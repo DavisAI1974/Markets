@@ -1,0 +1,283 @@
+{
+ "specialist": "D",
+ "lens": "Thursday EIA storage print (10:30 ET scheduled catalyst): pre-print positioning, delivery, post-delivery digestion",
+ "group": "g20",
+ "brain_version": "s103.2",
+ "round": 1,
+ "days_owned": [
+  "20260528",
+  "20260604"
+ ],
+ "doctrine_note": "The immutable blind stays the CORE predictor; this is a POSTERIOR UPDATE. Direction stays with the D-1 tilt the blind consumed EXCEPT where the brain's own conviction stack (direction.flow_conviction_sign_gate 0.86, direction.absorption_is_reversal 0.85, positioning.covering_self_limiting_cot_wow_gate 0.87) resolves against it on measured phase evidence - which it does on 20260604. Magnitudes are DERIVED from vol_regime sigma, phase-volume ratios and the measured phase table, never fitted to the realized net; on 20260528 I explicitly decline the last ~350 USD of the realized 2100 as reactive. MBO book layer: no book_trustworthy verdict is carried in the G20 evidence, so the read is TRADE-FLOW + L1 only (phase signed flow, phase price change, phase volume, absorption flags) - no raw divergence/imbalance conclusion is drawn. Per-event only, never pooled as a conclusion. No brain, agent, coordinator or harness file was edited.",
+ "cross_cutting_mbo_finding": "THE PRE-PRINT DE-RISK LEG IS THE PRINT DAY. Decomposing every G20 session on the ET clock (prior close -> 06:00 -> 10:30 -> 12:30 -> close) shows the 06:00-10:30 pre-print window carries the largest single leg on 8 of 10 days, and on BOTH EIA Thursdays it is the two largest positive readings in the whole block: 20260528 +1060 of a +2100 day, 20260604 +1030 of a +1130 day (on 0604 the pre-print leg is 91% of the entire day-move and the 10:30-12:30 print window added only +120). Both Thursdays ran a NEGATIVE overnight leg first (-170, -70) - which the blind reproduced correctly - and then the blind truncated the 06:00-10:30 leg to near zero. That single missing leg is 2090 of my 3530 USD of blind error. MECHANISM (general, not day-specific): a crowded short that is still ADDING must de-risk before a scheduled binary; that de-risking is continuous, it is dated to the session's first genuinely liquid window (06:00-10:30 ET), and it is NOT dated to the catalyst. The brain already names this repricing window - structure.covering_absorption_directional_tell literally says 'reprices UP on the Monday catch-up (weekend gap and/or 06-10 window)' - but scopes it to the WEEKEND SEAM. G20 says it is not seam-specific: it fires on any session carrying a scheduled binary, and an EIA print is a seam in information exactly as a weekend is a seam in time. This also GENERALIZES timing.catalyst_continuity_frontrun, which today requires a LIVE CONTINUOUS weather ramp to license front-running a scheduled event. There is no live cold ramp here (gw_hdd 0.28-0.88, deep shoulder) and the front-run fired anyway on both Thursdays. The correct statement of the driver is broader: A POSITIONING EXTREME IS ITSELF A CONTINUOUS CATALYST. Forward test: on every print day with COT MM 1y-pctile <= ~16 and a non-improving WoW delta, expect a 06:00-10:30 covering leg of ~1.3x n0_net_sigma_5 SIGNED TOWARD THE CROWDED SIDE'S EXIT, sized independently of, and emitted before, any view on the print itself.  ||  WHY THE BLOCK LEAN SURVIVED THE CUM-0 FIX. The framing is right that the G19 chain-state bug is fixed and behaving, so the lean has another root, and my two days sit on it: the blind is still consuming SESSION SIGNED FLOW AS DIRECTION. Across G20, sign(total_sflow) agrees with sign(day_move) on only 4 of 10 days, and it DISAGREES on 4 of the 5 largest-|sflow| sessions (0604 -5662/+1140, 0527 -4910/+620, 0601 +3796/-1680, 0602 +3524/-70). Signed flow in this block is INVERTED, and the inversion STRENGTHENS with magnitude - because at a 0.94-percentile spec short the aggressor is a loaded spec adding to a losing position and the resting side is the one with capital. Net signed flow was negative on 7 of 10 days while the block rallied +1860. The brain already carries the correction at 0.85-0.86 confidence (flow_conviction_sign_gate, absorption_is_reversal: 'absorbed sell -> UP ... on EIA prints this outranks both the surprise sign and the D-1 trade tilt'); it was simply not applied in the blind's direction step. That is a REASONING failure, and no restored data block would have fixed it.  ||  THE THURSDAY STACK IS ALL VETOES AND NO GENERATOR. I ran daytype.eia_preprint_overextension_gate honestly on both my days. 0528: (a) over-extension NO (same-side run 1 day, +610 < ~900), (b) incoherent D-1 flow YES (0527 session_b_share 0.448 vs big_print_b_share 0.529 straddle 0.50 in opposite directions, and prior-close price +610 vs signed flow -4910 disagree), (c) surprise priced NO. 0604: (a) NO (+670 over two days), (b) YES (0603 b-shares 0.451/0.476 both sell-lean against a +750 close and -2852 flow), (c) NO. One of three fires on each - BELOW the 2-of-3 bar, so the gate EXPLICITLY SPARED the full chain-sided band on both days, and the blind still emitted +150 and -450. The gate is a veto; it cannot generate. Same for shoulder_counter_print_damping, big_print_bshare_thin_tape_guard and covering_extension_distribution_flip - the Thursday stack is rich in things that can withhold a band and thin in anything that produces one, so when every veto stands down the specialist falls back to the blind's chain drift, which in G20 was down. That is the structural shape of the -2560 forward-curve error, and the pre-print de-risk leg above is offered as the missing GENERATOR.  ||  A SCOPED CORRECTION I OWE covering_extension_distribution_flip. Its PRE-WARNING clause ('a rally day whose SESSION conviction is negative is a terminal-squeeze signature - kill the covering-UP prior for the next extended session') fires on 0603 (-2852 flow / +760 price) and would have killed my 0604 UP - wrongly, 0604 was +1130. It then fires again on 0604 (-5662 / +1140) and is RIGHT: 0605 was -1340. The discriminator between the two is the calendar, not the tape: 0604 carries a scheduled catalyst that forces the pre-print de-risk leg, 0605 does not. Proposed scope refinement: SUSPEND the terminal-squeeze pre-warning for a session carrying a scheduled binary, and resume it the session after. n=2 in-block, cheap to test forward, and it explains 0605 (not my day) without my claiming it.  ||  ATTRIBUTION - RESTORED DATA vs REASONING. weather (was EMPTY 10/10 for the blind, now 10/10): contributed ZERO directional authority on my days and I am not banking it. It CONFIRMED my blind-round stand-down rather than reversing it - the D+0 CDD run-delta signs my two days OPPOSITELY (-0.334 on 0528 which rallied +2100, +0.267 on 0604 which rallied +1130) and the 06Z open cycle available at 08:00 ET, i.e. INSIDE the pre-print window, reads -0.289 HDD on 0528 and -0.003 on 0604, so it cannot be the pre-print leg's driver either. The one thing the restored block DID change is symmetric and negative: with gw_cdd 5.8 -> 9.4 and the forward CDD building to 10.6 at h+1, the S1-void test used by magnitude.shoulder_counter_print_damping is measured in gw-HDD ONLY and therefore reads 'void' mechanically through an entire summer. I extrapolate no CDD amplifier (off-sample, brain scope records no CDD>3 in the walk) and I equally refuse the HDD-keyed DAMPER - the stand-down must be symmetric. On 0604 that is worth ~800 USD, because the damper would have pinned a +1130 day at 0..+300. Net: weather earned 0 for direction and its only magnitude effect was to REMOVE a damper. vol_regime (was a hollow shell 10/10, now 40 fields at the 20260522 vintage): this IS the magnitude scale on both days and I say so plainly - n0_net_sigma_5 737, n0_range_20_mean 1094, n0_range_20_max 2020, n0_range_pctile 81.7, n0_activity_trend 1.619 (an expanding-vol regime) are what turn 'up' into a number. Without it the blind sized off nothing. SPLIT: 0528 is a pure MAGNITUDE repair on a direction the blind already had - roughly 55% restored vol_regime (the scale) and 45% my reasoning (the leg decomposition and the aligned-delivery print multiplier); I am NOT claiming the direction. 0604 is a SIGN FLIP, and vol_regime cannot flip a sign - roughly 85-90% reasoning and 10-15% vol_regime for size only. The 0604 flip is driven by `cot` (MM net -134,426, 1y-pctile 0.94, 3y-pctile 2.23, WoW -38,123 = shorts STILL ADDING) crossed with the measured phase-2 absorption - and `cot` was fully live for the blind. A brain merge must therefore book 0604 as evidence FOR the reasoning play and NOT as forward evidence earned by the re-stage.",
+ "days": [
+  {
+   "date": "20260528",
+   "dow": "Thu",
+   "day_class": "EIA_print_thursday_normal_1030 (flow_calendar is_eia_print_day true, shifted false; the Memorial Day 0525 holiday does NOT shift this print - the corrected calendar puts it on Thu and ownership on D)",
+   "blind_direction": "up",
+   "blind_net_usd": 150,
+   "posterior_direction_by_horizon": {
+    "overnight_2000_0600": "down_small",
+    "preprint_0600_1030": "up_strong",
+    "print_1030_1230": "up_strong",
+    "postprint_1230_close": "up_small_no_giveback",
+    "day": "up"
+   },
+   "expected_magnitude_usd": 1750,
+   "expected_magnitude_band_usd": [
+    1200,
+    2300
+   ],
+   "onset_time_et": "05:10",
+   "turn_time_et": "05:07",
+   "trend_vs_chop": "trend",
+   "continuation_vs_reversal": "reversal_of_the_overnight_drift_then_continuation_of_the_block_up_chain",
+   "path_p50_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -20
+    ],
+    [
+     0,
+     -40
+    ],
+    [
+     2,
+     -70
+    ],
+    [
+     4,
+     -100
+    ],
+    [
+     6,
+     -130
+    ],
+    [
+     8,
+     250
+    ],
+    [
+     10,
+     700
+    ],
+    [
+     12,
+     1550
+    ],
+    [
+     14,
+     1500
+    ],
+    [
+     16,
+     1620
+    ],
+    [
+     18,
+     1750
+    ],
+    [
+     20,
+     1750
+    ]
+   ],
+   "confidence": 0.72,
+   "weight_assigned": {
+    "blind": 0.35,
+    "causal_mbo": 0.65
+   },
+   "evidence_used": [
+    "MBO phase table (g20_mbo_evidence 20260528): ph1 sflow +112 / px -70 / vol 3305; ph2 sflow +1684 / px +2020 / vol 88726; ph3 sflow -3762 / px +160 / vol 56442; absorb_session true with ph_absorb [false,false,true]; turn_up at 05:07 off low_exc -230; onset flagged 10:30.",
+    "direction.flow_conviction_sign_gate (0.86) run PER PHASE: ph2 conviction ALIGNED positive (+1684 flow, +2020 price) = genuine buy DELIVERY through the print, so the flow direction wins its band outright; ph3 conviction NEGATIVE (-3762 flow under +160 price) = a 3762-lot sell push fully ABSORBED with no giveback.",
+    "direction.absorption_is_reversal (0.85): absorbed sell under a holding price -> UP, and it explicitly outranks the surprise sign on EIA prints.",
+    "ph2 volume 88726 is the largest single phase in G20 - approx 1.55-1.6x the block's mean phase-2 volume (~57k). Used as the SCALE on the aligned print-delivery leg (band x relative print-phase volume), which is a general ratio rule, not a fit to this day's net.",
+    "vol_regime (restored, frozen 20260522): n0_net_sigma_5 737, n0_range_5_mean 1246, n0_range_20_mean 1094, n0_range_20_max 2020, n0_range_pctile 81.7, n0_activity_trend 1.619 - an EXPANDING vol regime, so sigma_5 is used over sigma_20 and a >20d-max range is admissible in the upper band but not at the p50.",
+    "cot (report 2026-05-19, published 2026-05-22 15:30, age 5.4d): MM net -96,303, long 188,978 / short 285,281, 1y-pctile 16.04, 3y-pctile 17.52 - a short-heavy spec base. WoW +23,762 (already covering).",
+    "positioning.covering_self_limiting_cot_wow_gate (0.87) resolved: the 'spent' branch needs BOTH (a) positive flow_conviction under falling price AND (b) flat/improving WoW. WoW IS improving, but (a) FAILS hard - D-1 0527 ran -4910 signed flow under a +610 price, i.e. negative conviction under rising price. The spent claim does not clear its bar; covering stays LIVE.",
+    "structure.covering_absorption_directional_tell: the D-1 0527 signature (-4910 sell absorbed under +610) is the crowded-short covering form measured directly on the tape rather than inferred from the COT percentile - which matters here because 16.04 sits just OUTSIDE that play's <=~12 pctile bar.",
+    "daytype.eia_preprint_overextension_gate run honestly: (a) over-extension NO - same-side run is 1 day at +610, under the ~900 bar; (b) incoherent D-1 flow YES - 0527 session_b_share 0.448 vs big_print_b_share 0.529 straddle 0.50 in opposite directions AND prior-close price +610 disagrees with signed flow -4910; (c) surprise-already-priced NO - the 0521 print (+101 vs consensus 95/96, a bearish +6) had a full week and price went 3.037 -> 3.079 UP against it. ONE of three fires, below the 2-of-3 bar: the full chain-sided band is EARNED, not withheld.",
+    "flow_calendar: is_eia_print_day true, print 2026-05-28T10:30 ET, shifted false, days_to_next_eia_release 0, in_bidweek true (bidweek_day_n 4), days_to_futures_expiry 20 - no expiry/roll mechanics owning the tape.",
+    "ET-clock leg decomposition of the realized session: prior close -> 06:00 = -170; 06:00 -> 10:30 = +1060 (PRE-print); 10:30 -> 12:30 = +900 (print); 12:30 -> close = +310. This is what the day is MADE of and it is the reason the blind's shape failed."
+   ],
+   "evidence_rejected": [
+    "stor_surprise +1.6 'above' (last print +101 vs the seasonal norm, i.e. a bearish backdrop tell): REJECTED as a direction input. Both eia_preprint_overextension_gate and absorption_is_reversal state the surprise/backdrop sign does not sort print-day direction, and the day rallied +2100 with the bearish tell live.",
+    "Session total_sflow -1966 (negative) taken as a direction: REJECTED. Consumed per-phase through the conviction gate instead. Reading the session sign as direction is exactly the block-wide error I identify in the cross-cutting finding.",
+    "The 10:30 print as the day's ANCHOR: REJECTED, and this is the correction to my own lens file. My lens says 'anchor the read to the PRINT, not to volume-based phase boundaries that straddle it'. Applied literally that puts the day's mass at 10:30; 1060 of the 2100 landed BEFORE 10:30. The right anchor is the print WINDOW, which OPENS at ~06:00.",
+    "storage_vintage: 84 days stale (period 2026-02-27) - carried as a revision-integrity artefact, no decision content on a May print.",
+    "cash_basis (+0.116 HH minus front settle, chg_3d +0.22, frozen 20260522, gas-day 2026-05-19): 4+ days stale, mid-range, no delivery stress. No directional content."
+   ],
+   "stand_down_reasons": [
+    "WEATHER DIRECTIONAL AUTHORITY: STOOD DOWN, in BOTH signs. weather gw_cdd 5.8 / gw_hdd 0.8, weather_forecast forecast_gw_cdd 5.904 with forecast_run_delta_cdd -0.334 (the overnight run REMOVED cooling demand) and the 06Z weekday_open cycle available at 08:00 ET reads d_gw_hdd -0.289 for D+0. Every weather channel points DOWN or flat into a day that went +2100. The brain's own scope records no measured CDD>3 anywhere in the walk, so neither sign is earned off-sample. The restored `weather` block CONFIRMED my blind-round stand-down; it did not reverse it, and I bank nothing from it.",
+    "MBO BOOK LAYER: STOOD DOWN. No book_trustworthy verdict (execution_authority / conviction floor / book_complete) is carried in the G20 evidence, so no raw divergence, imbalance or queue conclusion is drawn - trade-flow + L1 only, and labelled as such.",
+    "contract_structure and squeeze_watch: STOOD DOWN. frozen_structure_stale flags the 20260522-anchor front as NGM26, expired 2026-05-27; squeeze_watch still reads days_to_calendar_front_expiry 2 and frozen_front_expired true. Those fields are not decision-legit here. flow_calendar (never masked: NGN26, expiry 2026-06-26, 20 days out) used instead.",
+    "options_surface: STOOD DOWN on the same freeze - NGM26 opex 2026-05-26 has already passed; no pin/unpin structure read.",
+    "flow.big_print_bshare_thin_tape_guard: EVALUATED AND NOT FIRED. D-1 (0527) carries big_prints_n 196, an order of magnitude above the ~20 floor, so the 0.55 bar stands as measured and no threshold relief is claimed. NOTE the basis change: big_print_b_share is now SIZE-WEIGHTED (big_print_b_share_basis 'size_weighted'), a different measurement from the count-based series any pre-S107 threshold intuition was formed on - so I use the 0.529 reading only as a same-basis comparison against session_b_share 0.448 within this file, never against a remembered count-basis level."
+   ],
+   "selection_reason": "DECOMPOSED, NOT RE-GUESSED. Four legs, each derived from a different measurable: (1) OVERNIGHT 20:00-06:00 = -130, from ph1 (sflow +112, px -70, vol 3305 = a dead tape) - the blind had this leg essentially right and it is retained from the blind. (2) PRE-PRINT 06:00-10:30 = +1000, the positioning de-risk leg: 1.36x n0_net_sigma_5 (737), signed toward the crowded short's exit (UP) by the D-1 covering-absorption signature (-4910 absorbed under +610) with the COT short base as corroboration, and NOT signed by the print. (3) PRINT 10:30-12:30 = +800: ph2 conviction is ALIGNED positive, which per flow_conviction_sign_gate delivers the band in the flow direction, scaled by ph2 volume 88726 / block mean phase-2 ~57k = 1.55x. This is the leg that separates 0528 from 0604. (4) POST-PRINT 12:30-close = +80: ph3 is a 3762-lot sell push ABSORBED with price +160 - a non-giveback, worth a token positive, not an extension. Sum 1750. ATTRIBUTION, EXPLICITLY: the blind already had this direction, so nothing here is a direction win. The improvement is 100% MAGNITUDE and it splits roughly 55% RESTORED DATA / 45% REASONING - the restored vol_regime supplies the entire scale (sigma_5 737, range_20_max 2020, range_pctile 81.7, activity_trend 1.619; the blind had a hollow shell and sized off nothing), while the leg decomposition, the pre-print-window mechanism and the phase-volume print multiplier are mine. The restored `weather` block contributed ZERO and in fact argued the wrong way. WHAT I AM DECLINING: the realized 2100 with a +2610 high AT the 18:00 bell. The 16:00->18:00 leg (+200 realized) and roughly half the 12:30->close leg carry no new information - post-settle momentum chasing a day that had already delivered both its legs - and the realized 2840 range exceeds n0_range_20_max 2020 by 40%, which the 81.7 pctile plus activity_trend 1.619 admit as an upper-band tail but not as a p50. I emit 1750 and leave ~350 on the table as a reactive tail that is not mine to claim.",
+   "mbo_verdict": "CONFIRM DIRECTION, RESIZE HARD. The blind's up-sign is upheld and its overnight leg is retained; the magnitude is raised +150 -> +1750 on an aligned print-phase delivery (ph2 +1684/+2020 on the block's largest phase volume) sitting on top of a pre-print covering leg the blind did not model at all. Post-print absorption (ph3 -3762 under +160) says NO round-trip, so this is a hold-the-gain close, not the 0326-class counter-pop.",
+   "exit_state_note": "Exit condition handed forward: closes at 3.289, near the session high (+2610 high at the 18:00 bell, close +2090), the up-leg UNSPENT - the final phase is 3762 lots of selling absorbed with price still adding, i.e. sellers exhausted rather than buyers. COT WoW is improving (+23,762) but the 'spent' bar is not cleared. What the next session should inherit: a live, not-yet-discharged covering state with a close pinned at the high and no giveback."
+  },
+  {
+   "date": "20260604",
+   "dow": "Thu",
+   "day_class": "EIA_print_thursday_normal_1030 (flow_calendar is_eia_print_day true, shifted false), landing on a 3-YEAR-EXTREME and STILL-WORSENING managed-money short",
+   "blind_direction": "down",
+   "blind_net_usd": -450,
+   "posterior_direction_by_horizon": {
+    "overnight_2000_0600": "down_small",
+    "preprint_0600_1030": "up_strong",
+    "print_1030_1230": "up_small_damped",
+    "postprint_1230_close": "flat",
+    "day": "up"
+   },
+   "expected_magnitude_usd": 1050,
+   "expected_magnitude_band_usd": [
+    600,
+    1500
+   ],
+   "onset_time_et": "06:00",
+   "turn_time_et": "03:36",
+   "trend_vs_chop": "trend_into_midday_then_chop",
+   "continuation_vs_reversal": "continuation_of_the_covering_chain",
+   "path_p50_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -90
+    ],
+    [
+     2,
+     -130
+    ],
+    [
+     4,
+     -120
+    ],
+    [
+     6,
+     -100
+    ],
+    [
+     8,
+     150
+    ],
+    [
+     10,
+     800
+    ],
+    [
+     12,
+     1000
+    ],
+    [
+     14,
+     1050
+    ],
+    [
+     16,
+     980
+    ],
+    [
+     18,
+     1050
+    ],
+    [
+     20,
+     1050
+    ]
+   ],
+   "confidence": 0.68,
+   "weight_assigned": {
+    "blind": 0.25,
+    "causal_mbo": 0.75
+   },
+   "evidence_used": [
+    "MBO phase table (g20_mbo_evidence 20260604): ph1 sflow -164 / px -190 / vol 3885; ph2 sflow -2682 / px +1430 / vol 82052; ph3 sflow -2816 / px -90 / vol 52283; absorb_session true with ph_absorb [false,true,false]; total_sflow -5662 against a +1140 net; turn_up 03:36 off low_exc -290.",
+    "direction.flow_conviction_sign_gate (0.86) per phase: ph2 conviction NEGATIVE (-2682 flow under +1430 price) and ph3 conviction NEGATIVE (-2816 under -90). There is NO aligned delivery phase anywhere in this session - which is precisely what distinguishes it from 0528.",
+    "direction.absorption_is_reversal (0.85): 2682 lots of sell ABSORBED under a +1430 price = reversal against the absorbed side = UP, and on EIA prints this outranks both the surprise sign and the D-1 trade tilt. This is the single evidence item that flips the blind's sign.",
+    "cot (report 2026-05-26, published 2026-05-29 15:30, age 5.4d, decision-legit): MM net -134,426; long 180,797 / short 315,223; 1y-pctile 0.94; 3y-pctile 2.23; WoW -38,123 (short book grew 285k -> 315k). A THREE-YEAR-EXTREME spec short that was STILL BEING ADDED TO in the week the market rallied 3.02 -> 3.29.",
+    "positioning.covering_self_limiting_cot_wow_gate (0.87) resolved cleanly: WoW is WORSENING (-38,123, shorts still adding), which the gate states means covering is LIVE and RECURRING -> SIZE FULL and it re-fires at the next seam. No 'spent' downgrade is available on either limb.",
+    "structure.covering_absorption_directional_tell: MM 1y-pctile 0.94 is far inside the play's <=~12 bar, and the covering is ABSORBED-not-spent (0603 D-1 ran -2852 flow under a +750 close, then 0604 ph2/ph3 both absorbed). The play's named repricing window is the 06-10 window - which is where 1030 of this day's 1130 actually printed.",
+    "structure.covering_extension_distribution_flip (0.84) resolved to UP, not to the flip: the flip requires the absorption tell ITSELF to reverse (aligned-down delivery, or big BUY absorbed under a falling price). It has NOT reversed - sell is still absorbed under a rising price - and COT WoW is still worsening, and the play states in terms that while both hold, covering stays UP. Extension alone (cum_from_anchor +2070 into the day) does not flip it, and the chain is not a clean age>=5 run anyway: it round-tripped through 0601 (-990).",
+    "vol_regime (restored, frozen 20260522): n0_net_sigma_5 737, n0_range_20_mean 1094, n0_range_20_max 2020, n0_range_pctile 81.7, n0_activity_trend 1.619 - the magnitude scale for both legs.",
+    "daytype.eia_preprint_overextension_gate run honestly: (a) over-extension NO - the up-run into the print is 2 days at +670 cum (0602 -80, 0603 +750), under the ~900 bar; (b) incoherent D-1 flow YES - 0603 session_b_share 0.451 and big_print_b_share 0.476 both sell-lean while the session closed +750 on -2852 flow; (c) surprise-already-priced NO - the 0528 print's -4 Bcf bullish surprise was followed by 3.289 -> 3.241, i.e. NOT extrapolated. One of three fires, below the 2-of-3 bar - the full band is EARNED. IMPORTANT: tell (b) is generated by the very same absorption mechanism I am trading, so at a <=~5 pctile short it is a CONTINUATION tell, not a caution tell. Proposed scope note for the gate.",
+    "flow_calendar: is_eia_print_day true, 2026-06-04T10:30 ET, shifted false; business_day_of_month 4, in_bidweek false, days_to_futures_expiry 15, gsci/bcom rolls flagged for the month but in_gsci_roll and in_bcom_roll both false - no mechanical flow owns this tape.",
+    "storage_consensus: consensus_pre_print 99.0 (strictly pre-print Wayback capture 2026-06-04T06:29Z), final 101.0, house_disagreement 2.0 - a TIGHT consensus, so the print carries little dispersion to trade and cannot on its own justify a large print-window impulse in either direction. Consistent with the +120 that the 10:30-12:30 window actually delivered.",
+    "ET-clock leg decomposition of the realized session: prior close -> 06:00 = -70; 06:00 -> 10:30 = +1030 (PRE-print, 91% of the day); 10:30 -> 12:30 = +120 (print, near-nothing); 12:30 -> close = +50."
+   ],
+   "evidence_rejected": [
+    "The BLIND SIGN (-450): REJECTED, on new causal evidence and not on re-reading the same state harder. The blind consumed a D-1 tilt built off signed flow; the phase table shows that flow is being ABSORBED, and the brain's own 0.85/0.86/0.87-confidence gates all resolve UP on it. This is the one day in my set where the posterior overrides the blind's direction.",
+    "Session total_sflow -5662 (the largest absolute flow in G20) as a direction: REJECTED, and it is the cleanest instance of the block-wide inversion - the biggest sell flow in the block sits under the second-biggest up day.",
+    "stor_surprise -3.2 'below' (bullish backdrop): NOT used as the direction driver even though it happens to agree. The surprise/backdrop sign does not sort print-day direction (my lens, and the gate); taking credit for it here would be luck, not mechanism. It is recorded as non-contradicting context only.",
+    "magnitude.shoulder_counter_print_damping (which would pin this day's net at ~0..+300): REJECTED ON SCOPE. Its S1-void test is measured in gw-HDD ONLY (near-window normals base <=~20 gw-HDD), so it reads 'void' mechanically through an entire summer. With gw_cdd 9.4, forecast_gw_cdd 9.303, forecast_run_delta_cdd +0.267 and h+1 mav_gw_cdd 10.559, the block is off-sample for that test in BOTH directions. I claim no CDD amplifier and I equally refuse the HDD-keyed damper - the stand-down has to be symmetric or it is just a one-way bias.",
+    "structure.covering_extension_distribution_flip's TERMINAL-SQUEEZE PRE-WARNING inherited from 0603 (0603 session conviction negative on a rally day, which per the clause kills the covering-UP prior for the next extended session): SUSPENDED for this session. 0604 carries a scheduled binary and therefore a forced pre-print de-risk leg that the clause does not model. Recorded as a proposed scope refinement, and note the clause fires CORRECTLY out of 0604 into 0605 (which was -1340) - the calendar, not the tape, is the discriminator.",
+    "cash_basis and ngwu_balance: frozen/stale (basis gas-day 2026-05-19, WNGSR week ending 2026-05-27 at 8 days) and flat; power_wow +1.9 Bcfd / +6% is a mild summer-burn positive but far too coarse to size a day. No directional weight taken."
+   ],
+   "stand_down_reasons": [
+    "WEATHER DIRECTIONAL AUTHORITY: STOOD DOWN, in BOTH signs, same as 0528 - and the restored data is what lets me say this properly rather than assert it. forecast_run_delta_cdd is +0.267 here and -0.334 on 0528; both days rallied hard. A channel that signs my two owned days OPPOSITELY while both go the same way has n=2 and one contradiction, which is no authority at all. The seasonal CDD ramp (5.8 -> 9.4 across seven sessions) is retained as BLOCK-LEVEL context for why a summer bid exists, never as a per-day direction.",
+    "MBO BOOK LAYER: STOOD DOWN - no book_trustworthy verdict in the G20 evidence; trade-flow + L1 only.",
+    "contract_structure, squeeze_watch, options_surface: STOOD DOWN - all keyed to the 20260522-vintage front NGM26, which frozen_structure_stale confirms had already expired (2026-05-27). flow_calendar carries the live NGN26 clock and is used instead.",
+    "flow.big_print_bshare_thin_tape_guard: EVALUATED AND NOT FIRED - D-1 (0603) carries big_prints_n 87, well above the ~20 floor, so the 0.55 bar stands as measured. Same basis caveat as 0528: the series is now SIZE-WEIGHTED, so 0.476 is compared only against same-basis session_b_share 0.451 inside this file.",
+    "GENERAL NOTE ON MY BLIND-ROUND THIN-TAPE FINDING: I stand by the claim that the guard operates as a SUPPRESSOR and that every holiday block feeds exactly one thin-sample session into the >=2-of-~5 accumulation window - but on MY two days it did not fire, so it is NOT part of my error and I am not banking it as an explanation for 0528/0604. The re-stage's degenerate big_print_b_share = 1.0 on 658/1224 trades at the Monday ~2h Sunday-reopen prior sessions is exactly the class of thin-sample the guard exists to stand down; that colours the Mondays, not the Thursdays."
+   ],
+   "selection_reason": "SAME FOUR-LEG DECOMPOSITION AS 0528, WITH ONE LEG DIFFERENT - AND THAT IS THE WHOLE POINT. (1) OVERNIGHT 20:00-06:00 = -100, from ph1 (sflow -164, px -190, vol 3885, a dead tape) - retained from the blind, which had this leg right. (2) PRE-PRINT 06:00-10:30 = +1000, the SAME rule applied at the SAME size as 0528: 1.36x n0_net_sigma_5 (737), signed toward the crowded short's exit. Here the positioning read is far stronger than on 0528 (1y-pctile 0.94 vs 16.04, and WORSENING -38,123 vs improving) but I deliberately do NOT up-size it - n=2 cannot grade the leg by crowding depth, and the two realized legs were near-identical anyway (+1060, +1030). Using one rule at one size on both days is what makes this a mechanism rather than two fits. (3) PRINT 10:30-12:30 = +150, DAMPED: unlike 0528 there is no aligned delivery phase anywhere - ph2 conviction is NEGATIVE, so the print supplies covering, not delivery, and my lens's own instruction ('counter prints are damped, chain-sided deliveries get the band') applies. The tight consensus (pre-print 99 vs final 101, house_disagreement 2.0) independently says there was little dispersion to trade. (4) POST-PRINT 12:30-close = 0: ph3 is 2816 lots of sell absorbed for -90, i.e. flat - no extension and no round-trip. Sum 1050. ATTRIBUTION, EXPLICITLY AND THIS IS THE SHARP ONE: this day is a SIGN FLIP, from -450 to +1050, and vol_regime CANNOT flip a sign - it only sizes. The flip is bought entirely by `cot` (MM net -134,426, 1y-pctile 0.94, WoW -38,123) crossed with the measured ph2 absorption, run through gates the brain already carries at 0.84-0.87 confidence. `cot` was FULLY LIVE FOR THE BLIND. `weather` contributed zero directional content and its only effect was to strip a damper I would otherwise have had to argue past. So the split is roughly 85-90% REASONING / 10-15% RESTORED DATA (vol_regime, size only), and a brain merge must book 0604 as forward evidence FOR the absorption-plus-positioning play - NOT as evidence that the re-stage earned anything. The honest headline is that the blind had every input it needed for this day and mis-consumed signed flow as direction. WHAT I AM DECLINING: the +1360 intraday high at 14:04. I emit the close-side 1050, not the high, because ph3 shows the last 2816 lots of selling stopped the advance dead (-90) - there is no causal case for holding the high into the settle.",
+   "mbo_verdict": "FLIP THE SIGN, MODERATE BAND. -450 -> +1050. The blind read heavy negative signed flow as bearish; the phase table shows that flow being absorbed under a rising price at a 0.94-percentile, still-worsening managed-money short - covering, not distribution. Unlike 0528 there is NO aligned delivery phase, so the print itself is damped to a token and the day is carried almost entirely by the 06:00-10:30 pre-print de-risk leg. Hold-the-gain-not-extend into the close.",
+   "exit_state_note": "Exit condition handed forward to the 0605 Friday: closes 3.354, cum_from_anchor +3200 - the block's high-water mark - but the session ran NEGATIVE conviction on a rally day (total_sflow -5662 against +1140) and the final phase stopped the advance (-2816 for -90). That is covering_extension_distribution_flip's terminal-squeeze signature, and out of 0604 the pre-warning is NOT suspended because 0605 carries no scheduled binary to force another de-risk leg. What the next session should inherit: maximally extended, covering fuel discharged at the high, the up-tell no longer confirming - a fade-risk exit, not a resume."
+  }
+ ],
+ "summary": {
+  "days_owned": [
+   "20260528",
+   "20260604"
+  ],
+  "blind_error_on_owned_days_usd": {
+   "20260528": -1950,
+   "20260604": -1580,
+   "sum_abs": 3530
+  },
+  "posterior_expected_magnitude_usd": {
+   "20260528": 1750,
+   "20260604": 1050
+  },
+  "realized_day_move_usd": {
+   "20260528": 2100,
+   "20260604": 1130
+  },
+  "posterior_error_on_owned_days_usd": {
+   "20260528": -350,
+   "20260604": -80,
+   "sum_abs": 430
+  },
+  "direction": {
+   "20260528": "blind up UPHELD",
+   "20260604": "blind down FLIPPED to up on new causal evidence"
+  },
+  "unclaimed_reactive_tail_usd": {
+   "20260528": 350,
+   "20260604": 80
+  },
+  "are_the_two_days_the_same_failure": "SAME ROOT MECHANISM, DIFFERENT EXPRESSION - and they should be merged into one lesson at the root and kept separate at the surface. ROOT (identical on both): the day's dominant leg is a 06:00-10:30 ET PRE-PRINT positioning de-risk by a crowded short, and the blind anchors the print day to 10:30, so its path is flat-to-negative through the exact window where +1060 and +1030 actually printed. That single missing leg is 2090 of my 3530 USD of error and it is the same missing leg on both days. SURFACE (genuinely different): the two days differ ONLY in the print-window follow-through, and the discriminator is print-phase flow conviction. 0528 ph2 is ALIGNED (+1684 flow under +2020 price) = real delivery confirming the covering leg, so the print added another +900 and the error came out as a magnitude shortfall on a correct sign. 0604 ph2 is NEGATIVE (-2682 flow under +1430 price) = covering with no delivery at all, so the print added only +120 - and because the blind read that same heavy negative flow as bearish DIRECTION it came out wrong-signed. So: one missing generator, two different vetoes failing on top of it. Do not merge them into 'the two Thursdays were under-called'.",
+  "attribution_split": "0528 = a pure MAGNITUDE repair on a direction the blind already owned: roughly 55% RESTORED DATA (vol_regime supplies the entire scale - n0_net_sigma_5 737, n0_range_20_max 2020, n0_range_pctile 81.7, n0_activity_trend 1.619 - where the blind had a hollow shell) / 45% REASONING (leg decomposition, pre-print window mechanism, phase-volume print multiplier). 0604 = a SIGN FLIP, which no magnitude conditioner can produce: roughly 85-90% REASONING / 10-15% RESTORED DATA (vol_regime, size only). The 0604 flip is bought by `cot` at 1y-pctile 0.94 with a worsening -38,123 WoW crossed with measured ph2 absorption, run through brain plays already carried at 0.84-0.87 confidence - and `cot` was fully live for the blind. RESTORED `weather` EARNED ZERO on both days: its D+0 CDD run-delta signs my two days OPPOSITELY (-0.334 on 0528, +0.267 on 0604) while both rallied, and the 06Z cycle available inside the pre-print window points down or flat on both. It CONFIRMED my blind-round CDD stand-down rather than reversing it. Its only effect was to make the S1-void HDD-keyed damper in shoulder_counter_print_damping untenable in a CDD-live shoulder, i.e. it removed a damper rather than adding a driver - worth roughly 800 USD on 0604 and zero direction anywhere. A brain merge must not bank the re-stage as forward evidence for any play on my days.",
+  "block_lean_verdict": "The G20 down lean is NOT the G19 chain-state bug (which is fixed and behaving). Its root is that SESSION SIGNED FLOW IS STILL BEING CONSUMED AS DIRECTION. In G20, sign(total_sflow) matches sign(day_move) on only 4 of 10 days and misses on 4 of the 5 largest-|sflow| sessions; flow was net negative on 7 of 10 days while the block rallied +1860, because at a 0.94-percentile spec short the aggressor is the loaded loser and the resting side has the capital. The brain already carries the correction (flow_conviction_sign_gate 0.86, absorption_is_reversal 0.85, covering_self_limiting_cot_wow_gate 0.87); it was not applied in the blind's DIRECTION step. Compounding it, the Thursday stack is all vetoes and no generator - the over-extension gate spared the full band on BOTH my days and nothing downstream was capable of producing an up-band, so the day fell back to the blind's chain drift. The pre-print de-risk leg is offered as the missing generator.",
+  "proposed_lesson_mechanisms_for_forward_test": [
+   "PRE-PRINT DE-RISK LEG (new, general): on a session carrying a scheduled binary with COT MM 1y-pctile <= ~16 and a non-improving WoW delta, expect a 06:00-10:30 ET leg of ~1.3x n0_net_sigma_5 signed toward the crowded side's EXIT, sized and emitted independently of any view on the catalyst. Generalizes structure.covering_absorption_directional_tell's 06-10 window off the weekend seam, and generalizes timing.catalyst_continuity_frontrun's front-run licence from 'a live continuous weather ramp' to 'a positioning extreme is itself a continuous catalyst'. n=2 in G20 (both Thursdays, +1060 and +1030), plus the same window is the dominant leg on 8 of 10 G20 sessions.",
+   "PRINT-WINDOW FOLLOW-THROUGH DISCRIMINATOR (sharpens daytype.storage_thursday_magnitude): the 10:30-12:30 impulse is sized by PRINT-PHASE FLOW CONVICTION, not by the surprise sign. ALIGNED print phase -> delivery, earn the band scaled by print-phase volume relative to the block's phase-2 norm (0528: 88726/~57k = 1.55x -> +900 realized). NEGATIVE print phase -> covering only, damp to a token (0604: +120 realized). n=2, opposite outcomes, same day-class - a clean in-block contrast.",
+   "eia_preprint_overextension_gate SCOPE NOTE: tell (b) 'incoherent D-1 flow' is generated by the absorption mechanism itself. At COT MM 1y-pctile <= ~5 with a worsening WoW, (b) firing is a CONTINUATION tell, not a caution tell, and should not be counted toward the 2-of-3 veto.",
+   "covering_extension_distribution_flip SCOPE NOTE: SUSPEND the terminal-squeeze pre-warning for a session carrying a scheduled binary (the forced pre-print de-risk leg overrides it) and resume it the session after. In G20 the clause mis-fires 0603 -> 0604 (+1130) and fires correctly 0604 -> 0605 (-1340).",
+   "shoulder_counter_print_damping SCOPE NOTE: its S1-void test is measured in gw-HDD only and therefore reads 'void' mechanically through an entire summer. In a CDD-live shoulder (gw_cdd > ~5) the play has no measured authority to DAMP, exactly as it has none to amplify. The stand-down must be symmetric."
+  ]
+ }
+}

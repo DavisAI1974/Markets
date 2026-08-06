@@ -1,0 +1,24 @@
+{
+ "date": "20260313",
+ "contract": "NGJ26",
+ "instrument_id": 1008,
+ "raw_symbol": "NGJ26",
+ "definition_date": "2026-03-13",
+ "hour_start_event_ns": 1773431999509506048,
+ "hour_end_event_ns": 1773435599064249344,
+ "first_price": 3.138,
+ "last_price": 3.132,
+ "high_price": 3.144,
+ "low_price": 3.127,
+ "net_usd": -60,
+ "direction": "down",
+ "buy_volume": 538.0,
+ "sell_volume": 615.0,
+ "signed_flow": -77.0,
+ "trade_count": 659,
+ "activity_rate": 10.98,
+ "data_quality": {
+  "n_trades_session": 42118,
+  "hour_span_min": 60.0
+ }
+}

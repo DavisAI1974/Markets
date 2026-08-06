@@ -1,0 +1,120 @@
+{
+  "specialist": "A_weekend_sunday_reopen",
+  "group": 15,
+  "brain_version": "s102.1_blind + posterior_refine",
+  "lens": "weekend gaps / thin Sunday / gap persistence vs rejection / reopen exhaustion. First Sunday update read RELATIVE to the Friday anchor. On thin Sunday tape MBO flow typically stands down -> fall back to trade-flow/L1, labeled.",
+  "doctrine_note": "POSTERIOR UPDATE of the IMMUTABLE blind, not a replacement. I start from grp15.json and adjust ONLY on material causal evidence. Both my days: KEEP the blind (evidence confirmed, no material adjustment).",
+  "anchor": {"date": "20260313", "close": 3.132, "last_hour_dir": "down", "instrument": "NGJ26"},
+  "days": [
+    {
+      "date": "20260315",
+      "dow": "Sun",
+      "instrument": "NGJ26",
+      "blind_direction": "down",
+      "blind_net_usd": -150,
+      "blind_day_move_usd": -450,
+      "blind_overnight_gap_usd": -300,
+      "posterior_direction_by_horizon": {
+        "overnight": "flat",
+        "us_open": "down",
+        "settle": "down",
+        "close": "down"
+      },
+      "posterior_direction_note": "overnight/reopen GAP SIGN is stood down as non-derivable thin-Sunday noise (actual gapped UP +480 then fully rejected). The Sunday-session drift with the chain sign (down) is the derivable directional content, and it is confirmed by trade-flow + the reopen exhaustion sequence.",
+      "expected_magnitude_usd": -450,
+      "expected_magnitude_basis": "day-move (gap + session), the doctrine-scored derived quantity; KEEP blind -450 (gap -300 + session -150).",
+      "onset_time_et": "18:03",
+      "turn_time_et": "18:05 (reopen up-spike rejected within ~5-10 min, then monotone down; no counter-turn thereafter)",
+      "trend_vs_chop": "trend (down) after a brief reopen up-spike that round-tripped",
+      "continuation_vs_reversal": "continuation (priced-stub chain-drift extends down; the up-gap is NOT a reversal, it is rejected)",
+      "path_p50_curve": [[18.0, 0], [18.25, -60], [18.5, -220], [19.0, -330], [19.5, -410], [20.0, -450]],
+      "path_p50_note": "cum-$ from the Friday anchor. Reopen centered ~0 (gap sign unpredictable; I do NOT bake in the actual +480 up-spike). Then a with-sign drift down to the day-move -450. Actual shape: gapped +480, sold to the low -950-from-open by 18:49, closed -430 vs anchor.",
+      "confidence": 0.68,
+      "weight_assigned": {
+        "blind_structural_ladder_chain_drift": "CORE / high - priced-stub chain-drift ownership at the drift sign is the predictor; unchanged.",
+        "trade_flow_fallback_evidence_json": "high (confirming) - onset down 18:03, total_sflow -337, all three phases sell-tilted, price down. This CONFIRMS the blind down day-move.",
+        "mbo_feature_state_flow": "low / STOOD DOWN - execution_authority False every bar (thin Sunday, mbo_mapping_flags); read as SHADOW only.",
+        "L1_spread": "low - thin, informational."
+      },
+      "evidence_used": [
+        "Friday anchor 3.132 down last-hour = the relative frame.",
+        "trade-flow (evidence.json): onset_dir down @18:03, total_sflow -337 sell, phases all sell-side, close 3.089 (-430 vs anchor).",
+        "MBO shadow sequence: reopen bar (18:26) imb_level +0.436 buy (the up-gap in progress) -> exhausts, flips to imb_level -0.574 sell / consumed BID / div_exhausting by 19:26 = the up-gap being rejected. Confirms down, used as CONFIRMATION not authority.",
+        "tape_conditions D-1 (0313): session B 0.463, big-print B 0.505 = squaring, no attack either way -> stub not continuation, consistent with blind."
+      ],
+      "evidence_rejected": [
+        "The actual +480 reopen gap-UP: rejected as a directional signal - thin-Sunday reopen noise, not derivable at open, and it fully round-tripped (anchor rejection). Not used to flip the call.",
+        "MBO first-bar buy-imbalance (+0.436) as a bullish read: rejected - it exhausted within the hour; taking it directionally would have been a false long into a down drift."
+      ],
+      "stand_down_reasons": [
+        "MBO feature-state flow: execution_authority False all session (thin Sunday, mbo_mapping_flags) -> no book-based conclusions, trade-flow/L1 fallback only.",
+        "Overnight/reopen gap sign: stood down as non-derivable (both my Sundays gapped up then sold; the gap is noise, the day-move is the signal)."
+      ],
+      "mbo_verdict": "NEUTRAL-to-marginally-helpful, correctly SUBORDINATED. The MBO layer stood itself down (thin Sunday, no execution authority) exactly as the weekend lens predicts. As shadow, it did carry a real and coherent sequence - reopen buy-imbalance (the up-gap) then exhaustion into sell/consumed-BID (the rejection) - which agrees with the down call. But it added NOTHING the trade-flow evidence didn't already say, and had I given the reopen buy-spike authority it would have MISLED me long into the up-gap. Net: it neither improved nor hurt the derived day-move; the blind was already right (-450 vs actual -430, residual +20). Down-weighted to shadow, as it should be on thin Sunday.",
+      "selection_reason": "Weekend/Sunday-reopen specialist owns the day (weekend_gap + sunday_session, 0313->0315 closure). Chain_drift priced-stub is the coordinator's owner; MBO stands down; trade-flow confirms; KEEP the immutable blind."
+    },
+    {
+      "date": "20260322",
+      "dow": "Sun",
+      "instrument": "NGK26",
+      "blind_direction": "down",
+      "blind_net_usd": -200,
+      "blind_day_move_usd": -600,
+      "blind_overnight_gap_usd": -400,
+      "posterior_direction_by_horizon": {
+        "overnight": "flat",
+        "us_open": "down",
+        "settle": "down",
+        "close": "down"
+      },
+      "posterior_direction_note": "Same weekend fingerprint as 0315: reopen GAP SIGN stood down as thin-Sunday noise (actual gapped UP +290 vs the 0320 close, then sold hard). The Sunday drift with the live down-chain (NGK26) is the derivable content; confirmed by trade-flow (mild).",
+      "expected_magnitude_usd": -600,
+      "expected_magnitude_basis": "day-move (gap -400 + session -200), weekend_chain_drift_day_move plain rung at class bottom (S1-void damping). KEEP blind.",
+      "onset_time_et": "18:01",
+      "turn_time_et": "none (front-loaded flush 18:00-18:10 to the low, then flat; no counter-turn)",
+      "trend_vs_chop": "front-loaded trend down then chop-flat (all the move is in the first ~40 min; phases 2-3 near-zero)",
+      "continuation_vs_reversal": "continuation (live down-chain, budget-form day-move); the up-gap is rejected, not a reversal",
+      "path_p50_curve": [[18.0, 0], [18.17, -420], [18.5, -520], [19.0, -580], [19.5, -610], [20.0, -600]],
+      "path_p50_note": "cum-$ from the 0320 close (weekend frame). Reopen centered ~0 (gap sign unpredictable). Front-loaded down - actual gapped +290 then dumped to -1090-from-open by 18:10 (low), settling to -640 vs 0320 close. My p50 front-loads the drop and lands the day-move at -600.",
+      "confidence": 0.62,
+      "confidence_note": "lower than 0315 - the MBO book was UNRELIABLE this session (see stand-down), so I lean entirely on trade-flow, which was thin (total_sflow only -68).",
+      "weight_assigned": {
+        "blind_structural_ladder_chain_drift_budget_form": "CORE / high - weekend_chain_drift_day_move plain rung, class bottom; live down-chain; unchanged.",
+        "trade_flow_fallback_evidence_json": "high-but-thin (confirming) - onset down 18:01, total_sflow -68 mild sell, price -640. Confirms down but weakly.",
+        "mbo_feature_state_flow": "ZERO / DISABLED - book never completed (book_complete False all session), mbo_maybe_bad_book flag on nearly every bar, execution_authority False. Book-based conclusions disabled.",
+        "tape_conditions_D-1_0320": "moderate - bigB 0.542 (mild big-print buy = covering tone into the weekend) -> hold class bottom, do not stretch the band. Used, agrees with blind."
+      },
+      "evidence_used": [
+        "0320 Friday close 3.07 (NGK26) = the weekend frame.",
+        "trade-flow (evidence.json): onset down @18:01, total_sflow -68 mild sell, phase-1 carries the whole move (pxchg -910 of the -930), close 3.006 (-640 vs 0320 close).",
+        "tape_conditions D-1 (0320): session B 0.442 / big-print B 0.542 covering tone -> class-bottom sizing, matches the blind."
+      ],
+      "evidence_rejected": [
+        "The actual +290 reopen gap-UP: rejected as directional - thin-Sunday noise, immediately sold through (anchor rejection).",
+        "ALL MBO book-derived features this session: rejected on data quality (bad/incomplete book). div_expect weakening / consumed ASK / far_side_recruitment 0.615 at 18:56 are NOT trustworthy (book never completed) - explicitly not used to shape the call."
+      ],
+      "stand_down_reasons": [
+        "MBO book UNRELIABLE: book_complete False every bar, 'mbo_maybe_bad_book' flagged nearly throughout, execution_authority False -> book-based conclusions DISABLED, trade-flow + L1 + D-1 tape only (doctrine item 8, labeled).",
+        "Overnight/reopen gap sign: non-derivable thin-Sunday noise."
+      ],
+      "mbo_verdict": "MBO HURT-POTENTIAL, correctly DISABLED = net neutral. This session is the clean case for the stand-down rule: the reconstructed book never completed and was flagged bad all session, so any book-based feature (the 18:56 consumed-ASK / far-side-recruitment 0.615 print) would have been FALSE PRECISION. The engine correctly withheld execution authority. Falling back to trade-flow gave a mild down confirmation, and the blind budget-form day-move -600 landed on actual -640 (residual +40). So the MBO neither helped nor hurt because it was properly switched off; the value here was the DATA-QUALITY GATE doing its job, not any positive MBO signal. If the gate had NOT fired and the bad-book features had been trusted, the call could have been corrupted.",
+      "selection_reason": "Weekend/Sunday-reopen specialist owns the day (weekend_gap + sunday_session, 0320->0322 closure). Chain_drift budget-form is the coordinator's owner; MBO disabled on data quality; trade-flow confirms; KEEP the immutable blind."
+    }
+  ],
+  "cross_day_summary": {
+    "verdict": "KEEP the blind on BOTH Sundays. The immutable blind's derived day-moves were already excellent (0315 -450 vs actual -430, residual +20; 0322 -600 vs actual -640, residual +40). No material causal evidence justified adjusting either.",
+    "mbo_helped_or_hurt": "MBO NEITHER HELPED NOR HURT on my two Sundays - and that is the correct outcome for thin weekend tape. 0315: MBO flow stood down (no execution authority, thin Sunday); as shadow it carried a coherent reopen-buy-then-exhaust-to-sell sequence that CONFIRMED down but added nothing over trade-flow, and would have MISLED if given authority (the reopen buy-spike was the up-gap that got rejected). 0322: the MBO book was outright UNRELIABLE (never completed, bad-book flagged all session) and the engine correctly disabled it - the only value was the data-quality gate preventing false precision. On thin Sunday tape the MBO layer is subordinate by design; the trade-flow/L1 fallback carries the confirmation.",
+    "weekend_lens_finding": "BOTH Sundays share a fingerprint: a thin-tape reopen GAP UP (0315 +480, 0322 +290) that is immediately REJECTED (anchor rejection) and sold with the pre-existing down-chain to a with-sign day-move. The gap SIGN is non-derivable noise; the DAY-MOVE (relative to the Friday/Friday-equivalent anchor) is the derivable, scored quantity and both blinds nailed it. Reopen exhaustion (buy-spike that exhausts within ~1 hour) = gap rejection = day takes the chain sign.",
+    "lesson_proposal": {
+      "mechanism": "thin_sunday_reopen_gap_rejection: on a Sunday globex reopen into a live chain, an initial reopen imbalance/price spike AGAINST the chain that exhausts within ~1 hour is a gap REJECTION; the day-move reverts to the chain sign at the priced-stub / budget-form band. Do NOT trade the reopen gap sign; forecast the day-move relative to the Friday anchor.",
+      "supporting_events": ["20260315 (+480 up-gap rejected, day-move -430)", "20260322 (+290 up-gap rejected, day-move -640)"],
+      "counterexamples": "none in-block (both my Sundays); needs a Sunday where the reopen gap PERSISTS to falsify.",
+      "n": 2,
+      "confidence": "low (n=2, same block, same direction of chain)",
+      "scope": "thin Sunday reopens (|session net| in the <=690 walk set), live chain, S1-void or S1-live alike (weekend gap-sign noise is regime-agnostic).",
+      "forward_validation": "G16/G17 Sundays - check whether the reopen gap sign remains non-derivable and the day-move keeps taking the chain sign; check whether MBO stand-down remains the norm on thin Sunday tape.",
+      "mbo_lesson": "MBO/L1 do NOT earn authority on thin Sunday tape (0315 no-authority; 0322 bad-book). Keep MBO SHADOW on Sundays and forecast the day-move from the blind chain-drift ladder + trade-flow fallback. The data-quality gate is the load-bearing MBO contribution on weekends, not any positive flow read."
+    },
+    "execution_mode": "SHADOW (no live execution; posterior refine only)."
+  }
+}

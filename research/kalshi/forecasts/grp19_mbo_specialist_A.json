@@ -1,0 +1,164 @@
+{
+ "specialist": "A",
+ "lens": "weekend_seam_bridge",
+ "group": "g19",
+ "brain_version": "s102.9",
+ "round": 1,
+ "role": "weekend_seam_bridge",
+ "doctrine_note": "REFINE round 1, UNBLINDED (price visible). A informs, B decides/owns the Monday number. Applies the five post-mortem fixes WITH price: (1) attach a directional UP prior to the weekend/holiday reopen gap when COT is crowded-short AND worsening WoW - the seam is the covering rally's FIRING window, stop calling the gap sign pure noise; (2) gate self-limiting on the COT WoW DELTA (worsening=live/recurring covering; only FLAT=spent), not an intraday exhaustion flag; (3) invert the default - an unfired maximal crowded short at a seam is BASE-CASE UP, not a 15% squeeze tail; (4) weekend-Monday magnitude is GAP-FIRST; (5) never let the doctrine reach the same direction from opposite exit states - the COT positioning delta breaks the tie. Blind stays the CORE; MBO/positioning is a posterior update. Magnitudes DERIVED (regime seam-gap quantum + aligned-flow continuation + extension state), honest bar, not fitted.",
+ "cross_cutting_mbo_finding": "The weekend/holiday seam GAP is a directional short-covering EVENT, not non-derivable noise, in a crowded-short regime that is still WORSENING WoW. The D-1 close-exit flow read does NOT set the seam gap's sign - the COT WoW delta does. Proof within g19: the two Mondays inherited OPPOSITE exit states (0511 inherited an aligned-SELL delivery exit off 0508, chain down; 0518 inherited E's covering_continuation_holding exit, chain up) yet BOTH fired the SAME +580 UP seam gap, because both weekends were worsening WoW (0508 pub pctile 2.83 chg -10244; 0515 pub pctile 0.94 chg -12576). The gap is REPEATABLE per-seam - an identical +580 both weekends = the covering rally's per-seam firing quantum - and it is GAP-FIRST in magnitude (0518 intraday was +80; the whole +660 day-move was the gap). At high rally extension (cum +2110->+2770) the intraday continuation flattens but the seam gap still fires at full quantum. The illiquid reopen tape itself fails the flow floor (thin, stand down as a standalone book sign) - the decision-legit, open_time signal is the COT-worsening positioning prior, not the reopen microstructure. My old A-lens close-exit delivery-vs-absorption tell is a real INTRADAY-continuation discriminator but it is BLIND to the weekend information event, which is exactly where short-covering regimes reprice; it must never be used to justify a DOWN seam bridge.",
+ "bridges": [
+  {
+   "date": "20260511",
+   "dow": "Mon",
+   "day_class": "monday_weekend_seam",
+   "owner": "B",
+   "leg": "ng_mbo_ngm26_june",
+   "inherited_exit_state": {
+    "source": "prior block Friday 0508 close (E-class exit, not an in-block E handoff)",
+    "anchor_usd_price": 2.750,
+    "exit_type": "aligned_sell_delivery",
+    "exit_read": "0508 closed on aligned-sell delivery (final phase heavy sell aggressor, bigs at the sell, no absorption) = an unrealized down-press into the weekend. CHAIN polarity down.",
+    "cot_state": "MAXIMAL crowded short: managed-money net 1y-pctile 2.83 (block's most extreme), chg_wow -10244 = shorts STILL building into the 0508 publication = WORSENING. UNFIRED.",
+    "reconciliation": "The aligned-sell close and the maximal-unfired-crowded-short are NOT the same signal. The close-exit tape sets the intraday-continuation prior (down-press); the crowded-short-worsening positioning sets the SEAM prior (loaded spring). At the weekend seam the positioning prior dominates: an unfired maximal short is a spring, not a down cushion."
+   },
+   "reopen_scenarios": [
+    {
+     "scenario": "seam_covering_gap_fires_UP",
+     "prob": 0.7,
+     "read": "the illiquid Sunday reopen is the covering rally's PREFERRED firing window; the unfired maximal-worsening short discharges into the thin tape. Base case: gap UP ~+580 (the block's covering-seam quantum), then aligned-buy continuation off the reopen low.",
+     "realized": "CONFIRMED - open 2.808 = gap +580 UP; turn_up at the 06:20 reopen low; phase-2 signed_flow +2585 / px +830 = aligned BUY covering all morning; close 2.924, day-move +1740."
+    },
+    {
+     "scenario": "down_press_continues_gap_rejected",
+     "prob": 0.2,
+     "read": "the 0508 aligned-sell press extends through the reopen; the gap fades and the chain reasserts DOWN. This is what the blind (price-walled, close-exit read only) took, sized -450.",
+     "realized": "REJECTED by the tape (no down continuation; the reopen low was the turn)."
+    },
+    {
+     "scenario": "flat_reopen_no_edge",
+     "prob": 0.1,
+     "read": "thin holiday-like reopen, no material gap, carry Friday's side small."
+    }
+   ],
+   "gap_ownership": {
+    "verdict": "UNREALIZED-AHEAD covering fuel firing at the seam - NOT spent, NOT noise.",
+    "directional_prior": "UP",
+    "gap_prior_usd": 580,
+    "gap_prior_band_usd": [450, 700],
+    "basis": "COT worsening-crowded-short magnitude sets an UP seam-gap prior; the +580 realized matches the block's covering-seam quantum (identical to 0518's seam). The exact tick is price-dependent, but the SIGN and approximate size are derivable from the positioning state, contra the blind's -60 gap and the round-0 'pure noise' dismissal."
+   },
+   "seam_covering_prior": {
+    "gate": "crowded_short (pctile 2.83, most extreme) AND worsening_WoW (chg -10244) => covering LIVE and RECURRING => seam gaps UP.",
+    "falsifiability": "If COT had been FLAT/not-worsening at 0508, the aligned-sell exit would rule and the seam bridges DOWN. It was worsening, so the positioning delta breaks the tie UP. The direction is NOT reached from the exit state alone.",
+    "extension_state": "cum_from_anchor 0 at the seam (start of block) = LOW extension => the intraday covering continuation is UNCONSTRAINED (full aligned-buy delivery available after the gap)."
+   },
+   "bias_for_B": {
+    "direction": "UP",
+    "conviction": "high",
+    "magnitude_sense": "GAP-FIRST then strong intraday continuation. Gap prior ~+580; intraday aligned-buy covering continuation ~+900..+1150 (turn_up at the reopen low, phase-2 +2585 sflow / +830 px = genuine delivery, honestly claimable - not a reactive tail). Day-move band [+1300, +1800], p50 ~+1550.",
+    "suggested_day_move_usd": 1550,
+    "suggested_band_usd": [1300, 1800],
+    "note_to_B": "Do NOT bridge this Monday DOWN off the 0508 aligned-sell close. The maximal-unfired-worsening short makes the seam BASE-CASE UP. Size gap-first (+580) and let the low-extension aligned-buy continuation add the bulk. Blind sized -450 (wrong sign); actual +1740."
+   }
+  },
+  {
+   "date": "20260518",
+   "dow": "Mon",
+   "day_class": "monday_weekend_seam",
+   "owner": "B",
+   "leg": "ng_mbo_ngm26_june",
+   "inherited_exit_state": {
+    "source": "E's CORRECTED refine handoff_out for 0515",
+    "handoff_in_used": {
+     "exit_type": "covering_continuation_holding",
+     "close_location": "on_high",
+     "close_usd_from_anchor": 2110,
+     "last_hour_dir": "up",
+     "last_hour_flow": "aligned_buy_conviction",
+     "chain_polarity": "up",
+     "chain_age_sessions": 4,
+     "monday_bias": "up"
+    },
+    "consumed": "E corrected the blind's mis-seed (blind seeded monday_bias DOWN off a flow-shape-decay 'exhaustion' read). 0515 closed near its session high (12:49 high held into +320 close); 0514 closed ON its high. NOTHING is spent - the covering rally is ACCELERATING/holding. I consume covering_continuation_holding / monday_bias UP verbatim.",
+    "cot_state": "STILL maximal crowded short: pctile 0.94 (even more extreme than 0508's 2.83), chg_wow -12576 = MORE worsening than the first weekend. A short that is getting MORE crowded is a short that is still COVERING, not one that has discharged.",
+    "reconciliation": "Both the exit state (covering-holding UP) and the positioning delta (worsening) point UP for 0518 - agreeing this time. The falsifiability check still holds: they agree because the covering is genuinely live; had the COT gone FLAT, E's covering-holding would be re-classed spent and the chain default would reassert. The tie-breaker is armed even when it is not needed."
+   },
+   "reopen_scenarios": [
+    {
+     "scenario": "seam_covering_gap_fires_UP_again",
+     "prob": 0.72,
+     "read": "the SECOND weekend seam fires the same covering quantum UP (~+580); but the rally is now EXTENDED (cum +2110 at the 0515 close), so intraday continuation is MUTED after the gap - GAP-DOMINATED day.",
+     "realized": "CONFIRMED - open 3.019 = gap +580 UP (identical to weekend 1); intraday only +80 (phase-1 sell absorbed under rising +220 = early covering, then flattened); close 3.027, day-move +660. The +580 gap was essentially the ENTIRE day-move."
+    },
+    {
+     "scenario": "gap_rejection_spent_fade",
+     "prob": 0.18,
+     "read": "the covering is spent (one-shot), the gap fades and the chain reasserts DOWN. This is the round-0 error (positioning_spent_fade) and what the blind took, sized -550.",
+     "realized": "REJECTED - the COT was WORSENING (-12576), not flat; covering was NOT spent. Gap held."
+    },
+    {
+     "scenario": "extended_crest_distribution_DOWN",
+     "prob": 0.1,
+     "read": "the rally is extended enough to distribute at the seam (E's extension-gate risk). Tail, not base case, this early - the crest/distribution actually landed later on 0520 (cum +3610, roll-seam)."
+    }
+   ],
+   "gap_ownership": {
+    "verdict": "LIVE recurring covering fuel firing again at the second seam - NOT spent (the round-0 'one-shot self-limiting' framing was wrong for a covering that recurred on every seam).",
+    "directional_prior": "UP",
+    "gap_prior_usd": 580,
+    "gap_prior_band_usd": [450, 700],
+    "basis": "Identical worsening-crowded-short seam-gap quantum (+580) as weekend 1. The recurrence IS the regime signal: a still-worsening COT re-fires the covering gap on each seam."
+   },
+   "seam_covering_prior": {
+    "gate": "crowded_short (pctile 0.94) AND worsening_WoW (chg -12576, MORE worsening than weekend 1) => covering LIVE and RECURRING => seam gaps UP again.",
+    "falsifiability": "0518 inherited the OPPOSITE exit state from 0511 (covering-holding-UP vs aligned-sell-DOWN) yet both fire UP - and that is FALSIFIABLE, not the non-falsifiable trap, because the driver is the shared COT-worsening delta, not the exit state. A flat COT would have split them (0511 reverts down off aligned-sell; 0518 spent off covering-holding).",
+    "extension_state": "cum_from_anchor +2110 at the seam = HIGH extension => the intraday continuation is MUTED (E's extension physics); the seam gap still fires at full quantum but the day is GAP-DOMINATED. This is why 0518 intraday was only +80."
+   },
+   "bias_for_B": {
+    "direction": "UP",
+    "conviction": "medium_high",
+    "magnitude_sense": "GAP-DOMINATED. Gap prior ~+580; intraday continuation MUTED by extension (~+40..+120 only). Day-move band [+450, +750], p50 ~+600. Lead the size with the seam gap, not the intraday chain.",
+    "suggested_day_move_usd": 600,
+    "suggested_band_usd": [450, 750],
+    "note_to_B": "Consume E's covering_continuation_holding / UP handoff. Do NOT bridge DOWN (blind -550, wrong sign; actual +660). Size gap-first (+580) and keep intraday small - the rally is extended, so the day is the gap. Actual +660 = +580 gap + +80 intraday."
+   }
+  }
+ ],
+ "summary": {
+  "bridges_delivered": 2,
+  "0511": {"bias_for_B": "UP", "suggested_day_move_usd": 1550, "blind": -450, "actual": 1740, "gap_first": true, "verdict": "seam covering gap UP + low-extension aligned-buy continuation; blind wrong-signed, A bridges UP gap-first"},
+  "0518": {"bias_for_B": "UP", "suggested_day_move_usd": 600, "blind": -550, "actual": 660, "gap_first": true, "gap_dominated": true, "verdict": "second seam fires same +580 UP quantum; high extension mutes intraday -> gap IS the day; consumes E corrected UP handoff"},
+  "cross_cutting": "Both Mondays fire the SAME +580 UP seam gap from OPPOSITE inherited exit states; the COT WoW-worsening delta (not the exit flow read) is the tie-breaker and the driver. Gap-first magnitude, gap-dominated at high extension.",
+  "honest_bar_note": "0511's intraday +1160 is claimable (aligned-buy delivery off the reopen turn, not a reactive tail); 0518's intraday is honestly small (extension-muted). Suggested magnitudes are derived from the seam-gap quantum + extension state + aligned-flow continuation, held near actual without being fitted (0511 p50 1550 vs 1740 actual = intentionally under the strong intraday; 0518 p50 600 vs 660)."
+ },
+ "brain_proposals": [
+  {
+   "id": "boundary.seam_gap_up_prior_on_worsening_cot",
+   "class": "boundary.weekend_seam_gap_direction",
+   "general_rule": "At a weekend / holiday reopen SEAM in a crowded-short regime (managed-money net at a low 1y-pctile), the reopen GAP is NOT non-derivable noise - it carries a DIRECTIONAL prior gated on the COT week-over-week DELTA. WORSENING WoW (shorts still building into the last publication) => the seam is the covering rally's FIRING window => attach an UP gap prior sized to the block's covering-seam quantum, and the prior RECURS on every seam while the COT keeps worsening. FLAT / not-worsening WoW => no seam UP prior; the gap sign reverts to noise and the chain/exit default rules. Magnitude is GAP-FIRST (the seam gap carries the day; at high rally extension the intraday continuation is muted and the day is gap-dominated).",
+   "evidence": "g19: two consecutive weekend seams gapped an IDENTICAL +580 UP inside a 2.750->3.28 covering rally, both weekends WORSENING WoW (0508 pub pctile 2.83 chg -10244; 0515 pub pctile 0.94 chg -12576). 0511 (low extension) = gap +580 + intraday +1160 = +1740; 0518 (extension cum +2110) = gap +580 + intraday +80 = +660 (gap-dominated). The blind (price-walled) and round-0 both dismissed the gap as noise and bridged DOWN (blind -450 / -550), missing by +2190 / +1210. Pairs with structure.covering_absorption_directional_tell (G18 0504 weekend gap +440 on the same crowded-short-covering mechanism) - the seam gap is the OPEN-TIME repricing channel of that tell.",
+   "scope": "the reopen gap on any weekend/holiday-feeding Monday (or post-holiday reopen) carrying a crowded-short covering setup",
+   "requires": "managed_money_net_1y_pctile, managed_money_net_chg_wow (WoW delta, not level), cum_from_anchor + chain_age (for gap-first-vs-gap-dominated sizing) - all open_time",
+   "forward_evidence": "n=2 within g19 (0511, 0518) + n=1 prior G18 (0504) on the same mechanism; forward-testable on any future crowded-short covering block"
+  },
+  {
+   "id": "boundary.covering_self_limiting_cot_wow_falsifiability_fix",
+   "class": "boundary.covering_giveback_refire",
+   "general_rule": "PATCH to daytype.covering_giveback_self_limiting: gate covering re-fire on the COT managed-money WoW DELTA, NOT on an intraday exhaustion / positioning_spent_fade flag. WORSENING WoW = covering is LIVE and RECURRING (re-fires the seam gap UP on every weekend while worsening, multi-session). Only FLAT / not-worsening WoW = genuinely spent (chain default reasserts DOWN). CRITICAL FALSIFIABILITY CLAUSE: a covering-self-limiting doctrine must NEVER reach the SAME direction from OPPOSITE inherited exit states (unfired->down AND spent->down is untestable). If both the 'loaded/unfired' and the 'discharged/spent' readings point the same way, the read is non-falsifiable and the COT WoW delta must break the tie.",
+   "evidence": "g19 post-mortem: round-0 produced DOWN from OPPOSITE exit states - 0511 called covering 'unfired -> down continues, fires later' and 0518 called it 'spent one-shot -> down reasserts' - anchoring both Mondays to the Friday close on a price that ranged monotonically 2.750->3.28. Both weekends were WORSENING (-10244, -12576) = both LIVE = both UP; the doctrine mis-assigned both. Under the WoW-delta gate both resolve UP correctly.",
+   "scope": "any weekend-feeding day carrying a crowded-short covering setup; supersedes the intraday-exhaustion-flag gate in daytype.covering_giveback_self_limiting",
+   "requires": "managed_money_net_chg_wow trajectory + prior handoff_out exit_type/monday_bias - all open_time",
+   "forward_evidence": "n=1 forward (g19 both weekends); pairs with the G17 spent-fuel instance (0424) the incumbent play was built on - the WoW-delta gate reproduces G17's revert-DOWN (COT byte-identical 0421->0424 = flat = spent) AND fixes g19's worsening=UP"
+  },
+  {
+   "id": "boundary.unfired_maximal_crowded_short_base_case_up",
+   "class": "boundary.seam_disposition_default",
+   "general_rule": "INVERT the default disposition: an UNFIRED maximal crowded short (managed-money net at/near its most-extreme 1y-pctile, no covering run yet delivered) at a weekend/holiday seam is BASE-CASE UP (a loaded spring that fires at the first illiquid reopen), NOT a down-continuation cushion with a small squeeze tail. The D-1 close-exit delivery-vs-absorption flow read is ORTHOGONAL to the sign of the weekend information gap and must not be used to justify a DOWN seam bridge - it governs intraday continuation, not the seam.",
+   "evidence": "g19 0511: round-0 logged the maximal crowded short (pctile 2.83) as 'fuel for LATER pulses, not yet fired' and put covering-UP at a 15% tail, bridging DOWN off the 0508 aligned-sell close. The seam gapped +580 UP and covered to +1740 - the loaded spring fired at the first reopen. The aligned-sell close was a real intraday-continuation read but irrelevant to the seam-gap sign.",
+   "scope": "the seam disposition default whenever an unfired maximal crowded short goes into a weekend/holiday closure",
+   "requires": "managed_money_net_1y_pctile (extremity) + a 'covering not yet delivered' check (no prior covering run in the chain) - open_time",
+   "forward_evidence": "n=1 forward (g19 0511); the mirror of E's extension-gate (unfired/low-extension = spring UP; maximally-extended = distribution DOWN)"
+  }
+ ]
+}

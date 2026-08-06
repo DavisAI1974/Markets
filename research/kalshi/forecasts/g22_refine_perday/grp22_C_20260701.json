@@ -1,0 +1,82 @@
+{
+ "specialist": "C",
+ "group": "g22",
+ "date": "20260701",
+ "round": 1,
+ "mode": "refine",
+ "brain_version": "s103.7",
+ "lens": "core intraday tape (mbo_specialist_C.md)",
+ "dow": "Wed",
+ "day_class": "core_midweek",
+ "blind_direction": "down",
+ "blind_net_usd": -380,
+ "posterior_direction_by_horizon": {
+  "overnight_20_00": "down (0630 ph3 exited still selling -1,907; the give-back's first leg)",
+  "predawn_00_06": "down_chop, floored near -300 (live CDD slope buys the dip; onset of the decisive overnight leg ~01:50)",
+  "morning_06_0830": "two_sided drift -150..-300",
+  "whip_0830_0905": "two_sided violent (flush to the session low 08:40, V to the +160 lower-high 09:02) - no directional claim inside the window",
+  "post_0905_close": "down (rejection of the lower-high resolves the day; give-back grinds to the lows, close holds heavy, close_off_low ~0.1-0.2)"
+ },
+ "expected_magnitude_usd": -470,
+ "expected_magnitude_band_usd": [-650, -250],
+ "onset_time_et": "01:50",
+ "turn_time_et": "09:05",
+ "trend_vs_chop": "trend_down with one violent counter-whip window 08:32-09:02; ex-window a steady three-phase grind (-170/-160/-180)",
+ "continuation_vs_reversal": "reversal_of_D1_pop (give-back of 0630's +790) = continuation of the block's sell chain; the pop was the counter-event, not the chain",
+ "path_p50_curve": [
+  [20, 0],
+  [22, -150],
+  [0, -60],
+  [2, -300],
+  [4, -250],
+  [6, -160],
+  [8, -260],
+  [10, -420],
+  [12, -350],
+  [14, -440],
+  [16, -470]
+ ],
+ "confidence": "high",
+ "weight_assigned": {
+  "blind": 0.55,
+  "causal_mbo": 0.45,
+  "note": "direction and the EIA-eve/chain frame are the blind's, unchanged; the causal layer supplies the give-back mechanism, the resize -380 -> -470, the turn time, and the close-shape correction (no pre-print lift)"
+ },
+ "evidence_used": [
+  "D-1 realized pair (the decisive causal fact): 0630 closed +790 (3.175 -> 3.254) on session_signed_flow -5,573 (the block's largest sell), absorb_session true, ph2 sflow -4,266 vs px +880 on 83,255 lots (ph_absorb true), ph3 already unwinding -430. A rally whose SESSION conviction is negative is the structure.covering_extension_distribution_flip PRE-WARNING (g19): kill the covering-UP prior for the next session. 0701 is that next session.",
+  "In-block rally-quality contrast pair: 0624 +790 rally WITH flow (sflow +311, no absorb flags) -> 0625 held (-60, no give-back); 0630 +790 rally AGAINST flow (absorption/covering) -> 0701 gave back -500 on flow-flat tape. The discriminator is the shared doctrine's flow_conviction, at day scale.",
+  "0701 realized phase table: (-300,-170) aligned-down open, then (+11,-160) and (+216,-180) - price fell -340 across ph2+ph3 under mildly POSITIVE flow (total_sflow -73, flow-flat). Per structure.covering_absorption_directional_tell arm (b), failing dip-buys under a falling price stay DOWN; the give-back was bid evaporation after the failed retest, not aggressive selling.",
+  "Morning microstructure (continuous render + exit state): 08:32-08:40 flush -30 -> session low (raw -590 at 08:40), 08:42-09:02 V to +160 = 3.270, a LOWER HIGH 58 ticks under 0630's 3.328 pop high; rejected to -140 by 09:09 and -470 by 09:51. The one retest of the pop failed inside 10 minutes - distribution confirmed, turn 09:05. No served catalyst for the whip; described, not attributed.",
+  "Tape conditions into the open (0630 session): b_share_two_sided 0.477, big_print_b_share 0.469 size-weighted on 246 prints (thick sample), quote_bid_share 0.509 - a genuine sell tape that did NOT deliver on its own day; the price reveals it was absorbed, which re-grounds the blind's down sign on the give-back mechanism rather than on sell-flow continuation.",
+  "COT (report 0623, published 0626, decision-legit): MM net -82,722 at 29.25 pctile_1y, WoW +2,187 improving - no crowded-short fuel, covering self-limiting; the 0630 pop was covering, not accumulation.",
+  "Weather (the MISSED-HILL target, read per the S109 asymmetric-slope doctrine): realized gw_cdd 17.0 = block max to date; D-1 MOS D0 17.211, D+1 18.868 rising; model_disagreement MAV 17.2 / MET 16.1, both hot. The CDD slope is a live UP-FORCE - it does not preclude a counter-day, it FLOORS it. Sized as the damper that keeps the give-back short of the full -790 round-trip.",
+  "Grid stack constraint term (the 0629-target block, READ this time; slice 06-29, age 2): US48 wind 2,137,477 MWh = block-max served slice, third consecutive climb (1.726M -> 2.032M -> 2.137M across the 0629/0630/0701 slices); nuclear outages only 1.26 GW with chg_7d -1,231 MW (fleet returning). The renewable subtractor mutes the heat-bid floor - which is why the give-back is allowed to run ~60% of the pop rather than half or less. Burn itself recovered to 40.2 Bcf/d on the demand surge (14.33M MWh), so the subtractor is a DAMPER on the floor, not a bear driver.",
+  "Flow calendar: days_to_next_eia_release 1 (print 07-02 10:30), business_day_of_month 1, in_gsci_roll false, futures expiry 19d - the blind's catalyst_continuity_frontrun configuration (Wed pre-print under a live sell context) stands; no program flow suspected.",
+  "Storage frame: level 2,835, vs_5yr +112, inject phase, stor_surprise proxy -1.4; last print +76 vs 74 final consensus. Comfortable surplus, no scarcity bid under the pop.",
+  "Gap: measured 0 (blind carried -10); the 24/24 intra-week |gap|<=10 boundary measurement holds again."
+ ],
+ "evidence_rejected": [
+  "storage_consensus next_print 81.0 Bcf: final_capture_is_post_print stamped, and the only strictly pre-print snapshot is 2026-07-02T06:22:55Z - AFTER my session close. Not decision-time on 0701; used only qualitatively (injection print tomorrow, size uncertain). The declared served-data trap, respected.",
+  "contract_structure / squeeze_watch frozen calendar-front fields: anchor-vintage front NGN26 expired 06-26 (frozen_front_expired true, frozen_structure_stale declared); live clocks taken from flow_calendar only. squeeze active treated UNKNOWN per the in-band note (masked spread limb), never as a negative.",
+  "vol_regime n0 family: S110 f3 declares the leg-era continuous store carries ~0.27 of the scored leg's tape - demoted to a weak sanity scaler (-470 is ~0.8 n0_sigma_5), no band derived from it.",
+  "options_surface: 06-19 vintage, 38d to NGQ26 opex, no play consumes it; the 3.0-put / 3.5-call walls noted as context only, no pin claim.",
+  "l1_book quote_bid_share 0.509 on 0630: marginal bid lean not permitted to fade the give-back read (and the book layer stands down regardless).",
+  "The 09:02 spike's cause: no served catalyst at 08:30-09:00 for NG; the whip is described as a macro-window liquidity event and given no mechanism."
+ ],
+ "stand_down_reasons": [
+  "MBO book layer: no book_trustworthy verdict served (no execution_authority / conviction-floor / book_complete fields) - book-based conclusions stand down; trade-flow + L1 only, labeled.",
+  "structure.accumulation_arm_turn: STAYS DOWN in refine, now on three measured legs instead of two inferred ones - tape leg: big-print buy-absorption >=0.55 on only 1 of the last 5 sessions (0626 0.783); COT leg: 29.25 pctile_1y and improving (+2,187 WoW), not extreme-and-worsening; NEW price leg: no turn ever delivered - the single post-pop up-excursion was +160 at 09:02, a lower high, rejected inside 10 minutes. The G18 caveat ('the arm needs price-turn confirmation') is exactly what the curve shows absent.",
+  "selector.midblock_right_the_ship: the turn stack did not build by my open (0702's bullish absorption pair is post-my-day and belongs to D's read).",
+  "midweek.stretched_extreme_close_giveback: does NOT fire - 0630 ran +790 (< ~$1200) and closed mid-range (close_off_low 0.56, not >=0.95 stretched). Recorded so the coordinator sees the give-back here comes from the CONVICTION channel (negative-session-conviction pop), not the stretched-close channel.",
+  "squeeze_watch: UNKNOWN by construction (spread limb masked; live dte 19) - no squeeze read either way."
+ ],
+ "selection_reason": "Wednesday core midweek with no calendar catalyst on the day itself (EIA prints the NEXT morning; the pre-print session is C's tape, the print day is D's) - default C ownership per the lens file.",
+ "mbo_verdict": "CONFIRM direction, RESIZE -380 -> -470, TURN identified 09:05, SHAPE corrected. The blind's down sign and EIA-eve frame were right; the curve re-grounds WHY: the -5,573 sell tape did not deliver on 0630 (it was absorbed into a +790 covering pop - the blind's one honest hole, flow.price_free_absorption_proxy half-scope, is exactly where the causal layer adds), so 0701 is the give-back of a conviction-negative pop, sized ~60% of +790 with the CDD floor muted by the wind-max/nuclear-return constraint. The blind's 'flatten from 14 ET on pre-print squaring' shape leg was wrong - the day closed AT its lows (0.12 off); on a give-back day the pop's late longs squaring INTO the print are supply, not lift. Honest bar: -470 emitted where the actual went -500; the extra 30 rode the close-heavy tail I do not claim.",
+ "proposal_contribution": "(1) FORWARD-EVIDENCE LINE for structure.covering_extension_distribution_flip (PRE-WARNING arm) and structure.covering_absorption_directional_tell: g22 adds 0630->0701 - a rally day with NEGATIVE session conviction (+790 px on -5,573 sflow, absorb_session true) was followed by a -500 give-back on flow-flat tape (-73), while the same-size ALIGNED rally 0624 (+790 on +311) was followed by a HOLD (-60). The pre-warning now spans g19+g22. Proposal rung (general, n=2 in-block pairs + the g19 class; forward test g23+): D-1 RALLY QUALITY sets the next core day's magnitude class - conviction-negative pop -> give-back p50 ~50-70% of the pop with sign against the pop (full round-trip is the ceiling, never the claim); conviction-aligned rally -> alternation/hold class (+-150). (2) THE S109 ASYMMETRIC-SLOPE CONSTRAINT TERM, measured on the named-target block: grid_stack was served and READ this refine. Honest in-block result: wind-elevated slices do NOT sort day sign (0630 went +780 under a rising-wind slice) - the renewable subtractor is a HEAT-BID DAMPER (magnitude lever on the up-force floor), never a sign sorter. Scoped rung: when sizing a counter-CDD give-back day, set the floor by the served burn margin - wind at a local max plus nuclear returning = muted floor, allow the give-back past half the pop (0701: wind 2.137M block-max slice, -500 = 63% of pop); wind fading with burn rising = firm floor, cap under half (0625 after the aligned 0624: slice wind 1.07M falling, day held -60). Single-block; forward test before any brain edit. (3) MISSED-HILL integration for the coordinator: my day is the hill's counter-day and the doctrine reads it cleanly - the CDD slope floors counter-days rather than precluding them (-500 stopped well short of the -790 round-trip and the block resolved 0 / +410 back up the hill next two sessions). A slope with tape events riding it, exactly as adjudicated. (4) SHAPE note (n=1, log only): pre-print squaring did not lift a give-back close - EIA-eve flatten belongs to balanced days, not to the session unwinding a conviction-negative pop. (5) The 24/24 intra-week |gap|<=10 measurement extends 25/25 with 0630->0701 gap 0.",
+ "state_defects_and_gaps_reported": [
+  "No NEW defects. The four in-band declarations were honored as declared: storage_consensus post-print capture (reconstructed decision-time view: consensus NOT visible 0701), frozen_structure_stale (live clocks from flow_calendar), vol_regime n0 era-degradation (S110 f3, demoted), options strike rescale (declared, unused).",
+  "Noted, not a defect: exit-state low_et 08:40 BEFORE high_et 09:02 looks inverted but is real - the continuous render confirms the morning flush-then-V; the session's whole range printed in 22 minutes.",
+  "Noted, not a defect: weather.regime label 'hard_cool' on a gw_cdd 17.0 day is the classifier's cooling-demand vocabulary; read as peak cooling demand.",
+  "Noted, not a defect: the downsampled continuous ends 0701 at 3.21 (-440) vs the authoritative stage-time close 3.204 (-500) - the declared downsample artifact; exit_states/evidence close used."
+ ]
+}

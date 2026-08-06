@@ -1,0 +1,87 @@
+{
+ "batch": 6,
+ "conditions": [
+  {
+   "play_id": "daytype.covering_giveback_self_limiting",
+   "conditions": [
+    {
+     "quantity": "cot_mm_net_wow_delta_not_worsening",
+     "state_path": "cot.managed_money_net_chg_wow",
+     "reference": "delta",
+     "comparator": ">=",
+     "threshold": 0,
+     "units": "contracts"
+    }
+   ]
+  },
+  {
+   "play_id": "structure.covering_absorption_directional_tell",
+   "conditions": [
+    {
+     "quantity": "cot_mm_net_1y_pctile_crowded_short",
+     "state_path": "cot.managed_money_net_pctile_1y",
+     "reference": "absolute",
+     "comparator": "<",
+     "threshold": 12,
+     "units": "percentile"
+    }
+   ]
+  },
+  {
+   "play_id": "positioning.covering_self_limiting_cot_wow_gate",
+   "conditions": [
+    {
+     "quantity": "cot_mm_net_wow_delta_flat_or_improving",
+     "state_path": "cot.managed_money_net_chg_wow",
+     "reference": "delta",
+     "comparator": ">=",
+     "threshold": 0,
+     "units": "contracts"
+    }
+   ]
+  },
+  {
+   "play_id": "boundary.seam_gap_up_prior_on_worsening_cot",
+   "conditions": [
+    {
+     "quantity": "cot_mm_net_wow_delta_worsening",
+     "state_path": "cot.managed_money_net_chg_wow",
+     "reference": "delta",
+     "comparator": "<",
+     "threshold": 0,
+     "units": "contracts"
+    },
+    {
+     "quantity": "cot_mm_net_1y_pctile_crowded_short",
+     "state_path": "cot.managed_money_net_pctile_1y",
+     "reference": "absolute",
+     "comparator": "<",
+     "threshold": 3,
+     "units": "percentile"
+    }
+   ]
+  }
+ ],
+ "no_condition": [
+  {
+   "play_id": "selector.midblock_right_the_ship",
+   "why": "The brain record states outright that this play has no bar of its own: assumption_retired_bshare_basis reads 'This play does not carry its own numeric bar; it restates accumulation_arm_turn's condition' and the deferral was written that way deliberately - 'Stated as a deferral rather than duplicated so there is ONE definition, not two that can drift.' Curating a bar here would create the second definition that note exists to prevent. On the limbs themselves: 'COT extreme AND trending more extreme' names no number for 'extreme'; 'recurring buy-absorption (>=2 of ~5, non-consecutive) under a sell tape' is the one counted bar and it keys on the absorption flags, which are unserved (vocab filter 'absorb' returns 0); 'a based chain with no new cum-extreme >=2 sessions' keys on cum_from_anchor, also unserved; and 'an EIA print delivering COUNTER on absorbing flow' is qualitative. Its action - unlock the selector from chain-down to TURN-PENDING - is a sequencing decision, not a threshold."
+  },
+  {
+   "play_id": "direction.flow_conviction_sign_gate",
+   "why": "No threshold, and the quantity that decides it is not served. flow_conviction = sign(signed_flow) * sign(price_change) computed PER PHASE from the MBO phase table; the comparison is against zero, i.e. a sign test on a product of two signs, so nothing in it is a bar on a magnitude. HALF the input exists and half cannot: tape_conditions.phase_signed_flow is served on g18-g23 (array-valued, which is why it is not in the scalar vocabulary listing), but there is NO price-change quantity anywhere in the state - tape_conditions declares itself 'NON-PRICE ... no price/return content', price being the blind's one deliberate mask - so the discriminating operand is absent. The play's own caveats say exactly this: 'REFINE-side gate: requires realized price. The blind cannot compute it.' tape_conditions.session_signed_flow is the nearest-looking legal name and it is the WRONG QUANTITY: a whole-session aggregate of the PRIOR day's tape with no price term at all, so a condition pointed there would read as evaluated while measuring something the play never claims. Separately worth recording: the S112 audit measured the gate's OUTPUT to be sign(price_change) on 70 of 70 sessions, so even with both operands served the aligned and negative branches never disagree - a D23 degeneracy sitting in the call rather than the trigger, which no state_path can express."
+  },
+  {
+   "play_id": "direction.absorption_is_reversal",
+   "why": "No bar, and the quantity is not served. The trigger is a BOOLEAN - ph_absorb / absorb_session true, i.e. price did not follow the flow sign - and the call is a direction flip against the absorbed side, so nothing in the play is a threshold on a magnitude. Its requires field names the absorption flags and phase flow-vs-price; the flags do not exist anywhere in the state (vocab filter 'absorb' returns 0), and while the phase FLOW half is served (tape_conditions.phase_signed_flow, array-valued and therefore not in the scalar vocabulary), the PRICE half that turns flow into absorption is the deliberate mask. The play's health note reports its fire rate off the committed g*_mbo_evidence.json files (absorb_session true on 24 of 70 days) - that is the post-hoc evidence store, not the decision state a specialist reads at the open, which is why the corpus records this play standing down on every blind day in the batch."
+  },
+  {
+   "play_id": "structure.covering_extension_distribution_flip",
+   "why": "The bars are well-formed and the quantities are unserved - the D31 case, not a missing-number case. The flip requires cum_from_anchor above about +2000 USD from the block anchor AND chain age >= 5 sessions AND a reversed absorption tell. cum_from_anchor is price-derived and does not exist in the vocabulary (filter returns 0); chain age likewise (no chain_age/chain_regime path is served - it lives only in the per-boundary forecasts/g*_he24_he1_handoffs.json, and the play's own assumption_retired block records the label form being measured BROKEN on 0605); the absorption tell is the same unserved ph_absorb channel. The health note's '9 of 70 sessions clear the cum bar' was computed off g*_actual.json, not off any state a specialist reads. Pointing the extension limb at a served path would name a different quantity than the one the play tests - the record already shows specialists substituting cumulative signed flow for it and declaring the substitution (B-0629: flow-cum -3,909 against a realized price cum of +890), which is precisely the two-quantities-one-name confusion the state_path slot exists to stop."
+  },
+  {
+   "play_id": "boundary.chain_label_must_track_realized_cum",
+   "why": "Not a market conditional at all - a consistency constraint on how a specialist may label a chain ('no day may open with a chain label contradicting the inherited cum, and NO DAY RESTARTS AT CUM 0'), so it has no trigger quantity and no threshold. Its own health field says it: 'Not a numeric bar - it is a consistency constraint'. And its one input, realized cum_from_anchor carried in the HE24->HE1 handoff, is not in the served vocabulary (filters 'cum_from_anchor' and 'handoff' both return 0) - which also falsifies the play's caveat that 'chain STATE travels in the handoff, which is never masked', a defect the S112 audit records against seven posteriors. What is enforceable here is a compliance rate (chain-label/cum contradictions per group), which is a scoreboard for the rule, not a condition on the state."
+  }
+ ]
+}

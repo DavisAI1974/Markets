@@ -1,0 +1,196 @@
+{
+ "specialist": "E",
+ "lens": "Friday / expiry / roll / weekend-positioning",
+ "group": "g17",
+ "brain_version": "s102.6",
+ "round": 2,
+ "days_owned": ["20260417", "20260421", "20260424"],
+ "doctrine_note": "ROUND 2 (HE24->HE1 coordination). Start from the round-1 posterior; use the incoming boundary STATE to tighten magnitude/timing/confidence, NOT to override direction. All three round-1 directions hold (no new causal evidence would flip them). Old blind stays CORE; MBO is a POSTERIOR update. Book layer STANDS DOWN all three days (no book_trustworthy verdict) - trade-flow only. Magnitudes DERIVED from the phase table, honest under-100.",
+ "cross_cutting_mbo_finding": "The handoff chain makes the self-limiting arc DOUBLY grounded. Round 1 rested the 0424 DOWN call primarily on the self-limiting gate (0417 covering spent, no fresh crowding by 0424). Round 2 shows I also INHERIT a live down chain: 0423 crashed -1240 and closed near its low (off_low 0.11, last-hour dir/flow -1/-1, chain_polarity -1 age1, D's read = buy absorption already FAILING as +5373 buy could not hold). So the covering-spent gate is not fighting a covering setup on 0424 - it is ALIGNED with a chain that had already resumed DOWN the prior session. My 0424 ph3 +3171 buy absorbed / +110 lift is the SAME absorption-failure mechanism continuing across the seam. Conversely 0417 inherits a HOT up-close (0416 delivered +730, closed at high 0.91 off low, up chain age2) - so 0417 is the CONSOLIDATION of a spent up-move (sellers -2794 absorbed at the top, ph3 absorb TRUE), not a fresh covering onset; magnitude stays small. The gate + the inherited chain state agree on both weekend-feeding Fridays.",
+ "days": [
+  {
+   "date": "20260417",
+   "dow": "Fri",
+   "day_class": "friday_weekend_positioning",
+   "blind_direction": "UP",
+   "blind_net_usd": 350,
+   "posterior_direction_by_horizon": {
+    "overnight": "flat (open 2.670 vs prior close 2.671 - the HOT up-close held, no give-back gap)",
+    "am": "dip (ph2 -110, low ~09:24 ET)",
+    "pm": "absorbed recovery (ph3 +110, sell flow -1353 absorbed at the top)",
+    "close": "UP small (consolidation of the spent 0416 up-move)"
+   },
+   "expected_magnitude_usd": 50,
+   "expected_magnitude_band_usd": [-20, 130],
+   "onset_time_et": "07:59",
+   "turn_time_et": "09:24",
+   "trend_vs_chop": "chop_consolidation (mid-morning dip then sellers absorbed at the top - the up-move was delivered 0416)",
+   "continuation_vs_reversal": "consolidation_after_spent_up (turn_up off the 09:24 low, one-shot; up-positioning spent 0416)",
+   "path_p50_curve": [[18, 0], [20, 8], [22, 16], [0.5, 12], [3, 2], [6, -20], [8, -55], [9.5, -80], [11, -30], [13, 25], [14.5, 42], [16, 48], [17, 50]],
+   "confidence": 0.72,
+   "weight_assigned": {"blind": 0.5, "causal_mbo": 0.5},
+   "handoff_in_used": {
+    "from": "20260416 (D), overnight",
+    "inherited_state": "close 2.671, day +730, closed at/near HIGH (off_low 0.91, high_late), last-hour dir/flow +1/+1, chain_polarity +1 age2, cum +180 - a HOT up-close; the EIA-driven up delivered on 0416.",
+    "tightened": "The up-move was DELIVERED 0416 (D owned the +700); into 0417 the up chain is topping. My open 2.670 is flat to the 2.671 close = NO give-back gap, the up held. So 0417 is the CONSOLIDATION, not a fresh covering onset - sellers press (-2794) and are absorbed at the top (ph3 absorb TRUE), price holds +50. This CAPS magnitude small: there is no leftover up-fuel (0416 spent it) and no fresh down-driver. Confidence up 0.70->0.72 (inherited state coheres with the read). Direction unchanged. Band narrowed (upper leftover-up removed).",
+    "not_used": "The prior day-net +730 is NOT carried as momentum (day-net is noise across the seam); I inherit the CLOSE + the topping up-chain state, not the +730."
+   },
+   "evidence_used": [
+    "inherited HOT up-close (0416 +730, off_low 0.91, up chain age2) = the up-move was already delivered; 0417 is consolidation",
+    "total_sflow -2794 (SELL flow) with price net +50 UP = sellers pressed the top and were ABSORBED (ph3 absorb TRUE, sflow -1353 / pxchg +110)",
+    "turn_up off the 09:24 low (turn_mag 520), onset up 07:59",
+    "open 2.670 flat to prior close 2.671 = no overnight give-back; the up chain held into Friday"
+   ],
+   "evidence_rejected": [
+    "blind's -0.085 bleed-to-2.568 (price held above the anchor; the inherited up-close refutes it)",
+    "blind's +350 - re-priced the up-move that already delivered 0416; 0417 leftover is only ~+40/+50",
+    "MBO book/divergence layer (no book_trustworthy verdict) - would have faded the held top, wrong",
+    "reading 0417 as a FRESH covering onset - the covering/up delivered 0416; 0417 is the spent-top consolidation"
+   ],
+   "stand_down_reasons": ["book layer un-trustworthy (no execution_authority/complete verdict) - trade-flow only"],
+   "selection_reason": "Friday weekend-positioning day, owner E; the spent-up-top consolidation + weekend sign-off is the E-lens core.",
+   "mbo_verdict": "CONFIRM UP small (+50). The up-move delivered 0416 (inherited hot close); 0417 sellers absorbed at the top, no fresh driver. Honest UP under-100.",
+   "handoff_out": {
+    "close_px": 2.675,
+    "close_px_note": "actual (NGK26/May leg); +0.022 ABOVE the 2.653 May anchor; held after inheriting the 0416 up-delivery",
+    "cum_from_anchor_usd": 220,
+    "chain_polarity": "up_topping (inherited up chain age2->3, now consolidating; sellers absorbed at the top)",
+    "chain_age_sessions": 3,
+    "exhaustion_flag": true,
+    "last_hour_dir": "up",
+    "last_hour_signed_flow": "divergent_up_vs_sell_tilt (ph3 sflow -1353, px +110 = sellers absorbed at the top)",
+    "conviction": "SPENT-TOP (up delivered 0416; sellers -2794 absorbed, price held +50; no fresh up-fuel)",
+    "close_off_extreme_frac": 0.62,
+    "exit_type": "positioning_spent_fade",
+    "crest_trim_vs_covering": "SPENT-TOP, mildly fadeable DOWN - the up-positioning is spent (no fresh up-driver) and sellers are live-but-absorbed. NOT active covering (that delivered 0416), NOT a fresh crest to extend. A can size the Sunday reopen as flat-to-down-small off this.",
+    "monday_bias": "down small - sellers present into a topped/spent up-chain, no fresh up-driver; modest resumption. Actual 0420 landed -510 intraday but B read the net near-flat/-90 with a live cold-shot up-driver; the DOWN-small tilt direction holds.",
+    "sunday_gap_owner": "chain_drift"
+   }
+  },
+  {
+   "date": "20260421",
+   "dow": "Tue",
+   "day_class": "roll_seam (May NGK26 -> June NGM26)",
+   "blind_direction": "DOWN",
+   "blind_net_usd": -150,
+   "posterior_direction_by_horizon": {
+    "overnight": "turn_up off the 21:06 (0420 evening) low - the reversal off an exhausted-down prior close",
+    "am": "strong buy (ph2 +1656 flow, px +490)",
+    "pm": "partial give-back (ph3 -170)",
+    "close": "UP"
+   },
+   "expected_magnitude_usd": 250,
+   "expected_magnitude_band_usd": [160, 340],
+   "onset_time_et": "08:14",
+   "turn_time_et": "21:06 (overnight low, 0420 evening)",
+   "trend_vs_chop": "trend_up (aligned buy conviction off an exhausted-down prior close)",
+   "continuation_vs_reversal": "reversal_vs_blind (aligned buy flow overturns the blind's down lean; the turn is a genuine reversal off 0420's exhausted-near-low close)",
+   "path_p50_curve": [[18, 0], [20, -8], [22, -18], [0.5, -25], [3, -35], [6, -15], [8, 60], [9.5, 250], [11, 420], [13, 430], [14.5, 320], [16, 275], [17, 260]],
+   "confidence": 0.68,
+   "weight_assigned": {"blind": 0.3, "causal_mbo": 0.7},
+   "handoff_in_used": {
+    "from": "20260420 (B), overnight",
+    "inherited_state": "close 2.669, day -510, closed WEAK near LOW (off_low 0.15, low_late), last-hour dir/flow +1/+1 (a late up-tick), chain_polarity +1 age0, cum +160. B's read = catchup_window capped-carry, mature chain absorbing the bounce.",
+    "tightened": "0420 closed exhausted-down (near its low, low_late) - a spent-down exit. The 21:06 overnight turn_up off THAT exhausted low is therefore a genuine reversal, not a front-run of an in-progress move: I size the 0421 aligned buy leg (ph2 +490) as a real turn off exhaustion. The prior close near-low + the age0 fresh chain support the FLIP-UP. Economic +250 held (net +260 actual); seam offset scoring-only. Confidence up 0.65->0.68 (the exhausted-down prior close corroborates the turn).",
+    "not_used": "The mechanical May->June roll offset (~+0.143) is passed as never-traded (seam) - excluded from the economic day-move. The -510 prior day-net is not carried as momentum."
+   },
+   "evidence_used": [
+    "total_sflow +1820 (BUY flow) with price net +260 UP = ALIGNED positive conviction",
+    "ph2 sflow +1656 / pxchg +490 = the clean buy-driven leg (the whole day's move)",
+    "turn_up off the 21:06 overnight low, onset up 08:14, sized off 0420's exhausted-near-low close (a genuine reversal, not front-run)",
+    "seam=TRUE: June NGM26 leg change passed as never-traded; anchor to the new leg, roll offset (~+0.143) is scoring-only"
+   ],
+   "evidence_rejected": [
+    "blind DOWN -150 (state/prior-over-flow; the aligned buy off an exhausted-down prior close overturns it)",
+    "MBO book layer (no trustworthy verdict) - trade-flow only",
+    "the mechanical roll offset as an economic move (scoring-only)"
+   ],
+   "stand_down_reasons": ["book layer un-trustworthy - trade-flow only", "seam day: leg-change offset excluded from economic magnitude"],
+   "selection_reason": "The May->June roll-seam day, owner E (roll-seam lens).",
+   "mbo_verdict": "FLIP to UP on clean aligned buy flow off an exhausted-down prior close. Economic day-move ~+250 (seam offset scoring-only). Blind was wrong-signed.",
+   "handoff_out": {
+    "close_px": 2.838,
+    "close_px_note": "actual (NGM26/June leg, post-roll); NOT weekend-feeding - 0422 (C) inherits this via post_seam boundary",
+    "cum_from_anchor_usd": 420,
+    "chain_polarity": "up_aligned (fresh buy-driven leg, age1)",
+    "chain_age_sessions": 1,
+    "exhaustion_flag": false,
+    "last_hour_dir": "up",
+    "last_hour_signed_flow": "up_with_late_sell_tilt (ph3 sflow +214 / pxchg -170 = partial give-back after the buy leg)",
+    "conviction": "ALIGNED-BUY (ph2 +1656/+490 delivered the day; late partial give-back, not a reversal)",
+    "close_off_extreme_frac": 0.65,
+    "exit_type": "aligned_buy_leg_with_partial_giveback",
+    "monday_bias": "n/a (not weekend-feeding)",
+    "sunday_gap_owner": "n/a"
+   }
+  },
+  {
+   "date": "20260424",
+   "dow": "Fri",
+   "day_class": "friday_weekend_positioning (expiry week ahead: opex Mon 0427, LTD/expiry Tue 0428)",
+   "blind_direction": "UP",
+   "blind_net_usd": 250,
+   "posterior_direction_by_horizon": {
+    "overnight": "flat (open 2.727 = prior close 2.727) - I inherit the down chain at the seam",
+    "am": "crash (ph2 pxchg -460)",
+    "pm": "buy absorbed but FAILED to reverse (ph3 sflow +3171, px only +110)",
+    "close": "DOWN"
+   },
+   "expected_magnitude_usd": -370,
+   "expected_magnitude_band_usd": [-480, -230],
+   "onset_time_et": "07:22",
+   "turn_time_et": null,
+   "trend_vs_chop": "trend_down_absorb_fail (single dominant down leg; buy absorbed at the low, no turn realized)",
+   "continuation_vs_reversal": "continuation_down (inherited live down chain resumes; the covering attempt dies against it)",
+   "path_p50_curve": [[18, 0], [20, -10], [22, -30], [0.5, -45], [3, -70], [6, -140], [8, -320], [9.5, -470], [11, -600], [13, -540], [14.5, -450], [16, -400], [17, -370]],
+   "confidence": 0.72,
+   "weight_assigned": {"blind": 0.25, "causal_mbo": 0.75},
+   "handoff_in_used": {
+    "from": "20260423 (D), overnight",
+    "inherited_state": "close 2.727, day -1240, closed near LOW (off_low 0.11), last-hour dir/flow -1/-1, chain_polarity -1 age1, cum -690. D's read = STAY DOWN; a +5373 buy total could not hold price = buy absorption already FAILING.",
+    "tightened": "THE KEY COORDINATION. Round 1 rested DOWN mainly on the self-limiting gate (covering spent 0417, no fresh crowding). Round 2: I INHERIT a LIVE down chain - 0423 crashed -1240, closed near its low, chain flipped DOWN age1, and D already saw buy absorption FAILING. So my covering-spent DOWN is ALIGNED with a resumed chain, not fighting a covering setup. My open 2.727 = prior close (flat seam) = the down is live from the open. My 0424 ph3 +3171 buy absorbed / +110 lift is the SAME absorption-failure mechanism continuing across the seam. Direction DOUBLY confirmed (gate + inherited chain) -> confidence up 0.65->0.72, blind weight down 0.30->0.25. Magnitude -370 held (phase-derived gap~0 + ph1 -30 + ph2 -460 + ph3 +110 = -380; the reactive -780 low tail is NOT claimed).",
+    "not_used": "The -1240 prior day-net is not carried as momentum; I inherit the CLOSE + the live down-chain STATE. The -780 intraday low excursion is a reactive tail, deliberately not claimed."
+   },
+   "evidence_used": [
+    "inherited live down chain (0423 -1240, close near low off_low 0.11, polarity -1 age1, buy absorption already failing) = 0424 continuation, not a fresh setup",
+    "absorb_session TRUE with total_sflow +3189 (BUY flow) and price net -380 DOWN = buy absorption FAILED to reverse the chain",
+    "ph3 sflow +3171 / pxchg +110 = huge buy absorbed for near-zero lift; ph2 pxchg -460 = the down leg; turn_kind none (no covering turn realized)",
+    "self-limiting gate: 0417 up/covering spent one-shot; no FRESH crowding stack rebuilt by 0424 (still-extreme-but-not-worsening COT = spent fuel) -> chain default DOWN, now corroborated by the inherited chain state"
+   ],
+   "evidence_rejected": [
+    "blind UP +250 - re-fired the spent covering; the self-limiting gate + the inherited down chain both forbid it",
+    "ph3 buy flow +3189 read as bullish - ABSORBED and FAILED (net -380)",
+    "expiry-week squeeze as a p50 trigger - fat-upper-TAIL risk (opex 0427 / expiry 0428), not the central case",
+    "MBO book layer (no trustworthy verdict) - trade-flow only"
+   ],
+   "stand_down_reasons": ["book layer un-trustworthy - trade-flow only", "covering-UP stood down (spent fuel, no fresh crowding, and the inherited chain is DOWN)"],
+   "selection_reason": "Friday weekend-positioning day with expiry the week ahead, owner E; the self-limiting covering lesson (the 0424 lesson itself) is the E-lens core.",
+   "mbo_verdict": "FLIP to DOWN (-370). Covering spent (0417) + fresh buy ABSORBED/FAILED (0424) + inherited live down chain (0423 close-near-low, polarity -1 age1) = chain resumes. DOUBLY confirmed. Blind +250 was the exact self-limiting error the gate corrects. Honest DOWN, phase-derived.",
+   "handoff_out": {
+    "close_px": 2.689,
+    "close_px_note": "actual (NGM26/June leg, post-0421 roll); ~+0.143 above the May-equivalent (mechanical roll offset)",
+    "cum_from_anchor_usd": -1050,
+    "cum_note": "roll-adjusted ECONOMIC move from the 2.653 May anchor (June-equiv 2.689 - 0.143 offset = 2.546 May-equiv)",
+    "chain_polarity": "down_intact_at_record_short (inherited -1 chain resumed; 0423 age1 -> 0424 age2)",
+    "chain_age_sessions": 2,
+    "exhaustion_flag": true,
+    "last_hour_dir": "up",
+    "last_hour_signed_flow": "buy_absorbed_failed (ph3 sflow +3171, px only +110 - massive buy, near-zero lift)",
+    "conviction": "ABSORB-FAIL (buy flow could not reverse the inherited down chain; absorb_session TRUE)",
+    "close_off_extreme_frac": 0.47,
+    "exit_type": "absorb_fail_chain_resumes",
+    "crest_trim_vs_covering": "NEITHER - this is an absorption-failure DOWN close continuing an inherited live down chain; the buy that tried to lift it was absorbed. Sunday/Monday inherit a DOWN-biased spent-buy state, NOT a fadeable up-crest and NOT active covering.",
+    "monday_bias": "p50 DOWN (chain continuation, age2; covering spent since 0417, no fresh crowding). BUT expiry-week = fat UPPER-tail risk into opex Mon 0427 + expiry Tue 0428 at record-short (~0.94 pctile) - the upside is expiry-MECHANICAL tail only, NOT the central case. Moderate size, two-sided tails.",
+    "sunday_gap_owner": "structural"
+   }
+  }
+ ],
+ "summary": {
+  "0417": "round-1 +50 -> round-2 +50 (unchanged; band tightened [-20,130], conf 0.70->0.72). Handoff tightened: inherited HOT up-close (0416 +730, off_low 0.91, up chain age2) reframes 0417 as the CONSOLIDATION of an already-delivered up-move (not a fresh covering onset) - sellers -2794 absorbed at the top, no leftover up-fuel, magnitude capped small. handoff_out: exit_type positioning_spent_fade, crest_trim_vs_covering=SPENT-TOP (mildly fadeable down), monday_bias DOWN small.",
+  "0421": "round-1 +250 -> round-2 +250 (economic; unchanged, conf 0.65->0.68). Handoff tightened: 0420 closed exhausted-DOWN near its low (off_low 0.15, low_late), so the 21:06 overnight turn_up is a genuine reversal off exhaustion, not a front-run - sizes the ph2 +490 aligned buy leg. Seam offset scoring-only. Not weekend-feeding (feeds 0422/C via post_seam).",
+  "0424": "round-1 -370 -> round-2 -370 (unchanged magnitude; conf 0.65->0.72, blind weight 0.30->0.25). THE KEY COORDINATION: incoming shows the chain FLIPPED DOWN into me (0423 -1240, close near low off_low 0.11, polarity -1 age1, buy-absorption already failing) - so my covering-self-limiting DOWN is ALIGNED with a resumed live chain, not fighting a covering setup. DOUBLY confirmed (self-limiting gate + inherited down chain). handoff_out: exit_type absorb_fail_chain_resumes, monday_bias DOWN p50 + expiry-week fat-upper-TAIL (opex 0427 / expiry 0428).",
+  "self_limiting_causal": "YES and now doubly grounded - the gate reverts 0424 to chain-default DOWN AND the inherited boundary state independently shows the down chain had already resumed (0423 close-near-low, buy-absorption-failing). The two agree.",
+  "directions_unchanged_r1_to_r2": "0417 UP-small, 0421 UP, 0424 DOWN - no direction flips (no new causal evidence would flip them); round 2 tightened magnitude bands, confidence, weights, and the weekend handoff reads only.",
+  "handoff_out_emitted": {"0417": "positioning_spent_fade / monday_bias DOWN small", "0424": "absorb_fail_chain_resumes / monday_bias DOWN p50 + expiry fat-upper-tail"}
+ }
+}

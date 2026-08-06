@@ -1,0 +1,82 @@
+{
+ "specialist": "C",
+ "group": "g22",
+ "date": "20260623",
+ "round": 1,
+ "mode": "refine",
+ "brain_version": "s103.7",
+ "lens": "core_intraday_tape",
+ "dow": "Tue",
+ "day_class": "core_midweek_tue_no_catalyst",
+ "blind_direction": "down",
+ "blind_net_usd": -430,
+ "posterior_direction_by_horizon": {
+  "overnight_20_02": "up_drift_unpaid_lift",
+  "early_morning_02_08": "down",
+  "morning_08_12": "down",
+  "midday_12_14": "down_flush_then_base",
+  "close_14_17": "stabilize_small_bounce",
+  "full_day": "down"
+ },
+ "expected_magnitude_usd": -700,
+ "expected_magnitude_band_usd": [-880, -520],
+ "onset_time_et": "01:00",
+ "turn_time_et": "01:02",
+ "trend_vs_chop": "trend",
+ "continuation_vs_reversal": "continuation",
+ "path_p50_curve": [
+  [20, 0],
+  [22, 20],
+  [0, 60],
+  [2, 150],
+  [4, 50],
+  [6, -80],
+  [8, -250],
+  [10, -400],
+  [12, -500],
+  [14, -680],
+  [16, -700]
+ ],
+ "confidence": "high",
+ "weight_assigned": {
+  "blind": 0.55,
+  "causal_mbo": 0.45,
+  "note": "direction is 100% the blind's D-1-tilt call (confirmed); the posterior update is magnitude-and-shape only, repositioning WITHIN the blind's own fired play band (s1void trend band -450..-780) on causal evidence"
+ },
+ "reasoning": "Tue core midweek, no on-day catalyst (EIA D+2, NGN26 opex D+2, expiry D+3, no index-roll window) - default C ownership. The blind called down -430 (dir HIT, actual -730, err +300) by trimming BELOW the low end of its own s1void TREND band (-450..-780) for two named reasons: (i) Monday's close phase decayed to near-balance, (ii) the D+1 CDD build deserved a partial bid. The causal evidence removes the force of (i) and prices the day's own bearish slope that the blind had no channel for. THE MISSED-HILL TARGET, ON MY DAY: 0623 is the local TROUGH of the block's CDD hill on the decision-time forecast track (fCDD 9.06 on 0622 -> 7.82 on 0623 -> 10.02 on 0624; realized gw_cdd ran 9.0->17.5 across the block). Every HDD-keyed instrument was void or trivially bearish here (divergence_resolution's >=16.4 HDD gate unreachable in July; shoulder_weather_band_void <=13.5 trivially satisfied), so the blind had no weather slope channel in EITHER direction - it got the sign from the D-1 tape default. Under the S109 asymmetric-slope correction (mild kills demand - big down), the day's own slope inputs were all mild-side: forecast_run_delta_cdd -0.486 on a 7.8 base, NAM d0 run-delta d_gw_cdd -1.463, MET 7.076 vs MAV 7.817 (-0.74 spread). A hill slopes - and 0623 is the down-slope step, worth the band's upper-middle, not a trimmed stub. THE RENEWABLE-SUBTRACTOR TARGET (0629's lesson), ON MY DAY: the same grid_stack fields that went unread on 0629 were served and READABLE here, and on my day they CONFIRM the mild trim rather than offset a heat add: US48 wind 1,400,375 MWh (+21% d/d vs 1,154,251), est_gas_burn 33.0 vs 34.3 Bcf/d (-1.3 d/d), gas_chg_7d -664,143 MWh (~-5 Bcf/d w/w) - power burn falling into a mild-revision day with production at 111 Bcf/d (STEO jun26) and storage +114 vs 5yr injecting. Reading the subtractor closes most of the blind's -300 magnitude gap. THE TAPE (causal): the blind's own declared largest residual - 'on a negative-flow D-1 tape I have no price-free instrument that says whether Monday's selling was DELIVERED or ABSORBED' - resolves to DELIVERED: 0622 ph2 sflow -3,942 -> px -560 with zero absorb phases, close_off_low 0.08. My session then printed a textbook C-lens day: thin overnight lift +160 (crest +420-470 at 01:01-01:02) on NET SELL flow -116 = negative conviction under rising = unpaid lift, round-trip risk - it turned at 01:02 (turn_down, mag 1200, the evidence's own named turn); then BOTH body phases ALIGNED sell (ph2 -1,281 flow / -430 px on 45.9k lots; ph3 -593 / -460 on 31.5k), ph_absorb false/false/false, absorb_session false. ALIGNED DELIVERS THE BAND (lens rule). Low -910 at 12:42 ET, close_off_low 0.13 - the settle-window stabilization plus the spent-covering floor (COT 06-16 report, published 0622 15:30, decision-legit: MM net -84,909, wow +37,708, 1y pctile 2.83 -> 25.47 = covering fuel spent; kills the upper tail AND floors the flush - no capitulation fuel for an extension much past the band). Derived magnitude: point estimate at the s1void trend band's upper-middle, -700, band [-880, -520]; the -890 flush low is the reactive tail's edge and lives at my band edge, not in the p50. Realized: gap 0, net -730, cum_from_anchor -80 at my close - the block gave back the Sunday heat-gap on the mild trough exactly as the asymmetric-slope doctrine says, then re-priced up 0624 when fCDD jumped to 10+.",
+ "evidence_used": [
+  "g22_mbo_evidence 20260623: ph2/ph3 flow_conviction ALIGNED sell (-1281 flow/-430 px; -593/-460), ph_absorb all false, absorb_session false - aligned delivers the band (C-lens core read)",
+  "g22_mbo_evidence 20260623 ph1: px +160 (excursion +470) on sflow -116 - negative conviction under a rising price = unpaid overnight lift; round-trip confirmed by the 01:02 turn_down (mag 1200)",
+  "g22_mbo_evidence 20260622 + g22_exit_states: ph2 sflow -3,942 -> px -560, no absorb phases, close_off_low 0.08 - Monday's selling was DELIVERED, not absorbed; resolves the blind posterior's declared unresolvable branch and licenses full chain continuation into Tuesday",
+  "weather_forecast 20260623: forecast_gw_cdd 7.817, forecast_run_delta_cdd -0.486 - the local trough of the block's CDD hill (0622 9.06 -> 0623 7.82 -> 0624 10.02); mild-side slope under the S109 asymmetric doctrine",
+  "model_disagreement 20260623 h0: NAM d_gw_cdd -1.463, MET 7.076 vs MAV 7.817 - models trimming heat at decision time, same sign as the MOS run delta",
+  "grid_stack period 2026-06-21 (age 2, decision-time served): US48 wind_mwh 1,400,375 (+21% d/d), est_gas_burn_bcfd 33.0 (-1.3 d/d), gas_chg_7d_mwh -664,143 (~-5 Bcf/d w/w) - the renewable/burn subtractor CONFIRMING the mild trim on my day (mirror case of 0629 where it offset the CDD add)",
+  "cot 06-16 report published 2026-06-22T15:30 ET (age 0.35d, decision-legit): MM net -84,909, chg_wow +37,708, 1y pctile 2.83 -> 25.47 - covering fuel spent; used to its stated scope (kills the upper tail, floors the flush; never the p50 sign)",
+  "storage 2759 Bcf, +73 wk, vs_5yr +114, inject + steo_vintage jun26 dry production 111.0 Bcfd - bearish backdrop, no scarcity constraint multiplier",
+  "magnitude.s1void_injection_chain_bleed (the blind's own fired play): TREND-class band -450..-780 - the refine repositions the point estimate within this band on the causal evidence above; magnitudes derived from the play band + phase table, never fitted to the actual",
+  "vol_regime n0_net_sigma_5 589 / n0_range_5_mean 1134 as RELATIVE floor conditioners only (era-degraded store, declared S110 f3)"
+ ],
+ "evidence_rejected": [
+  "storage_consensus next_print: consensus 74.0 is final_capture_is_post_print AND the pre-print 67.0 snapshot is stamped 2026-06-25T06:25Z - BOTH captures post-date 20260623, so NO consensus value for the upcoming print is decision-legit on my day (only house_disagreement 7.0 and the last print's -2 surprise are usable). The known served-data trap, reconstructed from estimates[] as directed - and on this day the reconstruction yields 'unknown', not 67.0",
+  "squeeze_watch frozen active=false - declared not decision-legit (S109 note); live dte limb 3 on NGN26 but the spread limb is masked, so squeeze is UNKNOWN either way; scored leg NGQ26 is 48+ sessions from its own expiry, delivery mechanics do not own my tape",
+  "options_surface NGN26 3.25 pin (24.3k calls / 24.1k puts balanced, opex 06-25 D+2): pin gravity subordinate to an aligned no-absorption sell tape, and the pinned month is the EXPIRING NGN26 while the scored leg is NGQ26; noted the S110 strike-rescale declaration (units now consistent)",
+  "anchor_lasthr_dir -1: at the price resolution floor (direction_caveat) on a holiday half-session tape, and stale by block day 2 - not leaned on",
+  "vol_regime n0_range_pctile 18.3: participation artifact (Juneteenth half-session inside the window) on an era-degraded store - ignored per my own blind note",
+  "weather.gw_cdd 8.1 (realized_as_proxy): own-day realized weather is a look-ahead surface - forecast-basis fields used instead"
+ ],
+ "stand_down_reasons": [
+  "BOOK layer: no book_trustworthy verdict (execution_authority / conviction floor / book_complete) is served in g22_mbo_evidence - the book read STANDS DOWN per doctrine; this posterior is trade-flow + phase-conviction only, with L1 context from tape_conditions (quote_bid_share 0.481, spread 2 ticks) used as color, not authority",
+  "structure.accumulation_arm_turn (my lens's named counter-flaw check): zero qualifying big-print BUY-absorption sessions in the last ~5 (0622 big_print_b_share 0.353 sell-side on 60 prints; 0619 degenerate n=2; 0621 stub) AND COT is improving, not extreme-and-worsening (NYMEX 25.5 pctile improving; ICE ld1 2.83 pctile worsening is the one extreme book but with no buy-absorption limb there is no stack) - the arm stays down, the block selector stays down-continuation, and the refine price evidence confirms: no absorb phase printed anywhere 0622-0623",
+  "selector.midblock_right_the_ship: turn stack DISSOLVING not building at my day (COT limb inverted, no buy-absorption, no based chain) - correctly stayed locked down"
+ ],
+ "selection_reason": "Tuesday core midweek with no calendar catalyst on the day (EIA print D+2, NGN26 opex D+2, futures expiry D+3, in_bcom_roll/in_gsci_roll false) - specialist C is the default owner of the non-catalyst core tape",
+ "mbo_verdict": "CONFIRM_AND_EXTEND_DOWN: the tape confirms the blind's down call and the causal stack (mild-side CDD revision at the hill's trough + live renewable/burn subtractor + delivered D-1 selling + aligned no-absorption session flow + unpaid overnight lift round-tripping at 01:02) supports the s1void trend band's upper-middle (-700) rather than the blind's trimmed -430; the spent-covering read floors the flush and caps extension beyond the band",
+ "defects_declared": [
+  "storage_consensus for the 06-25 print carries NO decision-legit estimate as of 20260623 - both estimates[] captures (pre-print 06-25T06:25Z, final post-print) post-date the day; served under as_of 2026-06-23 regardless. Handled by exclusion; the blind's use of 67.0 was itself a mild declared look-ahead",
+  "The CDD forward ladder ends at h1: weather_forecast.horizons/run_delta/fwd7 spans are HDD-only and model_disagreement CDD rows exist for h0/h1 only (h2-h7 coverage 0.0) - in a block whose entire demand driver is CDD, the forward demand view ends at 06-24. The single largest input hole; it bounds magnitude, not sign (the blind declared it; refine confirms it materially bound the call)",
+  "g22_mbo_evidence 20260622 lo_et '2026-06-22 18:02' sits at/after the session-close boundary it is attributed to (~24h leg windows; a ~2-minute seam-attribution wobble, exit_states low_late=true on 0622 inherits it). Not material to 20260623 (my session's extremes 01:02/12:42 are well inside any windowing) - declared rather than silently absorbed",
+  "vol_regime n0 family era-degraded in g22 (n0 store carries ~26.5% of the scored leg's tape, declared S110 f3) - absolute sigma/range levels rejected, relative use only"
+ ],
+ "proposal_contribution": "PROPOSAL 1 - CONTINUOUS SIGNED WEATHER-SLOPE CHANNEL WITH ASYMMETRIC GAIN (the missed-hill fix, both signs). Mechanism: weather drives the p50 as a CONTINUOUS slope term d(forecast degree-days) x asymmetric gain - mild-side (demand-killing) revisions carry MORE gain than heat/cold-add revisions, with anomaly x duration x constraint as a multiplier (Greg S109, adjudicated). The threshold-keyed instruments (selector.divergence_resolution's HDD>=16.4 authority gate, magnitude.shoulder_weather_band_void's <=13.5 void) leave the brain with NO slope channel whenever the driver is CDD or the anomaly sits inside the dead band - in g22 that was every single day, and the blind's -1,815 drift IS that missing channel. In-block evidence, both signs: DOWN-slope 0623 (run_delta_cdd -0.486 + NAM -1.463 + MET-MAV -0.74 at the hill's local trough -> realized -730 vs blind -430, sign right off the tape default but no slope term); UP-slope 0622->0624 (fCDD 7.82 -> 10.02 -> realized +800 vs blind -200) and 0630 (fCDD 16.19, run-delta +0.26 -> +780). Cross-group: the S109 adjudication case that named the mechanism (prior group) makes g22 the second group - n>=2 spanning groups on the mechanism, with the down-slope arm carrying n=1 clean in-block (0623) and needing one more group for its own spanning bar; flagged honestly. REQUIRES (data): extend the CDD forecast ladder past h1 (weather_forecast horizons/run_delta are HDD-only; model_disagreement CDD rows end at 06-24) - the named h2-h7 CDD hole is the binding constraint on this channel. PROPOSAL 2 - GRID-STACK RENEWABLE/BURN SUBTRACTOR AS A STANDING SIGNED TERM, READ EVERY DAY. Mechanism: wind_mwh/solar_mwh/est_gas_burn_bcfd (served in every slice at age 2) form a signed demand-side subtractor that GATES the weather-slope term's gain: a heat add against rising wind earns only a fraction of its add; a mild trim WITH rising wind compounds down. In-block evidence, n=2 with OPPOSITE interaction signs - the pair that proves it is a term and not a one-day story: 0623 CONFIRMING-DOWN (wind +21% d/d to 1.40M MWh, burn 33.0 -1.3 d/d, gas_chg_7d -664k MWh ~ -5 Bcf/d; realized -730 vs blind -430) and 0629 OFFSETTING-UP (wind +62% / +660,219 MWh vs 0626's slice, burn fell 4.2 Bcf/d while the CDD add arrived exactly as forecast; forecast gap +480 vs actual +50, session -1,160 - slope treated as spike, subtractor served in every slice and unread). Forward validation on g23. NOTE (instance record, no rule): 0623 ph1 is a clean instance of the standing negative-conviction-under-rising discriminator (px +160/+470 excursion on sflow -116, full round-trip at 01:02) - logged as +n for the existing read, no new mechanism claimed.",
+ "summary": "0623 Tue (C, core): blind down -430 (dir HIT, actual -730). Refine: CONFIRM direction, extend magnitude to -700 [-880,-520] - repositioned within the blind's own s1void trend band on causal evidence: the day is the CDD hill's local trough (mild-side slope, S109 asymmetric doctrine), the renewable/burn subtractor was served and confirming, Monday's selling was DELIVERED not absorbed (resolving the blind's declared residual), and the session tape was aligned-sell both body phases with zero absorption after an unpaid overnight lift round-tripped at 01:02. Spent covering (MM +37.7k wow) floors the flush; close_off_low 0.13. Realized -730, posterior error 30."
+}

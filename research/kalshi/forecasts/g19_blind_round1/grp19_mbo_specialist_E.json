@@ -1,0 +1,175 @@
+{
+ "specialist": "E",
+ "lens": "friday_expiry_roll_weekend_positioning",
+ "group": "g19",
+ "brain_version": "s102.9",
+ "round": 1,
+ "days_owned": ["20260515", "20260520", "20260522"],
+ "doctrine_note": "BLIND round-1 first pass: no prior blind exists, so this IS the forecast (blind_* fields carry my own D-1-tilt/chain base call; posterior = the same read refined by the never-masked MBO tape). Only market-force input is the price-masked decision_state + the full open-conditions D-1 tape (session/phase signed_flow, b_share, big prints, l1 resting lean). E-lens gates applied: (1) daytype.friday_turn_exhaustion_gate run prior-over-state before ANY Friday/pre-holiday sign; (2) daytype.covering_giveback_self_limiting governs the 0515->0520->0522 handoff seam - the covering pulse is a one-shot, spent within a session, so a spent-but-not-worsening COT is NOT re-fired on the next weekend-feeding day; (3) structure.covering_absorption_directional_tell is the sign discriminator on the 0520 roll seam (SELL-aggressor absorbed by big-print/resting-bid lean = covering UP). Seam 0520 = REAL scored day on the JULY/NGN26 leg: overnight_gap_usd=0 (June->July ~+0.169 offset scoring-only/never-traded), expected_magnitude = real intraday net on July leg. Book layer stands down (no trustworthy verdict) - covering reads lean on trade-flow + big-print + resting-bid, never a raw book divergence.",
+ "cross_cutting_mbo_finding": "In this covering-rally block the crowded-short covering fuel is REAL but discretely PULSED, not a standing weekly UP bias: it fires only on the absorption days (0514 EIA +1072, 0520 roll) and is spent within ~1 session, with the DOWN chain reasserting immediately after (0518 -872, 0521 -2651). The MBO tell that separates a covering PULSE from chain RESUMPTION is the divergence of resting/big-print lean vs the sell-aggressor b_share: on 0520 aggressor b_share 0.393 (SELL) but big_print_b_share 0.537 and l1 quote_bid_share 0.53 (bigs + resting book absorbing the sell) => covering UP; on 0521 aggressor 0.406 (SELL) with big_print 0.50 and l1 0.499 (bigs/book NEUTRAL, no absorption) => aligned delivery, DOWN continues. CONCLUSION (general, +n): in a crowded-short covering regime the sell-aggressor imbalance is NON-directional on its own; the covering discriminator is whether big_print_b_share and l1 resting bid_share sit ABOVE the aggressor b_share (absorption -> covered UP) or neutral/aligned (delivery -> DOWN). Same near-identical sell flow, opposite sign.",
+ "days": [
+  {
+   "date": "20260515",
+   "dow": "Fri",
+   "day_class": "friday_weekend_positioning",
+   "blind_direction": "UP",
+   "blind_net_usd": 90,
+   "posterior_direction_by_horizon": {
+    "overnight": "flat_to_up_small (residual covering, exhausting)",
+    "am": "up small then fade (D-1 buy tilt carries open, ph2 exhaustion dip)",
+    "pm": "small recovery (COT 05-12 report prints 15:30 = worsening short/fresh-crowding tell -> late covering nudge)",
+    "close": "UP small, exhausting"
+   },
+   "overnight_gap_usd": 20,
+   "expected_magnitude_usd": 90,
+   "expected_magnitude_band_usd": [-40, 200],
+   "onset_time_et": "08:00",
+   "turn_time_et": "10:30",
+   "trend_vs_chop": "chop_covering_exhausting (open buy, mid dip, late recovery)",
+   "continuation_vs_reversal": "continuation_covering_small (D-1 buy tilt residual; turn/exhaustion gate fired UP-side, covering the one-shot)",
+   "path_p50_curve": [[18, 0], [20, 10], [22, 20], [0.5, 22], [3, 20], [6, 35], [8, 50], [9.5, 40], [11, 15], [13, 25], [14.5, 55], [16, 80], [17, 90]],
+   "confidence": 0.58,
+   "weight_assigned": {"blind": 0.55, "causal_mbo": 0.45},
+   "evidence_used": [
+    "D-1 (0514 EIA) session_signed_flow +1072 BUY tilt -> direction UP (D-1 tilt owns the sign)",
+    "0514 phase_signed_flow [118, 913, 41] = covering EXHAUSTING (final phase collapsed 913->41) -> small magnitude + intraday fade",
+    "friday_turn_exhaustion_gate: chain_age>=4, cum near block-low extreme, COT pctile_1y 2.83 extreme, D-1 give-back opposing down chain -> gate fires the TURN (UP covering) side, prior-over-state DOWN default forbidden",
+    "COT 05-12 report (mm_net -120065, pctile 0.94, chg_wow -12576 WORSENING) publishes Fri 15:30 = fresh-crowding tell supporting a late-session covering nudge"
+   ],
+   "evidence_rejected": [
+    "prior-over-state DOWN chain-extrapolation as the Friday sign (forbidden by turn_exhaustion_gate when exhaustion fires)",
+    "sizing the covering large - it is exhausting (913->41) and self-limiting; honest-under small",
+    "raw l1/book divergence fade (book layer stands down, no trustworthy verdict)"
+   ],
+   "stand_down_reasons": [
+    "book layer un-trustworthy (no execution_authority/book_complete verdict) - trade-flow + big-print + resting-lean only"
+   ],
+   "selection_reason": "Friday weekend-positioning day, owner E; the give-back/exhaustion covering turn on a crowded-short block is the E-lens core.",
+   "mbo_verdict": "CONFIRM UP (D-1 buy tilt), size SMALL and honest-under (+90): covering exhausting one-shot, fresh COT crowding a late nudge not a driver. Exit spent -> Monday reverts DOWN.",
+   "handoff_out": {
+    "close_state_note": "BLIND (price masked): forecast close = covering continued small (~+90 day-move) but EXHAUSTING into the bell; cum-from-anchor still net short of the block covering-high",
+    "cum_from_anchor_usd": -300,
+    "cum_from_anchor_note": "GUESSED sign/scale only: block ran DOWN off the 2.750 anchor (0508 -3214 ... 0513 -2763) then 0514/0515 covered back a fraction; net still below anchor",
+    "chain_polarity": "down_with_spent_covering_bounce",
+    "chain_polarity_note": "heavy down chain 0508-0513, 0514 EIA covering pop (+1072) that exhausted, 0515 last-gasp small covering",
+    "chain_age_sessions": 5,
+    "exhaustion_flag": true,
+    "last_hour_dir": "up_small",
+    "last_hour_signed_flow": "covering_small_exhausting (D-1 final phase +41 collapse; fresh-COT nudge)",
+    "conviction": "COVERING-SPENT (one-shot pulse largely realized by close)",
+    "close_off_extreme_frac": 0.5,
+    "positioning_calendar": {"expiry": false, "opex": false, "days_to_opex": 6, "note": "NGM26 opex 05-26 six sessions out = squeeze TAIL risk, NOT a Friday-before covering trigger for the p50"},
+    "exit_type": "positioning_spent_fade",
+    "monday_bias": "down small-to-moderate: 0514 covering pulse spent and 0515 exhausted it; down chain reasserts Monday. Worsening COT (0.94) is squeeze TAIL not the p50. (Realized 0518 -872 consistent.)",
+    "sunday_gap_owner": "chain_drift"
+   }
+  },
+  {
+   "date": "20260520",
+   "dow": "Wed",
+   "day_class": "roll_seam_wednesday_july_leg",
+   "blind_direction": "UP",
+   "blind_net_usd": 200,
+   "posterior_direction_by_horizon": {
+    "overnight": "flat (seam - June->July offset scoring-only, gap voided to 0)",
+    "am": "up building (D-1 sell-aggressor absorbed by big-print/resting-bid lean = covering tell)",
+    "pm": "up accelerating (roll flow NGM26->NGN26 on a record-short leg + EIA-05-21 positioning)",
+    "close": "UP moderate (covering/roll lift into settle)"
+   },
+   "overnight_gap_usd": 0,
+   "expected_magnitude_usd": 200,
+   "expected_magnitude_band_usd": [40, 420],
+   "onset_time_et": "09:30",
+   "turn_time_et": null,
+   "trend_vs_chop": "trend_up_covering (absorption -> covered-direction lift, roll flow additive)",
+   "continuation_vs_reversal": "continuation_up (no reversal; late acceleration into settle)",
+   "path_p50_curve": [[18, 0], [20, 5], [22, 10], [0.5, 15], [3, 25], [6, 45], [8, 70], [9.5, 90], [11, 110], [13, 140], [14.5, 170], [16, 195], [17, 200]],
+   "confidence": 0.6,
+   "weight_assigned": {"blind": 0.4, "causal_mbo": 0.6},
+   "evidence_used": [
+    "SEAM CORRECTION applied: 0520 is a REAL scored day on the JULY/NGN26 leg; overnight_gap_usd=0 (June->July ~+0.169 offset scoring-only, never traded); expected_magnitude = real intraday July-leg net",
+    "covering_absorption_directional_tell: D-1 (0519) sell-aggressor (session -531, b_share 0.393) ABSORBED by big_print_b_share 0.537 + l1 quote_bid_share 0.53 (bigs + resting book leaning BUY) = crowded-short covering -> UP",
+    "COT pctile_1y 0.94 (mm_net -120065) = most-extreme short of the block = maximal covering fuel; roll day mechanically covers June short and re-establishes July",
+    "block theme = covering-rally on worsening crowded MM short; the roll seam is the structural covering pulse day"
+   ],
+   "evidence_rejected": [
+    "D-1 sell-aggressor imbalance (b_share 0.393) as the sign - NON-directional here; the resting/big-print divergence above it is the covering discriminator",
+    "the mechanical June->July +0.169 offset (scoring-only, never traded) - excluded from day-move, gap set 0",
+    "raw book-divergence fade of the covering (book stands down; lean on trade-flow + big-print + resting-bid)"
+   ],
+   "stand_down_reasons": [
+    "book layer un-trustworthy (no trustworthy verdict) - absorption read leans on big_print_b_share + l1 resting bid_share + roll/COT structure, not a reconstructed-book conclusion"
+   ],
+   "selection_reason": "Roll-seam day (NGM26->NGN26), owner E; the seam + covering-absorption sign discriminator is the E-lens core; forecast the real July-leg intraday move, gap voided.",
+   "mbo_verdict": "UP moderate (+200 intraday, gap=0): D-1 absorption tell + record-short + roll flow = covering pulse fires on the seam. Honest-under a potentially larger reactive tail (fat upper band).",
+   "handoff_out": {
+    "close_state_note": "BLIND: forecast close = covering/roll lift held into settle (~+200 July-leg day-move); this is the block's covering PULSE day",
+    "chain_polarity": "covering_pulse_up_on_seam",
+    "chain_age_sessions": 1,
+    "exhaustion_flag": false,
+    "last_hour_dir": "up",
+    "last_hour_signed_flow": "covering_up_accelerating (roll + absorption)",
+    "conviction": "COVERING-ABSORBED-UP (directional tell, not exhaustion)",
+    "exit_type": "covering_pulse_holding",
+    "next_day_bias": "0521 (Thu EIA): the covering pulse is a ONE-SHOT (self-limiting); absent a FRESH worsening-COT stack the chain default DOWN reasserts on 0521. Do NOT re-fire the covering-UP. (Realized 0521 -2651 confirms.)"
+   }
+  },
+  {
+   "date": "20260522",
+   "dow": "Fri",
+   "day_class": "friday_pre_holiday_weekend_positioning",
+   "blind_direction": "DOWN",
+   "blind_net_usd": -190,
+   "posterior_direction_by_horizon": {
+    "overnight": "down small (0521 hard-sell close momentum carries the Thu->Fri seam)",
+    "am": "down (D-1 aligned sell -2651 accelerating -2042 final phase; delivery, no absorption)",
+    "pm": "down extreme then late weekend-cover trim (crowded short de-risks into 3-day weekend)",
+    "close": "DOWN moderate, partly trimmed by late covering"
+   },
+   "overnight_gap_usd": -30,
+   "expected_magnitude_usd": -190,
+   "expected_magnitude_band_usd": [-360, 140],
+   "onset_time_et": "08:00",
+   "turn_time_et": "13:00",
+   "trend_vs_chop": "trend_down_with_late_cover_trim",
+   "continuation_vs_reversal": "continuation_down (aligned-sell delivery) with a late weekend-covering trim; NOT a reversal",
+   "path_p50_curve": [[18, 0], [20, -15], [22, -25], [0.5, -35], [3, -55], [6, -90], [8, -130], [9.5, -170], [11, -200], [13, -210], [14.5, -190], [16, -185], [17, -190]],
+   "confidence": 0.66,
+   "weight_assigned": {"blind": 0.6, "causal_mbo": 0.4},
+   "evidence_used": [
+    "D-1 (0521 EIA) session_signed_flow -2651 SELL, phase [87, -696, -2042] ACCELERATING into close, b_share [0.474, 0.41, 0.39] declining = decisive DOWN momentum",
+    "covering_absorption_directional_tell: 0521 big_print_b_share 0.50 + l1 quote_bid_share 0.499 = NEUTRAL (no absorption) => ALIGNED sell DELIVERY -> DOWN continues (contrast 0520's 0.537/0.53 absorption)",
+    "covering_giveback_self_limiting: 0520 covering pulse was one-shot and 0521 already resumed DOWN through it; COT extreme (0.94) but NOT worsening since = spent fuel, not new fuel -> Friday sign reverts to chain default DOWN",
+    "friday_turn_exhaustion_gate: turn check is DIRTY toward DOWN (spent covering, D-1 flow aligned-sell) -> continuation DOWN is the honest sign, not a re-fired covering-UP"
+   ],
+   "evidence_rejected": [
+    "re-firing covering-UP on this second weekend-feeding Friday (the G17 0424 miss: +250 guessed, -380 actual) - COT byte-identical/not-worsening = spent fuel",
+    "sizing the down move as large as the -2651 D-1 flow - post-big-down-day exhaustion + weekend-cover trim cap it; honest-under -190",
+    "reading the late weekend-cover trim as a p50 reversal - it is a fat-upper TAIL (holiday + NGM26 opex 05-26), not the central call"
+   ],
+   "stand_down_reasons": [
+    "book layer un-trustworthy (no verdict) - trade-flow only; D-1 flow is cleanly aligned so no absorption override"
+   ],
+   "selection_reason": "Block's closing Friday feeding a 3-day Memorial Day weekend + NGM26 opex 05-26; owner E; the self-limiting-covering + pre-holiday squeeze-tail read is the E-lens core.",
+   "mbo_verdict": "DOWN moderate (-190): aligned-sell delivery + spent covering => chain default DOWN, NOT re-fired covering. Fat UPPER tail for the holiday/opex squeeze risk kept in the band, not the p50.",
+   "handoff_out": {
+    "close_state_note": "BLIND: forecast close = down-momentum delivery (~-190 day-move) partly trimmed by late weekend short-covering; block closes with the DOWN chain intact and covering spent",
+    "cum_from_anchor_usd": -450,
+    "cum_from_anchor_note": "GUESSED sign/scale only: block net DOWN off the 2.750 anchor; the 0520 covering pulse was reversed by 0521-0522",
+    "chain_polarity": "down_covering_spent",
+    "chain_polarity_note": "0520 covering pulse (+200) reversed by 0521 (-2651) and 0522 continuation; the covering fuel is discharged",
+    "chain_age_sessions": 2,
+    "exhaustion_flag": false,
+    "last_hour_dir": "down_with_late_cover_trim",
+    "last_hour_signed_flow": "aligned_sell_delivery_then_weekend_cover_trim",
+    "conviction": "DELIVERY-DOWN (aligned, no absorption); covering discharged",
+    "close_off_extreme_frac": 0.4,
+    "positioning_calendar": {"expiry": false, "opex": true, "days_to_opex": 1, "holiday_weekend": true, "holiday": "Memorial Day 2026-05-25", "note": "3-day weekend + NGM26 opex 05-26 (Tue) = squeeze TAIL risk into the post-holiday session"},
+    "exit_type": "trend_down_into_holiday_squeeze_tail",
+    "monday_bias": "post-holiday 05-26 (opex Tue) base = DOWN small-moderate (spent covering, aligned-sell chain intact) WITH A FAT UPPER TAIL: crowded short (0.94) + NGM26 opex pin + 3-day gap risk = squeeze/short-cover potential. Treat any UP as tail, not the p50.",
+    "sunday_gap_owner": "chain_drift_with_squeeze_tail"
+   }
+  }
+ ],
+ "summary": "g19 covering-rally block on a worsening crowded MM short (COT pctile_1y 2.83->0.94, mm_net -107k->-120k). E owns 0515 (Fri), 0520 (Wed roll-seam, July/NGN26 leg), 0522 (Fri pre-Memorial-Day). Reads: 0515 UP +90 (D-1 buy tilt but covering EXHAUSTING 913->41; small, one-shot, exit spent -> Monday down). 0520 UP +200 REAL July-leg intraday, gap=0 (D-1 sell-aggressor 0.393 ABSORBED by big-print 0.537 + resting-bid 0.53 = covering pulse on the roll seam; record-short fuel). 0522 DOWN -190 (0521 aligned-sell delivery -2651 accelerating, NEUTRAL bigs/book = no absorption; 0520 covering spent/not-worsening COT => chain default DOWN, do NOT re-fire covering; fat UPPER tail for the holiday+NGM26-opex squeeze). Cross-cutting tell: sell-aggressor imbalance is NON-directional here; the covering discriminator is big_print_b_share + l1 resting bid_share diverging ABOVE the aggressor b_share (absorb->UP) vs neutral/aligned (deliver->DOWN)."
+}

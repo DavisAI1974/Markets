@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <title>DavisAI Markets — S100 Mission Control</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="rail" aria-label="Primary navigation">
+      <div class="brand" aria-label="DavisAI Markets">
+        <span class="brand-mark">D</span>
+        <span class="brand-label">S100</span>
+      </div>
+      <nav class="rail-nav">
+        <button class="nav-item active" data-view="mission" aria-label="Mission Control" title="Mission Control">
+          <span class="nav-icon">⌁</span><span class="nav-label">Desk</span>
+        </button>
+        <button class="nav-item" data-view="episode" aria-label="Active Decision Episode" title="Active Decision Episode">
+          <span class="nav-icon">◉</span><span class="nav-label">Episode</span>
+        </button>
+        <button class="nav-item" data-view="weather" aria-label="Weather Edge" title="Weather Edge">
+          <span class="nav-icon">☼</span><span class="nav-label">Weather</span>
+        </button>
+        <button class="nav-item" data-view="packages" aria-label="Opportunity Packages" title="Opportunity Packages">
+          <span class="nav-icon">⇄</span><span class="nav-label">Packages</span>
+        </button>
+        <button class="nav-item" data-view="replay" aria-label="Evidence and Replay" title="Evidence and Replay">
+          <span class="nav-icon">↺</span><span class="nav-label">Replay</span>
+        </button>
+        <button class="nav-item" data-view="risk" aria-label="Risk and Operations" title="Risk and Operations">
+          <span class="nav-icon">◇</span><span class="nav-label">Risk/Ops</span>
+        </button>
+      </nav>
+      <div class="rail-bottom">
+        <button class="nav-item" id="openCommand" aria-label="Open command palette" title="Command palette (/)" >
+          <span class="nav-icon">⌘</span><span class="nav-label">Command</span>
+        </button>
+        <div class="user-badge" title="Operator: S100">S</div>
+      </div>
+    </aside>
+
+    <main class="main-shell">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="eyebrow">DAVISAI MARKETS</div>
+            <h1 id="viewTitle">S100 Mission Control</h1>
+          </div>
+          <span class="environment-pill"><span class="status-dot positive"></span>SIMULATED UI</span>
+        </div>
+        <div class="health-strip" aria-label="System health">
+          <button class="health-chip" data-health="cme"><span class="status-dot positive"></span><span>CME</span><strong id="cmeLatency">7.7 ms</strong></button>
+          <button class="health-chip" data-health="kalshi"><span class="status-dot positive"></span><span>Kalshi</span><strong id="kalshiLatency">46 ms</strong></button>
+          <button class="health-chip" data-health="poly"><span class="status-dot positive"></span><span>Poly</span><strong id="polyLatency">81 ms</strong></button>
+          <button class="health-chip" data-health="weather"><span class="status-dot positive"></span><span>Weather</span><strong>LIVE</strong></button>
+        </div>
+        <div class="topbar-actions">
+          <div class="mode-control" role="group" aria-label="Default automation mode">
+            <button class="mode-button active" data-mode="AUTO">AUTO</button>
+            <button class="mode-button" data-mode="APPROVAL">APPROVAL</button>
+            <button class="mode-button" data-mode="SIGNAL">SIGNAL</button>
+            <button class="mode-button" data-mode="SHADOW">SHADOW</button>
+          </div>
+          <button class="icon-button" id="pauseSystem" title="Pause new autonomous entries" aria-label="Pause new autonomous entries">Ⅱ</button>
+          <button class="danger-outline" id="killButton">KILL</button>
+          <time id="clock">--:--:-- ET</time>
+        </div>
+      </header>
+
+      <section class="alert-banner hidden" id="systemBanner" role="status"></section>
+
+      <div class="view-container">
+        <!-- MISSION CONTROL -->
+        <section class="view active" id="view-mission" data-title="S100 Mission Control">
+          <div class="metric-row">
+            <article class="metric-card">
+              <span class="metric-label">Active episodes</span>
+              <div class="metric-value"><strong id="activeEpisodes">6</strong><span class="metric-delta positive">+2 today</span></div>
+              <small>3 autonomous · 2 shadow · 1 approval</small>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">Live edge at executable size</span>
+              <div class="metric-value"><strong id="liveEdge">$18,420</strong><span class="metric-delta positive">net taker</span></div>
+              <small>Across current opportunity queue</small>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">Risk budget used</span>
+              <div class="metric-value"><strong>31.4%</strong><span class="metric-delta neutral">normal</span></div>
+              <small>Largest thesis: heat → NG upside</small>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">Leader → order p50</span>
+              <div class="metric-value"><strong id="decisionLatency">41.8 ms</strong><span class="metric-delta positive">inside policy</span></div>
+              <small>Feed + features + coach + risk + send</small>
+            </article>
+          </div>
+
+          <div class="mission-grid">
+            <article class="panel opportunities-panel">
+              <div class="panel-header">
+                <div>
+                  <span class="panel-kicker">ACTION-RANKED</span>
+                  <h2>Opportunity Queue</h2>
+                </div>
+                <div class="header-actions">
+                  <button class="text-button active">Live</button>
+                  <button class="text-button">All</button>
+                  <button class="icon-button small" title="Filters">≡</button>
+                </div>
+              </div>
+              <div class="table-wrap compact-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Event / route</th>
+                      <th>Clock</th>
+                      <th>Net edge</th>
+                      <th>Size</th>
+                      <th>Play</th>
+                      <th>Mode</th>
+                    </tr>
+                  </thead>
+                  <tbody id="opportunityRows"></tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="panel active-episode-panel">
+              <div class="panel-header episode-heading">
+                <div>
+                  <span class="panel-kicker" id="episodeKicker">ACTIVE DECISION EPISODE</span>
+                  <h2 id="episodeTitle">NG leader → Kalshi follower</h2>
+                  <p id="episodeSubtitle">Strong buy flow; upper brackets remain stale</p>
+                </div>
+                <div class="episode-badges">
+                  <span class="badge direction-up" id="episodeDirection">LONG</span>
+                  <span class="badge" id="episodeStatus">ORDER WORKING</span>
+                </div>
+              </div>
+
+              <div class="chart-toolbar">
+                <div class="quote-cluster">
+                  <span id="leaderSymbol">NGQ6</span>
+                  <strong id="leaderPrice">3.492</strong>
+                  <span class="positive" id="leaderMove">+0.034</span>
+                </div>
+                <div class="legend">
+                  <span><i class="legend-line leader"></i>NYMEX leader</span>
+                  <span><i class="legend-line follower"></i>Follower probability</span>
+                  <span><i class="legend-area"></i>Signed flow</span>
+                </div>
+                <button class="text-button" id="openEpisodeButton">Open episode →</button>
+              </div>
+
+              <div class="live-chart" id="missionChart" aria-label="Synchronized leader and follower chart"></div>
+
+              <div class="edge-clock">
+                <div class="edge-clock-header">
+                  <div>
+                    <span class="metric-label">EDGE CLOCK</span>
+                    <strong id="edgeClockValue">11.2s elapsed</strong>
+                  </div>
+                  <span id="edgeClockState" class="positive">Inside expected 7–20s repricing window</span>
+                </div>
+                <div class="edge-track">
+                  <div class="edge-range"></div>
+                  <div class="edge-progress" id="edgeProgress"></div>
+                  <div class="edge-marker" style="left:35%"><span>CME move</span></div>
+                  <div class="edge-marker order" id="orderMarker" style="left:47%"><span>Order sent</span></div>
+                  <div class="edge-now" id="edgeNow" style="left:60%"><span>Now</span></div>
+                </div>
+                <div class="edge-ticks"><span>0s</span><span>7s</span><span>20s</span><span>30s</span></div>
+              </div>
+
+              <div class="episode-mini-grid">
+                <div class="mini-stat"><span>dip_imb_level</span><strong class="positive">+0.84 BUY</strong></div>
+                <div class="mini-stat"><span>Follower unchanged</span><strong id="staleStrikes">5 / 8 strikes</strong></div>
+                <div class="mini-stat"><span>Net taker edge</span><strong class="positive" id="episodeNetEdge">$3,260</strong></div>
+                <div class="mini-stat"><span>Residual capacity</span><strong id="episodeCapacity">$9,400</strong></div>
+              </div>
+            </article>
+
+            <article class="panel coach-panel">
+              <div class="panel-header">
+                <div>
+                  <span class="panel-kicker">DOCTRINE PIPELINE</span>
+                  <h2>Coach & Action Stack</h2>
+                </div>
+                <button class="icon-button small" title="Inspect decision hash">#</button>
+              </div>
+              <div class="coach-call">
+                <div>
+                  <span class="metric-label">NYMEX COACH</span>
+                  <strong class="positive">LONG</strong>
+                </div>
+                <div>
+                  <span class="metric-label">FOLLOWER ACTION</span>
+                  <strong>BUY YES</strong>
+                </div>
+                <div>
+                  <span class="metric-label">CURRENT POLICY</span>
+                  <strong id="currentPolicy">AUTO</strong>
+                </div>
+              </div>
+              <div class="stage-stack" id="stageStack">
+                <div class="stage-row"><span class="stage-index">1</span><div><strong>Scope & prerequisites</strong><small>Peak season · feeds fresh · definition matched</small></div><span class="stage-status pass">PASS</span></div>
+                <div class="stage-row active"><span class="stage-index">2</span><div><strong>Direction</strong><small>flow_nowcast · catalyst continuity</small></div><span class="stage-status long">LONG</span></div>
+                <div class="stage-row"><span class="stage-index">3</span><div><strong>Day type / regime</strong><small>Hot weekday · front squeeze</small></div><span class="stage-status pass">IN SCOPE</span></div>
+                <div class="stage-row"><span class="stage-index">4</span><div><strong>Magnitude & sizing</strong><small>Condition class B · 38% risk allocation</small></div><span class="stage-status">$12.6K</span></div>
+                <div class="stage-row"><span class="stage-index">5</span><div><strong>Execution timing</strong><small>Follower lag · route before repricing</small></div><span class="stage-status live">SENT</span></div>
+                <div class="stage-row"><span class="stage-index">6</span><div><strong>Hold / exit</strong><small>Staircase armed after favorable excursion</small></div><span class="stage-status muted">PENDING</span></div>
+              </div>
+              <div class="coach-footer">
+                <button class="primary-button" id="stageHedgeButton">Stage hedge package</button>
+                <button class="secondary-button" id="manualIntentButton">Manual intent</button>
+              </div>
+            </article>
+
+            <article class="panel delta-panel">
+              <div class="panel-header">
+                <div><span class="panel-kicker">CAUSAL CHANGES</span><h2>State Delta Tape</h2></div>
+                <button class="text-button">22 blocks</button>
+              </div>
+              <div class="delta-tape" id="deltaTape"></div>
+            </article>
+
+            <article class="panel ledger-panel">
+              <div class="panel-header">
+                <div><span class="panel-kicker">NEVER POOLED</span><h2>Coach Ledgers</h2></div>
+                <div class="segmented-control">
+                  <button class="active">Live</button><button>Today</button><button>7D</button>
+                </div>
+              </div>
+              <div class="ledger-grid">
+                <div class="ledger-card">
+                  <div class="ledger-title"><span class="venue-icon cme">C</span><div><strong>NYMEX Coach</strong><small>Futures & options</small></div><span class="badge positive-bg">LIVE</span></div>
+                  <div class="ledger-metrics"><div><span>Realized</span><strong class="positive">+$8,940</strong></div><div><span>Open</span><strong>+$1,310</strong></div><div><span>Orders</span><strong>14</strong></div></div>
+                  <div class="ledger-rule"><span>Current call</span><strong class="positive">LONG NG</strong></div>
+                </div>
+                <div class="ledger-card">
+                  <div class="ledger-title"><span class="venue-icon kalshi">K</span><div><strong>Kalshi Coach</strong><small>Commodity & weather events</small></div><span class="badge positive-bg">LIVE</span></div>
+                  <div class="ledger-metrics"><div><span>Realized</span><strong class="positive">+$5,370</strong></div><div><span>Open</span><strong>+$2,040</strong></div><div><span>Orders</span><strong>21</strong></div></div>
+                  <div class="ledger-rule"><span>Current call</span><strong>FOLLOW LEADER</strong></div>
+                </div>
+                <div class="ledger-card">
+                  <div class="ledger-title"><span class="venue-icon poly">P</span><div><strong>Polymarket Lane</strong><small>Cross-market opportunities</small></div><span class="badge warning-bg">SIGNAL</span></div>
+                  <div class="ledger-metrics"><div><span>Realized</span><strong class="positive">+$1,480</strong></div><div><span>Open</span><strong>+$120</strong></div><div><span>Signals</span><strong>4</strong></div></div>
+                  <div class="ledger-rule"><span>Current call</span><strong>NO NORMAL TRADE</strong></div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- ACTIVE EPISODE -->
+        <section class="view" id="view-episode" data-title="Active Decision Episode">
+          <div class="page-heading">
+            <div><span class="panel-kicker">EPISODE S100-NG-0719-0042</span><h2>NG leader → commodity event follower</h2><p>Exact as-of decision reconstruction, live market anatomy, and lifecycle management.</p></div>
+            <div class="page-actions"><span class="badge positive-bg">AUTO · WORKING</span><button class="secondary-button">Copy episode ID</button><button class="primary-button" id="episodeHedgeButton">Stage hedge</button></div>
+          </div>
+
+          <div class="episode-layout">
+            <article class="panel wide-chart-panel">
+              <div class="panel-header"><div><span class="panel-kicker">SYNCHRONIZED MARKET CLOCK</span><h2>Leader, flow, and follower response</h2></div><div class="legend"><span><i class="legend-line leader"></i>NGQ6</span><span><i class="legend-line follower"></i>Kalshi bracket</span><span><i class="legend-area"></i>Signed flow</span></div></div>
+              <div class="live-chart large" id="episodeChart"></div>
+              <div class="timeline-events">
+                <span style="left:18%"><i></i>Flow crossed strong</span>
+                <span style="left:31%"><i></i>Play eligible</span>
+                <span style="left:38%"><i></i>Order sent</span>
+                <span style="left:62%"><i></i>Partial fill</span>
+                <span style="left:79%"><i></i>Follower repriced</span>
+              </div>
+            </article>
+
+            <article class="panel perception-panel">
+              <div class="panel-header"><div><span class="panel-kicker">PER-LEG VOCABULARY</span><h2>Leg Fingerprint</h2></div><span class="badge">GRIND</span></div>
+              <div class="fingerprint-list">
+                <div><span>dip_imb_level</span><strong class="positive">+0.84 · BUY</strong><i style="--value:84%"></i></div>
+                <div><span>Continuation asymmetry</span><strong>Strong</strong><i style="--value:78%"></i></div>
+                <div><span>Peaked fast</span><strong>No</strong><i style="--value:16%"></i></div>
+                <div><span>Continuation collapse</span><strong>Not detected</strong><i style="--value:12%"></i></div>
+                <div><span>Big-leg share alive</span><strong>71%</strong><i style="--value:71%"></i></div>
+                <div><span>Far-ladder recruitment</span><strong>Increasing</strong><i style="--value:66%"></i></div>
+                <div><span>Dipole divergence</span><strong>Low</strong><i style="--value:18%"></i></div>
+                <div><span>Exhaustion</span><strong>Not confirmed</strong><i style="--value:9%"></i></div>
+              </div>
+            </article>
+
+            <article class="panel staircase-panel">
+              <div class="panel-header"><div><span class="panel-kicker">HOLD / EXIT</span><h2>Magnitude Staircase</h2></div><span class="badge positive-bg">HOLD</span></div>
+              <div class="staircase-summary"><div><span>Current favorable excursion</span><strong>$527</strong></div><div><span>Next management level</span><strong>$750</strong></div></div>
+              <div class="staircase">
+                <div class="stair-line"><span class="stair-fill"></span><span class="stair-current" style="left:52.7%"></span></div>
+                <div class="stair-point reached" style="left:0%"><i></i><span>$0</span></div>
+                <div class="stair-point reached" style="left:35%"><i></i><span>$350</span><small>Hold eligible</small></div>
+                <div class="stair-point reached" style="left:50%"><i></i><span>$500</span><small>Level crossed</small></div>
+                <div class="stair-point" style="left:75%"><i></i><span>$750</span></div>
+                <div class="stair-point" style="left:100%"><i></i><span>$1,000</span></div>
+              </div>
+              <div class="policy-note"><span>Governing policy</span><strong>magnitude_staircase v1.4</strong><small>Calibration result remains labeled separately from live forward telemetry.</small></div>
+            </article>
+
+            <article class="panel od-panel">
+              <div class="panel-header"><div><span class="panel-kicker">OD TOOLKIT</span><h2>Divergence & Exhaustion</h2></div><span class="badge warning-bg">ARMED</span></div>
+              <div class="od-grid">
+                <div><span>Price direction</span><strong class="positive">UP</strong></div>
+                <div><span>Signed flow</span><strong class="positive">UP</strong></div>
+                <div><span>Divergence</span><strong>0.18 · LOW</strong></div>
+                <div><span>Imbalance trend</span><strong>STABLE</strong></div>
+                <div><span>Fine reversal</span><strong>NOT CONFIRMED</strong></div>
+                <div><span>Far-side recruitment</span><strong>GROWING</strong></div>
+              </div>
+              <div class="action-statement"><span>Current action</span><strong>Hold; arm reversal trigger only after flow opposition and fine-resolution price confirmation.</strong></div>
+            </article>
+
+            <article class="panel play-stack-panel">
+              <div class="panel-header"><div><span class="panel-kicker">VERSIONED AUTHORITY</span><h2>Play Stack</h2></div><button class="text-button">Decision hash</button></div>
+              <div class="play-groups">
+                <div class="play-group"><h3>ACTIVE</h3><div class="play-row"><span>flow_nowcast</span><strong class="positive">LONG</strong><small>requirements 5/5</small><em>PRODUCTION</em></div><div class="play-row"><span>magnitude_staircase</span><strong>HOLD</strong><small>level 2 crossed</small><em>PRODUCTION</em></div><div class="play-row"><span>grind_vs_spike</span><strong>HOLD</strong><small>classified grind</small><em>BLIND</em></div></div>
+                <div class="play-group"><h3>ARMED</h3><div class="play-row"><span>recruitment_reversal</span><strong class="warning">SHORT</strong><small>timing missing</small><em>FORWARD</em></div><div class="play-row"><span>dipole_exhaustion</span><strong class="warning">SHORT</strong><small>opposition absent</small><em>FORWARD</em></div></div>
+                <div class="play-group"><h3>SUPPRESSED</h3><div class="play-row muted-row"><span>chain_polarity_flip</span><strong>—</strong><small>confirm bar incomplete</small><em>HARD GUARD</em></div><div class="play-row muted-row"><span>storage_thursday_magnitude</span><strong>—</strong><small>wrong day</small><em>OUT OF SCOPE</em></div></div>
+                <div class="play-group"><h3>SHADOW</h3><div class="play-row shadow-row"><span>subsecond_reversal_exhaustion</span><strong class="negative">SHORT</strong><small>counterfactual only</small><em>PROVISIONAL</em></div></div>
+              </div>
+            </article>
+
+            <article class="panel order-life-panel">
+              <div class="panel-header"><div><span class="panel-kicker">EXECUTION TRUTH</span><h2>Order Lifecycle</h2></div><span class="badge positive-bg">PARTIAL</span></div>
+              <div class="order-summary"><div><span>Requested</span><strong>1,250 YES</strong></div><div><span>Filled</span><strong>780</strong></div><div><span>Avg price</span><strong>42.1¢</strong></div><div><span>Edge at fill</span><strong class="positive">5.6¢</strong></div></div>
+              <ol class="event-timeline">
+                <li class="complete"><time>15:17:04.110</time><div><strong>Action intent created</strong><small>flow_nowcast · lag route · policy AUTO</small></div></li>
+                <li class="complete"><time>15:17:04.119</time><div><strong>Risk approved</strong><small>$12.6K reserved · definition match exact</small></div></li>
+                <li class="complete"><time>15:17:04.132</time><div><strong>Order transmitted</strong><small>BUY YES · limit 42.5¢ · IOC then passive remainder</small></div></li>
+                <li class="complete"><time>15:17:04.181</time><div><strong>Venue acknowledged</strong><small>Client order ID K-0042-A</small></div></li>
+                <li class="current"><time>15:17:04.206</time><div><strong>Partial fill</strong><small>780 @ 42.1¢ · 470 working</small></div></li>
+                <li><time>—</time><div><strong>Completion / cancel policy</strong><small>Cancel after fair probability reaches 47.8%</small></div></li>
+              </ol>
+            </article>
+          </div>
+        </section>
+
+        <!-- WEATHER -->
+        <section class="view" id="view-weather" data-title="Weather Upper-Tail Console">
+          <div class="page-heading">
+            <div><span class="panel-kicker">OPERATOR DISCOVERY · NON-SHOULDER MONTHS</span><h2>Weather Upper-Tail Console</h2><p>Threshold probabilities, cycle-level MOS vintages, executable event markets, and operator contribution.</p></div>
+            <div class="page-actions"><span class="badge positive-bg">SCOPE ELIGIBLE</span><button class="secondary-button">Dallas KDFW</button><button class="secondary-button">36h lead</button></div>
+          </div>
+          <div class="weather-grid">
+            <article class="panel weather-table-panel">
+              <div class="panel-header"><div><span class="panel-kicker">EVENT: DALLAS MAX TEMPERATURE · JUL 24</span><h2>Upper-tail probability ladder</h2></div><div class="header-actions"><span class="badge">PEAK COOLING</span><button class="primary-button">Route best edge</button></div></div>
+              <div class="weather-summary-strip">
+                <div><span>Consensus high</span><strong>99.4°F</strong></div><div><span>Operator high</span><strong class="positive">101.8°F</strong></div><div><span>Model spread</span><strong>2.6°F</strong></div><div><span>Last cycle delta</span><strong class="positive">+1.7°F</strong></div><div><span>Settlement source</span><strong>Rule snapshot #7</strong></div>
+              </div>
+              <div class="table-wrap">
+                <table class="weather-table">
+                  <thead><tr><th>Threshold</th><th>Kalshi bid/ask</th><th>Poly bid/ask</th><th>Baseline P</th><th>Operator P</th><th>Final P</th><th>Net taker edge</th><th>Executable size</th></tr></thead>
+                  <tbody id="weatherRows"></tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="panel distribution-panel">
+              <div class="panel-header"><div><span class="panel-kicker">FULL DISTRIBUTION</span><h2>Forecast versus market</h2></div><div class="legend"><span><i class="legend-line leader"></i>Desk calibrated</span><span><i class="legend-line follower"></i>Market implied</span></div></div>
+              <div id="weatherDistribution" class="distribution-chart"></div>
+              <div class="distribution-stats"><div><span>Desk P95</span><strong>104.1°F</strong></div><div><span>Market P95</span><strong>102.0°F</strong></div><div><span>Tail displacement</span><strong class="positive">+2.1°F</strong></div></div>
+            </article>
+
+            <article class="panel cycle-panel">
+              <div class="panel-header"><div><span class="panel-kicker">AS-OF VINTAGES</span><h2>MOS first appearance vs revision</h2></div><button class="text-button">Inspect source</button></div>
+              <div class="cycle-timeline">
+                <div class="cycle-row"><time>00z</time><span class="cycle-line empty"></span><div><strong>Horizon absent</strong><small>No tradable forecast content</small></div></div>
+                <div class="cycle-row first"><time>06z</time><span class="cycle-line"></span><div><strong>First appearance: 99°F</strong><small>Externally available 07:48:16 ET · pipeline ready 07:48:19</small></div><em>NEW INFO</em></div>
+                <div class="cycle-row"><time>12z</time><span class="cycle-line"></span><div><strong>Revision: 101°F</strong><small>Externally available 13:42:11 ET · pipeline ready 13:42:16</small></div><em>+2°F</em></div>
+                <div class="cycle-row"><time>18z</time><span class="cycle-line pending"></span><div><strong>Awaiting cycle</strong><small>Expected around 19:40 ET</small></div><em>PENDING</em></div>
+              </div>
+            </article>
+
+            <article class="panel contribution-panel">
+              <div class="panel-header"><div><span class="panel-kicker">EXPLAINABILITY</span><h2>Why the probability moved</h2></div><span class="badge">+8.2 pts</span></div>
+              <div class="contribution-list">
+                <div><span>Operator upper-tail adjustment</span><strong class="positive">+4.1</strong><i style="--value:82%"></i></div>
+                <div><span>12z first-class model ramp</span><strong class="positive">+2.5</strong><i style="--value:50%"></i></div>
+                <div><span>Station bias correction</span><strong class="positive">+1.3</strong><i style="--value:26%"></i></div>
+                <div><span>Live observation nowcast</span><strong class="positive">+0.9</strong><i style="--value:18%"></i></div>
+                <div><span>Model disagreement reserve</span><strong class="negative">−0.6</strong><i class="negative-bar" style="--value:12%"></i></div>
+              </div>
+              <div class="policy-note"><span>Scope</span><strong>Upper tail · non-shoulder · 24–48h · KDFW</strong><small>Outside scope, the operator adjustment has no production authority.</small></div>
+            </article>
+
+            <article class="panel calibration-panel">
+              <div class="panel-header"><div><span class="panel-kicker">FORWARD EVIDENCE</span><h2>Tail calibration by exact scope</h2></div><button class="text-button">Event list</button></div>
+              <div class="calibration-grid">
+                <div><span>Qualifying events</span><strong>48</strong><small>No pooled regime conclusions</small></div>
+                <div><span>Brier improvement</span><strong class="positive">18.7%</strong><small>vs frozen baseline</small></div>
+                <div><span>Edge captured</span><strong>71%</strong><small>after fees and slippage</small></div>
+                <div><span>Capacity at signal</span><strong>$182K</strong><small>sum of event-level executable size</small></div>
+              </div>
+              <div class="reliability-mini" id="reliabilityChart"></div>
+            </article>
+          </div>
+        </section>
+
+        <!-- PACKAGES -->
+        <section class="view" id="view-packages" data-title="Opportunity Packages">
+          <div class="page-heading">
+            <div><span class="panel-kicker">NON-NORMAL ROUTES</span><h2>Cross-market opportunity packages</h2><p>Hedges, arbs, and cross-platform structures with legging, definition, and recovery risk made explicit.</p></div>
+            <div class="page-actions"><button class="secondary-button">Show completed</button><button class="primary-button" id="newPackageButton">Compose manual intent</button></div>
+          </div>
+          <div class="package-board" id="packageBoard"></div>
+        </section>
+
+        <!-- REPLAY -->
+        <section class="view" id="view-replay" data-title="Evidence & As-Of Replay">
+          <div class="page-heading">
+            <div><span class="panel-kicker">IMMUTABLE AWS HISTORY</span><h2>Evidence & As-Of Replay</h2><p>Reconstruct what the system genuinely knew—without revised data, retroactive mappings, or rewritten leg boundaries.</p></div>
+            <div class="page-actions"><span class="badge">READ-ONLY</span><button class="secondary-button">Load episode</button><button class="primary-button">Verify decision hash</button></div>
+          </div>
+          <div class="replay-layout">
+            <article class="panel replay-control-panel">
+              <div class="panel-header"><div><span class="panel-kicker">S100-NG-0719-0042</span><h2>As-of control</h2></div><strong id="replayTime">15:17:04.119 ET</strong></div>
+              <input type="range" min="0" max="100" value="42" id="replaySlider" aria-label="Replay timeline" />
+              <div class="replay-marks"><span>Leader move</span><span>Play eligible</span><span>Risk approved</span><span>Order sent</span><span>Follower repriced</span></div>
+              <div class="replay-controls"><button class="icon-button">|‹</button><button class="icon-button">‹</button><button class="primary-button" id="replayPlay">▶ Play</button><button class="icon-button">›</button><button class="icon-button">›|</button><select><option>1×</option><option>10×</option><option>100×</option></select></div>
+            </article>
+
+            <article class="panel replay-chart-panel"><div class="panel-header"><div><span class="panel-kicker">FROZEN EVENT STREAM</span><h2>Market and decision timeline</h2></div><div class="legend"><span><i class="legend-line leader"></i>Leader</span><span><i class="legend-line follower"></i>Follower</span></div></div><div class="live-chart large" id="replayChart"></div></article>
+
+            <article class="panel snapshot-panel"><div class="panel-header"><div><span class="panel-kicker">CONTENT-ADDRESSED</span><h2>Decision snapshot</h2></div><span class="badge positive-bg">HASH MATCH</span></div><dl class="snapshot-list"><div><dt>State hash</dt><dd>sha256:a8d1…7c42</dd></div><div><dt>Play bundle</dt><dd>s100-ng-coach@1.18.3</dd></div><div><dt>Feature build</dt><dd>perception@0.24.6</dd></div><div><dt>Fee schedule</dt><dd>kalshi-fees@2026-07-19</dd></div><div><dt>Definition mapping</dt><dd>event-map@v7</dd></div><div><dt>Clock sync</dt><dd>+0.31 ms · healthy</dd></div></dl></article>
+
+            <article class="panel requirements-panel"><div class="panel-header"><div><span class="panel-kicker">PLAY INVOCATION</span><h2>Requirements at this instant</h2></div><span class="badge positive-bg">5 / 5 PASS</span></div><div class="requirement-list" id="replayRequirements"></div></article>
+
+            <article class="panel lineage-panel"><div class="panel-header"><div><span class="panel-kicker">CAUSAL DATA LINEAGE</span><h2>Source → feature → decision</h2></div><button class="text-button">Raw records</button></div><div class="lineage-flow"><div><span>Databento MBO</span><small>ts_event / ts_recv</small></div><i>→</i><div><span>Book + flow builder</span><small>version 0.24.6</small></div><i>→</i><div><span>dip_imb_level</span><small>+0.84</small></div><i>→</i><div><span>flow_nowcast</span><small>LONG</small></div><i>→</i><div><span>Action intent</span><small>BUY YES</small></div></div><div class="lineage-note">Historical/live normalized records and point-in-time definitions are assumed at the adapter boundary; the UI remains schema-driven rather than vendor-coupled.</div></article>
+          </div>
+        </section>
+
+        <!-- RISK / OPS -->
+        <section class="view" id="view-risk" data-title="Risk & Operations">
+          <div class="page-heading">
+            <div><span class="panel-kicker">AUTONOMOUS DESK CONTROL PLANE</span><h2>Risk & Operations</h2><p>State-contingent exposure, connector truth, recovery state, execution health, and strategy-level kill controls.</p></div>
+            <div class="page-actions"><span class="badge positive-bg">ALL HARD LIMITS NORMAL</span><button class="danger-outline" id="riskKillButton">Emergency controls</button></div>
+          </div>
+          <div class="risk-grid">
+            <article class="panel exposure-panel"><div class="panel-header"><div><span class="panel-kicker">THESIS-AWARE</span><h2>Concentrated exposures</h2></div><button class="text-button">Scenario matrix</button></div><div class="exposure-bars"><div><span>Heat → NG upside</span><i style="--value:72%"></i><strong>$184K</strong></div><div><span>CL upside / event thresholds</span><i style="--value:46%"></i><strong>$117K</strong></div><div><span>Weather station concentration</span><i style="--value:31%"></i><strong>$79K</strong></div><div><span>Kalshi collateral pool</span><i style="--value:28%"></i><strong>$71K</strong></div><div><span>Polymarket settlement basis</span><i style="--value:9%"></i><strong>$23K</strong></div></div></article>
+            <article class="panel scenario-panel"><div class="panel-header"><div><span class="panel-kicker">STATE-CONTINGENT P&L</span><h2>Heat × NG scenario</h2></div><span class="badge">NET OF FEES</span></div><div class="scenario-matrix"><div class="corner"></div><div>$3.25</div><div>$3.50</div><div>$3.75</div><div>$4.00</div><div class="row-label">Normal</div><div class="negative-cell">−42K</div><div>−8K</div><div class="positive-cell">+27K</div><div class="positive-cell">+61K</div><div class="row-label">Warm</div><div>−15K</div><div class="positive-cell">+24K</div><div class="positive-cell strong">+72K</div><div class="positive-cell strong">+119K</div><div class="row-label">Extreme heat</div><div class="positive-cell">+18K</div><div class="positive-cell strong">+69K</div><div class="positive-cell strong">+132K</div><div class="positive-cell strong">+201K</div></div></article>
+            <article class="panel connector-panel"><div class="panel-header"><div><span class="panel-kicker">EXECUTION TRUTH</span><h2>Connector and feed health</h2></div><button class="text-button">Open diagnostics</button></div><div class="connector-list" id="connectorList"></div></article>
+            <article class="panel limits-panel"><div class="panel-header"><div><span class="panel-kicker">HARD GATES</span><h2>Risk limits</h2></div><span class="badge positive-bg">NORMAL</span></div><div class="limit-list"><div><span>Daily loss</span><strong>$28K / $150K</strong><i style="--value:19%"></i></div><div><span>NG thesis concentration</span><strong>$184K / $400K</strong><i style="--value:46%"></i></div><div><span>Unhedged package loss</span><strong>$3.1K / $25K</strong><i style="--value:12%"></i></div><div><span>Venue collateral use</span><strong>31% / 75%</strong><i style="--value:41%"></i></div><div><span>Stale-data suppressions</span><strong>0 active</strong><i style="--value:1%"></i></div></div></article>
+            <article class="panel audit-panel"><div class="panel-header"><div><span class="panel-kicker">APPEND-ONLY</span><h2>Operations audit stream</h2></div><button class="text-button">Export</button></div><div class="audit-stream"><div><time>15:17:04.206</time><span class="positive">FILL</span><p>K-0042-A filled 780 YES @ 42.1¢</p></div><div><time>15:17:04.181</time><span>ACK</span><p>Kalshi acknowledged client order K-0042-A</p></div><div><time>15:17:04.132</time><span>ORDER</span><p>Execution router transmitted AUTO action intent</p></div><div><time>15:17:04.119</time><span class="positive">RISK</span><p>Hard gates passed; $12.6K reserved</p></div><div><time>15:17:04.110</time><span>PLAY</span><p>flow_nowcast v1.9 fired LONG</p></div><div><time>15:17:04.084</time><span>STATE</span><p>dip_imb_level crossed strong-flow threshold</p></div></div></article>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- COMMAND PALETTE -->
+  <div class="modal-backdrop hidden" id="commandModal" role="dialog" aria-modal="true" aria-labelledby="commandTitle">
+    <div class="command-modal">
+      <div class="command-input-wrap"><span>⌘</span><input id="commandInput" placeholder="Search episodes or type a command…" autocomplete="off" /></div>
+      <div class="command-results">
+        <button data-command-view="mission"><span>Open</span><strong>Mission Control</strong><kbd>G D</kbd></button>
+        <button data-command-view="episode"><span>Open</span><strong>Active Decision Episode</strong><kbd>G E</kbd></button>
+        <button data-command-view="weather"><span>Open</span><strong>Weather Upper-Tail Console</strong><kbd>G W</kbd></button>
+        <button id="commandStageHedge"><span>Action</span><strong>Stage hedge for active episode</strong><kbd>H</kbd></button>
+        <button id="commandPause"><span>Control</span><strong>Pause new autonomous entries</strong><kbd>P</kbd></button>
+      </div>
+      <div class="command-footer"><span>↑↓ navigate</span><span>Enter select</span><span>Esc close</span></div>
+    </div>
+  </div>
+
+  <!-- ACTION DRAWER -->
+  <div class="drawer-backdrop hidden" id="drawerBackdrop"></div>
+  <aside class="action-drawer" id="actionDrawer" aria-label="Opportunity package">
+    <div class="drawer-header"><div><span class="panel-kicker">STRUCTURED INTENT</span><h2 id="drawerTitle">Stage hedge package</h2></div><button class="icon-button" id="closeDrawer">×</button></div>
+    <div class="drawer-body">
+      <div class="drawer-summary"><span>Target episode</span><strong>S100-NG-0719-0042</strong><small>Reduce weather-linked upside concentration while preserving follower edge.</small></div>
+      <div class="form-grid">
+        <label>Intent type<select><option>Hedge</option><option>Arbitrage</option><option>Cross-market route</option><option>Manual directional</option></select></label>
+        <label>Risk reduction<input value="35%" /></label>
+        <label>Permitted instruments<select><option>NG futures + calls</option><option>NG futures only</option><option>Options only</option></select></label>
+        <label>Maximum cost<input value="$4,000" /></label>
+        <label>Urgency<select><option>Moderate</option><option>Immediate</option><option>Passive</option></select></label>
+        <label>TTL<input value="90 seconds" /></label>
+      </div>
+      <div class="package-preview">
+        <div class="package-preview-header"><span>Proposed route</span><span class="badge warning-bg">LEAD THEN HEDGE</span></div>
+        <div class="route-leg"><span class="route-index">1</span><div><strong>Keep Kalshi follower order</strong><small>470 YES working · cancel at fair P 47.8%</small></div><span>LIVE</span></div>
+        <div class="route-leg"><span class="route-index">2</span><div><strong>Sell 2 NGQ6 futures on fill completion</strong><small>Limit protection 2 ticks · reduce thesis delta 33%</small></div><span>ARMED</span></div>
+        <div class="route-risk"><div><span>Max temporary legging loss</span><strong>$1,120</strong></div><div><span>Estimated hedge cost</span><strong>$640</strong></div><div><span>Residual event edge</span><strong class="positive">$2,380</strong></div></div>
+      </div>
+      <label class="note-field">Operator note<textarea placeholder="Reason or constraint…">Preserve core lag trade; cap aggregate heat → NG upside exposure.</textarea></label>
+    </div>
+    <div class="drawer-footer"><button class="secondary-button" id="rejectDrawer">Cancel</button><button class="primary-button" id="approveDrawer">Submit intent to orchestrator</button></div>
+  </aside>
+
+  <!-- KILL MODAL -->
+  <div class="modal-backdrop hidden" id="killModal" role="dialog" aria-modal="true" aria-labelledby="killTitle">
+    <div class="kill-modal">
+      <span class="danger-icon">!</span>
+      <h2 id="killTitle">Emergency strategy controls</h2>
+      <p>This prototype separates canceling orders, pausing new entries, and flattening positions. No action is implied by a single generic “kill.”</p>
+      <div class="kill-actions">
+        <button class="danger-solid" data-kill-action="Cancel all working orders">Cancel all working orders</button>
+        <button class="danger-solid" data-kill-action="Pause all strategies">Pause all strategies</button>
+        <button class="danger-solid strongest" data-kill-action="Flatten and cancel">Flatten and cancel</button>
+      </div>
+      <button class="secondary-button full" id="closeKillModal">Close without action</button>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+  <script src="adapter.js"></script>
+</body>
+</html>

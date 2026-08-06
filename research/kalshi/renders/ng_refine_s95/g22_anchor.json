@@ -1,0 +1,45 @@
+{
+ "group": "g22",
+ "date": "20260619",
+ "dow": "Fri",
+ "anchor_close": 3.198,
+ "anchor_lasthr_dir": -1,
+ "leg": "ng_mbo_ngq26",
+ "basis": "Aug/NGQ26; boundary leg change NGN26->NGQ26 at 06-19/06-22 (anchor on the Aug leg); 07-03 Independence Day observed",
+ "is_holiday_session": true,
+ "verification": {
+  "source": "g21_actual.json last day 20260619",
+  "prior_group_close": 3.198,
+  "status": "MATCH"
+ },
+ "last_hour": {
+  "first_price": 3.2,
+  "last_price": 3.198,
+  "high_price": 3.206,
+  "low_price": 3.195,
+  "net_usd": -20,
+  "direction": "down",
+  "derived_dir": -1,
+  "n_points": 25,
+  "range_usd": 110,
+  "net_ticks": 2,
+  "net_share_of_range": 0.182,
+  "close_in_range": 0.273,
+  "direction_is_resolution_floor": true,
+  "direction_caveat": "the last-hour NET is 2 tick(s), 18% of the $110 last-hour range - at or near the price resolution floor, so anchor_lasthr_dir is a WEAK signal and should not be leaned on as a seam direction. close_in_range (0.273) is derived from the same data and is the sturdier read.",
+  "trade_count": null,
+  "signed_flow": null,
+  "provenance": "price levels derived from the actual file's DOWNSAMPLED `continuous` render path, not the raw tape. Trade count and signed flow are NOT recoverable from a downsampled series and are null by design - a number computed off this series would be wrong-but-well-formed."
+ },
+ "session_activity": {
+  "n_trades": 6935,
+  "volume_lots": 12148,
+  "trades_per_min": 6.8,
+  "session_signed_flow": -1353,
+  "session_b_share": 0.362,
+  "session_b_share_two_sided": 0.433,
+  "source": "tape_conditions.prior_full_session (scored leg); NOTE session_b_share is a declared RECONSTRUCTION, not a direct measurement - see session_b_share_basis",
+  "session_b_share_basis": "RECONSTRUCTED S109 from session_b_share_two_sided x (1 - unsided_volume_frac), an exact identity, because the S108 leg reader's side encoding zeroed the direct computation. Carries up to ~0.002 of rounding error vs a re-stage off raw lots; a re-stage overwrites it."
+ },
+ "holiday_caveat": "20260619 is a HOLIDAY half-session (6935 trades against a ~37,000 normal-session median). The anchor CLOSE is chain-verified and sound. The anchor's LAST-HOUR DIRECTION is derived from this thin tape, so it is a weaker seam signal than the same field in G17-G21 - size the weekend/reopen read accordingly and do not treat it as a full-session exit. Declared, not hidden."
+}

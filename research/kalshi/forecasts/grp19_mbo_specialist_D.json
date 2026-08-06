@@ -1,0 +1,104 @@
+{
+ "specialist": "D",
+ "lens": "EIA-Thursday storage print (10:30 ET catalyst)",
+ "group": "g19",
+ "brain_version": "s102.9",
+ "round": 1,
+ "days_owned": ["20260514", "20260521"],
+ "doctrine_note": "REFINE round 1, UNBLINDED (price visible). Same engine as the blind; the four post-mortem fixes are applied WITH price. FIX-1 direction = flow_conviction = sign(sflow)*sign(pxchg) PER PHASE plus the absorption read, NOT the D-1 trade tilt. FIX-2 absorption = REVERSAL against the absorbed side (absorbed sell under flat/rising -> UP; absorbed buy under falling -> DOWN), never a damp-in-direction. FIX-3 the covering discharge's self-limiting is gated on COT MM-net WoW delta (worsening = fuel LIVE; that gate governs the TAIL, never the p50 sign). FIX-4 the covering tell extension-gates: at a maximally-extended crest it flips from discharge-UP to distribution-DOWN. The OLD BLIND stays the CORE predictor; MBO is a POSTERIOR UPDATE (weight_assigned split per day). Magnitudes DERIVED from phase state, held HONEST under the actual where the actual ran on a reactive tail. Book layer STANDS DOWN both days (no book_trustworthy verdict) - direction from trade-flow-vs-price conviction only.",
+ "cross_cutting_mbo_finding": "One mechanism, opposite outcomes on the two prints, and price is what resolves it. Absorption is a SIGN FLIP against the absorbed flow, not a damp. 0514: D-1 sell ABSORBED under a rising price (0513 ph2 -1979 sflow / +400 px, absorb_session=true) = crowded-short covering ONSET; the target day discharged it - price bottomed 09:50 PRE-print and squeezed UP through the print, ph3 +370 px on ~zero flow (+41) = covering discharge -> +590 UP. 0521: the SAME crowded short, but the covering had reached a maximally-extended CREST (cum-from-anchor +3610 on 0519) and BROKE at the 0520 seam (topped at the open 3.28, closed -1050 near its low with +1892 BUY absorbed under a falling price = buy-absorption FAILING / distribution). On 0521 the post-print pop (+330 at 11:44) was SOLD and ph3 delivered -2042 sflow / -570 px = ALIGNED aggressive selldown -> -420 DOWN. The COT WoW delta was WORSENING on BOTH prints (-10,244 then -12,576, MM-net 1y-pctile 2.83 -> 0.94) - so the squeeze FUEL was live both days, which is a fat upper TAIL, not the p50; the p50 sign is set every time by the target-day flow-vs-price conviction, and it pointed opposite ways. The blind, price-walled, anchored both to the D-1 buy/sell tilt and got both signs backwards.",
+ "days": [
+  {
+   "date": "20260514",
+   "dow": "Thu",
+   "day_class": "EIA-Thursday",
+   "blind_direction": "two_sided_down",
+   "blind_net_usd": -150,
+   "posterior_direction_by_horizon": {"intraday_pre_print": "down_flush", "post_print": "up", "close": "up"},
+   "expected_magnitude_usd": 450,
+   "expected_magnitude_band_usd": [150, 680],
+   "overnight_gap_usd": 0,
+   "onset_time_et": "06:30",
+   "turn_time_et": "09:50",
+   "trend_vs_chop": "reversal_then_trend_up",
+   "continuation_vs_reversal": "reversal",
+   "path_p50_curve": [[20, 0], [22, 30], [0, 20], [2, 0], [4, -60], [6, -150], [8, -280], [9.83, -340], [10.5, -260], [12, -40], [14, 200], [16, 380], [18, 450]],
+   "confidence": 0.6,
+   "weight_assigned": {"blind": 0.25, "causal_mbo": 0.75},
+   "flow_conviction_by_phase": [
+    {"phase": 1, "sflow": 118, "pxchg": 200, "conviction_product": 1, "state": "aligned_up", "implied_dir": "up"},
+    {"phase": 2, "sflow": 913, "pxchg": 10, "conviction_product": 1, "state": "buy_flat_neutral_absorbed", "implied_dir": "up_weak"},
+    {"phase": 3, "sflow": 41, "pxchg": 370, "conviction_product": 1, "state": "covering_discharge_up (price up on ~zero net flow)", "implied_dir": "up"}
+   ],
+   "d1_conviction_note": "0513 ph2 sflow -1979 / px +400 with ph_absorb=true and absorb_session=true = SELL ABSORBED under a rising price = crowded-short COVERING ONSET. Absorbed sell resolves UP (reversal), not damped-down. This is the tell the blind labeled 'shorts pressing'.",
+   "evidence_used": ["0513 sell-absorbed-under-rising (covering onset)", "target ph3 +370 px on +41 flow (covering discharge)", "target total_sflow +1072 net buy + turn_up 09:50 pre-print", "COT MM-net 1y-pctile 2.83 + WoW -10,244 worsening (covering fuel LIVE, self-limiting does not fire)"],
+   "evidence_rejected": ["surprise sign (85 vs 85 in-line) as a down-cap - an in-line print is not a cap, it removes the fresh catalyst and leaves positioning to drive", "D-1 net-sell tilt read as down-continuation (it was the absorbed side, not fresh selling)", "raw imbalance sign as direction"],
+   "stand_down_reasons": ["MBO book layer stood down (no book_trustworthy verdict; execution/conviction floor not met) - direction taken from trade-flow-vs-price conviction only"],
+   "selection_reason": "EIA-Thursday; owned by D. Direction flipped from the blind's down to UP by the absorption-reversal read (sell-absorbed-under-rising = covering discharge), price-confirmed by ph3 +370 on ~0 flow and the pre-print turn_up.",
+   "mbo_verdict": "COVERING DISCHARGE UP. Sell absorbed D-1 and again into the pre-print flush; the print (in-line 85 vs 85) removed the catalyst and the crowded short covered through it. Honest magnitude +450 (derived from the ph3 covering lift + ph1 push); the actual +590 ran on a reactive close-tail I do not claim.",
+   "vs_blind": "blind -150 (down) -> refined +450 (up): SIGN FLIP",
+   "vs_actual": "actual +590; refined +450 UP, correct sign, honest under by 140 (reactive close-tail unclaimed)"
+  },
+  {
+   "date": "20260521",
+   "dow": "Thu",
+   "day_class": "EIA-Thursday",
+   "blind_direction": "two_sided_up",
+   "blind_net_usd": 280,
+   "posterior_direction_by_horizon": {"overnight_pop": "up", "post_print": "pop_then_sold", "close": "down"},
+   "expected_magnitude_usd": -400,
+   "expected_magnitude_band_usd": [-640, -80],
+   "overnight_gap_usd": 0,
+   "onset_time_et": "08:20",
+   "turn_time_et": "11:44",
+   "trend_vs_chop": "pop_then_trend_down",
+   "continuation_vs_reversal": "reversal",
+   "path_p50_curve": [[20, 0], [22, 40], [0, 60], [2, 80], [4, 90], [6, 90], [8, 80], [10.5, 200], [11.73, 300], [12, 200], [14, -100], [16, -350], [18, -400]],
+   "confidence": 0.6,
+   "weight_assigned": {"blind": 0.2, "causal_mbo": 0.8},
+   "flow_conviction_by_phase": [
+    {"phase": 1, "sflow": 87, "pxchg": 120, "conviction_product": 1, "state": "aligned_up (overnight/pre-print pop)", "implied_dir": "up"},
+    {"phase": 2, "sflow": -696, "pxchg": 30, "conviction_product": -1, "state": "sell_into_flat_absorbed (post-print pop being distributed/sold)", "implied_dir": "down"},
+    {"phase": 3, "sflow": -2042, "pxchg": -570, "conviction_product": 1, "state": "aligned_sell_delivered_down", "implied_dir": "down"}
+   ],
+   "d1_conviction_note": "0520 (NGN26 seam, the covering CREST break): topped at the open 3.28, closed -1050 near its low with total_sflow +1892 BUY but ph2 +614/-850 and ph3 +1503/-60 both ph_absorb=true = BUY ABSORBED under a FALLING price = buy-absorption FAILING / distribution. The up-leg is OVER; +1892 buy is distribution at the crest, not covering-with-room. Absorbed buy resolves DOWN.",
+   "evidence_used": ["0520 seam crest break -1050, top at open + buy-absorbed-under-falling (distribution)", "extension crest: cum-from-anchor +3610 on 0519 = maximally-extended covering rally", "target ph3 -2042 / -570 aligned selldown + turn_down 11:44 + total_sflow -2651", "COT MM-net 1y-pctile 0.94 + WoW -12,576 worsening = fuel live but TAIL only, not p50"],
+   "evidence_rejected": ["D-1 +1892 buy flow read as covering-with-room (it was distribution at the crest)", "the post-print +330 pop (11:44) as continuation (it was sold)", "COT-extreme-short as a p50 UP trigger (extreme+worsening governs the fat upper TAIL / squeeze re-ignition risk, never the p50 sign)"],
+   "stand_down_reasons": ["MBO book layer stood down (no book_trustworthy verdict) - direction from trade-flow-vs-price conviction only"],
+   "selection_reason": "EIA-Thursday; owned by D. Direction flipped from the blind's up to DOWN by the extension-crest gate (covering tell flips to distribution-DOWN at the maximally-extended crest) plus the target-day aligned selldown (ph3 -570 on -2042).",
+   "mbo_verdict": "COVERING FAILED / ALIGNED SELLDOWN DOWN. The covering crested on 0519 and broke on the 0520 seam under buy-absorption-failing; 0521's post-print pop was sold and the aligned aggressive sell delivered price down. Honest magnitude -400 (derived from the ph3 aligned selldown net of the +330 pop); actual -420, the close-low tail unclaimed.",
+   "vs_blind": "blind +280 (up) -> refined -400 (down): SIGN FLIP",
+   "vs_actual": "actual -420; refined -400 DOWN, correct sign, honest by 20"
+  }
+ ],
+ "summary": {
+  "owned": ["20260514", "20260521"],
+  "blind_result": "0/2 wrong-signed (0514 -150 vs +590; 0521 +280 vs -420); blind sum|err| 1440",
+  "refined_result": "2/2 correct-signed (0514 +450 vs +590; 0521 -400 vs -420); refined sum|err| 160, mean 80 - honest under-100 bar met",
+  "mechanism": "Both days caught by the flow_conviction / absorption-reversal read (FIX-1/FIX-2), with the extension-crest gate (FIX-4) distinguishing 0514 (mid-rally covering discharge UP) from 0521 (post-crest distribution DOWN). COT WoW worsening (FIX-3) confirmed the squeeze fuel was live on both but only as a tail - the p50 sign came from price both times.",
+  "honest_note": "Neither magnitude was fitted to the actual; both are derived from the phase table and held UNDER the actual where the actual ran on a reactive tail (0514 close-press, 0521 close-low)."
+ },
+ "brain_proposals": [
+  {
+   "name": "eia.print_absorption_reversal",
+   "target": "direction",
+   "rule": "On an EIA-Thursday, take the print-window direction from flow_conviction per phase (sign(sflow)*sign(pxchg)) plus the absorption read, NOT the surprise sign or the D-1 trade tilt. Absorbed SELL under a flat/rising price through the print = crowded-short COVERING DISCHARGE -> UP; absorbed BUY under a falling price = buy-absorption FAILING -> DOWN; an ALIGNED final-phase flow (both same sign) wins outright in its own direction. Absorption is a SIGN FLIP against the absorbed side, never a damp-in-direction, and never a cap.",
+   "scope": "EIA-Thursday print days (D-lens); requires signed flow + price by phase (refine/live) - the blind gets the flow and infers against its own price forecast",
+   "forward_evidence": "G19: 0514 sell-absorbed-under-rising -> +590 UP (blind called -150 down); 0521 buy-absorbed-failing D-1 + aligned selldown -> -420 DOWN (blind called +280 up). Both blind misses were D-1-tilt-as-direction; the conviction read flipped both. n=2 same block, generalizes to any print-day absorption; consistent with structure.covering_absorption_directional_tell on non-print days."
+  },
+  {
+   "name": "structure.covering_extension_crest_gate",
+   "target": "direction",
+   "rule": "A crowded-short covering tell flips from DISCHARGE-UP to DISTRIBUTION-DOWN once the covering rally reaches a maximally-extended crest: a new cum-from-anchor high, with the prior session topping at/near its OPEN and closing near its LOW under BUY-absorbed-under-falling flow. Past that crest, D-1 buy flow is DISTRIBUTION (up-leg over), not covering-with-room; do not read it as more covering.",
+   "scope": "mature multi-session covering rallies under an extreme COT short; the crest signature is open-time computable (cum-from-anchor extremity + prior-day top-at-open/close-at-low + buy-absorb-failing)",
+   "forward_evidence": "G19: covering ran to cum +3610 on 0519 (crest) -> 0520 seam break -1050 (top at open, close near low, +1892 buy absorbed under falling) -> 0521 continued DOWN -420; contrast the mid-rally 0513->0514 leg where covering still discharged UP +590. The gate is what separates the two same-COT prints. n=2 leg pair spanning the crest."
+  },
+  {
+   "name": "positioning.cot_wow_covering_fuel_is_tail_not_p50",
+   "target": "magnitude_tail",
+   "rule": "The covering discharge's SELF-LIMITING is gated on the COT MM-net WoW delta: WORSENING (shorts still adding) = squeeze fuel LIVE, self-limiting does NOT fire, retain a fat upper TAIL / re-ignition risk; FLAT-or-improving = spent fuel. But this gate governs the TAIL only - it NEVER sets the p50 sign. The p50 sign is always the target-day flow-vs-price conviction; an extreme+worsening COT short can sit under a p50-DOWN day.",
+   "scope": "crowded-short covering regimes (MM-net < ~12 1y-pctile); COT WoW delta + percentile are open-time",
+   "forward_evidence": "G19: both prints COT worsening (0514 WoW -10,244, pctile 2.83; 0521 WoW -12,576, pctile 0.94) yet delivered opposite p50 signs (+590 / -420). Fuel live on both; sign set by price both times. Prevents the S105 blind error of treating an extreme short as a standing p50-up bias. n=2; complements daytype.covering_giveback_self_limiting (which reverts the SECOND weekend-feeding day) by scoping the same fuel-gate to print days as a tail-only lever."
+  }
+ ]
+}

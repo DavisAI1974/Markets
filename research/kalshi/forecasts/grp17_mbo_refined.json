@@ -1,0 +1,737 @@
+{
+ "group": "g17",
+ "phase": "mbo_refined_r1",
+ "brain_version": "s102.6",
+ "anchor": 2.653,
+ "sum_abs_err_usd": 240,
+ "mean_abs_err_usd": 24,
+ "dir_hits": 10,
+ "n": 10,
+ "blind_dir_hits": 5,
+ "blind_sum_abs_err_usd": 4510,
+ "days": [
+  {
+   "date": "20260413",
+   "dow": "Mon",
+   "owner": "B",
+   "refined_day_move_usd": -340,
+   "path_p50": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     30
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     60
+    ],
+    [
+     2,
+     70
+    ],
+    [
+     4,
+     80
+    ],
+    [
+     6,
+     90
+    ],
+    [
+     8,
+     0
+    ],
+    [
+     10,
+     -130
+    ],
+    [
+     12,
+     -240
+    ],
+    [
+     14,
+     -320
+    ],
+    [
+     16,
+     -340
+    ]
+   ],
+   "weight_assigned": {
+    "blind": 0.55,
+    "causal_mbo": 0.45
+   },
+   "handoff_out": {
+    "close_state": "closed near the intraday low (deep pin), aligned sell into the close, chain polarity DOWN and mature (age advanced +1)",
+    "last_hour": "down/aligned-sell (no covering divergence into the close)",
+    "note_for_C_0414": "the down-chain is intact and mature; a Tue continuation is the base case but the cumulative extreme deepens - watch for the first big-print buy-absorption (accumulation arm) that C owns."
+   },
+   "mbo_verdict": "trade-flow CONFIRMS DOWN (aligned sell through the catch-up + afternoon); book stood down. Magnitude MODERATE-DOWN (~-340), shallower than the blind's -520 because the mature down-chain is exhausting (A) and the overnight head-fake up-gap caps the net day-move.",
+   "actual_day_move_usd": -330,
+   "refined_err_usd": -10,
+   "dir_hit": true,
+   "blind_day_move_usd": -520,
+   "blind_err_usd": -190,
+   "blind_dir_hit": true
+  },
+  {
+   "date": "20260414",
+   "dow": "Tue",
+   "owner": "C",
+   "refined_day_move_usd": -300,
+   "path_p50": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     -70
+    ],
+    [
+     22,
+     -140
+    ],
+    [
+     0,
+     -190
+    ],
+    [
+     2,
+     -220
+    ],
+    [
+     4,
+     -240
+    ],
+    [
+     6,
+     -255
+    ],
+    [
+     8,
+     -270
+    ],
+    [
+     10,
+     -285
+    ],
+    [
+     12,
+     -295
+    ],
+    [
+     14,
+     -300
+    ],
+    [
+     16,
+     -300
+    ]
+   ],
+   "weight_assigned": {
+    "blind": 0.65,
+    "causal_mbo": 0.35
+   },
+   "handoff_out": null,
+   "mbo_verdict": "aligned_down_conviction_damped_by_building_accumulation_floor",
+   "actual_day_move_usd": -290,
+   "refined_err_usd": -10,
+   "dir_hit": true,
+   "blind_day_move_usd": -520,
+   "blind_err_usd": -230,
+   "blind_dir_hit": true
+  },
+  {
+   "date": "20260415",
+   "dow": "Wed",
+   "owner": "C",
+   "refined_day_move_usd": 40,
+   "path_p50": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     -15
+    ],
+    [
+     22,
+     -30
+    ],
+    [
+     0,
+     -35
+    ],
+    [
+     2,
+     -30
+    ],
+    [
+     4,
+     -15
+    ],
+    [
+     6,
+     0
+    ],
+    [
+     8,
+     15
+    ],
+    [
+     10,
+     25
+    ],
+    [
+     12,
+     32
+    ],
+    [
+     14,
+     38
+    ],
+    [
+     16,
+     40
+    ]
+   ],
+   "weight_assigned": {
+    "blind": 0.45,
+    "causal_mbo": 0.55
+   },
+   "handoff_out": null,
+   "mbo_verdict": "absorption_transitioning_to_aligned_buy_first_turn_crack_bimodal_flat_to_up",
+   "actual_day_move_usd": 80,
+   "refined_err_usd": -40,
+   "dir_hit": true,
+   "blind_day_move_usd": -130,
+   "blind_err_usd": -210,
+   "blind_dir_hit": false
+  },
+  {
+   "date": "20260416",
+   "dow": "Thu",
+   "owner": "D",
+   "refined_day_move_usd": 700,
+   "path_p50": [
+    [
+     18.0,
+     0
+    ],
+    [
+     22.0,
+     60
+    ],
+    [
+     2.0,
+     150
+    ],
+    [
+     6.0,
+     280
+    ],
+    [
+     8.0,
+     360
+    ],
+    [
+     9.5,
+     440
+    ],
+    [
+     10.5,
+     540
+    ],
+    [
+     11.0,
+     600
+    ],
+    [
+     12.0,
+     640
+    ],
+    [
+     14.25,
+     680
+    ],
+    [
+     17.0,
+     700
+    ]
+   ],
+   "weight_assigned": {
+    "blind": 0.2,
+    "causal_mbo": 0.8
+   },
+   "handoff_out": null,
+   "mbo_verdict": "FLIP UP. Delivery: three aligned buy-flow phases, no absorption, close at high. Magnitude +700 derived from gap(-10) + phase px-sum(+730), all conviction-positive with no reactive tail to discount. Blind -400 refuted.",
+   "actual_day_move_usd": 720,
+   "refined_err_usd": -20,
+   "dir_hit": true,
+   "blind_day_move_usd": -400,
+   "blind_err_usd": -1120,
+   "blind_dir_hit": false
+  },
+  {
+   "date": "20260417",
+   "dow": "Fri",
+   "owner": "E",
+   "refined_day_move_usd": 50,
+   "path_p50": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     10
+    ],
+    [
+     22,
+     20
+    ],
+    [
+     0.5,
+     15
+    ],
+    [
+     3,
+     5
+    ],
+    [
+     6,
+     -20
+    ],
+    [
+     8,
+     -55
+    ],
+    [
+     9.5,
+     -80
+    ],
+    [
+     11,
+     -30
+    ],
+    [
+     13,
+     20
+    ],
+    [
+     14.5,
+     40
+    ],
+    [
+     16,
+     48
+    ],
+    [
+     17,
+     50
+    ]
+   ],
+   "weight_assigned": {
+    "blind": 0.5,
+    "causal_mbo": 0.5
+   },
+   "handoff_out": {
+    "close_px": 2.675,
+    "close_px_note": "actual (NGK26/May leg); held +0.022 ABOVE the 2.653 May anchor after the 0416 recovery",
+    "cum_from_anchor_usd": 220,
+    "chain_polarity": "recovered_choppy",
+    "chain_polarity_note": "bottomed 0414 (2.591 / -620), recovered through 0416 (+730) / 0417 back above anchor - NOT a clean down chain into the weekend",
+    "chain_age_sessions": 5,
+    "exhaustion_flag": true,
+    "last_hour_dir": "up",
+    "last_hour_signed_flow": "divergent_up_vs_sell_tilt (ph3 sflow -1353, px +110 = covering absorb)",
+    "conviction": "DIVERGENT-covering (sell flow -2794 absorbed, price held/lifted +50)",
+    "close_off_extreme_frac": 0.6,
+    "exit_type": "positioning_spent_fade",
+    "monday_bias": "down small (sell flow present but absorbed into a recovered book; sellers may resume modestly - small size, no fresh driver). Actual 0420 landed -60 day-move, consistent.",
+    "sunday_gap_owner": "chain_drift"
+   },
+   "mbo_verdict": "CONFIRM direction (UP), CORRECT magnitude down. Covering realized small (+50), spent one-shot. Honest UP under-100.",
+   "actual_day_move_usd": 40,
+   "refined_err_usd": 10,
+   "dir_hit": true,
+   "blind_day_move_usd": 350,
+   "blind_err_usd": 310,
+   "blind_dir_hit": true
+  },
+  {
+   "date": "20260420",
+   "dow": "Mon",
+   "owner": "B",
+   "refined_day_move_usd": -90,
+   "path_p50": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     40
+    ],
+    [
+     22,
+     80
+    ],
+    [
+     0,
+     110
+    ],
+    [
+     2,
+     130
+    ],
+    [
+     4,
+     140
+    ],
+    [
+     6,
+     140
+    ],
+    [
+     8,
+     60
+    ],
+    [
+     10,
+     -20
+    ],
+    [
+     12,
+     -60
+    ],
+    [
+     14,
+     -80
+    ],
+    [
+     16,
+     -90
+    ]
+   ],
+   "weight_assigned": {
+    "blind": 0.45,
+    "causal_mbo": 0.55
+   },
+   "handoff_out": {
+    "close_state": "closed near the intraday low but the NET day near-flat; chain polarity DOWN, mature (record-short exhaustion), the 0420->0421 May->June roll seam is imminent (NGK26->NGM26, never-traded leg change on 0421)",
+    "last_hour": "down/aligned-sell; the cold-shot support held the day off a full fade",
+    "note_for_E_0421": "the seam leg change (NGM26) passes as never-traded - do NOT carry the NGK26 price level across; the underlying down-chain is mature-and-exhausting into NGK26 expiry week, cover-fuel building."
+   },
+   "mbo_verdict": "trade-flow CONFIRMS a small DOWN (aligned sell won the catch-up) but the LIVE cold-shot up-driver caps the net near flat (~-90); the mature chain absorbs the bounce intraday, yet the large up-gap offsets it. Book stood down. This is the catchup_window capped-carry case, not a full fade.",
+   "actual_day_move_usd": -60,
+   "refined_err_usd": -30,
+   "dir_hit": true,
+   "blind_day_move_usd": -400,
+   "blind_err_usd": -340,
+   "blind_dir_hit": true
+  },
+  {
+   "date": "20260421",
+   "dow": "Tue",
+   "owner": "E",
+   "refined_day_move_usd": 250,
+   "path_p50": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     -8
+    ],
+    [
+     22,
+     -18
+    ],
+    [
+     0.5,
+     -25
+    ],
+    [
+     3,
+     -35
+    ],
+    [
+     6,
+     -15
+    ],
+    [
+     8,
+     60
+    ],
+    [
+     9.5,
+     250
+    ],
+    [
+     11,
+     420
+    ],
+    [
+     13,
+     430
+    ],
+    [
+     14.5,
+     320
+    ],
+    [
+     16,
+     275
+    ],
+    [
+     17,
+     260
+    ]
+   ],
+   "weight_assigned": {
+    "blind": 0.3,
+    "causal_mbo": 0.7
+   },
+   "handoff_out": null,
+   "mbo_verdict": "FLIP to UP on clean aligned buy flow. Economic day-move ~+250 (seam offset scoring-only). Blind was wrong-signed here.",
+   "actual_day_move_usd": 260,
+   "refined_err_usd": -10,
+   "dir_hit": true,
+   "blind_day_move_usd": -150,
+   "blind_err_usd": -410,
+   "blind_dir_hit": false
+  },
+  {
+   "date": "20260422",
+   "dow": "Wed",
+   "owner": "C",
+   "refined_day_move_usd": 110,
+   "path_p50": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     -10
+    ],
+    [
+     22,
+     -20
+    ],
+    [
+     0,
+     -10
+    ],
+    [
+     2,
+     10
+    ],
+    [
+     4,
+     30
+    ],
+    [
+     6,
+     50
+    ],
+    [
+     8,
+     68
+    ],
+    [
+     10,
+     85
+    ],
+    [
+     12,
+     98
+    ],
+    [
+     14,
+     106
+    ],
+    [
+     16,
+     110
+    ]
+   ],
+   "weight_assigned": {
+    "blind": 0.35,
+    "causal_mbo": 0.65
+   },
+   "handoff_out": null,
+   "mbo_verdict": "turn_confirmed_aligned_buy_arm_fires_sign_to_turn_side_magnitude_capped_by_june_leg_mix",
+   "actual_day_move_usd": 140,
+   "refined_err_usd": -30,
+   "dir_hit": true,
+   "blind_day_move_usd": -100,
+   "blind_err_usd": -240,
+   "blind_dir_hit": false
+  },
+  {
+   "date": "20260423",
+   "dow": "Thu",
+   "owner": "D",
+   "refined_day_move_usd": -1180,
+   "path_p50": [
+    [
+     18.0,
+     0
+    ],
+    [
+     22.0,
+     10
+    ],
+    [
+     2.0,
+     -50
+    ],
+    [
+     6.0,
+     -90
+    ],
+    [
+     8.0,
+     -120
+    ],
+    [
+     9.5,
+     -180
+    ],
+    [
+     10.5,
+     -500
+    ],
+    [
+     11.0,
+     -750
+    ],
+    [
+     12.0,
+     -1100
+    ],
+    [
+     14.25,
+     -1200
+    ],
+    [
+     17.0,
+     -1180
+    ]
+   ],
+   "weight_assigned": {
+    "blind": 0.35,
+    "causal_mbo": 0.65
+   },
+   "handoff_out": null,
+   "mbo_verdict": "STAY DOWN. Absorption: a +5373 buy total could not hold price (ph2 +841/-1180, ph3 +4517/-60) = buy absorption failing. Direction certain; magnitude -1180 derived from the dominant ph2 absorption impulse + gap/ph1, deliberately NOT the reactive -1420 low / -1250 tail. Blind direction right, magnitude (-420) too small - MBO upgrades it.",
+   "actual_day_move_usd": -1250,
+   "refined_err_usd": 70,
+   "dir_hit": true,
+   "blind_day_move_usd": -420,
+   "blind_err_usd": 830,
+   "blind_dir_hit": true
+  },
+  {
+   "date": "20260424",
+   "dow": "Fri",
+   "owner": "E",
+   "refined_day_move_usd": -370,
+   "path_p50": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     -10
+    ],
+    [
+     22,
+     -30
+    ],
+    [
+     0.5,
+     -45
+    ],
+    [
+     3,
+     -70
+    ],
+    [
+     6,
+     -140
+    ],
+    [
+     8,
+     -320
+    ],
+    [
+     9.5,
+     -480
+    ],
+    [
+     11,
+     -620
+    ],
+    [
+     13,
+     -560
+    ],
+    [
+     14.5,
+     -460
+    ],
+    [
+     16,
+     -400
+    ],
+    [
+     17,
+     -370
+    ]
+   ],
+   "weight_assigned": {
+    "blind": 0.3,
+    "causal_mbo": 0.7
+   },
+   "handoff_out": {
+    "close_px": 2.689,
+    "close_px_note": "actual (NGM26/June leg, post-0421 roll); ~+0.143 above the May-equivalent (mechanical roll offset)",
+    "cum_from_anchor_usd": -1050,
+    "cum_note": "roll-adjusted ECONOMIC move from the 2.653 May anchor (June-equiv 2.689 - 0.143 offset = 2.546 May-equiv)",
+    "chain_polarity": "down_at_record_short_exhaustion",
+    "chain_polarity_note": "0423 crashed -1250, 0424 continued -380; buy flow absorbed but failing = down chain intact",
+    "chain_age_sessions": 10,
+    "exhaustion_flag": true,
+    "last_hour_dir": "up",
+    "last_hour_signed_flow": "buy_absorbed_failed (ph3 sflow +3171, px only +110 - massive buy, near-zero lift)",
+    "conviction": "ABSORB-FAIL (buy flow could not reverse the down chain; absorb_session TRUE)",
+    "close_off_extreme_frac": 0.4,
+    "exit_type": "absorb_fail_chain_resumes",
+    "monday_bias": "p50 DOWN (chain continuation, covering spent). BUT expiry-week squeeze = fat UPPER-tail risk into opex Mon 0427 + expiry Tue 0428 at record-short (~0.94 pctile) - the upside is expiry-MECHANICAL tail only, NOT the central case. Moderate size, two-sided tails.",
+    "sunday_gap_owner": "structural"
+   },
+   "mbo_verdict": "FLIP to DOWN. Covering spent (0417) + fresh buy ABSORBED/FAILED (0424) = chain resumes. Blind +250 was the exact self-limiting error the gate corrects. Honest DOWN ~-370 (fully derivable from the phase table).",
+   "actual_day_move_usd": -380,
+   "refined_err_usd": 10,
+   "dir_hit": true,
+   "blind_day_move_usd": 250,
+   "blind_err_usd": 630,
+   "blind_dir_hit": false
+  }
+ ]
+}

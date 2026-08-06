@@ -1,0 +1,96 @@
+{
+ "proposal": "S114_DECISION_ORDER",
+ "session": "S114",
+ "target": "knowledge/ng_brain.json -> reasoning_method (the channel that IS served at spawn)",
+ "adjudication": {
+  "status": "MERGED S114 on Greg's explicit go ('go on the merge after you write everything', repeated 'Go on the merge'). Brain s105.3 -> s105.4. Incumbents byte-identical: 90/90 plays, 18/18 reasoning_method keys. Backup knowledge/ng_brain_s105.3_backup_pre_s105.4.json. Forward test registered against g24.",
+  "provenance": "D25 (S110, Greg) + the decision-screenshots discussion Greg re-pasted at S114. NOT re-derived - the design is his and the correction below is his correction OF me.",
+  "why_reasoning_method_and_not_the_gold_vault": "FORECAST_ARCHITECTURE_S111 s8: 'Curve-building doctrine lives in the brain (reasoning_method / doctrine), which IS served at spawn.' Measured S114: mbo_refine_shared.md and mbo_specialist_{A..E}.md contain ZERO occurrences of D23/D25/D31/D32/D37/D39, 'no average', or 'NO CALL'; the brain's served doctrine carries `no call` 0 times and `D25` 0 times. So the apparatus has never reached a specialist by ANY channel. reasoning_method is the one that needs no vault event.",
+  "the_correction_that_defines_it": "Greg, at the original discussion: 'the other option for the is doing nothing or going against what they decide is right so they do have options.' I had dropped 'option evaluation' as inapplicable because it assumes a MENU. Greg was right and I was wrong: the option set is not competing forecasts, it is DISPOSITION TOWARD YOUR OWN READ - commit it, stand down, or override it - and the instances split cleanly along exactly that axis."
+ },
+ "reasoning_method_additions": {
+  "decision_order": {
+   "why_this_exists": "The lens files specify WHAT a specialist evaluates and leave the SEQUENCE to the agent. Greg, D25: 'It matters the ORDER of reasoning the agents use to make their decisions. There has to be a certain order of steps.' Two documented failures are ORDERING faults and nothing else - fixable by a spec rather than by a better instrument. E-0710 ranked its own top failure as the burn gate 'run as a suppressor, which set -150 BEFORE magnitude was derived' - a gate firing at step 3 instead of step 4, capping a correct read before it existed, against a -660 actual. B-0713 SKIPPED step 3 entirely: it went straight from information to disposition and overrode an instrument it had never independently weighed.",
+   "and_why_order_pays_MORE_for_an_agent_than_for_a_human": "Humans skip prescribed steps under load; agents mostly do not - so the return on mandating an explicit order is HIGHER here than the human decision literature would suggest. And the constraint is mechanical, not stylistic: for an LLM the fast and slow systems are not separable (one forward pass), so a read taken AFTER the chain inputs are opened is already contaminated. A first impression cannot be retrofitted. That is why ORDER is load-bearing for us in a way it is not for a human, who can genuinely revisit.",
+   "steps": [
+    {
+     "n": 1,
+     "step": "CLASSIFY",
+     "maps_to": "problem recognition",
+     "do": "Establish the day class first - dow, holiday/partial, EIA print, opex/LTD/roll, weekend seam - from the calendar block, which is a LOOKUP and never an interpretation. Classify BEFORE reading anything that could suggest a lean (S101 doctrine: no Mondays scoring Fridays).",
+     "why": "Klein's recognition-primed model: experts do not compare options, they pattern-match the situation to a known class and then simulate the first workable course. Classify-then-simulate is what our best posteriors already do, so this stage is describing the machine we have rather than imposing one."
+    },
+    {
+     "n": 2,
+     "step": "INVENTORY",
+     "maps_to": "information search",
+     "do": "Enumerate what is actually SERVED and what is DEFECTIVE. Name every block you will use and every block that is empty, stale, frozen, or self-contradictory, and say so in state_defects_and_gaps_reported. Declare a defect rather than silently working around it.",
+     "why": "Six times in one session a block was silently empty and read downstream exactly like a deliberate mask (S107). The specialist is the last line that can catch a wrong-but-well-formed input, because presence, numeric type, range and owner are all true of it."
+    },
+    {
+     "n": 3,
+     "step": "THE PRE-INFLUENCE READ, THEN THE INDEPENDENT CHAIN - BOTH BEFORE ANY HANDED-DOWN READ",
+     "maps_to": "the stage the psychology page gets WRONG for us - see below",
+     "do": "(a) PRE-INFLUENCE READ first, emitted BEFORE opening ANY handed-down read - E's handoff_out, A's bridge, a verdict table, a run directive's named target. Four fields: SIGN, MAGNITUDE CLASS, ONE SENTENCE, TIMESTAMP. It is not required to be quick or shallow; it is required to be YOURS AND UNINFLUENCED. (b) THEN open the handed-down reads. (c) THEN build the independent chain estimate and record it beside the committed number.",
+     "why": "This is the step B-0713 skipped, and skipping it is what made its override invisible: there was NO independent number anywhere in its blind to weigh the verdict table against. E-0717 did a version of this unasked on the block's only exact call - publishing derived_centre_standalone_usd 170 beside the confirmed +180 - which cost one field and is what let right-for-the-right-reasons be separated from right-by-cancellation.",
+     "free_measurement": "The DELTA between the fast read and the chain estimate IS the chain's contribution, which we have only ever inferred once (~79% of one G17 miss). A two-stage emission measures it at every seam, and a SIGN difference between the two stages is a mechanical cascade detector.",
+     "the_contamination_boundary_and_it_is_exact": "The fast read is your own pattern-match on the STATE. It is contaminated by another agent's CONCLUSIONS, not by raw data - so the boundary is: after the state (step 2), before any handoff, bridge, table or directive. Greg: 'if the agent has already read E's handoff and A's bridge, its fast read is ALREADY CONTAMINATED and the guard is worthless. It has to be emitted before the chain inputs are opened.' For an LLM the two systems come out of the SAME FORWARD PASS, so this cannot be repaired later: you genuinely cannot retrofit a first impression. That is what makes order load-bearing for us in a way it is not for a human, who can revisit.",
+     "what_the_guard_makes_visible": "With a fast read on the record, an override becomes an auditable LINE instead of a silence. B-0713 would have had to write: 'my own read says DOWN (D-1 aggregate -1,225 sell), the handed-down table says UP, I am choosing the table because X.' That is a cascade you can SEE and audit in the run, rather than one discovered in a post-mortem. As it stands there is NO independent number anywhere in that blind, which is exactly why the override was invisible.",
+     "naming_note_and_it_is_deliberate": "Called PRE-INFLUENCE, not 'fast read' or 'System 1'. Greg on the dual-process framing: 'I'm just spit balling about the dual method. if there's a better fit then we go with the better fit.' The framing is held LOOSELY and the mechanism is not. For an LLM both reads come out of the SAME FORWARD PASS, so fast-vs-slow is a doubtful split - whereas the two axes that DO survive that objection are the ones this step is actually built on: BEFORE-INFLUENCE vs AFTER-INFLUENCE (what the ordering enforces) and DERIVED-FROM-ARITHMETIC vs DERIVED-FROM-NARRATIVE (what the audit checks). Labelling it 'fast' would invite a shallow impression, which is the opposite of what is wanted.",
+     "why_the_mechanism_survives_the_label": "The move - MAKE THE INDEPENDENT READ EXIST BEFORE THE INFLUENCE ARRIVES - appears in at least four separate literatures under four names: dual-process pre-commitment, pre-registration in forecasting tournaments, Klein's pre-mortem, and sealed-bid estimation before group discussion. They are the same move, and they exist independently in four places because the failure they prevent is that common. So the odds are good the mechanism holds even if the psychological label is later dropped entirely."
+    },
+    {
+     "n": 4,
+     "step": "APPLY GATES, DAMPS AND GUARDS",
+     "do": "Only now consult the brain's gates, damps, program guards and any handed-down directive. Each one may modify the step-3 number; none may replace the act of deriving it.",
+     "why": "A gate is a CONDITIONER of a derivation, not a substitute for one. E-0710's burn gate ran as a suppressor before the magnitude existed and capped a correct read to -150 against -660. The gate was not wrong; its position was."
+    },
+    {
+     "n": 5,
+     "step": "FALSIFIER AND ANTI-DEFAULT CHECK",
+     "do": "Run the pre-mortem: assume this call is wrong - why? Name the play or quantity most against your own number. Then check you have not defaulted: if your number is near the emission ceiling (see magnitude.emission_ceiling_check) or is the same shape you produce most days, say what the day's own drivers support.",
+     "why": "D-0625 ran an explicit pre-mortem unasked, naming in advance the play most against its own number. The anti-default check exists because the measured failure is not randomness but SAMENESS - 59 of 60 modern days emitted |guess| <= 550 while half of all days moved further."
+    },
+    {
+     "n": 6,
+     "step": "DISPOSITION - {COMMIT, ABSTAIN, OVERRIDE}",
+     "maps_to": "option evaluation, correctly placed",
+     "do": "Choose your disposition TOWARD YOUR OWN READ and name it explicitly in the posterior. COMMIT the step-3 number as conditioned; ABSTAIN (no call) when the day carries no read; or OVERRIDE your own read - which requires naming what beat it and why.",
+     "hard_ordering_rule": "OVERRIDE IS NOT REACHABLE UNTIL STEP 3 HAS PRODUCED A NUMBER. An override with nothing to override against is not a decision, it is an inheritance.",
+     "why": "Greg's correction, and the instances split cleanly on this axis. OVERRIDE produced the disasters: B-0713 had its own instrument pointing down (D-1 aggregate -1,225 SELL) and went up on a handed-down verdict table - its own words, 'not by my override' - the block's worst wrong-direction day; E-0710 is the milder form, overriding a correct read with an instrument rather than a table. STAND DOWN produced the saves: E-0717's counter-fade stand-down (firing it would have INVERTED a correct sign), C-0701's accumulation arm on three measured legs, D-0625's already-priced limb - standing down was the single most productive action of the G22 refine. COMMIT produced the wins where the number came from a chain: C-0714, C-0707, D-0716.",
+     "override_must_state_what_beat_it": "An OVERRIDE emission must name (1) your own step-3 read, (2) the thing that beat it, (3) why. Absent any of the three it is not an override, it is an inheritance - and D25's instance is the block's worst wrong-direction day."
+    },
+    {
+     "n": 7,
+     "step": "COMMIT AND HAND OFF",
+     "maps_to": "action and review",
+     "do": "Emit the number, the path, the reasoning limb by limb, the plays fired and stood down with their named measured quantities, and - on a weekend-feeding day - the handoff_out. The refine is the review stage.",
+     "why": "The handoff is the only channel by which one day's read reaches the next, and the S104 cascade measured what a bad one costs: 10 of 14 bad Mondays root to a mis-read Friday."
+    }
+   ]
+  },
+  "why_the_textbook_third_stage_is_wrong_for_us": {
+   "the_trap": "Classical decision-making teaches 'option evaluation: weigh the pros, cons, risks and rewards of each path.' That assumes a MENU of paths to compare. Our specialists do not pick from a menu, they PRODUCE AN ESTIMATE. Imported literally, it pushes an agent toward enumerating scenarios and weighting them.",
+   "the_measured_cost": "That is precisely the mush that produced G23's blind on 0709: scenario-weighted at loose / in-band / tight and landed at -250 against a -2,050 actual - direction right, 12% of the move captured.",
+   "the_correct_form": "Generate a candidate read, try to KILL it, then size what survives. The menu returns at step 6, where it belongs - and there the options are dispositions toward your own read, not competing forecasts."
+  },
+  "system1_system2_for_an_agent": {
+   "the_analogue": "System 1 is the immediate pattern-match on reading the state. System 2 is the explicit constructive derivation.",
+   "the_tell_and_it_is_auditable": "Whether the number came from an ARITHMETIC CHAIN or from NARRATIVE. Chains, both near-exact: C-0714's k3 carry - 0.026 x 3,747 flow plus ONE DECLARED $73 judgment term = +170 against a +200 actual. C-0707's leave-one-out - 250 x 0.60 = +150 against a +160 actual. Narrative: B-0713's blind, which had no independent number anywhere and consumed a verdict table fluently.",
+   "the_agent_specific_danger": "AGENTS CONFABULATE MORE FLUENTLY THAN HUMANS. Post-hoc rationalisation is a known human phenomenon, but an agent will produce a confident, well-structured mechanism for a conclusion it reached some other way - System 1 wearing System 2's clothes. This is why 'right number, wrong mechanism' is treated as seriously here as a wrong number: the mechanism is what gets extrapolated (S108 retracted a play whose day-net was right and whose mechanism was false). C-0708 DECLINING credit for a correct -520 is the behaviour to copy.",
+   "status_of_the_framing": "HELD LOOSELY, ON GREG'S INSTRUCTION. The dual-process vocabulary is retained here only because it is how the instances were originally described; nothing in the decision order depends on it. If it is dropped, the two operative axes stand on their own: BEFORE-INFLUENCE vs AFTER-INFLUENCE and ARITHMETIC vs NARRATIVE. The second is the auditable one - it can be checked in a posterior without any theory of mind about the agent that wrote it.",
+   "_renamed": "the_two_axes_that_survive (dual-process kept as one dress for it, not as the frame)"
+  },
+  "what_does_not_transfer_from_the_human_literature": {
+   "loss_aversion_is_a_GAP_not_a_win": "Humans feel losses about twice as hard as gains - a crude but real safety instinct. An agent feels nothing, so it will not naturally be more careful about a catastrophic downside than a symmetric one. For forecasting that is fine. FOR THE PAPER DOCK AND LIVE IT MEANS THE CAUTION MUST BE EXTERNAL - which is what the four risk caps in the paper ledger are. Keep in view as the dock goes live.",
+   "confirmation_bias_has_a_STRUCTURAL_AMPLIFIER_here": "Per-day causal isolation (D3) means no specialist can be corrected by a peer mid-run. In a human team someone says 'wait, look at 0707.' Ours structurally cannot - which is exactly what produced the burn-gate tally error, reported 0-of-3 when the truth was 1-of-4. The remedy is not a debiasing ritual, it is the coordinator-level recomputation already merged at S110: any tally assembled from independent slices is systematically incomplete and must be recomputed at the coordinator.",
+   "no_accumulating_tacit_expertise": "A human trader's twenty years lives in their intuition. Ours has to be externalised into the brain and the ledgers or it does not exist next session. That asymmetry is why the plant work matters more for us than a checklist matters in a hospital."
+  },
+  "the_frame": "Klein's naturalistic decision making (recognition-primed decision) is the better frame than the biases literature: experts pattern-match the situation to a known class and mentally simulate the first workable course, rather than comparing options. That is what classify-then-simulate already is, which is a sign the architecture is on a real track rather than an invented one. The biases literature is useful as a FAILURE TAXONOMY - anchoring (B-0713), confirmation bias (D-0716 citing 0715's +6,326 buy flow as bullish when the same-day tell is bearish), order effects (E-0710 vs E-0717, same engine, opposite outcomes, sequence the only difference)."
+ },
+ "known_gap_this_proposal_does_NOT_close": {
+  "abstention_is_structurally_unavailable": "Step 6 names ABSTAIN, and the machinery cannot emit it. C-0715 wrote that the correct handling of 0714 was 'NO CALL' and could not produce it: the output contract requires expected_magnitude_usd as a number and the coordinator hard-fails on missing or non-numeric. So the system FORCES a call on every day, and a forced number is indistinguishable downstream from a confident one. Greg, D25: adding explicit abstention - scored as ABSTAINED rather than wrong - may be worth more than any new play.",
+  "and_it_is_now_a_root-cause_candidate": "S114 measured the emission ceiling: the largest |guess| in 60 modern days is 950 (one over-call), the SECOND largest is 550, and half of all days moved further than 550. If the only reachable disposition is COMMIT, a specialist with no read produces a small defensible number and justifies it. That is the harness-side reading of A-40 and it is testable.",
+  "what_it_needs": "An output-contract change plus a coordinator change (registry A-2, and A-40's root cause). NOT included here - this proposal changes only what the brain SAYS, never what the contract ACCEPTS."
+ }
+}

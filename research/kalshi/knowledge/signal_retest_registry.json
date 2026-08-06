@@ -1,0 +1,73 @@
+{
+  "schema": "signal_retest_registry.v1",
+  "policy": {
+    "meaning_of_retired": "removed from forecast or execution authority, retained for falsifiable retest",
+    "default_mode": "SHADOW",
+    "promotion_gate": [
+      "pre-register target, scope, horizon, and decision-time inputs",
+      "use new forward or untouched historical data",
+      "compare against the incumbent within the same regime and day class",
+      "report proper score and net-of-cost where applicable",
+      "pass blind-wall and timestamp audits",
+      "require forward evidence before restoring ownership"
+    ],
+    "no_auto_resurrection": true
+  },
+  "candidates": [
+    {
+      "id": "turn_far_thinning",
+      "former_location": "ng_brain fingerprints / exit.recruitment_reversal",
+      "former_status": "DEMOTED_TO_NOISE",
+      "why_interesting": "MBO now supplies order-level adds, cancels, fills, and replenishment evidence that the earlier aggregated-depth proxy could not see.",
+      "retest_with": ["historical MBO", "live MBO", "MBP-10 depth"],
+      "target": "turn timing and continuation failure",
+      "required_scope": ["NG", "per-regime", "per-session-phase", "queue-reconstruction quality flag"],
+      "shadow_output": "far_side_recruitment_state",
+      "authority": "none"
+    },
+    {
+      "id": "directional_info_dipole_cell_signal",
+      "former_location": "odcore.info_dipole.DEPLOY",
+      "former_status": "DEPLOY_VALIDATED_FALSE",
+      "why_interesting": "The original directional test used thin crypto 1-minute samples. NG now has native L1/MBO and a different microstructure/participant mix.",
+      "retest_with": ["NG historical L1", "NG historical MBO", "NG live L1+MBO"],
+      "target": "nascent-leg direction likelihood",
+      "required_scope": ["per-regime", "per-time-of-day", "walk-forward", "fees and latency"],
+      "shadow_output": "directional_dipole_candidate",
+      "authority": "none"
+    },
+    {
+      "id": "monday_deep_book_shakeout",
+      "former_location": "ng_brain monday.window_deep_book_shakeout",
+      "former_status": "CANDIDATE_TIE_BREAKER",
+      "why_interesting": "The early result used L1-10 snapshots. MBO can distinguish genuine recruitment from displayed walls that cancel or replenish.",
+      "retest_with": ["historical MBO", "MBP-10", "Monday and post-holiday classes"],
+      "target": "Monday reaction direction and first-window shape",
+      "required_scope": ["Monday only", "06:00-10:00 ET", "gap class separated"],
+      "shadow_output": "monday_queue_shakeout_candidate",
+      "authority": "none"
+    },
+    {
+      "id": "book_contrarian",
+      "former_location": "direction.book_contrarian",
+      "former_status": "PROVISIONAL_LOW_CONFIDENCE",
+      "why_interesting": "MBO can separate durable resting interest from spoof-like or rapidly canceling displayed imbalance.",
+      "retest_with": ["historical MBO", "MBP-10", "trade flow"],
+      "target": "direction tie-breaker when live flow is weak",
+      "required_scope": ["weak-dipole only", "queue persistence bands", "per-regime"],
+      "shadow_output": "durable_book_contrarian_candidate",
+      "authority": "none"
+    },
+    {
+      "id": "od_regime_onset_operator",
+      "former_location": "odcore operator-discovery stack",
+      "former_status": "STRUCTURE_DETECTOR_NOT_FULLY_WIRED_TO_NG",
+      "why_interesting": "The operator detected energy/regime transitions in live streams and may provide move-readiness without claiming direction.",
+      "retest_with": ["NG historical L1", "NG historical MBO", "NG live stream"],
+      "target": "move onset, regime transition, and expected activity",
+      "required_scope": ["descriptive first", "no direction inference without separate evidence", "latency measured"],
+      "shadow_output": "od_regime_state",
+      "authority": "none"
+    }
+  ]
+}

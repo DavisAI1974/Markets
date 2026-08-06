@@ -1,0 +1,182 @@
+{
+ "note": "THE DOCUMENT REGISTRY. Greg, S112: 'we need to put the list of our working docs in the store or a section of the sop so one doesn't get forgotten about.' Same disease as A-17 one level up - a document that is on no list goes stale silently, and nothing can report it. MEASURED THE DAY THIS WAS BUILT: 55 of 151 tracked research/kalshi/*.py files were absent from KALSHI_TRADING.md, the index whose stated job is 'every Kalshi file, what it does, current vs old'; and PLANT_MAP.md had been EDITED THAT SAME SESSION while naming none of the four plant components built in it. So mtime is not staleness - CONTENT is, and only a content gate catches this.",
+ "classes": {
+  "LIVE": "must be kept current. A gate exists where the content can be computed; otherwise the trigger is stated and the andon can only remind.",
+  "RENDER": "GENERATED from a store. Never hand-edit - edit the store and re-render. Gated byte-identical by store.py check.",
+  "VAULT": "frozen, sha256-manifested. A change is a versioned vault event on Greg's go, never an edit. Gated by verify_gold.py.",
+  "RECORD": "dated and finished. NEVER updated - a handoff, kickoff, drop-in, ledger or findings memo describes the session that wrote it. Editing one is falsifying the record.",
+  "ARCHIVE": "moved out of the live surface deliberately. Consulted, not maintained."
+ },
+ "close_out_trio": {
+  "note": "Greg, S112: 'update all of our docs other than the 3 ending ones.' These three are written LAST, at close-out, because they summarise everything else. They are excluded from mid-session doc sweeps by design. S112 addition (Greg: 'include a doc that i can download and send to chat along with the drop ins when you're printing'): the ChatGPT hand-off ships WITH the drop-in and is GENERATED from the registry by chatgpt_handoff.py, so a finished item cannot appear in it as a live request - A-9's rule, one document over.",
+  "docs": [
+   "CLAUDE.md",
+   "SESSION_HANDOFF_<date>_S<N>.md",
+   "DROP_IN_S<N+1>.md"
+  ],
+  "ships_with": [
+   "CHATGPT_HANDOFF_S<N>.md (generated)",
+   "research/kalshi/chatgpt_tasks/S<N>_TASK_*.md (generated)",
+   "DATA_POINTS.md (the master data list, needed by the triage task)"
+  ]
+ },
+ "documents": [
+  {
+   "path": "CLAUDE.md",
+   "class": "LIVE",
+   "role": "the master pointer - one-line state, the read-first order, standing rules. Deliberately lean: it points at detail, it does not hold it.",
+   "update_when": "close-out only (member of the close-out trio), plus any STANDING rule change (D34 landed here mid-session because it is standing)",
+   "gate": null
+  },
+  {
+   "path": "KALSHI_TRADING.md",
+   "class": "LIVE",
+   "role": "THE FILE INDEX - every Kalshi file, what it does, current vs superseded. Curated prose per session, plus a GENERATED completeness appendix.",
+   "update_when": "any new research/kalshi file, same session it is created",
+   "gate": "index_py",
+   "gate_note": "every tracked research/kalshi/*.py must be NAMED somewhere in the file. The curated sections carry the judgment (current vs old); the generated appendix carries the completeness, so nothing can be silently missing."
+  },
+  {
+   "path": "DECISIONS.md",
+   "class": "RENDER",
+   "role": "the append-only binding-decision ledger, D1..D35 plus nonconformances, with the instance-inline rule.",
+   "update_when": "a decision is made - add to store/decisions.json, then render",
+   "gate": "render"
+  },
+  {
+   "path": "research/kalshi/agents/RUN_SOP.md",
+   "class": "LIVE",
+   "role": "THE SPEC BOOK, binding. Every station of the group cycle with verbatim spawn templates. Its appendix is a RENDER; the body is change-controlled prose.",
+   "update_when": "any change to how a run is spawned or scored - versioned diff on Greg's go, never an edit in place",
+   "gate": "render",
+   "gate_note": "the appendix is gated byte-identical against store/sop_templates.json; the prose body is change-controlled, not generated"
+  },
+  {
+   "path": "PLANT_MAP.md",
+   "class": "LIVE",
+   "role": "what runs where: every standing process, its host, branch, trigger and heartbeat. If a process is not on this map it is not a standing process.",
+   "update_when": "any new standing process, host, or plant control tool",
+   "gate": "index_sop_py",
+   "gate_note": "every .py the SOP names must appear here - non-circular, because the list is derived from another document rather than hand-kept"
+  },
+  {
+   "path": "research/kalshi/OPEN_ITEMS.json",
+   "class": "LIVE",
+   "role": "THE TRACKED WORK REGISTRY (D30). plant_status reads it at bring-up so an open item can be counted, not remembered.",
+   "update_when": "IN THE SESSION a thing is agreed - A-17's lesson: a commitment living in another item's prose is invisible to the count",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/knowledge/ng_brain.json",
+   "class": "LIVE",
+   "role": "THE BRAIN - plays, mechanisms, doctrine, instances. Schema brain-schema-1.",
+   "update_when": "a merge, a retirement, or a doctrine finding. Never hand-edit structure - brain_schema.py validates and migrates",
+   "gate": null
+  },
+  {
+   "path": "KEYS.md",
+   "class": "LIVE",
+   "role": "key inventory - names and holders ONLY, never values.",
+   "update_when": "a key is added, moved or retired. NOT rotated during the walk (standing)",
+   "gate": null
+  },
+  {
+   "path": "MISSION.md",
+   "class": "LIVE",
+   "role": "what the business is and what winning looks like.",
+   "update_when": "a scope or target change - D32 and D35 are both mission-level",
+   "gate": null
+  },
+  {
+   "path": "TODO.md",
+   "class": "LIVE",
+   "role": "short-horizon task list. SUBORDINATE to OPEN_ITEMS.json - if the two disagree, the registry wins.",
+   "update_when": "opportunistically; the registry is the system of record",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/README.md",
+   "class": "LIVE",
+   "role": "the agent handbook - roles, the five-specialist era, who owns which day class.",
+   "update_when": "a role is added or changed (state_auditor was the last)",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/QC_CHECKLIST.md",
+   "class": "LIVE",
+   "role": "the small-model conformance sweep, report-only.",
+   "update_when": "a new nonconformance class is found",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/knowledge/README.md",
+   "class": "LIVE",
+   "role": "how the brain is structured and how to read it.",
+   "update_when": "a schema change",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/mbo_refine_shared.md",
+   "class": "VAULT",
+   "role": "canonical specialist rule file - blind and refine read the SAME committed file byte-identically (D-S105). A separate copy could drift.",
+   "update_when": "versioned vault event on Greg's go only",
+   "gate": "verify_gold"
+  },
+  {
+   "path": "research/kalshi/agents/refine_gold_s105/",
+   "class": "VAULT",
+   "role": "the FROZEN gold vault, chmod 0444 + sha256 manifest, three off-site copies.",
+   "update_when": "never in place",
+   "gate": "verify_gold"
+  },
+  {
+   "path": "SESSION_HANDOFF_*.md",
+   "class": "RECORD",
+   "role": "the full detail of one session. The system of record for what happened.",
+   "update_when": "written once, at close-out. NEVER edited afterwards",
+   "gate": null
+  },
+  {
+   "path": "DROP_IN_S*.md",
+   "class": "RECORD",
+   "role": "the next session's opening instruction set. Its work list is GENERATED from the registry (A-9) so a DONE item cannot appear as a live instruction.",
+   "update_when": "written once, at close-out",
+   "gate": null
+  },
+  {
+   "path": "KICKOFF_*.md",
+   "class": "RECORD",
+   "role": "pre-DROP_IN era session openers.",
+   "update_when": "never - superseded by DROP_IN",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/*_S<N>.md",
+   "class": "RECORD",
+   "role": "per-session findings memos, ledgers, briefings and merge proposals. Dated by construction.",
+   "update_when": "never. A later correction goes in a LATER document or in the brain, never by rewriting the record",
+   "gate": null
+  },
+  {
+   "path": "CLAUDE_ARCHIVE_OD.md",
+   "class": "ARCHIVE",
+   "role": "the full OD/crypto-era and physics-era research, verbatim. Moved out of always-loaded context because it is history.",
+   "update_when": "never",
+   "gate": null
+  },
+  {
+   "path": "CHATGPT_HANDOFF_S<N>.md",
+   "class": "RENDER",
+   "role": "the external-research hand-off that ships with the drop-in. Generated from OPEN_ITEMS.json - items opt in with `delegable: true` and carry a `delegable_ask`.",
+   "update_when": "at close-out, and any time a delegable item is added or completed",
+   "gate": "generated"
+  },
+  {
+   "path": "DATA_POINTS.md",
+   "class": "RENDER",
+   "role": "THE MASTER DATA-POINT LIST - four tiers (SERVED / HELD / PLANNED / IDENTIFIED), every row labelled READ or NOT READ, with block, upstream source, cadence, what the blind sees, and known defects.",
+   "update_when": "any feed or serving change; regenerate with data_registry.py build --write",
+   "gate": "generated"
+  }
+ ]
+}

@@ -1,5 +1,272 @@
 # KALSHI TRADING — file index
 
+## S114 — the A-24 paper dissected per event; the two-sided lane MERGED; the decision order and the failure taxonomy
+
+- **`reasoning_method.decision_order` (brain s105.4)** — the seven-step order finally served to
+  specialists: classify -> inventory served/broken -> **pre-influence read then independent chain,
+  before any handed-down read** -> gates/damps/guards -> falsifier + pre-mortem + anti-default ->
+  **disposition {commit, abstain, override}** -> commit and hand off. Provenance D25 (S110, Greg).
+  Measured cause for building it: the canonical rule files carry ZERO occurrences of D23/D25/D31/
+  D32/D37/D39 or 'NO CALL', so none of this had ever reached a specialist by any channel. Carries
+  its own known gap - step 6 names ABSTAIN and the machinery cannot emit it (A-2/A-40).
+- **`agents/failure_judge.md` + `store/failure_judge.json` + `failure_localization.py`** — the
+  interaction-centric failure taxonomy (arXiv:2607.28802, Scale AI): every failure gets an
+  interaction EDGE and a FAULT SIDE naming which end owns the repair, plus the root-cause rule
+  (label the EARLIEST unrecovered failure; later errors are consequences). Applied to our own
+  history it inverts the headline - **context 16, model 8, owner 2, tool 2**. The role file is a
+  RENDER of its store, gated by `store.py check`. Registered as A-41.
+
+- **Brain s105.0 -> s105.4, 90 plays** — the two-sided winter/summer lane discovery lives in the
+  brain, NOT in a standalone doc (Greg: "Everything lives in the store now... put it where it can
+  be used"; an S114 standalone md was created and deleted the same session). Seven plays, all
+  PROVISIONAL with g24 forward tests registered in `research/kalshi/store/forward_tests.json`:
+  `weather.winter_heating_size_term`, `weather.renewables_masking_flip`,
+  `weather.freeze_conjunction_class2`, `weather.hydro_winter_buffer`,
+  `weather.summer_burn_lane_exclusion`, `weather.revision_seasonal_sign_map`,
+  `weather.month_tail_gates` (the full 12-month tail map, s105.2).
+- `forecasts/S114_TWO_SIDED_LANE_MERGE_PROPOSAL.json` — the D8 proposal + Greg's verbatim
+  adjudication + merge_gate admit verdicts with the PARK examination recorded. Backup:
+  `research/kalshi/knowledge/ng_brain_s105.0_backup_pre_s105.1.json`. Incumbents 82/82
+  byte-identical.
+- `research/kalshi/data_records/us48_hydro_daily_S114.csv` — 1,093 days of national hydro from the
+  keyless EIA-930 six-month files (2021H1, 2024, 2025, 2026H1); definition column marks the 2021
+  pre-split vintage.
+- `research/kalshi/data_records/walk_census_g18_g23_S114.csv` — all 60 modern scored walk days:
+  error, CDD/HDD revisions, model disagreement, computed ages, tape integrity panel. The dissection's
+  census artifact.
+
+## S111 (2026-08-05) — the reframe, the schema, three briefings
+
+- `research/kalshi/FORECAST_ARCHITECTURE_S111.md` — **READ FIRST.** The target: the product is a price
+  curve, the walk is a library build, the analog renders the forecast rather than making it. D32.
+- `research/kalshi/brain_schema.py` — the brain's schema: validate / migrate / sections / report.
+  Dry-run default, backup first, lossless round-trip enforced. D29.
+- `research/kalshi/condition_audit.py` — can a brain condition change state inside a block. D28.
+  Report-only. Carries an inline correction to its own original wording (D28.1).
+- `research/kalshi/condition_rate_experiment.py` — the rate/reference-window experiment. Its
+  information layer is superseded; its Q0 quantity triage (block-constant census) stands.
+- `research/kalshi/GAS_SIGNAL_BRIEFING_S111.md` (+ `_SYNTHESIS_`) — horizon, the dimension budget,
+  ranked signal gaps, folklore to drop.
+- `research/kalshi/GAS_OPTIONS_SYNTHESIS_S111.md` (+ `_BRIEFING_`) — contract mechanics, the gas vol
+  surface, and why our forecaster does not support an options business yet.
+- `research/kalshi/COMPETITIVE_BRIEF_S111.md` (+ `_FULL_`) — who is on the other side, where the
+  machines are weak, and whether the lag edge is crowded.
+- `SESSION_HANDOFF_2026-08-05_S111.md`, `DROP_IN_S112.md`.
+
+
+## NEW IN S110 (2026-08-02, current) — the plant's operating system, two group cycles, the dock
+
+**THE SPEC BOOK AND THE PLANT (read these first; RUN_SOP is binding)**
+- `research/kalshi/agents/RUN_SOP.md` — **THE SPEC BOOK, v1.6.** Every station of the group cycle with
+  VERBATIM spawn templates (AUD-1 auditor, BLD-1/BLD-2 blind + bridge, RFN-1/RFN-2 refine); slots are
+  lookups, never judgment. Change control: nothing runs off-SOP, a gap stops the line, changes are
+  versioned diffs on Greg's go, deviations are recorded nonconformances.
+- `DECISIONS.md` — the append-only binding-decision ledger (27 entries) with the instance-inline rule.
+  D23-D27 are Greg's open design calls.
+- `research/kalshi/plant_status.py` — the ANDON BOARD: one read-only command, PASS/WARN/FAIL per area.
+- `research/kalshi/agents/QC_CHECKLIST.md` — the small-model conformance sweep, report-only, 7 items.
+- `research/kalshi/decision_trace.py` — binds REASONING to the DECISION it produced (decision_id
+  changes the instant a number changes; `--embed` writes the self-contained record; `verify` fails any
+  unresolved id and names unbound ledgers).
+- `research/kalshi/batch_record.py` — the traveler on the pallet: one record per group, appended at
+  every station with session + SOP version + brain version.
+- `PLANT_MAP.md` (what runs where), `KEYS.md` (inventory, names only), `.gitattributes` (the CRLF trap
+  that false-flagged the whole gold vault as tampered).
+
+**THE REASONING LEDGERS (action beside reasoning; corpus state per D24)**
+- `research/kalshi/G22_REFINE_LEDGER_S110.md`, `G23_BLIND_LEDGER_S110.md`,
+  `G23_REFINE_LEDGER_S110.md` — every specialist's decision with the reasoning that produced it, each
+  bound by a DECISION CLAIMS table. `G22_REASONING_LEDGER_S109.md` is legacy-declared (pre-binding).
+
+**THE MERGES**
+- `research/kalshi/S110_MERGE_PROPOSAL.json` (s104.0) and `S110_MERGE_PROPOSAL_G23.json` (s105.0, and
+  the first RETIREMENT: the burn gate, with the dissent recorded in full).
+- `research/kalshi/adjudicate_g20_merge.py` — now carries the declared RETIREMENT class (may mutate
+  `status` only, must add its refuting evidence as a new key, before/after printed).
+- `research/kalshi/S110_MERGE_ADDENDUM_G22.md` — the G22 refine's twelve proposal items.
+
+**THE DOCK (paper trading)**
+- `research/kalshi/kalshi_auth.py` — signed REST client (RSA-PSS SHA256); prod + demo both verified.
+- `research/kalshi/kalshi_paper_ledger.py` — append-only paper ledger, four risk caps, 11/11 selftest.
+- `research/kalshi/ng_paper_loop.py` — the daily loop skeleton (public-API quotes, no keys needed).
+- `research/kalshi/KALSHI_DOCK_S110.md` — the full endpoint/auth/FIX reference and the routing decision.
+- `research/kalshi/tropical_feed.py` — the NHC tropical feed (the named summer gap), live-smoked.
+
+**REPAIRS AND MEASUREMENTS**
+- `research/kalshi/state_repair_s110.py` (audit f1/f3/f4/f5), `state_repair_s110b.py` (the CDD-ladder
+  artifact graft, identity-proven), `promotion_review.py`, `WINTER_RESIDUAL_S110.md` (the residual
+  tested in COLD at last: inert as a day timer, alive as a slope instrument).
+- `TURNAROUND_MEMO_S110.md` — the platform audit and the paper-trading go-plan.
+
+## NEW IN S109 (2026-08-01, current) — G22 blind, holes #9/#10/#11, the AUDITOR role, brain s103.7
+
+**THE SIXTH AGENT ROLE (audit and forecast are now separate jobs)**
+- `research/kalshi/agents/state_auditor.md` — CANONICAL, static, drop into every group unchanged. Reads
+  the WHOLE block before the blind spawns and hunts inputs that would mislead a specialist; emits NO
+  forecasts. Resolves hole #11's tension: cross-day reading is how eleven holes were found, but a
+  forecaster reading across days acquires information past its own decision point. The auditor
+  cross-compares freely (nothing to contaminate); the specialists run on causal slices. Carries the five
+  known KINDS of silently wrong input, the declared-vs-silent split, the findings schema, and a FIX-PHASE
+  contract. Trialled blind on G21: found the off-instrument defect S108 called the hardest of eight,
+  WITHOUT the scored-leg reconciliation S108 used.
+
+**CAUSALITY (hole #11 — the state let every specialist read past its own decision point)**
+- `research/kalshi/build_causal_slices.py` — cuts ONE SLICE PER DAY: every block <= day X, later blocks
+  dropped. A day's tape is served under the NEXT day's key, so the whole block in one file let a
+  specialist read its own outcome. All three first-run G22 specialists reached forward and all three
+  declared it. Self-audits; `forward_stamps()` also reports capture stamps past the decision point.
+- `research/kalshi/merge_perday.py` — joins per-day posteriors into the per-specialist `days[]` shape the
+  coordinator reads, GUARDED on owner_map: a mis-owned or missing day fails at the join.
+
+**DATA-INTEGRITY GUARDS (the enemy has now worn FIVE faces: empty, wrong-value, off-instrument, wrong-ENCODING, frozen-but-LIVE)**
+- `research/kalshi/state_health.py` — two new RECONCILIATION guards, not presence checks:
+  the b_share identity (`session_b_share == session_b_share_two_sided * (1 - unsided_volume_frac)`) HARD
+  at >0.002 (hole #9), and `squeeze_watch._live` vs `flow_calendar` (hole #10). Both negative-tested
+  against the real defect and across all 17 groups for false positives.
+- `research/kalshi/bshare_restage_repair.py` — HOLE #9. Recovers `session_b_share` by algebraic identity
+  without a data plane; idempotent, dry-run by default, declares each repair via `session_b_share_basis`.
+- `research/kalshi/squeeze_watch_live_repair.py` — HOLE #10. Re-derives the `_live` calendar limbs from
+  `flow_calendar` and the dead-sponsor arm from the block's own expiry calendar. Nulls
+  `calendar_limb_satisfied_live` rather than emitting a confident false — a derived boolean whose input
+  is masked must not be served as `false`.
+- `research/kalshi/build_anchor_block.py` — the anchor was NEVER DELIVERED to the agents (only g15 ever
+  had an anchor file). VERIFIES rather than asserts: each anchor must equal the PRIOR group's actual
+  last-day close (chain holds exactly G17->G23) and `anchor_lasthr_dir` is re-derived from the price
+  path. Carries `direction_caveat` / `close_in_range` / `net_ticks` — both G22 and G23 anchors sit at the
+  price RESOLUTION FLOOR.
+
+**THE WEATHER / DEMAND STACK (rebuilt on Greg's desk knowledge)**
+- `research/kalshi/gas_call_residual.py` — `demand - solar - wind - nuclear` (coal deliberately NOT
+  subtracted: that reproduces `gas_mwh` by construction). Two alignments, mechanism and decision-time.
+  Result: **UNTESTED IN ITS CLAIMED REGIME** — every block carrying `grid_stack` is WARM (mean gw_hdd
+  0.12-0.72) and Greg scopes the residual to cold/turning-cold. Prints its own power warning.
+- `research/kalshi/forecast_harness.py` — CDD FORWARD LADDER served (`forecast_gw_cdd`, `d_gw_cdd`,
+  `fwd7_gw_cdd_span`), `gw_cdd_d0` + `d_gw_cdd` on `sunday_reopen`, a `seam_delta_warning` (run deltas
+  baseline run-over-run, so across a seam difference the LEVELS) and a `ladder_basis_note` (an
+  unreachable absolute HDD bar is UNEVALUABLE in summer, not satisfied and not refuted).
+
+**THE RECORD (Greg, S109: "if you only have actions without context, it's tough to learn and to replicate")**
+- `research/kalshi/G22_REASONING_LEDGER_S109.md` — WHY each specialist decided what it did, attributed:
+  the right calls with their reasoning, the catches, and the after-the-fact corrections — including
+  Greg's four corrections and the places I was wrong.
+- `research/kalshi/S109_MERGE_PROPOSAL_G22.md` — P0 through P0.8, each with a falsifier. P0 weather as
+  hill+spike; P0.5 seasonal station weights (OHIO HAS NO STATION); P0.6 coal headroom; P0.7 the renewable
+  subtractor; P0.8 the residual's cold-only scope.
+- `SESSION_HANDOFF_2026-08-01_S109.md` + `DROP_IN_S110.md`.
+
+## S108 (2026-08-01) — G20 done, G21 walked, holes #7/#8, brain s103.6
+
+**Data-integrity guards (the recurring enemy has now worn THREE faces: empty, wrong-value, off-instrument)**
+- `research/kalshi/tape_reconcile.py` — HOLE #8. Asserts `tape_conditions` measures the CONTRACT BEING
+  FORECAST by reconciling its trade count against the scored leg; hard-fails outside [0.95, 1.05]. Wired
+  into `stage_group` after `state_health`. Presence is not enough and internal consistency is not enough -
+  only reconciliation settles it. Also carries `load_leg_trades`, the leg reader the harness now uses.
+- `research/kalshi/state_health.py` — extended: a `provisional_tail` weather day is now HARD (hole #7).
+- `research/kalshi/archive_blind.py` — THE FILENAME COLLISION (3rd occurrence). Archives the blind's
+  posteriors by MOVE, not copy, so a specialist that fails to write hard-fails the guard instead of
+  silently serving blind numbers at the refine's filename.
+- `research/kalshi/group_coordinate_refine.py` — `assert_not_the_blind()`: hashes every round-1 posterior
+  against its blind archive and refuses a byte-identical match. Negative-tested. Also renders
+  blind-vs-refine-vs-price.
+- `research/kalshi/group_coordinate_blind.py` — speaks the ENGINE schema natively (accepts
+  `expected_magnitude_usd`/`path_p50_curve` as well as the legacy names), killing a per-run hand-built
+  alias that lived in the scratchpad and did not survive a session. Regression-proven byte-identical.
+
+**Session bootstrap**
+- `research/kalshi/session_bootstrap.py` — one command from empty to ready: keys chmod 600, STS verify
+  (prints only the account tail), restore, then the completeness gate. `--verify-only` reports without
+  writing. Strips the container's PLACEHOLDER creds on every AWS call.
+- `scripts/session_start.sh` — extended to restore automatically when creds are present and to NO-OP
+  LOUDLY when they are not.
+
+**Measurement / scoring tools (all read committed artifacts only - no restore, no creds)**
+- `research/kalshi/blind_score_nonpooled.py` — **the scoring view doctrine now requires**: per-day errors,
+  `sum|err|`, drift AND the survival ratio together, because drift is a sum of SIGNED errors and cancels.
+- `research/kalshi/blind_drift_trend.py` — forward-curve drift group over group.
+- `research/kalshi/blind_lean_decomp.py` — is the blind's error a LEVEL bias or SHAPE? (answer: shape).
+- `research/kalshi/bshare_normalization_probe.py` — the probe that found the b_share defect.
+- `research/kalshi/blind_input_audit.py` — what the BLIND actually sees in a staged state.
+
+**Harness fixes**
+- `research/kalshi/flow_read.py` — two-sided b_share series + `unsided_volume_frac` + `phase_volume_lots`
+  / `phase_n_trades`; reads the SCORED LEG when a group context is supplied.
+- `research/kalshi/forecast_harness.py` — `prior_full_session` (the Monday stub fix), the two-sided
+  copy-through, `squeeze_watch`'s live calendar limb, `--group` on decision-state, leg-targeted tape read.
+- `research/kalshi/nws_temp_feed.py` — flags `provisional_tail` on the last day of any fetch range.
+- `research/kalshi/group_he24_he1_handoff.py` — stage-time exit-state precompute + `chain_regime_age_sessions`.
+- `research/kalshi/stage_group.py` — passes `--group`, runs the reconciliation, precomputes exit states.
+
+**Brain + merge record**
+- `research/kalshi/knowledge/ng_brain.json` — **s103.6, 67 plays** (backups s103.2/.3/.4/.5).
+- `research/kalshi/G20_MERGE_PROPOSAL_S108.json`, `BSHARE_NORMALIZATION_PROPOSAL_S108.json`,
+  `BSHARE_REPOINT_COMPLETION_S108.json`, `G21_MERGE_PROPOSAL_S108.json`,
+  `BSHARE_REPOINT_GAP_S108.md` — the four merges and the gap C found in the first b_share fix.
+- `research/kalshi/adjudicate_g20_merge.py` — takes ANY proposal path; verifies strictly-additive.
+- `SESSION_HANDOFF_2026-08-01_S108.md` / `DROP_IN_S109.md` — the record + the next box (the branch box
+  is BOX 1 there, to be pasted alone first).
+
+## NEW IN S104 (2026-07-21, current) — Friday->Monday cascade cleanup, G15 MBO round 2, coordinator guard
+
+- `research/kalshi/agents/mbo_refine_shared.md` + `mbo_specialist_{A,B,C,D,E}.md` — CANONICAL MBO
+  5-specialist causal-refinement files (A weekend/B Monday/C core/D Thu-EIA/E Fri-expiry), incl. the
+  round-2 HE24->HE1 handoff protocol + output contract. Registered in agents/README.md.
+- `research/kalshi/coordinate_g15_mbo.py` — now GUARDED (SELECT/ASSEMBLE only; hard-fails on any
+  day-move no specialist owns) + `--r2` round-2 mode + actual-curves-only render (own p50 path,
+  no re-anchored/scaled lines, no gap bridges). The guard + render pattern to port to every coordinator.
+- `research/kalshi/forecasts/grp15_mbo_specialist_{A..E}_r2.json` + `grp15_mbo_refined_r2.json` +
+  `renders/ng_refine_s95/g15_mbo_comparison_r2.json` — G15 MBO round 2: 12/12 dir, mean abs err 66.
+- `research/kalshi/knowledge/ng_brain.json` — **s102.5, 46 plays** (backup ng_brain_s102.4_backup.json;
+  the three cleanup proposals kept as review artifacts: ng_brain_{friday,midweek,monday}_proposal.json).
+- `research/kalshi/CASCADE_S104_friday_cleanup_summary.md` / `CASCADE_S104_monday_fix_summary.md` —
+  the per-day cascade tables (committed copies of the specialists' analyses).
+- `SESSION_HANDOFF_2026-07-21_S104.md` / `DROP_IN_S105.md` — the record + the next box.
+
+## NEW IN S101 (2026-07-21) — G12+G13 walked, day-class doctrine, rest-of-year data machine
+
+- `research/kalshi/run_g12_rt_s101.py` / `run_g13_rt_s101.py` — G12/G13 actuals (rt.json) +
+  continuous renders on the walked NG.n.0 basis from the local n0 store (the run_g11 precedent).
+- `research/kalshi/pull_july_2026_cl.py` — CL July 2026 raw top-up (CL year store ended 06-30).
+- `deploy/aws/pull_rest_2026.py` — THE REST-OF-YEAR DATA MACHINE (detached box job): NG.n.0/n.1
+  trades Mar->present, NG.FUT + ON/LNE.OPT + CL.FUT + LO.OPT statistics/definitions raw, CL.n.0/n.1
+  full year. Resumable, cost-guarded ($1.10 total measured).
+- `deploy/aws/cl_redecode_runner.py` — the 51 CL stub-Monday FREE redecode from done Databento
+  jobs (box-detached; window closes ~Aug 12-14).
+- `research/kalshi/knowledge/ng_brain.json` — s101.6, 27 plays (backups: s101.2/s101.5;
+  proposals: s101.3/s101.6 kept as review artifacts).
+- forecast_harness.py additions: `--mask-after` one-shot masking fix; squeeze_watch prompt-expiry
+  fields + unwind_watch.
+- Extended stores (S3-pushed): storage_consensus (hole closed, 47 reports), steo_vintage (11
+  vintages), flow_calendar + solar_calendar (-> 2026-12-31), vol_regime (-> Mar 13), n0 tape
+  (-> Mar 13 local; box extends to present on S3).
+- `SESSION_HANDOFF_2026-07-21_S101.md` / `KICKOFF_2026-07-21_S102.md` — the record + the next box.
+
+## NEW IN THE DASHBOARD SESSION (2026-07-20, current)
+
+- `dashboard/` — the Mission Control READ PLANE (dashboard wiring session, branch
+  `claude/dashboard-wiring-rgvahe`): FastAPI server (`dashboard/server.py`) + read-only
+  adapters over the signal core (brain / decision_state / lag map / fees / kalshi candles /
+  nymex minute bars / data-plane health) + the S100 prototype frontend wired with
+  REAL DATA / AWAITING DATA / SIMULATED truth badges. Executor lane deliberately NOT built
+  (last, per Greg). See `dashboard/README.md`; landing pad `DASHBOARD_HANDOFF_S100.md`.
+
+## NEW IN S100 (2026-07-20, current)
+
+- `research/kalshi/mos_cycle_feed.py` — feed A ph1: cycle-level MOS as-of (00z/06z/12z/18z,
+  weekend cycles; availability wall runtime+4.5h). Store S3 `weather/mos_cycle/`.
+- `research/kalshi/freeze_risk_feed.py` — feed E: basin freeze-off MIN temps (MAF/OKC/PIT/SHV),
+  thresholds-as-data. Store S3 `weather/mos_freeze/`.
+- `research/kalshi/lag_execution_map.py` + `kalshi_fill_model.py` — feed M: the lag execution
+  map on the KXNATGASD life + verified fee/spread model. Store S3 `kalshi_echo/`. Findings:
+  `research/kalshi/KALSHI_ECHO_MAP_S100.md` (maker-first verdict).
+- `research/kalshi/TWO_COACH_SPEC_S100.md` — Tier 3 item 6, printed (approval pending).
+- `research/kalshi/pull_july_2026.py` — the July 1-18 NG tape pull (done, idempotent).
+- `research/kalshi/LIVE_TELEMETRY_S100.md` — the live loop's first datum (7.7ms median).
+- `research/kalshi/vendor/` — verbatim vendor references: Databento raw-API example, the
+  IV/Black-76 tutorial (feed I ph ii pattern), `DATABENTO_LIVE_OPS_NOTES_S100.md` (M5 collector
+  design constraints: replay/snapshot/limits/reconnect).
+- `DASHBOARD_HANDOFF_S100.md` (repo root) — the parallel dashboard session's landing pad.
+- Brain: `knowledge/ng_brain.json` = **s101.2** (Tier 3 doctrine merged; s100.3 backup kept).
+
 > **TODO — FORECAST WORKFLOW (Greg S87, not built).** Build a workflow that runs the daily NYMEX
 > path-forecast lifecycle automatically:
 > 1. **By 5PM the day before** — score and LOAD tomorrow's forecast (pick the analog/expected-path
@@ -23,6 +290,124 @@
 The map of every Kalshi file: what it is, where it lives, and whether it's part of the CURRENT
 pipeline or an OLD/completed piece. Keep this current — add new files to the top section, move
 superseded ones down. (Started S81, 2026-07-12.)
+
+## S99 — four gate feeds + the Monday repair (CURRENT)
+- **`research/kalshi/steo_vintage.py`** + S3 `steo_vintage/` — FEED T (WIRED): the 7 frozen STEO
+  vintage workbooks (sep25..mar26), all 37 Table-5a series, MEASURED release-date joins
+  (knowable_from = release+1; Last-Modified never used), per-workbook column-origin detection,
+  revision deltas vs prior vintage (the freeze re-mark readable from 2026-02-11). Selftest 22/22.
+  `STEO_VINTAGE_NOTES_S99.md`.
+- **`research/kalshi/nuclear_outages.py`** + S3 `nuclear_outages/` — FEED R arm 1 (WIRED): EIA
+  daily US nuclear capacity-out 2007->present, wall period+1 strictly-prior, gaps stay gaps; the
+  freeze's 1.8->3.2 GW jump at D+1. `NUCLEAR_OUTAGES_NOTES_S99.md` — ALSO carries the Pyth
+  reckoning (NGD feeds never published; NATGAS 24/7 = Pyth Pro; FREE HERMES DIES 2026-07-31 ->
+  pyth_collector sunset decision) and the KXNATGASD settlement verification (Pyth per-contract
+  NGD 1-min close 17:00 EDT; 5bd-forward underlying roll; expiration_value = the settle print).
+- **`research/kalshi/grid_stack.py`** + S3 `grid_stack/` — FEED Q (WIRED): EIA-930 daily per-BA
+  demand + DAY-AHEAD demand forecast (DF) + gen by fuel + shares + labeled US48 burn estimate;
+  wall period+2; Eastern framing; freeze ramp 28.3->41.1 Bcf/d decision-time-visible.
+  `GRID_STACK_NOTES_S99.md`.
+- **`research/kalshi/options_surface.py`** + S3 `options_ng/` — FEED I phase i (WIRED; G13 gate
+  item CLOSED): NG options OI pin map off GLBX definition+statistics, BOTH roots (ON+LNE — the
+  "NG.OPT resolves to nothing" symbology trap), 81 sessions, top-5 OI walls / P/C / OI-weighted
+  strike / opex clock; opex anchors cross-check flow_calendar exactly. $4.67 substrate; monthly
+  chunking beats the 4-month 504. `OPTIONS_SURFACE_NOTES_S99.md`.
+- **`research/kalshi/databento_live_smoke.py`** — one-shot validation of the Bento LIVE plan
+  (Standard $179/mo, SUBSCRIBED S99 close; smoke test = S100 opener).
+- **`research/kalshi/renders/settle_delta_sweep_s99.json`** — Kalshi settle vs NYMEX 17:00 tape,
+  full KXNATGASD life: matched days median 0.1c; all big deltas = 5bd roll-window contract
+  mismatch (calendar spread, not oracle error).
+- **`research/kalshi/redownload_mondays.py`** (pre-existing S92 script, re-run S99) — repaired
+  the 22 NG stub Mondays Feb 2 - Jun 29 2026 found by the sweep (incl. ALL G12/G13 Mondays). CL's
+  51 stubs HELD for Greg (paid ~$130-165 vs free redecode before job expiry ~Aug 12-14).
+
+## S98 — the rewritten DATA GATE (the build list before any new group runs)
+- **`research/kalshi/knowledge/ng_brain.json`** — **s100.3, 23 plays** (MERGED 2026-07-20, Greg
+  approved: the C2 measurement - ratio reformulation REFUTED on comparable data, 0120 0.714 vs 0107
+  0.718; C2 kept + scoped per-instance, flip confirm completes as C1+C3+C4 on the modern tape
+  class; forward test rides G12). Backup `ng_brain_s100.2_backup.json`; record
+  `C2_RATIO_FINDINGS_S98.md` + `run_g11_fingerprints_s98.py` (all 12 G11 sessions fingerprinted on
+  NG.n.0, series_basis-tagged, pre-G11 counts reproduced exactly).
+- **`research/kalshi/storage_consensus.py`** + S3 `consensus/` — FEED D (WIRED): the EIA weekly
+  storage SURVEY CONSENSUS (the number the market is positioned against, vs the seasonal proxy),
+  29/29 weeks Sep 2025-Mar 5 2026, per-house rows + disagreement exposed, holiday-shifted prints
+  verified (incl. the Dec 29+31 double-print week), 0 blind-wall violations, named forward hole
+  Mar-Jul 2026. `STORAGE_CONSENSUS_NOTES_S98.md` = sources/caveats; 17 weeks of as-printed vs
+  current-vintage diffs handed to feed K.
+- **`research/kalshi/platform_sync.py`** — the ONE door between local cache and the S3 data plane
+  (M2): list / pull / push with per-prefix manifests, dry-run default, post-push verify.
+- **`research/kalshi/kalshi_ng_backfill.py`** + **`data/kalshi_ng/`** (local, gitignored; S3 push
+  pending) — FEED L: Kalshi NG family backfill off the public API's live+historical endpoint split
+  (`/historical/cutoff` = the moving boundary, 2026-05-21 at build). Full raw definitions + trades +
+  1-min candles for KXNATGASD/KXNATGASW/KXNATGASMON life and the winter annual NG markets.
+  `--selftest`, `--coverage`. HEADLINE FINDING: KXNATGASD did not exist before 2026-03-27 — the
+  walked winter has NO Kalshi NG daily market (Jan-Feb 2026: zero NG-linked Kalshi markets at all);
+  feed M's winter echo replay is structurally impossible, its lag/fill work runs on the Mar 30+
+  life instead. Dailies skip FRIDAYS (the weekly market owns Friday).
+- **`research/kalshi/KALSHI_NG_COVERAGE_S98.md`** — feed L's deliverable: branch-bins inventory
+  (collector born 2026-07-12; one named 12h outage Jul 16-17), the two-worlds API map + S80 code
+  drift, the 119-date winter coverage table (every date a named gap for the family), what
+  live-forward capture provides that history cannot (books, sub-minute).
+- **`research/kalshi/DATA_GATE_S98.md`** — THE AUTHORITATIVE DATA PLAN (Greg 2026-07-20: "this is what
+  we're doing before we do any more runs"). Supersedes the GATE section of
+  `SESSION_HANDOFF_2026-07-19_S97.md`. Organized by regime family (DEMAND / POSITIONING / DELIVERY):
+  Tier 0 = wire the three landed S97 feeds + `squeeze_watch` + the information clock; Tier 1 = G11
+  fingerprints on `.n.0` -> the C2 ratio reformulation (the G12 critical path); Tier 2 = feeds A-M
+  (model-cycle timing, vol regime, model disagreement, storage CONSENSUS, freeze-off risk, flow
+  calendar, cash basis, COT combined, options surface [required for G13], LNG feedgas sizing spike +
+  paid-data survey, revision-vintage audit, Kalshi NG data restore [L], lag echo replay + Kalshi
+  fill/fee model [M]); Tier 3 = brain doctrine (usage guidance, flip driver checklist, evidence-day
+  registry, two-books scoring split, squeeze-regime doctrine, the TWO-COACH spec). Section 0c = the
+  TWO-COACH ARCHITECTURE (Greg 2026-07-20): Kalshi = initial primary vehicle, NYMEX dailies quickly
+  after, one shared signal core, two separately-scored coaches; the lag is the Kalshi edge.
+  Gate-closure condition at the bottom defines when G12/G13 may run.
+- **`deploy/aws/AWS_PLATFORM_S98.md`** — the platform consolidation + AWS migration plan (Greg
+  2026-07-20: end the data sprawl; platform lives in AWS, hybrid with git). git = CODE, S3 = ALL
+  DATA one bucket + manifests, local = cache, live loop us-east-1 co-region with Kalshi.
+  Execution-speed verdict: the established 7-20s+ futures->Kalshi lag needs SUB-SECOND not sub-ms;
+  LLM never in the hot path; lag telemetry per fire (decay watch, never a retest). M1-M6 steps;
+  M1 = key rotation (Greg) blocks all pushes.
+- **S97 feed modules (landed S97, indexed here):** `research/kalshi/cot_feed.py` +
+  `data/cot/` (CFTC COT, publication-time blind wall); `research/kalshi/storage_regional.py` +
+  `data/storage_regional/` (EIA five-region + salt/non-salt); `research/kalshi/contract_structure.py`
+  + `data/contract_structure/` (49 fields incl. the CALENDAR-FRONT block that sees what the
+  OI-continuous front hides). WIRED into decision_state in S98 Tier 0 (audit-joins: 0 violations,
+  101 days).
+
+## S96 — G7 winter block + per-group refine + the settled protocol (CURRENT)
+- **PROTOCOL (Greg S96):** one-shot block-blind = the CANONICAL skill test; refine after EVERY group
+  (iterate until refined curves track via GENERAL rules only, n>=2 spanning groups; irreducibles declared);
+  renders PRINTED (sent to Greg) before each refine.
+- **`research/kalshi/forecast_harness.py`** — S96 BLIND FIX (storage/surprise joins strictly-prior-day; the
+  old `<=` leaked a storage Thursday's own 10:30 print) + **`reveal` subcommand** (day-sequential rolling-anchor
+  reveal packages: per-day actuals + per-leg fingerprint counts; kept for the LIVE-coach mode).
+- **`research/kalshi/forecasts/grp7.json`** — G7 blind + refined fields per day; `grp7_seq_experiment.json` —
+  the paused 3-day day-sequential experiment (its 1106 +1450g/+1350a hit = the day-boundary-turn evidence).
+- **`research/kalshi/knowledge/ng_brain.json`** — **s99.2, 21 plays** (S96 arc added: giveback_exhaustion_
+  boundary, mature_swing_alternation, giveback_origin_shelf, catalyst_continuity_frontrun,
+  chain_polarity_flip [four-condition confirm], failed_rally_tell, crash_regime_bands,
+  post_parabolic_bleed). Backups + all proposals alongside.
+- **`research/kalshi/forecasts/grp{7,8,9,10}.json`** — blind + refined fields per day for the four winter
+  blocks; `grp9` = the December surplus-collapse crash (lean-miss 1 -> polarity flip); `grp10` = the January
+  bleed (lean-miss 2, the false flip -> the hardened confirm + the bleed class).
+- **`research/kalshi/renders/ng_refine_s95/`** — g{7,8,9,10}_{continuous,overlay}.png + *_refined_*.png +
+  rt/score jsons + grp*_state.json + grp7_reveals.json; fingerprints.json spans Nov 4 -> Jan 16
+  (52 characterized days).
+
+## S95 — continuous-curve + roll-adjustment + refinement machinery (CURRENT)
+- **`research/kalshi/continuous_rt.py`** — THE RENDER FILE (canonical, date-parameterized): real-price RT
+  curve + optional `--guess` forecast overlay, rolls marked, weekend bridges broken. Use for any window.
+- **`research/kalshi/roll_adjust.py`** — contract-roll detection (instrument_id change) + back-adjust offsets.
+- **`research/kalshi/fast_tape.py`** — fast trade-price loader (grep-prefilter + npz cache, ~7x).
+- **`research/kalshi/precache_window.py`** — pre-decode a date window to npz.
+- **`research/kalshi/continuous_score.py`** — per-event scorecard + roll-adjusted skill overlay.
+- **`research/kalshi/characterize_turns.py`** — merge per-leg fingerprints into `fingerprints.json`.
+- **`research/kalshi/extract_guesses.py`** — pull guess-vs-actual scalars from the brain -> `guesses.json`.
+- **`research/kalshi/AGENT_RUNBOOK_S95.md`** — the two agent prompts (blind forecaster + unblinded refine).
+- **`research/kalshi/forecasts/`** — committed per-group forecast records (guess curve + reasoning) grp{3,4,5,6}.
+- **`research/kalshi/renders/ng_refine_s95/`** — committed renders (g3g4g5_continuous.png, g6_continuous.png,
+  *_rt.json, fingerprints.json, guesses.json, *_state.json) so they need no regeneration.
+- **`research/kalshi/knowledge/ng_brain.json`** — the ONE-FILE brain (s95.1; + s95.2 proposal to merge).
 
 > **FILE DISCIPLINE (Greg S87, load-bearing).** EDIT existing live files first; only create a NEW
 > file if one does not already exist for that purpose. Do not spin up a parallel file that
@@ -227,3 +612,173 @@ not on the live path).
   for its still-current parts (settle filter, leakage gate).
 - **Precise surprise→move regression** — deliberately NOT built (null); replaced by the merged
   architecture (release = catalyst/coarse size; book imbalance + exhaustion = direction/magnitude).
+
+<!-- BEGIN GENERATED FILE INVENTORY - store.py docs --write -->
+
+## COMPLETE FILE INVENTORY (generated - do not hand-edit)
+
+Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
+Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
+above carry the judgment (current vs superseded); this carries the completeness, so a
+new tool cannot go unlisted. **158 files.**
+
+- `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
+- `archive_blind.py` — move the blind's posteriors out of the refine's filenames (S108).
+- `batch_record.py` — the TRAVELER on the pallet (S110 turnaround memo 2.3, lot traceability).
+- `blind_drift_trend.py` — Is the BLIND improving group over group? Forward-curve drift is the scoreboard."""
+- `blind_input_audit.py` — What does the BLIND actually see? Audit the price-masked state G21 will be run on."""
+- `blind_lean_decomp.py` — Is the blind's error a LEVEL bias (removable by shifting the curve) or SHAPE?
+- `blind_score_nonpooled.py` — How much of the blind's error does the DRIFT metric cancel away? (S108, Greg's rule)
+- `blind_state_audit.py` — Strict blind-wall audit for NG forecaster decision-state artifacts.
+- `brain_audit.py` — the 82-play audit harness, IN THE REPO. (S111, fixing an S111 defect.)
+- `brain_backfill.py` — put the reasoning, the evidence and the past instances INTO the brain, and
+- `brain_conditions.py` — the CONDITIONS slot: vocabulary, verification, and curation harness.
+- `brain_schema.py` — give the brain a schema: typed, queryable, LOSSLESS. (S111, Greg's call)
+- `bshare_normalization_probe.py` — Is session_b_share structurally sub-0.50 because of how it is NORMALIZED?
+- `bshare_restage_repair.py` — S109: repair session_b_share in states staged on the S108 leg path, WITHOUT a data plane.
+- `bshare_threshold_study.py` — Does the 0.55 big_print_b_share threshold need to float?
+- `bucket_continuation.py` — the BUCKET CONTINUATION TABLE (forecaster method #1, the honest baseline).
+- `build_anchor_block.py` — S109: build the per-group ANCHOR BLOCK that gets handed to the specialists at spawn.
+- `build_blind_state.py` — Build the canonical blind forecaster state from the existing decision_state path.
+- `build_causal_slices.py` — S109 HOLE #11: build per-day CAUSAL SLICES of a blind state, so a specialist physically cannot
+- `cash_basis.py` — FEED G (family DEL): Henry Hub CASH vs front-futures-settle basis (S98 data gate).
+- `characterize_turns.py` — run month_characterize.characterize_day on the pivotal turn days of the
+- `chatgpt_brief_split.py` — generate one self-contained hand-off file per task from CHATGPT_BRIEF.
+- `chatgpt_handoff.py` — GENERATE the ChatGPT hand-off that ships with the drop-in. (Registry A-25.)
+- `coach_replay.py` — deterministic backtest of the ng_brain.json PLAYBOOK on the NG canary tape (S92 build).
+- `coal_commitment.py` — measure the COAL COMMITMENT CYCLE from EIA-930 (S113, registry item A-31).
+- `coal_prices.py` — accrue the EIA weekly coal basin spot prices. (Registry G-11.)
+- `condition_audit.py` — can each brain condition CHANGE STATE? (report-only; never fixes anything)
+- `condition_rate_experiment.py` — DERIVE the condition-health thresholds instead of asserting them.
+- `consensus_poll.py` — accrue forward STREET CONSENSUS (forecast) + ACTUAL for the
+- `continuous_rt.py` — the CONTINUOUS actual (RT) curve for the chronological walk (S95, Greg).
+- `continuous_score.py` — score a blind forecast (grpN.json) against the continuous actual (gN_rt.json),
+- `contract_structure.py` — the CONTRACT STRUCTURE feed for the NG intraday forecaster (S98).
+- `coordinate_g15_mbo.py` — COORDINATOR for the G15 MBO 5-specialist refine (S103; guard + render S104).
+- `cot_combined_feed.py` — CFTC COT FUTURES-AND-OPTIONS COMBINED positioning feed (DATA_GATE_S98 feed H).
+- `cot_feed.py` — CFTC Commitments of Traders (COT) positioning feed for the NG intraday forecaster.
+- `creds.py` — credential resolution, OUTSIDE the repo (S113, Greg: "no more scratchpad. It's in the sop").
+- `data_registry.py` — THE MASTER LIST OF EVERY DATA POINT WE HAVE. (Registry A-22.)
+- `databento_backfill.py` — TRUE-TICK historical NYMEX tape from Databento (S84).
+- `databento_live_smoke.py` — one-shot validation that the Databento LIVE plan is active (S99).
+- `decision_trace.py` — BIND the reasoning to the decision it produced (S110, Greg's question:
+- `defect_timeline.py` — which groups ran on a known-broken input, and was the EVIDENCE re-measured?
+- `due_gate.py` — serve the REGISTERED FORWARD TESTS into a group's run, and refuse a silent pass.
+- `eia_surprise.py` — historical EIA release SURPRISE for the NYMEX-canary release windows (S86).
+- `event_move_baseline.py` — the NYMEX-canary EVENT-MOVE baseline (S85).
+- `extract_guesses.py` — the per-day guess-vs-actual scorecard for G3/4/5 survived in the brain's
+- `failure_localization.py` — WHERE does the repair belong? (S114)
+- `fast_tape.py` — fast trade-price path loader for the continuous NG walk (S95 rebuild of the lost
+- `flow_calendar.py` — Flow calendar feed (family CAL) for the NG intraday forecaster -- DATA_GATE_S98 feed F.
+- `flow_read.py` — the full NON-PRICE microstructure flow read for a session (S105 data doctrine).
+- `forecast_contract.py` — Versioned output contract for the existing NG blind forecaster.
+- `forecast_harness.py` — turn-key helpers for the self-growing forecaster LOOP (S92 build).
+- `forward_curve.py` — the NYMEX forward-CURVE reader: backwardation/contango + prompt-vs-term conditioning
+- `free_ng_data_collector.py` — Collect free public drivers for Henry Hub NG and CME event-contract research.
+- `freeze_risk_feed.py` — FEED E (S100, DATA_GATE_S98) - freeze-off risk: producing-basin forecast MIN temps, cycle as-of.
+- `futures_kalshi_lag.py` — measure the LAG between the futures market (the price-discovery venue) and
+- `g15_mbo_engine.py` — G15 MBO causal REFINE engine (S103, ChatGPT audit branch).
+- `g17_actual.py` — build the G17 two-leg ACTUAL curve from per-contract MBO trades.
+- `g17_coordinate.py` — COORDINATOR for the G17 5-specialist BLIND panel (S105).
+- `g17_mbo_engine.py` — G17 MBO causal evidence for the refine (S105). Same extraction as
+- `g17_refine_coordinate.py` — COORDINATOR for the G17 MBO 5-specialist REFINE (round 1, S105).
+- `gas_call_residual.py` — S109 P0.7: the GAS CALL RESIDUAL - weather-driven load net of what renewables and baseload absorb.
+- `grid_stack.py` — FEED Q (family D/power): EIA-930 grid stack - daily demand, day-ahead demand
+- `group_actual.py` — build ANY group's two-leg ACTUAL curve from per-contract MBO trades, config-driven.
+- `group_config.py` — per-group turnkey config for the NG forecaster walk (S105).
+- `group_coordinate_blind.py` — GENERIC blind coordinator (S105), config-driven:
+- `group_coordinate_refine.py` — GENERIC refine coordinator (S105), config-driven:
+- `group_he24_he1_handoff.py` — GENERIC HE24->HE1 day-boundary handoff chain (S105). Config-driven:
+- `group_mbo_engine.py` — GENERIC MBO causal evidence engine (S105). Config-driven off group_config;
+- `he24_he1_handoff.py` — build the HE24->HE1 day-boundary handoff chain for the G15 MBO refine (S103).
+- `eia_bucket_study.py` — CONDITIONAL per-bucket event study (founder methodology correction).
+- `event_study.py` — Event-weight study: measure how much recurring scheduled releases move the
+- `intraday_study.py` — Intraday release-window event study using Yahoo 60m futures bars (~730d).
+- `macro_bucket_study.py` — PHASE-2 / WEAK-PROXY macro bucketing (NFP). LABELLED WEAK: the real consensus is
+- `macro_study.py` — Macro event-weight study. Explicit release-date lists (FOMC) + derived (NFP
+- `natgas_season_study.py` — (1) REGIME-SPLIT natgas bucketing - DATA-DISCOVERED regimes, NOT calendar months.
+- `natgas_weather_chain.py` — (2) WEATHER-DRIVER CHAIN: weather -> heating/cooling demand -> storage draw/build -> price.
+- `kalshi_auth.py` — the Kalshi signed-request client (G0 closure, S110). CLASSIC + margin lanes.
+- `kalshi_collector.py` — public-API snapshot collector for Kalshi prediction markets.
+- `kalshi_coupling_adapter.py` — feed Kalshi JSONL bins into news_coupling_research.py.
+- `kalshi_fill_model.py` — FEED M part 2 (S100, DATA_GATE_S98) - the Kalshi fill/fee model. Execution economics ONLY;
+- `kalshi_history.py` — pull HISTORICAL Kalshi trade + candlestick data around past scheduled releases.
+- `kalshi_ng_backfill.py` — FEED L (DATA_GATE_S98): Kalshi-side NG market data - inventory / backfill.
+- `kalshi_paper_ledger.py` — G1 of the paper-trading dock (S110 turnaround memo Part 3).
+- `kalshi_score.py` — settlement + scoring harness for Kalshi contracts (S78 Option A).
+- `kalshi_weather_forecast.py` — wire the OD-weather storage-NUMBER forecaster into the kalshi_score
+- `lag_execution_map.py` — FEED M part 1 (S100, DATA_GATE_S98) - the lag's NG-specific EXECUTION SHAPE on the KXNATGASD
+- `lag_exploit_backtest.py` — turn the MEASURED futures->Kalshi lag into a MEASURED, net-of-toll edge.
+- `lag_join.py` — the FUTURES->KALSHI lag join (realized-EV of the echo, net-of-fee), two modes.
+- `level_hit_dataset.py` — the PER-TRADE LEVEL-HIT dataset (S82; the continuation predictor).
+- `live_dipole_update.py` — Apply the existing live dipole as a likelihood update to a locked blind prior.
+- `merge_gate.py` — unattended adjudication for SOP gates 2 and 3. (Registry M-3 + A-7.)
+- `merge_perday.py` — S109: assemble per-DAY blind posteriors into the per-SPECIALIST shape the coordinator reads.
+- `model_disagreement.py` — FEED C (DATA_GATE_S98): MODEL DISAGREEMENT as a forecast-uncertainty proxy.
+- `month_characterize.py` — per-(commodity, MONTH) CONTINUOUS-tape characterizer. The per-agent TOOL the S88
+- `mos_cycle_feed.py` — FEED A PHASE 1 (S100, DATA_GATE_S98) - cycle-level MOS as-of, hour resolution.
+- `ng_historical_manifest.py` — Manifest contract for historical NG L1/trades and MBO replay.
+- `ng_historical_replay.py` — Deterministic G15 L1/trades + MBO replay through the live operator.
+- `ng_live_collector.py` — Durable live prompt-Henry-Hub collector, isolated from historical jobs.
+- `ng_live_operator.py` — Causal NG live onset, divergence, exhaustion, and MBO queue telemetry.
+- `ng_live_recover.py` — Best-effort upload of live NG DBN files left by an abrupt prior exit.
+- `ng_live_watchdog.py` — Restart the live NG collector when its process or heartbeat becomes stale.
+- `ng_paper_loop.py` — G2 of the paper-trading dock (S110): the DAILY PAPER LOOP skeleton.
+- `ng_rt_feature_state.py` — Causal feature-state contract for the NG Real-Time Refine Agent.
+- `ngwu_feed.py` — FEED N (family D/supply): the EIA weekly natural gas S/D balance, from the
+- `nrc_reactor_collector.py` — Collect NRC daily commercial reactor power status for NG power-burn research.
+- `nuclear_outages.py` — FEED R arm 1 (family D+S): U.S. nuclear capacity offline, daily (S99).
+- `nws_temp_feed.py` — the gas-demand TEMPERATURE feed for the NG path forecaster (S88, Greg's directive).
+- `options_iv_surface.py` — FEED I phase ii: the NG settle-IV surface (OPTIONS_COACH_RESEARCH_S100.1 E2 items 1-3).
+- `options_md_measures.py` — FEED I phase MD: the free measurement program on the settle-IV surface
+- `options_replay.py` — E4: the settle-IV replay of the walked winter (OPTIONS_COACH_RESEARCH_S100.1).
+- `options_surface.py` — FEED I phase i (family DEL/P): NG options OI-by-strike pin map + opex clock (S99).
+- `per_event.py` — the reporting contract for any measurement on this desk.
+- `plant_calendar.py` — the plant's clock and work cycle. RULES, not a loaded table.
+- `plant_status.py` — THE ANDON BOARD (S110, turnaround memo 2.4). One command, no arguments.
+- `platform_sync.py` — the ONE door between local cache and the S3 data plane (S98 M2, AWS_PLATFORM_S98.md).
+- `precache_window.py` — pre-decode every NG continuous day in a date window to npz (via fast_tape), so the
+- `promotion_review.py` — the play promotion/retirement REVIEW (S110 memo 1.4). Reporter only.
+- `proper_scoring.py` — Proper scoring for the existing NG blind forecast artifacts.
+- `pull_july_2026.py` — One-off ops (S100): pull the never-pulled July 1-18 2026 NG tape (year-pull boundary gap) into
+- `pull_july_2026_cl.py` — One-off ops (S100): pull the never-pulled July 2026 CL tape (S101; CL year store ends 20260630) (year-pull boundary gap) into
+- `pull_percontract_mbo.py` — pull RAW per-contract MBO (.dbn.zst, one file/day) for a specific NG monthly
+- `pull_year_mbp10.py` — pull a YEAR (or any month range) of continuous MBP-10 for CL+NG, month by month,
+- `pyth_backfill.py` — HISTORICAL per-second NYMEX tape from Pyth Hermes (S84).
+- `pyth_collector.py` — sub-second tick collector for the NYMEX/ICE futures Kalshi settles on, via Pyth Hermes.
+- `redownload_mondays.py` — One-off ops: re-download every corrupt Monday stub in nymex_cont/ (all Mondays were truncated to
+- `release_book_signal.py` — the S80 release-triggered BOOK signal (the MERGED architecture).
+- `release_signal_history.py` — test the S80 release-triggered signal on HISTORICAL Kalshi trade flow.
+- `render_util.py` — the ONE implementation of the walk's render rules (S107).
+- `replay_g15_mbo.py` — thin DRIVER (S103) that feeds historical NG MBO records through the EXISTING
+- `restore_substrate.py` — rebuild a fresh container's local data plane in ONE command (S107).
+- `roll_adjust.py` — contract-roll back-adjustment for the continuous NG.v.0 series (S95, Greg).
+- `run_g11_fingerprints_s98.py` — DATA_GATE_S98 Tier 1 item 1: G11 per-leg fingerprints on NG.n.0.
+- `run_g12_rt_s101.py` — build the G12 ACTUALS (rt.json) + continuous render on the walked NG.n.0 basis.
+- `run_g13_rt_s101.py` — build the G13 ACTUALS (rt.json) + continuous render on the walked NG.n.0 basis.
+- `run_g14_rt_s102.py` — build the G14 ACTUALS (rt.json) + continuous render on the DECIDED basis.
+- `run_g15_rt_s102.py` — G15 ACTUALS + render on the KALSHI-UNDERLYING basis (Greg's rule).
+- `session_bootstrap.py` — one command to take a fresh container from empty to ready (S108).
+- `solar_calendar.py` — FEED P (S98, Greg 2026-07-20: "do we have sun up/sun down time in our feed").
+- `spawn.py` — fill every SOP slot BY LOOKUP and emit the exact prompt. (Registry A-7.)
+- `squeeze_watch_live_repair.py` — S109 fix phase, findings f1 and f3 (state auditor, G22): squeeze_watch's "live" limbs are frozen.
+- `stage_group.py` — ONE-COMMAND staging so a group is completely ready (S105):
+- `standdown_ledger.py` — the SAVES. Every time a specialist talked itself out of firing a play, with
+- `state_health.py` — the stage-time COMPLETENESS ASSERTION (S107).
+- `state_repair_s110.py` — the S110 fix phase for the G23 pre-blind state audit (findings f1/f3/f4/f5).
+- `state_repair_s110b.py` — A11.1: the CDD-LADDER ARTIFACT repair (S110 merge addendum; Greg's go
+- `steo_vintage.py` — FEED T (family D/balance): STEO monthly VINTAGES - the frozen as-of NG balance (S99).
+- `storage_consensus.py` — weekly EIA natural gas storage ANALYST CONSENSUS as a decision-state
+- `storage_regional.py` — REGIONAL NG working-gas storage as a decision-state INPUT (S97).
+- `storage_vintage.py` — AS-FIRST-PRINTED vs CURRENT-VINTAGE EIA weekly storage (DATA_GATE_S98 feed K).
+- `store.py` — ONE STORE, GENERATED VIEWS. (Registry A-7.)
+- `tape_reconcile.py` — assert tape_conditions is measuring THE CONTRACT WE ARE FORECASTING (S108).
+- `test_ng_historical_replay.py` — (no docstring summary)
+- `test_ng_rt_feature_state.py` — (no docstring summary)
+- `tropical_feed.py` — the TROPICAL / HURRICANE feed (S110; the named summer gap, memo 1.4).
+- `databento_options_iv_black76_example.py` — VENDOR REFERENCE - Databento official 'Estimate implied volatility' tutorial (verbatim,
+- `verify_gold.py` — THE CONCRETE WALLS around the refine gold master (S105, Greg).
+- `vol_regime.py` — DATA_GATE_S98 feed B: VOL / RANGE REGIME per date (family: tape conditioner).
+- `weather_regime_score.py` — per-REGIME weather scoreboard (S84).
+
+<!-- END GENERATED FILE INVENTORY -->

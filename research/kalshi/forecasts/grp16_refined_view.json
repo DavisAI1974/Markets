@@ -1,0 +1,743 @@
+{
+ "group": 16,
+ "tag": "g16",
+ "kind": "unblinded_refine_view",
+ "brain_version_in": "s102.2",
+ "brain_version_out": "s102.3",
+ "anchor": {
+  "date": "20260327",
+  "price": 3.035,
+  "last_hour_dir": "up"
+ },
+ "price_basis": "Kalshi underlying = May/NGK26(996) whole block; no in-block roll; clean, no seam.",
+ "mult": 10000,
+ "refine_frame": "Confirmed S1-void spring INJECTION block; SLIDER=S3 (storage-trajectory+positioning own the lean, BEARISH). The never-masked tape_conditions session_b_share was SUB-0.50 on EVERY D-1 session (0.396-0.495) = a persistent, uninterrupted SELL-TAPE -> direction = DOWN every intraday session, interrupted only by the one S2 cold-add reopen GAP (0405). Block magnitude fix: the blind applied a UNIFORM shoulder-damp (~-150..-350) to chain-sided trend days that actually delivered -450..-790; a live chain-sided bleed delivers its shoulder TREND band, not a damped stub. Selector fix: on the three panel-split days (0401/0406/0407) the weather-UP angle lacked BOTH near-window band authority (HDD<16.4) AND D-1 buy-flow confirmation, so the S3/flow-DOWN angle wins (0405 is the positive control where the cold-add DID clear authority at the reopen and correctly owned the gap).",
+ "days": [
+  {
+   "date": "20260329",
+   "dow": "Sun",
+   "archetype": "s1void_reopen_deadsponsor_nofire_giveback",
+   "overnight_gap_usd": 100,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -44
+    ],
+    [
+     0,
+     -106
+    ],
+    [
+     2,
+     -194
+    ],
+    [
+     4,
+     -299
+    ],
+    [
+     6,
+     -405
+    ],
+    [
+     8,
+     -510
+    ],
+    [
+     10,
+     -616
+    ],
+    [
+     12,
+     -704
+    ],
+    [
+     14,
+     -774
+    ],
+    [
+     16,
+     -827
+    ],
+    [
+     18,
+     -862
+    ],
+    [
+     20,
+     -880
+    ]
+   ],
+   "guessed_net_usd": -880,
+   "day_move_usd": -780,
+   "refined_cum_usd": -780,
+   "actual_day_move_usd": -790,
+   "residual_usd": 10,
+   "refine_reasoning": "Dead-sponsor arm DECLINES to a NO-FIRE (calendar_front_next_spread 0.07, chg_3d 0.039 = tiny stranded premium; NGJ26 expired 0327, underlying already May/996): descriptor-grade, NOT a -E structural gap. So the 0327 up last-hour (big_print_b_share 0.817 = expiry-covering BUY) is artificial covering that reverses. KEY: a descriptor-grade covering pop gives back INTRADAY, not as an overnight gap - so the gap is ~flat (+100), and the give-back delivers through the session. SLIDER S3 (S1-void: fcst 11.5 gw, vs_normal -2.1, all warm cuts) hands the lean to storage-trajectory (0402 print +34 loose, ~+43 vs 5yr) = BEARISH, and the never-masked D-1 tape (0327 session_b_share 0.453) is a sell-tape. TREND band: base S1-void injection bleed (~-500) + the covering-pop give-back overlay (~-280). Blind guessed a -200 gap + -300 net; the gap sign was the error (covering gives back intraday)."
+  },
+  {
+   "date": "20260330",
+   "dow": "Mon",
+   "archetype": "monday_carry_selltape_trend",
+   "overnight_gap_usd": 20,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     20
+    ],
+    [
+     2,
+     40
+    ],
+    [
+     4,
+     0
+    ],
+    [
+     6,
+     -33
+    ],
+    [
+     8,
+     -132
+    ],
+    [
+     10,
+     -363
+    ],
+    [
+     12,
+     -515
+    ],
+    [
+     14,
+     -594
+    ],
+    [
+     16,
+     -634
+    ],
+    [
+     18,
+     -653
+    ],
+    [
+     20,
+     -660
+    ]
+   ],
+   "guessed_net_usd": -660,
+   "day_move_usd": -640,
+   "refined_cum_usd": -1420,
+   "actual_day_move_usd": -650,
+   "residual_usd": 10,
+   "refine_reasoning": "Monday R3 = carry the running side. The never-masked D-1 tape (0329 session_b_share 0.396 = the block's STRONGEST sell, big_print_b_share 0.20) confirms the covering pop sold hard on the reopen -> carry the sell-side. S1-void voids any winter-Monday UP-size, but it does NOT damp a chain-sided bleed to a stub: a live sell-tape delivers a full shoulder TREND session (Monday 06-10 ET catch-up shape). storage backdrop unchanged bearish (0402 loose print now d-2). TREND band. Blind -350 under-sized (the uniform-shoulder-damp error)."
+  },
+  {
+   "date": "20260331",
+   "dow": "Tue",
+   "archetype": "pre_eia_coil_neutral_tape",
+   "overnight_gap_usd": 10,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -13
+    ],
+    [
+     0,
+     -26
+    ],
+    [
+     2,
+     -39
+    ],
+    [
+     4,
+     -52
+    ],
+    [
+     6,
+     -65
+    ],
+    [
+     8,
+     -78
+    ],
+    [
+     10,
+     -91
+    ],
+    [
+     12,
+     -104
+    ],
+    [
+     14,
+     -114
+    ],
+    [
+     16,
+     -122
+    ],
+    [
+     18,
+     -127
+    ],
+    [
+     20,
+     -130
+    ]
+   ],
+   "guessed_net_usd": -130,
+   "day_move_usd": -120,
+   "refined_cum_usd": -1540,
+   "actual_day_move_usd": -110,
+   "residual_usd": -10,
+   "refine_reasoning": "Pre-EIA coil. D-1 tape (0330 session_b_share 0.494 = near-neutral, big_print 0.483) -> no conviction, the sell-tape idles into the print. COIL band (small down): a near-neutral D-1 session in S1-void with the print a coil-day away delivers a small chain-side drift, not a trend session. Blind -80 (right class, resid -10)."
+  },
+  {
+   "date": "20260401",
+   "dow": "Wed",
+   "archetype": "preprint_frontrun_trend_DOWN",
+   "overnight_gap_usd": -10,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -28
+    ],
+    [
+     0,
+     -67
+    ],
+    [
+     2,
+     -123
+    ],
+    [
+     4,
+     -190
+    ],
+    [
+     6,
+     -258
+    ],
+    [
+     8,
+     -325
+    ],
+    [
+     10,
+     -392
+    ],
+    [
+     12,
+     -448
+    ],
+    [
+     14,
+     -493
+    ],
+    [
+     16,
+     -526
+    ],
+    [
+     18,
+     -549
+    ],
+    [
+     20,
+     -560
+    ]
+   ],
+   "guessed_net_usd": -560,
+   "day_move_usd": -570,
+   "refined_cum_usd": -2110,
+   "actual_day_move_usd": -600,
+   "residual_usd": 30,
+   "refine_reasoning": "DIRECTIONAL FIX (blind +100, actual -600). The blind (agent C) leaned mild-UP on a FAR-window cold build (D+5/D+6 ~14.5 gw) + the Wed weak-up weekday_archetype. Both are OVERRIDDEN: (1) the far-window build is D+5+ and sub-band (14.5 < 16.4) - it does not price at the near grain (pricing-time / warm_cut_headroom); (2) the never-masked D-1 tape (0331 session_b_share 0.463) is a live sell-tape; (3) the loose print (0402 cons +34, largely priced) FRONT-RUNS into the pre-print session in a live sell-tape (catalyst_continuity_frontrun). Weekday_archetype never overrides chain+flow. TREND band down. This is instance 1 of 3 of the selector-divergence-resolution defect in this block."
+  },
+  {
+   "date": "20260402",
+   "dow": "Thu",
+   "archetype": "eia_print_prepriced_frontrun_coil",
+   "overnight_gap_usd": 20,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -12
+    ],
+    [
+     0,
+     -6
+    ],
+    [
+     2,
+     -21
+    ],
+    [
+     4,
+     -14
+    ],
+    [
+     6,
+     -8
+    ],
+    [
+     8,
+     -30
+    ],
+    [
+     10,
+     -82
+    ],
+    [
+     12,
+     -108
+    ],
+    [
+     14,
+     -142
+    ],
+    [
+     16,
+     -135
+    ],
+    [
+     18,
+     -146
+    ],
+    [
+     20,
+     -150
+    ]
+   ],
+   "guessed_net_usd": -150,
+   "day_move_usd": -130,
+   "refined_cum_usd": -2240,
+   "actual_day_move_usd": -130,
+   "residual_usd": 0,
+   "refine_reasoning": "PRINT day but MUTED (blind -450 OVER-sized, actual -130). The +34 print is a small surprise (pre-print 38 -> 34) and the move FRONT-RAN into 0401 (-600) the day before (catalyst_continuity_frontrun corollary: when the pre-print session already delivered the trend-down, the print-day chain-side leg ROUND-TRIPS). storage_thursday leg is chain-sided (down) but the day NET is a coil - the blind double-counted the print after 0401 had already delivered it. shoulder_counter_print_damping CONTRAST clause: this is a CHAIN-SIDED print so it still delivers a band, but a pre-priced/front-run chain-sided print delivers only the COIL band. Delivery 10:30-14:00."
+  },
+  {
+   "date": "20260405",
+   "dow": "Sun",
+   "archetype": "extended_weekend_S2_coldadd_gap_KEEP",
+   "overnight_gap_usd": 330,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     21
+    ],
+    [
+     0,
+     42
+    ],
+    [
+     2,
+     56
+    ],
+    [
+     4,
+     63
+    ],
+    [
+     6,
+     70
+    ],
+    [
+     8,
+     70
+    ],
+    [
+     10,
+     70
+    ],
+    [
+     12,
+     70
+    ],
+    [
+     14,
+     70
+    ],
+    [
+     16,
+     70
+    ],
+    [
+     18,
+     70
+    ],
+    [
+     20,
+     70
+    ]
+   ],
+   "guessed_net_usd": 70,
+   "day_move_usd": 400,
+   "refined_cum_usd": -1840,
+   "actual_day_move_usd": 400,
+   "residual_usd": 0,
+   "refine_reasoning": "KEEP (blind correct, resid 0). Extended 3-day weekend (Good Friday 0403 dark) reopen. The S2 cold-add (near-window D+2=16.9 gw clears the ~16.4 band-authority threshold for the GAP; cold adds never gated) owns the REOPEN GAP: +330. weekend_gap_delivery / block_gap_ownership weekend_cycle rung. CRITICAL: the cold-add's authority is spent on this ONE gap - intraday is ~flat (+70; D-1 0402 session_b_share 0.473 still a mild sell-tape, no buy follow-through). This is the POSITIVE CONTROL for the divergence-resolution doctrine: when the cold clears band authority AT the reopen, it owns the gap; it does not earn a multi-day up-lean."
+  },
+  {
+   "date": "20260406",
+   "dow": "Mon",
+   "archetype": "selector_fix_coldadd_spent_monday_trend_DOWN",
+   "overnight_gap_usd": -20,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     14
+    ],
+    [
+     2,
+     27
+    ],
+    [
+     4,
+     0
+    ],
+    [
+     6,
+     -22
+    ],
+    [
+     8,
+     -90
+    ],
+    [
+     10,
+     -248
+    ],
+    [
+     12,
+     -351
+    ],
+    [
+     14,
+     -405
+    ],
+    [
+     16,
+     -432
+    ],
+    [
+     18,
+     -446
+    ],
+    [
+     20,
+     -450
+    ]
+   ],
+   "guessed_net_usd": -450,
+   "day_move_usd": -470,
+   "refined_cum_usd": -2310,
+   "actual_day_move_usd": -470,
+   "residual_usd": 0,
+   "refine_reasoning": "SELECTOR FIX (blind +300, actual -470) - instance 2 of 3. Divergence: agents B/C called cold-add Monday catch-up UP (+400/+500), agent A called storage-down (-80, the accurate angle). The synthesis defaulted to a DAMPED MIDDLE (+300) - the primary defect. RESOLUTION: the cold-add fails BOTH gates - (a) near-window D0 12.5 / peak 15.8 never clears 16.4 (unobserved 13.6-16.4 band, no confirmed authority), (b) the never-masked D-1 tape (0405 session_b_share 0.495, thin Sunday, big_print_b_share 0.0) gives NO buy confirmation. The cold-add already owned its ONE gap (0405); with neither gate met, revert to the S3 down bleed. Monday R3 carries the sell-side. TREND band."
+  },
+  {
+   "date": "20260407",
+   "dow": "Tue",
+   "archetype": "selector_fix_coldpeak_sell_realization_coil_DOWN",
+   "overnight_gap_usd": 10,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -23
+    ],
+    [
+     0,
+     -46
+    ],
+    [
+     2,
+     -69
+    ],
+    [
+     4,
+     -92
+    ],
+    [
+     6,
+     -115
+    ],
+    [
+     8,
+     -138
+    ],
+    [
+     10,
+     -161
+    ],
+    [
+     12,
+     -184
+    ],
+    [
+     14,
+     -202
+    ],
+    [
+     16,
+     -216
+    ],
+    [
+     18,
+     -225
+    ],
+    [
+     20,
+     -230
+    ]
+   ],
+   "guessed_net_usd": -230,
+   "day_move_usd": -220,
+   "refined_cum_usd": -2530,
+   "actual_day_move_usd": -220,
+   "residual_usd": 0,
+   "refine_reasoning": "SELECTOR FIX (blind ~flat/+25, actual -220) - instance 3 of 3, the LARGEST flagged divergence. A +250 / B +500 (cold peak delivers up) vs C -300 (sell-the-realization). The synthesis AVERAGED the bimodal split into flat - the exact defect Greg flagged. RESOLUTION: agent C was directionally right and was the one angle that USED the never-masked D-1 flow (0406 session_b_share 0.448 = clear SELL). Gate check: the 'peak' HDD 15.8 is STILL < 16.4 (unobserved band, no authority) and flow is sell -> the cold is a headfake; sell-the-non-event. catalyst crest-mirror (D0 carries the max, forward stream cuts hard after -> give-back). COIL band down (peak-day realization is smaller than a trend session)."
+  },
+  {
+   "date": "20260408",
+   "dow": "Wed",
+   "archetype": "post_cold_softening_trend",
+   "overnight_gap_usd": 10,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -23
+    ],
+    [
+     0,
+     -55
+    ],
+    [
+     2,
+     -101
+    ],
+    [
+     4,
+     -156
+    ],
+    [
+     6,
+     -212
+    ],
+    [
+     8,
+     -267
+    ],
+    [
+     10,
+     -322
+    ],
+    [
+     12,
+     -368
+    ],
+    [
+     14,
+     -405
+    ],
+    [
+     16,
+     -432
+    ],
+    [
+     18,
+     -451
+    ],
+    [
+     20,
+     -460
+    ]
+   ],
+   "guessed_net_usd": -460,
+   "day_move_usd": -450,
+   "refined_cum_usd": -2980,
+   "actual_day_move_usd": -450,
+   "residual_usd": 0,
+   "refine_reasoning": "Post-cold softening (blind -250 under-sized, actual -450). Cold collapses (forecast_run_delta -0.579, near-window warming) -> sell-the-realization + pre-EIA. D-1 tape (0407 session_b_share 0.449 = sell). A chain-sided S1-void softening day with a live sell-tape delivers the TREND band, not a damped stub (the un-damping fix). TREND band."
+  },
+  {
+   "date": "20260409",
+   "dow": "Thu",
+   "archetype": "eia_print2_highactivity_chainsided_trend",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -49
+    ],
+    [
+     0,
+     -24
+    ],
+    [
+     2,
+     -85
+    ],
+    [
+     4,
+     -55
+    ],
+    [
+     6,
+     -30
+    ],
+    [
+     8,
+     -122
+    ],
+    [
+     10,
+     -336
+    ],
+    [
+     12,
+     -439
+    ],
+    [
+     14,
+     -580
+    ],
+    [
+     16,
+     -549
+    ],
+    [
+     18,
+     -592
+    ],
+    [
+     20,
+     -610
+    ]
+   ],
+   "guessed_net_usd": -610,
+   "day_move_usd": -610,
+   "refined_cum_usd": -3590,
+   "actual_day_move_usd": -610,
+   "residual_usd": 0,
+   "refine_reasoning": "Second EIA print, cons +46 = larger loose injection, surplus BUILDING (vs_5yr +45->+58). CHAIN-SIDED (agrees with the down chain) and delivered on the block's MOST ACTIVE D-1 tape (0408 n_trades 55490, big_prints 105 = block max; session_b_share 0.45 sell). storage_thursday high-activity chain-sided delivery -> full TREND band down (contrast with 0402: this print was NOT pre-priced by a single front-run day and the surplus was building, so it delivers rather than round-trips). Blind -500 (nearly right, resid +110). Delivery 10:30-14:00."
+  },
+  {
+   "date": "20260410",
+   "dow": "Fri",
+   "archetype": "friday_range_giveback_coil",
+   "overnight_gap_usd": -10,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -18
+    ],
+    [
+     0,
+     -36
+    ],
+    [
+     2,
+     -54
+    ],
+    [
+     4,
+     -72
+    ],
+    [
+     6,
+     -90
+    ],
+    [
+     8,
+     -108
+    ],
+    [
+     10,
+     -126
+    ],
+    [
+     12,
+     -144
+    ],
+    [
+     14,
+     -158
+    ],
+    [
+     16,
+     -169
+    ],
+    [
+     18,
+     -176
+    ],
+    [
+     20,
+     -180
+    ]
+   ],
+   "guessed_net_usd": -180,
+   "day_move_usd": -190,
+   "refined_cum_usd": -3780,
+   "actual_day_move_usd": -190,
+   "residual_usd": 0,
+   "refine_reasoning": "Friday range give-back. weekend_crest_friday NOT met (chain is a soft bleed, not stretched at an extreme; no live BUILDING catalyst - cold done, next print 0416 far off d-6). D-1 tape (0409 session_b_share 0.45 sell) but Friday range compresses the session. COIL band, mild bleed continuation. Blind -200 (right, resid -10)."
+  }
+ ]
+}

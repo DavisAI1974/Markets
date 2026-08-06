@@ -1,0 +1,100 @@
+{
+ "specialist": "B",
+ "lens": "monday_weekend_information_catchup",
+ "group": "g19",
+ "brain_version": "s102.9",
+ "round": 1,
+ "days_owned": ["20260511", "20260518"],
+ "doctrine_note": "BLIND round-1 Monday catch-up refine: PRICE curve masked; my only market-force inputs are the price-masked decision_state + the FULL never-masked MBO tape_conditions of each Monday's D-1 feeding session + A's weekend-seam bridge. A INFORMS, B DECIDES, B OWNS both Monday day-moves (coordinator guard enforces single ownership). B-lens applied: (1) Monday direction stays with the D-1 (Friday+Sunday) trade tilt; the 06-10 ET catch-up window is where Monday decides - the overnight session is drift the US morning ratifies or reverses (monday.catchup_window_tilt_gate). (2) minute-grain imb_flow is a known Monday sampling artifact - demoted to diagnostic; phase table + session turns + big-print/L1 lean are the primary objects. (3) MBO book layer STANDS DOWN (no book_trustworthy verdict) - reads lean on trade-flow + big_print_b_share + l1 quote_bid_share, never a reconstructed-book divergence. (4) g18_covering_rally_s105 forward test: run covering_absorption_directional_tell on the CLOSE-EXIT (big_print_b_share + l1 quote_bid_share vs aggressor b_share) to separate ALIGNED-DELIVERY (continue the chain) from COVERING-ABSORPTION (SELL absorbed under holding price -> UP) - but crowded short is a squeeze TAIL, not a default flip; confirm, and time-stamp absorbed-not-spent vs absorbed-then-spent. (5) covering_giveback_self_limiting: a one-shot covering give-back does NOT license extending UP unless a FRESH stack rebuilt AND has not yet discharged.",
+ "cross_cutting_mbo_finding": "Both Mondays resolve DOWN at the catch-up window, but through STRUCTURALLY OPPOSITE close-exit tells, and the B-lens sharpening of the S105 covering-absorption discriminator is that it must be run on the CLOSE-EXIT *and time-stamped*: absorbed-NOT-spent reprices UP on the Monday catch-up, but absorbed-THEN-spent (the covering fired and half gave-back by the close, exhaustion_flag true) is a fat upper TAIL, not a p50 flip - EVEN WHEN the COT is freshly worsening. 0508->0511: aggressor b_share 0.451 SELL with big_print 0.458 and l1 0.509 sitting AT/barely-above the sell aggressor (no divergence) = ALIGNED-DELIVERY DOWN, an accelerating -2692 final phase (84% of the -3214 session) that is unrealized-ahead; covering fuel present (COT 2.83) but UNFIRED -> the catch-up CARRIES the down chain (monday_weekend_gap: no fresh gap driver -> carry the Friday side). 0515->0518: big_print 0.506 and l1 0.526 sit clearly ABOVE aggressor 0.464 = a GENUINE covering-absorption-UP tell on the +703 late phase (the fresh-COT 0.94 nudge) - but it is a SPENT one-shot, exhaustion_flag true, close_off_extreme 0.5 (half already given back) -> the reopen UP lean is an overnight HEAD-FAKE (monday.overnight_headfake_into_catchup) that the 06-10 catch-up REVERSES; the age-5 down chain reasserts (catchup_window_tilt_gate sell-the-news fade). GENERAL MECHANISM (+n): on a Monday the catch-up window inherits the FRIDAY-CLOSE STATE, not the gap sign; diagnose it by whether the close-exit covering-absorption tell was UNSPENT (absorbed-not-given-back -> UP catch-up) vs SPENT (fired-and-half-given-back -> reopen up-gap is head-fake, chain reasserts DOWN). A freshly-worsening COT widens the upper tail but does not by itself flip the p50 once the covering has already discharged into the Friday close.",
+ "days": [
+  {
+   "date": "20260511",
+   "dow": "Mon",
+   "day_class": "first_monday_of_block_weekend_information_catchup",
+   "blind_direction": -1,
+   "blind_net_usd": "n.a.",
+   "posterior_direction_by_horizon": {
+    "overnight_reopen_20_06": -1,
+    "catchup_06_10": -1,
+    "afternoon_close_10_close": -1,
+    "note": "all-horizon DOWN: accelerating aligned-sell close carries the reopen; catch-up window ratifies the down chain; no fresh weekend driver to fade."
+   },
+   "expected_magnitude_usd": -450,
+   "expected_magnitude_band_usd": [-800, 150],
+   "overnight_gap_usd": -60,
+   "onset_time_et": "06:30",
+   "turn_time_et": null,
+   "trend_vs_chop": "trend_down",
+   "continuation_vs_reversal": "continuation",
+   "path_p50_curve": [[20, 0], [22, -30], [0, -45], [2, -55], [4, -60], [6, -90], [8, -230], [10, -320], [12, -400], [14, -450]],
+   "confidence": 0.57,
+   "weight_assigned": {"blind": 0.65, "causal_mbo": 0.35, "note": "price masked -> the immutable chain-continuation blind is core; the never-masked aligned-sell tape (0508 phase flow, big-print/L1 lean) is the confirming causal update, not a replacement."},
+   "evidence_used": [
+    "structure.covering_absorption_directional_tell run on the 0508 CLOSE-EXIT: aggressor b_share 0.451 SELL, big_print_b_share 0.458 and l1 quote_bid_share 0.509 AT/barely-above the sell aggressor = NO absorption divergence = ALIGNED-DELIVERY DOWN (flow direction wins), not a covering exit",
+    "daytype.monday_weekend_gap (S96.2 R3): no fresh weekend gap driver -> carry the Friday side; the accelerating -2692 final phase (of -3214) is press building into the bell (phase_b_share declining 0.469->0.437), unrealized-ahead",
+    "monday.catchup_window_tilt_gate: inherited D-1 down tilt carried through the 06-10 window; driver_realization = none realized over the weekend (COT 05-05 stale, covering unfired) -> catch-up ratifies, does not fade",
+    "daytype.covering_giveback_self_limiting: covering fuel present (COT pctile_1y 2.83, mm_net -107489, chg_wow -10244) but NOT YET FIRED at the anchor -> a crowded short is a squeeze TAIL underneath, not a default UP flip",
+    "A weekend-seam bridge: inherited_exit_state trend_down_delivery_press, exhaustion_flag false, gap_ownership unrealized_ahead_down, bias_for_B DOWN small-to-moderate"
+   ],
+   "evidence_rejected": [
+    "A reopen_scenario early_covering_pulse_fires_UP (0.15) as p50 - kept in the band's upper edge only; no absorption tell at the close to birth it",
+    "raw minute-grain imb_flow (Monday sampling-artifact trap) as a direction object - demoted to diagnostic",
+    "sizing this DEEP like a mature crash-flush: the crowded-short covering fuel caps the downside, so a moderate down-continuation, not a big flush"
+   ],
+   "stand_down_reasons": [
+    "MBO BOOK layer stands down (no book_trustworthy verdict) -> trade-flow + big_print + resting-bid lean only, no reconstructed-book divergence",
+    "reopen thin-tape expected to fail the flow floor (A live_reopen_watch) -> the overnight read is drift, weighted low; the catch-up window is the decision object"
+   ],
+   "selection_reason": "First Monday of the block sits in the DOWN-PRESS first half: an aligned-sell delivery accelerating into the 0508 close, no absorption tell, no fresh weekend driver, covering fuel present but unfired. B owns a moderate DOWN continuation anchored to 2.750; the reopen gap sign is noise, any bounce is dead-cat/gap-rejection fuel.",
+   "a_bridge_taken_or_overridden": "TAKEN: A's direction (DOWN) and small-to-moderate qualifier, A's aligned-delivery/no-absorption close-exit read, and the unrealized-ahead gap_ownership. OWNED/decided: magnitude -450 (moderate, sized between chain-drift-class bottom and the accelerating-press strength, capped by crowded-short squeeze risk underneath) and the all-horizon path. No override of A's read.",
+   "mbo_verdict": "ALIGNED-DELIVERY DOWN confirmed on the 0508 close-exit (bigs/l1 at the sell aggressor, no divergence); book stands down; covering fuel unfired (squeeze tail underneath, not a flip); catch-up carries the down chain. Moderate DOWN, continuation."
+  },
+  {
+   "date": "20260518",
+   "dow": "Mon",
+   "day_class": "regular_monday_post_spent_covering_weekend_information_catchup",
+   "blind_direction": -1,
+   "blind_net_usd": "n.a.",
+   "posterior_direction_by_horizon": {
+    "overnight_reopen_20_06": 1,
+    "catchup_06_10": -1,
+    "afternoon_close_10_close": -1,
+    "note": "overnight UP head-fake (Friday's spent-covering + l1 bid-lean prints a thin reopen gap up), REVERSED through the 06-10 catch-up (sell-the-news fade of the spent covering); the age-5 down chain reasserts into the close."
+   },
+   "expected_magnitude_usd": -550,
+   "expected_magnitude_band_usd": [-1050, 350],
+   "overnight_gap_usd": 90,
+   "onset_time_et": "07:00",
+   "turn_time_et": "07:00",
+   "trend_vs_chop": "chop_to_trend_down",
+   "continuation_vs_reversal": "reversal",
+   "path_p50_curve": [[20, 0], [22, 80], [0, 90], [2, 60], [4, 25], [6, -20], [8, -290], [10, -400], [12, -500], [14, -550]],
+   "confidence": 0.52,
+   "weight_assigned": {"blind": 0.60, "causal_mbo": 0.40, "note": "the close-exit covering-absorption tell (bigs 0.506/l1 0.526 above aggressor 0.464) is MATERIAL MBO evidence, earning more causal weight than 0511; but the spent-vs-fresh timing judgment and the age-5 chain keep the immutable down-chain blind core."},
+   "evidence_used": [
+    "structure.covering_absorption_directional_tell on the 0515 CLOSE-EXIT: big_print_b_share 0.506 and l1 quote_bid_share 0.526 both ABOVE aggressor b_share 0.464 = GENUINE covering-absorption UP on the +703 late phase (the fresh-COT 0.94 nudge). Tell CONFIRMED - but time-stamped SPENT (realized into the close, exhaustion_flag true, close_off_extreme_frac 0.5 = half given back)",
+    "daytype.covering_giveback_self_limiting: the +703 covering is a ONE-SHOT that already DISCHARGED Friday; a spent square-up does NOT license extending UP. The COT is freshly worsening (0.94, chg_wow -12576) but the run into it fired Friday, not since -> fat upper tail, not a p50 re-fire",
+    "monday.overnight_headfake_into_catchup: the reopen up-gap (Friday's covering + l1 bid-lean) is an age-0 thin-book lean on NO forward driver = head-fake reversed through the catch-up",
+    "monday.catchup_window_tilt_gate: E.monday_bias down + E.driver_realization = driver PEAKED over the weekend -> the 06-10 window is a SELL-THE-NEWS fade, not an extend",
+    "monday.seam_chainage_accommodation_gate: inherited chain age 5 (mature, >=3) -> ph2 late-buy ABSORBED, price still falls, close near-low -> size DEEPER than a young-chain carry; capped by the fresh crowded short underneath",
+    "A weekend-seam bridge: E's 05-15 positioning_spent_fade CONFIRMED against the tape, gap_ownership spent/chain_drift, bias_for_B DOWN small-to-moderate with a fat UPPER squeeze tail"
+   ],
+   "evidence_rejected": [
+    "A reopen_scenario covering_extends_UP (0.18) as p50 - the covering already discharged into the Friday close (exhaustion_flag true); kept as the fat upper tail (0.94 + NGM26 opex 05-26), not the central call",
+    "defaulting to UP just because the crowded short is the block's most extreme (0.94): per g18_covering_rally_s105 the crowded short is a squeeze TAIL, not a default flip - the tell must be UNSPENT to flip, and here it is spent",
+    "raw minute-grain imb_flow (Monday trap) as a direction object - demoted to diagnostic",
+    "sizing the DOWN as deep as a pure mature-chain flush: the freshly-worsening 0.94 short caps the downside and fattens the up-tail, so a moderate DOWN with an asymmetric wide band"
+   ],
+   "stand_down_reasons": [
+    "MBO BOOK layer stands down (no book_trustworthy verdict) -> trade-flow + big_print + resting-bid lean only",
+    "reopen thin-tape (0515 trades_per_min 27.9, already thinning vs 0508's 30.6) expected to fail the flow floor -> overnight weighted low; the catch-up window owns the decision",
+    "genuine forward-test tension (spent-vs-fresh 0.94 covering) -> confidence held moderate (0.52) and the upper band kept fat, not falsely precise"
+   ],
+   "selection_reason": "Second weekend-feeding Monday after a covering give-back: Friday's late +703 covering-absorption UP tell is genuine but SPENT (fired into the close, half given back). Self-limiting doctrine + driver peaked over the weekend -> the reopen up-gap is a head-fake, the 06-10 catch-up fades it, and the age-5 down chain reasserts. B owns a moderate DOWN anchored to E's 05-15 close, with an honestly fat upper squeeze tail.",
+   "a_bridge_taken_or_overridden": "TAKEN: A's direction (DOWN) and small-to-moderate qualifier, A's confirmation of E's positioning_spent_fade, the spent/gap-reject gap_ownership, the sell-the-news driver_realization, and A's fat UPPER squeeze tail (kept in the band, not the p50). OWNED/decided: magnitude -550 (moderate-deep from the age-5 mature-chain absorption, capped by the fresh crowded short), the overnight-up-head-fake-then-reverse intraday path, and the asymmetric wide band [-1050, +350]. No direction override; I sharpened A's spent-covering read into the time-stamped absorbed-then-spent discriminator.",
+   "mbo_verdict": "Covering-absorption UP tell CONFIRMED on the 0515 close (bigs/l1 above the sell aggressor) but SPENT (exhaustion true, half given back); self-limiting -> no UP re-fire despite the freshly-worsening 0.94 COT; the reopen up-gap is a head-fake the catch-up reverses; age-5 down chain reasserts. Moderate DOWN, reversal-of-reopen-bounce, fat upper tail."
+  }
+ ],
+ "summary": "B-lens Monday catch-up refine, g19 covering-rally block (COT pctile_1y 2.83->0.94). TWO Mondays, BOTH -> DOWN, opposite close-exit tells. 0511 (first Monday, anchor 2.750 05-08, dir -1): 0508 close = ALIGNED-DELIVERY DOWN, accelerating -2692 final phase, bigs 0.458/l1 0.509 AT the sell aggressor 0.451 (no absorption); covering fuel present (2.83) but UNFIRED -> catch-up carries the down chain; expected_magnitude -450, band [-800,150], overnight_gap -60, onset 06:30, trend/continuation, took A's DOWN small-to-moderate. 0518 (post-spent-covering, inherits E 05-15 positioning_spent_fade): 0515 close = GENUINE covering-absorption UP tell (bigs 0.506/l1 0.526 above aggressor 0.464 on the +703 nudge) but SPENT (exhaustion true, close_off_extreme 0.5); reopen up-gap is a head-fake the 06-10 catch-up reverses (sell-the-news fade); age-5 mature down chain reasserts; expected_magnitude -550, band [-1050,350] (fat upper squeeze tail: 0.94 + NGM26 opex 05-26), overnight_gap +90, onset/turn 07:00, chop_to_trend_down/reversal, took A's DOWN small-to-moderate. Cross-cutting: run covering_absorption_directional_tell on the CLOSE-EXIT and TIME-STAMP it - absorbed-not-spent reprices UP on the catch-up, absorbed-then-spent is a fat TAIL not a p50 flip, even under a freshly-worsening COT. Book stands down both days; minute-grain imb_flow demoted. B owns both numbers."
+}

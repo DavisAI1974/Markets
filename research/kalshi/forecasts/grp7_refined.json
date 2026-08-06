@@ -1,0 +1,645 @@
+{
+ "group": 7,
+ "tag": "g7_refined",
+ "brain_version": "s95.2",
+ "protocol": "one_shot_block_blind",
+ "anchor": {
+  "date": "20251104",
+  "price": 4.317,
+  "last_hour_dir": "down"
+ },
+ "block_lean": "Modest give-back off the 4.317 cum-extreme in the first three sessions (swing 4 sessions old but the counter-move trigger is only half-armed, so a partial fade not a crash), then the hard_heat HDD ramp wins the block per the G6 lesson - a W: early dip, big hard-heat weekend-gap Monday recovery, a mid-block moderation give-back through storage Thursday, and a re-cold recovery into the close, net modestly ABOVE the anchor.",
+ "note": "RENDER VIEW of the refined curves (refine agent output); originals live in grp7.json days[].",
+ "days": [
+  {
+   "date": "20251105",
+   "dow": "Wed",
+   "group": 7,
+   "archetype": "mature-swing give-back probe off the 1104 extreme",
+   "reasoning": "R4 mature_swing_alternation: the up-swing is 4 sessions old (G6 tail 1030 +2580 / 1031 / 1103 / 1104 chained as a YOUNG swing) and 1104 closed at a fresh material block extreme (4.317) - in a MATURE swing (>=4 sessions) every material fresh extreme close is followed by a give-back/hold session, never a consecutive extension (G7 5/5: 1104->1105, 1106->1107, 1109->1110, 1111->1112 hold, 1113->1114; plus 1007->1008 G4). 1104's ACTUAL tape shows NO continuation-collapse in the up-swing (big up-legs 10/13 continued) so this is a GIVE-BACK, not a turn (G6 give-back-not-reversal). Trigger only half-armed (no last-1-2-day counter-move; 1104 last hour -30) -> size at the low end of the mature-swing give-back band (-500..-900). Shape: overnight drift down, US probe to ~-750, afternoon partial-recovery close (give-back base case).",
+   "overnight_gap_usd": -20,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -30
+    ],
+    [
+     0,
+     -80
+    ],
+    [
+     2,
+     -200
+    ],
+    [
+     4,
+     -400
+    ],
+    [
+     6,
+     -500
+    ],
+    [
+     8,
+     -450
+    ],
+    [
+     10,
+     -550
+    ],
+    [
+     12,
+     -700
+    ],
+    [
+     14,
+     -750
+    ],
+    [
+     16,
+     -650
+    ],
+    [
+     18,
+     -550
+    ],
+    [
+     20,
+     -500
+    ]
+   ],
+   "guessed_net_usd": -500
+  },
+  {
+   "date": "20251106",
+   "dow": "Thu",
+   "group": 7,
+   "archetype": "storage Thursday resume-day UP - give-back exhausted, side = running swing",
+   "reasoning": "R1 giveback_exhaustion_boundary off 1105's ACTUAL tape: the give-back day fell to -1100 but closed -520 (recovered >50% off the low) with the LAST HOUR UP +250, and the underlying up-swing shows no continuation-collapse (1104 big up 10/13; 1105 mixed chop, no one-sided collapse) -> the give-back is EXHAUSTED after one day and the HDD-led up-swing RESUMES (n: 1105->1106, 1107->weekend gap, 1110->1111, 1112->1113 in G7; 0926->0929, 1003->1005 in G4). R2 storage_thursday_side: the post-print leg side = the RUNNING SWING (UP), never the print's surprise sign (10 storage Thursdays across G3-G7 all sided with the swing/turn state; both G7 Thursdays rallied THROUGH bearish above-consensus prints) - the bearish +10.8-above print gets bought in a rising-HDD winter-transition regime (G6 lesson: HDD > surplus). storage_thursday_magnitude up-sizes; resume-day band +800..+1400, catalyst high end. Shape: soft pre-print drift, post-print whipsaw, afternoon rally, close near high.",
+   "overnight_gap_usd": -20,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -20
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     2,
+     50
+    ],
+    [
+     4,
+     100
+    ],
+    [
+     6,
+     150
+    ],
+    [
+     8,
+     200
+    ],
+    [
+     10,
+     250
+    ],
+    [
+     12,
+     700
+    ],
+    [
+     14,
+     900
+    ],
+    [
+     16,
+     1150
+    ],
+    [
+     18,
+     1400
+    ],
+    [
+     20,
+     1400
+    ]
+   ],
+   "guessed_net_usd": 1400
+  },
+  {
+   "date": "20251107",
+   "dow": "Fri",
+   "group": 7,
+   "archetype": "mature-swing give-back off the fresh 1106 extreme, origin-shelf target",
+   "reasoning": "R4 mature_swing_alternation: 1106 closed +1350 at a fresh material extreme (4.397, cum +800) in a now 5-session-mature swing -> give-back session, do NOT extend (the blind call extended on a cold-front bid - weather is backdrop, never day-level timing). 1106's last hour ticked down -160 (mild counter-move) with no continuation-collapse -> give-back, not turn. R5 origin shelf: the extension began at the 4.32-4.33 shelf -> give-back target ~-650/-700 from 4.396. Friday non-catalyst keeps it in-band (no crash-regime override). Shape: US-morning-delivered fade, midday low ~-1000, partial-recovery close (exhausting give-back).",
+   "overnight_gap_usd": -10,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -20
+    ],
+    [
+     0,
+     -50
+    ],
+    [
+     2,
+     -80
+    ],
+    [
+     4,
+     -100
+    ],
+    [
+     6,
+     -150
+    ],
+    [
+     8,
+     -300
+    ],
+    [
+     10,
+     -700
+    ],
+    [
+     12,
+     -1000
+    ],
+    [
+     14,
+     -900
+    ],
+    [
+     16,
+     -800
+    ],
+    [
+     18,
+     -700
+    ],
+    [
+     20,
+     -650
+    ]
+   ],
+   "guessed_net_usd": -650
+  },
+  {
+   "date": "20251110",
+   "dow": "Mon",
+   "group": 7,
+   "archetype": "Sunday-gap delivery + Monday gap-fade at a mature-swing extreme",
+   "reasoning": "R1 on 1107's ACTUAL close: the Friday give-back exhausted (low -1280, closed -720 recovering ~44%, last hour +30) -> the swing resumes; per R3 weekend_gap_delivery the weekend resumption is delivered AT THE SUNDAY REOPEN as a GAP (1019 +1570 precedent), NOT in Monday's US session -> refined weekend gap +1200 (the hard_heat shock, HDD 20.6, repricing at the reopen). Then R3 gap-reaction: a Sunday gap WITH a MATURE swing to a fresh cum-extreme gets FADED by Monday's US session (1109->1110; 0908 the mild G3 case) - only a gap at a FRESH turn extends (1019->1020). Friday-carry agrees (1107 closed down; both G7 Mondays continued Friday's side, as did 0922 and 1020) - Monday is the REACTION to the gap, not a block-reversal. Monday bigness sizes the fade -800; afternoon stabilization (swing intact underneath, give-back shape).",
+   "overnight_gap_usd": 1200,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     2,
+     100
+    ],
+    [
+     4,
+     200
+    ],
+    [
+     6,
+     300
+    ],
+    [
+     8,
+     100
+    ],
+    [
+     10,
+     -400
+    ],
+    [
+     12,
+     -800
+    ],
+    [
+     14,
+     -1000
+    ],
+    [
+     16,
+     -900
+    ],
+    [
+     18,
+     -850
+    ],
+    [
+     20,
+     -800
+    ]
+   ],
+   "guessed_net_usd": -800
+  },
+  {
+   "date": "20251111",
+   "dow": "Tue",
+   "group": 7,
+   "archetype": "resume day after exhausted gap-fade - hard_heat overrides the thin holiday",
+   "reasoning": "R1 on 1110's ACTUAL tape: the Monday gap-fade closed -820, recovering ~690 off the -1510 low with a 16-18h recovery into the close, and the up-swing's own legs stayed healthy THROUGH the down day (big up-legs 5/6 continued) -> the give-back is exhausted, the swing RESUMES. R6 holiday_regime_override (s96.1): the Veterans thin flag does NOT size down inside an active hard_heat cold shock (HDD 20.4) - Columbus-1013 was a quiet shoulder Monday, not this. Resume-day band sized at the catalyst high end: +1400. THIS is where the blind W lands time-shifted: the carrier day is pinned by the give-back-exhaustion boundary read off day-N-1 actuals, not by the calendar. Shape: thin soft overnight, US-morning turn, big midday rally, close near the high (grind holds).",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     -50
+    ],
+    [
+     2,
+     -100
+    ],
+    [
+     4,
+     -150
+    ],
+    [
+     6,
+     -100
+    ],
+    [
+     8,
+     0
+    ],
+    [
+     10,
+     300
+    ],
+    [
+     12,
+     800
+    ],
+    [
+     14,
+     1100
+    ],
+    [
+     16,
+     1300
+    ],
+    [
+     18,
+     1400
+    ],
+    [
+     20,
+     1400
+    ]
+   ],
+   "guessed_net_usd": 1400
+  },
+  {
+   "date": "20251112",
+   "dow": "Wed",
+   "group": 7,
+   "archetype": "post-violent-resumption hold day (give-back probes fail)",
+   "reasoning": "R4: 1111 closed at a fresh material extreme (cum +2100) -> give-back/hold session. HOLD nuance: the session after a VIOLENT turn/resumption day sees its give-back probes FAIL intraday and closes near flat (0924 +50 after the 0923 bounce; 1112 +100 after the 1111 surge) - so size near zero, NOT the blind -450 (which point-loaded the HDD moderation; fundamentals are backdrop, not day-level). Refined: midday probe ~-350 that recovers into the close, net -100. HONEST: the sign inside +-150 is not callable at the open (irreducible); the content of the call is the near-zero magnitude.",
+   "overnight_gap_usd": -10,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     -50
+    ],
+    [
+     2,
+     -100
+    ],
+    [
+     4,
+     -150
+    ],
+    [
+     6,
+     -100
+    ],
+    [
+     8,
+     -50
+    ],
+    [
+     10,
+     -250
+    ],
+    [
+     12,
+     -350
+    ],
+    [
+     14,
+     -300
+    ],
+    [
+     16,
+     -200
+    ],
+    [
+     18,
+     -150
+    ],
+    [
+     20,
+     -100
+    ]
+   ],
+   "guessed_net_usd": -100
+  },
+  {
+   "date": "20251113",
+   "dow": "Thu",
+   "group": 7,
+   "archetype": "storage Thursday resume-day UP, late-swing sized",
+   "reasoning": "R2 storage_thursday_side: the post-print leg side = the RUNNING SWING = UP (the blind leaned on moderating HDD + the widening surplus - exactly the fundamental read R2 kills: 10 storage Thursdays across G3-G7 sided with the swing/turn state, never the print sign; 1113 rallied THROUGH the +5.2-above print). R1 on 1112's ACTUAL tape: the -510 probe recovered to a +100 close (probe exhausted, 0924-style hold) and the up-swing shows no continuation-collapse -> resume day. Storage magnitude up-sizes but the swing is LATE (7th session, cum stretched toward +2200) -> band low-middle: +800. Shape: soft overnight probe, print leg up, afternoon extension, close off the high (late-swing).",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -20
+    ],
+    [
+     0,
+     -50
+    ],
+    [
+     2,
+     -100
+    ],
+    [
+     4,
+     -150
+    ],
+    [
+     6,
+     -100
+    ],
+    [
+     8,
+     -50
+    ],
+    [
+     10,
+     50
+    ],
+    [
+     12,
+     500
+    ],
+    [
+     14,
+     700
+    ],
+    [
+     16,
+     800
+    ],
+    [
+     18,
+     800
+    ],
+    [
+     20,
+     800
+    ]
+   ],
+   "guessed_net_usd": 800
+  },
+  {
+   "date": "20251114",
+   "dow": "Fri",
+   "group": 7,
+   "archetype": "TERMINAL give-back - swing-exhaustion trigger fully armed at the 1113 extreme",
+   "reasoning": "swing_exhaustion_reversion FULLY armed for the first time this block: 1113 closed at the block cum-extreme (+2810) AND its late tape ROLLED OVER (+1160 at 14h -> +620 close, the 1007-style last-hours counter-move), on a 7-session mature swing +3340 off the 1105 low -> this give-back is the TERMINAL one, not a one-day probe. Override the Friday-range archetype (high-momentum precedent 1010 Fri -1050). R5 sizes toward the origin shelf (4.32-4.34). Terminal give-backs close HEAVY - no recovery close, contrast the R1 exhaustion shape (n: 1002 closed at its low -> 1003 continued; 1008 crash day): net -900, low ~-1200, close near the low.",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     2,
+     -150
+    ],
+    [
+     4,
+     -300
+    ],
+    [
+     6,
+     -350
+    ],
+    [
+     8,
+     -450
+    ],
+    [
+     10,
+     -800
+    ],
+    [
+     12,
+     -1100
+    ],
+    [
+     14,
+     -1200
+    ],
+    [
+     16,
+     -1000
+    ],
+    [
+     18,
+     -950
+    ],
+    [
+     20,
+     -900
+    ]
+   ],
+   "guessed_net_usd": -900
+  },
+  {
+   "date": "20251117",
+   "dow": "Mon",
+   "group": 7,
+   "archetype": "give-back continuation Monday (not exhausted at Friday's close)",
+   "reasoning": "R1 NOT-exhausted arm on 1114's ACTUAL tape: the give-back day closed AT its low (-910; the 16h recovery to -230 FAILED and dumped into the close, last hours down) -> the give-back CONTINUES next session (n: 1002->1003 G4, 1114->1117 G7); the Sunday reveal confirms (1116 drifted -410, no recovery, closed down). R3 Friday-carry: both G7 Mondays continued Friday's side (as did 0922 and 1020); no material Sunday gap to fade (+220 only). The blind guessed reversal-up on HDD re-cooling to 16.0 - a day-level weather read fundamentals_role kills; the armed swing-exhaustion give-back state dominates. Monday bigness sizes it UP: -1400, depth-checked by R5 (origin shelf 4.32-4.34 allows ~-1600 from 4.489). Shape: choppy overnight, heavy US-session grind down, close near the low (give-back still not exhausted).",
+   "overnight_gap_usd": -50,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -100
+    ],
+    [
+     0,
+     -150
+    ],
+    [
+     2,
+     -100
+    ],
+    [
+     4,
+     -150
+    ],
+    [
+     6,
+     -200
+    ],
+    [
+     8,
+     -350
+    ],
+    [
+     10,
+     -600
+    ],
+    [
+     12,
+     -800
+    ],
+    [
+     14,
+     -1000
+    ],
+    [
+     16,
+     -1250
+    ],
+    [
+     18,
+     -1400
+    ],
+    [
+     20,
+     -1400
+    ]
+   ],
+   "guessed_net_usd": -1400
+  },
+  {
+   "date": "20251118",
+   "dow": "Tue",
+   "group": 7,
+   "archetype": "origin-shelf stabilization - give-back spent-by-depth",
+   "reasoning": "R5 giveback_origin_shelf_floor: the give-back has retraced ~78% of the up-swing and sits ON the swing's origin shelf (4.339 close vs the 4.317 anchor / 4.264 1105 low) -> spent-by-depth. The depth floor OVERRIDES the R1 closes-at-low continuation read once the retrace is this deep at a stretched extreme of the MOVE itself - capitulation closes at extremes precede the bounce, not more continuation (n: 0922 closed near its low -> 0923 bounced +610 G3; 1016 capitulation -> 1017 +740 G5; 1117 -> 1118 G7). give-back-not-reversal: the demand-led winter up-swing is intact above the shelf. Tuesday stabilization: morning probe down FAILS at the shelf, afternoon recovery, small net up +250 (turn-day band 0923 +610 / 1017 +740, sized down for no catalyst).",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     50
+    ],
+    [
+     2,
+     0
+    ],
+    [
+     4,
+     -100
+    ],
+    [
+     6,
+     -50
+    ],
+    [
+     8,
+     -150
+    ],
+    [
+     10,
+     -300
+    ],
+    [
+     12,
+     -400
+    ],
+    [
+     14,
+     -100
+    ],
+    [
+     16,
+     150
+    ],
+    [
+     18,
+     250
+    ],
+    [
+     20,
+     250
+    ]
+   ],
+   "guessed_net_usd": 250
+  }
+ ]
+}

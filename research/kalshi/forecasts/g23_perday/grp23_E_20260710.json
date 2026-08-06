@@ -1,0 +1,137 @@
+{
+ "specialist": "E",
+ "group": "g23",
+ "date": "20260710",
+ "dow": "Fri",
+ "day_class": "Friday / weekend-feeding (feeds 0713 Monday) / GSCI roll day 3 of 5 / BCOM roll day 2 / NO expiry, NO opex (roll-confound class absent)",
+ "scored_leg": "ng_mbo_ngq26",
+ "brain_version": "s104.0",
+ "round": 1,
+ "mode": "BLIND (price curve masked; forecast from market forces only)",
+ "guessed_net_usd": -150,
+ "overnight_gap_usd": 0,
+ "path_p50_curve": [
+  [8, 20],
+  [10, 90],
+  [12, 60],
+  [14, -60],
+  [15, -120],
+  [16, -150]
+ ],
+ "path_note": "ET day-hours clock (grp22 per-day blind precedent). Morning firm on the still-hot D0 (CDD 14.4, burn ~45.4 Bcf/d est) and the absorbed-flat D-1 print; mid-morning crest ~+90; afternoon fade as the GSCI day-3 resting-offer cap holds and the weekend cooling bag + weekly squaring get set; close lower third. Volume-bound programs preserve RANGE (participant_taxonomy_s110): expect a normal ~$1,000-1,400 leg-basis range around a small net - chop, not trend. The 15:30 ET COT publication (report 2026-07-07) lands inside my last 90 minutes and is not in my state: tail risk both ways late.",
+ "expected_magnitude_band_usd": [-450, 250],
+ "confidence": "low",
+ "turn_exhaustion_gate": {
+  "play": "daytype.friday_turn_exhaustion_gate",
+  "run_order": "RUN FIRST, before any direction sign. The prior-over-state Friday default (range / roll-pressure DOWN) was never consulted as a direction source - it is the named cascade source and roll SIGN authority is REFUTED doctrine (s102_1: cap/stack only, n=2 split).",
+  "verdict": "CLEAN on every evaluable limb; no turn fires. Continuation is licensed FROM STATE - and the program-decontaminated state tilt is flat-to-sell, so the continuation is small-down, not a default.",
+  "limbs": {
+   "chain_age_ge_4": {
+    "result": "NO - no chain exists",
+    "value": "session_signed_flow across the week: -12 (0705 stub), -632 (0706), +1748 (0707), -2336 (0708), +1551 (0709) - alternating sign every session; session_b_share_two_sided 0.477a/0.496/0.508/0.487/0.505 oscillating around 0.50",
+    "declared_limitation": "flow-derived substitute; boundary.chain_label_must_track_realized_cum requires realized cum, which is masked"
+   },
+   "cum_from_anchor_at_extreme": {
+    "result": "UNEVALUATED - price-masked; I refuse to manufacture it",
+    "substitute": "cumulative session signed flow from the 3.245 anchor = +319 lots through my open - trivial against 95-155k lots/day; no extremity signal in the honest substitute"
+   },
+   "positioning_at_extreme": {
+    "result": "NO",
+    "value": "COT MM net -64,808, 1y pctile 44.34, 3y 36.62, WoW +17,914 IMPROVING (report 2026-06-30, published LATE 2026-07-06 15:30 - July-4 delay, publication_delayed=true). Options-implied 10.38 pctile 1y - low-ish but nowhere near the 2.83rd-pctile crowding class, and the delta direction is covering, not building"
+   },
+   "d1_flow_opposes_chain": {
+    "result": "NO CHAIN TO OPPOSE; D-1 aggregate is +1551 buy but PROGRAM-SUSPECT",
+    "value": "0709 was GSCI roll day 2 + BCOM day 1. flow.resting_program_inverts_aggressor_tilt (trigger TRUE, deterministic): the roll program RESTS OFFERS in NGQ26, the crowd lifts them, and the aggregate prints spurious BUY. Decontaminated read: big_print_b_share 0.454/0.465 SELL-tilted (n=303, guard-clean), l1 resting bid share 0.475 ask-leaned, aggregate +1551 = ~1% of 155k lots. Residual tilt = FLAT-TO-SELL"
+   },
+   "based_vs_stretched": {
+    "result": "BASED / CHOPPY - not stretched",
+    "consequence": "daytype.friday_crest_trim_discriminator routes crest-trim OUT; daytype.weekend_crest_friday trigger NOT met (no stretched same-side chain near a cum extreme)"
+   },
+   "crest_realization_window": {
+    "result": "HEAT CRESTED, BUT AS A PRICED SLOPE, NOT AN EXPIRING SHOT",
+    "value": "the week's add-engine ran five consecutive positive run-deltas (+0.963, +0.362, +0.570, +0.278) and DECAYED TO +0.02 at my vintage; D0 14.4 CDD is the local top and the ladder rolls downhill into the weekend (Sat 13.4, Sun 11.3, Mon 11.8) before a partial rebuild (Tue 13.4, Wed 13.1, Thu 12.5). Per weekend.carry_realization_flip scope_split_s110: the heat is IN the forward ladder = slope class = hill grammar ('a hill slopes, it does not gap') - the REALIZING->reverse arm is out of scope, exactly the G22 0703/0629 lesson"
+   }
+  }
+ },
+ "reasoning": "SIGN. The turn/exhaustion gate ran first and returned CLEAN (no chain, positioning mid-book and improving, nothing stretched), so the sign comes from state, and the state decomposes as: (1) the weekend-feeding bag - by the seam LEVEL rule (weekend.seam_delta_requires_level_difference) the ladder my close hands the weekend is a -2.6 gw-CDD cut from Friday D0 14.4 to Monday 11.8, a priced downhill slope; (2) the program-decontaminated D-1 tilt is flat-to-sell (aggregate +1551 is roll-suspect; big prints 0.454 sell, resting book 0.475 ask-leaned); (3) the fundamental stack is bearish but SPENT ON THE TAPE - surplus vs 5yr widened to 156, second consecutive bearish-side print (61 vs TE-frozen 49), yet the D-1 main phase absorbed it DEAD FLAT (-11 net on 98,400 lots) and the final phase handed over +1,390 on 50,946 lots; (4) the GSCI day-3 / BCOM day-2 programs cap rallies all session but get NO sign authority (refuted, cap/stack only). Against the down-lean stands the burn: est 45.4 Bcf/d (gas_chg_7d +83,322 MWh), ngwu power burn +6.3 Bcf/d WoW stated (+16%), STEO July power burn 47.6 - so weather.burn_conversion_gate (G23 forward test, applying and saying so) reads BOTH WAYS and a down-lean with burn ramping AGAINST it is SUPPRESSED to the constraint-floor class, -150..-200. I take p50 -150. MAGNITUDE. Quiet regime: n0_range_pctile 13.3, n0_net_sigma_5 665 - but the n0 family is era-degraded (carries ~0.226 of the leg tape, declared basis), so I cross-check on leg-basis G22 program/quiet-day nets (-60, -160, +410 class): -150 is ~0.2-0.25 sigma and inside the class. Band -450..+250, skewed down but wide because a program day plus an in-session COT arrival (15:30) can push either way late. GAP. 0709->0710 is an intra-week boundary: 24/24 measured intra-week boundaries carry |gap| <= 10; I emit 0. SURPRISE HONESTY. The served +12 Bcf bearish surprise rests on a POST-PRINT-FROZEN TE consensus (49); the investing.com row shows 60, i.e. possibly a +1 in-line print. I do not carry a 'bearish shock' driver - I carry the tape's own verdict: absorbed flat, sellers spent. WHAT I AM TRADING AGAINST, honestly: today is still the hottest tape of the week (D0 14.4, realized-yesterday 14.9 peak) with a 45+ burn, the print-day tape closed on a buy handover, and backwardation had the front FIRMING at the frozen 0703 vintage (front-next +0.09, chg_3d +0.037). If the residual (not aggregate) tape stays bid through the morning, this day closes flat-to-up instead of -150; that is why confidence is low and the band top is +250. The down p50 stands because the weekend bag prices a knowable -2.6 CDD slope, the add-engine has stopped (+0.02), and the only bid-side channels I can verify are either program-contaminated (aggregate flow) or stale-frozen (curve vintage).",
+ "plays_fired": [
+  "daytype.friday_turn_exhaustion_gate - ran FIRST, CLEAN; licensed a state-derived continuation (small-down off the decontaminated tilt + weekend slope), never a day-class default",
+  "flow.resting_program_inverts_aggressor_tilt - trigger TRUE on D-1 AND D0 (in_gsci_roll + in_bcom_roll, deterministic): D-1 aggregate +1551 buy tilt DISCOUNTED to flat-to-sell; consequence guard applied - big-print instruments lose authority on program days, residual tape read instead",
+  "handoff.residual_tilt_field - program-day mandatory: residual_tilt carried as an explicit handoff field; A/B consume it in place of session_signed_flow's sign",
+  "weather.burn_conversion_gate (G23 FORWARD TEST - applying and saying so) - the down-lean checked against burn per the both-ways clause: burn is ramping UP (est 45.4, gas +83,322 MWh 7d, ngwu +6.3 WoW) -> down-lean suppressed to the -150..-200 constraint-floor class; wind limb UNKNOWN (no wind w/w served - declared)",
+  "weekend.seam_delta_requires_level_difference - the weekend read executed on LEVELS (Fri D0 14.399 vs Mon 11.781 at my 2026-07-09T23:59Z vintage = -2.6 cut), never run-deltas across the seam",
+  "weekend.seam_sign_from_stability_ladder - consulted: my-vintage revision ladder is INCOHERENT (Sat +1.022, Sun -0.643, Mon +0.329, D+4 -0.36, D+5 -0.618) -> NO seam sign from this instrument at my close; the realized weekend cycles arbitrate via the handoff's two-limb condition",
+  "boundary.weekend_gap_wide_band_emission - the Sunday gap handed forward as SIGN + WIDE BAND only (mid-book 44th pctile: measured |gap|/sigma ~0.08 class absent a coherent revision; 0.5-1.0x sigma if one lands); never a point",
+  "positioning.covering_self_limiting_cot_wow_gate - limb (b): WoW +17,914 IMPROVING = spent fuel; no squeeze band; governs size/tail, not the p50 sign",
+  "daytype.covering_giveback_self_limiting - E-lens mandatory check: NO fresh crowding stack (44.34 pctile, improving) -> covering-UP not fired and explicitly not re-fired",
+  "daytype.friday_crest_trim_discriminator - evaluated: chain BASED not stretched -> crest-trim routed OUT (the 0327-class false positive avoided)",
+  "daytype.friday_exit_decomposition - handoff construction; sub-rule applied: the GSCI window is OPEN through Monday (days 4-5 = 0713/0714) -> the roll component is positioning-CARRY, not spent",
+  "daytype.friday_exit_close_location_over_flow_shape - my exit verdict is handed as forecast close-LOCATION with the (volume,net)-pair conditional for the bridge: an upper-third realized close on elevated final-phase volume REFUTES my down-slope carry",
+  "boundary.chain_staleness_gate - k=5 sessions from the block anchor: any cum-keyed rung is forbidden; nothing asserted on cum (consistent with the masked limb)",
+  "doctrine participant_taxonomy_s110 - volume-bound programs (gsci/bcom) preserve RANGE: normal range forecast around a small net"
+ ],
+ "plays_stood_down": [
+  "daytype.weekend_crest_friday - trigger NOT met: no stretched same-side chain near an extreme; the heat driver is a priced ladder SLOPE, not a shot realizing/expiring by the close",
+  "weekend.carry_realization_flip (REALIZING->reverse arm) - scope_split_s110: slope-class heat (in the forward ladder) = hill grammar; the shot arm out of scope - the exact G22 0703 miss class, not repeated",
+  "flow.price_free_absorption_proxy - program-day consequence guard (expiry_day_extension_s110) strips big-print instrument authority on roll days; its positive-flow precondition is met only on the SUSPECT aggregate",
+  "flow.big_print_bshare_thin_tape_guard - sample 303 is guard-clean, but the whole big-print instrument family is suspended on a program day (subsumed by the consequence guard)",
+  "boundary.seam_gap_up_prior_on_worsening_cot - COT WoW IMPROVING (+17,914), not worsening -> no UP-gap prior at the 0713 seam as of my state; RE-ARMS only if the 15:30 publication (report 0707) prints re-worsening - handed to A/B in confirm_refute",
+  "selector.divergence_resolution - no storage-vs-cold-add split exists in a July CDD market; its 16.4 HDD gate is unevaluable (weather.absolute_hdd_bar_unevaluable_in_cdd_regime) - not read as a live DOWN vote",
+  "structure.chain_polarity_flip - C1/C2 are price-derived and masked; no polarity claim; the alternating-flow read is a declared weaker substitute",
+  "direction.flow_conviction_sign_gate / direction.absorption_is_reversal - refine-only (require realized price); the absorbed-flat print read above is from the never-masked phase VOLUME/flow table, not price",
+  "tape.squeeze_ignition_flush_conjunction / tape.squeeze_ratchet_confirm / structure.squeeze_unwind - squeeze_watch inactive; DTE limb false live (13d); spread limb MASKED -> UNKNOWN, not read as absence either; unwind_watch false, last prompt expiry 4+ sessions back",
+  "structure.mature_swing_alternation s101_6_expiry_day_form + all expiry/opex mechanics - NO expiry and NO opex today (days_to_futures_expiry 13, days_to_opex 12)",
+  "daytype.storage_thursday_magnitude / daytype.eia_window_reopen_to_print / daytype.eia_preprint_overextension_gate - D-1's day-class, consulted only as prior-session context",
+  "daytype.thin_session_range_invariance - not a thin session; the participant taxonomy (volume-bound) governs instead",
+  "direction.flow_nowcast - needs_intraday_reveal; unavailable blind",
+  "monday.* family / daytype.monday_weekend_gap / magnitude.weekend_gap_delivery - not my day-class; weekend arbitration handed to A/B via the handoff",
+  "structure.friday_exhausted_extreme_giveback - requires extreme cum or chain age >= 4; neither evaluable/true (cum masked and declared, flow-chain age ~1)",
+  "daytype.weekday_archetype (Fri=range) - consulted as a secondary frame only; the range expectation came from the participant taxonomy and quiet vol regime, not the archetype"
+ ],
+ "state_defects_and_gaps_reported": [
+  "storage_consensus estimates[] (DECLARED TRAP, confirmed in-slice): the TE pre-print snapshot (2026-07-07) carried NO posted consensus; the served 49.0 is the POST-PRINT-FROZEN column. investing.com's row shows 60.0 (also post-print, but its live route cross-validates against our own consensus_poll for 0716). True pre-print street consensus unknown in [49, 60]; the '+12 bearish surprise' is possibly +1 in-line. Handled by using the tape's absorbed-flat verdict instead of a surprise-magnitude driver.",
+  "vol_regime n0_era_basis (DECLARED): n0 family computed on a degraded continuous store carrying ~0.226 of the g23 scored-leg tape; sigma/range levels era-degraded and vintage-frozen at 20260703 (masked_one_shot) - the week's realized vol is invisible to it. Used only as a rough scaler, cross-checked against leg-basis G22 day-net classes.",
+  "weather_forecast ladder_graft_basis (DECLARED REPAIR - read normally per spawn): CDD horizons/run-deltas grafted from the mos_asof store after identity proofs; fwd7_gw_cdd_span 3.118 is derived. Read normally; noted for the attribution fence on the burn gate's forward test.",
+  "weather_forecast_cycle cdd_basis: the cycle store is absent cold - gw_cdd_d0 / d_gw_cdd are NOT served for the morning cycles. Consequence: the overnight 00z/06z CDD revision for MY OWN session is unknowable from my state (HDD deltas served are inert in summer). My day-net assumes no material overnight CDD shock; the weekend read uses the LEVEL rule by hand as prescribed.",
+  "grid_stack wind_chg_7d NOT SERVED (only gas_chg_7d / solar_chg_7d): the burn gate's wind limb is UNKNOWN on my day - the gate was applied on the burn limb (confirmed up) with the wind limb declared unknown, not assumed clean. Staleness itself is doctrinal (period 0708, age 2; Friday reads Wednesday).",
+  "storage_consensus.next_print = null: NO forward consensus for the 0716 print exists in-state (the named Mar-Jul 2026 forward hole). Next-week positioning-into-print is unreadable from my slice; flagged to A/B.",
+  "COT in-session arrival: the report-2026-07-07 COT publishes Fri 15:30 ET DURING my last 90 minutes and is not in my state (my served report is 0630, published late 0706 due to the holiday). A late-session repricing channel I cannot see; carried as tail risk and as a confirm/refute limb for the seam.",
+  "anchor caveats inherited (declared, not defects): anchor last-hour direction sits at the price-resolution floor (1 tick, 11% of range) on a holiday half-session tape - close_in_range 0.222 is the sturdier read; at k=5 sessions the anchor's seam relevance is bookkeeping-only (cum-from-anchor), which is masked anyway."
+ ],
+ "handoff_out": {
+  "for_seam": "0710 Fri close -> 0712 Sun 18:00 ET reopen -> 0713 Mon (A/B). GSCI roll day 4 = Mon 0713, day 5 = Tue 0714; BCOM days 3-5 = Mon-Wed. Both program windows OPEN across the seam.",
+  "exit_type": "FUNDAMENTAL_CARRY_CONTINUE (weak, DOWN-slope) with a ROLL-CARRY qualifier. The fundamental carried across this weekend is the PRICED COOLING SLOPE (my-vintage ladder: Fri 14.4 -> Sun 11.3 -> Mon 11.8 gw-CDD) standing on a strong burn floor (45+ Bcf/d) with a Tue-Wed heat rebuild (13.4/13.1) behind it. NOT positioning_spent_fade: nothing discharged today - COT spent LAST week (WoW +17,914, 44th pctile) and the roll window is still open Monday, which per the friday_exit_decomposition sub-rule makes the roll component positioning-CARRY (the front cap persists into Mon/Tue), not spent. NOT momentum_carry: the residual tilt is flat, not aligned-with-direction. NOT crest_trim_fadeable: no stretched chain.",
+  "monday_bias": "DOWN-SMALL DEFAULT, CONDITIONAL ON THE TWO-LIMB FLIP TEST (my G22 lesson, now merged doctrine - both limbs testable on the realized weekend): LIMB A (weekend CDD add): difference the LEVELS per the seam rule - the Monday-slice served forecast for 0713 vs MY vintage 11.781 (and 0714 vs 13.413, 0715 vs 13.067; vintage asof 2026-07-09T23:59Z). A COHERENT add (Mon D0 >= ~+1.0 gw-CDD above 11.781 AND same-sign revision at D+1/D+2 per seam_sign_from_stability_ladder) passes; an isolated single-horizon wiggle does not. LIMB B (burn confirmation): weekday-normalized Sat-over-Sat - grid_stack est_gas_burn_bcfd for Sat 0711 vs Sat 0704, flat-to-up passes (and wind not ramping >~20% against; wind w/w was not served to me - measure it on your slice if present). VERDICTS: BOTH limbs pass -> flip Monday UP, full band (+300..+800 leg-basis class). LIMB A ONLY (add without burn) -> the add owns AT MOST the reopen GAP; NO intraday up-lean (the sub-confirmation grammar). NEITHER, or a coherent CUT -> DOWN delivered at the slope-derived level, -150..-400 class, damped toward the small end by the standing burn floor. Hill grammar throughout: the cooling is IN the ladder (priced slope) - expect Monday to SLOPE, not gap; the p50 close belongs at the slope-derived level.",
+  "exit_shape": "FORECAST (blind - no realized close): lower-third close (~0.30-0.35 of range) off a mid-morning crest; an orderly bag-setting fade, NOT a capitulation close-on-low. CONDITIONAL FOR THE BRIDGE per friday_exit_close_location_over_flow_shape: if the REALIZED 0710 close lands in the UPPER third with final-phase volume at/above the session max ((volume,net) pair = handover-that-continues), my down-slope carry is REFUTED at the source - read Monday neutral-to-up BEFORE the limbs, and the limbs then size it.",
+  "last_hour_dir": "forecast DOWN, weak (bag-setting + weekly squaring into a mid-range book); conviction low - treat the sign as fragile, and note the 15:30 COT arrival sits just before this window",
+  "last_hour_signed_flow_sign": "forecast NEGATIVE-to-flat ON THE RESIDUAL. WARNING: 0710 is GSCI d3/BCOM d2 - the AGGREGATE last-hour flow is program-contaminated exactly like D-1's was (resting_program_inverts_aggressor_tilt); a positive aggregate print under a soft close is the program's offers being lifted, not accumulation. Read the residual field below.",
+  "close_off_low": "forecast ~0.30 of range (off the low). If realized close_in_range < ~0.15 (hard close-on-low), the fade overshot the bag - that is delivery, not exhaustion; do not auto-fade it Monday.",
+  "chain_polarity_and_age": "NO CHAIN - polarity UNSET. The aggressor tape alternated sign every session this week (-632 / +1748 / -2336 / +1551) and the week's real driver, the five-run heat-add regime (run-delta +0.963 -> +0.362 -> +0.570 -> +0.278 -> +0.02), ENDED at my vintage. Flow-derived label, declared weak substitute: the moment realized cum is visible, re-derive and overrule.",
+  "cum_from_anchor_state": "MASKED - not manufactured. Honest substitute: cumulative session signed flow from the 3.245 anchor (0703, chain-verified) = +319 lots through my open, i.e. the aggressor tape is NET-FLAT from anchor - no extremity limb available to any cum-keyed play (and chain_staleness_gate forbids cum rungs at k=5 anyway). Anchor caveats inherited: holiday half-session tape, last-hour direction at the resolution floor, close_in_range 0.222 the sturdier field.",
+  "residual_tilt": "FLAT-TO-SELL (program-decontaminated, per handoff.residual_tilt_field - S110 mandatory on program days). Derivation from D-1 (0709, GSCI d2/BCOM d1): aggregate +1551 on 155k lots (~1%) vs big_print_b_share 0.454/0.465 SELL (n=303, guard-clean) and l1 resting bid share 0.475 (ask-leaned). The aggregate buy is the crowd lifting the roll program's resting offers. My own 0710 exit will carry the same contamination (GSCI d3/BCOM d2): A/B MUST consume THIS field in place of session_signed_flow's sign for the Monday gate.",
+  "confirm_refute": {
+   "confirms_monday_down_small": [
+    "Weekend cycles hold/cut CDD vs my vintage (0713 served <= ~11.8, no coherent add) - LIMB A fails",
+    "Sat 0711 est_gas_burn <= Sat 0704's (weekday-normalized) - LIMB B fails",
+    "Realized 0710 close in the lower half with an orderly (non-capitulation) final phase",
+    "The 15:30 Fri COT (report 0707) prints FLAT-TO-IMPROVING WoW - covering stays spent, seam_gap_up_prior stays disarmed",
+    "Sunday reopen stub prints net-sell on the residual (ignore thin-stub aggregate per the thin-tape guard)"
+   ],
+   "refutes_it_flip_monday_up": [
+    "LIMB A: coherent weekend CDD ADD by level difference (0713 >= ~12.8, same-sign at 0714/0715) - then LIMB B decides full-band vs gap-only",
+    "LIMB B: Sat-over-Sat burn UP with wind not ramping against - together with LIMB A -> UP full band +300..+800",
+    "Realized 0710 close UPPER third on final-phase volume at/above session max (handover-continues) - my exit read itself is refuted at the source",
+    "The 15:30 COT prints RE-WORSENING (MM shorts re-adding): seam_gap_up_prior_on_worsening_cot RE-ARMS for the 0713 seam (UP gap prior at the covering-seam quantum) - this is the one positioning channel that can override the spent-fuel read, and it arrives after my decision point"
+   ]
+  },
+  "structural_notes": [
+   "TO A (seam): gap emission per boundary.weekend_gap_wide_band_emission - SIGN from the realized weekend stability ladder (my vintage ladder is INCOHERENT: +1.022/-0.643/+0.329 - it signs nothing), BAND not point: at this mid book (COT 44th pctile, improving) the measured seam class is ~0.08x sigma (tens of USD); if a coherent revision lands, 0.5-1.0x sigma (leg-basis ~±300-650). Do not point-forecast the gap.",
+   "TO A: seam CDD comparisons are LEVEL differences against my 2026-07-09T23:59Z vintage (0713: 11.781, 0714: 13.413, 0715: 13.067) - never run-delta fields across the seam (structurally ~zero).",
+   "TO A/B: GSCI day 4 lands Mon 0713 and day 5 Tue 0714 (BCOM 3-5 Mon-Wed): the front-leg rally cap persists both days; roll flows are CAP/STACK ONLY - sign authority refuted (s102_1, n=2 split). Do not source a Monday DOWN from the roll.",
+   "TO B: NO forward consensus exists for the 0716 EIA print (storage_consensus.next_print null, named forward hole) - the pre-print positioning read for Wed/Thu must come from the tape, not a survey.",
+   "TO A/B: grid_stack staleness is ~D+2: Monday reads SATURDAY - the freshest same-day-class comparison (Sat-over-Sat), never same-day truth.",
+   "TO A/B: options_surface is 0703-vintage, 24+ days to opex - the 3.00 put wall / 3.50-4.00 call walls carry no pin authority this week; ignore for the seam.",
+   "SCORING NOTE: my-vintage sigma fields are era-degraded (n0 store ~0.226 of leg tape, declared) - the ±sigma translations above used leg-basis G22 day-net classes as the cross-check, not raw n0 sigma."
+  ]
+ }
+}

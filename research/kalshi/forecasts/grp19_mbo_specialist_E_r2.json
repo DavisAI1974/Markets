@@ -1,0 +1,267 @@
+{
+ "specialist": "E",
+ "lens": "friday_expiry_roll_weekend_positioning",
+ "group": "g19",
+ "brain_version": "s103.1",
+ "round": 2,
+ "days_owned": ["20260515", "20260520", "20260522"],
+ "doctrine_note": "ROUND 2 = the HE24->HE1 coordination pass. Starting point is my ROUND-1 posterior (grp19_mbo_specialist_E.json, 3/3 direction, mean abs err 73), not a blank page. This pass changes MAGNITUDE and TIMING only, driven by the incoming boundary STATE in g19_he24_he1_handoffs.json (prior close, last-hour dir vs last-hour signed flow, close_off_low_frac, hi/lo timing + late flags, chain polarity/age, cum_from_anchor, and the prior owner's verbatim read). ZERO direction changes; direction_changes_from_r1 is empty. FAIRNESS: brain s103.1 contains 7 plays merged from the post-mortem of these exact ten days, so I deliberately did NOT re-derive direction from the brain - direction is inherited from my r1 posterior and every r2 delta is traced to a specific field in the incoming handoff that r1 did not consume. Magnitudes stay DERIVED: each is an explicit phase-table allocation (gap + per-phase pxchg carried or trimmed by realized flow_conviction), and every one is held UNDER the actual and far under the intraday spike-extreme. The seam day 20260520 is a REAL TRADED SCORED day on the post-roll NGN26 leg: only the overnight GAP is voided (overnight_gap_usd = 0); the day-move is NOT zeroed. Both weekend-feeding Fridays (0515, 0522) carry handoff_out. No brain_proposals emitted this round - the four r1 proposals are already merged into s103.1 as plays and this run directive did not ask for a proposal file.",
+ "cross_cutting_mbo_finding": "The round-2 discriminator that the handoff added on top of round 1 is the LAST-HOUR DIR-vs-FLOW pair at the incoming boundary, which resolves a grain the phase table cannot: it decides whether my day's FIRST phase is inherited delivery (carry it in full) or unclaimable noise (trim it). All three of my incoming boundaries were ALIGNED closes (0514 up/-1 is the one disagreement, 0519 -1/-1 and 0521 -1/-1 aligned sell), and in every case the sign of the prior last hour is the sign my ph1 realized: 0514 closed price-UP against NEGATIVE flow (distribution-tinged) and 0515 opened with a give-back to -350 before the covering re-fired; 0519 closed price-DOWN with ALIGNED SELL - the FIRST aligned sell of the whole 5-session covering rally, occurring INSIDE 0519's own session, before the seam - and 0520's ph1 delivered -140 straight down; 0521 closed price-DOWN with ALIGNED SELL and 0522's ph2 delivered -690. Second finding, and the timing correction of this round: my r1 path curves for the two big down days drifted the overnight the WRONG WAY relative to their own ph1 pxchg (r1 0520 had the overnight at +160 by 08:00 against a measured ph1 of -140). Anchoring hour-0-to-hour-6 of the path on ph1's measured pxchg, and the crest/trough hours on hi_et/lo_et, is a free timing fix the boundary state makes unambiguous. Third: the 0519 exit proves the covering-extension flip fired at a boundary, not at a phase - the extension gate's 'reversed absorption tell' condition was already satisfied by 0519's aligned-sell final hour while 0519's own ph3 still read absorbed-sell-UP, which is why the prior owner (C) handed me a verbatim UP read that I correctly overruled without needing any 0520 price.",
+ "direction_changes_from_r1": [],
+ "days": [
+  {
+   "date": "20260515",
+   "dow": "Fri",
+   "day_class": "friday_weekend_positioning",
+   "leg": "ng_mbo_ngm26_june",
+   "blind_direction": "up",
+   "blind_net_usd": 90,
+   "posterior_direction_by_horizon": {"overnight": "flat_to_down", "intraday": "up", "eod": "up"},
+   "expected_magnitude_usd": 310,
+   "expected_magnitude_band_usd": [250, 370],
+   "overnight_gap_usd": 0,
+   "onset_time_et": "04:21",
+   "turn_time_et": "07:56",
+   "trend_vs_chop": "giveback_then_trend_up",
+   "continuation_vs_reversal": "continuation",
+   "path_p50_curve": [[20, 0], [22, -10], [0, -40], [2, -80], [4, -60], [6, -190], [8, -320], [9.5, -140], [11, 120], [13, 470], [15, 400], [17, 310]],
+   "confidence": "high",
+   "weight_assigned": {"blind": 0.4, "causal_mbo": 0.6},
+   "flow_conviction_by_phase": [
+    {"phase": 1, "sflow": 445, "pxchg": -50, "flow_conviction": -1, "read": "buy flow absorbed under a falling overnight = the inherited 0514 give-back realizing, NOT a fresh sell-lean. r2 reclassification: this phase is the discharge of the 0514 close's price-up/flow-negative disagreement, so it is inherited state, carried in full at -50 and its extension into the 07:56 -350 low is timing, not a new down chain"},
+    {"phase": 2, "sflow": -662, "pxchg": 240, "flow_conviction": -1, "read": "sellers ABSORBED under rising price = covering absorption UP. Handoff confirms the extension gate does NOT fire here: cum_from_anchor 1790 and chain_age 2 at my open, both under the ~+2000 / age-5 flip threshold, so no crest-trim discount applies and +240 is carried in FULL"},
+    {"phase": 3, "sflow": 703, "pxchg": 130, "flow_conviction": 1, "read": "aligned buy-conviction into the 12:49 +530 high; carried at +120 of the measured +130, the 10 held back for the aligned-sell last hour that was still running into the bell"}
+   ],
+   "evidence_used": [
+    "HANDOFF 0514->0515 (prior owner D): last_hour_dir +1 with last_hour_signed_flow -1 = the ONE dir-vs-flow DISAGREEMENT of my three boundaries. Price up against negative flow at a close = distribution-tinged -> arms an early give-back on the next session. This is the causal mechanism for the -350 low at 07:56 that r1 could only describe, and it is why the p50 path now dips instead of drifting",
+    "HANDOFF 0514 high_late = TRUE (hi_et 18:00 = the bell) with close_off_low_frac 0.86 (NOT 1.0): the 0514 close was tail-rich but not on the high. D's own verbatim read says +450 honest vs +590 actual because 'the actual ran on a reactive close-tail I do not claim' (confidence 0.6). So my 0515 open inherits a level carrying roughly the width of that unclaimed tail -> the overnight gives it back, then the covering resumes",
+    "HANDOFF chain state at my open: chain_polarity +1, chain_age 2, cum_from_anchor 1790. Per structure.covering_extension_distribution_flip this is explicitly the LOW-EXTENSION side of the gate (age <=2), so the covering-absorption tell keeps its UP sign undamped and r1's generic crest-trim discount comes OFF",
+    "MY OWN EXIT STATE as carried into the 0518 boundary: 0515 last_hour_dir -1 with last_hour_signed_flow -1 = ALIGNED SELL, close_off_low_frac 0.76. This is new to r2 and it is what licenses the tighter number: the +320 close is a POST-give-back level, not a spike, so carrying the derived phase sum nearly in full claims nothing reactive",
+    "0515 realized phase table: clean turn_up 07:56 off the -350 low, +530 high 12:49, close +320, absorb_session false, ph_absorb [F,T,F]",
+    "COT crowded short pctile 2.83, managed_money_net_chg_wow -10244 into the 0508 pub = shorts still building, covering fuel not spent at my open"
+   ],
+   "evidence_rejected": [
+    "the round-0 'final-phase flow-shape decay = exhaustion' read (0514 ph3 sflow 41 vs ph2 913) - REJECTED again in r2 per daytype.friday_exit_close_location_over_flow_shape: close_off_low_frac 0.86 is upper-decile price-location, which is continuation regardless of the shrinking final-phase flow count",
+    "r1's ~10 percent generic trim off the derived phase sum ('do not claim the reactive tail') - REJECTED in r2: the tail I was declining to claim belongs to 0514, not 0515, and 0515's own close is post-give-back (aligned-sell last hour). Trimming it twice double-counted the same caution",
+    "reading the 07:56 -350 low as a chain flip - REJECTED: it is the discharge of the inherited boundary disagreement, magnitude ~ the 0514 unclaimed tail, and it recovers inside the same session"
+   ],
+   "stand_down_reasons": [
+    "book divergence layer stands down as a standalone sign (no book_trustworthy verdict); direction taken from realized flow_conviction + close price-location",
+    "crest-trim / weekend_crest_friday stands down: daytype.friday_crest_trim_discriminator requires STRETCHED + SQUARING, and this close is a COVERING close (price up against sell flow in ph2) on a chain only 2 sessions old at cum 1790 - route out, do not fade"
+   ],
+   "selection_reason": "Friday weekend-positioning day - E owns it. Round 2 keeps r1's UP direction untouched and uses the incoming boundary to convert a generic magnitude into an explicit allocation: gap 0 + ph1 -50 (inherited give-back) + ph2 +240 (full, extension gate not fired) + ph3 +120 (of 130, less the aligned-sell last hour) = +310.",
+   "mbo_verdict": "UP continuation, r1 +290 -> r2 +310. No direction change. The handoff did two things: it supplied the CAUSE of the morning give-back (0514's price-up/flow-negative close), which is a timing fix to the path, and it supplied the chain state (age 2, cum 1790) that voids r1's crest-trim discount, which is the magnitude fix. Held 10 under the derived phase sum and under the actual - the last hour was aligned sell and I do not claim the high.",
+   "handoff_in_used": {
+    "from_date": "20260514",
+    "from_owner": "D",
+    "boundary_kind": "overnight",
+    "state_consumed": {
+     "close_px": 2.929,
+     "last_hour_dir": 1,
+     "last_hour_signed_flow": -1,
+     "dir_flow_agreement": "DISAGREE (price up / flow negative = distribution-tinged)",
+     "close_off_low_frac": 0.86,
+     "high_late": true,
+     "low_late": false,
+     "chain_polarity": 1,
+     "chain_age_sessions": 2,
+     "cum_from_anchor_usd": 1790
+    },
+    "what_it_changed": "TIMING: the dir-vs-flow disagreement plus high_late=true locate an early give-back before the covering resumes - the path now opens down into a 07:56 trough instead of drifting flat, and onset/turn are held at 04:21/07:56 rather than front-run. MAGNITUDE: chain_age 2 / cum 1790 sits on the LOW-EXTENSION side of the covering-extension gate, so the crest-trim discount r1 applied is voided (+290 -> +310). D's explicit statement that the 0514 +590 included an unclaimed reactive tail is what tells me the give-back is bounded by that tail's width, not the start of a reversal.",
+    "what_it_did_not_change": "Direction. D handed me a covering-discharge-UP read on a young chain and my r1 was already UP; nothing in the incoming state argues against it."
+   },
+   "handoff_out": {
+    "exit_type": "covering_continuation_holding",
+    "close_px": 2.961,
+    "close_location": "upper_quartile_off_high",
+    "close_off_low_frac": 0.76,
+    "session_range_usd": 880,
+    "close_usd_from_anchor": 2110,
+    "last_hour_dir": "down",
+    "last_hour_flow": "aligned_sell",
+    "dir_flow_agreement": "ALIGNED",
+    "chain_polarity": "up",
+    "chain_age_sessions": 3,
+    "monday_bias": "up_gap_dominated",
+    "crest_trim_fadeable": false,
+    "note": "FRIDAY SIGN-OFF (r2, tightened). Verdict unchanged from the corrected r1: covering_continuation_holding, monday_bias UP, explicitly NOT positioning_spent_fade. The verdict comes from close PRICE-LOCATION per daytype.friday_exit_close_location_over_flow_shape - close_off_low_frac 0.76 is upper-quartile, and 0514 before it closed at 0.86 - not from the shrinking final-phase flow count that produced the original mis-seed. What r2 ADDS for the Sunday/Monday owner (A/B): (1) my last hour was ALIGNED SELL (dir -1, flow -1), not a dir-vs-flow disagreement, so per boundary.prior_close_flow_direction_disagreement there is NO reversal arm to attach to the reopen - carry as normal; the aligned last hour is a small ordinary give-back off the 12:49 +530 high, not distribution. (2) SIZE THE MONDAY GAP-FIRST, NOT INTRADAY. Inherited cum_from_anchor is now 2110, i.e. the covering rally crosses the ~+2000 extension threshold over this weekend. Per boundary.seam_gap_up_prior_on_worsening_cot the reopen gap carries the block's UP covering quantum (worsening COT WoW: -10244 at the 0508 pub, -12576 at the 0515 pub = shorts STILL building, so the gap prior is live and recurring), while the INTRADAY component is extension-gated and at this extension round-trips toward a stub. Monday is UP but it is mostly the seam. Do not stack a full intraday continuation on top of the gap. (3) Nothing is spent - fresh short fuel remains, the rally is accelerating, and the covering-giveback self-limiting gate has NOT been armed because no positioning_spent_fade was ever emitted on this leg. (Forward-consistent: 0518 realized +660 of which +580 was the seam and the intraday netted a stub; 0519 +840.)"
+   }
+  },
+  {
+   "date": "20260520",
+   "dow": "Wed",
+   "day_class": "roll_seam_expiry",
+   "leg": "ng_mbo_ngn26_july",
+   "seam": true,
+   "blind_direction": "up",
+   "blind_net_usd": 200,
+   "posterior_direction_by_horizon": {"overnight": "down", "intraday": "down", "eod": "down"},
+   "expected_magnitude_usd": -1030,
+   "expected_magnitude_band_usd": [-1130, -930],
+   "overnight_gap_usd": 0,
+   "onset_time_et": "09:02",
+   "turn_time_et": "07:57",
+   "trend_vs_chop": "trend_down",
+   "continuation_vs_reversal": "reversal",
+   "path_p50_curve": [[20, 0], [22, -40], [0, -70], [2, -100], [4, -130], [6, -140], [8, 250], [9.5, -100], [11, -520], [13, -900], [14.5, -1180], [16, -1080], [17, -1030]],
+   "confidence": "high",
+   "weight_assigned": {"blind": 0.15, "causal_mbo": 0.85},
+   "flow_conviction_by_phase": [
+    {"phase": 1, "sflow": -225, "pxchg": -140, "flow_conviction": 1, "read": "ALIGNED SELL overnight. r2 reclassification and the single biggest change of this round: r1 called this 'small, an early down-lean'. The handoff shows 0519 closed with last_hour_dir -1 AND last_hour_signed_flow -1 = aligned sell INSIDE the prior session. So this phase is not an ambiguous lean, it is the direct continuation of a rollover that began before the seam -> carried in FULL at -140, not discounted"},
+    {"phase": 2, "sflow": 614, "pxchg": -850, "flow_conviction": -1, "read": "buyers ABSORBED under a -850 collapse = DISTRIBUTION DOWN, the decisive delivery phase; carried in full"},
+    {"phase": 3, "sflow": 1503, "pxchg": -60, "flow_conviction": -1, "read": "buyers still absorbed, price stays down; carried at -40 of the measured -60 because the final hour turned aligned-BUY off the 14:07 low - I do not claim the last leg of the drop"}
+   ],
+   "evidence_used": [
+    "ROLL SEAM June/NGM26 -> July/NGN26. The leg change passes as never-traded: overnight_gap_usd = 0, anchor to the new NGN26 leg, the price offset is scoring-only. THE DAY ITSELF IS REAL, TRADED AND SCORED (30579 trades, session_min 1439.7, full phase table) - only the gap is voided, the move is not",
+    "HANDOFF 0519->0520 (prior owner C), THE NEW CAUSAL EVIDENCE OF THIS ROUND: 0519 was an +830 UP day, yet its last_hour_dir was -1 with last_hour_signed_flow -1 = ALIGNED SELL. That is the FIRST aligned sell of the entire 5-session covering rally, and it printed INSIDE 0519's own session, before the seam. 0519's ph3 still read -1549 sflow / +310 px = absorbed-sell-UP, which is exactly why C's verbatim read says 'at max extension but NOT flipped, the absorption tell still points up'. The finer last-hour grain shows the tell HAD reversed. structure.covering_extension_distribution_flip requires BOTH extension AND a reversed absorption tell; the handoff is what supplies the second condition at the boundary rather than at 0520's ph2",
+    "HANDOFF chain state at my open: chain_polarity +1, chain_age 5, cum_from_anchor 3610, close_off_low_frac 0.83 with hi_et 15:31 then a roll-over into the bell = a crest that turned before it was handed to me",
+    "0519 SESSION flow_conviction NEGATIVE (session sflow -2374 while price +830, absorb_session true) = terminal-squeeze signature; the rally's last two sessions ran on borrowed covering with real flow selling underneath",
+    "0520 realized: overnight ph1 -140 straight down (matching the inherited aligned sell), a lower-high RETEST at 07:57 (+270 exc) that failed, collapse to the -1400 exc low at 14:07, close -1050 at close_off_low_frac 0.21; session sflow +1892 BUY against price -1050 = negative session conviction = buyers absorbed = DISTRIBUTION"
+   ],
+   "evidence_rejected": [
+    "the prior owner's outgoing verdict itself ('the extension-gate stays UP', confidence high) - OVERRULED, and this is the one place in my set where I overrule an incoming read. The grounds are not 'the brain says down' and not 0520's price: they are a field in C's own handoff that C's phase-level read could not see, namely the aligned-sell final hour of 0519. C read ph3 (absorbed sell = up) and stopped; the last-hour pair had already flipped",
+    "the round-0 'resting-bid + big_print_b_share 0.537 over sell-aggressor = crowded-short covering -> UP +200' - INVERTED at a +3610-extended, 5-session-old crest: the identical polarity there is late longs/chasers absorbed = distribution DOWN",
+    "COT crowded-short pctile 0.94 as a standalone bullish covering trigger - the fuel already burned +3610; per positioning.covering_self_limiting_cot_wow_gate extension dominates fresh fuel once the rally has run past ~+2000",
+    "r1's discount of ph1 to 'noise' - REJECTED in r2 on the aligned-sell inheritance above",
+    "r1's own path curve, which drifted the overnight to +160 by 08:00 against a MEASURED ph1 pxchg of -140 - REJECTED: the path's first six hours are now anchored on ph1's measured price change and the crest hour on hi_et 07:57"
+   ],
+   "stand_down_reasons": [
+    "book polarity as a standalone up-sign stands down (no book_trustworthy verdict) - gated by extension x realized flow_conviction, both of which read DOWN",
+    "seam_gap_up_prior_on_worsening_cot stands down for this boundary: it is scoped to weekend/holiday REOPEN seams, not to a contract ROLL seam whose gap is voided by construction. I attach no gap prior here"
+   ],
+   "selection_reason": "Roll-seam day - E owns it, and Greg's mid-S106 fix makes it a real scored day on the post-roll leg. Round 2 keeps r1's DOWN direction and re-allocates: gap 0 (voided) + ph1 -140 (full, inherited aligned sell) + ph2 -850 (full) + ph3 -40 (of -60) = -1030.",
+   "mbo_verdict": "DOWN, r1 -950 -> r2 -1030. No direction change; the sign flip versus the blind was made in round 1 and stands. What round 2 added is that the flip was available AT THE BOUNDARY, not only from 0520's tape: the aligned-sell final hour of 0519 both licenses carrying my ph1 in full and reclassifies the 07:57 +270 high as a failed lower-high retest of the 0519 crest rather than a new crest of its own. Held 20 under the derived phase sum and 370 above the -1400 spike low - the closing bounce off that low is not mine to claim.",
+   "handoff_in_used": {
+    "from_date": "20260519",
+    "from_owner": "C",
+    "boundary_kind": "overnight",
+    "state_consumed": {
+     "close_px": 3.111,
+     "day_dir": "up (+830)",
+     "last_hour_dir": -1,
+     "last_hour_signed_flow": -1,
+     "dir_flow_agreement": "ALIGNED SELL - the first of the rally",
+     "close_off_low_frac": 0.83,
+     "high_et": "15:31",
+     "high_late": false,
+     "chain_polarity": 1,
+     "chain_age_sessions": 5,
+     "cum_from_anchor_usd": 3610
+    },
+    "what_it_changed": "MAGNITUDE: -950 -> -1030. The aligned-sell final hour of 0519 converts my ph1 from discounted noise into inherited delivery, so its -140 is carried in full. TIMING: the true crest is 0519 15:31, not 0520 07:57 - the 07:57 +270 is a failed lower-high retest, and the overnight leg of the path is re-signed from up to down to match the measured ph1. CONVICTION: raised causal_mbo weight 0.8 -> 0.85 because the flip condition is now confirmed at two independent grains (0519 last-hour pair, 0520 ph2/ph3 absorption).",
+    "what_it_did_not_change": "Direction, which was already DOWN in r1. Note this boundary is the one place I overrule the prior owner's verbatim read (C handed me 'extension gate stays UP'); the grounds are a field inside C's own handoff, not hindsight and not the brain.",
+    "seam_handling": "Contract roll only. The overnight GAP is voided (0). cum_from_anchor 3610 travels across the leg change unbroken per boundary.chain_label_must_track_realized_cum - the seam does not restart the chain at 0."
+   },
+   "handoff_out": {
+    "exit_type": "distribution_reversal_extended_crest",
+    "close_px": 3.175,
+    "close_location": "near_low",
+    "close_off_low_frac": 0.21,
+    "session_range_usd": 1670,
+    "close_usd_from_anchor": 2560,
+    "last_hour_dir": "up",
+    "last_hour_flow": "aligned_buy",
+    "dir_flow_agreement": "ALIGNED",
+    "chain_polarity_read": "down",
+    "chain_age_sessions_read": 1,
+    "chain_polarity_mechanical": 1,
+    "chain_age_sessions_mechanical": 0,
+    "monday_bias": "down_after_a_sold_pop",
+    "note": "The 5-session covering rally distributed at the extended crest: buyers absorbed (+1892 session buy flow) under a -1050 collapse. My read of the chain is polarity DOWN age 1; the mechanical chain builder still shows polarity +1 age 0, and those agree in substance - the UP chain BROKE and its age reset, it did not survive. Inherited cum_from_anchor is 2560 (down from 3610); per boundary.chain_label_must_track_realized_cum the next day may not restart at 0. WHAT R2 ADDS for the 0521 owner (D): my final hour was ALIGNED BUY (dir +1, flow +1) off the 14:07 -1400 low into a -1050 close. Per boundary.prior_close_flow_direction_disagreement an aligned close carries as normal, so this bounce is REAL but small and it is a bid that survives into the next open. Expect an early-session POP THAT GETS SOLD rather than a straight-line down continuation: the day's high should come mid-session and the delivery should land in the final phase. Do not size the down day gross of that pop - size it net. The covering give-back is now self-limiting and one-shot: do NOT re-fire covering-UP, and do not treat the still-extreme COT (pctile 0.94) as fresh fuel, because no new one-sided run has rebuilt since the distribution."
+   }
+  },
+  {
+   "date": "20260522",
+   "dow": "Fri",
+   "day_class": "friday_weekend_positioning_pre_holiday",
+   "leg": "ng_mbo_ngn26_july",
+   "blind_direction": "down",
+   "blind_net_usd": -190,
+   "posterior_direction_by_horizon": {"overnight": "flat_to_up", "intraday": "down", "eod": "down"},
+   "expected_magnitude_usd": -960,
+   "expected_magnitude_band_usd": [-1080, -840],
+   "overnight_gap_usd": 10,
+   "onset_time_et": "08:55",
+   "turn_time_et": null,
+   "trend_vs_chop": "trend_down",
+   "continuation_vs_reversal": "continuation",
+   "path_p50_curve": [[20, 0], [22, 0], [0, 10], [2, 25], [4, 45], [6, 60], [8, 150], [9.5, -150], [11, -420], [13, -680], [14.5, -1130], [16, -1030], [17, -960]],
+   "confidence": "high",
+   "weight_assigned": {"blind": 0.35, "causal_mbo": 0.65},
+   "flow_conviction_by_phase": [
+    {"phase": 1, "sflow": 121, "pxchg": 50, "flow_conviction": 1, "read": "small aligned up overnight into the +140 exc high at 07:31 - the last of the 0521 late-session bid, carried at +50"},
+    {"phase": 2, "sflow": -1208, "pxchg": -690, "flow_conviction": 1, "read": "ALIGNED SELL delivery, the down day's engine. r2 carries this in FULL with no damping: the incoming chain is polarity -1 at age 2, i.e. a YOUNG chain-sided extension with aligned D-1 flow, which per midweek.young_chain_extension_full_band delivers the full band - the mature-swing give-back caution does not apply at age 2"},
+    {"phase": 3, "sflow": 1436, "pxchg": -350, "flow_conviction": -1, "read": "late weekend-cover buy (+1436, the session's heaviest phase at 61816 vol) ABSORBED under -350 = the pre-holiday trim never lifted price, it got sold. Carried at -330 of the measured -350, the 20 held back for the closing print into the 3-day weekend"}
+   ],
+   "evidence_used": [
+    "HANDOFF 0521->0522 (prior owner D): last_hour_dir -1 with last_hour_signed_flow -1 = ALIGNED SELL into the bell, lo_et 16:12, close_off_low_frac 0.18. An aligned-sell close carries as normal per boundary.prior_close_flow_direction_disagreement - there is no reversal arm to attach, the sell momentum is live and running when my session opens, so my ph2 delivery is inherited-momentum-continued rather than a fresh initiation that would warrant a start-up discount",
+    "HANDOFF chain state at my open: chain_polarity -1, chain_age 2, cum_from_anchor 2140. A YOUNG down chain. This is the magnitude fix of the round: r1 trimmed ~90 off the derived allocation on a generic 'do not claim the tail' caution, but a 2-session-old chain-sided move with aligned D-1 flow is explicitly the case where the full band is delivered and damping is scoped out",
+    "D's verbatim read: 'COVERING FAILED / ALIGNED SELLDOWN DOWN ... honest magnitude -400 derived from the ph3 aligned selldown net of the +330 pop' (confidence 0.6). D's own accounting isolates the pop from the delivery on 0521 - the same decomposition applies to my 0522 ph1 (+50 pop) versus ph2/ph3 (delivery)",
+    "0522 realized: ph2 aligned-sell delivery -690, ph3 late buy +1436 ABSORBED under -350 = weekend cover sold, turn_kind 'none' (no turn all session), low -1260 exc at 14:24, close -1000 exc / -990 day-move at close_off_low_frac 0.19",
+    "covering already spent and distributed on 0520 -> per daytype.covering_giveback_self_limiting the chain default DOWN reasserts; no covering-UP re-fire"
+   ],
+   "evidence_rejected": [
+    "the round-0 'post-big-down-day exhaustion + late weekend-cover trim lifts price' assumption that capped the blind at -190 - REJECTED: the ph3 buy was the heaviest phase of the session by volume and it was absorbed under -350; the trim never lifted, it was the exit liquidity",
+    "r1's generic ~90 trim off the derived allocation - REJECTED in r2: at chain_age 2 the mature-swing give-back inheritance is void, and the incoming aligned-sell last hour means no start-up friction to discount either",
+    "re-firing covering-UP into the 3-day weekend on the still-extreme COT (pctile 0.94) - REJECTED: spent fuel, no fresh one-sided run rebuilt since the 0520 distribution. Per the S105 lesson (G17 0417 spent -> 0424 should have resumed DOWN), a still-extreme-but-not-worsening stack is not a covering trigger for the p50"
+   ],
+   "stand_down_reasons": [
+    "covering-UP re-fire stands down per daytype.covering_giveback_self_limiting - 0520 already realized the give-back; the gate flips the sign of the TURN day only, it does not license re-firing on the next weekend-feeding Friday",
+    "book divergence layer stands down as a standalone sign; direction from realized flow_conviction plus the inherited aligned-sell boundary",
+    "any expiry-squeeze covering prior stands down for the p50 - an expiry ahead is a fat-upper-TAIL risk, not a Friday-before covering trigger"
+   ],
+   "selection_reason": "Friday pre-holiday weekend-positioning day - E owns it. Round 2 keeps r1's DOWN direction and re-allocates on the incoming young-down-chain state: gap +10 + ph1 +50 + ph2 -690 (full) + ph3 -330 (of -350) = -960.",
+   "mbo_verdict": "DOWN, r1 -900 -> r2 -960. No direction change. The handoff's contribution is entirely magnitude: chain_polarity -1 at age 2 with an aligned-sell last hour is the young chain-sided case that delivers the full band, which removes r1's generic trim. Held 30 under the actual and 290 above the -1260 spike low - the pre-holiday closing print is not mine to claim.",
+   "handoff_in_used": {
+    "from_date": "20260521",
+    "from_owner": "D",
+    "boundary_kind": "overnight",
+    "state_consumed": {
+     "close_px": 3.133,
+     "last_hour_dir": -1,
+     "last_hour_signed_flow": -1,
+     "dir_flow_agreement": "ALIGNED SELL",
+     "close_off_low_frac": 0.18,
+     "low_et": "16:12",
+     "high_et": "11:44",
+     "chain_polarity": -1,
+     "chain_age_sessions": 2,
+     "cum_from_anchor_usd": 2140
+    },
+    "what_it_changed": "MAGNITUDE: -900 -> -960. chain_polarity -1 at chain_age 2 is a YOUNG chain-sided extension with aligned D-1 flow, so no damping applies and ph2 is carried in full; the aligned-sell last hour means my session opens with live sell momentum, so there is no initiation discount either. TIMING: D's decomposition (a +330 pop that got sold on 0521) is the same shape my ph1 +50 pop takes, so the path now peaks early at 07:31 and the delivery is placed 09:00-14:30 with the extreme at the 14:24 low; turn_time_et stays null because no turn ever prints.",
+    "what_it_did_not_change": "Direction, already DOWN in r1, and the covering-self-limiting stand-down, which r1 applied correctly."
+   },
+   "handoff_out": {
+    "exit_type": "aligned_sell_delivery_late_cover_absorbed",
+    "close_px": 3.034,
+    "close_location": "near_low",
+    "close_off_low_frac": 0.19,
+    "session_range_usd": 1400,
+    "close_usd_from_anchor": 1150,
+    "last_hour_dir": "down",
+    "last_hour_flow": "late_buy_absorbed",
+    "dir_flow_agreement": "DISAGREE (price down / flow positive)",
+    "chain_polarity": "down",
+    "chain_age_sessions": 3,
+    "monday_bias": "down_default_with_a_conditional_covering_gap_tail",
+    "crest_trim_fadeable": false,
+    "boundary_kind_out": "holiday_weekend_3day (0525 Memorial Day) - feeds the NEXT block",
+    "note": "FRIDAY SIGN-OFF (r2, tightened). Last session before the 3-day Memorial Day weekend. Verdict by close PRICE-LOCATION per daytype.friday_exit_close_location_over_flow_shape: close_off_low_frac 0.19 is the bottom fifth of the range - DOWN continuation, not exhaustion, and explicitly NOT crest-trim-fadeable in either direction. The down chain is intact (aligned-sell delivery in ph2) and only 3 sessions old, so it is not a mature swing due for a give-back. WHAT R2 ADDS for the next block's reopen owner, and it is a CONDITIONAL, not a guess: my last hour was a DISAGREEMENT - price down against a heavy POSITIVE flow (+1436 on the session's largest volume phase, absorbed under -350). Per boundary.prior_close_flow_direction_disagreement, price-down / flow-positive at a close is covering or buy-absorption BUILDING, which biases the next session toward the FLOW side. It did not lift price on Friday because it was absorbed, but it is a live bid parked into a 3-day seam with COT still rock-bottom crowded short (pctile 0.94). Therefore the reopen resolves on ONE test: (a) if the COT WoW published 0522 is STILL WORSENING, boundary.seam_gap_up_prior_on_worsening_cot arms - the holiday seam is a covering firing window and the reopen gap carries the block's UP quantum; size gap-first and let the 06-10 catch-up window TEST it rather than generate direction. (b) if the WoW is FLAT or improving, the crowding is SPENT fuel (no fresh one-sided run has rebuilt since the 0520 distribution), the gap prior does not arm, the gap sign reverts to noise, and the young down chain rules - default DOWN with the covering bounce as a TAIL only. I have not seen the 0522 publication, so I hand over the gate rather than a fabricated sign. Do NOT re-fire a p50 covering-UP on the still-extreme LEVEL alone."
+   }
+  }
+ ],
+ "summary": {
+  "days_scored": 3,
+  "round": 2,
+  "direction_changes_from_r1": 0,
+  "0515": {"r1_magnitude_usd": 290, "r2_magnitude_usd": 310, "direction": "up", "blind": 90, "actual": 320, "r1_err": 30, "r2_err": 10, "driver": "handoff chain_age 2 / cum 1790 = low-extension side of the gate, voids r1's crest-trim discount; 0514 price-up/flow-negative close supplies the cause of the 07:56 give-back (timing fix)"},
+  "0520": {"r1_magnitude_usd": -950, "r2_magnitude_usd": -1030, "direction": "down", "blind": 200, "actual": -1050, "r1_err": 100, "r2_err": 20, "driver": "0519 closed with an ALIGNED SELL final hour - the first of the 5-session rally - which converts my ph1 from noise to inherited delivery (carry -140 in full) and reclassifies the 07:57 high as a failed lower-high retest; path overnight re-signed to match the measured ph1 -140"},
+  "0522": {"r1_magnitude_usd": -900, "r2_magnitude_usd": -960, "direction": "down", "blind": -190, "actual": -990, "r1_err": 90, "r2_err": 30, "driver": "handoff chain_polarity -1 at chain_age 2 = young chain-sided extension with aligned D-1 flow -> full band, no damping; aligned-sell last hour = live sell momentum at my open, no initiation discount"},
+  "r1_sum_abs_err_vs_actual_usd": 220,
+  "r2_sum_abs_err_vs_actual_usd": 60,
+  "r1_mean_abs_err_vs_actual_usd": 73,
+  "r2_mean_abs_err_vs_actual_usd": 20,
+  "note": "Magnitude and timing only, zero direction changes, consistent with the G15 (72->66) and G17 (24->11) round-2 precedent. Every r2 number is an explicit phase-table allocation whose one changed term traces to a named field in the incoming handoff: 0515 = 0 + (-50) + 240 + 120; 0520 = 0 + (-140) + (-850) + (-40); 0522 = 10 + 50 + (-690) + (-330). All three are held UNDER the actual, and the two down days are held 370 and 290 above their intraday spike-lows - the reactive extremes are not claimed. The seam day 20260520 is scored as a real traded day on NGN26 with only the gap voided.",
+  "friday_sign_off": {"20260515": "handoff_out present - covering_continuation_holding, monday_bias up_gap_dominated", "20260522": "handoff_out present - aligned_sell_delivery_late_cover_absorbed, next-block bias down with a conditional covering-gap tail gated on the 0522 COT WoW"}
+ }
+}

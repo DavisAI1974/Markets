@@ -1,0 +1,61 @@
+{
+  "specialist": "A",
+  "lens": "weekend seam",
+  "group": "g17",
+  "brain_version": "s102.5",
+  "consulted_proposals": [
+    "ng_brain_friday_gate_proposal.json (daytype.friday_turn_exhaustion_gate, daytype.friday_crest_trim_discriminator) - PROVISIONAL, forward_evidence NONE; G17 is their first forward test. Consulted, not treated as settled."
+  ],
+  "shared_backdrop": {
+    "anchor": {"date": "2026-04-10", "close_usd_equiv": 2.653, "contract": "May/NGK26", "last_hour": "down/flat", "on_chain": "G16 bearish bleed 3.035->2.653"},
+    "regime": "S3 shoulder / injection; curve contango; calendar_front NGK26 settle 2.648, next NGM26 2.806, front_next_spread -0.158 (chg_3d -0.042); squeeze_watch INACTIVE (dtx 12, spread not tightening).",
+    "chain_state": "mature bearish down-chain (multi-week bleed, chain_age high); cum near a block/multi-week extreme LOW at ~2.65; not a young chain.",
+    "positioning": "COT managed-money NET SHORT and GROWING: -86,033 (rpt 04-07) -> -114,095 (rpt 04-14); OI rising 1.559M->1.585M. Bearish-aligned, building toward a cover-fuel extreme (not yet a forced-cover print).",
+    "roll_note": "May/NGK26->June/NGM26 seam is 0420->0421 (a WEEKDAY seam), NOT inside either weekend. No never-traded leg change passes over the 0410->0413 or 0417->0420 weekends.",
+    "salience_caveat": "S3 shoulder -> weather authority REDUCED; a cold add of a few gw supports but does not dominate direction."
+  },
+  "bridges": [
+    {
+      "seam": "0410->0413",
+      "friday_exit_consumed": {
+        "source": "KNOWN anchor exit (0410), not an E inference",
+        "exit_type": "exhausted_bleed_drift_soft (down-chain intact but last hour DOWN/FLAT, not a fresh down-thrust)",
+        "monday_bias_from_exit": "soft-bearish-to-neutral",
+        "sanity_check_vs_chain": "CONSISTENT - a mature bleed at a cum-extreme printing a soft/flat exit is an exhausting continuation, not a re-accelerating one. 0410 tape: session_b_share 0.445 (sell-tilt) but big_print_b_share 0.526 (mild BUY divergence) = early big-money absorption into the bleed. Divergence noted, not decisive."
+      },
+      "reopen_scenarios": [
+        {"name": "gap_persistence_down (bleed continues)", "prob": 0.45, "rationale": "mature down-chain + warm/bearish weather (0413 HDD -7.5 vs normal, mod_cool) + MM short-and-growing. Continuation is the base case but capped: cum-extreme + soft exit + big-print absorption limit down-thrust -> grind not thrust."},
+        {"name": "flat_basing (bleed stalls / absorbs)", "prob": 0.35, "rationale": "0410 big-print buy divergence + cum-extreme = absorption can stall the drift into a low-range basing day."},
+        {"name": "gap_rejection_up (down-gap bought)", "prob": 0.20, "rationale": "exhaustion ingredients make a reopen down-gap rejection fuel, BUT there is NO forward bullish driver this weekend (weather warm), so any up is a rejection bounce, NOT a chain birth. Low weight."}
+      ],
+      "gap_ownership": "MOSTLY SPENT down. 2.653 is the floor of a multi-week bleed at a cum-extreme; limited unrealized-ahead downside; residual is grind, not a fresh leg. No unrealized up-driver ahead.",
+      "driver_realization_check": "NO bullish carry peaked over the 0410->0413 weekend. Weather stays warm/bearish (HDD -7.5 vs normal, fwd7 HDD span low 1.8-8.0); weekend model runs reinforce warm (weak S3 authority). No sell-the-news setup; no bounce driver.",
+      "monday_bias_confirmed_or_adjusted": {
+        "handed_to_B": "SOFT-BEARISH-TO-NEUTRAL, LOW MAGNITUDE",
+        "anchor_to": "the 0410 CLOSE 2.653 + chain state (NOT the 0410 day-move; reopen gap SIGN is non-derivable noise)",
+        "why": "down-chain intact and warm backdrop keep the lean down, but it is EXHAUSTING at a cum-extreme with early big-print absorption -> do NOT size a fresh continuation-down, and do NOT call a chain-birth up (no forward driver). A basing/flat outcome is live via the absorption caveat. B owns the number; magnitude small (shoulder, low-vol, exhausting bleed)."
+      }
+    },
+    {
+      "seam": "0417->0420",
+      "friday_exit_consumed": {
+        "source": "INFERRED from doctrine (E not visible) - SCENARIO, sanity-checked vs chain + tape",
+        "exit_type": "likely stretched_bleed_covering/basing (short-covering into weekend + approaching NGK26 expiry) OR a final soft down-flush - two-sided; NOT confidently a fresh down-thrust",
+        "monday_bias_from_exit": "flat-to-up (adjusted UP from the raw bearish-chain default)",
+        "sanity_check_vs_chain": "friday_turn_exhaustion_gate (consulted, PROVISIONAL) FIRES: chain mature, cum at a block extreme, MM short-and-growing (positioning extreme building), and D-1 (0416) big_print_b_share 0.692 = STRONG big-money BUY divergence opposing the chain. friday_crest_trim_discriminator: chain is STRETCHED (not based); a stretched down-bleed's squaring/covering resolves UP, and price up-into-settle against sell flow = COVERING = positioning_spent (do NOT read as fresh strength, but it caps downside). 0417's own tape (b_share 0.379 strong-sell, big_print 0.5 neutral, leg_count 18 choppy) = breadth still selling but big money NOT pressing -> consistent with a soft/covering exit rather than a fresh down-leg. CAVEAT: if E hands a HARD-DOWN 0417 exit (the prior-over-state flaw E flagged), it contradicts the forward driver below -> B should be ready to ADJUST toward this bridge's up-lean."
+      },
+      "reopen_scenarios": [
+        {"name": "gap_rejection / CHAIN-BIRTH up (bounce that holds)", "prob": 0.45, "rationale": "UNLIKE 0413, there IS a forward driver: a late-season cold shot realizes INTO Monday (0420 HDD 11.927, +3.99 vs normal, mod_heat regime) -> a reopen up-gap can be a genuine chain-BIRTH, not just a rejection. Plus MM extreme-short = cover fuel + prior big-print absorption. Weather authority weak in S3 shoulder, so up-magnitude capped."},
+        {"name": "flat_basing", "prob": 0.30, "rationale": "the cold shot is a TRANSIENT shot (0420 HDD 11.9 peaks then fades to 9.4 h1) and shoulder weight is low; covering can exhaust into a range rather than a trend."},
+        {"name": "gap_persistence_down (bleed continues)", "prob": 0.25, "rationale": "0417 breadth still strongly sell-tilted (0.379); if 0417 exited soft-down a reopen could gap down. BUT the forward cold-shot driver makes a down-gap rejection fuel this time -> lower weight than 0413's down case."}
+      ],
+      "gap_ownership": "DOWN is SPENT (deep cum-extreme; MM already near-max short -> limited fresh short fuel). The UP driver (cold shot) is UNREALIZED-AHEAD, realizing INTO Monday -> the up-side has room the down-side lacks.",
+      "driver_realization_check": "the cold shot's peak lands ON/around 0420 and FADES after (h1 9.4) -> peak is NOT spent before the weekend, so this is NOT sell-the-news; it is an unrealized-ahead BULLISH driver realizing into Monday. This is the key differentiator vs the 0410->0413 seam.",
+      "monday_bias_confirmed_or_adjusted": {
+        "handed_to_B": "LEAN UP / BOUNCE, MODERATE conviction (higher than 0413), MAGNITUDE capped by S3 shoulder + transient shot",
+        "anchor_to": "the 0417 CLOSE + chain state (reopen gap SIGN non-derivable; do NOT anchor to the 0417 day-move)",
+        "why": "adjusted UP from the raw bearish-chain default because a reopen up-gap here has a FORWARD DRIVER (cold shot) to convert it into a birth, plus positioning cover-fuel and prior big-print absorption. This is exactly the friday_gate's target case (mature exhausting chain + turn ingredients present at decision time). B owns the number; if E's 0417 exit is soft/covering as inferred, confirm up-lean; if E hands hard-down, ADJUST toward this up-lean given the unrealized cold-shot driver."
+      }
+    }
+  ]
+}

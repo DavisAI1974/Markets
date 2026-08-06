@@ -1,0 +1,130 @@
+{
+  "specialist": "C",
+  "lens": "CORE INTRADAY TAPE - onset, continuation-vs-reversal, signed-flow divergence, exhaustion, origin-shelf/give-back turns; default owner on non-catalyst midweek days",
+  "group": "g19",
+  "brain_version": "s102.9",
+  "round": 1,
+  "days_owned": ["20260512", "20260513", "20260519"],
+  "doctrine_note": "BLIND pass, round 1 clean re-run. Price curve masked; my only market-force inputs are the never-masked MBO flow read (session/phase signed_flow, b_share, big_print_b_share, l1_book) plus COT/structure/calendar. Block is a KNOWN covering-rally on a worsening record-extreme MM short (1y pctile 2.83 -> 0.94, MM_net -107k -> -120k, still ADDING shorts). S3-injection prior leans DOWN (dir -1), but g18_covering_rally_s105 warns the blind's block-bearish lean is the recurring gap vs covering rallies. C discipline (accumulation_arm_turn / midblock_right_the_ship): do NOT ride the S3-down default into a worsening covering short - but the LITERAL arm (big_print_b_share >= 0.55 on >= 2 of last ~5) NEVER hard-fires in g19 (max 0.537 on 05-19, 0.514 on 05-14), and covering_absorption_directional_tell requires PRICE conviction absent in the blind. So: aligned down-delivery is honestly ownable early; the turn is a BUILDING sub-threshold stack, acted on by degrading down-conviction and skewing 0519 to turn-pending/bimodal, NOT a hard up-flip.",
+  "cross_cutting_mbo_finding": "The soft-covering-fuel discriminator. g19 maximizes covering fuel (MM short worsening to the 0.94 1y-pctile, adding shorts every COT print, quote_bid_share climbing 0.51 -> 0.499 -> 0.528 as resting liquidity leans bid) yet NEVER trips the hard accumulation arm: big_print_b_share tops at 0.537 (05-19) / 0.514 (05-14), and the buy-lean big-print CLUSTER (05-14 0.514 / 05-15 0.506 / 05-18 0.506, all under sub-0.47 sell breadth) is a turn STACK building SUB-0.55. In the blind (no price) covering_absorption_directional_tell cannot be confirmed - it needs signed-flow-vs-price conviction - and the G18 forward caveat (0506 RTS-up was WRONG: buy-absorbed-FAILING stayed DOWN) proves a soft sub-threshold stack without price confirmation is not sign-certain UP. General mechanism: soft covering fuel (worsening extreme COT + a sub-0.55 buy-absorption cluster + a bid-leaning book) DEGRADES down-conviction and SKEWS the band up, but only the >= 0.55 hard arm OR a confirmed price turn justifies a sign FLIP. Applied: own aligned down-delivery on 0513 (big prints selling 0.446, flow -2586 aligned), keep 0512 a weak two-sided chop-down (mid +2585 buy that gave back -1526), move 0519 to turn-pending/bimodal flat-to-up as the stack matures - not a confident down, not a confident up.",
+  "days": [
+    {
+      "date": "20260512",
+      "dow": "Tue",
+      "day_class": "core (non-catalyst midweek; block wk1, EIA 05-14 ahead)",
+      "blind_direction": "down",
+      "blind_net_usd": "n.a.",
+      "posterior_direction_by_horizon": {
+        "overnight_reopen": "flat-to-down (05-11 exit phase sold -1526)",
+        "am_delivery": "down, weak",
+        "pm_close": "down, low-conviction chop"
+      },
+      "expected_magnitude_usd": -200,
+      "expected_magnitude_band_usd": [-450, 120],
+      "overnight_gap_usd": -50,
+      "onset_time_et": "08:00",
+      "turn_time_et": "14:00",
+      "trend_vs_chop": "chop",
+      "continuation_vs_reversal": "continuation (down, weak)",
+      "path_p50_curve": [[20, 0], [22, -30], [0, -50], [2, -20], [4, -60], [6, -90], [8, -70], [10, -120], [12, -100], [14, -150], [16, -180], [18, -210], [20, -200]],
+      "confidence": 0.42,
+      "weight_assigned": {"prior_blind": null, "this_read": 1.0, "note": "first blind pass - no prior blind to weight against; the market-force / MBO-flow read IS the forecast"},
+      "evidence_used": [
+        "D-1 (05-11) tape: session_b_share 0.471 sell-lean, big_print_b_share 0.507 (marginal, NOT >= 0.55 arm), session_signed_flow +763",
+        "phase_signed_flow [-296, +2585, -1526]: a mid-session buy surge (+2585 under only 0.49 phase b_share = size-concentrated, breadth stayed lean) that FAILED and GAVE BACK into the close (phase3 -1526, b_share 0.442) - a two-sided, non-committal exit that closed on the sell side",
+        "l1_book quote_bid_share 0.51 = balanced resting liquidity, no directional lean",
+        "COT pctile_1y 2.83, MM_net -107489 - extreme short but arm not yet hard-triggered; early block"
+      ],
+      "evidence_rejected": [
+        "reading the mid-session +2585 buy as accumulation/turn - it gave back the same session (buy-absorbed-failing pattern), and big_print_b_share 0.507 is below the 0.55 hard arm",
+        "sizing a clean trend day - the +763 positive net session and the give-back structure argue chop, not a directional delivery"
+      ],
+      "stand_down_reasons": [
+        "book layer stands down: blind has no execution_authority/price-conviction verdict; l1 is balanced (0.51) so no book-based call",
+        "accumulation arm STANDS DOWN: big_print_b_share 0.507 < 0.55, no >= 2-of-5 cluster yet this early"
+      ],
+      "selection_reason": "core midweek, no calendar catalyst -> C owns. Weak two-sided chop-down: sell-lean breadth + a failed mid-session buy that gave back, closing on the sell side, under a still-early (not yet worsening-confirmed) extreme short.",
+      "mbo_verdict": "ALIGNED-weak DOWN. Phase-3 sell give-back (-1526) owns the close; the mid buy was absorbed-failing, not accumulation. Honest small magnitude - chop not trend."
+    },
+    {
+      "date": "20260513",
+      "dow": "Wed",
+      "day_class": "core (non-catalyst midweek; EIA 05-14 next day)",
+      "blind_direction": "down",
+      "blind_net_usd": "n.a.",
+      "posterior_direction_by_horizon": {
+        "overnight_reopen": "down (05-12 delivered a clean aligned sell)",
+        "am_delivery": "down, trend",
+        "pm_close": "down, minor late stabilization (05-12 phase3 +409)"
+      },
+      "expected_magnitude_usd": -400,
+      "expected_magnitude_band_usd": [-660, -140],
+      "overnight_gap_usd": -60,
+      "onset_time_et": "06:00",
+      "turn_time_et": null,
+      "trend_vs_chop": "trend",
+      "continuation_vs_reversal": "continuation (down)",
+      "path_p50_curve": [[20, 0], [22, -40], [0, -60], [2, -90], [4, -110], [6, -150], [8, -200], [10, -260], [12, -300], [14, -350], [16, -380], [18, -410], [20, -400]],
+      "confidence": 0.58,
+      "weight_assigned": {"prior_blind": null, "this_read": 1.0, "note": "first blind pass - no prior blind to weight against; the market-force / MBO-flow read IS the forecast"},
+      "evidence_used": [
+        "D-1 (05-12) tape: session_b_share 0.454 sell-lean, big_print_b_share 0.446 (big prints SELLING - no buy-absorption), session_signed_flow -2586 (strong sell)",
+        "phase_signed_flow [-436, -2559, +409]: heavy aligned mid-session sell (-2559), only a minor late +409 buy = clean down delivery, NOT absorption (flow aligned WITH the down move on breadth AND big prints)",
+        "l1_book quote_bid_share 0.499 = balanced/neutral resting, no bid support building yet",
+        "COT pctile_1y 2.83 (unchanged print) - this down day is itself DEEPENING the crowded short = building covering fuel for later, but no turn tell present today"
+      ],
+      "evidence_rejected": [
+        "Wednesday chain-default caution (my documented 71%-of-error flaw): checked and CLEARED - the turn-state genuinely CONFIRMS down here (big prints selling 0.446, flow -2586 aligned), this is delivery not a buried turn. No accumulation cluster yet (05-11 0.507 / 05-12 0.446).",
+        "reading the late +409 phase3 buy as a turn - too small (< 20% of the -2559 mid sell) to be more than late stabilization"
+      ],
+      "stand_down_reasons": [
+        "book layer stands down (blind, no price-conviction verdict; l1 balanced 0.499)",
+        "accumulation arm STANDS DOWN: big_print_b_share 0.446 is SELL-lean - the arm is not even a candidate this day"
+      ],
+      "selection_reason": "core midweek, no catalyst -> C owns. The one clean aligned-down delivery of my set: sell breadth + selling big prints + strong negative flow all point the same way. Honest down-continuation, sized as a trend day, with a small late-base trim.",
+      "mbo_verdict": "ALIGNED DOWN (genuine delivery, all three of breadth/big-prints/flow agree). Highest-conviction of my three days. Minor late +409 base trims the magnitude off the full mid-session sell."
+    },
+    {
+      "date": "20260519",
+      "dow": "Tue",
+      "day_class": "core (non-catalyst midweek; block wk2, seam 05-20 NGM26->NGN26 next day, EIA 05-21)",
+      "blind_direction": "down",
+      "blind_net_usd": "n.a.",
+      "posterior_direction_by_horizon": {
+        "overnight_reopen": "flat-to-soft-down (05-18 thin sell-lean breadth exit)",
+        "am_catchup": "turn UP risk - covering discharge in the 06-10 window as the crowded short reprices",
+        "pm_close": "up-skew, turn-pending/bimodal - reversal not confirmed without price"
+      },
+      "expected_magnitude_usd": 150,
+      "expected_magnitude_band_usd": [-260, 620],
+      "overnight_gap_usd": 30,
+      "onset_time_et": "04:00",
+      "turn_time_et": "08:00",
+      "trend_vs_chop": "chop",
+      "continuation_vs_reversal": "reversal (turn-pending)",
+      "path_p50_curve": [[20, 0], [22, 20], [0, 10], [2, -20], [4, -40], [6, -30], [8, 10], [10, 60], [12, 90], [14, 120], [16, 140], [18, 160], [20, 150]],
+      "confidence": 0.4,
+      "weight_assigned": {"prior_blind": null, "this_read": 1.0, "note": "first blind pass - no prior blind to weight against; the market-force / MBO-flow read IS the forecast"},
+      "evidence_used": [
+        "COT worsened to pctile_1y 0.94, MM_net -120065, chg_wow -12576 = near-record short STILL ADDING - covering fuel at its block maximum (the midblock_right_the_ship COT-extreme-AND-worsening trigger)",
+        "buy-lean big-print CLUSTER building sub-0.55: 05-14 0.514 / 05-15 0.506 / 05-18 0.506, all under sub-0.47 sell breadth = soft accumulation / turn stack (>= 3 of last ~5 > 0.50, but none >= 0.55 hard arm)",
+        "D-1 (05-18) tape: THIN Monday (n_trades 21671 vs ~42k, trades_per_min 15.1 = half normal), session_b_share 0.386 heavy sell breadth BUT big_print_b_share 0.506 buy-lean and net only -872 = divergence/absorption (small players sell, big prints quietly buy) on low conviction",
+        "l1_book quote_bid_share 0.528 (up from 0.51/0.499) = resting liquidity now leans BID - supportive, consistent with accumulation building",
+        "phase_signed_flow [+288, -867, -293]: opened buying, sold mid/late but modestly - no capitulation, a based/soft-sell thin session",
+        "structure: seam 05-20 next day (NGM26->NGN26) + EIA 05-21 - covering into a positioning/roll window is the classic discharge setup"
+      ],
+      "evidence_rejected": [
+        "riding the S3-down default: doctrine (accumulation_arm_turn) explicitly forbids it under a worsening covering short - the HDD gate-out is NOT down-evidence, it excludes the up-angle by construction in a shoulder",
+        "a CONFIDENT hard up-flip: rejected - the LITERAL arm needs big_print_b_share >= 0.55 (cluster max 0.514, 05-19-read max 0.537) and covering_absorption_directional_tell needs PRICE conviction unavailable in the blind. G18 forward caveat: 0506 RTS-up was WRONG (buy-absorbed-FAILING stayed DOWN) - a soft sub-threshold stack without price confirmation is not sign-certain UP.",
+        "the 05-18 sell-lean breadth (0.386) as a down signal - it is thin (half-volume) and net only -872 with big prints buying against it; low-conviction, not directional"
+      ],
+      "stand_down_reasons": [
+        "book layer stands down for a hard call (blind, no execution/price-conviction verdict) - quote_bid_share 0.528 logged as a supportive lean, not a trade trigger",
+        "LITERAL accumulation arm stands down (no session >= 0.55) - I act on the SOFT building stack via midblock_right_the_ship (unlock to turn-pending), NOT the hard arm"
+      ],
+      "selection_reason": "core midweek, no same-day catalyst -> C owns; pre-seam. Mid-block RIGHT-THE-SHIP: the turn stack has built (COT extreme AND worsening + a >= 3-of-5 buy-lean big-print cluster + a bid-leaning book) so I UNLOCK the block lean from chain-down to turn-pending and skew the sign to the covering side. Kept honest/small and bimodal because the stack is sub-0.55 and price cannot confirm the turn in the blind.",
+      "mbo_verdict": "TURN-PENDING / bimodal flat-to-UP. Soft covering fuel maxed but sub-threshold; degrade down-conviction and skew the band up (up-tail to +620) rather than hard-flip. Reversal onset in the 06-10 catch-up if the covering discharges into the seam; if buy-absorption keeps FAILING it reverts down (down-tail -260)."
+    }
+  ],
+  "summary": "g19 wk1 rides honest down-delivery (0512 weak two-sided chop-down -200; 0513 clean aligned trend-down -400 - big prints and flow both selling, my one high-conviction day), then wk2 turns the ship: 0519 moves to turn-pending/bimodal flat-to-up (+150, up-skewed band -260..+620) as the record-extreme MM short worsens to 0.94 pctile and a sub-0.55 buy-absorption cluster + bid-leaning book build the covering stack. Governing discipline: the LITERAL accumulation arm never hard-fires in g19 (max big_print_b_share 0.537), and the blind has no price to confirm covering_absorption - so I DEGRADE down-conviction and SKEW up on 0519 rather than hard-flip, per the G18 forward caveat that a soft stack without price confirmation is not sign-certain UP. Do not ride the S3-down default into the worsening short; do not claim a confirmed up-reversal without the >= 0.55 arm or a price turn."
+}

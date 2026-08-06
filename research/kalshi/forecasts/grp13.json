@@ -1,0 +1,1621 @@
+{
+ "group": 13,
+ "tag": "grp13",
+ "brain_version": "s101.5",
+ "holdout_caveat": "same-session orchestrator (built the G12 refine and merged s101.3-s101.5 before spawning); Greg-directed in-session run; weight per the G11/G12 precedent",
+ "anchor": {
+  "date": "2026-02-13",
+  "close": 3.084,
+  "last_hour_dir": "down",
+  "day_net_usd": -160
+ },
+ "price_basis": "NG.n.0 OI-continuous. Instrument 996 from the anchor through 20260224; ROLLS on 20260225 (the calendar day NGH26/March expires) to instrument 1008, seam spread -0.022 (= -$220/contract). Roll MARKED, NEVER TRADED: at the 0224->0225 boundary the REAL overnight is forecast ~0. BASIS CAVEAT: contract identities are INFERRED - 996 may be the MAY contract (NGK26) with a rank-swap back to April (1008=NGJ26) at the March expiry; per-day intraday nets are roll-clean regardless; the walked series is NOT the March squeeze leg either way.",
+ "block_thesis": "REGIME-STATE DESCRIPTOR: post-unwind two-sided BASING at the 3.159 shelf resolves into a moderate DELIVERY-WINDOW ARCH, not a chain birth. A first-appearance cold shot (entering the models over the extended holiday closure, peaking 2/22-23 EXACTLY on bidweek/opex) reprices the walk up off the shelf through week 1 and crests at the opex/expiry pair (0223-0224) as the models cut the shot's tail; post-expiry the delivery sponsor is gone, the March strip is warm and the 0226 print flips the 5yr comparison back to surplus, bleeding the walk back to the shelf by 0227. POLARITY: no confirmed chain in either direction - basing with an up-drift week 1 and a down-drift week 2; every day is sized in basing/repricing classes, no crash or squeeze band used on the walked series. CONVICTION: moderate on the arch shape, low on week-2 amplitude. CHANGE CONDITIONS: (i) a violent March squeeze re-arm (unobservable behind the mask - collapsed spread was the anchor evidence) would run week-2 upside to multiples, shift the crest to expiry itself, and void demand bands on the March leg - never short that leg on band logic; (ii) the cold shot busting in the week-1 cycles flattens the arch and starts the shelf bleed early; (iii) any walked day breaking its counter-class band >=1.5x (C1) with C3/C4 satisfied would confirm a chain and re-polarize everything after it.",
+ "days": [
+  {
+   "date": "20260215",
+   "dow": "Sun",
+   "day_class": "weekend_gap + sunday_session (part 1 of the HOLIDAY-EXTENDED WEEKEND closure 0213->0217, first forward instance of the sub-class)",
+   "archetype": "chain_drift stub gap + thin Sunday drift",
+   "reasoning": "CLASS FIRST: weekend toolbag only - state reads, rhythm tools void. Item-8 procedure executed at the 0213 anchor for the WHOLE closure. STRUCTURAL CHECK FIRST: calendar-front (NGH26-NGJ26) spread +0.132 at the 0213 vintage, chg_1d -0.005 (narrowing), chg_3d +0.038, chg_5d +0.007. The level sits INSIDE the named post-unwind collapsed band (~+0.09-0.16), the 1d change is negative, the 3d uptick is oscillation from the collapsed low (0.094->0.132), cash basis +0.028 (normal - contrast +10.77 on 0130), vol quiet (n0 sigma_5 481, range pctile 25), no squeeze leg exists on the walk. Judged NOT positive-and-re-widening in the rebuild sense -> NO structural owner. The mechanical squeeze_watch flag (dte<=7 AND chg_3d>0) is ACTIVE and is recorded as a read, not a gate; its doctrine consequence applies to the MARCH leg, which the walk does not ride. WEATHER CHECK: the anchor-vintage stream is warm (D0 17.5, -6.8 vs normal), run-deltas sub-1 and mixed, cold only building toward normal at D+5-6 - nothing fresh at D+2..D+6 -> weather does not arm. -> CHAIN_DRIFT owner, PRICED-STUB band -200..-400 at chain sign (0213 closed -160 MID-RANGE, not at a chain extreme, so the -600..-1600 continuation class is explicitly NOT taken). Chain sign mild DOWN (warm strip, last hour down). Sunday session: thin set only, drift with the stub sign.",
+   "plays_fired": [
+    "magnitude.block_gap_ownership (chain_drift branch, stub band)",
+    "gap_ownership_scoring g13_0215_procedure (structural check declined, weather declined)",
+    "day_class_toolbags.a_weekend_toolbag (sunday_session_read_set)",
+    "squeeze_regime_doctrine (watch noted active; applies to March leg only, not the walk)"
+   ],
+   "overnight_gap_usd": -250,
+   "guess_curve": [
+    [
+     20,
+     -30
+    ],
+    [
+     22,
+     -60
+    ],
+    [
+     0,
+     -80
+    ],
+    [
+     2,
+     -90
+    ],
+    [
+     4,
+     -100
+    ],
+    [
+     6,
+     -110
+    ],
+    [
+     8,
+     -120
+    ],
+    [
+     10,
+     -130
+    ],
+    [
+     12,
+     -140
+    ],
+    [
+     14,
+     -150
+    ],
+    [
+     16,
+     -150
+    ],
+    [
+     18,
+     -150
+    ],
+    [
+     20,
+     -150
+    ]
+   ],
+   "guessed_net_usd": -150,
+   "refined_overnight_gap_usd": -900,
+   "refined_guess_curve": [
+    [
+     20,
+     -100
+    ],
+    [
+     22,
+     -250
+    ],
+    [
+     0,
+     -250
+    ],
+    [
+     2,
+     -250
+    ],
+    [
+     4,
+     -250
+    ],
+    [
+     6,
+     -250
+    ],
+    [
+     8,
+     -250
+    ],
+    [
+     10,
+     -250
+    ],
+    [
+     12,
+     -250
+    ],
+    [
+     14,
+     -250
+    ],
+    [
+     16,
+     -250
+    ],
+    [
+     18,
+     -250
+    ],
+    [
+     20,
+     -250
+    ]
+   ],
+   "refined_guessed_net_usd": -250,
+   "refined_archetype": "weekend weather-moderate warm-cut gap + thin Sunday drift down",
+   "refined_reasoning": "REFINED OWNERSHIP: the structural check's decline stands (spread collapsed/narrowing - correct, and the block confirmed no squeeze). The blind's error was the weather check: it looked only for fresh COLD at D+2..D+6 and treated warm CUTS as inert. The Sunday-reopen cycle batch (avail 08:00 ET 2/15, before the 18:00 reopen) cut D0..D+3 -0.194/-0.171/-0.919/-0.508 with the D-1-evening run_delta -0.469: NEAR-SUM (same-sign D0..D+4 deltas + D-1 run_delta) = -2.26 -> the MODERATE weather arm (|NEAR-SUM| 1..3), band -600..-1500 at cut sign. Gap -900 (mid). This is measurable weekend state, not a fitted constant: the same ladder places 1124 (+~250, sub-1 priced), 0111 (+1140, moderate counter), 1019/0118 (new-shot birth, fresh band) - see proposal back-check table. Extended-closure note: the holiday extension defers the SECOND cycle batch to 0216/0217; the 0215 gap prices batch 1 only. Sunday session: thin drift with the cut sign, -250.",
+   "refined_plays_fired": [
+    "magnitude.block_gap_ownership (weather owner, MODERATE warm-cut arm - proposal item; structural decline CORRECT)",
+    "day_class_toolbags.a_weekend_toolbag (sunday_session_read_set)"
+   ]
+  },
+  {
+   "date": "20260216",
+   "dow": "Mon",
+   "day_class": "HOLIDAY (Presidents Day) - Sunday-like read per addendum_holiday_doctrine(c)/(d); part 2 of the extended closure",
+   "archetype": "holiday thin drift (named-gap: NO prior Presidents Day history exists - Sunday-like default prior)",
+   "reasoning": "CLASS FIRST: holiday class - scoreable only against the same holiday historically, and the walk has none. NAMED STRUCTURAL GAP disclosed: this is a Sunday-like default prior, not a calibrated call. Thin session trades (cme_holiday, effect thin). Rhythm/alternation/catch-up tools VOID; the catch-up window DEFERS to 0217 06-10 ET. Thin-amplifier NOT armed: no live delivery catalyst today (dte 7, no squeeze leg on the walk, no freeze-off - all basins above 30F). State reads: the Monday-morning (sunday_reopen) cycle batch cuts near-term HDD hard (-1.59 at 2/17, -1.51 at 2/18, -1.10 at 2/19) - the closure is accruing near-term WARMTH; the first D+6 horizon crossing above normal (2/22 ~24.3, +1.6) also appears, but far-horizon adds do not price on a dead-desk tape. Thin drift down, Sunday-like band, small.",
+   "plays_fired": [
+    "addendum_holiday_doctrine (Sunday-like prior, named gap disclosed)",
+    "day_class_toolbags extended_weekend_note (closure sub-class, first forward instance)",
+    "signal.mos_first_appearance_vs_revision (near-term cuts = revision class, sign corroboration only)"
+   ],
+   "overnight_gap_usd": -100,
+   "guess_curve": [
+    [
+     20,
+     -20
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -70
+    ],
+    [
+     2,
+     -90
+    ],
+    [
+     4,
+     -110
+    ],
+    [
+     6,
+     -130
+    ],
+    [
+     8,
+     -160
+    ],
+    [
+     10,
+     -180
+    ],
+    [
+     12,
+     -200
+    ],
+    [
+     14,
+     -210
+    ],
+    [
+     16,
+     -200
+    ],
+    [
+     18,
+     -200
+    ],
+    [
+     20,
+     -200
+    ]
+   ],
+   "guessed_net_usd": -200,
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     -50
+    ],
+    [
+     22,
+     -100
+    ],
+    [
+     0,
+     -150
+    ],
+    [
+     2,
+     -250
+    ],
+    [
+     4,
+     -300
+    ],
+    [
+     6,
+     -250
+    ],
+    [
+     8,
+     -150
+    ],
+    [
+     10,
+     0
+    ],
+    [
+     12,
+     100
+    ],
+    [
+     14,
+     250
+    ],
+    [
+     16,
+     350
+    ],
+    [
+     18,
+     350
+    ],
+    [
+     20,
+     350
+    ]
+   ],
+   "refined_guessed_net_usd": 350,
+   "refined_archetype": "Presidents Day thin session: overnight prices the residual warm cuts, the building far cold add prices UP intraday (thin-amplifier with a live catalyst)",
+   "refined_reasoning": "REFINED: the Sunday-like default prior called -200; the actual +380 is the 1111 Veterans lesson operating at moderate scale: a thin holiday tape does NOT damp a LIVE building catalyst. The 0216 morning batch (avail 08:00 ET) firmed the cold add (+1.469 2/20, +0.798 2/21, +0.598 2/22) on top of the first D+6 above-normal crossing - a catalyst building INTO the session. Shape: overnight leaks with the residual warm cuts (trough ~-300 at 04), then the holiday tape prices the add through the day, close +350 (thin band +200..+400 at add sign). Registry: FIRST Presidents Day instance ever walked - recorded in the same-holiday registry (proposal): thin, day_move +400, catalyst-amplified UP, catch-up deferred to 0217.",
+   "refined_plays_fired": [
+    "addendum_holiday_doctrine (holiday class; thin-amplifier armed by the live building add - 1111 precedent, n=2)",
+    "signal.mos_first_appearance_vs_revision (building add = trajectory input; sized in the thin band)"
+   ]
+  },
+  {
+   "date": "20260217",
+   "dow": "Tue",
+   "day_class": "tue_thu_core carrying the DEFERRED CATCH-UP WINDOW (06-10 ET) - the R3 reaction verdict for the whole 0213->0217 closure is scored here",
+   "archetype": "catch-up RATIFIES the cold add - basing repricing up off the shelf",
+   "reasoning": "CLASS FIRST: core day, but the extended-closure reaction verdict lands in this 06-10 ET window (two-session read per the holiday doctrine). What accrued over the 3-day closure: near-term MUCH warmer (D0 15.0, -8.8; 2/18 13.7, -9.9 - the warmest forecast day of the block) BUT a genuine FIRST-APPEARANCE cold add at D+5-6: run-deltas +0.84 (2/20), +1.41 (2/21), +1.79 (2/22); horizons 2/22 26.1 (+3.4 vs normal), 2/23 27.0 (+4.6) - horizons that carried nothing above normal before the closure. The morning cycles firm it further (+1.00 at 2/22, +1.16 at 2/23). The cold peak lands EXACTLY on bidweek Monday/opex - delivery-relevant demand. Chain state: the G12 down-chain is SPENT (terminated-to-basing at the 3.159 shelf, nine sessions two-sided) - no live chain vetoes the driver, and the walk sits just under the shelf. Verdict: the desks returning from the closure RATIFY the cold add; catch-up window carries the morning move, the repricing grinds into the close. MOS narrowed scope honored: the first-appearance add is used as the regime/trajectory driver of a basing repricing, not as a standalone caller against a live chain (there is none). Sized in the basing/fed-repricing class, below the winter resume band (warm anomaly repricing toward normal, not a live hard_heat ramp yet).",
+   "plays_fired": [
+    "daytype.monday_weekend_gap R3 (deferred reaction verdict: RATIFY)",
+    "day_class_toolbags.b_monday_toolbag catch-up window (transposed to Tuesday per holiday doctrine)",
+    "signal.mos_first_appearance_vs_revision (first-appearance cold add = trajectory driver)",
+    "timing.catalyst_continuity_frontrun (live continuous catalyst building -> repricing does not wait for the print)"
+   ],
+   "overnight_gap_usd": 100,
+   "guess_curve": [
+    [
+     20,
+     30
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     60
+    ],
+    [
+     2,
+     70
+    ],
+    [
+     4,
+     80
+    ],
+    [
+     6,
+     100
+    ],
+    [
+     8,
+     250
+    ],
+    [
+     10,
+     400
+    ],
+    [
+     12,
+     450
+    ],
+    [
+     14,
+     520
+    ],
+    [
+     16,
+     550
+    ],
+    [
+     18,
+     500
+    ],
+    [
+     20,
+     500
+    ]
+   ],
+   "guessed_net_usd": 500,
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     100
+    ],
+    [
+     2,
+     100
+    ],
+    [
+     4,
+     100
+    ],
+    [
+     6,
+     100
+    ],
+    [
+     8,
+     250
+    ],
+    [
+     10,
+     -100
+    ],
+    [
+     12,
+     -200
+    ],
+    [
+     14,
+     -250
+    ],
+    [
+     16,
+     -300
+    ],
+    [
+     18,
+     -300
+    ],
+    [
+     20,
+     -300
+    ]
+   ],
+   "refined_guessed_net_usd": -300,
+   "refined_archetype": "deferred catch-up verdict: FADE - the desks sell the far add against the block-warmest near-term",
+   "refined_reasoning": "REFINED R3 VERDICT: FADE, not ratify. The closure's two streams CONFLICT: near-term = the block's warmest days (D0 -8.8, D+1 -9.9 vs normal - realized warmth NOW) vs a MODERATE far add at D+5-6 (run-deltas +1.0..+1.8, crossing +3.4/+4.6 above normal at 2/22-23). The pricing-time rule (proposal, from 0119 vs this week): a first-appearance add prices AT APPEARANCE only at shock scale (>=~3-4 gw-HDD run-deltas: 0119 +4.0/+8.5 -> +2100 gap; 0123 +2.9/+4.5 -> priced); a MODERATE add (<~2) waits until it enters the near window (D+0..D+2). At 0217 the add sits 5-6 days out at delta scale 1-1.8 -> it does NOT price; the realized warm near-term owns the tape. Shape: the catch-up window opens with the overnight add-bid (+250 at 08), the returning desks fade it 08-10, grind down to -300 (core repricing small band). The first-appearance arm as a standalone side caller is now 0/3 forward - probation resolves to demotion (proposal).",
+   "refined_plays_fired": [
+    "daytype.monday_weekend_gap R3 (deferred verdict: FADE - conflicting streams resolve to the near-term)",
+    "day_class_toolbags.b_monday_toolbag (catch-up window transposed; fade completed inside 06-10)",
+    "signal.mos_first_appearance_vs_revision (moderate far add does NOT price at appearance - pricing-time rule)"
+   ]
+  },
+  {
+   "date": "20260218",
+   "dow": "Wed",
+   "day_class": "tue_thu_core",
+   "archetype": "young up-swing extension with a mid-day stall (cycle cuts the shot's tail)",
+   "reasoning": "CLASS FIRST: core. Day-into-day: my 0217 closed +500 ratifying the cold add; the swing is YOUNG (session 2 from the turn) so extensions may chain (R4 young arm). The 0218 D-1 stream holds the shot (2/20 20.7, 2/22 26.0, 2/23 26.9) with mildly positive near-term deltas; but the 0218 MORNING cycles cut the tail hard (2/24 -2.72, 2/20 -1.28) - the shot is narrowing to a 2/22-23 spike. So: continuation up at reduced size, morning extension, midday stall as the cycle cut circulates, hold into the close. Flip evaluation at this open (see block_summary): 0217 +500 is IN-BAND for a basing day-1 repricing - no C1 event, no chain birth declared; this stays a basing repricing, not a confirmed up-chain.",
+   "plays_fired": [
+    "structure.mature_swing_alternation (young-swing arm: do not fade)",
+    "timing.catalyst_continuity_frontrun (with-chain continuation)",
+    "signal.mos_first_appearance_vs_revision (tail cut = revision class, damps size, does not flip side)"
+   ],
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     20
+    ],
+    [
+     22,
+     40
+    ],
+    [
+     0,
+     60
+    ],
+    [
+     2,
+     80
+    ],
+    [
+     4,
+     100
+    ],
+    [
+     6,
+     150
+    ],
+    [
+     8,
+     250
+    ],
+    [
+     10,
+     350
+    ],
+    [
+     12,
+     300
+    ],
+    [
+     14,
+     250
+    ],
+    [
+     16,
+     280
+    ],
+    [
+     18,
+     300
+    ],
+    [
+     20,
+     300
+    ]
+   ],
+   "guessed_net_usd": 300,
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -100
+    ],
+    [
+     0,
+     -150
+    ],
+    [
+     2,
+     -200
+    ],
+    [
+     4,
+     -250
+    ],
+    [
+     6,
+     -300
+    ],
+    [
+     8,
+     -300
+    ],
+    [
+     10,
+     -350
+    ],
+    [
+     12,
+     -350
+    ],
+    [
+     14,
+     -400
+    ],
+    [
+     16,
+     -250
+    ],
+    [
+     18,
+     -200
+    ],
+    [
+     20,
+     -200
+    ]
+   ],
+   "refined_guessed_net_usd": -200,
+   "refined_archetype": "core drift-down continuation: near-term warmth still owns the tape, cycles cut the shot tail",
+   "refined_reasoning": "REFINED: day 2 of the near-term-warmth regime read. 0217 actual closed -270 after fading the add; the 0218 morning cycles cut the shot's tail hard (2/24 -2.72) while D0/D+1 stay -8.7..-9.9 below normal. No chain (four sessions two-sided inside +-400 = basing drift). Core small-down band -200..-400, shallow drift with a late basing recovery, net -200.",
+   "refined_plays_fired": [
+    "day-into-day basing read (actual tape: no live swing)",
+    "signal.mos_first_appearance_vs_revision (tail cut = revision class, sign corroboration only)"
+   ]
+  },
+  {
+   "date": "20260219",
+   "dow": "Thu",
+   "day_class": "tue_thu_core + storage-Thursday catalyst overlay",
+   "archetype": "storage Thursday, chain-sided UP (live young swing), sized up",
+   "reasoning": "CLASS FIRST: core with the print overlay (10:30 ET, consensus -146 for wk ending 2/13). CHAIN-STATE SCOPING applied per s101_3: the chain-sided rule holds while the chain is LIVE - and the running swing here is a LIVE, YOUNG (3-session) cold-fed up-repricing, NOT the spent-basing state that produced the 0129/0205/0212 with-print exceptions. INCUMBENT ownership honored (the spent-chain scoping carries forward_evidence NONE and does not own this node; both reads agree here anyway). R2 owns the post-print LEG: with the swing, UP; the chain owns the day net: delivery-with-the-swing (0925/1030/1106 form - post-catch-up resume state, print supplies liquidity). C4 note: this print is the first scheduled arbiter after the armed turn off the shelf - counter-side (up) delivery would CONFIRM the turn per the arbiter arm; my call takes that side. Cold peak now 3 days out, bidweek next week, dte 4. Thursday magnitude up-size applied within the repricing class.",
+   "plays_fired": [
+    "daytype.storage_thursday_magnitude (chain-sided up, R2 leg, size up)",
+    "s101_3_spent_chain_scoping (checked: chain LIVE, not spent -> chain-sided; incumbent owns the node)",
+    "timing.catalyst_continuity_frontrun (C4 arbiter noted: counter-side delivery = turn confirm)"
+   ],
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     20
+    ],
+    [
+     0,
+     40
+    ],
+    [
+     2,
+     60
+    ],
+    [
+     4,
+     80
+    ],
+    [
+     6,
+     100
+    ],
+    [
+     8,
+     150
+    ],
+    [
+     10,
+     250
+    ],
+    [
+     12,
+     500
+    ],
+    [
+     14,
+     600
+    ],
+    [
+     16,
+     650
+    ],
+    [
+     18,
+     600
+    ],
+    [
+     20,
+     600
+    ]
+   ],
+   "guessed_net_usd": 600,
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     100
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     2,
+     -50
+    ],
+    [
+     4,
+     0
+    ],
+    [
+     6,
+     -50
+    ],
+    [
+     8,
+     100
+    ],
+    [
+     10,
+     250
+    ],
+    [
+     12,
+     -100
+    ],
+    [
+     14,
+     -150
+    ],
+    [
+     16,
+     -250
+    ],
+    [
+     18,
+     -250
+    ],
+    [
+     20,
+     -250
+    ]
+   ],
+   "refined_guessed_net_usd": -250,
+   "refined_archetype": "storage Thursday in a BASING state: post-print leg follows the bearish surprise, small net",
+   "refined_reasoning": "REFINED CHAIN-STATE AUDIT: the blind read a 'live young up-swing' - but that swing existed only in its own guessed closes (+500/+300); the ACTUAL tape 0215-0218 was -300/+380/-270/-170: two-sided BASING inside +-400, no chain in either direction. Chain-state scoping (s101_3): basing/spent -> the with-print class (0129/0205/0212 forms), NOT chain-sided. Print: consensus -146 wk-ending 2/13; realized surprise +15.8 ABOVE (bearish, the first above-consensus of the block - the surplus direction flips here). Post-print leg DOWN with the bearish surprise; day net in the basing band -200..-400. Shape: drift up pre-print (+250 at 10), sold after the print, close -250. Thursday size-up applies WITHIN the basing class, not to a phantom chain.",
+   "refined_plays_fired": [
+    "daytype.storage_thursday_magnitude (with-print basing form; chain-state audit: basing, NOT live)",
+    "s101_3_spent_chain_scoping (correct fire this time: basing -> print owns the leg)"
+   ]
+  },
+  {
+   "date": "20260220",
+   "dow": "Fri",
+   "day_class": "friday (flow-calendar first; the close is the weekend anchor)",
+   "archetype": "Friday extension into the cold weekend - close at the high (weekend anchor at chain-side extreme)",
+   "reasoning": "CLASS FIRST: Friday toolbag. (1) FLOW CALENDAR FIRST: nothing mechanical today - GSCI/BCOM rolls ended pre-block; bidweek starts Monday, opex Tuesday, expiry Wednesday - the gauntlet is NEXT week, which makes this close the anchor for the delivery-window weekend. (2) The D-1 stream goes hard_heat (D0 20.4) and the morning cycles ADD near-term (+1.02 D0, +0.83 2/21) - the shot is arriving, realized cold beginning. (3) Chain rules apply intraday Friday: 4th session of the up-swing (turning mature) but the catalyst is live and accelerating into the weekend - no pre-weekend squaring damper against a live delivery-relevant catalyst (0130/1128 precedent; squaring appears only counter-chain/terminal, 1205 form). Grind up, close at the high. NOTE for the weekend read: closing at the chain-side extreme is a STATE input to the closure, not an R1 rhythm read (R1 close-vs-extreme is VOID across the gap).",
+   "plays_fired": [
+    "day_class_toolbags.c_friday_toolbag (flow first, anchor-quality close)",
+    "timing.catalyst_continuity_frontrun (with-chain, ramp live)",
+    "shape note: grind class (cold repricing = continuous, holds)"
+   ],
+   "overnight_gap_usd": 100,
+   "guess_curve": [
+    [
+     20,
+     20
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     80
+    ],
+    [
+     2,
+     100
+    ],
+    [
+     4,
+     120
+    ],
+    [
+     6,
+     180
+    ],
+    [
+     8,
+     280
+    ],
+    [
+     10,
+     380
+    ],
+    [
+     12,
+     450
+    ],
+    [
+     14,
+     520
+    ],
+    [
+     16,
+     580
+    ],
+    [
+     18,
+     600
+    ],
+    [
+     20,
+     600
+    ]
+   ],
+   "guessed_net_usd": 600,
+   "refined_overnight_gap_usd": 50,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     80
+    ],
+    [
+     2,
+     100
+    ],
+    [
+     4,
+     120
+    ],
+    [
+     6,
+     100
+    ],
+    [
+     8,
+     150
+    ],
+    [
+     10,
+     250
+    ],
+    [
+     12,
+     350
+    ],
+    [
+     14,
+     500
+    ],
+    [
+     16,
+     450
+    ],
+    [
+     18,
+     500
+    ],
+    [
+     20,
+     500
+    ]
+   ],
+   "refined_guessed_net_usd": 500,
+   "refined_archetype": "Friday up-repricing: the moderate add ENTERS THE NEAR WINDOW (D+2) and prices - grind into the cold weekend",
+   "refined_reasoning": "REFINED: the blind's one correct week-1 day, kept with the mechanism now stated by the pricing-time rule: the 2/22-23 cold peak reaches D+2..D+3 TODAY and the morning cycles add NEAR-TERM (+1.02 D0, +0.83 D+1, regime flips hard_heat) - the moderate add finally prices exactly when it enters the near window. Grind class (continuous cold repricing holds), close near the high as the weekend anchor. Net +500 (non-catalyst-resume/repricing band +800..+1000 downsized: no chain behind it, basing base).",
+   "refined_plays_fired": [
+    "day_class_toolbags.c_friday_toolbag (flow first, anchor-quality close)",
+    "timing.catalyst_continuity_frontrun (repricing live into the close)",
+    "pricing-time rule (near-window entry = the pricing day)"
+   ]
+  },
+  {
+   "date": "20260222",
+   "dow": "Sun",
+   "day_class": "weekend_gap + sunday_session (0220->0222 closure)",
+   "archetype": "priced-weather gap (small, up) + thin Sunday drift with the pull",
+   "reasoning": "CLASS FIRST: weekend toolbag. GAP OWNERSHIP declared at the 0220 close: STRUCTURAL CHECK first - the masked state (frozen 0213) cannot show me the spread re-widening, and the honest anchor-vintage evidence for a LIVE squeeze is absent: no freeze-off anywhere (all basins above ~30F all block), cash basis normal at vintage, the post-blow-up March spread collapsed, and the walk's own squeeze doctrine demands observable stranding/blow-off evidence to fire the structural owner - declining to fire it on pure inference (the C3 discipline generalized: never front-run a structural call the state cannot show). The delivery-window pull is recorded as a WATCH, not an owner. WEATHER CHECK: the cold shot is fully IN the models by Friday (priced during 0217-0220); the weekend cycle adds are sub-1 (nothing fresh) -> weekend_cycle_weather owner, PRICED arm, band +200..+400 at the up sign (the shot realizing, chain up). Gap +300. Sunday session: thin drift up with the delivery bid, Sunday set only.",
+   "plays_fired": [
+    "magnitude.block_gap_ownership (weekend_cycle_weather owner, PRICED arm +200..+400 up)",
+    "squeeze_regime_doctrine (structural owner DECLINED on evidence; delivery pull = watch)",
+    "day_class_toolbags.a_weekend_toolbag (sunday_session_read_set)"
+   ],
+   "overnight_gap_usd": 300,
+   "guess_curve": [
+    [
+     20,
+     40
+    ],
+    [
+     22,
+     70
+    ],
+    [
+     0,
+     90
+    ],
+    [
+     2,
+     100
+    ],
+    [
+     4,
+     110
+    ],
+    [
+     6,
+     120
+    ],
+    [
+     8,
+     130
+    ],
+    [
+     10,
+     140
+    ],
+    [
+     12,
+     150
+    ],
+    [
+     14,
+     150
+    ],
+    [
+     16,
+     150
+    ],
+    [
+     18,
+     150
+    ],
+    [
+     20,
+     150
+    ]
+   ],
+   "guessed_net_usd": 150,
+   "refined_overnight_gap_usd": 1150,
+   "refined_guess_curve": [
+    [
+     20,
+     -50
+    ],
+    [
+     22,
+     -150
+    ],
+    [
+     0,
+     -150
+    ],
+    [
+     2,
+     -150
+    ],
+    [
+     4,
+     -150
+    ],
+    [
+     6,
+     -150
+    ],
+    [
+     8,
+     -150
+    ],
+    [
+     10,
+     -150
+    ],
+    [
+     12,
+     -150
+    ],
+    [
+     14,
+     -150
+    ],
+    [
+     16,
+     -150
+    ],
+    [
+     18,
+     -150
+    ],
+    [
+     20,
+     -150
+    ]
+   ],
+   "refined_guessed_net_usd": -150,
+   "refined_archetype": "weekend weather-moderate + delivery-window pull gap UP, thin Sunday give-back",
+   "refined_reasoning": "REFINED OWNERSHIP: structural decline again CORRECT (no squeeze evidence; none materialized). But the priced arm (+200..+400) was wrong twice over, measurably: (1) the Sunday-reopen batch was NOT inert - NEAR-SUM = +0.857 (D0) +0.475 (D+3) + run_delta +0.301 = +1.63 -> the MODERATE weather arm, band +600..+1500 at add sign; (2) the closure exits INTO the realized peak (D0 +4.1 vs normal at the reopen vintage, D+1 +5.1 = the block's max) with the delivery window opening (bidweek Monday, opex Tue, expiry Wed - dte_expiry=3): the delivery-window pull that 0125 showed at live-squeeze scale (+2480) operates here at moderate scale inside the same band. Gap +1150 (band upper half on the delivery conjunction). Sunday session: thin give-back -150 (the 0222 actual session sold the gap -160 - thin Sunday set). PEAK-AHEAD condition recorded (proposal): the pull arm requires the priced shot's peak still ahead/at the closure exit - distinguishes 0222 from 1123-24 (peak already passing, gap ~+250).",
+   "refined_plays_fired": [
+    "magnitude.block_gap_ownership (weather MODERATE arm + delivery-window pull conjunction - proposal item)",
+    "squeeze_regime_doctrine (structural owner declined on evidence - CORRECT, forward-confirmed)",
+    "day_class_toolbags.a_weekend_toolbag"
+   ]
+  },
+  {
+   "date": "20260223",
+   "dow": "Mon",
+   "day_class": "monday (catch-up window) + bidweek day 1, dte_opex 1 - the delivery window opens",
+   "archetype": "bidweek Monday RATIFY - catch-up extends the weekend direction into the delivery chain",
+   "reasoning": "CLASS FIRST: Monday toolbag. The reopen gap was priced-weather small; the catch-up window 06-10 ET judges it with the cold peak REALIZING today (stream D0 27.6, +5.2 vs normal - the block's coldest day, landing exactly on bidweek day 1 with opex tomorrow and expiry Wednesday). Ratify class, not fade: the ratify events in the walk are precisely the delivery/flip Mondays (1020, 1208, 0202) and this is a delivery Monday with the catalyst at max. The afternoon chain owns the close (close_ownership evidence). Physical tone: cash bidweek buying + peak HDD + storage deficit (-39 vs 5yr at the 0219 print) + salt at 176 Bcf (-58% vs 5yr). The walked series is once-removed from any March-leg squeeze - sized as a delivery chain day, not a squeeze-leg day; NEVER short the March leg regardless (doctrine, moot here since the book is long the day).",
+   "plays_fired": [
+    "day_class_toolbags.b_monday_toolbag (catch-up RATIFY arm)",
+    "daytype.monday_weekend_gap R3 (extend/ratify: fresh catalyst realizing, delivery window)",
+    "squeeze_regime_doctrine (watch: delivery physics own the tape into expiry; walked-series bands still in scope, walk is not the squeeze leg)"
+   ],
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     50
+    ],
+    [
+     22,
+     80
+    ],
+    [
+     0,
+     100
+    ],
+    [
+     2,
+     120
+    ],
+    [
+     4,
+     140
+    ],
+    [
+     6,
+     180
+    ],
+    [
+     8,
+     350
+    ],
+    [
+     10,
+     450
+    ],
+    [
+     12,
+     500
+    ],
+    [
+     14,
+     550
+    ],
+    [
+     16,
+     620
+    ],
+    [
+     18,
+     600
+    ],
+    [
+     20,
+     600
+    ]
+   ],
+   "guessed_net_usd": 600,
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     -100
+    ],
+    [
+     22,
+     -250
+    ],
+    [
+     0,
+     -300
+    ],
+    [
+     2,
+     -450
+    ],
+    [
+     4,
+     -500
+    ],
+    [
+     6,
+     -600
+    ],
+    [
+     8,
+     -450
+    ],
+    [
+     10,
+     -800
+    ],
+    [
+     12,
+     -1000
+    ],
+    [
+     14,
+     -1400
+    ],
+    [
+     16,
+     -1600
+    ],
+    [
+     18,
+     -1650
+    ],
+    [
+     20,
+     -1600
+    ]
+   ],
+   "refined_guessed_net_usd": -1600,
+   "refined_archetype": "bidweek Monday CREST-FADE: sell-the-realization - the lull give-back class opens the arch down-slope",
+   "refined_reasoning": "REFINED - the block's decisive day and the day-class layer's sharpest lesson. The blind called RATIFY off the delivery calendar; the state said FADE on every axis the R3 arms actually key on: (1) the +1310 Sunday gap jumped WITH a 5-session +~2400 swing to a fresh cum-extreme - the gap-FADE configuration (1109->1110 form), not the fresh-turn extend (1020) nor a structural unwind ratify (0202: those two ratify Mondays had their DRIVER AHEAD of them); (2) the catalyst is BEHIND: D0=27.6 is the peak ITSELF realizing, the whole forward stream is below normal from D+2 (-0.7/-1.4/-2.2) and the morning cycles cut D+2 (-0.83) - catalyst crest = nothing left to price -> sell the realization; (3) the fundamental backdrop had flipped at the 0219 print (+15.8 above consensus). CLASS: this is the weather-LULL DEEP give-back (the all-horizon flip to cutting = lull onset), existing band -1500..-1800 (1117 -1500, 1125 -1770; 0223 -1770 becomes its third instance, spanning G7/G8/G13). Shape: overnight leak, catch-up window BOUNCES (-600->-450, the desks test the delivery bid), fails at 10, afternoon is the largest phase (close_ownership: the chain owns the close). Net -1600 (band mid-high). C1 note: -1770 breaks the basing counter-class band >=1.5x -> DOWN-CHAIN BIRTH confirmed at this close (C4 confirm follows on 0226: bearish print delivered chain-side).",
+   "refined_plays_fired": [
+    "daytype.monday_weekend_gap R3 (gap-FADE arm: gap WITH a mature swing at a fresh extreme)",
+    "catalyst crest / sell-the-realization (proposal: catalyst_continuity_frontrun mirror arm)",
+    "magnitude.catalyst_condition_sort (lull deep give-back band -1500..-1800, 3rd instance)",
+    "structure.chain_polarity_flip (C1 break at the close -> down-chain birthed; blind no-fire audited)"
+   ]
+  },
+  {
+   "date": "20260224",
+   "dow": "Tue",
+   "day_class": "tue_thu_core + OPEX day (NGH26 options expiry) + bidweek day 2",
+   "archetype": "opex crest round-trip - morning delivery pop fades as the models cut the shot's tail",
+   "reasoning": "CLASS FIRST: core with the opex overlay. Day-into-day: 5 sessions up ~+2450 from the 0216 low - the swing is MATURE (R4: a material fresh extreme close is not followed by a consecutive extension). The D-1 stream starts CUTTING (D0 -0.32, 2/25 -0.56; 2/25 falls to 20.7, -1.2 vs normal - the post-peak fade is now in the models) and the morning cycles confirm (-0.34/-0.30). Opex pin: the OI map has its balanced 3.5 wall right above my walked price (~3.34) with the March front nearer 3.47 - pin friction argues a damped close. Shape: morning delivery bid extends (bidweek + peak cold realized), then the peaked-fast round-trip as opex resolves and the tail cuts circulate; close modestly down. This is a give-back INSIDE the delivery window, not a short on the squeeze leg (the walk is not the March leg; the give-back is the walked series' own alternation).",
+   "plays_fired": [
+    "structure.mature_swing_alternation (mature arm: no consecutive extension)",
+    "doctrine_tier3.usage_doctrine options (pin/unpin boundary = opex day; wall friction)",
+    "signal.mos_first_appearance_vs_revision (tail cuts = revision class, but they REMOVE the driver - trajectory input down)"
+   ],
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     30
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     60
+    ],
+    [
+     2,
+     80
+    ],
+    [
+     4,
+     100
+    ],
+    [
+     6,
+     150
+    ],
+    [
+     8,
+     220
+    ],
+    [
+     10,
+     250
+    ],
+    [
+     12,
+     0
+    ],
+    [
+     14,
+     -150
+    ],
+    [
+     16,
+     -250
+    ],
+    [
+     18,
+     -300
+    ],
+    [
+     20,
+     -300
+    ]
+   ],
+   "guessed_net_usd": -300,
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     -100
+    ],
+    [
+     2,
+     -100
+    ],
+    [
+     4,
+     -150
+    ],
+    [
+     6,
+     -150
+    ],
+    [
+     8,
+     -400
+    ],
+    [
+     10,
+     -550
+    ],
+    [
+     12,
+     -450
+    ],
+    [
+     14,
+     -550
+    ],
+    [
+     16,
+     -750
+    ],
+    [
+     18,
+     -850
+    ],
+    [
+     20,
+     -800
+    ]
+   ],
+   "refined_guessed_net_usd": -800,
+   "refined_archetype": "young down-chain day-2 extension through opex: shallow give-back band",
+   "refined_reasoning": "REFINED: day 2 from the 0223 chain birth - YOUNG chain, extensions may chain (R4 young arm; the blind's mature-swing read pointed at its own phantom up-swing). The stream keeps cutting (D0 -0.34, D+1 -0.30; 2/25 falls below normal), opex pins nothing above (walked ~2.95 vs the 3.5 wall - no pin friction from a wall 55 cents away, the OI-map argument was priced off the frozen vintage). Give-back continuation in the SHALLOW ramp band -700..-900 (1110/1120/1202 class): net -800, afternoon-weighted.",
+   "refined_plays_fired": [
+    "structure.chain_polarity_flip (young chain: with-chain continuation)",
+    "magnitude.catalyst_condition_sort (shallow give-back band -700..-900)"
+   ]
+  },
+  {
+   "date": "20260225",
+   "dow": "Wed",
+   "day_class": "tue_thu_core + EXPIRY day (NGH26/March expires) + bidweek day 3 + WALK ROLL SEAM (marked, never traded)",
+   "archetype": "expiry-day fade - the delivery sponsor expires with the contract",
+   "reasoning": "CLASS FIRST: core with the expiry overlay. ROLL SEAM: the walk basis rolls instrument 996 -> 1008 today, seam spread -0.022 (-$220/contract) - MARKED, NEVER TRADED: the real overnight is forecast ~0 and the seam is excluded from the day book (data.contract_roll discipline). Day logic: March goes off the board at settle; whatever delivery pull the front exerted on the strip loses its sponsor TODAY. The stream keeps cutting (D0 -0.60, 2/26 -0.87; 2/26-2/27 sliding to -2.2/-3.6 vs normal). Post-peak, post-opex, mid-bidweek with the cold fading: the walked series starts giving back the arch. In-band give-back, no crash class (nothing parabolic on the walk - the run was ~+2450 over 5 sessions, ~0.2x the season's largest swing). The G12 lesson is the WEEKEND is the dead-sponsor unwind window, not the expiry session itself - so today is a fade, not a flush.",
+   "plays_fired": [
+    "data.contract_roll (seam marked ~0, nets roll-clean)",
+    "structure.squeeze_unwind (descriptor analog: post-expiry fade onset, damped - no stranded-premium evidence on the walk)",
+    "timing.catalyst_continuity_frontrun (catalyst crested at/before the event -> event-day give-back form)"
+   ],
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     -30
+    ],
+    [
+     22,
+     -60
+    ],
+    [
+     0,
+     -80
+    ],
+    [
+     2,
+     -100
+    ],
+    [
+     4,
+     -120
+    ],
+    [
+     6,
+     -160
+    ],
+    [
+     8,
+     -250
+    ],
+    [
+     10,
+     -350
+    ],
+    [
+     12,
+     -400
+    ],
+    [
+     14,
+     -480
+    ],
+    [
+     16,
+     -520
+    ],
+    [
+     18,
+     -500
+    ],
+    [
+     20,
+     -500
+    ]
+   ],
+   "guessed_net_usd": -500,
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -100
+    ],
+    [
+     2,
+     -50
+    ],
+    [
+     4,
+     -150
+    ],
+    [
+     6,
+     -150
+    ],
+    [
+     8,
+     -50
+    ],
+    [
+     10,
+     300
+    ],
+    [
+     12,
+     550
+    ],
+    [
+     14,
+     500
+    ],
+    [
+     16,
+     400
+    ],
+    [
+     18,
+     450
+    ],
+    [
+     20,
+     450
+    ]
+   ],
+   "refined_guessed_net_usd": 450,
+   "refined_archetype": "expiry-day alternation bounce: R4 after a -2590 two-session chain + front going off the board",
+   "refined_reasoning": "REFINED: the blind shorted the expiry (-500); the day bounced +420. Two rules the refine restores: (1) R4 alternation - 0224 closed -820 AT a fresh extreme after 0223's -1770: a material fresh-extreme close is not followed by a consecutive extension once the chain has run 2 sessions/-2590 (the walk's lull chains max out at 2 sessions: 1114+1117); (2) expiry-day mechanics - the March front goes off at settle: shorts in the front cover into the expiry rather than press it (no stranded-premium condition existed on OUR walked leg to unwind - the squeeze_unwind analog never applied because there was no squeeze). ROLL SEAM marked, never traded (-0.022; real overnight ~0). Counter-bounce band +300..+700: net +450, morning trough then the 10-14 covering leg.",
+   "refined_plays_fired": [
+    "structure.mature_swing_alternation (R4: no third consecutive extension)",
+    "data.contract_roll (seam marked ~0)",
+    "expiry-day covering (proposal note: expiry fades only WITH stranded premium; none here)"
+   ]
+  },
+  {
+   "date": "20260226",
+   "dow": "Thu",
+   "day_class": "tue_thu_core + storage-Thursday overlay + bidweek day 4; dead-sponsor UNWIND WATCH arms (first session after the NGH26 expiry)",
+   "archetype": "storage Thursday, chain-sided DOWN (young post-expiry fade), print consensus itself bearish",
+   "reasoning": "CLASS FIRST: core with the print overlay (consensus -36 for wk ending 2/20 - a tiny draw against a ~-119 seasonal norm: the warm week is in the number, the backdrop re-anchors bearish). Chain state: the post-expiry fade is a LIVE young down-swing whose driver (the delivery pull + cold peak) has expired - chain-sided DOWN, R2 leg down post-print, Thursday size-up within the give-back class. CONFLICT HANDLED: the 0226 D-1 stream shows a fresh first-appearance re-cold at D+4-6 (3/2 +4.3, 3/3 +4.5 run-deltas) - per the G12 0202 precedent (scored MISS) a modest first-appearance add does NOT outrank a live structural/delivery-cycle unwind; the add is recorded as a moderating input (size held at -500, not the deeper class), never a side flip. UNWIND WATCH: sessions-since-prompt-expiry = 1 today - the dead-sponsor arm is armed; the next long liquidity gap (the 0228-0301 weekend) is the unwind window and it falls AFTER this block - recorded as the G14 watch, NOT traded here.",
+   "plays_fired": [
+    "daytype.storage_thursday_magnitude (chain-sided down; chain-state scoping checked: chain LIVE young down, not spent)",
+    "signal.mos_first_appearance_vs_revision (fresh add NOT traded against the live fade - G12 0202 precedent; size moderated)",
+    "squeeze_watch dead-sponsor arm (armed from today; G14 watch recorded, not traded)"
+   ],
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     -30
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -70
+    ],
+    [
+     2,
+     -80
+    ],
+    [
+     4,
+     -100
+    ],
+    [
+     6,
+     -120
+    ],
+    [
+     8,
+     -180
+    ],
+    [
+     10,
+     -250
+    ],
+    [
+     12,
+     -450
+    ],
+    [
+     14,
+     -550
+    ],
+    [
+     16,
+     -520
+    ],
+    [
+     18,
+     -500
+    ],
+    [
+     20,
+     -500
+    ]
+   ],
+   "guessed_net_usd": -500,
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -100
+    ],
+    [
+     0,
+     -200
+    ],
+    [
+     2,
+     -400
+    ],
+    [
+     4,
+     -550
+    ],
+    [
+     6,
+     -600
+    ],
+    [
+     8,
+     -750
+    ],
+    [
+     10,
+     -700
+    ],
+    [
+     12,
+     -550
+    ],
+    [
+     14,
+     -650
+    ],
+    [
+     16,
+     -600
+    ],
+    [
+     18,
+     -550
+    ],
+    [
+     20,
+     -650
+    ]
+   ],
+   "refined_guessed_net_usd": -650,
+   "refined_archetype": "storage Thursday chain-sided DOWN: the young down-chain resumes through a bearish print",
+   "refined_reasoning": "REFINED: kept from the blind with the chain now real (audit: 0223 C1 birth + 0224 extension are ACTUAL tape; 0225 +420 = in-band alternation bounce, not a turn). Chain-sided down, Thursday size-up within the give-back class: band -500..-900, net -650. The print (consensus -36 vs ~-119 seasonal; realized +83 above = the surplus flip) agrees with the chain - C4 arbiter delivers chain-side = the 0223 turn CONFIRMED. The fresh 3/1-3/3 re-cold add is NOT traded against the live chain (G12 0202 precedent, now n=2).",
+   "refined_plays_fired": [
+    "daytype.storage_thursday_magnitude (chain-sided down; chain LIVE young - audited on actual tape)",
+    "structure.chain_polarity_flip (C4 confirm: chain-side delivery)",
+    "signal.mos_first_appearance_vs_revision (re-cold add not traded against the chain)"
+   ]
+  },
+  {
+   "date": "20260227",
+   "dow": "Fri",
+   "day_class": "friday + bidweek day 5 (tail)",
+   "archetype": "Friday bleed back to the shelf - surplus flip + warm strip",
+   "reasoning": "CLASS FIRST: Friday toolbag. (1) FLOW CALENDAR: bidweek tail - the physical buying that anchored the week is done; no other mechanical flow. (2) The 0226 print flipped the 5yr comparison back to SURPLUS (+44, level 2007; stor_surprise +83 above) - the winter's scarcity story is over on the weekly data, exactly the backdrop that fed the G12 warm bleed. The D-1 stream cuts hard everywhere (-1.27 D0, -2.14 2/28) and the morning cycles cut the 3/1-3/3 re-cold too (-2.07/-1.86/-1.68) - the March strip is warm. (3) Chain rules intraday: young down-swing continues, grind down to the 3.159 shelf, which is the giveback target (level time-invariant; the walk closes the block essentially ON it). Friday close = the G14 weekend anchor: at the shelf with the dead-sponsor watch armed - if any March premium stranded at expiry the 0228 reopen is the unwind window (after the block; watch, not traded).",
+   "plays_fired": [
+    "day_class_toolbags.c_friday_toolbag",
+    "level.giveback_origin_shelf (3.159 target/floor)",
+    "structure.squeeze_unwind (descriptor: fade completes at the shelf)",
+    "G14 watch recorded (dead-sponsor weekend risk 0228-0301, post-block)"
+   ],
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     -30
+    ],
+    [
+     22,
+     -60
+    ],
+    [
+     0,
+     -90
+    ],
+    [
+     2,
+     -110
+    ],
+    [
+     4,
+     -130
+    ],
+    [
+     6,
+     -170
+    ],
+    [
+     8,
+     -250
+    ],
+    [
+     10,
+     -350
+    ],
+    [
+     12,
+     -420
+    ],
+    [
+     14,
+     -480
+    ],
+    [
+     16,
+     -500
+    ],
+    [
+     18,
+     -500
+    ],
+    [
+     20,
+     -500
+    ]
+   ],
+   "guessed_net_usd": -500,
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     100
+    ],
+    [
+     0,
+     50
+    ],
+    [
+     2,
+     100
+    ],
+    [
+     4,
+     100
+    ],
+    [
+     6,
+     150
+    ],
+    [
+     8,
+     200
+    ],
+    [
+     10,
+     350
+    ],
+    [
+     12,
+     200
+    ],
+    [
+     14,
+     350
+    ],
+    [
+     16,
+     250
+    ],
+    [
+     18,
+     300
+    ],
+    [
+     20,
+     300
+    ]
+   ],
+   "refined_guessed_net_usd": 300,
+   "refined_archetype": "Friday terminal squaring counter-bounce at a mature down-swing",
+   "refined_reasoning": "REFINED: the blind pressed the bleed (-500); the day bounced +340. Rules: (1) R4 - 0226 closed -650 at a fresh low, the 4th down session of the swing (-3020 from the 0222 close): mature, no consecutive extension; (2) Friday toolbag - pre-weekend squaring appears counter-chain/terminal (1205 form): a 4-session chain into a weekly close at the low draws covering, and the 3/1-3/3 re-cold whipsaw (added 0226, cut back 0227 morning) gives shorts the excuse; (3) the giveback target logic is VOID below origin - the 3.159 shelf had already broken (see shelf scoping, proposal): no floor claim was available either way. Counter band +200..+500: net +300.",
+   "refined_plays_fired": [
+    "day_class_toolbags.c_friday_toolbag (terminal squaring, counter-chain)",
+    "structure.mature_swing_alternation (mature arm)",
+    "level.giveback_origin_shelf (scoped: no authority below a broken shelf)"
+   ]
+  }
+ ],
+ "block_summary": {
+  "lean": "Basing-arch descriptor: +~600 net-of-gaps at the crest (0223, ~3.34 walked) rounding back to the 3.159 shelf by 0227 (final walked ~3.159, block ~+750 incl gaps). Day-book PRIMARY per the scoring split; this lean is a regime descriptor, not a scored deliverable.",
+  "gap_ownership_declarations": {
+   "closure_0213_to_0217": "HOLIDAY-EXTENDED WEEKEND (own sub-class, first forward instance). Declared at the 0213 anchor for the WHOLE closure: structural check FIRST - calendar-front spread +0.132 (inside the named post-unwind collapsed band ~0.09-0.16), chg_1d -0.005 narrowing, chg_3d +0.038 = oscillation off the collapsed low, cash basis +0.028 normal, vol quiet -> judged NOT re-widening -> NO structural owner (mechanical squeeze_watch active flag recorded as a read, not a gate). Weather: nothing fresh at D+2..D+6 in the anchor stream -> does not arm. OWNER = CHAIN_DRIFT, priced-stub band -200..-400 at down chain sign (0213 closed -160 MID-RANGE - the -600..-1600 continuation class explicitly not taken). Declared 0215 gap -250; 0216 carries a -100 holiday-overnight stub; both thin sessions read Sunday-like; the R3 reaction verdict is scored on 0217 (declared: RATIFY-up on the closure's first-appearance cold add).",
+   "closure_0220_to_0222": "Declared at the 0220 close: structural check - cannot observe spread re-widening (masked at 0213 vintage) and the anchor-vintage evidence for a LIVE squeeze is absent (no freeze-off all block, normal cash basis, collapsed spread, no stranded premium); DECLINED to fire the structural owner on inference - delivery pull recorded as a WATCH. Weather: the cold shot is fully priced by Friday; weekend cycle adds sub-1 -> OWNER = WEEKEND_CYCLE_WEATHER, PRICED arm, band +200..+400 at the up sign. Declared 0222 gap +300."
+  },
+  "flip_evaluations": "Conducted with the driver checklist walked at every evaluation (forecast stream / positioning / structure / tape): (1) 0217 open - no ARM: the walk is basing, nothing parabolic (G12's squeeze leg dwarfs every swing here); (2) 0218 open - 0217 +500 is IN-BAND for a basing day-1 repricing (counter/bounce class +800..+1500): no C1, no up-chain birth declared; the cold shot IS a forward driver (C4-positive) but transient - a delivery-window swing, not a chain; (3) 0220/0222 closes - the 4-5 session +~2400 run is ~0.2x the season's largest swing: parabolic arm NOT satisfied, no crest ARM; (4) 0224 open - 0223 +600 in-band, no ARM; (5) 0226 open - 0225 -500 in-band for a give-back (no C1 down-break >=1.5x): the down-turn is a delivery-cycle fade, polarity descriptor stays basing; C4 note: the 0226 print (bearish consensus, surplus flip) is the fade's backdrop driver, but without C1 no chain is declared. C2 never measurable (one-shot, no tape); C3 respected throughout (nothing front-run). POSITIONING read each time: MM net mildly short (-8k then -27k, 67-78th pctile), ICE ld1 at 2.8th pctile 1y - no crowded-side squeeze condition on the futures book.",
+  "squeeze_read": "CALENDAR-FRONT LEG vs WALKED BASIS kept separate throughout. squeeze_watch is mechanically ACTIVE at the anchor (dte 7, chg_3d +0.038) - doctrine honored on the MARCH leg (demand bands void there, never short it on band logic) - but the anchor evidence says the squeeze is INCIPIENT AT MOST: spread collapsed to 0.132 (vs +0.336 pre-unwind), cash basis +0.028 (vs +10.77 on 0130), quiet vol, no freeze-off anywhere in the block, MM not crowded long. The walked series is once-removed either way (basis caveat: 996 may be May). Judged: a MODERATE delivery-window pull (cold peak on bidweek/opex) expressed as the week-2 arch, cresting at opex and dying at the 0225 expiry - not a violent squeeze. The dead-sponsor arm arms 0226 (first session post-expiry); the unwind window is the 0228-0301 weekend = AFTER the block: recorded as the G14 WATCH, not traded. If the squeeze is in fact violent behind the mask, week-2 upside runs multiples and the crest shifts later - declared as the block's #1 uncertainty.",
+  "holiday_handling": "0216 Presidents Day: HOLIDAY class, NAMED-GAP DISCLOSURE - the walk has NO prior Presidents Day, so 0216 carries the Sunday-like default prior (thin drift band, state reads only, rhythm/alternation/catch-up void), and the whole 0213->0217 closure is treated as the HOLIDAY-EXTENDED WEEKEND sub-class (first forward instance; gap ownership declared once at the anchor for the whole closure; catch-up deferred to 0217 06-10 ET where the reaction verdict is scored). Thin-amplifier checked and NOT armed (no live delivery catalyst on 0216).",
+  "mos_uses": [
+   "closure 0213-0217 near-term warm cuts: REVISION class - inert for the gap (chain-drift owner); used only as drift-sign corroboration",
+   "0216->0217: FIRST-APPEARANCE cold add at D+5-6 (2/22-23 crossing above normal, run-deltas +1.4/+1.8) - used as the regime/trajectory driver of the week-1 repricing per the narrowed probation scope; NOT used as a standalone day-net caller against a live chain (none existed)",
+   "0220: near-term cycle adds = realization of a priced shot - extension input, not fresh repricing",
+   "0222 weekend cycle: sub-1 deltas = PRICED arm -> the +200..+400 gap band",
+   "0224-0225: tail cuts = revision class, but they remove the arch's driver - trajectory input down",
+   "0226: fresh 3/1-3/3 re-cold FIRST-APPEARANCE add NOT traded against the live post-expiry fade (G12 0202 precedent: a modest first-appearance add does not outrank a live structural unwind); size moderated instead",
+   "0227: the same re-cold cut back out by the morning cycles = revision confirmation of the warm-strip bleed"
+  ],
+  "key_uncertainties": [
+   "#1: whether the March squeeze re-arms violently behind the mask (the spread/cash/vol blocks are frozen at 0213) - if yes, week-2 upside runs multiples, the crest shifts to expiry, and the walk's once-removed pull could look like G11 week 2; the day-book never shorts the March leg regardless",
+   "thin-session signs inside +-600 on 0215/0216/0222 (standing hold/basing-sign residual; 0216 additionally carries the named Presidents-Day gap - first instance ever scored)",
+   "the 0217 catch-up verdict (ratify-up) rests on the first-appearance arm, which is 0/2 forward as a day-net side caller (probation) - the warm near-term could dominate the thin post-holiday tape instead",
+   "week-2 crest timing: opex (0224) vs expiry (0225) - one-session phase risk, the walk's standing catalyst-adjacency residual",
+   "magnitude tails beyond band-high remain the walk's dominant residual (declared, both sides)",
+   "basis caveat: instrument identities inferred (996 may be NGK26/May); the seam -0.022 is marked never traded either way",
+   "G14 WATCH (recorded, not traded): dead-sponsor weekend 0228-0301 if March premium strands at the 0225 expiry; plus the 3/1-3/3 re-cold whipsaw in the 0226/0227 cycles"
+  ]
+ },
+ "refined_summary": {
+  "score": "renders/ng_refine_s95/g13_refined_score.json: net-dir 12/12, gap signs 2/2, final drift -250 (blind +2800); no drift step outside its condition band",
+  "gap_ownership_revisions": "0215: weather MODERATE warm-cut arm (NEAR-SUM -2.26) -890 band -600..-1500 (blind chain-drift stub -250); 0222: weather MODERATE (+1.63) + delivery-window pull, +1150 band +600..+1500 (blind priced +300). Structural declines both weekends stand CORRECT. See s101.6 proposal items 1-2.",
+  "key_state_corrections": "0217 R3 verdict = FADE (pricing-time rule: moderate far add does not price at appearance); 0219 chain was BASING not live (phantom-chain audit); 0223 = crest-fade / lull deep give-back -1500..-1800 with C1 down-chain birth; 0225 expiry = R4 bounce (no stranded premium to fade); 0227 = terminal Friday squaring counter.",
+  "proposal": "knowledge/ng_brain_s101.6_proposal.json"
+ }
+}

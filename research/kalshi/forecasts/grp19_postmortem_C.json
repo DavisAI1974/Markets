@@ -1,0 +1,49 @@
+{
+  "specialist": "C",
+  "lens": "CORE INTRADAY TAPE - onset, continuation-vs-reversal, signed-flow divergence, exhaustion, origin-shelf/give-back turns",
+  "group": "g19",
+  "type": "post_mortem_self_eval",
+  "brain_version": "s102.9",
+  "block_summary": "g19 was a covering rally 2.750 -> ~3.13 on a worsening record-extreme MM short (1y pctile 2.83 -> 0.94, MM_net -107k -> -120k, still adding). cum_from_anchor rose monotonically through my owned days (05-12 780 -> 05-13 1200 -> 05-19 3610). My three owned days netted a total miss of ~2270 USD; direction defensible on 2 of 3 but every up-move was badly undersized and 0513 was flipped the wrong way.",
+  "days": [
+    {
+      "date": "20260512",
+      "dow": "Tue",
+      "blind_call": -200,
+      "actual": -960,
+      "miss_usd": 760,
+      "direction_verdict": "dir OK, badly undersized (4.8x)",
+      "misread": "Called it a 'weak two-sided chop-down' and throttled to -200, anchoring on 05-11's failed mid-buy give-back (phase3 -1526) as evidence of two-sidedness/chop. In fact 05-12's own session delivered a clean, large ALIGNED sell (session_sflow -2586, mid-phase -2559 flow on -1020 px, big prints selling 0.446, absorb_session FALSE) - a genuine trend-down delivery, not chop. I had the sign right but read 'chop' onto a day that was the block's one clean directional pullback.",
+      "blind_visible_signal_missed": "The 05-11 D-1 tape I forecast from was genuinely two-sided, so the FULL -960 magnitude was partly price-dependent (the -2559 mid-sell realized intraday on 0512, which the blind cannot see). But my 'chop' framing was a self-imposed magnitude cap, not a data verdict: a sell-lean D-1 exit into an EIA-week pullback supports a trend-down sizing, not a -200 chop. Undersizing here is the SAME reflex as my up-day undersizing - default to small when uncertain.",
+      "he24_he1_effect": "Minor for 0512 specifically - it was a countertrend dip, so no rising handoff would have enlarged it. But note it for what it did to 0513: 0512's clean aligned-down close became my launch state for 0513, and starting 0513 at cum 0 let that down tape read as 'continuation' with no memory that the block was still a rising covering rally."
+    },
+    {
+      "date": "20260513",
+      "dow": "Wed",
+      "blind_call": -400,
+      "actual": 420,
+      "miss_usd": 820,
+      "direction_verdict": "WRONG SIGN",
+      "misread": "Forecast -400 clean aligned trend-down, my stated highest-conviction day, off the 05-12 D-1 tape (sell breadth 0.454, big prints selling 0.446, sflow -2586). I explicitly checked and CLEARED my Wednesday chain-default flaw - and cleared it wrongly. The 05-12 tape WAS aligned-down, but it was the tape of a countertrend dip inside a rising covering rally, not the start of a down-leg. 0513 itself reverted UP +420: its own session was a textbook covering rally - total_sflow -2763 (net SELL) yet absorb_session TRUE, phase2 sflow -1979 UNDER pxchg +400 (negative-flow-under-rising = absorption), onset_dir up, turn_up. Shorts covered; sell flow was absorbed and price rose against it.",
+      "blind_visible_signal_missed": "The intraday covering tell was GENUINELY PRICE-DEPENDENT, not blind-visible: flow_conviction = sign(sflow -1979) * sign(px +400) = NEGATIVE is only computable WITH price, which the blind masks. From 05-12's tape alone the only up-hint was the tiny phase3 +409/+110 base, correctly too small to flip on. So the blind could NOT see the 0513 flip from the tape. What I DID have blind and underweighted was the BLOCK/positioning context: a known covering rally, cum rising 05-11 +1740 -> 05-12 still +780 net-positive-from-anchor, MM short worsening - i.e. the dominant block force was UP and 0512 was the anomaly. I discounted all of it as 'sub-0.55, not sign-certain' and rode the down tape instead.",
+      "he24_he1_effect": "DECISIVE. This is the day a live prior-day handoff would have caught. Starting 0513 at cum 0 from its own reopen erased the fact that the block was mid covering-rally (cum-from-anchor still +780 and the rally resumed to +1790 by 0514). A handoff carrying 'covering rally in force, cum rising, MM short worsening, 0512 was a one-day countertrend dip on absorbed sell flow' would have re-cast 0512's aligned-down tape as a dip-in-an-uptrend and flipped 0513's base case from continuation-down to covering-resume-up - or at minimum degraded -400 toward flat. The inheritance gap, not the tape read, is what put the sign wrong."
+    },
+    {
+      "date": "20260519",
+      "dow": "Tue",
+      "blind_call": 150,
+      "actual": 840,
+      "miss_usd": 690,
+      "direction_verdict": "dir OK, badly undersized (5.6x)",
+      "misread": "midblock_right_the_ship worked DIRECTIONALLY - I unlocked from chain-down to turn-pending and skewed up on the worsening 0.94-pctile short + sub-0.55 buy-lean cluster + bid-leaning book. Good call. But I capped magnitude at +150 (band -260..+620) because the LITERAL accumulation arm (big_print_b_share >= 0.55) never fired (max 0.537) and I could not confirm price in the blind, so I invoked 'honest under-claim'. The actual covering discharge was full-sized +840: 0519's own session was massive absorption - total_sflow -2374 (net SELL) with absorb_session TRUE, phase2 -796 flow under +650 px, phase3 -1549 flow under +310 px. The covering fired HARD without ever tripping the 0.55 arm.",
+      "blind_visible_signal_missed": "Same masked tell as 0513: negative-flow-under-rising is only visible WITH price. Blind, I correctly SKEWED up but had no way to size the +840 discharge - the arm I was gating on (0.55 big-print buy) is the WRONG gate; the covering discharged on price-confirmed absorption, not a buy-print threshold. My 'honest under-claim' discipline, meant to avoid claiming a reactive tail, instead became a systematic under-size of a fundamentally-driven covering rally I had already correctly diagnosed.",
+      "he24_he1_effect": "SIGNIFICANT. 0519 opened at 3.028 - the block had compounded 05-14 +590, 05-15 +320, 05-18 +660 since my last owned day, cum-from-anchor 780 -> 2770. Starting 0519 at cum 0 stripped that compounding-rally trajectory. A handoff carrying the rising exit state (repeated covering days, MM short STILL adding into the 05-20 seam) would have sized the up-day to the block's realized daily covering cadence (~+600/day) rather than a timid +150. The setup was right; the magnitude anchor was the prior day's rising exit, which I did not inherit."
+    }
+  ],
+  "dominant_flaw": "I ran a reduced-conviction bearish default and demanded a hard 0.55 buy-print arm (or price I was masked from) to leave it, so I filed the covering rally as an unfired tail to be small about - and, re-anchoring each owned day at cum 0 with no live handoff of the block's rising exit state, I stripped the compounding-rally context that would have both sized the up-days honestly and re-cast 0513's aligned-down dip-tape as a countertrend blip in an uptrend rather than a down-continuation.",
+  "refine_must_fix": [
+    "SIGN: with price, negative-flow-under-rising is the confirmable covering tell the blind is masked from (0513 -1979 flow/+400 px; 0519 -796/+650, -1549/+310). The refine must let price-confirmed absorption FLIP the sign - on 0513 specifically - not merely skew a bearish default up. The 0.55 big-print arm is the wrong gate; the discriminator that actually fired was price-vs-flow flow_conviction, which only the refine can see.",
+    "MAGNITUDE via HE24->HE1: carry a live prior-day handoff of the rising exit state (rising cum-from-anchor, repeated covering days, MM short worsening/adding) so up-days are sized to the block's realized covering cadence (~+600/day here) instead of an 'honest under-claim' floor. cum-0-per-reopen is the structural cause of both the 0513 sign error and the 0512/0519 undersizing.",
+    "DEFAULT: stop treating a worsening record-extreme short + an already-rising covering block as a bearish default awaiting a hard-arm exception. In a confirmed covering rally the UP-resumption after a one-day dip (0513) is the base case, and 'honest under-claim' is a magnitude lever only - never a reason to shave a fundamentally-driven, price-confirmed covering move down to a token size."
+  ]
+}

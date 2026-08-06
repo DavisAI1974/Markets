@@ -1,0 +1,98 @@
+{
+  "specialist": "D",
+  "lens": "thursday_eia_storage_print_catalyst",
+  "group": 15,
+  "brain_version_base": "s102.1",
+  "role": "POSTERIOR UPDATE of the IMMUTABLE BLIND (grp15.json). The blind stays the core predictor; MBO adjusts ONLY where causal evidence is material. Execution = SHADOW (feature-state execution_authority was False the entire session on both days - MBO is evidence-grade, not execution-grade here). Print cutoff respected: NO post-10:30-ET reaction evidence used to characterize pre-print positioning on either day.",
+  "days": [
+    {
+      "date": "20260319",
+      "dow": "Thu",
+      "instrument": "NGJ26",
+      "day_class": "tue_thu_core + EIA storage print overlay (10:30 ET, consensus +31 Bcf INJECTION, ~+59 loose vs 5yr = S3 bearish trajectory)",
+      "blind_direction": "down",
+      "blind_net_usd": -800,
+      "posterior_direction_by_horizon": {
+        "overnight_20_06": "down (onset down 00:50 ET, thr 500; phase1 drift to ~-360)",
+        "preprint_06_1030": "UP counter-probe - morning rally to the session high +470 at 09:31 ET, then turn_down 09:31 (BEFORE the print); weak conviction (imbL ~0, ask-consumed but small)",
+        "postprint_1030_close": "DOWN, chain-sided - the +31 injection print (loose vs 5yr, bearish) reinforces the running down-chain; delivery back-loaded, session low -1250 at 18:33 ET"
+      },
+      "expected_magnitude_usd": -1050,
+      "onset_time_et": "00:50 (down, overnight)",
+      "turn_time_et": "09:31 (turn_down; pre-print, at the +470 morning high - the counter-probe fails and the chain reasserts into the print)",
+      "trend_vs_chop": "trend down with one pre-print counter-probe up; net directional",
+      "continuation_vs_reversal": "continuation (down-chain continues; the print is chain-SIDED and delivers its band, deeper than the blind sized)",
+      "path_p50_curve": [[20,0],[22,-120],[0,-210],[2,-320],[4,-360],[6,-230],[8,260],[10,120],[12,-430],[14,-720],[16,-980],[18,-1200],[20,-1050]],
+      "mfe_usd": 470,
+      "mae_usd": -1250,
+      "confidence": 0.72,
+      "weight_assigned": 0.45,
+      "evidence_used": [
+        "onset_dir down at 00:50 ET (overnight, thr 500) - pre-print, corroborates the blind down chain",
+        "pre-print morning probe UP to +470 (high_exc, 09:31 ET) then turn_down 09:31 - a pre-print counter-squaring that FAILED before the print (legit pre-10:30 evidence)",
+        "total_sflow -4861 (sell), sflow_sign -1 - net selling all session",
+        "post-print phase3 break: sflow -1438, pxchg -880, absorb False -> the chain-sided down delivery, low -1250 at 18:33 ET (LATE, evening)",
+        "print context: +31 injection ~+59 loose vs 5yr = bearish; print AGREES with chain (backdrop not inverted here)"
+      ],
+      "evidence_rejected": [
+        "phase2 absorption (sflow -3457 but pxchg +170, absorb=True) NOT read as a bullish reversal - it is a mid-session absorption bounce that RESOLVED DOWN under the chain + bearish-print context; reading it as a reversal-up signal would have HURT (fought the correct down call)",
+        "raw onset counter-probe +470 not treated as a day-direction flip - it is a pre-print squaring, sub-conviction (imbL near 0)"
+      ],
+      "stand_down_reasons": [
+        "execution_authority False all session (SHADOW / evidence-grade only)",
+        "print-cutoff discipline: only pre-10:30-ET evidence used to characterize pre-print positioning"
+      ],
+      "mbo_verdict": "HELP. Confirms the blind's DIRECTION (down) and the chain-SIDED nature of the print, and materially corrects TWO things: (1) MAGNITUDE - actual -1080 vs blind -800, the chain-sided injection print delivered ~35% deeper than the blind's S1-void-damped band, so the posterior resizes to ~-1050; (2) TIMING/SHAPE - the low is BACK-LOADED (18:33 ET evening) not the blind's '10:30-14:00 delivery', and there is a pre-print +470 morning counter-probe that the blind's shape missed. HOW: the MBO phase/turn structure exposes both the pre-print probe (turn_down 09:31) and the late break (phase3 -880). WHY it only HELPS moderately: direction was already right in the blind, so MBO refines magnitude + path, not the call.",
+      "selection_reason": "Thursday EIA storage-print catalyst is the governing class (the print, not the Thursday, owns the day). Chain-sided print (loose injection agrees with the running down-chain) -> the with-print leg delivers its full band; specialist D confirms and deepens."
+    },
+    {
+      "date": "20260326",
+      "dow": "Thu",
+      "instrument": "NGK26",
+      "day_class": "tue_thu_core + EIA storage print overlay (10:30 ET, consensus -44 DRAW, ~-43 tight vs 5yr = backdrop-inversion) + April OPEX",
+      "blind_direction": "up",
+      "blind_net_usd": 900,
+      "posterior_direction_by_horizon": {
+        "overnight_20_06": "mild up (onset UP 04:34 ET, thr 250; phase1 sflow -12, px +110) - a thin overnight up-bias",
+        "preprint_06_1030": "SELL-COIL into the print - imbalance turns negative 09:05-10:05 (imbL -0.32 -> -0.40, cons=BID = sellers hitting bids); a divergence vs the blind's clean bullish up-print expectation (legit pre-10:30 evidence)",
+        "postprint_1030_1300": "UP leg DELIVERS to the session high +600 at 13:04 ET - direction of the leg matches the blind, BUT it rides on ABSORPTION (phase2 sflow -3175 NEGATIVE while px +390 up) = short-covering into supply, NO buy-flow conviction",
+        "postprint_1300_close": "REVERSAL - turn_down 13:04, give-back to the low -480 at 16:12 ET (phase3 sflow -409, px -550), close FLAT -60"
+      },
+      "expected_magnitude_usd": -50,
+      "onset_time_et": "04:34 (up, overnight) - but sub-conviction; the material pre-print read is the 09:05-10:05 sell-coil",
+      "turn_time_et": "13:04 (turn_down at the +600 high - the up-leg exhausts and round-trips)",
+      "trend_vs_chop": "round-trip / mean-revert: up-leg then full give-back to flat (chop-around-flat on the day net, though a clean up-then-down arc intraday)",
+      "continuation_vs_reversal": "REVERSAL - the counter-print up-leg delivers intraday then round-trips; NO continuation to the close",
+      "path_p50_curve": [[20,0],[22,40],[0,90],[2,150],[4,190],[6,150],[8,130],[10,110],[12,500],[14,320],[16,-450],[18,-150],[20,-60]],
+      "mfe_usd": 600,
+      "mae_usd": -480,
+      "confidence": 0.68,
+      "weight_assigned": 0.6,
+      "evidence_used": [
+        "pre-print sell-coil 09:05-10:05 ET: imbL -0.317 -> -0.397, cons=BID (sellers hitting bids into the print) - a divergence flag the blind's clean bullish-print read did not have",
+        "post-print up-leg to +600 (high_exc, 13:04 ET) delivered DESPITE phase2 sflow -3175 negative (absorb=True) - the CAUSAL tell: up-move is absorption/short-covering, not buy-flow, so it cannot hold",
+        "turn_down 13:04 (turn_mag 660) + phase3 give-back sflow -409, px -550 to low -480 (16:12 ET)",
+        "close net -60 (flat) - the round-trip completes",
+        "total_sflow -3596 (net SELL on the day) - the tape sold the whole session even as price rallied midday"
+      ],
+      "evidence_rejected": [
+        "raw onset_dir UP (04:34) as a confirmer of the blind's +900 - REJECTED: reading the overnight up-bias naively would have HELD the over-sized up call. The discriminator is signed-flow-vs-price (absorption), NOT onset direction",
+        "the +600 MFE as evidence the up-leg 'held' - REJECTED: an up-leg on persistent negative flow is a round-trip setup, not a trend"
+      ],
+      "stand_down_reasons": [
+        "execution_authority False all session (SHADOW / evidence-grade only)",
+        "print-cutoff discipline: the +600 high (13:04) and the round-trip are POST-print - used only for the post-print horizon, never to backfill a pre-print positioning read",
+        "the reversal call is live-detectable only at/after the 13:04 turn (the absorption signature emerges during the phase2 up-leg) - the posterior does not claim to know the round-trip at the open"
+      ],
+      "mbo_verdict": "HELP (strong - this is the block's over-size correction). The blind called +900 UP to the close; the MBO shows the up-leg DID deliver intraday (peak +600 at 13:04, blind's leg-direction right) but ROUND-TRIPPED to flat (close -60). The MECHANICAL CAUSE is visible in the flow: the entire up-leg ran on ABSORPTION - phase2 signed-flow -3175 NEGATIVE while price rose +390 - so it was short-covering into a selling tape with no buy conviction, which is exactly why it could not hold. Posterior resizes the DAY NET from +900 to ~flat (-50) and reclassifies continuation->REVERSAL with a ~13:00 turn. WHERE MBO COULD HURT (reported honestly): the raw onset_dir=UP and the absorb=True flag are the SAME signatures that appear on 0319 (which resolved down) - taken naively they would CONFIRM the over-sized up call. The signal that actually saves the day is signed-flow-vs-price direction (negative flow under a rising price = doomed up-leg), not onset or the absorb flag alone. This is the same conclusion the state-based refine reached structurally (shoulder_counter_print_damping), but the MBO SHOWS the round-trip mechanically rather than inferring it.",
+      "selection_reason": "Thursday EIA storage-print catalyst governs, and this is the COUNTER-print case (bullish -44 draw trading against the running down-chain in deep S1-void). Counter-print + no seasonal amplifier -> the up-leg delivers then round-trips; specialist D's flow-conviction read (absorption) is the decisive discriminator vs the blind's chain-sided-print assumption."
+    }
+  ],
+  "specialist_summary": {
+    "principle_check": "Both posteriors START from the immutable blind and adjust only on material MBO evidence; neither is a from-scratch order-flow forecast. 0319 = confirm+deepen (small adjustment); 0326 = the material override (day-net +900 -> flat), justified by the absorption/round-trip causal signature.",
+    "eia_lens_finding": "The Thursday-print day splits cleanly into pre-print positioning vs post-print reaction, and the MBO makes the split legible. The DECISIVE discriminator between a print that DELIVERS its band (0319, chain-sided) and one that ROUND-TRIPS (0326, counter-print) is signed-flow-vs-price CONVICTION on the post-print leg, NOT the print direction or the onset/absorb flags. 0319: post-print down-leg had flow behind the break (phase3 sflow -1438, px -880 aligned) -> delivered, deeper than blind. 0326: post-print up-leg had flow AGAINST it (phase2 sflow -3175, px +390 = absorption) -> round-tripped to flat.",
+    "mbo_helped_or_hurt_net": "HELP on both days. 0319: HELP (magnitude deeper -800->-1050, timing back-loaded, pre-print +470 probe surfaced). 0326: HELP strongly (over-size correction +900->flat via the absorption tell). The honest HURT risk: raw onset_dir and the absorb=True flag are ambiguous - identical on both days yet resolving oppositely - so they must NOT be used as standalone confirmers; only signed-flow-vs-price disambiguates. A naive MBO reader who trusted onset/absorb would have held the over-sized +900 on 0326.",
+    "cutoff_compliance": "No post-10:30-ET evidence was used to characterize pre-print positioning on either day. 0319 pre-print reads (onset 00:50 down, +470 probe/turn 09:31) are all pre-print; 0326 pre-print reads (onset 04:34 up, 09:05-10:05 sell-coil) are all pre-print. The +600 high (0326, 13:04) and both evening lows are post-print and used only for the post-print horizon.",
+    "per_event_no_averaging": "The two days are characterized individually and resolve oppositely (chain-sided vs counter-print); no pooled 'Thursday' number is asserted."
+  }
+}

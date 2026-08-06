@@ -1,0 +1,1542 @@
+{
+ "note": "PARTIAL - 2 of 8 batches. Rubric conflates ASSERTED with NOVEL_N1; see handoff.",
+ "batches": 3,
+ "audits": [
+  {
+   "play_id": "direction.book_contrarian",
+   "support_class": "UNCLEAR",
+   "the_argument": "Claim: when aggressor flow is flat, fade the heavy resting side - an ask-heavy book means price runs UP through it ('wall = fuel, not floor'). It rests on ONE cross-sectional rate split: ask-heavy legs go up 0.61 (n=158), bid-heavy 0.42 (n=121). That split is a real measurement and is NOT the outcome the play was written to explain, which is why it is not OUTCOME_CREDITED. But it is a single pooled read over 279 legs from 12 warm-season days (S92), with no per-cell breakdown - a direct violation of the desk's standing 'per-cell always, never pool' rule - no null, no monotone-in-strength check (which the sibling flow play DOES carry), and no replication. The play's own field says 'forward_evidence: NONE. Derived on the warm-season set; never re-tested on any later block. Zero forward evidence.' The 'flow_beats_book_when_disagree 262/293 = 0.89' number simultaneously establishes the play's scope and shrinks it to near-nothing.",
+   "could_evidence_have_come_out_otherwise": "YES for the original number - 0.61/0.42 could have come out 0.50/0.50 and did not. NO for anything since: no test has been run that could have refuted it in five years of walk. The causal story ('wall = fuel') is asserted on top of the correlation, never tested against the alternative (the resting side is where the informed capital sits and price is drawn to it).",
+   "d24_state": "not_searched",
+   "instances": [
+    {
+     "date": "20260701",
+     "group": "g22",
+     "source_file": "forecasts/g22_perday/grp22_C_20260701.json",
+     "what_the_state_said": "plays_stood_down: 'direction.book_contrarian and the MBO book layer generally - no book_trustworthy verdict is served'",
+     "what_the_day_did": "day_move -500; the play emitted nothing",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260707",
+     "group": "g23",
+     "source_file": "forecasts/g23_perday/grp23_C_20260707.json",
+     "what_the_state_said": "plays_stood_down: grouped with flow_nowcast / grind_vs_spike / magnitude_staircase / recruitment_reversal as 'needs_intraday_reveal'",
+     "what_the_day_did": "day_move +160; the play emitted nothing",
+     "supports_or_contradicts": "ambiguous"
+    }
+   ],
+   "condition_can_change_state": "NOT CHECKABLE AS WRITTEN - the play's read variable imb_R is served NOWHERE in any decision state g18-g23 (grep for imb_R / imb_level / dip_imb across grp23_state.json returns False on all three). It exists only in event_move_baseline.depth_features and month_characterize.depth_pieces, both of which need MBP-10 depth at leg entry, and that corpus lives on S3, not in the repo. PROXY MEASUREMENT I DID RUN, declared as a proxy: l1_book.quote_bid_share is served on 52 of 60 days g18-g23 and is described in-state as 'resting-liquidity lean (distinct from aggressor flow)'. Its range is 0.462-0.530 and it clears 0.50 on 25 of 52 days, so it DOES change state. Fading it at day grain hits 52% (27/52) - a coin flip - and 43% (6/14) on the subset where |session_signed_flow| < 1000, which is the play's own declared 'flow is flat' scope. This is a day-grain proxy against a leg-grain play and does not refute it; it does say the nearest available instrument shows nothing in the play's declared scope.",
+   "falsifier": "Re-run the imb_R split per-cell (side x velocity-class x season) on the staged blocks off the S3 MBP-10 corpus, restricted to legs where dip_imb_level is flat. The play dies if the ask-heavy/bid-heavy up-rate gap fails to survive within cells, or if it inverts on any non-warm-season cell. That test has never been attempted and is the only thing that would settle this play.",
+   "recommendation": "scope_narrower",
+   "confidence": "med"
+  },
+  {
+   "play_id": "daytype.storage_thursday_magnitude",
+   "support_class": "OUTCOME_CREDITED",
+   "the_argument": "Two arms. (i) SIZE: up-size the Thursday magnitude prior. (ii) SIDE: the post-print LEG sides with the running chain, never the print sign; the DAY NET is owned by the chain state. The SIZE arm is measurable and I measured it. The SIDE arm is the problem: its entire evidence field is a per-event narrative of the form 'date, actual net, the chain was X, so the chain won' - the chain state is read at the same time as the outcome and the rule is confirmed by the outcome. It is a 10,599-character evidence block containing no count that could have gone the other way, and every counterexample produced a NEW conditioning dimension rather than a refutation: 1120 -> the leg-vs-net split (S97.2); the G9 bullish-draw sells -> polarity (S98.2); 0129/0205/0212 -> spent-chain scoping (S101.3); the G14 blind -> chain-state-is-tape-state (S102.1); 0326 -> S1-void damping (a whole new play). Five successive rescues, each on n<=3. The forward_evidence field claiming '14 storage Thursdays, every one leg-sided with the running chain' is a 14/14 record for a rule that the same file documents breaking at 1120, 0129 and 0326 - the 14/14 survives only because each break was reclassified into a different arm first.",
+   "could_evidence_have_come_out_otherwise": "SIZE arm: yes, and I ran it. SIDE arm: no. 'The chain won' is unfalsifiable once the chain can be relabelled live/spent/young/basing after the fact, and the play's own history is a record of exactly that relabelling. The leg-side arm is ALSO not independently re-measurable in the committed corpus - g<N>_mbo_evidence.json serves only 3 coarse phases per day (sflow/pxchg/vol), not a print-anchored decomposition, so nobody can recompute 'leg-sided with the chain' from the record.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "20260625",
+     "group": "g22",
+     "source_file": "forecasts/g22_perday/grp22_D_20260625.json + renders/ng_refine_s95/g22_actual.json",
+     "what_the_state_said": "D fired the play 'for its SIDE/OWNERSHIP clause only'; blind guessed_net -110",
+     "what_the_day_did": "day_move -60. Direction right, error 50 - but the day is the SMALLEST |move| of a block whose non-print median is 690, i.e. the magnitude up-size was correctly NOT taken",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260702",
+     "group": "g22",
+     "source_file": "forecasts/g22_perday/grp22_D_20260702.json + renders/ng_refine_s95/g22_actual.json",
+     "what_the_state_said": "D fired 'LEG-SIDE arm only (R2): the post-print leg is chain-sided DOWN'; blind guessed_net +200",
+     "what_the_day_did": "day_move EXACTLY 0 against a block non-print median of 690. The up-size arm fails hardest here",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260709",
+     "group": "g23",
+     "source_file": "forecasts/g23_perday/grp23_D_20260709.json + renders/ng_refine_s95/g23_actual.json",
+     "what_the_state_said": "D fired 'R2: post-print LEG sides with the running young down swing'; guessed_net -250, expected_travel 1100",
+     "what_the_day_did": "day_move -2050 - the block's largest day. Direction right, magnitude 8x under. Session low 13:53, session high 03:15 (g23_mbo_evidence.json)",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260716",
+     "group": "g23",
+     "source_file": "forecasts/g23_perday/grp23_D_20260716.json + renders/ng_refine_s95/g23_actual.json",
+     "what_the_state_said": "D fired 'SIDE = chain state (live UP chain, age 2, driver delivering: heat + knowable tightening)'; guessed_net +300",
+     "what_the_day_did": "day_move -20. Chain-sided UP call, day closed DOWN and flat. Both arms wrong",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260528",
+     "group": "g20",
+     "source_file": "renders/ng_refine_s95/g20_actual.json + forecasts/grp20_mbo_specialist_D.json",
+     "what_the_state_said": "print Thursday, block non-print median |dm| 400",
+     "what_the_day_did": "day_move +2100, the largest of the block. The size arm's best instance in the modern corpus",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260604",
+     "group": "g20",
+     "source_file": "renders/ng_refine_s95/g20_actual.json",
+     "what_the_state_said": "print Thursday",
+     "what_the_day_did": "day_move +1130 vs block non-print median 400",
+     "supports_or_contradicts": "supports"
+    }
+   ],
+   "condition_can_change_state": "YES for the size arm, and I measured it across all 14 EIA Thursdays in g17-g23. Print Thursdays: mean |day_move| 850, median 725. All other days: mean 510, median 440. A real 1.65-1.67x lift. But per-block, only 9 of 14 print Thursdays exceed their OWN block's non-print median, and the failure cell is sharp and recent: g22 goes 0-for-2 (60 and 0 against a block median of 690 - the two smallest days in the block) and g23 goes 1-for-2 (2050 and 20). The up-size prior is a winter/spring-regime fact that inverts in the two summer blocks. The SIDE arm's condition ('the running chain') has no served numeric bar and is not checkable.",
+   "falsifier": "SIZE: a block where both print Thursdays land below the block's own non-print median |day_move| - which g22 already delivered and which is not recorded in the play. SIDE: a print day where the post-print leg runs against a chain that a specialist DECLARED before the print, with no post-hoc relabelling of the chain permitted. The second falsifier cannot currently be written because the chain label is not frozen at the open in any artifact.",
+   "recommendation": "scope_narrower",
+   "confidence": "high"
+  },
+  {
+   "play_id": "structure.chain_polarity_flip",
+   "support_class": "MECHANISM_VERIFIED",
+   "the_argument": "Claim: a chain polarity flip needs an ARM (parabolic run + blow-off close) and a four-condition CONFIRM (C1 band-break >=1.5x, C2 old-side continuation-collapse, C3 printed-never-front-run, C4 catalyst arbiter). This is the best-audited play in my batch. The support is a per-instance table with COUNTS THAT COULD HAVE GONE THE OTHER WAY: C1 fires 1008/1020/1208/1223/0120 and correctly DECLINES 0107 - 6 fires, 1 correct decline, 0 false positives across G4/G5/G9/G10/G11/G14. It carries a documented FALSE POSITIVE (G10 0108) and a documented FALSE NEGATIVE (G11), on opposite sides of the same bar, and it says so. C2's ratio reformulation was REFUTED on comparable data (0120 true 0.714 vs 0107 false 0.718, near-identical on every arm) and was KEPT-AND-SCOPED rather than quietly dropped. C2's absolute arm is explicitly declared non-discriminating above ~160 legs / 75k trades. A negative control (G7 1113) is named. That is falsification-shaped work. The problem is not the support; it is that the play has been DORMANT for nine blocks and its 'requires' field is wrong about the architecture it now runs in.",
+   "could_evidence_have_come_out_otherwise": "YES, repeatedly and demonstrably. 0107 could have fired C1 and did not. 0120 could have fired C2 and did not - and the play recorded that as its own false negative. The ratio reformulation could have separated true from false and it returned 0.714 vs 0.718, and the play recorded the refutation. This is the one play in my batch whose evidence has visibly been allowed to embarrass it.",
+   "d24_state": "searched_none",
+   "instances": [
+    {
+     "date": "20260626",
+     "group": "g22",
+     "source_file": "forecasts/g22_perday/grp22_E_20260626.json",
+     "what_the_state_said": "plays_stood_down: 'its CONFIRM conditions C1 (band-break) and C2 (old-side continuation-collapse in the actual tape) are PRICE-derived' and masked",
+     "what_the_day_did": "day_move +230; no flip evaluated",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260708",
+     "group": "g23",
+     "source_file": "forecasts/g23_perday/grp23_C_20260708.json",
+     "what_the_state_said": "plays_stood_down: 'C1 band-break unmeasurable under the mask; no polarity flip asserted (C3 respected)'",
+     "what_the_day_did": "day_move -520; no flip evaluated",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260709",
+     "group": "g23",
+     "source_file": "forecasts/g23_perday/grp23_D_20260709.json",
+     "what_the_state_said": "plays_fired, consulted only: 'no parabolic arm, no confirm anywhere near - alternation, not flip mechanics'",
+     "what_the_day_did": "day_move -2050, the block's largest day and the start of a -3,590 cum drawdown. No flip was declared before or after",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260713",
+     "group": "g23",
+     "source_file": "forecasts/g23_perday/grp23_B_20260713.json",
+     "what_the_state_said": "plays_stood_down: 'C1/C3/C4 confirm stack - price-derived, masked; no polarity claim (flow-alternation substitute declared weak)'",
+     "what_the_day_did": "day_move -620; no flip evaluated",
+     "supports_or_contradicts": "ambiguous"
+    }
+   ],
+   "condition_can_change_state": "NO, IN THE BLIND, AND THIS IS THE FINDING. C1 is a comparison of a day's dollar NET against a condition-class band. The blind's price-derived state blocks are FROZEN at the block-anchor vintage (grp23_state.json _mask_note: 'price-derived blocks FROZEN at the block-anchor vintage'), so the prior day's net is not available and C1 is permanently UNKNOWN - never true, never false. Six separate G22/G23 posteriors say exactly this in their own words. That directly contradicts the play's own requires field, which asserts 'NOTHING in the rule requires an intraday reveal; the rule is open-time applicable to the session AFTER the confirm'. Separately, the condition-class counter bands C1 is measured against are not served as a numeric table anywhere - each specialist re-derives them, which is D23's value-replacement problem in its purest form. And the amplitude regime has moved: every recorded C1 fire had |net| between 1,800 and 5,010, while the max |day_move| across all of g17-g23 is 2,100 and the block means run 355-799.",
+   "falsifier": "A counter day whose net breaks its condition-class band by >=1.5x, evaluated at the close and not front-run, that is NOT followed by a sustained polarity change - i.e. a genuine C1 false positive. Six fires and zero false positives is a real record. It has simply had no opportunity to be tested since G14, because in the blind the condition cannot be evaluated at all.",
+   "recommendation": "needs_reading_by_greg",
+   "confidence": "high"
+  },
+  {
+   "play_id": "tape.squeeze_ignition_flush_conjunction",
+   "support_class": "OUTCOME_CREDITED",
+   "the_argument": "Claim: a failed counter-flush in the last 30-75 min, IN CONJUNCTION with a live structural pull state, precedes squeeze ignition - 3/3 (0130, 1223, 0129) spanning G9/G11; the flush alone is named NOISE. The retrospective around it is unusually disciplined: it demotes F6 (trade-rate ramp) and F7 (VWAP posture) to NOISE because they fire on quiet-day controls, demotes F3/F4/F5 to WATCH for failing the spanning requirement, names 1128 as a 'WEAK-TELL INSTANCE, named honestly', names 1020's missing raw tape as a limit, and records G13 as a clean negative block. That is better conduct than most of the corpus. But the play itself has the outcome-credited shape underneath: the instances were SELECTED as days that ignited, the pre-onset signature was then found looking backwards, and when the one control that challenged it showed the flush-fail ALSO fires on quiet days (0219, 0212), the response was to add the conjunction limb rather than to retract. The conjunction limb was never itself varied - all three instances carry it and no instance is recorded where the conjunction fired and ignition did not follow. So: three positives, one control that killed the simpler version, and zero negative tests of the version that survived.",
+   "could_evidence_have_come_out_otherwise": "PARTLY. The quiet-day controls could have shown the flush-fail was clean and they did not - that measurement was allowed to come out badly, and F6/F7/compression were killed by it. But the surviving RULE (the conjunction) has no test that could refute it: a squeeze-regime day with a failed flush that did not ignite has never been looked for, and the controls were quiet days that by construction lack the conjunction's second limb.",
+   "d24_state": "not_searched",
+   "instances": [
+    {
+     "date": "20260625",
+     "group": "g22",
+     "source_file": "forecasts/g22_perday/grp22_D_20260625.json",
+     "what_the_state_said": "plays_stood_down: 'UNEVALUABLE, explicitly NOT false. squeeze_watch.calendar_limb_satisfied_live' - the spread limb is price-masked",
+     "what_the_day_did": "day_move -60; no ignition, no fire",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260703",
+     "group": "g22",
+     "source_file": "forecasts/g22_perday/grp22_A_20260703.json",
+     "what_the_state_said": "plays_stood_down with structure.squeeze_unwind and squeeze_ratchet_confirm: 'squeeze_watch.calendar_limb_satisfied_live is delivered null'",
+     "what_the_day_did": "day_move +410; no fire",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260710",
+     "group": "g23",
+     "source_file": "forecasts/g23_perday/grp23_E_20260710.json",
+     "what_the_state_said": "plays_stood_down: 'squeeze_watch inactive; DTE limb false live (13d)'",
+     "what_the_day_did": "day_move -660; no fire",
+     "supports_or_contradicts": "ambiguous"
+    }
+   ],
+   "condition_can_change_state": "NO WITHIN A BLOCK, BY CONSTRUCTION. squeeze_watch.active is frozen at the block-anchor vintage: it reads TRUE on all 10 days of g20 (with days_to_calendar_front_expiry stuck at 2 even on 0605, a fortnight after the anchor) and FALSE on all 10 days of each of g18, g19, g21, g22, g23 - 10 active out of 60 served days, and never a within-block transition. It is 10-of-10 or 0-of-10, exactly the shape the burn gate's CDD limb had. The S109 repair added a live calendar-DTE limb that DOES vary, but the gate is (dte<=7) AND (spread_chg_3d>0) and the SPREAD limb is genuinely price-masked, so the conjunction is unevaluable blind and 17 posteriors stand the play down as 'UNKNOWN, not negative'. SEPARATELY: the three named instances (0130, 1223, 0129) are NOT traceable to any committed artifact. They were measured on data/nymex_cont_n0; the surviving local store data/nymex_cont holds 105 files, none covering those dates, and forecasts/grp9.json and grp11.json carry no actuals. The instances trace only to the play's own prose - prose citing prose.",
+   "falsifier": "A day in a live structural pull state carrying a failed counter-flush in the final 30-75 min that does NOT ignite. That is the negative test the retrospective never ran, and it is the only thing that separates the conjunction from a re-description of three squeeze days. It requires either a winter block with squeeze_watch genuinely live and unmasked, or a re-pull of the G9/G11 raw tape from S3.",
+   "recommendation": "cannot_assess",
+   "confidence": "med"
+  },
+  {
+   "play_id": "magnitude.shoulder_counter_print_damping",
+   "support_class": "OUTCOME_CREDITED",
+   "the_argument": "Claim: in an S1-VOID shoulder (near-window normals base <= ~20 gw-HDD), a print whose fundamental would trade AGAINST the running chain has its DAY NET damped toward flat. The evidence field says n=1 and the single event is 0326: 'Blind sized +900 on the 0129 spent-chain-with-print form; actual +480 midday round-tripped to -60.' The exemplar IS the miss the play was written to explain. The mechanism ('S1-void removes the seasonal amplifier') was inferred from that one outcome, not tested against it. To its credit the play carries one real control - the rejected_alternative shows 0319 (chain-SIDED, same S1-void) delivered -1080, which kills the broader 'damp all shoulder prints' version and forces the scoping to counter prints only. And the G16 forward note is honest that the counter arm was NOT exercised because G16 contained no counter print. So the play has one instance, one control on a WIDER claim, and zero forward exercises of its own arm in ten sessions of merge history.",
+   "could_evidence_have_come_out_otherwise": "NO for the play's own arm. One day that round-tripped, explained by a mechanism chosen after the round-trip. The 0319 control could have come out otherwise and did real work - but it constrains a different, broader claim. The winter_contrast (0129/0205/0212 delivering +1480/+540/+120) is the same three days already used to build the spent-chain rule inside storage_thursday_magnitude, so it is not an independent measurement here.",
+   "d24_state": "searched_none",
+   "instances": [
+    {
+     "date": "20260702",
+     "group": "g22",
+     "source_file": "forecasts/g22_perday/grp22_D_20260702.json",
+     "what_the_state_said": "plays_stood_down: 'trigger fails twice: it is scoped to an S1-VOID SHOULDER (near-window normals <= ~20 gw-HDD with no demand...)'",
+     "what_the_day_did": "day_move EXACTLY 0 - the flat outcome the play predicts - and the play stood itself down rather than claim it",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260709",
+     "group": "g23",
+     "source_file": "forecasts/g23_perday/grp23_D_20260709.json",
+     "what_the_state_said": "plays_stood_down: 'scope = S1-void SHOULDER on the HDD axis; July is a live-CDD regime - scope unevaluable per the CDD-mirror'",
+     "what_the_day_did": "day_move -2050",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260716",
+     "group": "g23",
+     "source_file": "forecasts/g23_perday/grp23_D_20260716.json",
+     "what_the_state_said": "plays_fired, 'CONDITIONAL branch only: bounds the loose-print scenario at the S1-void round-trip flat class (~0..-300)'; D's blind guessed_net was +300",
+     "what_the_day_did": "day_move -20 - inside the conditional branch's bound and outside D's actual p50. The only modern instance where the play's number was closer than the specialist's",
+     "supports_or_contradicts": "supports"
+    }
+   ],
+   "condition_can_change_state": "NO. The trigger's only numeric bar is near-window normals base <= ~20 gw-HDD. Across every served day in g20-g23 the realized gw_hdd runs 0.0 to 1.5 - the bar fires 40 of 40, with a maximum reading 13x below the threshold. It cannot discriminate a shoulder from mid-summer; only the untestable word 'SHOULDER' does that, and 'shoulder' is not a served field. This is the same defect the brain itself already names in weather.absolute_hdd_bar_unevaluable_in_cdd_regime ('shoulder_weather_band_void 13.5 trivially satisfied -> weather band voided every summer day'), and it was called out in the field twice without being merged: D's G20 round-1 AND round-2 scope note says verbatim 'its S1-void test is measured in gw-HDD only and therefore reads void mechanically through an entire summer... The stand-down must be symmetric' (forecasts/grp20_mbo_specialist_D.json).",
+   "falsifier": "As written, none can be constructed that the play could fail: the trigger is always satisfied in summer, the call is 'damp toward flat', and any small day confirms it. A usable falsifier requires replacing the HDD bar with a condition that splits days - e.g. a seasonal-transition measure on the CDD axis - and then finding a counter print in that state that delivers a full counter band. Until the bar is replaced this play cannot be scored.",
+   "recommendation": "scope_narrower",
+   "confidence": "high"
+  },
+  {
+   "play_id": "midweek.giveback_exhaustion_reversal_recognition",
+   "support_class": "OUTCOME_CREDITED",
+   "the_argument": "Claim: a mature down-chain (age>=3) at a cum-extreme with a D-1 exhaustion tell reverses UP mid-week, and the blind keeps calling it down. Every one of the seven evidence entries has the identical form 'blind X, ACTUAL Y' - g15 0318 blind -400 / actual +1900; g12 0203/0204 blind -750/-850 / actual +1130/+1260; g10 0107 blind -550 / actual +1500; g9 0217 blind -800 / actual +1890; g14 0303 blind -650 / actual +640. The instance set IS the blind's biggest mid-week misses, and the rule is the description of what they had in common. The play is explicit that it is 'a SELECTOR/recognition failure, not a missing rule', which is honest about its own nature but does not change the support class. forward_evidence: NONE, self-declared. There is exactly one negative control (g15 0324, young chain, correctly continued down) and one out-of-scope exclusion (g13 0217, g16 0401). No base rate for the configuration was ever measured.",
+   "could_evidence_have_come_out_otherwise": "NO as assembled. Days were selected because they reversed; the tell was then read backwards off those days. The single negative control is a young-chain day, which fails the AGE limb rather than the EXHAUSTION limb, so the load-bearing limb has never been tested against a day that carried it and continued down.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "20260714",
+     "group": "g23",
+     "source_file": "renders/ng_refine_s95/g23_actual.json + grp23_state.json + forecasts/g23_perday/grp23_C_20260714.json",
+     "what_the_state_said": "The ONLY configuration match in 60 served days g18-g23: Tue after a 4-session down run (0708 -520, 0709 -2050, 0710 -660, 0713 -620), cum_from_anchor -3,590 = the block's extreme low. D-1 tape served: session_signed_flow -950, big_print_b_share 0.472. C stood the play down in its own posterior",
+     "what_the_day_did": "day_move +200. Direction UP as the play calls, but the play's own derived_magnitude is '+1200..+1600 off a 3+ session down-extreme' - the day delivered one sixth of that. And the D-1 exhaustion tell is ABSENT on its own definition: 0713's sell flow was NOT absorbed (price fell -620 with it) and bp 0.472 is not an extreme sell-climax, so by the play's own does_not_explain clause it should have deferred to the chain and called DOWN",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260603",
+     "group": "g20",
+     "source_file": "renders/ng_refine_s95/g20_actual.json + grp20_state.json",
+     "what_the_state_said": "Wed after a 3-session down run (0529 -160, 0601 -990, 0602 -80); D-1 flow +3,524 BUY under a -80 close = buy flow absorbed and failing. Cum +1,320, NOT at the block extreme",
+     "what_the_day_did": "day_move +750. Fails the cum-extreme limb, and the absorption tell is the wrong polarity for an up-reversal - included to show the configuration's near-misses were checked, not skipped",
+     "supports_or_contradicts": "ambiguous"
+    }
+   ],
+   "condition_can_change_state": "The configuration is REAL but RARE and BLIND-UNRUNNABLE. Scanning all 60 served days g18-g23: only 2 Tue/Wed sessions carry a >=3-session down run into them, and only 1 of those (0714) sits at the block cum-extreme. So the play's own configuration occurs roughly once per six blocks in the modern regime, and its evidence base (g9, g10, g12, g14, g15) is entirely winter/shoulder where amplitudes were 2-5x larger. Separately, two of its three required limbs - chain age and cum_from_anchor at the block extreme - are PRICE content and frozen in the blind. C wrote it plainly in its own posterior: 'THE PLAY THAT COULD FLIP MY SIGN, and it is unevaluable here: its limbs need chain age >= 3, cum-extreme...' (forecasts/g22_perday/grp22_C_20260624.json).",
+   "falsifier": "A Tue/Wed with a mature down-chain at a cum-extreme AND a clean D-1 absorption or sell-climax tell that continues DOWN. Nothing in the corpus has ever been checked for this; the base rate of the configuration was never measured before the rule was written from seven of its positive outcomes. 0714 is the nearest modern instance and it delivers the direction while refuting the magnitude by 6-8x.",
+   "recommendation": "forward_test_on_next_group",
+   "confidence": "med"
+  },
+  {
+   "play_id": "daytype.eia_preprint_overextension_gate",
+   "support_class": "OUTCOME_CREDITED",
+   "the_argument": "Claim: on an EIA print day, check three pre-print tells - (a) over-extended chain >= ~$900 same-side cum, (b) INCOHERENT D-1 flow, (c) surprise already priced >= 1 week - and if >=2 fire, refuse the full chain-sided band and go two-sided. The evidence field is a MISS CATALOGUE: 'D self-analysis: 9/14 misses = default DOWN into bearish bleed, print RALLIES (1030 +2590, 1106 +1330, 0416 +720, 0430 +1230)', followed by a two-day retro test-drive on 0416/0423 - the very days that produced two of those misses. The mechanism (flow coherence sorts print-day reliability) was inferred from the misses, never tested independently. That is the S108 shape. It is worse than that, because I could measure the limbs and all three are impaired: limb (b) rests on an unrepointed 0.50 semantic, limb (a) is price content masked in the blind, and limb (c) reads a feed the state auditor found DEAD after 0709.",
+   "could_evidence_have_come_out_otherwise": "NO for the merge evidence. The two test-drive days were chosen from the miss list. AND the forward record contains a contradiction the play does not carry. G20 is the play's own matched-pair test - D called it 'as clean a forward test of daytype.eia_preprint_overextension_gate as the walk has produced'. In the BLIND the gate FIRED on 0528 (tell (a) scored 'HALF - fired on the flow proxy, unverifiable in the units the play specifies', tell (b) 'FIRES, CLEANLY AND STRONGLY') and D emitted +150 against a +2,100 actual - the block's largest day and largest single-day error. On 0604 the gate SPARED and D emitted -450 against +1,130 - sign wrong. Both days missed, both in the same direction. The brain's declined_evidence records only the REFINE's re-scoring (1-of-3 on both, gate spared both) and concludes 'the gate was not the constraint: the failure was the absent generator, not an over-firing veto'. That conclusion is drawn from the price-bearing re-run and omits that the blind, which is where the gate has to work, DID fire it and did so on a limb it could not measure.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "20260528",
+     "group": "g20",
+     "source_file": "forecasts/g20_blind_round1/grp20_mbo_specialist_D.json",
+     "what_the_state_said": "day_class: 'PRE-PRINT OVER-EXTENSION GATE FIRED -> two-sided / counter-tilt, chain-sided full band REFUSED'; tell (a) scored HALF on a declared flow proxy because the price cum is masked; tell (b) fired on session_b_share 0.448 vs big_print_b_share 0.529. expected_magnitude_usd +150, band [-480,+700]",
+     "what_the_day_did": "day_move +2,100 - continuation, chain-sided, the block's largest up day. The gate's counter-tilt instruction sat on the walk's largest single-day miss",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260604",
+     "group": "g20",
+     "source_file": "forecasts/g20_blind_round1/grp20_mbo_specialist_D.json",
+     "what_the_state_said": "day_class: 'GATE SPARED (coherent D-1 sell) -> chain-sided band EARNED'; D-1 0.451/0.476 both below 0.50. expected_magnitude_usd -450",
+     "what_the_day_did": "day_move +1,130 UP. Sparing the gate did not help either - the chain-sided band it licensed was the wrong sign",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260709",
+     "group": "g23",
+     "source_file": "forecasts/g23_perday/grp23_D_20260709.json",
+     "what_the_state_said": "'run honestly: 0-1 of 3 tells fire -> chain-sided sign PERMITTED on coherent D-1 sell' (0.465/0.380 agree); guessed_net -250",
+     "what_the_day_did": "day_move -2,050. Direction right, magnitude 8x under. A spare that was directionally correct",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260716",
+     "group": "g23",
+     "source_file": "forecasts/g23_perday/grp23_D_20260716.json",
+     "what_the_state_said": "'(a) 0.5 unmeasurable-blind, (b) NOT fired (D-1 flow coherent 0.546/0.560)'; guessed_net +300",
+     "what_the_day_did": "day_move -20. Gate spared, chain-sided UP band licensed, day closed down and flat",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260717",
+     "group": "g23",
+     "source_file": "forecasts/grp23_state_audit.json finding f4",
+     "what_the_state_said": "'The survey-consensus feed died after capturing the 20260709 print... on 20260717 last_print still claims the 0709 print as the latest while the same day's storage block already carries the 0716 print'",
+     "what_the_day_did": "The auditor's impact line is explicit: 'limb (c) evaluates the WRONG print on 0717: it reads the 0709 surprise at age 8 as the latest when a new print landed the prior session - the limb fires as satisfied on stale identity'",
+     "supports_or_contradicts": "contradicts"
+    }
+   ],
+   "condition_can_change_state": "BARELY, AND ON A DEFECTIVE BASIS. Limb (b) arm 1 compares session_b_share to big_print_b_share about 0.50. On the ORIGINAL series the play's evidence is written on (0416 '0.472/0.522', 0423 '0.415/0.40'), session_b_share clears 0.50 on 2 of 47 non-Monday served days g18-g23, so one side of the comparison is effectively a CONSTANT and the test reduces to 'big_print_b_share > 0.50'. The state's own basis note says the opposite of what the play does: 'An ABSOLUTE 0.50 bar is only meaningful on the two-sided series.' On the two-sided series the limb's verdict FLIPS on 3 of the 6 print Thursdays where both are served (0618 coherent->incoherent, 0625 coherent->incoherent, 0702 incoherent->coherent). The play was merged at s102.6/S105, BEFORE the S108 b_share normalization fix, and was never repointed - the identical defect S108's C found living in prose on timing.catalyst_continuity_frontrun. Limb (b) arm 2 ('prior-close price dir vs signed flow disagree') fires on 30 of 48 non-Monday days (62.5%) and 9 of 12 print Thursdays, and sorts nothing: up-day rate 46.7% when it fires vs 50.0% when it does not. Limb (a) is denominated in dollars of chain cum, which is masked - D scored it 'FIRES-PROBABLE, NOT MEASURABLE'. Limb (c) reads a dead feed after 0709. So the 2-of-3 bar is being cleared by one near-constant arm, one uninformative arm, one proxy for a masked arm, and one stale-identity arm.",
+   "falsifier": "As currently wired the gate can be pushed over its 2-of-3 bar by arms that carry no information, so a clean falsifier is hard to write. The nearest one: re-score all 14 print Thursdays g17-g23 with limb (b) repointed to the two-sided series and limb (a) computed from real price, and check whether fired days show worse chain-sided reliability than spared days. On the four modern instances I traced, fired and spared both missed on 0528/0604 and spared was right on 0709 and wrong on 0716 - there is no separation yet. A second, cheaper falsifier is already twice-written in the field and never merged: D's G20 r1 AND r2 scope note, 'tell (b) is GENERATED by the very absorption mechanism I am trading, so at a <=~5 pctile short it is a CONTINUATION tell, not a caution tell, and should not count toward the 2-of-3 veto.'",
+   "recommendation": "needs_reading_by_greg",
+   "confidence": "high"
+  },
+  {
+   "play_id": "positioning.covering_self_limiting_cot_wow_gate",
+   "support_class": "MECHANISM_VERIFIED",
+   "the_argument": "Claim: a 'spent covering' downgrade is a POSITIVE CLAIM that must clear a two-limb bar - (a) the exit session shows positive flow_conviction under falling price, and (b) COT MM net WoW is flat or improving - and worsening WoW means covering is LIVE. It carries an explicit FALSIFIABILITY CLAUSE: 'the doctrine must NEVER reach the same direction from OPPOSITE inherited exit states'. That clause is doing real work: it is what caught the G19 blind calling both weekends down from opposite exits. The play is a REASONING CONSTRAINT rather than a directional prediction, and constraints of that kind are verified by construction plus a recorded correct decline, which it has (g20 0528: 'Limb (a) refused it on its own text... The gate CONFIRMED the band at its round-1 size and changed the number by zero'). Its outcome evidence is thin (n=2 weekends, both G19, and both are outcome-credited). What upgrades it is that the underlying variable sorts out of sample, which nobody has recorded.",
+   "could_evidence_have_come_out_otherwise": "The n=2 G19 evidence: no - both weekends were selected because they gapped up against the blind. The falsifiability clause: yes by construction - it fires whenever two opposite states produce the same call, which is checkable and did fire. The corpus search I ran: yes, and it could easily have come out flat.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "20260601",
+     "group": "g20",
+     "source_file": "renders/ng_refine_s95/grp20_state.json + g20_actual.json",
+     "what_the_state_said": "COT MM net -134,426, WoW -38,123 (the largest worsening in the corpus), 1y pctile 0.94",
+     "what_the_day_did": "Monday seam gapped +690 UP. Out-of-sample instance not recorded anywhere in the play, matching its G19 form exactly at 3x the WoW magnitude",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260615",
+     "group": "g21",
+     "source_file": "renders/ng_refine_s95/grp21_state.json + g21_actual.json",
+     "what_the_state_said": "COT MM net -122,617, WoW -7,763 (worsening), 1y pctile 2.83 - crowded short with shorts still adding",
+     "what_the_day_did": "Monday seam gapped -750 DOWN. The clean counterexample to the worsening-WoW-means-covering-fuel reading, and it is the largest DOWN gap of any worsening seam",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260622",
+     "group": "g22",
+     "source_file": "renders/ng_refine_s95/grp22_state.json + g22_actual.json + forecasts/g22_perday/grp22_B_20260622.json",
+     "what_the_state_said": "Same report as 0615 re-served at age 9.35 days: MM -122,617, WoW -7,763, pctile 2.83. B fired the play 'in its declared SCOPE only: MM 2.83 pctile with WoW -7,763 = covering LIVE, sizing the FAT UPPER tail'",
+     "what_the_day_did": "Monday seam gapped +1,210 UP - the largest gap in the corpus. Supports the direction, but on a STALE report identical to the one that preceded a -750 gap seven days earlier",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260504",
+     "group": "g18",
+     "source_file": "renders/ng_refine_s95/grp18_state.json + g18_actual.json",
+     "what_the_state_said": "COT MM net -97,245, WoW +3,329 = flat/improving, 1y pctile 10.38 - the 'spent' configuration",
+     "what_the_day_did": "Monday seam gapped +440 UP. The only improving-WoW seam in 6 that gapped materially up - the named exception in the out-of-sample set",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260706",
+     "group": "g23",
+     "source_file": "renders/ng_refine_s95/grp23_state.json + g23_actual.json",
+     "what_the_state_said": "COT MM net -82,722, WoW +2,187 (improving, served stale at age 9.35d), pctile 29.25",
+     "what_the_day_did": "Monday seam gapped -580 DOWN, consistent with spent fuel",
+     "supports_or_contradicts": "supports"
+    }
+   ],
+   "condition_can_change_state": "YES, CLEANLY. COT MM WoW across the 12 weekend seams g18-g23 runs from -38,123 to +23,762 with 10 distinct readings - it changes state freely and by large amounts. AND IT SORTS: worsening-WoW seams gapped UP on 4 of 5 (0511 +580, 0518 +580, 0601 +690, 0622 +1210; contra 0615 -750); flat/improving-WoW seams gapped up on 1 of 6 (0504 +440; the rest -50, -240, +50, -580, -360). That is a 4/5 vs 1/6 split on 12 out-of-sample seams and it could have come out flat. TWO CAVEATS. First, that split is the observable of the SIBLING play boundary.seam_gap_up_prior_on_worsening_cot, not of THIS gate's literal claim, which is scoped to 'the TAIL and the SIZE, never the p50 SIGN'. Second, 2 of the 12 Mondays (0622, 0706) serve a STALE repeat of the prior week's report at age 9.35 days, so the condition is frozen across those two seams.",
+   "falsifier": "Here is the structural problem, and it is the play's main weakness: because the play explicitly governs 'the TAIL and the SIZE, never the p50 SIGN', NO day-net observation can refute it - and day nets are the walk's entire scoreboard. Its falsifier has to be a band observation: a seam where COT WoW is worsening, the play forces a fat upper tail, and the realized move sits deep in the lower tail with no upside excursion at all. Nothing in the harness currently scores band coverage, so the play cannot be scored by the machine that scores everything else.",
+   "recommendation": "keep",
+   "confidence": "med"
+  },
+  {
+   "play_id": "flow.price_free_absorption_proxy",
+   "support_class": "MECHANISM_VERIFIED",
+   "the_argument": "Claim: under POSITIVE aggregate session flow, the size-weighted big-print channel says whether the absorber is still there, without price. Big prints still selling = absorber present; big prints flipping buy on a guard-clean sample = accumulation. The ORIGINAL merge evidence (n=2, 0601->0602 and 0602->0603) was outcome-credited - two days inside one block. What lifts the play to MECHANISM_VERIFIED is everything that happened afterwards, and this play has the best falsification record in my batch: the MIRROR ARM IS EXPLICITLY REFUTED on 5 named datapoints under negative tape (0527 .529 -> +2,100; 0528 .522 -> -160; 0604 .533 -> -1,340; 0603 .476 -> +1,130; 0611 .572 -> +620 - two up, two down, no ordering); a fire was WITHDRAWN when hole #8 contamination was found (0616); and S110 re-read it as MIS-SCALED, NOT REFUTED with the information confined to the TAILS ONLY, naming a confound it could not separate at n=9 and withdrawing its own earlier proposal-collision claim. That is a play that has been allowed to lose repeatedly.",
+   "could_evidence_have_come_out_otherwise": "YES, and it did, several times. The mirror arm was tested and failed and was scoped out rather than defended. The marginal-clear band was tested and found to carry no ordering. The 0616 fire was withdrawn on an input defect rather than kept. My corpus extension below could have confirmed the tail claim cleanly and it produced a clean contradiction instead.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "20260507",
+     "group": "g18",
+     "source_file": "renders/ng_refine_s95/grp18_state.json + g18_actual.json",
+     "what_the_state_said": "D-1 (0506) session_signed_flow +2,066 POSITIVE, big_print_b_share 0.427, big_prints_n 89 - guard-clean, deep in the 'absorber present' tail (bar <= 0.47)",
+     "what_the_day_did": "day_move +730 UP. A CLEAN OUT-OF-SAMPLE CONTRADICTION of the S110 claim that 'bp <= 0.47 goes 3/3 non-positive across three groups'. Over the full served corpus the tail-sell arm is 4 of 5, not 3 of 3",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260429",
+     "group": "g18",
+     "source_file": "renders/ng_refine_s95/grp18_state.json + g18_actual.json",
+     "what_the_state_said": "D-1 (0428) sflow +342 POSITIVE, big_print_b_share 0.318, n 85 - guard-clean, the deepest sell tail in the corpus",
+     "what_the_day_did": "day_move -440. Out-of-sample support for the tail-sell arm",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260427",
+     "group": "g18",
+     "source_file": "renders/ng_refine_s95/grp18_state.json + g18_actual.json",
+     "what_the_state_said": "D-1 sflow +3,189 POSITIVE, big_print_b_share 0.593, n 91 - a DECISIVE clear of the 0.547 bar",
+     "what_the_day_did": "day_move +370 UP. Out-of-sample support for the accumulation arm",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260430",
+     "group": "g18",
+     "source_file": "renders/ng_refine_s95/grp18_state.json + g18_actual.json",
+     "what_the_state_said": "D-1 sflow +7,783 POSITIVE (the largest in the corpus), big_print_b_share 0.621, n 116 - decisive clear",
+     "what_the_day_did": "day_move +1,230 UP, the block's largest. Out-of-sample support for the accumulation arm",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260618",
+     "group": "g21",
+     "source_file": "renders/ng_refine_s95/grp21_state.json + g21_actual.json",
+     "what_the_state_said": "D-1 sflow +1,162 POSITIVE, big_print_b_share 0.305 (extreme sell tail) but big_prints_n 16 - FAILS flow.big_print_bshare_thin_tape_guard (<20)",
+     "what_the_day_did": "day_move +520 UP. Would have been a second tail contradiction; the thin-tape guard correctly disarmed it. Named because the guard's value is invisible unless the near-miss is recorded",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260715",
+     "group": "g23",
+     "source_file": "renders/ng_refine_s95/grp23_state.json + g23_actual.json",
+     "what_the_state_said": "D-1 sflow +3,747 POSITIVE, big_print_b_share 0.553, n 61 - a MARGINAL clear of the 0.547 bar by 0.006",
+     "what_the_day_did": "day_move -60. Together with 0716 (bp 0.555, n 87, day -20) the marginal clears go 0-for-2 up, independently corroborating S110's 'the marginal 0714 clear should have been NO CALL'",
+     "supports_or_contradicts": "supports"
+    }
+   ],
+   "condition_can_change_state": "YES, FREELY. big_print_b_share ranges 0.303-0.841 across the served corpus and the precondition (prior-session signed flow POSITIVE) holds on 26 of 60 days g18-g23, of which 19 are guard-clean at n>=20. Full corpus tally, which extends the S110 window backwards by two blocks: DECISIVE BUY (bp >= 0.58) goes 3 for 3 UP (0427 +370, 0430 +1230, 0603 +750). TAIL SELL (bp <= 0.47) goes 4 of 5 non-positive (0429 -440, 0602 -80, 0625 -60, 0710 -660; contra 0507 +730). MIDDLE (0.47-0.58) goes 4 up / 5 down with no ordering, n=9. Base rate over all guard-clean positive-flow days is 9 up / 10 down = 47%, so the two tails sit at 100% and 20% against 47% - small n, but real separation on a condition that moves.",
+   "falsifier": "Stated and live: a guard-clean fire whose next session moves against the tail reading. 0507 (g18) is exactly that and it is NOT in the play's record - the play's tail count is scoped to G20-G23 and never searched backwards. A second falsifier already discharged: the mirror arm on negative tape, which the play retired rather than defended.",
+   "recommendation": "scope_narrower",
+   "confidence": "high"
+  },
+  {
+   "play_id": "daytype.eia_window_reopen_to_print",
+   "support_class": "MECHANISM_VERIFIED",
+   "the_argument": "Two separable claims. (i) ASSIGNMENT: the pre-print window is REOPEN->10:30, not 08:00-10:30, so timing claims must falsify against reopen->print mass and not a sub-window. (ii) MASS: the pre-print window carries about half the day's travel - 'the EIA Thursday is half built before the print', median 49.5%, IQR 34-59%, n=14 across 7 groups. The assignment claim is properly verified and I checked it against an independent artifact rather than the prose. The mass claim is a real measurement with a per-day table and a stated falsifier, but it is reported with NO NULL, and against the obvious nulls it points the other way. The play also records against itself twice, which is to its credit: 'D-0716: MASS was REFUTED 5x (+560 realized vs +110 forecast)' and 'on 0709 the blind fired this play BY NAME and emitted a path curve contradicting it.'",
+   "could_evidence_have_come_out_otherwise": "YES for both. The assignment claim would have died if the Thursday extremes and onsets clustered inside 08:00-10:30, and they do not. The mass measurement is a listed 14-value distribution (0416 58%, 0423 72%, 0430 26%, 0507 10%, 0514 34%, 0521 57%, 0528 42%, 0604 85%, 0611 72%, 0618 15%, 0625 46%, 0702 50%, 0709 59%, 0716 49%) with a written falsifier ('a group of EIA Thursdays whose pre-print share medians below about 25%'), so it is falsifiable - it just has no benchmark to be compared against.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "20260716",
+     "group": "g23",
+     "source_file": "renders/ng_refine_s95/g23_mbo_evidence.json",
+     "what_the_state_said": "D-0716 claimed the window 'set the session HIGH at 10:29:06, fifty-four seconds before the release'",
+     "what_the_day_did": "INDEPENDENTLY VERIFIED from the committed evidence file: hi_et = 2026-07-16 10:29:06.46, high_exc +680, net -20. The claim is exactly true and comes from a different artifact than the posterior asserting it",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260709",
+     "group": "g23",
+     "source_file": "renders/ng_refine_s95/g23_mbo_evidence.json",
+     "what_the_state_said": "D-0709 claimed 'the day's high and turn origin at 03:15 ET, outside any 08:00-start window'",
+     "what_the_day_did": "VERIFIED: hi_et = 2026-07-09 03:15:02, onset_et 09:29:03 down, net -2,050. The assignment claim holds on the block's largest day",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260625",
+     "group": "g22",
+     "source_file": "renders/ng_refine_s95/g22_mbo_evidence.json",
+     "what_the_state_said": "Play evidence: '0625: 44.4% of variation pre-10:30, high at 09:00'",
+     "what_the_day_did": "VERIFIED: hi_et = 2026-06-25 09:01:38, high_exc +850, net -40",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260702",
+     "group": "g22",
+     "source_file": "renders/ng_refine_s95/g22_mbo_evidence.json",
+     "what_the_state_said": "Play evidence: '0702: overnight -480 delivery, print = stop-run into the absorber... flushed to a marginal low then reclaimed'",
+     "what_the_day_did": "VERIFIED: lo_et = 2026-07-02 10:30:08 (eight seconds after the release), low_exc -530, net exactly 0",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "all 14 EIA Thursdays",
+     "group": "g17-g23",
+     "source_file": "renders/ng_refine_s95/g{17..23}_mbo_evidence.json",
+     "what_the_state_said": "The play's headline: 'the EIA Thursday is half built before the print' (median 49.5% of two-segment travel)",
+     "what_the_day_did": "MY INDEPENDENT CHECK CUTS THE OTHER WAY. The session HIGH is set pre-10:30 on only 3 of 14 Thursdays and the session LOW on only 6 of 14 - 9 of 28 extremes, 32%. The reopen->10:29 window is roughly 16.5 of ~23 session hours = 72% of the clock, so a time-proportional null predicts ~72% and a sqrt-time (random-walk) null ~61%. Both the 49.5% travel share and the 32% extremes share sit BELOW both nulls. Per unit of clock time the pre-print window is UNDER-productive and the extremes concentrate AFTER the print",
+     "supports_or_contradicts": "contradicts"
+    }
+   ],
+   "condition_can_change_state": "The assignment claim carries no numeric bar - it is a window definition, and it is right. The mass claim's own distribution changes state freely (10% to 85% across 14 Thursdays, IQR 34-59%), so it is not a degenerate condition; the problem is the missing benchmark, not a stuck bar. Note also the play's forward_evidence field names the risk itself: 'G20's decomposition lesson (2,090 credited from day nets, timing refuted 1-of-4) is the cautionary sibling' - the play knows it is standing next to the S108 failure and it still merged a mass default that was refuted 5x on its next instance.",
+   "falsifier": "Written and usable for the mass arm: 'a print day whose pre-10:30 share is trivial while the gate fired'. But the honest falsifier for the HEADLINE is different and has never been applied: state the 49.5% relative to a time-proportional or sqrt-time null. Under either null the measurement refutes the framing it was merged under. The assignment arm's falsifier is a run of Thursdays whose highs, lows and onsets sit inside 08:00-10:30; the corpus says the opposite (10 of 14 onsets pre-10:30, but only 3 of 14 highs).",
+   "recommendation": "scope_narrower",
+   "confidence": "high"
+  },
+  {
+   "play_id": "weather.burn_is_demand_arrival_not_direction",
+   "support_class": "MECHANISM_VERIFIED",
+   "the_argument": "Claim: burn confirms that weather-driven demand ARRIVED; it does not price it, because burn is a numerator with no balance-clearing denominator. Therefore burn may confirm, may damp a contradicting lean, but may NEVER license a directional lean of its own and must never suppress before magnitude is derived. This is a PROHIBITION, and it was born out of the hardest event in the corpus - the retirement of its own predecessor, weather.burn_conversion_gate, on that gate's named forward test, by four specialists including its author. The mechanism is causal (a rate with no stock term cannot say whether the arriving demand clears the surplus) and it was tested with numbers that came out badly and were published anyway: D-0716 reports the balance term as 2/3 as a gate revocation and 4/7 as a standalone direction sorter, and explicitly declines to claim it as one. E offers its own reformulation as 'a MEASUREMENT TO RUN, not a play to fire (n=1 clean)'. The forward_evidence field opens with the words 'HONEST AND THIN'. That is the conduct the audit is looking for.",
+   "could_evidence_have_come_out_otherwise": "YES, decisively, and it did - this play exists because the previous version's falsifier discharged against it. The predecessor's written falsifier was 'a burn-confirmed CDD add that fails to deliver, in G23+'; C-0708 found three clean up-fires in G23 (0708 -520, 0715 -60, 0716 -20) delivering 0 of 3, and D-0709 found the CDD-add limb was a CONSTANT (positive 20/20 days across two groups). The successor's own numbers (2/3, 4/7) were then reported unflatteringly rather than rounded up.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "20260703 -> 20260717",
+     "group": "g22/g23",
+     "source_file": "renders/ng_refine_s95/grp22_state.json + grp23_state.json",
+     "what_the_state_said": "I verified the play's cited balance term exactly against the served state: storage.vs_5yr ran 112 -> 151 -> 156 -> 162 while storage.weekly_chg ran 76 -> 87 -> 61 -> 41. Both were decision-time-visible in the same file on the same day keys, exactly as the play claims",
+     "what_the_day_did": "G23 delivered cum -3,290. The vs_5yr limb (surplus WIDENING 151->162 = bearish) sorted the block correctly",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260706 -> 20260717",
+     "group": "g23",
+     "source_file": "renders/ng_refine_s95/grp23_state.json (grid_stack.bas.US48.est_gas_burn_bcfd) + g23_actual.json",
+     "what_the_state_said": "est_gas_burn_bcfd rose essentially monotonically across the block: 42.9, 42.3, 44.9, 45.3, 45.4, 43.5, 43.3, 47.2, 48.8, 51.0",
+     "what_the_day_did": "The block fell -3,290 cum with the four biggest burn readings (47.2, 48.8, 51.0) sitting on days of -60, -20 and +180. Rising burn licensed nothing - the direct observable consequence of the prohibition, and it holds",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260706 -> 20260717",
+     "group": "g23",
+     "source_file": "renders/ng_refine_s95/grp23_state.json",
+     "what_the_state_said": "The play cites ONE 'balance term' but the cited quantity has TWO counter-signed limbs: vs_5yr widening 151->162 reads bearish, while weekly injections collapsing 87 -> 61 -> 41 reads tightening/bullish",
+     "what_the_day_did": "On G23 the vs_5yr limb sorted correctly DOWN and the injection limb would have sorted wrong UP. The play gives no rule for which limb carries the sign, so the successor mechanism is under-specified at exactly the point it replaces the retired gate",
+     "supports_or_contradicts": "ambiguous"
+    }
+   ],
+   "condition_can_change_state": "NO NUMERIC BAR - it is a prohibition, not a threshold, so the state-change test does not apply in the usual form. What I can check: the two inputs it names both move. est_gas_burn_bcfd ranges 33.0-51.0 across g22+g23 and storage.vs_5yr ranges 112-162, so neither is a stuck constant of the kind that killed the predecessor. grid_stack.age_days is constant at 2 on every served day, which the play declares up front ('D+2 stale by construction - a backward-looking instrument, labelled as such'). Declared staleness is not a defect.",
+   "falsifier": "Written: 'a block where burn licenses a directional lean that delivers, with the balance term pointing the other way.' Note the awkwardness - the play FORBIDS the action whose success would refute it, so the falsifier can only be discharged counterfactually. That is exactly how D-0716 ran it (scoring what a burn lean would have said against what the balance term said against the actual, giving 2/3 and 4/7), so it is testable in practice. D24 STATE FOR FIRING INSTANCES: SEARCHED_NONE - the play was merged at S110 close-out after G23 and appears in ZERO posteriors across the entire forecasts tree (0 hits on a full recursive scan). It has never been in a specialist's hands. G24 is its first ride.",
+   "recommendation": "forward_test_on_next_group",
+   "confidence": "med"
+  },
+  {
+   "play_id": "direction.flow_nowcast",
+   "support_class": "MECHANISM_VERIFIED",
+   "the_argument": "Claims NG's leg side = sign(dip_imb_level) when |dip_imb_level| >= 0.15, resting on three measurement-shaped numbers: n_strong_oos 34 at rate_oos 1.0, a monotone strength gradient 0.68 -> 0.84 -> 0.94 -> 0.93, and an S95 fingerprint pass over G3-G5 held legs. Confidence 0.87. The support IS a measurement (not a day-net credit), so it sits in the MECHANISM family - but I re-ran that measurement on the file it was computed from and the headline numbers do not reproduce.",
+   "could_evidence_have_come_out_otherwise": "Yes, and it did. renders/ng_refine_s95/fingerprints.json holds 6,358 legs over 108 days with dip_imb_level and leg dir. At the play's own |dip| >= 0.15 bar the agreement is 2,459/3,697 = 0.665, not 1.0. The claimed monotone RISE with strength is INVERTED on the corpus: |dip|>=0.10 0.69, >=0.15 0.67, >=0.20 0.63, >=0.30 0.58 - the signal gets WORSE as it gets stronger. The rate is also not tautological (an overlapping-window artifact would sit near 1.0 everywhere), which is what makes the era split below a real result rather than a plumbing complaint.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "2025-09-08 to 2026-01-16 (73 days)",
+     "group": "pre-G11 era, spans G3-G10",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/fingerprints.json",
+     "what_the_state_said": "|dip_imb_level| >= 0.15 on 1,537 legs",
+     "what_the_day_did": "sign(dip) matched leg dir on 87.6% of legs",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "2026-01-19 to 2026-02-27 (35 days)",
+     "group": "G11-G13 era",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/fingerprints.json",
+     "what_the_state_said": "|dip_imb_level| >= 0.15 on 2,160 legs",
+     "what_the_day_did": "sign(dip) matched leg dir on 51.5% - a coin flip. Jan19-31 52.9%, Feb 49.9%. Excluding the three .v.0 whipsaw days (0122/0123/0125 named in PASS2_CONTINUOUS_SERIES_NOTES.md) it is still 51.9%, so the collapse is NOT the instrument whipsaw",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "2025-10-20",
+     "group": "G5",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/fingerprints.json",
+     "what_the_state_said": "the play's own caveat names 1020 as the weak day (7/12)",
+     "what_the_day_did": "reproduces exactly at 10/14 on my |dip|>=0.15 slice - the play's self-declared failure is honest and traceable",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "2026-04-13 to 2026-07-17 (51 same-day joins)",
+     "group": "g18-g23",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/grp{18..23}_state.json joined to g{18..23}_actual.json",
+     "what_the_state_said": "session_signed_flow (the only flow channel served in the modern era)",
+     "what_the_day_did": "sign(session flow) == sign(session net) on 20/51 = 39%, i.e. contrarian at session scale. Different window and scale from the play's 300s leg read, so this scopes rather than refutes - but it means the play must never be generalised upward to the session aggregate",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260625, 20260707, 20260710, 20260713, 20260714, 20260715",
+     "group": "g22, g23",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/, E:/Markets/research/kalshi/forecasts/g23_perday/",
+     "what_the_state_said": "dip_imb_level is not served in any modern decision state (grepped grp20-grp23_state.json: absent)",
+     "what_the_day_did": "stood down 6/6 as needs_intraday_reveal. Zero modern forward instances; the play has produced only stand-down text since G17",
+     "supports_or_contradicts": "ambiguous"
+    }
+   ],
+   "condition_can_change_state": "Yes - |dip_imb_level| >= 0.15 splits 3,697 of 6,351 legs (58%), so the bar is live. The problem is not a dead condition, it is that the condition's payoff collapsed to 50/50 from 2026-01-19 and the play's stated rate (1.0) was measured only on the favourable era (12 warm-season days Jul-Sep 2025 plus 3 OOS days in the same window).",
+   "falsifier": "A block of legs at |dip_imb_level| >= 0.15 where sign agreement with leg direction falls to the ~50% base rate. ALREADY DISCHARGED on 2,160 legs spanning 2026-01-19 to 2026-02-27.",
+   "recommendation": "scope_narrower",
+   "confidence": "high"
+  },
+  {
+   "play_id": "daytype.monday_weekend_gap",
+   "support_class": "OUTCOME_CREDITED",
+   "the_argument": "Two claims stacked. (1) Monday is a BIG mover, size UP. (2) The side comes from a three-armed reaction read: FADE a gap that jumped with a mature swing to a fresh cum-extreme, EXTEND at a fresh turn, and with no material gap carry Friday's side. Every evidence entry in the play is of the form 'date X moved +N, guessed +M' with an arm assigned afterwards to explain it - eight separate per-event blobs (g6/g7/g10/g11/s96_2/s97_2/s98_2/s101_6/s102_1). The arms were not derived from an independently measured quantity; they were carved out of the outcome record. This is the S108 signature at scale.",
+   "could_evidence_have_come_out_otherwise": "For the bigness claim, yes - and it comes out the other way. For the fade/extend/carry arms, largely no: with three arms and a free swing-state selector, every Monday lands in one of them by construction, which is exactly what the play does with the G3-G5 Mondays ('swing-state coincidences, not a weekday property'). The play does carry two real acts of discipline: it FORWARD-FAILED its own gap-size arm in writing, and its declined_evidence block refuses to bank g20 0601's R3 as forward evidence because the constructed chain was inverted there.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "20260413 to 20260713 (14 Mondays, 70 days total)",
+     "group": "g17-g23",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{17..23}_actual.json",
+     "what_the_state_said": "Monday = a BIG mover, size UP",
+     "what_the_day_did": "Monday mean |day_move| 594 / median 615. THURSDAY is the big day class at 850 / 725. Monday ranks 2nd of 5 on both, ahead of Wed 526, Tue 486, Fri 435. The size-up prior is not wrong so much as misattributed - it belongs to Thursday",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "11 Mondays with |gap| >= 350",
+     "group": "g17-g23",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{17..23}_actual.json",
+     "what_the_state_said": "material gap -> FADE or EXTEND per swing state",
+     "what_the_day_did": "session net opposed the gap on 6, extended it on 5. The raw gap carries zero information; 100% of the play's content sits in the unmeasured swing-state selector",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260427, 20260525, 20260629",
+     "group": "g18, g20, g22",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{18,20,22}_actual.json",
+     "what_the_state_said": "no material gap -> carry FRIDAY's side",
+     "what_the_day_did": "0/3. 0424 Fri -380 -> 0427 Mon +370; 0522 Fri -990 -> 0525 Mon +30 net +270; 0626 Fri +230 -> 0629 Mon -1110. The carry arm is 0-for-3 in the modern corpus",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260622, 20260629, 20260706, 20260713",
+     "group": "g22, g23",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/grp22_B_*.json, E:/Markets/research/kalshi/forecasts/g23_perday/grp23_B_*.json",
+     "what_the_state_said": "fired on all four modern Mondays: 0622 size-down exception overruled by the bigness prior (-420), 0629 EXTEND-at-a-turn (+325), 0706 carry-Friday (+500), 0713 EXTEND/ratify (+550)",
+     "what_the_day_did": "actual nets -560, -1160, +680, -260. Right sign 2 of 4; both misses were the EXTEND arm and both were large (0629 off by 1,485; 0713 off by 810)",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260309",
+     "group": "g14",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g14_rt.json",
+     "what_the_state_said": "s102_1 unowned-premium full-fade WATCH n=1 predicts band -2950..-3150",
+     "what_the_day_did": "net -3020, inside the band. The number traces exactly; but the rule was written after the day and is self-declared n=1 with forward_evidence NONE",
+     "supports_or_contradicts": "ambiguous"
+    }
+   ],
+   "condition_can_change_state": "The 'material gap' bar (|gap| >= ~350 as the specialists apply it) splits 11 of 14 modern Mondays, so it is live. The arm-selecting conditions ('mature swing', 'fresh cum-extreme', 'fresh turn') carry no numeric bar on a served quantity and I could not check them - which is itself the finding: the only checkable limb is the one that carries no information.",
+   "falsifier": "For the bigness arm: a modern corpus in which Monday's mean |day_move| does not exceed the other weekday classes. DISCHARGED - Thursday beats Monday 850 to 594 over g17-g23. For the reaction arms: not writable as they stand, because the swing-state selector has no served definition, so any Monday can be assigned to an arm after the fact.",
+   "recommendation": "scope_narrower",
+   "confidence": "high"
+  },
+  {
+   "play_id": "timing.catalyst_continuity_frontrun",
+   "support_class": "OUTCOME_CREDITED",
+   "the_argument": "Claims an armed turn near a scheduled catalyst fires the session BEFORE the event when a continuous weather ramp is live, and waits for the event when it is not. The causal argument is genuine and stated (weather models are a continuous 2x-daily information stream; when live they own the timing and the discrete print only adds magnitude). But every evidence item is a date that delivered, with the arm assigned afterwards: '1110 exhausted -> 1111 +1580', '1118 armed -> 1119 +1930', '1203 front-run confirmed +1520'. No independent measurement of the ramp-live condition against a front-run rate exists anywhere in the corpus. This is the best-behaved OUTCOME_CREDITED play in my batch - it carries two live falsifications (G9 1204 FORWARD-FAILED in its original form; G10 0108 established the forbidden polarity-flip form) - but its support is still a catalogue of outcomes.",
+   "could_evidence_have_come_out_otherwise": "Partly. The G16 forward pair could have come out otherwise and it traces exactly: 0401 (D-1 to a pre-priced print) delivered -590 and 0402 round-tripped to -150, against 0409 (not pre-priced, building surplus) which delivered -610 with no round-trip. Had 0409 also round-tripped the discriminator would have died. That is real. The core fired/waited tally (n=3 fired vs n=2 waited) is not - it is five days sorted into two bins after the fact.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "20260401, 20260402, 20260409",
+     "group": "g16",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g16_rt.json + grp16_state.json",
+     "what_the_state_said": "0401 session_b_share 0.463 (the play quotes 0.463), pre-print session, print priced at +34",
+     "what_the_day_did": "0401 net -590 (play says -600), 0402 net -150 / day move -130 (play says -130), 0409 net -610 (play says -610). All three trace to the committed price file",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260701",
+     "group": "g22",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/grp22_C_20260701.json",
+     "what_the_state_said": "fired as the only genuine directional front-run in the modern corpus: Wed pre-print under a coherent sell tape, days_to_next_eia_release=1, cited the G16 0401 configuration as exact",
+     "what_the_day_did": "guessed -380, actual net -500. Right sign, err 120",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260625, 20260702, 20260714",
+     "group": "g22, g23",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/, E:/Markets/research/kalshi/forecasts/g23_perday/",
+     "what_the_state_said": "three further fires, all explicitly non-directional: 0625 WAIT-form (licenses a post-print window), 0702 and 0714 SHAPE ONLY",
+     "what_the_day_did": "guesses -110/+200/+280 against actuals -60/0/+200. Small errors, but three of the four modern fires do not exercise the play's direction claim at all",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260624 vs 20260630",
+     "group": "g22",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/grp22_C_20260624.json, grp22_C_20260630.json",
+     "what_the_state_said": "THE SAME specialist read the ramp limb two opposite ways in the same block on the same series: on 0624 'run_delta_cdd -0.011 and run_delta_hdd +0.034 are inert; the ramp is not updating' (stood down); on 0630 'a live continuous CDD ramp IS present' (read off the rising forecast_gw_cdd LEVEL 14.8 -> 16.2 -> 17.2)",
+     "what_the_day_did": "0624 +800, 0630 +780. The read has no served definition, so its state depends on which quantity the reader picks",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "g21-g23, 30 sessions",
+     "group": "g21, g22, g23",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/grp{21,22,23}_state.json weather_forecast.forecast_run_delta",
+     "what_the_state_said": "the served run-over-run delta - the natural numeric reading of 'is a ramp live'",
+     "what_the_day_did": "max |0.126| across 30 summer sessions, with exact repeats (0.034 on 0622/0623/0624; 0.000 on 0713/0714). Against g18-g19 where it reaches 0.846/0.747/-0.632. On the served field alone the limb is near-inert in the summer blocks",
+     "supports_or_contradicts": "contradicts"
+    }
+   ],
+   "condition_can_change_state": "Yes on the trigger (EIA-print proximity splits days cleanly and the play stood down on 0622 D-3, 0623 D-2, 0630 no-armed-turn). NO on the read limb as served: forecast_run_delta in g21-g23 sits inside +/-0.126 with repeated identical values, and the play carries no bar on it - which is why the same specialist could call the same ramp live and inert on two days of one block.",
+   "falsifier": "A ramp-live armed turn near a scheduled print that WAITS for the print instead of front-running it, or a ramp-dead armed turn that front-runs. Writable and partly discharged already (G9 1204), but not runnable as an audit until 'ramp is live' gets a numeric bar on a served field.",
+   "recommendation": "scope_narrower",
+   "confidence": "med"
+  },
+  {
+   "play_id": "structure.squeeze_unwind",
+   "support_class": "OUTCOME_CREDITED",
+   "the_argument": "A description of what G12 did after the dead-sponsor squeeze: the unwind retraces the full squeeze leg in two gap-led sessions to the pre-squeeze shelf, then bases; magnitudes inside the unwind are derived arithmetic (gap = -E, next session = remaining premium to shelf). It self-declares n=1 full instance, DESCRIPTOR grade, confidence 0.4, forward_evidence NONE, and refuses to promote a band. The shelf-holds-vs-breaks discriminator (squeeze form holds at 0202, weather-parabola form breaks at 1211) is fitted to exactly one instance per class, which is not measurement.",
+   "could_evidence_have_come_out_otherwise": "No. One instance per class cannot falsify a two-class discriminator. The S101.6 amendment is however a genuine act of scoping under pressure - when G13 broke the 3.159 shelf three weeks later the play was not widened, it was narrowed to the unwind sessions themselves and the post-basing shelf was demoted to an ordinary reference level.",
+   "d24_state": "searched_none",
+   "instances": [
+    {
+     "date": "20260201, 20260202",
+     "group": "g12",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g12_rt.json",
+     "what_the_state_said": "'-11850 of a ~+12600 leg in two sessions' and 'retraced to 3.159 +0.072 and STOPPED'",
+     "what_the_day_did": "BOTH REPRODUCE EXACTLY. Anchor 4.416 (0130); 0201 net -510, 0202 net -4260, cum_from_anchor_close -11,850 on 0202. 0202 close 3.231 = 3.159 + 0.072 to the tick",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260202 to 20260213 (11 sessions)",
+     "group": "g12",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g12_rt.json",
+     "what_the_state_said": "'G12 based 3.08-3.23 for nine sessions'",
+     "what_the_day_did": "DOES NOT REPRODUCE. Post-unwind closes run 3.084 to 3.521; FIVE sessions closed above the stated 3.23 top (3.231, 3.344, 3.470, 3.521, 3.405), the highest by 0.291 (~$2,900 in day-move terms). The basing band as written is wrong on the upside",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260329",
+     "group": "g16",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g16_rt.json",
+     "what_the_state_said": "g16_forward_evidence: a tiny-premium dead-sponsor pop gives back INTRADAY (session -990) with a ~flat overnight gap (+200), not as a -E structural gap",
+     "what_the_day_did": "net -990, gap +200. Traces exactly. This is a genuine non-firing forward observation",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260623, 20260624, 20260625, 20260626, 20260702, 20260703, 20260707, 20260708, 20260709, 20260710, 20260713, 20260714, 20260716",
+     "group": "g22, g23",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/, E:/Markets/research/kalshi/forecasts/g23_perday/",
+     "what_the_state_said": "squeeze_watch unwind_watch false throughout; calendar dte limb live-false from 0702 onward; spread limb price-masked",
+     "what_the_day_did": "STOOD DOWN 13 of 13, and correctly - the configuration never arose in either group. 0626 gave the cleanest decline: the expiring front traded BELOW the next (-0.043) and cheapening (chg_3d -0.021), the inverse of a squeeze. searched_none is the honest D24 result here",
+     "supports_or_contradicts": "ambiguous"
+    }
+   ],
+   "condition_can_change_state": "Yes and it demonstrably does. The dead-sponsor trigger (block_gap_ownership structural branch + stranded front premium) evaluated FALSE on all 13 modern candidate days on served fields (calendar_front_next_spread, unwind_watch, sessions_since_prompt_expiry) and TRUE on G12/G16-0327. A gate that declines cleanly 13 times is a working gate.",
+   "falsifier": "A dead-sponsor unwind that does NOT retrace to the pre-squeeze shelf inside its own unwind sessions, or that pierces the shelf on the unwind itself. Writable, correctly scoped, and untested since G12.",
+   "recommendation": "keep",
+   "confidence": "med"
+  },
+  {
+   "play_id": "monday.window_deep_book_shakeout",
+   "support_class": "OUTCOME_CREDITED",
+   "the_argument": "Claims a Monday 06:00 ET L1-10 resting-book imbalance (|imb10| >= 0.05) marks the caught side, and the 06-10 window leans against it as a tie-breaker under R3. Support is '14 Mondays MBP-10 (refine D): qualifying 6/7 ... miss 1222 expensive'. Two problems. First, the qualifying subset was chosen by the same refine pass that saw the outcomes - 7 of 14 Mondays were filtered out at a 0.05 bar and the 6/7 rate is quoted on what survived. Second, on n=7 a 6/7 rate is roughly p=0.06 one-sided against a coin flip, and the play itself reports that the shallower L1-3 read gives 8/14 and that window repricing runs against its own flow 8/14 - both coin flips. The play states its own gap honestly: no Tue-Thu control, so Monday-specificity is unproven.",
+   "could_evidence_have_come_out_otherwise": "In principle yes, but I could not put the claim to any test, because the underlying measurement is not committed anywhere. I grepped all of forecasts/ for imb10 and imb_R: zero hits. fingerprints.json carries imb_R per LEG at leg-entry times, not a Monday 06:00 book snapshot, and does not cover the seven named Mondays in a usable form. S102_MERGE_PROPOSAL.md restates the 6/7 and the 8/14 in prose. Per the instance discipline, prose citing prose is one instance, not two - so the play's headline rests on an uncommitted number.",
+   "d24_state": "not_searched",
+   "instances": [
+    {
+     "date": "20260622, 20260629, 20260706, 20260713",
+     "group": "g22, g23",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/grp22_B_20260622.json, grp22_B_20260629.json, E:/Markets/research/kalshi/forecasts/g23_perday/grp23_B_20260706.json, grp23_B_20260713.json",
+     "what_the_state_said": "firehose_present.l1_book is FALSE on every modern Monday stub; no 06:00 L1-10 object exists in the served state (grepped grp20-grp23_state.json for imb10/imb_R: absent)",
+     "what_the_day_did": "STOOD DOWN 4 of 4. B-0622 additionally noted that the 0619 book it could see is a Friday object and the play itself calls the reopen/overnight book uninformative at 8/14, so it carried the read at explicitly zero weight in the number",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20251006, 20251020, 20251027, 20251201, 20260202, 20260309, 20251222",
+     "group": "pre-G17 (S102 derivation set)",
+     "source_file": "E:/Markets/research/kalshi/S102_MERGE_PROPOSAL.md (prose only)",
+     "what_the_state_said": "6 of 7 qualifying Mondays leaned correctly against the heavy deep side; 1222 the expensive miss",
+     "what_the_day_did": "UNVERIFIABLE. No committed artifact carries imb10 for these dates. The one cross-check available is the play's own admission that on 1201 - the single Monday where R3 mis-phased - the book read was correct, which is a one-day counter-anchor and not a measurement",
+     "supports_or_contradicts": "ambiguous"
+    }
+   ],
+   "condition_can_change_state": "Cannot be checked. The bar (|imb10| >= 0.05) sits on a quantity that is not served in any modern decision state and not committed in any evidence file. The play's own figure implies 7 of 14 Mondays cleared it, which would make it live - but that number is not auditable.",
+   "falsifier": "A run of qualifying Mondays where the 06-10 window leans WITH the heavy L1-10 side, or a Tue-Thu control run showing the same rate (which would kill the Monday-specificity). Both are writable; neither can be run until the Monday 06:00 L1-10 snapshot is served or archived.",
+   "recommendation": "needs_reading_by_greg",
+   "confidence": "med"
+  },
+  {
+   "play_id": "midweek.prior_exit_lasthour_magnitude_gate",
+   "support_class": "OUTCOME_CREDITED",
+   "the_argument": "Claims that on a mid-week turn day, the prior session's last_hour_dir gates MAGNITUDE: an opposing prior exit means the reversal realises post-open (cap at the confirmed base), an aligned exit means momentum carries (do not cap). The headline is 'n: 6 opposing-exit reversal days (all D-1 lhd<=0) across g9,g10,g12,g15 = a strikingly consistent signature: EVERY clean mid-week reversal-up day in the record had a prior session that exited DOWN.' That is a base-rate artifact, and it is the single most important finding in my batch after flow_nowcast.",
+   "could_evidence_have_come_out_otherwise": "Barely. last_hour_dir is -1 on 25 of 40 modern sessions (63%). A claim of the form 'every reversal-up day had a prior exiting down' on n=6 is close to what you get by drawing six days at random. And the qualifier 'clean' does the selecting: the aligned counter-case (g9 0223) is quoted separately as its own arm, so no observation in the record can fall outside one of the two arms.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "40 sessions",
+     "group": "g20, g21, g22, g23",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{20..23}_exit_states.json",
+     "what_the_state_said": "base rate of last_hour_dir: -1 on 25, +1 on 12, 0 on 3",
+     "what_the_day_did": "the gate's arming condition is TRUE by default 63% of the time. Any signature keyed on 'the prior exited down' inherits that rate for free",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "10 reversal-up days",
+     "group": "g20, g21, g22, g23",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{20..23}_exit_states.json + g{20..23}_actual.json",
+     "what_the_state_said": "'EVERY clean mid-week reversal-up day had a prior session that exited DOWN'",
+     "what_the_day_did": "7 of 10 had prior lhd < 0, against a 61% base rate across all consecutive pairs. Lift of 9 points on n=10 - nothing. Restricted to Tue-Thu it is 5 of 7 (71% vs 63% base). Two mid-week reversal-up days had an ALIGNED prior exit: 20260630 (prior lhd +1, delivered +790) and 20260527 (prior lhd +1, +620)",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260526 -> 20260527",
+     "group": "g20",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g20_exit_states.json + g20_actual.json",
+     "what_the_state_said": "evidence_partial_uncap: prior exited lhd +1, lhf +1, low at 14:29, close_off_low_frac 0.17; un-cap 0.80 -> 0.90 giving 520 -> 580",
+     "what_the_day_did": "ALL FIVE NUMBERS REPRODUCE EXACTLY from the exit-state file, and 0527 delivered net +620 / day move +610. But this is a refine-era calibration fitted to one day with the answer visible, so it is an exact trace of an outcome-credited adjustment, not independent support",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260603, 20260609, 20260618, 20260624, 20260714",
+     "group": "g20-g23",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{20..23}_actual.json",
+     "what_the_state_said": "opposing-exit reversal confirmed base = retrace-to-shelf, ~+1200..+1600",
+     "what_the_day_did": "delivered +760, +70, +530, +790, +200. Median ~530, NONE inside the stated band. The magnitude band is a winter/spring artefact and does not transfer to the summer regime",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260624, 20260630, 20260707, 20260708, 20260715",
+     "group": "g22, g23",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/, E:/Markets/research/kalshi/forecasts/g23_perday/",
+     "what_the_state_said": "prior last_hour_dir is price-derived and is the blind's one deliberate mask",
+     "what_the_day_did": "STOOD DOWN 5 of 5. The gate is refine-only in practice despite being written as an open-time sizing rule",
+     "supports_or_contradicts": "ambiguous"
+    }
+   ],
+   "condition_can_change_state": "Technically yes (lhd is -1 63% / +1 30% / 0 7%), but for the purpose the play uses it, effectively no: because the arming state is the majority state, 'the prior exited against the turn' fires on nearly two thirds of all days regardless of what the day then does. Measured lift over base rate on modern reversal-up days: 9 points on n=10. Separately: sign(prior lhd) == sign(next session net) on 21/33 (64%), which is a different and possibly more useful relationship than the one the play claims - and it points at direction, not magnitude.",
+   "falsifier": "A set of mid-week reversal-up days whose prior-exit distribution matches the unconditional last_hour_dir base rate. DISCHARGED: 7/10 observed against 61% expected. The magnitude arms also need their own falsifier and have none - the +1200..+1600 base and the 'full band, no cap' arm are both stated without a bar that a day could violate.",
+   "recommendation": "scope_narrower",
+   "confidence": "high"
+  },
+  {
+   "play_id": "daytype.friday_crest_trim_discriminator",
+   "support_class": "ASSERTED",
+   "the_argument": "Adds two discriminators to the crest-trim trigger - (1) based-vs-stretched, (2) covering-vs-squaring - so that crest_trim_fadeable fires only on a stretched chain that is genuinely squaring. The entire evidence field is two days: 0327 (a false positive) and 0313 (a false negative). Two free discriminators fitted to exactly two failures is a guaranteed fit, not a measurement. Neither discriminator carries a numeric bar on a served quantity, so nothing in the corpus can contradict either one. The play also has a schema anomaly worth noting: its `confidence` field is a sentence, not a number.",
+   "could_evidence_have_come_out_otherwise": "No. With one parameter per failure case, the fit is exact by construction. And the play's forward_evidence - 'G17: no crest-trim candidate mis-fired. G18: no crest-trim mis-fire' - is not evidence FOR the discriminator; it records that nobody fired the play. Absence of a mis-fire when nothing fires is uninformative.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "20260313",
+     "group": "g14",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g14_rt.json + g14_score.json",
+     "what_the_state_said": "the false-negative case: called an up-grind, missed a real position-squaring trim",
+     "what_the_day_did": "guess_net +300, actual net -1030 (the play says the tape broke -1010; day move -1050 with gap +20). Traces exactly. Entering cum was ~+3780 - genuinely stretched",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260327",
+     "group": "g15",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g15_rt.json + g15_score.json",
+     "what_the_state_said": "the false-positive case: crest-trim fired DOWN on a based chain that was expiry covering UP",
+     "what_the_day_did": "guess_net -350, actual net +1160 / day move +1150 (play says +1150). Traces exactly. cum_from_anchor_close -600 - not stretched",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260626, 20260703, 20260710",
+     "group": "g22, g23",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/grp22_E_20260626.json, grp22_A_20260703.json, E:/Markets/research/kalshi/forecasts/g23_perday/grp23_E_20260710.json",
+     "what_the_state_said": "all three modern invocations ROUTED CREST-TRIM OUT: 0626 'chain BASED, not stretched', 0703 'the chain is DOWN and the driver realizing is the COUNTER-chain heat', 0710 'chain BASED not stretched - the 0327-class false positive avoided'",
+     "what_the_day_did": "0626 +230, 0703 +410, 0710 -660. The discriminator has never once ROUTED A DAY IN. Its only demonstrated behaviour in three groups is to suppress",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260710",
+     "group": "g23",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g23_actual.json + forecasts/g23_perday/grp23_E_20260710.json",
+     "what_the_state_said": "routed OUT as 'chain BASED not stretched'",
+     "what_the_day_did": "entered at cum -2310, the running block extreme, after a -2050 Thursday, and closed -660 taking cum to -2970. Another specialist could have called that stretched with equal warrant. The day happened to extend, so the routing was right - by an unfalsifiable reason",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "14 Fridays, 8 at a running cum extreme",
+     "group": "g17-g23",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{17..23}_actual.json",
+     "what_the_state_said": "crest-trim candidates require a stretched chain near a cum-extreme",
+     "what_the_day_did": "8 Fridays entered at a running cum extreme; 3 trimmed (0529 -160, 0605 -1340, 0612 +620) and 5 extended. Candidates plainly existed in G17-G23, so 'no mis-fire' means the play was never exercised, not that it worked. Suggestive gradient worth a real test: the two deepest stretches (+3200 and +2550) both trimmed",
+     "supports_or_contradicts": "ambiguous"
+    }
+   ],
+   "condition_can_change_state": "NO NUMERIC BAR EXISTS. 'Based-vs-stretched' and 'covering-vs-squaring' are prose over chain state and last-hour dir-vs-flow, neither of which is served in the blind. This is exactly Greg's D23 case: a condition written in words rather than in a bar still has to be able to change state, and this one changes state at the reader's discretion. It routed OUT on 3 of 3 modern days including one (0710) at a block cum extreme.",
+   "falsifier": "None can be written as the play stands. Any Friday can be declared based or stretched after the fact, so no observation can contradict it. That is the finding. It becomes falsifiable the moment 'stretched' is pinned to a served quantity - e.g. cum_from_anchor at or beyond the running block extreme, which is computable and which 8 of 14 modern Fridays satisfy.",
+   "recommendation": "needs_reading_by_greg",
+   "confidence": "high"
+  },
+  {
+   "play_id": "structure.covering_extension_distribution_flip",
+   "support_class": "OUTCOME_CREDITED",
+   "the_argument": "Claims the covering-absorption UP tell flips sign with extension: young/low-cum absorption = covering UP; maximally extended (cum > ~+2000 AND age >= 5) with the absorption tell itself reversed = distribution DOWN. Support is 'g19: UP on 0515, DOWN on 0520; the pair is the discriminator; 0519 was AT extension but absorption had not reversed so correctly NOT flipped'. Three days, one block, and all three readings were produced by the REFINE with the realized price curve in hand. The mechanism (late chasers absorbed = distribution) was inferred from which way the days went, not tested against anything.",
+   "could_evidence_have_come_out_otherwise": "Within the block, marginally - 0519 is a real non-fire at extension and it could have flipped. But the discriminator has three free terms (cum bar, age bar, absorption-reversal) and three days, and the refine set all three knowing the answers. The play states its own weakness plainly: 'n=3 within one block, needs a second block'.",
+   "d24_state": "searched_none",
+   "instances": [
+    {
+     "date": "20260515, 20260519, 20260520",
+     "group": "g19",
+     "source_file": "E:/Markets/research/kalshi/forecasts/grp19.json + grp19_mbo_refined.json + renders/ng_refine_s95/g19_actual.json",
+     "what_the_state_said": "exemplars: '0520 seam: blind +200 -> refined -950 (actual -1050)'; '0519 held UP despite age 7'",
+     "what_the_day_did": "ALL REPRODUCE EXACTLY: 0520 blind +200, refined -950, actual -1050; 0519 blind +150, refined +750, actual +840; 0515 blind +90, actual +320. The numbers are honest - but the refined values are the play's own output with the curve visible",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260519 vs 20260520",
+     "group": "g19",
+     "source_file": "E:/Markets/research/kalshi/knowledge/ng_brain.json (internal), cross-checked against renders/ng_refine_s95/g19_actual.json",
+     "what_the_state_said": "evidence says 0520 is 'age 6'; the exemplar says 0519 'held UP despite age 7'",
+     "what_the_day_did": "0519 precedes 0520, so its chain age cannot be higher under a monotone counter. On the realized sequence the covering rally began 0511, making 0519 the 7th session and 0520 the 8th. The ages in the play's own record are internally inconsistent and neither matches the series - a sign these were written narratively rather than read off a counter",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260605",
+     "group": "g20",
+     "source_file": "E:/Markets/research/kalshi/knowledge/ng_brain.json assumption_retired block, cross-checked against renders/ng_refine_s95/g20_actual.json",
+     "what_the_state_said": "assumption_retired: the handoff hands chain_age_sessions = 2 because a single -70 close on 0602 reset the alternation label, while cum ran +2,550 -> +3,200 without turning; cost 1,350",
+     "what_the_day_did": "the cum path verifies exactly (0528 +2550, 0602 +1320 after -80, 0603 +2070, 0604 +3200). This is a REAL measured correction with a traced cost and it converts the age arm to a blind-available reading. The best-supported component of the play",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "30 sessions",
+     "group": "g21, g22, g23",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{21,22,23}_actual.json",
+     "what_the_state_said": "flip requires cum > ~+2000 from the block anchor AND age >= 5",
+     "what_the_day_did": "cum reached +2000 on ZERO of 30 sessions (g21 max +340, g22 max +890, g23 entirely negative to -3590). Across g17-g23 it is 8 of 70, all in g19 and g20. The condition is regime-bound, not dead - but it cannot fire in the current regime",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260622, 20260623, 20260624, 20260626, 20260629, 20260701, 20260706, 20260707, 20260708, 20260714, 20260715",
+     "group": "g22, g23",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/, E:/Markets/research/kalshi/forecasts/g23_perday/",
+     "what_the_state_said": "stood down 11 of 11, on two distinct grounds: scope (no crowded-short covering regime; COT MM 44th pctile) and masking (cum_from_anchor and phase flow_conviction are price-derived)",
+     "what_the_day_did": "0629 was the one near-miss and was declared as such ('flow-cum is -3,909 and age is 4. Not triggered, but a near-miss to re-test'). Discipline is good; forward evidence remains nil",
+     "supports_or_contradicts": "ambiguous"
+    }
+   ],
+   "condition_can_change_state": "Yes across the corpus but NOT in the current regime: cum >= +2000 splits 8 of 70 days over g17-g23 and 0 of 30 over g21-g23. The absorption-reversal limb is refine-only (phase flow_conviction is price-derived), so at the open the play can never assemble more than the extension half of its own conjunction.",
+   "falsifier": "A maximally-extended covering session (cum > +2000, regime-age >= 5) with the absorption tell reversed that nevertheless delivers UP, or a young/low-extension absorption day that delivers DOWN. Cleanly writable. Untested - the regime has not recurred since G20.",
+   "recommendation": "forward_test_on_next_group",
+   "confidence": "med"
+  },
+  {
+   "play_id": "boundary.chain_staleness_gate",
+   "support_class": "MECHANISM_VERIFIED",
+   "the_argument": "A deterministic schedule, not a signal: a play keyed on cum_from_anchor may assert a RUNG only for k <= 3 sessions from the block anchor; from k >= 4 it widens or stands down. Rests on a single measurement - mean |constructed cum - realized cum| by k across G17-G20 - and on the observation that k is known in advance in a one-shot block blind, so nothing has to be inferred at runtime. It is the only play in my batch whose evidence is an aggregate over committed, re-runnable files rather than a narrative of days, and it carries a written forward test with a stated kill condition.",
+   "could_evidence_have_come_out_otherwise": "Yes, decisively. A flat divergence profile would have killed it outright, and a smooth sqrt(k) accumulation would have made the k<=3 boundary arbitrary. Neither happened.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "40 forecast days",
+     "group": "g17, g18, g19, g20",
+     "source_file": "E:/Markets/research/kalshi/forecasts/grp{17,18,19,20}.json vs renders/ng_refine_s95/g{17..20}_actual.json",
+     "what_the_state_said": "'Mean |constructed - realized| by k: 768 / 590 / 1,022 for k<=3; 2,182-2,730 for k>=4'",
+     "what_the_day_did": "REPRODUCES TO THE DOLLAR on an independent recomputation from the assembled blind guesses: 768, 590, 1022, 2182, 2408, 2645, 2730, 2388, 2612. Every figure the play states is exact",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "30 forecast days",
+     "group": "g21, g22, g23 (blocks not in the derivation set)",
+     "source_file": "E:/Markets/research/kalshi/forecasts/grp{21,22,23}.json vs renders/ng_refine_s95/g{21,22,23}_actual.json",
+     "what_the_state_said": "the schedule predicts a step in chain-divergence at the same k on unseen blocks",
+     "what_the_day_did": "FORWARD-CONFIRMED. Entering-k<=4 mean 489, k>=5 mean 1955 - a 4x step in the same place. Per k: 0, 647, 370, 940, 1797, 1640, 1605, 2088, 2208, 2392",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "structural check",
+     "group": "g17-g23",
+     "source_file": "E:/Markets/research/kalshi/forecasts/grp{17..23}.json",
+     "what_the_state_said": "the boundary sits between k=4 and k=5",
+     "what_the_day_did": "the step is 2.13x in the derivation set (1022 -> 2182) and 1.91x forward (940 -> 1797). Independent random-walk accumulation of uncorrelated daily errors predicts only 1.15x at that step. The kink is real and is evidence of CORRELATED (lean) error, not of mechanical accumulation - which is the play's implicit mechanism and it survives the null",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260623, 20260630, 20260701, 20260702, 20260703, 20260706, 20260708, 20260710, 20260713, 20260715, 20260716",
+     "group": "g22, g23",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/, E:/Markets/research/kalshi/forecasts/g23_perday/",
+     "what_the_state_said": "applied as the schedule it is, at k=2,3,5,6,7,8,9,10",
+     "what_the_day_did": "used correctly on 11 modern days, and it stood other plays' rungs down by name (mature_swing_alternation, covering_extension_distribution_flip, block_gap_ownership, giveback_exhaustion_reversal_recognition). Real load-bearing use, not decoration",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "all k>=4 days",
+     "group": "g22, g23",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/, E:/Markets/research/kalshi/forecasts/g23_perday/",
+     "what_the_state_said": "forward_test: 'the blind's |err| on k>=4 days where a cum-keyed play FIRED exceeds its |err| on k>=4 days where none did. Zero or negative difference KILLS it'",
+     "what_the_day_did": "THE TEST CANNOT RUN. Across g22 and g23 I found ZERO k>=4 days on which a cum-keyed rung was asserted - the gate stood every one down. Adoption of the gate eliminated its own treatment arm. The play's stated falsifier became undischargeable the moment the play was used",
+     "supports_or_contradicts": "ambiguous"
+    }
+   ],
+   "condition_can_change_state": "Yes, trivially and by design - k runs 1..10 in every block and the gate splits each block 3/7 (or 4/6 depending on the indexing convention). Note one thing to pin: the play's k is offset by one from the natural entering-day index (its '1,022 at k<=3' is my entering-k=4). Same numbers, but the boundary should be written unambiguously before it governs a run.",
+   "falsifier": "As written - a k>=4 comparison of blind |err| with vs without a fired cum-keyed rung - the falsifier is real but is now unrunnable under adoption. A REPLACEMENT that stays dischargeable: the divergence profile itself. If a future block shows entering-k>=5 mean |constructed-realized| at or below its k<=4 mean, the schedule dies. That test needs no treatment arm and re-runs in one command against forecasts/grp<N>.json.",
+   "recommendation": "keep",
+   "confidence": "high"
+  },
+  {
+   "play_id": "weather.burn_conversion_gate",
+   "support_class": "OUTCOME_CREDITED",
+   "the_argument": "As merged (before its refutation) the play claimed a CDD slope lean converts to a gas call only if est_gas_burn_bcfd confirms and wind is not ramping against it, and it read BOTH ways. Its support was six in-block instances from G22 with the arm assigned to each after the day delivered - 0629 wind-up/burn-down suppressed a realized CDD add (-1,160); 0624 wind-down/burn-up delivered (+800); 0630, 0703, 0625, 0702 as confirming mirrors. That is the textbook OUTCOME_CREDITED shape, and it is now REFUTED_FORWARD_TEST_S110_G23 on its own named forward test. I audited the refutation as well as the play, because a retirement can be as badly evidenced as a merge. It is not: it rests on two mechanism arguments, and I reproduced both from the served state.",
+   "could_evidence_have_come_out_otherwise": "The original G22 evidence, no - six days sorted into two polarities inside one block, with the play's own evidence list containing the pair that kills it (0624 and 0625). The refutation, yes - it is a mechanism claim about a served series and I re-measured it independently.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "19 sessions",
+     "group": "g22 + g23",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/grp{22,23}_state.json weather_forecast.horizons",
+     "what_the_state_said": "D-0709's mechanism claim: d_gw_cdd at horizon 1 is positive 20/20 across G22+G23, min +0.129 max +2.256; a limb that never changes sign cannot gate",
+     "what_the_day_did": "INDEPENDENTLY CONFIRMED. Reconstructing the h1 delta from the served ladder levels (today's ladder for target T minus yesterday's for the same T, as the state's own cdd_basis note instructs): POSITIVE 19 of 19 computable days, min +0.130, max +2.255. D's numbers are right to three decimals. The CDD-add limb is a constant",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260624 and 20260625",
+     "group": "g22",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/grp22_state.json grid_stack + g22_actual.json",
+     "what_the_state_said": "C-0715's pre-graft pair: identical served burn 39.3 on consecutive sessions, 0625 on lower wind",
+     "what_the_day_did": "CONFIRMED EXACTLY. 0624 burn 39.3 / wind 1,091,380 -> +800. 0625 burn 39.3 / wind 1,071,933 (lower) -> -60. Identical inputs, opposite outcomes, on consecutive days - and the play cites 0624 in its evidence and is silent on its twin",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "18 sessions with a computable burn delta",
+     "group": "g22 + g23",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/grp{22,23}_state.json grid_stack + g{22,23}_actual.json",
+     "what_the_state_said": "'burn-confirmed slope lean = full band' (the play's central call)",
+     "what_the_day_did": "MY OWN INDEPENDENT TEST, not run by any specialist: on the 12 sessions where burn was flat-to-up (the confirm state) the day closed UP only 4 times = 33%, against a 50% base rate. On the 6 burn-down sessions the day closed down 3 times = 50%. The confirm state is ANTI-predictive, which corroborates E-0710's mechanism that burn confirmation is bearish information at the demand peak",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260707",
+     "group": "g23",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/grp23_state.json grid_stack + g23_actual.json + forecasts/g23_perday/grp23_C_20260707.json",
+     "what_the_state_said": "C-0707's recorded dissent: the blind confirmed off grid period 2026-07-05, a holiday SUNDAY row that the gate's own weekday-normalization rule disqualifies",
+     "what_the_day_did": "the period field verifies (2026-07-05 is a Sunday) and the day delivered +160 UP. C-0707 was right that its day is not a refutation instance. The corrected tally is 1-of-4, as the brain now records. The retirement stands anyway because it never rested on the tally",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260708",
+     "group": "g23",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g23_perday/grp23_C_20260708.json + renders/ng_refine_s95/grp23_state.json",
+     "what_the_state_said": "C-0708 fired the gate on burn 44.9 >= the G22 block max",
+     "what_the_day_did": "the burn figure verifies (44.9 on 0708; G22 block max 44.8 on 0703) and the day delivered -520. A clean up-fire that did not deliver",
+     "supports_or_contradicts": "supports"
+    }
+   ],
+   "condition_can_change_state": "SPLIT, and this is the whole story. The CDD-add limb CANNOT: d_gw_cdd h1 is positive 19/19 across two full groups. The burn limb CAN, but its state changes are mechanical: all 6 burn-down readings fall on a Mon/Tue/Fri whose grid row is a weekend day at age 2 - which is precisely the weekday collapse the play's own text flags, so after honest weekday-normalization that limb largely stops discriminating too.",
+   "falsifier": "'A burn-confirmed CDD add that fails to deliver, or a wind-on day that delivers gross-CDD anyway, in G23+'. Written by the play itself, and DISCHARGED. My independent measurement (burn-confirm -> up on only 4 of 12) discharges it a second time by a route no specialist used.",
+   "recommendation": "keep",
+   "confidence": "high"
+  },
+  {
+   "play_id": "tape.heavy_buy_aggression_is_the_asymmetric_bearish_tell",
+   "support_class": "MECHANISM_VERIFIED",
+   "the_argument": "Claims same-day net BUY aggression is a bearish-to-null tell strengthening monotonically with size, while the sell side carries no comparable information, and that the same quantity on D-1 is a coin flip so it must never be used as a next-day direction input. The statistical claim is a full-corpus aggregate over committed files with per-event listing, a stated base-rate comparison, a declared negative control (the D-1 null), a written falsifier and a named era-dependence risk. Alongside chain_staleness_gate it is one of only two plays in my batch whose evidence is a re-runnable aggregate rather than a narrative.",
+   "could_evidence_have_come_out_otherwise": "Yes, at four thresholds independently and on both sides. It also DID come out otherwise on the one arm that matters for usability - the D-1 arm - and the play reports that null rather than burying it, and then converts the play into a prohibition on the strength of it. The mechanism story (persistent offer-side supply from producer hedging / index roll / call overwriting) is the one part that is ASSERTED - it is a plausible reading of the numbers, not a tested claim, and nothing in the corpus separates it from other explanations of the same asymmetry.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "70 sessions",
+     "group": "g17-g23 (all groups with realized MBO evidence)",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{17..23}_mbo_evidence.json",
+     "what_the_state_said": "'Buy flow >+1000: 41% agree n=22 sum -5,840. >+1500: 29% n=17 -7,600. >+2000: 25% n=12 -4,880. >+3000: 20% n=10 -4,970. Sell over identical thresholds: 46/43/46/47%'",
+     "what_the_day_did": "EVERY FIGURE REPRODUCES EXACTLY on independent recomputation: buy 41/29/25/20 at n=22/17/12/10 with sums -5,840/-7,600/-4,880/-4,970; sell 46/43/46/47 at n=35/30/24/15. Not one number is off",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "10 sessions above +3000 buy flow",
+     "group": "g17, g18, g20, g21, g23 (5 groups)",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{17..23}_mbo_evidence.json",
+     "what_the_state_said": "per-event, never pooled: 0429 +7,783 -> -440; 0715 +6,326 -> -50; 0423 +5,373 -> -1,240; 0601 +3,796 -> -1,680; 0714 +3,747 -> +200; 0602 +3,524 -> -70; 0608 +3,261 -> -540; 0505 +3,258 -> -830; 0415 +3,213 -> +60; 0424 +3,189 -> -380",
+     "what_the_day_did": "all ten reproduce to the dollar, in the same order, and 8 of 10 closed down with the two exceptions correctly named. Spans five separate groups, so this is not a single-block artifact",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "D-1 negative control",
+     "group": "g17-g23",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{17..23}_mbo_evidence.json",
+     "what_the_state_said": "'buy >+3000 -> next day agrees 4/9; >+2000 -> 6/11; sell <-3000 -> 8/13'",
+     "what_the_day_did": "reproduces exactly: 4/9, 6/11, 8/13. The control is real and it is what licenses the play's actual instruction (a prohibition on next-day use), which is the only form in which the play is blind-available",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "51 independently-joined sessions",
+     "group": "g18-g23",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/grp{18..23}_state.json tape_conditions joined to g{18..23}_actual.json",
+     "what_the_state_said": "same claim, via a completely different route - the served tape_conditions.session_signed_flow rather than the MBO evidence store",
+     "what_the_day_did": "shape holds on the second route: buy 25/17/12/14% at the four thresholds, sell 43/40/44/40%. Different files, different subset, same asymmetry",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "base rate",
+     "group": "g17-g23",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{17..23}_mbo_evidence.json",
+     "what_the_state_said": "the sell side 'carries no comparable information'",
+     "what_the_day_did": "the corpus up-close base rate is exactly 35/70 = 50%, so the buy side's 20-41% is a genuine departure and the sell side's 43-47% is at base rate. The claim is right, but 'flat at the base rate' is the accurate wording - on my second route the sell side runs 40-44%, so a weaker contrarian tilt on BOTH sides cannot be excluded and should not be described as zero",
+     "supports_or_contradicts": "ambiguous"
+    }
+   ],
+   "condition_can_change_state": "Yes and it is well distributed: the +1000 bar splits 22 of 70 sessions on the buy side and 35 on the sell side; the +3000 bar splits 10 and 15. No threshold is degenerate, and the effect is monotone ACROSS the thresholds rather than sitting on one bar - which is the property a single-bar play cannot demonstrate.",
+   "falsifier": "'A threshold band where heavy buy flow agrees with price at or above the sell side's rate.' Written, sharp, currently undischarged at all four thresholds, and re-runnable in one command against the committed evidence files. The play additionally names the right risk to watch (era-dependence: the offer-side supply regime can change).",
+   "recommendation": "keep",
+   "confidence": "high"
+  },
+  {
+   "play_id": "exit.recruitment_reversal",
+   "support_class": "ASSERTED",
+   "the_argument": "The play originally claimed the running turn is read from turn_far_thinning (far-ladder change) + turn_aligned_push. That arm was DEMOTED TO NOISE by the S95 fingerprint pass, and the play was rewritten in place: the read field now literally says 'REVISED: use old-swing continuation-collapse + turn_exhaustion instead'. The surviving call therefore rests on a measurement that belongs to a different play (structure.chain_polarity_flip's C2 arm), and this play id carries NO evidence of its own. Its legacy evidence field contains exactly two things: a count (n_big 101) and a NEGATIVE result ('turn_far_thinning did NOT confirm; DEMOTED to noise'). A play whose entire evidence block is the refutation of its own retired instrument, plus a pointer to another play's arm, is asserted.",
+   "could_evidence_have_come_out_otherwise": "For the RETIRED arm, yes, and it did - the S95 fingerprint pass was a genuine falsifiable test and turn_far_thinning failed it (held legs only ~half negative-tft). For the SURVIVING call there is no evidence attached to this id at all, so the question does not arise: nothing was measured under this play's name.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "20251008",
+     "group": "g4/g5 seam",
+     "source_file": "C2_RATIO_FINDINGS_S98.md",
+     "what_the_state_said": "old-swing UP legs 0/15 continuation = 0.0%, ratio 0.000, old big legs alive 0/0 - maximal continuation-collapse",
+     "what_the_day_did": "the G4 top; the turn delivered (1008 intraday crash -1800 roll-clean)",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20251020",
+     "group": "g5",
+     "source_file": "C2_RATIO_FINDINGS_S98.md",
+     "what_the_state_said": "old-side 1/10 = 10.0%, ratio 0.220",
+     "what_the_day_did": "G5 bottom, TRUE confirm",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260120",
+     "group": "g11",
+     "source_file": "C2_RATIO_FINDINGS_S98.md",
+     "what_the_state_said": "old-side continuation 8/28 = 28.6%, ratio 0.714 - the surviving continuation-collapse arm reads NO COLLAPSE and its rejection arm says 'no flip'",
+     "what_the_day_did": "was the TRUE flip confirm (the C1 fire)",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260107",
+     "group": "g10",
+     "source_file": "C2_RATIO_FINDINGS_S98.md",
+     "what_the_state_said": "old-side 10/36 = 27.8%, ratio 0.718 - statistically indistinguishable from 0120's 0.714 on every arm",
+     "what_the_day_did": "was the FALSE candidate, correctly declined - so the arm reads identically on a true and a false instance",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260707",
+     "group": "g23",
+     "source_file": "forecasts/g23_perday/grp23_C_20260707.json",
+     "what_the_state_said": "the ONLY mention of this play across every G17-G23 posterior I searched, and it is a STAND-DOWN: 'recruitment_reversal (needs_intraday_reveal - blind)'",
+     "what_the_day_did": "no fire; the play has not been exercised once in seven groups",
+     "supports_or_contradicts": "ambiguous"
+    }
+   ],
+   "condition_can_change_state": "Not checkable - no numeric bar on any served quantity. The read is leg-grain intraday (far-ladder change / per-leg continuation); no decision_state block in grp6..grp23_state.json carries either. Tagged needs_intraday_reveal, so it is unevaluable by construction in every blind round. Separately, knowledge/signal_retest_registry.json records turn_far_thinning as DEMOTED_TO_NOISE with authority 'none' and no_auto_resurrection - the brain's read field still names it.",
+   "falsifier": "Five or more turns where old-swing continuation-collapse is <=10% and the turn does NOT deliver, on a tape class where both sides do not routinely retain 18-47% continuation. Note the falsifier is already half-met: 0107 and 0120 read ~28% with OPPOSITE ground truths, so on the modern-tape class the arm is measured non-discriminating.",
+   "recommendation": "needs_reading_by_greg",
+   "confidence": "high"
+  },
+  {
+   "play_id": "direction.cross_block_reversion",
+   "support_class": "OUTCOME_CREDITED",
+   "the_argument": "Block-boundary give-back lean: fade a stretched swing at a cum-extreme with a last-1-2-day counter-move. The support is a narrated chronology of 5-6 turns (G3->G4, G4->G5/1008, 0923, 1016, G6 week-1, G7 1113-1118). Every arm - 'cum-extreme', 'last-1-2-day counter-move', 'last-hour roll-over' - is identified retrospectively on a price path that was already known, and the confirmation in each case is that the following days delivered. To the play's credit it is honestly self-labelled: status HYPOTHESIS, confidence 0.35, and the forward field says outright that it has been SUPERSEDED by chain_polarity_flip + post_parabolic_bleed and is 'retained as the historical record of the seam lean'.",
+   "could_evidence_have_come_out_otherwise": "Partly. G6 was a real holdout and it HALF-failed - week-1 give-back caught, week-2 recovery missed - which is a genuine falsification event honestly recorded. But the response was to reframe the play wider ('a GIVE-BACK not a reversal; the block can V back'), which is the tent-widening the desk's own doctrine forbids. Each subsequent reframe (G7 'the give-back can be one day deep') widened it again, and a claim that accommodates one-day, week-long and V-shaped outcomes has stopped being able to come out the other way.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "20260706",
+     "group": "g23",
+     "source_file": "forecasts/g23_perday/grp23_B_20260706.json",
+     "what_the_state_said": "at the g22->g23 boundary B DECLINED it on the play's own caveat: 'trigger half-armed at most: no last-1-2-day counter-move (0703 resumed UP after the 0701 give-back) and no cum-extreme; the play's own caveat forbids blind-fading a still-trending block'",
+     "what_the_day_did": "the block that followed ran -3,290 cum, the walk's most one-directional block - so the guard declined into the largest available reversal, correctly by its own text",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260713",
+     "group": "g23",
+     "source_file": "forecasts/g23_perday/grp23_B_20260713.json",
+     "what_the_state_said": "declined: 'block-boundary/cum-keyed; not a block boundary, cum masked + staleness-gated'",
+     "what_the_day_did": "-620; the play was not exercised",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260605",
+     "group": "g20->g21 seam",
+     "source_file": "renders/ng_refine_s95/g20_actual.json + g21_actual.json",
+     "what_the_state_said": "a would-have-fired instance I located that NOBODY took: g20 hit a cum extreme of +3,200 on 0604 and the last day 0605 delivered a -1,340 counter-move into the seam - both named arms armed",
+     "what_the_day_did": "g21 week 1 delivered -890, +70, +490, -1,080, +620 = -790, a give-back. The play would have been right and no specialist fired it in any g21 posterior I searched",
+     "supports_or_contradicts": "supports"
+    }
+   ],
+   "condition_can_change_state": "No - not in the blind. The arming limb is 'the running (roll-clean) path at a cum-EXTREME', which is price content and masked by design in every blind round since G19. It is 0-of-N evaluable in blind and only evaluable in refine, where the outcome is already visible. The play is nonetheless tagged requires: open_time_only.",
+   "falsifier": "Three consecutive block boundaries where the trigger is FULLY armed (cum-extreme AND last-1-2-day counter-move AND last-hour roll-over) and week 1 of the new block extends the old swing instead of giving back. Writable, but not reachable in blind because the cum-extreme limb is masked.",
+   "recommendation": "scope_narrower",
+   "confidence": "med"
+  },
+  {
+   "play_id": "structure.failed_rally_tell",
+   "support_class": "OUTCOME_CREDITED",
+   "the_argument": "Claim: a counter-chain intraday spike that round-trips (closes >=~60% off the counter extreme) means counter-side liquidity is exhausted, so the next session runs HARD chain-side and should be sized from the crash bands. The support is three in-chain instances plus one mirror, each written as 'spike X faded Y% -> next day delivered Z'. The mechanism - counter-side liquidity exhaustion - was never measured; nothing about liquidity, book state or absorption appears in the evidence. The measurement IS the next day's day-net, which is the thing the play was written to explain. This is the batch's cleanest S108 signature.",
+   "could_evidence_have_come_out_otherwise": "No, as constructed. I verified all three founding pairs to the dollar against the score files - and that is precisely the problem, the numbers reconcile because they ARE the outcomes. Worse, on all three founding days the standing forecast badly UNDER-called (guesses -750 / -200 / -750 against actuals -3,960 / -2,630 / -2,720), so the play is a description of the residual the forecaster had just missed, promoted to a mechanism.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "20251211",
+     "group": "g9",
+     "source_file": "renders/ng_refine_s95/g9_score.json",
+     "what_the_state_said": "D-1 (1210) closed +370 after a +1,060 spike = 65% round-trip; play predicts a hard chain-side crash",
+     "what_the_day_did": "-3,960 (the play cites -3,970). Delivered - but the live guess that day was -750, i.e. the band was written afterwards",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20251231",
+     "group": "g9",
+     "source_file": "renders/ng_refine_s95/g9_score.json",
+     "what_the_state_said": "D-1 (1230) closed +180 after a +1,990 spike on the HDD-30.1 peak = 91% round-trip",
+     "what_the_day_did": "-2,630 (exact match to the play's citation); live guess was -200",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260114",
+     "group": "g10",
+     "source_file": "renders/ng_refine_s95/g10_score.json",
+     "what_the_state_said": "D-1 (0113) closed +320 after a +1,190 cold-shot bounce = 73% round-trip",
+     "what_the_day_did": "-2,720 (play cites -2,710); live guess -750",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260120 / 20260121 / 20260127 / 20260128",
+     "group": "g11",
+     "source_file": "forecasts/grp11.json",
+     "what_the_state_said": "four fires, and the posterior states the arming input was unavailable: 'both need day-N-1 ACTUAL tape which the one-shot protocol withholds' and 'I cannot verify that without day-N-1 tape'",
+     "what_the_day_did": "direction 2/4 - a coin flip, on an arming read that was assumed rather than observed",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260413-20260717 (14 fires)",
+     "group": "g17-g23",
+     "source_file": "renders/ng_refine_s95/g17..g23_mbo_evidence.json + g17..g23_actual.json",
+     "what_the_state_said": "I ran the arming rule over the replayed tape (chain polarity = sign of prior day-move; counter spike >= $400; round-trip >= 60% computed from high_exc/low_exc vs net_usd): it fires 14 times in 63 evaluable days - 0414, 0417, 0504, 0514, 0601, 0602, 0609, 0610, 0615, 0625, 0626, 0707, 0715, 0716",
+     "what_the_day_did": "the next session ran chain-side on 5 of 14 (36%) against a corpus base rate of 24/55 (43.6%) - BELOW base rate. Mean |next move| on fires was $480 against a corpus mean of $578, i.e. the fires deliver SMALLER moves than average, the opposite of 'runs HARD... size from the crash bands'. Restricting to down-polarity fires only (the play's measured class): 2 of 6",
+     "supports_or_contradicts": "contradicts"
+    }
+   ],
+   "condition_can_change_state": "NOT IN BLIND - 0-of-N evaluable. The arming quantity is an intraday counter extreme versus the close, and no served blind block carries it: tape_conditions has n_trades, volume, b_share, big prints, leg_count and signed/phase flow, and no high or low. It is computable only from the refine's replayed g*_mbo_evidence.json (high_exc/low_exc), where the day's outcome is already visible. G11 and A-G21 both said so on the record; A-G21 substituted a declared FLOW round-trip instead ('a declared SUBSTITUTION, not the play's stated input'). In refine the condition does change state cleanly (14 of 63).",
+   "falsifier": "Ten or more armed instances where the next session fails to run chain-side at or above the corpus base rate, or delivers below the average day. Both halves are now met on G17-G23 (5/14 and $480 vs $578). The honest qualifier: my operationalization is mine, the play's measured class is winter down-chains, and 8 of my 14 fires are up-polarity - a class the play's own record says it has never been tested on.",
+   "recommendation": "scope_narrower",
+   "confidence": "high"
+  },
+  {
+   "play_id": "magnitude.positioning_saturation_turn",
+   "support_class": "OUTCOME_CREDITED",
+   "the_argument": "A four-limb conjunction (a: both futures books at 1y short extremes; b: price at the bleed low; c: bullish storage-trajectory catalyst; d: contango while storage phase withdraw) that takes ownership of a weekend gap and prices it at the covering side, +600..+1500. The positive evidence is n=2 gaps 'IN band' - 0301 +720 and 0308 +1220. The specificity arm (a 15-gap back-check with zero false fires) IS a real measurement that could have come out otherwise, and I credit it. The sensitivity arm is not: the band was drawn around the two numbers it was written to contain.",
+   "could_evidence_have_come_out_otherwise": "Split. The back-check could have produced false fires and did not - that is genuine. The two positive instances could not: I verified against renders/ng_refine_s95/g14_score.json that the actual gaps were exactly +720 and +1220, and that the blind had guessed -1,500 and -600 on those same gaps, i.e. both wrong-signed. The play is the post-mortem of a two-gap miss, with the band set to the misses' magnitudes. And the forward record consists ENTIRELY of declines, which cannot come out otherwise for the reason measured below.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "20260301",
+     "group": "g14",
+     "source_file": "renders/ng_refine_s95/g14_score.json",
+     "what_the_state_said": "the play's founding instance; NYMEX MM 1y pctile served 12.26 (above the literal '<=~12' bar, only the tilde rescues it), ICE LD1 0.94, contango + withdraw",
+     "what_the_day_did": "actual gap +720; blind had guessed -1,500. The +600..+1500 band was written afterwards to contain it",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260308",
+     "group": "g14",
+     "source_file": "renders/ng_refine_s95/g14_score.json",
+     "what_the_state_said": "NYMEX 12.26, ICE LD1 2.83, contango + withdraw",
+     "what_the_day_did": "actual gap +1,220; blind had guessed -600",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260301-20260313 (12 rows)",
+     "group": "g14",
+     "source_file": "renders/ng_refine_s95/grp14_state.json",
+     "what_the_state_said": "limb (d) [curve_regime contango AND storage phase withdraw] is TRUE on all 12 days of the block; limb (a) is TRUE on all 12 under the tilde. NEITHER limb changes state anywhere inside the block that generated the play",
+     "what_the_day_did": "the discriminating work inside G14 was done by (b) price-at-the-bleed-low and (c) storage consensus, not by the two limbs the play leans on",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20251022-20260717 (192 rows)",
+     "group": "g6-g23",
+     "source_file": "renders/ng_refine_s95/grp6..grp23_state.json",
+     "what_the_state_said": "I evaluated both anchor-measurable limbs across all 17 staged state files. Limb (a) [NYMEX MM 1y pctile <=12 AND ICE LD1 1y pctile <=3] is TRUE on 10 of 192 rows, ALL TEN in G18. Limb (d) is TRUE on 12 of 192 rows, ALL TWELVE in G14. The conjunction (a AND d) is TRUE on ZERO of 192 rows",
+     "what_the_day_did": "the play has never been able to fire anywhere in the staged corpus outside the block it was written on. 'Declined correctly at BOTH G15 closures, zero false fires' is exactly what a gate that is OFF for the entire block produces",
+     "supports_or_contradicts": "contradicts"
+    }
+   ],
+   "condition_can_change_state": "NO, not within a block. Limb (d) is a block-level constant in every one of the 17 staged groups - the play itself calls it 'the zero-free-constant discriminator', which is literally true. Limb (a) is likewise constant within a block except at the weekly COT vintage boundary (2, sometimes 3, distinct values per 10-day block). Measured firing rates: (d) 12/192, all in G14, 12-of-12 within G14; (a) 10/192, all in G18, 10-of-10 within G18; the conjunction 0/192. Separately, limb (b) is price content, so a play tagged requires: open_time_only carries a limb the blind cannot read.",
+   "falsifier": "A weekend where all four limbs are true and the gap prices at the warm-cut/with-swing side, or outside +600..+1500. Writable but UNREACHABLE: on the served quantities the conjunction is 0-of-192 across the whole walk, so the falsifier cannot be met by any staged block. That unreachability is the finding.",
+   "recommendation": "scope_narrower",
+   "confidence": "high"
+  },
+  {
+   "play_id": "magnitude.s1void_injection_chain_bleed",
+   "support_class": "OUTCOME_CREDITED",
+   "the_argument": "Sizing bands for chain-sided down days in a confirmed S1-void injection block under a sub-0.50 sell tape: TREND band -450..-780, COIL band -100..-250. n=1 block (G16). The evidence field is a list of eleven G16 days with their realized day-nets, partitioned into two bands, with the day-class labels (trend versus coil) assigned after the partition. I verified all eleven against renders/ng_refine_s95/g16_score.json and they match exactly - including the 'blind_contrast' line (-500/-350/+100/+300/-250 on 0329/0330/0401/0406/0408), which is the blind's own miss list. The bands are the realized nets with a line drawn between the big ones and the small ones. Nothing in the evidence could have come out the other way.",
+   "could_evidence_have_come_out_otherwise": "No. Every number in the evidence field is an outcome, and the class labels were fitted to the outcome split. The mechanism paragraph (S1-void removes the seasonal amplifier but not the storage-trajectory lean) is a story attached afterwards, and its own qualifier concedes the within-band exact is 'a band-position irreducible' - i.e. the only part that could be checked is declared uncheckable.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "20260329-20260410 (11 rows)",
+     "group": "g16",
+     "source_file": "renders/ng_refine_s95/grp16_state.json",
+     "what_the_state_said": "the sell-tape gate session_b_share < 0.50 is TRUE on 11 of 11 days (0.453, 0.396, 0.494, 0.463, 0.491, 0.473, 0.495, 0.448, 0.449, 0.450, 0.450)",
+     "what_the_day_did": "the gate contributed ZERO discrimination to the evidence it is credited with - it fired on the trend days and the coil days alike, and on the one UP day too",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260329 / 20260330 / 20260401",
+     "group": "g16",
+     "source_file": "renders/ng_refine_s95/grp16_state.json",
+     "what_the_state_said": "the trigger requires 'storage phase inject', but these three days are served phase = WITHDRAW",
+     "what_the_day_did": "these three are listed among the play's own SIX trend-band exemplars (-790, -650, -600). Half the trend band violates the play's own trigger",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260329-20260410",
+     "group": "g16",
+     "source_file": "renders/ng_refine_s95/grp16_state.json",
+     "what_the_state_said": "the trigger requires 'near-window normals base <=~20 gw', but the realized weather block is NULL on all 11 days (the S107 path-mismatch hole). Read off weather_forecast instead, forecast_gw_hdd runs 4.3-15.8, i.e. <=20 on 11 of 11",
+     "what_the_day_did": "the limb was UNEVALUABLE on the block that generated the play, and degenerate on any substitute reading",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260315-20260717 (82 rows)",
+     "group": "g15-g23",
+     "source_file": "renders/ng_refine_s95/grp15..grp23_state.json",
+     "what_the_state_said": "across every group where session_b_share is served, the sub-0.50 bar is TRUE on 79 of 82 day-rows = 96%. Under the corrected session_b_share_two_sided basis (served g21-g23 only) it splits cleanly: G21 5/10, G22 5/10, G23 5/9",
+     "what_the_day_did": "the bar as read when the evidence was gathered was the S108/S109 normalization defect - it cleared on 5 of 223 sessions corpus-wide. The play's assumption_retired note re-points it at the two-sided series but the evidence has never been re-derived on the corrected basis",
+     "supports_or_contradicts": "contradicts"
+    }
+   ],
+   "condition_can_change_state": "NO on all three trigger limbs in the birth block: session_b_share < 0.50 is 11-of-11; 'storage phase inject' is violated by 3 of the 6 trend exemplars; the weather limb is null/unevaluable. Corpus-wide the b_share gate is 79/82 = 96%. Under the corrected session_b_share_two_sided basis the gate WOULD split roughly 50/50 - but that has never been measured against these bands.",
+   "falsifier": "A confirmed S1-void injection block with a persistent sub-0.50 TWO-SIDED sell tape where chain-sided trend days land inside the coil band or outside -450..-780. Never run: the play's forward_evidence still reads 'NONE - G17+ is the forward test' seven groups later.",
+   "recommendation": "forward_test_on_next_group",
+   "confidence": "high"
+  },
+  {
+   "play_id": "monday.seam_chainage_accommodation_gate",
+   "support_class": "OUTCOME_CREDITED",
+   "the_argument": "Inherited seam chain-age <=2 means the late ph2 buy phase is ACCOMMODATED, so size the Monday shallow with the close off the low; age >=3 means it is ABSORBED, so size deep with the close near the low. Stated evidence: 'MBO-PROVEN n=2 both scales on G15' - 0316 age-1 shallow -540 (posterior -570) and 0323 age-3 deep -1080 (posterior -1080, err 0). Two days, one block, and the second is quoted with a ZERO error against the actual, which is the tell: the rule was read off the pair it explains. The 1117/1124 generalizations are narrated, not measured.",
+   "could_evidence_have_come_out_otherwise": "Not as written - a two-day fit reported with one zero-error day cannot fail. But unlike most of this batch the CONDITION is well-formed and genuinely checkable on served quantities, so I checked it, and it comes out inverted.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "20260629",
+     "group": "g22",
+     "source_file": "renders/ng_refine_s95/g22_mbo_evidence.json + g22_actual.json",
+     "what_the_state_said": "inherited chain age 1 (YOUNG, gap only +50 so it qualifies as a strict carry-Monday) - play calls for SHALLOW, close OFF the low, absorb_session False",
+     "what_the_day_did": "net -1,160, close-off-low 0.09 (pinned at the low) - the deepest Monday of the block. Play inverted",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260713",
+     "group": "g23",
+     "source_file": "renders/ng_refine_s95/g23_mbo_evidence.json + g23_actual.json",
+     "what_the_state_said": "inherited chain age 3 (MATURE, gap -360, the other strict carry-Monday) - play calls for DEEP, close NEAR the low, absorb_session True",
+     "what_the_day_did": "net -260, close-off-low 0.53 (mid-range), absorb_session False. Play inverted",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260601",
+     "group": "g20",
+     "source_file": "renders/ng_refine_s95/g20_mbo_evidence.json",
+     "what_the_state_said": "age 1 YOUNG - play calls shallow and absorb_session False",
+     "what_the_day_did": "net -1,680, close-off-low 0.06, absorb_session TRUE - one of only two absorption sessions among the seven modern carry-Mondays, and it is a young chain",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260615",
+     "group": "g21",
+     "source_file": "renders/ng_refine_s95/g21_mbo_evidence.json",
+     "what_the_state_said": "age 1 YOUNG",
+     "what_the_day_did": "net +910, close-off-low 0.96, absorb_session TRUE - the second absorption session, again a young chain",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260420 / 20260518",
+     "group": "g17 / g19",
+     "source_file": "renders/ng_refine_s95/g17_mbo_evidence.json, g19_mbo_evidence.json",
+     "what_the_state_said": "age 3 MATURE on both - play calls DEEP with the close near the low",
+     "what_the_day_did": "net -510 (off-low 0.15) and +80 (off-low 0.42); neither absorbed. Across the full set of seven modern carry-Mondays: YOUNG (age<=2, n=4) mean |net| $980 and BOTH absorption sessions; MATURE (age>=3, n=3) mean |net| $283 and zero absorptions. That is the play's call inverted on both limbs",
+     "supports_or_contradicts": "contradicts"
+    }
+   ],
+   "condition_can_change_state": "YES - this is the one play in the batch whose bar is clean. Inherited chain age over the seven modern carry-Mondays distributes [1,1,1,2,3,3,3], a 4/3 split. The condition is well-formed and falsifiable; it has now been measured and the effect runs the wrong way. Honest caveat: n=7 (n=2 under the play's strict no-fresh-shot-gap scope), and I derived chain age by the handoff's own definition (consecutive same-signed day-moves ending at the prior session), which may not be the definition each specialist used.",
+   "falsifier": "Six or more carry-Mondays where the young/mature split fails to sort |day net| and close-location in the stated direction. Met: 7-of-7 run the wrong way in direction of effect, and both strict-scope instances contradict individually.",
+   "recommendation": "scope_narrower",
+   "confidence": "med"
+  },
+  {
+   "play_id": "selector.midblock_right_the_ship",
+   "support_class": "OUTCOME_CREDITED",
+   "the_argument": "A process play: unlock the block thesis mid-block and take the next owned day's SIGN to the turn side when a turn stack builds. Its stated evidence is that 'all three self-analyses (C/D/E S105) independently prescribed a mid-block re-derivation' - three agents agreeing, which is not a measurement, and by the prose-citing-prose rule is one item. Its FORWARD evidence is the load-bearing problem: 'G17 refine r2: the HE24->HE1 coordination halved error 24->11 (10/10) with zero direction changes - the mid-block re-derivation working.' I verified the numbers (forecasts/grp17_mbo_refined.json mean 24 -> grp17_mbo_refined_r2.json mean 11, dir 10/10 both). But this is a SIGN play, and the run it is credited with changed ZERO signs. A magnitude halving in a run with no sign changes is logically incapable of bearing on a sign-unlock rule.",
+   "could_evidence_have_come_out_otherwise": "The G17 r2 credit could not have come out otherwise in any way that would inform the claim - it is the wrong measurement for the play. The four traceable blind fires COULD have come out otherwise and did, in both directions: 2 hits, 2 misses.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "20260506",
+     "group": "g18",
+     "source_file": "knowledge/ng_brain.json forward field + renders/ng_refine_s95/g18_actual.json",
+     "what_the_state_said": "RTS fired UP on a built stack",
+     "what_the_day_did": "-530 DOWN. MISS. Recorded honestly in the play's own forward field, with the amendment 'must confirm the turn DELIVERED, not just that the stack built' - which, taken literally, is unusable at open time",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260616",
+     "group": "g21",
+     "source_file": "forecasts/g21_blind_round1/grp21_mbo_specialist_C.json",
+     "what_the_state_said": "'the turn stack has BUILT across sessions (COT extreme AND trending more extreme; big-print buy readings on 2 of the last ~5 clean sessions under a mixed tape) ... I unlocked from the S3-down default and took the sign to the turn side'; blind emitted +180",
+     "what_the_day_did": "+970. Direction HIT",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260617",
+     "group": "g21",
+     "source_file": "forecasts/g21_blind_round1/grp21_mbo_specialist_C.json",
+     "what_the_state_said": "'the stack has now built across four sessions and this is the second owned day where it holds. A building multi-session stack ACTS'; blind emitted +110",
+     "what_the_day_did": "-970. MISS, and the largest single-day error of C's block",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260618",
+     "group": "g21",
+     "source_file": "forecasts/g21_blind_round1/grp21_mbo_specialist_D.json",
+     "what_the_state_said": "'its two named triggers are BOTH satisfied at this open ... The play's instruction is to UNLOCK the default lean and take the next owned day's SIGN to the turn side'; magnitude derived to ~950",
+     "what_the_day_did": "+520. Direction HIT, magnitude over by 430",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260623 / 20260630 / 20260701",
+     "group": "g22",
+     "source_file": "forecasts/g22_perday/grp22_C_20260623.json, _20260630.json, _20260701.json",
+     "what_the_state_said": "three clean STAND-DOWNs: 'the turn stack is not BUILDING but decaying (COT improving, big prints flipped 0.783 -> 0.322 across the roll, no recurring buy-absorption)'",
+     "what_the_day_did": "0623 -730 (consistent with the stand-down), 0701 -500 (consistent), 0630 +780 (a turn the stand-down declined to take). Declines are not calls, so these do not score the play either way",
+     "supports_or_contradicts": "ambiguous"
+    }
+   ],
+   "condition_can_change_state": "Partly, and two of the four named triggers are unusable. 'A based chain with no new cum-extreme >=2 sessions' is price content, masked in blind. 'Recurring buy-absorption >=2 of ~5 under a sell tape' defers by reference to accumulation_arm_turn's b_share condition, which was the broken encoding until S109 (sub-0.50 true on 96% of served days). The COT limb DOES change state, but only at the weekly vintage boundary - 2 or 3 distinct values per 10-day block: g18 8.49->10.38 disarmed, g19 2.83->0.94 armed, g20 16.04->0.94 armed, g21 4.72->2.83 armed, g22 2.83->25.47->29.25 disarmed, g23 29.25->44.34->50.0 disarmed. So the play can flip at most once or twice per block, driven almost entirely by one weekly field.",
+   "falsifier": "Six or more blind fires where the stack built on the COT limb and the next owned day's sign went the default way. Currently 2-of-4 traceable blind fires, which is a coin flip on n=4.",
+   "recommendation": "scope_narrower",
+   "confidence": "high"
+  },
+  {
+   "play_id": "boundary.chain_label_must_track_realized_cum",
+   "support_class": "MECHANISM_VERIFIED",
+   "the_argument": "A constraint on reasoning rather than a market claim: a chain's polarity and age must derive from the realized cum carried across the seam; no day restarts at cum 0; a specialist who cannot state the inherited cum may not assert a chain polarity at all. The evidence is a demonstrated CONTRADICTION - in the G19 blind, with every day reset to cum 0, B wrote a fictional 'age-5 DOWN chain' against a realized 4-session UP rally. A contradiction between an asserted label and a realized path is a checkable fact that could have come out otherwise, so the DEFECT is verified. What is NOT verified is the remedy: that enforcing the rule improves anything.",
+   "could_evidence_have_come_out_otherwise": "Yes for the defect - B could have stated a label consistent with the inherited cum, and the g19 posteriors would show it. No for the remedy: the blind-to-refine gap that is usually cited as its benefit confounds the rule with the price reveal, and the four groups it has ridden carry four other simultaneous fixes. Note also that 'corroborated by all five post-mortems' is one finding restated five times, not five instances.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "20260518",
+     "group": "g19",
+     "source_file": "knowledge/ng_brain.json evidence + forecasts/grp19.json",
+     "what_the_state_said": "the founding instance: B asserted an 'age-5 DOWN chain' with every blind day path-started at cum 0",
+     "what_the_day_did": "the realized path was a 4-session UP rally (0511 +1,740, 0513 +420, 0514 +590, 0515 +320); B's blind guess for 0518 was -550 against an actual of +660. The contradiction is real and traceable",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260619",
+     "group": "g21",
+     "source_file": "forecasts/g21_blind_round1/grp21_mbo_specialist_A.json",
+     "what_the_state_said": "'I assert NO chain polarity and NO chain age anywhere in this file - there is no handoff chain in a round-1 blind, so I have no inherited cum_from_anchor and the masked price is explicitly not an exemption'",
+     "what_the_day_did": "the play's stated premise - 'chain STATE travels in the handoff, which is never masked' - is FALSE for this run. There is no handoff file for g21, g22 or g23 in forecasts/ (only g15, g17, g18, g19, g20)",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260626 / 20260703",
+     "group": "g22",
+     "source_file": "forecasts/g22_perday/grp22_E_20260626.json, grp22_A_20260703.json",
+     "what_the_state_said": "E: 'requires REALIZED cum, which is price-masked. This age is derived from the AGGRESSOR-FLOW chain, an explicitly weaker substitute. Declared, not asserted as equivalent.' A: 'this label has NO realized cum behind it'",
+     "what_the_day_did": "the rule operated as a blanket prohibition plus a declared flow substitution, not as the conditional it is written as",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260707 / 20260716",
+     "group": "g23",
+     "source_file": "forecasts/g23_perday/grp23_C_20260707.json, grp23_D_20260716.json",
+     "what_the_state_said": "C: 'round-1 blind carries no realized cum_from_anchor for 0706 (price masked), so I assert NO hard chain polarity/age'. D: 'inherited realized cum declared UNKNOWABLE in this per-day slice (no handoff served)'",
+     "what_the_day_did": "same premise failure, two groups later and still uncorrected in the play text",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260605",
+     "group": "g20",
+     "source_file": "forecasts/g22_perday/grp22_A_20260703.json and grp22_E_20260626.json (both citing covering_extension_distribution_flip's retired-assumption note)",
+     "what_the_state_said": "the corpus's only counter-instance: 'a chain-age LABEL cost 1,350 on G20 0605 when cum ran without ever turning'. Cited by two posteriors but both trace to ONE source, so it is one instance, not two",
+     "what_the_day_did": "does not reconcile: forecasts/grp20.json records 0605 blind guess -500 against actual -1,340, err 840, direction HIT. The 1,350 figure has no independent basis I can find",
+     "supports_or_contradicts": "ambiguous"
+    }
+   ],
+   "condition_can_change_state": "No numeric bar. But the operative branch - 'cannot state the inherited cum, therefore may not assert a polarity' - is TRUE on essentially 100% of blind days since G21, because realized cum is masked and no handoff file exists. So in the blind the play is degenerate (a blanket prohibition), and only in the refine is it a conditional. Forward outcome over the window it rode: blind direction 6/10 (g20), 5/10 (g21), 4/10 (g22), 5/10 (g23) - no improvement. Blind sum|err| fell 9,390 -> 7,880 -> 6,320 -> 5,965 -> 5,920, but that window also carries the b_share fix, per-day causal slices, anchor blocks and the Monday stub fix, so none of it is attributable here.",
+   "falsifier": "A blind run in which specialists ARE given a real cum-carrying handoff and the chain-label error class recurs anyway; or one in which the prohibition is lifted and blind error does not worsen. Neither has been run.",
+   "recommendation": "needs_reading_by_greg",
+   "confidence": "high"
+  },
+  {
+   "play_id": "supply.lng_export_throughput_vessel_line",
+   "support_class": "ASSERTED",
+   "the_argument": "This is the honest kind of asserted, and I want that on the record. The play claims NO predictive content: status WIRED_UNPROVEN, confidence 'none-yet (monitoring)', call 'TREAT AS CONTEXT, NOT AS A SIGNAL... Do NOT fire a direction or a band off it', forward_evidence 'NONE', and it writes its own falsifier plus the instruction 'Do not fit a threshold to it'. The only factual claim it makes is that the channel is live and stepping while lng_feedgas_bcfd is dead - and that claim I verified. Merged to close the served-but-unread class, not because it was shown to predict, and it says so.",
+   "could_evidence_have_come_out_otherwise": "Yes for the liveness claim - the vessel line could have been null or frozen like lng_feedgas_bcfd (which sits at 16.3, week_ending 2025-09-24, self-declared sd_live false). It is not: both fields advance weekly from G12 through G23. There is no predictive claim to falsify, which is the play being correct about itself rather than evasive.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "20260622-20260703",
+     "group": "g22",
+     "source_file": "renders/ng_refine_s95/grp22_state.json",
+     "what_the_state_said": "the play's own evidence reproduces exactly: lng_vessels_departed 36,36,36,36,35,35,35,35,35,36 and lng_vessel_capacity_bcf 133.0 -> 135.0 -> 136.0",
+     "what_the_day_did": "confirmed live and updating on a weekly cadence, as claimed",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260201-20260717",
+     "group": "g12-g23",
+     "source_file": "renders/ng_refine_s95/grp12..grp23_state.json",
+     "what_the_state_said": "the line is served far more widely than the play claims - continuously from 2026-02-01 through 2026-07-17, both fields moving (vessels 29-39, capacity 111-149)",
+     "what_the_day_did": "the backfill the play's falsifier was waiting on already exists",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260706 / 20260707 / 20260708 / 20260713 / 20260715 / 20260716",
+     "group": "g23",
+     "source_file": "forecasts/g23_perday/grp23_B_20260706.json, _B_20260713.json, _C_20260707.json, _C_20260708.json, _C_20260715.json, _D_20260716.json",
+     "what_the_state_said": "six posteriors read the line in G23 - the first group after the merge",
+     "what_the_day_did": "the served-but-unread class this play was merged to close is in fact closed; the wiring worked",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260501-20260717 (12 weekly steps)",
+     "group": "g18-g23",
+     "source_file": "renders/ng_refine_s95/grp18..grp23_state.json + g18..g23_actual.json",
+     "what_the_state_said": "I RAN THE PLAY'S OWN FALSIFIER, now runnable: 12 weekly steps, 11 with a nonzero departure change, all landing on Friday with age_days 2 and knowable_from equal to the step day, so decision-time legal",
+     "what_the_day_did": "IT DID NOT COME OUT NULL. The sign of the departure step agrees with the same-day move on 9 of 11, with both arms populated (up-steps 4/5 positive; down-steps 5/6 negative); mean same-day move +284 on up-steps versus -548 on down-steps. Strictly forward, where in-block forward days exist (n=5), 5/5 with 3-session sums +450, -320, +160, -830, -480. CAVEATS THAT MUST TRAVEL WITH THIS: n=11, every step lands on a Friday, the step and the Friday move share the same weekly EIA publication so a common-cause confound is live, I chose the step-day and sign convention, and I ran no permutation null",
+     "supports_or_contradicts": "supports"
+    }
+   ],
+   "condition_can_change_state": "Yes - deliberately no numeric bar (the play forbids fitting one), and the underlying quantity steps weekly: 11 nonzero departure steps in 12 across G18-G23, range -5 to +7 vessels and -19 to +26 Bcf. This is the opposite of the degenerate-condition problem elsewhere in the batch.",
+   "falsifier": "The play's own, verbatim: 'if departure/capacity STEPS show no association with realized moves across the walked blocks once the line is backfilled, this stays a context field and is never promoted to a signal.' I ran it and it did not come out null. That is a reason to PRE-REGISTER a forward test, not a reason to promote - my measurement is retrospective and I chose its form.",
+   "recommendation": "forward_test_on_next_group",
+   "confidence": "med"
+  },
+  {
+   "play_id": "handoff.residual_tilt_field",
+   "support_class": "OUTCOME_CREDITED",
+   "the_argument": "On a day whose D-1 carried a scheduled program, carry a program-decontaminated residual tilt as an explicit handoff field and have the receiving specialist consume it IN PLACE OF session_signed_flow's sign. The entire positive evidence is one line: 'B-0629: the tilt gate fed +871 gross and weighted the self-derived residual 0.10 - the sign correction in r1 was the blind's own rule fed a decontaminated input.' That is a REFINE correction made with the actual in hand. Blind B-0629 emitted +325 against an actual of -1,110 (err 1,435, the worst miss of the G22 blind); the refine posterior then writes 'residual tilt was SELL; I had derived the residual-seller fact myself and weighted it 0.10 as a way-wrong instead of feeding it to the gate. The gate was right; its input was wrong.' The mechanism was credited after the outcome was known and no independent test was run. This is the S108 pattern exactly.",
+   "could_evidence_have_come_out_otherwise": "No, for the founding instance - it is a post-hoc reconstruction of a known miss. And the play's own written falsifier has ALREADY BEEN MET by a named instance, which is recorded inside the play as a 'REFORMULATION' rather than as a refutation. That relabelling is the laundering path in miniature.",
+   "d24_state": "found",
+   "instances": [
+    {
+     "date": "20260616",
+     "group": "g21",
+     "source_file": "renders/ng_refine_s95/grp21_state.json flow_calendar",
+     "what_the_state_said": "the play's scope claims 'n=2 (G21 0616, G22 0629)'. But 0616's D-1 is 0615, and the served flow_calendar for 0615 reads in_gsci_roll false, in_bcom_roll false, in_bcom_hedge_roll false, in_bidweek false, is_opex_day false, is_expiry_day false",
+     "what_the_day_did": "0616 does not satisfy the play's own trigger on the served calendar. n=2 is n=1",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260629",
+     "group": "g22",
+     "source_file": "forecasts/g22_perday/grp22_B_20260629.json and forecasts/g22_refine_perday/grp22_B_20260629.json",
+     "what_the_state_said": "D-1 (0626) was expiry day + bidweek d3, so the trigger is genuinely satisfied. The blind derived the residual-seller fact itself and weighted it 0.10; the refine then fed it to the gate",
+     "what_the_day_did": "blind +325 against actual -1,110 (err 1,435); the refine corrected the sign with the actual visible. A refine-round credit, not a forward test",
+     "supports_or_contradicts": "ambiguous"
+    },
+    {
+     "date": "20260713",
+     "group": "g23",
+     "source_file": "forecasts/g23_perday/grp23_E_20260710.json and forecasts/g23_perday/grp23_B_20260713.json",
+     "what_the_state_said": "E-0710 published residual_tilt 'FLAT-TO-SELL (program-decontaminated, per handoff.residual_tilt_field)' and instructed 'A/B MUST consume THIS field in place of session_signed_flow's sign for the Monday gate'. B-0713 records consuming it: 'residual_tilt FLAT-TO-SELL consumed in place of 0709's +1,551 aggregate sign'",
+     "what_the_day_did": "B emitted +550 against an actual of -620 - err 1,170, the G23 blind's worst Monday. The substituted field pointed the wrong way and the instrument it displaced pointed the right way",
+     "supports_or_contradicts": "contradicts"
+    },
+    {
+     "date": "20260714",
+     "group": "g23",
+     "source_file": "forecasts/g23_perday/grp23_C_20260714.json",
+     "what_the_state_said": "C decontaminated 0713's raw -950 aggregate to '~NEUTRAL, not down' and called +280 - but DECLARED the method is a proxy: 'tape_conditions carries NO program/cohort decomposition (handoff.residual_tilt_field's input) in a week where 4 of the 5 usable D-1 reads are GSCI/BCOM roll days - decontamination executed as a declared PROXY... not a measurement'",
+     "what_the_day_did": "+200. Direction HIT, err 80, the best day of the G23 blind's second week. The one genuinely favorable instance, and it must be counted - but it was executed on a proxy, not on the play's stated input, which is not served anywhere",
+     "supports_or_contradicts": "supports"
+    },
+    {
+     "date": "20260427-20260717 (59 day-pairs)",
+     "group": "g18-g23",
+     "source_file": "renders/ng_refine_s95/grp18..grp23_state.json + g18..g23_actual.json",
+     "what_the_state_said": "I measured both instruments across six groups. sign(session_signed_flow), which is D-1 by construction in tape_conditions, predicts the next-day sign 26/59 = 44.1% - independently reproducing the play's own inline '16/36 = 44%' on a wider sample. The SUBSTITUTE, big_print_b_share versus 0.50, predicts 25/53 = 47.2%",
+     "what_the_day_did": "both are coin flips. Swapping a 44% instrument for a 47% instrument is not a mechanism - the play replaces one non-informative sign with another and the difference is inside noise",
+     "supports_or_contradicts": "contradicts"
+    }
+   ],
+   "condition_can_change_state": "YES, and this is worth saying plainly because it is the one thing right with the play: the trigger 'D-1 carried a scheduled program' fires on 29 of 54 day-rows (54%) across G18-G23 - g18 5/9, g19 4/9, g20 4/9, g21 5/9, g22 5/9, g23 6/9. A clean split. The failure is not the trigger, it is (i) the substitute instrument carries no directional information and (ii) the play's stated requires - 'big-print cohort decomposition of the D-1 tape (flow_read)' - is NOT SERVED in tape_conditions, so every instance in the corpus is a declared proxy rather than the play.",
+   "falsifier": "The play states one: 'a program day whose residual tilt misleads while the gross aggregate reads true.' IT HAS ALREADY OCCURRED - 0710/0713, recorded inside the play's own status note, where the residual read BUY (big-print 0.550) against a -1,225 SELL aggregate and the day went DOWN -620. By the desk's own rules the play has met its written falsifier and is still carried as PROPOSED with the counter-instance folded in as a reformulation.",
+   "recommendation": "needs_reading_by_greg",
+   "confidence": "high"
+  }
+ ]
+}

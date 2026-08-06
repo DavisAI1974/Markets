@@ -1,0 +1,231 @@
+{
+ "specialist": "C",
+ "lens": "core intraday tape - onset, continuation-vs-reversal, signed-flow divergence, absorption, exhaustion and give-back turns; default owner of non-catalyst Tue/Wed core days",
+ "group": "g20",
+ "brain_version": "s103.2",
+ "round": 1,
+ "days_owned": ["20260526", "20260527", "20260602", "20260603"],
+ "doctrine_note": "The immutable blind stays the CORE predictor; this is a POSTERIOR UPDATE, not a replacement. Magnitudes are DERIVED from the vol_regime sigma scale (n0_net_sigma_10 = 648, n0_net_sigma_5 = 737, n0_range_20_mean = 1094, n0_range_pctile 81.7, frozen at the 20260522 anchor vintage) times a multiplier set by the STRENGTH of the causal stack - never fitted to the realized number. Two of four owned days take a direction change from the blind; each is carried by NEW causal evidence (a restored input, a structural calendar force, or the size-weighted big-print channel), not by re-reading the same state harder. Attribution is stated per day: where a RESTORED INPUT (weather, vol_regime) earned the improvement rather than my reasoning, it is labelled as such and must NOT be banked as forward evidence for a flow play. MBO book layer: no book_trustworthy verdict is available for G20 (no L1 manifest artifact exists for this group by design), so every read here is TRADE-FLOW + never-masked tape_conditions + L1 quote_bid_share only; book-derived conclusions stand down on 4/4 days and are recorded as such. Per-event only, never pooled as a conclusion. NG is not WTI.",
+ "cross_cutting_mbo_finding": {
+  "headline": "The G20 down lean is NOT a chain-state bug and NOT a flow-reading bug. It is a GATE-CONSTRUCTION bug plus two missing inputs: selector.divergence_resolution gate (b) cannot admit the up angle in a shoulder rally by construction, and the blind read an extreme-and-WORSENING managed-money short as bearish when it is the ARMING condition for the covering that actually drove the block.",
+  "finding_1_absolute_bshare_gate": {
+   "claim_from_blind": "The absolute 0.50 session_b_share gate in selector.divergence_resolution gate (b) is DEAD in this block; I proposed replacing it with a BLOCK-RELATIVE evaluation or a count-vs-size-weighted channel divergence.",
+   "diagnosis_verdict": "CONFIRMED. Realized session_b_share across the ten G20 sessions: 0.367, 0.486, 0.440, 0.448, 0.458, 0.513, 0.488, 0.487, 0.451, 0.445. Only 0.513 clears 0.50 and it sits on the degenerate 1,224-trade Sunday reopen (1 big print) - i.e. on every session with a usable tape the gate is sub-0.50. Gate (b) therefore excluded the weather-up angle on 10/10 days BY CONSTRUCTION while the block ran +1860 on the forward curve. A gate that cannot fire is not a discriminator, it is a constant.",
+   "proposed_remedy_verdict": "REFUTED - and this is the more useful half of the result. I tested my own blind proposal: recentre session_b_share on the block's own guard-clean mean (~0.459) and treat above/below as the buy/sell nowcast. Next-session direction under that rule: prior 0525 b 0.486 HIGH -> 0526 -190 (miss); 0526 0.440 LOW -> 0527 +610 (miss); 0527 0.448 LOW -> 0528 +2100 (miss); 0601 0.488 HIGH -> 0602 -80 (miss); 0602 0.487 HIGH -> 0603 +750 (hit); 0603 0.451 LOW -> 0604 +1130 (miss); 0604 0.445 LOW -> 0605 -1340 (hit). 2 of 8. Block-relative recentring of the COUNT tape is no better than the absolute bar. The count-tape aggressor share is not a day-grain direction nowcast in a shoulder-injection rally at all, at any centring.",
+   "consequence": "Do NOT recentre gate (b). REPLACE it. The correct discriminator is the SIZE-WEIGHTED big-print channel benchmarked against the per-quartile equal-rate bars already measured in play 61 (flow.big_print_bshare_thin_tape_guard: pooled mean 0.461, p50 0.479 on the corrected size-weighted series; equal-rate bar 0.579 for <=20 prints, 0.536/0.544/0.547 for the three thicker quartiles). That is finding 3."
+  },
+  "finding_2_cot_wow_sign_flip": {
+   "claim_from_blind": "The COT WoW sign FLIPS inside the block (+23,762 -> -38,123), so the covering gate and the seam-gap play point opposite ways in the two halves, and that one open-time field is what split my four days 2 down / 2 up.",
+   "verdict": "CONFIRMED as the split, but my blind READ of the second half was wrong in a way that generalizes. Week 1 (report 2026-05-19, published 05-22): managed_money_net -96,303, chg_wow +23,762, 1y pctile 16.0 = shorts COVERING. Week 2 (report 2026-05-26, published 05-29): managed_money_net -134,426, chg_wow -38,123, 1y pctile 0.94, 3y pctile 2.23 = shorts BUILDING to a one-year extreme. The blind treated week 2's -38,123 as bearish confirmation and carried the down lean into 0602/0603. It is not bearish. An extreme-AND-worsening managed-money short at the <=1st percentile is FUEL, not direction: it is the ARMING condition of selector.midblock_right_the_ship / the specialist-C accumulation arm. Both halves of this block were operationally UP - week 1 because covering was already running (0527 +610, 0528 +2100), week 2 because the crowd rebuilt a 1st-percentile short straight into a rising market and then had to cover it again (0603 +750, 0604 +1130).",
+   "general_mechanism": "sign(managed_money_net_chg_wow) is only a direction read when the LEVEL is unremarkable. Once managed_money_net_pctile_1y <= ~2, the WoW sign inverts in meaning: a more-negative WoW is an arming increment, not a bearish increment. The blind applied one sign convention across a percentile boundary the block crossed mid-stream."
+  },
+  "finding_3_price_free_absorption_proxy": {
+   "claim_from_blind": "While aggregate signed flow is POSITIVE, watch the size-weighted big-print channel: big prints STILL SELLING = absorber present = buy-absorption-failing risk live (take the turn small); big prints FLIPPING BUY on a guard-clean sample = absorber gone = accumulation confirmed. Claimed to resolve the G18-0506 trap WITHOUT price.",
+   "verdict": "SURVIVES on the arm it was stated for, with a hard scope restriction that I am reporting because it materially limits the claim. It fires on 2 of 10 G20 sessions; both fire correctly, both land on days I own, and both are days the blind got wrong in polarity or size. It is a PARTIAL substitute for flow_conviction - it covers the sign(aggregate flow) = POSITIVE half only.",
+   "firing_evidence": {
+    "20260601_session_to_20260602": "aggregate session_signed_flow +3796 (positive, precondition met); big_print_b_share 0.436 on 104 prints (q4, guard-clean, equal-rate bar 0.547; 0.436 sits below even the pooled p50 of 0.479). Big prints SELLING into a buying count tape = ABSORBER PRESENT -> do not extend the up. Blind said +250. Actual 0602 = -80. Price-side confirmation after the fact: the 0601 phase table is sflow +74/+1892/+1830 against pxchg +390/-2030/-40 with ph_absorb [false, true, true] - buying absorbed under a collapsing price. The price-free channel identified the absorber with no price at all.",
+    "20260602_session_to_20260603": "aggregate session_signed_flow +3524 (positive); big_print_b_share 0.585 on 122 prints (q4, guard-clean) CLEARS the 0.547 equal-rate bar and sits +0.73 quartile-sd above the pooled mean. Big prints FLIPPED BUY (0.436 -> 0.585) = ABSORBER GONE -> accumulation confirmed. Actual 0603 = +750. Price-side confirmation: 0603 total_sflow -2852 with net +760 and ph_absorb [false, true, true] - sellers absorbed under a RISING price all through the US session, the completed-accumulation signature."
+   },
+   "guard_case_and_forward_evidence_for_play_61": "20260525 session -> 20260526: aggregate signed_flow +1094 (precondition met) and big_print_b_share 0.599 - which would read as a buy-flip and fire the accumulation arm. But big_prints_n = 13, inside play 61's thin quartile (q1, sd 0.255, median 9 prints), where the guard raises the bar to ~0.60. 0.599 < 0.60 -> the arm STANDS DOWN. Actual 0526 = -190 DOWN. Un-guarded, both the flat 0.55 bar and even q1's own 0.579 equal-rate bar would have fired an accumulation call into a down day. This is a live G20 FORWARD-VALIDATING instance for play 61, whose forward_evidence field currently reads NONE and which explicitly rides G20+. The guard is load-bearing to the proxy, not decoration: without it the proxy goes 2 correct / 1 wrong instead of 2 correct / 1 correctly-silent.",
+   "mirror_arm_REFUTED": "I tested the obvious extension - aggregate flow NEGATIVE with big prints BUYING = sellers absorbed by size = accumulation under a sell tape. It does not hold in G20. prior 0527 (sflow -4910, bigB 0.529) -> 0528 +2100 UP; prior 0528 (-1966, 0.522) -> 0529 -160 DOWN; prior 0604 (-5662, 0.533) -> 0605 -1340 DOWN; prior 0603 (-2852, 0.476 SELL) -> 0604 +1130 UP. Two up, two down, and the single sell-side reading preceded the block's second-largest up day. Under a SELLING count tape the big-print channel carries no next-session information here. The proxy is an ABSORBER-DETECTION gate on a BUYING count tape, not a general direction generator.",
+   "answer_to_the_G19_open_question": "It is a HALF substitute for flow_conviction, not a full one. flow_conviction = sign(signed_flow) * sign(price_change) spans all four sign combinations; the proxy spans only sign(signed_flow) = +. It does resolve the G18-0506 class - a buy tape being absorbed, a turn stack that built but did not deliver - which is precisely the failure play 51 flags in its own forward_evidence ('the mid-block re-derivation must confirm the turn DELIVERED, not just that the stack built'). On 0601 the stack had built and the big prints said the turn would NOT deliver; 0602 came in -80. On 0602 the big prints flipped and said it WOULD; 0603 came in +750. That is a genuine price-free delivery test. It does NOT resolve the sell-tape-being-absorbed class (0527, 0604), and in G20 that class is exactly where the largest forward-curve errors sat. That half stays carried by weather run-deltas, COT arming state and calendar structure - not by flow.",
+   "n_and_honesty": "n = 2 firings + 1 correct guard stand-down inside one block. That is thin. I am reporting it as a mechanism with a stated precondition and a stated refuted extension, not as an established play."
+  },
+  "why_the_lean_survived_the_cum_0_fix": "Nothing in this block's lean needed chain state to go wrong. The blind's down angle on my days was produced by three independent constructions that all point down in a shoulder and none of which the cum-0 fix touches: (i) selector.divergence_resolution gate (a) - near-window max HDD versus the ~16.4 band-authority threshold - is unreachable in a mod_cool shoulder where forecast gw_HDD runs 0.28-1.07, so the weather-up angle is gated out on every single day before any evidence is weighed; (ii) gate (b) is sub-0.50 on 10/10 sessions and so cannot restore it; (iii) the week-2 COT WoW sign was read as bearish across a percentile boundary where its meaning inverts. Three down-by-construction paths and no admissible up path. The S105 lens already warns that 'the S3-down default is not sign-certain just because the HDD>=16.4 catalyst-override is gated out' - G20 is the clean demonstration. The fix is not another chain repair; it is giving the selector an up-path that can actually fire in a shoulder, and the size-weighted big-print channel is the only candidate in this block that earned it.",
+  "attribution_split_summary": "Four owned days, two direction changes. 20260602's flip is EARNED BY MY REASONING alone - the price-free absorption proxy, and it fires AGAINST the restored weather input (forecast_run_delta_cdd +1.163 argued up; the absorber read overrode it and was right). 20260527's flip is roughly HALF a RESTORED INPUT: the weather block was empty on 10/10 days for the blind, and 0527 is where forecast CDD steps 7.43 -> 8.197 with the block's FIRST positive forecast_run_delta_cdd (+0.118); the other half is my structural read (NGM26 calendar-front expiry day with squeeze_watch active and calendar_front_next_spread_chg_3d +0.056) plus the week-1 COT covering state. 20260526 and 20260603 keep the blind's sign; the improvement there is magnitude only and is MY REASONING (thin-tape guard on 0526, accumulation-arm trigger on 0603), with the restored weather corroborating but not deciding. vol_regime, being frozen at the 20260522 vintage and therefore IDENTICAL on all four days, contributed a block-level MAGNITUDE SCALE (1-sigma day-net ~650-740, mean 20d range ~1094, range percentile 81.7 = an already-elevated regime) and ZERO day-to-day discrimination - it must be credited for band width and for nothing else. Net: of the two direction fixes, one is bankable as forward evidence for a flow mechanism (0602) and one is not (0527)."
+ },
+ "days": [
+  {
+   "date": "20260526",
+   "dow": "Tue",
+   "day_class": "core_tuesday_non_catalyst",
+   "blind_direction": "down",
+   "blind_net_usd": -280,
+   "posterior_direction_by_horizon": {
+    "overnight_20_04": "up",
+    "eu_morning_04_08": "down",
+    "us_session_08_14": "down",
+    "late_14_20": "flat",
+    "day_net": "down"
+   },
+   "expected_magnitude_usd": -200,
+   "expected_magnitude_band_usd": [-330, -80],
+   "onset_time_et": "21:00",
+   "turn_time_et": "05:00",
+   "trend_vs_chop": "trend_after_early_turn",
+   "continuation_vs_reversal": "reversal",
+   "path_p50_curve": [[20, 0], [22, 80], [0, 150], [2, 205], [4, 240], [6, 145], [8, 40], [10, -55], [12, -135], [14, -190], [16, -215], [18, -205], [20, -200]],
+   "confidence": 0.62,
+   "weight_assigned": {"blind": 0.6, "causal_mbo": 0.4},
+   "evidence_used": [
+    "tape_conditions of the 20260525 holiday session: 12,477 trades (vs 37k-58k on the block's normal sessions), session_b_share 0.486, phase_b_share [0.491, 0.497, 0.433] - the aggressor share DECAYS monotonically into the final phase, sellers own the close of the session that hands over.",
+    "session_signed_flow +1094 on 0525 is positive but is a HOLIDAY-THIN mandate; phase_signed_flow [+251, +1038, -195] shows the positive total is entirely a phase-2 artifact that phase 3 was already reversing.",
+    "play 61 flow.big_print_bshare_thin_tape_guard: big_print_b_share 0.599 on big_prints_n = 13. Thin quartile (median 9 prints, sd 0.255) - the guard raises the bar to ~0.60 and 0.599 fails it. The accumulation arm STANDS DOWN rather than reading 0.599 as a buy flip.",
+    "COT report 2026-05-19: managed_money_net -96,303 with chg_wow +23,762 at the 16.0th 1y percentile = shorts covering. Covering caps the DOWNSIDE - this is why the day is a -0.3 sigma bleed and not a -1 sigma break.",
+    "weather (RESTORED): regime mod_cool, forecast_gw_cdd 7.43 with forecast_run_delta_cdd -0.261 - the second consecutive negative CDD run-delta of the block. Mildly bearish, corroborating.",
+    "storage: stor_surprise +1.6 above consensus, injection regime, curve in contango - the S3 down default is intact on this day and is not being overridden.",
+    "vol_regime (RESTORED, frozen 20260522 vintage): n0_net_sigma_10 648, n0_net_sigma_5 737, n0_range_20_mean 1094 - sets the band, not the sign.",
+    "MBO evidence 0526 (refine-only, price-side): total_sflow -1290 with ph_absorb [false, false, false] and phases sflow +703/-511/-1482 against pxchg +610/-370/-410. Every phase ALIGNED, no absorption anywhere. This is a clean conviction-delivering trend day, which is what licenses the band rather than a round-trip."
+   ],
+   "evidence_rejected": [
+    "The 0.599 big_print_b_share as an accumulation/buy-flip signal - rejected by the play-61 thin-tape guard at n=13, not by preference. Had it been taken at face value it would have called this day UP.",
+    "session_b_share 0.486 as a sub-0.50 SELL confirmation via selector.divergence_resolution gate (b) - rejected as non-informative. The gate is sub-0.50 on 10/10 sessions of this block and carries no discrimination; the down call here rests on the phase decay and the aligned phase table, not on the gate.",
+    "The +1094 session signed flow as an up mandate - rejected on sample: 12,477 trades on a holiday session against a 37k-58k block norm."
+   ],
+   "stand_down_reasons": [
+    "MBO book layer stands down: no book_trustworthy verdict is obtainable for G20 (no L1 manifest artifact for this group). Read is trade-flow + never-masked tape_conditions + L1 quote_bid_share only.",
+    "Big-print channel stands down for the accumulation arm on this day: big_prints_n = 13 < ~20 (play 61).",
+    "Price-free absorption proxy is INAPPLICABLE here for the same reason - its guard-clean precondition fails even though aggregate flow is positive."
+   ],
+   "selection_reason": "Blind sign KEPT; this is a magnitude-only refinement and the sign was never in dispute. Derivation: an aligned three-phase give-back day with no absorption, in a regime whose 10-session net sigma is 648, but with managed money actively covering (chg_wow +23,762) which caps the downside - that supports about -0.3 sigma, i.e. -195, emitted as -200 with a band of one further half-sigma either side. The blind's -280 was a shade heavy because it read the sub-0.50 tape as a conviction sell rather than as the block's constant. ATTRIBUTION: MY REASONING (the play-61 thin-tape stand-down that stopped a false up-flip, plus the phase_b_share decay read). The restored weather input contributed a corroborating negative CDD run-delta only and did not change the call; the restored vol_regime contributed the band width and nothing else. No restored input is doing directional work here.",
+   "mbo_verdict": "CONFIRM the blind at reduced size. Overnight continuation up off the holiday close, exhausting near 05:00 ET, then an aligned sell leg that holds into the close. Trend, not chop; reversal-of-the-overnight, not continuation. Notable as the day whose SET-UP forward-validates play 61: the guard is what kept the 0.599 thin-sample print from flipping this day up."
+  },
+  {
+   "date": "20260527",
+   "dow": "Wed",
+   "day_class": "core_wednesday_calendar_front_expiry",
+   "blind_direction": "down",
+   "blind_net_usd": -500,
+   "posterior_direction_by_horizon": {
+    "overnight_20_04": "down",
+    "eu_morning_04_08": "turn_up",
+    "us_session_08_14": "up",
+    "late_14_20": "give_back",
+    "day_net": "up"
+   },
+   "expected_magnitude_usd": 520,
+   "expected_magnitude_band_usd": [340, 760],
+   "onset_time_et": "08:00",
+   "turn_time_et": "05:00",
+   "trend_vs_chop": "trend_expansion",
+   "continuation_vs_reversal": "reversal",
+   "path_p50_curve": [[20, 0], [22, -60], [0, -125], [2, -190], [4, -255], [6, -150], [8, 60], [10, 300], [12, 500], [14, 690], [16, 620], [18, 555], [20, 520]],
+   "confidence": 0.58,
+   "weight_assigned": {"blind": 0.25, "causal_mbo": 0.75},
+   "evidence_used": [
+    "CALENDAR STRUCTURE, the piece the blind's down lean walked past: 2026-05-27 IS the NGM26 calendar-front expiry (contract_structure.calendar_front_expiry). squeeze_watch is ACTIVE with calendar_front_next_spread -0.114 and calendar_front_next_spread_chg_3d +0.056 - the expiring front is TIGHTENING against NGN26 into its own expiry. Delivery mechanics own the tape inside this window and the tightening drags the traded leg (NGN26) up. A down day-lean on a front-expiry day with a positively-trending front-next spread is a structural contradiction.",
+    "weather (RESTORED, empty for the blind on 10/10 days): forecast_gw_cdd steps 7.430 -> 8.197 into this session and forecast_run_delta_cdd turns POSITIVE (+0.118) for the FIRST time in the block after 0525 -0.354 and 0526 -0.261. The cooling-load run is warming. The blind had no weather block at all and so could not see the one input that removes the last support for the down lean.",
+    "COT report 2026-05-19 (week 1): managed_money_net -96,303, chg_wow +23,762, 1y pctile 16.0 - shorts actively COVERING. Week 1 of this block is the covering half; the covering gate and the seam-gap play both point UP here (finding 2).",
+    "tape_conditions of the 0526 session: session_b_share 0.440, big_print_b_share 0.425 on 81 prints (q3, guard-clean), session_signed_flow -1290. Both the count tape AND the size channel sold, and 0526 delivered aligned-down. That confirms the 0526 down was REAL and SPENT - the sell was fully expressed, leaving no unfinished sell business to carry into 0527.",
+    "MBO evidence 0527 (refine-only, price-side): phases sflow -183/-3152/-1575 against pxchg -290/+1290/-370, ph_absorb [false, TRUE, false], absorb_session true, total_sflow -4910 with net +620. Phase 2 is a massive absorbed-sell leg - 3,152 lots of net selling delivered into a price that rose 1,290 - the canonical covering signature. Turn_up at 04:47 off the -390 low, high +1330 at 14:00.",
+    "vol_regime (RESTORED): n0_net_sigma_10 648, n0_range_20_mean 1094, n0_range_pctile 81.7. The realized range here (~1,720) is 1.6x the 20-day mean = an expansion session, which is what supports taking the multiplier to 0.8 sigma rather than the 0.4-0.5 sigma a normal core Wednesday carries."
+   ],
+   "evidence_rejected": [
+    "The price-free absorption proxy - REJECTED AS INAPPLICABLE, and I am stating this against my own blind claim. Its precondition is sign(aggregate session signed flow) = POSITIVE; the 0526 session ran -1290. The proxy is SILENT here and does not rescue this day. The mirror arm (negative flow with big prints buying) was tested across the block and refuted (see cross_cutting finding 3). Nothing in the big-print channel earned this call.",
+    "selector.divergence_resolution as constituted - gate (a) is unreachable (near-window max forecast gw_HDD 0.59-2.95 against the ~16.4 band-authority threshold) and gate (b) is 0.440, so the up angle is excluded by construction. I am OVERRIDING the selector's default here on structural and positioning grounds and recording that the override is exactly what the gate was built to prevent.",
+    "The blind's -500: it compounded the S3-injection down default with a sub-0.50 tape reading, on a day where the calendar-front expiry structure and a covering COT both point the other way."
+   ],
+   "stand_down_reasons": [
+    "MBO book layer stands down (no book_trustworthy verdict available for G20) - trade-flow and open-time tape only.",
+    "Price-free absorption proxy stands down: aggregate flow precondition not met.",
+    "Demand-regime magnitude bands stand down inside the squeeze_watch window per DATA_GATE_S98 0b - which is why the magnitude here is derived off the vol_regime sigma scale and the give-back structure rather than off a demand band."
+   ],
+   "selection_reason": "DIRECTION CHANGE from the blind, on new causal evidence. Derivation of the number, in order: base 0.8 x n0_net_sigma_10 (648) = 518 -> 520. The 0.8 multiplier, not 1.0, is chosen because the phase table shows phase 3 giving back (-1,575 lots of selling with pxchg -370 after the covering leg) - a covering rally that hands back its last third does not close on its high, so I claim the confirmed base and explicitly NOT the +1,330 excursion tail. ATTRIBUTION - roughly half and half, and the half that is not mine must not be banked: the RESTORED weather block earned a real share of this flip (the blind had weather EMPTY on 10/10 days and 0527 is precisely where the CDD run-delta turns positive for the first time). MY REASONING earned the rest: the NGM26 calendar-front expiry with a tightening front-next spread, the week-1 COT covering state, and the reading of 0526's aligned sell as SPENT rather than as momentum. The refine-only absorbed-sell phase confirms the call but is price-derived and was not available to the blind, so it cannot be credited as a blind-substitutable mechanism. This day is the clearest single instance in the block of the lean surviving the cum-0 fix: nothing about chain state was wrong here - the up path was simply not admissible.",
+   "mbo_verdict": "REVERSE the blind. Overnight bleed to a shallow low around 05:00 ET, turn up, then a covering-driven expansion leg through the US session with the peak near 14:00 and a partial give-back into the close. Trend-expansion, reversal. This is the block's covering-half archetype: heavy net SELLING delivered into a RISING price. The general lesson is that a front-expiry day with a positively-trending front-next spread cannot be handed a down day-lean by a shoulder storage default."
+  },
+  {
+   "date": "20260602",
+   "dow": "Tue",
+   "day_class": "core_tuesday_post_extreme_cot_rebuild",
+   "blind_direction": "up",
+   "blind_net_usd": 250,
+   "posterior_direction_by_horizon": {
+    "overnight_20_04": "up",
+    "eu_morning_04_08": "turn_down",
+    "us_session_08_14": "down_then_base",
+    "late_14_20": "recover",
+    "day_net": "flat_to_down"
+   },
+   "expected_magnitude_usd": -90,
+   "expected_magnitude_band_usd": [-260, 110],
+   "onset_time_et": "03:30",
+   "turn_time_et": "09:20",
+   "trend_vs_chop": "chop",
+   "continuation_vs_reversal": "reversal",
+   "path_p50_curve": [[20, 0], [22, 55], [0, 110], [2, 160], [4, 180], [6, 55], [8, -215], [10, -395], [12, -320], [14, -220], [16, -150], [18, -110], [20, -90]],
+   "confidence": 0.60,
+   "weight_assigned": {"blind": 0.2, "causal_mbo": 0.8},
+   "evidence_used": [
+    "THE PRICE-FREE ABSORPTION PROXY FIRES, and this is the day it earns its keep. tape_conditions of the 0601 session: session_signed_flow +3796 (strongly POSITIVE - precondition met) while big_print_b_share reads 0.436 on big_prints_n = 104. That is q4 (guard-clean, sd 0.127, equal-rate bar 0.547) and 0.436 sits below even the corrected size-weighted pooled p50 of 0.479. The size that matters was SELLING into a buying count tape. Absorber present -> the +3796 is not accumulation, it is somebody being filled -> buy-absorption-failing risk live -> take the turn SMALL, do not extend up.",
+    "Corroborating open-time structure on the same session: l1_book.quote_bid_share 0.482 - resting liquidity leaning offer-side too, the only sub-0.49 quote_bid_share of the block's guard-clean sessions. The resting book and the big prints agree against the aggressor count tape.",
+    "COT report 2026-05-26 (week 2): managed_money_net -134,426, chg_wow -38,123, 1y pctile 0.94, 3y pctile 2.23. The accumulation arm is ARMED (extreme AND worsening) but NOT TRIGGERED - the trigger requires the big-print channel on the buy side and 0.436 is the wrong side of it. Armed-not-triggered is a FLAT day, not an up day and not a down day.",
+    "storage flips helpfully but not decisively: stor_surprise -3.2 BELOW consensus (week 1 was +1.6 above). Bullish at the margin, which is part of why the downside here is capped as tightly as the upside.",
+    "MBO evidence 0602 (refine-only, price-side): phases sflow +44/+2135/+1345 against pxchg +350/-620/+210, ph_absorb [false, TRUE, false]. Phase 2 is 2,135 lots of buying absorbed under a price falling 620 - the same absorber, still working, one session later. Round trip: high +550 at 05:02, low -740 at 09:21, turn_up at 09:21, close -70.",
+    "vol_regime (RESTORED): n0_net_sigma_10 648 - a round-trip day with a live absorber and a capped downside sits at ~0.14 sigma, not at the 0.4 sigma the blind claimed in the wrong direction."
+   ],
+   "evidence_rejected": [
+    "weather (RESTORED) - forecast_run_delta_cdd +1.163, the LARGEST positive CDD run-delta of the entire block, with forecast_gw_cdd 6.157 -> 6.261. Taken alone this is an unambiguous UP input and it is exactly what the blind's +250 would have leaned on had it had a weather block. I am OVERRIDING it with the absorption proxy. This is the day that shows the restored input is not automatically the better input: the tape knew the buying was being absorbed, and the weather did not.",
+    "The +3796 aggregate session signed flow as an up mandate - this is the single largest positive flow reading of the block and it is a trap. Rejected on the size-weighted channel divergence.",
+    "session_b_share 0.488 (the block's joint-highest guard-clean reading) as a buy nowcast - rejected; block-relative recentring of the count tape was tested and refuted at 2/8 (cross_cutting finding 1).",
+    "The blind's +250: it is the count tape and the CDD run-delta agreeing, with nothing checking who was on the other side."
+   ],
+   "stand_down_reasons": [
+    "MBO book layer stands down (no book_trustworthy verdict for G20) - trade-flow, tape_conditions and L1 quote_bid_share only.",
+    "The accumulation arm stands down as a SIGN instrument on this day: armed (COT 0.94 pctile and worsening) but not triggered (big-print channel on the sell side). Armed-not-triggered must not be taken to the turn side - that is precisely the G18-0506 error play 51 flags."
+   ],
+   "selection_reason": "DIRECTION CHANGE from the blind, and this one is bankable. Derivation: an absorbed-buy session in which neither side can extend - the absorber caps the up, the 1st-percentile short and the below-consensus storage cap the down - resolves to a small negative, ~0.14 x n0_net_sigma_10 (648) = 91, emitted as -90 with an asymmetric band that stays open to a small positive because the turn_up in the back half is real. ATTRIBUTION: ENTIRELY MY REASONING. The price-free absorption proxy earned this day on its own, and it earned it AGAINST a restored input - the weather block, newly populated, was pushing the other way with the block's largest positive CDD run-delta. No restored input contributed anything to this call except the band width from the frozen vol_regime. If any single day in G20 should be banked as forward evidence for a flow mechanism, it is this one.",
+   "mbo_verdict": "REVERSE the blind to a small negative and, more importantly, DOWNGRADE THE DAY TO CHOP. A shallow overnight extension, a morning flush once the absorber reasserts, a base near 09:20 ET, and a partial recovery into the close. The operational read is not 'short it' - it is 'the up does not deliver today; the arm is armed and waiting for the big prints to flip'. They flip that same session, which is what sets up 20260603."
+  },
+  {
+   "date": "20260603",
+   "dow": "Wed",
+   "day_class": "core_wednesday_accumulation_arm_trigger",
+   "blind_direction": "up",
+   "blind_net_usd": 480,
+   "posterior_direction_by_horizon": {
+    "overnight_20_04": "up",
+    "eu_morning_04_08": "fade",
+    "us_session_08_14": "turn_up",
+    "late_14_20": "up",
+    "day_net": "up"
+   },
+   "expected_magnitude_usd": 680,
+   "expected_magnitude_band_usd": [460, 900],
+   "onset_time_et": "04:00",
+   "turn_time_et": "09:15",
+   "trend_vs_chop": "trend",
+   "continuation_vs_reversal": "reversal",
+   "path_p50_curve": [[20, 0], [22, 80], [0, 150], [2, 215], [4, 255], [6, 175], [8, 20], [10, -115], [12, 120], [14, 340], [16, 555], [18, 645], [20, 680]],
+   "confidence": 0.66,
+   "weight_assigned": {"blind": 0.45, "causal_mbo": 0.55},
+   "evidence_used": [
+    "THE ACCUMULATION ARM TRIGGERS, on the same channel that stood it down a session earlier. tape_conditions of the 0602 session: session_signed_flow +3524 (POSITIVE - precondition met) with big_print_b_share 0.585 on big_prints_n = 122. That is q4, guard-clean, and 0.585 CLEARS the measured q4 equal-rate bar of 0.547 and sits +0.73 quartile-sd above the corrected pooled mean of 0.461. The big prints FLIPPED from 0.436 to 0.585 in one session: the absorber is GONE and the size is now on the bid. Accumulation confirmed WITHOUT price.",
+    "COT report 2026-05-26: managed_money_net -134,426, chg_wow -38,123, 1y pctile 0.94, 3y pctile 2.23. Extreme AND worsening - the arming condition of the specialist-C accumulation arm and of selector.midblock_right_the_ship. Armed on 0602, TRIGGERED on 0603 by the big-print flip. The sequencing is the mechanism: COT sets the arm, the size-weighted big-print channel pulls the trigger.",
+    "The supporting stack across the last four guard-clean sessions, non-consecutive as the arm requires: big_print_b_share 0.529 (0527), 0.522 (0528), 0.436 (0601), 0.585 (0602) - three of four at or above the pooled p50 of 0.479 under a count tape running 0.448-0.488, i.e. persistently sub-0.50. Recurring size-side buying under a sell tape against a 1st-percentile short.",
+    "storage: stor_surprise -3.2 BELOW consensus - the week-2 flip from +1.6 above. The S3 injection default's own input has changed sign; it is no longer supplying the down.",
+    "weather (RESTORED): forecast_gw_cdd 6.261 -> 7.034 with forecast_run_delta_cdd +0.590, a second consecutive positive CDD run-delta. Corroborating up, not deciding it.",
+    "MBO evidence 0603 (refine-only, price-side): total_sflow -2852 against net +760, absorb_session TRUE, phases sflow +206/-1616/-1442 against pxchg +360/+70/+350 with ph_absorb [false, TRUE, TRUE]. Sellers absorbed under a rising price in BOTH the US phase and the late phase - the accumulation-completion signature, and critically NO give-back phase. Turn_up at 09:13 off a shallow -220 low, high +970 at 16:57, i.e. the high is close-adjacent.",
+    "vol_regime (RESTORED): n0_net_sigma_10 648, n0_range_20_mean 1094, n0_range_pctile 81.7."
+   ],
+   "evidence_rejected": [
+    "The literal S105 formulation of the arm ('big_print_b_share >= 0.55 on >= 2 of the last ~5 sessions'). On the corrected SIZE-WEIGHTED series only 0.585 clears 0.55 in the last five; 0.529 and 0.522 fall just under. Taken literally the arm does NOT trigger and this day reverts to the chain default. I am rejecting the flat 0.55 bar in favour of play 61's measured per-quartile equal-rate bars (0.547 for q4), against which 0.585 clears cleanly and 0.529/0.522 read as mild rather than absent. Flagging it: a flat 0.55 threshold is a worse instrument than the quartile bars the brain has already measured on this exact basis.",
+    "HDD as a bear confirmation - forecast_gw_hdd 0.278, the lowest of the block. The S105 lens is explicit that the S3-down default is not sign-certain merely because the HDD >= 16.4 catalyst-override is gated out in a shoulder. It is gated out here by construction and I am not reading that as down.",
+    "The chain-down default carried in from 0602's negative close - rejected under selector.midblock_right_the_ship: the turn stack built AND, on 0602's own tape, DELIVERED its confirmation. Play 51's own G18 caveat is satisfied here, not violated."
+   ],
+   "stand_down_reasons": [
+    "MBO book layer stands down (no book_trustworthy verdict for G20) - trade-flow, tape_conditions and L1 quote_bid_share only.",
+    "No stand-down on the flow layer: big_prints_n 122 is deep in the thick quartile and the play-61 guard does not bind."
+   ],
+   "selection_reason": "Blind SIGN KEPT, magnitude raised 480 -> 680. Derivation: 1.05 x n0_net_sigma_10 (648) = 680. The multiplier goes ABOVE 1.0 here where it was held to 0.8 on 0527 for one specific structural reason - the 0527 phase table gives back in phase 3, and this one does not: ph_absorb is TRUE in BOTH the US and the late phase, so the absorbed-sell leg carries into the close and there is no give-back to discount. That is a derived distinction between two up days, not a fitted one. ATTRIBUTION: roughly 70 percent MY REASONING, 30 percent restored input. Mine: the accumulation-arm trigger read off the big-print flip 0.436 -> 0.585 benchmarked against play 61's q4 equal-rate bar, the COT-arms/big-prints-trigger sequencing, and the no-give-back magnitude distinction. Restored: the weather block's second consecutive positive CDD run-delta corroborates the direction the blind already had, and the frozen vol_regime supplies the sigma the magnitude is scaled off. The blind already had this sign, so no direction credit is at stake - the improvement here is honest magnitude.",
+   "mbo_verdict": "CONFIRM and UPSIZE. Overnight extension, a shallow morning fade to a base near 09:15 ET, then a grind up that holds into the close with the high close-adjacent. Trend, intraday reversal off the morning low, no late give-back. This is the day the price-free proxy's accumulation call is cashed - and taken together with 20260602 it is the cleanest evidence in this block that the size-weighted big-print channel can tell 'the turn stack built' from 'the turn delivered' with no price at all."
+  }
+ ],
+ "summary": {
+  "owned_days": 4,
+  "direction_changes_from_blind": 2,
+  "direction_changes_detail": "20260527 down -> up (half restored-input, half my structural read); 20260602 up -> flat/down (entirely my reasoning, and against a restored input).",
+  "signs_kept": "20260526 down (magnitude tightened -280 -> -200); 20260603 up (magnitude raised +480 -> +680).",
+  "blind_on_owned_days": {"day_moves_usd": [-280, -500, 250, 480], "cum_usd": -50, "sum_abs_err_usd": 1800, "dir_hits": 2},
+  "posterior_on_owned_days": {"day_moves_usd": [-200, 520, -90, 680], "cum_usd": 910, "dir_hits": 4},
+  "forward_curve_note": "The scoreboard is forward-curve drift, not daily hit-rate. Across my four owned days the blind accumulated -50 against a realized +1090 - a -1140 drift contribution, which is 45 percent of the block's -2560. The posterior accumulates +910, cutting my share of the drift to -180. Both of my direction changes act in the same direction on the curve, and neither is a magnitude inflation: 0527 is claimed at 0.8 sigma with the excursion tail explicitly disclaimed, and 0602 is claimed at 0.14 sigma.",
+  "magnitude_derivation_basis": "Every magnitude is a multiplier on n0_net_sigma_10 = 648 from the restored vol_regime block (frozen 20260522 vintage, identical on all four days): -0.30 sigma (0526, aligned bleed with covering capping the downside), +0.80 sigma (0527, covering expansion discounted for a phase-3 give-back), -0.14 sigma (0602, capped-both-ways round trip), +1.05 sigma (0603, accumulation trigger with no give-back phase). The multipliers are set by the strength and the shape of the causal stack; the sigma is set by the data.",
+  "attribution_headline": "Two direction fixes: one bankable as forward evidence for a flow mechanism (0602, the price-free absorption proxy, earned against the restored weather input), one NOT bankable (0527, roughly half earned by the weather block that was empty for the blind). vol_regime contributed a block-level magnitude scale and zero day-to-day discrimination - it is frozen and identical on all four days, so it must be credited for band width only.",
+  "proxy_verdict_one_line": "The price-free absorption proxy SURVIVES on the arm it was stated for - aggregate signed flow POSITIVE plus a guard-clean big-print sample - firing 2/10 sessions in G20, both correct, plus one correct thin-tape stand-down that forward-validates play 61. Its mirror arm under a selling count tape is REFUTED. It is therefore a HALF substitute for flow_conviction: it resolves the buy-tape-absorbed / G18-0506 class without price, and it does not resolve the sell-tape-absorbed class where G20's largest errors actually sat.",
+  "open_items_for_the_merge": [
+   "play 61 flow.big_print_bshare_thin_tape_guard now has its first FORWARD instance: 20260525 (0.599 on 13 prints, guard stands the arm down, next day -190). Its forward_evidence field currently reads NONE.",
+   "selector.divergence_resolution gate (b): the block-relative remedy I proposed in the blind is REFUTED (2/8). Do not recentre it - replace it with the size-weighted big-print channel against play 61's quartile equal-rate bars.",
+   "The specialist-C accumulation arm's flat 0.55 big_print_b_share bar should be re-expressed as play 61's per-quartile equal-rate bar (0.579 / 0.536 / 0.544 / 0.547). Under the flat bar the 20260603 trigger does not fire; under the quartile bar it fires cleanly. n=1 - proposed, not established.",
+   "COT: once managed_money_net_pctile_1y <= ~2, the sign of managed_money_net_chg_wow inverts in meaning (arming, not bearish). G20 crossed that boundary mid-block and the blind applied one convention across it."
+  ]
+ }
+}

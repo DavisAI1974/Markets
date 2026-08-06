@@ -1,0 +1,166 @@
+{
+  "specialist": "C",
+  "lens": "core intraday tape (onset/continuation-vs-reversal, signed-flow divergence, exhaustion, origin-shelf and give-back turns)",
+  "group": 15,
+  "brain_version": "s102.1 (blind) -> posterior update, execution=SHADOW",
+  "days_owned": ["20260317", "20260318", "20260324", "20260325"],
+  "doctrine_note": "Posterior UPDATE of the immutable blind (forecasts/grp15.json). The blind stays the core predictor; I adjust ONLY on material causal evidence and apply the doctrine's improved-vs-merely-reacted test honestly per day. Weights are mine.",
+  "cross_cutting_mbo_finding": {
+    "headline": "The new MBO build's 30-min signed-flow (imb_flow) is TOO NOISY to be a usable tick-by-tick direction caller - it flips sign on nearly every completed-event boundary across all four of my days (verified in g15_mbo_feature_states.jsonl). Trusted tick-by-tick it HURTS; a naive flow-follower would have been whipsawed and, on 0318, sold straight into the 02:24 ET reversal low.",
+    "what_is_usable": "Only the COARSER MBO grains carry signal: (1) day/phase ABSORPTION (ph_absorb + phase sflow-vs-pxchg divergence), (2) turn detection (onset_dir / turn_kind / turn_et), (3) imb_LEVEL (book/queue imbalance) around turns, which was more persistent than imb_flow (bid-level accumulation held positive through the 0318 overnight floor while imb_flow was flipping). This matches the standing dipole discipline: signed flow is not a direct direction predictor; the static level/absorption read is the detector.",
+    "signed_flow_can_invert_vs_price": "0324 day-level total_sflow = +1355 (net BUY) yet price closed DOWN -350 (absorb_session true) - a direct counterexample to using signed flow directionally. The correct down read came from the D-1 trade conditions (0323 big_print_b_share 0.373 heavy sell) the blind already consumes, NOT from MBO flow.",
+    "net_verdict": "The MBO stream mostly CORROBORATES, at the phase/absorption grain, evidence the blind already had at D-1 trade grain; it adds little independent decision-time directional lift and actively HURTS if used tick-by-tick. Its genuine value is turn/absorption CONFIRMATION, not anticipation."
+  },
+  "days": [
+    {
+      "date": "20260317",
+      "dow": "Tue",
+      "day_class": "tue_thu_core",
+      "blind_direction": "up (small counter)",
+      "blind_net_usd": 150,
+      "posterior_direction_by_horizon": {
+        "overnight_to_am": "down probe (morning fade of the peak-cold pop)",
+        "midday_to_close": "flat/whipsaw around the open - hold"
+      },
+      "expected_magnitude_usd": 50,
+      "expected_magnitude_band_usd": [-100, 200],
+      "onset_time_et": "2026-03-17 05:29 (down probe, thr 252)",
+      "turn_time_et": "2026-03-17 08:30 (turn_down - the morning pop to +630 exc gives back)",
+      "trend_vs_chop": "chop (whipsaw hold day)",
+      "continuation_vs_reversal": "neither - a mature-swing HOLD (R4 no-consecutive-extension after 0316's fresh cum-low)",
+      "path_p50_curve": [[20, 0], [0, -80], [4, -150], [6, -120], [8, 200], [10, 120], [12, 60], [14, 40], [20, 50]],
+      "confidence": "moderate",
+      "weight_assigned": {"blind": 0.85, "causal_mbo": 0.15},
+      "evidence_used": [
+        "MBO phase-2 MASSIVE absorption: sflow -2628 while price +210, ph_absorb=true - the block's largest sell-absorption phase; buyers absorbing the flush on the peak-cold day = no capitulation, consistent with a HOLD not an extension",
+        "turn_down at 08:30 ET gave back the +630 morning pop -> nets flat; close 3.033 vs open 3.034 (net -10)",
+        "D-1 (0316) trade tilt moderate sell (bigB 0.409) - drift pausing, not climaxing (blind read confirmed)"
+      ],
+      "evidence_rejected": [
+        "30-min imb_flow (flips -1.30/+0.87/-0.42/+0.86 etc. through the session) - unusable tick-by-tick, ignored for direction",
+        "large negative total_sflow (-2886) as a DOWN signal - it was absorbed, price held; using it directionally would be wrong"
+      ],
+      "stand_down_reasons": [
+        "book/flow flips too frequently at the feature grain to size intraday timing beyond the day-level hold read"
+      ],
+      "mbo_verdict": "HELP (mild). The phase-2 absorption + the 08:30 give-back of the morning pop CONFIRM the blind's hold-day thesis and argue the +150 is a touch high -> nudge toward pure hold (~+50). No new direction; MBO used only as confirmation. Tick flow would have HURT.",
+      "selection_reason": "core-tape specialist: mature-swing HOLD interpretation of the same absorption feature; keep the blind, shade to flat."
+    },
+    {
+      "date": "20260318",
+      "dow": "Wed",
+      "day_class": "tue_thu_core",
+      "blind_direction": "down (post-hold chain resume)",
+      "blind_net_usd": -400,
+      "posterior_direction_by_horizon": {
+        "overnight": "DOWN probe / stop-run below the origin shelf into ~02:24 ET (false breakdown to ~2.92)",
+        "am_to_close": "REVERSAL UP - give-back-exhaustion turn, close at/near the high"
+      },
+      "expected_magnitude_usd": 1500,
+      "expected_magnitude_band_usd": [1200, 1900],
+      "onset_time_et": "2026-03-17 23:50 (down, thr 796)",
+      "turn_time_et": "2026-03-18 02:24 (turn_up, turn_mag 3000 - the overnight low, a stop-run-and-reverse below the 0310 shelf)",
+      "trend_vs_chop": "trend (post-turn, sustained up all session)",
+      "continuation_vs_reversal": "REVERSAL up (this is THE turn the blind missed)",
+      "path_p50_curve": [[20, 0], [22, -350], [0, -650], [2, -900], [4, -300], [6, 200], [8, 600], [10, 1000], [12, 1300], [14, 1550], [16, 1650], [18, 1500], [20, 1500]],
+      "confidence": "moderate (direction high, magnitude-tail reactive)",
+      "weight_assigned": {"blind": 0.45, "causal_mbo_and_d1_trade": 0.55},
+      "evidence_used": [
+        "ANTICIPATORY (decision-time-legit at the 0318 open): 0317 D-1 big-print-BUY absorption divergence (bigB 0.643 vs session 0.413) - institutions bought the flush; and the 0317 MBO phase-2 absorption (-2628 sflow / +210 px) is the SAME absorption seen on the tape one day early -> abandon-the-short signal was available at the open",
+        "ORIGIN-SHELF floor: walk cum ~-1050 puts price ~3.03 = the 0310 basing shelf 3.056 = full retrace of the 0311 shot -> level.giveback_origin_shelf floor at decision time",
+        "STOP-RUN CONFIRM (partly reactive): overnight low pierced to ~2.92 (low_exc -1100) BELOW the shelf then snapped back - a liquidity grab; MBO ph2 sflow -896 while px +1000 (ph_absorb=true) = the absorption that recovered it",
+        "imb_LEVEL bid-side accumulation held POSITIVE through the overnight floor (0.206 -> 0.40 -> 0.407) with an imb_flow +0.788 buy burst at 01:34 just before the 02:24 low = far-side/bid recruitment forming the floor (the usable MBO grain here, not imb_flow)",
+        "live peak cold still under desks' feet that session (warm wall is FORWARD at D+3..D+5, not present)"
+      ],
+      "evidence_rejected": [
+        "the blind's forward headroom-void warm-cut sizing that produced -400 - it mis-weighted forward cuts and missed that TODAY was the last live-cold day and the shelf was a floor",
+        "30-min imb_flow as a live direction caller - it flipped every emission (-0.319/+0.369/-0.082/+0.788/-0.169...) and would have kept a tick-follower short into the 02:24 reversal low"
+      ],
+      "stand_down_reasons": [
+        "the FULL magnitude (+1900) was only knowable REACTIVELY after the 02:24 stop-run-and-reverse; at the open the decision-time-legit action was ABANDON THE SHORT and flag reversal risk, so I hold p50 at +1500 (below the actual) and keep confidence moderate rather than claim the tail was foreseeable"
+      ],
+      "mbo_verdict": "MIXED, net HELP at the coarse grain. HELPS: phase-2 absorption + overnight bid-LEVEL recruitment + the stop-run-and-reverse structure confirm the give-back-exhaustion reversal; combined with the D-1 buy-absorption they justify flipping the blind from -400 to UP. HURTS: the 30-min imb_flow is pure noise and, taken tick-by-tick, would have sold the low. HONEST diagnosis of detectability: the turn was NOT cleanly pre-signalled by MBO flow; it was an overnight stop-run at 02:24 ET. The genuinely anticipatory tell was the D-1 TRADE absorption (which the open-conditions blind already had), not the MBO tape. So the refine IMPROVES the direction (real) but the magnitude precision is partly REACTION. The MBO's independent contribution is confirmation, not anticipation.",
+      "selection_reason": "core-tape specialist owns the turn: give-back-exhaustion + origin-shelf floor + absorption divergence = reversal up; posterior flips direction but honestly brackets the magnitude and confidence."
+    },
+    {
+      "date": "20260324",
+      "dow": "Tue",
+      "day_class": "tue_thu_core",
+      "blind_direction": "down (chain extension day 2, reduced size)",
+      "blind_net_usd": -450,
+      "posterior_direction_by_horizon": {
+        "overnight": "up pop (buy flow) into 21:49 ET high, then exhausts",
+        "am_to_close": "DOWN - young-extension resume, give-back into the close"
+      },
+      "expected_magnitude_usd": -400,
+      "expected_magnitude_band_usd": [-550, -250],
+      "onset_time_et": "2026-03-23 20:44 (up, thr 250)",
+      "turn_time_et": "2026-03-23 21:49 (turn_down, turn_mag 830 - the overnight buy-pop is absorbed and rejected)",
+      "trend_vs_chop": "trend-down with an overnight false pop (absorb_session=true)",
+      "continuation_vs_reversal": "continuation down (extension day 2, size-capped by the 2-extension alternation ceiling)",
+      "path_p50_curve": [[20, 0], [22, 150], [0, 100], [2, -50], [6, -250], [10, -320], [12, -420], [14, -520], [16, -450], [20, -400]],
+      "confidence": "moderate-high",
+      "weight_assigned": {"blind": 0.80, "causal_mbo": 0.20},
+      "evidence_used": [
+        "D-1 (0323) trade conditions: the walk's heaviest sell session (52.4k trades, bigB 0.373) -> chain confirmed delivering DOWN (the blind's basis, kept)",
+        "MBO turn_down at 21:49 ET: the overnight buy-pop (ph1 sflow +737 / px +190) is REJECTED and price grinds down the rest of the session = young-extension resume, give-back-into-close shape confirmed",
+        "absorb_session=true with net positive signed flow but price down = distribution on the bid; sellers control price"
+      ],
+      "evidence_rejected": [
+        "day-level total_sflow +1355 (net BUY) as an UP signal - price closed DOWN -350; using MBO signed flow directionally here is FLATLY WRONG (the clearest counterexample of my four days)",
+        "30-min imb_flow (flips +0.87/-0.35/+0.28/-0.32...) - unusable"
+      ],
+      "stand_down_reasons": [
+        "MBO signed flow inverts vs price this day; disable flow-based direction and defer to the D-1 trade tilt + chain context"
+      ],
+      "mbo_verdict": "HELP on SHAPE, HURT on FLOW-direction. The turn_down + absorb_session confirm the overnight pop is absorbed and the day resumes down (blind's young-extension shape). But the day-level POSITIVE signed flow, if trusted, points the wrong way - a live demonstration that the new build hurts when used directionally. Net: KEEP the blind, tiny nudge -450 -> -400 (actual -350). Confirmation only.",
+      "selection_reason": "core-tape specialist: continuation-down at capped size; MBO used for absorption/turn shape, flow rejected for direction."
+    },
+    {
+      "date": "20260325",
+      "dow": "Wed",
+      "day_class": "tue_thu_core (bidweek opens; pre-print, pre-opex)",
+      "blind_direction": "up (in-band basing bounce)",
+      "blind_net_usd": 250,
+      "posterior_direction_by_horizon": {
+        "overnight": "final down-flush to the cum-low into ~20:38 ET, then TURN UP at the session open",
+        "am_to_close": "UP - aligned buy-driven basing bounce, catalysts ahead so it builds (not a one-day snap)"
+      },
+      "expected_magnitude_usd": 560,
+      "expected_magnitude_band_usd": [450, 660],
+      "onset_time_et": "2026-03-24 20:38 (down, thr 344 - the final flush)",
+      "turn_time_et": "2026-03-24 20:38 (turn_up, turn_mag 1010 - the bounce starts right at the session open off the cum-low)",
+      "trend_vs_chop": "trend-up (aligned buy push)",
+      "continuation_vs_reversal": "REVERSAL up - week-2 give-back-exhaustion turn-bounce off the cum-low",
+      "path_p50_curve": [[20, 0], [22, -230], [0, -200], [4, -150], [6, 0], [8, -50], [10, 150], [12, 480], [14, 520], [16, 560], [18, 620], [20, 560]],
+      "confidence": "moderate-good (my cleanest MBO-helps day)",
+      "weight_assigned": {"blind": 0.55, "causal_mbo": 0.45},
+      "evidence_used": [
+        "D-1 (0324) EXTREME big-print SELL climax (bigB 0.174, the block's most extreme sell tail) at the cum-low (-2400) = capitulation/absorption at the exhaustion boundary -> counter-bounce next session",
+        "MBO turn_up at 20:38 ET (session open) off the overnight low = the bounce starts immediately; then phase-2 ALIGNED buy push (sflow +971 while px +750) - here signed flow AGREES with price, the one day MBO flow is genuinely usable directionally",
+        "day-level total_sflow +1489 (buy) ALIGNED with the up close (contrast 0324 where it inverted) - a real buy-driven bounce, not absorption",
+        "counter-catalysts AHEAD not realized (draw print 0326, expiry 0327, cold event D+1/D+2, nuclear ramp-max) -> LOWER turn band / multi-session build, NOT the one-day upper-band snap 0318 got from its LIVE cold"
+      ],
+      "evidence_rejected": [
+        "the blind's +250 in-band-bounce sizing - it under-weighted the D-1 sell-climax + the aligned buy turn; the bounce is a genuine reversal worth ~+500..+650",
+        "the still-flipping 30-min imb_flow for timing precision (kept only the phase/turn read)"
+      ],
+      "stand_down_reasons": [
+        "no flip is ARMED (C1 not fired) and a bounce is never front-run into a chain - so I cap at the lower turn band ~+560, not a chain-birth-scale move"
+      ],
+      "mbo_verdict": "HELP (cleanest of my four). turn_up at the session open + phase-2 aligned buy push + day-level signed flow aligned with price all confirm a real buy-driven basing bounce; combined with the D-1 sell-climax they justify sizing UP from the blind's +250 to ~+560 (actual +660). This is the day MBO flow ALIGNED with price and added real value - notably the exception that proves the rule, since on my other three days the flow was noise or inverted.",
+      "selection_reason": "core-tape specialist: sell-climax exhaustion -> aligned reversal bounce, lower turn band because catalysts are ahead; posterior sizes up with moderate-good confidence."
+    }
+  ],
+  "summary": {
+    "per_day": {
+      "20260317": "KEEP blind, shade to hold ~+50 (blind +150, actual -10). MBO phase-2 absorption + 08:30 give-back confirm the whipsaw hold. MBO HELP (mild).",
+      "20260318": "FLIP blind -400 -> posterior UP p50 ~+1500 (actual +1900). Give-back-exhaustion stop-run reversal off the origin shelf; anticipatory tell was D-1 buy-absorption (open-conditions), the 02:24 turn itself + full magnitude were reactive. MBO MIXED, net HELP at coarse grain, HURT tick-by-tick.",
+      "20260324": "KEEP blind, nudge -450 -> -400 (actual -350). Continuation-down; MBO signed flow INVERTED (+1355 flow, price down) - would have hurt directionally. MBO HELP on shape, HURT on flow.",
+      "20260325": "SIZE UP blind +250 -> +560 (actual +660). Buy-driven basing bounce; MBO flow ALIGNED with price + turn_up at open. MBO HELP (cleanest)."
+    },
+    "the_0318_turn_diagnosis": "Honest per the doctrine's improved-vs-merely-reacted test: the reversal was DETECTABLE-TO-ABANDON-THE-SHORT at the open (D-1 0317 big-print-buy absorption + the 0317 MBO phase-2 absorption + the known 0310 origin shelf as a floor), but the actual turn was an overnight STOP-RUN below the shelf at 02:24 ET followed by absorption - the precise timing and the +1900 magnitude were only knowable REACTIVELY. So the refine genuinely IMPROVES the DIRECTION (real edge: do not press the -400 short, flip to up) but the magnitude precision is partly reaction, which is why my p50 sits at +1500 with moderate confidence, not +1900 with high. The MBO tape's contribution was CONFIRMATION (phase absorption, bid-level recruitment), not anticipation; the anticipatory signal lived in the D-1 trades the open-conditions blind already saw.",
+    "mbo_build_working_against_us": "YES, materially, if misused. The 30-min imb_flow flips sign on nearly every completed-event boundary on all four days (documented from g15_mbo_feature_states.jsonl) - it is NOT a usable tick-by-tick direction caller and would whipsaw. On 0324 the DAY-level signed flow even inverts vs price (+1355 buy / -350 close). The build is safe and additive ONLY at the coarse grains: phase absorption (ph_absorb), turn detection (onset/turn_kind/turn_et), and imb_LEVEL around turns. Recommend the coordinator gate MBO flow OUT of intraday direction and use it strictly for turn/absorption confirmation, deferring direction to the D-1 trade conditions - which is what actually carried all four of my calls.",
+    "weighting_philosophy": "Big posterior moves only where causal evidence is material AND at least partly decision-time-legit: a large but honestly-bracketed flip on 0318 (weight 0.55, magnitude held below actual), a clean size-up on 0325 (weight 0.45, aligned flow). Small confirm-only nudges on the two continuation/hold days (0317, 0324; weight 0.15-0.20). Per-event, no averaging."
+  }
+}

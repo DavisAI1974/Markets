@@ -1,0 +1,279 @@
+{
+  "specialist": "C",
+  "lens": "CORE INTRADAY TAPE - onset, continuation-vs-reversal, per-phase signed-flow-vs-price conviction, absorption/covering, origin-shelf/give-back turns",
+  "group": "g19",
+  "brain_version": "s103.1",
+  "round": 2,
+  "days_owned": ["20260512", "20260513", "20260519"],
+  "doctrine_note": "ROUND 2 = the HE24->HE1 coordination pass. Starting point is my ROUND-1 POSTERIOR (forecasts/grp19_mbo_specialist_C.json), not a blank page. Round 1 was already 3/3 direction on my owned set; per the shared directive's Round-2 protocol I change MAGNITUDE and TIMING only, off the incoming boundary STATE, and change ZERO directions. The single instrument round 2 adds that round 1 did not have is the prior session's EXIT CONDITION - last-hour price-direction vs last-hour signed flow (boundary.prior_close_flow_direction_disagreement), close-location-in-range (daytype.friday_exit_close_location_over_flow_shape, generalized to any boundary), and the inherited chain polarity/age/cum_from_anchor (boundary.chain_label_must_track_realized_cum). My round-1 magnitudes carried a CONSTANT 'honest under-claim' shave applied with no reference to the exit state; round 2 re-derives that shave per boundary, which is what tightens the numbers. FAIRNESS: brain s103.1 contains seven plays merged from the post-mortem of these exact ten days. I have therefore restricted the brain's role here to the ORDERING of tells that were already in my round-1 read (flow_conviction sign gate, absorption-is-reversal, COT-WoW gate, extension-distribution flip) and taken every round-2 number from measurable boundary state plus the replayed phase table. No direction is sourced from 'the brain now says X'.",
+  "cross_cutting_mbo_finding": "The HE24 exit condition is a TIMING-AND-SIZING instrument in a covering rally, not a direction instrument - and it is the thing that tells you whether a shave is earned or is a self-imposed cap. My three boundaries are three distinct exit classes and each produced a distinct next-session SHAPE. (a) FLAT-PRICE / SELL-FLOW exit (0511 into 0512: last_hour_dir 0, last_hour_sflow -1, close 0.92 off low): the covering bid stopped lifting while sell flow persisted - the close-on-high buys a SMALL overnight extension stub, then the withdrawn bid lets the aligned sell deliver in full. That removes the open-side covering floor I priced into round 1 and is worth +100 of magnitude. (b) ALIGNED-DOWN exit (0512 into 0513: dir -1, flow -1, close 0.16 off low, low at 13:07 = no capitulation flush): the down side is still being delivered at the bell, so the covering resume cannot start at the open - it needs an early-morning base first (realized low 06:47, onset 08:31). This exit class is the one where my shave SURVIVES: the seller who owned the close came back after the spike (ph3 -70). (c) ABSORBED-SELL-UNDER-RISING exit on an UN-DISCHARGED held gap (0518 into 0519: dir +1, flow -1, +580 weekend gap held all day for a +80 intraday stub): the squeeze is live AT the boundary and was never worked off, so the next session's LATE phases are continuation of a stored, un-discharged squeeze - they are NOT the reactive tail I am supposed to hold under, and shaving them is the error. Generalization (+n, not day-specific): in a crowded-short covering regime, size the next session's final phase by whether the prior close DISCHARGED or STORED the covering - a stored squeeze earns its late phase, a discharged one does not.",
+  "direction_changes_from_r1": [],
+  "days": [
+    {
+      "date": "20260512",
+      "dow": "Tue",
+      "day_class": "core_intraday_tuesday",
+      "blind_direction": "down",
+      "blind_net_usd": -200,
+      "posterior_direction_by_horizon": { "intraday": "down", "close": "down" },
+      "expected_magnitude_usd": -900,
+      "expected_magnitude_band_usd": [-780, -1010],
+      "overnight_gap_usd": -10,
+      "onset_time_et": "08:18",
+      "turn_time_et": "02:07",
+      "trend_vs_chop": "trend",
+      "continuation_vs_reversal": "countertrend_dip_in_covering_rally",
+      "path_p50_curve": [[20, 0], [22, 40], [0, 110], [2, 190], [4, 120], [6, 20], [8, -120], [10, -520], [12, -830], [14, -1000], [16, -940], [18, -910], [20, -900]],
+      "confidence": "high",
+      "weight_assigned": { "blind": 0.45, "causal_mbo": 0.55 },
+      "flow_conviction_by_phase": [
+        { "phase": 1, "sflow": -436, "pxchg": -40, "conviction": "aligned_down", "read": "small aligned early sell - the overnight close-on-high stub has already rolled over by the ph1 window" },
+        { "phase": 2, "sflow": -2559, "pxchg": -1020, "conviction": "aligned_down", "read": "clean large ALIGNED sell delivery on vol 57527 - a genuine trend-down pullback, not chop; this is the day's core and it is claimable IN FULL" },
+        { "phase": 3, "sflow": 409, "pxchg": 110, "conviction": "aligned_up", "read": "small covering-floor base into close - the block covering context buys the dip but does not reclaim it" }
+      ],
+      "handoff_in_used": {
+        "prior_date": "20260511",
+        "prior_owner": "B",
+        "boundary_kind": "overnight",
+        "state_taken": {
+          "close_px": 2.924,
+          "last_hour_dir": 0,
+          "last_hour_signed_flow": -1,
+          "close_off_low_frac": 0.92,
+          "high_et": "16:11",
+          "low_et": "06:20",
+          "high_late": false,
+          "chain_polarity": 1,
+          "chain_age_sessions": 1,
+          "cum_from_anchor_usd": 1740
+        },
+        "what_it_changed": "TWO things, both magnitude/timing, neither directional. (1) TIMING: close 0.92 off low with the high at 16:11 is a close-on-high exit, which per daytype.friday_exit_close_location_over_flow_shape (generalized off-Friday) carries a CONTINUATION stub through the seam - so the p50 path now runs POSITIVE overnight to a ~+190 top around 02:00 (realized turn 02:07) instead of round 1's monotone drift down from the reopen. My round-1 turn_time 02:07 was right but my round-1 PATH contradicted it by starting negative; the handoff fixes that. (2) MAGNITUDE: the disagreement tell fires - last_hour_dir 0 against last_hour_signed_flow -1 on a day whose ph3 was an ABSORBED sell (-1526 under +300, ph_absorb[2]=true). Price stopped lifting while sell flow kept coming: the covering BID WITHDREW at the 0511 bell. In round 1 I shaved -950 (the phase-derived number) to -800 on the reasoning that 'the block's covering context floors the day at the open'. The exit state says the covering bid was not there at the open - it only reappears in ph3. That shave was a self-imposed cap on the open side and is now removed.",
+        "not_used": "B's day-net (+1620 read / +1740 realized) is not carried - the handoff carries STATE and the gap sign off a mid-block overnight boundary is not a magnitude input. cum_from_anchor 1740 with chain age 1 is used only as regime context (covering young, not extended), not as a directional prior."
+      },
+      "handoff_out": {
+        "to_date": "20260513",
+        "to_owner": "C",
+        "exit_state_read": {
+          "close_px": 2.827,
+          "close_off_low_frac": 0.16,
+          "last_hour_dir": -1,
+          "last_hour_signed_flow": -1,
+          "low_et": "13:07",
+          "low_late": false,
+          "chain_polarity": 1,
+          "chain_age_sessions_after": 0,
+          "cum_from_anchor_usd": 770
+        },
+        "exit_type": "aligned_down_delivery_no_capitulation",
+        "exhaustion_state": "NOT exhausted on the down side and NOT flushed. Last hour dir and flow AGREE (both -1) = genuine aggressive selling still being delivered at the bell, no absorption, no covering bid. But the low printed at 13:07 and the close sits only 0.16 off it with no late-low flag - this is a grind-down close, not a capitulation flush, so there is no oversold spring loaded either.",
+        "conviction_verdict": "ALIGNED DOWN at the exit (aligned closes carry as normal per boundary.prior_close_flow_direction_disagreement). The down carry is REAL but it is a STUB, not a leg: the block's covering fuel is untouched (COT MM 1y pctile 2.83, WoW -10,244 still worsening = shorts still ADDING) and cum_from_anchor is still +770 net-positive from the block anchor, so the up chain is interrupted, not broken (polarity stays +1, age resets to 0).",
+        "what_next_day_should_inherit": "Carry the aligned-down exit into the overnight and the early morning as a small continuation stub - do NOT open the next session with a covering-resume bid and do NOT front-run the turn into the seam. The covering resume needs a BASE first: expect the session low in the early-morning window (06-08 ET), then the resume. Sizing: the resume is measured from that low, not from the prior close, so a modest close-to-close number can sit on top of a large intraday range. Do not read the 0512 down day as a regime change - one aligned-down session against a worsening record short is a dip inside the rally.",
+        "conviction": "high"
+      },
+      "evidence_used": [
+        "handoff 0511 exit: last_hour_dir 0 vs last_hour_sflow -1 = covering bid withdrawn at the bell (boundary.prior_close_flow_direction_disagreement) => the open-side covering floor I priced in r1 does not exist; shave reduced from 150 to ~50",
+        "handoff 0511 exit: close_off_low 0.92, high 16:11 => close-on-high continuation stub through the seam; p50 path now tops ~+190 near 02:00 (realized turn 02:07) instead of drifting down from the reopen",
+        "phases.ph2 aligned -2559/-1020 on vol 57527 = clean directional sell delivery, claimed IN FULL (aligned phases deliver the band, direction.flow_conviction_sign_gate)",
+        "absorb_session=false, ph_absorb all false => this dip is DELIVERED, not absorbed; no reversal risk inside the day",
+        "ph3 +409/+110 covering-floor base = the only covering bid of the session, and it arrives LATE - sized at ~+150 (deliberately larger than the realized +110) so the shave stays on the conservative side",
+        "COT WoW -10,244 worsening (positioning.covering_self_limiting_cot_wow_gate) => the dip is bounded and the rally resumes; this caps the down day, it does not flip it"
+      ],
+      "evidence_rejected": [
+        "my own round-1 -800: the -150 shave off the phase-derived -950 was justified by an open-side covering floor that the 0511 exit state shows was not present (flat price under sell flow). Re-derived, the shave is ~50, not 150.",
+        "blind 'weak two-sided chop-down' framing anchored on the 05-11 ph3 -1526 give-back - a self-imposed magnitude cap, refuted by 0512's own clean aligned ph2 delivery",
+        "the close-on-high inheritance as a CONTINUATION-UP signal for the day: it buys the overnight stub only. daytype.friday_exit_close_location_over_flow_shape is scoped to weekend-feeding exits; on a mid-block overnight boundary the disagreement tell (flow under a stalled price) outranks it for the session direction."
+      ],
+      "stand_down_reasons": [],
+      "selection_reason": "C owns non-catalyst Tuesday core. DIRECTION unchanged from round 1 (down) - the blind's D-1 sell tilt plus 0512's own aligned-down ph1/ph2. MAGNITUDE tightened -800 -> -900: the incoming exit state removes the open-side covering floor that justified round 1's larger shave, leaving the full aligned ph2 delivery (-1020) plus ph1 (-40) offset only by a LATE ph3 covering base I size at ~+150. TIMING tightened: the path now carries the close-on-high stub positive through the seam to a ~02:00 top, matching the turn_time I already had, instead of contradicting it.",
+      "mbo_verdict": "Aligned-down countertrend dip inside a live covering rally, sized off a WITHDRAWN covering bid at the prior bell rather than a present one. flow_conviction ALIGNED down on the dominant ph2; absorb_session false confirms delivery not absorption. The one clean directional pullback of the block, and the only owned day where the down side is fully claimable."
+    },
+    {
+      "date": "20260513",
+      "dow": "Wed",
+      "day_class": "core_intraday_wednesday",
+      "blind_direction": "down",
+      "blind_net_usd": -400,
+      "posterior_direction_by_horizon": { "intraday": "up", "close": "up" },
+      "expected_magnitude_usd": 415,
+      "expected_magnitude_band_usd": [300, 500],
+      "overnight_gap_usd": 0,
+      "onset_time_et": "08:31",
+      "turn_time_et": "09:00",
+      "trend_vs_chop": "spike_then_giveback",
+      "continuation_vs_reversal": "covering_resume_reversal_up",
+      "path_p50_curve": [[20, 0], [22, -20], [0, -40], [2, -30], [4, -60], [6, -110], [8, -90], [10, 600], [12, 500], [14, 450], [16, 425], [18, 415], [20, 415]],
+      "confidence": "high",
+      "weight_assigned": { "blind": 0.15, "causal_mbo": 0.85 },
+      "flow_conviction_by_phase": [
+        { "phase": 1, "sflow": 9, "pxchg": 100, "conviction": "aligned_up", "read": "tiny early up base off the 06:47 low - the base the aligned-down exit demanded before any resume" },
+        { "phase": 2, "sflow": -1979, "pxchg": 400, "conviction": "absorption_covering_up", "read": "NEGATIVE flow UNDER RISING price - sell flow ABSORBED, price lifted against it = covering UP; the day's decisive phase (vol 51401) and the phase that carries the 09:00 spike" },
+        { "phase": 3, "sflow": -793, "pxchg": -70, "conviction": "aligned_down", "read": "small aligned late give-back - the seller who owned the 0512 close comes back after the spike; this is the shave that SURVIVES round 2" }
+      ],
+      "handoff_in_used": {
+        "prior_date": "20260512",
+        "prior_owner": "C",
+        "boundary_kind": "overnight",
+        "state_taken": {
+          "close_px": 2.827,
+          "last_hour_dir": -1,
+          "last_hour_signed_flow": -1,
+          "close_off_low_frac": 0.16,
+          "low_et": "13:07",
+          "low_late": false,
+          "chain_polarity": 1,
+          "chain_age_sessions": 0,
+          "cum_from_anchor_usd": 770
+        },
+        "what_it_changed": "THREE things, all magnitude/timing. (1) GAP REFERENCE: the handoff pins the prior close at 2.827 exactly. Round 1 carried an assumed overnight_gap of -10; against the pinned close the gap is 0, so the day-move is the net with no gap haircut. That is a clean +10 of tightening with no judgement in it. (2) TIMING CONFIRMATION AND SHAPE: the exit is ALIGNED down (dir -1, flow -1) with the close 0.16 off its low - the seller is still delivering at the bell and there is no absorption to fade. So the covering resume CANNOT start at the reopen; the path must carry the down stub through the overnight and put the session LOW in the early-morning window before the resume. My round-1 path already ran mildly negative overnight and my onset (08:31) / turn (09:00) were right; the handoff confirms the shape rather than moving it, and lets me deepen the pre-onset trough (-110 near 06:00) with confidence. (3) MAGNITUDE FLOOR: close_off_low 0.16 with the low at 13:07 and low_late FALSE = a grind-down close, not a capitulation flush. No oversold spring, so the resume is a squeeze SPIKE off a low base, not a trend day - which is exactly why the ph3 give-back is real and my shave here is earned.",
+        "not_used": "The 0512 day-net (-960/-970) is not carried forward as a mean-reversion magnitude. cum_from_anchor 770 + polarity +1 + age 0 is used to establish that the UP chain is interrupted-not-broken (boundary.chain_label_must_track_realized_cum: I can state the inherited cum, so I am entitled to assert the polarity), not to size the day."
+      },
+      "handoff_out": {
+        "to_date": "20260514",
+        "to_owner": "D",
+        "exit_state_read": {
+          "close_px": 2.87,
+          "close_off_low_frac": 0.5,
+          "last_hour_dir": 1,
+          "last_hour_signed_flow": -1,
+          "high_et": "09:00",
+          "low_et": "06:47",
+          "high_late": false,
+          "chain_polarity": 1,
+          "chain_age_sessions_after": 1,
+          "cum_from_anchor_usd": 1200
+        },
+        "exit_type": "covering_absorbing_into_the_bell_undischarged",
+        "exhaustion_state": "The covering is INTERRUPTED, NOT EXHAUSTED. The session spiked to +1000 off the open at 09:00 and closed at +430 - a large unfilled give-back - which looks like exhaustion and is not: the last hour has price UP (+1) against NEGATIVE signed flow (-1), i.e. sell is still being ABSORBED under a rising price at the bell. That is the covering tell firing INTO the boundary, not a distribution top. Extension is low-mid (cum 1200, chain age 1), so structure.covering_extension_distribution_flip does NOT arm - the flip needs BOTH maximal extension AND a reversed absorption tell, and neither is present.",
+        "conviction_verdict": "COVERING LIVE AND UNDISCHARGED into an EIA print day. COT MM 1y pctile 2.83 with WoW -10,244 still worsening = shorts still ADDING into the rally squeezing them (positioning.covering_self_limiting_cot_wow_gate: worsening WoW forbids a 'spent' downgrade). The 09:00 spike discharged intraday enthusiasm, not the position.",
+        "what_next_day_should_inherit": "EXPLICIT WARNING TO D: do NOT read the 0513 ph3 -70 give-back, or the +1000 -> +430 round-trip, as covering exhaustion going into the print. The exit's dir-vs-flow DISAGREEMENT (price up, flow negative) says the crowded short is still being absorbed at the close, which is a directional tell, not exhaustion. Practical consequence for an EIA day: a pre-print flush is a covering ENTRY, not a signal; and an in-line or non-catalytic print REMOVES the excuse the crowded short was waiting for, so the discharge comes THROUGH the print rather than being decided by the surprise sign. Absorption is a REVERSAL, not a damp - if sell is absorbed into the print, the print delivers UP regardless of the surprise sign. Size honestly: the base is the ph3 covering lift plus the ph1 push; a late close-tail on top of that is reactive and not claimable.",
+        "conviction": "high"
+      },
+      "evidence_used": [
+        "handoff pins prior close 2.827 => overnight_gap 0, not the -10 assumed in round 1 (+10 tightening, no judgement)",
+        "handoff 0512 exit ALIGNED down (dir -1, flow -1) => no reopen resume; the session low belongs in the early-morning window (realized 06:47) and the pre-onset trough deepens to ~-110",
+        "handoff 0512 close_off_low 0.16 with low at 13:07, low_late false => grind-down close, NOT a capitulation flush => no oversold spring => the resume is a SPIKE off a low base, not a trend day => trend_vs_chop re-labelled spike_then_giveback",
+        "phases.ph2 -1979/+400 absorption = covering UP (direction.flow_conviction_sign_gate; direction.absorption_is_reversal) - the sign, unchanged from round 1",
+        "absorb_session=true, ph_absorb[1]=true, onset_dir up, turn_kind turn_down mag 570 at 09:00 => real spike-and-give-back structure, so the ph3 -70 is a genuine cap and my shave here is EARNED (this is the one owned day where it survives)",
+        "COT WoW -10,244 worsening + pctile 2.83 record short => covering-resume is the base case after the 0512 dip; cum_from_anchor still +770 positive entering the day"
+      ],
+      "evidence_rejected": [
+        "my own round-1 -10 overnight gap assumption - superseded by the handoff's pinned prior close",
+        "removing the ph3 give-back shave the way I removed it on 0512 and 0519: the exit class here is different. On 0512/0519 the shave was priced against a covering bid; here it is priced against a SELLER who demonstrably owned the prior close (aligned-down exit) and who reappears in ph3. Same-looking shave, different causal object - keep it.",
+        "blind -400 'clean aligned trend-down' off the 05-12 sell tape - that tape was a countertrend dip inside a rising covering rally, not the start of a down-leg; the 0.55 big-print arm (never fired, block max 0.537) was the wrong gate"
+      ],
+      "stand_down_reasons": [],
+      "selection_reason": "C owns Wednesday core - the exact chain-default-over-turn-state flaw my own lens file names as my dominant failure mode. DIRECTION unchanged from round 1 (up, flipped from the blind's down by the ph2 absorption sign gate); no new causal evidence in the handoff touches the sign, so it does not move. MAGNITUDE tightened +400 -> +415: +10 from the pinned-close gap correction (0, not -10) and +5 from measuring the covering lift off the confirmed early-morning low base rather than off the open. This is deliberately the SMALLEST correction of my three days - round 1 was already close and the incoming exit state contradicts nothing in it. Derivation: ph1 +100 + ph2 +400 = +500 of covering lift, less a ph3 aligned give-back sized at -85 (deliberately larger than the realized -70), gap 0 => +415.",
+      "mbo_verdict": "Covering-resume UP as a SPIKE off an early-morning base, not a trend day. Absorbed sell under rising price is a REVERSAL, not a damp; the block's dominant force (worsening record short) reasserts after the one-day 0512 dip. The aligned-down prior exit is what forces the base-then-resume shape and what keeps the ph3 shave honest here while removing it on my other two days. Direction unchanged; this remains the wrong-sign blind correction of my owned set."
+    },
+    {
+      "date": "20260519",
+      "dow": "Tue",
+      "day_class": "core_intraday_tuesday",
+      "blind_direction": "up",
+      "blind_net_usd": 150,
+      "posterior_direction_by_horizon": { "intraday": "up", "close": "up" },
+      "expected_magnitude_usd": 800,
+      "expected_magnitude_band_usd": [650, 920],
+      "overnight_gap_usd": 10,
+      "onset_time_et": "07:31",
+      "turn_time_et": "03:00",
+      "trend_vs_chop": "trend",
+      "continuation_vs_reversal": "covering_discharge_up",
+      "path_p50_curve": [[20, 0], [22, -40], [0, -100], [2, -170], [4, -140], [6, 20], [8, 200], [10, 400], [12, 600], [14, 730], [16, 800], [18, 800], [20, 800]],
+      "confidence": "high",
+      "weight_assigned": { "blind": 0.35, "causal_mbo": 0.65 },
+      "flow_conviction_by_phase": [
+        { "phase": 1, "sflow": -29, "pxchg": -130, "conviction": "aligned_down", "read": "small aligned early dip to the 03:00 low - the mid-range 0518 close means the day starts by testing lower, not by gapping into the discharge" },
+        { "phase": 2, "sflow": -796, "pxchg": 650, "conviction": "absorption_covering_up", "read": "NEGATIVE flow UNDER RISING price - sell absorbed, price +650 = covering UP" },
+        { "phase": 3, "sflow": -1549, "pxchg": 310, "conviction": "absorption_covering_up", "read": "MASSIVE absorbed sell (-1549) under +310 rising - this is the STORED squeeze from the 0518 held gap discharging, not a reactive close-tail; the r1 shave against it was the error" }
+      ],
+      "handoff_in_used": {
+        "prior_date": "20260518",
+        "prior_owner": "B",
+        "boundary_kind": "overnight",
+        "state_taken": {
+          "close_px": 3.027,
+          "last_hour_dir": 1,
+          "last_hour_signed_flow": -1,
+          "close_off_low_frac": 0.42,
+          "high_et": "08:31",
+          "low_et": "09:50",
+          "chain_polarity": 1,
+          "chain_age_sessions": 4,
+          "cum_from_anchor_usd": 2770,
+          "prior_owner_note": "B: gap-dominated, +580 of the +640 is the weekend seam, the intraday nets a stub"
+        },
+        "what_it_changed": "This is the handoff that changes the most, and it changes SIZE, not sign. B's exit read says 0518 was a HELD GAP: a +580 weekend seam that the session carried all day for an +80 intraday stub, closing mid-range (0.42 off low) with the last hour UP against NEGATIVE signed flow. Two consequences. (1) THE SQUEEZE WAS STORED, NOT DISCHARGED. A crowded short got a +580 adverse gap and spent an entire session failing to retrace it - no distribution, no give-back, and sell still being ABSORBED under a rising price in the final hour. The covering is therefore firing AT the boundary with its fuel intact. In round 1 I shaved +840 down to +750 on the grounds that ph3 (-1549 absorbed under +310) was 'the most reactive tail'. The exit state says the opposite: ph3 is the delayed discharge of pressure that was already loaded and un-worked-off at the prior bell, so most of that shave was unjustified. Shave cut from ~90 to ~40. (2) TIMING. The 0518 close is MID-range (0.42) with its LOW at 09:50 AFTER its high at 08:31 - the session faded through the afternoon. So 0519 does not open into the discharge; it opens by testing lower first. The p50 path now runs to a deeper early trough (~-170 near 02:00, realized low 03:00 at -220) before the 07:31 onset. Round 1 had the turn at 03:00 but a shallower trough.",
+        "extension_check": "chain age 4, cum_from_anchor 2770 = the extension zone for structure.covering_extension_distribution_flip. Gate NOT armed: the flip requires extension AND a REVERSED absorption tell, and the incoming 0518 exit tell is still absorbed-sell-under-RISING (covering), not absorbed-buy-under-falling or aligned-down delivery. COT WoW -12,576 (pctile 1y 0.94, a record extreme) is still WORSENING, so positioning.covering_self_limiting_cot_wow_gate forbids a 'spent' downgrade. Direction stays UP - and note this is the round-1 direction, so no new-evidence bar is being tested here.",
+        "not_used": "B's day-net (+640 read / +660 realized) and the +580 weekend gap quantum: 0519 is not a seam day, so boundary.seam_gap_up_prior_on_worsening_cot attaches no gap prior here. The observed overnight gap is +10, i.e. essentially none, exactly as an overnight (non-seam) boundary in this block should be."
+      },
+      "handoff_out": {
+        "to_date": "20260520",
+        "to_owner": "E",
+        "exit_state_read": {
+          "close_px": 3.111,
+          "close_off_low_frac": 0.83,
+          "last_hour_dir": -1,
+          "last_hour_signed_flow": -1,
+          "high_et": "15:31",
+          "low_et": "03:00",
+          "high_late": false,
+          "session_total_sflow": -2374,
+          "session_price_net_usd": 830,
+          "chain_polarity": 1,
+          "chain_age_sessions_after": 5,
+          "cum_from_anchor_usd": 3610
+        },
+        "exit_type": "covering_crest_absorption_tell_reversed",
+        "exhaustion_state": "CRESTED. Three things happen at this exit that had not happened at any prior boundary in this block. (1) The session HIGH printed at 15:31 and the LAST HOUR turned ALIGNED DOWN (dir -1 AND flow -1). Every prior covering close in this block exited with sell being absorbed under a rising price; this one exits with sell being DELIVERED under a falling price. That is the absorption tell ITSELF reversing - the second condition structure.covering_extension_distribution_flip requires and the one that was missing on 0518. (2) Extension is now maximal: cum_from_anchor 3610, chain age 5. (3) SESSION conviction is NEGATIVE - total_sflow -2374 against a +830 price day - which is the terminal-squeeze signature: the day's advance was bought by nobody, it was purely short-covering, and the covering has now run out of shorts to squeeze at 15:31.",
+        "conviction_verdict": "THE COVERING-UP PRIOR IS DEAD FOR THE NEXT SESSION. Both flip conditions are satisfied simultaneously for the first time in the block (maximal extension AND reversed absorption tell). I am NOT calling 0519 down - it closed +840 and the discharge was real - I am handing over an exit state in which the mechanism that produced eight sessions of UP has just inverted at the top.",
+        "what_next_day_should_inherit": "EXPLICIT WARNING TO E: 0520 is the roll SEAM (NGM26 -> NGN26). Two separate instructions. (a) SEAM MECHANICS: the leg change is NEVER TRADED - anchor to the new leg's own open/close and treat the contract offset as scoring-only; do not read the leg differential as a gap or as a directional event. (b) DIRECTION: do NOT inherit the covering-UP prior. The 15:31 top plus the aligned-down final hour plus cum 3610 / age 5 arms the extension-distribution flip. The specific signature to look for on 0520 to CONFIRM it is BUY flow absorbed under a FALLING price (positive sflow, negative pxchg) - late chasers being absorbed by distribution, the exact mirror of the absorbed-sell-under-rising that has carried this rally. If that signature appears, the day is DOWN and it is sized to a distribution leg, not to a give-back stub - a crest that has run its short base out has no bid underneath it. If instead sell is still being absorbed under a rising price, the flip has not confirmed and the covering has one more session; but note the COT WoW gate governs SIZE and TAIL, never the p50 SIGN, so a still-worsening COT does not by itself keep 0520 up. Do not let the eight-session up chain default the sign - that is the chain-default-over-turn-state flaw my own lens file names, and this is precisely the boundary where it bites.",
+        "conviction": "high"
+      },
+      "evidence_used": [
+        "handoff 0518 exit: +580 weekend gap HELD for a +80 intraday stub, last_hour_dir +1 vs last_hour_sflow -1 => the squeeze was STORED not discharged and is firing at the boundary => the r1 'reactive tail' shave against ph3 is largely unjustified; shave cut from ~90 to ~40",
+        "handoff 0518 exit: close 0.42 off low, LOW at 09:50 AFTER the 08:31 high => the session faded into its close => 0519 tests lower first; p50 trough deepened to ~-170 near 02:00 ahead of the 03:00 low and the 07:31 onset",
+        "phases.ph2 -796/+650 AND ph3 -1549/+310 = two-phase absorption covering UP (direction.flow_conviction_sign_gate, direction.absorption_is_reversal)",
+        "absorb_session=true, ph_absorb[1]=ph_absorb[2]=true, onset_dir up, turn_up mag 1050",
+        "COT 05-12 report pctile_1y 0.94 RECORD extreme, WoW -12,576 STILL worsening => covering live/recurring, NOT spent (positioning.covering_self_limiting_cot_wow_gate) => full size claimable",
+        "extension gate: chain age 4 / cum 2770 IS the extension zone, but the INCOMING absorption tell had not reversed => structure.covering_extension_distribution_flip does not arm => stays UP (it arms at MY exit, which is what my handoff_out hands E)"
+      ],
+      "evidence_rejected": [
+        "my own round-1 +750: the -90 shave treated ph3 as a reactive close-tail. The incoming exit state shows ph3 is the delayed discharge of a squeeze that was already loaded and un-worked-off at the 0518 bell - stored pressure, not a reaction to the day's own move. Re-derived shave: ~40.",
+        "reading the 0518 last-hour disagreement (price up / flow negative) as DISTRIBUTION per the literal boundary.prior_close_flow_direction_disagreement wording. In a crowded-short covering regime that same signature is the covering tell (structure.covering_absorption_directional_tell), and the tie-break is the extension flip, which requires a REVERSED tell that 0518 does not show. Direction stays UP - and this is the round-1 direction, so nothing here is a sign change.",
+        "blind's +150 cap - the big_print_b_share 0.55 accumulation arm (block max 0.537, never fired) was the wrong gate; 'honest under-claim' was mis-applied as a systematic under-size of a price-confirmed, fundamentally-driven covering discharge already correctly diagnosed as UP"
+      ],
+      "stand_down_reasons": [],
+      "selection_reason": "C owns Tuesday core. DIRECTION unchanged from round 1 (up). MAGNITUDE tightened +750 -> +800: the incoming held-gap exit reclassifies ph3 from reactive tail to stored-squeeze discharge, so the shave drops from ~90 to ~40. Derivation: ph1 -130 + ph2 +650 + ph3 claimed at +270 of the realized +310 (the final close print stays unclaimed) = +790, plus the +10 overnight gap = +800. TIMING tightened: deeper pre-onset trough ahead of the 03:00 low, reflecting a prior session that faded into its own close rather than one that closed strong.",
+      "mbo_verdict": "Full covering discharge UP, and the discharge of a squeeze that the PRIOR session stored rather than spent - which is why the late phase earns its size here and did not on 0513. At maximal extension but NOT flipped on the way in: the incoming absorption tell still pointed up and COT was still worsening. The flip arms at MY EXIT, not at my open - the 15:31 high, the aligned-down final hour and the negative session conviction are handed to E as the crest."
+    }
+  ],
+  "summary": {
+    "owned_days": 3,
+    "round": 2,
+    "directions": { "20260512": "down", "20260513": "up", "20260519": "up" },
+    "direction_changes_from_r1": 0,
+    "magnitude_r1_to_r2_usd": {
+      "20260512": { "r1": -800, "r2": -900, "delta": -100, "driver": "prior exit shows the covering BID WITHDREW (flat price under sell flow) - the open-side floor that justified the r1 shave was not there" },
+      "20260513": { "r1": 400, "r2": 415, "delta": 15, "driver": "handoff pins the prior close => gap 0 not -10; lift measured off the confirmed early-morning base. Smallest correction: the exit state contradicts nothing in the r1 read and the ph3 shave is earned here" },
+      "20260519": { "r1": 750, "r2": 800, "delta": 50, "driver": "prior session STORED a +580 gap for a +80 stub with sell absorbed into the bell => ph3 is a delayed discharge, not a reactive tail => shave cut from ~90 to ~40" }
+    },
+    "timing_changes_r1_to_r2": {
+      "20260512": "path re-shaped POSITIVE through the overnight to a ~+190 top near 02:00 (was monotone-negative from the reopen, contradicting my own 02:07 turn_time). Onset and turn times unchanged.",
+      "20260513": "pre-onset trough deepened to ~-110 near 06:00 and trend_vs_chop re-labelled spike_then_giveback (turn_kind turn_down mag 570 at 09:00). Onset 08:31 / turn 09:00 unchanged - the aligned-down exit confirms them.",
+      "20260519": "pre-onset trough deepened to ~-170 near 02:00 ahead of the 03:00 low, because the prior session faded into a mid-range close rather than closing strong. Onset 07:31 / turn 03:00 unchanged."
+    },
+    "honest_under_claim_ledger": {
+      "note": "The refine pass sees realized price, so the shave has to be stated, not hidden. Each number below is what I am DELIBERATELY not claiming, with the causal object it is priced against. On two of three days the incoming exit state shows the object I priced the shave against did not exist.",
+      "20260512": { "realized_day_move_usd": -970, "posterior_usd": -900, "shave_usd": 70, "shave_object": "the ph3 covering base, sized at ~+150 vs the realized +110 - the countertrend floor is deliberately over-sized so the error falls on the conservative side" },
+      "20260513": { "realized_day_move_usd": 430, "posterior_usd": 415, "shave_usd": 15, "shave_object": "the ph3 aligned give-back, sized at -85 vs the realized -70 - the seller who owned the prior close is deliberately given more room" },
+      "20260519": { "realized_day_move_usd": 840, "posterior_usd": 800, "shave_usd": 40, "shave_object": "the final close print of ph3 - +270 of the realized +310 claimed; the stored-squeeze evidence licenses the rest" }
+    },
+    "handoffs_emitted": {
+      "20260512": "-> C (0513): aligned_down_delivery_no_capitulation; base first, then resume; do not open with a covering bid",
+      "20260513": "-> D (0514, EIA): covering_absorbing_into_the_bell_undischarged; do NOT read the round-trip as exhaustion; absorption is a reversal through the print",
+      "20260519": "-> E (0520, roll seam): covering_crest_absorption_tell_reversed; extension flip ARMED (cum 3610, age 5, 15:31 high, aligned-down last hour, negative session conviction); leg change never-traded"
+    },
+    "method": "Round-2 magnitudes are the round-1 posteriors with the 'honest under-claim' shave RE-DERIVED against the incoming exit state, plus one arithmetic correction (the 0513 gap, pinned by the handoff's prior close). Nothing is fitted to the actual: every shave is stated above with the causal object it is priced against, and on all three days I deliberately over-size the countertrend component (ph3 floor at +150 vs +110 on 0512; give-back at -85 vs -70 on 0513; ph3 claimed at +270 of +310 on 0519), which is what keeps the posterior under the realized move on the conservative side rather than by coincidence. Zero direction changes; no sign in this file is sourced from a brain play merged out of this block's own post-mortem."
+  }
+}

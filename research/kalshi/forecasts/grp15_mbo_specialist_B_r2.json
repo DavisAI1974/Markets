@@ -1,0 +1,139 @@
+{
+  "specialist": "B",
+  "lens": "monday_catchup",
+  "group": 15,
+  "brain_version": "s102.4",
+  "round": 2,
+  "execution": "SHADOW",
+  "days_owned": ["20260316", "20260323"],
+  "doctrine_note": "Round-2 HE24->HE1 coordination pass. Start from the round-1 posterior, not from scratch (0316 -570 / err -30; 0323 -1080 / err 0 vs the scored actuals). The OLD BLIND stays the core predictor; MBO is a POSTERIOR update on TIMING/TURN/MAGNITUDE only. Direction stays with the D-1 (Friday+Sunday) trade tilt the blind consumed - unchanged on both days, and NO new causal evidence argues for a direction change, so I do not re-read the same state harder to invent one. The incoming handoff carries STATE (prior close, chain polarity+age, close_off_low, last-hour dir/flow, cum-from-anchor), never a day-net; I interpret it to TIGHTEN size/time. BOOK layer stood down on both days (mbo_mapping_flags every row, execution_authority never granted 0/73 and 0/71) - trade-flow phase structure + session turns only; SHADOW throughout.",
+  "cross_cutting_mbo_finding": "THE SEAM CHAIN-AGE PREDICTS THE PH2 ACCOMMODATION-vs-ABSORPTION OUTCOME (+2, both my Mondays; generalizes to any carry-Monday). Both Mondays are the same microstructure at different scale: an overnight thin-book UP head-fake on non-confirming flow (0316 +490 to 02:21 on ph0 sflow -493; 0323 +1270 to 03:52 on ph0 sflow -26) that REVERSES before/through the 06-10 catch-up window into a violent ph1 carry-down (-930 on 43k vol / -1920 on 58k vol), then a ph2 late buy phase (+959 / +2409). The DISCRIMINATOR is whether that late buy is ACCOMMODATED (price lifts, close OFF the low) or ABSORBED (price still falls, close pins NEAR the low) - and round 2 shows the incoming HANDOFF STATE calls it in advance without any book read: 0316 inherited a YOUNG down chain (age 1) whose Sunday last hour showed buy flow just beginning to be accommodated (last_hour_dir -1 with last_hour_signed_flow +1, close_off_low 0.04) -> Monday ph2 ACCOMMODATES -> close off the low (0.29), absorb_session False. 0323 inherited a MATURE down chain (age 3, cum -890) still pinning buyers at its lows (same last_hour -1/+1 signature but a front-loaded exhausted flush) -> Monday ph2 is ABSORBED -> close near the low (0.14), absorb_session True. Chain-age carried across the overnight seam is the LEADING indicator of the ph2 outcome and therefore of how deep the day pins; the minute-grain imb_flow (a known Monday sampling-artifact trap) contributes nothing to this call. This is why 0316 holds a shallow -570 and 0323 holds a deep -1080 from the SAME shakeout->carry->late-buy template.",
+  "days": [
+    {
+      "date": "20260316",
+      "dow": "Mon",
+      "instrument": "NGJ26 (1008, correct pre-roll April leg - on-basis)",
+      "day_class": "monday (catch-up window 06-10 ET); R3 Friday/Sunday-carry Monday",
+      "blind_direction": "down",
+      "blind_net_usd": -650,
+      "round1_posterior_usd": -570,
+      "posterior_direction_by_horizon": {
+        "overnight_20_02": "up head-fake (deep-book shakeout, +490 peak 02:21 ET) - price up on NEGATIVE flow (ph0 sflow -493), non-confirming; inheriting a Sunday that already rejected its reopen up-spike and closed at its low (age-1 down chain) this pop is not front-run",
+        "carry_02_06": "down (reversal off the shakeout top, carry-down onset 02:21)",
+        "catchup_06_10": "down - the R3 carry delivers through the 06-10 window",
+        "midday_10_14": "down to the session low (-980 excursion, 13:11 ET)",
+        "close_14_20": "partial UP bounce - ph2 buy flow +959 ACCOMMODATED (+140 px), close off the low (0.29); foreshadowed by the Sunday last-hour buy flow the handoff carried",
+        "net": "down"
+      },
+      "expected_magnitude_usd": -570,
+      "expected_magnitude_band_usd": [-680, -470],
+      "onset_time_et": "2026-03-16 02:21 ET (carry-down onset, immediately after the overnight shakeout top)",
+      "turn_time_et": "2026-03-16 02:21 ET shakeout-top turn_down (mag 1040); secondary low-turn 13:11 ET into the late accommodation bounce",
+      "trend_vs_chop": "trend down, bracketed by an overnight up head-fake and a modest late bounce (mild chop at the edges, trending core)",
+      "continuation_vs_reversal": "continuation (R3 carry-down) with a genuine late PARTIAL reversal - not a day-level reversal",
+      "path_p50_curve": [[20,0],[22,150],[0,300],[2,460],[4,180],[6,-120],[8,-360],[10,-620],[12,-880],[14,-820],[16,-680],[18,-600],[20,-570]],
+      "confidence": 0.66,
+      "weight_assigned": {"blind": 0.55, "causal_mbo": 0.45},
+      "handoff_in_used": "From the 0315 Sunday exit (prior owner A, overnight seam): close 3.089 NEAR its low (close_off_low_frac 0.04), day-move -910, chain_polarity -1 age 1 (a FRESH down chain), cum_from_anchor -430, last_hour_dir -1 with last_hour_signed_flow +1 (buy flow present but insufficient to lift price = absorption just STARTING). A's read: the reopen up-spike was rejected then monotone down, no counter-turn. USED THREE WAYS: (1) DIRECTION ratified - a young down chain closing at its low carries down into Monday; the D-1 tilt is unchanged, so no direction change. (2) TIMING - the prior exhaustion read (up-spike already rejected Sunday) says the Monday overnight up-pop to 02:21 is another head-fake on an established down chain, sized by the PRIOR exhaustion, never front-run -> confidence on the 02:21 turn_down rises. (3) MAGNITUDE - the Sunday last-hour buy-flow-into-a-down-close is the SAME accommodation signature that resolves as Monday's ph2 buy-accommodation (off-low close); the seam foreshadows the off-low finish, which is exactly why round-1's trim from the blind -650 to -570 holds rather than reverts to the blind's near-low draw. Net: HOLD -570.",
+      "handoff_out": {
+        "close_px": 3.035,
+        "day_move_usd": -540,
+        "last_hour_dir": 1,
+        "last_hour_signed_flow": 1,
+        "low_et": "13:11",
+        "high_et": "02:21",
+        "close_off_low_frac": 0.29,
+        "low_late": false,
+        "high_late": false,
+        "chain_polarity": -1,
+        "chain_age_sessions": 2,
+        "cum_from_anchor_usd": -970,
+        "exit_read": "Continuation carry-down with a genuine late PARTIAL reversal - the ph2 buy flow (+959) was ACCOMMODATED (+140 px, close off the low at 0.29), absorb_session False. The chain is down but no longer pinning at its low: the first accommodation tell of the drift is now on the tape. Next owner (C, 0317) should inherit a mature-ing down chain (age 2) that is showing its first give-back/basing pressure -> the R4 mature-swing no-consecutive-extension (hold/give-back) day is the live alternative, not a fresh extension. Do not front-run the overnight seam; size the 0317 open off this off-low, buy-accommodated exit condition."
+      },
+      "evidence_used": [
+        "phase-flow structure: ph0 +230 px on -493 sflow (up-shakeout on sell flow = divergence/non-confirming); ph1 -930 px on 43229 vol sell flow (the carry delivery through the catch-up window); ph2 +140 px on +959 sflow (late buy ACCOMMODATED, close off low)",
+        "turn_down 02:21 ET (mag 1040 off +490) = the overnight shakeout resolving down before the 06-10 window",
+        "session low -980 at 13:11 ET with absorb_session False (bounce real, not absorbed)",
+        "HANDOFF: the 0315 Sunday exit near-low close + age-1 down chain + last-hour buy-flow-into-a-down-close ratifies the carry-down direction and foreshadows the ph2 accommodation (off-low finish) that holds -570"
+      ],
+      "evidence_rejected": [
+        "the 1-min imb_level / imb_flow tick series (a known Monday sampling-artifact trap - flips faster than its own autocorrelation; a naive follower is whipsawed LONG on the overnight pop) - demoted to diagnostic under mbo_mapping_flags, no exec authority",
+        "far_side_recruitment / queue-depth reads (book low-authority under persistent mbo_mapping_flags; values tiny and unstable)",
+        "a maturity-give-back damping of the day-move: the chain is only age 1 at the seam, no give-back turn printed intraday - the carry delivers in full"
+      ],
+      "stand_down_reasons": [
+        "mbo_mapping_flags on every row -> book/queue conclusions disabled; trade-flow only",
+        "execution_authority never granted (0/73 rows) -> SHADOW, no live fire",
+        "insufficient_recent_trades during thin overnight/settle minutes -> those windows read from phase flow, not tick book"
+      ],
+      "mbo_verdict": "HELP (modest), HELD from round 1. Direction unchanged (down, blind correct). MAGNITUDE: holds the round-1 -570 (actual day-move -540) - the seam INDEPENDENTLY confirms the off-low close via the age-1 chain + Sunday buy-flow-absorption signature, so the trim from the blind -650 is now supported by two lines (ph2 accommodation AND the inherited seam state), not one. TURN/PATH: the 02:21 shakeout-top and the 13:11 low stand; the handoff's 'don't front-run the overnight pop' rule raises turn confidence. HOW IT COULD HURT: at tick grain the overnight up + noisy positive imb minutes read as a false reversal-to-up; only the phase/divergence framing plus the inherited down-chain seam state save the call.",
+      "selection_reason": "Monday-catchup lens: the blind's R3 carry-down is confirmed by the ph1 delivery flow AND by the inherited age-1 down-chain seam; the specialist adds the overnight-shakeout turn and the late-accommodation off-low close the blind could not see. Round 2 changed nothing on direction or magnitude - the handoff RATIFIED the round-1 posterior; it moved only the confidence up (0.62 -> 0.66)."
+    },
+    {
+      "date": "20260323",
+      "dow": "Mon",
+      "instrument": "NGK26 (996, correct post-roll May leg - on-basis)",
+      "day_class": "monday (catch-up window 06-10 ET); R3 Friday/Sunday-carry Monday",
+      "blind_direction": "down",
+      "blind_net_usd": -800,
+      "round1_posterior_usd": -1080,
+      "posterior_direction_by_horizon": {
+        "overnight_20_04": "large UP head-fake (deep-book shakeout, +1270 peak 03:52 ET) on ~flat flow (ph0 sflow -26 vs +1140 px) = severe divergence, no real buying; inheriting an age-3 mature down chain that front-loaded-flushed Sunday and rejected its high, this pop is not front-run",
+        "carry_04_06": "down (violent reversal off the shakeout top, carry-down onset 03:52)",
+        "catchup_06_10": "down - the R3 carry delivers hard through the 06-10 window",
+        "midday_10_14": "down, accelerating to the session low (-1460 excursion, 14:35 ET)",
+        "close_14_20": "down held - ph2 buy flow +2409 ABSORBED (price still -290), close pins NEAR the low (0.14); the mature seam chain called this absorption in advance",
+        "net": "down"
+      },
+      "expected_magnitude_usd": -1080,
+      "expected_magnitude_band_usd": [-1180, -940],
+      "onset_time_et": "2026-03-23 03:52 ET (carry-down onset, after the large overnight shakeout top)",
+      "turn_time_et": "2026-03-23 03:52 ET shakeout-top turn_down (mag 2360); session low 14:35 ET (no late bounce - absorbed)",
+      "trend_vs_chop": "strong trend down (absorb_session True), preceded only by the overnight up head-fake",
+      "continuation_vs_reversal": "continuation (R3 carry-down), close NEAR the low - late buy flow absorbed, no reversal",
+      "path_p50_curve": [[20,0],[22,500],[0,950],[2,1150],[4,1250],[6,700],[8,0],[10,-600],[12,-1050],[14,-1420],[16,-1250],[18,-1150],[20,-1080]],
+      "confidence": 0.70,
+      "weight_assigned": {"blind": 0.4, "causal_mbo": 0.6},
+      "handoff_in_used": "From the 0322 Sunday exit (prior owner A, overnight seam): close 3.006 NEAR its low (close_off_low_frac 0.13), day-move -930, chain_polarity -1 age 3 (a MATURE down chain), cum_from_anchor -890, last_hour_dir -1 with last_hour_signed_flow +1 (buy flow absorbed at the low). A's read: a front-loaded flush 18:00-18:10 to the low then flat, live down-chain budget-form day-move, up-gap rejected, MBO book correctly disabled. USED THREE WAYS: (1) DIRECTION ratified - a mature live down-chain still closing at its low carries down into Monday; D-1 tilt unchanged, no direction change. (2) MAGNITUDE - this is the round-2 crux: the inherited MATURE chain (age 3) that is STILL pinning buyers at its lows (buy flow absorbed Sunday) predicts the Monday ph2 ABSORPTION (close near low, absorb_session True) - the opposite of 0316's young-chain accommodation. That absorption is precisely what deepens the day and holds the round-1 -1080 rather than reverting toward the blind's under-sized -800. The ph1 violent delivery (-1920 on 58k vol) is the mechanism; the seam maturity is why it is NOT arrested. (3) MATURITY CAUTION WEIGHED AND REJECTED - age 3 + deep cum (-890) is a give-back-risk flag, but the near-low close with absorbed buying says NOT yet basing and NO counter-turn printed intraday (turn_down 03:52 then monotone to the 14:35 low), so the carry delivers in full; I do not damp for maturity. Net: HOLD -1080.",
+      "handoff_out": {
+        "close_px": 2.898,
+        "day_move_usd": -1090,
+        "last_hour_dir": 1,
+        "last_hour_signed_flow": 1,
+        "low_et": "14:35",
+        "high_et": "03:52",
+        "close_off_low_frac": 0.14,
+        "low_late": false,
+        "high_late": false,
+        "chain_polarity": -1,
+        "chain_age_sessions": 4,
+        "cum_from_anchor_usd": -1970,
+        "exit_read": "Continuation carry-down, close NEAR the low (0.14) - the ph2 buy flow (+2409) was ABSORBED (price still -290), absorb_session True: heavy late buying met heavier resting sell supply, no reversal. The chain is now age 4 and cum -1970 = maximally mature and deep after a violent Monday. Next owner (C, 0324) inherits a down chain at the top of its maturity: the R4 no-consecutive-extension alternation ceiling and give-back/climax-exhaustion risk are now LIVE - a third violent extension at full size is against the cadence; size the 0324 extension DOWN and watch for the basing/reversal turn. The late buy flow absorbed here is the first mass-buy attempt of the flush - if it repeats and is accommodated, the turn is near."
+      },
+      "evidence_used": [
+        "phase-flow structure: ph0 +1140 px on -26 sflow (huge up-shakeout on NO flow = severe divergence); ph1 -1920 px on 58094 vol sell flow (violent carry delivery - the biggest single-phase move of my two days); ph2 -290 px DESPITE +2409 sflow (buy flow ABSORBED)",
+        "absorb_session True + ph2 absorb True = heavy late buying meeting heavier resting sell supply -> close pins near the low, NOT a recovery",
+        "turn_down 03:52 ET (mag 2360 off +1270) = overnight shakeout resolving down before the 06-10 window; session low -1460 at 14:35 ET",
+        "HANDOFF: the 0322 Sunday exit near-low close + age-3 MATURE chain + buy-flow-absorbed-at-the-low predicts the Monday ph2 ABSORPTION (vs 0316's young-chain accommodation) and holds the deep -1080; the maturity flag is weighed but rejected as a damper because no give-back turn printed"
+      ],
+      "evidence_rejected": [
+        "the 1-min imb_level / imb_flow tick series (e.g. +0.55 imb_level at 20:05 during the up head-fake; +1.0/+1.2 imb_flow spikes overnight) - would have false-signalled LONG into the +1270 pop; the known Monday sampling-artifact trap, demoted to diagnostic, no exec authority",
+        "far_side_recruitment / queue reads (book low-authority, mapping_flags throughout)",
+        "a maturity-give-back damping of the day-move (age 3): considered via the handoff and REJECTED - the near-low absorbed close + no counter-turn means the mature chain delivered in full this session; the give-back risk transfers to 0324, not 0323"
+      ],
+      "stand_down_reasons": [
+        "mbo_mapping_flags on every row -> book/queue conclusions disabled; trade-flow only",
+        "execution_authority never granted (0/71 rows) -> SHADOW, no live fire",
+        "insufficient_recent_trades in thin overnight/settle minutes -> phase flow used there, not tick book"
+      ],
+      "mbo_verdict": "HELP (substantial, on MAGNITUDE), HELD from round 1. Direction unchanged (down, blind correct; the blind also correctly declined the far-window cold-add up-temptation). The blind UNDER-sized at -800; the ph1 violent delivery (-1920 on 58k vol) plus ph2 ABSORPTION (buy +2409 but price -290, absorb_session True) deepen the posterior to -1080 (actual day-move -1090, err ~10). Round 2 confirms this deepening is not a fit-to-actual: the inherited age-3 mature seam chain INDEPENDENTLY predicts the ph2 absorption and the near-low pin, so two lines (the flow phases AND the seam maturity) support -1080. TURN: the 03:52 overnight-shakeout top holds. HOW IT COULD HURT: same as 0316 - at tick grain the +1270 overnight pop with positive imb minutes reads as a reversal-to-up; only the divergence/phase framing plus the inherited mature-down seam keep the carry-down call.",
+      "selection_reason": "Monday-catchup lens: the blind's R3 carry-down and its 'far add does not price' decision are both confirmed by flow AND by the inherited mature down-chain; the specialist's value is deepening the magnitude via the ph1 delivery + ph2 absorption that the blind's state-only view under-sized. Round 2 changed nothing on direction or magnitude - the handoff RATIFIED the round-1 -1080 (and made the deepening derivable from the seam rather than only from the phase table); it moved only the confidence up (0.66 -> 0.70)."
+    }
+  ],
+  "summary": {
+    "0316": "Round-1 posterior -570 (down) -> round-2 -570 (down), HELD. The 0315->0316 handoff (Sunday near-low close, age-1 fresh down chain, last-hour buy-flow-absorption) RATIFIED the carry-down direction and independently foreshadowed the ph2 accommodation (off-low close) that had trimmed the blind's -650 to -570 - so the number holds and confidence rises 0.62 -> 0.66. Actual day-move -540 (err -30).",
+    "0323": "Round-1 posterior -1080 (down) -> round-2 -1080 (down), HELD. The 0322->0323 handoff (Sunday near-low close, age-3 MATURE down chain, buy-flow absorbed at the low) predicted the Monday ph2 ABSORPTION and near-low pin, making the round-1 deepening from the blind's under-sized -800 DERIVABLE from the seam state rather than only from the phase table. Maturity give-back risk was weighed and rejected (no counter-turn printed) - it transfers to 0324. Confidence 0.66 -> 0.70. Actual day-move -1090 (err ~10).",
+    "helped_or_hurt": "HELP on both, HELD from round 1; net positive for the Monday-catchup lens. Round-2's specific contribution is that the HE24->HE1 handoff turned two round-1 magnitude calls that had leaned on the intraday phase table into calls also supported by the INHERITED SEAM STATE - both directions and both magnitudes are unchanged, but each is now backed by two independent lines. No direction change was made because none had new causal support (the doctrine bar). The book layer added nothing trustworthy (mbo_mapping_flags throughout); all lift came from signed trade-flow phase structure, session turns, and the seam chain-age read.",
+    "vs_prior_state_refine_benchmark": "Consistent with grp15_refined_view (0316 -570, 0323 -1080; both hit) and the scored comparison (refined_err 0316 -30, 0323 0). The round-2 posterior lands identically at -570 / -1080 - the coordination pass tightened the DERIVATION and confidence, not the numbers."
+  }
+}

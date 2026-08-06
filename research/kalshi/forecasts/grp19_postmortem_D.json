@@ -1,0 +1,40 @@
+{
+  "specialist": "D",
+  "lens": "EIA-Thursday storage print (10:30 ET catalyst)",
+  "group": "g19",
+  "brain_version": "s102.9",
+  "mode": "post_mortem_self_eval",
+  "owned_days": ["20260514", "20260521"],
+  "headline": "Both owned EIA prints wrong-signed. On BOTH days I recognized the absorption event and then RE-SIZED in the absorbed flow's nominal direction instead of FLIPPING the sign against it - the exact error my own lens (POST-PRINT RE-ANCHOR: flip, do not re-size) and the g18_covering_rally_s105 brain entry warn against. G19 was the forward test of 'the blind's block-level bearish lean vs a covering rally'; I failed it exactly as g18 predicted, and on 0521 I additionally called an aligned-delivered-DOWN day UP.",
+  "days": [
+    {
+      "date": "20260514",
+      "dow": "Thu",
+      "day_class": "EIA-Thursday",
+      "blind_call": {"direction": "two_sided_down", "expected_magnitude_usd": -150, "band_usd": [-350, 120]},
+      "actual": {"net_usd": 590, "day_move_usd": 590, "open": 2.87, "close": 2.929, "turn_kind": "turn_up", "turn_et": "09:50", "lo_et": "09:50 (pre-print low)", "hi_et": "18:00 (close region)"},
+      "miss_usd": 740,
+      "sign": "WRONG (called down, delivered +590 up)",
+      "misread": "I read the covering as still-to-arrive (I explicitly labeled 0514 the 'transition day - shorts still press but absorption begins') and treated the in-line print (85 vs 85) as a CAP that damps the down-press. Actual: the covering rally was ALREADY in force. Price bottomed at 09:50 PRE-print and rallied through the print to close near the high. Target-day tape was net BUY (total_sflow +1072, sign +1, turn_kind turn_up); phase-3 sflow +41 with pxchg +370 = price squeezed UP on ~zero net aggressor flow = classic short-covering lift. My own lens rule (a counter attempt that prints into absorption ROUND-TRIPS / FLIP the block lean) applied here says FLIP to up - I instead kept the sign negative and merely shrank it to -150.",
+      "flow_signal_inverted": "The absorption consequence. D-1 (0513) showed absorb_session=true with phase-2 ph_absorb=true under -1979 sell flow - the sell being ABSORBED = covering onset. I read that same tape as 'selling accelerating, shorts pressing into the print' (continuation-down). Absorbed sell flow resolves UP (reversal), not damped-down. I inverted the sign of what absorption implies.",
+      "blind_visible_signal_missed": "PARTIALLY blind-visible, fully resolvable only with price. Blind-visible and misread: D-1 (0513) absorb_session=true + phase-2 absorb flag = the sell was being absorbed (covering tell), which I labeled 'shorts pressing'. Also blind-visible on the target day: total_sflow +1072 (net BUY) and turn_kind turn_up - I anchored direction to the D-1 sell tilt and never let the day's own net-buy/turn-up override it. The FULL sign (that absorbed sell -> +590) needed price: phase-3 pxchg +370 on +41 flow is the flow-vs-price covering discriminator, which is exactly the price-bearing evidence the refine adds.",
+      "he24_he1_effect": "CORRECTING. My day started at cum 0 from reopen with no inheritance. The prior exit (0513) was an UP day (net +430) closing near its high with absorb_session=true (sell absorbed = covering underway), block cum-from-anchor already +1200 on a rising covering rally. Inheriting that state - an established, sell-absorbing covering rally with up momentum into the seam - reframes 0514 from 'shorts still press -> down' to 'covering continues -> up' and corrects the sign."
+    },
+    {
+      "date": "20260521",
+      "dow": "Thu",
+      "day_class": "EIA-Thursday",
+      "blind_call": {"direction": "two_sided_up", "expected_magnitude_usd": 280, "band_usd": [80, 520]},
+      "actual": {"net_usd": -420, "day_move_usd": -420, "open": 3.175, "close": 3.133, "turn_kind": "turn_down", "turn_et": "11:44", "hi_et": "11:44 (post-print pop +330 exc)", "lo_et": "16:12 (close-low -580 exc)"},
+      "miss_usd": 700,
+      "sign": "WRONG (called up, delivered -420 down)",
+      "misread": "I read D-1 (0520) +1892 buy flow as 'covering in force with room to run' and projected continuation up. Actual: the 0520 buy was being DISTRIBUTED, not accumulated - 0520 was a seam/roll day whose price FELL -1050 despite +1892 buy flow (absorb_session=true, phases 2&3 both absorbed). The covering had EXHAUSTED into the roll. On 0521 the post-print pop (+330 at 11:44) that I sized as the continuation was SOLD: target-day total_sflow -2651 (heavy net SELL), turn_kind turn_down, phase-3 sflow -2042 with pxchg -570 = ALIGNED aggressive sell delivered down. I got the pop-fade SHAPE right (pop at 11:44 then fade) but the fade drove through zero to -420; I had it fading to +280.",
+      "flow_signal_inverted": "Same inversion, opposite side. I treated D-1 (0520) accelerating BUY flow as directional-up continuation when its blind-visible absorb_session=true flag meant that buy was absorbed = exhaustion/distribution -> reversal DOWN. Absorbed buy flow resolves DOWN, not continued-up. I inverted absorption again.",
+      "blind_visible_signal_missed": "PARTIALLY blind-visible. Blind-visible and misread: D-1 (0520) absorb_session=true with phases 2&3 absorbed - the +1892 buy was being absorbed, an EXHAUSTION tell I read as 'covering with room'. The confirming target-day tape was strongly net SELL (total_sflow -2651, turn_down) - I overrode it with the D-1 buy tilt and my count-vs-size 'covering signature' narrative. Full sign needed price: 0520 falling -1050 under +1892 buy, and 0521 phase-3 -570 aligned selldown, are the flow-vs-price reads the refine's price access resolves.",
+      "he24_he1_effect": "CORRECTING. Started at cum 0, no inheritance. The prior exit (0520, the NGN26 seam) was a sharp DOWN day (net -1050) that topped at the open (3.28) and closed near its low (lo 14:07) with +1892 buy ABSORBED = a freshly broken top with down momentum and buy-side exhaustion. 0521 is a clean post-seam continuation of the same leg. Inheriting that exit state - top broken, buy absorbed, momentum down - reframes 0521 from '+1892 covering -> up' to 'up-leg over -> continue down' and corrects the sign."
+    }
+  ],
+  "dominant_flaw": "On both prints I correctly detected the absorption event but treated absorption as a DAMP-in-the-flow's-direction rather than a SIGN FLIP against it - re-sizing (0514 kept down at -150; 0521 kept up at +280) exactly where my own POST-PRINT RE-ANCHOR rule and the g18 covering discriminator demand a flip - so I called the covering-absorbed-UP day down and the aligned-delivered-DOWN day up.",
+  "refine_must_fix": "Replace the D-1-tilt-as-direction step with the target-day flow-vs-price conviction sign (flow_conviction = sign(signed_flow)*sign(pxchg) per phase) and hard-enforce absorption=REVERSAL: an absorbed sell under flat/rising price flips UP (0514 phase-3 +370 on ~0 flow = +590), an absorbed buy under a falling price flips DOWN (0520 buy absorbed -> 0521 phase-3 -570 aligned selldown = -420). The refine's price access is precisely what resolves the flip the blind could only half-see via the absorb flag; additionally, carry the HE24->HE1 exit state (0513 sell-absorbed-up-momentum; 0520 buy-absorbed-broken-top) so the covering rally's turn is inherited, not re-derived from cum 0 each day.",
+  "self_score": "0/2 owned days, both wrong-signed, mean sign-miss ~720 USD. This is the g18_covering_rally_s105 'open' gap realized on the forward test: the blind's block-level lean lost to the covering rally, and the flow-vs-price absorption discriminator (refine-with-price) is where both days get caught."
+}

@@ -1,0 +1,244 @@
+{
+ "days": [
+  {
+   "date": "20260515",
+   "dow": "Fri",
+   "owner": "E",
+   "guessed_net_usd": 90,
+   "overnight_gap_usd": 20,
+   "path_distribution": [
+    {
+     "et_hr": 18,
+     "p50": 0
+    },
+    {
+     "et_hr": 20,
+     "p50": 10
+    },
+    {
+     "et_hr": 22,
+     "p50": 20
+    },
+    {
+     "et_hr": 0.5,
+     "p50": 22
+    },
+    {
+     "et_hr": 3,
+     "p50": 20
+    },
+    {
+     "et_hr": 6,
+     "p50": 35
+    },
+    {
+     "et_hr": 8,
+     "p50": 50
+    },
+    {
+     "et_hr": 9.5,
+     "p50": 40
+    },
+    {
+     "et_hr": 11,
+     "p50": 15
+    },
+    {
+     "et_hr": 13,
+     "p50": 25
+    },
+    {
+     "et_hr": 14.5,
+     "p50": 55
+    },
+    {
+     "et_hr": 16,
+     "p50": 80
+    },
+    {
+     "et_hr": 17,
+     "p50": 90
+    }
+   ],
+   "handoff_out": {
+    "close_state_note": "BLIND (price masked): forecast close = covering continued small (~+90 day-move) but EXHAUSTING into the bell; cum-from-anchor still net short of the block covering-high",
+    "cum_from_anchor_usd": -300,
+    "cum_from_anchor_note": "GUESSED sign/scale only: block ran DOWN off the 2.750 anchor (0508 -3214 ... 0513 -2763) then 0514/0515 covered back a fraction; net still below anchor",
+    "chain_polarity": "down_with_spent_covering_bounce",
+    "chain_polarity_note": "heavy down chain 0508-0513, 0514 EIA covering pop (+1072) that exhausted, 0515 last-gasp small covering",
+    "chain_age_sessions": 5,
+    "exhaustion_flag": true,
+    "last_hour_dir": "up_small",
+    "last_hour_signed_flow": "covering_small_exhausting (D-1 final phase +41 collapse; fresh-COT nudge)",
+    "conviction": "COVERING-SPENT (one-shot pulse largely realized by close)",
+    "close_off_extreme_frac": 0.5,
+    "positioning_calendar": {
+     "expiry": false,
+     "opex": false,
+     "days_to_opex": 6,
+     "note": "NGM26 opex 05-26 six sessions out = squeeze TAIL risk, NOT a Friday-before covering trigger for the p50"
+    },
+    "exit_type": "positioning_spent_fade",
+    "monday_bias": "down small-to-moderate: 0514 covering pulse spent and 0515 exhausted it; down chain reasserts Monday. Worsening COT (0.94) is squeeze TAIL not the p50. (Realized 0518 -872 consistent.)",
+    "sunday_gap_owner": "chain_drift"
+   }
+  },
+  {
+   "date": "20260520",
+   "dow": "Wed",
+   "owner": "E",
+   "guessed_net_usd": 200,
+   "overnight_gap_usd": 0,
+   "path_distribution": [
+    {
+     "et_hr": 18,
+     "p50": 0
+    },
+    {
+     "et_hr": 20,
+     "p50": 5
+    },
+    {
+     "et_hr": 22,
+     "p50": 10
+    },
+    {
+     "et_hr": 0.5,
+     "p50": 15
+    },
+    {
+     "et_hr": 3,
+     "p50": 25
+    },
+    {
+     "et_hr": 6,
+     "p50": 45
+    },
+    {
+     "et_hr": 8,
+     "p50": 70
+    },
+    {
+     "et_hr": 9.5,
+     "p50": 90
+    },
+    {
+     "et_hr": 11,
+     "p50": 110
+    },
+    {
+     "et_hr": 13,
+     "p50": 140
+    },
+    {
+     "et_hr": 14.5,
+     "p50": 170
+    },
+    {
+     "et_hr": 16,
+     "p50": 195
+    },
+    {
+     "et_hr": 17,
+     "p50": 200
+    }
+   ],
+   "handoff_out": {
+    "close_state_note": "BLIND: forecast close = covering/roll lift held into settle (~+200 July-leg day-move); this is the block's covering PULSE day",
+    "chain_polarity": "covering_pulse_up_on_seam",
+    "chain_age_sessions": 1,
+    "exhaustion_flag": false,
+    "last_hour_dir": "up",
+    "last_hour_signed_flow": "covering_up_accelerating (roll + absorption)",
+    "conviction": "COVERING-ABSORBED-UP (directional tell, not exhaustion)",
+    "exit_type": "covering_pulse_holding",
+    "next_day_bias": "0521 (Thu EIA): the covering pulse is a ONE-SHOT (self-limiting); absent a FRESH worsening-COT stack the chain default DOWN reasserts on 0521. Do NOT re-fire the covering-UP. (Realized 0521 -2651 confirms.)"
+   }
+  },
+  {
+   "date": "20260522",
+   "dow": "Fri",
+   "owner": "E",
+   "guessed_net_usd": -190,
+   "overnight_gap_usd": -30,
+   "path_distribution": [
+    {
+     "et_hr": 18,
+     "p50": 0
+    },
+    {
+     "et_hr": 20,
+     "p50": -15
+    },
+    {
+     "et_hr": 22,
+     "p50": -25
+    },
+    {
+     "et_hr": 0.5,
+     "p50": -35
+    },
+    {
+     "et_hr": 3,
+     "p50": -55
+    },
+    {
+     "et_hr": 6,
+     "p50": -90
+    },
+    {
+     "et_hr": 8,
+     "p50": -130
+    },
+    {
+     "et_hr": 9.5,
+     "p50": -170
+    },
+    {
+     "et_hr": 11,
+     "p50": -200
+    },
+    {
+     "et_hr": 13,
+     "p50": -210
+    },
+    {
+     "et_hr": 14.5,
+     "p50": -190
+    },
+    {
+     "et_hr": 16,
+     "p50": -185
+    },
+    {
+     "et_hr": 17,
+     "p50": -190
+    }
+   ],
+   "handoff_out": {
+    "close_state_note": "BLIND: forecast close = down-momentum delivery (~-190 day-move) partly trimmed by late weekend short-covering; block closes with the DOWN chain intact and covering spent",
+    "cum_from_anchor_usd": -450,
+    "cum_from_anchor_note": "GUESSED sign/scale only: block net DOWN off the 2.750 anchor; the 0520 covering pulse was reversed by 0521-0522",
+    "chain_polarity": "down_covering_spent",
+    "chain_polarity_note": "0520 covering pulse (+200) reversed by 0521 (-2651) and 0522 continuation; the covering fuel is discharged",
+    "chain_age_sessions": 2,
+    "exhaustion_flag": false,
+    "last_hour_dir": "down_with_late_cover_trim",
+    "last_hour_signed_flow": "aligned_sell_delivery_then_weekend_cover_trim",
+    "conviction": "DELIVERY-DOWN (aligned, no absorption); covering discharged",
+    "close_off_extreme_frac": 0.4,
+    "positioning_calendar": {
+     "expiry": false,
+     "opex": true,
+     "days_to_opex": 1,
+     "holiday_weekend": true,
+     "holiday": "Memorial Day 2026-05-25",
+     "note": "3-day weekend + NGM26 opex 05-26 (Tue) = squeeze TAIL risk into the post-holiday session"
+    },
+    "exit_type": "trend_down_into_holiday_squeeze_tail",
+    "monday_bias": "post-holiday 05-26 (opex Tue) base = DOWN small-moderate (spent covering, aligned-sell chain intact) WITH A FAT UPPER TAIL: crowded short (0.94) + NGM26 opex pin + 3-day gap risk = squeeze/short-cover potential. Treat any UP as tail, not the p50.",
+    "sunday_gap_owner": "chain_drift_with_squeeze_tail"
+   }
+  }
+ ]
+}

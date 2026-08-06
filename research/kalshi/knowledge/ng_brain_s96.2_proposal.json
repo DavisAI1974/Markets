@@ -1,0 +1,458 @@
+{
+ "meta": {
+  "market": "NG",
+  "version": "s96.2_proposal",
+  "built_pass": 2,
+  "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). s95.2 = the MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout, reviewed and CONFIRMED as the brain (S96). Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved.",
+  "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year.",
+  "regime_scope": "12 warm-season days (Jul-Sep) + G3/G4/G5 (Sep8-Oct21) autumn contango + G6 (Oct22-Nov4) the first TRUE holdout at the winter transition. Winter/backwardation + Mondays still thin.",
+  "risk_gate": "Every play is provisional-until-live: must clear the size-vs-fee wall and paper-trade on Kalshi demo before real orders.",
+  "s92.6_note": "Consecutive-block merge s92.3 -> +G3 -> +G4 -> +G5 (blinded scorecards). Biggest lead was direction.cross_block_reversion (each block reverses/gives back the prior block's net). Fundamentals a slow BACKDROP for block-trajectory, not a short-term signal. Preserved verbatim from s95.1.",
+  "s95_refine_note": "S95 UNBLINDED deep refine over G3/G4/G5 laying per-day guesses on the CONTINUOUS RT curve. Resolved three problems into GENERAL rules: (A) intraday SIDE called by SHAPE (grind holds / spike round-trips) + flow nowcast + continuation-asymmetry; (B) CROSS-BLOCK REVERSION reframed as SWING-EXHAUSTION REVERSION (cum-extreme + last-1-2-day counter-move); (C) MAGNITUDE under-forecast is CONCENTRATED on three catalyst conditions (weekend-gap Monday / storage Thursday / swing-reversal-seam), not uniform. NOTE (superseded in part by s95_2): this note originally cited a '0925 overnight gap +2760 = swing-exhaustion reversion' as delivery form (B) - that specific sub-claim is VOID (it was the contract roll). See s95_2_roll_correction.",
+  "s95_fingerprint_note": "S95 fingerprint pass (6 pivotal days) CONFIRMED dip_imb_level as the held-leg side caller (5/6 days near-perfect), continuation-ASYMMETRY as the intraday side structure (dominant-dir legs continue, counter-dir die), peaked_fast spikes fade (23/24), and swing-exhaustion via a CONTINUATION-COLLAPSE signature (1008 old-swing up 0/15). REVISED: turn_far_thinning DEMOTED to noise. flow_nowcast LAGS the extreme gap melt-up (1020 7/12). Preserved from s95.1.",
+  "s95_fingerprints_note": "Added the fingerprints catalog (perception vocabulary). dip_imb_level + continuation-asymmetry + peaked_fast CARRY direction/hold/turn; turn_far_thinning DEMOTED to noise. Preserved from s95.1.",
+  "s95_2_roll_correction": "LOAD-BEARING (Greg S95.2): the continuous NG.v.0 series ROLLS between contracts ~monthly. The ONE roll inside G3-5 is at the G3->G4 seam: Sep24->25, instrument 869->864 (Oct->Nov contract), offset +0.276 (=$2760). CONSEQUENCES: (1) The s95.1 flagship finding '0925 overnight gap +$2760 = swing-exhaustion reversion' is VOID - it was EXACTLY the roll (0.276 x 10000), a DATA ARTIFACT not a market move. (2) The G3->G4 reversal was REAL but delivered through the INTRADAY US SESSIONS of G4's first week (0925 +740 roll-clean net, 0929 +950, 0930 +640, 1001 +1170), pre-signaled by the 0923 bounce + 0924 hold - NOT as an overnight gap. (3) The block-reversal MAGNITUDE was roll-INFLATED: continuous 2.869->3.514 (+0.645) is +0.276 roll; the REAL G4 amplitude (0925 open 3.145 -> 1007 close 3.514, same contract) is +0.369, ~0.28 smaller. Block reversal real but WEAKER. (4) INTRADAY per-day nets (open->close, same contract) are roll-clean and trustworthy; the Oct7->8 G4->G5 seam did NOT roll (that crash is fully real). The genuine OVERNIGHT-GAP delivery form of a swing reversal is still evidenced by 1019 Sun +1570 (real weekend gap pre-loading the 1020 reversal), not by 0925.",
+  "s95_2_note": "S95.2 FULL UNBLINDED refine re-done PROPERLY on roll-clean data across ALL G3/G4/G5 days (prior pass sampled 6 and ran on roll-contaminated data), producing a RENDERABLE refined guess CURVE per day (cum_from_open $ on the ET grid) in forecasts/grp{3,4,5}.json - reasoned day-into-day from the prior guessed close by GENERAL condition->behavior rules, NOT by tracing the actual. WHERE THE REFINED CURVES TRACK (rules earn the side): 0910/0911/0918/0922 (block-trend + storage-Thursday down, sized up), 0923 swing-reversal-up off the 0922 extreme, 0925 seam-reversal-UP + storage Thursday (the roll-corrected win - orig extended G3 down), 0929 Monday reversal-up, 1008 seam-reversal-DOWN intraday (the G4->G5 win - orig extended G4 up), 1009/1010/1014/1016 the G5 downtrend with the Thursday capitulation at the V-bottom, 1017 swing-reversal-up off the bottom, 1020 Monday compound reversal-up, 1021 Tuesday to the top. WHERE THEY MISS (honestly): 0916 counter-trend grind-up (unsolved intra-block turn, not callable at the open), 1019 the +1570 weekend gap (direction unforecastable), and the whole set UNDER-sizes the catalyst extremes (1001 ~4x, 1007 ~3.5x, 1020 ~2x). PER-EVENT, no averages, no point-fitting.",
+  "g6_holdout_note": "G6 (Oct22-Nov4) is the FIRST TRUE blind holdout scored on s95.1. Roll-adjusted, G6 was a V: week-1 give-back DOWN (3.52->3.14) then week-2 recovery UP (->3.66), net +0.14. The forecast leaned down (reversion lean) and: (a) CAUGHT the week-1 give-back DIRECTION (cross_block_reversion earned week-1); (b) MISSED the week-2 recovery - the intra-block turn / counter-trend recovery, the OPEN problem, still unsolved (same failure mode as 0916); (c) MAGNITUDE was the DOMINANT error (undersized both the dip and the recovery); (d) the storage SURPLUS (bearish) got the block direction WRONG - winter heating-demand (HDD rising) won. LESSONS FOLDED: cross_block_reversion is a GIVE-BACK, not a sustained reversal (a block can V back - as G5 and G6 both did); fundamentals are NOT even a reliable block-direction cue near the winter transition (rising HDD flips the sign); magnitude remains the dominant residual; the intra-block counter-trend turn is the top open problem.",
+  "g7_holdout_note": "G7 (Nov5-18, the FIRST WINTER BLOCK) one-shot blind holdout on s95.2 (canonical protocol; a 3-day day-sequential side experiment was run first and PAUSED - see forecasts/grp7_seq_experiment.json). PER-EVENT scorecard (renders/ng_refine_s95/g7_score.json): direction 3/10 days (1105 OK -350g/-520a; 1111 OK; 1118 OK) BUT the BLOCK lean was RIGHT - guessed a W netting above the anchor, close-cum +880g vs +490a, final drift only +390. The W happened TIME-SHIFTED: the forecast put the hard-heat Monday shock on 1110 (actual -820) while the real +1580 rally came 1111 Veterans Day - the day sized DOWN for the thin-holiday flag; both storage Thursdays (1106 +1350a vs -700g, 1113 +620a vs -900g) went UP against fundamental-leaning down calls. NEW located problem: day-level SEQUENCING inside a right block lean. Reconfirmed: HDD beats the widening surplus at the winter transition (market rallied +1350 THROUGH the bearish +10.8-above print on 1106; surplus widened +130->+146 all block yet block net UP); give-back off the G6 high was real but SHALLOW (one day, -520) then the up-swing resumed - give-back-not-reversal holds. Monday bigness held (both G7 Mondays big: -820, -1500) but BOTH were CONTINUATION-down days, against the reversal-lean prior; side stays uncalled.",
+  "s96_seq_experiment_note": "S96 protocol experiment (3 days, then reverted to one-shot canonical per Greg): DAY-SEQUENTIAL rolling actual anchor (each day forecast blind, flowing from the prior day's ACTUAL close + per-leg reveal fingerprint). Per-event: 1105 -350g/-520a HIT; 1106 storage-Thu +1450g/+1350a HIT (read 1105's actual tape as give-back-exhausted: half-recovered drop + last-hour up + no continuation-collapse, then sized the Thursday up); 1107 +400g/-720a MISS. The 1106 call is the first direct evidence the day-boundary TURN is callable from day-N actuals - the exact information the one-shot protocol withholds. Canonical skill test stays ONE-SHOT; revisit sequential as the LIVE-coach operating mode.",
+  "s96_2_refine_note": "S96.2 UNBLINDED per-group refine of G7 (Nov5-18, first winter block) - ITERATIVE (Greg S96): refined curves written into forecasts/grp7.json (refined_* fields), derived ONLY from general rules + decision-state + prior-day ACTUAL tape (never the forecast day's own tape). NEW/CHANGED RULES (each n>=2 spanning groups): (R1) GIVE-BACK-EXHAUSTION DAY-BOUNDARY READ - new play direction.giveback_exhaustion_boundary: a give-back day that closes >=~40-50% off its intraday extreme with a last-hours counter-tick, while the underlying swing's big legs show no continuation-collapse -> give-back EXHAUSTED, swing resumes next session (1105->1106, 1107->1109 gap, 1110->1111, 1112->1113 G7; 0926->0929, 1003->1005 G4); a give-back that closes AT its extreme with last hours extending CONTINUES (1002->1003 G4, 1114->1117 G7); if the swing side's own legs already collapsed, stand down (0915 down-legs 0/8 -> the 0916 counter-grind correctly filtered). THIS is the day-level SEQUENCING answer: the carrier day (1111 not 1110) is pinned by the boundary read off day-N-1 actuals. (R2) STORAGE-THURSDAY SIDE = RUNNING SWING/TURN STATE, NEVER THE PRINT SIGN - reframed into daytype.storage_thursday_magnitude: 10 storage Thursdays across G3-G7 all sided with the swing (or the just-armed turn: 0925, 1030), zero with the surprise sign when they disagreed (1106 +1350 THROUGH +10.8-above; 1113 +620 THROUGH +5.2-above). (R3) WEEKEND-GAP DELIVERY + MONDAY GAP-REACTION - reframed into daytype.monday_weekend_gap: the weekend repricing is delivered at the SUNDAY reopen gap; Monday's US session is the REACTION: gap WITH a mature swing to a fresh extreme is FADED (1109+1560->1110 -820; 0908 mild), gap at a FRESH turn is EXTENDED (1019->1020 +2660); with no material gap Monday carries Friday's side (1107->1110, 1114->1117, 0919->0922, 1017->1020). Monday-as-block-reversal is DEAD - it was swing-state coincidence. (R4) MATURE-SWING ALTERNATION - new play structure.mature_swing_alternation: a young swing (<=3 sessions from the turn) chains extensions (0929-1001 G4; 1030-1104 G6); a mature swing (>=4 sessions) never extends a material fresh extreme close - next session is a give-back/hold (G7 5/5; 1007->1008 G4). (R5) GIVE-BACK ORIGIN-SHELF FLOOR - new play level.giveback_origin_shelf: a terminal give-back runs to the swing's origin shelf then stabilizes; at >=~75% retrace the R1 closes-at-low read INVERTS (capitulation precedes the bounce: 0922->0923, 1016->1017, 1117->1118). REFINED-vs-ACTUAL (per-event): 1105 -500/-520, 1106 +1400/+1350, 1107 -650/-720, 1110 -800/-820 (weekend gap +1200/+1560), 1111 +1400/+1580, 1112 -100/+100 (sign miss, hold-day), 1113 +800/+620, 1114 -900/-910, 1117 -1400/-1500, 1118 +250/+270. IRREDUCIBLE at the open: (a) the hold-day sign inside +-150 (1112); (b) the EXTREME magnitudes (1111 +1580 on a thin holiday - direction+size-up callable, full size not; the standing dominant residual); (c) the Sunday-gap SIZE (1109 +1560 - direction callable via R1, magnitude not); (d) the R5 bounce-day timing rests on a soft >=75%-retrace threshold (n=3). GUARD: rules were applied UNIFORMLY across the block and back-checked on G3-6; sizes come from condition-class bands (mature-swing give-back -500..-900; catalyst resume +800..+1400), never from the target day's tape."
+ },
+ "reasoning_method": {
+  "note": "HOW he reasons - the general method applied every day. Per-event, never averaged; drift is a DESCRIPTOR tied to conditions, never point-fit.",
+  "continuous_frame": "Reason CONTINUOUSLY, one day into the next. Each day's forecast FLOWS from the prior day's close + trajectory + running state - a continuation-or-turn of the running path, never a from-flat isolated event. CAUTION (s95_2): the continuous data series contains CONTRACT ROLLS (~monthly) that inject a fake overnight jump (G3-5: the Sep24->25 +0.276 Oct->Nov roll). At a known roll boundary forecast the REAL overnight ~0 and reason on roll-clean intraday nets; never read a roll jump as a market move / swing turn.",
+  "anchor": "Start each block from the ACTUAL hr24 of the day BEFORE the block (blind-safe). Within the block, each day flows from the agent's OWN prior-day guessed close.",
+  "block_open_lean": "At a block boundary, LEAN AGAINST a stretched swing - but the trigger is SWING EXHAUSTION, not the calendar seam: weight a reversal when the running (roll-clean) path is at a cum-EXTREME AND the old block's LAST 1-2 days show a counter-move (0923 bounce + 0924 hold before the G3->G4 up-turn; 1007 last-hour roll-over before the G4->G5 crash). The reversal is delivered through the INTRADAY US SESSIONS (G3->G4 first week) or as an intraday US-session CRASH (1008), and occasionally pre-loaded by a real overnight/weekend GAP (1019 +1570). Do NOT extend the trend into a stretched seam; do NOT blind-fade a still-trending block with no last-day counter-move. G6 CAVEAT: this reversion is a GIVE-BACK, not a sustained reversal - the block can itself V back (G5, G6), so do not marry the new lean past its own exhaustion. Confirm with intraday flow.",
+  "fundamentals_role": "Storage surplus/deficit + HDD/CDD regime = a SLOW, WEAK block-trajectory backdrop, NEVER a day-level or pre-print side/timing signal. The +150 Bcf surplus called G3 down. BUT (G6, load-bearing): near the seasonal (autumn->winter) transition the surplus is an UNRELIABLE block-direction cue - rising HDD (heating demand) flipped the block UP through G4/Oct and won in G6 despite the bearish surplus. Treat fundamentals as a lean of last resort, dominated by the running trajectory and the swing-exhaustion read.",
+  "daytype_priors": "Monday = BIG mover, but the weekend repricing arrives at the SUNDAY reopen gap and Monday's US session is the REACTION (R3: fade a mature-swing gap, extend a fresh-turn gap, else carry Friday's side) - the old 'often a REVERSAL' lean is retired (G7: both Mondays continued). Thin-holiday size-down only with NO active weather catalyst (1013 yes, 1111 no). Storage Thursday = large dominant leg at/after the 10:30 ET print, size UP; SIDE = the running swing/turn state, never the print sign (R2, 10/10 G3-G7). Fri = range (overridden in a high-momentum reversal regime AND by R4 give-back-after-extreme: 1107, 1114). Tue = strongest-trend weekday. Wed = weak up-lean (overridden by block trend). Never pool across DOW.",
+  "intraday_side": "OPEN-time from-flat side is a coin-flip (stays OPEN). WITHIN the day the side is CALLED by (1) dip_imb_level flow nowcast (held legs' flow sign matches leg dir near-perfect) and (2) CONTINUATION-ASYMMETRY (true-direction legs continue, counter-dir die). A counter-trend GRIND is real (block trend does not veto it) - BUT it is NOT callable AT THE OPEN (0916, G6 week-2): no open-time signal distinguishes a counter-trend grind from a continuation day. CAVEAT: flow_nowcast LAGS an extreme gap melt-up (1020 7/12) - lean on continuation-asymmetry there. Shape (grind holds / peaked_fast spike fades, 23/24) decides hold-vs-close.",
+  "magnitude_sizing": "Size per event vs the running trajectory + regime; do NOT globally rescale. The under-forecast is CONCENTRATED on three catalyst conditions - weekend-gap Monday, storage Thursday, swing-reversal/seam - which run to MULTIPLES of default; non-catalyst chop is sized ~right. Stack the up-sizers when they coincide (1020: Monday + reversal + swing-turn). G6 CONFIRMS magnitude is the DOMINANT residual error (undersized both the dip and the recovery) - even after condition-sorting, expect to under-size the extremes; do NOT clip the ride. Use the $350 staircase as the real-time continuation read.",
+  "shape_and_exit": "A slow GRIND holds; a front-loaded peaked_fast SPIKE round-trips (fingerprint-confirmed 23/24). REVISED: turn_far_thinning did NOT confirm as the live recruitment/exit discriminator - treat it as a diagnostic only. Use continuation/retention + peaked_fast + flow for the running turn.",
+  "discipline": "PER-EVENT only, never average/pool/count. Drift is a DESCRIPTOR - tie each miss to its CONDITIONS, never point-fit. GENERAL rules (mechanism + n) only.",
+  "swing_exhaustion_reversion": "GENERAL mechanism, fingerprint-CONFIRMED via a CONTINUATION-COLLAPSE signature: at a swing turn the OLD-direction legs STOP continuing and turn_exhaustion goes negative, while the NEW direction begins to hold at the extreme. Named: G4->G5 top 1008 (old-swing UP 0/15 - total exhaustion, dominant DOWN 12/26); G5 V-bottom 1016 (UP recruits hold 5/18 on a down-close day); intra-block 0916 (block-DOWN legs 1/11) and G3 0922 low -> 0923 bounce. The turn begins in the old swing's last legs and completes through the INTRADAY sessions (G3->G4) or as an intraday US-session CRASH (1008), sometimes pre-loaded by a real overnight/weekend GAP (1019 +1570). CORRECTION (s95_2): the previously-cited '0925 +2760 overnight gap' delivery form is VOID - that was the Oct->Nov contract roll, NOT a swing turn. Do NOT extend trend into a stretched swing; watch for the old-direction continuation-collapse. G6: the reversion is a GIVE-BACK - a block can V back, so treat each leg of the swing as its own exhaustible move.",
+  "magnitude_catalyst_sort": "GENERAL: sort the big days by CONDITION, do not rescale. UP-size on weekend-gap Monday, storage Thursday, and swing-reversal/seam days. DOWN-size on thin-holiday Monday (1013), Sunday carry, non-catalyst chop. Compound the up-sizers when they coincide (1020). G6: still expect to under-size the extremes - magnitude is the dominant residual.",
+  "giveback_exhaustion_boundary": "R1 (S96.2, the sequencing solvent): read the give-back's OWN close. EXHAUSTED = closes >=~40-50% off its intraday extreme + last-hours counter-tick + no continuation-collapse in the underlying swing's big legs -> next session RESUMES the swing (size up if a catalyst day). NOT exhausted = closes at/near its extreme with last hours extending -> give-back CONTINUES. If the swing side's own legs have already collapsed (0915 down 0/8), stand down - the swing is suspect, no resume call. n: resume 1105->1106, 1107->1109gap, 1110->1111, 1112->1113 (G7), 0926->0929, 1003->1005 (G4); continue 1002->1003 (G4), 1114->1117 (G7); filter 0915->0916 (G3). Mechanism: a give-back is positioning unwind inside an intact flow regime - when the unwind cannot hold its lows into the close, the sellers are done and the dominant flow re-asserts; the last hour is the earliest tell (hr24->hr1).",
+  "mature_swing_alternation": "R4 (S96.2): swing AGE gates day-sequencing. YOUNG swing (<=3 sessions since the turn) chains extensions day-after-day (0929/0930/1001 G4; 1030/1031/1103/1104 G6). MATURE swing (>=4 sessions): a material fresh extreme close (>= ~$300 beyond the prior extreme) is NEVER followed by a consecutive extension - the next session is a give-back/hold (G7 5/5: 1104->1105, 1106->1107, 1109->1110, 1111->1112, 1113->1114; 1007->1008 G4). Then R1 decides whether the give-back exhausts (resume) or runs (continue). Mechanism: early in a swing the repricing is under-done (info still propagating); late, each new extreme exhausts the marginal buyer - swing-exhaustion in incremental form.",
+  "weekend_gap_reaction": "R3 (S96.2): the weekend repricing is delivered AT THE SUNDAY REOPEN as the gap - Monday's US session is the REACTION, not the repricing. Gap WITH a mature swing to a fresh cum-extreme -> Monday FADES it (1109 +1560 -> 1110 -820; 0908 +460 -> faded +740->+190). Gap at a FRESH turn (<=~2 sessions old) -> Monday EXTENDS (1019 +1570 -> 1020 +2660). No material gap -> Monday carries FRIDAY's side (1107->1110, 1114->1117 G7; 0919->0922 G3; 1017->1020 G5). Monday bigness stands; Monday-as-block-reversal is retired (the G3-5 'reversals' were swing-state coincidences).",
+  "giveback_origin_shelf_floor": "R5 (S96.2): a terminal give-back runs until it retraces to the swing's ORIGIN/consolidation shelf, then stabilizes (give-back-not-reversal). At >=~75% retrace of the swing, the R1 closes-at-low continuation read INVERTS: capitulation closes at stretched extremes precede the BOUNCE (0922->0923 +610 G3; 1016->1017 +740 G5; 1117->1118 +270 G7; also 1029 stall -> 1030 +2580 G6 as the Thursday-turn form). Mechanism: the give-back unwinds the crowd that entered during the extension; once price returns to where the extension began there is no trapped inventory left to force further. Use for give-back sizing (floor) and for calling the stabilization/turn day."
+ },
+ "plays": [
+  {
+   "id": "direction.flow_nowcast",
+   "target": "direction",
+   "trigger": "a leg is forming (order-flow window ~300s around the trigger push)",
+   "read": "dip_imb_level (Lee-Ready buy-minus-sell flow imbalance, signed)",
+   "call": "NG's side = sign(dip_imb_level) when strong (|dip_imb_level| >= 0.15); fire on the LAGGING Kalshi mark on that side",
+   "evidence": {
+    "n_strong_oos": 34,
+    "rate_oos": 1.0,
+    "monotone": "0.68 -> 0.84 -> 0.94 -> 0.93",
+    "s95_fingerprint_held_leg_side": "held-leg dip_imb_level sign matched leg dir near-perfect on 5/6 pivotal days: 0916 4/4, 0925 8/8, 1008 8/9, 1016 12/12, 0908 6/8; WEAKER on the extreme gap melt-up 1020 (7/12)."
+   },
+   "status": "PROVISIONAL",
+   "confidence": 0.87,
+   "exemplars": [
+    "07-24 idx5126 dip+0.59->up $270",
+    "OOS 07-15/07-30/08-15 strong-flow 34/34"
+   ],
+   "caveats": "NOWCAST (flow overlaps the nascent leg), not a from-flat forecast. Direction only. CONFIRMED held-leg side caller; LAGS on an extreme gap MELT-UP (1020 7/12) - lean on continuation-asymmetry there. Unchanged s95.2."
+  },
+  {
+   "id": "direction.book_contrarian",
+   "target": "direction",
+   "trigger": "at entry, when flow (dip_imb_level) is flat/ambiguous",
+   "read": "imb_R (resting-book imbalance at entry)",
+   "call": "fade the heavy resting side - ask-heavy book -> price runs UP through it (wall = fuel, not floor)",
+   "evidence": {
+    "ask_heavy_up": 0.61,
+    "n_ask": 158,
+    "bid_heavy_up": 0.42,
+    "n_bid": 121,
+    "flow_beats_book_when_disagree": "262/293 = 0.89"
+   },
+   "status": "PROVISIONAL",
+   "confidence": 0.5,
+   "exemplars": [],
+   "caveats": "Weaker than flow; use only as a tie-breaker when flow is flat. Unchanged s95.2."
+  },
+  {
+   "id": "ride.magnitude_staircase",
+   "target": "sustain",
+   "trigger": "a leg's favorable peak crosses a $ threshold in real time",
+   "read": "peak_usd reached so far",
+   "call": "RIDE - continuation rises with size: $50->0.43, $150->0.57, $250->0.75, $350->0.92, $500->1.00.",
+   "evidence": {
+    "n_350": 38,
+    "cont_350": 0.92,
+    "n_500": 11,
+    "cont_500": 1.0
+   },
+   "status": "STABLE",
+   "confidence": 0.9,
+   "exemplars": [
+    "07-03 idx17768 $1060 ret.83",
+    "08-06 idx9611 $840 ret.98"
+   ],
+   "caveats": "peak_usd is realized-so-far; the CROSSING is the usable real-time event. Unchanged s95.2. G6: the staircase is the live tool to avoid clipping the extreme rides (1020) the open-time magnitude prior under-sizes."
+  },
+  {
+   "id": "exit.recruitment_reversal",
+   "target": "turn",
+   "trigger": "a big leg maturing - watch the far-side book as price runs",
+   "read": "turn_far_thinning (far-ladder change) + turn_aligned_push - REVISED: use old-swing continuation-collapse + turn_exhaustion instead",
+   "call": "The running turn is read from old-swing CONTINUATION-COLLAPSE (old-direction legs stop continuing) + negative turn_exhaustion + peaked_fast fade, NOT from turn_far_thinning sign.",
+   "evidence": {
+    "n_big": 101,
+    "s95_fingerprint_nonconfirm": "turn_far_thinning did NOT confirm as the hold-vs-fade discriminator (held legs only ~half negative-tft); DEMOTED to noise."
+   },
+   "status": "PROVISIONAL",
+   "confidence": 0.5,
+   "exemplars": [
+    "1008 old-swing up-legs 0/15 continuation-collapse at the G4->G5 top"
+   ],
+   "caveats": "turn_far_thinning is NOISE at leg granularity. The running turn is read from continuation-collapse + turn_exhaustion + peaked_fast. Unchanged s95.2."
+  },
+  {
+   "id": "shape.grind_vs_spike",
+   "target": "sustain",
+   "trigger": "how the leg is being built",
+   "read": "fast_capture / peaked_fast",
+   "call": "a slow GRIND holds (ride); a front-loaded SPIKE round-trips (scalp/skip). Primary INTRADAY hold-vs-fade AND counter-trend side discriminator: a counter-trend GRIND rides even against the block trend; a SPIKE fades back to the trend.",
+   "evidence": {
+    "held_that_spiked": "1/111",
+    "g3g4g5_grinds_held": "0916 counter-trend grind-up +1330; 0929 Mon grind +1240; 1007 grind +1620; 1020 Mon grind +2770",
+    "g3g4g5_spikes_roundtripped": "1002 Thu +900 spike closed -440; 1006 Mon +1020 spike closed +70; 0908 Mon +740 faded to +190",
+    "s95_fingerprint_spike_fade": "peaked_fast legs faded 23/24 across the 6 pivotal days",
+    "s95_continuation_asymmetry": "dominant-dir legs continue while counter-dir die: 0916 (down 1/11), 1008 (up 0/15), 1020 (down 1/10)"
+   },
+   "status": "STABLE",
+   "confidence": 0.9,
+   "exemplars": [],
+   "caveats": "Usable once the first ~60s-2h of build is seen - NOT at the open. G6 week-2 + 0916 re-flag the OPEN PROBLEM: a counter-trend grind is not callable at the open, so the refined open-time curve honestly MISSES the intra-block counter-trend turns. Confidence 0.9 held."
+  },
+  {
+   "id": "daytype.surprise_magnitude",
+   "target": "daytype",
+   "trigger": "at the open, from the week's EIA storage surprise",
+   "read": "|stor_surprise| (Bcf vs seasonal)",
+   "call": "big |surprise| -> expect a bigger-leg day; near-consensus -> range/chop. SIGN does NOT sort direction.",
+   "evidence": {
+    "distinct_prints": 6
+   },
+   "status": "PROVISIONAL_WEAKENED",
+   "confidence": 0.35,
+   "exemplars": [
+    "0820 big-|surprise| trend-bet UP -> actual DOWN (opposite)"
+   ],
+   "caveats": "Season-confounded, ~6 prints. Surprise magnitude does not sort direction. Fundamentals are a slow block-trajectory backdrop only, and (G6) an UNRELIABLE block-direction cue near the winter transition - rising HDD flipped the sign. Confidence 0.35 held."
+  },
+  {
+   "id": "daytype.weekday_archetype",
+   "target": "daytype",
+   "trigger": "at the open, from the weekday",
+   "read": "day of week",
+   "call": "Wed = weak US up-lean (overridden by block trend); Thu = storage catalyst + BIG-magnitude day; Fri = range (overridden in a strong reversal regime); Tue = strongest-trend weekday (continuation); Mon = weekend-gap BIG mover.",
+   "evidence": {},
+   "status": "PROVISIONAL",
+   "confidence": 0.4,
+   "exemplars": [
+    "1010 Fri range archetype OVERRIDDEN by the G5 crash regime (-1050)",
+    "0910 Wed up-lean overridden by the down block (-950)"
+   ],
+   "caveats": "Never pool across DOW. Weekday archetypes are OVERRIDDEN by the running block trajectory + a high-momentum reversal regime. Warm/autumn-season only. Confidence 0.4 held."
+  },
+  {
+   "id": "timing.subsecond_reversal_exhaustion",
+   "target": "turn",
+   "trigger": "at a maturing leg's turn - the BTC fine-resolution price-reversal + dipole-EXHAUSTION edge, tested on NG futures directly",
+   "read": "dipole EXHAUSTION stacked with fine-resolution price-reversal timing",
+   "call": "EXECUTION-LAYER turn-timing ONLY. Near a turn the exhaustion-collapse marks the reversal and fine price-reversal pins entry ~5-6bps off the turn.",
+   "evidence": {
+    "ng_exhaustion_pulse_pp": 2.7,
+    "n": "1 NG trend day (2025-07-17), 1-sec binned"
+   },
+   "status": "HYPOTHESIS",
+   "confidence": 0.25,
+   "exemplars": [],
+   "caveats": "SMALL BUT REAL and RIGHT-SIGNED. The real edge lives at NATIVE TICK / ms-us. EXECUTION-layer - not a blind open-time curve input. Unchanged s95.2."
+  },
+  {
+   "id": "daytype.monday_weekend_gap",
+   "target": "daytype",
+   "trigger": "at the open on a MONDAY (Sunday-evening reopen)",
+   "read": "day of week = Monday + accumulated weekend information",
+   "call": "Monday = a BIG mover, size UP - but the weekend info reprices AT THE SUNDAY REOPEN (the gap); Monday's US session is the REACTION (R3): FADE a Sunday gap that jumped WITH a mature swing to a fresh cum-extreme; EXTEND a gap at a fresh turn; with no material gap, carry FRIDAY's side. The 'often a REVERSAL' lean is RETIRED (S96.2). EXCEPTION: thin-holiday Monday with NO active weather catalyst = quiet, size DOWN (1013).",
+   "evidence": {
+    "reversal_undersize_per_event_g3g4g5": "1020 Mon +$2770 (guessed +$580 = ~5x under, V-bottom reversal up); 0929 Mon +$1240 (guessed -$640, wrong side, G3->G4 up-reversal); 1006 Mon +$1150 (guessed +$600); 0908 +$1260; 0915 -$1150; 0922 -$1410. 1013 Columbus thin-holiday the lone quiet one.",
+    "shape_nuance": "Monday bigness manifests as a GRIND (holds: 0929 +1240, 1020 +2770) OR a front-loaded SPIKE (round-trips: 1006 +1020->+70; 0908 +740->+190).",
+    "g6_note": "G6 week-1 give-back included a Monday that reversed the prior block DOWN - the reversal-lean earned week-1 direction; consistent with Monday = reversal-of-recent + big.",
+    "g7_note": "G7 per-event: 1110 Mon -820a (guessed +1200 reversal-up - side wrong) and 1117 Mon -1500a (guessed +700 - side wrong, big): BIGNESS confirmed on both, but BOTH were CONTINUATION-down days, not reversals. The reversal-of-recent lean is weakened (G3-5 Mondays reversed; G7 Mondays continued); side stays uncalled at the open.",
+    "s96_2_reaction_read": "gap-fade: 1109 +1560 Sun gap at a mature-swing extreme -> 1110 Mon -820 (G7); 0908 gap +460 faded +740->+190 (G3). gap-extend at a fresh turn: 1019 +1570 -> 1020 +2660 (G5). Friday-carry with no material gap: 1107 down -> 1110 down, 1114 down -> 1117 -1500 (G7); 0919 down -> 0922 -1210 (G3); 1017 up -> 1020 up (G5). The G3-5 'Monday reversals' were swing-state coincidences (0929 = R1 resume after the 0926 exhausted give-back), not a weekday property."
+   },
+   "status": "PROVISIONAL",
+   "confidence": 0.5,
+   "exemplars": [
+    "Mon 1020 +$2770 (~5x under, V reversal up)",
+    "Mon 0929 +$1240 (wrong side, G3->G4 reversal)",
+    "Mon 1013 Columbus quiet -300 (size down)"
+   ],
+   "caveats": "Bigness + size-up is the lesson; the side comes from the SWING STATE (R1/R3/R4), not from a reversal prior. Thin-holiday down-size is regime-conditioned (no active catalyst). Confidence 0.45->0.5 (the reaction read resolves the G7 side misses)."
+  },
+  {
+   "id": "daytype.storage_thursday_magnitude",
+   "target": "daytype",
+   "trigger": "at the open on a storage THURSDAY (EIA print 10:30 ET)",
+   "read": "day of week = Thursday storage-print day",
+   "call": "Up-size the storage-Thursday MAGNITUDE prior (unchanged) AND call the SIDE (S96.2 R2): the post-print leg sides with the RUNNING SWING / just-armed turn state - as judged including the last 1-2 days' turn evidence (R1/R5) - NEVER with the print's surprise sign or the storage-surplus fundamental.",
+   "evidence": {
+    "per_event_g3g4g5": "0911 Thu -$1180 (side right, ~2x under); 0918 Thu -$1560 (side right, under); 0925 Thu +$740 roll-clean intraday net (the $1160 dominant-move figure includes the +2760 ROLL; side wrong at the open then the seam-reversal carried it up); 1002 Thu +$900 spike round-tripped to -440 (side right on the leg); 1009 Thu -$1010 (wrong side at open, aligned new downtrend); 1016 Thu -$1190 (side right, ~4x under, the V-bottom capitulation).",
+    "shape_and_turn_nuance": "The print leg can GRIND (holds) or SPIKE and round-trip (1002). A capitulation Thursday into a cum-extreme can MARK a swing turn (1016 V-bottom).",
+    "g7_note": "G7 per-event: 1106 Thu +1350a (guessed -700; market rallied THROUGH a bearish +10.8-above print) and 1113 Thu +620a (guessed -900). Magnitude prior held; the side-leans-with-block/fundamental heuristic failed BOTH G7 Thursdays (both went UP against down leans in a rising-HDD regime).",
+    "s96_2_side_rule": "10 storage Thursdays, per-event: 0911 down-swing DOWN; 0918 down-swing DOWN; 0925 just-turned (0923 bounce + 0924 hold) UP +740; 1002 up-swing leg UP (round-tripped, shape not side); 1009 fresh down-swing DOWN; 1016 down-swing DOWN (capitulation marking the V); 1023 give-back-swing DOWN -1640 (G6); 1030 turn-at-stretched-extreme UP +2580 (G6 - the 1029 stall + depth armed the turn, the Thursday delivered it); 1106 intact up-swing UP +1350 THROUGH the +10.8-above bearish print (G7); 1113 up-swing UP +620 THROUGH +5.2-above (G7). When the print sign disagreed with the swing, the swing won EVERY time."
+   },
+   "status": "PROVISIONAL",
+   "confidence": 0.6,
+   "exemplars": [
+    "Thu 1016 -$1190 (V-bottom capitulation, ~4x under)",
+    "Thu 0925 roll-clean +$740 (dominant-move $1160 was roll-inflated)"
+   ],
+   "caveats": "SIZE up always. SIDE = swing/turn state (R2); a 1-day exhausted give-back does NOT flip the swing (1105 before 1106 - read it via R1); at a stretched extreme the Thursday itself can BE the turn day (1030, 1016) - use R5 depth + the prior day's stall/roll-over to arm it. Never lean the print leg on the storage fundamental (killed 3 blind Thursday calls across G6/G7). ROLL-CORRECTION note on 0925 unchanged. Confidence 0.5->0.6 (side upgraded from coin-flip to swing-read)."
+  },
+  {
+   "id": "magnitude.warm_season_scale_candidate",
+   "target": "magnitude",
+   "trigger": "when sizing the expected dominant-move magnitude",
+   "read": "per-day blind magnitude error, named per day (guessed peak vs actual dominant move)",
+   "call": "CANDIDATE correction ONLY: on catalyst days the actual dominant move DWARFED the guess. Do NOT globally rescale; sort by condition (see magnitude.catalyst_condition_sort).",
+   "evidence": {
+    "under_forecast_days_g5": "1008 -$1980 vs +$320; 1010 -$1490 vs +$150; 1016 -$1190 vs -$300; 1020 +$2770 vs +$580 (the ~5x extreme); 1021 +$1100 vs +$440",
+    "g6_note": "G6 CONFIRMS magnitude is the DOMINANT residual error - undersized BOTH the week-1 dip and the week-2 recovery. The s95.2 refined curves still under-size 1001 ~4x, 1007 ~3.5x, 1020 ~2x even after sizing catalysts up.",
+    "roll_note": "The G3->G4 'reversal magnitude' was ROLL-INFLATED by +0.276; the real amplitude is ~0.28 smaller. Cross-seam magnitude reads must be roll-clean."
+   },
+   "status": "HYPOTHESIS",
+   "confidence": 0.35,
+   "exemplars": [],
+   "caveats": "ANTI-LOCK-IN: the under-forecast recurs across G3/G4/G5 + G6 (reading A: warm/autumn scale too small) BUT reading B (higher-vol autumn regime) is still live. Do NOT globally rescale or pool into a ratio. The under-forecast SORTS BY CONDITION. Confidence 0.35 held."
+  },
+  {
+   "id": "direction.cross_block_reversion",
+   "target": "direction",
+   "trigger": "at a BLOCK boundary, when setting the block-level directional lean",
+   "read": "the running (roll-clean) path at a cum-EXTREME + a counter-move in the old swing's LAST 1-2 days + last-hour momentum into the seam - NOT the calendar seam alone",
+   "call": "LEAN AGAINST a stretched swing, do NOT extend it. Trigger on SWING EXHAUSTION (cum-extreme + last-1-2-day counter-move). The reversal is delivered through the INTRADAY sessions (G3->G4) or as an intraday US-session CRASH (1008), occasionally pre-loaded by a real overnight/weekend GAP (1019). It is a GIVE-BACK - the block can V back. Do NOT blind-fade a still-trending block with no last-day counter-move; confirm with intraday flow.",
+   "evidence": {
+    "n": "5 turns across 4 blocks: G3->G4 seam, G4->G5 seam (1008), intra-block 0923 + 1016, + G6 week-1 give-back (first holdout)",
+    "per_event_chronology": "G3 fell to the 0922 cum-extreme, turned up 0923/0924; G4 ROSE THROUGH ITS SESSIONS (0925 +740, 0929 +950, 1001 +1170) - the agent extended G3 down and was wrong week 1. G4 topped 1007 (+2120 roll-clean) with a last-hour roll-over; G5 CRASHED intraday 1008 -1800, fell to the 1016 V-bottom (-3770 roll-clean), then V-rallied to 1021. G6 gave back week-1 DOWN (reversion-lean earned it) then recovered week-2 UP (missed).",
+    "mechanism_reframe": "SWING-EXHAUSTION reversion, not calendar-seam fade. G3->G4: 0923 bounce + 0924 hold pre-signaled a reversal DELIVERED THROUGH THE INTRADAY SESSIONS (NOT an overnight gap). G4->G5: 1007 last-hour roll-over at the cum-extreme pre-signaled the 1008 intraday crash.",
+    "two_delivery_forms": "intraday US-session build/CRASH (G3->G4 sessions; 1008 crash) is the primary form; a real overnight/weekend GAP (1019 +1570) is the secondary form. CORRECTION (s95_2): the previously-cited 0925 +2760 overnight gap was the CONTRACT ROLL, NOT a delivery form.",
+    "s95_fingerprint_continuation_collapse": "1008 old-swing UP legs 0/15 + negative turn_exhaustion; 1016 V-bottom UP recruits hold 5/18; 0916 block-DOWN legs 1/11.",
+    "g6_lesson": "cross_block_reversion is a GIVE-BACK, not a sustained reversal - the block can V back within itself; and fundamentals are NOT a reliable block-direction cue near the winter transition (surplus called G6 down; HDD-driven recovery won week-2).",
+    "g7_note": "G7 block open: half-armed trigger (cum-extreme, no last-1-2-day counter-move) correctly played as a partial fade: 1105 -520a vs -350g HIT. The give-back lasted ONE day, then the up-swing resumed (1106 +1350) - give-back-not-reversal confirmed on a 6th event.",
+    "s96_2_g7_terminal": "G7 completes the arc: the trigger stayed half-armed through the block's extremes (mild give-backs only, R4) until 1113 - cum-extreme +2810 AND the late-tape roll-over (+1160 at 14h -> +620 close, the 1007 form) on a 7-session swing -> terminal give-back delivered 1114 -910 + 1117 -1500 through the sessions, then STOPPED at the origin shelf (R5) and stabilized 1118 +270. Give-back-not-reversal confirmed again: -2590 retrace, swing origin held."
+   },
+   "status": "HYPOTHESIS",
+   "confidence": 0.45,
+   "exemplars": [
+    "G3->G4: 0923 bounce + 0924 hold pre-signaled a reversal delivered through the sessions (the +2760 overnight was the ROLL)",
+    "G4->G5: 1007 last-hour roll-over pre-signaled the 1008 intraday crash",
+    "G6 week-1 give-back DOWN caught (week-2 recovery missed)"
+   ],
+   "caveats": "Reframed to SWING-EXHAUSTION reversion (n=5, spanning autumn + the G6 winter-transition holdout). Roll-corrected: the G3->G4 turn came through the sessions, not an overnight gap. G6 confirms the week-1 give-back DIRECTION but the intra-block counter-turn (week-2 recovery) is UNSOLVED - same failure mode as 0916. Two delivery forms (intraday build/crash primary; overnight/weekend gap secondary). Do NOT harden into 'always fade the last block'. Confidence 0.4->0.42 (one true holdout half-confirmed). Winter/backwardation remains the decisive test. S96.2: the trigger's two arms are now operational - R4 (mature-swing extreme) arms the WATCH, the last-hours roll-over (1007, 1113) arms the FIRE; R5 (origin shelf / >=75% retrace) bounds the give-back and calls the stabilization day. Confidence 0.42->0.45 (G7 armed-trigger fired correctly on 1114/1117/1118)."
+  },
+  {
+   "id": "magnitude.catalyst_condition_sort",
+   "target": "magnitude",
+   "trigger": "at the open, when sizing the expected dominant-move magnitude",
+   "read": "which catalyst condition(s) the day carries: weekend-gap Monday / storage Thursday / swing-reversal(seam or intra-block V) / thin-holiday / non-catalyst chop",
+   "call": "UP-size on weekend-gap Monday, storage Thursday, and swing-reversal/seam days. COMPOUND the up-sizers when they coincide (1020 = Monday + reversal + swing-turn = the biggest move). DOWN-size on thin-holiday Monday (1013), Sunday carry, non-catalyst chop. Sorts magnitude by condition - not a global rescale.",
+   "evidence": {
+    "up_size_events": "Mon: 1020 +2770, 0929 +1240, 0908 +1260, 1006 +1150; Thu: 0918 -1560, 1002 +1360, 1016 -1190, 0911 -1180, 1009 -1010; reversal/seam: 1008 -1980, 1020 +2770",
+    "down_size_events": "1013 Columbus Mon -300; Sundays flat carry; 0924 +50, 1015 +200 chop",
+    "compound_example": "1020: Monday + swing-reversal-up-off-the-V + weekend gap stacked -> +2770",
+    "g6_note": "G6: even condition-sorted sizing UNDER-shot both the dip and the recovery - magnitude is the dominant residual; the s95.2 refined curves size catalysts up but still under 1020 ~2x.",
+    "g7_contra": "1111 Veterans Day (thin flag) was the BLOCK'S BIGGEST day +1580a (guessed +100 sized-down per the Columbus-1013 lesson, ~15x under). The thin-holiday DOWN-size does NOT generalize: Columbus was a quiet shoulder Monday; Veterans was a Tuesday INSIDE a hard_heat cold shock - the weather catalyst overrode the thin calendar. Condition the holiday down-size on regime (no active weather catalyst), never on the flag alone."
+   },
+   "status": "PROVISIONAL",
+   "confidence": 0.42,
+   "exemplars": [
+    "1020 +2770 (Mon+reversal+turn stacked)",
+    "1008 -1980 (seam reversal)",
+    "1013 -300 (thin holiday, correctly small)"
+   ],
+   "caveats": "Complements magnitude.warm_season_scale_candidate: sort by catalyst condition instead of a scalar rescale. PER-EVENT, no averages/ratios. G6 confirms the up-sizers but flags a persistent residual undersize. Confidence 0.4->0.42. Winter/backwardation is the decisive out-of-regime test. G7: thin-holiday down-size overridden by an active cold-shock regime (1111 +1580) - flag alone is not a size-down."
+  },
+  {
+   "id": "direction.giveback_exhaustion_boundary",
+   "target": "direction",
+   "trigger": "at the OPEN of the session after a give-back (counter-swing) day, reading the prior day's ACTUAL tape",
+   "read": "prior give-back day's close-vs-extreme recovery + last-hours direction + the underlying swing's big-leg continuation (collapse or intact)",
+   "call": "EXHAUSTED give-back (close recovered >=~40-50% off the intraday extreme + last-hours counter-tick + swing legs intact) -> next session RESUMES the underlying swing, sized up on a catalyst day. NOT exhausted (close at/near the extreme, last hours extending) -> the give-back CONTINUES. Swing-side legs already collapsed -> stand down (no call).",
+   "evidence": {
+    "n": "9 boundary events across G3/G4/G7",
+    "resume_events": "1105->1106 +1350 (closed -520 off -1100, last hr +250); 1107->1109 weekend gap +1560 (closed -720 off -1280, last hr +30); 1110->1111 +1580 (closed -820 off -1510, 16-18h recovery); 1112->1113 +620 (closed +100 off -510); 0926->0929 +950 (closed -430 off -940); 1003->1005/1006 (closed -680 off -820, mild)",
+    "continue_events": "1002->1003 -680 (1002 closed -440 AT its low after the +900 round-trip); 1114->1117 -1500 (1114 closed -910 AT its low, the 16h recovery to -230 failed)",
+    "filter_event": "0915 down-legs 0/8 continued (swing collapse) -> the 0916 +1200 counter-grind was correctly NOT a resume-down setup - the collapse filter catches the brain's oldest unsolved miss",
+    "s96_seq_confirmation": "the S96 3-day sequential experiment's 1106 hit (+1450g/+1350a) was exactly this read, made blind with day-N-1 reveals"
+   },
+   "status": "PROVISIONAL",
+   "confidence": 0.55,
+   "exemplars": [
+    "1110 closed -820 recovering 690 off the low -> 1111 +1580 resume (the G7 sequencing answer)",
+    "1114 closed AT its low -> 1117 -1500 continuation"
+   ],
+   "caveats": "Requires day-N-1 ACTUAL tape - a LIVE-coach / sequential input, honestly unavailable to the one-shot block-blind protocol (this is WHY one-shot direction scored 3/10 while the block lean was right). Thresholds (~40-50% recovery) are descriptive bands, not fitted constants. At >=~75% swing retrace the continue-arm INVERTS - R5 origin-shelf floor takes over (1117->1118). Winter up-swing + G4 evidence; the mirror side (up give-backs inside a down-swing) rests on the collapse filter (0915/0916) - retest."
+  },
+  {
+   "id": "structure.mature_swing_alternation",
+   "target": "daytype",
+   "trigger": "at the open, from the swing's AGE and whether yesterday closed at a material fresh cum-extreme (>= ~$300 beyond the prior extreme close)",
+   "read": "sessions since the swing turned + yesterday's close vs the running extreme",
+   "call": "YOUNG swing (<=3 sessions since the turn): extensions can CHAIN - do not fade strength. MATURE swing (>=4 sessions): a material fresh extreme close is NOT followed by a consecutive extension - forecast a give-back/hold session, then apply R1 to the give-back's own close for the resume/continue call. A post-VIOLENT-resumption session is a HOLD (probes fail, net ~0): 0924 +50 after 0923; 1112 +100 after 1111.",
+   "evidence": {
+    "mature_no_consecutive_extension": "G7 5/5: 1104->1105 -520, 1106->1107 -720, 1109(gap extreme)->1110 -820, 1111->1112 +100 hold, 1113->1114 -910; G4 terminal: 1007->1008 -1800; G6 tail->G7: 1104 was the 4th chained day (young) and 1105 the first mature give-back",
+    "young_chains": "0929/0930/1001 (G4, +950/+640/+1170 consecutive); 1030/1031/1103/1104 (G6, +2580/+530/+1110/+860 consecutive)",
+    "materiality": "1112 +100 closed INSIDE 1111's range (not a material extreme) -> 1113 extended; the >=$300-beyond threshold keeps this consistent"
+   },
+   "status": "PROVISIONAL",
+   "confidence": 0.5,
+   "exemplars": [
+    "1106 +1350 extreme -> 1107 give-back (the blind extended and missed)",
+    "1030-1104 young chain -> do not fade week-2-style runs"
+   ],
+   "caveats": "This is the SEQUENCING rhythm of a demand-led swing (G4 up, G6 recovery, G7 winter up) - G3's supply-led decline trended with weaker alternation (its give-backs were the up days: 0916); apply per swing-side. The 4-session age boundary is descriptive (G4 had a session-2 give-back 0926). Magnitude of the give-back comes from catalyst_condition_sort + R5, not from this play."
+  },
+  {
+   "id": "level.giveback_origin_shelf",
+   "target": "magnitude",
+   "trigger": "sizing a running give-back / calling its stabilization day",
+   "read": "retrace fraction of the swing + the swing's origin/consolidation shelf price",
+   "call": "A terminal give-back runs toward the swing's ORIGIN shelf and stabilizes there (give-back-not-reversal). At >=~75% retrace, INVERT the R1 closes-at-low read: a capitulation close at the stretched extreme precedes the BOUNCE/stabilization, not more continuation.",
+   "evidence": {
+    "n": 4,
+    "per_event": "0922 closed near the -2250 cum low -> 0923 +610 bounce (G3); 1016 capitulation at the V-bottom -> 1017 +740 (G5); 1117 closed at -1500 with the give-back at ~78% retrace ON the 4.32-4.34 origin shelf -> 1118 +270 stabilization (G7); 1029 stall after the -3800 week-1 give-back -> 1030 +2580 turn (G6, the Thursday-turn form)",
+    "floor_use": "1110 gap-fade stopped just above the pre-gap 1107 close; 1117 sized -1400 with the shelf allowing ~-1600 from 4.489"
+   },
+   "status": "HYPOTHESIS",
+   "confidence": 0.4,
+   "exemplars": [
+    "1118 +270 on the origin shelf after -2590 of give-back"
+   ],
+   "caveats": "The >=75% threshold is soft (n=4); the shelf is a zone, not a tick. Distinguish mid-swing give-backs (R1 governs) from move-terminal stretches (this play governs). A shelf BREAK would falsify the give-back-not-reversal frame for that swing - treat as a live stop condition."
+  }
+ ],
+ "mechanisms": [
+  {
+   "id": "clock.storage_thursday",
+   "text": "Weekly EIA storage print Thu 10:30 ET is the one scheduled catalyst; busiest Thursday hour."
+  },
+  {
+   "id": "clock.us_session",
+   "text": "US session ~08-16 ET decides the day's range; overnight is thin drift. STABLE."
+  },
+  {
+   "id": "clock.weekend_gap",
+   "text": "Weekend info accumulates -> Monday reprices at the Sun-eve reopen -> a big Monday move (often a reversal of recent direction). See daytype.monday_weekend_gap."
+  },
+  {
+   "id": "data.contract_roll",
+   "text": "NEW (s95_2): the continuous NG.v.0 series ROLLS between contracts ~monthly, injecting a fake overnight price jump at the seam (G3-5: Sep24->25 Oct->Nov, +0.276 = $2760). A roll is a DATA ARTIFACT, not a market move - at a known roll forecast the real overnight ~0 and reason on roll-clean intraday nets. The s95.1 '0925 overnight-gap swing reversion' was this roll (VOID)."
+  },
+  {
+   "id": "regime.seasonal",
+   "text": "Summer=cooling/weather-led; autumn=shoulder (rising HDD begins to matter, G4/G5); winter=heating, bigger swings, withdrawal. G6 (winter transition): rising HDD flipped block direction UP against the bearish storage surplus. Winter/backwardation still the decisive test."
+  },
+  {
+   "id": "supply.unmeasured",
+   "text": "LNG feedgas / production / pipeline outages are real drivers, currently NO feed. Data gap."
+  }
+ ],
+ "open_frontier": [
+  "DAY-LEVEL SEQUENCING - ADDRESSED in s96.2 (proposal): R1 giveback_exhaustion_boundary + R4 mature_swing_alternation re-derive 9/10 G7 day directions from rules + day-N-1 actuals (1112 hold-day sign the lone miss). NEEDS: forward blind confirmation on G8+ in sequential/live-coach mode - the one-shot protocol cannot use R1 (no day-N-1 reveals).",
+  "THE DAY-BOUNDARY TURN: the S96 3-day rolling-anchor experiment called 1106 (+1450g/+1350a) from day-N actuals (give-back-exhausted read) - the turn IS callable with yesterday's tape. One-shot stays canonical; design the live coach around the sequential read.",
+  "IRREDUCIBLE at the open (S96.2): the hold-day sign inside +-150 (1112); extreme-day full magnitude (1111 +1580); the Sunday-gap SIZE (1109 +1560, direction callable via R1, size not); R5 bounce-day timing (soft >=75% threshold, n=4).",
+  "INTRA-BLOCK COUNTER-TREND TURN (the #1 open problem, re-flagged by G6 week-2 + 0916): a counter-trend grind is not callable AT THE OPEN. Can the open-time side be called before the leg forms?",
+  "SWING-EXHAUSTION REVERSION (n=5 incl. G6 holdout) - confirm the cum-extreme + last-1-2-day counter-move trigger on winter/backwardation; it is a GIVE-BACK (block can V back), distinguish from a trend-extending bias.",
+  "CONTRACT-ROLL HYGIENE (s95_2): ensure every cross-seam magnitude/direction read is roll-clean; audit the other blocks' seams for rolls before any cross-block claim.",
+  "FUNDAMENTALS near the seasonal transition (G6): rising HDD flips the surplus-implied block direction - build an HDD-vs-surplus block-direction read.",
+  "MAGNITUDE - the dominant residual (G6): condition-sort under-sizes the extremes; resolve reading A (scale too small) vs B (higher-vol regime) with a winter group.",
+  "WINTER / backwardation regime - the decisive out-of-regime test.",
+  "Why does flow_nowcast LAG the extreme gap melt-up (1020)?",
+  "NATIVE-TICK / ms test of the BTC sub-second price-reversal + dipole-EXHAUSTION edge on NG futures."
+ ],
+ "ruled_out_by_target": {
+  "note": "NOISE across all four targets in the warm-season multi-target pass - warm-season only, retest in winter:",
+  "signals": [
+   "aligned_imb",
+   "aligned_imb_R",
+   "exhaustion",
+   "spread_ratio",
+   "pre_vol",
+   "coiled_split",
+   "dip_aligned_flow",
+   "dip_mi_flow",
+   "bid_dep_entry",
+   "ask_dep_entry",
+   "temp_regime",
+   "gw_hdd",
+   "gw_cdd",
+   "gw_precip",
+   "curve_regime(contango-flat)",
+   "turn_far_thinning(demoted to noise, S95)"
+  ]
+ },
+ "fingerprints": {
+  "note": "The measures the agent PERCEIVES with (per-leg off the tape). Raw values are DATA (renders/*/fingerprints.json); THIS is the vocabulary + what discriminates.",
+  "measures": {
+   "dip_imb_level": {
+    "is": "signed Lee-Ready flow imbalance (~300s)",
+    "read": "held-leg SIDE = sign(dip_imb_level) when strong",
+    "carries": "direction (nowcast)",
+    "status": "CONFIRMED side-caller; LAGS extreme gap melt-ups (1020 7/12)",
+    "play": "direction.flow_nowcast"
+   },
+   "continuation_retention": {
+    "is": "does a leg past peak keep going + continuation-ASYMMETRY",
+    "read": "$350 = 92% ride; counter-dir legs die on a directional day",
+    "carries": "hold + counter-trend intraday side",
+    "status": "CONFIRMED (the real intraday-side structure); NOT callable at the open",
+    "play": "ride.magnitude_staircase / shape.grind_vs_spike"
+   },
+   "peaked_fast_fast_capture": {
+    "is": "how front-loaded a leg's build is",
+    "read": "SPIKE round-trips; GRIND holds",
+    "carries": "fade vs hold",
+    "status": "CONFIRMED (faded 23/24)",
+    "play": "shape.grind_vs_spike"
+   },
+   "turn_exhaustion": {
+    "is": "flow imbalance collapsing / continuation-collapse at a swing extreme",
+    "read": "old-swing legs stop continuing (0/15 at 1008) = the reversal",
+    "carries": "the turn (swing exhaustion)",
+    "status": "CONFIRMED as continuation-collapse marker",
+    "play": "exit.recruitment_reversal / direction.cross_block_reversion"
+   },
+   "turn_far_thinning": {
+    "is": "far-side ladder change",
+    "read": "hypothesized NEG=recruited vs POS=eaten",
+    "carries": "NONE",
+    "status": "DEMOTED to NOISE (S95)",
+    "play": "exit.recruitment_reversal (diagnostic only)"
+   },
+   "imb_R": {
+    "is": "resting-book imbalance at entry",
+    "read": "fade the heavy resting side",
+    "carries": "weak contrarian tie-breaker",
+    "status": "weaker than flow",
+    "play": "direction.book_contrarian"
+   },
+   "peak_usd": {
+    "is": "realized favorable $ so far",
+    "read": "the threshold CROSSING is the real-time continuation event",
+    "carries": "magnitude staircase input",
+    "status": "STABLE",
+    "play": "ride.magnitude_staircase"
+   }
+  },
+  "ruled_out_note": "Full noise set in ruled_out_by_target. Warm/autumn-season only; retest in winter/backwardation."
+ }
+}

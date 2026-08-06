@@ -1,0 +1,293 @@
+{
+  "specialist": "A",
+  "lens": "weekend / holiday seam (reopen stub, gap ownership, Friday-exit -> Monday bridge)",
+  "group": "g20",
+  "brain_version": "s103.2",
+  "round": 1,
+  "days_owned": ["20260525"],
+  "doctrine_note": "Old blind stays the CORE predictor; this is a POSTERIOR UPDATE with an explicit weight_assigned split. The MBO BOOK layer STANDS DOWN on 20260525 and across the bridge: G20 carries no book_trustworthy verdict (no execution_authority / conviction-floor / book_complete field anywhere in grp20_state.json or g20_mbo_evidence.json) AND firehose_present.l1_book is FALSE on every day of the block - so this is TRADE-FLOW ONLY, not even trade-flow + L1, and every read below is labelled as such. Magnitudes are DERIVED from measurable state (the never-masked reopen-stub tape, the vol_regime n0 ruler, the phase table, the never-masked expiry clock) and never fitted to the realized number; the 0525 high_exc of +860 is explicitly NOT claimed. 20260525 is a Memorial Day partial session and EXPECTED_SPARSE is the legitimate condition, not a data hole - thinness is USED as a mechanism (an unowned displacement) and never as a source of conviction. Per-event only; nothing pooled. NG is not WTI.",
+
+  "cross_cutting_mbo_finding": {
+    "headline": "A seam gap is not noise and it is not a forecast - it is a DISPLACEMENT WITH AN OWNER OR WITHOUT ONE. The staging now serves the gap-forming session itself (the 18:00-20:00 reopen stub) as tape_conditions on both Mondays, which makes the gap SIGN measurable and the gap's OWNERSHIP measurable. Ownership, not sign, is what decides the day.",
+
+    "1_the_restage_hands_A_the_gap_forming_session_and_that_changes_my_lens": {
+      "the_fact": "tape_conditions on 20260525 describes session 20260524 (658 trades, 120 min, 5.5 trades/min) and on 20260601 describes session 20260531 (1,224 trades, 120 min, 10.3 trades/min). Both are exactly the 2-hour Sunday 18:00-20:00 ET reopen. The block's day-clock starts at 20:00. Therefore the reopen stub IS the window in which the day's gap is formed, and its signed flow is served live, never masked.",
+      "what_it_overturns_in_my_own_lens": "My canonical fingerprint says 'the reopen gap SIGN stays non-derivable noise - Monday's day-move anchors to the Friday close.' On this staging that is FALSE for the days I own and for the days I bridge. The stub's own session_signed_flow gives the gap sign directly: 0524 flow -173 with session_b_share 0.367 and phase_b_share [0.363, 0.377, 0.370] -> gap -240 realized; 0531 flow +278 with session_b_share 0.513 and phase_b_share [0.485, 0.489, 0.669] -> gap +690 realized. 2/2 on sign, and on 0524 the sell lean is uniform across all three sub-phases, so it is not one print. I am NOT claiming a magnitude map from n=2. I claim the SIGN, and I claim it only where the staging actually serves the stub as the prior session.",
+      "scope_and_limits": "This is a STAGING-CONDITIONAL instrument. It holds when tape_conditions.asof_prior_session is the Sunday/holiday reopen date rather than the preceding Friday. If a future stage reverts to serving the full Friday, the gap sign goes back to being non-derivable and this instrument stands down. n=2 within one block; PROPOSAL, needs a second block.",
+      "attribution": "PURE REASONING off a never-masked block. tape_conditions carries never_masked TRUE and was fully available to the blind, which did not use the stub's signed flow at all (it guessed +40 gap on 0525 against -240, and +300 on 0601 against +690)."
+    },
+
+    "2_displacement_without_participation_is_unowned_and_reverts_the_quantitative_form": {
+      "the_measure": "REOPEN DISPLACEMENT EFFICIENCY = (|gap| / stub n_trades) divided by (|prior full session net| / prior full session n_trades). Both terms are decision-time-legit at 20:00: the numerator needs only the reopen print and the never-masked stub trade count; the denominator comes from vol_regime n0_prev_net / n0_prev_trades (RESTORED INPUT - name it).",
+      "0525": "stub 240/658 = 0.365 USD per trade. Prior full session (05-22) 1000/42,233 = 0.0237 USD per trade. Ratio 15.4x. On the range basis (n0_prev_range 1400) 11.0x.",
+      "0601": "stub 690/1,224 = 0.564 USD per trade. Prior full session (0529) range 1,160 over 50,723 trades = 0.0229 USD per trade. Ratio 24.6x. The 0601 gap is the LEAST-OWNED displacement in the block.",
+      "the_rule": "A ratio well above ~1 says the same quantity of flow moved multiples of the price it would have moved under normal participation. That excess is a LIQUIDITY PREMIUM, not information, and it decays at the first restoration of liquidity (EU 04:00 ET, then the US open). The gap does NOT survive on its own; it survives only if a driver or a mechanical flow re-underwrites it inside the session.",
+      "why_this_is_the_same_mechanism_E_found_on_the_other_side_of_the_seam": "E's FLOWLESS_BID_WITHDRAWAL says a price displacement made without flow is owned by nobody and reverts at the next liquidity restoration. That is the CLOSE side of the seam; this is the REOPEN side. One mechanism, two faces. BUT see finding 4 - I do not accept that E's 0529 case is actually an instance of it."
+    },
+
+    "3_adjudication_of_E_s_correction_to_my_COT_RESIDUAL_instrument": {
+      "verdict_on_the_window": "E IS RIGHT AND I ACCEPT THE CORRECTION IN FULL. The consumption window must run from publication_ts to the candidate seam, across ALL intervening sessions, not the D-1 post-publication phase. E's 0605 counterexample is decisive and I can add nothing to defend the D-1 form as a general instrument.",
+      "what_my_D_1_form_actually_was": "It was never a different instrument. It was my instrument evaluated on a TRUNCATED window, and it is indistinguishable from the correct one exactly when the candidate seam is the FIRST seam after the publication - because then publication_ts to seam spans at most one session-remainder plus a reopen stub, and the D-1 post-publication phase IS essentially the whole window. On 0525 the window is [05-22 15:30 -> 05-24 20:00]; on 0529 it is [05-29 15:30 -> 05-29 close]. Both first seams, both cases where the two forms agree. On 0605 the window is FIVE sessions and D-1 phase 3 is a ~20% sample of it - and a sample taken at the far end, after the consumption event. That is the whole failure.",
+      "surviving_scope_of_the_D_1_form": "FIRST-SEAM-AFTER-PUBLICATION ONLY, and even there it is the corrected instrument in disguise rather than a shortcut worth keeping separately. I withdraw it as a named instrument. It is not a face-saving scope: it is the statement that a truncated window is safe only when truncation removes nothing.",
+      "where_I_correct_E_BACK_1_decay_is_not_worthless_it_is_the_wrong_units": "E states the test as 'a CROSS to cumulative net-positive signed flow, not decay.' Right about the test, imprecise about decay. The decay E measured on 0529 (-1,573 -> -59) is the covering bid ARRIVING: sell flow being met. Decay measures the RATE at which the residual is being drawn down; only the cumulative signed integral measures the AMOUNT drawn down. So decay is a leading indicator of the cross, and the cross is the consumption EVENT. Keep both, spend the residual only on the integral. This is a strict generalization of E's form, not a defence of mine.",
+      "where_I_correct_E_BACK_2_the_window_must_contain_the_REOPEN_STUB": "E's window enumerates SESSIONS. On my seams that is not sufficient. The 0525 window contains the Sunday 05-24 reopen stub - a separately-labelled 2-hour session that carries -173 of signed flow and appears NOWHERE in the phase table; it arrives only through tape_conditions.session_signed_flow. A window defined over the phase table alone silently drops it. Corrected: the window is all TRADED TIME from publication_ts to the seam OPEN, comprising (a) intra-session phase fragments after 15:30 on the publication day, (b) whole intervening sessions from the phase table, and (c) weekend/holiday reopen stubs from tape_conditions.session_signed_flow. This matters for exactly the seams I own.",
+      "where_I_correct_E_BACK_3_consumption_is_IRREVERSIBLE": "E writes 'any CROSS', which I read as an event, and that reading must be made explicit because the 0605 window does not stay positive: -59, +3,796, +3,524 (cum +7,261 - CROSS), -2,852, -5,662 -> cum -1,253 at the seam. A running-state test would report 'not consumed' at 0605 and re-arm the wrong prior. The residual is a STOCK: buying draws it down, and once drawn down it is gone. Later selling REBUILDS a short stack, but that new stack is not reported until the NEXT publication and cannot arm a seam off the OLD one. Consumption latches.",
+      "the_joint_instrument_as_I_now_hold_it": {
+        "name": "cot_residual_consumption_window (A + E joint; A original, E corrected the window and the test, A corrected the traded-time definition and the latch)",
+        "arm": "A COT publication with managed-money net at a low 1y-pctile creates an UP residual at publication_ts.",
+        "window": "ALL TRADED TIME from publication_ts to the candidate seam OPEN - post-15:30 phase fragments on the publication day, whole intervening sessions, AND weekend/holiday reopen stubs (tape_conditions.session_signed_flow).",
+        "test": "if cumulative signed flow over that window CROSSES to net-positive at any point, the residual is SPENT - latched, irreversibly, for that publication and every later seam. Decay toward zero without a cross leaves it LOADED. Only a NEW publication rebuilds the stack.",
+        "supersedes": "the RECURRING arm of boundary.seam_gap_up_prior_on_worsening_cot ('RECURRING on every seam while the COT keeps worsening') - falsified here by 0605. The WoW delta governs whether a residual was ever CREATED; the consumption window governs whether it is still THERE. Proposed patch only - no brain edits in this run.",
+        "test_all_three_G20_seams": {
+          "seam_1_0525_holiday_reopen": "publication 2026-05-22T15:30 (report 05-19, MM net -96,303, 1y pctile 16.04, WoW +23,762 IMPROVING). Window = 05-22 phase 3 (+1,436) + 05-24 reopen stub (-173) = cum +1,263. CROSSED -> SPENT before the seam opens -> NO up gap prior -> the gap reverts to the stub's own tape lean, which is DOWN. REALIZED gap -240. CORRECT. Note this seam also fails the ARM test independently (WoW improving, pctile 16 not 1), so it is doubly disarmed.",
+          "seam_2_0529_close": "publication 2026-05-29T15:30 (report 05-26, MM net -134,426, 1y pctile 0.94, WoW -38,123 WORSENING). Window = 0529 phase 3 only, -59. Decayed from -1,573 without ever crossing -> LOADED -> UP gap prior. REALIZED gap +690. CORRECT.",
+          "seam_3_0605_close": "same publication. Window = 0529 ph3 -59, then 0601 +3,796, 0602 +3,524 -> cum +7,261, CROSSED at 0602; 0603 -2,852 and 0604 -5,662 do NOT un-spend it. SPENT -> no UP prior -> revert to chain/state default. REALIZED -1,340 aligned down, no squeeze. CORRECT."
+        },
+        "n": "3 seams, 2 publications, 1 block. PROPOSAL. Needs a second block."
+      }
+    },
+
+    "4_I_DO_NOT_ACCEPT_E_S_FLOWLESS_READ_OF_THE_0529_EXIT_and_this_is_the_bridge_s_load_bearing_correction": {
+      "E_s_claim": "0529 phase 3 moved price -810 on net signed flow of -59, therefore 'nobody sold this low', the close is a FAKE CLOSE, and the drop reverts - giving the Monday gap a second independent channel worth +570 to +690.",
+      "the_number_E_did_not_use": "0529 phase 3 volume is 60,930 - the LARGEST-volume phase of the session (ph1 4,715, ph2 51,424). 60,930 lots changed hands. That is not air and it is not thin. It is FULL participation with a NET of essentially zero.",
+      "why_the_distinction_is_not_pedantic": "My 0525 stub is displacement WITHOUT participation: 658 trades, nobody transferred inventory, and the print reverts because no position depends on it. 0529 ph3 is the opposite object: maximal participation, zero net. Inventory was transferred in size at declining prices. SOMEBODY now owns 3.273 and lower. A high-volume net-flat decline is the signature of DISTRIBUTION - a bid stepping down while both sides trade heavily - not of an unowned print.",
+      "consequence_for_the_bridge": "E's gap-UP prior survives, but on ONE channel (the unconsumed COT residual), not two. The flowless-reversion channel is withdrawn. B must NOT treat E's two channels as independent confirmation. And the same correction ARMS E's own intraday call harder than E armed it: if Friday's final phase was distribution under full participation, the distribution did not start on Monday - it started Friday afternoon, and Monday inherits it already running.",
+      "general_form": "Read (volume, net) as a PAIR, never net alone. Low volume + any net = unowned displacement, reverts. High volume + near-zero net = two-sided transfer with a stepping bid, i.e. distribution, does NOT revert and predicts continuation of the price direction. High volume + large aligned net = delivery. High volume + large opposed net = absorption. E's FLOWLESS_BID_WITHDRAWAL is a real fifth exit type; 0529 ph3 is simply not an instance of it. Proposed rename of the discriminator: the exit-type test needs a VOLUME condition, not only a flow condition."
+    },
+
+    "5_the_crossover_date_earns_its_keep_on_my_own_day": {
+      "statement": "A frozen block needs a CROSSOVER DATE, never a blanket verdict. The state now carries frozen_structure_stale, and it is present on 0528-0605 and ABSENT on 0525-0527 - exactly the crossover I derived independently. On my day the 20260522 vintage is 3 days old, NGM26 has NOT yet expired (expiry 2026-05-27), and the never-masked flow_calendar independently corroborates it (days_to_futures_expiry 2, futures_expiry_date 2026-05-27). squeeze_watch.active TRUE is a TRUE POSITIVE on 20260525 and I USED it. C, D and E all correctly stood it down - on their days. Their stand-down and my use are the same rule evaluated on different sides of the crossover.",
+      "what_it_bought_on_0525": "NGM26 expires in 2 sessions and the traded leg is NGN26 (front_is_calendar_front FALSE). Open interest in NGN26 is building +19,263/day against 336,476. Cash sits +0.116 over the front with basis_chg_3d +0.22 (cash_basis, 3 days stale on a still-live front - usable HERE and only here). That is mechanical roll-in BUYING of my leg concentrated into the last liquid window before the 13:00 holiday early close. It is the driver that re-underwrites the gap rejection instead of leaving the day flat."
+    },
+
+    "6_attribution_split_on_my_day": {
+      "verdict": "MY DAY'S IMPROVEMENT IS ~70% REASONING, ~30% RESTORED INPUT, AND 0% WEATHER. I tested weather independently rather than inheriting C/D/E's finding, and I reach the same place by a different route.",
+      "reasoning_earned": "The gap SIGN comes from tape_conditions (never_masked TRUE, fully blind-available): stub signed flow -173, b_share 0.367 uniform across all three sub-phases. The gap OWNERSHIP argument, the COT consumption test, the crossover-date use of squeeze_watch, and the roll-in bid all run on never-masked blocks (tape_conditions, cot, flow_calendar, contract_structure). The blind had every one of them and used none.",
+      "restored_input_earned_the_RULER_and_only_the_ruler": "vol_regime is the restored block that pays. n0_prev_trades 42,233 and n0_prev_net -1,000 are the DENOMINATOR of the displacement-efficiency ratio - without them 'the stub is thin' is an adjective, and with them it is 15.4x. n0_net_sigma_20 661 and n0_range_20_mean 1,094 size the gap and cap the day. Roughly 30% of the improvement. Note the same honesty E flagged: vol_regime is frozen at the 20260522 anchor and is byte-identical across all ten days, so it supplies block-level SCALE and cannot discriminate between days at all.",
+      "restored_weather_earned_NOTHING_on_0525_and_here_is_the_test_I_ran": "weather_forecast on 0525 gives forecast_run_delta -0.758 and forecast_run_delta_cdd -0.354; weather_forecast_cycle.sunday_reopen (asof 2026-05-24T17:59, decision-time-legit BEFORE the reopen) gives d_gw_hdd for D+0 of -0.528. All bearish, all agreeing with the down gap. That is CORROBORATION OF A CHANNEL I ALREADY HAD - the stub tape gave me the same sign with a tighter read. The test for whether a block EARNED something is whether removing it changes the answer: remove weather from 0525 and the gap sign, size, and the day-move are all unchanged. It earned zero. It did NOT argue the wrong way (unlike E's 0605), so it costs nothing either - it is simply redundant. Independent test, same conclusion as C, D and E.",
+      "the_merge_warning": "Do not bank restored weather as forward evidence for daytype.monday_weekend_gap's weather arm off this day. On 0525 the structural owner (roll-in + gap ownership) and the weather owner point the same way, so the day cannot separate them, exactly as the brain's own s101_3 backcheck of 0125 warns."
+    },
+
+    "7_where_the_block_drift_is_from_the_seam_lens": "The block's -2560 forward-curve drift is not on my day (blind +180 vs actual +30, the block's smallest miss) and E has shown it is not on the Fridays. From the seam lens I can name where a piece of it IS: 0601, blind +350 vs actual -990, is 1,340 of the 2,560 and it is a SEAM-ALLOCATION failure, not a magnitude failure. The blind put the day-move approximately equal to its gap (+350 vs +300) - rung 2 of the extension ladder - when the state called for rung 3 (see the bridge). Fixing the allocation rule recovers a third of the block drift at one day. The rest is E's absorbed-sell-rally undersizing on 0527/0528/0604, which is not mine and I make no claim on it."
+  },
+
+  "days": [
+    {
+      "date": "20260525",
+      "dow": "Mon",
+      "day_class": "holiday_reopen_monday / Memorial Day CME partial_session / EXPECTED_SPARSE thin tape / block day 1, no chain inherited from inside the block / pre-expiry roll window (NGM26 expires 2026-05-27, T-2)",
+      "blind_direction": "up",
+      "blind_net_usd": 180,
+      "posterior_direction_by_horizon": {
+        "reopen_stub_18_20_et": "down - this is the GAP window and it is already realized before my clock starts. Stub signed flow -173, b_share 0.367 uniform across [0.363, 0.377, 0.370]; 658 trades in 120 min (5.5/min, roughly half the intensity of the block's non-holiday Sunday reopen). Gap -220 derived, band [-350, -80].",
+        "overnight_20_04_et": "down (weak, extending) - the stub's sell lean has no counterparty until Europe. Low zone 00:00-02:00 ET at about -450 to -520 cum from the anchor. But note ph1 already carries +251 of BUY flow against -40 of price: the reversion bid is arriving inside the overnight, absorbing the drift before the US session. That is the turn being built, not the trend continuing.",
+        "eu_04_08_et": "up - first liquidity restoration. A displacement carrying 15x the prior session's per-trade impact starts paying it back here.",
+        "us_am_08_13_et": "up, and this is the ONLY liquid window of the holiday. Two additive terms: (a) full reversion of an unowned gap, (b) mechanical roll-in buying of NGN26 ahead of the 05-27 NGM26 expiry, which MUST execute before the 13:00 early close. High of the session prints here.",
+        "us_pm_13_17_et": "down (drift-back) - the mechanical buyer is done and the post-early-close tape is thin again.",
+        "day_net": "up, small - a near-flat day-move. The gap and the gap-rejection very nearly cancel; what is left over is the roll carry."
+      },
+      "expected_magnitude_usd": 60,
+      "expected_magnitude_band_usd": [-140, 280],
+      "onset_time_et": "08:00",
+      "turn_time_et": "09:45",
+      "trend_vs_chop": "chop with ONE directional window. Not a trend day: the session is a thin overnight drift, a single 08:00-09:45 mechanical push, and a bleed. On a partial session the day-move is decided in about 100 minutes.",
+      "continuation_vs_reversal": "reversal AT THE SEAM (gap-rejection). The reopen gap extends the 05-22 down leg and the session rejects it. Relative to the day itself the net result is a near-flat: the reversal spends itself paying back the gap.",
+      "path_p50_curve": [
+        [20, -220],
+        [22, -300],
+        [0, -420],
+        [2, -470],
+        [4, -380],
+        [6, -250],
+        [8, -90],
+        [10, 250],
+        [12, 160],
+        [14, 90],
+        [16, 60]
+      ],
+      "confidence": 0.6,
+      "weight_assigned": { "blind": 0.55, "causal_mbo": 0.45 },
+      "magnitude_derivation": {
+        "gap": "-220, band [-350, -80]. SIGN from two channels: (i) the reopen stub's own signed flow -173 with a uniform sell lean across all three sub-phases; (ii) the COT residual from the 2026-05-22T15:30 publication is SPENT at this seam (window +1,436 on 05-22 ph3, -173 on the stub, cum +1,263, CROSSED) and the publication fails the arm test anyway (WoW +23,762 IMPROVING, 1y pctile 16.04) - so there is no offsetting UP gap prior and the gap is free to take the tape's sign. SIZE: base weekend-seam displacement in this vol regime taken at about a third of n0_range_20_mean (1,094) = 361, scaled by the holiday participation ratio 5.5/10.3 trades-per-min = 0.53 -> 192; carried at -220 to respect the 81.7 range percentile. The one-third base is a lens prior, stated as such, not fitted here.",
+        "session_net": "+280, built from three named terms. (a) FULL REVERSION OF AN UNOWNED GAP: +220. The gap carries 15.4x the prior full session's per-trade displacement (0.365 vs 0.0237 USD/trade off vol_regime n0_prev_net 1,000 / n0_prev_trades 42,233); that excess is a liquidity premium and it is fully repaid once participation returns. (b) ROLL-IN CARRY: +120. squeeze_watch is a TRUE positive here (frozen_structure_stale ABSENT on 0525-0527; NGM26 alive until 05-27; corroborated by never-masked flow_calendar days_to_futures_expiry 2). NGN26 open interest is building +19,263/day against 336,476 = ~5.7%/session of roll-in demand into the leg I trade, with cash +0.116 over the front and basis_chg_3d +0.22. On a partial session that tranche is small; sized at ~0.18 sigma of n0_net_sigma_20 661 = 119. (c) HOLIDAY POST-CLOSE DRIFT-BACK: -60, the give-back once the mechanical buyer stops at the 13:00 early close, sized at half the ph1 overnight drift.",
+        "day_move": "-220 + 280 = +60.",
+        "sanity_check_against_the_regime": "A holiday session running roughly 30% of a normal session's trade count scales sigma by sqrt(0.30) = 0.55, so the holiday-session sigma is about 360. A +60 day-move is 0.17 sigma - a nothing day. That is exactly what daytype.monday_weekend_gap's own exception arm calls for: 'thin-holiday Monday with NO active weather catalyst = quiet, size DOWN (1013)'. weather_forecast here gives forecast_run_delta_cdd -0.354, i.e. no bullish catalyst. The incumbent play and the derived number agree, from opposite directions.",
+        "what_I_am_deliberately_NOT_claiming": "The realized high_exc is +860 from the open (+620 from the anchor) at 09:30 with turn_mag 590. My p50 at 10:00 is +250. I am not claiming the spike. A 590-point round trip inside a 100-minute holiday liquidity window is a reactive tail on a partial session and it is not mine to bank; I carry it in the band, not in the p50."
+      },
+      "evidence_used": [
+        "tape_conditions 20260525 (NEVER MASKED, blind-available, unused by the blind): session 20260524, 658 trades / 120 min = 5.5 trades/min, volume_lots 1,158, session_signed_flow -173, session_b_share 0.367, phase_signed_flow [-118, -33, -22], phase_b_share [0.363, 0.377, 0.370], leg_count_150 2. THE GAP-FORMING SESSION. Sign from the uniform sell lean; thinness from the trade rate.",
+        "vol_regime 20260525 (RESTORED INPUT - named): n0_prev_net -1,000, n0_prev_range 1,400, n0_prev_trades 42,233, n0_net_sigma_20 661, n0_range_20_mean 1,094, n0_range_pctile 81.7, n0_activity_trend 1.619. Supplies the denominator of the displacement-efficiency ratio and the sigma ruler. Frozen at the 20260522 anchor and byte-identical on all ten days - block-level SCALE only.",
+        "cot 20260525 (never masked): report 2026-05-19, publication_ts 2026-05-22T15:30, MM net -96,303, WoW +23,762 IMPROVING, 1y pctile 16.04, 3y 17.52. Fails the crowded-short arm AND its residual is already consumed at this seam. No UP gap prior.",
+        "flow_calendar 20260525 (never masked): cme_holiday TRUE, cme_holiday_name Memorial_Day, cme_session_class partial_session, is_cme_business_day FALSE, days_to_futures_expiry 2, futures_expiry_date 2026-05-27, days_to_opex 1, options_expiry_date 2026-05-26, days_to_next_eia_release 3, in_gsci_roll FALSE, in_bidweek FALSE. Fixes the early close, the liquidity window, and the roll clock.",
+        "squeeze_watch + contract_structure 20260525 (masked_one_shot at 20260522 but PRE-CROSSOVER and therefore decision-legit HERE): active TRUE, days_to_calendar_front_expiry 2, calendar_front NGM26, front_next_spread_chg_3d +0.056, front_is_calendar_front FALSE, front_symbol NGN26, open_interest_front 336,476 with chg_1d +19,263. frozen_structure_stale is ABSENT on this day. The roll-in bid.",
+        "cash_basis 20260525 (20260522 vintage, 3 days stale on a STILL-LIVE front): hh_cash_minus_front_settle +0.116, basis_chg_1d +0.07, basis_chg_3d +0.22. Physical pulling above the front into a delivery window - corroborates the roll-in bid. Explicitly NOT usable from 0528 onward.",
+        "g20_mbo_evidence 20260525 phase table: ph1 sflow +251 / pxchg -40 / vol 3,134; ph2 +1,038 / +410 / 15,207; ph3 -195 / -110 / 3,663; total_sflow +1,094 sign +1; ph_absorb all FALSE; absorb_session FALSE; lo_et 2026-05-24 23:30, onset 08:26 up, turn_down 09:30. ph1 is negative-conviction (buy flow absorbed under falling price) = the reversion bid arriving inside the overnight; ph2 is aligned delivery; ph3 is the aligned post-close bleed. Session flow_conviction ALIGNED with no absorption anywhere = mechanical buying, NOT covering.",
+        "weather / weather_forecast / weather_forecast_cycle 20260525 (RESTORED): regime mod_cool, gw_cdd 5.6, forecast_run_delta -0.758, forecast_run_delta_cdd -0.354, sunday_reopen cycle asof 2026-05-24T17:59 with D+0 d_gw_hdd -0.528, fwd7 hdd span [0.539, 3.677]. Used ONLY as a redundancy check on the down gap. It agrees and it changes nothing - see attribution.",
+        "storage / storage_consensus 20260525: level 2,391, weekly_chg +101, vs_5yr +98, phase inject; next print Thu 05-28 10:30 with consensus +96.0 and house_disagreement 0.0. No print in the session, no pre-print positioning term, zero house dispersion. Nothing to trade against on a holiday.",
+        "daytype.monday_weekend_gap (brain, play 8): R3 FADE arm - fade a Sunday gap that jumped WITH a mature swing to a fresh cum-extreme - plus the explicit thin-holiday exception 'quiet, size DOWN (1013)'. Both fire here."
+      ],
+      "evidence_rejected": [
+        "big_print_b_share 1.0 on the 0524 stub: big_prints_n is 1. flow.big_print_bshare_thin_tape_guard stands it down outright (1 is far below the ~20 floor, and the guard's own measurement puts the thinnest quartile at double the dispersion). A single size-weighted print is not a bid lean and reading it as one would have manufactured a bull tell out of one trade on the exact session whose flow is SELLING (-173, b_share 0.367). The guard and the session lean disagree by construction; the guard wins.",
+        "the MBO BOOK layer: no book_trustworthy verdict exists anywhere in G20 (no execution_authority, no conviction floor, no book_complete field) AND firehose_present.l1_book is FALSE. Stood down harder than the usual fallback - this is trade-flow ONLY, with no L1 resting-lean channel available either.",
+        "options_surface 20260525: 20260522 vintage. NGM26 opex is 2026-05-26 with days_to_opex 3 as-of the vintage but 1 as-of the day, and the block is keyed to the expiring month. Directionally uninformative for a July-leg holiday session; not used. (Distinct from squeeze_watch, which I DID use - squeeze_watch's fields are corroborated by the never-masked flow_calendar; options_surface's are not.)",
+        "boundary.seam_gap_up_prior_on_worsening_cot: trigger NOT met on this seam. It requires WORSENING WoW in a crowded-short regime; the live publication has WoW +23,762 IMPROVING at 1y pctile 16.04. Its RECURRING arm is separately falsified block-wide (see cross-cutting finding 3) but that is not why it is off here - it simply never arms.",
+        "structure.covering_extension_distribution_flip: not applicable. Block day 1, no covering ramp to be extended on, cum_from_anchor 0 at the open, chain age 0.",
+        "the blind's +40 UP overnight gap: rejected. It has the sign wrong against a never-masked block that states the gap-forming session's flow directly.",
+        "reading the thin tape as a data hole: rejected. EXPECTED_SPARSE is the legitimate condition of a Memorial Day partial session. Thinness here is a MECHANISM (an unowned displacement that must revert), used as such, and it is never a source of conviction - hence confidence 0.60, not higher."
+      ],
+      "stand_down_reasons": [
+        "MBO book layer: no book_trustworthy verdict in G20; firehose_present.l1_book FALSE - trade-flow only, no L1",
+        "big_print_b_share 1.0: big_prints_n = 1, flow.big_print_bshare_thin_tape_guard stands the arm down",
+        "options_surface: 20260522 freeze keyed to the expiring NGM26 month, not corroborated by a never-masked block",
+        "boundary.seam_gap_up_prior_on_worsening_cot: WoW improving, crowded-short trigger not met",
+        "structure.covering_extension_distribution_flip: no chain to extend on block day 1",
+        "EXPECTED_SPARSE holiday partial session: confidence capped at 0.60 and the +590 realized round trip left in the band rather than the p50"
+      ],
+      "selection_reason": "The blind had the DIRECTION right and got there for the wrong reason: it carried a +40 UP overnight gap into a +180 day when the gap was in fact -240 DOWN and the session then rejected it. Right answer, wrong two halves. My correction is +180 -> +60 and the ATTRIBUTION is roughly 70 REASONING / 30 RESTORED INPUT / 0 WEATHER. The reasoning half runs entirely on never-masked blocks the blind already had: tape_conditions gives the gap-forming session's own signed flow (-173, b_share 0.367 uniform across sub-phases) which fixes the gap SIGN; the cot block's publication_ts plus the consumption window shows the 05-22 residual was already spent (and never armed anyway on an IMPROVING WoW at the 16th percentile), so nothing offsets that down gap; and squeeze_watch read PRE-CROSSOVER - frozen_structure_stale is absent on 0525-0527 and never-masked flow_calendar independently confirms NGM26 expires 05-27 - supplies the mechanical roll-in bid into NGN26 that re-underwrites the rejection instead of leaving the day flat. The RESTORED half is vol_regime and it is precisely the RULER: n0_prev_trades 42,233 and n0_prev_net -1,000 turn 'the stub is thin' into 'the gap carries 15.4x the prior session's per-trade displacement', which is the whole reversion argument, and n0_net_sigma_20 661 sizes the roll carry and caps the day at 0.17 sigma. Restored WEATHER earned NOTHING here and I tested it rather than inheriting C/D/E's finding: its three bearish signals (run_delta -0.758, run_delta_cdd -0.354, Sunday-reopen cycle D+0 -0.528) all corroborate a gap sign I already had from a tighter channel, and removing weather leaves sign, size and day-move unchanged. It did not argue the wrong way, so it costs nothing - it is simply redundant, and the merge must not bank it as forward evidence for daytype.monday_weekend_gap's weather arm off a day where the structural and weather owners point the same way.",
+      "mbo_verdict": "CONFIRM DIRECTION, CUT MAGNITUDE 180 -> 60, AND REBUILD BOTH HALVES OF THE DAY. Direction is unchanged from the blind per doctrine. The three material MBO updates are: (a) the GAP sign flips +40 -> -220 off the never-masked reopen stub, which is the single biggest correction on the day and is available to a blind that reads tape_conditions; (b) the session net goes +140 -> +280 as a gap-rejection plus a roll carry, so the day-move falls to +60 even though the session works harder; (c) the PATH is rebuilt - the blind ran monotonically up from 22:00, whereas the causal read puts the low at 00:00-02:00 ET around -470 cum, holds negative until the EU restoration, and puts the entire day-move in a single 08:00-09:45 window before the 13:00 holiday early close, then bleeds. PROCEDURAL NOTE FOR THE COORDINATOR: my path_p50_curve starts at [20, -220], NOT at 0. On a Sunday/holiday reopen Monday the gap is formed in the 18:00-20:00 stub and is therefore ALREADY IN THE PRICE when the 20:00 clock starts; a curve pinned to 0 at 20:00 mis-states the day by the whole gap and forces the gap to be spread over hours in which it did not happen. The blind does exactly that on both Mondays. The curve still terminates at expected_magnitude_usd."
+    }
+  ],
+
+  "weekend_bridge_20260601": {
+    "purpose": "A informs, B decides, B owns the 20260601 number. This is the bridge from E's 0529 exit to B's Monday. Per E's finding 4 and my finding 1, the restage leaves B with NO independent tape read of the Friday exit - B's tape_conditions describes the 2-hour Sunday 05-31 reopen stub, whose only big-print number (big_print_b_share 1.0 on big_prints_n 1) the thin-tape guard stands down outright. This bridge and E's handoff_out are the entire channel. Sized accordingly.",
+
+    "friday_exit_consumed": {
+      "E_s_exit_type": "FLOWLESS_BID_WITHDRAWAL (proposed fifth type in daytype.friday_exit_decomposition): 0529 ph3 pxchg -810 on sflow -59, close at the session low (lo_et 16:59:20), turn_mag 1,150 off the 08:51 high.",
+      "sanity_check_verdict": "PARTIALLY REJECTED. The exit STATE E reports is correct and I take it verbatim: close 3.273 at the session low, ph2 absorbing (sflow -1,573 under pxchg +530, ph_absorb TRUE), ph3 net-flat at -59, chain UP age 5, cum_from_anchor +2,390 against a 3.034 anchor. The INTERPRETATION does not survive one number E did not use: ph3 volume is 60,930, the LARGEST-volume phase of the session (ph1 4,715, ph2 51,424). 60,930 lots is not 'traded by nobody'. This is full participation with zero net - two-sided transfer at declining prices with a stepping bid, i.e. DISTRIBUTION, not an unowned print.",
+      "what_B_should_take_instead": "The Friday close is NOT a fake print that must revert. It is the first hour of a distribution that is already running. Inventory changed hands in size below 3.30 on Friday afternoon; somebody owns it. That makes the close a WEAK level (it will not be defended) but a REAL one (it will not spring back on its own).",
+      "the_flowless_type_itself_survives": "FLOWLESS_BID_WITHDRAWAL is a real and useful fifth exit type - it is exactly my 0525 reopen stub on the other side of the seam. 0529 ph3 is simply not an instance of it. Proposed condition for the type: it requires LOW VOLUME as well as low net flow. Read (volume, net) as a pair: low-vol + any net = unowned, reverts; high-vol + ~zero net = distribution, continues; high-vol + large aligned net = delivery; high-vol + large opposed net = absorption."
+    },
+
+    "cot_residual_state_at_this_seam": {
+      "verdict": "LOADED AND UNCONSUMED - I CONFIRM E IN FULL.",
+      "publication": "2026-05-29T15:30-04:00, report date 2026-05-26. MM net -134,426, WoW -38,123 WORSENING, 1y pctile 0.94 (most crowded short in a year, n_obs 53), 3y pctile 2.23. ICE PEN MM net -194,553 corroborating short.",
+      "consumption_window_run_correctly": "publication_ts -> seam open covers only the remainder of 0529: ph3 signed flow -59. Decayed from -1,573 without ever crossing to cumulative net-positive. UNCONSUMED. This is the FIRST seam after the publication, which is exactly the case where my withdrawn D-1 shortcut and E's corrected full-window form give the same answer - so there is no instrument risk on this call.",
+      "arm": "boundary.seam_gap_up_prior_on_worsening_cot ARMS here on its own trigger (worsening WoW, crowded short, weekend seam). Its RECURRING arm is falsified block-wide by 0605 but that does not touch its behaviour at the FIRST seam, which is what this is."
+    },
+
+    "reopen_scenarios": {
+      "note": "Probabilities are the bridge's, on the pre-open state. They are a prior for B, not a forecast of B's day.",
+      "S1_gap_up_and_the_gap_IS_the_discharge": {
+        "p": 0.62,
+        "description": "The reopen gaps UP on the loaded residual. The covering fires INTO THE GAP rather than during the session - the shorts that survived Friday buy at the reopen, at the worst available price, on stub liquidity. The residual is then SPENT before 20:00 and the session opens with a maximally-extended chain, no positioning fuel, and no forward driver. Day gives back the gap and then the leg.",
+        "day_move_implication": "materially NEGATIVE - the day-move opposes the gap sign."
+      },
+      "S2_gap_up_and_the_covering_continues_intraday": {
+        "p": 0.2,
+        "description": "The gap is a partial discharge; buying continues into the US session and the day holds or extends the gap. This is the rung-2 outcome the blind assumed.",
+        "day_move_implication": "day-move approximately equals the gap, ~+400 to +700."
+      },
+      "S3_gap_down_through_3.240": {
+        "p": 0.13,
+        "description": "E's own first invalidation. If the reopen prints DOWN through 3.240, the loaded-residual read is wrong, Friday was straight distribution, and Monday is MOMENTUM_CARRY down from the aligned-down class.",
+        "day_move_implication": "-600 to -1,200, but reached from the other side."
+      },
+      "S4_no_material_gap": {
+        "p": 0.05,
+        "description": "Gap under about 0.3 x n0_net_sigma_20 (under ~200). The fade arm never arms and daytype.monday_weekend_gap's R3 default applies: carry Friday's side.",
+        "day_move_implication": "small, down, ~-150 to -300."
+      }
+    },
+
+    "live_reopen_watch_20260531_18_00_to_20_00_ET": {
+      "status": "OBSERVED (this is the refine; the stub is served in B's own tape_conditions and I read it here so B does not have to reconstruct it).",
+      "gap_sign": "UP. CONFIRMED on both channels: the stub's session_signed_flow is +278 and session_b_share 0.513, and the COT residual is loaded. Scenario S1/S2 branch, S3 eliminated.",
+      "gap_size": "+690 realized. That is 1.04 x n0_net_sigma_20 (661) and 63% of n0_range_20_mean (1,094). A seam gap at or above one sigma is a FULL discharge of a loaded residual, not a partial one.",
+      "participation": "1,224 trades / 120 min = 10.3 trades/min. Volume 2,620 lots. This is a NORMAL non-holiday Sunday reopen (my 0524 holiday stub ran 5.5/min) but it is still only about 26% of the prior session's weekday trade rate (0529: 50,723 trades over 1,260 min = 40.3/min) and 2.4% of its trade COUNT.",
+      "displacement_efficiency": "690/1,224 = 0.564 USD per trade against the prior full session's 1,160 range / 50,723 trades = 0.0229 USD per trade. RATIO 24.6x - the least-owned displacement in the block, and 60% less owned than my own 0525 gap at 15.4x. Under the rule in cross-cutting finding 2 this gap does not survive the first restoration of liquidity unless something re-underwrites it inside the session. See driver_realization_check: nothing does.",
+      "texture_the_single_most_useful_stub_number": "phase_b_share is [0.485, 0.489, 0.669] and phase_signed_flow is [79, 62, 137]. The first two-thirds of the reopen are FLAT-TO-SELL - both below 0.500. The entire buy lean lands in the FINAL THIRD, the last ~40 minutes before 20:00. This is not broad accumulation across the reopen; it is a BACK-LOADED chase into the close of the stub. Late buyers, filled at the top of a two-hour window, at the highest cum_from_anchor of the block. That cohort is the raw material distribution requires.",
+      "thin_tape_conviction_verdict": "STAND DOWN on big_print_b_share. It reads exactly 1.0 on big_prints_n = 1; flow.big_print_bshare_thin_tape_guard stands the arm down (floor ~20, and the guard's own measurement puts the thinnest quartile at double the dispersion). B MUST NOT read a bid lean from that 1.0 - it is one print. Note it agrees with the stub's net flow here purely by luck; on my 0525 the same field read 1.0 while the session flow was SELLING.",
+      "other_stand_downs_B_should_carry": [
+        "MBO book layer: no book_trustworthy verdict in G20 AND firehose_present.l1_book FALSE on 0601 - trade-flow ONLY, no L1 resting-lean channel",
+        "squeeze_watch and contract_structure: frozen_structure_stale is PRESENT on 0601, frozen_front_expired TRUE, frozen calendar front NGM26 expired 2026-05-27. This is the far side of the crossover date - the identical flag I used as a TRUE positive on 0525 is a FALSE positive here. Use never-masked flow_calendar instead (days_to_futures_expiry 18, futures_expiry_date 2026-06-26, is_expiry_day FALSE, is_opex_day FALSE, in_gsci_roll FALSE, in_bcom_roll FALSE, in_bidweek FALSE, business_day_of_month 1). NO mechanical flow term on 0601 at all.",
+        "options_surface and cash_basis: same 20260522 freeze, 10 days stale, keyed to a dead front. Not usable."
+      ]
+    },
+
+    "gap_ownership": {
+      "verdict": "SPENT, and spent BY THE GAP ITSELF. This is the bridge's central claim.",
+      "argument": "The one thing that could have carried the Monday higher was the unconsumed crowded-short residual. A +690 gap - one full sigma - made on 1,224 trades IS that residual firing. The covering does not need the session; it happens in the seam, on stub liquidity, at the worst price of the whole move. By 20:00 the fuel is gone. Under the joint consumption instrument, this gap is itself the CROSS to net-positive that latches the publication as spent for every later seam - which is precisely why the same publication must not re-arm 0605, and it is E's own conclusion reached from the other end.",
+      "unrealized_ahead": "NOTHING. Storage surprise -3.2 below is already realized (05-28 print). The next EIA is 2026-06-04, three sessions out. No expiry, no opex, no roll, no bidweek. weather_forecast run_delta_cdd is -0.197 (CDD revised DOWN run-over-run) and fwd7_gw_hdd_span has collapsed to [0.41, 0.882] against 0525's [0.539, 3.677] - a flat, featureless forward book. The weekend cycle (weather_forecast_cycle.sunday_reopen, asof 2026-05-31T17:59, decision-legit before the reopen) adds +0.112 on D+0 and -0.385 on D+1: noise, not a shock.",
+      "consequence": "A gap that consumes the last fuel and leaves the chain at its extreme with no driver ahead is a sell-the-news configuration. The session opens long, alone, and unfed."
+    },
+
+    "driver_realization_check": {
+      "question": "Did the carry's peak land over the weekend?",
+      "verdict": "YES, and on BOTH drivers.",
+      "driver_1_positioning": "The crowded short (1y pctile 0.94) discharged in the +690 seam gap - see gap_ownership.",
+      "driver_2_fundamental": "The 05-28 EIA surprise (-3.2 below) that lit the +2,710 covering ramp across 0527-0528 is realized and behind us; days_to_next_eia_release is 3.",
+      "driver_3_weather": "There is no third driver. run_delta_cdd -0.197 and a collapsed fwd7 span. forecast_vs_normal +0.503 on a gw_hdd of 0.997 in June is arithmetic noise, not demand.",
+      "conclusion": "SELL-THE-NEWS ARMED at the open, not conditional on an intraday trigger."
+    },
+
+    "the_extension_ladder_this_is_what_B_got_wrong_last_time": {
+      "the_diagnosis": "B's blind was +350 against a +300 gap - B set the day-move approximately EQUAL to the gap. That is rung 2 of boundary.seam_gap_up_prior_on_worsening_cot's magnitude arm ('at high extension it round-trips to ~0 and the day IS the gap'). B did not make an arithmetic error and did not repeat the G19 cum-0 bug; B built inherited cum correctly and then applied the WRONG RUNG. This is a reasoning miss on a fixed mechanism, exactly as the framing says.",
+      "the_incumbent_play_is_falsified_at_the_top_of_its_own_range": "0601 realized a day-move of -990 against a gap of +690, i.e. a session net of -1,680. The intraday did not round-trip to ~0; it went straight THROUGH the gap and 990 beyond it. The play's two-rung ladder has no rung for this.",
+      "proposed_three_rung_ladder": {
+        "rung_1_low_extension": "aligned continuation EXCEEDS the gap; day-move > gap, same sign. (G19 0511: gap +580, intraday +1,160.)",
+        "rung_2_high_extension": "intraday round-trips to ~0; the day IS the gap. (G19 0518: gap +580, intraday +80.)",
+        "rung_3_maximal_extension_with_the_residual_discharged_INTO_the_gap": "intraday goes THROUGH the gap; the day-move takes the OPPOSITE sign to the gap. (G20 0601: gap +690, intraday -1,680, day -990.)"
+      },
+      "rung_3_discriminator_all_five_present_on_0601": [
+        "(a) THE DECISIVE ONE - the prior Friday's FINAL phase was net-flat or reversed under FULL participation (0529 ph3: 60,930 lots, sflow -59, price -810). Distribution has already begun; the Monday inherits it running. Contrast G19 0518, whose exit was a covering-holding close-on-HIGH with flow present - rung 2.",
+        "(b) the seam gap is at or above 1.0 x n0_net_sigma_20, i.e. a FULL discharge rather than a partial (0601: 690 vs 661). n=1 for the threshold - flag as PROPOSAL, do not lean on the exact number.",
+        "(c) the gap is made on stub participation with a displacement-efficiency ratio far above 1 (24.6x) - unowned, nothing defends it.",
+        "(d) cum_from_anchor at or near the block extreme AND chain age >= 5 (at the 0601 open: +2,390 + 690 = +3,080, age 5). This is structure.covering_extension_distribution_flip's extension condition, met.",
+        "(e) NO forward driver into the session (gap_ownership above). The gap has nothing to hand off to."
+      ],
+      "how_to_use_it": "Rungs 1 and 2 are read off extension alone. Rung 3 requires (a) AND (e) on top of extension - and (a) is checkable directly from the Friday phase table's (volume, net) pair, which is exactly why it belongs in the handoff and nowhere else."
+    },
+
+    "monday_bias_confirmed_or_adjusted": {
+      "structure": "CONFIRMED - E's two-part, GAP-FIRST allocation is right and B must not collapse it into one day sign. Gap and intraday are separately derived. This is also what boundary.seam_gap_up_prior_on_worsening_cot already specifies.",
+      "adjustment_1_the_gap_prior_is_ONE_channel_not_two": "E supported the UP gap with (i) flowless-drop reversion, +570 to +690, and (ii) the unconsumed COT residual. Channel (i) does NOT survive: 0529 ph3 was the session's highest-volume phase, so the drop was distributed, not unowned. Only channel (ii) supports the gap. The gap prior stays UP and the size range stays right - I carry +650, realized +690 - but B must not treat it as doubly confirmed. Net effect on B: same gap number, less conviction in the gap and MORE conviction in the intraday, which is the direction B needs to move.",
+      "adjustment_2_the_intraday_is_PRE_ARMED_not_conditional": "E wrote 'WATCH FOR THE TRIGGER: if the Monday's main US phase prints heavy BUY flow absorbed under a FALLING price...'. B should not wait for it. Three pre-session facts arm the flip before 20:00: (a) Friday's final phase was already net-flat distribution under full participation; (b) the +690 gap IS the residual discharging, so the fuel is spent at the open rather than during the day; (c) the Sunday stub's buy lean is back-loaded into its final 40 minutes (phase_b_share 0.485/0.489/0.669) - late chasers filled at the block's highest cum. The cohort that gets distributed to is already positioned. If B waits for the intraday tell it will confirm at midday and B will emit the number after the move.",
+      "adjustment_3_name_the_rung": "0601 is RUNG 3. All five discriminators are present. B's error last time was rung 2. Say the rung out loud in the posterior.",
+      "invalidations_carried_forward_from_E_updated": [
+        "E's first invalidation (reopen prints DOWN through 3.240) is RESOLVED and did not fire - the reopen gapped +690 up. Scenario S3 is dead.",
+        "E's second invalidation stands, inverted to match the pre-arming: if the Monday's main US phase shows SELL flow absorbed under a RISING price, the covering is still live, the flip has NOT triggered, and the day holds the gap - revert to rung 2, day-move approximately +550 to +700.",
+        "NEW third invalidation, mine: if the US session's main phase shows heavy volume with LARGE ALIGNED DOWN net flow rather than absorbed BUY flow, this is a fresh impulse seller rather than distribution of the covering cohort - the day is still down but it is a different mechanism, it does not stop at the extension give-back, and the band should be widened downward rather than centred."
+      ]
+    },
+
+    "bridge_derived_day_move_for_cross_check_only": {
+      "disclaimer": "INFORMATIONAL. B owns the 20260601 number and the coordinator will only consume B's. This is here so B can see where the seam lens lands independently and can say why it differs.",
+      "gap": "+650 (realized +690). One channel: the unconsumed residual, discharging fully at one sigma.",
+      "leg_1_full_gap_giveback": "-690. An unowned displacement at 24.6x normal per-trade impact, with no driver to re-underwrite it, is repaid in full once liquidity restores. This alone takes the day-move to 0.",
+      "leg_2_extension_giveback": "-850. The distribution flip does not stop at the gap: the +2,710 covering ramp (0527 +610, 0528 +2,100) is being unwound into the late cohort. Sized at 1.0 to 1.5 x n0_net_sigma_20 (661) = -660 to -990, centred -850, corroborated by the fact that the last leg's own final phase (0528 ph3: -3,762 absorbed for +160) was already unproductive.",
+      "day_move": "-850, band [-1,400, -250]. Realized -990.",
+      "the_arithmetic_trap_B_must_not_fall_into": "A day-move of -850 with a gap of +690 requires a SESSION NET of -1,540, which is 2.3 sigma. If B sizes the session net against sigma WITHOUT first adding the gap-reversion term, B will emit something like -700 net and land at a day-move near 0 - which looks conservative and is in fact the rung-2 error wearing different clothes. Size the net as (gap giveback) + (extension giveback), then check the total against sigma, not the other way round.",
+      "timing_read": "Onset at the EU restoration, 03:00-04:00 ET, where the gap first fails; the high should print early (realized hi_et 03:40 with high_exc only +540 against the open, i.e. the gap was never extended). Main delivery through the US morning 08:00-14:00. Low late in the US session. Trend, not chop - a single monotone unwind, because a discharged residual has no second wave."
+    },
+
+    "what_B_inherits_in_one_paragraph": "The close 3.273 as a WEAK BUT REAL level - weak because it was not defended, real because 60,930 lots transferred to make it, so it will not spring back on its own. The chain: polarity UP, age 5, cum_from_anchor +2,390 at the Friday exit and +3,080 at the Monday open, within ~160 of the block extreme - MAXIMALLY EXTENDED. The COT residual: loaded and unconsumed at the seam, then FULLY DISCHARGED into the +690 reopen gap, and therefore spent for every subsequent seam including 0605. The forward book: empty - no expiry, no opex, no roll, no bidweek, EIA three sessions out, CDD revised down, fwd7 HDD span collapsed. And the procedural fact that B's own tape_conditions block is a 1,224-trade Sunday stub whose only big-print number is a stood-down 1.0, so this bridge plus E's handoff_out is the entire channel. NO day-net is handed on. The rung is 3."
+  },
+
+  "summary": {
+    "days_emitted": 1,
+    "blind_on_owned_day_usd": 180,
+    "posterior_on_owned_day_usd": 60,
+    "direction_changes_from_blind": 0,
+    "magnitude_changes_from_blind": 1,
+    "path_shape_changes_from_blind": 1,
+    "gap_sign_changes_from_blind": 1,
+    "book_layer": "STOOD DOWN block-wide - no book_trustworthy verdict exists for G20 and firehose_present.l1_book is FALSE on every day. Trade-flow ONLY, no L1.",
+    "weekend_bridge_present": ["20260601"],
+    "adjudication_of_E_s_challenge": "E's correction to my COT-residual instrument is ACCEPTED IN FULL on the window: it runs from publication_ts to the candidate seam across all intervening sessions, and the test is a CROSS to cumulative net-positive signed flow. My D-1 form is WITHDRAWN as a named instrument - it was the same instrument on a truncated window and is only safe at the FIRST seam after a publication, where truncation removes nothing. I correct E back on three points that the corrected instrument needs: decay is the leading indicator of the cross and not a rival test (it measures the RATE, the integral measures the AMOUNT); the window must be defined over TRADED TIME and must include the weekend/holiday reopen stub, which lives in tape_conditions and appears nowhere in the phase table (this is load-bearing on my 0525 seam, where the stub carries -173); and consumption LATCHES - the 0605 window crosses to +7,261 and then falls back to -1,253, so a running-state test would wrongly re-arm it. The joint instrument goes 3-for-3 on G20's three seams.",
+    "instruments_withdrawn": [
+      "the D-1 post-publication phase as the COT-residual consumption window - withdrawn, superseded by the full publication_ts-to-seam traded-time window",
+      "'the reopen gap SIGN is non-derivable noise' - withdrawn for any staging in which tape_conditions serves the reopen stub as the prior session; the stub's own signed flow gives the sign (2/2 on this block)",
+      "E's flowless-reversion channel as support for the 0601 gap prior - withdrawn on volume: 0529 ph3 is the session's highest-volume phase, so it is distribution, not an unowned print"
+    ],
+    "instruments_proposed": [
+      "cot_residual_consumption_window (A+E joint, corrected form) - arm on a low-1y-pctile publication; window = all TRADED TIME from publication_ts to the seam open including post-15:30 phase fragments and reopen stubs; test = a CROSS to cumulative net-positive signed flow, which LATCHES the residual as spent for every later seam. Supersedes the RECURRING arm of boundary.seam_gap_up_prior_on_worsening_cot. 3/3 on G20's seams, n=3, PROPOSAL.",
+      "reopen_gap_sign_from_the_stub_tape - on stagings that serve the 18:00-20:00 reopen as tape_conditions, the gap sign is read from session_signed_flow and the uniformity of phase_b_share. 2/2 on G20's two Mondays, n=2, STAGING-CONDITIONAL, PROPOSAL.",
+      "reopen_displacement_efficiency - (|gap| / stub n_trades) / (|prior session net or range| / prior session n_trades), using vol_regime n0_prev_* as the denominator. Above ~1 the gap is a liquidity premium and reverts at the next liquidity restoration unless re-underwritten inside the session. 0525 15.4x (reverted), 0601 24.6x (reverted and overshot). n=2, PROPOSAL.",
+      "the (volume, net) PAIR as the exit-type discriminator - low-vol + any net = unowned displacement, reverts; high-vol + ~zero net = distribution, continues; high-vol + large aligned net = delivery; high-vol + large opposed net = absorption. Adds the missing VOLUME condition to E's proposed FLOWLESS_BID_WITHDRAWAL type.",
+      "the THREE-RUNG extension ladder for boundary.seam_gap_up_prior_on_worsening_cot's magnitude arm - rung 3 (day-move takes the OPPOSITE sign to the gap) exists and G20 0601 is the event; its decisive discriminator is a prior-Friday final phase that is net-flat or reversed under FULL participation. n=1 for rung 3, PROPOSAL.",
+      "crossover-date evaluation of every frozen block, never a blanket verdict - now instrumented as frozen_structure_stale (absent 0525-0527, present 0528-0605); squeeze_watch is a TRUE positive on 0525 and a FALSE positive on 0601, same field, same block."
+    ],
+    "attribution_headline": "20260525 is ~70% REASONING / ~30% RESTORED INPUT / 0% WEATHER. Reasoning: the gap sign and the gap-ownership argument off never-masked tape_conditions; the COT consumption test off the never-masked cot block; the pre-crossover use of squeeze_watch corroborated by never-masked flow_calendar, giving the roll-in bid. Restored: vol_regime supplies the RULER and nothing else - n0_prev_trades 42,233 and n0_prev_net -1,000 are the denominator that turns 'thin' into 15.4x, and n0_net_sigma_20 661 caps the day at 0.17 sigma; it is frozen at the 20260522 anchor and byte-identical on all ten days, so it can supply block SCALE and can never discriminate between days. Restored weather earned ZERO on my day and I tested it rather than inheriting the finding: all three of its signals corroborate a gap sign I already had from a tighter channel, and removing the block changes nothing. It did not argue the wrong way, so it cost nothing either - but it must NOT be banked as forward evidence for daytype.monday_weekend_gap's weather arm off a day where the structural and weather owners happen to agree.",
+    "block_level_note": "My day is the block's smallest miss and it is not where the -2560 drift lives. From the seam lens the locatable piece is 0601: 1,340 of the 2,560 sits on one day, and it is a SEAM-ALLOCATION failure (day-move set equal to the gap - rung 2 - when the state called for rung 3), not a magnitude failure. The rest is E's absorbed-sell-rally undersizing on 0527/0528/0604, on which I make no claim."
+  }
+}

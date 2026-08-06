@@ -1,0 +1,2716 @@
+{
+ "tag": "g3g4g5",
+ "brain_version": "s95.2",
+ "days": [
+  {
+   "date": "20250908",
+   "dow": "Mon",
+   "group": 3,
+   "archetype": "weekend_gap_monday_spike_fade",
+   "guess_usd": -450,
+   "actual_usd": 1260,
+   "drift": "Guessed DOWN extending the anchor-down lean; actual gapped UP overnight (+460) and grinded to +740 by hr6 before fading to +190 net. Miss-side.",
+   "conditions": [
+    "weekend_gap_monday",
+    "block_open",
+    "counter_to_anchor_down",
+    "spike_then_fade_shape"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": 300,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     300
+    ],
+    [
+     0,
+     400
+    ],
+    [
+     2,
+     550
+    ],
+    [
+     4,
+     600
+    ],
+    [
+     6,
+     550
+    ],
+    [
+     8,
+     350
+    ],
+    [
+     10,
+     300
+    ],
+    [
+     12,
+     250
+    ],
+    [
+     14,
+     300
+    ],
+    [
+     16,
+     280
+    ],
+    [
+     18,
+     300
+    ],
+    [
+     20,
+     300
+    ]
+   ],
+   "refined_reasoning": "A weekend-gap Monday reprices at the Sun-eve reopen and frequently OPENS AGAINST the running lean (anchor-down -> lean the Monday UP as a reversal of the recent direction). Model an early-loaded pop that FADES by the US session (spike round-trips) -> small positive net. Size the Monday move up but hold the side only while the leg grinds. Refined side (up-fade) is right; magnitude of the early pop is under."
+  },
+  {
+   "date": "20250909",
+   "dow": "Tue",
+   "group": 3,
+   "archetype": "noncatalyst_chop",
+   "guess_usd": null,
+   "actual_usd": 120,
+   "drift": "Small up chop (+120 net), no dominant leg; unscored.",
+   "conditions": [
+    "quiet_midblock",
+    "no_catalyst"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": -150,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -40
+    ],
+    [
+     0,
+     -60
+    ],
+    [
+     2,
+     -30
+    ],
+    [
+     4,
+     -80
+    ],
+    [
+     6,
+     -100
+    ],
+    [
+     8,
+     -120
+    ],
+    [
+     10,
+     -150
+    ],
+    [
+     12,
+     -180
+    ],
+    [
+     14,
+     -150
+    ],
+    [
+     16,
+     -130
+    ],
+    [
+     18,
+     -140
+    ],
+    [
+     20,
+     -150
+    ]
+   ],
+   "refined_reasoning": "Non-catalyst Tuesday without a fresh gap or print chops small; default magnitude is roughly right on no-catalyst days (the under-forecast is concentrated on catalyst days). Lean with the block (down) but keep it small."
+  },
+  {
+   "date": "20250910",
+   "dow": "Wed",
+   "group": 3,
+   "archetype": "wed_block_trend_grind_down",
+   "guess_usd": 370,
+   "actual_usd": -950,
+   "drift": "Guessed UP on the Wed up-lean archetype; actual grinded DOWN steadily from hr6. Miss-side.",
+   "conditions": [
+    "wed_uplean_archetype_failed",
+    "grind_down",
+    "block_downtrend"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": -500,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -60
+    ],
+    [
+     2,
+     -40
+    ],
+    [
+     4,
+     -80
+    ],
+    [
+     6,
+     -150
+    ],
+    [
+     8,
+     -280
+    ],
+    [
+     10,
+     -380
+    ],
+    [
+     12,
+     -450
+    ],
+    [
+     14,
+     -500
+    ],
+    [
+     16,
+     -520
+    ],
+    [
+     18,
+     -500
+    ],
+    [
+     20,
+     -500
+    ]
+   ],
+   "refined_reasoning": "The Wednesday up-lean is a weak weekday prior OVERRIDDEN by the running block trajectory: inside a down block a Wed grinds down all session. Defer weekday archetypes to the trajectory + intraday flow. Refined side (down) now right; magnitude modest (non-catalyst)."
+  },
+  {
+   "date": "20250911",
+   "dow": "Thu",
+   "group": 3,
+   "archetype": "storage_thursday_with_block",
+   "guess_usd": -540,
+   "actual_usd": -1180,
+   "drift": "Side right (down) but ~2x under. Flat until hr10 then post-print plunge. Print-driven grind down.",
+   "conditions": [
+    "storage_thursday",
+    "print_driven_leg",
+    "side_right",
+    "undersized"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": -1000,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -20
+    ],
+    [
+     0,
+     -40
+    ],
+    [
+     2,
+     -30
+    ],
+    [
+     4,
+     0
+    ],
+    [
+     6,
+     -20
+    ],
+    [
+     8,
+     -80
+    ],
+    [
+     10,
+     -250
+    ],
+    [
+     12,
+     -600
+    ],
+    [
+     14,
+     -850
+    ],
+    [
+     16,
+     -1000
+    ],
+    [
+     18,
+     -1000
+    ],
+    [
+     20,
+     -1000
+    ]
+   ],
+   "refined_reasoning": "Storage Thursday delivers a large dominant leg AT/AFTER the 10:30 ET print (flat pre-print, then a sustained grind). Size storage-Thursday magnitude UP structurally; side is a coin-flip at the open but leans with the bearish surplus backdrop when the block already trends that way - a Thursday firing WITH the block is the largest-magnitude configuration. Still undersized (magnitude residual)."
+  },
+  {
+   "date": "20250912",
+   "dow": "Fri",
+   "group": 3,
+   "archetype": "friday_range",
+   "guess_usd": null,
+   "actual_usd": 280,
+   "drift": "Small up (+280); a mid-session bounce faded. Unscored.",
+   "conditions": [
+    "friday_range",
+    "no_catalyst"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": -150,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -30
+    ],
+    [
+     0,
+     -50
+    ],
+    [
+     2,
+     -60
+    ],
+    [
+     4,
+     -40
+    ],
+    [
+     6,
+     0
+    ],
+    [
+     8,
+     80
+    ],
+    [
+     10,
+     50
+    ],
+    [
+     12,
+     -50
+    ],
+    [
+     14,
+     -120
+    ],
+    [
+     16,
+     -150
+    ],
+    [
+     18,
+     -150
+    ],
+    [
+     20,
+     -150
+    ]
+   ],
+   "refined_reasoning": "Friday without a catalyst reverts toward range; a mid-day pop round-trips. Fri range prior holds when no gap/print is present."
+  },
+  {
+   "date": "20250914",
+   "dow": "Sun",
+   "group": 3,
+   "archetype": "sunday_carry",
+   "guess_usd": null,
+   "actual_usd": 340,
+   "drift": "Sunday reopen carry (+340 flat line). Unscored.",
+   "conditions": [
+    "sunday_carry"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": 50,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     50
+    ],
+    [
+     2,
+     50
+    ],
+    [
+     4,
+     50
+    ],
+    [
+     6,
+     50
+    ],
+    [
+     8,
+     50
+    ],
+    [
+     10,
+     50
+    ],
+    [
+     12,
+     50
+    ],
+    [
+     14,
+     50
+    ],
+    [
+     16,
+     50
+    ],
+    [
+     18,
+     50
+    ],
+    [
+     20,
+     50
+    ]
+   ],
+   "refined_reasoning": "Sunday reopen is a flat carry row (the reprice shows up on the Monday, not the thin Sunday tape); guess a flat near-zero line, do not size Sunday as an active day. The weekend gap direction is not forecastable, so overnight gap is guessed 0."
+  },
+  {
+   "date": "20250915",
+   "dow": "Mon",
+   "group": 3,
+   "archetype": "weekend_gap_monday_two_sided",
+   "guess_usd": 450,
+   "actual_usd": -1150,
+   "drift": "Two-sided Monday V: slid to -600 by hr8 (dominant down leg, scored -1150) then recovered to +610, closed +200 net. Guessed up; dominant leg was down. Miss-side on the dominant leg.",
+   "conditions": [
+    "weekend_gap_monday",
+    "two_sided_V",
+    "dominant_leg_down"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": -200,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -100
+    ],
+    [
+     0,
+     -150
+    ],
+    [
+     2,
+     -100
+    ],
+    [
+     4,
+     -250
+    ],
+    [
+     6,
+     -450
+    ],
+    [
+     8,
+     -700
+    ],
+    [
+     10,
+     -500
+    ],
+    [
+     12,
+     -300
+    ],
+    [
+     14,
+     -100
+    ],
+    [
+     16,
+     -150
+    ],
+    [
+     18,
+     -200
+    ],
+    [
+     20,
+     -200
+    ]
+   ],
+   "refined_reasoning": "Weekend-gap Mondays are BIG and often two-sided (a dominant early leg then a reversal); SIDE is not fixed by Monday-ness. Not yet at a stretched extreme, so lean the dominant leg WITH the block (down) and size up, but model a partial recover (two-sided V) -> small net. Side of the dominant leg is a coin-flip resolved intraday."
+  },
+  {
+   "date": "20250916",
+   "dow": "Tue",
+   "group": 3,
+   "archetype": "tuesday_continuation_lean_MISS",
+   "guess_usd": -140,
+   "actual_usd": 1330,
+   "drift": "Guessed slightly DOWN continuing the block downtrend; actual was a sustained GRIND UP all day. Miss-side, big. Counter-trend day inside a down block.",
+   "conditions": [
+    "tuesday_trend",
+    "counter_trend_grind_up",
+    "grind_shape_holds",
+    "undersized",
+    "open_problem_intra_block_turn"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": -200,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -30
+    ],
+    [
+     0,
+     -50
+    ],
+    [
+     2,
+     -40
+    ],
+    [
+     4,
+     -80
+    ],
+    [
+     6,
+     -120
+    ],
+    [
+     8,
+     -180
+    ],
+    [
+     10,
+     -200
+    ],
+    [
+     12,
+     -220
+    ],
+    [
+     14,
+     -200
+    ],
+    [
+     16,
+     -180
+    ],
+    [
+     18,
+     -190
+    ],
+    [
+     20,
+     -200
+    ]
+   ],
+   "refined_reasoning": "HONEST MISS by design. A counter-trend grind-up HOLDS and rides (shape.grind_vs_spike; fingerprint 0916 dom-up 5/15 vs counter 1/11), but the grind is NOT callable AT THE OPEN - no open-time signal distinguishes it from a continuation day. Refined rule leans Tuesday WITH the block (down, small) and misses. This is the unsolved intra-block-turn / week-2-recovery problem the G6 holdout re-flagged; the refined curve shows it as a miss rather than hindsight-tracing the up-grind."
+  },
+  {
+   "date": "20250917",
+   "dow": "Wed",
+   "group": 3,
+   "archetype": "wed_spike_roundtrip",
+   "guess_usd": null,
+   "actual_usd": -430,
+   "drift": "Up to +310 hr10 then reversed down to -500 hr16, closed -430. Spike-up round-trip into a down close. Unscored.",
+   "conditions": [
+    "spike_up_roundtrip",
+    "block_downtrend"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": -200,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -30
+    ],
+    [
+     0,
+     -50
+    ],
+    [
+     2,
+     -80
+    ],
+    [
+     4,
+     -40
+    ],
+    [
+     6,
+     50
+    ],
+    [
+     8,
+     150
+    ],
+    [
+     10,
+     100
+    ],
+    [
+     12,
+     -50
+    ],
+    [
+     14,
+     -150
+    ],
+    [
+     16,
+     -200
+    ],
+    [
+     18,
+     -200
+    ],
+    [
+     20,
+     -200
+    ]
+   ],
+   "refined_reasoning": "Inside a down block a mid-day up spike that stalls round-trips back to the trend; the spike shape is the tell it is a fade, not a turn. Small down net."
+  },
+  {
+   "date": "20250918",
+   "dow": "Thu",
+   "group": 3,
+   "archetype": "storage_thursday_with_block",
+   "guess_usd": -650,
+   "actual_usd": -1560,
+   "drift": "Side right (down), ~2.4x under. Flat to hr10 then post-print crash. Largest G3 down leg.",
+   "conditions": [
+    "storage_thursday",
+    "print_driven_leg",
+    "side_right",
+    "undersized"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": -1000,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     10
+    ],
+    [
+     0,
+     20
+    ],
+    [
+     2,
+     0
+    ],
+    [
+     4,
+     -40
+    ],
+    [
+     6,
+     -20
+    ],
+    [
+     8,
+     -80
+    ],
+    [
+     10,
+     -300
+    ],
+    [
+     12,
+     -700
+    ],
+    [
+     14,
+     -900
+    ],
+    [
+     16,
+     -1000
+    ],
+    [
+     18,
+     -1000
+    ],
+    [
+     20,
+     -1000
+    ]
+   ],
+   "refined_reasoning": "Storage-Thursday magnitude is structurally under-forecast: the post-print grind was the block's biggest single leg. Size Thursday up; when the print fires WITH the established block-down it is the largest-magnitude configuration. Side right, still undersized."
+  },
+  {
+   "date": "20250919",
+   "dow": "Fri",
+   "group": 3,
+   "archetype": "friday_range",
+   "guess_usd": null,
+   "actual_usd": -250,
+   "drift": "Small down (-250) continuation. Unscored.",
+   "conditions": [
+    "friday_range",
+    "mild_continuation"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": -200,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -30
+    ],
+    [
+     0,
+     -60
+    ],
+    [
+     2,
+     -100
+    ],
+    [
+     4,
+     -120
+    ],
+    [
+     6,
+     -150
+    ],
+    [
+     8,
+     -180
+    ],
+    [
+     10,
+     -220
+    ],
+    [
+     12,
+     -200
+    ],
+    [
+     14,
+     -230
+    ],
+    [
+     16,
+     -200
+    ],
+    [
+     18,
+     -200
+    ],
+    [
+     20,
+     -200
+    ]
+   ],
+   "refined_reasoning": "Friday reverts toward range even in a trend block; the residual drift follows the block (down) but is small."
+  },
+  {
+   "date": "20250921",
+   "dow": "Sun",
+   "group": 3,
+   "archetype": "sunday_carry",
+   "guess_usd": null,
+   "actual_usd": 140,
+   "drift": "Sunday carry (+140 flat). Unscored.",
+   "conditions": [
+    "sunday_carry"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": 50,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     50
+    ],
+    [
+     2,
+     50
+    ],
+    [
+     4,
+     50
+    ],
+    [
+     6,
+     50
+    ],
+    [
+     8,
+     50
+    ],
+    [
+     10,
+     50
+    ],
+    [
+     12,
+     50
+    ],
+    [
+     14,
+     50
+    ],
+    [
+     16,
+     50
+    ],
+    [
+     18,
+     50
+    ],
+    [
+     20,
+     50
+    ]
+   ],
+   "refined_reasoning": "Sunday carry row; the weekend reprice lands on Monday 0922. Flat near-zero, overnight gap guessed 0."
+  },
+  {
+   "date": "20250922",
+   "dow": "Mon",
+   "group": 3,
+   "archetype": "weekend_gap_monday_continuation",
+   "guess_usd": -500,
+   "actual_usd": -1410,
+   "drift": "Side right (down), ~2.8x under. US-session grind down to the block low (2.801). Weekend-gap Monday, a CONTINUATION down.",
+   "conditions": [
+    "weekend_gap_monday",
+    "continuation_down",
+    "block_extreme_low",
+    "side_right",
+    "undersized"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": -900,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -20
+    ],
+    [
+     0,
+     -40
+    ],
+    [
+     2,
+     -100
+    ],
+    [
+     4,
+     -150
+    ],
+    [
+     6,
+     -300
+    ],
+    [
+     8,
+     -500
+    ],
+    [
+     10,
+     -600
+    ],
+    [
+     12,
+     -750
+    ],
+    [
+     14,
+     -800
+    ],
+    [
+     16,
+     -880
+    ],
+    [
+     18,
+     -900
+    ],
+    [
+     20,
+     -900
+    ]
+   ],
+   "refined_reasoning": "Weekend-gap Mondays are big in EITHER direction: with the block still firmly bearish and not yet clearly exhausted, lean the Monday to CONTINUE the block down and size up. Bigness is the invariant; side follows whether the weekend info extends or reverses the trajectory. A block reaching a fresh cum-extreme here (roll-clean -2250) is the setup for the next-swing reversal (0923). Side right, undersized."
+  },
+  {
+   "date": "20250923",
+   "dow": "Tue",
+   "group": 3,
+   "archetype": "swing_reversal_off_extreme",
+   "guess_usd": -300,
+   "actual_usd": 690,
+   "drift": "Guessed DOWN extending the block; actual BOUNCED off the block low (down to -200 hr8, then +640 hr16). Miss-side. Intra-block V-bottom turn.",
+   "conditions": [
+    "swing_reversal_off_extreme",
+    "tuesday_trend",
+    "block_bottom",
+    "counter_trend_up"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": 500,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -30
+    ],
+    [
+     0,
+     -80
+    ],
+    [
+     2,
+     -120
+    ],
+    [
+     4,
+     -100
+    ],
+    [
+     6,
+     -50
+    ],
+    [
+     8,
+     50
+    ],
+    [
+     10,
+     250
+    ],
+    [
+     12,
+     350
+    ],
+    [
+     14,
+     450
+    ],
+    [
+     16,
+     500
+    ],
+    [
+     18,
+     500
+    ],
+    [
+     20,
+     500
+    ]
+   ],
+   "refined_reasoning": "SWING-EXHAUSTION REVERSION applied intra-block (the refined WIN): after a block runs to a cum-extreme (0922 low), weight a reversal UP, do not extend the trend into the extreme. Model an early dip that fails then a bounce that holds. Refined side (up) now right where the original guessed down. The turn begins BEFORE the calendar seam."
+  },
+  {
+   "date": "20250924",
+   "dow": "Wed",
+   "group": 3,
+   "archetype": "pre_seam_turn_hold",
+   "guess_usd": null,
+   "actual_usd": 50,
+   "drift": "Choppy flat (+50), held the 0923 bounce. Unscored. Last G3 day before the seam.",
+   "conditions": [
+    "turn_confirmation",
+    "pre_seam",
+    "held_bounce"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": 150,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     20
+    ],
+    [
+     0,
+     40
+    ],
+    [
+     2,
+     -20
+    ],
+    [
+     4,
+     -60
+    ],
+    [
+     6,
+     -40
+    ],
+    [
+     8,
+     20
+    ],
+    [
+     10,
+     120
+    ],
+    [
+     12,
+     150
+    ],
+    [
+     14,
+     130
+    ],
+    [
+     16,
+     150
+    ],
+    [
+     18,
+     150
+    ],
+    [
+     20,
+     150
+    ]
+   ],
+   "refined_reasoning": "The last 1-2 days of a block carry the seam signal: 0923 turned up and 0924 HELD it, telegraphing the G3->G4 up-turn BEFORE the seam. Read the last-day momentum into a seam as the reversal cue, not as noise to be over-ridden by trend-continuation. Small up hold."
+  },
+  {
+   "date": "20250925",
+   "dow": "Thu",
+   "group": 4,
+   "archetype": "seam_reversal_up_storage_thursday",
+   "guess_usd": -330,
+   "actual_usd": 1160,
+   "drift": "Guessed DOWN extending G3; actual (roll-clean) grinded +740 intraday after the storage print. The RT '+2760 overnight' was the CONTRACT ROLL, not a market move. Miss-side. THE G3->G4 seam reversal, delivered through the session.",
+   "conditions": [
+    "block_seam",
+    "storage_thursday",
+    "swing_reversal",
+    "counter_to_prior_block",
+    "roll_boundary_void_gap"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": 900,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     20
+    ],
+    [
+     0,
+     40
+    ],
+    [
+     2,
+     20
+    ],
+    [
+     4,
+     -30
+    ],
+    [
+     6,
+     0
+    ],
+    [
+     8,
+     120
+    ],
+    [
+     10,
+     400
+    ],
+    [
+     12,
+     650
+    ],
+    [
+     14,
+     800
+    ],
+    [
+     16,
+     880
+    ],
+    [
+     18,
+     900
+    ],
+    [
+     20,
+     900
+    ]
+   ],
+   "refined_reasoning": "ROLL-CORRECTED CROSS-BLOCK REVERSION: at a seam where the prior block ran to a cum-extreme (0922 low) AND the last 1-2 days turned up (0923 bounce, 0924 hold), NEUTRALIZE/REVERSE the continuation lean and lean UP with the exhausted swing's turn. The reversal is delivered INTRADAY (the +2760 overnight was the Oct->Nov roll - a data artifact; guess the real overnight ~0). A storage Thursday landing at the seam STACKS catalyst magnitude on the reversal -> size up, flat-to-print then post-print grind up. Refined side (up) now right where the original extended G3 down."
+  },
+  {
+   "date": "20250926",
+   "dow": "Fri",
+   "group": 4,
+   "archetype": "friday_range_giveback",
+   "guess_usd": null,
+   "actual_usd": -430,
+   "drift": "Spike down -940 hr10 then recovered to -430 close. Fri partial round-trip. Unscored.",
+   "conditions": [
+    "friday_range",
+    "spike_down_partial_roundtrip"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": -150,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     20
+    ],
+    [
+     2,
+     0
+    ],
+    [
+     4,
+     40
+    ],
+    [
+     6,
+     -20
+    ],
+    [
+     8,
+     -80
+    ],
+    [
+     10,
+     -200
+    ],
+    [
+     12,
+     -150
+    ],
+    [
+     14,
+     -120
+    ],
+    [
+     16,
+     -150
+    ],
+    [
+     18,
+     -150
+    ],
+    [
+     20,
+     -150
+    ]
+   ],
+   "refined_reasoning": "A Friday spike against the fresh block direction partially round-trips; Fri range prior dampens follow-through even after a strong reversal week. Small give-back."
+  },
+  {
+   "date": "20250928",
+   "dow": "Sun",
+   "group": 4,
+   "archetype": "sunday_carry",
+   "guess_usd": null,
+   "actual_usd": 260,
+   "drift": "Sunday carry (+260 flat, gap -280). Unscored.",
+   "conditions": [
+    "sunday_carry"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": 50,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     50
+    ],
+    [
+     2,
+     50
+    ],
+    [
+     4,
+     50
+    ],
+    [
+     6,
+     50
+    ],
+    [
+     8,
+     50
+    ],
+    [
+     10,
+     50
+    ],
+    [
+     12,
+     50
+    ],
+    [
+     14,
+     50
+    ],
+    [
+     16,
+     50
+    ],
+    [
+     18,
+     50
+    ],
+    [
+     20,
+     50
+    ]
+   ],
+   "refined_reasoning": "Sunday carry row; weekend reprice lands on Monday 0929. Flat near-zero, overnight gap guessed 0."
+  },
+  {
+   "date": "20250929",
+   "dow": "Mon",
+   "group": 4,
+   "archetype": "weekend_gap_monday_reversal_up",
+   "guess_usd": -640,
+   "actual_usd": 1240,
+   "drift": "Guessed DOWN (still extending G3); actual dipped -230 overnight then US-session ramp to +1000 hr18. Miss-side, ~2x under. Weekend-gap Monday reversal-up confirming the new G4 uptrend.",
+   "conditions": [
+    "weekend_gap_monday",
+    "reversal_up",
+    "grind_shape_holds",
+    "new_block_trend",
+    "undersized"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": 1000,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -100
+    ],
+    [
+     0,
+     -150
+    ],
+    [
+     2,
+     -100
+    ],
+    [
+     4,
+     50
+    ],
+    [
+     6,
+     200
+    ],
+    [
+     8,
+     350
+    ],
+    [
+     10,
+     550
+    ],
+    [
+     12,
+     750
+    ],
+    [
+     14,
+     900
+    ],
+    [
+     16,
+     950
+    ],
+    [
+     18,
+     1000
+    ],
+    [
+     20,
+     1000
+    ]
+   ],
+   "refined_reasoning": "A weekend-gap Monday early in a NEW block confirms/extends the fresh reversal, not the dead prior trend. Do not carry the old block's lean past the first Monday. The shape is a grind (overnight dip then sustained US-session build) = holds and rides; size the Monday up hard. Refined side (up) now right; magnitude sized up (still a touch under)."
+  },
+  {
+   "date": "20250930",
+   "dow": "Tue",
+   "group": 4,
+   "archetype": "tuesday_trend_continuation",
+   "guess_usd": null,
+   "actual_usd": 640,
+   "drift": "Grind up +610 hr10, held +640. Unscored. Tuesday trend continuation.",
+   "conditions": [
+    "tuesday_trend",
+    "grind_up",
+    "block_uptrend"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": 500,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     30
+    ],
+    [
+     0,
+     60
+    ],
+    [
+     2,
+     40
+    ],
+    [
+     4,
+     -50
+    ],
+    [
+     6,
+     50
+    ],
+    [
+     8,
+     200
+    ],
+    [
+     10,
+     350
+    ],
+    [
+     12,
+     420
+    ],
+    [
+     14,
+     450
+    ],
+    [
+     16,
+     500
+    ],
+    [
+     18,
+     500
+    ],
+    [
+     20,
+     500
+    ]
+   ],
+   "refined_reasoning": "Tuesday tends to be the strongest-trend weekday; once a block trend is established it grinds with it. Continuation base-case holds mid-block when the shape is a grind. Side right, sized ~right."
+  },
+  {
+   "date": "20251001",
+   "dow": "Wed",
+   "group": 4,
+   "archetype": "wed_uplean_aligned",
+   "guess_usd": 360,
+   "actual_usd": 1590,
+   "drift": "Side right (up), ~4x under. Grind up with a late surge +1510 hr14. Wed up-lean worked WITH the block.",
+   "conditions": [
+    "wed_uplean_aligned_block",
+    "grind_up",
+    "late_surge",
+    "undersized"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": 700,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     80
+    ],
+    [
+     2,
+     150
+    ],
+    [
+     4,
+     250
+    ],
+    [
+     6,
+     350
+    ],
+    [
+     8,
+     450
+    ],
+    [
+     10,
+     400
+    ],
+    [
+     12,
+     500
+    ],
+    [
+     14,
+     650
+    ],
+    [
+     16,
+     700
+    ],
+    [
+     18,
+     700
+    ],
+    [
+     20,
+     700
+    ]
+   ],
+   "refined_reasoning": "When the weak Wed up-lean ALIGNS with the block trend it can produce a large day (the archetype adds signal only when it agrees with the trajectory). Mid-block grind-up days with a late-session surge run several times default; refined sizes up but still ~4x under - the magnitude residual persists."
+  },
+  {
+   "date": "20251002",
+   "dow": "Thu",
+   "group": 4,
+   "archetype": "storage_thursday_spike_roundtrip",
+   "guess_usd": 760,
+   "actual_usd": 1360,
+   "drift": "Dominant up leg +900 SPIKE hr12 (post-print) then collapsed to -440 net close. Side right on the leg, but a round-trip. Storage Thursday spike.",
+   "conditions": [
+    "storage_thursday",
+    "print_spike",
+    "round_trip",
+    "spike_shape"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": 300,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -30
+    ],
+    [
+     0,
+     -50
+    ],
+    [
+     2,
+     -60
+    ],
+    [
+     4,
+     -40
+    ],
+    [
+     6,
+     0
+    ],
+    [
+     8,
+     150
+    ],
+    [
+     10,
+     500
+    ],
+    [
+     12,
+     900
+    ],
+    [
+     14,
+     500
+    ],
+    [
+     16,
+     350
+    ],
+    [
+     18,
+     300
+    ],
+    [
+     20,
+     300
+    ]
+   ],
+   "refined_reasoning": "A storage-Thursday print can produce a big SPIKE that round-trips the same session: the print leg is real and large (size up, lean up with the block + very-bullish -40.8 surprise) but a front-loaded spike does not hold to the close. Model the print pop to +900 then a partial fade to a small positive net. Right on the leg; net honestly too high (actual fully round-tripped negative) - the full spike-fade is only readable once the peak forms."
+  },
+  {
+   "date": "20251003",
+   "dow": "Fri",
+   "group": 4,
+   "archetype": "friday_range_giveback",
+   "guess_usd": null,
+   "actual_usd": -680,
+   "drift": "Early up +320 then grind down to -820 hr16, -680 close. Fri gave back. Unscored.",
+   "conditions": [
+    "friday_range",
+    "gave_back"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": -200,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     100
+    ],
+    [
+     0,
+     150
+    ],
+    [
+     2,
+     120
+    ],
+    [
+     4,
+     50
+    ],
+    [
+     6,
+     0
+    ],
+    [
+     8,
+     -100
+    ],
+    [
+     10,
+     -150
+    ],
+    [
+     12,
+     -200
+    ],
+    [
+     14,
+     -220
+    ],
+    [
+     16,
+     -250
+    ],
+    [
+     18,
+     -200
+    ],
+    [
+     20,
+     -200
+    ]
+   ],
+   "refined_reasoning": "Friday erodes the week's direction (range revert); a pullback inside an up block does not negate the block. Small give-back."
+  },
+  {
+   "date": "20251005",
+   "dow": "Sun",
+   "group": 4,
+   "archetype": "sunday_carry",
+   "guess_usd": null,
+   "actual_usd": 690,
+   "drift": "Sunday carry (+690 flat, gap -360). Unscored.",
+   "conditions": [
+    "sunday_carry"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": 50,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     50
+    ],
+    [
+     2,
+     50
+    ],
+    [
+     4,
+     50
+    ],
+    [
+     6,
+     50
+    ],
+    [
+     8,
+     50
+    ],
+    [
+     10,
+     50
+    ],
+    [
+     12,
+     50
+    ],
+    [
+     14,
+     50
+    ],
+    [
+     16,
+     50
+    ],
+    [
+     18,
+     50
+    ],
+    [
+     20,
+     50
+    ]
+   ],
+   "refined_reasoning": "Sunday carry row; the reprice lands on Monday 1006. Flat near-zero, gap guessed 0."
+  },
+  {
+   "date": "20251006",
+   "dow": "Mon",
+   "group": 4,
+   "archetype": "weekend_gap_monday_early_spike_fade",
+   "guess_usd": 600,
+   "actual_usd": 1150,
+   "drift": "Side right (up), ~2x under. Early/overnight ramp to +1020 hr4 then faded to +70 net close. Weekend-gap Monday SPIKE that round-tripped.",
+   "conditions": [
+    "weekend_gap_monday",
+    "early_spike",
+    "round_trip",
+    "undersized"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": 200,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     300
+    ],
+    [
+     0,
+     400
+    ],
+    [
+     2,
+     600
+    ],
+    [
+     4,
+     800
+    ],
+    [
+     6,
+     650
+    ],
+    [
+     8,
+     450
+    ],
+    [
+     10,
+     250
+    ],
+    [
+     12,
+     200
+    ],
+    [
+     14,
+     150
+    ],
+    [
+     16,
+     200
+    ],
+    [
+     18,
+     220
+    ],
+    [
+     20,
+     200
+    ]
+   ],
+   "refined_reasoning": "A weekend-gap Monday can deliver its big move EARLY (overnight/pre-US) as a spike that fades by the close: the dominant move is large (size up, lean up with the block) but net can be small. Monday bigness manifests as a spike OR a grind; the spike shape here means hold-to-close fails -> small positive net. Right side, right shape; magnitude of the pop under."
+  },
+  {
+   "date": "20251007",
+   "dow": "Tue",
+   "group": 4,
+   "archetype": "tuesday_trend_to_top",
+   "guess_usd": 460,
+   "actual_usd": 1620,
+   "drift": "Side right (up), ~3.5x under. Grind up all day, late surge +1550 hr18 then rolled to +1360 hr20. G4 TOP (3.514). Last-hour roll-over.",
+   "conditions": [
+    "tuesday_trend",
+    "grind_up",
+    "block_top",
+    "last_hour_rollover",
+    "undersized"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": 700,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -20
+    ],
+    [
+     0,
+     20
+    ],
+    [
+     2,
+     100
+    ],
+    [
+     4,
+     150
+    ],
+    [
+     6,
+     250
+    ],
+    [
+     8,
+     400
+    ],
+    [
+     10,
+     500
+    ],
+    [
+     12,
+     600
+    ],
+    [
+     14,
+     700
+    ],
+    [
+     16,
+     780
+    ],
+    [
+     18,
+     750
+    ],
+    [
+     20,
+     700
+    ]
+   ],
+   "refined_reasoning": "Tuesday grind-up to the block top; lean up with the block and size up (still ~3.5x under - magnitude residual). Model a late-session peak then a slight LAST-HOUR ROLL-OVER (+780 hr16 -> +700). The roll-over at a stretched cum-extreme (roll-clean +2120) is the swing-exhaustion cue for the coming seam reversal - it telegraphs the 1008 crash."
+  },
+  {
+   "date": "20251008",
+   "dow": "Wed",
+   "group": 5,
+   "archetype": "seam_reversal_down_intraday",
+   "guess_usd": 320,
+   "actual_usd": -1980,
+   "drift": "Guessed UP extending G4's uptrend; actual flat to hr8 (+110) then US-session CRASH -900 hr10, -1820 hr14. Miss-side, biggest down leg. THE G4->G5 seam reversal, delivered intraday (no gap, no roll).",
+   "conditions": [
+    "block_seam",
+    "intraday_session_reversal",
+    "swing_reversal",
+    "counter_to_prior_block",
+    "block_extreme_top"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": -1000,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -80
+    ],
+    [
+     2,
+     -100
+    ],
+    [
+     4,
+     -50
+    ],
+    [
+     6,
+     -80
+    ],
+    [
+     8,
+     -100
+    ],
+    [
+     10,
+     -450
+    ],
+    [
+     12,
+     -800
+    ],
+    [
+     14,
+     -950
+    ],
+    [
+     16,
+     -1000
+    ],
+    [
+     18,
+     -1000
+    ],
+    [
+     20,
+     -1000
+    ]
+   ],
+   "refined_reasoning": "CROSS-BLOCK REVERSION can arrive as an INTRADAY US-session crash (contrast the roll-corrected 0925 form): after a block tops at a cum-extreme (roll-clean +2120) with a last-hour roll-over (1007), REVERSE the lean DOWN and do NOT extend the prior up-trend. The overnight can look calm and the reversal fires in the US session (flat pre-08 ET, crash 10-14). Size up (seam reversal). This is the refined WIN - orig guessed up. G6 caveat: read this as a GIVE-BACK that can itself V back (it did, into 1016), so do not marry the new down-lean past its own exhaustion."
+  },
+  {
+   "date": "20251009",
+   "dow": "Thu",
+   "group": 5,
+   "archetype": "storage_thursday_with_block",
+   "guess_usd": 450,
+   "actual_usd": -1010,
+   "drift": "Guessed UP; actual up +310 hr8 then reversed down -930 hr16 (post-print). Miss-side. Storage Thursday firing WITH the new downtrend.",
+   "conditions": [
+    "storage_thursday",
+    "print_driven_leg",
+    "aligned_new_downtrend",
+    "miss_side"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": -900,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -80
+    ],
+    [
+     2,
+     -60
+    ],
+    [
+     4,
+     0
+    ],
+    [
+     6,
+     80
+    ],
+    [
+     8,
+     150
+    ],
+    [
+     10,
+     -100
+    ],
+    [
+     12,
+     -450
+    ],
+    [
+     14,
+     -700
+    ],
+    [
+     16,
+     -880
+    ],
+    [
+     18,
+     -900
+    ],
+    [
+     20,
+     -900
+    ]
+   ],
+   "refined_reasoning": "Once a new block reversal is in force (1008), stop leaning with the dead prior trend; lean the storage-Thursday print DOWN with the fresh G5 downtrend and size up. Model a small pre-print up wobble then the post-print grind down. Refined side (down) now right where the original extended G4 up."
+  },
+  {
+   "date": "20251010",
+   "dow": "Fri",
+   "group": 5,
+   "archetype": "friday_range_overridden",
+   "guess_usd": 150,
+   "actual_usd": -1490,
+   "drift": "Guessed small UP (Fri range); actual grind DOWN, spike -1460 hr14, -1050 net. Miss-side. Fri range archetype failed in a strong-reversal regime.",
+   "conditions": [
+    "friday_range_failed",
+    "strong_trend_regime",
+    "grind_down",
+    "miss_side"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": -500,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     20
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     2,
+     -50
+    ],
+    [
+     4,
+     -150
+    ],
+    [
+     6,
+     -250
+    ],
+    [
+     8,
+     -350
+    ],
+    [
+     10,
+     -400
+    ],
+    [
+     12,
+     -480
+    ],
+    [
+     14,
+     -520
+    ],
+    [
+     16,
+     -500
+    ],
+    [
+     18,
+     -500
+    ],
+    [
+     20,
+     -500
+    ]
+   ],
+   "refined_reasoning": "The Friday range prior is OVERRIDDEN inside a strong directional/reversal regime: a fresh, forceful block move (the G5 crash) carries through Friday. Weight weekday archetypes DOWN when the block is in a high-momentum reversal; the trajectory dominates. Refined side (down) now right; magnitude modest (still under)."
+  },
+  {
+   "date": "20251012",
+   "dow": "Sun",
+   "group": 5,
+   "archetype": "sunday_carry",
+   "guess_usd": null,
+   "actual_usd": 230,
+   "drift": "Sunday carry (+230 flat, gap -330). Unscored.",
+   "conditions": [
+    "sunday_carry"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": 50,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     50
+    ],
+    [
+     2,
+     50
+    ],
+    [
+     4,
+     50
+    ],
+    [
+     6,
+     50
+    ],
+    [
+     8,
+     50
+    ],
+    [
+     10,
+     50
+    ],
+    [
+     12,
+     50
+    ],
+    [
+     14,
+     50
+    ],
+    [
+     16,
+     50
+    ],
+    [
+     18,
+     50
+    ],
+    [
+     20,
+     50
+    ]
+   ],
+   "refined_reasoning": "Sunday carry row ahead of the Columbus Day Monday. Flat near-zero, gap guessed 0."
+  },
+  {
+   "date": "20251013",
+   "dow": "Mon",
+   "group": 5,
+   "archetype": "thin_holiday_monday",
+   "guess_usd": null,
+   "actual_usd": -300,
+   "drift": "Quiet: dipped -650 hr10 then recovered to -300. Columbus Day thin holiday, handled small (unscored, dir_ok per brain).",
+   "conditions": [
+    "thin_holiday_monday",
+    "columbus_day",
+    "quiet",
+    "size_down"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": -200,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     20
+    ],
+    [
+     2,
+     60
+    ],
+    [
+     4,
+     40
+    ],
+    [
+     6,
+     -100
+    ],
+    [
+     8,
+     -300
+    ],
+    [
+     10,
+     -400
+    ],
+    [
+     12,
+     -250
+    ],
+    [
+     14,
+     -150
+    ],
+    [
+     16,
+     -200
+    ],
+    [
+     18,
+     -200
+    ],
+    [
+     20,
+     -200
+    ]
+   ],
+   "refined_reasoning": "EXCEPTION to weekend-gap-Monday bigness: a thin-holiday Monday (Columbus Day) is QUIET -> size DOWN. The Monday-bigness rule is a weekend-INFORMATION-gap mechanism; a holiday with participants absent removes the repricing flow. Lean gently with the block (down) at small size."
+  },
+  {
+   "date": "20251014",
+   "dow": "Tue",
+   "group": 5,
+   "archetype": "tuesday_continuation_down",
+   "guess_usd": 360,
+   "actual_usd": -910,
+   "drift": "Guessed UP; actual grind DOWN -850 hr12, -790 net. Miss-side. Tuesday continuation of the G5 fall toward the V-bottom.",
+   "conditions": [
+    "tuesday_trend",
+    "grind_down",
+    "continuation_to_bottom",
+    "miss_side"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": -500,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     10
+    ],
+    [
+     0,
+     -30
+    ],
+    [
+     2,
+     -150
+    ],
+    [
+     4,
+     -200
+    ],
+    [
+     6,
+     -250
+    ],
+    [
+     8,
+     -350
+    ],
+    [
+     10,
+     -450
+    ],
+    [
+     12,
+     -500
+    ],
+    [
+     14,
+     -480
+    ],
+    [
+     16,
+     -450
+    ],
+    [
+     18,
+     -500
+    ],
+    [
+     20,
+     -500
+    ]
+   ],
+   "refined_reasoning": "Tuesday follows the block trend (here still down into the V-bottom); the original miss was carrying an up-lean against an established downtrend. Continuation base-case = the running trajectory, not a weekday up-bias. Refined side (down) now right; sized ~right."
+  },
+  {
+   "date": "20251015",
+   "dow": "Wed",
+   "group": 5,
+   "archetype": "basing_chop",
+   "guess_usd": null,
+   "actual_usd": 200,
+   "drift": "Chop, small up +200 net near the V-bottom. Unscored.",
+   "conditions": [
+    "quiet_near_bottom",
+    "basing"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": -100,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -30
+    ],
+    [
+     0,
+     -20
+    ],
+    [
+     2,
+     -100
+    ],
+    [
+     4,
+     -50
+    ],
+    [
+     6,
+     -60
+    ],
+    [
+     8,
+     -150
+    ],
+    [
+     10,
+     -80
+    ],
+    [
+     12,
+     -150
+    ],
+    [
+     14,
+     -120
+    ],
+    [
+     16,
+     -50
+    ],
+    [
+     18,
+     -80
+    ],
+    [
+     20,
+     -100
+    ]
+   ],
+   "refined_reasoning": "Basing chop near a swing extreme precedes the reversal; small non-catalyst days cluster at the turn. Guess a small down-drift (block still nominally down) but low conviction - the turn is brewing."
+  },
+  {
+   "date": "20251016",
+   "dow": "Thu",
+   "group": 5,
+   "archetype": "storage_thursday_capitulation",
+   "guess_usd": -300,
+   "actual_usd": -1190,
+   "drift": "Side right (down), ~4x under. Flat to hr12 then post-print crash -930 hr14, -1120 hr18. THE V-BOTTOM (2.925), a storage-Thursday capitulation leg.",
+   "conditions": [
+    "storage_thursday",
+    "print_driven_leg",
+    "swing_bottom",
+    "capitulation",
+    "side_right",
+    "undersized"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": -900,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     20
+    ],
+    [
+     0,
+     30
+    ],
+    [
+     2,
+     -20
+    ],
+    [
+     4,
+     20
+    ],
+    [
+     6,
+     -20
+    ],
+    [
+     8,
+     -50
+    ],
+    [
+     10,
+     -200
+    ],
+    [
+     12,
+     -350
+    ],
+    [
+     14,
+     -700
+    ],
+    [
+     16,
+     -880
+    ],
+    [
+     18,
+     -900
+    ],
+    [
+     20,
+     -900
+    ]
+   ],
+   "refined_reasoning": "A storage-Thursday print can mark the SWING BOTTOM as a capitulation leg (large, size up - orig only -300, ~4x under). Lean down with the block and size the Thursday up; a catalyst leg into a cum-extreme (roll-clean -3770, the deepest of the three blocks) is a candidate exhaustion/turn point - it set up the 1017/1020 reversal. Catch the side via the print, read the extreme as setup for the next reversal."
+  },
+  {
+   "date": "20251017",
+   "dow": "Fri",
+   "group": 5,
+   "archetype": "swing_reversal_off_bottom",
+   "guess_usd": null,
+   "actual_usd": 740,
+   "drift": "Bounce off the V-bottom: down to -200 early then +790 hr12, +740 close. Unscored. First up day of the recovery.",
+   "conditions": [
+    "swing_reversal_off_bottom",
+    "friday",
+    "turn_confirmation"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": 400,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -100
+    ],
+    [
+     2,
+     -120
+    ],
+    [
+     4,
+     -80
+    ],
+    [
+     6,
+     -20
+    ],
+    [
+     8,
+     80
+    ],
+    [
+     10,
+     200
+    ],
+    [
+     12,
+     400
+    ],
+    [
+     14,
+     400
+    ],
+    [
+     16,
+     380
+    ],
+    [
+     18,
+     400
+    ],
+    [
+     20,
+     400
+    ]
+   ],
+   "refined_reasoning": "SWING-EXHAUSTION REVERSION off a fresh extreme (the refined win intra-block): after a capitulation Thursday drives the block to its deepest cum-extreme, weight a reversal UP - the turn begins BEFORE the next Monday. A Friday-range prior is overridden by the turn-off-extreme. Model an early dip that fails then a bounce that holds. A strong counter-move the day/two before a Monday is the reversal cue that Monday amplifies (1020)."
+  },
+  {
+   "date": "20251019",
+   "dow": "Sun",
+   "group": 5,
+   "archetype": "sunday_carry_gap_unforecast",
+   "guess_usd": null,
+   "actual_usd": -50,
+   "drift": "Sunday carry, but a HUGE +1570 overnight gap up into the reopen. Net flat -50. Unscored.",
+   "conditions": [
+    "sunday_carry",
+    "large_weekend_gap_up",
+    "reversal_repricing"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": 50,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     50
+    ],
+    [
+     2,
+     50
+    ],
+    [
+     4,
+     50
+    ],
+    [
+     6,
+     50
+    ],
+    [
+     8,
+     50
+    ],
+    [
+     10,
+     50
+    ],
+    [
+     12,
+     50
+    ],
+    [
+     14,
+     50
+    ],
+    [
+     16,
+     50
+    ],
+    [
+     18,
+     50
+    ],
+    [
+     20,
+     50
+    ]
+   ],
+   "refined_reasoning": "HONEST MISS on the gap: the weekend information gap can show as a very large Sunday-reopen GAP (+1570) that PRE-LOADS the Monday reversal, but its DIRECTION and size are not forecastable at the open - guess overnight ~0 and a flat carry. Note (for the Monday): a big weekend gap in the reversal direction is a strong tell that the Monday will be a large continuation of the turn - so it raises conviction on 1020 even though the gap itself is missed."
+  },
+  {
+   "date": "20251020",
+   "dow": "Mon",
+   "group": 5,
+   "archetype": "weekend_gap_monday_compound_reversal_up",
+   "guess_usd": 580,
+   "actual_usd": 2770,
+   "drift": "Side right (up), ~5x under (the extreme miss). Sustained GRIND UP: +1460 hr10, +2270 hr14, +2660 net. Weekend-gap Monday REVERSAL-UP off the V, amplifying the 1017/1019 turn.",
+   "conditions": [
+    "weekend_gap_monday",
+    "swing_reversal_up",
+    "grind_shape_holds",
+    "block_V_bottom_reversal",
+    "worst_undersize"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": 1300,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -40
+    ],
+    [
+     0,
+     -50
+    ],
+    [
+     2,
+     0
+    ],
+    [
+     4,
+     200
+    ],
+    [
+     6,
+     350
+    ],
+    [
+     8,
+     500
+    ],
+    [
+     10,
+     750
+    ],
+    [
+     12,
+     950
+    ],
+    [
+     14,
+     1150
+    ],
+    [
+     16,
+     1250
+    ],
+    [
+     18,
+     1300
+    ],
+    [
+     20,
+     1300
+    ]
+   ],
+   "refined_reasoning": "The single most under-sized configuration = a weekend-gap Monday that REVERSES the block off a swing extreme, pre-signaled by a prior-day bounce (1017) and a large weekend gap (1019). COMPOUND the up-sizers: Monday + reversal + swing-exhaustion turn -> guess the biggest of the three blocks and lean up hard, grind-and-hold shape. Refined sizes it up to +1300 (orig +580) but STILL ~2x under the +2770 - magnitude is the irreducible dominant residual (do not clip the ride). This is the refined method's best-earned side + biggest honest magnitude gap."
+  },
+  {
+   "date": "20251021",
+   "dow": "Tue",
+   "group": 5,
+   "archetype": "tuesday_trend_to_top",
+   "guess_usd": 440,
+   "actual_usd": 1100,
+   "drift": "Side right (up), ~2.5x under. Grind up, late surge +670 hr16, +1040 net. G5 TOP (3.522). Tuesday trend continuation of the recovery.",
+   "conditions": [
+    "tuesday_trend",
+    "grind_up",
+    "continuation",
+    "undersized"
+   ],
+   "overnight_gap_usd": 0,
+   "guessed_net_usd": 700,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -100
+    ],
+    [
+     2,
+     -60
+    ],
+    [
+     4,
+     0
+    ],
+    [
+     6,
+     150
+    ],
+    [
+     8,
+     300
+    ],
+    [
+     10,
+     350
+    ],
+    [
+     12,
+     400
+    ],
+    [
+     14,
+     500
+    ],
+    [
+     16,
+     600
+    ],
+    [
+     18,
+     650
+    ],
+    [
+     20,
+     700
+    ]
+   ],
+   "refined_reasoning": "Tuesday continues the freshly-reversed trend (up into the G5 top); the recovery grind sustains. Continuation of a confirmed reversal is the base-case; size up (magnitude ran ~2.5x default even on a non-catalyst continuation day in this higher-vol autumn regime). Right side, under-sized."
+  }
+ ]
+}
