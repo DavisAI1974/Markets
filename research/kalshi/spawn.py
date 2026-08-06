@@ -716,12 +716,19 @@ def cmd_selftest(a):
           "class partial_session" in dc3)
 
     # THE A-50 GATE, both branches, each printing its output (NC-3)
+    #
+    # S114: THE CLEAN-SIDE PROBE MUST BE A SYNTHETIC UNWALKED WINDOW, NOT A NAMED GROUP.
+    # It used to assert that g24 was clean. That was true when written and became FALSE within the
+    # same session: g24 was walked, scored, and written up in CLAUDE.md, whose S114 block names
+    # 20260720 - so the gate correctly began firing and the TEST went red on a premise that had
+    # simply expired, not on a defect. Every group eventually becomes a walked group, so ANY named
+    # gid on the clean side is a time bomb. Probe a window of days that cannot appear in any
+    # narrative instead, which tests the GATE rather than the calendar.
     import brain_view as _bv
-    try:
-        _bv.assert_no_context_leak("g24", hard=True)
-        check("A-50 gate PASSES a fresh block (g24 has no outcome anywhere)", True)
-    except SystemExit:
-        check("A-50 gate PASSES a fresh block (g24 has no outcome anywhere)", False)
+    _future = ["2099010%d" % i for i in range(1, 6)]
+    _hits = _bv.context_leak(_future)
+    check("A-50 gate PASSES a window with no outcome anywhere (synthetic, never walked)",
+          not _hits)
     try:
         _bv.assert_no_context_leak("g22", hard=True)
         check("A-50 gate BLOCKS a walked block (g22 is in CLAUDE.md)", False)

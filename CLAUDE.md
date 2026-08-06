@@ -1,4 +1,65 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-05, Session 113)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-06, Session 114)
+
+
+## S114 — G24 WALKED BLIND (6/10) AND IT TIES DOING NOTHING, THE RENEWABLES FORCING IS WIRED, AND EVERY REPORTED DEFECT IS CLOSED (read `SESSION_HANDOFF_2026-08-06_S114.md` + `DROP_IN_S115.md`)
+
+**Branch = `claude/kalshi-agents-coordinator-guard-sg0n15`. Brain s105.4 -> s105.8, 90 plays — play
+CALLS unchanged. G24 BLIND RUN AND SCORED. No merge. THE G24 REFINE HAS NOT RUN and is S115's
+opener.** Decisions 44 -> 48.
+
+**THE SCORE, WITH BENCHMARKS (A-1): 6/10 direction, sum|err| 4,890, drift +1,010, survives 21% —
+and it is 0.98x zero_change (WE TIED DOING NOTHING) and 1.20x seasonal_naive (WE LOST TO "last
+same-weekday move").** Best direction hit-rate of the walk. Hit-rate is not the product; the curve is.
+
+**THE DOMINANT FINDING — SYSTEMATIC UNDER-EMISSION, AND IT IS GETTING WORSE.** mean|guess| /
+mean|actual| = **0.29x, under on 8 of 10 days**, against g22 0.55x and g23 0.68x. Max emission 250
+against a max realized move of 1,360. **Emitting small IS emitting near-zero, which is why we tie
+zero_change.** Three competing explanations recorded and NONE promoted (D37): the brief's
+stand-down passage biasing small; shrinking being CORRECT because four specialists had their sign
+instrument refuted by the brain; or a genuinely hard block. Next run varies the stand-down passage
+and holds everything else.
+
+**THE RENEWABLES FORCING IS BUILT AND WIRED (D46, G-5/A-51).** New block
+`weather_forcing_forecast`: forward wind and solar as a **31-member GEFS ensemble DENSITY**, per
+day. Wind CF p50 swings **0.157 -> 0.292 across the block (nearly 2x)**, p10-p90 spread 0.027 to
+0.096 — the width a specialist can decline on. **Blind-legal by vintage and AUDITED**: the 12Z
+cycle of D-1, 10 of 10 days, 7.0h lead, zero violations. Wind and solar **never summed**. In
+`state_health.REQUIRED_EVERY_DAY`. Four specialists had reported that no forward wind expectation
+existed anywhere while `grid_stack.wind_mwh` is D+2 stale BY CONSTRUCTION.
+
+**EVERY DATA DEFECT GOT A CAUSE, NOT A PATCH.** `model_disagreement` 100% null = a **BUILD-ORDER**
+defect (store built 8 min before the raw archive landed) whose empty-but-PRESENT record **shadowed
+the recompute fallback**. COT one publication stale **INVERTED a load-bearing term** (WoW -45,414 ->
+**+2,953**) from Cloudflare 403ing urllib's default User-Agent *and* `--build` building 1 of 5
+served codes. `storage_regional` frozen two prints behind `storage` in the same slice. **`vol_regime`
+— the magnitude conditioner — carried 41 of 223 reopen STUBS inside its trailing sigma windows
+(the header declared it and nothing ever filtered on it), and the S108 Monday-stub fix had never
+reached it.** `options_surface.days_to_opex` was exempt from the relive for the WHOLE WALK because
+`_RELIVE_FIELDS` walks top-level keys only. **The `ng_l1` writer did not exist** — `--schema mbp-1`
+fell through to the trades writer, so a pull reported 333,530 rows and produced no file.
+
+**PLAY EVALUABILITY (A-46), the highest-consensus request of the run.** `brain_view --state --day`
+resolves every parsed condition against the specialist's OWN slice and stamps EVALUABLE /
+INPUT_ABSENT / PARTIALLY_EVALUABLE, each numeric limb read out (`14.15 >= 3 -> ARMED`). **It
+annotates, never drops.** It immediately found that `weather.summer_burn_lane_exclusion` — the play
+that should have carried this block — pointed at a **PROSE pseudo-path**, which is why it stood down
+on 8 of 10 days as **uncomputable, not inapplicable**. Now EVALUABLE and ARMED.
+
+**TWO REGRESSIONS I SHIPPED AND CAUGHT, recorded because the pattern matters.** Making `scored_leg`
+required turned g19-g23 **permanently red** (fixed structurally: states now stamp `_state_build`).
+And `live_verdict` first flagged 43 of 90 by matching "degenerate" anywhere, catching plays that
+merely DISCUSS degeneracy while concluding they are sound — **a false CANNOT_CHANGE_STATE talks a
+specialist out of a working play.** Now 22, false positives clean.
+
+**D45 THE REFINE DOES NOT NEED THE BLIND WALL** (Greg) — never gate or delay a refine on blind-wall
+grounds. **D47 A STORE REBUILT IN A SESSION IS NOT A FIX UNTIL IT IS ON S3** — measured at close,
+S3 still held PRE-FIX copies of four stores and `eia_surprise.json` was absent entirely; a fresh
+session would have silently undone the day's work. **D48 all four keys in `~/.config/markets/env`**,
+chmod 600, verified by name in KEYS.md.
+
+**REFUTED AND WORTH KEEPING:** the "Monday stub in the 20260720 slice", filed by two specialists, is
+NOT a defect — the block declares it three ways and the day's OWNER used it correctly. Both
+reporters were non-owners reading a headline for a day they did not own.
 
 ## S113 — THE NO-AVERAGE RULE BECAME A FUNCTION, AND THE STORAGE LANE'S BIGGEST TERM TURNS OUT TO BE UNMODELLED (read `SESSION_HANDOFF_2026-08-05_S113.md` + `DROP_IN_S114.md`)
 
@@ -821,6 +882,17 @@ DATA next (Greg): forward-curve cache back ($0.07; curve_regime was 'unknown' al
 FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the driver; back-fill the walked
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
+
+**One-line state (S114):** brain **s105.8, 90 plays — CALLS unchanged**. **G24 blind RUN AND
+SCORED: 6/10, sum|err| 4,890 — 0.98x zero_change and 1.20x seasonal_naive, i.e. we tied doing
+nothing and lost to naive.** **THE REFINE HAS NOT RUN — it is S115's opener.** The dominant problem
+is **under-emission at 0.29x of realized magnitude, 8 of 10 days, worsening from 0.55x/0.68x**.
+**The renewables forcing is WIRED** (31-member GEFS density, blind-wall audited 10/10, wind and
+solar never summed). Every specialist-reported data defect closed WITH ITS CAUSE, and two
+regressions of my own caught and fixed. **A-46 play evaluability is live** and found the
+centrepiece play was standing down because its `state_path` was prose. **The data plane is SYNCED
+to S3 and verified by reading back** — it was NOT, mid-session, and a fresh session would have
+undone everything. Decisions 48. **Keys do NOT rotate during the walk.**
 
 **One-line state (S113):** brain **s105.0, 82 plays — UNCHANGED. No group run, no merge**, and
 **nothing from S113 is in the brain**, which is the largest gap at close (specialists read the

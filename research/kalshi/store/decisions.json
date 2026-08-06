@@ -313,6 +313,34 @@
    "decision": "**WHY THE RENDERED LINES DID NOT CONNECT \u2014 root-caused.** Greg: \"is that why the lines weren't connecting?\" Measured: the coordinator advances the running level by NET (day-move minus gap) but DRAWS each day to its last path point, so a path emitted as cum-from-PRIOR-CLOSE ends one whole gap above where the next day begins. **g22 0/10 days mismatched; g23 8/10, and both Mondays off by exactly their +400 gap** (0706 path-end +500 vs net +100; 0707 -350 vs -310 = its -40 gap). Cause is a SPEC AMBIGUITY, not agent error - the contract did not say whether cum runs from the open or the prior close, and the two groups read it differently. **NO SCORE IS AFFECTED**: scoring reads guess_day_move_usd and never touches the path; G23's 5/10 and sum-abs 5,920 stand as reported - the picture was wrong, not the scoreboard",
    "status": "BUILT (announce)",
    "enforced_by": "SOP v1.6 pins cum-from-OPEN with last point == day-move minus gap; coordinator prints a per-day continuity warning. **Left as ANNOUNCE not HARD-FAIL deliberately: hard-failing would invalidate committed artifacts - promoting it to a gate is Greg's call**"
+  },
+  {
+   "id": "D45",
+   "session": "S114 (Greg)",
+   "decision": "**THE REFINE DOES NOT NEED THE BLIND WALL.** Greg, verbatim: *\"And we don't need blind wall for refine\"*. The refine sees the price curve by design, so blind-wall considerations must never gate, delay or constrain a refine round. INSTANCE: the S114 forward-forcing feed was blind-wall audited (12Z cycle of D-1, 10 of 10 days, zero violations) - that audit is for the BLIND's benefit and is explicitly not a refine gate. Consequence: when staging for a refine, stage UNMASKED and do not withhold anything on blind-wall grounds.",
+   "status": "STANDING",
+   "enforced_by": "stated in the S114 handoff's refine runbook; the refine stages UNMASKED and blind_legality/window redaction are not applied to it"
+  },
+  {
+   "id": "D46",
+   "session": "S114 (Greg, said three times)",
+   "decision": "**THE RENEWABLES FORCING IS A PREREQUISITE, NOT A BACKLOG ITEM.** Greg: *\"I keep saying that we have to build the renewables part. That has to be done before refine runs.\"* Built and wired at S114 as `weather_forcing_forecast` (G-5/A-51): forward wind and solar as a 31-member GEFS ensemble density, served per day, wind and solar NEVER summed (they are seasonally anti-correlated - D37). THE MEASURED JUSTIFICATION: four g24 specialists independently reported that no forward wind expectation existed anywhere, while `grid_stack.wind_mwh` is D+2 stale BY CONSTRUCTION - so on the exact channel the 0629 lesson is about (gw_cdd rose as forecast and burn FELL 4.2 Bcf/d on a 62% wind rise), wind could only ever corroborate, never forecast.",
+   "status": "BUILT",
+   "enforced_by": "BUILT - forecast_harness._weather_forcing_block + state_health.REQUIRED_EVERY_DAY (so its absence hard-fails a stage) + restore_substrate prefix + store on S3"
+  },
+  {
+   "id": "D47",
+   "session": "S114 (measured, not decided)",
+   "decision": "**A STORE REBUILT IN A SESSION IS NOT A FIX UNTIL IT IS ON S3.** `data/` is disposable and `restore_substrate` pulls from S3, so a fresh session silently restores whatever S3 holds. MEASURED at S114 close, BEFORE pushing: S3 still held the PRE-FIX copies of `model_disagreement`, `storage_regional`, `vol_regime` and all five COT books, and `eia_surprise.json` was ABSENT FROM S3 ENTIRELY. Starting the next session at that moment would have undone nearly every data fix of the session, silently, with no error. RULE: a session that rebuilds a served store pushes it to S3 in the same session, and verifies by reading it BACK from S3 - not by trusting the upload.",
+   "status": "STANDING",
+   "enforced_by": "verified at S114 close by reading each store BACK from S3; the handoff's step 2 makes restore_substrate the first action of the next session"
+  },
+  {
+   "id": "D48",
+   "session": "S114 (Greg)",
+   "decision": "**ALL FOUR KEYS LIVE IN ONE ENV FILE, AND IT IS NOTED.** Greg: *\"make sure that the keys get put into an env file and it's noted somewhere\"*. `~/.config/markets/env`, chmod 600, outside the repo, holding AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY + DATABENTO_API_KEY + EIA_API_KEY as NAME=VALUE lines. Documented in KEYS.md with a per-key verification table (names and holders only, never a value). The container's `proxy-injected` placeholder still shadows the real AWS pair in the process env, which is why `creds.aws_client()` remains the ONLY sanctioned way to build a boto3 client.",
+   "status": "STANDING",
+   "enforced_by": "creds.py resolves env -> ~/.config/markets/env -> legacy, and ignores the container placeholder; KEYS.md carries the per-key verification table"
   }
  ]
 }
