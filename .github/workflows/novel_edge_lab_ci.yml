@@ -10,6 +10,8 @@ on:
       - dashboard/frontend/novel.css
       - dashboard/frontend/novel.js
       - dashboard/server.py
+      - dashboard/README.md
+      - CHATGPT_HANDOFF_S116_NOVEL_EDGE_LAB.md
       - .github/workflows/novel_edge_lab_ci.yml
   pull_request:
     paths:
@@ -18,6 +20,8 @@ on:
       - dashboard/frontend/novel.css
       - dashboard/frontend/novel.js
       - dashboard/server.py
+      - dashboard/README.md
+      - CHATGPT_HANDOFF_S116_NOVEL_EDGE_LAB.md
       - .github/workflows/novel_edge_lab_ci.yml
   workflow_dispatch:
 
