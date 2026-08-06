@@ -433,13 +433,34 @@ def build(brain, role, phase="working", window_days=None):
 
 
 def _resolve(state_day, path):
-    """Walk a dotted state_path against ONE day's served slice. -> (found, value)."""
+    """Walk a dotted state_path against ONE day's served slice. -> (found, value).
+
+    S115 (audit D4-3/D3-5): supports [N] list indexing - 'tape_conditions.phase_signed_flow[2]'
+    was stamped INPUT_ABSENT while the served list sat 3 elements long in the same slice. A false
+    INPUT_ABSENT talks a specialist out of a play with a live input, the exact inversion of the
+    point (the S114 live_verdict lesson). An out-of-range index is a clean absent, never a raise.
+    """
+    import re
     cur = state_day
     for part in (path or "").split("."):
-        if isinstance(cur, dict) and part in cur:
-            cur = cur[part]
-        else:
-            return False, None
+        name = part
+        idxs = []
+        if "[" in part:
+            m = re.match(r"^([^\[\]]*)((?:\[\d+\])+)$", part)
+            if not m:
+                return False, None          # malformed bracket syntax = not resolvable, say so
+            name = m.group(1)
+            idxs = [int(i) for i in re.findall(r"\[(\d+)\]", m.group(2))]
+        if name:
+            if isinstance(cur, dict) and name in cur:
+                cur = cur[name]
+            else:
+                return False, None
+        for i in idxs:
+            if isinstance(cur, (list, tuple)) and i < len(cur):
+                cur = cur[i]
+            else:
+                return False, None
     return True, cur
 
 
@@ -705,6 +726,17 @@ def cmd_selftest():
     unwalled24, _, _ = build(brain, "specialist", "working", None)
     check("NEGATIVE unwalled view still carries the changelog outcome (the wall is doing the work)",
           "g24 blind" in json.dumps(unwalled24["meta"]))
+
+    # S115 (audit D4-3/D3-5) - THE BRACKET-INDEX RESOLVER. A served list element must resolve;
+    # out-of-range and malformed brackets are clean absents, and plain paths are unchanged.
+    _sd = {"tape_conditions": {"phase_signed_flow": [10, -5, 7], "session_b_share": 0.48}}
+    check("resolver: list index resolves", _resolve(_sd, "tape_conditions.phase_signed_flow[2]") == (True, 7))
+    check("resolver: out-of-range index is a clean absent",
+          _resolve(_sd, "tape_conditions.phase_signed_flow[9]") == (False, None))
+    check("resolver: malformed bracket is a clean absent",
+          _resolve(_sd, "tape_conditions.phase_signed_flow[x]") == (False, None))
+    check("resolver: plain dotted path unchanged",
+          _resolve(_sd, "tape_conditions.session_b_share") == (True, 0.48))
 
     # NEGATIVE 3 - no view may carry every section by accident
     check("NEGATIVE specialist view is strictly smaller than the brain",
