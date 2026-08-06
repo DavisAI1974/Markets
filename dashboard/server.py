@@ -152,8 +152,8 @@ def index():
     """Serve the stable S100 shell with additive Novel Edge Lab assets injected.
 
     The large baseline HTML remains untouched so Claude's active dashboard wiring and
-    visual language are preserved. The injected module adds a read-only navigation item
-    and view at runtime.
+    visual language are preserved. The injected modules add a read-only navigation item,
+    candidate view, and optional rule-scan diagnostic at runtime.
     """
     index_path = os.path.join(FRONTEND, "index.html")
     with open(index_path, encoding="utf-8") as f:
@@ -162,6 +162,8 @@ def index():
         html = html.replace("</head>", "  <link rel=\"stylesheet\" href=\"novel.css\" />\n</head>")
     if "novel.js" not in html:
         html = html.replace("</body>", "  <script src=\"novel.js\"></script>\n</body>")
+    if "novel_diagnostics.js" not in html:
+        html = html.replace("</body>", "  <script src=\"novel_diagnostics.js\"></script>\n</body>")
     return HTMLResponse(html)
 
 
