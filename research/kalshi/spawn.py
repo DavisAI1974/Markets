@@ -158,7 +158,7 @@ def _brief_lines(obj, out, depth=0):
         out.append("%s%s" % (pad, obj))
 
 
-def mission_brief(role):
+def mission_brief(role, window_days=None):
     """THE PRE-LAUNCH BRIEF, generated from brain.mission - never typed into a template.
 
     Greg, S114: "If i told you to start build py files but you didn't know why you were building
@@ -172,8 +172,16 @@ def mission_brief(role):
     if "mission" not in view:
         raise SlotError("MISSION: brain.mission is not served to role %r at phase 'briefing' - "
                         "check meta.sections['mission'].roles/phase" % role)
+    mission = view["mission"]
+    if window_days:
+        # THE BRIEF LEAKS TOO (specialist E, S114, found mid-rehearsal). The mission cites worked
+        # examples by date - 0629's actual session move is INSIDE the g22 block, 0707 and 0714 are
+        # inside g23 - so fencing brain_view alone left a second channel wide open. Same wall,
+        # applied here: the arithmetic-chain lesson survives fine without "against a +200 actual".
+        import brain_view
+        mission = brain_view.redact_window(mission, brain_view.window_tokens(window_days), [0])
     out = []
-    _brief_lines(view["mission"], out)
+    _brief_lines(mission, out)
     return "\n".join(out)
 
 
@@ -329,7 +337,7 @@ def slots(gid, day=None, spec=None):
         # would be no continuity." It is delivered pre-launch and is deliberately NOT in the working
         # view - orientation, not something to consult mid-curve. Generated, never typed: a brief
         # kept in a template would drift from the brain the moment either was edited.
-        "MISSION": (mission_brief("specialist"),
+        "MISSION": (mission_brief("specialist", g["days"]),
                     "GENERATED from brain.mission via brain_view --phase briefing"),
         "DAYS": (", ".join(g["days"]), "group_config.GROUPS[%s].days" % gid),
         "WINDOW": (str(g.get("window")), "group_config"),

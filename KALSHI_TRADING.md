@@ -620,7 +620,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **160 files.**
+new tool cannot go unlisted. **161 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `archive_blind.py` — move the blind's posteriors out of the refine's filenames (S108).
@@ -684,6 +684,7 @@ new tool cannot go unlisted. **160 files.**
 - `g17_mbo_engine.py` — G17 MBO causal evidence for the refine (S105). Same extraction as
 - `g17_refine_coordinate.py` — COORDINATOR for the G17 MBO 5-specialist REFINE (round 1, S105).
 - `gas_call_residual.py` — S109 P0.7: the GAS CALL RESIDUAL - weather-driven load net of what renewables and baseload absorb.
+- `gefs_ensemble.py` — the GEFS ensemble through OUR gas-weighted degree days, to a DENSITY. (G-5.)
 - `grid_stack.py` — FEED Q (family D/power): EIA-930 grid stack - daily demand, day-ahead demand
 - `group_actual.py` — build ANY group's two-leg ACTUAL curve from per-contract MBO trades, config-driven.
 - `group_config.py` — per-group turnkey config for the NG forecaster walk (S105).

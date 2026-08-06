@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 138 |
+| open | 145 |
 | in progress | 1 |
-| done | 12 |
+| done | 13 |
 
-By size: **XS** 18, **S** 63, **M** 44, **L** 8
+By size: **XS** 18, **S** 63, **M** 43, **L** 8
 
 ---
 
-By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 31, **REST** 100
+By tier: **ESSENTIAL** 10, **BIGGEST_WIN** 34, **REST** 102
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (8)
+## ESSENTIAL (10)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -34,8 +34,10 @@ By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 31, **REST** 100
 | **A-40** | M | ROOT-CAUSE THE MAGNITUDE EMISSION CEILING - the forecaster never emits above ~$550 while half of all days exceed it | - |
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
+| **A-50** | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
+| **A-51** | ? | Serve FORWARD wind and solar - all three specialists named it independently | - |
 
-## BIGGEST WIN (31)
+## BIGGEST WIN (34)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -63,7 +65,6 @@ By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 31, **REST** 100
 | **A-4** | M | Score the CURVE, not the scalar - four error terms kept separate | D32 made the product a CURVE and we have never scored it. Four error terms kept separate - level, slope, shape, timing - because a day high by 4,000 and a day low by 4,000 net to zero on a forecaster that was catastrophically wrong twice. The scoreboard is what every other item is judged by. |
 | **A-41** | M | RUN THE FAILURE JUDGE ON AGENT BEHAVIOUR - localize every post-mortem finding to an interaction edge and fault side BEFORE it becomes brain evidence | - |
 | **G-4** | M | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | THE TOP-RANKED GAP, named by two independent lenses, and 0629 is its canonical instance - our cooling forecast was exactly right and burn fell 4.2 Bcf/d because wind rose 62%. It is the fastest-dying input AND the one that flips the SIGN rather than the magnitude. ChatGPT ALREADY DELIVERED the source research (S112 T3) - collect it from Greg first. |
-| **G-5** | M | ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY | Fills the ensemble gap, the spread gap, the probabilistic-path gap and the option-dispersion gap SIMULTANEOUSLY, at zero cost - ECMWF members went CC-BY in October 2025. It is also the prerequisite for a confidence gate and therefore for A-2. ChatGPT ALREADY DELIVERED the retrieval research (S112 T2). |
 | **M-4** | M | CDD-vs-normal (the anomaly instrument separating hill from spike) | The cure for the D28 TRANSFER disease, and nws_temp_feed already fetches the normals - so it is a serving change, not an ingest. gw_cdd >= 16.4 fires 46.6% pooled and 0/10 on all four summer blocks; an absolute bar cannot transfer across season by construction. |
 | **A-19** | L | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | L, and it is the foundation under the dominant driver. The station set is 16 hand-set metros with ONE covering the entire Southeast, the weights were never tuned, and the primitive is wrong - it should be per-BA with a measured roll-up. Everything weather-shaped rests on this. |
 | **A-23** | L | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not | Turns 1,129 unread data points into a ranked verdict list, and it is the gate on A-24 - Greg's correlated-pair hunch. Delegable in full, with DATA_POINTS.md as its input. |
@@ -72,8 +73,12 @@ By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 31, **REST** 100
 | **A-42** | ? | RUN the failure judge (FJ-1) on a scored group and see whether the labels change any repair | - |
 | **A-46** | ? | The clutter is the BRAIN, not the prompt: serve plays by relevance, not all 90 | - |
 | **A-47** | ? | Re-emit the truncated curves: g17/g18/g22 blinds have no overnight leg | - |
+| **A-49** | ? | stage_group --suffix still writes canonical names: the inspection certificate leaked | - |
+| **A-52** | ? | wind_mwh has no chg_7d twin while gas, solar and hydro all do | - |
+| **A-53** | ? | Sweep every play's `requires` against the served BLIND field set | - |
+| **A-54** | ? | The output contract cannot express what the specialists actually derived | - |
 
-## REST (100)
+## REST (102)
 
 *everything else - real work, correctly tracked, and none of it deleted. Several become cheap once an ESSENTIAL or BIGGEST_WIN item lands.*
 
@@ -179,6 +184,8 @@ By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 31, **REST** 100
 | **A-43** | ? | Second judge for adjudication where a label routes real work | - |
 | **A-44** | ? | Feed the model-context coverage gap back as a finding, and check it against the paper's own data | - |
 | **A-45** | ? | Apply the edge/fault-side labelling to the WINNERS census, not only failures | - |
+| **A-55** | ? | A play CONFLICT REGISTER - the plays contradict and nothing surfaces it | - |
+| **A-56** | ? | Generate the field inventory at STAGING, and count leaves not top-level keys | - |
 
 ---
 
@@ -194,6 +201,8 @@ By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 31, **REST** 100
 | **A-40** | ESSENTIAL | M | OPEN | S114 | ROOT-CAUSE THE MAGNITUDE EMISSION CEILING - the forecaster never emits above ~$550 while half of all days exceed it | - |
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
+| **A-50** | ESSENTIAL | ? | OPEN | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
+| **A-51** | ESSENTIAL | ? | OPEN | ? | Serve FORWARD wind and solar - all three specialists named it independently | - |
 | **O-2** | BIGGEST_WIN | XS | OPEN | S114 | RECORD THE S111 OPTIONS VERDICT AS A BINDING DECISION - it exists only in a file-index blurb | - |
 | **A-15** | BIGGEST_WIN | S | OPEN | S112 | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | - |
 | **A-18** | BIGGEST_WIN | S | OPEN | S112 | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | - |
@@ -216,7 +225,6 @@ By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 31, **REST** 100
 | **A-4** | BIGGEST_WIN | M | OPEN | S111 | Score the CURVE, not the scalar - four error terms kept separate | - |
 | **A-41** | BIGGEST_WIN | M | OPEN | S114 | RUN THE FAILURE JUDGE ON AGENT BEHAVIOUR - localize every post-mortem finding to an interaction edge and fault side BEFORE it becomes brain evidence | - |
 | **G-4** | BIGGEST_WIN | M | OPEN | S111 | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | - |
-| **G-5** | BIGGEST_WIN | M | OPEN | S111 | ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY | - |
 | **M-4** | BIGGEST_WIN | M | OPEN | S109 | CDD-vs-normal (the anomaly instrument separating hill from spike) | - |
 | **A-19** | BIGGEST_WIN | L | OPEN | S112 | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | - |
 | **A-23** | BIGGEST_WIN | L | OPEN | S112 | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not | - |
@@ -225,6 +233,10 @@ By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 31, **REST** 100
 | **A-42** | BIGGEST_WIN | ? | OPEN | ? | RUN the failure judge (FJ-1) on a scored group and see whether the labels change any repair | - |
 | **A-46** | BIGGEST_WIN | ? | OPEN | ? | The clutter is the BRAIN, not the prompt: serve plays by relevance, not all 90 | - |
 | **A-47** | BIGGEST_WIN | ? | OPEN | ? | Re-emit the truncated curves: g17/g18/g22 blinds have no overnight leg | - |
+| **A-49** | BIGGEST_WIN | ? | OPEN | ? | stage_group --suffix still writes canonical names: the inspection certificate leaked | - |
+| **A-52** | BIGGEST_WIN | ? | OPEN | ? | wind_mwh has no chg_7d twin while gas, solar and hydro all do | - |
+| **A-53** | BIGGEST_WIN | ? | OPEN | ? | Sweep every play's `requires` against the served BLIND field set | - |
+| **A-54** | BIGGEST_WIN | ? | OPEN | ? | The output contract cannot express what the specialists actually derived | - |
 | **G-14** | REST | XS | OPEN | S111 | Fix the LNE strike decode at source (Databento display_factor bug) | - |
 | **G-17** | REST | XS | OPEN | S111 (recommendation); S112  | TAPE: the BOIL/KOLD close-imbalance test | - |
 | **G-21** | REST | XS | OPEN | S111 (recommendation); S112  | STORAGE CONSENSUS: carry the RANGE, not just the median | - |
@@ -325,6 +337,8 @@ By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 31, **REST** 100
 | **A-43** | REST | ? | OPEN | ? | Second judge for adjudication where a label routes real work | - |
 | **A-44** | REST | ? | OPEN | ? | Feed the model-context coverage gap back as a finding, and check it against the paper's own data | - |
 | **A-45** | REST | ? | OPEN | ? | Apply the edge/fault-side labelling to the WINNERS census, not only failures | - |
+| **A-55** | REST | ? | OPEN | ? | A play CONFLICT REGISTER - the plays contradict and nothing surfaces it | - |
+| **A-56** | REST | ? | OPEN | ? | Generate the field inventory at STAGING, and count leaves not top-level keys | - |
 
 ## DONE
 
@@ -339,6 +353,7 @@ By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 31, **REST** 100
 | A-24c | M | Physical absorption: gas-marginality BREADTH across BAs x South Central salt composition |
 | A-25 | S | THE CHATGPT HAND-OFF IS GENERATED AND SHIPS WITH THE DROP-IN - built S112 |
 | A-32 | XS | INTERCHANGE (TI) SERVED - the collapse hypothesis is refuted, but it discriminates ramp-limited events from no-surplus events |
+| A-48 | ? | grp22_state.json is STALE at the canonical name - promote the corrected state or delete it |
 | G-19 | S | EIA-930: BATTERY STORAGE is now its own category and we do not carry it |
 | M-2 | S | Brain status taxonomy normalized to an enum |
 | S111-1 | S | brain_schema.py sections --write |
@@ -469,6 +484,26 @@ THE GAP: we serve degree days (gw_hdd) and we serve power burn. We serve NOTHING
 ALSO MISSING FROM THE EXTRACT: industrial consumption. It is 21.4-27.0 Bcf/d - the SECOND largest component - and appears in our steo_vintage store only as the arithmetic residual of NGTCPUS minus the six series we do carry. EIA publishes it; our parse drops it.
 
 WEEKLY CORROBORATION LANDED S114, from a second committed file (storage_week_by_week_S113.csv), per event: four same-burn SAME-BREADTH pairs, each a November/early-December week against a January/February week, 219-369 Bcf apart - 2021-02-25 -338 vs 2020-11-19 +31 (burns 168/174, both br2); 2022-02-03 -268 vs 2022-11-10 +79 (197/197, br2); 2025-01-30 -321 vs 2024-12-05 -30 (248/256, br4); 2019-02-07 -237 vs 2020-11-27 -18 (171/172, br3). Identical power burn, identical breadth; the differing term is res/comm heating. The monthly finding now has its weekly echo at the traded horizon. ALSO: 12 of the 14 deepest breadth-0/1 winter weeks carry POSITIVE dVRE - wind was muting burn while heating drained the tank, which is why a burn-based model under-calls exactly the weeks that matter. See WINTER_LANE_FORWARD_TOOL_S114.md s1.
+
+---
+
+### [ESSENTIAL] A-50 - CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else
+
+*size ? | OPEN | raised ?*
+
+**Source:** g22 rehearsal specialist debriefs, S114
+
+Specialist E, S114: 'You have three leak channels, not one.' Brain view (walled), mission brief (walled), and CLAUDE.md - which states G22's blind and refine scores outright, names 0629's mechanism and its actual, and is loaded into EVERY agent in this repo before it reads a single instruction. Fencing the brain and the brief does not give a clean blind run while this stands. It is structural and needs Greg's call because CLAUDE.md is the session record and cannot simply be emptied: options are (a) a blind-safe CLAUDE.md variant selected at spawn, (b) moving walked-block numbers out of it into a handoff the agents do not load, or (c) accepting it and declaring every blind contaminated, which would end blind measurement. Do not run G24 blind before this is decided.
+
+---
+
+### [ESSENTIAL] A-51 - Serve FORWARD wind and solar - all three specialists named it independently
+
+*size ? | OPEN | raised ?*
+
+**Source:** g22 rehearsal specialist debriefs, S114
+
+Greg, S114: 'We also have to ingest wind and solar and prec data.' The three rehearsal specialists reached the same conclusion from three different days without seeing each other. E: 'You give me a seven-day CDD ladder with run deltas and NOTHING forward at all on the forcings, which by your own 0629 post-mortem is the term that breaks forecasts' - its weekend handoff shipped with an unresolvable caveat on the exact seam where 10 of 14 bad Mondays live. D: carry_realization_flip's own falsifier says run the test on the burn RESIDUAL net of wind and solar, and it could not. SERVE THEM SEPARATELY, never summed: wind peaks spring/autumn, solar at the solstice, and summing two opposite annual cycles is worse than nothing (D37). GEFS carries the fields - the retrieval is already built in gefs_ensemble.py and needs only the extra GRIB messages (10 m U/V wind, downward shortwave, APCP for precip).
 
 ---
 
@@ -1588,20 +1623,6 @@ SECOND CANONICAL INSTANCE FOUND S114: 0601 is 0629's twin. The g20 state served 
 
 ---
 
-### [BIGGEST_WIN] G-5 - ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY
-
-*size M | OPEN | raised S111*
-
-**Why it is BIGGEST WIN:** Fills the ensemble gap, the spread gap, the probabilistic-path gap and the option-dispersion gap SIMULTANEOUSLY, at zero cost - ECMWF members went CC-BY in October 2025. It is also the prerequisite for a confidence gate and therefore for A-2. ChatGPT ALREADY DELIVERED the retrieval research (S112 T2).
-
-**Source:** GAS_SIGNAL_BRIEFING_S111 s2.2 (TIER 1)
-
-**Already delegated:** S112 TASK 2 (ECMWF ENS + GEFS ensemble MEMBER retrieval). DELIVERED and COMMITTED S113 as research/kalshi/CHATGPT_S112_SIX_WORKSTREAMS.md. CORRECTED S113: this item previously recorded TASK 1 (the dipole direction result), which belongs to the flow_nowcast family, not here.
-
-FREE since 1 Oct 2025 - the full ECMWF real-time catalogue went open under CC-BY-4.0 with data charges removed. Our MOS deterministic guidance structurally cannot produce a spread. Fills the ensemble, spread, probabilistic-path and option-dispersion gaps in one feed, and is the prerequisite for a confidence gate. START ARCHIVING IMMEDIATELY - the archive is the asset.
-
----
-
 ### [BIGGEST_WIN] M-4 - CDD-vs-normal (the anomaly instrument separating hill from spike)
 
 *size M | OPEN | raised S109*
@@ -1731,6 +1752,46 @@ Greg, S114: 'I'm trying to straddle the line of being right there but not clutte
 **Source:** path_contract.py measurement, S114
 
 path_contract.py (S114) measures it per group, scoped per D31 so an era is not called a defect. PRE-g17 blinds emitted NO path at all - the curve was not yet the product, so those are era, not violations. The real findings are in the curve era: g17 10/10 and g18 10/10 and g22 10/10 miss the 20:00 REOPEN entirely (every day starts at hour 08, so the whole overnight leg is absent); g20 10/10 overrun PAST the 17:00 close into the next session; g23 9/10; and g21 is 3/10 - the best block, 8 of 10 days on the canonical clock. SO g22 IS A REGRESSION FROM g21, AND THE CAUSE IS ALREADY RECORDED: the 2-hourly clock spec lived only in RFN-1 until S110, so the BLIND template never carried it. BLD-1 carries it now and path_contract enforces it, which closes it forward. WHAT IS STILL OWED: the committed curves themselves. They are library entries (D32) and retrieval matches on SHAPE, so a curve missing its first six hours is furniture that can never be matched. DO NOT hand-patch them - a synthesised overnight leg is invented data. They are re-emitted by re-running the specialist under the fixed template, in a rehearsal namespace, or they stay declared-truncated. Deciding which is Greg's call and is cheap either way now that the measurement is per-group.
+
+---
+
+### [BIGGEST_WIN] A-49 - stage_group --suffix still writes canonical names: the inspection certificate leaked
+
+*size ? | OPEN | raised ?*
+
+**Source:** found staging the g22 rehearsal, S114
+
+The suffixed run prints 'skipping mbo_evidence and exit_states - they write canonical names with no redirect', so the leak is KNOWN and enumerated - but the list is incomplete. Staging g22 with --suffix _fresh rewrote forecasts/g22_inspection.json, a committed record, changing its timestamp. Only a timestamp this time; the point is that a path advertised as safe for rehearsal is not, and this is the NC-4 class (a rehearsal command mutating a record). Fix by deriving the redirect at the WRITE site rather than maintaining a hand-kept skip list - a hand-kept list of what to skip is the same shape as the hand-kept field list that failed (A-22). Until then a suffixed run must be followed by a git status check.
+
+---
+
+### [BIGGEST_WIN] A-52 - wind_mwh has no chg_7d twin while gas, solar and hydro all do
+
+*size ? | OPEN | raised ?*
+
+**Source:** g22 rehearsal specialist debriefs, S114
+
+Found independently by D and E. Every other stack term carries <x>_chg_7d_mwh; wind does not, for any BA. Wind is the term the 0629 lesson is ABOUT. D recovered the trend by hand only because its slice happened to carry four days - 'a one-day slice could not read it at all'. Cheap and mechanical.
+
+---
+
+### [BIGGEST_WIN] A-53 - Sweep every play's `requires` against the served BLIND field set
+
+*size ? | OPEN | raised ?*
+
+**Source:** g22 rehearsal specialist debriefs, S114
+
+E: two plays assert blind-legality that their own inputs contradict. terminal_impact_coefficient_carry says 'ALL PRE-CUTOFF, so this is BLIND-LEGAL' and its NUMERATOR is the masked object; flow_conviction_sign_gate labels itself refine-only and is honest. D wasted real effort standing down four plays that could never fire in blind. E's framing: 'that is a script, not a judgment call' - mark each play BLIND_UNAVAILABLE mechanically so a specialist disposes of it in one line instead of four paragraphs.
+
+---
+
+### [BIGGEST_WIN] A-54 - The output contract cannot express what the specialists actually derived
+
+*size ? | OPEN | raised ?*
+
+**Source:** g22 rehearsal specialist debriefs, S114
+
+Three separate versions of one gap. D derived a magnitude with real confidence and NO sign - 'the order implicitly assumes direction resolves and magnitude follows; here it inverted' - and had to improvise a partial stand-down in prose, which the coordinator assembles verbatim as a clean +60. B's gap play says the gap is NOT OWNABLE AS A POINT and the contract demands an integer, so B emitted a band midpoint and labelled it an artifact. E hit the same on a NO CALL band. The schema forces exactly the manufactured-answer failure the mission brief warns about. Cheapest fix: `direction_established: true|false` plus an optional band. This is A-2 arriving from a different direction.
 
 ---
 
@@ -2879,6 +2940,26 @@ The paper's model-context edge has NO harness-side mode - its three are State Tr
 **Source:** Scale AI arXiv:2607.28802 - applied S114
 
 Registered in failure_localization's own docstring and never built. We currently credit a day carried by a clean served block and a day carried by a derived arithmetic chain identically to the forecaster. The same labelling separates them, and the second is the only kind that extrapolates.
+
+---
+
+### [REST] A-55 - A play CONFLICT REGISTER - the plays contradict and nothing surfaces it
+
+*size ? | OPEN | raised ?*
+
+**Source:** g22 rehearsal specialist debriefs, S114
+
+B: seam_gap_up_prior_on_worsening_cot (conf 0.85) says positioning signs a seam; seam_sign_from_stability_ladder says it does not, 1/3, sign-agnostic. Both scoped to weekend seams in crowded-short regimes, both evaluable on the same state, opposite answers to the day's only real question. B: 'I picked my sign by picking my play, which is not forecasting.'
+
+---
+
+### [REST] A-56 - Generate the field inventory at STAGING, and count leaves not top-level keys
+
+*size ? | OPEN | raised ?*
+
+**Source:** g22 rehearsal specialist debriefs, S114
+
+D and E both found the inventory absent for their day and built their own - which then did the job it exists for (D found model_disagreement.stability had no coverage; E found wind had no chg_7d twin and that phase price change is unserved). Two lessons: it must be generated at staging rather than written by the spawn call, and D's own count is 1,219 served LEAF fields against the 419 top-level keys the current builder reports - the leaf count is the useful one.
 
 ---
 

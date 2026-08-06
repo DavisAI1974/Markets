@@ -1809,6 +1809,69 @@
    "status": "OPEN",
    "session": "S114",
    "source": "found staging the g22 rehearsal, S114"
+  },
+  {
+   "id": "A-50",
+   "tier": "ESSENTIAL",
+   "title": "CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else",
+   "why": "Specialist E, S114: 'You have three leak channels, not one.' Brain view (walled), mission brief (walled), and CLAUDE.md - which states G22's blind and refine scores outright, names 0629's mechanism and its actual, and is loaded into EVERY agent in this repo before it reads a single instruction. Fencing the brain and the brief does not give a clean blind run while this stands. It is structural and needs Greg's call because CLAUDE.md is the session record and cannot simply be emptied: options are (a) a blind-safe CLAUDE.md variant selected at spawn, (b) moving walked-block numbers out of it into a handoff the agents do not load, or (c) accepting it and declaring every blind contaminated, which would end blind measurement. Do not run G24 blind before this is decided.",
+   "status": "OPEN",
+   "session": "S114",
+   "source": "g22 rehearsal specialist debriefs, S114"
+  },
+  {
+   "id": "A-51",
+   "tier": "ESSENTIAL",
+   "title": "Serve FORWARD wind and solar - all three specialists named it independently",
+   "why": "Greg, S114: 'We also have to ingest wind and solar and prec data.' The three rehearsal specialists reached the same conclusion from three different days without seeing each other. E: 'You give me a seven-day CDD ladder with run deltas and NOTHING forward at all on the forcings, which by your own 0629 post-mortem is the term that breaks forecasts' - its weekend handoff shipped with an unresolvable caveat on the exact seam where 10 of 14 bad Mondays live. D: carry_realization_flip's own falsifier says run the test on the burn RESIDUAL net of wind and solar, and it could not. SERVE THEM SEPARATELY, never summed: wind peaks spring/autumn, solar at the solstice, and summing two opposite annual cycles is worse than nothing (D37). GEFS carries the fields - the retrieval is already built in gefs_ensemble.py and needs only the extra GRIB messages (10 m U/V wind, downward shortwave, APCP for precip).",
+   "status": "OPEN",
+   "session": "S114",
+   "source": "g22 rehearsal specialist debriefs, S114"
+  },
+  {
+   "id": "A-52",
+   "tier": "BIGGEST_WIN",
+   "title": "wind_mwh has no chg_7d twin while gas, solar and hydro all do",
+   "why": "Found independently by D and E. Every other stack term carries <x>_chg_7d_mwh; wind does not, for any BA. Wind is the term the 0629 lesson is ABOUT. D recovered the trend by hand only because its slice happened to carry four days - 'a one-day slice could not read it at all'. Cheap and mechanical.",
+   "status": "OPEN",
+   "session": "S114",
+   "source": "g22 rehearsal specialist debriefs, S114"
+  },
+  {
+   "id": "A-53",
+   "tier": "BIGGEST_WIN",
+   "title": "Sweep every play's `requires` against the served BLIND field set",
+   "why": "E: two plays assert blind-legality that their own inputs contradict. terminal_impact_coefficient_carry says 'ALL PRE-CUTOFF, so this is BLIND-LEGAL' and its NUMERATOR is the masked object; flow_conviction_sign_gate labels itself refine-only and is honest. D wasted real effort standing down four plays that could never fire in blind. E's framing: 'that is a script, not a judgment call' - mark each play BLIND_UNAVAILABLE mechanically so a specialist disposes of it in one line instead of four paragraphs.",
+   "status": "OPEN",
+   "session": "S114",
+   "source": "g22 rehearsal specialist debriefs, S114"
+  },
+  {
+   "id": "A-54",
+   "tier": "BIGGEST_WIN",
+   "title": "The output contract cannot express what the specialists actually derived",
+   "why": "Three separate versions of one gap. D derived a magnitude with real confidence and NO sign - 'the order implicitly assumes direction resolves and magnitude follows; here it inverted' - and had to improvise a partial stand-down in prose, which the coordinator assembles verbatim as a clean +60. B's gap play says the gap is NOT OWNABLE AS A POINT and the contract demands an integer, so B emitted a band midpoint and labelled it an artifact. E hit the same on a NO CALL band. The schema forces exactly the manufactured-answer failure the mission brief warns about. Cheapest fix: `direction_established: true|false` plus an optional band. This is A-2 arriving from a different direction.",
+   "status": "OPEN",
+   "session": "S114",
+   "source": "g22 rehearsal specialist debriefs, S114"
+  },
+  {
+   "id": "A-55",
+   "tier": "REST",
+   "title": "A play CONFLICT REGISTER - the plays contradict and nothing surfaces it",
+   "why": "B: seam_gap_up_prior_on_worsening_cot (conf 0.85) says positioning signs a seam; seam_sign_from_stability_ladder says it does not, 1/3, sign-agnostic. Both scoped to weekend seams in crowded-short regimes, both evaluable on the same state, opposite answers to the day's only real question. B: 'I picked my sign by picking my play, which is not forecasting.'",
+   "status": "OPEN",
+   "session": "S114",
+   "source": "g22 rehearsal specialist debriefs, S114"
+  },
+  {
+   "id": "A-56",
+   "tier": "REST",
+   "title": "Generate the field inventory at STAGING, and count leaves not top-level keys",
+   "why": "D and E both found the inventory absent for their day and built their own - which then did the job it exists for (D found model_disagreement.stability had no coverage; E found wind had no chg_7d twin and that phase price change is unserved). Two lessons: it must be generated at staging rather than written by the spawn call, and D's own count is 1,219 served LEAF fields against the 419 top-level keys the current builder reports - the leaf count is the useful one.",
+   "status": "OPEN",
+   "session": "S114",
+   "source": "g22 rehearsal specialist debriefs, S114"
   }
  ],
  "tiers": {
