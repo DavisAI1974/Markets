@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 156 |
+| open | 157 |
 | in progress | 1 |
 | done | 17 |
 
-By size: **XS** 18, **S** 71, **M** 48, **L** 9
+By size: **XS** 18, **S** 72, **M** 48, **L** 9
 
 ---
 
-By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 39, **REST** 103
+By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 40, **REST** 103
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -42,7 +42,7 @@ By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 39, **REST** 103
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 | **A-50** | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 
-## BIGGEST WIN (39)
+## BIGGEST WIN (40)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -61,6 +61,7 @@ By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 39, **REST** 103
 | **A-57** | S | SERVE THE BREADTH TERM - A-24c's first pass SURVIVED its benchmark and has no forward home | A measured result that beat its own named benchmark and then went nowhere. Serving three derived fields off data we already hold is the cheapest possible follow-on, and D30 says a finding with no home does not exist. |
 | **A-61** | S | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | A false REFUTED is worse than no verification: it argues for UNDOING a real fix, with an adversarial verdict behind it. Cheap to fix (pin a commit) and it protects every future audit. |
 | **A-65** | S | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | It is the test that would have caught THIS session's own worst mistake before Greg did, it is cheap (one extra spawn per change), and it converts every future view/brain change from an argument into a measurement. |
+| **A-66** | S | THE COMPOSITION MAP - classify every borrowed piece by UPDATE TARGET x DRIVING SIGNAL before building the hybrid | It is the collision detector for everything else registered tonight. Cheap (a table), and it is the difference between composing best-of-breed and building something that fights itself. Do it BEFORE any of A-59/62/63/64/65 is built. |
 | **G-30** | S | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | It is the instrument dependency under A-24a, the discovery note's own RANK 1 candidate and the one it calls strongest. It also turns five of twelve path points from a timing judgment into arithmetic, on a feed we already ingest. |
 | **M-15** | S | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | A compromised credential with a deferral that has silently expired is the kind of thing that is only ever noticed after it matters. Cheap to do, and the deferral it replaces was explicit and time-boxed. |
 | **O-3** | S | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
@@ -232,6 +233,7 @@ By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 39, **REST** 103
 | **A-57** | BIGGEST_WIN | S | OPEN | S115 | SERVE THE BREADTH TERM - A-24c's first pass SURVIVED its benchmark and has no forward home | - |
 | **A-61** | BIGGEST_WIN | S | OPEN | S115 | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | - |
 | **A-65** | BIGGEST_WIN | S | OPEN | S115 | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | - |
+| **A-66** | BIGGEST_WIN | S | OPEN | S115 | THE COMPOSITION MAP - classify every borrowed piece by UPDATE TARGET x DRIVING SIGNAL before building the hybrid | - |
 | **G-30** | BIGGEST_WIN | S | OPEN | S115 | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | - |
 | **M-15** | BIGGEST_WIN | S | OPEN | S115 | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | - |
 | **O-3** | BIGGEST_WIN | S | OPEN | S114 | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
@@ -1351,6 +1353,32 @@ WHY IT GENERALISES BEYOND COMPACTION: this is a REGRESSION TEST FOR THE VIEW, an
 THE PAPER'S FIVE PRIMITIVES, as an audit of what we hold: architecting (have - brain_schema/D29), ingesting (have - feeds to decision state), scoping (have - brain_view role/phase), ANTICIPATING what is needed next (WE HAVE NOTHING), compacting & consolidation (attempted and reverted today, never validated). Its 'consolidating and forgetting while PRESERVING PROVENANCE' is our own standing rule that an absence must announce itself, reached independently from holes #7 and #8 - convergence worth noting.
 EVIDENCE CAUTION, stated so nobody quotes it as settled: single author; the reference implementation (Maximem Synap) is a commercial multi-tenant service; the 92% LongMemEval / 93.2% LoCoMo figures are SELF-REPORTED for that product under a configuration in Section 6 which has NOT been read here. Treat the framework as useful and the numbers as vendor-reported. 23 pages, 6 figures, 4 tables; evaluation harness and study data on GitHub (maximem-ai) - if this is pursued, that harness is the thing to look at first.
 FALSIFIER: if posterior-diffing shows NO change across a range of day-classes for a compaction we independently believe is lossy, the test is insensitive and is not measuring decision impact - fix the test before trusting any compaction it blesses.
+
+---
+
+### [BIGGEST_WIN] A-66 - THE COMPOSITION MAP - classify every borrowed piece by UPDATE TARGET x DRIVING SIGNAL before building the hybrid
+
+*size S | OPEN | raised S115*
+
+**Why it is BIGGEST WIN:** It is the collision detector for everything else registered tonight. Cheap (a table), and it is the difference between composing best-of-breed and building something that fights itself. Do it BEFORE any of A-59/62/63/64/65 is built.
+
+**Source:** Greg, S115: https://arxiv.org/abs/2607.13104 (Self-Improvements in Modern Agentic Systems: A Survey; Ren et al. incl. Schmidhuber, 97pp) + his framing: 'take the pieces we want and stack one family from different approaches on top of weaving different families together'
+
+THE SURVEY DESCRIBES OUR SYSTEM ALMOST VERBATIM: 'a configuration coupling a foundation model with an operational scaffold of PROMPTS, MEMORY, TOOLS, and CONTROL LOGIC' - our gold-vaulted agent files, the brain, the feeds/state, and the coordinators+guards. It formalises self-improvement as 'a self-induced update operator that obtains and commits updates to model parameters or scaffold components', and organises the literature by UPDATE TARGET and by the SIGNALS that drive change.
+WE ARE ALREADY RUNNING THAT LOOP: we cannot touch model parameters (no fine-tuning), but the D8 merge protocol - run, measure, propose, adjudicate, commit to the brain - IS a self-induced update operator on the SCAFFOLD with Greg as the adjudicator. Twenty sessions of it, without the vocabulary.
+GREG'S FRAMING AND THE DISCIPLINE IT NEEDS: he wants a deliberate composite ('Frankenstein... stack one family from different approaches on top of weaving different families together'). The failure mode of composition is NOT ugliness, it is INHERITED ASSUMPTIONS - NOOA assumes you control the code; ACM/Li assumes you can fine-tune; ACM/Dadhich assumes a multi-tenant service; Kernel Forge assumes GPU workloads. Borrow a piece, inherit its premises unexamined, and the composite fights itself.
+THE SURVEY'S TWO AXES ARE THE COLLISION DETECTOR: pieces acting on DIFFERENT targets compose cleanly; pieces acting on the SAME target with DIFFERENT signals will contend. First pass over what S115 registered:
+  A-59 NOOA render-target      target=scaffold(prompts+contracts)  signal=none (structure, not improvement)
+  A-65 validated compaction    target=MEMORY                       signal=posterior diff
+  A-62 specialist priors       target=MEMORY                       signal=measured outcomes
+  A-63 retrieval kernel        target=tools                        signal=cohort coverage
+  A-64 branching refine        target=control logic                signal=score
+  D8 brain merge (existing)    target=MEMORY                       signal=forward tests + adjudication
+THREE WRITE TO MEMORY (A-62, A-65, D8). That is where the composite tears, and it is now visible BEFORE the build rather than after. Concretely: specialist_priors is new served memory, so it must be validated by A-65's posterior diff, and both must respect D8's adjudication rather than becoming a second self-updating channel into the brain.
+THE BOUNDARY WE DO NOT CROSS, stated so the survey's framing is not adopted wholesale: its goal is adaptation 'with minimal or even no human input'. WE HAVE DELIBERATELY NOT TAKEN THAT DIRECTION and should not. D8 (proposal -> adjudication -> merge, never a direct edit) exists because unsupervised self-update on a system that will place real orders is how a play ends up rewriting its own falsifier. READ THE SURVEY FOR ITS TAXONOMY; DO NOT ADOPT ITS OBJECTIVE.
+DELIVERABLE: a one-page table in the brain's doctrine - every borrowed or planned component with its update target, driving signal, and the assumption it inherits from its source. Any two sharing a target must name which signal wins, or they are not both built.
+FALSIFIER: if two components sharing an update target can be built with no contention observed over a full group cycle, the axis is not load-bearing for a system our size and this collapses to documentation.
+PROVENANCE: abstract read in full and quoted; the 97-page body was NOT read. Do not cite findings from it.
 
 ---
 
