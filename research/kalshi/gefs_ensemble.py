@@ -196,7 +196,9 @@ def target_fhrs(day, cycle_date, cycle_hour, step=3):
                              dt.time(int(cycle_hour)), tzinfo=dt.timezone.utc)
     lo = int((start_local.astimezone(dt.timezone.utc) - c0).total_seconds() // 3600)
     hi = int((end_local.astimezone(dt.timezone.utc) - c0).total_seconds() // 3600)
-    lo = lo - (lo % step)
+    # round UP. Rounding DOWN pulled two hours of the PREVIOUS gas day into every CDT window.
+    if lo % step:
+        lo = lo + (step - lo % step)
     return list(range(max(lo, 0), hi + 1, step))
 
 
@@ -438,7 +440,13 @@ def station_fields_multi(cycle_date, cycle_hour, member, fhr, pts, needles, sess
                         seen_names.add(sn)
                         nm = SHORTNAME_MAP.get(sn)
                         if nm and nm in needles:
+                            try:
+                                st0 = int(eccodes.codes_get(gid, "startStep"))
+                                st1 = int(eccodes.codes_get(gid, "endStep"))
+                            except Exception:
+                                st0 = st1 = None
                             out[nm] = _sample(gid, pts)
+                            out.setdefault("_steps", {})[nm] = (st0, st1)
                     finally:
                         eccodes.codes_release(gid)
         finally:
@@ -534,50 +542,113 @@ def turbine_power(speed_ms):
     return (v ** 3 - 3.0 ** 3) / (12.0 ** 3 - 3.0 ** 3)
 
 
-def member_forcings(day, member, cycle_date, cycle_hour, grids, session=None):
-    """One member -> US48 forcing proxies, each on ITS OWN capacity-weighted geography.
+def gas_day_utc(day):
+    """(start, end) UTC instants of the Chicago gas day - the DST-correct 23/24/25 h span."""
+    d = dt.datetime.strptime(day, "%Y%m%d").date()
+    a = dt.datetime.combine(d, dt.time(0), tzinfo=GAS_TZ)
+    b = dt.datetime.combine(d + dt.timedelta(days=1), dt.time(0), tzinfo=GAS_TZ)
+    return a.astimezone(dt.timezone.utc), b.astimezone(dt.timezone.utc)
 
-    `grids` = {"wind": capacity_points("wind"), "solar": capacity_points("solar"),
-               "all": conus_points()}  - wind and solar are sampled where wind and solar actually
-    ARE, and precipitation stays on the uniform grid because it is a general weather field with no
-    generation fleet behind it.
+
+def member_forcings(day, member, cycle_date, cycle_hour, grids, session=None):
+    """One member -> US48 forcing proxies, interval-correct and selected by VALIDITY TIME.
+
+    THREE DEFECTS FOUND BY AN ADVERSARIAL AUDIT, sharing one root: GEFS accumulated and averaged
+    fields arrive on OVERLAPPING buckets - 12-15, 12-18, 18-21, 18-24 - so each 6 h bucket appears
+    twice, once as its 3 h head and once whole. Read from the .idx, not assumed.
+
+      PRECIP double-counted: 13 blocks summed over a true 9-block summer span (1.44x), 14 over 8 in
+      winter (1.75x). The excess depends on WHEN in the bucket the rain fell, so it distorted
+      day-to-day comparison - the only thing the proxy is validated for.
+
+      SOLAR mis-weighted: DSWRF is stepType=avg, so averaging a 3 h mean with a 6 h mean at equal
+      weight over-weights the first half of every bucket. Wind is stepType=instant and was always
+      clean, which is consistent with wind validating higher than solar.
+
+      THE CDT WINDOW ran 2 h early: `lo - (lo % step)` rounded 17 DOWN to 15, pulling two hours of
+      the PREVIOUS gas day into every summer window. Invisible in winter (18 % 3 == 0 makes it a
+      no-op), so a summer-only validation measured it and a winter test would not have found it.
+
+    FIXED AT THE ROOT: buckets are decomposed into DISJOINT blocks by differencing the 6 h value
+    against its 3 h head, and a block is kept only if its OWN validity interval lies inside the gas
+    day. Selection is by time, never by a rounded forecast hour, so DST deformation cannot recur.
     """
+    import math
     fhrs = target_fhrs(day, cycle_date, cycle_hour)
+    c0 = dt.datetime.combine(dt.datetime.strptime(cycle_date, "%Y%m%d").date(),
+                             dt.time(int(cycle_hour)), tzinfo=dt.timezone.utc)
+    g_start, g_end = gas_day_utc(day)
     allpts = {}
     for g in grids.values():
         allpts.update({k: {"lat": v["lat"], "lon": v["lon"]} for k, v in g.items()})
-    acc = {"wind": [], "solar": [], "precip": []}
-    miss = set()
+
+    raw, miss = {}, set()
     for fhr in fhrs:
         got = station_fields_multi(cycle_date, cycle_hour, member, fhr, allpts,
                                    FORCING_NEEDLES, session)
         if not got:
             continue
         miss.update((got.pop("_missing", {}) or {}).get("fields", []))
+        raw[fhr] = got
+
+    wind = []
+    for fhr, got in sorted(raw.items()):
+        valid = c0 + dt.timedelta(hours=fhr)
+        if not (g_start <= valid <= g_end):
+            continue
         u, v = got.get("wind_u10"), got.get("wind_v10")
         if u and v:
-            import math
             cf = {k: turbine_power(hub_speed(math.hypot(u[k], v[k])))
                   for k in grids["wind"] if k in u}
             w = _wavg(cf, grids["wind"])
             if w is not None:
-                acc["wind"].append(w)
-        if got.get("solar_dswrf"):
-            d = {k: got["solar_dswrf"][k] for k in grids["solar"] if k in got["solar_dswrf"]}
-            sv = _wavg(d, grids["solar"])
-            if sv is not None:
-                acc["solar"].append(sv)
-        if got.get("precip_apcp"):
-            a = got["precip_apcp"]
-            acc["precip"].append(sum(a.values()) / len(a))
-    if len(acc["wind"]) < 4:
+                wind.append(w)
+
+    def blocks(field, wgrid):
+        have = {}
+        for fhr, got in raw.items():
+            if field not in got:
+                continue
+            st = (got.get("_steps") or {}).get(field)
+            if not st or st[0] is None:
+                continue
+            if wgrid:
+                v = _wavg({k: got[field][k] for k in wgrid if k in got[field]}, wgrid)
+            else:
+                v = sum(got[field].values()) / len(got[field])
+            if v is not None:
+                have[(st[0], st[1])] = v
+        out = []
+        for (a, b), v in sorted(have.items()):
+            heads = [(x, y) for (x, y) in have if x == a and y < b]
+            if heads:
+                h = max(heads, key=lambda t: t[1])
+                span = b - h[1]
+                if field == "precip_apcp":
+                    val = v - have[h]
+                else:
+                    val = (v * (b - a) - have[h] * (h[1] - a)) / span
+                lo_i, hi_i = h[1], b
+            else:
+                val, span, lo_i, hi_i = v, b - a, a, b
+            v0 = c0 + dt.timedelta(hours=lo_i)
+            v1 = c0 + dt.timedelta(hours=hi_i)
+            if v0 >= g_start and v1 <= g_end:
+                out.append((span, val))
+        return out
+
+    sol = blocks("solar_dswrf", grids["solar"])
+    pre = blocks("precip_apcp", None)
+    if len(wind) < 4:
         return None
+    sh = sum(h for h, _ in sol)
     return {
-        "wind_cf_proxy": round(sum(acc["wind"]) / len(acc["wind"]), 5),
-        "solar_irradiance_proxy": round(sum(acc["solar"]) / len(acc["solar"]), 2)
-        if acc["solar"] else None,
-        "precip_proxy": round(sum(acc["precip"]), 3) if acc["precip"] else None,
-        "slots": len(acc["wind"]),
+        "wind_cf_proxy": round(sum(wind) / len(wind), 5),
+        "solar_irradiance_proxy": round(sum(h * v for h, v in sol) / sh, 2) if sh else None,
+        "precip_proxy": round(sum(v for _, v in pre), 3) if pre else None,
+        "slots": len(wind),
+        "solar_hours_covered": sh or None,
+        "precip_blocks": len(pre) or None,
         "fields_missing": sorted(miss) or None,
     }
 
