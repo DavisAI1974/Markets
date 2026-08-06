@@ -461,7 +461,7 @@ def station_fields_multi(cycle_date, cycle_hour, member, fhr, pts, needles, sess
     return out or None
 
 
-def capacity_points(kind, cell=0.25):
+def capacity_points(kind, cell=0.25, asof=None):
     """Capacity-weighted sampling cells from REAL generator locations. -> {key: {lat,lon,weight}}
 
 WHY CAPACITY WEIGHTING, MEASURED. 77 days, day-over-day direction against realized EIA-930 US48
@@ -488,7 +488,18 @@ WHY CAPACITY WEIGHTING, MEASURED. 77 days, day-over-day direction against realiz
                          "required). Refusing to fall back to a uniform grid, which is measured to "
                          "fail." % os.path.relpath(fn, HERE))
     with open(fn, encoding="utf-8") as f:
-        gens = json.load(f)["generators"]
+        doc = json.load(f)
+    gens = doc["generators"]
+    # POINT-IN-TIME FLEET (adversarial audit, S114). The file is ONE snapshot of the operating
+    # fleet; applying it to earlier days weights the geography by plants that were not yet running
+    # - a forward-looking term inside a record that declares `knowable_from`. Second-order (it is a
+    # weighting, not a level) but real, and it scales with span: 2026 alone commissioned 9,070 MW
+    # of solar and 5,661 MW of wind against ~163 GW fleets. Every generator carries EIA's
+    # operating-year-month (100% coverage on both files), so the fleet AS OF a day is
+    # reconstructible rather than assumed.
+    if asof:
+        ym = "%s-%s" % (asof[:4], asof[4:6])
+        gens = [g for g in gens if not g.get("op") or g["op"] <= ym]
     cells = {}
     for g in gens:
         la, lo = g["lat"], g["lon"]
@@ -511,6 +522,8 @@ def _wavg(vals, pts):
         return None
     return sum(vals[k] * pts[k]["weight"] for k in vals if k in pts) / tot
 
+
+_SUBCOMMANDS = set()          # populated by main(); the selftest asserts `plants` is in it
 
 HUB_M = 100.0            # typical modern hub height
 SHEAR_ALPHA = 0.14       # power-law exponent, open terrain (the standard 1/7 rule)
@@ -654,7 +667,7 @@ def member_forcings(day, member, cycle_date, cycle_hour, grids, session=None):
 
 
 def forcing_density(day, members=None, cycle_hour=12, verbose=True):
-    grids = {"wind": capacity_points("wind"), "solar": capacity_points("solar"),
+    grids = {"wind": capacity_points("wind", asof=day), "solar": capacity_points("solar", asof=day),
              "all": conus_points()}
     cycle_date, ch, known = cycle_for(day, cycle_hour)
     mems = members or MEMBERS
@@ -752,6 +765,56 @@ def forcing_series(days, members=None, cycle_hour=12, workers=6, verbose=True):
     return out
 
 
+def cmd_plants(write):
+    """Refresh the generator geography from EIA. THE COMMAND THE ERROR TEXT NAMED AND THAT DID NOT
+    EXIST - found by the adversarial audit: capacity_points() told the caller to run
+    `gefs_ensemble.py plants --write` and main() registered no such subcommand, so the snapshot
+    could not be re-cut by the documented route."""
+    import creds
+    k = creds.get("EIA_API_KEY")
+    if not k:
+        raise SystemExit("gefs plants: EIA_API_KEY not resolvable via creds.py")
+    U = "https://api.eia.gov/v2/electricity/operating-generator-capacity/data/"
+    for code, label in (("WND", "wind"), ("SUN", "solar")):
+        rows, off = [], 0
+        while True:
+            q = [("api_key", k), ("frequency", "monthly"),
+                 ("data[]", "nameplate-capacity-mw"), ("data[]", "latitude"),
+                 ("data[]", "longitude"), ("data[]", "operating-year-month"),
+                 ("facets[energy_source_code][]", code), ("facets[status][]", "OP"),
+                 ("sort[0][column]", "period"), ("sort[0][direction]", "desc"),
+                 ("offset", off), ("length", 5000)]
+            r = requests.get(U, params=q, timeout=180)
+            if not r.ok:
+                raise SystemExit("gefs plants: EIA HTTP %s" % r.status_code)
+            d = r.json()["response"]["data"]
+            if not d:
+                break
+            rows += d
+            off += len(d)
+            if len(d) < 5000 or off >= 25000:
+                break
+        per = max(x["period"] for x in rows)
+        seen = {}
+        for x in rows:
+            if x["period"] != per or not x.get("latitude") or not x.get("longitude"):
+                continue
+            seen[(x.get("plantid"), x.get("generatorid"))] = {
+                "lat": float(x["latitude"]), "lon": float(x["longitude"]),
+                "mw": float(x.get("nameplate-capacity-mw") or 0),
+                "op": x.get("operating-year-month"),
+                "ba": x.get("balancing_authority_code"), "state": x.get("stateid")}
+        v = list(seen.values())
+        print("%-6s snapshot %s | %d generators | %.0f MW | %d with operating date"
+              % (label, per, len(v), sum(x["mw"] for x in v), sum(1 for x in v if x["op"])))
+        if write:
+            with open(os.path.join(HERE, "store", "plants_%s.json" % label), "w",
+                      encoding="utf-8") as f:
+                json.dump({"snapshot_period": per, "total_mw": round(sum(x["mw"] for x in v)),
+                           "generators": v}, f, indent=1)
+    return 0
+
+
 def cmd_probe(date):
     """Is this cycle actually retrievable? Probe exact keys, never a truncated listing."""
     pts = coords()
@@ -776,6 +839,12 @@ def cmd_selftest():
             fails.append(name)
 
     print("gefs_ensemble selftest")
+    # build the parser so _SUBCOMMANDS is populated without running a command
+    try:
+        main.__wrapped__
+    except AttributeError:
+        pass
+    _build_parser()
     pts = coords()
     check("all 16 weighted stations have coordinates",
           set(pts) == set(ntf.STATION_WEIGHTS_RAW), "%d resolved" % len(pts))
@@ -788,8 +857,24 @@ def cmd_selftest():
           dt.datetime.fromisoformat(known) <
           dt.datetime(2026, 7, 20, 0, 0, tzinfo=dt.timezone.utc), known)
 
+    # THE OLD ASSERTION HERE WAS `fh[-1] - fh[0] >= 24` AND IT ENCODED THE BUG: 24 h of span was
+    # only reachable because the window rounded DOWN into the previous gas day. A test that passes
+    # BECAUSE of the defect is worse than no test - it certifies the thing it should catch. The
+    # real property is containment: every slot inside the gas day, never before its start.
+    for d_ in ("20260720", "20260115"):
+        cd_, ch_, _ = cycle_for(d_)
+        fh_ = target_fhrs(d_, cd_, ch_)
+        c0_ = dt.datetime.combine(dt.datetime.strptime(cd_, "%Y%m%d").date(),
+                                  dt.time(int(ch_)), tzinfo=dt.timezone.utc)
+        a_, b_ = gas_day_utc(d_)
+        first = c0_ + dt.timedelta(hours=fh_[0])
+        last = c0_ + dt.timedelta(hours=fh_[-1])
+        check("%s window starts INSIDE its gas day" % d_, first >= a_,
+              "first slot %s vs day start %s" % (first.isoformat()[:16], a_.isoformat()[:16]))
+        check("%s window ends inside its gas day" % d_, last <= b_)
+        cov = (last - first).total_seconds() / 3600.0
+        check("%s covers at least 21 h of the day" % d_, cov >= 21, "%.0f h" % cov)
     fh = target_fhrs("20260720", cd, ch)
-    check("fhrs cover a full 24h gas day", fh[-1] - fh[0] >= 24, "f%03d..f%03d" % (fh[0], fh[-1]))
     check("fhrs are 3-hourly", all(b - a == 3 for a, b in zip(fh, fh[1:])))
 
     # the weighting must be the imported one, not a copy
@@ -798,6 +883,26 @@ def cmd_selftest():
           abs(sum(w.values()) - 1.0) < 1e-9 and set(w) == set(pts))
     h, c = ntf.degree_days(75.0)
     check("degree_days is the imported base-65 math", (h, c) == (0.0, 10.0), "75F -> %s/%s" % (h, c))
+
+    # --- defects found by the S114 adversarial audit; each keeps its own regression -------
+    # DST: the gas day is 23/24/25 h and the window must never reach into the previous day
+    for d_, span in (("20260308", 23), ("20261101", 25), ("20260115", 24), ("20260720", 24)):
+        a_, b_ = gas_day_utc(d_)
+        got = (b_ - a_).total_seconds() / 3600.0
+        check("gas day %s spans %d h" % (d_, span), abs(got - span) < 1e-6, "%.0f h" % got)
+    cdt = target_fhrs("20260720", *cycle_for("20260720")[:2])
+    check("CDT window no longer starts 2 h early (was f015, the down-rounding bug)",
+          cdt[0] == 18, "starts f%03d" % cdt[0])
+
+    # POINT-IN-TIME FLEET: an earlier day must see a SMALLER fleet, not the 2026 snapshot
+    n26 = len(capacity_points("solar", asof="20260720"))
+    n20 = len(capacity_points("solar", asof="20200101"))
+    check("capacity_points(asof=) reconstructs a point-in-time fleet", n20 < n26,
+          "2020 %d cells vs 2026 %d" % (n20, n26))
+
+    # the command the error text names must EXIST (it did not, which is how the snapshot got stuck)
+    import argparse as _ap
+    check("`plants` subcommand is registered", "plants" in _SUBCOMMANDS)
 
     # NEGATIVE: an absent message returns None rather than a fabricated temperature
     bad = station_temps_f("19000101", "12", "gep01", 24, pts)
@@ -808,11 +913,13 @@ def cmd_selftest():
     return 1 if fails else 0
 
 
-def main():
+def _build_parser():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("coords").add_argument("--write", action="store_true")
+    sub.add_parser("plants").add_argument("--write", action="store_true")
+    globals()["_SUBCOMMANDS"] = set(sub.choices)
     p = sub.add_parser("probe"); p.add_argument("--date", required=True)
     sr = sub.add_parser("series")
     sr.add_argument("--start", required=True)
@@ -829,6 +936,11 @@ def main():
     d.add_argument("--members", type=int, default=0, help="first N members (0 = all 31)")
     d.add_argument("--out", default="")
     sub.add_parser("selftest")
+    return ap
+
+
+def main():
+    ap = _build_parser()
     a = ap.parse_args()
     if a.cmd == "selftest":
         return cmd_selftest()
@@ -836,6 +948,8 @@ def main():
         fetch_coords(write=a.write)
         print("coords written" if a.write else "coords resolved (dry run)")
         return 0
+    if a.cmd == "plants":
+        return cmd_plants(a.write)
     if a.cmd == "probe":
         return cmd_probe(a.date)
     if a.cmd == "forcings":
