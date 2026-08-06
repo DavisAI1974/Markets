@@ -30,6 +30,36 @@ Container trap (standing): cloud containers inject PLACEHOLDER AWS env vars that
 or `bash -lc`; `session_bootstrap.py` handles this.
 
 
+
+## S114 — DURABLE RETRIEVAL: SSM Parameter Store (SecureString)
+
+**THE PROBLEM.** `~/.config/markets/env` is the canonical home and is correct — chmod 600, outside
+the repo. But it lives in an **EPHEMERAL CONTAINER and does not survive the session**, and secrets
+can never go into git (this file's own standing rule; AWS kills keys it finds on GitHub, and these
+were photographed into chat at S99). So every key had to be re-pasted by hand, every session, all
+four.
+
+**THE FIX, in our own AWS account, KMS-encrypted:**
+
+| parameter | type | holds |
+|---|---|---|
+| `/markets/DATABENTO_API_KEY` | SecureString | the Databento key |
+| `/markets/EIA_API_KEY` | SecureString | the EIA key |
+
+`creds.get()` now falls back to SSM automatically, so a session that has the AWS pair retrieves the
+other two with no action. **The per-session paste drops from four values to two.**
+
+**THE AWS PAIR IS DELIBERATELY NOT STORED THERE, and the distinction is the whole design:** it is
+the BOOTSTRAP — you need it to read SSM at all. Storing it in the thing it unlocks would be
+circular. Greg pastes the AWS pair; everything else follows.
+
+**AFTER ANY PASTE OR ROTATION:** `python research/kalshi/creds.py --sync-ssm`. It pushes and then
+**verifies by reading back** (D47 — a store is not updated until a read-back proves it), and prints
+lengths and match booleans only, never a value.
+
+**ROTATION IS UNAFFECTED.** Same keys, same account. D1 still stands: they do not rotate during the
+walk. When we go live and rotate, re-paste and re-run `--sync-ssm`.
+
 ## S114 VERIFICATION — all four keys confirmed live from the one env file
 
 Checked at S114 close, by NAME only, values never printed:

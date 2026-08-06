@@ -15,8 +15,12 @@ git log --oneline -1
 python research/kalshi/restore_substrate.py
 ```
 
-**Greg drops the four key values per-session into `~/.config/markets/env` (chmod 600, outside the
-repo): `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `DATABENTO_API_KEY`, `EIA_API_KEY`.** Nothing
+**GREG NOW ONLY PASTES TWO VALUES: `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.** Put them in
+`~/.config/markets/env` (chmod 600, outside the repo). **`DATABENTO_API_KEY` and `EIA_API_KEY` are
+retrieved AUTOMATICALLY** from AWS SSM Parameter Store (`/markets/*`, SecureString, our own
+account) the first time `creds.get()` asks for them — S114. The AWS pair is deliberately NOT in
+SSM: it is the bootstrap that reads SSM. After any paste or rotation run
+`python research/kalshi/creds.py --sync-ssm`, which pushes and verifies by READ-BACK. Nothing else
 survives the container. `creds.py` resolves them; **`creds.aws_client()` is the ONLY sanctioned way
 to build a boto3 client** — the harness injects a `proxy-injected` placeholder that shadows the real
 AWS pair, and a bare `boto3.client()` fails with `InvalidClientTokenId` on a known-good key. Full
