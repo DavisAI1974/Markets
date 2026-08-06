@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 150 |
+| open | 151 |
 | in progress | 1 |
 | done | 17 |
 
-By size: **XS** 18, **S** 69, **M** 45, **L** 8
+By size: **XS** 18, **S** 69, **M** 46, **L** 8
 
 ---
 
-By tier: **ESSENTIAL** 13, **BIGGEST_WIN** 35, **REST** 103
+By tier: **ESSENTIAL** 14, **BIGGEST_WIN** 35, **REST** 103
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (13)
+## ESSENTIAL (14)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -35,6 +35,7 @@ By tier: **ESSENTIAL** 13, **BIGGEST_WIN** 35, **REST** 103
 | **A-37** | M | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
 | **A-40** | M | ROOT-CAUSE THE MAGNITUDE EMISSION CEILING - the forecaster never emits above ~$550 while half of all days exceed it | - |
 | **A-58** | M | THE BRAIN POINTS OUT OF ITSELF 21 TIMES IN SERVED SECTIONS - and 3 of those files were DELETED at S105 | It is the one-doc rule measured against the live brain, and it is going live. Three pointers already resolve to nothing, which means a specialist following them silently loses the content - the exact silent-absence family this desk has recorded eleven times. |
+| **A-60** | M | THE PRE-PAPER GATE: score the BAND, not the point - the forecaster has never been validated on the only field a binary market consumes | It is the measurement chain across the walk->paper boundary. The walk's scoreboard stops at the boundary and nothing on the other side has ever been validated, so the first honest number about the tradeable object would arrive from live P&L - the most expensive place to learn it. |
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | M | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24. |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -207,6 +208,7 @@ By tier: **ESSENTIAL** 13, **BIGGEST_WIN** 35, **REST** 103
 | **A-37** | ESSENTIAL | M | OPEN | S113 (implicit in D35 at S11 | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
 | **A-40** | ESSENTIAL | M | OPEN | S114 | ROOT-CAUSE THE MAGNITUDE EMISSION CEILING - the forecaster never emits above ~$550 while half of all days exceed it | - |
 | **A-58** | ESSENTIAL | M | OPEN | S115 | THE BRAIN POINTS OUT OF ITSELF 21 TIMES IN SERVED SECTIONS - and 3 of those files were DELETED at S105 | - |
+| **A-60** | ESSENTIAL | M | OPEN | S115 | THE PRE-PAPER GATE: score the BAND, not the point - the forecaster has never been validated on the only field a binary market consumes | - |
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | ESSENTIAL | M | OPEN | S115 | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -515,6 +517,31 @@ THE ANSWER TO GREG'S QUESTION, recorded so it is not re-litigated: the external 
 THE WORK: classify all 21 into (a)/(b)/(c), inline every (c), repair or strike the three dead ones, and add a brain_schema check that every '*.md' cited in a served section EXISTS - a dead citation should fail validation the way a desktop path does (D34's _is_machine_path precedent).
 DO IT AS A D8 PROPOSAL, never a direct edit of ng_brain.json.
 FALSIFIER: if a specialist can reason correctly on every play without opening any cited .md, the one-doc rule holds and only the dead pointers need repair.
+
+---
+
+### [ESSENTIAL] A-60 - THE PRE-PAPER GATE: score the BAND, not the point - the forecaster has never been validated on the only field a binary market consumes
+
+*size M | OPEN | raised S115*
+
+**Why it is ESSENTIAL:** It is the measurement chain across the walk->paper boundary. The walk's scoreboard stops at the boundary and nothing on the other side has ever been validated, so the first honest number about the tradeable object would arrive from live P&L - the most expensive place to learn it.
+
+**Source:** Greg, S115: 'blind vs refine isn't really relevant anymore' / 'we can leave the last group run as is but upgrade for a trading environment'
+
+MEASURED S115: ng_paper_loop consumes paper/forecast_today.json = {date, market_ticker, direction, day_move_usd_p50, band_usd, confidence, note}. The walk has scored ONLY day_move_usd_p50 - grep of blind_score_nonpooled.py and per_event.py returns ZERO references to band_usd or expected_magnitude_band_usd. So the BAND has never been scored, ever.
+
+WHY THAT IS THE WHOLE PROBLEM: a Kalshi daily binary does not pay for a point estimate. It pays for P(settle > strike), which is a property of the DISTRIBUTION. The band IS the tradeable object and it is the single least-validated field we emit. Every error number this desk has ever quoted describes a quantity the market does not price.
+
+WHAT CHANGES WHEN BLIND/REFINE STOPS BEING THE AXIS (Greg's reframe): the question stops being 'was the point right' (accuracy, which needs a held-out blind) and becomes 'is the band honest' (CALIBRATION, which does not). Calibration is measurable on days we have already walked, so this is buildable NOW on the committed corpus and does not consume the last group run.
+
+THE BUILD:
+ 1. BAND COVERAGE, per event, never pooled (D4/D37): for every scored day, did |actual| land inside expected_magnitude_band_usd? A p50/p90 band that covers 55% of days is not a band, it is a decoration. Report the coverage COUNT and name the misses individually - a band that covers the quiet middle and misses the tails is exactly the emission-ceiling failure (A-40) wearing different clothes.
+ 2. BAND -> PROBABILITY: the mapping from (p50, band) to P(settle > strike) is where O-1's missing skew correction bites, and O-1 is registered as a LIVE mispricing already sitting in the paper book. Do them together.
+ 3. CONFIDENCE must discriminate or be replaced. S111 measured one high-confidence day in fifty with `low` outscoring `med`. NOT RE-MEASURED S115 - a re-check could not reconstruct the rows from the committed posteriors, so this is cited, not verified, and re-measuring is part of the task.
+ 4. NO CALL (A-2) is a TRADING requirement, not only a measurement one: the paper loop places an order on every forecast it is handed. Abstention is a position.
+ 5. WIRE THE HANDOFF: forecast_today.json is written BY HAND today ('STUBBED pending G0/coach-wiring'). A hand-carried artifact is the S108 open item that has outlived five sessions.
+
+FALSIFIER: if band coverage on the walked corpus already matches its stated rate per season, the band is honest and only the probability mapping (2) is needed - which would be a good result and should be recorded as one rather than assumed away.
 
 ---
 
