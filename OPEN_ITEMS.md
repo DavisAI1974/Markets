@@ -61,7 +61,7 @@ By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 40, **REST** 103
 | **A-57** | S | SERVE THE BREADTH TERM - A-24c's first pass SURVIVED its benchmark and has no forward home | A measured result that beat its own named benchmark and then went nowhere. Serving three derived fields off data we already hold is the cheapest possible follow-on, and D30 says a finding with no home does not exist. |
 | **A-61** | S | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | A false REFUTED is worse than no verification: it argues for UNDOING a real fix, with an adversarial verdict behind it. Cheap to fix (pin a commit) and it protects every future audit. |
 | **A-65** | S | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | It is the test that would have caught THIS session's own worst mistake before Greg did, it is cheap (one extra spawn per change), and it converts every future view/brain change from an argument into a measurement. |
-| **A-66** | S | THE COMPOSITION MAP - classify every borrowed piece by UPDATE TARGET x DRIVING SIGNAL before building the hybrid | It is the collision detector for everything else registered tonight. Cheap (a table), and it is the difference between composing best-of-breed and building something that fights itself. Do it BEFORE any of A-59/62/63/64/65 is built. |
+| **A-66** | S | THE COMPOSITION MAP - update target x driving signal, to STACK borrowed pieces deliberately (not to rank them) | It is the collision detector for everything else registered tonight. Cheap (a table), and it is the difference between composing best-of-breed and building something that fights itself. Do it BEFORE any of A-59/62/63/64/65 is built. |
 | **G-30** | S | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | It is the instrument dependency under A-24a, the discovery note's own RANK 1 candidate and the one it calls strongest. It also turns five of twelve path points from a timing judgment into arithmetic, on a feed we already ingest. |
 | **M-15** | S | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | A compromised credential with a deferral that has silently expired is the kind of thing that is only ever noticed after it matters. Cheap to do, and the deferral it replaces was explicit and time-boxed. |
 | **O-3** | S | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
@@ -114,7 +114,7 @@ By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 40, **REST** 103
 | **A-17** | S | NUCLEAR PLANNED-OUTAGE SCHEDULE (forward) - agreed TWICE across sessions and never tracked until S112 | - |
 | **A-20** | S | TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none | - |
 | **A-3** | S | Compute the effective matching dimension d of any retrieval | - |
-| **A-64** | S | Kernel Forge (arXiv 2607.24762) - CUDA optimization NOT APPLICABLE to us; the MCTS-over-candidates harness pattern IS | Registered under D36 because a delivered external recommendation gets a line even when most of it is rejected - an unrecorded rejection returns as a surprise. The applicable slice is one harness idea, not a build; the domain half is closed with a stated reason. |
+| **A-64** | S | Kernel Forge (arXiv 2607.24762) - CUDA half OUT OF SCOPE for our workload today; the MCTS-over-candidates harness pattern stacks with A-63/A-60 | Registered under D36 because a delivered external recommendation gets a line even when most of it is rejected - an unrecorded rejection returns as a surprise. The applicable slice is one harness idea, not a build; the domain half is closed with a stated reason. |
 | **A-8** | S | Wire the depth-based turn_exhaustion as the monitor's CONFIRMING turn channel | - |
 | **A-9** | S | Generate the drop-in's work list FROM the registry instead of restating it in prose | - |
 | **G-10** | S | Separate TAS (NGT) from the tape; add jump-robust realized variance | - |
@@ -233,7 +233,7 @@ By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 40, **REST** 103
 | **A-57** | BIGGEST_WIN | S | OPEN | S115 | SERVE THE BREADTH TERM - A-24c's first pass SURVIVED its benchmark and has no forward home | - |
 | **A-61** | BIGGEST_WIN | S | OPEN | S115 | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | - |
 | **A-65** | BIGGEST_WIN | S | OPEN | S115 | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | - |
-| **A-66** | BIGGEST_WIN | S | OPEN | S115 | THE COMPOSITION MAP - classify every borrowed piece by UPDATE TARGET x DRIVING SIGNAL before building the hybrid | - |
+| **A-66** | BIGGEST_WIN | S | OPEN | S115 | THE COMPOSITION MAP - update target x driving signal, to STACK borrowed pieces deliberately (not to rank them) | - |
 | **G-30** | BIGGEST_WIN | S | OPEN | S115 | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | - |
 | **M-15** | BIGGEST_WIN | S | OPEN | S115 | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | - |
 | **O-3** | BIGGEST_WIN | S | OPEN | S114 | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
@@ -279,7 +279,7 @@ By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 40, **REST** 103
 | **A-17** | REST | S | OPEN | pre-S112, exact session unre | NUCLEAR PLANNED-OUTAGE SCHEDULE (forward) - agreed TWICE across sessions and never tracked until S112 | - |
 | **A-20** | REST | S | OPEN | S112 | TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none | A-16 (serve WAT) and A-18 (add the BAs) - both small, both prerequisites |
 | **A-3** | REST | S | OPEN | S111 | Compute the effective matching dimension d of any retrieval | - |
-| **A-64** | REST | S | OPEN | S115 | Kernel Forge (arXiv 2607.24762) - CUDA optimization NOT APPLICABLE to us; the MCTS-over-candidates harness pattern IS | - |
+| **A-64** | REST | S | OPEN | S115 | Kernel Forge (arXiv 2607.24762) - CUDA half OUT OF SCOPE for our workload today; the MCTS-over-candidates harness pattern stacks with A-63/A-60 | - |
 | **A-8** | REST | S | OPEN | S111 | Wire the depth-based turn_exhaustion as the monitor's CONFIRMING turn channel | - |
 | **A-9** | REST | S | OPEN | S111 | Generate the drop-in's work list FROM the registry instead of restating it in prose | - |
 | **G-10** | REST | S | OPEN | S111 | Separate TAS (NGT) from the tape; add jump-robust realized variance | - |
@@ -1356,7 +1356,7 @@ FALSIFIER: if posterior-diffing shows NO change across a range of day-classes fo
 
 ---
 
-### [BIGGEST_WIN] A-66 - THE COMPOSITION MAP - classify every borrowed piece by UPDATE TARGET x DRIVING SIGNAL before building the hybrid
+### [BIGGEST_WIN] A-66 - THE COMPOSITION MAP - update target x driving signal, to STACK borrowed pieces deliberately (not to rank them)
 
 *size S | OPEN | raised S115*
 
@@ -1367,18 +1367,24 @@ FALSIFIER: if posterior-diffing shows NO change across a range of day-classes fo
 THE SURVEY DESCRIBES OUR SYSTEM ALMOST VERBATIM: 'a configuration coupling a foundation model with an operational scaffold of PROMPTS, MEMORY, TOOLS, and CONTROL LOGIC' - our gold-vaulted agent files, the brain, the feeds/state, and the coordinators+guards. It formalises self-improvement as 'a self-induced update operator that obtains and commits updates to model parameters or scaffold components', and organises the literature by UPDATE TARGET and by the SIGNALS that drive change.
 WE ARE ALREADY RUNNING THAT LOOP: we cannot touch model parameters (no fine-tuning), but the D8 merge protocol - run, measure, propose, adjudicate, commit to the brain - IS a self-induced update operator on the SCAFFOLD with Greg as the adjudicator. Twenty sessions of it, without the vocabulary.
 GREG'S FRAMING AND THE DISCIPLINE IT NEEDS: he wants a deliberate composite ('Frankenstein... stack one family from different approaches on top of weaving different families together'). The failure mode of composition is NOT ugliness, it is INHERITED ASSUMPTIONS - NOOA assumes you control the code; ACM/Li assumes you can fine-tune; ACM/Dadhich assumes a multi-tenant service; Kernel Forge assumes GPU workloads. Borrow a piece, inherit its premises unexamined, and the composite fights itself.
-THE SURVEY'S TWO AXES ARE THE COLLISION DETECTOR: pieces acting on DIFFERENT targets compose cleanly; pieces acting on the SAME target with DIFFERENT signals will contend. First pass over what S115 registered:
+THE SURVEY'S TWO AXES ARE THE COLLISION DETECTOR: pieces acting on DIFFERENT targets compose cleanly; pieces acting on the SAME target need a declared write protocol (they are additive, not rival). First pass over what S115 registered:
   A-59 NOOA render-target      target=scaffold(prompts+contracts)  signal=none (structure, not improvement)
   A-65 validated compaction    target=MEMORY                       signal=posterior diff
   A-62 specialist priors       target=MEMORY                       signal=measured outcomes
   A-63 retrieval kernel        target=tools                        signal=cohort coverage
   A-64 branching refine        target=control logic                signal=score
   D8 brain merge (existing)    target=MEMORY                       signal=forward tests + adjudication
-THREE WRITE TO MEMORY (A-62, A-65, D8). That is where the composite tears, and it is now visible BEFORE the build rather than after. Concretely: specialist_priors is new served memory, so it must be validated by A-65's posterior diff, and both must respect D8's adjudication rather than becoming a second self-updating channel into the brain.
+THREE WRITE TO MEMORY (A-62, A-65, D8) - which is where a write protocol is REQUIRED, not where a winner is chosen. That is where the composite tears if uncoordinated, and it is now visible BEFORE the build rather than after. Concretely: specialist_priors is new served memory, so it must be validated by A-65's posterior diff, and both must respect D8's adjudication rather than becoming a second self-updating channel into the brain.
 THE BOUNDARY WE DO NOT CROSS, stated so the survey's framing is not adopted wholesale: its goal is adaptation 'with minimal or even no human input'. WE HAVE DELIBERATELY NOT TAKEN THAT DIRECTION and should not. D8 (proposal -> adjudication -> merge, never a direct edit) exists because unsupervised self-update on a system that will place real orders is how a play ends up rewriting its own falsifier. READ THE SURVEY FOR ITS TAXONOMY; DO NOT ADOPT ITS OBJECTIVE.
-DELIVERABLE: a one-page table in the brain's doctrine - every borrowed or planned component with its update target, driving signal, and the assumption it inherits from its source. Any two sharing a target must name which signal wins, or they are not both built.
+DELIVERABLE: a one-page table in the brain's doctrine - every borrowed or planned component with its update target, driving signal, and the assumption it inherits from its source. Any two sharing a target must name their WRITE PROTOCOL - the order, who may overwrite whom, and how provenance survives - so both contribute. NEVER 'which signal wins': same-target pieces attacking different angles are FORCE MULTIPLIERS and are stacked and measured TOGETHER (Greg, S115; CLAUDE.md since S36: 'tools are COMPLEMENTARY, not competing - evaluate by STACKING, never head-to-head'). The hazard being managed is uncoordinated WRITES, not competition.
 FALSIFIER: if two components sharing an update target can be built with no contention observed over a full group cycle, the axis is not load-bearing for a system our size and this collapses to documentation.
 PROVENANCE: abstract read in full and quoted; the 97-page body was NOT read. Do not cite findings from it.
+
+=== S115 CORRECTION (Greg): DO NOT FRAME PIECES AS DOWNGRADE OR LESS-THAN ===
+Greg, S115, verbatim: 'don't look at things as downgrade or less than. They might improve the same thing but if they attack different angles then they are force multipliers.'
+HE IS RESTATING HIS OWN STANDING RULE AND I BROKE IT REPEATEDLY IN ONE EVENING. CLAUDE.md has carried it since S36: 'tools are COMPLEMENTARY, not competing - evaluate by STACKING, never head-to-head'; and the per-cell doctrine says a signal surviving on a SUBSET of cells is KEPT and used there - 'report works on {X}, not {Y}, never X failed'. D31 adds that a refutation is SCOPED to the cell and instrument it was measured on, never converted into 'dead'.
+WHAT I ACTUALLY DID: 'downgraded' the ACM half, marked Kernel Forge's domain half 'CLOSED', and framed the whole exercise as 'steal one piece, park the rest'. Each of those converts a scoped non-fit into a verdict on the idea. The scoped facts stand (Li's ACM needs fine-tuning we cannot do; we run no PyTorch models today) - what was wrong is the RANKING LANGUAGE wrapped around them.
+THE DISTINCTION I COLLAPSED, and both halves are real: (a) two IDEAS improving the same thing from different angles are ADDITIVE - that is the force multiplier, and the correct treatment is to STACK and measure them together; (b) two MECHANISMS writing the same store without a coordination protocol is a PLUMBING hazard - uncoordinated writes, lost provenance - and its answer is a WRITE PROTOCOL, not a winner. I wrote (b)'s caution using (a)'s language.
 
 ---
 
@@ -2033,6 +2039,12 @@ REVISED SPLIT:
 === S115 SECOND CORRECTION: THERE ARE TWO DIFFERENT 'ACM' PAPERS ===
 The ACM downgraded above is Li/Ming/Chu/Shao/Jin/Xiong (arXiv 2607.23809), which requires post-training - that downgrade STANDS for that paper. Greg then sent arXiv 2607.21503, 'Agentic Context Management' by Gaurav Dadhich - SAME ACRONYM, DIFFERENT PAPER, and it is an ARCHITECTURE DISCIPLINE (five primitives: architecting, ingesting, scoping, anticipating, compacting & consolidation) usable with off-the-shelf models, no fine-tuning. So 'ACM needs fine-tuning and is therefore unavailable to us' was correct about the paper I read and WRONG as a conclusion about the idea. The usable half is now tracked as A-65 (validated compaction).
 
+=== S115 CORRECTION (Greg): DO NOT FRAME PIECES AS DOWNGRADE OR LESS-THAN ===
+Greg, S115, verbatim: 'don't look at things as downgrade or less than. They might improve the same thing but if they attack different angles then they are force multipliers.'
+HE IS RESTATING HIS OWN STANDING RULE AND I BROKE IT REPEATEDLY IN ONE EVENING. CLAUDE.md has carried it since S36: 'tools are COMPLEMENTARY, not competing - evaluate by STACKING, never head-to-head'; and the per-cell doctrine says a signal surviving on a SUBSET of cells is KEPT and used there - 'report works on {X}, not {Y}, never X failed'. D31 adds that a refutation is SCOPED to the cell and instrument it was measured on, never converted into 'dead'.
+WHAT I ACTUALLY DID: 'downgraded' the ACM half, marked Kernel Forge's domain half 'CLOSED', and framed the whole exercise as 'steal one piece, park the rest'. Each of those converts a scoped non-fit into a verdict on the idea. The scoped facts stand (Li's ACM needs fine-tuning we cannot do; we run no PyTorch models today) - what was wrong is the RANKING LANGUAGE wrapped around them.
+THE DISTINCTION I COLLAPSED, and both halves are real: (a) two IDEAS improving the same thing from different angles are ADDITIVE - that is the force multiplier, and the correct treatment is to STACK and measure them together; (b) two MECHANISMS writing the same store without a coordination protocol is a PLUMBING hazard - uncoordinated writes, lost provenance - and its answer is a WRITE PROTOCOL, not a winner. I wrote (b)'s caution using (a)'s language.
+
 ---
 
 ### [BIGGEST_WIN] G-29 - DAILY DRY-GAS PRODUCTION NOWCAST - the balance lens called it 'the single biggest hole' and the synthesis dropped it
@@ -2351,7 +2363,7 @@ L = k/r^d caps our library at a matching dimension of about 3. Condition on ten 
 
 ---
 
-### [REST] A-64 - Kernel Forge (arXiv 2607.24762) - CUDA optimization NOT APPLICABLE to us; the MCTS-over-candidates harness pattern IS
+### [REST] A-64 - Kernel Forge (arXiv 2607.24762) - CUDA half OUT OF SCOPE for our workload today; the MCTS-over-candidates harness pattern stacks with A-63/A-60
 
 *size S | OPEN | raised S115*
 
@@ -2369,6 +2381,12 @@ PAIRS WITH: A-63 (the retrieval kernel supplies the candidate cohort) and A-60 (
 THEIR METHODOLOGICAL COMPLAINT IS OUR OWN DOCTRINE, worth noting as corroboration: they criticise prior work for evaluating on 'randomly generated tensors and isolated kernels' and insist on real models in place. That is per-event scoring on real days, never pooled and never synthetic (D4/D37).
 
 FALSIFIER for the transferable half: if a branching refine (N candidate reads, scored, one selected) does not beat the linear chain on sum|err| per event on a walked block, the linear chain was not the constraint and this closes.
+
+=== S115 CORRECTION (Greg): DO NOT FRAME PIECES AS DOWNGRADE OR LESS-THAN ===
+Greg, S115, verbatim: 'don't look at things as downgrade or less than. They might improve the same thing but if they attack different angles then they are force multipliers.'
+HE IS RESTATING HIS OWN STANDING RULE AND I BROKE IT REPEATEDLY IN ONE EVENING. CLAUDE.md has carried it since S36: 'tools are COMPLEMENTARY, not competing - evaluate by STACKING, never head-to-head'; and the per-cell doctrine says a signal surviving on a SUBSET of cells is KEPT and used there - 'report works on {X}, not {Y}, never X failed'. D31 adds that a refutation is SCOPED to the cell and instrument it was measured on, never converted into 'dead'.
+WHAT I ACTUALLY DID: 'downgraded' the ACM half, marked Kernel Forge's domain half 'CLOSED', and framed the whole exercise as 'steal one piece, park the rest'. Each of those converts a scoped non-fit into a verdict on the idea. The scoped facts stand (Li's ACM needs fine-tuning we cannot do; we run no PyTorch models today) - what was wrong is the RANKING LANGUAGE wrapped around them.
+THE DISTINCTION I COLLAPSED, and both halves are real: (a) two IDEAS improving the same thing from different angles are ADDITIVE - that is the force multiplier, and the correct treatment is to STACK and measure them together; (b) two MECHANISMS writing the same store without a coordination protocol is a PLUMBING hazard - uncoordinated writes, lost provenance - and its answer is a WRITE PROTOCOL, not a winner. I wrote (b)'s caution using (a)'s language.
 
 ---
 
