@@ -76,7 +76,7 @@ By tier: **ESSENTIAL** 14, **BIGGEST_WIN** 36, **REST** 102
 | **A-19** | L | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | L, and it is the foundation under the dominant driver. The station set is 16 hand-set metros with ONE covering the entire Southeast, the weights were never tuned, and the primitive is wrong - it should be per-BA with a measured roll-up. Everything weather-shaped rests on this. |
 | **A-23** | L | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not | Turns 1,129 unread data points into a ranked verdict list, and it is the gate on A-24 - Greg's correlated-pair hunch. Delegable in full, with DATA_POINTS.md as its input. |
 | **A-39** | L | THE WINTER LANE FORWARD TOOL - build the missing terms behind the seven s105.1 plays (A-38 converter, G-4 feeds, conjunction joins) | - |
-| **A-59** | L | THE HYBRID: the agent object is another RENDER TARGET - NOOA's typed/OO shell over our store-as-truth, at the paper boundary | RE-SCOPED S115 on Greg's correction. It is not a framework adoption and not a one-feature steal: it is the same store->render pattern we already run three times, extended so the agent's docstrings and type annotations ARE the render. It closes A-54 (contract), A-7 (prompt/machine drift) and the hand-written-guard tax in one move, and the paper boundary is its natural seam. |
+| **A-59** | L | THE HYBRID: agent-as-render-target (NOOA) + agent-managed context with declared offload (ACM) - our store stays the truth | RE-SCOPED S115 on Greg's correction. It is not a framework adoption and not a one-feature steal: it is the same store->render pattern we already run three times, extended so the agent's docstrings and type annotations ARE the render. It closes A-54 (contract), A-7 (prompt/machine drift) and the hand-written-guard tax in one move, and the paper boundary is its natural seam. |
 | **G-29** | L | DAILY DRY-GAS PRODUCTION NOWCAST - the balance lens called it 'the single biggest hole' and the synthesis dropped it | - |
 | **A-42** | ? | RUN the failure judge (FJ-1) on a scored group and see whether the labels change any repair | - |
 | **A-47** | ? | Re-emit the truncated curves: g17/g18/g22 blinds have no overnight leg | - |
@@ -242,7 +242,7 @@ By tier: **ESSENTIAL** 14, **BIGGEST_WIN** 36, **REST** 102
 | **A-19** | BIGGEST_WIN | L | OPEN | S112 | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | - |
 | **A-23** | BIGGEST_WIN | L | OPEN | S112 | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not | - |
 | **A-39** | BIGGEST_WIN | L | OPEN | S114 | THE WINTER LANE FORWARD TOOL - build the missing terms behind the seven s105.1 plays (A-38 converter, G-4 feeds, conjunction joins) | - |
-| **A-59** | BIGGEST_WIN | L | OPEN | S115 | THE HYBRID: the agent object is another RENDER TARGET - NOOA's typed/OO shell over our store-as-truth, at the paper boundary | - |
+| **A-59** | BIGGEST_WIN | L | OPEN | S115 | THE HYBRID: agent-as-render-target (NOOA) + agent-managed context with declared offload (ACM) - our store stays the truth | - |
 | **G-29** | BIGGEST_WIN | L | OPEN | S114 | DAILY DRY-GAS PRODUCTION NOWCAST - the balance lens called it 'the single biggest hole' and the synthesis dropped it | - |
 | **A-42** | BIGGEST_WIN | ? | OPEN | ? | RUN the failure judge (FJ-1) on a scored group and see whether the labels change any repair | - |
 | **A-47** | BIGGEST_WIN | ? | OPEN | ? | Re-emit the truncated curves: g17/g18/g22 blinds have no overnight leg | - |
@@ -1872,13 +1872,13 @@ THE KNOWLEDGE IS IN THE BRAIN (s105.1: weather.winter_heating_size_term, renewab
 
 ---
 
-### [BIGGEST_WIN] A-59 - THE HYBRID: the agent object is another RENDER TARGET - NOOA's typed/OO shell over our store-as-truth, at the paper boundary
+### [BIGGEST_WIN] A-59 - THE HYBRID: agent-as-render-target (NOOA) + agent-managed context with declared offload (ACM) - our store stays the truth
 
 *size L | OPEN | raised S115*
 
 **Why it is BIGGEST WIN:** RE-SCOPED S115 on Greg's correction. It is not a framework adoption and not a one-feature steal: it is the same store->render pattern we already run three times, extended so the agent's docstrings and type annotations ARE the render. It closes A-54 (contract), A-7 (prompt/machine drift) and the hand-written-guard tax in one move, and the paper boundary is its natural seam.
 
-**Source:** Greg, S115: 'something to consider. just want you to look it over.' https://arxiv.org/abs/2607.20709
+**Source:** Greg, S115: 'something to consider. just want you to look it over.' https://arxiv.org/abs/2607.20709  ||  Greg, S115: 'We can merge this into our hybrid too' - https://arxiv.org/abs/2607.23809 (ACM: Agentic Context Management for Long Horizon Tasks; Li, Ming, Chu, Shao, Jin, Xiong)
 
 THE PAPER: NVIDIA Object-Oriented Agents (arXiv 2607.20709). An agent IS a Python object - methods are actions, fields are state, DOCSTRINGS ARE PROMPTS, type annotations are contracts; a method whose body is `...` is model-completed at runtime while normal methods stay deterministic.
 
@@ -1898,6 +1898,21 @@ WHY GREG'S OTHER S115 REFRAME MAKES THIS EASIER, NOT HARDER: the vault today pro
 COSTS, stated so this is not a sales pitch: it is a real spawn-layer build, not a weekend. And it MUST NOT land before the last group run - changing the engine mid-measurement is the one thing the walk cannot absorb. THE SEAM IS THE PAPER BOUNDARY, which is the same boundary where blind/refine stops being the organising idea anyway.
 
 FALSIFIER: if a prototype cannot reproduce the CURRENT emitted BLD-1/RFN-1 prompt byte-for-byte from the store (the same proof store.py check demands of every render today), the render abstraction does not actually hold and the hybrid is not buildable as described - build the typed-contract slice alone and stop.
+
+=== S115 ADDITION: ACM (arXiv 2607.23809) MERGED INTO THIS ITEM ON GREG'S CALL ===
+THE PAPER: agents manage their OWN context through purpose-built editing tools - deciding when to compress, OFFLOADING discarded content to EXTERNAL MEMORY, and RETRIEVING on demand, mirroring short-term/long-term memory. Its stated motivation is that existing compression is 'triggered by rigid heuristic rules' and 'inevitably incurs information loss'. Results on agentic search and coding: lower peak token pressure, longer explorations, more consistent solutions across trials. Code, data and checkpoints released.
+
+IT NAMES THE EXACT MISTAKE MADE IN THIS SESSION, which is why it is credible here rather than merely interesting. S115 hit a 420k-token working view and I applied a RIGID HEURISTIC COMPRESSION - cut legacy_notes, cut the audit prose - which INCURRED INFORMATION LOSS: audit.argument on all 82 plays (why a play says what it says) and falsifier on 17 (the content every specialist named most valuable). Greg reverted it on principle; this paper classifies it.
+
+AND THE REPLACEMENT BUILT AFTER THAT CORRECTION IS THE ACM PATTERN, ARRIVED AT INDEPENDENTLY: play_index is an index into external memory; the 90 plays served WHOLE are the external memory; the specialist choosing which to open is retrieval-on-demand; nothing is compressed so nothing is lost. That convergence is the evidence - ACM is not a new direction for us, it is the formalisation of the one the correction put us on.
+
+HOW THE TWO PAPERS COMPOSE (they are orthogonal, not overlapping): NOOA IS WHAT THE AGENT IS; ACM IS WHAT THE AGENT DOES OVER TIME. In NOOA terms ACM's context operations are simply METHODS on the agent object - recall(play_id), offload(...) - with the working set as an explicit FIELD, since in NOOA fields ARE state. One supplies the structure, the other the temporal discipline.
+
+WHERE THE PAYOFF ACTUALLY IS - LIVE, NOT THE WALK. A per-day specialist is a SHORT task and context barely binds. A live coach monitoring one session for ~21 hours, re-checking on TAPE triggers rather than clock triggers and adjusting a curve continuously, is long-horizon by definition - and D32 already states 'the adjustment loop is the product'. We are about to enter exactly the regime this paper targets with NO context discipline of any kind.
+
+THE ONE ADAPTATION IT NEEDS BEFORE IT TOUCHES THIS DESK: ACM lets the agent decide what to FORGET. Our standing rule is that AN ABSENCE MUST ANNOUNCE ITSELF - holes #7 and #8 were both silent absences that read downstream exactly like a deliberate mask, and that lesson is why redact_window replaces rather than drops. Agent-decided forgetting that does not declare itself is that defect with a paper behind it. CONSTRAINT: every offload must be DECLARED in the emitted record and RETRIEVABLE BY NAME. Our brain already satisfies both, so the constraint costs nothing and closes the only real hazard.
+
+ADDED FALSIFIER for the ACM half: if a live-loop prototype cannot show a session where agent-managed context BEAT serving the full view - on decision quality, not on token count - then for our sizes this is ceremony and only the declared-retrieval index (already built) is warranted. Token reduction alone is NOT the success criterion; this desk does not have a context-cost problem, it has a decision-quality problem.
 
 ---
 
