@@ -57,6 +57,7 @@ jobs:
             research/kalshi/frankie_core.py \
             research/kalshi/frankie_backends.py \
             research/kalshi/frankie_engine.py \
+            research/kalshi/frankie_idempotency.py \
             research/kalshi/frankie_improve.py \
             research/kalshi/frankie_reflect.py \
             research/kalshi/frankie_reflect_runner.py
