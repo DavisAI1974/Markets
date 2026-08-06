@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 153 |
+| open | 154 |
 | in progress | 1 |
 | done | 17 |
 
-By size: **XS** 18, **S** 69, **M** 47, **L** 9
+By size: **XS** 18, **S** 69, **M** 48, **L** 9
 
 ---
 
-By tier: **ESSENTIAL** 14, **BIGGEST_WIN** 38, **REST** 102
+By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 38, **REST** 102
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (14)
+## ESSENTIAL (15)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -36,6 +36,7 @@ By tier: **ESSENTIAL** 14, **BIGGEST_WIN** 38, **REST** 102
 | **A-40** | M | ROOT-CAUSE THE MAGNITUDE EMISSION CEILING - the forecaster never emits above ~$550 while half of all days exceed it | - |
 | **A-58** | M | THE BRAIN POINTS OUT OF ITSELF 21 TIMES IN SERVED SECTIONS - and 3 of those files were DELETED at S105 | It is the one-doc rule measured against the live brain, and it is going live. Three pointers already resolve to nothing, which means a specialist following them silently loses the content - the exact silent-absence family this desk has recorded eleven times. |
 | **A-60** | M | THE PRE-PAPER GATE: score the BAND, not the point - the forecaster has never been validated on the only field a binary market consumes | It is the measurement chain across the walk->paper boundary. The walk's scoreboard stops at the boundary and nothing on the other side has ever been validated, so the first honest number about the tradeable object would arrive from live P&L - the most expensive place to learn it. |
+| **A-63** | M | THE KERNEL IS THE MISSING ENGINE - and it produces the BAND for free, which is the same build as A-60 | D32 makes analog retrieval THE product and we have no similarity function at all - retrieval is a calendar window plus a regime label. It is also the cheapest honest route to the band, which A-60 shows has never been validated and is the only field a binary market actually prices. Two ESSENTIAL items, one build. |
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | M | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24. |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -211,6 +212,7 @@ By tier: **ESSENTIAL** 14, **BIGGEST_WIN** 38, **REST** 102
 | **A-40** | ESSENTIAL | M | OPEN | S114 | ROOT-CAUSE THE MAGNITUDE EMISSION CEILING - the forecaster never emits above ~$550 while half of all days exceed it | - |
 | **A-58** | ESSENTIAL | M | OPEN | S115 | THE BRAIN POINTS OUT OF ITSELF 21 TIMES IN SERVED SECTIONS - and 3 of those files were DELETED at S105 | - |
 | **A-60** | ESSENTIAL | M | OPEN | S115 | THE PRE-PAPER GATE: score the BAND, not the point - the forecaster has never been validated on the only field a binary market consumes | - |
+| **A-63** | ESSENTIAL | M | OPEN | S115 | THE KERNEL IS THE MISSING ENGINE - and it produces the BAND for free, which is the same build as A-60 | - |
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | ESSENTIAL | M | OPEN | S115 | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -546,6 +548,22 @@ THE BUILD:
  5. WIRE THE HANDOFF: forecast_today.json is written BY HAND today ('STUBBED pending G0/coach-wiring'). A hand-carried artifact is the S108 open item that has outlived five sessions.
 
 FALSIFIER: if band coverage on the walked corpus already matches its stated rate per season, the band is honest and only the probability mapping (2) is needed - which would be a good result and should be recorded as one rather than assumed away.
+
+---
+
+### [ESSENTIAL] A-63 - THE KERNEL IS THE MISSING ENGINE - and it produces the BAND for free, which is the same build as A-60
+
+*size M | OPEN | raised S115*
+
+**Why it is ESSENTIAL:** D32 makes analog retrieval THE product and we have no similarity function at all - retrieval is a calendar window plus a regime label. It is also the cheapest honest route to the band, which A-60 shows has never been validated and is the only field a binary market actually prices. Two ESSENTIAL items, one build.
+
+**Source:** Greg, S115: 'anything else you would like to see in an agent? kernels?' - confirmed as similarity/retrieval
+
+THE GAP: D32 (S111, Greg) makes the machine ANALOG RETRIEVAL - project conditions forward, reason to how the session should BEHAVE, then find a past day whose SHAPE matches that behaviour and re-anchor its level; 'the analog does not do the forecasting, it RENDERS it'. That is a kernel problem and WE HAVE NO KERNEL. Today's retrieval key is a +/-2 week calendar window (which holds day length near-constant by construction) plus a regime label. Nothing measures shape similarity.
+THE CONSTRAINT IS ALREADY MEASURED: the S111 dimension-budget briefing gives L = k/r^d, capping our effective matching dimension at about 3 - which is WHY a coarse regime label has been the only viable key. A-3 (compute d for any retrieval) is the check on any candidate kernel; A-5 (the library index) is where it lands.
+THE SYNTHESIS, AND IT IS THE POINT OF THIS ITEM: **THE KERNEL PRODUCES THE BAND FOR FREE.** D32 already says so - 'one analog for the central path, the cohort that PASSED the match test but was not chosen for the band - nothing averaged'. So the band is not a quantity to fit; it is the EMPIRICAL SPREAD OF THE MATCHED COHORT. That makes A-60 (score the band, the only field a Kalshi binary prices) and this item the SAME BUILD, and it makes the band non-parametric, which is exactly what this desk's evidence demands: S114 struck weekend_gap_wide_band_emission's 0.5-1.0x sigma band because it held on 1 of its own 4 instances, while the OBSERVATION it rested on survived (D37). A fitted sigma failed; a cohort spread is the honest replacement.
+FORM CONSTRAINTS, from our own rules: match on SHAPE not level - D32 says 'the scrap signal is SLOPE, not level' and 'level errors are correctable and slope errors are not', and differencing removes the level automatically. Per-cell, never pooled (D4/D37) - one kernel fitted across all seasons is the pooled-correlation error in a new costume, and S113 measured that exact failure (a pooled correlation whose sign was opposite to every constituent cell). And amplitude stays a REJECTION TEST, not a knob (D32) - if the matched cohort must be rescaled much to fit, that is the signal to construct rather than retrieve.
+FALSIFIER: if the matched cohort's spread does not cover realized moves at its stated rate - measured per event and per season, never pooled - the kernel is not selecting on anything that governs outcome, and the retrieval key is wrong rather than the band. That is the same coverage test A-60 specifies, which is the evidence these are one build.
 
 ---
 
