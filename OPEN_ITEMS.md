@@ -6,7 +6,7 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 132 |
+| open | 138 |
 | in progress | 1 |
 | done | 12 |
 
@@ -14,7 +14,7 @@ By size: **XS** 18, **S** 63, **M** 44, **L** 8
 
 ---
 
-By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 28, **REST** 97
+By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 31, **REST** 100
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -35,7 +35,7 @@ By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 28, **REST** 97
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 
-## BIGGEST WIN (28)
+## BIGGEST WIN (31)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -69,8 +69,11 @@ By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 28, **REST** 97
 | **A-23** | L | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not | Turns 1,129 unread data points into a ranked verdict list, and it is the gate on A-24 - Greg's correlated-pair hunch. Delegable in full, with DATA_POINTS.md as its input. |
 | **A-39** | L | THE WINTER LANE FORWARD TOOL - build the missing terms behind the seven s105.1 plays (A-38 converter, G-4 feeds, conjunction joins) | - |
 | **G-29** | L | DAILY DRY-GAS PRODUCTION NOWCAST - the balance lens called it 'the single biggest hole' and the synthesis dropped it | - |
+| **A-42** | ? | RUN the failure judge (FJ-1) on a scored group and see whether the labels change any repair | - |
+| **A-46** | ? | The clutter is the BRAIN, not the prompt: serve plays by relevance, not all 90 | - |
+| **A-47** | ? | Re-emit the truncated curves: g17/g18/g22 blinds have no overnight leg | - |
 
-## REST (97)
+## REST (100)
 
 *everything else - real work, correctly tracked, and none of it deleted. Several become cheap once an ESSENTIAL or BIGGEST_WIN item lands.*
 
@@ -173,6 +176,9 @@ By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 28, **REST** 97
 | **A-24** | L | THE UNKNOWN CORRELATED PAIR - search the 1,717 for structure nobody has put together, WITHOUT manufacturing it | - |
 | **A-5** | L | Build the library index (seasonal window, regime label, day class, shape descriptor) | - |
 | **A-7** | L | ONE STORE + generated spawns | - |
+| **A-43** | ? | Second judge for adjudication where a label routes real work | - |
+| **A-44** | ? | Feed the model-context coverage gap back as a finding, and check it against the paper's own data | - |
+| **A-45** | ? | Apply the edge/fault-side labelling to the WINNERS census, not only failures | - |
 
 ---
 
@@ -216,6 +222,9 @@ By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 28, **REST** 97
 | **A-23** | BIGGEST_WIN | L | OPEN | S112 | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not | - |
 | **A-39** | BIGGEST_WIN | L | OPEN | S114 | THE WINTER LANE FORWARD TOOL - build the missing terms behind the seven s105.1 plays (A-38 converter, G-4 feeds, conjunction joins) | - |
 | **G-29** | BIGGEST_WIN | L | OPEN | S114 | DAILY DRY-GAS PRODUCTION NOWCAST - the balance lens called it 'the single biggest hole' and the synthesis dropped it | - |
+| **A-42** | BIGGEST_WIN | ? | OPEN | ? | RUN the failure judge (FJ-1) on a scored group and see whether the labels change any repair | - |
+| **A-46** | BIGGEST_WIN | ? | OPEN | ? | The clutter is the BRAIN, not the prompt: serve plays by relevance, not all 90 | - |
+| **A-47** | BIGGEST_WIN | ? | OPEN | ? | Re-emit the truncated curves: g17/g18/g22 blinds have no overnight leg | - |
 | **G-14** | REST | XS | OPEN | S111 | Fix the LNE strike decode at source (Databento display_factor bug) | - |
 | **G-17** | REST | XS | OPEN | S111 (recommendation); S112  | TAPE: the BOIL/KOLD close-imbalance test | - |
 | **G-21** | REST | XS | OPEN | S111 (recommendation); S112  | STORAGE CONSENSUS: carry the RANGE, not just the median | - |
@@ -313,6 +322,9 @@ By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 28, **REST** 97
 | **A-24** | REST | L | OPEN | S112 | THE UNKNOWN CORRELATED PAIR - search the 1,717 for structure nobody has put together, WITHOUT manufacturing it | A-23 (triage first - a pair built on a defect artifact is a manufactured mechanism) |
 | **A-5** | REST | L | OPEN | S111 | Build the library index (seasonal window, regime label, day class, shape descriptor) | - |
 | **A-7** | REST | L | OPEN | S111 | ONE STORE + generated spawns | - |
+| **A-43** | REST | ? | OPEN | ? | Second judge for adjudication where a label routes real work | - |
+| **A-44** | REST | ? | OPEN | ? | Feed the model-context coverage gap back as a finding, and check it against the paper's own data | - |
+| **A-45** | REST | ? | OPEN | ? | Apply the edge/fault-side labelling to the WINNERS census, not only failures | - |
 
 ## DONE
 
@@ -1692,6 +1704,36 @@ The supply side of the balance has no nowcast. The briefing's own balance lens r
 
 ---
 
+### [BIGGEST_WIN] A-42 - RUN the failure judge (FJ-1) on a scored group and see whether the labels change any repair
+
+*size ? | OPEN | raised ?*
+
+**Source:** Scale AI arXiv:2607.28802 - applied S114
+
+The role file, the frozen taxonomy, the validator and now the FJ-1 spawn template all exist, and the judge has never been run on a live group. Until it is, the whole apparatus is the exact shape it was built to stop: a document describing what should happen, sitting apart from the machinery. The honest test is `would_a_different_label_change_the_repair` coming back TRUE on at least one finding - if it is false everywhere, the taxonomy is decoration on this desk and should be scoped down rather than carried.
+
+---
+
+### [BIGGEST_WIN] A-46 - The clutter is the BRAIN, not the prompt: serve plays by relevance, not all 90
+
+*size ? | OPEN | raised ?*
+
+**Source:** measured while wiring brain_view / the mission brief, S114
+
+Greg, S114: 'I'm trying to straddle the line of being right there but not clutter for their job.' MEASURED, and it redirects where the clutter actually is. The spawn prompt is 21,783 chars (~5.4k tokens), of which the mission brief is 76%. The WORKING BRAIN VIEW the same specialist holds is 1,581,814 chars - about 395k tokens. So the entire prompt, brief included, is roughly 1% of what is in front of the agent, and trimming it would be optimising noise. The clutter is 90 plays served whole on a day that fires a handful. THIS IS A RETRIEVAL PROBLEM AND WE ALREADY HAVE THE FINDING THAT SHAPES IT: the dimension budget L = k/r^d caps a viable matching dimension at ~3, which is why a regime/day-class label is the only workable retrieval key. Plays already carry `conditions` (parsed, 0 unparsed as of S112) and a day already carries its class, so a relevance cut is buildable from committed fields rather than invented. DO NOT BUILD IT BLIND: a play withheld from a specialist that needed it is a silent absence, which is the hole #7/#8 shape - so any cut must DECLARE what it withheld, exactly as brain_view already does at section level, and the first version should be measured against a full-brain run before it is trusted.
+
+---
+
+### [BIGGEST_WIN] A-47 - Re-emit the truncated curves: g17/g18/g22 blinds have no overnight leg
+
+*size ? | OPEN | raised ?*
+
+**Source:** path_contract.py measurement, S114
+
+path_contract.py (S114) measures it per group, scoped per D31 so an era is not called a defect. PRE-g17 blinds emitted NO path at all - the curve was not yet the product, so those are era, not violations. The real findings are in the curve era: g17 10/10 and g18 10/10 and g22 10/10 miss the 20:00 REOPEN entirely (every day starts at hour 08, so the whole overnight leg is absent); g20 10/10 overrun PAST the 17:00 close into the next session; g23 9/10; and g21 is 3/10 - the best block, 8 of 10 days on the canonical clock. SO g22 IS A REGRESSION FROM g21, AND THE CAUSE IS ALREADY RECORDED: the 2-hourly clock spec lived only in RFN-1 until S110, so the BLIND template never carried it. BLD-1 carries it now and path_contract enforces it, which closes it forward. WHAT IS STILL OWED: the committed curves themselves. They are library entries (D32) and retrieval matches on SHAPE, so a curve missing its first six hours is furniture that can never be matched. DO NOT hand-patch them - a synthesised overnight leg is invented data. They are re-emitted by re-running the specialist under the fixed template, in a rehearsal namespace, or they stay declared-truncated. Deciding which is Greg's call and is cheap either way now that the measurement is per-group.
+
+---
+
 ### [REST] G-14 - Fix the LNE strike decode at source (Databento display_factor bug)
 
 *size XS | OPEN | raised S111*
@@ -2807,6 +2849,36 @@ The shape vocabulary is ALREADY emitted in every posterior (onset_time_et, turn_
 **Source:** FORECAST_ARCHITECTURE_S111 s8, Greg S111
 
 RUN_SOP.md carries 13 slot placeholders across 36 occurrences, every one filled BY HAND - which is exactly how NC-1 happened (a calendar premise asserted from prose instead of looked up). spawn.py fills slots BY LOOKUP and emits the prompt, so running off-SOP becomes impossible rather than forbidden. Curve-building doctrine moves into the brain (served at spawn); plant policy stays in the ledger; both files become renders.
+
+---
+
+### [REST] A-43 - Second judge for adjudication where a label routes real work
+
+*size ? | OPEN | raised ?*
+
+**Source:** Scale AI arXiv:2607.28802 - applied S114
+
+The paper's Cohen's kappa 0.76 is the BEST of four frontier models against human labels on 40 worked examples - substantial agreement, not ground truth. We run ONE judge. Where a label would route a brain merge, a feed rebuild or spend, a single judge is a single point of failure with a known error rate. Not needed before FJ-1 has run once; needed before a label is allowed to move a play.
+
+---
+
+### [REST] A-44 - Feed the model-context coverage gap back as a finding, and check it against the paper's own data
+
+*size ? | OPEN | raised ?*
+
+**Source:** Scale AI arXiv:2607.28802 - applied S114
+
+The paper's model-context edge has NO harness-side mode - its three are State Tracking Failure (model), Goal Drift (model), Context Rationale Erosion (either). That is where 16 of our 28 failures live, and it forced a declared local extension (Context Delivery Failure). Either the gap is real and general, or our pipeline is unusual in a way worth naming. Both are worth knowing; today we have asserted the first without checking.
+
+---
+
+### [REST] A-45 - Apply the edge/fault-side labelling to the WINNERS census, not only failures
+
+*size ? | OPEN | raised ?*
+
+**Source:** Scale AI arXiv:2607.28802 - applied S114
+
+Registered in failure_localization's own docstring and never built. We currently credit a day carried by a clean served block and a day carried by a derived arithmetic chain identically to the forecaster. The same labelling separates them, and the second is the only kind that extrapolates.
 
 ---
 
