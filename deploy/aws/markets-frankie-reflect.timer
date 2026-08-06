@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Frankie bounded reflection daily
+
+[Timer]
+OnCalendar=*-*-* 07:15:00 UTC
+RandomizedDelaySec=900
+Persistent=true
+Unit=markets-frankie-reflect.service
+
+[Install]
+WantedBy=timers.target
