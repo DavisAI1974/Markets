@@ -3,9 +3,9 @@ set -euo pipefail
 
 MARKETS_DIR="${1:-/opt/markets}"
 RUN_USER="${2:-ubuntu}"
-SERVICE_SRC="$MARKETS_DIR/deploy/aws/markets-frankie.service"
-SERVICE_DST="/etc/systemd/system/markets-frankie.service"
 STATE_DIR="/var/lib/markets/frankie"
+UNIT_DIR="/etc/systemd/system"
+UNITS=(markets-frankie.service markets-frankie-reflect.service markets-frankie-reflect.timer)
 
 if [[ "${EUID}" -ne 0 ]]; then
   echo "Run as root: sudo $0 [markets-dir] [run-user]" >&2
@@ -15,25 +15,29 @@ if [[ ! -f "$MARKETS_DIR/research/kalshi/agent_frankie.py" ]]; then
   echo "agent_frankie.py not found under $MARKETS_DIR" >&2
   exit 2
 fi
-if [[ ! -f "$SERVICE_SRC" ]]; then
-  echo "service template not found: $SERVICE_SRC" >&2
-  exit 2
-fi
 if ! id "$RUN_USER" >/dev/null 2>&1; then
   echo "run user does not exist: $RUN_USER" >&2
   exit 2
 fi
+for unit in "${UNITS[@]}"; do
+  if [[ ! -f "$MARKETS_DIR/deploy/aws/$unit" ]]; then
+    echo "unit template not found: $MARKETS_DIR/deploy/aws/$unit" >&2
+    exit 2
+  fi
+done
 
 python3 -m pip install --upgrade -r "$MARKETS_DIR/deploy/aws/requirements-frankie.txt"
 install -d -m 0700 -o "$RUN_USER" -g "$RUN_USER" \
-  "$STATE_DIR/evidence" "$STATE_DIR/proposals/pending"
+  "$STATE_DIR/evidence" "$STATE_DIR/outcomes" "$STATE_DIR/proposals/pending"
 install -d -m 0750 /etc/markets
 
-sed \
-  -e "s|@MARKETS_DIR@|$MARKETS_DIR|g" \
-  -e "s|@RUN_USER@|$RUN_USER|g" \
-  "$SERVICE_SRC" > "$SERVICE_DST"
-chmod 0644 "$SERVICE_DST"
+for unit in "${UNITS[@]}"; do
+  sed \
+    -e "s|@MARKETS_DIR@|$MARKETS_DIR|g" \
+    -e "s|@RUN_USER@|$RUN_USER|g" \
+    "$MARKETS_DIR/deploy/aws/$unit" > "$UNIT_DIR/$unit"
+  chmod 0644 "$UNIT_DIR/$unit"
+done
 
 if [[ ! -f /etc/markets/frankie.env ]]; then
   cat > /etc/markets/frankie.env <<'EOF'
@@ -59,4 +63,6 @@ systemctl daemon-reload
 echo "Frankie installed but NOT enabled or started."
 echo "1. Configure /etc/markets/frankie.env and the SQS queue/DLQ."
 echo "2. Run: sudo -u $RUN_USER bash -lc 'cd $MARKETS_DIR/research/kalshi && python3 agent_frankie.py health && python3 agent_frankie.py selftest'"
-echo "3. Then: systemctl enable --now markets-frankie.service"
+echo "3. Start the worker: systemctl enable --now markets-frankie.service"
+echo "4. After hybrid backends and resolved evidence exist, enable reflection separately:"
+echo "   systemctl enable --now markets-frankie-reflect.timer"
