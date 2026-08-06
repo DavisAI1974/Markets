@@ -3,7 +3,7 @@
 
 ## S114 — G24 WALKED BLIND (6/10) AND IT TIES DOING NOTHING, THE RENEWABLES FORCING IS WIRED, AND EVERY REPORTED DEFECT IS CLOSED (read `SESSION_HANDOFF_2026-08-06_S114.md` + `DROP_IN_S115.md`)
 
-**Branch = `claude/kalshi-agents-coordinator-guard-sg0n15`. Brain s105.4 -> s105.8, 90 plays — play
+**Branch = `claude/kalshi-agents-coordinator-guard-sg0n15`. Brain s105.4 -> s105.9, 90 plays — play
 CALLS unchanged. G24 BLIND RUN AND SCORED. No merge. THE G24 REFINE HAS NOT RUN and is S115's
 opener.** Decisions 44 -> 48.
 
@@ -883,7 +883,7 @@ FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the drive
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
-**One-line state (S114):** brain **s105.8, 90 plays — CALLS unchanged**. **G24 blind RUN AND
+**One-line state (S114):** brain **s105.9, 90 plays — CALLS unchanged**. **G24 blind RUN AND
 SCORED: 6/10, sum|err| 4,890 — 0.98x zero_change and 1.20x seasonal_naive, i.e. we tied doing
 nothing and lost to naive.** **THE REFINE HAS NOT RUN — it is S115's opener.** The dominant problem
 is **under-emission at 0.29x of realized magnitude, 8 of 10 days, worsening from 0.55x/0.68x**.

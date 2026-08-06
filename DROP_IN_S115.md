@@ -2,7 +2,7 @@
 
 **BRANCH: `claude/kalshi-agents-coordinator-guard-sg0n15`**
 **TIP AT HANDOFF: run `git log --oneline -1` and confirm it is the S114 docs commit or later.**
-**BRAIN: s105.8, 90 plays. DECISIONS: 48. G24 BLIND IS RUN AND SCORED. THE G24 REFINE IS YOUR OPENER.**
+**BRAIN: s105.9, 90 plays. DECISIONS: 48. G24 BLIND IS RUN AND SCORED. THE G24 REFINE IS YOUR OPENER.**
 
 ---
 

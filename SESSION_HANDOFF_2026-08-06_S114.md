@@ -1,6 +1,6 @@
 # SESSION HANDOFF — S114 (2026-08-06)
 
-**Branch = `claude/kalshi-agents-coordinator-guard-sg0n15`. Brain s105.4 -> s105.8, 90 plays —
+**Branch = `claude/kalshi-agents-coordinator-guard-sg0n15`. Brain s105.4 -> s105.9, 90 plays —
 play CALLS unchanged. G24 BLIND RUN AND SCORED. No merge. THE G24 REFINE HAS NOT RUN and is the
 next session's opener.**
 
