@@ -73,10 +73,18 @@ def _retry(fn, tries=5, base=2.0):
 
 
 def _client():
+    """S115: resolve through creds.py, the one resolver - this read the process env DIRECTLY, so it
+    failed on a fresh container even with the key sitting in ~/.config/markets/env or retrievable
+    from SSM. Same family as the nuclear_outages and databento_live_smoke fixes: a feed consumer
+    that knows about exactly one credential home is a feed that stops working when the home moves.
+    creds.get walks MARKETS_ env vars -> ~/.config/markets/env -> legacy -> SSM SecureString."""
     import databento as db
-    key = os.environ.get("DATABENTO_API_KEY")
+    import creds
+    key = creds.get("DATABENTO_API_KEY", required=False)
     if not key:
-        raise SystemExit("[databento] set DATABENTO_API_KEY (a secret) in the env first")
+        raise SystemExit("[databento] DATABENTO_API_KEY not resolvable - check `python creds.py`. "
+                         "Homes: MARKETS_DATABENTO_API_KEY, ~/.config/markets/env, or SSM "
+                         "/markets/DATABENTO_API_KEY (needs the AWS pair to read SSM).")
     return db.Historical(key)
 
 
