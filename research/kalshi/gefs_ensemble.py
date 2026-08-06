@@ -453,61 +453,149 @@ def station_fields_multi(cycle_date, cycle_hour, member, fhr, pts, needles, sess
     return out or None
 
 
-def member_forcings(day, member, cycle_date, cycle_hour, pts, session=None):
-    """One member -> US48 forcing proxies for `day`, on the same gas-day boundary as the temps.
+def capacity_points(kind, cell=0.25):
+    """Capacity-weighted sampling cells from REAL generator locations. -> {key: {lat,lon,weight}}
 
-    WIND is the mean of |V10| CUBED, not of |V10|. Turbine power goes as the cube of wind speed, so
-    averaging speed and then cubing understates a windy day and overstates a calm one - and wind is
-    the term the 0629 miss turned on. SOLAR is mean DSWRF. PRECIP is the day's accumulation.
-    All three are PROXIES for output, never output, and they are named `*_proxy` for that reason.
+    THE UNIFORM CONUS GRID FAILED VALIDATION AND THIS IS WHY. Measured on 77 days against realized
+    EIA-930 US48 output, day-over-day direction, celled by month and never pooled:
+        WIND  28/76 = 37%, and BELOW 50% in all four month cells (5/20, 7/21, 10/22, 6/13)
+        SOLAR 40/76 = 53%, indistinguishable from a coin flip
+    A uniform mean over the lower 48 is dominated by area with no turbines on it. The generation is
+    not uniform and it is not close: wind nameplate is TX 43.7 GW, OK 13.7, IA 13.4, KS 9.7, IL
+    8.7, NM 8.1 - one contiguous belt - while solar is TX 32.6, CA 25.0, FL 13.3, AZ 7.5. Averaging
+    the whole country asks a question about the wrong places.
+
+    This is NOT the "hand-picked points" I warned against when the grid was built. The coordinates
+    and the nameplate MW are EIA's operating-generator record - physical fact, refreshed by
+    `plants --write`, not a choice tuned until the answer improved. 1,560 wind generators totalling
+    165 GW; 8,081 solar totalling 163 GW.
+
+    Plants are binned onto the model's own 0.25 deg cells so one decoded field serves them all.
     """
-    import math
+    fn = os.path.join(HERE, "store", "plants_%s.json" % kind)
+    if not os.path.exists(fn):
+        raise SystemExit("gefs: %s missing - run `gefs_ensemble.py plants --write` (EIA API key "
+                         "required). Refusing to fall back to a uniform grid, which is measured to "
+                         "fail." % os.path.relpath(fn, HERE))
+    with open(fn, encoding="utf-8") as f:
+        gens = json.load(f)["generators"]
+    cells = {}
+    for g in gens:
+        la, lo = g["lat"], g["lon"]
+        if not (24 < la < 50 and -126 < lo < -66):      # CONUS only; AK/HI are not on this grid
+            continue
+        j = round(la / cell) * cell
+        i = round(lo / cell) * cell
+        k = "%.2f_%.2f" % (j, i)
+        c = cells.setdefault(k, {"lat": j, "lon": i, "weight": 0.0})
+        c["weight"] += g["mw"]
+    tot = sum(c["weight"] for c in cells.values())
+    for c in cells.values():
+        c["weight"] /= tot
+    return cells
+
+
+def _wavg(vals, pts):
+    tot = sum(pts[k]["weight"] for k in vals if k in pts)
+    if not tot:
+        return None
+    return sum(vals[k] * pts[k]["weight"] for k in vals if k in pts) / tot
+
+
+HUB_M = 100.0            # typical modern hub height
+SHEAR_ALPHA = 0.14       # power-law exponent, open terrain (the standard 1/7 rule)
+
+
+def hub_speed(v10):
+    """Extrapolate 10 m wind to hub height. v_h = v_10 * (h/10)^alpha - the standard power law.
+
+    NOT a tuning knob. GEFS serves 10 m wind; turbines sit near 100 m, where the air is markedly
+    faster, and the ratio is 10^0.14 = 1.39. Skipping it is not conservative - it drives most cells
+    below the 3 m/s cut-in and CLIPS THE SIGNAL TO ZERO, which showed up immediately as a 6.3%
+    capacity-factor proxy against a real US fleet average near 35%.
+    """
+    return v10 * (HUB_M / 10.0) ** SHEAR_ALPHA
+
+
+def turbine_power(speed_ms):
+    """A generic turbine power curve, normalised 0-1. PHYSICAL FACT, not a fitted shape.
+
+    Pure cubing is wrong at both ends and the ends are where the interesting days are: below
+    cut-in (~3 m/s) a turbine makes NOTHING, and above rated (~12 m/s) it makes its rated output
+    and no more, so cubing overstates every windy day. Cut-out ~25 m/s takes it back to zero.
+    """
+    v = speed_ms
+    if v < 3.0 or v >= 25.0:
+        return 0.0
+    if v >= 12.0:
+        return 1.0
+    return (v ** 3 - 3.0 ** 3) / (12.0 ** 3 - 3.0 ** 3)
+
+
+def member_forcings(day, member, cycle_date, cycle_hour, grids, session=None):
+    """One member -> US48 forcing proxies, each on ITS OWN capacity-weighted geography.
+
+    `grids` = {"wind": capacity_points("wind"), "solar": capacity_points("solar"),
+               "all": conus_points()}  - wind and solar are sampled where wind and solar actually
+    ARE, and precipitation stays on the uniform grid because it is a general weather field with no
+    generation fleet behind it.
+    """
     fhrs = target_fhrs(day, cycle_date, cycle_hour)
-    acc = {"wind_cube": [], "solar": [], "precip": []}
+    allpts = {}
+    for g in grids.values():
+        allpts.update({k: {"lat": v["lat"], "lon": v["lon"]} for k, v in g.items()})
+    acc = {"wind": [], "solar": [], "precip": []}
     miss = set()
     for fhr in fhrs:
-        got = station_fields_multi(cycle_date, cycle_hour, member, fhr, pts,
+        got = station_fields_multi(cycle_date, cycle_hour, member, fhr, allpts,
                                    FORCING_NEEDLES, session)
         if not got:
             continue
         miss.update((got.pop("_missing", {}) or {}).get("fields", []))
         u, v = got.get("wind_u10"), got.get("wind_v10")
         if u and v:
-            sp = [math.hypot(u[k], v[k]) for k in u]
-            acc["wind_cube"].append(sum(x ** 3 for x in sp) / len(sp))
+            import math
+            cf = {k: turbine_power(hub_speed(math.hypot(u[k], v[k])))
+                  for k in grids["wind"] if k in u}
+            w = _wavg(cf, grids["wind"])
+            if w is not None:
+                acc["wind"].append(w)
         if got.get("solar_dswrf"):
-            d = got["solar_dswrf"]
-            acc["solar"].append(sum(d.values()) / len(d))
+            d = {k: got["solar_dswrf"][k] for k in grids["solar"] if k in got["solar_dswrf"]}
+            sv = _wavg(d, grids["solar"])
+            if sv is not None:
+                acc["solar"].append(sv)
         if got.get("precip_apcp"):
             a = got["precip_apcp"]
             acc["precip"].append(sum(a.values()) / len(a))
-    if len(acc["wind_cube"]) < 4:
+    if len(acc["wind"]) < 4:
         return None
     return {
-        "wind_power_proxy": round(sum(acc["wind_cube"]) / len(acc["wind_cube"]), 2),
+        "wind_cf_proxy": round(sum(acc["wind"]) / len(acc["wind"]), 5),
         "solar_irradiance_proxy": round(sum(acc["solar"]) / len(acc["solar"]), 2)
         if acc["solar"] else None,
         "precip_proxy": round(sum(acc["precip"]), 3) if acc["precip"] else None,
-        "slots": len(acc["wind_cube"]),
+        "slots": len(acc["wind"]),
         "fields_missing": sorted(miss) or None,
     }
 
 
 def forcing_density(day, members=None, cycle_hour=12, verbose=True):
-    pts = conus_points()
+    grids = {"wind": capacity_points("wind"), "solar": capacity_points("solar"),
+             "all": conus_points()}
     cycle_date, ch, known = cycle_for(day, cycle_hour)
     mems = members or MEMBERS
     s = requests.Session()
     rows = []
     for m in mems:
-        r = member_forcings(day, m, cycle_date, ch, pts, s)
+        r = member_forcings(day, m, cycle_date, ch, grids, s)
         if r is None:
             continue
         r["member"] = m
         rows.append(r)
         if verbose:
-            print("  %-6s wind %10.1f  solar %7.1f  precip %6.3f"
-                  % (m, r["wind_power_proxy"], r["solar_irradiance_proxy"] or -1,
+            print("  %-6s wind_cf %7.4f  solar %7.1f  precip %6.3f"
+                  % (m, r["wind_cf_proxy"], r["solar_irradiance_proxy"] or -1,
                      r["precip_proxy"] or 0))
     if not rows:
         raise SystemExit("gefs: no member produced forcings for %s" % day)
@@ -521,23 +609,63 @@ def forcing_density(day, members=None, cycle_hour=12, verbose=True):
                 "min": v[0], "max": v[-1]}
     return {
         "day": day, "scale": "US48 (CONUS bounding-box grid, %.0f deg)" % CONUS["step"],
-        "n_gridpoints": len(pts),
+        "n_wind_cells": len(grids["wind"]), "n_solar_cells": len(grids["solar"]),
         "cycle_utc": "%sT%s:00:00Z" % (dt.datetime.strptime(cycle_date, "%Y%m%d").date(), ch),
         "knowable_from": known,
         "served_separately": ("wind and solar are NEVER summed - they are seasonally "
                               "ANTI-correlated (wind peaks spring/autumn, solar at the solstice), "
                               "so one 'renewables' term is a composite of two opposite annual "
                               "cycles (D37)."),
-        "wind_is_cubed": ("wind_power_proxy is the mean of |V10|^3. Turbine power goes as the cube "
-                          "of speed; averaging speed then cubing understates a windy day."),
+        "wind_method": ("capacity-weighted mean of a generic TURBINE POWER CURVE applied to the "
+                        "HUB-HEIGHT wind (10 m extrapolated to 100 m by the standard 1/7 power law) "
+                        "at each cell - zero below 3 m/s cut-in, cube between, flat at rated above "
+                        "12 m/s, zero above 25 m/s cut-out. Pure cubing overstates every windy day."),
+        "geography": ("wind and solar are sampled at their OWN capacity-weighted cells from EIA's "
+                      "operating-generator record, NOT on a uniform grid - the uniform version was "
+                      "measured at 37% (wind) and 53% (solar) day-over-day direction against "
+                      "realized EIA-930, and 37% is worse than a coin flip."),
         "these_are_proxies": ("meteorological fields, NOT MWh. Usable only to the extent the "
                               "validation below holds - see `gefs_ensemble.py validate`."),
         "members_used": len(rows),
-        "wind_power_proxy": dist("wind_power_proxy"),
+        "wind_cf_proxy": dist("wind_cf_proxy"),
         "solar_irradiance_proxy": dist("solar_irradiance_proxy"),
         "precip_proxy": dist("precip_proxy"),
         "members": rows,
     }
+
+
+def forcing_series(days, members=None, cycle_hour=12, workers=6, verbose=True):
+    """Forcing densities for many days, days fetched CONCURRENTLY.
+
+    THE VALIDATION/PRODUCTION SPLIT, and it is what makes this affordable. Deciding whether the
+    proxy TRACKS realized output needs many days and does not need spread - the control member
+    alone answers it, at ~5 s a day. Deciding how UNCERTAIN a given day is needs all 31 members and
+    only for the days actually being forecast, at ~3 min a day. So validation runs `--members 1`
+    over a long span; a staged block runs the full ensemble over ten days.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+    out = {}
+
+    def one(day):
+        try:
+            return day, forcing_density(day, members=members, cycle_hour=cycle_hour, verbose=False)
+        except SystemExit as e:
+            return day, {"error": str(e)}
+        except Exception as e:
+            return day, {"error": "%s: %s" % (type(e).__name__, e)}
+
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        for day, rec in ex.map(one, days):
+            out[day] = rec
+            if verbose:
+                if "error" in rec:
+                    print("  %s ERROR %s" % (day, rec["error"][:70]))
+                else:
+                    w = rec["wind_cf_proxy"]
+                    sol = rec["solar_irradiance_proxy"]
+                    print("  %s wind p50 %8.1f  solar p50 %7.1f  n=%d"
+                          % (day, w["p50"], (sol or {}).get("p50", -1), rec["members_used"]))
+    return out
 
 
 def cmd_probe(date):
@@ -602,6 +730,16 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("coords").add_argument("--write", action="store_true")
     p = sub.add_parser("probe"); p.add_argument("--date", required=True)
+    sr = sub.add_parser("series")
+    sr.add_argument("--start", required=True)
+    sr.add_argument("--end", required=True)
+    sr.add_argument("--members", type=int, default=1)
+    sr.add_argument("--workers", type=int, default=6)
+    sr.add_argument("--out", default="")
+    f = sub.add_parser("forcings")
+    f.add_argument("--day", required=True)
+    f.add_argument("--members", type=int, default=0)
+    f.add_argument("--out", default="")
     d = sub.add_parser("density")
     d.add_argument("--day", required=True)
     d.add_argument("--members", type=int, default=0, help="first N members (0 = all 31)")
@@ -616,6 +754,25 @@ def main():
         return 0
     if a.cmd == "probe":
         return cmd_probe(a.date)
+    if a.cmd == "forcings":
+        rec = forcing_density(a.day, MEMBERS[:a.members] if a.members else None)
+        print(json.dumps({k: v for k, v in rec.items() if k != "members"}, indent=1))
+        if a.out:
+            json.dump(rec, open(a.out, "w"), indent=1)
+            print("written ->", a.out)
+        return 0
+    if a.cmd == "series":
+        import plant_calendar as pcal
+        d0 = dt.datetime.strptime(a.start, "%Y%m%d").date()
+        d1 = dt.datetime.strptime(a.end, "%Y%m%d").date()
+        days = [x["date"] for x in pcal.sessions(d0, d1)]
+        print("%d trading sessions %s..%s, %d member(s), %d workers"
+              % (len(days), a.start, a.end, a.members or 31, a.workers))
+        recs = forcing_series(days, MEMBERS[:a.members] if a.members else None, workers=a.workers)
+        if a.out:
+            json.dump(recs, open(a.out, "w"), indent=1)
+            print("written ->", a.out)
+        return 0
     rec = density(a.day, MEMBERS[:a.members] if a.members else None)
     print(json.dumps({k: v for k, v in rec.items() if k != "members"}, indent=1))
     if a.out:
