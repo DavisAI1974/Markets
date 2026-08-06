@@ -1,0 +1,62 @@
+name: Novel Edge Lab CI
+
+on:
+  push:
+    branches:
+      - chatgpt/novel-edge-lab-s116
+    paths:
+      - dashboard/adapters/novel.py
+      - dashboard/novel_candidates.json
+      - dashboard/frontend/novel.css
+      - dashboard/frontend/novel.js
+      - dashboard/server.py
+      - .github/workflows/novel_edge_lab_ci.yml
+  pull_request:
+    paths:
+      - dashboard/adapters/novel.py
+      - dashboard/novel_candidates.json
+      - dashboard/frontend/novel.css
+      - dashboard/frontend/novel.js
+      - dashboard/server.py
+      - .github/workflows/novel_edge_lab_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dashboard dependency
+        run: pip install --quiet fastapi
+      - name: Compile Python
+        run: python -m py_compile dashboard/adapters/novel.py dashboard/server.py
+      - name: Validate candidate registry JSON
+        run: python -m json.tool dashboard/novel_candidates.json >/dev/null
+      - name: Check JavaScript syntax
+        run: node --check dashboard/frontend/novel.js
+      - name: Validate read-only registry and fixed 48-hour schedule
+        run: |
+          python - <<'PY'
+          import datetime as dt
+          from zoneinfo import ZoneInfo
+          from dashboard.adapters import novel
+          from dashboard.server import app
+
+          now = dt.datetime(2026, 8, 6, 10, 13, tzinfo=ZoneInfo('America/New_York'))
+          payload = novel.snapshot(now=now)
+          assert payload['authority'] == 'READ_ONLY'
+          assert payload['execution_enabled'] is False
+          assert len(payload['candidates']) == 10
+          assert payload['summary']['next_48h_watch_windows'] >= 3
+          assert all(c['execution_enabled'] is False for c in payload['candidates'])
+          assert all(c['authority'] in {'WATCH_ONLY', 'SHADOW'} for c in payload['candidates'])
+          paths = {route.path for route in app.routes}
+          assert '/api/v1/novel/candidates' in paths
+          print(payload['summary'])
+          PY
