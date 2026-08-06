@@ -67,16 +67,24 @@ def _next_weekday_window(now: dt.datetime, weekday: int, hour: int, minute: int)
     return candidate
 
 
+def _next_business_window(now: dt.datetime, hour: int, minute: int) -> dt.datetime:
+    """Next weekday clock occurrence, including later today when eligible."""
+    candidate = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    if candidate <= now:
+        candidate += dt.timedelta(days=1)
+    while candidate.weekday() >= 5:
+        candidate += dt.timedelta(days=1)
+    return candidate
+
+
 def _immediate_schedule(now: dt.datetime) -> list[dict]:
     windows: list[dict] = []
 
     # Daily settlement-source watch. This is intentionally a watch window, not a
     # claim that a matching active contract exists; active-rule verification is required.
     for hour, minute, label in ((14, 15, "WTI source/expiry approach"), (16, 45, "5:00 p.m. commodity determination approach")):
-        when = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
-        if when <= now:
-            when += dt.timedelta(days=1)
-        if when.weekday() < 5 and when <= now + dt.timedelta(hours=48):
+        when = _next_business_window(now, hour, minute)
+        if when <= now + dt.timedelta(hours=48):
             windows.append({
                 "candidate_id": "COMMODITY_SETTLEMENT_CLOCK_RESIDUAL",
                 "label": label,
