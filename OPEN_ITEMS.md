@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 157 |
+| open | 158 |
 | in progress | 1 |
 | done | 17 |
 
-By size: **XS** 18, **S** 72, **M** 48, **L** 9
+By size: **XS** 18, **S** 72, **M** 48, **L** 10
 
 ---
 
-By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 40, **REST** 103
+By tier: **ESSENTIAL** 16, **BIGGEST_WIN** 40, **REST** 103
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (15)
+## ESSENTIAL (16)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -40,6 +40,7 @@ By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 40, **REST** 103
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | M | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24. |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
+| **A-67** | L | THE A/B: build the minimum Frankenstein, then run g24 refine TWICE on identical data - current harness vs hybrid | It is the only way the hybrid ships on a MEASUREMENT rather than on argument, and it DE-RISKS the last group run rather than endangering it - the run would then use a harness validated on g24 instead of one reasoned about. It is also A-65's validated-compaction discipline applied at architecture scale, which is the standard S115 just adopted. |
 | **A-50** | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 
 ## BIGGEST WIN (40)
@@ -219,6 +220,7 @@ By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 40, **REST** 103
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | ESSENTIAL | M | OPEN | S115 | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
+| **A-67** | ESSENTIAL | L | OPEN | S115 | THE A/B: build the minimum Frankenstein, then run g24 refine TWICE on identical data - current harness vs hybrid | - |
 | **A-50** | ESSENTIAL | ? | OPEN | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 | **O-2** | BIGGEST_WIN | XS | OPEN | S114 | RECORD THE S111 OPTIONS VERDICT AS A BINDING DECISION - it exists only in a file-index blurb | - |
 | **A-15** | BIGGEST_WIN | S | OPEN | S112 | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | - |
@@ -632,6 +634,35 @@ THE GAP: we serve degree days (gw_hdd) and we serve power burn. We serve NOTHING
 ALSO MISSING FROM THE EXTRACT: industrial consumption. It is 21.4-27.0 Bcf/d - the SECOND largest component - and appears in our steo_vintage store only as the arithmetic residual of NGTCPUS minus the six series we do carry. EIA publishes it; our parse drops it.
 
 WEEKLY CORROBORATION LANDED S114, from a second committed file (storage_week_by_week_S113.csv), per event: four same-burn SAME-BREADTH pairs, each a November/early-December week against a January/February week, 219-369 Bcf apart - 2021-02-25 -338 vs 2020-11-19 +31 (burns 168/174, both br2); 2022-02-03 -268 vs 2022-11-10 +79 (197/197, br2); 2025-01-30 -321 vs 2024-12-05 -30 (248/256, br4); 2019-02-07 -237 vs 2020-11-27 -18 (171/172, br3). Identical power burn, identical breadth; the differing term is res/comm heating. The monthly finding now has its weekly echo at the traded horizon. ALSO: 12 of the 14 deepest breadth-0/1 winter weeks carry POSITIVE dVRE - wind was muting burn while heating drained the tank, which is why a burn-based model under-calls exactly the weeks that matter. See WINTER_LANE_FORWARD_TOOL_S114.md s1.
+
+---
+
+### [ESSENTIAL] A-67 - THE A/B: build the minimum Frankenstein, then run g24 refine TWICE on identical data - current harness vs hybrid
+
+*size L | OPEN | raised S115*
+
+**Why it is ESSENTIAL:** It is the only way the hybrid ships on a MEASUREMENT rather than on argument, and it DE-RISKS the last group run rather than endangering it - the run would then use a harness validated on g24 instead of one reasoned about. It is also A-65's validated-compaction discipline applied at architecture scale, which is the standard S115 just adopted.
+
+**Source:** Greg, S115: 'I say we build it before the group run and run two different refine runs on that data. Refine vs Frankenstein'
+
+THE DESIGN, and it is clean: g24 is staged, 0 hard, causal slices CLEAN, and the refine has not run. Same state, same actual, same brain, same ten days - the ONLY variable is the harness. D45 says the refine needs no blind wall, so a refine may be re-run freely; nothing about this consumes the last group run or touches the blind record (grp24.json stays immutable, and grp24_state_blind_s114.json preserves what the blind read).
+IT INVERTS THE RISK I HAD BEEN ASSERTING. 'Do not change the engine before the last group run' was right about shipping an UNMEASURED harness. Building it and validating it on g24 means the last run uses a harness we have MEASURED. That de-risks the final run instead of endangering it.
+
+SCOPE - THE MINIMUM FRANKENSTEIN THAT ACTUALLY TESTS THE THESIS (the full stack is too large to build before a run, and an unfinished stack tests nothing):
+  IN  A-59 render target + typed contract - prompts/docstrings RENDERED from the store, contract enforced at EMISSION. This is the core claim.
+  IN  A-62 specialist priors - the agent is served its own measured failure mode (E: prior-over-state, 13 of 18 Friday misses; B: the Monday lane).
+  IN  A-64 branching candidates - N candidate reads with a selection step, against the current single linear chain.
+  OUT A-63 retrieval kernel - depends on A-5 (the library index), which does not exist. Too big for this cycle; it is not a lesser idea, it is a later one.
+  OUT A-65 validated compaction - nothing to compact (the S115 cuts were reverted). Its METHOD is what this whole item runs on.
+
+THE METRIC IS WHERE THIS CAN GO WRONG, AND IT NEEDS DECIDING BEFORE THE RUN. BOTH arms see the price curve, so both will look good on error and sum|err| WILL NOT DISCRIMINATE - two 10/10 runs teach nothing. Score per event, never pooled (D4/D37), on what actually matters:
+  (1) EMISSION RATIO mean|guess|/mean|actual| per day - the standing disease is 0.29x (g24 blind), trending down from 0.55x/0.68x. Does the hybrid size on DERIVED grounds?
+  (2) BAND COVERAGE - does |actual| land inside the emitted band at its stated rate (A-60)? The band is the only field a Kalshi binary prices and has never been scored.
+  (3) STAND-DOWN HONESTY - does it decline where inputs are absent and NAME the ground, rather than manufacturing a number?
+  (4) DERIVED vs FITTED - the hardest and the most important, readable only in the reasoning. A hybrid that scores better by fitting the visible curve has failed, not won.
+
+PROCEDURE: archive nothing, write both arms to SEPARATE namespaces (never the canonical names - NC-4), diff per event with per_event.report(), and record the comparison as a REGISTERED experiment with its metric fixed BEFORE the run so the winner cannot be chosen after the fact.
+FALSIFIER: if the hybrid arm does not move (1)-(3) on a per-event basis, the harness is not the constraint on this desk's forecasting and the hybrid should ship - if at all - purely on maintainability grounds, with that stated honestly rather than dressed as a performance win.
 
 ---
 
