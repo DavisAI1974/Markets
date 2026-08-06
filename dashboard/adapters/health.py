@@ -55,7 +55,7 @@ def _store_status(rel: str) -> dict:
 
 
 def snapshot() -> dict:
-    creds = paths.resolve_aws_creds()
+    credential_status = paths.aws_credential_status()
     stores = []
     n_present = 0
     for label, rel, prefix, feeds in STORES:
@@ -64,12 +64,7 @@ def snapshot() -> dict:
         stores.append({"label": label, "local": rel, "s3_prefix": prefix,
                        "feeds": feeds, **st})
     return {
-        "aws_credentials": {
-            "resolved": creds is not None,
-            "note": (None if creds else
-                     "no real key pair on this container (placeholder proxy vars ignored); "
-                     "drop the pair into scratchpad/aws.env or ~/.aws/credentials"),
-        },
+        "aws_credentials": credential_status,
         "stores": stores,
         "stores_present": n_present,
         "stores_total": len(STORES),
