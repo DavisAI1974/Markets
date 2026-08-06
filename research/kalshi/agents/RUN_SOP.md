@@ -63,6 +63,15 @@ re-composed the spawn text from prose. That is the fixed-then-dropped failure mo
 procedure itself. This file closes it.
 
 ## VERSION LOG
+- v1.16 (S115): REMEDIATION LOG ENTRY, recorded after `station0/sop_version` fired at S115
+  bring-up. The change it names was made at S114 close and documented in the S114 handoff (13.5)
+  but never version-logged - change-control item 2 broken in its logging half, recorded per item 3
+  rather than tidied away. WHAT CHANGED: `spawn.py`'s A-50 selftest clean-side probe no longer
+  asserts a NAMED group is unwalked (that premise expired within the session it was written - g24
+  was walked and named in CLAUDE.md, turning the test red on the calendar rather than on a defect);
+  it now probes a SYNTHETIC never-walked window (2099 dates), which tests the GATE. No template, no
+  procedure, and no coordinator changed; the store's 6 templates are byte-identical. First session
+  under it: S115.
 - v1.15 (S114): TWO SLOT DEFECTS FOUND BY READING THE FIRST EMITTED REHEARSAL PROMPT, before any
   agent ran. Both would have broken the run, and both are the same disease - a slot resolving to
   something that is not a usable value.
