@@ -20,6 +20,7 @@ from frankie_core import (
     GateStop,
     atomic_write_json,
     load_json,
+    parse_iso,
     safe_id,
     sha256_json,
     utc_now,
@@ -169,7 +170,68 @@ def validate_review(raw: Mapping[str, Any], *, backend: str) -> ImprovementRevie
     return ImprovementReview(**core, review_hash=sha256_json(core))
 
 
-def load_evidence(paths: Sequence[Path]) -> tuple[list[dict[str, Any]], set[str]]:
+def record_outcome(
+    *,
+    evidence_path: Path,
+    outcome: Mapping[str, Any],
+    config: FrankieConfig,
+) -> dict[str, Any]:
+    """Write an immutable outcome sidecar; never edit the original decision envelope."""
+    evidence = load_json(evidence_path)
+    if not isinstance(evidence, dict) or not isinstance(evidence.get("decision"), dict):
+        raise GateStop("evidence envelope must contain a decision object")
+    decision = evidence["decision"]
+    decision_hash = str(decision.get("decision_hash") or "")
+    if not decision_hash:
+        raise GateStop("evidence decision is missing decision_hash")
+    if outcome.get("execution_enabled") is True:
+        raise GateStop("outcome attempted to enable execution")
+    for key in ("resolved_at", "result", "source_provenance"):
+        if not outcome.get(key):
+            raise GateStop(f"outcome missing required field: {key}")
+    resolved_at = parse_iso(str(outcome["resolved_at"]))
+    provenance = outcome["source_provenance"]
+    if not isinstance(provenance, list) or not provenance:
+        raise GateStop("outcome source_provenance must be a non-empty list")
+    for index, source in enumerate(provenance):
+        if not isinstance(source, dict):
+            raise GateStop(f"outcome source_provenance[{index}] must be an object")
+        for key in ("source", "knowable_at", "content_hash"):
+            if not source.get(key):
+                raise GateStop(f"outcome source_provenance[{index}] missing {key}")
+        parse_iso(str(source["knowable_at"]))
+    core = {
+        "schema_version": "1.0",
+        "decision_hash": decision_hash,
+        "evidence_envelope_hash": str(evidence.get("envelope_hash") or sha256_json(evidence)),
+        "event_id": decision.get("event_id"),
+        "candidate_id": decision.get("candidate_id"),
+        "resolved_at": resolved_at.isoformat().replace("+00:00", "Z"),
+        "result": str(outcome["result"]),
+        "metrics": dict(outcome.get("metrics") or {}),
+        "source_provenance": provenance,
+        "notes": str(outcome.get("notes") or ""),
+        "execution_enabled": False,
+    }
+    sidecar = {**core, "outcome_hash": sha256_json(core)}
+    path = config.evidence_root.parent / "outcomes" / f"{decision_hash}.json"
+    if path.exists():
+        existing = load_json(path)
+        if existing != sidecar:
+            raise GateStop(
+                f"outcome sidecar already exists with different content: {path}. "
+                "Outcomes are append-only; write a correction record rather than overwriting."
+            )
+        return {"outcome_path": str(path), **existing}
+    atomic_write_json(path, sidecar)
+    return {"outcome_path": str(path), **sidecar}
+
+
+def load_evidence(
+    paths: Sequence[Path],
+    *,
+    config: FrankieConfig,
+) -> tuple[list[dict[str, Any]], set[str]]:
     if not paths:
         raise GateStop("at least one evidence file is required")
     if len(paths) > MAX_EVIDENCE_FILES:
@@ -184,13 +246,18 @@ def load_evidence(paths: Sequence[Path]) -> tuple[list[dict[str, Any]], set[str]
         if not isinstance(raw, dict):
             raise GateStop(f"evidence file must contain an object: {path}")
         envelope_hash = str(raw.get("envelope_hash") or sha256_json(raw))
+        decision = raw.get("decision") if isinstance(raw.get("decision"), dict) else {}
+        decision_hash = str(decision.get("decision_hash") or "")
+        sidecar_path = config.evidence_root.parent / "outcomes" / f"{decision_hash}.json"
+        outcome = load_json(sidecar_path) if decision_hash and sidecar_path.exists() else None
         records.append(
             {
                 "path": str(path),
                 "envelope_hash": envelope_hash,
-                "decision": raw.get("decision"),
+                "decision": decision or None,
                 "event": raw.get("event"),
-                "outcome": raw.get("outcome"),
+                "outcome": outcome,
+                "outcome_status": "RESOLVED" if outcome else "AWAITING_OUTCOME",
             }
         )
         hashes.add(envelope_hash)
@@ -199,14 +266,15 @@ def load_evidence(paths: Sequence[Path]) -> tuple[list[dict[str, Any]], set[str]
 
 PROPOSAL_INSTRUCTIONS = """You are Frankie's improvement-proposal lane. Diagnose repeated misses,
 false positives, missing evidence, retrieval failures, or cost-gate failures from the supplied
-immutable evidence. Propose exactly one bounded change. You cannot edit code, apply a patch, weaken
-a gate, modify spawn.py, touch credentials/risk/execution, choose a result after seeing a holdout, or
-grant authority. Return one JSON object only. Evidence references must be exact envelope hashes."""
+immutable evidence and resolved outcome sidecars. Propose exactly one bounded change. You cannot edit
+code, apply a patch, weaken a gate, modify spawn.py, touch credentials/risk/execution, choose a result
+after seeing a holdout, or grant authority. Do not claim learning from records marked
+AWAITING_OUTCOME. Return one JSON object only. Evidence references must be exact envelope hashes."""
 
 REVIEW_INSTRUCTIONS = """You are the independent critic of a Frankie self-improvement proposal.
-Try to falsify it. Check leakage, post-hoc fitting, threshold tuning, duplicated evidence, missing
-nulls, contract mismatch, execution-safety creep, and whether the test can fail. You cannot apply
-or rewrite the proposal. Return one JSON object only."""
+Try to falsify it. Check leakage, post-hoc fitting, threshold tuning, unresolved outcomes, duplicated
+evidence, missing nulls, contract mismatch, execution-safety creep, and whether the test can fail.
+You cannot apply or rewrite the proposal. Return one JSON object only."""
 
 
 def propose_improvement(
@@ -217,7 +285,7 @@ def propose_improvement(
     config: FrankieConfig,
 ) -> dict[str, Any]:
     origin = verify_original_spawn()
-    records, hashes = load_evidence(evidence_paths)
+    records, hashes = load_evidence(evidence_paths, config=config)
     proposal_schema = {
         "target_component": sorted(ALLOWED_COMPONENTS),
         "hypothesis": "specific causal diagnosis",
@@ -252,6 +320,9 @@ def propose_improvement(
         prompt=json.dumps(
             {
                 "proposal": proposal.as_dict(),
+                "evidence_outcome_status": {
+                    record["envelope_hash"]: record["outcome_status"] for record in records
+                },
                 "required_schema": {
                     "verdict": sorted(ALLOWED_REVIEW),
                     "reasons": ["reason"],
