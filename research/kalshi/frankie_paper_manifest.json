@@ -1,10 +1,72 @@
 {
   "schema_version": "1.0",
   "agent": "Frankie",
-  "status": "AWAITING_PRIVATE_CLAUDE_LINK_EXPORT",
+  "status": "PARTIAL_REVIEWED_MISSING_1_OR_2",
   "source_session": "https://claude.ai/code/session_01XASwGBJCADah3Tb8GssvLJ",
-  "note": "The Claude Code session is login-gated from the build environment. Add the exact linked paper URLs and titles here when exported or pasted. Frankie must not invent paper claims.",
-  "papers": [],
+  "note": "Four paper links were supplied directly by Greg and verified against arXiv on 2026-08-07. Greg believes one or two papers from the Claude discussion are still missing. Keep hybrid paper-grounded promotion blocked until the missing links are identified and this manifest is explicitly changed to READY.",
+  "papers": [
+    {
+      "id": "nooa-2607.20709",
+      "title": "NVIDIA-labs OO Agents: Native Python Object-Oriented Agents",
+      "url": "https://arxiv.org/abs/2607.20709",
+      "claims": [
+        "NOOA models an agent as a native Python object whose methods are actions, fields are state, docstrings act as prompts, and type annotations serve as contracts.",
+        "Deterministic Python methods and LLM-completed methods share the same object interface, making agent behavior easier to test, trace, refactor, and improve as software.",
+        "The framework combines typed input/output, live object references, code-as-action, explicit object state, programmable loop engineering, and harness APIs for context and events on one surface."
+      ],
+      "why_it_matters": "This is the strongest direct grounding for Frankie's object-like typed state, deterministic safety kernel, model-facing actions, and testable/refactorable agent architecture rather than a prompt-only agent."
+    },
+    {
+      "id": "acm-long-horizon-2607.23809",
+      "title": "ACM: Agentic Context Management for Long Horizon Tasks",
+      "url": "https://arxiv.org/abs/2607.23809",
+      "claims": [
+        "ACM gives an agent explicit context-editing tools instead of relying only on rigid heuristic compression.",
+        "The agent can decide when to compress context, offload discarded content to external memory, and retrieve it later on demand.",
+        "The paper reports that active context management reduces peak token pressure and improves consistency across independent long-horizon trials."
+      ],
+      "why_it_matters": "Grounds Frankie's need for explicit long-horizon context lifecycle, durable external evidence/memory, and selective retrieval instead of allowing live reasoning context to grow without control."
+    },
+    {
+      "id": "kernel-forge-2607.24762",
+      "title": "Kernel Forge: An Agent Harness for LLM-based Generation and Optimization of CUDA Kernels",
+      "url": "https://arxiv.org/abs/2607.24762",
+      "claims": [
+        "Kernel Forge is an end-to-end agentic harness that operates on unmodified PyTorch models and includes monitoring and debugging of candidate outputs.",
+        "Its search uses Monte Carlo Tree Search to explore multiple optimization paths rather than a single linear refinement chain.",
+        "The system evaluates candidate kernel changes empirically and reports performance improvements across multiple model workloads."
+      ],
+      "why_it_matters": "Provides a concrete precedent for Frankie's improvement search being multi-path, instrumented, empirically validated, and separable from production application rather than a single self-editing chain."
+    },
+    {
+      "id": "acm-lifecycle-2607.21503",
+      "title": "Agentic Context Management: Solving Agent Memory and Cost by Treating Them as Lifecycle and Architecture Problems",
+      "url": "https://arxiv.org/abs/2607.21503",
+      "claims": [
+        "The paper frames agent context management as a lifecycle and architecture problem rather than only a storage-and-retrieval problem.",
+        "It decomposes the lifecycle into architecting, ingesting, scoping, anticipating, and compacting/consolidation.",
+        "It argues that validated compaction is required to control long-horizon context cost while preserving decision-relevant fidelity and provenance."
+      ],
+      "why_it_matters": "Grounds Frankie's separation of immutable evidence, scoped working context, provenance-preserving memory, anticipation of future dependencies, and explicit compaction/reflection stages."
+    }
+  ],
+  "possible_missing_papers_not_confirmed": [
+    {
+      "title": "Self-Harness: Harnesses That Improve Themselves",
+      "url": "https://arxiv.org/abs/2606.09498",
+      "reason": "Strong thematic match to Greg and Claude's self-improvement discussion: weakness mining, minimal harness proposals, and regression-test validation. Not confirmed as a link from the private Claude session."
+    },
+    {
+      "title": "Self-GC: Self-Governing Context for Long-Horizon LLM Agents",
+      "url": "https://arxiv.org/abs/2607.00692",
+      "reason": "Strong thematic match to the long-horizon context discussion: indexed context objects, side-channel planning, recoverable sidecars, safe commit boundaries, and selective fold/mask/prune actions. Not confirmed as a link from the private Claude session."
+    },
+    {
+      "title": "Self-Evolving Agent Harnesses via Gated Semantic Quality-Diversity",
+      "url": "https://arxiv.org/abs/2607.13683",
+      "reason": "Also a strong candidate because it separates model-proposed harness changes from deterministic measurement and sealed-test credit assignment. Not confirmed as a link from the private Claude session."
+    }
+  ],
   "repo_grounding": [
     "research/kalshi/FORECAST_ARCHITECTURE_S111.md",
     "research/kalshi/TWO_COACH_SPEC_S100.md",
