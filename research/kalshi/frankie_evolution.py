@@ -39,8 +39,6 @@ MUTABLE_SCAFFOLD_SURFACES = {
     "calibration_report",
 }
 
-# MOSS-style source evolution is represented only as an isolated trial request.
-# Production application remains outside Frankie and requires a reviewed Git change.
 SOURCE_TRIAL_SURFACES = {
     "research_tool",
     "test_harness",
@@ -70,8 +68,6 @@ FORBIDDEN_RELEASE_TARGETS = {
 
 @dataclass(frozen=True)
 class HarnessState:
-    """RSEA-style compact natural-language state carried by a harness version."""
-
     strategy: str
     skills: tuple[str, ...]
     playbook: tuple[str, ...]
@@ -203,7 +199,8 @@ def build_candidate(raw: Mapping[str, Any], *, evidence_hashes: set[str]) -> Har
         "execution_enabled": False,
         "apply_allowed": False,
     }
-    return HarnessCandidate(**core, candidate_hash=sha256_json(dataclasses.asdict(core)))
+    hash_core = {**core, "harness_state": dataclasses.asdict(state)}
+    return HarnessCandidate(**core, candidate_hash=sha256_json(hash_core))
 
 
 def classify_flips(rows: Sequence[Mapping[str, Any]]) -> tuple[FlipRecord, ...]:
@@ -241,11 +238,7 @@ def evaluate_release(
     required_tests_passed: bool,
     held_out_rows: Sequence[Mapping[str, Any]],
 ) -> ReleaseEvaluation:
-    """Strict RSEA/AgentDevel gate: no pass->fail regression, and at least one fix.
-
-    No fitted score, threshold, weight, or coefficient is used. The gate operates only on
-    preregistered case identities and boolean pass/fail outcomes.
-    """
+    """Strict RSEA/AgentDevel gate: no pass->fail regression, and at least one fix."""
     flips = classify_flips(held_out_rows)
     counts = {name: sum(1 for flip in flips if flip.class_name == name) for name in (
         "PASS_TO_FAIL", "FAIL_TO_PASS", "UNCHANGED_PASS", "UNCHANGED_FAIL"
@@ -285,7 +278,8 @@ def evaluate_release(
         "execution_enabled": False,
         "apply_allowed": False,
     }
-    return ReleaseEvaluation(**core, evaluation_hash=sha256_json(dataclasses.asdict(core)))
+    hash_core = {**core, "flips": [dataclasses.asdict(flip) for flip in flips]}
+    return ReleaseEvaluation(**core, evaluation_hash=sha256_json(hash_core))
 
 
 def write_candidate(root: Path, candidate: HarnessCandidate) -> Path:
