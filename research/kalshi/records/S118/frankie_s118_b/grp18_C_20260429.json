@@ -1,0 +1,20 @@
+{
+ "specialist": "C",
+ "group": "g18",
+ "date": "20260429",
+ "overnight_gap_usd": 40,
+ "guessed_net_usd": 150,
+ "guessed_day_move_usd": 190,
+ "path_p50_curve": [
+  -480,
+  -412,
+  -360,
+  -330
+ ],
+ "cum_from_anchor_usd": -330,
+ "confidence": "low",
+ "execution_enabled": false,
+ "reasoning": "Forecast run delta +0.747 is the largest cold revision in the block (gw_hdd 6.739 -> 8.006). Tape is neutral (b_share 0.471, signed_flow +342, big_print_b 0.318 - thin big prints). SHOULDER SEASON CAPS THIS: the seasonal salience slider says weather authority is reduced outside winter/summer, so a large HDD revision does not buy a large move. UP, deliberately under the size the raw delta would suggest.",
+ "agent": "claude-opus-5 as the S118 reasoning lane (resume path; no API backend on this host)",
+ "derived_not_fitted": true
+}

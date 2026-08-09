@@ -1,0 +1,20 @@
+{
+ "specialist": "E",
+ "group": "g19",
+ "date": "20260522",
+ "overnight_gap_usd": -40,
+ "guessed_net_usd": -250,
+ "guessed_day_move_usd": -290,
+ "path_p50_curve": [
+  -920,
+  -1032,
+  -1120,
+  -1170
+ ],
+ "cum_from_anchor_usd": -1170,
+ "confidence": "med",
+ "execution_enabled": false,
+ "reasoning": "Coherent sell into the Friday exit: b_share 0.406, signed_flow -2651, run delta -0.295 warm, contango intact. The whole block closed under a sub-0.50 tape on 10 of 10 days and never printed a flip confirm - no band break, no buy-side clearing of 0.50 - so the down chain is still alive at the exit and I hand a DOWN Monday bias forward.",
+ "agent": "claude-opus-5 as the S118 reasoning lane (resume path; no API backend on this host)",
+ "derived_not_fitted": true
+}

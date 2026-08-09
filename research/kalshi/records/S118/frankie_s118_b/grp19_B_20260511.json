@@ -1,0 +1,20 @@
+{
+ "specialist": "B",
+ "group": "g19",
+ "date": "20260511",
+ "overnight_gap_usd": -50,
+ "guessed_net_usd": -160,
+ "guessed_day_move_usd": -210,
+ "path_p50_curve": [
+  -50,
+  -122,
+  -178,
+  -210
+ ],
+ "cum_from_anchor_usd": -210,
+ "confidence": "low",
+ "execution_enabled": false,
+ "reasoning": "Monday inheriting a DOWN Friday exit (anchor lasthr -1). Tape and weather OPPOSE: b_share 0.451 with signed_flow -3214 says sell, while run delta +0.846 is the block's largest cold revision. mod_cool is not winter - the seasonal salience slider hands authority to flows outside the extremes, so the tape leads and the cold revision only caps the size. Small DOWN.",
+ "agent": "claude-opus-5 as the S118 reasoning lane (resume path; no API backend on this host)",
+ "derived_not_fitted": true
+}

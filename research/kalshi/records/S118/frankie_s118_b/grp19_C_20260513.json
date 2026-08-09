@@ -1,0 +1,20 @@
+{
+ "specialist": "C",
+ "group": "g19",
+ "date": "20260513",
+ "overnight_gap_usd": -40,
+ "guessed_net_usd": -230,
+ "guessed_day_move_usd": -270,
+ "path_p50_curve": [
+  -100,
+  -204,
+  -284,
+  -330
+ ],
+ "cum_from_anchor_usd": -330,
+ "confidence": "med",
+ "execution_enabled": false,
+ "reasoning": "Coherent sell: b_share 0.454, signed_flow -2586, big_print_b 0.446 all one way, and run delta -0.281 turns the weather warm behind it. Both channels agree, so this is sized above 0511 where they fought.",
+ "agent": "claude-opus-5 as the S118 reasoning lane (resume path; no API backend on this host)",
+ "derived_not_fitted": true
+}

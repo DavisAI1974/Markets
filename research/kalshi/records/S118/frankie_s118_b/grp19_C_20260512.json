@@ -1,0 +1,20 @@
+{
+ "specialist": "C",
+ "group": "g19",
+ "date": "20260512",
+ "overnight_gap_usd": 30,
+ "guessed_net_usd": 120,
+ "guessed_day_move_usd": 150,
+ "path_p50_curve": [
+  -180,
+  -126,
+  -84,
+  -60
+ ],
+ "cum_from_anchor_usd": -60,
+ "confidence": "low",
+ "execution_enabled": false,
+ "reasoning": "Flow goes flat-to-positive (signed_flow +763 after -3214) with big_print_b 0.507 and run delta +0.36 still cold. Nothing has conviction. Small UP, and small is the honest answer rather than a hedge - no channel is loud.",
+ "agent": "claude-opus-5 as the S118 reasoning lane (resume path; no API backend on this host)",
+ "derived_not_fitted": true
+}

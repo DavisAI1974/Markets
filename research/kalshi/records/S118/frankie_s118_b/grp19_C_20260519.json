@@ -1,0 +1,20 @@
+{
+ "specialist": "C",
+ "group": "g19",
+ "date": "20260519",
+ "overnight_gap_usd": -40,
+ "guessed_net_usd": -240,
+ "guessed_day_move_usd": -280,
+ "path_p50_curve": [
+  -200,
+  -308,
+  -392,
+  -440
+ ],
+ "cum_from_anchor_usd": -440,
+ "confidence": "med",
+ "execution_enabled": false,
+ "reasoning": "Give-back after the ramp. b_share 0.386 is the most extreme sell reading of the block and gw_cdd fades 10.331 -> 9.16. The ramp was priced on 0518; the tape is now selling it. DOWN.",
+ "agent": "claude-opus-5 as the S118 reasoning lane (resume path; no API backend on this host)",
+ "derived_not_fitted": true
+}

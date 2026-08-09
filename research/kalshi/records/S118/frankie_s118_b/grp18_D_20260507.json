@@ -1,0 +1,20 @@
+{
+ "specialist": "D",
+ "group": "g18",
+ "date": "20260507",
+ "overnight_gap_usd": 20,
+ "guessed_net_usd": 90,
+ "guessed_day_move_usd": 110,
+ "path_p50_curve": [
+  -480,
+  -440,
+  -408,
+  -390
+ ],
+ "cum_from_anchor_usd": -390,
+ "confidence": "low",
+ "execution_enabled": false,
+ "reasoning": "Second EIA print day, and the WEAKEST conviction of the block. signed_flow +2066 is positive but big_print_b 0.427 is well under the 0.55 gate and b_share 0.48 is under 0.50 - the flow_conviction sign gate is NOT satisfied, the size-weighted big prints do not confirm, and run delta is -0.104. Near-flat UP. I am emitting small because the evidence is genuinely thin, not to protect the scoreboard.",
+ "agent": "claude-opus-5 as the S118 reasoning lane (resume path; no API backend on this host)",
+ "derived_not_fitted": true
+}

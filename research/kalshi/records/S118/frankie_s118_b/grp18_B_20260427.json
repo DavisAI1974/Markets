@@ -1,0 +1,20 @@
+{
+ "specialist": "B",
+ "group": "g18",
+ "date": "20260427",
+ "overnight_gap_usd": -50,
+ "guessed_net_usd": -150,
+ "guessed_day_move_usd": -200,
+ "path_p50_curve": [
+  -50,
+  -118,
+  -170,
+  -200
+ ],
+ "cum_from_anchor_usd": -200,
+ "confidence": "low",
+ "execution_enabled": false,
+ "reasoning": "Weekend inheritance from a Friday whose final hour printed DOWN (anchor lasthr -1). Tape is INCOHERENT: b_share 0.453 sells while signed_flow +3189 buys, and big_print_b 0.593 leans buy - a split I decline to resolve by averaging (selector.divergence_resolution: default to the tape/flow regime, do not split the difference). Contango front/next -0.16 in injection season is a standing bleed. Small DOWN, sized at the low end BECAUSE the tape disagrees with itself, not because I am hedging.",
+ "agent": "claude-opus-5 as the S118 reasoning lane (resume path; no API backend on this host)",
+ "derived_not_fitted": true
+}

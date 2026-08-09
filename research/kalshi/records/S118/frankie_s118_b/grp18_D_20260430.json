@@ -1,0 +1,20 @@
+{
+ "specialist": "D",
+ "group": "g18",
+ "date": "20260430",
+ "overnight_gap_usd": 50,
+ "guessed_net_usd": 330,
+ "guessed_day_move_usd": 380,
+ "path_p50_curve": [
+  -280,
+  -132,
+  -16,
+  50
+ ],
+ "cum_from_anchor_usd": 50,
+ "confidence": "med",
+ "execution_enabled": false,
+ "reasoning": "EIA print day, consensus +80 Bcf. The strongest coherent BUY in the block: signed_flow +7783 (2x any other day), b_share 0.52 - the only reading above 0.50 all block - and big_print_b 0.621 clearing the 0.55 gate on a size-weighted basis. Managed money sits at the 8.49th percentile 1y, deeply crowded short with WoW +13,521 already covering. Per S106 the crowded short is a TAIL driver, not a p50 driver, so this is sized on the FLOW, with the positioning noted as upside tail rather than folded into the number.",
+ "agent": "claude-opus-5 as the S118 reasoning lane (resume path; no API backend on this host)",
+ "derived_not_fitted": true
+}

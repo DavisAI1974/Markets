@@ -1,0 +1,20 @@
+{
+ "specialist": "C",
+ "group": "g18",
+ "date": "20260428",
+ "overnight_gap_usd": -60,
+ "guessed_net_usd": -260,
+ "guessed_day_move_usd": -320,
+ "path_p50_curve": [
+  -260,
+  -377,
+  -468,
+  -520
+ ],
+ "cum_from_anchor_usd": -520,
+ "confidence": "med",
+ "execution_enabled": false,
+ "reasoning": "The most COHERENT sell day of week 1: b_share 0.419, signed_flow -3950 and big_print_b 0.42 all point the same way, and forecast run delta -0.096 adds a mild warm revision. Coherence is the reason this is sized above 0427, not the raw flow number.",
+ "agent": "claude-opus-5 as the S118 reasoning lane (resume path; no API backend on this host)",
+ "derived_not_fitted": true
+}

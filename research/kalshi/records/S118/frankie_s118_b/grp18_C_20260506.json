@@ -1,0 +1,20 @@
+{
+ "specialist": "C",
+ "group": "g18",
+ "date": "20260506",
+ "overnight_gap_usd": 40,
+ "guessed_net_usd": 220,
+ "guessed_day_move_usd": 260,
+ "path_p50_curve": [
+  -720,
+  -621,
+  -544,
+  -500
+ ],
+ "cum_from_anchor_usd": -500,
+ "confidence": "med",
+ "execution_enabled": false,
+ "reasoning": "Flow flips positive and coherent: signed_flow +3258, b_share 0.489, big_print_b 0.521, with run delta +0.346 colder behind it. Both channels agree for the first time since 0430. UP.",
+ "agent": "claude-opus-5 as the S118 reasoning lane (resume path; no API backend on this host)",
+ "derived_not_fitted": true
+}

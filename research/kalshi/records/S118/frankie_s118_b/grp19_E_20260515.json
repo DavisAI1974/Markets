@@ -1,0 +1,20 @@
+{
+ "specialist": "E",
+ "group": "g19",
+ "date": "20260515",
+ "overnight_gap_usd": 20,
+ "guessed_net_usd": 100,
+ "guessed_day_move_usd": 120,
+ "path_p50_curve": [
+  -620,
+  -575,
+  -540,
+  -520
+ ],
+ "cum_from_anchor_usd": -520,
+ "confidence": "low",
+ "execution_enabled": false,
+ "reasoning": "Friday. Flow ticks positive (+1072) and big_print_b 0.514 clears 0.50, but b_share 0.463 does not - the flow_conviction gate is unsatisfied, so this is a pause in the bleed rather than a turn. Small UP, weak exit signal handed forward.",
+ "agent": "claude-opus-5 as the S118 reasoning lane (resume path; no API backend on this host)",
+ "derived_not_fitted": true
+}

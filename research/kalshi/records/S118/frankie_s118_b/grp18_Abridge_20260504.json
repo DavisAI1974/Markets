@@ -1,0 +1,18 @@
+{
+ "specialist": "A",
+ "group": "g18",
+ "date": "20260504",
+ "template": "BLD-2",
+ "overnight_gap_usd": -70,
+ "guessed_net_usd": 0,
+ "path_p50_curve": [
+  0,
+  -70
+ ],
+ "monday_bias": "down",
+ "exit_type": "give_back",
+ "execution_enabled": false,
+ "reasoning": "E exits 05-01 on a give-back: signed_flow -801 against the prior day's +7783, the block's largest WARM revision (run delta -0.343) and gw_cdd at its block low of 0.708. A's weekend read: the Friday exit is a GIVE-BACK, not a turn - nothing cleared 0.50 on the way out. Week 2 opens with gw_hdd collapsing 9.421 -> 2.652, so the weekend adds warm to an already-warm exit. Monday bias DOWN, and B should size it on the chain rather than treat it as a fresh start (the S106 extension-blindness lesson: do not reset to cum 0 at the weekend).",
+ "agent": "claude-opus-5 as the S118 reasoning lane",
+ "note": "A informs, B decides, B owns the number (S104 weekend seam pairing)."
+}

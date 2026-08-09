@@ -1,0 +1,20 @@
+{
+ "specialist": "D",
+ "group": "g19",
+ "date": "20260514",
+ "overnight_gap_usd": -40,
+ "guessed_net_usd": -270,
+ "guessed_day_move_usd": -310,
+ "path_p50_curve": [
+  -370,
+  -492,
+  -586,
+  -640
+ ],
+ "cum_from_anchor_usd": -640,
+ "confidence": "med",
+ "execution_enabled": false,
+ "reasoning": "EIA print day in injection season with a coherent sell tape into it (b_share 0.444, signed_flow -2763) and run delta -0.239 warm. Contango front/next holds. DOWN. The crowded short is noted and NOT folded in - see 0518.",
+ "agent": "claude-opus-5 as the S118 reasoning lane (resume path; no API backend on this host)",
+ "derived_not_fitted": true
+}

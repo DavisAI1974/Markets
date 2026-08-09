@@ -1,0 +1,20 @@
+{
+ "specialist": "C",
+ "group": "g18",
+ "date": "20260505",
+ "overnight_gap_usd": -40,
+ "guessed_net_usd": -200,
+ "guessed_day_move_usd": -240,
+ "path_p50_curve": [
+  -560,
+  -650,
+  -720,
+  -760
+ ],
+ "cum_from_anchor_usd": -760,
+ "confidence": "med",
+ "execution_enabled": false,
+ "reasoning": "Tape and weather DISAGREE: signed_flow -3110 and b_share 0.443 say sell, while gw_cdd 3.438 and gw_hdd 4.435 both tick up (run delta +0.07). In the shoulder the slider hands authority to flows, so the tape wins and the weather tick only reduces the size. DOWN, smaller than 0504.",
+ "agent": "claude-opus-5 as the S118 reasoning lane (resume path; no API backend on this host)",
+ "derived_not_fitted": true
+}

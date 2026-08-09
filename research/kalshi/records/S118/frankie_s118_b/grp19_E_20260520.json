@@ -1,0 +1,20 @@
+{
+ "specialist": "E",
+ "group": "g19",
+ "date": "20260520",
+ "overnight_gap_usd": -30,
+ "guessed_net_usd": -200,
+ "guessed_day_move_usd": -230,
+ "path_p50_curve": [
+  -470,
+  -560,
+  -630,
+  -670
+ ],
+ "cum_from_anchor_usd": -670,
+ "confidence": "med",
+ "execution_enabled": false,
+ "reasoning": "SEAM DAY - the June/NGM26 -> July/NGN26 roll. The overnight GAP across a never-traded seam is void, so I put almost nothing in the gap and take the call in the session net. Tape stays sell (b_share 0.393) and run delta -0.478 is warm. DOWN on the post-roll leg.",
+ "agent": "claude-opus-5 as the S118 reasoning lane (resume path; no API backend on this host)",
+ "derived_not_fitted": true
+}

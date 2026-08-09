@@ -1,0 +1,20 @@
+{
+ "specialist": "D",
+ "group": "g19",
+ "date": "20260521",
+ "overnight_gap_usd": -30,
+ "guessed_net_usd": -180,
+ "guessed_day_move_usd": -210,
+ "path_p50_curve": [
+  -700,
+  -781,
+  -844,
+  -880
+ ],
+ "cum_from_anchor_usd": -880,
+ "confidence": "low",
+ "execution_enabled": false,
+ "reasoning": "Second EIA print. Tape is INCOHERENT (b_share 0.425 sells, signed_flow +1892 buys, big_print_b 0.476 under the gate) but the weather is not: run delta -0.632 is the block's largest warm revision, gw_cdd collapses 7.076 -> 2.697 and the regime drops to shoulder. Mild kills demand - the big-DOWN asymmetry. DOWN, sized on the weather because it is the only coherent channel.",
+ "agent": "claude-opus-5 as the S118 reasoning lane (resume path; no API backend on this host)",
+ "derived_not_fitted": true
+}

@@ -6,32 +6,30 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 176 |
+| open | 175 |
 | in progress | 1 |
-| done | 19 |
+| done | 21 |
 
-By size: **XS** 21, **S** 79, **M** 54, **L** 12
+By size: **XS** 20, **S** 78, **M** 54, **L** 13
 
 ---
 
-By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 44, **REST** 108
+By tier: **ESSENTIAL** 24, **BIGGEST_WIN** 44, **REST** 108
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (25)
+## ESSENTIAL (24)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
 | id | size | title | why it is here |
 |---|---|---|---|
 | **A-79** | XS | BEDROCK IS GATED AT THE ACCOUNT LEVEL - no Claude model is invocable in any region, and only Greg can clear it | It is the sole hard blocker on the Frankie architecture test, it is a console action nobody but the account owner can take, and the OpenAI lane is not credentialed here either - so there is currently NO reasoning backend on this host. |
-| **A-80** | XS | THE S118 RUNNER SERVES ZERO PLAYS - two shape mismatches against brain_view, both failing OPEN | It would have produced a completed, plausible-looking Frankie-vs-blind comparison that actually measured **Frankie with NO PLAYS against a blind that had all 90**. Not a wrong number - a wrong experiment, and one whose own preflight says PASS. |
 | **G-1** | XS | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | 20 MINUTES, and it is the documented hole signature eleven times over. The EIA Natural Gas Weekly Update's final edition was the week ending 2026-01-21. A pipeline pointed at a dead vehicle goes stale SILENTLY - present, numeric, in range, right owner - which is exactly the shape state_health cannot see. Confirm what replaced it before the next group reads the block. |
 | **G-11** | XS | Start accruing EIA weekly coal basin spot prices | IRREVERSIBLE and running out. The EIA endpoint carries a rolling FIVE-WEEK window and EIA states the history is proprietary and cannot be released, so every week nobody runs it is a week gone permanently. Already IN_PROGRESS, captured once by hand; it needs a schedule, not a decision. |
 | **A-73** | S | LIVE MBO IS NOT AUTHORIZED ON OUR DATABENTO TIER - the live feed lane Greg calls critical cannot start on what we pay for | It is a PROCUREMENT DECISION that only Greg can make, it gates the live lane he has named critical, and it has sat unregistered since S103. The failure mode is the worst kind: the live collector does not fail loudly, it HOT-LOOPS on ErrorMsg, so a live bring-up looks like a hang rather than a billing answer. |
-| **A-82** | S | THE S118 LEAK GUARD IS SCOPED TO TOKEN NAMES, NOT TO DATES - it blocks the run on legitimate prior-group evidence | It is the last thing standing between a fixed runner and a real Frankie run, and it must be fixed by NARROWING SCOPE, never by relaxing the guard. A leak guard weakened to make a run go green is the worst possible edit in this repo. |
 | **M-12** | S | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | It is the gate under every data fix. Without it a session cannot tell what it actually pushed, and the next session silently inherits pre-fix stores - which is what happened between S114 and S115. |
 | **M-14** | S | THE PAPER DOCK'S OWN CREDENTIAL PATH IS SESSION SCRATCHPAD - kalshi_auth reads scratchpad/kalshi.env | It is the credential the paper book itself needs. It fails on every fresh container by construction, so paper trading cannot start on a new session until it moves. Same class as the three feed consumers fixed this session (D1-02/03/04). |
 | **M-16** | S | THE PULLER WRITES TO A PHANTOM data/ AND LIES ABOUT WHERE - relative OUT_DIR + _write_df ignores out_dir | It silently empties the data plane for the LAST group run while reporting success. Third occurrence of the reports-rows-writes-nothing family (S114 ng_l1 writer; S115 --roll v near-miss). Small fix, and everything downstream of staging depends on it. |
@@ -50,6 +48,7 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 44, **REST** 108
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 | **A-67** | L | THE A/B IS BLIND vs FRANKENSTEIN ON THE UNWALKED HEAD - one block that is the last group run, the architecture test AND the under-emission experiment | It is the only way the hybrid ships on a MEASUREMENT rather than on argument, and it DE-RISKS the last group run rather than endangering it - the run would then use a harness validated on g24 instead of one reasoned about. It is also A-65's validated-compaction discipline applied at architecture scale, which is the standard S115 just adopted. |
 | **A-69** | L | SELF-TRAINING LOOP: Frankie runs blinds on the WALKED corpus, grades himself with FJ-1, and the head is held out as the only true test | It creates the TRAIN/TEST SPLIT this project has never had, it uses a corpus we already own and have used once each, and its grader is already built and has never been run. It is also the mechanism that makes A-67's retention arm meaningful - retention with nothing to retain across is ceremony. |
+| **A-83** | L | THE UNDER-EMISSION IS THE REASONING LANE, NOT THE HARNESS - it reproduced at 0.26-0.35x with a different agent | Three groups, two harnesses, two different agents, same failure. It is the dominant open problem of the whole walk and it now has a much cleaner attribution than it had at S114. |
 | **A-50** | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 
 ## BIGGEST WIN (44)
@@ -225,11 +224,9 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 44, **REST** 108
 | id | tier | size | status | raised | title | blocked by |
 |---|---|---|---|---|---|---|
 | **A-79** | ESSENTIAL | XS | OPEN | S118 | BEDROCK IS GATED AT THE ACCOUNT LEVEL - no Claude model is invocable in any region, and only Greg can clear it | - |
-| **A-80** | ESSENTIAL | XS | OPEN | S118 | THE S118 RUNNER SERVES ZERO PLAYS - two shape mismatches against brain_view, both failing OPEN | - |
 | **G-1** | ESSENTIAL | XS | OPEN | S111 | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | - |
 | **G-11** | ESSENTIAL | XS | IN_PROGRESS | S111 | Start accruing EIA weekly coal basin spot prices | - |
 | **A-73** | ESSENTIAL | S | OPEN | S103 (recorded in that memo, | LIVE MBO IS NOT AUTHORIZED ON OUR DATABENTO TIER - the live feed lane Greg calls critical cannot start on what we pay for | - |
-| **A-82** | ESSENTIAL | S | OPEN | S118 | THE S118 LEAK GUARD IS SCOPED TO TOKEN NAMES, NOT TO DATES - it blocks the run on legitimate prior-group evidence | - |
 | **M-12** | ESSENTIAL | S | OPEN | S115 | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | - |
 | **M-14** | ESSENTIAL | S | OPEN | S115 | THE PAPER DOCK'S OWN CREDENTIAL PATH IS SESSION SCRATCHPAD - kalshi_auth reads scratchpad/kalshi.env | - |
 | **M-16** | ESSENTIAL | S | OPEN | S115 | THE PULLER WRITES TO A PHANTOM data/ AND LIES ABOUT WHERE - relative OUT_DIR + _write_df ignores out_dir | - |
@@ -248,6 +245,7 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 44, **REST** 108
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 | **A-67** | ESSENTIAL | L | OPEN | S115 | THE A/B IS BLIND vs FRANKENSTEIN ON THE UNWALKED HEAD - one block that is the last group run, the architecture test AND the under-emission experiment | - |
 | **A-69** | ESSENTIAL | L | OPEN | S115 | SELF-TRAINING LOOP: Frankie runs blinds on the WALKED corpus, grades himself with FJ-1, and the head is held out as the only true test | - |
+| **A-83** | ESSENTIAL | L | OPEN | S118 | THE UNDER-EMISSION IS THE REASONING LANE, NOT THE HARNESS - it reproduced at 0.26-0.35x with a different agent | - |
 | **A-50** | ESSENTIAL | ? | OPEN | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 | **O-2** | BIGGEST_WIN | XS | OPEN | S114 | RECORD THE S111 OPTIONS VERDICT AS A BINDING DECISION - it exists only in a file-index blurb | - |
 | **A-15** | BIGGEST_WIN | S | OPEN | S112 | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | - |
@@ -421,6 +419,8 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 44, **REST** 108
 | A-52 | ? | wind_mwh has no chg_7d twin while gas, solar and hydro all do |
 | A-71 | S | M-16's PHYSICAL repair - the guarded puller exists, the already-paid head + L1 data is still not in the canonical root |
 | A-77 | M | REBUILD THE g6-g16 ACTUALS - the corpus is 70 gradeable days, not the ~180 the narrative implied |
+| A-80 | XS | THE S118 RUNNER SERVES ZERO PLAYS - two shape mismatches against brain_view, both failing OPEN |
+| A-82 | S | THE S118 LEAK GUARD IS SCOPED TO TOKEN NAMES, NOT TO DATES - it blocks the run on legitimate prior-group evidence |
 | G-19 | S | EIA-930: BATTERY STORAGE is now its own category and we do not carry it |
 | G-5 | M | ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY |
 | M-2 | S | Brain status taxonomy normalized to an enum |
@@ -448,27 +448,6 @@ MEASURED S118 on account 568968024170 (arn user/Claude). `bedrock.list_foundatio
 A second, different error covers claude-opus-5 / opus-4-8 / opus-4-7 / sonnet-5 / fable-5: 'is not available for this account' - those are not enabled at all, which is a separate question from the form.
 
 HONESTY NOTE, because it matters for how much to trust this: an earlier probe in the same session printed OK for `us.anthropic.claude-sonnet-4-6` in us-east-2 and us-west-2. That result did NOT reproduce - the identical call then failed 15 of 15 across three regions. The repeated measurement stands and the single earlier success is unexplained; it is recorded rather than quietly dropped.
-
----
-
-### [ESSENTIAL] A-80 - THE S118 RUNNER SERVES ZERO PLAYS - two shape mismatches against brain_view, both failing OPEN
-
-*size XS | OPEN | raised S118*
-
-**Why it is ESSENTIAL:** It would have produced a completed, plausible-looking Frankie-vs-blind comparison that actually measured **Frankie with NO PLAYS against a blind that had all 90**. Not a wrong number - a wrong experiment, and one whose own preflight says PASS.
-
-**Source:** S118 environment prep; found by checking a preflight field rather than accepting PACKETS_CAUSAL
-
-MEASURED S118 at head 3a72fee on `chatgpt/agent-frankie-s117`. `frankie_group_forecast_s118.preflight_group` reports `served_plays: 0` on ALL 20 days of g18 and g19 while the verdict reads `PACKETS_CAUSAL`. Cause is `_compact_brain`, and it is TWO independent shape assumptions, each wrong, each failing open to 'serve nothing' rather than raising:
-
-1. `play_index` is assumed to be `{name: row}` or `[row, ...]`. `brain_view` emits `{_note, n_plays, evaluability, rows: [...90 rows...]}`, so `index.items()` iterates FOUR METADATA KEYS and `_index_status` reads the `_note` prose as a status. Nothing matches ARMED/EVALUABLE, so `chosen` is empty.
-2. Even with the index read correctly, `selected = {name: plays[name] for name in chosen if name in plays}` assumes `view['plays']` is a MAPPING. It is a LIST of 90 play objects, so `name in plays` is a membership test of a string against dicts - always False - and `plays[name]` would raise TypeError if it were ever reached.
-
-MEASURED CORRECT ANSWER: the 90 index rows carry evaluability EVALUABLE 30, PARTIALLY_EVALUABLE 1, NO_PARSED_CONDITIONS 57, INPUT_ABSENT 2 - so **31 plays should be served**, not 0.
-
-This is an INTEGRATION defect between two branches, not a fault in either alone: the `play_index` section was added to `brain_view` at S115 on trunk, and the S118 consumer was written against a different assumed shape. It is exactly what A-70 exists to catch.
-
-**FIX WRITTEN AND VERIFIED S118** (patch: research/kalshi/records/S118/a80_compact_brain_fix.patch, against 3a72fee - NOT committed to their branch, it is theirs to take). Both shapes handled: unwrap `play_index['rows']`, index `view['plays']` by each object's `id`, and read the row's `play` key FIRST (the old order tried name/id, which are absent, so even a correctly-unwrapped list would still have produced empty names - a THIRD assumption behind the two already found). **Result: served_plays 0 -> 33 on g18 20260427.**
 
 ---
 
@@ -520,26 +499,6 @@ that ladder. It is no longer a slow structural level for M-6 alone.
 MEASURED at S103 and never entered the registry: the $179/mo Databento LIVE Standard plan returns 'Not authorized for mbo schema'. `mbp-10` is in the same entitlement class. The live collector LEADS with an `mbo` subscribe. The tier that carries it is roughly $1,500/mo.
 
 This is not the same question as the historical pull, which works fine - the year of NG tape was bought per-job under the subscription. It is specifically LIVE streaming depth.
-
----
-
-### [ESSENTIAL] A-82 - THE S118 LEAK GUARD IS SCOPED TO TOKEN NAMES, NOT TO DATES - it blocks the run on legitimate prior-group evidence
-
-*size S | OPEN | raised S118*
-
-**Why it is ESSENTIAL:** It is the last thing standing between a fixed runner and a real Frankie run, and it must be fixed by NARROWING SCOPE, never by relaxing the guard. A leak guard weakened to make a run go green is the worst possible edit in this repo.
-
-**Source:** S118, exposed the moment A-80's fix made the runner actually serve plays
-
-MEASURED S118. With A-80 fixed the runner serves 33 plays on g18's first day and then hard-stops:
-
-  ForecastStop: outcome leak token 'actual_day_move_usd' entered packet for g18 20260427
-
-The token sits inside `structure.accumulation_arm_turn`'s evidence, describing **g17's 2026-04-22** - a prior, already-walked group. g18's window opens 20260427.
-
-**SWEPT EXHAUSTIVELY BEFORE CALLING IT A FALSE POSITIVE**: across all 20 days of g18 and g19, every occurrence of actual_day_move_usd / actual_net_usd / actual_close_cum / actual_gap_usd in the served plays has surrounding dates ONLY BEFORE that group's own window - **0 occurrences reach into or past it**. This is what brain instances ARE, and it is what every specialist in the walk has always been served.
-
-Same shape as the S114 `live_verdict` defect, which flagged 43 plays by matching 'degenerate' anywhere, including plays that merely DISCUSS degeneracy while concluding they are sound. Matching a WORD instead of a CLAIM.
 
 ---
 
@@ -938,6 +897,22 @@ THE ACTUAL IS NOT OPTIONAL HERE. Greg's discipline is explicit - 'He only sees t
 THE GAP IS A REBUILD, NOT A RE-PULL, which is why this is a prerequisite rather than a blocker: the day ranges are recoverable FROM THE STATE FILES themselves (each state is keyed by its own days), group_actual.build(gid) already exists and is what stage_group calls, and the tape covers the window - nymex_cont_n0 spans 2025-11-02..2026-07-20, containing ALL of g10..g16 (Jan-Apr 2026). So the corpus roughly DOUBLES to ~140 days off tape we already hold, at no Databento cost.
 DO IT BEFORE THE LOOP STARTS: 70 days across four lenses is E~21, C~21, D~14, B~14 - thin for anything a self-training loop should be trusted to conclude, and thinner still once split by day-class (D4/D37 forbids pooling across classes to manufacture an n).
 CAVEAT ON THE OLDER BLOCKS, so nobody treats them as equivalent: g6..g16 were walked under the PRE-S105 architecture and some on the NG.v.0 basis rather than NG.n.0 (S97: v.0 whipsaws through expiry weeks, which is why g11 was re-pulled). Rebuild their actuals on the SAME basis their states were built on, and record which basis each block used - a training corpus mixing bases silently is the off-instrument defect (S108 hole #8) arriving through the training door.
+
+---
+
+### [ESSENTIAL] A-83 - THE UNDER-EMISSION IS THE REASONING LANE, NOT THE HARNESS - it reproduced at 0.26-0.35x with a different agent
+
+*size L | OPEN | raised S118*
+
+**Why it is ESSENTIAL:** Three groups, two harnesses, two different agents, same failure. It is the dominant open problem of the whole walk and it now has a much cleaner attribution than it had at S114.
+
+**Source:** S118 Frankie two-group run on g18/g19
+
+MEASURED S118. Frankie ran g18 and g19 through the S118 contracts with a DIFFERENT reasoning agent, and emitted **0.35x** (g18) and **0.26x** (g19) of realized magnitude - against g24's 0.29x, g23's 0.68x and g22's 0.55x on the OLD harness.
+
+**THIS IS THE ATTRIBUTION THAT WAS MISSING.** S114 recorded three competing explanations for the under-emission and promoted none (D37): the brief's stand-down passage biasing small, correct shrinking after specialists had their sign instrument refuted, or a genuinely hard block. A different harness and a different agent reproducing it at the same scale **weakens the harness explanation** and points at the reasoning lane itself - the agent will not emit the size its own drivers support.
+
+It is visible day by day in this run: on g19 20260511 the actual was +1,740 and the call was -160; on g18 20260430 the actual was +1,230 and the call was +330 with the strongest coherent buy tape in the block (signed_flow +7,783, the only b_share above 0.50, big_print_b 0.621 clearing the gate). **The direction read was right and the size was a fifth of the move.**
 
 ---
 

@@ -1,0 +1,122 @@
+diff --git a/research/kalshi/frankie_group_forecast_s118.py b/research/kalshi/frankie_group_forecast_s118.py
+index 9a3e280..e22c86e 100644
+--- a/research/kalshi/frankie_group_forecast_s118.py
++++ b/research/kalshi/frankie_group_forecast_s118.py
+@@ -123,16 +123,43 @@ def _compact_brain(view: dict[str, Any]) -> dict[str, Any]:
+     EVALUABLE rows are included when the play body can be resolved by name.
+     """
+     out = {k: v for k, v in view.items() if k != "plays"}
+-    plays = view.get("plays") if isinstance(view.get("plays"), Mapping) else {}
++    # A-80 FIX (S118). Both of these were shape assumptions against brain_view that FAILED OPEN to
++    # "serve nothing", so preflight reported served_plays: 0 on all 20 days while its verdict read
++    # PACKETS_CAUSAL. The run would have completed and measured Frankie-with-no-plays against a
++    # blind that had all 90 - a wrong experiment, not a wrong number.
++    #
++    # (1) `plays` is a LIST of play objects keyed by an `id` field, not a Mapping. The old
++    #     `isinstance(..., Mapping) else {}` silently produced an EMPTY dict, so every later lookup
++    #     missed. Index it by id.
++    raw_plays = view.get("plays")
++    if isinstance(raw_plays, Mapping):
++        plays = dict(raw_plays)
++    elif isinstance(raw_plays, list):
++        plays = {}
++        for row in raw_plays:
++            if isinstance(row, Mapping):
++                pid = str(row.get("id") or row.get("play") or row.get("name") or "")
++                if pid:
++                    plays[pid] = row
++    else:
++        plays = {}
+     index = view.get("play_index")
+     chosen: set[str] = set()
++    # (2) `play_index` is {_note, n_plays, evaluability, rows: [...]} - a envelope with the rows one
++    #     level down, not {name: row}. Iterating `.items()` walked the FOUR METADATA KEYS and read
++    #     the `_note` prose as a status. Unwrap the envelope first.
++    if isinstance(index, Mapping) and isinstance(index.get("rows"), list):
++        index = index["rows"]
+     if isinstance(index, Mapping):
+         items = index.items()
+     elif isinstance(index, list):
+         items = []
+         for row in index:
+             if isinstance(row, Mapping):
+-                name = str(row.get("name") or row.get("id") or row.get("play") or "")
++                # "play" FIRST: brain_view's index rows key the play under `play`. The old order
++                # tried name/id first, which are absent, so a correctly-unwrapped list would still
++                # have produced empty names.
++                name = str(row.get("play") or row.get("name") or row.get("id") or "")
+                 if name:
+                     items.append((name, row))
+     else:
+@@ -181,13 +208,67 @@ def _packet(template: str, gid: str, day: str, spec: str, namespace: str,
+         "brain_view_served": view,
+     }
+     text = json.dumps(packet, sort_keys=True)
+-    forbidden = (f"{gid}_actual.json", f"{gid}_rt.json", "actual_day_move_usd", "actual_close")
+-    for token in forbidden:
+-        if token in text:
+-            raise ForecastStop(f"outcome leak token {token!r} entered packet for {gid} {day}")
++    _assert_no_outcome_leak(text, gid, day)
+     return prompt, packet
+ 
+ 
++# A-82 (S118). THE GUARD WAS SCOPED TO TOKEN NAMES, NOT TO DATES, AND SO IT BLOCKED THE RUN ON
++# LEGITIMATE PRIOR-GROUP EVIDENCE. It hard-stopped on `actual_day_move_usd` inside
++# structure.accumulation_arm_turn's evidence describing g17's 2026-04-22 - a group walked, scored
++# and merged long before g18 opens on 2026-04-27. That text is what a brain INSTANCE is, and every
++# specialist in the walk has always been served it.
++#
++# Same shape as the S114 `live_verdict` defect, which flagged 43 plays by matching "degenerate"
++# anywhere - including plays that merely DISCUSS degeneracy while concluding they are sound.
++# Matching a WORD instead of a CLAIM.
++#
++# THE INTENT WAS RIGHT AND ONLY THE REACH WAS WRONG, so this NARROWS scope; it does not relax the
++# guard. Two classes now, because they are two different risks:
++#
++#   FILE tokens (gN_actual.json, gN_rt.json) stay ABSOLUTE. Naming the forbidden artifact is never
++#   legitimate at any date - there is no evidentiary reason to cite the file itself.
++#
++#   FIELD tokens (actual_day_move_usd, actual_close) are leaks only when attached to THIS DAY OR
++#   LATER. A realized field name next to an earlier group's date is evidence; next to the packet's
++#   own day it is the answer.
++#
++# It FAILS CLOSED on ambiguity: an occurrence with no 8-digit date anywhere in its neighbourhood is
++# treated as a leak, because an unattributable realized number cannot be shown to be historical.
++# Measured on the real corpus - all 20 days of g18 and g19 - every occurrence carries dates and all
++# of them precede their group's window, so failing closed costs nothing here and protects the case
++# nobody has thought of yet.
++_LEAK_FILE_TOKENS = ("{gid}_actual.json", "{gid}_rt.json")
++_LEAK_FIELD_TOKENS = ("actual_day_move_usd", "actual_close", "actual_net_usd", "actual_gap_usd")
++_LEAK_CONTEXT = 400
++_DATE8 = re.compile(r"20\d{6}")
++
++
++def _assert_no_outcome_leak(text: str, gid: str, day: str) -> None:
++    for tmpl in _LEAK_FILE_TOKENS:
++        token = tmpl.format(gid=gid)
++        if token in text:
++            raise ForecastStop(
++                f"outcome leak: forbidden artifact {token!r} named in packet for {gid} {day}")
++    for token in _LEAK_FIELD_TOKENS:
++        start = 0
++        while True:
++            i = text.find(token, start)
++            if i < 0:
++                break
++            start = i + len(token)
++            ctx = text[max(0, i - _LEAK_CONTEXT): i + _LEAK_CONTEXT]
++            dates = _DATE8.findall(ctx)
++            if not dates:
++                raise ForecastStop(
++                    f"outcome leak: {token!r} in packet for {gid} {day} carries NO date in context - "
++                    f"an unattributable realized value cannot be shown to be historical")
++            forward = sorted({d for d in dates if d >= day})
++            if forward:
++                raise ForecastStop(
++                    f"outcome leak: {token!r} in packet for {gid} {day} is attached to {forward} - "
++                    f"this day or later")
++
++
+ def _output_path_from_prompt(prompt: str, namespace: str, gid: str, spec: str, day: str,
+                              template: str) -> Path:
+     matches = re.findall(r"(?:OUTPUT\s*[—-]\s*write|write)\s+([A-Za-z0-9_./-]+\.json)", prompt, flags=re.I)

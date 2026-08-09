@@ -1,0 +1,18 @@
+{
+ "specialist": "A",
+ "group": "g19",
+ "date": "20260518",
+ "template": "BLD-2",
+ "overnight_gap_usd": 60,
+ "guessed_net_usd": 0,
+ "path_p50_curve": [
+  0,
+  60
+ ],
+ "monday_bias": "up",
+ "exit_type": "pause_not_turn",
+ "execution_enabled": false,
+ "reasoning": "E exits 05-15 flat-to-mildly-up: signed_flow +1072 and big_print_b 0.514, but b_share 0.463 never cleared 0.50, so the flow_conviction gate is unsatisfied and this is a PAUSE in the bleed, not a turn. The weekend then changes the driver: forecast gw_cdd 3.992 -> 10.331 and the regime flips to hard_cool. A's read: the down chain is intact on flow but a genuine cooling ramp arrives over the weekend and the tape is not opposing it. Monday bias UP, with the caveat that managed money at the 2.83rd percentile with shorts still adding makes the upside the fatter tail.",
+ "agent": "claude-opus-5 as the S118 reasoning lane",
+ "note": "A informs, B decides, B owns the number (S104 weekend seam pairing)."
+}

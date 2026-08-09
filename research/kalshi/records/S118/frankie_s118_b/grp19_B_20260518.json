@@ -1,0 +1,20 @@
+{
+ "specialist": "B",
+ "group": "g19",
+ "date": "20260518",
+ "overnight_gap_usd": 60,
+ "guessed_net_usd": 300,
+ "guessed_day_move_usd": 360,
+ "path_p50_curve": [
+  -460,
+  -325,
+  -220,
+  -160
+ ],
+ "cum_from_anchor_usd": -160,
+ "confidence": "med",
+ "execution_enabled": false,
+ "reasoning": "THE BLOCK'S DOMINANT WEATHER EVENT: forecast gw_cdd 3.992 -> 10.331 and the regime flips to hard_cool, a mid-May cooling ramp that is a genuine power-burn driver, not a shoulder tick. The tape does NOT oppose it (signed_flow +486, big_print_b 0.506). When the dominant forcing is unopposed by flow I size on the forcing. UP, the block's largest call. Standing caveat: managed money at the 2.83rd percentile 1y with shorts STILL ADDING (WoW -10,244) is the G11 configuration, where the blind held a down-chain into a covering rally - I carry that as an UPSIDE TAIL on this day, not as p50.",
+ "agent": "claude-opus-5 as the S118 reasoning lane (resume path; no API backend on this host)",
+ "derived_not_fitted": true
+}

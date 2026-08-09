@@ -1,0 +1,20 @@
+{
+ "specialist": "B",
+ "group": "g18",
+ "date": "20260504",
+ "overnight_gap_usd": -70,
+ "guessed_net_usd": -280,
+ "guessed_day_move_usd": -350,
+ "path_p50_curve": [
+  -240,
+  -366,
+  -464,
+  -520
+ ],
+ "cum_from_anchor_usd": -520,
+ "confidence": "med",
+ "execution_enabled": false,
+ "reasoning": "Monday inheriting E's DOWN exit. Week 2 opens with gw_hdd collapsing 9.421 -> 2.652, the block's largest single warm shift, and the tape confirms rather than contradicts (b_share 0.443, signed_flow -3358). Warm + contango + injection season + a confirmed sell tape is a chain-sided bleed day, and per magnitude.s1void_injection_chain_bleed those deliver the FULL band rather than the damped shoulder band.",
+ "agent": "claude-opus-5 as the S118 reasoning lane (resume path; no API backend on this host)",
+ "derived_not_fitted": true
+}

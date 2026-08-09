@@ -1,0 +1,20 @@
+{
+ "specialist": "E",
+ "group": "g18",
+ "date": "20260501",
+ "overnight_gap_usd": -30,
+ "guessed_net_usd": -190,
+ "guessed_day_move_usd": -220,
+ "path_p50_curve": [
+  20,
+  -66,
+  -132,
+  -170
+ ],
+ "cum_from_anchor_usd": -170,
+ "confidence": "low",
+ "execution_enabled": false,
+ "reasoning": "Friday exit after a print day. Forecast run delta -0.343 is the block's largest WARM revision and gw_cdd 0.708 is its lowest - mild kills demand, which the weather model says is the big-DOWN asymmetry. Tape gives back: signed_flow -801 against the prior day's +7783. E owns the exit and the weekend handoff; exit type is give-back, Monday bias DOWN.",
+ "agent": "claude-opus-5 as the S118 reasoning lane (resume path; no API backend on this host)",
+ "derived_not_fitted": true
+}
