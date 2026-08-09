@@ -170,32 +170,18 @@ emission is the failure wearing a hit-rate.
 
 ---
 
-## 6. STILL OPEN, LOWER PRIORITY
+## 6. EVERYTHING ELSE OPEN
 
-- **A-61 before the next audit**: 3 of 4 "REFUTED" verdicts in an earlier audit were verified
-  against a tree that moved underneath the verifier. Pin the snapshot first.
-- **A-77 — the g6-g16 actual rebuild**: states exist, actuals do not, so the gradeable corpus is
-  **70 days, not ~180**. A REBUILD, not a re-pull (`group_actual.build(gid)` already exists). Use
-  the basis each STATE was built on and **do not silently normalize old blocks onto one continuous
-  basis** (`.v.0` vs `.n.0`) — that produces a corpus that scores cleanly and measures the wrong
-  contract. Blocks A-69.
-- **A-78 — the g24 refine** (REST, and the demotion is deliberate). Round 1's point is MAGNITUDE:
-  the blind emitted 0.29x of realized, under on 8 of 10 days. A 10/10 direction result at the same
-  sizing is the failure wearing a hit-rate. Inputs survive at `records/S115/refine_g24_aborted/`.
-- The live feed setup for the coach — Greg's call was to do it after the last group, and that is
-  still where it sits. **Two of its pieces now have registry lines and one of them needs Greg**:
-  **A-73** (live MBO is not authorized on our $179 Databento tier; the collector hot-loops on the
-  entitlement error rather than failing loudly; the tier that carries it is ~$1,500/mo — buy it, or
-  design the live lane onto trades + L1 and MEASURE what is lost) and **A-74**
-  (collector-as-a-service: `ng_live_collector` + `ng_live_watchdog` under systemd with a heartbeat
-  the andon reads).
-- **A-72** — re-run the order-flow direction nowcast CAUSALLY against persistence and slope
-  benchmarks before anyone grants it authority. It is the highest-agreement result the desk has
-  (0.68/0.84/0.94/0.93 by strength, 34 of 34 on three unseen days) and it had zero registry lines
-  until S115 close. Note both honest halves: the original audit package is gone, and it is a
-  running-leg NOWCAST, not a from-flat forecast.
-- **A-17A/C/D** are buildable now from free public sources (ERCOT/PJM/MISO/SPP aggregate outages,
-  NRC daily unit status, EIA-860M with a retained revision history). **A-17B is a measured public-data
-  gap** — no free public nationwide unit-level nuclear refuelling calendar exists, and one must never
-  be inferred from aggregate ISO MW or from typical 18/24-month cycles.
+**Read `OPEN_ITEMS.md`.** It is the render of `research/kalshi/OPEN_ITEMS.json`, 192 items, tiered,
+and it is the ONLY place open work lives (Greg, S115: *"Open things go to the open items md"*; D30).
+This box does not restate it - a second list is a second thing to keep in sync, and the one that
+goes stale is always the copy.
 
+```bash
+python research/kalshi/registry_grep.py <regex>          # every text field, not just the title
+python research/kalshi/registry_grep.py . --tier ESSENTIAL --status OPEN
+python research/kalshi/registry_grep.py <regex> --full
+```
+
+Sections 2-4 above name the three items that are SEQUENCED - A-70, then A-71, then A-67 arm 1 -
+because ordering is instruction and does not live in the registry. Everything else is in the render.

@@ -97,6 +97,21 @@ one command away.** Listing it is the point: a silent drop reads as "we saved ev
 
 ---
 
+## 4b. THERE IS NO SEPARATE "NEXT SESSION" NOTE HERE, AND THAT IS DELIBERATE
+
+One was written at S115 close listing six deferred items, and it was **deleted the same session on
+Greg's instruction: "Why are you creating another doc. Use the one we have. Open_items."** He is
+right, and it is the session's own lesson pointed back at me. **A second document holding open work
+is the same defect as the second doctrine file in the agents' read list (A-58) and the same defect
+as a brain view that splits the call from the argument** - two places to look, one of them stale
+within a session. Every item that note carried is a registry line: A-70, A-71, A-72, A-73, A-74,
+A-75, A-76, A-17A/B/C/D, A-77, A-78. The reasoning about what was DONE lives in the S115 handoff,
+which is a RECORD and correctly frozen.
+
+**The rule, stated once so it does not need restating: OPEN WORK LIVES IN `OPEN_ITEMS.json` AND
+NOWHERE ELSE.** Search it with `python research/kalshi/registry_grep.py <regex>`. Prose may point at
+an item; it may never be the item.
+
 ## 5. THE RULE THAT COMES OUT OF THIS — D52
 
 **Nothing authored may live only on a session scratchpad.** The harness offers one and will keep
