@@ -8,7 +8,9 @@ on:
       - research/kalshi/agent_frankie.py
       - research/kalshi/frankie_*.py
       - research/kalshi/frankie_*.json
+      - research/kalshi/databento_backfill_s115.py
       - research/kalshi/tests/test_*frankie*.py
+      - research/kalshi/tests/test_*s115.py
       - research/kalshi/FRANKIE_ARCHITECTURE_S117.md
       - research/kalshi/FRANKIE_RESEARCH_INTEGRATION_S117.md
       - deploy/aws/markets-frankie*.service
@@ -25,7 +27,9 @@ on:
       - research/kalshi/agent_frankie.py
       - research/kalshi/frankie_*.py
       - research/kalshi/frankie_*.json
+      - research/kalshi/databento_backfill_s115.py
       - research/kalshi/tests/test_*frankie*.py
+      - research/kalshi/tests/test_*s115.py
       - research/kalshi/FRANKIE_ARCHITECTURE_S117.md
       - research/kalshi/FRANKIE_RESEARCH_INTEGRATION_S117.md
       - deploy/aws/markets-frankie*.service
@@ -67,7 +71,11 @@ jobs:
             research/kalshi/frankie_improve.py \
             research/kalshi/frankie_evolution.py \
             research/kalshi/frankie_reflect.py \
-            research/kalshi/frankie_reflect_runner.py
+            research/kalshi/frankie_reflect_runner.py \
+            research/kalshi/frankie_s115.py \
+            research/kalshi/frankie_render_s115.py \
+            research/kalshi/frankie_validation_s115.py \
+            research/kalshi/databento_backfill_s115.py
       - name: Validate JSON contracts
         run: |
           python -m json.tool research/kalshi/frankie_event_schema.json >/dev/null
@@ -90,7 +98,19 @@ jobs:
       - name: Run Frankie selftest
         run: python research/kalshi/agent_frankie.py selftest
       - name: Run Frankie unit tests
-        run: python -m unittest discover -s research/kalshi/tests -p 'test_*frankie*.py'
+        run: |
+          python -m unittest discover -s research/kalshi/tests -p 'test_*frankie*.py'
+          python -m unittest discover -s research/kalshi/tests -p 'test_*s115.py'
+      - name: Verify S115 ownership is collision-free
+        run: |
+          PYTHONPATH=research/kalshi python - <<'PY'
+          from frankie_s115 import OWNERSHIP, assert_ownership_clean
+          assert_ownership_clean()
+          assert OWNERSHIP['D8_merge']['part'] == 'content_store'
+          assert OWNERSHIP['A62_specialist_priors']['part'] == 'derived_track_record_index'
+          assert OWNERSHIP['A65_compaction']['part'] == 'serving_policy'
+          print('A-66 ownership clean')
+          PY
       - name: Verify health is secret-free and non-executable
         run: |
           python research/kalshi/agent_frankie.py health > /tmp/frankie-health.json
