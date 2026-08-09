@@ -1,0 +1,21 @@
+{
+ "specialist": "C",
+ "group": "g20",
+ "date": "20260526",
+ "overnight_gap_usd": 70,
+ "guessed_net_usd": 420,
+ "guessed_day_move_usd": 490,
+ "path_p50_curve": [
+  -230,
+  -41,
+  106,
+  190
+ ],
+ "cum_from_anchor_usd": 190,
+ "confidence": "med",
+ "execution_enabled": false,
+ "reasoning": "TWO INDEPENDENT DRIVERS AGREE AND I AM SUMMING THEM, not emitting the dominant one: buy tape (signed_flow +1094, big_print_b 0.599 clearing the 0.55 gate) AND a real cooling ramp (gw_cdd 5.618 -> 7.43). Under the withdrawn under-100 target I would have called ~+150 here; the drivers support more.",
+ "arm": "S114 varied sizing passage (arm B)",
+ "agent": "claude-opus-5 as the S118 reasoning lane",
+ "derived_not_fitted": true
+}

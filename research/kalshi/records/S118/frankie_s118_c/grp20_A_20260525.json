@@ -1,0 +1,21 @@
+{
+ "specialist": "A",
+ "group": "g20",
+ "date": "20260525",
+ "overnight_gap_usd": -60,
+ "guessed_net_usd": -240,
+ "guessed_day_move_usd": -300,
+ "path_p50_curve": [
+  -60,
+  -168,
+  -252,
+  -300
+ ],
+ "cum_from_anchor_usd": -300,
+ "confidence": "low",
+ "execution_enabled": false,
+ "reasoning": "Memorial Day. b_share 0.367 is the block's most extreme sell but the tape is THIN and big_print_b 1.0 on a holiday session is a thin-tape artifact, not a 1.0 conviction - S107's guard says raise the bar below ~20 prints, so I do not size on it. run delta -0.758 is the block's largest warm revision. DOWN, and damped for thinness rather than for caution.",
+ "arm": "S114 varied sizing passage (arm B)",
+ "agent": "claude-opus-5 as the S118 reasoning lane",
+ "derived_not_fitted": true
+}

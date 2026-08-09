@@ -1,0 +1,21 @@
+{
+ "specialist": "B",
+ "group": "g20",
+ "date": "20260601",
+ "overnight_gap_usd": 50,
+ "guessed_net_usd": 250,
+ "guessed_day_move_usd": 300,
+ "path_p50_curve": [
+  -1130,
+  -1018,
+  -930,
+  -880
+ ],
+ "cum_from_anchor_usd": -880,
+ "confidence": "low",
+ "execution_enabled": false,
+ "reasoning": "Month start. b_share 0.513 CLEARS 0.50 for the first time in the block, but signed_flow is only +278 and big_print_b 1.0 is again a thin-print artifact. The sign gate is satisfied and the size evidence is not, so this is a genuine small UP - small because the evidence is thin, not to protect the error line.",
+ "arm": "S114 varied sizing passage (arm B)",
+ "agent": "claude-opus-5 as the S118 reasoning lane",
+ "derived_not_fitted": true
+}

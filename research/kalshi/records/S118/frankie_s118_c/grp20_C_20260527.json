@@ -1,0 +1,21 @@
+{
+ "specialist": "C",
+ "group": "g20",
+ "date": "20260527",
+ "overnight_gap_usd": -50,
+ "guessed_net_usd": -330,
+ "guessed_day_move_usd": -380,
+ "path_p50_curve": [
+  140,
+  -8,
+  -124,
+  -190
+ ],
+ "cum_from_anchor_usd": -190,
+ "confidence": "low",
+ "execution_enabled": false,
+ "reasoning": "SPLIT: tape sells (b_share 0.44, signed_flow -1290) while gw_cdd keeps rising to 8.197 (run delta +0.171). Override test is gw_hdd >= 16.4 AND b_share >= 0.50 - gw_hdd is 0.593 and b_share 0.44, so it FAILS and selector.divergence_resolution says take the TAPE. Declaring the split and the test explicitly (A-84), because resolving it silently is what cost the two worst events of the last run.",
+ "arm": "S114 varied sizing passage (arm B)",
+ "agent": "claude-opus-5 as the S118 reasoning lane",
+ "derived_not_fitted": true
+}

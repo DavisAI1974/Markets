@@ -1,0 +1,21 @@
+{
+ "specialist": "D",
+ "group": "g20",
+ "date": "20260604",
+ "overnight_gap_usd": -60,
+ "guessed_net_usd": -400,
+ "guessed_day_move_usd": -460,
+ "path_p50_curve": [
+  10,
+  -170,
+  -310,
+  -390
+ ],
+ "cum_from_anchor_usd": -390,
+ "confidence": "med",
+ "execution_enabled": false,
+ "reasoning": "Second EIA print. SPLIT and this one is uncomfortable: signed_flow -2852 sells while gw_cdd ramps to 9.303. Override fails (gw_hdd 0.281), so TAPE. I am taking it because the rule says so and I applied it on 0527 and 0602 - applying it only when it feels right is how it stopped being a rule.",
+ "arm": "S114 varied sizing passage (arm B)",
+ "agent": "claude-opus-5 as the S118 reasoning lane",
+ "derived_not_fitted": true
+}

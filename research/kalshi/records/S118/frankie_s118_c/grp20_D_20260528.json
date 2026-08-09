@@ -1,0 +1,21 @@
+{
+ "specialist": "D",
+ "group": "g20",
+ "date": "20260528",
+ "overnight_gap_usd": -70,
+ "guessed_net_usd": -520,
+ "guessed_day_move_usd": -590,
+ "path_p50_curve": [
+  -260,
+  -494,
+  -676,
+  -780
+ ],
+ "cum_from_anchor_usd": -780,
+ "confidence": "med",
+ "execution_enabled": false,
+ "reasoning": "EIA print in injection season with the block's second-largest sell flow (-4910), b_share 0.448, and the weather SOFTENING behind it (gw_cdd 8.197 -> 5.904). Not a split - both drivers point down, so I sum them. The largest down call of week 1.",
+ "arm": "S114 varied sizing passage (arm B)",
+ "agent": "claude-opus-5 as the S118 reasoning lane",
+ "derived_not_fitted": true
+}

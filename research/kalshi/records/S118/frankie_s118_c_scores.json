@@ -1,0 +1,214 @@
+{
+  "prepare": {
+    "actual_tape_read": false,
+    "groups": [
+      {
+        "actual_tape_read": false,
+        "anchor": "/tmp/claude-0/-home-user-Markets/4b552543-8f19-57ec-ad0e-26dd3ed7484d/scratchpad/s118/research/kalshi/renders/ng_refine_s95/g20_anchor.json",
+        "causal_slices": "/tmp/claude-0/-home-user-Markets/4b552543-8f19-57ec-ad0e-26dd3ed7484d/scratchpad/s118/research/kalshi/renders/ng_refine_s95/g20_causal_slices",
+        "group": "g20",
+        "state": "/tmp/claude-0/-home-user-Markets/4b552543-8f19-57ec-ad0e-26dd3ed7484d/scratchpad/s118/research/kalshi/renders/ng_refine_s95/grp20_state.json"
+      }
+    ]
+  },
+  "runs": [
+    {
+      "run": {
+        "bridges": [
+          "forecasts/frankie_s118_c/grp20_Abridge_20260601.json"
+        ],
+        "forecasts": [
+          "forecasts/frankie_s118_c/grp20_A_20260525.json",
+          "forecasts/frankie_s118_c/grp20_C_20260526.json",
+          "forecasts/frankie_s118_c/grp20_C_20260527.json",
+          "forecasts/frankie_s118_c/grp20_D_20260528.json",
+          "forecasts/frankie_s118_c/grp20_E_20260529.json",
+          "forecasts/frankie_s118_c/grp20_B_20260601.json",
+          "forecasts/frankie_s118_c/grp20_C_20260602.json",
+          "forecasts/frankie_s118_c/grp20_C_20260603.json",
+          "forecasts/frankie_s118_c/grp20_D_20260604.json",
+          "forecasts/frankie_s118_c/grp20_E_20260605.json"
+        ],
+        "group": "g20",
+        "namespace": "frankie_s118_c"
+      },
+      "score": {
+        "counts": {
+          "frankie_better_error": 5,
+          "frankie_dir_hits": 3,
+          "frankie_worse_error": 5,
+          "n": 10,
+          "old_dir_hits": 6
+        },
+        "events": [
+          {
+            "actual": 30.0,
+            "day": "20260525",
+            "error_delta_frankie_minus_old": 120.0,
+            "event_id": "g20:20260525",
+            "frankie": -240.0,
+            "frankie_abs_error": 270.0,
+            "frankie_direction_ok": false,
+            "old_abs_error": 150.0,
+            "old_blind": 180.0,
+            "old_direction_ok": true,
+            "owner": "A",
+            "persistence_abs_error": 30.0,
+            "seasonal_naive_abs_error": 30.0,
+            "zero_change_abs_error": 30.0
+          },
+          {
+            "actual": -190.0,
+            "day": "20260526",
+            "error_delta_frankie_minus_old": 520.0,
+            "event_id": "g20:20260526",
+            "frankie": 420.0,
+            "frankie_abs_error": 610.0,
+            "frankie_direction_ok": false,
+            "old_abs_error": 90.0,
+            "old_blind": -280.0,
+            "old_direction_ok": true,
+            "owner": "C",
+            "persistence_abs_error": 220.0,
+            "seasonal_naive_abs_error": 190.0,
+            "zero_change_abs_error": 190.0
+          },
+          {
+            "actual": 610.0,
+            "day": "20260527",
+            "error_delta_frankie_minus_old": -170.0,
+            "event_id": "g20:20260527",
+            "frankie": -330.0,
+            "frankie_abs_error": 940.0,
+            "frankie_direction_ok": false,
+            "old_abs_error": 1110.0,
+            "old_blind": -500.0,
+            "old_direction_ok": false,
+            "owner": "C",
+            "persistence_abs_error": 800.0,
+            "seasonal_naive_abs_error": 610.0,
+            "zero_change_abs_error": 610.0
+          },
+          {
+            "actual": 2100.0,
+            "day": "20260528",
+            "error_delta_frankie_minus_old": 670.0,
+            "event_id": "g20:20260528",
+            "frankie": -520.0,
+            "frankie_abs_error": 2620.0,
+            "frankie_direction_ok": false,
+            "old_abs_error": 1950.0,
+            "old_blind": 150.0,
+            "old_direction_ok": true,
+            "owner": "D",
+            "persistence_abs_error": 1490.0,
+            "seasonal_naive_abs_error": 2100.0,
+            "zero_change_abs_error": 2100.0
+          },
+          {
+            "actual": -160.0,
+            "day": "20260529",
+            "error_delta_frankie_minus_old": -30.0,
+            "event_id": "g20:20260529",
+            "frankie": -350.0,
+            "frankie_abs_error": 190.0,
+            "frankie_direction_ok": true,
+            "old_abs_error": 220.0,
+            "old_blind": -380.0,
+            "old_direction_ok": true,
+            "owner": "E",
+            "persistence_abs_error": 2260.0,
+            "seasonal_naive_abs_error": 160.0,
+            "zero_change_abs_error": 160.0
+          },
+          {
+            "actual": -990.0,
+            "day": "20260601",
+            "error_delta_frankie_minus_old": -100.0,
+            "event_id": "g20:20260601",
+            "frankie": 250.0,
+            "frankie_abs_error": 1240.0,
+            "frankie_direction_ok": false,
+            "old_abs_error": 1340.0,
+            "old_blind": 350.0,
+            "old_direction_ok": false,
+            "owner": "B",
+            "persistence_abs_error": 830.0,
+            "seasonal_naive_abs_error": 1020.0,
+            "zero_change_abs_error": 990.0
+          },
+          {
+            "actual": -80.0,
+            "day": "20260602",
+            "error_delta_frankie_minus_old": 130.0,
+            "event_id": "g20:20260602",
+            "frankie": 380.0,
+            "frankie_abs_error": 460.0,
+            "frankie_direction_ok": false,
+            "old_abs_error": 330.0,
+            "old_blind": 250.0,
+            "old_direction_ok": false,
+            "owner": "C",
+            "persistence_abs_error": 910.0,
+            "seasonal_naive_abs_error": 110.0,
+            "zero_change_abs_error": 80.0
+          },
+          {
+            "actual": 750.0,
+            "day": "20260603",
+            "error_delta_frankie_minus_old": 30.0,
+            "event_id": "g20:20260603",
+            "frankie": 450.0,
+            "frankie_abs_error": 300.0,
+            "frankie_direction_ok": true,
+            "old_abs_error": 270.0,
+            "old_blind": 480.0,
+            "old_direction_ok": true,
+            "owner": "C",
+            "persistence_abs_error": 830.0,
+            "seasonal_naive_abs_error": 140.0,
+            "zero_change_abs_error": 750.0
+          },
+          {
+            "actual": 1130.0,
+            "day": "20260604",
+            "error_delta_frankie_minus_old": -50.0,
+            "event_id": "g20:20260604",
+            "frankie": -400.0,
+            "frankie_abs_error": 1530.0,
+            "frankie_direction_ok": false,
+            "old_abs_error": 1580.0,
+            "old_blind": -450.0,
+            "old_direction_ok": false,
+            "owner": "D",
+            "persistence_abs_error": 380.0,
+            "seasonal_naive_abs_error": 970.0,
+            "zero_change_abs_error": 1130.0
+          },
+          {
+            "actual": -1340.0,
+            "day": "20260605",
+            "error_delta_frankie_minus_old": -60.0,
+            "event_id": "g20:20260605",
+            "frankie": -560.0,
+            "frankie_abs_error": 780.0,
+            "frankie_direction_ok": true,
+            "old_abs_error": 840.0,
+            "old_blind": -500.0,
+            "old_direction_ok": true,
+            "owner": "E",
+            "persistence_abs_error": 2470.0,
+            "seasonal_naive_abs_error": 1180.0,
+            "zero_change_abs_error": 1340.0
+          }
+        ],
+        "group": "g20",
+        "kind": "S118_WALKED_TWO_GROUP_VALIDATION",
+        "namespace": "frankie_s118_c",
+        "pooled_scalar": null,
+        "schema_version": "1.0",
+        "warning": "walked validation data; not A-67 evidence"
+      }
+    }
+  ]
+}

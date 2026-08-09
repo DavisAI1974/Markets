@@ -1,0 +1,21 @@
+{
+ "specialist": "C",
+ "group": "g20",
+ "date": "20260602",
+ "overnight_gap_usd": 60,
+ "guessed_net_usd": 380,
+ "guessed_day_move_usd": 440,
+ "path_p50_curve": [
+  -820,
+  -649,
+  -516,
+  -440
+ ],
+ "cum_from_anchor_usd": -440,
+ "confidence": "med",
+ "execution_enabled": false,
+ "reasoning": "SPLIT the other way: signed_flow +3796 buys hard while run delta -0.36 turns the weather warm. Override fails again (gw_hdd 0.522), so TAPE wins - the same rule as 0527, applied in the opposite direction, which is the consistency that was missing last run. UP.",
+ "arm": "S114 varied sizing passage (arm B)",
+ "agent": "claude-opus-5 as the S118 reasoning lane",
+ "derived_not_fitted": true
+}

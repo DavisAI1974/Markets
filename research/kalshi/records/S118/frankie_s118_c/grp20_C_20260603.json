@@ -1,0 +1,21 @@
+{
+ "specialist": "C",
+ "group": "g20",
+ "date": "20260603",
+ "overnight_gap_usd": 60,
+ "guessed_net_usd": 450,
+ "guessed_day_move_usd": 510,
+ "path_p50_curve": [
+  -380,
+  -178,
+  -20,
+  70
+ ],
+ "cum_from_anchor_usd": 70,
+ "confidence": "med",
+ "execution_enabled": false,
+ "reasoning": "No split - everything agrees: signed_flow +3524, big_print_b 0.585 clears the gate, gw_cdd rises 6.261 -> 7.034. Three live drivers on one side get SUMMED. The largest up call of the block.",
+ "arm": "S114 varied sizing passage (arm B)",
+ "agent": "claude-opus-5 as the S118 reasoning lane",
+ "derived_not_fitted": true
+}

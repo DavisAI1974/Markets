@@ -1,0 +1,21 @@
+{
+ "specialist": "E",
+ "group": "g20",
+ "date": "20260529",
+ "overnight_gap_usd": -50,
+ "guessed_net_usd": -350,
+ "guessed_day_move_usd": -400,
+ "path_p50_curve": [
+  -830,
+  -988,
+  -1110,
+  -1180
+ ],
+ "cum_from_anchor_usd": -1180,
+ "confidence": "med",
+ "execution_enabled": false,
+ "reasoning": "Friday exit continuing the sell: signed_flow -1966, b_share 0.458, big_print_b 0.522. Nothing has turned - no band break, b_share never cleared 0.50 all week. DOWN into the weekend, chain intact.",
+ "arm": "S114 varied sizing passage (arm B)",
+ "agent": "claude-opus-5 as the S118 reasoning lane",
+ "derived_not_fitted": true
+}

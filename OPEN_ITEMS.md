@@ -8,7 +8,7 @@ home does not exist.
 |---|---|
 | open | 176 |
 | in progress | 1 |
-| done | 21 |
+| done | 22 |
 
 By size: **XS** 20, **S** 78, **M** 55, **L** 13
 
@@ -49,7 +49,7 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 44, **REST** 108
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 | **A-67** | L | THE A/B IS BLIND vs FRANKENSTEIN ON THE UNWALKED HEAD - one block that is the last group run, the architecture test AND the under-emission experiment | It is the only way the hybrid ships on a MEASUREMENT rather than on argument, and it DE-RISKS the last group run rather than endangering it - the run would then use a harness validated on g24 instead of one reasoned about. It is also A-65's validated-compaction discipline applied at architecture scale, which is the standard S115 just adopted. |
 | **A-69** | L | SELF-TRAINING LOOP: Frankie runs blinds on the WALKED corpus, grades himself with FJ-1, and the head is held out as the only true test | It creates the TRAIN/TEST SPLIT this project has never had, it uses a corpus we already own and have used once each, and its grader is already built and has never been run. It is also the mechanism that makes A-67's retention arm meaningful - retention with nothing to retain across is ceremony. |
-| **A-83** | L | THE UNDER-EMISSION IS THE REASONING LANE, NOT THE HARNESS - it reproduced at 0.26-0.35x with a different agent | Three groups, two harnesses, two different agents, same failure. It is the dominant open problem of the whole walk and it now has a much cleaner attribution than it had at S114. |
+| **A-85** | L | THE EMITTED MAGNITUDE CARRIES NO INFORMATION ABOUT THE DAY'S MAGNITUDE - a constant band, not a forecast | It reframes the dominant open problem of the walk. Under-emission was the SYMPTOM; this is the disease, and it says the current contract is asking the agent for a number it has no signal to produce. |
 | **A-50** | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 
 ## BIGGEST WIN (44)
@@ -247,7 +247,7 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 44, **REST** 108
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 | **A-67** | ESSENTIAL | L | OPEN | S115 | THE A/B IS BLIND vs FRANKENSTEIN ON THE UNWALKED HEAD - one block that is the last group run, the architecture test AND the under-emission experiment | - |
 | **A-69** | ESSENTIAL | L | OPEN | S115 | SELF-TRAINING LOOP: Frankie runs blinds on the WALKED corpus, grades himself with FJ-1, and the head is held out as the only true test | - |
-| **A-83** | ESSENTIAL | L | OPEN | S118 | THE UNDER-EMISSION IS THE REASONING LANE, NOT THE HARNESS - it reproduced at 0.26-0.35x with a different agent | - |
+| **A-85** | ESSENTIAL | L | OPEN | S118 | THE EMITTED MAGNITUDE CARRIES NO INFORMATION ABOUT THE DAY'S MAGNITUDE - a constant band, not a forecast | - |
 | **A-50** | ESSENTIAL | ? | OPEN | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 | **O-2** | BIGGEST_WIN | XS | OPEN | S114 | RECORD THE S111 OPTIONS VERDICT AS A BINDING DECISION - it exists only in a file-index blurb | - |
 | **A-15** | BIGGEST_WIN | S | OPEN | S112 | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | - |
@@ -423,6 +423,7 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 44, **REST** 108
 | A-77 | M | REBUILD THE g6-g16 ACTUALS - the corpus is 70 gradeable days, not the ~180 the narrative implied |
 | A-80 | XS | THE S118 RUNNER SERVES ZERO PLAYS - two shape mismatches against brain_view, both failing OPEN |
 | A-82 | S | THE S118 LEAK GUARD IS SCOPED TO TOKEN NAMES, NOT TO DATES - it blocks the run on legitimate prior-group evidence |
+| A-83 | L | THE UNDER-EMISSION IS THE REASONING LANE, NOT THE HARNESS - it reproduced at 0.26-0.35x with a different agent |
 | G-19 | S | EIA-930: BATTERY STORAGE is now its own category and we do not carry it |
 | G-5 | M | ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY |
 | M-2 | S | Brain status taxonomy normalized to an enum |
@@ -921,21 +922,24 @@ CAVEAT ON THE OLDER BLOCKS, so nobody treats them as equivalent: g6..g16 were wa
 
 ---
 
-### [ESSENTIAL] A-83 - THE UNDER-EMISSION IS THE REASONING LANE, NOT THE HARNESS - it reproduced at 0.26-0.35x with a different agent
+### [ESSENTIAL] A-85 - THE EMITTED MAGNITUDE CARRIES NO INFORMATION ABOUT THE DAY'S MAGNITUDE - a constant band, not a forecast
 
 *size L | OPEN | raised S118*
 
-**Why it is ESSENTIAL:** Three groups, two harnesses, two different agents, same failure. It is the dominant open problem of the whole walk and it now has a much cleaner attribution than it had at S114.
+**Why it is ESSENTIAL:** It reframes the dominant open problem of the walk. Under-emission was the SYMPTOM; this is the disease, and it says the current contract is asking the agent for a number it has no signal to produce.
 
-**Source:** S118 Frankie two-group run on g18/g19
+**Source:** S118 S114-experiment arm B; visible only by sorting events on |actual| and reading them individually
 
-MEASURED S118. Frankie ran g18 and g19 through the S118 contracts with a DIFFERENT reasoning agent, and emitted **0.35x** (g18) and **0.26x** (g19) of realized magnitude - against g24's 0.29x, g23's 0.68x and g22's 0.55x on the OLD harness.
+MEASURED S118, per event, both arms. Sort each arm's events by |actual| ascending and read the emitted |guess| beside it:
 
-**THIS IS THE ATTRIBUTION THAT WAS MISSING.** S114 recorded three competing explanations for the under-emission and promoted none (D37): the brief's stand-down passage biasing small, correct shrinking after specialists had their sign instrument refuted, or a genuinely hard block. A different harness and a different agent reproducing it at the same scale **weakens the harness explanation** and points at the reasoning lane itself - the agent will not emit the size its own drivers support.
+  arm A  smallest-half |actual| -> |guess| spans 100..270 ; largest-half -> 90..330
+  arm B  smallest-half |actual| -> |guess| spans 240..420 ; largest-half -> 250..560
 
-It is visible day by day in this run: on g19 20260511 the actual was +1,740 and the call was -160; on g18 20260430 the actual was +1,230 and the call was +330 with the strongest coherent buy tape in the block (signed_flow +7,783, the only b_share above 0.50, big_print_b 0.621 clearing the gate). **The direction read was right and the size was a fifth of the move.**
+**The two ranges OVERLAP almost completely in both arms.** The emitted size does not separate a 30 USD day from a 2,100 USD day. Varying the sizing passage moved the whole band UP (A-83) and left the discrimination exactly where it was.
 
-**CORRECTED AFTER RE-READING PER EVENT (Greg: 'you cannot average. you have to look at every event individually'). The first version of this item was written off sum|err| and ratios - D37's exact prohibition - and the per-event view partly OVERTURNS it.** It is NOT a uniform wash: g18 improved 3/10 and worsened 7/10, **worse on 6 of its 8 largest moves** - a real loss concentrated where being wrong costs. g19 improved 7/10 and was **better on 5 of its 8 largest**, including the two biggest (0511 +1,740: err 2,190 -> 1,900; 0520 -1,050: err 1,250 -> 850). Averaging hid both halves. The under-emission claim SURVIVES (0430: actual +1,230, called +330 on the block's strongest coherent tape), but it is not the only failure and it is not the one that owns the largest misses - see A-84.
+Worst individual illustrations: arm A 20260511 actual 1,740 -> guessed 160, while 20260515 actual 320 -> guessed 100. Arm B 20260525 actual 30 -> guessed 240, while 20260528 actual 2,100 -> guessed 520.
+
+This is a DISCRIMINATION failure, and the S111 condition_audit found the same disease shape in triggers: transfer is cured by form, discrimination is cured by CENTRING, and the two are different illnesses. A forecaster emitting a roughly constant band is reporting its prior, not its read.
 
 ---
 

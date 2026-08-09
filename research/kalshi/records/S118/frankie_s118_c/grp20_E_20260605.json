@@ -1,0 +1,21 @@
+{
+ "specialist": "E",
+ "group": "g20",
+ "date": "20260605",
+ "overnight_gap_usd": -70,
+ "guessed_net_usd": -560,
+ "guessed_day_move_usd": -630,
+ "path_p50_curve": [
+  -460,
+  -712,
+  -908,
+  -1020
+ ],
+ "cum_from_anchor_usd": -1020,
+ "confidence": "med",
+ "execution_enabled": false,
+ "reasoning": "The hardest day in the block and the clearest test of the rule. The block's LARGEST sell flow (-5662) against its LARGEST bullish weather signal - gw_cdd 10.921 and the regime flipping to hard_cool. Override test: gw_hdd 0.433, nowhere near 16.4, and b_share 0.445 under 0.50 - it FAILS, so TAPE. DOWN and sized large, because both the flow magnitude and the Friday exit support it. Standing caveat carried, not folded in: managed money covered +23,762 WoW, the largest weekly cover of any block here, so the upside tail is fat even though the p50 is down.",
+ "arm": "S114 varied sizing passage (arm B)",
+ "agent": "claude-opus-5 as the S118 reasoning lane",
+ "derived_not_fitted": true
+}

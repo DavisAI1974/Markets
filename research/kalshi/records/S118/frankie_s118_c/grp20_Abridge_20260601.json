@@ -1,0 +1,18 @@
+{
+ "specialist": "A",
+ "group": "g20",
+ "date": "20260601",
+ "template": "BLD-2",
+ "overnight_gap_usd": 50,
+ "guessed_net_usd": 0,
+ "path_p50_curve": [
+  0,
+  50
+ ],
+ "monday_bias": "up",
+ "exit_type": "chain_intact_no_turn",
+ "execution_enabled": false,
+ "reasoning": "E exits 0529 still selling (signed_flow -1966, b_share 0.458) with no band break and b_share never clearing 0.50 all week - the down chain is INTACT, not turned. But the weekend changes one thing: gw_cdd holds 6.1 and month-start flow arrives, and managed money covered +23,762 WoW, the largest weekly cover in this block. A's read: chain intact, no turn confirmed, so B should NOT reset to a fresh start (S106 extension-blindness) - carry the chain. Monday bias mildly UP on month-start flow only, and small, because the chain says down and only the calendar says up.",
+ "arm": "S114 varied sizing passage (arm B)",
+ "note": "A informs, B decides, B owns the number."
+}
