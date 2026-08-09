@@ -71,14 +71,16 @@ class FrankieTests(unittest.TestCase):
 
     @staticmethod
     def outcome(result="NO_EDGE_AFTER_COSTS"):
+        # Synthetic unit-test resolution deliberately far after any test decision timestamp.
+        resolved = "2099-01-01T00:00:00Z"
         return {
-            "resolved_at": "2026-08-07T21:00:00Z",
+            "resolved_at": resolved,
             "result": result,
             "metrics": {"net_edge": 0.0},
             "source_provenance": [
                 {
                     "source": "unit-outcome",
-                    "knowable_at": "2026-08-07T21:00:00Z",
+                    "knowable_at": resolved,
                     "content_hash": "unit-outcome-hash",
                 }
             ],
@@ -125,10 +127,10 @@ class FrankieTests(unittest.TestCase):
                 paper_ids=set(),
             )
 
-    def test_incomplete_paper_manifest_caps_shadow(self):
+    def test_ready_paper_manifest_allows_agreed_shadow(self):
         with tempfile.TemporaryDirectory() as tmp:
             _, decision, evidence = self.evaluated(tmp)
-            self.assertEqual(decision.state, "WATCH_ONLY")
+            self.assertEqual(decision.state, "SHADOW")
             self.assertFalse(decision.execution_enabled)
             self.assertTrue(evidence.is_file())
 
