@@ -678,7 +678,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **173 files.**
+new tool cannot go unlisted. **175 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `archive_blind.py` — move the blind's posteriors out of the refine's filenames (S108).
@@ -812,6 +812,8 @@ new tool cannot go unlisted. **173 files.**
 - `pyth_backfill.py` — HISTORICAL per-second NYMEX tape from Pyth Hermes (S84).
 - `pyth_collector.py` — sub-second tick collector for the NYMEX/ICE futures Kalshi settles on, via Pyth Hermes.
 - `append_d51.py` — (no docstring summary)
+- `close_a71_correct_m16.py` — Close A-71 and correct M-16's description of its own defect. (S115.)
+- `land_head_trades_a71.py` — move the head trades out of the phantom tree and onto S3. (A-71, S115.)
 - `register_a70_a71.py` — (no docstring summary)
 - `register_briefing_audit_gaps.py` — (no docstring summary)
 - `register_prose_only_opens.py` — Register the two open things that were living only in handoff prose. (S115 close.)

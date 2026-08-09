@@ -338,6 +338,11 @@
    "path": "OPEN_ITEMS.md",
    "class": "RENDER",
    "why": "GENERATED from research/kalshi/OPEN_ITEMS.json by `store.py docs --write` and gated byte-identical by `store.py check`. **It was missing from this registry entirely until S115 close** - a gated render the document registry did not know existed, found the moment the classification gate was widened past research/kalshi. Never hand-edit; edit the store."
+  },
+  {
+   "path": "research/kalshi/CHATGPT_BRIEF_S116_FRANKIE_STATUS.md",
+   "class": "EXTERNAL",
+   "why": "OUTBOUND status brief to the external Frankie builder at S115 close: how we verified the build and why it is not merged (A-70), the three corrections that affect their work (M-16 is two defects and the ignored-out_dir half is the worse one; A-71 done so the head substrate exists; the corpus is 70 gradeable days), the new registry items, and three narrow asks. A RECORD of what we sent, dated."
   }
  ]
 }

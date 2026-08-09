@@ -131,6 +131,13 @@
     "A-17D"
    ],
    "verified_on": "S115"
+  },
+  "CHATGPT_BRIEF_S116_FRANKIE_STATUS.md": {
+   "session": "S115",
+   "n_recommendations": 0,
+   "result": "AUDITED BY CONSTRUCTION at S115 close. OUTBOUND task packet: it carries three ASKS and a status report, not recommendations to us. Every registry id it cites was registered before the brief was written - A-70..A-78 and A-17A/B/C/D - which is the correct order under D36 and the opposite of what happened with the S111 briefings, where twelve of thirteen suggestions lived in prose nothing counted. Recommendations arriving in the REPLY get registered in the session that reply lands.",
+   "items": [],
+   "verified_on": "S115"
   }
  }
 }
