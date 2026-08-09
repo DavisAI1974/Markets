@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 172 |
+| open | 174 |
 | in progress | 1 |
 | done | 17 |
 
-By size: **XS** 19, **S** 78, **M** 53, **L** 12
+By size: **XS** 19, **S** 78, **M** 55, **L** 12
 
 ---
 
-By tier: **ESSENTIAL** 23, **BIGGEST_WIN** 44, **REST** 106
+By tier: **ESSENTIAL** 24, **BIGGEST_WIN** 44, **REST** 107
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (23)
+## ESSENTIAL (24)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -43,6 +43,7 @@ By tier: **ESSENTIAL** 23, **BIGGEST_WIN** 44, **REST** 106
 | **A-68** | M | GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal | It is the PREREQUISITE for A-67's retention arm - without it there is no retention to measure, and the arm cannot run. It is also the smallest change that turns a per-day amnesiac spawn into something with a horizon, which is the whole premise of the hybrid. |
 | **A-70** | M | MERGE REVIEW: chatgpt/agent-frankie-s117 carries an UNREAD base branch into the trunk | Everything downstream is blocked on it. A-67 arm 1 is the next real experiment and it cannot run until Frankie is on the trunk; but the merge commit also lands the dashboard / novel-edge-lab S116 base, and a merge commit signs for the whole diff. |
 | **A-74** | M | THE LIVE LOOP HAS NEVER RUN AS A SERVICE - collector-as-a-service was G3 of the S110 go-plan and has no registry line | Paper trading is the next milestone and it needs a loop that survives a session ending. Everything else in the S110 go-plan got built - G0 account closed, G1 paper ledger with four risk caps, G2 daily loop, G4 andon - and this one line, the one that makes them RUN WITHOUT A HUMAN, was never tracked. |
+| **A-77** | M | REBUILD THE g6-g16 ACTUALS - the corpus is 70 gradeable days, not the ~180 the narrative implied | A-69's self-training loop has no training set without it, and A-69 is one of the two arms of the architecture test. It was described inside A-69's `why` and had no line of its own, which is exactly the shape D30 exists to catch. |
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | M | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24. |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -101,7 +102,7 @@ By tier: **ESSENTIAL** 23, **BIGGEST_WIN** 44, **REST** 106
 | **A-53** | ? | Sweep every play's `requires` against the served BLIND field set | - |
 | **A-54** | ? | The output contract cannot express what the specialists actually derived | - |
 
-## REST (106)
+## REST (107)
 
 *everything else - real work, correctly tracked, and none of it deleted. Several become cheap once an ESSENTIAL or BIGGEST_WIN item lands.*
 
@@ -181,6 +182,7 @@ By tier: **ESSENTIAL** 23, **BIGGEST_WIN** 44, **REST** 106
 | **A-24f** | M | Cross-basin freeze GEOMETRY - overlap, sequence and duration, not the coldest basin | Stays REST S114 only because it is BLOCKED, not because it is a mere candidate - A-33 already promoted its content. Unblocks at the g12/g13 actual repull or the first winter block. |
 | **A-24g** | M | Sunset compression x regional gas marginality - the synchronised thermal ramp | Stays REST S114: correctly parked by its own author on A-28. Six findings queue behind that one ingest change; when it lands this item is testable. |
 | **A-6** | M | Re-test the dipole EXHAUSTION arm on gas AT NATIVE TICK - it has a measurable success criterion | - |
+| **A-78** | M | THE g24 REFINE HAS NEVER RUN - carried as 'the opener' then 'housekeeping' for two sessions, in prose only | Deliberately REST, and the demotion is the honest part. A-67 arm 1 is a BLIND run on the clean unwalked head, which is a better test than a refine of a block whose state has been read forwards and backwards all session. This is real work that should happen; it is not the frontier, and pretending otherwise is how the frontier gets displaced. |
 | **G-13** | M | NG weekly option settlements + EIA-print event variance extraction | - |
 | **G-18** | M | OPTIONS: de-Samuelsonize and de-seasonalize the IV surface before reading it | - |
 | **G-22** | M | TERM STRUCTURE: use as a REGIME LABEL, and carry the CARRYOUT PROJECTION | - |
@@ -237,6 +239,7 @@ By tier: **ESSENTIAL** 23, **BIGGEST_WIN** 44, **REST** 106
 | **A-68** | ESSENTIAL | M | OPEN | S115 | GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal | - |
 | **A-70** | ESSENTIAL | M | OPEN | S115 | MERGE REVIEW: chatgpt/agent-frankie-s117 carries an UNREAD base branch into the trunk | - |
 | **A-74** | ESSENTIAL | M | OPEN | S101-02 (designed), S110 (pl | THE LIVE LOOP HAS NEVER RUN AS A SERVICE - collector-as-a-service was G3 of the S110 go-plan and has no registry line | - |
+| **A-77** | ESSENTIAL | M | OPEN | S115 | REBUILD THE g6-g16 ACTUALS - the corpus is 70 gradeable days, not the ~180 the narrative implied | - |
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | ESSENTIAL | M | OPEN | S115 | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -361,6 +364,7 @@ By tier: **ESSENTIAL** 23, **BIGGEST_WIN** 44, **REST** 106
 | **A-24f** | REST | M | OPEN | S113 | Cross-basin freeze GEOMETRY - overlap, sequence and duration, not the coldest basin | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
 | **A-24g** | REST | M | OPEN | S113 | Sunset compression x regional gas marginality - the synchronised thermal ramp | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
 | **A-6** | REST | M | OPEN | S90 | Re-test the dipole EXHAUSTION arm on gas AT NATIVE TICK - it has a measurable success criterion | - |
+| **A-78** | REST | M | OPEN | S114 (as S115's opener) | THE g24 REFINE HAS NEVER RUN - carried as 'the opener' then 'housekeeping' for two sessions, in prose only | - |
 | **G-13** | REST | M | OPEN | S111 | NG weekly option settlements + EIA-print event variance extraction | - |
 | **G-18** | REST | M | OPEN | S111 (recommendation); S112  | OPTIONS: de-Samuelsonize and de-seasonalize the IV surface before reading it | - |
 | **G-22** | REST | M | OPEN | S111 (recommendation); S112  | TERM STRUCTURE: use as a REGIME LABEL, and carry the CARRYOUT PROJECTION | - |
@@ -723,6 +727,20 @@ MEASURED S115: `git merge --no-commit --no-ff origin/chatgpt/agent-frankie-s117`
 MEASURED S115: searching the registry for `live orchestrat|systemd|collector-as-a-service|watchdog` returns 0 of 181. `ng_live_collector` and `ng_live_watchdog` were designed at S101-02 and, in the memo's own words, 'never yet run as a service'. The S110 memo listed it as G3, half a session of work, with health.json feeding the andon board.
 
 Note the shape: this is D36 exactly - a memo's recommendation living in prose that nothing counts. It is the third instance of that family found by auditing briefings (12 of 13 S111 suggestions, then the A-24 hand-off, now this).
+
+---
+
+### [ESSENTIAL] A-77 - REBUILD THE g6-g16 ACTUALS - the corpus is 70 gradeable days, not the ~180 the narrative implied
+
+*size M | OPEN | raised S115*
+
+**Why it is ESSENTIAL:** A-69's self-training loop has no training set without it, and A-69 is one of the two arms of the architecture test. It was described inside A-69's `why` and had no line of its own, which is exactly the shape D30 exists to catch.
+
+**Source:** S115 close; measured when scoping A-69, and named as its own item in the external build's 'not claimed as passed' list. Registered on Greg's instruction that open things go to the registry, not into handoff prose.
+
+MEASURED S115, against a number I had asserted from narrative. I said '18 blocks, ~180 days'. Only g18-g24 carry BOTH a state and a rebuilt actual - **70 gradeable days**. g6-g16 have states with no actuals, so they are unlabelled data: a blind can be run on them but nothing can score it.
+
+THE GAP IS A REBUILD, NOT A RE-PULL. The day ranges are recoverable from the state files themselves (each state is keyed by its own days) and `group_actual.build(gid)` already exists - it is what `stage_group` calls. Nothing needs to be bought.
 
 ---
 
@@ -3314,6 +3332,20 @@ THE SUCCESS CRITERION, which is what makes this a well-defined job rather than a
 SCOPE, and keep it: this is a TURN-TIMING / EXECUTION edge like the futures-to-Kalshi lag. It is NEVER a blind open-time curve input. WHY NOW: in the S111 monitor design the slope test and the missed-turn check are both LAGGING by construction, and this is the only instrument that fires before price confirms - so it is the leading edge of the adjustment loop, which D32 makes the product.
 
 PLACEMENT (S111, architecture doc s1.5 instrument panel): the whole dipole family lives in the LIVE loop and none of it is a pre-open forecast input - forced by direction.flow_nowcast's `requires: needs_intraday_reveal`. Three timing classes: LEADING = the exhaustion arm (this item, the only instrument that fires before price confirms); CONFIRMING = dip_imb_level direction and depth turn_exhaustion, both already measured on NG; LAGGING = slope divergence and named turn times.
+
+---
+
+### [REST] A-78 - THE g24 REFINE HAS NEVER RUN - carried as 'the opener' then 'housekeeping' for two sessions, in prose only
+
+*size M | OPEN | raised S114 (as S115's opener)*
+
+**Why it is REST:** Deliberately REST, and the demotion is the honest part. A-67 arm 1 is a BLIND run on the clean unwalked head, which is a better test than a refine of a block whose state has been read forwards and backwards all session. This is real work that should happen; it is not the frontier, and pretending otherwise is how the frontier gets displaced.
+
+**Source:** S115 close, sweeping the handoff and drop-in for opens with no registry line (Greg: 'Open things go to the open items md')
+
+g24 blind scored 6/10, sum|err| 4,890 - **0.98x zero_change and 1.20x seasonal_naive**, i.e. we tied doing nothing and lost to naive. The refine has never been run against it. It was started at S115 and stopped at 2 of 10 posteriors, both DISCARDED as artifacts of the degraded brain view that was reverted the same session; the inputs survive at `research/kalshi/records/S115/refine_g24_aborted/`.
+
+THE POINT OF THE ROUND IS MAGNITUDE, NOT DIRECTION, and the aborted directive already says so: the blind's dominant failure was emitting **0.29x of realized magnitude, under on 8 of 10 days**, worsening from 0.55x (g22) and 0.68x (g23). A refine that returns 10/10 direction at the same sizing has fixed nothing.
 
 ---
 

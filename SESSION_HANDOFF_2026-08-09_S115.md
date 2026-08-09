@@ -2,7 +2,7 @@
 
 **Branch: `claude/kalshi-agents-coordinator-guard-sg0n15`. Brain s105.9, 90 plays — UNCHANGED,
 byte-untouched except the four ONE-DOC repairs below. No group run, no merge. 44 commits.**
-Registry **164 -> 190 items**. Decisions **48 -> 52**.
+Registry **164 -> 192 items**. Decisions **48 -> 52**.
 
 Read this with `DROP_IN_S116.md`. The one-line version: **the platform got its pre-live audit, the
 brain became genuinely one document, five papers became a registered build sequence, and an external
@@ -305,7 +305,15 @@ matter what anyone did.** Now it reads the max, and D1 and D13 are re-affirmed w
 `enforced_by` is corrected: it said "nothing built", which stopped being true at S111** — same
 species as D50, opposite sign.
 
-**Registry 181 -> 190. Decisions 52. The andon board is ALL CLEAR for the first time.**
+**Registry 181 -> 192. Decisions 52. The andon board is ALL CLEAR for the first time.**
+
+**And a last sweep on Greg's instruction - "Open things go to the open items md" (D30 restated).**
+Two open things were living only in handoff prose, carried across two sessions: the **g6-g16 actual
+rebuild** (described inside A-69's `why`, no line of its own) and **the g24 refine itself**
+(mentioned inside A-65's `why` as the thing that would first exercise it, never registered - it has
+been "S115's opener" and then "housekeeping" in narrative only). Registered as **A-77** and
+**A-78**. A-78 is deliberately REST and the demotion is the honest part: a blind run on the clean
+unwalked head is a better test than a refine of a block read forwards and backwards all session.
 
 ## 7. STATE AT CLOSE
 
@@ -317,7 +325,7 @@ species as D50, opposite sign.
   it was started and stopped at 2 of 10 posteriors, both discarded as degraded-view artifacts from
   the section-1 cut. It is now housekeeping, not the frontier: **A-67 arm 1 is a BLIND run on the
   unwalked head, which is a better test than a refine of a contaminated block.**
-- **Registry 190 items** (24 ESSENTIAL). A-70 and A-71 are new; A-59/A-61/A-62/A-65/A-66/A-67/A-68/
+- **Registry 192 items** (25 ESSENTIAL). A-70 and A-71 are new; A-59/A-61/A-62/A-65/A-66/A-67/A-68/
   A-69/A-42/A-50/A-64/M-16 each carry an `external_build` note naming branch, commit and the exact
   symbol that implements them — and every one of them **stays OPEN**.
 - **Brain s105.9, 90 plays, CALLS unchanged.** One D8 proposal is PENDING Greg

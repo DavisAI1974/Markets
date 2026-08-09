@@ -40,11 +40,11 @@ python store.py check          # four renders must match their stores
 
 - **Brain s105.9, 90 plays, CALLS unchanged.** One D8 proposal PENDING Greg
   (`emission_ceiling_check` -> DEGENERATE + re-site).
-- **Registry 190 items, 24 ESSENTIAL. Decisions 52.**
+- **Registry 192 items, 25 ESSENTIAL. Decisions 52.**
 - **Line: g24 staged -> blind-scored -> archived [ACTIVE].** g24 blind was **6/10, sum|err| 4,890,
   0.98x zero_change** — we tied doing nothing. The dominant problem is still **under-emission at
   0.29x of realized magnitude**.
-- **The g24 refine has NOT run.** It is housekeeping now, not the frontier — see item 4.
+- **The g24 refine has NOT run** (A-78, REST). Housekeeping, not the frontier — see item 4.
 - **Andon: ALL CLEAR** (first time). The briefing backlog was discharged with real dispositions -
   all 13 audited - and it produced four registry gaps, two of them live-trading: **A-73** (live MBO
   is not authorized on our $179 Databento tier and the collector hot-loops on the error; ~$1,500/mo
@@ -128,8 +128,10 @@ conditions."*
 - Arm 2 (retention across three sequential blocks) is a SEPARATE test. Ten days cannot measure
   retention and the reason is architectural, not statistical.
 
-The g24 refine can be run any time after this as housekeeping. **Do not let it displace arm 1** — a
-blind run on clean substrate is a better test than a refine of a contaminated block.
+The g24 refine (**A-78**) can be run any time after this. **Do not let it displace arm 1** — a blind
+run on clean substrate is a better test than a refine of a block read forwards and backwards all
+session. When it does run, its point is MAGNITUDE: a 10/10 direction result at the same 0.29x
+emission is the failure wearing a hit-rate.
 
 ---
 
@@ -155,6 +157,9 @@ blind run on clean substrate is a better test than a refine of a contaminated bl
   different angles stack; evaluate by STACKING, never head-to-head.
 - **Split the part more finely before inventing an arbitration protocol** (Greg, S115). "Memory" is
   three layers: content store, derived index, serving policy.
+- **Open things go to the registry, never to handoff prose (Greg, S115; D30).** The S115 sweep found
+  two carried in narrative for two sessions and registered them as A-77 and A-78. If it is open and
+  it is not an item, it does not exist.
 - **D52 (new): nothing authored may live only on a session scratchpad.** The harness offers one and
   will keep offering one; that is not permission (D33/D34 — there is nothing local). Work files go
   under the repo. **Sweep the temp directory BEFORE writing the drop-in box** (SOP v1.19, STEP 7),
@@ -169,10 +174,14 @@ blind run on clean substrate is a better test than a refine of a contaminated bl
 
 - **A-61 before the next audit**: 3 of 4 "REFUTED" verdicts in an earlier audit were verified
   against a tree that moved underneath the verifier. Pin the snapshot first.
-- **g6-g16 actuals**: states exist, actuals do not — so the gradeable corpus is **70 days, not
-  ~180**. A-69's training corpus is a REBUILD job, and the rebuild must use the basis each STATE was
-  built on. **Do not silently normalize old blocks onto one continuous basis** (`.v.0` vs `.n.0`).
-- The g24 refine (housekeeping).
+- **A-77 — the g6-g16 actual rebuild**: states exist, actuals do not, so the gradeable corpus is
+  **70 days, not ~180**. A REBUILD, not a re-pull (`group_actual.build(gid)` already exists). Use
+  the basis each STATE was built on and **do not silently normalize old blocks onto one continuous
+  basis** (`.v.0` vs `.n.0`) — that produces a corpus that scores cleanly and measures the wrong
+  contract. Blocks A-69.
+- **A-78 — the g24 refine** (REST, and the demotion is deliberate). Round 1's point is MAGNITUDE:
+  the blind emitted 0.29x of realized, under on 8 of 10 days. A 10/10 direction result at the same
+  sizing is the failure wearing a hit-rate. Inputs survive at `records/S115/refine_g24_aborted/`.
 - The live feed setup for the coach — Greg's call was to do it after the last group, and that is
   still where it sits. **Two of its pieces now have registry lines and one of them needs Greg**:
   **A-73** (live MBO is not authorized on our $179 Databento tier; the collector hot-loops on the

@@ -995,7 +995,7 @@ winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~J
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
 **One-line state (S115):** brain **s105.9, 90 plays — CALLS unchanged. No group run, no merge.**
-Registry **190 items (24 ESSENTIAL)**, decisions **52**, **and the andon board is ALL CLEAR for the
+Registry **192 items (25 ESSENTIAL)**, decisions **52**, **and the andon board is ALL CLEAR for the
 first time** — the briefing backlog was discharged with real dispositions (all 13 audited) and paid
 for itself with four gaps, two of them live-trading: **A-73** (live MBO is NOT AUTHORIZED on our
 $179 Databento tier and the collector HOT-LOOPS on the error; ~$1,500/mo for the tier — Greg's call,
