@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 175 |
+| open | 176 |
 | in progress | 1 |
 | done | 19 |
 
-By size: **XS** 21, **S** 78, **M** 54, **L** 12
+By size: **XS** 21, **S** 79, **M** 54, **L** 12
 
 ---
 
-By tier: **ESSENTIAL** 24, **BIGGEST_WIN** 44, **REST** 108
+By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 44, **REST** 108
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (24)
+## ESSENTIAL (25)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -31,6 +31,7 @@ By tier: **ESSENTIAL** 24, **BIGGEST_WIN** 44, **REST** 108
 | **G-1** | XS | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | 20 MINUTES, and it is the documented hole signature eleven times over. The EIA Natural Gas Weekly Update's final edition was the week ending 2026-01-21. A pipeline pointed at a dead vehicle goes stale SILENTLY - present, numeric, in range, right owner - which is exactly the shape state_health cannot see. Confirm what replaced it before the next group reads the block. |
 | **G-11** | XS | Start accruing EIA weekly coal basin spot prices | IRREVERSIBLE and running out. The EIA endpoint carries a rolling FIVE-WEEK window and EIA states the history is proprietary and cannot be released, so every week nobody runs it is a week gone permanently. Already IN_PROGRESS, captured once by hand; it needs a schedule, not a decision. |
 | **A-73** | S | LIVE MBO IS NOT AUTHORIZED ON OUR DATABENTO TIER - the live feed lane Greg calls critical cannot start on what we pay for | It is a PROCUREMENT DECISION that only Greg can make, it gates the live lane he has named critical, and it has sat unregistered since S103. The failure mode is the worst kind: the live collector does not fail loudly, it HOT-LOOPS on ErrorMsg, so a live bring-up looks like a hang rather than a billing answer. |
+| **A-82** | S | THE S118 LEAK GUARD IS SCOPED TO TOKEN NAMES, NOT TO DATES - it blocks the run on legitimate prior-group evidence | It is the last thing standing between a fixed runner and a real Frankie run, and it must be fixed by NARROWING SCOPE, never by relaxing the guard. A leak guard weakened to make a run go green is the worst possible edit in this repo. |
 | **M-12** | S | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | It is the gate under every data fix. Without it a session cannot tell what it actually pushed, and the next session silently inherits pre-fix stores - which is what happened between S114 and S115. |
 | **M-14** | S | THE PAPER DOCK'S OWN CREDENTIAL PATH IS SESSION SCRATCHPAD - kalshi_auth reads scratchpad/kalshi.env | It is the credential the paper book itself needs. It fails on every fresh container by construction, so paper trading cannot start on a new session until it moves. Same class as the three feed consumers fixed this session (D1-02/03/04). |
 | **M-16** | S | THE PULLER WRITES TO A PHANTOM data/ AND LIES ABOUT WHERE - relative OUT_DIR + _write_df ignores out_dir | It silently empties the data plane for the LAST group run while reporting success. Third occurrence of the reports-rows-writes-nothing family (S114 ng_l1 writer; S115 --roll v near-miss). Small fix, and everything downstream of staging depends on it. |
@@ -228,6 +229,7 @@ By tier: **ESSENTIAL** 24, **BIGGEST_WIN** 44, **REST** 108
 | **G-1** | ESSENTIAL | XS | OPEN | S111 | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | - |
 | **G-11** | ESSENTIAL | XS | IN_PROGRESS | S111 | Start accruing EIA weekly coal basin spot prices | - |
 | **A-73** | ESSENTIAL | S | OPEN | S103 (recorded in that memo, | LIVE MBO IS NOT AUTHORIZED ON OUR DATABENTO TIER - the live feed lane Greg calls critical cannot start on what we pay for | - |
+| **A-82** | ESSENTIAL | S | OPEN | S118 | THE S118 LEAK GUARD IS SCOPED TO TOKEN NAMES, NOT TO DATES - it blocks the run on legitimate prior-group evidence | - |
 | **M-12** | ESSENTIAL | S | OPEN | S115 | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | - |
 | **M-14** | ESSENTIAL | S | OPEN | S115 | THE PAPER DOCK'S OWN CREDENTIAL PATH IS SESSION SCRATCHPAD - kalshi_auth reads scratchpad/kalshi.env | - |
 | **M-16** | ESSENTIAL | S | OPEN | S115 | THE PULLER WRITES TO A PHANTOM data/ AND LIES ABOUT WHERE - relative OUT_DIR + _write_df ignores out_dir | - |
@@ -466,6 +468,8 @@ MEASURED CORRECT ANSWER: the 90 index rows carry evaluability EVALUABLE 30, PART
 
 This is an INTEGRATION defect between two branches, not a fault in either alone: the `play_index` section was added to `brain_view` at S115 on trunk, and the S118 consumer was written against a different assumed shape. It is exactly what A-70 exists to catch.
 
+**FIX WRITTEN AND VERIFIED S118** (patch: research/kalshi/records/S118/a80_compact_brain_fix.patch, against 3a72fee - NOT committed to their branch, it is theirs to take). Both shapes handled: unwrap `play_index['rows']`, index `view['plays']` by each object's `id`, and read the row's `play` key FIRST (the old order tried name/id, which are absent, so even a correctly-unwrapped list would still have produced empty names - a THIRD assumption behind the two already found). **Result: served_plays 0 -> 33 on g18 20260427.**
+
 ---
 
 ### [ESSENTIAL] G-1 - Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras)
@@ -516,6 +520,26 @@ that ladder. It is no longer a slow structural level for M-6 alone.
 MEASURED at S103 and never entered the registry: the $179/mo Databento LIVE Standard plan returns 'Not authorized for mbo schema'. `mbp-10` is in the same entitlement class. The live collector LEADS with an `mbo` subscribe. The tier that carries it is roughly $1,500/mo.
 
 This is not the same question as the historical pull, which works fine - the year of NG tape was bought per-job under the subscription. It is specifically LIVE streaming depth.
+
+---
+
+### [ESSENTIAL] A-82 - THE S118 LEAK GUARD IS SCOPED TO TOKEN NAMES, NOT TO DATES - it blocks the run on legitimate prior-group evidence
+
+*size S | OPEN | raised S118*
+
+**Why it is ESSENTIAL:** It is the last thing standing between a fixed runner and a real Frankie run, and it must be fixed by NARROWING SCOPE, never by relaxing the guard. A leak guard weakened to make a run go green is the worst possible edit in this repo.
+
+**Source:** S118, exposed the moment A-80's fix made the runner actually serve plays
+
+MEASURED S118. With A-80 fixed the runner serves 33 plays on g18's first day and then hard-stops:
+
+  ForecastStop: outcome leak token 'actual_day_move_usd' entered packet for g18 20260427
+
+The token sits inside `structure.accumulation_arm_turn`'s evidence, describing **g17's 2026-04-22** - a prior, already-walked group. g18's window opens 20260427.
+
+**SWEPT EXHAUSTIVELY BEFORE CALLING IT A FALSE POSITIVE**: across all 20 days of g18 and g19, every occurrence of actual_day_move_usd / actual_net_usd / actual_close_cum / actual_gap_usd in the served plays has surrounding dates ONLY BEFORE that group's own window - **0 occurrences reach into or past it**. This is what brain instances ARE, and it is what every specialist in the walk has always been served.
+
+Same shape as the S114 `live_verdict` defect, which flagged 43 plays by matching 'degenerate' anywhere, including plays that merely DISCUSS degeneracy while concluding they are sound. Matching a WORD instead of a CLAIM.
 
 ---
 

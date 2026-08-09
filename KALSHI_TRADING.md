@@ -678,7 +678,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **176 files.**
+new tool cannot go unlisted. **177 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `archive_blind.py` — move the blind's posteriors out of the refine's filenames (S108).
@@ -702,6 +702,7 @@ new tool cannot go unlisted. **176 files.**
 - `build_anchor_block.py` — S109: build the per-group ANCHOR BLOCK that gets handed to the specialists at spawn.
 - `build_blind_state.py` — Build the canonical blind forecaster state from the existing decision_state path.
 - `build_causal_slices.py` — S109 HOLE #11: build per-day CAUSAL SLICES of a blind state, so a specialist physically cannot
+- `build_legacy_actuals_a77.py` — recover the g6-g16 actual corpus. (A-77, S118.)
 - `build_realized_forcings.py` — the VALIDATION TARGET for the GEFS forcing proxies (S114).
 - `cash_basis.py` — FEED G (family DEL): Henry Hub CASH vs front-futures-settle basis (S98 data gate).
 - `characterize_turns.py` — run month_characterize.characterize_day on the pivotal turn days of the

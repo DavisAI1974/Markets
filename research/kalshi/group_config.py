@@ -200,8 +200,51 @@ GROUPS = {
         "eia_thursdays": ["20260723","20260730"],
         "basis": "Aug/NGQ26 through 07-21; Sep/NGU26 from 07-22 (Kalshi underlying roll, 5 business "
                  "days before NGQ26's 07-29 LTD). First two-leg block since g19. LAST BLOCK THE "
-                 "WALK CAN DO - G25 would be 08-02..08-14 and only 3 of its 10 sessions have "
-                 "happened.",
+                 "WALK CAN DO GOING FORWARD - see h1, which goes BACKWARD into the unwalked head "
+                 "instead.",
+    },
+    # h1 - THE UNWALKED HEAD. The walk ran FORWARD from g6 (2025-10-22) and never touched the
+    # 2025-07-22..2025-09-05 span, which the S115 A-71 landing put on S3 (nymex_cont_n0 now spans
+    # NG_20250722..NG_20260720). This is the only genuinely unseen substrate left: g24 is
+    # contaminated (its state has been read forwards and backwards), and the forward direction is
+    # exhausted.
+    #
+    # NAMED h1, NOT g25, ON PURPOSE. g24's own basis note speculatively used "G25" for a FORWARD
+    # 2026-08-02 block that has not happened. Reusing that label for a 2025 block would collide with
+    # a name already spoken for in the record - the S105 "two copies of one thing" defect applied to
+    # an identifier.
+    #
+    # WINDOW: Mon 2025-08-04 -> Fri 2025-08-15, 10 sessions, chosen for a CLEAN SINGLE LEG. Aug
+    # NGQ25's LTD was 2025-07-29, so the front is Sep NGU25 for the whole block and NGU25's own LTD
+    # (~2025-08-27) is outside it. No seam, no roll, nothing to attribute a miss to. Verified on the
+    # tape: 10 of 10 sessions present, and no day-to-day jump above 0.25 anywhere in
+    # 2025-07-22..2025-09-08, so the continuous series does not roll inside the window either.
+    #
+    # ANCHOR measured from the tape, not asserted: last print on Fri 2025-08-01 = 3.095, and the
+    # final hour opened and closed at 3.095 (598 trades), so the last-hour direction is flat-to-down
+    # and recorded as -1. THAT FLATNESS IS ITSELF A DECLARED CAVEAT - the E->A->B weekend seam reads
+    # this direction, and a dead final hour carries less information than a directional one.
+    "h1": {
+        "window": "Mon 2025-08-04 -> Fri 2025-08-15 (THE UNWALKED HEAD)",
+        "days": ["20250804","20250805","20250806","20250807","20250808",
+                 "20250811","20250812","20250813","20250814","20250815"],
+        "anchor": 3.095,
+        "anchor_date": "20250801",
+        "anchor_lasthr_dir": -1,
+        "mask_after": "20250801",
+        "seam": None,
+        # {"all": ...}, not {"pre","post"} - the single-leg convention every clean block uses
+        # (g18/g20/g23). `leg_for` branches on "all" being present and only reads `seam` otherwise;
+        # a pre/post pair with seam=None type-errors on the first day. Declaring one leg twice is
+        # not the same as declaring one leg.
+        "legs": {"all": "ngu25"},
+        "eia_thursdays": ["20250807","20250814"],
+        "basis": "Sep/NGU25 clean - single leg for all 10 sessions. Aug/NGQ25 expired 07-29 before "
+                 "the block opens; NGU25's LTD ~08-27 falls after it. THE UNWALKED HEAD: the walk "
+                 "ran forward from g6 (2025-10-22) and never saw this span. Substrate landed on S3 "
+                 "at S115 (A-71). Anchor 3.095 measured from the tape's last print on 08-01; the "
+                 "final hour was FLAT (3.095 open and close over 598 trades), so the weekend-seam "
+                 "direction read is weak by construction - declared, not hidden.",
     },
 }
 
