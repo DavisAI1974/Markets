@@ -258,6 +258,16 @@
    "path": "research/kalshi/FRANKIE_BUILD_BRIEF_S115.md",
    "class": "BRIEFING",
    "why": "S115 build brief for the external collaborator building Frankie. A RENDER of the registry (A-59..A-69, M-16), not a source: where they disagree OPEN_ITEMS.json wins. Carries the build sequence with dependencies, the acceptance test (falsifier) per item, and the desk constraints that decide whether a build is valid here."
+  },
+  {
+   "path": "SESSION_HANDOFF_2026-08-09_S115.md",
+   "class": "HANDOFF",
+   "why": "S115 session record: the pre-live platform audit and its confirmed defects, the ONE-DOC brain work (A-58), the reverted working-view cut and Greg's correction, M-16, the five-paper build sequence A-59..A-69, and the external Frankie build (verified, not merged)."
+  },
+  {
+   "path": "DROP_IN_S116.md",
+   "class": "DROP_IN",
+   "why": "S116 opener: A-70 (review and merge chatgpt/agent-frankie-s117), A-71 (move the phantom-tree head data), then A-67 arm 1 - blind vs Frankenstein on the unwalked head."
   }
  ]
 }

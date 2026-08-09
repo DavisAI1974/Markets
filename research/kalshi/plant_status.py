@@ -387,7 +387,7 @@ def main() -> int:
     SCRATCH_MARKERS = (".claude/projects", "appdata/local/temp", "workflows/scripts/", " /tmp/")
     PATHY = re.compile(r"((?:research/kalshi/|odcore/|deploy/|dashboard/)[\w./-]*"
                        r"\.(?:py|json|md|sh|yml))")
-    scratch_hits, missing = [], []
+    scratch_hits, missing, _named_refs = [], [], set()
     for doc in handoff_docs:
         if not os.path.exists(doc):
             continue
@@ -402,6 +402,23 @@ def main() -> int:
             for mk in SCRATCH_MARKERS:
                 if mk in norm:
                     scratch_hits.append("%s -> %s" % (base, mk.strip()))
+        # A FILE ON A NAMED BRANCH IS OPENABLE, AND THAT IS THE WHOLE TEST THIS ROW APPLIES (S115).
+        # The gate's premise is "nobody else can open it" - true of a scratchpad path, FALSE of a
+        # file tracked on a branch the doc names, which any reader reaches with one `git fetch`.
+        # So NAMING THE BRANCH is what makes the reference legible, and naming it is exactly what
+        # we want a handoff to do. INSTANCE: DROP_IN_S116 points S116 at agent_frankie.py on
+        # `chatgpt/agent-frankie-s117`, which is the session's item zero - reachable, reviewed, and
+        # deliberately unmerged (D51). A bare path with no branch still FAILS, which is the case
+        # that matters: an unreachable file cited as if it were on the trunk.
+        for bm in re.finditer(r"\b((?:chatgpt|claude|codex)/[\w./-]+)\b", txt):
+            ref = "origin/" + bm.group(1)
+            if ref in _named_refs:
+                continue
+            _named_refs.add(ref)
+            r = _sp.run(["git", "ls-tree", "-r", "--name-only", ref],
+                        capture_output=True, text=True, cwd=ROOT)
+            if r.returncode == 0:
+                tracked.update(r.stdout.split())
         for m in PATHY.finditer(txt):
             rel = m.group(1)
             if rel not in tracked and rel.rstrip("/") not in tracked:

@@ -1,5 +1,98 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-06, Session 114)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-09, Session 115)
 
+
+## S115 — THE PRE-LIVE AUDIT, THE BRAIN BECAME ONE DOCUMENT, FIVE PAPERS BECAME A BUILD SEQUENCE, AND SOMEONE BUILT IT (read `SESSION_HANDOFF_2026-08-09_S115.md` + `DROP_IN_S116.md`)
+
+**Branch = `claude/kalshi-agents-coordinator-guard-sg0n15`. Brain s105.9, 90 plays — CALLS
+UNCHANGED. No group run, no merge. 44 commits.** Registry 164 -> 181. Decisions 48 -> 51.
+**THE G24 REFINE STILL HAS NOT RUN** — it is now housekeeping, not the frontier.
+
+**GREG SET THE BAR: "This should be live ready."** Verbatim: *"go through the entire platform setup,
+code and data point calls and make sure everything is working as it should... **I want to keep it as
+the one doc so nothing gets overlooked**... We are running our last tests to start doing paper
+trades and I want them to be our final time we are doing these types of fixes."*
+
+**THE SESSION'S WORST MOMENT, FIRST, BECAUSE IT IS THE LESSON. I built a "working view" of the brain
+that CUT THE REASONING OUT OF IT.** To fit a ~420k-token view I withheld `legacy_notes` and
+compressed `audit` prose. Measured afterwards: **`audit.argument` on all 82 plays**, plus
+forward_evidence 77, evidence 75, conditions_note 57, exemplars 33, **falsifier 17**. Greg: *"reasoning
+is exactly what we want tied to the decision! ... **you have intentionally made a separate doc that
+explains why their brain tells them to do something**."* **A view that serves the CALL and withholds
+the ARGUMENT does not shrink the brain, it SPLITS it** — and the withheld half is the half S114 spent
+a session establishing ("if you cut the view, cut CALLS before FALSIFIERS"). Fully reverted; the
+selftest now asserts nothing is withheld; the brain FILE was never touched.
+
+**THE BRAIN IS NOW ACTUALLY ONE DOCUMENT (A-58).** Measured: **it pointed OUT of itself 21 times
+inside role-served sections, three of them to files that DO NOT EXIST.** Four defects closed in
+`brain_onedoc_fix_s115.py`: (1) **a SECOND doctrine file was in the agents' read list** —
+`refinement_architecture_doctrine.md` declares in its own header that it was merged at S103 "and
+kept as the human-readable source", and RFN-1 had ordered every refine specialist to read it ever
+since. **Two copies of one doctrine, one of them served, is the S105 root cause verbatim.** Its FLOW
+line is now transcribed in and the file is off the read list. (2) Three dead citations
+(`blind_class_{C,D,E}.md`, deleted at S105 BY DESIGN under D7) repaired to state what happened.
+(3) Doctrine that deferred substance to an external build list, reframed as dated provenance.
+(4) **`brain_schema.check_cited_files()`** — any `.md` named in a role-served section must EXIST.
+**A bug worth carrying: the fixer's first version branched on `where.split(".")[0] == "plays"` and
+every play id CONTAINS DOTS, so the branch never fired and the run REPORTED SUCCESS WHILE DOING
+NOTHING.** Caught only by re-reading the brain after `--write`. NC-3 in a third costume.
+
+**THE AUDIT'S CONFIRMED DEFECTS, each fixed at its cause.** **D4-1 (BLOCKER)**: the blind wall
+covered neither `meta` nor the group's own name (`g24`/`G24`/`grp24` passed straight through).
+**`brain_view.build()` was NOT IDEMPOTENT** — it handed the caller a REFERENCE to the brain's plays
+and annotated in place; harmless while additive, destructive the moment a cut popped a key, which is
+exactly what happened above. **The paste ritual ends**: `creds.py` resolves `MARKETS_<NAME>` first,
+which the container's `proxy-injected` placeholders cannot shadow, and `aws_client()` passes the
+resolved pair explicitly instead of trusting boto3's precedence; five consumers migrated.
+**`state_health`'s storage guard was ONE-DIRECTIONAL** (the S114 defect's mirror image would have
+passed) — now symmetric, plus a 9-day cadence bound, and its CLI is read-only by default.
+**`squeeze_watch.sessions_since_prompt_expiry` was exempt from the relive**, the same
+top-level-keys-only blind spot that exempted `options_surface.days_to_opex` for the whole S114 walk.
+**g24's storage lane went 12 hard -> 0 hard** via `storage_restage_repair.py` — a targeted GRAFT, not
+a re-stage, because **D47 failed in the real world**: 3 of S114's 5 store fixes never reached S3, so a
+fresh re-stage would have read a substrate OLDER than the state it overwrote.
+
+**M-16 (ESSENTIAL) — THE PULLER WRITES TO A PHANTOM `data/` AND LIES ABOUT WHERE.** Two completed
+Databento jobs reported **2,384,994** and **1,386,421** rows and landed nothing where anything
+reads: `OUT_DIR`/`L1_DIR`/`MBP10_DIR` are relative and resolved against cwd, creating
+`research/kalshi/data/` (219MB + 22MB); `_write_df(df, symbol)` takes no `out_dir`; and the log
+printed the REQUESTED destination, never the actual one. **Third occurrence of the
+reports-rows-writes-nothing family.** Found by verifying Greg's *"we have the whole year's data for
+ng, we're good"* instead of accepting it.
+
+**FIVE PAPERS BECAME A REGISTERED BUILD SEQUENCE (A-59..A-69 + `FRANKIE_BUILD_BRIEF_S115.md`).**
+NOOA 2607.20709 (agent-as-render-target, typed contracts), ACM long-horizon 2607.23809, ACM lifecycle
+2607.21503 (**validated compaction**), Kernel Forge 2607.24762 (MCTS over candidates; the CUDA half
+closed), Self-Improvement survey 2607.13104. **GREG'S TWO CORRECTIONS CHANGED THE DESIGN, not the
+wording.** *"Don't look at things as downgrade or less than. They might improve the same thing but if
+they attack different angles then they are FORCE MULTIPLIERS"* — his own S36 standing rule, which I
+had drifted off into ranking language. And *"you can write the contract that says they own DIFFERENT
+PARTS of the same job"* — my draft had a "which signal wins" arbitration clause, i.e. head-to-head
+smuggled back in; the real cause was **a taxonomy too coarse: "memory" is THREE layers** (content
+store / derived index / serving policy), and once split the collision disappears. **Split the part
+more finely before inventing a protocol.** **THE TEST IS BLIND vs FRANKENSTEIN** (Greg: *"Better yet,
+Blind vs Frankenstein... that will be closer to real world conditions"*) on the **unwalked head**;
+retention needs three blocks so it is a separate arm 2. **Two things I got wrong and corrected in the
+record: I recommended A-59 from ABSTRACTS** (Greg: *"Did you read it"*), and **I asserted the corpus
+size from narrative — measured, it is 70 gradeable days, not ~180**, so A-69's corpus is a REBUILD.
+
+**FRANKIE EXISTS, IS VERIFIED, AND IS DELIBERATELY NOT MERGED.** ChatGPT built the brief on
+**`chatgpt/agent-frankie-s117` @ `48e50b9` (PR #8)** — 49 files, ~7,954 insertions, entry point
+`research/kalshi/agent_frankie.py`, conformance record `research/kalshi/FRANKIE_S115_IMPLEMENTATION.md`.
+**Verified here rather than taken on description**: merge dry-run CLEAN (0 conflicts), `agent_frankie.py
+health` reports spawn.py's git blob observed == expected, `selftest` **11/11 PASS** (incl. "Frankie can
+never enable execution", "self-improvement cannot touch spawn.py"), and `frankie_s115_status.py` shows
+**A-63/A-60 explicitly DEFERRED until A-5** — it did not pull the fitted-sigma shortcut forward when
+doing so would have looked like progress. **THE BEST THING IN IT IS NOT CODE**: the implementation
+record splits itself into **"Built"** and **"Not claimed as passed"**, listing six harness-present /
+evidence-absent items. **That is D51 and it is now binding on us.** **Why not merged, and it is not
+about Frankie**: the branch is based on `chatgpt/novel-edge-lab-s116`, so the merge also lands ~1,500
+lines of dashboard code nobody here has read. **Verified is not reviewed, and a merge commit signs for
+the whole diff.** That review is **A-70, S116's item zero**.
+
+**D49** the D40-D44 numbering gap is recorded, not lost. **D50** D13's `enforced_by` claimed a QC
+sweep that does not exist — the gas-only scope is unchanged and still binding; the ENFORCEMENT CLAIM
+was the lie. **D51** a gate that exists is not a gate that passed, and an external build is verified
+before it is merged, with the verification NAMED.
 
 ## S114 — G24 WALKED BLIND (6/10) AND IT TIES DOING NOTHING, THE RENEWABLES FORCING IS WIRED, AND EVERY REPORTED DEFECT IS CLOSED (read `SESSION_HANDOFF_2026-08-06_S114.md` + `DROP_IN_S115.md`)
 
@@ -900,6 +993,23 @@ DATA next (Greg): forward-curve cache back ($0.07; curve_regime was 'unknown' al
 FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the driver; back-fill the walked
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
+
+**One-line state (S115):** brain **s105.9, 90 plays — CALLS unchanged. No group run, no merge.**
+Registry **181 items (21 ESSENTIAL)**, decisions **51**. **The pre-live audit ran and its confirmed
+defects are closed at their causes**: the blind wall now covers `meta` and the group's own name
+(BLOCKER), `brain_view.build()` is idempotent, `creds.py` resolves an un-shadowable `MARKETS_<NAME>`
+so the paste ritual ends, the storage guard is symmetric, two relive exemptions are shut, and g24
+went **12 hard -> 0 hard** by a GRAFT (a re-stage would have read a substrate older than the state —
+**D47 measured failing**). **THE BRAIN IS ONE DOCUMENT NOW**: it pointed out of itself 21 times in
+served sections, 3 to deleted files; the second doctrine file is merged and off the read list, and
+`check_cited_files()` stops it recurring. **THE WORST MOMENT WAS MINE — a working view that CUT the
+reasoning** (audit.argument on all 82 plays, 17 falsifiers); Greg: *"reasoning is exactly what we want
+tied to the decision"*; fully reverted, brain file untouched. **M-16: the puller reported 2.38M rows
+and landed nothing** where anything reads — third occurrence of that family. **Five papers became
+A-59..A-69 + `FRANKIE_BUILD_BRIEF_S115.md`, and ChatGPT BUILT it**: `chatgpt/agent-frankie-s117`
+@`48e50b9` (PR #8), merge dry-run clean, selftest 11/11, **NOT merged** — the base branch carries
+unread dashboard work (**A-70 = S116's item zero**). **D51: a gate that exists is not a gate that
+passed**, so every Frankie item stays OPEN. **Keys do NOT rotate during the walk.**
 
 **One-line state (S114):** brain **s105.9, 90 plays — CALLS unchanged**. **G24 blind RUN AND
 SCORED: 6/10, sum|err| 4,890 — 0.98x zero_change and 1.20x seasonal_naive, i.e. we tied doing

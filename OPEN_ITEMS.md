@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 161 |
+| open | 163 |
 | in progress | 1 |
 | done | 17 |
 
-By size: **XS** 18, **S** 73, **M** 49, **L** 11
+By size: **XS** 18, **S** 74, **M** 50, **L** 11
 
 ---
 
-By tier: **ESSENTIAL** 19, **BIGGEST_WIN** 40, **REST** 103
+By tier: **ESSENTIAL** 21, **BIGGEST_WIN** 40, **REST** 103
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (19)
+## ESSENTIAL (21)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -28,6 +28,7 @@ By tier: **ESSENTIAL** 19, **BIGGEST_WIN** 40, **REST** 103
 |---|---|---|---|
 | **G-1** | XS | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | 20 MINUTES, and it is the documented hole signature eleven times over. The EIA Natural Gas Weekly Update's final edition was the week ending 2026-01-21. A pipeline pointed at a dead vehicle goes stale SILENTLY - present, numeric, in range, right owner - which is exactly the shape state_health cannot see. Confirm what replaced it before the next group reads the block. |
 | **G-11** | XS | Start accruing EIA weekly coal basin spot prices | IRREVERSIBLE and running out. The EIA endpoint carries a rolling FIVE-WEEK window and EIA states the history is proprietary and cannot be released, so every week nobody runs it is a week gone permanently. Already IN_PROGRESS, captured once by hand; it needs a schedule, not a decision. |
+| **A-71** | S | M-16's PHYSICAL repair - the guarded puller exists, the already-paid head + L1 data is still not in the canonical root | A-67 arm 1 needs the unwalked head (2025-07-22 -> 09-05) staged, and the head trades are the thing that landed in the phantom tree. The guard stops the NEXT pull from lying; it does not move the bytes that are already in the wrong place. |
 | **M-12** | S | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | It is the gate under every data fix. Without it a session cannot tell what it actually pushed, and the next session silently inherits pre-fix stores - which is what happened between S114 and S115. |
 | **M-14** | S | THE PAPER DOCK'S OWN CREDENTIAL PATH IS SESSION SCRATCHPAD - kalshi_auth reads scratchpad/kalshi.env | It is the credential the paper book itself needs. It fails on every fresh container by construction, so paper trading cannot start on a new session until it moves. Same class as the three feed consumers fixed this session (D1-02/03/04). |
 | **M-16** | S | THE PULLER WRITES TO A PHANTOM data/ AND LIES ABOUT WHERE - relative OUT_DIR + _write_df ignores out_dir | It silently empties the data plane for the LAST group run while reporting success. Third occurrence of the reports-rows-writes-nothing family (S114 ng_l1 writer; S115 --roll v near-miss). Small fix, and everything downstream of staging depends on it. |
@@ -39,6 +40,7 @@ By tier: **ESSENTIAL** 19, **BIGGEST_WIN** 40, **REST** 103
 | **A-60** | M | THE PRE-PAPER GATE: score the BAND, not the point - the forecaster has never been validated on the only field a binary market consumes | It is the measurement chain across the walk->paper boundary. The walk's scoreboard stops at the boundary and nothing on the other side has ever been validated, so the first honest number about the tradeable object would arrive from live P&L - the most expensive place to learn it. |
 | **A-63** | M | THE KERNEL IS THE MISSING ENGINE - and it produces the BAND for free, which is the same build as A-60 | D32 makes analog retrieval THE product and we have no similarity function at all - retrieval is a calendar window plus a regime label. It is also the cheapest honest route to the band, which A-60 shows has never been validated and is the only field a binary market actually prices. Two ESSENTIAL items, one build. |
 | **A-68** | M | GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal | It is the PREREQUISITE for A-67's retention arm - without it there is no retention to measure, and the arm cannot run. It is also the smallest change that turns a per-day amnesiac spawn into something with a horizon, which is the whole premise of the hybrid. |
+| **A-70** | M | MERGE REVIEW: chatgpt/agent-frankie-s117 carries an UNREAD base branch into the trunk | Everything downstream is blocked on it. A-67 arm 1 is the next real experiment and it cannot run until Frankie is on the trunk; but the merge commit also lands the dashboard / novel-edge-lab S116 base, and a merge commit signs for the whole diff. |
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | M | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24. |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -211,6 +213,7 @@ By tier: **ESSENTIAL** 19, **BIGGEST_WIN** 40, **REST** 103
 |---|---|---|---|---|---|---|
 | **G-1** | ESSENTIAL | XS | OPEN | S111 | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | - |
 | **G-11** | ESSENTIAL | XS | IN_PROGRESS | S111 | Start accruing EIA weekly coal basin spot prices | - |
+| **A-71** | ESSENTIAL | S | OPEN | S115 | M-16's PHYSICAL repair - the guarded puller exists, the already-paid head + L1 data is still not in the canonical root | - |
 | **M-12** | ESSENTIAL | S | OPEN | S115 | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | - |
 | **M-14** | ESSENTIAL | S | OPEN | S115 | THE PAPER DOCK'S OWN CREDENTIAL PATH IS SESSION SCRATCHPAD - kalshi_auth reads scratchpad/kalshi.env | - |
 | **M-16** | ESSENTIAL | S | OPEN | S115 | THE PULLER WRITES TO A PHANTOM data/ AND LIES ABOUT WHERE - relative OUT_DIR + _write_df ignores out_dir | - |
@@ -222,6 +225,7 @@ By tier: **ESSENTIAL** 19, **BIGGEST_WIN** 40, **REST** 103
 | **A-60** | ESSENTIAL | M | OPEN | S115 | THE PRE-PAPER GATE: score the BAND, not the point - the forecaster has never been validated on the only field a binary market consumes | - |
 | **A-63** | ESSENTIAL | M | OPEN | S115 | THE KERNEL IS THE MISSING ENGINE - and it produces the BAND for free, which is the same build as A-60 | - |
 | **A-68** | ESSENTIAL | M | OPEN | S115 | GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal | - |
+| **A-70** | ESSENTIAL | M | OPEN | S115 | MERGE REVIEW: chatgpt/agent-frankie-s117 carries an UNREAD base branch into the trunk | - |
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | ESSENTIAL | M | OPEN | S115 | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -438,6 +442,18 @@ that ladder. It is no longer a slow structural level for M-6 alone.
 
 ---
 
+### [ESSENTIAL] A-71 - M-16's PHYSICAL repair - the guarded puller exists, the already-paid head + L1 data is still not in the canonical root
+
+*size S | OPEN | raised S115*
+
+**Why it is ESSENTIAL:** A-67 arm 1 needs the unwalked head (2025-07-22 -> 09-05) staged, and the head trades are the thing that landed in the phantom tree. The guard stops the NEXT pull from lying; it does not move the bytes that are already in the wrong place.
+
+**Source:** S115 close; ChatGPT's own 'not complete evidence yet' list, item 1
+
+MEASURED S115: two completed Databento jobs reported 2,384,994 and 1,386,421 rows and landed in `research/kalshi/data/` (219MB trades + 22MB L1) because `OUT_DIR`/`L1_DIR`/`MBP10_DIR` were relative and resolved against cwd. `databento_backfill_s115.py` fixes the class going forward. The data itself has not been moved or re-decoded, and it is already PAID FOR - re-pulling it spends money for nothing.
+
+---
+
 ### [ESSENTIAL] M-12 - S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written
 
 *size S | OPEN | raised S115*
@@ -649,6 +665,18 @@ CONSEQUENCE FOR THE BOOK SPECIFICALLY: the book's CARRYING half may update conti
 
 (2) ADAPTATION NEEDS A DETECTOR, OR IT IS DRIFT WITH BETTER VOCABULARY. You cannot adapt to a change you have not noticed, and our one documented instance (G-25) is a feed whose sign inverted with nothing raising a hand. A self-improving agent with no change-detection improves against YESTERDAY'S WORLD - confidently, and with a scoreboard that still looks fine. The detector is the prerequisite, not a later refinement: something must be able to say 'this instrument no longer behaves as its instances describe'. instrument_priors (S114) is the raw material - it already carries each instrument's measured track record - and the missing piece is comparing RECENT behaviour against that prior rather than serving the prior as a static fact.
 PAIRS WITH A-35 (which is exactly the 'how would we know' question) and A-62 (the lens's own track record is the same detector aimed at the agent instead of the instrument).
+
+---
+
+### [ESSENTIAL] A-70 - MERGE REVIEW: chatgpt/agent-frankie-s117 carries an UNREAD base branch into the trunk
+
+*size M | OPEN | raised S115*
+
+**Why it is ESSENTIAL:** Everything downstream is blocked on it. A-67 arm 1 is the next real experiment and it cannot run until Frankie is on the trunk; but the merge commit also lands the dashboard / novel-edge-lab S116 base, and a merge commit signs for the whole diff.
+
+**Source:** S115 close, D51
+
+MEASURED S115: `git merge --no-commit --no-ff origin/chatgpt/agent-frankie-s117` -> 'Automatic merge went well', 0 conflicted paths (aborted). 49 files, ~7,954 insertions. The Frankie half is verified running (selftest 11/11 from a worktree; spawn.py blob unchanged; the paper manifest is READY at 9 papers). The OTHER half is not: the branch is based on `chatgpt/novel-edge-lab-s116`, which brings `dashboard/adapters/novel.py`, `dashboard/frontend/novel.{js,css}`, `dashboard/novel_candidates.json`, a `dashboard/server.py` edit, two new CI workflows and two S116 handoff docs - none of it read on this side. **Verified is not reviewed.**
 
 ---
 

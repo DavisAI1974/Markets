@@ -26,8 +26,36 @@
 - **`brain_view.py` (S115)** — the blind wall now covers `meta` and the group's own name forms (a
   served g24 view carried `"g24 blind (6/10, sum|err| 4,890)"` in `meta.changelog`, past a full
   redaction pass, because the string holds no date); the evaluability resolver supports `[N]` list
-  indexing; and the working view gains `play_index` + two declared provenance cuts, taking it from
-  ~420k to ~338k tokens with all 90 plays, 661 instances and 90 falsifiers intact.
+  indexing; `build()` now DEEP-COPIES the brain's plays (it had handed the caller a reference and
+  annotated in place — harmless while every annotation was additive, destructive the moment a cut
+  popped a key); and the working view gains a generated `play_index`. **The field CUTS trialled
+  mid-session were FULLY REVERTED** and the selftest now asserts that nothing is withheld — they had
+  removed `audit.argument` on all 82 plays plus 17 falsifiers, and Greg's correction is the standing
+  rule: *"reasoning is exactly what we want tied to the decision"*. The view serves all 90 plays,
+  661 instances and 90 falsifiers, complete.
+
+## S115 — the paper-driven agent: the build brief, and the external build that answered it
+
+- **`research/kalshi/FRANKIE_BUILD_BRIEF_S115.md`** — the implementation sequence for A-59..A-69
+  (the five arXiv papers Greg brought), written FOR an external builder. Dependency-ordered stages,
+  **a falsifier as the acceptance test for every item**, the PART-level ownership table (content
+  store / derived track-record index / serving policy / lens journal / render contract / candidate
+  branching), and the desk constraints that bind any contributor (D8 merge protocol, D4/D37
+  never-pool, D3 causal absence, D31 scoped refutation, NC-3, D22, the gold vault, and "a pull that
+  reports rows is not a pull that landed data"). Registered as class BRIEFING.
+- **`chatgpt/agent-frankie-s117` @ `48e50b9` (PR #8) — BUILT, VERIFIED, NOT MERGED.** 49 files,
+  ~7,954 insertions. Entry point `research/kalshi/agent_frankie.py`; conformance record
+  `research/kalshi/FRANKIE_S115_IMPLEMENTATION.md`; handoff `CHATGPT_HANDOFF_S117_AGENT_FRANKIE.md`;
+  architecture `research/kalshi/FRANKIE_ARCHITECTURE_S117.md`. Core modules: `frankie_core.py`,
+  `frankie_s115.py` (ownership table, snapshot pinning, lens book, track records, compaction
+  validator, FJ-1 grader, training split), `frankie_render_s115.py` (NOOA typed contract +
+  byte-identity against canonical render), `frankie_forecaster_s115.py`, `frankie_validation_s115.py`
+  (the A-67 A/B seal), `frankie_evolution.py`, `frankie_improve.py`, `databento_backfill_s115.py`
+  (the M-16 guarded puller: repo-root absolute destinations, NG roll defaults to `n`, asserts
+  destination BYTE GROWTH). **Verified here: merge dry-run clean, `agent_frankie.py selftest` 11/11,
+  spawn.py's git blob unchanged. Merge is blocked on A-70** — the branch is based on
+  `chatgpt/novel-edge-lab-s116` and carries unread dashboard work. **Every Frankie registry item
+  stays OPEN under D51: the harness is built, the measurement is not made.**
 - **`SESSION_HANDOFF_2026-08-06_S115.md`**, **`DROP_IN_S116.md`** — the session record and next box.
 
 ## S114 — the A-24 paper dissected per event; the two-sided lane MERGED; the decision order and the failure taxonomy
