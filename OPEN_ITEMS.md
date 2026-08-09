@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 174 |
+| open | 173 |
 | in progress | 1 |
-| done | 17 |
+| done | 18 |
 
-By size: **XS** 19, **S** 78, **M** 55, **L** 12
+By size: **XS** 19, **S** 77, **M** 55, **L** 12
 
 ---
 
-By tier: **ESSENTIAL** 24, **BIGGEST_WIN** 44, **REST** 107
+By tier: **ESSENTIAL** 23, **BIGGEST_WIN** 44, **REST** 107
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (24)
+## ESSENTIAL (23)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -28,7 +28,6 @@ By tier: **ESSENTIAL** 24, **BIGGEST_WIN** 44, **REST** 107
 |---|---|---|---|
 | **G-1** | XS | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | 20 MINUTES, and it is the documented hole signature eleven times over. The EIA Natural Gas Weekly Update's final edition was the week ending 2026-01-21. A pipeline pointed at a dead vehicle goes stale SILENTLY - present, numeric, in range, right owner - which is exactly the shape state_health cannot see. Confirm what replaced it before the next group reads the block. |
 | **G-11** | XS | Start accruing EIA weekly coal basin spot prices | IRREVERSIBLE and running out. The EIA endpoint carries a rolling FIVE-WEEK window and EIA states the history is proprietary and cannot be released, so every week nobody runs it is a week gone permanently. Already IN_PROGRESS, captured once by hand; it needs a schedule, not a decision. |
-| **A-71** | S | M-16's PHYSICAL repair - the guarded puller exists, the already-paid head + L1 data is still not in the canonical root | A-67 arm 1 needs the unwalked head (2025-07-22 -> 09-05) staged, and the head trades are the thing that landed in the phantom tree. The guard stops the NEXT pull from lying; it does not move the bytes that are already in the wrong place. |
 | **A-73** | S | LIVE MBO IS NOT AUTHORIZED ON OUR DATABENTO TIER - the live feed lane Greg calls critical cannot start on what we pay for | It is a PROCUREMENT DECISION that only Greg can make, it gates the live lane he has named critical, and it has sat unregistered since S103. The failure mode is the worst kind: the live collector does not fail loudly, it HOT-LOOPS on ErrorMsg, so a live bring-up looks like a hang rather than a billing answer. |
 | **M-12** | S | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | It is the gate under every data fix. Without it a session cannot tell what it actually pushed, and the next session silently inherits pre-fix stores - which is what happened between S114 and S115. |
 | **M-14** | S | THE PAPER DOCK'S OWN CREDENTIAL PATH IS SESSION SCRATCHPAD - kalshi_auth reads scratchpad/kalshi.env | It is the credential the paper book itself needs. It fails on every fresh container by construction, so paper trading cannot start on a new session until it moves. Same class as the three feed consumers fixed this session (D1-02/03/04). |
@@ -224,7 +223,6 @@ By tier: **ESSENTIAL** 24, **BIGGEST_WIN** 44, **REST** 107
 |---|---|---|---|---|---|---|
 | **G-1** | ESSENTIAL | XS | OPEN | S111 | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | - |
 | **G-11** | ESSENTIAL | XS | IN_PROGRESS | S111 | Start accruing EIA weekly coal basin spot prices | - |
-| **A-71** | ESSENTIAL | S | OPEN | S115 | M-16's PHYSICAL repair - the guarded puller exists, the already-paid head + L1 data is still not in the canonical root | - |
 | **A-73** | ESSENTIAL | S | OPEN | S103 (recorded in that memo, | LIVE MBO IS NOT AUTHORIZED ON OUR DATABENTO TIER - the live feed lane Greg calls critical cannot start on what we pay for | - |
 | **M-12** | ESSENTIAL | S | OPEN | S115 | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | - |
 | **M-14** | ESSENTIAL | S | OPEN | S115 | THE PAPER DOCK'S OWN CREDENTIAL PATH IS SESSION SCRATCHPAD - kalshi_auth reads scratchpad/kalshi.env | - |
@@ -415,6 +413,7 @@ By tier: **ESSENTIAL** 24, **BIGGEST_WIN** 44, **REST** 107
 | A-48 | ? | grp22_state.json is STALE at the canonical name - promote the corrected state or delete it |
 | A-51 | ? | Serve FORWARD wind and solar - all three specialists named it independently |
 | A-52 | ? | wind_mwh has no chg_7d twin while gas, solar and hydro all do |
+| A-71 | S | M-16's PHYSICAL repair - the guarded puller exists, the already-paid head + L1 data is still not in the canonical root |
 | G-19 | S | EIA-930: BATTERY STORAGE is now its own category and we do not carry it |
 | G-5 | M | ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY |
 | M-2 | S | Brain status taxonomy normalized to an enum |
@@ -461,18 +460,6 @@ saturates at ~3.1M MWh/day around $7 gas because coal's cost per MWh sits below 
 BASIN-SPECIFIC. PRB at $14.65/ton is roughly $8/MWh of fuel and is never displaced; CAPP at $82/ton is
 roughly $33/MWh and is displaced by $3 gas. The switching threshold is a per-basin ladder and this feed IS
 that ladder. It is no longer a slow structural level for M-6 alone.
-
----
-
-### [ESSENTIAL] A-71 - M-16's PHYSICAL repair - the guarded puller exists, the already-paid head + L1 data is still not in the canonical root
-
-*size S | OPEN | raised S115*
-
-**Why it is ESSENTIAL:** A-67 arm 1 needs the unwalked head (2025-07-22 -> 09-05) staged, and the head trades are the thing that landed in the phantom tree. The guard stops the NEXT pull from lying; it does not move the bytes that are already in the wrong place.
-
-**Source:** S115 close; ChatGPT's own 'not complete evidence yet' list, item 1
-
-MEASURED S115: two completed Databento jobs reported 2,384,994 and 1,386,421 rows and landed in `research/kalshi/data/` (219MB trades + 22MB L1) because `OUT_DIR`/`L1_DIR`/`MBP10_DIR` were relative and resolved against cwd. `databento_backfill_s115.py` fixes the class going forward. The data itself has not been moved or re-decoded, and it is already PAID FOR - re-pulling it spends money for nothing.
 
 ---
 
@@ -553,6 +540,8 @@ THIRD OCCURRENCE OF THE FAMILY: S114 found the ng_l1 writer DID NOT EXIST and '-
 THE FIX, all small: (a) anchor OUT_DIR/MBP10_DIR/L1_DIR on REPO like every other module; (b) give _write_df the out_dir parameter its siblings already have; (c) make the log print the writer's ACTUAL destination, returned by the writer rather than assumed by the caller; (d) after any pull, ASSERT the expected day files exist on disk and hard-fail if not - a row count is not a landing check (NC-3).
 NO RE-PURCHASE NEEDED: Databento re-serves a completed job FREE for 30 days (jobs GLBX-20260806-SEC5NWEY4U and GLBX-20260806-FUHPD9FHH5), and the decoded data is sitting in research/kalshi/data/ - it can be moved rather than re-pulled.
 BLOCKS: staging any head block (A-67/A-69's substrate). Do NOT stage on a plane that looks fine and is empty.
+
+**CORRECTED S115 - THE DEFECT IS TWO DEFECTS, AND THIS ITEM NAMED ONLY ONE.** Measured when A-71 was executed: the rows did not land in a phantom `data/nymex_cont_n0` (that directory was created EMPTY). They landed in **`research/kalshi/data/pyth_ticks/`** - the phantom root AND the wrong store name - because **`OUT_DIR = "data/pyth_ticks"` is the trades writer's hardcoded default and `_write_df(df, symbol)` takes no `out_dir`, so `--out-dir` is ACCEPTED AND IGNORED.** The relative path is the lesser half. **A flag that is accepted and ignored is a lie the caller cannot see**, and it is why the trades ended up filed as pyth ticks - a store from a different market, in a different format, that nothing would ever have looked in. The guarded entry point (`databento_backfill_s115.py`, arriving with A-70) fixes the root and asserts byte growth; it must also be checked for the ignored-`out_dir` half before the next trades pull.
 
 ---
 

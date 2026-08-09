@@ -91,25 +91,27 @@ Expect this to be a short read. It is ESSENTIAL for what it guards, not for what
 
 ---
 
-## 3. THEN A-71 — MOVE THE HEAD DATA OUT OF THE PHANTOM TREE
+## 3. A-71 IS DONE — THE HEAD DATA IS ON S3
 
-M-16's GUARD is built (`databento_backfill_s115.py`: repo-root absolute destinations, NG roll
-defaults to `n`, asserts destination byte growth). **The already-paid data is still in the wrong
-place**: `research/kalshi/data/` holds ~219MB of head trades and ~22MB of L1 that two completed
-Databento jobs wrote there when `OUT_DIR` resolved against cwd.
+Closed at S115 close, and **the location M-16 originally named was wrong**, so read this rather than
+the old text. The head trades were never in a phantom `data/nymex_cont_n0` (that directory was
+created EMPTY). They were in **`research/kalshi/data/pyth_ticks/`** — phantom root *and* wrong store
+— because `OUT_DIR = "data/pyth_ticks"` is the trades writer's hardcoded default and `_write_df`
+takes no `out_dir`, so **`--out-dir` is accepted and ignored.** That second half is the worse one and
+it is still unfixed on trunk: check it in `databento_backfill_s115.py` when A-70 lands.
 
-**Move it, do not re-pull — it is paid for.** Then **verify by READING BACK** file count and span,
-not by trusting the mover's exit code. This is the same posture as D47 (a store rebuilt in a session
-is not a fix until it is on S3), applied one layer down.
+Verified before moving: **2,384,994 rows on disk == 2,384,994 reported**, zero missing weekdays,
+clean seam. Landed and **read back from S3**, not trusted from an exit code.
 
-**If the phantom tree is gone, you are still fine**: the pull logs are committed at
-`research/kalshi/records/S115/databento_logs/` and carry the job ids, and **a completed Databento job
-re-decodes FREE**. Head trades NG.n.0 2025-07-22..2025-11-02 = `GLBX-20260806-SEC5NWEY4U`; L1 mbp-1
-NG.n.0 2026-07-31..2026-08-06 = `GLBX-20260806-FUHPD9FHH5`. **Two other ids in those logs are the
-WRONG LEG** — `NEK78EWGLK` and `Y65VR393GC` are NG.v.0, which whipsaws through expiry weeks; the walk
-is `.n.0`.
+```
+s3://bento-568968024170-us-east-2-an/nymex/nymex_cont_n0/   311 files  NG_20250722 .. NG_20260720
+s3://bento-568968024170-us-east-2-an/nymex/ng_l1/           326 files  NG_20250722 .. NG_20260805
+```
 
-**A-71 blocks A-67 arm 1**, because the unwalked head is arm 1's substrate.
+**The unwalked head (2025-07-22 -> 2025-09-05) now has both trades and L1.** Nothing was re-pulled.
+The four Databento jobs stay re-decodable free until **2026-09-05** if anything is ever lost:
+`GLBX-20260806-SEC5NWEY4U` (head trades) and `-FUHPD9FHH5` (L1) are the right leg; `-NEK78EWGLK` and
+`-Y65VR393GC` are NG.v.0 and must never be mixed in.
 
 ---
 
@@ -183,5 +185,5 @@ python research/kalshi/registry_grep.py . --tier ESSENTIAL --status OPEN
 python research/kalshi/registry_grep.py <regex> --full
 ```
 
-Sections 2-4 above name the three items that are SEQUENCED - A-70, then A-71, then A-67 arm 1 -
+Sections 2-4 above name what is SEQUENCED - A-70, then A-67 arm 1 (A-71 is done) -
 because ordering is instruction and does not live in the registry. Everything else is in the render.
