@@ -6,26 +6,28 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 173 |
+| open | 175 |
 | in progress | 1 |
 | done | 18 |
 
-By size: **XS** 19, **S** 77, **M** 55, **L** 12
+By size: **XS** 21, **S** 77, **M** 55, **L** 12
 
 ---
 
-By tier: **ESSENTIAL** 23, **BIGGEST_WIN** 44, **REST** 107
+By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 44, **REST** 107
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (23)
+## ESSENTIAL (25)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
 | id | size | title | why it is here |
 |---|---|---|---|
+| **A-79** | XS | BEDROCK IS GATED AT THE ACCOUNT LEVEL - no Claude model is invocable in any region, and only Greg can clear it | It is the sole hard blocker on the Frankie architecture test, it is a console action nobody but the account owner can take, and the OpenAI lane is not credentialed here either - so there is currently NO reasoning backend on this host. |
+| **A-80** | XS | THE S118 RUNNER SERVES ZERO PLAYS - two shape mismatches against brain_view, both failing OPEN | It would have produced a completed, plausible-looking Frankie-vs-blind comparison that actually measured **Frankie with NO PLAYS against a blind that had all 90**. Not a wrong number - a wrong experiment, and one whose own preflight says PASS. |
 | **G-1** | XS | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | 20 MINUTES, and it is the documented hole signature eleven times over. The EIA Natural Gas Weekly Update's final edition was the week ending 2026-01-21. A pipeline pointed at a dead vehicle goes stale SILENTLY - present, numeric, in range, right owner - which is exactly the shape state_health cannot see. Confirm what replaced it before the next group reads the block. |
 | **G-11** | XS | Start accruing EIA weekly coal basin spot prices | IRREVERSIBLE and running out. The EIA endpoint carries a rolling FIVE-WEEK window and EIA states the history is proprietary and cannot be released, so every week nobody runs it is a week gone permanently. Already IN_PROGRESS, captured once by hand; it needs a schedule, not a decision. |
 | **A-73** | S | LIVE MBO IS NOT AUTHORIZED ON OUR DATABENTO TIER - the live feed lane Greg calls critical cannot start on what we pay for | It is a PROCUREMENT DECISION that only Greg can make, it gates the live lane he has named critical, and it has sat unregistered since S103. The failure mode is the worst kind: the live collector does not fail loudly, it HOT-LOOPS on ErrorMsg, so a live bring-up looks like a hang rather than a billing answer. |
@@ -221,6 +223,8 @@ By tier: **ESSENTIAL** 23, **BIGGEST_WIN** 44, **REST** 107
 
 | id | tier | size | status | raised | title | blocked by |
 |---|---|---|---|---|---|---|
+| **A-79** | ESSENTIAL | XS | OPEN | S118 | BEDROCK IS GATED AT THE ACCOUNT LEVEL - no Claude model is invocable in any region, and only Greg can clear it | - |
+| **A-80** | ESSENTIAL | XS | OPEN | S118 | THE S118 RUNNER SERVES ZERO PLAYS - two shape mismatches against brain_view, both failing OPEN | - |
 | **G-1** | ESSENTIAL | XS | OPEN | S111 | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | - |
 | **G-11** | ESSENTIAL | XS | IN_PROGRESS | S111 | Start accruing EIA weekly coal basin spot prices | - |
 | **A-73** | ESSENTIAL | S | OPEN | S103 (recorded in that memo, | LIVE MBO IS NOT AUTHORIZED ON OUR DATABENTO TIER - the live feed lane Greg calls critical cannot start on what we pay for | - |
@@ -425,6 +429,43 @@ By tier: **ESSENTIAL** 23, **BIGGEST_WIN** 44, **REST** 107
 
 Each item's `why` verbatim - the reasoning, not a summary of it. Ordered by tier, then
 by size, so the cheapest essential work is first.
+
+### [ESSENTIAL] A-79 - BEDROCK IS GATED AT THE ACCOUNT LEVEL - no Claude model is invocable in any region, and only Greg can clear it
+
+*size XS | OPEN | raised S118*
+
+**Why it is ESSENTIAL:** It is the sole hard blocker on the Frankie architecture test, it is a console action nobody but the account owner can take, and the OpenAI lane is not credentialed here either - so there is currently NO reasoning backend on this host.
+
+**Source:** S118 environment prep for the Frankie two-group validation run
+
+MEASURED S118 on account 568968024170 (arn user/Claude). `bedrock.list_foundation_models` shows 15 Claude models in us-east-1 and they are all `INFERENCE_PROFILE` only, so the bare model id cannot be invoked - the call must use the `us.` profile id. With the correct profile id, EVERY modern Claude model fails, in us-east-1, us-east-2 AND us-west-2, 15 of 15 attempts, with this VERBATIM error:
+
+  ResourceNotFoundException: Model use case details have not been submitted for this account. Fill out the Anthropic use case details form before using the model. If you have already filled out the form, try again in 15 minutes.
+
+A second, different error covers claude-opus-5 / opus-4-8 / opus-4-7 / sonnet-5 / fable-5: 'is not available for this account' - those are not enabled at all, which is a separate question from the form.
+
+HONESTY NOTE, because it matters for how much to trust this: an earlier probe in the same session printed OK for `us.anthropic.claude-sonnet-4-6` in us-east-2 and us-west-2. That result did NOT reproduce - the identical call then failed 15 of 15 across three regions. The repeated measurement stands and the single earlier success is unexplained; it is recorded rather than quietly dropped.
+
+---
+
+### [ESSENTIAL] A-80 - THE S118 RUNNER SERVES ZERO PLAYS - two shape mismatches against brain_view, both failing OPEN
+
+*size XS | OPEN | raised S118*
+
+**Why it is ESSENTIAL:** It would have produced a completed, plausible-looking Frankie-vs-blind comparison that actually measured **Frankie with NO PLAYS against a blind that had all 90**. Not a wrong number - a wrong experiment, and one whose own preflight says PASS.
+
+**Source:** S118 environment prep; found by checking a preflight field rather than accepting PACKETS_CAUSAL
+
+MEASURED S118 at head 3a72fee on `chatgpt/agent-frankie-s117`. `frankie_group_forecast_s118.preflight_group` reports `served_plays: 0` on ALL 20 days of g18 and g19 while the verdict reads `PACKETS_CAUSAL`. Cause is `_compact_brain`, and it is TWO independent shape assumptions, each wrong, each failing open to 'serve nothing' rather than raising:
+
+1. `play_index` is assumed to be `{name: row}` or `[row, ...]`. `brain_view` emits `{_note, n_plays, evaluability, rows: [...90 rows...]}`, so `index.items()` iterates FOUR METADATA KEYS and `_index_status` reads the `_note` prose as a status. Nothing matches ARMED/EVALUABLE, so `chosen` is empty.
+2. Even with the index read correctly, `selected = {name: plays[name] for name in chosen if name in plays}` assumes `view['plays']` is a MAPPING. It is a LIST of 90 play objects, so `name in plays` is a membership test of a string against dicts - always False - and `plays[name]` would raise TypeError if it were ever reached.
+
+MEASURED CORRECT ANSWER: the 90 index rows carry evaluability EVALUABLE 30, PARTIALLY_EVALUABLE 1, NO_PARSED_CONDITIONS 57, INPUT_ABSENT 2 - so **31 plays should be served**, not 0.
+
+This is an INTEGRATION defect between two branches, not a fault in either alone: the `play_index` section was added to `brain_view` at S115 on trunk, and the S118 consumer was written against a different assumed shape. It is exactly what A-70 exists to catch.
+
+---
 
 ### [ESSENTIAL] G-1 - Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras)
 
