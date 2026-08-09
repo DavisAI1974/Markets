@@ -11,8 +11,7 @@ on:
       - research/kalshi/databento_backfill_s115.py
       - research/kalshi/tests/test_*frankie*.py
       - research/kalshi/tests/test_*s115.py
-      - research/kalshi/FRANKIE_ARCHITECTURE_S117.md
-      - research/kalshi/FRANKIE_RESEARCH_INTEGRATION_S117.md
+      - research/kalshi/FRANKIE_*.md
       - deploy/aws/markets-frankie*.service
       - deploy/aws/markets-frankie*.timer
       - deploy/aws/install_frankie.sh
@@ -30,8 +29,7 @@ on:
       - research/kalshi/databento_backfill_s115.py
       - research/kalshi/tests/test_*frankie*.py
       - research/kalshi/tests/test_*s115.py
-      - research/kalshi/FRANKIE_ARCHITECTURE_S117.md
-      - research/kalshi/FRANKIE_RESEARCH_INTEGRATION_S117.md
+      - research/kalshi/FRANKIE_*.md
       - deploy/aws/markets-frankie*.service
       - deploy/aws/markets-frankie*.timer
       - deploy/aws/install_frankie.sh
@@ -76,6 +74,7 @@ jobs:
             research/kalshi/frankie_render_s115.py \
             research/kalshi/frankie_validation_s115.py \
             research/kalshi/frankie_forecaster_s115.py \
+            research/kalshi/frankie_s115_status.py \
             research/kalshi/databento_backfill_s115.py
       - name: Validate JSON contracts
         run: |
@@ -112,6 +111,8 @@ jobs:
           assert OWNERSHIP['A65_compaction']['part'] == 'serving_policy'
           print('A-66 ownership clean')
           PY
+      - name: Run S115 status without promoting evidence
+        run: python research/kalshi/frankie_s115_status.py > /tmp/frankie-s115-status.json
       - name: Verify health is secret-free and non-executable
         run: |
           python research/kalshi/agent_frankie.py health > /tmp/frankie-health.json
