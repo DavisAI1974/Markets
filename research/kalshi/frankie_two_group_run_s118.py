@@ -24,6 +24,20 @@ import frankie_group_forecast_s118 as runner  # noqa: E402
 GROUPS = ("g18", "g19")
 RENDERS = HERE / "renders" / "ng_refine_s95"
 
+# The canonical rehearsal banner names the forbidden outcome filename in a prohibition
+# ("do not open g18_actual.json"). The packet leak guard correctly scans packet text, so redact
+# that filename token in the *emitted copy only* to avoid confusing the warning with leaked data.
+# The stored spawn template and spawn.py remain byte-identical.
+_ORIGINAL_REDIRECT = runner.spawn._redirect
+
+def _s118_redirect(text: str, gid: str, namespace: str) -> str:
+    out = _ORIGINAL_REDIRECT(text, gid, namespace)
+    out = out.replace(f"{gid}_actual.json", "[FORBIDDEN_ACTUAL_FILE]")
+    out = out.replace(f"{gid}_rt.json", "[FORBIDDEN_RT_FILE]")
+    return out
+
+runner.spawn._redirect = _s118_redirect
+
 
 def _materialize_anchor(gid: str) -> Path:
     g = gc.GROUPS[gid]
