@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 175 |
+| open | 176 |
 | in progress | 1 |
 | done | 21 |
 
-By size: **XS** 20, **S** 78, **M** 54, **L** 13
+By size: **XS** 20, **S** 78, **M** 55, **L** 13
 
 ---
 
-By tier: **ESSENTIAL** 24, **BIGGEST_WIN** 44, **REST** 108
+By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 44, **REST** 108
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (24)
+## ESSENTIAL (25)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -43,6 +43,7 @@ By tier: **ESSENTIAL** 24, **BIGGEST_WIN** 44, **REST** 108
 | **A-68** | M | GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal | It is the PREREQUISITE for A-67's retention arm - without it there is no retention to measure, and the arm cannot run. It is also the smallest change that turns a per-day amnesiac spawn into something with a horizon, which is the whole premise of the hybrid. |
 | **A-70** | M | MERGE REVIEW: chatgpt/agent-frankie-s117 carries an UNREAD base branch into the trunk | Everything downstream is blocked on it. A-67 arm 1 is the next real experiment and it cannot run until Frankie is on the trunk; but the merge commit also lands the dashboard / novel-edge-lab S116 base, and a merge commit signs for the whole diff. |
 | **A-74** | M | THE LIVE LOOP HAS NEVER RUN AS A SERVICE - collector-as-a-service was G3 of the S110 go-plan and has no registry line | Paper trading is the next milestone and it needs a loop that survives a session ending. Everything else in the S110 go-plan got built - G0 account closed, G1 paper ledger with four risk caps, G2 daily loop, G4 andon - and this one line, the one that makes them RUN WITHOUT A HUMAN, was never tracked. |
+| **A-84** | M | THE TAPE-vs-FORECAST-WEATHER CONFLICT IS RESOLVED ARBITRARILY, AND IT OWNS THE LARGEST MISSES | A SELECTION failure, distinct from A-83's under-emission, and it owns the single worst remaining event of the run. Under-emission costs a fraction of a move; taking the wrong side of a conflict costs the whole move AND the sign. |
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | M | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24. |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -240,6 +241,7 @@ By tier: **ESSENTIAL** 24, **BIGGEST_WIN** 44, **REST** 108
 | **A-68** | ESSENTIAL | M | OPEN | S115 | GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal | - |
 | **A-70** | ESSENTIAL | M | OPEN | S115 | MERGE REVIEW: chatgpt/agent-frankie-s117 carries an UNREAD base branch into the trunk | - |
 | **A-74** | ESSENTIAL | M | OPEN | S101-02 (designed), S110 (pl | THE LIVE LOOP HAS NEVER RUN AS A SERVICE - collector-as-a-service was G3 of the S110 go-plan and has no registry line | - |
+| **A-84** | ESSENTIAL | M | OPEN | S118 | THE TAPE-vs-FORECAST-WEATHER CONFLICT IS RESOLVED ARBITRARILY, AND IT OWNS THE LARGEST MISSES | - |
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | ESSENTIAL | M | OPEN | S115 | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -744,6 +746,25 @@ Note the shape: this is D36 exactly - a memo's recommendation living in prose th
 
 ---
 
+### [ESSENTIAL] A-84 - THE TAPE-vs-FORECAST-WEATHER CONFLICT IS RESOLVED ARBITRARILY, AND IT OWNS THE LARGEST MISSES
+
+*size M | OPEN | raised S118*
+
+**Why it is ESSENTIAL:** A SELECTION failure, distinct from A-83's under-emission, and it owns the single worst remaining event of the run. Under-emission costs a fraction of a move; taking the wrong side of a conflict costs the whole move AND the sign.
+
+**Source:** S118 Frankie run, found ONLY by reading every event individually (D37)
+
+MEASURED per event, S118. The two days where the served tape and the served forecast weather disagreed hardest were g18 20260429 and g19 20260511. **The same conflict was resolved in OPPOSITE directions and both were wrong:**
+
+  20260429  cold revision +0.747, tape neutral-to-sell -> sided with the WEATHER, called +150, actual -440 (err -590 vs the old blind's -290)
+  20260511  cold revision +0.846, tape sell (b_share 0.451, signed_flow -3,214) -> sided with the TAPE, called -160, actual +1,740 (err +1,900, the worst remaining event in either group)
+
+**The brain already carries the rule and it was not applied consistently**: `selector.divergence_resolution` (merged s102.3) says stop AVERAGING bimodal splits, default to the tape/flow regime, catalyst override only above gw_hdd >= 16.4 AND b_share >= 0.50. Neither day met the override, so the play says TAPE on both - which would still have lost 0429, but consistently, and consistency is what makes a rule testable at all.
+
+Invisible in any aggregate: the two errors have OPPOSITE SIGNS and partly cancel in drift, which is the cancellation D4 was written against.
+
+---
+
 ### [ESSENTIAL] M-11 - MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly
 
 *size M | OPEN | raised S114*
@@ -913,6 +934,8 @@ MEASURED S118. Frankie ran g18 and g19 through the S118 contracts with a DIFFERE
 **THIS IS THE ATTRIBUTION THAT WAS MISSING.** S114 recorded three competing explanations for the under-emission and promoted none (D37): the brief's stand-down passage biasing small, correct shrinking after specialists had their sign instrument refuted, or a genuinely hard block. A different harness and a different agent reproducing it at the same scale **weakens the harness explanation** and points at the reasoning lane itself - the agent will not emit the size its own drivers support.
 
 It is visible day by day in this run: on g19 20260511 the actual was +1,740 and the call was -160; on g18 20260430 the actual was +1,230 and the call was +330 with the strongest coherent buy tape in the block (signed_flow +7,783, the only b_share above 0.50, big_print_b 0.621 clearing the gate). **The direction read was right and the size was a fifth of the move.**
+
+**CORRECTED AFTER RE-READING PER EVENT (Greg: 'you cannot average. you have to look at every event individually'). The first version of this item was written off sum|err| and ratios - D37's exact prohibition - and the per-event view partly OVERTURNS it.** It is NOT a uniform wash: g18 improved 3/10 and worsened 7/10, **worse on 6 of its 8 largest moves** - a real loss concentrated where being wrong costs. g19 improved 7/10 and was **better on 5 of its 8 largest**, including the two biggest (0511 +1,740: err 2,190 -> 1,900; 0520 -1,050: err 1,250 -> 850). Averaging hid both halves. The under-emission claim SURVIVES (0430: actual +1,230, called +330 on the block's strongest coherent tape), but it is not the only failure and it is not the one that owns the largest misses - see A-84.
 
 ---
 
