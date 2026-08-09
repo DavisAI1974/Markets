@@ -1,12 +1,13 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "agent": "Frankie",
-  "status": "PARTIAL_REVIEWED_MISSING_1_OR_2",
+  "status": "READY",
   "source_session": "https://claude.ai/code/session_01XASwGBJCADah3Tb8GssvLJ",
-  "note": "Four paper links were supplied directly by Greg and verified against arXiv on 2026-08-07. Greg believes one or two papers from the Claude discussion are still missing. Keep hybrid paper-grounded promotion blocked until the missing links are identified and this manifest is explicitly changed to READY.",
+  "note": "Four papers were supplied directly by Greg from the Claude discussion. On 2026-08-08 Greg explicitly approved five additional arXiv papers to be worked into Frankie even if they were not all among the originally missing Claude links. The original conversation may still contain one or more additional papers, but that no longer blocks Frankie's reviewed research grounding.",
   "papers": [
     {
       "id": "nooa-2607.20709",
+      "source_type": "confirmed_claude_discussion",
       "title": "NVIDIA-labs OO Agents: Native Python Object-Oriented Agents",
       "url": "https://arxiv.org/abs/2607.20709",
       "claims": [
@@ -14,10 +15,11 @@
         "Deterministic Python methods and LLM-completed methods share the same object interface, making agent behavior easier to test, trace, refactor, and improve as software.",
         "The framework combines typed input/output, live object references, code-as-action, explicit object state, programmable loop engineering, and harness APIs for context and events on one surface."
       ],
-      "why_it_matters": "This is the strongest direct grounding for Frankie's object-like typed state, deterministic safety kernel, model-facing actions, and testable/refactorable agent architecture rather than a prompt-only agent."
+      "why_it_matters": "Grounds Frankie's object-like typed state, deterministic safety kernel, model-facing methods, and the separation between deterministic guards and model-completed behavior."
     },
     {
       "id": "acm-long-horizon-2607.23809",
+      "source_type": "confirmed_claude_discussion",
       "title": "ACM: Agentic Context Management for Long Horizon Tasks",
       "url": "https://arxiv.org/abs/2607.23809",
       "claims": [
@@ -25,10 +27,11 @@
         "The agent can decide when to compress context, offload discarded content to external memory, and retrieve it later on demand.",
         "The paper reports that active context management reduces peak token pressure and improves consistency across independent long-horizon trials."
       ],
-      "why_it_matters": "Grounds Frankie's need for explicit long-horizon context lifecycle, durable external evidence/memory, and selective retrieval instead of allowing live reasoning context to grow without control."
+      "why_it_matters": "Grounds explicit long-horizon recall/offload methods, named durable external memory, and an explicit working set for Frankie's live-session context."
     },
     {
       "id": "kernel-forge-2607.24762",
+      "source_type": "confirmed_claude_discussion",
       "title": "Kernel Forge: An Agent Harness for LLM-based Generation and Optimization of CUDA Kernels",
       "url": "https://arxiv.org/abs/2607.24762",
       "claims": [
@@ -36,10 +39,11 @@
         "Its search uses Monte Carlo Tree Search to explore multiple optimization paths rather than a single linear refinement chain.",
         "The system evaluates candidate kernel changes empirically and reports performance improvements across multiple model workloads."
       ],
-      "why_it_matters": "Provides a concrete precedent for Frankie's improvement search being multi-path, instrumented, empirically validated, and separable from production application rather than a single self-editing chain."
+      "why_it_matters": "Provides a precedent for Frankie's improvement search being multi-path, instrumented, empirically validated, and separable from production application rather than a single self-editing chain."
     },
     {
       "id": "acm-lifecycle-2607.21503",
+      "source_type": "confirmed_claude_discussion",
       "title": "Agentic Context Management: Solving Agent Memory and Cost by Treating Them as Lifecycle and Architecture Problems",
       "url": "https://arxiv.org/abs/2607.21503",
       "claims": [
@@ -48,24 +52,73 @@
         "It argues that validated compaction is required to control long-horizon context cost while preserving decision-relevant fidelity and provenance."
       ],
       "why_it_matters": "Grounds Frankie's separation of immutable evidence, scoped working context, provenance-preserving memory, anticipation of future dependencies, and explicit compaction/reflection stages."
+    },
+    {
+      "id": "self-improvement-survey-2607.13104",
+      "source_type": "user_approved_supplemental",
+      "title": "Self-Improvements in Modern Agentic Systems: A Survey",
+      "url": "https://arxiv.org/abs/2607.13104",
+      "claims": [
+        "The survey represents a modern agent as a foundation model coupled to an operational scaffold of prompts, memory, tools, and control logic.",
+        "It formalizes self-improvement as a self-induced update operator that obtains and commits updates to model parameters or scaffold components.",
+        "It organizes prior work by what is updated and by the signal that drives the update, providing a systems taxonomy for controlled agent evolution."
+      ],
+      "why_it_matters": "Provides Frankie's explicit mutable-surface taxonomy so strategy, skills, playbooks, prompts, retrieval, tools, data contracts, tests, and release state are versioned rather than treated as one opaque prompt."
+    },
+    {
+      "id": "adaptive-auto-harness-2606.01770",
+      "source_type": "user_approved_supplemental",
+      "title": "Adaptive Auto-Harness: Sustained Self-Improvement for Agentic System Deployment on Open-Ended Task Streams",
+      "url": "https://arxiv.org/abs/2606.01770",
+      "claims": [
+        "Open-ended task streams make one densely and repeatedly updated harness brittle because task distributions shift and heterogeneous tasks need different harnesses.",
+        "Adaptive Auto-Harness uses a stateful multi-agent evolver, a harness tree with solve-time routing, and human-steering hooks when history lacks the needed signal.",
+        "The system is evaluated on prediction-market, security-competition, and event-forecasting streams."
+      ],
+      "why_it_matters": "Directly supports a Frankie harness tree with explicit task routes instead of one universal self-modifying harness, and it supports human steering for novel market regimes."
+    },
+    {
+      "id": "rsea-heldout-2606.28374",
+      "source_type": "user_approved_supplemental",
+      "title": "Recursive Self-Evolving Agents via Held-Out Selection",
+      "url": "https://arxiv.org/abs/2606.28374",
+      "claims": [
+        "RSEA carries a compact three-layer natural-language state consisting of an imperative strategy, reusable skills, and a procedural playbook.",
+        "It rewrites those layers from its own trajectories but commits a candidate only if it does not regress on a disjoint held-out split using a strict keep-better gate.",
+        "The paper reports that unguarded context evolution can be high variance and that strict held-out selection is the mechanism used to prevent regression."
+      ],
+      "why_it_matters": "Grounds Frankie's strategy/skills/playbook harness state and a precommitted held-out keep-better gate before any candidate can become release-eligible."
+    },
+    {
+      "id": "moss-source-rewrite-2605.22794",
+      "source_type": "user_approved_supplemental",
+      "title": "MOSS: Self-Evolution through Source-Level Rewriting in Autonomous Agent Systems",
+      "url": "https://arxiv.org/abs/2605.22794",
+      "claims": [
+        "MOSS argues that text-only mutation cannot reach structural failures in routing, hook ordering, state invariants, and dispatch that live in source code.",
+        "Its source-level evolution is anchored to curated production-failure evidence and runs through a deterministic multi-stage pipeline.",
+        "Candidate code is verified by replay in ephemeral trial workers before a user-consent-gated promotion with health-probe rollback."
+      ],
+      "why_it_matters": "Frankie may propose source-level research-harness changes, but only as isolated trial-worker candidates. Production application remains outside Frankie and requires explicit human-reviewed release."
+    },
+    {
+      "id": "agentdevel-2601.04620",
+      "source_type": "user_approved_supplemental",
+      "title": "AgentDevel: Reframing Self-Evolving LLM Agents as Release Engineering",
+      "url": "https://arxiv.org/abs/2601.04620",
+      "claims": [
+        "AgentDevel externalizes self-improvement into a regression-aware release pipeline rather than embedding unrestricted self-refinement inside the agent.",
+        "It uses an implementation-blind critic, script-based executable diagnosis, and flip-centered gating that treats pass-to-fail regressions and fail-to-pass fixes as first-class evidence.",
+        "It maintains a single canonical version line and emphasizes non-regression and auditable release artifacts."
+      ],
+      "why_it_matters": "Grounds Frankie's single canonical release lineage, symptom-level diagnosis, explicit pass-to-fail regression accounting, and separation of candidate generation from release authority."
     }
   ],
-  "possible_missing_papers_not_confirmed": [
-    {
-      "title": "Self-Harness: Harnesses That Improve Themselves",
-      "url": "https://arxiv.org/abs/2606.09498",
-      "reason": "Strong thematic match to Greg and Claude's self-improvement discussion: weakness mining, minimal harness proposals, and regression-test validation. Not confirmed as a link from the private Claude session."
-    },
-    {
-      "title": "Self-GC: Self-Governing Context for Long-Horizon LLM Agents",
-      "url": "https://arxiv.org/abs/2607.00692",
-      "reason": "Strong thematic match to the long-horizon context discussion: indexed context objects, side-channel planning, recoverable sidecars, safe commit boundaries, and selective fold/mask/prune actions. Not confirmed as a link from the private Claude session."
-    },
-    {
-      "title": "Self-Evolving Agent Harnesses via Gated Semantic Quality-Diversity",
-      "url": "https://arxiv.org/abs/2607.13683",
-      "reason": "Also a strong candidate because it separates model-proposed harness changes from deterministic measurement and sealed-test credit assignment. Not confirmed as a link from the private Claude session."
-    }
+  "original_session_search_still_open": true,
+  "possible_additional_claude_papers_not_required_for_runtime": [
+    "https://arxiv.org/abs/2606.09498",
+    "https://arxiv.org/abs/2607.00692",
+    "https://arxiv.org/abs/2607.13683"
   ],
   "repo_grounding": [
     "research/kalshi/FORECAST_ARCHITECTURE_S111.md",
@@ -74,6 +127,7 @@
     "research/kalshi/agents/RUN_SOP.md",
     "deploy/aws/COACH_AGENT_SETUP_S93.md",
     "research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md",
-    "CHATGPT_HANDOFF_S116_NOVEL_EDGE_LAB.md"
+    "CHATGPT_HANDOFF_S116_NOVEL_EDGE_LAB.md",
+    "research/kalshi/FRANKIE_ARCHITECTURE_S117.md"
   ]
 }
