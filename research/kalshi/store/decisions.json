@@ -36,7 +36,7 @@
   },
   {
    "id": "D1",
-   "session": "S107 (Greg)",
+   "session": "S107 (Greg) (re-affirmed S115: still binding and still correct - the walk is not finished, g24 is the last scored block and the head block is not staged. The expiry is unchanged: rotation happens at walk end, as paper-trading item G5. There is nothing to wire - a decision not to act cannot be enforced by a gate, only re-stated on a date.)",
    "decision": "Keys do NOT rotate during the walk; rotation happens after, as its own item",
    "status": "DECIDED",
    "enforced_by": "doc (CLAUDE.md AWS section + every drop-in) — expires at walk end, then becomes paper-trading item G5"
@@ -120,7 +120,7 @@
   },
   {
    "id": "D13",
-   "session": "S110 (Greg)",
+   "session": "S110 (Greg) (re-affirmed S115: the gas-only SCOPE is unchanged and still binding; what S115 corrected, in D50, was this entry's false claim that a QC sweep enforced it. Honestly doc-only now, and re-stated rather than dressed up.)",
    "decision": "Gas only — the platform scopes to NG/KXNATGASD/Henry Hub until further notice",
    "status": "DECIDED",
    "enforced_by": "doc-only (memo + this ledger) — acceptable: it is a scope statement, checked by the QC sweep against new non-gas builds"
@@ -267,10 +267,10 @@
   },
   {
    "id": "D32",
-   "session": "S111 (Greg, across the whole session)",
+   "session": "S111 (Greg, across the whole session) (re-affirmed S115)",
    "decision": "**THE FORECAST ARCHITECTURE, stated so it is not relitigated.** The product is a **PRICE CURVE** (trader's noun - the pricing curve we have been trying to match; do not read it as a claim about smoothness). The machine is **ANALOG RETRIEVAL**: project market conditions forward, reason to how the session should BEHAVE, then find a past trading day whose SHAPE matches the behaviour already concluded, and re-anchor its level. **The analog does not do the forecasting - it renders it**, supplying real traded intraday texture instead of a smooth guess; Greg: *\"we're always going to have to be reconstructing no matter what.\"* **Library key = a two-week calendar window** (day length and weather forecasts are the two biggest drivers; a ±2wk window holds day length near-constant by construction, and `solar.gw_day_length_h` is already served). **The only free parameter in the transplant is LEVEL.** Amplitude is a **REJECTION TEST, not a knob** - Greg: *\"if you are also adjusting amplitude more than just a little then you should be using a different forecast... a little knob turning is fine but if you're doing it too much then you're no longer forecasting\"* - which is the refine's own \"magnitudes DERIVED, never fitted\" rule applied one step later, and it makes the retrieve-vs-construct boundary EMERGENT rather than legislated (retrieve when a candidate passes; when nothing passes, that failure IS the signal to construct). **Live = the refine running forward**: refine-grade information up to now, the analog supplying the rest, with the tape confirming continuously - so intraday is NOT a blind problem, though the pre-open entry and any multi-day horizon still are. **The scrap signal is SLOPE, not level** - Greg: *\"level movement keeps the same linear equation\"*; differencing removes the level automatically, and the principle underneath is that **level errors are correctable and slope errors are not**. Adjust once, adjust again and you are on notice, keep adjusting and the analog is wrong; direction disagreement short-circuits to immediate scrap. **Checks are triggered by the TAPE, not the clock** (our `path_p50_curve` 2-hourly grid is a human summary, not what the monitor consumes - the retrieved analog's own tick tape is the reference). **THE ADJUSTMENT LOOP IS THE PRODUCT, not a safety net** - Greg: *\"no trader has this information, you just have to adjust faster and better than everyone else.\"* **One object, three lanes, diverging as LATE as possible** (shared: data plane, condition projection, behaviour reasoning, library, retrieved analog; divergent: how each product reads it): Kalshi wants a probability at a point, futures a trajectory, options a distribution over trajectories - and per S98 the ledgers are never pooled, so a good number in one lane is not evidence in another. **Dispersion comes free and resolves the pick-one-vs-distribution tension**: one analog for the central path, the cohort that PASSED the match test but was not chosen for the band - nothing averaged. **Accuracy bar (Greg): direction of each leg must be right, turn timing close, peaks and valleys a little wrong is tolerable, level free.** That is a scoring function, and it is the one we do not compute",
    "status": "DECIDED",
-   "enforced_by": "nothing built. Written here because it is the session's main output and existed only in conversation. Next: a design document, then the SOP/contract changes it implies (curve scored instead of the scalar; monitor spec; NO CALL)"
+   "enforced_by": "**CORRECTED S115 - this entry said 'nothing built' and that stopped being true at S111.** The design document it asked for EXISTS: `research/kalshi/FORECAST_ARCHITECTURE_S111.md`, and `plant_status.py`'s `architecture` row already points every session at it as the first thing to read. The SOP/contract change it implies is also partly landed - the scoreboard is the forward CURVE, and `blind_score_nonpooled.py` reports sum|err|, drift and survival against three named benchmarks (A-1) rather than a hit rate. STILL NOT BUILT, and named so it is not read as done: the retrieval half - the library index (A-5) and the matched-cohort band (A-60/A-63) - which is why those stay ESSENTIAL and OPEN. Same species as D50, opposite sign: there the ledger claimed a guard that did not exist, here it denied work that did."
   },
   {
    "id": "D31",

@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 163 |
+| open | 172 |
 | in progress | 1 |
 | done | 17 |
 
-By size: **XS** 18, **S** 74, **M** 50, **L** 11
+By size: **XS** 19, **S** 78, **M** 53, **L** 12
 
 ---
 
-By tier: **ESSENTIAL** 21, **BIGGEST_WIN** 40, **REST** 103
+By tier: **ESSENTIAL** 23, **BIGGEST_WIN** 44, **REST** 106
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (21)
+## ESSENTIAL (23)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -29,6 +29,7 @@ By tier: **ESSENTIAL** 21, **BIGGEST_WIN** 40, **REST** 103
 | **G-1** | XS | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | 20 MINUTES, and it is the documented hole signature eleven times over. The EIA Natural Gas Weekly Update's final edition was the week ending 2026-01-21. A pipeline pointed at a dead vehicle goes stale SILENTLY - present, numeric, in range, right owner - which is exactly the shape state_health cannot see. Confirm what replaced it before the next group reads the block. |
 | **G-11** | XS | Start accruing EIA weekly coal basin spot prices | IRREVERSIBLE and running out. The EIA endpoint carries a rolling FIVE-WEEK window and EIA states the history is proprietary and cannot be released, so every week nobody runs it is a week gone permanently. Already IN_PROGRESS, captured once by hand; it needs a schedule, not a decision. |
 | **A-71** | S | M-16's PHYSICAL repair - the guarded puller exists, the already-paid head + L1 data is still not in the canonical root | A-67 arm 1 needs the unwalked head (2025-07-22 -> 09-05) staged, and the head trades are the thing that landed in the phantom tree. The guard stops the NEXT pull from lying; it does not move the bytes that are already in the wrong place. |
+| **A-73** | S | LIVE MBO IS NOT AUTHORIZED ON OUR DATABENTO TIER - the live feed lane Greg calls critical cannot start on what we pay for | It is a PROCUREMENT DECISION that only Greg can make, it gates the live lane he has named critical, and it has sat unregistered since S103. The failure mode is the worst kind: the live collector does not fail loudly, it HOT-LOOPS on ErrorMsg, so a live bring-up looks like a hang rather than a billing answer. |
 | **M-12** | S | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | It is the gate under every data fix. Without it a session cannot tell what it actually pushed, and the next session silently inherits pre-fix stores - which is what happened between S114 and S115. |
 | **M-14** | S | THE PAPER DOCK'S OWN CREDENTIAL PATH IS SESSION SCRATCHPAD - kalshi_auth reads scratchpad/kalshi.env | It is the credential the paper book itself needs. It fails on every fresh container by construction, so paper trading cannot start on a new session until it moves. Same class as the three feed consumers fixed this session (D1-02/03/04). |
 | **M-16** | S | THE PULLER WRITES TO A PHANTOM data/ AND LIES ABOUT WHERE - relative OUT_DIR + _write_df ignores out_dir | It silently empties the data plane for the LAST group run while reporting success. Third occurrence of the reports-rows-writes-nothing family (S114 ng_l1 writer; S115 --roll v near-miss). Small fix, and everything downstream of staging depends on it. |
@@ -41,6 +42,7 @@ By tier: **ESSENTIAL** 21, **BIGGEST_WIN** 40, **REST** 103
 | **A-63** | M | THE KERNEL IS THE MISSING ENGINE - and it produces the BAND for free, which is the same build as A-60 | D32 makes analog retrieval THE product and we have no similarity function at all - retrieval is a calendar window plus a regime label. It is also the cheapest honest route to the band, which A-60 shows has never been validated and is the only field a binary market actually prices. Two ESSENTIAL items, one build. |
 | **A-68** | M | GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal | It is the PREREQUISITE for A-67's retention arm - without it there is no retention to measure, and the arm cannot run. It is also the smallest change that turns a per-day amnesiac spawn into something with a horizon, which is the whole premise of the hybrid. |
 | **A-70** | M | MERGE REVIEW: chatgpt/agent-frankie-s117 carries an UNREAD base branch into the trunk | Everything downstream is blocked on it. A-67 arm 1 is the next real experiment and it cannot run until Frankie is on the trunk; but the merge commit also lands the dashboard / novel-edge-lab S116 base, and a merge commit signs for the whole diff. |
+| **A-74** | M | THE LIVE LOOP HAS NEVER RUN AS A SERVICE - collector-as-a-service was G3 of the S110 go-plan and has no registry line | Paper trading is the next milestone and it needs a loop that survives a session ending. Everything else in the S110 go-plan got built - G0 account closed, G1 paper ledger with four risk caps, G2 daily loop, G4 andon - and this one line, the one that makes them RUN WITHOUT A HUMAN, was never tracked. |
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | M | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24. |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -48,7 +50,7 @@ By tier: **ESSENTIAL** 21, **BIGGEST_WIN** 40, **REST** 103
 | **A-69** | L | SELF-TRAINING LOOP: Frankie runs blinds on the WALKED corpus, grades himself with FJ-1, and the head is held out as the only true test | It creates the TRAIN/TEST SPLIT this project has never had, it uses a corpus we already own and have used once each, and its grader is already built and has never been run. It is also the mechanism that makes A-67's retention arm meaningful - retention with nothing to retain across is ceremony. |
 | **A-50** | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 
-## BIGGEST WIN (40)
+## BIGGEST WIN (44)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -56,6 +58,8 @@ By tier: **ESSENTIAL** 21, **BIGGEST_WIN** 40, **REST** 103
 |---|---|---|---|
 | **O-2** | XS | RECORD THE S111 OPTIONS VERDICT AS A BINDING DECISION - it exists only in a file-index blurb | - |
 | **A-15** | S | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | PLAY-SIDE ONLY, no feed work. coal_mwh and nuclear_mwh are served across US48 and six BAs and referenced by ZERO plays; wind and solar have one reader each and it is RETIRED. Three of the four terms that set the gas residual have no consumer. This is 0629 generalised. |
+| **A-17C** | S | REALIZED nuclear outage truth from the NRC daily power reactor status - buildable now | A-17 was one item covering four different data realities with four different answers. The delivered report's final line is explicit: A-17 should NOT be closed as 'forward nuclear unit schedule solved'. Splitting it is the report's own recommendation and it is what makes the honest 'no' in A-17B survivable as a record. |
+| **A-17D** | S | Coal additions and retirements calendar from EIA-860M - buildable now, and it feeds the coal-ramp work | A-17 was one item covering four different data realities with four different answers. The delivered report's final line is explicit: A-17 should NOT be closed as 'forward nuclear unit schedule solved'. Splitting it is the report's own recommendation and it is what makes the honest 'no' in A-17B survivable as a record. |
 | **A-18** | S | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | A LIST EDIT plus a rebuild. We serve one of six Southeast BAs in the highest-gas-share region in the country, and per D35 the Gulf corridor is among the best-transmitting demand to Henry Hub itself. Pairs with A-16 - hydro at US48 level averages TVA's drought against Pacific Northwest runoff and shows nothing. |
 | **A-24d** | S | Freshness-weighted source precedence - stale and fresh blocks should not vote as simultaneous | RE-TIERED S114 on Greg's go. Proposes NO correlation - it changes who is allowed to speak - so the shared 'candidates not findings' tier_why never applied to it. Instances were already in the ledger (B-0713's override, the block's worst wrong-direction day; E's PRIOR-OVER-STATE, 13 of 18 Friday misses) and the census re-derived 0713 independently: every fresh instrument down, the stale table won, -620. The age fields it needs were WRONG until S113's h-frozen_countdowns fix - unreadable, not unread - and became readable one session ago. Zero new data required. |
 | **A-24e** | S | Order-flow signal INTEGRITY as a play-level authority gate (not a staging gate) | RE-TIERED S114 on Greg's go. A quality GATE on the desk's best forward-confirmed play (flow_nowcast 0.87, 34/34 OOS) whose input family has produced THREE documented defects (S108 denominator, S109 encoding, hole #8 off-instrument). Census, by name: stub Mondays 0622 (191 trades, b/2s on OPPOSITE sides of 0.50), 0629, 0713, 0706 - four of the six worst Mondays sat on sub-1,300-trade panels; quiet stubs (0615, 0525) prove gate-not-signal, exactly as proposed. Feeds A-2's NO CALL on B's Monday lane, the walk's worst. The note's own data limitation stands: several quality fields carry <=29 observations - diagnosis first, authority accrues forward. |
@@ -71,6 +75,7 @@ By tier: **ESSENTIAL** 21, **BIGGEST_WIN** 40, **REST** 103
 | **G-30** | S | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | It is the instrument dependency under A-24a, the discovery note's own RANK 1 candidate and the one it calls strongest. It also turns five of twelve path points from a timing judgment into arithmetic, on a feed we already ingest. |
 | **M-15** | S | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | A compromised credential with a deferral that has silently expired is the kind of thing that is only ever noticed after it matters. Cheap to do, and the deferral it replaces was explicit and time-boxed. |
 | **O-3** | S | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
+| **A-17A** | M | Public AGGREGATE forward outage calendar - buildable now from ERCOT, PJM, MISO, SPP | A-17 was one item covering four different data realities with four different answers. The delivered report's final line is explicit: A-17 should NOT be closed as 'forward nuclear unit schedule solved'. Splitting it is the report's own recommendation and it is what makes the honest 'no' in A-17B survivable as a record. |
 | **A-2** | M | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | THE OTHER MEASUREMENT PREREQUISITE, in Greg's own framing: we cannot measure skill until the system can say NO CALL, because without it the forecaster must pick something and then justify the guess. Measured: one high-confidence day in fifty, and the confidence field does not discriminate (low beats med). A discord score is a number, so no contract change is needed. |
 | **A-21** | M | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | Its cheapest sub-task is the highest-value thing on this list per hour: measure demand_mwh against gas_mwh per BA, from data we have held since 2019, to get the LOAD -> GAS BURN convexity. That is the actual dispatch curve the desk is trying to forecast and nobody has ever plotted it. No new feed, no new station. |
 | **A-24a** | M | Weather information ACCEPTANCE: revision size x model convergence x release timing | RE-TIERED S114 on Greg's go, per-event evidence in walk_census_g18_g23_S114.csv. Its own why already said PROMOTED FROM BEHAVIORAL TO PHYSICAL (A-31: revision timing decides whether coal can be warm - falsifiable against generation); the census showed the authority half working per event (0713 convergence 0.017 = D25's override day; 0511 disagreement 1.127 = the walk's worst day) and the sign half's prerequisite - the seasonal sign map - is now IN THE BRAIN (s105.1 weather.revision_seasonal_sign_map, g24 test registered). The old shared blocker (A-23 triage) was decoration: A-24b/c ran to completion with it in place. |
@@ -82,6 +87,7 @@ By tier: **ESSENTIAL** 21, **BIGGEST_WIN** 40, **REST** 103
 | **A-4** | M | Score the CURVE, not the scalar - four error terms kept separate | D32 made the product a CURVE and we have never scored it. Four error terms kept separate - level, slope, shape, timing - because a day high by 4,000 and a day low by 4,000 net to zero on a forecaster that was catastrophically wrong twice. The scoreboard is what every other item is judged by. |
 | **A-41** | M | RUN THE FAILURE JUDGE ON AGENT BEHAVIOUR - localize every post-mortem finding to an interaction edge and fault side BEFORE it becomes brain evidence | - |
 | **A-62** | M | SERVE EACH SPECIALIST ITS OWN TRACK RECORD - we measure how each agent fails and have never told the agent | instrument_priors proved the pattern works and was the most-praised content of the g24 run ('the honest prior on every instrument I have' - C-0721). This is the same object aimed at the agent instead of the instrument, built from measurements we already hold, and it targets the walk's worst-performing lanes by name. |
+| **A-72** | M | THE ORDER-FLOW DIRECTION NOWCAST HAS NO REGISTRY LINE - the one workstream of six that was never registered | It is the direction half of the live lag play, it is already implemented, and it is the single highest-agreement result the desk has ever recorded - and no registry line has ever pointed at it, so nobody has re-run it causally. Five of the six S112 workstreams map onto G-4, G-5 (DONE), G-7, A-19/A-21 and A-5/G-28. Task 1 maps onto NOTHING. |
 | **G-4** | M | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | THE TOP-RANKED GAP, named by two independent lenses, and 0629 is its canonical instance - our cooling forecast was exactly right and burn fell 4.2 Bcf/d because wind rose 62%. It is the fastest-dying input AND the one that flips the SIGN rather than the magnitude. ChatGPT ALREADY DELIVERED the source research (S112 T3) - collect it from Greg first. |
 | **M-4** | M | CDD-vs-normal (the anomaly instrument separating hill from spike) | The cure for the D28 TRANSFER disease, and nws_temp_feed already fetches the normals - so it is a serving change, not an ingest. gw_cdd >= 16.4 fires 46.6% pooled and 0/10 on all four summer blocks; an absolute bar cannot transfer across season by construction. |
 | **A-19** | L | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | L, and it is the foundation under the dominant driver. The station set is 16 hand-set metros with ONE covering the entire Southeast, the weights were never tuned, and the primitive is wrong - it should be per-BA with a measured roll-up. Everything weather-shaped rests on this. |
@@ -95,12 +101,13 @@ By tier: **ESSENTIAL** 21, **BIGGEST_WIN** 40, **REST** 103
 | **A-53** | ? | Sweep every play's `requires` against the served BLIND field set | - |
 | **A-54** | ? | The output contract cannot express what the specialists actually derived | - |
 
-## REST (103)
+## REST (106)
 
 *everything else - real work, correctly tracked, and none of it deleted. Several become cheap once an ESSENTIAL or BIGGEST_WIN item lands.*
 
 | id | size | title | why it is here |
 |---|---|---|---|
+| **A-76** | XS | ng_live_operator imports odcore by repo-root path with no sys.path shim - a footgun that stands the operator down | Trivial, but it is on the live path and it fails as an ImportError at bring-up time, which is the worst moment to be debugging a path. |
 | **G-14** | XS | Fix the LNE strike decode at source (Databento display_factor bug) | - |
 | **G-17** | XS | TAPE: the BOIL/KOLD close-imbalance test | - |
 | **G-21** | XS | STORAGE CONSENSUS: carry the RANGE, not just the median | - |
@@ -121,6 +128,7 @@ By tier: **ESSENTIAL** 21, **BIGGEST_WIN** 40, **REST** 103
 | **A-20** | S | TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none | - |
 | **A-3** | S | Compute the effective matching dimension d of any retrieval | - |
 | **A-64** | S | Kernel Forge (arXiv 2607.24762) - CUDA half OUT OF SCOPE for our workload today; the MCTS-over-candidates harness pattern stacks with A-63/A-60 | Registered under D36 because a delivered external recommendation gets a line even when most of it is rejected - an unrecorded rejection returns as a surprise. The applicable slice is one harness idea, not a build; the domain half is closed with a stated reason. |
+| **A-75** | S | A ROLL-STRADDLING GROUP RENDERS ON THE WRONG LEG - continuous_rt.py draws the NG.n.0 tape, which is the post-roll contract for the whole block | Real and reproducible, but it bites only on groups that straddle a Kalshi-underlying roll, and the walk's staged blocks are done. It matters again the moment a head block straddles one. |
 | **A-8** | S | Wire the depth-based turn_exhaustion as the monitor's CONFIRMING turn channel | - |
 | **A-9** | S | Generate the drop-in's work list FROM the registry instead of restating it in prose | - |
 | **G-10** | S | Separate TAS (NGT) from the tape; add jump-robust realized variance | - |
@@ -196,6 +204,7 @@ By tier: **ESSENTIAL** 21, **BIGGEST_WIN** 40, **REST** 103
 | **S111-2** | M | Run the 82-play audit, all eight batches, using the COMMITTED harness | - |
 | **S111-3** | M | THE BACKFILL - instances and corpus state into the brain | - |
 | **S111-4** | M | Falsifier backfill - 65 of 82 plays have none | - |
+| **A-17B** | L | Public UNIT-LEVEL nuclear refuelling calendar - a MEASURED public-data gap, not a build | A-17 was one item covering four different data realities with four different answers. The delivered report's final line is explicit: A-17 should NOT be closed as 'forward nuclear unit schedule solved'. Splitting it is the report's own recommendation and it is what makes the honest 'no' in A-17B survivable as a record. |
 | **A-24** | L | THE UNKNOWN CORRELATED PAIR - search the 1,717 for structure nobody has put together, WITHOUT manufacturing it | - |
 | **A-5** | L | Build the library index (seasonal window, regime label, day class, shape descriptor) | - |
 | **A-7** | L | ONE STORE + generated spawns | - |
@@ -214,6 +223,7 @@ By tier: **ESSENTIAL** 21, **BIGGEST_WIN** 40, **REST** 103
 | **G-1** | ESSENTIAL | XS | OPEN | S111 | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | - |
 | **G-11** | ESSENTIAL | XS | IN_PROGRESS | S111 | Start accruing EIA weekly coal basin spot prices | - |
 | **A-71** | ESSENTIAL | S | OPEN | S115 | M-16's PHYSICAL repair - the guarded puller exists, the already-paid head + L1 data is still not in the canonical root | - |
+| **A-73** | ESSENTIAL | S | OPEN | S103 (recorded in that memo, | LIVE MBO IS NOT AUTHORIZED ON OUR DATABENTO TIER - the live feed lane Greg calls critical cannot start on what we pay for | - |
 | **M-12** | ESSENTIAL | S | OPEN | S115 | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | - |
 | **M-14** | ESSENTIAL | S | OPEN | S115 | THE PAPER DOCK'S OWN CREDENTIAL PATH IS SESSION SCRATCHPAD - kalshi_auth reads scratchpad/kalshi.env | - |
 | **M-16** | ESSENTIAL | S | OPEN | S115 | THE PULLER WRITES TO A PHANTOM data/ AND LIES ABOUT WHERE - relative OUT_DIR + _write_df ignores out_dir | - |
@@ -226,6 +236,7 @@ By tier: **ESSENTIAL** 21, **BIGGEST_WIN** 40, **REST** 103
 | **A-63** | ESSENTIAL | M | OPEN | S115 | THE KERNEL IS THE MISSING ENGINE - and it produces the BAND for free, which is the same build as A-60 | - |
 | **A-68** | ESSENTIAL | M | OPEN | S115 | GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal | - |
 | **A-70** | ESSENTIAL | M | OPEN | S115 | MERGE REVIEW: chatgpt/agent-frankie-s117 carries an UNREAD base branch into the trunk | - |
+| **A-74** | ESSENTIAL | M | OPEN | S101-02 (designed), S110 (pl | THE LIVE LOOP HAS NEVER RUN AS A SERVICE - collector-as-a-service was G3 of the S110 go-plan and has no registry line | - |
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | ESSENTIAL | M | OPEN | S115 | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -234,6 +245,8 @@ By tier: **ESSENTIAL** 21, **BIGGEST_WIN** 40, **REST** 103
 | **A-50** | ESSENTIAL | ? | OPEN | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 | **O-2** | BIGGEST_WIN | XS | OPEN | S114 | RECORD THE S111 OPTIONS VERDICT AS A BINDING DECISION - it exists only in a file-index blurb | - |
 | **A-15** | BIGGEST_WIN | S | OPEN | S112 | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | - |
+| **A-17C** | BIGGEST_WIN | S | OPEN | S113 (report), S115 (registe | REALIZED nuclear outage truth from the NRC daily power reactor status - buildable now | - |
+| **A-17D** | BIGGEST_WIN | S | OPEN | S113 (report), S115 (registe | Coal additions and retirements calendar from EIA-860M - buildable now, and it feeds the coal-ramp work | - |
 | **A-18** | BIGGEST_WIN | S | OPEN | S112 | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | - |
 | **A-24d** | BIGGEST_WIN | S | OPEN | S113 | Freshness-weighted source precedence - stale and fresh blocks should not vote as simultaneous | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
 | **A-24e** | BIGGEST_WIN | S | OPEN | S113 | Order-flow signal INTEGRITY as a play-level authority gate (not a staging gate) | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
@@ -249,6 +262,7 @@ By tier: **ESSENTIAL** 21, **BIGGEST_WIN** 40, **REST** 103
 | **G-30** | BIGGEST_WIN | S | OPEN | S115 | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | - |
 | **M-15** | BIGGEST_WIN | S | OPEN | S115 | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | - |
 | **O-3** | BIGGEST_WIN | S | OPEN | S114 | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
+| **A-17A** | BIGGEST_WIN | M | OPEN | S113 (report), S115 (registe | Public AGGREGATE forward outage calendar - buildable now from ERCOT, PJM, MISO, SPP | - |
 | **A-2** | BIGGEST_WIN | M | OPEN | S110 | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | - |
 | **A-21** | BIGGEST_WIN | M | OPEN | S112 | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | A-19 (station set) should land first - form over the wrong stations is worse, not better |
 | **A-24a** | BIGGEST_WIN | M | OPEN | S113 | Weather information ACCEPTANCE: revision size x model convergence x release timing | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
@@ -260,6 +274,7 @@ By tier: **ESSENTIAL** 21, **BIGGEST_WIN** 40, **REST** 103
 | **A-4** | BIGGEST_WIN | M | OPEN | S111 | Score the CURVE, not the scalar - four error terms kept separate | - |
 | **A-41** | BIGGEST_WIN | M | OPEN | S114 | RUN THE FAILURE JUDGE ON AGENT BEHAVIOUR - localize every post-mortem finding to an interaction edge and fault side BEFORE it becomes brain evidence | - |
 | **A-62** | BIGGEST_WIN | M | OPEN | S115 | SERVE EACH SPECIALIST ITS OWN TRACK RECORD - we measure how each agent fails and have never told the agent | - |
+| **A-72** | BIGGEST_WIN | M | OPEN | S115 | THE ORDER-FLOW DIRECTION NOWCAST HAS NO REGISTRY LINE - the one workstream of six that was never registered | - |
 | **G-4** | BIGGEST_WIN | M | OPEN | S111 | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | - |
 | **M-4** | BIGGEST_WIN | M | OPEN | S109 | CDD-vs-normal (the anomaly instrument separating hill from spike) | - |
 | **A-19** | BIGGEST_WIN | L | OPEN | S112 | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | - |
@@ -272,6 +287,7 @@ By tier: **ESSENTIAL** 21, **BIGGEST_WIN** 40, **REST** 103
 | **A-49** | BIGGEST_WIN | ? | OPEN | ? | stage_group --suffix still writes canonical names: the inspection certificate leaked | - |
 | **A-53** | BIGGEST_WIN | ? | OPEN | ? | Sweep every play's `requires` against the served BLIND field set | - |
 | **A-54** | BIGGEST_WIN | ? | OPEN | ? | The output contract cannot express what the specialists actually derived | - |
+| **A-76** | REST | XS | OPEN | S103, never registered | ng_live_operator imports odcore by repo-root path with no sys.path shim - a footgun that stands the operator down | - |
 | **G-14** | REST | XS | OPEN | S111 | Fix the LNE strike decode at source (Databento display_factor bug) | - |
 | **G-17** | REST | XS | OPEN | S111 (recommendation); S112  | TAPE: the BOIL/KOLD close-imbalance test | - |
 | **G-21** | REST | XS | OPEN | S111 (recommendation); S112  | STORAGE CONSENSUS: carry the RANGE, not just the median | - |
@@ -292,6 +308,7 @@ By tier: **ESSENTIAL** 21, **BIGGEST_WIN** 40, **REST** 103
 | **A-20** | REST | S | OPEN | S112 | TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none | A-16 (serve WAT) and A-18 (add the BAs) - both small, both prerequisites |
 | **A-3** | REST | S | OPEN | S111 | Compute the effective matching dimension d of any retrieval | - |
 | **A-64** | REST | S | OPEN | S115 | Kernel Forge (arXiv 2607.24762) - CUDA half OUT OF SCOPE for our workload today; the MCTS-over-candidates harness pattern stacks with A-63/A-60 | - |
+| **A-75** | REST | S | OPEN | S103, never registered | A ROLL-STRADDLING GROUP RENDERS ON THE WRONG LEG - continuous_rt.py draws the NG.n.0 tape, which is the post-roll contract for the whole block | - |
 | **A-8** | REST | S | OPEN | S111 | Wire the depth-based turn_exhaustion as the monitor's CONFIRMING turn channel | - |
 | **A-9** | REST | S | OPEN | S111 | Generate the drop-in's work list FROM the registry instead of restating it in prose | - |
 | **G-10** | REST | S | OPEN | S111 | Separate TAS (NGT) from the tape; add jump-robust realized variance | - |
@@ -367,6 +384,7 @@ By tier: **ESSENTIAL** 21, **BIGGEST_WIN** 40, **REST** 103
 | **S111-2** | REST | M | OPEN | S111 | Run the 82-play audit, all eight batches, using the COMMITTED harness | - |
 | **S111-3** | REST | M | OPEN | S111 | THE BACKFILL - instances and corpus state into the brain | S111-2 |
 | **S111-4** | REST | M | OPEN | S111 | Falsifier backfill - 65 of 82 plays have none | - |
+| **A-17B** | REST | L | OPEN | S113 (report), S115 (registe | Public UNIT-LEVEL nuclear refuelling calendar - a MEASURED public-data gap, not a build | - |
 | **A-24** | REST | L | OPEN | S112 | THE UNKNOWN CORRELATED PAIR - search the 1,717 for structure nobody has put together, WITHOUT manufacturing it | A-23 (triage first - a pair built on a defect artifact is a manufactured mechanism) |
 | **A-5** | REST | L | OPEN | S111 | Build the library index (seasonal window, regime label, day class, shape descriptor) | - |
 | **A-7** | REST | L | OPEN | S111 | ONE STORE + generated spawns | - |
@@ -451,6 +469,20 @@ that ladder. It is no longer a slow structural level for M-6 alone.
 **Source:** S115 close; ChatGPT's own 'not complete evidence yet' list, item 1
 
 MEASURED S115: two completed Databento jobs reported 2,384,994 and 1,386,421 rows and landed in `research/kalshi/data/` (219MB trades + 22MB L1) because `OUT_DIR`/`L1_DIR`/`MBP10_DIR` were relative and resolved against cwd. `databento_backfill_s115.py` fixes the class going forward. The data itself has not been moved or re-decoded, and it is already PAID FOR - re-pulling it spends money for nothing.
+
+---
+
+### [ESSENTIAL] A-73 - LIVE MBO IS NOT AUTHORIZED ON OUR DATABENTO TIER - the live feed lane Greg calls critical cannot start on what we pay for
+
+*size S | OPEN | raised S103 (recorded in that memo, never registered - twelve sessions)*
+
+**Why it is ESSENTIAL:** It is a PROCUREMENT DECISION that only Greg can make, it gates the live lane he has named critical, and it has sat unregistered since S103. The failure mode is the worst kind: the live collector does not fail loudly, it HOT-LOOPS on ErrorMsg, so a live bring-up looks like a hang rather than a billing answer.
+
+**Source:** S115 close, auditing G15_MBO_FIXES_FOR_CHATGPT.md item 9 against the registry (D36); Greg, S115: 'We need the live feeds for the agent to read and the coach to call plays. it's critical for live trading'
+
+MEASURED at S103 and never entered the registry: the $179/mo Databento LIVE Standard plan returns 'Not authorized for mbo schema'. `mbp-10` is in the same entitlement class. The live collector LEADS with an `mbo` subscribe. The tier that carries it is roughly $1,500/mo.
+
+This is not the same question as the historical pull, which works fine - the year of NG tape was bought per-job under the subscription. It is specifically LIVE streaming depth.
 
 ---
 
@@ -680,6 +712,20 @@ MEASURED S115: `git merge --no-commit --no-ff origin/chatgpt/agent-frankie-s117`
 
 ---
 
+### [ESSENTIAL] A-74 - THE LIVE LOOP HAS NEVER RUN AS A SERVICE - collector-as-a-service was G3 of the S110 go-plan and has no registry line
+
+*size M | OPEN | raised S101-02 (designed), S110 (planned as G3), never registered*
+
+**Why it is ESSENTIAL:** Paper trading is the next milestone and it needs a loop that survives a session ending. Everything else in the S110 go-plan got built - G0 account closed, G1 paper ledger with four risk caps, G2 daily loop, G4 andon - and this one line, the one that makes them RUN WITHOUT A HUMAN, was never tracked.
+
+**Source:** S115 close, auditing TURNAROUND_MEMO_S110.md PART 3 against the registry (D36)
+
+MEASURED S115: searching the registry for `live orchestrat|systemd|collector-as-a-service|watchdog` returns 0 of 181. `ng_live_collector` and `ng_live_watchdog` were designed at S101-02 and, in the memo's own words, 'never yet run as a service'. The S110 memo listed it as G3, half a session of work, with health.json feeding the andon board.
+
+Note the shape: this is D36 exactly - a memo's recommendation living in prose that nothing counts. It is the third instance of that family found by auditing briefings (12 of 13 S111 suggestions, then the A-24 hand-off, now this).
+
+---
+
 ### [ESSENTIAL] M-11 - MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly
 
 *size M | OPEN | raised S114*
@@ -871,6 +917,30 @@ THIS IS THE 0629 DEFECT GENERALISED, and 0629 is the desk's cleanest documented 
 WHAT IS CHEAP HERE: the data is already served in every modern block, so this is a PLAY-SIDE job, not a feed build. The residual form is arithmetic we already hold - load minus wind minus solar minus nuclear minus coal - and est_gas_burn_bcfd is served beside it for a cross-check.
 
 SCOPE IT CORRECTLY (the same doctrine entry): coal and nuclear are LEVELS on outage / retirement / commitment timescales, never same-day absorbers. The play wants 'how much coal is running and is that level changing', not 'how much can coal absorb today'.
+
+---
+
+### [BIGGEST_WIN] A-17C - REALIZED nuclear outage truth from the NRC daily power reactor status - buildable now
+
+*size S | OPEN | raised S113 (report), S115 (registered)*
+
+**Why it is BIGGEST WIN:** A-17 was one item covering four different data realities with four different answers. The delivered report's final line is explicit: A-17 should NOT be closed as 'forward nuclear unit schedule solved'. Splitting it is the report's own recommendation and it is what makes the honest 'no' in A-17B survivable as a record.
+
+**Source:** S115 close, auditing CHATGPT_S113_T1_NUCLEAR_OUTAGE_SOURCES.md section 8 - the report's own final build decision
+
+The NRC publishes daily unit power status with the literal header `ReportDt|Unit|Power`, plus a detailed page carrying `Down` and `Reason or Comment`. That is realized outage truth at UNIT level - the thing the ISO aggregates cannot give.
+
+---
+
+### [BIGGEST_WIN] A-17D - Coal additions and retirements calendar from EIA-860M - buildable now, and it feeds the coal-ramp work
+
+*size S | OPEN | raised S113 (report), S115 (registered)*
+
+**Why it is BIGGEST WIN:** A-17 was one item covering four different data realities with four different answers. The delivered report's final line is explicit: A-17 should NOT be closed as 'forward nuclear unit schedule solved'. Splitting it is the report's own recommendation and it is what makes the honest 'no' in A-17B survivable as a record.
+
+**Source:** S115 close, auditing CHATGPT_S113_T1_NUCLEAR_OUTAGE_SOURCES.md section 8 - the report's own final build decision
+
+EIA-860M is a monthly generator-level calendar of planned additions and retirements. It is the forward instrument the S113 coal work (A-31, coal as a startup-constrained ramp) has been reasoning about without.
 
 ---
 
@@ -1658,6 +1728,18 @@ A-1 wired the ZERO_CHANGE benchmark, which answers 'do we beat no-forecast'. It 
 
 ---
 
+### [BIGGEST_WIN] A-17A - Public AGGREGATE forward outage calendar - buildable now from ERCOT, PJM, MISO, SPP
+
+*size M | OPEN | raised S113 (report), S115 (registered)*
+
+**Why it is BIGGEST WIN:** A-17 was one item covering four different data realities with four different answers. The delivered report's final line is explicit: A-17 should NOT be closed as 'forward nuclear unit schedule solved'. Splitting it is the report's own recommendation and it is what makes the honest 'no' in A-17B survivable as a record.
+
+**Source:** S115 close, auditing CHATGPT_S113_T1_NUCLEAR_OUTAGE_SOURCES.md section 8 - the report's own final build decision
+
+The delivered report FOUND four ingestible public products: ERCOT NP3-233-CD, PJM `frcstd_gen_outages`, the MISO public JSON endpoint, and SPP's seven-day fuel-type outage CSV. These give forward outage CAPACITY, aggregate, by fuel type where published.
+
+---
+
 ### [BIGGEST_WIN] A-2 - Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate)
 
 *size M | OPEN | raised S110*
@@ -2097,6 +2179,24 @@ FALSIFIER: if a run under specialist_priors shows no change in the named failure
 
 ---
 
+### [BIGGEST_WIN] A-72 - THE ORDER-FLOW DIRECTION NOWCAST HAS NO REGISTRY LINE - the one workstream of six that was never registered
+
+*size M | OPEN | raised S115*
+
+**Why it is BIGGEST WIN:** It is the direction half of the live lag play, it is already implemented, and it is the single highest-agreement result the desk has ever recorded - and no registry line has ever pointed at it, so nobody has re-run it causally. Five of the six S112 workstreams map onto G-4, G-5 (DONE), G-7, A-19/A-21 and A-5/G-28. Task 1 maps onto NOTHING.
+
+**Source:** S115 close, auditing CHATGPT_S112_SIX_WORKSTREAMS.md Task 1 against the registry (D36)
+
+MEASURED S115 by searching the registry for the result itself (`Lee-Ready`, `order-flow direction nowcast`): 0 of 181 items. The nearest neighbours are A-24e (order-flow signal INTEGRITY as an authority gate - a different question) and A-6 (the dipole EXHAUSTION arm - a different instrument).
+
+WHAT EXISTS. `dip_imb_level`, the signed buy-minus-sell imbalance, eligible at |imb| >= 0.15. Agreement rises MONOTONICALLY across strength cells: 0.68 / 0.84 / 0.94 / 0.93, and the desk recorded 34 of 34 qualifying observations on three unseen days (S92). Known failure: it lags an extreme gap melt-up.
+
+WHAT DOES NOT EXIST, and the honest half. The ORIGINAL audit package is gone - formula version, aggregation window, instrument/date list, qualifying-event count, bin boundaries, null-test output. SEARCHED AND FOUND NOTHING (D24 case 2). The result and the completeness of its audit trail are two different things, and neither one substitutes for the other.
+
+IT IS ALSO A NOWCAST, NOT A FORECAST. The target was the side or continuation of a RUNNING LEG - not direction from a flat pre-session state. Quoting the 94% as if it were a from-flat forecast would be the S110 'a right day-net carrying a false mechanism' defect in a new place.
+
+---
+
 ### [BIGGEST_WIN] G-4 - ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent)
 
 *size M | OPEN | raised S111*
@@ -2336,6 +2436,18 @@ Three separate versions of one gap. D derived a magnitude with real confidence a
 
 ---
 
+### [REST] A-76 - ng_live_operator imports odcore by repo-root path with no sys.path shim - a footgun that stands the operator down
+
+*size XS | OPEN | raised S103, never registered*
+
+**Why it is REST:** Trivial, but it is on the live path and it fails as an ImportError at bring-up time, which is the worst moment to be debugging a path.
+
+**Source:** S115 close, auditing G15_MBO_FIXES_FOR_CHATGPT.md item 6 against the registry (D36)
+
+`ng_live_operator.py` does `from odcore.info_dipole import ...`, which resolves only from the repository root. Running from `research/kalshi` - the working directory the SOP and every gate command uses - requires PYTHONPATH to be set by hand. Verified S115: the file still has no `sys.path` insert.
+
+---
+
 ### [REST] G-14 - Fix the LNE strike decode at source (Databento display_factor bug)
 
 *size XS | OPEN | raised S111*
@@ -2544,6 +2656,8 @@ CAVEAT THAT MUST BE CHECKED PER COMMISSION, NOT ASSUMED: Georgia's own filing sc
 
 AND NOTE WHAT THIS DOES NOT FIX: a monthly commission filing is a MONTHLY cadence on a day-ahead-to-two-week desk. Its value is the forward DATED calendar it may contain (planned start and end), not its refresh rate - which is the same class as EIA-860M's planned retirement dates. Judge it on whether it carries forward dates, never on timeliness.
 
+SPLIT AT S115 ON THE DELIVERED REPORT'S OWN FINAL BUILD DECISION (CHATGPT_S113_T1_NUCLEAR_OUTAGE_SOURCES.md section 8, audited under D36): **A-17 must NOT be closed as 'forward nuclear unit schedule solved'.** It was one item covering four data realities with four different answers - A-17A public aggregate forward outage capacity (buildable now, ERCOT/PJM/MISO/SPP), A-17B public unit-level refuelling calendar (SEARCHED AND FOUND NOTHING - a measured public-data gap, D24 case 2), A-17C realized unit truth from the NRC (buildable now), A-17D coal additions/retirements from EIA-860M (buildable now). **A-17 stays OPEN as the parent** so the thing Greg asked for twice keeps its own line; the four children carry the work. The operational rule the report is emphatic about: the public ISO products CANNOT identify which nuclear unit is scheduled out, so never infer a unit-level calendar from aggregate outage totals.
+
 ---
 
 ### [REST] A-20 - TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none
@@ -2616,6 +2730,20 @@ Greg, S115, verbatim: 'don't look at things as downgrade or less than. They migh
 HE IS RESTATING HIS OWN STANDING RULE AND I BROKE IT REPEATEDLY IN ONE EVENING. CLAUDE.md has carried it since S36: 'tools are COMPLEMENTARY, not competing - evaluate by STACKING, never head-to-head'; and the per-cell doctrine says a signal surviving on a SUBSET of cells is KEPT and used there - 'report works on {X}, not {Y}, never X failed'. D31 adds that a refutation is SCOPED to the cell and instrument it was measured on, never converted into 'dead'.
 WHAT I ACTUALLY DID: 'downgraded' the ACM half, marked Kernel Forge's domain half 'CLOSED', and framed the whole exercise as 'steal one piece, park the rest'. Each of those converts a scoped non-fit into a verdict on the idea. The scoped facts stand (Li's ACM needs fine-tuning we cannot do; we run no PyTorch models today) - what was wrong is the RANKING LANGUAGE wrapped around them.
 THE DISTINCTION I COLLAPSED, and both halves are real: (a) two IDEAS improving the same thing from different angles are ADDITIVE - that is the force multiplier, and the correct treatment is to STACK and measure them together; (b) two MECHANISMS writing the same store without a coordination protocol is a PLUMBING hazard - uncoordinated writes, lost provenance - and its answer is a WRITE PROTOCOL, not a winner. I wrote (b)'s caution using (a)'s language.
+
+---
+
+### [REST] A-75 - A ROLL-STRADDLING GROUP RENDERS ON THE WRONG LEG - continuous_rt.py draws the NG.n.0 tape, which is the post-roll contract for the whole block
+
+*size S | OPEN | raised S103, never registered*
+
+**Why it is REST:** Real and reproducible, but it bites only on groups that straddle a Kalshi-underlying roll, and the walk's staged blocks are done. It matters again the moment a head block straddles one.
+
+**Source:** S115 close, auditing G15_MBO_FIXES_FOR_CHATGPT.md item 10 against the registry (D36)
+
+MEASURED at S103 on G15: `continuous_rt.py` reads the S3 NG.n.0 tape for the actual curve. For G15 that is NGK26/May across the WHOLE block, so the pre-roll days (0313-0319) were drawn about 0.037 below the NGJ26 basis the group was actually forecast on. The generic render is correct for a non-straddling group and quietly wrong for a straddling one - which is the dangerous half, because the picture looks fine.
+
+The hand-rolled `run_g15_rt_s102.py` two-leg approach (NGJ26 pre-roll + NGK26 post-roll, seam marked at 0320) is the correct shape; it was never generalised.
 
 ---
 
@@ -3428,6 +3556,18 @@ HARNESS NOW COMMITTED as research/kalshi/brain_audit.py (S111 fix after S112 fou
 **Source:** S111
 
 The burn gate died on its own forward test BECAUSE someone wrote the falsifier sentence down. Sixty-five plays have no such sentence and therefore cannot be killed by evidence.
+
+---
+
+### [REST] A-17B - Public UNIT-LEVEL nuclear refuelling calendar - a MEASURED public-data gap, not a build
+
+*size L | OPEN | raised S113 (report), S115 (registered)*
+
+**Why it is REST:** A-17 was one item covering four different data realities with four different answers. The delivered report's final line is explicit: A-17 should NOT be closed as 'forward nuclear unit schedule solved'. Splitting it is the report's own recommendation and it is what makes the honest 'no' in A-17B survivable as a record.
+
+**Source:** S115 close, auditing CHATGPT_S113_T1_NUCLEAR_OUTAGE_SOURCES.md section 8 - the report's own final build decision
+
+The report's executive determination, verbatim in substance: there is NO single free, public, nationwide, unit-level forward nuclear refuelling calendar ingestible as a production feed. CAISO publishes a current-trade-date unit snapshot, not a forward schedule; the non-ISO Southeast has no standardized public equivalent. This is D24 case 2 - SEARCHED AND FOUND NOTHING - and it is recorded as such rather than left looking like work nobody got to.
 
 ---
 

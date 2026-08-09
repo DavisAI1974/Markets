@@ -354,14 +354,28 @@ def render_inventory():
 
 
 def _unclassified_md(store):
-    """Tracked research/kalshi/*.md not covered by ANY documents-registry path pattern. (S115.)
+    """Tracked *.md - in research/kalshi AND at the repo root - not covered by ANY documents-registry
+    path pattern. (S115.)
 
     The registry's paths are written for humans (`research/kalshi/*_S<N>.md`), so `<N>` is
-    normalised to a digit run before matching. Deliberately scoped to research/kalshi: repo-root
-    docs are covered by their own explicit entries."""
+    normalised to a digit run before matching.
+
+    S115 CLOSE - THE SCOPE WAS THE BUG, AND THE DOCSTRING ASSERTED THE THING THAT WAS FALSE. This
+    read "deliberately scoped to research/kalshi: repo-root docs are covered by their own explicit
+    entries". MEASURED: 13 tracked root-level .md carried no entry at all, and one of them was
+    `OPEN_ITEMS.md` - a GENERATED RENDER the andon gates byte-identical, absent from the very
+    registry that is supposed to know what every document is. The three ChatGPT hand-offs arriving
+    with the A-70 merge all land at the root too.
+
+    This is the A-24 defect one directory up. The S115 inversion was right - stop asking "does the
+    NAME match a known pattern" (fails OPEN on anything new) and ask "is this document CLASSIFIED"
+    (fails CLOSED) - and then it was scoped to a single directory, which fails open on everything
+    outside it. A gate that fails closed inside its box and open outside it is a gate whose box is
+    the finding."""
     import fnmatch
-    tracked = subprocess.run(["git", "-C", ROOT, "ls-files", "research/kalshi/*.md"],
+    tracked = subprocess.run(["git", "-C", ROOT, "ls-files", "research/kalshi/*.md", "*.md"],
                              capture_output=True, text=True).stdout.split()
+    tracked = [t for t in tracked if "/" not in t or t.startswith("research/kalshi/")]
     pats = []
     for d in store.get("documents", []):
         p = (d.get("path") or "").replace("<N>", "*").replace("<n>", "*")
@@ -416,7 +430,7 @@ def docs_problems():
     unclassified = _unclassified_md(_docstore)
     if unclassified:
         probs.append(("store/documents.json", "md_unclassified",
-                      "%d tracked research/kalshi/*.md carry NO registry class - an unclassified "
+                      "%d tracked *.md (research/kalshi + repo root) carry NO registry class - an unclassified "
                       "document is one no gate can reach (the A-24 hand-off was invisible for two "
                       "sessions this way). Classify each in store/documents.json, EXTERNAL for a "
                       "delivered hand-off: %s"
@@ -559,7 +573,13 @@ def cmd_docs(a):
         by_class.setdefault(d["class"], []).append(d)
     print("THE DOCUMENT REGISTRY - %d entries\n" % len(store["documents"]))
     for cls, docs in by_class.items():
-        print("%s  (%s)" % (cls, store["classes"][cls]))
+        # .get, NOT [cls]: an invented class used to kill this printer with a KeyError AFTER a
+        # --write had already rewritten the render, so the command exited non-zero saying nothing
+        # useful and the real finding (three undeclared classes) stayed hidden. The gate that
+        # reports it properly is `class_undeclared` in docs_problems(), twenty lines below - it must
+        # be allowed to RUN. A crash is not a diagnosis.
+        print("%s  (%s)" % (cls, store["classes"].get(cls, "UNDECLARED - see the class_undeclared "
+                                                           "gate below")))
         for d in docs:
             print("   %-46s gate=%s" % (d["path"], d.get("gate") or "-"))
         print()

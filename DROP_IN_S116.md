@@ -9,7 +9,7 @@ Paste this into a FRESH session. It is the whole starting state.
 ```bash
 git fetch origin claude/kalshi-agents-coordinator-guard-sg0n15
 git checkout -B claude/kalshi-agents-coordinator-guard-sg0n15 origin/claude/kalshi-agents-coordinator-guard-sg0n15
-git log --oneline -1        # must be the S115 close-out commit
+git log --oneline -1        # must be the S115 close-out (andon ALL CLEAR)
 ```
 
 **Branch = `claude/kalshi-agents-coordinator-guard-sg0n15`.** Develop and push here.
@@ -24,7 +24,7 @@ Then read, in this order:
 Then, from `research/kalshi`:
 
 ```bash
-python plant_status.py         # the andon board - expect 1 FAIL: station0/briefings
+python plant_status.py         # the andon board - expect ALL CLEAR
 python state_health.py         # g24: 0 hard, 13 soft (declared)
 python store.py check          # four renders must match their stores
 ```
@@ -40,14 +40,17 @@ python store.py check          # four renders must match their stores
 
 - **Brain s105.9, 90 plays, CALLS unchanged.** One D8 proposal PENDING Greg
   (`emission_ceiling_check` -> DEGENERATE + re-site).
-- **Registry 181 items, 21 ESSENTIAL. Decisions 51.**
+- **Registry 190 items, 24 ESSENTIAL. Decisions 52.**
 - **Line: g24 staged -> blind-scored -> archived [ACTIVE].** g24 blind was **6/10, sum|err| 4,890,
   0.98x zero_change** — we tied doing nothing. The dominant problem is still **under-emission at
   0.29x of realized magnitude**.
 - **The g24 refine has NOT run.** It is housekeeping now, not the frontier — see item 4.
-- **Andon: 1 FAIL** (`station0/briefings`, 8 of 12 unaudited; it got worse on purpose because the
-  glob was widened). Everything else PASS: gold intact, git clean, state_health clean, keys
-  resolvable, all four renders match.
+- **Andon: ALL CLEAR** (first time). The briefing backlog was discharged with real dispositions -
+  all 13 audited - and it produced four registry gaps, two of them live-trading: **A-73** (live MBO
+  is not authorized on our $179 Databento tier and the collector hot-loops on the error; ~$1,500/mo
+  for the tier - a decision for Greg, not a build) and **A-74** (collector-as-a-service, never
+  built, never tracked). Also **A-72** (the order-flow direction nowcast had zero registry lines)
+  and **A-17 split into A-17A/B/C/D** on the nuclear report's own instruction.
 
 ---
 
@@ -164,8 +167,6 @@ blind run on clean substrate is a better test than a refine of a contaminated bl
 
 ## 6. STILL OPEN, LOWER PRIORITY
 
-- `station0/briefings` FAIL — 8 of 12 briefings unaudited against the registry. Needs real
-  dispositions, not a widened glob.
 - **A-61 before the next audit**: 3 of 4 "REFUTED" verdicts in an earlier audit were verified
   against a tree that moved underneath the verifier. Pin the snapshot first.
 - **g6-g16 actuals**: states exist, actuals do not — so the gradeable corpus is **70 days, not
@@ -173,5 +174,19 @@ blind run on clean substrate is a better test than a refine of a contaminated bl
   built on. **Do not silently normalize old blocks onto one continuous basis** (`.v.0` vs `.n.0`).
 - The g24 refine (housekeeping).
 - The live feed setup for the coach — Greg's call was to do it after the last group, and that is
-  still where it sits.
+  still where it sits. **Two of its pieces now have registry lines and one of them needs Greg**:
+  **A-73** (live MBO is not authorized on our $179 Databento tier; the collector hot-loops on the
+  entitlement error rather than failing loudly; the tier that carries it is ~$1,500/mo — buy it, or
+  design the live lane onto trades + L1 and MEASURE what is lost) and **A-74**
+  (collector-as-a-service: `ng_live_collector` + `ng_live_watchdog` under systemd with a heartbeat
+  the andon reads).
+- **A-72** — re-run the order-flow direction nowcast CAUSALLY against persistence and slope
+  benchmarks before anyone grants it authority. It is the highest-agreement result the desk has
+  (0.68/0.84/0.94/0.93 by strength, 34 of 34 on three unseen days) and it had zero registry lines
+  until S115 close. Note both honest halves: the original audit package is gone, and it is a
+  running-leg NOWCAST, not a from-flat forecast.
+- **A-17A/C/D** are buildable now from free public sources (ERCOT/PJM/MISO/SPP aggregate outages,
+  NRC daily unit status, EIA-860M with a retained revision history). **A-17B is a measured public-data
+  gap** — no free public nationwide unit-level nuclear refuelling calendar exists, and one must never
+  be inferred from aggregate ISO MW or from typical 18/24-month cycles.
 

@@ -273,6 +273,71 @@
    "path": "research/kalshi/records/S115/README.md",
    "class": "RECORD",
    "why": "What was rescued off the S115 session scratchpad and what was deliberately not (D52). Carries the Databento job IDs that make A-71's 'do not re-pull' recoverable, the aborted g24 refine inputs, and the regeneration command for every item dropped."
+  },
+  {
+   "path": "S36_NETCOST_BACKTEST_FINDINGS.md",
+   "class": "RECORD",
+   "why": "2026-06-22 findings memo: the flow divergence/exhaustion policy net of cost, per cell. Dated and finished, but NOT archive - CLAUDE.md's live dipole section cites it as the provenance for the net-of-cost result (the 64% reversal does not clear a 10bps round-trip pooled; the edge is SIZE-vs-FEE). Consulted when a dipole claim needs its measurement."
+  },
+  {
+   "path": "BUILD_PLAN.md",
+   "class": "ARCHIVE",
+   "why": "The OD-era rebuild plan for the Markets signal core (pre-Kalshi). Superseded by the Kalshi walk; kept for provenance of the odcore/ toolkit."
+  },
+  {
+   "path": "BUILD_QUESTIONS.md",
+   "class": "ARCHIVE",
+   "why": "Running log of judgment calls made for Greg's later review, OD era. Superseded by DECISIONS.md, which is append-only and gated."
+  },
+  {
+   "path": "CLEANUP_RUNBOOK.md",
+   "class": "ARCHIVE",
+   "why": "2026-06-09 trade-data binning cleanup runbook, crypto era. The data plane it describes is gone (D34: S3 for data, data/ disposable)."
+  },
+  {
+   "path": "DEPLOY.md",
+   "class": "ARCHIVE",
+   "why": "Deployment notes for the MAY-2026 markets-watch front-end stack. NOT the current dashboard/ lane (S100.1) - do not follow these for it."
+  },
+  {
+   "path": "FREE_DATA_GAPS.md",
+   "class": "ARCHIVE",
+   "why": "An early free-public-data gap plan for NG. Superseded by research/kalshi/DATA_GATE_S98.md, which reorganised the gate by regime family and is the build list that actually ran."
+  },
+  {
+   "path": "HANDOFF_DESKTOP.md",
+   "class": "ARCHIVE",
+   "why": "2026-05-04 dipole/refrag handoff to Desktop. Pre-Kalshi."
+  },
+  {
+   "path": "HANDOFF_PHASE1_5.md",
+   "class": "ARCHIVE",
+   "why": "2026-05-04 actor-aware regime classifier spec. Pre-Kalshi."
+  },
+  {
+   "path": "HANDOFF_TO_CODE.md",
+   "class": "ARCHIVE",
+   "why": "2026-05-04 dipole handoff. Pre-Kalshi."
+  },
+  {
+   "path": "HANDOFF_TO_CODE_PHASE2.md",
+   "class": "ARCHIVE",
+   "why": "2026-05-04 autoresearch phase-2 handoff. Pre-Kalshi."
+  },
+  {
+   "path": "HUMMINGBOT_PAPER_RUNBOOK.md",
+   "class": "ARCHIVE",
+   "why": "S77 Hummingbot paper-trade runbook against the Kraken book, crypto era. The paper lane that is live now is Kalshi's (KALSHI_DOCK_S110.md), not this one."
+  },
+  {
+   "path": "MARKETS_BRIEF_FOR_FRIENDS.md",
+   "class": "ARCHIVE",
+   "why": "2026-05-04 non-technical program brief. A snapshot of the program before the Kalshi walk; nothing reads it."
+  },
+  {
+   "path": "OPEN_ITEMS.md",
+   "class": "RENDER",
+   "why": "GENERATED from research/kalshi/OPEN_ITEMS.json by `store.py docs --write` and gated byte-identical by `store.py check`. **It was missing from this registry entirely until S115 close** - a gated render the document registry did not know existed, found the moment the classification gate was widened past research/kalshi. Never hand-edit; edit the store."
   }
  ]
 }

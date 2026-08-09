@@ -291,8 +291,16 @@ def main() -> int:
             cells = [c.strip() for c in row.split("|")]
             if len(cells) < 7 or not cells[1].startswith("D"):
                 continue
-            m = re.search(r"S(\d+)", cells[2])
-            ses = int(m.group(1)) if m else 0
+            # MAX, not first (S115). This row's message offers TWO remedies - "wire an enforcement
+            # or re-affirm" - and only ever accepted the first, because it read the session cell's
+            # FIRST S-number, which is the original decision date and never moves. A doc-only
+            # decision that is still correct could therefore never clear this line no matter what
+            # anyone did, which is how a warning becomes wallpaper. Re-affirmations are appended to
+            # the session cell as "(re-affirmed S<n>: why)" - the original date stays verbatim,
+            # because an append-only ledger's dates are the record - and the age is measured from
+            # the most recent stamp in the cell.
+            ss = [int(x) for x in re.findall(r"S(\d+)", cells[2])]
+            ses = max(ss) if ss else 0
             status, enforced = cells[4], cells[5].lower()
             if status.startswith("DECIDED") and "doc" in enforced.split("(")[0] and cur - ses >= 2:
                 stale.append(cells[1])
@@ -429,6 +437,35 @@ def main() -> int:
          if not bad else
          "%d BROKEN REFERENCE(S) - a handoff naming a file nobody else can open is a broken handoff: %s"
          % (len(bad), "; ".join(bad[:4]))))
+
+    # 9.4 THE SESSION RECORDS DIRECTORY (D52, S115). Deliberately a PARTIAL guard, and it says so
+    # in its own message, because the honest version of this check is impossible from inside the
+    # repo: nothing here can enumerate a directory that is not here. It answers exactly one
+    # question - "did this session write a records directory at all" - and it CANNOT answer
+    # "was the sweep complete". A row implying completeness it does not have would be worse than
+    # no row, which is the S114 lesson (a live status on dead evidence) pointed at a gate.
+    # It only fires once the session has written a handoff, i.e. once close-out has begun; before
+    # that there is nothing to have swept.
+    sess = None
+    hs = sorted(glob.glob(os.path.join(ROOT, "SESSION_HANDOFF_*.md")),
+                key=lambda x: int(re.search(r"S(\d+)", os.path.basename(x)).group(1))
+                if re.search(r"S(\d+)", os.path.basename(x)) else -1)
+    if hs:
+        m = re.search(r"S(\d+)", os.path.basename(hs[-1]))
+        sess = "S%s" % m.group(1) if m else None
+    if sess:
+        rd = os.path.join(HERE, "records", sess)
+        readme = os.path.join(rd, "README.md")
+        if os.path.isfile(readme):
+            n = sum(len(f) for _, _, f in os.walk(rd))
+            say("INFO", "records", "%s/ present, %d file(s) - PARTIAL: this proves a sweep happened, "
+                                   "NOT that it was complete (D52; nothing in the repo can see a "
+                                   "directory outside it)" % (sess, n))
+        else:
+            say("WARN", "records", "no research/kalshi/records/%s/README.md - D52 says sweep the temp "
+                                   "directory BEFORE the drop-in box and record what was kept and "
+                                   "what was dropped. WARN not FAIL: a session with nothing worth "
+                                   "keeping is legitimate, but it should say so." % sess)
 
     # 9.5 STORE CONFORMANCE (A-7, S112). Every generated document must equal what its store
     # currently produces. A render that has DRIFTED from its store is a document describing what

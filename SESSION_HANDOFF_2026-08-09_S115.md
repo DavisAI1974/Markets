@@ -2,7 +2,7 @@
 
 **Branch: `claude/kalshi-agents-coordinator-guard-sg0n15`. Brain s105.9, 90 plays — UNCHANGED,
 byte-untouched except the four ONE-DOC repairs below. No group run, no merge. 44 commits.**
-Registry **164 -> 181 items**. Decisions **48 -> 51**.
+Registry **164 -> 190 items**. Decisions **48 -> 52**.
 
 Read this with `DROP_IN_S116.md`. The one-line version: **the platform got its pre-live audit, the
 brain became genuinely one document, five papers became a registered build sequence, and an external
@@ -261,17 +261,63 @@ on one.
 
 ---
 
+## 6b. THE BRIEFING BACKLOG WAS DISCHARGED, AND IT PAID FOR ITSELF
+
+`station0/briefings` had been red for four sessions at **8 of 13 unaudited**. It went to **all 13
+audited** — not by widening a glob (that is what made it look green before, and the S115 widening is
+why the count had gone UP) but by reading every one and writing a real disposition. **Four real gaps
+came out of it, two of them touching live trading.**
+
+- **A-72** — the ORDER-FLOW DIRECTION NOWCAST had **zero registry lines**. Five of the six S112
+  workstreams map onto G-4, G-5 (DONE), G-7, A-19/A-21, A-5/G-28. Task 1 mapped onto nothing.
+  `dip_imb_level` agreement rises monotonically 0.68 / 0.84 / 0.94 / 0.93 by strength with 34 of 34
+  on three unseen days — the highest-agreement result the desk has ever recorded, and nobody has
+  re-run it causally against a named benchmark. Registered with its honest halves intact: the RESULT
+  exists, the ORIGINAL AUDIT PACKAGE does not (searched, found nothing), and it is a running-leg
+  NOWCAST, never a from-flat forecast.
+- **A-73 (ESSENTIAL)** — **live MBO is NOT AUTHORIZED on our $179 Databento tier**, the live
+  collector **hot-loops on the entitlement error** instead of failing loudly, and the tier that
+  carries it is ~$1,500/mo. Measured at S103 and never registered — twelve sessions — against Greg's
+  *"we need the live feeds for the agent to read and the coach to call plays. it's critical for live
+  trading."* It is a procurement decision, not a build.
+- **A-74 (ESSENTIAL)** — collector-as-a-service. Everything else in the S110 go-plan shipped (G0
+  account, G1 paper ledger with four risk caps, G2 daily loop, G4 andon); the one line that makes
+  them RUN WITHOUT A HUMAN was planned at half a session and never tracked. Paper trading needs a
+  loop that survives a session ending.
+- **A-17 split into A-17A/B/C/D** on the delivered nuclear report's own final build decision, which
+  says explicitly that A-17 must not be closed as "solved". A-17B is the honest negative: **no free
+  public nationwide unit-level forward refuelling calendar exists**, and a unit calendar must never
+  be inferred from aggregate ISO MW, from typical 18/24-month cycles, or from undated vendor
+  commentary.
+
+Plus **A-75** (a roll-straddling group renders on the wrong leg) and **A-76** (the odcore import
+footgun on the live path).
+
+**Two gates were fixed by their own findings.** The document-classification gate walked only
+`research/kalshi/*.md`, and its docstring asserted that root-level docs were covered by explicit
+entries — **measured: 13 were not, including `OPEN_ITEMS.md`, a generated render the andon gates
+byte-identical, missing from the registry whose job is to know what every document is.** That is the
+A-24 defect one directory up: the fails-closed inversion was right and was scoped to one directory,
+which fails open everywhere else. And the `decisions` row offered two remedies — "wire an
+enforcement or re-affirm" — while only ever accepting the first, because it read the FIRST S-number
+in the session cell, which never moves. **A correct doc-only decision could never clear that line no
+matter what anyone did.** Now it reads the max, and D1 and D13 are re-affirmed while **D32's
+`enforced_by` is corrected: it said "nothing built", which stopped being true at S111** — same
+species as D50, opposite sign.
+
+**Registry 181 -> 190. Decisions 52. The andon board is ALL CLEAR for the first time.**
+
 ## 7. STATE AT CLOSE
 
-- **Andon: 1 FAIL** — `station0/briefings`, 8 of 12 unaudited (it got WORSE on purpose: the glob was
-  widened this session, so it now sees briefings it previously missed). Every other station PASS.
-  `git` clean, `gold` intact, `state_health` g24 **0 hard**, `keys` resolvable, `store` all four
-  renders match.
+- **Andon: ALL CLEAR** — the first time. `station0/briefings` all 13 audited, `decisions` clean,
+  `gold` intact, `state_health` g24 **0 hard**, `keys` resolvable, `store` all four renders match,
+  plus a new honest-partial `records` row (it proves a sweep happened and says in its own message
+  that it cannot prove the sweep was complete).
 - **Line: g24 staged -> blind-scored -> archived [ACTIVE].** The **g24 refine has still not run** —
   it was started and stopped at 2 of 10 posteriors, both discarded as degraded-view artifacts from
   the section-1 cut. It is now housekeeping, not the frontier: **A-67 arm 1 is a BLIND run on the
   unwalked head, which is a better test than a refine of a contaminated block.**
-- **Registry 181 items** (21 ESSENTIAL). A-70 and A-71 are new; A-59/A-61/A-62/A-65/A-66/A-67/A-68/
+- **Registry 190 items** (24 ESSENTIAL). A-70 and A-71 are new; A-59/A-61/A-62/A-65/A-66/A-67/A-68/
   A-69/A-42/A-50/A-64/M-16 each carry an `external_build` note naming branch, commit and the exact
   symbol that implements them — and every one of them **stays OPEN**.
 - **Brain s105.9, 90 plays, CALLS unchanged.** One D8 proposal is PENDING Greg

@@ -995,7 +995,14 @@ winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~J
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
 **One-line state (S115):** brain **s105.9, 90 plays — CALLS unchanged. No group run, no merge.**
-Registry **181 items (21 ESSENTIAL)**, decisions **51**. **The pre-live audit ran and its confirmed
+Registry **190 items (24 ESSENTIAL)**, decisions **52**, **and the andon board is ALL CLEAR for the
+first time** — the briefing backlog was discharged with real dispositions (all 13 audited) and paid
+for itself with four gaps, two of them live-trading: **A-73** (live MBO is NOT AUTHORIZED on our
+$179 Databento tier and the collector HOT-LOOPS on the error; ~$1,500/mo for the tier — Greg's call,
+not a build) and **A-74** (collector-as-a-service, planned at S110, never built, never tracked).
+Also **A-72** (the order-flow direction nowcast — 0.68/0.84/0.94/0.93 by strength, 34 of 34 on three
+unseen days — had ZERO registry lines) and **A-17 split into A-17A/B/C/D** on the delivered nuclear
+report's own instruction that it must not be closed as solved. **The pre-live audit ran and its confirmed
 defects are closed at their causes**: the blind wall now covers `meta` and the group's own name
 (BLOCKER), `brain_view.build()` is idempotent, `creds.py` resolves an un-shadowable `MARKETS_<NAME>`
 so the paste ritual ends, the storage guard is symmetric, two relive exemptions are shut, and g24
