@@ -2,15 +2,14 @@
 """S115 forecaster harness for Frankie.
 
 The blind engine remains the predictor. Frankie extends it with explicit object state, typed output,
-a causal lens book, generated track-record attachments, and validation hooks. Nothing here replaces
-spawn.py or writes the canonical brain.
+a causal lens book, generated track-record attachments, a toolbox catalogue, and a grading duty.
+Nothing here replaces spawn.py or writes the canonical brain.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import sys
-from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
@@ -33,6 +32,40 @@ BOOK_ROOT = STATE_ROOT / "lens_books"
 POSTERIOR_ROOT = STATE_ROOT / "posteriors"
 TRACK_RECORD_PATH = STATE_ROOT / "specialist_track_records.json"
 
+TOOLBOX = {
+    "spawn": {
+        "path": "research/kalshi/spawn.py",
+        "use": "canonical slot lookup and prompt rendering; never bypass its stop gates",
+    },
+    "store_check": {
+        "path": "research/kalshi/store.py",
+        "use": "prove generated renders still reproduce committed artifacts",
+    },
+    "failure_judge": {
+        "path": "research/kalshi/failure_localization.py",
+        "use": "FJ-1 frozen taxonomy grading after outcomes are available",
+    },
+    "actual_builder": {
+        "path": "research/kalshi/group_actual.py",
+        "use": "build actuals only after the blind decision; preserve the state's contract basis",
+    },
+    "databento_s115": {
+        "path": "research/kalshi/databento_backfill_s115.py",
+        "use": "cwd-independent S115 pull/redecode with physical landing assertion",
+    },
+}
+
+GRADING_DUTY = (
+    "After the outcome becomes available, grade the run with FJ-1 against the frozen taxonomy. "
+    "Localize the earliest unrecovered failure. The grading result may update this lens's track "
+    "record/lens book; a general lesson still requires the normal brain proposal/adjudication/merge."
+)
+
+PLAY_POLICY = (
+    "Additive in what is available, selective in what is consulted: retain whole plays and use the "
+    "existing play_index/retrieval-on-demand. Never shrink the toolbox merely to make choosing easier."
+)
+
 
 def _book(lens: str) -> Path:
     return BOOK_ROOT / f"{lens}.jsonl"
@@ -54,9 +87,13 @@ def prepare_day(
         "specialist": specialist,
         "canonical_prompt": agent.render_prompt(),
         "canonical_prompt_byte_identity": True,
+        "toolbox_catalogue": TOOLBOX,
+        "toolbox_rule": "availability is additive; consultation is selective and task-local",
+        "play_policy": PLAY_POLICY,
         "lens_book": book_view,
         "lens_book_rule": "strictly earlier days only; absent means absent",
         "track_record_attachment": str(TRACK_RECORD_PATH) if TRACK_RECORD_PATH.is_file() else None,
+        "grading_duty": GRADING_DUTY,
         "execution_enabled": False,
     }
 
@@ -84,6 +121,7 @@ def record_day(*, posterior_raw: dict[str, Any], carried_state: dict[str, Any]) 
         "posterior_path": str(path),
         "lens_book_path": str(_book(posterior.specialist)),
         "lens_book_entry_hash": row_hash,
+        "grading_duty": GRADING_DUTY,
         "execution_enabled": False,
     }
 
@@ -131,7 +169,7 @@ def main() -> int:
             )
         print(json.dumps(out, indent=2, sort_keys=True))
         return 0
-    except (S115Stop, Exception) as exc:
+    except Exception as exc:
         print(f"STOP - {type(exc).__name__}: {exc}", file=sys.stderr)
         return 2
 
