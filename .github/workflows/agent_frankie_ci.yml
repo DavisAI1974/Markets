@@ -75,6 +75,7 @@ jobs:
             research/kalshi/frankie_s115.py \
             research/kalshi/frankie_render_s115.py \
             research/kalshi/frankie_validation_s115.py \
+            research/kalshi/frankie_forecaster_s115.py \
             research/kalshi/databento_backfill_s115.py
       - name: Validate JSON contracts
         run: |
