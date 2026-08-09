@@ -288,7 +288,7 @@ def cmd_selftest(args: argparse.Namespace) -> int:
                 "hypothesis": "a missing null test allowed a false positive",
                 "change_summary": "add one session-preserving null regression",
                 "evidence_refs": [evidence_hash],
-                "requested_files": ["research/kalshi/tests/test_agent_frankie.py"],
+                "requested_files": ["research/kalshi/tests/test_harness_candidate.py"],
                 "expected_benefit": "reject false positives before shadow",
                 "falsifiers": ["new test does not separate the failed case"],
                 "test_plan": ["replay", "session-preserving null", "untouched shadow"],
