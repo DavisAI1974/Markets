@@ -10,6 +10,7 @@ on:
       - research/kalshi/frankie_*.json
       - research/kalshi/tests/test_*frankie*.py
       - research/kalshi/FRANKIE_ARCHITECTURE_S117.md
+      - research/kalshi/FRANKIE_RESEARCH_INTEGRATION_S117.md
       - deploy/aws/markets-frankie*.service
       - deploy/aws/markets-frankie*.timer
       - deploy/aws/install_frankie.sh
@@ -26,6 +27,7 @@ on:
       - research/kalshi/frankie_*.json
       - research/kalshi/tests/test_*frankie*.py
       - research/kalshi/FRANKIE_ARCHITECTURE_S117.md
+      - research/kalshi/FRANKIE_RESEARCH_INTEGRATION_S117.md
       - deploy/aws/markets-frankie*.service
       - deploy/aws/markets-frankie*.timer
       - deploy/aws/install_frankie.sh
