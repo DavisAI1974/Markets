@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import datetime as dt
 import json
 import subprocess
 import sys
@@ -91,6 +92,11 @@ def cmd_health(args: argparse.Namespace) -> int:
                 "automatic_apply": False,
                 "production_promotion": "human-reviewed Git PR only",
             },
+            "s115": {
+                "status_command": "python research/kalshi/frankie_s115_status.py",
+                "forecaster_harness": "research/kalshi/frankie_forecaster_s115.py",
+                "retrieval_band": "DEFERRED until A-5 library index, per S115",
+            },
         }
     )
     return 0
@@ -137,15 +143,12 @@ def cmd_legacy(args: argparse.Namespace) -> int:
 
 
 def cmd_consume_once(args: argparse.Namespace) -> int:
-    # None means honor FRANKIE_DETERMINISTIC_ONLY from the environment. The flag may
-    # force deterministic mode on, but absence must never force it off.
     only = True if args.deterministic_only else None
     print_json(consume_once(config=FrankieConfig.from_env(), deterministic_only=only))
     return 0
 
 
 def cmd_serve(args: argparse.Namespace) -> int:
-    # Same tri-state rule as consume-once: environment is authoritative by default.
     only = True if args.deterministic_only else None
     return serve(config=FrankieConfig.from_env(), deterministic_only=only)
 
@@ -213,6 +216,11 @@ def lane_result(balance_mode: str = "DELTA_NEUTRAL", state: str = "SHADOW") -> d
     }
 
 
+def _after_decision(generated_at_utc: str) -> str:
+    parsed = dt.datetime.fromisoformat(generated_at_utc.replace("Z", "+00:00"))
+    return (parsed + dt.timedelta(seconds=1)).isoformat().replace("+00:00", "Z")
+
+
 def cmd_selftest(args: argparse.Namespace) -> int:
     del args
     checks: list[tuple[str, bool]] = []
@@ -226,6 +234,8 @@ def cmd_selftest(args: argparse.Namespace) -> int:
     base = FrankieConfig.from_env()
     registry = load_candidate_registry(base.novel_registry)
     check("Novel candidate registry is readable", "CME_KALSHI_DIGITAL_PARITY" in registry)
+    manifest = load_paper_manifest(base.paper_manifest, allow_missing=True)
+    check("reviewed paper manifest is READY", manifest.status == "READY" and bool(manifest.papers))
     event = sample_event()
     qualification = qualify_event(event, registry[event.candidate_id])
     check("qualified synthetic event clears deterministic gates", qualification.eligible)
@@ -247,20 +257,20 @@ def cmd_selftest(args: argparse.Namespace) -> int:
             deterministic_only=False,
         )
         evidence_path = Path(evidence["local_path"])
-        check("paper-incomplete gate caps SHADOW to WATCH_ONLY", decision.state == "WATCH_ONLY")
+        check("READY manifest permits agreed SHADOW", decision.state == "SHADOW")
         check("Frankie can never enable execution", decision.execution_enabled is False)
         check("evidence is written after adjudication", evidence_path.is_file())
 
         outcome = record_outcome(
             evidence_path=evidence_path,
             outcome={
-                "resolved_at": "2026-08-07T21:00:00Z",
+                "resolved_at": _after_decision(decision.generated_at_utc),
                 "result": "NO_EDGE_AFTER_COSTS",
                 "metrics": {"net_edge": 0.0},
                 "source_provenance": [
                     {
                         "source": "selftest-outcome",
-                        "knowable_at": "2026-08-07T21:00:00Z",
+                        "knowable_at": _after_decision(decision.generated_at_utc),
                         "content_hash": "selftest-outcome-hash",
                     }
                 ],
