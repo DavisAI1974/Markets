@@ -63,6 +63,15 @@ re-composed the spawn text from prose. That is the fixed-then-dropped failure mo
 procedure itself. This file closes it.
 
 ## VERSION LOG
+- v1.19 (S115 close): **STEP 7 gains the TEMP-DIRECTORY SWEEP (D52).** Greg, on finding a session's
+  working files sitting outside the repo: *"whatever is on scratchpad needs to be committed to a file
+  in git so we don't lose whatever is on it... and we're not supposed to be using scratchpad
+  anymore."* Both halves are D33/D34 restated where they kept failing. The sweep runs BEFORE the
+  drop-in box is written, so the box can point at what was rescued. **It is a checklist line, not a
+  gate, and the reason is stated rather than hidden**: `plant_status.py` can catch a handoff that
+  NAMES a temp path, but nothing inside the repo can observe work that merely SAT on one. INSTANCE:
+  S115 left ~15MB outside the repo; `research/kalshi/records/S115/` is the repair, and its README
+  lists everything deliberately dropped alongside the command that regenerates it.
 - v1.18 (S115): TWO RUN WRAPPERS CHANGED BY THE PRE-PAPER-TRADE AUDIT, logged per change-control
   item 2. Both are STEP-invoked wrappers, so they are in scope for this log even though neither
   changes a template, a slot or the procedure.
@@ -433,6 +442,18 @@ staging defect, not a neutral fact. The QC sweep checks the consumer map.
   `PLANT_MAP.md` (if any standing process moved), `KEYS.md` (if the inventory changed).
 - Diff this session's OPEN list against the prior handoff's — every dropped item is either
   carried forward, closed in DECISIONS.md, or it is a nonconformance.
+- **SWEEP THE TEMP DIRECTORY BEFORE WRITING THE DROP-IN BOX, NOT AFTER (v1.19, D52, Greg S115:
+  *"whatever is on scratchpad needs to be committed to a file in git so we don't lose whatever is on
+  it... and we're not supposed to be using scratchpad anymore"*).** List every file the session left
+  outside the repo. Anything AUTHORED or anything that is EVIDENCE — a log carrying a vendor job id,
+  a directive, a rendered prompt, a one-off script whose effect is committed but whose provenance is
+  not — is copied into `research/kalshi/records/S<n>/` and **verified by reading the committed copy
+  back**, not by the copy command's exit code. Everything deliberately dropped is LISTED with the
+  command that regenerates it: a silent drop reads as "we saved everything". **The scratchpad gate
+  catches a handoff that NAMES a temp path; nothing in the repo can see work that merely SAT on one**
+  — which is why this is a checklist line and not a check. INSTANCE: S115 left ~15MB outside the
+  repo, including the four Databento logs that carry the job ids making A-71's "do not re-pull"
+  recoverable.
 - Commit + push. No emojis. Committer noreply@anthropic.com.
 
 ## QA CADENCE (adopted S110)

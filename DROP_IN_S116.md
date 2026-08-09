@@ -99,6 +99,13 @@ Databento jobs wrote there when `OUT_DIR` resolved against cwd.
 not by trusting the mover's exit code. This is the same posture as D47 (a store rebuilt in a session
 is not a fix until it is on S3), applied one layer down.
 
+**If the phantom tree is gone, you are still fine**: the pull logs are committed at
+`research/kalshi/records/S115/databento_logs/` and carry the job ids, and **a completed Databento job
+re-decodes FREE**. Head trades NG.n.0 2025-07-22..2025-11-02 = `GLBX-20260806-SEC5NWEY4U`; L1 mbp-1
+NG.n.0 2026-07-31..2026-08-06 = `GLBX-20260806-FUHPD9FHH5`. **Two other ids in those logs are the
+WRONG LEG** — `NEK78EWGLK` and `Y65VR393GC` are NG.v.0, which whipsaws through expiry weeks; the walk
+is `.n.0`.
+
 **A-71 blocks A-67 arm 1**, because the unwalked head is arm 1's substrate.
 
 ---
@@ -145,6 +152,12 @@ blind run on clean substrate is a better test than a refine of a contaminated bl
   different angles stack; evaluate by STACKING, never head-to-head.
 - **Split the part more finely before inventing an arbitration protocol** (Greg, S115). "Memory" is
   three layers: content store, derived index, serving policy.
+- **D52 (new): nothing authored may live only on a session scratchpad.** The harness offers one and
+  will keep offering one; that is not permission (D33/D34 — there is nothing local). Work files go
+  under the repo. **Sweep the temp directory BEFORE writing the drop-in box** (SOP v1.19, STEP 7),
+  copy anything authored or evidential into `research/kalshi/records/S<n>/`, verify by reading the
+  committed copy back, and LIST what you dropped with the command that regenerates it. Worked
+  example: `research/kalshi/records/S115/README.md`.
 - **KEYS DO NOT ROTATE DURING THE WALK** (Greg, S107, standing).
 
 ---

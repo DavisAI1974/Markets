@@ -1,0 +1,5 @@
+/home/user/Markets/research/kalshi/databento_backfill.py:99: BentoWarning: Metadata after 2026-08-05 00:00:00+00:00 is not finalized; costs are expected to be over-estimated.
+  cost = client.metadata.get_cost(dataset=DATASET, symbols=[sym], stype_in=stype,
+[databento] est. cost NG.v.0 mbp-1 2026-07-31..2026-08-06: $0.0000
+[databento] batch NG 2026-07-31..2026-08-06 job=GLBX-20260806-Y65VR393GC state=queued
+[databento] batch NG 2026-07-31..2026-08-06: 1386421 rows -> data/nymex_mbp10

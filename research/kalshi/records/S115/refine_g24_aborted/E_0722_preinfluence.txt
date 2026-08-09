@@ -1,0 +1,19 @@
+PRE-INFLUENCE READ - specialist E, day 20260722 - emitted from the STATE SLICE ONLY.
+Emitted BEFORE opening: g24_actual.json, forecasts/grp24.json, my own blind posterior,
+g24_exit_states.json, g24_mbo_evidence.json, any handoff.
+(Contamination note: the RUN DIRECTIVE was in my spawn prompt and is therefore already read -
+ unavoidable under the current spawn form. Declared, not hidden.)
+
+SIGN: DOWN
+MAGNITUDE CLASS: SMALL (sub-300 day-move class)
+ONE SENTENCE: A Wednesday core day with zero mechanical program flow (in_gsci_roll/in_bcom_roll/
+in_bidweek/is_expiry_day/is_opex_day ALL false), a below-median range regime (n0_range_pctile 33.3,
+n0_range_10_mean 1025, activity trend 0.902), a mildly sell-tilted D-1 tape (session_signed_flow
+-541, two-sided b_share 0.495, big_print_b_share 0.409 size-weighted), and a bearish fundamental
+backdrop (storage +162 vs 5yr and LOOSER than norm by +5.4, supply +1.7 Bcf/d vs power +1.4, LNG
+feedgas -4%, cash basis -0.067 = no delivery stress) - sitting one day BEFORE an EIA print with NO
+consensus served, which historically pins the pre-print day small; BUT with a coherent forward CDD
+ADD (+1.09 / +0.93 / +0.26 / +1.17 / +1.40 gw across D+2..D+6) landing on the 06Z cycle at 08:00 ET,
+and a crowded-short COT (MM 1y pctile 14.15) still WORSENING (-45,414 WoW), which cap the depth and
+make a deep down day the wrong shape.
+TIMESTAMP: 2026-08-06, before any handed-down read.

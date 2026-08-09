@@ -1,0 +1,27 @@
+PRE-INFLUENCE READ - specialist C, g24, day 20260721 (Tue, core, normal)
+EMITTED BEFORE opening: g24_actual.json, forecasts/grp24.json (immutable blind),
+forecasts/g24_blind_round1/grp24_mbo_specialist_C.json (my own blind), g24_mbo_evidence.json,
+g24_exit_states.json, g24_anchor.json.
+Built from: grp24_state.json day slice + grp24_state_s115.json's three extra blocks
+(weather_forcing_forecast, scored_leg, model_disagreement-fixed) + the brain view.
+
+SIGN: DOWN
+
+MAGNITUDE CLASS: ~1 sigma of the recent day-net distribution. n0_net_sigma_10 = 580,
+n0_net_sigma_20 = 558, n0_range_pctile 33.3 -> centre -500, band -350..-700.
+
+ONE SENTENCE: A coherent D-1 sell tape (aggressor -4,537 lots, two-sided b-share 0.469,
+big prints 0.305 on n=146 - all three channels agreeing, no divergence anywhere) into a
+near-window CDD cut on the open cycle (-0.70 gw-CDD summed d0..d3) and a +17% day-over-day
+forward wind rise (0.1819 -> 0.2133 CF proxy p50), against a +162 Bcf five-year storage
+surplus with injections running 5.4 above their own five-year norm - everything that can
+speak points DOWN, and the only counterweight is a crowded and rapidly worsening managed-money
+short (NYMEX 14.15 pctile, WoW -45,414; ICE LD1 0.94 pctile, WoW -50,194), which doctrine
+treats as a CONVEXITY conditioner, never a direction term.
+
+TIMESTAMP: recorded at the state->handoff boundary, step 3(a) of the decision order.
+
+WHAT I HAVE ALREADY BEEN INFLUENCED BY AND DECLARE: the run directive (magnitude is the
+round's target; emit what the read supports; the emission ceiling is degenerate as written)
+arrived in the spawn prompt, i.e. BEFORE this read. So the magnitude class above is not
+uninfluenced on the size axis. The SIGN is uninfluenced - the directive names no side.

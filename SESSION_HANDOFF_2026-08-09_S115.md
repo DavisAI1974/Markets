@@ -243,6 +243,21 @@ what it guards, not for what it is expected to find.
 unchanged and still binding; what changed is the honesty of its enforcement claim.
 **D51** — a gate that exists is not a gate that passed, and an external build is verified before it
 is merged, with the verification named.
+**D52** — nothing authored may live only on a session scratchpad (Greg, at close: *"whatever is on
+scratchpad needs to be committed to a file in git so we don't lose whatever is on it... and we're not
+supposed to be using scratchpad anymore"*). D33/D34 restated where they kept failing. **~15MB was
+sitting outside the repo when this handoff was being written.** Rescued into
+`research/kalshi/records/S115/`, each copy **verified by sha256 against the source rather than by the
+copy command's exit code**: the four Databento pull logs (the primary evidence for M-16, and the
+carrier of the job ids `GLBX-20260806-SEC5NWEY4U` / `-FUHPD9FHH5` that make A-71's "do not re-pull"
+recoverable, since a completed job re-decodes free), the aborted g24 refine's directive + rendered
+prompt + three pre-influence records, and the three one-off scripts whose effects are committed but
+whose provenance a store diff does not show. **Everything deliberately dropped is listed in that
+directory's README with the command that regenerates it** — a silent drop reads as "we saved
+everything". SOP **v1.19** puts the sweep in STEP 7, before the drop-in box is written. It is a
+checklist line and not a gate, and the reason is stated rather than hidden: the scratchpad gate can
+catch a handoff that NAMES a temp path, but nothing inside the repo can observe work that merely SAT
+on one.
 
 ---
 

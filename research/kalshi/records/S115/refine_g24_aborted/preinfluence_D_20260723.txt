@@ -1,0 +1,16 @@
+PRE-INFLUENCE READ - specialist D, 20260723, emitted from STATE ONLY.
+Opened so far: grp24_state.json (all blocks), g24_anchor.json, brain view (doctrine/method/
+mechanisms/fingerprints/instrument_priors/play_index). NOT yet opened: forecasts/grp24.json,
+my own blind posterior, g24_actual.json, g24_mbo_evidence.json, g24_exit_states.json.
+
+SIGN: DOWN
+MAGNITUDE CLASS: moderate, centre ~ -400, band -250..-650
+ONE SENTENCE: An EIA-print Thursday landing on the block's WEAKEST own-day cooling demand
+(D+0 gw_cdd 11.149 D-1-evening / 11.657 on the 06Z open cycle, against Wednesday's 13.303 -
+a 1.6-2.2 gw-CDD day-over-day demand drop, the low of all ten block days), with grid_stack
+carrying a +395,201 MWh (+47% WoW) wind add that is a non-regulating forcing landing directly
+on gas, into a storage surplus that has been widening (vs_5yr 162, last print +5.4 above the
+5-yr change) - the bearish arithmetic is on the demand side, not the print side; capped below
+by a crowded managed-money short (net -105,709, 1y pctile 14.15, WoW -45,414) which is the
+fuel for any covering bounce, and contradicted on the FORWARD (not the day) by a genuine
+near-window CDD ADD of +1.197/+1.163/+0.604 at h1/h2/h3.

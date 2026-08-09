@@ -268,6 +268,11 @@
    "path": "DROP_IN_S116.md",
    "class": "DROP_IN",
    "why": "S116 opener: A-70 (review and merge chatgpt/agent-frankie-s117), A-71 (move the phantom-tree head data), then A-67 arm 1 - blind vs Frankenstein on the unwalked head."
+  },
+  {
+   "path": "research/kalshi/records/S115/README.md",
+   "class": "RECORD",
+   "why": "What was rescued off the S115 session scratchpad and what was deliberately not (D52). Carries the Databento job IDs that make A-71's 'do not re-pull' recoverable, the aborted g24 refine inputs, and the regeneration command for every item dropped."
   }
  ]
 }
