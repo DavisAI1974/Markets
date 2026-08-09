@@ -8,19 +8,19 @@ home does not exist.
 |---|---|
 | open | 175 |
 | in progress | 1 |
-| done | 18 |
+| done | 19 |
 
-By size: **XS** 21, **S** 77, **M** 55, **L** 12
+By size: **XS** 21, **S** 78, **M** 54, **L** 12
 
 ---
 
-By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 44, **REST** 107
+By tier: **ESSENTIAL** 24, **BIGGEST_WIN** 44, **REST** 108
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (25)
+## ESSENTIAL (24)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -44,7 +44,6 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 44, **REST** 107
 | **A-68** | M | GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal | It is the PREREQUISITE for A-67's retention arm - without it there is no retention to measure, and the arm cannot run. It is also the smallest change that turns a per-day amnesiac spawn into something with a horizon, which is the whole premise of the hybrid. |
 | **A-70** | M | MERGE REVIEW: chatgpt/agent-frankie-s117 carries an UNREAD base branch into the trunk | Everything downstream is blocked on it. A-67 arm 1 is the next real experiment and it cannot run until Frankie is on the trunk; but the merge commit also lands the dashboard / novel-edge-lab S116 base, and a merge commit signs for the whole diff. |
 | **A-74** | M | THE LIVE LOOP HAS NEVER RUN AS A SERVICE - collector-as-a-service was G3 of the S110 go-plan and has no registry line | Paper trading is the next milestone and it needs a loop that survives a session ending. Everything else in the S110 go-plan got built - G0 account closed, G1 paper ledger with four risk caps, G2 daily loop, G4 andon - and this one line, the one that makes them RUN WITHOUT A HUMAN, was never tracked. |
-| **A-77** | M | REBUILD THE g6-g16 ACTUALS - the corpus is 70 gradeable days, not the ~180 the narrative implied | A-69's self-training loop has no training set without it, and A-69 is one of the two arms of the architecture test. It was described inside A-69's `why` and had no line of its own, which is exactly the shape D30 exists to catch. |
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | M | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24. |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -103,7 +102,7 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 44, **REST** 107
 | **A-53** | ? | Sweep every play's `requires` against the served BLIND field set | - |
 | **A-54** | ? | The output contract cannot express what the specialists actually derived | - |
 
-## REST (107)
+## REST (108)
 
 *everything else - real work, correctly tracked, and none of it deleted. Several become cheap once an ESSENTIAL or BIGGEST_WIN item lands.*
 
@@ -132,6 +131,7 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 44, **REST** 107
 | **A-64** | S | Kernel Forge (arXiv 2607.24762) - CUDA half OUT OF SCOPE for our workload today; the MCTS-over-candidates harness pattern stacks with A-63/A-60 | Registered under D36 because a delivered external recommendation gets a line even when most of it is rejected - an unrecorded rejection returns as a surprise. The applicable slice is one harness idea, not a build; the domain half is closed with a stated reason. |
 | **A-75** | S | A ROLL-STRADDLING GROUP RENDERS ON THE WRONG LEG - continuous_rt.py draws the NG.n.0 tape, which is the post-roll contract for the whole block | Real and reproducible, but it bites only on groups that straddle a Kalshi-underlying roll, and the walk's staged blocks are done. It matters again the moment a head block straddles one. |
 | **A-8** | S | Wire the depth-based turn_exhaustion as the monitor's CONFIRMING turn channel | - |
+| **A-81** | S | g11's 12 days are the ONE corpus gap left - its score file predates the actual_* columns | 12 days against a corpus that is now 200. Worth having, not worth blocking A-69 for. |
 | **A-9** | S | Generate the drop-in's work list FROM the registry instead of restating it in prose | - |
 | **G-10** | S | Separate TAS (NGT) from the tape; add jump-robust realized variance | - |
 | **G-12** | S | UNG roll + NG futures/options expiry calendars as day-class tags | - |
@@ -241,7 +241,6 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 44, **REST** 107
 | **A-68** | ESSENTIAL | M | OPEN | S115 | GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal | - |
 | **A-70** | ESSENTIAL | M | OPEN | S115 | MERGE REVIEW: chatgpt/agent-frankie-s117 carries an UNREAD base branch into the trunk | - |
 | **A-74** | ESSENTIAL | M | OPEN | S101-02 (designed), S110 (pl | THE LIVE LOOP HAS NEVER RUN AS A SERVICE - collector-as-a-service was G3 of the S110 go-plan and has no registry line | - |
-| **A-77** | ESSENTIAL | M | OPEN | S115 | REBUILD THE g6-g16 ACTUALS - the corpus is 70 gradeable days, not the ~180 the narrative implied | - |
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | ESSENTIAL | M | OPEN | S115 | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -315,6 +314,7 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 44, **REST** 107
 | **A-64** | REST | S | OPEN | S115 | Kernel Forge (arXiv 2607.24762) - CUDA half OUT OF SCOPE for our workload today; the MCTS-over-candidates harness pattern stacks with A-63/A-60 | - |
 | **A-75** | REST | S | OPEN | S103, never registered | A ROLL-STRADDLING GROUP RENDERS ON THE WRONG LEG - continuous_rt.py draws the NG.n.0 tape, which is the post-roll contract for the whole block | - |
 | **A-8** | REST | S | OPEN | S111 | Wire the depth-based turn_exhaustion as the monitor's CONFIRMING turn channel | - |
+| **A-81** | REST | S | OPEN | S118 | g11's 12 days are the ONE corpus gap left - its score file predates the actual_* columns | - |
 | **A-9** | REST | S | OPEN | S111 | Generate the drop-in's work list FROM the registry instead of restating it in prose | - |
 | **G-10** | REST | S | OPEN | S111 | Separate TAS (NGT) from the tape; add jump-robust realized variance | - |
 | **G-12** | REST | S | OPEN | S111 | UNG roll + NG futures/options expiry calendars as day-class tags | - |
@@ -418,6 +418,7 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 44, **REST** 107
 | A-51 | ? | Serve FORWARD wind and solar - all three specialists named it independently |
 | A-52 | ? | wind_mwh has no chg_7d twin while gas, solar and hydro all do |
 | A-71 | S | M-16's PHYSICAL repair - the guarded puller exists, the already-paid head + L1 data is still not in the canonical root |
+| A-77 | M | REBUILD THE g6-g16 ACTUALS - the corpus is 70 gradeable days, not the ~180 the narrative implied |
 | G-19 | S | EIA-930: BATTERY STORAGE is now its own category and we do not carry it |
 | G-5 | M | ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY |
 | M-2 | S | Brain status taxonomy normalized to an enum |
@@ -757,20 +758,6 @@ MEASURED S115: `git merge --no-commit --no-ff origin/chatgpt/agent-frankie-s117`
 MEASURED S115: searching the registry for `live orchestrat|systemd|collector-as-a-service|watchdog` returns 0 of 181. `ng_live_collector` and `ng_live_watchdog` were designed at S101-02 and, in the memo's own words, 'never yet run as a service'. The S110 memo listed it as G3, half a session of work, with health.json feeding the andon board.
 
 Note the shape: this is D36 exactly - a memo's recommendation living in prose that nothing counts. It is the third instance of that family found by auditing briefings (12 of 13 S111 suggestions, then the A-24 hand-off, now this).
-
----
-
-### [ESSENTIAL] A-77 - REBUILD THE g6-g16 ACTUALS - the corpus is 70 gradeable days, not the ~180 the narrative implied
-
-*size M | OPEN | raised S115*
-
-**Why it is ESSENTIAL:** A-69's self-training loop has no training set without it, and A-69 is one of the two arms of the architecture test. It was described inside A-69's `why` and had no line of its own, which is exactly the shape D30 exists to catch.
-
-**Source:** S115 close; measured when scoping A-69, and named as its own item in the external build's 'not claimed as passed' list. Registered on Greg's instruction that open things go to the registry, not into handoff prose.
-
-MEASURED S115, against a number I had asserted from narrative. I said '18 blocks, ~180 days'. Only g18-g24 carry BOTH a state and a rebuilt actual - **70 gradeable days**. g6-g16 have states with no actuals, so they are unlabelled data: a blind can be run on them but nothing can score it.
-
-THE GAP IS A REBUILD, NOT A RE-PULL. The day ranges are recoverable from the state files themselves (each state is keyed by its own days) and `group_actual.build(gid)` already exists - it is what `stage_group` calls. Nothing needs to be bought.
 
 ---
 
@@ -2802,6 +2789,20 @@ The hand-rolled `run_g15_rt_s102.py` two-leg approach (NGJ26 pre-roll + NGK26 po
 **Source:** FORECAST_ARCHITECTURE_S111 s1.5 instrument panel
 
 The one turn instrument that is ALREADY MEASURED AND WORKING on NG and needs no new research: month_characterize's depth-based turn_exhaustion (book support collapsing entry->push) separates reversed turns from held ones - reversed median -0.107 against held -0.018. characterize_turns.py already saves the fingerprints. WIRE THIS FIRST of the turn instruments: A-6 (the flow-dipole exhaustion arm) is the LEADING channel but needs the native-tick test, whereas this is the CONFIRMING channel and is ready now. Independent of the flow dipole, so the two together give a leading signal and an independent confirmation rather than one instrument twice. Do NOT conflate the two measures.
+
+---
+
+### [REST] A-81 - g11's 12 days are the ONE corpus gap left - its score file predates the actual_* columns
+
+*size S | OPEN | raised S118*
+
+**Why it is REST:** 12 days against a corpus that is now 200. Worth having, not worth blocking A-69 for.
+
+**Source:** S118, A-77's build; the only group of eleven that could not be recovered
+
+MEASURED S118: `g11_score.json` carries 12 day rows and **zero** `actual_*` columns - it was written before that schema existed. Every other g6-g16 group had them. g11 also carries its anchor as a BARE FLOAT rather than the {date, price, last_hour_dir} dict every other group uses, so it predates that convention too.
+
+S97 context that makes this the awkward one: G11 is the block that was RE-PULLED on NG.n.0 after NG.v.0 was found whipsawing through the expiry week. So its basis question has a known answer, which is the good news, but its anchor date is not recorded in the score file.
 
 ---
 

@@ -1,0 +1,128 @@
+{
+ "group": "g7",
+ "anchor": {
+  "date": "20251104",
+  "price": 4.317,
+  "last_hour_dir": "down"
+ },
+ "basis": "PER-EVENT scorecard. drift_usd = continuous guessed-close cum minus actual cum (the 'if you followed it' gap). NO averages/pooled rates - each day is its own descriptor.",
+ "days": [
+  {
+   "date": "20251105",
+   "dow": "Wed",
+   "close": 4.264,
+   "net_usd": -520,
+   "gap_usd": -10,
+   "day_move_usd": -530,
+   "cum_from_anchor_usd": -530,
+   "open": 4.316
+  },
+  {
+   "date": "20251106",
+   "dow": "Thu",
+   "close": 4.397,
+   "net_usd": 1350,
+   "gap_usd": -20,
+   "day_move_usd": 1330,
+   "cum_from_anchor_usd": 800,
+   "open": 4.262
+  },
+  {
+   "date": "20251107",
+   "dow": "Fri",
+   "close": 4.324,
+   "net_usd": -720,
+   "gap_usd": -10,
+   "day_move_usd": -730,
+   "cum_from_anchor_usd": 70,
+   "open": 4.396
+  },
+  {
+   "date": "20251110",
+   "dow": "Mon",
+   "close": 4.369,
+   "net_usd": -820,
+   "gap_usd": 10,
+   "day_move_usd": -810,
+   "cum_from_anchor_usd": 520,
+   "open": 4.451
+  },
+  {
+   "date": "20251111",
+   "dow": "Tue",
+   "close": 4.527,
+   "net_usd": 1580,
+   "gap_usd": 0,
+   "day_move_usd": 1580,
+   "cum_from_anchor_usd": 2100,
+   "open": 4.369
+  },
+  {
+   "date": "20251112",
+   "dow": "Wed",
+   "close": 4.536,
+   "net_usd": 100,
+   "gap_usd": -10,
+   "day_move_usd": 90,
+   "cum_from_anchor_usd": 2190,
+   "open": 4.526
+  },
+  {
+   "date": "20251113",
+   "dow": "Thu",
+   "close": 4.598,
+   "net_usd": 620,
+   "gap_usd": 0,
+   "day_move_usd": 620,
+   "cum_from_anchor_usd": 2810,
+   "open": 4.536
+  },
+  {
+   "date": "20251114",
+   "dow": "Fri",
+   "close": 4.509,
+   "net_usd": -910,
+   "gap_usd": 20,
+   "day_move_usd": -890,
+   "cum_from_anchor_usd": 1920,
+   "open": 4.6
+  },
+  {
+   "date": "20251117",
+   "dow": "Mon",
+   "close": 4.339,
+   "net_usd": -1500,
+   "gap_usd": -10,
+   "day_move_usd": -1510,
+   "cum_from_anchor_usd": 220,
+   "open": 4.489
+  },
+  {
+   "date": "20251118",
+   "dow": "Tue",
+   "close": 4.366,
+   "net_usd": 270,
+   "gap_usd": 0,
+   "day_move_usd": 270,
+   "cum_from_anchor_usd": 490,
+   "open": 4.339
+  }
+ ],
+ "provenance": {
+  "built_by": "build_legacy_actuals_a77.py (A-77, S118)",
+  "source": "renders/ng_refine_s95/g7_score.json",
+  "source_is_group_own_run": true,
+  "derived_from": "close = anchor + cum_from_anchor_usd/10000; open = close - net_usd/10000. Levels are DERIVED from the group's own recorded USD moves, not read from a tape.",
+  "usd_per_point": 10000.0,
+  "leg_omitted": "this route cannot determine the contract leg; a guessed leg is worse than an absent one",
+  "tape_reconciliation": {
+   "tape": "data/nymex_cont_n0 (NG.n.0)",
+   "days_checked": 10,
+   "days_exact": 0,
+   "max_abs_diff_usd": 2310,
+   "basis_state": "OWN_LEG",
+   "basis_is_n0": false,
+   "note": "n.0 DISAGREES - this group was walked on a different leg. The score file is authoritative because it is on the group's own basis; the tape is not. Do NOT rebuild this group from n.0 (A-77 falsifier)."
+  }
+ }
+}

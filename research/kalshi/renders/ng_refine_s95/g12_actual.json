@@ -1,0 +1,148 @@
+{
+ "group": "g12",
+ "anchor": {
+  "date": "20260130",
+  "price": 4.416,
+  "last_hour_dir": "up"
+ },
+ "basis": "PER-EVENT scorecard. drift_usd = continuous guessed-close cum minus actual cum (the 'if you followed it' gap). NO averages/pooled rates - each day is its own descriptor.",
+ "days": [
+  {
+   "date": "20260201",
+   "dow": "Sun",
+   "close": 3.657,
+   "net_usd": -510,
+   "gap_usd": -7080,
+   "day_move_usd": -7590,
+   "cum_from_anchor_usd": -7590,
+   "open": 3.708
+  },
+  {
+   "date": "20260202",
+   "dow": "Mon",
+   "close": 3.231,
+   "net_usd": -4260,
+   "gap_usd": 0,
+   "day_move_usd": -4260,
+   "cum_from_anchor_usd": -11850,
+   "open": 3.657
+  },
+  {
+   "date": "20260203",
+   "dow": "Tue",
+   "close": 3.344,
+   "net_usd": 1130,
+   "gap_usd": 0,
+   "day_move_usd": 1130,
+   "cum_from_anchor_usd": -10720,
+   "open": 3.231
+  },
+  {
+   "date": "20260204",
+   "dow": "Wed",
+   "close": 3.47,
+   "net_usd": 1260,
+   "gap_usd": 0,
+   "day_move_usd": 1260,
+   "cum_from_anchor_usd": -9460,
+   "open": 3.344
+  },
+  {
+   "date": "20260205",
+   "dow": "Thu",
+   "close": 3.521,
+   "net_usd": 540,
+   "gap_usd": -30,
+   "day_move_usd": 510,
+   "cum_from_anchor_usd": -8950,
+   "open": 3.467
+  },
+  {
+   "date": "20260206",
+   "dow": "Fri",
+   "close": 3.405,
+   "net_usd": -1140,
+   "gap_usd": -20,
+   "day_move_usd": -1160,
+   "cum_from_anchor_usd": -10110,
+   "open": 3.519
+  },
+  {
+   "date": "20260208",
+   "dow": "Sun",
+   "close": 3.211,
+   "net_usd": -390,
+   "gap_usd": -1550,
+   "day_move_usd": -1940,
+   "cum_from_anchor_usd": -12050,
+   "open": 3.25
+  },
+  {
+   "date": "20260209",
+   "dow": "Mon",
+   "close": 3.128,
+   "net_usd": -830,
+   "gap_usd": 0,
+   "day_move_usd": -830,
+   "cum_from_anchor_usd": -12880,
+   "open": 3.211
+  },
+  {
+   "date": "20260210",
+   "dow": "Tue",
+   "close": 3.152,
+   "net_usd": 240,
+   "gap_usd": 0,
+   "day_move_usd": 240,
+   "cum_from_anchor_usd": -12640,
+   "open": 3.128
+  },
+  {
+   "date": "20260211",
+   "dow": "Wed",
+   "close": 3.213,
+   "net_usd": 610,
+   "gap_usd": 0,
+   "day_move_usd": 610,
+   "cum_from_anchor_usd": -12030,
+   "open": 3.152
+  },
+  {
+   "date": "20260212",
+   "dow": "Thu",
+   "close": 3.224,
+   "net_usd": 120,
+   "gap_usd": -10,
+   "day_move_usd": 110,
+   "cum_from_anchor_usd": -11920,
+   "open": 3.212
+  },
+  {
+   "date": "20260213",
+   "dow": "Fri",
+   "close": 3.084,
+   "net_usd": -160,
+   "gap_usd": -1240,
+   "day_move_usd": -1400,
+   "cum_from_anchor_usd": -13320,
+   "open": 3.1
+  }
+ ],
+ "provenance": {
+  "built_by": "build_legacy_actuals_a77.py (A-77, S118)",
+  "source": "renders/ng_refine_s95/g12_score.json",
+  "source_is_group_own_run": true,
+  "derived_from": "close = anchor + cum_from_anchor_usd/10000; open = close - net_usd/10000. Levels are DERIVED from the group's own recorded USD moves, not read from a tape.",
+  "usd_per_point": 10000.0,
+  "leg_omitted": "this route cannot determine the contract leg; a guessed leg is worse than an absent one",
+  "tape_reconciliation": {
+   "tape": "data/nymex_cont_n0 (NG.n.0)",
+   "days_checked": 12,
+   "days_exact": 12,
+   "max_abs_diff_usd": 0,
+   "basis_state": "N0",
+   "basis_is_n0": true,
+   "note": "n.0 AGREES on every checked day, so this group's basis is the continuous front and the corpus is independently corroborated."
+  }
+ }
+}
