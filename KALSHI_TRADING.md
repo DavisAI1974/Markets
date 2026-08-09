@@ -678,7 +678,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **166 files.**
+new tool cannot go unlisted. **169 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `archive_blind.py` — move the blind's posteriors out of the refine's filenames (S108).
@@ -811,6 +811,9 @@ new tool cannot go unlisted. **166 files.**
 - `pull_year_mbp10.py` — pull a YEAR (or any month range) of continuous MBP-10 for CL+NG, month by month,
 - `pyth_backfill.py` — HISTORICAL per-second NYMEX tape from Pyth Hermes (S84).
 - `pyth_collector.py` — sub-second tick collector for the NYMEX/ICE futures Kalshi settles on, via Pyth Hermes.
+- `append_d51.py` — (no docstring summary)
+- `register_a70_a71.py` — (no docstring summary)
+- `registry_grep.py` — (no docstring summary)
 - `redownload_mondays.py` — One-off ops: re-download every corrupt Monday stub in nymex_cont/ (all Mondays were truncated to
 - `release_book_signal.py` — the S80 release-triggered BOOK signal (the MERGED architecture).
 - `release_signal_history.py` — test the S80 release-triggered signal on HISTORICAL Kalshi trade flow.

@@ -422,6 +422,24 @@ def docs_problems():
                       "delivered hand-off: %s"
                       % (len(unclassified), ", ".join(unclassified[:6])
                          + (" ..." if len(unclassified) > 6 else ""))))
+    # S115 - AN UNDECLARED CLASS IS A CLASS NO GATE KNOWS ABOUT.
+    # The class vocabulary was enforced NOWHERE. `cmd_docs` indexes `store["classes"][cls]` when it
+    # prints the legend, so an invented class surfaced as a KeyError TRACEBACK at the end of a
+    # `--write` that had already succeeded - the render was regenerated, the command exited non-zero,
+    # and nothing said what was actually wrong. MEASURED S115: three invented classes were live at
+    # once (BRIEFING, HANDOFF, DROP_IN), all three added the same session, all three by me, and every
+    # gate that keys off class read straight past them. The legend already SAYS a handoff and a
+    # drop-in are RECORD; I did not read it, and nothing made me. Fails CLOSED now, and it reports
+    # rather than crashes - same posture as md_unclassified above, one level up: that gate asks
+    # "is this document classified", this one asks "is that class a real one".
+    undeclared = sorted({d["class"] for d in _docstore["documents"]} - set(_docstore["classes"]))
+    if undeclared:
+        probs.append(("store/documents.json", "class_undeclared",
+                      "%d document class(es) are not declared in `classes` - a class no gate knows "
+                      "about is a document nothing can reach, and it surfaced only as a traceback "
+                      "in the legend printer: %s. Either use a declared class or declare the new "
+                      "one WITH its rule, the way every existing class carries one."
+                      % (len(undeclared), ", ".join(undeclared))))
     missing_sop = _index_gate(PLANT_MAP, _sop_named_py(), "index_sop_py")
     if missing_sop:
         probs.append(("PLANT_MAP.md", "index_sop_py",
