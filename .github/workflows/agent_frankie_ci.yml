@@ -63,6 +63,7 @@ jobs:
             research/kalshi/frankie_engine.py \
             research/kalshi/frankie_idempotency.py \
             research/kalshi/frankie_improve.py \
+            research/kalshi/frankie_evolution.py \
             research/kalshi/frankie_reflect.py \
             research/kalshi/frankie_reflect_runner.py
       - name: Validate JSON contracts
@@ -96,6 +97,8 @@ jobs:
           data = json.load(open('/tmp/frankie-health.json'))
           assert data['execution_enabled'] is False
           assert data['origin']['verified'] is True
+          assert data['paper_manifest']['hybrid_ready'] is True
+          assert data['paper_manifest']['papers'] >= 9
           assert data['self_improvement']['automatic_apply'] is False
           assert data['self_improvement']['immutable_outcome_sidecars'] is True
           text = open('/tmp/frankie-health.json').read()
