@@ -650,7 +650,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **164 files.**
+new tool cannot go unlisted. **166 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `archive_blind.py` — move the blind's posteriors out of the refine's filenames (S108).
@@ -664,6 +664,7 @@ new tool cannot go unlisted. **164 files.**
 - `brain_audit.py` — the 82-play audit harness, IN THE REPO. (S111, fixing an S111 defect.)
 - `brain_backfill.py` — put the reasoning, the evidence and the past instances INTO the brain, and
 - `brain_conditions.py` — the CONDITIONS slot: vocabulary, verification, and curation harness.
+- `brain_onedoc_fix_s115.py` — close the ONE-DOC holes in the brain. (S115, Greg's go.)
 - `brain_schema.py` — give the brain a schema: typed, queryable, LOSSLESS. (S111, Greg's call)
 - `brain_view.py` — serve the brain to a ROLE, and DECLARE what was withheld.
 - `bshare_normalization_probe.py` — Is session_b_share structurally sub-0.50 because of how it is NORMALIZED?
@@ -806,6 +807,7 @@ new tool cannot go unlisted. **164 files.**
 - `steo_vintage.py` — FEED T (family D/balance): STEO monthly VINTAGES - the frozen as-of NG balance (S99).
 - `storage_consensus.py` — weekly EIA natural gas storage ANALYST CONSENSUS as a decision-state
 - `storage_regional.py` — REGIONAL NG working-gas storage as a decision-state INPUT (S97).
+- `storage_restage_repair.py` — graft the CORRECT storage lane onto a committed group state. (S115.)
 - `storage_vintage.py` — AS-FIRST-PRINTED vs CURRENT-VINTAGE EIA weekly storage (DATA_GATE_S98 feed K).
 - `store.py` — ONE STORE, GENERATED VIEWS. (Registry A-7.)
 - `tape_reconcile.py` — assert tape_conditions is measuring THE CONTRACT WE ARE FORECASTING (S108).

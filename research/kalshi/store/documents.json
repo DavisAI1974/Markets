@@ -253,6 +253,11 @@
    "path": "research/kalshi/DATABENTO_PLATFORM_REVIEW.md",
    "class": "RECORD",
    "why": "dated platform review."
+  },
+  {
+   "path": "research/kalshi/FRANKIE_BUILD_BRIEF_S115.md",
+   "class": "BRIEFING",
+   "why": "S115 build brief for the external collaborator building Frankie. A RENDER of the registry (A-59..A-69, M-16), not a source: where they disagree OPEN_ITEMS.json wins. Carries the build sequence with dependencies, the acceptance test (falsifier) per item, and the desk constraints that decide whether a build is valid here."
   }
  ]
 }

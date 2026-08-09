@@ -69,6 +69,13 @@
    "result": "AUDITED RANK BY RANK against the registry (Greg, S115: 'just want to make sure we didn't miss anything'). ALL SEVEN ranks carry registry lines: Rank1->A-24a, Rank2->A-24b (DONE - killed on instrument grounds: across all 36 vintage reports the revisions do not exist at a testable size, largest |rev| 1.0 Bcf in the key salt series, Pacific never revised), Rank3->A-24c (DONE - SURVIVED its benchmark: summer R2 0.469->0.554, winter 0.065->0.462), Rank4->A-24d, Rank5->A-24e, Rank6->A-24f, Rank7->A-24g, plus the parent hunch A-24. THREE GAPS FOUND AND REGISTERED THIS SESSION: A-57 (A-24c's surviving result had no forward home - nothing serves the breadth term; D30), G-30 (weather_forecast_cycle nets 18Z/00Z/06Z into one delta, which is the instrument dependency under Rank 1 and was prose-only in two handoffs), and the glob defect below. The note's own excluded list traces to existing items (G-4, G-7, A-17, A-18, A-19, G-3, A-11, A-2).",
    "items": "A-24, A-24a..A-24g, + new A-57, G-30",
    "glob_defect_found": "this file matched NONE of the station's BRIEFING/SYNTHESIS/MEMO patterns, so D36 could not reach it and nothing recorded its disposition - a rule whose scanner cannot see the document is a rule that does not cover it. Patterns widened S115 to include CANDIDATES/DISCOVERY/CHATGPT_*, which immediately surfaced 5 further un-audited external hand-offs."
+  },
+  "FRANKIE_BUILD_BRIEF_S115.md": {
+   "session": "S115",
+   "n_recommendations": 12,
+   "result": "GENERATED FROM the registry rather than proposing new work - its twelve items ARE A-59..A-69 plus M-16, every one already a registry line with a falsifier. Audited by construction: it is a render, so D36 is satisfied at the source. If it ever states work with no registry id, that is the defect.",
+   "items": "A-59..A-69, M-16, A-50, A-61",
+   "verified_on": "S115"
   }
  }
 }
