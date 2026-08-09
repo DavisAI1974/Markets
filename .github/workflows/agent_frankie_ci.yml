@@ -78,6 +78,7 @@ jobs:
             research/kalshi/frankie_two_group_smoke_s118.py \
             research/kalshi/frankie_anchor_s118.py \
             research/kalshi/frankie_group_forecast_s118.py \
+            research/kalshi/frankie_two_group_run_s118.py \
             research/kalshi/databento_backfill_s115.py
       - name: Validate JSON contracts
         run: |
@@ -107,9 +108,7 @@ jobs:
       - name: Verify S118 two-group matched artifacts
         run: python research/kalshi/frankie_two_group_smoke_s118.py > /tmp/frankie-s118-two-group.json
       - name: Verify S118 causal forecast packets without outcomes
-        run: |
-          python research/kalshi/frankie_anchor_s118.py g17 g18 > /tmp/frankie-s118-anchors.json
-          python research/kalshi/frankie_group_forecast_s118.py g17 g18 --preflight --namespace ci_s118 > /tmp/frankie-s118-packets.json
+        run: python research/kalshi/frankie_two_group_run_s118.py --preflight --namespace ci_s118 > /tmp/frankie-s118-packets.json
       - name: Verify S115 ownership is collision-free
         run: |
           PYTHONPATH=research/kalshi python - <<'PY'
