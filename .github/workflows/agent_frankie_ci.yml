@@ -76,6 +76,7 @@ jobs:
             research/kalshi/frankie_forecaster_s115.py \
             research/kalshi/frankie_s115_status.py \
             research/kalshi/frankie_two_group_smoke_s118.py \
+            research/kalshi/frankie_group_forecast_s118.py \
             research/kalshi/databento_backfill_s115.py
       - name: Validate JSON contracts
         run: |
@@ -104,6 +105,8 @@ jobs:
           python -m unittest discover -s research/kalshi/tests -p 'test_*s115.py'
       - name: Verify S118 two-group matched artifacts
         run: python research/kalshi/frankie_two_group_smoke_s118.py > /tmp/frankie-s118-two-group.json
+      - name: Verify S118 causal forecast packets without outcomes
+        run: python research/kalshi/frankie_group_forecast_s118.py g17 g18 --preflight --namespace ci_s118 > /tmp/frankie-s118-packets.json
       - name: Verify S115 ownership is collision-free
         run: |
           PYTHONPATH=research/kalshi python - <<'PY'
