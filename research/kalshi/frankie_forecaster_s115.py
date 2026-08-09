@@ -1,0 +1,140 @@
+#!/usr/bin/env python3
+"""S115 forecaster harness for Frankie.
+
+The blind engine remains the predictor. Frankie extends it with explicit object state, typed output,
+a causal lens book, generated track-record attachments, and validation hooks. Nothing here replaces
+spawn.py or writes the canonical brain.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from dataclasses import asdict
+from pathlib import Path
+from typing import Any
+
+HERE = Path(__file__).resolve().parent
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
+
+from frankie_render_s115 import FrankieAgentObject, TypedPosterior, assert_byte_identical  # noqa: E402
+from frankie_s115 import (  # noqa: E402
+    LensBookEntry,
+    S115Stop,
+    append_lens_book,
+    assert_future_absent,
+    assert_ownership_clean,
+    causal_lens_view,
+)
+
+STATE_ROOT = HERE / "data" / "frankie_s115"
+BOOK_ROOT = STATE_ROOT / "lens_books"
+POSTERIOR_ROOT = STATE_ROOT / "posteriors"
+TRACK_RECORD_PATH = STATE_ROOT / "specialist_track_records.json"
+
+
+def _book(lens: str) -> Path:
+    return BOOK_ROOT / f"{lens}.jsonl"
+
+
+def prepare_day(
+    *, template: str, gid: str, day: str, specialist: str, directive: str | None = None,
+) -> dict[str, Any]:
+    """Prepare one specialist without changing the canonical prompt bytes."""
+    assert_ownership_clean()
+    agent = FrankieAgentObject(template, gid, day, specialist, directive)
+    assert_byte_identical(agent)
+    book_view = causal_lens_view(_book(specialist), lens=specialist, current_day=_iso_day(day))
+    assert_future_absent(book_view, _iso_day(day))
+    return {
+        "template": template,
+        "gid": gid,
+        "day": day,
+        "specialist": specialist,
+        "canonical_prompt": agent.render_prompt(),
+        "canonical_prompt_byte_identity": True,
+        "lens_book": book_view,
+        "lens_book_rule": "strictly earlier days only; absent means absent",
+        "track_record_attachment": str(TRACK_RECORD_PATH) if TRACK_RECORD_PATH.is_file() else None,
+        "execution_enabled": False,
+    }
+
+
+def record_day(*, posterior_raw: dict[str, Any], carried_state: dict[str, Any]) -> dict[str, Any]:
+    posterior = TypedPosterior.from_mapping(posterior_raw)
+    path = POSTERIOR_ROOT / posterior.group / posterior.specialist / f"{posterior.day}.json"
+    posterior.write(path)
+    entry = LensBookEntry(
+        lens=posterior.specialist,
+        day=_iso_day(posterior.day),
+        decision_at=str(posterior_raw.get("decision_at") or f"{_iso_day(posterior.day)}T20:00:00Z"),
+        event_id=str(posterior_raw.get("event_id") or f"{posterior.group}:{posterior.specialist}:{posterior.day}"),
+        carried_state=carried_state,
+        action={
+            "direction": posterior.direction,
+            "magnitude": posterior.magnitude,
+            "fired": list(posterior.fired),
+            "stood_down": list(posterior.stood_down),
+        },
+        source_hashes=posterior.source_hashes,
+    )
+    row_hash = append_lens_book(_book(posterior.specialist), entry)
+    return {
+        "posterior_path": str(path),
+        "lens_book_path": str(_book(posterior.specialist)),
+        "lens_book_entry_hash": row_hash,
+        "execution_enabled": False,
+    }
+
+
+def _iso_day(day: str) -> str:
+    day = day.replace("-", "")
+    if len(day) != 8 or not day.isdigit():
+        raise S115Stop(f"invalid day: {day}")
+    return f"{day[:4]}-{day[4:6]}-{day[6:]}"
+
+
+def _read_object(path: str) -> dict[str, Any]:
+    raw = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        raise S115Stop(f"expected JSON object: {path}")
+    return raw
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__)
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    p = sub.add_parser("prepare-day")
+    p.add_argument("template")
+    p.add_argument("gid")
+    p.add_argument("day")
+    p.add_argument("specialist")
+    p.add_argument("--directive")
+    p = sub.add_parser("record-day")
+    p.add_argument("posterior")
+    p.add_argument("--carried-state", required=True)
+    args = ap.parse_args()
+    try:
+        if args.cmd == "prepare-day":
+            out = prepare_day(
+                template=args.template,
+                gid=args.gid,
+                day=args.day,
+                specialist=args.specialist,
+                directive=args.directive,
+            )
+        else:
+            out = record_day(
+                posterior_raw=_read_object(args.posterior),
+                carried_state=_read_object(args.carried_state),
+            )
+        print(json.dumps(out, indent=2, sort_keys=True))
+        return 0
+    except (S115Stop, Exception) as exc:
+        print(f"STOP - {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
