@@ -18,6 +18,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 # (source, output width, square?) - icons are square, the contact sheet keeps its own aspect
 JOBS = [
+    ("markets_terminal_icon.svg", 512, True),      # THE CHOSEN MARK (A)
     ("markets_terminal_a_curve.svg", 512, True),
     ("markets_terminal_b_brackets.svg", 512, True),
     ("markets_terminal_c_gap.svg", 512, True),
