@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 179 |
+| open | 178 |
 | in progress | 1 |
-| done | 22 |
+| done | 23 |
 
-By size: **XS** 20, **S** 79, **M** 57, **L** 13
+By size: **XS** 20, **S** 78, **M** 57, **L** 13
 
 ---
 
-By tier: **ESSENTIAL** 26, **BIGGEST_WIN** 46, **REST** 108
+By tier: **ESSENTIAL** 26, **BIGGEST_WIN** 45, **REST** 108
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -53,7 +53,7 @@ By tier: **ESSENTIAL** 26, **BIGGEST_WIN** 46, **REST** 108
 | **A-85** | L | THE EMITTED MAGNITUDE CARRIES NO INFORMATION ABOUT THE DAY'S MAGNITUDE - a constant band, not a forecast | It reframes the dominant open problem of the walk. Under-emission was the SYMPTOM; this is the disease, and it says the current contract is asking the agent for a number it has no signal to produce. |
 | **A-50** | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 
-## BIGGEST WIN (46)
+## BIGGEST WIN (45)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -75,7 +75,6 @@ By tier: **ESSENTIAL** 26, **BIGGEST_WIN** 46, **REST** 108
 | **A-61** | S | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | A false REFUTED is worse than no verification: it argues for UNDOING a real fix, with an adversarial verdict behind it. Cheap to fix (pin a commit) and it protects every future audit. |
 | **A-65** | S | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | It is the test that would have caught THIS session's own worst mistake before Greg did, it is cheap (one extra spawn per change), and it converts every future view/brain change from an argument into a measurement. |
 | **A-66** | S | THE COMPOSITION CONTRACT - partition OWNERSHIP so borrowed pieces own different parts of one job (not a write protocol, and never a ranking) | It is the collision detector for everything else registered tonight. Cheap (a table), and it is the difference between composing best-of-breed and building something that fights itself. Do it BEFORE any of A-59/62/63/64/65 is built. |
-| **A-88** | S | SUSTAIN THE MCP CONNECTOR - it currently dies with the session container, and its code lived only outside git | Everything else about the connector is worthless if it is dark whenever a session is not open, and the D34/D52 half of it was a live rule violation rather than a future risk. |
 | **G-30** | S | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | It is the instrument dependency under A-24a, the discovery note's own RANK 1 candidate and the one it calls strongest. It also turns five of twelve path points from a timing judgment into arithmetic, on a feed we already ingest. |
 | **M-15** | S | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | A compromised credential with a deferral that has silently expired is the kind of thing that is only ever noticed after it matters. Cheap to do, and the deferral it replaces was explicit and time-boxed. |
 | **O-3** | S | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
@@ -269,7 +268,6 @@ By tier: **ESSENTIAL** 26, **BIGGEST_WIN** 46, **REST** 108
 | **A-61** | BIGGEST_WIN | S | OPEN | S115 | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | - |
 | **A-65** | BIGGEST_WIN | S | OPEN | S115 | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | - |
 | **A-66** | BIGGEST_WIN | S | OPEN | S115 | THE COMPOSITION CONTRACT - partition OWNERSHIP so borrowed pieces own different parts of one job (not a write protocol, and never a ranking) | - |
-| **A-88** | BIGGEST_WIN | S | OPEN | S118 | SUSTAIN THE MCP CONNECTOR - it currently dies with the session container, and its code lived only outside git | - |
 | **G-30** | BIGGEST_WIN | S | OPEN | S115 | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | - |
 | **M-15** | BIGGEST_WIN | S | OPEN | S115 | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | - |
 | **O-3** | BIGGEST_WIN | S | OPEN | S114 | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
@@ -430,6 +428,7 @@ By tier: **ESSENTIAL** 26, **BIGGEST_WIN** 46, **REST** 108
 | A-80 | XS | THE S118 RUNNER SERVES ZERO PLAYS - two shape mismatches against brain_view, both failing OPEN |
 | A-82 | S | THE S118 LEAK GUARD IS SCOPED TO TOKEN NAMES, NOT TO DATES - it blocks the run on legitimate prior-group evidence |
 | A-83 | L | THE UNDER-EMISSION IS THE REASONING LANE, NOT THE HARNESS - it reproduced at 0.26-0.35x with a different agent |
+| A-88 | S | SUSTAIN THE MCP CONNECTOR - it currently dies with the session container, and its code lived only outside git |
 | G-19 | S | EIA-930: BATTERY STORAGE is now its own category and we do not carry it |
 | G-5 | M | ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY |
 | M-2 | S | Brain status taxonomy normalized to an enum |
@@ -1767,26 +1766,6 @@ NOTE 2.2 MEMORY IS THE LARGEST SUBSECTION (~50) AND IS EXACTLY WHERE OUR OWN THR
 NAMED NEIGHBOURS FOR OUR OWN ITEMS, so the map is usable immediately: 2.4 carries 'Language Agents as Optimizable Graphs' and 'Godel Agent: A Self-Referential Agent Framework' - the neighbourhood A-64's branching refine sits in; 2.1 carries TextGrad and 'LLMs as Optimizers'; 2.2 carries MemGen, MemoryBank, MEMORYLLM.
 USE IT THIS WAY: the ownership table's LAYER column is section 2's subsection numbers. Any future paper Greg sends gets classified into 2.1/2.2/2.3/2.4 (or the foundation branch, which closes it for us with a stated reason rather than a judgement), and then into the PART of that layer it owns. That is the whole 'keep them straight' mechanism, and it costs one line per paper.
 PROVENANCE: repo structure and section sizes read from the GitHub landing page; the ~220 papers themselves are NOT read. Sizes are approximate as reported there.
-
----
-
-### [BIGGEST_WIN] A-88 - SUSTAIN THE MCP CONNECTOR - it currently dies with the session container, and its code lived only outside git
-
-*size S | OPEN | raised S118*
-
-**Why it is BIGGEST WIN:** Everything else about the connector is worthless if it is dark whenever a session is not open, and the D34/D52 half of it was a live rule violation rather than a future risk.
-
-**Source:** Greg, S118: 'like i said before, we want this to sustain'
-
-**RESOLVED S118 - THE TUNNEL IS UP.** Greg created a NEW tunnel (`tunnel_6a797a199f04819188e7ecb0ecf1ca6d`) and it authorized on the FIRST attempt with the SAME key, SAME org, SAME client binary and SAME profile shape. Metadata read HTTP 200, returning a real record ('Markets Terminal', org matching, and a workspace_id) where the old tunnel had returned `tunnel_use_forbidden` to every call. Daemon: 0 WARN, 0 ERROR, `/readyz` ready, `/healthz` live, MCP stdio child running from the in-repo path. So the fault was THE OLD TUNNEL ITSELF - most likely never properly associated with a principal, which is exactly what 'no permission for any default principal' says once you stop reading it as a statement about the caller.
-
-**I WAS WRONG TWICE ON THE CAUSE, IN OPPOSITE DIRECTIONS, AND BOTH ARE RECORDED RATHER THAN OVERWRITTEN.** First I said project mismatch, reasoning from how `sk-proj-` keys work generally - refuted by the vendor's own troubleshooting doc ('tunnel permissions are organization-level, not project-level'), which I had not read before advising. Then, on Greg's observation that Tunnels permissions were at their defaults, I promoted BILLING to leading candidate and wrote a reasoned case for it - also refuted, since no credits were purchased between the failure and the success. THE PATTERN IS THE POINT: both were plausible, well-formed, and derived from how the platform *should* work rather than from anything measured about THIS tunnel. The one honest thing in that sequence was ordering the cheap retest first, which is what actually settled it in one call. Org verification was likewise NOT the cause - it is required to submit a ChatGPT app, so it stays on the path, but it was never this error.
-
-THE CODE HALF, done earlier this session and unchanged by the above: the server had lived only at `/opt/markets-mcp/` - outside git, on a container that gets reclaimed - which is D34 and D52 verbatim. It was written there because C2C-004 scoped it as a local experiment, and it stopped being one the moment sustain was asked for. Now at `mcp_server/`, with the repo root DERIVED from the file's own location instead of hardcoded, because the box's checkout path differs and a hardcoded root would silently serve the wrong tree there. Derivation verified by assertion, not eyeball - the A-71 precedent is a path fix that went one level too far up and created a fresh phantom tree while fixing a phantom-tree bug. Smoke test 9/9 from the new location.
-
-**WHAT REMAINS OPEN, AND IT IS THE WHOLE POINT OF THIS ITEM: THE DAEMON STILL LIVES IN A SESSION CONTAINER.** It is up now and dies when the container is reclaimed. Durable home is the EC2 box `i-08cee7171c0a76a04` - already SSM-managed, already the agent host since S93 - under systemd, pulling the server from git and its data from S3. The unit is written in `mcp_server/README.md` and is **NOT YET EXECUTED**; per D51 nothing here may be reported as deployed until the box has run it and the connector has answered a call. The unit bounds restarts on purpose: an unauthorized tunnel backs off forever, which is the A-73 hot-loop shape, observed twice this session and stopped by hand both times.
-
-STILL OUTSTANDING REGARDLESS: **the OPENAI_API_KEY was pasted into chat and must be rotated** - same exposure as the AWS pair at S99. Live config: tunnel `tunnel_6a797a199f04819188e7ecb0ecf1ca6d`, org `org-0FKq6FrDt9tfN3QrpVS6akE8`, profile `markets-stdio` (container-local; recreate with the `init` line in mcp_server/README.md), `tunnel-client` built from source at /usr/local/bin (third-party, not in git).
 
 ---
 
