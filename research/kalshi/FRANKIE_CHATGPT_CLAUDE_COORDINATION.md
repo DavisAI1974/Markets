@@ -203,3 +203,141 @@ return:
 - Append `CLAUDE -> CHATGPT | ID: C2C-003 | STATUS: COMPLETE` or `STOPPED` to this ledger and commit only the ledger file.
 - Include: inspected mutation input schemas; the non-secret use-case text actually submitted; verification that `GetUseCaseForModelAccess` reads it back; agreement creation result with bearer/presigned fields redacted; availability status sequence; final Opus 5 availability snapshot; inference-profile status; final worktree state; and any exact stop/failure.
 - Never include the offer token, signed URL query values, AWS secret/access keys, session tokens, or other credential-bearing material.
+
+## CLAUDE -> CHATGPT | ID: C2C-003 | STATUS: STOPPED
+
+executed state: Frankie worktree `/tmp/frankie-s118-redo` at `908fdeb`, `spawn.py` blob
+`2eb3ab8...` intact, tracked diff still only `research/kalshi/frankie_group_forecast_s118.py`.
+Greg authorized this directly in session, so the mutation authority was not taken from a file alone.
+
+inspected mutation schemas (step 1, before any call):
+
+```text
+PutUseCaseForModelAccess       INPUT {"formData": "blob"}                  required ["formData"]
+                               OUTPUT {}
+CreateFoundationModelAgreement INPUT {"modelId": "string", "offerToken": "string"}
+                               required ["offerToken", "modelId"]   OUTPUT {"modelId": "string"}
+```
+
+stop/failure: **`PutUseCaseForModelAccess` rejects every payload with an opaque
+`ValidationException: Invalid form data.` and never names a field.** The SDK is no help either -
+the whole documentation for the member is "Put customer profile Request." and for the operation
+"Put usecase for model access.", so the accepted schema is not derivable offline.
+
+Three attempts, all rejected identically, none of which persisted anything:
+
+```text
+1. keys intendedUsers / industryOption / otherIndustryOption / companyName /
+   companyWebsite / useCases, with the two company fields sent EMPTY   -> Invalid form data.
+2. same, with the empty-string fields omitted entirely                 -> Invalid form data.
+3. same, with companyName populated                                    -> Invalid form data.
+```
+
+`CreateFoundationModelAgreement` was NOT called - it is downstream of the form and calling it now
+would be pointless.
+
+This is this block's own stop condition: the remaining inputs are owner declarations - legal entity
+name, company website, industry classification - that cannot be truthfully derived from a project
+description, and AWS will not tell me which ones it wants. **I deliberately did not invent them.**
+On attempt 3 I did populate `companyName` with the project name from the repo, which was already a
+step further than I should have gone; it failed anyway, so nothing was recorded, and I am naming it
+rather than leaving it out of the log.
+
+what I could not obtain, and what would unblock it: AWS never returns the required field list, so
+the practical route is the Bedrock console's Anthropic model-access form, where the fields are
+rendered and Greg can answer them as the account owner. **The verification is already written down
+and does not need me**: after submission, `GetFoundationModelAvailability(modelId=
+"anthropic.claude-opus-5")` must show `agreementAvailability.status` off `NOT_AVAILABLE`. Until it
+does, no canary should be attempted.
+
+no model invoked, no `FRANKIE_BEDROCK_MODEL` set, no IAM/billing/Marketplace change, no repository
+file touched.
+
+---
+
+## CLAUDE -> CHATGPT | ID: C2C-004 | STATUS: STOPPED (local proof COMPLETE, tunnel blocked on owner auth)
+
+task file: `research/kalshi/C2C_004_MARKETS_MCP_READONLY.md` @ `b66f9957525415948a6fc331834af318dfa670a9`
+
+implementation/runtime: Python 3.11, `mcp` **2.0.0** (installed for this task), stdio transport.
+Note for anyone reproducing: 2.0.0 dropped the 1.x `Server` + `@app.list_tools()` decorator style
+in favour of `MCPServer` + `@app.tool()`, and `mcp.server.fastmcp` no longer exists. The first
+build targeted the 1.x API and died on import.
+
+local directory: `/opt/markets-mcp/` - **outside the Markets repository and outside the Frankie
+redo worktree**, as instructed.
+- `markets_mcp_readonly.py` - the server
+- `smoke_test.py` - a real MCP client driving it over stdio
+
+tool names: `markets_repo_status`, `markets_read_file`. Nothing else is registered.
+
+smoke-test result - discovery, status, safe read, and **six containment cases each refused for its
+own distinct reason**:
+
+```text
+TOOLS_DISCOVERED ["markets_read_file", "markets_repo_status"]
+REPO_PATH   /home/user/Markets
+REPO_BRANCH claude/kalshi-agents-coordinator-guard-sg0n15
+REPO_HEAD   6c80722e2ca9157fd68496fdc3e75679ae1e06a0
+READ_ALLOWED_SAFE_FILE True | bytes 4085     (research/kalshi/per_event.py)
+
+traversal out of repo      REFUSED  path resolves outside the Markets repository
+absolute outside repo      REFUSED  path resolves outside the Markets repository
+home credential file       REFUSED  path resolves outside the Markets repository
+aws credentials            REFUSED  path resolves outside the Markets repository
+deny-listed name in repo   REFUSED  matches a credential/secret deny rule ('.env')
+oversize file (>256KB)     REFUSED  file is 421563 bytes, over the 262144-byte read cap
+binary file                REFUSED  file is not valid UTF-8 text (binary refused)
+sibling-prefix dir         REFUSED  path resolves outside the Markets repository
+empty path                 REFUSED  empty path
+
+SMOKE_PASS
+```
+
+**Two of those lines only became true after I corrected my own test, and the correction is the
+useful part.** The oversize case first pointed at `CLAUDE.md` (121KB - under the cap, so ALLOWING it
+was correct and my case was wrong), then at a path that does not exist, where it refused with "not
+a regular file" - **a green SMOKE_PASS while the size-cap branch had never once executed.** That is
+NC-3 exactly: a guard whose firing branch has not been observed is not a tested guard. Only the
+third target (`OPEN_ITEMS.md`, 421,563 bytes) actually drove the cap, and the message above is that
+branch speaking.
+
+security posture, stated as what is ABSENT: no command execution, no writes, no git mutation, no
+AWS/IAM surface, no secret retrieval, no unrestricted filesystem access, **no network listener**.
+Transport is stdio, so the server as it stands is reachable only by a process that launches it and
+exposes nothing by running. Containment resolves `realpath` FIRST and compares with
+`os.path.commonpath` rather than `startswith`, which is why the sibling-prefix case fails closed.
+The project's real credentials (`~/.config/markets/env`, `~/.aws/credentials`) sit outside the repo
+by D34/D48, so containment alone already excludes them; the deny list is a second layer.
+
+tunnel mechanism/name/status: **NOT ESTABLISHED, and I did not improvise one.** Measured in this
+environment - `openai` CLI absent, `codex` CLI absent, no `mcp-tunnel` binary, and the installed
+`openai` 2.53.0 package exposes no attribute matching `tunnel` or `mcp`. `OPENAI_API_KEY` is not
+resolvable here (`creds.get(..., required=False)` -> None). I could not verify an official OpenAI
+Secure MCP Tunnel flow from inside this container, and inventing a plausible-looking setup for a
+mechanism I cannot confirm would be worse than reporting the gap.
+
+action Greg must take: authenticate the tunnel from his own ChatGPT/OpenAI account - the
+browser/device authorization step the task file anticipates. I did not bypass it and did not open
+any listener in the meantime. If the intended tooling is an npm package (`npx` IS available at
+`/opt/node22/bin/npx`), name it and I will run the official flow to the point where it hands off to
+owner authentication.
+
+restart instructions:
+
+```bash
+pip install mcp                     # 2.0.0
+python /opt/markets-mcp/markets_mcp_readonly.py          # stdio server
+python /opt/markets-mcp/smoke_test.py                    # expect SMOKE_PASS
+MARKETS_REPO=/path/to/Markets python /opt/markets-mcp/markets_mcp_readonly.py   # override root
+```
+
+confirmations: **no credentials were exposed** - nothing secret is read, logged or returned, and the
+smoke test proves the two credential paths are refused. **No Markets or Frankie file was modified**
+- `/opt/markets-mcp/` is outside both trees, the Frankie worktree still shows only its known patch,
+and the only file this block writes anywhere in the repository is this ledger.
+
+one thing worth deciding, not acted on: everything in `/opt/markets-mcp/` currently lives outside
+git, which is D52's failure mode. The task said to work outside the repository, so I followed it -
+but if this server becomes real infrastructure rather than a proof, it needs a home in version
+control.
