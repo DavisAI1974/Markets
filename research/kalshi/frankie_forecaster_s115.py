@@ -17,6 +17,7 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
+from frankie_nova_optimizer import BPE_CONTRACT, HARNESS_ACTION_CONTRACT  # noqa: E402
 from frankie_render_s115 import FrankieAgentObject, TypedPosterior, assert_byte_identical  # noqa: E402
 from frankie_s115 import (  # noqa: E402
     LensBookEntry,
@@ -31,6 +32,7 @@ STATE_ROOT = HERE / "data" / "frankie_s115"
 BOOK_ROOT = STATE_ROOT / "lens_books"
 POSTERIOR_ROOT = STATE_ROOT / "posteriors"
 TRACK_RECORD_PATH = STATE_ROOT / "specialist_track_records.json"
+ACCESS_LEDGER_ROOT = STATE_ROOT / "harness_access"
 
 TOOLBOX = {
     "spawn": {
@@ -66,6 +68,12 @@ PLAY_POLICY = (
     "existing play_index/retrieval-on-demand. Never shrink the toolbox merely to make choosing easier."
 )
 
+HARNESS_POLICY = (
+    "BPE is a view over existing Frankie state, not a replacement store. Retrieval is an explicit "
+    "costed action. Start with lossless NOVA compaction and access telemetry; any lossy view must "
+    "declare withheld content and pass A-65 decision-equivalence validation before becoming load-bearing."
+)
+
 
 def _book(lens: str) -> Path:
     return BOOK_ROOT / f"{lens}.jsonl"
@@ -94,6 +102,21 @@ def prepare_day(
         "lens_book_rule": "strictly earlier days only; absent means absent",
         "track_record_attachment": str(TRACK_RECORD_PATH) if TRACK_RECORD_PATH.is_file() else None,
         "grading_duty": GRADING_DUTY,
+        "external_state_contract": BPE_CONTRACT,
+        "external_state_actions": HARNESS_ACTION_CONTRACT,
+        "harness_policy": HARNESS_POLICY,
+        "harness_access_ledger": str(ACCESS_LEDGER_ROOT / f"{specialist}.jsonl"),
+        "harness_access_rule": (
+            "append-only telemetry; record bytes/tokens/source/action/state class and any withheld content; "
+            "do not use telemetry to reveal future/current outcomes"
+        ),
+        "token_optimizer": {
+            "implementation": "research/kalshi/frankie_nova_optimizer.py",
+            "origin": "Frankie-specific adaptation of DavisAI1974/Nova-Optimizer; original remains untouched",
+            "default_mode": "lossless",
+            "lossy_views_require_a65": True,
+            "canonical_prompt_modified": False,
+        },
         "execution_enabled": False,
     }
 
