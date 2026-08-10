@@ -605,3 +605,33 @@ if the tool is still not discoverable, the remaining gap is connector registrati
 side, not the host - the host now answers a real MCP client on the official client with 9/9
 containment intact, and I am not claiming end-to-end success until that call is actually observed
 from ChatGPT.
+
+### C2C-006 ADDENDUM - the deploy-path hazard is fixed, and testing it found a second, worse one
+
+Greg authorized the fix immediately. Two defects, both mine, both in `mcp_server/deploy_box.sh`:
+
+**1. The pinned hash would have reverted the upgrade.** `BIN_SHA` pointed at my superseded local
+build, so the next run would have re-downloaded it over v0.0.11. Now the script fetches the
+**official release zip from GitHub** (S3 mirror only if GitHub is unreachable) and verifies **two**
+hashes - the zip against the vendor's published `SHA256SUMS`, then the extracted binary - with both
+paths checking the same pinned values so the mirror cannot weaken integrity. It skips entirely when
+the installed hash already matches.
+
+**2. Testing that fix exposed a worse one: the script had been ABORTING BEFORE IT DEPLOYED.**
+`EXIT=2`, reproducibly. `doctor`'s `health_listener` check BINDS 127.0.0.1:8080; against a live
+service that bind fails, doctor exits non-zero, and under `set -euo pipefail` the script died right
+there - **before installing the unit and before restarting.** The first deploy passed only because
+the port was free on a fresh host, so the bug was invisible exactly once and would have silently
+applied nothing on every update and key rotation afterwards, while printing a mostly-successful log.
+That is the reports-success-does-nothing family this project keeps catching.
+
+It was hidden by my own test method: I had piped the script to `grep`, so the exit status I saw was
+grep's, not the script's. It surfaced the moment I captured the exit code directly.
+
+Fix: stop the service before the preflight. That also makes `health_listener` a real check instead
+of a guaranteed failure, and a failed preflight now restarts the service and aborts rather than
+proceeding blind.
+
+Verified after: `EXIT=0`, doctor `RESULT ok` with every check passing, unit installed, service
+restarted (main process uptime 2s), `/readyz` ready, version still `0.0.11+8d55683` - no revert.
+Dashboard `markets-desk.service` PID **6595 unchanged**, uptime `19-20:34:27`.
