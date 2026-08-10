@@ -3,8 +3,8 @@
 
 G18/G19 are the first current-format walked groups whose committed masked STATE artifacts are
 present on the Frankie branch. This wrapper reconstructs only disposable causal slices and declared
-anchor lookup files, then delegates to frankie_group_forecast_s118. Realized actuals remain unread
-until scoring after all forecasts are written.
+anchor lookup files, then delegates to frankie_group_forecast_s118 through the S118 clean-redo
+guards. Realized actuals remain unread until scoring after all forecasts are written.
 """
 from __future__ import annotations
 
@@ -20,21 +20,28 @@ if str(HERE) not in sys.path:
 
 import group_config as gc  # noqa: E402
 import frankie_group_forecast_s118 as runner  # noqa: E402
+import frankie_s118_redo as redo  # noqa: E402
+
+# Install the measured S118 redo repairs in-process. This changes only the validation runner:
+# A-80 real play serving, A-82 date-scoped outcome wall, A-86 real-curve/output validation.
+# It does not edit the canonical brain, specialist doctrine, or spawn.py.
+redo.install()
 
 GROUPS = ("g18", "g19")
 RENDERS = HERE / "renders" / "ng_refine_s95"
 
 # The canonical rehearsal banner names the forbidden outcome filename in a prohibition
-# ("do not open g18_actual.json"). The packet leak guard correctly scans packet text, so redact
-# that filename token in the *emitted copy only* to avoid confusing the warning with leaked data.
-# The stored spawn template and spawn.py remain byte-identical.
+# ("do not open g18_actual.json"). Redact that filename token in the emitted copy only. The stored
+# spawn template and spawn.py remain byte-identical; the A-82 wall still rejects actual contents.
 _ORIGINAL_REDIRECT = runner.spawn._redirect
+
 
 def _s118_redirect(text: str, gid: str, namespace: str) -> str:
     out = _ORIGINAL_REDIRECT(text, gid, namespace)
     out = out.replace(f"{gid}_actual.json", "[FORBIDDEN_ACTUAL_FILE]")
     out = out.replace(f"{gid}_rt.json", "[FORBIDDEN_RT_FILE]")
     return out
+
 
 runner.spawn._redirect = _s118_redirect
 
@@ -97,7 +104,7 @@ def prepare() -> dict:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--namespace", default="frankie_s118_b")
+    ap.add_argument("--namespace", default="frankie_s118_redo_b")
     ap.add_argument("--backend", choices=("openai", "bedrock"), default="openai")
     ap.add_argument("--preflight", action="store_true")
     ap.add_argument("--score-only", action="store_true")
