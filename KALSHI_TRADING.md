@@ -678,7 +678,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **177 files.**
+new tool cannot go unlisted. **178 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `archive_blind.py` — move the blind's posteriors out of the refine's filenames (S108).
@@ -825,6 +825,7 @@ new tool cannot go unlisted. **177 files.**
 - `registry_grep.py` — search the work registry. (S115 close; promoted from a scratchpad one-liner.)
 - `release_book_signal.py` — the S80 release-triggered BOOK signal (the MERGED architecture).
 - `release_signal_history.py` — test the S80 release-triggered signal on HISTORICAL Kalshi trade flow.
+- `render_s118_curves.py` — the S118 forward-curve renders: actual vs old blind vs Frankie.
 - `render_util.py` — the ONE implementation of the walk's render rules (S107).
 - `replay_g15_mbo.py` — thin DRIVER (S103) that feeds historical NG MBO records through the EXISTING
 - `restore_substrate.py` — rebuild a fresh container's local data plane in ONE command (S107).

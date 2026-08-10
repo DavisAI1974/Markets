@@ -138,6 +138,20 @@
    "result": "AUDITED BY CONSTRUCTION at S115 close. OUTBOUND task packet: it carries three ASKS and a status report, not recommendations to us. Every registry id it cites was registered before the brief was written - A-70..A-78 and A-17A/B/C/D - which is the correct order under D36 and the opposite of what happened with the S111 briefings, where twelve of thirteen suggestions lived in prose nothing counted. Recommendations arriving in the REPLY get registered in the session that reply lands.",
    "items": [],
    "verified_on": "S115"
+  },
+  "FRANKIE_S118_RESULTS_PAPER.md": {
+   "session": "S118",
+   "n_recommendations": 4,
+   "result": "AUDITED BY CONSTRUCTION at S118. Its four 'what a reader should take' points map to registry lines that existed BEFORE the paper was written: (1) fix the curve contract -> A-86; (2) the magnitude channel -> A-85 with A-83 closed; (3) find a discriminator across the 200-day corpus -> A-85's falsifier, corpus from A-77; (4) A-67 still needs an unseen block -> A-67, with h1's blocked staging recorded in group_config. Nothing in the paper recommends work that is not already an item, which is the correct D36 order.",
+   "items": [
+    "A-83",
+    "A-84",
+    "A-85",
+    "A-86",
+    "A-77",
+    "A-67"
+   ],
+   "verified_on": "S118"
   }
  }
 }

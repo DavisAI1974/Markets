@@ -1,0 +1,725 @@
+{
+ "what_this_is": "Every forecast Agent Frankie's S118 run produced, the reasoning behind each one, and the scored outcome - one file so nothing has to be reassembled. Written for an external reader.",
+ "honest_limits": [
+  "ONE POINT PER DAY. path_p50_curve is a LINEAR INTERPOLATION of the single net figure ([open, open+net*0.45, open+net*0.8, close]); it carries no intraday content. See A-86.",
+  "17 of the canonical contract's 20 day-level fields were never emitted (no band, no onset_time_et, no turn_time_et, no stand_down_reasons, no evidence_used/rejected).",
+  "NOT A-67 EVIDENCE. g18/g19/g20 are WALKED groups whose lessons are already merged into the brain, so this validates contracts and plumbing, not architecture.",
+  "The reasoning agent is Claude (opus-5) on the runner's resume path - there is no API backend credentialed on this host. Arm B's agent had read the arm A results, which is declared, not hidden."
+ ],
+ "arms": {
+  "A_baseline_passage": {
+   "namespace": "frankie_s118_b",
+   "sizing_passage": "BASELINE - the shared role file's 'Target honest under-100 USD error per day'",
+   "groups": {
+    "g18": {
+     "days": [
+      {
+       "date": "20260427",
+       "owner": "B",
+       "forecast_gap_usd": -50,
+       "forecast_net_usd": -150,
+       "forecast_day_move_usd": -200,
+       "confidence": "low",
+       "reasoning": "Weekend inheritance from a Friday whose final hour printed DOWN (anchor lasthr -1). Tape is INCOHERENT: b_share 0.453 sells while signed_flow +3189 buys, and big_print_b 0.593 leans buy - a split I decline to resolve by averaging (selector.divergence_resolution: default to the tape/flow regime, do not split the difference). Contango front/next -0.16 in injection season is a standing bleed. Small DOWN, sized at the low end BECAUSE the tape disagrees with itself, not because I am hedging.",
+       "actual_day_move_usd": 370.0,
+       "old_blind_day_move_usd": -170.0,
+       "frankie_abs_error": 520.0,
+       "old_blind_abs_error": 540.0,
+       "frankie_direction_ok": false,
+       "old_blind_direction_ok": false,
+       "emission_ratio_guess_over_actual": 0.541,
+       "benchmarks_abs_error": {
+        "zero_change": 370.0,
+        "seasonal_naive": 370.0,
+        "persistence": 370.0
+       }
+      },
+      {
+       "date": "20260504",
+       "owner": "B",
+       "forecast_gap_usd": -70,
+       "forecast_net_usd": -280,
+       "forecast_day_move_usd": -350,
+       "confidence": "med",
+       "reasoning": "Monday inheriting E's DOWN exit. Week 2 opens with gw_hdd collapsing 9.421 -> 2.652, the block's largest single warm shift, and the tape confirms rather than contradicts (b_share 0.443, signed_flow -3358). Warm + contango + injection season + a confirmed sell tape is a chain-sided bleed day, and per magnitude.s1void_injection_chain_bleed those deliver the FULL band rather than the damped shoulder band.",
+       "actual_day_move_usd": 610.0,
+       "old_blind_day_move_usd": -130.0,
+       "frankie_abs_error": 890.0,
+       "old_blind_abs_error": 740.0,
+       "frankie_direction_ok": false,
+       "old_blind_direction_ok": false,
+       "emission_ratio_guess_over_actual": 0.574,
+       "benchmarks_abs_error": {
+        "zero_change": 610.0,
+        "seasonal_naive": 240.0,
+        "persistence": 330.0
+       }
+      },
+      {
+       "date": "20260428",
+       "owner": "C",
+       "forecast_gap_usd": -60,
+       "forecast_net_usd": -260,
+       "forecast_day_move_usd": -320,
+       "confidence": "med",
+       "reasoning": "The most COHERENT sell day of week 1: b_share 0.419, signed_flow -3950 and big_print_b 0.42 all point the same way, and forecast run delta -0.096 adds a mild warm revision. Coherence is the reason this is sized above 0427, not the raw flow number.",
+       "actual_day_move_usd": -440.0,
+       "old_blind_day_move_usd": -350.0,
+       "frankie_abs_error": 180.0,
+       "old_blind_abs_error": 90.0,
+       "frankie_direction_ok": true,
+       "old_blind_direction_ok": true,
+       "emission_ratio_guess_over_actual": 0.727,
+       "benchmarks_abs_error": {
+        "zero_change": 440.0,
+        "seasonal_naive": 440.0,
+        "persistence": 810.0
+       }
+      },
+      {
+       "date": "20260429",
+       "owner": "C",
+       "forecast_gap_usd": 40,
+       "forecast_net_usd": 150,
+       "forecast_day_move_usd": 190,
+       "confidence": "low",
+       "reasoning": "Forecast run delta +0.747 is the largest cold revision in the block (gw_hdd 6.739 -> 8.006). Tape is neutral (b_share 0.471, signed_flow +342, big_print_b 0.318 - thin big prints). SHOULDER SEASON CAPS THIS: the seasonal salience slider says weather authority is reduced outside winter/summer, so a large HDD revision does not buy a large move. UP, deliberately under the size the raw delta would suggest.",
+       "actual_day_move_usd": -440.0,
+       "old_blind_day_move_usd": -150.0,
+       "frankie_abs_error": 590.0,
+       "old_blind_abs_error": 290.0,
+       "frankie_direction_ok": false,
+       "old_blind_direction_ok": true,
+       "emission_ratio_guess_over_actual": 0.432,
+       "benchmarks_abs_error": {
+        "zero_change": 440.0,
+        "seasonal_naive": 440.0,
+        "persistence": 0.0
+       }
+      },
+      {
+       "date": "20260505",
+       "owner": "C",
+       "forecast_gap_usd": -40,
+       "forecast_net_usd": -200,
+       "forecast_day_move_usd": -240,
+       "confidence": "med",
+       "reasoning": "Tape and weather DISAGREE: signed_flow -3110 and b_share 0.443 say sell, while gw_cdd 3.438 and gw_hdd 4.435 both tick up (run delta +0.07). In the shoulder the slider hands authority to flows, so the tape wins and the weather tick only reduces the size. DOWN, smaller than 0504.",
+       "actual_day_move_usd": -830.0,
+       "old_blind_day_move_usd": -400.0,
+       "frankie_abs_error": 630.0,
+       "old_blind_abs_error": 430.0,
+       "frankie_direction_ok": true,
+       "old_blind_direction_ok": true,
+       "emission_ratio_guess_over_actual": 0.289,
+       "benchmarks_abs_error": {
+        "zero_change": 830.0,
+        "seasonal_naive": 390.0,
+        "persistence": 1440.0
+       }
+      },
+      {
+       "date": "20260506",
+       "owner": "C",
+       "forecast_gap_usd": 40,
+       "forecast_net_usd": 220,
+       "forecast_day_move_usd": 260,
+       "confidence": "med",
+       "reasoning": "Flow flips positive and coherent: signed_flow +3258, b_share 0.489, big_print_b 0.521, with run delta +0.346 colder behind it. Both channels agree for the first time since 0430. UP.",
+       "actual_day_move_usd": -530.0,
+       "old_blind_day_move_usd": 100.0,
+       "frankie_abs_error": 750.0,
+       "old_blind_abs_error": 630.0,
+       "frankie_direction_ok": false,
+       "old_blind_direction_ok": false,
+       "emission_ratio_guess_over_actual": 0.491,
+       "benchmarks_abs_error": {
+        "zero_change": 530.0,
+        "seasonal_naive": 90.0,
+        "persistence": 300.0
+       }
+      },
+      {
+       "date": "20260430",
+       "owner": "D",
+       "forecast_gap_usd": 50,
+       "forecast_net_usd": 330,
+       "forecast_day_move_usd": 380,
+       "confidence": "med",
+       "reasoning": "EIA print day, consensus +80 Bcf. The strongest coherent BUY in the block: signed_flow +7783 (2x any other day), b_share 0.52 - the only reading above 0.50 all block - and big_print_b 0.621 clearing the 0.55 gate on a size-weighted basis. Managed money sits at the 8.49th percentile 1y, deeply crowded short with WoW +13,521 already covering. Per S106 the crowded short is a TAIL driver, not a p50 driver, so this is sized on the FLOW, with the positioning noted as upside tail rather than folded into the number.",
+       "actual_day_move_usd": 1230.0,
+       "old_blind_day_move_usd": 400.0,
+       "frankie_abs_error": 900.0,
+       "old_blind_abs_error": 830.0,
+       "frankie_direction_ok": true,
+       "old_blind_direction_ok": true,
+       "emission_ratio_guess_over_actual": 0.309,
+       "benchmarks_abs_error": {
+        "zero_change": 1230.0,
+        "seasonal_naive": 1230.0,
+        "persistence": 1670.0
+       }
+      },
+      {
+       "date": "20260507",
+       "owner": "D",
+       "forecast_gap_usd": 20,
+       "forecast_net_usd": 90,
+       "forecast_day_move_usd": 110,
+       "confidence": "low",
+       "reasoning": "Second EIA print day, and the WEAKEST conviction of the block. signed_flow +2066 is positive but big_print_b 0.427 is well under the 0.55 gate and b_share 0.48 is under 0.50 - the flow_conviction sign gate is NOT satisfied, the size-weighted big prints do not confirm, and run delta is -0.104. Near-flat UP. I am emitting small because the evidence is genuinely thin, not to protect the scoreboard.",
+       "actual_day_move_usd": 730.0,
+       "old_blind_day_move_usd": -120.0,
+       "frankie_abs_error": 640.0,
+       "old_blind_abs_error": 850.0,
+       "frankie_direction_ok": true,
+       "old_blind_direction_ok": false,
+       "emission_ratio_guess_over_actual": 0.151,
+       "benchmarks_abs_error": {
+        "zero_change": 730.0,
+        "seasonal_naive": 500.0,
+        "persistence": 1260.0
+       }
+      },
+      {
+       "date": "20260501",
+       "owner": "E",
+       "forecast_gap_usd": -30,
+       "forecast_net_usd": -190,
+       "forecast_day_move_usd": -220,
+       "confidence": "low",
+       "reasoning": "Friday exit after a print day. Forecast run delta -0.343 is the block's largest WARM revision and gw_cdd 0.708 is its lowest - mild kills demand, which the weather model says is the big-DOWN asymmetry. Tape gives back: signed_flow -801 against the prior day's +7783. E owns the exit and the weekend handoff; exit type is give-back, Monday bias DOWN.",
+       "actual_day_move_usd": 280.0,
+       "old_blind_day_move_usd": -480.0,
+       "frankie_abs_error": 470.0,
+       "old_blind_abs_error": 760.0,
+       "frankie_direction_ok": false,
+       "old_blind_direction_ok": false,
+       "emission_ratio_guess_over_actual": 0.786,
+       "benchmarks_abs_error": {
+        "zero_change": 280.0,
+        "seasonal_naive": 280.0,
+        "persistence": 950.0
+       }
+      },
+      {
+       "date": "20260508",
+       "owner": "E",
+       "forecast_gap_usd": -20,
+       "forecast_net_usd": -150,
+       "forecast_day_move_usd": -170,
+       "confidence": "low",
+       "reasoning": "Friday exit into the weekend. Tape is quiet and mildly negative (signed_flow -544, b_share 0.459), run delta -0.02 flat. Friday close-location over flow shape per the S106 play: no driver argues for size. Modest DOWN and a DOWN weekend bias handed to the next Monday.",
+       "actual_day_move_usd": -370.0,
+       "old_blind_day_move_usd": -420.0,
+       "frankie_abs_error": 220.0,
+       "old_blind_abs_error": 50.0,
+       "frankie_direction_ok": true,
+       "old_blind_direction_ok": true,
+       "emission_ratio_guess_over_actual": 0.459,
+       "benchmarks_abs_error": {
+        "zero_change": 370.0,
+        "seasonal_naive": 650.0,
+        "persistence": 1100.0
+       }
+      }
+     ],
+     "weekend_bridges": [
+      {
+       "specialist": "A",
+       "group": "g18",
+       "date": "20260504",
+       "template": "BLD-2",
+       "overnight_gap_usd": -70,
+       "guessed_net_usd": 0,
+       "path_p50_curve": [
+        0,
+        -70
+       ],
+       "monday_bias": "down",
+       "exit_type": "give_back",
+       "execution_enabled": false,
+       "reasoning": "E exits 05-01 on a give-back: signed_flow -801 against the prior day's +7783, the block's largest WARM revision (run delta -0.343) and gw_cdd at its block low of 0.708. A's weekend read: the Friday exit is a GIVE-BACK, not a turn - nothing cleared 0.50 on the way out. Week 2 opens with gw_hdd collapsing 9.421 -> 2.652, so the weekend adds warm to an already-warm exit. Monday bias DOWN, and B should size it on the chain rather than treat it as a fresh start (the S106 extension-blindness lesson: do not reset to cum 0 at the weekend).",
+       "agent": "claude-opus-5 as the S118 reasoning lane",
+       "note": "A informs, B decides, B owns the number (S104 weekend seam pairing)."
+      }
+     ]
+    },
+    "g19": {
+     "days": [
+      {
+       "date": "20260511",
+       "owner": "B",
+       "forecast_gap_usd": -50,
+       "forecast_net_usd": -160,
+       "forecast_day_move_usd": -210,
+       "confidence": "low",
+       "reasoning": "Monday inheriting a DOWN Friday exit (anchor lasthr -1). Tape and weather OPPOSE: b_share 0.451 with signed_flow -3214 says sell, while run delta +0.846 is the block's largest cold revision. mod_cool is not winter - the seasonal salience slider hands authority to flows outside the extremes, so the tape leads and the cold revision only caps the size. Small DOWN.",
+       "actual_day_move_usd": 1740.0,
+       "old_blind_day_move_usd": -450.0,
+       "frankie_abs_error": 1900.0,
+       "old_blind_abs_error": 2190.0,
+       "frankie_direction_ok": false,
+       "old_blind_direction_ok": false,
+       "emission_ratio_guess_over_actual": 0.121,
+       "benchmarks_abs_error": {
+        "zero_change": 1740.0,
+        "seasonal_naive": 1740.0,
+        "persistence": 1740.0
+       }
+      },
+      {
+       "date": "20260518",
+       "owner": "B",
+       "forecast_gap_usd": 60,
+       "forecast_net_usd": 300,
+       "forecast_day_move_usd": 360,
+       "confidence": "med",
+       "reasoning": "THE BLOCK'S DOMINANT WEATHER EVENT: forecast gw_cdd 3.992 -> 10.331 and the regime flips to hard_cool, a mid-May cooling ramp that is a genuine power-burn driver, not a shoulder tick. The tape does NOT oppose it (signed_flow +486, big_print_b 0.506). When the dominant forcing is unopposed by flow I size on the forcing. UP, the block's largest call. Standing caveat: managed money at the 2.83rd percentile 1y with shorts STILL ADDING (WoW -10,244) is the G11 configuration, where the blind held a down-chain into a covering rally - I carry that as an UPSIDE TAIL on this day, not as p50.",
+       "actual_day_move_usd": 660.0,
+       "old_blind_day_move_usd": -550.0,
+       "frankie_abs_error": 360.0,
+       "old_blind_abs_error": 1210.0,
+       "frankie_direction_ok": true,
+       "old_blind_direction_ok": false,
+       "emission_ratio_guess_over_actual": 0.545,
+       "benchmarks_abs_error": {
+        "zero_change": 660.0,
+        "seasonal_naive": 1080.0,
+        "persistence": 340.0
+       }
+      },
+      {
+       "date": "20260512",
+       "owner": "C",
+       "forecast_gap_usd": 30,
+       "forecast_net_usd": 120,
+       "forecast_day_move_usd": 150,
+       "confidence": "low",
+       "reasoning": "Flow goes flat-to-positive (signed_flow +763 after -3214) with big_print_b 0.507 and run delta +0.36 still cold. Nothing has conviction. Small UP, and small is the honest answer rather than a hedge - no channel is loud.",
+       "actual_day_move_usd": -960.0,
+       "old_blind_day_move_usd": -200.0,
+       "frankie_abs_error": 1080.0,
+       "old_blind_abs_error": 760.0,
+       "frankie_direction_ok": false,
+       "old_blind_direction_ok": true,
+       "emission_ratio_guess_over_actual": 0.156,
+       "benchmarks_abs_error": {
+        "zero_change": 960.0,
+        "seasonal_naive": 960.0,
+        "persistence": 2700.0
+       }
+      },
+      {
+       "date": "20260513",
+       "owner": "C",
+       "forecast_gap_usd": -40,
+       "forecast_net_usd": -230,
+       "forecast_day_move_usd": -270,
+       "confidence": "med",
+       "reasoning": "Coherent sell: b_share 0.454, signed_flow -2586, big_print_b 0.446 all one way, and run delta -0.281 turns the weather warm behind it. Both channels agree, so this is sized above 0511 where they fought.",
+       "actual_day_move_usd": 420.0,
+       "old_blind_day_move_usd": -400.0,
+       "frankie_abs_error": 650.0,
+       "old_blind_abs_error": 820.0,
+       "frankie_direction_ok": false,
+       "old_blind_direction_ok": false,
+       "emission_ratio_guess_over_actual": 0.643,
+       "benchmarks_abs_error": {
+        "zero_change": 420.0,
+        "seasonal_naive": 420.0,
+        "persistence": 1380.0
+       }
+      },
+      {
+       "date": "20260519",
+       "owner": "C",
+       "forecast_gap_usd": -40,
+       "forecast_net_usd": -240,
+       "forecast_day_move_usd": -280,
+       "confidence": "med",
+       "reasoning": "Give-back after the ramp. b_share 0.386 is the most extreme sell reading of the block and gw_cdd fades 10.331 -> 9.16. The ramp was priced on 0518; the tape is now selling it. DOWN.",
+       "actual_day_move_usd": 840.0,
+       "old_blind_day_move_usd": 150.0,
+       "frankie_abs_error": 1080.0,
+       "old_blind_abs_error": 690.0,
+       "frankie_direction_ok": false,
+       "old_blind_direction_ok": true,
+       "emission_ratio_guess_over_actual": 0.333,
+       "benchmarks_abs_error": {
+        "zero_change": 840.0,
+        "seasonal_naive": 1800.0,
+        "persistence": 180.0
+       }
+      },
+      {
+       "date": "20260514",
+       "owner": "D",
+       "forecast_gap_usd": -40,
+       "forecast_net_usd": -270,
+       "forecast_day_move_usd": -310,
+       "confidence": "med",
+       "reasoning": "EIA print day in injection season with a coherent sell tape into it (b_share 0.444, signed_flow -2763) and run delta -0.239 warm. Contango front/next holds. DOWN. The crowded short is noted and NOT folded in - see 0518.",
+       "actual_day_move_usd": 590.0,
+       "old_blind_day_move_usd": -150.0,
+       "frankie_abs_error": 860.0,
+       "old_blind_abs_error": 740.0,
+       "frankie_direction_ok": false,
+       "old_blind_direction_ok": false,
+       "emission_ratio_guess_over_actual": 0.525,
+       "benchmarks_abs_error": {
+        "zero_change": 590.0,
+        "seasonal_naive": 590.0,
+        "persistence": 170.0
+       }
+      },
+      {
+       "date": "20260521",
+       "owner": "D",
+       "forecast_gap_usd": -30,
+       "forecast_net_usd": -180,
+       "forecast_day_move_usd": -210,
+       "confidence": "low",
+       "reasoning": "Second EIA print. Tape is INCOHERENT (b_share 0.425 sells, signed_flow +1892 buys, big_print_b 0.476 under the gate) but the weather is not: run delta -0.632 is the block's largest warm revision, gw_cdd collapses 7.076 -> 2.697 and the regime drops to shoulder. Mild kills demand - the big-DOWN asymmetry. DOWN, sized on the weather because it is the only coherent channel.",
+       "actual_day_move_usd": -420.0,
+       "old_blind_day_move_usd": 280.0,
+       "frankie_abs_error": 240.0,
+       "old_blind_abs_error": 700.0,
+       "frankie_direction_ok": true,
+       "old_blind_direction_ok": false,
+       "emission_ratio_guess_over_actual": 0.5,
+       "benchmarks_abs_error": {
+        "zero_change": 420.0,
+        "seasonal_naive": 1010.0,
+        "persistence": 630.0
+       }
+      },
+      {
+       "date": "20260515",
+       "owner": "E",
+       "forecast_gap_usd": 20,
+       "forecast_net_usd": 100,
+       "forecast_day_move_usd": 120,
+       "confidence": "low",
+       "reasoning": "Friday. Flow ticks positive (+1072) and big_print_b 0.514 clears 0.50, but b_share 0.463 does not - the flow_conviction gate is unsatisfied, so this is a pause in the bleed rather than a turn. Small UP, weak exit signal handed forward.",
+       "actual_day_move_usd": 320.0,
+       "old_blind_day_move_usd": 90.0,
+       "frankie_abs_error": 220.0,
+       "old_blind_abs_error": 230.0,
+       "frankie_direction_ok": true,
+       "old_blind_direction_ok": true,
+       "emission_ratio_guess_over_actual": 0.375,
+       "benchmarks_abs_error": {
+        "zero_change": 320.0,
+        "seasonal_naive": 320.0,
+        "persistence": 270.0
+       }
+      },
+      {
+       "date": "20260520",
+       "owner": "E",
+       "forecast_gap_usd": -30,
+       "forecast_net_usd": -200,
+       "forecast_day_move_usd": -230,
+       "confidence": "med",
+       "reasoning": "SEAM DAY - the June/NGM26 -> July/NGN26 roll. The overnight GAP across a never-traded seam is void, so I put almost nothing in the gap and take the call in the session net. Tape stays sell (b_share 0.393) and run delta -0.478 is warm. DOWN on the post-roll leg.",
+       "actual_day_move_usd": -1050.0,
+       "old_blind_day_move_usd": 200.0,
+       "frankie_abs_error": 850.0,
+       "old_blind_abs_error": 1250.0,
+       "frankie_direction_ok": true,
+       "old_blind_direction_ok": false,
+       "emission_ratio_guess_over_actual": 0.219,
+       "benchmarks_abs_error": {
+        "zero_change": 1050.0,
+        "seasonal_naive": 1470.0,
+        "persistence": 1890.0
+       }
+      },
+      {
+       "date": "20260522",
+       "owner": "E",
+       "forecast_gap_usd": -40,
+       "forecast_net_usd": -250,
+       "forecast_day_move_usd": -290,
+       "confidence": "med",
+       "reasoning": "Coherent sell into the Friday exit: b_share 0.406, signed_flow -2651, run delta -0.295 warm, contango intact. The whole block closed under a sub-0.50 tape on 10 of 10 days and never printed a flip confirm - no band break, no buy-side clearing of 0.50 - so the down chain is still alive at the exit and I hand a DOWN Monday bias forward.",
+       "actual_day_move_usd": -990.0,
+       "old_blind_day_move_usd": -190.0,
+       "frankie_abs_error": 740.0,
+       "old_blind_abs_error": 800.0,
+       "frankie_direction_ok": true,
+       "old_blind_direction_ok": true,
+       "emission_ratio_guess_over_actual": 0.293,
+       "benchmarks_abs_error": {
+        "zero_change": 990.0,
+        "seasonal_naive": 1310.0,
+        "persistence": 570.0
+       }
+      }
+     ],
+     "weekend_bridges": [
+      {
+       "specialist": "A",
+       "group": "g19",
+       "date": "20260518",
+       "template": "BLD-2",
+       "overnight_gap_usd": 60,
+       "guessed_net_usd": 0,
+       "path_p50_curve": [
+        0,
+        60
+       ],
+       "monday_bias": "up",
+       "exit_type": "pause_not_turn",
+       "execution_enabled": false,
+       "reasoning": "E exits 05-15 flat-to-mildly-up: signed_flow +1072 and big_print_b 0.514, but b_share 0.463 never cleared 0.50, so the flow_conviction gate is unsatisfied and this is a PAUSE in the bleed, not a turn. The weekend then changes the driver: forecast gw_cdd 3.992 -> 10.331 and the regime flips to hard_cool. A's read: the down chain is intact on flow but a genuine cooling ramp arrives over the weekend and the tape is not opposing it. Monday bias UP, with the caveat that managed money at the 2.83rd percentile with shorts still adding makes the upside the fatter tail.",
+       "agent": "claude-opus-5 as the S118 reasoning lane",
+       "note": "A informs, B decides, B owns the number (S104 weekend seam pairing)."
+      }
+     ]
+    }
+   }
+  },
+  "B_varied_sizing_passage": {
+   "namespace": "frankie_s118_c",
+   "sizing_passage": "VARIED - the under-100 error target withdrawn; size what the drivers support, sum independent drivers, scoreboard is the forward curve against named benchmarks. THE ONLY VARIABLE CHANGED.",
+   "groups": {
+    "g20": {
+     "days": [
+      {
+       "date": "20260525",
+       "owner": "A",
+       "forecast_gap_usd": -60,
+       "forecast_net_usd": -240,
+       "forecast_day_move_usd": -300,
+       "confidence": "low",
+       "reasoning": "Memorial Day. b_share 0.367 is the block's most extreme sell but the tape is THIN and big_print_b 1.0 on a holiday session is a thin-tape artifact, not a 1.0 conviction - S107's guard says raise the bar below ~20 prints, so I do not size on it. run delta -0.758 is the block's largest warm revision. DOWN, and damped for thinness rather than for caution.",
+       "actual_day_move_usd": 30.0,
+       "old_blind_day_move_usd": 180.0,
+       "frankie_abs_error": 270.0,
+       "old_blind_abs_error": 150.0,
+       "frankie_direction_ok": false,
+       "old_blind_direction_ok": true,
+       "emission_ratio_guess_over_actual": 10.0,
+       "benchmarks_abs_error": {
+        "zero_change": 30.0,
+        "seasonal_naive": 30.0,
+        "persistence": 30.0
+       }
+      },
+      {
+       "date": "20260601",
+       "owner": "B",
+       "forecast_gap_usd": 50,
+       "forecast_net_usd": 250,
+       "forecast_day_move_usd": 300,
+       "confidence": "low",
+       "reasoning": "Month start. b_share 0.513 CLEARS 0.50 for the first time in the block, but signed_flow is only +278 and big_print_b 1.0 is again a thin-print artifact. The sign gate is satisfied and the size evidence is not, so this is a genuine small UP - small because the evidence is thin, not to protect the error line.",
+       "actual_day_move_usd": -990.0,
+       "old_blind_day_move_usd": 350.0,
+       "frankie_abs_error": 1240.0,
+       "old_blind_abs_error": 1340.0,
+       "frankie_direction_ok": false,
+       "old_blind_direction_ok": false,
+       "emission_ratio_guess_over_actual": 0.303,
+       "benchmarks_abs_error": {
+        "zero_change": 990.0,
+        "seasonal_naive": 1020.0,
+        "persistence": 830.0
+       }
+      },
+      {
+       "date": "20260526",
+       "owner": "C",
+       "forecast_gap_usd": 70,
+       "forecast_net_usd": 420,
+       "forecast_day_move_usd": 490,
+       "confidence": "med",
+       "reasoning": "TWO INDEPENDENT DRIVERS AGREE AND I AM SUMMING THEM, not emitting the dominant one: buy tape (signed_flow +1094, big_print_b 0.599 clearing the 0.55 gate) AND a real cooling ramp (gw_cdd 5.618 -> 7.43). Under the withdrawn under-100 target I would have called ~+150 here; the drivers support more.",
+       "actual_day_move_usd": -190.0,
+       "old_blind_day_move_usd": -280.0,
+       "frankie_abs_error": 610.0,
+       "old_blind_abs_error": 90.0,
+       "frankie_direction_ok": false,
+       "old_blind_direction_ok": true,
+       "emission_ratio_guess_over_actual": 2.579,
+       "benchmarks_abs_error": {
+        "zero_change": 190.0,
+        "seasonal_naive": 190.0,
+        "persistence": 220.0
+       }
+      },
+      {
+       "date": "20260527",
+       "owner": "C",
+       "forecast_gap_usd": -50,
+       "forecast_net_usd": -330,
+       "forecast_day_move_usd": -380,
+       "confidence": "low",
+       "reasoning": "SPLIT: tape sells (b_share 0.44, signed_flow -1290) while gw_cdd keeps rising to 8.197 (run delta +0.171). Override test is gw_hdd >= 16.4 AND b_share >= 0.50 - gw_hdd is 0.593 and b_share 0.44, so it FAILS and selector.divergence_resolution says take the TAPE. Declaring the split and the test explicitly (A-84), because resolving it silently is what cost the two worst events of the last run.",
+       "actual_day_move_usd": 610.0,
+       "old_blind_day_move_usd": -500.0,
+       "frankie_abs_error": 940.0,
+       "old_blind_abs_error": 1110.0,
+       "frankie_direction_ok": false,
+       "old_blind_direction_ok": false,
+       "emission_ratio_guess_over_actual": 0.623,
+       "benchmarks_abs_error": {
+        "zero_change": 610.0,
+        "seasonal_naive": 610.0,
+        "persistence": 800.0
+       }
+      },
+      {
+       "date": "20260602",
+       "owner": "C",
+       "forecast_gap_usd": 60,
+       "forecast_net_usd": 380,
+       "forecast_day_move_usd": 440,
+       "confidence": "med",
+       "reasoning": "SPLIT the other way: signed_flow +3796 buys hard while run delta -0.36 turns the weather warm. Override fails again (gw_hdd 0.522), so TAPE wins - the same rule as 0527, applied in the opposite direction, which is the consistency that was missing last run. UP.",
+       "actual_day_move_usd": -80.0,
+       "old_blind_day_move_usd": 250.0,
+       "frankie_abs_error": 460.0,
+       "old_blind_abs_error": 330.0,
+       "frankie_direction_ok": false,
+       "old_blind_direction_ok": false,
+       "emission_ratio_guess_over_actual": 5.5,
+       "benchmarks_abs_error": {
+        "zero_change": 80.0,
+        "seasonal_naive": 110.0,
+        "persistence": 910.0
+       }
+      },
+      {
+       "date": "20260603",
+       "owner": "C",
+       "forecast_gap_usd": 60,
+       "forecast_net_usd": 450,
+       "forecast_day_move_usd": 510,
+       "confidence": "med",
+       "reasoning": "No split - everything agrees: signed_flow +3524, big_print_b 0.585 clears the gate, gw_cdd rises 6.261 -> 7.034. Three live drivers on one side get SUMMED. The largest up call of the block.",
+       "actual_day_move_usd": 750.0,
+       "old_blind_day_move_usd": 480.0,
+       "frankie_abs_error": 300.0,
+       "old_blind_abs_error": 270.0,
+       "frankie_direction_ok": true,
+       "old_blind_direction_ok": true,
+       "emission_ratio_guess_over_actual": 0.68,
+       "benchmarks_abs_error": {
+        "zero_change": 750.0,
+        "seasonal_naive": 140.0,
+        "persistence": 830.0
+       }
+      },
+      {
+       "date": "20260528",
+       "owner": "D",
+       "forecast_gap_usd": -70,
+       "forecast_net_usd": -520,
+       "forecast_day_move_usd": -590,
+       "confidence": "med",
+       "reasoning": "EIA print in injection season with the block's second-largest sell flow (-4910), b_share 0.448, and the weather SOFTENING behind it (gw_cdd 8.197 -> 5.904). Not a split - both drivers point down, so I sum them. The largest down call of week 1.",
+       "actual_day_move_usd": 2100.0,
+       "old_blind_day_move_usd": 150.0,
+       "frankie_abs_error": 2620.0,
+       "old_blind_abs_error": 1950.0,
+       "frankie_direction_ok": false,
+       "old_blind_direction_ok": true,
+       "emission_ratio_guess_over_actual": 0.281,
+       "benchmarks_abs_error": {
+        "zero_change": 2100.0,
+        "seasonal_naive": 2100.0,
+        "persistence": 1490.0
+       }
+      },
+      {
+       "date": "20260604",
+       "owner": "D",
+       "forecast_gap_usd": -60,
+       "forecast_net_usd": -400,
+       "forecast_day_move_usd": -460,
+       "confidence": "med",
+       "reasoning": "Second EIA print. SPLIT and this one is uncomfortable: signed_flow -2852 sells while gw_cdd ramps to 9.303. Override fails (gw_hdd 0.281), so TAPE. I am taking it because the rule says so and I applied it on 0527 and 0602 - applying it only when it feels right is how it stopped being a rule.",
+       "actual_day_move_usd": 1130.0,
+       "old_blind_day_move_usd": -450.0,
+       "frankie_abs_error": 1530.0,
+       "old_blind_abs_error": 1580.0,
+       "frankie_direction_ok": false,
+       "old_blind_direction_ok": false,
+       "emission_ratio_guess_over_actual": 0.407,
+       "benchmarks_abs_error": {
+        "zero_change": 1130.0,
+        "seasonal_naive": 970.0,
+        "persistence": 380.0
+       }
+      },
+      {
+       "date": "20260529",
+       "owner": "E",
+       "forecast_gap_usd": -50,
+       "forecast_net_usd": -350,
+       "forecast_day_move_usd": -400,
+       "confidence": "med",
+       "reasoning": "Friday exit continuing the sell: signed_flow -1966, b_share 0.458, big_print_b 0.522. Nothing has turned - no band break, b_share never cleared 0.50 all week. DOWN into the weekend, chain intact.",
+       "actual_day_move_usd": -160.0,
+       "old_blind_day_move_usd": -380.0,
+       "frankie_abs_error": 190.0,
+       "old_blind_abs_error": 220.0,
+       "frankie_direction_ok": true,
+       "old_blind_direction_ok": true,
+       "emission_ratio_guess_over_actual": 2.5,
+       "benchmarks_abs_error": {
+        "zero_change": 160.0,
+        "seasonal_naive": 160.0,
+        "persistence": 2260.0
+       }
+      },
+      {
+       "date": "20260605",
+       "owner": "E",
+       "forecast_gap_usd": -70,
+       "forecast_net_usd": -560,
+       "forecast_day_move_usd": -630,
+       "confidence": "med",
+       "reasoning": "The hardest day in the block and the clearest test of the rule. The block's LARGEST sell flow (-5662) against its LARGEST bullish weather signal - gw_cdd 10.921 and the regime flipping to hard_cool. Override test: gw_hdd 0.433, nowhere near 16.4, and b_share 0.445 under 0.50 - it FAILS, so TAPE. DOWN and sized large, because both the flow magnitude and the Friday exit support it. Standing caveat carried, not folded in: managed money covered +23,762 WoW, the largest weekly cover of any block here, so the upside tail is fat even though the p50 is down.",
+       "actual_day_move_usd": -1340.0,
+       "old_blind_day_move_usd": -500.0,
+       "frankie_abs_error": 780.0,
+       "old_blind_abs_error": 840.0,
+       "frankie_direction_ok": true,
+       "old_blind_direction_ok": true,
+       "emission_ratio_guess_over_actual": 0.47,
+       "benchmarks_abs_error": {
+        "zero_change": 1340.0,
+        "seasonal_naive": 1180.0,
+        "persistence": 2470.0
+       }
+      }
+     ],
+     "weekend_bridges": [
+      {
+       "specialist": "A",
+       "group": "g20",
+       "date": "20260601",
+       "template": "BLD-2",
+       "overnight_gap_usd": 50,
+       "guessed_net_usd": 0,
+       "path_p50_curve": [
+        0,
+        50
+       ],
+       "monday_bias": "up",
+       "exit_type": "chain_intact_no_turn",
+       "execution_enabled": false,
+       "reasoning": "E exits 0529 still selling (signed_flow -1966, b_share 0.458) with no band break and b_share never clearing 0.50 all week - the down chain is INTACT, not turned. But the weekend changes one thing: gw_cdd holds 6.1 and month-start flow arrives, and managed money covered +23,762 WoW, the largest weekly cover in this block. A's read: chain intact, no turn confirmed, so B should NOT reset to a fresh start (S106 extension-blindness) - carry the chain. Monday bias mildly UP on month-start flow only, and small, because the chain says down and only the calendar says up.",
+       "arm": "S114 varied sizing passage (arm B)",
+       "note": "A informs, B decides, B owns the number."
+      }
+     ]
+    }
+   }
+  }
+ }
+}

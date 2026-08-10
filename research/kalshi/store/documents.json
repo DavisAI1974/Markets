@@ -343,6 +343,16 @@
    "path": "research/kalshi/CHATGPT_BRIEF_S116_FRANKIE_STATUS.md",
    "class": "EXTERNAL",
    "why": "OUTBOUND status brief to the external Frankie builder at S115 close: how we verified the build and why it is not merged (A-70), the three corrections that affect their work (M-16 is two defects and the ignored-out_dir half is the worse one; A-71 done so the head substrate exists; the corpus is 70 gradeable days), the new registry items, and three narrow asks. A RECORD of what we sent, dated."
+  },
+  {
+   "path": "research/kalshi/FRANKIE_S118_RESULTS_PAPER.md",
+   "class": "EXTERNAL",
+   "why": "The S118 Frankie run written up for an external reader (ChatGPT): every result per event, the reasoning, the two arms of the S114 sizing experiment, and four limits stated before the results - chief among them that path_p50_curve is a linear interpolation of one number per day (A-86)."
+  },
+  {
+   "path": "research/kalshi/records/S118/FRANKIE_S118_COMPLETE_RUN.json",
+   "class": "RECORD",
+   "why": "Machine-readable companion to the S118 paper: all 30 forecasts with reasoning, actual, old-blind comparison, per-event errors, emission ratio and the three named benchmarks, plus the weekend bridges. One file so nothing has to be reassembled."
   }
  ]
 }

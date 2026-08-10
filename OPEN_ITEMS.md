@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 176 |
+| open | 177 |
 | in progress | 1 |
 | done | 22 |
 
-By size: **XS** 20, **S** 78, **M** 55, **L** 13
+By size: **XS** 20, **S** 78, **M** 56, **L** 13
 
 ---
 
-By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 44, **REST** 108
+By tier: **ESSENTIAL** 26, **BIGGEST_WIN** 44, **REST** 108
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (25)
+## ESSENTIAL (26)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -44,6 +44,7 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 44, **REST** 108
 | **A-70** | M | MERGE REVIEW: chatgpt/agent-frankie-s117 carries an UNREAD base branch into the trunk | Everything downstream is blocked on it. A-67 arm 1 is the next real experiment and it cannot run until Frankie is on the trunk; but the merge commit also lands the dashboard / novel-edge-lab S116 base, and a merge commit signs for the whole diff. |
 | **A-74** | M | THE LIVE LOOP HAS NEVER RUN AS A SERVICE - collector-as-a-service was G3 of the S110 go-plan and has no registry line | Paper trading is the next milestone and it needs a loop that survives a session ending. Everything else in the S110 go-plan got built - G0 account closed, G1 paper ledger with four risk caps, G2 daily loop, G4 andon - and this one line, the one that makes them RUN WITHOUT A HUMAN, was never tracked. |
 | **A-84** | M | THE TAPE-vs-FORECAST-WEATHER CONFLICT IS RESOLVED ARBITRARILY, AND IT OWNS THE LARGEST MISSES | A SELECTION failure, distinct from A-83's under-emission, and it owns the single worst remaining event of the run. Under-emission costs a fraction of a move; taking the wrong side of a conflict costs the whole move AND the sign. |
+| **A-86** | M | THE S118 POSTERIORS ARE ONE POINT PER DAY - path_p50_curve is validated on LENGTH, so a straight line passes | It means the S118 run did not produce the product. D32 says the product is a CURVE; what was emitted is a daily net with a straight line drawn through it, and every render, score and comparison built on it inherits that. |
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | M | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24. |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -242,6 +243,7 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 44, **REST** 108
 | **A-70** | ESSENTIAL | M | OPEN | S115 | MERGE REVIEW: chatgpt/agent-frankie-s117 carries an UNREAD base branch into the trunk | - |
 | **A-74** | ESSENTIAL | M | OPEN | S101-02 (designed), S110 (pl | THE LIVE LOOP HAS NEVER RUN AS A SERVICE - collector-as-a-service was G3 of the S110 go-plan and has no registry line | - |
 | **A-84** | ESSENTIAL | M | OPEN | S118 | THE TAPE-vs-FORECAST-WEATHER CONFLICT IS RESOLVED ARBITRARILY, AND IT OWNS THE LARGEST MISSES | - |
+| **A-86** | ESSENTIAL | M | OPEN | S118 | THE S118 POSTERIORS ARE ONE POINT PER DAY - path_p50_curve is validated on LENGTH, so a straight line passes | - |
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | ESSENTIAL | M | OPEN | S115 | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -763,6 +765,22 @@ MEASURED per event, S118. The two days where the served tape and the served fore
 **The brain already carries the rule and it was not applied consistently**: `selector.divergence_resolution` (merged s102.3) says stop AVERAGING bimodal splits, default to the tape/flow regime, catalyst override only above gw_hdd >= 16.4 AND b_share >= 0.50. Neither day met the override, so the play says TAPE on both - which would still have lost 0429, but consistently, and consistency is what makes a rule testable at all.
 
 Invisible in any aggregate: the two errors have OPPOSITE SIGNS and partly cancel in drift, which is the cancellation D4 was written against.
+
+---
+
+### [ESSENTIAL] A-86 - THE S118 POSTERIORS ARE ONE POINT PER DAY - path_p50_curve is validated on LENGTH, so a straight line passes
+
+*size M | OPEN | raised S118*
+
+**Why it is ESSENTIAL:** It means the S118 run did not produce the product. D32 says the product is a CURVE; what was emitted is a daily net with a straight line drawn through it, and every render, score and comparison built on it inherits that.
+
+**Source:** S118; Greg, looking at the renders: 'there's only one point per day. why?'
+
+MEASURED S118 against the canonical output contract in `agents/mbo_refine_shared.md`. The contract specifies **`path_p50_curve` as `[[et_hr, cum_usd], ...]` on the 2-HOURLY CLOCK FROM THE 20:00 REOPEN** - roughly twelve points carrying explicit ET hours - alongside `onset_time_et`, `turn_time_et`, `expected_magnitude_band_usd`, `trend_vs_chop`, `continuation_vs_reversal`, `stand_down_reasons`, `evidence_used`, `evidence_rejected`, `selection_reason`, `mbo_verdict`, `weight_assigned`, `day_class`, `posterior_direction_by_horizon`, and `handoff_out` on weekend-feeding days.
+
+**WHAT WAS ACTUALLY EMITTED: four bare numbers, computed as `[open, open+net*0.45, open+net*0.8, close]`** - a LINEAR INTERPOLATION of the single net figure already decided. It has four points and zero intraday content: no hours, no onset, no turn, no shape. 13 of the contract's 20 day-level fields were never emitted at all, including the BAND - which A-85 argues is the real product.
+
+**IT PASSED BECAUSE THE GATE MEASURES LENGTH.** `_validate_day` checks specialist / group / date agreement, that `guessed_net_usd` and `overnight_gap_usd` are numeric, that `path_p50_curve` is a list with `len >= 2`, and that execution is not enabled. A degenerate straight line satisfies every one of those. D51 in a new place: the gate exists and the gate passed, and neither fact meant the curve was a curve.
 
 ---
 
