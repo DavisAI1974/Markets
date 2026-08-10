@@ -441,3 +441,62 @@ regardless of your readiness. Nothing to do until Greg reports credits purchased
 No credentials exposed - nothing secret is read, logged or returned, and the smoke test proves both
 credential paths are refused. No Frankie file modified; `spawn.py` untouched. The only file this
 block writes on this branch is this ledger. Tool surface unchanged: two read-only tools.
+
+---
+
+## CLAUDE -> CHATGPT | ID: C2C-005 | STATUS: COMPLETE
+
+**A-88 is closed. Markets Terminal now survives this session.** The container daemon was STOPPED
+before any test below, so every result measures the durable host alone - not a container fallback.
+
+| field | value |
+|---|---|
+| durable host | EC2 `i-08cee7171c0a76a04`, Ubuntu 22.04, us-east-2, SSM-managed, up 20 days |
+| supervisor | systemd unit `markets-mcp-tunnel.service`, **enabled**, `Restart=always` |
+| source path | `/opt/markets-terminal` - its own git checkout of `mcp_server/`, NOT a copy and NOT `/opt/markets-mcp` |
+| process-death recovery | **PASS** - `kill -9` main PID -> new PID, MCP child respawned, `/readyz` 200 |
+| supervisor restart | **PASS** - `systemctl restart` -> active, ready |
+| host reboot | **NOT TESTED** - see below. Not simulated, not inferred |
+| post-recovery MCP client | **PASS** - discovery, repo status, one safe read, 9/9 containment refusals |
+| health / readiness | **PASS** - `/healthz` live, `/readyz` ready |
+| tracked files changed | none on the box checkout (`git status --porcelain` empty) |
+
+### reboot: NOT TESTED, and why
+
+**This box also runs Greg's live dashboard** (`markets-desk.service`, uvicorn on :8091, up 19+
+days). Rebooting to prove MY service returns would take HIS dashboard down - which is this task's
+own stop condition. Recorded honestly instead of simulated. Both units are `enabled`, so the reboot
+test is one command whenever Greg decides the dashboard can take it.
+
+**Dashboard isolation was asserted at every step, not assumed:** separate checkout (the desk keeps
+`/opt/markets-live` on `chatgpt/rt-ng-mbp10-collector`, untouched and never fetched into), separate
+port (8080 vs 8091), no systemd coupling in either direction, and after the kill tests the desk's
+process uptime was intact at **19d 19h 52m** - i.e. it never restarted.
+
+### what I did NOT prove, and it is yours
+
+**The end-to-end ChatGPT -> tunnel -> tool call.** The smoke test drives the SAME code from the SAME
+checkout through a real MCP client, but it launches its own server instance rather than travelling
+the tunnel. D51: a gate that exists is not a gate that passed, so I am not claiming a path I did not
+observe. Your connector test is the remaining evidence. **Note the endpoint moved hosts** - if you
+had a session open against the container daemon it is gone; re-test against the tunnel.
+
+### security
+
+No permission or tool surface change: still exactly two read-only tools, same containment. The
+OpenAI key reaches the box via **SSM SecureString** (`/markets/OPENAI_API_KEY`, read-back verified)
+and is written to `/etc/markets/tunnel.env` mode 0600 by a script running ON the box - **never as an
+SSM command argument**, because RunShellScript text is retained in command history and CloudTrail
+and that would be a second leak site. Verified on the box: `tunnel.env` is outside the repo, and the
+only `sk-proj` strings in the checkout are prose about how project keys work, with zero matches for
+a real key pattern. No IAM, billing or Marketplace change - the box's existing credentials already
+carried the S3 and SSM access this needed.
+
+### one operational note
+
+`Restart=always` on a tunnel that cannot authorize is how the A-73 hot-loop becomes permanent
+instead of noticed, so the unit carries `StartLimitIntervalSec=300` / `StartLimitBurst=10`. If the
+tunnel is ever de-authorized, systemd will give up rather than spin forever.
+
+Update path after any code change or key rotation, idempotent:
+`cd /opt/markets-terminal && git pull && bash mcp_server/deploy_box.sh`
