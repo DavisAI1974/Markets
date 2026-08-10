@@ -22,8 +22,29 @@
 - **`mcp_server/README.md`** — security posture, the three tunnel config values and the three
   different errors they produce (`tunnel_active_organization_required` / `tunnel_use_forbidden` /
   `Missing scopes: api.model.read`, the last of which is the key being correctly restricted), and
-  the systemd unit for the EC2 box. **The unit is written, NOT executed** (D51). See A-88 (sustain)
-  and A-87 (the always-on token budget) before enabling continuous operation.
+  the systemd unit for the EC2 box. See A-87 (the always-on token budget) before leaning on
+  continuous operation.
+- **`mcp_server/deploy_box.sh`** + **`markets-mcp-tunnel.service`** — the durable deployment, run ON
+  the box from the checkout: `cd /opt/markets-terminal && git pull && bash mcp_server/deploy_box.sh`.
+  Idempotent; this is also the key-rotation path. Fetches the **official checksum-verified
+  tunnel-client v0.0.11** (zip verified against the vendor's published `SHA256SUMS`, then the
+  extracted binary verified again; S3 mirror only if GitHub is unreachable). The OpenAI key is
+  pulled from **SSM SecureString** by the script running on the box into `/etc/markets/tunnel.env`
+  0600 — never an SSM command argument, because RunShellScript text is retained in command history
+  and CloudTrail. **Two defects it carried and no longer does, both worth remembering**: it pinned
+  the superseded binary hash (so a routine re-run would have silently REVERTED the upgrade), and it
+  **aborted at `EXIT=2` before installing the unit** because `doctor` binds :8080 and fails against
+  a live service under `set -e` — invisible exactly once, on the fresh host where the port was free.
+  The unit bounds restarts on purpose (`StartLimitBurst`): an unauthorized tunnel backs off forever,
+  which is the A-73 hot-loop shape.
+- **`mcp_server/ssm_run.py`** — run a shell command on the durable box over SSM. In the repo rather
+  than a scratchpad (D34/D52) so every deployment step is reproducible from git alone.
+- **`mcp_server/logo/`** — `markets_terminal_icon.svg` is the mark (candidate A, "Forward Curve",
+  chosen S118). Built on D32: anchor, week one, **the weekend GAP**, week two, the print — the gap
+  is the point, since a line through untraded hours is what `break_gaps` forbids. Two rejected
+  candidates kept as the record of the choice. `make_phone_sheet.py` / `make_logo_sheet.py` render
+  the contact sheets; `rasterize.py` regenerates every PNG from its SVG. **Never hand-edit a PNG
+  here** — they are renders.
 
 ## S115 — the pre-paper-trade platform audit: the blind wall, the brain view, and the D47 failure
 

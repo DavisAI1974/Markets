@@ -1,4 +1,86 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-09, Session 115)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-10, Session 118)
+
+## S118 — FRANKIE RAN AND MAGNITUDE TURNED OUT TO CARRY NO INFORMATION, AND MARKETS TERMINAL WENT DURABLE (read `SESSION_HANDOFF_2026-08-10_S118.md`)
+
+**Branch = `claude/kalshi-agents-coordinator-guard-sg0n15`. Brain s105.9, 90 plays — UNCHANGED, no
+merge.** Registry 192 -> 202 (178 open: 26 ESSENTIAL). Decisions 52 -> 53. Two unrelated halves.
+
+**FRANKIE RAN on g18/g19 (arm A, baseline sizing passage) and g20 (arm B, passage withdrawn) — 30
+days, one variable, everything else held.** Two defects had to be fixed first: **A-80, the runner
+served ZERO plays on all 20 days while its preflight reported `PACKETS_CAUSAL`** (three stacked
+shape assumptions against `brain_view`, each failing OPEN; served_plays 0 -> 33), and **A-82, the
+leak guard matched TOKEN NAMES not DATES** and hard-stopped on legitimate prior-group evidence
+(rescoped to dates, negative-tested 7/7). **The corpus was rebuilt first — A-77, 70 -> 200 gradeable
+days — and ITS falsifier fired**: tape reconciliation is exact on g12/g13/g16 and **0/10, 0/11, 0/12
+on g6, g10, g15**, so a single-leg rebuild would have measured the WRONG CONTRACT on 6 of 10 groups
+while looking well-formed.
+
+**GREG'S CORRECTION OVERTURNED MY FIRST READ.** *"you cannot average. you have to look at every event
+individually."* Pooled it looked like a wash. Per event: **g18 improved 3/10 and is worse on 6 of its
+8 largest moves**; g19 improved 7/10 and is better on 5 of 8; g20 5/10. **04-30 is the emblem** — the
+block's strongest coherent buy signal, direction called RIGHT, **size 27% of the move**.
+
+**THE DOMINANT FINDING (A-85, ESSENTIAL, OPEN): SIZE CARRIES NO INFORMATION.** A-83 is closed — the
+under-emission is **INSTRUCTIONAL**, since *"target honest under-100 USD error per day"* on blocks
+moving several hundred is only reliably reachable by emitting near zero. Withdrawing it moved the
+band (arm A **0 of 20** events >= 400; arm B **5 of 10**) **and did not change discrimination at
+all**: sorted by `|actual|`, the smallest-half and largest-half `|guess|` ranges overlap almost
+completely in BOTH arms, and arm B overshot the quiet days (actual 30 -> called 240) while still
+undershooting a +2,100 day at 0.25x. **Under-emission was the symptom; magnitude is not being
+forecast at all.** Direct argument for A-60/A-63: the band should be the matched cohort's empirical
+spread, not a number the agent produces.
+
+**A-86 — THE RENDERS WERE RIGHT AND THE DATA WAS WRONG.** Greg: *"there's only one point per day.
+why?"* `path_p50_curve` is a **linear interpolation of the single net figure already decided**
+(`[open, open+net*0.45, open+net*0.8, close]`); **17 of the contract's 20 day-level fields were never
+emitted**. It passed validation because `_validate_day` checks `len(curve) >= 2` — a straight line
+satisfies that. **NOT A-67 evidence**: g18/g19/g20 are WALKED groups; the architecture test needs the
+unseen head, and **h1 is staged but BLOCKED** on 2026-only fundamental stores.
+
+**MARKETS TERMINAL IS NOW A DURABLE READ-ONLY MCP SERVICE (A-88 DONE).** `mcp_server/` in git, two
+tools (`markets_repo_status`, `markets_read_file`), stdio only, no execution/writes/AWS/secrets/
+listener; containment resolves `realpath` FIRST and compares on path COMPONENTS. Runs on the box as
+`markets-mcp-tunnel.service` from its own checkout on the **official checksum-verified
+tunnel-client v0.0.11**. Proven by observing it: kill -9 recovery, supervisor restart, and a real MCP
+client passing **9/9 containment refusals**. **Reboot NOT TESTED on purpose** — the box also hosts
+Greg's live dashboard, and its process uptime was verified intact after every test.
+
+**THREE WRONG CAUSES IN A ROW, AND THE PATTERN IS THE LESSON.** `tunnel_use_forbidden` drew, in
+order: project mismatch (**refuted by the vendor's own doc I had not read** before sending Greg to
+the wrong page), billing (**argued at length, refuted — the fix arrived with no purchase**), and
+permissions (never needed). **The cause was the tunnel itself**; a NEW tunnel authorized on the first
+attempt with the same key, org and binary. Each theory was reasoned from **how the platform should
+work rather than from anything measured about that tunnel**. Only the cheap one-call retest resolved
+it.
+
+**TWO DEFECTS IN MY OWN DEPLOY SCRIPT, THE SECOND WORSE.** It pinned the superseded binary hash, so
+the documented update AND rotation path would have **silently reverted** the upgrade. Testing that
+fix found the real one: **the script had been ABORTING AT `EXIT=2` BEFORE INSTALLING THE UNIT**,
+because `doctor` binds :8080 and fails against a live service under `set -euo pipefail`. **It passed
+exactly once — on the fresh host where the port was free** — and would have applied NOTHING on every
+run after, while printing a mostly-successful log. **Hidden by my own test method**: I piped the
+script to `grep`, so the exit status I read was grep's.
+
+**C2C-007 STOPPED, and the reason is structural.** Codex cannot consume the tunnel through a plugin:
+`.mcp.json` documents local stdio only (a SECOND server), and `apps` needs a `plugin_asdk_app` id
+**minted in ChatGPT developer mode** — the Chat seat the task existed to avoid. Codex CLI does
+support remote MCP, but `/v1/mcp/{tunnel_id}` **404s to the runtime key on every method** while
+`/v1/tunnels/{id}` returns 200 on the same credential. **The tunnel publishes a LOCAL server to a
+product that cannot run local code — ChatGPT cannot, Codex can**, so for a Codex seat the clean
+answer is a local stdio plugin. Not built: that needs the "no second MCP server" constraint relaxed,
+which is theirs to relax.
+
+**D53 — A SHARED RECORD IS APPEND-ONLY.** ChatGPT's C2C-007 commit **replaced the coordination
+ledger: 637 lines -> 35**, standing in one line reading *"[CONTENT PRESERVED THROUGH C2C-006]"* —
+a line that asserts preservation and IS the deletion. Restored at `ffd6556`. **Found only because
+Greg asked whether the notes had been committed**, not by any check. The most load-bearing thing lost
+was the deploy-script silent-abort defect — a bug in the path ChatGPT depends on. **A shared record
+that reports continuity while dropping content is the same failure shape as a script that reports
+success while doing nothing.**
+
+**STILL OUTSTANDING: ROTATE THE OPENAI KEY** (pasted into chat; same exposure as the AWS pair at
+S99). Rotation is now clean: rotate -> `creds.py --sync-ssm` -> `deploy_box.sh`. **And the end-to-end
+ChatGPT -> tunnel -> tool call has still never been observed** (D51).
 
 
 ## S115 — THE PRE-LIVE AUDIT, THE BRAIN BECAME ONE DOCUMENT, FIVE PAPERS BECAME A BUILD SEQUENCE, AND SOMEONE BUILT IT (read `SESSION_HANDOFF_2026-08-09_S115.md` + `DROP_IN_S116.md`)
@@ -994,6 +1076,24 @@ FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the drive
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
+**One-line state (S118):** brain **s105.9, 90 plays — UNCHANGED, no merge.** Registry **202 items
+(178 open, 26 ESSENTIAL)**, decisions **53**. **FRANKIE RAN** on g18/g19/g20 after two harness
+defects were fixed (**A-80**: zero plays served on all 20 days while preflight said `PACKETS_CAUSAL`;
+**A-82**: the leak guard matched token names, not dates). Per event, never pooled: **g18 is worse on
+6 of its 8 largest moves**, g19 better on 5 of 8. **A-83 closed — the under-emission is
+INSTRUCTIONAL**, but withdrawing the passage moved the band **without changing discrimination at
+all**, so **A-85 (ESSENTIAL) is the real finding: MAGNITUDE IS NOT BEING FORECAST**. **A-86**:
+`path_p50_curve` is a linear interpolation of the single net figure and 17 of 20 contract fields were
+never emitted — it passed a gate that only checks `len >= 2`. **A-77**: corpus 70 -> **200 gradeable
+days**, and its falsifier fired (wrong contract on 6 of 10 groups had it been rebuilt single-leg).
+**h1 still BLOCKED** on 2026-only stores, so **none of this is A-67 evidence**. Separately,
+**MARKETS TERMINAL is durable** — read-only MCP (two tools) on the box under systemd on official
+**tunnel-client v0.0.11**, recovery and 9/9 containment proven, reboot NOT TESTED because the live
+dashboard shares the host (**A-88 DONE**). **I was wrong three times about one tunnel error** and the
+cause was the tunnel itself; **my deploy script had been aborting before it deployed**, hidden
+because I piped it to `grep`. **D53: a shared record is append-only** — chat's commit cut the ledger
+637 -> 35 lines and it was caught only because Greg asked. **ROTATE THE OPENAI KEY.**
+
 **One-line state (S115):** brain **s105.9, 90 plays — CALLS unchanged. No group run, no merge.**
 Registry **192 items (25 ESSENTIAL)**, decisions **52**, **and the andon board is ALL CLEAR for the
 first time** — the briefing backlog was discharged with real dispositions (all 13 audited) and paid
@@ -1283,6 +1383,17 @@ in the live doc. Full detail: `S36_NETCOST_BACKTEST_FINDINGS.md`, `SESSION_HANDO
 Detail is in the latest handoff + kickoff — this is the pointer, not the record.
 
 Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
+- **S118** — Frankie RAN (g18/g19 arm A, g20 arm B) after A-80 (zero plays served, preflight said
+  otherwise) and A-82 (leak guard on token names, not dates) were fixed; corpus 70 -> 200 days
+  (A-77) with its falsifier firing on 6 of 10 groups; per-event reading overturned the pooled "wash"
+  (**g18 worse on 6 of its 8 largest**); A-83 closed (under-emission is INSTRUCTIONAL) but the band
+  moved without discrimination changing, so **A-85: magnitude is not being forecast**; A-86
+  (`path_p50_curve` is an interpolation; 17 of 20 fields never emitted; the gate only checks
+  `len >= 2`). Markets Terminal durable on the box (A-88), official tunnel-client v0.0.11, 9/9
+  containment, reboot NOT TESTED (live dashboard shares the host). Three wrong causes for one tunnel
+  error; a deploy script that aborted before deploying, hidden by piping to `grep`; **D53 shared
+  records are append-only** after chat's commit cut the ledger 637 -> 35 lines.
+  Detail: `SESSION_HANDOFF_2026-08-10_S118.md`.
 - **S99** — item zero held (determination after rest); feeds T/R/Q/I built+wired (21 blocks, 12
   audit classes, 0 violations); Bento live subscribed; Pyth free era ends Jul 31 (NGD feeds never
   published; NATGAS 24/7 = Pro, declined); KXNATGASD settlement verified from spec (per-contract
