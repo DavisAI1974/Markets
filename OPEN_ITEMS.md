@@ -1786,7 +1786,18 @@ TWO SEPARATE FAILURES, one already fixed and one open.
 
 THE UNIT CARRIES A DELIBERATE RESTART BOUND. An unauthorized tunnel backs off and retries forever - observed twice in this session on `tunnel_active_organization_required` and then `tunnel_use_forbidden`, and stopped by hand both times. Unbounded restart of a daemon that cannot succeed is the A-73 hot-loop shape, which is already on this registry as a live-trading cost item. StartLimitIntervalSec/StartLimitBurst are there for that reason.
 
-BLOCKED ON, and it is not a code problem: the runtime key cannot USE the tunnel (`tunnel_use_forbidden`). `sk-proj-` keys are project-scoped, so the most likely cause is that the key and the tunnel live in different projects; the alternative is the key lacking Tunnels Use. Do NOT widen the key's model scopes to chase this - `Missing scopes: api.model.read` on /v1/models is the key being correctly restricted and is unrelated.
+BLOCKED ON THREE THINGS, none of them code.
+
+(a) THE RUNTIME KEY LACKS TUNNELS **USE**. MEASURED, not inferred: sending the org id as an explicit `OpenAI-Organization` header, tunnel metadata read returns HTTP 403 `tunnel_use_forbidden` - vendor definition 'the caller does not have tunnel use permission for any default principal'. Fix is Tunnels **Read + Use** on the runtime-key principal; Read alone serves the Platform page, Use is what `run` needs to poll. Vendor warns a new role assignment can take up to 30 minutes to propagate, so a still-403 immediately after granting is not evidence the grant failed.
+  CORRECTION, recorded rather than quietly edited: the first version of this item said the likely cause was a PROJECT MISMATCH, because `sk-proj-` keys are project-scoped. That is REFUTED by the vendor's own troubleshooting doc - 'Tunnel permissions are organization-level, not project-level'. I had reasoned from how OpenAI project keys work generally instead of reading the tunnel docs, and sent Greg to check the wrong page. The lesson is the S115 one in a new costume: plausible, well-formed, unverified.
+  ALSO REFUTED as the cause: org verification. The Platform banner asks for it and it IS required to submit a ChatGPT app, so it is on the path - but nothing in the tunnel docs ties verification to `tunnel_use_forbidden`. Two errands on one settings page, not one cause.
+  DO NOT widen the key's model scopes to chase any of this. `Missing scopes: api.model.read` on /v1/models is the key being correctly restricted to Tunnels and is unrelated.
+
+(b) NO PLATFORM CREDITS PURCHASED YET (Greg, S118). Unverified as a contributing cause and listed so it is checked before more permission archaeology: an org with no billing may simply not carry the entitlement, which would present as a permission error rather than a billing one.
+
+(c) THE CHATGPT SIDE IS NOT DONE (Greg, S118). The connector must be created/attached from ChatGPT settings, and vendor guidance is that this is done only while `tunnel-client run` is HEALTHY - so (a) has to clear first regardless.
+
+STATE AT PARK, so nothing is re-derived: server committed to `mcp_server/` and smoke-tested 9/9 from its in-repo location; `tunnel-client` built from source at /usr/local/bin (not in git - it is third-party, rebuild with `go build -o /usr/local/bin/tunnel-client ./cmd/client` from github.com/openai/tunnel-client); profile `markets-local-stdio` at ~/.config/tunnel-client/ (container-local, recreate with the `init` line in mcp_server/README.md); `doctor` RESULT ok; tunnel id tunnel_6a797191dd488191aa51ca1b5acc651b; org org-0FKq6FrDt9tfN3QrpVS6akE8; OPENAI_API_KEY in ~/.config/markets/env chmod 600. THE KEY WAS PASTED INTO CHAT AND MUST BE ROTATED - same exposure as the AWS pair at S99.
 
 ---
 
