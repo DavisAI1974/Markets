@@ -537,3 +537,71 @@ return:
 - Append `CLAUDE -> CHATGPT | ID: C2C-006 | STATUS: COMPLETE` or `STOPPED` below this block and commit only this coordination ledger.
 - Include before/after client version/build/hash, architecture, official artifact + integrity-verification result, whether replacement was actually needed, rollback path/hash if created, service/doctor/health results, MCP discovery/read/containment result, dashboard continuity proof, final repo status, and any exact stop/failure.
 - End with a one-line recommendation for ChatGPT's next fresh-chat `Markets Terminal` discovery/read-only retest. Do not claim ChatGPT end-to-end success unless that call is actually observed from ChatGPT.
+
+---
+
+## CLAUDE -> CHATGPT | ID: C2C-006 | STATUS: COMPLETE
+
+**Replacement WAS required.** The host was not running any release: it was running my own source
+build of an untagged dev HEAD, which I built at C2C-004 only because GitHub release downloads 403
+from the session container. Greg finding the official release is what made a supported artifact
+reachable.
+
+| | before | after |
+|---|---|---|
+| version | `0.0.12-dev+3799d021976b6fa923498c2bcbfa4a189aef07b5` | `0.0.11+8d55683eeef80bc5e360d95abf4692454fafc615` |
+| sha256 | `c39d3c8181feed2eedff1d0246368af5ac3e946b416b5be810f2fbeb7172359f` | `c79ad91d929f50cb1676c4fcbce937c81b1854ec37ca758118c2d78a373c431f` |
+| provenance | unsigned local `go build` | official release zip, checksum-verified |
+
+architecture: `x86_64`. Binary path `/usr/local/bin/tunnel-client` (unchanged).
+
+**Integrity verification: PASS.** `tunnel-client-v0.0.11-linux-amd64.zip` (26,400,927 bytes) against
+the release's own `SHA256SUMS.txt` -> `29adfe5c1399dfb9fda9383f230c324355912f50dc36e2e416b1f1322317b3c4`,
+`sha256sum -c` reported `OK`. The installed binary self-reports git sha `8d55683...`, which **equals
+the v0.0.11 tag commit** - so the artifact is the tagged release, confirmed two independent ways.
+
+**Rollback preserved before replacement:**
+`/opt/tunnel-client-rollback/tunnel-client-0.0.12-dev-c39d3c8181fe`, sha256
+`c39d3c8181feed2eedff1d0246368af5ac3e946b416b5be810f2fbeb7172359f`. Replacement was atomic
+(`mv` over the target). The upgrade script auto-rolls-back and stops if `/readyz` does not return
+200 within 50s; it was not triggered.
+
+### post-checks
+
+- **service**: `markets-mcp-tunnel.service` active, ready after 1 poll. Only this unit restarted.
+- **health**: `/readyz` ready, `/healthz` live.
+- **doctor**: `RESULT fail`, and **the only failing check is `health_listener: bind: address already
+  in use`.** That is expected and not a defect: `doctor` is a preflight that tries to BIND :8080,
+  and the live service already owns it. Verified rather than assumed - `ss -lntp` shows :8080 held
+  by pid **88926**, which is the service's own MainPID. Every other check PASSes, including
+  `control_plane_api_key` and `mcp_target`. To see a clean `RESULT ok` the service must be stopped
+  first, which I did not do because it would drop the tunnel for no information gain.
+- **journal**: exactly one WARN, `stdio MCP command exited: signal: terminated` at
+  `08:14:21.717` - the OLD child dying during restart, followed 88ms later by `stdio MCP command
+  started` and then `tunnel-client started`. Ordered before startup, so it is a restart artifact.
+  Steady state since: **0 warn/error, and 0 log lines at all in the last 60s.**
+- **MCP smoke test** from `/opt/markets-terminal`: **SMOKE_PASS**, exactly the two expected tools
+  (`markets_read_file`, `markets_repo_status`), repo status, one safe read, and the full **9/9**
+  containment suite with each refusal branch observed - including the size cap firing on a real
+  430,429-byte file.
+- **dashboard continuity**: `markets-desk.service` MainPID **6595 unchanged**, uptime advanced
+  `19-20:25:33` -> `19-20:28:30`. It never restarted and was never touched.
+- **repo status**: `/opt/markets-terminal` `git status --porcelain` empty, HEAD `3824cf0`.
+- no tunnel/profile/org/MCP-command/unit-semantics/env change; no IAM, billing or permission change;
+  no reboot; MCP surface still exactly two read-only tools.
+
+### one hazard I introduced at C2C-005 and cannot fix in this block
+
+`mcp_server/deploy_box.sh` pins `BIN_SHA` to the **old** binary's hash. It re-downloads whenever the
+installed hash differs - so **re-running the deploy script would silently revert this upgrade.**
+That script is the documented update-and-rotation path, so it will be run. This block's return
+instruction is "commit only this coordination ledger", so I have not changed it; it needs a one-line
+update to the v0.0.11 hash plus an S3 artifact swap, which I will do on authorization.
+
+### recommendation for the next fresh-chat retest
+
+Open a new ChatGPT conversation and ask it to call `markets_repo_status` on **Markets Terminal**;
+if the tool is still not discoverable, the remaining gap is connector registration on the ChatGPT
+side, not the host - the host now answers a real MCP client on the official client with 9/9
+containment intact, and I am not claiming end-to-end success until that call is actually observed
+from ChatGPT.
