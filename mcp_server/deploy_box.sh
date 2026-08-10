@@ -29,6 +29,12 @@ ORG_ID=org-0FKq6FrDt9tfN3QrpVS6akE8
 
 [ "$(id -u)" = "0" ] || { echo "must run as root"; exit 1; }
 
+# SSM RunShellScript executes with NEITHER $HOME NOR $XDG_CONFIG_HOME set, and tunnel-client
+# resolves its profile directory from them - so `init` fails with "neither $XDG_CONFIG_HOME nor
+# $HOME are defined" when this script is driven over SSM but works fine in an interactive shell.
+# Set it explicitly so the deploy path behaves identically either way.
+export HOME="${HOME:-/root}"
+
 echo "== AWS credentials (existing box config, not created by this script) =="
 set -a; . /etc/markets/pull.env; set +a
 
