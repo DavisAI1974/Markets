@@ -183,7 +183,10 @@ def sync_ssm():
     """
     ssm = aws_client("ssm", os.environ.get("AWS_REGION") or "us-east-2")
     ok = True
-    for name in ("DATABENTO_API_KEY", "EIA_API_KEY"):
+    # OPENAI_API_KEY joined the set at S118: the durable box fetches it from here to build
+    # /etc/markets/tunnel.env, so the value never travels in an SSM RunShellScript command line
+    # (those are retained in command history and CloudTrail - a second place to leak a key).
+    for name in ("DATABENTO_API_KEY", "EIA_API_KEY", "OPENAI_API_KEY"):
         v = get(name, required=False)
         if not v:
             print("  SKIP %s - not resolvable locally, nothing to push" % name)

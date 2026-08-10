@@ -1,0 +1,26 @@
+[Unit]
+Description=Markets Terminal - read-only MCP server behind the OpenAI secure tunnel
+Documentation=https://github.com/davisai1974/markets/blob/HEAD/mcp_server/README.md
+After=network-online.target
+Wants=network-online.target
+# Deliberately NO coupling to markets-desk.service. The dashboard is unrelated production on this
+# host; this unit must never be able to take it down, order it, or be ordered by it.
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/markets-terminal
+EnvironmentFile=/etc/markets/tunnel.env
+ExecStart=/usr/local/bin/tunnel-client run --profile markets-box-stdio
+Restart=always
+RestartSec=10
+# Bound the retry storm. An unauthorized tunnel backs off and retries FOREVER - observed twice at
+# S118 and stopped by hand both times. That is the A-73 hot-loop shape, and a supervisor with
+# Restart=always is exactly how it becomes permanent instead of noticed.
+StartLimitIntervalSec=300
+StartLimitBurst=10
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
