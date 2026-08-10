@@ -1,5 +1,30 @@
 # KALSHI TRADING — file index
 
+## S118 — the read-only MCP connector (C2C-004)
+
+- **`mcp_server/markets_mcp_readonly.py`** — a READ-ONLY MCP server over this repository, so
+  ChatGPT can read the Markets tree through an OpenAI Secure MCP Tunnel instead of having files
+  pasted at it. **Two tools only**: `markets_repo_status` and `markets_read_file`. Deliberately
+  absent: command execution, writes, git mutation, AWS/IAM surface, secret retrieval, unrestricted
+  filesystem access, network listener — transport is stdio, so the process talks only to whatever
+  launched it. The read tool's containment resolves `realpath` FIRST and compares on path
+  COMPONENTS (`commonpath`), because a `startswith` on the raw string admits both `../../etc/passwd`
+  and a sibling `Markets-secrets/`; a credential deny list runs after containment, binary fails
+  closed on strict UTF-8, and a 256 KB cap REFUSES loudly rather than silently truncating. The repo
+  root is DERIVED from the file's own location (the box's checkout path differs; a hardcoded root
+  would silently serve the wrong tree) and verified by assertion, not eyeball — the A-71 precedent
+  is a path fix that went one level too far and created a fresh phantom tree.
+- **`mcp_server/smoke_test.py`** — drives the server as a real MCP client over stdio: discovery,
+  status, one safe read, then **nine negative cases that must each REFUSE**. A read tool returning
+  the right file proves nothing; refusing the wrong ones is the test. NC-3 instance recorded in the
+  README: an earlier version printed `SMOKE_PASS` with the size-cap branch never executed, because
+  its "oversize" case was under the cap. Last observed: 9/9, cap firing at 421,563 bytes.
+- **`mcp_server/README.md`** — security posture, the three tunnel config values and the three
+  different errors they produce (`tunnel_active_organization_required` / `tunnel_use_forbidden` /
+  `Missing scopes: api.model.read`, the last of which is the key being correctly restricted), and
+  the systemd unit for the EC2 box. **The unit is written, NOT executed** (D51). See A-88 (sustain)
+  and A-87 (the always-on token budget) before enabling continuous operation.
+
 ## S115 — the pre-paper-trade platform audit: the blind wall, the brain view, and the D47 failure
 
 - **`research/kalshi/brain_onedoc_fix_s115.py`** — closes the ONE-DOC holes in the brain (Greg:

@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 177 |
+| open | 179 |
 | in progress | 1 |
 | done | 22 |
 
-By size: **XS** 20, **S** 78, **M** 56, **L** 13
+By size: **XS** 20, **S** 79, **M** 57, **L** 13
 
 ---
 
-By tier: **ESSENTIAL** 26, **BIGGEST_WIN** 44, **REST** 108
+By tier: **ESSENTIAL** 26, **BIGGEST_WIN** 46, **REST** 108
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -53,7 +53,7 @@ By tier: **ESSENTIAL** 26, **BIGGEST_WIN** 44, **REST** 108
 | **A-85** | L | THE EMITTED MAGNITUDE CARRIES NO INFORMATION ABOUT THE DAY'S MAGNITUDE - a constant band, not a forecast | It reframes the dominant open problem of the walk. Under-emission was the SYMPTOM; this is the disease, and it says the current contract is asking the agent for a number it has no signal to produce. |
 | **A-50** | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 
-## BIGGEST WIN (44)
+## BIGGEST WIN (46)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -75,6 +75,7 @@ By tier: **ESSENTIAL** 26, **BIGGEST_WIN** 44, **REST** 108
 | **A-61** | S | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | A false REFUTED is worse than no verification: it argues for UNDOING a real fix, with an adversarial verdict behind it. Cheap to fix (pin a commit) and it protects every future audit. |
 | **A-65** | S | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | It is the test that would have caught THIS session's own worst mistake before Greg did, it is cheap (one extra spawn per change), and it converts every future view/brain change from an argument into a measurement. |
 | **A-66** | S | THE COMPOSITION CONTRACT - partition OWNERSHIP so borrowed pieces own different parts of one job (not a write protocol, and never a ranking) | It is the collision detector for everything else registered tonight. Cheap (a table), and it is the difference between composing best-of-breed and building something that fights itself. Do it BEFORE any of A-59/62/63/64/65 is built. |
+| **A-88** | S | SUSTAIN THE MCP CONNECTOR - it currently dies with the session container, and its code lived only outside git | Everything else about the connector is worthless if it is dark whenever a session is not open, and the D34/D52 half of it was a live rule violation rather than a future risk. |
 | **G-30** | S | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | It is the instrument dependency under A-24a, the discovery note's own RANK 1 candidate and the one it calls strongest. It also turns five of twelve path points from a timing judgment into arithmetic, on a feed we already ingest. |
 | **M-15** | S | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | A compromised credential with a deferral that has silently expired is the kind of thing that is only ever noticed after it matters. Cheap to do, and the deferral it replaces was explicit and time-boxed. |
 | **O-3** | S | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
@@ -91,6 +92,7 @@ By tier: **ESSENTIAL** 26, **BIGGEST_WIN** 44, **REST** 108
 | **A-41** | M | RUN THE FAILURE JUDGE ON AGENT BEHAVIOUR - localize every post-mortem finding to an interaction edge and fault side BEFORE it becomes brain evidence | - |
 | **A-62** | M | SERVE EACH SPECIALIST ITS OWN TRACK RECORD - we measure how each agent fails and have never told the agent | instrument_priors proved the pattern works and was the most-praised content of the g24 run ('the honest prior on every instrument I have' - C-0721). This is the same object aimed at the agent instead of the instrument, built from measurements we already hold, and it targets the walk's worst-performing lanes by name. |
 | **A-72** | M | THE ORDER-FLOW DIRECTION NOWCAST HAS NO REGISTRY LINE - the one workstream of six that was never registered | It is the direction half of the live lag play, it is already implemented, and it is the single highest-agreement result the desk has ever recorded - and no registry line has ever pointed at it, so nobody has re-run it causally. Five of the six S112 workstreams map onto G-4, G-5 (DONE), G-7, A-19/A-21 and A-5/G-28. Task 1 maps onto NOTHING. |
+| **A-87** | M | THE ALWAYS-ON TOKEN BUDGET - an MCP connector that never sleeps turns context cost from a per-session nuisance into a standing bill, and the reducer belongs at the TOOL BOUNDARY | It is the gating condition on running the connector continuously at all, and it is cheap relative to what it governs. It also corrects a premise this desk wrote down at S115 and would otherwise keep quoting. |
 | **G-4** | M | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | THE TOP-RANKED GAP, named by two independent lenses, and 0629 is its canonical instance - our cooling forecast was exactly right and burn fell 4.2 Bcf/d because wind rose 62%. It is the fastest-dying input AND the one that flips the SIGN rather than the magnitude. ChatGPT ALREADY DELIVERED the source research (S112 T3) - collect it from Greg first. |
 | **M-4** | M | CDD-vs-normal (the anomaly instrument separating hill from spike) | The cure for the D28 TRANSFER disease, and nws_temp_feed already fetches the normals - so it is a serving change, not an ingest. gw_cdd >= 16.4 fires 46.6% pooled and 0/10 on all four summer blocks; an absolute bar cannot transfer across season by construction. |
 | **A-19** | L | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | L, and it is the foundation under the dominant driver. The station set is 16 hand-set metros with ONE covering the entire Southeast, the weights were never tuned, and the primitive is wrong - it should be per-BA with a measured roll-up. Everything weather-shaped rests on this. |
@@ -267,6 +269,7 @@ By tier: **ESSENTIAL** 26, **BIGGEST_WIN** 44, **REST** 108
 | **A-61** | BIGGEST_WIN | S | OPEN | S115 | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | - |
 | **A-65** | BIGGEST_WIN | S | OPEN | S115 | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | - |
 | **A-66** | BIGGEST_WIN | S | OPEN | S115 | THE COMPOSITION CONTRACT - partition OWNERSHIP so borrowed pieces own different parts of one job (not a write protocol, and never a ranking) | - |
+| **A-88** | BIGGEST_WIN | S | OPEN | S118 | SUSTAIN THE MCP CONNECTOR - it currently dies with the session container, and its code lived only outside git | - |
 | **G-30** | BIGGEST_WIN | S | OPEN | S115 | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | - |
 | **M-15** | BIGGEST_WIN | S | OPEN | S115 | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | - |
 | **O-3** | BIGGEST_WIN | S | OPEN | S114 | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
@@ -283,6 +286,7 @@ By tier: **ESSENTIAL** 26, **BIGGEST_WIN** 44, **REST** 108
 | **A-41** | BIGGEST_WIN | M | OPEN | S114 | RUN THE FAILURE JUDGE ON AGENT BEHAVIOUR - localize every post-mortem finding to an interaction edge and fault side BEFORE it becomes brain evidence | - |
 | **A-62** | BIGGEST_WIN | M | OPEN | S115 | SERVE EACH SPECIALIST ITS OWN TRACK RECORD - we measure how each agent fails and have never told the agent | - |
 | **A-72** | BIGGEST_WIN | M | OPEN | S115 | THE ORDER-FLOW DIRECTION NOWCAST HAS NO REGISTRY LINE - the one workstream of six that was never registered | - |
+| **A-87** | BIGGEST_WIN | M | OPEN | S118 | THE ALWAYS-ON TOKEN BUDGET - an MCP connector that never sleeps turns context cost from a per-session nuisance into a standing bill, and the reducer belongs at the TOOL BOUNDARY | - |
 | **G-4** | BIGGEST_WIN | M | OPEN | S111 | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | - |
 | **M-4** | BIGGEST_WIN | M | OPEN | S109 | CDD-vs-normal (the anomaly instrument separating hill from spike) | - |
 | **A-19** | BIGGEST_WIN | L | OPEN | S112 | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | - |
@@ -1766,6 +1770,26 @@ PROVENANCE: repo structure and section sizes read from the GitHub landing page; 
 
 ---
 
+### [BIGGEST_WIN] A-88 - SUSTAIN THE MCP CONNECTOR - it currently dies with the session container, and its code lived only outside git
+
+*size S | OPEN | raised S118*
+
+**Why it is BIGGEST WIN:** Everything else about the connector is worthless if it is dark whenever a session is not open, and the D34/D52 half of it was a live rule violation rather than a future risk.
+
+**Source:** Greg, S118: 'like i said before, we want this to sustain'
+
+TWO SEPARATE FAILURES, one already fixed and one open.
+
+(1) THE CODE LIVED ONLY AT /opt/markets-mcp/ - outside git, on a container that gets reclaimed. That is D34 ('there is nothing local') and D52 ('nothing authored may live only on a session scratchpad') verbatim. It was written there because C2C-004 scoped it as a local experiment, and it stopped being one the moment sustain was asked for. FIXED S118: moved to `mcp_server/` in the repo, with the repo root now DERIVED from the file's own location instead of hardcoded to /home/user/Markets, because the box's checkout path differs and a hardcoded root would silently serve the wrong tree there. Derivation verified by assertion, not by eyeball - the A-71 precedent is a path fix that went one level too far up and created a fresh phantom tree.
+
+(2) THE DAEMON STILL LIVES IN THE SESSION CONTAINER. `tunnel-client run` was started here, so the connector goes dark when the container is reclaimed. The durable home is the EC2 box `i-08cee7171c0a76a04` - already SSM-managed, already the agent host since S93 - under systemd, pulling the server from git and its data from S3. The unit file is written in `mcp_server/README.md` and is NOT YET EXECUTED; per D51 nothing here may be reported as deployed until the box has run it and the connector has answered a call.
+
+THE UNIT CARRIES A DELIBERATE RESTART BOUND. An unauthorized tunnel backs off and retries forever - observed twice in this session on `tunnel_active_organization_required` and then `tunnel_use_forbidden`, and stopped by hand both times. Unbounded restart of a daemon that cannot succeed is the A-73 hot-loop shape, which is already on this registry as a live-trading cost item. StartLimitIntervalSec/StartLimitBurst are there for that reason.
+
+BLOCKED ON, and it is not a code problem: the runtime key cannot USE the tunnel (`tunnel_use_forbidden`). `sk-proj-` keys are project-scoped, so the most likely cause is that the key and the tunnel live in different projects; the alternative is the key lacking Tunnels Use. Do NOT widen the key's model scopes to chase this - `Missing scopes: api.model.read` on /v1/models is the key being correctly restricted and is unrelated.
+
+---
+
 ### [BIGGEST_WIN] G-30 - weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable
 
 *size S | OPEN | raised S115*
@@ -2273,6 +2297,30 @@ WHAT EXISTS. `dip_imb_level`, the signed buy-minus-sell imbalance, eligible at |
 WHAT DOES NOT EXIST, and the honest half. The ORIGINAL audit package is gone - formula version, aggregation window, instrument/date list, qualifying-event count, bin boundaries, null-test output. SEARCHED AND FOUND NOTHING (D24 case 2). The result and the completeness of its audit trail are two different things, and neither one substitutes for the other.
 
 IT IS ALSO A NOWCAST, NOT A FORECAST. The target was the side or continuation of a RUNNING LEG - not direction from a flat pre-session state. Quoting the 94% as if it were a from-flat forecast would be the S110 'a right day-net carrying a false mechanism' defect in a new place.
+
+---
+
+### [BIGGEST_WIN] A-87 - THE ALWAYS-ON TOKEN BUDGET - an MCP connector that never sleeps turns context cost from a per-session nuisance into a standing bill, and the reducer belongs at the TOOL BOUNDARY
+
+*size M | OPEN | raised S118*
+
+**Why it is BIGGEST WIN:** It is the gating condition on running the connector continuously at all, and it is cheap relative to what it governs. It also corrects a premise this desk wrote down at S115 and would otherwise keep quoting.
+
+**Source:** Greg, S118: 'once we get him going I'm going to have to integrate the token reducer if he's going to be running all the time'
+
+A-59 ALREADY ANTICIPATED THIS AND SAID SO: 'a live coach monitoring one session for ~21 hours ... is long-horizon by definition ... We are about to enter exactly the regime this paper targets with NO context discipline of any kind.' Greg's S118 note is that regime arriving on a date rather than in a paragraph, so this item is the TRIGGER, not a new direction.
+
+WHAT IS ACTUALLY NEW, AND IT REVERSES A STATED PREMISE. A-59 closes with: 'Token reduction alone is NOT the success criterion; this desk does not have a context-cost problem, it has a decision-quality problem.' THAT WAS TRUE OF A PER-DAY SPECIALIST AND IS FALSE OF AN ALWAYS-ON CONNECTOR. A specialist is a short task spawned per day; a connector answering calls continuously accumulates cost with wall-clock time and with nobody watching. The sentence should not be quoted forward unqualified - the scoping that made it true has changed.
+
+WHERE THE FAUCET ACTUALLY IS, measured off the server we just built: `markets_read_file` returns up to 256 KB per call, roughly 64k tokens, and an agent that can read whole files freely will re-read them. The largest thing it can legally hand back today is a file like OPEN_ITEMS.md at 421 KB - refused only because it is over the cap, not because anything decided it was the wrong answer. So the first and cheapest reduction is not model-side context management at all: it is the TOOL BOUNDARY - ranged reads, an index/summary response instead of a whole file, and retrieval by name.
+
+AND WE ALREADY HAVE THE PATTERN, BUILT AND CORRECTED. `play_index` is an index into external memory; the plays served whole are the memory; the agent opening the ones it needs is retrieval-on-demand; nothing is compressed so nothing is lost. That design exists because S115 did the OTHER thing - a rigid heuristic cut that lost audit.argument on all 82 plays and falsifier on 17 - and Greg reverted it on principle. The reducer here should be the same shape applied to the MCP tools, not a fresh invention.
+
+THE HARD CONSTRAINT, carried over unchanged: AN ABSENCE MUST ANNOUNCE ITSELF. Holes #7 and #8 were both silent absences that read downstream exactly like a deliberate mask. A truncated or elided tool response that does not say it was truncated is that defect with a token-saving excuse attached. Every reduction declares what it withheld and how to retrieve it by name - which is what the 256 KB refusal already does correctly today, since it REFUSES loudly rather than silently returning the first 256 KB.
+
+IT SHIPS THROUGH A-65, NOT AROUND IT. Validated compaction is exactly the gate this needs: run the same task twice, full response vs reduced response, and diff the outcome. A reducer that changes what the agent concludes is refused. Per-cell, never pooled (D4/D37). Shipping a reducer on a token-count argument alone is the S115 mistake with better economics.
+
+DEPENDS ON: A-88 (there is nothing to budget until the connector actually persists). RELATED: A-59 (framing + the regime call), A-65 (the gate), A-46 (the built precedent), A-73 (the other always-on cost nobody was tracking until it hot-looped).
 
 ---
 
