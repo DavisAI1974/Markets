@@ -107,7 +107,16 @@ if [ ! -f "/root/.config/tunnel-client/${PROFILE}.yaml" ]; then
 else
   echo "  profile already present"
 fi
-tunnel-client doctor --profile "$PROFILE" | grep -E 'FAIL|RESULT'
+echo "== preflight =="
+# STOP THE SERVICE FIRST, and this is load-bearing rather than tidiness. `doctor` includes a
+# health_listener check that BINDS 127.0.0.1:8080. Against a live service that bind necessarily
+# fails, doctor exits non-zero, and under `set -euo pipefail` THE WHOLE SCRIPT ABORTED HERE -
+# before installing the unit and before restarting. The first deploy passed only because the port
+# was free on a fresh host, so the bug was invisible exactly once and would have silently broken
+# every update and key rotation afterwards, while printing a mostly-successful log.
+# Stopping first also makes the check MEAN something instead of being a guaranteed failure.
+systemctl stop "$UNIT" 2>/dev/null || true
+tunnel-client doctor --profile "$PROFILE" || { echo "  PREFLIGHT FAILED - restarting service and aborting"; systemctl start "$UNIT" 2>/dev/null || true; exit 1; }
 
 echo "== systemd unit =="
 install -m 0644 "${REPO}/mcp_server/${UNIT}" "/etc/systemd/system/${UNIT}"
