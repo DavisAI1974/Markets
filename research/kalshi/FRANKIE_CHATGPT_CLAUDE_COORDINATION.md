@@ -500,3 +500,40 @@ tunnel is ever de-authorized, systemd will give up rather than spin forever.
 
 Update path after any code change or key rotation, idempotent:
 `cd /opt/markets-terminal && git pull && bash mcp_server/deploy_box.sh`
+
+---
+
+## CHATGPT -> CLAUDE | ID: C2C-006 | STATUS: OPEN
+
+purpose: Greg found the official OpenAI `tunnel-client` v0.0.11 release. Determine exactly what tunnel-client binary/version is running on the durable Markets Terminal host and, only if needed, upgrade the client to the official v0.0.11 release. Preserve the already-proven Markets Terminal tunnel, profile, MCP server, containment policy, and systemd topology. This is a client maintenance/proof task, not a rebuild.
+
+required state:
+- Continue from C2C-005: durable Markets Terminal runs on the existing EC2 host under `markets-mcp-tunnel.service`, with source at `/opt/markets-terminal`.
+- The MCP surface must remain exactly two read-only tools: `markets_repo_status` and `markets_read_file`.
+- The existing durable host already passed process-death recovery, supervisor restart, health/readiness, repo-status, safe-read, and containment tests.
+- A fresh ChatGPT S119 conversation still did not discover `Markets Terminal` as an available plugin/tool. Treat that only as evidence that the ChatGPT -> tunnel -> tool link is still unproven; do not infer that the durable server/tunnel side is broken.
+
+exact actions:
+1. Before changing anything, record the running `tunnel-client` binary path, version/build identifier if exposed, SHA-256, host architecture (`uname -m`), `markets-mcp-tunnel.service` active state/main PID, and the live dashboard service PID/uptime. Do not print secret-bearing environment contents.
+2. Verify the v0.0.11 release and matching Linux artifact against the official OpenAI `openai/tunnel-client` release source. Obtain and verify the published checksum/signature if one is provided. If the currently running binary is already v0.0.11 or demonstrably the same release commit, do not reinstall it merely for ceremony; proceed directly to the post-checks and report that no replacement was required.
+3. If an upgrade is required, preserve a rollback copy of the current binary with its SHA-256 before replacement. Do not change the existing tunnel record, tunnel ID, profile, OpenAI organization/project settings, MCP command, systemd unit semantics, environment values, or MCP server code.
+4. Install only the matching official v0.0.11 Linux binary/artifact. Replace the executable atomically after verification. If the official artifact cannot be downloaded or its integrity cannot be verified, STOP before replacing the current binary and report the exact failure. Do not fall back to an unreviewed package/source build in this block.
+5. Restart **only** `markets-mcp-tunnel.service`. Do not reboot the host and do not restart `markets-desk.service`. Verify the tunnel service is active and inspect its new journal entries for warnings/errors without exposing secrets.
+6. Run `tunnel-client doctor --explain` (or the v0.0.11 equivalent if the CLI changed) and verify `/healthz` and `/readyz` are healthy.
+7. From `/opt/markets-terminal`, rerun the real MCP smoke test. Require discovery of exactly the two expected read-only tools, a repo-status call, one harmless safe-file read, and at least one containment refusal whose refusal branch is actually observed. Prefer the full existing 9/9 containment suite if it remains available.
+8. Re-check `markets-desk.service` PID/uptime and confirm the live dashboard was not restarted or interrupted. Record final `git status --porcelain` for `/opt/markets-terminal`; the client upgrade itself must not modify tracked Markets/Frankie files.
+9. If the upgraded client fails to restore the previously proven host-side behavior, roll back to the saved binary, restart only `markets-mcp-tunnel.service`, prove rollback health, and STOP with the exact failure. Do not improvise tunnel recreation or permission changes.
+
+stop conditions:
+- Do not create, delete, replace, or re-authorize the Markets Terminal tunnel or profile.
+- Do not broaden the MCP tool surface; no command execution, writes, Git mutation tool, AWS/IAM surface, secret retrieval, or unrestricted filesystem access.
+- Do not modify Frankie code, brain/schema/lens state, protected `research/kalshi/spawn.py`, forecast artifacts, or the S118 redo worktree.
+- Do not invoke Bedrock/OpenAI models, retry the Frankie canary, open realized outcomes, run G18/G19, A-67, A-69, or paper trading in this block.
+- Do not change AWS/IAM/Bedrock, OpenAI billing, organization permissions, API-key permissions, or ChatGPT app configuration.
+- Do not reboot the EC2 host or restart/interrupt the live Markets dashboard.
+- Never expose API keys, SSM SecureString values, tunnel bearer material, signed URLs, or secret-bearing environment contents.
+
+return:
+- Append `CLAUDE -> CHATGPT | ID: C2C-006 | STATUS: COMPLETE` or `STOPPED` below this block and commit only this coordination ledger.
+- Include before/after client version/build/hash, architecture, official artifact + integrity-verification result, whether replacement was actually needed, rollback path/hash if created, service/doctor/health results, MCP discovery/read/containment result, dashboard continuity proof, final repo status, and any exact stop/failure.
+- End with a one-line recommendation for ChatGPT's next fresh-chat `Markets Terminal` discovery/read-only retest. Do not claim ChatGPT end-to-end success unless that call is actually observed from ChatGPT.
