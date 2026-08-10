@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Preflight the namespace-local E->A->B weekend bridge path for S118 G18/G19 validation.
 
-No model is invoked and no realized outcome is read. This exists because the historical Monday
-failure was specifically a missing live A bridge; BLD-1-only packet checks do not exercise BLD-2.
+No model is invoked and no target/future realized outcome is read. Prior-dated realized evidence is
+legal under A-82; own-day, future, or undated realized evidence must remain physically absent.
+This exists because the historical Monday failure was specifically a missing live A bridge;
+BLD-1-only packet checks do not exercise BLD-2.
 """
 from __future__ import annotations
 
@@ -16,6 +18,7 @@ if str(HERE) not in sys.path:
 
 import frankie_two_group_run_s118 as two  # noqa: E402
 import frankie_group_forecast_s118 as runner  # noqa: E402
+import frankie_s118_redo as redo  # noqa: E402
 import group_config as gc  # noqa: E402
 
 
@@ -35,9 +38,10 @@ def main() -> int:
             out = runner._output_path_from_prompt(
                 prompt, namespace, gid, "A", day, "BLD-2"
             )
-            text = json.dumps(packet, sort_keys=True)
-            if "actual_day_move_usd" in text or "actual_close" in text:
-                raise RuntimeError(f"{gid} {day}: realized outcome field entered bridge packet")
+            # A-82 is the canonical S118 leak rule: prior-dated realized evidence may be carried
+            # forward, while own-day, future, undated, or forbidden actual/RT artifacts fail closed.
+            # Do not regress to the old substring-only check, which falsely rejects legal history.
+            redo.assert_no_outcome_leak(json.dumps(packet, sort_keys=True), gid, day)
             if namespace not in str(out):
                 raise RuntimeError(f"{gid} {day}: bridge output escaped namespace: {out}")
             rows.append({
@@ -45,7 +49,8 @@ def main() -> int:
                 "monday": day,
                 "prior_friday": fri,
                 "bridge_output": str(out.relative_to(HERE)),
-                "actual_tape_read": False,
+                "target_or_future_actual_read": False,
+                "a82_outcome_wall": "PASS",
             })
     if not rows:
         raise RuntimeError("no in-block Monday bridge cases were exercised")
@@ -53,7 +58,8 @@ def main() -> int:
         "verdict": "PASS",
         "prepare": prep,
         "bridges": rows,
-        "actual_tape_read": False,
+        "target_or_future_actual_read": False,
+        "a82_outcome_wall": "PASS",
     }, indent=2, sort_keys=True))
     return 0
 
