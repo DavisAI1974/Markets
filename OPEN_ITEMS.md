@@ -1793,7 +1793,11 @@ BLOCKED ON THREE THINGS, none of them code.
   ALSO REFUTED as the cause: org verification. The Platform banner asks for it and it IS required to submit a ChatGPT app, so it is on the path - but nothing in the tunnel docs ties verification to `tunnel_use_forbidden`. Two errands on one settings page, not one cause.
   DO NOT widen the key's model scopes to chase any of this. `Missing scopes: api.model.read` on /v1/models is the key being correctly restricted to Tunnels and is unrelated.
 
-(b) NO PLATFORM CREDITS PURCHASED YET (Greg, S118). Unverified as a contributing cause and listed so it is checked before more permission archaeology: an org with no billing may simply not carry the entitlement, which would present as a permission error rather than a billing one.
+(b) NO PLATFORM CREDITS / BILLING - PROMOTED S118 TO THE LEADING CANDIDATE, ahead of (a), on Greg's observation: 'the permissions were the default settings for tunnels. i think it was the billing issue.' If Tunnels sat at its DEFAULTS and the call still fails, 'a grant was switched off' is the weak explanation and 'the org does not carry the entitlement' is the strong one - and a missing entitlement surfacing as a permission error is ordinary platform behaviour. The error string is consistent with it: 'does not have tunnel use permission for any DEFAULT PRINCIPAL' reads as the caller's principal set coming back empty, not as a specific permission being denied. STILL UNPROVEN either way - and it is cheap to settle, which is the point of ordering it first: buy credits, re-run the one-line metadata probe, and the answer arrives before any role archaeology is done. THE RETEST (no daemon needed, no state to rebuild):
+    curl -sS -o /tmp/o.json -w 'HTTP %{http_code}\n' \
+      https://api.openai.com/v1/tunnels/<TUNNEL_ID> \
+      -H "Authorization: Bearer $KEY" -H 'OpenAI-Organization: <ORG_ID>'
+  Anything other than `tunnel_use_forbidden` means billing was the cause. Only if it is UNCHANGED after credits land does (a) become worth pursuing.
 
 (c) THE CHATGPT SIDE IS NOT DONE (Greg, S118). The connector must be created/attached from ChatGPT settings, and vendor guidance is that this is done only while `tunnel-client run` is HEALTHY - so (a) has to clear first regardless.
 
