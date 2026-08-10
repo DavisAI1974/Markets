@@ -20,8 +20,17 @@ ENV_FILE=/etc/markets/tunnel.env
 PROFILE=markets-box-stdio
 UNIT=markets-mcp-tunnel.service
 BUCKET=bento-568968024170-us-east-2-an
-BIN_KEY=tooling/tunnel-client/tunnel-client-linux-amd64
-BIN_SHA=c39d3c8181feed2eedff1d0246368af5ac3e946b416b5be810f2fbeb7172359f
+
+# THE OFFICIAL RELEASE, not a local build. C2C-004 shipped a `go build` of an untagged dev HEAD
+# because GitHub release downloads 403 from the session container; C2C-006 replaced it with the
+# signed release once Greg found it. Two hashes are pinned so integrity is checked twice - the
+# ZIP against the vendor's own published SHA256SUMS, and then the extracted binary itself.
+TC_VERSION=v0.0.11
+TC_ZIP=tunnel-client-${TC_VERSION}-linux-amd64.zip
+TC_ZIP_SHA=29adfe5c1399dfb9fda9383f230c324355912f50dc36e2e416b1f1322317b3c4
+TC_BIN_SHA=c79ad91d929f50cb1676c4fcbce937c81b1854ec37ca758118c2d78a373c431f
+TC_URL=https://github.com/openai/tunnel-client/releases/download/${TC_VERSION}/${TC_ZIP}
+TC_S3_KEY=tooling/tunnel-client/${TC_ZIP}      # mirror, in case GitHub is unreachable at deploy time
 
 # Non-secret identifiers. Safe in git; they are useless without the key.
 TUNNEL_ID=tunnel_6a797a199f04819188e7ecb0ecf1ca6d
@@ -38,20 +47,35 @@ export HOME="${HOME:-/root}"
 echo "== AWS credentials (existing box config, not created by this script) =="
 set -a; . /etc/markets/pull.env; set +a
 
-echo "== tunnel-client binary =="
-if [ ! -x /usr/local/bin/tunnel-client ] || \
-   [ "$(sha256sum /usr/local/bin/tunnel-client | cut -d' ' -f1)" != "$BIN_SHA" ]; then
-  python3 - "$BUCKET" "$BIN_KEY" <<'PY'
+echo "== tunnel-client ${TC_VERSION} =="
+have=""
+[ -x /usr/local/bin/tunnel-client ] && have=$(sha256sum /usr/local/bin/tunnel-client | cut -d' ' -f1)
+if [ "$have" = "$TC_BIN_SHA" ]; then
+  echo "  already ${TC_VERSION} (sha verified) - no replacement needed"
+else
+  echo "  installed sha ${have:-none} != pinned - fetching the official release"
+  work=$(mktemp -d); trap 'rm -rf "$work"' EXIT
+  # GitHub first (the vendor is the source of truth); S3 is only a mirror for when it is
+  # unreachable. Both paths verify the SAME pinned hash, so the fallback cannot weaken integrity.
+  if ! curl -fsSL --max-time 300 -o "$work/$TC_ZIP" "$TC_URL"; then
+    echo "  GitHub unreachable, falling back to the S3 mirror"
+    python3 - "$BUCKET" "$TC_S3_KEY" "$work/$TC_ZIP" <<'PY'
 import boto3, sys
-boto3.client("s3", region_name="us-east-2").download_file(
-    sys.argv[1], sys.argv[2], "/usr/local/bin/tunnel-client")
-print("  downloaded")
+boto3.client("s3", region_name="us-east-2").download_file(sys.argv[1], sys.argv[2], sys.argv[3])
 PY
-  chmod 0755 /usr/local/bin/tunnel-client
+  fi
+  got=$(sha256sum "$work/$TC_ZIP" | cut -d' ' -f1)
+  [ "$got" = "$TC_ZIP_SHA" ] || { echo "  ZIP SHA MISMATCH: $got"; exit 1; }
+  echo "  zip sha256 verified against the published SHA256SUMS"
+  python3 -c "import zipfile,sys; zipfile.ZipFile(sys.argv[1]).extract('tunnel-client', sys.argv[2])" \
+    "$work/$TC_ZIP" "$work"
+  got=$(sha256sum "$work/tunnel-client" | cut -d' ' -f1)
+  [ "$got" = "$TC_BIN_SHA" ] || { echo "  BINARY SHA MISMATCH: $got"; exit 1; }
+  install -m 0755 "$work/tunnel-client" /usr/local/bin/.tunnel-client.new
+  mv -f /usr/local/bin/.tunnel-client.new /usr/local/bin/tunnel-client   # atomic
+  echo "  installed and verified"
 fi
-have=$(sha256sum /usr/local/bin/tunnel-client | cut -d' ' -f1)
-[ "$have" = "$BIN_SHA" ] || { echo "  SHA MISMATCH: $have"; exit 1; }
-echo "  sha256 verified"
+echo "  version: $(/usr/local/bin/tunnel-client --version 2>&1 | head -1)"
 
 echo "== python mcp package =="
 python3 -c 'import mcp.server' 2>/dev/null || pip3 install --quiet mcp
