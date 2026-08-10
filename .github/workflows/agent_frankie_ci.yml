@@ -20,6 +20,9 @@ on:
       - deploy/aws/frankie_iam_policy.example.json
       - deploy/aws/FRANKIE_AWS_SETUP_S117.md
       - CHATGPT_HANDOFF_S117_AGENT_FRANKIE.md
+      - mcp_server/**
+      - plugins/markets-terminal/**
+      - .agents/plugins/marketplace.json
       - .github/workflows/agent_frankie_ci.yml
   pull_request:
     paths:
@@ -38,6 +41,9 @@ on:
       - deploy/aws/frankie_iam_policy.example.json
       - deploy/aws/FRANKIE_AWS_SETUP_S117.md
       - CHATGPT_HANDOFF_S117_AGENT_FRANKIE.md
+      - mcp_server/**
+      - plugins/markets-terminal/**
+      - .agents/plugins/marketplace.json
       - .github/workflows/agent_frankie_ci.yml
   workflow_dispatch:
 
@@ -80,13 +86,44 @@ jobs:
             research/kalshi/frankie_group_forecast_s118.py \
             research/kalshi/frankie_two_group_run_s118.py \
             research/kalshi/frankie_bridge_preflight_s118.py \
-            research/kalshi/databento_backfill_s115.py
+            research/kalshi/databento_backfill_s115.py \
+            mcp_server/markets_mcp_readonly.py
       - name: Validate JSON contracts
         run: |
           python -m json.tool research/kalshi/frankie_event_schema.json >/dev/null
           python -m json.tool research/kalshi/frankie_outcome_schema.json >/dev/null
           python -m json.tool research/kalshi/frankie_paper_manifest.json >/dev/null
           python -m json.tool deploy/aws/frankie_iam_policy.example.json >/dev/null
+          python -m json.tool plugins/markets-terminal/.codex-plugin/plugin.json >/dev/null
+          python -m json.tool plugins/markets-terminal/.mcp.json >/dev/null
+          python -m json.tool .agents/plugins/marketplace.json >/dev/null
+      - name: Verify Markets Terminal plugin remains read-only
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          plugin = json.loads(Path('plugins/markets-terminal/.codex-plugin/plugin.json').read_text())
+          mcp = json.loads(Path('plugins/markets-terminal/.mcp.json').read_text())
+          market = json.loads(Path('.agents/plugins/marketplace.json').read_text())
+          assert plugin['name'] == 'markets-terminal'
+          assert plugin['mcpServers'] == './.mcp.json'
+          assert plugin['interface']['capabilities'] == ['Read']
+          assert set(mcp['mcpServers']) == {'markets-terminal'}
+          server = mcp['mcpServers']['markets-terminal']
+          assert server['command'] == 'python'
+          assert server['args'] == ['mcp_server/markets_mcp_readonly.py']
+          entry = market['plugins'][0]
+          assert entry['name'] == 'markets-terminal'
+          assert entry['policy']['products'] == ['CODEX']
+          src = Path('mcp_server/markets_mcp_readonly.py').read_text()
+          assert src.count('@app.tool(') == 2
+          assert 'def markets_repo_status' in src
+          assert 'def markets_read_file' in src
+          assert 'app.run(transport="stdio")' in src
+          for forbidden in ('subprocess.Popen', 'os.system(', '@app.resource', '@app.prompt'):
+              assert forbidden not in src
+          print('Markets Terminal plugin contract clean')
+          PY
       - name: Validate shell and systemd templates
         run: |
           bash -n deploy/aws/install_frankie.sh
