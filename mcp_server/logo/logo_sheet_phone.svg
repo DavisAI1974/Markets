@@ -1,0 +1,485 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 1464" width="760" height="1464" font-family="ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif">
+<rect width="100%" height="100%" fill="#0A0E15"/>
+<text x="40" y="62" fill="#E8EDF4" font-size="34" font-weight="650">Markets Terminal</text>
+<text x="40" y="98" fill="#8FA0B5" font-size="20">Three logo candidates</text>
+<text x="40" y="126" fill="#66788F" font-size="17">Every mark carries the weekend GAP.</text>
+<line x1="40" y1="150" x2="720" y2="150" stroke="#1E2A3A" stroke-width="2"/>
+<rect x="40" y="176" width="46" height="34" rx="8" fill="#42C2C6"/>
+<text x="63" y="201" fill="#06131A" font-size="22" font-weight="700" text-anchor="middle">A</text>
+<text x="102" y="201" fill="#E8EDF4" font-size="26" font-weight="600">Forward Curve</text>
+<text x="40" y="238" fill="#8FA0B5" font-size="19">Anchor, week one, the gap, week two, the print.</text>
+<svg viewBox="0 0 512 512" x="40" y="260" width="230" height="230">
+  
+  <defs>
+    <linearGradient id="a_bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#132033"/>
+      <stop offset="1" stop-color="#080D16"/>
+    </linearGradient>
+    <linearGradient id="a_curve" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0"   stop-color="#3E7FB8"/>
+      <stop offset="0.55" stop-color="#42C2C6"/>
+      <stop offset="1"   stop-color="#F2B441"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#a_bg)"/>
+
+  <!-- the anchor line: every curve in this system accumulates from a declared anchor -->
+  <line x1="88" y1="344" x2="424" y2="344" stroke="#2A3A4F" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- week one: rise, shallow give-back, rise -->
+  <path d="M104 336 L152 300 L200 314 L248 252 L288 228"
+        fill="none" stroke="url(#a_curve)" stroke-width="26"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- THE GAP. The weekend is not traded, so no line is drawn through it. -->
+
+  <!-- week two -->
+  <path d="M336 258 L384 186 L416 136"
+        fill="none" stroke="url(#a_curve)" stroke-width="26"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- the anchor, hollow: a level we start from, not a level we called -->
+  <circle cx="104" cy="336" r="17" fill="#080D16" stroke="#3E7FB8" stroke-width="10"/>
+  <!-- the print -->
+  <circle cx="416" cy="136" r="19" fill="#F2B441"/>
+</svg>
+
+<rect x="304" y="260" width="416" height="122" rx="14" fill="#12181F"/>
+<svg viewBox="0 0 512 512" x="330" y="289" width="64" height="64">
+  
+  <defs>
+    <linearGradient id="a_bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#132033"/>
+      <stop offset="1" stop-color="#080D16"/>
+    </linearGradient>
+    <linearGradient id="a_curve" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0"   stop-color="#3E7FB8"/>
+      <stop offset="0.55" stop-color="#42C2C6"/>
+      <stop offset="1"   stop-color="#F2B441"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#a_bg)"/>
+
+  <!-- the anchor line: every curve in this system accumulates from a declared anchor -->
+  <line x1="88" y1="344" x2="424" y2="344" stroke="#2A3A4F" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- week one: rise, shallow give-back, rise -->
+  <path d="M104 336 L152 300 L200 314 L248 252 L288 228"
+        fill="none" stroke="url(#a_curve)" stroke-width="26"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- THE GAP. The weekend is not traded, so no line is drawn through it. -->
+
+  <!-- week two -->
+  <path d="M336 258 L384 186 L416 136"
+        fill="none" stroke="url(#a_curve)" stroke-width="26"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- the anchor, hollow: a level we start from, not a level we called -->
+  <circle cx="104" cy="336" r="17" fill="#080D16" stroke="#3E7FB8" stroke-width="10"/>
+  <!-- the print -->
+  <circle cx="416" cy="136" r="19" fill="#F2B441"/>
+</svg>
+
+<svg viewBox="0 0 512 512" x="428" y="305" width="32" height="32">
+  
+  <defs>
+    <linearGradient id="a_bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#132033"/>
+      <stop offset="1" stop-color="#080D16"/>
+    </linearGradient>
+    <linearGradient id="a_curve" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0"   stop-color="#3E7FB8"/>
+      <stop offset="0.55" stop-color="#42C2C6"/>
+      <stop offset="1"   stop-color="#F2B441"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#a_bg)"/>
+
+  <!-- the anchor line: every curve in this system accumulates from a declared anchor -->
+  <line x1="88" y1="344" x2="424" y2="344" stroke="#2A3A4F" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- week one: rise, shallow give-back, rise -->
+  <path d="M104 336 L152 300 L200 314 L248 252 L288 228"
+        fill="none" stroke="url(#a_curve)" stroke-width="26"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- THE GAP. The weekend is not traded, so no line is drawn through it. -->
+
+  <!-- week two -->
+  <path d="M336 258 L384 186 L416 136"
+        fill="none" stroke="url(#a_curve)" stroke-width="26"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- the anchor, hollow: a level we start from, not a level we called -->
+  <circle cx="104" cy="336" r="17" fill="#080D16" stroke="#3E7FB8" stroke-width="10"/>
+  <!-- the print -->
+  <circle cx="416" cy="136" r="19" fill="#F2B441"/>
+</svg>
+
+<text x="330" y="374" fill="#66788F" font-size="15">64</text>
+<text x="428" y="374" fill="#66788F" font-size="15">32</text>
+<text x="500" y="328" fill="#66788F" font-size="16">on dark</text>
+<rect x="304" y="398" width="416" height="122" rx="14" fill="#F4F6F9"/>
+<svg viewBox="0 0 512 512" x="330" y="427" width="64" height="64">
+  
+  <defs>
+    <linearGradient id="a_bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#132033"/>
+      <stop offset="1" stop-color="#080D16"/>
+    </linearGradient>
+    <linearGradient id="a_curve" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0"   stop-color="#3E7FB8"/>
+      <stop offset="0.55" stop-color="#42C2C6"/>
+      <stop offset="1"   stop-color="#F2B441"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#a_bg)"/>
+
+  <!-- the anchor line: every curve in this system accumulates from a declared anchor -->
+  <line x1="88" y1="344" x2="424" y2="344" stroke="#2A3A4F" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- week one: rise, shallow give-back, rise -->
+  <path d="M104 336 L152 300 L200 314 L248 252 L288 228"
+        fill="none" stroke="url(#a_curve)" stroke-width="26"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- THE GAP. The weekend is not traded, so no line is drawn through it. -->
+
+  <!-- week two -->
+  <path d="M336 258 L384 186 L416 136"
+        fill="none" stroke="url(#a_curve)" stroke-width="26"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- the anchor, hollow: a level we start from, not a level we called -->
+  <circle cx="104" cy="336" r="17" fill="#080D16" stroke="#3E7FB8" stroke-width="10"/>
+  <!-- the print -->
+  <circle cx="416" cy="136" r="19" fill="#F2B441"/>
+</svg>
+
+<svg viewBox="0 0 512 512" x="428" y="443" width="32" height="32">
+  
+  <defs>
+    <linearGradient id="a_bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#132033"/>
+      <stop offset="1" stop-color="#080D16"/>
+    </linearGradient>
+    <linearGradient id="a_curve" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0"   stop-color="#3E7FB8"/>
+      <stop offset="0.55" stop-color="#42C2C6"/>
+      <stop offset="1"   stop-color="#F2B441"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#a_bg)"/>
+
+  <!-- the anchor line: every curve in this system accumulates from a declared anchor -->
+  <line x1="88" y1="344" x2="424" y2="344" stroke="#2A3A4F" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- week one: rise, shallow give-back, rise -->
+  <path d="M104 336 L152 300 L200 314 L248 252 L288 228"
+        fill="none" stroke="url(#a_curve)" stroke-width="26"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- THE GAP. The weekend is not traded, so no line is drawn through it. -->
+
+  <!-- week two -->
+  <path d="M336 258 L384 186 L416 136"
+        fill="none" stroke="url(#a_curve)" stroke-width="26"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- the anchor, hollow: a level we start from, not a level we called -->
+  <circle cx="104" cy="336" r="17" fill="#080D16" stroke="#3E7FB8" stroke-width="10"/>
+  <!-- the print -->
+  <circle cx="416" cy="136" r="19" fill="#F2B441"/>
+</svg>
+
+<text x="330" y="512" fill="#5A6B80" font-size="15">64</text>
+<text x="428" y="512" fill="#5A6B80" font-size="15">32</text>
+<text x="500" y="466" fill="#5A6B80" font-size="16">on light</text>
+<line x1="40" y1="580" x2="720" y2="580" stroke="#1E2A3A" stroke-width="2"/>
+<rect x="40" y="606" width="46" height="34" rx="8" fill="#42C2C6"/>
+<text x="63" y="631" fill="#06131A" font-size="22" font-weight="700" text-anchor="middle">B</text>
+<text x="102" y="631" fill="#E8EDF4" font-size="26" font-weight="600">Bracketed Read</text>
+<text x="40" y="668" fill="#8FA0B5" font-size="19">Brackets = terminal AND read-only. Cursor waits.</text>
+<svg viewBox="0 0 512 512" x="40" y="690" width="230" height="230">
+  
+  <defs>
+    <linearGradient id="b_bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0E1A2B"/>
+      <stop offset="1" stop-color="#060A11"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#b_bg)"/>
+
+  <!-- Brackets: the terminal half of the name, and the read-only half at once. The curve is
+       held INSIDE a frame it cannot write past. -->
+  <path d="M150 118 L96 118 L96 394 L150 394"
+        fill="none" stroke="#42C2C6" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M362 118 L416 118 L416 394 L362 394"
+        fill="none" stroke="#42C2C6" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- week one -->
+  <path d="M150 322 L196 292 L242 304 L286 244"
+        fill="none" stroke="#F2F5F9" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- THE GAP -->
+  <!-- week two -->
+  <path d="M330 262 L362 190"
+        fill="none" stroke="#F2F5F9" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- the cursor: a terminal waiting for the next print -->
+  <rect x="348" y="150" width="28" height="28" rx="6" fill="#F2B441"/>
+</svg>
+
+<rect x="304" y="690" width="416" height="122" rx="14" fill="#12181F"/>
+<svg viewBox="0 0 512 512" x="330" y="719" width="64" height="64">
+  
+  <defs>
+    <linearGradient id="b_bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0E1A2B"/>
+      <stop offset="1" stop-color="#060A11"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#b_bg)"/>
+
+  <!-- Brackets: the terminal half of the name, and the read-only half at once. The curve is
+       held INSIDE a frame it cannot write past. -->
+  <path d="M150 118 L96 118 L96 394 L150 394"
+        fill="none" stroke="#42C2C6" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M362 118 L416 118 L416 394 L362 394"
+        fill="none" stroke="#42C2C6" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- week one -->
+  <path d="M150 322 L196 292 L242 304 L286 244"
+        fill="none" stroke="#F2F5F9" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- THE GAP -->
+  <!-- week two -->
+  <path d="M330 262 L362 190"
+        fill="none" stroke="#F2F5F9" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- the cursor: a terminal waiting for the next print -->
+  <rect x="348" y="150" width="28" height="28" rx="6" fill="#F2B441"/>
+</svg>
+
+<svg viewBox="0 0 512 512" x="428" y="735" width="32" height="32">
+  
+  <defs>
+    <linearGradient id="b_bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0E1A2B"/>
+      <stop offset="1" stop-color="#060A11"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#b_bg)"/>
+
+  <!-- Brackets: the terminal half of the name, and the read-only half at once. The curve is
+       held INSIDE a frame it cannot write past. -->
+  <path d="M150 118 L96 118 L96 394 L150 394"
+        fill="none" stroke="#42C2C6" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M362 118 L416 118 L416 394 L362 394"
+        fill="none" stroke="#42C2C6" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- week one -->
+  <path d="M150 322 L196 292 L242 304 L286 244"
+        fill="none" stroke="#F2F5F9" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- THE GAP -->
+  <!-- week two -->
+  <path d="M330 262 L362 190"
+        fill="none" stroke="#F2F5F9" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- the cursor: a terminal waiting for the next print -->
+  <rect x="348" y="150" width="28" height="28" rx="6" fill="#F2B441"/>
+</svg>
+
+<text x="330" y="804" fill="#66788F" font-size="15">64</text>
+<text x="428" y="804" fill="#66788F" font-size="15">32</text>
+<text x="500" y="758" fill="#66788F" font-size="16">on dark</text>
+<rect x="304" y="828" width="416" height="122" rx="14" fill="#F4F6F9"/>
+<svg viewBox="0 0 512 512" x="330" y="857" width="64" height="64">
+  
+  <defs>
+    <linearGradient id="b_bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0E1A2B"/>
+      <stop offset="1" stop-color="#060A11"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#b_bg)"/>
+
+  <!-- Brackets: the terminal half of the name, and the read-only half at once. The curve is
+       held INSIDE a frame it cannot write past. -->
+  <path d="M150 118 L96 118 L96 394 L150 394"
+        fill="none" stroke="#42C2C6" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M362 118 L416 118 L416 394 L362 394"
+        fill="none" stroke="#42C2C6" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- week one -->
+  <path d="M150 322 L196 292 L242 304 L286 244"
+        fill="none" stroke="#F2F5F9" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- THE GAP -->
+  <!-- week two -->
+  <path d="M330 262 L362 190"
+        fill="none" stroke="#F2F5F9" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- the cursor: a terminal waiting for the next print -->
+  <rect x="348" y="150" width="28" height="28" rx="6" fill="#F2B441"/>
+</svg>
+
+<svg viewBox="0 0 512 512" x="428" y="873" width="32" height="32">
+  
+  <defs>
+    <linearGradient id="b_bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0E1A2B"/>
+      <stop offset="1" stop-color="#060A11"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#b_bg)"/>
+
+  <!-- Brackets: the terminal half of the name, and the read-only half at once. The curve is
+       held INSIDE a frame it cannot write past. -->
+  <path d="M150 118 L96 118 L96 394 L150 394"
+        fill="none" stroke="#42C2C6" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M362 118 L416 118 L416 394 L362 394"
+        fill="none" stroke="#42C2C6" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- week one -->
+  <path d="M150 322 L196 292 L242 304 L286 244"
+        fill="none" stroke="#F2F5F9" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- THE GAP -->
+  <!-- week two -->
+  <path d="M330 262 L362 190"
+        fill="none" stroke="#F2F5F9" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- the cursor: a terminal waiting for the next print -->
+  <rect x="348" y="150" width="28" height="28" rx="6" fill="#F2B441"/>
+</svg>
+
+<text x="330" y="942" fill="#5A6B80" font-size="15">64</text>
+<text x="428" y="942" fill="#5A6B80" font-size="15">32</text>
+<text x="500" y="896" fill="#5A6B80" font-size="16">on light</text>
+<line x1="40" y1="1010" x2="720" y2="1010" stroke="#1E2A3A" stroke-width="2"/>
+<rect x="40" y="1036" width="46" height="34" rx="8" fill="#42C2C6"/>
+<text x="63" y="1061" fill="#06131A" font-size="22" font-weight="700" text-anchor="middle">C</text>
+<text x="102" y="1061" fill="#E8EDF4" font-size="26" font-weight="600">The Gap</text>
+<text x="40" y="1098" fill="#8FA0B5" font-size="19">Two strokes and a hole. Readable at 16px.</text>
+<svg viewBox="0 0 512 512" x="40" y="1120" width="230" height="230">
+  
+  <defs>
+    <linearGradient id="c_bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1B4A6B"/>
+      <stop offset="1" stop-color="#0A1B2A"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#c_bg)"/>
+
+  <!-- Reduced to the one thing that is ours: a curve with the untraded hours left OUT of it.
+       Two strokes and a hole. Survives being 16 pixels wide, which the other two do not. -->
+  <path d="M112 350 L232 214"
+        fill="none" stroke="#FFFFFF" stroke-width="42" stroke-linecap="round"/>
+  <path d="M300 286 L400 152"
+        fill="none" stroke="#FFFFFF" stroke-width="42" stroke-linecap="round"/>
+
+  <circle cx="400" cy="152" r="27" fill="#F2B441"/>
+</svg>
+
+<rect x="304" y="1120" width="416" height="122" rx="14" fill="#12181F"/>
+<svg viewBox="0 0 512 512" x="330" y="1149" width="64" height="64">
+  
+  <defs>
+    <linearGradient id="c_bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1B4A6B"/>
+      <stop offset="1" stop-color="#0A1B2A"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#c_bg)"/>
+
+  <!-- Reduced to the one thing that is ours: a curve with the untraded hours left OUT of it.
+       Two strokes and a hole. Survives being 16 pixels wide, which the other two do not. -->
+  <path d="M112 350 L232 214"
+        fill="none" stroke="#FFFFFF" stroke-width="42" stroke-linecap="round"/>
+  <path d="M300 286 L400 152"
+        fill="none" stroke="#FFFFFF" stroke-width="42" stroke-linecap="round"/>
+
+  <circle cx="400" cy="152" r="27" fill="#F2B441"/>
+</svg>
+
+<svg viewBox="0 0 512 512" x="428" y="1165" width="32" height="32">
+  
+  <defs>
+    <linearGradient id="c_bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1B4A6B"/>
+      <stop offset="1" stop-color="#0A1B2A"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#c_bg)"/>
+
+  <!-- Reduced to the one thing that is ours: a curve with the untraded hours left OUT of it.
+       Two strokes and a hole. Survives being 16 pixels wide, which the other two do not. -->
+  <path d="M112 350 L232 214"
+        fill="none" stroke="#FFFFFF" stroke-width="42" stroke-linecap="round"/>
+  <path d="M300 286 L400 152"
+        fill="none" stroke="#FFFFFF" stroke-width="42" stroke-linecap="round"/>
+
+  <circle cx="400" cy="152" r="27" fill="#F2B441"/>
+</svg>
+
+<text x="330" y="1234" fill="#66788F" font-size="15">64</text>
+<text x="428" y="1234" fill="#66788F" font-size="15">32</text>
+<text x="500" y="1188" fill="#66788F" font-size="16">on dark</text>
+<rect x="304" y="1258" width="416" height="122" rx="14" fill="#F4F6F9"/>
+<svg viewBox="0 0 512 512" x="330" y="1287" width="64" height="64">
+  
+  <defs>
+    <linearGradient id="c_bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1B4A6B"/>
+      <stop offset="1" stop-color="#0A1B2A"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#c_bg)"/>
+
+  <!-- Reduced to the one thing that is ours: a curve with the untraded hours left OUT of it.
+       Two strokes and a hole. Survives being 16 pixels wide, which the other two do not. -->
+  <path d="M112 350 L232 214"
+        fill="none" stroke="#FFFFFF" stroke-width="42" stroke-linecap="round"/>
+  <path d="M300 286 L400 152"
+        fill="none" stroke="#FFFFFF" stroke-width="42" stroke-linecap="round"/>
+
+  <circle cx="400" cy="152" r="27" fill="#F2B441"/>
+</svg>
+
+<svg viewBox="0 0 512 512" x="428" y="1303" width="32" height="32">
+  
+  <defs>
+    <linearGradient id="c_bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1B4A6B"/>
+      <stop offset="1" stop-color="#0A1B2A"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#c_bg)"/>
+
+  <!-- Reduced to the one thing that is ours: a curve with the untraded hours left OUT of it.
+       Two strokes and a hole. Survives being 16 pixels wide, which the other two do not. -->
+  <path d="M112 350 L232 214"
+        fill="none" stroke="#FFFFFF" stroke-width="42" stroke-linecap="round"/>
+  <path d="M300 286 L400 152"
+        fill="none" stroke="#FFFFFF" stroke-width="42" stroke-linecap="round"/>
+
+  <circle cx="400" cy="152" r="27" fill="#F2B441"/>
+</svg>
+
+<text x="330" y="1372" fill="#5A6B80" font-size="15">64</text>
+<text x="428" y="1372" fill="#5A6B80" font-size="15">32</text>
+<text x="500" y="1326" fill="#5A6B80" font-size="16">on light</text>
+</svg>
