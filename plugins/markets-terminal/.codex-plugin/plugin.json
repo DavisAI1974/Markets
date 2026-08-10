@@ -1,0 +1,24 @@
+{
+  "name": "markets-terminal",
+  "version": "0.1.0",
+  "description": "Read-only Markets repository access for Frankie engineering work.",
+  "author": {
+    "name": "DavisAI"
+  },
+  "repository": "https://github.com/DavisAI1974/Markets",
+  "keywords": ["markets", "frankie", "mcp", "read-only"],
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Markets Terminal",
+    "shortDescription": "Read-only access to the Markets repo",
+    "longDescription": "Provides exactly two read-only MCP tools for Markets/Frankie engineering: repository status and safe UTF-8 file reads constrained to the Markets checkout.",
+    "developerName": "DavisAI",
+    "category": "Productivity",
+    "capabilities": ["Read"],
+    "defaultPrompt": [
+      "Show the current Markets repo status.",
+      "Read a safe file from the Markets repo.",
+      "Check Frankie state without changing anything."
+    ]
+  }
+}
