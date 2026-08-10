@@ -1,9 +1,9 @@
 {
-  "schema_version": "1.1",
+  "schema_version": "1.2",
   "agent": "Frankie",
   "status": "READY",
   "source_session": "https://claude.ai/code/session_01XASwGBJCADah3Tb8GssvLJ",
-  "note": "Four papers were supplied directly by Greg from the Claude discussion. On 2026-08-08 Greg explicitly approved five additional arXiv papers to be worked into Frankie even if they were not all among the originally missing Claude links. The original conversation may still contain one or more additional papers, but that no longer blocks Frankie's reviewed research grounding.",
+  "note": "Four papers were supplied directly by Greg from the Claude discussion. On 2026-08-08 Greg explicitly approved five additional arXiv papers to be worked into Frankie even if they were not all among the originally missing Claude links. On 2026-08-10 Greg directed a surgical, no-rebuild integration of the valuable missing EvoHarness-RL mechanisms while preserving Frankie's existing brain/schema/lens architecture and the original DavisAI NOVA Token Optimizer. The original conversation may still contain one or more additional papers, but that no longer blocks Frankie's reviewed research grounding.",
   "papers": [
     {
       "id": "nooa-2607.20709",
@@ -112,6 +112,18 @@
         "It maintains a single canonical version line and emphasizes non-regression and auditable release artifacts."
       ],
       "why_it_matters": "Grounds Frankie's single canonical release lineage, symptom-level diagnosis, explicit pass-to-fail regression accounting, and separation of candidate generation from release authority."
+    },
+    {
+      "id": "evoharness-rl-2608.05446",
+      "source_type": "user_directed_s119",
+      "title": "EvoHarness-RL: Learning Self-Evolving Runtime Harness for Long-Horizon LLM Agents",
+      "url": "https://arxiv.org/abs/2608.05446",
+      "claims": [
+        "EvoHarness-RL exposes Belief, Progress, and Experience as policy-facing external harness state rather than one undifferentiated memory store.",
+        "It gives the policy explicit external-state actions and uses cost-aware reinforcement learning to make state access selective rather than automatic.",
+        "Its reported training dynamics include harness annealing, where external-state calls become more selective, and harness evolution, where progress and experience are consolidated into a compact task-adaptive substrate."
+      ],
+      "why_it_matters": "Frankie already has the needed state organs, so the paper is integrated as a taxonomy and access-policy layer rather than a rebuild: Belief maps to causal decision state, Progress to A-68 lens books, Experience to A-62 track records/play retrieval/reviewed lessons; track/commit/recall/note access is instrumented and costed, while NOVA compaction remains conservative and A-65-gated before any lossy view becomes decision-bearing."
     }
   ],
   "original_session_search_still_open": true,
@@ -128,6 +140,7 @@
     "deploy/aws/COACH_AGENT_SETUP_S93.md",
     "research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md",
     "CHATGPT_HANDOFF_S116_NOVEL_EDGE_LAB.md",
-    "research/kalshi/FRANKIE_ARCHITECTURE_S117.md"
+    "research/kalshi/FRANKIE_ARCHITECTURE_S117.md",
+    "research/kalshi/frankie_nova_optimizer.py"
   ]
 }
