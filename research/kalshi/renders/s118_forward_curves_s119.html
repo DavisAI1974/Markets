@@ -1,0 +1,221 @@
+<title>Tied With Doing Nothing</title>
+<style>
+  :root{
+    color-scheme: light;
+    --ground:#eceff0; --panel:#f9fbfa; --panel-2:#f1f4f4;
+    --ink:#0f1618; --ink-2:#55625f; --ink-3:#8a9694; --rule:#d3dad8;
+    --s-actual:#0f1618; --s-frankie:#2a78d6; --s-old:#eb6834; --bench:#9aa5a3;
+    --warn:#b3401f; --good:#1b7f4f; --flat:#7d8b88;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --ground:#0e1315; --panel:#151b1d; --panel-2:#1b2325;
+      --ink:#eef3f2; --ink-2:#9aa8a5; --ink-3:#6b7a77; --rule:#263033;
+      --s-actual:#eef3f2; --s-frankie:#3987e5; --s-old:#d95926; --bench:#6b7a77;
+      --warn:#e2704c; --good:#4bbd84; --flat:#8b9996;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --ground:#0e1315; --panel:#151b1d; --panel-2:#1b2325;
+    --ink:#eef3f2; --ink-2:#9aa8a5; --ink-3:#6b7a77; --rule:#263033;
+    --s-actual:#eef3f2; --s-frankie:#3987e5; --s-old:#d95926; --bench:#6b7a77;
+    --warn:#e2704c; --good:#4bbd84; --flat:#8b9996;
+  }
+  *{box-sizing:border-box;}
+  body{
+    background:var(--ground); color:var(--ink);
+    font-family:var(--sans); line-height:1.55;
+    margin:0; padding:28px 20px 64px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1020px; margin:0 auto; display:flex; flex-direction:column; gap:26px;}
+
+  header.head{display:flex; flex-direction:column; gap:10px; border-bottom:2px solid var(--ink); padding-bottom:16px;}
+  .eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3);}
+  h1{font-size:clamp(26px,4.4vw,40px); line-height:1.08; margin:0; text-wrap:balance; font-weight:640; letter-spacing:-.015em;}
+  .dek{color:var(--ink-2); max-width:64ch; margin:0; font-size:15.5px;}
+
+  .strip{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px; background:var(--rule); border:1px solid var(--rule);}
+  .cell{background:var(--panel); padding:13px 15px; display:flex; flex-direction:column; gap:3px;}
+  .cell .k{font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3);}
+  .cell .v{font-family:var(--mono); font-size:23px; font-variant-numeric:tabular-nums; letter-spacing:-.02em;}
+  .cell .n{font-size:12px; color:var(--ink-2); line-height:1.35;}
+
+  section.panel{background:var(--panel); border:1px solid var(--rule); padding:20px 20px 16px; display:flex; flex-direction:column; gap:14px;}
+  h2{font-size:17px; margin:0; font-weight:640; letter-spacing:-.01em;}
+  h2 .gid{font-family:var(--mono); color:var(--ink-3); font-weight:500; font-size:14px; margin-left:8px;}
+  .sub{color:var(--ink-2); font-size:13.5px; margin:0; max-width:70ch;}
+
+  .legend{display:flex; flex-wrap:wrap; gap:16px; font-size:12.5px; color:var(--ink-2); font-family:var(--mono);}
+  .legend i{display:inline-block; width:22px; height:0; border-top-width:2.5px; border-top-style:solid; vertical-align:middle; margin-right:7px;}
+
+  .chartbox{overflow-x:auto;}
+  svg{display:block; width:100%; height:auto; min-width:560px;}
+  .grid{stroke:var(--rule); stroke-width:1;}
+  .zero{stroke:var(--ink-3); stroke-width:1; stroke-dasharray:2 3;}
+  .ax{font-family:var(--mono); font-size:10px; fill:var(--ink-3);}
+  .lbl{font-family:var(--mono); font-size:10.5px; fill:var(--ink-2);}
+  .seam{stroke:var(--ink-3); stroke-width:1; stroke-dasharray:1 4; opacity:.75;}
+  .seamtx{font-family:var(--mono); font-size:9px; fill:var(--ink-3);}
+
+  .tbl{overflow-x:auto;}
+  table{border-collapse:collapse; width:100%; font-family:var(--mono); font-size:12.5px; font-variant-numeric:tabular-nums; min-width:600px;}
+  th{text-align:right; font-weight:500; color:var(--ink-3); font-size:10px; letter-spacing:.09em; text-transform:uppercase; padding:0 10px 7px; border-bottom:1px solid var(--rule); white-space:nowrap;}
+  th:first-child,td:first-child{text-align:left;}
+  td{text-align:right; padding:5px 10px; border-bottom:1px solid var(--rule);}
+  tr:last-child td{border-bottom:none;}
+  tr.big td{background:var(--panel-2);}
+  .day{color:var(--ink-2);}
+  .dow{color:var(--ink-3); font-size:11px;}
+  .neg{color:var(--warn);} .pos{color:var(--good);}
+  .miss{color:var(--warn); font-weight:600;}
+  .tag{font-family:var(--mono); font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; padding:1.5px 6px; border:1px solid currentColor; white-space:nowrap;}
+  .tag.w{color:var(--warn);} .tag.g{color:var(--good);} .tag.f{color:var(--flat);}
+
+  .ratio{display:flex; align-items:baseline; gap:10px; font-family:var(--mono); flex-wrap:wrap;}
+  .ratio .big{font-size:30px; font-variant-numeric:tabular-nums; letter-spacing:-.02em;}
+  .ratio .cap{font-size:12.5px; color:var(--ink-2);}
+
+  .canary{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:1px; background:var(--rule); border:1px solid var(--rule);}
+  .note{font-size:13px; color:var(--ink-2); border-left:2px solid var(--rule); padding-left:14px; margin:0; max-width:72ch;}
+  footer{font-family:var(--mono); font-size:11px; color:var(--ink-3); border-top:1px solid var(--rule); padding-top:14px; line-height:1.7;}
+  a{color:inherit;}
+</style>
+
+<div class="wrap">
+
+<header class="head">
+  <div class="eyebrow">S118 forward curves · rendered S119 · brain s105.9</div>
+  <h1>Frankie ties doing nothing on both blocks</h1>
+  <p class="dek">Cum-from-anchor, each series accumulating its own day moves, broken at the weekend seam. The vertical distance between two lines on any day <em>is</em> the cumulative error to that day — nothing is re-anchored or rescaled.</p>
+</header>
+
+<div class="strip" id="strip"></div>
+
+<p class="note"><strong>Read the ratio, not the total.</strong> A sum of absolute errors means nothing without a benchmark (A-1). Against <span style="font-family:var(--mono)">zero_change</span> — forecast no move at all — Frankie lands within 0.7% on g18 and 0.1% on g19. That is the shape of a forecaster whose magnitude carries no information, which is what A-85 says.</p>
+
+<section class="panel" id="p-g18"></section>
+<section class="panel" id="p-g19"></section>
+
+<section class="panel">
+  <h2>Today's canary <span class="gid">g18 / 20260427 / specialist B · GPT-5.6 Sol</span></h2>
+  <p class="sub">First forecast to clear structural validation end to end. The model declined, and for the first time the boundary let it.</p>
+  <div class="canary" id="canary"></div>
+  <p class="note"><strong>The flat line is the point.</strong> A valid abstention is a 13-point curve on the 2-hourly ET clock with every value zero. At C2C-014 that same shape was rejected as a decorative straight line — an abstention and a fake curve both have shape deviation 0.0. The <span style="font-family:var(--mono)">disposition</span> field now separates them, so declining is representable. One unscored day proves nothing about skill; it proves the gate no longer blocks the honest answer.</p>
+</section>
+
+<footer>
+  SNAPSHOT, HAND-BUILT — not regenerated by any tool. Source data: research/kalshi/records/S118/frankie_s118_b_scores.json (g18/g19, arm A only; g20/arm B is not in that file). Canary artifact sha256 bfadfcc4 · ledger d8e8c04. Re-derive from the source rather than editing this page.<br>
+  Render rule (S104/S105): actual curve + each forecaster's own p50 path, no re-anchoring, no weekend bridge. Per-event only, never pooled (D4/D37).
+</footer>
+
+</div>
+
+<script>
+const DATA = [{"group": "g18", "points": [{"day": "20260427", "label": "04-27", "dow": "Mon", "gap_before": false, "actual": 370.0, "frankie": -150.0, "old_blind": -170.0, "actual_move": 370.0, "old": -170.0, "f_err": 520.0, "o_err": 540.0, "z_err": 370.0, "f_dir": false, "o_dir": false}, {"day": "20260428", "label": "04-28", "dow": "Tue", "gap_before": false, "actual": -70.0, "frankie": -260.0, "old_blind": -520.0, "actual_move": -440.0, "old": -350.0, "f_err": 180.0, "o_err": 90.0, "z_err": 440.0, "f_dir": true, "o_dir": true}, {"day": "20260429", "label": "04-29", "dow": "Wed", "gap_before": false, "actual": -510.0, "frankie": 150.0, "old_blind": -670.0, "actual_move": -440.0, "old": -150.0, "f_err": 590.0, "o_err": 290.0, "z_err": 440.0, "f_dir": false, "o_dir": true}, {"day": "20260430", "label": "04-30", "dow": "Thu", "gap_before": false, "actual": 720.0, "frankie": 330.0, "old_blind": -270.0, "actual_move": 1230.0, "old": 400.0, "f_err": 900.0, "o_err": 830.0, "z_err": 1230.0, "f_dir": true, "o_dir": true}, {"day": "20260501", "label": "05-01", "dow": "Fri", "gap_before": false, "actual": 1000.0, "frankie": -190.0, "old_blind": -750.0, "actual_move": 280.0, "old": -480.0, "f_err": 470.0, "o_err": 760.0, "z_err": 280.0, "f_dir": false, "o_dir": false}, {"day": "20260504", "label": "05-04", "dow": "Mon", "gap_before": true, "actual": 1610.0, "frankie": -280.0, "old_blind": -880.0, "actual_move": 610.0, "old": -130.0, "f_err": 890.0, "o_err": 740.0, "z_err": 610.0, "f_dir": false, "o_dir": false}, {"day": "20260505", "label": "05-05", "dow": "Tue", "gap_before": false, "actual": 780.0, "frankie": -200.0, "old_blind": -1280.0, "actual_move": -830.0, "old": -400.0, "f_err": 630.0, "o_err": 430.0, "z_err": 830.0, "f_dir": true, "o_dir": true}, {"day": "20260506", "label": "05-06", "dow": "Wed", "gap_before": false, "actual": 250.0, "frankie": 220.0, "old_blind": -1180.0, "actual_move": -530.0, "old": 100.0, "f_err": 750.0, "o_err": 630.0, "z_err": 530.0, "f_dir": false, "o_dir": false}, {"day": "20260507", "label": "05-07", "dow": "Thu", "gap_before": false, "actual": 980.0, "frankie": 90.0, "old_blind": -1300.0, "actual_move": 730.0, "old": -120.0, "f_err": 640.0, "o_err": 850.0, "z_err": 730.0, "f_dir": true, "o_dir": false}, {"day": "20260508", "label": "05-08", "dow": "Fri", "gap_before": false, "actual": 610.0, "frankie": -150.0, "old_blind": -1720.0, "actual_move": -370.0, "old": -420.0, "f_err": 220.0, "o_err": 50.0, "z_err": 370.0, "f_dir": true, "o_dir": true}], "sum_f": 5790.0, "sum_o": 5210.0, "sum_z": 5830.0, "dir_f": 5, "dir_o": 5, "better": 3, "worse": 7}, {"group": "g19", "points": [{"day": "20260511", "label": "05-11", "dow": "Mon", "gap_before": false, "actual": 1740.0, "frankie": -160.0, "old_blind": -450.0, "actual_move": 1740.0, "old": -450.0, "f_err": 1900.0, "o_err": 2190.0, "z_err": 1740.0, "f_dir": false, "o_dir": false}, {"day": "20260512", "label": "05-12", "dow": "Tue", "gap_before": false, "actual": 780.0, "frankie": 120.0, "old_blind": -650.0, "actual_move": -960.0, "old": -200.0, "f_err": 1080.0, "o_err": 760.0, "z_err": 960.0, "f_dir": false, "o_dir": true}, {"day": "20260513", "label": "05-13", "dow": "Wed", "gap_before": false, "actual": 1200.0, "frankie": -230.0, "old_blind": -1050.0, "actual_move": 420.0, "old": -400.0, "f_err": 650.0, "o_err": 820.0, "z_err": 420.0, "f_dir": false, "o_dir": false}, {"day": "20260514", "label": "05-14", "dow": "Thu", "gap_before": false, "actual": 1790.0, "frankie": -270.0, "old_blind": -1200.0, "actual_move": 590.0, "old": -150.0, "f_err": 860.0, "o_err": 740.0, "z_err": 590.0, "f_dir": false, "o_dir": false}, {"day": "20260515", "label": "05-15", "dow": "Fri", "gap_before": false, "actual": 2110.0, "frankie": 100.0, "old_blind": -1110.0, "actual_move": 320.0, "old": 90.0, "f_err": 220.0, "o_err": 230.0, "z_err": 320.0, "f_dir": true, "o_dir": true}, {"day": "20260518", "label": "05-18", "dow": "Mon", "gap_before": true, "actual": 2770.0, "frankie": 300.0, "old_blind": -1660.0, "actual_move": 660.0, "old": -550.0, "f_err": 360.0, "o_err": 1210.0, "z_err": 660.0, "f_dir": true, "o_dir": false}, {"day": "20260519", "label": "05-19", "dow": "Tue", "gap_before": false, "actual": 3610.0, "frankie": -240.0, "old_blind": -1510.0, "actual_move": 840.0, "old": 150.0, "f_err": 1080.0, "o_err": 690.0, "z_err": 840.0, "f_dir": false, "o_dir": true}, {"day": "20260520", "label": "05-20", "dow": "Wed", "gap_before": false, "actual": 2560.0, "frankie": -200.0, "old_blind": -1310.0, "actual_move": -1050.0, "old": 200.0, "f_err": 850.0, "o_err": 1250.0, "z_err": 1050.0, "f_dir": true, "o_dir": false}, {"day": "20260521", "label": "05-21", "dow": "Thu", "gap_before": false, "actual": 2140.0, "frankie": -180.0, "old_blind": -1030.0, "actual_move": -420.0, "old": 280.0, "f_err": 240.0, "o_err": 700.0, "z_err": 420.0, "f_dir": true, "o_dir": false}, {"day": "20260522", "label": "05-22", "dow": "Fri", "gap_before": false, "actual": 1150.0, "frankie": -250.0, "old_blind": -1220.0, "actual_move": -990.0, "old": -190.0, "f_err": 740.0, "o_err": 800.0, "z_err": 990.0, "f_dir": true, "o_dir": true}], "sum_f": 7980.0, "sum_o": 9390.0, "sum_z": 7990.0, "dir_f": 5, "dir_o": 4, "better": 7, "worse": 3}];
+const CAN = [
+  ["disposition","ABSTAIN","valid per C2C-016"],
+  ["structural verdict","PASS","installed S120 validate_day"],
+  ["curve","13 pts","2-hourly ET, all zero"],
+  ["plays served","90 / 90","full brain, none dropped"],
+  ["input tokens","477,817","vs 500,000 TPM cap"],
+  ["compaction","13.74%","lossless, round-trip equal"]
+];
+
+const fmt = n => (n>0?"+":"") + n.toLocaleString();
+const cls = n => n>0 ? "pos" : n<0 ? "neg" : "";
+
+// ---- header strip
+const strip = document.getElementById("strip");
+DATA.forEach(b=>{
+  const r = b.sum_f / b.sum_z;
+  strip.insertAdjacentHTML("beforeend", `
+    <div class="cell"><span class="k">${b.group} · frankie / zero-change</span>
+      <span class="v">${r.toFixed(3)}&times;</span>
+      <span class="n">sum|err| ${b.sum_f.toLocaleString()} vs ${b.sum_z.toLocaleString()} doing nothing</span></div>`);
+});
+DATA.forEach(b=>{
+  strip.insertAdjacentHTML("beforeend", `
+    <div class="cell"><span class="k">${b.group} · per event</span>
+      <span class="v">${b.better}&thinsp;/&thinsp;${b.worse}</span>
+      <span class="n">improved / worsened vs the old blind · direction ${b.dir_f} of 10</span></div>`);
+});
+
+// ---- charts
+function chart(b){
+  const W=760,H=280,L=52,R=118,T=18,B=34;
+  const pts=b.points, n=pts.length;
+  const series=[["actual","actual","var(--s-actual)",2.6],["frankie","Frankie","var(--s-frankie)",2],["old_blind","old blind","var(--s-old)",2]];
+  let lo=0,hi=0;
+  pts.forEach(p=>series.forEach(([k])=>{lo=Math.min(lo,p[k]);hi=Math.max(hi,p[k]);}));
+  const pad=(hi-lo)*0.12||100; lo-=pad; hi+=pad;
+  const X=i=>L+(i*(W-L-R))/(n-1), Y=v=>T+((hi-v)*(H-T-B))/(hi-lo);
+
+  // gridlines at rounded steps
+  const step=Math.ceil((hi-lo)/5/250)*250, g=[];
+  for(let v=Math.ceil(lo/step)*step; v<=hi; v+=step) g.push(v);
+
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${b.group} forward curve, actual versus Frankie versus old blind">`;
+  g.forEach(v=>{ s+=`<line class="${v===0?'zero':'grid'}" x1="${L}" x2="${W-R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"/>`
+    + `<text class="ax" x="${L-8}" y="${(Y(v)+3.4).toFixed(1)}" text-anchor="end">${v>0?"+":""}${v}</text>`; });
+
+  // weekend seam markers
+  pts.forEach((p,i)=>{ if(p.gap_before){ const x=(X(i-1)+X(i))/2;
+    s+=`<line class="seam" x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${T}" y2="${H-B}"/>`
+     + `<text class="seamtx" x="${x.toFixed(1)}" y="${T-5}" text-anchor="middle">weekend</text>`; }});
+
+  // x labels
+  pts.forEach((p,i)=>{ s+=`<text class="ax" x="${X(i).toFixed(1)}" y="${H-B+15}" text-anchor="middle">${p.label}</text>`
+    + `<text class="ax" x="${X(i).toFixed(1)}" y="${H-B+25}" text-anchor="middle" opacity=".65">${p.dow}</text>`; });
+
+  // series, broken at seams
+  series.forEach(([k,name,col,w])=>{
+    let seg=[],segs=[];
+    pts.forEach((p,i)=>{ if(p.gap_before && seg.length){segs.push(seg);seg=[];} seg.push([X(i),Y(p[k])]); });
+    if(seg.length) segs.push(seg);
+    segs.forEach(sg=>{ s+=`<polyline fill="none" stroke="${col}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round" points="${sg.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ")}"/>`; });
+    pts.forEach((p,i)=>{ s+=`<circle cx="${X(i).toFixed(1)}" cy="${Y(p[k]).toFixed(1)}" r="${k==='actual'?3.2:2.6}" fill="${col}" stroke="var(--panel)" stroke-width="1.6"/>`; });
+    const last=pts[n-1];
+    s+=`<text class="lbl" x="${W-R+10}" y="${(Y(last[k])+3.6).toFixed(1)}" fill="${col}">${name} ${fmt(last[k])}</text>`;
+  });
+  s+=`</svg>`;
+  return s;
+}
+
+DATA.forEach(b=>{
+  const el=document.getElementById("p-"+b.group);
+  const big=[...b.points].sort((x,y)=>Math.abs(y.actual_move)-Math.abs(x.actual_move)).slice(0,3).map(p=>p.day);
+  const rows=b.points.map(p=>{
+    const share=Math.abs(p.actual_move)>0 ? Math.abs(p.frankie)/Math.abs(p.actual_move) : null;
+    return `<tr class="${big.includes(p.day)?'big':''}">
+      <td><span class="day">${p.label}</span> <span class="dow">${p.dow}</span></td>
+      <td class="${cls(p.actual_move)}">${fmt(p.actual_move)}</td>
+      <td class="${cls(p.frankie)}">${fmt(p.frankie)}</td>
+      <td>${share===null?"—":(share*100).toFixed(0)+"%"}</td>
+      <td class="${p.f_err>p.z_err?'miss':''}">${p.f_err.toLocaleString()}</td>
+      <td>${p.z_err.toLocaleString()}</td>
+      <td>${p.f_dir?'<span class="tag g">dir ok</span>':'<span class="tag w">wrong sign</span>'}</td>
+    </tr>`;}).join("");
+  el.innerHTML = `
+    <h2>Forward curve<span class="gid">${b.group} · ${b.points[0].label} to ${b.points[b.points.length-1].label} · owner-scored</span></h2>
+    <div class="ratio"><span class="big">${(b.sum_f/b.sum_z).toFixed(3)}&times;</span>
+      <span class="cap">zero-change. Frankie ${b.sum_f.toLocaleString()} · doing nothing ${b.sum_z.toLocaleString()} · old blind ${b.sum_o.toLocaleString()}</span></div>
+    <div class="legend">
+      <span><i style="border-color:var(--s-actual)"></i>actual</span>
+      <span><i style="border-color:var(--s-frankie)"></i>Frankie p50</span>
+      <span><i style="border-color:var(--s-old)"></i>old blind</span>
+    </div>
+    <div class="chartbox">${chart(b)}</div>
+    <p class="sub">Every event named — the three largest actual moves are shaded. <span style="font-family:var(--mono)">called %</span> is |guess| as a share of |actual|; <span class="miss" style="font-family:var(--mono)">red |err|</span> means the day was worse than forecasting no move at all.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>day</th><th>actual</th><th>called</th><th>called&nbsp;%</th><th>|err|</th><th>zero-chg</th><th>direction</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`;
+});
+
+document.getElementById("canary").innerHTML = CAN.map(([k,v,n])=>
+  `<div class="cell"><span class="k">${k}</span><span class="v">${v}</span><span class="n">${n}</span></div>`).join("");
+</script>
