@@ -83,7 +83,7 @@ class TargetCellManifestTests(unittest.TestCase):
 
     def test_missing_domain_bucket_fails(self):
         rows = [row("brain schema plays", "brain"), row("Databento MBO tape", "mbo")]
-        with self.assertRaisesRegex(m.TargetCellManifestStop, "required domain bucket"):
+        with self.assertRaisesRegex(m.KitchenSinkStop, "required domain bucket"):
             m.compile_manifest({
                 "target": {"group": "g18", "date": "20260427", "cutoff": "T", "namespace": "test"},
                 "rows": rows,
