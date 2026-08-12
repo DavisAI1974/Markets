@@ -11,7 +11,6 @@ Use this entry point for S115+ pulls. The original module remains importable for
 from __future__ import annotations
 
 import argparse
-import glob
 import os
 import sys
 from pathlib import Path
@@ -44,6 +43,9 @@ def absolute_destination(path: str | None, schema: str) -> Path:
 
 
 def _files_for(dest: Path, symbol: str, schema: str) -> list[Path]:
+    # Order matters: "mbp-10" also starts with "mbp-1".
+    if schema.startswith("mbp-10"):
+        return sorted(dest.glob(f"{symbol}_*.jsonl"))
     if schema.startswith("mbp-1"):
         return sorted(dest.glob(f"{symbol}_*.jsonl.gz"))
     return sorted(dest.glob(f"{symbol}_*.jsonl"))
@@ -96,8 +98,10 @@ def run_pull(args: argparse.Namespace) -> int:
         rows = legacy.range_pull(
             client, args.symbol, args.start, args.end, args.schema, args.max_cost, str(dest)
         )
-        # legacy range_pull historically returns None; infer success from bytes and use 1 as asserted work.
-        reported = 1 if _sizes(dest, args.symbol, args.schema) != before else 0
+        # Historical range_pull returns None, so there is no independent row count to trust.
+        # Treat an unknown return as asserted work and require destination byte growth. This fails
+        # closed when the legacy call reports only through logs but lands nothing.
+        reported = int(rows) if rows is not None else 1
     elif args.mode == "pull":
         rows = legacy.batch_pull(
             client, args.symbol, args.start, args.end, args.schema, args.max_cost, str(dest)
