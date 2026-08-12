@@ -1,0 +1,108 @@
+{
+  "confidence": "low",
+  "date": "20260430",
+  "disposition": "CALL",
+  "group": "g18",
+  "guessed_net_usd": 400,
+  "overnight_gap_usd": 50,
+  "path_p50_curve": [
+    [
+      "20:00",
+      0
+    ],
+    [
+      "22:00",
+      10
+    ],
+    [
+      "00:00",
+      20
+    ],
+    [
+      "02:00",
+      25
+    ],
+    [
+      "04:00",
+      30
+    ],
+    [
+      "06:00",
+      45
+    ],
+    [
+      "08:00",
+      70
+    ],
+    [
+      "09:30",
+      90
+    ],
+    [
+      "10:15",
+      80
+    ],
+    [
+      "10:30",
+      80
+    ],
+    [
+      "10:45",
+      230
+    ],
+    [
+      "11:15",
+      280
+    ],
+    [
+      "12:00",
+      260
+    ],
+    [
+      "13:00",
+      275
+    ],
+    [
+      "14:00",
+      295
+    ],
+    [
+      "15:00",
+      315
+    ],
+    [
+      "16:00",
+      330
+    ],
+    [
+      "17:00",
+      350
+    ]
+  ],
+  "plays_fired": [
+    "daytype.eia_preprint_overextension_gate",
+    "daytype.storage_thursday_magnitude",
+    "magnitude.shoulder_weather_band_void",
+    "flow.price_free_absorption_proxy",
+    "flow.big_print_bshare_thin_tape_guard"
+  ],
+  "plays_stood_down": [
+    "selector.divergence_resolution (HDD>=16.4 up-gate unreached; its mechanical default-DOWN explicitly NOT read as evidence, per its own DEGENERATE finding)",
+    "weather.absolute_hdd_bar_unevaluable_in_cdd_regime (N/A -- HDD-dominant regime today, not CDD)",
+    "structure.chain_polarity_flip (no parabolic arm / no confirm signature present)",
+    "structure.squeeze_unwind / squeeze_watch overlay (inactive; 19 sessions since last prompt expiry, well past the ~3-session window)",
+    "structure.covering_absorption_directional_tell (out of scope -- Friday/weekend-seam play, not applicable to a Thursday)",
+    "weather.winter_heating_size_term (out of scope -- Nov-Mar only)",
+    "daytype.friday_*/monday.*/weekend.* toolbag plays (out of scope -- not a Friday/Monday/weekend day)",
+    "positioning.covering_self_limiting_cot_wow_gate ('spent' criteria unverifiable blind; COT is weekly-stale context, not fired as a decisive play)",
+    "all needs_intraday_reveal plays (direction.flow_nowcast, shape.grind_vs_spike, ride.magnitude_staircase, magnitude.crash_regime_bands, exit.recruitment_reversal, direction.book_contrarian, timing.subsecond_reversal_exhaustion) -- unevaluable under the price mask"
+  ],
+  "reasoning": "Thursday EIA storage-print day (print 10:30 ET, for week ending 2026-04-24, consensus +80 Bcf build, house_disagreement only 3 Bcf, days_to_print=0). Per lens doctrine (D), SIDE on a storage Thursday comes from the running chain/swing state, never from the unknown print surprise sign; the print delivers magnitude, chain delivers direction. (1) PRE-PRINT OVER-EXTENSION GATE (daytype.eia_preprint_overextension_gate): checked all three tells against the never-masked tape_conditions across the block's four served days. (a) Over-extended same-side chain into the print (>=~$900 cum run): flow direction alternates day to day (Fri 04/24 buy +3189 -> Mon 04/27 sell -3950 -> Tue 04/28 mixed/incoherent +342 with big_print_b_share only 0.318 -> Wed 04/29 strong coherent buy +7783) -- no sustained same-side run, tell NOT met. (b) Incoherent D-1 (Wed 04/29) flow: session_b_share 0.520 and big_print_b_share 0.621 both point the same (buy) way, and phase_signed_flow [53, 3644, 4086] accelerates into the close -- coherent, tell NOT met. (c) Surprise already priced >=1 week: unassessable blind for the NEXT print's own surprise (it hasn't printed yet) -- not counted as firing. 0 of 3 tells clear the >=2 bar, so the gate does NOT force a two-sided/damped call; per the lens file's own '0423 hit' precedent, coherent D-1 flow earns the FULL BAND chain-sided call. (2) CHAIN SIDE = UP, taken from Wednesday's flow (coherent, accelerating buy into the close) rather than from any print-sign guess. (3) flow.price_free_absorption_proxy: precondition met (D-1 aggregate session flow positive +7783, guard-clean sample big_prints_n=116>=20 so flow.big_print_bshare_thin_tape_guard's standard 0.55 bar applies, not the raised thin-tape bar). big_print_b_share 0.621 clears the play's own decisive-buy threshold (>=0.58) -> reads 'absorber gone / accumulation confirmed', a second independent confirmation of the UP lean (play status PROPOSED, so weighted moderately, not decisively). (4) magnitude.shoulder_weather_band_void: near-window (D0..D+3) max forecast_gw_hdd = 10.253 (D+2), well under the 13.5 gw threshold -> the weather band is VOID for day-lean/magnitude authority despite the above-normal cold read (forecast_vs_normal +2.954 at D0). Weather is carried as CONTEXT ONLY, not as a magnitude driver, consistent with April shoulder-season doctrine. (5) selector.divergence_resolution's mechanical form defaults to S3-bearish-DOWN when its HDD>=16.4 up-gate is unreached; per the brain's own DEGENERATE finding on this play (the gate is essentially unreachable in shoulder blocks), this un-fired default is explicitly NOT read as evidence for DOWN and is stood down rather than banked. (6) Fundamental/burn context: US48 est_gas_burn_bcfd rose 29.6->31.3 Bcf/d day-over-day while wind_mwh fell ~17% (1,747,896->1,449,408) and solar also declined -- renewables falling onto a regulating-gas stack is a mild bullish confirmation, consistent with the flow read, though it is a lagged (period+2) EIA-930 read and not fresh for today specifically. Nuclear outages ~19.5-20 GW (~20% of fleet) offline, spring refuel season, essentially flat day-over-day -- background bullish tilt, no fresh delta. (7) Positioning: COT (report 2026-04-21, published Fri 2026-04-24, unchanged/stale across the whole block by construction) shows a crowded short at the 8.5th 1y-percentile with a positive (improving/covering) WoW delta of +13,521 contracts. This is weekly-cadence context supporting some short-covering tailwind but is not a fresh same-day signal and cannot be scored as a fired directional play (positioning.covering_self_limiting_cot_wow_gate's 'spent' criteria are unverifiable blind); carried as a mild tailwind only. (8) squeeze_watch inactive (active=false, unwind_watch=false, sessions_since_prompt_expiry=19, well past the ~3-session dead-sponsor window) -- no structural/squeeze overlay. No expiry/opex/roll flow live today (days_to_futures_expiry=18, in_gsci_roll/in_bcom_roll both false). Given the modest, non-extreme conjunction of signals (coherent-but-not-extended flow, a mild positive accumulation tell, voided weather, background positioning tailwind, tight print consensus with small house disagreement limiting surprise-driven volatility), I size the day honestly under the emission ceiling rather than fitting to any single instrument: a small continuation-style overnight gap (no fresh overnight weather shock, weekday_open HDD delta only +0.053), a mild pre-print drift up, a moderate chain-sided delivery leg at the 10:30 print, and modest digestion into the close. Curve is continuous from the 20:00 reopen (cum=0) through the 17:00 close (cum=350=day-move 400 minus gap 50), with the discontinuity confined to the gap and the print window carrying the largest single repricing consistent with 'a hill slopes, it does not gap' outside the print itself.",
+  "specialist": "D",
+  "state_defects_and_gaps_reported": [
+    "vol_regime is masked_one_shot/null for every day in this packet -- expected under the blind protocol, but it removes any sigma-based reference for sizing the day's magnitude band, which materially widens the honest uncertainty on the emitted number.",
+    "grid_stack (EIA-930 generation/burn stack) is served at period+2 lag with no forward wind/solar expectation anywhere in the packet -- the renewables-falling/burn-rising read used above is a backward-looking (2-day-lagged) fact, not a forecast for Thursday itself, and cannot be extrapolated with confidence.",
+    "the daily 'weather' (realized) and 'storage' (daily print) fields are null on every served day -- consistent with expected blind masking / the print not yet having occurred (days_to_print=0 today), not flagged as anomalous, but noted for completeness.",
+    "model_disagreement.disagreement rows for horizon>=2 all carry coverage=0.0 (no MAV/MET overlap beyond ~D+1), limiting the weather stability read past tomorrow -- not decision-critical here since the weather band is already void, but named as a standing coverage gap."
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "confidence": "low",
+  "date": "20260427",
+  "disposition": "CALL",
+  "group": "g18",
+  "guessed_net_usd": -550,
+  "overnight_gap_usd": -180,
+  "path_p50_curve": [
+    [
+      20.0,
+      0
+    ],
+    [
+      22.0,
+      -30
+    ],
+    [
+      0.0,
+      -50
+    ],
+    [
+      2.0,
+      -70
+    ],
+    [
+      4.0,
+      -90
+    ],
+    [
+      6.0,
+      -150
+    ],
+    [
+      8.0,
+      -280
+    ],
+    [
+      10.0,
+      -330
+    ],
+    [
+      12.0,
+      -350
+    ],
+    [
+      14.0,
+      -365
+    ],
+    [
+      16.0,
+      -370
+    ],
+    [
+      17.0,
+      -370
+    ]
+  ],
+  "plays_fired": [
+    "magnitude.s1void_injection_chain_bleed",
+    "weather.shoulder_weather_band_void / magnitude.shoulder_weather_band_void",
+    "selector.divergence_resolution",
+    "monday.overnight_headfake_into_catchup",
+    "tape.heavy_buy_aggression_is_the_asymmetric_bearish_tell",
+    "boundary.seam_gap_up_prior_on_worsening_cot",
+    "magnitude.weekend_gap_delivery"
+  ],
+  "plays_stood_down": [
+    "timing.catalyst_continuity_frontrun (EIA print 3 sessions out; weather is being cut, not building -- no live ramp to front-run)",
+    "structure.squeeze_unwind / squeeze-regime plays (squeeze_watch.active false, unwind_watch false despite front expiring T+1 and today being opex)",
+    "positioning.covering_self_limiting_cot_wow_gate (WoW improving but not extreme enough either way to force a directional covering-spent claim; carried as context only)",
+    "magnitude.block_gap_ownership (cum_from_anchor / chain age are price-derived and masked; structural/weather/chain-drift ownership rungs unevaluable this slice)",
+    "structure.chain_polarity_flip (no realized D-1 price tape or handoff available to evaluate C1 band-break / C2 continuation-collapse)",
+    "monday.window_deep_book_shakeout (needs a live 06:00 ET L1-10 book snapshot; not served)",
+    "weather.freeze_conjunction_class2 / weather.hydro_winter_buffer (April shoulder session, zero freeze-risk readings in any basin)"
+  ],
+  "reasoning": "No inbound bridge from A this run (A did not spawn), so I own the Monday number unaided from the D-1 (Friday 20260424) tape and open-conditions state alone. FUNDAMENTAL BACKDROP: near-window forecast HDD is very low (D0 5.885 gw, D0..D+3 max 9.191 gw), well under both selector.divergence_resolution's 16.4 gate and magnitude.shoulder_weather_band_void's 13.5 void threshold -> the weather-cold-add UP angle cannot win; default to the S3-bearish DOWN angle, weather delivery band VOID, fall through to the residual/fundamental co-condition. storage_regional shows a materially building surplus (L48 vs_5yr +111.8 Bcf, weekly_chg +103), consistent with early-injection-season bearish trajectory. WEATHER REVISION READ: the weekend cycle CUT HDD across nearly every horizon vs the prior evening run (D0 -0.334 to D+4 -0.941, one small D+5 add +0.433), and the Monday weekday_open cycle cut D0 further (-0.862) -- persistent warm-cut revisions, not a first-appearance shock (all deltas well under the ~3-4 gw shock-scale bar in timing.catalyst_continuity_frontrun / magnitude.unpriced_shot_extension), so I read this as a MODERATE/PRICED revision, not a fresh-shot event. POSITIONING: managed-money net is at the 8.49th 1y percentile (crowded short) but chg_wow is +13,521, i.e. IMPROVING/covering, not worsening -- boundary.seam_gap_up_prior_on_worsening_cot's arming gate (WoW<0) is NOT satisfied, so I did not license an up-gap prior off the crowded-short read; treated as a spent/already-covering signature rather than a live squeeze trigger. squeeze_watch.active is false and unwind_watch is false despite the front (NGK26) expiring in 1 session and today being opex -- no squeeze regime is live, so squeeze doctrine does not override the fundamental lean. TAPE: Friday's (D-1) session showed net BUY flow (session_signed_flow +3,189, phase-3 flow +3,171, big_print_b_share 0.593 on a guard-clean 91-print sample) despite a sub-0.50 raw session_b_share (0.453). Per tape.heavy_buy_aggression_is_the_asymmetric_bearish_tell, the D-1 form of this instrument is explicitly refuted as a next-day signal (measured coin-flip, 4/9) -- I deliberately did NOT read Friday's buy flow as bullish confirmation for Monday. The raw sub-0.50 session_b_share is read with the known S108 basis caveat (no two-sided series served this slice) but was still used, per magnitude.s1void_injection_chain_bleed, to arm a chain-sided-down TREND read (Monday carry, non-coil) rather than damping to a stub. SIZING: given only a moderate (not shock-scale) weather revision, a spent rather than fresh positioning trigger, and no squeeze/flip confirmation available, I sized toward the lower-middle of the S1-void trend band (-450..-780) rather than its top, landing total day-move -550 (gap -180 in the priced/moderate weekend_gap_delivery class, session -370). PATH: overnight/Asia-Europe drift is thin and mildly bearish (Friday's late buy flow fading rather than continuing, consistent with the D-1 tape being a null next-day signal); the bulk of the move is delivered in the 06-10 ET Monday catch-up window as the further Monday-morning weather cut and the building-surplus backdrop get priced by returning desks (per my own Monday-specialist lens: the catch-up window is where Monday decides, not the overnight drift); the afternoon flattens into the 14:00-14:30 settle window and holds into the 17:00 close.",
+  "specialist": "B",
+  "state_defects_and_gaps_reported": [
+    "storage (national weekly) block is null this slice; only storage_regional (as of 2026-04-17) and storage_consensus (survey) were available and used as the surplus proxy instead.",
+    "vol_regime is fully masked/null this slice (masked_one_shot=true, value null) -- no sigma reference available for magnitude sizing; sized off condition-class bands instead of a measured vol scale.",
+    "weather (realized) block is null; only weather_forecast / weather_forecast_cycle (MOS forecast) fields were available and used in its place.",
+    "No specialist-A bridge read was produced for this Monday (A did not run) -- owned the Monday number unaided per the run directive.",
+    "model_disagreement horizons 2-7 show zero coverage (spread null, not zero -- beyond both models' reach); only h0/h1 were usable for the disagreement read.",
+    "tape_conditions.session_b_share is served only on the known S108-biased single-sided basis (no two-sided series in this slice); read with that caveat rather than treated as a clean 50/50 bar."
+  ]
+}

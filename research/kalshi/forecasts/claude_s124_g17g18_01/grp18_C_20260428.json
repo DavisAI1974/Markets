@@ -1,0 +1,85 @@
+{
+  "confidence": "low",
+  "date": "20260428",
+  "disposition": "CALL",
+  "group": "g18",
+  "guessed_net_usd": -300,
+  "overnight_gap_usd": -50,
+  "path_p50_curve": [
+    [
+      20,
+      0
+    ],
+    [
+      22,
+      -20
+    ],
+    [
+      0,
+      -30
+    ],
+    [
+      2,
+      -35
+    ],
+    [
+      4,
+      -30
+    ],
+    [
+      6,
+      -40
+    ],
+    [
+      8,
+      -90
+    ],
+    [
+      10,
+      -160
+    ],
+    [
+      12,
+      -190
+    ],
+    [
+      14,
+      -220
+    ],
+    [
+      16,
+      -240
+    ],
+    [
+      17,
+      -250
+    ]
+  ],
+  "plays_fired": [
+    "magnitude.s1void_injection_chain_bleed",
+    "positioning.covering_self_limiting_cot_wow_gate",
+    "selector.divergence_resolution"
+  ],
+  "plays_stood_down": [
+    "structure.accumulation_arm_turn",
+    "magnitude.positioning_saturation_turn",
+    "tape.heavy_buy_aggression_is_the_asymmetric_bearish_tell",
+    "timing.catalyst_continuity_frontrun",
+    "structure.covering_absorption_directional_tell",
+    "boundary.prior_close_flow_direction_disagreement",
+    "weather.renewables_masking_flip",
+    "structure.mature_swing_alternation",
+    "structure.squeeze_unwind",
+    "daytype.storage_thursday_magnitude",
+    "daytype.weekday_archetype"
+  ],
+  "reasoning": "Core Tue day, S1-void shoulder regime (D0 forecast_gw_hdd 6.739, forecast_vs_normal +0.68, mod_cool; near-window HDD far below the ~16-20gw band-authority thresholds), so weather cannot own the day and the default falls to the S3 storage-trajectory lean (selector.divergence_resolution gate (a) unreachable at this HDD level; treated as weak/structural context per weather.absolute_hdd_bar_unevaluable_in_cdd_regime doctrine, not a hard bearish trigger on its own). D-1 (Mon 4/27) tape_conditions is the strongest legitimate never-masked signal available: session_signed_flow -3950 (net sell), session_b_share 0.419, and phase_b_share declining through the session (0.478->0.422->0.405) with the heaviest selling in the middle/late phases (phase_signed_flow 254/-3299/-905) - a chain-sided sell tape, not a coil/near-neutral D-1. Under magnitude.s1void_injection_chain_bleed this argues for a TREND-class session (not the shallower coil band), so I size toward the lower-middle of the -450..-780 trend band rather than damping to a stub, while discounting because multi-day chain age/polarity cannot be confirmed blind (cum_from_anchor is masked) - treated as a soft lean, not a hard commitment. COT: managed_money_net_pctile_1y 8.49 (crowded short) but chg_wow +13521 (IMPROVING, i.e. covering already happened last week) - positioning.covering_self_limiting_cot_wow_gate limb (b) is satisfied (flat/improving), and D-1's aligned-selling-under-declining-price shape plausibly satisfies limb (a) too, so I read the crowded short as SPENT/self-limiting rather than live fuel for a squeeze bounce - this damps any covering-driven upside expectation and reinforces a modest-not-extreme bearish lean rather than a violent one. structure.accumulation_arm_turn does NOT fire: D-1 big_print_b_share 0.42 is well below the 0.55 recurrence bar, and the COT WoW is improving not worsening, so no buy-absorption turn signature - default S3-down stays uncontested by that arm. magnitude.positioning_saturation_turn's percentile limbs are both technically satisfied (NYMEX 8.49<=12, ICE LD1 0.94<=3) but its trigger requires a weekend/block-opening gap, which does not exist on a plain Tuesday - stood down on scope. Today is NGK26 (May, calendar-front) expiry (flow_calendar.is_expiry_day=true, days_to_futures_expiry=0), but the scored/traded leg is the deferred volume/OI front (NGN26, July) - the same configuration as the G22 0626 NGN26-expiry-on-deferred-NGQ26 precedent. squeeze_watch is frozen at the 4/24 anchor vintage (masked_one_shot) and shows active=false, unwind_watch=false, no widening front-next spread - no stranded premium evident, so I do not expect a dead-sponsor unwind or a covering-into-settle rally to drive the scored leg; expiry mechanics treated as Descriptor-grade context only. No storage catalyst today (print is 2 sessions out, Thu 4/30); no freeze risk anywhere (all basin thresholds 0 days-below); grid_stack day-over-day shows wind up (+65k MWh) and solar down (-52k MWh) with gas down (-127k MWh) - a mild renewables-displacing-gas signal, but too small relative to the already-low HDD to be decisive, so treated as context not a fired play. All price-derived chain/R1/R4/R5/flip machinery is unevaluable blind (cum_from_anchor, last_hour_dir/flow, close-off-extreme all masked). Net read: a quiet, catalyst-light S1-void Tuesday inheriting continued D-1 sell-tape momentum into the reopen and main session, damped by a self-limiting (not live) COT-covering read and by weak confirmation of chain age - small overnight continuation, session weight concentrated in the 08:00-14:00 ET window, modest total move, low confidence given how many plays stood down for lack of price/chain confirmation.",
+  "specialist": "C",
+  "state_defects_and_gaps_reported": [
+    "contract_structure/options_surface/vol_regime/cash_basis/squeeze_watch are all frozen at the 2026-04-24 anchor vintage (masked_one_shot) while flow_calendar (live/deterministic) shows today IS the calendar-front (NGK26) futures expiry day - the frozen structural fields cannot confirm live spread/stranded-premium state on the actual expiry session itself, a real gap for evaluating structure.squeeze_unwind / block_gap_ownership's dead-sponsor arm today.",
+    "vol_regime.value is null - no sigma/range benchmark available for magnitude calibration on this day.",
+    "top-level `storage` and `weather` blocks are null; only storage_consensus, storage_regional (stale, period ending 2026-04-17), and weather_forecast (D-1-evening MOS) are populated - consistent with the mask design but named for completeness.",
+    "ngwu_balance level fields (dry_production, LNG feedgas, industrial, power, rescomm, etc.) are null/stale since week_ending 2025-09-24 (216+ days) - LNG/production context is limited to the vessel-departure proxy (35 vessels, 134 Bcf capacity, unchanged vs D-1).",
+    "model_disagreement and weather_forecast_cycle.stability horizons beyond h0/h1 are all zero-coverage (null), consistent with the known MAV(~72h)/MET(~84h)/NAM/GFS reach limits - only the near-term two days are usable."
+  ]
+}

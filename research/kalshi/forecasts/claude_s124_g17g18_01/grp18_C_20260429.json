@@ -1,0 +1,95 @@
+{
+  "confidence": "low",
+  "date": "20260429",
+  "disposition": "CALL",
+  "group": "g18",
+  "guessed_net_usd": -350,
+  "overnight_gap_usd": -50,
+  "path_p50_curve": [
+    [
+      "20:00",
+      0
+    ],
+    [
+      "22:00",
+      -15
+    ],
+    [
+      "00:00",
+      -30
+    ],
+    [
+      "02:00",
+      -45
+    ],
+    [
+      "04:00",
+      -60
+    ],
+    [
+      "06:00",
+      -90
+    ],
+    [
+      "08:00",
+      -140
+    ],
+    [
+      "09:30",
+      -180
+    ],
+    [
+      "10:30",
+      -210
+    ],
+    [
+      "12:00",
+      -240
+    ],
+    [
+      "13:30",
+      -265
+    ],
+    [
+      "14:30",
+      -285
+    ],
+    [
+      "15:30",
+      -300
+    ],
+    [
+      "17:00",
+      -300
+    ]
+  ],
+  "plays_fired": [
+    "flow.price_free_absorption_proxy",
+    "selector.divergence_resolution",
+    "magnitude.catalyst_condition_sort",
+    "timing.catalyst_continuity_frontrun"
+  ],
+  "plays_stood_down": [
+    "structure.accumulation_arm_turn",
+    "selector.midblock_right_the_ship",
+    "tape.heavy_buy_aggression_is_the_asymmetric_bearish_tell",
+    "direction.absorption_is_reversal",
+    "structure.covering_absorption_directional_tell",
+    "structure.chain_polarity_flip",
+    "magnitude.block_gap_ownership",
+    "magnitude.s1void_injection_chain_bleed",
+    "daytype.storage_thursday_magnitude",
+    "daytype.eia_preprint_overextension_gate",
+    "structure.mature_swing_alternation",
+    "structure.failed_rally_tell"
+  ],
+  "reasoning": "Day class: Wednesday core session (specialist C territory), no weekend/holiday seam, no EIA print today (print is tomorrow 2026-04-30, days_to_next_eia_release=1, inside the 1-3 session catalyst-front-run window but with NO live continuous weather ramp - forecast_run_delta on the HDD axis oscillates sign across horizons rather than trending monotonically, so timing.catalyst_continuity_frontrun's ramp-live arm does not arm; per that play the resume/turn WAITS for the discrete catalyst rather than front-running it, so today's move is read as tape/positioning-driven, not print-anticipation-driven. Regime: near-window max forecast_gw_hdd (fwd7 span [5.185, 11.463]) never clears the 16.4 gw-HDD authority bar, so selector.divergence_resolution's weather-up gate is unreachable and the play defaults to the S3-bearish storage-trajectory angle - consistent with the storage backdrop: storage_regional (as-of 2026-04-23) shows L48 vs_5yr +111.8 Bcf (wide, building surplus), weekly_chg +103, and tomorrow's consensus is another +80 Bcf build (house_disagreement only 3 Bcf, low dispersion) after last week's print already surprised bearish (+103 actual vs +94 consensus, +9 surprise). This is a confirmed S1-void injection-season backdrop (near-window HDD well under 20 gw): weather-trajectory authority is void for gaps/day-sides, ownership passes to storage-trajectory + positioning. Tape: flow.price_free_absorption_proxy's precondition is satisfied on D-1 (2026-04-28) - aggregate session_signed_flow +342 (positive, barely) on a guard-clean sample (big_prints_n=85, well above the ~20 thin-tape floor) - and the big_print_b_share on that session reads 0.318, inside the play's tail-sell class (<=0.47): 'big prints still selling = absorber present, take the turn small.' This is corroborated by the phase-level flow shape the same day: phase_signed_flow [71, 1055, -784] - a flat morning, a midday buy push (+1055), then a sell-driven fade into the close (-784), netting only +342. That is a faded-rally / distribution shape at the session-flow grain (the only grain available blind - direction.absorption_is_reversal and structure.covering_absorption_directional_tell both need realized phase flow-vs-price conviction, which requires price and is masked, so both are stood down rather than proxied). COT: managed_money_net pctile_1y 8.49 / pctile_3y 13.69 is a genuinely crowded short, but chg_wow is +13,521 (IMPROVING/covering), not worsening - so structure.accumulation_arm_turn's COT limb (extreme AND worsening) fails, and its buy-absorption limb also fails (only 1 of the last 3 sessions, 2026-04-24 at 0.593, clears the >=0.55 bar; the play needs >=2 of the last ~5 non-consecutive). selector.midblock_right_the_ship inherits the same failure - no turn stack is building, so the block default (S3-down) is not unlocked. magnitude.s1void_injection_chain_bleed's sell-tape limb is satisfied (D-1 session_b_share 0.471 < 0.50) but I cannot confirm the chain-sided-down precondition blind (chain age/polarity requires day-N-1 realized cum, which is masked), so I decline to claim its trend band (-450..-780) outright and instead size below it, consistent with the honest-under-claim discipline - if a mature down-chain IS running my -300 session estimate is conservative relative to that band, not contradicting it. magnitude.catalyst_condition_sort classifies today as non-catalyst core chop (no weekend gap, no storage Thursday, no swing-reversal seam), which caps magnitude at the small end rather than the up-sized catalyst classes. No armed parabolic swing or confirm signature is visible (structure.chain_polarity_flip, structure.failed_rally_tell, structure.mature_swing_alternation all stand down for want of realized chain state/day-N-1 tape). tape.heavy_buy_aggression_is_the_asymmetric_bearish_tell is a same-day-only instrument and cannot be evaluated pre-open. Net read: modest bearish-to-flat grind, tape-driven (unabsorbed large-size selling into the prior close) inside a bearish storage-trajectory backdrop, with COT covering acting as a mild brake against sizing this larger (per doctrine, positioning is a convexity conditioner, never a timing/direction driver, and no squeeze regime is active - squeeze_watch.active=false). No weekend/holiday seam exists (ordinary Tue->Wed transition), so the overnight gap is sized small and same-signed as the session read rather than treated as a separate information event. Path drawn as a continuous grind-down (a hill slopes, it does not gap): flat overnight, building through the US morning as the unabsorbed sell pressure reasserts, flattening into the settle window rather than a violent one-shot move, consistent with a session-flow-shape read rather than a catalyst-driven spike.",
+  "specialist": "C",
+  "state_defects_and_gaps_reported": [
+    "vol_regime is masked_one_shot with value null on all three days in my slice (2026-04-27/28/29) - no sigma/range basis is available to calibrate magnitude against, so the -350 estimate is derived from tape/fundamental reads alone, not cross-checked against a vol band.",
+    "The top-level `storage` block is null on every day; only storage_consensus, storage_regional (as-of 2026-04-23) and storage_vintage (55 days stale, as-of 2026-03-05) are served. storage_vintage's staleness means the as-printed/current-vintage reconciliation this desk normally relies on is unavailable for the live period - I fell back to storage_regional + storage_consensus.",
+    "stor_surprise and stor_surprise_sign are null on all three days; the seasonal-proxy surprise metric is unpopulated. I substituted storage_consensus.last_print.surprise_vs_consensus_bcf (+9.0) as the decision-legit equivalent.",
+    "No session_b_share_two_sided field is served anywhere in tape_conditions on any of my three days - per the b_share_basis_rule doctrine, the ~0.47/0.50 bars in flow.price_free_absorption_proxy and magnitude.s1void_injection_chain_bleed were read on the raw (single-sided) series, which is known to run biased low versus a hypothetical two-sided series; I flag this rather than silently trusting the raw read.",
+    "model_disagreement horizons 2-7 are null (no MAV/MET overlap beyond D+1) on all three days - expected per the model-reach doctrine, but it means the weather-authority channel is effectively unusable past tomorrow, reinforcing why I did not lean on any forward weather read."
+  ]
+}

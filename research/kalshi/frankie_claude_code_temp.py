@@ -35,7 +35,15 @@ from frankie_packet_compact_s120 import (  # noqa: E402
 
 TEMP_BACKEND_NAME = "claude-code-subscription-temp"
 DEFAULT_DISALLOWED_TOOLS = (
-    "Bash,Read,Write,Edit,MultiEdit,Glob,Grep,WebFetch,WebSearch,NotebookEdit"
+    # S124: the guard text alone did not stop a tool call. Observed failure: the model issued a
+    # tool_use, which consumed the single permitted turn, and Claude Code exited
+    # `error_max_turns` before any forecast JSON was returned. The listed set below was
+    # incomplete (TodoWrite/Task/Skill/etc. were still callable), so this is a transport fix
+    # only - it changes nothing Frankie is served, and --max-turns stays 1.
+    "Bash,Read,Write,Edit,MultiEdit,Glob,Grep,WebFetch,WebSearch,NotebookEdit,"
+    "TodoWrite,Task,Skill,SlashCommand,BashOutput,KillBash,Tmux,Monitor,REPL,"
+    "SendUserFile,ToolSearch,ExitPlanMode,AskUserQuestion,Artifact,"
+    "ListMcpResourcesTool,ReadMcpResourceTool,NotebookRead,WebSearchTool"
 )
 
 OPERATOR_GUARD = r"""
