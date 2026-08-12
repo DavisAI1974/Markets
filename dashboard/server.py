@@ -18,10 +18,10 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fastapi import FastAPI, HTTPException  # noqa: E402
-from fastapi.responses import FileResponse  # noqa: E402
+from fastapi.responses import FileResponse, HTMLResponse  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
-from dashboard.adapters import brain, decision, fees, health, lagmap, market, paths  # noqa: E402
+from dashboard.adapters import brain, decision, demo, fees, health, lagmap, market, paths, signals  # noqa: E402
 
 app = FastAPI(title="DavisAI Markets Dashboard", docs_url="/api/docs")
 
@@ -36,6 +36,19 @@ def _validate_day(day: str) -> str:
     except ValueError:
         raise HTTPException(400, f"not a calendar date: {day}")
     return day
+
+
+def _default_day() -> str:
+    kd = market.list_event_days()
+    if kd.get("available"):
+        iso = market.event_day_iso(kd["event_tickers"][-1])
+        if iso:
+            return iso.replace("-", "")
+    return datetime.date.today().strftime("%Y%m%d")
+
+
+def _resolved_day(day: str | None) -> str:
+    return _validate_day(day) if day is not None else _default_day()
 
 
 @app.get("/api/v1/operations/health")
@@ -56,6 +69,26 @@ def api_brain_full():
 @app.get("/api/v1/decision-state/{day}")
 def api_decision_state(day: str):
     return decision.state_for_day(_validate_day(day))
+
+
+@app.get("/api/v1/signals/in-use")
+def api_signals_in_use(day: str | None = None):
+    day8 = _resolved_day(day)
+    ds = decision.state_for_day(day8)
+    return signals.snapshot(day8, ds)
+
+
+@app.get("/api/v1/demo/opportunities")
+def api_demo_opportunities(day: str | None = None):
+    day8 = _resolved_day(day)
+    ds = decision.state_for_day(day8)
+    sigs = signals.snapshot(day8, ds)
+    return demo.snapshot(day8, ds, sigs)
+
+
+@app.get("/api/v1/demo/credentials")
+def api_demo_credentials():
+    return demo.credential_status()
 
 
 @app.get("/api/v1/lag-map/summary")
@@ -108,27 +141,26 @@ def api_nymex_bars(day: str):
 
 @app.get("/api/v1/desk/snapshot")
 def api_desk_snapshot(day: str | None = None):
-    """The composite Mission Control snapshot for one as-of day."""
-    if day is None:
-        kd = market.list_event_days()
-        if kd.get("available"):
-            iso = market.event_day_iso(kd["event_tickers"][-1])
-            day = iso.replace("-", "") if iso else None
-    if day is None:
-        day = datetime.date.today().strftime("%Y%m%d")
-    day = _validate_day(day)
+    """Composite Mission Control snapshot for one as-of day."""
+    day8 = _resolved_day(day)
+    ds = decision.state_for_day(day8)
+    sigs = signals.snapshot(day8, ds)
+    demo_feed = demo.snapshot(day8, ds, sigs)
     return {
-        "as_of_day": day,
+        "as_of_day": day8,
         "generated_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
         "health": health.snapshot(),
         "brain": brain.summary(),
-        "decision_state": decision.state_for_day(day),
+        "decision_state": ds,
+        "signals_in_use": sigs,
+        "demo_feed": demo_feed,
         "lag_map": lagmap.summary(),
         "doctrine_banner": [
             "per-event rows, never pooled means as headlines",
             "ledgers never pooled (NYMEX / Kalshi / any future lane)",
-            "maker-first economics; taker reserved for the >=4c fast tail",
+            "maker-first economics; taker reserved for the measured fast tail",
             "provenance labels on every probability (blind vs refined, provisional-until-live)",
+            "demo feed has no execution authority and browser holds no credentials",
             "Polymarket lane = context-only until its own feed exists",
         ],
     }
@@ -139,7 +171,14 @@ FRONTEND = os.path.join(paths.DASHBOARD, "frontend")
 
 @app.get("/")
 def index():
-    return FileResponse(os.path.join(FRONTEND, "index.html"))
+    """Serve the prototype and inject the additive demo wiring after its existing scripts."""
+    index_path = os.path.join(FRONTEND, "index.html")
+    with open(index_path, encoding="utf-8") as fh:
+        html = fh.read()
+    demo_script = '<script src="signals_demo.js"></script>'
+    if demo_script not in html:
+        html = html.replace("</body>", f"  {demo_script}\n</body>")
+    return HTMLResponse(html)
 
 
 app.mount("/", StaticFiles(directory=FRONTEND), name="frontend")
