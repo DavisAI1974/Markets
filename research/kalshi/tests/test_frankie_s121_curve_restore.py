@@ -74,7 +74,7 @@ class S121CurveRestoreTests(unittest.TestCase):
             self.validate(row)
 
     def test_adapter_text_explicitly_forbids_fixed_grid_and_flat_abstain_semantics(self):
-        text = s121.S121_OUTPUT_ADDENDUM
+        text = " ".join(s121.S121_OUTPUT_ADDENDUM.split())
         self.assertIn("NO required cadence", text)
         self.assertIn("ABSTAIN does NOT erase the market forecast", text)
         self.assertIn("do not average", text.lower())
