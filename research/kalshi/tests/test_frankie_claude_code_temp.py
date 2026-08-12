@@ -34,11 +34,12 @@ def packet90():
 class ClaudeCodeTempTests(unittest.TestCase):
     def test_guard_explicitly_forbids_changing_frankie_view(self):
         text = mod.OPERATOR_GUARD
-        self.assertIn("DO NOT change, prune, rank-gate, hide, truncate", text)
-        self.assertIn("data surface or settings Frankie is allowed to see", text)
-        self.assertIn("all supplied play bodies remain available", text.lower())
-        self.assertIn("blind artifact is immutable", text)
-        self.assertIn("A-82 isolation remains binding", text)
+        normalized = " ".join(text.lower().split())
+        self.assertIn("do not change, prune, rank-gate, hide, truncate", normalized)
+        self.assertIn("data surface or settings frankie is allowed to see", normalized)
+        self.assertIn("all supplied play bodies remain available", normalized)
+        self.assertIn("blind artifact is immutable", normalized)
+        self.assertIn("a-82 isolation remains binding", normalized)
 
     def test_subscription_env_strips_api_and_cloud_provider_routing(self):
         with mock.patch.dict(
