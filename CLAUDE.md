@@ -1,4 +1,75 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-10, Session 118)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-12, Session 119)
+
+## S119 — THE FIRST FORECAST TO PASS VALIDATION, AND THE FIRST TO BEAT DOING NOTHING (read `SESSION_HANDOFF_2026-08-12_S119.md` + `DROP_IN_S120.md`)
+
+**Three branches, deliberately separate. Brain s105.9, 90 plays — UNCHANGED, no merge, no group
+scored into the record.** `chatgpt/agent-frankie-s117` @ `d8e8c04` (the shared C2C ledger, blocks
+C2C-008..018, now 2,753 lines and still append-only); `claude/kalshi-research-handoff-4l0nt7` @
+`b19cdcd` (the refreshed master data list); `claude/frankie-temp-s124` @ `c27b5be` (the
+Claude-operated Frankie run).
+
+**M-16 IS PHYSICALLY CLOSED AND THE PAID DATA WAS NEVER AT RISK.** The inspection verdict was
+PARTIALLY FIXED — the legacy module is byte-identical across branches so all three original bugs are
+live everywhere, and the guard existed only on chat's branch. **Two defects found in that guard, both
+observed executing**: `_files_for` dispatched `mbp-10` into the `mbp-1` branch (`"mbp-10"` starts with
+`"mbp-1"`), so every depth pull STOPped with data on disk; and in `range` mode the row count was
+derived from the destination, making the landing assertion **a tautology that could not fire**. Both
+fixed by chat, verified 4/4 by running each firing path. The restore then reproduced the S3 evidence
+**byte for byte** — 311 files, 85,835,820 bytes, paid window 74 of 74 weekdays.
+
+**THE BEDROCK LANE OPENED AND THEN DENIED AT RUNTIME.** A-79's form-and-agreement half is closed:
+the agreement was accepted on the single authorized call and availability went `NOT_AVAILABLE ->
+PENDING -> AVAILABLE` in 30s. The canary was then denied — `anthropic.claude-opus-5 is not available
+for this account`. A matched Haiku probe returned a **different** failure (`use case details have not
+been submitted ... try again in 15 minutes`), so it hit a **prior account-level gate** and did not
+localise Opus 5. **Control plane and runtime disagree**: the form reads stored and Opus 5 reads
+AVAILABLE while the runtime says it was never submitted. No cause proposed — this is the exact
+error-shape family that drew three wrong answers at S118.
+
+**THE FIRST FRANKIE FORECAST TO CLEAR STRUCTURAL VALIDATION END TO END (C2C-018).** The full-brain
+packet was **7% over the 500k TPM ceiling** (535,833 requested); **lossless whitespace compaction**
+alone cleared it — 2,074,610 -> 1,789,638 bytes, 13.74%, round-trip equal, 90/90 plays intact — and
+the run PASSED. It was an **ABSTAIN**, which is the point: at C2C-014 the same model abstained the
+only way it could and A-86 rejected it, because **an abstention and a decorative flat line both have
+shape deviation 0.0**. Chat's `disposition` field separates them. **Declining is now representable**,
+which is the S111 prerequisite.
+
+**A-86's REGISTRY TEXT IS MIS-SCOPED AND IT IS MY ERROR.** My "0 of 14 canonical fields" census
+measured a BLD-1 **blind** emission against the **refine** contract in `mbo_refine_shared.md` — that
+field list sits under Round 2 and mirrors `blind_direction`/`blind_net_usd` as INPUTS. The curve half
+of A-86 survives intact; the field-census half needs correcting at the registry.
+
+**THE MASTER DATA LIST HAD GONE STALE: 36 -> 44 blocks, 1,717 -> 1,914 served, 1,222 READ BY NOTHING
+(64%).** Eight blocks and ~200 fields had landed since it was last written, so anything answered from
+that store was answered off an old surface. `model_disagreement` alone is 464 fields, 380 unread.
+
+**CLAUDE TEMPORARILY OPERATED FRANKIE (the S124 takeover) AND IT BEAT DOING NOTHING ON FOUR DAYS.**
+Subscription auth only — no API key, no Bedrock, no Vertex; `spawn.py` never modified. **4 of 10 g18
+blind days, then the operator halted.** Per event, never pooled: **04-27 called -730 into +370 (wrong
+sign, 197%), 04-28 -350 into -440 (80%), 04-29 -400 into -440 (91%), 04-30 +450 into +1,230 (37%)**.
+Against `zero_change` that is **0.810x**, where the S118 GPT arms sat at **0.993x and 0.999x**. **The
+called-% column is the finding: 80% and 91% is SIZING, not the roughly constant band A-85 described.**
+Four days with one wrong-signed miss is not a result — but it is the first sign magnitude may carry
+information. All four are CALLs with **self-chosen intraday structure**, 12 to 18 irregular
+timestamps.
+
+**THREE GENUINE STOPS, NONE ROUTED AROUND.** **g17 cannot be blind-forecast**: brain play
+`structure.accumulation_arm_turn` carries an instance **dated 20260422, inside g17's own window**,
+sourced from `g17_actual.json` and narrating the realized value — the blind wall redacts the date, the
+value survives, A-82 fails closed. **20 brain instances sit inside g17/g18 windows (4 g17, 16 g18)**,
+and g18 passes only because none names one of the four literal tokens — **A-82 is a token tripwire,
+not a semantic check**. **The S121 curve contract cannot express a 20:00 session close** (hour 20.0
+maps to session position 0.0; `24.0` is out of `[0,24)`), which is the main cost driver of the run.
+**RFN-1 is blocked on a DIRECTIVE**, which `spawn.py:583` states is an INPUT and not a lookup — it
+failed before any model call, so nothing was spent, and inventing one would repeat NC-1.
+
+**THE REPORTS-SUCCESS-WHILE-DOING-NOTHING FAMILY ADDED THREE MORE.** A `git merge --ff-only` printing
+`Updating 047d4dd..c607e36` as its **last stdout line** while HEAD never moved (exit 1, blocked by an
+untracked file) — on that stale checkout a gate read **33 of 90 and failed**, which would have been
+reported as chat's redesign being broken. A wrapper whose **prose** said "do not use tools" while the
+**flag** still allowed them, so a tool call consumed the only turn and killed the run at **$0.446 a
+time**. And a token estimate calibrated against a serialization that was **logged but never
+transmitted**, which would have produced a false STOP on a run that in fact fits.
 
 ## S118 — FRANKIE RAN AND MAGNITUDE TURNED OUT TO CARRY NO INFORMATION, AND MARKETS TERMINAL WENT DURABLE (read `SESSION_HANDOFF_2026-08-10_S118.md`)
 
@@ -1088,6 +1159,22 @@ FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the drive
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
+**One-line state (S119):** brain **s105.9, 90 plays — UNCHANGED, no merge, no group scored.** Three
+branches live: ledger `chatgpt/agent-frankie-s117` @ `d8e8c04` (C2C-008..018, append-only), ours
+`claude/kalshi-research-handoff-4l0nt7` @ `b19cdcd`, Frankie run `claude/frankie-temp-s124` @
+`c27b5be`. **M-16 physically closed** — paid data was complete on S3, restore matched byte for byte.
+**The first Frankie forecast passed structural validation (C2C-018)**, an ABSTAIN, reached only after
+**lossless compaction** cut the full-brain packet 13.74% to clear a 500k TPM ceiling it was 7% over.
+**Claude then operated Frankie for 4 g18 blind days at 0.810x zero_change** (S118 GPT arms: 0.993x /
+0.999x) with **80% and 91% of the move called on two days — sizing, not A-85's constant band** — and
+one wrong-signed Monday that names its own cause: no A-bridge, no Friday handoff. **Three genuine
+stops, none routed around**: g17 is un-forecastable because the brain records g17 outcomes against
+g17 dates; the S121 curve contract cannot express a 20:00 close; RFN-1 needs a DIRECTIVE, which is an
+input, not a lookup. **A-86's field-census half is mis-scoped (my error) — it measured a blind
+emission against the refine contract.** Master data list refreshed to **44 blocks / 1,914 served /
+1,222 read by nothing**. **The six remaining g18 days need a FRESH CONTEXT** — this reasoner read the
+actuals. **Keys do NOT rotate during the walk.**
+
 **One-line state (S118):** brain **s105.9, 90 plays — UNCHANGED, no merge.** Registry **202 items
 (178 open, 26 ESSENTIAL)**, decisions **53**. **FRANKIE RAN** on g18/g19/g20 after two harness
 defects were fixed (**A-80**: zero plays served on all 20 days while preflight said `PACKETS_CAUSAL`;
@@ -1395,6 +1482,16 @@ in the live doc. Full detail: `S36_NETCOST_BACKTEST_FINDINGS.md`, `SESSION_HANDO
 Detail is in the latest handoff + kickoff — this is the pointer, not the record.
 
 Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
+- **S119** — M-16 physically closed (paid data complete on S3; restore matched byte for byte; two
+  guard defects found by running each firing path). Bedrock agreement accepted and the canary still
+  denied at runtime, localised to a prior account-level gate, no cause proposed. **First Frankie
+  forecast to pass structural validation (C2C-018)** — an ABSTAIN, after lossless compaction cleared a
+  TPM ceiling the full-brain packet was 7% over. **Claude operated Frankie for 4 g18 blind days at
+  0.810x zero_change with 80%/91% sizing on two of them.** Three genuine stops honoured: g17
+  un-forecastable (brain holds g17 outcomes on g17 dates), the S121 curve contract cannot express a
+  20:00 close, RFN-1 needs a coordinator DIRECTIVE. A-86's field census is mis-scoped (mine). Master
+  data list 36 -> 44 blocks, 1,717 -> 1,914 served, 1,222 unread.
+  Detail: `SESSION_HANDOFF_2026-08-12_S119.md`, `DROP_IN_S120.md`.
 - **S118** — Frankie RAN (g18/g19 arm A, g20 arm B) after A-80 (zero plays served, preflight said
   otherwise) and A-82 (leak guard on token names, not dates) were fixed; corpus 70 -> 200 days
   (A-77) with its falsifier firing on 6 of 10 groups; per-event reading overturned the pooled "wash"
