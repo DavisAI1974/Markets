@@ -1,0 +1,80 @@
+{
+  "schema": "frankie-progress-lock-s122.1",
+  "authority": "current code + tests + current generated/live measurements override stale S114 prose/status",
+  "branch": "chatgpt/agent-frankie-s117",
+  "measurement": {
+    "served": 1914,
+    "decision_state_blocks": 44,
+    "served_unread": 1222,
+    "held_not_served": 5,
+    "named_absent": 7,
+    "planned_raw_stale_registry": 124,
+    "status": "CURRENT_ACCEPTED_MEASUREMENT",
+    "note": "The 1717/1113 committed store snapshot is historical/stale and must never replace this measurement as current truth. Unread is old-brain readership, not Frankie accessibility."
+  },
+  "rules": {
+    "unread_does_not_mean_unavailable_to_frankie": true,
+    "frankie_access_rule": "Every possessed, causal-by-cutoff, non-future-contaminated field must be accessible to Frankie regardless of ng_brain reader count.",
+    "future_target_curve_masked": true,
+    "spawn_py_protected": true,
+    "old_open_status_is_not_build_evidence": true,
+    "research_delivered_is_not_wiring_proof": true
+  },
+  "fully_done": {
+    "A-1": "zero-change / seasonal-naive / persistence baselines built and causal",
+    "A-13": "calendar serving change completed",
+    "A-14": "calendar early-close correction completed",
+    "A-16": "hydro WAT plus PS/BAT/unnamed generation serving execution-verified",
+    "A-22": "master data registry built",
+    "A-25": "generated ChatGPT handoff machinery built",
+    "A-32": "interchange work completed",
+    "A-46": "brain-view annotation/relevance layer completed; annotate, never drop",
+    "A-48": "stale G22 correction completed",
+    "A-51": "forward wind and solar serving completed with S114 forward forcing build",
+    "A-52": "wind 7d change/share serving completed",
+    "G-5": "31-member GEFS density served through weather_forcing_forecast; g24 vintage audit 10/10",
+    "G-19": "battery serving completed"
+  },
+  "implemented_do_not_rebuild_evidence_pending": {
+    "A-42": "FJ-1 adapter/frozen taxonomy implemented; production grading evidence remains",
+    "A-50": "narrative/leak gate implemented; must remain enforced",
+    "A-59": "typed posterior and render-target architecture implemented",
+    "A-61": "pin_snapshot / verify_snapshot implemented",
+    "A-62": "specialist track-record mechanism implemented; empirical effect remains",
+    "A-65": "same-cell validated compaction mechanism implemented; validate each proposed view change",
+    "A-66": "ownership/collision hard-fail implemented",
+    "A-67": "blind-vs-Frankenstein experiment harness implemented; arms remain evidence operations",
+    "A-68": "append-only Lens's Book and strictly-earlier causal lens view implemented; retention evidence remains",
+    "A-69": "training split / held-out / release-gate harness implemented; training and held-out scoring remain"
+  },
+  "later_done_do_not_rebuild": {
+    "A-82": "future/actual price-curve isolation wall",
+    "C2C-018": "full 90-play packet with lossless whitespace compaction and structural/full-brain canary",
+    "S121-ENDOGENOUS-CURVE": "Frankie selects forecast timestamps; harness does not interpolate/smooth/average; ABSTAIN is disposition, not flat curve",
+    "S121-KITCHEN-SINK": "fail-closed causal completeness gate",
+    "A-87": "durable system inventory retaining DONE/SUPERSEDED history",
+    "S122-TARGET-CELL-MANIFEST": "field-level fail-closed target-cell manifest compiler"
+  },
+  "partial_not_rebuild": {
+    "M-16": "S115 guarded root-relative Databento backfill mechanics implemented; physical EC2/S3 data-plane landing proof still required"
+  },
+  "must_verify_current_code_before_calling_open": {
+    "A-11": "chain state",
+    "A-18": "Southeast BA completeness",
+    "A-15": "old-brain thermal-stack consumption; not equivalent to Frankie access"
+  },
+  "genuine_or_measured_open_after_reconciliation": {
+    "G-7": "LNG feedgas EBB ingest/adapters: research delivered; live wiring/health-state ingest still requires code evidence",
+    "M-6": "coal headroom / EIA-860M additions-retirements plus outage aggregates",
+    "A-17": "unit-level exact forward nuclear calendar is a measured public-data gap; only build public aggregate/commission lanes actually supported by sources",
+    "A-23": "unread-field triage remains diagnostic research, but 1222 unread must never be treated as 1222 Frankie-unavailable fields"
+  },
+  "historical_research_delivered_do_not_research_again": {
+    "ensembles": "ECMWF ENS and GEFS member retrieval",
+    "forward_net_load": "ISO day-ahead / multi-day load, wind and solar source contracts",
+    "summer_degree_days": "gas-weighted HDD and summer power-sector replacement",
+    "weather_regimes": "North American weather regime construction",
+    "lng_feedgas_sources": "terminal/pipeline EBB nomination source register",
+    "flow_nowcast": "strong-flow running-leg direction result and canonical replication contract"
+  }
+}
