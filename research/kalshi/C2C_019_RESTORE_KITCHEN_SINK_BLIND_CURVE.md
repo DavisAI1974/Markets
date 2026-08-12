@@ -1,6 +1,7 @@
 # C2C-019 — Restore kitchen-sink blind curve methodology
 
-Owner: Claude terminal/AWS implementation, coordinated by ChatGPT
+Owner: ChatGPT
+Claude role: terminal/AWS-only operator for evidence or execution ChatGPT cannot access directly
 Status: OPEN
 Predecessor: C2C-018 COMPLETE at d8e8c04
 
@@ -22,6 +23,12 @@ For a historical blind recreation at cutoff T:
 6. Output is Frankie's blind high-resolution expected price path for the full session. Point count/timestamps are endogenous to his forecast and should be dense enough to represent the expected market evolution. Do not manufacture points after inference.
 7. Daily curves concatenate chronologically into the week/two-week forecast. No pooled/averaged daily forecast substitutes for event/path structure.
 8. Freeze the raw forecast before any target actual/RT curve is opened. Only then may a later explicit scoring task overlay/compare forecast vs actual. This task MUST NOT score or open the target actual/RT curve.
+
+## Division of work
+
+ChatGPT owns and performs every task possible through repo access, prior-chat history, attached/library artifacts, CI, and connector-visible code. Do not delegate repository archaeology, registry reconciliation, contract review, test design, code review, or status classification to Claude merely for convenience.
+
+Claude is reserved only for evidence or execution ChatGPT genuinely cannot access: AWS/local filesystem inventory, credentials-bound services, terminal-only generators against non-repo data, local object stores, and the eventual temporary Claude-model inference if separately authorized. Claude must receive narrow concrete asks through the shared ledger/task protocol, not a duplicate investigation.
 
 ## Immediate implementation/audit work — NO PAID MODEL CALL
 
@@ -69,6 +76,10 @@ The historical `DATA_POINTS.md` "READ BY NOTHING" count is diagnostic, not a mod
 
 Do not claim completeness from a family-level label alone. The regenerated registry/current state must be diffed against what the exact target-cell packet or retrieval layer exposes. Preserve fields even when no current play mentions them: Frankie is allowed to discover usefulness himself.
 
+### B2. Prior-chat evidence reconciliation — ChatGPT-owned
+
+Before asking Claude for anything, ChatGPT must inspect prior conversation history and current repo truth for evidence of work already performed in S109-S120. Prior-chat claims are leads, not sufficient proof by themselves; confirm in current code/registry/commits where possible. Record contradictions explicitly. Only unresolved evidence requiring non-repo/AWS/local access is handed to Claude.
+
 C. Token/access architecture.
 - C2C-018 actual Sol input was 477,817 tokens, too close to 500k TPM.
 - Do not solve this by dropping information access.
@@ -96,9 +107,9 @@ Add tests that fail if:
 
 `research/kalshi/forecasts/grp24.json` is an example of the older fixed-grid blind artifact and is provenance, not the desired new Frankie path constraint.
 
-## Deliverable back to ChatGPT
+## Deliverable
 
-Append C2C-019 COMPLETE/STOPPED to `research/kalshi/FRANKIE_CHATGPT_CLAUDE_COORDINATION.md` using append-only ledger discipline. Report:
+ChatGPT maintains the C2C-019 result and uses `research/kalshi/FRANKIE_CHATGPT_CLAUDE_COORDINATION.md` append-only discipline for any Claude handoff/return. Report:
 - exact files changed and commits;
 - methodology authority traced;
 - fixed-grid/flat-abstain removal status;
