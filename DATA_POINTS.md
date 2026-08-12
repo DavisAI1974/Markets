@@ -11,13 +11,13 @@ small non-zero is a prompt to look, never a clean bill.
 
 | | count |
 |---|---|
-| served data points | 1717 |
-| **served and READ BY NOTHING** | **1113** |
+| served data points | 1914 |
+| **served and READ BY NOTHING** | **1222** |
 | HELD but not served | 5 |
-| PLANNED (from the work registry) | 63 |
+| PLANNED (from the work registry) | 124 |
 | IDENTIFIED, not committed | 9 |
 | named ABSENT | 7 |
-| source blocks | 36 |
+| source blocks | 44 |
 
 ## SERVED AND READ BY NOTHING
 
@@ -25,293 +25,348 @@ The 0629 class. Present, numeric, correct, in every slice - and no consumer.
 
 | path | kind | groups | days populated |
 |---|---|---|---|
-| `cash_basis.basis_chg_1d` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cash_basis.basis_chg_3d` | number | 12,13,14,15,16,18,19,20,21,22,23 | 109 |
-| `cash_basis.basis_chg_5d` | number | 12,13,14,15,16,18,19,20,21,22,23 | 83 |
-| `cash_basis.front_settle` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cash_basis.front_settle_session` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cash_basis.front_settle_source` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cash_basis.front_settle_symbol` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cash_basis.hh_cash_minus_front_settle` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cash_basis.hh_spot` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cash_basis.hh_spot_gas_day` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cash_basis.hh_spot_publication_basis` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cash_basis.hh_spot_publication_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cash_basis.hh_spot_vintage` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.asof_session` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.calendar_front_expiry_source` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.calendar_front_next_spread_chg_1d` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.calendar_front_next_spread_chg_5d` | number | 12,13,14,15,16,18,19,20,21,22,23 | 93 |
-| `contract_structure.calendar_front_pair_changed_1d` | bool | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.calendar_front_pair_changed_3d` | bool | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.calendar_front_pair_changed_5d` | bool | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.calendar_front_settle` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.calendar_front_symbol` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.calendar_next_settle` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.calendar_next_symbol` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.curve_asof` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.curve_curvature` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.curve_slope_1` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.curve_slope_back` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.days_to_front_expiry_calendar` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.expiry_source` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.front_is_calendar_front` | bool | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.front_next_pair_changed_1d` | bool | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.front_next_pair_changed_3d` | bool | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.front_next_pair_changed_5d` | bool | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.front_next_spread_basis` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.front_next_spread_chg_1d` | number | 12,13,14,15,16,18,19,20,21,22,23 | 87 |
-| `contract_structure.front_next_spread_chg_5d` | number | 12,13,14,15,16,18,19,20,21,22,23 | 65 |
-| `contract_structure.front_symbol` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.frozen_front_expired` | bool | 20,22 | 12 |
-| `contract_structure.mar_apr_pair` | string | 12,13,14,15,16,18,19,20,21,22,23 | 84 |
-| `contract_structure.mar_apr_spread` | number | 12,13,14,15,16,18,19,20,21,22,23 | 84 |
-| `contract_structure.next_symbol` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.oi_front_symbol` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.oi_volume_divergence` | bool | 12,13,14,15,16,18,19,20,21,22,23 | 84 |
-| `contract_structure.oi_volume_divergence_note` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.open_interest_front` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.open_interest_front_chg_1d` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.open_interest_front_session` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.open_interest_next` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.open_interest_next_chg_1d` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.open_interest_next_session` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `contract_structure.volume_front_symbol` | string | 12,13,14,15,16,18,19,20,21,22,23 | 84 |
-| `cot.age_days_combined` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.contract_code` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.contract_code_combined` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.ice.hh_basis.open_interest` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.ice.hh_index.open_interest` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.ice.ld1.open_interest` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.ice.pen.open_interest` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.managed_money_long` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.managed_money_long_combined` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.managed_money_long_options_implied` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.managed_money_net_chg_wow_combined` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.managed_money_net_chg_wow_options_implied` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.managed_money_net_combined` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.managed_money_net_options_implied_pctile_1y` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.managed_money_net_pctile_1y_combined` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.managed_money_net_pctile_3y_combined` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.managed_money_short_combined` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.managed_money_short_options_implied` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.market_name` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.market_name_combined` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.open_interest` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.open_interest_combined` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.open_interest_options_implied` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.options_implied_pctile_1y_n_obs` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.options_implied_pctile_3y_n_obs` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.other_reportable_net` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.other_reportable_net_combined` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.other_reportable_net_options_implied` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.pctile_1y_n_obs` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.pctile_1y_n_obs_combined` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.pctile_3y_n_obs` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.pctile_3y_n_obs_combined` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.producer_merchant_net` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.producer_merchant_net_combined` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.producer_merchant_net_options_implied` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.publication_confidence` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.publication_confidence_combined` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.publication_delayed` | bool | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.publication_delayed_combined` | bool | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.publication_ts_combined` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.report_date_combined` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.swap_dealer_net` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.swap_dealer_net_combined` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot.swap_dealer_net_options_implied` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `cot_publication_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 11 |
-| `dow` | string | 6,7,8,9,10,11,12,13,14,15,16,18,19,20,21,22,23 | 192 |
-| `eia_storage_print_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 11 |
-| `firehose_present.mbo_flow` | bool | 20,21,22,23 | 40 |
-| `flow_calendar.bcom_january_rebalance` | bool | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `flow_calendar.bidweek_delivery_month` | string | 12,13,14,15,16,18,19,20,21,22,23 | 24 |
-| `flow_calendar.cme_holiday_name` | string | 12,13,14,15,16,18,19,20,21,22,23 | 4 |
-| `flow_calendar.cme_session_class` | string | 12,13,14,15,16,18,19,20,21,22,23 | 4 |
-| `flow_calendar.eia_releases_this_week[0].datetime_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `flow_calendar.eia_releases_this_week[0].for_week_ending` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `flow_calendar.eia_releases_this_week[0].shift_reason` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `flow_calendar.eia_storage_release_datetime_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `flow_calendar.front_symbol_calendar` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `flow_calendar.futures_expiry_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `flow_calendar.next_eia_release_datetime_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `flow_calendar.options_expiry_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.sunday_reopen.asof_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.asof_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.MAF.max_cycle_runtime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.10.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.10.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.10.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.10.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.15.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.15.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.15.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.15.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.20.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.20.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.20.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.20.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.MAF.tmin_by_horizon[0]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.MAF.tmin_by_horizon[1]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.MAF.tmin_by_horizon[2]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.MAF.tmin_by_horizon[3]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.MAF.tmin_d0_f` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.OKC.max_cycle_runtime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.10.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.10.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.10.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.10.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.15.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.15.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.15.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.15.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.20.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.20.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.20.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.20.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.OKC.tmin_by_horizon[0]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.OKC.tmin_by_horizon[1]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.OKC.tmin_by_horizon[2]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.OKC.tmin_by_horizon[3]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.OKC.tmin_d0_f` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.PIT.max_cycle_runtime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.10.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.10.0.first_below` | string | 12,13,14,15,16,18,19,20,21,22,23 | 2 |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.10.0.last_below` | string | 12,13,14,15,16,18,19,20,21,22,23 | 2 |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.10.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.15.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.15.0.first_below` | string | 12,13,14,15,16,18,19,20,21,22,23 | 2 |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.15.0.last_below` | string | 12,13,14,15,16,18,19,20,21,22,23 | 2 |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.15.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.20.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.20.0.first_below` | string | 12,13,14,15,16,18,19,20,21,22,23 | 4 |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.20.0.last_below` | string | 12,13,14,15,16,18,19,20,21,22,23 | 4 |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.20.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.PIT.tmin_by_horizon[0]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.PIT.tmin_by_horizon[1]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.PIT.tmin_by_horizon[2]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.PIT.tmin_by_horizon[3]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.PIT.tmin_d0_f` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.SHV.max_cycle_runtime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.10.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.10.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.10.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.10.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.15.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.15.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.15.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.15.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.20.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.20.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.20.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.20.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.SHV.tmin_by_horizon[0]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.SHV.tmin_by_horizon[1]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.SHV.tmin_by_horizon[2]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.SHV.tmin_by_horizon[3]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.sunday_reopen.basins.SHV.tmin_d0_f` | number | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `freeze_risk.weekday_open.asof_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.asof_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.MAF.max_cycle_runtime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.10.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.10.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.10.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.10.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.15.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.15.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.15.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.15.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.20.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.20.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.20.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.20.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.MAF.tmin_by_horizon[0]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.MAF.tmin_by_horizon[1]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.MAF.tmin_by_horizon[2]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.MAF.tmin_by_horizon[3]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.MAF.tmin_d0_f` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.OKC.max_cycle_runtime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.10.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.10.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.10.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.10.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.15.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.15.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.15.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.15.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.20.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.20.0.first_below` | string | 12,13,14,15,16,18,19,20,21,22,23 | 1 |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.20.0.last_below` | string | 12,13,14,15,16,18,19,20,21,22,23 | 1 |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.20.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.OKC.tmin_by_horizon[0]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.OKC.tmin_by_horizon[1]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.OKC.tmin_by_horizon[2]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.OKC.tmin_by_horizon[3]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.OKC.tmin_d0_f` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.PIT.max_cycle_runtime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.10.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.10.0.first_below` | string | 12,13,14,15,16,18,19,20,21,22,23 | 8 |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.10.0.last_below` | string | 12,13,14,15,16,18,19,20,21,22,23 | 8 |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.10.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.15.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.15.0.first_below` | string | 12,13,14,15,16,18,19,20,21,22,23 | 10 |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.15.0.last_below` | string | 12,13,14,15,16,18,19,20,21,22,23 | 10 |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.15.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.20.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.20.0.first_below` | string | 12,13,14,15,16,18,19,20,21,22,23 | 24 |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.20.0.last_below` | string | 12,13,14,15,16,18,19,20,21,22,23 | 24 |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.20.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.PIT.tmin_by_horizon[0]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.PIT.tmin_by_horizon[1]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.PIT.tmin_by_horizon[2]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.PIT.tmin_by_horizon[3]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.PIT.tmin_d0_f` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.SHV.max_cycle_runtime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.10.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.10.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.10.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.10.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.15.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.15.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.15.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.15.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.20.0.days_below` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.20.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.20.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.20.0.max_consecutive` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.SHV.tmin_by_horizon[0]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.SHV.tmin_by_horizon[1]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.SHV.tmin_by_horizon[2]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.SHV.tmin_by_horizon[3]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `freeze_risk.weekday_open.basins.SHV.tmin_d0_f` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `frozen_structure_stale.frozen_calendar_front_expiry` | string | 20,22 | 12 |
-| `frozen_structure_stale.frozen_calendar_front_symbol` | string | 20,22 | 12 |
-| `frozen_structure_stale.live_front_symbol_calendar` | string | 20,22 | 12 |
-| `globex_reopen_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 11 |
-| `grid_stack.bas.CISO.solar_chg_7d_mwh` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `grid_stack.bas.CISO.solar_share` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `grid_stack.bas.ERCO.solar_chg_7d_mwh` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `grid_stack.bas.ERCO.solar_share` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `grid_stack.bas.MISO.solar_chg_7d_mwh` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `grid_stack.bas.MISO.solar_share` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `grid_stack.bas.PJM.solar_chg_7d_mwh` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `grid_stack.bas.PJM.solar_share` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `grid_stack.bas.SOCO.solar_chg_7d_mwh` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `grid_stack.bas.SOCO.solar_share` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `grid_stack.bas.SWPP.solar_chg_7d_mwh` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `grid_stack.bas.SWPP.solar_share` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `grid_stack.bas.US48.solar_chg_7d_mwh` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `grid_stack.bas.US48.solar_share` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_cycles_et.00z_gfs_mos` | string | 12,13,14,15,16,18,19,20,21,22,23 | 11 |
-| `model_cycles_et.06z_gfs_mos` | string | 12,13,14,15,16,18,19,20,21,22,23 | 11 |
-| `model_cycles_et.12z_gfs_mos` | string | 12,13,14,15,16,18,19,20,21,22,23 | 11 |
-| `model_cycles_et.18z_gfs_mos` | string | 12,13,14,15,16,18,19,20,21,22,23 | 11 |
-| `model_cycles_et.cycles_run_weekends_too` | bool | 12,13,14,15,16,18,19,20,21,22,23 | 11 |
-| `model_disagreement.asof_note` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.asof_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[0].mav_gw_cdd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[0].mav_gw_hdd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
+| `blocks_emitted[0]` | string | 1 | 1 |
+| `blocks_emitted[1]` | string | 1 | 1 |
+| `blocks_emitted[2]` | string | 1 | 1 |
+| `blocks_emitted[3]` | string | 1 | 1 |
+| `built_utc` | string | 1 | 1 |
+| `cash_basis.basis_chg_1d` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `cash_basis.basis_chg_3d` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 |
+| `cash_basis.basis_chg_5d` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 93 |
+| `cash_basis.front_settle` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `cash_basis.front_settle_session` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `cash_basis.front_settle_source` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `cash_basis.front_settle_symbol` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `cash_basis.hh_cash_minus_front_settle` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `cash_basis.hh_spot` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `cash_basis.hh_spot_gas_day` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `cash_basis.hh_spot_publication_basis` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `cash_basis.hh_spot_publication_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `cash_basis.hh_spot_vintage` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.asof_session` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.calendar_front_expiry_source` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.calendar_front_next_spread_chg_1d` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.calendar_front_next_spread_chg_5d` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 103 |
+| `contract_structure.calendar_front_pair_changed_1d` | bool | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.calendar_front_pair_changed_3d` | bool | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.calendar_front_pair_changed_5d` | bool | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.calendar_front_settle` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.calendar_front_symbol` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.calendar_next_settle` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.calendar_next_symbol` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.curve_asof` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.curve_curvature` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.curve_slope_1` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.curve_slope_back` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.days_to_front_expiry_calendar` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.expiry_source` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.front_is_calendar_front` | bool | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.front_next_pair_changed_1d` | bool | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.front_next_pair_changed_3d` | bool | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.front_next_pair_changed_5d` | bool | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.front_next_spread_basis` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.front_next_spread_chg_1d` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 97 |
+| `contract_structure.front_next_spread_chg_5d` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 65 |
+| `contract_structure.front_symbol` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.frozen_front_expired` | bool | 20,22,24 | 14 |
+| `contract_structure.mar_apr_pair` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 94 |
+| `contract_structure.mar_apr_spread` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 94 |
+| `contract_structure.next_symbol` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.oi_front_symbol` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.oi_volume_divergence` | bool | 12,13,14,15,16,18,19,20,21,22,23,24 | 94 |
+| `contract_structure.oi_volume_divergence_note` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.open_interest_front` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.open_interest_front_chg_1d` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.open_interest_front_session` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.open_interest_next` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.open_interest_next_chg_1d` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.open_interest_next_session` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `contract_structure.volume_front_symbol` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 94 |
+| `cot.age_days_combined` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.contract_code` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.contract_code_combined` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.ice.hh_basis.open_interest` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.ice.hh_index.open_interest` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.ice.ld1.open_interest` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.ice.pen.open_interest` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.managed_money_long` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.managed_money_long_combined` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.managed_money_long_options_implied` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.managed_money_net_chg_wow_combined` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.managed_money_net_chg_wow_options_implied` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.managed_money_net_combined` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.managed_money_net_options_implied_pctile_1y` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.managed_money_net_pctile_1y_combined` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.managed_money_net_pctile_3y_combined` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.managed_money_short_combined` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.managed_money_short_options_implied` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.market_name` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.market_name_combined` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.open_interest` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.open_interest_combined` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.open_interest_options_implied` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.options_implied_pctile_1y_n_obs` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.options_implied_pctile_3y_n_obs` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.other_reportable_net` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.other_reportable_net_combined` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.other_reportable_net_options_implied` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.pctile_1y_n_obs` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.pctile_1y_n_obs_combined` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.pctile_3y_n_obs` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.pctile_3y_n_obs_combined` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.producer_merchant_net` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.producer_merchant_net_combined` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.producer_merchant_net_options_implied` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.publication_confidence` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.publication_confidence_combined` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.publication_delayed` | bool | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.publication_delayed_combined` | bool | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.publication_ts_combined` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.report_date_combined` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.swap_dealer_net` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.swap_dealer_net_combined` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot.swap_dealer_net_options_implied` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `cot_publication_et` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 13 |
+| `dow` | string | 1,6,7,8,9,10,11,12,13,14,15,16,18,19,20,21,22,23,24 | 212 |
+| `eia_storage_print_et` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 13 |
+| `firehose_present.mbo_flow` | bool | 1,20,21,22,23,24 | 60 |
+| `flow_calendar.bcom_january_rebalance` | bool | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `flow_calendar.cme_holiday_name` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 4 |
+| `flow_calendar.cme_session_class` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 4 |
+| `flow_calendar.eia_releases_this_week[0].datetime_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `flow_calendar.eia_releases_this_week[0].for_week_ending` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `flow_calendar.eia_releases_this_week[0].shift_reason` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `flow_calendar.eia_storage_release_datetime_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `flow_calendar.front_symbol_calendar` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `flow_calendar.futures_expiry_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `flow_calendar.next_eia_release_datetime_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `flow_calendar.options_expiry_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `freeze_risk.sunday_reopen.asof_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 |
+| `freeze_risk.sunday_reopen.asof_utc` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 |
+| `freeze_risk.sunday_reopen.basins.MAF.max_cycle_runtime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.10.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.10.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.15.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.15.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.20.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.20.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.sunday_reopen.basins.MAF.tmin_by_horizon[0]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.MAF.tmin_by_horizon[1]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.MAF.tmin_by_horizon[2]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.MAF.tmin_by_horizon[3]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.MAF.tmin_d0_f` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.OKC.max_cycle_runtime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.10.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.10.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.15.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.15.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.20.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.20.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.sunday_reopen.basins.OKC.tmin_by_horizon[0]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.OKC.tmin_by_horizon[1]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.OKC.tmin_by_horizon[2]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.OKC.tmin_by_horizon[3]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.OKC.tmin_d0_f` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.PIT.max_cycle_runtime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.10.0.first_below` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 2 |
+| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.10.0.last_below` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 2 |
+| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.15.0.first_below` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 2 |
+| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.15.0.last_below` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 2 |
+| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.20.0.first_below` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 4 |
+| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.20.0.last_below` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 4 |
+| `freeze_risk.sunday_reopen.basins.PIT.tmin_by_horizon[0]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.PIT.tmin_by_horizon[1]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.PIT.tmin_by_horizon[2]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.PIT.tmin_by_horizon[3]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.PIT.tmin_d0_f` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.SHV.max_cycle_runtime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.10.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.10.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.15.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.15.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.20.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.20.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.sunday_reopen.basins.SHV.tmin_by_horizon[0]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.SHV.tmin_by_horizon[1]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.SHV.tmin_by_horizon[2]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.SHV.tmin_by_horizon[3]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.sunday_reopen.basins.SHV.tmin_d0_f` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 |
+| `freeze_risk.weekday_open.asof_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `freeze_risk.weekday_open.asof_utc` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `freeze_risk.weekday_open.basins.MAF.max_cycle_runtime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.MAF.thresholds_f.10.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.weekday_open.basins.MAF.thresholds_f.10.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.weekday_open.basins.MAF.thresholds_f.15.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.weekday_open.basins.MAF.thresholds_f.15.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.weekday_open.basins.MAF.thresholds_f.20.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.weekday_open.basins.MAF.thresholds_f.20.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.weekday_open.basins.MAF.tmin_by_horizon[0]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.MAF.tmin_by_horizon[1]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.MAF.tmin_by_horizon[2]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.MAF.tmin_by_horizon[3]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.MAF.tmin_d0_f` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.OKC.max_cycle_runtime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.OKC.thresholds_f.10.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.weekday_open.basins.OKC.thresholds_f.10.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.weekday_open.basins.OKC.thresholds_f.15.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.weekday_open.basins.OKC.thresholds_f.15.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.weekday_open.basins.OKC.thresholds_f.20.0.first_below` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 1 |
+| `freeze_risk.weekday_open.basins.OKC.thresholds_f.20.0.last_below` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 1 |
+| `freeze_risk.weekday_open.basins.OKC.tmin_by_horizon[0]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.OKC.tmin_by_horizon[1]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.OKC.tmin_by_horizon[2]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.OKC.tmin_by_horizon[3]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.OKC.tmin_d0_f` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.PIT.max_cycle_runtime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.PIT.thresholds_f.10.0.first_below` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 8 |
+| `freeze_risk.weekday_open.basins.PIT.thresholds_f.10.0.last_below` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 8 |
+| `freeze_risk.weekday_open.basins.PIT.thresholds_f.15.0.first_below` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 10 |
+| `freeze_risk.weekday_open.basins.PIT.thresholds_f.15.0.last_below` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 10 |
+| `freeze_risk.weekday_open.basins.PIT.thresholds_f.20.0.first_below` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 |
+| `freeze_risk.weekday_open.basins.PIT.thresholds_f.20.0.last_below` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 |
+| `freeze_risk.weekday_open.basins.PIT.tmin_by_horizon[0]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.PIT.tmin_by_horizon[1]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.PIT.tmin_by_horizon[2]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.PIT.tmin_by_horizon[3]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.PIT.tmin_d0_f` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.SHV.max_cycle_runtime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.SHV.thresholds_f.10.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.weekday_open.basins.SHV.thresholds_f.10.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.weekday_open.basins.SHV.thresholds_f.15.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.weekday_open.basins.SHV.thresholds_f.15.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.weekday_open.basins.SHV.thresholds_f.20.0.first_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.weekday_open.basins.SHV.thresholds_f.20.0.last_below` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `freeze_risk.weekday_open.basins.SHV.tmin_by_horizon[0]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.SHV.tmin_by_horizon[1]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.SHV.tmin_by_horizon[2]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.SHV.tmin_by_horizon[3]` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `freeze_risk.weekday_open.basins.SHV.tmin_d0_f` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 |
+| `frozen_structure_stale.frozen_calendar_front_expiry` | string | 20,22,24 | 14 |
+| `frozen_structure_stale.frozen_calendar_front_symbol` | string | 20,22,24 | 14 |
+| `frozen_structure_stale.live_front_symbol_calendar` | string | 20,22,24 | 14 |
+| `globex_reopen_et` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 13 |
+| `grid_stack.bas.CISO.battery_mwh` | null-only | 1,22,24 | 0 |
+| `grid_stack.bas.CISO.hydro_chg_7d_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.CISO.hydro_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.CISO.hydro_share` | number | 1,22,24 | 30 |
+| `grid_stack.bas.CISO.hydro_share_chg_7d` | number | 1 | 10 |
+| `grid_stack.bas.CISO.interchange_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.CISO.pumped_storage_mwh` | null-only | 1,22,24 | 0 |
+| `grid_stack.bas.CISO.share_chg_note` | string | 1 | 10 |
+| `grid_stack.bas.CISO.solar_chg_7d_mwh` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `grid_stack.bas.CISO.solar_share` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `grid_stack.bas.CISO.solar_share_chg_7d` | number | 1 | 10 |
+| `grid_stack.bas.CISO.unnamed_gen_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.CISO.wat_is_separable_from_pumped_storage` | bool | 1,22,24 | 30 |
+| `grid_stack.bas.CISO.wind_chg_7d_mwh` | number | 1,24 | 20 |
+| `grid_stack.bas.CISO.wind_share` | number | 1,24 | 20 |
+| `grid_stack.bas.CISO.wind_share_chg_7d` | number | 1 | 10 |
+| `grid_stack.bas.ERCO.battery_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.ERCO.hydro_chg_7d_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.ERCO.hydro_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.ERCO.hydro_share` | number | 1,22,24 | 30 |
+| `grid_stack.bas.ERCO.hydro_share_chg_7d` | number | 1 | 10 |
+| `grid_stack.bas.ERCO.interchange_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.ERCO.pumped_storage_mwh` | null-only | 1,22,24 | 0 |
+| `grid_stack.bas.ERCO.share_chg_note` | string | 1 | 10 |
+| `grid_stack.bas.ERCO.solar_chg_7d_mwh` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `grid_stack.bas.ERCO.solar_share` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `grid_stack.bas.ERCO.solar_share_chg_7d` | number | 1 | 10 |
+| `grid_stack.bas.ERCO.unnamed_gen_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.ERCO.wat_is_separable_from_pumped_storage` | bool | 1,22,24 | 30 |
+| `grid_stack.bas.ERCO.wind_chg_7d_mwh` | number | 1,24 | 20 |
+| `grid_stack.bas.ERCO.wind_share` | number | 1,24 | 20 |
+| `grid_stack.bas.ERCO.wind_share_chg_7d` | number | 1 | 10 |
+| `grid_stack.bas.MISO.battery_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.MISO.hydro_chg_7d_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.MISO.hydro_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.MISO.hydro_share` | number | 1,22,24 | 30 |
+| `grid_stack.bas.MISO.hydro_share_chg_7d` | number | 1 | 10 |
+| `grid_stack.bas.MISO.interchange_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.MISO.pumped_storage_mwh` | null-only | 1,22,24 | 0 |
+| `grid_stack.bas.MISO.share_chg_note` | string | 1 | 10 |
+| `grid_stack.bas.MISO.solar_chg_7d_mwh` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `grid_stack.bas.MISO.solar_share` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `grid_stack.bas.MISO.solar_share_chg_7d` | number | 1 | 10 |
+| `grid_stack.bas.MISO.unnamed_gen_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.MISO.wat_is_separable_from_pumped_storage` | bool | 1,22,24 | 30 |
+| `grid_stack.bas.MISO.wind_chg_7d_mwh` | number | 1,24 | 20 |
+| `grid_stack.bas.MISO.wind_share` | number | 1,24 | 20 |
+| `grid_stack.bas.MISO.wind_share_chg_7d` | number | 1 | 10 |
+| `grid_stack.bas.PJM.battery_mwh` | null-only | 1,22,24 | 0 |
+| `grid_stack.bas.PJM.hydro_chg_7d_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.PJM.hydro_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.PJM.hydro_share` | number | 1,22,24 | 30 |
+| `grid_stack.bas.PJM.hydro_share_chg_7d` | number | 1 | 10 |
+| `grid_stack.bas.PJM.interchange_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.PJM.pumped_storage_mwh` | null-only | 1,22,24 | 0 |
+| `grid_stack.bas.PJM.share_chg_note` | string | 1 | 10 |
+| `grid_stack.bas.PJM.solar_chg_7d_mwh` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `grid_stack.bas.PJM.solar_share` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `grid_stack.bas.PJM.solar_share_chg_7d` | number | 1 | 10 |
+| `grid_stack.bas.PJM.unnamed_gen_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.PJM.wat_is_separable_from_pumped_storage` | bool | 1,22,24 | 30 |
+| `grid_stack.bas.PJM.wind_chg_7d_mwh` | number | 1,24 | 20 |
+| `grid_stack.bas.PJM.wind_share` | number | 1,24 | 20 |
+| `grid_stack.bas.PJM.wind_share_chg_7d` | number | 1 | 10 |
+| `grid_stack.bas.SOCO.battery_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.SOCO.hydro_chg_7d_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.SOCO.hydro_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.SOCO.hydro_share` | number | 1,22,24 | 30 |
+| `grid_stack.bas.SOCO.hydro_share_chg_7d` | number | 1 | 10 |
+| `grid_stack.bas.SOCO.interchange_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.SOCO.pumped_storage_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.SOCO.share_chg_note` | string | 1 | 10 |
+| `grid_stack.bas.SOCO.solar_chg_7d_mwh` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `grid_stack.bas.SOCO.solar_share` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `grid_stack.bas.SOCO.solar_share_chg_7d` | number | 1 | 10 |
+| `grid_stack.bas.SOCO.unnamed_gen_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.SOCO.wat_is_separable_from_pumped_storage` | bool | 1,22,24 | 30 |
+| `grid_stack.bas.SOCO.wind_chg_7d_mwh` | number | 1,24 | 20 |
+| `grid_stack.bas.SOCO.wind_share` | number | 1,24 | 20 |
+| `grid_stack.bas.SOCO.wind_share_chg_7d` | number | 1 | 10 |
+| `grid_stack.bas.SWPP.battery_mwh` | number | 1,22,24 | 20 |
+| `grid_stack.bas.SWPP.hydro_chg_7d_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.SWPP.hydro_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.SWPP.hydro_share` | number | 1,22,24 | 30 |
+| `grid_stack.bas.SWPP.hydro_share_chg_7d` | number | 1 | 10 |
+| `grid_stack.bas.SWPP.interchange_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.SWPP.pumped_storage_mwh` | null-only | 1,22,24 | 0 |
+| `grid_stack.bas.SWPP.share_chg_note` | string | 1 | 10 |
+| `grid_stack.bas.SWPP.solar_chg_7d_mwh` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `grid_stack.bas.SWPP.solar_share` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `grid_stack.bas.SWPP.solar_share_chg_7d` | number | 1 | 10 |
+| `grid_stack.bas.SWPP.unnamed_gen_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.SWPP.wat_is_separable_from_pumped_storage` | bool | 1,22,24 | 30 |
+| `grid_stack.bas.SWPP.wind_chg_7d_mwh` | number | 1,24 | 20 |
+| `grid_stack.bas.SWPP.wind_share` | number | 1,24 | 20 |
+| `grid_stack.bas.SWPP.wind_share_chg_7d` | number | 1 | 10 |
+| `grid_stack.bas.US48.battery_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.US48.hydro_chg_7d_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.US48.hydro_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.US48.hydro_share` | number | 1,22,24 | 30 |
+| `grid_stack.bas.US48.hydro_share_chg_7d` | number | 1 | 10 |
+| `grid_stack.bas.US48.interchange_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.US48.pumped_storage_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.US48.share_chg_note` | string | 1 | 10 |
+| `grid_stack.bas.US48.solar_chg_7d_mwh` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `grid_stack.bas.US48.solar_share` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `grid_stack.bas.US48.solar_share_chg_7d` | number | 1 | 10 |
+| `grid_stack.bas.US48.unnamed_gen_mwh` | number | 1,22,24 | 30 |
+| `grid_stack.bas.US48.wat_is_separable_from_pumped_storage` | bool | 1,22,24 | 30 |
+| `grid_stack.bas.US48.wind_chg_7d_mwh` | number | 1,24 | 20 |
+| `grid_stack.bas.US48.wind_share` | number | 1,24 | 20 |
+| `grid_stack.bas.US48.wind_share_chg_7d` | number | 1 | 10 |
+| `mask_after` | string | 1 | 1 |
+| `model_cycles_et.00z_gfs_mos` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 13 |
+| `model_cycles_et.06z_gfs_mos` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 13 |
+| `model_cycles_et.12z_gfs_mos` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 13 |
+| `model_cycles_et.18z_gfs_mos` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 13 |
+| `model_cycles_et.cycles_run_weekends_too` | bool | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 13 |
+| `model_disagreement.asof_note` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.asof_utc` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.disagreement[0].mav_gw_cdd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 |
+| `model_disagreement.disagreement[0].mav_gw_hdd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 |
 | `model_disagreement.disagreement[0].mav_runs.ATL` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.disagreement[0].mav_runs.BOS` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.disagreement[0].mav_runs.DCA` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
@@ -328,8 +383,8 @@ The 0629 class. Present, numeric, correct, in every slice - and no consumer.
 | `model_disagreement.disagreement[0].mav_runs.SEA` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.disagreement[0].mav_runs.SFO` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.disagreement[0].mav_runs.STL` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[0].met_gw_cdd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[0].met_gw_hdd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
+| `model_disagreement.disagreement[0].met_gw_cdd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 |
+| `model_disagreement.disagreement[0].met_gw_hdd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 |
 | `model_disagreement.disagreement[0].met_runs.ATL` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.disagreement[0].met_runs.BOS` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.disagreement[0].met_runs.DCA` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
@@ -346,11 +401,15 @@ The 0629 class. Present, numeric, correct, in every slice - and no consumer.
 | `model_disagreement.disagreement[0].met_runs.SEA` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.disagreement[0].met_runs.SFO` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.disagreement[0].met_runs.STL` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[0].n_common_metros` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[0].spread_gw_cdd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[0].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[1].mav_gw_cdd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[1].mav_gw_hdd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
+| `model_disagreement.disagreement[0].metros_neither[0]` | string | 24 | 10 |
+| `model_disagreement.disagreement[0].metros_neither[1]` | string | 24 | 10 |
+| `model_disagreement.disagreement[0].metros_neither[2]` | string | 24 | 10 |
+| `model_disagreement.disagreement[0].metros_neither[3]` | string | 24 | 10 |
+| `model_disagreement.disagreement[0].n_common_metros` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.disagreement[0].spread_gw_cdd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 |
+| `model_disagreement.disagreement[0].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.disagreement[1].mav_gw_cdd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 |
+| `model_disagreement.disagreement[1].mav_gw_hdd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 |
 | `model_disagreement.disagreement[1].mav_runs.ATL` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.disagreement[1].mav_runs.BOS` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.disagreement[1].mav_runs.DCA` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
@@ -367,8 +426,8 @@ The 0629 class. Present, numeric, correct, in every slice - and no consumer.
 | `model_disagreement.disagreement[1].mav_runs.SEA` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.disagreement[1].mav_runs.SFO` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.disagreement[1].mav_runs.STL` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[1].met_gw_cdd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[1].met_gw_hdd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
+| `model_disagreement.disagreement[1].met_gw_cdd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 |
+| `model_disagreement.disagreement[1].met_gw_hdd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 |
 | `model_disagreement.disagreement[1].met_runs.ATL` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.disagreement[1].met_runs.BOS` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.disagreement[1].met_runs.DCA` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
@@ -385,32 +444,40 @@ The 0629 class. Present, numeric, correct, in every slice - and no consumer.
 | `model_disagreement.disagreement[1].met_runs.SEA` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.disagreement[1].met_runs.SFO` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.disagreement[1].met_runs.STL` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[1].n_common_metros` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[1].spread_gw_cdd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[1].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[2].mav_gw_cdd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `model_disagreement.disagreement[2].mav_gw_hdd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `model_disagreement.disagreement[2].met_gw_cdd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `model_disagreement.disagreement[2].met_gw_hdd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `model_disagreement.disagreement[2].metros_neither[0]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[2].metros_neither[1]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[2].metros_neither[2]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[2].metros_neither[3]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[2].n_common_metros` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[2].spread_gw_cdd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `model_disagreement.disagreement[2].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[3].mav_gw_cdd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `model_disagreement.disagreement[3].mav_gw_hdd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `model_disagreement.disagreement[3].met_gw_cdd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `model_disagreement.disagreement[3].met_gw_hdd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `model_disagreement.disagreement[3].metros_neither[0]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[3].metros_neither[1]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[3].metros_neither[2]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[3].metros_neither[3]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[3].n_common_metros` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.disagreement[3].spread_gw_cdd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `model_disagreement.disagreement[3].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.GFS[0].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
+| `model_disagreement.disagreement[1].metros_neither[0]` | string | 24 | 10 |
+| `model_disagreement.disagreement[1].metros_neither[1]` | string | 24 | 10 |
+| `model_disagreement.disagreement[1].metros_neither[2]` | string | 24 | 10 |
+| `model_disagreement.disagreement[1].metros_neither[3]` | string | 24 | 10 |
+| `model_disagreement.disagreement[1].n_common_metros` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.disagreement[1].spread_gw_cdd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 |
+| `model_disagreement.disagreement[1].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.disagreement[2].mav_gw_cdd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `model_disagreement.disagreement[2].mav_gw_hdd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `model_disagreement.disagreement[2].met_gw_cdd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `model_disagreement.disagreement[2].met_gw_hdd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `model_disagreement.disagreement[2].metros_neither[0]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.disagreement[2].metros_neither[1]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.disagreement[2].metros_neither[2]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.disagreement[2].metros_neither[3]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.disagreement[2].n_common_metros` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.disagreement[2].spread_gw_cdd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `model_disagreement.disagreement[2].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.disagreement[3].mav_gw_cdd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `model_disagreement.disagreement[3].mav_gw_hdd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `model_disagreement.disagreement[3].met_gw_cdd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `model_disagreement.disagreement[3].met_gw_hdd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `model_disagreement.disagreement[3].metros_neither[0]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.disagreement[3].metros_neither[1]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.disagreement[3].metros_neither[2]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.disagreement[3].metros_neither[3]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.disagreement[3].n_common_metros` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.disagreement[3].spread_gw_cdd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `model_disagreement.disagreement[3].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.GFS[0].metros_missing[0]` | string | 24 | 10 |
+| `model_disagreement.stability.GFS[0].metros_missing[1]` | string | 24 | 10 |
+| `model_disagreement.stability.GFS[0].metros_missing[2]` | string | 24 | 10 |
+| `model_disagreement.stability.GFS[0].metros_missing[3]` | string | 24 | 10 |
+| `model_disagreement.stability.GFS[0].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
 | `model_disagreement.stability.GFS[0].runs_cur.ATL` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.GFS[0].runs_cur.BOS` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.GFS[0].runs_cur.DCA` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
@@ -443,26 +510,30 @@ The 0629 class. Present, numeric, correct, in every slice - and no consumer.
 | `model_disagreement.stability.GFS[0].runs_prv.SEA` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.GFS[0].runs_prv.SFO` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.GFS[0].runs_prv.STL` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.GFS[0].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.GFS[1].metros_missing[0]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.GFS[1].metros_missing[1]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.GFS[1].metros_missing[2]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.GFS[1].metros_missing[3]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.GFS[1].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.GFS[1].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.GFS[2].metros_missing[0]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.GFS[2].metros_missing[1]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.GFS[2].metros_missing[2]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.GFS[2].metros_missing[3]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.GFS[2].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.GFS[2].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.GFS[3].metros_missing[0]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.GFS[3].metros_missing[1]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.GFS[3].metros_missing[2]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.GFS[3].metros_missing[3]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.GFS[3].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.GFS[3].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.MEX[0].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
+| `model_disagreement.stability.GFS[0].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.GFS[1].metros_missing[0]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.GFS[1].metros_missing[1]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.GFS[1].metros_missing[2]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.GFS[1].metros_missing[3]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.GFS[1].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.GFS[1].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.GFS[2].metros_missing[0]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.GFS[2].metros_missing[1]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.GFS[2].metros_missing[2]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.GFS[2].metros_missing[3]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.GFS[2].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.GFS[2].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.GFS[3].metros_missing[0]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.GFS[3].metros_missing[1]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.GFS[3].metros_missing[2]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.GFS[3].metros_missing[3]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.GFS[3].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.GFS[3].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.MEX[0].metros_missing[0]` | string | 24 | 10 |
+| `model_disagreement.stability.MEX[0].metros_missing[1]` | string | 24 | 10 |
+| `model_disagreement.stability.MEX[0].metros_missing[2]` | string | 24 | 10 |
+| `model_disagreement.stability.MEX[0].metros_missing[3]` | string | 24 | 10 |
+| `model_disagreement.stability.MEX[0].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
 | `model_disagreement.stability.MEX[0].runs_cur.ATL` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.MEX[0].runs_cur.BOS` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.MEX[0].runs_cur.DCA` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
@@ -495,8 +566,12 @@ The 0629 class. Present, numeric, correct, in every slice - and no consumer.
 | `model_disagreement.stability.MEX[0].runs_prv.SEA` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.MEX[0].runs_prv.SFO` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.MEX[0].runs_prv.STL` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.MEX[0].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.MEX[1].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
+| `model_disagreement.stability.MEX[0].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.MEX[1].metros_missing[0]` | string | 24 | 10 |
+| `model_disagreement.stability.MEX[1].metros_missing[1]` | string | 24 | 10 |
+| `model_disagreement.stability.MEX[1].metros_missing[2]` | string | 24 | 10 |
+| `model_disagreement.stability.MEX[1].metros_missing[3]` | string | 24 | 10 |
+| `model_disagreement.stability.MEX[1].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
 | `model_disagreement.stability.MEX[1].runs_cur.ATL` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.MEX[1].runs_cur.BOS` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.MEX[1].runs_cur.DCA` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
@@ -529,8 +604,12 @@ The 0629 class. Present, numeric, correct, in every slice - and no consumer.
 | `model_disagreement.stability.MEX[1].runs_prv.SEA` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.MEX[1].runs_prv.SFO` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.MEX[1].runs_prv.STL` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.MEX[1].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.MEX[2].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
+| `model_disagreement.stability.MEX[1].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.MEX[2].metros_missing[0]` | string | 24 | 10 |
+| `model_disagreement.stability.MEX[2].metros_missing[1]` | string | 24 | 10 |
+| `model_disagreement.stability.MEX[2].metros_missing[2]` | string | 24 | 10 |
+| `model_disagreement.stability.MEX[2].metros_missing[3]` | string | 24 | 10 |
+| `model_disagreement.stability.MEX[2].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
 | `model_disagreement.stability.MEX[2].runs_cur.ATL` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.MEX[2].runs_cur.BOS` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.MEX[2].runs_cur.DCA` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
@@ -563,8 +642,12 @@ The 0629 class. Present, numeric, correct, in every slice - and no consumer.
 | `model_disagreement.stability.MEX[2].runs_prv.SEA` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.MEX[2].runs_prv.SFO` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.MEX[2].runs_prv.STL` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.MEX[2].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.MEX[3].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
+| `model_disagreement.stability.MEX[2].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.MEX[3].metros_missing[0]` | string | 24 | 10 |
+| `model_disagreement.stability.MEX[3].metros_missing[1]` | string | 24 | 10 |
+| `model_disagreement.stability.MEX[3].metros_missing[2]` | string | 24 | 10 |
+| `model_disagreement.stability.MEX[3].metros_missing[3]` | string | 24 | 10 |
+| `model_disagreement.stability.MEX[3].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
 | `model_disagreement.stability.MEX[3].runs_cur.ATL` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.MEX[3].runs_cur.BOS` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.MEX[3].runs_cur.DCA` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
@@ -597,8 +680,12 @@ The 0629 class. Present, numeric, correct, in every slice - and no consumer.
 | `model_disagreement.stability.MEX[3].runs_prv.SEA` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.MEX[3].runs_prv.SFO` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.MEX[3].runs_prv.STL` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.MEX[3].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.NAM[0].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
+| `model_disagreement.stability.MEX[3].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.NAM[0].metros_missing[0]` | string | 24 | 10 |
+| `model_disagreement.stability.NAM[0].metros_missing[1]` | string | 24 | 10 |
+| `model_disagreement.stability.NAM[0].metros_missing[2]` | string | 24 | 10 |
+| `model_disagreement.stability.NAM[0].metros_missing[3]` | string | 24 | 10 |
+| `model_disagreement.stability.NAM[0].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
 | `model_disagreement.stability.NAM[0].runs_cur.ATL` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.NAM[0].runs_cur.BOS` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.NAM[0].runs_cur.DCA` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
@@ -631,287 +718,297 @@ The 0629 class. Present, numeric, correct, in every slice - and no consumer.
 | `model_disagreement.stability.NAM[0].runs_prv.SEA` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.NAM[0].runs_prv.SFO` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.stability.NAM[0].runs_prv.STL` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.NAM[0].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.NAM[1].metros_missing[0]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.NAM[1].metros_missing[1]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.NAM[1].metros_missing[2]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.NAM[1].metros_missing[3]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.NAM[1].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.NAM[1].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.NAM[2].metros_missing[0]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.NAM[2].metros_missing[1]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.NAM[2].metros_missing[2]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.NAM[2].metros_missing[3]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.NAM[2].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.NAM[2].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.NAM[3].metros_missing[0]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.NAM[3].metros_missing[1]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.NAM[3].metros_missing[2]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.NAM[3].metros_missing[3]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.NAM[3].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.stability.NAM[3].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.summary.max_abs_spread_horizon` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.summary.mean_abs_spread_over_overlap` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.summary.n_overlap_horizons` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
+| `model_disagreement.stability.NAM[0].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.NAM[1].metros_missing[0]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.NAM[1].metros_missing[1]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.NAM[1].metros_missing[2]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.NAM[1].metros_missing[3]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.NAM[1].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.NAM[1].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.NAM[2].metros_missing[0]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.NAM[2].metros_missing[1]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.NAM[2].metros_missing[2]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.NAM[2].metros_missing[3]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.NAM[2].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.NAM[2].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.NAM[3].metros_missing[0]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.NAM[3].metros_missing[1]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.NAM[3].metros_missing[2]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.NAM[3].metros_missing[3]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.NAM[3].n_metros` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.stability.NAM[3].target_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `model_disagreement.summary.max_abs_spread_horizon` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 |
+| `model_disagreement.summary.mean_abs_spread_over_overlap` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 |
+| `model_disagreement.summary.n_overlap_horizons` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
 | `model_disagreement.summary.overlap_horizons[0]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
 | `model_disagreement.summary.overlap_horizons[1]` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `model_disagreement.summary.summary_note` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.dry_production_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 5 |
-| `ngwu_balance.dry_production_wow_computed_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.dry_production_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 1 |
-| `ngwu_balance.dry_production_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23 | 1 |
-| `ngwu_balance.era` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.industrial_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.industrial_wow_computed_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.industrial_wow_stated_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.industrial_wow_stated_pct` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.issue_age_days` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.issue_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.knowable_from` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.latest_sd_levels.dry_production_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.latest_sd_levels.dry_production_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.latest_sd_levels.dry_production_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.latest_sd_levels.industrial_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.latest_sd_levels.industrial_wow_stated_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.latest_sd_levels.industrial_wow_stated_pct` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.latest_sd_levels.issue_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.latest_sd_levels.lng_feedgas_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.latest_sd_levels.lng_feedgas_wow_stated_pct` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.latest_sd_levels.mexico_exports_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.latest_sd_levels.mexico_exports_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.latest_sd_levels.mexico_exports_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.latest_sd_levels.net_canada_imports_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.latest_sd_levels.net_canada_imports_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.latest_sd_levels.net_canada_imports_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.latest_sd_levels.power_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.latest_sd_levels.power_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.latest_sd_levels.power_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.latest_sd_levels.rescomm_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.latest_sd_levels.rescomm_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.latest_sd_levels.rescomm_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.latest_sd_levels.total_consumption_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.latest_sd_levels.total_consumption_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.latest_sd_levels.total_consumption_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.latest_sd_levels.total_supply_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.latest_sd_levels.total_supply_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.latest_sd_levels.total_supply_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.lng_feedgas_wow_computed_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.lng_feedgas_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 1 |
-| `ngwu_balance.lng_feedgas_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23 | 6 |
-| `ngwu_balance.mexico_exports_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.mexico_exports_wow_computed_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.mexico_exports_wow_stated_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.mexico_exports_wow_stated_pct` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.net_canada_imports_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.net_canada_imports_wow_computed_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.net_canada_imports_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 1 |
-| `ngwu_balance.net_canada_imports_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23 | 1 |
-| `ngwu_balance.power_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.power_wow_computed_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.power_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 26 |
-| `ngwu_balance.power_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23 | 26 |
-| `ngwu_balance.rescomm_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.rescomm_wow_computed_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.rescomm_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 17 |
-| `ngwu_balance.rescomm_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23 | 11 |
-| `ngwu_balance.source_url` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.total_consumption_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.total_consumption_wow_computed_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.total_consumption_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 64 |
-| `ngwu_balance.total_consumption_wow_stated_pct` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.total_supply_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.total_supply_wow_computed_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `ngwu_balance.total_supply_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23 | 11 |
-| `ngwu_balance.total_supply_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23 | 6 |
-| `ngwu_balance.vessels_attribution` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.week_span[0]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `ngwu_balance.week_span[1]` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `nuclear_outages.capacity_out_gw` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `nuclear_outages.capacity_out_mw` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `nuclear_outages.chg_1d_mw` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `nuclear_outages.fleet_capacity_mw` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `nuclear_outages.outage_season` | string | 12,13,14,15,16,18,19,20,21,22,23 | 60 |
-| `nuclear_outages.pct_of_fleet_out` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `options_surface.asof_session` | string | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[0].n_strikes` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[0].opex_date` | string | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[0].per_asset_opex.LNE` | string | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[0].per_asset_opex.ON` | string | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[0].per_asset_totals.LNE.call_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[0].per_asset_totals.LNE.put_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
+| `model_disagreement.summary.summary_note` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.dry_production_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 5 |
+| `ngwu_balance.dry_production_wow_computed_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.dry_production_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 11 |
+| `ngwu_balance.dry_production_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 11 |
+| `ngwu_balance.era` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.industrial_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.industrial_wow_computed_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.industrial_wow_stated_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.industrial_wow_stated_pct` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.issue_age_days` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.issue_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.knowable_from` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.latest_sd_levels.dry_production_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.latest_sd_levels.dry_production_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.latest_sd_levels.dry_production_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.latest_sd_levels.industrial_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.latest_sd_levels.industrial_wow_stated_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.latest_sd_levels.industrial_wow_stated_pct` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.latest_sd_levels.issue_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.latest_sd_levels.lng_feedgas_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.latest_sd_levels.lng_feedgas_wow_stated_pct` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.latest_sd_levels.mexico_exports_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.latest_sd_levels.mexico_exports_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.latest_sd_levels.mexico_exports_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.latest_sd_levels.net_canada_imports_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.latest_sd_levels.net_canada_imports_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.latest_sd_levels.net_canada_imports_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.latest_sd_levels.power_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.latest_sd_levels.power_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.latest_sd_levels.power_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.latest_sd_levels.rescomm_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.latest_sd_levels.rescomm_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.latest_sd_levels.rescomm_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.latest_sd_levels.total_consumption_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.latest_sd_levels.total_consumption_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.latest_sd_levels.total_consumption_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.latest_sd_levels.total_supply_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.latest_sd_levels.total_supply_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.latest_sd_levels.total_supply_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.lng_feedgas_wow_computed_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.lng_feedgas_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 11 |
+| `ngwu_balance.lng_feedgas_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 16 |
+| `ngwu_balance.mexico_exports_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.mexico_exports_wow_computed_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.mexico_exports_wow_stated_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.mexico_exports_wow_stated_pct` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.net_canada_imports_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.net_canada_imports_wow_computed_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.net_canada_imports_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 11 |
+| `ngwu_balance.net_canada_imports_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 11 |
+| `ngwu_balance.power_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.power_wow_computed_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.power_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 36 |
+| `ngwu_balance.power_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 36 |
+| `ngwu_balance.rescomm_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.rescomm_wow_computed_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.rescomm_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 17 |
+| `ngwu_balance.rescomm_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 11 |
+| `ngwu_balance.source_url` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.total_consumption_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.total_consumption_wow_computed_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.total_consumption_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 64 |
+| `ngwu_balance.total_consumption_wow_stated_pct` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.total_supply_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.total_supply_wow_computed_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `ngwu_balance.total_supply_wow_stated_bcfd` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 21 |
+| `ngwu_balance.total_supply_wow_stated_pct` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 16 |
+| `ngwu_balance.vessels_attribution` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.week_span[0]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `ngwu_balance.week_span[1]` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `nuclear_outages.capacity_out_gw` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `nuclear_outages.capacity_out_mw` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `nuclear_outages.chg_1d_mw` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 138 |
+| `nuclear_outages.fleet_capacity_mw` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `nuclear_outages.outage_season` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 60 |
+| `nuclear_outages.pct_of_fleet_out` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `options_surface.asof_session` | string | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[0].n_strikes` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[0].opex_date` | string | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[0].per_asset_opex.LNE` | string | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[0].per_asset_opex.ON` | string | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[0].per_asset_totals.LNE.call_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[0].per_asset_totals.LNE.put_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
 | `options_surface.months[0].per_asset_totals.ON.call_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
 | `options_surface.months[0].per_asset_totals.ON.put_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[0].put_call_oi_ratio` | number | 12,13,14,15,18,19,20,21,22,23 | 96 |
-| `options_surface.months[0].top5_oi_strikes[0].call_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[0].top5_oi_strikes[0].put_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[0].top5_oi_strikes[0].share_of_month_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 96 |
-| `options_surface.months[0].top5_oi_strikes[1].call_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[0].top5_oi_strikes[1].put_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[0].top5_oi_strikes[1].share_of_month_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 96 |
-| `options_surface.months[0].top5_oi_strikes[2].call_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[0].top5_oi_strikes[2].put_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[0].top5_oi_strikes[2].share_of_month_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 96 |
-| `options_surface.months[0].top5_oi_strikes[3].call_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[0].top5_oi_strikes[3].put_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[0].top5_oi_strikes[3].share_of_month_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 96 |
-| `options_surface.months[0].total_call_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[0].total_put_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[1].n_strikes` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[1].opex_date` | string | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[1].per_asset_opex.LNE` | string | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[1].per_asset_opex.ON` | string | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[1].per_asset_totals.LNE.call_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[1].per_asset_totals.LNE.put_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
+| `options_surface.months[0].put_call_oi_ratio` | number | 12,13,14,15,18,19,20,21,22,23,24 | 106 |
+| `options_surface.months[0].top5_oi_strikes[0].call_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[0].top5_oi_strikes[0].put_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[0].top5_oi_strikes[0].share_of_month_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 106 |
+| `options_surface.months[0].top5_oi_strikes[1].call_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[0].top5_oi_strikes[1].put_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[0].top5_oi_strikes[1].share_of_month_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 106 |
+| `options_surface.months[0].top5_oi_strikes[2].call_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[0].top5_oi_strikes[2].put_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[0].top5_oi_strikes[2].share_of_month_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 106 |
+| `options_surface.months[0].top5_oi_strikes[3].call_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[0].top5_oi_strikes[3].put_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[0].top5_oi_strikes[3].share_of_month_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 106 |
+| `options_surface.months[0].total_call_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[0].total_put_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[1].n_strikes` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[1].opex_date` | string | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[1].per_asset_opex.LNE` | string | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[1].per_asset_opex.ON` | string | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[1].per_asset_totals.LNE.call_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[1].per_asset_totals.LNE.put_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
 | `options_surface.months[1].per_asset_totals.ON.call_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
 | `options_surface.months[1].per_asset_totals.ON.put_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[1].put_call_oi_ratio` | number | 12,13,14,15,18,19,20,21,22,23 | 96 |
-| `options_surface.months[1].top5_oi_strikes[0].call_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[1].top5_oi_strikes[0].put_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[1].top5_oi_strikes[0].share_of_month_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 96 |
-| `options_surface.months[1].top5_oi_strikes[1].call_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[1].top5_oi_strikes[1].put_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[1].top5_oi_strikes[1].share_of_month_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 96 |
-| `options_surface.months[1].top5_oi_strikes[2].call_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[1].top5_oi_strikes[2].put_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[1].top5_oi_strikes[2].share_of_month_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 96 |
-| `options_surface.months[1].top5_oi_strikes[3].call_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[1].top5_oi_strikes[3].put_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[1].top5_oi_strikes[3].share_of_month_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 96 |
-| `options_surface.months[1].total_call_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.months[1].total_put_oi` | number | 12,13,14,15,18,19,20,21,22,23 | 108 |
-| `options_surface.strike_rescale_basis` | string | 22,23 | 20 |
-| `options_surface.strike_units` | string | 22,23 | 20 |
-| `session_close_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 11 |
-| `settle_window_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 11 |
-| `solar.gw_day_length_chg_7d` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.gw_day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.ATL.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.ATL.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.ATL.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.ATL.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.BOS.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.BOS.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.BOS.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.BOS.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.DCA.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.DCA.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.DCA.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.DCA.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.DEN.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.DEN.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.DEN.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.DEN.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.DFW.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.DFW.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.DFW.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.DFW.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.DTW.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.DTW.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.DTW.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.DTW.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.IAH.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.IAH.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.IAH.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.IAH.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.LAX.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.LAX.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.LAX.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.LAX.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.MSP.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.MSP.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.MSP.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.MSP.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.NYC.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.NYC.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.NYC.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.NYC.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.ORD.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.ORD.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.ORD.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.ORD.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.PHL.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.PHL.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.PHL.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.PHL.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.PHX.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.PHX.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.PHX.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.PHX.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.SEA.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.SEA.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.SEA.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.SEA.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.SFO.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.SFO.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.SFO.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.SFO.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.STL.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.STL.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.STL.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.metros.STL.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.sunset_et_earliest` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `solar.sunset_et_latest` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `squeeze_watch.active_status_note` | string | 22 | 10 |
-| `squeeze_watch.calendar_front_symbol` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `squeeze_watch.calendar_front_symbol_live` | string | 22,23 | 20 |
-| `squeeze_watch.calendar_limb_basis` | string | 22,23 | 20 |
-| `squeeze_watch.calendar_limb_note` | string | 22,23 | 20 |
-| `squeeze_watch.frozen_front_expired` | bool | 20,22 | 12 |
-| `squeeze_watch.last_prompt_expiry` | string | 13,14,15,16,18,19,20,21,22,23 | 107 |
-| `squeeze_watch.unwind_basis` | string | 22 | 5 |
-| `squeeze_watch.unwind_note` | string | 13,14,15,16,18,19,20,21,22,23 | 107 |
-| `steo_vintage.fields.commercial_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.commercial_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.dry_production_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.dry_production_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.industrial_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `steo_vintage.fields.lng_gross_exports_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.lng_gross_exports_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.lng_gross_imports_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.lng_gross_imports_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.marketed_production_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.marketed_production_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.net_storage_withdrawal_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.net_storage_withdrawal_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.pipeline_gross_exports_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.pipeline_gross_exports_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.pipeline_gross_imports_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.pipeline_gross_imports_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.power_burn_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.power_burn_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.residential_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.residential_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.total_consumption_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.total_consumption_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.working_gas_inventory_bcf.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.fields.working_gas_inventory_bcf.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.knowable_from` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.month_cur` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.month_next` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.month_prev` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.prev_vintage_id` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.release_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.revisions_vs_prev_vintage.commercial_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.revisions_vs_prev_vintage.dry_production_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.revisions_vs_prev_vintage.lng_gross_exports_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.revisions_vs_prev_vintage.lng_gross_imports_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.revisions_vs_prev_vintage.marketed_production_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.revisions_vs_prev_vintage.net_storage_withdrawal_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.revisions_vs_prev_vintage.pipeline_gross_exports_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.revisions_vs_prev_vintage.pipeline_gross_imports_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.revisions_vs_prev_vintage.power_burn_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.revisions_vs_prev_vintage.residential_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.revisions_vs_prev_vintage.total_consumption_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.revisions_vs_prev_vintage.working_gas_inventory_bcf.cur` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `steo_vintage.vintage_id` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `stor_surprise_sign` | string | 6,7,8,9,10,11,12,13,14,15,16,18,19,20,21,22,23 | 172 |
-| `storage.as_of` | string | 6,7,8,9,10,11,12,13,14,15,16,20,21,22,23 | 172 |
-| `storage_consensus.as_of` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_consensus.last_print.actual_as_printed_bcf` | number | 12,13,14,15,16,18,19,20,21,22,23 | 118 |
-| `storage_consensus.last_print.actual_as_printed_source` | string | 12,13,14,15,16,18,19,20,21,22,23 | 118 |
-| `storage_consensus.last_print.actual_current_vintage_bcf` | number | 12,13,14,15,16,18,19,20,21,22,23 | 118 |
-| `storage_consensus.last_print.consensus_pre_print_snapshot_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 63 |
-| `storage_consensus.last_print.days_since_print` | number | 12,13,14,15,16,18,19,20,21,22,23 | 118 |
+| `options_surface.months[1].put_call_oi_ratio` | number | 12,13,14,15,18,19,20,21,22,23,24 | 106 |
+| `options_surface.months[1].top5_oi_strikes[0].call_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[1].top5_oi_strikes[0].put_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[1].top5_oi_strikes[0].share_of_month_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 106 |
+| `options_surface.months[1].top5_oi_strikes[1].call_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[1].top5_oi_strikes[1].put_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[1].top5_oi_strikes[1].share_of_month_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 106 |
+| `options_surface.months[1].top5_oi_strikes[2].call_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[1].top5_oi_strikes[2].put_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[1].top5_oi_strikes[2].share_of_month_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 106 |
+| `options_surface.months[1].top5_oi_strikes[3].call_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[1].top5_oi_strikes[3].put_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[1].top5_oi_strikes[3].share_of_month_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 106 |
+| `options_surface.months[1].total_call_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.months[1].total_put_oi` | number | 12,13,14,15,18,19,20,21,22,23,24 | 118 |
+| `options_surface.strike_rescale_basis` | string | 23 | 10 |
+| `options_surface.strike_units` | string | 22,23,24 | 30 |
+| `options_surface.strike_units_basis` | string | 22,24 | 20 |
+| `scored_leg.block_is_two_leg` | bool | 1 | 10 |
+| `scored_leg.leg` | string | 1 | 10 |
+| `scored_leg.seam_date` | null-only | 1 | 0 |
+| `scored_leg.side_of_seam` | null-only | 1 | 0 |
+| `session_close_et` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 13 |
+| `settle_window_et` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 13 |
+| `solar.gw_day_length_chg_7d` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.gw_day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.ATL.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.ATL.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.ATL.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.ATL.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.BOS.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.BOS.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.BOS.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.BOS.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.DCA.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.DCA.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.DCA.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.DCA.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.DEN.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.DEN.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.DEN.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.DEN.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.DFW.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.DFW.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.DFW.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.DFW.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.DTW.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.DTW.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.DTW.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.DTW.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.IAH.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.IAH.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.IAH.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.IAH.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.LAX.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.LAX.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.LAX.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.LAX.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.MSP.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.MSP.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.MSP.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.MSP.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.NYC.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.NYC.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.NYC.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.NYC.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.ORD.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.ORD.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.ORD.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.ORD.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.PHL.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.PHL.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.PHL.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.PHL.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.PHX.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.PHX.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.PHX.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.PHX.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.SEA.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.SEA.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.SEA.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.SEA.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.SFO.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.SFO.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.SFO.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.SFO.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.STL.day_length_h` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.STL.sunrise_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.STL.sunset_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.metros.STL.sunset_local` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.sunset_et_earliest` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `solar.sunset_et_latest` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `squeeze_watch.active_false_negative` | string | 22,24 | 13 |
+| `squeeze_watch.calendar_front_symbol` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `squeeze_watch.calendar_front_symbol_live` | string | 22,23,24 | 30 |
+| `squeeze_watch.calendar_limb_basis` | string | 22,23,24 | 30 |
+| `squeeze_watch.calendar_limb_note` | string | 23 | 10 |
+| `squeeze_watch.frozen_front_expired` | bool | 20,22,24 | 14 |
+| `squeeze_watch.last_prompt_expiry` | string | 13,14,15,16,18,19,20,21,22,23,24 | 117 |
+| `squeeze_watch.unwind_note` | string | 13,14,15,16,18,19,20,21,22,23,24 | 117 |
+| `steo_vintage.fields.commercial_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.commercial_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.dry_production_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.dry_production_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.industrial_bcfd` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `steo_vintage.fields.lng_gross_exports_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.lng_gross_exports_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.lng_gross_imports_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.lng_gross_imports_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.marketed_production_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.marketed_production_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.net_storage_withdrawal_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.net_storage_withdrawal_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.pipeline_gross_exports_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.pipeline_gross_exports_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.pipeline_gross_imports_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.pipeline_gross_imports_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.power_burn_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.power_burn_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.residential_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.residential_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.total_consumption_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.total_consumption_bcfd.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.working_gas_inventory_bcf.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.fields.working_gas_inventory_bcf.series_id` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.knowable_from` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.month_cur` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.month_next` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.month_prev` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.prev_vintage_id` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.release_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.revisions_vs_prev_vintage.commercial_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.revisions_vs_prev_vintage.dry_production_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.revisions_vs_prev_vintage.lng_gross_exports_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.revisions_vs_prev_vintage.lng_gross_imports_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.revisions_vs_prev_vintage.marketed_production_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.revisions_vs_prev_vintage.net_storage_withdrawal_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.revisions_vs_prev_vintage.pipeline_gross_exports_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.revisions_vs_prev_vintage.pipeline_gross_imports_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.revisions_vs_prev_vintage.power_burn_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.revisions_vs_prev_vintage.residential_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.revisions_vs_prev_vintage.total_consumption_bcfd.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.revisions_vs_prev_vintage.working_gas_inventory_bcf.cur` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `steo_vintage.vintage_id` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `stor_surprise_basis.actual_bcf` | number | 1,24 | 16 |
+| `stor_surprise_basis.as_of_report_date` | string | 1,24 | 16 |
+| `stor_surprise_basis.period_week_ending` | string | 1,24 | 16 |
+| `stor_surprise_basis.seasonal_expectation_bcf` | number | 1,24 | 16 |
+| `stor_surprise_basis.sign_means` | string | 1,24 | 16 |
+| `stor_surprise_basis.surprise_bcf` | number | 1,24 | 16 |
+| `stor_surprise_sign` | string | 1,6,7,8,9,10,11,12,13,14,15,16,18,19,20,21,22,23,24 | 192 |
+| `storage.as_of` | string | 1,6,7,8,9,10,11,12,13,14,15,16,20,21,22,23,24 | 192 |
+| `storage_consensus.as_of` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_consensus.last_print.actual_as_printed_bcf` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 |
+| `storage_consensus.last_print.actual_as_printed_source` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 |
+| `storage_consensus.last_print.actual_current_vintage_bcf` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 |
+| `storage_consensus.last_print.consensus_pre_print_snapshot_utc` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 63 |
+| `storage_consensus.last_print.days_since_print` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 |
 | `storage_consensus.last_print.estimates[0].how` | string | 12,13,14,15,16,18,19,20,21,22,23 | 118 |
 | `storage_consensus.last_print.estimates[0].snapshot_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 118 |
 | `storage_consensus.last_print.estimates[0].url` | string | 12,13,14,15,16,18,19,20,21,22,23 | 118 |
@@ -931,24 +1028,24 @@ The 0629 class. Present, numeric, correct, in every slice - and no consumer.
 | `storage_consensus.last_print.estimates[3].snapshot_utc` | string | 12 | 11 |
 | `storage_consensus.last_print.estimates[3].url` | string | 12 | 11 |
 | `storage_consensus.last_print.estimates[3].value_bcf` | number | 12 | 11 |
-| `storage_consensus.last_print.for_report_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 118 |
-| `storage_consensus.last_print.n_estimates` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `storage_consensus.last_print.print_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 118 |
-| `storage_consensus.last_print.print_datetime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 118 |
-| `storage_consensus.last_print.print_dow` | string | 12,13,14,15,16,18,19,20,21,22,23 | 118 |
-| `storage_consensus.last_print.print_schedule_note` | string | 12,13,14,15,16,18,19,20,21,22,23 | 118 |
-| `storage_consensus.last_print.print_time_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 118 |
-| `storage_consensus.last_print.range_high_bcf` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `storage_consensus.last_print.range_low_bcf` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `storage_consensus.last_print.surprise_as_printed_vs_consensus_bcf` | number | 12,13,14,15,16,18,19,20,21,22,23 | 118 |
-| `storage_consensus.last_print.vintage_diff_bcf` | number | 12,13,14,15,16,18,19,20,21,22,23 | 118 |
+| `storage_consensus.last_print.for_report_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 |
+| `storage_consensus.last_print.n_estimates` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `storage_consensus.last_print.print_date` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 |
+| `storage_consensus.last_print.print_datetime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 |
+| `storage_consensus.last_print.print_dow` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 |
+| `storage_consensus.last_print.print_schedule_note` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 |
+| `storage_consensus.last_print.print_time_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 |
+| `storage_consensus.last_print.range_high_bcf` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `storage_consensus.last_print.range_low_bcf` | null-only | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `storage_consensus.last_print.surprise_as_printed_vs_consensus_bcf` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 118 |
+| `storage_consensus.last_print.vintage_diff_bcf` | number | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 |
 | `storage_consensus.last_print_basis` | string | 23 | 1 |
-| `storage_consensus.next_print.consensus_pre_print_snapshot_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 54 |
-| `storage_consensus.next_print.days_to_print` | number | 12,13,14,15,16,18,19,20,21,22,23 | 113 |
-| `storage_consensus.next_print.estimates[0].how` | string | 12,13,14,15,16,18,19,20,21,22,23 | 113 |
-| `storage_consensus.next_print.estimates[0].snapshot_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 113 |
-| `storage_consensus.next_print.estimates[0].url` | string | 12,13,14,15,16,18,19,20,21,22,23 | 113 |
-| `storage_consensus.next_print.estimates[0].value_bcf` | number | 12,13,14,15,16,18,19,20,21,22,23 | 60 |
+| `storage_consensus.next_print.consensus_pre_print_snapshot_utc` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 54 |
+| `storage_consensus.next_print.days_to_print` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 132 |
+| `storage_consensus.next_print.estimates[0].how` | string | 1,12,13,14,15,16,18,19,20,21,22,23 | 123 |
+| `storage_consensus.next_print.estimates[0].snapshot_utc` | string | 1,12,13,14,15,16,18,19,20,21,22,23 | 123 |
+| `storage_consensus.next_print.estimates[0].url` | string | 1,12,13,14,15,16,18,19,20,21,22,23 | 123 |
+| `storage_consensus.next_print.estimates[0].value_bcf` | number | 1,12,13,14,15,16,18,19,20,21,22,23 | 70 |
 | `storage_consensus.next_print.estimates[1].how` | string | 12,13,14,15,16,18,19,20,21,22,23 | 113 |
 | `storage_consensus.next_print.estimates[1].snapshot_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 113 |
 | `storage_consensus.next_print.estimates[1].url` | string | 12,13,14,15,16,18,19,20,21,22,23 | 113 |
@@ -961,183 +1058,195 @@ The 0629 class. Present, numeric, correct, in every slice - and no consumer.
 | `storage_consensus.next_print.estimates[3].snapshot_utc` | string | 12 | 5 |
 | `storage_consensus.next_print.estimates[3].url` | string | 12 | 5 |
 | `storage_consensus.next_print.estimates[3].value_bcf` | number | 12 | 5 |
-| `storage_consensus.next_print.for_report_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 113 |
-| `storage_consensus.next_print.n_estimates` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `storage_consensus.next_print.print_date` | string | 12,13,14,15,16,18,19,20,21,22,23 | 113 |
-| `storage_consensus.next_print.print_datetime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 113 |
-| `storage_consensus.next_print.print_dow` | string | 12,13,14,15,16,18,19,20,21,22,23 | 113 |
-| `storage_consensus.next_print.print_schedule_note` | string | 12,13,14,15,16,18,19,20,21,22,23 | 113 |
-| `storage_consensus.next_print.print_time_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 113 |
-| `storage_consensus.next_print.range_high_bcf` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `storage_consensus.next_print.range_low_bcf` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `storage_regional.as_of` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_regional.days_of_supply` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `storage_regional.days_of_supply_note` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_regional.eia_estimate_basis` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `storage_regional.regions.east.vs_year_ago` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_regional.regions.l48.vs_year_ago` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_regional.regions.midwest.vs_year_ago` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_regional.regions.mountain.vs_year_ago` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_regional.regions.pacific.vs_year_ago` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_regional.regions.south_central.vs_year_ago` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_regional.regions.south_central_nonsalt.vs_year_ago` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_regional.regions.south_central_salt.vs_year_ago` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_regional.salt_share` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.as_of` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.as_printed_recovered` | bool | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.eia_revision_flags_at_print` | null-only | 12,13,14,15,16,18,19,20,21,22,23 | 0 |
-| `storage_vintage.evidence_url` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.national_chg_as_printed` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.national_chg_current` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.national_level_as_printed` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.national_level_current` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.print_datetime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.east.chg_as_printed` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.east.chg_current` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.east.chg_delta` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.east.level_as_printed` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.east.level_current` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.east.level_delta` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.l48.chg_as_printed` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.l48.chg_current` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.l48.chg_delta` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.l48.level_as_printed` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.l48.level_current` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.l48.level_delta` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.midwest.chg_as_printed` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.midwest.chg_current` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.midwest.chg_delta` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.midwest.level_as_printed` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.midwest.level_current` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.midwest.level_delta` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.mountain.chg_as_printed` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.mountain.chg_current` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.mountain.chg_delta` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.mountain.level_as_printed` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.mountain.level_current` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.mountain.level_delta` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.pacific.chg_as_printed` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.pacific.chg_current` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.pacific.chg_delta` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.pacific.level_as_printed` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.pacific.level_current` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.pacific.level_delta` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.south_central.chg_as_printed` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.south_central.chg_current` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.south_central.chg_delta` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.south_central.level_as_printed` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.south_central.level_current` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.south_central.level_delta` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.south_central_nonsalt.chg_as_printed` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.south_central_nonsalt.chg_current` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.south_central_nonsalt.chg_delta` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.south_central_nonsalt.level_as_printed` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.south_central_nonsalt.level_current` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.south_central_nonsalt.level_delta` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.south_central_salt.chg_as_printed` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.south_central_salt.chg_current` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.south_central_salt.chg_delta` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.south_central_salt.level_as_printed` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.south_central_salt.level_current` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.regions.south_central_salt.level_delta` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.vintage_delta_chg` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `storage_vintage.vintage_delta_level` | number | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `tape_conditions.asof_prior_session` | string | 15,16,18,19,20,21,22,23 | 83 |
-| `tape_conditions.b_share_basis_note` | string | 21,22,23 | 30 |
-| `tape_conditions.big_print_b_share_basis` | string | 20,21,22,23 | 40 |
-| `tape_conditions.firehose_present.mbo_flow` | bool | 20,21,22,23 | 40 |
+| `storage_consensus.next_print.for_report_date` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 132 |
+| `storage_consensus.next_print.n_estimates` | null-only | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `storage_consensus.next_print.print_date` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 132 |
+| `storage_consensus.next_print.print_datetime_utc` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 132 |
+| `storage_consensus.next_print.print_dow` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 132 |
+| `storage_consensus.next_print.print_schedule_note` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 132 |
+| `storage_consensus.next_print.print_time_et` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 132 |
+| `storage_consensus.next_print.range_high_bcf` | null-only | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `storage_consensus.next_print.range_low_bcf` | null-only | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `storage_regional.as_of` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_regional.days_of_supply` | null-only | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `storage_regional.days_of_supply_note` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_regional.eia_estimate_basis` | null-only | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `storage_regional.regions.east.vs_year_ago` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_regional.regions.l48.vs_year_ago` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_regional.regions.midwest.vs_year_ago` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_regional.regions.mountain.vs_year_ago` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_regional.regions.pacific.vs_year_ago` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_regional.regions.south_central.vs_year_ago` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_regional.regions.south_central_nonsalt.vs_year_ago` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_regional.regions.south_central_salt.vs_year_ago` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_regional.salt_share` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_repair_basis.not_touched` | string | 24 | 6 |
+| `storage_repair_basis.to` | string | 24 | 6 |
+| `storage_repair_basis.why` | string | 24 | 6 |
+| `storage_vintage.as_of` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.as_printed_recovered` | bool | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.eia_revision_flags_at_print` | null-only | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 0 |
+| `storage_vintage.evidence_url` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.national_chg_as_printed` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.national_chg_current` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.national_level_as_printed` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.national_level_current` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.print_datetime_utc` | string | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.east.chg_as_printed` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.east.chg_current` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.east.chg_delta` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.east.level_as_printed` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.east.level_current` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.east.level_delta` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.l48.chg_as_printed` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.l48.chg_current` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.l48.chg_delta` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.l48.level_as_printed` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.l48.level_current` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.l48.level_delta` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.midwest.chg_as_printed` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.midwest.chg_current` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.midwest.chg_delta` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.midwest.level_as_printed` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.midwest.level_current` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.midwest.level_delta` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.mountain.chg_as_printed` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.mountain.chg_current` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.mountain.chg_delta` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.mountain.level_as_printed` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.mountain.level_current` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.mountain.level_delta` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.pacific.chg_as_printed` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.pacific.chg_current` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.pacific.chg_delta` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.pacific.level_as_printed` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.pacific.level_current` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.pacific.level_delta` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.south_central.chg_as_printed` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.south_central.chg_current` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.south_central.chg_delta` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.south_central.level_as_printed` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.south_central.level_current` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.south_central.level_delta` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.south_central_nonsalt.chg_as_printed` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.south_central_nonsalt.chg_current` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.south_central_nonsalt.chg_delta` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.south_central_nonsalt.level_as_printed` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.south_central_nonsalt.level_current` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.south_central_nonsalt.level_delta` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.south_central_salt.chg_as_printed` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.south_central_salt.chg_current` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.south_central_salt.chg_delta` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.south_central_salt.level_as_printed` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.south_central_salt.level_current` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.regions.south_central_salt.level_delta` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.vintage_delta_chg` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `storage_vintage.vintage_delta_level` | number | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 |
+| `tape_conditions.asof_prior_session` | string | 1,15,16,18,19,20,21,22,23,24 | 103 |
+| `tape_conditions.b_share_basis_note` | string | 1,21,22,23,24 | 50 |
+| `tape_conditions.big_print_b_share_basis` | string | 1,20,21,22,23,24 | 60 |
+| `tape_conditions.firehose_present.mbo_flow` | bool | 1,20,21,22,23,24 | 60 |
 | `tape_conditions.flow_family_basis` | string | 23 | 1 |
-| `tape_conditions.l1_book.quote_bid_share_p25_p75[0]` | number | 18,19,20,21,22,23 | 52 |
-| `tape_conditions.l1_book.quote_bid_share_p25_p75[1]` | number | 18,19,20,21,22,23 | 52 |
-| `tape_conditions.leg_count_150` | number | 15,16,18,19,20,21,22,23 | 83 |
-| `tape_conditions.note_stub` | string | 21,22,23 | 6 |
+| `tape_conditions.l1_book.quote_bid_share_p25_p75[0]` | number | 1,18,19,20,21,22,23,24 | 63 |
+| `tape_conditions.l1_book.quote_bid_share_p25_p75[1]` | number | 1,18,19,20,21,22,23,24 | 63 |
+| `tape_conditions.leg_count_150` | number | 1,15,16,18,19,20,21,22,23,24 | 103 |
+| `tape_conditions.note_stub` | string | 21,22,23,24 | 7 |
 | `tape_conditions.phase_b_share_two_sided` | null-only | 23 | 0 |
-| `tape_conditions.phase_b_share_two_sided[0]` | number | 21,22,23 | 29 |
-| `tape_conditions.phase_b_share_two_sided[1]` | number | 21,22,23 | 29 |
-| `tape_conditions.phase_b_share_two_sided[2]` | number | 21,22,23 | 29 |
+| `tape_conditions.phase_b_share_two_sided[0]` | number | 1,21,22,23,24 | 49 |
+| `tape_conditions.phase_b_share_two_sided[1]` | number | 1,21,22,23,24 | 49 |
+| `tape_conditions.phase_b_share_two_sided[2]` | number | 1,21,22,23,24 | 49 |
+| `tape_conditions.phase_bounds_et[0].end_et` | string | 1 | 10 |
+| `tape_conditions.phase_bounds_et[0].start_et` | string | 1 | 10 |
+| `tape_conditions.phase_bounds_et[1].end_et` | string | 1 | 10 |
+| `tape_conditions.phase_bounds_et[1].start_et` | string | 1 | 10 |
+| `tape_conditions.phase_bounds_et[2].end_et` | string | 1 | 10 |
+| `tape_conditions.phase_bounds_et[2].start_et` | string | 1 | 10 |
+| `tape_conditions.phase_bounds_note` | string | 1 | 10 |
 | `tape_conditions.phase_n_trades` | null-only | 23 | 0 |
-| `tape_conditions.phase_n_trades[0]` | number | 22,23 | 19 |
-| `tape_conditions.phase_n_trades[1]` | number | 22,23 | 19 |
-| `tape_conditions.phase_n_trades[2]` | number | 22,23 | 19 |
-| `tape_conditions.phase_volume_note` | string | 22,23 | 20 |
-| `tape_conditions.prior_full_session.asof_prior_session` | string | 21,22,23 | 6 |
-| `tape_conditions.prior_full_session.b_share_basis_note` | string | 21,22,23 | 6 |
-| `tape_conditions.prior_full_session.big_print_b_share_basis` | string | 21,22,23 | 6 |
-| `tape_conditions.prior_full_session.firehose_present.mbo_flow` | bool | 21,22,23 | 6 |
-| `tape_conditions.prior_full_session.l1_book.quote_bid_share_p25_p75[0]` | number | 21,22,23 | 6 |
-| `tape_conditions.prior_full_session.l1_book.quote_bid_share_p25_p75[1]` | number | 21,22,23 | 6 |
-| `tape_conditions.prior_full_session.leg_count_150` | number | 21,22,23 | 6 |
-| `tape_conditions.prior_full_session.phase_b_share_two_sided[0]` | number | 21,22,23 | 6 |
-| `tape_conditions.prior_full_session.phase_b_share_two_sided[1]` | number | 21,22,23 | 6 |
-| `tape_conditions.prior_full_session.phase_b_share_two_sided[2]` | number | 21,22,23 | 6 |
-| `tape_conditions.prior_full_session.phase_n_trades[0]` | number | 22,23 | 4 |
-| `tape_conditions.prior_full_session.phase_n_trades[1]` | number | 22,23 | 4 |
-| `tape_conditions.prior_full_session.phase_n_trades[2]` | number | 22,23 | 4 |
-| `tape_conditions.prior_full_session.phase_volume_note` | string | 22,23 | 4 |
-| `tape_conditions.prior_full_session.session_b_share_basis` | string | 22,23 | 4 |
-| `tape_conditions.prior_full_session.source_store` | string | 21,22,23 | 6 |
-| `tape_conditions.prior_full_session.unsided_volume_frac` | number | 21,22,23 | 6 |
-| `tape_conditions.prior_session_is_reopen_stub` | bool | 21,22,23 | 6 |
-| `tape_conditions.session_b_share_basis` | string | 22,23 | 16 |
-| `tape_conditions.source_store` | string | 15,16,18,19,20,21,22,23 | 83 |
-| `tape_conditions.unsided_volume_frac` | number | 21,22,23 | 29 |
-| `vol_regime.n0_activity_trend` | number | 12,13,14,20,21,22,23 | 76 |
-| `vol_regime.n0_era_basis` | string | 22,23 | 20 |
-| `vol_regime.n0_net_sigma_20` | number | 12,13,14,20,21,22,23 | 76 |
-| `vol_regime.n0_range_10_mean` | number | 12,13,14,20,21,22,23 | 76 |
-| `vol_regime.n0_range_20_max` | number | 12,13,14,20,21,22,23 | 76 |
-| `vol_regime.n0_range_5_mean` | number | 12,13,14,20,21,22,23 | 76 |
-| `vol_regime.n0_range_pctile_n` | number | 12,13,14,20,21,22,23 | 76 |
-| `vol_regime.n0_win_n_10` | number | 12,13,14,20,21,22,23 | 76 |
-| `vol_regime.n0_win_n_20` | number | 12,13,14,20,21,22,23 | 76 |
-| `vol_regime.n0_win_n_5` | number | 12,13,14,20,21,22,23 | 76 |
-| `vol_regime.v0_activity_trend` | null-only | 12,13,14,20,21,22,23 | 0 |
-| `vol_regime.v0_net_sigma_10` | number | 12,13,14,20,21,22,23 | 36 |
-| `vol_regime.v0_net_sigma_20` | null-only | 12,13,14,20,21,22,23 | 0 |
-| `vol_regime.v0_net_sigma_5` | number | 12,13,14,20,21,22,23 | 36 |
-| `vol_regime.v0_prev_age_days` | number | 12,13,14,20,21,22,23 | 36 |
-| `vol_regime.v0_prev_date` | string | 12,13,14,20,21,22,23 | 36 |
-| `vol_regime.v0_prev_net` | number | 12,13,14,20,21,22,23 | 36 |
-| `vol_regime.v0_prev_range` | number | 12,13,14,20,21,22,23 | 36 |
-| `vol_regime.v0_prev_trades` | number | 12,13,14,20,21,22,23 | 36 |
-| `vol_regime.v0_range_10_mean` | number | 12,13,14,20,21,22,23 | 36 |
-| `vol_regime.v0_range_20_max` | null-only | 12,13,14,20,21,22,23 | 0 |
-| `vol_regime.v0_range_20_mean` | null-only | 12,13,14,20,21,22,23 | 0 |
-| `vol_regime.v0_range_5_mean` | number | 12,13,14,20,21,22,23 | 36 |
-| `vol_regime.v0_range_pctile` | number | 12,13,14,20,21,22,23 | 36 |
-| `vol_regime.v0_range_pctile_n` | number | 12,13,14,20,21,22,23 | 76 |
-| `vol_regime.v0_win_n_10` | number | 12,13,14,20,21,22,23 | 76 |
-| `vol_regime.v0_win_n_20` | number | 12,13,14,20,21,22,23 | 76 |
-| `vol_regime.v0_win_n_5` | number | 12,13,14,20,21,22,23 | 76 |
-| `weather_forecast.asof_utc` | string | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 |
-| `weather_forecast.forecast_regime` | string | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 |
-| `weather_forecast.forecast_vs_normal` | number | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 |
-| `weather_forecast.fwd7_gw_cdd_span` | number | 22,23 | 20 |
-| `weather_forecast.fwd7_gw_cdd_span_basis` | string | 22,23 | 20 |
-| `weather_forecast.horizons[0].forecast_vs_normal` | number | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 |
-| `weather_forecast.horizons[0].target_date` | string | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 |
-| `weather_forecast.horizons[1].forecast_vs_normal` | number | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 |
-| `weather_forecast.horizons[1].target_date` | string | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 |
-| `weather_forecast.horizons[2].forecast_vs_normal` | number | 11,12,13,14,15,16,18,19,20,21,22,23 | 130 |
-| `weather_forecast.horizons[2].target_date` | string | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 |
-| `weather_forecast.horizons[3].forecast_vs_normal` | number | 11,12,13,14,15,16,18,19,20,21,22,23 | 129 |
-| `weather_forecast.horizons[3].target_date` | string | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 |
-| `weather_forecast.ladder_basis_note` | string | 22,23 | 20 |
-| `weather_forecast.ladder_graft_basis` | string | 22,23 | 20 |
-| `weather_forecast.run_delta[0].target_date` | string | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 |
-| `weather_forecast.run_delta[1].target_date` | string | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 |
-| `weather_forecast.run_delta[2].target_date` | string | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 |
-| `weather_forecast.run_delta[3].target_date` | string | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 |
-| `weather_forecast_cycle.sunday_reopen.asof_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `weather_forecast_cycle.sunday_reopen.asof_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `weather_forecast_cycle.sunday_reopen.availability_rule` | string | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `weather_forecast_cycle.sunday_reopen.max_cycle_runtime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `weather_forecast_cycle.sunday_reopen.regime_d0` | string | 12,13,14,15,16,18,19,20,21,22,23 | 22 |
-| `weather_forecast_cycle.weekday_open.asof_et` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `weather_forecast_cycle.weekday_open.asof_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `weather_forecast_cycle.weekday_open.availability_rule` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `weather_forecast_cycle.weekday_open.max_cycle_runtime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
-| `weather_forecast_cycle.weekday_open.regime_d0` | string | 12,13,14,15,16,18,19,20,21,22,23 | 119 |
+| `tape_conditions.phase_n_trades[0]` | number | 1,22,23,24 | 39 |
+| `tape_conditions.phase_n_trades[1]` | number | 1,22,23,24 | 39 |
+| `tape_conditions.phase_n_trades[2]` | number | 1,22,23,24 | 39 |
+| `tape_conditions.phase_volume_note` | string | 1,22,23,24 | 40 |
+| `tape_conditions.prior_full_session.asof_prior_session` | string | 21,22,23,24 | 7 |
+| `tape_conditions.prior_full_session.b_share_basis_note` | string | 21,22,23,24 | 7 |
+| `tape_conditions.prior_full_session.big_print_b_share_basis` | string | 21,22,23,24 | 7 |
+| `tape_conditions.prior_full_session.firehose_present.mbo_flow` | bool | 21,22,23,24 | 7 |
+| `tape_conditions.prior_full_session.l1_book.quote_bid_share_p25_p75[0]` | number | 21,22,23,24 | 7 |
+| `tape_conditions.prior_full_session.l1_book.quote_bid_share_p25_p75[1]` | number | 21,22,23,24 | 7 |
+| `tape_conditions.prior_full_session.leg_count_150` | number | 21,22,23,24 | 7 |
+| `tape_conditions.prior_full_session.phase_b_share_two_sided[0]` | number | 21,22,23,24 | 7 |
+| `tape_conditions.prior_full_session.phase_b_share_two_sided[1]` | number | 21,22,23,24 | 7 |
+| `tape_conditions.prior_full_session.phase_b_share_two_sided[2]` | number | 21,22,23,24 | 7 |
+| `tape_conditions.prior_full_session.phase_n_trades[0]` | number | 22,23,24 | 5 |
+| `tape_conditions.prior_full_session.phase_n_trades[1]` | number | 22,23,24 | 5 |
+| `tape_conditions.prior_full_session.phase_n_trades[2]` | number | 22,23,24 | 5 |
+| `tape_conditions.prior_full_session.phase_volume_note` | string | 22,23,24 | 5 |
+| `tape_conditions.prior_full_session.session_b_share_basis` | string | 23 | 2 |
+| `tape_conditions.prior_full_session.source_store` | string | 21,22,23,24 | 7 |
+| `tape_conditions.prior_full_session.unsided_volume_frac` | number | 21,22,23,24 | 7 |
+| `tape_conditions.prior_session_is_reopen_stub` | bool | 21,22,23,24 | 7 |
+| `tape_conditions.session_b_share_basis` | string | 23 | 8 |
+| `tape_conditions.source_store` | string | 1,15,16,18,19,20,21,22,23,24 | 103 |
+| `tape_conditions.unsided_volume_frac` | number | 1,21,22,23,24 | 49 |
+| `vol_regime.n0_activity_trend` | number | 12,13,14,20,21,22,23,24 | 86 |
+| `vol_regime.n0_era_basis` | string | 22,23,24 | 30 |
+| `vol_regime.n0_net_sigma_20` | number | 12,13,14,20,21,22,23,24 | 86 |
+| `vol_regime.n0_range_10_mean` | number | 12,13,14,20,21,22,23,24 | 86 |
+| `vol_regime.n0_range_20_max` | number | 12,13,14,20,21,22,23,24 | 86 |
+| `vol_regime.n0_range_5_mean` | number | 12,13,14,20,21,22,23,24 | 86 |
+| `vol_regime.n0_range_pctile_n` | number | 12,13,14,20,21,22,23,24 | 86 |
+| `vol_regime.n0_win_n_10` | number | 12,13,14,20,21,22,23,24 | 86 |
+| `vol_regime.n0_win_n_20` | number | 12,13,14,20,21,22,23,24 | 86 |
+| `vol_regime.n0_win_n_5` | number | 12,13,14,20,21,22,23,24 | 86 |
+| `vol_regime.v0_activity_trend` | null-only | 12,13,14,20,21,22,23,24 | 0 |
+| `vol_regime.v0_era_basis` | string | 22,24 | 20 |
+| `vol_regime.v0_net_sigma_10` | number | 12,13,14,20,21,22,23,24 | 36 |
+| `vol_regime.v0_net_sigma_20` | null-only | 12,13,14,20,21,22,23,24 | 0 |
+| `vol_regime.v0_net_sigma_5` | number | 12,13,14,20,21,22,23,24 | 36 |
+| `vol_regime.v0_prev_age_days` | number | 12,13,14,20,21,22,23,24 | 36 |
+| `vol_regime.v0_prev_date` | string | 12,13,14,20,21,22,23,24 | 36 |
+| `vol_regime.v0_prev_net` | number | 12,13,14,20,21,22,23,24 | 36 |
+| `vol_regime.v0_prev_range` | number | 12,13,14,20,21,22,23,24 | 36 |
+| `vol_regime.v0_prev_trades` | number | 12,13,14,20,21,22,23,24 | 36 |
+| `vol_regime.v0_range_10_mean` | number | 12,13,14,20,21,22,23,24 | 36 |
+| `vol_regime.v0_range_20_max` | null-only | 12,13,14,20,21,22,23,24 | 0 |
+| `vol_regime.v0_range_20_mean` | null-only | 12,13,14,20,21,22,23,24 | 0 |
+| `vol_regime.v0_range_5_mean` | number | 12,13,14,20,21,22,23,24 | 36 |
+| `vol_regime.v0_range_pctile` | number | 12,13,14,20,21,22,23,24 | 36 |
+| `vol_regime.v0_range_pctile_n` | number | 12,13,14,20,21,22,23,24 | 86 |
+| `vol_regime.v0_win_n_10` | number | 12,13,14,20,21,22,23,24 | 86 |
+| `vol_regime.v0_win_n_20` | number | 12,13,14,20,21,22,23,24 | 86 |
+| `vol_regime.v0_win_n_5` | number | 12,13,14,20,21,22,23,24 | 86 |
+| `weather_forcing_forecast` | null-only | 1 | 0 |
+| `weather_forecast.asof_utc` | string | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 |
+| `weather_forecast.forecast_regime` | string | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 |
+| `weather_forecast.forecast_vs_normal` | number | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 133 |
+| `weather_forecast.fwd7_gw_cdd_span` | number | 22,23,24 | 10 |
+| `weather_forecast.fwd7_gw_cdd_span_basis` | string | 23 | 10 |
+| `weather_forecast.horizons[0].forecast_vs_normal` | number | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 133 |
+| `weather_forecast.horizons[0].target_date` | string | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 |
+| `weather_forecast.horizons[1].forecast_vs_normal` | number | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 132 |
+| `weather_forecast.horizons[1].target_date` | string | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 |
+| `weather_forecast.horizons[2].forecast_vs_normal` | number | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 130 |
+| `weather_forecast.horizons[2].target_date` | string | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 |
+| `weather_forecast.horizons[3].forecast_vs_normal` | number | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `weather_forecast.horizons[3].target_date` | string | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 |
+| `weather_forecast.ladder_basis_note` | string | 22,23,24 | 30 |
+| `weather_forecast.ladder_graft_basis` | string | 23 | 10 |
+| `weather_forecast.run_delta[0].target_date` | string | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 |
+| `weather_forecast.run_delta[1].target_date` | string | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 |
+| `weather_forecast.run_delta[2].target_date` | string | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 |
+| `weather_forecast.run_delta[3].target_date` | string | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 |
+| `weather_forecast_cycle.sunday_reopen.asof_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 |
+| `weather_forecast_cycle.sunday_reopen.asof_utc` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 |
+| `weather_forecast_cycle.sunday_reopen.availability_rule` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 |
+| `weather_forecast_cycle.sunday_reopen.max_cycle_runtime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 |
+| `weather_forecast_cycle.sunday_reopen.regime_d0` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 |
+| `weather_forecast_cycle.weekday_open.asof_et` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `weather_forecast_cycle.weekday_open.asof_utc` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `weather_forecast_cycle.weekday_open.availability_rule` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `weather_forecast_cycle.weekday_open.max_cycle_runtime_utc` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
+| `weather_forecast_cycle.weekday_open.regime_d0` | string | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 |
 
 ## PULLED BUT NOT SERVED
 
@@ -1189,7 +1298,6 @@ here automatically. Deliberately over-inclusive - omission is the failure mode.
 | G-2 | S | OPEN | EIA implied flow + reclassification flag + published sampling SE |
 | G-3 | S | OPEN | Recompute COT as a CHANGE (Q = delta-net / OI), split MM vs Producer, three decay windows |
 | G-4 | M | OPEN | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) |
-| G-5 | M | OPEN | ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY |
 | G-6 | S | OPEN | Forecast PROGRESSION deltas by block (1-5, 6-10, 11-15) |
 | G-7 | M | OPEN | Scrape the ~10 LNG feedgas pipeline EBBs |
 | G-8 | M | OPEN | Pipeline critical notices + planned-maintenance calendar |
@@ -1236,6 +1344,68 @@ here automatically. Deliberately over-inclusive - omission is the failure mode.
 | A-38 | L | OPEN | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest |
 | A-36 | S | OPEN | INTERCHANGE IS A BOUNDARY TERM - carry it for HH territory, and NOT in the national roll-up |
 | A-39 | L | OPEN | THE WINTER LANE FORWARD TOOL - build the missing terms behind the seven s105.1 plays (A-38 converter, G-4 feeds, conjunction joins) |
+| A-40 | M | OPEN | ROOT-CAUSE THE MAGNITUDE EMISSION CEILING - the forecaster never emits above ~$550 while half of all days exceed it |
+| M-11 | M | OPEN | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly |
+| O-1 | S | OPEN | THE KALSHI DAILY BINARY IS PRICED WITHOUT THE SKEW CORRECTION - a live mispricing in the paper book |
+| G-29 | L | OPEN | DAILY DRY-GAS PRODUCTION NOWCAST - the balance lens called it 'the single biggest hole' and the synthesis dropped it |
+| O-2 | XS | OPEN | RECORD THE S111 OPTIONS VERDICT AS A BINDING DECISION - it exists only in a file-index blurb |
+| O-3 | S | OPEN | THE OPTION SKILL RATIO - blind |err| divided by the market's own one-day ATM straddle, per day, never pooled |
+| O-4 | S | OPEN | WIRE THE SIGMA YARDSTICK - print every forecast and error in sigma_day units beside dollars |
+| O-5 | S | OPEN | MEASURE k = RV/IV AT 1, 5 AND 21 DAYS, PER SEASON AND PER DAY-CLASS |
+| O-6 | S | OPEN | SELECTION-BIAS SWEEP ON THE ANALOG COHORT - does sigma_emp rise monotonically as the match tolerance loosens |
+| O-7 | S | OPEN | PUBLISH SE(sigma_emp) WITH EVERY DISPERSION OUTPUT AND GATE OUT ANY EDGE INSIDE ONE STANDARD ERROR |
+| O-12 | S | OPEN | TAG EVERY SETTLE IV OBSERVED-vs-FITTED and restrict alpha claims to OTM, near-dated, actually-traded strikes |
+| O-14 | S | OPEN | KEY EVERY ROW OF OPTIONS DATA BY DELIVERY MONTH, NOT EXPIRY MONTH |
+| O-15 | S | OPEN | STORE THE SKEW SIGN CONVENTION AS DATA, reconciled against our own 25-delta re-derivation |
+| O-17 | S | OPEN | ROOT DISCIPLINE AS A HARD GATE - never merge ladders, never mix ON into LNE, normalize contract sizes |
+| O-22 | S | OPEN | INGEST CVOL DAILY (NGVL/NGSK/NGUP/NGDN/NGAM/NGCV) as an independent vol construction |
+| O-28 | M | OPEN | BUILD THE MONTH-BY-MONTH HEDGE-RATIO MATRIX from the per-leg MBP-10 tape already on S3 |
+| O-33 | XS | OPEN | HEDGE-FREQUENCY POLICY - and never hedge on a clock through 10:30 ET Thursday or the settle window |
+| O-43 | S | OPEN | ADOPT THE FIVE SIZING RULES - blind-only Kelly inputs, pessimistic end of the range, quarter Kelly at N=20, shorts sized off a 15-20% up-gap stress, reject any edge inside one SE |
+| O-44 | S | OPEN | TEST WHETHER OI PINNING ACTUALLY OCCURS IN GAS, and whether our pin map is predictive or merely descriptive |
+| O-46 | M | OPEN | SPLIT THE FORECAST INTO TERMINAL DISPERSION AND PATH ROUGHNESS - they price different instruments |
+| O-52 | M | OPEN | EXTEND THE FORECAST HORIZON TO 5+ SESSIONS, or aggregate daily paths into a weekly terminal density |
+| A-41 | M | OPEN | RUN THE FAILURE JUDGE ON AGENT BEHAVIOUR - localize every post-mortem finding to an interaction edge and fault side BEFORE it becomes brain evidence |
+| A-43 | - | OPEN | Second judge for adjudication where a label routes real work |
+| A-44 | - | OPEN | Feed the model-context coverage gap back as a finding, and check it against the paper's own data |
+| A-45 | - | OPEN | Apply the edge/fault-side labelling to the WINNERS census, not only failures |
+| A-47 | - | OPEN | Re-emit the truncated curves: g17/g18/g22 blinds have no overnight leg |
+| A-49 | - | OPEN | stage_group --suffix still writes canonical names: the inspection certificate leaked |
+| A-53 | - | OPEN | Sweep every play's `requires` against the served BLIND field set |
+| A-55 | - | OPEN | A play CONFLICT REGISTER - the plays contradict and nothing surfaces it |
+| A-56 | - | OPEN | Generate the field inventory at STAGING, and count leaves not top-level keys |
+| M-12 | S | OPEN | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written |
+| M-13 | M | OPEN | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk |
+| M-15 | S | OPEN | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived |
+| A-57 | S | OPEN | SERVE THE BREADTH TERM - A-24c's first pass SURVIVED its benchmark and has no forward home |
+| G-30 | S | OPEN | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable |
+| A-58 | M | OPEN | THE BRAIN POINTS OUT OF ITSELF 21 TIMES IN SERVED SECTIONS - and 3 of those files were DELETED at S105 |
+| A-59 | L | OPEN | THE HYBRID: agent-as-render-target (NOOA) + agent-managed context with declared offload (ACM) - our store stays the truth |
+| A-60 | M | OPEN | THE PRE-PAPER GATE: score the BAND, not the point - the forecaster has never been validated on the only field a binary market consumes |
+| A-61 | S | OPEN | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers |
+| A-62 | M | OPEN | SERVE EACH SPECIALIST ITS OWN TRACK RECORD - we measure how each agent fails and have never told the agent |
+| A-63 | M | OPEN | THE KERNEL IS THE MISSING ENGINE - and it produces the BAND for free, which is the same build as A-60 |
+| A-64 | S | OPEN | Kernel Forge (arXiv 2607.24762) - CUDA half OUT OF SCOPE for our workload today; the MCTS-over-candidates harness pattern stacks with A-63/A-60 |
+| A-65 | S | OPEN | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day |
+| A-66 | S | OPEN | THE COMPOSITION CONTRACT - partition OWNERSHIP so borrowed pieces own different parts of one job (not a write protocol, and never a ranking) |
+| A-67 | L | OPEN | THE A/B IS BLIND vs FRANKENSTEIN ON THE UNWALKED HEAD - one block that is the last group run, the architecture test AND the under-emission experiment |
+| A-68 | M | OPEN | GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal |
+| A-69 | L | OPEN | SELF-TRAINING LOOP: Frankie runs blinds on the WALKED corpus, grades himself with FJ-1, and the head is held out as the only true test |
+| M-16 | S | OPEN | THE PULLER WRITES TO A PHANTOM data/ AND LIES ABOUT WHERE - relative OUT_DIR + _write_df ignores out_dir |
+| A-70 | M | OPEN | MERGE REVIEW: chatgpt/agent-frankie-s117 carries an UNREAD base branch into the trunk |
+| A-72 | M | OPEN | THE ORDER-FLOW DIRECTION NOWCAST HAS NO REGISTRY LINE - the one workstream of six that was never registered |
+| A-73 | S | OPEN | LIVE MBO IS NOT AUTHORIZED ON OUR DATABENTO TIER - the live feed lane Greg calls critical cannot start on what we pay for |
+| A-74 | M | OPEN | THE LIVE LOOP HAS NEVER RUN AS A SERVICE - collector-as-a-service was G3 of the S110 go-plan and has no registry line |
+| A-75 | S | OPEN | A ROLL-STRADDLING GROUP RENDERS ON THE WRONG LEG - continuous_rt.py draws the NG.n.0 tape, which is the post-roll contract for the whole block |
+| A-17A | M | OPEN | Public AGGREGATE forward outage calendar - buildable now from ERCOT, PJM, MISO, SPP |
+| A-17B | L | OPEN | Public UNIT-LEVEL nuclear refuelling calendar - a MEASURED public-data gap, not a build |
+| A-17C | S | OPEN | REALIZED nuclear outage truth from the NRC daily power reactor status - buildable now |
+| A-17D | S | OPEN | Coal additions and retirements calendar from EIA-860M - buildable now, and it feeds the coal-ramp work |
+| A-81 | S | OPEN | g11's 12 days are the ONE corpus gap left - its score file predates the actual_* columns |
+| A-84 | M | OPEN | THE TAPE-vs-FORECAST-WEATHER CONFLICT IS RESOLVED ARBITRARILY, AND IT OWNS THE LARGEST MISSES |
+| A-85 | L | OPEN | THE EMITTED MAGNITUDE CARRIES NO INFORMATION ABOUT THE DAY'S MAGNITUDE - a constant band, not a forecast |
+| A-86 | M | OPEN | THE S118 POSTERIORS ARE ONE POINT PER DAY - path_p50_curve is validated on LENGTH, so a straight line passes |
+| A-87 | M | OPEN | THE ALWAYS-ON TOKEN BUDGET - an MCP connector that never sleeps turns context cost from a per-session nuisance into a standing bill, and the reducer belongs at the TOOL BOUNDARY |
 
 ## IDENTIFIED - free and available, no registry item yet
 
@@ -1262,38 +1432,46 @@ be consumed - `grid_stack` and `weather` are the ones to look at first.
 
 | block | fields | NOT READ | upstream source | cadence | what the blind sees |
 |---|---|---|---|---|---|
-| `model_disagreement` | 431 | **348** | cross-model spread between MOS families | per cycle | live |
-| `freeze_risk` | 157 | **148** | station-level freeze-off proxy off the same ASOS obs | daily | live |
-| `ngwu_balance` | 83 | **70** | EIA Natural Gas Weekly Update. LIVE RISK: final edition was the week ending 2026-01-21 | weekly - DISCONTINUED | live |
-| `solar` | 86 | **68** | solar geometry + EIA-930 solar generation | daily | live |
+| `model_disagreement` | 464 | **380** | cross-model spread between MOS families | per cycle | live |
+| `grid_stack` | 193 | **112** | EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel | daily, wall = period+2 | live |
+| `freeze_risk` | 158 | **100** | station-level freeze-off proxy off the same ASOS obs | daily | live |
+| `ngwu_balance` | 84 | **70** | EIA Natural Gas Weekly Update. LIVE RISK: final edition was the week ending 2026-01-21 | weekly - DISCONTINUED | live |
+| `solar` | 87 | **68** | solar geometry + EIA-930 solar generation | daily | live |
 | `storage_consensus` | 102 | **64** | street consensus for the storage print | weekly, pre-print | live |
 | `storage_vintage` | 64 | **59** | EIA storage as-of each vintage - the revision process | weekly | live |
-| `options_surface` | 67 | **49** | NG options settle IV surface, ON/LNE roots | daily settle | FROZEN at anchor vintage (price-derived) |
+| `options_surface` | 68 | **50** | NG options settle IV surface, ON/LNE roots | daily settle | FROZEN at anchor vintage (price-derived) |
+| `tape_conditions` | 102 | **46** | Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED | per session | NEVER MASKED |
 | `cot` | 79 | **44** | CFTC Commitments of Traders, futures and ICE HH | weekly Fri, suspended in shutdowns | live |
-| `steo_vintage` | 95 | **44** | EIA STEO monthly archived workbooks - the complete balance as-of release | monthly, 1-34d stale | live |
-| `contract_structure` | 52 | **39** | CME definitions + forward curve, calendar-front pair | daily | FROZEN at anchor vintage (price-derived) |
-| `tape_conditions` | 92 | **39** | Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED | per session | NEVER MASKED |
-| `vol_regime` | 42 | **28** | realized vol regime derived from the tape | daily | FROZEN at anchor vintage (price-derived) |
-| `weather_forecast` | 68 | **19** | NWS MOS (GFS/NAM/MEX) via the IEM archive | per model cycle | live |
-| `grid_stack` | 88 | **14** | EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel | daily, wall = period+2 | live |
-| `cash_basis` | 17 | **13** | Henry Hub cash vs front-futures settle | weekly batches | FROZEN at anchor vintage (price-derived) |
+| `steo_vintage` | 96 | **44** | EIA STEO monthly archived workbooks - the complete balance as-of release | monthly, 1-34d stale | live |
+| `contract_structure` | 53 | **39** | CME definitions + forward curve, calendar-front pair | daily | FROZEN at anchor vintage (price-derived) |
+| `vol_regime` | 43 | **29** | realized vol regime derived from the tape | daily | FROZEN at anchor vintage (price-derived) |
+| `weather_forecast` | 69 | **19** | NWS MOS (GFS/NAM/MEX) via the IEM archive | per model cycle | live |
+| `cash_basis` | 18 | **13** | Henry Hub cash vs front-futures settle | weekly batches | FROZEN at anchor vintage (price-derived) |
 | `storage_regional` | 56 | **13** | EIA regional + salt/non-salt storage | weekly | live |
-| `flow_calendar` | 34 | **12** | exchange + index calendar: roll, BCOM, expiry, holidays | static rules | live |
-| `weather_forecast_cycle` | 35 | **10** | MOS cycle timing - which run was available at decision time | per cycle | live |
-| `squeeze_watch` | 22 | **9** | expiry/OI/positioning conjunction detector | daily | FROZEN at anchor vintage (price-derived) |
+| `flow_calendar` | 35 | **11** | exchange + index calendar: roll, BCOM, expiry, holidays | static rules | live |
+| `weather_forecast_cycle` | 46 | **10** | MOS cycle timing - which run was available at decision time | per cycle | live |
+| `squeeze_watch` | 22 | **8** | expiry/OI/positioning conjunction detector | daily | FROZEN at anchor vintage (price-derived) |
 | `nuclear_outages` | 10 | **6** | NRC daily reactor status | daily, age 1d | live |
+| `stor_surprise_basis` | 7 | **6** | (not declared) | - | live |
 | `model_cycles_et` | 6 | **5** | model run times in ET | static | live |
+| `blocks_emitted` | 4 | **4** | (not declared) | - | live |
+| `scored_leg` | 6 | **4** | (not declared) | - | live |
 | `frozen_structure_stale` | 4 | **3** | staleness flag on the one-shot mask | per day | live |
+| `storage_repair_basis` | 7 | **3** | (not declared) | - | live |
+| `built_utc` | 1 | **1** | (not declared) | - | live |
 | `cot_publication_et` | 1 | **1** | (not declared) | - | live |
 | `dow` | 1 | **1** | day of week | derived | live |
 | `eia_storage_print_et` | 1 | **1** | (not declared) | - | live |
 | `firehose_present` | 2 | **1** | whether the MBO firehose reached this day | per day | live |
 | `globex_reopen_et` | 1 | **1** | (not declared) | - | live |
+| `mask_after` | 1 | **1** | (not declared) | - | live |
 | `session_close_et` | 1 | **1** | (not declared) | - | live |
 | `settle_window_et` | 1 | **1** | (not declared) | - | live |
 | `stor_surprise_sign` | 1 | **1** | (not declared) | - | live |
 | `storage` | 6 | **1** | EIA weekly working gas in storage | weekly Thu 10:30 ET | live |
+| `weather_forcing_forecast` | 1 | **1** | (not declared) | - | live |
 | `curve_regime` | 1 | **0** | backwardation/contango label off the forward curve | daily | live |
+| `group` | 1 | **0** | (not declared) | - | live |
 | `holiday` | 3 | **0** | CME holiday table - HARDCODED, ends 2027-02-15 (A-14) | static, 194d runway | live |
 | `note` | 1 | **0** | free-text annotation, not a quantity | - | live |
 | `stor_surprise` | 1 | **0** | actual minus consensus | weekly | live |
@@ -1306,293 +1484,348 @@ wrong for five groups is not the same field as one that never was.
 
 | path | READ? | kind | block | groups | days populated | brain mentions | blind sees | defects |
 |---|---|---|---|---|---|---|---|---|
-| `cash_basis.basis_chg_1d` | **NOT READ** | number | cash_basis | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `cash_basis.basis_chg_3d` | **NOT READ** | number | cash_basis | 12,13,14,15,16,18,19,20,21,22,23 | 109 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `cash_basis.basis_chg_5d` | **NOT READ** | number | cash_basis | 12,13,14,15,16,18,19,20,21,22,23 | 83 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `cash_basis.front_settle` | **NOT READ** | number | cash_basis | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `cash_basis.front_settle_session` | **NOT READ** | string | cash_basis | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `cash_basis.front_settle_source` | **NOT READ** | string | cash_basis | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `cash_basis.front_settle_symbol` | **NOT READ** | string | cash_basis | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `cash_basis.hh_cash_minus_front_settle` | **NOT READ** | number | cash_basis | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `cash_basis.hh_spot` | **NOT READ** | number | cash_basis | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `cash_basis.hh_spot_gas_day` | **NOT READ** | string | cash_basis | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `cash_basis.hh_spot_publication_basis` | **NOT READ** | string | cash_basis | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `cash_basis.hh_spot_publication_date` | **NOT READ** | string | cash_basis | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `cash_basis.hh_spot_vintage` | **NOT READ** | string | cash_basis | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.asof_session` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.calendar_front_expiry_source` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.calendar_front_next_spread_chg_1d` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.calendar_front_next_spread_chg_5d` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 93 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.calendar_front_pair_changed_1d` | **NOT READ** | bool | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.calendar_front_pair_changed_3d` | **NOT READ** | bool | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.calendar_front_pair_changed_5d` | **NOT READ** | bool | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.calendar_front_settle` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.calendar_front_symbol` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.calendar_next_settle` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.calendar_next_symbol` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.curve_asof` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.curve_curvature` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.curve_slope_1` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.curve_slope_back` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.days_to_front_expiry_calendar` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.expiry_source` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.front_is_calendar_front` | **NOT READ** | bool | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.front_next_pair_changed_1d` | **NOT READ** | bool | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.front_next_pair_changed_3d` | **NOT READ** | bool | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.front_next_pair_changed_5d` | **NOT READ** | bool | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.front_next_spread_basis` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.front_next_spread_chg_1d` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 87 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.front_next_spread_chg_5d` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 65 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.front_symbol` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.frozen_front_expired` | **NOT READ** | bool | contract_structure | 20,22 | 12 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.mar_apr_pair` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 84 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.mar_apr_spread` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 84 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.next_symbol` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.oi_front_symbol` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.oi_volume_divergence` | **NOT READ** | bool | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 84 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.oi_volume_divergence_note` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.open_interest_front` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.open_interest_front_chg_1d` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.open_interest_front_session` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.open_interest_next` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.open_interest_next_chg_1d` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.open_interest_next_session` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.volume_front_symbol` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 84 | 0 | FROZEN at anchor vintage (price-derived) | - |
-| `cot.age_days_combined` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.contract_code` | **NOT READ** | string | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.contract_code_combined` | **NOT READ** | string | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.ice.hh_basis.open_interest` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.ice.hh_index.open_interest` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.ice.ld1.open_interest` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.ice.pen.open_interest` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.managed_money_long` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.managed_money_long_combined` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.managed_money_long_options_implied` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.managed_money_net_chg_wow_combined` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.managed_money_net_chg_wow_options_implied` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.managed_money_net_combined` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.managed_money_net_options_implied_pctile_1y` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.managed_money_net_pctile_1y_combined` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.managed_money_net_pctile_3y_combined` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.managed_money_short_combined` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.managed_money_short_options_implied` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.market_name` | **NOT READ** | string | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.market_name_combined` | **NOT READ** | string | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.open_interest` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.open_interest_combined` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.open_interest_options_implied` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.options_implied_pctile_1y_n_obs` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.options_implied_pctile_3y_n_obs` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.other_reportable_net` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.other_reportable_net_combined` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.other_reportable_net_options_implied` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.pctile_1y_n_obs` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.pctile_1y_n_obs_combined` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.pctile_3y_n_obs` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.pctile_3y_n_obs_combined` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.producer_merchant_net` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.producer_merchant_net_combined` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.producer_merchant_net_options_implied` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.publication_confidence` | **NOT READ** | string | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.publication_confidence_combined` | **NOT READ** | string | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.publication_delayed` | **NOT READ** | bool | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.publication_delayed_combined` | **NOT READ** | bool | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.publication_ts_combined` | **NOT READ** | string | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.report_date_combined` | **NOT READ** | string | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.swap_dealer_net` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.swap_dealer_net_combined` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot.swap_dealer_net_options_implied` | **NOT READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cot_publication_et` | **NOT READ** | string | cot_publication_et | 12,13,14,15,16,18,19,20,21,22,23 | 11 | 0 | live | - |
-| `dow` | **NOT READ** | string | dow | 6,7,8,9,10,11,12,13,14,15,16,18,19,20,21,22,23 | 192 | 0 | live | - |
-| `eia_storage_print_et` | **NOT READ** | string | eia_storage_print_et | 12,13,14,15,16,18,19,20,21,22,23 | 11 | 0 | live | - |
-| `firehose_present.mbo_flow` | **NOT READ** | bool | firehose_present | 20,21,22,23 | 40 | 0 | live | - |
-| `flow_calendar.bcom_january_rebalance` | **NOT READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `flow_calendar.bidweek_delivery_month` | **NOT READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 24 | 0 | live | - |
-| `flow_calendar.cme_holiday_name` | **NOT READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 4 | 0 | live | - |
-| `flow_calendar.cme_session_class` | **NOT READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 4 | 0 | live | - |
-| `flow_calendar.eia_releases_this_week[0].datetime_et` | **NOT READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `flow_calendar.eia_releases_this_week[0].for_week_ending` | **NOT READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `flow_calendar.eia_releases_this_week[0].shift_reason` | **NOT READ** | null-only | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `flow_calendar.eia_storage_release_datetime_et` | **NOT READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `flow_calendar.front_symbol_calendar` | **NOT READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `flow_calendar.futures_expiry_date` | **NOT READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `flow_calendar.next_eia_release_datetime_et` | **NOT READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `flow_calendar.options_expiry_date` | **NOT READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.sunday_reopen.asof_et` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.asof_utc` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.MAF.max_cycle_runtime_utc` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.10.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.10.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.10.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.10.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.15.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.15.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.15.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.15.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.20.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.20.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.20.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.20.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.MAF.tmin_by_horizon[0]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.MAF.tmin_by_horizon[1]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.MAF.tmin_by_horizon[2]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.MAF.tmin_by_horizon[3]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.MAF.tmin_d0_f` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.OKC.max_cycle_runtime_utc` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.10.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.10.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.10.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.10.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.15.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.15.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.15.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.15.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.20.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.20.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.20.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.20.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.OKC.tmin_by_horizon[0]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.OKC.tmin_by_horizon[1]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.OKC.tmin_by_horizon[2]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.OKC.tmin_by_horizon[3]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.OKC.tmin_d0_f` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.PIT.max_cycle_runtime_utc` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.10.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.10.0.first_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 2 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.10.0.last_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 2 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.10.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.15.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.15.0.first_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 2 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.15.0.last_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 2 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.15.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.20.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.20.0.first_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 4 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.20.0.last_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 4 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.20.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.PIT.tmin_by_horizon[0]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.PIT.tmin_by_horizon[1]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.PIT.tmin_by_horizon[2]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.PIT.tmin_by_horizon[3]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.PIT.tmin_d0_f` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.SHV.max_cycle_runtime_utc` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.10.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.10.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.10.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.10.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.15.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.15.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.15.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.15.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.20.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.20.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.20.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.20.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.SHV.tmin_by_horizon[0]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.SHV.tmin_by_horizon[1]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.SHV.tmin_by_horizon[2]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.SHV.tmin_by_horizon[3]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.sunday_reopen.basins.SHV.tmin_d0_f` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `freeze_risk.weekday_open.asof_et` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.asof_utc` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.MAF.max_cycle_runtime_utc` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.10.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.10.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.10.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.10.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.15.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.15.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.15.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.15.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.20.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.20.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.20.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.MAF.thresholds_f.20.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.MAF.tmin_by_horizon[0]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.MAF.tmin_by_horizon[1]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.MAF.tmin_by_horizon[2]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.MAF.tmin_by_horizon[3]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.MAF.tmin_d0_f` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.OKC.max_cycle_runtime_utc` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.10.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.10.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.10.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.10.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.15.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.15.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.15.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.15.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.20.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.20.0.first_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 1 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.20.0.last_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 1 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.OKC.thresholds_f.20.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.OKC.tmin_by_horizon[0]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.OKC.tmin_by_horizon[1]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.OKC.tmin_by_horizon[2]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.OKC.tmin_by_horizon[3]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.OKC.tmin_d0_f` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.PIT.max_cycle_runtime_utc` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.10.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.10.0.first_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 8 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.10.0.last_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 8 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.10.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.15.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.15.0.first_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 10 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.15.0.last_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 10 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.15.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.20.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.20.0.first_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 24 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.20.0.last_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 24 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.PIT.thresholds_f.20.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.PIT.tmin_by_horizon[0]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.PIT.tmin_by_horizon[1]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.PIT.tmin_by_horizon[2]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.PIT.tmin_by_horizon[3]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.PIT.tmin_d0_f` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.SHV.max_cycle_runtime_utc` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.10.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.10.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.10.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.10.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.15.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.15.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.15.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.15.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.20.0.days_below` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.20.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.20.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.SHV.thresholds_f.20.0.max_consecutive` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.SHV.tmin_by_horizon[0]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.SHV.tmin_by_horizon[1]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.SHV.tmin_by_horizon[2]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.SHV.tmin_by_horizon[3]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `freeze_risk.weekday_open.basins.SHV.tmin_d0_f` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `frozen_structure_stale.frozen_calendar_front_expiry` | **NOT READ** | string | frozen_structure_stale | 20,22 | 12 | 0 | live | - |
-| `frozen_structure_stale.frozen_calendar_front_symbol` | **NOT READ** | string | frozen_structure_stale | 20,22 | 12 | 0 | live | - |
-| `frozen_structure_stale.live_front_symbol_calendar` | **NOT READ** | string | frozen_structure_stale | 20,22 | 12 | 0 | live | - |
-| `globex_reopen_et` | **NOT READ** | string | globex_reopen_et | 12,13,14,15,16,18,19,20,21,22,23 | 11 | 0 | live | - |
-| `grid_stack.bas.CISO.solar_chg_7d_mwh` | **NOT READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `grid_stack.bas.CISO.solar_share` | **NOT READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `grid_stack.bas.ERCO.solar_chg_7d_mwh` | **NOT READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `grid_stack.bas.ERCO.solar_share` | **NOT READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `grid_stack.bas.MISO.solar_chg_7d_mwh` | **NOT READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `grid_stack.bas.MISO.solar_share` | **NOT READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `grid_stack.bas.PJM.solar_chg_7d_mwh` | **NOT READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `grid_stack.bas.PJM.solar_share` | **NOT READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `grid_stack.bas.SOCO.solar_chg_7d_mwh` | **NOT READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `grid_stack.bas.SOCO.solar_share` | **NOT READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `grid_stack.bas.SWPP.solar_chg_7d_mwh` | **NOT READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `grid_stack.bas.SWPP.solar_share` | **NOT READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `grid_stack.bas.US48.solar_chg_7d_mwh` | **NOT READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `grid_stack.bas.US48.solar_share` | **NOT READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_cycles_et.00z_gfs_mos` | **NOT READ** | string | model_cycles_et | 12,13,14,15,16,18,19,20,21,22,23 | 11 | 0 | live | - |
-| `model_cycles_et.06z_gfs_mos` | **NOT READ** | string | model_cycles_et | 12,13,14,15,16,18,19,20,21,22,23 | 11 | 0 | live | - |
-| `model_cycles_et.12z_gfs_mos` | **NOT READ** | string | model_cycles_et | 12,13,14,15,16,18,19,20,21,22,23 | 11 | 0 | live | - |
-| `model_cycles_et.18z_gfs_mos` | **NOT READ** | string | model_cycles_et | 12,13,14,15,16,18,19,20,21,22,23 | 11 | 0 | live | - |
-| `model_cycles_et.cycles_run_weekends_too` | **NOT READ** | bool | model_cycles_et | 12,13,14,15,16,18,19,20,21,22,23 | 11 | 0 | live | - |
-| `model_disagreement.asof_note` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.asof_utc` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[0].mav_gw_cdd` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[0].mav_gw_hdd` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
+| `blocks_emitted[0]` | **NOT READ** | string | blocks_emitted | 1 | 1 | 0 | live | - |
+| `blocks_emitted[1]` | **NOT READ** | string | blocks_emitted | 1 | 1 | 0 | live | - |
+| `blocks_emitted[2]` | **NOT READ** | string | blocks_emitted | 1 | 1 | 0 | live | - |
+| `blocks_emitted[3]` | **NOT READ** | string | blocks_emitted | 1 | 1 | 0 | live | - |
+| `built_utc` | **NOT READ** | string | built_utc | 1 | 1 | 0 | live | - |
+| `cash_basis.basis_chg_1d` | **NOT READ** | number | cash_basis | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `cash_basis.basis_chg_3d` | **NOT READ** | number | cash_basis | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `cash_basis.basis_chg_5d` | **NOT READ** | number | cash_basis | 12,13,14,15,16,18,19,20,21,22,23,24 | 93 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `cash_basis.front_settle` | **NOT READ** | number | cash_basis | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `cash_basis.front_settle_session` | **NOT READ** | string | cash_basis | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `cash_basis.front_settle_source` | **NOT READ** | string | cash_basis | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `cash_basis.front_settle_symbol` | **NOT READ** | string | cash_basis | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `cash_basis.hh_cash_minus_front_settle` | **NOT READ** | number | cash_basis | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `cash_basis.hh_spot` | **NOT READ** | number | cash_basis | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `cash_basis.hh_spot_gas_day` | **NOT READ** | string | cash_basis | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `cash_basis.hh_spot_publication_basis` | **NOT READ** | string | cash_basis | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `cash_basis.hh_spot_publication_date` | **NOT READ** | string | cash_basis | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `cash_basis.hh_spot_vintage` | **NOT READ** | string | cash_basis | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.asof_session` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.calendar_front_expiry_source` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.calendar_front_next_spread_chg_1d` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.calendar_front_next_spread_chg_5d` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 103 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.calendar_front_pair_changed_1d` | **NOT READ** | bool | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.calendar_front_pair_changed_3d` | **NOT READ** | bool | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.calendar_front_pair_changed_5d` | **NOT READ** | bool | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.calendar_front_settle` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.calendar_front_symbol` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.calendar_next_settle` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.calendar_next_symbol` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.curve_asof` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.curve_curvature` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.curve_slope_1` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.curve_slope_back` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.days_to_front_expiry_calendar` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.expiry_source` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.front_is_calendar_front` | **NOT READ** | bool | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.front_next_pair_changed_1d` | **NOT READ** | bool | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.front_next_pair_changed_3d` | **NOT READ** | bool | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.front_next_pair_changed_5d` | **NOT READ** | bool | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.front_next_spread_basis` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.front_next_spread_chg_1d` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 97 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.front_next_spread_chg_5d` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 65 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.front_symbol` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.frozen_front_expired` | **NOT READ** | bool | contract_structure | 20,22,24 | 14 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.mar_apr_pair` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 94 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.mar_apr_spread` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 94 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.next_symbol` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.oi_front_symbol` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.oi_volume_divergence` | **NOT READ** | bool | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 94 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.oi_volume_divergence_note` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.open_interest_front` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.open_interest_front_chg_1d` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.open_interest_front_session` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.open_interest_next` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.open_interest_next_chg_1d` | **NOT READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.open_interest_next_session` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.volume_front_symbol` | **NOT READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 94 | 0 | FROZEN at anchor vintage (price-derived) | - |
+| `cot.age_days_combined` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.contract_code` | **NOT READ** | string | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.contract_code_combined` | **NOT READ** | string | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.ice.hh_basis.open_interest` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.ice.hh_index.open_interest` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.ice.ld1.open_interest` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.ice.pen.open_interest` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.managed_money_long` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.managed_money_long_combined` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.managed_money_long_options_implied` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.managed_money_net_chg_wow_combined` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.managed_money_net_chg_wow_options_implied` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.managed_money_net_combined` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.managed_money_net_options_implied_pctile_1y` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.managed_money_net_pctile_1y_combined` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.managed_money_net_pctile_3y_combined` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.managed_money_short_combined` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.managed_money_short_options_implied` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.market_name` | **NOT READ** | string | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.market_name_combined` | **NOT READ** | string | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.open_interest` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.open_interest_combined` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.open_interest_options_implied` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.options_implied_pctile_1y_n_obs` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.options_implied_pctile_3y_n_obs` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.other_reportable_net` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.other_reportable_net_combined` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.other_reportable_net_options_implied` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.pctile_1y_n_obs` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.pctile_1y_n_obs_combined` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.pctile_3y_n_obs` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.pctile_3y_n_obs_combined` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.producer_merchant_net` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.producer_merchant_net_combined` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.producer_merchant_net_options_implied` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.publication_confidence` | **NOT READ** | string | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.publication_confidence_combined` | **NOT READ** | string | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.publication_delayed` | **NOT READ** | bool | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.publication_delayed_combined` | **NOT READ** | bool | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.publication_ts_combined` | **NOT READ** | string | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.report_date_combined` | **NOT READ** | string | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.swap_dealer_net` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.swap_dealer_net_combined` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot.swap_dealer_net_options_implied` | **NOT READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `cot_publication_et` | **NOT READ** | string | cot_publication_et | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 13 | 0 | live | - |
+| `dow` | **NOT READ** | string | dow | 1,6,7,8,9,10,11,12,13,14,15,16,18,19,20,21,22,23,24 | 212 | 0 | live | - |
+| `eia_storage_print_et` | **NOT READ** | string | eia_storage_print_et | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 13 | 0 | live | - |
+| `firehose_present.mbo_flow` | **NOT READ** | bool | firehose_present | 1,20,21,22,23,24 | 60 | 0 | live | - |
+| `flow_calendar.bcom_january_rebalance` | **NOT READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `flow_calendar.cme_holiday_name` | **NOT READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 4 | 0 | live | - |
+| `flow_calendar.cme_session_class` | **NOT READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 4 | 0 | live | - |
+| `flow_calendar.eia_releases_this_week[0].datetime_et` | **NOT READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `flow_calendar.eia_releases_this_week[0].for_week_ending` | **NOT READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `flow_calendar.eia_releases_this_week[0].shift_reason` | **NOT READ** | null-only | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `flow_calendar.eia_storage_release_datetime_et` | **NOT READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `flow_calendar.front_symbol_calendar` | **NOT READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `flow_calendar.futures_expiry_date` | **NOT READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `flow_calendar.next_eia_release_datetime_et` | **NOT READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `flow_calendar.options_expiry_date` | **NOT READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `freeze_risk.sunday_reopen.asof_et` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 0 | live | - |
+| `freeze_risk.sunday_reopen.asof_utc` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.MAF.max_cycle_runtime_utc` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.10.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.10.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.15.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.15.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.20.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.20.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.MAF.tmin_by_horizon[0]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.MAF.tmin_by_horizon[1]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.MAF.tmin_by_horizon[2]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.MAF.tmin_by_horizon[3]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.MAF.tmin_d0_f` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.OKC.max_cycle_runtime_utc` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.10.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.10.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.15.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.15.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.20.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.20.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.OKC.tmin_by_horizon[0]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.OKC.tmin_by_horizon[1]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.OKC.tmin_by_horizon[2]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.OKC.tmin_by_horizon[3]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.OKC.tmin_d0_f` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.PIT.max_cycle_runtime_utc` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.10.0.first_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 2 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.10.0.last_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 2 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.15.0.first_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 2 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.15.0.last_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 2 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.20.0.first_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 4 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.20.0.last_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 4 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.PIT.tmin_by_horizon[0]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.PIT.tmin_by_horizon[1]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.PIT.tmin_by_horizon[2]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.PIT.tmin_by_horizon[3]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.PIT.tmin_d0_f` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.SHV.max_cycle_runtime_utc` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.10.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.10.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.15.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.15.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.20.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.20.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.SHV.tmin_by_horizon[0]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.SHV.tmin_by_horizon[1]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.SHV.tmin_by_horizon[2]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.SHV.tmin_by_horizon[3]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.sunday_reopen.basins.SHV.tmin_d0_f` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 0 | live | - |
+| `freeze_risk.weekday_open.asof_et` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `freeze_risk.weekday_open.asof_utc` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.MAF.max_cycle_runtime_utc` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.MAF.thresholds_f.10.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.MAF.thresholds_f.10.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.MAF.thresholds_f.15.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.MAF.thresholds_f.15.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.MAF.thresholds_f.20.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.MAF.thresholds_f.20.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.MAF.tmin_by_horizon[0]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.MAF.tmin_by_horizon[1]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.MAF.tmin_by_horizon[2]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.MAF.tmin_by_horizon[3]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.MAF.tmin_d0_f` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.OKC.max_cycle_runtime_utc` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.OKC.thresholds_f.10.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.OKC.thresholds_f.10.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.OKC.thresholds_f.15.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.OKC.thresholds_f.15.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.OKC.thresholds_f.20.0.first_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 1 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.OKC.thresholds_f.20.0.last_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 1 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.OKC.tmin_by_horizon[0]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.OKC.tmin_by_horizon[1]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.OKC.tmin_by_horizon[2]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.OKC.tmin_by_horizon[3]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.OKC.tmin_d0_f` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.PIT.max_cycle_runtime_utc` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.PIT.thresholds_f.10.0.first_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 8 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.PIT.thresholds_f.10.0.last_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 8 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.PIT.thresholds_f.15.0.first_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 10 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.PIT.thresholds_f.15.0.last_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 10 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.PIT.thresholds_f.20.0.first_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.PIT.thresholds_f.20.0.last_below` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.PIT.tmin_by_horizon[0]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.PIT.tmin_by_horizon[1]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.PIT.tmin_by_horizon[2]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.PIT.tmin_by_horizon[3]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.PIT.tmin_d0_f` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.SHV.max_cycle_runtime_utc` | **NOT READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.SHV.thresholds_f.10.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.SHV.thresholds_f.10.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.SHV.thresholds_f.15.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.SHV.thresholds_f.15.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.SHV.thresholds_f.20.0.first_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.SHV.thresholds_f.20.0.last_below` | **NOT READ** | null-only | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.SHV.tmin_by_horizon[0]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.SHV.tmin_by_horizon[1]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.SHV.tmin_by_horizon[2]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.SHV.tmin_by_horizon[3]` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `freeze_risk.weekday_open.basins.SHV.tmin_d0_f` | **NOT READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 0 | live | - |
+| `frozen_structure_stale.frozen_calendar_front_expiry` | **NOT READ** | string | frozen_structure_stale | 20,22,24 | 14 | 0 | live | - |
+| `frozen_structure_stale.frozen_calendar_front_symbol` | **NOT READ** | string | frozen_structure_stale | 20,22,24 | 14 | 0 | live | - |
+| `frozen_structure_stale.live_front_symbol_calendar` | **NOT READ** | string | frozen_structure_stale | 20,22,24 | 14 | 0 | live | - |
+| `globex_reopen_et` | **NOT READ** | string | globex_reopen_et | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 13 | 0 | live | - |
+| `grid_stack.bas.CISO.battery_mwh` | **NOT READ** | null-only | grid_stack | 1,22,24 | 0 | 0 | live | - |
+| `grid_stack.bas.CISO.hydro_chg_7d_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.CISO.hydro_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.CISO.hydro_share` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.CISO.hydro_share_chg_7d` | **NOT READ** | number | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.CISO.interchange_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.CISO.pumped_storage_mwh` | **NOT READ** | null-only | grid_stack | 1,22,24 | 0 | 0 | live | - |
+| `grid_stack.bas.CISO.share_chg_note` | **NOT READ** | string | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.CISO.solar_chg_7d_mwh` | **NOT READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `grid_stack.bas.CISO.solar_share` | **NOT READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `grid_stack.bas.CISO.solar_share_chg_7d` | **NOT READ** | number | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.CISO.unnamed_gen_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.CISO.wat_is_separable_from_pumped_storage` | **NOT READ** | bool | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.CISO.wind_chg_7d_mwh` | **NOT READ** | number | grid_stack | 1,24 | 20 | 0 | live | - |
+| `grid_stack.bas.CISO.wind_share` | **NOT READ** | number | grid_stack | 1,24 | 20 | 0 | live | - |
+| `grid_stack.bas.CISO.wind_share_chg_7d` | **NOT READ** | number | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.ERCO.battery_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.ERCO.hydro_chg_7d_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.ERCO.hydro_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.ERCO.hydro_share` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.ERCO.hydro_share_chg_7d` | **NOT READ** | number | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.ERCO.interchange_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.ERCO.pumped_storage_mwh` | **NOT READ** | null-only | grid_stack | 1,22,24 | 0 | 0 | live | - |
+| `grid_stack.bas.ERCO.share_chg_note` | **NOT READ** | string | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.ERCO.solar_chg_7d_mwh` | **NOT READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `grid_stack.bas.ERCO.solar_share` | **NOT READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `grid_stack.bas.ERCO.solar_share_chg_7d` | **NOT READ** | number | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.ERCO.unnamed_gen_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.ERCO.wat_is_separable_from_pumped_storage` | **NOT READ** | bool | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.ERCO.wind_chg_7d_mwh` | **NOT READ** | number | grid_stack | 1,24 | 20 | 0 | live | - |
+| `grid_stack.bas.ERCO.wind_share` | **NOT READ** | number | grid_stack | 1,24 | 20 | 0 | live | - |
+| `grid_stack.bas.ERCO.wind_share_chg_7d` | **NOT READ** | number | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.MISO.battery_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.MISO.hydro_chg_7d_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.MISO.hydro_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.MISO.hydro_share` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.MISO.hydro_share_chg_7d` | **NOT READ** | number | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.MISO.interchange_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.MISO.pumped_storage_mwh` | **NOT READ** | null-only | grid_stack | 1,22,24 | 0 | 0 | live | - |
+| `grid_stack.bas.MISO.share_chg_note` | **NOT READ** | string | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.MISO.solar_chg_7d_mwh` | **NOT READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `grid_stack.bas.MISO.solar_share` | **NOT READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `grid_stack.bas.MISO.solar_share_chg_7d` | **NOT READ** | number | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.MISO.unnamed_gen_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.MISO.wat_is_separable_from_pumped_storage` | **NOT READ** | bool | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.MISO.wind_chg_7d_mwh` | **NOT READ** | number | grid_stack | 1,24 | 20 | 0 | live | - |
+| `grid_stack.bas.MISO.wind_share` | **NOT READ** | number | grid_stack | 1,24 | 20 | 0 | live | - |
+| `grid_stack.bas.MISO.wind_share_chg_7d` | **NOT READ** | number | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.PJM.battery_mwh` | **NOT READ** | null-only | grid_stack | 1,22,24 | 0 | 0 | live | - |
+| `grid_stack.bas.PJM.hydro_chg_7d_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.PJM.hydro_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.PJM.hydro_share` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.PJM.hydro_share_chg_7d` | **NOT READ** | number | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.PJM.interchange_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.PJM.pumped_storage_mwh` | **NOT READ** | null-only | grid_stack | 1,22,24 | 0 | 0 | live | - |
+| `grid_stack.bas.PJM.share_chg_note` | **NOT READ** | string | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.PJM.solar_chg_7d_mwh` | **NOT READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `grid_stack.bas.PJM.solar_share` | **NOT READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `grid_stack.bas.PJM.solar_share_chg_7d` | **NOT READ** | number | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.PJM.unnamed_gen_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.PJM.wat_is_separable_from_pumped_storage` | **NOT READ** | bool | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.PJM.wind_chg_7d_mwh` | **NOT READ** | number | grid_stack | 1,24 | 20 | 0 | live | - |
+| `grid_stack.bas.PJM.wind_share` | **NOT READ** | number | grid_stack | 1,24 | 20 | 0 | live | - |
+| `grid_stack.bas.PJM.wind_share_chg_7d` | **NOT READ** | number | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.SOCO.battery_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.SOCO.hydro_chg_7d_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.SOCO.hydro_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.SOCO.hydro_share` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.SOCO.hydro_share_chg_7d` | **NOT READ** | number | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.SOCO.interchange_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.SOCO.pumped_storage_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.SOCO.share_chg_note` | **NOT READ** | string | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.SOCO.solar_chg_7d_mwh` | **NOT READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `grid_stack.bas.SOCO.solar_share` | **NOT READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `grid_stack.bas.SOCO.solar_share_chg_7d` | **NOT READ** | number | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.SOCO.unnamed_gen_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.SOCO.wat_is_separable_from_pumped_storage` | **NOT READ** | bool | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.SOCO.wind_chg_7d_mwh` | **NOT READ** | number | grid_stack | 1,24 | 20 | 0 | live | - |
+| `grid_stack.bas.SOCO.wind_share` | **NOT READ** | number | grid_stack | 1,24 | 20 | 0 | live | - |
+| `grid_stack.bas.SOCO.wind_share_chg_7d` | **NOT READ** | number | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.SWPP.battery_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 20 | 0 | live | - |
+| `grid_stack.bas.SWPP.hydro_chg_7d_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.SWPP.hydro_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.SWPP.hydro_share` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.SWPP.hydro_share_chg_7d` | **NOT READ** | number | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.SWPP.interchange_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.SWPP.pumped_storage_mwh` | **NOT READ** | null-only | grid_stack | 1,22,24 | 0 | 0 | live | - |
+| `grid_stack.bas.SWPP.share_chg_note` | **NOT READ** | string | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.SWPP.solar_chg_7d_mwh` | **NOT READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `grid_stack.bas.SWPP.solar_share` | **NOT READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `grid_stack.bas.SWPP.solar_share_chg_7d` | **NOT READ** | number | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.SWPP.unnamed_gen_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.SWPP.wat_is_separable_from_pumped_storage` | **NOT READ** | bool | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.SWPP.wind_chg_7d_mwh` | **NOT READ** | number | grid_stack | 1,24 | 20 | 0 | live | - |
+| `grid_stack.bas.SWPP.wind_share` | **NOT READ** | number | grid_stack | 1,24 | 20 | 0 | live | - |
+| `grid_stack.bas.SWPP.wind_share_chg_7d` | **NOT READ** | number | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.US48.battery_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.US48.hydro_chg_7d_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.US48.hydro_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.US48.hydro_share` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.US48.hydro_share_chg_7d` | **NOT READ** | number | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.US48.interchange_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.US48.pumped_storage_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.US48.share_chg_note` | **NOT READ** | string | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.US48.solar_chg_7d_mwh` | **NOT READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `grid_stack.bas.US48.solar_share` | **NOT READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `grid_stack.bas.US48.solar_share_chg_7d` | **NOT READ** | number | grid_stack | 1 | 10 | 0 | live | - |
+| `grid_stack.bas.US48.unnamed_gen_mwh` | **NOT READ** | number | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.US48.wat_is_separable_from_pumped_storage` | **NOT READ** | bool | grid_stack | 1,22,24 | 30 | 0 | live | - |
+| `grid_stack.bas.US48.wind_chg_7d_mwh` | **NOT READ** | number | grid_stack | 1,24 | 20 | 0 | live | - |
+| `grid_stack.bas.US48.wind_share` | **NOT READ** | number | grid_stack | 1,24 | 20 | 0 | live | - |
+| `grid_stack.bas.US48.wind_share_chg_7d` | **NOT READ** | number | grid_stack | 1 | 10 | 0 | live | - |
+| `mask_after` | **NOT READ** | string | mask_after | 1 | 1 | 0 | live | - |
+| `model_cycles_et.00z_gfs_mos` | **NOT READ** | string | model_cycles_et | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 13 | 0 | live | - |
+| `model_cycles_et.06z_gfs_mos` | **NOT READ** | string | model_cycles_et | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 13 | 0 | live | - |
+| `model_cycles_et.12z_gfs_mos` | **NOT READ** | string | model_cycles_et | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 13 | 0 | live | - |
+| `model_cycles_et.18z_gfs_mos` | **NOT READ** | string | model_cycles_et | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 13 | 0 | live | - |
+| `model_cycles_et.cycles_run_weekends_too` | **NOT READ** | bool | model_cycles_et | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 13 | 0 | live | - |
+| `model_disagreement.asof_note` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.asof_utc` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.disagreement[0].mav_gw_cdd` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 0 | live | - |
+| `model_disagreement.disagreement[0].mav_gw_hdd` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 0 | live | - |
 | `model_disagreement.disagreement[0].mav_runs.ATL` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.disagreement[0].mav_runs.BOS` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.disagreement[0].mav_runs.DCA` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
@@ -1609,8 +1842,8 @@ wrong for five groups is not the same field as one that never was.
 | `model_disagreement.disagreement[0].mav_runs.SEA` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.disagreement[0].mav_runs.SFO` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.disagreement[0].mav_runs.STL` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[0].met_gw_cdd` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[0].met_gw_hdd` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
+| `model_disagreement.disagreement[0].met_gw_cdd` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 0 | live | - |
+| `model_disagreement.disagreement[0].met_gw_hdd` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 0 | live | - |
 | `model_disagreement.disagreement[0].met_runs.ATL` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.disagreement[0].met_runs.BOS` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.disagreement[0].met_runs.DCA` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
@@ -1627,11 +1860,15 @@ wrong for five groups is not the same field as one that never was.
 | `model_disagreement.disagreement[0].met_runs.SEA` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.disagreement[0].met_runs.SFO` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.disagreement[0].met_runs.STL` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[0].n_common_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[0].spread_gw_cdd` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[0].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[1].mav_gw_cdd` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[1].mav_gw_hdd` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
+| `model_disagreement.disagreement[0].metros_neither[0]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.disagreement[0].metros_neither[1]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.disagreement[0].metros_neither[2]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.disagreement[0].metros_neither[3]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.disagreement[0].n_common_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.disagreement[0].spread_gw_cdd` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 0 | live | - |
+| `model_disagreement.disagreement[0].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.disagreement[1].mav_gw_cdd` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 0 | live | - |
+| `model_disagreement.disagreement[1].mav_gw_hdd` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 0 | live | - |
 | `model_disagreement.disagreement[1].mav_runs.ATL` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.disagreement[1].mav_runs.BOS` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.disagreement[1].mav_runs.DCA` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
@@ -1648,8 +1885,8 @@ wrong for five groups is not the same field as one that never was.
 | `model_disagreement.disagreement[1].mav_runs.SEA` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.disagreement[1].mav_runs.SFO` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.disagreement[1].mav_runs.STL` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[1].met_gw_cdd` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[1].met_gw_hdd` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
+| `model_disagreement.disagreement[1].met_gw_cdd` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 0 | live | - |
+| `model_disagreement.disagreement[1].met_gw_hdd` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 0 | live | - |
 | `model_disagreement.disagreement[1].met_runs.ATL` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.disagreement[1].met_runs.BOS` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.disagreement[1].met_runs.DCA` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
@@ -1666,32 +1903,40 @@ wrong for five groups is not the same field as one that never was.
 | `model_disagreement.disagreement[1].met_runs.SEA` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.disagreement[1].met_runs.SFO` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.disagreement[1].met_runs.STL` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[1].n_common_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[1].spread_gw_cdd` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[1].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[2].mav_gw_cdd` | **NOT READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `model_disagreement.disagreement[2].mav_gw_hdd` | **NOT READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `model_disagreement.disagreement[2].met_gw_cdd` | **NOT READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `model_disagreement.disagreement[2].met_gw_hdd` | **NOT READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `model_disagreement.disagreement[2].metros_neither[0]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[2].metros_neither[1]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[2].metros_neither[2]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[2].metros_neither[3]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[2].n_common_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[2].spread_gw_cdd` | **NOT READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `model_disagreement.disagreement[2].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[3].mav_gw_cdd` | **NOT READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `model_disagreement.disagreement[3].mav_gw_hdd` | **NOT READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `model_disagreement.disagreement[3].met_gw_cdd` | **NOT READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `model_disagreement.disagreement[3].met_gw_hdd` | **NOT READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `model_disagreement.disagreement[3].metros_neither[0]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[3].metros_neither[1]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[3].metros_neither[2]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[3].metros_neither[3]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[3].n_common_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.disagreement[3].spread_gw_cdd` | **NOT READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `model_disagreement.disagreement[3].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.GFS[0].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
+| `model_disagreement.disagreement[1].metros_neither[0]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.disagreement[1].metros_neither[1]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.disagreement[1].metros_neither[2]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.disagreement[1].metros_neither[3]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.disagreement[1].n_common_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.disagreement[1].spread_gw_cdd` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 0 | live | - |
+| `model_disagreement.disagreement[1].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.disagreement[2].mav_gw_cdd` | **NOT READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `model_disagreement.disagreement[2].mav_gw_hdd` | **NOT READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `model_disagreement.disagreement[2].met_gw_cdd` | **NOT READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `model_disagreement.disagreement[2].met_gw_hdd` | **NOT READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `model_disagreement.disagreement[2].metros_neither[0]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.disagreement[2].metros_neither[1]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.disagreement[2].metros_neither[2]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.disagreement[2].metros_neither[3]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.disagreement[2].n_common_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.disagreement[2].spread_gw_cdd` | **NOT READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `model_disagreement.disagreement[2].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.disagreement[3].mav_gw_cdd` | **NOT READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `model_disagreement.disagreement[3].mav_gw_hdd` | **NOT READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `model_disagreement.disagreement[3].met_gw_cdd` | **NOT READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `model_disagreement.disagreement[3].met_gw_hdd` | **NOT READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `model_disagreement.disagreement[3].metros_neither[0]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.disagreement[3].metros_neither[1]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.disagreement[3].metros_neither[2]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.disagreement[3].metros_neither[3]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.disagreement[3].n_common_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.disagreement[3].spread_gw_cdd` | **NOT READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `model_disagreement.disagreement[3].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.GFS[0].metros_missing[0]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.GFS[0].metros_missing[1]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.GFS[0].metros_missing[2]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.GFS[0].metros_missing[3]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.GFS[0].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
 | `model_disagreement.stability.GFS[0].runs_cur.ATL` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.GFS[0].runs_cur.BOS` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.GFS[0].runs_cur.DCA` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
@@ -1724,26 +1969,30 @@ wrong for five groups is not the same field as one that never was.
 | `model_disagreement.stability.GFS[0].runs_prv.SEA` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.GFS[0].runs_prv.SFO` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.GFS[0].runs_prv.STL` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.GFS[0].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.GFS[1].metros_missing[0]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.GFS[1].metros_missing[1]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.GFS[1].metros_missing[2]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.GFS[1].metros_missing[3]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.GFS[1].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.GFS[1].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.GFS[2].metros_missing[0]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.GFS[2].metros_missing[1]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.GFS[2].metros_missing[2]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.GFS[2].metros_missing[3]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.GFS[2].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.GFS[2].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.GFS[3].metros_missing[0]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.GFS[3].metros_missing[1]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.GFS[3].metros_missing[2]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.GFS[3].metros_missing[3]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.GFS[3].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.GFS[3].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.MEX[0].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
+| `model_disagreement.stability.GFS[0].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.GFS[1].metros_missing[0]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.GFS[1].metros_missing[1]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.GFS[1].metros_missing[2]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.GFS[1].metros_missing[3]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.GFS[1].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.GFS[1].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.GFS[2].metros_missing[0]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.GFS[2].metros_missing[1]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.GFS[2].metros_missing[2]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.GFS[2].metros_missing[3]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.GFS[2].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.GFS[2].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.GFS[3].metros_missing[0]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.GFS[3].metros_missing[1]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.GFS[3].metros_missing[2]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.GFS[3].metros_missing[3]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.GFS[3].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.GFS[3].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.MEX[0].metros_missing[0]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.MEX[0].metros_missing[1]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.MEX[0].metros_missing[2]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.MEX[0].metros_missing[3]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.MEX[0].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
 | `model_disagreement.stability.MEX[0].runs_cur.ATL` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.MEX[0].runs_cur.BOS` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.MEX[0].runs_cur.DCA` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
@@ -1776,8 +2025,12 @@ wrong for five groups is not the same field as one that never was.
 | `model_disagreement.stability.MEX[0].runs_prv.SEA` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.MEX[0].runs_prv.SFO` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.MEX[0].runs_prv.STL` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.MEX[0].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.MEX[1].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
+| `model_disagreement.stability.MEX[0].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.MEX[1].metros_missing[0]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.MEX[1].metros_missing[1]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.MEX[1].metros_missing[2]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.MEX[1].metros_missing[3]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.MEX[1].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
 | `model_disagreement.stability.MEX[1].runs_cur.ATL` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.MEX[1].runs_cur.BOS` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.MEX[1].runs_cur.DCA` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
@@ -1810,8 +2063,12 @@ wrong for five groups is not the same field as one that never was.
 | `model_disagreement.stability.MEX[1].runs_prv.SEA` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.MEX[1].runs_prv.SFO` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.MEX[1].runs_prv.STL` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.MEX[1].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.MEX[2].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
+| `model_disagreement.stability.MEX[1].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.MEX[2].metros_missing[0]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.MEX[2].metros_missing[1]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.MEX[2].metros_missing[2]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.MEX[2].metros_missing[3]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.MEX[2].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
 | `model_disagreement.stability.MEX[2].runs_cur.ATL` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.MEX[2].runs_cur.BOS` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.MEX[2].runs_cur.DCA` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
@@ -1844,8 +2101,12 @@ wrong for five groups is not the same field as one that never was.
 | `model_disagreement.stability.MEX[2].runs_prv.SEA` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.MEX[2].runs_prv.SFO` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.MEX[2].runs_prv.STL` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.MEX[2].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.MEX[3].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
+| `model_disagreement.stability.MEX[2].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.MEX[3].metros_missing[0]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.MEX[3].metros_missing[1]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.MEX[3].metros_missing[2]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.MEX[3].metros_missing[3]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.MEX[3].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
 | `model_disagreement.stability.MEX[3].runs_cur.ATL` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.MEX[3].runs_cur.BOS` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.MEX[3].runs_cur.DCA` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
@@ -1878,8 +2139,12 @@ wrong for five groups is not the same field as one that never was.
 | `model_disagreement.stability.MEX[3].runs_prv.SEA` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.MEX[3].runs_prv.SFO` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.MEX[3].runs_prv.STL` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.MEX[3].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.NAM[0].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
+| `model_disagreement.stability.MEX[3].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.NAM[0].metros_missing[0]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.NAM[0].metros_missing[1]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.NAM[0].metros_missing[2]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.NAM[0].metros_missing[3]` | **NOT READ** | string | model_disagreement | 24 | 10 | 0 | live | - |
+| `model_disagreement.stability.NAM[0].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
 | `model_disagreement.stability.NAM[0].runs_cur.ATL` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.NAM[0].runs_cur.BOS` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.NAM[0].runs_cur.DCA` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
@@ -1912,287 +2177,297 @@ wrong for five groups is not the same field as one that never was.
 | `model_disagreement.stability.NAM[0].runs_prv.SEA` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.NAM[0].runs_prv.SFO` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.stability.NAM[0].runs_prv.STL` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.NAM[0].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.NAM[1].metros_missing[0]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.NAM[1].metros_missing[1]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.NAM[1].metros_missing[2]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.NAM[1].metros_missing[3]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.NAM[1].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.NAM[1].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.NAM[2].metros_missing[0]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.NAM[2].metros_missing[1]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.NAM[2].metros_missing[2]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.NAM[2].metros_missing[3]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.NAM[2].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.NAM[2].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.NAM[3].metros_missing[0]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.NAM[3].metros_missing[1]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.NAM[3].metros_missing[2]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.NAM[3].metros_missing[3]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.NAM[3].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.stability.NAM[3].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.summary.max_abs_spread_horizon` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.summary.mean_abs_spread_over_overlap` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.summary.n_overlap_horizons` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
+| `model_disagreement.stability.NAM[0].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.NAM[1].metros_missing[0]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.NAM[1].metros_missing[1]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.NAM[1].metros_missing[2]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.NAM[1].metros_missing[3]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.NAM[1].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.NAM[1].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.NAM[2].metros_missing[0]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.NAM[2].metros_missing[1]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.NAM[2].metros_missing[2]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.NAM[2].metros_missing[3]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.NAM[2].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.NAM[2].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.NAM[3].metros_missing[0]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.NAM[3].metros_missing[1]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.NAM[3].metros_missing[2]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.NAM[3].metros_missing[3]` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.NAM[3].n_metros` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.stability.NAM[3].target_date` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `model_disagreement.summary.max_abs_spread_horizon` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 0 | live | - |
+| `model_disagreement.summary.mean_abs_spread_over_overlap` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 0 | live | - |
+| `model_disagreement.summary.n_overlap_horizons` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
 | `model_disagreement.summary.overlap_horizons[0]` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
 | `model_disagreement.summary.overlap_horizons[1]` | **NOT READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `model_disagreement.summary.summary_note` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.dry_production_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 5 | 0 | live | - |
-| `ngwu_balance.dry_production_wow_computed_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.dry_production_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 1 | 0 | live | - |
-| `ngwu_balance.dry_production_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 1 | 0 | live | - |
-| `ngwu_balance.era` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.industrial_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.industrial_wow_computed_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.industrial_wow_stated_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.industrial_wow_stated_pct` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.issue_age_days` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.issue_date` | **NOT READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.knowable_from` | **NOT READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.dry_production_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.dry_production_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.dry_production_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.industrial_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.industrial_wow_stated_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.industrial_wow_stated_pct` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.issue_date` | **NOT READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.lng_feedgas_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.lng_feedgas_wow_stated_pct` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.mexico_exports_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.mexico_exports_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.mexico_exports_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.net_canada_imports_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.net_canada_imports_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.net_canada_imports_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.power_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.power_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.power_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.rescomm_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.rescomm_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.rescomm_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.total_consumption_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.total_consumption_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.total_consumption_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.total_supply_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.total_supply_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.latest_sd_levels.total_supply_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.lng_feedgas_wow_computed_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.lng_feedgas_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 1 | 0 | live | - |
-| `ngwu_balance.lng_feedgas_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 6 | 0 | live | - |
-| `ngwu_balance.mexico_exports_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.mexico_exports_wow_computed_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.mexico_exports_wow_stated_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.mexico_exports_wow_stated_pct` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.net_canada_imports_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.net_canada_imports_wow_computed_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.net_canada_imports_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 1 | 0 | live | - |
-| `ngwu_balance.net_canada_imports_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 1 | 0 | live | - |
-| `ngwu_balance.power_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.power_wow_computed_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.power_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 26 | 0 | live | - |
-| `ngwu_balance.power_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 26 | 0 | live | - |
-| `ngwu_balance.rescomm_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.rescomm_wow_computed_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.rescomm_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 17 | 0 | live | - |
-| `ngwu_balance.rescomm_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 11 | 0 | live | - |
-| `ngwu_balance.source_url` | **NOT READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.total_consumption_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.total_consumption_wow_computed_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.total_consumption_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 64 | 0 | live | - |
-| `ngwu_balance.total_consumption_wow_stated_pct` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.total_supply_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.total_supply_wow_computed_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `ngwu_balance.total_supply_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 11 | 0 | live | - |
-| `ngwu_balance.total_supply_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 6 | 0 | live | - |
-| `ngwu_balance.vessels_attribution` | **NOT READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.week_span[0]` | **NOT READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `ngwu_balance.week_span[1]` | **NOT READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `nuclear_outages.capacity_out_gw` | **NOT READ** | number | nuclear_outages | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `nuclear_outages.capacity_out_mw` | **NOT READ** | number | nuclear_outages | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `nuclear_outages.chg_1d_mw` | **NOT READ** | number | nuclear_outages | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `nuclear_outages.fleet_capacity_mw` | **NOT READ** | number | nuclear_outages | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `nuclear_outages.outage_season` | **NOT READ** | string | nuclear_outages | 12,13,14,15,16,18,19,20,21,22,23 | 60 | 0 | live | - |
-| `nuclear_outages.pct_of_fleet_out` | **NOT READ** | number | nuclear_outages | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `options_surface.asof_session` | **NOT READ** | string | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].n_strikes` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].opex_date` | **NOT READ** | string | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].per_asset_opex.LNE` | **NOT READ** | string | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].per_asset_opex.ON` | **NOT READ** | string | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].per_asset_totals.LNE.call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].per_asset_totals.LNE.put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `model_disagreement.summary.summary_note` | **NOT READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.dry_production_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 5 | 0 | live | - |
+| `ngwu_balance.dry_production_wow_computed_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.dry_production_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 11 | 0 | live | - |
+| `ngwu_balance.dry_production_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 11 | 0 | live | - |
+| `ngwu_balance.era` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.industrial_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.industrial_wow_computed_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.industrial_wow_stated_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.industrial_wow_stated_pct` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.issue_age_days` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.issue_date` | **NOT READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.knowable_from` | **NOT READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.dry_production_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.dry_production_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.dry_production_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.industrial_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.industrial_wow_stated_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.industrial_wow_stated_pct` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.issue_date` | **NOT READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.lng_feedgas_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.lng_feedgas_wow_stated_pct` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.mexico_exports_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.mexico_exports_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.mexico_exports_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.net_canada_imports_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.net_canada_imports_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.net_canada_imports_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.power_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.power_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.power_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.rescomm_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.rescomm_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.rescomm_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.total_consumption_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.total_consumption_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.total_consumption_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.total_supply_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.total_supply_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.latest_sd_levels.total_supply_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.lng_feedgas_wow_computed_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.lng_feedgas_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 11 | 0 | live | - |
+| `ngwu_balance.lng_feedgas_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 16 | 0 | live | - |
+| `ngwu_balance.mexico_exports_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.mexico_exports_wow_computed_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.mexico_exports_wow_stated_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.mexico_exports_wow_stated_pct` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.net_canada_imports_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.net_canada_imports_wow_computed_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.net_canada_imports_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 11 | 0 | live | - |
+| `ngwu_balance.net_canada_imports_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 11 | 0 | live | - |
+| `ngwu_balance.power_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.power_wow_computed_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.power_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 36 | 0 | live | - |
+| `ngwu_balance.power_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 36 | 0 | live | - |
+| `ngwu_balance.rescomm_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.rescomm_wow_computed_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.rescomm_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 17 | 0 | live | - |
+| `ngwu_balance.rescomm_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 11 | 0 | live | - |
+| `ngwu_balance.source_url` | **NOT READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.total_consumption_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.total_consumption_wow_computed_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.total_consumption_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 64 | 0 | live | - |
+| `ngwu_balance.total_consumption_wow_stated_pct` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.total_supply_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.total_supply_wow_computed_bcfd` | **NOT READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `ngwu_balance.total_supply_wow_stated_bcfd` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 21 | 0 | live | - |
+| `ngwu_balance.total_supply_wow_stated_pct` | **NOT READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 16 | 0 | live | - |
+| `ngwu_balance.vessels_attribution` | **NOT READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.week_span[0]` | **NOT READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `ngwu_balance.week_span[1]` | **NOT READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `nuclear_outages.capacity_out_gw` | **NOT READ** | number | nuclear_outages | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `nuclear_outages.capacity_out_mw` | **NOT READ** | number | nuclear_outages | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `nuclear_outages.chg_1d_mw` | **NOT READ** | number | nuclear_outages | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 138 | 0 | live | - |
+| `nuclear_outages.fleet_capacity_mw` | **NOT READ** | number | nuclear_outages | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `nuclear_outages.outage_season` | **NOT READ** | string | nuclear_outages | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 60 | 0 | live | - |
+| `nuclear_outages.pct_of_fleet_out` | **NOT READ** | number | nuclear_outages | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `options_surface.asof_session` | **NOT READ** | string | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].n_strikes` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].opex_date` | **NOT READ** | string | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].per_asset_opex.LNE` | **NOT READ** | string | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].per_asset_opex.ON` | **NOT READ** | string | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].per_asset_totals.LNE.call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].per_asset_totals.LNE.put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
 | `options_surface.months[0].per_asset_totals.ON.call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
 | `options_surface.months[0].per_asset_totals.ON.put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].put_call_oi_ratio` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 96 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].top5_oi_strikes[0].call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].top5_oi_strikes[0].put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].top5_oi_strikes[0].share_of_month_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 96 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].top5_oi_strikes[1].call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].top5_oi_strikes[1].put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].top5_oi_strikes[1].share_of_month_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 96 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].top5_oi_strikes[2].call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].top5_oi_strikes[2].put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].top5_oi_strikes[2].share_of_month_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 96 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].top5_oi_strikes[3].call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].top5_oi_strikes[3].put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].top5_oi_strikes[3].share_of_month_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 96 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].total_call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].total_put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].n_strikes` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].opex_date` | **NOT READ** | string | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].per_asset_opex.LNE` | **NOT READ** | string | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].per_asset_opex.ON` | **NOT READ** | string | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].per_asset_totals.LNE.call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].per_asset_totals.LNE.put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].put_call_oi_ratio` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 106 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].top5_oi_strikes[0].call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].top5_oi_strikes[0].put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].top5_oi_strikes[0].share_of_month_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 106 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].top5_oi_strikes[1].call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].top5_oi_strikes[1].put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].top5_oi_strikes[1].share_of_month_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 106 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].top5_oi_strikes[2].call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].top5_oi_strikes[2].put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].top5_oi_strikes[2].share_of_month_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 106 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].top5_oi_strikes[3].call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].top5_oi_strikes[3].put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].top5_oi_strikes[3].share_of_month_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 106 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].total_call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].total_put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].n_strikes` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].opex_date` | **NOT READ** | string | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].per_asset_opex.LNE` | **NOT READ** | string | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].per_asset_opex.ON` | **NOT READ** | string | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].per_asset_totals.LNE.call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].per_asset_totals.LNE.put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
 | `options_surface.months[1].per_asset_totals.ON.call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
 | `options_surface.months[1].per_asset_totals.ON.put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].put_call_oi_ratio` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 96 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].top5_oi_strikes[0].call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].top5_oi_strikes[0].put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].top5_oi_strikes[0].share_of_month_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 96 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].top5_oi_strikes[1].call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].top5_oi_strikes[1].put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].top5_oi_strikes[1].share_of_month_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 96 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].top5_oi_strikes[2].call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].top5_oi_strikes[2].put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].top5_oi_strikes[2].share_of_month_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 96 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].top5_oi_strikes[3].call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].top5_oi_strikes[3].put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].top5_oi_strikes[3].share_of_month_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 96 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].total_call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].total_put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.strike_rescale_basis` | **NOT READ** | string | options_surface | 22,23 | 20 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.strike_units` | **NOT READ** | string | options_surface | 22,23 | 20 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `session_close_et` | **NOT READ** | string | session_close_et | 12,13,14,15,16,18,19,20,21,22,23 | 11 | 0 | live | - |
-| `settle_window_et` | **NOT READ** | string | settle_window_et | 12,13,14,15,16,18,19,20,21,22,23 | 11 | 0 | live | - |
-| `solar.gw_day_length_chg_7d` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.gw_day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.ATL.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.ATL.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.ATL.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.ATL.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.BOS.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.BOS.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.BOS.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.BOS.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.DCA.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.DCA.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.DCA.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.DCA.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.DEN.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.DEN.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.DEN.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.DEN.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.DFW.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.DFW.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.DFW.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.DFW.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.DTW.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.DTW.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.DTW.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.DTW.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.IAH.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.IAH.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.IAH.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.IAH.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.LAX.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.LAX.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.LAX.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.LAX.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.MSP.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.MSP.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.MSP.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.MSP.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.NYC.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.NYC.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.NYC.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.NYC.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.ORD.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.ORD.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.ORD.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.ORD.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.PHL.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.PHL.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.PHL.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.PHL.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.PHX.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.PHX.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.PHX.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.PHX.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.SEA.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.SEA.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.SEA.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.SEA.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.SFO.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.SFO.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.SFO.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.SFO.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.STL.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.STL.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.STL.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.metros.STL.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.sunset_et_earliest` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `solar.sunset_et_latest` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `squeeze_watch.active_status_note` | **NOT READ** | string | squeeze_watch | 22 | 10 | 0 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `squeeze_watch.calendar_front_symbol` | **NOT READ** | string | squeeze_watch | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `squeeze_watch.calendar_front_symbol_live` | **NOT READ** | string | squeeze_watch | 22,23 | 20 | 0 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `squeeze_watch.calendar_limb_basis` | **NOT READ** | string | squeeze_watch | 22,23 | 20 | 0 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `squeeze_watch.calendar_limb_note` | **NOT READ** | string | squeeze_watch | 22,23 | 20 | 0 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `squeeze_watch.frozen_front_expired` | **NOT READ** | bool | squeeze_watch | 20,22 | 12 | 0 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `squeeze_watch.last_prompt_expiry` | **NOT READ** | string | squeeze_watch | 13,14,15,16,18,19,20,21,22,23 | 107 | 0 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `squeeze_watch.unwind_basis` | **NOT READ** | string | squeeze_watch | 22 | 5 | 0 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `squeeze_watch.unwind_note` | **NOT READ** | string | squeeze_watch | 13,14,15,16,18,19,20,21,22,23 | 107 | 0 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `steo_vintage.fields.commercial_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.commercial_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.dry_production_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.dry_production_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.industrial_bcfd` | **NOT READ** | null-only | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `steo_vintage.fields.lng_gross_exports_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.lng_gross_exports_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.lng_gross_imports_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.lng_gross_imports_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.marketed_production_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.marketed_production_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.net_storage_withdrawal_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.net_storage_withdrawal_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.pipeline_gross_exports_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.pipeline_gross_exports_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.pipeline_gross_imports_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.pipeline_gross_imports_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.power_burn_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.power_burn_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.residential_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.residential_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.total_consumption_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.total_consumption_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.working_gas_inventory_bcf.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.fields.working_gas_inventory_bcf.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.knowable_from` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.month_cur` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.month_next` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.month_prev` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.prev_vintage_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.release_date` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.commercial_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.dry_production_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.lng_gross_exports_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.lng_gross_imports_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.marketed_production_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.net_storage_withdrawal_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.pipeline_gross_exports_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.pipeline_gross_imports_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.power_burn_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.residential_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.total_consumption_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.working_gas_inventory_bcf.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `steo_vintage.vintage_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `stor_surprise_sign` | **NOT READ** | string | stor_surprise_sign | 6,7,8,9,10,11,12,13,14,15,16,18,19,20,21,22,23 | 172 | 0 | live | - |
-| `storage.as_of` | **NOT READ** | string | storage | 6,7,8,9,10,11,12,13,14,15,16,20,21,22,23 | 172 | 0 | live | h-storage |
-| `storage_consensus.as_of` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_consensus.last_print.actual_as_printed_bcf` | **NOT READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 0 | live | - |
-| `storage_consensus.last_print.actual_as_printed_source` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 0 | live | - |
-| `storage_consensus.last_print.actual_current_vintage_bcf` | **NOT READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 0 | live | - |
-| `storage_consensus.last_print.consensus_pre_print_snapshot_utc` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 63 | 0 | live | - |
-| `storage_consensus.last_print.days_since_print` | **NOT READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 0 | live | - |
+| `options_surface.months[1].put_call_oi_ratio` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 106 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].top5_oi_strikes[0].call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].top5_oi_strikes[0].put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].top5_oi_strikes[0].share_of_month_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 106 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].top5_oi_strikes[1].call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].top5_oi_strikes[1].put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].top5_oi_strikes[1].share_of_month_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 106 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].top5_oi_strikes[2].call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].top5_oi_strikes[2].put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].top5_oi_strikes[2].share_of_month_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 106 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].top5_oi_strikes[3].call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].top5_oi_strikes[3].put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].top5_oi_strikes[3].share_of_month_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 106 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].total_call_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].total_put_oi` | **NOT READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.strike_rescale_basis` | **NOT READ** | string | options_surface | 23 | 10 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.strike_units` | **NOT READ** | string | options_surface | 22,23,24 | 30 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.strike_units_basis` | **NOT READ** | string | options_surface | 22,24 | 20 | 0 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `scored_leg.block_is_two_leg` | **NOT READ** | bool | scored_leg | 1 | 10 | 0 | live | - |
+| `scored_leg.leg` | **NOT READ** | string | scored_leg | 1 | 10 | 0 | live | - |
+| `scored_leg.seam_date` | **NOT READ** | null-only | scored_leg | 1 | 0 | 0 | live | - |
+| `scored_leg.side_of_seam` | **NOT READ** | null-only | scored_leg | 1 | 0 | 0 | live | - |
+| `session_close_et` | **NOT READ** | string | session_close_et | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 13 | 0 | live | - |
+| `settle_window_et` | **NOT READ** | string | settle_window_et | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 13 | 0 | live | - |
+| `solar.gw_day_length_chg_7d` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.gw_day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.ATL.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.ATL.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.ATL.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.ATL.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.BOS.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.BOS.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.BOS.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.BOS.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.DCA.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.DCA.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.DCA.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.DCA.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.DEN.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.DEN.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.DEN.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.DEN.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.DFW.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.DFW.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.DFW.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.DFW.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.DTW.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.DTW.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.DTW.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.DTW.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.IAH.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.IAH.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.IAH.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.IAH.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.LAX.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.LAX.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.LAX.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.LAX.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.MSP.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.MSP.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.MSP.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.MSP.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.NYC.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.NYC.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.NYC.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.NYC.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.ORD.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.ORD.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.ORD.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.ORD.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.PHL.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.PHL.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.PHL.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.PHL.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.PHX.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.PHX.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.PHX.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.PHX.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.SEA.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.SEA.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.SEA.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.SEA.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.SFO.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.SFO.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.SFO.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.SFO.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.STL.day_length_h` | **NOT READ** | number | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.STL.sunrise_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.STL.sunset_et` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.metros.STL.sunset_local` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.sunset_et_earliest` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `solar.sunset_et_latest` | **NOT READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `squeeze_watch.active_false_negative` | **NOT READ** | string | squeeze_watch | 22,24 | 13 | 0 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `squeeze_watch.calendar_front_symbol` | **NOT READ** | string | squeeze_watch | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `squeeze_watch.calendar_front_symbol_live` | **NOT READ** | string | squeeze_watch | 22,23,24 | 30 | 0 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `squeeze_watch.calendar_limb_basis` | **NOT READ** | string | squeeze_watch | 22,23,24 | 30 | 0 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `squeeze_watch.calendar_limb_note` | **NOT READ** | string | squeeze_watch | 23 | 10 | 0 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `squeeze_watch.frozen_front_expired` | **NOT READ** | bool | squeeze_watch | 20,22,24 | 14 | 0 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `squeeze_watch.last_prompt_expiry` | **NOT READ** | string | squeeze_watch | 13,14,15,16,18,19,20,21,22,23,24 | 117 | 0 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `squeeze_watch.unwind_note` | **NOT READ** | string | squeeze_watch | 13,14,15,16,18,19,20,21,22,23,24 | 117 | 0 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `steo_vintage.fields.commercial_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.commercial_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.dry_production_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.dry_production_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.industrial_bcfd` | **NOT READ** | null-only | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `steo_vintage.fields.lng_gross_exports_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.lng_gross_exports_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.lng_gross_imports_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.lng_gross_imports_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.marketed_production_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.marketed_production_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.net_storage_withdrawal_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.net_storage_withdrawal_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.pipeline_gross_exports_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.pipeline_gross_exports_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.pipeline_gross_imports_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.pipeline_gross_imports_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.power_burn_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.power_burn_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.residential_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.residential_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.total_consumption_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.total_consumption_bcfd.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.working_gas_inventory_bcf.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.fields.working_gas_inventory_bcf.series_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.knowable_from` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.month_cur` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.month_next` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.month_prev` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.prev_vintage_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.release_date` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.commercial_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.dry_production_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.lng_gross_exports_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.lng_gross_imports_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.marketed_production_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.net_storage_withdrawal_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.pipeline_gross_exports_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.pipeline_gross_imports_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.power_burn_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.residential_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.total_consumption_bcfd.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.working_gas_inventory_bcf.cur` | **NOT READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `steo_vintage.vintage_id` | **NOT READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `stor_surprise_basis.actual_bcf` | **NOT READ** | number | stor_surprise_basis | 1,24 | 16 | 0 | live | - |
+| `stor_surprise_basis.as_of_report_date` | **NOT READ** | string | stor_surprise_basis | 1,24 | 16 | 0 | live | - |
+| `stor_surprise_basis.period_week_ending` | **NOT READ** | string | stor_surprise_basis | 1,24 | 16 | 0 | live | - |
+| `stor_surprise_basis.seasonal_expectation_bcf` | **NOT READ** | number | stor_surprise_basis | 1,24 | 16 | 0 | live | - |
+| `stor_surprise_basis.sign_means` | **NOT READ** | string | stor_surprise_basis | 1,24 | 16 | 0 | live | - |
+| `stor_surprise_basis.surprise_bcf` | **NOT READ** | number | stor_surprise_basis | 1,24 | 16 | 0 | live | - |
+| `stor_surprise_sign` | **NOT READ** | string | stor_surprise_sign | 1,6,7,8,9,10,11,12,13,14,15,16,18,19,20,21,22,23,24 | 192 | 0 | live | - |
+| `storage.as_of` | **NOT READ** | string | storage | 1,6,7,8,9,10,11,12,13,14,15,16,20,21,22,23,24 | 192 | 0 | live | h-storage |
+| `storage_consensus.as_of` | **NOT READ** | string | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_consensus.last_print.actual_as_printed_bcf` | **NOT READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 | 0 | live | - |
+| `storage_consensus.last_print.actual_as_printed_source` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 | 0 | live | - |
+| `storage_consensus.last_print.actual_current_vintage_bcf` | **NOT READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 | 0 | live | - |
+| `storage_consensus.last_print.consensus_pre_print_snapshot_utc` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23,24 | 63 | 0 | live | - |
+| `storage_consensus.last_print.days_since_print` | **NOT READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 | 0 | live | - |
 | `storage_consensus.last_print.estimates[0].how` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 0 | live | - |
 | `storage_consensus.last_print.estimates[0].snapshot_utc` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 0 | live | - |
 | `storage_consensus.last_print.estimates[0].url` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 0 | live | - |
@@ -2212,24 +2487,24 @@ wrong for five groups is not the same field as one that never was.
 | `storage_consensus.last_print.estimates[3].snapshot_utc` | **NOT READ** | string | storage_consensus | 12 | 11 | 0 | live | - |
 | `storage_consensus.last_print.estimates[3].url` | **NOT READ** | string | storage_consensus | 12 | 11 | 0 | live | - |
 | `storage_consensus.last_print.estimates[3].value_bcf` | **NOT READ** | number | storage_consensus | 12 | 11 | 0 | live | - |
-| `storage_consensus.last_print.for_report_date` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 0 | live | - |
-| `storage_consensus.last_print.n_estimates` | **NOT READ** | null-only | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `storage_consensus.last_print.print_date` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 0 | live | - |
-| `storage_consensus.last_print.print_datetime_utc` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 0 | live | - |
-| `storage_consensus.last_print.print_dow` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 0 | live | - |
-| `storage_consensus.last_print.print_schedule_note` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 0 | live | - |
-| `storage_consensus.last_print.print_time_et` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 0 | live | - |
-| `storage_consensus.last_print.range_high_bcf` | **NOT READ** | null-only | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `storage_consensus.last_print.range_low_bcf` | **NOT READ** | null-only | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `storage_consensus.last_print.surprise_as_printed_vs_consensus_bcf` | **NOT READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 0 | live | - |
-| `storage_consensus.last_print.vintage_diff_bcf` | **NOT READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 0 | live | - |
+| `storage_consensus.last_print.for_report_date` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 | 0 | live | - |
+| `storage_consensus.last_print.n_estimates` | **NOT READ** | null-only | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `storage_consensus.last_print.print_date` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 | 0 | live | - |
+| `storage_consensus.last_print.print_datetime_utc` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 | 0 | live | - |
+| `storage_consensus.last_print.print_dow` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 | 0 | live | - |
+| `storage_consensus.last_print.print_schedule_note` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 | 0 | live | - |
+| `storage_consensus.last_print.print_time_et` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 | 0 | live | - |
+| `storage_consensus.last_print.range_high_bcf` | **NOT READ** | null-only | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `storage_consensus.last_print.range_low_bcf` | **NOT READ** | null-only | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `storage_consensus.last_print.surprise_as_printed_vs_consensus_bcf` | **NOT READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23,24 | 118 | 0 | live | - |
+| `storage_consensus.last_print.vintage_diff_bcf` | **NOT READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 | 0 | live | - |
 | `storage_consensus.last_print_basis` | **NOT READ** | string | storage_consensus | 23 | 1 | 0 | live | - |
-| `storage_consensus.next_print.consensus_pre_print_snapshot_utc` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 54 | 0 | live | - |
-| `storage_consensus.next_print.days_to_print` | **NOT READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 0 | live | - |
-| `storage_consensus.next_print.estimates[0].how` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 0 | live | - |
-| `storage_consensus.next_print.estimates[0].snapshot_utc` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 0 | live | - |
-| `storage_consensus.next_print.estimates[0].url` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 0 | live | - |
-| `storage_consensus.next_print.estimates[0].value_bcf` | **NOT READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 60 | 0 | live | - |
+| `storage_consensus.next_print.consensus_pre_print_snapshot_utc` | **NOT READ** | string | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 54 | 0 | live | - |
+| `storage_consensus.next_print.days_to_print` | **NOT READ** | number | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 132 | 0 | live | - |
+| `storage_consensus.next_print.estimates[0].how` | **NOT READ** | string | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23 | 123 | 0 | live | - |
+| `storage_consensus.next_print.estimates[0].snapshot_utc` | **NOT READ** | string | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23 | 123 | 0 | live | - |
+| `storage_consensus.next_print.estimates[0].url` | **NOT READ** | string | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23 | 123 | 0 | live | - |
+| `storage_consensus.next_print.estimates[0].value_bcf` | **NOT READ** | number | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23 | 70 | 0 | live | - |
 | `storage_consensus.next_print.estimates[1].how` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 0 | live | - |
 | `storage_consensus.next_print.estimates[1].snapshot_utc` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 0 | live | - |
 | `storage_consensus.next_print.estimates[1].url` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 0 | live | - |
@@ -2242,784 +2517,884 @@ wrong for five groups is not the same field as one that never was.
 | `storage_consensus.next_print.estimates[3].snapshot_utc` | **NOT READ** | string | storage_consensus | 12 | 5 | 0 | live | - |
 | `storage_consensus.next_print.estimates[3].url` | **NOT READ** | string | storage_consensus | 12 | 5 | 0 | live | - |
 | `storage_consensus.next_print.estimates[3].value_bcf` | **NOT READ** | number | storage_consensus | 12 | 5 | 0 | live | - |
-| `storage_consensus.next_print.for_report_date` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 0 | live | - |
-| `storage_consensus.next_print.n_estimates` | **NOT READ** | null-only | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `storage_consensus.next_print.print_date` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 0 | live | - |
-| `storage_consensus.next_print.print_datetime_utc` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 0 | live | - |
-| `storage_consensus.next_print.print_dow` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 0 | live | - |
-| `storage_consensus.next_print.print_schedule_note` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 0 | live | - |
-| `storage_consensus.next_print.print_time_et` | **NOT READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 0 | live | - |
-| `storage_consensus.next_print.range_high_bcf` | **NOT READ** | null-only | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `storage_consensus.next_print.range_low_bcf` | **NOT READ** | null-only | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `storage_regional.as_of` | **NOT READ** | string | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_regional.days_of_supply` | **NOT READ** | null-only | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `storage_regional.days_of_supply_note` | **NOT READ** | string | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_regional.eia_estimate_basis` | **NOT READ** | null-only | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `storage_regional.regions.east.vs_year_ago` | **NOT READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_regional.regions.l48.vs_year_ago` | **NOT READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_regional.regions.midwest.vs_year_ago` | **NOT READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_regional.regions.mountain.vs_year_ago` | **NOT READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_regional.regions.pacific.vs_year_ago` | **NOT READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_regional.regions.south_central.vs_year_ago` | **NOT READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_regional.regions.south_central_nonsalt.vs_year_ago` | **NOT READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_regional.regions.south_central_salt.vs_year_ago` | **NOT READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_regional.salt_share` | **NOT READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.as_of` | **NOT READ** | string | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.as_printed_recovered` | **NOT READ** | bool | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.eia_revision_flags_at_print` | **NOT READ** | null-only | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 0 | live | - |
-| `storage_vintage.evidence_url` | **NOT READ** | string | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.national_chg_as_printed` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.national_chg_current` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.national_level_as_printed` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.national_level_current` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.print_datetime_utc` | **NOT READ** | string | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.east.chg_as_printed` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.east.chg_current` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.east.chg_delta` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.east.level_as_printed` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.east.level_current` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.east.level_delta` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.l48.chg_as_printed` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.l48.chg_current` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.l48.chg_delta` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.l48.level_as_printed` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.l48.level_current` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.l48.level_delta` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.midwest.chg_as_printed` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.midwest.chg_current` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.midwest.chg_delta` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.midwest.level_as_printed` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.midwest.level_current` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.midwest.level_delta` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.mountain.chg_as_printed` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.mountain.chg_current` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.mountain.chg_delta` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.mountain.level_as_printed` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.mountain.level_current` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.mountain.level_delta` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.pacific.chg_as_printed` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.pacific.chg_current` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.pacific.chg_delta` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.pacific.level_as_printed` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.pacific.level_current` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.pacific.level_delta` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.south_central.chg_as_printed` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.south_central.chg_current` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.south_central.chg_delta` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.south_central.level_as_printed` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.south_central.level_current` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.south_central.level_delta` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.south_central_nonsalt.chg_as_printed` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.south_central_nonsalt.chg_current` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.south_central_nonsalt.chg_delta` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.south_central_nonsalt.level_as_printed` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.south_central_nonsalt.level_current` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.south_central_nonsalt.level_delta` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.south_central_salt.chg_as_printed` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.south_central_salt.chg_current` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.south_central_salt.chg_delta` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.south_central_salt.level_as_printed` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.south_central_salt.level_current` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.regions.south_central_salt.level_delta` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.vintage_delta_chg` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `storage_vintage.vintage_delta_level` | **NOT READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `tape_conditions.asof_prior_session` | **NOT READ** | string | tape_conditions | 15,16,18,19,20,21,22,23 | 83 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.b_share_basis_note` | **NOT READ** | string | tape_conditions | 21,22,23 | 30 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.big_print_b_share_basis` | **NOT READ** | string | tape_conditions | 20,21,22,23 | 40 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.firehose_present.mbo_flow` | **NOT READ** | bool | tape_conditions | 20,21,22,23 | 40 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `storage_consensus.next_print.for_report_date` | **NOT READ** | string | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 132 | 0 | live | - |
+| `storage_consensus.next_print.n_estimates` | **NOT READ** | null-only | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `storage_consensus.next_print.print_date` | **NOT READ** | string | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 132 | 0 | live | - |
+| `storage_consensus.next_print.print_datetime_utc` | **NOT READ** | string | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 132 | 0 | live | - |
+| `storage_consensus.next_print.print_dow` | **NOT READ** | string | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 132 | 0 | live | - |
+| `storage_consensus.next_print.print_schedule_note` | **NOT READ** | string | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 132 | 0 | live | - |
+| `storage_consensus.next_print.print_time_et` | **NOT READ** | string | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 132 | 0 | live | - |
+| `storage_consensus.next_print.range_high_bcf` | **NOT READ** | null-only | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `storage_consensus.next_print.range_low_bcf` | **NOT READ** | null-only | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `storage_regional.as_of` | **NOT READ** | string | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_regional.days_of_supply` | **NOT READ** | null-only | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `storage_regional.days_of_supply_note` | **NOT READ** | string | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_regional.eia_estimate_basis` | **NOT READ** | null-only | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `storage_regional.regions.east.vs_year_ago` | **NOT READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_regional.regions.l48.vs_year_ago` | **NOT READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_regional.regions.midwest.vs_year_ago` | **NOT READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_regional.regions.mountain.vs_year_ago` | **NOT READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_regional.regions.pacific.vs_year_ago` | **NOT READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_regional.regions.south_central.vs_year_ago` | **NOT READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_regional.regions.south_central_nonsalt.vs_year_ago` | **NOT READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_regional.regions.south_central_salt.vs_year_ago` | **NOT READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_regional.salt_share` | **NOT READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_repair_basis.not_touched` | **NOT READ** | string | storage_repair_basis | 24 | 6 | 0 | live | - |
+| `storage_repair_basis.to` | **NOT READ** | string | storage_repair_basis | 24 | 6 | 0 | live | - |
+| `storage_repair_basis.why` | **NOT READ** | string | storage_repair_basis | 24 | 6 | 0 | live | - |
+| `storage_vintage.as_of` | **NOT READ** | string | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.as_printed_recovered` | **NOT READ** | bool | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.eia_revision_flags_at_print` | **NOT READ** | null-only | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 0 | live | - |
+| `storage_vintage.evidence_url` | **NOT READ** | string | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.national_chg_as_printed` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.national_chg_current` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.national_level_as_printed` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.national_level_current` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.print_datetime_utc` | **NOT READ** | string | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.east.chg_as_printed` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.east.chg_current` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.east.chg_delta` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.east.level_as_printed` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.east.level_current` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.east.level_delta` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.l48.chg_as_printed` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.l48.chg_current` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.l48.chg_delta` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.l48.level_as_printed` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.l48.level_current` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.l48.level_delta` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.midwest.chg_as_printed` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.midwest.chg_current` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.midwest.chg_delta` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.midwest.level_as_printed` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.midwest.level_current` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.midwest.level_delta` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.mountain.chg_as_printed` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.mountain.chg_current` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.mountain.chg_delta` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.mountain.level_as_printed` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.mountain.level_current` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.mountain.level_delta` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.pacific.chg_as_printed` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.pacific.chg_current` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.pacific.chg_delta` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.pacific.level_as_printed` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.pacific.level_current` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.pacific.level_delta` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.south_central.chg_as_printed` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.south_central.chg_current` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.south_central.chg_delta` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.south_central.level_as_printed` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.south_central.level_current` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.south_central.level_delta` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.south_central_nonsalt.chg_as_printed` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.south_central_nonsalt.chg_current` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.south_central_nonsalt.chg_delta` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.south_central_nonsalt.level_as_printed` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.south_central_nonsalt.level_current` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.south_central_nonsalt.level_delta` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.south_central_salt.chg_as_printed` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.south_central_salt.chg_current` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.south_central_salt.chg_delta` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.south_central_salt.level_as_printed` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.south_central_salt.level_current` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.regions.south_central_salt.level_delta` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.vintage_delta_chg` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `storage_vintage.vintage_delta_level` | **NOT READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 0 | live | - |
+| `tape_conditions.asof_prior_session` | **NOT READ** | string | tape_conditions | 1,15,16,18,19,20,21,22,23,24 | 103 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.b_share_basis_note` | **NOT READ** | string | tape_conditions | 1,21,22,23,24 | 50 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.big_print_b_share_basis` | **NOT READ** | string | tape_conditions | 1,20,21,22,23,24 | 60 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.firehose_present.mbo_flow` | **NOT READ** | bool | tape_conditions | 1,20,21,22,23,24 | 60 | 0 | NEVER MASKED | h-tape_offinstrument |
 | `tape_conditions.flow_family_basis` | **NOT READ** | string | tape_conditions | 23 | 1 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.l1_book.quote_bid_share_p25_p75[0]` | **NOT READ** | number | tape_conditions | 18,19,20,21,22,23 | 52 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.l1_book.quote_bid_share_p25_p75[1]` | **NOT READ** | number | tape_conditions | 18,19,20,21,22,23 | 52 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.leg_count_150` | **NOT READ** | number | tape_conditions | 15,16,18,19,20,21,22,23 | 83 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.note_stub` | **NOT READ** | string | tape_conditions | 21,22,23 | 6 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.l1_book.quote_bid_share_p25_p75[0]` | **NOT READ** | number | tape_conditions | 1,18,19,20,21,22,23,24 | 63 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.l1_book.quote_bid_share_p25_p75[1]` | **NOT READ** | number | tape_conditions | 1,18,19,20,21,22,23,24 | 63 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.leg_count_150` | **NOT READ** | number | tape_conditions | 1,15,16,18,19,20,21,22,23,24 | 103 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.note_stub` | **NOT READ** | string | tape_conditions | 21,22,23,24 | 7 | 0 | NEVER MASKED | h-tape_offinstrument |
 | `tape_conditions.phase_b_share_two_sided` | **NOT READ** | null-only | tape_conditions | 23 | 0 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.phase_b_share_two_sided[0]` | **NOT READ** | number | tape_conditions | 21,22,23 | 29 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.phase_b_share_two_sided[1]` | **NOT READ** | number | tape_conditions | 21,22,23 | 29 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.phase_b_share_two_sided[2]` | **NOT READ** | number | tape_conditions | 21,22,23 | 29 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.phase_b_share_two_sided[0]` | **NOT READ** | number | tape_conditions | 1,21,22,23,24 | 49 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.phase_b_share_two_sided[1]` | **NOT READ** | number | tape_conditions | 1,21,22,23,24 | 49 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.phase_b_share_two_sided[2]` | **NOT READ** | number | tape_conditions | 1,21,22,23,24 | 49 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.phase_bounds_et[0].end_et` | **NOT READ** | string | tape_conditions | 1 | 10 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.phase_bounds_et[0].start_et` | **NOT READ** | string | tape_conditions | 1 | 10 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.phase_bounds_et[1].end_et` | **NOT READ** | string | tape_conditions | 1 | 10 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.phase_bounds_et[1].start_et` | **NOT READ** | string | tape_conditions | 1 | 10 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.phase_bounds_et[2].end_et` | **NOT READ** | string | tape_conditions | 1 | 10 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.phase_bounds_et[2].start_et` | **NOT READ** | string | tape_conditions | 1 | 10 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.phase_bounds_note` | **NOT READ** | string | tape_conditions | 1 | 10 | 0 | NEVER MASKED | h-tape_offinstrument |
 | `tape_conditions.phase_n_trades` | **NOT READ** | null-only | tape_conditions | 23 | 0 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.phase_n_trades[0]` | **NOT READ** | number | tape_conditions | 22,23 | 19 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.phase_n_trades[1]` | **NOT READ** | number | tape_conditions | 22,23 | 19 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.phase_n_trades[2]` | **NOT READ** | number | tape_conditions | 22,23 | 19 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.phase_volume_note` | **NOT READ** | string | tape_conditions | 22,23 | 20 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.asof_prior_session` | **NOT READ** | string | tape_conditions | 21,22,23 | 6 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.b_share_basis_note` | **NOT READ** | string | tape_conditions | 21,22,23 | 6 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.big_print_b_share_basis` | **NOT READ** | string | tape_conditions | 21,22,23 | 6 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.firehose_present.mbo_flow` | **NOT READ** | bool | tape_conditions | 21,22,23 | 6 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.l1_book.quote_bid_share_p25_p75[0]` | **NOT READ** | number | tape_conditions | 21,22,23 | 6 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.l1_book.quote_bid_share_p25_p75[1]` | **NOT READ** | number | tape_conditions | 21,22,23 | 6 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.leg_count_150` | **NOT READ** | number | tape_conditions | 21,22,23 | 6 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.phase_b_share_two_sided[0]` | **NOT READ** | number | tape_conditions | 21,22,23 | 6 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.phase_b_share_two_sided[1]` | **NOT READ** | number | tape_conditions | 21,22,23 | 6 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.phase_b_share_two_sided[2]` | **NOT READ** | number | tape_conditions | 21,22,23 | 6 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.phase_n_trades[0]` | **NOT READ** | number | tape_conditions | 22,23 | 4 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.phase_n_trades[1]` | **NOT READ** | number | tape_conditions | 22,23 | 4 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.phase_n_trades[2]` | **NOT READ** | number | tape_conditions | 22,23 | 4 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.phase_volume_note` | **NOT READ** | string | tape_conditions | 22,23 | 4 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.session_b_share_basis` | **NOT READ** | string | tape_conditions | 22,23 | 4 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.source_store` | **NOT READ** | string | tape_conditions | 21,22,23 | 6 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.unsided_volume_frac` | **NOT READ** | number | tape_conditions | 21,22,23 | 6 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_session_is_reopen_stub` | **NOT READ** | bool | tape_conditions | 21,22,23 | 6 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.session_b_share_basis` | **NOT READ** | string | tape_conditions | 22,23 | 16 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.source_store` | **NOT READ** | string | tape_conditions | 15,16,18,19,20,21,22,23 | 83 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.unsided_volume_frac` | **NOT READ** | number | tape_conditions | 21,22,23 | 29 | 0 | NEVER MASKED | h-tape_offinstrument |
-| `vol_regime.n0_activity_trend` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 76 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.n0_era_basis` | **NOT READ** | string | vol_regime | 22,23 | 20 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.n0_net_sigma_20` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 76 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.n0_range_10_mean` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 76 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.n0_range_20_max` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 76 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.n0_range_5_mean` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 76 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.n0_range_pctile_n` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 76 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.n0_win_n_10` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 76 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.n0_win_n_20` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 76 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.n0_win_n_5` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 76 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.v0_activity_trend` | **NOT READ** | null-only | vol_regime | 12,13,14,20,21,22,23 | 0 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.v0_net_sigma_10` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 36 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.v0_net_sigma_20` | **NOT READ** | null-only | vol_regime | 12,13,14,20,21,22,23 | 0 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.v0_net_sigma_5` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 36 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.v0_prev_age_days` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 36 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.v0_prev_date` | **NOT READ** | string | vol_regime | 12,13,14,20,21,22,23 | 36 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.v0_prev_net` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 36 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.v0_prev_range` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 36 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.v0_prev_trades` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 36 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.v0_range_10_mean` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 36 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.v0_range_20_max` | **NOT READ** | null-only | vol_regime | 12,13,14,20,21,22,23 | 0 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.v0_range_20_mean` | **NOT READ** | null-only | vol_regime | 12,13,14,20,21,22,23 | 0 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.v0_range_5_mean` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 36 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.v0_range_pctile` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 36 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.v0_range_pctile_n` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 76 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.v0_win_n_10` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 76 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.v0_win_n_20` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 76 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.v0_win_n_5` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23 | 76 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `weather_forecast.asof_utc` | **NOT READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 0 | live | - |
-| `weather_forecast.forecast_regime` | **NOT READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 0 | live | - |
-| `weather_forecast.forecast_vs_normal` | **NOT READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 0 | live | - |
-| `weather_forecast.fwd7_gw_cdd_span` | **NOT READ** | number | weather_forecast | 22,23 | 20 | 0 | live | - |
-| `weather_forecast.fwd7_gw_cdd_span_basis` | **NOT READ** | string | weather_forecast | 22,23 | 20 | 0 | live | - |
-| `weather_forecast.horizons[0].forecast_vs_normal` | **NOT READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 0 | live | - |
-| `weather_forecast.horizons[0].target_date` | **NOT READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 0 | live | - |
-| `weather_forecast.horizons[1].forecast_vs_normal` | **NOT READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 0 | live | - |
-| `weather_forecast.horizons[1].target_date` | **NOT READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 0 | live | - |
-| `weather_forecast.horizons[2].forecast_vs_normal` | **NOT READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 130 | 0 | live | - |
-| `weather_forecast.horizons[2].target_date` | **NOT READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 0 | live | - |
-| `weather_forecast.horizons[3].forecast_vs_normal` | **NOT READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 129 | 0 | live | - |
-| `weather_forecast.horizons[3].target_date` | **NOT READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 0 | live | - |
-| `weather_forecast.ladder_basis_note` | **NOT READ** | string | weather_forecast | 22,23 | 20 | 0 | live | - |
-| `weather_forecast.ladder_graft_basis` | **NOT READ** | string | weather_forecast | 22,23 | 20 | 0 | live | - |
-| `weather_forecast.run_delta[0].target_date` | **NOT READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 0 | live | - |
-| `weather_forecast.run_delta[1].target_date` | **NOT READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 0 | live | - |
-| `weather_forecast.run_delta[2].target_date` | **NOT READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 0 | live | - |
-| `weather_forecast.run_delta[3].target_date` | **NOT READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 0 | live | - |
-| `weather_forecast_cycle.sunday_reopen.asof_et` | **NOT READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `weather_forecast_cycle.sunday_reopen.asof_utc` | **NOT READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `weather_forecast_cycle.sunday_reopen.availability_rule` | **NOT READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `weather_forecast_cycle.sunday_reopen.max_cycle_runtime_utc` | **NOT READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `weather_forecast_cycle.sunday_reopen.regime_d0` | **NOT READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 0 | live | - |
-| `weather_forecast_cycle.weekday_open.asof_et` | **NOT READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `weather_forecast_cycle.weekday_open.asof_utc` | **NOT READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `weather_forecast_cycle.weekday_open.availability_rule` | **NOT READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `weather_forecast_cycle.weekday_open.max_cycle_runtime_utc` | **NOT READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `weather_forecast_cycle.weekday_open.regime_d0` | **NOT READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 0 | live | - |
-| `cash_basis.age_days` | **READ** | number | cash_basis | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 54 | FROZEN at anchor vintage (price-derived) | - |
-| `cash_basis.masked_one_shot` | **READ** | bool | cash_basis | 13,14,15,16,18,19,20,21,22,23 | 107 | 2 | FROZEN at anchor vintage (price-derived) | - |
-| `cash_basis.note` | **READ** | string | cash_basis | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | FROZEN at anchor vintage (price-derived) | - |
-| `cash_basis.vintage_asof` | **READ** | string | cash_basis | 13,14,15,16,18,19,20,21,22,23 | 107 | 1 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.calendar_front_expiry` | **READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 11 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.calendar_front_next_spread` | **READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 8 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.calendar_front_next_spread_chg_3d` | **READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 105 | 1 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.curve_regime` | **READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 49 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.date` | **READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 772 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.days_to_calendar_front_expiry` | **READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 11 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.days_to_front_expiry` | **READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.front_expiry` | **READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 12 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.front_next_spread` | **READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 8 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.front_next_spread_chg_3d` | **READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 75 | 1 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.masked_one_shot` | **READ** | bool | contract_structure | 13,14,15,16,18,19,20,21,22,23 | 107 | 2 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.root` | **READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 7 | FROZEN at anchor vintage (price-derived) | - |
-| `contract_structure.vintage_asof` | **READ** | string | contract_structure | 13,14,15,16,18,19,20,21,22,23 | 107 | 1 | FROZEN at anchor vintage (price-derived) | - |
-| `cot.age_days` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 54 | live | - |
-| `cot.ice.hh_basis.managed_money_net` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 29 | live | - |
-| `cot.ice.hh_basis.managed_money_net_chg_wow` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 8 | live | - |
-| `cot.ice.hh_basis.managed_money_net_pctile_1y` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 10 | live | - |
-| `cot.ice.hh_basis.managed_money_net_pctile_3y` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 4 | live | - |
-| `cot.ice.hh_basis.publication_ts` | **READ** | string | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `cot.ice.hh_basis.report_date` | **READ** | string | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `cot.ice.hh_index.managed_money_net` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 29 | live | - |
-| `cot.ice.hh_index.managed_money_net_chg_wow` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 8 | live | - |
-| `cot.ice.hh_index.managed_money_net_pctile_1y` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 10 | live | - |
-| `cot.ice.hh_index.managed_money_net_pctile_3y` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 4 | live | - |
-| `cot.ice.hh_index.publication_ts` | **READ** | string | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `cot.ice.hh_index.report_date` | **READ** | string | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `cot.ice.ld1.managed_money_net` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 29 | live | - |
-| `cot.ice.ld1.managed_money_net_chg_wow` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 8 | live | - |
-| `cot.ice.ld1.managed_money_net_pctile_1y` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 10 | live | - |
-| `cot.ice.ld1.managed_money_net_pctile_3y` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 4 | live | - |
-| `cot.ice.ld1.publication_ts` | **READ** | string | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `cot.ice.ld1.report_date` | **READ** | string | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `cot.ice.pen.managed_money_net` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 29 | live | - |
-| `cot.ice.pen.managed_money_net_chg_wow` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 8 | live | - |
-| `cot.ice.pen.managed_money_net_pctile_1y` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 10 | live | - |
-| `cot.ice.pen.managed_money_net_pctile_3y` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 4 | live | - |
-| `cot.ice.pen.publication_ts` | **READ** | string | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `cot.ice.pen.report_date` | **READ** | string | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `cot.managed_money_net` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 29 | live | - |
-| `cot.managed_money_net_chg_wow` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 8 | live | - |
-| `cot.managed_money_net_options_implied` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `cot.managed_money_net_options_implied_pctile_3y` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `cot.managed_money_net_pctile_1y` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 10 | live | - |
-| `cot.managed_money_net_pctile_3y` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 4 | live | - |
-| `cot.managed_money_short` | **READ** | number | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `cot.note` | **READ** | string | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `cot.publication_ts` | **READ** | string | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `cot.report_date` | **READ** | string | cot | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `curve_regime` | **READ** | string | curve_regime | 6,7,8,9,10,11,12,13,14,15,16,18,19,20,21,22,23 | 192 | 49 | live | - |
-| `firehose_present.l1_book` | **READ** | bool | firehose_present | 20,21,22,23 | 40 | 61 | live | h-l1book, h-mbo_book_absent |
-| `flow_calendar.bcom_ng_roll_this_month` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 4 | live | - |
-| `flow_calendar.bcom_roll_day_n` | **READ** | number | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 27 | 3 | live | - |
-| `flow_calendar.bidweek_day_n` | **READ** | number | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 24 | 1 | live | - |
-| `flow_calendar.business_day_of_month` | **READ** | number | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 105 | 11 | live | - |
-| `flow_calendar.cme_early_close` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `flow_calendar.cme_holiday` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `flow_calendar.date` | **READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 772 | live | - |
-| `flow_calendar.days_to_futures_expiry` | **READ** | number | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 11 | live | - |
-| `flow_calendar.days_to_next_eia_release` | **READ** | number | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 14 | live | - |
-| `flow_calendar.days_to_opex` | **READ** | number | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 6 | live | - |
-| `flow_calendar.eia_releases_this_week[0].shifted` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `flow_calendar.gsci_ng_roll_this_month` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 6 | live | - |
-| `flow_calendar.gsci_roll_day_n` | **READ** | number | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 28 | 4 | live | - |
-| `flow_calendar.in_bcom_hedge_roll` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `flow_calendar.in_bcom_roll` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 23 | live | - |
-| `flow_calendar.in_bidweek` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 4 | live | - |
-| `flow_calendar.in_gsci_roll` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 28 | live | - |
-| `flow_calendar.is_cme_business_day` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `flow_calendar.is_eia_print_day` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 7 | live | - |
-| `flow_calendar.is_expiry_day` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 10 | live | - |
-| `flow_calendar.is_opex_day` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 4 | live | - |
-| `flow_calendar.note` | **READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `freeze_risk.note` | **READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `freeze_risk.sunday_reopen.basins.MAF.basin` | **READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 70 | live | - |
-| `freeze_risk.sunday_reopen.basins.OKC.basin` | **READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 70 | live | - |
-| `freeze_risk.sunday_reopen.basins.PIT.basin` | **READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 70 | live | - |
-| `freeze_risk.sunday_reopen.basins.SHV.basin` | **READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 70 | live | - |
-| `freeze_risk.weekday_open.basins.MAF.basin` | **READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 70 | live | - |
-| `freeze_risk.weekday_open.basins.OKC.basin` | **READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 70 | live | - |
-| `freeze_risk.weekday_open.basins.PIT.basin` | **READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 70 | live | - |
-| `freeze_risk.weekday_open.basins.SHV.basin` | **READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 70 | live | - |
-| `frozen_structure_stale.note` | **READ** | string | frozen_structure_stale | 20,22 | 12 | 464 | live | - |
-| `grid_stack.age_days` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 54 | live | - |
-| `grid_stack.bas.CISO.coal_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `grid_stack.bas.CISO.demand_forecast_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 117 | 2 | live | - |
-| `grid_stack.bas.CISO.demand_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `grid_stack.bas.CISO.gas_chg_7d_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `grid_stack.bas.CISO.gas_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `grid_stack.bas.CISO.gas_share` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `grid_stack.bas.CISO.nuclear_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `grid_stack.bas.CISO.solar_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 5 | live | - |
-| `grid_stack.bas.CISO.total_gen_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `grid_stack.bas.CISO.wind_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 7 | live | - |
-| `grid_stack.bas.ERCO.coal_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `grid_stack.bas.ERCO.demand_forecast_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `grid_stack.bas.ERCO.demand_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `grid_stack.bas.ERCO.gas_chg_7d_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `grid_stack.bas.ERCO.gas_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `grid_stack.bas.ERCO.gas_share` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `grid_stack.bas.ERCO.nuclear_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `grid_stack.bas.ERCO.solar_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 5 | live | - |
-| `grid_stack.bas.ERCO.total_gen_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `grid_stack.bas.ERCO.wind_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 7 | live | - |
-| `grid_stack.bas.MISO.coal_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `grid_stack.bas.MISO.demand_forecast_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 115 | 2 | live | - |
-| `grid_stack.bas.MISO.demand_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `grid_stack.bas.MISO.gas_chg_7d_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `grid_stack.bas.MISO.gas_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `grid_stack.bas.MISO.gas_share` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `grid_stack.bas.MISO.nuclear_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `grid_stack.bas.MISO.solar_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 5 | live | - |
-| `grid_stack.bas.MISO.total_gen_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `grid_stack.bas.MISO.wind_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 7 | live | - |
-| `grid_stack.bas.PJM.coal_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `grid_stack.bas.PJM.demand_forecast_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 2 | live | - |
-| `grid_stack.bas.PJM.demand_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `grid_stack.bas.PJM.gas_chg_7d_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `grid_stack.bas.PJM.gas_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `grid_stack.bas.PJM.gas_share` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `grid_stack.bas.PJM.nuclear_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `grid_stack.bas.PJM.solar_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 5 | live | - |
-| `grid_stack.bas.PJM.total_gen_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `grid_stack.bas.PJM.wind_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 7 | live | - |
-| `grid_stack.bas.SOCO.coal_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `grid_stack.bas.SOCO.demand_forecast_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `grid_stack.bas.SOCO.demand_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `grid_stack.bas.SOCO.gas_chg_7d_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `grid_stack.bas.SOCO.gas_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `grid_stack.bas.SOCO.gas_share` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `grid_stack.bas.SOCO.nuclear_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `grid_stack.bas.SOCO.solar_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 5 | live | - |
-| `grid_stack.bas.SOCO.total_gen_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `grid_stack.bas.SOCO.wind_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 7 | live | - |
-| `grid_stack.bas.SWPP.coal_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `grid_stack.bas.SWPP.demand_forecast_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 117 | 2 | live | - |
-| `grid_stack.bas.SWPP.demand_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `grid_stack.bas.SWPP.gas_chg_7d_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `grid_stack.bas.SWPP.gas_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `grid_stack.bas.SWPP.gas_share` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `grid_stack.bas.SWPP.nuclear_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `grid_stack.bas.SWPP.solar_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 5 | live | - |
-| `grid_stack.bas.SWPP.total_gen_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `grid_stack.bas.SWPP.wind_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 7 | live | - |
-| `grid_stack.bas.US48.coal_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `grid_stack.bas.US48.demand_forecast_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `grid_stack.bas.US48.demand_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `grid_stack.bas.US48.est_gas_burn_bcfd` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 9 | live | - |
-| `grid_stack.bas.US48.gas_chg_7d_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `grid_stack.bas.US48.gas_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `grid_stack.bas.US48.gas_share` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `grid_stack.bas.US48.nuclear_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `grid_stack.bas.US48.solar_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 5 | live | - |
-| `grid_stack.bas.US48.total_gen_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `grid_stack.bas.US48.wind_mwh` | **READ** | number | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 7 | live | - |
-| `grid_stack.note` | **READ** | string | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `grid_stack.period` | **READ** | string | grid_stack | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 13 | live | - |
-| `holiday` | **READ** | null-only | holiday | 6,7,8,9,10,11,12,13,14,15,16,18,19,20,21,22,23 | 0 | 121 | live | - |
-| `holiday.effect` | **READ** | string | holiday | 7,8,9,11,13,20,21,22 | 10 | 27 | live | - |
-| `holiday.name` | **READ** | string | holiday | 7,8,9,11,13,20,21,22 | 10 | 220 | live | - |
-| `model_cycles_et.weekend_note` | **READ** | string | model_cycles_et | 12,13,14,15,16,18,19,20,21,22,23 | 11 | 3 | live | - |
-| `model_disagreement.date` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 772 | live | - |
-| `model_disagreement.disagreement[0].abs_spread_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `model_disagreement.disagreement[0].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 11 | live | - |
-| `model_disagreement.disagreement[0].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 80 | live | - |
-| `model_disagreement.disagreement[0].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `model_disagreement.disagreement[0].spread_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `model_disagreement.disagreement[1].abs_spread_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `model_disagreement.disagreement[1].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 11 | live | - |
-| `model_disagreement.disagreement[1].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 80 | live | - |
-| `model_disagreement.disagreement[1].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `model_disagreement.disagreement[1].spread_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `model_disagreement.disagreement[2].abs_spread_gw_hdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 2 | live | - |
-| `model_disagreement.disagreement[2].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 11 | live | - |
-| `model_disagreement.disagreement[2].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 80 | live | - |
-| `model_disagreement.disagreement[2].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `model_disagreement.disagreement[2].spread_gw_hdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 2 | live | - |
-| `model_disagreement.disagreement[3].abs_spread_gw_hdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 2 | live | - |
-| `model_disagreement.disagreement[3].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 11 | live | - |
-| `model_disagreement.disagreement[3].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 80 | live | - |
-| `model_disagreement.disagreement[3].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `model_disagreement.disagreement[3].spread_gw_hdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 2 | live | - |
-| `model_disagreement.note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `model_disagreement.stability.GFS[0].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 11 | live | - |
-| `model_disagreement.stability.GFS[0].d_gw_cdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 21 | live | - |
-| `model_disagreement.stability.GFS[0].d_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 5 | live | - |
-| `model_disagreement.stability.GFS[0].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 80 | live | - |
-| `model_disagreement.stability.GFS[0].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `model_disagreement.stability.GFS[1].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 11 | live | - |
-| `model_disagreement.stability.GFS[1].d_gw_cdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 21 | live | - |
-| `model_disagreement.stability.GFS[1].d_gw_hdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 5 | live | - |
-| `model_disagreement.stability.GFS[1].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 80 | live | - |
-| `model_disagreement.stability.GFS[1].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `model_disagreement.stability.GFS[2].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 11 | live | - |
-| `model_disagreement.stability.GFS[2].d_gw_cdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 21 | live | - |
-| `model_disagreement.stability.GFS[2].d_gw_hdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 5 | live | - |
-| `model_disagreement.stability.GFS[2].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 80 | live | - |
-| `model_disagreement.stability.GFS[2].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `model_disagreement.stability.GFS[3].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 11 | live | - |
-| `model_disagreement.stability.GFS[3].d_gw_cdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 21 | live | - |
-| `model_disagreement.stability.GFS[3].d_gw_hdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 5 | live | - |
-| `model_disagreement.stability.GFS[3].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 80 | live | - |
-| `model_disagreement.stability.GFS[3].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `model_disagreement.stability.MEX[0].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 11 | live | - |
-| `model_disagreement.stability.MEX[0].d_gw_cdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 21 | live | - |
-| `model_disagreement.stability.MEX[0].d_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 5 | live | - |
-| `model_disagreement.stability.MEX[0].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 80 | live | - |
-| `model_disagreement.stability.MEX[0].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `model_disagreement.stability.MEX[1].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 11 | live | - |
-| `model_disagreement.stability.MEX[1].d_gw_cdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 21 | live | - |
-| `model_disagreement.stability.MEX[1].d_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 5 | live | - |
-| `model_disagreement.stability.MEX[1].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 80 | live | - |
-| `model_disagreement.stability.MEX[1].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `model_disagreement.stability.MEX[2].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 11 | live | - |
-| `model_disagreement.stability.MEX[2].d_gw_cdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 21 | live | - |
-| `model_disagreement.stability.MEX[2].d_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 5 | live | - |
-| `model_disagreement.stability.MEX[2].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 80 | live | - |
-| `model_disagreement.stability.MEX[2].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `model_disagreement.stability.MEX[3].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 11 | live | - |
-| `model_disagreement.stability.MEX[3].d_gw_cdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 21 | live | - |
-| `model_disagreement.stability.MEX[3].d_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 5 | live | - |
-| `model_disagreement.stability.MEX[3].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 80 | live | - |
-| `model_disagreement.stability.MEX[3].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `model_disagreement.stability.NAM[0].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 11 | live | - |
-| `model_disagreement.stability.NAM[0].d_gw_cdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 21 | live | - |
-| `model_disagreement.stability.NAM[0].d_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 5 | live | - |
-| `model_disagreement.stability.NAM[0].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 80 | live | - |
-| `model_disagreement.stability.NAM[0].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `model_disagreement.stability.NAM[1].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 11 | live | - |
-| `model_disagreement.stability.NAM[1].d_gw_cdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 21 | live | - |
-| `model_disagreement.stability.NAM[1].d_gw_hdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 5 | live | - |
-| `model_disagreement.stability.NAM[1].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 80 | live | - |
-| `model_disagreement.stability.NAM[1].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `model_disagreement.stability.NAM[2].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 11 | live | - |
-| `model_disagreement.stability.NAM[2].d_gw_cdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 21 | live | - |
-| `model_disagreement.stability.NAM[2].d_gw_hdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 5 | live | - |
-| `model_disagreement.stability.NAM[2].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 80 | live | - |
-| `model_disagreement.stability.NAM[2].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `model_disagreement.stability.NAM[3].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 11 | live | - |
-| `model_disagreement.stability.NAM[3].d_gw_cdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 21 | live | - |
-| `model_disagreement.stability.NAM[3].d_gw_hdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 5 | live | - |
-| `model_disagreement.stability.NAM[3].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 80 | live | - |
-| `model_disagreement.stability.NAM[3].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `model_disagreement.summary.max_abs_spread_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 2 | live | - |
-| `ngwu_balance.age_days` | **READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 54 | live | - |
-| `ngwu_balance.asof` | **READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `ngwu_balance.attribution` | **READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 13 | live | - |
-| `ngwu_balance.latest_sd_levels.age_days` | **READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 54 | live | - |
-| `ngwu_balance.latest_sd_levels.attribution` | **READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 13 | live | - |
-| `ngwu_balance.latest_sd_levels.lng_feedgas_bcfd` | **READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 4 | live | - |
-| `ngwu_balance.latest_sd_levels.week_ending` | **READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `ngwu_balance.lng_feedgas_bcfd` | **READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 0 | 4 | live | - |
-| `ngwu_balance.lng_vessel_capacity_bcf` | **READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 6 | live | - |
-| `ngwu_balance.lng_vessels_departed` | **READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 6 | live | - |
-| `ngwu_balance.note` | **READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `ngwu_balance.sd_live` | **READ** | bool | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `ngwu_balance.week_ending` | **READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `note` | **READ** | string | note | 12,13,14,15,16,18,19,20,21,22,23 | 11 | 464 | live | - |
-| `nuclear_outages.age_days` | **READ** | number | nuclear_outages | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 54 | live | - |
-| `nuclear_outages.chg_7d_mw` | **READ** | number | nuclear_outages | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `nuclear_outages.note` | **READ** | string | nuclear_outages | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `nuclear_outages.period` | **READ** | string | nuclear_outages | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 13 | live | - |
-| `options_surface.masked_one_shot` | **READ** | bool | options_surface | 13,14,15,16,18,19,20,21,22,23 | 107 | 2 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].days_to_opex` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 6 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].month` | **READ** | string | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 97 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].oi_weighted_strike` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 96 | 1 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].top5_oi_strikes[0].strike` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 5 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].top5_oi_strikes[1].strike` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 5 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].top5_oi_strikes[2].strike` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 5 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[0].top5_oi_strikes[3].strike` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 5 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].days_to_opex` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 6 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].month` | **READ** | string | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 97 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].oi_weighted_strike` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 96 | 1 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].top5_oi_strikes[0].strike` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 5 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].top5_oi_strikes[1].strike` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 5 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].top5_oi_strikes[2].strike` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 5 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.months[1].top5_oi_strikes[3].strike` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 5 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.note` | **READ** | string | options_surface | 12,13,14,15,18,19,20,21,22,23 | 108 | 464 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.value` | **READ** | null-only | options_surface | 16 | 0 | 53 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `options_surface.vintage_asof` | **READ** | string | options_surface | 13,14,15,16,18,19,20,21,22,23 | 107 | 1 | FROZEN at anchor vintage (price-derived) | h-options_surface |
-| `solar.date` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 772 | live | - |
-| `solar.metros.ATL.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 34 | live | - |
-| `solar.metros.BOS.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 34 | live | - |
-| `solar.metros.DCA.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 34 | live | - |
-| `solar.metros.DEN.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 34 | live | - |
-| `solar.metros.DFW.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 34 | live | - |
-| `solar.metros.DTW.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 34 | live | - |
-| `solar.metros.IAH.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 34 | live | - |
-| `solar.metros.LAX.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 34 | live | - |
-| `solar.metros.MSP.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 34 | live | - |
-| `solar.metros.NYC.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 34 | live | - |
-| `solar.metros.ORD.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 34 | live | - |
-| `solar.metros.PHL.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 34 | live | - |
-| `solar.metros.PHX.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 34 | live | - |
-| `solar.metros.SEA.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 34 | live | - |
-| `solar.metros.SFO.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 34 | live | - |
-| `solar.metros.STL.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 34 | live | - |
-| `solar.note` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `squeeze_watch.active` | **READ** | bool | squeeze_watch | 12,13,14,15,16,18,19,20,21,22,23 | 105 | 49 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `squeeze_watch.calendar_dte_limb_satisfied_live` | **READ** | bool | squeeze_watch | 22,23 | 20 | 8 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `squeeze_watch.calendar_front_next_spread` | **READ** | number | squeeze_watch | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 8 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `squeeze_watch.calendar_front_next_spread_chg_3d` | **READ** | number | squeeze_watch | 12,13,14,15,16,18,19,20,21,22,23 | 105 | 1 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `squeeze_watch.calendar_limb_satisfied_live` | **READ** | null-only | squeeze_watch | 22,23 | 0 | 18 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `squeeze_watch.days_to_calendar_front_expiry` | **READ** | number | squeeze_watch | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 11 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `squeeze_watch.days_to_calendar_front_expiry_live` | **READ** | number | squeeze_watch | 22,23 | 20 | 8 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `squeeze_watch.last_prompt_symbol` | **READ** | string | squeeze_watch | 13,14,15,16,18,19,20,21,22,23 | 107 | 1 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `squeeze_watch.masked_one_shot` | **READ** | bool | squeeze_watch | 13,14,15,16,18,19,20,21,22,23 | 107 | 2 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `squeeze_watch.note` | **READ** | string | squeeze_watch | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `squeeze_watch.sessions_since_prompt_expiry` | **READ** | number | squeeze_watch | 13,14,15,16,18,19,20,21,22,23 | 107 | 13 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `squeeze_watch.unwind_watch` | **READ** | bool | squeeze_watch | 13,14,15,16,18,19,20,21,22,23 | 107 | 16 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `squeeze_watch.vintage_asof` | **READ** | string | squeeze_watch | 13,14,15,16,18,19,20,21,22,23 | 107 | 1 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
-| `steo_vintage.age_days` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 54 | live | - |
-| `steo_vintage.fields.commercial_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.fields.commercial_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.fields.dry_production_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.fields.dry_production_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.fields.lng_gross_exports_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.fields.lng_gross_exports_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.fields.lng_gross_imports_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.fields.lng_gross_imports_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.fields.marketed_production_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.fields.marketed_production_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.fields.net_storage_withdrawal_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.fields.net_storage_withdrawal_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.fields.pipeline_gross_exports_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.fields.pipeline_gross_exports_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.fields.pipeline_gross_imports_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.fields.pipeline_gross_imports_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.fields.power_burn_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.fields.power_burn_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.fields.residential_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.fields.residential_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.fields.total_consumption_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.fields.total_consumption_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.fields.working_gas_inventory_bcf.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.fields.working_gas_inventory_bcf.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.label` | **READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 116 | live | - |
-| `steo_vintage.note` | **READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.commercial_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.commercial_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.dry_production_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.dry_production_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.lng_gross_exports_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.lng_gross_exports_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.lng_gross_imports_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.lng_gross_imports_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.marketed_production_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.marketed_production_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.net_storage_withdrawal_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.net_storage_withdrawal_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.pipeline_gross_exports_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.pipeline_gross_exports_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.pipeline_gross_imports_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.pipeline_gross_imports_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.power_burn_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.power_burn_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.residential_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.residential_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.total_consumption_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.total_consumption_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.working_gas_inventory_bcf.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 272 | live | - |
-| `steo_vintage.revisions_vs_prev_vintage.working_gas_inventory_bcf.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 46 | live | - |
-| `stor_surprise` | **READ** | number | stor_surprise | 6,7,8,9,10,11,12,13,14,15,16,18,19,20,21,22,23 | 172 | 22 | live | h-storage |
-| `storage` | **READ** | null-only | storage | 18,19 | 0 | 258 | live | h-storage |
-| `storage.level` | **READ** | number | storage | 6,7,8,9,10,11,12,13,14,15,16,20,21,22,23 | 172 | 197 | live | h-storage |
-| `storage.phase` | **READ** | string | storage | 6,7,8,9,10,11,12,13,14,15,16,20,21,22,23 | 172 | 411 | live | h-storage |
-| `storage.vs_5yr` | **READ** | number | storage | 6,7,8,9,10,11,12,13,14,15,16,20,21,22,23 | 172 | 57 | live | h-storage |
-| `storage.weekly_chg` | **READ** | number | storage | 6,7,8,9,10,11,12,13,14,15,16,20,21,22,23 | 172 | 3 | live | h-storage |
-| `storage_consensus.last_print` | **READ** | null-only | storage_consensus | 23 | 0 | 2 | live | - |
-| `storage_consensus.last_print.consensus_chg_bcf` | **READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 3 | live | - |
-| `storage_consensus.last_print.consensus_pre_print_bcf` | **READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 63 | 1 | live | - |
+| `tape_conditions.phase_n_trades[0]` | **NOT READ** | number | tape_conditions | 1,22,23,24 | 39 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.phase_n_trades[1]` | **NOT READ** | number | tape_conditions | 1,22,23,24 | 39 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.phase_n_trades[2]` | **NOT READ** | number | tape_conditions | 1,22,23,24 | 39 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.phase_volume_note` | **NOT READ** | string | tape_conditions | 1,22,23,24 | 40 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.asof_prior_session` | **NOT READ** | string | tape_conditions | 21,22,23,24 | 7 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.b_share_basis_note` | **NOT READ** | string | tape_conditions | 21,22,23,24 | 7 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.big_print_b_share_basis` | **NOT READ** | string | tape_conditions | 21,22,23,24 | 7 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.firehose_present.mbo_flow` | **NOT READ** | bool | tape_conditions | 21,22,23,24 | 7 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.l1_book.quote_bid_share_p25_p75[0]` | **NOT READ** | number | tape_conditions | 21,22,23,24 | 7 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.l1_book.quote_bid_share_p25_p75[1]` | **NOT READ** | number | tape_conditions | 21,22,23,24 | 7 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.leg_count_150` | **NOT READ** | number | tape_conditions | 21,22,23,24 | 7 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.phase_b_share_two_sided[0]` | **NOT READ** | number | tape_conditions | 21,22,23,24 | 7 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.phase_b_share_two_sided[1]` | **NOT READ** | number | tape_conditions | 21,22,23,24 | 7 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.phase_b_share_two_sided[2]` | **NOT READ** | number | tape_conditions | 21,22,23,24 | 7 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.phase_n_trades[0]` | **NOT READ** | number | tape_conditions | 22,23,24 | 5 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.phase_n_trades[1]` | **NOT READ** | number | tape_conditions | 22,23,24 | 5 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.phase_n_trades[2]` | **NOT READ** | number | tape_conditions | 22,23,24 | 5 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.phase_volume_note` | **NOT READ** | string | tape_conditions | 22,23,24 | 5 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.session_b_share_basis` | **NOT READ** | string | tape_conditions | 23 | 2 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.source_store` | **NOT READ** | string | tape_conditions | 21,22,23,24 | 7 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.unsided_volume_frac` | **NOT READ** | number | tape_conditions | 21,22,23,24 | 7 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_session_is_reopen_stub` | **NOT READ** | bool | tape_conditions | 21,22,23,24 | 7 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.session_b_share_basis` | **NOT READ** | string | tape_conditions | 23 | 8 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.source_store` | **NOT READ** | string | tape_conditions | 1,15,16,18,19,20,21,22,23,24 | 103 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.unsided_volume_frac` | **NOT READ** | number | tape_conditions | 1,21,22,23,24 | 49 | 0 | NEVER MASKED | h-tape_offinstrument |
+| `vol_regime.n0_activity_trend` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.n0_era_basis` | **NOT READ** | string | vol_regime | 22,23,24 | 30 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.n0_net_sigma_20` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.n0_range_10_mean` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.n0_range_20_max` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.n0_range_5_mean` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.n0_range_pctile_n` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.n0_win_n_10` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.n0_win_n_20` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.n0_win_n_5` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.v0_activity_trend` | **NOT READ** | null-only | vol_regime | 12,13,14,20,21,22,23,24 | 0 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.v0_era_basis` | **NOT READ** | string | vol_regime | 22,24 | 20 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.v0_net_sigma_10` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 36 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.v0_net_sigma_20` | **NOT READ** | null-only | vol_regime | 12,13,14,20,21,22,23,24 | 0 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.v0_net_sigma_5` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 36 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.v0_prev_age_days` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 36 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.v0_prev_date` | **NOT READ** | string | vol_regime | 12,13,14,20,21,22,23,24 | 36 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.v0_prev_net` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 36 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.v0_prev_range` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 36 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.v0_prev_trades` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 36 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.v0_range_10_mean` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 36 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.v0_range_20_max` | **NOT READ** | null-only | vol_regime | 12,13,14,20,21,22,23,24 | 0 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.v0_range_20_mean` | **NOT READ** | null-only | vol_regime | 12,13,14,20,21,22,23,24 | 0 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.v0_range_5_mean` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 36 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.v0_range_pctile` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 36 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.v0_range_pctile_n` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.v0_win_n_10` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.v0_win_n_20` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.v0_win_n_5` | **NOT READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 0 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `weather_forcing_forecast` | **NOT READ** | null-only | weather_forcing_forecast | 1 | 0 | 0 | live | - |
+| `weather_forecast.asof_utc` | **NOT READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 0 | live | - |
+| `weather_forecast.forecast_regime` | **NOT READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 0 | live | - |
+| `weather_forecast.forecast_vs_normal` | **NOT READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 133 | 0 | live | - |
+| `weather_forecast.fwd7_gw_cdd_span` | **NOT READ** | number | weather_forecast | 22,23,24 | 10 | 0 | live | - |
+| `weather_forecast.fwd7_gw_cdd_span_basis` | **NOT READ** | string | weather_forecast | 23 | 10 | 0 | live | - |
+| `weather_forecast.horizons[0].forecast_vs_normal` | **NOT READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 133 | 0 | live | - |
+| `weather_forecast.horizons[0].target_date` | **NOT READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 0 | live | - |
+| `weather_forecast.horizons[1].forecast_vs_normal` | **NOT READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 132 | 0 | live | - |
+| `weather_forecast.horizons[1].target_date` | **NOT READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 0 | live | - |
+| `weather_forecast.horizons[2].forecast_vs_normal` | **NOT READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 130 | 0 | live | - |
+| `weather_forecast.horizons[2].target_date` | **NOT READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 0 | live | - |
+| `weather_forecast.horizons[3].forecast_vs_normal` | **NOT READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `weather_forecast.horizons[3].target_date` | **NOT READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 0 | live | - |
+| `weather_forecast.ladder_basis_note` | **NOT READ** | string | weather_forecast | 22,23,24 | 30 | 0 | live | - |
+| `weather_forecast.ladder_graft_basis` | **NOT READ** | string | weather_forecast | 23 | 10 | 0 | live | - |
+| `weather_forecast.run_delta[0].target_date` | **NOT READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 0 | live | - |
+| `weather_forecast.run_delta[1].target_date` | **NOT READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 0 | live | - |
+| `weather_forecast.run_delta[2].target_date` | **NOT READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 0 | live | - |
+| `weather_forecast.run_delta[3].target_date` | **NOT READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 0 | live | - |
+| `weather_forecast_cycle.sunday_reopen.asof_et` | **NOT READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 0 | live | - |
+| `weather_forecast_cycle.sunday_reopen.asof_utc` | **NOT READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 0 | live | - |
+| `weather_forecast_cycle.sunday_reopen.availability_rule` | **NOT READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 0 | live | - |
+| `weather_forecast_cycle.sunday_reopen.max_cycle_runtime_utc` | **NOT READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 0 | live | - |
+| `weather_forecast_cycle.sunday_reopen.regime_d0` | **NOT READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 0 | live | - |
+| `weather_forecast_cycle.weekday_open.asof_et` | **NOT READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `weather_forecast_cycle.weekday_open.asof_utc` | **NOT READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `weather_forecast_cycle.weekday_open.availability_rule` | **NOT READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `weather_forecast_cycle.weekday_open.max_cycle_runtime_utc` | **NOT READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `weather_forecast_cycle.weekday_open.regime_d0` | **NOT READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 0 | live | - |
+| `cash_basis.age_days` | **READ** | number | cash_basis | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 54 | FROZEN at anchor vintage (price-derived) | - |
+| `cash_basis.masked_one_shot` | **READ** | bool | cash_basis | 1,13,14,15,16,18,19,20,21,22,23,24 | 127 | 2 | FROZEN at anchor vintage (price-derived) | - |
+| `cash_basis.note` | **READ** | string | cash_basis | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | FROZEN at anchor vintage (price-derived) | - |
+| `cash_basis.value` | **READ** | null-only | cash_basis | 1 | 0 | 59 | FROZEN at anchor vintage (price-derived) | - |
+| `cash_basis.vintage_asof` | **READ** | string | cash_basis | 1,13,14,15,16,18,19,20,21,22,23,24 | 127 | 1 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.calendar_front_expiry` | **READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 11 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.calendar_front_next_spread` | **READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 8 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.calendar_front_next_spread_chg_3d` | **READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 115 | 1 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.curve_regime` | **READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.date` | **READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 791 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.days_to_calendar_front_expiry` | **READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 11 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.days_to_front_expiry` | **READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.front_expiry` | **READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 12 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.front_next_spread` | **READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 8 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.front_next_spread_chg_3d` | **READ** | number | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 75 | 1 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.masked_one_shot` | **READ** | bool | contract_structure | 1,13,14,15,16,18,19,20,21,22,23,24 | 127 | 2 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.root` | **READ** | string | contract_structure | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 10 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.value` | **READ** | null-only | contract_structure | 1 | 0 | 59 | FROZEN at anchor vintage (price-derived) | - |
+| `contract_structure.vintage_asof` | **READ** | string | contract_structure | 1,13,14,15,16,18,19,20,21,22,23,24 | 127 | 1 | FROZEN at anchor vintage (price-derived) | - |
+| `cot.age_days` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 54 | live | - |
+| `cot.ice.hh_basis.managed_money_net` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 29 | live | - |
+| `cot.ice.hh_basis.managed_money_net_chg_wow` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 8 | live | - |
+| `cot.ice.hh_basis.managed_money_net_pctile_1y` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 10 | live | - |
+| `cot.ice.hh_basis.managed_money_net_pctile_3y` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 4 | live | - |
+| `cot.ice.hh_basis.publication_ts` | **READ** | string | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `cot.ice.hh_basis.report_date` | **READ** | string | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `cot.ice.hh_index.managed_money_net` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 29 | live | - |
+| `cot.ice.hh_index.managed_money_net_chg_wow` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 8 | live | - |
+| `cot.ice.hh_index.managed_money_net_pctile_1y` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 10 | live | - |
+| `cot.ice.hh_index.managed_money_net_pctile_3y` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 4 | live | - |
+| `cot.ice.hh_index.publication_ts` | **READ** | string | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `cot.ice.hh_index.report_date` | **READ** | string | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `cot.ice.ld1.managed_money_net` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 29 | live | - |
+| `cot.ice.ld1.managed_money_net_chg_wow` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 8 | live | - |
+| `cot.ice.ld1.managed_money_net_pctile_1y` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 10 | live | - |
+| `cot.ice.ld1.managed_money_net_pctile_3y` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 4 | live | - |
+| `cot.ice.ld1.publication_ts` | **READ** | string | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `cot.ice.ld1.report_date` | **READ** | string | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `cot.ice.pen.managed_money_net` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 29 | live | - |
+| `cot.ice.pen.managed_money_net_chg_wow` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 8 | live | - |
+| `cot.ice.pen.managed_money_net_pctile_1y` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 10 | live | - |
+| `cot.ice.pen.managed_money_net_pctile_3y` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 4 | live | - |
+| `cot.ice.pen.publication_ts` | **READ** | string | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `cot.ice.pen.report_date` | **READ** | string | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `cot.managed_money_net` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 29 | live | - |
+| `cot.managed_money_net_chg_wow` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 8 | live | - |
+| `cot.managed_money_net_options_implied` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `cot.managed_money_net_options_implied_pctile_3y` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `cot.managed_money_net_pctile_1y` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 10 | live | - |
+| `cot.managed_money_net_pctile_3y` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 4 | live | - |
+| `cot.managed_money_short` | **READ** | number | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `cot.note` | **READ** | string | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 485 | live | - |
+| `cot.publication_ts` | **READ** | string | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `cot.report_date` | **READ** | string | cot | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `curve_regime` | **READ** | string | curve_regime | 1,6,7,8,9,10,11,12,13,14,15,16,18,19,20,21,22,23,24 | 212 | 49 | live | - |
+| `firehose_present.l1_book` | **READ** | bool | firehose_present | 1,20,21,22,23,24 | 60 | 61 | live | h-l1book, h-mbo_book_absent |
+| `flow_calendar` | **READ** | null-only | flow_calendar | 1 | 0 | 51 | live | - |
+| `flow_calendar.bcom_ng_roll_this_month` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 4 | live | - |
+| `flow_calendar.bcom_roll_day_n` | **READ** | number | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 27 | 3 | live | - |
+| `flow_calendar.bidweek_day_n` | **READ** | number | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 29 | 1 | live | - |
+| `flow_calendar.bidweek_delivery_month` | **READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 29 | 8 | live | - |
+| `flow_calendar.business_day_of_month` | **READ** | number | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 115 | 11 | live | - |
+| `flow_calendar.cme_early_close` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 2 | live | - |
+| `flow_calendar.cme_holiday` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 2 | live | - |
+| `flow_calendar.date` | **READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 791 | live | - |
+| `flow_calendar.days_to_futures_expiry` | **READ** | number | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 11 | live | - |
+| `flow_calendar.days_to_next_eia_release` | **READ** | number | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 14 | live | - |
+| `flow_calendar.days_to_opex` | **READ** | number | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 6 | live | - |
+| `flow_calendar.eia_releases_this_week[0].shifted` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 3 | live | - |
+| `flow_calendar.gsci_ng_roll_this_month` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 6 | live | - |
+| `flow_calendar.gsci_roll_day_n` | **READ** | number | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 28 | 4 | live | - |
+| `flow_calendar.in_bcom_hedge_roll` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 2 | live | - |
+| `flow_calendar.in_bcom_roll` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 23 | live | - |
+| `flow_calendar.in_bidweek` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 4 | live | - |
+| `flow_calendar.in_gsci_roll` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 28 | live | - |
+| `flow_calendar.is_cme_business_day` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 2 | live | - |
+| `flow_calendar.is_eia_print_day` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 7 | live | - |
+| `flow_calendar.is_expiry_day` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 10 | live | - |
+| `flow_calendar.is_opex_day` | **READ** | bool | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 4 | live | - |
+| `flow_calendar.note` | **READ** | string | flow_calendar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `freeze_risk` | **READ** | null-only | freeze_risk | 1 | 0 | 9 | live | - |
+| `freeze_risk.note` | **READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `freeze_risk.sunday_reopen.basins.MAF.basin` | **READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 72 | live | - |
+| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.10.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.10.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.15.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.15.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.20.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.MAF.thresholds_f.20.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.OKC.basin` | **READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 72 | live | - |
+| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.10.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.10.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.15.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.15.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.20.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.OKC.thresholds_f.20.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.PIT.basin` | **READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 72 | live | - |
+| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.10.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.10.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.15.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.15.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.20.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.PIT.thresholds_f.20.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.SHV.basin` | **READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 72 | live | - |
+| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.10.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.10.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.15.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.15.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.20.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.sunday_reopen.basins.SHV.thresholds_f.20.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.MAF.basin` | **READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 72 | live | - |
+| `freeze_risk.weekday_open.basins.MAF.thresholds_f.10.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.MAF.thresholds_f.10.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.MAF.thresholds_f.15.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.MAF.thresholds_f.15.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.MAF.thresholds_f.20.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.MAF.thresholds_f.20.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.OKC.basin` | **READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 72 | live | - |
+| `freeze_risk.weekday_open.basins.OKC.thresholds_f.10.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.OKC.thresholds_f.10.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.OKC.thresholds_f.15.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.OKC.thresholds_f.15.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.OKC.thresholds_f.20.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.OKC.thresholds_f.20.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.PIT.basin` | **READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 72 | live | - |
+| `freeze_risk.weekday_open.basins.PIT.thresholds_f.10.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.PIT.thresholds_f.10.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.PIT.thresholds_f.15.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.PIT.thresholds_f.15.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.PIT.thresholds_f.20.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.PIT.thresholds_f.20.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.SHV.basin` | **READ** | string | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 72 | live | - |
+| `freeze_risk.weekday_open.basins.SHV.thresholds_f.10.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.SHV.thresholds_f.10.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.SHV.thresholds_f.15.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.SHV.thresholds_f.15.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.SHV.thresholds_f.20.0.days_below` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `freeze_risk.weekday_open.basins.SHV.thresholds_f.20.0.max_consecutive` | **READ** | number | freeze_risk | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `frozen_structure_stale.note` | **READ** | string | frozen_structure_stale | 20,22,24 | 14 | 485 | live | - |
+| `grid_stack.age_days` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 54 | live | - |
+| `grid_stack.bas.CISO.coal_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `grid_stack.bas.CISO.demand_forecast_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 137 | 2 | live | - |
+| `grid_stack.bas.CISO.demand_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 2 | live | - |
+| `grid_stack.bas.CISO.gas_chg_7d_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `grid_stack.bas.CISO.gas_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `grid_stack.bas.CISO.gas_share` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 5 | live | - |
+| `grid_stack.bas.CISO.gas_share_chg_7d` | **READ** | number | grid_stack | 1 | 10 | 2 | live | - |
+| `grid_stack.bas.CISO.nuclear_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `grid_stack.bas.CISO.solar_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 5 | live | - |
+| `grid_stack.bas.CISO.total_gen_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 2 | live | - |
+| `grid_stack.bas.CISO.wind_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 9 | live | - |
+| `grid_stack.bas.ERCO.coal_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `grid_stack.bas.ERCO.demand_forecast_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 2 | live | - |
+| `grid_stack.bas.ERCO.demand_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 2 | live | - |
+| `grid_stack.bas.ERCO.gas_chg_7d_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `grid_stack.bas.ERCO.gas_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `grid_stack.bas.ERCO.gas_share` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 5 | live | - |
+| `grid_stack.bas.ERCO.gas_share_chg_7d` | **READ** | number | grid_stack | 1 | 10 | 2 | live | - |
+| `grid_stack.bas.ERCO.nuclear_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `grid_stack.bas.ERCO.solar_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 5 | live | - |
+| `grid_stack.bas.ERCO.total_gen_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 2 | live | - |
+| `grid_stack.bas.ERCO.wind_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 9 | live | - |
+| `grid_stack.bas.MISO.coal_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `grid_stack.bas.MISO.demand_forecast_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 135 | 2 | live | - |
+| `grid_stack.bas.MISO.demand_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 2 | live | - |
+| `grid_stack.bas.MISO.gas_chg_7d_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `grid_stack.bas.MISO.gas_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `grid_stack.bas.MISO.gas_share` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 5 | live | - |
+| `grid_stack.bas.MISO.gas_share_chg_7d` | **READ** | number | grid_stack | 1 | 10 | 2 | live | - |
+| `grid_stack.bas.MISO.nuclear_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `grid_stack.bas.MISO.solar_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 5 | live | - |
+| `grid_stack.bas.MISO.total_gen_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 2 | live | - |
+| `grid_stack.bas.MISO.wind_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 9 | live | - |
+| `grid_stack.bas.PJM.coal_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `grid_stack.bas.PJM.demand_forecast_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 138 | 2 | live | - |
+| `grid_stack.bas.PJM.demand_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 2 | live | - |
+| `grid_stack.bas.PJM.gas_chg_7d_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `grid_stack.bas.PJM.gas_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `grid_stack.bas.PJM.gas_share` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 5 | live | - |
+| `grid_stack.bas.PJM.gas_share_chg_7d` | **READ** | number | grid_stack | 1 | 10 | 2 | live | - |
+| `grid_stack.bas.PJM.nuclear_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `grid_stack.bas.PJM.solar_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 5 | live | - |
+| `grid_stack.bas.PJM.total_gen_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 2 | live | - |
+| `grid_stack.bas.PJM.wind_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 9 | live | - |
+| `grid_stack.bas.SOCO.coal_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `grid_stack.bas.SOCO.demand_forecast_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 2 | live | - |
+| `grid_stack.bas.SOCO.demand_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 2 | live | - |
+| `grid_stack.bas.SOCO.gas_chg_7d_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `grid_stack.bas.SOCO.gas_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `grid_stack.bas.SOCO.gas_share` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 5 | live | - |
+| `grid_stack.bas.SOCO.gas_share_chg_7d` | **READ** | number | grid_stack | 1 | 10 | 2 | live | - |
+| `grid_stack.bas.SOCO.nuclear_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `grid_stack.bas.SOCO.solar_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 5 | live | - |
+| `grid_stack.bas.SOCO.total_gen_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 2 | live | - |
+| `grid_stack.bas.SOCO.wind_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 9 | live | - |
+| `grid_stack.bas.SWPP.coal_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `grid_stack.bas.SWPP.demand_forecast_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 137 | 2 | live | - |
+| `grid_stack.bas.SWPP.demand_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 2 | live | - |
+| `grid_stack.bas.SWPP.gas_chg_7d_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `grid_stack.bas.SWPP.gas_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `grid_stack.bas.SWPP.gas_share` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 5 | live | - |
+| `grid_stack.bas.SWPP.gas_share_chg_7d` | **READ** | number | grid_stack | 1 | 10 | 2 | live | - |
+| `grid_stack.bas.SWPP.nuclear_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `grid_stack.bas.SWPP.solar_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 5 | live | - |
+| `grid_stack.bas.SWPP.total_gen_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 2 | live | - |
+| `grid_stack.bas.SWPP.wind_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 9 | live | - |
+| `grid_stack.bas.US48.coal_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `grid_stack.bas.US48.demand_forecast_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 2 | live | - |
+| `grid_stack.bas.US48.demand_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 2 | live | - |
+| `grid_stack.bas.US48.est_gas_burn_bcfd` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 9 | live | - |
+| `grid_stack.bas.US48.gas_chg_7d_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `grid_stack.bas.US48.gas_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `grid_stack.bas.US48.gas_share` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 5 | live | - |
+| `grid_stack.bas.US48.gas_share_chg_7d` | **READ** | number | grid_stack | 1 | 10 | 2 | live | - |
+| `grid_stack.bas.US48.nuclear_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `grid_stack.bas.US48.solar_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 5 | live | - |
+| `grid_stack.bas.US48.total_gen_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 2 | live | - |
+| `grid_stack.bas.US48.wind_mwh` | **READ** | number | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 9 | live | - |
+| `grid_stack.note` | **READ** | string | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 485 | live | - |
+| `grid_stack.period` | **READ** | string | grid_stack | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 13 | live | - |
+| `group` | **READ** | string | group | 1 | 1 | 774 | live | - |
+| `holiday` | **READ** | null-only | holiday | 1,6,7,8,9,10,11,12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 122 | live | - |
+| `holiday.effect` | **READ** | string | holiday | 7,8,9,11,13,20,21,22 | 10 | 28 | live | - |
+| `holiday.name` | **READ** | string | holiday | 7,8,9,11,13,20,21,22 | 10 | 257 | live | - |
+| `model_cycles_et.weekend_note` | **READ** | string | model_cycles_et | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 13 | 3 | live | - |
+| `model_disagreement` | **READ** | null-only | model_disagreement | 1 | 0 | 7 | live | - |
+| `model_disagreement.date` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 791 | live | - |
+| `model_disagreement.disagreement[0].abs_spread_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 2 | live | - |
+| `model_disagreement.disagreement[0].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 14 | live | - |
+| `model_disagreement.disagreement[0].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 79 | live | - |
+| `model_disagreement.disagreement[0].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `model_disagreement.disagreement[0].spread_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 2 | live | - |
+| `model_disagreement.disagreement[1].abs_spread_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 2 | live | - |
+| `model_disagreement.disagreement[1].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 14 | live | - |
+| `model_disagreement.disagreement[1].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 79 | live | - |
+| `model_disagreement.disagreement[1].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `model_disagreement.disagreement[1].spread_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 2 | live | - |
+| `model_disagreement.disagreement[2].abs_spread_gw_hdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 2 | live | - |
+| `model_disagreement.disagreement[2].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 14 | live | - |
+| `model_disagreement.disagreement[2].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 79 | live | - |
+| `model_disagreement.disagreement[2].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `model_disagreement.disagreement[2].spread_gw_hdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 2 | live | - |
+| `model_disagreement.disagreement[3].abs_spread_gw_hdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 2 | live | - |
+| `model_disagreement.disagreement[3].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 14 | live | - |
+| `model_disagreement.disagreement[3].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 79 | live | - |
+| `model_disagreement.disagreement[3].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `model_disagreement.disagreement[3].spread_gw_hdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 2 | live | - |
+| `model_disagreement.note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `model_disagreement.stability.GFS[0].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 14 | live | - |
+| `model_disagreement.stability.GFS[0].d_gw_cdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 21 | live | - |
+| `model_disagreement.stability.GFS[0].d_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 5 | live | - |
+| `model_disagreement.stability.GFS[0].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 79 | live | - |
+| `model_disagreement.stability.GFS[0].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `model_disagreement.stability.GFS[1].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 14 | live | - |
+| `model_disagreement.stability.GFS[1].d_gw_cdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 21 | live | - |
+| `model_disagreement.stability.GFS[1].d_gw_hdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 5 | live | - |
+| `model_disagreement.stability.GFS[1].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 79 | live | - |
+| `model_disagreement.stability.GFS[1].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `model_disagreement.stability.GFS[2].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 14 | live | - |
+| `model_disagreement.stability.GFS[2].d_gw_cdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 21 | live | - |
+| `model_disagreement.stability.GFS[2].d_gw_hdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 5 | live | - |
+| `model_disagreement.stability.GFS[2].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 79 | live | - |
+| `model_disagreement.stability.GFS[2].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `model_disagreement.stability.GFS[3].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 14 | live | - |
+| `model_disagreement.stability.GFS[3].d_gw_cdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 21 | live | - |
+| `model_disagreement.stability.GFS[3].d_gw_hdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 5 | live | - |
+| `model_disagreement.stability.GFS[3].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 79 | live | - |
+| `model_disagreement.stability.GFS[3].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `model_disagreement.stability.MEX[0].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 14 | live | - |
+| `model_disagreement.stability.MEX[0].d_gw_cdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 21 | live | - |
+| `model_disagreement.stability.MEX[0].d_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 5 | live | - |
+| `model_disagreement.stability.MEX[0].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 79 | live | - |
+| `model_disagreement.stability.MEX[0].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `model_disagreement.stability.MEX[1].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 14 | live | - |
+| `model_disagreement.stability.MEX[1].d_gw_cdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 21 | live | - |
+| `model_disagreement.stability.MEX[1].d_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 5 | live | - |
+| `model_disagreement.stability.MEX[1].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 79 | live | - |
+| `model_disagreement.stability.MEX[1].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `model_disagreement.stability.MEX[2].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 14 | live | - |
+| `model_disagreement.stability.MEX[2].d_gw_cdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 21 | live | - |
+| `model_disagreement.stability.MEX[2].d_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 5 | live | - |
+| `model_disagreement.stability.MEX[2].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 79 | live | - |
+| `model_disagreement.stability.MEX[2].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `model_disagreement.stability.MEX[3].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 14 | live | - |
+| `model_disagreement.stability.MEX[3].d_gw_cdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 21 | live | - |
+| `model_disagreement.stability.MEX[3].d_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 5 | live | - |
+| `model_disagreement.stability.MEX[3].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 79 | live | - |
+| `model_disagreement.stability.MEX[3].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `model_disagreement.stability.NAM[0].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 14 | live | - |
+| `model_disagreement.stability.NAM[0].d_gw_cdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 21 | live | - |
+| `model_disagreement.stability.NAM[0].d_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 5 | live | - |
+| `model_disagreement.stability.NAM[0].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 79 | live | - |
+| `model_disagreement.stability.NAM[0].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `model_disagreement.stability.NAM[1].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 14 | live | - |
+| `model_disagreement.stability.NAM[1].d_gw_cdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 21 | live | - |
+| `model_disagreement.stability.NAM[1].d_gw_hdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 5 | live | - |
+| `model_disagreement.stability.NAM[1].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 79 | live | - |
+| `model_disagreement.stability.NAM[1].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `model_disagreement.stability.NAM[2].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 14 | live | - |
+| `model_disagreement.stability.NAM[2].d_gw_cdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 21 | live | - |
+| `model_disagreement.stability.NAM[2].d_gw_hdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 5 | live | - |
+| `model_disagreement.stability.NAM[2].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 79 | live | - |
+| `model_disagreement.stability.NAM[2].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `model_disagreement.stability.NAM[3].coverage` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 14 | live | - |
+| `model_disagreement.stability.NAM[3].d_gw_cdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 21 | live | - |
+| `model_disagreement.stability.NAM[3].d_gw_hdd` | **READ** | null-only | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 5 | live | - |
+| `model_disagreement.stability.NAM[3].horizon` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 79 | live | - |
+| `model_disagreement.stability.NAM[3].note` | **READ** | string | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `model_disagreement.summary.max_abs_spread_gw_hdd` | **READ** | number | model_disagreement | 12,13,14,15,16,18,19,20,21,22,23,24 | 119 | 2 | live | - |
+| `ngwu_balance` | **READ** | null-only | ngwu_balance | 1 | 0 | 8 | live | - |
+| `ngwu_balance.age_days` | **READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 54 | live | - |
+| `ngwu_balance.asof` | **READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `ngwu_balance.attribution` | **READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 15 | live | - |
+| `ngwu_balance.latest_sd_levels.age_days` | **READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 54 | live | - |
+| `ngwu_balance.latest_sd_levels.attribution` | **READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 15 | live | - |
+| `ngwu_balance.latest_sd_levels.lng_feedgas_bcfd` | **READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 4 | live | - |
+| `ngwu_balance.latest_sd_levels.week_ending` | **READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `ngwu_balance.lng_feedgas_bcfd` | **READ** | null-only | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 0 | 4 | live | - |
+| `ngwu_balance.lng_vessel_capacity_bcf` | **READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 6 | live | - |
+| `ngwu_balance.lng_vessels_departed` | **READ** | number | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 6 | live | - |
+| `ngwu_balance.note` | **READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `ngwu_balance.sd_live` | **READ** | bool | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `ngwu_balance.week_ending` | **READ** | string | ngwu_balance | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `note` | **READ** | string | note | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 14 | 485 | live | - |
+| `nuclear_outages.age_days` | **READ** | number | nuclear_outages | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 54 | live | - |
+| `nuclear_outages.chg_7d_mw` | **READ** | number | nuclear_outages | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `nuclear_outages.note` | **READ** | string | nuclear_outages | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 485 | live | - |
+| `nuclear_outages.period` | **READ** | string | nuclear_outages | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 13 | live | - |
+| `options_surface.masked_one_shot` | **READ** | bool | options_surface | 1,13,14,15,16,18,19,20,21,22,23,24 | 127 | 2 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].days_to_opex` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 6 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].month` | **READ** | string | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 129 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].oi_weighted_strike` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 106 | 1 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].top5_oi_strikes[0].strike` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 5 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].top5_oi_strikes[1].strike` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 5 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].top5_oi_strikes[2].strike` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 5 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[0].top5_oi_strikes[3].strike` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 5 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].days_to_opex` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 6 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].month` | **READ** | string | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 129 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].oi_weighted_strike` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 106 | 1 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].top5_oi_strikes[0].strike` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 5 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].top5_oi_strikes[1].strike` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 5 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].top5_oi_strikes[2].strike` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 5 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.months[1].top5_oi_strikes[3].strike` | **READ** | number | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 5 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.note` | **READ** | string | options_surface | 12,13,14,15,18,19,20,21,22,23,24 | 118 | 485 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.value` | **READ** | null-only | options_surface | 1,16 | 0 | 59 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `options_surface.vintage_asof` | **READ** | string | options_surface | 1,13,14,15,16,18,19,20,21,22,23,24 | 127 | 1 | FROZEN at anchor vintage (price-derived) | h-options_surface |
+| `scored_leg.group` | **READ** | string | scored_leg | 1 | 10 | 774 | live | - |
+| `scored_leg.note` | **READ** | string | scored_leg | 1 | 10 | 485 | live | - |
+| `solar` | **READ** | null-only | solar | 1 | 0 | 29 | live | - |
+| `solar.date` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 791 | live | - |
+| `solar.metros.ATL.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 37 | live | - |
+| `solar.metros.BOS.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 37 | live | - |
+| `solar.metros.DCA.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 37 | live | - |
+| `solar.metros.DEN.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 37 | live | - |
+| `solar.metros.DFW.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 37 | live | - |
+| `solar.metros.DTW.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 37 | live | - |
+| `solar.metros.IAH.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 37 | live | - |
+| `solar.metros.LAX.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 37 | live | - |
+| `solar.metros.MSP.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 37 | live | - |
+| `solar.metros.NYC.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 37 | live | - |
+| `solar.metros.ORD.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 37 | live | - |
+| `solar.metros.PHL.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 37 | live | - |
+| `solar.metros.PHX.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 37 | live | - |
+| `solar.metros.SEA.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 37 | live | - |
+| `solar.metros.SFO.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 37 | live | - |
+| `solar.metros.STL.grid` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 37 | live | - |
+| `solar.note` | **READ** | string | solar | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `squeeze_watch.active` | **READ** | bool | squeeze_watch | 12,13,14,15,16,18,19,20,21,22,23,24 | 115 | 51 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `squeeze_watch.calendar_dte_limb_satisfied_live` | **READ** | bool | squeeze_watch | 23 | 10 | 8 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `squeeze_watch.calendar_front_next_spread` | **READ** | number | squeeze_watch | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 8 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `squeeze_watch.calendar_front_next_spread_chg_3d` | **READ** | number | squeeze_watch | 12,13,14,15,16,18,19,20,21,22,23,24 | 115 | 1 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `squeeze_watch.calendar_limb_satisfied_live` | **READ** | bool | squeeze_watch | 22,23,24 | 20 | 18 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `squeeze_watch.days_to_calendar_front_expiry` | **READ** | number | squeeze_watch | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 11 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `squeeze_watch.days_to_calendar_front_expiry_live` | **READ** | number | squeeze_watch | 22,23,24 | 30 | 8 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `squeeze_watch.last_prompt_symbol` | **READ** | string | squeeze_watch | 13,14,15,16,18,19,20,21,22,23,24 | 117 | 1 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `squeeze_watch.masked_one_shot` | **READ** | bool | squeeze_watch | 1,13,14,15,16,18,19,20,21,22,23,24 | 127 | 2 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `squeeze_watch.note` | **READ** | string | squeeze_watch | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `squeeze_watch.sessions_since_prompt_expiry` | **READ** | number | squeeze_watch | 13,14,15,16,18,19,20,21,22,23,24 | 117 | 13 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `squeeze_watch.unwind_watch` | **READ** | bool | squeeze_watch | 13,14,15,16,18,19,20,21,22,23,24 | 117 | 16 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `squeeze_watch.value` | **READ** | null-only | squeeze_watch | 1 | 0 | 59 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `squeeze_watch.vintage_asof` | **READ** | string | squeeze_watch | 1,13,14,15,16,18,19,20,21,22,23,24 | 127 | 1 | FROZEN at anchor vintage (price-derived) | h-squeeze_live |
+| `steo_vintage` | **READ** | null-only | steo_vintage | 1 | 0 | 1 | live | - |
+| `steo_vintage.age_days` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 54 | live | - |
+| `steo_vintage.fields.commercial_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.fields.commercial_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.fields.dry_production_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.fields.dry_production_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.fields.lng_gross_exports_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.fields.lng_gross_exports_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.fields.lng_gross_imports_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.fields.lng_gross_imports_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.fields.marketed_production_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.fields.marketed_production_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.fields.net_storage_withdrawal_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.fields.net_storage_withdrawal_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.fields.pipeline_gross_exports_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.fields.pipeline_gross_exports_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.fields.pipeline_gross_imports_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.fields.pipeline_gross_imports_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.fields.power_burn_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.fields.power_burn_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.fields.residential_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.fields.residential_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.fields.total_consumption_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.fields.total_consumption_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.fields.working_gas_inventory_bcf.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.fields.working_gas_inventory_bcf.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.label` | **READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 159 | live | - |
+| `steo_vintage.note` | **READ** | string | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.commercial_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.commercial_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.dry_production_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.dry_production_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.lng_gross_exports_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.lng_gross_exports_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.lng_gross_imports_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.lng_gross_imports_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.marketed_production_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.marketed_production_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.net_storage_withdrawal_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.net_storage_withdrawal_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.pipeline_gross_exports_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.pipeline_gross_exports_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.pipeline_gross_imports_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.pipeline_gross_imports_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.power_burn_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.power_burn_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.residential_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.residential_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.total_consumption_bcfd.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.total_consumption_bcfd.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.working_gas_inventory_bcf.next` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 281 | live | - |
+| `steo_vintage.revisions_vs_prev_vintage.working_gas_inventory_bcf.prev` | **READ** | number | steo_vintage | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 49 | live | - |
+| `stor_surprise` | **READ** | number | stor_surprise | 1,6,7,8,9,10,11,12,13,14,15,16,18,19,20,21,22,23,24 | 192 | 23 | live | h-storage |
+| `stor_surprise_basis.formula` | **READ** | string | stor_surprise_basis | 1,24 | 16 | 9 | live | - |
+| `storage` | **READ** | null-only | storage | 18,19 | 0 | 265 | live | h-storage |
+| `storage.level` | **READ** | number | storage | 1,6,7,8,9,10,11,12,13,14,15,16,20,21,22,23,24 | 192 | 213 | live | h-storage |
+| `storage.phase` | **READ** | string | storage | 1,6,7,8,9,10,11,12,13,14,15,16,20,21,22,23,24 | 192 | 436 | live | h-storage |
+| `storage.vs_5yr` | **READ** | number | storage | 1,6,7,8,9,10,11,12,13,14,15,16,20,21,22,23,24 | 192 | 57 | live | h-storage |
+| `storage.weekly_chg` | **READ** | number | storage | 1,6,7,8,9,10,11,12,13,14,15,16,20,21,22,23,24 | 192 | 3 | live | h-storage |
+| `storage_consensus.last_print` | **READ** | null-only | storage_consensus | 1,23 | 0 | 2 | live | - |
+| `storage_consensus.last_print.consensus_chg_bcf` | **READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23,24 | 118 | 3 | live | - |
+| `storage_consensus.last_print.consensus_pre_print_bcf` | **READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23,24 | 63 | 1 | live | - |
 | `storage_consensus.last_print.estimates[0].kind` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 68 | live | - |
 | `storage_consensus.last_print.estimates[0].pre_print` | **READ** | bool | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 1 | live | - |
-| `storage_consensus.last_print.estimates[0].source` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 757 | live | - |
+| `storage_consensus.last_print.estimates[0].source` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 767 | live | - |
 | `storage_consensus.last_print.estimates[1].kind` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 68 | live | - |
 | `storage_consensus.last_print.estimates[1].pre_print` | **READ** | bool | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 1 | live | - |
-| `storage_consensus.last_print.estimates[1].source` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 757 | live | - |
+| `storage_consensus.last_print.estimates[1].source` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 767 | live | - |
 | `storage_consensus.last_print.estimates[2].kind` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 106 | 68 | live | - |
 | `storage_consensus.last_print.estimates[2].pre_print` | **READ** | bool | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 100 | 1 | live | - |
-| `storage_consensus.last_print.estimates[2].source` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 106 | 757 | live | - |
+| `storage_consensus.last_print.estimates[2].source` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 106 | 767 | live | - |
 | `storage_consensus.last_print.estimates[3].kind` | **READ** | string | storage_consensus | 12 | 11 | 68 | live | - |
 | `storage_consensus.last_print.estimates[3].pre_print` | **READ** | bool | storage_consensus | 12 | 11 | 1 | live | - |
-| `storage_consensus.last_print.estimates[3].source` | **READ** | string | storage_consensus | 12 | 11 | 757 | live | - |
-| `storage_consensus.last_print.house_disagreement_bcf` | **READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 112 | 1 | live | - |
-| `storage_consensus.last_print.source` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 757 | live | - |
-| `storage_consensus.last_print.surprise_vs_consensus_bcf` | **READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 118 | 2 | live | - |
-| `storage_consensus.next_print` | **READ** | null-only | storage_consensus | 23 | 0 | 6 | live | - |
-| `storage_consensus.next_print.consensus_chg_bcf` | **READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 3 | live | - |
-| `storage_consensus.next_print.consensus_pre_print_bcf` | **READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 54 | 1 | live | - |
-| `storage_consensus.next_print.estimates[0].kind` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 68 | live | - |
-| `storage_consensus.next_print.estimates[0].pre_print` | **READ** | bool | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 1 | live | - |
-| `storage_consensus.next_print.estimates[0].source` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 757 | live | - |
+| `storage_consensus.last_print.estimates[3].source` | **READ** | string | storage_consensus | 12 | 11 | 767 | live | - |
+| `storage_consensus.last_print.house_disagreement_bcf` | **READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23,24 | 112 | 1 | live | - |
+| `storage_consensus.last_print.source` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23,24 | 128 | 767 | live | - |
+| `storage_consensus.last_print.surprise_vs_consensus_bcf` | **READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23,24 | 118 | 2 | live | - |
+| `storage_consensus.next_print` | **READ** | null-only | storage_consensus | 23,24 | 0 | 6 | live | - |
+| `storage_consensus.next_print.consensus_chg_bcf` | **READ** | number | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 123 | 3 | live | - |
+| `storage_consensus.next_print.consensus_pre_print_bcf` | **READ** | number | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 54 | 1 | live | - |
+| `storage_consensus.next_print.estimates[0].kind` | **READ** | string | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23 | 123 | 68 | live | - |
+| `storage_consensus.next_print.estimates[0].pre_print` | **READ** | bool | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23 | 123 | 1 | live | - |
+| `storage_consensus.next_print.estimates[0].source` | **READ** | string | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23 | 123 | 767 | live | - |
 | `storage_consensus.next_print.estimates[1].kind` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 68 | live | - |
 | `storage_consensus.next_print.estimates[1].pre_print` | **READ** | bool | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 1 | live | - |
-| `storage_consensus.next_print.estimates[1].source` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 757 | live | - |
+| `storage_consensus.next_print.estimates[1].source` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 767 | live | - |
 | `storage_consensus.next_print.estimates[2].kind` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 101 | 68 | live | - |
 | `storage_consensus.next_print.estimates[2].pre_print` | **READ** | bool | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 96 | 1 | live | - |
-| `storage_consensus.next_print.estimates[2].source` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 101 | 757 | live | - |
+| `storage_consensus.next_print.estimates[2].source` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 101 | 767 | live | - |
 | `storage_consensus.next_print.estimates[3].kind` | **READ** | string | storage_consensus | 12 | 5 | 68 | live | - |
 | `storage_consensus.next_print.estimates[3].pre_print` | **READ** | bool | storage_consensus | 12 | 5 | 1 | live | - |
-| `storage_consensus.next_print.estimates[3].source` | **READ** | string | storage_consensus | 12 | 5 | 757 | live | - |
-| `storage_consensus.next_print.final_capture_is_post_print` | **READ** | bool | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 1 | live | - |
-| `storage_consensus.next_print.house_disagreement_bcf` | **READ** | number | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 107 | 1 | live | - |
-| `storage_consensus.next_print.source` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 113 | 757 | live | - |
-| `storage_consensus.note` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `storage_consensus.source` | **READ** | string | storage_consensus | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 757 | live | - |
-| `storage_regional.note` | **READ** | string | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `storage_regional.period` | **READ** | string | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 13 | live | - |
-| `storage_regional.regions.east.chg_vs_5yr_chg` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `storage_regional.regions.east.level` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 197 | live | - |
-| `storage_regional.regions.east.unit` | **READ** | string | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 74 | live | - |
-| `storage_regional.regions.east.vs_5yr` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 57 | live | - |
-| `storage_regional.regions.east.weekly_chg` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `storage_regional.regions.l48.chg_vs_5yr_chg` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `storage_regional.regions.l48.level` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 197 | live | - |
-| `storage_regional.regions.l48.unit` | **READ** | string | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 74 | live | - |
-| `storage_regional.regions.l48.vs_5yr` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 57 | live | - |
-| `storage_regional.regions.l48.weekly_chg` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `storage_regional.regions.midwest.chg_vs_5yr_chg` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `storage_regional.regions.midwest.level` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 197 | live | - |
-| `storage_regional.regions.midwest.unit` | **READ** | string | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 74 | live | - |
-| `storage_regional.regions.midwest.vs_5yr` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 57 | live | - |
-| `storage_regional.regions.midwest.weekly_chg` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `storage_regional.regions.mountain.chg_vs_5yr_chg` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `storage_regional.regions.mountain.level` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 197 | live | - |
-| `storage_regional.regions.mountain.unit` | **READ** | string | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 74 | live | - |
-| `storage_regional.regions.mountain.vs_5yr` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 57 | live | - |
-| `storage_regional.regions.mountain.weekly_chg` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `storage_regional.regions.pacific.chg_vs_5yr_chg` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `storage_regional.regions.pacific.level` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 197 | live | - |
-| `storage_regional.regions.pacific.unit` | **READ** | string | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 74 | live | - |
-| `storage_regional.regions.pacific.vs_5yr` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 57 | live | - |
-| `storage_regional.regions.pacific.weekly_chg` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `storage_regional.regions.south_central.chg_vs_5yr_chg` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `storage_regional.regions.south_central.level` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 197 | live | - |
-| `storage_regional.regions.south_central.unit` | **READ** | string | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 74 | live | - |
-| `storage_regional.regions.south_central.vs_5yr` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 57 | live | - |
-| `storage_regional.regions.south_central.weekly_chg` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `storage_regional.regions.south_central_nonsalt.chg_vs_5yr_chg` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `storage_regional.regions.south_central_nonsalt.level` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 197 | live | - |
-| `storage_regional.regions.south_central_nonsalt.unit` | **READ** | string | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 74 | live | - |
-| `storage_regional.regions.south_central_nonsalt.vs_5yr` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 57 | live | - |
-| `storage_regional.regions.south_central_nonsalt.weekly_chg` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `storage_regional.regions.south_central_salt.chg_vs_5yr_chg` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `storage_regional.regions.south_central_salt.level` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 197 | live | - |
-| `storage_regional.regions.south_central_salt.unit` | **READ** | string | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 74 | live | - |
-| `storage_regional.regions.south_central_salt.vs_5yr` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 57 | live | - |
-| `storage_regional.regions.south_central_salt.weekly_chg` | **READ** | number | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 3 | live | - |
-| `storage_regional.source` | **READ** | string | storage_regional | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 757 | live | - |
-| `storage_vintage.age_days` | **READ** | number | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 54 | live | - |
-| `storage_vintage.note` | **READ** | string | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `storage_vintage.period` | **READ** | string | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 13 | live | - |
-| `storage_vintage.route` | **READ** | string | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 14 | live | - |
-| `storage_vintage.source` | **READ** | string | storage_vintage | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 757 | live | - |
-| `tape_conditions.big_print_b_share` | **READ** | number | tape_conditions | 15,16,18,19,20,21,22,23 | 76 | 114 | NEVER MASKED | h-tape_offinstrument, h-big_print_series, h-bshare_denom |
-| `tape_conditions.big_print_b_share_two_sided` | **READ** | number | tape_conditions | 21,22,23 | 24 | 5 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.big_prints_n` | **READ** | number | tape_conditions | 15,16,18,19,20,21,22,23 | 83 | 45 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.firehose_present.l1_book` | **READ** | bool | tape_conditions | 20,21,22,23 | 40 | 61 | NEVER MASKED | h-tape_offinstrument, h-l1book, h-mbo_book_absent |
-| `tape_conditions.l1_book.note` | **READ** | string | tape_conditions | 18,19,20,21,22,23 | 52 | 464 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.l1_book.quote_bid_share` | **READ** | number | tape_conditions | 18,19,20,21,22,23 | 52 | 14 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.l1_book.quote_updates` | **READ** | number | tape_conditions | 18,19,20,21,22,23 | 52 | 2 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.l1_book.spread_ticks_med` | **READ** | number | tape_conditions | 18,19,20,21,22,23 | 52 | 1 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.n_trades` | **READ** | number | tape_conditions | 15,16,18,19,20,21,22,23 | 83 | 55 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.never_masked` | **READ** | bool | tape_conditions | 15,16,18,19,20,21,22,23 | 83 | 24 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.note` | **READ** | string | tape_conditions | 15,16,18,19,20,21,22,23 | 83 | 464 | NEVER MASKED | h-tape_offinstrument |
+| `storage_consensus.next_print.estimates[3].source` | **READ** | string | storage_consensus | 12 | 5 | 767 | live | - |
+| `storage_consensus.next_print.final_capture_is_post_print` | **READ** | bool | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 123 | 1 | live | - |
+| `storage_consensus.next_print.house_disagreement_bcf` | **READ** | number | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 107 | 1 | live | - |
+| `storage_consensus.next_print.source` | **READ** | string | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 132 | 767 | live | - |
+| `storage_consensus.note` | **READ** | string | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 485 | live | - |
+| `storage_consensus.source` | **READ** | string | storage_consensus | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 767 | live | - |
+| `storage_regional.note` | **READ** | string | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 485 | live | - |
+| `storage_regional.period` | **READ** | string | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 13 | live | - |
+| `storage_regional.regions.east.chg_vs_5yr_chg` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `storage_regional.regions.east.level` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 213 | live | - |
+| `storage_regional.regions.east.unit` | **READ** | string | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 75 | live | - |
+| `storage_regional.regions.east.vs_5yr` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 57 | live | - |
+| `storage_regional.regions.east.weekly_chg` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `storage_regional.regions.l48.chg_vs_5yr_chg` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `storage_regional.regions.l48.level` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 213 | live | - |
+| `storage_regional.regions.l48.unit` | **READ** | string | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 75 | live | - |
+| `storage_regional.regions.l48.vs_5yr` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 57 | live | - |
+| `storage_regional.regions.l48.weekly_chg` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `storage_regional.regions.midwest.chg_vs_5yr_chg` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `storage_regional.regions.midwest.level` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 213 | live | - |
+| `storage_regional.regions.midwest.unit` | **READ** | string | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 75 | live | - |
+| `storage_regional.regions.midwest.vs_5yr` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 57 | live | - |
+| `storage_regional.regions.midwest.weekly_chg` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `storage_regional.regions.mountain.chg_vs_5yr_chg` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `storage_regional.regions.mountain.level` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 213 | live | - |
+| `storage_regional.regions.mountain.unit` | **READ** | string | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 75 | live | - |
+| `storage_regional.regions.mountain.vs_5yr` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 57 | live | - |
+| `storage_regional.regions.mountain.weekly_chg` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `storage_regional.regions.pacific.chg_vs_5yr_chg` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `storage_regional.regions.pacific.level` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 213 | live | - |
+| `storage_regional.regions.pacific.unit` | **READ** | string | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 75 | live | - |
+| `storage_regional.regions.pacific.vs_5yr` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 57 | live | - |
+| `storage_regional.regions.pacific.weekly_chg` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `storage_regional.regions.south_central.chg_vs_5yr_chg` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `storage_regional.regions.south_central.level` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 213 | live | - |
+| `storage_regional.regions.south_central.unit` | **READ** | string | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 75 | live | - |
+| `storage_regional.regions.south_central.vs_5yr` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 57 | live | - |
+| `storage_regional.regions.south_central.weekly_chg` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `storage_regional.regions.south_central_nonsalt.chg_vs_5yr_chg` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `storage_regional.regions.south_central_nonsalt.level` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 213 | live | - |
+| `storage_regional.regions.south_central_nonsalt.unit` | **READ** | string | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 75 | live | - |
+| `storage_regional.regions.south_central_nonsalt.vs_5yr` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 57 | live | - |
+| `storage_regional.regions.south_central_nonsalt.weekly_chg` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `storage_regional.regions.south_central_salt.chg_vs_5yr_chg` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 1 | live | - |
+| `storage_regional.regions.south_central_salt.level` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 213 | live | - |
+| `storage_regional.regions.south_central_salt.unit` | **READ** | string | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 75 | live | - |
+| `storage_regional.regions.south_central_salt.vs_5yr` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 57 | live | - |
+| `storage_regional.regions.south_central_salt.weekly_chg` | **READ** | number | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 3 | live | - |
+| `storage_regional.source` | **READ** | string | storage_regional | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 767 | live | - |
+| `storage_repair_basis.computation` | **READ** | string | storage_repair_basis | 24 | 6 | 8 | live | - |
+| `storage_repair_basis.from` | **READ** | string | storage_repair_basis | 24 | 6 | 847 | live | - |
+| `storage_repair_basis.session` | **READ** | string | storage_repair_basis | 24 | 6 | 1754 | live | - |
+| `storage_repair_basis.what` | **READ** | string | storage_repair_basis | 24 | 6 | 1543 | live | - |
+| `storage_vintage.age_days` | **READ** | number | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 54 | live | - |
+| `storage_vintage.note` | **READ** | string | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 485 | live | - |
+| `storage_vintage.period` | **READ** | string | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 13 | live | - |
+| `storage_vintage.route` | **READ** | string | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 16 | live | - |
+| `storage_vintage.source` | **READ** | string | storage_vintage | 1,12,13,14,15,16,18,19,20,21,22,23,24 | 139 | 767 | live | - |
+| `tape_conditions.big_print_b_share` | **READ** | number | tape_conditions | 1,15,16,18,19,20,21,22,23,24 | 95 | 114 | NEVER MASKED | h-tape_offinstrument, h-big_print_series, h-bshare_denom |
+| `tape_conditions.big_print_b_share_two_sided` | **READ** | number | tape_conditions | 1,21,22,23,24 | 43 | 5 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.big_prints_n` | **READ** | number | tape_conditions | 1,15,16,18,19,20,21,22,23,24 | 103 | 45 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.firehose_present.l1_book` | **READ** | bool | tape_conditions | 1,20,21,22,23,24 | 60 | 61 | NEVER MASKED | h-tape_offinstrument, h-l1book, h-mbo_book_absent |
+| `tape_conditions.l1_book.note` | **READ** | string | tape_conditions | 1,18,19,20,21,22,23,24 | 63 | 485 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.l1_book.quote_bid_share` | **READ** | number | tape_conditions | 1,18,19,20,21,22,23,24 | 63 | 14 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.l1_book.quote_updates` | **READ** | number | tape_conditions | 1,18,19,20,21,22,23,24 | 63 | 2 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.l1_book.spread_ticks_med` | **READ** | number | tape_conditions | 1,18,19,20,21,22,23,24 | 63 | 1 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.n_trades` | **READ** | number | tape_conditions | 1,15,16,18,19,20,21,22,23,24 | 103 | 55 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.never_masked` | **READ** | bool | tape_conditions | 1,15,16,18,19,20,21,22,23,24 | 103 | 24 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.note` | **READ** | string | tape_conditions | 1,15,16,18,19,20,21,22,23,24 | 103 | 485 | NEVER MASKED | h-tape_offinstrument |
 | `tape_conditions.phase_b_share` | **READ** | null-only | tape_conditions | 23 | 0 | 3 | NEVER MASKED | h-tape_offinstrument, h-bshare_denom |
-| `tape_conditions.phase_b_share[0]` | **READ** | number | tape_conditions | 18,19,20,21,22,23 | 59 | 3 | NEVER MASKED | h-tape_offinstrument, h-bshare_denom |
-| `tape_conditions.phase_b_share[1]` | **READ** | number | tape_conditions | 18,19,20,21,22,23 | 59 | 3 | NEVER MASKED | h-tape_offinstrument, h-bshare_denom |
-| `tape_conditions.phase_b_share[2]` | **READ** | number | tape_conditions | 18,19,20,21,22,23 | 59 | 3 | NEVER MASKED | h-tape_offinstrument, h-bshare_denom |
-| `tape_conditions.phase_signed_flow[0]` | **READ** | number | tape_conditions | 18,19,20,21,22,23 | 60 | 22 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.phase_signed_flow[1]` | **READ** | number | tape_conditions | 18,19,20,21,22,23 | 60 | 22 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.phase_signed_flow[2]` | **READ** | number | tape_conditions | 18,19,20,21,22,23 | 60 | 22 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.phase_volume_lots[0]` | **READ** | number | tape_conditions | 22,23 | 20 | 14 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.phase_volume_lots[1]` | **READ** | number | tape_conditions | 22,23 | 20 | 14 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.phase_volume_lots[2]` | **READ** | number | tape_conditions | 22,23 | 20 | 14 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.big_print_b_share` | **READ** | number | tape_conditions | 21,22,23 | 6 | 114 | NEVER MASKED | h-tape_offinstrument, h-big_print_series, h-bshare_denom |
-| `tape_conditions.prior_full_session.big_print_b_share_two_sided` | **READ** | number | tape_conditions | 21,22,23 | 6 | 5 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.big_prints_n` | **READ** | number | tape_conditions | 21,22,23 | 6 | 45 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.firehose_present.l1_book` | **READ** | bool | tape_conditions | 21,22,23 | 6 | 61 | NEVER MASKED | h-tape_offinstrument, h-l1book, h-mbo_book_absent |
-| `tape_conditions.prior_full_session.l1_book.note` | **READ** | string | tape_conditions | 21,22,23 | 6 | 464 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.l1_book.quote_bid_share` | **READ** | number | tape_conditions | 21,22,23 | 6 | 14 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.l1_book.quote_updates` | **READ** | number | tape_conditions | 21,22,23 | 6 | 2 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.l1_book.spread_ticks_med` | **READ** | number | tape_conditions | 21,22,23 | 6 | 1 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.n_trades` | **READ** | number | tape_conditions | 21,22,23 | 6 | 55 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.never_masked` | **READ** | bool | tape_conditions | 21,22,23 | 6 | 24 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.note` | **READ** | string | tape_conditions | 21,22,23 | 6 | 464 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.phase_b_share[0]` | **READ** | number | tape_conditions | 21,22,23 | 6 | 3 | NEVER MASKED | h-tape_offinstrument, h-bshare_denom |
-| `tape_conditions.prior_full_session.phase_b_share[1]` | **READ** | number | tape_conditions | 21,22,23 | 6 | 3 | NEVER MASKED | h-tape_offinstrument, h-bshare_denom |
-| `tape_conditions.prior_full_session.phase_b_share[2]` | **READ** | number | tape_conditions | 21,22,23 | 6 | 3 | NEVER MASKED | h-tape_offinstrument, h-bshare_denom |
-| `tape_conditions.prior_full_session.phase_signed_flow[0]` | **READ** | number | tape_conditions | 21,22,23 | 6 | 22 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.phase_signed_flow[1]` | **READ** | number | tape_conditions | 21,22,23 | 6 | 22 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.phase_signed_flow[2]` | **READ** | number | tape_conditions | 21,22,23 | 6 | 22 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.phase_volume_lots[0]` | **READ** | number | tape_conditions | 22,23 | 4 | 14 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.phase_volume_lots[1]` | **READ** | number | tape_conditions | 22,23 | 4 | 14 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.phase_volume_lots[2]` | **READ** | number | tape_conditions | 22,23 | 4 | 14 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.session` | **READ** | string | tape_conditions | 21,22,23 | 6 | 1713 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.session_b_share` | **READ** | number | tape_conditions | 21,22,23 | 6 | 130 | NEVER MASKED | h-tape_offinstrument, h-bshare_denom, h-session_bshare_encoding |
-| `tape_conditions.prior_full_session.session_b_share_two_sided` | **READ** | number | tape_conditions | 21,22,23 | 6 | 26 | NEVER MASKED | h-tape_offinstrument, h-bshare_denom |
-| `tape_conditions.prior_full_session.session_signed_flow` | **READ** | number | tape_conditions | 21,22,23 | 6 | 112 | NEVER MASKED | h-tape_offinstrument, h-l1book |
-| `tape_conditions.prior_full_session.trades_per_min` | **READ** | number | tape_conditions | 21,22,23 | 6 | 1 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.prior_full_session.volume_lots` | **READ** | number | tape_conditions | 21,22,23 | 6 | 17 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.session` | **READ** | string | tape_conditions | 15,16,18,19,20,21,22,23 | 83 | 1713 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.session_b_share` | **READ** | number | tape_conditions | 15,16,18,19,20,21,22,23 | 82 | 130 | NEVER MASKED | h-tape_offinstrument, h-bshare_denom, h-session_bshare_encoding |
-| `tape_conditions.session_b_share_two_sided` | **READ** | number | tape_conditions | 21,22,23 | 29 | 26 | NEVER MASKED | h-tape_offinstrument, h-bshare_denom |
-| `tape_conditions.session_signed_flow` | **READ** | number | tape_conditions | 18,19,20,21,22,23 | 60 | 112 | NEVER MASKED | h-tape_offinstrument, h-l1book |
-| `tape_conditions.trades_per_min` | **READ** | number | tape_conditions | 15,16,18,19,20,21,22,23 | 83 | 1 | NEVER MASKED | h-tape_offinstrument |
-| `tape_conditions.volume_lots` | **READ** | number | tape_conditions | 15,16,18,19,20,21,22,23 | 83 | 17 | NEVER MASKED | h-tape_offinstrument |
-| `vol_regime.date` | **READ** | string | vol_regime | 12,13,14,20,21,22,23 | 76 | 772 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.masked_one_shot` | **READ** | bool | vol_regime | 13,14,15,16,18,19,20,21,22,23 | 107 | 2 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.n0_net_sigma_10` | **READ** | number | vol_regime | 12,13,14,20,21,22,23 | 76 | 1 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.n0_net_sigma_5` | **READ** | number | vol_regime | 12,13,14,20,21,22,23 | 76 | 2 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.n0_prev_age_days` | **READ** | number | vol_regime | 12,13,14,20,21,22,23 | 76 | 1 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.n0_prev_date` | **READ** | string | vol_regime | 12,13,14,20,21,22,23 | 76 | 2 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.n0_prev_net` | **READ** | number | vol_regime | 12,13,14,20,21,22,23 | 76 | 7 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.n0_prev_range` | **READ** | number | vol_regime | 12,13,14,20,21,22,23 | 76 | 2 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.n0_prev_trades` | **READ** | number | vol_regime | 12,13,14,20,21,22,23 | 76 | 3 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.n0_range_20_mean` | **READ** | number | vol_regime | 12,13,14,20,21,22,23 | 76 | 4 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.n0_range_pctile` | **READ** | number | vol_regime | 12,13,14,20,21,22,23 | 76 | 1 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.note` | **READ** | string | vol_regime | 12,13,14,20,21,22,23 | 76 | 464 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.value` | **READ** | null-only | vol_regime | 15,16,18,19 | 0 | 53 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `vol_regime.vintage_asof` | **READ** | string | vol_regime | 13,14,15,16,18,19,20,21,22,23 | 107 | 1 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
-| `weather` | **READ** | null-only | weather | 16,18,19 | 0 | 244 | live | h-weather_path, h-nws_tail |
-| `weather.gw_cdd` | **READ** | number | weather | 6,7,8,9,10,11,12,13,14,15,20,21,22,23 | 161 | 44 | live | h-weather_path, h-nws_tail |
-| `weather.gw_hdd` | **READ** | number | weather | 6,7,8,9,10,11,12,13,14,15,20,21,22,23 | 161 | 54 | live | h-weather_path, h-nws_tail |
-| `weather.gw_precip` | **READ** | number | weather | 6,7,8,9,10,11,12,13,14,15,20,21,22,23 | 161 | 2 | live | h-weather_path, h-nws_tail |
-| `weather.note` | **READ** | string | weather | 6,7,8,9,10,11,12,13,14,15,20,21,22,23 | 161 | 464 | live | h-weather_path, h-nws_tail |
-| `weather.regime` | **READ** | string | weather | 6,7,8,9,10,11,12,13,14,15,20,21,22,23 | 161 | 294 | live | h-weather_path, h-nws_tail |
-| `weather_forecast.complete` | **READ** | bool | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 34 | live | - |
-| `weather_forecast.coverage_note` | **READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 1 | live | - |
-| `weather_forecast.forecast_gw_cdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 12 | live | - |
-| `weather_forecast.forecast_gw_hdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 17 | live | - |
-| `weather_forecast.forecast_run_delta` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 26 | live | - |
-| `weather_forecast.forecast_run_delta_cdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 18 | live | - |
-| `weather_forecast.fwd7_gw_hdd_span[0]` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 1 | live | - |
-| `weather_forecast.fwd7_gw_hdd_span[1]` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 1 | live | - |
-| `weather_forecast.horizons[0].coverage` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 11 | live | - |
-| `weather_forecast.horizons[0].forecast_gw_cdd` | **READ** | number | weather_forecast | 22,23 | 20 | 12 | live | - |
-| `weather_forecast.horizons[0].forecast_gw_hdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 17 | live | - |
-| `weather_forecast.horizons[0].horizon` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 80 | live | - |
-| `weather_forecast.horizons[0].partial` | **READ** | bool | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 20 | live | - |
-| `weather_forecast.horizons[1].coverage` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 11 | live | - |
-| `weather_forecast.horizons[1].forecast_gw_cdd` | **READ** | number | weather_forecast | 22,23 | 20 | 12 | live | - |
-| `weather_forecast.horizons[1].forecast_gw_hdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 17 | live | - |
-| `weather_forecast.horizons[1].horizon` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 80 | live | - |
-| `weather_forecast.horizons[1].partial` | **READ** | bool | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 20 | live | - |
-| `weather_forecast.horizons[2].coverage` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 11 | live | - |
-| `weather_forecast.horizons[2].forecast_gw_cdd` | **READ** | number | weather_forecast | 22,23 | 20 | 12 | live | - |
-| `weather_forecast.horizons[2].forecast_gw_hdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 17 | live | - |
-| `weather_forecast.horizons[2].horizon` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 80 | live | - |
-| `weather_forecast.horizons[2].partial` | **READ** | bool | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 20 | live | - |
-| `weather_forecast.horizons[3].coverage` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 11 | live | - |
-| `weather_forecast.horizons[3].forecast_gw_cdd` | **READ** | number | weather_forecast | 22,23 | 20 | 12 | live | - |
-| `weather_forecast.horizons[3].forecast_gw_hdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 17 | live | - |
-| `weather_forecast.horizons[3].horizon` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 80 | live | - |
-| `weather_forecast.horizons[3].partial` | **READ** | bool | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 20 | live | - |
-| `weather_forecast.note` | **READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 464 | live | - |
-| `weather_forecast.run_delta[0].coverage` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 11 | live | - |
-| `weather_forecast.run_delta[0].d_gw_cdd` | **READ** | number | weather_forecast | 22,23 | 20 | 21 | live | - |
-| `weather_forecast.run_delta[0].d_gw_hdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 5 | live | - |
-| `weather_forecast.run_delta[0].horizon` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 80 | live | - |
-| `weather_forecast.run_delta[0].partial` | **READ** | bool | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 20 | live | - |
-| `weather_forecast.run_delta[1].coverage` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 11 | live | - |
-| `weather_forecast.run_delta[1].d_gw_cdd` | **READ** | number | weather_forecast | 22,23 | 20 | 21 | live | - |
-| `weather_forecast.run_delta[1].d_gw_hdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 5 | live | - |
-| `weather_forecast.run_delta[1].horizon` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 80 | live | - |
-| `weather_forecast.run_delta[1].partial` | **READ** | bool | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 20 | live | - |
-| `weather_forecast.run_delta[2].coverage` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 11 | live | - |
-| `weather_forecast.run_delta[2].d_gw_cdd` | **READ** | number | weather_forecast | 22,23 | 20 | 21 | live | - |
-| `weather_forecast.run_delta[2].d_gw_hdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 5 | live | - |
-| `weather_forecast.run_delta[2].horizon` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 80 | live | - |
-| `weather_forecast.run_delta[2].partial` | **READ** | bool | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 20 | live | - |
-| `weather_forecast.run_delta[3].coverage` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 11 | live | - |
-| `weather_forecast.run_delta[3].d_gw_cdd` | **READ** | number | weather_forecast | 22,23 | 20 | 21 | live | - |
-| `weather_forecast.run_delta[3].d_gw_hdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 5 | live | - |
-| `weather_forecast.run_delta[3].horizon` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 80 | live | - |
-| `weather_forecast.run_delta[3].partial` | **READ** | bool | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23 | 131 | 20 | live | - |
-| `weather_forecast_cycle.note` | **READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 464 | live | - |
-| `weather_forecast_cycle.sunday_reopen.cdd_basis` | **READ** | string | weather_forecast_cycle | 22,23 | 4 | 1 | live | - |
-| `weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[0].d_gw_hdd` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 5 | live | - |
-| `weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[0].target` | **READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 118 | live | - |
-| `weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[1].d_gw_hdd` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 5 | live | - |
-| `weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[1].target` | **READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 118 | live | - |
-| `weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[2].d_gw_hdd` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 5 | live | - |
-| `weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[2].target` | **READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 118 | live | - |
-| `weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[3].d_gw_hdd` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 5 | live | - |
-| `weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[3].target` | **READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 118 | live | - |
-| `weather_forecast_cycle.sunday_reopen.gw_hdd_d0` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 1 | live | - |
-| `weather_forecast_cycle.sunday_reopen.seam_delta_warning` | **READ** | string | weather_forecast_cycle | 22,23 | 4 | 1 | live | - |
-| `weather_forecast_cycle.sunday_reopen.vs_normal_d0` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 22 | 1 | live | - |
-| `weather_forecast_cycle.weekday_open.cdd_basis` | **READ** | string | weather_forecast_cycle | 22,23 | 20 | 1 | live | - |
-| `weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[0].d_gw_hdd` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 5 | live | - |
-| `weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[0].target` | **READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 118 | live | - |
-| `weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[1].d_gw_hdd` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 5 | live | - |
-| `weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[1].target` | **READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 118 | live | - |
-| `weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[2].d_gw_hdd` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 5 | live | - |
-| `weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[2].target` | **READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 118 | live | - |
-| `weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[3].d_gw_hdd` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 5 | live | - |
-| `weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[3].target` | **READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 118 | live | - |
-| `weather_forecast_cycle.weekday_open.gw_hdd_d0` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
-| `weather_forecast_cycle.weekday_open.seam_delta_warning` | **READ** | string | weather_forecast_cycle | 22,23 | 20 | 1 | live | - |
-| `weather_forecast_cycle.weekday_open.vs_normal_d0` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23 | 119 | 1 | live | - |
+| `tape_conditions.phase_b_share[0]` | **READ** | number | tape_conditions | 1,18,19,20,21,22,23,24 | 79 | 3 | NEVER MASKED | h-tape_offinstrument, h-bshare_denom |
+| `tape_conditions.phase_b_share[1]` | **READ** | number | tape_conditions | 1,18,19,20,21,22,23,24 | 79 | 3 | NEVER MASKED | h-tape_offinstrument, h-bshare_denom |
+| `tape_conditions.phase_b_share[2]` | **READ** | number | tape_conditions | 1,18,19,20,21,22,23,24 | 79 | 3 | NEVER MASKED | h-tape_offinstrument, h-bshare_denom |
+| `tape_conditions.phase_bounds_et[0].phase` | **READ** | number | tape_conditions | 1 | 10 | 436 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.phase_bounds_et[1].phase` | **READ** | number | tape_conditions | 1 | 10 | 436 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.phase_bounds_et[2].phase` | **READ** | number | tape_conditions | 1 | 10 | 436 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.phase_signed_flow[0]` | **READ** | number | tape_conditions | 1,18,19,20,21,22,23,24 | 80 | 22 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.phase_signed_flow[1]` | **READ** | number | tape_conditions | 1,18,19,20,21,22,23,24 | 80 | 22 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.phase_signed_flow[2]` | **READ** | number | tape_conditions | 1,18,19,20,21,22,23,24 | 80 | 22 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.phase_volume_lots[0]` | **READ** | number | tape_conditions | 1,22,23,24 | 40 | 14 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.phase_volume_lots[1]` | **READ** | number | tape_conditions | 1,22,23,24 | 40 | 14 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.phase_volume_lots[2]` | **READ** | number | tape_conditions | 1,22,23,24 | 40 | 14 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.big_print_b_share` | **READ** | number | tape_conditions | 21,22,23,24 | 7 | 114 | NEVER MASKED | h-tape_offinstrument, h-big_print_series, h-bshare_denom |
+| `tape_conditions.prior_full_session.big_print_b_share_two_sided` | **READ** | number | tape_conditions | 21,22,23,24 | 7 | 5 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.big_prints_n` | **READ** | number | tape_conditions | 21,22,23,24 | 7 | 45 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.firehose_present.l1_book` | **READ** | bool | tape_conditions | 21,22,23,24 | 7 | 61 | NEVER MASKED | h-tape_offinstrument, h-l1book, h-mbo_book_absent |
+| `tape_conditions.prior_full_session.l1_book.note` | **READ** | string | tape_conditions | 21,22,23,24 | 7 | 485 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.l1_book.quote_bid_share` | **READ** | number | tape_conditions | 21,22,23,24 | 7 | 14 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.l1_book.quote_updates` | **READ** | number | tape_conditions | 21,22,23,24 | 7 | 2 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.l1_book.spread_ticks_med` | **READ** | number | tape_conditions | 21,22,23,24 | 7 | 1 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.n_trades` | **READ** | number | tape_conditions | 21,22,23,24 | 7 | 55 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.never_masked` | **READ** | bool | tape_conditions | 21,22,23,24 | 7 | 24 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.note` | **READ** | string | tape_conditions | 21,22,23,24 | 7 | 485 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.phase_b_share[0]` | **READ** | number | tape_conditions | 21,22,23,24 | 7 | 3 | NEVER MASKED | h-tape_offinstrument, h-bshare_denom |
+| `tape_conditions.prior_full_session.phase_b_share[1]` | **READ** | number | tape_conditions | 21,22,23,24 | 7 | 3 | NEVER MASKED | h-tape_offinstrument, h-bshare_denom |
+| `tape_conditions.prior_full_session.phase_b_share[2]` | **READ** | number | tape_conditions | 21,22,23,24 | 7 | 3 | NEVER MASKED | h-tape_offinstrument, h-bshare_denom |
+| `tape_conditions.prior_full_session.phase_signed_flow[0]` | **READ** | number | tape_conditions | 21,22,23,24 | 7 | 22 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.phase_signed_flow[1]` | **READ** | number | tape_conditions | 21,22,23,24 | 7 | 22 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.phase_signed_flow[2]` | **READ** | number | tape_conditions | 21,22,23,24 | 7 | 22 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.phase_volume_lots[0]` | **READ** | number | tape_conditions | 22,23,24 | 5 | 14 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.phase_volume_lots[1]` | **READ** | number | tape_conditions | 22,23,24 | 5 | 14 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.phase_volume_lots[2]` | **READ** | number | tape_conditions | 22,23,24 | 5 | 14 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.session` | **READ** | string | tape_conditions | 21,22,23,24 | 7 | 1754 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.session_b_share` | **READ** | number | tape_conditions | 21,22,23,24 | 7 | 134 | NEVER MASKED | h-tape_offinstrument, h-bshare_denom, h-session_bshare_encoding |
+| `tape_conditions.prior_full_session.session_b_share_two_sided` | **READ** | number | tape_conditions | 21,22,23,24 | 7 | 26 | NEVER MASKED | h-tape_offinstrument, h-bshare_denom |
+| `tape_conditions.prior_full_session.session_signed_flow` | **READ** | number | tape_conditions | 21,22,23,24 | 7 | 112 | NEVER MASKED | h-tape_offinstrument, h-l1book |
+| `tape_conditions.prior_full_session.trades_per_min` | **READ** | number | tape_conditions | 21,22,23,24 | 7 | 1 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.prior_full_session.volume_lots` | **READ** | number | tape_conditions | 21,22,23,24 | 7 | 17 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.session` | **READ** | string | tape_conditions | 1,15,16,18,19,20,21,22,23,24 | 103 | 1754 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.session_b_share` | **READ** | number | tape_conditions | 1,15,16,18,19,20,21,22,23,24 | 102 | 134 | NEVER MASKED | h-tape_offinstrument, h-bshare_denom, h-session_bshare_encoding |
+| `tape_conditions.session_b_share_two_sided` | **READ** | number | tape_conditions | 1,21,22,23,24 | 49 | 26 | NEVER MASKED | h-tape_offinstrument, h-bshare_denom |
+| `tape_conditions.session_signed_flow` | **READ** | number | tape_conditions | 1,18,19,20,21,22,23,24 | 80 | 112 | NEVER MASKED | h-tape_offinstrument, h-l1book |
+| `tape_conditions.trades_per_min` | **READ** | number | tape_conditions | 1,15,16,18,19,20,21,22,23,24 | 103 | 1 | NEVER MASKED | h-tape_offinstrument |
+| `tape_conditions.volume_lots` | **READ** | number | tape_conditions | 1,15,16,18,19,20,21,22,23,24 | 103 | 17 | NEVER MASKED | h-tape_offinstrument |
+| `vol_regime.date` | **READ** | string | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 791 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.masked_one_shot` | **READ** | bool | vol_regime | 1,13,14,15,16,18,19,20,21,22,23,24 | 127 | 2 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.n0_net_sigma_10` | **READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 1 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.n0_net_sigma_5` | **READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 2 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.n0_prev_age_days` | **READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 1 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.n0_prev_date` | **READ** | string | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 2 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.n0_prev_net` | **READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 7 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.n0_prev_range` | **READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 2 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.n0_prev_trades` | **READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 3 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.n0_range_20_mean` | **READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 4 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.n0_range_pctile` | **READ** | number | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 1 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.note` | **READ** | string | vol_regime | 12,13,14,20,21,22,23,24 | 86 | 485 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.value` | **READ** | null-only | vol_regime | 1,15,16,18,19 | 0 | 59 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `vol_regime.vintage_asof` | **READ** | string | vol_regime | 1,13,14,15,16,18,19,20,21,22,23,24 | 127 | 1 | FROZEN at anchor vintage (price-derived) | h-vol_regime |
+| `weather` | **READ** | null-only | weather | 16,18,19 | 0 | 261 | live | h-weather_path, h-nws_tail |
+| `weather.gw_cdd` | **READ** | number | weather | 1,6,7,8,9,10,11,12,13,14,15,20,21,22,23,24 | 181 | 45 | live | h-weather_path, h-nws_tail |
+| `weather.gw_hdd` | **READ** | number | weather | 1,6,7,8,9,10,11,12,13,14,15,20,21,22,23,24 | 181 | 56 | live | h-weather_path, h-nws_tail |
+| `weather.gw_precip` | **READ** | number | weather | 1,6,7,8,9,10,11,12,13,14,15,20,21,22,23,24 | 181 | 2 | live | h-weather_path, h-nws_tail |
+| `weather.note` | **READ** | string | weather | 1,6,7,8,9,10,11,12,13,14,15,20,21,22,23,24 | 181 | 485 | live | h-weather_path, h-nws_tail |
+| `weather.regime` | **READ** | string | weather | 1,6,7,8,9,10,11,12,13,14,15,20,21,22,23,24 | 181 | 296 | live | h-weather_path, h-nws_tail |
+| `weather_forecast` | **READ** | null-only | weather_forecast | 1 | 0 | 42 | live | - |
+| `weather_forecast.complete` | **READ** | bool | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 38 | live | - |
+| `weather_forecast.coverage_note` | **READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 1 | live | - |
+| `weather_forecast.forecast_gw_cdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 12 | live | - |
+| `weather_forecast.forecast_gw_hdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 17 | live | - |
+| `weather_forecast.forecast_run_delta` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 26 | live | - |
+| `weather_forecast.forecast_run_delta_cdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 18 | live | - |
+| `weather_forecast.fwd7_gw_hdd_span[0]` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 1 | live | - |
+| `weather_forecast.fwd7_gw_hdd_span[1]` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 1 | live | - |
+| `weather_forecast.horizons[0].coverage` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 14 | live | - |
+| `weather_forecast.horizons[0].forecast_gw_cdd` | **READ** | number | weather_forecast | 22,23,24 | 30 | 12 | live | - |
+| `weather_forecast.horizons[0].forecast_gw_hdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 17 | live | - |
+| `weather_forecast.horizons[0].horizon` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 79 | live | - |
+| `weather_forecast.horizons[0].partial` | **READ** | bool | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 21 | live | - |
+| `weather_forecast.horizons[1].coverage` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 14 | live | - |
+| `weather_forecast.horizons[1].forecast_gw_cdd` | **READ** | number | weather_forecast | 22,23,24 | 30 | 12 | live | - |
+| `weather_forecast.horizons[1].forecast_gw_hdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 17 | live | - |
+| `weather_forecast.horizons[1].horizon` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 79 | live | - |
+| `weather_forecast.horizons[1].partial` | **READ** | bool | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 21 | live | - |
+| `weather_forecast.horizons[2].coverage` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 14 | live | - |
+| `weather_forecast.horizons[2].forecast_gw_cdd` | **READ** | number | weather_forecast | 22,23,24 | 30 | 12 | live | - |
+| `weather_forecast.horizons[2].forecast_gw_hdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 17 | live | - |
+| `weather_forecast.horizons[2].horizon` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 79 | live | - |
+| `weather_forecast.horizons[2].partial` | **READ** | bool | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 21 | live | - |
+| `weather_forecast.horizons[3].coverage` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 14 | live | - |
+| `weather_forecast.horizons[3].forecast_gw_cdd` | **READ** | number | weather_forecast | 22,23,24 | 30 | 12 | live | - |
+| `weather_forecast.horizons[3].forecast_gw_hdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 17 | live | - |
+| `weather_forecast.horizons[3].horizon` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 79 | live | - |
+| `weather_forecast.horizons[3].partial` | **READ** | bool | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 21 | live | - |
+| `weather_forecast.note` | **READ** | string | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 485 | live | - |
+| `weather_forecast.run_delta[0].coverage` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 14 | live | - |
+| `weather_forecast.run_delta[0].d_gw_cdd` | **READ** | number | weather_forecast | 22,23,24 | 30 | 21 | live | - |
+| `weather_forecast.run_delta[0].d_gw_hdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 5 | live | - |
+| `weather_forecast.run_delta[0].horizon` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 79 | live | - |
+| `weather_forecast.run_delta[0].partial` | **READ** | bool | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 21 | live | - |
+| `weather_forecast.run_delta[1].coverage` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 14 | live | - |
+| `weather_forecast.run_delta[1].d_gw_cdd` | **READ** | number | weather_forecast | 22,23,24 | 30 | 21 | live | - |
+| `weather_forecast.run_delta[1].d_gw_hdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 5 | live | - |
+| `weather_forecast.run_delta[1].horizon` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 79 | live | - |
+| `weather_forecast.run_delta[1].partial` | **READ** | bool | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 21 | live | - |
+| `weather_forecast.run_delta[2].coverage` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 14 | live | - |
+| `weather_forecast.run_delta[2].d_gw_cdd` | **READ** | number | weather_forecast | 22,23,24 | 30 | 21 | live | - |
+| `weather_forecast.run_delta[2].d_gw_hdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 5 | live | - |
+| `weather_forecast.run_delta[2].horizon` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 79 | live | - |
+| `weather_forecast.run_delta[2].partial` | **READ** | bool | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 21 | live | - |
+| `weather_forecast.run_delta[3].coverage` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 14 | live | - |
+| `weather_forecast.run_delta[3].d_gw_cdd` | **READ** | number | weather_forecast | 22,23,24 | 30 | 21 | live | - |
+| `weather_forecast.run_delta[3].d_gw_hdd` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 5 | live | - |
+| `weather_forecast.run_delta[3].horizon` | **READ** | number | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 79 | live | - |
+| `weather_forecast.run_delta[3].partial` | **READ** | bool | weather_forecast | 11,12,13,14,15,16,18,19,20,21,22,23,24 | 141 | 21 | live | - |
+| `weather_forecast_cycle` | **READ** | null-only | weather_forecast_cycle | 1 | 0 | 6 | live | - |
+| `weather_forecast_cycle.note` | **READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 485 | live | - |
+| `weather_forecast_cycle.sunday_reopen.cdd_basis` | **READ** | string | weather_forecast_cycle | 23 | 2 | 1 | live | - |
+| `weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[0].d_gw_cdd` | **READ** | number | weather_forecast_cycle | 22,24 | 4 | 21 | live | - |
+| `weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[0].d_gw_hdd` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 5 | live | - |
+| `weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[0].target` | **READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 122 | live | - |
+| `weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[1].d_gw_cdd` | **READ** | number | weather_forecast_cycle | 22,24 | 4 | 21 | live | - |
+| `weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[1].d_gw_hdd` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 5 | live | - |
+| `weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[1].target` | **READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 122 | live | - |
+| `weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[2].d_gw_cdd` | **READ** | number | weather_forecast_cycle | 22,24 | 4 | 21 | live | - |
+| `weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[2].d_gw_hdd` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 5 | live | - |
+| `weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[2].target` | **READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 122 | live | - |
+| `weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[3].d_gw_cdd` | **READ** | number | weather_forecast_cycle | 22,24 | 4 | 21 | live | - |
+| `weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[3].d_gw_hdd` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 5 | live | - |
+| `weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[3].target` | **READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 122 | live | - |
+| `weather_forecast_cycle.sunday_reopen.gw_cdd_d0` | **READ** | number | weather_forecast_cycle | 22,24 | 4 | 1 | live | - |
+| `weather_forecast_cycle.sunday_reopen.gw_hdd_d0` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 24 | 1 | live | - |
+| `weather_forecast_cycle.sunday_reopen.seam_delta_warning` | **READ** | string | weather_forecast_cycle | 22,23,24 | 6 | 1 | live | - |
+| `weather_forecast_cycle.sunday_reopen.vs_normal_d0` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 23 | 1 | live | - |
+| `weather_forecast_cycle.weekday_open.cdd_basis` | **READ** | string | weather_forecast_cycle | 23 | 10 | 1 | live | - |
+| `weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[0].d_gw_cdd` | **READ** | number | weather_forecast_cycle | 22,24 | 20 | 21 | live | - |
+| `weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[0].d_gw_hdd` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 5 | live | - |
+| `weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[0].target` | **READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 122 | live | - |
+| `weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[1].d_gw_cdd` | **READ** | number | weather_forecast_cycle | 22,24 | 20 | 21 | live | - |
+| `weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[1].d_gw_hdd` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 5 | live | - |
+| `weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[1].target` | **READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 122 | live | - |
+| `weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[2].d_gw_cdd` | **READ** | number | weather_forecast_cycle | 22,24 | 20 | 21 | live | - |
+| `weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[2].d_gw_hdd` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 5 | live | - |
+| `weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[2].target` | **READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 122 | live | - |
+| `weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[3].d_gw_cdd` | **READ** | number | weather_forecast_cycle | 22,24 | 20 | 21 | live | - |
+| `weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[3].d_gw_hdd` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 5 | live | - |
+| `weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[3].target` | **READ** | string | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 122 | live | - |
+| `weather_forecast_cycle.weekday_open.gw_cdd_d0` | **READ** | number | weather_forecast_cycle | 22,24 | 20 | 1 | live | - |
+| `weather_forecast_cycle.weekday_open.gw_hdd_d0` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 129 | 1 | live | - |
+| `weather_forecast_cycle.weekday_open.seam_delta_warning` | **READ** | string | weather_forecast_cycle | 22,23,24 | 30 | 1 | live | - |
+| `weather_forecast_cycle.weekday_open.vs_normal_d0` | **READ** | number | weather_forecast_cycle | 12,13,14,15,16,18,19,20,21,22,23,24 | 121 | 1 | live | - |
