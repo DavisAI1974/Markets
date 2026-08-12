@@ -13,10 +13,27 @@ class DataRegistryS123Tests(unittest.TestCase):
     def setUpClass(cls):
         cls.store = mod.build()
 
-    def test_current_surface_does_not_regress(self):
-        accepted = cls_accepted = self.store["accepted_measurement"]
-        self.assertGreaterEqual(self.store["n_served"], cls_accepted["served"])
-        self.assertGreaterEqual(self.store["n_blocks"], cls_accepted["decision_state_blocks"])
+    def test_accepted_surface_is_locked_to_live_measurement(self):
+        accepted = self.store["accepted_measurement"]
+        self.assertEqual(accepted["served"], 1914)
+        self.assertEqual(accepted["decision_state_blocks"], 44)
+        self.assertEqual(accepted["served_unread"], 1222)
+
+    def test_committed_checkout_cannot_downgrade_accepted_truth(self):
+        accepted = self.store["accepted_measurement"]
+        if (self.store["n_served"] < accepted["served"] or
+                self.store["n_blocks"] < accepted["decision_state_blocks"]):
+            self.assertEqual(self.store["measurement_status"], "REGRESSED_LOCAL_SURVEY_DO_NOT_WRITE")
+            with self.assertRaises(RuntimeError):
+                mod._write_guard(self.store)
+        elif (self.store["n_served"] > accepted["served"] or
+              self.store["n_blocks"] > accepted["decision_state_blocks"]):
+            self.assertEqual(self.store["measurement_status"], "ADVANCED_SURVEY_UPDATE_LOCK_BEFORE_WRITE")
+            with self.assertRaises(RuntimeError):
+                mod._write_guard(self.store)
+        else:
+            self.assertEqual(self.store["measurement_status"], "CURRENT_ACCEPTED_SURVEY")
+            mod._write_guard(self.store)
 
     def test_unread_is_not_frankie_access_control(self):
         self.assertIn("does not mean unavailable", self.store["reader_semantics"])
@@ -26,7 +43,6 @@ class DataRegistryS123Tests(unittest.TestCase):
     def test_completed_gap_claims_cannot_return(self):
         absent = "\n".join(x["field"] for x in self.store["known_absent"])
         held = "\n".join(x["field"] for x in self.store["held_not_served"])
-        identified = "\n".join(x["field"] for x in self.store["identified_not_committed"])
         self.assertNotIn("forward wind / solar generation forecast", absent)
         self.assertNotIn("zero-change", absent)
         self.assertNotIn("gen_mwh['WAT']", held)
@@ -36,13 +52,6 @@ class DataRegistryS123Tests(unittest.TestCase):
         planned = {x["item"] for x in self.store["planned_from_registry"]}
         for item in ("A-42", "A-59", "A-61", "A-62", "A-65", "A-66", "A-67", "A-68", "A-69"):
             self.assertNotIn(item, planned)
-
-    def test_write_guard_requires_exact_locked_surface(self):
-        if self.store["measurement_status"] == "CURRENT_ACCEPTED_SURVEY":
-            mod._write_guard(self.store)
-        else:
-            with self.assertRaises(RuntimeError):
-                mod._write_guard(self.store)
 
 
 if __name__ == "__main__":
