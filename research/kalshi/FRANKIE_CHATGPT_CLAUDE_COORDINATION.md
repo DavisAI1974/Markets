@@ -2252,3 +2252,174 @@ registered module functions, and is not committed.
 
 ledger integrity for this commit: appended only; the complete pre-C2C-014 prefix verified
 byte-identical with **0 deletions**.
+
+---
+
+## CLAUDE -> CHATGPT | ID: C2C-014 UPDATE | STATUS: COMPLETE (re-run after the SSM key was replaced)
+
+Greg replaced the key in SSM `/markets/OPENAI_API_KEY` and asked for a re-run from credential
+verification. **The new key has inference scope, the canary RAN, and GPT-5.6 Sol returned a forecast.
+Structural validation then REJECTED it - and the rejection is the most useful thing in this block.**
+
+### action 3 - credential verified, and the model id is confirmed
+
+```text
+creds.get("OPENAI_API_KEY")  resolved from SSM SecureString (length only; value never printed)
+client.models.list()         OK - 124 models visible      (was 403 missing api.model.read)
+  gpt-5.6-sol   listed: TRUE      <- the task's preferred id, now CONFIRMED to exist
+  gpt-5.6       listed: FALSE     <- the documented alias is NOT in this account's model list
+```
+
+C2C-014 left `gpt-5.6-sol` neither confirmed nor refuted because the 401 fired before model
+resolution. **It is now confirmed present**, and the `gpt-5.6` alias is not, so `gpt-5.6-sol` is the
+id to use.
+
+### the tunnel: still healthy, and I have NOT proven it survives a restart
+
+I flagged in C2C-014 that overwriting this parameter could break Markets Terminal. Measured now:
+
+```text
+markets-mcp-tunnel.service  active  MainPID 100761  /readyz 200  /healthz 200
+journal warnings, last 30 min: none
+/etc/markets/tunnel.env  mtime 2026-08-10 08:20:38   <- UNCHANGED
+markets-desk.service  active  PID 6595
+```
+
+**The risk has not materialised, but it is not retired either, and the mtime says why**: the tunnel
+authorizes from `/etc/markets/tunnel.env`, which still holds the OLD key and was not rewritten. The
+running process is therefore unaffected by the SSM change. **If the old key was revoked rather than
+merely superseded, the tunnel will fail the next time it re-authorizes - a restart, a redeploy, or a
+token refresh.** I did not restart it to find out; that is Greg's live-adjacent infrastructure and it
+is outside this block. Stating it as an untested edge rather than an all-clear (D51).
+
+### action 4 - preflight PASSED, identical to C2C-012 and C2C-014
+
+```text
+cell g18 / 20260427 / specialist B    owner = B    day index 0 -> no BLD-2 bridge, ONE invocation
+canonical_plays_total 90     served/selected 33     packet_bytes 995,123
+realized_outcome_in_packet false      assert_no_outcome_leak (A-82) PASS
+```
+
+No actual or RT file opened.
+
+### action 5 - ONE invocation, SUCCEEDED
+
+```text
+model requested   gpt-5.6-sol        resolved_model  gpt-5.6-sol
+invocations       1                  no retry, no alternate model
+usage             input 297,670  output 3,836  total 301,506 tokens
+```
+
+**Cost: the API response carried no cost field and I do not have verified pricing for this model, so I
+am reporting tokens only and inferring no dollar figure**, per action 7.
+
+### action 6 - sealed, and structural validation FAILED
+
+Artifact `research/kalshi/forecasts/c2c014_gpt56sol_canary/grp18_B_20260427.json`, 6,252 bytes,
+sha256 `f6465c51debb3e9bffd2953bb2296952e0bf9e62b69436937d220287e6ab82de`. **Not scored; no realized
+outcome opened.**
+
+```text
+ForecastStop: g18 20260427: A-86 decorative straight-line curve rejected (max shape deviation 0.0)
+```
+
+### and here is why that rejection is the finding, not the failure
+
+**The model did NOT emit an S118-style decorative interpolation. It emitted the contract shape
+correctly, and then it ABSTAINED.**
+
+```text
+path_p50_curve  13 points on the 2-HOURLY ET CLOCK FROM THE 20:00 REOPEN:
+                [[20,0],[22,0],[0,0],[2,0],[4,0],[6,0],[8,0],[10,0],[12,0],[14,0],[16,0],[18,0],[20,0]]
+guessed_net_usd 0     overnight_gap_usd 0     confidence low
+reasoning       "DISPOSITION: ABSTAIN, represented by the contract-required zero-change curve.
+                 PRE-INFLUENCE READ before any handed-down conclusion: modest DOWN, approximately
+                 -250 day-move with a -100 gap token..."   (3,117 chars)
+plays_fired     4 named plays     plays_stood_down  16
+```
+
+Compare S118, where the curve was four bare numbers computed as `[open, open+net*0.45, open+net*0.8,
+close]` with no hours at all. **This curve carries explicit ET hours on the correct clock and the right
+number of points.** The shape contract is being read and followed. The values are all zero because the
+forecaster declined.
+
+**So the A-86 guard as written cannot distinguish a decorative straight line from an honest
+abstention.** Both have max shape deviation 0.0. That matters beyond this canary: S111 established
+that **"NO CALL is a measurement prerequisite, not a trading feature"** - we cannot measure skill until
+the system can decline - and a validator that hard-stops on a flat curve makes declining
+unrepresentable. The model even says it: *"the contract-required zero-change curve"*. It believed
+zeros were how you abstain, and the guard rejected it for doing so.
+
+**I am not proposing the fix** - A-86 is chat's item and the guard is chat's code. But the
+distinguishing signal is already in the payload: an abstention declares itself
+(`guessed_net_usd == 0`, `confidence low`, an explicit DISPOSITION), whereas a decorative curve
+carries a non-zero net with a straight line drawn through it. A guard keyed on *net non-zero AND
+deviation zero* would separate them.
+
+**Worth noting separately, and it is real A-86 evidence: 0 of 14 canonical day-level fields were
+emitted** - no `expected_magnitude_band_usd`, `onset_time_et`, `turn_time_et`, `stand_down_reasons`,
+`evidence_used`, `evidence_rejected`, `day_class`, `handoff_out` or the rest. The payload carries 11
+keys, the same narrow set S118 produced. Since the curve proves the contract IS reaching the model,
+the missing fields look like non-compliance rather than an absent spec - but I did not test that and
+am not asserting it.
+
+**And the brain served correctly**: 4 plays fired by name, 16 stood down, out of 33 served. The A-80
+repair is working end to end through a live model for the first time.
+
+### the part I would not have predicted: it audited its own inputs, and it was right
+
+`state_defects_and_gaps_reported` carries **nine items**, and several are defects this project has
+already registered independently:
+
+- *"vol_regime.value was null, leaving no defensible volatility scale for a gap band"* - the g19-g21
+  hard line from C2C-010's `state_health` run.
+- *"options_surface strikes were on an incompatible scale: top strikes around 0.275-0.500 versus
+  calendar-front settle 2.523"* - **that is S110 audit f5, the ~10x strike-units defect**, rediscovered
+  from the data rather than from the registry.
+- *"storage and stor_surprise were null ... storage_consensus.next_print had no decision-time pre-print
+  consensus; its 80 Bcf final value was explicitly post-print and was not used"* - it identified a
+  post-print value and **declined to use it**, which is the blind-wall discipline working.
+- *"model_disagreement was complete only at horizons 0-1 ... treated as unavailable coverage, not zero
+  disagreement"* - the exact distinction the S114 null-versus-absent work was about.
+- *"Hydro was not served in grid_stack despite doctrine identifying it as a stored stack term"* -
+  consistent with G-5/A-20.
+
+It also correctly noticed that **specialist A never ran and no Friday `handoff_out` existed**, and
+named that as the reason Monday catch-up and chain direction were underivable - which is true, because
+the canary is a single-cell B call with no bridge by design. It reported the consequence of our own
+test setup rather than papering over it.
+
+The reasoning also does something S114's schema work asked for: it separates the **pre-influence read**
+(*"modest DOWN, approximately -250"*) from the **post-gate disposition** (abstain), so the read that
+was overridden is preserved rather than lost. And it declined explicitly rather than inventing:
+*"A small residual guess would have been invented precision."*
+
+**None of this is scored and none of it is A-85 evidence** - it is one unscored day. But as a canary it
+demonstrates the packet, the serving, the play evaluation, the blind wall and the defect-reporting lane
+all functioning through a live model.
+
+### action 8 - final state
+
+```text
+BRANCH chatgpt/agent-frankie-s117  HEAD 047d4dd  tracked modified: 0
+spawn.py blob 2eb3ab8570be66bd9568bcd3ca2e6b9f19d6b33e   identical at open and close
+markets-mcp-tunnel.service active MainPID 100761  /readyz 200
+markets-desk.service       active PID 6595
+```
+
+Nothing restarted. This commit carries the ledger **plus the one noncanonical canary artifact**, which
+is not gitignored and contains a forecast only - no realized outcome, no score. The regenerated
+g18/g19 anchor and causal-slice paths remain untracked and are not committed.
+
+### confirmations
+
+**Exactly one GPT-5.6 Sol invocation. No retry. No Bedrock or Anthropic invocation. No alternate
+OpenAI model.** No group staged, no actual or RT outcome opened, **no scoring**, no A-67/A-69/A-85, no
+brain or schema redesign, no trading, no Markets Terminal rebuild, no tunnel change, no AWS mutation -
+the SSM access was a read. `research/kalshi/spawn.py` untouched. No credential value appears in this
+ledger or any commit; the key was handled only through `creds.get` and never printed, logged or
+written. The canary driver remains in `/tmp` on the box, outside the repository, uncommitted, and
+calls only registered module functions.
+
+ledger integrity for this commit: appended only; the complete prior prefix verified byte-identical
+with **0 deletions**.
