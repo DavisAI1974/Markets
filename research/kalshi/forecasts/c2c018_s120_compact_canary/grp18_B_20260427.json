@@ -1,0 +1,97 @@
+{
+  "confidence": "low",
+  "date": "20260427",
+  "disposition": "ABSTAIN",
+  "group": "g18",
+  "guessed_net_usd": 0,
+  "overnight_gap_usd": 0,
+  "path_p50_curve": [
+    [
+      20,
+      0
+    ],
+    [
+      22,
+      0
+    ],
+    [
+      0,
+      0
+    ],
+    [
+      2,
+      0
+    ],
+    [
+      4,
+      0
+    ],
+    [
+      6,
+      0
+    ],
+    [
+      8,
+      0
+    ],
+    [
+      10,
+      0
+    ],
+    [
+      12,
+      0
+    ],
+    [
+      14,
+      0
+    ],
+    [
+      16,
+      0
+    ],
+    [
+      18,
+      0
+    ],
+    [
+      20,
+      0
+    ]
+  ],
+  "plays_fired": [],
+  "plays_stood_down": [
+    "daytype.monday_weekend_gap \u2014 material gap and mature-versus-fresh swing selector are price-derived and unavailable before the reopen; no A bridge or Friday handoff",
+    "monday.catchup_window_tilt_gate \u2014 required inherited monday_bias and driver_realization were not produced",
+    "monday.seam_chainage_accommodation_gate \u2014 inherited chain age and polarity were absent; no block-boundary handoff exists",
+    "monday.overnight_headfake_into_catchup \u2014 status DEGENERATE as written and requires intraday price-versus-flow confirmation",
+    "monday.window_deep_book_shakeout \u2014 requires a live 06:00 ET L1-10 snapshot; no such decision-state object was supplied",
+    "weekend.seam_sign_from_stability_ladder \u2014 proposed sign rule failed both declared G23 forward seams; not used",
+    "boundary.weekend_gap_wide_band_emission \u2014 surviving form requires a defensible sign first; none was established",
+    "magnitude.block_gap_ownership \u2014 structural rung declined on negative/narrowing calendar spread; weather and chain-drift rungs lacked a trustworthy sign/chain state",
+    "magnitude.positioning_saturation_turn \u2014 both positioning percentile limbs were present, but storage phase/trajectory and price-at-bleed-low limbs were unavailable",
+    "positioning.covering_self_limiting_cot_wow_gate \u2014 improving COT supported only a spent-covering size/tail condition; exit-session price conviction was masked and no p50 sign is licensed",
+    "boundary.seam_gap_up_prior_on_worsening_cot \u2014 both parsed limbs were not armed: WoW improved and NYMEX percentile was above the play's <3 threshold",
+    "tape.heavy_buy_aggression_is_the_asymmetric_bearish_tell \u2014 Friday +3189 flow met the same-day threshold, but the play explicitly refutes D-1 directional use",
+    "flow.price_free_absorption_proxy \u2014 positive-flow and guard-clean preconditions held, but its decisive-buy reading is a proposed tail instrument and cannot replace the missing Monday handoff",
+    "structure.chain_polarity_flip \u2014 status DEGENERATE in blind mode because C1 requires masked prior-day price net and condition-class bands",
+    "direction.flow_nowcast \u2014 dip_imb_level was absent and the play requires intraday reveal",
+    "direction.flow_conviction_sign_gate \u2014 requires realized phase price changes and is unavailable blind",
+    "timing.catalyst_continuity_frontrun \u2014 EIA was three sessions ahead, but no independently armed turn/resume or defined live-ramp state existed",
+    "flow.resting_program_inverts_aggressor_tilt \u2014 no BCOM/GSCI roll window was active; opex alone does not supply a measured residual tilt",
+    "structure.squeeze_unwind \u2014 descriptor only; no dead-sponsor structural gap or stranded premium was established"
+  ],
+  "reasoning": "ABSTAIN. Pre-influence read: no independently derivable Monday sign or magnitude. The prior Friday tape was strongly buy-skewed (session signed flow +3189; big-print buy share 0.593 on a guard-clean 91 prints), but tape.heavy_buy_aggression_is_the_asymmetric_bearish_tell explicitly rejects this as a D-1 direction instrument, and the measured next-day record is near chance. Positioning was crowded short in NYMEX (8.49th percentile) and extreme in ICE LD1 (0.94th), but NYMEX managed-money WoW improved by +13,521, supporting a spent rather than newly worsening covering state; without Friday price-versus-flow conviction this does not establish Monday direction. Weekend weather revisions were broadly warmer through D0-D4, but absolute demand was shoulder-low (D0 HDD about 5-6 GW), model coverage beyond h1 was absent, and the cycle feed did not provide a usable CDD-axis seam read. Structural evidence did not supply a squeeze: calendar-front spread was -0.160 and narrowing further, squeeze_watch inactive, with opex today and futures expiry tomorrow creating calendar friction but no directional owner. A's weekend bridge was not produced, and no inbound Friday handoff supplied monday_bias, driver_realization, chain polarity, chain age, or close location. Because monday.catchup_window_tilt_gate and monday.seam_chainage_accommodation_gate require those inherited objects, constructing a Monday sign would be inheritance fabrication. The weekend seam-sign rule was also stood down because its declared G23 forward test failed on both seams. With no independent sign, no trustworthy gap owner, and no defensible arithmetic magnitude chain, the disposition is ABSTAIN rather than a small manufactured forecast.",
+  "specialist": "B",
+  "state_defects_and_gaps_reported": [
+    "Specialist A did not run, so the required weekend bridge was NOT PRODUCED.",
+    "No inbound Friday handoff_out was supplied; monday_bias, driver_realization, chain polarity, chain age, close location, and gap owner were unavailable.",
+    "vol_regime.value is null, leaving no usable current volatility scale for gap or session magnitude.",
+    "storage and stor_surprise are null even though storage_consensus and storage_regional are populated; the state contains an incomplete storage family.",
+    "weather is null; only forecast and cycle weather are available.",
+    "model_disagreement has coverage only at h0-h1 and null coverage at h2-h7, limiting authority assessment across the weekend-relevant horizon.",
+    "weather_forecast_cycle provides HDD deltas but no comparable CDD seam ladder despite the shoulder transition, preventing a complete seasonal-axis seam read.",
+    "ngwu_balance demand, supply, production, and feedgas levels are null; the only live LNG channel is the lagging vessel context line.",
+    "contract_structure, options_surface, cash_basis, and squeeze_watch are frozen at the 20260424 anchor vintage; usable as anchor state but not as a live Monday update."
+  ]
+}

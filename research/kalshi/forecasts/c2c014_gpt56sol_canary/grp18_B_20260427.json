@@ -1,0 +1,98 @@
+{
+  "confidence": "low",
+  "date": "20260427",
+  "group": "g18",
+  "guessed_net_usd": 0,
+  "overnight_gap_usd": 0,
+  "path_p50_curve": [
+    [
+      20,
+      0
+    ],
+    [
+      22,
+      0
+    ],
+    [
+      0,
+      0
+    ],
+    [
+      2,
+      0
+    ],
+    [
+      4,
+      0
+    ],
+    [
+      6,
+      0
+    ],
+    [
+      8,
+      0
+    ],
+    [
+      10,
+      0
+    ],
+    [
+      12,
+      0
+    ],
+    [
+      14,
+      0
+    ],
+    [
+      16,
+      0
+    ],
+    [
+      18,
+      0
+    ],
+    [
+      20,
+      0
+    ]
+  ],
+  "plays_fired": [
+    "magnitude.shoulder_weather_band_void",
+    "positioning.covering_self_limiting_cot_wow_gate",
+    "boundary.weekend_gap_wide_band_emission",
+    "weather.month_tail_gates"
+  ],
+  "plays_stood_down": [
+    "daytype.monday_weekend_gap",
+    "monday.overnight_headfake_into_catchup",
+    "monday.catchup_window_tilt_gate",
+    "monday.seam_chainage_accommodation_gate",
+    "magnitude.block_gap_ownership",
+    "magnitude.positioning_saturation_turn",
+    "boundary.seam_gap_up_prior_on_worsening_cot",
+    "flow.price_free_absorption_proxy",
+    "tape.heavy_buy_aggression_is_the_asymmetric_bearish_tell",
+    "timing.catalyst_continuity_frontrun",
+    "magnitude.catalyst_condition_sort",
+    "magnitude.terminal_impact_coefficient_carry",
+    "selector.divergence_resolution",
+    "magnitude.s1void_injection_chain_bleed",
+    "weather.burn_conversion_gate",
+    "daytype.storage_thursday_magnitude"
+  ],
+  "reasoning": "DISPOSITION: ABSTAIN, represented by the contract-required zero-change curve. PRE-INFLUENCE READ before any handed-down conclusion: modest DOWN, approximately -250 day-move with a -100 gap token. Inputs were the coherent weekend HDD cuts (Sunday D0..D+4 deltas -0.334/-0.829/-1.073/-0.570/-0.941), loose storage backdrop (last print +103 Bcf, +9 vs final consensus, L48 +111.8 Bcf vs five-year), nuclear outages falling 2.40 GW over seven days, and contango. That initial read did not survive the gates. No A bridge was produced, and no Friday handoff_out supplied exit_type, monday_bias, chain age, close location, driver realization, or gap owner; therefore the Monday catch-up and chain-drift direction could not be derived. STRUCTURE: calendar-front spread was -0.160 and narrowed another -0.015 over three days with squeeze_watch inactive, so no structural squeeze owner. magnitude.block_gap_ownership was evaluated: anchor_structural declined; weekend weather showed coherent warm cuts, but magnitude.shoulder_weather_band_void armed because forecast D0 HDD was only 5.885 and every D0..D+4 level was below 13.5, so the winter weather-delivery band had no authority; chain_drift was unevaluable without Friday close/chain state. POSITIONING: NYMEX MM remained short-crowded at the 8.49th percentile, but WoW improved by +13,521 contracts. boundary.seam_gap_up_prior_on_worsening_cot did not arm, while positioning.covering_self_limiting_cot_wow_gate treated the covering tail as spent rather than recurring. magnitude.positioning_saturation_turn was declined despite its two percentile limbs arithmetically passing: ICE LD1 was an extreme net-LONG book, not a second crowded-short book, and the required withdrawal-turn window/storage catalyst was absent. FLOW: Friday session flow was +3,189 with 91 big prints and big_print_b_share 0.593. flow.price_free_absorption_proxy's decisive-buy branch was arithmetically armed, but tape.heavy_buy_aggression_is_the_asymmetric_bearish_tell explicitly refutes the same aggregate as a D-1 directional instrument; under single-node ownership I did not promote the proposed proxy over the measured D-1 null. monday.overnight_headfake_into_catchup was stood down because it is DEGENERATE as written and current Monday overnight price-versus-flow was not served. timing.catalyst_continuity_frontrun had the calendar limb armed at three days to EIA, but no measurable live-ramp definition and no armed turn/resume, so it did not fire. OPEX/expiry were treated as calendar context only: options expiry was today and futures expiry tomorrow, but the option strike scale was incompatible with the 2.523 calendar-front settle, preventing an OI-wall read. weather.month_tail_gates supplied only a May storage-band context, never a daily direction. FINAL: after removing the void weather band, unavailable chain inheritance, non-directional COT convexity, and D-1 flow instruments measured at chance, no causal sign or magnitude remained. A small residual guess would have been invented precision, so the required numerical emission is zero with a flat p50 path and low confidence.",
+  "specialist": "B",
+  "state_defects_and_gaps_reported": [
+    "Specialist A did not run, so the required Monday bridge was not produced. No Friday handoff_out supplied exit_type, monday_bias, chain age, close location, driver realization, or Sunday gap owner.",
+    "Current Monday reopen/overnight signed-flow-versus-price evidence was absent. Only Friday tape_conditions were served, so the Monday head-fake/catch-up test could not be evaluated causally.",
+    "vol_regime.value was null, leaving no defensible volatility scale for a gap band or session range.",
+    "options_surface strikes were on an incompatible scale: top strikes around 0.275-0.500 versus calendar-front settle 2.523. OI-wall distance and pin authority were therefore uninterpretable.",
+    "storage and stor_surprise were null. storage_consensus.next_print had no decision-time pre-print consensus; its 80 Bcf final value was explicitly post-print and was not used. storage_vintage was 53 days old.",
+    "ngwu_balance supply/demand levels were null and latest_sd_levels were 215 days old. Only the vessel departure line was current enough for context.",
+    "grid_stack served realized wind_mwh levels but no forward wind/solar expectation and no wind change field, so net-load conversion could not be forecast from the stack.",
+    "model_disagreement was complete only at horizons 0-1; horizons 2-7 were null because they were beyond model reach. This was treated as unavailable coverage, not zero disagreement.",
+    "Hydro was not served in grid_stack despite doctrine identifying it as a stored stack term, preventing a complete spring power-stack residual."
+  ]
+}

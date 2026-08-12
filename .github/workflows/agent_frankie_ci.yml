@@ -1,0 +1,180 @@
+name: Agent Frankie CI
+
+on:
+  push:
+    branches:
+      - chatgpt/agent-frankie-s117
+    paths:
+      - research/kalshi/agent_frankie.py
+      - research/kalshi/frankie_*.py
+      - research/kalshi/frankie_*.json
+      - research/kalshi/databento_backfill_s115.py
+      - research/kalshi/tests/test_*frankie*.py
+      - research/kalshi/tests/test_*s115.py
+      - research/kalshi/FRANKIE_*.md
+      - deploy/aws/markets-frankie*.service
+      - deploy/aws/markets-frankie*.timer
+      - deploy/aws/install_frankie.sh
+      - deploy/aws/requirements-frankie.txt
+      - deploy/aws/frankie.env.example
+      - deploy/aws/frankie_iam_policy.example.json
+      - deploy/aws/FRANKIE_AWS_SETUP_S117.md
+      - CHATGPT_HANDOFF_S117_AGENT_FRANKIE.md
+      - mcp_server/**
+      - plugins/markets-terminal/**
+      - .agents/plugins/marketplace.json
+      - .github/workflows/agent_frankie_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/agent_frankie.py
+      - research/kalshi/frankie_*.py
+      - research/kalshi/frankie_*.json
+      - research/kalshi/databento_backfill_s115.py
+      - research/kalshi/tests/test_*frankie*.py
+      - research/kalshi/tests/test_*s115.py
+      - research/kalshi/FRANKIE_*.md
+      - deploy/aws/markets-frankie*.service
+      - deploy/aws/markets-frankie*.timer
+      - deploy/aws/install_frankie.sh
+      - deploy/aws/requirements-frankie.txt
+      - deploy/aws/frankie.env.example
+      - deploy/aws/frankie_iam_policy.example.json
+      - deploy/aws/FRANKIE_AWS_SETUP_S117.md
+      - CHATGPT_HANDOFF_S117_AGENT_FRANKIE.md
+      - mcp_server/**
+      - plugins/markets-terminal/**
+      - .agents/plugins/marketplace.json
+      - .github/workflows/agent_frankie_ci.yml
+  workflow_dispatch:
+
+concurrency:
+  group: agent-frankie-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile Frankie
+        run: |
+          python -m py_compile \
+            research/kalshi/agent_frankie.py \
+            research/kalshi/frankie_core.py \
+            research/kalshi/frankie_backends.py \
+            research/kalshi/frankie_engine.py \
+            research/kalshi/frankie_idempotency.py \
+            research/kalshi/frankie_improve.py \
+            research/kalshi/frankie_evolution.py \
+            research/kalshi/frankie_reflect.py \
+            research/kalshi/frankie_reflect_runner.py \
+            research/kalshi/frankie_s115.py \
+            research/kalshi/frankie_render_s115.py \
+            research/kalshi/frankie_validation_s115.py \
+            research/kalshi/frankie_forecaster_s115.py \
+            research/kalshi/frankie_s115_status.py \
+            research/kalshi/frankie_two_group_smoke_s118.py \
+            research/kalshi/frankie_anchor_s118.py \
+            research/kalshi/frankie_group_forecast_s118.py \
+            research/kalshi/frankie_two_group_run_s118.py \
+            research/kalshi/frankie_bridge_preflight_s118.py \
+            research/kalshi/databento_backfill_s115.py \
+            mcp_server/markets_mcp_readonly.py
+      - name: Validate JSON contracts
+        run: |
+          python -m json.tool research/kalshi/frankie_event_schema.json >/dev/null
+          python -m json.tool research/kalshi/frankie_outcome_schema.json >/dev/null
+          python -m json.tool research/kalshi/frankie_paper_manifest.json >/dev/null
+          python -m json.tool deploy/aws/frankie_iam_policy.example.json >/dev/null
+          python -m json.tool plugins/markets-terminal/.codex-plugin/plugin.json >/dev/null
+          python -m json.tool plugins/markets-terminal/.mcp.json >/dev/null
+          python -m json.tool .agents/plugins/marketplace.json >/dev/null
+      - name: Verify Markets Terminal plugin remains read-only
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          plugin = json.loads(Path('plugins/markets-terminal/.codex-plugin/plugin.json').read_text())
+          mcp = json.loads(Path('plugins/markets-terminal/.mcp.json').read_text())
+          market = json.loads(Path('.agents/plugins/marketplace.json').read_text())
+          assert plugin['name'] == 'markets-terminal'
+          assert plugin['mcpServers'] == './.mcp.json'
+          assert plugin['interface']['capabilities'] == ['Read']
+          assert set(mcp['mcpServers']) == {'markets-terminal'}
+          server = mcp['mcpServers']['markets-terminal']
+          assert server['command'] == 'python'
+          assert server['args'] == ['mcp_server/markets_mcp_readonly.py']
+          entry = market['plugins'][0]
+          assert entry['name'] == 'markets-terminal'
+          assert entry['policy']['products'] == ['CODEX']
+          src = Path('mcp_server/markets_mcp_readonly.py').read_text()
+          assert src.count('@app.tool(') == 2
+          assert 'def markets_repo_status' in src
+          assert 'def markets_read_file' in src
+          assert 'app.run(transport="stdio")' in src
+          for forbidden in ('subprocess.Popen', 'os.system(', '@app.resource', '@app.prompt'):
+              assert forbidden not in src
+          print('Markets Terminal plugin contract clean')
+          PY
+      - name: Validate shell and systemd templates
+        run: |
+          bash -n deploy/aws/install_frankie.sh
+          grep -q 'ExecStart=/usr/bin/python3 agent_frankie.py serve' deploy/aws/markets-frankie.service
+          grep -q 'NoNewPrivileges=true' deploy/aws/markets-frankie.service
+          grep -q 'frankie_reflect_runner.py' deploy/aws/markets-frankie-reflect.service
+          grep -q 'Persistent=true' deploy/aws/markets-frankie-reflect.timer
+      - name: Prove original spawner is untouched
+        run: |
+          git fetch --no-tags origin \
+            chatgpt/novel-edge-lab-s116:refs/remotes/origin/chatgpt/novel-edge-lab-s116
+          test "$(git hash-object research/kalshi/spawn.py)" = "2eb3ab8570be66bd9568bcd3ca2e6b9f19d6b33e"
+          git diff --exit-code origin/chatgpt/novel-edge-lab-s116 -- research/kalshi/spawn.py
+      - name: Run Frankie selftest
+        run: python research/kalshi/agent_frankie.py selftest
+      - name: Run Frankie unit tests
+        run: |
+          python -m unittest discover -s research/kalshi/tests -p 'test_*frankie*.py'
+          python -m unittest discover -s research/kalshi/tests -p 'test_*s115.py'
+      - name: Verify S118 two-group matched artifacts
+        run: python research/kalshi/frankie_two_group_smoke_s118.py > /tmp/frankie-s118-two-group.json
+      - name: Verify S118 causal forecast packets without outcomes
+        run: python research/kalshi/frankie_two_group_run_s118.py --preflight --namespace ci_s118 > /tmp/frankie-s118-packets.json
+      - name: Verify S118 weekend bridge packets without outcomes
+        run: python research/kalshi/frankie_bridge_preflight_s118.py > /tmp/frankie-s118-bridges.json
+      - name: Verify S115 ownership is collision-free
+        run: |
+          PYTHONPATH=research/kalshi python - <<'PY'
+          from frankie_s115 import OWNERSHIP, assert_ownership_clean
+          assert_ownership_clean()
+          assert OWNERSHIP['D8_merge']['part'] == 'content_store'
+          assert OWNERSHIP['A62_specialist_priors']['part'] == 'derived_track_record_index'
+          assert OWNERSHIP['A65_compaction']['part'] == 'serving_policy'
+          print('A-66 ownership clean')
+          PY
+      - name: Run S115 status without promoting evidence
+        run: python research/kalshi/frankie_s115_status.py > /tmp/frankie-s115-status.json
+      - name: Verify health is secret-free and non-executable
+        run: |
+          python research/kalshi/agent_frankie.py health > /tmp/frankie-health.json
+          python - <<'PY'
+          import json
+          data = json.load(open('/tmp/frankie-health.json'))
+          assert data['execution_enabled'] is False
+          assert data['origin']['verified'] is True
+          assert data['paper_manifest']['hybrid_ready'] is True
+          assert data['paper_manifest']['papers'] >= 9
+          assert data['self_improvement']['automatic_apply'] is False
+          assert data['self_improvement']['immutable_outcome_sidecars'] is True
+          text = open('/tmp/frankie-health.json').read()
+          assert 'AWS_SECRET_ACCESS_KEY' not in text
+          assert 'OPENAI_API_KEY' not in text
+          print(data['paper_manifest'])
+          PY

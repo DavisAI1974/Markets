@@ -1,0 +1,21 @@
+{
+  "name": "davisai-markets",
+  "interface": {
+    "displayName": "DavisAI Markets"
+  },
+  "plugins": [
+    {
+      "name": "markets-terminal",
+      "source": {
+        "source": "local",
+        "path": "./plugins/markets-terminal"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL",
+        "products": ["CODEX"]
+      },
+      "category": "Productivity"
+    }
+  ]
+}

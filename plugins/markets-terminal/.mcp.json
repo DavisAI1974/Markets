@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "markets-terminal": {
+      "command": "python",
+      "args": ["mcp_server/markets_mcp_readonly.py"]
+    }
+  }
+}

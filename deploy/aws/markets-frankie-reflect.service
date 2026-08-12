@@ -1,0 +1,20 @@
+[Unit]
+Description=DavisAI Markets Frankie bounded reflection
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=@RUN_USER@
+WorkingDirectory=@MARKETS_DIR@/research/kalshi
+EnvironmentFile=-/etc/markets/markets.env
+EnvironmentFile=-/etc/markets/frankie.env
+ExecStart=/usr/bin/python3 frankie_reflect_runner.py --limit 50 --min-resolved 5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/lib/markets/frankie
+MemoryMax=2G
+CPUQuota=100%
+UMask=0077
