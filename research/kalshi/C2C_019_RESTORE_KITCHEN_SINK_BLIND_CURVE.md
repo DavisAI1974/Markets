@@ -40,6 +40,35 @@ B. Build a causal-data completeness audit for the target cell before any next in
 - A packet is NOT ready if possessed causal data is silently omitted.
 - The only deliberate target-period mask is the future/actual PRICE CURVE and future-derived information.
 
+### B1. Registry-first reconciliation — REQUIRED
+
+Greg supplied the historical generated `DATA_POINTS.md` master-list snapshot. Do NOT treat its counts or hole list as current truth and do NOT reopen work merely because that snapshot says it was missing.
+
+Use the repository registries as the current status authority:
+- root `OPEN_ITEMS.md` is a generated view only;
+- `research/kalshi/OPEN_ITEMS.json` is the canonical mutable work/status registry behind that view;
+- regenerate the current data-point registry from the current `research/kalshi/data_registry.py`/registered build path on the terminal/data plane if present; if the generator or generated output moved, trace the current equivalent rather than inventing a hand list.
+
+Produce a reconciliation table for every material gap/family in the historical `DATA_POINTS.md` and every relevant current OPEN item with these columns:
+
+`historical_gap_or_field | historical_item_id | current_open_item/status | current_code_or_data_evidence | served_now? | Frankie_accessible_now? | causal_at_target_cutoff? | classification | action`
+
+Allowed `classification` values:
+- `FIXED` — prove with current code/data/serving evidence;
+- `PARTIALLY_FIXED` — name exactly what landed and what remains;
+- `STILL_OPEN` — current registry/evidence says unresolved;
+- `SUPERSEDED` — name the replacement item/mechanism and prove it;
+- `NOT_APPLICABLE_TO_TARGET_CUTOFF` — data did not legally exist by cutoff;
+- `UNKNOWN_STOP` — evidence is insufficient; this blocks readiness rather than being guessed away.
+
+Important current-registry examples that MUST be reconciled rather than assumed fixed: A-11 chain state, A-15 thermal-stack consumption, A-17 forward nuclear schedule, A-18 Southeast BA coverage, A-23 unread-point triage, G-4 forward wind/solar net-load half, G-7 LNG feedgas EBBs, and M-6 coal headroom. The current OPEN registry still carries these as unresolved as of this task's creation. If terminal truth proves otherwise, update the canonical registry with evidence rather than silently overriding it in the canary packet.
+
+The historical `DATA_POINTS.md` "READ BY NOTHING" count is diagnostic, not a model-access definition. A field with zero `ng_brain.json` readers can still be available to Frankie if the raw/derived causal field is actually exposed to the reasoning backend. Therefore audit both separately:
+1. traditional play/brain reader coverage; and
+2. actual Frankie reasoning accessibility in the kitchen-sink packet/access layer.
+
+Do not claim completeness from a family-level label alone. The regenerated registry/current state must be diffed against what the exact target-cell packet or retrieval layer exposes. Preserve fields even when no current play mentions them: Frankie is allowed to discover usefulness himself.
+
 C. Token/access architecture.
 - C2C-018 actual Sol input was 477,817 tokens, too close to 500k TPM.
 - Do not solve this by dropping information access.
@@ -54,6 +83,9 @@ Add tests that fail if:
 - any averaging/pooling/smoothing/interpolation is performed by the coordinator/harness;
 - any of 90 plays is dropped;
 - a possessed causal data family is silently omitted from the completeness manifest;
+- current OPEN_ITEMS status and the generated data registry disagree without an explicit evidence-backed reconciliation;
+- a historical DATA_POINTS gap is marked FIXED solely because it disappeared from a view/filename;
+- a zero traditional brain-reader count is incorrectly treated as proof that Frankie cannot access a field through the kitchen-sink reasoning layer;
 - target/future actual curve data leaks through A-82.
 
 ## Repo-truth notes
@@ -70,8 +102,10 @@ Append C2C-019 COMPLETE/STOPPED to `research/kalshi/FRANKIE_CHATGPT_CLAUDE_COORD
 - exact files changed and commits;
 - methodology authority traced;
 - fixed-grid/flat-abstain removal status;
-- completeness-manifest results by data family;
-- any possessed-but-unserved data discovered;
+- regenerated data-registry identity/counts and its diff against Greg's historical DATA_POINTS snapshot;
+- OPEN_ITEMS reconciliation, including FIXED/PARTIALLY_FIXED/STILL_OPEN/SUPERSEDED classifications with evidence;
+- completeness-manifest results by data family and actual Frankie accessibility;
+- any possessed-but-unserved or served-but-inaccessible data discovered;
 - token/access design for the full kitchen sink;
 - regression results/CI;
 - `spawn.py` blob before/after;
