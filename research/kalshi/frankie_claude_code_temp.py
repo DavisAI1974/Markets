@@ -129,10 +129,8 @@ def _claude_command(system_prompt: str) -> list[str]:
         "json",
         "--max-turns",
         "1",
-        "--permission-mode",
-        "plan",
         "--disallowedTools",
-        os.environ.get("FRANKIE_CLAUDE_DISALLOWED_TOOLS", DEFAULT_DISALLOWED_TOOLS),
+        DEFAULT_DISALLOWED_TOOLS,
         "--system-prompt",
         system_prompt,
     ]

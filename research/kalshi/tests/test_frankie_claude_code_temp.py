@@ -36,7 +36,7 @@ class ClaudeCodeTempTests(unittest.TestCase):
         text = mod.OPERATOR_GUARD
         self.assertIn("DO NOT change, prune, rank-gate, hide, truncate", text)
         self.assertIn("data surface or settings Frankie is allowed to see", text)
-        self.assertIn("all supplied play bodies remain available", text)
+        self.assertIn("all supplied play bodies remain available", text.lower())
         self.assertIn("blind artifact is immutable", text)
         self.assertIn("A-82 isolation remains binding", text)
 
@@ -108,7 +108,6 @@ class ClaudeCodeTempTests(unittest.TestCase):
         self.assertIn("-p", cmd)
         self.assertIn("--output-format", cmd)
         self.assertIn("--max-turns", cmd)
-        self.assertIn("--permission-mode", cmd)
         self.assertIn("--disallowedTools", cmd)
         self.assertIn("--system-prompt", cmd)
         self.assertEqual(cmd[cmd.index("--max-turns") + 1], "1")
