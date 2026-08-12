@@ -20,8 +20,8 @@ given:
     the classic hole - `repo/../../etc/passwd` starts with the repo prefix as a string.
   * the comparison is on path COMPONENTS (`os.path.commonpath`), not a `startswith` on the raw
     string, so a sibling directory named `Markets-secrets` cannot pass by sharing a prefix.
-  * a deny list runs after containment, on the repo-relative path, for names that carry secrets
-    even when they live inside the repo.
+  * a deny list runs after containment, on the repo-relative path, for names that carry secrets even
+    when they live inside the repo.
   * binary is refused by decoding as UTF-8 strictly and failing closed, not by extension guessing.
   * size is capped so a single call cannot drain a large artifact.
 
@@ -36,6 +36,7 @@ import os
 import subprocess
 
 from mcp.server import MCPServer
+from mcp.types import ToolAnnotations
 
 # The repo root is derived from THIS FILE's own location - the file lives at <repo>/mcp_server/, so
 # one level up from its directory is the root. Deriving it beats hardcoding `/home/user/Markets`
@@ -51,6 +52,13 @@ MAX_BYTES = 256 * 1024
 DENY_SUBSTRINGS = (
     ".env", "credentials", "id_rsa", "id_ed25519", ".pem", ".key", ".p12", ".pfx",
     "secret", "aws.env", "bento.env", ".netrc", ".npmrc", ".pypirc", ".git/config",
+)
+
+READ_ONLY_ANNOTATIONS = ToolAnnotations(
+    readOnlyHint=True,
+    destructiveHint=False,
+    idempotentHint=True,
+    openWorldHint=False,
 )
 
 
@@ -104,8 +112,10 @@ def _read_file_impl(path: str) -> str:
 app = MCPServer("markets-terminal")
 
 
-@app.tool(description="Report the Markets repository path, current branch, HEAD commit and "
-                      "worktree status. Read-only.")
+@app.tool(
+    description="Report the Markets repository path, current branch, HEAD commit and worktree status. Read-only.",
+    annotations=READ_ONLY_ANNOTATIONS,
+)
 def markets_repo_status() -> str:
     return json.dumps({
         "repo_path": REPO,
@@ -117,9 +127,13 @@ def markets_repo_status() -> str:
     }, indent=2)
 
 
-@app.tool(description="Read UTF-8 text from a path inside the Markets repository. Rejects path "
-                      "traversal, paths outside the repo, credential-bearing paths, binary files, "
-                      "and files over 256KB. Read-only.")
+@app.tool(
+    description=(
+        "Read UTF-8 text from a path inside the Markets repository. Rejects path traversal, paths "
+        "outside the repo, credential-bearing paths, binary files, and files over 256KB. Read-only."
+    ),
+    annotations=READ_ONLY_ANNOTATIONS,
+)
 def markets_read_file(path: str) -> str:
     return _read_file_impl(path)
 
