@@ -70,10 +70,14 @@ def validate_inventory(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         if status not in _ALLOWED_STATUS:
             raise KitchenSinkStop(f"{family}: invalid status {status!r}")
 
-        # The only lawful reason to possess causal information and withhold it is that the object is
-        # itself the future answer or is contaminated by future-answer information.
+        # This is the strongest invariant in the inventory contract. If we possess information that
+        # was causally available by the historical cutoff and it is not future-answer contaminated,
+        # Frankie must be able to see it. Raise this before status-consistency diagnostics so a stale
+        # or contradictory status label can never hide the more important silent-serving failure.
         if possessed and causal and not contaminated and not accessible_now:
-            omissions.append(family)
+            raise KitchenSinkStop(
+                "possessed causal data silently omitted from Frankie access: " + family
+            )
 
         if status == "ACCESSIBLE":
             if not (possessed and causal and accessible_now and not contaminated):
