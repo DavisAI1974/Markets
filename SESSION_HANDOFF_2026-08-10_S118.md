@@ -236,3 +236,25 @@ up**, and it was found only because Greg asked whether the notes had been commit
   **A-81** (g11's 12 days), **h1** blocked on 2026-only fundamental stores.
 - **The end-to-end ChatGPT -> tunnel -> tool call has still never been observed.** The host answers
   a real MCP client with 9/9 containment intact; that is not the same claim (D51).
+
+---
+
+## POST-CLOSE ADDENDUM - THE BOX NOW SERVES CHATGPT'S BRANCH, NOT OURS
+
+After the close-out above, Greg directed the durable checkout at `/opt/markets-terminal` to
+`chatgpt/agent-frankie-s117` @ **`d539c2a`** ("Fix MCP v2 ToolAnnotations field names"), and only
+`markets-mcp-tunnel.service` was restarted. Verified: HEAD `d539c2a`, working tree clean, service
+active on a NEW MainPID, `/readyz` ready, `/healthz` live. Nothing else on the box was touched.
+
+**This matters for the next session and is easy to miss.** `markets_read_file` and
+`markets_repo_status` serve **whatever that checkout holds**, so the repository ChatGPT reads through
+Markets Terminal is now chat's Frankie branch - not `claude/kalshi-agents-coordinator-guard-sg0n15`,
+where this session's work lives. Two consequences:
+
+1. **`markets_repo_status` is the check, not an assumption.** It reports branch and HEAD; read it
+   before concluding anything about what the other side can see.
+2. **Work committed to the claude branch is invisible through the connector** until the box is
+   pointed back or chat's branch carries it. The deploy path
+   (`cd /opt/markets-terminal && git pull && bash mcp_server/deploy_box.sh`) is idempotent and will
+   happily run on either branch, so the branch is a deliberate choice each time rather than a
+   default.

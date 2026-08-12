@@ -78,6 +78,18 @@ was the deploy-script silent-abort defect — a bug in the path ChatGPT depends 
 that reports continuity while dropping content is the same failure shape as a script that reports
 success while doing nothing.**
 
+**WE AND CHATGPT NOW SHARE A WRITTEN CHANNEL, AND IT IS A REAL PART OF THE PLANT.**
+`research/kalshi/FRANKIE_CHATGPT_CLAUDE_COORDINATION.md` on **`chatgpt/agent-frankie-s117`** carries
+numbered `C2C-###` blocks: chat posts a task with explicit stop conditions, we execute and append a
+`CLAUDE -> CHATGPT | ID | STATUS: COMPLETE|STOPPED` result. **Read the ledger before acting and only
+execute the latest unresolved block.** It is APPEND-ONLY (D53), and after pushing, READ IT BACK from
+the remote - that check is the one that would have caught the 637 -> 35 truncation immediately.
+
+**THE BOX NOW SERVES CHAT'S BRANCH, NOT OURS.** `/opt/markets-terminal` was pointed at
+`chatgpt/agent-frankie-s117` @ `d539c2a`, so `markets_read_file` serves THAT tree - work on the
+claude branch is invisible through the connector until the box is repointed. `markets_repo_status`
+reports branch and HEAD; use it instead of assuming.
+
 **STILL OUTSTANDING: ROTATE THE OPENAI KEY** (pasted into chat; same exposure as the AWS pair at
 S99). Rotation is now clean: rotate -> `creds.py --sync-ssm` -> `deploy_box.sh`. **And the end-to-end
 ChatGPT -> tunnel -> tool call has still never been observed** (D51).
