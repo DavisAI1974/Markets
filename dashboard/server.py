@@ -18,10 +18,10 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fastapi import FastAPI, HTTPException  # noqa: E402
-from fastapi.responses import FileResponse  # noqa: E402
+from fastapi.responses import HTMLResponse  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
-from dashboard.adapters import brain, decision, fees, health, lagmap, market, paths  # noqa: E402
+from dashboard.adapters import brain, decision, fees, health, lagmap, market, novel, paths  # noqa: E402
 
 app = FastAPI(title="DavisAI Markets Dashboard", docs_url="/api/docs")
 
@@ -106,6 +106,16 @@ def api_nymex_bars(day: str):
     return market.nymex_minute_bars(_validate_day(day))
 
 
+@app.get("/api/v1/novel/candidates")
+def api_novel_candidates():
+    """Read-only preregistered candidate registry and local-input readiness.
+
+    This endpoint never emits an executable action. The immediate schedule consists of
+    watch/shadow windows whose rule identity and active books still require verification.
+    """
+    return novel.snapshot()
+
+
 @app.get("/api/v1/desk/snapshot")
 def api_desk_snapshot(day: str | None = None):
     """The composite Mission Control snapshot for one as-of day."""
@@ -137,9 +147,24 @@ def api_desk_snapshot(day: str | None = None):
 FRONTEND = os.path.join(paths.DASHBOARD, "frontend")
 
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 def index():
-    return FileResponse(os.path.join(FRONTEND, "index.html"))
+    """Serve the stable S100 shell with additive Novel Edge Lab assets injected.
+
+    The large baseline HTML remains untouched so Claude's active dashboard wiring and
+    visual language are preserved. The injected modules add a read-only navigation item,
+    candidate view, and optional rule-scan diagnostic at runtime.
+    """
+    index_path = os.path.join(FRONTEND, "index.html")
+    with open(index_path, encoding="utf-8") as f:
+        html = f.read()
+    if "novel.css" not in html:
+        html = html.replace("</head>", "  <link rel=\"stylesheet\" href=\"novel.css\" />\n</head>")
+    if "novel.js" not in html:
+        html = html.replace("</body>", "  <script src=\"novel.js\"></script>\n</body>")
+    if "novel_diagnostics.js" not in html:
+        html = html.replace("</body>", "  <script src=\"novel_diagnostics.js\"></script>\n</body>")
+    return HTMLResponse(html)
 
 
 app.mount("/", StaticFiles(directory=FRONTEND), name="frontend")

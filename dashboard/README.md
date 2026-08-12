@@ -25,8 +25,70 @@ reads `data/` relative paths). API docs at `/api/docs`.
         fees.py            kalshi_fill_model wrapper (maker-first framing)
         market.py          Kalshi candles (both schema vintages) + NYMEX minute bars
         health.py          data-plane truth: stores present, creds, live-feed reality
+        novel.py           Novel Edge Lab registry, local readiness, 48h clocks, rule-scan summary
+      novel_candidates.json canonical preregistered candidate + balance-mode registry
       frontend/            the S100 prototype (visual language preserved) + adapter.js
+        novel.js           additive Novel navigation/view and separate candidate cards
+        novel.css          Novel panel styles using the existing S100 design tokens
+        novel_diagnostics.js visible rank-1 rule-scan diagnostic
       data-contracts.md    proposed canonical event contracts (from the prototype bundle)
+
+Research-side deterministic tool:
+
+    research/kalshi/kalshi_rule_canonicalizer.py
+
+It canonicalizes current market JSON, separates exact normalized-rule groups from semantic
+near-matches, and writes a read-only scan such as `data/novel/kalshi_rule_scan.json`.
+
+## Novel Edge Lab
+
+The Novel panel is a read-only research and readiness surface. It does not score or route
+trades. It shows one separate card per preregistered candidate with:
+
+- structural or predictive status;
+- ordinal potential, causal defensibility and testability;
+- exact causal clock and permitted instruments;
+- required local stores and existing supporting code;
+- use conditions and kill test;
+- balance convention (`PAYOFF_NEUTRAL`, `DELTA_NEUTRAL`, `INVENTORY_SKEWED`,
+  `DIRECTIONAL`, or `WATCH_ONLY`);
+- dynamically generated ET watch windows for the next 48 hours.
+
+Endpoint: `GET /api/v1/novel/candidates`.
+
+Every candidate is emitted with `execution_enabled=false`. Authority is restricted to
+`WATCH_ONLY` or `SHADOW`. A structural seam is not labeled realized arbitrage, and a
+predictive candidate is not labeled proven edge.
+
+The rank-1 duplicate-wrapper card also displays the latest rule-scan summary when
+`data/novel/kalshi_rule_scan.json` exists:
+
+- exact normalized-rule groups;
+- semantic near-match groups;
+- gross pair checks;
+- positive gross margins before fees.
+
+Even an exact normalized-rule group remains subject to complete human rule review. Any
+positive pair count is gross before fees, slippage, legging, disputes and execution failure.
+
+The baseline `index.html` remains untouched. `dashboard.server` injects `novel.css`,
+`novel.js`, and `novel_diagnostics.js` when serving `/`, allowing the panel to coexist with
+Claude's current dashboard wiring without replacing the S100 shell.
+
+## Run the rule scanner
+
+```bash
+python research/kalshi/kalshi_rule_canonicalizer.py current_markets.json \
+  --out data/novel/kalshi_rule_scan.json
+```
+
+Input may be a JSON market list or an object containing a `markets` list.
+
+Self-test:
+
+```bash
+python research/kalshi/kalshi_rule_canonicalizer.py --selftest
+```
 
 ## Truth badges (every panel carries one)
 
@@ -34,6 +96,9 @@ reads `data/` relative paths). API docs at `/api/docs`.
 - AWAITING DATA - the store exists on S3 but is not in the local cache (or no AWS creds).
 - SIMULATED - prototype placeholder; no real counterpart exists yet (executor lane is last,
   coach emit feed does not exist yet).
+
+The Novel panel additionally distinguishes `WIRED INPUTS`, `PARTIAL INPUTS`, and
+`AWAITING DATA`. These describe local input readiness, not edge validation.
 
 ## Doctrine bound into the UI
 
@@ -44,6 +109,9 @@ reads `data/` relative paths). API docs at `/api/docs`.
 - Maker-first economics; taker reserved for the >=4c fast tail; maker fills are BOUNDS ONLY.
 - Every play shows brain provenance (status, forward_evidence, requires, scope).
 - Missing data renders as missing (missing==None doctrine); nothing interpolated.
+- Novel candidates remain preregistered and non-executable until their own untouched-forward,
+  rule-identity, cost and latency gates pass.
+- Buy and sell sides are balanced by the intended risk, not equal dollars or equal order count.
 
 ## AWS
 
@@ -61,3 +129,8 @@ the server is self-contained and environment-driven so it moves to a box unchang
    until that feed exists; the dashboard never elects owning plays itself.
 4. Live SSE from an AWS box collector.
 5. Executor toggle + structured intents (LAST; server-side risk pipeline, browser holds nothing).
+6. Current active-market/rules fetch plus a scheduled rule-canonicalizer run and synchronous
+   executable-book capture. The deterministic scanner itself is built.
+7. Novel CME narrow-vertical digital builder and contract-month/source normalizer.
+8. EIA-930 first-vintage/revised-vintage archival seam and causal timestamp audit.
+9. Session-preserving five-step agnostic-coupler runner with untouched-forward exploitability.

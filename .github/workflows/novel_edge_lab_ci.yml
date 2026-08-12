@@ -1,0 +1,100 @@
+name: Novel Edge Lab CI
+
+on:
+  push:
+    branches:
+      - chatgpt/novel-edge-lab-s116
+    paths:
+      - dashboard/adapters/novel.py
+      - dashboard/novel_candidates.json
+      - dashboard/frontend/novel.css
+      - dashboard/frontend/novel.js
+      - dashboard/frontend/novel_diagnostics.js
+      - dashboard/server.py
+      - dashboard/README.md
+      - research/kalshi/kalshi_rule_canonicalizer.py
+      - CHATGPT_HANDOFF_S116_NOVEL_EDGE_LAB.md
+      - CHATGPT_HANDOFF_S116_NOVEL_EDGE_LAB_ADDENDUM.md
+      - .github/workflows/novel_edge_lab_ci.yml
+  pull_request:
+    paths:
+      - dashboard/adapters/novel.py
+      - dashboard/novel_candidates.json
+      - dashboard/frontend/novel.css
+      - dashboard/frontend/novel.js
+      - dashboard/frontend/novel_diagnostics.js
+      - dashboard/server.py
+      - dashboard/README.md
+      - research/kalshi/kalshi_rule_canonicalizer.py
+      - CHATGPT_HANDOFF_S116_NOVEL_EDGE_LAB.md
+      - CHATGPT_HANDOFF_S116_NOVEL_EDGE_LAB_ADDENDUM.md
+      - .github/workflows/novel_edge_lab_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dashboard dependency
+        run: pip install --quiet fastapi
+      - name: Compile Python
+        run: |
+          python -m py_compile \
+            dashboard/adapters/novel.py \
+            dashboard/server.py \
+            research/kalshi/kalshi_rule_canonicalizer.py
+      - name: Validate candidate registry JSON
+        run: python -m json.tool dashboard/novel_candidates.json >/dev/null
+      - name: Check JavaScript syntax
+        run: |
+          node --check dashboard/frontend/novel.js
+          node --check dashboard/frontend/novel_diagnostics.js
+      - name: Test rule canonicalizer
+        run: python research/kalshi/kalshi_rule_canonicalizer.py --selftest
+      - name: Validate read-only registry and fixed 48-hour schedule
+        run: |
+          python - <<'PY'
+          import datetime as dt
+          from zoneinfo import ZoneInfo
+          from dashboard.adapters import novel
+          from dashboard.server import app, index
+
+          et = ZoneInfo('America/New_York')
+          now = dt.datetime(2026, 8, 6, 10, 13, tzinfo=et)
+          payload = novel.snapshot(now=now)
+          assert payload['authority'] == 'READ_ONLY'
+          assert payload['execution_enabled'] is False
+          assert len(payload['candidates']) == 10
+          assert payload['summary']['next_48h_watch_windows'] >= 3
+          assert all(c['execution_enabled'] is False for c in payload['candidates'])
+          assert all(c['authority'] in {'WATCH_ONLY', 'SHADOW'} for c in payload['candidates'])
+          duplicate = next(c for c in payload['candidates']
+                           if c['id'] == 'KALSHI_DUPLICATE_WRAPPER_PARITY')
+          assert 'live_diagnostic' in duplicate
+          assert duplicate['live_diagnostic']['path'] == 'data/novel/kalshi_rule_scan.json'
+
+          # Sunday morning must roll daily settlement watches to Monday rather than
+          # dropping them because the next calendar day is not a trading weekday.
+          sunday = dt.datetime(2026, 8, 9, 10, 0, tzinfo=et)
+          weekend_payload = novel.snapshot(now=sunday)
+          daily = [w for w in weekend_payload['immediate_schedule']
+                   if w['candidate_id'] == 'COMMODITY_SETTLEMENT_CLOCK_RESIDUAL']
+          assert len(daily) == 2
+          assert all(w['starts_at_et'].startswith('2026-08-10T') for w in daily)
+
+          paths = {route.path for route in app.routes}
+          assert '/api/v1/novel/candidates' in paths
+          body = index().body.decode('utf-8')
+          assert 'novel.css' in body
+          assert 'novel.js' in body
+          assert 'novel_diagnostics.js' in body
+          print(payload['summary'])
+          print({'weekend_rollover_windows': len(daily)})
+          PY
