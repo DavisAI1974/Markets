@@ -1,0 +1,134 @@
+<title>Four Days, Blind</title>
+<style>
+  :root{
+    color-scheme: light;
+    --ground:#eceff0; --panel:#f9fbfa; --panel-2:#f1f4f4;
+    --ink:#0f1618; --ink-2:#55625f; --ink-3:#8a9694; --rule:#d3dad8;
+    --s-actual:#0f1618; --s-blind:#2a78d6;
+    --warn:#b3401f; --good:#1b7f4f;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --ground:#0e1315; --panel:#151b1d; --panel-2:#1b2325;
+      --ink:#eef3f2; --ink-2:#9aa8a5; --ink-3:#6b7a77; --rule:#263033;
+      --s-actual:#eef3f2; --s-blind:#3987e5;
+      --warn:#e2704c; --good:#4bbd84;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --ground:#0e1315; --panel:#151b1d; --panel-2:#1b2325;
+    --ink:#eef3f2; --ink-2:#9aa8a5; --ink-3:#6b7a77; --rule:#263033;
+    --s-actual:#eef3f2; --s-blind:#3987e5;
+    --warn:#e2704c; --good:#4bbd84;
+  }
+  *{box-sizing:border-box;}
+  body{background:var(--ground); color:var(--ink); font-family:var(--sans);
+       line-height:1.55; margin:0; padding:28px 20px 64px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1040px; margin:0 auto; display:flex; flex-direction:column; gap:24px;}
+  header.head{display:flex; flex-direction:column; gap:10px; border-bottom:2px solid var(--ink); padding-bottom:16px;}
+  .eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3);}
+  h1{font-size:clamp(26px,4.4vw,40px); line-height:1.08; margin:0; text-wrap:balance; font-weight:640; letter-spacing:-.015em;}
+  .dek{color:var(--ink-2); max-width:66ch; margin:0; font-size:15.5px;}
+  .strip{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1px; background:var(--rule); border:1px solid var(--rule);}
+  .cell{background:var(--panel); padding:13px 15px; display:flex; flex-direction:column; gap:3px;}
+  .cell .k{font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3);}
+  .cell .v{font-family:var(--mono); font-size:24px; font-variant-numeric:tabular-nums; letter-spacing:-.02em;}
+  .cell .n{font-size:12px; color:var(--ink-2); line-height:1.35;}
+  .grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(440px,1fr)); gap:14px;}
+  section.day{background:var(--panel); border:1px solid var(--rule); padding:16px 16px 12px; display:flex; flex-direction:column; gap:10px;}
+  .dhead{display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap;}
+  .dname{font-family:var(--mono); font-size:15px; font-weight:640;}
+  .dname small{color:var(--ink-3); font-weight:500; margin-left:6px;}
+  .verdict{font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; padding:2px 7px; border:1px solid currentColor;}
+  .verdict.hit{color:var(--good);} .verdict.miss{color:var(--warn);}
+  .nums{font-family:var(--mono); font-size:12.5px; color:var(--ink-2); font-variant-numeric:tabular-nums;}
+  .nums b{color:var(--ink);}
+  svg{display:block; width:100%; height:auto;}
+  .gl{stroke:var(--rule); stroke-width:1;}
+  .zero{stroke:var(--ink-3); stroke-width:1; stroke-dasharray:2 3;}
+  .ax{font-family:var(--mono); font-size:9.5px; fill:var(--ink-3);}
+  .legend{display:flex; gap:16px; font-family:var(--mono); font-size:11.5px; color:var(--ink-2);}
+  .legend i{display:inline-block; width:20px; height:0; border-top-width:2.5px; border-top-style:solid; vertical-align:middle; margin-right:6px;}
+  .note{font-size:13px; color:var(--ink-2); border-left:2px solid var(--rule); padding-left:14px; margin:0; max-width:74ch;}
+  .why{font-size:12.5px; color:var(--ink-2); line-height:1.5; border-top:1px solid var(--rule); padding-top:9px; margin:0;}
+  .why b{color:var(--ink); font-family:var(--mono); font-size:11.5px;}
+  footer{font-family:var(--mono); font-size:11px; color:var(--ink-3); border-top:1px solid var(--rule); padding-top:14px; line-height:1.7;}
+</style>
+
+<div class="wrap">
+<header class="head">
+  <div class="eyebrow">S124 · Claude-operated Frankie · g18 blind, 4 of 10 days · brain 90 plays</div>
+  <h1>It sized three of four, and got one badly wrong</h1>
+  <p class="dek">Frozen blind calls against the realized intraday tape. Each panel is cumulative dollars from that day's open, on the session clock from the 20:00 ET reopen. The blind path is Frankie's own — self-chosen timestamps, nothing re-anchored or rescaled.</p>
+</header>
+
+<div class="strip" id="strip"></div>
+
+<p class="note"><strong>Read the ratio, and read n.</strong> Against <span style="font-family:var(--mono)">zero_change</span> — forecast no move at all — these four days land at <b>0.810×</b>, where the S118 GPT-driven arms landed at 0.993× and 0.999×. That is the first time this desk's forecaster has beaten doing nothing by a margin worth the word. It is also <b>four days</b>, one of them a wrong-sign miss large enough to swamp the rest, and the group is 4 of 10. Nothing here is a result yet.</p>
+
+<div class="grid2" id="days"></div>
+
+<footer>
+  Blind artifacts frozen and committed at <span style="color:var(--ink-2)">7422bcd</span> on claude/frankie-temp-s124 before any actual was opened; hashes recorded in CLAUDE_FRANKIE_TEMP_S124_RUN_NOTES.md.<br>
+  Actual paths from research/kalshi/renders/ng_refine_s95/g18_actual.json — reconstructed nets match the recorded net_usd to the dollar on all four days (420 / -440 / -440 / 1230).<br>
+  Render rule (S104/S105): actual curve + the forecaster's own p50 path only. Per-event, never pooled (D4/D37). No refine has run.
+</footer>
+</div>
+
+<script>
+const D = [{"day": "20260427", "dow": "Mon", "owner": "B", "blind_net": -550, "blind_gap": -180, "blind_daymove": -730, "conf": "low", "disp": "CALL", "act_net": 420, "act_gap": -50, "act_daymove": 370, "recon_net_check": 420, "n_actual": 400, "actual": [[0.0, 0], [0.977, 50], [1.461, 210], [3.632, 40], [4.628, 50], [5.763, 50], [6.582, 40], [7.034, 50], [7.485, 160], [8.107, 160], [8.473, 170], [9.011, 210], [9.484, 260], [9.823, 340], [10.286, 330], [10.473, 470], [10.586, 440], [10.742, 460], [10.836, 620], [10.881, 670], [11.009, 740], [11.091, 770], [11.179, 720], [11.281, 780], [11.348, 760], [11.4, 660], [11.535, 670], [11.659, 700], [11.767, 730], [11.846, 780], [11.979, 820], [12.033, 780], [12.146, 720], [12.225, 810], [12.261, 920], [12.354, 870], [12.416, 980], [12.436, 1080], [12.477, 1080], [12.514, 1010], [12.537, 1050], [12.6, 970], [12.62, 930], [12.644, 880], [12.678, 870], [12.735, 860], [12.777, 870], [12.862, 860], [12.883, 910], [12.919, 890], [12.984, 1030], [13.008, 1070], [13.014, 1010], [13.039, 1090], [13.101, 1040], [13.152, 1060], [13.197, 1070], [13.234, 1080], [13.259, 1080], [13.301, 1060], [13.401, 1060], [13.433, 1010], [13.5, 950], [13.535, 990], [13.571, 1010], [13.593, 1120], [13.63, 1100], [13.672, 1070], [13.73, 1140], [13.779, 1120], [13.822, 1120], [13.891, 1080], [13.935, 1120], [13.963, 1110], [14.0, 1140], [14.012, 1170], [14.034, 1200], [14.087, 1130], [14.134, 1140], [14.191, 1110], [14.271, 1170], [14.339, 1150], [14.382, 1160], [14.478, 1130], [14.55, 1140], [14.6, 1070], [14.652, 1110], [14.702, 1210], [14.724, 1240], [14.774, 1130], [14.873, 1120], [14.938, 1120], [15.035, 1160], [15.096, 1110], [15.152, 1070], [15.252, 1160], [15.328, 1180], [15.369, 1210], [15.445, 1200], [15.502, 1110], [15.551, 1090], [15.642, 1120], [15.765, 1080], [15.804, 1020], [15.868, 940], [15.928, 870], [15.959, 830], [16.01, 800], [16.104, 920], [16.16, 850], [16.282, 860], [16.416, 860], [16.48, 910], [16.619, 890], [16.79, 900], [16.872, 820], [17.038, 850], [17.16, 900], [17.274, 850], [17.398, 800], [17.451, 780], [17.533, 760], [17.631, 710], [17.694, 680], [17.758, 710], [17.861, 690], [17.952, 670], [18.033, 710], [18.158, 660], [18.25, 810], [18.308, 740], [18.374, 710], [18.416, 600], [18.429, 640], [18.466, 600], [18.469, 500], [18.472, 450], [18.481, 410], [18.487, 430], [18.494, 440], [18.506, 430], [18.567, 510], [18.634, 500], [18.867, 500], [19.149, 480], [19.491, 500], [19.951, 460], [20.218, 400], [20.62, 480], [22.2, 420], [23.998, 420]], "blind": [[0.0, 0], [2.0, -30], [4.0, -50], [6.0, -70], [8.0, -90], [10.0, -150], [12.0, -280], [14.0, -330], [16.0, -350], [18.0, -365], [20.0, -370], [21.0, -370]], "fired": ["magnitude.s1void_injection_chain_bleed", "weather.shoulder_weather_band_void / magnitude.shoulder_weather_band_void", "selector.divergence_resolution", "monday.overnight_headfake_into_catchup", "tape.heavy_buy_aggression_is_the_asymmetric_bearish_tell", "boundary.seam_gap_up_prior_on_worsening_cot", "magnitude.weekend_gap_delivery"], "stood": 7, "defects": ["storage (national weekly) block is null this slice; only storage_regional (as of 2026-04-17) and storage_consensus (survey) were available and used as the surplus proxy instead.", "vol_regime is fully masked/null this slice (masked_one_shot=true, value null) -- no sigma reference available for magnitude sizing; sized off condition-class bands instead of a measured vol scale.", "weather (realized) block is null; only weather_forecast / weather_forecast_cycle (MOS forecast) fields were available and used in its place.", "No specialist-A bridge read was produced for this Monday (A did not run) -- owned the Monday number unaided per the run directive.", "model_disagreement horizons 2-7 show zero coverage (spread null, not zero -- beyond both models' reach); only h0/h1 were usable for the disagreement read.", "tape_conditions.session_b_share is served only on the known S108-biased single-sided basis (no two-sided series in this slice); read with that caveat rather than treated as a clean 50/50 bar."]}, {"day": "20260428", "dow": "Tue", "owner": "C", "blind_net": -300, "blind_gap": -50, "blind_daymove": -350, "conf": "low", "disp": "CALL", "act_net": -440, "act_gap": 0, "act_daymove": -440, "recon_net_check": -440, "n_actual": 400, "actual": [[0.0, 0], [0.459, -40], [1.517, -50], [3.074, -90], [3.521, -30], [4.753, -90], [5.687, -60], [6.108, -50], [6.583, -90], [7.125, -120], [7.538, -60], [8.038, -140], [8.198, -140], [8.44, -100], [8.933, -180], [9.68, -210], [9.898, -260], [10.062, -300], [10.363, -350], [10.492, -310], [10.606, -400], [10.817, -430], [11.003, -400], [11.201, -340], [11.349, -230], [11.399, -170], [11.531, -140], [11.594, 60], [11.626, 120], [11.683, 50], [11.785, 40], [11.826, 130], [11.906, 60], [12.0, 10], [12.033, -90], [12.139, -110], [12.245, -150], [12.296, -150], [12.328, 100], [12.344, -100], [12.361, 0], [12.429, 40], [12.528, 90], [12.618, 20], [12.766, 20], [12.833, -170], [12.845, -160], [12.919, -250], [13.0, -170], [13.015, -100], [13.054, -160], [13.094, -30], [13.115, 40], [13.167, 70], [13.224, -70], [13.253, -120], [13.33, -50], [13.409, -90], [13.489, -120], [13.496, -230], [13.547, -150], [13.586, -120], [13.619, -80], [13.694, -110], [13.731, -180], [13.795, -140], [13.879, -200], [13.941, -130], [14.02, -120], [14.119, -70], [14.186, 0], [14.289, 40], [14.361, 90], [14.39, 80], [14.473, 110], [14.558, 60], [14.591, 60], [14.659, 170], [14.752, 130], [14.8, 40], [14.896, 20], [14.954, -10], [15.008, -90], [15.078, -70], [15.167, -50], [15.221, -90], [15.328, -150], [15.401, -160], [15.466, -160], [15.51, -50], [15.548, 10], [15.621, -100], [15.74, -60], [15.92, -50], [16.038, -30], [16.202, -80], [16.35, -110], [16.485, -110], [16.586, -100], [16.742, -140], [16.781, -120], [16.943, -100], [17.093, -140], [17.167, -170], [17.236, -190], [17.371, -200], [17.468, -190], [17.521, -250], [17.597, -260], [17.612, -300], [17.685, -280], [17.743, -310], [17.784, -310], [17.867, -260], [17.951, -270], [18.001, -300], [18.034, -340], [18.079, -350], [18.101, -320], [18.127, -270], [18.167, -240], [18.191, -200], [18.232, -240], [18.256, -300], [18.274, -290], [18.317, -310], [18.353, -340], [18.385, -350], [18.408, -370], [18.437, -340], [18.467, -340], [18.473, -340], [18.484, -350], [18.49, -350], [18.498, -370], [18.522, -330], [18.569, -310], [18.628, -410], [18.75, -440], [18.801, -480], [18.872, -510], [18.953, -450], [19.078, -450], [19.281, -460], [19.529, -400], [19.786, -390], [20.159, -440], [20.682, -410], [20.835, -410], [22.151, -440], [23.964, -440]], "blind": [[0.0, 0], [2.0, -20], [4.0, -30], [6.0, -35], [8.0, -30], [10.0, -40], [12.0, -90], [14.0, -160], [16.0, -190], [18.0, -220], [20.0, -240], [21.0, -250]], "fired": ["magnitude.s1void_injection_chain_bleed", "positioning.covering_self_limiting_cot_wow_gate", "selector.divergence_resolution"], "stood": 11, "defects": ["contract_structure/options_surface/vol_regime/cash_basis/squeeze_watch are all frozen at the 2026-04-24 anchor vintage (masked_one_shot) while flow_calendar (live/deterministic) shows today IS the calendar-front (NGK26) futures expiry day - the frozen structural fields cannot confirm live spread/stranded-premium state on the actual expiry session itself, a real gap for evaluating structure.squeeze_unwind / block_gap_ownership's dead-sponsor arm today.", "vol_regime.value is null - no sigma/range benchmark available for magnitude calibration on this day.", "top-level `storage` and `weather` blocks are null; only storage_consensus, storage_regional (stale, period ending 2026-04-17), and weather_forecast (D-1-evening MOS) are populated - consistent with the mask design but named for completeness.", "ngwu_balance level fields (dry_production, LNG feedgas, industrial, power, rescomm, etc.) are null/stale since week_ending 2025-09-24 (216+ days) - LNG/production context is limited to the vessel-departure proxy (35 vessels, 134 Bcf capacity, unchanged vs D-1).", "model_disagreement and weather_forecast_cycle.stability horizons beyond h0/h1 are all zero-coverage (null), consistent with the known MAV(~72h)/MET(~84h)/NAM/GFS reach limits - only the near-term two days are usable."]}, {"day": "20260429", "dow": "Wed", "owner": "C", "blind_net": -350, "blind_gap": -50, "blind_daymove": -400, "conf": "low", "disp": "CALL", "act_net": -440, "act_gap": 0, "act_daymove": -440, "recon_net_check": -440, "n_actual": 400, "actual": [[0.0, 0], [0.201, -30], [1.07, -70], [1.901, -50], [2.295, -120], [2.81, -90], [3.787, -150], [4.579, -140], [5.433, -90], [6.325, -50], [6.609, 30], [7.424, -10], [7.967, 20], [8.122, 70], [8.589, 80], [8.83, -30], [9.056, -20], [9.639, -100], [10.069, -120], [10.141, -160], [10.383, -200], [10.636, -190], [10.75, -170], [11.009, -160], [11.161, -240], [11.316, -190], [11.426, -320], [11.487, -310], [11.55, -350], [11.575, -390], [11.624, -280], [11.675, -200], [11.796, -220], [11.91, -270], [11.964, -190], [12.073, -230], [12.163, -260], [12.208, -290], [12.277, -320], [12.354, -380], [12.378, -410], [12.42, -380], [12.491, -300], [12.536, -300], [12.603, -410], [12.674, -430], [12.723, -440], [12.782, -460], [12.866, -420], [12.889, -480], [12.964, -440], [13.0, -480], [13.003, -560], [13.026, -580], [13.051, -600], [13.06, -600], [13.092, -650], [13.13, -630], [13.159, -640], [13.21, -600], [13.262, -560], [13.289, -580], [13.333, -480], [13.362, -440], [13.38, -400], [13.406, -330], [13.438, -280], [13.452, -300], [13.501, -300], [13.528, -280], [13.555, -230], [13.585, -240], [13.646, -280], [13.663, -250], [13.684, -170], [13.708, -100], [13.744, -160], [13.801, -170], [13.853, -210], [13.867, -240], [13.951, -330], [14.023, -270], [14.089, -280], [14.15, -330], [14.256, -340], [14.335, -350], [14.449, -330], [14.512, -290], [14.587, -330], [14.654, -360], [14.765, -280], [14.857, -280], [14.961, -330], [15.101, -340], [15.172, -320], [15.265, -380], [15.366, -410], [15.425, -370], [15.497, -320], [15.564, -350], [15.623, -370], [15.749, -340], [15.854, -310], [15.888, -290], [15.922, -300], [15.973, -320], [16.03, -340], [16.153, -390], [16.201, -360], [16.307, -380], [16.464, -400], [16.563, -390], [16.624, -380], [16.728, -380], [16.921, -400], [16.994, -450], [17.033, -440], [17.057, -480], [17.128, -480], [17.254, -460], [17.334, -490], [17.401, -490], [17.468, -460], [17.53, -480], [17.588, -480], [17.7, -450], [17.782, -440], [17.854, -460], [18.002, -440], [18.065, -450], [18.136, -400], [18.25, -380], [18.337, -370], [18.391, -370], [18.438, -360], [18.459, -340], [18.468, -370], [18.474, -360], [18.483, -340], [18.488, -350], [18.496, -330], [18.564, -320], [18.679, -380], [18.93, -410], [19.262, -400], [19.534, -360], [19.883, -390], [20.179, -390], [20.557, -360], [22.171, -390], [23.904, -440]], "blind": [[0.0, 0], [2.0, -15], [4.0, -30], [6.0, -45], [8.0, -60], [10.0, -90], [12.0, -140], [13.5, -180], [14.5, -210], [16.0, -240], [17.5, -265], [18.5, -285], [19.5, -300], [21.0, -300]], "fired": ["flow.price_free_absorption_proxy", "selector.divergence_resolution", "magnitude.catalyst_condition_sort", "timing.catalyst_continuity_frontrun"], "stood": 12, "defects": ["vol_regime is masked_one_shot with value null on all three days in my slice (2026-04-27/28/29) - no sigma/range basis is available to calibrate magnitude against, so the -350 estimate is derived from tape/fundamental reads alone, not cross-checked against a vol band.", "The top-level `storage` block is null on every day; only storage_consensus, storage_regional (as-of 2026-04-23) and storage_vintage (55 days stale, as-of 2026-03-05) are served. storage_vintage's staleness means the as-printed/current-vintage reconciliation this desk normally relies on is unavailable for the live period - I fell back to storage_regional + storage_consensus.", "stor_surprise and stor_surprise_sign are null on all three days; the seasonal-proxy surprise metric is unpopulated. I substituted storage_consensus.last_print.surprise_vs_consensus_bcf (+9.0) as the decision-legit equivalent.", "No session_b_share_two_sided field is served anywhere in tape_conditions on any of my three days - per the b_share_basis_rule doctrine, the ~0.47/0.50 bars in flow.price_free_absorption_proxy and magnitude.s1void_injection_chain_bleed were read on the raw (single-sided) series, which is known to run biased low versus a hypothetical two-sided series; I flag this rather than silently trusting the raw read.", "model_disagreement horizons 2-7 are null (no MAV/MET overlap beyond D+1) on all three days - expected per the model-reach doctrine, but it means the weather-authority channel is effectively unusable past tomorrow, reinforcing why I did not lean on any forward weather read."]}, {"day": "20260430", "dow": "Thu", "owner": "D", "blind_net": 400, "blind_gap": 50, "blind_daymove": 450, "conf": "low", "disp": "CALL", "act_net": 1230, "act_gap": 0, "act_daymove": 1230, "recon_net_check": 1230, "n_actual": 400, "actual": [[0.0, 0], [0.607, -50], [2.45, -30], [4.029, 20], [5.022, 50], [6.378, 80], [7.076, -60], [7.4, -50], [8.105, -50], [8.609, -140], [8.999, -100], [9.521, -160], [10.086, -110], [10.518, -160], [11.016, -160], [11.331, -140], [11.485, -170], [11.592, -280], [11.75, -250], [11.847, -300], [11.957, -360], [12.059, -380], [12.086, -430], [12.242, -320], [12.364, -350], [12.461, -350], [12.581, -270], [12.689, -110], [12.747, -110], [12.803, 50], [12.838, 130], [12.861, 120], [12.916, 170], [12.969, 280], [13.003, 220], [13.033, 180], [13.073, 100], [13.102, 90], [13.151, 0], [13.209, -70], [13.27, -140], [13.366, 40], [13.451, 40], [13.51, 60], [13.591, 100], [13.687, 130], [13.758, 180], [13.861, 210], [13.947, 280], [13.985, 330], [14.037, 290], [14.139, 350], [14.183, 330], [14.243, 260], [14.324, 350], [14.381, 330], [14.42, 460], [14.469, 330], [14.5, 450], [14.504, 560], [14.508, 550], [14.514, 570], [14.527, 590], [14.556, 490], [14.575, 510], [14.632, 600], [14.694, 600], [14.721, 620], [14.809, 550], [14.898, 480], [14.953, 420], [15.007, 410], [15.114, 450], [15.166, 430], [15.218, 530], [15.322, 520], [15.414, 570], [15.492, 510], [15.619, 500], [15.752, 480], [15.961, 540], [16.096, 550], [16.167, 630], [16.189, 720], [16.296, 710], [16.367, 780], [16.406, 850], [16.434, 960], [16.468, 950], [16.526, 990], [16.531, 1140], [16.543, 1170], [16.557, 1280], [16.567, 1340], [16.581, 1310], [16.6, 1320], [16.622, 1340], [16.628, 1390], [16.647, 1460], [16.673, 1430], [16.683, 1550], [16.708, 1460], [16.734, 1380], [16.745, 1380], [16.783, 1410], [16.816, 1350], [16.826, 1350], [16.866, 1370], [16.909, 1390], [16.938, 1260], [16.955, 1170], [16.985, 1140], [17.013, 1150], [17.059, 1150], [17.102, 1100], [17.137, 1170], [17.181, 1200], [17.254, 1160], [17.314, 1210], [17.391, 1270], [17.507, 1160], [17.525, 1080], [17.635, 1130], [17.718, 1260], [17.775, 1200], [17.868, 1260], [17.962, 1280], [18.013, 1250], [18.104, 1230], [18.175, 1360], [18.231, 1340], [18.288, 1290], [18.359, 1340], [18.409, 1310], [18.44, 1420], [18.467, 1390], [18.47, 1360], [18.481, 1280], [18.496, 1250], [18.516, 1270], [18.642, 1300], [18.816, 1320], [18.936, 1300], [19.176, 1260], [19.401, 1270], [19.624, 1250], [20.001, 1230], [20.471, 1190], [20.874, 1250], [22.083, 1120], [23.998, 1230]], "blind": [[0.0, 0], [2.0, 10], [4.0, 20], [6.0, 25], [8.0, 30], [10.0, 45], [12.0, 70], [13.5, 90], [14.25, 80], [14.5, 80], [14.75, 230], [15.25, 280], [16.0, 260], [17.0, 275], [18.0, 295], [19.0, 315], [20.0, 330], [21.0, 350]], "fired": ["daytype.eia_preprint_overextension_gate", "daytype.storage_thursday_magnitude", "magnitude.shoulder_weather_band_void", "flow.price_free_absorption_proxy", "flow.big_print_bshare_thin_tape_guard"], "stood": 9, "defects": ["vol_regime is masked_one_shot/null for every day in this packet -- expected under the blind protocol, but it removes any sigma-based reference for sizing the day's magnitude band, which materially widens the honest uncertainty on the emitted number.", "grid_stack (EIA-930 generation/burn stack) is served at period+2 lag with no forward wind/solar expectation anywhere in the packet -- the renewables-falling/burn-rising read used above is a backward-looking (2-day-lagged) fact, not a forecast for Thursday itself, and cannot be extrapolated with confidence.", "the daily 'weather' (realized) and 'storage' (daily print) fields are null on every served day -- consistent with expected blind masking / the print not yet having occurred (days_to_print=0 today), not flagged as anomalous, but noted for completeness.", "model_disagreement.disagreement rows for horizon>=2 all carry coverage=0.0 (no MAV/MET overlap beyond ~D+1), limiting the weather stability read past tomorrow -- not decision-critical here since the weather band is already void, but named as a standing coverage gap."]}];
+const fmt = n => (n>0?"+":"") + n.toLocaleString();
+
+const sumF = D.reduce((a,x)=>a+Math.abs(x.blind_daymove-x.act_daymove),0);
+const sumZ = D.reduce((a,x)=>a+Math.abs(x.act_daymove),0);
+const hits = D.filter(x=>(x.blind_daymove>0)===(x.act_daymove>0)).length;
+
+document.getElementById("strip").innerHTML = [
+ ["blind / zero-change", (sumF/sumZ).toFixed(3)+"×", "sum|err| "+sumF.toLocaleString()+" vs "+sumZ.toLocaleString()+" doing nothing"],
+ ["direction", hits+" / 4", "the miss is 04-27, and it is wrong-signed"],
+ ["days emitted", "4 / 10", "run halted by the operator; no score, no refine"],
+ ["disposition", "4 CALL", "no abstentions; every day confidence low"]
+].map(([k,v,n])=>`<div class="cell"><span class="k">${k}</span><span class="v">${v}</span><span class="n">${n}</span></div>`).join("");
+
+function chart(x){
+  const W=470,H=210,L=52,R=14,T=14,B=26;
+  const all=[...x.actual.map(p=>p[1]), ...x.blind.map(p=>p[1])];
+  let lo=Math.min(0,...all), hi=Math.max(0,...all);
+  const pad=(hi-lo)*0.14||100; lo-=pad; hi+=pad;
+  const X=p=>L+(p/24)*(W-L-R), Y=v=>T+((hi-v)*(H-T-B))/(hi-lo);
+  const step=Math.max(250,Math.ceil((hi-lo)/4/250)*250); const g=[];
+  for(let v=Math.ceil(lo/step)*step; v<=hi; v+=step) g.push(v);
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${x.day} actual versus blind cumulative path">`;
+  g.forEach(v=>{ s+=`<line class="${v===0?'zero':'gl'}" x1="${L}" x2="${W-R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"/>`
+    +`<text class="ax" x="${L-6}" y="${(Y(v)+3.2).toFixed(1)}" text-anchor="end">${v>0?"+":""}${v}</text>`;});
+  [[0,"20"],[4,"00"],[8,"04"],[12,"08"],[16,"12"],[20,"16"],[24,"20"]].forEach(([p,lab])=>{
+    s+=`<text class="ax" x="${X(p).toFixed(1)}" y="${H-B+14}" text-anchor="middle">${lab}</text>`;});
+  const line=(pts,col,w,dots)=>{
+    if(!pts.length) return "";
+    let o=`<polyline fill="none" stroke="${col}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round" points="${pts.map(p=>X(p[0]).toFixed(1)+","+Y(p[1]).toFixed(1)).join(" ")}"/>`;
+    if(dots) o+=pts.map(p=>`<circle cx="${X(p[0]).toFixed(1)}" cy="${Y(p[1]).toFixed(1)}" r="2.4" fill="${col}" stroke="var(--panel)" stroke-width="1.2"/>`).join("");
+    return o;};
+  s+=line(x.actual,"var(--s-actual)",2.2,false);
+  s+=line(x.blind,"var(--s-blind)",2,true);
+  s+=`</svg>`; return s;
+}
+
+document.getElementById("days").innerHTML = D.map(x=>{
+  const hit=(x.blind_daymove>0)===(x.act_daymove>0);
+  const share=Math.round(Math.abs(x.blind_daymove)/Math.abs(x.act_daymove)*100);
+  const fired = x.fired.length ? x.fired.map(f=>f.split(" ")[0]).slice(0,4).join(", ") : "none";
+  return `<section class="day">
+    <div class="dhead">
+      <span class="dname">${x.day.slice(4,6)}-${x.day.slice(6)} <small>${x.dow} · owner ${x.owner}</small></span>
+      <span class="verdict ${hit?'hit':'miss'}">${hit?'direction hit':'wrong sign'}</span>
+    </div>
+    <div class="nums">called <b>${fmt(x.blind_daymove)}</b> · actual <b>${fmt(x.act_daymove)}</b> · |err| <b>${Math.abs(x.blind_daymove-x.act_daymove).toLocaleString()}</b> · ${share}% of the move</div>
+    ${chart(x)}
+    <div class="legend"><span><i style="border-color:var(--s-actual)"></i>actual tape</span><span><i style="border-color:var(--s-blind)"></i>blind p50 (${x.blind.length} pts)</span></div>
+    <p class="why"><b>fired (${x.fired.length}):</b> ${fired}${x.fired.length>4?" …":""} &nbsp;<b>stood down:</b> ${x.stood} &nbsp;<b>gaps reported:</b> ${x.defects.length}</p>
+  </section>`;}).join("");
+</script>
