@@ -1,10 +1,42 @@
-# Markets Terminal Codex plugin
+# Markets Terminal
 
-This is the Codex-local discovery wrapper for the existing read-only Markets MCP server.
+Markets Terminal is the read-only MCP access path for the DavisAI Markets development environment.
 
-It does not replace or modify the OpenAI Secure MCP Tunnel. The tunnel remains the ChatGPT-side path. This plugin exists because Codex can launch local stdio MCP servers directly.
+## Proven ChatGPT Business path (2026-08-12)
 
-## Surface
+The working ChatGPT path is a **custom App backed by the existing OpenAI Secure MCP Tunnel**. The repo-local Codex plugin is a separate local-stdio path; it is not what gives ChatGPT cloud access to the Markets host.
+
+Working topology:
+
+```text
+ChatGPT Business
+  -> Markets Terminal custom App
+  -> OpenAI Secure MCP Tunnel
+  -> /opt/markets-terminal on the Markets host
+  -> mcp_server/markets_mcp_readonly.py
+```
+
+The live proof returned `/opt/markets-terminal`, branch `chatgpt/agent-frankie-s117`, the deployed HEAD, a clean worktree, and read-only access through `markets_repo_status`.
+
+## ChatGPT setup sequence
+
+1. In the Business workspace, enable Developer mode under Admin -> Apps.
+2. Create a custom App.
+3. Name/describe it as the Markets read-only integration.
+4. Choose **Tunnel**, not Server URL.
+5. Select the existing Markets Terminal Secure MCP Tunnel. Do not create a replacement tunnel merely to publish the App.
+6. Use **No Auth** for this tunnel-backed private MCP server.
+7. Review the custom-MCP risk notices and the actual action parameters before publishing.
+8. Before publication, inspect **Actions** and require exactly two actions:
+   - `markets_repo_status`
+   - `markets_read_file`
+9. Both actions must be classified **READ**. If ChatGPT shows WRITE, DESTRUCTIVE, or OPEN WORLD, do not publish that action snapshot. The MCP server must advertise `ToolAnnotations(read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False)`, the host service must be restarted, and on ChatGPT Business the App may need to be recreated so discovery occurs against the corrected live metadata.
+10. Publish/enable the App, then connect it from the user-facing Plugins/App directory before expecting tools in chat.
+11. Use **Try in chat** and call `markets_repo_status` as the positive proof.
+
+Observed negative-path behavior: a `../outside.txt` traversal request was blocked by OpenAI safety checks before the MCP server received it. This is an additional upstream safety layer; server-side containment remains implemented and tested independently.
+
+## Read-only surface
 
 Exactly two MCP tools are intended:
 
@@ -13,35 +45,38 @@ Exactly two MCP tools are intended:
 
 No shell, file writes, Git writes, AWS/IAM, secret retrieval, unrestricted filesystem, model invocation, or trading execution is exposed.
 
-## Files
+`markets_read_file` resolves symlinks/`..` before component-wise repo containment, rejects credential/secret-bearing paths, refuses binary/non-UTF-8 content, and caps reads at 256 KiB.
+
+## Host/runtime
+
+The durable host checkout used by the tunnel is `/opt/markets-terminal`. The tunnel service is `markets-mcp-tunnel.service`. Updating MCP tool metadata requires the host checkout to receive the new server commit and the service to restart before ChatGPT can rediscover the new action definitions.
+
+Do not delete/recreate the working Secure MCP Tunnel during ordinary plugin/App maintenance.
+
+## Codex-local package
+
+The repository also retains a Codex-local discovery wrapper:
 
 - `.codex-plugin/plugin.json` - plugin metadata
-- `.mcp.json` - stdio MCP launch config
-- `../../mcp_server/markets_mcp_readonly.py` - the proven read-only server implementation
+- `.mcp.json` - local stdio MCP launch config
+- `../../mcp_server/markets_mcp_readonly.py` - shared read-only server implementation
 - `../../.agents/plugins/marketplace.json` - repo/team marketplace registration
 
-## Runtime prerequisite
-
-The Python environment used by Codex must have the MCP Python package compatible with this server (`mcp` 2.x; the proven C2C-004 runtime used 2.0.0). The plugin intentionally does not auto-install Python packages or mutate the host environment.
-
-## Expected working directory
-
-The MCP config launches:
+Codex-local launch is intentionally repo-scoped:
 
 ```text
 python mcp_server/markets_mcp_readonly.py
 ```
 
-It is therefore intentionally repo-scoped: Codex should run it with the Markets checkout as the workspace/current directory. The server itself derives the repository root from its file location and also supports `MARKETS_REPO` as an explicit override.
+The Python environment must have a compatible MCP Python package (`mcp` 2.x; the proven runtime used 2.0.0).
 
-## Validation sequence
+## Validation contract
 
-After Codex installs/enables the repo plugin:
+A valid deployment must preserve all of the following:
 
-1. Confirm only `markets_repo_status` and `markets_read_file` are discovered.
-2. Call `markets_repo_status`.
-3. Read one harmless small UTF-8 file.
-4. Attempt one containment-negative read such as a traversal outside the repository and require a `REFUSED:` result.
-5. Do not broaden permissions merely to make discovery easier.
-
-The Business workspace admin GitHub importer is not the validation target for this local stdio package. If/when OpenAI supports organization-managed local stdio MCP plugins through that importer, this package can be evaluated for that route separately.
+- exactly two tools;
+- both tools classified READ by ChatGPT;
+- successful live `markets_repo_status` through the tunnel-backed App;
+- no write, shell, Git mutation, AWS/IAM, secret, model, or trading authority;
+- server-side path containment and secret denial remain intact;
+- `research/kalshi/spawn.py` and Frankie forecast architecture are unrelated to this transport and must not be modified merely to maintain Markets Terminal.
