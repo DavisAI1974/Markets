@@ -2,13 +2,18 @@
 """Build an event-level US48 gas-generation vs Henry Hub spot ledger.
 
 No regression, correlation, fitted coefficient, threshold, or seasonal average is
-computed here.  The raw daily physical series is retained and each Henry Hub
+computed here. The raw daily physical series is retained and each Henry Hub
 trading-day move is paired with the physical change over the same trading-date
-endpoints.  Wind, solar, hydro, nuclear, and coal are retained as context.
+endpoints. Wind, solar, hydro, nuclear, and coal are retained as context.
 
 Sources:
-- EIA-930 daily generation by energy source, US48, Eastern time.
+- EIA Grid Monitor full-history US48 workbook, Published Hourly Data sheet.
 - EIA Henry Hub daily spot-price history XLS (RNGWHHDd.xls).
+
+The EIA workbook timestamps are interval ends in UTC. We convert the interval
+start (UTC end minus one hour) to America/New_York and aggregate generation by
+that local calendar date. This makes the physical day explicit and keeps every
+hour available for audit.
 """
 
 from __future__ import annotations
@@ -17,16 +22,16 @@ import argparse
 import csv
 import io
 import json
-import os
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+import pandas as pd
 import requests
 import xlrd
 
-EIA_DAILY_FUEL_URL = (
-    "https://api.eia.gov/v2/electricity/rto/daily-fuel-type-data/data/"
+EIA_US48_WORKBOOK_URL = (
+    "https://www.eia.gov/electricity/gridmonitor/knownissues/xls/Region_US48.xlsx"
 )
 HH_DAILY_XLS_URL = "https://www.eia.gov/dnav/ng/hist_xls/RNGWHHDd.xls"
 FUEL_TYPES = ("NG", "WND", "SUN", "WAT", "NUC", "COL")
@@ -38,6 +43,7 @@ FUEL_COLUMNS = {
     "NUC": "nuclear_mwh",
     "COL": "coal_mwh",
 }
+WORKBOOK_COLUMNS = {fuel: f"NG: {fuel}" for fuel in FUEL_TYPES}
 
 
 def parse_args() -> argparse.Namespace:
@@ -49,7 +55,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def as_float(value):
-    if value in (None, "", "NA", "N/A"):
+    if value is None or pd.isna(value) or value in ("", "NA", "N/A"):
         return None
     return float(value)
 
@@ -90,38 +96,45 @@ def daterange(start: date, end: date):
         d += timedelta(days=1)
 
 
-def get_eia_daily_fuels(api_key: str, start: str, end: str):
+def get_eia_daily_fuels(start: date, end: date):
+    r = requests.get(EIA_US48_WORKBOOK_URL, timeout=180)
+    r.raise_for_status()
+    workbook_bytes = r.content
+
+    df = pd.read_excel(
+        io.BytesIO(workbook_bytes),
+        sheet_name="Published Hourly Data",
+        engine="openpyxl",
+    )
+    required = ["UTC time", *WORKBOOK_COLUMNS.values()]
+    missing = [c for c in required if c not in df.columns]
+    if missing:
+        raise RuntimeError(
+            f"EIA US48 workbook missing expected columns {missing}; "
+            f"available={list(df.columns)}"
+        )
+
+    utc_end = pd.to_datetime(df["UTC time"], utc=True, errors="coerce")
+    interval_start_et = (utc_end - pd.Timedelta(hours=1)).dt.tz_convert(
+        "America/New_York"
+    )
+    df = df.assign(local_date=interval_start_et.dt.date)
+    df = df[df["local_date"].notna()].copy()
+    df = df[(df["local_date"] >= start) & (df["local_date"] <= end)]
+
     by_date = defaultdict(dict)
-    raw = {}
-    for fuel in FUEL_TYPES:
-        params = [
-            ("api_key", api_key),
-            ("frequency", "daily"),
-            ("data[0]", "value"),
-            ("facets[respondent][]", "US48"),
-            ("facets[timezone][]", "Eastern"),
-            ("facets[fueltype][]", fuel),
-            ("start", start),
-            ("end", end),
-            ("sort[0][column]", "period"),
-            ("sort[0][direction]", "asc"),
-            ("offset", "0"),
-            ("length", "5000"),
-        ]
-        r = requests.get(EIA_DAILY_FUEL_URL, params=params, timeout=90)
-        r.raise_for_status()
-        payload = r.json()
-        raw[fuel] = payload
-        rows = payload.get("response", {}).get("data", [])
-        if not rows:
-            raise RuntimeError(f"EIA returned no rows for fuel={fuel}: {payload}")
-        for row in rows:
-            period = row.get("period")
-            if not period:
-                continue
-            d = datetime.strptime(period[:10], "%Y-%m-%d").date()
-            by_date[d][fuel] = as_float(row.get("value"))
-    return by_date, raw
+    hour_counts = {}
+    grouped = df.groupby("local_date", sort=True)
+    for d, day in grouped:
+        hour_counts[d] = int(len(day))
+        for fuel, column in WORKBOOK_COLUMNS.items():
+            numeric = pd.to_numeric(day[column], errors="coerce")
+            if numeric.notna().sum() == 0:
+                by_date[d][fuel] = None
+            else:
+                by_date[d][fuel] = float(numeric.sum(min_count=1))
+
+    return by_date, hour_counts, workbook_bytes
 
 
 def get_henry_hub_daily():
@@ -156,26 +169,28 @@ def main():
             f"Window must be exactly 365 calendar days; got {(end-start).days + 1}."
         )
 
-    api_key = os.environ.get("EIA_API_KEY", "").strip()
-    if not api_key:
-        raise SystemExit("EIA_API_KEY is required")
-
     outdir = Path(args.out)
     outdir.mkdir(parents=True, exist_ok=True)
 
-    fuels, raw_eia = get_eia_daily_fuels(api_key, args.start, args.end)
+    fuels, hour_counts, eia_workbook = get_eia_daily_fuels(start, end)
     hh, hh_xls = get_henry_hub_daily()
 
     physical_rows = []
     missing_ng = []
+    suspicious_hours = []
     for d in daterange(start, end):
         vals = fuels.get(d, {})
         if vals.get("NG") is None:
             missing_ng.append(d.isoformat())
+        hours = hour_counts.get(d, 0)
+        # 23 and 25 are valid DST local-day counts; all others should be 24.
+        if hours not in (23, 24, 25):
+            suspicious_hours.append((d.isoformat(), hours))
         row = {
             "date": d.isoformat(),
             "month": d.strftime("%Y-%m"),
             "season": season_for(d),
+            "source_hour_count": hours,
             "hh_spot_usd_mmbtu": hh.get(d),
         }
         for fuel, col in FUEL_COLUMNS.items():
@@ -187,6 +202,11 @@ def main():
             "Missing US48 natural-gas generation on calendar dates: "
             + ", ".join(missing_ng[:20])
             + (" ..." if len(missing_ng) > 20 else "")
+        )
+    if suspicious_hours:
+        raise RuntimeError(
+            "Unexpected US48 hourly coverage after Eastern-day aggregation: "
+            + repr(suspicious_hours[:20])
         )
 
     trading_dates = sorted(d for d in hh if start <= d <= end and d in fuels)
@@ -249,15 +269,14 @@ def main():
         ledger_rows.append(row)
 
     physical_fields = [
-        "date", "month", "season", "hh_spot_usd_mmbtu",
+        "date", "month", "season", "source_hour_count", "hh_spot_usd_mmbtu",
         "ng_mwh", "wind_mwh", "solar_mwh", "hydro_mwh", "nuclear_mwh", "coal_mwh",
     ]
     ledger_fields = list(ledger_rows[0].keys())
     write_csv(outdir / "physical_daily_365d.csv", physical_rows, physical_fields)
     write_csv(outdir / "hh_trading_day_event_ledger.csv", ledger_rows, ledger_fields)
 
-    with (outdir / "eia_raw_responses.json").open("w", encoding="utf-8") as f:
-        json.dump(raw_eia, f)
+    (outdir / "eia_region_us48_source.xlsx").write_bytes(eia_workbook)
     (outdir / "henry_hub_source.xls").write_bytes(hh_xls)
 
     notes = [
@@ -267,9 +286,11 @@ def main():
         "",
         "This artifact intentionally computes no R-squared, correlation, regression, fitted coefficient, seasonal mean, or annual mean.",
         "",
-        "`physical_daily_365d.csv` preserves every calendar day of US48 EIA-930 generation by fuel. `hh_trading_day_event_ledger.csv` preserves each Henry Hub trading-day move and compares it with the change in US48 natural-gas generation over the same trading-date endpoints. Weekend and holiday physical paths remain visible via the calendar gap and interval NG min/max columns.",
+        "`physical_daily_365d.csv` preserves every calendar day of US48 EIA Grid Monitor generation by fuel. `hh_trading_day_event_ledger.csv` preserves each Henry Hub trading-day move and compares it with the change in US48 natural-gas generation over the same trading-date endpoints. Weekend and holiday physical paths remain visible via the calendar gap and interval NG min/max columns.",
         "",
         "Natural-gas generation is retained in raw MWh. No heat-rate conversion is applied here, so a Bcf/d conversion cannot create or reverse the sign relationship. Wind and solar are retained on every date because the requested study is intentionally limited to one recent renewable regime.",
+        "",
+        "The source workbook's `UTC time` is treated as interval end, matching the published GridStatus EIA parser. We subtract one hour to obtain interval start, convert to America/New_York, then sum by local calendar date. The `source_hour_count` field preserves the 23/24/25-hour DST audit trail.",
         "",
         f"Physical calendar rows: {len(physical_rows)}",
         f"Henry Hub event rows: {len(ledger_rows)}",
@@ -277,7 +298,7 @@ def main():
         f"Last Henry Hub event row: {ledger_rows[-1]['date']}",
         "",
         "Sources:",
-        f"- EIA-930 daily fuel-type API: {EIA_DAILY_FUEL_URL}",
+        f"- EIA US48 Grid Monitor full-history workbook: {EIA_US48_WORKBOOK_URL}",
         f"- EIA Henry Hub daily history: {HH_DAILY_XLS_URL}",
     ]
     (outdir / "README.md").write_text("\n".join(notes) + "\n", encoding="utf-8")
