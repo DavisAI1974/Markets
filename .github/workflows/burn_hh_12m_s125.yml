@@ -1,0 +1,55 @@
+name: S125 Burn-HH 12m Independent Ledger
+
+on:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - research/kalshi/burn_hh_12m_event_ledger.py
+      - .github/workflows/burn_hh_12m_s125.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-ledger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install --quiet requests xlrd
+      - name: Build 365-day event ledger
+        env:
+          EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+        run: |
+          python research/kalshi/burn_hh_12m_event_ledger.py \
+            --start 2025-08-01 \
+            --end 2026-07-31 \
+            --out /tmp/s125_burn_hh_12m
+      - name: Sanity checks
+        run: |
+          python - <<'PY'
+          import csv
+          from pathlib import Path
+          root = Path('/tmp/s125_burn_hh_12m')
+          physical = list(csv.DictReader((root/'physical_daily_365d.csv').open()))
+          ledger = list(csv.DictReader((root/'hh_trading_day_event_ledger.csv').open()))
+          assert len(physical) == 365, len(physical)
+          assert len(ledger) >= 200, len(ledger)
+          assert all(r['ng_mwh'] not in ('', 'None') for r in physical)
+          assert all(r['hh_delta_usd_mmbtu'] not in ('', 'None') for r in ledger)
+          print('physical rows:', len(physical))
+          print('event rows:', len(ledger))
+          print('event range:', ledger[0]['date'], ledger[-1]['date'])
+          PY
+      - name: Upload independent ledger
+        uses: actions/upload-artifact@v4
+        with:
+          name: s125-burn-hh-12m-independent-ledger
+          path: /tmp/s125_burn_hh_12m/
+          retention-days: 30
