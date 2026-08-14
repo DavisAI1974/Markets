@@ -7,8 +7,10 @@ on:
     paths:
       - research/kalshi/frankie_aws_stage_s126.py
       - research/kalshi/frankie_s114_separation_metadata_s126.py
+      - research/kalshi/frankie_causal_capture_gate_s126.py
       - research/kalshi/tests/test_frankie_aws_stage_s126.py
       - research/kalshi/tests/test_frankie_s114_separation_metadata_s126.py
+      - research/kalshi/tests/test_frankie_causal_capture_gate_s126.py
       - .github/workflows/frankie_aws_stage_s126_ci.yml
   workflow_dispatch:
 
@@ -26,15 +28,17 @@ jobs:
           python-version: '3.11'
       - name: Install focused test dependency
         run: pip install --quiet pytest
-      - name: Compile AWS staging and S114 metadata preflights
+      - name: Compile AWS staging, S114 metadata and causal-capture gates
         run: |
           python -m py_compile research/kalshi/frankie_aws_stage_s126.py
           python -m py_compile research/kalshi/frankie_s114_separation_metadata_s126.py
+          python -m py_compile research/kalshi/frankie_causal_capture_gate_s126.py
       - name: Test fail-closed weather, metadata and causal-slice invariants
         run: |
           python -m pytest -q \
             research/kalshi/tests/test_frankie_aws_stage_s126.py \
-            research/kalshi/tests/test_frankie_s114_separation_metadata_s126.py
+            research/kalshi/tests/test_frankie_s114_separation_metadata_s126.py \
+            research/kalshi/tests/test_frankie_causal_capture_gate_s126.py
       - name: Prove recovery reuses existing S114 and canonical staging paths
         env:
           PYTHONPATH: research/kalshi
@@ -44,10 +48,12 @@ jobs:
           from pathlib import Path
           import frankie_aws_stage_s126 as s
           import frankie_s114_separation_metadata_s126 as sep
+          import frankie_causal_capture_gate_s126 as cap
 
           src = inspect.getsource(s.stage_for_aws)
           restore_src = Path('research/kalshi/restore_substrate.py').read_text(encoding='utf-8')
           sep_src = inspect.getsource(sep)
+          cap_src = inspect.getsource(cap)
           assert 'restore_substrate.py' in src
           assert 'build_causal_slices.py' in src
           assert 'stage_group.py' in restore_src
@@ -58,5 +64,6 @@ jobs:
           assert 'served_separately' in sep_src
           assert 'platform_sync.py' in sep_src
           assert 'verify_s3_readback' in sep_src
-          print('PASS: S114 recovery keeps strict verifier; metadata repair can only label already-separate non-null proxies')
+          assert 'forward_stamps' in cap_src and 'audit' in cap_src
+          print('PASS: strict S114 verifier + metadata-only repair + hard future-capture gate are all installed')
           PY
