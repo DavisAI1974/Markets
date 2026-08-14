@@ -1,0 +1,92 @@
+name: S130 Frankie G3 Historical Hydration
+
+on:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - .github/workflows/frankie_g3_s130_hydrate.yml
+      - research/kalshi/frankie_historical_hydrate_s130.py
+      - research/kalshi/historical/g3_s130_storage_seed.json
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hydrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONPATH: research/kalshi
+      EIA_API_KEY: DEMO_KEY
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install historical rebuild dependencies
+        run: python -m pip install --quiet numpy requests openpyxl xlrd
+
+      - name: Rebuild deterministic and public historical stores
+        run: |
+          set -e
+          python research/kalshi/cot_feed.py --build
+          python research/kalshi/cot_combined_feed.py --build
+          python research/kalshi/solar_calendar.py --build
+          python research/kalshi/storage_regional.py --build --source xls
+          python research/kalshi/steo_vintage.py --build
+
+      - name: Attempt EIA daily historical stores without fabrication
+        run: |
+          set +e
+          python research/kalshi/nuclear_outages.py --build
+          echo "nuclear_outages_rc=$?" > /tmp/eia_optional_status.txt
+          python research/kalshi/grid_stack.py --build
+          echo "grid_stack_rc=$?" >> /tmp/eia_optional_status.txt
+          cat /tmp/eia_optional_status.txt
+          exit 0
+
+      - name: Build current S128 state and apply causal historical hydration
+        run: |
+          set -e
+          mkdir -p /tmp/g3_s130
+          # NGWU store was not permanently captured for this historical period. Empty schema means unavailable.
+          mkdir -p data/ngwu
+          test -e data/ngwu/ngwu.json || printf '{"issues":[]}\n' > data/ngwu/ngwu.json
+
+          python research/kalshi/frankie_s128_decision_state.py decision-state \
+            --days 20250908,20250909,20250910,20250911,20250912,20250915,20250916,20250917,20250918,20250919 \
+            --out /tmp/g3_s130/g3_s130_current_base_state.json \
+            > /tmp/g3_s130/g3_s130_current_base_state.pretty.json
+
+          python research/kalshi/frankie_historical_hydrate_s130.py \
+            --state /tmp/g3_s130/g3_s130_current_base_state.json \
+            --out /tmp/g3_s130/g3_s130_hydrated_state.json \
+            > /tmp/g3_s130/g3_s130_hydration_manifest.json
+
+          cp /tmp/eia_optional_status.txt /tmp/g3_s130/eia_optional_status.txt
+          python - <<'PY'
+          import json
+          p='/tmp/g3_s130/g3_s130_hydrated_state.json'
+          d=json.load(open(p))
+          m=d['_historical_hydration']
+          print('fully_populated', m['fully_populated_channels'])
+          print('partially_populated', m['partially_populated_channels'])
+          print('unavailable', m['unavailable_channels'])
+          for day in m['decision_days']:
+              r=d[day]
+              print(day,
+                    'storage_asof=', (r.get('storage') or {}).get('as_of'),
+                    'regional_asof=', (r.get('storage_regional') or {}).get('as_of'),
+                    'steo=', (r.get('steo_vintage') or {}).get('vintage_id'),
+                    'solar=', r.get('solar') is not None,
+                    'nuclear=', r.get('nuclear_outages') is not None,
+                    'grid=', r.get('grid_stack') is not None)
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frankie-g3-s130-hydrated-state
+          path: /tmp/g3_s130
+          retention-days: 30
