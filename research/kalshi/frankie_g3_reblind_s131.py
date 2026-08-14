@@ -54,6 +54,7 @@ ANCHOR_DATE = "20250905"
 ANCHOR_PRICE = 3.026
 ANCHOR_LASTHR_DIR = -1
 SCORED_LEG = "ngv25"
+SCORED_STORE = f"ng_mbo_{SCORED_LEG}"
 DEFAULT_NAMESPACE = "frankie_g3_s131_corrected_reblind"
 
 # This is a local harness contract, not a canonical group_config edit.
@@ -132,8 +133,8 @@ def build_state() -> dict[str, Any]:
         if not isinstance(row, dict):
             raise S131Stop(f"state missing day {day}")
         scored = row.get("scored_leg")
-        if not isinstance(scored, dict) or scored.get("leg") != SCORED_LEG:
-            raise S131Stop(f"{day}: scored-leg context is not {SCORED_LEG}: {scored!r}")
+        if not isinstance(scored, dict) or scored.get("leg") != SCORED_STORE:
+            raise S131Stop(f"{day}: scored-leg context is not {SCORED_STORE}: {scored!r}")
 
         # The one-shot price mask must be machine-readable even when an underlying historical
         # price-derived source is absent.  Exogenous channels are intentionally NOT frozen.
@@ -156,6 +157,7 @@ def build_state() -> dict[str, Any]:
         },
         "group_context": GID,
         "scored_leg": "NGV25",
+        "scored_store": SCORED_STORE,
         "seam_inside_window": False,
         "next_known_seam_date": "20250925",
         "price_mask_after": ANCHOR_DATE,
@@ -323,6 +325,7 @@ def export(out_dir: Path, namespace: str) -> dict[str, Any]:
         "mask_after": ANCHOR_DATE,
         "starter_anchor": {"date": ANCHOR_DATE, "close": ANCHOR_PRICE, "last_hour_dir": "down"},
         "scored_leg": "NGV25",
+        "scored_store": SCORED_STORE,
         "hydration": "REJECTED_NOT_USED",
         "model_api_invoked": False,
         "actuals_read": False,
