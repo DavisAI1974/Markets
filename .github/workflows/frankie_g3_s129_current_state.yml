@@ -20,6 +20,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Install current-state runtime dependency
+        run: python -m pip install --quiet numpy
       - name: Build S128 repaired decision state for Sep 8-19 2025
         env:
           PYTHONPATH: research/kalshi
