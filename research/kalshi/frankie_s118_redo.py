@@ -8,6 +8,8 @@ A-80/S120: preserve the complete canonical play map and use play_index only as c
 A-82: permit prior-dated realized evidence while failing closed on own/future/undated outcome data.
 A-86/S120: validate the canonical BLD-1 day object and make explicit zero-net abstention representable
 while continuing to reject decorative non-zero straight-line paths.
+S126: keep Frankie as coordinator while giving specialists A-E the complete causal slice, full brain,
+and current Frankie shared runtime/toolbox contract without rewriting any specialist role file.
 
 The canonical BLD-1 store currently defines eleven required day fields. The S120 canary boundary adds
 one explicit adapter field, ``disposition``, so abstention is structured rather than inferred from
@@ -16,6 +18,7 @@ registered, this adapter must be changed to consume that authority directly.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sys
@@ -27,6 +30,7 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
+import frankie_forecaster_s115 as current_frankie  # noqa: E402
 import frankie_group_forecast_s118 as base  # noqa: E402
 
 ForecastStop = base.ForecastStop
@@ -34,6 +38,7 @@ ForecastStop = base.ForecastStop
 _DATE8 = re.compile(r"20\d{6}")
 _LEAK_FIELDS = ("actual_day_move_usd", "actual_close", "actual_net_usd", "actual_gap_usd")
 _LEAK_CONTEXT = 500
+_SPECIALISTS = frozenset("ABCDE")
 
 # Authority: canonical BLD-1 OUTPUT object in store/sop_templates.json, mirrored here only for
 # validation. Keep this tuple byte-for-byte aligned with that object until a single generated schema
@@ -64,6 +69,119 @@ and an all-zero canonical session curve. Do not use ABSTAIN for a non-zero direc
 For `CALL`, the canonical A-86 path-shape requirements still apply; a mechanically straight or flat
 non-zero path is invalid. Return only the JSON object.
 """.strip()
+
+_SPECIALIST_SHARED_ADDENDUM = """
+CURRENT FRANKIE SPECIALIST SHARED CONTRACT — A THROUGH E.
+Frankie remains the coordinator. The coordinator selects the canonical owner for the day and does
+not average, scale, preselect, summarize-away, or substitute that specialist's forecast.
+
+Your existing A/B/C/D/E lens and canonical role text are unchanged. The lens defines your ownership
+and emphasis; it is NOT a data-access filter. The supplied `causal_slice` is the complete served
+Frankie decision-state universe that is legal at this day's cutoff, and `brain_view_served` retains
+every canonical play body. You may consult any supplied causal field that is relevant to your owned
+day. `play_index` is consultation guidance only and never removes availability.
+
+Do not reach outside the packet. Future day blocks and realized target outcomes remain absent in the
+blind phase. Do not reconstruct them. Do not alter Frankie settings, schema, inputs, masks, ownership,
+role definitions, thresholds, or execution authority. Return only the existing canonical output.
+""".strip()
+
+
+def _count_leaf_values(obj: Any) -> int:
+    """Telemetry only: count supplied leaves without filtering or transforming the packet."""
+    if isinstance(obj, Mapping):
+        return sum(_count_leaf_values(v) for v in obj.values())
+    if isinstance(obj, list):
+        return sum(_count_leaf_values(v) for v in obj)
+    return 1
+
+
+def _role_hashes(role_files: Mapping[str, Any]) -> dict[str, str]:
+    out: dict[str, str] = {}
+    for name in ("shared", "specialist"):
+        text = role_files.get(name)
+        if not isinstance(text, str) or not text:
+            raise ForecastStop(f"specialist role file {name!r} missing from packet")
+        out[name] = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    return out
+
+
+def specialist_shared_context(
+    *, spec: str, gid: str, day: str, causal_slice: Mapping[str, Any],
+    view: Mapping[str, Any], role_files: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Additive A-E context over the already-served Frankie packet; no role/data mutation.
+
+    The packet itself is the authority. This function only proves the load-bearing availability and
+    causal-wall properties and then exposes the current static Frankie shared runtime contracts.
+    It deliberately does not attach lens-book/track-record rows here: historical blind recreations
+    may not import later-written memory merely because its event date is earlier.
+    """
+    if spec not in _SPECIALISTS:
+        raise ForecastStop(f"unknown specialist {spec!r}; expected one of {sorted(_SPECIALISTS)}")
+    if not isinstance(causal_slice, Mapping) or day not in causal_slice:
+        raise ForecastStop(f"{gid} {day}: complete causal slice is missing the decision-day block")
+
+    future_blocks = sorted(
+        str(k) for k in causal_slice
+        if isinstance(k, str) and _DATE8.fullmatch(k) and k > day
+    )
+    if future_blocks:
+        raise ForecastStop(
+            f"{gid} {day}: specialist packet crossed causal wall with future block(s) {future_blocks[:3]}"
+        )
+
+    plays = view.get("plays")
+    serving = view.get("_frankie_serving")
+    if not isinstance(plays, Mapping) or not isinstance(serving, Mapping):
+        raise ForecastStop(f"{gid} {day}: full Frankie brain/serving telemetry missing")
+    canonical = int(serving.get("canonical_plays_total", -1))
+    served = int(serving.get("full_plays_served", -1))
+    if canonical != len(plays) or served != len(plays) or canonical <= 0:
+        raise ForecastStop(
+            f"{gid} {day}: reduced specialist brain refused: canonical={canonical} "
+            f"served={served} bodies={len(plays)}"
+        )
+
+    day_block = causal_slice.get(day)
+    if not isinstance(day_block, Mapping):
+        raise ForecastStop(f"{gid} {day}: decision-day state block must be an object")
+
+    return {
+        "contract_version": "s126.specialists-current.1",
+        "coordinator": "Frankie",
+        "coordinator_policy": (
+            "select canonical owner per day; never average, scale, preselect, summarize-away, or "
+            "substitute the specialist forecast"
+        ),
+        "specialist": spec,
+        "specialist_role_rewritten": False,
+        "role_file_sha256": _role_hashes(role_files),
+        "complete_served_causal_slice": True,
+        "causal_cutoff_day": day,
+        "future_day_blocks_present": False,
+        "served_day_blocks": sum(
+            1 for k in causal_slice if isinstance(k, str) and _DATE8.fullmatch(k)
+        ),
+        "served_leaf_values": _count_leaf_values(causal_slice),
+        "decision_day_top_level_blocks": sorted(str(k) for k in day_block),
+        "full_brain_available": True,
+        "canonical_play_bodies": canonical,
+        "play_index_consultation_only": True,
+        "toolbox_catalogue": current_frankie.TOOLBOX,
+        "play_policy": current_frankie.PLAY_POLICY,
+        "external_state_contract": current_frankie.BPE_CONTRACT,
+        "external_state_actions": current_frankie.HARNESS_ACTION_CONTRACT,
+        "harness_policy": current_frankie.HARNESS_POLICY,
+        "historical_memory_attached": False,
+        "historical_memory_rule": (
+            "do not backfill later-written lens-book or track-record memory into historical blind calls"
+        ),
+        "frankie_settings_mutable": False,
+        "frankie_schema_mutable": False,
+        "frankie_inputs_mutable": False,
+        "execution_enabled": False,
+    }
 
 
 def _play_map(raw_plays: Any) -> dict[str, Any]:
@@ -161,7 +279,7 @@ def assert_no_outcome_leak(text: str, gid: str, day: str) -> None:
 
 def packet(template: str, gid: str, day: str, spec: str, namespace: str,
            *, bridge_deviation: bool = False) -> tuple[str, dict[str, Any]]:
-    """Faithful causal packet: full canonical brain availability + leak wall + output adapter."""
+    """Faithful causal packet: full canonical brain + full state universe + unchanged A-E roles."""
     prompt = base._emit_prompt(
         template, gid, day=day, spec=spec, namespace=namespace,
         allow_bridge_deviation=bridge_deviation,
@@ -185,6 +303,14 @@ def packet(template: str, gid: str, day: str, spec: str, namespace: str,
         "canonical_role_files": role_files,
         "causal_slice": causal_slice,
         "brain_view_served": view,
+        "frankie_specialist_shared_context": specialist_shared_context(
+            spec=spec,
+            gid=gid,
+            day=day,
+            causal_slice=causal_slice,
+            view=view,
+            role_files=role_files,
+        ),
         "canary_output_adapter": {
             "canonical_bld1_required_fields": list(CANONICAL_BLD1_DAY_FIELDS),
             "adapter_required_fields": list(CANARY_ADAPTER_FIELDS),
@@ -192,7 +318,12 @@ def packet(template: str, gid: str, day: str, spec: str, namespace: str,
             "allowed_dispositions": sorted(_ALLOWED_DISPOSITIONS),
             "abstain_rule": "ABSTAIN iff zero net + low confidence + all-zero canonical curve",
         },
-        "redo_guards": ["A-80/S120-full-brain", "A-82", "A-86/S120-abstain"],
+        "redo_guards": [
+            "A-80/S120-full-brain",
+            "A-82",
+            "A-86/S120-abstain",
+            "S126-A-E-full-current-context",
+        ],
     }
     assert_no_outcome_leak(json.dumps(payload, sort_keys=True), gid, day)
     return prompt, payload
@@ -293,19 +424,29 @@ def validate_day(payload: Mapping[str, Any], gid: str, day: str, spec: str) -> N
 
 
 def install() -> None:
-    """Install the S120 canary-boundary functions into the legacy S118 orchestrator in-process."""
+    """Install current Frankie guards into the legacy S118 orchestrator in-process."""
     base._compact_brain = full_brain
     base._packet = packet
     base._validate_day = validate_day
     if _CANARY_OUTPUT_ADDENDUM not in base.MODEL_INSTRUCTIONS:
         base.MODEL_INSTRUCTIONS = base.MODEL_INSTRUCTIONS.rstrip() + "\n\n" + _CANARY_OUTPUT_ADDENDUM
+    if _SPECIALIST_SHARED_ADDENDUM not in base.MODEL_INSTRUCTIONS:
+        base.MODEL_INSTRUCTIONS = base.MODEL_INSTRUCTIONS.rstrip() + "\n\n" + _SPECIALIST_SHARED_ADDENDUM
 
 
 if __name__ == "__main__":
     install()
     print(json.dumps({
         "status": "READY",
-        "guards": ["A-80/S120-full-brain", "A-82", "A-86/S120-abstain"],
+        "guards": [
+            "A-80/S120-full-brain",
+            "A-82",
+            "A-86/S120-abstain",
+            "S126-A-E-full-current-context",
+        ],
+        "specialists": sorted(_SPECIALISTS),
+        "coordinator": "Frankie",
+        "specialist_roles_rewritten": False,
         "canonical_bld1_required_fields": list(CANONICAL_BLD1_DAY_FIELDS),
         "canary_adapter_required_fields": list(CANARY_ADAPTER_FIELDS),
         "brain_modified": False,
