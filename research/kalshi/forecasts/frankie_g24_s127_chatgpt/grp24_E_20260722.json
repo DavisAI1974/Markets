@@ -1,0 +1,39 @@
+{
+  "specialist": "E",
+  "group": "g24",
+  "date": "20260722",
+  "guessed_net_usd": -400,
+  "overnight_gap_usd": 0,
+  "path_p50_curve": [[20.0,0],[21.2,-40],[22.8,-85],[0.6,-120],[2.4,-155],[4.4,-190],[6.3,-235],[7.5,-260],[8.4,-205],[9.4,-145],[10.6,-110],[11.8,-155],[13.2,-235],[14.8,-315],[16.4,-370],[18.0,-420],[19.2,-385],[20.0,-400]],
+  "reasoning": "DAY CLASS / CONTRACT IDENTITY: Wednesday 20260722 is E-owned because it is the Kalshi-underlying roll seam. The scored leg is explicitly ng_mbo_ngu26, post-roll. I treat the Q26->U26 leg change as NEVER-TRADED and the offset as scoring-only, exactly as E's canonical role and the continuous-frame doctrine require. Therefore I assign zero p50 overnight gap to the roll itself: I do not forecast the mechanical contract offset as a market move. The packet also carries an explicit hole-#8 warning: price-derived frozen blocks contract_structure, options_surface and squeeze_watch are anchor-vintage Q26 structure and must NOT be imported as direct U26 expiry/opex/squeeze state. I obey that wall. The Q26/U26 calendar spread may be noted only as cross-leg context, not as direct new-leg pressure.\n\nDIRECTION: with the mechanical seam removed, the highest-authority blind sign is the D-1 trade tilt, and it is modestly bearish rather than extreme. The 20260721 tape has session signed flow -541 lots, two-sided session b_share 0.495, 74 big prints with size-weighted b_share 0.409, and phase signed flow -70/-633/+162. The big-print sample is guard-clean and distinctly sell-sided, while aggregate two-sided flow is close to neutral and the final phase turns slightly positive. That supports DOWN, but with materially less conviction than a broad all-phase sell. The standing accumulation/covering turn exception does not clear: MM net remains -105709 and worsened -45414 WoW, but its 1y percentile is 14.15 rather than the <12 or <3 extremes used by the covering/seam arms. I preserve an upside tail for crowded-short risk without flipping p50.\n\nWEATHER / PRE-PRINT OVERLAY: Thursday's EIA print is one day ahead, not today. The prior-evening D0 CDD change is nearly flat (-0.059), while the 08:00 weekday-open cycle adds about +0.480 CDD to D0 and warms the forward strip more materially on D2-D6. In July I read CDD, not HDD. That warmer update is a real counterweight to the sell tilt and is why the path rebounds through the US morning rather than extending mechanically. I do NOT let timing.catalyst_continuity_frontrun own the sign: its calendar limbs are armed at D-1, but the play itself admits that 'ramp-live' lacks a stable served definition and that front-running is WITH-chain-resume only. No blind-legal inherited chain polarity is supplied here, so I will not manufacture it. Grid burn is elevated but renewables shares are also expanding, and the grid block is stale by construction; burn confirms demand arrival, not direction. Storage remains 3024 Bcf, +162 vs 5y, with the next 20260723 survey consensus absent.\n\nMAGNITUDE / PATH: the roll seam itself does NOT justify a large move because its leg offset is data/scoring plumbing, not a catalyst. The generic catalyst sorter says seam/reversal days can size up, but applying that to a never-traded contract transition would violate E's more specific roll rule, so I do not fire it for magnitude. n0 sigma10 is about 621 and the prior comparable full-session range is 800 at the 20th percentile; D-1 flow is only moderately negative and final-phase flow is +162. I therefore derive a below-one-sigma -400 day: overnight/morning continuation lower, an 08-11 ET warm-weather rebound that does not erase the D-1 sell state, then renewed afternoon selling with a late partial recovery. Falsifier: if the new-leg live tape establishes guard-clean buy-side conviction / sustained lifting rather than the inherited D-1 sell tilt, the DOWN call fails. Confidence is low because the new scored leg is precisely where several frozen structural price blocks are intentionally unusable.",
+  "plays_fired": [
+    "data.contract_roll / reasoning_method.continuous_frame — roll is a data/scoring artifact; forecast real overnight near zero and reason on roll-clean intraday net.",
+    "flow.big_print_bshare_thin_tape_guard — D-1 sample n=74 is thick enough that the 0.409 big-print sell read is not noise-gated.",
+    "weather.revision_seasonal_sign_map — cooling-season CDD axis used; 08:00 D0/forward warming is a counterweight, not an automatic sign owner.",
+    "weather.burn_is_demand_arrival_not_direction — elevated burn used only as demand-arrival context.",
+    "specialist-E roll-seam rule — anchor/reason on the new U26 scored leg and keep the never-traded Q26->U26 offset out of market-path forecasting."
+  ],
+  "plays_stood_down": [
+    "magnitude.catalyst_condition_sort — EIA-print limb is NOT ARMED (days_to_next_eia_release=1), and its generic seam size-up is superseded here by E's specific never-traded roll rule.",
+    "timing.catalyst_continuity_frontrun — calendar window 1..3 is armed, but the play lacks a stable served ramp-live definition and requires a known chain resume; no blind-legal chain polarity is supplied.",
+    "boundary.seam_gap_up_prior_on_worsening_cot — WoW worsening is armed but MM 1y percentile 14.15 fails the <3 crowded-short limb; this is also not a weekend reopen seam.",
+    "structure.covering_absorption_directional_tell — MM 14.15 fails <12 and price/flow conviction is masked.",
+    "flow.price_free_absorption_proxy — D-1 aggregate signed flow is -541, failing its positive-flow precondition despite a guard-clean sell-tail sample.",
+    "flow.resting_program_inverts_aggressor_tilt — neither GSCI nor BCOM roll window is live and this is not the Q26 expiry day; the Kalshi-underlying leg seam is a different mechanism.",
+    "boundary.prior_close_flow_direction_disagreement — price/range-location half is masked, so it may not own a flip.",
+    "magnitude.terminal_impact_coefficient_carry — final-phase |flow|=162 fails the >=500 limb.",
+    "direction.flow_conviction_sign_gate / direction.absorption_is_reversal — price-bearing conviction unavailable in blind.",
+    "magnitude.emission_ceiling_check — INPUT_ABSENT; no ceiling is reconstructed.",
+    "contract_structure/options_surface/squeeze_watch direct expiry or squeeze reads — stood down on the scored_leg hole-#8 caveat because those frozen price-derived blocks describe Q26, not the U26 scored leg."
+  ],
+  "confidence": "low",
+  "state_defects_and_gaps_reported": [
+    "Scored leg is U26 while frozen price-derived contract_structure/options_surface/squeeze_watch describe anchor-vintage Q26. Their direct expiry/opex/squeeze fields are unusable on this day by explicit hole-#8 guard.",
+    "The next 2026-07-23 storage survey consensus is absent one day before the print; no estimate is invented.",
+    "No blind-legal inherited chain polarity/cum_from_anchor is supplied, so chain-resume/front-run plays cannot be asserted from memory or reconstructed from masked price.",
+    "timing.catalyst_continuity_frontrun has armed calendar limbs but no stable served definition/bar for ramp-live.",
+    "vol_regime still uses 2026-07-17 as its immediately comparable full-session basis and is used only as a coarse magnitude conditioner.",
+    "magnitude.emission_ceiling_check is INPUT_ABSENT."
+  ],
+  "disposition": "CALL"
+}
