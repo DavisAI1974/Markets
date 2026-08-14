@@ -1,0 +1,2 @@
+nuclear_outages_rc=0
+grid_stack_rc=1

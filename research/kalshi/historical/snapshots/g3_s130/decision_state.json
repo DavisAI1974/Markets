@@ -1,0 +1,4686 @@
+{
+ "_information_clock": {
+  "note": "static ET reference of scheduled information arrival; all times approximate post/settle conventions, not data. A catalyst prices into the NEXT tradeable window after its arrival.",
+  "model_cycles_et": {
+   "00z_gfs_mos": "~03:30-04:30",
+   "06z_gfs_mos": "~09:30-10:30",
+   "12z_gfs_mos": "~15:30-16:30",
+   "18z_gfs_mos": "~21:30-22:30",
+   "cycles_run_weekends_too": true,
+   "weekend_note": "Sat/Sun 00z/12z cycles price the SUNDAY 18:00 ET reopen gap - the D-1-evening feed is one cycle behind it (s100_2_weekend_gap_note)"
+  },
+  "eia_storage_print_et": "Thu 10:30 (holiday weeks may shift - see the flow calendar feed when wired)",
+  "cot_publication_et": "Fri 15:30 for Tuesday positions",
+  "settle_window_et": "14:00-14:30 daily settle flows (excluded from every backtest cell)",
+  "globex_reopen_et": "Sun 18:00 (the weekend gap prints here)",
+  "session_close_et": "17:00, next session opens 18:00 (the daily maintenance hour)"
+ },
+ "20250908": {
+  "dow": "Mon",
+  "scored_leg": null,
+  "stor_surprise": 7.6,
+  "stor_surprise_sign": "above",
+  "stor_surprise_basis": null,
+  "curve_regime": "unknown",
+  "storage": {
+   "level": 3262,
+   "weekly_chg": 45,
+   "vs_5yr": 149,
+   "phase": "inject",
+   "as_of": "2025-09-04"
+  },
+  "storage_regional": {
+   "as_of": "2025-09-04",
+   "period": "2025-08-29",
+   "regions": {
+    "l48": {
+     "level": 3262.0,
+     "weekly_chg": 45.0,
+     "vs_5yr": 148.6,
+     "vs_year_ago": -85.0,
+     "chg_vs_5yr_chg": 7.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "east": {
+     "level": 735.0,
+     "weekly_chg": 28.0,
+     "vs_5yr": 4.2,
+     "vs_year_ago": -26.0,
+     "chg_vs_5yr_chg": 11.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "midwest": {
+     "level": 860.0,
+     "weekly_chg": 28.0,
+     "vs_5yr": -8.2,
+     "vs_year_ago": -62.0,
+     "chg_vs_5yr_chg": 4.8,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central": {
+     "level": 1129.0,
+     "weekly_chg": 4.0,
+     "vs_5yr": 90.0,
+     "vs_year_ago": 24.0,
+     "chg_vs_5yr_chg": 9.2,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central_salt": {
+     "level": 273.0,
+     "weekly_chg": 1.0,
+     "vs_5yr": 27.2,
+     "vs_year_ago": 6.0,
+     "chg_vs_5yr_chg": 6.0,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central_nonsalt": {
+     "level": 856.0,
+     "weekly_chg": 3.0,
+     "vs_5yr": 62.4,
+     "vs_year_ago": 18.0,
+     "chg_vs_5yr_chg": 2.8,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "mountain": {
+     "level": 244.0,
+     "weekly_chg": -10.0,
+     "vs_5yr": 34.0,
+     "vs_year_ago": -26.0,
+     "chg_vs_5yr_chg": -12.4,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "pacific": {
+     "level": 294.0,
+     "weekly_chg": -4.0,
+     "vs_5yr": 28.8,
+     "vs_year_ago": 5.0,
+     "chg_vs_5yr_chg": -4.2,
+     "unit": "Bcf",
+     "missing": []
+    }
+   },
+   "salt_share": 0.2418,
+   "days_of_supply": null,
+   "days_of_supply_note": "EIA publishes no days-of-supply (or any demand-normalized) figure in the Weekly Natural Gas Storage Report, and no regional demand denominator; no substitute is computed here.",
+   "source": "EIA_WNGSR_ngshistory_xls",
+   "eia_estimate_basis": "EIA-912",
+   "note": "five regions + salt split; salt = the fast-cycling swing capacity. ADDITIVE to the national `storage` block, which is untouched"
+  },
+  "storage_consensus": null,
+  "storage_vintage": null,
+  "ngwu_balance": null,
+  "steo_vintage": null,
+  "cot": {
+   "report_date": "2025-09-02",
+   "publication_ts": "2025-09-05T15:30:00-04:00",
+   "publication_delayed": false,
+   "publication_confidence": "derived",
+   "contract_code": "023651",
+   "market_name": "NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE",
+   "open_interest": 1635669,
+   "managed_money_long": 216191,
+   "managed_money_short": 252953,
+   "managed_money_net": -36762,
+   "producer_merchant_net": -21694,
+   "swap_dealer_net": 110906,
+   "other_reportable_net": -66014,
+   "managed_money_net_chg_wow": 7270,
+   "pctile_1y_n_obs": 53,
+   "managed_money_net_pctile_1y": 50.0,
+   "pctile_3y_n_obs": 157,
+   "managed_money_net_pctile_3y": 58.92,
+   "age_days": 2.3542,
+   "report_date_combined": "2025-09-02",
+   "publication_ts_combined": "2025-09-05T15:30:00-04:00",
+   "publication_delayed_combined": false,
+   "publication_confidence_combined": "derived",
+   "contract_code_combined": "023651",
+   "market_name_combined": "NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE",
+   "open_interest_combined": 1650508,
+   "managed_money_long_combined": 216270,
+   "managed_money_short_combined": 253220,
+   "managed_money_net_combined": -36950,
+   "producer_merchant_net_combined": -21696,
+   "swap_dealer_net_combined": 111407,
+   "other_reportable_net_combined": -67089,
+   "managed_money_net_chg_wow_combined": 7393,
+   "pctile_1y_n_obs_combined": 53,
+   "managed_money_net_pctile_1y_combined": 50.0,
+   "pctile_3y_n_obs_combined": 157,
+   "managed_money_net_pctile_3y_combined": 58.92,
+   "age_days_combined": 2.3542,
+   "open_interest_options_implied": 14839,
+   "managed_money_long_options_implied": 79,
+   "managed_money_short_options_implied": 267,
+   "managed_money_net_options_implied": -188,
+   "producer_merchant_net_options_implied": -2,
+   "swap_dealer_net_options_implied": 501,
+   "other_reportable_net_options_implied": -1075,
+   "managed_money_net_chg_wow_options_implied": 123,
+   "options_implied_pctile_1y_n_obs": 53,
+   "managed_money_net_options_implied_pctile_1y": 51.89,
+   "options_implied_pctile_3y_n_obs": 157,
+   "managed_money_net_options_implied_pctile_3y": 27.71,
+   "ice": {
+    "ld1": {
+     "report_date": "2025-09-02",
+     "publication_ts": "2025-09-05T15:30:00-04:00",
+     "open_interest": 7647324,
+     "managed_money_net": 1102233,
+     "managed_money_net_chg_wow": 68378,
+     "managed_money_net_pctile_1y": 87.74,
+     "managed_money_net_pctile_3y": 95.86
+    },
+    "pen": {
+     "report_date": "2025-09-02",
+     "publication_ts": "2025-09-05T15:30:00-04:00",
+     "open_interest": 757170,
+     "managed_money_net": -60888,
+     "managed_money_net_chg_wow": 30551,
+     "managed_money_net_pctile_1y": 89.62,
+     "managed_money_net_pctile_3y": 79.94
+    },
+    "hh_basis": {
+     "report_date": "2025-09-02",
+     "publication_ts": "2025-09-05T15:30:00-04:00",
+     "open_interest": 139971,
+     "managed_money_net": 37408,
+     "managed_money_net_chg_wow": 2880,
+     "managed_money_net_pctile_1y": 97.17,
+     "managed_money_net_pctile_3y": 99.04
+    },
+    "hh_index": {
+     "report_date": "2025-09-02",
+     "publication_ts": "2025-09-05T15:30:00-04:00",
+     "open_interest": 162293,
+     "managed_money_net": 18566,
+     "managed_money_net_chg_wow": 4470,
+     "managed_money_net_pctile_1y": 95.28,
+     "managed_money_net_pctile_3y": 96.5
+    }
+   },
+   "note": "positioning as-of PUBLICATION time; futures-only + _combined + the derived _options_implied delta + the four ICE HH books under `ice` (separate reads, never pooled; basis/index = the physical legs, squeeze-regime context); percentiles vs trailing 1y/3y of weekly nets"
+  },
+  "contract_structure": null,
+  "squeeze_watch": null,
+  "vol_regime": null,
+  "cash_basis": null,
+  "flow_calendar": {
+   "date": "2025-09-08",
+   "is_cme_business_day": true,
+   "cme_holiday": false,
+   "cme_holiday_name": null,
+   "cme_session_class": null,
+   "cme_early_close": false,
+   "front_symbol_calendar": "NGV25",
+   "futures_expiry_date": "2025-09-26",
+   "days_to_futures_expiry": 14,
+   "is_expiry_day": false,
+   "options_expiry_date": "2025-09-25",
+   "days_to_opex": 13,
+   "is_opex_day": false,
+   "in_bidweek": false,
+   "bidweek_day_n": null,
+   "bidweek_delivery_month": null,
+   "business_day_of_month": 5,
+   "in_gsci_roll": true,
+   "gsci_roll_day_n": 1,
+   "gsci_ng_roll_this_month": true,
+   "in_bcom_roll": false,
+   "bcom_roll_day_n": null,
+   "in_bcom_hedge_roll": true,
+   "bcom_ng_roll_this_month": false,
+   "bcom_january_rebalance": false,
+   "eia_storage_release_datetime_et": "2025-09-11T10:30:00-04:00",
+   "eia_releases_this_week": [
+    {
+     "datetime_et": "2025-09-11T10:30:00-04:00",
+     "for_week_ending": "2025-09-05",
+     "shifted": false,
+     "shift_reason": null
+    }
+   ],
+   "is_eia_print_day": false,
+   "next_eia_release_datetime_et": "2025-09-11T10:30:00-04:00",
+   "days_to_next_eia_release": 3,
+   "note": "mechanical scheduled flows - desks trade around these; G13 carries the full gauntlet (GSCI roll Feb 6-12, BCOM Feb 9-13, bidweek Feb 23-27, opex Feb 24, expiry Feb 25)"
+  },
+  "solar": {
+   "date": "2025-09-08",
+   "gw_day_length_chg_7d": -0.284,
+   "gw_day_length_h": 12.777,
+   "metros": {
+    "ATL": {
+     "day_length_h": 12.66,
+     "grid": "SOCO",
+     "sunrise_local": "07:15",
+     "sunset_et": "19:55",
+     "sunset_local": "19:55"
+    },
+    "BOS": {
+     "day_length_h": 12.87,
+     "grid": "ISO-NE",
+     "sunrise_local": "06:15",
+     "sunset_et": "19:07",
+     "sunset_local": "19:07"
+    },
+    "DCA": {
+     "day_length_h": 12.78,
+     "grid": "PJM",
+     "sunrise_local": "06:42",
+     "sunset_et": "19:29",
+     "sunset_local": "19:29"
+    },
+    "DEN": {
+     "day_length_h": 12.8,
+     "grid": "WECC",
+     "sunrise_local": "06:32",
+     "sunset_et": "21:20",
+     "sunset_local": "19:20"
+    },
+    "DFW": {
+     "day_length_h": 12.64,
+     "grid": "ERCOT",
+     "sunrise_local": "07:06",
+     "sunset_et": "20:44",
+     "sunset_local": "19:44"
+    },
+    "DTW": {
+     "day_length_h": 12.87,
+     "grid": "MISO",
+     "sunrise_local": "07:04",
+     "sunset_et": "19:56",
+     "sunset_local": "19:56"
+    },
+    "IAH": {
+     "day_length_h": 12.58,
+     "grid": "ERCOT",
+     "sunrise_local": "07:01",
+     "sunset_et": "20:36",
+     "sunset_local": "19:36"
+    },
+    "LAX": {
+     "day_length_h": 12.66,
+     "grid": "CAISO",
+     "sunrise_local": "06:31",
+     "sunset_et": "22:11",
+     "sunset_local": "19:11"
+    },
+    "MSP": {
+     "day_length_h": 12.94,
+     "grid": "MISO",
+     "sunrise_local": "06:42",
+     "sunset_et": "20:38",
+     "sunset_local": "19:38"
+    },
+    "NYC": {
+     "day_length_h": 12.83,
+     "grid": "NYISO",
+     "sunrise_local": "06:28",
+     "sunset_et": "19:18",
+     "sunset_local": "19:18"
+    },
+    "ORD": {
+     "day_length_h": 12.86,
+     "grid": "PJM",
+     "sunrise_local": "06:23",
+     "sunset_et": "20:14",
+     "sunset_local": "19:14"
+    },
+    "PHL": {
+     "day_length_h": 12.81,
+     "grid": "PJM",
+     "sunrise_local": "06:34",
+     "sunset_et": "19:22",
+     "sunset_local": "19:22"
+    },
+    "PHX": {
+     "day_length_h": 12.65,
+     "grid": "WECC",
+     "sunrise_local": "06:06",
+     "sunset_et": "21:45",
+     "sunset_local": "18:45"
+    },
+    "SEA": {
+     "day_length_h": 13.02,
+     "grid": "WECC",
+     "sunrise_local": "06:35",
+     "sunset_et": "22:37",
+     "sunset_local": "19:37"
+    },
+    "SFO": {
+     "day_length_h": 12.74,
+     "grid": "CAISO",
+     "sunrise_local": "06:44",
+     "sunset_et": "22:29",
+     "sunset_local": "19:29"
+    },
+    "STL": {
+     "day_length_h": 12.78,
+     "grid": "MISO",
+     "sunrise_local": "06:35",
+     "sunset_et": "20:22",
+     "sunset_local": "19:22"
+    }
+   },
+   "sunset_et_earliest": "19:07",
+   "sunset_et_latest": "22:37",
+   "note": "deterministic solar state; sunset_et positions the evening gas-burn ramp on the session clock; gw_day_length_chg_7d is the seasonal march"
+  },
+  "nuclear_outages": {
+   "period": "2025-09-07",
+   "age_days": 1,
+   "capacity_out_mw": 5964.967,
+   "capacity_out_gw": 5.965,
+   "pct_of_fleet_out": 6.16,
+   "fleet_capacity_mw": 96880.2,
+   "chg_1d_mw": 2157.8,
+   "chg_7d_mw": 4474.0,
+   "outage_season": "fall_outage_season",
+   "note": "nuclear GW offline adds gas burn roughly GW-for-GW at the margin; season tag is calendar-descriptive; changes across missing days are None, never bridged"
+  },
+  "grid_stack": null,
+  "options_surface": null,
+  "weather": null,
+  "weather_forecast": null,
+  "weather_forecast_cycle": null,
+  "weather_forcing_forecast": null,
+  "freeze_risk": null,
+  "model_disagreement": null,
+  "tape_conditions": null,
+  "holiday": null,
+  "firehose_present": null
+ },
+ "20250909": {
+  "dow": "Tue",
+  "scored_leg": null,
+  "stor_surprise": 7.6,
+  "stor_surprise_sign": "above",
+  "stor_surprise_basis": null,
+  "curve_regime": "unknown",
+  "storage": {
+   "level": 3262,
+   "weekly_chg": 45,
+   "vs_5yr": 149,
+   "phase": "inject",
+   "as_of": "2025-09-04"
+  },
+  "storage_regional": {
+   "as_of": "2025-09-04",
+   "period": "2025-08-29",
+   "regions": {
+    "l48": {
+     "level": 3262.0,
+     "weekly_chg": 45.0,
+     "vs_5yr": 148.6,
+     "vs_year_ago": -85.0,
+     "chg_vs_5yr_chg": 7.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "east": {
+     "level": 735.0,
+     "weekly_chg": 28.0,
+     "vs_5yr": 4.2,
+     "vs_year_ago": -26.0,
+     "chg_vs_5yr_chg": 11.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "midwest": {
+     "level": 860.0,
+     "weekly_chg": 28.0,
+     "vs_5yr": -8.2,
+     "vs_year_ago": -62.0,
+     "chg_vs_5yr_chg": 4.8,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central": {
+     "level": 1129.0,
+     "weekly_chg": 4.0,
+     "vs_5yr": 90.0,
+     "vs_year_ago": 24.0,
+     "chg_vs_5yr_chg": 9.2,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central_salt": {
+     "level": 273.0,
+     "weekly_chg": 1.0,
+     "vs_5yr": 27.2,
+     "vs_year_ago": 6.0,
+     "chg_vs_5yr_chg": 6.0,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central_nonsalt": {
+     "level": 856.0,
+     "weekly_chg": 3.0,
+     "vs_5yr": 62.4,
+     "vs_year_ago": 18.0,
+     "chg_vs_5yr_chg": 2.8,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "mountain": {
+     "level": 244.0,
+     "weekly_chg": -10.0,
+     "vs_5yr": 34.0,
+     "vs_year_ago": -26.0,
+     "chg_vs_5yr_chg": -12.4,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "pacific": {
+     "level": 294.0,
+     "weekly_chg": -4.0,
+     "vs_5yr": 28.8,
+     "vs_year_ago": 5.0,
+     "chg_vs_5yr_chg": -4.2,
+     "unit": "Bcf",
+     "missing": []
+    }
+   },
+   "salt_share": 0.2418,
+   "days_of_supply": null,
+   "days_of_supply_note": "EIA publishes no days-of-supply (or any demand-normalized) figure in the Weekly Natural Gas Storage Report, and no regional demand denominator; no substitute is computed here.",
+   "source": "EIA_WNGSR_ngshistory_xls",
+   "eia_estimate_basis": "EIA-912",
+   "note": "five regions + salt split; salt = the fast-cycling swing capacity. ADDITIVE to the national `storage` block, which is untouched"
+  },
+  "storage_consensus": null,
+  "storage_vintage": null,
+  "ngwu_balance": null,
+  "steo_vintage": null,
+  "cot": {
+   "report_date": "2025-09-02",
+   "publication_ts": "2025-09-05T15:30:00-04:00",
+   "publication_delayed": false,
+   "publication_confidence": "derived",
+   "contract_code": "023651",
+   "market_name": "NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE",
+   "open_interest": 1635669,
+   "managed_money_long": 216191,
+   "managed_money_short": 252953,
+   "managed_money_net": -36762,
+   "producer_merchant_net": -21694,
+   "swap_dealer_net": 110906,
+   "other_reportable_net": -66014,
+   "managed_money_net_chg_wow": 7270,
+   "pctile_1y_n_obs": 53,
+   "managed_money_net_pctile_1y": 50.0,
+   "pctile_3y_n_obs": 157,
+   "managed_money_net_pctile_3y": 58.92,
+   "age_days": 3.3542,
+   "report_date_combined": "2025-09-02",
+   "publication_ts_combined": "2025-09-05T15:30:00-04:00",
+   "publication_delayed_combined": false,
+   "publication_confidence_combined": "derived",
+   "contract_code_combined": "023651",
+   "market_name_combined": "NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE",
+   "open_interest_combined": 1650508,
+   "managed_money_long_combined": 216270,
+   "managed_money_short_combined": 253220,
+   "managed_money_net_combined": -36950,
+   "producer_merchant_net_combined": -21696,
+   "swap_dealer_net_combined": 111407,
+   "other_reportable_net_combined": -67089,
+   "managed_money_net_chg_wow_combined": 7393,
+   "pctile_1y_n_obs_combined": 53,
+   "managed_money_net_pctile_1y_combined": 50.0,
+   "pctile_3y_n_obs_combined": 157,
+   "managed_money_net_pctile_3y_combined": 58.92,
+   "age_days_combined": 3.3542,
+   "open_interest_options_implied": 14839,
+   "managed_money_long_options_implied": 79,
+   "managed_money_short_options_implied": 267,
+   "managed_money_net_options_implied": -188,
+   "producer_merchant_net_options_implied": -2,
+   "swap_dealer_net_options_implied": 501,
+   "other_reportable_net_options_implied": -1075,
+   "managed_money_net_chg_wow_options_implied": 123,
+   "options_implied_pctile_1y_n_obs": 53,
+   "managed_money_net_options_implied_pctile_1y": 51.89,
+   "options_implied_pctile_3y_n_obs": 157,
+   "managed_money_net_options_implied_pctile_3y": 27.71,
+   "ice": {
+    "ld1": {
+     "report_date": "2025-09-02",
+     "publication_ts": "2025-09-05T15:30:00-04:00",
+     "open_interest": 7647324,
+     "managed_money_net": 1102233,
+     "managed_money_net_chg_wow": 68378,
+     "managed_money_net_pctile_1y": 87.74,
+     "managed_money_net_pctile_3y": 95.86
+    },
+    "pen": {
+     "report_date": "2025-09-02",
+     "publication_ts": "2025-09-05T15:30:00-04:00",
+     "open_interest": 757170,
+     "managed_money_net": -60888,
+     "managed_money_net_chg_wow": 30551,
+     "managed_money_net_pctile_1y": 89.62,
+     "managed_money_net_pctile_3y": 79.94
+    },
+    "hh_basis": {
+     "report_date": "2025-09-02",
+     "publication_ts": "2025-09-05T15:30:00-04:00",
+     "open_interest": 139971,
+     "managed_money_net": 37408,
+     "managed_money_net_chg_wow": 2880,
+     "managed_money_net_pctile_1y": 97.17,
+     "managed_money_net_pctile_3y": 99.04
+    },
+    "hh_index": {
+     "report_date": "2025-09-02",
+     "publication_ts": "2025-09-05T15:30:00-04:00",
+     "open_interest": 162293,
+     "managed_money_net": 18566,
+     "managed_money_net_chg_wow": 4470,
+     "managed_money_net_pctile_1y": 95.28,
+     "managed_money_net_pctile_3y": 96.5
+    }
+   },
+   "note": "positioning as-of PUBLICATION time; futures-only + _combined + the derived _options_implied delta + the four ICE HH books under `ice` (separate reads, never pooled; basis/index = the physical legs, squeeze-regime context); percentiles vs trailing 1y/3y of weekly nets"
+  },
+  "contract_structure": null,
+  "squeeze_watch": null,
+  "vol_regime": null,
+  "cash_basis": null,
+  "flow_calendar": {
+   "date": "2025-09-09",
+   "is_cme_business_day": true,
+   "cme_holiday": false,
+   "cme_holiday_name": null,
+   "cme_session_class": null,
+   "cme_early_close": false,
+   "front_symbol_calendar": "NGV25",
+   "futures_expiry_date": "2025-09-26",
+   "days_to_futures_expiry": 13,
+   "is_expiry_day": false,
+   "options_expiry_date": "2025-09-25",
+   "days_to_opex": 12,
+   "is_opex_day": false,
+   "in_bidweek": false,
+   "bidweek_day_n": null,
+   "bidweek_delivery_month": null,
+   "business_day_of_month": 6,
+   "in_gsci_roll": true,
+   "gsci_roll_day_n": 2,
+   "gsci_ng_roll_this_month": true,
+   "in_bcom_roll": true,
+   "bcom_roll_day_n": 1,
+   "in_bcom_hedge_roll": true,
+   "bcom_ng_roll_this_month": false,
+   "bcom_january_rebalance": false,
+   "eia_storage_release_datetime_et": "2025-09-11T10:30:00-04:00",
+   "eia_releases_this_week": [
+    {
+     "datetime_et": "2025-09-11T10:30:00-04:00",
+     "for_week_ending": "2025-09-05",
+     "shifted": false,
+     "shift_reason": null
+    }
+   ],
+   "is_eia_print_day": false,
+   "next_eia_release_datetime_et": "2025-09-11T10:30:00-04:00",
+   "days_to_next_eia_release": 2,
+   "note": "mechanical scheduled flows - desks trade around these; G13 carries the full gauntlet (GSCI roll Feb 6-12, BCOM Feb 9-13, bidweek Feb 23-27, opex Feb 24, expiry Feb 25)"
+  },
+  "solar": {
+   "date": "2025-09-09",
+   "gw_day_length_chg_7d": -0.285,
+   "gw_day_length_h": 12.736,
+   "metros": {
+    "ATL": {
+     "day_length_h": 12.62,
+     "grid": "SOCO",
+     "sunrise_local": "07:16",
+     "sunset_et": "19:53",
+     "sunset_local": "19:53"
+    },
+    "BOS": {
+     "day_length_h": 12.83,
+     "grid": "ISO-NE",
+     "sunrise_local": "06:16",
+     "sunset_et": "19:05",
+     "sunset_local": "19:05"
+    },
+    "DCA": {
+     "day_length_h": 12.74,
+     "grid": "PJM",
+     "sunrise_local": "06:43",
+     "sunset_et": "19:27",
+     "sunset_local": "19:27"
+    },
+    "DEN": {
+     "day_length_h": 12.76,
+     "grid": "WECC",
+     "sunrise_local": "06:33",
+     "sunset_et": "21:18",
+     "sunset_local": "19:18"
+    },
+    "DFW": {
+     "day_length_h": 12.61,
+     "grid": "ERCOT",
+     "sunrise_local": "07:07",
+     "sunset_et": "20:43",
+     "sunset_local": "19:43"
+    },
+    "DTW": {
+     "day_length_h": 12.82,
+     "grid": "MISO",
+     "sunrise_local": "07:05",
+     "sunset_et": "19:55",
+     "sunset_local": "19:55"
+    },
+    "IAH": {
+     "day_length_h": 12.55,
+     "grid": "ERCOT",
+     "sunrise_local": "07:02",
+     "sunset_et": "20:35",
+     "sunset_local": "19:35"
+    },
+    "LAX": {
+     "day_length_h": 12.63,
+     "grid": "CAISO",
+     "sunrise_local": "06:32",
+     "sunset_et": "22:09",
+     "sunset_local": "19:09"
+    },
+    "MSP": {
+     "day_length_h": 12.89,
+     "grid": "MISO",
+     "sunrise_local": "06:43",
+     "sunset_et": "20:36",
+     "sunset_local": "19:36"
+    },
+    "NYC": {
+     "day_length_h": 12.79,
+     "grid": "NYISO",
+     "sunrise_local": "06:29",
+     "sunset_et": "19:16",
+     "sunset_local": "19:16"
+    },
+    "ORD": {
+     "day_length_h": 12.81,
+     "grid": "PJM",
+     "sunrise_local": "06:24",
+     "sunset_et": "20:13",
+     "sunset_local": "19:13"
+    },
+    "PHL": {
+     "day_length_h": 12.76,
+     "grid": "PJM",
+     "sunrise_local": "06:35",
+     "sunset_et": "19:21",
+     "sunset_local": "19:21"
+    },
+    "PHX": {
+     "day_length_h": 12.62,
+     "grid": "WECC",
+     "sunrise_local": "06:06",
+     "sunset_et": "21:43",
+     "sunset_local": "18:43"
+    },
+    "SEA": {
+     "day_length_h": 12.96,
+     "grid": "WECC",
+     "sunrise_local": "06:37",
+     "sunset_et": "22:35",
+     "sunset_local": "19:35"
+    },
+    "SFO": {
+     "day_length_h": 12.71,
+     "grid": "CAISO",
+     "sunrise_local": "06:45",
+     "sunset_et": "22:27",
+     "sunset_local": "19:27"
+    },
+    "STL": {
+     "day_length_h": 12.73,
+     "grid": "MISO",
+     "sunrise_local": "06:36",
+     "sunset_et": "20:20",
+     "sunset_local": "19:20"
+    }
+   },
+   "sunset_et_earliest": "19:05",
+   "sunset_et_latest": "22:35",
+   "note": "deterministic solar state; sunset_et positions the evening gas-burn ramp on the session clock; gw_day_length_chg_7d is the seasonal march"
+  },
+  "nuclear_outages": {
+   "period": "2025-09-08",
+   "age_days": 1,
+   "capacity_out_mw": 5397.489,
+   "capacity_out_gw": 5.397,
+   "pct_of_fleet_out": 5.57,
+   "fleet_capacity_mw": 96880.2,
+   "chg_1d_mw": -567.5,
+   "chg_7d_mw": 4309.4,
+   "outage_season": "fall_outage_season",
+   "note": "nuclear GW offline adds gas burn roughly GW-for-GW at the margin; season tag is calendar-descriptive; changes across missing days are None, never bridged"
+  },
+  "grid_stack": null,
+  "options_surface": null,
+  "weather": null,
+  "weather_forecast": null,
+  "weather_forecast_cycle": null,
+  "weather_forcing_forecast": null,
+  "freeze_risk": null,
+  "model_disagreement": null,
+  "tape_conditions": null,
+  "holiday": null,
+  "firehose_present": null
+ },
+ "20250910": {
+  "dow": "Wed",
+  "scored_leg": null,
+  "stor_surprise": 7.6,
+  "stor_surprise_sign": "above",
+  "stor_surprise_basis": null,
+  "curve_regime": "unknown",
+  "storage": {
+   "level": 3262,
+   "weekly_chg": 45,
+   "vs_5yr": 149,
+   "phase": "inject",
+   "as_of": "2025-09-04"
+  },
+  "storage_regional": {
+   "as_of": "2025-09-04",
+   "period": "2025-08-29",
+   "regions": {
+    "l48": {
+     "level": 3262.0,
+     "weekly_chg": 45.0,
+     "vs_5yr": 148.6,
+     "vs_year_ago": -85.0,
+     "chg_vs_5yr_chg": 7.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "east": {
+     "level": 735.0,
+     "weekly_chg": 28.0,
+     "vs_5yr": 4.2,
+     "vs_year_ago": -26.0,
+     "chg_vs_5yr_chg": 11.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "midwest": {
+     "level": 860.0,
+     "weekly_chg": 28.0,
+     "vs_5yr": -8.2,
+     "vs_year_ago": -62.0,
+     "chg_vs_5yr_chg": 4.8,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central": {
+     "level": 1129.0,
+     "weekly_chg": 4.0,
+     "vs_5yr": 90.0,
+     "vs_year_ago": 24.0,
+     "chg_vs_5yr_chg": 9.2,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central_salt": {
+     "level": 273.0,
+     "weekly_chg": 1.0,
+     "vs_5yr": 27.2,
+     "vs_year_ago": 6.0,
+     "chg_vs_5yr_chg": 6.0,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central_nonsalt": {
+     "level": 856.0,
+     "weekly_chg": 3.0,
+     "vs_5yr": 62.4,
+     "vs_year_ago": 18.0,
+     "chg_vs_5yr_chg": 2.8,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "mountain": {
+     "level": 244.0,
+     "weekly_chg": -10.0,
+     "vs_5yr": 34.0,
+     "vs_year_ago": -26.0,
+     "chg_vs_5yr_chg": -12.4,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "pacific": {
+     "level": 294.0,
+     "weekly_chg": -4.0,
+     "vs_5yr": 28.8,
+     "vs_year_ago": 5.0,
+     "chg_vs_5yr_chg": -4.2,
+     "unit": "Bcf",
+     "missing": []
+    }
+   },
+   "salt_share": 0.2418,
+   "days_of_supply": null,
+   "days_of_supply_note": "EIA publishes no days-of-supply (or any demand-normalized) figure in the Weekly Natural Gas Storage Report, and no regional demand denominator; no substitute is computed here.",
+   "source": "EIA_WNGSR_ngshistory_xls",
+   "eia_estimate_basis": "EIA-912",
+   "note": "five regions + salt split; salt = the fast-cycling swing capacity. ADDITIVE to the national `storage` block, which is untouched"
+  },
+  "storage_consensus": null,
+  "storage_vintage": null,
+  "ngwu_balance": null,
+  "steo_vintage": {
+   "vintage_id": "sep25",
+   "release_date": "2025-09-09",
+   "knowable_from": "2025-09-10",
+   "age_days": 1,
+   "month_prev": "202508",
+   "month_cur": "202509",
+   "month_next": "202510",
+   "fields": {
+    "dry_production_bcfd": {
+     "series_id": "NGPRPUS",
+     "prev": 107.1787,
+     "cur": 106.6771,
+     "next": 106.691
+    },
+    "marketed_production_bcfd": {
+     "series_id": "NGMPPUS",
+     "prev": 117.7735,
+     "cur": 117.4085,
+     "next": 117.427
+    },
+    "total_consumption_bcfd": {
+     "series_id": "NGTCPUS",
+     "prev": 84.8607,
+     "cur": 78.8311,
+     "next": 79.7682
+    },
+    "residential_bcfd": {
+     "series_id": "NGRCPUS",
+     "prev": 3.545,
+     "cur": 3.6775,
+     "next": 7.511
+    },
+    "commercial_bcfd": {
+     "series_id": "NGCCPUS",
+     "prev": 4.739,
+     "cur": 5.1382,
+     "next": 7.4895
+    },
+    "industrial_bcfd": null,
+    "power_burn_bcfd": {
+     "series_id": "NGEPCON",
+     "prev": 45.5421,
+     "cur": 39.2324,
+     "next": 33.5263
+    },
+    "lng_gross_exports_bcfd": {
+     "series_id": "NGEXPUS_LNG",
+     "prev": 14.7,
+     "cur": 14.729,
+     "next": 15.315
+    },
+    "lng_gross_imports_bcfd": {
+     "series_id": "NGIMPUS_LNG",
+     "prev": 0.0525,
+     "cur": 0.0192,
+     "next": 0.0391
+    },
+    "pipeline_gross_exports_bcfd": {
+     "series_id": "NGEXPUS_PIPE",
+     "prev": 9.7531,
+     "cur": 9.7404,
+     "next": 9.2591
+    },
+    "pipeline_gross_imports_bcfd": {
+     "series_id": "NGIMPUS_PIPE",
+     "prev": 8.6038,
+     "cur": 8.3171,
+     "next": 7.8699
+    },
+    "net_storage_withdrawal_bcfd": {
+     "series_id": "NGNWPUS",
+     "prev": -5.2001,
+     "cur": -10.6084,
+     "next": -8.8188
+    },
+    "working_gas_inventory_bcf": {
+     "series_id": "NGWGPUS",
+     "prev": 3320.7474,
+     "cur": 3639.001,
+     "next": 3912.383
+    }
+   },
+   "revisions_vs_prev_vintage": null,
+   "prev_vintage_id": null,
+   "label": "STIFS estimates at/after the NGM anchor; as-printed, frozen per issue",
+   "note": "monthly as-of balance consensus (STIFS estimates, as-printed, frozen per issue - zero vintage risk by construction); revisions_vs_prev_vintage is the first-appearance-vs-revision signal; scope sep25..mar26 vintages, apr26+ joins only after its release dates are measured"
+  },
+  "cot": {
+   "report_date": "2025-09-02",
+   "publication_ts": "2025-09-05T15:30:00-04:00",
+   "publication_delayed": false,
+   "publication_confidence": "derived",
+   "contract_code": "023651",
+   "market_name": "NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE",
+   "open_interest": 1635669,
+   "managed_money_long": 216191,
+   "managed_money_short": 252953,
+   "managed_money_net": -36762,
+   "producer_merchant_net": -21694,
+   "swap_dealer_net": 110906,
+   "other_reportable_net": -66014,
+   "managed_money_net_chg_wow": 7270,
+   "pctile_1y_n_obs": 53,
+   "managed_money_net_pctile_1y": 50.0,
+   "pctile_3y_n_obs": 157,
+   "managed_money_net_pctile_3y": 58.92,
+   "age_days": 4.3542,
+   "report_date_combined": "2025-09-02",
+   "publication_ts_combined": "2025-09-05T15:30:00-04:00",
+   "publication_delayed_combined": false,
+   "publication_confidence_combined": "derived",
+   "contract_code_combined": "023651",
+   "market_name_combined": "NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE",
+   "open_interest_combined": 1650508,
+   "managed_money_long_combined": 216270,
+   "managed_money_short_combined": 253220,
+   "managed_money_net_combined": -36950,
+   "producer_merchant_net_combined": -21696,
+   "swap_dealer_net_combined": 111407,
+   "other_reportable_net_combined": -67089,
+   "managed_money_net_chg_wow_combined": 7393,
+   "pctile_1y_n_obs_combined": 53,
+   "managed_money_net_pctile_1y_combined": 50.0,
+   "pctile_3y_n_obs_combined": 157,
+   "managed_money_net_pctile_3y_combined": 58.92,
+   "age_days_combined": 4.3542,
+   "open_interest_options_implied": 14839,
+   "managed_money_long_options_implied": 79,
+   "managed_money_short_options_implied": 267,
+   "managed_money_net_options_implied": -188,
+   "producer_merchant_net_options_implied": -2,
+   "swap_dealer_net_options_implied": 501,
+   "other_reportable_net_options_implied": -1075,
+   "managed_money_net_chg_wow_options_implied": 123,
+   "options_implied_pctile_1y_n_obs": 53,
+   "managed_money_net_options_implied_pctile_1y": 51.89,
+   "options_implied_pctile_3y_n_obs": 157,
+   "managed_money_net_options_implied_pctile_3y": 27.71,
+   "ice": {
+    "ld1": {
+     "report_date": "2025-09-02",
+     "publication_ts": "2025-09-05T15:30:00-04:00",
+     "open_interest": 7647324,
+     "managed_money_net": 1102233,
+     "managed_money_net_chg_wow": 68378,
+     "managed_money_net_pctile_1y": 87.74,
+     "managed_money_net_pctile_3y": 95.86
+    },
+    "pen": {
+     "report_date": "2025-09-02",
+     "publication_ts": "2025-09-05T15:30:00-04:00",
+     "open_interest": 757170,
+     "managed_money_net": -60888,
+     "managed_money_net_chg_wow": 30551,
+     "managed_money_net_pctile_1y": 89.62,
+     "managed_money_net_pctile_3y": 79.94
+    },
+    "hh_basis": {
+     "report_date": "2025-09-02",
+     "publication_ts": "2025-09-05T15:30:00-04:00",
+     "open_interest": 139971,
+     "managed_money_net": 37408,
+     "managed_money_net_chg_wow": 2880,
+     "managed_money_net_pctile_1y": 97.17,
+     "managed_money_net_pctile_3y": 99.04
+    },
+    "hh_index": {
+     "report_date": "2025-09-02",
+     "publication_ts": "2025-09-05T15:30:00-04:00",
+     "open_interest": 162293,
+     "managed_money_net": 18566,
+     "managed_money_net_chg_wow": 4470,
+     "managed_money_net_pctile_1y": 95.28,
+     "managed_money_net_pctile_3y": 96.5
+    }
+   },
+   "note": "positioning as-of PUBLICATION time; futures-only + _combined + the derived _options_implied delta + the four ICE HH books under `ice` (separate reads, never pooled; basis/index = the physical legs, squeeze-regime context); percentiles vs trailing 1y/3y of weekly nets"
+  },
+  "contract_structure": null,
+  "squeeze_watch": null,
+  "vol_regime": null,
+  "cash_basis": null,
+  "flow_calendar": {
+   "date": "2025-09-10",
+   "is_cme_business_day": true,
+   "cme_holiday": false,
+   "cme_holiday_name": null,
+   "cme_session_class": null,
+   "cme_early_close": false,
+   "front_symbol_calendar": "NGV25",
+   "futures_expiry_date": "2025-09-26",
+   "days_to_futures_expiry": 12,
+   "is_expiry_day": false,
+   "options_expiry_date": "2025-09-25",
+   "days_to_opex": 11,
+   "is_opex_day": false,
+   "in_bidweek": false,
+   "bidweek_day_n": null,
+   "bidweek_delivery_month": null,
+   "business_day_of_month": 7,
+   "in_gsci_roll": true,
+   "gsci_roll_day_n": 3,
+   "gsci_ng_roll_this_month": true,
+   "in_bcom_roll": true,
+   "bcom_roll_day_n": 2,
+   "in_bcom_hedge_roll": true,
+   "bcom_ng_roll_this_month": false,
+   "bcom_january_rebalance": false,
+   "eia_storage_release_datetime_et": "2025-09-11T10:30:00-04:00",
+   "eia_releases_this_week": [
+    {
+     "datetime_et": "2025-09-11T10:30:00-04:00",
+     "for_week_ending": "2025-09-05",
+     "shifted": false,
+     "shift_reason": null
+    }
+   ],
+   "is_eia_print_day": false,
+   "next_eia_release_datetime_et": "2025-09-11T10:30:00-04:00",
+   "days_to_next_eia_release": 1,
+   "note": "mechanical scheduled flows - desks trade around these; G13 carries the full gauntlet (GSCI roll Feb 6-12, BCOM Feb 9-13, bidweek Feb 23-27, opex Feb 24, expiry Feb 25)"
+  },
+  "solar": {
+   "date": "2025-09-10",
+   "gw_day_length_chg_7d": -0.285,
+   "gw_day_length_h": 12.695,
+   "metros": {
+    "ATL": {
+     "day_length_h": 12.59,
+     "grid": "SOCO",
+     "sunrise_local": "07:16",
+     "sunset_et": "19:52",
+     "sunset_local": "19:52"
+    },
+    "BOS": {
+     "day_length_h": 12.78,
+     "grid": "ISO-NE",
+     "sunrise_local": "06:17",
+     "sunset_et": "19:04",
+     "sunset_local": "19:04"
+    },
+    "DCA": {
+     "day_length_h": 12.7,
+     "grid": "PJM",
+     "sunrise_local": "06:44",
+     "sunset_et": "19:25",
+     "sunset_local": "19:25"
+    },
+    "DEN": {
+     "day_length_h": 12.72,
+     "grid": "WECC",
+     "sunrise_local": "06:33",
+     "sunset_et": "21:16",
+     "sunset_local": "19:16"
+    },
+    "DFW": {
+     "day_length_h": 12.58,
+     "grid": "ERCOT",
+     "sunrise_local": "07:07",
+     "sunset_et": "20:42",
+     "sunset_local": "19:42"
+    },
+    "DTW": {
+     "day_length_h": 12.77,
+     "grid": "MISO",
+     "sunrise_local": "07:06",
+     "sunset_et": "19:53",
+     "sunset_local": "19:53"
+    },
+    "IAH": {
+     "day_length_h": 12.52,
+     "grid": "ERCOT",
+     "sunrise_local": "07:02",
+     "sunset_et": "20:33",
+     "sunset_local": "19:33"
+    },
+    "LAX": {
+     "day_length_h": 12.59,
+     "grid": "CAISO",
+     "sunrise_local": "06:32",
+     "sunset_et": "22:08",
+     "sunset_local": "19:08"
+    },
+    "MSP": {
+     "day_length_h": 12.84,
+     "grid": "MISO",
+     "sunrise_local": "06:44",
+     "sunset_et": "20:34",
+     "sunset_local": "19:34"
+    },
+    "NYC": {
+     "day_length_h": 12.74,
+     "grid": "NYISO",
+     "sunrise_local": "06:30",
+     "sunset_et": "19:14",
+     "sunset_local": "19:14"
+    },
+    "ORD": {
+     "day_length_h": 12.77,
+     "grid": "PJM",
+     "sunrise_local": "06:25",
+     "sunset_et": "20:11",
+     "sunset_local": "19:11"
+    },
+    "PHL": {
+     "day_length_h": 12.72,
+     "grid": "PJM",
+     "sunrise_local": "06:36",
+     "sunset_et": "19:19",
+     "sunset_local": "19:19"
+    },
+    "PHX": {
+     "day_length_h": 12.58,
+     "grid": "WECC",
+     "sunrise_local": "06:07",
+     "sunset_et": "21:42",
+     "sunset_local": "18:42"
+    },
+    "SEA": {
+     "day_length_h": 12.91,
+     "grid": "WECC",
+     "sunrise_local": "06:38",
+     "sunset_et": "22:33",
+     "sunset_local": "19:33"
+    },
+    "SFO": {
+     "day_length_h": 12.67,
+     "grid": "CAISO",
+     "sunrise_local": "06:46",
+     "sunset_et": "22:26",
+     "sunset_local": "19:26"
+    },
+    "STL": {
+     "day_length_h": 12.69,
+     "grid": "MISO",
+     "sunrise_local": "06:37",
+     "sunset_et": "20:19",
+     "sunset_local": "19:19"
+    }
+   },
+   "sunset_et_earliest": "19:04",
+   "sunset_et_latest": "22:33",
+   "note": "deterministic solar state; sunset_et positions the evening gas-burn ramp on the session clock; gw_day_length_chg_7d is the seasonal march"
+  },
+  "nuclear_outages": {
+   "period": "2025-09-09",
+   "age_days": 1,
+   "capacity_out_mw": 6035.066,
+   "capacity_out_gw": 6.035,
+   "pct_of_fleet_out": 6.18,
+   "fleet_capacity_mw": 97648.7,
+   "chg_1d_mw": 637.6,
+   "chg_7d_mw": 4904.3,
+   "outage_season": "fall_outage_season",
+   "note": "nuclear GW offline adds gas burn roughly GW-for-GW at the margin; season tag is calendar-descriptive; changes across missing days are None, never bridged"
+  },
+  "grid_stack": null,
+  "options_surface": null,
+  "weather": null,
+  "weather_forecast": null,
+  "weather_forecast_cycle": null,
+  "weather_forcing_forecast": null,
+  "freeze_risk": null,
+  "model_disagreement": null,
+  "tape_conditions": null,
+  "holiday": null,
+  "firehose_present": null
+ },
+ "20250911": {
+  "dow": "Thu",
+  "scored_leg": null,
+  "stor_surprise": 7.6,
+  "stor_surprise_sign": "above",
+  "stor_surprise_basis": null,
+  "curve_regime": "unknown",
+  "storage": {
+   "level": 3262,
+   "weekly_chg": 45,
+   "vs_5yr": 149,
+   "phase": "inject",
+   "as_of": "2025-09-04"
+  },
+  "storage_regional": {
+   "as_of": "2025-09-04",
+   "period": "2025-08-29",
+   "regions": {
+    "l48": {
+     "level": 3262.0,
+     "weekly_chg": 45.0,
+     "vs_5yr": 148.6,
+     "vs_year_ago": -85.0,
+     "chg_vs_5yr_chg": 7.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "east": {
+     "level": 735.0,
+     "weekly_chg": 28.0,
+     "vs_5yr": 4.2,
+     "vs_year_ago": -26.0,
+     "chg_vs_5yr_chg": 11.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "midwest": {
+     "level": 860.0,
+     "weekly_chg": 28.0,
+     "vs_5yr": -8.2,
+     "vs_year_ago": -62.0,
+     "chg_vs_5yr_chg": 4.8,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central": {
+     "level": 1129.0,
+     "weekly_chg": 4.0,
+     "vs_5yr": 90.0,
+     "vs_year_ago": 24.0,
+     "chg_vs_5yr_chg": 9.2,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central_salt": {
+     "level": 273.0,
+     "weekly_chg": 1.0,
+     "vs_5yr": 27.2,
+     "vs_year_ago": 6.0,
+     "chg_vs_5yr_chg": 6.0,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central_nonsalt": {
+     "level": 856.0,
+     "weekly_chg": 3.0,
+     "vs_5yr": 62.4,
+     "vs_year_ago": 18.0,
+     "chg_vs_5yr_chg": 2.8,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "mountain": {
+     "level": 244.0,
+     "weekly_chg": -10.0,
+     "vs_5yr": 34.0,
+     "vs_year_ago": -26.0,
+     "chg_vs_5yr_chg": -12.4,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "pacific": {
+     "level": 294.0,
+     "weekly_chg": -4.0,
+     "vs_5yr": 28.8,
+     "vs_year_ago": 5.0,
+     "chg_vs_5yr_chg": -4.2,
+     "unit": "Bcf",
+     "missing": []
+    }
+   },
+   "salt_share": 0.2418,
+   "days_of_supply": null,
+   "days_of_supply_note": "EIA publishes no days-of-supply (or any demand-normalized) figure in the Weekly Natural Gas Storage Report, and no regional demand denominator; no substitute is computed here.",
+   "source": "EIA_WNGSR_ngshistory_xls",
+   "eia_estimate_basis": "EIA-912",
+   "note": "five regions + salt split; salt = the fast-cycling swing capacity. ADDITIVE to the national `storage` block, which is untouched"
+  },
+  "storage_consensus": null,
+  "storage_vintage": null,
+  "ngwu_balance": null,
+  "steo_vintage": {
+   "vintage_id": "sep25",
+   "release_date": "2025-09-09",
+   "knowable_from": "2025-09-10",
+   "age_days": 2,
+   "month_prev": "202508",
+   "month_cur": "202509",
+   "month_next": "202510",
+   "fields": {
+    "dry_production_bcfd": {
+     "series_id": "NGPRPUS",
+     "prev": 107.1787,
+     "cur": 106.6771,
+     "next": 106.691
+    },
+    "marketed_production_bcfd": {
+     "series_id": "NGMPPUS",
+     "prev": 117.7735,
+     "cur": 117.4085,
+     "next": 117.427
+    },
+    "total_consumption_bcfd": {
+     "series_id": "NGTCPUS",
+     "prev": 84.8607,
+     "cur": 78.8311,
+     "next": 79.7682
+    },
+    "residential_bcfd": {
+     "series_id": "NGRCPUS",
+     "prev": 3.545,
+     "cur": 3.6775,
+     "next": 7.511
+    },
+    "commercial_bcfd": {
+     "series_id": "NGCCPUS",
+     "prev": 4.739,
+     "cur": 5.1382,
+     "next": 7.4895
+    },
+    "industrial_bcfd": null,
+    "power_burn_bcfd": {
+     "series_id": "NGEPCON",
+     "prev": 45.5421,
+     "cur": 39.2324,
+     "next": 33.5263
+    },
+    "lng_gross_exports_bcfd": {
+     "series_id": "NGEXPUS_LNG",
+     "prev": 14.7,
+     "cur": 14.729,
+     "next": 15.315
+    },
+    "lng_gross_imports_bcfd": {
+     "series_id": "NGIMPUS_LNG",
+     "prev": 0.0525,
+     "cur": 0.0192,
+     "next": 0.0391
+    },
+    "pipeline_gross_exports_bcfd": {
+     "series_id": "NGEXPUS_PIPE",
+     "prev": 9.7531,
+     "cur": 9.7404,
+     "next": 9.2591
+    },
+    "pipeline_gross_imports_bcfd": {
+     "series_id": "NGIMPUS_PIPE",
+     "prev": 8.6038,
+     "cur": 8.3171,
+     "next": 7.8699
+    },
+    "net_storage_withdrawal_bcfd": {
+     "series_id": "NGNWPUS",
+     "prev": -5.2001,
+     "cur": -10.6084,
+     "next": -8.8188
+    },
+    "working_gas_inventory_bcf": {
+     "series_id": "NGWGPUS",
+     "prev": 3320.7474,
+     "cur": 3639.001,
+     "next": 3912.383
+    }
+   },
+   "revisions_vs_prev_vintage": null,
+   "prev_vintage_id": null,
+   "label": "STIFS estimates at/after the NGM anchor; as-printed, frozen per issue",
+   "note": "monthly as-of balance consensus (STIFS estimates, as-printed, frozen per issue - zero vintage risk by construction); revisions_vs_prev_vintage is the first-appearance-vs-revision signal; scope sep25..mar26 vintages, apr26+ joins only after its release dates are measured"
+  },
+  "cot": {
+   "report_date": "2025-09-02",
+   "publication_ts": "2025-09-05T15:30:00-04:00",
+   "publication_delayed": false,
+   "publication_confidence": "derived",
+   "contract_code": "023651",
+   "market_name": "NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE",
+   "open_interest": 1635669,
+   "managed_money_long": 216191,
+   "managed_money_short": 252953,
+   "managed_money_net": -36762,
+   "producer_merchant_net": -21694,
+   "swap_dealer_net": 110906,
+   "other_reportable_net": -66014,
+   "managed_money_net_chg_wow": 7270,
+   "pctile_1y_n_obs": 53,
+   "managed_money_net_pctile_1y": 50.0,
+   "pctile_3y_n_obs": 157,
+   "managed_money_net_pctile_3y": 58.92,
+   "age_days": 5.3542,
+   "report_date_combined": "2025-09-02",
+   "publication_ts_combined": "2025-09-05T15:30:00-04:00",
+   "publication_delayed_combined": false,
+   "publication_confidence_combined": "derived",
+   "contract_code_combined": "023651",
+   "market_name_combined": "NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE",
+   "open_interest_combined": 1650508,
+   "managed_money_long_combined": 216270,
+   "managed_money_short_combined": 253220,
+   "managed_money_net_combined": -36950,
+   "producer_merchant_net_combined": -21696,
+   "swap_dealer_net_combined": 111407,
+   "other_reportable_net_combined": -67089,
+   "managed_money_net_chg_wow_combined": 7393,
+   "pctile_1y_n_obs_combined": 53,
+   "managed_money_net_pctile_1y_combined": 50.0,
+   "pctile_3y_n_obs_combined": 157,
+   "managed_money_net_pctile_3y_combined": 58.92,
+   "age_days_combined": 5.3542,
+   "open_interest_options_implied": 14839,
+   "managed_money_long_options_implied": 79,
+   "managed_money_short_options_implied": 267,
+   "managed_money_net_options_implied": -188,
+   "producer_merchant_net_options_implied": -2,
+   "swap_dealer_net_options_implied": 501,
+   "other_reportable_net_options_implied": -1075,
+   "managed_money_net_chg_wow_options_implied": 123,
+   "options_implied_pctile_1y_n_obs": 53,
+   "managed_money_net_options_implied_pctile_1y": 51.89,
+   "options_implied_pctile_3y_n_obs": 157,
+   "managed_money_net_options_implied_pctile_3y": 27.71,
+   "ice": {
+    "ld1": {
+     "report_date": "2025-09-02",
+     "publication_ts": "2025-09-05T15:30:00-04:00",
+     "open_interest": 7647324,
+     "managed_money_net": 1102233,
+     "managed_money_net_chg_wow": 68378,
+     "managed_money_net_pctile_1y": 87.74,
+     "managed_money_net_pctile_3y": 95.86
+    },
+    "pen": {
+     "report_date": "2025-09-02",
+     "publication_ts": "2025-09-05T15:30:00-04:00",
+     "open_interest": 757170,
+     "managed_money_net": -60888,
+     "managed_money_net_chg_wow": 30551,
+     "managed_money_net_pctile_1y": 89.62,
+     "managed_money_net_pctile_3y": 79.94
+    },
+    "hh_basis": {
+     "report_date": "2025-09-02",
+     "publication_ts": "2025-09-05T15:30:00-04:00",
+     "open_interest": 139971,
+     "managed_money_net": 37408,
+     "managed_money_net_chg_wow": 2880,
+     "managed_money_net_pctile_1y": 97.17,
+     "managed_money_net_pctile_3y": 99.04
+    },
+    "hh_index": {
+     "report_date": "2025-09-02",
+     "publication_ts": "2025-09-05T15:30:00-04:00",
+     "open_interest": 162293,
+     "managed_money_net": 18566,
+     "managed_money_net_chg_wow": 4470,
+     "managed_money_net_pctile_1y": 95.28,
+     "managed_money_net_pctile_3y": 96.5
+    }
+   },
+   "note": "positioning as-of PUBLICATION time; futures-only + _combined + the derived _options_implied delta + the four ICE HH books under `ice` (separate reads, never pooled; basis/index = the physical legs, squeeze-regime context); percentiles vs trailing 1y/3y of weekly nets"
+  },
+  "contract_structure": null,
+  "squeeze_watch": null,
+  "vol_regime": null,
+  "cash_basis": null,
+  "flow_calendar": {
+   "date": "2025-09-11",
+   "is_cme_business_day": true,
+   "cme_holiday": false,
+   "cme_holiday_name": null,
+   "cme_session_class": null,
+   "cme_early_close": false,
+   "front_symbol_calendar": "NGV25",
+   "futures_expiry_date": "2025-09-26",
+   "days_to_futures_expiry": 11,
+   "is_expiry_day": false,
+   "options_expiry_date": "2025-09-25",
+   "days_to_opex": 10,
+   "is_opex_day": false,
+   "in_bidweek": false,
+   "bidweek_day_n": null,
+   "bidweek_delivery_month": null,
+   "business_day_of_month": 8,
+   "in_gsci_roll": true,
+   "gsci_roll_day_n": 4,
+   "gsci_ng_roll_this_month": true,
+   "in_bcom_roll": true,
+   "bcom_roll_day_n": 3,
+   "in_bcom_hedge_roll": true,
+   "bcom_ng_roll_this_month": false,
+   "bcom_january_rebalance": false,
+   "eia_storage_release_datetime_et": "2025-09-11T10:30:00-04:00",
+   "eia_releases_this_week": [
+    {
+     "datetime_et": "2025-09-11T10:30:00-04:00",
+     "for_week_ending": "2025-09-05",
+     "shifted": false,
+     "shift_reason": null
+    }
+   ],
+   "is_eia_print_day": true,
+   "next_eia_release_datetime_et": "2025-09-11T10:30:00-04:00",
+   "days_to_next_eia_release": 0,
+   "note": "mechanical scheduled flows - desks trade around these; G13 carries the full gauntlet (GSCI roll Feb 6-12, BCOM Feb 9-13, bidweek Feb 23-27, opex Feb 24, expiry Feb 25)"
+  },
+  "solar": {
+   "date": "2025-09-11",
+   "gw_day_length_chg_7d": -0.286,
+   "gw_day_length_h": 12.654,
+   "metros": {
+    "ATL": {
+     "day_length_h": 12.56,
+     "grid": "SOCO",
+     "sunrise_local": "07:17",
+     "sunset_et": "19:50",
+     "sunset_local": "19:50"
+    },
+    "BOS": {
+     "day_length_h": 12.73,
+     "grid": "ISO-NE",
+     "sunrise_local": "06:18",
+     "sunset_et": "19:02",
+     "sunset_local": "19:02"
+    },
+    "DCA": {
+     "day_length_h": 12.66,
+     "grid": "PJM",
+     "sunrise_local": "06:44",
+     "sunset_et": "19:24",
+     "sunset_local": "19:24"
+    },
+    "DEN": {
+     "day_length_h": 12.67,
+     "grid": "WECC",
+     "sunrise_local": "06:34",
+     "sunset_et": "21:15",
+     "sunset_local": "19:15"
+    },
+    "DFW": {
+     "day_length_h": 12.54,
+     "grid": "ERCOT",
+     "sunrise_local": "07:08",
+     "sunset_et": "20:40",
+     "sunset_local": "19:40"
+    },
+    "DTW": {
+     "day_length_h": 12.73,
+     "grid": "MISO",
+     "sunrise_local": "07:07",
+     "sunset_et": "19:51",
+     "sunset_local": "19:51"
+    },
+    "IAH": {
+     "day_length_h": 12.49,
+     "grid": "ERCOT",
+     "sunrise_local": "07:03",
+     "sunset_et": "20:32",
+     "sunset_local": "19:32"
+    },
+    "LAX": {
+     "day_length_h": 12.56,
+     "grid": "CAISO",
+     "sunrise_local": "06:33",
+     "sunset_et": "22:06",
+     "sunset_local": "19:06"
+    },
+    "MSP": {
+     "day_length_h": 12.79,
+     "grid": "MISO",
+     "sunrise_local": "06:45",
+     "sunset_et": "20:32",
+     "sunset_local": "19:32"
+    },
+    "NYC": {
+     "day_length_h": 12.7,
+     "grid": "NYISO",
+     "sunrise_local": "06:31",
+     "sunset_et": "19:13",
+     "sunset_local": "19:13"
+    },
+    "ORD": {
+     "day_length_h": 12.72,
+     "grid": "PJM",
+     "sunrise_local": "06:26",
+     "sunset_et": "20:09",
+     "sunset_local": "19:09"
+    },
+    "PHL": {
+     "day_length_h": 12.68,
+     "grid": "PJM",
+     "sunrise_local": "06:37",
+     "sunset_et": "19:17",
+     "sunset_local": "19:17"
+    },
+    "PHX": {
+     "day_length_h": 12.55,
+     "grid": "WECC",
+     "sunrise_local": "06:08",
+     "sunset_et": "21:41",
+     "sunset_local": "18:41"
+    },
+    "SEA": {
+     "day_length_h": 12.85,
+     "grid": "WECC",
+     "sunrise_local": "06:39",
+     "sunset_et": "22:31",
+     "sunset_local": "19:31"
+    },
+    "SFO": {
+     "day_length_h": 12.63,
+     "grid": "CAISO",
+     "sunrise_local": "06:47",
+     "sunset_et": "22:24",
+     "sunset_local": "19:24"
+    },
+    "STL": {
+     "day_length_h": 12.65,
+     "grid": "MISO",
+     "sunrise_local": "06:38",
+     "sunset_et": "20:17",
+     "sunset_local": "19:17"
+    }
+   },
+   "sunset_et_earliest": "19:02",
+   "sunset_et_latest": "22:31",
+   "note": "deterministic solar state; sunset_et positions the evening gas-burn ramp on the session clock; gw_day_length_chg_7d is the seasonal march"
+  },
+  "nuclear_outages": {
+   "period": "2025-09-10",
+   "age_days": 1,
+   "capacity_out_mw": 5322.406,
+   "capacity_out_gw": 5.322,
+   "pct_of_fleet_out": 5.45,
+   "fleet_capacity_mw": 97648.7,
+   "chg_1d_mw": -712.7,
+   "chg_7d_mw": 2463.4,
+   "outage_season": "fall_outage_season",
+   "note": "nuclear GW offline adds gas burn roughly GW-for-GW at the margin; season tag is calendar-descriptive; changes across missing days are None, never bridged"
+  },
+  "grid_stack": null,
+  "options_surface": null,
+  "weather": null,
+  "weather_forecast": null,
+  "weather_forecast_cycle": null,
+  "weather_forcing_forecast": null,
+  "freeze_risk": null,
+  "model_disagreement": null,
+  "tape_conditions": null,
+  "holiday": null,
+  "firehose_present": null
+ },
+ "20250912": {
+  "dow": "Fri",
+  "scored_leg": null,
+  "stor_surprise": 5.6,
+  "stor_surprise_sign": "above",
+  "stor_surprise_basis": null,
+  "curve_regime": "unknown",
+  "storage": {
+   "level": 3333,
+   "weekly_chg": 71,
+   "vs_5yr": 154,
+   "phase": "inject",
+   "as_of": "2025-09-11"
+  },
+  "storage_regional": {
+   "as_of": "2025-09-11",
+   "period": "2025-09-05",
+   "regions": {
+    "l48": {
+     "level": 3333.0,
+     "weekly_chg": 71.0,
+     "vs_5yr": 154.2,
+     "vs_year_ago": -54.0,
+     "chg_vs_5yr_chg": 5.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "east": {
+     "level": 757.0,
+     "weekly_chg": 22.0,
+     "vs_5yr": 6.4,
+     "vs_year_ago": -23.0,
+     "chg_vs_5yr_chg": 2.2,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "midwest": {
+     "level": 890.0,
+     "weekly_chg": 30.0,
+     "vs_5yr": -8.4,
+     "vs_year_ago": -60.0,
+     "chg_vs_5yr_chg": -0.2,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central": {
+     "level": 1145.0,
+     "weekly_chg": 16.0,
+     "vs_5yr": 94.8,
+     "vs_year_ago": 47.0,
+     "chg_vs_5yr_chg": 4.8,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central_salt": {
+     "level": 282.0,
+     "weekly_chg": 9.0,
+     "vs_5yr": 32.8,
+     "vs_year_ago": 16.0,
+     "chg_vs_5yr_chg": 5.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central_nonsalt": {
+     "level": 863.0,
+     "weekly_chg": 7.0,
+     "vs_5yr": 61.8,
+     "vs_year_ago": 31.0,
+     "chg_vs_5yr_chg": -0.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "mountain": {
+     "level": 246.0,
+     "weekly_chg": 2.0,
+     "vs_5yr": 32.0,
+     "vs_year_ago": -27.0,
+     "chg_vs_5yr_chg": -2.0,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "pacific": {
+     "level": 293.0,
+     "weekly_chg": -1.0,
+     "vs_5yr": 27.4,
+     "vs_year_ago": 8.0,
+     "chg_vs_5yr_chg": -1.4,
+     "unit": "Bcf",
+     "missing": []
+    }
+   },
+   "salt_share": 0.2463,
+   "days_of_supply": null,
+   "days_of_supply_note": "EIA publishes no days-of-supply (or any demand-normalized) figure in the Weekly Natural Gas Storage Report, and no regional demand denominator; no substitute is computed here.",
+   "source": "EIA_WNGSR_ngshistory_xls",
+   "eia_estimate_basis": "EIA-912",
+   "note": "five regions + salt split; salt = the fast-cycling swing capacity. ADDITIVE to the national `storage` block, which is untouched"
+  },
+  "storage_consensus": null,
+  "storage_vintage": null,
+  "ngwu_balance": null,
+  "steo_vintage": {
+   "vintage_id": "sep25",
+   "release_date": "2025-09-09",
+   "knowable_from": "2025-09-10",
+   "age_days": 3,
+   "month_prev": "202508",
+   "month_cur": "202509",
+   "month_next": "202510",
+   "fields": {
+    "dry_production_bcfd": {
+     "series_id": "NGPRPUS",
+     "prev": 107.1787,
+     "cur": 106.6771,
+     "next": 106.691
+    },
+    "marketed_production_bcfd": {
+     "series_id": "NGMPPUS",
+     "prev": 117.7735,
+     "cur": 117.4085,
+     "next": 117.427
+    },
+    "total_consumption_bcfd": {
+     "series_id": "NGTCPUS",
+     "prev": 84.8607,
+     "cur": 78.8311,
+     "next": 79.7682
+    },
+    "residential_bcfd": {
+     "series_id": "NGRCPUS",
+     "prev": 3.545,
+     "cur": 3.6775,
+     "next": 7.511
+    },
+    "commercial_bcfd": {
+     "series_id": "NGCCPUS",
+     "prev": 4.739,
+     "cur": 5.1382,
+     "next": 7.4895
+    },
+    "industrial_bcfd": null,
+    "power_burn_bcfd": {
+     "series_id": "NGEPCON",
+     "prev": 45.5421,
+     "cur": 39.2324,
+     "next": 33.5263
+    },
+    "lng_gross_exports_bcfd": {
+     "series_id": "NGEXPUS_LNG",
+     "prev": 14.7,
+     "cur": 14.729,
+     "next": 15.315
+    },
+    "lng_gross_imports_bcfd": {
+     "series_id": "NGIMPUS_LNG",
+     "prev": 0.0525,
+     "cur": 0.0192,
+     "next": 0.0391
+    },
+    "pipeline_gross_exports_bcfd": {
+     "series_id": "NGEXPUS_PIPE",
+     "prev": 9.7531,
+     "cur": 9.7404,
+     "next": 9.2591
+    },
+    "pipeline_gross_imports_bcfd": {
+     "series_id": "NGIMPUS_PIPE",
+     "prev": 8.6038,
+     "cur": 8.3171,
+     "next": 7.8699
+    },
+    "net_storage_withdrawal_bcfd": {
+     "series_id": "NGNWPUS",
+     "prev": -5.2001,
+     "cur": -10.6084,
+     "next": -8.8188
+    },
+    "working_gas_inventory_bcf": {
+     "series_id": "NGWGPUS",
+     "prev": 3320.7474,
+     "cur": 3639.001,
+     "next": 3912.383
+    }
+   },
+   "revisions_vs_prev_vintage": null,
+   "prev_vintage_id": null,
+   "label": "STIFS estimates at/after the NGM anchor; as-printed, frozen per issue",
+   "note": "monthly as-of balance consensus (STIFS estimates, as-printed, frozen per issue - zero vintage risk by construction); revisions_vs_prev_vintage is the first-appearance-vs-revision signal; scope sep25..mar26 vintages, apr26+ joins only after its release dates are measured"
+  },
+  "cot": {
+   "report_date": "2025-09-02",
+   "publication_ts": "2025-09-05T15:30:00-04:00",
+   "publication_delayed": false,
+   "publication_confidence": "derived",
+   "contract_code": "023651",
+   "market_name": "NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE",
+   "open_interest": 1635669,
+   "managed_money_long": 216191,
+   "managed_money_short": 252953,
+   "managed_money_net": -36762,
+   "producer_merchant_net": -21694,
+   "swap_dealer_net": 110906,
+   "other_reportable_net": -66014,
+   "managed_money_net_chg_wow": 7270,
+   "pctile_1y_n_obs": 53,
+   "managed_money_net_pctile_1y": 50.0,
+   "pctile_3y_n_obs": 157,
+   "managed_money_net_pctile_3y": 58.92,
+   "age_days": 6.3542,
+   "report_date_combined": "2025-09-02",
+   "publication_ts_combined": "2025-09-05T15:30:00-04:00",
+   "publication_delayed_combined": false,
+   "publication_confidence_combined": "derived",
+   "contract_code_combined": "023651",
+   "market_name_combined": "NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE",
+   "open_interest_combined": 1650508,
+   "managed_money_long_combined": 216270,
+   "managed_money_short_combined": 253220,
+   "managed_money_net_combined": -36950,
+   "producer_merchant_net_combined": -21696,
+   "swap_dealer_net_combined": 111407,
+   "other_reportable_net_combined": -67089,
+   "managed_money_net_chg_wow_combined": 7393,
+   "pctile_1y_n_obs_combined": 53,
+   "managed_money_net_pctile_1y_combined": 50.0,
+   "pctile_3y_n_obs_combined": 157,
+   "managed_money_net_pctile_3y_combined": 58.92,
+   "age_days_combined": 6.3542,
+   "open_interest_options_implied": 14839,
+   "managed_money_long_options_implied": 79,
+   "managed_money_short_options_implied": 267,
+   "managed_money_net_options_implied": -188,
+   "producer_merchant_net_options_implied": -2,
+   "swap_dealer_net_options_implied": 501,
+   "other_reportable_net_options_implied": -1075,
+   "managed_money_net_chg_wow_options_implied": 123,
+   "options_implied_pctile_1y_n_obs": 53,
+   "managed_money_net_options_implied_pctile_1y": 51.89,
+   "options_implied_pctile_3y_n_obs": 157,
+   "managed_money_net_options_implied_pctile_3y": 27.71,
+   "ice": {
+    "ld1": {
+     "report_date": "2025-09-02",
+     "publication_ts": "2025-09-05T15:30:00-04:00",
+     "open_interest": 7647324,
+     "managed_money_net": 1102233,
+     "managed_money_net_chg_wow": 68378,
+     "managed_money_net_pctile_1y": 87.74,
+     "managed_money_net_pctile_3y": 95.86
+    },
+    "pen": {
+     "report_date": "2025-09-02",
+     "publication_ts": "2025-09-05T15:30:00-04:00",
+     "open_interest": 757170,
+     "managed_money_net": -60888,
+     "managed_money_net_chg_wow": 30551,
+     "managed_money_net_pctile_1y": 89.62,
+     "managed_money_net_pctile_3y": 79.94
+    },
+    "hh_basis": {
+     "report_date": "2025-09-02",
+     "publication_ts": "2025-09-05T15:30:00-04:00",
+     "open_interest": 139971,
+     "managed_money_net": 37408,
+     "managed_money_net_chg_wow": 2880,
+     "managed_money_net_pctile_1y": 97.17,
+     "managed_money_net_pctile_3y": 99.04
+    },
+    "hh_index": {
+     "report_date": "2025-09-02",
+     "publication_ts": "2025-09-05T15:30:00-04:00",
+     "open_interest": 162293,
+     "managed_money_net": 18566,
+     "managed_money_net_chg_wow": 4470,
+     "managed_money_net_pctile_1y": 95.28,
+     "managed_money_net_pctile_3y": 96.5
+    }
+   },
+   "note": "positioning as-of PUBLICATION time; futures-only + _combined + the derived _options_implied delta + the four ICE HH books under `ice` (separate reads, never pooled; basis/index = the physical legs, squeeze-regime context); percentiles vs trailing 1y/3y of weekly nets"
+  },
+  "contract_structure": null,
+  "squeeze_watch": null,
+  "vol_regime": null,
+  "cash_basis": null,
+  "flow_calendar": {
+   "date": "2025-09-12",
+   "is_cme_business_day": true,
+   "cme_holiday": false,
+   "cme_holiday_name": null,
+   "cme_session_class": null,
+   "cme_early_close": false,
+   "front_symbol_calendar": "NGV25",
+   "futures_expiry_date": "2025-09-26",
+   "days_to_futures_expiry": 10,
+   "is_expiry_day": false,
+   "options_expiry_date": "2025-09-25",
+   "days_to_opex": 9,
+   "is_opex_day": false,
+   "in_bidweek": false,
+   "bidweek_day_n": null,
+   "bidweek_delivery_month": null,
+   "business_day_of_month": 9,
+   "in_gsci_roll": true,
+   "gsci_roll_day_n": 5,
+   "gsci_ng_roll_this_month": true,
+   "in_bcom_roll": true,
+   "bcom_roll_day_n": 4,
+   "in_bcom_hedge_roll": true,
+   "bcom_ng_roll_this_month": false,
+   "bcom_january_rebalance": false,
+   "eia_storage_release_datetime_et": "2025-09-11T10:30:00-04:00",
+   "eia_releases_this_week": [
+    {
+     "datetime_et": "2025-09-11T10:30:00-04:00",
+     "for_week_ending": "2025-09-05",
+     "shifted": false,
+     "shift_reason": null
+    }
+   ],
+   "is_eia_print_day": false,
+   "next_eia_release_datetime_et": "2025-09-18T10:30:00-04:00",
+   "days_to_next_eia_release": 6,
+   "note": "mechanical scheduled flows - desks trade around these; G13 carries the full gauntlet (GSCI roll Feb 6-12, BCOM Feb 9-13, bidweek Feb 23-27, opex Feb 24, expiry Feb 25)"
+  },
+  "solar": {
+   "date": "2025-09-12",
+   "gw_day_length_chg_7d": -0.286,
+   "gw_day_length_h": 12.613,
+   "metros": {
+    "ATL": {
+     "day_length_h": 12.52,
+     "grid": "SOCO",
+     "sunrise_local": "07:18",
+     "sunset_et": "19:49",
+     "sunset_local": "19:49"
+    },
+    "BOS": {
+     "day_length_h": 12.69,
+     "grid": "ISO-NE",
+     "sunrise_local": "06:19",
+     "sunset_et": "19:00",
+     "sunset_local": "19:00"
+    },
+    "DCA": {
+     "day_length_h": 12.61,
+     "grid": "PJM",
+     "sunrise_local": "06:45",
+     "sunset_et": "19:22",
+     "sunset_local": "19:22"
+    },
+    "DEN": {
+     "day_length_h": 12.63,
+     "grid": "WECC",
+     "sunrise_local": "06:35",
+     "sunset_et": "21:13",
+     "sunset_local": "19:13"
+    },
+    "DFW": {
+     "day_length_h": 12.51,
+     "grid": "ERCOT",
+     "sunrise_local": "07:09",
+     "sunset_et": "20:39",
+     "sunset_local": "19:39"
+    },
+    "DTW": {
+     "day_length_h": 12.68,
+     "grid": "MISO",
+     "sunrise_local": "07:08",
+     "sunset_et": "19:49",
+     "sunset_local": "19:49"
+    },
+    "IAH": {
+     "day_length_h": 12.46,
+     "grid": "ERCOT",
+     "sunrise_local": "07:03",
+     "sunset_et": "20:31",
+     "sunset_local": "19:31"
+    },
+    "LAX": {
+     "day_length_h": 12.52,
+     "grid": "CAISO",
+     "sunrise_local": "06:34",
+     "sunset_et": "22:05",
+     "sunset_local": "19:05"
+    },
+    "MSP": {
+     "day_length_h": 12.74,
+     "grid": "MISO",
+     "sunrise_local": "06:46",
+     "sunset_et": "20:31",
+     "sunset_local": "19:31"
+    },
+    "NYC": {
+     "day_length_h": 12.65,
+     "grid": "NYISO",
+     "sunrise_local": "06:32",
+     "sunset_et": "19:11",
+     "sunset_local": "19:11"
+    },
+    "ORD": {
+     "day_length_h": 12.68,
+     "grid": "PJM",
+     "sunrise_local": "06:27",
+     "sunset_et": "20:07",
+     "sunset_local": "19:07"
+    },
+    "PHL": {
+     "day_length_h": 12.63,
+     "grid": "PJM",
+     "sunrise_local": "06:37",
+     "sunset_et": "19:16",
+     "sunset_local": "19:16"
+    },
+    "PHX": {
+     "day_length_h": 12.52,
+     "grid": "WECC",
+     "sunrise_local": "06:08",
+     "sunset_et": "21:39",
+     "sunset_local": "18:39"
+    },
+    "SEA": {
+     "day_length_h": 12.8,
+     "grid": "WECC",
+     "sunrise_local": "06:41",
+     "sunset_et": "22:29",
+     "sunset_local": "19:29"
+    },
+    "SFO": {
+     "day_length_h": 12.59,
+     "grid": "CAISO",
+     "sunrise_local": "06:47",
+     "sunset_et": "22:23",
+     "sunset_local": "19:23"
+    },
+    "STL": {
+     "day_length_h": 12.61,
+     "grid": "MISO",
+     "sunrise_local": "06:39",
+     "sunset_et": "20:15",
+     "sunset_local": "19:15"
+    }
+   },
+   "sunset_et_earliest": "19:00",
+   "sunset_et_latest": "22:29",
+   "note": "deterministic solar state; sunset_et positions the evening gas-burn ramp on the session clock; gw_day_length_chg_7d is the seasonal march"
+  },
+  "nuclear_outages": {
+   "period": "2025-09-11",
+   "age_days": 1,
+   "capacity_out_mw": 5331.356,
+   "capacity_out_gw": 5.331,
+   "pct_of_fleet_out": 5.46,
+   "fleet_capacity_mw": 97648.7,
+   "chg_1d_mw": 8.9,
+   "chg_7d_mw": 1614.2,
+   "outage_season": "fall_outage_season",
+   "note": "nuclear GW offline adds gas burn roughly GW-for-GW at the margin; season tag is calendar-descriptive; changes across missing days are None, never bridged"
+  },
+  "grid_stack": null,
+  "options_surface": null,
+  "weather": null,
+  "weather_forecast": null,
+  "weather_forecast_cycle": null,
+  "weather_forcing_forecast": null,
+  "freeze_risk": null,
+  "model_disagreement": null,
+  "tape_conditions": null,
+  "holiday": null,
+  "firehose_present": null
+ },
+ "20250915": {
+  "dow": "Mon",
+  "scored_leg": null,
+  "stor_surprise": 5.6,
+  "stor_surprise_sign": "above",
+  "stor_surprise_basis": null,
+  "curve_regime": "unknown",
+  "storage": {
+   "level": 3333,
+   "weekly_chg": 71,
+   "vs_5yr": 154,
+   "phase": "inject",
+   "as_of": "2025-09-11"
+  },
+  "storage_regional": {
+   "as_of": "2025-09-11",
+   "period": "2025-09-05",
+   "regions": {
+    "l48": {
+     "level": 3333.0,
+     "weekly_chg": 71.0,
+     "vs_5yr": 154.2,
+     "vs_year_ago": -54.0,
+     "chg_vs_5yr_chg": 5.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "east": {
+     "level": 757.0,
+     "weekly_chg": 22.0,
+     "vs_5yr": 6.4,
+     "vs_year_ago": -23.0,
+     "chg_vs_5yr_chg": 2.2,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "midwest": {
+     "level": 890.0,
+     "weekly_chg": 30.0,
+     "vs_5yr": -8.4,
+     "vs_year_ago": -60.0,
+     "chg_vs_5yr_chg": -0.2,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central": {
+     "level": 1145.0,
+     "weekly_chg": 16.0,
+     "vs_5yr": 94.8,
+     "vs_year_ago": 47.0,
+     "chg_vs_5yr_chg": 4.8,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central_salt": {
+     "level": 282.0,
+     "weekly_chg": 9.0,
+     "vs_5yr": 32.8,
+     "vs_year_ago": 16.0,
+     "chg_vs_5yr_chg": 5.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central_nonsalt": {
+     "level": 863.0,
+     "weekly_chg": 7.0,
+     "vs_5yr": 61.8,
+     "vs_year_ago": 31.0,
+     "chg_vs_5yr_chg": -0.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "mountain": {
+     "level": 246.0,
+     "weekly_chg": 2.0,
+     "vs_5yr": 32.0,
+     "vs_year_ago": -27.0,
+     "chg_vs_5yr_chg": -2.0,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "pacific": {
+     "level": 293.0,
+     "weekly_chg": -1.0,
+     "vs_5yr": 27.4,
+     "vs_year_ago": 8.0,
+     "chg_vs_5yr_chg": -1.4,
+     "unit": "Bcf",
+     "missing": []
+    }
+   },
+   "salt_share": 0.2463,
+   "days_of_supply": null,
+   "days_of_supply_note": "EIA publishes no days-of-supply (or any demand-normalized) figure in the Weekly Natural Gas Storage Report, and no regional demand denominator; no substitute is computed here.",
+   "source": "EIA_WNGSR_ngshistory_xls",
+   "eia_estimate_basis": "EIA-912",
+   "note": "five regions + salt split; salt = the fast-cycling swing capacity. ADDITIVE to the national `storage` block, which is untouched"
+  },
+  "storage_consensus": null,
+  "storage_vintage": null,
+  "ngwu_balance": null,
+  "steo_vintage": {
+   "vintage_id": "sep25",
+   "release_date": "2025-09-09",
+   "knowable_from": "2025-09-10",
+   "age_days": 6,
+   "month_prev": "202508",
+   "month_cur": "202509",
+   "month_next": "202510",
+   "fields": {
+    "dry_production_bcfd": {
+     "series_id": "NGPRPUS",
+     "prev": 107.1787,
+     "cur": 106.6771,
+     "next": 106.691
+    },
+    "marketed_production_bcfd": {
+     "series_id": "NGMPPUS",
+     "prev": 117.7735,
+     "cur": 117.4085,
+     "next": 117.427
+    },
+    "total_consumption_bcfd": {
+     "series_id": "NGTCPUS",
+     "prev": 84.8607,
+     "cur": 78.8311,
+     "next": 79.7682
+    },
+    "residential_bcfd": {
+     "series_id": "NGRCPUS",
+     "prev": 3.545,
+     "cur": 3.6775,
+     "next": 7.511
+    },
+    "commercial_bcfd": {
+     "series_id": "NGCCPUS",
+     "prev": 4.739,
+     "cur": 5.1382,
+     "next": 7.4895
+    },
+    "industrial_bcfd": null,
+    "power_burn_bcfd": {
+     "series_id": "NGEPCON",
+     "prev": 45.5421,
+     "cur": 39.2324,
+     "next": 33.5263
+    },
+    "lng_gross_exports_bcfd": {
+     "series_id": "NGEXPUS_LNG",
+     "prev": 14.7,
+     "cur": 14.729,
+     "next": 15.315
+    },
+    "lng_gross_imports_bcfd": {
+     "series_id": "NGIMPUS_LNG",
+     "prev": 0.0525,
+     "cur": 0.0192,
+     "next": 0.0391
+    },
+    "pipeline_gross_exports_bcfd": {
+     "series_id": "NGEXPUS_PIPE",
+     "prev": 9.7531,
+     "cur": 9.7404,
+     "next": 9.2591
+    },
+    "pipeline_gross_imports_bcfd": {
+     "series_id": "NGIMPUS_PIPE",
+     "prev": 8.6038,
+     "cur": 8.3171,
+     "next": 7.8699
+    },
+    "net_storage_withdrawal_bcfd": {
+     "series_id": "NGNWPUS",
+     "prev": -5.2001,
+     "cur": -10.6084,
+     "next": -8.8188
+    },
+    "working_gas_inventory_bcf": {
+     "series_id": "NGWGPUS",
+     "prev": 3320.7474,
+     "cur": 3639.001,
+     "next": 3912.383
+    }
+   },
+   "revisions_vs_prev_vintage": null,
+   "prev_vintage_id": null,
+   "label": "STIFS estimates at/after the NGM anchor; as-printed, frozen per issue",
+   "note": "monthly as-of balance consensus (STIFS estimates, as-printed, frozen per issue - zero vintage risk by construction); revisions_vs_prev_vintage is the first-appearance-vs-revision signal; scope sep25..mar26 vintages, apr26+ joins only after its release dates are measured"
+  },
+  "cot": {
+   "report_date": "2025-09-09",
+   "publication_ts": "2025-09-12T15:30:00-04:00",
+   "publication_delayed": false,
+   "publication_confidence": "derived",
+   "contract_code": "023651",
+   "market_name": "NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE",
+   "open_interest": 1631092,
+   "managed_money_long": 225888,
+   "managed_money_short": 250640,
+   "managed_money_net": -24752,
+   "producer_merchant_net": -30640,
+   "swap_dealer_net": 113956,
+   "other_reportable_net": -69795,
+   "managed_money_net_chg_wow": 12010,
+   "pctile_1y_n_obs": 53,
+   "managed_money_net_pctile_1y": 57.55,
+   "pctile_3y_n_obs": 157,
+   "managed_money_net_pctile_3y": 67.83,
+   "age_days": 2.3542,
+   "report_date_combined": "2025-09-09",
+   "publication_ts_combined": "2025-09-12T15:30:00-04:00",
+   "publication_delayed_combined": false,
+   "publication_confidence_combined": "derived",
+   "contract_code_combined": "023651",
+   "market_name_combined": "NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE",
+   "open_interest_combined": 1647371,
+   "managed_money_long_combined": 226017,
+   "managed_money_short_combined": 250996,
+   "managed_money_net_combined": -24979,
+   "producer_merchant_net_combined": -30648,
+   "swap_dealer_net_combined": 114187,
+   "other_reportable_net_combined": -70402,
+   "managed_money_net_chg_wow_combined": 11971,
+   "pctile_1y_n_obs_combined": 53,
+   "managed_money_net_pctile_1y_combined": 57.55,
+   "pctile_3y_n_obs_combined": 157,
+   "managed_money_net_pctile_3y_combined": 67.83,
+   "age_days_combined": 2.3542,
+   "open_interest_options_implied": 16279,
+   "managed_money_long_options_implied": 129,
+   "managed_money_short_options_implied": 356,
+   "managed_money_net_options_implied": -227,
+   "producer_merchant_net_options_implied": -8,
+   "swap_dealer_net_options_implied": 231,
+   "other_reportable_net_options_implied": -607,
+   "managed_money_net_chg_wow_options_implied": -39,
+   "options_implied_pctile_1y_n_obs": 53,
+   "managed_money_net_options_implied_pctile_1y": 50.0,
+   "options_implied_pctile_3y_n_obs": 157,
+   "managed_money_net_options_implied_pctile_3y": 25.16,
+   "ice": {
+    "ld1": {
+     "report_date": "2025-09-09",
+     "publication_ts": "2025-09-12T15:30:00-04:00",
+     "open_interest": 7715587,
+     "managed_money_net": 1121015,
+     "managed_money_net_chg_wow": 18782,
+     "managed_money_net_pctile_1y": 89.62,
+     "managed_money_net_pctile_3y": 96.5
+    },
+    "pen": {
+     "report_date": "2025-09-09",
+     "publication_ts": "2025-09-12T15:30:00-04:00",
+     "open_interest": 790823,
+     "managed_money_net": -42538,
+     "managed_money_net_chg_wow": 18350,
+     "managed_money_net_pctile_1y": 93.4,
+     "managed_money_net_pctile_3y": 84.39
+    },
+    "hh_basis": {
+     "report_date": "2025-09-09",
+     "publication_ts": "2025-09-12T15:30:00-04:00",
+     "open_interest": 99663,
+     "managed_money_net": 26610,
+     "managed_money_net_chg_wow": -10798,
+     "managed_money_net_pctile_1y": 76.42,
+     "managed_money_net_pctile_3y": 92.04
+    },
+    "hh_index": {
+     "report_date": "2025-09-09",
+     "publication_ts": "2025-09-12T15:30:00-04:00",
+     "open_interest": 111382,
+     "managed_money_net": 19287,
+     "managed_money_net_chg_wow": 721,
+     "managed_money_net_pctile_1y": 95.28,
+     "managed_money_net_pctile_3y": 97.77
+    }
+   },
+   "note": "positioning as-of PUBLICATION time; futures-only + _combined + the derived _options_implied delta + the four ICE HH books under `ice` (separate reads, never pooled; basis/index = the physical legs, squeeze-regime context); percentiles vs trailing 1y/3y of weekly nets"
+  },
+  "contract_structure": null,
+  "squeeze_watch": null,
+  "vol_regime": null,
+  "cash_basis": null,
+  "flow_calendar": {
+   "date": "2025-09-15",
+   "is_cme_business_day": true,
+   "cme_holiday": false,
+   "cme_holiday_name": null,
+   "cme_session_class": null,
+   "cme_early_close": false,
+   "front_symbol_calendar": "NGV25",
+   "futures_expiry_date": "2025-09-26",
+   "days_to_futures_expiry": 9,
+   "is_expiry_day": false,
+   "options_expiry_date": "2025-09-25",
+   "days_to_opex": 8,
+   "is_opex_day": false,
+   "in_bidweek": false,
+   "bidweek_day_n": null,
+   "bidweek_delivery_month": null,
+   "business_day_of_month": 10,
+   "in_gsci_roll": false,
+   "gsci_roll_day_n": null,
+   "gsci_ng_roll_this_month": true,
+   "in_bcom_roll": true,
+   "bcom_roll_day_n": 5,
+   "in_bcom_hedge_roll": false,
+   "bcom_ng_roll_this_month": false,
+   "bcom_january_rebalance": false,
+   "eia_storage_release_datetime_et": "2025-09-18T10:30:00-04:00",
+   "eia_releases_this_week": [
+    {
+     "datetime_et": "2025-09-18T10:30:00-04:00",
+     "for_week_ending": "2025-09-12",
+     "shifted": false,
+     "shift_reason": null
+    }
+   ],
+   "is_eia_print_day": false,
+   "next_eia_release_datetime_et": "2025-09-18T10:30:00-04:00",
+   "days_to_next_eia_release": 3,
+   "note": "mechanical scheduled flows - desks trade around these; G13 carries the full gauntlet (GSCI roll Feb 6-12, BCOM Feb 9-13, bidweek Feb 23-27, opex Feb 24, expiry Feb 25)"
+  },
+  "solar": {
+   "date": "2025-09-15",
+   "gw_day_length_chg_7d": -0.288,
+   "gw_day_length_h": 12.489,
+   "metros": {
+    "ATL": {
+     "day_length_h": 12.42,
+     "grid": "SOCO",
+     "sunrise_local": "07:20",
+     "sunset_et": "19:45",
+     "sunset_local": "19:45"
+    },
+    "BOS": {
+     "day_length_h": 12.55,
+     "grid": "ISO-NE",
+     "sunrise_local": "06:22",
+     "sunset_et": "18:55",
+     "sunset_local": "18:55"
+    },
+    "DCA": {
+     "day_length_h": 12.49,
+     "grid": "PJM",
+     "sunrise_local": "06:48",
+     "sunset_et": "19:17",
+     "sunset_local": "19:17"
+    },
+    "DEN": {
+     "day_length_h": 12.5,
+     "grid": "WECC",
+     "sunrise_local": "06:38",
+     "sunset_et": "21:08",
+     "sunset_local": "19:08"
+    },
+    "DFW": {
+     "day_length_h": 12.41,
+     "grid": "ERCOT",
+     "sunrise_local": "07:10",
+     "sunset_et": "20:35",
+     "sunset_local": "19:35"
+    },
+    "DTW": {
+     "day_length_h": 12.54,
+     "grid": "MISO",
+     "sunrise_local": "07:12",
+     "sunset_et": "19:44",
+     "sunset_local": "19:44"
+    },
+    "IAH": {
+     "day_length_h": 12.38,
+     "grid": "ERCOT",
+     "sunrise_local": "07:05",
+     "sunset_et": "20:27",
+     "sunset_local": "19:27"
+    },
+    "LAX": {
+     "day_length_h": 12.42,
+     "grid": "CAISO",
+     "sunrise_local": "06:35",
+     "sunset_et": "22:01",
+     "sunset_local": "19:01"
+    },
+    "MSP": {
+     "day_length_h": 12.59,
+     "grid": "MISO",
+     "sunrise_local": "06:50",
+     "sunset_et": "20:25",
+     "sunset_local": "19:25"
+    },
+    "NYC": {
+     "day_length_h": 12.52,
+     "grid": "NYISO",
+     "sunrise_local": "06:35",
+     "sunset_et": "19:06",
+     "sunset_local": "19:06"
+    },
+    "ORD": {
+     "day_length_h": 12.54,
+     "grid": "PJM",
+     "sunrise_local": "06:30",
+     "sunset_et": "20:02",
+     "sunset_local": "19:02"
+    },
+    "PHL": {
+     "day_length_h": 12.51,
+     "grid": "PJM",
+     "sunrise_local": "06:40",
+     "sunset_et": "19:11",
+     "sunset_local": "19:11"
+    },
+    "PHX": {
+     "day_length_h": 12.41,
+     "grid": "WECC",
+     "sunrise_local": "06:10",
+     "sunset_et": "21:35",
+     "sunset_local": "18:35"
+    },
+    "SEA": {
+     "day_length_h": 12.63,
+     "grid": "WECC",
+     "sunrise_local": "06:45",
+     "sunset_et": "22:22",
+     "sunset_local": "19:22"
+    },
+    "SFO": {
+     "day_length_h": 12.47,
+     "grid": "CAISO",
+     "sunrise_local": "06:50",
+     "sunset_et": "22:18",
+     "sunset_local": "19:18"
+    },
+    "STL": {
+     "day_length_h": 12.49,
+     "grid": "MISO",
+     "sunrise_local": "06:41",
+     "sunset_et": "20:11",
+     "sunset_local": "19:11"
+    }
+   },
+   "sunset_et_earliest": "18:55",
+   "sunset_et_latest": "22:22",
+   "note": "deterministic solar state; sunset_et positions the evening gas-burn ramp on the session clock; gw_day_length_chg_7d is the seasonal march"
+  },
+  "nuclear_outages": {
+   "period": "2025-09-14",
+   "age_days": 1,
+   "capacity_out_mw": 6348.14,
+   "capacity_out_gw": 6.348,
+   "pct_of_fleet_out": 6.5,
+   "fleet_capacity_mw": 97648.7,
+   "chg_1d_mw": 884.3,
+   "chg_7d_mw": 383.2,
+   "outage_season": "fall_outage_season",
+   "note": "nuclear GW offline adds gas burn roughly GW-for-GW at the margin; season tag is calendar-descriptive; changes across missing days are None, never bridged"
+  },
+  "grid_stack": null,
+  "options_surface": null,
+  "weather": null,
+  "weather_forecast": null,
+  "weather_forecast_cycle": null,
+  "weather_forcing_forecast": null,
+  "freeze_risk": null,
+  "model_disagreement": null,
+  "tape_conditions": null,
+  "holiday": null,
+  "firehose_present": null
+ },
+ "20250916": {
+  "dow": "Tue",
+  "scored_leg": null,
+  "stor_surprise": 5.6,
+  "stor_surprise_sign": "above",
+  "stor_surprise_basis": null,
+  "curve_regime": "unknown",
+  "storage": {
+   "level": 3333,
+   "weekly_chg": 71,
+   "vs_5yr": 154,
+   "phase": "inject",
+   "as_of": "2025-09-11"
+  },
+  "storage_regional": {
+   "as_of": "2025-09-11",
+   "period": "2025-09-05",
+   "regions": {
+    "l48": {
+     "level": 3333.0,
+     "weekly_chg": 71.0,
+     "vs_5yr": 154.2,
+     "vs_year_ago": -54.0,
+     "chg_vs_5yr_chg": 5.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "east": {
+     "level": 757.0,
+     "weekly_chg": 22.0,
+     "vs_5yr": 6.4,
+     "vs_year_ago": -23.0,
+     "chg_vs_5yr_chg": 2.2,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "midwest": {
+     "level": 890.0,
+     "weekly_chg": 30.0,
+     "vs_5yr": -8.4,
+     "vs_year_ago": -60.0,
+     "chg_vs_5yr_chg": -0.2,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central": {
+     "level": 1145.0,
+     "weekly_chg": 16.0,
+     "vs_5yr": 94.8,
+     "vs_year_ago": 47.0,
+     "chg_vs_5yr_chg": 4.8,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central_salt": {
+     "level": 282.0,
+     "weekly_chg": 9.0,
+     "vs_5yr": 32.8,
+     "vs_year_ago": 16.0,
+     "chg_vs_5yr_chg": 5.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central_nonsalt": {
+     "level": 863.0,
+     "weekly_chg": 7.0,
+     "vs_5yr": 61.8,
+     "vs_year_ago": 31.0,
+     "chg_vs_5yr_chg": -0.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "mountain": {
+     "level": 246.0,
+     "weekly_chg": 2.0,
+     "vs_5yr": 32.0,
+     "vs_year_ago": -27.0,
+     "chg_vs_5yr_chg": -2.0,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "pacific": {
+     "level": 293.0,
+     "weekly_chg": -1.0,
+     "vs_5yr": 27.4,
+     "vs_year_ago": 8.0,
+     "chg_vs_5yr_chg": -1.4,
+     "unit": "Bcf",
+     "missing": []
+    }
+   },
+   "salt_share": 0.2463,
+   "days_of_supply": null,
+   "days_of_supply_note": "EIA publishes no days-of-supply (or any demand-normalized) figure in the Weekly Natural Gas Storage Report, and no regional demand denominator; no substitute is computed here.",
+   "source": "EIA_WNGSR_ngshistory_xls",
+   "eia_estimate_basis": "EIA-912",
+   "note": "five regions + salt split; salt = the fast-cycling swing capacity. ADDITIVE to the national `storage` block, which is untouched"
+  },
+  "storage_consensus": null,
+  "storage_vintage": null,
+  "ngwu_balance": null,
+  "steo_vintage": {
+   "vintage_id": "sep25",
+   "release_date": "2025-09-09",
+   "knowable_from": "2025-09-10",
+   "age_days": 7,
+   "month_prev": "202508",
+   "month_cur": "202509",
+   "month_next": "202510",
+   "fields": {
+    "dry_production_bcfd": {
+     "series_id": "NGPRPUS",
+     "prev": 107.1787,
+     "cur": 106.6771,
+     "next": 106.691
+    },
+    "marketed_production_bcfd": {
+     "series_id": "NGMPPUS",
+     "prev": 117.7735,
+     "cur": 117.4085,
+     "next": 117.427
+    },
+    "total_consumption_bcfd": {
+     "series_id": "NGTCPUS",
+     "prev": 84.8607,
+     "cur": 78.8311,
+     "next": 79.7682
+    },
+    "residential_bcfd": {
+     "series_id": "NGRCPUS",
+     "prev": 3.545,
+     "cur": 3.6775,
+     "next": 7.511
+    },
+    "commercial_bcfd": {
+     "series_id": "NGCCPUS",
+     "prev": 4.739,
+     "cur": 5.1382,
+     "next": 7.4895
+    },
+    "industrial_bcfd": null,
+    "power_burn_bcfd": {
+     "series_id": "NGEPCON",
+     "prev": 45.5421,
+     "cur": 39.2324,
+     "next": 33.5263
+    },
+    "lng_gross_exports_bcfd": {
+     "series_id": "NGEXPUS_LNG",
+     "prev": 14.7,
+     "cur": 14.729,
+     "next": 15.315
+    },
+    "lng_gross_imports_bcfd": {
+     "series_id": "NGIMPUS_LNG",
+     "prev": 0.0525,
+     "cur": 0.0192,
+     "next": 0.0391
+    },
+    "pipeline_gross_exports_bcfd": {
+     "series_id": "NGEXPUS_PIPE",
+     "prev": 9.7531,
+     "cur": 9.7404,
+     "next": 9.2591
+    },
+    "pipeline_gross_imports_bcfd": {
+     "series_id": "NGIMPUS_PIPE",
+     "prev": 8.6038,
+     "cur": 8.3171,
+     "next": 7.8699
+    },
+    "net_storage_withdrawal_bcfd": {
+     "series_id": "NGNWPUS",
+     "prev": -5.2001,
+     "cur": -10.6084,
+     "next": -8.8188
+    },
+    "working_gas_inventory_bcf": {
+     "series_id": "NGWGPUS",
+     "prev": 3320.7474,
+     "cur": 3639.001,
+     "next": 3912.383
+    }
+   },
+   "revisions_vs_prev_vintage": null,
+   "prev_vintage_id": null,
+   "label": "STIFS estimates at/after the NGM anchor; as-printed, frozen per issue",
+   "note": "monthly as-of balance consensus (STIFS estimates, as-printed, frozen per issue - zero vintage risk by construction); revisions_vs_prev_vintage is the first-appearance-vs-revision signal; scope sep25..mar26 vintages, apr26+ joins only after its release dates are measured"
+  },
+  "cot": {
+   "report_date": "2025-09-09",
+   "publication_ts": "2025-09-12T15:30:00-04:00",
+   "publication_delayed": false,
+   "publication_confidence": "derived",
+   "contract_code": "023651",
+   "market_name": "NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE",
+   "open_interest": 1631092,
+   "managed_money_long": 225888,
+   "managed_money_short": 250640,
+   "managed_money_net": -24752,
+   "producer_merchant_net": -30640,
+   "swap_dealer_net": 113956,
+   "other_reportable_net": -69795,
+   "managed_money_net_chg_wow": 12010,
+   "pctile_1y_n_obs": 53,
+   "managed_money_net_pctile_1y": 57.55,
+   "pctile_3y_n_obs": 157,
+   "managed_money_net_pctile_3y": 67.83,
+   "age_days": 3.3542,
+   "report_date_combined": "2025-09-09",
+   "publication_ts_combined": "2025-09-12T15:30:00-04:00",
+   "publication_delayed_combined": false,
+   "publication_confidence_combined": "derived",
+   "contract_code_combined": "023651",
+   "market_name_combined": "NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE",
+   "open_interest_combined": 1647371,
+   "managed_money_long_combined": 226017,
+   "managed_money_short_combined": 250996,
+   "managed_money_net_combined": -24979,
+   "producer_merchant_net_combined": -30648,
+   "swap_dealer_net_combined": 114187,
+   "other_reportable_net_combined": -70402,
+   "managed_money_net_chg_wow_combined": 11971,
+   "pctile_1y_n_obs_combined": 53,
+   "managed_money_net_pctile_1y_combined": 57.55,
+   "pctile_3y_n_obs_combined": 157,
+   "managed_money_net_pctile_3y_combined": 67.83,
+   "age_days_combined": 3.3542,
+   "open_interest_options_implied": 16279,
+   "managed_money_long_options_implied": 129,
+   "managed_money_short_options_implied": 356,
+   "managed_money_net_options_implied": -227,
+   "producer_merchant_net_options_implied": -8,
+   "swap_dealer_net_options_implied": 231,
+   "other_reportable_net_options_implied": -607,
+   "managed_money_net_chg_wow_options_implied": -39,
+   "options_implied_pctile_1y_n_obs": 53,
+   "managed_money_net_options_implied_pctile_1y": 50.0,
+   "options_implied_pctile_3y_n_obs": 157,
+   "managed_money_net_options_implied_pctile_3y": 25.16,
+   "ice": {
+    "ld1": {
+     "report_date": "2025-09-09",
+     "publication_ts": "2025-09-12T15:30:00-04:00",
+     "open_interest": 7715587,
+     "managed_money_net": 1121015,
+     "managed_money_net_chg_wow": 18782,
+     "managed_money_net_pctile_1y": 89.62,
+     "managed_money_net_pctile_3y": 96.5
+    },
+    "pen": {
+     "report_date": "2025-09-09",
+     "publication_ts": "2025-09-12T15:30:00-04:00",
+     "open_interest": 790823,
+     "managed_money_net": -42538,
+     "managed_money_net_chg_wow": 18350,
+     "managed_money_net_pctile_1y": 93.4,
+     "managed_money_net_pctile_3y": 84.39
+    },
+    "hh_basis": {
+     "report_date": "2025-09-09",
+     "publication_ts": "2025-09-12T15:30:00-04:00",
+     "open_interest": 99663,
+     "managed_money_net": 26610,
+     "managed_money_net_chg_wow": -10798,
+     "managed_money_net_pctile_1y": 76.42,
+     "managed_money_net_pctile_3y": 92.04
+    },
+    "hh_index": {
+     "report_date": "2025-09-09",
+     "publication_ts": "2025-09-12T15:30:00-04:00",
+     "open_interest": 111382,
+     "managed_money_net": 19287,
+     "managed_money_net_chg_wow": 721,
+     "managed_money_net_pctile_1y": 95.28,
+     "managed_money_net_pctile_3y": 97.77
+    }
+   },
+   "note": "positioning as-of PUBLICATION time; futures-only + _combined + the derived _options_implied delta + the four ICE HH books under `ice` (separate reads, never pooled; basis/index = the physical legs, squeeze-regime context); percentiles vs trailing 1y/3y of weekly nets"
+  },
+  "contract_structure": null,
+  "squeeze_watch": null,
+  "vol_regime": null,
+  "cash_basis": null,
+  "flow_calendar": {
+   "date": "2025-09-16",
+   "is_cme_business_day": true,
+   "cme_holiday": false,
+   "cme_holiday_name": null,
+   "cme_session_class": null,
+   "cme_early_close": false,
+   "front_symbol_calendar": "NGV25",
+   "futures_expiry_date": "2025-09-26",
+   "days_to_futures_expiry": 8,
+   "is_expiry_day": false,
+   "options_expiry_date": "2025-09-25",
+   "days_to_opex": 7,
+   "is_opex_day": false,
+   "in_bidweek": false,
+   "bidweek_day_n": null,
+   "bidweek_delivery_month": null,
+   "business_day_of_month": 11,
+   "in_gsci_roll": false,
+   "gsci_roll_day_n": null,
+   "gsci_ng_roll_this_month": true,
+   "in_bcom_roll": false,
+   "bcom_roll_day_n": null,
+   "in_bcom_hedge_roll": false,
+   "bcom_ng_roll_this_month": false,
+   "bcom_january_rebalance": false,
+   "eia_storage_release_datetime_et": "2025-09-18T10:30:00-04:00",
+   "eia_releases_this_week": [
+    {
+     "datetime_et": "2025-09-18T10:30:00-04:00",
+     "for_week_ending": "2025-09-12",
+     "shifted": false,
+     "shift_reason": null
+    }
+   ],
+   "is_eia_print_day": false,
+   "next_eia_release_datetime_et": "2025-09-18T10:30:00-04:00",
+   "days_to_next_eia_release": 2,
+   "note": "mechanical scheduled flows - desks trade around these; G13 carries the full gauntlet (GSCI roll Feb 6-12, BCOM Feb 9-13, bidweek Feb 23-27, opex Feb 24, expiry Feb 25)"
+  },
+  "solar": {
+   "date": "2025-09-16",
+   "gw_day_length_chg_7d": -0.289,
+   "gw_day_length_h": 12.447,
+   "metros": {
+    "ATL": {
+     "day_length_h": 12.39,
+     "grid": "SOCO",
+     "sunrise_local": "07:20",
+     "sunset_et": "19:43",
+     "sunset_local": "19:43"
+    },
+    "BOS": {
+     "day_length_h": 12.5,
+     "grid": "ISO-NE",
+     "sunrise_local": "06:23",
+     "sunset_et": "18:53",
+     "sunset_local": "18:53"
+    },
+    "DCA": {
+     "day_length_h": 12.45,
+     "grid": "PJM",
+     "sunrise_local": "06:49",
+     "sunset_et": "19:16",
+     "sunset_local": "19:16"
+    },
+    "DEN": {
+     "day_length_h": 12.46,
+     "grid": "WECC",
+     "sunrise_local": "06:39",
+     "sunset_et": "21:06",
+     "sunset_local": "19:06"
+    },
+    "DFW": {
+     "day_length_h": 12.38,
+     "grid": "ERCOT",
+     "sunrise_local": "07:11",
+     "sunset_et": "20:34",
+     "sunset_local": "19:34"
+    },
+    "DTW": {
+     "day_length_h": 12.49,
+     "grid": "MISO",
+     "sunrise_local": "07:13",
+     "sunset_et": "19:42",
+     "sunset_local": "19:42"
+    },
+    "IAH": {
+     "day_length_h": 12.35,
+     "grid": "ERCOT",
+     "sunrise_local": "07:05",
+     "sunset_et": "20:26",
+     "sunset_local": "19:26"
+    },
+    "LAX": {
+     "day_length_h": 12.39,
+     "grid": "CAISO",
+     "sunrise_local": "06:36",
+     "sunset_et": "21:59",
+     "sunset_local": "18:59"
+    },
+    "MSP": {
+     "day_length_h": 12.53,
+     "grid": "MISO",
+     "sunrise_local": "06:51",
+     "sunset_et": "20:23",
+     "sunset_local": "19:23"
+    },
+    "NYC": {
+     "day_length_h": 12.48,
+     "grid": "NYISO",
+     "sunrise_local": "06:36",
+     "sunset_et": "19:04",
+     "sunset_local": "19:04"
+    },
+    "ORD": {
+     "day_length_h": 12.49,
+     "grid": "PJM",
+     "sunrise_local": "06:31",
+     "sunset_et": "20:00",
+     "sunset_local": "19:00"
+    },
+    "PHL": {
+     "day_length_h": 12.46,
+     "grid": "PJM",
+     "sunrise_local": "06:41",
+     "sunset_et": "19:09",
+     "sunset_local": "19:09"
+    },
+    "PHX": {
+     "day_length_h": 12.38,
+     "grid": "WECC",
+     "sunrise_local": "06:11",
+     "sunset_et": "21:34",
+     "sunset_local": "18:34"
+    },
+    "SEA": {
+     "day_length_h": 12.57,
+     "grid": "WECC",
+     "sunrise_local": "06:46",
+     "sunset_et": "22:20",
+     "sunset_local": "19:20"
+    },
+    "SFO": {
+     "day_length_h": 12.43,
+     "grid": "CAISO",
+     "sunrise_local": "06:51",
+     "sunset_et": "22:16",
+     "sunset_local": "19:16"
+    },
+    "STL": {
+     "day_length_h": 12.45,
+     "grid": "MISO",
+     "sunrise_local": "06:42",
+     "sunset_et": "20:09",
+     "sunset_local": "19:09"
+    }
+   },
+   "sunset_et_earliest": "18:53",
+   "sunset_et_latest": "22:20",
+   "note": "deterministic solar state; sunset_et positions the evening gas-burn ramp on the session clock; gw_day_length_chg_7d is the seasonal march"
+  },
+  "nuclear_outages": {
+   "period": "2025-09-15",
+   "age_days": 1,
+   "capacity_out_mw": 7524.4,
+   "capacity_out_gw": 7.524,
+   "pct_of_fleet_out": 7.71,
+   "fleet_capacity_mw": 97648.7,
+   "chg_1d_mw": 1176.3,
+   "chg_7d_mw": 2126.9,
+   "outage_season": "fall_outage_season",
+   "note": "nuclear GW offline adds gas burn roughly GW-for-GW at the margin; season tag is calendar-descriptive; changes across missing days are None, never bridged"
+  },
+  "grid_stack": null,
+  "options_surface": null,
+  "weather": null,
+  "weather_forecast": null,
+  "weather_forecast_cycle": null,
+  "weather_forcing_forecast": null,
+  "freeze_risk": null,
+  "model_disagreement": null,
+  "tape_conditions": null,
+  "holiday": null,
+  "firehose_present": null
+ },
+ "20250917": {
+  "dow": "Wed",
+  "scored_leg": null,
+  "stor_surprise": 5.6,
+  "stor_surprise_sign": "above",
+  "stor_surprise_basis": null,
+  "curve_regime": "unknown",
+  "storage": {
+   "level": 3333,
+   "weekly_chg": 71,
+   "vs_5yr": 154,
+   "phase": "inject",
+   "as_of": "2025-09-11"
+  },
+  "storage_regional": {
+   "as_of": "2025-09-11",
+   "period": "2025-09-05",
+   "regions": {
+    "l48": {
+     "level": 3333.0,
+     "weekly_chg": 71.0,
+     "vs_5yr": 154.2,
+     "vs_year_ago": -54.0,
+     "chg_vs_5yr_chg": 5.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "east": {
+     "level": 757.0,
+     "weekly_chg": 22.0,
+     "vs_5yr": 6.4,
+     "vs_year_ago": -23.0,
+     "chg_vs_5yr_chg": 2.2,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "midwest": {
+     "level": 890.0,
+     "weekly_chg": 30.0,
+     "vs_5yr": -8.4,
+     "vs_year_ago": -60.0,
+     "chg_vs_5yr_chg": -0.2,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central": {
+     "level": 1145.0,
+     "weekly_chg": 16.0,
+     "vs_5yr": 94.8,
+     "vs_year_ago": 47.0,
+     "chg_vs_5yr_chg": 4.8,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central_salt": {
+     "level": 282.0,
+     "weekly_chg": 9.0,
+     "vs_5yr": 32.8,
+     "vs_year_ago": 16.0,
+     "chg_vs_5yr_chg": 5.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central_nonsalt": {
+     "level": 863.0,
+     "weekly_chg": 7.0,
+     "vs_5yr": 61.8,
+     "vs_year_ago": 31.0,
+     "chg_vs_5yr_chg": -0.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "mountain": {
+     "level": 246.0,
+     "weekly_chg": 2.0,
+     "vs_5yr": 32.0,
+     "vs_year_ago": -27.0,
+     "chg_vs_5yr_chg": -2.0,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "pacific": {
+     "level": 293.0,
+     "weekly_chg": -1.0,
+     "vs_5yr": 27.4,
+     "vs_year_ago": 8.0,
+     "chg_vs_5yr_chg": -1.4,
+     "unit": "Bcf",
+     "missing": []
+    }
+   },
+   "salt_share": 0.2463,
+   "days_of_supply": null,
+   "days_of_supply_note": "EIA publishes no days-of-supply (or any demand-normalized) figure in the Weekly Natural Gas Storage Report, and no regional demand denominator; no substitute is computed here.",
+   "source": "EIA_WNGSR_ngshistory_xls",
+   "eia_estimate_basis": "EIA-912",
+   "note": "five regions + salt split; salt = the fast-cycling swing capacity. ADDITIVE to the national `storage` block, which is untouched"
+  },
+  "storage_consensus": null,
+  "storage_vintage": null,
+  "ngwu_balance": null,
+  "steo_vintage": {
+   "vintage_id": "sep25",
+   "release_date": "2025-09-09",
+   "knowable_from": "2025-09-10",
+   "age_days": 8,
+   "month_prev": "202508",
+   "month_cur": "202509",
+   "month_next": "202510",
+   "fields": {
+    "dry_production_bcfd": {
+     "series_id": "NGPRPUS",
+     "prev": 107.1787,
+     "cur": 106.6771,
+     "next": 106.691
+    },
+    "marketed_production_bcfd": {
+     "series_id": "NGMPPUS",
+     "prev": 117.7735,
+     "cur": 117.4085,
+     "next": 117.427
+    },
+    "total_consumption_bcfd": {
+     "series_id": "NGTCPUS",
+     "prev": 84.8607,
+     "cur": 78.8311,
+     "next": 79.7682
+    },
+    "residential_bcfd": {
+     "series_id": "NGRCPUS",
+     "prev": 3.545,
+     "cur": 3.6775,
+     "next": 7.511
+    },
+    "commercial_bcfd": {
+     "series_id": "NGCCPUS",
+     "prev": 4.739,
+     "cur": 5.1382,
+     "next": 7.4895
+    },
+    "industrial_bcfd": null,
+    "power_burn_bcfd": {
+     "series_id": "NGEPCON",
+     "prev": 45.5421,
+     "cur": 39.2324,
+     "next": 33.5263
+    },
+    "lng_gross_exports_bcfd": {
+     "series_id": "NGEXPUS_LNG",
+     "prev": 14.7,
+     "cur": 14.729,
+     "next": 15.315
+    },
+    "lng_gross_imports_bcfd": {
+     "series_id": "NGIMPUS_LNG",
+     "prev": 0.0525,
+     "cur": 0.0192,
+     "next": 0.0391
+    },
+    "pipeline_gross_exports_bcfd": {
+     "series_id": "NGEXPUS_PIPE",
+     "prev": 9.7531,
+     "cur": 9.7404,
+     "next": 9.2591
+    },
+    "pipeline_gross_imports_bcfd": {
+     "series_id": "NGIMPUS_PIPE",
+     "prev": 8.6038,
+     "cur": 8.3171,
+     "next": 7.8699
+    },
+    "net_storage_withdrawal_bcfd": {
+     "series_id": "NGNWPUS",
+     "prev": -5.2001,
+     "cur": -10.6084,
+     "next": -8.8188
+    },
+    "working_gas_inventory_bcf": {
+     "series_id": "NGWGPUS",
+     "prev": 3320.7474,
+     "cur": 3639.001,
+     "next": 3912.383
+    }
+   },
+   "revisions_vs_prev_vintage": null,
+   "prev_vintage_id": null,
+   "label": "STIFS estimates at/after the NGM anchor; as-printed, frozen per issue",
+   "note": "monthly as-of balance consensus (STIFS estimates, as-printed, frozen per issue - zero vintage risk by construction); revisions_vs_prev_vintage is the first-appearance-vs-revision signal; scope sep25..mar26 vintages, apr26+ joins only after its release dates are measured"
+  },
+  "cot": {
+   "report_date": "2025-09-09",
+   "publication_ts": "2025-09-12T15:30:00-04:00",
+   "publication_delayed": false,
+   "publication_confidence": "derived",
+   "contract_code": "023651",
+   "market_name": "NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE",
+   "open_interest": 1631092,
+   "managed_money_long": 225888,
+   "managed_money_short": 250640,
+   "managed_money_net": -24752,
+   "producer_merchant_net": -30640,
+   "swap_dealer_net": 113956,
+   "other_reportable_net": -69795,
+   "managed_money_net_chg_wow": 12010,
+   "pctile_1y_n_obs": 53,
+   "managed_money_net_pctile_1y": 57.55,
+   "pctile_3y_n_obs": 157,
+   "managed_money_net_pctile_3y": 67.83,
+   "age_days": 4.3542,
+   "report_date_combined": "2025-09-09",
+   "publication_ts_combined": "2025-09-12T15:30:00-04:00",
+   "publication_delayed_combined": false,
+   "publication_confidence_combined": "derived",
+   "contract_code_combined": "023651",
+   "market_name_combined": "NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE",
+   "open_interest_combined": 1647371,
+   "managed_money_long_combined": 226017,
+   "managed_money_short_combined": 250996,
+   "managed_money_net_combined": -24979,
+   "producer_merchant_net_combined": -30648,
+   "swap_dealer_net_combined": 114187,
+   "other_reportable_net_combined": -70402,
+   "managed_money_net_chg_wow_combined": 11971,
+   "pctile_1y_n_obs_combined": 53,
+   "managed_money_net_pctile_1y_combined": 57.55,
+   "pctile_3y_n_obs_combined": 157,
+   "managed_money_net_pctile_3y_combined": 67.83,
+   "age_days_combined": 4.3542,
+   "open_interest_options_implied": 16279,
+   "managed_money_long_options_implied": 129,
+   "managed_money_short_options_implied": 356,
+   "managed_money_net_options_implied": -227,
+   "producer_merchant_net_options_implied": -8,
+   "swap_dealer_net_options_implied": 231,
+   "other_reportable_net_options_implied": -607,
+   "managed_money_net_chg_wow_options_implied": -39,
+   "options_implied_pctile_1y_n_obs": 53,
+   "managed_money_net_options_implied_pctile_1y": 50.0,
+   "options_implied_pctile_3y_n_obs": 157,
+   "managed_money_net_options_implied_pctile_3y": 25.16,
+   "ice": {
+    "ld1": {
+     "report_date": "2025-09-09",
+     "publication_ts": "2025-09-12T15:30:00-04:00",
+     "open_interest": 7715587,
+     "managed_money_net": 1121015,
+     "managed_money_net_chg_wow": 18782,
+     "managed_money_net_pctile_1y": 89.62,
+     "managed_money_net_pctile_3y": 96.5
+    },
+    "pen": {
+     "report_date": "2025-09-09",
+     "publication_ts": "2025-09-12T15:30:00-04:00",
+     "open_interest": 790823,
+     "managed_money_net": -42538,
+     "managed_money_net_chg_wow": 18350,
+     "managed_money_net_pctile_1y": 93.4,
+     "managed_money_net_pctile_3y": 84.39
+    },
+    "hh_basis": {
+     "report_date": "2025-09-09",
+     "publication_ts": "2025-09-12T15:30:00-04:00",
+     "open_interest": 99663,
+     "managed_money_net": 26610,
+     "managed_money_net_chg_wow": -10798,
+     "managed_money_net_pctile_1y": 76.42,
+     "managed_money_net_pctile_3y": 92.04
+    },
+    "hh_index": {
+     "report_date": "2025-09-09",
+     "publication_ts": "2025-09-12T15:30:00-04:00",
+     "open_interest": 111382,
+     "managed_money_net": 19287,
+     "managed_money_net_chg_wow": 721,
+     "managed_money_net_pctile_1y": 95.28,
+     "managed_money_net_pctile_3y": 97.77
+    }
+   },
+   "note": "positioning as-of PUBLICATION time; futures-only + _combined + the derived _options_implied delta + the four ICE HH books under `ice` (separate reads, never pooled; basis/index = the physical legs, squeeze-regime context); percentiles vs trailing 1y/3y of weekly nets"
+  },
+  "contract_structure": null,
+  "squeeze_watch": null,
+  "vol_regime": null,
+  "cash_basis": null,
+  "flow_calendar": {
+   "date": "2025-09-17",
+   "is_cme_business_day": true,
+   "cme_holiday": false,
+   "cme_holiday_name": null,
+   "cme_session_class": null,
+   "cme_early_close": false,
+   "front_symbol_calendar": "NGV25",
+   "futures_expiry_date": "2025-09-26",
+   "days_to_futures_expiry": 7,
+   "is_expiry_day": false,
+   "options_expiry_date": "2025-09-25",
+   "days_to_opex": 6,
+   "is_opex_day": false,
+   "in_bidweek": false,
+   "bidweek_day_n": null,
+   "bidweek_delivery_month": null,
+   "business_day_of_month": 12,
+   "in_gsci_roll": false,
+   "gsci_roll_day_n": null,
+   "gsci_ng_roll_this_month": true,
+   "in_bcom_roll": false,
+   "bcom_roll_day_n": null,
+   "in_bcom_hedge_roll": false,
+   "bcom_ng_roll_this_month": false,
+   "bcom_january_rebalance": false,
+   "eia_storage_release_datetime_et": "2025-09-18T10:30:00-04:00",
+   "eia_releases_this_week": [
+    {
+     "datetime_et": "2025-09-18T10:30:00-04:00",
+     "for_week_ending": "2025-09-12",
+     "shifted": false,
+     "shift_reason": null
+    }
+   ],
+   "is_eia_print_day": false,
+   "next_eia_release_datetime_et": "2025-09-18T10:30:00-04:00",
+   "days_to_next_eia_release": 1,
+   "note": "mechanical scheduled flows - desks trade around these; G13 carries the full gauntlet (GSCI roll Feb 6-12, BCOM Feb 9-13, bidweek Feb 23-27, opex Feb 24, expiry Feb 25)"
+  },
+  "solar": {
+   "date": "2025-09-17",
+   "gw_day_length_chg_7d": -0.289,
+   "gw_day_length_h": 12.406,
+   "metros": {
+    "ATL": {
+     "day_length_h": 12.35,
+     "grid": "SOCO",
+     "sunrise_local": "07:21",
+     "sunset_et": "19:42",
+     "sunset_local": "19:42"
+    },
+    "BOS": {
+     "day_length_h": 12.45,
+     "grid": "ISO-NE",
+     "sunrise_local": "06:24",
+     "sunset_et": "18:51",
+     "sunset_local": "18:51"
+    },
+    "DCA": {
+     "day_length_h": 12.41,
+     "grid": "PJM",
+     "sunrise_local": "06:50",
+     "sunset_et": "19:14",
+     "sunset_local": "19:14"
+    },
+    "DEN": {
+     "day_length_h": 12.42,
+     "grid": "WECC",
+     "sunrise_local": "06:40",
+     "sunset_et": "21:05",
+     "sunset_local": "19:05"
+    },
+    "DFW": {
+     "day_length_h": 12.34,
+     "grid": "ERCOT",
+     "sunrise_local": "07:12",
+     "sunset_et": "20:32",
+     "sunset_local": "19:32"
+    },
+    "DTW": {
+     "day_length_h": 12.45,
+     "grid": "MISO",
+     "sunrise_local": "07:14",
+     "sunset_et": "19:40",
+     "sunset_local": "19:40"
+    },
+    "IAH": {
+     "day_length_h": 12.32,
+     "grid": "ERCOT",
+     "sunrise_local": "07:06",
+     "sunset_et": "20:25",
+     "sunset_local": "19:25"
+    },
+    "LAX": {
+     "day_length_h": 12.35,
+     "grid": "CAISO",
+     "sunrise_local": "06:37",
+     "sunset_et": "21:58",
+     "sunset_local": "18:58"
+    },
+    "MSP": {
+     "day_length_h": 12.48,
+     "grid": "MISO",
+     "sunrise_local": "06:52",
+     "sunset_et": "20:21",
+     "sunset_local": "19:21"
+    },
+    "NYC": {
+     "day_length_h": 12.43,
+     "grid": "NYISO",
+     "sunrise_local": "06:37",
+     "sunset_et": "19:02",
+     "sunset_local": "19:02"
+    },
+    "ORD": {
+     "day_length_h": 12.44,
+     "grid": "PJM",
+     "sunrise_local": "06:32",
+     "sunset_et": "19:59",
+     "sunset_local": "18:59"
+    },
+    "PHL": {
+     "day_length_h": 12.42,
+     "grid": "PJM",
+     "sunrise_local": "06:42",
+     "sunset_et": "19:07",
+     "sunset_local": "19:07"
+    },
+    "PHX": {
+     "day_length_h": 12.35,
+     "grid": "WECC",
+     "sunrise_local": "06:11",
+     "sunset_et": "21:32",
+     "sunset_local": "18:32"
+    },
+    "SEA": {
+     "day_length_h": 12.52,
+     "grid": "WECC",
+     "sunrise_local": "06:47",
+     "sunset_et": "22:18",
+     "sunset_local": "19:18"
+    },
+    "SFO": {
+     "day_length_h": 12.39,
+     "grid": "CAISO",
+     "sunrise_local": "06:52",
+     "sunset_et": "22:15",
+     "sunset_local": "19:15"
+    },
+    "STL": {
+     "day_length_h": 12.4,
+     "grid": "MISO",
+     "sunrise_local": "06:43",
+     "sunset_et": "20:07",
+     "sunset_local": "19:07"
+    }
+   },
+   "sunset_et_earliest": "18:51",
+   "sunset_et_latest": "22:18",
+   "note": "deterministic solar state; sunset_et positions the evening gas-burn ramp on the session clock; gw_day_length_chg_7d is the seasonal march"
+  },
+  "nuclear_outages": {
+   "period": "2025-09-16",
+   "age_days": 1,
+   "capacity_out_mw": 7628.753,
+   "capacity_out_gw": 7.629,
+   "pct_of_fleet_out": 7.81,
+   "fleet_capacity_mw": 97648.7,
+   "chg_1d_mw": 104.4,
+   "chg_7d_mw": 1593.7,
+   "outage_season": "fall_outage_season",
+   "note": "nuclear GW offline adds gas burn roughly GW-for-GW at the margin; season tag is calendar-descriptive; changes across missing days are None, never bridged"
+  },
+  "grid_stack": null,
+  "options_surface": null,
+  "weather": null,
+  "weather_forecast": null,
+  "weather_forecast_cycle": null,
+  "weather_forcing_forecast": null,
+  "freeze_risk": null,
+  "model_disagreement": null,
+  "tape_conditions": null,
+  "holiday": null,
+  "firehose_present": null
+ },
+ "20250918": {
+  "dow": "Thu",
+  "scored_leg": null,
+  "stor_surprise": 5.6,
+  "stor_surprise_sign": "above",
+  "stor_surprise_basis": null,
+  "curve_regime": "unknown",
+  "storage": {
+   "level": 3333,
+   "weekly_chg": 71,
+   "vs_5yr": 154,
+   "phase": "inject",
+   "as_of": "2025-09-11"
+  },
+  "storage_regional": {
+   "as_of": "2025-09-11",
+   "period": "2025-09-05",
+   "regions": {
+    "l48": {
+     "level": 3333.0,
+     "weekly_chg": 71.0,
+     "vs_5yr": 154.2,
+     "vs_year_ago": -54.0,
+     "chg_vs_5yr_chg": 5.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "east": {
+     "level": 757.0,
+     "weekly_chg": 22.0,
+     "vs_5yr": 6.4,
+     "vs_year_ago": -23.0,
+     "chg_vs_5yr_chg": 2.2,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "midwest": {
+     "level": 890.0,
+     "weekly_chg": 30.0,
+     "vs_5yr": -8.4,
+     "vs_year_ago": -60.0,
+     "chg_vs_5yr_chg": -0.2,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central": {
+     "level": 1145.0,
+     "weekly_chg": 16.0,
+     "vs_5yr": 94.8,
+     "vs_year_ago": 47.0,
+     "chg_vs_5yr_chg": 4.8,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central_salt": {
+     "level": 282.0,
+     "weekly_chg": 9.0,
+     "vs_5yr": 32.8,
+     "vs_year_ago": 16.0,
+     "chg_vs_5yr_chg": 5.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central_nonsalt": {
+     "level": 863.0,
+     "weekly_chg": 7.0,
+     "vs_5yr": 61.8,
+     "vs_year_ago": 31.0,
+     "chg_vs_5yr_chg": -0.6,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "mountain": {
+     "level": 246.0,
+     "weekly_chg": 2.0,
+     "vs_5yr": 32.0,
+     "vs_year_ago": -27.0,
+     "chg_vs_5yr_chg": -2.0,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "pacific": {
+     "level": 293.0,
+     "weekly_chg": -1.0,
+     "vs_5yr": 27.4,
+     "vs_year_ago": 8.0,
+     "chg_vs_5yr_chg": -1.4,
+     "unit": "Bcf",
+     "missing": []
+    }
+   },
+   "salt_share": 0.2463,
+   "days_of_supply": null,
+   "days_of_supply_note": "EIA publishes no days-of-supply (or any demand-normalized) figure in the Weekly Natural Gas Storage Report, and no regional demand denominator; no substitute is computed here.",
+   "source": "EIA_WNGSR_ngshistory_xls",
+   "eia_estimate_basis": "EIA-912",
+   "note": "five regions + salt split; salt = the fast-cycling swing capacity. ADDITIVE to the national `storage` block, which is untouched"
+  },
+  "storage_consensus": null,
+  "storage_vintage": null,
+  "ngwu_balance": null,
+  "steo_vintage": {
+   "vintage_id": "sep25",
+   "release_date": "2025-09-09",
+   "knowable_from": "2025-09-10",
+   "age_days": 9,
+   "month_prev": "202508",
+   "month_cur": "202509",
+   "month_next": "202510",
+   "fields": {
+    "dry_production_bcfd": {
+     "series_id": "NGPRPUS",
+     "prev": 107.1787,
+     "cur": 106.6771,
+     "next": 106.691
+    },
+    "marketed_production_bcfd": {
+     "series_id": "NGMPPUS",
+     "prev": 117.7735,
+     "cur": 117.4085,
+     "next": 117.427
+    },
+    "total_consumption_bcfd": {
+     "series_id": "NGTCPUS",
+     "prev": 84.8607,
+     "cur": 78.8311,
+     "next": 79.7682
+    },
+    "residential_bcfd": {
+     "series_id": "NGRCPUS",
+     "prev": 3.545,
+     "cur": 3.6775,
+     "next": 7.511
+    },
+    "commercial_bcfd": {
+     "series_id": "NGCCPUS",
+     "prev": 4.739,
+     "cur": 5.1382,
+     "next": 7.4895
+    },
+    "industrial_bcfd": null,
+    "power_burn_bcfd": {
+     "series_id": "NGEPCON",
+     "prev": 45.5421,
+     "cur": 39.2324,
+     "next": 33.5263
+    },
+    "lng_gross_exports_bcfd": {
+     "series_id": "NGEXPUS_LNG",
+     "prev": 14.7,
+     "cur": 14.729,
+     "next": 15.315
+    },
+    "lng_gross_imports_bcfd": {
+     "series_id": "NGIMPUS_LNG",
+     "prev": 0.0525,
+     "cur": 0.0192,
+     "next": 0.0391
+    },
+    "pipeline_gross_exports_bcfd": {
+     "series_id": "NGEXPUS_PIPE",
+     "prev": 9.7531,
+     "cur": 9.7404,
+     "next": 9.2591
+    },
+    "pipeline_gross_imports_bcfd": {
+     "series_id": "NGIMPUS_PIPE",
+     "prev": 8.6038,
+     "cur": 8.3171,
+     "next": 7.8699
+    },
+    "net_storage_withdrawal_bcfd": {
+     "series_id": "NGNWPUS",
+     "prev": -5.2001,
+     "cur": -10.6084,
+     "next": -8.8188
+    },
+    "working_gas_inventory_bcf": {
+     "series_id": "NGWGPUS",
+     "prev": 3320.7474,
+     "cur": 3639.001,
+     "next": 3912.383
+    }
+   },
+   "revisions_vs_prev_vintage": null,
+   "prev_vintage_id": null,
+   "label": "STIFS estimates at/after the NGM anchor; as-printed, frozen per issue",
+   "note": "monthly as-of balance consensus (STIFS estimates, as-printed, frozen per issue - zero vintage risk by construction); revisions_vs_prev_vintage is the first-appearance-vs-revision signal; scope sep25..mar26 vintages, apr26+ joins only after its release dates are measured"
+  },
+  "cot": {
+   "report_date": "2025-09-09",
+   "publication_ts": "2025-09-12T15:30:00-04:00",
+   "publication_delayed": false,
+   "publication_confidence": "derived",
+   "contract_code": "023651",
+   "market_name": "NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE",
+   "open_interest": 1631092,
+   "managed_money_long": 225888,
+   "managed_money_short": 250640,
+   "managed_money_net": -24752,
+   "producer_merchant_net": -30640,
+   "swap_dealer_net": 113956,
+   "other_reportable_net": -69795,
+   "managed_money_net_chg_wow": 12010,
+   "pctile_1y_n_obs": 53,
+   "managed_money_net_pctile_1y": 57.55,
+   "pctile_3y_n_obs": 157,
+   "managed_money_net_pctile_3y": 67.83,
+   "age_days": 5.3542,
+   "report_date_combined": "2025-09-09",
+   "publication_ts_combined": "2025-09-12T15:30:00-04:00",
+   "publication_delayed_combined": false,
+   "publication_confidence_combined": "derived",
+   "contract_code_combined": "023651",
+   "market_name_combined": "NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE",
+   "open_interest_combined": 1647371,
+   "managed_money_long_combined": 226017,
+   "managed_money_short_combined": 250996,
+   "managed_money_net_combined": -24979,
+   "producer_merchant_net_combined": -30648,
+   "swap_dealer_net_combined": 114187,
+   "other_reportable_net_combined": -70402,
+   "managed_money_net_chg_wow_combined": 11971,
+   "pctile_1y_n_obs_combined": 53,
+   "managed_money_net_pctile_1y_combined": 57.55,
+   "pctile_3y_n_obs_combined": 157,
+   "managed_money_net_pctile_3y_combined": 67.83,
+   "age_days_combined": 5.3542,
+   "open_interest_options_implied": 16279,
+   "managed_money_long_options_implied": 129,
+   "managed_money_short_options_implied": 356,
+   "managed_money_net_options_implied": -227,
+   "producer_merchant_net_options_implied": -8,
+   "swap_dealer_net_options_implied": 231,
+   "other_reportable_net_options_implied": -607,
+   "managed_money_net_chg_wow_options_implied": -39,
+   "options_implied_pctile_1y_n_obs": 53,
+   "managed_money_net_options_implied_pctile_1y": 50.0,
+   "options_implied_pctile_3y_n_obs": 157,
+   "managed_money_net_options_implied_pctile_3y": 25.16,
+   "ice": {
+    "ld1": {
+     "report_date": "2025-09-09",
+     "publication_ts": "2025-09-12T15:30:00-04:00",
+     "open_interest": 7715587,
+     "managed_money_net": 1121015,
+     "managed_money_net_chg_wow": 18782,
+     "managed_money_net_pctile_1y": 89.62,
+     "managed_money_net_pctile_3y": 96.5
+    },
+    "pen": {
+     "report_date": "2025-09-09",
+     "publication_ts": "2025-09-12T15:30:00-04:00",
+     "open_interest": 790823,
+     "managed_money_net": -42538,
+     "managed_money_net_chg_wow": 18350,
+     "managed_money_net_pctile_1y": 93.4,
+     "managed_money_net_pctile_3y": 84.39
+    },
+    "hh_basis": {
+     "report_date": "2025-09-09",
+     "publication_ts": "2025-09-12T15:30:00-04:00",
+     "open_interest": 99663,
+     "managed_money_net": 26610,
+     "managed_money_net_chg_wow": -10798,
+     "managed_money_net_pctile_1y": 76.42,
+     "managed_money_net_pctile_3y": 92.04
+    },
+    "hh_index": {
+     "report_date": "2025-09-09",
+     "publication_ts": "2025-09-12T15:30:00-04:00",
+     "open_interest": 111382,
+     "managed_money_net": 19287,
+     "managed_money_net_chg_wow": 721,
+     "managed_money_net_pctile_1y": 95.28,
+     "managed_money_net_pctile_3y": 97.77
+    }
+   },
+   "note": "positioning as-of PUBLICATION time; futures-only + _combined + the derived _options_implied delta + the four ICE HH books under `ice` (separate reads, never pooled; basis/index = the physical legs, squeeze-regime context); percentiles vs trailing 1y/3y of weekly nets"
+  },
+  "contract_structure": null,
+  "squeeze_watch": null,
+  "vol_regime": null,
+  "cash_basis": null,
+  "flow_calendar": {
+   "date": "2025-09-18",
+   "is_cme_business_day": true,
+   "cme_holiday": false,
+   "cme_holiday_name": null,
+   "cme_session_class": null,
+   "cme_early_close": false,
+   "front_symbol_calendar": "NGV25",
+   "futures_expiry_date": "2025-09-26",
+   "days_to_futures_expiry": 6,
+   "is_expiry_day": false,
+   "options_expiry_date": "2025-09-25",
+   "days_to_opex": 5,
+   "is_opex_day": false,
+   "in_bidweek": false,
+   "bidweek_day_n": null,
+   "bidweek_delivery_month": null,
+   "business_day_of_month": 13,
+   "in_gsci_roll": false,
+   "gsci_roll_day_n": null,
+   "gsci_ng_roll_this_month": true,
+   "in_bcom_roll": false,
+   "bcom_roll_day_n": null,
+   "in_bcom_hedge_roll": false,
+   "bcom_ng_roll_this_month": false,
+   "bcom_january_rebalance": false,
+   "eia_storage_release_datetime_et": "2025-09-18T10:30:00-04:00",
+   "eia_releases_this_week": [
+    {
+     "datetime_et": "2025-09-18T10:30:00-04:00",
+     "for_week_ending": "2025-09-12",
+     "shifted": false,
+     "shift_reason": null
+    }
+   ],
+   "is_eia_print_day": true,
+   "next_eia_release_datetime_et": "2025-09-18T10:30:00-04:00",
+   "days_to_next_eia_release": 0,
+   "note": "mechanical scheduled flows - desks trade around these; G13 carries the full gauntlet (GSCI roll Feb 6-12, BCOM Feb 9-13, bidweek Feb 23-27, opex Feb 24, expiry Feb 25)"
+  },
+  "solar": {
+   "date": "2025-09-18",
+   "gw_day_length_chg_7d": -0.29,
+   "gw_day_length_h": 12.364,
+   "metros": {
+    "ATL": {
+     "day_length_h": 12.32,
+     "grid": "SOCO",
+     "sunrise_local": "07:22",
+     "sunset_et": "19:41",
+     "sunset_local": "19:41"
+    },
+    "BOS": {
+     "day_length_h": 12.4,
+     "grid": "ISO-NE",
+     "sunrise_local": "06:25",
+     "sunset_et": "18:49",
+     "sunset_local": "18:49"
+    },
+    "DCA": {
+     "day_length_h": 12.37,
+     "grid": "PJM",
+     "sunrise_local": "06:51",
+     "sunset_et": "19:12",
+     "sunset_local": "19:12"
+    },
+    "DEN": {
+     "day_length_h": 12.37,
+     "grid": "WECC",
+     "sunrise_local": "06:41",
+     "sunset_et": "21:03",
+     "sunset_local": "19:03"
+    },
+    "DFW": {
+     "day_length_h": 12.31,
+     "grid": "ERCOT",
+     "sunrise_local": "07:12",
+     "sunset_et": "20:31",
+     "sunset_local": "19:31"
+    },
+    "DTW": {
+     "day_length_h": 12.4,
+     "grid": "MISO",
+     "sunrise_local": "07:15",
+     "sunset_et": "19:39",
+     "sunset_local": "19:39"
+    },
+    "IAH": {
+     "day_length_h": 12.29,
+     "grid": "ERCOT",
+     "sunrise_local": "07:06",
+     "sunset_et": "20:23",
+     "sunset_local": "19:23"
+    },
+    "LAX": {
+     "day_length_h": 12.32,
+     "grid": "CAISO",
+     "sunrise_local": "06:37",
+     "sunset_et": "21:56",
+     "sunset_local": "18:56"
+    },
+    "MSP": {
+     "day_length_h": 12.43,
+     "grid": "MISO",
+     "sunrise_local": "06:53",
+     "sunset_et": "20:19",
+     "sunset_local": "19:19"
+    },
+    "NYC": {
+     "day_length_h": 12.39,
+     "grid": "NYISO",
+     "sunrise_local": "06:38",
+     "sunset_et": "19:01",
+     "sunset_local": "19:01"
+    },
+    "ORD": {
+     "day_length_h": 12.4,
+     "grid": "PJM",
+     "sunrise_local": "06:33",
+     "sunset_et": "19:57",
+     "sunset_local": "18:57"
+    },
+    "PHL": {
+     "day_length_h": 12.38,
+     "grid": "PJM",
+     "sunrise_local": "06:43",
+     "sunset_et": "19:06",
+     "sunset_local": "19:06"
+    },
+    "PHX": {
+     "day_length_h": 12.31,
+     "grid": "WECC",
+     "sunrise_local": "06:12",
+     "sunset_et": "21:31",
+     "sunset_local": "18:31"
+    },
+    "SEA": {
+     "day_length_h": 12.46,
+     "grid": "WECC",
+     "sunrise_local": "06:49",
+     "sunset_et": "22:16",
+     "sunset_local": "19:16"
+    },
+    "SFO": {
+     "day_length_h": 12.35,
+     "grid": "CAISO",
+     "sunrise_local": "06:52",
+     "sunset_et": "22:13",
+     "sunset_local": "19:13"
+    },
+    "STL": {
+     "day_length_h": 12.36,
+     "grid": "MISO",
+     "sunrise_local": "06:44",
+     "sunset_et": "20:06",
+     "sunset_local": "19:06"
+    }
+   },
+   "sunset_et_earliest": "18:49",
+   "sunset_et_latest": "22:16",
+   "note": "deterministic solar state; sunset_et positions the evening gas-burn ramp on the session clock; gw_day_length_chg_7d is the seasonal march"
+  },
+  "nuclear_outages": {
+   "period": "2025-09-17",
+   "age_days": 1,
+   "capacity_out_mw": 7965.101,
+   "capacity_out_gw": 7.965,
+   "pct_of_fleet_out": 8.16,
+   "fleet_capacity_mw": 97648.7,
+   "chg_1d_mw": 336.3,
+   "chg_7d_mw": 2642.7,
+   "outage_season": "fall_outage_season",
+   "note": "nuclear GW offline adds gas burn roughly GW-for-GW at the margin; season tag is calendar-descriptive; changes across missing days are None, never bridged"
+  },
+  "grid_stack": null,
+  "options_surface": null,
+  "weather": null,
+  "weather_forecast": null,
+  "weather_forecast_cycle": null,
+  "weather_forcing_forecast": null,
+  "freeze_risk": null,
+  "model_disagreement": null,
+  "tape_conditions": null,
+  "holiday": null,
+  "firehose_present": null
+ },
+ "20250919": {
+  "dow": "Fri",
+  "scored_leg": null,
+  "stor_surprise": 12.0,
+  "stor_surprise_sign": "above",
+  "stor_surprise_basis": null,
+  "curve_regime": "unknown",
+  "storage": {
+   "level": 3423,
+   "weekly_chg": 90,
+   "vs_5yr": 166,
+   "phase": "inject",
+   "as_of": "2025-09-18"
+  },
+  "storage_regional": {
+   "as_of": "2025-09-18",
+   "period": "2025-09-12",
+   "regions": {
+    "l48": {
+     "level": 3423.0,
+     "weekly_chg": 90.0,
+     "vs_5yr": 166.2,
+     "vs_year_ago": -22.0,
+     "chg_vs_5yr_chg": 12.0,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "east": {
+     "level": 781.0,
+     "weekly_chg": 24.0,
+     "vs_5yr": 8.8,
+     "vs_year_ago": -21.0,
+     "chg_vs_5yr_chg": 2.4,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "midwest": {
+     "level": 920.0,
+     "weekly_chg": 30.0,
+     "vs_5yr": -7.0,
+     "vs_year_ago": -53.0,
+     "chg_vs_5yr_chg": 1.4,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central": {
+     "level": 1174.0,
+     "weekly_chg": 29.0,
+     "vs_5yr": 101.0,
+     "vs_year_ago": 63.0,
+     "chg_vs_5yr_chg": 6.2,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central_salt": {
+     "level": 294.0,
+     "weekly_chg": 12.0,
+     "vs_5yr": 36.2,
+     "vs_year_ago": 23.0,
+     "chg_vs_5yr_chg": 3.4,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "south_central_nonsalt": {
+     "level": 879.0,
+     "weekly_chg": 16.0,
+     "vs_5yr": 63.8,
+     "vs_year_ago": 39.0,
+     "chg_vs_5yr_chg": 2.0,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "mountain": {
+     "level": 251.0,
+     "weekly_chg": 5.0,
+     "vs_5yr": 33.4,
+     "vs_year_ago": -24.0,
+     "chg_vs_5yr_chg": 1.4,
+     "unit": "Bcf",
+     "missing": []
+    },
+    "pacific": {
+     "level": 297.0,
+     "weekly_chg": 4.0,
+     "vs_5yr": 30.4,
+     "vs_year_ago": 14.0,
+     "chg_vs_5yr_chg": 3.0,
+     "unit": "Bcf",
+     "missing": []
+    }
+   },
+   "salt_share": 0.2504,
+   "days_of_supply": null,
+   "days_of_supply_note": "EIA publishes no days-of-supply (or any demand-normalized) figure in the Weekly Natural Gas Storage Report, and no regional demand denominator; no substitute is computed here.",
+   "source": "EIA_WNGSR_ngshistory_xls",
+   "eia_estimate_basis": "EIA-912",
+   "note": "five regions + salt split; salt = the fast-cycling swing capacity. ADDITIVE to the national `storage` block, which is untouched"
+  },
+  "storage_consensus": null,
+  "storage_vintage": null,
+  "ngwu_balance": null,
+  "steo_vintage": {
+   "vintage_id": "sep25",
+   "release_date": "2025-09-09",
+   "knowable_from": "2025-09-10",
+   "age_days": 10,
+   "month_prev": "202508",
+   "month_cur": "202509",
+   "month_next": "202510",
+   "fields": {
+    "dry_production_bcfd": {
+     "series_id": "NGPRPUS",
+     "prev": 107.1787,
+     "cur": 106.6771,
+     "next": 106.691
+    },
+    "marketed_production_bcfd": {
+     "series_id": "NGMPPUS",
+     "prev": 117.7735,
+     "cur": 117.4085,
+     "next": 117.427
+    },
+    "total_consumption_bcfd": {
+     "series_id": "NGTCPUS",
+     "prev": 84.8607,
+     "cur": 78.8311,
+     "next": 79.7682
+    },
+    "residential_bcfd": {
+     "series_id": "NGRCPUS",
+     "prev": 3.545,
+     "cur": 3.6775,
+     "next": 7.511
+    },
+    "commercial_bcfd": {
+     "series_id": "NGCCPUS",
+     "prev": 4.739,
+     "cur": 5.1382,
+     "next": 7.4895
+    },
+    "industrial_bcfd": null,
+    "power_burn_bcfd": {
+     "series_id": "NGEPCON",
+     "prev": 45.5421,
+     "cur": 39.2324,
+     "next": 33.5263
+    },
+    "lng_gross_exports_bcfd": {
+     "series_id": "NGEXPUS_LNG",
+     "prev": 14.7,
+     "cur": 14.729,
+     "next": 15.315
+    },
+    "lng_gross_imports_bcfd": {
+     "series_id": "NGIMPUS_LNG",
+     "prev": 0.0525,
+     "cur": 0.0192,
+     "next": 0.0391
+    },
+    "pipeline_gross_exports_bcfd": {
+     "series_id": "NGEXPUS_PIPE",
+     "prev": 9.7531,
+     "cur": 9.7404,
+     "next": 9.2591
+    },
+    "pipeline_gross_imports_bcfd": {
+     "series_id": "NGIMPUS_PIPE",
+     "prev": 8.6038,
+     "cur": 8.3171,
+     "next": 7.8699
+    },
+    "net_storage_withdrawal_bcfd": {
+     "series_id": "NGNWPUS",
+     "prev": -5.2001,
+     "cur": -10.6084,
+     "next": -8.8188
+    },
+    "working_gas_inventory_bcf": {
+     "series_id": "NGWGPUS",
+     "prev": 3320.7474,
+     "cur": 3639.001,
+     "next": 3912.383
+    }
+   },
+   "revisions_vs_prev_vintage": null,
+   "prev_vintage_id": null,
+   "label": "STIFS estimates at/after the NGM anchor; as-printed, frozen per issue",
+   "note": "monthly as-of balance consensus (STIFS estimates, as-printed, frozen per issue - zero vintage risk by construction); revisions_vs_prev_vintage is the first-appearance-vs-revision signal; scope sep25..mar26 vintages, apr26+ joins only after its release dates are measured"
+  },
+  "cot": {
+   "report_date": "2025-09-09",
+   "publication_ts": "2025-09-12T15:30:00-04:00",
+   "publication_delayed": false,
+   "publication_confidence": "derived",
+   "contract_code": "023651",
+   "market_name": "NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE",
+   "open_interest": 1631092,
+   "managed_money_long": 225888,
+   "managed_money_short": 250640,
+   "managed_money_net": -24752,
+   "producer_merchant_net": -30640,
+   "swap_dealer_net": 113956,
+   "other_reportable_net": -69795,
+   "managed_money_net_chg_wow": 12010,
+   "pctile_1y_n_obs": 53,
+   "managed_money_net_pctile_1y": 57.55,
+   "pctile_3y_n_obs": 157,
+   "managed_money_net_pctile_3y": 67.83,
+   "age_days": 6.3542,
+   "report_date_combined": "2025-09-09",
+   "publication_ts_combined": "2025-09-12T15:30:00-04:00",
+   "publication_delayed_combined": false,
+   "publication_confidence_combined": "derived",
+   "contract_code_combined": "023651",
+   "market_name_combined": "NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE",
+   "open_interest_combined": 1647371,
+   "managed_money_long_combined": 226017,
+   "managed_money_short_combined": 250996,
+   "managed_money_net_combined": -24979,
+   "producer_merchant_net_combined": -30648,
+   "swap_dealer_net_combined": 114187,
+   "other_reportable_net_combined": -70402,
+   "managed_money_net_chg_wow_combined": 11971,
+   "pctile_1y_n_obs_combined": 53,
+   "managed_money_net_pctile_1y_combined": 57.55,
+   "pctile_3y_n_obs_combined": 157,
+   "managed_money_net_pctile_3y_combined": 67.83,
+   "age_days_combined": 6.3542,
+   "open_interest_options_implied": 16279,
+   "managed_money_long_options_implied": 129,
+   "managed_money_short_options_implied": 356,
+   "managed_money_net_options_implied": -227,
+   "producer_merchant_net_options_implied": -8,
+   "swap_dealer_net_options_implied": 231,
+   "other_reportable_net_options_implied": -607,
+   "managed_money_net_chg_wow_options_implied": -39,
+   "options_implied_pctile_1y_n_obs": 53,
+   "managed_money_net_options_implied_pctile_1y": 50.0,
+   "options_implied_pctile_3y_n_obs": 157,
+   "managed_money_net_options_implied_pctile_3y": 25.16,
+   "ice": {
+    "ld1": {
+     "report_date": "2025-09-09",
+     "publication_ts": "2025-09-12T15:30:00-04:00",
+     "open_interest": 7715587,
+     "managed_money_net": 1121015,
+     "managed_money_net_chg_wow": 18782,
+     "managed_money_net_pctile_1y": 89.62,
+     "managed_money_net_pctile_3y": 96.5
+    },
+    "pen": {
+     "report_date": "2025-09-09",
+     "publication_ts": "2025-09-12T15:30:00-04:00",
+     "open_interest": 790823,
+     "managed_money_net": -42538,
+     "managed_money_net_chg_wow": 18350,
+     "managed_money_net_pctile_1y": 93.4,
+     "managed_money_net_pctile_3y": 84.39
+    },
+    "hh_basis": {
+     "report_date": "2025-09-09",
+     "publication_ts": "2025-09-12T15:30:00-04:00",
+     "open_interest": 99663,
+     "managed_money_net": 26610,
+     "managed_money_net_chg_wow": -10798,
+     "managed_money_net_pctile_1y": 76.42,
+     "managed_money_net_pctile_3y": 92.04
+    },
+    "hh_index": {
+     "report_date": "2025-09-09",
+     "publication_ts": "2025-09-12T15:30:00-04:00",
+     "open_interest": 111382,
+     "managed_money_net": 19287,
+     "managed_money_net_chg_wow": 721,
+     "managed_money_net_pctile_1y": 95.28,
+     "managed_money_net_pctile_3y": 97.77
+    }
+   },
+   "note": "positioning as-of PUBLICATION time; futures-only + _combined + the derived _options_implied delta + the four ICE HH books under `ice` (separate reads, never pooled; basis/index = the physical legs, squeeze-regime context); percentiles vs trailing 1y/3y of weekly nets"
+  },
+  "contract_structure": null,
+  "squeeze_watch": null,
+  "vol_regime": null,
+  "cash_basis": null,
+  "flow_calendar": {
+   "date": "2025-09-19",
+   "is_cme_business_day": true,
+   "cme_holiday": false,
+   "cme_holiday_name": null,
+   "cme_session_class": null,
+   "cme_early_close": false,
+   "front_symbol_calendar": "NGV25",
+   "futures_expiry_date": "2025-09-26",
+   "days_to_futures_expiry": 5,
+   "is_expiry_day": false,
+   "options_expiry_date": "2025-09-25",
+   "days_to_opex": 4,
+   "is_opex_day": false,
+   "in_bidweek": false,
+   "bidweek_day_n": null,
+   "bidweek_delivery_month": null,
+   "business_day_of_month": 14,
+   "in_gsci_roll": false,
+   "gsci_roll_day_n": null,
+   "gsci_ng_roll_this_month": true,
+   "in_bcom_roll": false,
+   "bcom_roll_day_n": null,
+   "in_bcom_hedge_roll": false,
+   "bcom_ng_roll_this_month": false,
+   "bcom_january_rebalance": false,
+   "eia_storage_release_datetime_et": "2025-09-18T10:30:00-04:00",
+   "eia_releases_this_week": [
+    {
+     "datetime_et": "2025-09-18T10:30:00-04:00",
+     "for_week_ending": "2025-09-12",
+     "shifted": false,
+     "shift_reason": null
+    }
+   ],
+   "is_eia_print_day": false,
+   "next_eia_release_datetime_et": "2025-09-25T10:30:00-04:00",
+   "days_to_next_eia_release": 6,
+   "note": "mechanical scheduled flows - desks trade around these; G13 carries the full gauntlet (GSCI roll Feb 6-12, BCOM Feb 9-13, bidweek Feb 23-27, opex Feb 24, expiry Feb 25)"
+  },
+  "solar": {
+   "date": "2025-09-19",
+   "gw_day_length_chg_7d": -0.29,
+   "gw_day_length_h": 12.323,
+   "metros": {
+    "ATL": {
+     "day_length_h": 12.28,
+     "grid": "SOCO",
+     "sunrise_local": "07:22",
+     "sunset_et": "19:39",
+     "sunset_local": "19:39"
+    },
+    "BOS": {
+     "day_length_h": 12.36,
+     "grid": "ISO-NE",
+     "sunrise_local": "06:26",
+     "sunset_et": "18:48",
+     "sunset_local": "18:48"
+    },
+    "DCA": {
+     "day_length_h": 12.32,
+     "grid": "PJM",
+     "sunrise_local": "06:51",
+     "sunset_et": "19:11",
+     "sunset_local": "19:11"
+    },
+    "DEN": {
+     "day_length_h": 12.33,
+     "grid": "WECC",
+     "sunrise_local": "06:42",
+     "sunset_et": "21:01",
+     "sunset_local": "19:01"
+    },
+    "DFW": {
+     "day_length_h": 12.28,
+     "grid": "ERCOT",
+     "sunrise_local": "07:13",
+     "sunset_et": "20:29",
+     "sunset_local": "19:29"
+    },
+    "DTW": {
+     "day_length_h": 12.35,
+     "grid": "MISO",
+     "sunrise_local": "07:16",
+     "sunset_et": "19:37",
+     "sunset_local": "19:37"
+    },
+    "IAH": {
+     "day_length_h": 12.26,
+     "grid": "ERCOT",
+     "sunrise_local": "07:07",
+     "sunset_et": "20:22",
+     "sunset_local": "19:22"
+    },
+    "LAX": {
+     "day_length_h": 12.28,
+     "grid": "CAISO",
+     "sunrise_local": "06:38",
+     "sunset_et": "21:55",
+     "sunset_local": "18:55"
+    },
+    "MSP": {
+     "day_length_h": 12.38,
+     "grid": "MISO",
+     "sunrise_local": "06:54",
+     "sunset_et": "20:17",
+     "sunset_local": "19:17"
+    },
+    "NYC": {
+     "day_length_h": 12.34,
+     "grid": "NYISO",
+     "sunrise_local": "06:39",
+     "sunset_et": "18:59",
+     "sunset_local": "18:59"
+    },
+    "ORD": {
+     "day_length_h": 12.35,
+     "grid": "PJM",
+     "sunrise_local": "06:34",
+     "sunset_et": "19:55",
+     "sunset_local": "18:55"
+    },
+    "PHL": {
+     "day_length_h": 12.33,
+     "grid": "PJM",
+     "sunrise_local": "06:44",
+     "sunset_et": "19:04",
+     "sunset_local": "19:04"
+    },
+    "PHX": {
+     "day_length_h": 12.28,
+     "grid": "WECC",
+     "sunrise_local": "06:13",
+     "sunset_et": "21:29",
+     "sunset_local": "18:29"
+    },
+    "SEA": {
+     "day_length_h": 12.4,
+     "grid": "WECC",
+     "sunrise_local": "06:50",
+     "sunset_et": "22:14",
+     "sunset_local": "19:14"
+    },
+    "SFO": {
+     "day_length_h": 12.31,
+     "grid": "CAISO",
+     "sunrise_local": "06:53",
+     "sunset_et": "22:12",
+     "sunset_local": "19:12"
+    },
+    "STL": {
+     "day_length_h": 12.32,
+     "grid": "MISO",
+     "sunrise_local": "06:45",
+     "sunset_et": "20:04",
+     "sunset_local": "19:04"
+    }
+   },
+   "sunset_et_earliest": "18:48",
+   "sunset_et_latest": "22:14",
+   "note": "deterministic solar state; sunset_et positions the evening gas-burn ramp on the session clock; gw_day_length_chg_7d is the seasonal march"
+  },
+  "nuclear_outages": {
+   "period": "2025-09-18",
+   "age_days": 1,
+   "capacity_out_mw": 7750.509,
+   "capacity_out_gw": 7.751,
+   "pct_of_fleet_out": 7.94,
+   "fleet_capacity_mw": 97648.7,
+   "chg_1d_mw": -214.6,
+   "chg_7d_mw": 2419.2,
+   "outage_season": "fall_outage_season",
+   "note": "nuclear GW offline adds gas burn roughly GW-for-GW at the margin; season tag is calendar-descriptive; changes across missing days are None, never bridged"
+  },
+  "grid_stack": null,
+  "options_surface": null,
+  "weather": null,
+  "weather_forecast": null,
+  "weather_forecast_cycle": null,
+  "weather_forcing_forecast": null,
+  "freeze_risk": null,
+  "model_disagreement": null,
+  "tape_conditions": null,
+  "holiday": null,
+  "firehose_present": null
+ },
+ "_state_build": {
+  "built_utc": "2026-08-14T11:42:53Z",
+  "blocks_emitted": [
+   "cash_basis",
+   "contract_structure",
+   "cot",
+   "curve_regime",
+   "dow",
+   "firehose_present",
+   "flow_calendar",
+   "freeze_risk",
+   "grid_stack",
+   "holiday",
+   "model_disagreement",
+   "ngwu_balance",
+   "nuclear_outages",
+   "options_surface",
+   "scored_leg",
+   "solar",
+   "squeeze_watch",
+   "steo_vintage",
+   "stor_surprise",
+   "stor_surprise_basis",
+   "stor_surprise_sign",
+   "storage",
+   "storage_consensus",
+   "storage_regional",
+   "storage_vintage",
+   "tape_conditions",
+   "vol_regime",
+   "weather",
+   "weather_forcing_forecast",
+   "weather_forecast",
+   "weather_forecast_cycle"
+  ],
+  "group": null,
+  "mask_after": null,
+  "note": "the vintage of THIS STATE FILE, not of the data in it. `blocks_emitted` is the block vocabulary the builder knew; a required block absent from that list means the state predates the block and must be re-staged, not that the feed is dead.",
+  "s128_contract_repairs": [
+   "forward_consensus_snapshot_fallback",
+   "post_roll_scored_leg_structure_unavailable",
+   "emission_ceiling_play_formally_unavailable"
+  ]
+ },
+ "_play_input_availability": {
+  "magnitude.emission_ceiling_check": {
+   "status": "UNAVAILABLE_NO_SERVED_INPUT",
+   "action": "STAND_DOWN",
+   "rule": "No registered served input currently satisfies this play. Do not synthesize or reverse-engineer a ceiling. This is a serving-contract status, not a request to add a new datapoint family."
+  }
+ },
+ "_historical_hydration": {
+  "schema": "frankie_historical_hydration_manifest_v1",
+  "group": "g3_s130",
+  "window": "2025-09-08..2025-09-19",
+  "source": {
+   "source_artifact": "research/kalshi/renders/ng_refine_s95/g3g4g5_state.json",
+   "source_lineage": "chatgpt/ng-forecaster-s103-audit",
+   "rule": "Only the report payload is recovered from the legacy causal archive. Decision-day visibility is recomputed with report_date STRICTLY BEFORE decision day. Legacy same-Thursday visibility is rejected.",
+   "weather_policy": "Legacy realized_as_proxy weather is NOT recovered into the current blind state."
+  },
+  "strict_storage_wall": true,
+  "legacy_realized_weather_rejected": true,
+  "channel_non_null_day_counts": {
+   "cash_basis": 0,
+   "contract_structure": 0,
+   "cot": 10,
+   "curve_regime": 10,
+   "firehose_present": 0,
+   "flow_calendar": 10,
+   "freeze_risk": 0,
+   "grid_stack": 0,
+   "model_disagreement": 0,
+   "ngwu_balance": 0,
+   "nuclear_outages": 10,
+   "options_surface": 0,
+   "scored_leg": 0,
+   "solar": 10,
+   "squeeze_watch": 0,
+   "steo_vintage": 8,
+   "stor_surprise": 10,
+   "stor_surprise_basis": 0,
+   "stor_surprise_sign": 10,
+   "storage": 10,
+   "storage_consensus": 0,
+   "storage_regional": 10,
+   "storage_vintage": 0,
+   "tape_conditions": 0,
+   "vol_regime": 0,
+   "weather": 0,
+   "weather_forcing_forecast": 0,
+   "weather_forecast": 0,
+   "weather_forecast_cycle": 0
+  },
+  "fully_populated_channels": [
+   "cot",
+   "curve_regime",
+   "flow_calendar",
+   "nuclear_outages",
+   "solar",
+   "stor_surprise",
+   "stor_surprise_sign",
+   "storage",
+   "storage_regional"
+  ],
+  "partially_populated_channels": [
+   "steo_vintage"
+  ],
+  "unavailable_channels": [
+   "cash_basis",
+   "contract_structure",
+   "firehose_present",
+   "freeze_risk",
+   "grid_stack",
+   "model_disagreement",
+   "ngwu_balance",
+   "options_surface",
+   "scored_leg",
+   "squeeze_watch",
+   "stor_surprise_basis",
+   "storage_consensus",
+   "storage_vintage",
+   "tape_conditions",
+   "vol_regime",
+   "weather",
+   "weather_forcing_forecast",
+   "weather_forecast",
+   "weather_forecast_cycle"
+  ],
+  "decision_days": [
+   "20250908",
+   "20250909",
+   "20250910",
+   "20250911",
+   "20250912",
+   "20250915",
+   "20250916",
+   "20250917",
+   "20250918",
+   "20250919"
+  ]
+ }
+}
