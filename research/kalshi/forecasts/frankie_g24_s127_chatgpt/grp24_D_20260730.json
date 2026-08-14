@@ -1,0 +1,34 @@
+{
+  "specialist": "D",
+  "group": "g24",
+  "date": "20260730",
+  "guessed_net_usd": 250,
+  "overnight_gap_usd": 0,
+  "path_p50_curve": [[20.0,0],[21.0,-30],[22.6,-55],[0.5,-75],[2.4,-45],[4.5,-10],[6.3,35],[7.8,85],[9.0,135],[10.15,110],[10.55,420],[11.2,275],[12.0,125],[13.2,20],[14.5,-60],[15.8,15],[17.0,105],[18.2,205],[20.0,250]],
+  "reasoning": "PRINT-DAY FRAME: Thursday 20260730 is D's 10:30 ET storage-print day. The print is the day's scheduled volatility event, but blind mode does not permit the future post-print impulse/delivery read to determine sign. More importantly, the current 20260730 pre-print survey consensus is absent from the causal packet: next_print.days_to_print=0, consensus_pre_print_bcf=None, estimates=[]. I therefore cannot compute a survey surprise and I do not substitute the seasonal proxy stor_surprise=9.6. The prior known print was +32 versus +29 consensus; it is historical backdrop only.\n\nD-1 FLOW / OVER-EXTENSION GATE: D-1 aggregate flow is near flat: session signed flow -72, two-sided b_share 0.499, quote bid share 0.483. Large prints strongly disagree on the buy side: 109 big prints, two-sided b_share 0.633. Phase flow is +86 / +198 / -356, so the final phase reverses the early/middle buy tilt. This is the canonical incoherent D-1 flow condition, not a clean chain-sided delivery. The chain-extension/cum tell is blind-unavailable and the current surprise-pricing tell is unevaluable without a current survey. I therefore refuse a full-band directional CALL through the print.\n\nWEATHER / BALANCE: the D-1-evening D0 CDD is 12.713 after -0.093, while the 08:00 Thursday cycle adds +0.643 to 13.357. That modestly favors demand/upside before the print. COT remains short but has improved +2953 WoW, reducing the old worsening-short covering stack. Storage level is 3056 / +171 vs 5y heading into the unknown print. These inputs support a mild positive p50 but do not resolve the catalyst side.\n\nCONTRACT/CALENDAR: after the 07/29 Q26 expiry, the live calendar front is U26 and the scored leg is also U26. The packet still warns that frozen price-derived structural blocks are anchor-vintage Q26; I continue to ignore their old price-derived spread/pinning values. Bidweek day 4 is live and can affect flows, but it does not supply a directional print surprise.\n\nP50 / RANGE / DISPOSITION: I set +250 p50 from the strong buy-side large-print counterweight plus warmer D0 weather, but disposition is ABSTAIN because the aggregate tape is incoherent and the current survey/print-side arbiter is unavailable. The path carries a large 10:30 impulse/round-trip: soft overnight, gradual pre-print firming, sharp modeled positive impulse, deep digestion back through near-flat/negative, then recovery into the close. The sign of the future impulse is not claimed as known; the wide path represents supported print-day volatility. Low confidence. Falsifier to the mild positive lean is clean pre-print sell-side conviction; actual post-print delivery/absorption remains intentionally future-masked.",
+  "plays_fired": [
+    "daytype.storage_thursday_magnitude — print day is a wider intraday-range class; storage fundamental does not set direction.",
+    "magnitude.catalyst_condition_sort — days_to_next_eia_release=0 arms the print-day range condition, not a surprise-sign call.",
+    "daytype.eia_window_reopen_to_print — timing anchored to 10:30 ET, not volume-phase labels.",
+    "flow.big_print_bshare_thin_tape_guard — n=109 is guard-clean; 0.633 buy-side large-print pressure is retained as a counterweight.",
+    "weather.revision_seasonal_sign_map — 08:00 D0 CDD +0.643 modestly supports the positive p50."
+  ],
+  "plays_stood_down": [
+    "daytype.eia_preprint_overextension_gate full-band chain side — D-1 flow is explicitly incoherent and the other two tells cannot both be established blind; go two-sided rather than force chain-through-print.",
+    "daytype.eia_print_impulse_arbiter — first post-print delivery/absorption is future-masked in blind mode.",
+    "daytype.surprise_magnitude — current survey consensus is absent; prior seasonal proxy is not a substitute.",
+    "direction.flow_conviction_sign_gate / direction.absorption_is_reversal — price-bearing conviction is unavailable.",
+    "magnitude.terminal_impact_coefficient_carry — final-phase flow is -356 and the price-impact numerator is masked.",
+    "frozen contract_structure/options_surface/squeeze_watch price mechanics — anchor-vintage Q26 values are not imported as current U26 price structure.",
+    "magnitude.emission_ceiling_check — INPUT_ABSENT."
+  ],
+  "confidence": "low",
+  "state_defects_and_gaps_reported": [
+    "Current 2026-07-30 pre-print storage survey consensus is absent at the blind cutoff despite days_to_print=0; no surprise is fabricated.",
+    "D-1 flow is internally incoherent: aggregate near-flat/sell, big prints strongly buy, final phase negative.",
+    "Post-print first-minute/delivery-vs-absorption information is future-masked by design.",
+    "Frozen price-derived structural blocks remain Q26 vintage even though live/scored front is U26; their price-derived values are excluded.",
+    "magnitude.emission_ceiling_check is INPUT_ABSENT."
+  ],
+  "disposition": "ABSTAIN"
+}
