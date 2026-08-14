@@ -81,3 +81,21 @@ def test_validate_served_forcing_fails_on_future_day_block(tmp_path):
     sl_path.write_text(json.dumps(sl), encoding="utf-8")
     with pytest.raises(aws_stage.StageInvariantError, match="CAUSAL_WALL"):
         aws_stage.validate_served_forcing("g24", tmp_path)
+
+
+def test_main_emits_runbook_success_line_exactly(monkeypatch, capsys):
+    monkeypatch.setattr(
+        aws_stage,
+        "stage_for_aws",
+        lambda gid: {
+            "group": gid,
+            "days": 10,
+            "weather_forcing_forecast": "PASS",
+            "wind_solar_separate": True,
+            "causal_slices": "PASS",
+            "blind_artifact_unchanged": True,
+        },
+    )
+    assert aws_stage.main(["g24"]) == 0
+    out = capsys.readouterr().out
+    assert "PASS: g24 restored, re-staged, causal slices rebuilt, S114 wind/solar served end-to-end" in out
