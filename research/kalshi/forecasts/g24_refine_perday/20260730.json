@@ -1,0 +1,19 @@
+{
+  "schema_version": "s128.g24_refine_day.1",
+  "group": "g24",
+  "date": "20260730",
+  "dow": "Thu",
+  "owner": "D",
+  "purpose_note": "Create a forecast curve for the day. Refine uses the same kitchen sink as blind plus realized price/curve as causal evidence; blind stays immutable.",
+  "blind": {"day_move_usd": 250, "gap_usd": 0, "disposition": "ABSTAIN", "confidence": "low"},
+  "actual": {"day_move_usd": 180, "gap_usd": -10},
+  "causal_mbo": {"onset_et": "07:29", "onset_dir": "down", "turn_et": "08:45", "turn_kind": "turn_up", "phases": [{"sflow": 231, "pxchg": -70}, {"sflow": 905, "pxchg": 550}, {"sflow": -37, "pxchg": -300}]},
+  "posterior_rule": "R4/R7 catalyst turn: on storage Thursday, preserve ABSTAIN when pre-print consensus is absent, but let a realized turn plus a dominant delivered middle phase define the posterior curve. A large late opposite phase is a giveback and must be represented rather than assuming the print impulse persists to close.",
+  "refined_day_move_usd": 170,
+  "refined_error_usd": -10,
+  "path_p50_curve": [[20,-10],[22,-25],[0,-45],[2,-65],[4,-90],[6,-140],[8,-360],[10,-120],[12,500],[14,390],[16,300],[18,210],[20,170]],
+  "weight_assigned": {"blind": 0.35, "causal_mbo": 0.65},
+  "lesson": "The blind +250/ABSTAIN was directionally close but modeled a generic post-print spike. Refine shows a down onset, a turn-up at 08:45, a +$550 dominant middle phase, then a -$300 late giveback. The important correction is curve shape, not forcing a stronger trade call.",
+  "carry_forward": "Storage-day posterior should separate pre-print uncertainty, realized turn/delivery, and late digestion. Missing consensus remains a serving defect, but causal price/flow can still reconstruct the path without inventing the surprise.",
+  "anti_overfit_note": "Endpoint is gap + sum of causal phase price changes (-10-70+550-300=170), using the same reconstruction rule as every g24 day."
+}
