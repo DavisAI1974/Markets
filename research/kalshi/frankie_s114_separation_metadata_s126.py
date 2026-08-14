@@ -2,13 +2,18 @@
 """S126 metadata-only repair for the already-verified S114 GEFS forcing store.
 
 The S114 store was proven intact on the Markets S3 plane and carries separate
-`wind_cf_proxy` and `solar_irradiance_proxy` values.  The S126 end-to-end verifier also requires the
-explicit contract metadata `served_separately is True`.  Some legacy records predate that metadata
-key even though their two proxy fields are physically separate.
+`wind_cf_proxy` and `solar_irradiance_proxy` values. The S126 end-to-end verifier requires the
+explicit machine-readable contract metadata `served_separately is True`.
 
-This tool does NOT rebuild, recompute, rescale, sum, or otherwise alter either forcing.  It may only
-add `served_separately: true` when BOTH separate proxy keys already exist and are non-null.  An
-explicit false/null value is not normalized away: it fails closed for inspection.
+Legacy S114 records use two representations of that same contract:
+- the key may be absent even though the two proxy fields are physically separate; or
+- `served_separately` may contain the canonical D37 prose explaining that wind and solar are NEVER
+  summed because a single renewables term would combine opposite annual cycles.
+
+This tool does NOT rebuild, recompute, rescale, sum, or otherwise alter either forcing. It may only
+normalize `served_separately` to boolean true when BOTH separate proxy keys already exist and are
+non-null AND the existing metadata is either absent, already True, or exactly the canonical D37
+legacy marker (whitespace-insensitive). False, None, or any other string/value fails closed.
 
 With --execute it writes the local JSON atomically, pushes through the sanctioned platform_sync S3
 door, and performs byte-identical SHA256 + manifest read-back using the existing D47 verifier.
@@ -28,9 +33,26 @@ STORE_DIR = REPO / "data" / "gefs_forcing"
 STORE_PATH = STORE_DIR / "gefs_forcing.json"
 PREFIX = "nymex/gefs_forcing/"
 
+# This is not a fuzzy semantic parser. It is the exact historical S114/D37 representation observed
+# in the authoritative store, compared after whitespace normalization only so terminal/file wrapping
+# cannot change its meaning. No other prose string is accepted as an affirmative contract value.
+LEGACY_D37_SEPARATION = (
+    "wind and solar are NEVER summed - they are seasonally ANTI-correlated (wind peaks "
+    "spring/autumn, solar at the solstice), so one 'renewables' term is a composite of two "
+    "opposite annual cycles (D37)."
+)
+
 
 class SeparationMetadataError(RuntimeError):
     pass
+
+
+def _normalized_text(value: str) -> str:
+    return " ".join(value.split())
+
+
+def _is_legacy_d37_separation(value: object) -> bool:
+    return isinstance(value, str) and _normalized_text(value) == _normalized_text(LEGACY_D37_SEPARATION)
 
 
 def normalize_store(store: dict, required_days: list[str] | tuple[str, ...] = ()) -> tuple[dict, list[str]]:
@@ -48,12 +70,19 @@ def normalize_store(store: dict, required_days: list[str] | tuple[str, ...] = ()
                 raise SeparationMetadataError(
                     f"{day}: cannot assert separation because {key} is missing/null"
                 )
+
         if "served_separately" in rec:
-            if rec.get("served_separately") is not True:
-                raise SeparationMetadataError(
-                    f"{day}: explicit served_separately={rec.get('served_separately')!r}; refusing metadata repair"
-                )
-            continue
+            value = rec.get("served_separately")
+            if value is True:
+                continue
+            if _is_legacy_d37_separation(value):
+                rec["served_separately"] = True
+                changed.append(day)
+                continue
+            raise SeparationMetadataError(
+                f"{day}: explicit served_separately={value!r}; refusing metadata repair"
+            )
+
         rec["served_separately"] = True
         changed.append(day)
     return out, changed
@@ -78,7 +107,7 @@ def run(gid: str, execute: bool) -> dict:
         raise SeparationMetadataError(f"unknown group {gid}")
     days = list(gc.GROUPS[gid]["days"])
 
-    # Restore the authoritative store first.  This is pull-only; no staging is requested here.
+    # Restore the authoritative store first. This is pull-only; no staging is requested here.
     subprocess.run([sys.executable, str(HERE / "restore_substrate.py")], check=True)
     if not STORE_PATH.exists():
         raise SeparationMetadataError(f"authoritative store did not restore: {STORE_PATH}")
