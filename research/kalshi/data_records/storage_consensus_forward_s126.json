@@ -1,0 +1,70 @@
+{
+  "contract": "M-13 S126 forward storage-consensus evidence. Every row below is a point-in-time collector observation that occurred strictly before the corresponding EIA natural-gas storage print. Durable consensus.jsonl is not sufficient provenance because its forecast field is updated in place.",
+  "blind_rule": "observed_at_utc < print_datetime_utc",
+  "series": "KXNATGASD",
+  "source_workflow": ".github/workflows/kalshi_collectors_durable.yml",
+  "source_collector": "research/kalshi/consensus_poll.py",
+  "rows": [
+    {
+      "release_date": "2026-07-16",
+      "print_datetime_utc": "2026-07-16T14:30:00Z",
+      "observed_at_utc": "2026-07-16T13:50:18Z",
+      "consensus_bcf": 45.0,
+      "previous_bcf": 61.0,
+      "workflow_run_id": 29502083281,
+      "workflow_job_id": 87633299835,
+      "source": "ForexFactory/Fair Economy via consensus_poll.py",
+      "evidence_url": "https://github.com/DavisAI1974/Markets/actions/runs/29502083281"
+    },
+    {
+      "release_date": "2026-07-23",
+      "print_datetime_utc": "2026-07-23T14:30:00Z",
+      "observed_at_utc": "2026-07-23T14:06:50Z",
+      "consensus_bcf": 29.0,
+      "previous_bcf": 41.0,
+      "workflow_run_id": 30011332024,
+      "workflow_job_id": 89219907311,
+      "source": "ForexFactory/Fair Economy via consensus_poll.py",
+      "evidence_url": "https://github.com/DavisAI1974/Markets/actions/runs/30011332024"
+    },
+    {
+      "release_date": "2026-07-30",
+      "print_datetime_utc": "2026-07-30T14:30:00Z",
+      "observed_at_utc": "2026-07-30T14:02:59Z",
+      "consensus_bcf": 37.0,
+      "previous_bcf": 32.0,
+      "workflow_run_id": 30548003510,
+      "workflow_job_id": 90889044860,
+      "source": "ForexFactory/Fair Economy via consensus_poll.py",
+      "evidence_url": "https://github.com/DavisAI1974/Markets/actions/runs/30548003510"
+    },
+    {
+      "release_date": "2026-08-06",
+      "print_datetime_utc": "2026-08-06T14:30:00Z",
+      "observed_at_utc": "2026-08-06T14:14:57Z",
+      "consensus_bcf": 30.0,
+      "previous_bcf": 28.0,
+      "workflow_run_id": 31107396784,
+      "workflow_job_id": 92636017448,
+      "source": "ForexFactory/Fair Economy via consensus_poll.py",
+      "evidence_url": "https://github.com/DavisAI1974/Markets/actions/runs/31107396784"
+    },
+    {
+      "release_date": "2026-08-13",
+      "print_datetime_utc": "2026-08-13T14:30:00Z",
+      "observed_at_utc": "2026-08-13T08:49:47Z",
+      "consensus_bcf": 31.0,
+      "previous_bcf": 33.0,
+      "workflow_run_id": 31676970642,
+      "workflow_job_id": 94373558071,
+      "source": "ForexFactory/Fair Economy via consensus_poll.py",
+      "evidence_url": "https://github.com/DavisAI1974/Markets/actions/runs/31676970642"
+    }
+  ],
+  "rejected_evidence": [
+    {
+      "workflow_run_id": 31702028437,
+      "reason": "The scheduled run was created before the 2026-08-13 print but its consensus poll actually executed after 14:30Z. It is therefore not used as blind-safe provenance."
+    }
+  ]
+}
