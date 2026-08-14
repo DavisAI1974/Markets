@@ -16,27 +16,38 @@ permissions:
 jobs:
   corrected-inputs:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install current decision-state runtime dependencies
-        run: python -m pip install --quiet numpy requests
+
+      - name: Install current decision-state and S3 staging dependencies
+        run: python -m pip install --quiet numpy requests boto3 pandas databento
+
+      - name: Restore canonical existing S3 substrate
+        env:
+          PYTHONPATH: research/kalshi
+          MARKETS_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          MARKETS_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          # Pull existing stores only. No group staging here because canonical group_config does not
+          # contain legacy G3, and stage_group's latter half builds actual/outcome artifacts.
+          python research/kalshi/restore_substrate.py
+
       - name: Rebuild public positioning caches
         env:
           PYTHONPATH: research/kalshi
         run: |
           python research/kalshi/cot_feed.py --build
           python research/kalshi/cot_combined_feed.py --build
-      - name: Preserve missing-as-missing NGWU behavior
-        run: |
-          mkdir -p data/ngwu
-          test -e data/ngwu/ngwu.json || printf '{"issues":[]}\n' > data/ngwu/ngwu.json
+
       - name: Export corrected G3 reblind inputs only
         env:
           PYTHONPATH: research/kalshi
+          MARKETS_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          MARKETS_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
           rm -rf /tmp/g3_s131
           python research/kalshi/frankie_g3_reblind_s131_runner.py \
@@ -56,8 +67,11 @@ jobs:
           assert d['packet_count']==12
           print('S131 blind-wall manifest verified:', p)
           PY
+
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: frankie-g3-s131-corrected-reblind-inputs
           path: /tmp/g3_s131
           retention-days: 14
+          if-no-files-found: warn
