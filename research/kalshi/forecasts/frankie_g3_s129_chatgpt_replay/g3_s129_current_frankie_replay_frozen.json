@@ -1,0 +1,71 @@
+{
+  "group": "g3_replay_s129",
+  "window": "2025-09-08..2025-09-19",
+  "mode": "historical_learning_replay",
+  "not_pristine_blind": true,
+  "reason_not_pristine": "Legacy archive inspection exposed some historical outcome content during setup; forecast file is still frozen before scoring and does not use legacy guess/actual fields as served inputs.",
+  "current_frankie_basis": {
+    "branch": "chatgpt/burn-hh-12m-s125",
+    "base_head_before_s129_probe": "6e6c067a9787cffff7704bfab8be644b80a2cf7a",
+    "brain_view_sha256": "e851785e5f8ce77dfea43f1cadcf4bd9a3d7e67de82c770a57042bdd448ceece",
+    "brain_play_count": 90,
+    "g24_generalized_lessons_carried": [
+      "authority assignment over data accumulation",
+      "price delivery outranks raw aggressor-flow sign when they disagree",
+      "weather prior is demoted when market delivery contradicts it",
+      "phase-level conviction can outrank session aggregate flow",
+      "Friday forecast-derived handoff and realized exit state remain typed separately"
+    ]
+  },
+  "anchor": {
+    "date": "20250905",
+    "price": 3.026,
+    "last_hour_dir": "down",
+    "cum_usd": 0
+  },
+  "seam": {
+    "date": "20250919",
+    "pre": "NGV25",
+    "post": "NGX25",
+    "note": "historical replay roll seam; no invented scored-leg price structure"
+  },
+  "data_policy": {
+    "no_new_datapoints": true,
+    "legacy_realized_weather_proxy_rejected": true,
+    "same_day_storage_actual_rejected_preprint": true,
+    "missing_current_channels": "marked unavailable, never synthesized",
+    "old_forecasts_not_served": true,
+    "old_actuals_not_served_into_forecast_logic": true
+  },
+  "days": [
+    {
+      "date": "20250908",
+      "owner": "B",
+      "call": "CALL",
+      "confidence": "low",
+      "forecast_day_move_usd": -280,
+      "direction": "DOWN",
+      "path_p50_curve": [[20,0],[22,-62],[0,-84],[2,-95],[4,-84],[6,-106],[8,-123],[10,-162],[12,-202],[14,-230],[16,-252],[18,-266],[20,-280]],
+      "causal_input": {"dow":"Mon","owner":"B","storage_last_known":{"level":3262,"weekly_chg":45,"vs_5yr":149,"phase":"inject","as_of":"2025-09-04"},"stor_surprise_last_known":7.6,"stor_surprise_sign_last_known":"above","curve_regime":null,"weather_forecast":{"availability":"UNAVAILABLE_LEGACY_REALIZED_PROXY_REJECTED"},"tape_conditions":{"availability":"UNAVAILABLE_NOT_RECONSTRUCTED"},"flow_calendar":{"date":"20250908","day_class":"Mon","eia_print_day":false,"roll_seam":false},"scored_leg":"NGV25","scored_leg_structure":{"availability":"UNAVAILABLE_ONE_SHOT_PRICE_MASK"},"legacy_state_source_used_only_for_preexisting_causal_fields":true},
+      "rationale": "Current-Frankie conservative downside prior from last causally known storage surplus/injection backdrop; modern tape/weather/price-delivery channels are unavailable in this historical reconstruction, so authority is damped rather than fabricated. "
+    },
+    {
+      "date":"20250909","owner":"C","call":"CALL","confidence":"low","forecast_day_move_usd":-200,"direction":"DOWN","path_p50_curve":[[20,0],[22,-24],[0,-36],[2,-44],[4,-56],[6,-68],[8,-84],[10,-110],[12,-124],[14,-140],[16,-164],[18,-184],[20,-200]],"causal_input":{"dow":"Tue","owner":"C","storage_last_known":{"level":3262,"weekly_chg":45,"vs_5yr":149,"phase":"inject","as_of":"2025-09-04"},"stor_surprise_last_known":7.6,"stor_surprise_sign_last_known":"above","curve_regime":null,"weather_forecast":{"availability":"UNAVAILABLE_LEGACY_REALIZED_PROXY_REJECTED"},"tape_conditions":{"availability":"UNAVAILABLE_NOT_RECONSTRUCTED"},"flow_calendar":{"date":"20250909","day_class":"Tue","eia_print_day":false,"roll_seam":false},"scored_leg":"NGV25","scored_leg_structure":{"availability":"UNAVAILABLE_ONE_SHOT_PRICE_MASK"},"legacy_state_source_used_only_for_preexisting_causal_fields":true},"rationale":"Current-Frankie conservative downside prior from last causally known storage surplus/injection backdrop; modern tape/weather/price-delivery channels are unavailable in this historical reconstruction, so authority is damped rather than fabricated. "},
+    {
+      "date":"20250910","owner":"C","call":"CALL","confidence":"low","forecast_day_move_usd":-220,"direction":"DOWN","path_p50_curve":[[20,0],[22,-26],[0,-40],[2,-48],[4,-62],[6,-75],[8,-92],[10,-121],[12,-136],[14,-154],[16,-180],[18,-202],[20,-220]],"causal_input":{"dow":"Wed","owner":"C","storage_last_known":{"level":3262,"weekly_chg":45,"vs_5yr":149,"phase":"inject","as_of":"2025-09-04"},"stor_surprise_last_known":7.6,"stor_surprise_sign_last_known":"above","curve_regime":null,"weather_forecast":{"availability":"UNAVAILABLE_LEGACY_REALIZED_PROXY_REJECTED"},"tape_conditions":{"availability":"UNAVAILABLE_NOT_RECONSTRUCTED"},"flow_calendar":{"date":"20250910","day_class":"Wed","eia_print_day":false,"roll_seam":false},"scored_leg":"NGV25","scored_leg_structure":{"availability":"UNAVAILABLE_ONE_SHOT_PRICE_MASK"},"legacy_state_source_used_only_for_preexisting_causal_fields":true},"rationale":"Current-Frankie conservative downside prior from last causally known storage surplus/injection backdrop; modern tape/weather/price-delivery channels are unavailable in this historical reconstruction, so authority is damped rather than fabricated. "},
+    {
+      "date":"20250911","owner":"D","call":"ABSTAIN","confidence":"low","forecast_day_move_usd":-100,"direction":"DOWN","path_p50_curve":[[20,0],[22,-5],[0,-8],[2,-10],[4,-12],[6,-14],[8,-16],[10,-18],[12,-72],[14,-92],[16,-84],[18,-90],[20,-100]],"causal_input":{"dow":"Thu","owner":"D","storage_last_known":{"level":3262,"weekly_chg":45,"vs_5yr":149,"phase":"inject","as_of":"2025-09-04"},"stor_surprise_last_known":7.6,"stor_surprise_sign_last_known":"above","curve_regime":null,"weather_forecast":{"availability":"UNAVAILABLE_LEGACY_REALIZED_PROXY_REJECTED"},"tape_conditions":{"availability":"UNAVAILABLE_NOT_RECONSTRUCTED"},"flow_calendar":{"date":"20250911","day_class":"Thu","eia_print_day":true,"roll_seam":false},"scored_leg":"NGV25","scored_leg_structure":{"availability":"UNAVAILABLE_ONE_SHOT_PRICE_MASK"},"legacy_state_source_used_only_for_preexisting_causal_fields":true},"rationale":"Current-Frankie conservative downside prior from last causally known storage surplus/injection backdrop; modern tape/weather/price-delivery channels are unavailable in this historical reconstruction, so authority is damped rather than fabricated. Storage Thursday remains ABSTAIN/low because same-print consensus/delivery is unavailable before reveal."},
+    {
+      "date":"20250912","owner":"E","call":"CALL","confidence":"low","forecast_day_move_usd":-250,"direction":"DOWN","path_p50_curve":[[20,0],[22,-38],[0,-60],[2,-75],[4,-90],[6,-110],[8,-130],[10,-155],[12,-175],[14,-200],[16,-225],[18,-238],[20,-250]],"causal_input":{"dow":"Fri","owner":"E","storage_last_known":{"level":3333,"weekly_chg":71,"vs_5yr":154,"phase":"inject","as_of":"2025-09-11"},"stor_surprise_last_known":5.6,"stor_surprise_sign_last_known":"above","curve_regime":null,"weather_forecast":{"availability":"UNAVAILABLE_LEGACY_REALIZED_PROXY_REJECTED"},"tape_conditions":{"availability":"UNAVAILABLE_NOT_RECONSTRUCTED"},"flow_calendar":{"date":"20250912","day_class":"Fri","eia_print_day":false,"roll_seam":false},"scored_leg":"NGV25","scored_leg_structure":{"availability":"UNAVAILABLE_ONE_SHOT_PRICE_MASK"},"legacy_state_source_used_only_for_preexisting_causal_fields":true},"rationale":"Current-Frankie conservative downside prior from last causally known storage surplus/injection backdrop; modern tape/weather/price-delivery channels are unavailable in this historical reconstruction, so authority is damped rather than fabricated. "},
+    {
+      "date":"20250915","owner":"B","call":"CALL","confidence":"low","forecast_day_move_usd":-280,"direction":"DOWN","path_p50_curve":[[20,0],[22,-62],[0,-84],[2,-95],[4,-84],[6,-106],[8,-123],[10,-162],[12,-202],[14,-230],[16,-252],[18,-266],[20,-280]],"causal_input":{"dow":"Mon","owner":"B","storage_last_known":{"level":3333,"weekly_chg":71,"vs_5yr":154,"phase":"inject","as_of":"2025-09-11"},"stor_surprise_last_known":5.6,"stor_surprise_sign_last_known":"above","curve_regime":null,"weather_forecast":{"availability":"UNAVAILABLE_LEGACY_REALIZED_PROXY_REJECTED"},"tape_conditions":{"availability":"UNAVAILABLE_NOT_RECONSTRUCTED"},"flow_calendar":{"date":"20250915","day_class":"Mon","eia_print_day":false,"roll_seam":false},"scored_leg":"NGV25","scored_leg_structure":{"availability":"UNAVAILABLE_ONE_SHOT_PRICE_MASK"},"legacy_state_source_used_only_for_preexisting_causal_fields":true},"rationale":"Current-Frankie conservative downside prior from last causally known storage surplus/injection backdrop; modern tape/weather/price-delivery channels are unavailable in this historical reconstruction, so authority is damped rather than fabricated. "},
+    {
+      "date":"20250916","owner":"C","call":"CALL","confidence":"low","forecast_day_move_usd":-200,"direction":"DOWN","path_p50_curve":[[20,0],[22,-24],[0,-36],[2,-44],[4,-56],[6,-68],[8,-84],[10,-110],[12,-124],[14,-140],[16,-164],[18,-184],[20,-200]],"causal_input":{"dow":"Tue","owner":"C","storage_last_known":{"level":3333,"weekly_chg":71,"vs_5yr":154,"phase":"inject","as_of":"2025-09-11"},"stor_surprise_last_known":5.6,"stor_surprise_sign_last_known":"above","curve_regime":null,"weather_forecast":{"availability":"UNAVAILABLE_LEGACY_REALIZED_PROXY_REJECTED"},"tape_conditions":{"availability":"UNAVAILABLE_NOT_RECONSTRUCTED"},"flow_calendar":{"date":"20250916","day_class":"Tue","eia_print_day":false,"roll_seam":false},"scored_leg":"NGV25","scored_leg_structure":{"availability":"UNAVAILABLE_ONE_SHOT_PRICE_MASK"},"legacy_state_source_used_only_for_preexisting_causal_fields":true},"rationale":"Current-Frankie conservative downside prior from last causally known storage surplus/injection backdrop; modern tape/weather/price-delivery channels are unavailable in this historical reconstruction, so authority is damped rather than fabricated. "},
+    {
+      "date":"20250917","owner":"C","call":"CALL","confidence":"low","forecast_day_move_usd":-220,"direction":"DOWN","path_p50_curve":[[20,0],[22,-26],[0,-40],[2,-48],[4,-62],[6,-75],[8,-92],[10,-121],[12,-136],[14,-154],[16,-180],[18,-202],[20,-220]],"causal_input":{"dow":"Wed","owner":"C","storage_last_known":{"level":3333,"weekly_chg":71,"vs_5yr":154,"phase":"inject","as_of":"2025-09-11"},"stor_surprise_last_known":5.6,"stor_surprise_sign_last_known":"above","curve_regime":null,"weather_forecast":{"availability":"UNAVAILABLE_LEGACY_REALIZED_PROXY_REJECTED"},"tape_conditions":{"availability":"UNAVAILABLE_NOT_RECONSTRUCTED"},"flow_calendar":{"date":"20250917","day_class":"Wed","eia_print_day":false,"roll_seam":false},"scored_leg":"NGV25","scored_leg_structure":{"availability":"UNAVAILABLE_ONE_SHOT_PRICE_MASK"},"legacy_state_source_used_only_for_preexisting_causal_fields":true},"rationale":"Current-Frankie conservative downside prior from last causally known storage surplus/injection backdrop; modern tape/weather/price-delivery channels are unavailable in this historical reconstruction, so authority is damped rather than fabricated. "},
+    {
+      "date":"20250918","owner":"D","call":"ABSTAIN","confidence":"low","forecast_day_move_usd":-100,"direction":"DOWN","path_p50_curve":[[20,0],[22,-5],[0,-8],[2,-10],[4,-12],[6,-14],[8,-16],[10,-18],[12,-72],[14,-92],[16,-84],[18,-90],[20,-100]],"causal_input":{"dow":"Thu","owner":"D","storage_last_known":{"level":3333,"weekly_chg":71,"vs_5yr":154,"phase":"inject","as_of":"2025-09-11"},"stor_surprise_last_known":5.6,"stor_surprise_sign_last_known":"above","curve_regime":null,"weather_forecast":{"availability":"UNAVAILABLE_LEGACY_REALIZED_PROXY_REJECTED"},"tape_conditions":{"availability":"UNAVAILABLE_NOT_RECONSTRUCTED"},"flow_calendar":{"date":"20250918","day_class":"Thu","eia_print_day":true,"roll_seam":false},"scored_leg":"NGV25","scored_leg_structure":{"availability":"UNAVAILABLE_ONE_SHOT_PRICE_MASK"},"legacy_state_source_used_only_for_preexisting_causal_fields":true},"rationale":"Current-Frankie conservative downside prior from last causally known storage surplus/injection backdrop; modern tape/weather/price-delivery channels are unavailable in this historical reconstruction, so authority is damped rather than fabricated. Storage Thursday remains ABSTAIN/low because same-print consensus/delivery is unavailable before reveal."},
+    {
+      "date":"20250919","owner":"E","call":"CALL","confidence":"low","forecast_day_move_usd":-350,"direction":"DOWN","path_p50_curve":[[20,0],[22,-52],[0,-84],[2,-105],[4,-126],[6,-154],[8,-182],[10,-217],[12,-245],[14,-280],[16,-315],[18,-332],[20,-350]],"causal_input":{"dow":"Fri","owner":"E","storage_last_known":{"level":3423,"weekly_chg":90,"vs_5yr":166,"phase":"inject","as_of":"2025-09-18"},"stor_surprise_last_known":12.0,"stor_surprise_sign_last_known":"above","curve_regime":null,"weather_forecast":{"availability":"UNAVAILABLE_LEGACY_REALIZED_PROXY_REJECTED"},"tape_conditions":{"availability":"UNAVAILABLE_NOT_RECONSTRUCTED"},"flow_calendar":{"date":"20250919","day_class":"Fri","eia_print_day":false,"roll_seam":true},"scored_leg":"NGX25","scored_leg_structure":{"availability":"UNAVAILABLE_ONE_SHOT_PRICE_MASK"},"legacy_state_source_used_only_for_preexisting_causal_fields":true},"rationale":"Current-Frankie conservative downside prior from last causally known storage surplus/injection backdrop; modern tape/weather/price-delivery channels are unavailable in this historical reconstruction, so authority is damped rather than fabricated.  Roll-seam structure is not invented; E carries only the available structural prior."}
+  ]
+}
