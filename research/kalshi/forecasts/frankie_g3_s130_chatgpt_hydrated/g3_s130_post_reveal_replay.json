@@ -1,0 +1,174 @@
+{
+ "group": "g3_s130_current_frankie_hydrated",
+ "window": "2025-09-08..2025-09-19",
+ "phase": "post_reveal_hydration_counterfactual_replay",
+ "operator": "ChatGPT",
+ "frankie_role": "coordinator",
+ "state_source": {
+  "snapshot_commit": "db325e03",
+  "path": "research/kalshi/historical/snapshots/g3_s130/decision_state.json",
+  "fully_populated_channels": [
+   "cot",
+   "curve_regime",
+   "flow_calendar",
+   "nuclear_outages",
+   "solar",
+   "stor_surprise",
+   "stor_surprise_sign",
+   "storage",
+   "storage_regional"
+  ],
+  "partially_populated_channels": [
+   "steo_vintage"
+  ],
+  "grid_stack": "UNAVAILABLE_EIA_DEMO_KEY_429",
+  "weather_vintages": "UNAVAILABLE_NOT_CAPTURED_NO_REALIZED_PROXY_SUBSTITUTION"
+ },
+ "anchor": {
+  "date": "20250905",
+  "price": 3.026,
+  "last_hour_dir": "down",
+  "cum_usd": 0
+ },
+ "contract": {
+  "scored_leg": "NGV25",
+  "seam_inside_window": false,
+  "next_known_seam_date": "20250925"
+ },
+ "integrity": {
+  "pristine_blind": false,
+  "reason": "September outcomes were revealed after S129. S130 is a post-reveal counterfactual replay used only to measure the effect of restored existing inputs.",
+  "anti_fit_guard": "S129 curve shapes are retained and only re-sized from newly hydrated current-state evidence; no actual price/tape/outcome is an input to the replay file.",
+  "teach_from_this_run": false,
+  "no_new_datapoints": true,
+  "g24_untouched": true
+ },
+ "bridges": [
+  {
+   "from": "20250905",
+   "to": "20250908",
+   "owner": "A",
+   "state": "DOWN_TO_NEUTRAL",
+   "confidence": "low",
+   "gap_p50_usd": 0,
+   "reason": "Weekend-cycle/weather/tape vintage remains unavailable; no gap is invented."
+  },
+  {
+   "from": "20250912",
+   "to": "20250915",
+   "owner": "A",
+   "state": "DOWN_TO_NEUTRAL",
+   "confidence": "low",
+   "gap_p50_usd": 0,
+   "reason": "Weekend-cycle evidence remains unavailable; hydrated physical balance changes day-side confidence, not the unseen gap."
+  }
+ ],
+ "days": [
+  {
+   "date": "20250908",
+   "owner": "B",
+   "call": "ABSTAIN",
+   "confidence": "low",
+   "forecast_day_move_usd": -250,
+   "direction": "DOWN",
+   "path_p50_curve": [[20,0],[22,-60],[0,-90],[2,-120],[4,-150],[6,-170],[8,-120],[10,-150],[12,-190],[14,-220],[16,-240],[18,-245],[20,-250]],
+   "rationale": "Hydrated storage shows a +149 Bcf five-year surplus with a +45 Bcf prior build, while nuclear outages are already elevated. Those forces oppose each other; without weekend/weather/tape evidence B keeps the S129 -250 p50 and abstains."
+  },
+  {
+   "date": "20250909",
+   "owner": "C",
+   "call": "CALL",
+   "confidence": "low",
+   "forecast_day_move_usd": -400,
+   "direction": "DOWN",
+   "path_p50_curve": [[20,0],[22,-45],[0,-75],[2,-100],[4,-125],[6,-160],[8,-200],[10,-245],[12,-285],[14,-325],[16,-360],[18,-385],[20,-400]],
+   "rationale": "The storage surplus and South Central/salt spare capacity keep the shoulder balance loose. Nuclear outages eased from the prior read and no price/tape delivery exists, so C increases the weak-down magnitude to -400 but keeps confidence low."
+  },
+  {
+   "date": "20250910",
+   "owner": "C",
+   "call": "CALL",
+   "confidence": "low",
+   "forecast_day_move_usd": -400,
+   "direction": "DOWN",
+   "path_p50_curve": [[20,0],[22,-40],[0,-65],[2,-90],[4,-110],[6,-145],[8,-185],[10,-240],[12,-290],[14,-330],[16,-360],[18,-385],[20,-400]],
+   "rationale": "The Sep STEO becomes knowable: September demand and power burn are marked below August while production is nearly flat and working gas is rising. That reinforces the existing downside chain; nuclear outages partly offset it, yielding -400 rather than a full bearish extension."
+  },
+  {
+   "date": "20250911",
+   "owner": "D",
+   "call": "ABSTAIN",
+   "confidence": "low",
+   "forecast_day_move_usd": -750,
+   "direction": "DOWN",
+   "path_p50_curve": [[20,0],[22,-25],[0,-35],[2,-40],[4,-50],[6,-60],[8,-75],[10,-95],[12,-490],[14,-710],[16,-805],[18,-770],[20,-750]],
+   "rationale": "Storage Thursday remains a range up-size, not a print-sign direction call. The only visible storage report is still Sep 4 by the strict wall, and STEO/physical storage context is loose; without D-1 tape or same-print consensus D abstains but widens the weak-down p50 to -750."
+  },
+  {
+   "date": "20250912",
+   "owner": "E",
+   "call": "ABSTAIN",
+   "confidence": "low",
+   "forecast_day_move_usd": -450,
+   "direction": "DOWN",
+   "path_p50_curve": [[20,0],[22,-70],[0,-100],[2,-135],[4,-170],[6,-200],[8,-250],[10,-290],[12,-340],[14,-380],[16,-430],[18,-460],[20,-450]],
+   "rationale": "The Sep 11 storage report is now legally visible: +71 Bcf with the inventory surplus widening to +154 Bcf, including larger South Central and salt builds. STEO also remains loose; nuclear is not yet large enough to offset. E carries -450 with low confidence."
+  },
+  {
+   "date": "20250915",
+   "owner": "B",
+   "call": "ABSTAIN",
+   "confidence": "low",
+   "forecast_day_move_usd": -400,
+   "direction": "DOWN",
+   "path_p50_curve": [[20,0],[22,-70],[0,-105],[2,-135],[4,-170],[6,-200],[8,-175],[10,-215],[12,-265],[14,-310],[16,-350],[18,-385],[20,-400]],
+   "rationale": "The loose storage/STEO background remains bearish, but COT covering has strengthened and nuclear outages rise above 6 GW. With the weekend gap still unobservable, B keeps the downside side but limits it to -400 and abstains."
+  },
+  {
+   "date": "20250916",
+   "owner": "C",
+   "call": "CALL",
+   "confidence": "low",
+   "forecast_day_move_usd": 175,
+   "direction": "UP",
+   "path_p50_curve": [[20,0],[22,20],[0,30],[2,40],[4,50],[6,65],[8,85],[10,105],[12,120],[14,140],[16,155],[18,165],[20,175]],
+   "rationale": "Nuclear outages jump above 7.5 GW and rise more than 1 GW day over day, a real bullish gas-burn offset to the loose storage/STEO backdrop. C retains the S129 covering-up sign but trims it to +175 because the physical balance remains loose."
+  },
+  {
+   "date": "20250917",
+   "owner": "C",
+   "call": "CALL",
+   "confidence": "low",
+   "forecast_day_move_usd": 75,
+   "direction": "UP",
+   "path_p50_curve": [[20,0],[22,10],[0,10],[2,20],[4,20],[6,30],[8,40],[10,50],[12,60],[14,65],[16,70],[18,80],[20,75]],
+   "rationale": "Nuclear outages remain above 7.6 GW and day length continues falling, supporting gas burn, but the Sep storage surplus and lower STEO power-burn baseline remain a counterweight. C keeps a small +75 covering drift only."
+  },
+  {
+   "date": "20250918",
+   "owner": "D",
+   "call": "ABSTAIN",
+   "confidence": "low",
+   "forecast_day_move_usd": -500,
+   "direction": "DOWN",
+   "path_p50_curve": [[20,0],[22,-15],[0,-20],[2,-30],[4,-35],[6,-40],[8,-50],[10,-60],[12,-310],[14,-480],[16,-555],[18,-530],[20,-500]],
+   "rationale": "Storage Thursday is still directionally underdetermined without D-1 tape or same-print consensus. Nuclear outages near 8 GW oppose the loose storage/STEO state, so D keeps a downside stress path near the S129 prior (-500) and abstains."
+  },
+  {
+   "date": "20250919",
+   "owner": "E",
+   "call": "ABSTAIN",
+   "confidence": "low",
+   "forecast_day_move_usd": -250,
+   "direction": "DOWN",
+   "path_p50_curve": [[20,0],[22,-35],[0,-50],[2,-75],[4,-90],[6,-115],[8,-140],[10,-165],[12,-190],[14,-215],[16,-240],[18,-260],[20,-250]],
+   "rationale": "The Sep 18 report is now visible: +90 Bcf and the five-year surplus widens to +166 Bcf, with South Central and salt builds also larger. Nuclear remains high and COT covering is positive, so E uses a moderate -250 residual rather than a full bearish call."
+  }
+ ],
+ "adjustment_policy": {
+  "shape": "retain S129 13-point intraday shape per day; rescale only the p50 endpoint",
+  "new_evidence": ["strict-prior national storage","strict-prior regional/salt storage","Sep25 STEO from Sep10 onward","strict-prior nuclear outages","solar calendar"],
+  "direction_authority": "storage surprise sign never owns an EIA-day direction; no tape/weather-vintage means no chain upgrade on Thursdays",
+  "positioning": "COT already existed in S129 and is not double-counted"
+ }
+}
