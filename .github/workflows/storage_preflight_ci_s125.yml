@@ -1,0 +1,38 @@
+name: S125 Storage Preflight CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - research/kalshi/frankie_storage_preflight.py
+      - research/kalshi/eia_storage_compat.py
+      - .github/workflows/storage_preflight_ci_s125.yml
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install --quiet xlrd
+      - name: Run storage preflight
+        run: python research/kalshi/frankie_storage_preflight.py > /tmp/storage_preflight.json
+      - name: Validate preflight result
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/storage_preflight.json'))
+          assert d['status']=='READY', d
+          assert d['api_key_required'] is False, d
+          assert d['regional_reports'] >= 800, d
+          assert d['national_reports'] >= 800, d
+          print(json.dumps(d, indent=2))
+          PY
