@@ -101,6 +101,41 @@ def install_g3_context() -> None:
     gc.GROUPS[GID] = dict(_G3_CONTEXT)
 
 
+def install_anchor_artifact() -> tuple[Path, dict[str, Any]]:
+    """Materialize the already-declared Sep-05 starter anchor for spawn; never read a target outcome."""
+    anchor = {
+        "group": GID,
+        "date": ANCHOR_DATE,
+        "dow": "Fri",
+        "anchor_close": ANCHOR_PRICE,
+        "anchor_lasthr_dir": ANCHOR_LASTHR_DIR,
+        "leg": SCORED_STORE,
+        "basis": _G3_CONTEXT["basis"],
+        "is_holiday_session": False,
+        "verification": {
+            "source": "pre-existing S129 starter-anchor contract; no Sep-08..Sep-19 outcome read",
+            "status": "DECLARED_REPLAY_ANCHOR",
+        },
+        "last_hour": {
+            "direction": "down",
+            "derived_dir": ANCHOR_LASTHR_DIR,
+            "provenance": "declared starter-anchor last-hour direction; target-window outcomes are outside this exporter",
+        },
+        "session_activity": None,
+    }
+    path = HERE / "renders" / "ng_refine_s95" / "g3_anchor.json"
+    if path.exists():
+        old = json.loads(path.read_text(encoding="utf-8"))
+        check = (old.get("date"), old.get("anchor_close"), old.get("anchor_lasthr_dir"), old.get("leg"))
+        want = (ANCHOR_DATE, ANCHOR_PRICE, ANCHOR_LASTHR_DIR, SCORED_STORE)
+        if check != want:
+            raise S131Stop(f"existing g3 anchor conflicts with S131 contract: {check} != {want}")
+        return path, old
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(anchor, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return path, anchor
+
+
 def _assert_no_rejected_hydration() -> None:
     if _REJECTED_HYDRATION_MODULE in sys.modules:
         raise S131Stop("rejected S130 hydration module entered the S131 process")
@@ -255,11 +290,14 @@ def _packet(
 def export(out_dir: Path, namespace: str) -> dict[str, Any]:
     verify_original_spawn()
     install_g3_context()
+    anchor_path, anchor = install_anchor_artifact()
     _assert_no_rejected_hydration()
     owners = _owners()
     state = build_state()
 
     out_dir.mkdir(parents=True, exist_ok=True)
+    anchor_text = json.dumps(anchor, indent=2, sort_keys=True) + "\n"
+    (out_dir / "g3_s131_anchor.json").write_text(anchor_text, encoding="utf-8")
     state_path = out_dir / "g3_s131_corrected_state.json"
     state_text = json.dumps(state, indent=2, sort_keys=True) + "\n"
     state_path.write_text(state_text, encoding="utf-8")
@@ -324,6 +362,7 @@ def export(out_dir: Path, namespace: str) -> dict[str, Any]:
         "group_config_file_modified": False,
         "mask_after": ANCHOR_DATE,
         "starter_anchor": {"date": ANCHOR_DATE, "close": ANCHOR_PRICE, "last_hour_dir": "down"},
+        "anchor_artifact": {"runner_path": str(anchor_path.relative_to(ROOT)), "export_path": "g3_s131_anchor.json"},
         "scored_leg": "NGV25",
         "scored_store": SCORED_STORE,
         "hydration": "REJECTED_NOT_USED",
