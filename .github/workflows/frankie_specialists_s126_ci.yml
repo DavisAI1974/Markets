@@ -7,9 +7,12 @@ on:
     paths:
       - research/kalshi/frankie_specialist_parity_s126.py
       - research/kalshi/frankie_s121_curve_restore.py
+      - research/kalshi/frankie_g24_run_s127.py
       - research/kalshi/frankie_aws_stage_s126.py
       - research/kalshi/frankie_causal_capture_gate_s126.py
       - research/kalshi/tests/test_frankie_specialist_parity_s126.py
+      - research/kalshi/tests/test_frankie_s121_curve_restore.py
+      - research/kalshi/tests/test_frankie_g24_run_s127.py
       - research/kalshi/renders/ng_refine_s95/grp24_state.json
       - research/kalshi/renders/ng_refine_s95/g24_causal_slices/**
       - .github/workflows/frankie_specialists_s126_ci.yml
@@ -36,12 +39,18 @@ jobs:
           python -m py_compile \
             research/kalshi/frankie_specialist_parity_s126.py \
             research/kalshi/frankie_s121_curve_restore.py \
+            research/kalshi/frankie_g24_run_s127.py \
             research/kalshi/frankie_s118_redo.py \
             research/kalshi/frankie_group_forecast_s118.py \
             research/kalshi/frankie_aws_stage_s126.py \
             research/kalshi/frankie_causal_capture_gate_s126.py
       - name: Run A-E parity and blind-wall tests
         run: python -m pytest -q research/kalshi/tests/test_frankie_specialist_parity_s126.py
+      - name: Run S121 close-boundary and S127 manual-runner tests
+        run: |
+          python -m pytest -q \
+            research/kalshi/tests/test_frankie_s121_curve_restore.py \
+            research/kalshi/tests/test_frankie_g24_run_s127.py
       - name: Prove protected spawner and specialist roles were not rewritten
         run: |
           test "$(git hash-object research/kalshi/spawn.py)" = "2eb3ab8570be66bd9568bcd3ca2e6b9f19d6b33e"
@@ -99,6 +108,33 @@ jobs:
           assert capture['causal_structure'] == 'PASS'
           print(f'PASS: committed g24 state + {len(days)} causal slices pass S114 separation and hard causal-capture gates')
           PY
+      - name: Export lossless sanctioned g24 packets for ChatGPT operation
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          python research/kalshi/frankie_g24_run_s127.py export \
+            --namespace frankie_g24_s127_chatgpt \
+            --out /tmp/frankie_g24_s127_packets \
+            > /tmp/frankie_g24_s127_export_stdout.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('/tmp/frankie_g24_s127_packets')
+          manifest = json.loads((root / 'manifest.json').read_text())
+          assert manifest['group'] == 'g24'
+          assert manifest['packet_count'] == 11
+          assert manifest['model_api_invoked'] is False
+          assert manifest['actuals_read'] is False
+          assert all(p['invariants']['full_play_bodies_served'] == 90 for p in manifest['packets'])
+          assert all(p['invariants']['realized_outcome_in_packet'] is False for p in manifest['packets'])
+          print('PASS: exported 10 BLD-1 packets + one Friday-cutoff BLD-2 packet; no model, no outcomes')
+          PY
+      - name: Upload ChatGPT-operated g24 packets
+        uses: actions/upload-artifact@v4
+        with:
+          name: frankie-g24-s127-chatgpt-packets
+          path: /tmp/frankie_g24_s127_packets/
+          retention-days: 7
       - name: Re-read existing S114 GEFS store when Actions AWS credentials are available
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
