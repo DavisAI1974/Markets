@@ -1,0 +1,44 @@
+name: S129 Frankie G3 Current-State Replay
+
+on:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - .github/workflows/frankie_g3_s129_current_state.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  current-state:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Build S128 repaired decision state for Sep 8-19 2025
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          mkdir -p /tmp/g3_s129
+          python research/kalshi/frankie_s128_decision_state.py decision-state \
+            --days 20250908,20250909,20250910,20250911,20250912,20250915,20250916,20250917,20250918,20250919 \
+            --out /tmp/g3_s129/g3_s129_current_state.json \
+            > /tmp/g3_s129/g3_s129_current_state.pretty.json
+          python - <<'PY'
+          import json
+          p='/tmp/g3_s129/g3_s129_current_state.json'
+          d=json.load(open(p))
+          print('days', len(d))
+          for day,state in d.items():
+              print(day, 'fields=', len(state), 'keys=', sorted(state)[:20])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frankie-g3-s129-current-state
+          path: /tmp/g3_s129
+          retention-days: 14
