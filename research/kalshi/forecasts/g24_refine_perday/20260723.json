@@ -1,0 +1,19 @@
+{
+  "schema_version": "s128.g24_refine_day.1",
+  "group": "g24",
+  "date": "20260723",
+  "dow": "Thu",
+  "owner": "D",
+  "purpose_note": "Create a forecast curve for the day. Refine uses the same kitchen sink as blind plus realized price/curve as causal evidence; blind stays immutable.",
+  "blind": {"day_move_usd": 150, "gap_usd": 0, "disposition": "ABSTAIN", "confidence": "low"},
+  "actual": {"day_move_usd": -40, "gap_usd": -10},
+  "causal_mbo": {"onset_et": "01:41", "onset_dir": "up", "turn_et": "08:37", "turn_kind": "turn_down", "phases": [{"sflow": -113, "pxchg": 270}, {"sflow": -835, "pxchg": -190}, {"sflow": -595, "pxchg": -130}]},
+  "posterior_rule": "R4 catalyst-turn ownership: on a storage day, a realized pre-event extreme and causal turn can own the curve even when the survey surprise is unavailable. Once the turn is followed by same-sign negative price phases, the posterior must model reversal/round-trip rather than impose a generic post-print impulse sign.",
+  "refined_day_move_usd": -60,
+  "refined_error_usd": -20,
+  "path_p50_curve": [[20,-10],[22,35],[0,90],[2,170],[4,260],[6,380],[8,500],[10,405],[12,230],[14,65],[16,-35],[18,-70],[20,-60]],
+  "weight_assigned": {"blind": 0.30, "causal_mbo": 0.70},
+  "lesson": "The blind's ABSTAIN was correct, but its curve centered the main impulse after 10:30. Refine shows the important move cresting at 08:37 before the print, then reversing. The missing consensus limited blind directional confidence, but it did not prevent a causal turn model once price was revealed.",
+  "carry_forward": "On catalyst days, event timing does not automatically own the dominant turn. If a material pre-event extreme is followed by a causal turn and two delivered post-turn phases, let the turn state override the generic print-impulse template.",
+  "anti_overfit_note": "Endpoint is gap + sum of causal phase price changes (-10+270-190-130=-60), using the same reconstruction rule as every g24 day."
+}
