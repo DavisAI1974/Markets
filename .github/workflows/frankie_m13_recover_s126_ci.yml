@@ -6,8 +6,10 @@ on:
       - chatgpt/burn-hh-12m-s125
     paths:
       - research/kalshi/frankie_m13_recover_s126.py
+      - research/kalshi/storage_consensus.py
       - research/kalshi/data_records/storage_consensus_forward_s126.json
       - research/kalshi/tests/test_frankie_m13_recover_s126.py
+      - research/kalshi/tests/test_storage_consensus_causal_s126.py
       - .github/workflows/frankie_m13_recover_s126_ci.yml
   workflow_dispatch:
 
@@ -25,10 +27,15 @@ jobs:
           python-version: '3.11'
       - name: Install focused test dependency
         run: pip install --quiet pytest
-      - name: Compile M13 recovery wrapper
-        run: python -m py_compile research/kalshi/frankie_m13_recover_s126.py
-      - name: Test blind-safe evidence merge and D47 read-back invariants
-        run: python -m pytest -q research/kalshi/tests/test_frankie_m13_recover_s126.py
+      - name: Compile M13 recovery and causal consensus feed
+        run: |
+          python -m py_compile research/kalshi/frankie_m13_recover_s126.py
+          python -m py_compile research/kalshi/storage_consensus.py
+      - name: Test M13 recovery and storage-consensus blind wall
+        run: |
+          python -m pytest -q \
+            research/kalshi/tests/test_frankie_m13_recover_s126.py \
+            research/kalshi/tests/test_storage_consensus_causal_s126.py
       - name: Prove wrapper reuses canonical builders and sanctioned S3 door
         env:
           PYTHONPATH: research/kalshi
@@ -38,6 +45,7 @@ jobs:
           import json
           from pathlib import Path
           import frankie_m13_recover_s126 as m13
+          import storage_consensus as sc
 
           src = inspect.getsource(m13)
           evidence = json.loads(Path('research/kalshi/data_records/storage_consensus_forward_s126.json').read_text(encoding='utf-8'))
@@ -54,5 +62,7 @@ jobs:
           assert 'weather_forecast_cycle' in src
           assert 'freeze_risk' in src
           assert 'storage_consensus' in src
-          print('PASS: M13 recovery is existing-builder reuse, blind-safe, D47-verified, and rehearsal-gated')
+          assert sc._DECISION_OPEN_HOUR_ET == 8
+          assert '_visible_snapshot' in inspect.getsource(sc._next_print_view)
+          print('PASS: M13 recovery reuses existing builders and next-print consensus is capture-time causal')
           PY
