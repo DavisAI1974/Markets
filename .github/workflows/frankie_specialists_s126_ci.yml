@@ -7,6 +7,8 @@ on:
     paths:
       - research/kalshi/frankie_specialist_parity_s126.py
       - research/kalshi/frankie_s121_curve_restore.py
+      - research/kalshi/frankie_aws_stage_s126.py
+      - research/kalshi/frankie_causal_capture_gate_s126.py
       - research/kalshi/tests/test_frankie_specialist_parity_s126.py
       - research/kalshi/renders/ng_refine_s95/grp24_state.json
       - research/kalshi/renders/ng_refine_s95/g24_causal_slices/**
@@ -35,7 +37,9 @@ jobs:
             research/kalshi/frankie_specialist_parity_s126.py \
             research/kalshi/frankie_s121_curve_restore.py \
             research/kalshi/frankie_s118_redo.py \
-            research/kalshi/frankie_group_forecast_s118.py
+            research/kalshi/frankie_group_forecast_s118.py \
+            research/kalshi/frankie_aws_stage_s126.py \
+            research/kalshi/frankie_causal_capture_gate_s126.py
       - name: Run A-E parity and blind-wall tests
         run: python -m pytest -q research/kalshi/tests/test_frankie_specialist_parity_s126.py
       - name: Prove protected spawner and specialist roles were not rewritten
@@ -74,41 +78,26 @@ jobs:
           assert ('nymex/gefs_forcing/', 'data/gefs_forcing') in restore_substrate.PREFIXES
           print('PASS: S114 producer -> decision_state -> stage-health -> restore path remains intact')
           PY
-      - name: Prove committed g24 state and slices actually serve S114 wind and solar
+      - name: Prove committed g24 state and slices pass the same S126 serving and causal gates
         env:
           PYTHONPATH: research/kalshi
         run: |
           python - <<'PY'
-          import json
-          from pathlib import Path
           import group_config as gc
+          from frankie_aws_stage_s126 import validate_served_forcing
+          from frankie_causal_capture_gate_s126 import validate as validate_capture
 
           days = list(gc.GROUPS['g24']['days'])
-          state_path = Path('research/kalshi/renders/ng_refine_s95/grp24_state.json')
-          state = json.loads(state_path.read_text(encoding='utf-8'))
-
-          def require(day, block, where):
-              if not isinstance(block, dict) or not block:
-                  raise SystemExit(f'STALE_STATE: {where} {day} has no weather_forcing_forecast')
-              if block.get('wind_cf_proxy') is None:
-                  raise SystemExit(f'STALE_STATE: {where} {day} has no wind_cf_proxy')
-              if block.get('solar_irradiance_proxy') is None:
-                  raise SystemExit(f'STALE_STATE: {where} {day} has no solar_irradiance_proxy')
-              if block.get('is_forecast_not_realized') is not True:
-                  raise SystemExit(f'STALE_STATE: {where} {day} is not marked forecast-not-realized')
-              if not block.get('cycle_utc') or not block.get('knowable_from'):
-                  raise SystemExit(f'STALE_STATE: {where} {day} lacks forcing timestamps')
-              iso = f'{day[:4]}-{day[4:6]}-{day[6:]}'
-              if str(block['knowable_from'])[:10] >= iso:
-                  raise SystemExit(f'CAUSAL_WALL: {where} {day} forcing is not strictly pre-day')
-
-          for day in days:
-              require(day, (state.get(day) or {}).get('weather_forcing_forecast'), 'grp24_state')
-              slice_path = Path(f'research/kalshi/renders/ng_refine_s95/g24_causal_slices/state_{day}.json')
-              slice_obj = json.loads(slice_path.read_text(encoding='utf-8'))
-              require(day, (slice_obj.get(day) or {}).get('weather_forcing_forecast'), slice_path.name)
-
-          print(f'PASS: committed g24 state + {len(days)} causal slices serve causal S114 wind+solar')
+          serving = validate_served_forcing('g24')
+          capture = validate_capture('g24')
+          assert serving['days'] == len(days)
+          assert serving['weather_forcing_forecast'] == 'PASS'
+          assert serving['wind_solar_separate'] is True
+          assert serving['causal_slices'] == 'PASS'
+          assert capture['days'] == len(days)
+          assert capture['future_capture_stamps'] == 0
+          assert capture['causal_structure'] == 'PASS'
+          print(f'PASS: committed g24 state + {len(days)} causal slices pass S114 separation and hard causal-capture gates')
           PY
       - name: Re-read existing S114 GEFS store when Actions AWS credentials are available
         env:
@@ -145,6 +134,7 @@ jobs:
               assert isinstance(rec, dict) and rec, (day, rec)
               assert rec.get('wind_cf_proxy') is not None, (day, rec)
               assert rec.get('solar_irradiance_proxy') is not None, (day, rec)
+              assert rec.get('served_separately') is True, (day, rec)
               assert rec.get('is_forecast_not_realized') is True, (day, rec)
               assert rec.get('cycle_utc') and rec.get('knowable_from'), (day, rec)
               assert str(rec['knowable_from'])[:10] < f'{day[:4]}-{day[4:6]}-{day[6:]}', (day, rec)
@@ -164,5 +154,5 @@ jobs:
               }, specialist=spec, phase='BLIND')
               assert packet['causal_slice'][day]['weather_forcing_forecast'] is checked[day]
               assert packet['specialist_access_contract']['coordinator'] == 'Frankie'
-          print(f'PASS: live S3 re-read found non-null S114 wind+solar on {len(days)} g24 days; unchanged to A-E')
+          print(f'PASS: live S3 re-read found non-null separate S114 wind+solar on {len(days)} g24 days; unchanged to A-E')
           PY
