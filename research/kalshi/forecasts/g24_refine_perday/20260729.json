@@ -1,0 +1,19 @@
+{
+  "schema_version": "s128.g24_refine_day.1",
+  "group": "g24",
+  "date": "20260729",
+  "dow": "Wed",
+  "owner": "C",
+  "purpose_note": "Create a forecast curve for the day. Refine uses the same kitchen sink as blind plus realized price/curve as causal evidence; blind stays immutable.",
+  "blind": {"day_move_usd": -150, "gap_usd": 0, "disposition": "ABSTAIN", "confidence": "low"},
+  "actual": {"day_move_usd": 340, "gap_usd": -10},
+  "causal_mbo": {"onset_et": "09:49", "onset_dir": "up", "turn_et": "07:48", "turn_kind": "turn_up", "phases": [{"sflow": 86, "pxchg": -80}, {"sflow": 198, "pxchg": 500}, {"sflow": -356, "pxchg": -60}]},
+  "posterior_rule": "R7 turn confirmation: after an early decline, a realized turn-up followed by a large rising-price middle phase establishes a new causal direction even if aggregate flow is near neutral. A small opposite final phase is a giveback unless it reverses the delivered middle-phase move.",
+  "refined_day_move_usd": 350,
+  "refined_error_usd": 10,
+  "path_p50_curve": [[20,-10],[22,-30],[0,-55],[2,-80],[4,-120],[6,-180],[8,-250],[10,-70],[12,210],[14,500],[16,610],[18,455],[20,350]],
+  "weight_assigned": {"blind": 0.20, "causal_mbo": 0.80},
+  "lesson": "The blind ABSTAIN was reasonable from ambiguous D-1 flow, but refine shows a clean intraday state change: low/turn around 07:48, then +$500 in the middle phase. The late -$60 phase trims the rally without invalidating it.",
+  "carry_forward": "When prior-flow evidence is ambiguous, do not force continuation. A causal turn plus one dominant delivered phase can become the new chain state; later smaller counter-moves are givebacks unless they erase the turn.",
+  "anti_overfit_note": "Endpoint is gap + sum of causal phase price changes (-10-80+500-60=350), using the same reconstruction rule as every g24 day."
+}
