@@ -1,0 +1,81 @@
+name: S129 Frankie Sep2025 Historical Probe
+
+on:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - .github/workflows/frankie_sep2025_probe_s129.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch all branch refs
+        run: git fetch --force origin '+refs/heads/*:refs/remotes/origin/*'
+      - name: Locate Sep 8-19 2025 historical inputs across refs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/s129_probe/export
+          python - <<'PY'
+          import os, re, subprocess, pathlib, json
+          out = pathlib.Path('/tmp/s129_probe')
+          refs = subprocess.check_output(
+              ['git','for-each-ref','--format=%(refname)','refs/remotes/origin'], text=True
+          ).splitlines()
+          needles = ['20250908','20250919','2025-09-08','2025-09-19']
+          rows = []
+          seen = set()
+          for ref in refs:
+              if ref.endswith('/HEAD'):
+                  continue
+              paths = set()
+              for needle in needles:
+                  p = subprocess.run(
+                      ['git','grep','-l','-F',needle,ref,'--','research/kalshi'],
+                      text=True, capture_output=True
+                  )
+                  if p.returncode not in (0,1):
+                      continue
+                  for line in p.stdout.splitlines():
+                      if ':' in line:
+                          _, path = line.split(':',1)
+                          paths.add(path)
+              for path in sorted(paths):
+                  key = (ref, path)
+                  if key in seen:
+                      continue
+                  seen.add(key)
+                  try:
+                      blob = subprocess.check_output(['git','show',f'{ref}:{path}'])
+                  except subprocess.CalledProcessError:
+                      continue
+                  both = all(n in blob.decode('utf-8','ignore') for n in ('20250908','20250919')) or all(n in blob.decode('utf-8','ignore') for n in ('2025-09-08','2025-09-19'))
+                  rows.append({'ref':ref,'path':path,'bytes':len(blob),'contains_both_bounds':both})
+                  if len(blob) <= 12_000_000 and len(rows) <= 300:
+                      safe = re.sub(r'[^A-Za-z0-9_.-]+','_',ref.replace('refs/remotes/origin/','')+'__'+path)
+                      (out/'export'/safe).write_bytes(blob)
+          rows.sort(key=lambda r:(not r['contains_both_bounds'], r['ref'], r['path']))
+          (out/'probe_report.json').write_text(json.dumps(rows, indent=2), encoding='utf-8')
+          with (out/'probe_report.txt').open('w', encoding='utf-8') as f:
+              f.write(f'matches={len(rows)}\n')
+              for r in rows:
+                  f.write(f"both={r['contains_both_bounds']} bytes={r['bytes']} {r['ref']}:{r['path']}\n")
+          print(f'Found {len(rows)} matching ref/path pairs')
+          for r in rows[:80]:
+              print(r)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frankie-sep2025-probe-s129
+          path: /tmp/s129_probe
+          retention-days: 7
