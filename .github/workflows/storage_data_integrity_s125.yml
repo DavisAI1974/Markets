@@ -1,0 +1,58 @@
+name: S125 Storage Data Integrity
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - research/kalshi/eia_storage_compat.py
+      - .github/workflows/storage_data_integrity_s125.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install --quiet xlrd
+      - name: Build weekly storage stores
+        run: |
+          python research/kalshi/storage_regional.py --build --source xls
+          python research/kalshi/eia_storage_compat.py --out data/eia_surprise.json
+      - name: Check April historical joins
+        run: |
+          python - <<'PY'
+          import json, sys
+          sys.path.insert(0, 'research/kalshi')
+          import forecast_harness as fh
+          import storage_regional as sr
+          series = fh._storage_series()
+          result = {}
+          for iso in ('2026-04-27','2026-04-28','2026-04-29','2026-04-30'):
+              national = fh._storage_asof(iso, series)
+              regional = sr.storage_regional_asof(iso)
+              assert national is not None
+              assert regional is not None
+              l48 = regional['regions']['l48']
+              assert national['as_of'] == regional['as_of']
+              assert abs(float(national['level']) - float(l48['level'])) < 0.11
+              assert abs(float(national['weekly_chg']) - float(l48['weekly_chg'])) < 0.11
+              assert national['as_of'] < iso
+              result[iso] = {'national': national, 'regional_as_of': regional['as_of'], 'period': regional['period']}
+          assert result['2026-04-30']['national']['as_of'] == '2026-04-23'
+          print(json.dumps(result, indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: s125-storage-data
+          path: |
+            data/eia_surprise.json
+            data/storage_regional/storage_regional.json
+          retention-days: 30
