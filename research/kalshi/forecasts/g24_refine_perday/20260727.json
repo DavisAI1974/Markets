@@ -1,0 +1,20 @@
+{
+  "schema_version": "s128.g24_refine_day.1",
+  "group": "g24",
+  "date": "20260727",
+  "dow": "Mon",
+  "owner": "B",
+  "purpose_note": "Create a forecast curve for the day. Refine uses the same kitchen sink as blind plus realized price/curve as causal evidence; blind stays immutable.",
+  "blind": {"day_move_usd": 550, "gap_usd": 100, "disposition": "CALL", "confidence": "med"},
+  "actual": {"day_move_usd": -1360, "gap_usd": -610},
+  "causal_mbo": {"onset_et": "00:25", "onset_dir": "down", "absorb_session": true, "phases": [{"sflow": -202, "pxchg": -680}, {"sflow": 2708, "pxchg": 140}, {"sflow": 546, "pxchg": -220}], "phase3_absorption": true},
+  "handoff_in_used": "20260724 refined bridge: failed Friday rally / late negative delivery; Monday prior DOWN_TO_NEUTRAL, low confidence, with weather still a competing driver.",
+  "posterior_rule": "R6 weekend-gap plus absorption override: a large realized reopen gap against a weather prior immediately demotes that prior. If subsequent heavy positive aggressor flow cannot lift price, treat the buying as absorption rather than bullish confirmation; falling price under positive flow is bearish, not supportive.",
+  "refined_day_move_usd": -1370,
+  "refined_error_usd": -10,
+  "path_p50_curve": [[20,-610],[22,-650],[0,-720],[2,-830],[4,-980],[6,-1120],[8,-1260],[10,-1310],[12,-1220],[14,-1260],[16,-1320],[18,-1410],[20,-1370]],
+  "weight_assigned": {"blind": 0.10, "causal_mbo": 0.90},
+  "lesson": "This is the largest blind miss and the clearest refine lesson. Weather carry strengthened, but the market opened -$610 and then fell another $680 in phase 1. The +2708 phase-2 flow produced only +$140 and phase 3 had +546 flow while price fell -$220. Positive aggressor flow was being absorbed, not delivering a rally.",
+  "carry_forward": "After a large opposite-sign weekend gap, require live price delivery before reasserting the weather prior. Heavy buy flow with flat/falling price is bearish absorption and must not be used as a continuation signal on the next day.",
+  "anti_overfit_note": "Endpoint is gap + sum of causal phase price changes (-610-680+140-220=-1370), using the same reconstruction rule as every g24 day."
+}
