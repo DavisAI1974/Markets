@@ -34,12 +34,15 @@ jobs:
         run: |
           python - <<'PY'
           import inspect
+          from pathlib import Path
           import frankie_aws_stage_s126 as s
 
           src = inspect.getsource(s.stage_for_aws)
+          restore_src = Path('research/kalshi/restore_substrate.py').read_text(encoding='utf-8')
           assert 'restore_substrate.py' in src
           assert 'build_causal_slices.py' in src
-          assert 'stage_group' not in src  # restore_substrate --group remains the canonical caller
+          assert 'stage_group.py' in restore_src
+          assert '"--group" in sys.argv' in restore_src
           assert 'grp{gid[1:]}_state_blind_s114.json' in src
           assert 'weather_forcing_forecast' in inspect.getsource(s.validate_served_forcing)
           print('PASS: recovery restores existing S114 data, canonical-stages, rebuilds slices, preserves blind artifact')
