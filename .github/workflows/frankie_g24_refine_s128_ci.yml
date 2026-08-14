@@ -1,0 +1,44 @@
+name: Frankie g24 S128 refine render
+
+on:
+  push:
+    branches: [chatgpt/burn-hh-12m-s125]
+    paths:
+      - 'research/kalshi/forecasts/grp24_mbo_refined.json'
+      - 'research/kalshi/forecasts/g24_refine_perday/**'
+      - 'research/kalshi/frankie_g24_refine_render_s128.py'
+      - '.github/workflows/frankie_g24_refine_s128_ci.yml'
+  workflow_dispatch:
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install render dependency
+        run: python -m pip install matplotlib
+      - name: Render chronological g24 refine
+        working-directory: research/kalshi
+        run: python frankie_g24_refine_render_s128.py
+      - name: Validate <= 50 target
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('renders/ng_refine_s95/g24_frankie_s128_refine_metrics.json')
+          m=json.loads(p.read_text())
+          assert m['all_days_within_target'] is True, m
+          assert m['max_abs_err_usd'] <= 50, m
+          print(m)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frankie-g24-s128-refine-render
+          path: |
+            research/kalshi/renders/ng_refine_s95/g24_frankie_s128_refined_vs_actual.png
+            research/kalshi/renders/ng_refine_s95/g24_frankie_s128_refine_metrics.json
+          if-no-files-found: error
