@@ -1,0 +1,31 @@
+{
+  "schema": "frankie_historical_storage_seed_v1",
+  "group": "g3_s130",
+  "window": "2025-09-08..2025-09-19",
+  "provenance": {
+    "source_artifact": "research/kalshi/renders/ng_refine_s95/g3g4g5_state.json",
+    "source_lineage": "chatgpt/ng-forecaster-s103-audit",
+    "rule": "Only the report payload is recovered from the legacy causal archive. Decision-day visibility is recomputed with report_date STRICTLY BEFORE decision day. Legacy same-Thursday visibility is rejected.",
+    "weather_policy": "Legacy realized_as_proxy weather is NOT recovered into the current blind state."
+  },
+  "reports": {
+    "2025-09-04": {
+      "storage": {"level": 3262, "weekly_chg": 45, "vs_5yr": 149, "phase": "inject", "as_of": "2025-09-04"},
+      "stor_surprise": 7.6,
+      "stor_surprise_sign": "above",
+      "stor_surprise_basis": null
+    },
+    "2025-09-11": {
+      "storage": {"level": 3333, "weekly_chg": 71, "vs_5yr": 154, "phase": "inject", "as_of": "2025-09-11"},
+      "stor_surprise": 5.6,
+      "stor_surprise_sign": "above",
+      "stor_surprise_basis": null
+    },
+    "2025-09-18": {
+      "storage": {"level": 3423, "weekly_chg": 90, "vs_5yr": 166, "phase": "inject", "as_of": "2025-09-18"},
+      "stor_surprise": 12.0,
+      "stor_surprise_sign": "above",
+      "stor_surprise_basis": null
+    }
+  }
+}
