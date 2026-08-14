@@ -1,0 +1,74 @@
+{
+  "specialist": "A",
+  "group": "g24",
+  "template": "BLD-2",
+  "decision_day": "20260724",
+  "target_monday": "20260727",
+  "friday_exit_consumed": {
+    "exit_type": "fundamental_carry_continue",
+    "exit_type_confidence": "low",
+    "monday_bias": {"direction": "UP", "size_class": "moderate"},
+    "sunday_gap_owner": "weather",
+    "sanity_check": "MECHANISM ACCEPTED, CONFIDENCE TRIMMED: Friday's forward weather ladder still places the cooling-demand driver ahead of Monday rather than realized before the weekend. Friday's own DOWN day-net is not inherited as Monday direction. The handoff's forecast-derived close/cum fields are treated as forecast state, not realized truth."
+  },
+  "reopen_scenarios": [
+    {
+      "name": "weather_carry_persists",
+      "probability": 0.45,
+      "gap_direction": "UP",
+      "gap_size_class": "small_to_moderate",
+      "monday_implication": "supports the UP prior but does not by itself justify a squeeze-size Monday; B must confirm with Sunday/opening tape and the Monday causal slice"
+    },
+    {
+      "name": "weather_carry_prices_with_little_gap",
+      "probability": 0.35,
+      "gap_direction": "FLAT_MIXED",
+      "gap_size_class": "small",
+      "monday_implication": "driver remains ahead and can express in the 06-10 ET catch-up window even if the reopen does not gap"
+    },
+    {
+      "name": "weekend_weather_cut_or_gap_rejection",
+      "probability": 0.20,
+      "gap_direction": "DOWN_OR_UP_REJECTED",
+      "gap_size_class": "small_to_moderate",
+      "monday_implication": "downgrade the UP prior; if the reopen is thin and against the inherited driver, treat the gap as rejection fuel rather than chain birth"
+    }
+  ],
+  "gap_ownership": {
+    "owner": "weather",
+    "status": "UNREALIZED_AHEAD_AT_FRIDAY_CUTOFF",
+    "evidence": "Friday D-1-evening ladder: Monday 2026-07-27 CDD 14.542; Friday weekday-open update adds +0.486 CDD to Monday. The stronger demand driver is still ahead of the weekend rather than already realized on Friday.",
+    "not_owned_by": [
+      "Kalshi Q26->U26 roll offset — never-traded/scoring-only and already behind the seam",
+      "Q26 expiry/opex countdown — frozen price-derived structure belongs to the wrong scored leg",
+      "index roll — GSCI/BCOM roll windows are not active"
+    ]
+  },
+  "driver_realization_check": {
+    "driver": "cooling-demand weather / forward CDD",
+    "peak_in_friday_cutoff_ladder": "2026-07-27 and 2026-07-29 at 14.542 CDD",
+    "realizes_before_monday": false,
+    "sell_the_news_weekend": false,
+    "note": "The driver has not completed over the weekend at the Friday decision point. A does not convert an unrealized-ahead weather carry into an exhaustion label."
+  },
+  "reopen_watch": {
+    "status": "UNAVAILABLE_AT_FRIDAY_BLIND_CUTOFF",
+    "required_on_sunday": [
+      "gap sign/size versus Friday forecast state",
+      "two-sided session/aggressor share rather than denominator-biased raw b_share",
+      "thin-tape sample floor / big-print count",
+      "whether weekend weather revisions preserved or cut the Friday carry"
+    ],
+    "stand_down_rule": "If the reopen sample is thin or internally inconsistent, do not let its sign own Monday; fall back to Friday carry plus the Monday causal tape/weather read, explicitly labeled."
+  },
+  "monday_bias_confirmed_or_adjusted": {
+    "direction": "UP",
+    "size_class": "moderate",
+    "confidence": "low_to_medium_prior_only",
+    "action": "CONFIRMED_AS_PRIOR_NOT_AS_CALL",
+    "why": "Forward CDD is still ahead and Friday's negative day tape does not automatically transfer across the weekend. But the actual Sunday reopen and weekend forecast revisions are future to this bridge and must be adjudicated by B before B owns the Monday number."
+  },
+  "authority": "A informs; B decides; B alone owns the 20260727 Monday forecast number",
+  "realized_outcome_in_packet": false,
+  "execution_enabled": false
+}
