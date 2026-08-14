@@ -36,8 +36,33 @@ def test_existing_true_flag_is_preserved_without_change():
     assert out["20260720"]["served_separately"] is True
 
 
-@pytest.mark.parametrize("value", [False, None, 0, "true"])
-def test_explicit_non_true_flag_fails_closed(value):
+def test_exact_legacy_d37_prose_is_normalized_to_boolean_true():
+    store = {"20260720": _rec(served_separately=sep.LEGACY_D37_SEPARATION)}
+    out, changed = sep.normalize_store(store, ["20260720"])
+    assert changed == ["20260720"]
+    assert out["20260720"]["served_separately"] is True
+    assert out["20260720"]["wind_cf_proxy"] == store["20260720"]["wind_cf_proxy"]
+    assert out["20260720"]["solar_irradiance_proxy"] == store["20260720"]["solar_irradiance_proxy"]
+    assert store["20260720"]["served_separately"] == sep.LEGACY_D37_SEPARATION
+
+
+def test_legacy_d37_match_is_whitespace_only_not_fuzzy_semantics():
+    wrapped = sep.LEGACY_D37_SEPARATION.replace(
+        "(wind peaks spring/autumn, solar at the solstice)",
+        "(wind peaks\n  spring/autumn, solar at the solstice)",
+    )
+    out, changed = sep.normalize_store(
+        {"20260720": _rec(served_separately=wrapped)}, ["20260720"]
+    )
+    assert changed == ["20260720"]
+    assert out["20260720"]["served_separately"] is True
+
+
+@pytest.mark.parametrize(
+    "value",
+    [False, None, 0, "true", "wind and solar are separate", "wind and solar are NEVER summed"],
+)
+def test_explicit_non_true_noncanonical_flag_fails_closed(value):
     with pytest.raises(sep.SeparationMetadataError, match="explicit served_separately"):
         sep.normalize_store({"20260720": _rec(served_separately=value)}, ["20260720"])
 
