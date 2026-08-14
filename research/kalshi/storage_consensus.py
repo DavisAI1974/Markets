@@ -1,92 +1,15 @@
 """
-storage_consensus.py -- weekly EIA natural gas storage ANALYST CONSENSUS as a decision-state
-INPUT (S98, DATA_GATE_S98 feed D).
+storage_consensus.py -- weekly EIA natural gas storage analyst consensus as a decision-state input.
 
-WHY. The market prices the weekly EIA storage print against the ANALYST SURVEY CONSENSUS, not
-against the 5-yr seasonal norm that `eia_surprise.py` proxies. A -80 Bcf draw is a bearish miss
-if consensus was -95 even though it looks bullish vs the 5-yr. Concretely: on 2026-01-29 the
-print was 15.2 Bcf below the SEASONAL comparison and the market rallied +1480; against the
-surveyed consensus the surprise was much smaller (consensus -232 TE / -237 FF / -238 NGI,
-printed -242, i.e. -4..-10 Bcf). Which number the market was actually positioned against was
-previously unknowable from our data; this feed supplies it. It is an INPUT for the agent to use
-as it sees fit -- NOT a thesis on trial: nothing here gates, scores, or argues for/against
-using consensus.
+The store carries archived and forward point-in-time survey evidence.  The serving rule is stricter
+than the storage record itself: an UPCOMING print may expose only consensus evidence that was actually
+captured before the decision-day open.  A later capture can prove history after the fact, but it cannot
+travel backward into an earlier blind slice.
 
-ADDITIVE. New standalone module + store. Touches nothing existing; reads
-`data/eia_surprise.json` strictly read-only for the realized-actual join.
-
-STORE. data/storage_consensus/storage_consensus.json, built from ARCHIVED point-in-time
-sources (Wayback snapshots of TradingEconomics / investing.com mirrors / ForexFactory pages,
-plus named news-wire survey mentions), each row carrying the exact snapshot URL and whether the
-capture was strictly pre-print. Sources disagree on some weeks (e.g. 2026-01-22: TE -106 vs
-FF -90); disagreeing values are CARRIED SIDE BY SIDE, never averaged. Coverage and gaps are
-named per week in research/kalshi/STORAGE_CONSENSUS_NOTES_S98.md.
-
-VINTAGE. `actual_as_printed_bcf` (what the market saw at the print, from the archives; mutually
-consistent across TE/investing/FF on every overlap) differs from today's EIA API series on many
-weeks (mostly 1-3 Bcf; 2025-09-04 differs by 10). Both are carried; feed K owns the full
-vintage audit.
-
-BLIND WALL (exact mechanics). The consensus for an UPCOMING print is public BEFORE the print
-(analyst surveys publish Tue/Wed), so on a print-day morning the consensus for that day's print
-IS available; the print's ACTUAL value is NOT (it lands at the print datetime: Thursday
-10:30 ET normally; four in-window holiday shifts per EIA's published schedule -- Fri 2025-11-14
-10:30, Wed 2025-11-26 12:00, Mon 2025-12-29 12:00, Wed 2025-12-31 12:00). For a decision day D:
-  - next_print (print_date >= D): consensus fields ONLY. No actual, no surprise. Post-print-
-    captured per-source rows have the page-displayed actual STRIPPED so a print's own actual
-    can never reach its own morning. `final_capture_is_post_print` flags that our EVIDENCE of
-    the final frozen consensus is a post-print snapshot (the number itself was public at the
-    print; the strictly-pre-print evidence value sits in `consensus_pre_print_bcf`).
-  - last_print (print_date < D): consensus + realized actual (current vintage joined read-only
-    from data/eia_surprise.json, as-printed from the archives) + the surprises.
-Assertions enforce this on every call, and --selftest audits the whole store plus a daily sweep
-of the walked window, printing the violation count (must be 0).
-
-MISSING IS EXPLICIT, NEVER ZERO. None = unknown. No interpolation, no seasonal stand-in, zero
-synthetic data. A week with no obtainable value stays None and is named in the notes.
-
-PUBLIC INTERFACE (the orchestrator wires this into decision_state serially, later):
-
-    storage_consensus_asof(date) -> dict | None
-
-        date : str "YYYY-MM-DD" | datetime.date  -- the DECISION day D (open-time semantics,
-               date resolution, matching forecast_harness._storage_asof's S96 convention).
-        returns None if the store is absent/empty or D precedes all records; else
-        {
-          "as_of": "YYYY-MM-DD",
-          "next_print": {            # the upcoming print at-or-after D; None past the store end
-             "for_report_date", "print_date", "print_dow", "print_time_et",
-             "print_datetime_utc", "print_schedule_note", "days_to_print",
-             "consensus_chg_bcf",              # final frozen house consensus (primary source)
-             "source",                         # which house/value the headline number is
-             "final_capture_is_post_print",    # True: evidence snapshot is post-print
-             "consensus_pre_print_bcf",        # value from a STRICTLY pre-print snapshot | None
-             "consensus_pre_print_snapshot_utc",
-             "n_estimates", "range_low_bcf", "range_high_bcf",   # None throughout (not carried
-                                                                 # by any free archived source)
-             "house_disagreement_bcf",         # max-min across houses where >=2 exist
-             "estimates": [...]                # per-source rows, actual_on_page stripped
-          } | None,
-          "last_print": {            # most recent print STRICTLY before D; None before store
-             ...same consensus fields..., "days_since_print",
-             "actual_current_vintage_bcf",     # from data/eia_surprise.json (read-only join)
-             "actual_as_printed_bcf",          # from the archives (what the market saw)
-             "actual_as_printed_source",
-             "vintage_diff_bcf",
-             "surprise_vs_consensus_bcf",              # current-vintage actual - consensus
-             "surprise_as_printed_vs_consensus_bcf",   # as-printed actual - consensus
-             "estimates": [...]                # per-source rows, intact
-          } | None,
-          "source": "storage_consensus_v1"
-        }
-        Sign convention: values are net weekly change in Bcf (negative = withdrawal);
-        surprise = actual - consensus, so NEGATIVE surprise = bigger draw than expected
-        (tighter than consensus). Same orientation as eia_surprise.py.
-
-USAGE
-    python research/kalshi/storage_consensus.py --selftest
-    python research/kalshi/storage_consensus.py --audit
-    python research/kalshi/storage_consensus.py --asof 2026-01-29
+Decision-time convention matches the walk's weekday-open state: 08:00 America/New_York on D.
+For next_print, estimates/capture metadata at or after that cutoff are withheld.  Missing stays None;
+there is no interpolation, seasonal stand-in, or synthetic earlier vintage.  last_print is strictly
+before D and may carry realized actual/surprise fields.
 """
 from __future__ import annotations
 
@@ -95,6 +18,7 @@ import datetime as dt
 import json
 import os
 import sys
+from zoneinfo import ZoneInfo
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _STORE_DIRS = [os.path.join(_HERE, "..", "..", "data", "storage_consensus"),
@@ -102,21 +26,18 @@ _STORE_DIRS = [os.path.join(_HERE, "..", "..", "data", "storage_consensus"),
 STORE_NAME = "storage_consensus.json"
 _SURPRISE_PATHS = [os.path.join(_HERE, "..", "..", "data", "eia_surprise.json"),
                    os.path.join("data", "eia_surprise.json")]
+_ET = ZoneInfo("America/New_York")
+_DECISION_OPEN_HOUR_ET = 8
 
-# The four in-window exceptions to the normal Thursday 10:30 ET rule, verbatim from EIA's
-# published schedule (https://ir.eia.gov/ngs/schedule.html, fetched 2026-07-20), keyed by
-# actual print date. Used by --selftest to re-assert the store's schedule fields.
 SCHEDULE_EXCEPTIONS = {
-    "2025-11-14": ("Fri", "10:30"),   # Veterans Day observance
-    "2025-11-26": ("Wed", "12:00"),   # Thanksgiving Day
-    "2025-12-29": ("Mon", "12:00"),   # Christmas Day (EIA 'Updated')
-    "2025-12-31": ("Wed", "12:00"),   # New Year's Day
+    "2025-11-14": ("Fri", "10:30"),
+    "2025-11-26": ("Wed", "12:00"),
+    "2025-12-29": ("Mon", "12:00"),
+    "2025-12-31": ("Wed", "12:00"),
 }
 
 _CACHE = {"store": None, "surprise": None}
 
-
-# --------------------------------------------------------------------------- loading
 
 def _find_store():
     for d in _STORE_DIRS:
@@ -137,7 +58,6 @@ def _load_store():
 
 
 def _load_surprise_actuals():
-    """{nominal_release_iso: actual} from data/eia_surprise.json (READ-ONLY), or None."""
     if _CACHE["surprise"] is None:
         for p in _SURPRISE_PATHS:
             if os.path.exists(p):
@@ -158,7 +78,33 @@ def _as_date(d):
     return dt.date.fromisoformat(str(d)[:10])
 
 
-# --------------------------------------------------------------------------- views
+def _snapshot_utc(value):
+    """Parse the store's ISO/compact/date-only provenance stamps as aware UTC datetimes."""
+    if not value:
+        return None
+    s = str(value).strip()
+    try:
+        if len(s) == 14 and s.isdigit():
+            return dt.datetime.strptime(s, "%Y%m%d%H%M%S").replace(tzinfo=dt.timezone.utc)
+        if "T" not in s:
+            return dt.datetime.fromisoformat(s + "T00:00:00+00:00")
+        parsed = dt.datetime.fromisoformat(s.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=dt.timezone.utc)
+        return parsed.astimezone(dt.timezone.utc)
+    except ValueError:
+        return None
+
+
+def _decision_cutoff_utc(D: dt.date) -> dt.datetime:
+    local = dt.datetime.combine(D, dt.time(_DECISION_OPEN_HOUR_ET, 0), tzinfo=_ET)
+    return local.astimezone(dt.timezone.utc)
+
+
+def _visible_snapshot(value, D: dt.date) -> bool:
+    snap = _snapshot_utc(value)
+    return snap is not None and snap < _decision_cutoff_utc(D)
+
 
 _CONSENSUS_KEYS = [
     "for_report_date", "print_date", "print_dow", "print_time_et", "print_datetime_utc",
@@ -166,32 +112,100 @@ _CONSENSUS_KEYS = [
     "consensus_pre_print_snapshot_utc", "n_estimates", "range_low_bcf", "range_high_bcf",
     "house_disagreement_bcf",
 ]
+_STATIC_NEXT_KEYS = [
+    "for_report_date", "print_date", "print_dow", "print_time_et", "print_datetime_utc",
+    "print_schedule_note",
+]
+
+
+def _clean_estimate(e):
+    return {k: v for k, v in e.items() if k != "actual_on_page_bcf"}
 
 
 def _next_print_view(rec, D):
-    """Blind-safe view of an upcoming print: consensus only, never its actual."""
-    out = {k: rec.get(k) for k in _CONSENSUS_KEYS}
+    """Upcoming-print view using only evidence actually visible by the decision-day open."""
+    out = {k: rec.get(k) for k in _STATIC_NEXT_KEYS}
     out["days_to_print"] = (dt.date.fromisoformat(rec["print_date"]) - D).days
-    out["final_capture_is_post_print"] = True if rec.get("consensus_chg_bcf") is not None else None
-    est = []
+
+    legal_est = []
     for e in rec.get("estimates", []):
-        e2 = {k: v for k, v in e.items() if k != "actual_on_page_bcf"}
-        est.append(e2)
-    out["estimates"] = est
-    # blind-wall assertion: nothing actual/surprise/vintage-shaped may appear here
+        if e.get("pre_print") is True and _visible_snapshot(e.get("snapshot_utc"), D):
+            legal_est.append(_clean_estimate(e))
+
+    pre_val = rec.get("consensus_pre_print_bcf")
+    pre_ts = rec.get("consensus_pre_print_snapshot_utc")
+    legal_pre = pre_val if pre_val is not None and _visible_snapshot(pre_ts, D) else None
+
+    headline = rec.get("consensus_chg_bcf")
+    chosen = None
+    chosen_source = None
+    chosen_ts = None
+
+    # Preserve the archived primary headline only when a decision-time-visible source supports it.
+    if headline is not None:
+        for e in legal_est:
+            v = e.get("value_bcf")
+            if isinstance(v, (int, float)) and abs(float(v) - float(headline)) < 1e-9:
+                chosen = float(headline)
+                chosen_source = rec.get("source") or e.get("source")
+                chosen_ts = e.get("snapshot_utc")
+                break
+        if chosen is None and legal_pre is not None and abs(float(legal_pre) - float(headline)) < 1e-9:
+            chosen = float(headline)
+            chosen_source = rec.get("source")
+            chosen_ts = pre_ts
+
+    # If the final headline is not yet evidenced at the cutoff, a strictly pre-print captured value
+    # may still be served.  It is carried as that captured value, never silently promoted to a later one.
+    if chosen is None and legal_pre is not None:
+        chosen = float(legal_pre)
+        chosen_ts = pre_ts
+        for e in legal_est:
+            v = e.get("value_bcf")
+            if isinstance(v, (int, float)) and abs(float(v) - chosen) < 1e-9:
+                chosen_source = e.get("source")
+                chosen_ts = e.get("snapshot_utc") or chosen_ts
+                break
+        chosen_source = chosen_source or "strictly_pre_print_snapshot"
+
+    # A single visible source is usable even if the store's later frozen headline came from another
+    # house.  With multiple conflicting visible sources and no primary/pre-print pin, remain unknown.
+    if chosen is None and len(legal_est) == 1 and isinstance(legal_est[0].get("value_bcf"), (int, float)):
+        chosen = float(legal_est[0]["value_bcf"])
+        chosen_source = legal_est[0].get("source")
+        chosen_ts = legal_est[0].get("snapshot_utc")
+
+    vals = [float(e["value_bcf"]) for e in legal_est if isinstance(e.get("value_bcf"), (int, float))]
+    out["consensus_chg_bcf"] = chosen
+    out["source"] = chosen_source
+    out["final_capture_is_post_print"] = False if chosen is not None else None
+    out["consensus_pre_print_bcf"] = chosen
+    out["consensus_pre_print_snapshot_utc"] = chosen_ts
+    out["n_estimates"] = len(vals) if vals else None
+    out["range_low_bcf"] = None
+    out["range_high_bcf"] = None
+    out["house_disagreement_bcf"] = (round(max(vals) - min(vals), 3) if len(vals) >= 2 else None)
+    out["estimates"] = legal_est
+
     for k in out:
         assert not any(s in k for s in ("actual", "surprise", "vintage")), \
             f"blind wall: forbidden key {k} in next_print view"
-    for e in est:
+    cutoff = _decision_cutoff_utc(D)
+    if out.get("consensus_pre_print_snapshot_utc"):
+        snap = _snapshot_utc(out["consensus_pre_print_snapshot_utc"])
+        assert snap is not None and snap < cutoff, \
+            f"blind wall: next_print snapshot {snap} not before decision cutoff {cutoff}"
+    for e in legal_est:
         assert "actual_on_page_bcf" not in e, "blind wall: page actual leaked into next_print"
+        snap = _snapshot_utc(e.get("snapshot_utc"))
+        assert snap is not None and snap < cutoff, \
+            f"blind wall: estimate snapshot {snap} not before decision cutoff {cutoff}"
     return out
 
 
 def _last_print_view(rec, D, actuals):
     out = {k: rec.get(k) for k in _CONSENSUS_KEYS}
     out["days_since_print"] = (D - dt.date.fromisoformat(rec["print_date"])).days
-    # realized actual: prefer the live read-only eia_surprise join; fall back to the value
-    # baked into the store at build time (same series, same vintage question).
     cur = actuals.get(rec["nominal_release_date"])
     if cur is None:
         cur = rec.get("actual_current_vintage_bcf")
@@ -211,15 +225,12 @@ def _last_print_view(rec, D, actuals):
     return out
 
 
-# --------------------------------------------------------------------------- public
-
 def storage_consensus_asof(date) -> dict | None:
-    """Consensus state visible at open-time of decision day `date`. See module docstring."""
     store = _load_store()
     if not store or not store.get("reports"):
         return None
     D = _as_date(date)
-    reports = store["reports"]  # build order is print-date ascending; asserted in selftest
+    reports = store["reports"]
     last = None
     nxt = None
     for rec in reports:
@@ -231,7 +242,6 @@ def storage_consensus_asof(date) -> dict | None:
             break
     if last is None and nxt is None:
         return None
-    # blind-wall assertions (in addition to the structural ones inside the views)
     if last is not None:
         assert dt.date.fromisoformat(last["print_date"]) < D, "blind wall: last_print not strictly before D"
     if nxt is not None:
@@ -245,8 +255,6 @@ def storage_consensus_asof(date) -> dict | None:
     }
 
 
-# --------------------------------------------------------------------------- selftest / audit
-
 def selftest() -> bool:
     ok = True
     violations = 0
@@ -256,7 +264,6 @@ def selftest() -> bool:
         return False
     reports = store["reports"]
 
-    # 1) store-level structure: ascending prints, week-ending alignment, schedule fields
     prev = None
     for rec in reports:
         pd_ = dt.date.fromisoformat(rec["print_date"])
@@ -274,64 +281,59 @@ def selftest() -> bool:
                 print(f"  FAIL: schedule exception mismatch at {rec['print_date']}"); ok = False
         elif rec["print_dow"] != "Thu" or rec["print_time_et"] != "10:30":
             print(f"  FAIL: non-exception print not Thu 10:30: {rec['print_date']}"); ok = False
-        # missing-is-None sanity: a headline value of exactly 0.0 with no source would be a
-        # coerced placeholder (a real 0 consensus would still carry its source row)
         if rec["consensus_chg_bcf"] == 0.0 and not rec.get("estimates"):
             print(f"  FAIL: zero-with-no-source at {rec['print_date']} (placeholder?)"); ok = False
 
-    # 2) source-level pre-print audit: every row flagged pre_print must have been captured
-    #    strictly before the print datetime
-    for rec in reports:
-        put = dt.datetime.fromisoformat(rec["print_datetime_utc"].replace("Z", ""))
+        put = _snapshot_utc(rec.get("print_datetime_utc"))
         for e in rec.get("estimates", []):
             if e.get("pre_print") is True:
-                ts = e.get("snapshot_utc", "")
-                try:
-                    if "T" in ts:
-                        snap = dt.datetime.fromisoformat(ts.replace("Z", ""))
-                    elif len(ts) == 14 and ts.isdigit():
-                        snap = dt.datetime.strptime(ts, "%Y%m%d%H%M%S")
-                    else:  # date-only provenance (news pub date): midnight UTC that day
-                        snap = dt.datetime.fromisoformat(ts + "T00:00:00")
-                except ValueError:
-                    print(f"  FAIL: unparseable snapshot_utc {ts!r} at {rec['print_date']}")
+                snap = _snapshot_utc(e.get("snapshot_utc"))
+                if snap is None:
+                    print(f"  FAIL: unparseable snapshot_utc {e.get('snapshot_utc')!r} at {rec['print_date']}")
                     ok = False
-                    continue
-                if snap >= put:
+                elif put is not None and snap >= put:
                     violations += 1
-                    print(f"  VIOLATION: pre_print row captured at/after print "
-                          f"{rec['print_date']} ({e['source']} {ts})")
+                    print(f"  VIOLATION: pre_print row captured at/after print {rec['print_date']} "
+                          f"({e.get('source')} {e.get('snapshot_utc')})")
 
-    # 3) daily blind-wall sweep across the walked window (extended S101: the store now
-    #    covers the Mar-Jul 2026 forward hole through the 2026-07-09 print)
-    d0, d1 = dt.date(2025, 8, 15), dt.date(2026, 7, 19)
+    # Sweep through the whole stored period, including the newly recovered forward rows.
+    d0 = dt.date(2025, 8, 15)
+    d1 = max(dt.date.fromisoformat(r["print_date"]) for r in reports) + dt.timedelta(days=1)
     d = d0
     while d <= d1:
-        st = storage_consensus_asof(d)  # internal assertions also run here
+        st = storage_consensus_asof(d)
         if st is not None:
             np_, lp = st["next_print"], st["last_print"]
             if np_ is not None:
                 if dt.date.fromisoformat(np_["print_date"]) < d:
                     violations += 1; print(f"  VIOLATION: next_print before D at {d}")
                 bad = [k for k in np_ if any(s in k for s in ("actual", "surprise", "vintage"))]
-                for e in np_.get("estimates", []):
-                    if "actual_on_page_bcf" in e:
-                        bad.append("estimates.actual_on_page_bcf")
                 if bad:
                     violations += 1; print(f"  VIOLATION: actual-shaped keys {bad} in next_print at {d}")
+                cutoff = _decision_cutoff_utc(d)
+                ts = np_.get("consensus_pre_print_snapshot_utc")
+                if ts:
+                    snap = _snapshot_utc(ts)
+                    if snap is None or snap >= cutoff:
+                        violations += 1
+                        print(f"  VIOLATION: next_print snapshot {ts} reaches {d} cutoff {cutoff}")
+                for e in np_.get("estimates", []):
+                    if "actual_on_page_bcf" in e:
+                        violations += 1; print(f"  VIOLATION: page actual in next_print estimate at {d}")
+                    snap = _snapshot_utc(e.get("snapshot_utc"))
+                    if snap is None or snap >= cutoff:
+                        violations += 1
+                        print(f"  VIOLATION: estimate snapshot {e.get('snapshot_utc')} reaches {d} cutoff {cutoff}")
             if lp is not None and dt.date.fromisoformat(lp["print_date"]) >= d:
                 violations += 1; print(f"  VIOLATION: last_print not strictly before D at {d}")
         d += dt.timedelta(days=1)
 
-    # 4) spot semantic checks on known mechanics
-    st = storage_consensus_asof("2026-01-29")  # print-day morning
+    st = storage_consensus_asof("2026-01-29")
     if st is None or st["next_print"] is None or st["next_print"]["print_date"] != "2026-01-29":
-        print("  FAIL: print-day morning must see its own print as next_print"); ok = False
-    elif st["next_print"]["consensus_chg_bcf"] is None:
-        print("  FAIL: 2026-01-29 morning consensus missing"); ok = False
+        print("  FAIL: print-day open must identify its own print as next_print"); ok = False
     if st and st["last_print"] and st["last_print"]["print_date"] != "2026-01-22":
         print("  FAIL: last_print on 2026-01-29 should be 2026-01-22"); ok = False
-    st2 = storage_consensus_asof("2025-12-30")  # between the two holiday-shifted prints
+    st2 = storage_consensus_asof("2025-12-30")
     if not st2 or not st2["last_print"] or st2["last_print"]["print_date"] != "2025-12-29" \
             or not st2["next_print"] or st2["next_print"]["print_date"] != "2025-12-31":
         print("  FAIL: double-print week (Dec 29 / Dec 31) mechanics wrong"); ok = False
@@ -339,14 +341,13 @@ def selftest() -> bool:
     n_pre = sum(1 for r in reports if r.get("consensus_pre_print_bcf") is not None)
     print(f"  store: {len(reports)} reports, consensus {sum(1 for r in reports if r['consensus_chg_bcf'] is not None)}"
           f"/{len(reports)}, strictly-pre-print value {n_pre}/{len(reports)}")
-    print(f"  blind-wall violations: {violations}")
+    print(f"  decision cutoff: {_DECISION_OPEN_HOUR_ET:02d}:00 ET; blind-wall violations: {violations}")
     ok = ok and violations == 0
     print("SELFTEST", "PASS" if ok else "FAIL")
     return ok
 
 
 def audit():
-    """Per-week coverage table; gaps named individually (never a percentage)."""
     store = _load_store()
     if not store:
         print("no store"); return
