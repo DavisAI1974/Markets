@@ -1,0 +1,121 @@
+name: S126 Frankie Specialist Parity
+
+on:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - research/kalshi/frankie_specialist_parity_s126.py
+      - research/kalshi/frankie_s121_curve_restore.py
+      - research/kalshi/tests/test_frankie_specialist_parity_s126.py
+      - .github/workflows/frankie_specialists_s126_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  specialist-parity-and-weather:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install focused test dependencies
+        run: pip install --quiet pytest boto3
+      - name: Compile current Frankie specialist seam
+        run: |
+          python -m py_compile \
+            research/kalshi/frankie_specialist_parity_s126.py \
+            research/kalshi/frankie_s121_curve_restore.py \
+            research/kalshi/frankie_s118_redo.py \
+            research/kalshi/frankie_group_forecast_s118.py
+      - name: Run A-E parity and blind-wall tests
+        run: python -m pytest -q research/kalshi/tests/test_frankie_specialist_parity_s126.py
+      - name: Prove protected spawner and specialist roles were not rewritten
+        run: |
+          test "$(git hash-object research/kalshi/spawn.py)" = "2eb3ab8570be66bd9568bcd3ca2e6b9f19d6b33e"
+          git diff --exit-code 6441a2772a19cb19a390bc5c81fab28f9d9fb2f1 HEAD -- \
+            research/kalshi/spawn.py \
+            research/kalshi/agents/mbo_refine_shared.md \
+            research/kalshi/agents/mbo_specialist_A.md \
+            research/kalshi/agents/mbo_specialist_B.md \
+            research/kalshi/agents/mbo_specialist_C.md \
+            research/kalshi/agents/mbo_specialist_D.md \
+            research/kalshi/agents/mbo_specialist_E.md
+      - name: Restore only the existing S114 GEFS forcing store
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-2
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import boto3
+          for key in ('AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY'):
+              if not os.environ.get(key):
+                  raise SystemExit(f'{key} repository secret is not set')
+          dest = Path('data/gefs_forcing/gefs_forcing.json')
+          dest.parent.mkdir(parents=True, exist_ok=True)
+          boto3.client('s3', region_name='us-east-2').download_file(
+              'bento-568968024170-us-east-2-an',
+              'nymex/gefs_forcing/gefs_forcing.json',
+              str(dest),
+          )
+          assert dest.stat().st_size > 0
+          print(f'restored existing S114 store: {dest} ({dest.stat().st_size} bytes)')
+          PY
+      - name: Verify S114 wind and solar are populated and served through the S126 seam
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          python - <<'PY'
+          import inspect
+          import group_config as gc
+          import forecast_harness as fh
+          import state_health
+          from frankie_specialist_parity_s126 import SPECIALISTS, attach_specialist_access
+
+          fh._GEFS_CACHE = None
+          days = list(gc.GROUPS['g24']['days'])
+          checked = {}
+          for day in days:
+              rec = fh._weather_forcing_block(day)
+              assert isinstance(rec, dict) and rec, (day, rec)
+              assert rec.get('wind_cf_proxy') is not None, (day, rec)
+              assert rec.get('solar_irradiance_proxy') is not None, (day, rec)
+              assert rec.get('is_forecast_not_realized') is True, (day, rec)
+              assert rec.get('cycle_utc'), (day, rec)
+              assert rec.get('knowable_from'), (day, rec)
+              assert str(rec['knowable_from'])[:10] < f'{day[:4]}-{day[4:6]}-{day[6:]}', (day, rec)
+              checked[day] = rec
+
+          source = inspect.getsource(fh.decision_state)
+          assert '"weather_forcing_forecast": _weather_forcing_block(d)' in source
+          assert 'weather_forcing_forecast' in state_health.REQUIRED_EVERY_DAY
+
+          # The specialist parity seam never creates, filters, or summarizes the weather record.
+          # It carries the already-served causal slice unchanged to each existing A-E role.
+          day = days[0]
+          causal_slice = {day: {'weather_forcing_forecast': checked[day]}}
+          brain = {
+              'plays': {'sentinel': {'body': 'full-brain parity sentinel'}},
+              '_frankie_serving': {'canonical_plays_total': 1, 'full_plays_served': 1},
+          }
+          for spec in SPECIALISTS:
+              packet = attach_specialist_access({
+                  'realized_outcome_in_packet': False,
+                  'causal_slice': causal_slice,
+                  'brain_view_served': brain,
+              }, specialist=spec, phase='BLIND')
+              assert packet['causal_slice'] is causal_slice
+              assert packet['causal_slice'][day]['weather_forcing_forecast'] is checked[day]
+              assert packet['specialist_access_contract']['coordinator'] == 'Frankie'
+
+          print(f'PASS: {len(days)} g24 days have non-null S114 wind+solar forcing; served unchanged to A-E')
+          PY
