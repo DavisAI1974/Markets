@@ -1,0 +1,67 @@
+{
+  "specialist": "E",
+  "group": "g24",
+  "date": "20260724",
+  "guessed_net_usd": -500,
+  "overnight_gap_usd": -50,
+  "path_p50_curve": [[20.0,0],[21.0,-55],[22.6,-110],[0.4,-165],[2.3,-205],[4.4,-235],[6.2,-180],[7.7,-90],[8.6,20],[9.7,65],[10.8,25],[12.0,-80],[13.4,-210],[14.8,-335],[16.2,-430],[17.5,-505],[18.6,-490],[20.0,-450]],
+  "reasoning": "DAY CLASS / SIGN: Friday 20260724 is E's weekend-feeding day on the post-roll U26 scored leg. The highest-authority blind sign is the D-1 trade tilt, and unlike Thursday's mixed pre-print state it is coherent SELL: 20260723 session signed flow -1543 lots, session two-sided b_share 0.485, 72 big prints with two-sided b_share 0.485, and phase signed flow -113/-835/-595 with every phase two-sided below 0.50. The sample is guard-clean. The now-known prior storage print is also mildly loose versus survey: current-vintage +32 Bcf against a strictly pre-print +29 consensus, while the storage level is 3056 Bcf / +171 vs 5y. I use that only as a slow bearish backdrop, not as a Friday timing signal.\n\nCOUNTERWEIGHTS / WHY THIS IS NOT A CRASH CALL: the 08:00 Friday weather cycle adds +1.048 CDD to D0 and the D-1 evening ladder has materially higher CDD into the weekend/Monday (D3 Monday 14.542 versus Friday 11.941). That is a real bullish demand counterweight and leaves a covering/weather upside tail. COT is still very short and worsening (-105709 MM net, -45414 WoW), but the 1y percentile 14.15 does not clear the brain's <12/<3 covering/extreme bars. I therefore keep the p50 DOWN from coherent flow rather than promoting a squeeze. The generic Friday 'range' prior is not allowed to erase a live D-1 tilt, and the brain explicitly warns against a universal pre-weekend squaring damper.\n\nSTRUCTURAL LEG WALL: the packet's scored_leg says U26 while frozen price-derived contract_structure/options_surface/squeeze_watch remain anchor-vintage Q26. Their Q26 expiry/opex countdown cannot be imported as direct U26 Friday pressure. I do not call positioning-spent merely because the calendar front is close to Q26 expiry; index-roll GSCI/BCOM windows are not active.\n\nPATH / MAGNITUDE: Friday is not the storage print and not a live index-roll program day. n0 sigma10 is ~621 and the prior comparable range is 800. I derive a moderate -500 day with a small -50 overnight gap: continuation lower overnight, a meaningful 07-10 ET recovery when the +1.048 D0 CDD update enters the decision set, then renewed afternoon selling as the coherent D-1 flow/storage backdrop reasserts. The final p50 is off the session low rather than pinned to it, which keeps the Friday exit from being labeled as a mechanically exhausted extreme. Confidence is medium: the flow sign is unusually coherent, but the forward weather driver is real and several direct structural fields are deliberately unusable on U26.\n\nWEEKEND HANDOFF: the handoff is a FORECAST exit-state, not realized Friday price/flow. I derive the forecast close and cum only from the known anchor plus this run's own frozen blind day-move chain; I mark future-flow fields that cannot be known at the Friday decision point as unavailable rather than inventing them. Monday should NOT inherit Friday's -500 day-net. The forward CDD driver remains ahead of Monday and is not realized before the weekend, so the handoff type is fundamental_carry_continue with a moderate UP Monday lean and weather as the Sunday-gap owner. That type is low-confidence because the brain's own audit says blind Friday exit labels have poor survival; A should sanity-check it rather than treat the label as truth.",
+  "plays_fired": [
+    "direction_source_rule (doctrine) — D-1 session/big-print two-sided shares and signed flow coherently favor SELL.",
+    "flow.big_print_bshare_thin_tape_guard — n=72 is guard-clean, so 0.485 large-print sell tilt is retained.",
+    "daytype.friday_exit_decomposition — emitted a weekend state/type distinct from the Friday day-net; Monday inherits the state, not Friday's sign.",
+    "weather.revision_seasonal_sign_map — Friday 08:00 D0 +1.048 CDD and warmer weekend/Monday levels are retained as the main counterweight and handoff driver.",
+    "weather.burn_is_demand_arrival_not_direction — demand/weather evidence informs the driver state without replacing the D-1 tape sign.",
+    "specialist-E scored-leg rule — U26 is the forecasted instrument; Q26 frozen structural countdowns are not imported."
+  ],
+  "plays_stood_down": [
+    "daytype.weekend_crest_friday — DEGENERATE and no blind-legal stretched-price/crest state is available; no generic Friday counter-chain rule is fired.",
+    "daytype.friday_crest_trim_discriminator — stretched/close-location price limbs are future-masked; no crest_trim_fadeable label is asserted.",
+    "daytype.friday_turn_exhaustion_gate — chain cum/extreme and future close state are unavailable, so a turn is not manufactured.",
+    "daytype.covering_giveback_self_limiting — still-worsening COT fails the play's not-worsening spent-fuel limb; no positioning_spent_fade is inferred.",
+    "structure.friday_exhausted_extreme_giveback — future Friday close-vs-extreme is not knowable in blind mode; stood down.",
+    "flow.resting_program_inverts_aggressor_tilt — GSCI/BCOM roll windows are not active; not a program day.",
+    "contract_structure/options_surface/squeeze_watch direct expiry mechanics — stood down under the explicit U26/Q26 hole-#8 scored-leg caveat.",
+    "structure.covering_absorption_directional_tell — MM percentile 14.15 fails <12 and price-bearing conviction is masked.",
+    "magnitude.emission_ceiling_check — INPUT_ABSENT; no ceiling reconstructed."
+  ],
+  "confidence": "med",
+  "state_defects_and_gaps_reported": [
+    "The canonical 9-field handoff spec contains realized-price/last-hour fields that are not knowable at a blind Friday decision point. This blind handoff marks future-only components as forecast-derived or unavailable rather than fabricating realized state.",
+    "Scored leg is U26 while frozen price-derived structural blocks describe Q26; direct Q26 expiry/opex/squeeze reads are unusable for U26.",
+    "The brain's own audit says blind-emitted Friday exit_type survived reveal only 2 of 8 measured weekends; exit_type is therefore passed with low confidence and should be sanity-checked by A.",
+    "Next 2026-07-30 storage consensus is absent; not relevant to Friday sign but remains a forward data gap.",
+    "magnitude.emission_ceiling_check is INPUT_ABSENT."
+  ],
+  "disposition": "CALL",
+  "handoff_out": {
+    "close_px": 2.826,
+    "cum_from_anchor_usd": -900,
+    "chain_polarity": "DOWN_FORECAST_CUM",
+    "chain_age_sessions": null,
+    "last_hour_dir": 1,
+    "last_hour_signed_flow": null,
+    "conviction": "UNAVAILABLE_BLIND_FUTURE_FLOW",
+    "close_off_extreme_frac": 0.11,
+    "positioning_calendar": {
+      "expiry": "UNRESOLVED_FOR_U26_FROM_SERVED_CALENDAR",
+      "opex": "UNRESOLVED_FOR_U26_FROM_SERVED_CALENDAR",
+      "index_roll_window_open_monday": false
+    },
+    "driver_realization": {
+      "driver": "cooling-demand weather / forward CDD",
+      "peak_day_et": "2026-07-27 and 2026-07-29 tied at 14.542 CDD in the D-1-evening ladder",
+      "realizes_before_monday": false
+    },
+    "exit_type": "fundamental_carry_continue",
+    "exit_type_confidence": "low",
+    "monday_bias": {
+      "direction": "UP",
+      "size_class": "moderate",
+      "basis": "forward CDD driver remains ahead of Monday; do not inherit Friday day-net sign"
+    },
+    "sunday_gap_owner": "weather",
+    "blind_forecast_not_realized": true,
+    "basis_note": "close_px/cum/last_hour_dir are derived from this run's own blind p50 path and anchor, not realized price; future Friday signed flow is deliberately unavailable"
+  }
+}
