@@ -62,7 +62,8 @@ jobs:
           assert 'weather_forecast_cycle' in src
           assert 'freeze_risk' in src
           assert 'storage_consensus' in src
-          assert sc._DECISION_OPEN_HOUR_ET == 8
+          assert sc._DECISION_REOPEN_HOUR_ET == 20
           assert '_visible_snapshot' in inspect.getsource(sc._next_print_view)
-          print('PASS: M13 recovery reuses existing builders and next-print consensus is capture-time causal')
+          assert 'D - dt.timedelta(days=1)' in inspect.getsource(sc._decision_cutoff_utc)
+          print('PASS: M13 recovery reuses existing builders and next-print consensus is causal to the D-1 20:00 ET reopen')
           PY
