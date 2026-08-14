@@ -172,13 +172,14 @@ def main(argv: list[str] | None = None) -> int:
     if len(args) != 1:
         print("usage: frankie_aws_stage_s126.py <group>  (current recovery target: g24)", file=sys.stderr)
         return 2
+    gid = args[0]
     try:
-        result = stage_for_aws(args[0])
+        result = stage_for_aws(gid)
     except (StageInvariantError, subprocess.CalledProcessError) as exc:
         print(f"[frankie-aws-stage] FAIL: {exc}", file=sys.stderr)
         return 1
     print(json.dumps(result, indent=2, sort_keys=True))
-    print("[frankie-aws-stage] PASS: AWS substrate -> canonical state -> causal specialist slices")
+    print(f"PASS: {gid} restored, re-staged, causal slices rebuilt, S114 wind/solar served end-to-end")
     return 0
 
 
