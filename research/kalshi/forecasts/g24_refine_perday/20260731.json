@@ -1,0 +1,19 @@
+{
+  "schema_version": "s128.g24_refine_day.1",
+  "group": "g24",
+  "date": "20260731",
+  "dow": "Fri",
+  "owner": "E",
+  "purpose_note": "Create a forecast curve for the day. Refine uses the same kitchen sink as blind plus realized price/curve as causal evidence; blind stays immutable.",
+  "blind": {"day_move_usd": 600, "gap_usd": 50, "disposition": "CALL", "confidence": "med"},
+  "actual": {"day_move_usd": 480, "gap_usd": 0},
+  "causal_mbo": {"onset_et": "22:48", "onset_dir": "up", "turn_et": "11:51", "turn_kind": "turn_up", "absorb_session": true, "phases": [{"sflow": 458, "pxchg": 510}, {"sflow": -2552, "pxchg": -570}, {"sflow": -347, "pxchg": 540}]},
+  "posterior_rule": "R8 multi-phase absorption reversal: treat each phase independently. Negative flow with falling price is delivered downside; if the next phase still has negative flow but price rises sharply, that is seller absorption/covering and a causal reversal. The final reversal can own the close even when total session flow remains negative.",
+  "refined_day_move_usd": 480,
+  "refined_error_usd": 0,
+  "path_p50_curve": [[20,0],[22,90],[0,170],[2,255],[4,340],[6,430],[8,510],[10,300],[12,-280],[14,-120],[16,180],[18,390],[20,480]],
+  "weight_assigned": {"blind": 0.35, "causal_mbo": 0.65},
+  "lesson": "The blind final direction was right but missed the deep intraday round-trip. Refine sees phase 1 rally +$510, phase 2 delivered selloff -$570, then phase 3 +$540 despite continued negative signed flow. That last phase is a classic seller-absorption reversal; session flow of -2441 cannot be read as bearish by sign alone.",
+  "carry_forward": "For Friday and all mature swings, score flow conviction by phase, not by session aggregate. Opposite-sign price/flow in a late phase can reverse the chain and must feed the weekend handoff as realized exit state.",
+  "anti_overfit_note": "Endpoint is gap + sum of causal phase price changes (0+510-570+540=480), using the same reconstruction rule as every g24 day."
+}
