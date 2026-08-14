@@ -1,0 +1,68 @@
+name: S130 Persist G3 Hydrated Snapshot
+
+on:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - .github/workflows/frankie_g3_s130_persist.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  persist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/burn-hh-12m-s125
+          fetch-depth: 0
+      - name: Download sealed S130 hydration artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/g3_s130
+          gh run download 31797152410 --repo DavisAI1974/Markets \
+            --name frankie-g3-s130-hydrated-state --dir /tmp/g3_s130
+          test -s /tmp/g3_s130/g3_s130_hydrated_state.json
+          test -s /tmp/g3_s130/g3_s130_hydration_manifest.json
+      - name: Persist decision state and provenance manifest
+        run: |
+          mkdir -p research/kalshi/historical/snapshots/g3_s130
+          cp /tmp/g3_s130/g3_s130_hydrated_state.json \
+             research/kalshi/historical/snapshots/g3_s130/decision_state.json
+          cp /tmp/g3_s130/g3_s130_hydration_manifest.json \
+             research/kalshi/historical/snapshots/g3_s130/hydration_manifest.json
+          cp /tmp/g3_s130/eia_optional_status.txt \
+             research/kalshi/historical/snapshots/g3_s130/eia_optional_status.txt
+          cat > research/kalshi/historical/snapshots/g3_s130/README.md <<'EOF'
+          # G3 S130 sealed current-Frankie historical state
+
+          Window: 2025-09-08 through 2025-09-19. Starter anchor: 2025-09-05 close 3.026.
+
+          This directory is the durable materialized decision-state snapshot for the S130 historical
+          replay. It stores inputs only, not realized NG outcomes. It exists so a clean runner does not
+          lose historically reconstructible values simply because runtime caches are ephemeral.
+
+          Causal rules:
+          - Current S128 serving contract and current brain/schema; no old Frankie forecasts are reused.
+          - EIA storage payloads recovered from the legacy causal archive are rejoined STRICTLY before
+            each decision day; same-Thursday own prints are hidden.
+          - Legacy realized-weather-as-forecast proxy is rejected and never copied here.
+          - Missing vintage feeds remain unavailable; no zeros or synthetic replacements.
+          - Grid stack was unavailable in this build because the public EIA DEMO_KEY rate-limited the
+            multi-BA pull. That failure is recorded explicitly and the field remains unavailable.
+          - This snapshot does not make a post-reveal replay pristine blind; it preserves input state.
+          EOF
+          git config user.name "DavisAI S130 Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add research/kalshi/historical/snapshots/g3_s130
+          if git diff --cached --quiet; then
+            echo "snapshot already current"
+          else
+            git commit -m "S130 persist sealed G3 hydrated decision state"
+            git push origin HEAD:chatgpt/burn-hh-12m-s125
+          fi
