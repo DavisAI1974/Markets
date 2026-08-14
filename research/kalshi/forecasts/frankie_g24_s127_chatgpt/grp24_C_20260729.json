@@ -1,0 +1,31 @@
+{
+  "specialist": "C",
+  "group": "g24",
+  "date": "20260729",
+  "guessed_net_usd": -150,
+  "overnight_gap_usd": 0,
+  "path_p50_curve": [[20.0,0],[21.0,20],[22.6,45],[0.5,25],[2.4,-10],[4.4,-45],[6.2,-80],[7.6,-120],[8.5,-185],[9.7,-240],[10.9,-275],[12.1,-220],[13.4,-145],[14.8,-90],[16.2,-130],[17.5,-185],[18.7,-165],[20.0,-150]],
+  "reasoning": "CORE TAPE / COHERENCE: Wednesday 20260729 is C-owned, but the D-1 tape no longer gives a clean continuation sign. Aggregate session flow is only +583 lots with two-sided session b_share 0.503, essentially balanced. The large-print sample is thick (194) but leans the opposite way at 0.473. Phase flow is -155 / +196 / +542, with phase shares 0.488 / 0.502 / 0.508. That is a late positive drift against sell-leaning large prints, not a broad all-phase delivery. Without price conviction, I cannot classify that divergence as absorption versus distribution. The C role specifically warns against forcing chain continuation through an ambiguous tape, so I do not promote Tuesday's strong UP call into a Wednesday default.\n\nWEATHER / FUNDAMENTALS: the D-1-evening D0 CDD is 14.048 with a small +0.112 run revision, but the 08:00 Wednesday cycle cuts D0 by -0.469 to 13.579. That is a modest bearish demand revision. Storage remains 3056 Bcf / +171 vs 5y, the prior print was +32 versus +29 consensus, and the next print is one day away with no current survey consensus served. COT remains net short but is improving WoW (+2953), so the extreme+worsening accumulation/covering setup is absent.\n\nCALENDAR / HOLE-#8: the calendar says Q26 futures expiry today and bidweek day 3. But this day is scored on U26, and the packet explicitly says the frozen price-derived structural blocks describe Q26. I therefore refuse to turn Q26 expiry into U26 directional authority or a magnitude bump. There is no active GSCI/BCOM roll program.\n\nP50 / DISPOSITION: the only mild directional balance I can defend is slightly DOWN: sell-leaning big prints plus the 08:00 CDD cut outweigh the near-neutral aggregate flow, but not by enough for a trade call. I set -150 p50 with zero gap and a round-trip path: small early lift, morning fade as the cooler revision enters, partial midday recovery, then a soft close. The market forecast stays non-flat even though disposition is ABSTAIN. Falsifier to the mild downside lean would be a fresh guard-clean buy-side continuation in live tape; conversely, coherent sell-side phases would upgrade the downside. Low confidence.",
+  "plays_fired": [
+    "flow.big_print_bshare_thin_tape_guard — n=194 is thick; the 0.473 sell-lean is real evidence but conflicts with aggregate flow.",
+    "weather.revision_seasonal_sign_map — 08:00 D0 CDD -0.469 is a modest bearish cooling-demand revision.",
+    "C mature-swing / re-derivation doctrine — prior-day strong continuation is not extended automatically when the new tape becomes internally mixed."
+  ],
+  "plays_stood_down": [
+    "direction_source_rule full continuation — session flow 0.503/+583 and big-print 0.473 disagree; no coherent D-1 sign.",
+    "structure.accumulation_arm_turn / selector.midblock_right_the_ship — extreme+worsening COT stack is absent; COT improved WoW and percentile is 17.92.",
+    "direction.flow_conviction_sign_gate / direction.absorption_is_reversal — price-bearing conviction is masked, so the session-vs-big-print disagreement cannot be labeled absorption.",
+    "flow.resting_program_inverts_aggressor_tilt — Q26 expiry is not the U26 scored-leg expiry and no index-roll program is active.",
+    "magnitude.catalyst_condition_sort expiry/seam size-up — generic expiry mechanics are stood down under the scored-leg hole-#8 guard.",
+    "magnitude.terminal_impact_coefficient_carry — final-phase flow exists but price-impact numerator is unavailable.",
+    "magnitude.emission_ceiling_check — INPUT_ABSENT."
+  ],
+  "confidence": "low",
+  "state_defects_and_gaps_reported": [
+    "D-1 aggregate and big-print flow disagree; without price-bearing conviction the divergence cannot be classified as absorption or delivery.",
+    "Current 2026-07-30 storage survey consensus is absent one day before the print.",
+    "Calendar Q26 expiry belongs to the frozen wrong-leg structural context; the scored leg is U26, so direct expiry mechanics are excluded.",
+    "magnitude.emission_ceiling_check is INPUT_ABSENT."
+  ],
+  "disposition": "ABSTAIN"
+}
