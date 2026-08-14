@@ -7,6 +7,7 @@ on:
     paths:
       - .github/workflows/frankie_g3_reblind_s131.yml
       - research/kalshi/frankie_g3_reblind_s131.py
+      - research/kalshi/frankie_g3_reblind_s131_runner.py
   workflow_dispatch:
 
 permissions:
@@ -38,7 +39,7 @@ jobs:
           PYTHONPATH: research/kalshi
         run: |
           rm -rf /tmp/g3_s131
-          python research/kalshi/frankie_g3_reblind_s131.py \
+          python research/kalshi/frankie_g3_reblind_s131_runner.py \
             --out /tmp/g3_s131 \
             --namespace frankie_g3_s131_corrected_reblind
           python - <<'PY'
