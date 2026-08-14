@@ -20,8 +20,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install current-state runtime dependency
-        run: python -m pip install --quiet numpy
+      - name: Install current-state runtime dependencies
+        run: python -m pip install --quiet numpy requests
       - name: Rebuild public positioning caches
         env:
           PYTHONPATH: research/kalshi
