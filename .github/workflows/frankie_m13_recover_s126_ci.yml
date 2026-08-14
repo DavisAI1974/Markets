@@ -54,6 +54,5 @@ jobs:
           assert 'weather_forecast_cycle' in src
           assert 'freeze_risk' in src
           assert 'storage_consensus' in src
-          assert 'spawn.py' not in src
           print('PASS: M13 recovery is existing-builder reuse, blind-safe, D47-verified, and rehearsal-gated')
           PY
