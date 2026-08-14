@@ -3,13 +3,13 @@ storage_consensus.py -- weekly EIA natural gas storage analyst consensus as a de
 
 The store carries archived and forward point-in-time survey evidence.  The serving rule is stricter
 than the storage record itself: an UPCOMING print may expose only consensus evidence that was actually
-captured before the decision-day open.  A later capture can prove history after the fact, but it cannot
+captured before the decision point.  A later capture can prove history after the fact, but it cannot
 travel backward into an earlier blind slice.
 
-Decision-time convention matches the walk's weekday-open state: 08:00 America/New_York on D.
-For next_print, estimates/capture metadata at or after that cutoff are withheld.  Missing stays None;
-there is no interpolation, seasonal stand-in, or synthetic earlier vintage.  last_print is strictly
-before D and may carry realized actual/surprise fields.
+Decision-time convention matches the canonical specialist path: the 20:00 America/New_York reopen on
+D-1 for decision day D.  For next_print, estimates/capture metadata at or after that cutoff are withheld.
+Missing stays None; there is no interpolation, seasonal stand-in, or synthetic earlier vintage.
+last_print is strictly before D and may carry realized actual/surprise fields.
 """
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ STORE_NAME = "storage_consensus.json"
 _SURPRISE_PATHS = [os.path.join(_HERE, "..", "..", "data", "eia_surprise.json"),
                    os.path.join("data", "eia_surprise.json")]
 _ET = ZoneInfo("America/New_York")
-_DECISION_OPEN_HOUR_ET = 8
+_DECISION_REOPEN_HOUR_ET = 20
 
 SCHEDULE_EXCEPTIONS = {
     "2025-11-14": ("Fri", "10:30"),
@@ -97,7 +97,8 @@ def _snapshot_utc(value):
 
 
 def _decision_cutoff_utc(D: dt.date) -> dt.datetime:
-    local = dt.datetime.combine(D, dt.time(_DECISION_OPEN_HOUR_ET, 0), tzinfo=_ET)
+    prior = D - dt.timedelta(days=1)
+    local = dt.datetime.combine(prior, dt.time(_DECISION_REOPEN_HOUR_ET, 0), tzinfo=_ET)
     return local.astimezone(dt.timezone.utc)
 
 
@@ -123,7 +124,7 @@ def _clean_estimate(e):
 
 
 def _next_print_view(rec, D):
-    """Upcoming-print view using only evidence actually visible by the decision-day open."""
+    """Upcoming-print view using only evidence actually visible by the D-1 reopen decision point."""
     out = {k: rec.get(k) for k in _STATIC_NEXT_KEYS}
     out["days_to_print"] = (dt.date.fromisoformat(rec["print_date"]) - D).days
 
@@ -330,7 +331,7 @@ def selftest() -> bool:
 
     st = storage_consensus_asof("2026-01-29")
     if st is None or st["next_print"] is None or st["next_print"]["print_date"] != "2026-01-29":
-        print("  FAIL: print-day open must identify its own print as next_print"); ok = False
+        print("  FAIL: print-day state must identify its own print as next_print"); ok = False
     if st and st["last_print"] and st["last_print"]["print_date"] != "2026-01-22":
         print("  FAIL: last_print on 2026-01-29 should be 2026-01-22"); ok = False
     st2 = storage_consensus_asof("2025-12-30")
@@ -341,7 +342,7 @@ def selftest() -> bool:
     n_pre = sum(1 for r in reports if r.get("consensus_pre_print_bcf") is not None)
     print(f"  store: {len(reports)} reports, consensus {sum(1 for r in reports if r['consensus_chg_bcf'] is not None)}"
           f"/{len(reports)}, strictly-pre-print value {n_pre}/{len(reports)}")
-    print(f"  decision cutoff: {_DECISION_OPEN_HOUR_ET:02d}:00 ET; blind-wall violations: {violations}")
+    print(f"  decision cutoff: D-1 {_DECISION_REOPEN_HOUR_ET:02d}:00 ET; blind-wall violations: {violations}")
     ok = ok and violations == 0
     print("SELFTEST", "PASS" if ok else "FAIL")
     return ok
