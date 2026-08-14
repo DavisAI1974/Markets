@@ -14,6 +14,13 @@ capture `forecast`, once AFTER to capture `actual`. Idempotent: keyed by
 (title, date); re-polls fill in `actual` and refresh. Stdlib-only (runs in GHA
 with no pip, like kalshi_collector.py).
 
+S128: preserve `forecast_history` with an observed-at timestamp. The old store
+kept only the latest forecast plus first/last poll times, which meant a later
+forecast revision could not safely be served back at an earlier blind cutoff.
+History is append-only by changed forecast value. Existing legacy rows are
+seeded conservatively at their LAST poll time, never their first poll time, so
+we do not back-date a value whose earlier vintage is unknown.
+
 Usage:
     python research/kalshi/consensus_poll.py                       # poll + merge
     python research/kalshi/consensus_poll.py --out data/kalshi/consensus.jsonl
@@ -80,6 +87,24 @@ def load_store(path: Path) -> dict[str, dict]:
     return store
 
 
+def _forecast_history(prev: dict | None, forecast, now: str) -> list[dict]:
+    """Append-only changed-value snapshots; never back-date a legacy value."""
+    history = [dict(x) for x in ((prev or {}).get("forecast_history") or []) if isinstance(x, dict)]
+    if not history and prev and prev.get("forecast") not in (None, ""):
+        # Conservative migration: last_polled_at is the latest time we can PROVE this stored
+        # value existed. first_polled_at would incorrectly imply the final/revised forecast was
+        # already known on the first poll.
+        observed = prev.get("last_polled_at")
+        if observed:
+            history.append({"forecast": prev.get("forecast"), "observed_at": observed,
+                            "migration": "legacy_value_seeded_at_last_poll"})
+    if forecast in (None, ""):
+        return history
+    if not history or history[-1].get("forecast") != forecast:
+        history.append({"forecast": forecast, "observed_at": now})
+    return history
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description="Poll + accrue forward release consensus/actual")
     p.add_argument("--out", default="data/kalshi/consensus.jsonl")
@@ -100,12 +125,14 @@ def main() -> None:
             continue
         key = f"{title}|{e.get('date')}"
         prev = store.get(key)
+        forecast = e.get("forecast") or None
         rec = {
             "title": title,
             "country": e.get("country"),
             "date": e.get("date"),
             "impact": e.get("impact"),
-            "forecast": e.get("forecast") or None,
+            "forecast": forecast,
+            "forecast_history": _forecast_history(prev, forecast, now),
             "previous": e.get("previous") or None,
             "actual": e.get("actual") or None,
             "series": series,
