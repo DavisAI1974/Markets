@@ -1,0 +1,57 @@
+name: Burn-HH Living 365d Dataset
+
+on:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - research/kalshi/burn_hh_12m_event_ledger.py
+      - research/kalshi/burn_hh_living_365d.py
+      - .github/workflows/burn_hh_living_365d_ci.yml
+  schedule:
+    - cron: '17 15 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rebuild-current-window:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install --quiet requests xlrd pandas openpyxl
+      - name: Rebuild latest complete 365-day window
+        run: |
+          python research/kalshi/burn_hh_living_365d.py \
+            --out /tmp/burn_hh_living_current
+      - name: Validate current window
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+          root = Path('/tmp/burn_hh_living_current')
+          manifest = json.loads((root/'CURRENT_WINDOW.json').read_text())
+          physical = list(csv.DictReader((root/'physical_daily_365d.csv').open()))
+          events = list(csv.DictReader((root/'hh_trading_day_event_ledger.csv').open()))
+          assert manifest['window_days'] == 365
+          assert len(physical) == 365, len(physical)
+          assert len(events) >= 200, len(events)
+          assert physical[0]['date'] == manifest['window_start']
+          assert physical[-1]['date'] == manifest['window_end']
+          print(json.dumps(manifest, indent=2))
+          print('physical rows:', len(physical))
+          print('event rows:', len(events))
+          PY
+      - name: Upload current living dataset
+        uses: actions/upload-artifact@v4
+        with:
+          name: burn-hh-living-365d-current
+          path: /tmp/burn_hh_living_current/
+          retention-days: 30
