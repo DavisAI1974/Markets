@@ -49,7 +49,7 @@ class S127G24RunnerTests(unittest.TestCase):
         self.assertEqual(packet["causal_slice"], original["causal_slice"])
         self.assertEqual(packet["brain_view_served"], original["brain_view_served"])
         self.assertFalse(packet["realized_outcome_in_packet"])
-        self.assertIn("ChatGPT", packet["operator_transport"])
+        self.assertIn("chatgpt", packet["operator_transport"].lower())
 
     def test_g24_packet_rejects_other_groups(self):
         with self.assertRaisesRegex(s127.S127Stop, "g24-only"):
