@@ -1,0 +1,59 @@
+name: S126 Frankie M13 Recovery Invariant
+
+on:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - research/kalshi/frankie_m13_recover_s126.py
+      - research/kalshi/data_records/storage_consensus_forward_s126.json
+      - research/kalshi/tests/test_frankie_m13_recover_s126.py
+      - .github/workflows/frankie_m13_recover_s126_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  m13-recovery-invariant:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install focused test dependency
+        run: pip install --quiet pytest
+      - name: Compile M13 recovery wrapper
+        run: python -m py_compile research/kalshi/frankie_m13_recover_s126.py
+      - name: Test blind-safe evidence merge and D47 read-back invariants
+        run: python -m pytest -q research/kalshi/tests/test_frankie_m13_recover_s126.py
+      - name: Prove wrapper reuses canonical builders and sanctioned S3 door
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          python - <<'PY'
+          import inspect
+          import json
+          from pathlib import Path
+          import frankie_m13_recover_s126 as m13
+
+          src = inspect.getsource(m13)
+          evidence = json.loads(Path('research/kalshi/data_records/storage_consensus_forward_s126.json').read_text(encoding='utf-8'))
+          rows = m13.validate_evidence_rows(evidence['rows'], '2026-08-13')
+
+          assert len(rows) == 5
+          assert rows[-1]['release_date'] == '2026-08-13'
+          assert 'restore_substrate.py' in src
+          assert 'mos_cycle.build' in src
+          assert 'freeze.pull' in src and 'freeze.build' in src
+          assert 'platform_sync.py' in src and '"--execute"' in src
+          assert 'stage_group.py' in src and m13.REHEARSAL_SUFFIX == '_m13check'
+          assert 'state_health.audit' in src
+          assert 'weather_forecast_cycle' in src
+          assert 'freeze_risk' in src
+          assert 'storage_consensus' in src
+          assert 'spawn.py' not in src
+          print('PASS: M13 recovery is existing-builder reuse, blind-safe, D47-verified, and rehearsal-gated')
+          PY
