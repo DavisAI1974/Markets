@@ -1,0 +1,19 @@
+{
+  "schema_version": "s128.g24_refine_day.1",
+  "group": "g24",
+  "date": "20260722",
+  "dow": "Wed",
+  "owner": "E",
+  "purpose_note": "Create a forecast curve for the day. Refine uses the same kitchen sink as blind plus realized price/curve as causal evidence; blind stays immutable.",
+  "blind": {"day_move_usd": -400, "gap_usd": 0, "disposition": "CALL", "confidence": "low"},
+  "actual": {"day_move_usd": 630, "gap_usd": 0},
+  "causal_mbo": {"onset_et": "07:47", "onset_dir": "up", "seam": true, "phases": [{"sflow": 163, "pxchg": 50}, {"sflow": -319, "pxchg": 320}, {"sflow": 763, "pxchg": 270}]},
+  "posterior_rule": "R3 scored-leg seam reset: the never-traded contract roll offset remains excluded, and stale prior-leg structural pressure loses authority on the new scored leg. Fresh-leg price/flow conviction owns direction; negative flow into rising price is absorption, not bearish continuation.",
+  "refined_day_move_usd": 640,
+  "refined_error_usd": 10,
+  "path_p50_curve": [[20,0],[22,-20],[0,-55],[2,-90],[4,-125],[6,-70],[8,60],[10,245],[12,430],[14,650],[16,690],[18,665],[20,640]],
+  "weight_assigned": {"blind": 0.15, "causal_mbo": 0.85},
+  "lesson": "The blind correctly protected the Q26-to-U26 accounting seam but still leaned on the inherited D-1 sell state. Refine shows U26 establishing its own bullish tape: phase 1 rises with buy flow, phase 2 rises sharply despite sell flow, and phase 3 rises with strong buy flow. The new leg must be re-derived from its own causal price/flow state.",
+  "carry_forward": "At any scored-leg seam, zero the mechanical roll move and sharply discount inherited prior-leg direction until the new leg establishes causal delivery/absorption. Do not transfer expiry/squeeze structure across legs.",
+  "anti_overfit_note": "Endpoint is gap + sum of causal phase price changes (0+50+320+270=640), using the same reconstruction rule as every g24 day."
+}
