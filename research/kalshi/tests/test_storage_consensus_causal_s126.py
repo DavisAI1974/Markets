@@ -56,29 +56,35 @@ def test_future_capture_cannot_travel_backward_into_earlier_decision_day():
     assert nxt["estimates"] == []
 
 
-def test_same_day_capture_after_0800_et_open_is_withheld():
-    # 14:06:50Z = 10:06:50 ET in July, after the 08:00 ET decision cutoff.
+def test_print_day_morning_capture_is_withheld_because_curve_was_fixed_prior_evening():
     view = _serve("2026-07-23", _report())
     assert view["next_print"]["consensus_chg_bcf"] is None
     assert view["next_print"]["estimates"] == []
 
 
-def test_same_day_capture_before_0800_et_open_is_legal():
-    # 08:49:47Z = 04:49:47 ET in August, strictly before the 08:00 ET cutoff.
+def test_even_early_print_day_capture_is_after_the_d_minus_1_reopen():
     report = _report(release="2026-08-13", observed="2026-08-13T08:49:47Z", value=31.0)
     view = _serve("2026-08-13", report)
-    nxt = view["next_print"]
-    assert nxt["consensus_chg_bcf"] == 31.0
-    assert nxt["consensus_pre_print_snapshot_utc"] == "2026-08-13T08:49:47Z"
-    assert len(nxt["estimates"]) == 1
-    assert "actual_on_page_bcf" not in nxt["estimates"][0]
+    assert view["next_print"]["consensus_chg_bcf"] is None
+    assert view["next_print"]["estimates"] == []
 
 
-def test_prior_day_capture_is_legal_for_upcoming_print():
-    report = _report(observed="2026-07-22T18:00:00Z")
+def test_prior_day_capture_before_2000_et_reopen_is_legal():
+    # 22:00Z = 18:00 ET in July, two hours before the 20:00 ET D-1 decision point.
+    report = _report(observed="2026-07-22T22:00:00Z")
     view = _serve("2026-07-23", report)
     assert view["next_print"]["consensus_chg_bcf"] == 29.0
-    assert view["next_print"]["consensus_pre_print_snapshot_utc"] == "2026-07-22T18:00:00Z"
+    assert view["next_print"]["consensus_pre_print_snapshot_utc"] == "2026-07-22T22:00:00Z"
+    assert len(view["next_print"]["estimates"]) == 1
+    assert "actual_on_page_bcf" not in view["next_print"]["estimates"][0]
+
+
+def test_prior_day_capture_at_or_after_2000_et_reopen_is_withheld():
+    # 00:30Z on Jul-23 = 20:30 ET on Jul-22, after the decision point for Jul-23.
+    report = _report(observed="2026-07-23T00:30:00Z")
+    view = _serve("2026-07-23", report)
+    assert view["next_print"]["consensus_chg_bcf"] is None
+    assert view["next_print"]["estimates"] == []
 
 
 def test_completed_print_keeps_historical_consensus_and_actuals():
