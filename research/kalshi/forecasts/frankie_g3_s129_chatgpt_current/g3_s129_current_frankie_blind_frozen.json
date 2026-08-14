@@ -1,0 +1,44 @@
+{
+  "group": "g3_s129_current_frankie",
+  "window": "2025-09-08..2025-09-19",
+  "phase": "current_frankie_historical_learning_replay_blind_freeze",
+  "operator": "ChatGPT",
+  "frankie_role": "coordinator",
+  "current_state_source": {
+    "workflow_run": 31792711198,
+    "artifact_id": 9216129154,
+    "artifact_digest": "sha256:b34c6a2b39207302050e95ab58f5bf4538fde714d5f5ed5e35b169a31d323fe5",
+    "builder": "research/kalshi/frankie_s128_decision_state.py",
+    "branch_head_at_build": "2f2985cdf306cdf8b106d72839601302c2379546",
+    "schema_channels_per_day": 31,
+    "populated_historical_channels": ["cot", "flow_calendar", "dow", "curve_regime"],
+    "unavailable_channels_policy": "remain null; never synthesized"
+  },
+  "anchor": {"date": "20250905", "price": 3.026, "last_hour_dir": "down", "cum_usd": 0},
+  "contract": {"scored_leg": "NGV25", "seam_inside_window": false, "next_known_seam_date": "20250925"},
+  "replay_integrity": {
+    "not_pristine_blind": true,
+    "reason": "Current brain contains historical provenance from older g3-era learning and setup inspection exposed old outcome artifacts. This is a learning replay, not a holdout score.",
+    "operator_guard": "Forecast judgments below use current state triggers/generalized plays, not target-date outcome lookup.",
+    "g24_untouched": true,
+    "no_new_datapoints": true,
+    "protected_roles_unchanged": true,
+    "spawn_unchanged": true
+  },
+  "bridges": [
+    {"from": "20250905", "to": "20250908", "owner": "A", "state": "DOWN_TO_NEUTRAL", "confidence": "low", "gap_p50_usd": 0, "reason": "Friday last-hour direction was down, but weekend-cycle model evidence is unavailable; no gap sign or size is invented."},
+    {"from": "20250912", "to": "20250915", "owner": "A", "state": "DOWN_TO_NEUTRAL", "confidence": "low", "gap_p50_usd": 0, "reason": "Forecast-derived Friday weak-down residual only; realized Friday exit state is not used and weekend-cycle evidence is unavailable."}
+  ],
+  "days": [
+    {"date":"20250908","owner":"B","call":"ABSTAIN","confidence":"low","forecast_day_move_usd":-250,"direction":"DOWN","path_p50_curve":[[20,0],[22,-60],[0,-90],[2,-120],[4,-150],[6,-170],[8,-120],[10,-150],[12,-190],[14,-220],[16,-240],[18,-245],[20,-250]],"rationale":"Monday reaction magnitude is elevated, but weekend-cycle/gap evidence is unavailable. Friday handoff is weak-down; COT is mid-distribution and covering, so side authority is insufficient."},
+    {"date":"20250909","owner":"C","call":"CALL","confidence":"low","forecast_day_move_usd":-300,"direction":"DOWN","path_p50_curve":[[20,0],[22,-35],[0,-55],[2,-75],[4,-95],[6,-120],[8,-150],[10,-185],[12,-215],[14,-245],[16,-270],[18,-290],[20,-300]],"rationale":"Dual scheduled roll windows are live and the inherited chain is weak-down. COT covering offsets conviction, so only a low-confidence continuation is emitted."},
+    {"date":"20250910","owner":"C","call":"CALL","confidence":"low","forecast_day_move_usd":-250,"direction":"DOWN","path_p50_curve":[[20,0],[22,-25],[0,-40],[2,-55],[4,-70],[6,-90],[8,-115],[10,-150],[12,-180],[14,-205],[16,-225],[18,-240],[20,-250]],"rationale":"Continuation remains the least-assumptive chain read while GSCI/BCOM roll windows are active; no tape/weather delivery is available to upgrade or reverse it."},
+    {"date":"20250911","owner":"D","call":"ABSTAIN","confidence":"low","forecast_day_move_usd":-550,"direction":"DOWN","path_p50_curve":[[20,0],[22,-20],[0,-25],[2,-30],[4,-35],[6,-45],[8,-55],[10,-70],[12,-360],[14,-520],[16,-590],[18,-565],[20,-550]],"rationale":"Storage Thursday licenses a larger range, not a surprise-sign direction. Same-print consensus and causal post-print tape are unavailable, so D abstains on side; p50 retains the inherited weak-down chain."},
+    {"date":"20250912","owner":"E","call":"ABSTAIN","confidence":"low","forecast_day_move_usd":-200,"direction":"DOWN","path_p50_curve":[[20,0],[22,-30],[0,-45],[2,-60],[4,-75],[6,-90],[8,-110],[10,-130],[12,-150],[14,-170],[16,-190],[18,-205],[20,-200]],"rationale":"Friday is the final GSCI roll day and BCOM remains live, but no phase tape/price delivery exists. E keeps only a small weak-down residual and refuses a high-authority roll story."},
+    {"date":"20250915","owner":"B","call":"ABSTAIN","confidence":"low","forecast_day_move_usd":-250,"direction":"DOWN","path_p50_curve":[[20,0],[22,-45],[0,-65],[2,-85],[4,-105],[6,-125],[8,-110],[10,-135],[12,-165],[14,-195],[16,-220],[18,-240],[20,-250]],"rationale":"Monday magnitude prior is live, but weekend gap evidence is unavailable. BCOM is on its final roll day while COT shows additional covering, leaving direction unresolved; p50 follows the weak-down handoff only."},
+    {"date":"20250916","owner":"C","call":"CALL","confidence":"low","forecast_day_move_usd":250,"direction":"UP","path_p50_curve":[[20,0],[22,25],[0,40],[2,55],[4,75],[6,95],[8,120],[10,150],[12,175],[14,200],[16,220],[18,238],[20,250]],"rationale":"Both scheduled roll windows have cleared and the newly published COT shows further short covering. With no contrary tape/weather evidence, C permits a low-confidence counter-chain covering drift."},
+    {"date":"20250917","owner":"C","call":"CALL","confidence":"low","forecast_day_move_usd":150,"direction":"UP","path_p50_curve":[[20,0],[22,15],[0,25],[2,35],[4,45],[6,60],[8,75],[10,95],[12,115],[14,130],[16,145],[18,155],[20,150]],"rationale":"Post-roll covering drift remains the only positive open-time evidence. The signal is weak and no delivery tape exists, so magnitude is trimmed and confidence stays low."},
+    {"date":"20250918","owner":"D","call":"ABSTAIN","confidence":"low","forecast_day_move_usd":-450,"direction":"DOWN","path_p50_curve":[[20,0],[22,-15],[0,-20],[2,-25],[4,-30],[6,-35],[8,-45],[10,-55],[12,-280],[14,-430],[16,-500],[18,-475],[20,-450]],"rationale":"Storage Thursday again implies large-range potential but same-print consensus and post-print tape are unavailable. D does not infer direction from the print; p50 uses a modest downside stress path only."},
+    {"date":"20250919","owner":"E","call":"ABSTAIN","confidence":"low","forecast_day_move_usd":-150,"direction":"DOWN","path_p50_curve":[[20,0],[22,-20],[0,-30],[2,-45],[4,-55],[6,-70],[8,-85],[10,-100],[12,-115],[14,-130],[16,-145],[18,-155],[20,-150]],"rationale":"Friday approaches options/futures expiry but is not itself the roll seam. With roll programs over and no tape/structure surface, E leaves only a small downside residual and abstains."}
+  ]
+}
