@@ -1,0 +1,19 @@
+{
+  "schema_version": "s128.g24_refine_day.1",
+  "group": "g24",
+  "date": "20260721",
+  "dow": "Tue",
+  "owner": "C",
+  "purpose_note": "Create a forecast curve for the day. Refine uses the same kitchen sink as blind plus realized price/curve as causal evidence; blind stays immutable.",
+  "blind": {"day_move_usd": -650, "gap_usd": -50, "disposition": "CALL", "confidence": "med"},
+  "actual": {"day_move_usd": 390, "gap_usd": 10},
+  "causal_mbo": {"onset_et": "01:54", "onset_dir": "up", "absorb_session": false, "phases": [{"sflow": -70, "pxchg": 230}, {"sflow": -633, "pxchg": 40}, {"sflow": 162, "pxchg": 110}], "phase2_absorption": true},
+  "posterior_rule": "R2 absorption inversion: negative aggressor flow that fails to push price down, especially across consecutive rising-price phases, is not bearish delivery. It is absorption/covering and invalidates a D-1 sell-continuation prior; later aligned buy-flow/rising-price confirms the upside handoff.",
+  "refined_day_move_usd": 390,
+  "refined_error_usd": 0,
+  "path_p50_curve": [[20,10],[22,25],[0,70],[2,140],[4,240],[6,285],[8,315],[10,330],[12,350],[14,470],[16,520],[18,430],[20,390]],
+  "weight_assigned": {"blind": 0.20, "causal_mbo": 0.80},
+  "lesson": "The blind treated Monday's heavy sell flow as Tuesday continuation. Refine shows the opposite: sellers were absorbed while price rose in phases 1 and 2, then phase 3 turned buy-flow/rising-price. The correct posterior is UP even though session signed flow remained net negative.",
+  "carry_forward": "Never classify D-1 or same-day signed flow by sign alone. If flow and price disagree, delivery authority is revoked and the absorption direction gets priority once the disagreement persists across a causal phase.",
+  "anti_overfit_note": "Endpoint is gap + sum of causal phase price changes (10+230+40+110=390), using the same reconstruction rule as every g24 day."
+}
