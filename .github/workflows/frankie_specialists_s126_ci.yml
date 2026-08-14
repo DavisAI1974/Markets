@@ -8,11 +8,13 @@ on:
       - research/kalshi/frankie_specialist_parity_s126.py
       - research/kalshi/frankie_s121_curve_restore.py
       - research/kalshi/frankie_g24_run_s127.py
+      - research/kalshi/frankie_g24_score_render_s127.py
       - research/kalshi/frankie_aws_stage_s126.py
       - research/kalshi/frankie_causal_capture_gate_s126.py
       - research/kalshi/tests/test_frankie_specialist_parity_s126.py
       - research/kalshi/tests/test_frankie_s121_curve_restore.py
       - research/kalshi/tests/test_frankie_g24_run_s127.py
+      - research/kalshi/forecasts/frankie_g24_s127_chatgpt/**
       - research/kalshi/renders/ng_refine_s95/grp24_state.json
       - research/kalshi/renders/ng_refine_s95/g24_causal_slices/**
       - .github/workflows/frankie_specialists_s126_ci.yml
@@ -33,13 +35,14 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install focused test dependencies
-        run: pip install --quiet pytest boto3
+        run: pip install --quiet pytest boto3 matplotlib
       - name: Compile current Frankie specialist seam
         run: |
           python -m py_compile \
             research/kalshi/frankie_specialist_parity_s126.py \
             research/kalshi/frankie_s121_curve_restore.py \
             research/kalshi/frankie_g24_run_s127.py \
+            research/kalshi/frankie_g24_score_render_s127.py \
             research/kalshi/frankie_s118_redo.py \
             research/kalshi/frankie_group_forecast_s118.py \
             research/kalshi/frankie_aws_stage_s126.py \
@@ -135,6 +138,21 @@ jobs:
           name: frankie-g24-s127-chatgpt-packets
           path: /tmp/frankie_g24_s127_packets/
           retention-days: 7
+      - name: Score only after the full blind group is frozen and render the reveal
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          python research/kalshi/frankie_g24_score_render_s127.py \
+            > /tmp/frankie_g24_s127_score_stdout.json
+          cat /tmp/frankie_g24_s127_score_stdout.json
+      - name: Upload S127 g24 score and render
+        uses: actions/upload-artifact@v4
+        with:
+          name: frankie-g24-s127-score-render
+          path: |
+            research/kalshi/renders/ng_refine_s95/g24_frankie_s127_chatgpt_score.json
+            research/kalshi/renders/ng_refine_s95/g24_frankie_s127_chatgpt_render.png
+          retention-days: 14
       - name: Re-read existing S114 GEFS store when Actions AWS credentials are available
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
