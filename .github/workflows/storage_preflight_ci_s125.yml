@@ -24,12 +24,15 @@ jobs:
           python-version: '3.11'
       - run: pip install --quiet xlrd
       - name: Run storage preflight
-        run: python research/kalshi/frankie_storage_preflight.py > /tmp/storage_preflight.json
+        run: python research/kalshi/frankie_storage_preflight.py > /tmp/storage_preflight.txt
       - name: Validate preflight result
         run: |
           python - <<'PY'
           import json
-          d=json.load(open('/tmp/storage_preflight.json'))
+          text=open('/tmp/storage_preflight.txt').read()
+          start=text.rfind('\n{')
+          payload=text[start+1:] if start >= 0 else text[text.find('{'):]
+          d=json.loads(payload)
           assert d['status']=='READY', d
           assert d['api_key_required'] is False, d
           assert d['regional_reports'] >= 800, d
