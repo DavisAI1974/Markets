@@ -1,0 +1,40 @@
+{
+  "specialist": "C",
+  "group": "g24",
+  "date": "20260721",
+  "guessed_net_usd": -650,
+  "overnight_gap_usd": -50,
+  "path_p50_curve": [[20.0,0],[21.0,-30],[22.6,-75],[0.4,-120],[2.2,-150],[4.5,-205],[6.4,-285],[8.0,-365],[9.4,-470],[10.8,-540],[12.2,-585],[13.7,-520],[15.1,-575],[16.7,-625],[18.3,-590],[20.0,-600]],
+  "reasoning": "DAY CLASS / DIRECTION SOURCE: Tuesday core day, pre-roll side of the 20260722 contract seam. Under the blind doctrine the sign stays with the D-1 trade tilt unless a valid turn/absorption arm displaces it. The served 20260720 tape is a clean, thick SELL read: session signed flow -4537 lots; two-sided b_share 0.469; 146 big prints with size-weighted b_share 0.305; all three phase signed-flow buckets are negative (-339/-3533/-665), with the middle phase carrying 51250 lots. The big-print sample is well above the thin-tape guard and both session and big-print sides agree, so I take DOWN as the primary blind sign. I do not translate that into 'capitulation' or absorption because the price half is masked.\n\nTURN CHECK / ANTI-DEFAULT: C's accumulation/right-the-ship exception does not arm. This is not recurring BUY absorption under a sell tape: the large-print ratio is 0.305, not >=0.55, and NYMEX MM 1y percentile 14.15 does not clear the play's <12 crowded-short turn threshold. There is therefore no blind-legal accumulation stack strong enough to override the D-1 sell tilt. The COT book is still worsening sharply (-45414 WoW), so I keep an upside squeeze/covering tail in the shape, but not in the p50 sign. The live expiry calendar is inside six business days, yet the front-next spread 3d change is -0.002; calendar proximity alone is not a squeeze signal.\n\nFUNDAMENTALS / WEATHER: the balance backdrop does not rescue the long side. The D-1-evening D0 CDD revision is +0.643 and D1 +1.674, but the 08:00 Tuesday cycle cools D0 by -0.208 and D1 by -0.545. In July I read CDD, not HDD, and I do not scale magnitude by revision size. Grid burn is 44.2 bcfd with wind share lower WoW, so renewable masking is less severe than Monday; however grid_stack is D+2 stale and cannot own sign. Weekly supply is +1.7 bcfd with dry production +1.1 and LNG feedgas -0.7, while storage remains +162 Bcf vs 5y. The last print was only 4 Bcf tighter than the recovered survey consensus and the next consensus is still absent. Net: weather is a modest counterweight to the sell tape, not an override.\n\nMAGNITUDE / PATH: Tuesday is a non-print core day and the catalyst sorter does not justify a Thursday-sized band. n0 net sigma10 is 621 and the prior comparable full-session range is 800 at the 20th percentile. I center the call near one sigma at -650: continuation from the thick D-1 sell tape into the overnight/US morning, then a partial afternoon recovery because the crowded/worsening short book and backwardated front create asymmetric upside tail risk. The -50 gap is deliberately small because this is a midweek boundary with no weekend-gap ownership play. Falsifier: a guard-clean shift of the live tape to buy-side conviction / recurring big-print BUY absorption would invalidate the chain-down continuation; absent that, the D-1 trade-tilt rule remains the highest-authority blind sign.",
+  "plays_fired": [
+    "direction_source_rule (doctrine) — D-1 session_b_share/big_print_b_share agree on SELL; this is the primary blind sign.",
+    "flow.big_print_bshare_thin_tape_guard — thick sample n=146, so the standing big-print threshold is valid rather than noise-gated.",
+    "daytype.weekday_archetype — Tuesday trend-day frame used only as a secondary continuation/magnitude context, not as independent sign authority.",
+    "weather.revision_seasonal_sign_map — cooling-season CDD axis used; 08:00 D0/D1 cuts damp the prior warm-add counter-signal.",
+    "weather.burn_is_demand_arrival_not_direction — grid burn treated as confirmation/context only, never as sign authority."
+  ],
+  "plays_stood_down": [
+    "structure.accumulation_arm_turn — no buy-absorption: big_print_b_share 0.305, and MM 1y percentile 14.15 fails the <12 turn threshold.",
+    "selector.midblock_right_the_ship — the multi-session accumulation/turn stack is not built; no blind-legal reason to unlock chain-down.",
+    "structure.covering_absorption_directional_tell — MM 14.15 fails <12 and phase price/flow conviction is masked.",
+    "direction.flow_conviction_sign_gate / direction.absorption_is_reversal — price-bearing conviction is unavailable in blind; no absorption label is inferred from flow alone.",
+    "flow.price_free_absorption_proxy — aggregate D-1 flow is negative, failing the play's positive-flow precondition.",
+    "tape.heavy_buy_aggression_is_the_asymmetric_bearish_tell — wrong side; D-1 flow is heavy sell, and the play is same-day buy-aggression only.",
+    "magnitude.terminal_impact_coefficient_carry — phase-3 |flow|=665 clears its flow limb, but the required phase price-impact numerator is masked; no k3 is reconstructed.",
+    "timing.catalyst_continuity_frontrun — EIA is two days ahead but the ramp-live limb lacks a stable served definition; D0/D1 weather revisions reverse at the 08:00 update.",
+    "magnitude.catalyst_condition_sort — storage-Thursday limb not armed and Tuesday is not a weekend-gap day; no catalyst up-size.",
+    "flow.resting_program_inverts_aggressor_tilt — no GSCI/BCOM roll and not expiry day.",
+    "magnitude.positioning_saturation_turn — MM percentile threshold fails and injection/backwardation is outside its withdraw/contango turn regime.",
+    "weather.burn_conversion_gate — REFUTED; not retried.",
+    "magnitude.emission_ceiling_check — INPUT_ABSENT; uncertainty retained rather than inventing a ceiling."
+  ],
+  "confidence": "med",
+  "state_defects_and_gaps_reported": [
+    "Phase price changes/flow_conviction are intentionally masked, so the strong sell flow cannot be classified as delivered versus absorbed; that limits turn-state confidence.",
+    "Next 2026-07-23 storage survey consensus remains absent; no estimate is synthesized.",
+    "vol_regime still references 2026-07-17 as its prior full-session comparison basis rather than 20260720, so it is used only as a coarse magnitude conditioner.",
+    "squeeze_watch.active=false is a declared stale-vintage false negative for the calendar limb; live DTE=6 is used, while the non-confirming spread change prevents squeeze promotion.",
+    "magnitude.emission_ceiling_check is INPUT_ABSENT."
+  ],
+  "disposition": "CALL"
+}
