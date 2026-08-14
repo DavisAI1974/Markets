@@ -46,6 +46,12 @@ Each point is `[et_time, cumulative_usd_from_day_open]`, where `et_time` may be 
 the evening reopen through the close. The first cumulative value is 0. The last cumulative value
 must equal `guessed_net_usd - overnight_gap_usd` within the normal rounding tolerance.
 
+A full session may start at 20:00 ET and close at the next day's 20:00 ET. To make that boundary
+unambiguous, a terminal repeated `20:00`/`20.0` is interpreted as the NEXT-DAY session close when it
+follows later session points. A terminal `24:00`/`24.0` is also accepted as an explicit S121 close
+sentinel for that same next-day 20:00 ET boundary. Those close forms are valid only as the final
+curve point; ordinary clock values remain in [0,24).
+
 `disposition` remains `CALL` or `ABSTAIN`, but it is a TRADE/NO-CALL disposition only. ABSTAIN does
 NOT erase the market forecast and does NOT require zero net, zero gap, low confidence, or a flat
 curve. Return your best market-path forecast either way.
@@ -54,13 +60,19 @@ curve. Return your best market-path forecast either way.
 _TIME_RE = re.compile(r"^(?P<h>\d{1,2}):(?P<m>\d{2})$")
 
 
-def _et_hour(raw: Any, gid: str, day: str) -> float:
+def _et_hour(raw: Any, gid: str, day: str, *, allow_close_sentinel: bool = False) -> float:
+    """Parse an ET clock value, allowing 24:00 only as the terminal S121 close sentinel."""
     if isinstance(raw, bool):
         raise ForecastStop(f"{gid} {day}: curve ET time must be numeric hour or HH:MM")
     if isinstance(raw, (int, float)):
         h = float(raw)
+        if allow_close_sentinel and math.isfinite(h) and abs(h - 24.0) <= 1e-12:
+            return 24.0
     elif isinstance(raw, str):
-        m = _TIME_RE.match(raw.strip())
+        text = raw.strip()
+        if allow_close_sentinel and text == "24:00":
+            return 24.0
+        m = _TIME_RE.match(text)
         if not m:
             raise ForecastStop(f"{gid} {day}: curve ET time {raw!r} must be numeric hour or HH:MM")
         hh, mm = int(m.group("h")), int(m.group("m"))
@@ -85,14 +97,25 @@ def curve_points(curve: Any, gid: str, day: str) -> list[tuple[float, float]]:
         raise ForecastStop(f"{gid} {day}: path_p50_curve must contain a real session path")
     pts: list[tuple[float, float]] = []
     prior_pos: float | None = None
-    for point in curve:
+    for index, point in enumerate(curve):
         if not isinstance(point, (list, tuple)) or len(point) != 2:
             raise ForecastStop(f"{gid} {day}: every path point must be [et_time, cumulative_usd]")
-        h = _et_hour(point[0], gid, day)
+        terminal = index == len(curve) - 1
+        h = _et_hour(point[0], gid, day, allow_close_sentinel=terminal)
         value = point[1]
         if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(float(value)):
             raise ForecastStop(f"{gid} {day}: curve cumulative value must be finite numeric")
-        pos = _session_position(h)
+
+        # S124 exposed a real S121 contract gap: a full 20:00 -> 20:00 session could not express its
+        # close. Preserve 20:00 as position 0 at the reopen, but interpret a repeated terminal 20:00
+        # as the next-day close. 24:00/24.0 is an explicit terminal synonym for the same boundary.
+        if terminal and h == 24.0:
+            pos = 24.0
+        else:
+            pos = _session_position(h)
+            if terminal and prior_pos is not None and abs(h - 20.0) <= 1e-12 and pos <= prior_pos:
+                pos = 24.0
+
         if prior_pos is not None and pos <= prior_pos:
             raise ForecastStop(f"{gid} {day}: curve timestamps must be strictly chronological")
         prior_pos = pos
@@ -167,4 +190,4 @@ def install() -> None:
 
 if __name__ == "__main__":
     install()
-    print("S121 READY: endogenous timestamps; ABSTAIN independent of market-path forecast")
+    print("S121 READY: endogenous timestamps; full 20:00 close expressible; ABSTAIN independent of market-path forecast")

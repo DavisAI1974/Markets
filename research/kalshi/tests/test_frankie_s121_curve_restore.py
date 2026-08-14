@@ -49,6 +49,30 @@ class S121CurveRestoreTests(unittest.TestCase):
         pts = s121.curve_points([[20.0, 0], [20.13, 5], [21.77, -2], [23.42, 9], [1.03, 4]], "g18", "20260427")
         self.assertEqual(len(pts), 5)
 
+    def test_terminal_repeated_2000_is_next_day_session_close(self):
+        curve = [[20.0, 0], [21.2, 20], [23.4, -5], [0.6, 35], [4.2, 55],
+                 [9.8, 90], [15.3, 125], [19.5, 145], [20.0, 160]]
+        row = payload(guess=160, gap=0, curve=curve)
+        self.validate(row)
+        pts = s121.curve_points(curve, "g18", "20260427")
+        self.assertEqual(pts[0][0], 0.0)
+        self.assertEqual(pts[-1][0], 24.0)
+
+    def test_terminal_2400_close_sentinel_accepts_numeric_and_string_forms(self):
+        prefix = [[20.0, 0], [21.2, 20], [23.4, -5], [0.6, 35], [4.2, 55],
+                  [9.8, 90], [15.3, 125], [19.5, 145]]
+        for close in (24.0, "24:00"):
+            with self.subTest(close=close):
+                curve = prefix + [[close, 160]]
+                row = payload(guess=160, gap=0, curve=curve)
+                self.validate(row)
+                self.assertEqual(s121.curve_points(curve, "g18", "20260427")[-1][0], 24.0)
+
+    def test_2400_close_sentinel_is_terminal_only(self):
+        row = payload(guess=30, gap=0, curve=[[20.0, 0], [24.0, 10], [1.0, 30]])
+        with self.assertRaisesRegex(s121.ForecastStop, "outside \[0,24\)"):
+            self.validate(row)
+
     def test_abstain_does_not_flatten_or_zero_the_market_forecast(self):
         row = payload(disposition="ABSTAIN")
         self.validate(row)
@@ -78,6 +102,8 @@ class S121CurveRestoreTests(unittest.TestCase):
         self.assertIn("NO required cadence", text)
         self.assertIn("ABSTAIN does NOT erase the market forecast", text)
         self.assertIn("do not average", text.lower())
+        self.assertIn("terminal repeated `20:00`", text)
+        self.assertIn("terminal `24:00`", text)
 
 
 if __name__ == "__main__":
