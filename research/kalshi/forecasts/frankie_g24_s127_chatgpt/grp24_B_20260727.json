@@ -1,0 +1,34 @@
+{
+  "specialist": "B",
+  "group": "g24",
+  "date": "20260727",
+  "guessed_net_usd": 550,
+  "overnight_gap_usd": 100,
+  "path_p50_curve": [[20.0,0],[20.8,25],[22.2,45],[23.7,20],[1.0,55],[2.8,80],[4.8,115],[6.1,165],[7.2,235],[8.1,315],[9.0,390],[10.1,455],[11.4,485],[12.8,450],[14.2,385],[15.8,410],[17.2,465],[18.6,430],[20.0,450]],
+  "reasoning": "MONDAY OWNERSHIP / A BRIDGE: I consumed A's Friday-cutoff bridge before finalizing. I TAKE its core mechanism: Friday's forward cooling-demand driver was still unrealized ahead of Monday, so Friday's negative day-net should not be inherited mechanically; A confirmed UP/moderate only as a prior and explicitly left the Monday number to B. I also take A's warning that the Sunday reopen itself must not own direction if thin/noisy. I do not treat A's forecast-derived Friday close/cum as realized truth.\n\nD-1 + SUNDAY TAPE: the served prior-session tape is essentially neutral at session level: signed flow +32 lots, two-sided b_share exactly 0.500, quote_bid_share 0.490. Big prints are a real bearish counterweight (n=74, two-sided 0.455), and the phase stack is mixed (-69, +817, -716). That is not a coherent Friday-down continuation signal. It therefore fails to displace A's weather carry but keeps confidence below high. The Monday role's warning about noisy minute flow remains binding; I use the phase/session table, not a minute-grain nowcast.\n\nWEEKEND WEATHER / CATCH-UP: the Sunday-reopen cycle preserves the carry rather than cutting it: D0 Monday CDD 16.112, +0.112 versus its prior basis. The Monday 08:00 weekday-open cycle then raises D0 to 17.006, another +1.096 CDD. That is the clearest fresh Monday input in the packet. Friday-cutoff ladder had Monday near 14.542; by Monday morning the served level is materially hotter. The driver therefore did not realize and fade over the weekend; it strengthened into the 06-10 ET catch-up window. I make the US-morning catch-up, not the overnight gap, own most of the p50.\n\nPOSITIONING / CALENDAR / LEG WALL: COT is still short (-102756 MM net, 17.92 1y percentile) but improved +2953 WoW, so the earlier worsening-short squeeze stack has weakened; I do not use crowding as primary sign. Bidweek day 1 is live, but GSCI/BCOM roll windows are not. The calendar front shows Q26 opex/expiry nearby, while the scored leg is U26 and the packet explicitly forbids importing Q26 frozen structural mechanics directly onto U26. Those countdowns are tail/context only.\n\nMAGNITUDE / PATH: n0 sigma10 is about 621 and the prior comparable range is 800. A weather-led Monday with neutral D-1 tape earns a moderate +550, not a squeeze-size extension. I assign +100 to the reopen p50 and +450 to the ex-gap session path: modest overnight lift, some wobble, then the main 06-10 ET acceleration as the hotter 08:00 cycle arrives, followed by an afternoon give-back and late stabilization. Falsifier: if live Monday flow cannot confirm the weather-led catch-up and instead resolves into guard-clean sell-side conviction, the UP call fails. Disposition CALL, medium confidence.",
+  "plays_fired": [
+    "specialist-B A-bridge consumption — A's UP/moderate weather carry is accepted as prior, with B retaining sole Monday number ownership.",
+    "monday catch-up doctrine — 06-10 ET window owns most of the move; overnight gap is secondary.",
+    "weather.revision_seasonal_sign_map — summer CDD axis used; Sunday +0.112 and Monday 08:00 +1.096 D0 CDD strengthen the forward demand carry.",
+    "flow.big_print_bshare_thin_tape_guard — n=74 is thick enough that 0.455 big-print sell tilt remains a legitimate counterweight.",
+    "weather.burn_is_demand_arrival_not_direction — weather/burn evidence informs demand arrival; B still requires tape confirmation rather than treating burn as autonomous sign."
+  ],
+  "plays_stood_down": [
+    "monday.overnight_headfake_into_catchup — no clean opposing Sunday/Fri trade tilt exists; session flow is neutral and phase flow is mixed, so the specific head-fake setup is not asserted.",
+    "monday.seam_chainage_accommodation_gate — no blind-legal realized chain-age/cum is supplied; no synthetic chain label is created.",
+    "structure.covering_absorption_directional_tell — MM percentile 17.92 fails the <12 crowding threshold and COT improved WoW.",
+    "boundary.seam_gap_up_prior_on_worsening_cot — COT no longer worsened WoW and percentile is not extreme; weather, not positioning, owns the gap prior.",
+    "flow.resting_program_inverts_aggressor_tilt — no GSCI/BCOM roll program is active; Q26 expiry mechanics are not imported onto the U26 scored leg.",
+    "direction.flow_conviction_sign_gate / direction.absorption_is_reversal — price-bearing live Monday conviction is future to the blind packet.",
+    "magnitude.emission_ceiling_check — INPUT_ABSENT; no ceiling is reconstructed."
+  ],
+  "confidence": "med",
+  "state_defects_and_gaps_reported": [
+    "A's Friday-cutoff bridge cannot observe the actual Sunday reopen; its UP bias is used only as a prior and adjudicated against Monday's own causal packet.",
+    "D-1 tape is internally mixed: neutral session flow/b_share, sell-heavy big prints, and mixed phases. It cannot supply a high-confidence sign by itself.",
+    "Scored leg is U26 while frozen structural price blocks describe Q26; direct Q26 expiry/opex/squeeze mechanics are excluded.",
+    "Next 2026-07-30 storage survey consensus is absent three days before the print.",
+    "magnitude.emission_ceiling_check is INPUT_ABSENT."
+  ],
+  "disposition": "CALL"
+}
