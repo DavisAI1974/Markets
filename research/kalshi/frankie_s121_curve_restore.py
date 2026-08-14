@@ -20,6 +20,7 @@ from collections.abc import Mapping
 from typing import Any
 
 import frankie_s118_redo as s120
+import frankie_specialist_parity_s126 as s126
 
 ForecastStop = s120.ForecastStop
 CANARY_ADAPTER_FIELDS = s120.CANARY_ADAPTER_FIELDS
@@ -156,8 +157,8 @@ def validate_day(payload: Mapping[str, Any], gid: str, day: str, spec: str) -> N
 
 
 def install() -> None:
-    """Install after S120 so full-brain/A-82 repairs remain and curve semantics are restored."""
-    s120.install()
+    """Install S120, specialist parity, then S121 curve validation on the current runner."""
+    s126.install()
     base = s120.base
     base._validate_day = validate_day
     if S121_OUTPUT_ADDENDUM not in base.MODEL_INSTRUCTIONS:
