@@ -1,0 +1,43 @@
+name: Frankie S128 contract repairs
+
+on:
+  push:
+    branches: [chatgpt/burn-hh-12m-s125]
+    paths:
+      - 'research/kalshi/consensus_poll.py'
+      - 'research/kalshi/frankie_s128_contract_repairs.py'
+      - 'research/kalshi/frankie_s128_decision_state.py'
+      - 'research/kalshi/frankie_s128_handoff.py'
+      - 'research/kalshi/frankie_stage_group_s128.py'
+      - 'research/kalshi/tests/test_frankie_s128_contract_repairs.py'
+      - '.github/workflows/frankie_s128_contract_repairs_ci.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile repaired seams
+        run: |
+          python -m py_compile \
+            research/kalshi/consensus_poll.py \
+            research/kalshi/frankie_s128_contract_repairs.py \
+            research/kalshi/frankie_s128_decision_state.py \
+            research/kalshi/frankie_s128_handoff.py \
+            research/kalshi/frankie_stage_group_s128.py
+      - name: Run focused contract tests
+        run: python -m unittest research.kalshi.tests.test_frankie_s128_contract_repairs -v
+      - name: Protected-file proof
+        run: |
+          git diff --exit-code 5d0354b5230c5fe746c639608075e0a3f2a54735 -- \
+            research/kalshi/spawn.py \
+            research/kalshi/agents/mbo_refine_shared.md \
+            research/kalshi/agents/mbo_specialist_A.md \
+            research/kalshi/agents/mbo_specialist_B.md \
+            research/kalshi/agents/mbo_specialist_C.md \
+            research/kalshi/agents/mbo_specialist_D.md \
+            research/kalshi/agents/mbo_specialist_E.md
