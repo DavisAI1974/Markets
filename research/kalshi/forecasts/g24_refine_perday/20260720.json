@@ -1,0 +1,19 @@
+{
+  "schema_version": "s128.g24_refine_day.1",
+  "group": "g24",
+  "date": "20260720",
+  "dow": "Mon",
+  "owner": "B",
+  "purpose_note": "Create a forecast curve for the day. Refine uses the same kitchen sink as blind plus realized price/curve as causal evidence; blind stays immutable.",
+  "blind": {"day_move_usd": 500, "gap_usd": 100, "disposition": "CALL", "confidence": "low"},
+  "actual": {"day_move_usd": -710, "gap_usd": -330},
+  "causal_mbo": {"onset_et": "03:56", "onset_dir": "down", "absorb_session": false, "phases": [{"sflow": -339, "pxchg": -270}, {"sflow": -3533, "pxchg": -160}, {"sflow": -665, "pxchg": 40}], "late_absorption": true},
+  "posterior_rule": "R1 early-delivery override: when a low-authority blind prior is contradicted by the observed reopen gap and two consecutive guard-clean same-sign flow/price phases, causal delivery overrides the blind sign; late opposite-sign price against same-sign flow is absorption and caps extension rather than restoring the blind thesis.",
+  "refined_day_move_usd": -720,
+  "refined_error_usd": -10,
+  "path_p50_curve": [[20,-330],[22,-360],[0,-420],[2,-480],[4,-600],[6,-640],[8,-680],[10,-720],[12,-760],[14,-750],[16,-735],[18,-725],[20,-720]],
+  "weight_assigned": {"blind": 0.20, "causal_mbo": 0.80},
+  "lesson": "The blind UP thesis carried its own falsifier but overweighted Friday/weather priors. The actual gap opened against it and the first two causal phases delivered DOWN with large negative signed flow. The final positive price phase against negative flow is late absorption, so it argues for deceleration, not a bullish reversal.",
+  "carry_forward": "Do not let weather or D-1 flow retain sign authority once the live causal tape delivers the opposite sign across two phases. Price-flow conviction outranks the prior after delivery is established.",
+  "anti_overfit_note": "Endpoint is gap + sum of the three causal phase price changes (-330-270-160+40=-720); the same reconstruction is used for every g24 day, not tuned to this close."
+}
