@@ -1,0 +1,19 @@
+{
+  "schema_version": "s128.g24_refine_day.1",
+  "group": "g24",
+  "date": "20260724",
+  "dow": "Fri",
+  "owner": "E",
+  "purpose_note": "Create a forecast curve for the day. Refine uses the same kitchen sink as blind plus realized price/curve as causal evidence; blind stays immutable.",
+  "blind": {"day_move_usd": -500, "gap_usd": -50, "disposition": "CALL", "confidence": "med"},
+  "actual": {"day_move_usd": -40, "gap_usd": -10},
+  "causal_mbo": {"onset_et": "08:06", "onset_dir": "up", "turn_et": "08:41", "turn_kind": "turn_down", "phases": [{"sflow": -69, "pxchg": -140}, {"sflow": 817, "pxchg": 410}, {"sflow": -716, "pxchg": -290}]},
+  "posterior_rule": "R5 Friday crest decomposition: Friday day-net and weekend state are separate. A mid-session rally followed by a causal turn and opposite delivered final phase is a crest/round-trip state; the close should not inherit the opening directional prior, and the weekend handoff must use the realized exit state rather than the Friday day-net.",
+  "refined_day_move_usd": -30,
+  "refined_error_usd": 10,
+  "path_p50_curve": [[20,-10],[22,-45],[0,-80],[2,-110],[4,-150],[6,-110],[8,120],[10,520],[12,300],[14,-80],[16,-330],[18,-120],[20,-30]],
+  "weight_assigned": {"blind": 0.25, "causal_mbo": 0.75},
+  "lesson": "The blind had the final sign barely right but the path wrong by treating coherent Thursday sell flow as Friday continuation. Friday actually rallied hard, crested near 08:41, then reversed and nearly round-tripped. The useful state for Monday is the exit/driver condition, not the -$40 Friday day move.",
+  "carry_forward": "Weekend-feeding Friday must emit a realized/refined exit-state handoff after reveal: close location, last-hour direction/flow, turn state, driver realization and chain state. Monday never inherits Friday's day-net sign directly.",
+  "anti_overfit_note": "Endpoint is gap + sum of causal phase price changes (-10-140+410-290=-30), using the same reconstruction rule as every g24 day."
+}
