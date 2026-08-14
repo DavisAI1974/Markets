@@ -1,0 +1,33 @@
+{
+  "specialist": "C",
+  "group": "g24",
+  "date": "20260728",
+  "guessed_net_usd": 700,
+  "overnight_gap_usd": 50,
+  "path_p50_curve": [[20.0,0],[21.0,35],[22.5,70],[0.4,110],[2.2,145],[4.2,185],[6.0,255],[7.4,330],[8.5,410],[9.6,505],[10.8,590],[12.0,645],[13.3,610],[14.7,540],[16.1,575],[17.4,635],[18.6,620],[20.0,650]],
+  "reasoning": "CORE TAPE SIGN: Tuesday 20260728 is C-owned and the D-1 tape is unusually coherent on the BUY side. Session signed flow is +3052 lots with two-sided session b_share 0.517. The large-print sample is both thick and strongly buy-skewed: 174 big prints, size-weighted two-sided b_share 0.616. Phase flow is -202 / +2708 / +546, so the only negative phase is the first; the middle and final phases deliver the bulk of the positive flow and both finish with two-sided buy shares at or above 0.51. This is not the C-role accumulation exception fighting a down tape; it is direct guard-clean buy-side continuation.\n\nTURN / ACCUMULATION CHECK: the special accumulation/right-the-ship arm is not needed to produce the sign and is not fully satisfied anyway. COT is still net short (-102756) but improved +2953 WoW and its 1y percentile is 17.92, so the 'extreme AND worsening' turn stack is not present. I therefore do not claim a squeeze/accumulation regime from crowding. The simpler higher-authority read is that the prior trade tilt itself is UP.\n\nWEATHER / FUNDAMENTALS: the D-1-evening D0 CDD is 14.287 after a -0.351 run revision, but the 08:00 Tuesday cycle adds +0.396 CDD to D0 (14.683). That is supportive but not large enough to own the move independently. Storage is still 3056 Bcf / +171 vs 5y; the last print was +32 versus +29 consensus, a modest +3 looser-than-survey result. The next print is two days away and current consensus remains absent. These slow fundamentals temper the bullish tape rather than reverse it.\n\nCALENDAR / SCORED LEG: options expiry for the calendar front is today and bidweek day 2 is active, but the scored leg is U26 while the frozen price-derived structure describes Q26. I do not import Q26 opex/expiry pinning or squeeze mechanics onto U26. Those calendar facts can widen tails/flow awareness only. No GSCI/BCOM roll program is active.\n\nMAGNITUDE / SHAPE: n0 sigma10 is ~621 and the prior comparable range is 800. Coherent +3k flow plus 0.616 big-print buying earns a modest size-up above one sigma but not a multi-sigma chase because price-delivery conviction remains masked and the storage backdrop is not tight. I set +700 total, +50 gap: early continuation, strongest extension through the US morning, then an afternoon give-back before a firm close. Falsifier: a guard-clean reversal of the live tape into persistent sell-side conviction would invalidate the continuation read. CALL, medium confidence.",
+  "plays_fired": [
+    "direction_source_rule (doctrine) — D-1 trade tilt is coherently BUY across session flow and large prints.",
+    "flow.big_print_bshare_thin_tape_guard — n=174 is well above the sample floor, so 0.616 big-print buy share is actionable evidence.",
+    "daytype.weekday_archetype — Tuesday continuation frame used as magnitude/timing context after sign is already supplied by tape.",
+    "weather.revision_seasonal_sign_map — summer CDD axis used; 08:00 +0.396 D0 revision modestly supports the buy tape.",
+    "weather.burn_is_demand_arrival_not_direction — demand evidence remains conditioner, not autonomous sign."
+  ],
+  "plays_stood_down": [
+    "structure.accumulation_arm_turn — not needed for sign and its extreme+worsening COT stack is absent (17.92 percentile; +2953 WoW improvement).",
+    "selector.midblock_right_the_ship — no down-chain default needs unlocking; direct D-1 tape already points UP.",
+    "structure.covering_absorption_directional_tell — crowding threshold fails and price-bearing conviction is masked.",
+    "flow.resting_program_inverts_aggressor_tilt — no GSCI/BCOM roll program; Q26 option-expiry mechanics are not imported to U26.",
+    "direction.flow_conviction_sign_gate / direction.absorption_is_reversal — price-bearing delivery/absorption cannot be observed in blind mode.",
+    "magnitude.terminal_impact_coefficient_carry — positive final-phase flow exists but the required price-impact numerator is masked; no coefficient is reconstructed.",
+    "magnitude.emission_ceiling_check — INPUT_ABSENT."
+  ],
+  "confidence": "med",
+  "state_defects_and_gaps_reported": [
+    "Price-bearing phase conviction is masked, so the +3052 flow cannot be labeled delivered-versus-absorbed with high confidence; sign uses the permitted D-1 trade-tilt rule instead.",
+    "Current 2026-07-30 storage survey consensus is absent two days before print.",
+    "Scored leg U26 differs from frozen Q26 price-derived structural blocks; direct Q26 opex/expiry reads are excluded.",
+    "magnitude.emission_ceiling_check is INPUT_ABSENT."
+  ],
+  "disposition": "CALL"
+}
