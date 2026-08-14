@@ -27,13 +27,16 @@ jobs:
           PYTHONPATH: research/kalshi
         run: |
           mkdir -p /tmp/g3_s129
+          # Noncommitted runtime store: fail closed with the feed's expected empty schema.
+          mkdir -p data/ngwu
+          test -e data/ngwu/ngwu.json || printf '{"issues":[]}\n' > data/ngwu/ngwu.json
           python - <<'PY'
           import pathlib, re, subprocess, sys
           cmd = [sys.executable, 'research/kalshi/frankie_s128_decision_state.py', 'decision-state',
                  '--days', '20250908,20250909,20250910,20250911,20250912,20250915,20250916,20250917,20250918,20250919',
                  '--out', '/tmp/g3_s129/g3_s129_current_state.json']
           root = pathlib.Path.cwd().resolve()
-          created=[]
+          created=['data/ngwu/ngwu.json (empty issues; unavailable)']
           for attempt in range(30):
               p = subprocess.run(cmd, text=True, capture_output=True)
               pathlib.Path('/tmp/g3_s129/g3_s129_current_state.pretty.json').write_text(p.stdout, encoding='utf-8')
@@ -46,7 +49,6 @@ jobs:
                   print(p.stderr, file=sys.stderr)
                   raise SystemExit(p.returncode)
               missing = pathlib.Path(m.group(1)).resolve()
-              # Only allow fail-closed materialization of absent runtime DATA/WEATHER stores.
               if root not in missing.parents or not any(part in ('data','weather') for part in missing.parts):
                   print(p.stderr, file=sys.stderr)
                   raise SystemExit('refusing to synthesize non-data missing path: '+str(missing))
