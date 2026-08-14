@@ -1,0 +1,29 @@
+{
+  "schema_version": "s128.g24_refine_bridge.1",
+  "group": "g24",
+  "bridge_for": "20260727",
+  "source_friday": "20260724",
+  "owner": "A",
+  "causal_wall": "Built after revealing 20260724 only; contains no 20260727 price, flow, gap or outcome information.",
+  "friday_exit_state": {
+    "actual_close_px": 2.908,
+    "actual_cum_from_anchor_usd": 230,
+    "turn_kind": "turn_down",
+    "turn_et": "08:41",
+    "phase3_signed_flow": -716,
+    "phase3_price_change_usd": -290,
+    "exit_read": "failed intraday rally / late sell delivery / near-flat day close"
+  },
+  "driver_realization": {
+    "weather_driver_still_ahead_of_monday": true,
+    "note": "Forward CDD remains a live weekend input, but Friday's realized failed-rally exit is now a competing state rather than an assumed continuation vehicle."
+  },
+  "monday_prior": {
+    "direction": "DOWN_TO_NEUTRAL",
+    "size_class": "small_to_moderate",
+    "confidence": "low",
+    "basis": "Friday revealed a large failed rally, a turn-down and negative delivered final phase; weather remains ahead but no longer owns Monday sign by itself."
+  },
+  "sunday_gap_owner": "weather_plus_friday_exit_state",
+  "carry_rule": "Weekend bridge passes realized exit state and driver status, never Friday day-net as Monday direction and never any Monday realized field."
+}
