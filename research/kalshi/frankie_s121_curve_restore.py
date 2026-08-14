@@ -21,6 +21,7 @@ from typing import Any
 
 import frankie_s118_redo as s120
 import frankie_specialist_parity_s126 as s126
+import frankie_s128_contract_repairs as s128
 
 ForecastStop = s120.ForecastStop
 CANARY_ADAPTER_FIELDS = s120.CANARY_ADAPTER_FIELDS
@@ -180,8 +181,9 @@ def validate_day(payload: Mapping[str, Any], gid: str, day: str, spec: str) -> N
 
 
 def install() -> None:
-    """Install S120, specialist parity, then S121 curve validation on the current runner."""
+    """Install S120, specialist parity, S128 packet availability, then S121 curve validation."""
     s126.install()
+    s128.install_brain()
     base = s120.base
     base._validate_day = validate_day
     if S121_OUTPUT_ADDENDUM not in base.MODEL_INSTRUCTIONS:
