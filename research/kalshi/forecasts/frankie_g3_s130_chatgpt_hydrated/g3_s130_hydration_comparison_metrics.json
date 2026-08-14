@@ -1,0 +1,53 @@
+{
+  "group": "g3_s130_current_frankie_hydrated",
+  "window": "2025-09-08..2025-09-19",
+  "anchor": {"date": "2025-09-05", "price": 3.026},
+  "integrity": {
+    "s130_pristine_blind": false,
+    "teach_from_s130": false,
+    "reason": "Post-reveal hydration counterfactual; only measures impact of restored existing inputs."
+  },
+  "availability": {
+    "s129_materially_populated_channels": 4,
+    "s130_fully_populated_channels": 9,
+    "s130_partially_populated_channels": 1,
+    "grid_stack": "unavailable: EIA DEMO_KEY 429",
+    "weather_vintages": "unavailable: not captured; realized proxy not substituted"
+  },
+  "s129_starved": {
+    "endpoint_mae_usd": 529.0,
+    "endpoint_rmse_usd": 578.1,
+    "max_abs_endpoint_error_usd": 950,
+    "direction_hits": 5,
+    "direction_n": 10,
+    "call_direction_hits": 2,
+    "call_n": 4,
+    "day_local_intraday_curve_mae_usd": 336.8,
+    "endpoint_errors_usd": {
+      "20250908": -440, "20250909": -420, "20250910": 500, "20250911": 460,
+      "20250912": -480, "20250915": -450, "20250916": -950, "20250917": 580,
+      "20250918": 910, "20250919": 100
+    }
+  },
+  "s130_hydrated": {
+    "endpoint_mae_usd": 529.0,
+    "endpoint_rmse_usd": 599.4,
+    "max_abs_endpoint_error_usd": 1025,
+    "direction_hits": 5,
+    "direction_n": 10,
+    "call_direction_hits": 2,
+    "call_n": 4,
+    "day_local_intraday_curve_mae_usd": 332.4,
+    "endpoint_errors_usd": {
+      "20250908": -440, "20250909": -520, "20250910": 350, "20250911": 260,
+      "20250912": -730, "20250915": -600, "20250916": -1025, "20250917": 505,
+      "20250918": 860, "20250919": 0
+    }
+  },
+  "delta_s130_minus_s129": {
+    "endpoint_mae_usd": 0.0,
+    "day_local_curve_mae_usd": -4.4,
+    "endpoint_rmse_usd": 21.3
+  },
+  "final_cumulative_usd_from_anchor": {"actual": -1080, "s129": -2000, "s130": -3150}
+}
