@@ -1,0 +1,46 @@
+name: S126 Frankie AWS Stage Invariant
+
+on:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - research/kalshi/frankie_aws_stage_s126.py
+      - research/kalshi/tests/test_frankie_aws_stage_s126.py
+      - .github/workflows/frankie_aws_stage_s126_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  aws-stage-invariant:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install focused test dependency
+        run: pip install --quiet pytest
+      - name: Compile AWS staging preflight
+        run: python -m py_compile research/kalshi/frankie_aws_stage_s126.py
+      - name: Test fail-closed weather and causal-slice invariants
+        run: python -m pytest -q research/kalshi/tests/test_frankie_aws_stage_s126.py
+      - name: Prove recovery reuses existing S114 and canonical staging paths
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          python - <<'PY'
+          import inspect
+          import frankie_aws_stage_s126 as s
+
+          src = inspect.getsource(s.stage_for_aws)
+          assert 'restore_substrate.py' in src
+          assert 'build_causal_slices.py' in src
+          assert 'stage_group' not in src  # restore_substrate --group remains the canonical caller
+          assert 'grp{gid[1:]}_state_blind_s114.json' in src
+          assert 'weather_forcing_forecast' in inspect.getsource(s.validate_served_forcing)
+          print('PASS: recovery restores existing S114 data, canonical-stages, rebuilds slices, preserves blind artifact')
+          PY
