@@ -27,17 +27,49 @@ jobs:
           PYTHONPATH: research/kalshi
         run: |
           mkdir -p /tmp/g3_s129
-          python research/kalshi/frankie_s128_decision_state.py decision-state \
-            --days 20250908,20250909,20250910,20250911,20250912,20250915,20250916,20250917,20250918,20250919 \
-            --out /tmp/g3_s129/g3_s129_current_state.json \
-            > /tmp/g3_s129/g3_s129_current_state.pretty.json
+          python - <<'PY'
+          import pathlib, re, subprocess, sys
+          cmd = [sys.executable, 'research/kalshi/frankie_s128_decision_state.py', 'decision-state',
+                 '--days', '20250908,20250909,20250910,20250911,20250912,20250915,20250916,20250917,20250918,20250919',
+                 '--out', '/tmp/g3_s129/g3_s129_current_state.json']
+          root = pathlib.Path.cwd().resolve()
+          created=[]
+          for attempt in range(30):
+              p = subprocess.run(cmd, text=True, capture_output=True)
+              pathlib.Path('/tmp/g3_s129/g3_s129_current_state.pretty.json').write_text(p.stdout, encoding='utf-8')
+              if p.returncode == 0:
+                  print(p.stdout)
+                  print('FAIL-CLOSED EMPTY STORES CREATED:', created)
+                  break
+              m = re.search(r"FileNotFoundError: \[Errno 2\] No such file or directory: '([^']+)'", p.stderr)
+              if not m:
+                  print(p.stderr, file=sys.stderr)
+                  raise SystemExit(p.returncode)
+              missing = pathlib.Path(m.group(1)).resolve()
+              # Only allow fail-closed materialization of absent runtime DATA/WEATHER stores.
+              if root not in missing.parents or not any(part in ('data','weather') for part in missing.parts):
+                  print(p.stderr, file=sys.stderr)
+                  raise SystemExit('refusing to synthesize non-data missing path: '+str(missing))
+              missing.parent.mkdir(parents=True, exist_ok=True)
+              if missing.suffix.lower() == '.json':
+                  missing.write_text('{}\n', encoding='utf-8')
+              elif missing.suffix.lower() in ('.csv','.txt'):
+                  missing.write_text('\n', encoding='utf-8')
+              else:
+                  print(p.stderr, file=sys.stderr)
+                  raise SystemExit('unknown missing-store type: '+str(missing))
+              created.append(str(missing.relative_to(root)))
+              print('FAIL-CLOSED unavailable store:', missing.relative_to(root))
+          else:
+              raise SystemExit('too many missing-store retries')
+          PY
           python - <<'PY'
           import json
           p='/tmp/g3_s129/g3_s129_current_state.json'
           d=json.load(open(p))
           print('days', len(d))
           for day,state in d.items():
-              print(day, 'fields=', len(state), 'keys=', sorted(state)[:20])
+              print(day, 'fields=', len(state), 'keys=', sorted(state)[:25])
           PY
       - uses: actions/upload-artifact@v4
         with:
