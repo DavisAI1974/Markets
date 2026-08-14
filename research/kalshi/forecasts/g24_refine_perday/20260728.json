@@ -1,0 +1,19 @@
+{
+  "schema_version": "s128.g24_refine_day.1",
+  "group": "g24",
+  "date": "20260728",
+  "dow": "Tue",
+  "owner": "C",
+  "purpose_note": "Create a forecast curve for the day. Refine uses the same kitchen sink as blind plus realized price/curve as causal evidence; blind stays immutable.",
+  "blind": {"day_move_usd": 700, "gap_usd": 50, "disposition": "CALL", "confidence": "med"},
+  "actual": {"day_move_usd": -800, "gap_usd": 0},
+  "causal_mbo": {"onset_et": "07:19", "onset_dir": "down", "absorb_session": false, "phases": [{"sflow": -155, "pxchg": -210}, {"sflow": 196, "pxchg": -700}, {"sflow": 542, "pxchg": 110}]},
+  "posterior_rule": "R6 carry-forward from 20260727: buy-flow sign has no bullish authority without price delivery. Positive flow into a large falling-price phase is failed buying/absorption pressure; only a later rising-price phase can begin repairing that state, and a small repair does not erase the delivered trend.",
+  "refined_day_move_usd": -800,
+  "refined_error_usd": 0,
+  "path_p50_curve": [[20,0],[22,-35],[0,-70],[2,-105],[4,-150],[6,-220],[8,-420],[10,-680],[12,-930],[14,-910],[16,-865],[18,-820],[20,-800]],
+  "weight_assigned": {"blind": 0.10, "causal_mbo": 0.90},
+  "lesson": "The blind made the exact mistake July 27 just taught us not to make: it treated prior +3052 buy flow as continuation. Tuesday's own middle phase had positive flow (+196) while price collapsed -$700. The live causal state says sellers still owned price despite apparent buying; the +$110 final phase is only a late repair.",
+  "carry_forward": "Once positive-flow/falling-price absorption is established, do not recycle aggregate buy flow as next-day bullish evidence. Require a full causal phase of rising price with aligned flow before chain direction can flip back up.",
+  "anti_overfit_note": "Endpoint is gap + sum of causal phase price changes (0-210-700+110=-800), using the same reconstruction rule as every g24 day."
+}
