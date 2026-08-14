@@ -1,0 +1,33 @@
+{
+  "group": "g3_s129_current_frankie",
+  "window": "2025-09-08..2025-09-19",
+  "classification": "historical learning replay; not pristine blind",
+  "endpoint_mae_usd": 529.0,
+  "endpoint_rmse_usd": 578.1,
+  "max_abs_endpoint_error_usd": 950,
+  "p50_direction_hits": 5,
+  "n_days": 10,
+  "call_direction_hits": 2,
+  "n_calls": 4,
+  "day_local_intraday_curve_mae_usd": 336.8,
+  "anchor": {"date": "20250905", "price": 3.026},
+  "state_coverage": {
+    "schema_channels_per_day": 31,
+    "populated_historical_channels": 4,
+    "populated": ["dow", "curve_regime", "cot", "flow_calendar"],
+    "missing_or_unavailable": ["scored_leg", "stor_surprise", "stor_surprise_sign", "stor_surprise_basis", "storage", "storage_regional", "storage_consensus", "storage_vintage", "ngwu_balance", "steo_vintage", "contract_structure", "squeeze_watch", "vol_regime", "cash_basis", "solar", "nuclear_outages", "grid_stack", "options_surface", "weather", "weather_forecast", "weather_forecast_cycle", "weather_forcing_forecast", "freeze_risk", "model_disagreement", "tape_conditions", "holiday", "firehose_present"]
+  },
+  "per_day": [
+    {"date":"20250908","forecast":-250,"actual":190,"abs_error":440,"direction_hit":false,"call":"ABSTAIN"},
+    {"date":"20250909","forecast":-300,"actual":120,"abs_error":420,"direction_hit":false,"call":"CALL"},
+    {"date":"20250910","forecast":-250,"actual":-750,"abs_error":500,"direction_hit":true,"call":"CALL"},
+    {"date":"20250911","forecast":-550,"actual":-1010,"abs_error":460,"direction_hit":true,"call":"ABSTAIN"},
+    {"date":"20250912","forecast":-200,"actual":280,"abs_error":480,"direction_hit":false,"call":"ABSTAIN"},
+    {"date":"20250915","forecast":-250,"actual":200,"abs_error":450,"direction_hit":false,"call":"ABSTAIN"},
+    {"date":"20250916","forecast":250,"actual":1200,"abs_error":950,"direction_hit":true,"call":"CALL"},
+    {"date":"20250917","forecast":150,"actual":-430,"abs_error":580,"direction_hit":false,"call":"CALL"},
+    {"date":"20250918","forecast":-450,"actual":-1360,"abs_error":910,"direction_hit":true,"call":"ABSTAIN"},
+    {"date":"20250919","forecast":-150,"actual":-250,"abs_error":100,"direction_hit":true,"call":"ABSTAIN"}
+  ],
+  "interpretation": "Do not promote a Frankie-brain lesson from this score. The current S128 schema ran correctly, but the historical runner lacked 27 of 31 current state channels. Backfill/reconstruct the existing historical stores and rerun before judging current Frankie. This is existing-field availability work, not a request for new datapoints."
+}
