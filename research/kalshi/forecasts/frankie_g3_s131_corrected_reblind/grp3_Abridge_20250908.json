@@ -1,0 +1,76 @@
+{
+  "specialist": "A",
+  "group": "g3",
+  "template": "BLD-2",
+  "decision_day": "20250905",
+  "target_monday": "20250908",
+  "friday_exit_consumed": {
+    "source": "S131 explicit starter anchor; no E Friday handoff exists before the replay window",
+    "exit_type": "starter_anchor_only",
+    "exit_type_confidence": "low",
+    "monday_bias": {
+      "direction": "DOWN",
+      "size_class": "small"
+    },
+    "sunday_gap_owner": "chain_drift",
+    "sanity_check": "The only blind-legal Friday-exit facts at block start are anchor close 3.026 and declared last-hour direction DOWN. No Friday day-net, close-location, signed-flow handoff, or forward-weather vintage is manufactured."
+  },
+  "reopen_scenarios": [
+    {
+      "name": "anchor_down_drift_persists",
+      "probability": 0.4,
+      "gap_direction": "DOWN",
+      "gap_size_class": "small",
+      "monday_implication": "supports a DOWN prior only; B must compare it with the measured Sep5 scored-leg flow before owning Monday."
+    },
+    {
+      "name": "thin_reopen_neutral_rejection",
+      "probability": 0.35,
+      "gap_direction": "FLAT_MIXED",
+      "gap_size_class": "small",
+      "monday_implication": "starter-anchor direction has little authority; B should let its own D-1 flow read decide."
+    },
+    {
+      "name": "contrary_up_gap",
+      "probability": 0.25,
+      "gap_direction": "UP",
+      "gap_size_class": "small_to_moderate",
+      "monday_implication": "without a forward driver, treat a thin contrary gap as possible rejection/head-fake rather than a new chain."
+    }
+  ],
+  "gap_ownership": {
+    "owner": "chain_drift",
+    "status": "LOW_AUTHORITY_STARTER_BOUNDARY",
+    "evidence": "Sep5 anchor last-hour direction is DOWN; there is no archived Sep-2025 MOS/GEFS forward-weather vintage and no E handoff before the replay window.",
+    "not_owned_by": [
+      "weather - no archived forward vintage at Sep5 cutoff",
+      "options/contract structure - Sep5 frozen underlying values are unavailable",
+      "realized Friday outcome - intentionally unread"
+    ]
+  },
+  "driver_realization_check": {
+    "driver": "none independently measurable beyond starter anchor",
+    "realizes_before_monday": null,
+    "sell_the_news_weekend": false,
+    "note": "No forward driver is claimed. This is a mechanical block-start bridge, not a reconstructed Friday posterior."
+  },
+  "reopen_watch": {
+    "status": "UNAVAILABLE_AT_FRIDAY_BLIND_CUTOFF",
+    "required_on_sunday": [
+      "gap sign/size versus 3.026 anchor",
+      "guard-clean two-sided flow and big-print sample",
+      "whether the thin reopen contradicts or confirms the anchor direction"
+    ],
+    "stand_down_rule": "If reopen tape is thin or internally inconsistent, do not let the gap own Monday; B must fall back to its own measured D-1 flow state."
+  },
+  "monday_bias_confirmed_or_adjusted": {
+    "direction": "DOWN",
+    "size_class": "small",
+    "confidence": "low_prior_only",
+    "action": "STARTER_PRIOR_ONLY",
+    "why": "The explicit anchor ends with a down last-hour direction, but the normal E Friday exit state is unavailable at the replay boundary. B remains free to override with its stronger measured Friday tape."
+  },
+  "authority": "A informs; B decides; B alone owns the 20250908 Monday forecast number",
+  "realized_outcome_in_packet": false,
+  "execution_enabled": false
+}
