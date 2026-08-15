@@ -1,0 +1,60 @@
+name: S131 Frankie G3 Blind Freeze Before Reveal
+
+on:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - .github/workflows/frankie_g3_s131_freeze.yml
+      - research/kalshi/frankie_g3_s131_freeze.py
+      - research/kalshi/frankie_s118_redo.py
+      - research/kalshi/forecasts/frankie_g3_s131_corrected_reblind/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  freeze-no-reveal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Compile S131 actual-free freeze coordinator
+        run: python -m py_compile research/kalshi/frankie_g3_s131_freeze.py
+
+      - name: Freeze current-Frankie G3 blind without outcome access
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          rm -f /tmp/g3_s131_blind_frozen.json
+          python research/kalshi/frankie_g3_s131_freeze.py \
+            --out /tmp/g3_s131_blind_frozen.json
+          python - <<'PY'
+          import json
+          p='/tmp/g3_s131_blind_frozen.json'
+          d=json.load(open(p))
+          assert d['group']=='g3'
+          assert d['phase']=='BLIND_FROZEN_BEFORE_REVEAL'
+          assert d['actuals_read'] is False
+          assert d['target_window_outcomes_read'] is False
+          assert d['score_or_reveal_phase_present'] is False
+          assert d['hydration']=='REJECTED_NOT_USED'
+          assert d['summary']['days']==10
+          assert d['summary']['full_curve_points']==120
+          assert len(d['days'])==10
+          assert len(d['full_curve_p50'])==120
+          assert len(d['bridges'])==2
+          print('PASS: S131 blind frozen before any reveal:', p)
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frankie-g3-s131-blind-frozen-candidate
+          path: /tmp/g3_s131_blind_frozen.json
+          retention-days: 30
+          if-no-files-found: error
