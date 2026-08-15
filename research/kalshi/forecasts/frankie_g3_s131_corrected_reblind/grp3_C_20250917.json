@@ -1,0 +1,29 @@
+{
+  "specialist": "C",
+  "group": "g3",
+  "date": "20250917",
+  "guessed_net_usd": 0,
+  "overnight_gap_usd": 0,
+  "path_p50_curve": [[20.0,0],[22.0,0],[0.0,0],[2.0,0],[4.0,0],[6.0,0],[8.0,0],[10.0,0],[12.0,0],[14.0,0],[16.0,0],[17.0,0]],
+  "reasoning": "DAY CLASS: Wednesday core day, one session before EIA. I reach a genuine directional collision and use the current no-call contract rather than manufacture a small number.\n\nDOWN SIDE: the market-known balance remains loose. Last storage is +71 Bcf versus +68 final / +66 pre-print and working gas is +154 Bcf versus five-year; NGWU still says power demand -1.7 Bcf/d WoW. The next EIA print is tomorrow but there is no pre-print consensus in the archived snapshot, so I cannot turn event anticipation into a measured surprise term.\n\nUP / DAMPING SIDE: D-1 Tuesday tape is coherently buy-side on the scored leg: +1,918 signed lots, two-sided b_share 0.510, big-print two-sided share 0.665 on n=90, with all three phase flows positive [+300,+1581,+37]. The decision-legal grid row (period Sep15) also shows demand ARRIVING: est gas burn 41.5 Bcf/d, gas generation +832,890 MWh WoW and gas share +3.19 points, with wind -251,852 MWh and -3.01 share points. But current Frankie's later merged lesson weather.burn_is_demand_arrival_not_direction exists precisely to stop the mistake I would otherwise make here: burn may confirm demand arrival and damp a contradictory lean, but it may NEVER license a directional lean of its own. Its later evidence includes multiple high-burn days that did not deliver the inferred UP side.\n\nWHY NO CALL: after obeying that rule, the only clean UP sign candidate is D-1 aggregate/large-print flow, and the current brain's own audits say next-day D-1 flow inheritance is near coin flip unless price/absorption or a stronger turn stack resolves it. Price-bearing flow_conviction is masked. The DOWN balance state is real but now directly contradicted by demand arrival and the buy tape. COT is 57.55th percentile with WoW +12,010 improving, so accumulation/right-the-ship does not adjudicate the collision. There is no arithmetic chain from these inputs to a non-zero day net that does not make an unsupported judgment term larger than the measured terms. Per the current emission/no-call doctrine, zero-change is the honest p50 and the all-zero curve is intentional ABSTAIN, not a directional flat forecast.",
+  "plays_fired": [
+    "weather.burn_is_demand_arrival_not_direction - demand arrival is confirmed, but the play's prohibition prevents promoting it to an UP sign.",
+    "flow.big_print_bshare_thin_tape_guard - n=90 makes the 0.665 buy-skew a valid observation, but not a standalone next-day sign.",
+    "magnitude.emission_ceiling/no-call doctrine - no independently derivable non-zero magnitude survives the sign collision, so the forecast declines rather than fitting a small number."
+  ],
+  "plays_stood_down": [
+    "direction.flow_conviction_sign_gate - price change is required to distinguish delivered buy flow from absorption; blind lane cannot compute it.",
+    "structure.accumulation_arm_turn / selector.midblock_right_the_ship - COT is not extreme/worsening and the recurrent buy-absorption-under-sell-tape stack is absent.",
+    "timing.catalyst_continuity_frontrun - EIA is one day ahead, but the historical pre-print consensus/forecast-weather ramp needed to derive a signed front-run is unavailable.",
+    "weather.burn_conversion_gate - REFUTED predecessor; current successor explicitly forbids burn from licensing direction.",
+    "structure.mature_swing_alternation / young_chain_extension_full_band - price cum/chain age/fresh extreme are masked."
+  ],
+  "confidence": "low",
+  "state_defects_and_gaps_reported": [
+    "No Sep18 pre-print consensus estimate is archived in the decision-time snapshot; the next_print object exists but its consensus fields are null.",
+    "Forecast-weather/stability families are unavailable for Sep-2025, so no weather revision can arbitrate the pre-EIA collision.",
+    "Price-bearing absorption/chain state remains unavailable under the one-shot mask; D-1 buy flow cannot be promoted to a delivered-price regime.",
+    "The current brain specifically records rising gas burn as demand-arrival context rather than a directional signal; I follow that later learned restriction."
+  ],
+  "disposition": "ABSTAIN"
+}
