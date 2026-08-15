@@ -1,0 +1,32 @@
+{
+  "specialist": "D",
+  "group": "g3",
+  "date": "20250911",
+  "guessed_net_usd": -350,
+  "overnight_gap_usd": 0,
+  "path_p50_curve": [[20.0,0],[22.0,-30],[0.0,-60],[2.0,-85],[4.0,-70],[6.0,-55],[8.0,-25],[10.0,20],[12.0,-390],[14.0,-430],[16.0,-370],[17.0,-350]],
+  "reasoning": "DAY CLASS: Thursday EIA storage print at 10:30 ET. The pre-print survey is decision-time visible at +66 Bcf. I use that as the event reference but do not use the unknown future surprise sign to forecast direction. Storage entering the print is 3,262 Bcf, +149 versus 5y; the prior as-printed Sep4 change was +55 versus +54 survey, only a +1 Bcf surprise. The current-vintage +45 value differs by 10 Bcf from the as-printed historical truth, so the vintage block - not the current-vintage change - is authoritative for that prior print.\n\nPRE-PRINT / FLOW: prior Wednesday flow is mildly sell-side and late-weighted: session signed flow -661, two-sided b_share 0.496, phase flow +467/-387/-741. Big prints are nearly balanced at 0.512 on n=112. My running blind sequence is only moderately down, not a >=$900 over-extension, so the over-extension gate does not have two clean veto limbs. The flow read is not strongly coherent enough for a full one-sigma sell call either. Grid/wind context remains loose: gas share 0.4174 (-0.0589 WoW), wind share 0.0944 (+0.0595), while the forecast-weather archive is absent.\n\nPRINT RANGE / P50: I separate event RANGE from p50 direction. The path stays mildly soft overnight, firms into the print, then models a downside delivery/round-trip class around 10:30 and a partial recovery. I emit -350 with no material gap; this is below one n0 sigma (~481) but allows a much larger intraday print swing. Falsifier: if the first post-print delivery is guard-clean buy-side rather than sell-side, D should reverse rather than defend the pre-print lean. CALL, low confidence because that delivery read is future-masked.",
+  "plays_fired": [
+    "daytype.storage_thursday_magnitude - print day is treated as a larger intraday-range class; the storage fundamental does not own side.",
+    "magnitude.catalyst_condition_sort - EIA calendar limb is armed and used for range expansion.",
+    "daytype.eia_preprint_overextension_gate - explicitly evaluated; no >=2-of-3 veto is established from the blind-legal state.",
+    "flow.big_print_bshare_thin_tape_guard - n=112 is guard-clean; the near-neutral 0.512 big-print share is retained as a real counterweight."
+  ],
+  "plays_stood_down": [
+    "daytype.eia_print_impulse_arbiter / post-print absorption read - future 10:30 delivery information is unavailable in blind mode.",
+    "timing.catalyst_continuity_frontrun - today is the event, not the 1-3 session ahead window.",
+    "direction.flow_conviction_sign_gate - price-bearing conviction is masked.",
+    "weather.burn_conversion_gate - REFUTED and forecast-weather archive absent.",
+    "contract_structure/options_surface/squeeze_watch - frozen Sep5 envelopes have no archived underlying Sep-2025 values.",
+    "magnitude.emission_ceiling_check - INPUT_ABSENT."
+  ],
+  "confidence": "low",
+  "state_defects_and_gaps_reported": [
+    "Sep-2025 weather_forecast/weather_forecast_cycle/freeze_risk, model_disagreement, and weather_forcing_forecast have no archived Sep-2025 vintage in the durable S3 prefixes; they remain unavailable rather than backfilled.",
+    "Sep-05-frozen contract_structure, options_surface, and squeeze_watch have no Sep-2025 archived underlying vintage; null masked values are treated as unavailable, not as a market signal.",
+    "curve_regime is unknown because the durable nymex_curve prefix has no Sep-2025 date-keyed object.",
+    "magnitude.emission_ceiling_check is unavailable because no served input contract exists; no ceiling is reconstructed.",
+    "The historical pre-print survey (+66 Bcf) is available, but the target print itself is future at the decision point and is not read."
+  ],
+  "disposition": "CALL"
+}
