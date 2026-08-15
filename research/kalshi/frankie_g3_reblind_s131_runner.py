@@ -1,24 +1,31 @@
 #!/usr/bin/env python3
-"""Thin S131 entrypoint for a corrected G3 mechanical re-blind.
+"""Thin S131 entrypoint for a corrected G3 current-Frankie historical replay.
 
 This runner restores only the BLIND input side of the canonical stage_group path after the shared S3
 substrate has been restored by the workflow: scored-contract leg files plus prior n0/n1/L1 tape. It
 never calls stage_group.stage(), group_actual, the scoring path, or any reveal/refine routine.
 
-It then exposes the already-corrected in-memory S131 state to the standard canonical spawn slots:
+It exposes the corrected in-memory S131 state to the standard canonical spawn slots:
   renders/ng_refine_s95/grp3_state.json
   renders/ng_refine_s95/g3_causal_slices/state_<DAY>.json
-Those files exist only in the disposable GitHub Actions checkout; no canonical repo artifact is changed.
+Those files exist only in the disposable GitHub Actions checkout; no canonical repo state artifact is
+changed.
 
-S131 is a CURRENT-FRANKIE improvement test, not a historical-brain reconstruction. The generalized
-current brain/rules remain available, but DIRECT realized-outcome evidence dated on or after each
-historical decision cutoff is visibly withheld before the packet reaches the unchanged S120 A-82 leak
-guard. The guard itself is never weakened or replaced.
+S131 is a CURRENT-FRANKIE improvement test, not a historical-brain reconstruction. Therefore the
+CURRENT brain keeps later learned evidence, including dated realized examples learned after Sep-2025.
+The blind wall is narrower and exact: the tested Sep-08..Sep-19 2025 target outcomes and G3 actual /
+reveal artifacts are forbidden. Canonical S120 is not edited; this S131 runner installs the narrower
+checker only inside its own process.
 
 The runner also declares the Sep-2025 archive gaps proven by the read-only S3 inventory run
 31911949696 (commit 89c21ce7): zero Sep-2025 objects exist in the relevant durable prefixes. Missing
 families therefore remain unavailable/null; no hydration, synthesis, or realized-data substitution is
 performed.
+
+The current E -> A -> B Monday guard is preserved. Once ChatGPT-operated Frankie has produced the
+isolated S131 A bridge under forecasts/frankie_g3_s131_corrected_reblind/, this runner verifies that
+bridge and copies it EPHEMERALLY into forecasts/g3_perday/ inside the disposable workflow checkout so
+canonical spawn can see the bridge it requires. No canonical bridge file is committed.
 """
 from __future__ import annotations
 
@@ -32,15 +39,12 @@ import frankie_g3_reblind_s131 as s131
 
 _ORIGINAL_PACKET = s131._packet
 _ORIGINAL_BUILD_STATE = s131.build_state
-_ORIGINAL_FULL_BRAIN = s131.s128.full_brain
-_ACTIVE_CUTOFF: str | None = None
 _OUT_DIR: Path | None = None
 
+_TARGET_DATES = frozenset(s131.DAYS)
 _DATE8 = re.compile(r"20\d{6}")
-_DATE_SEP = re.compile(r"(20\d{2})[-/.](\d{2})[-/.](\d{2})")
-_DATE_KEYS = frozenset(("date", "day", "target_date", "session_date", "evidence_date", "ymd"))
-_DIRECT_LEAK_FIELDS = ("actual_day_move_usd", "actual_close", "actual_net_usd", "actual_gap_usd")
-_POST_CUTOFF_MARKER = "[WITHHELD: post-cutoff direct outcome evidence]"
+_LEAK_FIELDS = ("actual_day_move_usd", "actual_close", "actual_net_usd", "actual_gap_usd")
+_LEAK_CONTEXT = 500
 
 # Read-only S3 inventory: workflow run 31911949696, commit 89c21ce7ad4a1e0c8c423e9e9be26a68710f3ede.
 # Every listed durable prefix had zero Sep-2025 date-keyed objects. This is declaration only; it does
@@ -58,69 +62,36 @@ _ARCHIVE_ABSENT = {
 }
 
 
-def _extract_dates(value) -> set[str]:
-    text = str(value)
-    out = set(_DATE8.findall(text))
-    out.update("".join(m.groups()) for m in _DATE_SEP.finditer(text))
-    return out
+def _assert_s131_target_window_only(text: str, gid: str, day: str) -> None:
+    """Permit current-brain learned outcomes except the Sep-2025 target window itself.
 
-
-def _is_direct_outcome_leaf(key: str, value) -> bool:
-    k = str(key).lower()
-    if k == "what_the_day_did" or k.startswith("actual_") or k.startswith("realized_"):
-        return True
-    if isinstance(value, str) and any(token in value for token in _DIRECT_LEAK_FIELDS):
-        return True
-    return False
-
-
-def _redact_post_cutoff_outcomes(obj, cutoff: str, counter: list[int], in_future_record: bool = False):
-    """Withhold direct outcome leaves inside records explicitly dated >= cutoff.
-
-    This preserves the current brain's generalized rules, claims, health/falsifier logic and learned
-    parameters. It removes only the realized-answer leaf of a later dated example. The replacement is
-    explicit rather than a silent drop. A direct outcome string that carries its own future date is
-    also withheld even when no sibling date field exists.
+    S120's historical-canary A-82 rule rejects all own/future dated outcome evidence. That is correct
+    for its test, but it is not the question S131 asks. S131 asks whether CURRENT Frankie, with what it
+    has learned since, reasons better on an old market environment. Dated 2026 realized examples are
+    therefore legitimate brain evidence. Only the answer to the tested Sep-08..Sep-19 2025 block is
+    illegal here.
     """
-    if isinstance(obj, dict):
-        local_dates: set[str] = set()
-        for key, value in obj.items():
-            if str(key).lower() in _DATE_KEYS:
-                local_dates.update(_extract_dates(value))
-        future = in_future_record or any(day >= cutoff for day in local_dates)
-        out = {}
-        for key, value in obj.items():
-            if future and _is_direct_outcome_leaf(str(key), value):
-                out[key] = _POST_CUTOFF_MARKER
-                counter[0] += 1
-            else:
-                out[key] = _redact_post_cutoff_outcomes(value, cutoff, counter, future)
-        return out
-    if isinstance(obj, list):
-        return [_redact_post_cutoff_outcomes(value, cutoff, counter, in_future_record) for value in obj]
-    if isinstance(obj, str):
-        dates = _extract_dates(obj)
-        if any(day >= cutoff for day in dates) and any(token in obj for token in _DIRECT_LEAK_FIELDS):
-            counter[0] += 1
-            return _POST_CUTOFF_MARKER
-    return obj
+    scan = re.sub(r"do not open[^\n]+", "", text, flags=re.IGNORECASE)
+    for artifact in (f"{gid}_actual.json", f"{gid}_rt.json", f"{gid}_mbo_evidence.json"):
+        if artifact in scan:
+            raise s131.s120.ForecastStop(
+                f"S131 target-window leak: forbidden artifact {artifact!r} entered {gid} {day} packet"
+            )
 
-
-def _full_brain_with_cutoff(view):
-    if not _ACTIVE_CUTOFF:
-        raise s131.S131Stop("S131 brain cutoff was not set before current-brain serving")
-    full = _ORIGINAL_FULL_BRAIN(view)
-    counter = [0]
-    redacted = _redact_post_cutoff_outcomes(full, _ACTIVE_CUTOFF, counter)
-    serving = redacted.get("_frankie_serving")
-    if isinstance(serving, dict):
-        serving["s131_historical_cutoff"] = _ACTIVE_CUTOFF
-        serving["s131_post_cutoff_direct_outcomes_redacted"] = counter[0]
-        serving["s131_redaction_rule"] = (
-            "generalized current brain retained; direct realized-outcome leaves in records dated "
-            "on/after this historical cutoff are visibly withheld; canonical S120 A-82 remains unchanged"
-        )
-    return redacted
+    for field in _LEAK_FIELDS:
+        start = 0
+        while True:
+            i = text.find(field, start)
+            if i < 0:
+                break
+            start = i + len(field)
+            ctx = text[max(0, i - _LEAK_CONTEXT): i + _LEAK_CONTEXT]
+            bad = sorted(set(_DATE8.findall(ctx)) & _TARGET_DATES)
+            if bad:
+                raise s131.s120.ForecastStop(
+                    f"S131 target-window leak: {field!r} in {gid} {day} packet is associated with "
+                    f"tested target date(s) {bad}"
+                )
 
 
 def _coverage_report(state: dict) -> dict:
@@ -139,7 +110,10 @@ def _coverage_report(state: dict) -> dict:
         rows[day] = {
             "top_level_blocks": len(block),
             "nonempty_top_level_blocks": sum(not empty(v) for v in block.values()),
-            "archive_absent_blocks": [name for name in _ARCHIVE_ABSENT if empty(block.get(name)) or block.get(name) == "unknown"],
+            "archive_absent_blocks": [
+                name for name in _ARCHIVE_ABSENT
+                if empty(block.get(name)) or block.get(name) == "unknown"
+            ],
             "firehose_present": block.get("firehose_present"),
             "scored_leg": block.get("scored_leg"),
         }
@@ -236,17 +210,43 @@ def _materialize_standard_slots(state) -> None:
             raise s131.S131Stop(f"standard slice {day} failed reread causal audit: {bad2}")
 
 
+def _install_verified_a_bridge_for_spawn() -> dict:
+    """Expose the completed S131 A bridge to canonical spawn only inside this disposable checkout."""
+    src = (
+        s131.HERE / "forecasts" / s131.DEFAULT_NAMESPACE / "grp3_Abridge_20250915.json"
+    )
+    if not src.is_file():
+        return {"installed": False, "reason": "S131 rehearsal A bridge not produced yet"}
+
+    obj = json.loads(src.read_text(encoding="utf-8"))
+    if obj.get("specialist") != "A" or obj.get("group") != s131.GID:
+        raise s131.S131Stop(f"S131 A bridge identity invalid: {src}")
+    if "20250915" not in str(obj.get("bridge_for", "")):
+        raise s131.S131Stop(f"S131 A bridge does not identify Sep-15 Monday: {src}")
+    forbidden_output_keys = {"guessed_net_usd", "path_p50_curve", "actual_day_move_usd", "actual_close"}
+    present = sorted(forbidden_output_keys & set(obj))
+    if present:
+        raise s131.S131Stop(
+            f"S131 A bridge illegally owns/contains Monday outcome fields {present}; B must own Monday"
+        )
+    bridge_text = json.dumps(obj, sort_keys=True)
+    _assert_s131_target_window_only(bridge_text, s131.GID, "20250912")
+
+    dest = s131.HERE / "forecasts" / "g3_perday" / "grp3_Abridge_20250915.json"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(json.dumps(obj, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return {
+        "installed": True,
+        "source": str(src.relative_to(s131.HERE)),
+        "ephemeral_spawn_path": str(dest.relative_to(s131.HERE)),
+        "committed_canonical_artifact": False,
+        "rule": "verified S131 rehearsal bridge copied only into disposable workflow checkout",
+    }
+
+
 def _packet_with_standard_state_slot(state, **kwargs):
-    global _ACTIVE_CUTOFF
     _materialize_standard_slots(state)
-    cutoff = str(kwargs.get("decision_day") or kwargs.get("day") or "")
-    if not re.fullmatch(r"20\d{6}", cutoff):
-        raise s131.S131Stop(f"cannot establish historical cutoff for packet: {kwargs}")
-    _ACTIVE_CUTOFF = cutoff
-    try:
-        return _ORIGINAL_PACKET(state, **kwargs)
-    finally:
-        _ACTIVE_CUTOFF = None
+    return _ORIGINAL_PACKET(state, **kwargs)
 
 
 def main() -> int:
@@ -263,10 +263,15 @@ def main() -> int:
         (args.out / "g3_s131_input_stage_report.json").write_text(
             json.dumps(staging, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
-        # Preserve canonical S120 A-82 unchanged. Only the model-facing current brain view is filtered
-        # for direct post-cutoff outcome leaves, and the filter is applied per packet cutoff.
+        bridge = _install_verified_a_bridge_for_spawn()
+        (args.out / "g3_s131_bridge_stage_report.json").write_text(
+            json.dumps(bridge, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+
         s131.build_state = _build_state_with_archive_contract
-        s131.s128.full_brain = _full_brain_with_cutoff
+        # S131-specific improvement-test wall: keep later learned brain evidence; block only the
+        # Sep-2025 target outcomes/artifacts. Canonical S120 source remains byte-for-byte untouched.
+        s131.s120.assert_no_outcome_leak = _assert_s131_target_window_only
         s131._packet = _packet_with_standard_state_slot
         result = s131.export(args.out, args.namespace)
         print(json.dumps(result, indent=2, sort_keys=True))
