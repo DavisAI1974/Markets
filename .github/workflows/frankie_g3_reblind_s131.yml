@@ -57,7 +57,9 @@ jobs:
           assert '20250915' in target
           forbidden = {'guessed_net_usd','path_p50_curve','actual_day_move_usd','actual_close'}
           assert not (forbidden & set(obj))
-          dest = Path('research/kalshi/forecasts/g3_perday/grp3_A_bridge_20250915.json')
+          # spawn.py's B prompt bridge_path lookup is ROOT/forecasts/..., while its WAVE-2 gate is
+          # HERE/forecasts/... . The runner supplies the latter; this ephemeral alias supplies the former.
+          dest = Path('forecasts/g3_perday/grp3_A_bridge_20250915.json')
           dest.parent.mkdir(parents=True, exist_ok=True)
           dest.write_text(json.dumps(obj, indent=2, sort_keys=True) + '\n')
           print('S131 ephemeral B prompt-context bridge alias installed:', dest)
