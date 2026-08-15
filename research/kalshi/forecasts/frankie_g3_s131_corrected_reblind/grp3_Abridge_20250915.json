@@ -1,0 +1,99 @@
+{
+  "specialist": "A",
+  "lens": "weekend_seam_bridge",
+  "group": "g3",
+  "bridge_for": "20250915 Monday (Sun 20250914 18:00 ET reopen)",
+  "decision_point": "20250912 Friday exit; state slice cut at 20250912. No Sep-15 state and no target-window actual/reveal artifact consumed.",
+  "slice_used": "renders/ng_refine_s95/g3_causal_slices/state_20250912.json",
+  "mode": "BLIND current-Frankie improvement replay",
+  "role_note": "A informs, B decides. This bridge emits NO Monday day-move number.",
+  "leg_roll_check": "No scored-contract change across the weekend: NGV25 remains the scored leg. The scheduled INDEX programs are distinct from a contract seam: GSCI is on roll day 5 Friday and ends, while BCOM is day 4 Friday and remains live as day 5 Monday. Therefore the program state is only partly spent at the Friday close.",
+  "friday_exit_consumed": {
+    "source": "forecasts/frankie_g3_s131_corrected_reblind/grp3_E_20250912.json",
+    "exit_type": "FUNDAMENTAL_CARRY_CONTINUE with ROLL-CARRY qualifier",
+    "monday_bias": "E separated the objects correctly: no reliable directional Sunday-gap prior; DOWN-SMALL Monday-session default from unfinished BCOM roll plus loose-storage/weak-burn backdrop.",
+    "sanity_check_verdict": "SUBSTANTIALLY CONFIRMED, WITH TAXONOMY CAVEAT. The measured state supports E's carry logic: Sep-11 storage printed +71 Bcf vs +68 final/+66 pre-print consensus, L48 sits +154.2 Bcf vs five-year with the gap still building +5.6, US48 gas generation is down 759,759 MWh/7d while wind is up 295,027 MWh/7d, and Monday really is BCOM roll day 5. COT does not support a squeeze seam: MM 1y pctile 50.0 and WoW +7,270 improving. The caveat is that daytype.friday_exit_decomposition's four labels are incomplete in the current brain, and the slow storage backdrop is already known rather than a fresh Monday catalyst. The operative part is the ROLL-CARRY + loose-balance state, not confidence in the label name itself.",
+    "residual_tilt": "UNKNOWN. Friday/D-1 aggregate flow is program-contaminated and the required cohort decomposition for handoff.residual_tilt_field is not served. Do not replace the gross sign with a hand-built residual proxy.",
+    "flags": [
+      "E's forecast lower-quarter close is a BLIND hypothesis, not a realized Friday close-location. daytype.friday_exit_close_location_over_flow_shape is useful only as a falsifiable forecast here; B must not treat 0.11 as observed.",
+      "The GSCI/BCOM calendar program is real, but flow.resting_program_inverts_aggressor_tilt does NOT license simply flipping the -3,844-lot gross sell tape. Its current audit says ordinary-day inversion is at least as common and the residual-sign substitute has a 1-1 record.",
+      "The historical Sep-2025 weather forecast/stability plane is absent after canonical S3 restore. Any seam read that requires weekend forecast revisions is unavailable, not zero."
+    ]
+  },
+  "reopen_scenarios": [
+    {
+      "scenario": "small_or_no_gap_then_session_carry",
+      "probability": 0.50,
+      "description": "No coherent new weekend driver is available at A's Friday decision point. The Sunday gap is small/noisy around the Friday close; Monday then expresses the unfinished BCOM roll plus loose-balance backdrop as a small DOWN session. This is the base case because neither positioning nor structure owns a directional seam prior."
+    },
+    {
+      "scenario": "down_gap_plus_down_session",
+      "probability": 0.25,
+      "description": "The same loose-balance/program pressure is expressed immediately at the reopen and persists. Treat this as a stronger version of the carry, not as evidence of a new price chain. B still sizes Monday independently."
+    },
+    {
+      "scenario": "up_gap_rejected_or_partly_rejected",
+      "probability": 0.25,
+      "description": "A weekend demand/supply revision not present in the archived Friday forecast plane produces an UP reopen. With COT mid-book/improving and no squeeze prior, the gap does not automatically reverse the Monday-session carry. B should test persistence rather than infer a new UP regime from the gap alone."
+    }
+  ],
+  "gap_ownership_walked": {
+    "rung_1_anchor_structural": {
+      "question": "Does expiry/opex/squeeze/contract structure own the seam?",
+      "measured": "Flow calendar says 9 days to opex and 10 to futures expiry on Friday; no holiday and no scored-leg seam. contract_structure/options_surface/squeeze_watch frozen values are unavailable at the 20250905 anchor.",
+      "verdict": "DOES NOT OWN. The deterministic clock is too far from expiry, and absent price-derived structure is left UNKNOWN rather than reconstructed."
+    },
+    "rung_2_weekend_cycle_weather": {
+      "question": "Is there a coherent decision-time weekend forecast revision that owns the reopen?",
+      "measured": "weather_forecast, weather_forecast_cycle, weather_forcing_forecast and model_disagreement are null in the restored Sep-2025 archive. The served weather block is explicitly realized_as_proxy_for_forecastable_regime and is not a legal substitute for a vintage forecast revision.",
+      "verdict": "UNKNOWN / CANNOT OWN AT THIS DECISION POINT. No sign is manufactured."
+    },
+    "rung_3_positioning_covering_seam": {
+      "question": "Does crowded-short worsening COT arm the UP seam prior?",
+      "measured": "NYMEX MM net -36,762; 1y pctile 50.0; 3y pctile 58.92; WoW +7,270 (improving, not worsening).",
+      "verdict": "DISARMED. boundary.seam_gap_up_prior_on_worsening_cot fails both load-bearing limbs."
+    },
+    "rung_4_chain_drift": {
+      "question": "Does a mature same-side chain own the gap?",
+      "measured": "Price cum is masked. Non-price session-flow sequence is +3,040, +4,145, +879, -661, -3,844; cumulative +3,559, with the late sessions overlapping index-roll programs.",
+      "verdict": "DOES NOT OWN. There is no confirmed price chain; the flow sequence is a turn/basing sequence and program-contaminated."
+    },
+    "resolution": "NO RUNG EARNS A DIRECTIONAL GAP SIGN. The seam stays a separate, low-confidence, zero-centered object. Monday's session read anchors to the Friday close and is decided by B from B's legal Monday inputs plus this bridge."
+  },
+  "driver_realization_check": {
+    "carried_driver": "Loose storage / weak gas-burn demand plus unfinished BCOM program",
+    "did_peak_land_over_weekend": "NO EVIDENCE THAT IT DID. The storage state is a slow backdrop and the next EIA adjudication is Thursday 20250918; BCOM's final roll day is Monday itself, so that program has explicitly NOT finished over the weekend.",
+    "sell_the_news_flip": "NOT ARMED from Friday information. There is no known weekend event whose realization exhausts E's down driver before Monday. A later decision-time-legit weekend weather revision could alter the reopen, but that information is absent from A's Friday slice and must be tested by B only if B actually receives it.",
+    "carry_verdict": "KEEP DOWN-SMALL SESSION CARRY, but do not transfer it into a directional gap call."
+  },
+  "reopen_watch": {
+    "status": "NOT OBSERVABLE AT FRIDAY DECISION POINT",
+    "rule_for_B": "If B has a legal reopen observation, first test whether the gap is persistent or rejected. A thin reopen against the carried session state is not a chain birth by itself. Keep gap sign/size and Monday day-move separately attributable.",
+    "thin_tape_rule": "If reopen flow/L1 fails the participation floor, stand down on its conviction and fall back to the declared state/roll/fundamental carry rather than promoting a thin print into a regime change."
+  },
+  "monday_bias_confirmed_or_adjusted": {
+    "gap": "ADJUSTED TO NEUTRAL/UNKNOWN. E already declined a confident sign; A confirms that no gap-ownership rung supplies one.",
+    "session": "CONFIRMED DOWN-SMALL as the inherited state, NOT as B's final number. The reasons that survive the seam are BCOM roll day 5 on Monday, loose storage (+71 vs +68/+66, +154 vs 5yr) and weak gas-burn/power demand. B alone decides whether Monday's own legal inputs confirm or override this.",
+    "confidence": "low-to-medium",
+    "override_rule": "B should override the carried DOWN state if Monday's legal tape shows a clean non-program demand/flow handover or if a decision-time-legit weekend fundamental revision supplies a coherent opposite driver. Do not override merely because the Sunday gap is UP."
+  },
+  "plays_fired": [
+    "daytype.friday_exit_decomposition - consumed E's type with the current taxonomy caveat; retained the ROLL-CARRY sub-rule",
+    "boundary.weekend_gap_wide_band_emission - form only: gap separated from session and no point authority claimed",
+    "flow.resting_program_inverts_aggressor_tilt - used as a contamination guard, not as a sign-flip engine"
+  ],
+  "plays_stood_down": [
+    "boundary.seam_gap_up_prior_on_worsening_cot - 50th percentile and +7270 WoW fail crowding+worsening",
+    "weekend.seam_sign_from_stability_ladder - forecast/stability archive unavailable and COT extremeness limb not armed",
+    "handoff.residual_tilt_field - required program cohort decomposition not served; no proxy residual sign",
+    "weekend.carry_realization_flip - no observed weekend realization at Friday decision point and no legal weather-revision series to test the flip",
+    "daytype.weekend_crest_friday - current status DEGENERATE; no valid price-chain stretch can be established under the mask"
+  ],
+  "state_defects_and_gaps_reported": [
+    "Sep-2025 weekend forecast/stability archive absent: weather_forecast, weather_forecast_cycle, weather_forcing_forecast and model_disagreement are null. A cannot derive a weather-owned reopen sign.",
+    "Price-derived structural anchor stores absent: contract_structure/options_surface/squeeze_watch have masked null frozen values, so no structural seam owner is reconstructed.",
+    "Program residual flow cannot be measured from served tape_conditions because no cohort decomposition is present. Gross program-day aggressor flow is demoted rather than inverted by assumption.",
+    "The current Friday-exit taxonomy itself is incomplete per its health record (three of eight measured exits outside the four canonical types). The bridge therefore preserves the measured carry state and names the taxonomy caveat rather than treating the label as ground truth."
+  ],
+  "summary": "A accepts the substance of E's Friday handoff but separates the seam from the session. No gap-ownership rung earns a directional Sunday sign: expiry/structure is too distant or unavailable, the historical weekend weather/stability archive is missing, COT is mid-book and improving rather than crowded/worsening, and there is no confirmed price chain. The Monday SESSION state remains mildly bearish because the BCOM roll is still open on Monday and the loose-storage/weak-burn backdrop survives the weekend. B owns the Monday number and must test that carry against Monday's own legal inputs; an UP Sunday gap by itself is not enough to flip it."
+}
