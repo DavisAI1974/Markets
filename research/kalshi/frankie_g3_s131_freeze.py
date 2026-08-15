@@ -93,8 +93,20 @@ def _validate_bridge(target_day: str, path: Path) -> dict[str, Any]:
     b = _read(path)
     if b.get("specialist") != "A" or b.get("group") != GID:
         raise FreezeStop(f"bridge identity mismatch: {path}")
-    if target_day not in str(b.get("bridge_for", "")):
-        raise FreezeStop(f"bridge {path.name} does not identify target Monday {target_day}")
+
+    # The replay-opening Sep5->Sep8 bridge is intentionally a different boundary object: there is
+    # no E Friday posterior before the test window, so it declares ``target_monday`` directly.
+    # The in-block Sep12->Sep15 bridge is the normal BLD-2 object and declares ``bridge_for``.
+    declared_target = str(b.get("target_monday") or b.get("bridge_for") or "")
+    if target_day not in declared_target:
+        raise FreezeStop(
+            f"bridge {path.name} does not identify target Monday {target_day}: {declared_target!r}"
+        )
+    if target_day == "20250908" and str(b.get("decision_day")) != ANCHOR_DATE:
+        raise FreezeStop(
+            f"starter bridge must be cut at declared anchor {ANCHOR_DATE}, got {b.get('decision_day')!r}"
+        )
+
     forbidden = sorted(
         k for k in ("guessed_net_usd", "expected_magnitude_usd", "path_p50_curve",
                     "actual_day_move_usd", "actual_close", "actual_net_usd")
