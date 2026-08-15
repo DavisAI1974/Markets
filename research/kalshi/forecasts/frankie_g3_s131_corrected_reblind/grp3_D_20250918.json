@@ -1,0 +1,31 @@
+{
+  "specialist": "D",
+  "group": "g3",
+  "date": "20250918",
+  "guessed_net_usd": 0,
+  "overnight_gap_usd": 0,
+  "path_p50_curve": [[20.0,0],[22.0,0],[0.0,0],[2.0,0],[4.0,0],[6.0,0],[8.0,0],[10.0,0],[12.0,0],[14.0,0],[16.0,0],[17.0,0]],
+  "reasoning": "DAY CLASS: EIA storage Thursday, 10:30 ET release. I abstain because the current brain's D-specific lessons remove every route that would let me derive the open-time DAY SIGN honestly.\n\nWHAT IS KNOWN: the previous print was +71 Bcf versus +68 final / +66 strictly pre-print consensus, with working gas +154 Bcf versus five-year. D-1 Wednesday tape is strongly buy-side: +2,561 signed lots, two-sided b_share 0.518, big-print two-sided share 0.528 on n=99, all three phase flows positive [+324,+942,+1295]. The decision-legal grid row (period Sep16) also shows demand arrival: estimated gas burn 42.3 Bcf/d, gas generation +824,422 MWh WoW, gas share +3.18 points and wind -199,941 MWh / -2.41 share points. But burn cannot license direction under the current brain, and D-1 aggregate flow cannot tell me whether that buying delivered or was absorbed because price is masked.\n\nWHAT IS NOT KNOWN: storage_consensus.next_print for today's release exists but BOTH consensus_pre_print_bcf and consensus_chg_bcf are null in the archived decision-time store. There is no lawful surprise estimate. Price cum / pre-print extension is unavailable, so daytype.eia_preprint_overextension_gate cannot establish the >=2-of-3 veto state from open-time evidence. The strongest current D instrument, daytype.eia_print_impulse_arbiter, explicitly needs the first 60-second post-print impulse and is an intraday execution-lane read, not an open-time forecast.\n\nCURRENT-BRAIN LEARNING: daytype.storage_thursday_magnitude still shows a pooled 1.65x range lift, but its own audit says only 8/14 print Thursdays exceed their block's non-print median and the failure cell is sharp in recent summer blocks; its SIDE arm is not numerically served. daytype.surprise_magnitude is explicitly refuted on modern data and, even worse, the served surprise on print day belongs to the PREVIOUS week. magnitude.shoulder_counter_print_damping is DEGENERATE/partially evaluable. D's canonical self-analysis says chain-through-the-print is the dominant miss mode. On this state, forcing either UP from D-1 buying/demand arrival or DOWN from loose storage would repeat exactly that defect.\n\nDISPOSITION: no independently derivable non-zero DAY NET exists before the print. The all-zero curve is an intentional ABSTAIN benchmark, not a claim that intraday travel will be zero. EIA can still produce a large range; I am declining only the p50 direction/net because its owner inputs arrive after the decision point. The first legal post-print delivery/absorption read would be the thing that changes this state, but S131 round 1 cannot see it.",
+  "plays_fired": [
+    "daytype.eia_preprint_overextension_gate - evaluated as the mandatory pre-print check; key price/chain limbs are unavailable, so it cannot license a chain-sided call.",
+    "daytype.eia_print_impulse_arbiter - recognized as the current D arbiter, but explicitly deferred because its first-minute impulse is future/intraday information.",
+    "daytype.storage_thursday_magnitude - consulted for range-class context only; its current health record prevents an automatic day-net up-size/sign.",
+    "magnitude.emission_ceiling/no-call doctrine - no lawful arithmetic chain to a non-zero net survives, so D abstains."
+  ],
+  "plays_stood_down": [
+    "daytype.surprise_magnitude - current brain marks the magnitude arm refuted and today's own surprise is not yet known/served.",
+    "direction.flow_conviction_sign_gate - requires price to classify D-1 buying as delivery versus absorption.",
+    "weather.burn_conversion_gate - REFUTED; demand arrival cannot generate an UP sign.",
+    "magnitude.shoulder_counter_print_damping - DEGENERATE and its forecast-HDD limb is absent.",
+    "timing.catalyst_continuity_frontrun - today is the catalyst, not an ahead-of-event session.",
+    "contract_structure/options_surface/squeeze_watch - Sep5 frozen underlying values unavailable."
+  ],
+  "confidence": "low",
+  "state_defects_and_gaps_reported": [
+    "No decision-time pre-print consensus is archived for the Sep18 release; both next_print consensus fields are null. No surprise sign or width is reconstructed from post-print values.",
+    "Price cum, prior-close delivery and pre-print extension are masked/unavailable, so D's overextension and chain-side gates cannot be completed.",
+    "The first-minute EIA impulse and post-delivery absorption state are causally inside the target session and correctly unavailable at the open.",
+    "Forecast-weather/stability families remain absent for Sep-2025; no seasonal print modifier is synthesized."
+  ],
+  "disposition": "ABSTAIN"
+}
