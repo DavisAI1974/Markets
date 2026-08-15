@@ -1,0 +1,34 @@
+{
+  "specialist": "B",
+  "group": "g3",
+  "date": "20250908",
+  "guessed_net_usd": 250,
+  "overnight_gap_usd": 50,
+  "path_p50_curve": [[20.0,0],[22.0,25],[0.0,60],[2.0,85],[4.0,115],[6.0,145],[8.0,195],[10.0,245],[12.0,220],[14.0,185],[16.0,205],[17.0,200]],
+  "reasoning": "DAY CLASS / PRE-INFLUENCE READ: regular Monday at the G3 block open. My own state read is UP-small-to-moderate before consuming A: the prior scored-leg Friday tape is thick and coherently buy-side (session signed flow +3040; two-sided b_share 0.518; 147 big prints at two-sided b_share 0.623; phase flow -12/+2361/+691). L1 is neutral-to-slight bid at 0.505, so it does not contradict the aggressor tilt. COT is not a squeeze extreme: managed money net -36,762 is about 50th percentile 1y and improved +7,270 WoW. The slow backdrop is mixed-to-loose - storage 3,262 Bcf, +149 versus 5y; NGWU power demand -2.8 bcfd WoW and LNG feedgas -0.3 - so I do not turn the Friday buy tape into a large trend call.\n\nHANDOFF / GAP: A's starter bridge is low-authority because G3 begins from the explicit Sep-05 anchor rather than an E Friday handoff. It leans DOWN-small from the declared last-hour-down anchor and labels the gap as chain-drift/noise. I OVERRIDE that prior for the Monday p50 because the measured Friday trade tilt is substantially stronger than the starter-anchor directional stub. The override is limited: the weekend-gap instrument has no Sep-2025 forecast-weather archive and COT is improving rather than worsening, so I use only +50 for the gap and keep the uncertainty implicitly spanning zero.\n\nMAGNITUDE / SHAPE: n0 net sigma5/10 is about 481 and the prior full-session range is 1,090 at the 41st percentile. With one strong tape input but loose fundamentals and no live catch-up reveal, +250 is a sub-sigma Monday call. The path carries a modest overnight rise, accelerates into the 06-10 ET catch-up window, then gives back part of the move into the close. Falsifier: if Monday's own catch-up tape fails to sustain the Friday-positive tilt, the UP thesis should be cut rather than defended. Disposition CALL, low confidence.",
+  "plays_fired": [
+    "direction_source_rule (doctrine) - prior scored-leg Friday trade tilt is coherently BUY on signed flow, two-sided session share, and guard-clean big prints.",
+    "flow.big_print_bshare_thin_tape_guard - n=147 is well above the thin-sample floor, so the 0.623 two-sided large-print buy read is usable.",
+    "magnitude.catalyst_condition_sort - Monday class permits a modest magnitude up-size, not a sign by itself.",
+    "boundary.weekend_gap_wide_band_emission - gap and session are kept separate; the +50 gap is low-authority and the uncertainty must span zero."
+  ],
+  "plays_stood_down": [
+    "boundary.seam_gap_up_prior_on_worsening_cot - COT improved +7,270 WoW and is near the middle of its 1y distribution, so the worsening/extreme-short seam trigger is not armed.",
+    "monday.catchup_window_tilt_gate / monday.overnight_headfake_into_catchup live confirmation - the future 06-10 ET price/flow conviction is not available at the decision point.",
+    "structure.accumulation_arm_turn - no extreme-and-worsening short book; prior session two-sided b_share is above 0.50 rather than the required sell-tape turn stack.",
+    "tape.heavy_buy_aggression_is_the_asymmetric_bearish_tell - explicitly same-day only; Friday's +3040 is not converted into a next-day bearish signal.",
+    "weather.burn_conversion_gate - REFUTED and no Sep-2025 forecast-weather ladder is archived.",
+    "magnitude.terminal_impact_coefficient_carry - phase-3 flow is observable but the required price-impact numerator is masked.",
+    "magnitude.emission_ceiling_check - INPUT_ABSENT."
+  ],
+  "confidence": "low",
+  "state_defects_and_gaps_reported": [
+    "Sep-2025 weather_forecast/weather_forecast_cycle/freeze_risk, model_disagreement, and weather_forcing_forecast have no archived Sep-2025 vintage in the durable S3 prefixes; they remain unavailable rather than backfilled.",
+    "Sep-05-frozen contract_structure, options_surface, and squeeze_watch have no Sep-2025 archived underlying vintage; null masked values are treated as unavailable, not as a market signal.",
+    "curve_regime is unknown because the durable nymex_curve prefix has no Sep-2025 date-keyed object.",
+    "magnitude.emission_ceiling_check is unavailable because no served input contract exists; no ceiling is reconstructed.",
+    "The block-opening starter bridge has no E Sep-05 handoff; it is an explicitly labeled anchor-only bridge rather than a fabricated Friday exit state.",
+    "Sep8-9 STEO vintage is not yet knowable/served; it is not substituted from later releases."
+  ],
+  "disposition": "CALL"
+}
