@@ -265,6 +265,7 @@ def _packet(
         "template": template,
         "not_pristine_holdout": True,
         "corrected_mechanical_reblind": True,
+        "realized_outcome_in_packet": False,
         "realized_target_outcome_in_packet": False,
         "actuals_read": False,
         "canonical_prompt": prompt,
