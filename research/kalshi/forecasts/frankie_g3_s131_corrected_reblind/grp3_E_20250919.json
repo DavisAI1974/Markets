@@ -31,7 +31,12 @@
     "for_seam": "20250919 Fri close -> 20250921 Sun reopen -> 20250922 Mon. Outside the scored G3 window.",
     "exit_type": "UNCLASSIFIED_BALANCE_CARRY_WEAK. I do not force one of the four canonical Friday types because the current brain says the taxonomy misses 3/8 measured exits and the blind discriminating tell is price-derived. The state carried forward is a newly widened loose-storage balance partly offset by rising gas burn/tighter supply.",
     "monday_bias": "No directional seam prior. If this were consumed by a later B, the session prior would be DOWN-SMALL from the widened storage surplus, but it must be re-tested against weekend information and the approaching expiry/opex complex rather than inherited mechanically.",
-    "last_hour_dir": "FORECAST UP-SMALL from the emitted path's 14 ET low into the close; not observed.",
+    "exit_shape": "FORECAST ONLY from E's blind p50 path: lower-quarter-style close after a 14 ET low and modest 14-17 ET recovery. Path high 0, low -210, close -170. This is a forecast state for continuity, not a realized Friday close-location read.",
+    "last_hour_dir": "FORECAST UP-SMALL from the emitted path's 16 ET -185 to 17 ET -170; not observed.",
+    "last_hour_signed_flow_sign": "UNKNOWN_BLIND_FUTURE_FLOW. Friday target-session last-hour signed flow is not observable at the open and is not inferred from D-1 tape.",
+    "close_off_low": "FORECAST ~0.19 from the emitted p50 path ((close -170) - (low -210)) / ((high 0) - (low -210)); not observed.",
+    "chain_polarity_and_age": "NO CONFIRMED PRICE CHAIN under the one-shot mask. Blind state is weak-DOWN balance carry only; price-chain age/fresh-extreme status is unavailable and is not reconstructed from flow.",
+    "cum_from_anchor_state": "PRICE CUM IS MASKED. Honest non-price continuity check across the served prior-session signed-flow sequence Sep12..Sep18 is -3, -3340, +1918, +2561, -1352 = -216 lots, a mixed near-flat aggregate rather than a clean price trend; do not score or inherit it as cum price.",
     "tail_risk": "Two-sided. DOWN tail from the fresh +90 build / +166 surplus; UP tail from gas-demand arrival, supply tightening and expiry/opex proximity whose structural spread/options state is unavailable."
   },
   "disposition": "CALL"
