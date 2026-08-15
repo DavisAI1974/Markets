@@ -43,7 +43,7 @@ jobs:
           python research/kalshi/cot_feed.py --build
           python research/kalshi/cot_combined_feed.py --build
 
-      - name: Expose verified A bridge to legacy B prompt-context alias
+      - name: Expose verified A bridge to every canonical B lookup path
         run: |
           python - <<'PY'
           import json
@@ -57,12 +57,17 @@ jobs:
           assert '20250915' in target
           forbidden = {'guessed_net_usd','path_p50_curve','actual_day_move_usd','actual_close'}
           assert not (forbidden & set(obj))
-          # spawn.py's B prompt bridge_path lookup is ROOT/forecasts/..., while its WAVE-2 gate is
-          # HERE/forecasts/... . The runner supplies the latter; this ephemeral alias supplies the former.
-          dest = Path('forecasts/g3_perday/grp3_A_bridge_20250915.json')
-          dest.parent.mkdir(parents=True, exist_ok=True)
-          dest.write_text(json.dumps(obj, indent=2, sort_keys=True) + '\n')
-          print('S131 ephemeral B prompt-context bridge alias installed:', dest)
+          # spawn.py has two legacy lookup roots/names and _emit_prompt namespaces g3_perday paths.
+          # All aliases are disposable checkout files; the committed source remains the isolated S131 bridge.
+          dests = [
+              Path('forecasts/g3_perday/grp3_A_bridge_20250915.json'),
+              Path('research/kalshi/forecasts/frankie_g3_s131_corrected_reblind/grp3_A_bridge_20250915.json'),
+          ]
+          text = json.dumps(obj, indent=2, sort_keys=True) + '\n'
+          for dest in dests:
+              dest.parent.mkdir(parents=True, exist_ok=True)
+              dest.write_text(text)
+              print('S131 ephemeral A bridge alias installed:', dest)
           PY
 
       - name: Export corrected G3 reblind inputs only
@@ -77,6 +82,7 @@ jobs:
             --namespace frankie_g3_s131_corrected_reblind
           python - <<'PY'
           import json
+          from pathlib import Path
           p='/tmp/g3_s131/manifest.json'
           d=json.load(open(p))
           assert d['group']=='g3'
@@ -87,7 +93,13 @@ jobs:
           assert d['model_api_invoked'] is False
           assert d['score_or_reveal_phase_present'] is False
           assert d['packet_count']==12
-          print('S131 blind-wall manifest verified:', p)
+          b=json.load(open('/tmp/g3_s131/g3_BLD-1_B_20250915.json'))
+          prompt=b['canonical_prompt']
+          bridge='forecasts/frankie_g3_s131_corrected_reblind/grp3_A_bridge_20250915.json'
+          assert 'NOT PRODUCED' not in prompt
+          assert bridge in prompt
+          assert Path('research/kalshi', bridge).is_file()
+          print('S131 blind-wall manifest + live Monday bridge path verified:', p)
           PY
 
       - uses: actions/upload-artifact@v4
