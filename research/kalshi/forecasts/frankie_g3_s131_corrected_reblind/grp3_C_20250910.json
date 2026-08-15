@@ -1,0 +1,30 @@
+{
+  "specialist": "C",
+  "group": "g3",
+  "date": "20250910",
+  "guessed_net_usd": -300,
+  "overnight_gap_usd": -20,
+  "path_p50_curve": [[20.0,0],[22.0,-20],[0.0,-55],[2.0,-80],[4.0,-105],[6.0,-135],[8.0,-185],[10.0,-240],[12.0,-310],[14.0,-335],[16.0,-295],[17.0,-280]],
+  "reasoning": "DAY CLASS / PRE-INFLUENCE READ: Wednesday core day, one session before EIA. Prior Tuesday aggregate flow is only +879 with a near-neutral two-sided session b_share 0.505, while phase 3 reverses sharply to -1,110 and 0.483 two-sided b_share after a +2,032 middle phase. The 115 big prints remain buy-skewed at 0.640, so the tape is internally mixed rather than a clean continuation. The strongest independent non-price conditioner is bearish: the D+2 grid row has gas burn 35.1 bcfd, gas share 0.410 (-0.0472 WoW) and wind share 0.1103 (+0.0753 WoW). Storage is still +149 versus 5y and NGWU power demand remains -2.8 bcfd WoW. Weather's realized-as-proxy CDD rises to 6.5, but the actual Sep-2025 forecast ladder is not archived, so I do not let that proxy override the burn/renewables state.\n\nTURN CHECK: C's accumulation arm does not clear. The short book is not extreme or worsening; two-sided session flow is not a sell extreme; and price-bearing absorption is masked. The late negative phase is enough to tilt the next session down, not enough to claim a capitulation/turn taxonomy.\n\nMAGNITUDE / SHAPE: with EIA one day ahead but no defined live-ramp forecast-weather limb, I do not front-run a catalyst mechanically. I use -300, only -20 in the gap, and a -280 open-to-close path that trends lower into midday before a modest late rebound. Falsifier: if fresh flow turns guard-clean buy-side and the wind/gas-burn mask relaxes, the down call loses its basis. CALL, medium-low confidence.",
+  "plays_fired": [
+    "flow.big_print_bshare_thin_tape_guard - n=115 makes the 0.640 large-print buy share a valid counterweight, not noise.",
+    "magnitude.catalyst_condition_sort - Wednesday is not the print; magnitude remains a core-session band.",
+    "weather.renewables_masking_flip / burn-stack context - exceptionally high wind share and lower gas share are treated as a demand-transmission damper, not a standalone price signal."
+  ],
+  "plays_stood_down": [
+    "structure.accumulation_arm_turn / selector.midblock_right_the_ship - COT is not extreme/worsening and the required recurrent buy-absorption-under-sell-tape stack is absent.",
+    "timing.catalyst_continuity_frontrun - EIA is one day ahead, but the ramp-live limb has no Sep-2025 archived forecast-weather definition; no calendar-only front-run is manufactured.",
+    "direction.flow_conviction_sign_gate - phase price change is masked, so the late -1,110 flow cannot be promoted to price/flow conviction.",
+    "weather.burn_conversion_gate - REFUTED.",
+    "magnitude.terminal_impact_coefficient_carry - late |flow| clears its volume limb but price impact is masked.",
+    "magnitude.emission_ceiling_check - INPUT_ABSENT."
+  ],
+  "confidence": "med",
+  "state_defects_and_gaps_reported": [
+    "Sep-2025 weather_forecast/weather_forecast_cycle/freeze_risk, model_disagreement, and weather_forcing_forecast have no archived Sep-2025 vintage in the durable S3 prefixes; they remain unavailable rather than backfilled.",
+    "Sep-05-frozen contract_structure, options_surface, and squeeze_watch have no Sep-2025 archived underlying vintage; null masked values are treated as unavailable, not as a market signal.",
+    "curve_regime is unknown because the durable nymex_curve prefix has no Sep-2025 date-keyed object.",
+    "magnitude.emission_ceiling_check is unavailable because no served input contract exists; no ceiling is reconstructed."
+  ],
+  "disposition": "CALL"
+}
