@@ -1,0 +1,31 @@
+{
+  "specialist": "B",
+  "group": "g3",
+  "date": "20250915",
+  "guessed_net_usd": -120,
+  "overnight_gap_usd": 0,
+  "path_p50_curve": [[20.0,0],[22.0,-10],[0.0,-20],[2.0,-30],[4.0,-45],[6.0,-60],[8.0,-90],[10.0,-135],[12.0,-165],[14.0,-185],[16.0,-135],[17.0,-120]],
+  "reasoning": "DAY CLASS / A BRIDGE: regular Monday and BCOM roll day 5; GSCI is finished. I consumed A's Sep12->Sep15 bridge before forming the number. I TAKE A's separation of the seam from the session and its DOWN-SMALL inherited state; I OVERRIDE any implication that the BCOM calendar itself supplies direction. Current Frankie's later evidence says monday.catchup_window_tilt_gate's blind record is only 2/4 on the originally claimed seams and roughly 5/9 when pinned to D-1 signed flow, while flow.resting_program_inverts_aggressor_tilt has a healthy trigger but no served residual-flow quantity that can settle the program's direction. So the roll is a contamination/carry condition, not a free sell signal. The Sunday gap has no owner: COT is 57.55th percentile with WoW +12,010 improving, the historical weekend weather/stability archive is absent, and structure/options are unavailable at the Sep5 anchor. P50 gap = 0 rather than a manufactured sign.\n\nINDEPENDENT OPEN-TIME READ: the slow balance/demand stack still leans mildly bearish. The last known storage print is +71 Bcf versus +68 final / +66 strictly pre-print consensus with working gas +154 Bcf versus five-year. The decision-legal grid row (period Sep13) estimates gas burn at 36.0 Bcf/d, gas generation -568,582 MWh WoW and gas share -5.43 points while wind is +643,572 MWh and +5.51 share points. NGWU independently has power demand -1.7 Bcf/d WoW. Against that, dry production is -0.5 Bcf/d WoW (tightening) and Friday's scored-leg tape does NOT hand me a continuation sell: aggregate is essentially flat (-3 lots, two-sided b_share 0.500), with phase 2 -833 followed by phase 3 +920 and guard-clean big prints buy-skewed at 0.602 on n=92. Those offsets are why I keep the inherited down state small.\n\nARITHMETIC / SHAPE: I allocate roughly -90 to the loose-storage state and -110 to the weak gas-burn/renewables stack, then +50 for production tightening and +30 for the Friday buy-side handover; the remaining BCOM program is treated as uncertainty rather than assigned a directional dollar term. That lands near -120 without fitting to a band. n0 sigma5/10 is ~481/484, so this is deliberately sub-quarter-sigma. The curve is quiet overnight, sells through the 06-14 ET catch-up/US window, then recovers part of the move into the close. Falsifier: a clean Monday buy handover would erase the small down state; absent an intraday reveal I do not pretend to observe that confirmation. CALL, low confidence.",
+  "plays_fired": [
+    "daytype.monday_weekend_gap - consumed through A's bridge as a seam/session separation rule; no directional gap prior claimed.",
+    "flow.resting_program_inverts_aggressor_tilt - BCOM day 5 is ARMED; used only to demote/contaminate raw flow, not to invert sign.",
+    "boundary.weekend_gap_wide_band_emission - applied as form: zero-centered p50 gap with uncertainty spanning both signs.",
+    "magnitude.catalyst_condition_sort - Monday class permits a catch-up shape but does not generate the sign."
+  ],
+  "plays_stood_down": [
+    "monday.catchup_window_tilt_gate as sign authority - current brain audit reduces its claimed record and the live 06-10 confirmation is unavailable at the open.",
+    "boundary.seam_gap_up_prior_on_worsening_cot - WoW +12010 is improving and 1y pctile 57.55 is nowhere near the crowded-short arm.",
+    "weekend.seam_sign_from_stability_ladder - Sep-2025 forecast/stability archive absent; no substitute revision is synthesized.",
+    "handoff.residual_tilt_field - the cohort decomposition required to produce a program-decontaminated residual is not served.",
+    "structure.accumulation_arm_turn / selector.midblock_right_the_ship - COT is neither extreme nor worsening and the price-bearing absorption/chain limbs are unavailable.",
+    "magnitude.emission_ceiling_check - INPUT_ABSENT; no ceiling value reconstructed."
+  ],
+  "confidence": "low",
+  "state_defects_and_gaps_reported": [
+    "Historical Sep-2025 weather_forecast/weather_forecast_cycle/weather_forcing_forecast/model_disagreement remain unavailable after the canonical S3 restore; Monday seam weather cannot be reconstructed.",
+    "contract_structure/options_surface/squeeze_watch have one-shot masked null values at the Sep5 anchor and curve_regime is unknown; no structural gap owner is invented.",
+    "The program-decontaminated residual_tilt demanded by the handoff brain is not derivable from served aggregate/phase tape; BCOM roll is treated as contamination/carry context only.",
+    "The current brain's Monday catch-up gate has a corrected weak record; I do not preserve its older 4/4 narrative as authority."
+  ],
+  "disposition": "CALL"
+}
