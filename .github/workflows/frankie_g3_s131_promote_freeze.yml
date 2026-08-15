@@ -1,0 +1,72 @@
+name: S131 Promote Verified Blind Freeze
+
+on:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - .github/workflows/frankie_g3_s131_promote_freeze.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  promote-exact-freeze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      FROZEN: research/kalshi/forecasts/frankie_g3_s131_corrected_reblind/grp3_s131_blind_frozen.json
+      EXPECTED_SHA256: 3368822121b9c515891c83cb5b3d0a4d85881acff7f3d57cc1e7189870836771
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/burn-hh-12m-s125
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Refuse an existing frozen record
+        run: |
+          if [ -e "$FROZEN" ]; then
+            echo "::error::Frozen S131 record already exists; immutable blind will not be overwritten: $FROZEN"
+            exit 1
+          fi
+
+      - name: Rebuild and verify the exact no-reveal freeze
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          python research/kalshi/frankie_g3_s131_freeze.py --out "$FROZEN"
+          got="$(sha256sum "$FROZEN" | awk '{print $1}')"
+          echo "freeze sha256=$got"
+          test "$got" = "$EXPECTED_SHA256" || {
+            echo "::error::Freeze bytes differ from the CI-verified candidate: expected $EXPECTED_SHA256 got $got"
+            exit 1
+          }
+          python - <<'PY'
+          import json, os
+          p=os.environ['FROZEN']
+          d=json.load(open(p))
+          assert d['phase']=='BLIND_FROZEN_BEFORE_REVEAL'
+          assert d['actuals_read'] is False
+          assert d['target_window_outcomes_read'] is False
+          assert d['score_or_reveal_phase_present'] is False
+          assert d['summary']['days']==10
+          assert d['summary']['full_curve_points']==120
+          print('PASS: exact S131 freeze is ready for git promotion; reveal still absent')
+          PY
+
+      - name: Commit the immutable blind record
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$FROZEN"
+          git diff --cached --exit-code && {
+            echo "::error::No frozen record staged"
+            exit 1
+          } || true
+          git commit -m "Freeze S131 current-Frankie G3 blind before reveal"
+          git push origin HEAD:chatgpt/burn-hh-12m-s125
