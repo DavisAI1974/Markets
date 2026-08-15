@@ -1,0 +1,38 @@
+{
+  "specialist": "E",
+  "group": "g3",
+  "date": "20250919",
+  "guessed_net_usd": -180,
+  "overnight_gap_usd": -10,
+  "path_p50_curve": [[20.0,0],[22.0,-10],[0.0,-25],[2.0,-35],[4.0,-45],[6.0,-65],[8.0,-95],[10.0,-135],[12.0,-180],[14.0,-210],[16.0,-185],[17.0,-170]],
+  "reasoning": "DAY CLASS / TURN GATE FIRST: Friday, no GSCI/BCOM program live, not opex and not futures expiry, but the deterministic clock is now 4 days to opex / 5 days to futures expiry. The price-derived structure/options/squeeze anchor is unavailable, so proximity is tail context only and cannot own the p50. I run the Friday exhaustion/turn check before sign: price cum, chain age, close-off-extreme and price-against-flow are masked, so the gate cannot certify a reversal OR a clean continuation. I therefore do not use a Friday archetype/default as direction.\n\nFRESH DECISION-LEGAL STATE: Thursday's storage outcome is now known. The Sep18 print was +90 Bcf; the first post-print frozen consensus is +81, so the printed build is 9 Bcf looser than that final survey reference. More importantly, working gas is +166 Bcf versus five-year and that surplus widened by about 12 Bcf on the week. The scored-leg D-1 tape after the print is also sell-side: -1,352 signed lots, two-sided b_share 0.493, guard-clean n=179 big prints with two-sided b_share 0.414, and phase flows [+162,-1280,-234]. I do NOT claim the negative-tape mirror of flow.price_free_absorption_proxy: the current brain explicitly retired that mirror and D-1 flow is weak next-day direction by itself. It is corroboration for the already-loose balance state, not the sign source.\n\nOFFSET / CURRENT-BRAIN BURN RULE: the demand/supply stack pushes the other way. The decision-legal grid row (period Sep17) has estimated gas burn 42.7 Bcf/d, gas generation +643,808 MWh WoW and gas share +3.41 points, while wind is -289,173 MWh and -2.73 share points. The fresh Sep18 NGWU, knowable today, says power demand +1.3 Bcf/d WoW, dry production -0.2, total supply -0.5 and LNG feedgas +0.1. Current Frankie's weather.burn_is_demand_arrival_not_direction rule is load-bearing here: burn may CONFIRM demand arrival and may DAMP a lean that contradicts it, but it may not create an UP sign. So I first derive the bearish state from widened storage surplus + fresh loose print, then use demand arrival/tighter supply to shrink it.\n\nARITHMETIC / SHAPE: I assign roughly -160 to the newly widened loose-storage state and -70 corroboration to the post-print sell delivery, then +50 for supply tightening and about +0 to +20 net for the mixed demand stack after applying the current burn prohibition; the result rounds to -180 rather than a full print-day band. n0 sigma5/10 remains ~481/484, so this is a small Friday call. The curve is quiet overnight, softens through the US morning, reaches its low around 14 ET, then recovers modestly into the close. Falsifier: a clean non-program buy handover would invalidate continuation, but that future Friday tape is not available at the open. CALL, low-to-medium confidence.",
+  "plays_fired": [
+    "daytype.friday_turn_exhaustion_gate - ran first as procedure; price-derived turn/clean-continuation limbs are unavailable, preventing a day-class default from owning sign.",
+    "weather.burn_is_demand_arrival_not_direction - used exactly as the current successor specifies: demand arrival dampens the derived bearish lean but does not license an UP sign.",
+    "flow.big_print_bshare_thin_tape_guard - n=179 makes the D-1 large-print sell observation real corroborating state.",
+    "magnitude.catalyst_condition_sort - Friday is post-catalyst, not an EIA print day; magnitude is stepped back from Thursday event range."
+  ],
+  "plays_stood_down": [
+    "flow.price_free_absorption_proxy negative-tape mirror - current brain says the mirror arm is refuted/retired; 0.414 is not promoted to a next-day sign.",
+    "daytype.friday_exit_close_location_over_flow_shape - realized Friday close-location is future and cannot be read blind.",
+    "daytype.friday_exit_decomposition as a four-type certainty - current health says 3/8 measured exits fall outside the taxonomy and blind type survived reveal only 2/8; no fitted canonical label is used to generate today's number.",
+    "structure.squeeze_unwind / squeeze ignition - price-derived spread limb and anchor structure are unavailable; 4-5 day expiry proximity is tail context only.",
+    "boundary.seam_gap_up_prior_on_worsening_cot - the served COT is mid-distribution and improving; no crowded-short covering prior.",
+    "magnitude.emission_ceiling_check - INPUT_ABSENT."
+  ],
+  "confidence": "med",
+  "state_defects_and_gaps_reported": [
+    "The Sep18 pre-print consensus itself was not archived; Friday can know the +90 print and the frozen final +81 reference, but this is not retroactively treated as a decision-time Thursday survey.",
+    "Price-derived structure/options/squeeze and Friday exit-price shape remain unavailable, so expiry proximity cannot become a p50 sign.",
+    "Forecast-weather/stability families remain absent for Sep-2025; rising grid burn and fresh NGWU power demand are used only through the current demand-arrival restriction.",
+    "The served COT publication remains the Sep9 report as of the Friday open; a later Friday publication is not pulled backward into the decision point."
+  ],
+  "handoff_out": {
+    "for_seam": "20250919 Fri close -> 20250921 Sun reopen -> 20250922 Mon. Outside the scored G3 window.",
+    "exit_type": "UNCLASSIFIED_BALANCE_CARRY_WEAK. I do not force one of the four canonical Friday types because the current brain says the taxonomy misses 3/8 measured exits and the blind discriminating tell is price-derived. The state carried forward is a newly widened loose-storage balance partly offset by rising gas burn/tighter supply.",
+    "monday_bias": "No directional seam prior. If this were consumed by a later B, the session prior would be DOWN-SMALL from the widened storage surplus, but it must be re-tested against weekend information and the approaching expiry/opex complex rather than inherited mechanically.",
+    "last_hour_dir": "FORECAST UP-SMALL from the emitted path's 14 ET low into the close; not observed.",
+    "tail_risk": "Two-sided. DOWN tail from the fresh +90 build / +166 surplus; UP tail from gas-demand arrival, supply tightening and expiry/opex proximity whose structural spread/options state is unavailable."
+  },
+  "disposition": "CALL"
+}
