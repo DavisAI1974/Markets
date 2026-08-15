@@ -1,0 +1,30 @@
+{
+  "specialist": "C",
+  "group": "g3",
+  "date": "20250909",
+  "guessed_net_usd": -200,
+  "overnight_gap_usd": -20,
+  "path_p50_curve": [[20.0,0],[22.0,10],[0.0,-15],[2.0,-40],[4.0,-70],[6.0,-105],[8.0,-145],[10.0,-205],[12.0,-235],[14.0,-210],[16.0,-190],[17.0,-180]],
+  "reasoning": "DAY CLASS / PRE-INFLUENCE READ: Tuesday core session. The prior Monday tape is a thick buy session (+4,145 signed flow, two-sided b_share 0.518, 205 big prints at 0.640, all three phase-flow buckets positive). That is real state, but C's current brain explicitly rejects using heavy D-1 buy aggression as automatic next-day bullish evidence. My independent sign is therefore mildly DOWN from the non-price demand/balance stack rather than inherited UP: storage remains +149 Bcf versus 5y, NGWU power demand is -2.8 bcfd WoW, and the D+2 grid row shows gas burn down to 37.0 bcfd while wind share rises to 0.0638 (+0.0214 WoW). COT is only mid-distribution and improving, so neither squeeze continuation nor an accumulation-turn exception has authority.\n\nTAPE / TURN CHECK: the prior big-print sample is guard-clean, but because price is masked I cannot tell whether the buy aggression delivered or was absorbed. The accumulation/right-the-ship arm specifically needs recurrent buy absorption under a sell tape with an extreme worsening short; those conditions are absent. I therefore keep the sign small and allow an early bid before the loose stack takes over.\n\nMAGNITUDE / SHAPE: n0 sigma10 is about 481. With no catalyst today and no price-bearing conviction, I call -200 with a -20 reopen gap and a -180 open-to-close path: brief early strength, steady morning fade, then partial afternoon recovery. Falsifier: a guard-clean live shift to sustained buy-side delivery would invalidate the small-down read. CALL, low confidence.",
+  "plays_fired": [
+    "flow.big_print_bshare_thin_tape_guard - n=205 validates the large-print observation as a real state variable.",
+    "weather/burn-stack conditioning - D+2 gas burn is 37.0 bcfd and wind share is rising; used only as a conditioner because the forecast-weather archive is absent.",
+    "magnitude.catalyst_condition_sort - non-catalyst Tuesday keeps the magnitude below print/Monday classes."
+  ],
+  "plays_stood_down": [
+    "tape.heavy_buy_aggression_is_the_asymmetric_bearish_tell as D-1 signal - the play explicitly says the D-1 version is a coin flip.",
+    "structure.accumulation_arm_turn / selector.midblock_right_the_ship - MM net is about 50th percentile and improving; the extreme-worsening-short prerequisite is absent.",
+    "direction.flow_conviction_sign_gate / direction.absorption_is_reversal - price half is masked, so buy flow cannot be labeled delivered versus absorbed.",
+    "flow.resting_program_inverts_aggressor_tilt - roll windows are active, but the play supplies no blind-legal direction without a price/impact discriminator; I do not infer a sign from calendar membership alone.",
+    "weather.burn_conversion_gate - REFUTED.",
+    "magnitude.emission_ceiling_check - INPUT_ABSENT."
+  ],
+  "confidence": "low",
+  "state_defects_and_gaps_reported": [
+    "Sep-2025 weather_forecast/weather_forecast_cycle/freeze_risk, model_disagreement, and weather_forcing_forecast have no archived Sep-2025 vintage in the durable S3 prefixes; they remain unavailable rather than backfilled.",
+    "Sep-05-frozen contract_structure, options_surface, and squeeze_watch have no Sep-2025 archived underlying vintage; null masked values are treated as unavailable, not as a market signal.",
+    "curve_regime is unknown because the durable nymex_curve prefix has no Sep-2025 date-keyed object.",
+    "magnitude.emission_ceiling_check is unavailable because no served input contract exists; no ceiling is reconstructed."
+  ],
+  "disposition": "CALL"
+}
