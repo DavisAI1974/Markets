@@ -1,0 +1,97 @@
+name: S131 G3 Sep2025 S3 Input Inventory
+
+on:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - .github/workflows/frankie_g3_s131_s3_probe.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install S3 client
+        run: python -m pip install --quiet boto3
+      - name: Inventory existing Sep-2025 vintages only
+        env:
+          MARKETS_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          MARKETS_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          PYTHONPATH: research/kalshi
+        run: |
+          mkdir -p /tmp/s131_s3_probe
+          python - <<'PY'
+          import json
+          import re
+          import creds
+
+          BUCKET = "bento-568968024170-us-east-2-an"
+          PREFIXES = [
+              "weather/mos_cycle/",
+              "weather/mos_freeze/",
+              "nymex/gefs_forcing/",
+              "model_disagreement/",
+              "nymex/contract_structure/",
+              "nymex/nymex_curve/",
+              "cash_basis/",
+              "options_ng/",
+              "options_ng_bridge/",
+          ]
+          DATE_PAT = re.compile(r"(?:202509|2025[-_/]09)")
+          s3 = creds.aws_client("s3", "us-east-2")
+          out = {}
+          for prefix in PREFIXES:
+              total = 0
+              matched = []
+              first = []
+              last = []
+              truncated_at = None
+              for page in s3.get_paginator("list_objects_v2").paginate(Bucket=BUCKET, Prefix=prefix):
+                  for obj in page.get("Contents", []):
+                      total += 1
+                      key = obj["Key"]
+                      row = {
+                          "key": key,
+                          "size": obj.get("Size"),
+                          "last_modified": obj.get("LastModified").isoformat() if obj.get("LastModified") else None,
+                      }
+                      if len(first) < 12:
+                          first.append(row)
+                      last.append(row)
+                      last = last[-12:]
+                      if DATE_PAT.search(key):
+                          matched.append(row)
+                      if total >= 20000:
+                          truncated_at = total
+                          break
+                  if truncated_at:
+                      break
+              out[prefix] = {
+                  "objects_scanned": total,
+                  "scan_truncated_at": truncated_at,
+                  "sep2025_match_count": len(matched),
+                  "sep2025_matches": matched[:500],
+                  "first_keys": first,
+                  "last_keys_seen": last,
+              }
+          with open('/tmp/s131_s3_probe/report.json','w') as f:
+              json.dump(out, f, indent=2, sort_keys=True)
+          for prefix, rec in out.items():
+              print(prefix, "scanned", rec["objects_scanned"], "sep2025", rec["sep2025_match_count"])
+              for row in rec["sep2025_matches"][:20]:
+                  print("  ", row["key"], row["size"], row["last_modified"])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frankie-g3-s131-s3-inventory
+          path: /tmp/s131_s3_probe/report.json
+          retention-days: 14
