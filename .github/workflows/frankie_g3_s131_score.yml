@@ -7,6 +7,7 @@ on:
     paths:
       - .github/workflows/frankie_g3_s131_score.yml
       - research/kalshi/frankie_g3_s131_score.py
+      - research/kalshi/frankie_g3_s131_reconcile_score.py
       - research/kalshi/forecasts/frankie_g3_s131_corrected_reblind/grp3_s131_blind_frozen.json
   workflow_dispatch:
 
@@ -34,6 +35,9 @@ jobs:
         run: |
           rm -rf /tmp/g3_s131_score
           python research/kalshi/frankie_g3_s131_score.py --out /tmp/g3_s131_score
+          python research/kalshi/frankie_g3_s131_reconcile_score.py \
+            --score /tmp/g3_s131_score/g3_s131_score.json \
+            --out /tmp/g3_s131_score/g3_s131_score_reconciled.json
           python - <<'PY'
           import json
           p='/tmp/g3_s131_score/g3_s131_score.json'
@@ -45,7 +49,10 @@ jobs:
           assert d['hydration']=='REJECTED_NOT_USED'
           assert d['endpoint']['n_days']==10
           assert d['curve']['points']==120
-          print('PASS: S131 revealed/scored only after immutable freeze')
+          r=json.load(open('/tmp/g3_s131_score/g3_s131_score_reconciled.json'))
+          assert 'S129 reported endpoint actual == exact NGV25 session open-to-close net on all 10 days' in r['basis_proof']['verdict']
+          assert r['shared_11_point_intraday_curve']['points_per_run']==110
+          print('PASS: S131 revealed/scored after immutable freeze and score bases reconciled')
           PY
 
       - uses: actions/upload-artifact@v4
