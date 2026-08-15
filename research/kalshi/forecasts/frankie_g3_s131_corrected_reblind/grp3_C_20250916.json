@@ -1,0 +1,30 @@
+{
+  "specialist": "C",
+  "group": "g3",
+  "date": "20250916",
+  "guessed_net_usd": -250,
+  "overnight_gap_usd": -10,
+  "path_p50_curve": [[20.0,0],[22.0,-15],[0.0,-30],[2.0,-45],[4.0,-65],[6.0,-95],[8.0,-140],[10.0,-200],[12.0,-250],[14.0,-285],[16.0,-255],[17.0,-240]],
+  "reasoning": "DAY CLASS / PRE-INFLUENCE READ: Tuesday core session, no GSCI/BCOM program live and no catalyst today. The slow balance stack remains bearish: last storage +71 Bcf versus +68 final / +66 pre-print, working gas +154 Bcf versus five-year; NGWU power demand -1.7 Bcf/d WoW; and the decision-legal grid row (period Sep14) has estimated gas burn only 37.0 Bcf/d, gas share -2.99 points WoW while wind share is +4.01 points. Dry production -0.5 Bcf/d WoW is the main tightening offset.\n\nTAPE: D-1 Monday is a thick sell session on the scored NGV25 leg: -3,340 signed lots, two-sided b_share 0.480, big-print two-sided share 0.477 on n=122, and all three phase flows negative [-573,-1062,-1705]. That alignment is useful corroboration now that the index-roll window has ended. I still do NOT make it the sign source by itself: current Frankie's later evidence shows D-1 aggregate-flow inheritance around coin-flip quality, and direction.flow_conviction_sign_gate is refine/intraday because price is required to distinguish delivery from absorption. The sign instead comes from the independent loose-storage + weak-gas-demand stack, with the tape confirming rather than creating it.\n\nTURN / RIGHT-THE-SHIP: no accumulation-turn unlock. COT is 57.55th percentile 1y with WoW +12,010 improving; the current selector.midblock_right_the_ship audit requires a BUILDING extreme/worsening turn stack and explicitly records only a mixed forward record. Big prints are sell, not recurrent buy absorption. Price-cum and chain-age limbs are unavailable under the one-shot mask, so I do not invent a mature-swing label.\n\nARITHMETIC / SHAPE: roughly -90 storage/surplus, -90 grid/renewables demand transmission and -40 NGWU power, offset +50 for production tightening; I allow about -80 of corroboration from the unusually coherent sell tape but discount it heavily for the D-1 record. Net is about -250. n0 sigma5/10 is ~481/484, so the number is roughly half-sigma. The path drifts down overnight, accelerates through the 08-14 ET core window, then recovers modestly into 17:00. Falsifier: a guard-clean buy-side handover today would invalidate continuation; I cannot see that future tape at the open. CALL, medium-low confidence.",
+  "plays_fired": [
+    "flow.big_print_bshare_thin_tape_guard - n=122 is guard-clean; the 0.477 two-sided large-print sell state is real corroborating evidence.",
+    "magnitude.catalyst_condition_sort - non-catalyst Tuesday keeps the emission inside a core-session band.",
+    "selector.midblock_right_the_ship - explicitly evaluated and left LOCKED because the required extreme/worsening accumulation stack is not building."
+  ],
+  "plays_stood_down": [
+    "direction.flow_conviction_sign_gate - requires price change to classify delivery versus absorption; blind open-time lane cannot compute it.",
+    "structure.accumulation_arm_turn - COT is mid-distribution and improving; big prints are sell rather than recurrent buy absorption.",
+    "structure.mature_swing_alternation / young_chain_extension_full_band - price cum, swing age and fresh-extreme state are masked/unavailable.",
+    "flow.resting_program_inverts_aggressor_tilt - both scheduled roll windows are finished today; trigger is not live.",
+    "weather.burn_conversion_gate - REFUTED in current brain; grid/burn is used as state context, not as a directional play.",
+    "magnitude.emission_ceiling_check - INPUT_ABSENT."
+  ],
+  "confidence": "med",
+  "state_defects_and_gaps_reported": [
+    "Sep-2025 forecast-weather/stability families remain unavailable; no weather revision sign or timing is synthesized.",
+    "Price-derived chain/cum/structure/options fields remain masked or historically absent, so delivery-vs-absorption and chain-age plays cannot be promoted from flow alone.",
+    "Current brain evidence weakens D-1 aggregate flow as a standalone next-day sign; the -3340 session is used only because an independent bearish balance/demand stack points the same way.",
+    "curve_regime remains unknown and v0 volatility basis is absent; magnitude uses n0 only."
+  ],
+  "disposition": "CALL"
+}
