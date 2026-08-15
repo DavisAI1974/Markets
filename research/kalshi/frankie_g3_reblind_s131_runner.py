@@ -9,17 +9,59 @@ It then exposes the already-corrected in-memory S131 state to the standard canon
   renders/ng_refine_s95/grp3_state.json
   renders/ng_refine_s95/g3_causal_slices/state_<DAY>.json
 Those files exist only in the disposable GitHub Actions checkout; no canonical repo artifact is changed.
+
+S131 is a CURRENT-FRANKIE improvement test, not a historical-brain reconstruction. The current brain
+therefore keeps later learned evidence, including realized examples learned after Sep-2025. The blind
+wall applies to the TARGET WINDOW only: Sep-08..Sep-19 2025 outcomes and G3 actual/reveal artifacts
+remain forbidden. Canonical S120 is not changed; this narrower rule is installed only in this runner.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import os
+import re
 from pathlib import Path
 
 import frankie_g3_reblind_s131 as s131
 
 _ORIGINAL_PACKET = s131._packet
+_TARGET_DATES = frozenset(s131.DAYS)
+_LEAK_FIELDS = ("actual_day_move_usd", "actual_close", "actual_net_usd", "actual_gap_usd")
+_DATE8 = re.compile(r"20\d{6}")
+_LEAK_CONTEXT = 500
+
+
+def _assert_s131_target_window_only(text: str, gid: str, day: str) -> None:
+    """Permit current-brain learned outcomes except the Sep-2025 target window itself.
+
+    This deliberately differs from S120's pristine/walked-canary A-82 rule. S131 asks whether the
+    CURRENT Frankie, with everything learned since, can reason better on an old market environment.
+    Therefore a dated 2026 realized example is legitimate learned evidence. What remains illegal is
+    the answer to the period being tested: G3 actual/reveal artifacts or an outcome field associated
+    with any Sep-08..Sep-19 2025 target date.
+    """
+    scan = re.sub(r"do not open[^\n]+", "", text, flags=re.IGNORECASE)
+    for artifact in (f"{gid}_actual.json", f"{gid}_rt.json"):
+        if artifact in scan:
+            raise s131.s120.ForecastStop(
+                f"S131 target-window leak: forbidden artifact {artifact!r} entered {gid} {day} packet"
+            )
+
+    for field in _LEAK_FIELDS:
+        start = 0
+        while True:
+            i = text.find(field, start)
+            if i < 0:
+                break
+            start = i + len(field)
+            ctx = text[max(0, i - _LEAK_CONTEXT): i + _LEAK_CONTEXT]
+            bad = sorted(set(_DATE8.findall(ctx)) & _TARGET_DATES)
+            if bad:
+                raise s131.s120.ForecastStop(
+                    f"S131 target-window leak: {field!r} in {gid} {day} packet is associated with "
+                    f"tested target date(s) {bad}"
+                )
 
 
 def _stage_existing_blind_inputs() -> dict:
@@ -104,6 +146,7 @@ def main() -> int:
         (args.out / "g3_s131_input_stage_report.json").write_text(
             json.dumps(staging, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
+        s131.s120.assert_no_outcome_leak = _assert_s131_target_window_only
         s131._packet = _packet_with_standard_state_slot
         result = s131.export(args.out, args.namespace)
         print(json.dumps(result, indent=2, sort_keys=True))
