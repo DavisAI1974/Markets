@@ -1,0 +1,61 @@
+name: S132 G3 Event-Driven Curve Rehearsal
+
+on:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - research/kalshi/frankie_s132_dynamic_curve.py
+      - research/kalshi/frankie_g3_s132_dynamic_curve_rehearsal.py
+      - research/kalshi/forecasts/frankie_g3_s132_dynamic_curve_rehearsal/g3_s132_curve_nodes.json
+      - .github/workflows/frankie_g3_s132_dynamic_curve_rehearsal.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  assemble-without-reveal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Assemble S132 curve layer only
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          rm -rf /tmp/g3_s132_curve
+          python research/kalshi/frankie_g3_s132_dynamic_curve_rehearsal.py --out /tmp/g3_s132_curve
+
+      - name: Verify contract-only rehearsal boundary
+        run: |
+          python - <<'PY'
+          import json
+          p='/tmp/g3_s132_curve/g3_s132_curve_rehearsal.json'
+          d=json.load(open(p))
+          assert d['classification']=='POST_REVEAL_CURVE_CONTRACT_REHEARSAL_NOT_BLIND_SCORE'
+          assert d['operator_had_prior_target_reveal_context'] is True
+          assert d['actuals_read'] is False
+          assert d['score_or_reveal_phase_present'] is False
+          assert d['hydration']=='REJECTED_NOT_USED'
+          assert d['brain_changed'] is False
+          assert d['specialist_roles_changed'] is False
+          assert d['direction_magnitude_reasoning_changed'] is False
+          assert d['curve_contract_changed'] is True
+          assert d['total_curve_nodes'] != 120
+          assert len(set(d['node_counts'])) >= 2
+          assert all(r['immutable_forecast_judgment_verified'] is True for r in d['days'])
+          print('PASS: S132 changed the curve contract only; no reveal/score was read')
+          print('node counts:', d['node_counts'], 'total:', d['total_curve_nodes'])
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frankie-g3-s132-dynamic-curve-rehearsal
+          path: /tmp/g3_s132_curve
+          retention-days: 14
+          if-no-files-found: error
