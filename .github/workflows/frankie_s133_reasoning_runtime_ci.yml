@@ -1,0 +1,45 @@
+name: S133 Frankie Reasoning Authority Runtime
+
+on:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - research/kalshi/frankie_s133_reasoning_runtime.py
+      - .github/workflows/frankie_s133_reasoning_runtime_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reasoning-authority:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Compile and prove S133 reasoning/runtime boundary
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          python -m py_compile research/kalshi/frankie_s133_reasoning_runtime.py
+          python research/kalshi/frankie_s133_reasoning_runtime.py
+
+      - name: Source guards for the S131 refine lesson
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s = Path('research/kalshi/frankie_s133_reasoning_runtime.py').read_text()
+          assert 'RAW PRIOR-SESSION FLOW WITHOUT PAIRED PRICE/SHAPE IS NOT NEXT-SESSION DIRECTIONAL CORROBORATION' in s
+          assert 'direction_owner_required_for_call' in s
+          assert 'packet_sequential' in s
+          assert 'session_day >= target' in s
+          assert 'base._packet = packet' in s
+          assert 'base._validate_day = s132.validate_day' in s
+          assert 'spawn.py' in s and 'does NOT modify' in s
+          print('PASS: S133 keeps S132 curve contract and adds only reasoning authority + prior-session date wall')
+          PY
