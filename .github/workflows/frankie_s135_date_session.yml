@@ -63,6 +63,41 @@ jobs:
           print('S131 historical future-outcome wall installed for date session')
           PY
 
+      - name: Transport frozen Friday E handoff into A bridge packet
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('research/kalshi/frankie_s135_date_session.py')
+          s = p.read_text(encoding='utf-8')
+          old = '''                bpath = args.outputs / f"bridge_A_{plan.day}.json"
+                if not bpath.is_file():
+                    return _request(args.out, "weekend_bridge", plan, bp, bpacket, ledger)
+'''
+          new = '''                epath = args.outputs / f"forecast_{prev.owner}_{prev.day}.json"
+                if not epath.is_file():
+                    raise SystemExit(f"Friday owner forecast missing before A bridge: {epath}")
+                eobj = _read(epath)
+                ehandoff = eobj.get("handoff_out")
+                if not isinstance(ehandoff, dict):
+                    raise SystemExit(f"Friday owner handoff_out missing before A bridge: {epath}")
+                bpacket = dict(bpacket)
+                bpacket["s135_friday_owner_handoff"] = {
+                    "from_day": prev.day,
+                    "from_specialist": prev.owner,
+                    "forecast_disposition": eobj.get("disposition"),
+                    "handoff_out": ehandoff,
+                }
+                runner._assert_packet_outcome_wall(runtime, bpacket, gid, plan.day)
+                bpath = args.outputs / f"bridge_A_{plan.day}.json"
+                if not bpath.is_file():
+                    return _request(args.out, "weekend_bridge", plan, bp, bpacket, ledger)
+'''
+          if old not in s:
+              raise SystemExit('weekend bridge transport seam changed; refusing runtime patch')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          print('Friday E handoff transport installed for A bridge')
+          PY
+
       - name: Advance S135 date-driven blind to next model request
         env:
           PYTHONPATH: research/kalshi
