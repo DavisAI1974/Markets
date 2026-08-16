@@ -1,0 +1,73 @@
+name: S134 Full G3 Unblinded Refine Evidence
+
+on:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - research/kalshi/frankie_g3_s134_refine_evidence.py
+      - .github/workflows/frankie_g3_s134_refine_evidence.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  refine-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install current data/runtime dependencies
+        run: python -m pip install --quiet numpy pandas databento boto3 requests
+
+      - name: Restore canonical existing S3 substrate
+        env:
+          PYTHONPATH: research/kalshi
+          MARKETS_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          MARKETS_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: python research/kalshi/restore_substrate.py
+
+      - name: Stage exact G3 scored-leg and prior-tape files
+        env:
+          PYTHONPATH: research/kalshi
+          MARKETS_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          MARKETS_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          python - <<'PY'
+          import json
+          import frankie_g3_reblind_s131_runner as r
+          x = r._stage_existing_blind_inputs()
+          assert x['actuals_read'] is False
+          print(json.dumps(x, indent=2, sort_keys=True))
+          PY
+
+      - name: Extract all ten realized MBO fingerprints for refine
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          rm -rf /tmp/g3_s134
+          mkdir -p /tmp/g3_s134
+          python research/kalshi/frankie_g3_s134_refine_evidence.py --out /tmp/g3_s134/g3_s134_refine_evidence.json
+          python - <<'PY'
+          import json
+          p='/tmp/g3_s134/g3_s134_refine_evidence.json'
+          d=json.load(open(p))
+          assert d['phase']=='POST_SCORE_UNBLINDED_REFINE_EVIDENCE'
+          assert d['actuals_read'] is True
+          assert d['hydration']=='REJECTED_NOT_USED'
+          assert len(d['days'])==10
+          assert all(v['contract']=='NGV25' for v in d['days'].values())
+          print('PASS: all ten NGV25 target-day fingerprints extracted for refine')
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frankie-g3-s134-refine-evidence
+          path: /tmp/g3_s134
+          retention-days: 30
+          if-no-files-found: error
