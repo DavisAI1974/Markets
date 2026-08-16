@@ -1,0 +1,73 @@
+{
+  "specialist": "C",
+  "group": "gdate",
+  "date": "20250924",
+  "guessed_net_usd": -120,
+  "overnight_gap_usd": 0,
+  "path_p50_curve": [
+    [20.0, 0.0],
+    [8.0, -80.0],
+    [11.5, -220.0],
+    [15.0, 40.0],
+    [16.95, -120.0]
+  ],
+  "curve_nodes": [
+    {
+      "et_hour": 20.0,
+      "p25_cum_usd": 0.0,
+      "p50_cum_usd": 0.0,
+      "p75_cum_usd": 0.0,
+      "market_condition": "Session-open reference. No independent overnight-gap sign owner is available, so the gap P50 is centered at zero."
+    },
+    {
+      "et_hour": 8.0,
+      "p25_cum_usd": -480.0,
+      "p50_cum_usd": -80.0,
+      "p75_cum_usd": 360.0,
+      "market_condition": "Early test of whether Sep-23's strong turn-up is a durable reversal or only a give-back inside the Sep-22 downside impulse. The packet does not establish enough chain age to grant either interpretation sign authority."
+    },
+    {
+      "et_hour": 11.5,
+      "p25_cum_usd": -720.0,
+      "p50_cum_usd": -220.0,
+      "p75_cum_usd": 430.0,
+      "market_condition": "US-morning/pre-EIA positioning window. Tomorrow's EIA print, options expiry and nearby futures expiry support a wider range, while the directional center remains only a mild counter-tilt because the valid sign discriminators conflict."
+    },
+    {
+      "et_hour": 15.0,
+      "p25_cum_usd": -650.0,
+      "p50_cum_usd": 40.0,
+      "p75_cum_usd": 700.0,
+      "market_condition": "Late-session reversal/positioning test. Sep-23 closed near its high after a morning low, so a second upswing remains plausible; equally, price-up/flow-down disagreement leaves distribution/give-back risk live."
+    },
+    {
+      "et_hour": 16.95,
+      "p25_cum_usd": -620.0,
+      "p50_cum_usd": -120.0,
+      "p75_cum_usd": 600.0,
+      "market_condition": "Terminal pre-event positioning state. Net center stays small relative to the roughly $570 trailing net-sigma regime, but the envelope remains broad because the next session contains the EIA/opex/roll-seam stack."
+    }
+  ],
+  "reasoning": "ABSTAIN. The completed Sep-23 price/shape invalidates a mechanical continuation of Sep-22's down impulse: NGV25 opened 2.803, first pushed to a -$310 low, then turned up by roughly $920 from that low, closed 2.864 for +$610, and finished only about $80 below its +$690 high excursion. That is a genuine paired price/shape turn and therefore stands down the prior day's simple near-low continuation read. But the opposite claim is not clean enough to own sign either. Sep-23 was price-up while aggregate signed flow was -955, with absorb_session true and every phase flow negative while phase price changed -70/+230/+460. direction.absorption_is_reversal would read absorbed sell as UP, but its S112 population audit is approximately coin-flip outside the EIA subset and recommends narrower scope; Sep-24 is a pre-EIA Wednesday, not the print day, so I do not promote that flow/price disagreement into an UP owner. boundary.prior_close_flow_direction_disagreement reads price-up/flow-negative as distribution/give-back risk, but the play explicitly says it is a boundary tell, not a direction owner. direction.giveback_exhaustion_boundary has a bounce-day-crush branch, but applying that branch requires confidence that Sep-23 is a bounce inside a mature chain rather than the first completed reversal. The legally carried sequence establishes one large down session followed by one strong turn-up session; it does not establish the >=3-session mature-chain / shelf context used by the more specific midweek reversal-recognition machinery. I therefore refuse to manufacture DOWN authority from the bounce label. Raw D-1 flow and slow storage/grid/demand backdrop are not allowed to resolve the tie under S133/S135. Magnitude/range can still be forecast: trailing net sigma is roughly $570 and the calendar is one day before an EIA print, options expiry and the scored-leg seam, so positioning and two-sided travel can be material even while directional authority is withheld. The P50 path carries only a small negative counter-tilt, not a directional CALL, with a broad two-sided envelope and a late reversal node.",
+  "plays_fired": [
+    "timing.catalyst_continuity_frontrun - calendar limb is armed one session before EIA and is used only to widen/locate positioning risk, not to own sign",
+    "magnitude.catalyst_condition_sort - catalyst proximity is used for range conditioning only"
+  ],
+  "plays_stood_down": [
+    "direction.giveback_exhaustion_boundary - Sep-23 is a strong completed turn; calling its bounce-day-crush branch would require mature-chain context not established by the legal carried sequence",
+    "direction.absorption_is_reversal - absorbed-sell configuration is present, but the audit finds approximately base-rate performance outside its EIA-born subset; Sep-24 is not an EIA print day",
+    "boundary.prior_close_flow_direction_disagreement - price-up/flow-down disagreement is a warning/tell and explicitly not a sign owner",
+    "midweek.giveback_exhaustion_reversal_recognition - requires mature chain age/cum shelf context and is blind-unrunnable on those limbs",
+    "midweek.stretched_extreme_close_giveback - requires chain age and own run/close-off-extreme context under a winter-calibrated absolute bar; not a valid sign owner here",
+    "magnitude.terminal_impact_coefficient_carry - final phase flow is -508 lots but the play requires paired terminal price-impact coefficient and is refine-only in practice",
+    "daytype.eia_preprint_overextension_gate - scoped to the EIA print day, not the pre-print Wednesday"
+  ],
+  "confidence": "low",
+  "state_defects_and_gaps_reported": [
+    "Historical weather forecast/model-disagreement/freeze-risk/options/contract-structure families remain unavailable/null under the historical archive-gap policy.",
+    "The legal sequence contains only one completed large down day followed by one completed strong up-turn day; mature-chain age/shelf status is not established strongly enough to activate a bounce-day-crush sign rule.",
+    "The prior-session MBO file carries the known calendar-day/window tail beyond the desk's nominal 17:00 close convention, so exact close-extreme percentages are down-weighted.",
+    "Tomorrow is simultaneously EIA print, options expiry and the NGV25-to-NGX25 scored-leg seam; those are range/state-transition risks, not automatic Sep-24 sign owners."
+  ],
+  "disposition": "ABSTAIN"
+}
