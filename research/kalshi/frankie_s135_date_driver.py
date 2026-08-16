@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """Permanent thin driver for S135 date-window ChatGPT sessions.
 
-Future runs edit only date_run_session.json.  This driver keeps the two historical transport seams
-that were proven during the Sep-22..Oct-03 run out of the workflow YAML:
+The public run intent is only an inclusive start/end date pair. S136 resolves that pair against one
+exact window already declared in group_config.py and fails before staging if the contract plan cannot
+be proven there. No contract-month arithmetic or roll inference is allowed.
 
-1. S131 historical wall: retain current later-learned rules/plays while visibly withholding direct
-   realized-outcome leaves dated on/after each historical decision cutoff.
-2. Friday E -> A transport: attach the frozen Friday owner's handoff_out to the Monday A bridge packet;
-   A still receives the legally completed Friday session separately and may override E's forecast read.
+The normal current Frankie role view is used unchanged: this driver does not redact, roll back, or
+hydrate the brain. The only retained transport shim is the proven Friday E -> A handoff: E's frozen
+handoff_out is attached to the Monday A bridge packet while A still receives the legally completed
+Friday session separately and may override E's forecast read.
 
 Frankie, spawn.py, brain/schema, specialist roles, datapoint universe and the S135 state machine remain
-unchanged.  Hydration/synthesis remains rejected.
+unchanged.
 """
 from __future__ import annotations
 
@@ -23,36 +24,50 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
-import brain_view
-import frankie_g3_reblind_s131_runner as historical_wall
 import frankie_s135_date_session as session
 import frankie_s135_current_runtime as runtime
 import frankie_s135_group_runner as runner
+import frankie_s136_date_plan as date_plan
 import group_config as gc
 
 _OUTPUTS: Path | None = None
+_RESOLVED_PLAN: dict | None = None
 _ORIG_PACKET_SEQUENTIAL = runtime.packet_sequential
+_ORIG_INSTALL_DATE_CONFIG = session._install_date_config
+_ORIG_STAGE_BLIND_INPUTS = session._stage_blind_inputs
 
 
-def _install_historical_role_view(gid: str, state: dict) -> None:
-    def builder(request_gid: str, day: str, namespace: str) -> Path:
-        if request_gid != gid:
-            raise RuntimeError(f"date-session role builder got unexpected gid {request_gid}")
-        brain = brain_view.load()
-        view, _served, _withheld = brain_view.build(
-            brain, "specialist", phase="working", window_days=gc.GROUPS[gid]["days"]
+def _write_json(path: Path, value: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _install_resolved_date_config(args) -> str:
+    """Preserve declared holiday ownership without changing the frozen S135 session implementation."""
+    gid = _ORIG_INSTALL_DATE_CONFIG(args)
+    if _RESOLVED_PLAN is None:
+        raise RuntimeError("resolved date plan missing")
+    gc.GROUPS[gid]["holidays"] = list(_RESOLVED_PLAN.get("holidays", []))
+    return gid
+
+
+def _stage_only_proven_contract_inputs(gid: str) -> dict:
+    """Require every declared per-contract MBO leg file; optional prior feeds may remain absent/null."""
+    report = _ORIG_STAGE_BLIND_INPUTS(gid)
+    missing = [
+        row for row in report.get("legs", [])
+        if str(row.get("status")) not in {"ok", "skip"}
+    ]
+    if missing:
+        details = ", ".join(
+            f"{row.get('store')}:{row.get('day')}={row.get('status')}" for row in missing
         )
-        redacted = [0]
-        view = historical_wall._redact_post_cutoff_outcomes(view, day, redacted)
-        if isinstance(view.get("meta"), dict):
-            view["meta"]["s135_historical_cutoff"] = day
-            view["meta"]["s135_post_cutoff_direct_outcomes_redacted"] = redacted[0]
-        view = brain_view.annotate_evaluability(view, state[day])
-        path = runtime.base.PACKET_ROOT / namespace / gid / f"brain_view_{day}.json"
-        session._write(path, view)
-        return path
-
-    runtime.base._build_role_view = builder
+        raise SystemExit(
+            "S136 contract archive proof failed; declared leg file(s) are unavailable: "
+            f"{details}. Refusing to continue or infer a replacement contract."
+        )
+    report["contract_archive_proof"] = "PASS_ALL_DECLARED_LEG_FILES_PRESENT"
+    return report
 
 
 def _packet_sequential_with_friday_handoff(template, gid, day, spec, namespace, **kwargs):
@@ -91,34 +106,49 @@ def _packet_sequential_with_friday_handoff(template, gid, day, spec, namespace, 
 
 
 def main() -> int:
-    global _OUTPUTS
+    global _OUTPUTS, _RESOLVED_PLAN
+
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--config", type=Path, required=True)
     ap.add_argument("--out", type=Path, required=True)
+    ap.add_argument("--start-date")
+    ap.add_argument("--end-date")
     args = ap.parse_args()
-    cfg = json.loads(args.config.read_text(encoding="utf-8"))
 
-    days = cfg["days"]
-    if isinstance(days, list):
-        days = ",".join(str(x) for x in days)
-    eia = cfg.get("eia", [])
-    if isinstance(eia, list):
-        eia = ",".join(str(x) for x in eia)
+    raw = json.loads(args.config.read_text(encoding="utf-8"))
+    start_date = args.start_date or raw.get("start_date")
+    end_date = args.end_date or raw.get("end_date")
+    if not start_date or not end_date:
+        raise SystemExit(
+            "date intent incomplete: provide both start_date and end_date in the config or CLI"
+        )
 
+    try:
+        cfg = date_plan.resolve_date_plan(start_date, end_date)
+    except (RuntimeError, ValueError) as exc:
+        raise SystemExit(str(exc)) from exc
+
+    args.out.mkdir(parents=True, exist_ok=True)
+    _write_json(args.out / "resolved_date_plan.json", cfg)
+
+    _RESOLVED_PLAN = cfg
     _OUTPUTS = Path(cfg["outputs"])
-    session._install_inprocess_role_view = _install_historical_role_view
+    session._install_date_config = _install_resolved_date_config
+    session._stage_blind_inputs = _stage_only_proven_contract_inputs
     runtime.packet_sequential = _packet_sequential_with_friday_handoff
 
+    days = ",".join(str(x) for x in cfg["days"])
+    eia = ",".join(str(x) for x in cfg.get("eia", []))
     argv = [
         "frankie_s135_date_session.py",
-        "--days", str(days),
+        "--days", days,
         "--anchor-date", str(cfg["anchor_date"]),
         "--anchor", str(cfg["anchor"]),
         "--anchor-lasthr-dir", str(cfg.get("anchor_lasthr_dir", 0)),
         "--pre-leg", str(cfg["pre_leg"]),
-        "--eia", str(eia),
+        "--eia", eia,
         "--basis", str(cfg.get("basis", "date-driven S135 historical run")),
-        "--namespace", str(cfg.get("namespace", "frankie_s135_date_session")),
+        "--namespace", str(cfg["namespace"]),
         "--outputs", str(_OUTPUTS),
         "--out", str(args.out),
     ]

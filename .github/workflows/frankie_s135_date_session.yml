@@ -9,9 +9,19 @@ on:
       - research/kalshi/frankie_s135_date_driver.py
       - research/kalshi/frankie_s135_date_session.py
       - research/kalshi/frankie_s135_date_render.py
+      - research/kalshi/frankie_s136_date_plan.py
       - research/kalshi/date_run_session.json
       - research/kalshi/date_run_outputs/**
   workflow_dispatch:
+    inputs:
+      start_date:
+        description: Exact configured window start (YYYY-MM-DD)
+        required: true
+        default: "2026-04-13"
+      end_date:
+        description: Exact configured window end (YYYY-MM-DD)
+        required: true
+        default: "2026-04-24"
 
 permissions:
   contents: read
@@ -26,51 +36,42 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Reuse date-session input substrate
-        id: substrate
-        uses: actions/cache@v4
-        with:
-          path: data
-          key: frankie-s135-date-${{ hashFiles('research/kalshi/date_run_session.json') }}
-
       - name: Install existing Frankie staging dependencies
         run: python -m pip install --quiet numpy requests boto3 pandas databento matplotlib pillow
 
-      - name: Restore canonical S3 substrate
-        if: steps.substrate.outputs.cache-hit != 'true'
+      - name: Advance date-driven blind to next model request
         env:
           PYTHONPATH: research/kalshi
           MARKETS_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           MARKETS_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run: python research/kalshi/restore_substrate.py
-
-      - name: Rebuild public positioning caches
-        if: steps.substrate.outputs.cache-hit != 'true'
-        env:
-          PYTHONPATH: research/kalshi
-        run: |
-          python research/kalshi/cot_feed.py --build
-          python research/kalshi/cot_combined_feed.py --build
-
-      - name: Advance S135 date-driven blind to next model request
-        env:
-          PYTHONPATH: research/kalshi
-          MARKETS_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          MARKETS_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          START_DATE: ${{ github.event.inputs.start_date }}
+          END_DATE: ${{ github.event.inputs.end_date }}
         run: |
           rm -rf /tmp/frankie_s135_date_session
+          extra=()
+          if [[ -n "${START_DATE:-}" ]]; then
+            extra+=(--start-date "$START_DATE")
+          fi
+          if [[ -n "${END_DATE:-}" ]]; then
+            extra+=(--end-date "$END_DATE")
+          fi
           python research/kalshi/frankie_s135_date_driver.py \
             --config research/kalshi/date_run_session.json \
-            --out /tmp/frankie_s135_date_session
+            --out /tmp/frankie_s135_date_session \
+            "${extra[@]}"
 
-      - name: Print completed blind render with every point
+      - name: Render completed session
         env:
           PYTHONPATH: research/kalshi
         run: |
           rm -rf /tmp/frankie_s135_render
-          python research/kalshi/frankie_s135_date_render.py \
-            --config research/kalshi/date_run_session.json \
-            --out /tmp/frankie_s135_render
+          if [[ -f /tmp/frankie_s135_date_session/complete.json ]]; then
+            python research/kalshi/frankie_s135_date_render.py \
+              --plan /tmp/frankie_s135_date_session/resolved_date_plan.json \
+              --out /tmp/frankie_s135_render
+          else
+            echo "Session not complete; render deferred until all model outputs are frozen."
+          fi
 
       - uses: actions/upload-artifact@v4
         if: always()
