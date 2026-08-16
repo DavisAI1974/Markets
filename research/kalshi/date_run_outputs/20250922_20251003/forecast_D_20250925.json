@@ -1,0 +1,72 @@
+{
+  "specialist": "D",
+  "group": "gdate",
+  "date": "20250925",
+  "guessed_net_usd": 0,
+  "overnight_gap_usd": 0,
+  "path_p50_curve": [
+    [20.0, 0.0],
+    [9.75, 60.0],
+    [10.5, 0.0],
+    [12.5, -40.0],
+    [16.95, 0.0]
+  ],
+  "curve_nodes": [
+    {
+      "et_hour": 20.0,
+      "p25_cum_usd": 0.0,
+      "p50_cum_usd": 0.0,
+      "p75_cum_usd": 0.0,
+      "market_condition": "NGX25 scored-leg session-open reference. The NGV25-to-NGX25 leg change is not a traded move and current-NGX25 price structure is unavailable under the one-shot mask, so no synthetic seam gap is inserted."
+    },
+    {
+      "et_hour": 9.75,
+      "p25_cum_usd": -520.0,
+      "p50_cum_usd": 60.0,
+      "p75_cum_usd": 620.0,
+      "market_condition": "Pre-print positioning state. Sep-24 was a roughly flat net session after a down-then-up turn and coherent middle-phase buying; that is useful two-sided state context but does not grant D an opening sign."
+    },
+    {
+      "et_hour": 10.5,
+      "p25_cum_usd": -1050.0,
+      "p50_cum_usd": 0.0,
+      "p75_cum_usd": 1100.0,
+      "market_condition": "Scheduled EIA information-state transition. The current print has no decision-time consensus/house-disagreement value in the archive, so the opening forecast cannot sign the surprise. Envelope expands for print/opex/seam interaction; post-event direction must be re-derived only after legal impulse evidence exists."
+    },
+    {
+      "et_hour": 12.5,
+      "p25_cum_usd": -1250.0,
+      "p50_cum_usd": -40.0,
+      "p75_cum_usd": 1250.0,
+      "market_condition": "Post-print distribution placeholder from the opening information state, not a defended sign. S135-D requires the remaining curve to be rebuilt from the actual legally observed EIA/price-flow state rather than preserving this opening median."
+    },
+    {
+      "et_hour": 16.95,
+      "p25_cum_usd": -1000.0,
+      "p50_cum_usd": 0.0,
+      "p75_cum_usd": 1000.0,
+      "market_condition": "Terminal opening-state distribution. Catalyst-day range remains materially wider than ordinary-session net sigma, while directional authority remains withheld absent the event re-derive."
+    }
+  ],
+  "reasoning": "ABSTAIN at the opening information state. Sep-25 is simultaneously the EIA print day, options expiry and the scored-leg seam onto NGX25. The seam itself cannot supply a traded move: S131 fixes NGV25 through Sep-24 and NGX25 from Sep-25, and the current scored-leg contract block explicitly warns that frozen price-derived structure describes NGV25 and is unusable for NGX25. Therefore overnight_gap_usd is centered at zero rather than importing the V/X level difference. The current EIA print is scheduled for 10:30 ET, but storage_consensus.next_print has consensus_pre_print_bcf=null, consensus_chg_bcf=null, house_disagreement_bcf=null and no estimates. The previous print's +9 Bcf surprise is historical context, not the sign of today's unknown print. Sep-24's legally completed state also fails to produce a clean opening owner: NGV25 opened 2.864 and closed 2.869 for only +$50 after traveling from -$480 to +$500; it turned up from the morning low, phase 2 was coherently positive (+$460 price / +1770 signed flow), and the final phase gave back only -$110 with +82 flow. absorb_session and every ph_absorb flag are false. That is a two-sided handover, not a near-extreme continuation or a qualified absorption reversal. Raw +1838 prior-session flow cannot manufacture D's print-day sign under S133/S135, and slow storage/grid/demand backdrop is regime/range context only. daytype.eia_preprint_overextension_gate cannot be completed because its chain-cum/price limb is masked and the current consensus-pricing limb is absent; its machine B-share limbs are also documented as basis-defective. direction.absorption_is_reversal has no prior-session absorption trigger. The appropriate action is therefore to withhold opening directional authority while forecasting a materially enlarged EIA/opex/seam range. The scheduled 10:30 node is a real event boundary, not a fixed-clock curve convention. Under S135-D, once the EIA print and its price/flow impulse become legally available, the remaining curve must be re-derived from that new information state; this opening forecast explicitly does not defend its post-event P50 against contrary evidence.",
+  "plays_fired": [
+    "magnitude.catalyst_condition_sort - EIA/opex/seam stack used to widen range only",
+    "daytype.eia_window_reopen_to_print - scheduled print boundary used for information-state/window assignment only"
+  ],
+  "plays_stood_down": [
+    "daytype.eia_preprint_overextension_gate - chain-cum/price and current-consensus pricing limbs are unavailable; its B-share machine conditions are documented basis-defective",
+    "daytype.eia_print_impulse_arbiter - no legal current print/impulse exists at the opening decision state",
+    "direction.absorption_is_reversal - Sep-24 absorb_session=false and all phase absorption flags are false",
+    "direction.giveback_exhaustion_boundary - Sep-24 closed near the middle of its full excursion after a two-sided turn, not at a qualifying chain extreme or clearly classified mature-chain bounce",
+    "magnitude.terminal_impact_coefficient_carry - requires paired terminal price-impact coefficient and is refine-only in practice",
+    "weekend.seam_sign_from_stability_ladder - this is a contract scored-leg seam, not a weekend/holiday weather seam, and historical model-disagreement stability inputs are unavailable"
+  ],
+  "confidence": "low",
+  "state_defects_and_gaps_reported": [
+    "Decision-time consensus/estimate/house-disagreement for the Sep-25 EIA print is unavailable in the historical archive.",
+    "Current NGX25 price-derived contract structure/options/squeeze state is unavailable under the one-shot mask; frozen structural blocks describe NGV25 and are explicitly unusable for the post-seam scored leg.",
+    "Historical weather-forecast/model-disagreement/freeze-risk families remain unavailable/null; hydration and synthesis are rejected.",
+    "This artifact is the opening-state D forecast. S135 requires a separate remaining-curve re-derive once legal EIA impulse evidence exists; the opening packet contains no such event outcome."
+  ],
+  "disposition": "ABSTAIN"
+}
