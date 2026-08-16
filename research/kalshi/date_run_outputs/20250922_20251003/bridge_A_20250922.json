@@ -1,0 +1,83 @@
+{
+  "bridge_for": "20250922",
+  "decision_date": "20250919",
+  "driver_realization_check": {
+    "read": "Weather forecast, forecast-cycle, forcing forecast, model-disagreement, and freeze-risk history are unavailable for this date. The stability-ladder / weekend-realization test therefore cannot be run; no sell-the-news or carry-forward claim is made.",
+    "status": "UNRESOLVED_ARCHIVE_GAP"
+  },
+  "friday_exit_consumed": {
+    "exit_type": "HANDOVER_UNRESOLVED_PRICE_SHAPE",
+    "monday_bias": "NEUTRAL_NO_SIGN_AUTHORITY",
+    "sanity_check": "Completed NGV25 Friday anchor close is 2.918 with positive last-hour direction. Prior-session tape is two-sided nearly balanced overall (B-share 0.508) with +1000 signed flow on 72,129 lots; the final phase is slightly sell-tilted (-319 signed flow, two-sided B-share 0.495) on the session's largest phase volume (35,258 lots). The packet does not carry Friday range-location, cum-from-anchor, close-off-extreme, or an E handoff exit_type, so I cannot honestly label the close crest, extreme exhaustion, or clean continuation."
+  },
+  "gap_ownership": {
+    "read": "The seam gap sign is not derivable from the served archive. Managed money is not at the crowded-short extreme required by the positioning seam-gap prior (net -23,091; 1y percentile 57.55), and WoW net improved by +1,661 rather than worsening. Do not assign directional ownership to a hypothetical gap.",
+    "spent_vs_unrealized_ahead": "UNRESOLVED",
+    "status": "UNRESOLVED"
+  },
+  "group": "gdate",
+  "monday_bias_confirmed_or_adjusted": {
+    "bias": "NEUTRAL_NO_SIGN_AUTHORITY",
+    "owns_monday_forecast": false,
+    "why": "Friday's completed non-price tape is not strongly one-sided and the decisive price/shape exit fields are absent. Slow storage/grid/cash context and raw D-1 flow cannot manufacture Monday sign under S133/S135. A carries the Friday state and defects forward; B must establish Monday direction from a valid owner."
+  },
+  "plays_fired": [],
+  "plays_stood_down": [
+    {
+      "play": "daytype.friday_exit_decomposition",
+      "reason": "No Friday range-location/cum/close-off-extreme or E handoff exit_type is served; exit decomposition cannot be completed."
+    },
+    {
+      "play": "daytype.friday_exit_close_location_over_flow_shape",
+      "reason": "Price close-location is absent; final-phase flow alone may not decide continuation versus exhaustion."
+    },
+    {
+      "play": "structure.friday_exhausted_extreme_giveback",
+      "reason": "No evidence that Friday closed at an extreme/blow-off; do not infer exhaustion from final-phase flow."
+    },
+    {
+      "play": "weekend.carry_realization_flip",
+      "reason": "No archived weekend driver realization/forecast path is available."
+    },
+    {
+      "play": "weekend.seam_sign_from_stability_ladder",
+      "reason": "Historical weather/stability ladder inputs are absent."
+    },
+    {
+      "play": "boundary.weekend_gap_wide_band_emission",
+      "reason": "Its sign parent (weekend stability ladder) is unavailable; A will not invent a gap sign."
+    },
+    {
+      "play": "boundary.seam_gap_up_prior_on_worsening_cot",
+      "reason": "Managed-money positioning is not at a crowded-short extreme and WoW net change improved rather than worsened."
+    },
+    {
+      "play": "monday.overnight_headfake_into_catchup",
+      "reason": "Requires observed Monday/reopen price-vs-flow behavior; no reopen outcome is legally present in this bridge packet."
+    }
+  ],
+  "reopen_scenarios": [
+    {
+      "condition": "Only if genuinely available reopen flow/driver evidence confirms the move. No such historical weekend/reopen evidence is present in this packet.",
+      "probability": 0.5,
+      "scenario": "gap_persistence"
+    },
+    {
+      "condition": "If the reopen is thin or non-confirming, reject the gap rather than inherit its sign. No observed reopen evidence is present here, so this remains a symmetric scenario, not a call.",
+      "probability": 0.5,
+      "scenario": "gap_rejection"
+    }
+  ],
+  "reopen_watch": {
+    "read": "No actual Sunday/reopen tape or legitimate archived weekend driver update is in the packet. Do not reconstruct or infer one. B must treat any later legally observed gap separately from Monday's session.",
+    "status": "STAND_DOWN"
+  },
+  "specialist": "A",
+  "state_defects_and_gaps_reported": [
+    "Friday E handoff is unavailable for the starter boundary.",
+    "Friday price/range exit shape and cum-from-anchor are unavailable in the starter context.",
+    "Historical weekend weather forecast/stability/reopen information is unavailable; hydration is rejected.",
+    "No Sunday/reopen tape is present; gap sign and gap ownership are not inferred."
+  ],
+  "summary": "A bridge for 2025-09-22: carry Friday's 2.918 close, positive last-hour direction, and nearly balanced completed flow state into B, but do not convert them into a Monday sign. Weekend/reopen and price-shape discriminators are missing, so A stands down on gap direction, exhaustion/continuation classification, and driver-realization. Monday ownership remains entirely with B."
+}
