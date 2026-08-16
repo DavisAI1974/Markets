@@ -42,6 +42,13 @@ jobs:
             /tmp/NG_20250923.jsonl.gz \
             /tmp/NG_20250930.jsonl.gz \
             /tmp/NG_20251001.jsonl.gz
+      - name: Run duration-class curve audit
+        run: |
+          PYTHONPATH=research python research/ng_dipole_duration_class_audit.py \
+            /tmp/NG_20250717.jsonl.gz \
+            /tmp/NG_20250923.jsonl.gz \
+            /tmp/NG_20250930.jsonl.gz \
+            /tmp/NG_20251001.jsonl.gz
       - name: Upload state-audit results
         uses: actions/upload-artifact@v4
         with:
@@ -52,3 +59,8 @@ jobs:
         with:
           name: ng-dipole-runway-audit
           path: ng_dipole_runway_audit_results.json
+      - name: Upload duration-class results
+        uses: actions/upload-artifact@v4
+        with:
+          name: ng-dipole-duration-class
+          path: ng_dipole_duration_class_results.json
