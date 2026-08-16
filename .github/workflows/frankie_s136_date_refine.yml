@@ -1,0 +1,81 @@
+name: S136 Frankie Date Refine Prep
+
+on:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - .github/workflows/frankie_s136_date_refine.yml
+      - research/kalshi/frankie_s136_date_refine_prep.py
+      - research/kalshi/date_run_session.json
+      - research/kalshi/date_run_outputs/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prep-refine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Reuse date-session input substrate
+        id: substrate
+        uses: actions/cache@v4
+        with:
+          path: data
+          key: frankie-s135-date-${{ hashFiles('research/kalshi/date_run_session.json') }}
+
+      - name: Install existing Frankie refine dependencies
+        run: python -m pip install --quiet numpy requests boto3 pandas databento matplotlib pillow
+
+      - name: Restore canonical S3 substrate
+        if: steps.substrate.outputs.cache-hit != 'true'
+        env:
+          PYTHONPATH: research/kalshi
+          MARKETS_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          MARKETS_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: python research/kalshi/restore_substrate.py
+
+      - name: Rebuild public positioning caches
+        if: steps.substrate.outputs.cache-hit != 'true'
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          python research/kalshi/cot_feed.py --build
+          python research/kalshi/cot_combined_feed.py --build
+
+      - name: Prepare post-reveal refine packets with full current brain
+        env:
+          PYTHONPATH: research/kalshi
+          MARKETS_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          MARKETS_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          rm -rf /tmp/frankie_s136_refine
+          python research/kalshi/frankie_s136_date_refine_prep.py \
+            --config research/kalshi/date_run_session.json \
+            --out /tmp/frankie_s136_refine
+          python - <<'PY'
+          import json
+          p='/tmp/frankie_s136_refine/manifest.json'
+          d=json.load(open(p))
+          assert d['status']=='READY_FOR_CURRENT_FRANKIE_REFINE'
+          assert d['packet_count']==10
+          assert d['blind_rerun'] is False
+          assert d['actuals_visible'] is True
+          assert d['current_brain']['window_redaction'] is False
+          assert d['hydration']=='REJECTED_NOT_USED'
+          print('PASS: refine packets use current unredacted brain and immutable blind baseline')
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frankie-s136-date-refine-inputs
+          path: /tmp/frankie_s136_refine
+          retention-days: 14
+          if-no-files-found: error
