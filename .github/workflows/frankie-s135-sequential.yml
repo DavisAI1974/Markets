@@ -1,0 +1,57 @@
+name: Frankie S135 sequential contract
+
+on:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - research/kalshi/frankie_s135_group_runner.py
+      - research/kalshi/frankie_s135_preflight.py
+      - research/kalshi/frankie_s135_current_runtime.py
+      - research/kalshi/frankie_s135_specialist_authority.py
+      - research/kalshi/frankie_s135_handoff.py
+      - research/kalshi/frankie_s132_dynamic_curve.py
+      - research/kalshi/frankie_s133_reasoning_runtime.py
+      - research/kalshi/group_config.py
+      - tests/test_frankie_s135_group_runner.py
+      - .github/workflows/frankie-s135-sequential.yml
+  pull_request:
+    paths:
+      - research/kalshi/frankie_s135_group_runner.py
+      - research/kalshi/frankie_s135_preflight.py
+      - research/kalshi/frankie_s135_current_runtime.py
+      - research/kalshi/frankie_s135_specialist_authority.py
+      - research/kalshi/frankie_s135_handoff.py
+      - research/kalshi/frankie_s132_dynamic_curve.py
+      - research/kalshi/frankie_s133_reasoning_runtime.py
+      - research/kalshi/group_config.py
+      - tests/test_frankie_s135_group_runner.py
+      - .github/workflows/frankie-s135-sequential.yml
+
+permissions:
+  contents: read
+
+jobs:
+  sequential-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile S135 contract surfaces
+        run: |
+          python -m py_compile \
+            research/kalshi/frankie_s135_group_runner.py \
+            research/kalshi/frankie_s135_preflight.py \
+            tests/test_frankie_s135_group_runner.py
+      - name: Run fail-closed sequential contract tests
+        run: python -m unittest discover -s tests -p 'test_frankie_s135_group_runner.py' -v
+      - name: Prove canonical G24 run spec without reading target outcomes
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          python research/kalshi/frankie_s135_group_runner.py \
+            --group g24 \
+            --mode blind \
+            --preflight-only
