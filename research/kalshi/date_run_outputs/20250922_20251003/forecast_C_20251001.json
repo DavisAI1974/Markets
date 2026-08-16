@@ -1,0 +1,73 @@
+{
+  "specialist": "C",
+  "group": "gdate",
+  "date": "20251001",
+  "guessed_net_usd": 60,
+  "overnight_gap_usd": 0,
+  "path_p50_curve": [
+    [20.0, 0.0],
+    [8.0, 110.0],
+    [11.25, 200.0],
+    [14.75, -90.0],
+    [16.95, 60.0]
+  ],
+  "curve_nodes": [
+    {
+      "et_hour": 20.0,
+      "p25_cum_usd": 0.0,
+      "p50_cum_usd": 0.0,
+      "p75_cum_usd": 0.0,
+      "market_condition": "Wednesday session-open reference. No independent overnight-gap sign owner is available; gap P50 remains neutral."
+    },
+    {
+      "et_hour": 8.0,
+      "p25_cum_usd": -340.0,
+      "p50_cum_usd": 110.0,
+      "p75_cum_usd": 510.0,
+      "market_condition": "Early continuation test after two completed UP sessions. The center is mildly positive, but C has not granted a third-day directional call because the prior close-location remains between the brain's clean continuation and alternation bands."
+    },
+    {
+      "et_hour": 11.25,
+      "p25_cum_usd": -410.0,
+      "p50_cum_usd": 200.0,
+      "p75_cum_usd": 690.0,
+      "market_condition": "US-morning/pre-EIA positioning window. Two-day positive price/flow alignment supports upper-tail persistence, while absent current EIA consensus and current-leg options/structure keep the median low-authority."
+    },
+    {
+      "et_hour": 14.75,
+      "p25_cum_usd": -690.0,
+      "p50_cum_usd": -90.0,
+      "p75_cum_usd": 620.0,
+      "market_condition": "Late pre-print de-risking/give-back test. Tomorrow's scheduled EIA event can produce position squaring even when no direction owner exists at today's open."
+    },
+    {
+      "et_hour": 16.95,
+      "p25_cum_usd": -580.0,
+      "p50_cum_usd": 60.0,
+      "p75_cum_usd": 610.0,
+      "market_condition": "Terminal pre-EIA state. The non-flat path preserves roughly ordinary-session range while directional authority remains withheld."
+    }
+  ],
+  "reasoning": "ABSTAIN. The legally completed Sep-30 state again makes UP continuation plausible but does not supply a clean current-brain sign discriminator. NGX25 opened 3.269, closed 3.333 for +$640, reached +$820 high excursion and -$240 low excursion, turned up from the overnight low, and advanced another +$170 in the final phase. Phases 2 and 3 were price/flow aligned (+$660/+2,492 and +$170/+263), with absorb_session=false and no phase-absorption flags. This is the second consecutive completed UP session after Sep-29's +$950. However, Sep-30 closed about $180 below its high, roughly 17% off the full high-to-low excursion. direction.giveback_exhaustion_boundary's strongest chain-side continuation branch is a close at the extreme (<~10% recovery), while the one-day alternation branch is around >=~35% off the extreme with a late counter-tick. Sep-30 remains between those descriptive bands just as Sep-29 did. Two consecutive aligned UP sessions do not give permission to move the threshold. direction.flow_conviction_sign_gate can be evaluated on the completed prior session but its current S112 audit shows that its two states both reduce to the phase price direction and add no discriminating lift, so it cannot own Oct-1 sign. Raw +2,481 D-1 signed flow and thick-tape big-print B-share 0.641 likewise cannot add next-day sign confidence under S133/S135. The blind-available flow-absorption arm of direction.giveback_exhaustion_boundary is not fully armed because session_b_share 0.477 is above its <=0.45 selling-session threshold; and the prior session itself has no absorption. Midweek.giveback_exhaustion_reversal_recognition requires a mature >=3-session chain at a cum-extreme plus exhaustion evidence; the legally established post-seam chain has only two completed UP days and the masked cum-extreme limb is unavailable. Tomorrow is the EIA print, but the Oct-2 consensus/house-disagreement archive remains absent, so pre-print positioning may widen today's late distribution without supplying a directional forecast. I retain a small positive P50 center from the two-day completed trend, then allow late pre-EIA give-back, but disposition remains ABSTAIN because neither continuation nor reversal has a clean canonical owner.",
+  "plays_fired": [
+    "timing.catalyst_continuity_frontrun - one-day-to-EIA calendar state used to locate/widen pre-event positioning, not to own direction",
+    "magnitude.catalyst_condition_sort - EIA proximity used for range conditioning only"
+  ],
+  "plays_stood_down": [
+    "direction.giveback_exhaustion_boundary - Sep-30 close-location again falls between the strongest <~10% continuation and >=~35% alternation bands",
+    "direction.flow_conviction_sign_gate - completed prior price/flow is available but the audited gate is sign-degenerate and cannot resolve the boundary",
+    "direction.absorption_is_reversal - Sep-30 absorb_session=false and all phase absorption flags are false",
+    "midweek.giveback_exhaustion_reversal_recognition - no established mature >=3-session chain/cum-extreme configuration and no exhaustion tell",
+    "structure.accumulation_arm_turn - no qualified turn configuration is established from the completed prior session",
+    "raw D-1 positive flow continuation - forbidden as next-session sign corroboration without a valid paired discriminator",
+    "daytype.eia_preprint_overextension_gate - Oct-1 is not the print session and current Oct-2 consensus/price-pricing limbs are unavailable"
+  ],
+  "confidence": "low",
+  "state_defects_and_gaps_reported": [
+    "Current NGX25 options/contract-structure/squeeze price blocks remain unavailable under the historical one-shot mask.",
+    "Historical weather forecast/model-disagreement/freeze-risk families remain unavailable/null; hydration and synthesis are rejected.",
+    "Decision-time consensus/house disagreement for the Oct-2 EIA print is unavailable in the historical archive.",
+    "The legally completed post-seam UP sequence is two sessions old, not enough to assert the mature-chain configuration required by the midweek reversal machinery."
+  ],
+  "disposition": "ABSTAIN"
+}
