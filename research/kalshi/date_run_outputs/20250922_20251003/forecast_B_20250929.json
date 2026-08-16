@@ -1,0 +1,74 @@
+{
+  "specialist": "B",
+  "group": "gdate",
+  "date": "20250929",
+  "guessed_net_usd": 460,
+  "overnight_gap_usd": 0,
+  "path_p50_curve": [
+    [20.0, 0.0],
+    [7.75, 90.0],
+    [10.75, 340.0],
+    [14.25, 570.0],
+    [16.95, 460.0]
+  ],
+  "curve_nodes": [
+    {
+      "et_hour": 20.0,
+      "p25_cum_usd": 0.0,
+      "p50_cum_usd": 0.0,
+      "p75_cum_usd": 0.0,
+      "market_condition": "Monday session-open reference. A explicitly leaves the Sunday gap sign unresolved, so no invented gap is inserted; the directional call belongs to the regular session only."
+    },
+    {
+      "et_hour": 7.75,
+      "p25_cum_usd": -360.0,
+      "p50_cum_usd": 90.0,
+      "p75_cum_usd": 540.0,
+      "market_condition": "Early handover test of A's UP-small turn bias. Friday's late recovery/absorbed selling favors an upward regular-session response, but no reopen tape exists to confirm an overnight move."
+    },
+    {
+      "et_hour": 10.75,
+      "p25_cum_usd": -420.0,
+      "p50_cum_usd": 340.0,
+      "p75_cum_usd": 820.0,
+      "market_condition": "Core Monday catch-up window. The completed Friday price/shape turn remains the sign owner while any raw Friday sell flow is explicitly barred from reinforcing direction."
+    },
+    {
+      "et_hour": 14.25,
+      "p25_cum_usd": -350.0,
+      "p50_cum_usd": 570.0,
+      "p75_cum_usd": 1050.0,
+      "market_condition": "Expected late continuation/covering test. Newly more-short COT raises the upper tail, but because positioning does not clear the canonical crowded-short gate it is not allowed to own the median sign."
+    },
+    {
+      "et_hour": 16.95,
+      "p25_cum_usd": -420.0,
+      "p50_cum_usd": 460.0,
+      "p75_cum_usd": 920.0,
+      "market_condition": "Terminal Monday state after modest give-back from the expected late high. The call remains smaller than a full catalyst impulse because weekend driver confirmation and current-leg options/structure are unavailable."
+    }
+  ],
+  "reasoning": "CALL UP, low confidence.\nDIRECTION OWNER: direction.giveback_exhaustion_boundary, using the legally completed Sep-26 Friday price/shape carried through Specialist A. Friday NGX25 opened 3.220, fell to roughly -$980 from the open, closed -$430, and therefore recovered about $550 from the low, roughly 44% of the full high-to-low range. The final phase itself rose about +$500 while signed flow was -2,476 and ph_absorb=true. Under the current polarity-relative give-back/exhaustion boundary, a chain-side give-back that closes >=~35-50% off its adverse extreme with a late counter-tick is an alternation/turn state rather than a clean continuation state. A's weekend bridge independently performs the required Friday sanity check, rejects E's forecast upper-half Friday hold, and hands B an UP_SMALL_FOR_B_TO_TEST bias from the realized exhausted-down give-back/late recovery. B accepts that bias because it is grounded in the paired completed Friday price/shape; it does NOT add confidence from Friday's raw -5,777 signed flow. flow.price_free_absorption_proxy is corroboration only: late sell aggression failed to stop the +$500 recovery, but the proxy does not independently own Monday sign. The Sunday gap remains completely unsigned because no reopen tape, weekend weather realization, or model-stability archive exists; overnight_gap_usd is therefore centered at zero and is not an assertion that no gap occurs. The Sep-26 COT publication is materially more short (managed-money net -63,176, WoW -40,085, 1y percentile 21.7), which increases the squeeze/covering upper tail, but structure.covering_absorption_directional_tell and boundary.seam_gap_up_prior_on_worsening_cot both require a substantially more crowded short state around the <~12 percentile gate, so COT cannot own sign. Monday is still a catalyst-class session and bidweek day 4, so magnitude is allowed above ordinary chop, but I keep the median at +$460 because current NGX25 options/contract structure, weekend driver confirmation, and actual reopen conviction are absent. The curve therefore expects a modest early lift, strongest delivery through the 08-14 ET catch-up window, a late high, then a small settlement give-back. Slow storage/grid/demand backdrop is retained as regime/range context only and does not manufacture the UP call.",
+  "plays_fired": [
+    "direction.giveback_exhaustion_boundary - completed Friday recovered ~44% off its downside extreme with a strong late counter-tick; paired price/shape owns the UP alternation/turn read",
+    "monday.catchup_window_tilt_gate - A supplied an explicit UP-small Monday bias from the completed Friday exit; used to locate the expected 08-14 ET delivery window, not to invent a Sunday gap",
+    "magnitude.catalyst_condition_sort - weekend-gap Monday class used to widen range/magnitude only"
+  ],
+  "plays_stood_down": [
+    "monday.overnight_headfake_into_catchup - no legally observed reopen gap/price-flow exists, so its gap-fade mechanics cannot be asserted from observation",
+    "weekend.carry_realization_flip - historical weekend driver realization is unavailable",
+    "weekend.seam_sign_from_stability_ladder - historical weekend weather/model-stability inputs are unavailable",
+    "boundary.weekend_gap_wide_band_emission - parent gap-sign instrument is unavailable; gap P50 remains neutral",
+    "structure.covering_absorption_directional_tell - managed-money 1y percentile 21.7 does not clear the canonical crowded-short <~12 gate",
+    "boundary.seam_gap_up_prior_on_worsening_cot - COT worsened sharply but is not crowded enough to own sign and this is not the Sep-25 scored-leg seam day",
+    "raw Friday signed-flow continuation - S133/S135 forbids using -5,777 D-1 flow as next-session directional corroboration without paired price/shape; Friday's late price recovery in fact contradicts mechanical continuation"
+  ],
+  "confidence": "low",
+  "state_defects_and_gaps_reported": [
+    "No historical Sunday/reopen tape or weekend weather/model-disagreement/freeze-risk realization is available; hydration and synthesis remain rejected.",
+    "Current NGX25 options, squeeze and contract-structure price blocks remain unavailable under the one-shot historical mask.",
+    "The direction.giveback_exhaustion_boundary is heavily outcome-credited historically and its blind flow-only arm is weak; this call uses the newly legal completed prior-session price/shape primary arm and is therefore kept low confidence.",
+    "A's bridge correctly overrides E's forecast Friday exit label with the realized Friday state; B uses A's realized-exit bias rather than E's failed forecast carry."
+  ],
+  "disposition": "CALL"
+}
