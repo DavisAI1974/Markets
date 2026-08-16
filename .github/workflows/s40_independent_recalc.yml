@@ -38,7 +38,7 @@ jobs:
           ls -lh realbins/*_bybit_perp_bins.json
 
       - name: Recalculate S40 independently
-        run: python research/s40_independent_recalc.py
+        run: PYTHONPATH=. python research/s40_independent_recalc.py
 
       - name: Upload calculation artifact
         if: always()
