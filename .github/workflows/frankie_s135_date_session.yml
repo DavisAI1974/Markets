@@ -28,7 +28,6 @@ jobs:
         with:
           path: data
           key: frankie-s135-date-20250922-20251003-v1
-          save-always: true
 
       - name: Install existing Frankie staging dependencies
         run: python -m pip install --quiet numpy requests boto3 pandas databento
@@ -53,20 +52,8 @@ jobs:
           from pathlib import Path
           p = Path('research/kalshi/frankie_s135_date_session.py')
           s = p.read_text(encoding='utf-8')
-          old = '''        view = brain_view.annotate_evaluability(view, state[day])
-        p = runtime.base.PACKET_ROOT / namespace / gid / f"brain_view_{day}.json"
-'''
-          new = '''        # Same historical blind wall proven by S131: keep current later-learned rules/plays,
-        # but visibly withhold direct realized-outcome leaves dated on/after this decision cutoff.
-        import frankie_g3_reblind_s131_runner as _historical_wall
-        _redacted = [0]
-        view = _historical_wall._redact_post_cutoff_outcomes(view, day, _redacted)
-        if isinstance(view.get("meta"), dict):
-            view["meta"]["s135_post_cutoff_direct_outcomes_redacted"] = _redacted[0]
-            view["meta"]["s135_historical_cutoff"] = day
-        view = brain_view.annotate_evaluability(view, state[day])
-        p = runtime.base.PACKET_ROOT / namespace / gid / f"brain_view_{day}.json"
-'''
+          old = "        view = brain_view.annotate_evaluability(view, state[day])\n        p = runtime.base.PACKET_ROOT / namespace / gid / f\"brain_view_{day}.json\"\n"
+          new = "        import frankie_g3_reblind_s131_runner as _historical_wall\n        _redacted = [0]\n        view = _historical_wall._redact_post_cutoff_outcomes(view, day, _redacted)\n        if isinstance(view.get(\"meta\"), dict):\n            view[\"meta\"][\"s135_post_cutoff_direct_outcomes_redacted\"] = _redacted[0]\n            view[\"meta\"][\"s135_historical_cutoff\"] = day\n        view = brain_view.annotate_evaluability(view, state[day])\n        p = runtime.base.PACKET_ROOT / namespace / gid / f\"brain_view_{day}.json\"\n"
           if old not in s:
               raise SystemExit('date-session role-view seam changed; refusing runtime patch')
           p.write_text(s.replace(old, new, 1), encoding='utf-8')
