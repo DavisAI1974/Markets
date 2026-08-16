@@ -143,6 +143,10 @@ def assert_brain_target_safe(view: Mapping[str, Any], target_day: str) -> None:
 
     def walk(obj: Any, path: str) -> None:
         if isinstance(obj, Mapping):
+            # brain_view's own proof marker intentionally names the target date. It is wall
+            # metadata, not evidence, so do not mistake the guardrail label for leaked content.
+            if path == "brain_view_served.meta.window_redaction":
+                return
             if _attribution_mentions_target(obj, target):
                 raise s120.ForecastStop(
                     f"S136 target outcome wall: target-attributed brain object survived at {path}"
