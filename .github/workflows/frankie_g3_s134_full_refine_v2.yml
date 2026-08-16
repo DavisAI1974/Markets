@@ -1,0 +1,81 @@
+name: S134 Full Two-Week Frankie Refine And Render V2
+
+on:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - research/kalshi/frankie_g3_s134_full_refine.py
+      - research/kalshi/frankie_g3_s134_full_refine_runner.py
+      - .github/workflows/frankie_g3_s134_full_refine_v2.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  full-refine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install current data and render runtime
+        run: python -m pip install --quiet numpy pandas matplotlib databento boto3 requests
+
+      - name: Restore canonical existing S3 substrate
+        env:
+          PYTHONPATH: research/kalshi
+          MARKETS_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          MARKETS_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: python research/kalshi/restore_substrate.py
+
+      - name: Stage exact G3 NGV25 legs and existing prior tape
+        env:
+          PYTHONPATH: research/kalshi
+          MARKETS_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          MARKETS_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          python - <<'PY'
+          import json
+          import frankie_g3_reblind_s131_runner as r
+          x=r._stage_existing_blind_inputs()
+          assert x['actuals_read'] is False
+          print(json.dumps(x, indent=2, sort_keys=True))
+          PY
+
+      - name: Run full ten-day unblinded refine to actual curves
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          rm -rf /tmp/g3_s134_full_refine
+          python research/kalshi/frankie_g3_s134_full_refine_runner.py --out-dir /tmp/g3_s134_full_refine
+          python - <<'PY'
+          import json
+          p='/tmp/g3_s134_full_refine/g3_s134_full_refine.json'
+          d=json.load(open(p))
+          assert d['phase']=='POST_REVEAL_FULL_CURVE_REFINE'
+          assert d['actuals_read'] is True
+          assert d['target_day_tape_used_to_construct_refined_curves'] is True
+          assert d['classification'].startswith('unblinded refine-to-actual')
+          assert d['hydration']=='REJECTED_NOT_USED'
+          assert d['new_datapoint_family_added'] is False
+          assert d['fixed_curve_clock'] is False
+          assert d['fixed_curve_point_count'] is False
+          assert len(d['days'])==10
+          assert all(x['target_day_tape_used_to_construct_curve'] is True for x in d['days'])
+          assert all(len(x['curve_nodes']) >= 3 for x in d['days'])
+          assert all(abs(x['curve_nodes'][0]['p50_cum_usd']) < 1e-9 for x in d['days'])
+          print('PASS: S134 full two-week refine uses target tape and dynamic market-transition nodes')
+          PY
+          test -s /tmp/g3_s134_full_refine/g3_s134_refined_vs_actual.png
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frankie-g3-s134-full-refine-v2
+          path: /tmp/g3_s134_full_refine
+          retention-days: 30
+          if-no-files-found: error
