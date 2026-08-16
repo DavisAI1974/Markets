@@ -1,0 +1,72 @@
+{
+  "specialist": "E",
+  "group": "gdate",
+  "date": "20251003",
+  "guessed_net_usd": -680,
+  "overnight_gap_usd": 0,
+  "path_p50_curve": [
+    [20.0, 0.0],
+    [8.0, -120.0],
+    [11.5, -420.0],
+    [15.0, -780.0],
+    [16.95, -680.0]
+  ],
+  "curve_nodes": [
+    {
+      "et_hour": 20.0,
+      "p25_cum_usd": 0.0,
+      "p50_cum_usd": 0.0,
+      "p75_cum_usd": 0.0,
+      "market_condition": "Friday session-open reference on NGX25. No independent overnight-gap sign owner is available, so the gap P50 is centered at zero and the call belongs to the regular-session completed Thursday handoff."
+    },
+    {
+      "et_hour": 8.0,
+      "p25_cum_usd": -520.0,
+      "p50_cum_usd": -120.0,
+      "p75_cum_usd": 300.0,
+      "market_condition": "Early continuation test after Thursday's failed bullish EIA rally and near-low close. The downside owner is paired completed price/shape; prior raw sell flow is not added as independent sign confidence."
+    },
+    {
+      "et_hour": 11.5,
+      "p25_cum_usd": -980.0,
+      "p50_cum_usd": -420.0,
+      "p75_cum_usd": 190.0,
+      "market_condition": "Primary Friday delivery window. The completed EIA-day turn-down remains active unless Friday price itself establishes a new turn; the upper tail preserves that possibility."
+    },
+    {
+      "et_hour": 15.0,
+      "p25_cum_usd": -1320.0,
+      "p50_cum_usd": -780.0,
+      "p75_cum_usd": 80.0,
+      "market_condition": "Late-session extension/exhaustion test. E expects a downside extreme before settlement but does not assume gross Friday program flow or calendar mechanics own direction."
+    },
+    {
+      "et_hour": 16.95,
+      "p25_cum_usd": -1180.0,
+      "p50_cum_usd": -680.0,
+      "p75_cum_usd": 120.0,
+      "market_condition": "Terminal Friday state after modest recovery from the expected late low. The forecast is directional but retains a material reversal tail because Thursday's full session was itself a large two-sided event day."
+    }
+  ],
+  "reasoning": "CALL DOWN, medium confidence.\nDIRECTION OWNER: direction.giveback_exhaustion_boundary, using the legally completed Oct-2 EIA-day price/shape and turn state. The storage print is now historical and legal: 53 Bcf as printed versus roughly 66 Bcf pre-print consensus, a materially bullish surprise. NGX25 nevertheless failed to hold the bullish event move. Thursday opened 3.449, reached a +$1,360 high, then turned down by about $1,800 from that high, closed 3.405 for -$440, and finished only about $40 above its -$480 low excursion - roughly 2% off the full high-to-low range. The final phase itself fell about -$1,340. That is the current brain's clean near-extreme/late-extension continuation branch after a completed turn-down, not the >=~35% recovered alternation branch. The important evidence is the paired price/shape: a bullish surprise was rejected, the session registered turn_kind=turn_down, and price closed essentially on the downside extreme. Raw D-1 signed flow (-5,406 total; -2,470 final phase) is not used as a second sign owner. It is only consistent background because S133/S135 forbids raw prior-session flow from adding next-day directional confidence by itself. The completed phase structure also prevents misreading the EIA reaction as simple same-direction absorption: phase 2 rose about +$1,070 against -2,394 sell flow and was flagged absorbed, but phase 3 then reversed about -$1,340 with -2,470 sell flow and no absorption flag. The late price response therefore resolved the earlier absorption into an actual downside turn before the day completed. daytype.eia_print_impulse_arbiter is not credited here because the packet does not serve the dedicated first-minute impulse required by that play; I do not reconstruct it from three coarse phases. The legal full-session EIA rejection is sufficient for the separate completed-session giveback/exhaustion owner. structure.covering_absorption_directional_tell is stood down because managed-money 1y percentile remains 21.7, not below the canonical ~12 crowded-short gate. magnitude.terminal_impact_coefficient_carry also does not suppress Friday net: the terminal impact coefficient from the completed phase is approximately 1340/2470, nowhere near the <=~0.05 numb regime. Friday is not an EIA, expiry, opex, bidweek or active index-roll day in the served calendar, so there is no calendar reason to override the completed Thursday turn. I center the Friday session at -$680, allowing a deeper late downside excursion followed by modest settlement recovery. Current NGX25 options/contract-structure price state remains unavailable, so tails stay broad and confidence is medium rather than high.",
+  "plays_fired": [
+    "direction.giveback_exhaustion_boundary - completed Oct-2 EIA rally turned down ~$1.8k from the high and closed ~2% off the downside extreme with a large late price extension; paired price/shape owns DOWN",
+    "magnitude.catalyst_condition_sort - prior EIA event state informs range persistence/tails, not Friday sign"
+  ],
+  "plays_stood_down": [
+    "daytype.eia_print_impulse_arbiter - the dedicated first-minute impulse is not served in the Oct-3 packet and is not reconstructed from coarse phase data",
+    "direction.absorption_is_reversal - phase-2 absorbed selling initially accompanied the EIA rally, but the completed session subsequently produced an actual turn-down and aligned -$1,340 final phase; the completed price/shape supersedes a same-session absorption-only read",
+    "structure.covering_absorption_directional_tell - managed-money 1y percentile 21.7 does not clear the canonical crowded-short <~12 gate",
+    "boundary.prior_close_flow_direction_disagreement - Thursday's terminal price and flow are aligned down, and this play is a boundary tell rather than an owner in any case",
+    "magnitude.terminal_impact_coefficient_carry - completed final-phase price impact is far above the numb <=~0.05 regime, so next-day net is not compressed to the <=~$200 class",
+    "gross Friday program/roll flow - E's S135 authority explicitly forbids program/roll flow from owning sign without paired price response; no such future Friday response exists at the open"
+  ],
+  "confidence": "med",
+  "state_defects_and_gaps_reported": [
+    "The dedicated first-minute Oct-2 EIA impulse used by daytype.eia_print_impulse_arbiter is not present in the model-facing packet; that play is not reconstructed or claimed.",
+    "Current NGX25 options, squeeze and contract-structure price blocks remain unavailable under the historical one-shot mask.",
+    "Historical weather forecast/model-disagreement/freeze-risk families remain unavailable/null; hydration and synthesis are rejected.",
+    "The completed prior-session MBO window carries the known post-17:00 calendar-day tail caveat, so exact close-extreme percentages are treated as strong but not tick-perfect settlement measurements."
+  ],
+  "disposition": "CALL"
+}
