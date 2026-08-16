@@ -18,13 +18,17 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: us-east-2
     steps:
-      - name: Check credential presence without disclosure
-        run: |
-          test -n "$AWS_ACCESS_KEY_ID" && echo "AWS_ACCESS_KEY_ID_PRESENT=yes" || echo "AWS_ACCESS_KEY_ID_PRESENT=no"
-          test -n "$AWS_SECRET_ACCESS_KEY" && echo "AWS_SECRET_ACCESS_KEY_PRESENT=yes" || echo "AWS_SECRET_ACCESS_KEY_PRESENT=no"
       - name: Probe authoritative NG day
         run: |
           aws s3api head-object \
             --bucket bento-568968024170-us-east-2-an \
             --key nymex/nymex_cont/NG_20250717.jsonl.gz \
             --query '{ContentLength:ContentLength,ETag:ETag,LastModified:LastModified}'
+          aws s3 cp s3://bento-568968024170-us-east-2-an/nymex/nymex_cont/NG_20250717.jsonl.gz /tmp/ng.jsonl.gz --only-show-errors
+          python - <<'PY'
+          import gzip, json
+          with gzip.open('/tmp/ng.jsonl.gz','rt') as f:
+              for i, line in zip(range(5), f):
+                  row=json.loads(line)
+                  print('ROW', i, json.dumps(row, sort_keys=True))
+          PY
