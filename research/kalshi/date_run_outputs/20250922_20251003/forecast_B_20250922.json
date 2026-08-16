@@ -1,0 +1,69 @@
+{
+  "specialist": "B",
+  "group": "gdate",
+  "date": "20250922",
+  "guessed_net_usd": 0,
+  "overnight_gap_usd": 0,
+  "path_p50_curve": [
+    [20.0, 0.0],
+    [8.0, -80.0],
+    [12.5, 30.0],
+    [16.95, 0.0]
+  ],
+  "curve_nodes": [
+    {
+      "et_hour": 20.0,
+      "p25_cum_usd": 0.0,
+      "p50_cum_usd": 0.0,
+      "p75_cum_usd": 0.0,
+      "market_condition": "Session-open reference. The historical Sunday/reopen tape and weekend driver update are unavailable, so the gap is not assigned a sign or inherited into the Monday session."
+    },
+    {
+      "et_hour": 8.0,
+      "p25_cum_usd": -600.0,
+      "p50_cum_usd": -80.0,
+      "p75_cum_usd": 500.0,
+      "market_condition": "Center of the brain's 06-10 ET Monday catch-up window. A delivered no sign authority and no legally observed gap-confirmation evidence exists; the wide envelope expresses resolution/head-fake risk rather than a directional call."
+    },
+    {
+      "et_hour": 12.5,
+      "p25_cum_usd": -700.0,
+      "p50_cum_usd": 30.0,
+      "p75_cum_usd": 650.0,
+      "market_condition": "Post-catch-up liquidity/absorption state. Prior-session big prints are guard-clean and sell-tilted while aggregate flow was positive, which keeps two-sided turn risk live, but S133/S135 forbids converting that unpaired D-1 flow evidence into next-session sign authority."
+    },
+    {
+      "et_hour": 16.95,
+      "p25_cum_usd": -550.0,
+      "p50_cum_usd": 0.0,
+      "p75_cum_usd": 550.0,
+      "market_condition": "Terminal/settlement state. Trailing net sigma is roughly $570 and recent full-session ranges average roughly $1.1k, so ABSTAIN does not imply a flat session; the terminal P50 is neutral because no valid sign discriminator survives the blind wall."
+    }
+  ],
+  "reasoning": "ABSTAIN. Specialist A's attached S135 bridge is authoritative despite stale legacy prompt prose saying the bridge was NOT PRODUCED; A explicitly hands over Friday state with NEUTRAL_NO_SIGN_AUTHORITY. The completed Sep-19 context is NGV25 close 2.918 with positive last-hour direction, but the decisive Friday close-location/range/close-off-extreme fields are unavailable. Prior tape is nearly balanced on the corrected two-sided basis (session B-share 0.508; +1000 signed flow on 72,129 lots) and the final phase is slightly sell-tilted (-319; two-sided B-share 0.495). The price-free absorption proxy is arithmetically live on a guard-clean sample (111 big prints, big-print B-share 0.411 while aggregate signed flow is positive), but current S133/S135 authority explicitly says raw D-1 flow without paired price/shape cannot add next-session directional confidence, so I use it only to widen turn/absorption risk, not to own sign. monday.overnight_headfake_into_catchup is numerically marked evaluable by the biased legacy session_b_share limb, but its own health record says that limb is degenerate and its call requires an inherited E/A monday_bias plus observed catch-up conviction; A's bias is neutral and no reopen/catch-up observation is legally available at forecast time. weekend.seam_sign_from_stability_ladder and boundary.weekend_gap_wide_band_emission cannot own the gap because historical weather/stability inputs are absent. boundary.seam_gap_up_prior_on_worsening_cot is stood down because managed-money positioning is mid-range rather than crowded-short (1y percentile 57.55) and WoW net improved by +1661 instead of worsening. direction.giveback_exhaustion_boundary is not armed on its available flow-absorption limbs (big-print B-share 0.411 < 0.62; session B-share 0.459 > 0.45), while its primary price-shape discriminator is masked. structure.accumulation_arm_turn is also not armed (big-print B-share 0.411 below 0.55/0.62; gw_hdd 0.5 far below 16.4). No other valid canonical sign owner survives. Magnitude remains material even without sign: prior full-session range is $640 at only the 4.5th percentile while trailing 5/10/20-session mean ranges are about $1090/$1085/$1157 and net sigma about $570-$688. Monday is a weekend-gap catalyst class, so the forecast keeps a roughly $1.1k two-sided session envelope rather than flattening. The P50 gap is set to zero only as a neutral center of an unresolved gap distribution, not as a claim that no gap occurs. The P50 path is likewise a small head-fake/catch-up oscillation around zero, with no directional trading authority.",
+  "plays_fired": [
+    "flow.price_free_absorption_proxy (risk/range context only; sign authority explicitly withheld)",
+    "magnitude.catalyst_condition_sort (Monday catalyst class used for range, not sign)"
+  ],
+  "plays_stood_down": [
+    "monday.overnight_headfake_into_catchup - inherited A bias is neutral, observed catch-up conviction is unavailable, and its legacy single-sided B-share condition is documented degenerate",
+    "monday.catchup_window_tilt_gate - A supplied no directional monday_bias and weekend driver realization is unresolved",
+    "weekend.carry_realization_flip - archived weekend driver realization is unavailable",
+    "weekend.seam_sign_from_stability_ladder - historical weather/stability ladder inputs are unavailable",
+    "boundary.weekend_gap_wide_band_emission - parent seam-sign instrument is unavailable",
+    "boundary.seam_gap_up_prior_on_worsening_cot - COT is not crowded-short and WoW net improved",
+    "magnitude.block_gap_ownership - structural and weekend-weather ownership limbs are absent and expiry is still four days away",
+    "direction.giveback_exhaustion_boundary - available flow limbs are not armed and primary prior-session price/shape is unavailable",
+    "structure.accumulation_arm_turn - big-print and HDD limbs are not armed",
+    "magnitude.terminal_impact_coefficient_carry - final-phase signed-flow magnitude is 319 lots, below the 500-lot arm"
+  ],
+  "confidence": "low",
+  "state_defects_and_gaps_reported": [
+    "Historical weekend/reopen weather, stability, model-disagreement and freeze-risk inputs are unavailable; hydration/synthesis remains rejected.",
+    "Friday prior-session range location, close-off-extreme and full price-shape exit state are not available in the starter carry.",
+    "No legally observed Sunday gap/reopen tape is present, so overnight gap sign and ownership are unresolved.",
+    "Legacy canonical B prompt says A bridge was NOT PRODUCED, but the S135 packet contains the frozen A bridge; packet bridge context is used and the prompt line is stale.",
+    "monday.overnight_headfake_into_catchup is tagged evaluable through the known-biased single-sided session_b_share field; its health record says this limb is degenerate, so it is not treated as sufficient authority."
+  ],
+  "disposition": "ABSTAIN"
+}
