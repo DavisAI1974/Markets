@@ -1,0 +1,72 @@
+{
+  "specialist": "D",
+  "group": "gdate",
+  "date": "20251002",
+  "guessed_net_usd": -160,
+  "overnight_gap_usd": 0,
+  "path_p50_curve": [
+    [20.0, 0.0],
+    [9.75, -90.0],
+    [10.5, -40.0],
+    [12.5, -230.0],
+    [16.95, -160.0]
+  ],
+  "curve_nodes": [
+    {
+      "et_hour": 20.0,
+      "p25_cum_usd": 0.0,
+      "p50_cum_usd": 0.0,
+      "p75_cum_usd": 0.0,
+      "market_condition": "EIA-day session-open reference on NGX25. No independent overnight-gap sign owner is available, so the gap P50 is centered at zero."
+    },
+    {
+      "et_hour": 9.75,
+      "p25_cum_usd": -620.0,
+      "p50_cum_usd": -90.0,
+      "p75_cum_usd": 520.0,
+      "market_condition": "Pre-print positioning state after three consecutive completed UP sessions. The chain is stretched and D-1 price/flow is incoherent, which raises give-back risk, but neither condition has enough audited authority to own the opening sign."
+    },
+    {
+      "et_hour": 10.5,
+      "p25_cum_usd": -1450.0,
+      "p50_cum_usd": -40.0,
+      "p75_cum_usd": 1500.0,
+      "market_condition": "Scheduled 10:30 ET EIA information-state transition. Decision-time consensus is +66 Bcf, but the actual print and first-minute price impulse are not yet legal; the opening forecast therefore widens sharply without assigning surprise direction."
+    },
+    {
+      "et_hour": 12.5,
+      "p25_cum_usd": -1550.0,
+      "p50_cum_usd": -230.0,
+      "p75_cum_usd": 1420.0,
+      "market_condition": "Post-print placeholder from the opening information state, not a defended event sign. S135-D requires the remaining curve to be rebuilt if legal print/impulse evidence becomes available; the opening artifact does not pre-commit to either event arm."
+    },
+    {
+      "et_hour": 16.95,
+      "p25_cum_usd": -1250.0,
+      "p50_cum_usd": -160.0,
+      "p75_cum_usd": 1200.0,
+      "market_condition": "Terminal opening-state distribution. The P50 carries only a small overextension counter-tilt while the event-day range remains materially larger than ordinary-session net sigma."
+    }
+  ],
+  "reasoning": "ABSTAIN at the opening information state. The Oct-2 EIA consensus is legally available at +66 Bcf for the week ending Sep-26, but the actual print and first-minute price impulse are not. Surprise sign therefore cannot be known at the open and is not inferred from the previous week's print. The legally completed Oct-1 NGX25 session is a strong third consecutive UP day: open 3.333, close 3.450, net +$1,170, high excursion +$1,590, low excursion -$150. Yet it also shows pronounced price/flow incoherence: total signed flow -3,194 while price rose, and the final phase gained about +$850 against -1,508 signed flow with ph_absorb=true. That paired state makes simple chain continuation less certain, but it does not license a DOWN call by itself. daytype.eia_preprint_overextension_gate is directionally relevant as a veto/counter-tilt concept because the post-seam NGX25 chain has now advanced for three completed sessions and Oct-1 flow is incoherent with the price rise. However, the current audit says this gate is outcome-credited, its blind price limb is impaired, and its machine B-share limbs are on a defective basis; the actually served B-share limbs are not armed. I therefore use it only to stand down a full-band chain-UP forecast and create a small negative counter-tilt, not as a DOWN owner. direction.absorption_is_reversal would read absorbed sell as UP, but its broad non-EIA population is approximately coin-flip; Oct-1 itself is a pre-EIA Wednesday rather than an EIA-born absorption session, so I do not promote that configuration into opening UP authority either. direction.giveback_exhaustion_boundary also does not cleanly resolve the state: Oct-1 closed roughly $420 below its high, about 24% off the full high-to-low excursion, between the strongest <~10% continuation and >=~35% alternation bands. Raw -3,194 D-1 flow and slow storage/grid/demand state are explicitly barred from manufacturing one-day sign under S133/S135. The best opening action is therefore ABSTAIN with a wide event-driven distribution. The 10:30 node is a genuine scheduled information transition, not a fixed-clock path convention. If the EIA print and first-minute impulse become legally available, D's current authority contract requires a remaining-curve re-derive from that evidence rather than defending this opening P50. daytype.eia_print_impulse_arbiter is the strongest post-event instrument in the current brain, but it cannot fire before the impulse exists.",
+  "plays_fired": [
+    "magnitude.catalyst_condition_sort - EIA-day status used to widen the event distribution only",
+    "daytype.eia_window_reopen_to_print - scheduled EIA boundary used for information-state/window assignment only"
+  ],
+  "plays_stood_down": [
+    "daytype.eia_preprint_overextension_gate - conceptually raises counter-tilt risk after a three-session rally with incoherent D-1 flow, but its audited blind gate is defective/not cleanly armed and cannot own DOWN sign",
+    "daytype.eia_print_impulse_arbiter - strongest post-event arbiter, but first-minute impulse is future information at the opening decision state",
+    "direction.absorption_is_reversal - Oct-1 absorbed sell/price-up state is present, but the broad non-EIA form is not sufficiently reliable to own the opening UP sign",
+    "direction.giveback_exhaustion_boundary - Oct-1 close-location is between the strongest continuation and alternation bands",
+    "midweek.giveback_exhaustion_reversal_recognition - the chain is now mature enough to inspect, but the required clean exhaustion/turn discriminator is conflicted by continued price strength against absorbed selling",
+    "raw D-1 signed flow - forbidden as next-session directional corroboration without a valid paired sign owner"
+  ],
+  "confidence": "low",
+  "state_defects_and_gaps_reported": [
+    "Historical weather forecast/model-disagreement/freeze-risk families remain unavailable/null; hydration and synthesis are rejected.",
+    "Current NGX25 options/contract-structure/squeeze price blocks remain unavailable under the historical one-shot mask.",
+    "The Oct-2 EIA consensus (+66 Bcf) is available, but no decision-time estimate range/house-disagreement breadth beyond the single archived estimate is available.",
+    "This is D's opening-state artifact. The actual Oct-2 print and first-minute impulse are intentionally absent and must not be inferred; any legal post-event state requires a separate remaining-curve re-derive."
+  ],
+  "disposition": "ABSTAIN"
+}
