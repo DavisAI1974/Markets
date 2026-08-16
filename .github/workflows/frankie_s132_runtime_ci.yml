@@ -1,0 +1,44 @@
+name: S132 Frankie Runtime Packet Contract
+
+on:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - research/kalshi/frankie_s132_dynamic_curve.py
+      - research/kalshi/frankie_s132_runtime.py
+      - .github/workflows/frankie_s132_runtime_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Compile and prove clean S132 packet/runtime install
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          python -m py_compile research/kalshi/frankie_s132_dynamic_curve.py research/kalshi/frankie_s132_runtime.py
+          python research/kalshi/frankie_s132_runtime.py
+
+      - name: Source-level guard against old flat-abstain contract leaking into S132 runtime
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s = Path('research/kalshi/frankie_s132_runtime.py').read_text()
+          assert '_remove_old_canary_instruction' in s
+          assert 'payload.pop("canary_output_adapter", None)' in s
+          assert 's132_output_adapter' in s
+          assert 'base._packet = packet' in s
+          assert 'base._validate_day = s132.validate_day' in s
+          print('PASS: S132 runtime replaces, rather than layers on, the old output contract')
+          PY
