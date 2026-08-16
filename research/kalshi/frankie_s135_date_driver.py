@@ -16,6 +16,7 @@ unchanged.
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
 import sys
 from pathlib import Path
@@ -24,6 +25,7 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
+import forecast_harness as fh
 import frankie_s135_date_session as session
 import frankie_s135_current_runtime as runtime
 import frankie_s135_group_runner as runner
@@ -38,11 +40,40 @@ _RESOLVED_PLAN: dict | None = None
 _ORIG_PACKET_SEQUENTIAL = runtime.packet_sequential
 _ORIG_INSTALL_DATE_CONFIG = session._install_date_config
 _ORIG_STAGE_BLIND_INPUTS = session._stage_blind_inputs
+_ORIG_BUILD_STATE = session._build_state
 
 
 def _write_json(path: Path, value: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _attach_prior_session_plan(cfg: dict) -> dict:
+    """Derive target -> previous actual session from the resolved declared session sequence."""
+    out = dict(cfg)
+    days = [str(x) for x in out.get("days", [])]
+    anchor = str(out.get("anchor_date") or "")
+    sequence = [anchor] + days
+    if not anchor or not days:
+        raise SystemExit("S136 prior-session proof requires an anchor and resolved session days")
+    if sequence != sorted(sequence) or len(sequence) != len(set(sequence)):
+        raise SystemExit(
+            "S136 prior-session proof failed: anchor + resolved session sequence is not unique/chronological"
+        )
+    prior = {day: sequence[index] for index, day in enumerate(days)}
+    for target, previous in prior.items():
+        if previous >= target:
+            raise SystemExit(
+                f"S136 prior-session proof failed: {target} previous session {previous} is not prior"
+            )
+    out["prior_session_by_day"] = prior
+    out["prior_session_proof"] = {
+        "status": "RESOLVED_SEQUENCE_PENDING_ARCHIVE_PROOF",
+        "source": "exact declared group_config session sequence + declared completed-session anchor",
+        "rule": "target session -> immediately previous resolved trading session; never calendar D-1",
+        "archive_requirement": "n0+n1+L1 prior tape and declared leg archive must stage or fail closed",
+    }
+    return out
 
 
 def _install_resolved_date_config(args) -> str:
@@ -91,8 +122,29 @@ def _stage_only_proven_contract_inputs(gid: str) -> dict:
             f"{details}. Refusing to continue or synthesize it."
         )
 
+    prior_map = dict(_RESOLVED_PLAN.get("prior_session_by_day") or {})
+    expected_prior_days = list(prior_map.values())
+    if len(expected_prior_days) != len(set(expected_prior_days)):
+        raise SystemExit("S136 prior-session archive proof failed: duplicate resolved prior sessions")
+    for store in ("nymex_cont_n0", "nymex_cont_n1", "ng_l1"):
+        staged_days = [
+            str(row.get("day")) for row in report.get("prior_tape", [])
+            if row.get("store") == store
+        ]
+        if staged_days != expected_prior_days:
+            raise SystemExit(
+                f"S136 prior-session archive proof failed for {store}: staged={staged_days} "
+                f"expected={expected_prior_days}"
+            )
+
     report["contract_archive_proof"] = "PASS_ALL_DECLARED_LEG_FILES_PRESENT"
     report["prior_context_proof"] = "PASS_ALL_REQUIRED_N0_N1_L1_PRESENT"
+    report["prior_session_identity_proof"] = {
+        "status": "PASS_EXACT_RESOLVED_PRIOR_SESSIONS_STAGED",
+        "rule": "target session -> immediately previous resolved trading session; never calendar D-1",
+        "by_target": prior_map,
+        "required_stores": ["nymex_cont_n0", "nymex_cont_n1", "ng_l1"],
+    }
     report["canonical_state_stage"] = {
         "manifest": str(manifest_path),
         "object_count": canonical["object_count"],
@@ -103,6 +155,56 @@ def _stage_only_proven_contract_inputs(gid: str) -> dict:
     }
     report["vol_regime"] = state_stage.rebuild_vol_regime()
     return report
+
+
+def _build_state_with_proven_prior(gid: str):
+    """Build state with exact resolved prior sessions; calendar D-1 fallback is forbidden here."""
+    if _RESOLVED_PLAN is None:
+        raise RuntimeError("S136 resolved plan missing before state build")
+    prior_map = dict(_RESOLVED_PLAN.get("prior_session_by_day") or {})
+    if set(prior_map) != set(gc.GROUPS[gid]["days"]):
+        raise SystemExit("S136 prior-session map does not cover the resolved target session set exactly")
+
+    original_tape_conditions = fh._tape_conditions_block
+
+    def exact_prior_tape(iso: str):
+        target = iso.replace("-", "")
+        prior = prior_map.get(target)
+        if prior is None:
+            raise RuntimeError(
+                f"S136 no proven prior-session identity for target {target}; refusing calendar fallback"
+            )
+        stats = fh._tape_day_stats(prior)
+        if stats is None:
+            raise RuntimeError(
+                f"S136 proven prior session {prior} for target {target} has no readable tape; fail closed"
+            )
+        prior_date = dt.datetime.strptime(prior, "%Y%m%d").date()
+        out = fh._tape_enrich(prior_date, prior, stats)
+        out["prior_session_resolution"] = {
+            "status": "PROVEN_RESOLVED_SESSION",
+            "target_session": target,
+            "prior_session": prior,
+            "rule": "immediately previous resolved trading session; calendar D-1 lookup disabled",
+        }
+        return out
+
+    fh._tape_conditions_block = exact_prior_tape
+    try:
+        state, state_path = _ORIG_BUILD_STATE(gid)
+    finally:
+        fh._tape_conditions_block = original_tape_conditions
+
+    for target, prior in prior_map.items():
+        tape = (state.get(target) or {}).get("tape_conditions") or {}
+        expected_iso = dt.datetime.strptime(prior, "%Y%m%d").date().isoformat()
+        if tape.get("asof_prior_session") != expected_iso or tape.get("session") != prior:
+            raise SystemExit(
+                f"S136 prior-session state proof failed for {target}: "
+                f"served asof={tape.get('asof_prior_session')} session={tape.get('session')} "
+                f"expected={expected_iso}/{prior}"
+            )
+    return state, state_path
 
 
 def _install_target_only_role_view(gid: str, state: dict) -> None:
@@ -159,7 +261,7 @@ def _packet_sequential_with_friday_handoff(template, gid, day, spec, namespace, 
         "forecast_disposition": obj.get("disposition"),
         "handoff_out": handoff,
     }
-    runner._assert_packet_outcome_wall(runtime, packet, gid, day)
+    runner._assert_packet_outcome_wall(runtime, packet, gid, plan.day)
     return prompt, packet
 
 
@@ -182,7 +284,7 @@ def main() -> int:
         )
 
     try:
-        cfg = date_plan.resolve_date_plan(start_date, end_date)
+        cfg = _attach_prior_session_plan(date_plan.resolve_date_plan(start_date, end_date))
     except (RuntimeError, ValueError) as exc:
         raise SystemExit(str(exc)) from exc
 
@@ -194,6 +296,7 @@ def main() -> int:
     _OUTPUTS = Path(cfg["outputs"])
     session._install_date_config = _install_resolved_date_config
     session._stage_blind_inputs = _stage_only_proven_contract_inputs
+    session._build_state = _build_state_with_proven_prior
     session._install_inprocess_role_view = _install_target_only_role_view
     target_brain_wall.install_date_run_leak_guard()
     runtime.packet_sequential = _packet_sequential_with_friday_handoff
