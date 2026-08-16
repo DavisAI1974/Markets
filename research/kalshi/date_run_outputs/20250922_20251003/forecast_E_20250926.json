@@ -1,0 +1,85 @@
+{
+  "specialist": "E",
+  "group": "gdate",
+  "date": "20250926",
+  "guessed_net_usd": 380,
+  "overnight_gap_usd": 0,
+  "path_p50_curve": [
+    [20.0, 0.0],
+    [8.0, 70.0],
+    [11.5, 240.0],
+    [15.25, 470.0],
+    [16.95, 380.0]
+  ],
+  "curve_nodes": [
+    {
+      "et_hour": 20.0,
+      "p25_cum_usd": 0.0,
+      "p50_cum_usd": 0.0,
+      "p75_cum_usd": 0.0,
+      "market_condition": "Friday/NGX25 expiry-session open. No independent overnight-gap owner is available, so the gap P50 is centered at zero and the call is assigned to the regular-session paired price/flow state."
+    },
+    {
+      "et_hour": 8.0,
+      "p25_cum_usd": -330.0,
+      "p50_cum_usd": 70.0,
+      "p75_cum_usd": 470.0,
+      "market_condition": "Early test of whether the Sep-25 EIA-session absorbed selling continues to reprice upward. The prior session's price response to aggression, not the raw -6.4k flow count, owns the sign."
+    },
+    {
+      "et_hour": 11.5,
+      "p25_cum_usd": -420.0,
+      "p50_cum_usd": 240.0,
+      "p75_cum_usd": 780.0,
+      "market_condition": "Midday expiry/bidweek delivery window. Continuation remains favored while the prior EIA absorption state is intact, but lack of current-leg options/structure data keeps the downside tail substantial."
+    },
+    {
+      "et_hour": 15.25,
+      "p25_cum_usd": -350.0,
+      "p50_cum_usd": 470.0,
+      "p75_cum_usd": 980.0,
+      "market_condition": "Late expiry/settlement positioning test. E's lens allows expiry mechanics to extend a real covering/holding move, but only if price continues to accept against sell pressure; no raw program-flow assumption is embedded in the median."
+    },
+    {
+      "et_hour": 16.95,
+      "p25_cum_usd": -430.0,
+      "p50_cum_usd": 380.0,
+      "p75_cum_usd": 900.0,
+      "market_condition": "Terminal Friday handoff state: modest give-back from the expected late high while retaining an upper-half close. The forecast handoff is explicitly provisional until the completed Friday close/flow shape is revealed to A."
+    }
+  ],
+  "reasoning": "CALL UP, low confidence.\nDIRECTION OWNER: direction.absorption_is_reversal, narrowly scoped to the completed Sep-25 EIA-born absorption state and confirmed by paired price response. Sep-25 on NGX25 opened 3.145 and closed 3.219 for +$740, with a +$1,160 high excursion and only -$140 low excursion. Against that positive price path, aggregate signed flow was -6,427 lots: phase 2 delivered +$730 while signed flow was -5,697 and phase 3 still delivered +$40 against -672, with absorb_session=true and ph_absorb=true in both phases. This is not a raw-flow call; it is the opposite: heavy selling failed to push price down and was absorbed while price repriced higher. The current brain's direction.absorption_is_reversal says absorbed sell -> UP. Its full-population audit is weak at 11/22 next-day calls, so I do not grant the broad form authority. But the same audit identifies the EIA-print subset as the only slice that clears (4/6), and Sep-25 is exactly an EIA print session. That narrower EIA-born form is the sign owner here. E's specialist guard independently requires price response and turn evidence before Friday/roll flow can own sign, which is satisfied by the paired +$740 price / -6.4k flow disagreement; gross program or roll flow itself is not used. The prior session did not register a turn (turn_kind=none), and its close retained roughly two-thirds of the full low-to-high range rather than fully round-tripping the impulse. That supports holding rather than an immediate fade, but the +$420 give-back from the +$1,160 high keeps confidence low. structure.covering_absorption_directional_tell is stood down because its crowded-short gate fails badly (managed-money 1y percentile 57.55, not <~12), so I am not calling a classic crowded-short covering squeeze. boundary.prior_close_flow_direction_disagreement is also not allowed to own sign; it is subordinate to the stronger EIA-specific absorption mechanism. magnitude.terminal_impact_coefficient_carry does not justify a tiny <=$200 net: the final phase has |-672| lots and +$40 price change, an impact coefficient about 0.060, just above the play's <=0.05 numb threshold, and its broad audit materially weakens the original effect size. Friday is futures-expiry and bidweek day 3, so the distribution is widened for settlement mechanics, but current NGX25 contract-structure/options/squeeze data is unavailable under the historical mask; expiry proximity is therefore magnitude/tail context, not a second sign owner. I center the day at +$380, below the prior EIA session's +$740 impulse, with a late expiry lift and modest settlement give-back. Slow grid/storage/demand state is not used to create the UP sign.",
+  "plays_fired": [
+    "direction.absorption_is_reversal - narrowed to the prior EIA-print subset: completed Sep-25 sell aggression was absorbed while NGX25 price rose materially, so absorbed sell -> UP",
+    "magnitude.catalyst_condition_sort - futures-expiry/bidweek Friday used to widen the range and late-session tail, not to own direction"
+  ],
+  "plays_stood_down": [
+    "structure.covering_absorption_directional_tell - managed-money 1y percentile is 57.55, far above the <~12 crowded-short gate",
+    "boundary.prior_close_flow_direction_disagreement - paired price/flow disagreement is a boundary tell but is explicitly not an independent direction owner",
+    "direction.giveback_exhaustion_boundary - prior session closed about one-third off its high, not cleanly in either strongest <~10% continuation or >=~35% late-counter-tick alternation band; EIA absorption owner is cleaner",
+    "daytype.friday_exit_close_location_over_flow_shape - the current Friday close location is future information at the open and cannot be read blind; it is emitted only as a forecast handoff state",
+    "daytype.friday_exit_decomposition - current Friday realized exit type is not available at forecast time and is not invented",
+    "magnitude.terminal_impact_coefficient_carry - prior final-phase impact is about 0.060, above the <=~0.05 numb threshold, and the full-scope audit weakens the rule",
+    "boundary.seam_gap_up_prior_on_worsening_cot - the scored-leg seam occurred Sep-25 and COT is mid-distribution/improving, not a fresh crowded-short seam trigger"
+  ],
+  "confidence": "low",
+  "state_defects_and_gaps_reported": [
+    "Current NGX25 price-derived contract structure, options surface and squeeze state remain unavailable under the one-shot historical mask; frozen structural blocks describe NGV25 and are unusable for the scored leg.",
+    "Historical weather-forecast/model-disagreement/freeze-risk inputs remain unavailable/null; hydration and synthesis are rejected.",
+    "The direction.absorption_is_reversal broad population is approximately coin-flip; I use only its narrower prior-EIA-session subset, which the current audit identifies as the one slice with positive evidence.",
+    "Friday realized close-location, last-hour flow and exit taxonomy are future at this decision point. handoff_out therefore labels them as forecast state only, to be replaced by A's legally revealed completed Friday evidence."
+  ],
+  "handoff_out": {
+    "for_seam": "20250926 Fri close -> 20250928 Sun reopen -> 20250929 Mon.",
+    "exit_type": "FORECAST_COVERING_HOLD_CONTINUATION_BIASED. This is a blind forecast label, not a realized Friday exit classification: p50 expects an expiry-session late high followed by only a modest settlement give-back.",
+    "monday_bias": "UP-SMALL PROVISIONAL only if the completed Friday close remains upper-half / holding and sell aggression continues to be absorbed. A must re-test this against the legally revealed Friday exit and genuine weekend information; do not inherit +380 mechanically.",
+    "exit_shape": "FORECAST ONLY from E's p50 path: open 0, gradual morning lift, +470 late-session high around 15:15 ET, close +380. This is not a realized close-location read.",
+    "last_hour_dir": "FORECAST DOWN-SMALL/GIVEBACK from the late +470 node to +380 settlement; not observed.",
+    "last_hour_signed_flow_sign": "UNKNOWN_BLIND_FUTURE_FLOW. Friday target-session final-hour signed flow is not observable at the open and is not inferred from Sep-25 flow.",
+    "close_off_low": "FORECAST upper-half/holding state from the emitted p50 curve; exact realized fraction is unavailable until Friday is completed.",
+    "chain_polarity_and_age": "LEGAL carried state is Sep-25 EIA UP impulse with EIA-born sell absorption; longer NGX25 price-chain age is unavailable because the scored leg began at the Sep-25 seam.",
+    "cum_from_anchor_state": "CURRENT NGX25 cumulative price chain from the pre-seam 2.918 anchor is not treated as a continuous traded quantity across the contract leg change; the seam is scoring-only and never a traded move.",
+    "tail_risk": "Two-sided. UP tail from EIA-born absorbed selling plus expiry settlement mechanics; DOWN tail from Sep-25's ~36% give-back off the high, absence of crowded-short COT support, and unavailable current-leg options/structure."
+  },
+  "disposition": "CALL"
+}
