@@ -8,6 +8,7 @@ on:
       - .github/workflows/frankie_s135_date_session.yml
       - research/kalshi/frankie_s135_date_driver.py
       - research/kalshi/frankie_s135_date_session.py
+      - research/kalshi/frankie_s135_date_render.py
       - research/kalshi/date_run_session.json
       - research/kalshi/date_run_outputs/**
   workflow_dispatch:
@@ -33,7 +34,7 @@ jobs:
           key: frankie-s135-date-${{ hashFiles('research/kalshi/date_run_session.json') }}
 
       - name: Install existing Frankie staging dependencies
-        run: python -m pip install --quiet numpy requests boto3 pandas databento
+        run: python -m pip install --quiet numpy requests boto3 pandas databento matplotlib pillow
 
       - name: Restore canonical S3 substrate
         if: steps.substrate.outputs.cache-hit != 'true'
@@ -62,10 +63,21 @@ jobs:
             --config research/kalshi/date_run_session.json \
             --out /tmp/frankie_s135_date_session
 
+      - name: Print completed blind render with every point
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          rm -rf /tmp/frankie_s135_render
+          python research/kalshi/frankie_s135_date_render.py \
+            --config research/kalshi/date_run_session.json \
+            --out /tmp/frankie_s135_render
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: frankie-s135-date-session
-          path: /tmp/frankie_s135_date_session
+          path: |
+            /tmp/frankie_s135_date_session
+            /tmp/frankie_s135_render
           retention-days: 14
           if-no-files-found: warn
