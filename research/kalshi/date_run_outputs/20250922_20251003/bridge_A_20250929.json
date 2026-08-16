@@ -1,0 +1,59 @@
+{
+  "bridge_for": "20250929",
+  "decision_date": "20250926",
+  "driver_realization_check": {
+    "read": "E's Sep-26 forecast expected an expiry-session UP hold from the Sep-25 EIA-born absorption. The completed Friday instead delivered -$430, so that forecast continuation did not realize. Friday itself then recovered roughly $550 from a -$980 low and its final phase rose about $500 despite -2,476 signed sell-flow, leaving a new late recovery/absorption state. Historical weekend weather/model-stability updates remain unavailable, so no additional weekend driver realization is invented.",
+    "status": "FRIDAY_FORECAST_CARRY_REJECTED_NEW_EXIT_STATE_USED"
+  },
+  "friday_exit_consumed": {
+    "exit_type": "REALIZED_EXHAUSTED_DOWN_GIVEBACK_WITH_LATE_RECOVERY",
+    "monday_bias": "UP_SMALL_FOR_B_TO_TEST_NOT_A_FORECAST",
+    "sanity_check": "E's frozen handoff was FORECAST_COVERING_HOLD_CONTINUATION_BIASED with provisional UP-small Monday carry if Friday held upper-half. The completed NGX25 Friday invalidates that condition: open 3.220, close 3.177, net -$430, high excursion +$280, low excursion -$980. The close recovered about $550 from the low, roughly 44% of the full high-to-low range, and the final phase was +$500 while signed flow was -2,476 with ph_absorb=true. That is not an upper-half covering hold; it is a material down give-back that exhausted/recovered late."
+  },
+  "gap_ownership": {
+    "read": "No genuine Sunday/reopen tape or historical weekend weather/stability signal is present, so gap sign is not derivable. The newly published COT is materially more short (managed-money net -63,176, WoW -40,085, 1y percentile 21.7) but it does not clear the canonical <~12 crowded-short gate; it raises squeeze tail risk without owning a gap sign. Friday was futures-expiry/bidweek positioning, but realized program/expiry flow is not itself a Monday sign owner.",
+    "spent_vs_unrealized_ahead": "THURSDAY_EIA_UP_CARRY_PARTLY_SPENT_BY_FRIDAY_DOWN_GIVEBACK; FRIDAY_LATE_RECOVERY_IS_NEW_STATE",
+    "status": "GAP_SIGN_UNRESOLVED"
+  },
+  "monday_bias_confirmed_or_adjusted": {
+    "bias": "UP_SMALL_FOR_B_TO_TEST",
+    "owns_monday_forecast": false,
+    "why": "E's pre-Friday reason for UP carry failed, but the legally completed Friday exit supplies a different paired price/shape read: a down session recovered ~44% off its low with a strong late counter-move, while final sell aggression was absorbed into rising price. That is consistent with the current give-back/exhaustion alternation logic and stands down simple DOWN continuation. A passes the UP-small turn bias to B; B must decide whether it survives Monday's own available state."
+  },
+  "plays_fired": [
+    "direction.giveback_exhaustion_boundary - completed Friday down move recovered ~44% off its low with a strong late counter-move, so the next-session alternation/turn branch is the relevant boundary read",
+    "flow.price_free_absorption_proxy - final-phase sell aggression was absorbed while price recovered; used as corroboration of the realized late recovery, not as an independent Monday sign owner"
+  ],
+  "plays_stood_down": [
+    "structure.covering_absorption_directional_tell - managed-money 1y percentile is 21.7, not below the canonical ~12 crowded-short gate",
+    "weekend.carry_realization_flip - no archived weekend weather/driver realization path exists beyond the completed Friday state",
+    "weekend.seam_sign_from_stability_ladder - historical weekend weather/model-stability inputs are unavailable",
+    "boundary.weekend_gap_wide_band_emission - its sign parent is unavailable; A will not invent the Sunday gap sign",
+    "boundary.seam_gap_up_prior_on_worsening_cot - COT worsened sharply but remains outside the canonical crowded-short threshold, so it is tail context rather than sign authority",
+    "raw Friday signed flow continuation - total -5,777 flow is not promoted to Monday direction; S133/S135 requires paired price/shape and Friday's late price recovery contradicts a mechanical flow extrapolation"
+  ],
+  "reopen_scenarios": [
+    {
+      "condition": "If a genuine reopen gap appears against the Friday late-recovery/turn state without confirming price-flow conviction, treat it as thin-gap rejection fuel and re-anchor toward Friday's 3.177 close rather than inheriting the gap sign.",
+      "probability": 0.5,
+      "scenario": "gap_rejection"
+    },
+    {
+      "condition": "If genuinely available weekend information and reopen price-flow jointly confirm a gap, permit persistence. No such evidence is present in this historical packet, so this remains conditional rather than a directional forecast.",
+      "probability": 0.5,
+      "scenario": "gap_persistence"
+    }
+  ],
+  "reopen_watch": {
+    "read": "No actual Sunday/reopen tape is legally present in the bridge packet. A therefore cannot classify gap size/sign, thin-tape conviction, or persistence from observation. Monday B must keep the gap separate from the regular-session forecast and use any legally served reopen evidence if it exists in its own state.",
+    "status": "STAND_DOWN_NO_REOPEN_ARCHIVE"
+  },
+  "specialist": "A",
+  "state_defects_and_gaps_reported": [
+    "Historical weekend weather forecast/model-disagreement/freeze-risk and Sunday-reopen tape are unavailable; hydration and synthesis remain rejected.",
+    "E's handoff was correctly transported, but its forecast exit_type did not survive the completed Friday reveal; A explicitly replaces it with the realized exit state rather than inheriting it.",
+    "Current-leg options/contract-structure/squeeze state remains unavailable under the historical one-shot mask.",
+    "COT short positioning worsened sharply on the Sep-26 publication but remains outside the canonical crowded-short gate; it is not promoted to gap or Monday sign authority."
+  ],
+  "summary": "A weekend bridge into Sep-29: E's forecast Friday UP-hold was invalidated by the realized -$430 Friday. The completed exit instead shows an exhausted down give-back with a ~44% recovery off the low and a +$500 final phase against heavy sell flow. A therefore hands B an UP-small turn bias to test, not a Monday forecast. Weekend/reopen evidence is absent, so Sunday gap sign remains unresolved and must never be invented."
+}
