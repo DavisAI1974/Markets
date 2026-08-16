@@ -1,0 +1,70 @@
+{
+  "specialist": "C",
+  "group": "gdate",
+  "date": "20250923",
+  "guessed_net_usd": -520,
+  "overnight_gap_usd": 0,
+  "path_p50_curve": [
+    [20.0, 0.0],
+    [7.5, -120.0],
+    [11.5, -430.0],
+    [14.5, -650.0],
+    [16.95, -520.0]
+  ],
+  "curve_nodes": [
+    {
+      "et_hour": 20.0,
+      "p25_cum_usd": 0.0,
+      "p50_cum_usd": 0.0,
+      "p75_cum_usd": 0.0,
+      "market_condition": "Session-open reference. No independent overnight-gap owner is available for this ordinary Tuesday, so gap P50 is centered at zero and the directional call is assigned to the regular-session continuation read."
+    },
+    {
+      "et_hour": 7.5,
+      "p25_cum_usd": -430.0,
+      "p50_cum_usd": -120.0,
+      "p75_cum_usd": 220.0,
+      "market_condition": "Expected early continuation pressure after the prior session's close near its downside extreme; uncertainty stays broad because late prior-session buy aggression was absorbed into falling price and can seed a counter-move."
+    },
+    {
+      "et_hour": 11.5,
+      "p25_cum_usd": -850.0,
+      "p50_cum_usd": -430.0,
+      "p75_cum_usd": 120.0,
+      "market_condition": "Primary continuation-delivery window. The paired prior-session price/shape owner remains down unless the absorption warning converts into an actual price turn."
+    },
+    {
+      "et_hour": 14.5,
+      "p25_cum_usd": -1050.0,
+      "p50_cum_usd": -650.0,
+      "p75_cum_usd": 80.0,
+      "market_condition": "Expected late-session extension/exhaustion test. This node allows a deeper downside excursion while explicitly retaining a large recovery tail if the prior day's buy-absorption warning finally produces a price turn."
+    },
+    {
+      "et_hour": 16.95,
+      "p25_cum_usd": -900.0,
+      "p50_cum_usd": -520.0,
+      "p75_cum_usd": 140.0,
+      "market_condition": "Terminal state after partial recovery from the expected downside excursion. Magnitude is kept near the trailing net-sigma class rather than repeating the prior day's -$1.21k shock mechanically."
+    }
+  ],
+  "reasoning": "CALL DOWN, low confidence. DIRECTION OWNER: direction.giveback_exhaustion_boundary. The owner is the legally completed Sep-22 price/shape, not raw D-1 flow: NGV25 opened 2.922, closed 2.801, net -$1210, reached a -$1410 low excursion, and finished only about $200 off that low (~14% recovery) with the final phase still -$240. That is much closer to the play's near-extreme/last-hours-extending continuation branch than its >=~35% recovered-with-counter-tick alternation branch. The threshold is borderline rather than clean (<~10% is the strongest continuation form), so confidence is low and the upper tail remains large. The same completed session also carries an explicit warning: final-phase signed flow was +2350 while price changed -$240, and ph_absorb was true. boundary.prior_close_flow_direction_disagreement therefore flags price-down/flow-positive disagreement, but that play explicitly says it is a boundary tell, not a direction owner, and its health audit is poor; it widens reversal risk rather than flipping the call. structure.covering_absorption_directional_tell cannot own an up reversal because its crowded-short gate fails badly (managed-money 1y percentile 57.55 versus <~12 required). The available flow-only arm of direction.giveback_exhaustion_boundary is also not armed on the masked state (big-print B-share 0.449 < 0.62 and session B-share 0.453 > 0.45), but the newly legal completed prior-session price/shape supplies the primary arm directly. Raw session flow itself is nearly neutral (+228 total) and is not used as next-session sign evidence. No reliable independent Tuesday gap instrument is present, so overnight_gap_usd is centered at zero rather than invented. Magnitude is deliberately smaller than Sep-22's shock: trailing 10/20-session net sigma is about $570 and the prior day already delivered a -$1210 impulse. magnitude.terminal_impact_coefficient_carry is not fired because although final-phase flow is large, its required price-impact calculation is now approximately |240|/2350 rather than a clearly numb <=~0.05 regime. The event curve therefore expects continuation into the US morning, a late downside extension/exhaustion test, then partial recovery into settlement. Slow storage, grid and demand context are retained only as backdrop/range risk and do not own sign.",
+  "plays_fired": [
+    "direction.giveback_exhaustion_boundary - paired completed prior-session close-vs-extreme and late price extension own the down sign"
+  ],
+  "plays_stood_down": [
+    "boundary.prior_close_flow_direction_disagreement - price-down/flow-up disagreement is a warning/tell, explicitly not a sign owner",
+    "structure.covering_absorption_directional_tell - crowded-short COT gate is not met (1y percentile 57.55)",
+    "structure.accumulation_arm_turn - big-print accumulation arms are not met and no actual price turn has occurred in the carried state",
+    "boundary.seam_gap_up_prior_on_worsening_cot - not a seam day; COT WoW is improving and not crowded-short",
+    "magnitude.terminal_impact_coefficient_carry - large final-phase flow is present but the paired completed price change does not establish the required numb impact regime",
+    "magnitude.s1void_injection_chain_bleed - its legacy single-sided B-share condition is documented degenerate and is not used to manufacture continuation"
+  ],
+  "confidence": "low",
+  "state_defects_and_gaps_reported": [
+    "Historical weather-forecast, model-disagreement, freeze-risk, options and contract-structure families remain unavailable/null under the historical archive-gap policy.",
+    "The completed prior-session MBO evidence spans the known calendar-day/window caveat; its late tail extends beyond the desk's nominal 17:00 session convention, so close/extreme interpretation is down-weighted rather than treated as exact settlement microstructure.",
+    "The strongest continuation threshold in direction.giveback_exhaustion_boundary is approximately <10% recovery; Sep-22 recovered about 14% from its downside extreme, so the call is intentionally low confidence."
+  ],
+  "disposition": "CALL"
+}
