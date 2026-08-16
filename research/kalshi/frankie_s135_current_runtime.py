@@ -11,7 +11,8 @@ S135 composes, in order:
 - S132 event-driven full-curve contract (no fixed clock, no flat-ABSTAIN rule);
 - S133 reasoning-authority contract + explicit sequential/live/refine prior-session carry;
 - S126 A-E specialist parity over the complete already-served data/brain universe;
-- S128 current decision-state contract repairs through the exported decision_state() proxy.
+- S128 current decision-state contract repairs through the exported decision_state() proxy;
+- S135 specialist authority contracts for C/D/E and the A weekend bridge.
 
 It does NOT edit the brain, A-E role files, spawn.py, group_config.py, or add a datapoint family.
 Hydration is not part of this runtime. Frankie remains coordinator. Day owners are not averaged.
@@ -28,13 +29,14 @@ import frankie_s118_redo as s120
 import frankie_s128_contract_repairs as s128
 import frankie_s132_dynamic_curve as s132
 import frankie_s133_reasoning_runtime as s133
+import frankie_s135_specialist_authority as authority
 import frankie_specialist_parity_s126 as s126
 from frankie_core import verify_original_spawn
 
 base = s133.base
 ForecastStop = s133.ForecastStop
 SPECIALISTS = tuple("ABCDE")
-STACK_VERSION = "s135.current-frankie.1"
+STACK_VERSION = "s135.current-frankie.2"
 
 
 def decision_state(days, mask_after=None, group=None):
@@ -44,8 +46,12 @@ def decision_state(days, mask_after=None, group=None):
     return s128.decision_state(days, mask_after=mask_after, group=group)
 
 
-def _attach(payload: dict[str, Any], *, specialist: str, phase: str) -> dict[str, Any]:
+def _attach(payload: dict[str, Any], *, specialist: str, phase: str,
+            task: str = "day_forecast", information_state: str = "open") -> dict[str, Any]:
     out = s126.attach_specialist_access(payload, specialist=specialist, phase=phase)
+    out = authority.attach(
+        out, specialist=specialist, phase=phase, task=task, information_state=information_state
+    )
     out["s135_current_frankie_stack"] = {
         "version": STACK_VERSION,
         "s120_full_current_brain": True,
@@ -53,6 +59,7 @@ def _attach(payload: dict[str, Any], *, specialist: str, phase: str) -> dict[str
         "s128_decision_state_repairs": True,
         "s132_event_driven_curve": True,
         "s133_reasoning_authority": True,
+        "s135_specialist_authority": True,
         "fixed_curve_clock": False,
         "fixed_curve_point_count": False,
         "abstain_means_flat_market": False,
@@ -72,7 +79,8 @@ def packet(template: str, gid: str, day: str, spec: str, namespace: str,
         template, gid, day, spec, namespace, bridge_deviation=bridge_deviation
     )
     phase = str(payload.get("phase") or "BLIND").upper()
-    return prompt, _attach(payload, specialist=spec, phase=phase)
+    task = "weekend_bridge" if spec == "A" and template == "BLD-2" else "day_forecast"
+    return prompt, _attach(payload, specialist=spec, phase=phase, task=task)
 
 
 def packet_sequential(template: str, gid: str, day: str, spec: str, namespace: str,
@@ -87,7 +95,17 @@ def packet_sequential(template: str, gid: str, day: str, spec: str, namespace: s
         provenance=provenance,
     )
     phase = str(payload.get("phase") or "BLIND").upper()
-    return prompt, _attach(payload, specialist=spec, phase=phase)
+    task = "weekend_bridge" if spec == "A" and template == "BLD-2" else "day_forecast"
+    return prompt, _attach(payload, specialist=spec, phase=phase, task=task)
+
+
+def packet_live_rederive(open_packet: Mapping[str, Any], *, legal_event_evidence: Mapping[str, Any]) -> dict[str, Any]:
+    """Canonical D post-catalyst re-derive entry. Triggered by evidence availability, never a fixed clock."""
+    return authority.live_rederive_packet(open_packet, legal_event_evidence=legal_event_evidence)
+
+
+def validate_owner_output(output: Mapping[str, Any], specialist: str, *, task: str = "day_forecast") -> None:
+    authority.validate_owner_output(output, specialist, task=task)
 
 
 def install() -> None:
@@ -122,6 +140,7 @@ def stack_manifest() -> dict[str, Any]:
         "s128_decision_state_repairs": Path(s128.__file__).resolve(),
         "s132_event_driven_curve": Path(s132.__file__).resolve(),
         "s133_reasoning_authority": Path(s133.__file__).resolve(),
+        "s135_specialist_authority": Path(authority.__file__).resolve(),
         "s135_current_runtime": Path(__file__).resolve(),
     }
     role_paths = {"shared": Path(base.ROLE_SHARED).resolve()}
@@ -149,6 +168,8 @@ def stack_manifest() -> dict[str, Any]:
             "owner_averaging": False,
             "hydration": "REJECTED_NOT_USED",
             "new_datapoint_family": False,
+            "sequential_prior_completed_session": True,
+            "specialist_authority_contracts": True,
         },
     }
 
@@ -183,6 +204,8 @@ def _selftest() -> None:
         assert payload["s135_current_frankie_stack"]["s132_event_driven_curve"] is True
         assert payload["s135_current_frankie_stack"]["s133_reasoning_authority"] is True
         assert payload["s135_current_frankie_stack"]["s126_specialist_parity"] is True
+        assert payload["s135_current_frankie_stack"]["s135_specialist_authority"] is True
+        assert payload["s135_specialist_authority"]["continuation_guard"]["raw_d1_flow_plus_slow_backdrop_may_recreate_sign"] is False
     finally:
         s133.packet = real
 
