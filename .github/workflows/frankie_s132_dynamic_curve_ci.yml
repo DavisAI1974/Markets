@@ -1,0 +1,45 @@
+name: S132 Frankie Event-Driven Curve Contract
+
+on:
+  push:
+    branches:
+      - chatgpt/burn-hh-12m-s125
+    paths:
+      - research/kalshi/frankie_s132_dynamic_curve.py
+      - .github/workflows/frankie_s132_dynamic_curve_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dynamic-curve-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Compile and self-test S132 event-driven curve contract
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          python -m py_compile research/kalshi/frankie_s132_dynamic_curve.py
+          python research/kalshi/frankie_s132_dynamic_curve.py
+
+      - name: Prove no fixed clock and no flat-abstain rule
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('research/kalshi/frankie_s132_dynamic_curve.py')
+          s = p.read_text()
+          assert '_EXPECTED_CLOCK' not in s
+          assert 'all-zero canonical curve' not in s
+          assert 'fixed_point_count": False' in s
+          assert 'fixed_clock": False' in s
+          assert 'abstain_forces_flat_curve": False' in s
+          assert '10.5' in s, 'minute-level catalyst selftest missing'
+          print('PASS: S132 curve nodes are Frankie-selected, not clock-selected')
+          PY
