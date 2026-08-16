@@ -1,0 +1,125 @@
+{
+  "artifact_version": "s132.g3.event-driven-curve-rehearsal.1",
+  "classification": "POST_REVEAL_CURVE_CONTRACT_REHEARSAL_NOT_BLIND_SCORE",
+  "operator_had_prior_target_reveal_context": true,
+  "assembler_actuals_read": false,
+  "source_policy": "Keep every S131 owner, direction, guessed net, gap, confidence, plays and reasoning unchanged. Re-emit only the curve layer from the market-condition shape described in the original S131 forecast record. Do not use this rehearsal as independent forecast evidence.",
+  "curve_contract": "Frankie-selected event nodes with P25/P50/P75 cumulative-from-open envelope; no fixed cadence or point count",
+  "days": {
+    "20250908": {
+      "owner": "B",
+      "source": "../frankie_g3_s131_corrected_reblind/grp3_B_20250908.json",
+      "curve_nodes": [
+        {"et_hour": 18.0, "p25_cum_usd": 0, "p50_cum_usd": 0, "p75_cum_usd": 0, "market_condition": "Sunday reopen / session-open reference; weekend gap is accounted for separately and remains low-authority."},
+        {"et_hour": 6.0, "p25_cum_usd": -80, "p50_cum_usd": 110, "p75_cum_usd": 285, "market_condition": "End of the modest overnight-rise phase before the Monday catch-up window becomes the dominant expected mechanism."},
+        {"et_hour": 10.0, "p25_cum_usd": -30, "p50_cum_usd": 245, "p75_cum_usd": 500, "market_condition": "Expected peak of the 06-10 ET catch-up acceleration if Friday's coherent buy tilt survives into Monday liquidity."},
+        {"et_hour": 14.0, "p25_cum_usd": -145, "p50_cum_usd": 180, "p75_cum_usd": 455, "market_condition": "Loose storage/power backdrop is expected to take back part of the catch-up move after the morning impulse."},
+        {"et_hour": 17.0, "p25_cum_usd": -175, "p50_cum_usd": 200, "p75_cum_usd": 475, "market_condition": "Terminal state after partial giveback; still positive if the Friday-positive handoff was not invalidated."}
+      ]
+    },
+    "20250909": {
+      "owner": "C",
+      "source": "../frankie_g3_s131_corrected_reblind/grp3_C_20250909.json",
+      "curve_nodes": [
+        {"et_hour": 18.0, "p25_cum_usd": 0, "p50_cum_usd": 0, "p75_cum_usd": 0, "market_condition": "Session-open reference; small negative reopen gap is accounted for outside the intraday path."},
+        {"et_hour": 22.0, "p25_cum_usd": -85, "p50_cum_usd": 10, "p75_cum_usd": 115, "market_condition": "Brief early bid from the thick prior-session buy state before the independent loose-demand stack is expected to dominate."},
+        {"et_hour": 10.0, "p25_cum_usd": -390, "p50_cum_usd": -205, "p75_cum_usd": 25, "market_condition": "Morning fade under storage surplus, weak power demand and rising wind share; no catalyst is expected to interrupt the core-session drift."},
+        {"et_hour": 12.0, "p25_cum_usd": -445, "p50_cum_usd": -235, "p75_cum_usd": 5, "market_condition": "Expected trough of the loose-demand expression after the morning fade."},
+        {"et_hour": 17.0, "p25_cum_usd": -385, "p50_cum_usd": -180, "p75_cum_usd": 65, "market_condition": "Partial afternoon recovery because the prior buy tape cannot be classified as delivered versus absorbed and therefore remains a counterweight."}
+      ]
+    },
+    "20250910": {
+      "owner": "C",
+      "source": "../frankie_g3_s131_corrected_reblind/grp3_C_20250910.json",
+      "curve_nodes": [
+        {"et_hour": 18.0, "p25_cum_usd": 0, "p50_cum_usd": 0, "p75_cum_usd": 0, "market_condition": "Session-open reference; small negative reopen gap is separate."},
+        {"et_hour": 6.0, "p25_cum_usd": -295, "p50_cum_usd": -135, "p75_cum_usd": 45, "market_condition": "Overnight-to-early-US drift lower as weak gas burn/high wind and loose storage dominate the mixed prior tape."},
+        {"et_hour": 12.0, "p25_cum_usd": -510, "p50_cum_usd": -310, "p75_cum_usd": -55, "market_condition": "Expected midday delivery of the bearish demand-transmission state; EIA is still one day away and is not mechanically front-run."},
+        {"et_hour": 14.0, "p25_cum_usd": -550, "p50_cum_usd": -335, "p75_cum_usd": -65, "market_condition": "Expected local low if the late prior-session sell phase carries into the US core without a guard-clean buy reversal."},
+        {"et_hour": 17.0, "p25_cum_usd": -485, "p50_cum_usd": -280, "p75_cum_usd": -15, "market_condition": "Modest late rebound because the big-print tape is still buy-skewed and the turn stack never fully cleared."}
+      ]
+    },
+    "20250911": {
+      "owner": "D",
+      "source": "../frankie_g3_s131_corrected_reblind/grp3_D_20250911.json",
+      "curve_nodes": [
+        {"et_hour": 18.0, "p25_cum_usd": 0, "p50_cum_usd": 0, "p75_cum_usd": 0, "market_condition": "EIA-session open reference with no material gap."},
+        {"et_hour": 2.0, "p25_cum_usd": -230, "p50_cum_usd": -85, "p75_cum_usd": 80, "market_condition": "Mild overnight softness from the loose backdrop before the pre-print positioning phase."},
+        {"et_hour": 10.25, "p25_cum_usd": -160, "p50_cum_usd": 20, "p75_cum_usd": 210, "market_condition": "Pre-print firming immediately ahead of the known 10:30 ET storage catalyst; the unknown surprise sign is not used."},
+        {"et_hour": 10.5, "p25_cum_usd": -610, "p50_cum_usd": -230, "p75_cum_usd": 360, "market_condition": "EIA release node: print-day range expands sharply; P50 leans to downside delivery but uncertainty spans a large opposite-sign impulse because the actual surprise is future."},
+        {"et_hour": 11.25, "p25_cum_usd": -760, "p50_cum_usd": -430, "p75_cum_usd": 190, "market_condition": "Expected extension/absorption window after the first print impulse; this is where a downside-delivery class would reach maximum expression before a round trip."},
+        {"et_hour": 15.0, "p25_cum_usd": -650, "p50_cum_usd": -390, "p75_cum_usd": 135, "market_condition": "Partial post-event recovery as the initial print move is absorbed and the pre-print side loses authority."},
+        {"et_hour": 17.0, "p25_cum_usd": -610, "p50_cum_usd": -350, "p75_cum_usd": 160, "market_condition": "Terminal state after the modeled downside-delivery/round-trip class."}
+      ]
+    },
+    "20250912": {
+      "owner": "E",
+      "source": "../frankie_g3_s131_corrected_reblind/grp3_E_20250912.json",
+      "curve_nodes": [
+        {"et_hour": 18.0, "p25_cum_usd": 0, "p50_cum_usd": 0, "p75_cum_usd": 0, "market_condition": "Friday session-open reference; the separately forecast reopen gap is -50 and is not folded into the intraday curve."},
+        {"et_hour": 6.0, "p25_cum_usd": -305, "p50_cum_usd": -145, "p75_cum_usd": 45, "market_condition": "Overnight/early-morning fundamental carry from loose storage and weak gas-burn demand under an active index-roll contamination regime."},
+        {"et_hour": 8.0, "p25_cum_usd": -270, "p50_cum_usd": -105, "p75_cum_usd": 85, "market_condition": "Forecast counter-move: 06-08 ET bounce/squaring rather than uninterrupted roll-pressure extrapolation."},
+        {"et_hour": 10.0, "p25_cum_usd": -350, "p50_cum_usd": -155, "p75_cum_usd": 55, "market_condition": "US morning resumes the fundamental-carry/downside delivery once the early bounce fails to change the slow balance state."},
+        {"et_hour": 14.0, "p25_cum_usd": -555, "p50_cum_usd": -305, "p75_cum_usd": -35, "market_condition": "Expected low in the 10-14 ET delivery/settle window as loose storage, weak power burn and unfinished BCOM roll pressure align."},
+        {"et_hour": 17.0, "p25_cum_usd": -500, "p50_cum_usd": -270, "p75_cum_usd": 5, "market_condition": "Modest late squaring recovery into the Friday close; forecast exit remains lower-quarter rather than momentum acceleration."}
+      ]
+    },
+    "20250915": {
+      "owner": "B",
+      "source": "../frankie_g3_s131_corrected_reblind/grp3_B_20250915.json",
+      "curve_nodes": [
+        {"et_hour": 18.0, "p25_cum_usd": 0, "p50_cum_usd": 0, "p75_cum_usd": 0, "market_condition": "Monday session-open reference; seam gap has no lawful directional owner and remains centered at zero."},
+        {"et_hour": 6.0, "p25_cum_usd": -180, "p50_cum_usd": -60, "p75_cum_usd": 90, "market_condition": "Quiet overnight drift while inherited loose-storage/weak-demand carry is present but BCOM day-5 contamination prevents a strong roll sign."},
+        {"et_hour": 10.0, "p25_cum_usd": -285, "p50_cum_usd": -135, "p75_cum_usd": 70, "market_condition": "US catch-up window expresses the small bearish balance state after the quiet overnight phase."},
+        {"et_hour": 14.0, "p25_cum_usd": -360, "p50_cum_usd": -185, "p75_cum_usd": 55, "market_condition": "Expected low near the end of the 06-14 ET sell window if the weak power/storage stack survives Monday liquidity."},
+        {"et_hour": 17.0, "p25_cum_usd": -310, "p50_cum_usd": -120, "p75_cum_usd": 110, "market_condition": "Partial close recovery from Friday buy-side handover and production tightening; roll state is uncertainty, not a one-way sell signal."}
+      ]
+    },
+    "20250916": {
+      "owner": "C",
+      "source": "../frankie_g3_s131_corrected_reblind/grp3_C_20250916.json",
+      "curve_nodes": [
+        {"et_hour": 18.0, "p25_cum_usd": 0, "p50_cum_usd": 0, "p75_cum_usd": 0, "market_condition": "Tuesday session-open reference after the scheduled index-roll window has ended."},
+        {"et_hour": 6.0, "p25_cum_usd": -255, "p50_cum_usd": -95, "p75_cum_usd": 85, "market_condition": "Overnight drift lower from loose storage and weak gas-demand state, with D-1 sell tape only corroborating the sign."},
+        {"et_hour": 8.0, "p25_cum_usd": -330, "p50_cum_usd": -140, "p75_cum_usd": 70, "market_condition": "Start of the expected US-core acceleration after the overnight drift."},
+        {"et_hour": 10.0, "p25_cum_usd": -420, "p50_cum_usd": -200, "p75_cum_usd": 50, "market_condition": "Coherent balance/tape continuation is expected to strengthen during the core-liquidity window."},
+        {"et_hour": 14.0, "p25_cum_usd": -545, "p50_cum_usd": -285, "p75_cum_usd": 20, "market_condition": "Expected low if the independent bearish balance state and all-phase D-1 sell corroboration remain aligned through the afternoon."},
+        {"et_hour": 17.0, "p25_cum_usd": -500, "p50_cum_usd": -240, "p75_cum_usd": 80, "market_condition": "Modest close recovery because D-1 flow inheritance is explicitly discounted and cannot own the terminal state by itself."}
+      ]
+    },
+    "20250917": {
+      "owner": "C",
+      "source": "../frankie_g3_s131_corrected_reblind/grp3_C_20250917.json",
+      "curve_nodes": [
+        {"et_hour": 18.0, "p25_cum_usd": 0, "p50_cum_usd": 0, "p75_cum_usd": 0, "market_condition": "Wednesday session-open reference. Frankie has a genuine sign collision and grants no directional trading authority."},
+        {"et_hour": 6.0, "p25_cum_usd": -150, "p50_cum_usd": 0, "p75_cum_usd": 135, "market_condition": "Overnight uncertainty: loose storage can pressure price, but prior buy-side tape and arriving demand prevent a lawful one-sided P50 lean."},
+        {"et_hour": 9.5, "p25_cum_usd": -275, "p50_cum_usd": 0, "p75_cum_usd": 285, "market_condition": "US liquidity opens the conflict between loose balance and strong D-1 buying / higher gas burn; uncertainty expands rather than collapsing to a fake small call."},
+        {"et_hour": 14.0, "p25_cum_usd": -350, "p50_cum_usd": 0, "p75_cum_usd": 365, "market_condition": "Maximum two-sided expression of the unresolved balance-versus-demand collision before EIA day; P50 remains neutral because neither sign source clears the current brain's gate."},
+        {"et_hour": 17.0, "p25_cum_usd": -235, "p50_cum_usd": 0, "p75_cum_usd": 245, "market_condition": "Terminal no-call: expected range remains material even though the median day net is zero and trading direction is withheld."}
+      ]
+    },
+    "20250918": {
+      "owner": "D",
+      "source": "../frankie_g3_s131_corrected_reblind/grp3_D_20250918.json",
+      "curve_nodes": [
+        {"et_hour": 18.0, "p25_cum_usd": 0, "p50_cum_usd": 0, "p75_cum_usd": 0, "market_condition": "EIA-session open reference. D abstains on side because the pre-print consensus and price-extension limbs are unavailable."},
+        {"et_hour": 9.75, "p25_cum_usd": -135, "p50_cum_usd": 0, "p75_cum_usd": 140, "market_condition": "Pre-print compression/positioning window: known catalyst is imminent but no lawful surprise sign exists."},
+        {"et_hour": 10.5, "p25_cum_usd": -575, "p50_cum_usd": 0, "p75_cum_usd": 590, "market_condition": "10:30 ET EIA release: range is expected to expand sharply while the median side remains unresolved because the actual print/impulse is future."},
+        {"et_hour": 11.25, "p25_cum_usd": -725, "p50_cum_usd": 0, "p75_cum_usd": 740, "market_condition": "Post-print delivery/absorption window where D expects the largest two-sided excursion but cannot pre-select the direction without the first legal impulse."},
+        {"et_hour": 14.0, "p25_cum_usd": -525, "p50_cum_usd": 0, "p75_cum_usd": 540, "market_condition": "Post-event digestion: some impulse is expected to retrace/absorb, but side remains unowned at the opening decision point."},
+        {"et_hour": 17.0, "p25_cum_usd": -360, "p50_cum_usd": 0, "p75_cum_usd": 370, "market_condition": "Terminal ABSTAIN: nonzero range remains forecast even though D grants no p50 directional authority."}
+      ]
+    },
+    "20250919": {
+      "owner": "E",
+      "source": "../frankie_g3_s131_corrected_reblind/grp3_E_20250919.json",
+      "curve_nodes": [
+        {"et_hour": 18.0, "p25_cum_usd": 0, "p50_cum_usd": 0, "p75_cum_usd": 0, "market_condition": "Friday session-open reference after the storage outcome is legally known; separate reopen gap is -10."},
+        {"et_hour": 6.0, "p25_cum_usd": -210, "p50_cum_usd": -65, "p75_cum_usd": 105, "market_condition": "Quiet overnight softening from widened storage surplus, damped by rising gas demand and slightly tighter supply."},
+        {"et_hour": 10.0, "p25_cum_usd": -325, "p50_cum_usd": -135, "p75_cum_usd": 85, "market_condition": "US morning expresses the bearish storage/post-print sell state, while burn-demand arrival limits the magnitude."},
+        {"et_hour": 14.0, "p25_cum_usd": -420, "p50_cum_usd": -210, "p75_cum_usd": 55, "market_condition": "Expected local low after the morning softening; Friday turn gate cannot certify a reversal, so only a modest continuation low is forecast."},
+        {"et_hour": 17.0, "p25_cum_usd": -370, "p50_cum_usd": -170, "p75_cum_usd": 105, "market_condition": "Modest close recovery as demand arrival/supply tightening damp the widened-storage bearish state."}
+      ]
+    }
+  }
+}
