@@ -1,0 +1,47 @@
+name: Whole-Curve Duration Family Audit
+
+on:
+  push:
+    branches:
+      - chatgpt/duration-arc-audit-20260816
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet numpy matplotlib scikit-learn
+      - name: Materialize Kraken book tapes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/kbook
+          for COIN in sol btc eth xrp; do
+            BR="data/${COIN}-kraken-book"
+            git fetch --force origin "$BR:refs/remotes/origin/$BR"
+            : > "/tmp/kbook/${COIN}_book.jsonl"
+            mapfile -t ARCH < <(git ls-tree -r --name-only "origin/$BR" | grep "${COIN}_kraken_book_arch_.*\.jsonl\.gz$" | sort || true)
+            for F in "${ARCH[@]}"; do git show "origin/$BR:$F" | gzip -dc >> "/tmp/kbook/${COIN}_book.jsonl"; done
+            LIVE="${COIN}_kraken_book.jsonl.gz"
+            if git cat-file -e "origin/$BR:$LIVE" 2>/dev/null; then git show "origin/$BR:$LIVE" | gzip -dc >> "/tmp/kbook/${COIN}_book.jsonl"; fi
+            test -s "/tmp/kbook/${COIN}_book.jsonl"
+          done
+      - name: Run duration family audit
+        run: PYTHONPATH=.:research/shape_s71 python research/shape_s71/whole_curve_extremes_audit.py
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: whole-curve-extremes-audit
+          path: whole_curve_extremes_audit_results.json
+          if-no-files-found: warn
