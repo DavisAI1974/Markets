@@ -9,21 +9,28 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 from typing import Any, Mapping
 
-VERSION = "S135_SPECIALIST_AUTHORITY_V1"
+VERSION = "S135_SPECIALIST_AUTHORITY_V2"
 _SPECIALISTS = set("ABCDE")
 _FORBIDDEN_LIVE_OUTCOME_KEYS = {
     "actual_close", "actual_day_move_usd", "realized_close", "realized_day_move_usd",
     "final_session_close", "target_outcome",
 }
+_OWNER_RE = re.compile(r"(?:^|\n)\s*DIRECTION\s+OWNER\s*:\s*([^\n]+)", re.I)
+_PRICE_SHAPE_TERMS = (
+    "price", "shape", "absorption", "exhaustion", "turn", "failure-to-extend", "failed move",
+    "delivery", "close_off", "close-off", "giveback_exhaustion_boundary",
+)
 
 
 def _common() -> list[str]:
     return [
         "Preserve the assigned specialist's CALL/ABSTAIN and S132 curve verbatim; coordinator averaging or smoothing is forbidden.",
         "ABSTAIN withholds directional authority; it still requires the best event-driven P25/P50/P75 path/range.",
-        "A CALL requires an evaluable S133 direction owner. Raw D-1 signed flow without paired price/shape cannot add next-session sign confidence.",
+        "Every CALL reasoning MUST contain a literal `DIRECTION OWNER: ...` line naming the evaluable evidence/canonical play that owns sign. This makes S133 authority machine-checkable.",
+        "Raw D-1 signed flow without paired price/shape cannot add next-session sign confidence.",
         "Slow storage/balance/grid/demand state is backdrop/regime/magnitude/risk unless a canonical current-brain play explicitly grants day-sign authority.",
     ]
 
@@ -96,11 +103,20 @@ def attach(payload: Mapping[str, Any], *, specialist: str, phase: str,
 
 
 def _direction_owner_text(output: Mapping[str, Any]) -> str:
-    reasoning = output.get("reasoning") if isinstance(output.get("reasoning"), Mapping) else {}
-    owner = reasoning.get("direction_owner")
-    if isinstance(owner, Mapping):
-        owner = json.dumps(dict(owner), sort_keys=True)
-    return str(owner or "").lower()
+    reasoning = output.get("reasoning")
+    if isinstance(reasoning, Mapping):
+        owner = reasoning.get("direction_owner")
+        if isinstance(owner, Mapping):
+            owner = json.dumps(dict(owner), sort_keys=True)
+        return str(owner or "").strip().lower()
+    if isinstance(reasoning, str):
+        m = _OWNER_RE.search(reasoning)
+        return (m.group(1).strip().lower() if m else "")
+    return ""
+
+
+def _has_price_shape_pair(owner: str) -> bool:
+    return any(term in owner for term in _PRICE_SHAPE_TERMS)
 
 
 def validate_owner_output(output: Mapping[str, Any], specialist: str, *, task: str = "day_forecast") -> None:
@@ -108,19 +124,26 @@ def validate_owner_output(output: Mapping[str, Any], specialist: str, *, task: s
     spec = str(specialist).upper()
     if spec not in _SPECIALISTS:
         raise ValueError(f"unknown specialist {specialist!r}")
-    call = str(output.get("call") or output.get("decision") or "").upper()
-    if call == "CALL":
+
+    disposition = str(output.get("disposition") or output.get("call") or output.get("decision") or "").upper()
+    if task == "day_forecast" and disposition == "CALL":
         owner = _direction_owner_text(output)
-        if not owner:
-            raise ValueError(f"Specialist {spec} CALL missing evaluable reasoning.direction_owner")
+        if not owner or owner in {"none", "n/a", "na", "missing", "conflicted", "unavailable"}:
+            raise ValueError(
+                f"Specialist {spec} CALL missing machine-evaluable `DIRECTION OWNER: ...` in reasoning"
+            )
         if spec == "C":
-            forbidden = ("raw d-1", "raw_d1", "d-1 trade tilt", "slow balance", "slow backdrop")
-            if any(x in owner for x in forbidden):
-                raise ValueError("Specialist C cannot use raw D-1 flow/slow backdrop as replacement direction owner")
+            raw_flow = any(x in owner for x in ("raw d-1", "raw_d1", "d-1 trade tilt", "signed flow", "b-share"))
+            if raw_flow and not _has_price_shape_pair(owner):
+                raise ValueError("Specialist C cannot use unpaired raw D-1 flow as replacement direction owner")
+            if any(x in owner for x in ("slow balance", "slow backdrop")):
+                raise ValueError("Specialist C cannot use slow balance/backdrop itself as replacement direction owner")
         if spec == "E":
-            forbidden = ("gross program flow", "program_flow_only", "roll flow only", "gross roll flow")
-            if any(x in owner for x in forbidden):
-                raise ValueError("Specialist E cannot use gross program/roll flow alone as direction owner")
+            program_flow = any(x in owner for x in (
+                "gross program flow", "program_flow_only", "program flow", "roll flow only", "gross roll flow"
+            ))
+            if program_flow and not _has_price_shape_pair(owner):
+                raise ValueError("Specialist E cannot use gross program/roll flow without paired price response as direction owner")
 
     if spec == "A" and task == "weekend_bridge":
         forbidden_fields = {"guessed_net_usd", "guess_day_move_usd", "path_p50_curve", "curve_nodes"}
@@ -165,12 +188,22 @@ def _selftest() -> None:
     assert e["friday_guard"]["gross_program_or_roll_flow_alone_may_own_sign"] is False
     a = specialist_contract("A", task="weekend_bridge")
     assert a["weekend_bridge"]["owns_monday_forecast"] is False
+
+    good = {"disposition": "CALL", "reasoning": "DIRECTION OWNER: giveback_exhaustion_boundary price/shape turn"}
+    validate_owner_output(good, "C")
     try:
-        validate_owner_output({"call": "CALL", "reasoning": {"direction_owner": "raw D-1 flow"}}, "C")
+        validate_owner_output({"disposition": "CALL", "reasoning": "DIRECTION OWNER: raw D-1 signed flow"}, "C")
     except ValueError:
         pass
     else:
         raise AssertionError("C raw-flow direction-owner guard did not fire")
+    try:
+        validate_owner_output({"disposition": "CALL", "reasoning": "bearish because balance is loose"}, "C")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("CALL without explicit direction owner did not fail closed")
+
     live = live_rederive_packet(
         {"specialist": "D", "phase": "LIVE"},
         legal_event_evidence={"event": "EIA storage", "available_at": "event_timestamp", "impulse": "observed"},
