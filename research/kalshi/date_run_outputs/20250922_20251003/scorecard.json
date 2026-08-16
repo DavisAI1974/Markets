@@ -1,0 +1,113 @@
+{
+  "status": "COMPLETE",
+  "mode": "BLIND",
+  "window": "2025-09-22..2025-10-03",
+  "sessions": 10,
+  "calls": 4,
+  "abstains": 6,
+  "call_direction_hits": 2,
+  "call_direction_accuracy": 0.5,
+  "median_sign_hits_all_sessions": 5,
+  "median_sign_accuracy_all_sessions": 0.5,
+  "mean_absolute_error_usd": 646.0,
+  "rmse_usd": 761.2227006599317,
+  "mean_forecast_error_usd": -186.0,
+  "mean_absolute_actual_session_net_usd": 692.0,
+  "direction_note": "CALL direction accuracy is the decision metric. median_sign_hits_all_sessions includes small nonzero P50 medians on ABSTAIN days and must not be described as directional call accuracy.",
+  "days": [
+    {
+      "date": "20250922",
+      "owner": "B",
+      "disposition": "ABSTAIN",
+      "forecast_session_net_usd": 0.0,
+      "actual_session_net_usd": -1210.0,
+      "abs_error_usd": 1210.0,
+      "median_sign_hit": false
+    },
+    {
+      "date": "20250923",
+      "owner": "C",
+      "disposition": "CALL",
+      "forecast_session_net_usd": -520.0,
+      "actual_session_net_usd": 610.0,
+      "abs_error_usd": 1130.0,
+      "median_sign_hit": false,
+      "call_direction_hit": false
+    },
+    {
+      "date": "20250924",
+      "owner": "C",
+      "disposition": "ABSTAIN",
+      "forecast_session_net_usd": -120.0,
+      "actual_session_net_usd": 50.0,
+      "abs_error_usd": 170.0,
+      "median_sign_hit": false
+    },
+    {
+      "date": "20250925",
+      "owner": "D",
+      "disposition": "ABSTAIN",
+      "forecast_session_net_usd": 0.0,
+      "actual_session_net_usd": 740.0,
+      "abs_error_usd": 740.0,
+      "median_sign_hit": false
+    },
+    {
+      "date": "20250926",
+      "owner": "E",
+      "disposition": "CALL",
+      "forecast_session_net_usd": 380.0,
+      "actual_session_net_usd": -430.0,
+      "abs_error_usd": 810.0,
+      "median_sign_hit": false,
+      "call_direction_hit": false
+    },
+    {
+      "date": "20250929",
+      "owner": "B",
+      "disposition": "CALL",
+      "forecast_session_net_usd": 460.0,
+      "actual_session_net_usd": 950.0,
+      "abs_error_usd": 490.0,
+      "median_sign_hit": true,
+      "call_direction_hit": true
+    },
+    {
+      "date": "20250930",
+      "owner": "C",
+      "disposition": "ABSTAIN",
+      "forecast_session_net_usd": 120.0,
+      "actual_session_net_usd": 640.0,
+      "abs_error_usd": 520.0,
+      "median_sign_hit": true
+    },
+    {
+      "date": "20251001",
+      "owner": "C",
+      "disposition": "ABSTAIN",
+      "forecast_session_net_usd": 60.0,
+      "actual_session_net_usd": 1170.0,
+      "abs_error_usd": 1110.0,
+      "median_sign_hit": true
+    },
+    {
+      "date": "20251002",
+      "owner": "D",
+      "disposition": "ABSTAIN",
+      "forecast_session_net_usd": -160.0,
+      "actual_session_net_usd": -440.0,
+      "abs_error_usd": 280.0,
+      "median_sign_hit": true
+    },
+    {
+      "date": "20251003",
+      "owner": "E",
+      "disposition": "CALL",
+      "forecast_session_net_usd": -680.0,
+      "actual_session_net_usd": -680.0,
+      "abs_error_usd": 0.0,
+      "median_sign_hit": true,
+      "call_direction_hit": true
+    }
+  ]
+}
