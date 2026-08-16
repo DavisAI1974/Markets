@@ -261,7 +261,7 @@ def _packet_sequential_with_friday_handoff(template, gid, day, spec, namespace, 
         "forecast_disposition": obj.get("disposition"),
         "handoff_out": handoff,
     }
-    runner._assert_packet_outcome_wall(runtime, packet, gid, plan.day)
+    runner._assert_packet_outcome_wall(runtime, packet, gid, day)
     return prompt, packet
 
 
