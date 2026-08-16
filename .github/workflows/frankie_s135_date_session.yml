@@ -23,6 +23,12 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Reuse date-session input substrate
+        uses: actions/cache@v4
+        with:
+          path: data
+          key: frankie-s135-date-20250922-20251003-v1
+
       - name: Install existing Frankie staging dependencies
         run: python -m pip install --quiet numpy requests boto3 pandas databento
 
