@@ -1,0 +1,71 @@
+{
+  "specialist": "C",
+  "group": "gdate",
+  "date": "20250930",
+  "guessed_net_usd": 120,
+  "overnight_gap_usd": 0,
+  "path_p50_curve": [
+    [20.0, 0.0],
+    [8.0, 80.0],
+    [11.5, 230.0],
+    [14.75, -20.0],
+    [16.95, 120.0]
+  ],
+  "curve_nodes": [
+    {
+      "et_hour": 20.0,
+      "p25_cum_usd": 0.0,
+      "p50_cum_usd": 0.0,
+      "p75_cum_usd": 0.0,
+      "market_condition": "Tuesday session-open reference. No independent overnight-gap sign owner is present, so gap P50 is centered at zero."
+    },
+    {
+      "et_hour": 8.0,
+      "p25_cum_usd": -360.0,
+      "p50_cum_usd": 80.0,
+      "p75_cum_usd": 500.0,
+      "market_condition": "Early test of whether Monday's strong UP turn continues. Prior price and flow were aligned, but the close location does not satisfy the brain's strongest near-extreme continuation threshold."
+    },
+    {
+      "et_hour": 11.5,
+      "p25_cum_usd": -430.0,
+      "p50_cum_usd": 230.0,
+      "p75_cum_usd": 720.0,
+      "market_condition": "US-morning continuation attempt. A mild positive center reflects the completed Monday trend, while the distribution remains two-sided because no canonical sign owner cleanly resolves continuation versus turn."
+    },
+    {
+      "et_hour": 14.75,
+      "p25_cum_usd": -650.0,
+      "p50_cum_usd": -20.0,
+      "p75_cum_usd": 660.0,
+      "market_condition": "Late-session give-back/positioning test ahead of the Thursday EIA. Bidweek day 5 and event proximity support material travel without granting direction."
+    },
+    {
+      "et_hour": 16.95,
+      "p25_cum_usd": -560.0,
+      "p50_cum_usd": 120.0,
+      "p75_cum_usd": 620.0,
+      "market_condition": "Terminal state with a small positive center but no directional authority. Range remains near the ordinary trailing-sigma class rather than collapsing to flat."
+    }
+  ],
+  "reasoning": "ABSTAIN. The legally completed Sep-29 session is directionally strong but does not cleanly resolve C's continuation-versus-turn boundary under the current brain. NGX25 opened 3.175, closed 3.270 for +$950, reached +$1,240 high excursion and -$420 low excursion, and turned up sharply from the morning low. The final phase still advanced about +$380, and phases 2/3 carried positive signed flow (+2,909/+115) with no absorption flags. That makes UP continuation plausible. However, the close finished about $290 below the high, roughly 17-18% off the full high-to-low range. direction.giveback_exhaustion_boundary's strongest polarity-relative continuation arm is a chain-side close at the extreme (<~10% recovery), while the alternation/turn arm begins around >=~35% off the extreme with a late counter-tick. Sep-29 lands between those descriptive bands. I will not widen the <10% threshold merely because Monday was strong. direction.flow_conviction_sign_gate can now be computed on the completed prior session, but its own S112 audit shows the gate's output degenerates to the phase price direction and provides no discriminating lift; it cannot repair the missing boundary decision. Raw +2,857 D-1 signed flow and big-print B-share 0.640 are therefore not allowed to add next-session sign confidence under S133/S135. No qualifying price-flow disagreement exists to activate an absorption reversal either: absorb_session=false and all ph_absorb flags are false. Midweek reversal-recognition machinery requires mature-chain/cum-extreme context that remains unavailable or unestablished on the post-seam NGX25 chain. Sep-30 is bidweek day 5 and two sessions before EIA, so positioning/event proximity can widen the path but cannot own sign. The emitted P50 keeps a small positive center from the completed Monday state, then allows a late give-back, while disposition remains ABSTAIN because the sign discriminator is neither clean continuation nor clean alternation.",
+  "plays_fired": [
+    "magnitude.catalyst_condition_sort - bidweek/event proximity used for range conditioning only"
+  ],
+  "plays_stood_down": [
+    "direction.giveback_exhaustion_boundary - completed Monday closes between the play's strongest <~10% continuation band and >=~35% alternation band; no clean branch owns sign",
+    "direction.flow_conviction_sign_gate - prior-session price/flow is legally observable, but the current audit finds the gate degenerates to price direction and provides no discriminating sign lift",
+    "direction.absorption_is_reversal - Sep-29 absorb_session=false and all phase absorption flags are false",
+    "midweek.giveback_exhaustion_reversal_recognition - mature chain age/cum-extreme shelf context is not established on the young post-seam NGX25 sequence",
+    "structure.covering_absorption_directional_tell - no qualifying prior-session absorption and COT remains outside the canonical crowded-short gate",
+    "raw D-1 positive flow continuation - forbidden as next-session directional corroboration without a valid paired sign discriminator"
+  ],
+  "confidence": "low",
+  "state_defects_and_gaps_reported": [
+    "Current NGX25 options/contract-structure/squeeze price blocks remain unavailable under the historical one-shot mask.",
+    "Historical weather forecast/model-disagreement/freeze-risk families remain unavailable/null; hydration and synthesis are rejected.",
+    "The post-seam NGX25 chain is still young and lacks a reliable masked cum-from-anchor/chain-age discriminator for the midweek reversal plays.",
+    "Monday's close-location is informative but sits between the current brain's descriptive continuation and alternation bands; disposition is reduced rather than moving those bands."
+  ],
+  "disposition": "ABSTAIN"
+}
