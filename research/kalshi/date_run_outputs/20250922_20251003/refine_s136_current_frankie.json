@@ -1,0 +1,227 @@
+{
+  "status": "COMPLETE",
+  "phase": "POST_REVEAL_REFINE",
+  "learning_run_not_grade": true,
+  "blind_rerun": false,
+  "blind_immutable": true,
+  "current_brain_full_capacity": true,
+  "brain_version": "s105.9",
+  "brain_sha256": "28412ad4cd7e68996472e5b8659467d05f5943f6dd2a2f4057210c6c647cc941",
+  "canonical_plays_served": 90,
+  "historical_date_window_redaction": false,
+  "one_forecast_per_session": true,
+  "single_event_driven_p50_only": true,
+  "fixed_clock": false,
+  "fixed_point_count": false,
+  "hydration": "REJECTED_NOT_USED",
+  "new_datapoint_family_added": false,
+  "days": [
+    {
+      "date": "20250922",
+      "specialist": "B",
+      "blind_sha256": "096c7cd4185f9dc9c562d4937c4caa8723b5f3e1",
+      "blind_disposition": "ABSTAIN",
+      "blind_session_net_usd": 0,
+      "revealed_provider_session_net_usd": -1210,
+      "posterior_forecast": {
+        "session_net_usd": -1210,
+        "event_points": [
+          {"timestamp_et":"2025-09-21T20:00:00-04:00","p50_cum_usd":0,"market_condition":"Session-open anchor; no weekend sign is retroactively invented."},
+          {"timestamp_et":"2025-09-22T07:28:00-04:00","p50_cum_usd":-560,"market_condition":"First material downside displacement becomes visible."},
+          {"timestamp_et":"2025-09-22T08:36:00-04:00","p50_cum_usd":230,"market_condition":"US-morning recovery reaches the session high and fails; this is the rejection pivot."},
+          {"timestamp_et":"2025-09-22T11:38:00-04:00","p50_cum_usd":-1020,"market_condition":"Downside delivery establishes acceptance well below the open after the failed recovery."},
+          {"timestamp_et":"2025-09-22T14:30:00-04:00","p50_cum_usd":-1160,"market_condition":"Late downside remains accepted while buy aggression fails to repair price."},
+          {"timestamp_et":"2025-09-22T19:59:00-04:00","p50_cum_usd":-1210,"market_condition":"Terminal revealed provider state; refine only."}
+        ]
+      },
+      "refine_reasoning": "Blind abstention remains defensible. Refine shows a failed morning recovery followed by accepted downside and late buy-side absorption; learn the live rejection/delivery mechanism, not a Monday-down rule."
+    },
+    {
+      "date": "20250923",
+      "specialist": "C",
+      "blind_sha256": "b3b2edd90450a11ad7a171ac80f67659a1c160bf",
+      "blind_disposition": "CALL",
+      "blind_session_net_usd": -520,
+      "revealed_provider_session_net_usd": 610,
+      "posterior_forecast": {
+        "session_net_usd": 610,
+        "event_points": [
+          {"timestamp_et":"2025-09-22T20:00:00-04:00","p50_cum_usd":0,"market_condition":"Session-open anchor."},
+          {"timestamp_et":"2025-09-23T07:56:00-04:00","p50_cum_usd":-270,"market_condition":"The blind continuation idea initially expresses as a downside test."},
+          {"timestamp_et":"2025-09-23T08:06:00-04:00","p50_cum_usd":-310,"market_condition":"The downside test fails near the session low; this is the turn-up boundary."},
+          {"timestamp_et":"2025-09-23T10:33:00-04:00","p50_cum_usd":380,"market_condition":"Price reclaims the open and sell aggression is no longer delivering downside."},
+          {"timestamp_et":"2025-09-23T14:04:00-04:00","p50_cum_usd":600,"market_condition":"Upside acceptance is established; the reversal now owns the live path."},
+          {"timestamp_et":"2025-09-23T19:59:00-04:00","p50_cum_usd":610,"market_condition":"Terminal revealed provider state; refine only."}
+        ]
+      },
+      "refine_reasoning": "The blind near-low continuation owner was borderline and the target tape quickly invalidated it: the early downside test failed, price turned up, and selling stopped delivering downside. Treat this as authority calibration and live turn recognition, not a new day-specific rule."
+    },
+    {
+      "date": "20250924",
+      "specialist": "C",
+      "blind_sha256": "1bfe85dcba006eae3306c811795a7b5143b8110c",
+      "blind_disposition": "ABSTAIN",
+      "blind_session_net_usd": -120,
+      "revealed_provider_session_net_usd": 50,
+      "posterior_forecast": {
+        "session_net_usd": 50,
+        "event_points": [
+          {"timestamp_et":"2025-09-23T20:00:00-04:00","p50_cum_usd":0,"market_condition":"Session-open anchor."},
+          {"timestamp_et":"2025-09-24T06:30:00-04:00","p50_cum_usd":-480,"market_condition":"Morning downside reaches its realized low and fails to extend."},
+          {"timestamp_et":"2025-09-24T11:06:00-04:00","p50_cum_usd":500,"market_condition":"The rebound reaches the opposite side of the full two-sided range."},
+          {"timestamp_et":"2025-09-24T13:42:00-04:00","p50_cum_usd":-290,"market_condition":"The upside move gives back sharply; no durable one-way owner survives."},
+          {"timestamp_et":"2025-09-24T14:39:00-04:00","p50_cum_usd":90,"market_condition":"Late rebound returns the session toward balance."},
+          {"timestamp_et":"2025-09-24T19:56:00-04:00","p50_cum_usd":50,"market_condition":"Terminal revealed provider state; refine only."}
+        ]
+      },
+      "refine_reasoning": "The tape validates the blind conflict diagnosis: a near-full-range move down, then up, then back toward balance. Preserve non-flat range forecasting under ABSTAIN; no directional lesson is justified."
+    },
+    {
+      "date": "20250925",
+      "specialist": "D",
+      "blind_sha256": "b638d4650a0246e99f76684e6904bf18626c6759",
+      "blind_disposition": "ABSTAIN",
+      "blind_session_net_usd": 0,
+      "revealed_provider_session_net_usd": 740,
+      "posterior_forecast": {
+        "session_net_usd": 740,
+        "event_points": [
+          {"timestamp_et":"2025-09-24T20:00:00-04:00","p50_cum_usd":0,"market_condition":"NGX25 session-open anchor; the contract seam itself is not a traded move."},
+          {"timestamp_et":"2025-09-25T08:04:00-04:00","p50_cum_usd":470,"market_condition":"Material upside delivery is already visible before the scheduled release window."},
+          {"timestamp_et":"2025-09-25T10:30:00-04:00","p50_cum_usd":720,"market_condition":"EIA information-state transition; the remaining path is now a live/post-event problem."},
+          {"timestamp_et":"2025-09-25T11:09:00-04:00","p50_cum_usd":1160,"market_condition":"Post-event upside reaches the session high despite heavy sell aggression."},
+          {"timestamp_et":"2025-09-25T13:10:00-04:00","p50_cum_usd":190,"market_condition":"Large give-back tests whether the event move was accepted or transient."},
+          {"timestamp_et":"2025-09-25T14:12:00-04:00","p50_cum_usd":690,"market_condition":"Price re-accepts higher levels; absorbed selling remains the important paired price/flow fact."},
+          {"timestamp_et":"2025-09-25T19:59:00-04:00","p50_cum_usd":740,"market_condition":"Terminal revealed provider state; refine only."}
+        ]
+      },
+      "refine_reasoning": "Opening D abstention was appropriate. Once the EIA state became legal, strong upside price acceptance against heavy sell aggression required a remaining-curve re-derive; learn post-event re-anchoring, not a bullish-EIA rule."
+    },
+    {
+      "date": "20250926",
+      "specialist": "E",
+      "blind_sha256": "f49b8278cfbf499acceda9ebdfeca0896576b255",
+      "blind_disposition": "CALL",
+      "blind_session_net_usd": 380,
+      "revealed_provider_session_net_usd": -430,
+      "posterior_forecast": {
+        "session_net_usd": -430,
+        "event_points": [
+          {"timestamp_et":"2025-09-25T20:00:00-04:00","p50_cum_usd":0,"market_condition":"Friday session-open anchor."},
+          {"timestamp_et":"2025-09-26T07:32:00-04:00","p50_cum_usd":280,"market_condition":"Early upside continuation attempt reaches the session high and fails."},
+          {"timestamp_et":"2025-09-26T08:24:00-04:00","p50_cum_usd":-380,"market_condition":"Downside displacement invalidates the inherited EIA-absorption continuation thesis in live price."},
+          {"timestamp_et":"2025-09-26T09:55:00-04:00","p50_cum_usd":-980,"market_condition":"Downside delivery reaches the session low."},
+          {"timestamp_et":"2025-09-26T11:22:00-04:00","p50_cum_usd":-310,"market_condition":"A substantial recovery begins, showing the selloff is no longer one-way."},
+          {"timestamp_et":"2025-09-26T14:36:00-04:00","p50_cum_usd":-50,"market_condition":"Late recovery nearly repairs the session, with sell aggression increasingly absorbed."},
+          {"timestamp_et":"2025-09-26T16:59:00-04:00","p50_cum_usd":-430,"market_condition":"Terminal revealed provider state; refine only."}
+        ]
+      },
+      "refine_reasoning": "The inherited EIA-absorption UP thesis failed early in live price and the session delivered down before a late recovery. Do not let the weak/outcome-credited absorption subset own next-session sign without current price confirmation."
+    },
+    {
+      "date": "20250929",
+      "specialist": "B",
+      "blind_sha256": "6cab8ac85eb74d7f19867322e5fc88fabe7248e8",
+      "blind_disposition": "CALL",
+      "blind_session_net_usd": 460,
+      "revealed_provider_session_net_usd": 950,
+      "posterior_forecast": {
+        "session_net_usd": 950,
+        "event_points": [
+          {"timestamp_et":"2025-09-28T20:00:00-04:00","p50_cum_usd":0,"market_condition":"Monday session-open anchor; the unobserved Sunday gap is not assigned a causal sign."},
+          {"timestamp_et":"2025-09-29T06:31:00-04:00","p50_cum_usd":450,"market_condition":"Early upside response expresses the Friday-exhaustion/turn handoff."},
+          {"timestamp_et":"2025-09-29T08:14:00-04:00","p50_cum_usd":-420,"market_condition":"The catch-up window washes out to the session low; the initial lift is not blindly defended."},
+          {"timestamp_et":"2025-09-29T09:43:00-04:00","p50_cum_usd":340,"market_condition":"The washout is reclaimed, confirming a genuine turn rather than simple Friday downside continuation."},
+          {"timestamp_et":"2025-09-29T12:45:00-04:00","p50_cum_usd":1240,"market_condition":"Upside delivery reaches the session high."},
+          {"timestamp_et":"2025-09-29T13:37:00-04:00","p50_cum_usd":790,"market_condition":"Late give-back tests acceptance while leaving the day structurally positive."},
+          {"timestamp_et":"2025-09-29T19:59:00-04:00","p50_cum_usd":950,"market_condition":"Terminal revealed provider state; refine only."}
+        ]
+      },
+      "refine_reasoning": "A correctly replaced E's failed Friday forecast carry with the realized Friday exit; B then used that paired price/shape state without inventing a Sunday gap. The refine supports the E-to-A-to-B handoff process, not an automatic Monday rule."
+    },
+    {
+      "date": "20250930",
+      "specialist": "C",
+      "blind_sha256": "ada7e05d195bbfab7433e09b34c24c2410fe70c3",
+      "blind_disposition": "ABSTAIN",
+      "blind_session_net_usd": 120,
+      "revealed_provider_session_net_usd": 640,
+      "posterior_forecast": {
+        "session_net_usd": 640,
+        "event_points": [
+          {"timestamp_et":"2025-09-29T20:00:00-04:00","p50_cum_usd":0,"market_condition":"Session-open anchor."},
+          {"timestamp_et":"2025-09-30T06:28:00-04:00","p50_cum_usd":-240,"market_condition":"Early downside test reaches the session low."},
+          {"timestamp_et":"2025-09-30T08:56:00-04:00","p50_cum_usd":820,"market_condition":"The test reverses into a strong upside extension."},
+          {"timestamp_et":"2025-09-30T10:22:00-04:00","p50_cum_usd":200,"market_condition":"A deep give-back tests whether the continuation is exhausted."},
+          {"timestamp_et":"2025-09-30T13:19:00-04:00","p50_cum_usd":700,"market_condition":"Upside is re-established after the give-back."},
+          {"timestamp_et":"2025-09-30T14:25:00-04:00","p50_cum_usd":260,"market_condition":"A second sharp give-back again fails to turn the day negative."},
+          {"timestamp_et":"2025-09-30T19:56:00-04:00","p50_cum_usd":640,"market_condition":"Terminal revealed provider state; refine only."}
+        ]
+      },
+      "refine_reasoning": "Another strong UP session followed a close-location reading that sat between the current brain's continuation and alternation bands. The 10%-35% middle is a testable authority gap, not a threshold change from one replay."
+    },
+    {
+      "date": "20251001",
+      "specialist": "C",
+      "blind_sha256": "24f2b3b6a6248793fc00ba724434a09d6602f4ab",
+      "blind_disposition": "ABSTAIN",
+      "blind_session_net_usd": 60,
+      "revealed_provider_session_net_usd": 1170,
+      "posterior_forecast": {
+        "session_net_usd": 1170,
+        "event_points": [
+          {"timestamp_et":"2025-09-30T20:00:00-04:00","p50_cum_usd":0,"market_condition":"Session-open anchor."},
+          {"timestamp_et":"2025-10-01T07:59:00-04:00","p50_cum_usd":600,"market_condition":"The multi-day upside chain continues into the morning."},
+          {"timestamp_et":"2025-10-01T10:04:00-04:00","p50_cum_usd":-150,"market_condition":"A full intraday reset reaches the session low but does not mature into a downside turn."},
+          {"timestamp_et":"2025-10-01T12:23:00-04:00","p50_cum_usd":670,"market_condition":"Fresh upside displacement reappears after the reset."},
+          {"timestamp_et":"2025-10-01T12:58:00-04:00","p50_cum_usd":1390,"market_condition":"The move accelerates into a new regime rather than merely recovering the morning loss."},
+          {"timestamp_et":"2025-10-01T13:49:00-04:00","p50_cum_usd":1590,"market_condition":"Upside reaches the session high before late give-back."},
+          {"timestamp_et":"2025-10-01T19:58:00-04:00","p50_cum_usd":1170,"market_condition":"Terminal revealed provider state; refine only."}
+        ]
+      },
+      "refine_reasoning": "The multi-session UP trajectory survived a deep intraday reset and re-accelerated even with negative aggregate flow. Price trajectory/acceptance mattered more than raw flow; do not turn this into a flow-continuation rule."
+    },
+    {
+      "date": "20251002",
+      "specialist": "D",
+      "blind_sha256": "4c25b77ff13a4f84482833da0042afe6467bd08e",
+      "blind_disposition": "ABSTAIN",
+      "blind_session_net_usd": -160,
+      "revealed_provider_session_net_usd": -440,
+      "posterior_forecast": {
+        "session_net_usd": -440,
+        "event_points": [
+          {"timestamp_et":"2025-10-01T20:00:00-04:00","p50_cum_usd":0,"market_condition":"EIA-day session-open anchor."},
+          {"timestamp_et":"2025-10-02T07:37:00-04:00","p50_cum_usd":-350,"market_condition":"Early downside pressure is rejected as the pre-print run begins to build."},
+          {"timestamp_et":"2025-10-02T10:29:00-04:00","p50_cum_usd":390,"market_condition":"Immediately pre-print the session has a material positive run."},
+          {"timestamp_et":"2025-10-02T10:30:00-04:00","p50_cum_usd":1030,"market_condition":"The EIA release produces a strong positive first-minute move in the one-minute tape representation."},
+          {"timestamp_et":"2025-10-02T11:16:00-04:00","p50_cum_usd":1360,"market_condition":"The bullish event extension peaks; this becomes the turn-down pivot."},
+          {"timestamp_et":"2025-10-02T14:00:00-04:00","p50_cum_usd":-360,"market_condition":"The entire event rally has failed and price has crossed below the open."},
+          {"timestamp_et":"2025-10-02T19:59:00-04:00","p50_cum_usd":-440,"market_condition":"Terminal revealed provider state; refine only."}
+        ]
+      },
+      "refine_reasoning": "Opening D abstention was appropriate. The revealed EIA session rallied hard through the print, peaked, then fully rejected and closed down; the approximate +390 pre-print / +640 first-minute jump followed by a down close is a candidate forward falsifier for the current EIA impulse arbiter and needs exact tick-window verification before any brain change."
+    },
+    {
+      "date": "20251003",
+      "specialist": "E",
+      "blind_sha256": "10707c8e750901ccbc86efcf0af977fbbff21f64",
+      "blind_disposition": "CALL",
+      "blind_session_net_usd": -680,
+      "revealed_provider_session_net_usd": -680,
+      "posterior_forecast": {
+        "session_net_usd": -680,
+        "event_points": [
+          {"timestamp_et":"2025-10-02T20:00:00-04:00","p50_cum_usd":0,"market_condition":"Friday session-open anchor."},
+          {"timestamp_et":"2025-10-03T06:54:00-04:00","p50_cum_usd":360,"market_condition":"An early counter-trend lift tests the prior Thursday downside handoff."},
+          {"timestamp_et":"2025-10-03T08:35:00-04:00","p50_cum_usd":-700,"market_condition":"The lift fails into a sharp downside washout."},
+          {"timestamp_et":"2025-10-03T09:19:00-04:00","p50_cum_usd":470,"market_condition":"A violent rebound reaches the session high; this is the final major rejection pivot."},
+          {"timestamp_et":"2025-10-03T11:16:00-04:00","p50_cum_usd":-570,"market_condition":"Downside delivery reasserts after the rebound failure."},
+          {"timestamp_et":"2025-10-03T14:26:00-04:00","p50_cum_usd":-970,"market_condition":"The selloff reaches the session low before settlement recovery."},
+          {"timestamp_et":"2025-10-03T16:59:00-04:00","p50_cum_usd":-680,"market_condition":"Terminal revealed provider state; refine only."}
+        ]
+      },
+      "refine_reasoning": "The blind completed-session DOWN owner remained useful, but the actual path contained multiple violent counter-trend reversals before the late low. Keep the downside handoff lesson separate from any hard-coded Friday path shape."
+    }
+  ]
+}
