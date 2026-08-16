@@ -5,10 +5,10 @@ The public run intent is only an inclusive start/end date pair. S136 resolves th
 exact window already declared in group_config.py and fails before staging if the contract plan cannot
 be proven there. No contract-month arithmetic or roll inference is allowed.
 
-The normal current Frankie role view is used unchanged: this driver does not redact, roll back, or
-hydrate the brain. The only retained transport shim is the proven Friday E -> A handoff: E's frozen
-handoff_out is attached to the Monday A bridge packet while A still receives the legally completed
-Friday session separately and may override E's forecast read.
+Historical learning runs receive current full Frankie.  The date layer withholds only evidence
+attributable to the target session itself; it does not roll the brain back to the historical date.
+The proven Friday E -> A handoff remains: E's frozen handoff_out is attached to the Monday A bridge
+packet while A also receives completed Friday reality and may override E's forecast read.
 
 Frankie, spawn.py, brain/schema, specialist roles, datapoint universe and the S135 state machine remain
 unchanged.
@@ -28,9 +28,12 @@ import frankie_s135_date_session as session
 import frankie_s135_current_runtime as runtime
 import frankie_s135_group_runner as runner
 import frankie_s136_date_plan as date_plan
+import frankie_s136_state_stage as state_stage
+import frankie_s136_target_brain_wall as target_brain_wall
 import group_config as gc
 
 _OUTPUTS: Path | None = None
+_DRIVER_OUT: Path | None = None
 _RESOLVED_PLAN: dict | None = None
 _ORIG_PACKET_SEQUENTIAL = runtime.packet_sequential
 _ORIG_INSTALL_DATE_CONFIG = session._install_date_config
@@ -52,22 +55,77 @@ def _install_resolved_date_config(args) -> str:
 
 
 def _stage_only_proven_contract_inputs(gid: str) -> dict:
-    """Require every declared per-contract MBO leg file; optional prior feeds may remain absent/null."""
+    """Stage real canonical state, exact contract legs and required prior tape; fail closed."""
+    if _RESOLVED_PLAN is None or _DRIVER_OUT is None:
+        raise RuntimeError("S136 resolved plan/output missing before staging")
+
+    manifest_path = _DRIVER_OUT / "state_stage_manifest.json"
+    canonical = state_stage.stage_compact_state(
+        str(_RESOLVED_PLAN["start_ymd"]), manifest_path
+    )
     report = _ORIG_STAGE_BLIND_INPUTS(gid)
-    missing = [
+
+    missing_legs = [
         row for row in report.get("legs", [])
         if str(row.get("status")) not in {"ok", "skip"}
     ]
-    if missing:
+    if missing_legs:
         details = ", ".join(
-            f"{row.get('store')}:{row.get('day')}={row.get('status')}" for row in missing
+            f"{row.get('store')}:{row.get('day')}={row.get('status')}" for row in missing_legs
         )
         raise SystemExit(
             "S136 contract archive proof failed; declared leg file(s) are unavailable: "
             f"{details}. Refusing to continue or infer a replacement contract."
         )
+
+    missing_prior = [
+        row for row in report.get("prior_tape", [])
+        if str(row.get("status")) not in {"ok", "skip"}
+    ]
+    if missing_prior:
+        details = ", ".join(
+            f"{row.get('store')}:{row.get('day')}={row.get('status')}" for row in missing_prior
+        )
+        raise SystemExit(
+            "S136 required prior n0/n1/L1 context is unavailable: "
+            f"{details}. Refusing to continue or synthesize it."
+        )
+
     report["contract_archive_proof"] = "PASS_ALL_DECLARED_LEG_FILES_PRESENT"
+    report["prior_context_proof"] = "PASS_ALL_REQUIRED_N0_N1_L1_PRESENT"
+    report["canonical_state_stage"] = {
+        "manifest": str(manifest_path),
+        "object_count": canonical["object_count"],
+        "bucket": canonical["bucket"],
+        "full_n0_restore": canonical["full_n0_restore"],
+        "bounded_prior_n0": canonical["bounded_prior_n0"],
+        "ngwu_policy": "RESTORE_REAL_CANONICAL_STORE_FROM_S3; missing fields remain None",
+    }
+    report["vol_regime"] = state_stage.rebuild_vol_regime()
     return report
+
+
+def _install_target_only_role_view(gid: str, state: dict) -> None:
+    """Serve current full brain with only the target session structurally walled."""
+    if _RESOLVED_PLAN is None:
+        raise RuntimeError("S136 resolved plan missing before role-view install")
+    source_group = str(_RESOLVED_PLAN.get("resolved_group") or "")
+
+    def builder(request_gid: str, day: str, namespace: str) -> Path:
+        if request_gid != gid:
+            raise RuntimeError(f"date-session role builder got unexpected gid {request_gid}")
+        raw_brain = session.brain_view.load()
+        view = target_brain_wall.build_role_view(
+            raw_brain,
+            target_day=day,
+            source_group=source_group,
+            state_day=state[day],
+        )
+        path = runtime.base.PACKET_ROOT / namespace / gid / f"brain_view_{day}.json"
+        _write_json(path, view)
+        return path
+
+    runtime.base._build_role_view = builder
 
 
 def _packet_sequential_with_friday_handoff(template, gid, day, spec, namespace, **kwargs):
@@ -106,7 +164,7 @@ def _packet_sequential_with_friday_handoff(template, gid, day, spec, namespace, 
 
 
 def main() -> int:
-    global _OUTPUTS, _RESOLVED_PLAN
+    global _OUTPUTS, _DRIVER_OUT, _RESOLVED_PLAN
 
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--config", type=Path, required=True)
@@ -132,9 +190,12 @@ def main() -> int:
     _write_json(args.out / "resolved_date_plan.json", cfg)
 
     _RESOLVED_PLAN = cfg
+    _DRIVER_OUT = args.out
     _OUTPUTS = Path(cfg["outputs"])
     session._install_date_config = _install_resolved_date_config
     session._stage_blind_inputs = _stage_only_proven_contract_inputs
+    session._install_inprocess_role_view = _install_target_only_role_view
+    target_brain_wall.install_date_run_leak_guard()
     runtime.packet_sequential = _packet_sequential_with_friday_handoff
 
     days = ",".join(str(x) for x in cfg["days"])

@@ -10,6 +10,8 @@ on:
       - research/kalshi/frankie_s135_date_session.py
       - research/kalshi/frankie_s135_date_render.py
       - research/kalshi/frankie_s136_date_plan.py
+      - research/kalshi/frankie_s136_state_stage.py
+      - research/kalshi/frankie_s136_target_brain_wall.py
       - research/kalshi/date_run_session.json
       - research/kalshi/date_run_outputs/**
   workflow_dispatch:
@@ -29,7 +31,7 @@ permissions:
 jobs:
   next-blind-step:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -38,18 +40,6 @@ jobs:
 
       - name: Install existing Frankie staging dependencies
         run: python -m pip install --quiet numpy requests boto3 pandas databento matplotlib pillow
-
-      - name: Prepare legitimate sparse current-state feeds
-        env:
-          PYTHONPATH: research/kalshi
-        run: |
-          # S129 precedent: public historical positioning is legitimate current-Frankie context.
-          python research/kalshi/cot_feed.py --build
-          python research/kalshi/cot_combined_feed.py --build
-
-          # S129 precedent: NGWU absent from the runner stays unavailable. Do not hydrate or invent it.
-          mkdir -p data/ngwu
-          test -e data/ngwu/ngwu.json || printf '{"issues":[]}\n' > data/ngwu/ngwu.json
 
       - name: Advance date-driven blind to next model request
         env:
