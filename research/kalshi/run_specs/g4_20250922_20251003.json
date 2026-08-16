@@ -1,0 +1,31 @@
+{
+  "group": "g4",
+  "window": "Sun 2025-09-21 -> Fri 2025-10-03",
+  "days": [
+    "20250922",
+    "20250923",
+    "20250924",
+    "20250925",
+    "20250926",
+    "20250929",
+    "20250930",
+    "20251001",
+    "20251002",
+    "20251003"
+  ],
+  "anchor": 2.918,
+  "anchor_date": "20250919",
+  "anchor_lasthr_dir": 1,
+  "mask_after": "20250919",
+  "seam": "20250925",
+  "legs": {
+    "pre": "ngv25",
+    "post": "ngx25"
+  },
+  "eia_thursdays": [
+    "20250925",
+    "20251002"
+  ],
+  "holidays": [],
+  "basis": "Oct/NGV25 through 2025-09-24; Nov/NGX25 from 2025-09-25, the next scored-leg seam explicitly recorded by S131. Anchor is the frozen G3 2025-09-19 NGV25 close 2.918 with positive final-hour direction."
+}
