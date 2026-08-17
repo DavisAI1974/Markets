@@ -29,6 +29,10 @@ def _tuple_strings(value: Any) -> tuple[str, ...]:
 def _number(value: Any) -> float | None:
     if value is None or isinstance(value, bool):
         return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _freeze_json(value: Any) -> Any:
@@ -37,10 +41,6 @@ def _freeze_json(value: Any) -> Any:
     if isinstance(value, list):
         return tuple(_freeze_json(item) for item in value)
     return value
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
 
 
 class ReadOnlyForecastAdapter:
