@@ -42,7 +42,7 @@ V0 rule for every scale:
 
 There are no nonlinear duration weights in V0.
 
-## Microstructure and confidence
+## Microstructure
 
 Microstructure is confidence-only and can never change family/state identity or runway seconds. V0 deliberately uses qualitative confidence because the experiment did not freeze calibrated numeric confidence weights:
 
@@ -63,17 +63,27 @@ C remains `C_SCALE_TRANSITION_PROVISIONAL` with a low/moderate-confidence fallba
 
 ## Replay proof
 
-`validate_committed_replay_metrics()` validates the already-frozen post-reveal metrics without rerunning the blind experiment. It fails if any of these committed facts drift:
+V0 validates both immutable sides of the finished blind experiment without regenerating predictions or retuning anything.
 
-- classifier SHA;
-- A count 831 fast-collapse / 785 persistent;
-- four held-out days are present;
-- persistent > fast-collapse at 3t/5t/8t/13t on every held-out day;
+`validate_blind_freeze_manifest()` validates the pre-reveal freeze manifest and fails if any of these facts drift:
+
+- exact classifier SHA;
+- A state counts 831 fast-collapse / 785 persistent;
+- Family A total 1616 and prediction total 1711;
+- causal t0 anchor was served;
+- future price was not served to the model;
+- outcome was not accessed before freeze;
+- the four frozen prediction-shard days, record total, or compressed SHA-256 values drift.
+
+`validate_committed_replay_metrics()` independently validates the post-reveal metrics and fails if any of these facts drift:
+
+- classifier SHA or post-reveal refit status;
+- the same 831 / 785 A counts;
+- persistent > fast-collapse at 3t/5t/8t/13t on every one of the four held-out days;
 - blind predictions retained the frozen reveal duration baselines;
-- classifier was not refit after reveal;
 - frozen artifact reports no permanent Frankie brain/schema mutation.
 
-The raw held-out prediction packet is not committed on this branch, so V0 does not fabricate a second blind run. The committed blind metrics are the replay-validation boundary.
+The pre-reveal freeze manifest and four frozen prediction shards are committed in the repository. V0 validates their immutable manifest metadata/hashes plus the post-reveal metrics; it does not redo the blind experiment.
 
 ## Do-not-learn boundary
 
@@ -81,8 +91,10 @@ The finished blind scratch curve generator is not imported or reused. Its hand-a
 
 ## Tests
 
-`tests/test_ng_exhaustion_runway_clock.py` covers checksum drift, 61D normalization/distance, the +60s legal gate, monotonic/nonnegative countdown, fail-closed data availability, microstructure confidence-only behavior, B/C boundaries, deterministic output, and frozen replay facts.
+`tests/test_ng_exhaustion_runway_clock.py` covers checksum drift, 61D normalization/distance, the +60s legal gate, monotonic/nonnegative countdown, fail-closed data availability, microstructure confidence-only behavior, B/C boundaries, deterministic output, and post-reveal replay facts.
+
+`tests/test_ng_exhaustion_replay_proof.py` separately validates the immutable pre-reveal freeze manifest, all four shard hashes/record totals, and fail-closed tamper detection.
 
 ## Permanent Frankie protection
 
-This V0 adds an isolated module, renderer, tests, and documentation only. It does not modify permanent brain/schema/roles/plays/datapoints/spawn.py/workflow. A later deliberate brain-update step may merge only the separately curated validated lessons.
+This V0 adds isolated modules, renderer, tests, and documentation only. It does not modify permanent brain/schema/roles/plays/datapoints/spawn.py/workflow. A later deliberate brain-update step may merge only the separately curated validated lessons.
