@@ -1,0 +1,12 @@
+{
+  "name": "NG exhaustion chain Phase-1 55-week insert-only reconciliation launch",
+  "date": "2026-08-17",
+  "status": "LAUNCH_REQUESTED",
+  "base_54w_artifact_id": 9281733364,
+  "held_week": "20260329",
+  "held_artifact_id": 9281272840,
+  "scoring_policy": "Use frozen Era4 training/settings; no held-week retuning; preserve immutable 54-week evidence.",
+  "phase2_before_success": false,
+  "permanent_frankie_mutation_allowed": false,
+  "runway_clock_mutation_allowed": false
+}

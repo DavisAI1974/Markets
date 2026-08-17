@@ -1,0 +1,107 @@
+name: NG Exhaustion 55W Insert-Only Reconciliation 20260817
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-chain-full-history-phase1-20260817
+    paths:
+      - research/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILE_LAUNCH_20260817.json
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  BASE_CANONICAL_ARTIFACT_ID: '9281733364'
+  BASE_CANONICAL_SHA256: 'f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1'
+  HELD_CANONICAL_ARTIFACT_ID: '9281272840'
+  HELD_CANONICAL_SHA256: '21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e'
+  STRUCTURAL_ARTIFACT_ID: '9289900864'
+  STRUCTURAL_SHA256: 'f7f81353c2209dd85fd7ec36dbcdd0dcadc2e2c294d5f17acfe22c8680620696'
+  LINEAGE_ARTIFACT_ID: '9289929292'
+  LINEAGE_SHA256: 'a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95'
+  AGENT7_ARTIFACT_ID: '9287506554'
+  AGENT7_SHA256: 'b3b70fc106ee4404177303a6a5951ec085e3d88a1332693f20ffb62e95ca34cb'
+  CAUSAL_ARTIFACT_ID: '9301045248'
+  CAUSAL_SHA256: '9b10192b0912f5ac155b47aeb7f818855ec6583def3bc9c5365fe85100aa51d8'
+  FALSIFIER_ARTIFACT_ID: '9301072378'
+  FALSIFIER_SHA256: 'dc8f68a02e11d66078dc49105323690e65be6e2eedd2d94aed3c64f7fd1b3197'
+
+jobs:
+  reconcile:
+    name: Score held week with frozen Era4 settings and freeze 55W evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet numpy scipy scikit-learn
+
+      - name: Download exact frozen source artifacts
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/base /tmp/held /tmp/structural /tmp/lineage /tmp/agent7 /tmp/causal /tmp/falsifier
+          get_artifact () {
+            id="$1"; sha="$2"; out="$3"; dest="$4"
+            curl -L --fail --silent --show-error \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" \
+              -o "${out}"
+            echo "${sha}  ${out}" | sha256sum -c -
+            unzip -q "${out}" -d "${dest}"
+          }
+          get_artifact "${BASE_CANONICAL_ARTIFACT_ID}" "${BASE_CANONICAL_SHA256}" /tmp/base.zip /tmp/base
+          get_artifact "${HELD_CANONICAL_ARTIFACT_ID}" "${HELD_CANONICAL_SHA256}" /tmp/held.zip /tmp/held
+          get_artifact "${STRUCTURAL_ARTIFACT_ID}" "${STRUCTURAL_SHA256}" /tmp/structural.zip /tmp/structural
+          get_artifact "${LINEAGE_ARTIFACT_ID}" "${LINEAGE_SHA256}" /tmp/lineage.zip /tmp/lineage
+          get_artifact "${AGENT7_ARTIFACT_ID}" "${AGENT7_SHA256}" /tmp/agent7.zip /tmp/agent7
+          get_artifact "${CAUSAL_ARTIFACT_ID}" "${CAUSAL_SHA256}" /tmp/causal.zip /tmp/causal
+          get_artifact "${FALSIFIER_ARTIFACT_ID}" "${FALSIFIER_SHA256}" /tmp/falsifier.zip /tmp/falsifier
+
+      - name: Reconcile 20260329 as insert-only held fold
+        run: |
+          set -euo pipefail
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_chain_phase1_reconcile_55w_20260817.py \
+            --base-table /tmp/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz \
+            --base-summary /tmp/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_SUMMARY.json \
+            --held-table /tmp/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz \
+            --held-summary /tmp/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_SUMMARY.json \
+            --structural-summary /tmp/structural/NG_EXHAUSTION_CHAIN_PHASE1_STRUCTURAL_54W_20260817_SUMMARY.json \
+            --causal-summary /tmp/causal/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_54W_20260817.json \
+            --lineage-summary /tmp/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.json \
+            --lineage-instances /tmp/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz \
+            --falsifier-summary /tmp/falsifier/NG_EXHAUSTION_CHAIN_PHASE1_FALSIFIER_54W_20260817.json \
+            --agent7-summary /tmp/agent7/NG_EXHAUSTION_CHAIN_PHASE1_AGENT7_OPEN_MECHANISM_54W_20260817.json
+
+      - name: Fail closed unless historical Phase 1 is complete
+        run: |
+          python - <<'PY'
+          import json
+          p='NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_SUMMARY.json'
+          d=json.load(open(p))
+          assert d['status']=='PHASE1_HISTORICAL_55W_INSERT_ONLY_RECONCILED_COMPLETE', d
+          assert d['historical_phase1_complete'] is True
+          assert d['phase2_allowed'] is True
+          assert d['week_count']==55
+          assert d['event_count']==235170
+          assert d['base_54w_preserved_immutable'] is True
+          assert d['held_week_insert_only'] is True
+          assert d['runway_clock_mutated'] is False
+          assert d['permanent_frankie_mutated'] is False
+          print('55-week Phase 1 historical reconciliation complete; Phase 2 may now begin without mutating Frankie or the runway clock.')
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-phase1-55w-reconciled-final-20260817
+          path: |
+            NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_SUMMARY.json
+            NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_STRUCTURAL_GAINS.jsonl.gz
+            NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz
+          if-no-files-found: error
