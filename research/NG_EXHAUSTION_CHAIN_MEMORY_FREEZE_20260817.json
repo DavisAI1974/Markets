@@ -1,0 +1,80 @@
+{
+  "name": "NG exhaustion recursive predictive-memory chain test",
+  "date": "2026-08-17",
+  "status": "FROZEN_BEFORE_CHAIN_ROSTER_REVEAL",
+  "purpose": "Determine how many successive exhaustion links retain inherited predictive information before the lineage resets, without categorizing chains by their characteristics.",
+  "input_sequence": "Complete ordered week-continuous exhaustion roster from first detected exhaustion after Sunday reopen through weekly close.",
+  "membership_features": {
+    "allowed": [
+      "the 61-sample oriented roll20 exhaustion pre-curve t=-60..0 for each event",
+      "the raw exhaustion polarity for each event"
+    ],
+    "forbidden": [
+      "price or price-derived features",
+      "realized exhaustion endpoint duration",
+      "post-t0 flow",
+      "family A/B/C labels or distances",
+      "book state",
+      "time gap between events",
+      "time of day / session position",
+      "number of links already observed",
+      "any long/short/reversal/alternating category"
+    ],
+    "reason": "First-pass chain membership must be driven by inherited exhaustion-state information, not by posthoc chain characteristics."
+  },
+  "primary_target": "Whether the next detected exhaustion has the same polarity as the current exhaustion.",
+  "order_semantics": {
+    "history_length_0": "intercept-only population baseline",
+    "history_length_1": "current exhaustion state predicts the next exhaustion; this is the clean second-order test",
+    "history_length_2": "previous exhaustion plus current exhaustion predict the next exhaustion; incremental value over length 1 is third-order inherited memory",
+    "history_length_h": "the oldest event in the h-event history is an ancestor h-1 links behind the current event; incremental predictive value over h-1 measures whether that ancestor still matters for the next transition"
+  },
+  "cross_week_validation": {
+    "scheme": "leave-one-trading-week-out; train on the other complete weeks and score the held-out week, rotating so every event receives only out-of-week predictions",
+    "hyperparameter_tuning_on_heldout": false,
+    "time_order_within_week_preserved": true
+  },
+  "state_representation": {
+    "curve_compression": "PCA fit on training-week 61-sample pre-curves only; retain the minimum components explaining at least 95% training variance",
+    "pca_outcome_blind": true,
+    "polarity_appended": true,
+    "history_order": "oldest to current",
+    "standardization": "fit on training weeks only"
+  },
+  "predictive_model": {
+    "primary": "L2-regularized logistic regression",
+    "regularization_C": 1.0,
+    "class_weight": null,
+    "solver": "lbfgs",
+    "max_iter": 2000,
+    "model_selection_on_holdout": false
+  },
+  "aggregate_memory_depth": {
+    "metric": "out-of-week log-loss improvement Δ_h = logloss(history h-1) - logloss(history h)",
+    "continuation_evidence": "Δ_h > 0 means the additional ancestor improves prediction on unseen weeks",
+    "initial_history_depths": [1,2,3,4,5,6,7,8],
+    "adaptive_extension": "If the deepest tested history still has positive pooled out-of-week Δ_h and positive Δ_h in at least two of three held-out weeks, extend depths to 16; repeat to 32 and 64 as needed. If memory remains at the computational cap, report right-censored depth rather than declaring an endpoint.",
+    "no_fixed_chain_length": true
+  },
+  "instance_level_lineage": {
+    "pointwise_evidence": "For an actual next-event outcome, compute inherited pointwise log-score gain g_h = log p_h(actual outcome) - log p_(h-1)(actual outcome).",
+    "bootstrap": "Within each training fold, resample training events by contiguous within-week blocks and refit the frozen PCA/model pipeline; never resample individual events as IID.",
+    "confirmed_inherited_link": "25th percentile of bootstrap g_h is > 0",
+    "confirmed_reset_link": "75th percentile of bootstrap g_h is < 0",
+    "uncertain_link": "bootstrap interquartile interval spans 0",
+    "uncertainty_is_allowed": true,
+    "segmentation": "Begin with the first exhaustion after weekly reopen as the first origin. Extend the current lineage while inherited links are confirmed. At the first confirmed reset, the current exhaustion becomes the next first-order origin. An uncertain boundary is preserved as uncertain rather than forced into either chain."
+  },
+  "secondary_targets_after_membership_freeze": [
+    "time to next exhaustion",
+    "price/trade behavior between frozen chain links",
+    "endpoint and overlap structure"
+  ],
+  "secondary_targets_do_not_redefine_membership": true,
+  "posthoc_characterization_only_after_membership": true,
+  "do_not_touch": [
+    "completed runway clock",
+    "frozen runway classifiers/contracts",
+    "permanent Frankie"
+  ]
+}
