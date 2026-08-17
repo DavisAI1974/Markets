@@ -1,0 +1,105 @@
+name: NG Exhaustion Chain Canonical 20260817
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-aftermath-20260817
+    paths:
+      - research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json
+      - research/NG_EXHAUSTION_AFTERMATH_POSTV2_CHAIN_SEED_FREEZE_20260817.json
+      - research/ng_exhaustion_chain_canonical_table_20260817.py
+      - .github/workflows/ng_exhaustion_chain_canonical_20260817.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  canonical:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      BUCKET: bento-568968024170-us-east-2-an
+      REVEAL_ARTIFACT_ID: '9273273233'
+      BLIND_ARTIFACT_ID: '9274443976'
+      REVEAL_SHA256: 127e936355be479398e14f20f071f81b0d22a2975b02e87a1a3e0a044ec023e1
+      BLIND_SHA256: 224be8b033c1a03d638d7b84aef849363067e1961e9945e72bc86b52c3d01c39
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify frozen chain contract
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          c=json.load(open('research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json'))
+          s=json.load(open('research/NG_EXHAUSTION_AFTERMATH_POSTV2_CHAIN_SEED_FREEZE_20260817.json'))
+          assert c['status']=='FROZEN_PRECHAIN_BUILD'
+          assert c['observation_stream']['origin'].startswith('first actual NG trade')
+          assert c['observation_stream']['calendar_midnight_resets'] is False
+          assert c['time_context']['initial_chain_gate'] is False
+          assert s['status']=='FROZEN_RESEARCH_INPUT_FOR_CHAIN_STUDY_ONLY'
+          assert s['boundaries']['runway_clock_mutable'] is False
+          assert s['boundaries']['permanent_frankie_mutable'] is False
+          PY
+      - name: Install event detector dependency
+        run: python -m pip install --quiet matplotlib
+      - name: Download exact frozen reveal and blind rosters
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${REVEAL_ARTIFACT_ID}/zip" -o /tmp/reveal.zip
+          curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${BLIND_ARTIFACT_ID}/zip" -o /tmp/blind.zip
+          echo "${REVEAL_SHA256}  /tmp/reveal.zip" | sha256sum -c -
+          echo "${BLIND_SHA256}  /tmp/blind.zip" | sha256sum -c -
+          mkdir -p /tmp/reveal /tmp/blind
+          unzip -q /tmp/reveal.zip ng_frankie_reveal_records.json -d /tmp/reveal
+          unzip -q /tmp/blind.zip ng_frankie_blind_records.json -d /tmp/blind
+      - name: Download complete Sunday-through-Friday raw weeks
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ngweeks
+          days=(
+            20250713 20250714 20250715 20250716 20250717 20250718
+            20250921 20250922 20250923 20250924 20250925 20250926
+            20250928 20250929 20250930 20251001 20251002 20251003
+          )
+          for d in "${days[@]}"; do
+            mapfile -t keys < <(aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" \
+              --query 'Contents[].Key' --output text | tr '\t' '\n' | grep -E "NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" | sort -u)
+            if [ "${#keys[@]}" -ne 1 ]; then
+              echo "::error::Expected exactly one NG raw object for ${d}, found ${#keys[@]}: ${keys[*]-}"
+              exit 1
+            fi
+            aws s3 cp "s3://${BUCKET}/${keys[0]}" "/tmp/ngweeks/NG_${d}.jsonl.gz" --only-show-errors
+            test -s "/tmp/ngweeks/NG_${d}.jsonl.gz"
+          done
+          printf '%s\n' /tmp/ngweeks/NG_*.jsonl.gz | sort > /tmp/raw_paths.txt
+          test "$(wc -l < /tmp/raw_paths.txt)" -eq 18
+      - name: Build and equivalence-check canonical chain event table
+        run: |
+          set -euo pipefail
+          mapfile -t RAW < /tmp/raw_paths.txt
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_chain_canonical_table_20260817.py \
+            --reveal-records /tmp/reveal/ng_frankie_reveal_records.json \
+            --holdout-records /tmp/blind/ng_frankie_blind_records.json \
+            "${RAW[@]}"
+      - name: Upload canonical chain table
+        uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-chain-canonical-20260817
+          path: |
+            NG_EXHAUSTION_CHAIN_CANONICAL_20260817_SUMMARY.json
+            NG_EXHAUSTION_CHAIN_CANONICAL_20260817_EVENT_TABLE.jsonl.gz
+          if-no-files-found: error
