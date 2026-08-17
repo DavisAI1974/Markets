@@ -1,0 +1,55 @@
+{
+  "name": "NG exhaustion phase-1 causal-executable higher-order protocol",
+  "date": "2026-08-17",
+  "status": "FROZEN_BEFORE_CAUSAL_RESULTS",
+  "parent_phase1": "research/NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_PROTOCOL_20260817.json",
+  "mechanism_addendum": "research/NG_EXHAUSTION_CHAIN_PHASE1_MECHANISM_ADDENDUM_20260817.json",
+  "canonical_input": {
+    "artifact_id": 9279077256,
+    "event_count": 12991,
+    "weeks": ["20250713", "20250921", "20250928"]
+  },
+  "purpose": "Separate retrospective structural higher-order chain memory from higher-order behavior that is causally available at the descendant event and therefore potentially executable.",
+  "do_not_discard": {
+    "retrospective_structural_chain": "The parent Phase-1 full-path run remains a first-class structural-chain result even when some predecessor aftermath samples finish after the descendant event begins.",
+    "causal_executable_chain": "This run is a second structural axis, not a replacement. It asks what chain depth survives using only predecessor behavior already observable by the descendant t0."
+  },
+  "causal_input_horizons_seconds": [5,10,20,30,60,120,300],
+  "input_at_horizon_h": {
+    "fields": "predecessor next-exhaustion same/flip plus predecessor signed displacement, MFE and MAE at every frozen aftermath horizon <= h",
+    "availability_gate": "for every predecessor included in a depth-D history, predecessor causal endpoint confirmation + h must be <= descendant event t0; next-same is known no later than the descendant t0 for the immediate predecessor",
+    "time_used_as_characteristic": false,
+    "time_used_only_for_causal_availability": true
+  },
+  "target": {
+    "fields": "descendant full behavior vector: its next-exhaustion same/flip plus signed displacement, MFE and MAE at 5,10,20,30,60,120,300 seconds",
+    "role": "future behavior to be predicted at descendant t0"
+  },
+  "depth_comparison": {
+    "depths": [1,2,3,4,5,6],
+    "paired_sample_rule": "For each D, compare D-history against D-1-history on exactly the same D-eligible training and test targets so sample selection cannot manufacture incremental gain.",
+    "outer_validation": "leave-one-trading-week-out",
+    "inner_tuning": "alternate the two training weeks; no held-out-week tuning",
+    "models": ["ridge","distance-weighted KNN","extra trees"]
+  },
+  "reporting": {
+    "retrospective_higher_order": "reported from parent structural Phase-1 run",
+    "causal_higher_order_by_information_latency": "reported independently at each h",
+    "structural_but_not_yet_executable": "allowed and preserved when retrospective depth exceeds causal depth",
+    "rolling_vs_inherited": "origin-persistence remains a separate axis and is not required for either structural or causal higher-order chain status"
+  },
+  "characteristics_wall": {
+    "family": false,
+    "frozen_post_state": false,
+    "flow": false,
+    "book": false,
+    "time_of_day": false,
+    "session_position": false,
+    "pre_exhaustion_shape": false
+  },
+  "promotion": {
+    "forward_live_required": true,
+    "permanent_frankie_mutation": false,
+    "runway_clock_mutation": false
+  }
+}
