@@ -35,7 +35,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Verify frozen chain contract
+      - name: Verify frozen two-phase chain contract
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -45,7 +45,11 @@ jobs:
           assert c['status']=='FROZEN_PRECHAIN_BUILD'
           assert c['observation_stream']['origin'].startswith('first actual NG trade')
           assert c['observation_stream']['calendar_midnight_resets'] is False
-          assert c['time_context']['initial_chain_gate'] is False
+          assert c['phase_1_chain_discovery']['predefined_chain_categories'] is False
+          assert c['phase_1_chain_discovery']['characteristic_based_segmentation'] is False
+          assert c['phase_1_chain_discovery']['no_naming_until_frozen'] is True
+          assert c['phase_2_characterization']['starts_only_after_phase_1_freeze'] is True
+          assert c['time_context']['phase_1_gate'] is False
           assert s['status']=='FROZEN_RESEARCH_INPUT_FOR_CHAIN_STUDY_ONLY'
           assert s['boundaries']['runway_clock_mutable'] is False
           assert s['boundaries']['permanent_frankie_mutable'] is False
