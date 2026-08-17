@@ -1,0 +1,25 @@
+{
+  "name": "NG exhaustion aftermath endpoint confirmation addendum",
+  "date": "2026-08-17",
+  "status": "FROZEN_PREVALIDATION_ADDENDUM",
+  "applies_to": "research/NG_EXHAUSTION_AFTERMATH_CAUSAL_VALIDATION_FREEZE_20260817.json",
+  "reason": "The first fail-closed validation exposed events whose 3-second nonpositive run starts near +60 but cannot be confirmed until after +60. This addendum resolves onset versus causal knowability without changing the termination signal or tuning to held-out outcomes.",
+  "endpoint_semantics": {
+    "termination_condition": "three consecutive causal seconds with oriented trailing-20-second aggressor-volume imbalance <= 0",
+    "structural_onset_second": "the first second of the first qualifying 3-second run",
+    "causal_confirmation_second": "the third second of that same qualifying run",
+    "primary_aftermath_anchor": "causal_confirmation_second",
+    "descriptive_structural_anchor": "structural_onset_second may be retained only as a descriptive cross-check",
+    "hardcoded_end_time": false,
+    "maximum_duration_seconds": null,
+    "plus60_role": "checkpoint only; it is neither an endpoint nor a censor boundary",
+    "asof_plus60_collapsed": "true only if the 3-second termination run has been fully confirmed by t0+60; equivalently its onset is at or before t0+58",
+    "asof_plus60_alive_or_unconfirmed": "true if termination has not yet been causally confirmed by t0+60, including a run that begins at +59 or +60 but is not yet confirmed",
+    "censoring": "Only lack of a confirmed termination before the end of the available continuous market stream may censor the endpoint. Calendar midnight and daily file boundaries are never censor boundaries."
+  },
+  "validation_rule": {
+    "artifact_zero_s_comparison": "Existing zero_s is a structural-onset label inside the bounded +60 artifact. When present it must match reconstructed structural onset exactly. When absent, a reconstructed onset at +59 or later is not drift because confirmation necessarily lies beyond the artifact window.",
+    "no_heldout_retuning": true,
+    "failed_run_is_preserved": true
+  }
+}
