@@ -1,0 +1,124 @@
+name: NG Sunday Reopen Repair 20260817
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-aftermath-20260817
+    paths:
+      - .github/workflows/ng_sunday_reopen_repair_20260817.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      BUCKET: bento-568968024170-us-east-2-an
+      JOB_ID: GLBX-20260720-NJRXDHEGFY
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install recovery dependencies
+        run: pip install --quiet databento pandas boto3
+      - name: Verify exact paid batch and missing destination objects
+        run: |
+          set -euo pipefail
+          PYTHONPATH=research/kalshi python - <<'PY'
+          import databento_backfill as dbf
+          c=dbf._client()
+          j=c.batch.get_job_details('GLBX-20260720-NJRXDHEGFY')
+          assert j.get('state')=='done', j
+          assert j.get('dataset')=='GLBX.MDP3', j
+          assert j.get('schema')=='mbp-10', j
+          assert str(j.get('symbols'))=='NG.v.0', j
+          assert str(j.get('start')).startswith('2026-07-01'), j
+          assert str(j.get('end')).startswith('2026-07-19'), j
+          print(j)
+          PY
+          for d in 20260705 20260712; do
+            if aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" --query 'KeyCount' --output text | grep -vq '^0$'; then
+              echo "::error::Destination Sunday ${d} is no longer missing; refusing overwrite"
+              exit 1
+            fi
+          done
+      - name: Download only Sunday and adjacent daily DBN files from completed batch
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/dbn /tmp/decoded
+          PYTHONPATH=research/kalshi python - <<'PY'
+          import pathlib
+          import databento_backfill as dbf
+          c=dbf._client(); jid='GLBX-20260720-NJRXDHEGFY'
+          files=c.batch.list_files(jid)
+          wanted_dates=('20260705','20260706','20260707','20260712','20260713','20260714')
+          data=[]
+          for f in files:
+              name=str(f.get('filename',''))
+              if name.endswith('.dbn.zst') and any(d in name.replace('-','') for d in wanted_dates):
+                  data.append((name,int(f.get('size',0)),str(f.get('hash',''))))
+          print('selected files:', data)
+          found=' '.join(x[0].replace('-','') for x in data)
+          for d in wanted_dates:
+              assert d in found, (d,data)
+          for name,_,_ in data:
+              c.batch.download(job_id=jid, output_dir='/tmp/dbn', filename_to_download=name)
+          PY
+          find /tmp/dbn -type f -maxdepth 3 -print | sort
+      - name: Decode with canonical raw MBP10 writer and build Sunday gzip objects
+        run: |
+          set -euo pipefail
+          PYTHONPATH=research/kalshi python - <<'PY'
+          import glob, gzip, hashlib, json, math, os, shutil
+          import databento as db
+          import databento_backfill as dbf
+          out='/tmp/decoded'; os.makedirs(out,exist_ok=True)
+          total=0
+          for p in sorted(glob.glob('/tmp/dbn/**/*.dbn.zst',recursive=True)):
+              df=db.DBNStore.from_file(p).to_df()
+              if len(df): total += dbf._write_mbp10_df(df,'NG',out)
+          print('decoded rows:',total)
+          for day in ('20260705','20260712'):
+              src=f'{out}/NG_{day}.jsonl'
+              assert os.path.isfile(src) and os.path.getsize(src)>0, src
+              rows=0; min_ts=None; max_ts=None
+              with open(src) as f:
+                  for line in f:
+                      r=json.loads(line); rows+=1
+                      ts=r.get('ts')
+                      if ts is not None:
+                          ts=float(ts); min_ts=ts if min_ts is None else min(min_ts,ts); max_ts=ts if max_ts is None else max(max_ts,ts)
+              assert rows>0
+              dst=f'/tmp/NG_{day}_sun.jsonl.gz'
+              with open(src,'rb') as a, gzip.open(dst,'wb',compresslevel=6) as b: shutil.copyfileobj(a,b)
+              raw_sha=hashlib.sha256(open(src,'rb').read()).hexdigest()
+              gz_sha=hashlib.sha256(open(dst,'rb').read()).hexdigest()
+              print(json.dumps({'day':day,'rows':rows,'raw_bytes':os.path.getsize(src),'gzip_bytes':os.path.getsize(dst),'raw_sha256':raw_sha,'gzip_sha256':gz_sha,'min_ts':min_ts,'max_ts':max_ts},sort_keys=True))
+          PY
+          test -s /tmp/NG_20260705_sun.jsonl.gz
+          test -s /tmp/NG_20260712_sun.jsonl.gz
+          gzip -t /tmp/NG_20260705_sun.jsonl.gz
+          gzip -t /tmp/NG_20260712_sun.jsonl.gz
+      - name: Publish only the two missing canonical Sunday objects
+        run: |
+          set -euo pipefail
+          for d in 20260705 20260712; do
+            key="nymex/nymex_cont/NG_${d}_sun.jsonl.gz"
+            aws s3 cp "/tmp/NG_${d}_sun.jsonl.gz" "s3://${BUCKET}/${key}" --only-show-errors
+            aws s3api head-object --bucket "${BUCKET}" --key "${key}"
+          done
+      - name: Verify Sunday reopen corpus is now complete
+        run: |
+          set -euo pipefail
+          for d in 20260705 20260712; do
+            n=$(aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" --query 'KeyCount' --output text)
+            test "$n" -eq 1 || { echo "::error::Expected one restored object for ${d}, got ${n}"; exit 1; }
+          done
+          aws s3 ls "s3://${BUCKET}/nymex/nymex_cont/" | grep -E 'NG_20260705|NG_20260712'
