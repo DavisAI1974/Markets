@@ -1,0 +1,43 @@
+{
+  "schema_id": "FRANKIE_NG_EXHAUSTION_BLIND_PREDICTION_V1_FROZEN_20260816",
+  "status": "FROZEN_BEFORE_HELDOUT_PREDICTIONS",
+  "outcome_access": "NONE",
+  "input_artifact_id": 9274443976,
+  "input_artifact_digest": "sha256:224be8b033c1a03d638d7b84aef849363067e1961e9945e72bc86b52c3d01c39",
+  "frozen_a_classifier_sha256": "698b956f2a9aad4b99ccb9afab916e7219123d10c82408b8d9340137c266ecb9",
+  "rules": {
+    "A-fast-collapse_duration_s": {"3t":358,"5t":993,"8t":1802,"13t":4386},
+    "A-persistent_duration_s": {"3t":700,"5t":1802,"8t":3455,"13t":6836},
+    "B_family_duration_s": {"3t":353,"5t":995,"8t":1615,"13t":4543},
+    "C_family_duration_s": {"3t":377,"5t":1159,"8t":1713,"13t":4320},
+    "B_alignment_reveal_rates": {"3t":0.568,"5t":0.472,"8t":0.457,"13t":0.375},
+    "C_alignment_reveal_rates": {"2t":0.419,"3t":0.468,"5t":0.548,"8t":0.565,"13t":0.567}
+  },
+  "per_event_fields": {
+    "blind_id":"string",
+    "family":"A|B|C",
+    "day":"YYYYMMDD",
+    "t0_second_utc":"integer",
+    "price_anchor":"number; causal t0 last-trade origin only",
+    "post_state":"A-fast-collapse|A-persistent|null",
+    "predicted_duration_s":"object with 3t,5t,8t,13t point predictions",
+    "predicted_end_second_utc":"t0 + predicted duration, modulo day not applied",
+    "directional_scale_projection":"frozen qualitative family/state rule only",
+    "alignment_probability":"only where frozen reveal rate exists; otherwise null",
+    "numeric_displacement_prediction":"null; no frozen numeric magnitude mapping exists",
+    "confidence":"HIGH_A_STATE|LOW_B|LOW_MODERATE_C",
+    "brain_attribution":"existing brain concepts may support interpretation but may not retune numeric baselines",
+    "microstructure_modifier":"reported as non-numeric unless an exact frozen aggregation rule exists; no new threshold/weighting",
+    "early_precursor_same_call":"null unless a frozen deterministic precursor classifier exists; none is in the legal packet",
+    "falsifier":"string",
+    "outcome_accessed":"false"
+  },
+  "guardrails": [
+    "No heldout future price, ZigZag, duration, displacement, pivot or outcome may be read before prediction freeze.",
+    "Family A state is the recovered frozen 61-D nearest-centroid assignment exactly.",
+    "No B/C persistent-collapse subtype classifier is invented or refit.",
+    "No numeric magnitude/displacement mapping is invented after the blind boundary.",
+    "Full brain may change interpretation/confidence only where legally served inputs support the concept; it cannot retune frozen reveal medians or family/state rules.",
+    "Predictions must be persisted, hashed and committed before any heldout price reveal."
+  ]
+}
