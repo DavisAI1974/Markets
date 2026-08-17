@@ -3,7 +3,7 @@
   "date": "2026-08-17",
   "status": "FROZEN_PRECHAIN_BUILD",
   "source_seed": "research/NG_EXHAUSTION_AFTERMATH_POSTV2_CHAIN_SEED_FREEZE_20260817.json",
-  "purpose": "Measure how far predictive dependence propagates from one exhaustion episode through second-, third-, and higher-order event/tape behavior, and distinguish inherited chains from behavioral resets.",
+  "purpose": "Discover how far predictive dependence propagates from one exhaustion episode through higher-order behavior, freeze the actual chain boundaries first, and only then categorize the discovered chains by their characteristics.",
   "observation_stream": {
     "origin": "first actual NG trade after the Sunday weekly reopen",
     "end": "last actual NG trade before the genuine weekly close",
@@ -17,28 +17,72 @@
     "price_used": false,
     "signal": "trailing-20-second aggressor-volume imbalance from MBP-10 trade price versus concurrent top-of-book midpoint",
     "orientation": "event polarity from roll20 sign at t0",
-    "threshold": "85th percentile of absolute roll20 within each UTC source date, preserving the existing NG event-detector threshold convention",
+    "threshold": "85th percentile of absolute roll20 within each UTC source date, preserving the existing frozen-event detector convention",
     "local_max_radius_seconds": 5,
     "refractory_seconds": 45,
     "prominence": "absolute t0 roll20 minus median absolute roll20 over t0-30..t0-10",
     "week_continuity_extension": "candidate windows, prominence history, roll20, and refractory selection may cross UTC-date boundaries; day-native thresholding does not create a chain reset",
     "target_day_equivalence": "compare continuous-week detected target-day events against the frozen 3429-event reveal+holdout roster and fail closed on unexplained interior mismatches"
   },
-  "node_features": {
-    "pre_family": "frozen operational A/B/C classifier only; annotation/context, not a required clustering cell",
-    "a_post_state": "frozen A +60 classifier only when family A; annotation/context, not a required clustering cell",
-    "seed_aftermath_state": {
-      "labels": [
-        "persistent_exhaustion",
-        "collapsed_same_flow_reload",
-        "collapsed_opposite_flow_reversal",
-        "collapsed_sparse_indeterminate"
-      ],
-      "role": "validated annotations and benchmark features only; chain discovery must not force observations into these cells or assume chain clusters equal these labels"
-    },
+  "phase_1_chain_discovery": {
+    "goal": "find the chains themselves: origin, descendants, link depth, and reset point",
+    "predefined_chain_categories": false,
+    "predefined_long_short_cutoff": false,
+    "predefined_reversal_same_side_alternating_classes": false,
+    "predefined_cluster_count": false,
+    "characteristic_based_segmentation": false,
+    "time_based_segmentation": false,
+    "family_based_segmentation": false,
+    "aftermath_label_based_segmentation": false,
+    "principle": "chain membership and reset are determined by whether information inherited from earlier links continues to add reproducible out-of-sample predictive information about subsequent event/tape behavior beyond what the most recent event alone provides",
+    "lineage_measure": "for each candidate descendant depth, compare predictive information from the current event alone against the current event plus progressively older ancestors; record incremental out-of-sample gain and uncertainty",
+    "reset_definition": "the first point where ancestor information no longer adds reproducible predictive value beyond the current event becomes a candidate reset; reset must replicate and cannot be created by a clock/date/file boundary",
+    "depth_definition": "chain depth is empirical and continues only while inherited information survives with adequate sample support",
+    "discovery_outputs_to_freeze_before_characterization": [
+      "chain_id",
+      "chain_origin_event_id",
+      "ordered member event_ids",
+      "link indices",
+      "candidate reset event_id",
+      "chain event-count length",
+      "chain elapsed-time length",
+      "per-link inherited-information gain",
+      "per-link causal/executable status"
+    ],
+    "no_naming_until_frozen": true
+  },
+  "phase_2_characterization": {
+    "starts_only_after_phase_1_freeze": true,
+    "goal": "describe and categorize already-discovered chains based on the characteristics they actually exhibit",
+    "characteristics_to_examine_post_hoc": [
+      "polarity sequence",
+      "family A/B/C annotation",
+      "frozen A post-state annotation",
+      "validated aftermath-state annotation",
+      "raw exhaustion curve geometry",
+      "late aggressor flow",
+      "10-level book state/change",
+      "dynamic endpoint timing",
+      "post-end tape displacement/excursion/first-hit behavior",
+      "inter-event timing",
+      "time-of-day/session position",
+      "hours since weekly reopen"
+    ],
+    "category_names_are_post_hoc": true,
+    "time_is_gate": false,
+    "rule": "characteristics may explain, distinguish, or name a frozen chain type, but cannot retroactively move its boundaries or create a chain that phase 1 did not find"
+  },
+  "event_annotations": {
+    "pre_family": "retain frozen operational A/B/C for later characterization only",
+    "a_post_state": "retain frozen A +60 state for later characterization only",
+    "validated_aftermath_states": [
+      "persistent_exhaustion",
+      "collapsed_same_flow_reload",
+      "collapsed_opposite_flow_reversal",
+      "collapsed_sparse_indeterminate"
+    ],
+    "validated_aftermath_role": "benchmark/post-hoc interpretation only; never a phase-1 chain cell or boundary rule",
     "dynamic_endpoint": "three consecutive causal forward-filled oriented roll20 <= 0; record structural onset and causal confirmation",
-    "late_flow": "+41..+60 aligned aggressor pressure retained as a continuous feature",
-    "book": "aligned 10-level book imbalance and change retained as continuous features",
     "family_bc": "no new B/C subtype doctrine"
   },
   "time_context": {
@@ -52,59 +96,29 @@
       "source UTC date",
       "position within trading week"
     ],
-    "initial_chain_gate": false,
+    "phase_1_gate": false,
     "reset_gate": false,
-    "analysis_role": "context/covariate after chain structures are discovered"
+    "phase_2_role": "post-hoc characteristic only"
   },
   "chain_representation": {
     "structural_sequence": "all detected exhaustion events ordered continuously inside the trading week",
-    "polarity_sequence": "plus/minus event polarity",
-    "continuous_event_features": "retain raw/continuous exhaustion geometry, flow, book, timing, endpoint, and tape-after-end measurements so clustering is not limited to preassigned categorical cells",
-    "validated_annotations": "A/B/C, frozen A post-state, and validated aftermath labels travel with each event but do not define the clusters",
     "inter_event_seconds": true,
     "overlap": "record whether a descendant event starts before the ancestor exhaustion endpoint confirms",
-    "executable_link": "record whether the predecessor state used for a prediction was causally known before the descendant t0"
-  },
-  "data_driven_clustering": {
-    "required": true,
-    "predefined_chain_cells": false,
-    "predefined_long_short_cutoff": false,
-    "predefined_reversal_same_side_alternating_classes": false,
-    "cluster_count_fixed_in_advance": false,
-    "principle": "let recurrent structures emerge from the continuous event/link/sequence data first; name and describe clusters only after they are stable and interpretable",
-    "methods": "compare multiple unsupervised/sequence-aware views rather than trusting one algorithm; use stability under resampling/leave-one-week-out replication and neighborhood continuity to decide whether a cluster is real",
-    "validated_labels_role": "use prior validated aftermath states only to interpret or externally validate discovered clusters after formation, never to seed, force, or score the clustering solution",
-    "time_role": "exclude time-of-day as an initial clustering gate; inspect its enrichment only after clusters are formed",
-    "rare_structure_guardrail": "a visually interesting tiny cluster is not a finding unless it recurs across independent weeks or has strong out-of-sample support"
-  },
-  "chain_questions": [
-    "What recurrent chain structures emerge from the data without predefined chain cells?",
-    "Does current event information predict event n+1?",
-    "Does adding event n-1 improve prediction of n+1 beyond current event alone?",
-    "Does adding n-2 improve again, and how far does incremental information survive?",
-    "Which discovered structures turn out to have longer versus shorter predictive lifespans after clustering, rather than defining long/short beforehand?",
-    "At what link does inherited information from the chain origin cease to improve prediction over a fresh first-order model?",
-    "Do post-end tape continuation/reversal outcomes themselves propagate into later exhaustion states?",
-    "Do discovered chain structures cluster by time-of-day/session position without using time as a gate?"
-  ],
-  "order_depth": {
-    "fixed_chain_length_assumption": false,
-    "stop_rule": "continue increasing event-order depth while out-of-sample predictive improvement and sample support survive; stop/downgrade when incremental information disappears or sample size becomes uninformative",
-    "combinatorial_guardrail": "do not promote rare exact sequences solely because they were screened; prefer continuous learned structure, shrinkage, stability, monotone effects where present, and leave-one-week-out replication"
+    "executable_link": "record whether predecessor information used for a prediction was causally known before descendant t0",
+    "raw_characteristics_preserved": "retain rich causal event/tape measurements in the canonical data so phase 2 can characterize frozen chains without rebuilding or changing phase-1 boundaries"
   },
   "validation": {
     "initial_weeks": ["2025-07-13", "2025-09-21", "2025-09-28"],
-    "initial_method": "leave-one-trading-week-out replication for learned chain structures, order-depth models, and sequence statistics",
+    "phase_1_method": "leave-one-trading-week-out replication of lineage/incremental-information survival and reset points",
+    "phase_2_method": "profile frozen phase-1 chain IDs and test whether discovered characteristic differences replicate across weeks",
     "higher_order_promotion": "requires replication beyond one week and eventual forward-live validation",
-    "time_of_day_retuning": false,
     "permanent_frankie_mutation": false,
     "runway_clock_mutation": false
   },
   "parallel_lanes_after_canonical_table_freeze": {
-    "structure_discovery": "data-driven clustering/sequence structure from continuous event and link features; no predefined chain cells",
-    "order_memory": "incremental event-order prediction using learned structures and raw features",
-    "tape_propagation": "post-end continuation/reversal propagation through later events",
-    "reset_detection": "test when origin information no longer adds beyond current state",
-    "time_context": "describe timing/session clustering only after chain structures are identified"
+    "lineage_discovery": "find chain boundaries/depth from inherited predictive information only; output frozen chain IDs",
+    "reset_falsification": "independently challenge lineage/reset points and search for false persistence",
+    "tape_linkage": "measure whether tape outcomes propagate across already-discovered links without defining the chains",
+    "posthoc_characterization": "only after chain IDs freeze, categorize them using polarity, flow, book, shape, duration, time, and other observed characteristics"
   }
 }
