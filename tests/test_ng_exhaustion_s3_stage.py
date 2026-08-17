@@ -21,9 +21,16 @@ class NGExhaustionS3StageTests(unittest.TestCase):
             m = s.stage(ART, CLF, out)
             self.assertEqual(m["partition_totals"]["records"], 1711)
             self.assertEqual({d: p["records"] for d, p in m["partitions"].items()}, s.EXPECTED_DAY_COUNTS)
+            self.assertEqual(
+                {d: p["compressed_sha256"] for d, p in m["partitions"].items()},
+                s.EXPECTED_PARTITION_SHA256,
+            )
             self.assertEqual(s.sha256_file(out / m["canonical_source"]["path"]), s.EXPECTED_ARTIFACT_SHA256)
-            self.assertNotEqual(m["partitions"]["20250717"]["compressed_sha256"], "")
             self.assertTrue((out / "content_manifest.json").exists())
+            for info in m["partitions"].values():
+                gz = (out / info["path"]).read_bytes()
+                self.assertEqual(gz[:3], b"\x1f\x8b\x08")
+                self.assertEqual(gz[9], 255)
 
     def test_artifact_sha_drift_fails_closed(self):
         with tempfile.TemporaryDirectory() as td:
@@ -43,6 +50,10 @@ class NGExhaustionS3StageTests(unittest.TestCase):
             self.assertEqual(
                 {d: p["compressed_sha256"] for d, p in ma["partitions"].items()},
                 {d: p["compressed_sha256"] for d, p in mb["partitions"].items()},
+            )
+            self.assertEqual(
+                {d: p["compressed_sha256"] for d, p in ma["partitions"].items()},
+                s.EXPECTED_PARTITION_SHA256,
             )
 
 
