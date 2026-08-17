@@ -1,0 +1,91 @@
+{
+  "bucket": "bento-568968024170-us-east-2-an",
+  "canonical_source": {
+    "artifact_bytes": 2238990,
+    "artifact_sha256": "224be8b033c1a03d638d7b84aef849363067e1961e9945e72bc86b52c3d01c39",
+    "classifier_sha256": "698b956f2a9aad4b99ccb9afab916e7219123d10c82408b8d9340137c266ecb9",
+    "github_actions_artifact_id": 9274443976,
+    "path": "canonical/ng_exhaustion_blind_input_artifact_9274443976.zip",
+    "records_member_bytes": 22104694,
+    "records_member_sha256": "4e15430cd8ed79afb0e1d12938487e06fc6d9b5e38d336f34d460747525f2796"
+  },
+  "frozen_invariants": {
+    "blind_record_outcome_wall_scan": "PASS",
+    "classifier_sha256": "698b956f2a9aad4b99ccb9afab916e7219123d10c82408b8d9340137c266ecb9",
+    "day_counts": {
+      "20250717": 420,
+      "20250923": 446,
+      "20250930": 428,
+      "20251001": 417
+    },
+    "family_counts": {
+      "A": 1616,
+      "B": 35,
+      "C": 60
+    },
+    "future_price_or_price_bearing_window_served": false,
+    "records": 1711
+  },
+  "local_proof": {
+    "s3_put_blocker": "No AWS/S3 connector or credential surface available in this ChatGPT runtime",
+    "s3_put_executed": false,
+    "stage_tests_passed": 3,
+    "stage_tests_total": 3
+  },
+  "partition_totals": {
+    "compressed_bytes": 1691591,
+    "records": 1711,
+    "uncompressed_bytes": 22104692
+  },
+  "partitions": {
+    "20250717": {
+      "compressed_bytes": 258275,
+      "compressed_sha256": "5a475a45629fe25fb1b782b0ed79b9cfec68daa8b67c080b22eddb9af22b419b",
+      "families": {"A": 400, "B": 8, "C": 12},
+      "max_t0_second_utc": 86286,
+      "min_t0_second_utc": 224,
+      "path": "partitions/day=20250717/records.jsonl.gz",
+      "records": 420,
+      "uncompressed_bytes": 2823746,
+      "uncompressed_sha256": "a490ef9a5b068aa33a914001ef76d6fb1d541466f6fd7c0b6f4e55ce08bd4933"
+    },
+    "20250923": {
+      "compressed_bytes": 478500,
+      "compressed_sha256": "e7149ce7967ca6251928a41ca45197b47fcee00f926484adac8c7895bcddf6c2",
+      "families": {"A": 423, "B": 6, "C": 17},
+      "max_t0_second_utc": 86038,
+      "min_t0_second_utc": 93,
+      "path": "partitions/day=20250923/records.jsonl.gz",
+      "records": 446,
+      "uncompressed_bytes": 6591489,
+      "uncompressed_sha256": "37f2fadadd23056464ae0b96df1feb968c281202f55194f004b74bc88561d961"
+    },
+    "20250930": {
+      "compressed_bytes": 473415,
+      "compressed_sha256": "41086c62725b26f1eef80c405bc4ebc49feebaf9db49f6f49ead1e6e3fbcc102",
+      "families": {"A": 403, "B": 10, "C": 15},
+      "max_t0_second_utc": 86197,
+      "min_t0_second_utc": 85,
+      "path": "partitions/day=20250930/records.jsonl.gz",
+      "records": 428,
+      "uncompressed_bytes": 6409330,
+      "uncompressed_sha256": "6c834ef34837e6e933763632efd4f0d429a49e2431fa1d98f3eba735bde80b58"
+    },
+    "20251001": {
+      "compressed_bytes": 481401,
+      "compressed_sha256": "739a352e03b0da9dffa0177251ceab6a7f18e73b48da35b29ff79975388da6e7",
+      "families": {"A": 390, "B": 11, "C": 16},
+      "max_t0_second_utc": 86307,
+      "min_t0_second_utc": 74,
+      "path": "partitions/day=20251001/records.jsonl.gz",
+      "records": 417,
+      "uncompressed_bytes": 6280127,
+      "uncompressed_sha256": "c532f25f319749c7a38bc0138ed7cb9969a29508ed8d670bf4001914e19a87e5"
+    }
+  },
+  "prefix": "nymex/ng_exhaustion/v0/",
+  "schema": "markets.ng_exhaustion.s3_stage.proof.v1",
+  "status": "PASS_READY_FOR_PLATFORM_SYNC",
+  "upload_command": "python research/kalshi/platform_sync.py push --prefix nymex/ng_exhaustion/v0/ --src data/ng_exhaustion_s3_stage --execute --note 'NG exhaustion V0 canonical blind source + deterministic day partitions'",
+  "upload_door": "research/kalshi/platform_sync.py"
+}
