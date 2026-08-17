@@ -1,5 +1,6 @@
 name: NG Exhaustion MBO Inventory 20260816
 
+# Exact-date archive inventory; no synthetic MBO substitution.
 on:
   push:
     branches:
