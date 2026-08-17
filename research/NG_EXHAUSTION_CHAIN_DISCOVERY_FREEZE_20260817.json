@@ -1,0 +1,71 @@
+{
+  "name": "NG exhaustion chain discovery freeze",
+  "date": "2026-08-17",
+  "status": "FROZEN_BEFORE_CHAIN_DISCOVERY",
+  "gate": "Do not begin chain discovery until required Target 1 causal validation and Target 2 endpoint-relative aftermath/transition validation are complete.",
+  "measurement_origin": "For each NG trading week, begin at the first actual trade after the Sunday evening weekly reopen and run continuously through the true weekly close.",
+  "continuity": {
+    "calendar_midnight_resets_chain": false,
+    "HE24_to_HE1_resets_chain": false,
+    "daily_file_boundary_resets_chain": false,
+    "weekly_close_reopen_starts_new_observation_week": true
+  },
+  "discovery_principle": "Let the observed continuous event and tape geometry determine the natural chain groupings. Do not pre-impose long/short/reversal/alternating/time-of-day cells and do not choose a fixed number of chain types in advance.",
+  "forbidden_preclustering": [
+    "No hand-chosen long-versus-short duration threshold.",
+    "No hand-chosen number of links that defines a chain class.",
+    "No preassigned same-side/reversal/alternating chain bucket.",
+    "No time-of-day or session bucket used to create a cluster.",
+    "No reveal/holdout outcome threshold selected because it produces a visually attractive cluster.",
+    "No quantile/tertile/quintile cells used as chain definitions. Existing bins are validation diagnostics only."
+  ],
+  "event_and_link_feature_space": {
+    "continuous_first": true,
+    "candidate_dimensions": [
+      "exhaustion duration and confirmed endpoint timing",
+      "oriented roll20 geometry and decay/reload trajectory",
+      "aggressor-flow pressure and its change",
+      "10-level book imbalance and its change",
+      "time gap to the next detected exhaustion",
+      "polarity relationship between adjacent exhaustions",
+      "signed price displacement and excursion between confirmed endpoint, transition checkpoint, and next exhaustion",
+      "number and timing of intervening exhaustion onsets before prior exhaustion confirmation",
+      "family/post-state descriptors where causal and already frozen"
+    ],
+    "time_of_day_excluded_from_first_clustering_pass": true,
+    "time_of_day_retained_for_posthoc_annotation": true
+  },
+  "data_driven_methods": {
+    "primary": "density-based clustering that does not require a preset cluster count and can leave noise/unclassified observations rather than force every sequence into a bucket",
+    "stability_crosscheck": "hierarchical/resampling stability analysis on the same reveal feature space",
+    "sequence_crosscheck": "state/transition representation of discovered event sequences without prespecifying long/short labels",
+    "cluster_count_fixed_in_advance": false,
+    "noise_class_allowed": true,
+    "one_cluster_solution_allowed": true
+  },
+  "reveal_holdout_discipline": {
+    "discover_structure_on": "reveal/training weeks only",
+    "freeze_after_discovery": "feature normalization, cluster representation, discovered prototypes/assignment rule, and any chain/reset rule inferred from reveal",
+    "holdout_use": "one-time assignment and replication test only; no retuning cluster geometry on holdout",
+    "failed_replication": "retain as a negative finding; do not merge weak clusters until they look good"
+  },
+  "naming_rule": "Only after stable clusters emerge may they be given descriptive names such as long-chain, short-chain, same-side, reversal, alternating, or reset-prone. Names describe discovered groups; names never define them.",
+  "time_context": {
+    "record_every_link": true,
+    "fields": [
+      "absolute event timestamp",
+      "canonical market clock time",
+      "elapsed time since Sunday reopen",
+      "trading-day/session position",
+      "HE/session-hour label when available"
+    ],
+    "first_pass_cluster_feature": false,
+    "posthoc_question": "After behavior clusters are discovered, test whether any cluster is enriched by time-of-day/session position and whether that enrichment replicates."
+  },
+  "chain_reset": "A reset must be inferred from loss of inherited predictive dependence or a discovered structural break in the week-continuous sequence. Date/time/file boundaries cannot create a reset by themselves.",
+  "do_not_touch": [
+    "completed runway clock",
+    "frozen runway classifiers/contracts",
+    "permanent Frankie brain/schema/roles/plays/datapoints/workflow"
+  ]
+}
