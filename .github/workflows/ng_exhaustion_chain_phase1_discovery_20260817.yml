@@ -1,0 +1,70 @@
+name: NG Exhaustion Chain Phase1 Discovery 20260817
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-aftermath-20260817
+    paths:
+      - research/NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_PROTOCOL_20260817.json
+      - research/ng_exhaustion_chain_phase1_discovery_20260817.py
+      - .github/workflows/ng_exhaustion_chain_phase1_discovery_20260817.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  phase1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      CANONICAL_ARTIFACT_ID: '9279077256'
+      CANONICAL_ARTIFACT_SHA256: 'de93a54d4b4d126ea50a2a0c9ce27a0dcf83497affcb93c0ec090de769c54ef6'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify frozen phase1 protocol
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          p=json.load(open('research/NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_PROTOCOL_20260817.json'))
+          assert p['status']=='FROZEN_BEFORE_FORMAL_PHASE1_RUN'
+          assert p['canonical_input']['artifact_id']==9279077256
+          assert p['phase_separation']['phase2_only'].startswith('After phase-1')
+          assert p['chain_evidence_rules']['no_chain_cell_names'] is True
+          PY
+      - name: Install phase1 dependencies
+        run: python -m pip install --quiet numpy scipy scikit-learn
+      - name: Download strict-contract canonical chain table
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -L --fail --silent --show-error \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${CANONICAL_ARTIFACT_ID}/zip" \
+            -o /tmp/canonical.zip
+          echo "${CANONICAL_ARTIFACT_SHA256}  /tmp/canonical.zip" | sha256sum -c -
+          mkdir -p /tmp/canonical
+          unzip -q /tmp/canonical.zip -d /tmp/canonical
+          test -s /tmp/canonical/NG_EXHAUSTION_CHAIN_CANONICAL_20260817_EVENT_TABLE.jsonl.gz
+      - name: Run behavior-only phase1 discovery
+        run: |
+          set -euo pipefail
+          python research/ng_exhaustion_chain_phase1_discovery_20260817.py \
+            /tmp/canonical/NG_EXHAUSTION_CHAIN_CANONICAL_20260817_EVENT_TABLE.jsonl.gz
+      - name: Upload phase1 discovery artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-chain-phase1-discovery-20260817
+          path: |
+            NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_20260817_SUMMARY.json
+            NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_20260817_LINEAGE.jsonl.gz
+          if-no-files-found: error
