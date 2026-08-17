@@ -56,6 +56,20 @@
     "weekly_boundary": "Run the event/tape stream continuously across calendar dates and session-hour labels through the trading week; only the true weekly close/reopen boundary starts a new observation week. Holiday/special-session boundaries must follow the actual trade stream rather than an assumed clock time.",
     "behavioral_reset_rule": "Within a trading week, a chain may reset only because inherited predictive dependence is empirically lost or an explicit market-state reset is demonstrated; a date change, midnight, HE24->HE1, or file boundary can never create a reset by itself.",
     "data_requirement": "Long/short-chain research must load the complete contiguous raw NG corpus covering each studied trading week, including all intervening dates around the four frozen target dates. Isolated target-day files are insufficient for chain ancestry or descendants.",
+    "time_of_day_context": {
+      "record_for_every_chain_and_link": true,
+      "fields": [
+        "absolute event timestamp",
+        "clock time in the project's canonical market timezone",
+        "hours/minutes since weekly reopen",
+        "trading-day/session position",
+        "HE/session-hour label when available"
+      ],
+      "role": "descriptive/context covariate only in the first chain pass",
+      "is_chain_gate": false,
+      "is_reset_gate": false,
+      "analysis": "After chain types are discovered without time gating, test whether particular long/short/reversal/same-side/alternating chain types cluster by time-of-day or session position and whether that relationship replicates. Absence of a time pattern must not invalidate an otherwise real chain."
+    },
     "principle": "A later event belongs to the inherited chain only while measurable dependence on the originating state survives; otherwise mark a behavioral reset and start a new first-order chain at that event.",
     "long_and_short_chains_separate": true
   },
