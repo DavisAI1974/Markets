@@ -1,12 +1,13 @@
 name: NG Exhaustion Family Quantify V2 20260816
 
-# Geometry-balanced rerun: duplicate pre-flip shapes do not get extra clustering weight.
+# Geometry-balanced family fit plus stratified diagnostics for rare morphologies.
 on:
   push:
     branches:
       - chatgpt/ng-exhaustion-frankie-blind-20260816
     paths:
       - research/ng_exhaustion_family_quantify_v2_20260816.py
+      - research/ng_exhaustion_family_quantify_v3_20260816.py
       - .github/workflows/ng_exhaustion_family_quantify_v2_20260816.yml
   workflow_dispatch:
 
@@ -36,7 +37,7 @@ jobs:
           done
       - name: Run price-blind geometry-balanced audit
         run: |
-          PYTHONPATH=research python research/ng_exhaustion_family_quantify_v2_20260816.py \
+          PYTHONPATH=research python research/ng_exhaustion_family_quantify_v3_20260816.py \
             /tmp/NG_20250717.jsonl.gz \
             /tmp/NG_20250923.jsonl.gz \
             /tmp/NG_20250930.jsonl.gz \
