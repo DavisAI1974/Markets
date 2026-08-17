@@ -1,5 +1,6 @@
 name: NG Exhaustion Family Quantify 20260816
 
+# Scratch-only price-blind family audit.
 on:
   push:
     branches:
