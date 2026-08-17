@@ -1,0 +1,80 @@
+name: NG Frankie Family Reveal Part 1 20260816
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-frankie-blind-20260816
+    paths:
+      - research/ng_frankie_family_reveal_part1_20260816.py
+      - .github/workflows/ng_frankie_family_reveal_part1_20260816.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-revealed-half:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      BUCKET: bento-568968024170-us-east-2-an
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install scratch analysis dependencies
+        run: python -m pip install --quiet numpy matplotlib databento
+      - name: Download authoritative continuous MBP-10 days
+        run: |
+          set -euo pipefail
+          for d in 20250717 20250923 20250930 20251001; do
+            aws s3 cp s3://${BUCKET}/nymex/nymex_cont/NG_${d}.jsonl.gz /tmp/NG_${d}.jsonl.gz --only-show-errors
+            test -s /tmp/NG_${d}.jsonl.gz
+          done
+      - name: Download proven matching contract MBO
+        run: |
+          set -euo pipefail
+          aws s3 cp s3://${BUCKET}/nymex/ng_mbo_ngv25/NG_20250923.dbn.zst /tmp/NGV25_20250923.dbn.zst --only-show-errors
+          aws s3 cp s3://${BUCKET}/nymex/ng_mbo_ngx25/NG_20250930.dbn.zst /tmp/NGX25_20250930.dbn.zst --only-show-errors
+          aws s3 cp s3://${BUCKET}/nymex/ng_mbo_ngx25/NG_20251001.dbn.zst /tmp/NGX25_20251001.dbn.zst --only-show-errors
+          test -s /tmp/NGV25_20250923.dbn.zst
+          test -s /tmp/NGX25_20250930.dbn.zst
+          test -s /tmp/NGX25_20251001.dbn.zst
+      - name: Build frozen revealed-half packet
+        run: |
+          PYTHONPATH=research python research/ng_frankie_family_reveal_part1_20260816.py \
+            /tmp/NG_20250717.jsonl.gz \
+            /tmp/NG_20250923.jsonl.gz \
+            /tmp/NG_20250930.jsonl.gz \
+            /tmp/NG_20251001.jsonl.gz \
+            --mbo '20250923=/tmp/NGV25_20250923.dbn.zst::nymex/ng_mbo_ngv25/NG_20250923.dbn.zst' \
+            --mbo '20250930=/tmp/NGX25_20250930.dbn.zst::nymex/ng_mbo_ngx25/NG_20250930.dbn.zst' \
+            --mbo '20251001=/tmp/NGX25_20251001.dbn.zst::nymex/ng_mbo_ngx25/NG_20251001.dbn.zst'
+      - name: Confirm blind half has no outcomes
+        run: |
+          python - <<'PY'
+          import json
+          x=json.load(open('ng_frankie_part1_split_manifest.json'))
+          forbidden=('price','duration','ticks','exh_','mbo','mbp','post','outcome','displacement','pivot')
+          for r in x['heldout_events']:
+              bad=[k for k in r if any(t in k.lower() for t in forbidden)]
+              assert not bad, (r,bad)
+          assert x['heldout_contains_outcome'] is False
+          print('HELDOUT_OUTCOME_WALL=PASS', len(x['heldout_events']))
+          PY
+      - name: Upload Part 1 packet
+        uses: actions/upload-artifact@v4
+        with:
+          name: ng-frankie-family-reveal-part1-20260816
+          compression-level: 9
+          path: |
+            ng_frankie_part1_split_manifest.json
+            ng_frankie_part1_revealed_events.jsonl.gz
+            ng_frankie_part1_revealed_summary.json
+            ng_frankie_part1_family_provenance_NOT_FOR_FRANKIE.json
+            ng_frankie_part1_prompt.txt
+            ng_frankie_part1_revealed_montage.png
