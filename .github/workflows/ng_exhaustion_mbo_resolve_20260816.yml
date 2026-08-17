@@ -1,0 +1,100 @@
+name: NG Exhaustion MBO Resolve 20260816
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-frankie-blind-20260816
+    paths:
+      - .github/workflows/ng_exhaustion_mbo_resolve_20260816.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      BUCKET: bento-568968024170-us-east-2-an
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet databento numpy
+      - name: Download continuous tapes and available candidate MBO
+        run: |
+          set -euo pipefail
+          for d in 20250923 20250930 20251001; do
+            aws s3 cp s3://${BUCKET}/nymex/nymex_cont/NG_${d}.jsonl.gz /tmp/NG_${d}.jsonl.gz --only-show-errors
+          done
+          aws s3 cp s3://${BUCKET}/nymex/ng_mbo_ngv25/NG_20250923.dbn.zst /tmp/ngv25_20250923.dbn.zst --only-show-errors
+          aws s3 cp s3://${BUCKET}/nymex/ng_mbo_ngx25/NG_20250923.dbn.zst /tmp/ngx25_20250923.dbn.zst --only-show-errors
+          aws s3 cp s3://${BUCKET}/nymex/ng_mbo_ngx25/NG_20250930.dbn.zst /tmp/ngx25_20250930.dbn.zst --only-show-errors
+          aws s3 cp s3://${BUCKET}/nymex/ng_mbo_ngx25/NG_20251001.dbn.zst /tmp/ngx25_20251001.dbn.zst --only-show-errors
+      - name: Match contract MBO to continuous trade tape
+        run: |
+          python - <<'PY'
+          import gzip,json,math
+          from collections import defaultdict
+          from pathlib import Path
+          import databento as db
+          import numpy as np
+
+          days={
+            '20250923':['/tmp/ngv25_20250923.dbn.zst','/tmp/ngx25_20250923.dbn.zst'],
+            '20250930':['/tmp/ngx25_20250930.dbn.zst'],
+            '20251001':['/tmp/ngx25_20251001.dbn.zst'],
+          }
+          def cont(path):
+            m={}
+            with gzip.open(path,'rt') as f:
+              for line in f:
+                r=json.loads(line)
+                if r.get('action')!='T': continue
+                px=float(r.get('price') or 0)
+                if px<=0: continue
+                ts=float(r.get('ts_event',r.get('ts',0)))
+                m[int(ts)%86400]=px
+            return m
+          def mbo(path):
+            m={}
+            store=db.DBNStore.from_file(path)
+            for r in store:
+              if type(r).__name__!='MBOMsg': continue
+              if str(getattr(r.action,'value',r.action))!='T': continue
+              p=getattr(r,'price',None)
+              if p in (None,9223372036854775807,-9223372036854775808): continue
+              m[int(int(r.ts_event)/1_000_000_000)%86400]=float(p)/1e9
+            return m
+          out={}
+          for day,cands in days.items():
+            c=cont(f'/tmp/NG_{day}.jsonl.gz')
+            rows=[]
+            for p in cands:
+              mm=mbo(p); shared=sorted(set(c)&set(mm))
+              dif=[abs(c[s]-mm[s]) for s in shared]
+              rows.append({
+                'candidate':Path(p).name.split('_')[0],
+                'file':Path(p).name,
+                'continuous_trade_seconds':len(c),
+                'mbo_trade_seconds':len(mm),
+                'shared_seconds':len(shared),
+                'median_abs_price_diff':float(np.median(dif)) if dif else None,
+                'p95_abs_price_diff':float(np.quantile(dif,.95)) if dif else None,
+                'within_half_tick_fraction':float(np.mean(np.asarray(dif)<=0.0005)) if dif else None,
+              })
+            valid=[r for r in rows if r['median_abs_price_diff'] is not None]
+            best=min(valid,key=lambda r:(r['median_abs_price_diff'],-r['shared_seconds'])) if valid else None
+            out[day]={'candidates':rows,'selected':best}
+          Path('ng_exhaustion_mbo_resolution.json').write_text(json.dumps(out,indent=2)+'\n')
+          print(json.dumps(out,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-mbo-resolution-20260816
+          path: ng_exhaustion_mbo_resolution.json
