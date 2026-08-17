@@ -1,0 +1,93 @@
+{
+  "name": "NG exhaustion higher-order chain study contract",
+  "date": "2026-08-17",
+  "status": "FROZEN_PRECHAIN_BUILD",
+  "source_seed": "research/NG_EXHAUSTION_AFTERMATH_POSTV2_CHAIN_SEED_FREEZE_20260817.json",
+  "purpose": "Measure how far predictive dependence propagates from one exhaustion episode through second-, third-, and higher-order event/tape behavior, and distinguish inherited chains from behavioral resets.",
+  "observation_stream": {
+    "origin": "first actual NG trade after the Sunday weekly reopen",
+    "end": "last actual NG trade before the genuine weekly close",
+    "calendar_midnight_resets": false,
+    "he24_to_he1_resets": false,
+    "daily_file_boundary_resets": false,
+    "date_label_resets": false,
+    "holiday_special_sessions": "follow actual trade stream, never assumed clock time"
+  },
+  "event_detection": {
+    "price_used": false,
+    "signal": "trailing-20-second aggressor-volume imbalance from MBP-10 trade price versus concurrent top-of-book midpoint",
+    "orientation": "event polarity from roll20 sign at t0",
+    "threshold": "85th percentile of absolute roll20 within each UTC source date, preserving the existing NG event-detector threshold convention",
+    "local_max_radius_seconds": 5,
+    "refractory_seconds": 45,
+    "prominence": "absolute t0 roll20 minus median absolute roll20 over t0-30..t0-10",
+    "week_continuity_extension": "candidate windows, prominence history, roll20, and refractory selection may cross UTC-date boundaries; day-native thresholding does not create a chain reset",
+    "target_day_equivalence": "compare continuous-week detected target-day events against the frozen 3429-event reveal+holdout roster and fail closed on unexplained interior mismatches"
+  },
+  "node_features": {
+    "pre_family": "frozen operational A/B/C classifier only",
+    "a_post_state": "frozen A +60 classifier only when family A",
+    "seed_aftermath_state": [
+      "persistent_exhaustion",
+      "collapsed_same_flow_reload",
+      "collapsed_opposite_flow_reversal",
+      "collapsed_sparse_indeterminate"
+    ],
+    "dynamic_endpoint": "three consecutive causal forward-filled oriented roll20 <= 0; record structural onset and causal confirmation",
+    "late_flow": "+41..+60 aligned aggressor pressure",
+    "book": "aligned 10-level book imbalance and change",
+    "family_bc": "no new B/C subtype doctrine"
+  },
+  "time_context": {
+    "record_for_every_event_and_link": true,
+    "fields": [
+      "absolute UTC timestamp",
+      "America/New_York local timestamp",
+      "seconds and hours since first Sunday-reopen trade",
+      "UTC date/time",
+      "local date/time",
+      "source UTC date",
+      "position within trading week"
+    ],
+    "initial_chain_gate": false,
+    "reset_gate": false,
+    "analysis_role": "context/covariate after chain types are discovered"
+  },
+  "chain_representation": {
+    "structural_sequence": "all detected exhaustion events ordered continuously inside the trading week",
+    "polarity_sequence": "plus/minus event polarity",
+    "state_sequence": "validated seed aftermath state per event",
+    "family_sequence": "A/B/C per event",
+    "inter_event_seconds": true,
+    "overlap": "record whether a descendant event starts before the ancestor exhaustion endpoint confirms",
+    "executable_link": "record whether the predecessor state used for a prediction was causally known before the descendant t0"
+  },
+  "chain_questions": [
+    "Does current event state predict event n+1?",
+    "Does adding event n-1 improve prediction of n+1 beyond current event alone?",
+    "Does adding n-2 improve again, and how far does incremental information survive?",
+    "Which polarity/state sequences form reproducible long chains versus short chains?",
+    "At what link does inherited information from the chain origin cease to improve prediction over a fresh first-order model?",
+    "Do post-end tape continuation/reversal outcomes themselves propagate into later exhaustion states?",
+    "Do specific chain types cluster by time-of-day/session position without using time as a gate?"
+  ],
+  "order_depth": {
+    "fixed_chain_length_assumption": false,
+    "stop_rule": "continue increasing event-order depth while out-of-sample predictive improvement and sample support survive; stop/downgrade when incremental information disappears or sample size becomes uninformative",
+    "combinatorial_guardrail": "do not promote rare exact sequences solely because they were screened; prefer state aggregation, shrinkage, monotone effects, and leave-one-week-out replication"
+  },
+  "validation": {
+    "initial_weeks": ["2025-07-13", "2025-09-21", "2025-09-28"],
+    "initial_method": "leave-one-trading-week-out replication for chain-order models and sequence statistics",
+    "higher_order_promotion": "requires replication beyond one week and eventual forward-live validation",
+    "time_of_day_retuning": false,
+    "permanent_frankie_mutation": false,
+    "runway_clock_mutation": false
+  },
+  "parallel_lanes_after_canonical_table_freeze": {
+    "order_memory": "Markov/event-order incremental prediction and polarity/state sequence depth",
+    "tape_propagation": "post-end continuation/reversal propagation through later events",
+    "reset_detection": "test when origin information no longer adds beyond current state",
+    "time_context": "describe timing/session clustering after chain types are identified"
+  }
+}
