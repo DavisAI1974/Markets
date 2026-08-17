@@ -125,6 +125,25 @@ class ExhaustionRunwayClockTests(unittest.TestCase):
         self.assertEqual(out["post_state"], clock.C_SCALE_TRANSITION_PROVISIONAL)
         self.assertEqual(out["runways"]["13t"]["baseline_total_s"], 4320.0)
 
+    def test_data_flags_fail_closed_or_degrade_confidence(self):
+        no_micro = self.update(
+            microstructure="same_side",
+            data_flags={"microstructure": False, "a_classifier_window": True, "event_clock": True},
+        )
+        self.assertEqual(no_micro["microstructure_confirmation"], "unavailable")
+        self.assertIn("microstructure", no_micro["data_gap_status"])
+        self.assertLess(no_micro["runways"]["8t"]["confidence"], 0.70)
+
+        no_classifier = self.update(
+            a_t0_to_plus60=self.fast,
+            data_flags={"a_classifier_window": False, "event_clock": True},
+        )
+        self.assertEqual(no_classifier["post_state"], clock.A_STATE_UNAVAILABLE)
+        self.assertIsNone(no_classifier["runways"]["8t"]["remaining_s"])
+
+        with self.assertRaises(clock.RunwayClockError):
+            self.update(data_flags={"event_clock": False})
+
     def test_update_is_deterministic(self):
         first = self.update(a_t0_to_plus60=self.persistent, microstructure="same_side", elapsed_s=321.0)
         second = self.update(a_t0_to_plus60=self.persistent, microstructure="same_side", elapsed_s=321.0)
