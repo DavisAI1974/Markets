@@ -1,0 +1,76 @@
+name: NG Frankie Exhaustion Blind Predict 20260816
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-frankie-blind-20260816
+    paths:
+      - research/ng_exhaustion_frankie_blind_predict_20260816.py
+      - research/FRANKIE_NG_EXHAUSTION_BLIND_PREDICTION_SCHEMA_FROZEN_20260816.json
+      - .github/workflows/ng_frankie_blind_predict_20260816.yml
+
+permissions:
+  contents: write
+
+jobs:
+  frankie_blind_predict:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      BUCKET: bento-568968024170-us-east-2-an
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install frozen blind dependencies
+        run: python -m pip install --quiet numpy scipy scikit-learn matplotlib databento
+      - name: Download authoritative continuous MBP10 days
+        run: |
+          set -euo pipefail
+          for d in 20250717 20250923 20250930 20251001; do
+            aws s3 cp s3://${BUCKET}/nymex/nymex_cont/NG_${d}.jsonl.gz /tmp/NG_${d}.jsonl.gz --only-show-errors
+            test -s /tmp/NG_${d}.jsonl.gz
+          done
+      - name: Download proven matching MBO where available
+        run: |
+          set -euo pipefail
+          aws s3 cp s3://${BUCKET}/nymex/ng_mbo_ngv25/NG_20250923.dbn.zst /tmp/ng_mbo_ngv25_20250923.dbn.zst --only-show-errors
+          aws s3 cp s3://${BUCKET}/nymex/ng_mbo_ngx25/NG_20250930.dbn.zst /tmp/ng_mbo_ngx25_20250930.dbn.zst --only-show-errors
+          aws s3 cp s3://${BUCKET}/nymex/ng_mbo_ngx25/NG_20251001.dbn.zst /tmp/ng_mbo_ngx25_20251001.dbn.zst --only-show-errors
+      - name: Rebuild guarded blind packet only
+        run: |
+          set -euo pipefail
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_frankie_blind_input_v2_20260816.py \
+            /tmp/NG_20250717.jsonl.gz \
+            /tmp/NG_20250923.jsonl.gz \
+            /tmp/NG_20250930.jsonl.gz \
+            /tmp/NG_20251001.jsonl.gz
+          test ! -e ng_frankie_blind_answers.json
+          test ! -e ng_frankie_blind_answers_SEALED.json
+      - name: Run Frankie single-best price curves
+        run: |
+          set -euo pipefail
+          python research/ng_exhaustion_frankie_blind_predict_20260816.py | tee /tmp/frankie_freeze_manifest.log
+          test -s research/blind_freeze/ng_exhaustion_20260816/FRANKIE_NG_EXHAUSTION_BLIND_PREDICTION_FREEZE_MANIFEST_20260816.json
+          test ! -e ng_frankie_blind_answers.json
+          test ! -e ng_frankie_blind_answers_SEALED.json
+      - name: Freeze predictions to scratch branch
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/blind_freeze/ng_exhaustion_20260816/
+          git diff --cached --quiet && { echo 'No new prediction freeze files'; exit 1; }
+          git commit -m 'Freeze Frankie NG exhaustion blind price curves'
+          git push origin HEAD:${GITHUB_REF_NAME}
+      - name: Upload frozen blind predictions
+        uses: actions/upload-artifact@v4
+        with:
+          name: frankie-ng-exhaustion-blind-predictions-20260816
+          path: research/blind_freeze/ng_exhaustion_20260816/
+          if-no-files-found: error
