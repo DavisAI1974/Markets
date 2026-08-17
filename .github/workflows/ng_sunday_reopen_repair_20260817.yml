@@ -28,13 +28,12 @@ jobs:
           python-version: '3.11'
       - name: Install recovery dependencies
         run: pip install --quiet databento pandas boto3
-      - name: Verify exact paid batch and missing destination objects
+      - name: Verify exact paid batch and identify only still-missing Sundays
         run: |
           set -euo pipefail
           PYTHONPATH=research/kalshi python - <<'PY'
           import databento_backfill as dbf
-          c=dbf._client()
-          j=c.batch.get_job_details('GLBX-20260720-NJRXDHEGFY')
+          c=dbf._client(); j=c.batch.get_job_details('GLBX-20260720-NJRXDHEGFY')
           assert j.get('state')=='done', j
           assert j.get('dataset')=='GLBX.MDP3', j
           assert j.get('schema')=='mbp-10', j
@@ -43,82 +42,121 @@ jobs:
           assert str(j.get('end')).startswith('2026-07-19'), j
           print(j)
           PY
+          : > /tmp/missing_days.txt
+          mkdir -p /tmp/current
           for d in 20260705 20260712; do
-            if aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" --query 'KeyCount' --output text | grep -vq '^0$'; then
-              echo "::error::Destination Sunday ${d} is no longer missing; refusing overwrite"
-              exit 1
+            mapfile -t keys < <(
+              aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" \
+                --query 'Contents[].Key' --output text | tr '\t' '\n' | \
+                grep -E "^nymex/nymex_cont/NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" || true
+            )
+            if [ "${#keys[@]}" -eq 0 ]; then
+              echo "$d" >> /tmp/missing_days.txt
+              echo "still missing ${d}"
+            elif [ "${#keys[@]}" -eq 1 ]; then
+              key="${keys[0]}"; echo "already present ${d}: ${key}"
+              aws s3 cp "s3://${BUCKET}/${key}" "/tmp/current/$(basename "${key}")" --only-show-errors
+              gzip -t "/tmp/current/$(basename "${key}")"
+            else
+              echo "::error::Duplicate canonical Sunday objects for ${d}: ${keys[*]}"; exit 1
             fi
           done
-      - name: Download only Sunday and adjacent daily DBN files from completed batch
+          echo 'missing days:'; cat /tmp/missing_days.txt || true
+      - name: Download only needed Sunday and adjacent daily DBN files
         run: |
           set -euo pipefail
           mkdir -p /tmp/dbn /tmp/decoded
+          if [ ! -s /tmp/missing_days.txt ]; then echo 'No repair download needed'; exit 0; fi
           PYTHONPATH=research/kalshi python - <<'PY'
-          import pathlib
+          from datetime import datetime,timedelta
           import databento_backfill as dbf
-          c=dbf._client(); jid='GLBX-20260720-NJRXDHEGFY'
-          files=c.batch.list_files(jid)
-          wanted_dates=('20260705','20260706','20260707','20260712','20260713','20260714')
+          missing=[x.strip() for x in open('/tmp/missing_days.txt') if x.strip()]
+          wanted=set()
+          for d in missing:
+              dt=datetime.strptime(d,'%Y%m%d')
+              for k in (0,1,2): wanted.add((dt+timedelta(days=k)).strftime('%Y%m%d'))
+          c=dbf._client(); jid='GLBX-20260720-NJRXDHEGFY'; files=c.batch.list_files(jid)
           data=[]
           for f in files:
-              name=str(f.get('filename',''))
-              if name.endswith('.dbn.zst') and any(d in name.replace('-','') for d in wanted_dates):
+              name=str(f.get('filename','')); compact=name.replace('-','')
+              if name.endswith('.dbn.zst') and any(d in compact for d in wanted):
                   data.append((name,int(f.get('size',0)),str(f.get('hash',''))))
-          print('selected files:', data)
+          print('wanted dates:',sorted(wanted)); print('selected files:',data)
           found=' '.join(x[0].replace('-','') for x in data)
-          for d in wanted_dates:
-              assert d in found, (d,data)
+          for d in wanted: assert d in found,(d,data)
           for name,_,_ in data:
-              c.batch.download(job_id=jid, output_dir='/tmp/dbn', filename_to_download=name)
+              c.batch.download(job_id=jid,output_dir='/tmp/dbn',filename_to_download=name)
           PY
           find /tmp/dbn -type f -maxdepth 3 -print | sort
-      - name: Decode with canonical raw MBP10 writer and build Sunday gzip objects
+      - name: Decode with canonical raw MBP10 writer and build only missing Sunday gzip objects
         run: |
           set -euo pipefail
+          if [ ! -s /tmp/missing_days.txt ]; then echo 'No decode needed'; exit 0; fi
           PYTHONPATH=research/kalshi python - <<'PY'
-          import glob, gzip, hashlib, json, math, os, shutil
+          import glob,gzip,hashlib,json,os,shutil
           import databento as db
           import databento_backfill as dbf
-          out='/tmp/decoded'; os.makedirs(out,exist_ok=True)
-          total=0
+          out='/tmp/decoded'; os.makedirs(out,exist_ok=True); total=0
           for p in sorted(glob.glob('/tmp/dbn/**/*.dbn.zst',recursive=True)):
               df=db.DBNStore.from_file(p).to_df()
-              if len(df): total += dbf._write_mbp10_df(df,'NG',out)
+              if len(df): total+=dbf._write_mbp10_df(df,'NG',out)
           print('decoded rows:',total)
-          for day in ('20260705','20260712'):
-              src=f'{out}/NG_{day}.jsonl'
-              assert os.path.isfile(src) and os.path.getsize(src)>0, src
+          for day in [x.strip() for x in open('/tmp/missing_days.txt') if x.strip()]:
+              src=f'{out}/NG_{day}.jsonl'; assert os.path.isfile(src) and os.path.getsize(src)>0,src
               rows=0; min_ts=None; max_ts=None
               with open(src) as f:
                   for line in f:
-                      r=json.loads(line); rows+=1
-                      ts=r.get('ts')
+                      r=json.loads(line); rows+=1; ts=r.get('ts')
                       if ts is not None:
                           ts=float(ts); min_ts=ts if min_ts is None else min(min_ts,ts); max_ts=ts if max_ts is None else max(max_ts,ts)
               assert rows>0
               dst=f'/tmp/NG_{day}_sun.jsonl.gz'
-              with open(src,'rb') as a, gzip.open(dst,'wb',compresslevel=6) as b: shutil.copyfileobj(a,b)
-              raw_sha=hashlib.sha256(open(src,'rb').read()).hexdigest()
-              gz_sha=hashlib.sha256(open(dst,'rb').read()).hexdigest()
-              print(json.dumps({'day':day,'rows':rows,'raw_bytes':os.path.getsize(src),'gzip_bytes':os.path.getsize(dst),'raw_sha256':raw_sha,'gzip_sha256':gz_sha,'min_ts':min_ts,'max_ts':max_ts},sort_keys=True))
+              with open(src,'rb') as a,gzip.open(dst,'wb',compresslevel=6) as b: shutil.copyfileobj(a,b)
+              print(json.dumps({'day':day,'rows':rows,'raw_bytes':os.path.getsize(src),'gzip_bytes':os.path.getsize(dst),
+                                'raw_sha256':hashlib.sha256(open(src,'rb').read()).hexdigest(),
+                                'gzip_sha256':hashlib.sha256(open(dst,'rb').read()).hexdigest(),
+                                'min_ts':min_ts,'max_ts':max_ts},sort_keys=True))
           PY
-          test -s /tmp/NG_20260705_sun.jsonl.gz
-          test -s /tmp/NG_20260712_sun.jsonl.gz
-          gzip -t /tmp/NG_20260705_sun.jsonl.gz
-          gzip -t /tmp/NG_20260712_sun.jsonl.gz
-      - name: Publish only the two missing canonical Sunday objects
+      - name: Publish only Sundays that remain missing at write time
         run: |
           set -euo pipefail
-          for d in 20260705 20260712; do
-            key="nymex/nymex_cont/NG_${d}_sun.jsonl.gz"
-            aws s3 cp "/tmp/NG_${d}_sun.jsonl.gz" "s3://${BUCKET}/${key}" --only-show-errors
-            aws s3api head-object --bucket "${BUCKET}" --key "${key}"
-          done
-      - name: Verify Sunday reopen corpus is now complete
-        run: |
-          set -euo pipefail
-          for d in 20260705 20260712; do
+          if [ ! -s /tmp/missing_days.txt ]; then echo 'Nothing to publish'; exit 0; fi
+          while read -r d; do
+            [ -n "$d" ] || continue
             n=$(aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" --query 'KeyCount' --output text)
-            test "$n" -eq 1 || { echo "::error::Expected one restored object for ${d}, got ${n}"; exit 1; }
+            if [ "$n" -eq 0 ]; then
+              key="nymex/nymex_cont/NG_${d}_sun.jsonl.gz"
+              test -s "/tmp/NG_${d}_sun.jsonl.gz"; gzip -t "/tmp/NG_${d}_sun.jsonl.gz"
+              aws s3 cp "/tmp/NG_${d}_sun.jsonl.gz" "s3://${BUCKET}/${key}" --only-show-errors
+              echo "published ${key}"
+            else
+              echo "${d} was restored concurrently; preserving existing object"
+            fi
+          done < /tmp/missing_days.txt
+      - name: Verify both Sunday reopen objects are present and readable
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/final
+          for d in 20260705 20260712; do
+            mapfile -t keys < <(
+              aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" \
+                --query 'Contents[].Key' --output text | tr '\t' '\n' | \
+                grep -E "^nymex/nymex_cont/NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" || true
+            )
+            test "${#keys[@]}" -eq 1 || { echo "::error::Sunday ${d} has ${#keys[@]} canonical objects"; exit 1; }
+            key="${keys[0]}"; dst="/tmp/final/$(basename "${key}")"
+            aws s3 cp "s3://${BUCKET}/${key}" "$dst" --only-show-errors
+            gzip -t "$dst"
+            python - "$dst" <<'PY'
+          import gzip,json,sys
+          p=sys.argv[1]; n=0; lo=None; hi=None
+          with gzip.open(p,'rt') as f:
+              for line in f:
+                  r=json.loads(line); n+=1; ts=r.get('ts')
+                  if ts is not None:
+                      ts=float(ts); lo=ts if lo is None else min(lo,ts); hi=ts if hi is None else max(hi,ts)
+          assert n>0
+          print({'path':p,'rows':n,'min_ts':lo,'max_ts':hi})
+          PY
           done
           aws s3 ls "s3://${BUCKET}/nymex/nymex_cont/" | grep -E 'NG_20260705|NG_20260712'
