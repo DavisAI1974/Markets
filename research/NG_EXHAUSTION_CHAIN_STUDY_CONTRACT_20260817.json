@@ -25,17 +25,20 @@
     "target_day_equivalence": "compare continuous-week detected target-day events against the frozen 3429-event reveal+holdout roster and fail closed on unexplained interior mismatches"
   },
   "node_features": {
-    "pre_family": "frozen operational A/B/C classifier only",
-    "a_post_state": "frozen A +60 classifier only when family A",
-    "seed_aftermath_state": [
-      "persistent_exhaustion",
-      "collapsed_same_flow_reload",
-      "collapsed_opposite_flow_reversal",
-      "collapsed_sparse_indeterminate"
-    ],
+    "pre_family": "frozen operational A/B/C classifier only; annotation/context, not a required clustering cell",
+    "a_post_state": "frozen A +60 classifier only when family A; annotation/context, not a required clustering cell",
+    "seed_aftermath_state": {
+      "labels": [
+        "persistent_exhaustion",
+        "collapsed_same_flow_reload",
+        "collapsed_opposite_flow_reversal",
+        "collapsed_sparse_indeterminate"
+      ],
+      "role": "validated annotations and benchmark features only; chain discovery must not force observations into these cells or assume chain clusters equal these labels"
+    },
     "dynamic_endpoint": "three consecutive causal forward-filled oriented roll20 <= 0; record structural onset and causal confirmation",
-    "late_flow": "+41..+60 aligned aggressor pressure",
-    "book": "aligned 10-level book imbalance and change",
+    "late_flow": "+41..+60 aligned aggressor pressure retained as a continuous feature",
+    "book": "aligned 10-level book imbalance and change retained as continuous features",
     "family_bc": "no new B/C subtype doctrine"
   },
   "time_context": {
@@ -51,43 +54,57 @@
     ],
     "initial_chain_gate": false,
     "reset_gate": false,
-    "analysis_role": "context/covariate after chain types are discovered"
+    "analysis_role": "context/covariate after chain structures are discovered"
   },
   "chain_representation": {
     "structural_sequence": "all detected exhaustion events ordered continuously inside the trading week",
     "polarity_sequence": "plus/minus event polarity",
-    "state_sequence": "validated seed aftermath state per event",
-    "family_sequence": "A/B/C per event",
+    "continuous_event_features": "retain raw/continuous exhaustion geometry, flow, book, timing, endpoint, and tape-after-end measurements so clustering is not limited to preassigned categorical cells",
+    "validated_annotations": "A/B/C, frozen A post-state, and validated aftermath labels travel with each event but do not define the clusters",
     "inter_event_seconds": true,
     "overlap": "record whether a descendant event starts before the ancestor exhaustion endpoint confirms",
     "executable_link": "record whether the predecessor state used for a prediction was causally known before the descendant t0"
   },
+  "data_driven_clustering": {
+    "required": true,
+    "predefined_chain_cells": false,
+    "predefined_long_short_cutoff": false,
+    "predefined_reversal_same_side_alternating_classes": false,
+    "cluster_count_fixed_in_advance": false,
+    "principle": "let recurrent structures emerge from the continuous event/link/sequence data first; name and describe clusters only after they are stable and interpretable",
+    "methods": "compare multiple unsupervised/sequence-aware views rather than trusting one algorithm; use stability under resampling/leave-one-week-out replication and neighborhood continuity to decide whether a cluster is real",
+    "validated_labels_role": "use prior validated aftermath states only to interpret or externally validate discovered clusters after formation, never to seed, force, or score the clustering solution",
+    "time_role": "exclude time-of-day as an initial clustering gate; inspect its enrichment only after clusters are formed",
+    "rare_structure_guardrail": "a visually interesting tiny cluster is not a finding unless it recurs across independent weeks or has strong out-of-sample support"
+  },
   "chain_questions": [
-    "Does current event state predict event n+1?",
+    "What recurrent chain structures emerge from the data without predefined chain cells?",
+    "Does current event information predict event n+1?",
     "Does adding event n-1 improve prediction of n+1 beyond current event alone?",
     "Does adding n-2 improve again, and how far does incremental information survive?",
-    "Which polarity/state sequences form reproducible long chains versus short chains?",
+    "Which discovered structures turn out to have longer versus shorter predictive lifespans after clustering, rather than defining long/short beforehand?",
     "At what link does inherited information from the chain origin cease to improve prediction over a fresh first-order model?",
     "Do post-end tape continuation/reversal outcomes themselves propagate into later exhaustion states?",
-    "Do specific chain types cluster by time-of-day/session position without using time as a gate?"
+    "Do discovered chain structures cluster by time-of-day/session position without using time as a gate?"
   ],
   "order_depth": {
     "fixed_chain_length_assumption": false,
     "stop_rule": "continue increasing event-order depth while out-of-sample predictive improvement and sample support survive; stop/downgrade when incremental information disappears or sample size becomes uninformative",
-    "combinatorial_guardrail": "do not promote rare exact sequences solely because they were screened; prefer state aggregation, shrinkage, monotone effects, and leave-one-week-out replication"
+    "combinatorial_guardrail": "do not promote rare exact sequences solely because they were screened; prefer continuous learned structure, shrinkage, stability, monotone effects where present, and leave-one-week-out replication"
   },
   "validation": {
     "initial_weeks": ["2025-07-13", "2025-09-21", "2025-09-28"],
-    "initial_method": "leave-one-trading-week-out replication for chain-order models and sequence statistics",
+    "initial_method": "leave-one-trading-week-out replication for learned chain structures, order-depth models, and sequence statistics",
     "higher_order_promotion": "requires replication beyond one week and eventual forward-live validation",
     "time_of_day_retuning": false,
     "permanent_frankie_mutation": false,
     "runway_clock_mutation": false
   },
   "parallel_lanes_after_canonical_table_freeze": {
-    "order_memory": "Markov/event-order incremental prediction and polarity/state sequence depth",
+    "structure_discovery": "data-driven clustering/sequence structure from continuous event and link features; no predefined chain cells",
+    "order_memory": "incremental event-order prediction using learned structures and raw features",
     "tape_propagation": "post-end continuation/reversal propagation through later events",
     "reset_detection": "test when origin information no longer adds beyond current state",
-    "time_context": "describe timing/session clustering after chain types are identified"
+    "time_context": "describe timing/session clustering only after chain structures are identified"
   }
 }
