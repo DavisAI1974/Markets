@@ -115,7 +115,7 @@ def main(paths):
           'aggressor_sell_volume_t_minus60_to_plus60':vec(d.sell_vol,t),
           'post_exhaustion_dipole_only':{'t50_s':r['exh_t50_s'],'t25_s':r['exh_t25_s'],'t10_s':r['exh_t10_s'],'zero_s':r['exh_zero_s']},
           'mbo_status':'MATCHED_CONTRACT_MBO' if r['day'] in mbo else 'UNAVAILABLE_MBP10_ONLY',
-          'mbo_nonprice_t_minus60_to_plus60':mbo_vec(mbo.get(r['day'],{}),t) if r['day'] in mbo else None})
+          'mbo_orderflow_t_minus60_to_plus60':mbo_vec(mbo.get(r['day'],{}),t) if r['day'] in mbo else None})
     bad=scan_keys(out)
     if bad: raise SystemExit(f'forbidden blind fields {bad[:10]}')
     toks=target_tokens(); c=[0]; brain=redact(copy.deepcopy(brain_view.load()),toks,c)
