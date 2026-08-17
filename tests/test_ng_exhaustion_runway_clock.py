@@ -104,21 +104,22 @@ class ExhaustionRunwayClockTests(unittest.TestCase):
         for scale in clock.SCALES:
             self.assertEqual(same["runways"][scale]["remaining_s"], mixed["runways"][scale]["remaining_s"])
             self.assertEqual(opposite["runways"][scale]["remaining_s"], mixed["runways"][scale]["remaining_s"])
-            self.assertGreater(same["runways"][scale]["confidence"], mixed["runways"][scale]["confidence"])
-            self.assertLess(opposite["runways"][scale]["confidence"], mixed["runways"][scale]["confidence"])
+            self.assertEqual(same["runways"][scale]["confidence"]["modifier"], "stronger")
+            self.assertEqual(mixed["runways"][scale]["confidence"]["modifier"], "neutral")
+            self.assertEqual(opposite["runways"][scale]["confidence"]["modifier"], "weaker")
 
     def test_missing_A_window_after60_degrades_closed(self):
         out = self.update(a_t0_to_plus60=None, elapsed_s=120.0)
         self.assertEqual(out["post_state"], clock.A_STATE_UNAVAILABLE)
         self.assertIn("a_classifier_window", out["data_gap_status"])
-        self.assertEqual(out["runways"]["8t"]["confidence"], 0.0)
+        self.assertEqual(out["runways"]["8t"]["confidence"]["base"], "unavailable")
         self.assertIsNone(out["runways"]["8t"]["remaining_s"])
 
     def test_B_remains_unresolved_low_confidence(self):
         out = self.update(family="B", a_t0_to_plus60=None, elapsed_s=100.0)
         self.assertEqual(out["post_state"], clock.B_UNRESOLVED)
         self.assertEqual(out["runways"]["3t"]["baseline_total_s"], 353.0)
-        self.assertLessEqual(out["runways"]["3t"]["confidence"], 0.25)
+        self.assertEqual(out["runways"]["3t"]["confidence"]["base"], "low")
 
     def test_C_is_provisional_fallback(self):
         out = self.update(family="C", a_t0_to_plus60=None, elapsed_s=100.0)
@@ -132,7 +133,7 @@ class ExhaustionRunwayClockTests(unittest.TestCase):
         )
         self.assertEqual(no_micro["microstructure_confirmation"], "unavailable")
         self.assertIn("microstructure", no_micro["data_gap_status"])
-        self.assertLess(no_micro["runways"]["8t"]["confidence"], 0.70)
+        self.assertEqual(no_micro["runways"]["8t"]["confidence"]["modifier"], "degraded_unavailable")
 
         no_classifier = self.update(
             a_t0_to_plus60=self.fast,
