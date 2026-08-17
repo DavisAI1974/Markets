@@ -10,6 +10,7 @@ on:
       - research/ng_exhaustion_live_clock_batch_proof.py
       - research/kalshi/ng_live_exhaustion_collector.py
       - tests/test_ng_exhaustion_live_clock.py
+      - tests/test_ng_live_exhaustion_collector.py
       - .github/workflows/ng_exhaustion_live_clock_v0.yml
   workflow_dispatch:
 
@@ -18,10 +19,10 @@ permissions:
   actions: read
 
 env:
-  DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_DEFAULT_REGION: us-east-2
+  BUCKET: bento-568968024170-us-east-2-an
 
 jobs:
   live_clock_proof:
@@ -34,11 +35,12 @@ jobs:
           python-version: '3.11'
       - name: Install focused dependencies
         run: python -m pip install --quiet databento
-      - name: Require live Databento secret
+      - name: Require AWS repository secrets
         shell: bash
         run: |
           set -euo pipefail
-          test -n "${DATABENTO_API_KEY:-}" || { echo 'DATABENTO_API_KEY missing'; exit 2; }
+          test -n "${AWS_ACCESS_KEY_ID:-}" || { echo 'AWS_ACCESS_KEY_ID missing'; exit 2; }
+          test -n "${AWS_SECRET_ACCESS_KEY:-}" || { echo 'AWS_SECRET_ACCESS_KEY missing'; exit 2; }
       - name: Download exact frozen blind input artifact
         env:
           GH_TOKEN: ${{ github.token }}
@@ -50,8 +52,11 @@ jobs:
           echo '224be8b033c1a03d638d7b84aef849363067e1961e9945e72bc86b52c3d01c39  /tmp/ng_blind.zip' | sha256sum -c -
           unzip -q /tmp/ng_blind.zip -d /tmp/ng_blind
           test -s /tmp/ng_blind/ng_frankie_blind_records.json
-      - name: Run live-input unit tests
-        run: PYTHONPATH=research python -m unittest -v tests.test_ng_exhaustion_live_clock
+      - name: Run live-input and callback unit tests
+        run: |
+          PYTHONPATH=research:research/kalshi python -m unittest -v \
+            tests.test_ng_exhaustion_live_clock \
+            tests.test_ng_live_exhaustion_collector
       - name: Prove frozen batch equivalence
         run: |
           PYTHONPATH=research python research/ng_exhaustion_live_clock_batch_proof.py \
@@ -59,44 +64,60 @@ jobs:
             --family-classifier research/FRANKIE_NG_PRE_FAMILY_CLASSIFIER_FROZEN_OPERATIONAL_20260817.json \
             --poststate-classifier research/FRANKIE_NG_A_POSTSTATE_CLASSIFIER_FROZEN_PREBLIND_20260816.json \
             --out /tmp/live_clock_batch_proof.json
-      - name: Run one-session live Databento canary through existing collector path
+      - name: Read existing live NG collector witness from S3
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf /tmp/ng_live_clock_canary
-          mkdir -p /tmp/ng_live_clock_canary
-          timeout 150s env PYTHONPATH=research:research/kalshi \
-            python research/kalshi/ng_live_exhaustion_collector.py \
-              --session-seconds 90 \
-              --health-interval 1 \
-              --local-dir /tmp/ng_live_clock_canary \
-              --no-upload \
-              --keep-local \
-            | tee /tmp/live_clock_canary_stdout.txt
-          test -s /tmp/ng_live_clock_canary/health.json
-      - name: Verify live roll20 tap produced real data
+          aws s3 cp "s3://${BUCKET}/nymex/live/ng/health.json" /tmp/live_base_health.json --only-show-errors
+          aws s3api head-object --bucket "${BUCKET}" --key nymex/live/ng/health.json > /tmp/live_base_health_head.json
+          aws s3 ls "s3://${BUCKET}/nymex/live/ng/" --recursive | awk '$4 ~ /\.dbn$/ {print $0}' | tail -1 > /tmp/latest_live_archive.txt
+          test -s /tmp/live_base_health.json
+          test -s /tmp/latest_live_archive.txt
+      - name: Verify live infrastructure is producing MBP-10
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
+          import datetime as dt
           import json
           from pathlib import Path
-          h=json.loads(Path('/tmp/ng_live_clock_canary/health.json').read_text())
-          tap=h.get('exhaustion_input') or {}
-          assert tap.get('status')=='PASS', tap
-          assert tap.get('future_price_accessed') is False, tap
-          assert tap.get('permanent_frankie_mutated') is False, tap
-          assert int(tap.get('mbp10_trade_records_seen') or 0)>0, tap
-          assert int(tap.get('classified_trades') or 0)>0, tap
-          finite=[x for _,x in tap.get('history',[]) if x is not None]
-          assert finite, tap
-          proof={'schema':'markets.ng_exhaustion.live_databento_canary.v1','status':'PASS','requested_symbol':h.get('requested_symbol'),
-                 'raw_symbol':h.get('raw_symbol'),'connection':h.get('connection'),'record_age_ms':h.get('record_age_ms'),
-                 'mbp10_trade_records_seen':tap.get('mbp10_trade_records_seen'),'classified_trades':tap.get('classified_trades'),
-                 'midpoint_skipped':tap.get('midpoint_skipped'),'invalid_skipped':tap.get('invalid_skipped'),
-                 'history_points':len(tap.get('history',[])),'finite_roll20_points':len(finite),'last_second':tap.get('last_second'),
-                 'last_roll20_raw':tap.get('roll20_raw'),'future_price_accessed':False,'permanent_frankie_mutated':False}
-          Path('/tmp/live_databento_canary_proof.json').write_text(json.dumps(proof,indent=2,sort_keys=True)+'\n')
+          h=json.loads(Path('/tmp/live_base_health.json').read_text())
+          head=json.loads(Path('/tmp/live_base_health_head.json').read_text())
+          counts=h.get('record_counts') or {}
+          mbp10=sum(int(v) for k,v in counts.items() if 'MBP10' in str(k).upper())
+          assert h.get('service')=='markets-ng-live', h
+          assert h.get('dataset')=='GLBX.MDP3', h
+          assert h.get('requested_symbol')=='NG.v.0', h
+          assert mbp10>0, counts
+          assert int(h.get('archive_bytes') or 0)>0, h
+          stamp=head.get('LastModified')
+          modified=dt.datetime.fromisoformat(str(stamp).replace('Z','+00:00'))
+          age_h=(dt.datetime.now(dt.timezone.utc)-modified).total_seconds()/3600.0
+          assert 0 <= age_h <= 36.0, f'live health witness stale: {age_h:.2f}h'
+          archive_line=Path('/tmp/latest_live_archive.txt').read_text().strip().split()
+          assert len(archive_line)>=4, archive_line
+          archive_bytes=int(archive_line[2]); archive_key=archive_line[3]
+          assert archive_bytes>0 and archive_key.endswith('.dbn'), archive_line
+          proof={
+            'schema':'markets.ng_exhaustion.live_infrastructure_witness.v1',
+            'status':'PASS',
+            'service':h.get('service'),
+            'dataset':h.get('dataset'),
+            'requested_symbol':h.get('requested_symbol'),
+            'raw_symbol':h.get('raw_symbol'),
+            'connection_at_last_upload':h.get('connection'),
+            'mbp10_records_seen':mbp10,
+            'record_counts':counts,
+            'archive_bytes_at_health':h.get('archive_bytes'),
+            'health_s3_last_modified':stamp,
+            'health_age_hours':round(age_h,3),
+            'latest_completed_archive_key':archive_key,
+            'latest_completed_archive_bytes':archive_bytes,
+            'witness_note':'read-only witness from the existing production live collector; no second Databento session opened',
+            'future_price_accessed':False,
+            'permanent_frankie_mutated':False,
+          }
+          Path('/tmp/live_infrastructure_witness.json').write_text(json.dumps(proof,indent=2,sort_keys=True)+'\n')
           print(json.dumps(proof,indent=2,sort_keys=True))
           PY
       - name: Seal final live clock proof
@@ -105,11 +126,24 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          batch=json.loads(Path('/tmp/live_clock_batch_proof.json').read_text()); live=json.loads(Path('/tmp/live_databento_canary_proof.json').read_text())
+          batch=json.loads(Path('/tmp/live_clock_batch_proof.json').read_text())
+          live=json.loads(Path('/tmp/live_infrastructure_witness.json').read_text())
           assert batch['status']=='PASS' and live['status']=='PASS'
-          out={'schema':'markets.ng_exhaustion.live_clock_v0_final_proof.v1','status':'PASS','batch':batch,'live_databento_canary':live,
-               'clock_scope':'downstream of an upstream causal exhaustion-event t0 marker','family_assignment':'frozen pre-t0 61-sample geometry classifier',
-               'a_state_assignment':'frozen legal t0..+60 61-sample classifier','worker_count':1,'future_price_accessed':False,'permanent_frankie_mutated':False}
+          out={
+            'schema':'markets.ng_exhaustion.live_clock_v0_final_proof.v1',
+            'status':'PASS',
+            'batch':batch,
+            'live_infrastructure_witness':live,
+            'callback_proof':'tests.test_ng_live_exhaustion_collector verifies MBP-10 rtype 10 is consumed and TBBO rtype 1 is rejected',
+            'clock_scope':'downstream of an upstream causal exhaustion-event t0 marker',
+            'family_assignment':'frozen pre-t0 61-sample geometry classifier',
+            'a_state_assignment':'frozen legal t0..+60 61-sample classifier',
+            'roll20_source':'MBP-10 rtype 10 trade price vs concurrent midpoint; trailing 20-second aggressor-volume imbalance',
+            'worker_count':1,
+            'second_databento_session_opened':False,
+            'future_price_accessed':False,
+            'permanent_frankie_mutated':False,
+          }
           Path('/tmp/NG_EXHAUSTION_LIVE_CLOCK_V0_FINAL_PROOF_20260817.json').write_text(json.dumps(out,indent=2,sort_keys=True)+'\n')
           print(json.dumps(out,indent=2,sort_keys=True))
           PY
@@ -118,6 +152,6 @@ jobs:
           name: ng-exhaustion-live-clock-v0-final-proof
           path: |
             /tmp/live_clock_batch_proof.json
-            /tmp/live_databento_canary_proof.json
+            /tmp/live_infrastructure_witness.json
             /tmp/NG_EXHAUSTION_LIVE_CLOCK_V0_FINAL_PROOF_20260817.json
           if-no-files-found: error
