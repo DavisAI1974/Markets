@@ -1,0 +1,54 @@
+{
+  "a_post_state_counts": {
+    "A-fast-collapse": 831,
+    "A-persistent": 785
+  },
+  "causal_t0_anchor_served": true,
+  "family_counts": {
+    "A": 1616,
+    "B": 35,
+    "C": 60
+  },
+  "frozen_a_classifier_sha256": "698b956f2a9aad4b99ccb9afab916e7219123d10c82408b8d9340137c266ecb9",
+  "future_price_served_to_model": false,
+  "input_artifact_digest": "sha256:224be8b033c1a03d638d7b84aef849363067e1961e9945e72bc86b52c3d01c39",
+  "input_artifact_id": 9274443976,
+  "model_transport": "ChatGPT applying Frankie frozen experiment context and unchanged target-day-redacted brain",
+  "outcome_accessed_before_freeze": false,
+  "prediction_n": 1711,
+  "schema_commit": "58970b54fb8b6cd9f0d6e34dc34cdfaf538fcb77",
+  "schema_id": "FRANKIE_NG_EXHAUSTION_BLIND_PREDICTION_V2_SINGLE_BEST_CURVE_20260816",
+  "shards": {
+    "frankie_ng_blind_predictions_20250717.jsonl.gz": {
+      "bytes": 41097,
+      "day": "20250717",
+      "records": 420,
+      "sha256": "580198ef63cbec1ca6b7935cba5f57c8473b6c20bbc105ed0e861c7a04668806",
+      "uncompressed_sha256": "9e47cea374535f61de04049ff4c0f4d545c68f997d56babdcf960fdbf9aff203"
+    },
+    "frankie_ng_blind_predictions_20250923.jsonl.gz": {
+      "bytes": 43826,
+      "day": "20250923",
+      "records": 446,
+      "sha256": "43dee4e629627c50e14fefb72c560f5e5ecdd3ad0df03973acc9d9d8f6ee64a1",
+      "uncompressed_sha256": "b1cd799672f9ca41dee6ef6ff664fc3141e4ea806914d47b848417b2cef4fd0e"
+    },
+    "frankie_ng_blind_predictions_20250930.jsonl.gz": {
+      "bytes": 42872,
+      "day": "20250930",
+      "records": 428,
+      "sha256": "9b14348fd9519eac73f018ce48f7dd30f55fba4a013c327f8b53c71ee60bc855",
+      "uncompressed_sha256": "d50130709a85a2f82a0ddd37470ce974707708f4af359fcdae9b38caa02867f0"
+    },
+    "frankie_ng_blind_predictions_20251001.jsonl.gz": {
+      "bytes": 41804,
+      "day": "20251001",
+      "records": 417,
+      "sha256": "e6aaf55e826cf47bbfb898425c29772c55caad06476a04c5d161c0cc4ebd6ac7",
+      "uncompressed_sha256": "3f294786a18dce3d1b9009a23a34f7e14d7199aa14136f9ccc8026b77a7d5b14"
+    }
+  },
+  "single_best_curve_only": true,
+  "status": "FROZEN_BLIND_PREDICTIONS_PENDING_REVEAL",
+  "uncertainty_bands": false
+}
