@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -8,7 +9,7 @@ import sys
 sys.path.insert(0, str(ROOT / "research"))
 import ng_exhaustion_s3_stage as s
 
-ART = Path("/mnt/data/ng_exhaustion_blind_input_artifact.zip")
+ART = Path(os.environ.get("NG_EXHAUSTION_BLIND_ARTIFACT", "/mnt/data/ng_exhaustion_blind_input_artifact.zip"))
 CLF = ROOT / "research" / "FRANKIE_NG_A_POSTSTATE_CLASSIFIER_FROZEN_PREBLIND_20260816.json"
 
 
