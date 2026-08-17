@@ -1,93 +1,50 @@
 {
-  "name": "NG exhaustion chain Phase-1 54-week execution protocol",
+  "name": "NG exhaustion chain Phase-1 54-week execution adapter",
   "date": "2026-08-17",
   "status": "FROZEN_BEFORE_54W_RESULTS",
   "base_freeze": "research/NG_EXHAUSTION_CHAIN_PHASE1_54W_BASE_FREEZE_20260817.json",
-  "parent_contracts": [
-    "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json",
-    "research/NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_PROTOCOL_20260817.json",
-    "research/NG_EXHAUSTION_CHAIN_PHASE1_MECHANISM_ADDENDUM_20260817.json",
-    "research/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_PROTOCOL_20260817.json"
-  ],
-  "purpose": "Scale Phase-1 to the 54 unaffected historical weeks without changing detector, endpoint, week-boundary, chain-definition, or characteristics-wall semantics, while reserving 20260329 as a later insert-only out-of-time repair fold.",
-  "canonicalization": {
-    "week_streaming_required": true,
-    "reason": "Avoid holding dozens of six-day MBP-10 week arrays in memory simultaneously; each week is processed independently through the existing canonical detector functions and then merged deterministically.",
-    "shard_count": 6,
-    "weeks_per_shard": 9,
-    "pilot_equivalence_required_after_merge": true,
-    "frozen_reveal_holdout_events_expected": 3429,
-    "feature_outcome_namespace_separation_required": true,
-    "schema_hash_required": true,
-    "event_table_hash_required": true
+  "authoritative_existing_phase1": {
+    "canonical_builder": "research/ng_exhaustion_chain_canonical_table_20260817.py",
+    "structural_engine": "research/ng_exhaustion_chain_phase1_discovery_20260817.py",
+    "causal_engine": "research/ng_exhaustion_chain_phase1_causal_20260817.py",
+    "study_contract": "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json",
+    "discovery_protocol": "research/NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_PROTOCOL_20260817.json",
+    "mechanism_addendum": "research/NG_EXHAUSTION_CHAIN_PHASE1_MECHANISM_ADDENDUM_20260817.json",
+    "causal_protocol": "research/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_PROTOCOL_20260817.json"
   },
-  "validation": {
+  "rule": "Do not replace or reinterpret the prior Phase-1 machinery. Extend the existing calculators from the three-week pilot to the frozen 54-week base by removing pilot-only week/event-count assertions and by adding temporally honest whole-week validation appropriate to the longer history. The existing behavioral vectors, nonlinear models, lineage semantics, causal-availability semantics, detector, endpoint and chain interpretation remain authoritative.",
+  "existing_nonlinear_work_must_be_reused": true,
+  "existing_model_families": ["ridge", "distance-weighted KNN", "extra trees"],
+  "existing_behavior_only_full_path_dimensions": 22,
+  "existing_sparse_sensitivity_dimensions": 8,
+  "canonicalization": {
+    "week_streaming_is_execution_only": true,
+    "detector_semantics_may_change": false,
+    "endpoint_semantics_may_change": false,
+    "week_boundary_semantics_may_change": false,
+    "pilot_equivalence_after_merge_required": true,
+    "frozen_reveal_holdout_events_expected": 3429,
+    "event_table_hash_required": true,
+    "schema_hash_required": true
+  },
+  "full_history_validation_adapter": {
     "outer_unit": "whole trading week",
     "random_event_split_allowed": false,
-    "chronological_discovery_folds": [
-      {"train_base_week_indices": [0,17], "test_base_week_indices": [18,23]},
-      {"train_base_week_indices": [0,23], "test_base_week_indices": [24,29]},
-      {"train_base_week_indices": [0,29], "test_base_week_indices": [30,35]},
-      {"train_base_week_indices": [0,35], "test_base_week_indices": [36,41]},
-      {"train_base_week_indices": [0,41], "test_base_week_indices": [42,47]}
-    ],
-    "untouched_confirmation_base_week_indices": [48,53],
-    "inner_tuning": "Inside each training era only, use the final one-sixth of training weeks as chronological validation and all preceding training weeks for fitting; never tune on the outer test era or untouched confirmation era.",
-    "report_per_week_and_per_era": true,
-    "uncertainty": "Report week-block bootstrap confidence intervals over outer-test week gains where applicable; do not rely on pooled event counts alone."
-  },
-  "structural_depth": {
-    "primary_behavior_vector": "same frozen 22-dimensional full-path vector",
-    "sparse_sensitivity_vector": "same frozen 8-dimensional sparse vector",
-    "depths_tested": [1,2,3,4,5,6,7,8,9,10,11,12],
-    "extension_reason": "The full-history campaign is explicitly intended to let the data determine how far sequential memory propagates; the added depths are preregistered before 54-week results are read.",
-    "stop_rule": "After two successive depths lack reproducible out-of-time incremental support, still compute deeper preregistered depths only as sensitivity; they cannot define a Phase-1 boundary without renewed preregistration.",
-    "models": ["ridge", "extra_trees", "knn_sensitivity"],
-    "knn_sensitivity": "KNN remains a model-family sensitivity check. To keep the full-history run computationally bounded, use deterministic evenly-spaced samples within training and test weeks; KNN may contradict or weaken a finding but cannot by itself create a confirmed depth.",
-    "no_final_55w_promotion_from_54w": true
-  },
-  "causal_executable_depth": {
-    "information_horizons_seconds": [5,10,20,30,60,120,300],
-    "paired_sample_rule_unchanged": true,
-    "causal_availability_gate_unchanged": true,
-    "structural_and_executable_reported_as_separate_axes": true
-  },
-  "lineage": {
-    "origin_persistence_is_separate_axis": true,
-    "rolling_reorigin_preserved": true,
-    "inherited_origin_preserved": true,
-    "instance_specific_survival_required": true,
-    "universal_long_short_cutoff_allowed": false
-  },
-  "falsification": {
-    "required": true,
-    "attacks": [
-      "weekly-block permutation/null tests",
-      "chronological era stability",
-      "single-era dependence",
-      "model-family dependence",
-      "paired-sample integrity",
-      "omitted-current-state placebo",
-      "threshold sensitivity without changing the canonical detector",
-      "provenance and continuity fail-closed checks"
-    ]
+    "multiple_out_of_time_eras_required": true,
+    "per_week_stability_required": true,
+    "tuning_inside_training_eras_only": true,
+    "later_untouched_confirmation_segment_required_where_practical": true,
+    "note": "These validation requirements come from the committed full-history handoff; they adapt the prior three-week leave-one-week-out pilot to 54 weeks without changing the underlying Phase-1 calculators."
   },
   "repair_week_insert": {
     "week": "20260329",
     "must_use_same_canonical_detector": true,
     "must_not_rebuild_54w_base": true,
-    "score_as_out_of_time_insert_before_any_optional_refit": true,
-    "optional_refit_after_insert_for_descriptive_55w_summary": "Allowed only if clearly separated from the frozen out-of-time insert score and it may not overwrite the 54-week evidence artifacts.",
+    "score_separately_after_repair": true,
     "phase2_unlock_after_reconciliation_only": true
   },
   "hard_walls": {
     "phase2_allowed": false,
-    "family_used_as_phase1_feature": false,
-    "flow_used_as_phase1_feature": false,
-    "book_used_as_phase1_feature": false,
-    "polarity_pattern_used_as_phase1_category": false,
-    "time_of_day_used_as_phase1_gate": false,
-    "session_position_used_as_phase1_gate": false,
     "permanent_frankie_mutable": false,
     "runway_clock_mutable": false
   }
