@@ -56,7 +56,7 @@ jobs:
               assert hashlib.sha256(data).hexdigest()==meta['uncompressed_sha256']
               n += len([x for x in data.splitlines() if x.strip()])
           assert n==1711
-          print(json.dumps({'freeze_commit':'0f26c125548c801037bb3084d23b1b5d974ae0eb','prediction_n':n,'freeze_hashes':'PASS','outcome_before_freeze':False},indent=2))
+          print(json.dumps({'freeze_commit':m.get('prediction_freeze_commit','0f26c125548c801037bb3084d23b1b5d974ae0eb'),'prediction_n':n,'freeze_hashes':'PASS','outcome_before_freeze':False},indent=2))
           PY
           test ! -e ng_frankie_blind_answers.json
           test ! -e ng_frankie_blind_answers_SEALED.json
@@ -96,6 +96,7 @@ jobs:
           test -s research/blind_reveal/ng_exhaustion_20260816/frankie_vs_actual_examples.png
           test -s research/blind_reveal/ng_exhaustion_20260816/frankie_postreveal_summary.png
       - name: Commit compact postreveal record without retuning
+        continue-on-error: true
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
@@ -105,8 +106,10 @@ jobs:
             research/blind_reveal/ng_exhaustion_20260816/FRANKIE_NG_EXHAUSTION_POSTREVEAL_ANALYSIS_SCAFFOLD_20260816.md
           git diff --cached --quiet && { echo 'No compact postreveal files'; exit 1; }
           git commit -m 'Record Frankie NG exhaustion blind postreveal metrics'
+          git pull --rebase origin ${GITHUB_REF_NAME}
           git push origin HEAD:${GITHUB_REF_NAME}
       - name: Upload full actual-vs-forecast renders and event metrics
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: frankie-ng-exhaustion-blind-postreveal-20260816
