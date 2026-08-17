@@ -1,0 +1,341 @@
+name: NG Exhaustion 54W Phase1 Seven-Agent Campaign 20260817
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-chain-full-history-phase1-20260817
+    paths:
+      - research/NG_EXHAUSTION_CHAIN_PHASE1_54W_LAUNCH_20260817.json
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: us-east-2
+  BUCKET: bento-568968024170-us-east-2-an
+  REVEAL_ARTIFACT_ID: '9273273233'
+  BLIND_ARTIFACT_ID: '9274443976'
+  REVEAL_SHA256: 127e936355be479398e14f20f071f81b0d22a2975b02e87a1a3e0a044ec023e1
+  BLIND_SHA256: 224be8b033c1a03d638d7b84aef849363067e1961e9945e72bc86b52c3d01c39
+
+jobs:
+  agent1_continuity:
+    name: Agent 1 - corpus continuity
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet boto3
+      - name: Audit frozen 54-week base and held repair week
+        run: python research/ng_exhaustion_chain_phase1_continuity_54w_20260817.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-agent1-continuity-54w-20260817
+          path: NG_EXHAUSTION_CHAIN_PHASE1_CONTINUITY_54W_20260817.json
+          if-no-files-found: error
+
+  agent2_canonical_shards:
+    name: Agent 2 - canonical shard ${{ matrix.shard }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: 0
+            weeks: 20250629,20250706,20250713,20250720,20250727,20250803,20250810,20250817,20250824
+          - shard: 1
+            weeks: 20250831,20250907,20250914,20250921,20250928,20251005,20251012,20251019,20251026
+          - shard: 2
+            weeks: 20251102,20251109,20251116,20251123,20251130,20251207,20251214,20251221,20251228
+          - shard: 3
+            weeks: 20260104,20260111,20260118,20260125,20260201,20260208,20260215,20260222,20260301
+          - shard: 4
+            weeks: 20260308,20260315,20260322,20260405,20260412,20260419,20260426,20260503,20260510
+          - shard: 5
+            weeks: 20260517,20260524,20260531,20260607,20260614,20260621,20260628,20260705,20260712
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet matplotlib
+      - name: Materialize exact raw Sunday-Friday files for shard
+        env:
+          WEEKS: ${{ matrix.weeks }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ngraw
+          python - <<'PY' > /tmp/days.txt
+          import os
+          from datetime import datetime,timedelta
+          for w in os.environ['WEEKS'].split(','):
+              d=datetime.strptime(w,'%Y%m%d')
+              for i in range(6):
+                  print((d+timedelta(days=i)).strftime('%Y%m%d'))
+          PY
+          while read -r d; do
+            mapfile -t keys < <(aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" \
+              --query 'Contents[].Key' --output text | tr '\t' '\n' | grep -E "NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" | sort -u)
+            if [ "${#keys[@]}" -ne 1 ]; then
+              echo "::error::Expected exactly one raw NG object for ${d}, got ${#keys[@]}: ${keys[*]-}"
+              exit 1
+            fi
+            aws s3 cp "s3://${BUCKET}/${keys[0]}" "/tmp/ngraw/NG_${d}.jsonl.gz" --only-show-errors
+            test -s "/tmp/ngraw/NG_${d}.jsonl.gz"
+          done < /tmp/days.txt
+      - name: Build canonical shard with frozen detector
+        env:
+          WEEKS: ${{ matrix.weeks }}
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          mapfile -t RAW < <(find /tmp/ngraw -name 'NG_*.jsonl.gz' -type f | sort)
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_chain_canonical_54w_shard_20260817.py \
+            --weeks "${WEEKS}" \
+            --out-prefix "NG_EXHAUSTION_CHAIN_CANONICAL_54W_SHARD_${SHARD}_20260817" \
+            "${RAW[@]}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-agent2-canonical-shard-${{ matrix.shard }}-20260817
+          path: |
+            NG_EXHAUSTION_CHAIN_CANONICAL_54W_SHARD_${{ matrix.shard }}_20260817_SUMMARY.json
+            NG_EXHAUSTION_CHAIN_CANONICAL_54W_SHARD_${{ matrix.shard }}_20260817_EVENT_TABLE.jsonl.gz
+          if-no-files-found: error
+
+  coordinator_freeze_canonical:
+    name: Coordinator - freeze one 54W canonical table
+    needs: [agent1_continuity, agent2_canonical_shards]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet matplotlib
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ng-exhaustion-agent2-canonical-shard-*-20260817
+          path: /tmp/shards
+      - name: Download exact frozen reveal and blind rosters
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${REVEAL_ARTIFACT_ID}/zip" -o /tmp/reveal.zip
+          curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${BLIND_ARTIFACT_ID}/zip" -o /tmp/blind.zip
+          echo "${REVEAL_SHA256}  /tmp/reveal.zip" | sha256sum -c -
+          echo "${BLIND_SHA256}  /tmp/blind.zip" | sha256sum -c -
+          mkdir -p /tmp/reveal /tmp/blind
+          unzip -q /tmp/reveal.zip ng_frankie_reveal_records.json -d /tmp/reveal
+          unzip -q /tmp/blind.zip ng_frankie_blind_records.json -d /tmp/blind
+      - name: Merge, equivalence-audit, hash and freeze
+        run: |
+          set -euo pipefail
+          mapfile -t SUMMARIES < <(find /tmp/shards -name '*_SUMMARY.json' -type f | sort)
+          mapfile -t TABLES < <(find /tmp/shards -name '*_EVENT_TABLE.jsonl.gz' -type f | sort)
+          test "${#SUMMARIES[@]}" -eq 6
+          test "${#TABLES[@]}" -eq 6
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_chain_canonical_54w_merge_20260817.py \
+            --reveal-records /tmp/reveal/ng_frankie_reveal_records.json \
+            --holdout-records /tmp/blind/ng_frankie_blind_records.json \
+            --summaries "${SUMMARIES[@]}" \
+            --tables "${TABLES[@]}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-canonical-54w-base-frozen-20260817
+          path: |
+            NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_SUMMARY.json
+            NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz
+          if-no-files-found: error
+
+  agent3_structural:
+    name: Agent 3 - retrospective structural depth
+    needs: coordinator_freeze_canonical
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet numpy scipy scikit-learn
+      - uses: actions/download-artifact@v4
+        with:
+          name: ng-exhaustion-canonical-54w-base-frozen-20260817
+          path: /tmp/canonical
+      - name: Run existing Phase-1 structural machinery over 54 weeks
+        run: |
+          python research/ng_exhaustion_chain_phase1_structural_54w_20260817.py \
+            /tmp/canonical/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-agent3-structural-54w-20260817
+          path: |
+            NG_EXHAUSTION_CHAIN_PHASE1_STRUCTURAL_54W_20260817_SUMMARY.json
+            NG_EXHAUSTION_CHAIN_PHASE1_STRUCTURAL_54W_20260817_OOT_GAINS.jsonl.gz
+          if-no-files-found: error
+
+  agent4_causal:
+    name: Agent 4 - causal executable depth
+    needs: coordinator_freeze_canonical
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet numpy scikit-learn
+      - uses: actions/download-artifact@v4
+        with:
+          name: ng-exhaustion-canonical-54w-base-frozen-20260817
+          path: /tmp/canonical
+      - name: Run existing causal-executable machinery over 54 weeks
+        run: |
+          python research/ng_exhaustion_chain_phase1_causal_54w_20260817.py \
+            /tmp/canonical/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-agent4-causal-54w-20260817
+          path: NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_54W_20260817.json
+          if-no-files-found: error
+
+  agent7_open_mechanism:
+    name: Agent 7 - independent higher-order nonlinear/equation discovery
+    needs: coordinator_freeze_canonical
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet numpy scipy scikit-learn
+      - uses: actions/download-artifact@v4
+        with:
+          name: ng-exhaustion-canonical-54w-base-frozen-20260817
+          path: /tmp/canonical
+      - name: Discover independent higher-order equations and nonlinear mechanisms
+        run: |
+          python research/ng_exhaustion_chain_phase1_agent7_open_mechanism_54w_20260817.py \
+            /tmp/canonical/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-agent7-open-mechanism-54w-20260817
+          path: NG_EXHAUSTION_CHAIN_PHASE1_AGENT7_OPEN_MECHANISM_54W_20260817.json
+          if-no-files-found: error
+
+  agent5_lineage:
+    name: Agent 5 - origin persistence and instance lifespan
+    needs: [agent3_structural, agent7_open_mechanism]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet numpy scipy
+      - uses: actions/download-artifact@v4
+        with:
+          name: ng-exhaustion-canonical-54w-base-frozen-20260817
+          path: /tmp/canonical
+      - uses: actions/download-artifact@v4
+        with:
+          name: ng-exhaustion-agent3-structural-54w-20260817
+          path: /tmp/structural
+      - uses: actions/download-artifact@v4
+        with:
+          name: ng-exhaustion-agent7-open-mechanism-54w-20260817
+          path: /tmp/agent7
+      - name: Measure inherited-origin vs rolling/re-origin and lifespan
+        run: |
+          python research/ng_exhaustion_chain_phase1_lineage_54w_20260817.py \
+            /tmp/canonical/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz \
+            /tmp/structural/NG_EXHAUSTION_CHAIN_PHASE1_STRUCTURAL_54W_20260817_OOT_GAINS.jsonl.gz \
+            --agent7-summary /tmp/agent7/NG_EXHAUSTION_CHAIN_PHASE1_AGENT7_OPEN_MECHANISM_54W_20260817.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-agent5-lineage-54w-20260817
+          path: |
+            NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.json
+            NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz
+          if-no-files-found: error
+
+  agent6_falsifier:
+    name: Agent 6 - independent falsification and null attacks
+    needs: [agent1_continuity, coordinator_freeze_canonical, agent3_structural, agent4_causal, agent5_lineage, agent7_open_mechanism]
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet numpy
+      - uses: actions/download-artifact@v4
+        with:
+          name: ng-exhaustion-agent1-continuity-54w-20260817
+          path: /tmp/continuity
+      - uses: actions/download-artifact@v4
+        with:
+          name: ng-exhaustion-canonical-54w-base-frozen-20260817
+          path: /tmp/canonical
+      - uses: actions/download-artifact@v4
+        with:
+          name: ng-exhaustion-agent3-structural-54w-20260817
+          path: /tmp/structural
+      - uses: actions/download-artifact@v4
+        with:
+          name: ng-exhaustion-agent4-causal-54w-20260817
+          path: /tmp/causal
+      - uses: actions/download-artifact@v4
+        with:
+          name: ng-exhaustion-agent5-lineage-54w-20260817
+          path: /tmp/lineage
+      - uses: actions/download-artifact@v4
+        with:
+          name: ng-exhaustion-agent7-open-mechanism-54w-20260817
+          path: /tmp/agent7
+      - name: Attack provenance, leakage, nulls, era stability and model dependence
+        run: |
+          python research/ng_exhaustion_chain_phase1_falsifier_54w_20260817.py \
+            /tmp/canonical/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_SUMMARY.json \
+            /tmp/continuity/NG_EXHAUSTION_CHAIN_PHASE1_CONTINUITY_54W_20260817.json \
+            /tmp/structural/NG_EXHAUSTION_CHAIN_PHASE1_STRUCTURAL_54W_20260817_SUMMARY.json \
+            /tmp/causal/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_54W_20260817.json \
+            /tmp/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.json \
+            /tmp/agent7/NG_EXHAUSTION_CHAIN_PHASE1_AGENT7_OPEN_MECHANISM_54W_20260817.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-agent6-falsifier-54w-20260817
+          path: NG_EXHAUSTION_CHAIN_PHASE1_FALSIFIER_54W_20260817.json
+          if-no-files-found: error
+
+  coordinator_checkpoint:
+    name: Coordinator - provisional 54W checkpoint only
+    needs: agent6_falsifier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enforce Phase 2 remains locked
+        run: |
+          python - <<'PY'
+          import json
+          b=json.load(open('research/NG_EXHAUSTION_CHAIN_PHASE1_54W_BASE_FREEZE_20260817.json'))
+          assert b['base_week_count']==54
+          assert b['temporarily_excluded_weeks']==['20260329']
+          assert b['phase1_rules']['phase2_characterization_allowed'] is False
+          print('54-week Phase-1 campaign complete only as provisional base; 20260329 insert remains required.')
+          PY
