@@ -46,6 +46,8 @@ jobs:
           a=json.load(open('research/NG_EXHAUSTION_AFTERMATH_ENDPOINT_CONFIRMATION_ADDENDUM_20260817.json'))
           assert x['status']=='FROZEN_PREVALIDATION'
           assert x['target1']['holdout_retuning'] is False
+          assert x['chain_research_gate']['continuous_through_week'] is True
+          assert x['chain_research_gate']['calendar_midnight_is_reset'] is False
           assert a['status']=='FROZEN_PREVALIDATION_ADDENDUM'
           assert a['endpoint_semantics']['hardcoded_end_time'] is False
           assert a['endpoint_semantics']['primary_aftermath_anchor']=='causal_confirmation_second'
@@ -65,24 +67,36 @@ jobs:
           mkdir -p /tmp/reveal /tmp/blind
           unzip -q /tmp/reveal.zip ng_frankie_reveal_records.json -d /tmp/reveal
           unzip -q /tmp/blind.zip ng_frankie_blind_records.json -d /tmp/blind
-      - name: Download contiguous target-week NG raw corpus
+      - name: Download contiguous target-week NG raw corpus including every Sunday reopen
         run: |
           set -euo pipefail
           mkdir -p /tmp/ngweeks
-          optional=(20250713 20250921 20250928)
           required=(
-            20250714 20250715 20250716 20250717 20250718
-            20250922 20250923 20250924 20250925 20250926
-            20250929 20250930 20251001 20251002 20251003
+            20250713 20250714 20250715 20250716 20250717 20250718
+            20250921 20250922 20250923 20250924 20250925 20250926
+            20250928 20250929 20250930 20251001 20251002 20251003
           )
           for d in "${required[@]}"; do
-            aws s3 cp "s3://${BUCKET}/nymex/nymex_cont/NG_${d}.jsonl.gz" "/tmp/ngweeks/NG_${d}.jsonl.gz" --only-show-errors
-            test -s "/tmp/ngweeks/NG_${d}.jsonl.gz"
-          done
-          for d in "${optional[@]}"; do
-            if aws s3api head-object --bucket "${BUCKET}" --key "nymex/nymex_cont/NG_${d}.jsonl.gz" >/dev/null 2>&1; then
-              aws s3 cp "s3://${BUCKET}/nymex/nymex_cont/NG_${d}.jsonl.gz" "/tmp/ngweeks/NG_${d}.jsonl.gz" --only-show-errors
+            mapfile -t keys < <(
+              aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" \
+                --query 'Contents[].Key' --output text | tr '\t' '\n' | \
+                grep -E "^nymex/nymex_cont/NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" || true
+            )
+            if [ "${#keys[@]}" -ne 1 ]; then
+              echo "::error::Expected exactly one canonical NG raw object for ${d}; found ${#keys[@]}: ${keys[*]-}"
+              exit 1
             fi
+            key="${keys[0]}"
+            base="$(basename "${key}")"
+            aws s3 cp "s3://${BUCKET}/${key}" "/tmp/ngweeks/${base}" --only-show-errors
+            test -s "/tmp/ngweeks/${base}"
+            echo "resolved ${d} -> ${key}"
+          done
+          # Chain/aftermath integrity requirement: Sunday reopen must exist in each studied week.
+          for sunday in 20250713 20250921 20250928; do
+            test "$(find /tmp/ngweeks -maxdepth 1 -type f -name "NG_${sunday}*.jsonl.gz" | wc -l)" -eq 1 || {
+              echo "::error::Missing Sunday reopen corpus for ${sunday}"; exit 1;
+            }
           done
           find /tmp/ngweeks -type f -name 'NG_*.jsonl.gz' -size +0c | sort > /tmp/raw_paths.txt
           cat /tmp/raw_paths.txt
