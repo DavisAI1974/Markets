@@ -1,0 +1,61 @@
+{
+  "artifact_id": 9274443976,
+  "artifact_sha256": "224be8b033c1a03d638d7b84aef849363067e1961e9945e72bc86b52c3d01c39",
+  "bucket": "bento-568968024170-us-east-2-an",
+  "future_price_accessed": false,
+  "github_repository": "DavisAI1974/Markets",
+  "github_run_id": "31995977689",
+  "github_sha": "363f59a7b19e0dd8d7ee5ac96555d6b483132945",
+  "objects_verified": {
+    "canonical/ng_exhaustion_blind_input_artifact_9274443976.zip": {
+      "bytes": 2238990,
+      "sha256": "224be8b033c1a03d638d7b84aef849363067e1961e9945e72bc86b52c3d01c39"
+    },
+    "content_manifest.json": {
+      "bytes": 5426,
+      "sha256": "0ee7841cdc08e49454d3eb0af936102f82b76c72f2b49c1b4ba01fd06e7c4128"
+    },
+    "partitions/day=20250717/records.jsonl.gz": {
+      "bytes": 258275,
+      "sha256": "5a475a45629fe25fb1b782b0ed79b9cfec68daa8b67c080b22eddb9af22b419b"
+    },
+    "partitions/day=20250923/records.jsonl.gz": {
+      "bytes": 478500,
+      "sha256": "e7149ce7967ca6251928a41ca45197b47fcee00f926484adac8c7895bcddf6c2"
+    },
+    "partitions/day=20250930/records.jsonl.gz": {
+      "bytes": 473415,
+      "sha256": "41086c62725b26f1eef80c405bc4ebc49feebaf9db49f6f49ead1e6e3fbcc102"
+    },
+    "partitions/day=20251001/records.jsonl.gz": {
+      "bytes": 481401,
+      "sha256": "739a352e03b0da9dffa0177251ceab6a7f18e73b48da35b29ff79975388da6e7"
+    }
+  },
+  "permanent_frankie_mutated": false,
+  "prefix": "nymex/ng_exhaustion/v0/",
+  "prefix_manifest": {
+    "files": [
+      "canonical/ng_exhaustion_blind_input_artifact_9274443976.zip",
+      "content_manifest.json",
+      "partitions/day=20250717/records.jsonl.gz",
+      "partitions/day=20250923/records.jsonl.gz",
+      "partitions/day=20250930/records.jsonl.gz",
+      "partitions/day=20251001/records.jsonl.gz"
+    ],
+    "object_count": 6,
+    "writer": "platform_sync.py"
+  },
+  "publication": {
+    "actions_conclusion": "success",
+    "actions_run_id": 31995977689,
+    "proof_artifact_digest": "sha256:5bc486b5a13134efe59e4c7a21cd033e05d5a5577273d72cc96cdc0074fb7885",
+    "proof_artifact_id": 9276834723,
+    "proof_artifact_name": "ng-exhaustion-s3-v0-publish-proof",
+    "s3_readback_sha_verified": true,
+    "secret_values_exposed": false
+  },
+  "schema": "markets.ng_exhaustion.s3_publish_proof.v1",
+  "status": "PASS",
+  "verified_at_utc": "2026-08-17T04:53:47+00:00"
+}
