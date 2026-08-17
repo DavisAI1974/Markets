@@ -1,11 +1,20 @@
 {
-  "schema_id": "FRANKIE_NG_EXHAUSTION_BLIND_PREDICTION_V1_FROZEN_20260816",
+  "schema_id": "FRANKIE_NG_EXHAUSTION_BLIND_PREDICTION_V2_SINGLE_BEST_CURVE_20260816",
   "status": "FROZEN_BEFORE_HELDOUT_PREDICTIONS",
   "outcome_access": "NONE",
   "input_artifact_id": 9274443976,
   "input_artifact_digest": "sha256:224be8b033c1a03d638d7b84aef849363067e1961e9945e72bc86b52c3d01c39",
   "frozen_a_classifier_sha256": "698b956f2a9aad4b99ccb9afab916e7219123d10c82408b8d9340137c266ecb9",
-  "rules": {
+  "curve_contract": {
+    "authoritative_output": "single_best_price_curve",
+    "uncertainty_bands": false,
+    "fixed_clock": false,
+    "fixed_point_count": false,
+    "event_relative": true,
+    "anchor": "first node seconds_from_t0=0 and forecast_price equals causal t0 price anchor exactly",
+    "node_rule": "Frankie chooses nodes only where needed to express his expected price-path state changes, turns, accelerations, decelerations, exhaustion, recovery, or terminal behavior"
+  },
+  "frozen_reveal_reference": {
     "A-fast-collapse_duration_s": {"3t":358,"5t":993,"8t":1802,"13t":4386},
     "A-persistent_duration_s": {"3t":700,"5t":1802,"8t":3455,"13t":6836},
     "B_family_duration_s": {"3t":353,"5t":995,"8t":1615,"13t":4543},
@@ -14,30 +23,30 @@
     "C_alignment_reveal_rates": {"2t":0.419,"3t":0.468,"5t":0.548,"8t":0.565,"13t":0.567}
   },
   "per_event_fields": {
-    "blind_id":"string",
-    "family":"A|B|C",
-    "day":"YYYYMMDD",
-    "t0_second_utc":"integer",
-    "price_anchor":"number; causal t0 last-trade origin only",
-    "post_state":"A-fast-collapse|A-persistent|null",
-    "predicted_duration_s":"object with 3t,5t,8t,13t point predictions",
-    "predicted_end_second_utc":"t0 + predicted duration, modulo day not applied",
-    "directional_scale_projection":"frozen qualitative family/state rule only",
-    "alignment_probability":"only where frozen reveal rate exists; otherwise null",
-    "numeric_displacement_prediction":"null; no frozen numeric magnitude mapping exists",
-    "confidence":"HIGH_A_STATE|LOW_B|LOW_MODERATE_C",
-    "brain_attribution":"existing brain concepts may support interpretation but may not retune numeric baselines",
-    "microstructure_modifier":"reported as non-numeric unless an exact frozen aggregation rule exists; no new threshold/weighting",
-    "early_precursor_same_call":"null unless a frozen deterministic precursor classifier exists; none is in the legal packet",
-    "falsifier":"string",
-    "outcome_accessed":"false"
+    "blind_id": "string",
+    "family": "A|B|C",
+    "day": "YYYYMMDD",
+    "t0_second_utc": "integer",
+    "price_anchor": "number; causal t0 last-trade origin only",
+    "post_state": "A-fast-collapse|A-persistent|null",
+    "best_price_curve": "list of {seconds_from_t0, forecast_price, market_condition}; one authoritative curve only",
+    "path_price_curve": "exact [[seconds_from_t0, forecast_price], ...] projection of best_price_curve",
+    "predicted_duration_s": "3t,5t,8t,13t point forecasts carried as scoring landmarks, not a substitute for the curve",
+    "directional_scale_projection": "Frankie's best local-to-broad path interpretation",
+    "confidence": "low|med|high",
+    "reasoning": "Frankie's concise blind reasoning from legal packet + frozen reveal context + unchanged redacted brain",
+    "brain_attribution": "list of existing brain concepts materially used or stood down",
+    "microstructure_read": "event-window confirmation/contradiction read without outcome access",
+    "falsifier": "string",
+    "outcome_accessed": "false"
   },
   "guardrails": [
     "No heldout future price, ZigZag, duration, displacement, pivot or outcome may be read before prediction freeze.",
     "Family A state is the recovered frozen 61-D nearest-centroid assignment exactly.",
     "No B/C persistent-collapse subtype classifier is invented or refit.",
-    "No numeric magnitude/displacement mapping is invented after the blind boundary.",
-    "Full brain may change interpretation/confidence only where legally served inputs support the concept; it cannot retune frozen reveal medians or family/state rules.",
+    "The causal t0 price anchor may set the absolute origin; no t>t0 price may be served.",
+    "Frankie must emit his single best price curve; no P25/P50/P75 or other probability-band envelope is part of this blind experiment.",
+    "Permanent Frankie/S132 remains unchanged; this is a scratch-only event-relative experiment output schema.",
     "Predictions must be persisted, hashed and committed before any heldout price reveal."
   ]
 }
