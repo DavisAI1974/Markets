@@ -1,0 +1,47 @@
+name: NG Exhaustion Target1 Transition Validation 20260817
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-aftermath-20260817
+    paths:
+      - research/ng_exhaustion_target1_transition_validation_20260817.py
+      - .github/workflows/ng_exhaustion_target1_transition_validation_20260817.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      V2_ARTIFACT_ID: '9278686522'
+      V2_ARTIFACT_SHA256: '0357826f86ce9971688a467c41ea4c64c23eaaf2d22dc1f37fc39ce62c4f168a'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download exact successful V2 event table
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${V2_ARTIFACT_ID}/zip" -o /tmp/v2.zip
+          echo "${V2_ARTIFACT_SHA256}  /tmp/v2.zip" | sha256sum -c -
+          mkdir -p /tmp/v2
+          unzip -q /tmp/v2.zip NG_EXHAUSTION_AFTERMATH_VALIDATION_V2_20260817_EVENT_TABLE.jsonl.gz -d /tmp/v2
+      - name: Derive thresholds from reveal and score holdout once
+        run: |
+          python research/ng_exhaustion_target1_transition_validation_20260817.py \
+            /tmp/v2/NG_EXHAUSTION_AFTERMATH_VALIDATION_V2_20260817_EVENT_TABLE.jsonl.gz
+      - name: Upload Target1 validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-target1-transition-validation-20260817
+          path: NG_EXHAUSTION_TARGET1_TRANSITION_VALIDATION_20260817.json
+          if-no-files-found: error
