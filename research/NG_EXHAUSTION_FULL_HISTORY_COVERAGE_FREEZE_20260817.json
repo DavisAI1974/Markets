@@ -1,0 +1,66 @@
+{
+  "name": "NG exhaustion full-history chain coverage freeze",
+  "date": "2026-08-17",
+  "status": "FROZEN_FULL_HISTORY_COVERAGE_READY_FOR_PHASE1",
+  "authoritative_source": "s3://bento-568968024170-us-east-2-an/nymex/nymex_cont/NG_*",
+  "postrepair_inventory": {
+    "workflow_run": 32005944876,
+    "artifact_id": 9280008162,
+    "artifact_digest": "sha256:f943b59f27c2e3e2d03fcb43870a16f0248b1eeeb78899a49ae5718472cd1734",
+    "raw_object_count": 329,
+    "unique_raw_dates": 329,
+    "first_raw_date": "20250629",
+    "last_raw_date": "20260717",
+    "trading_week_count": 55,
+    "usable_complete_week_count": 55,
+    "repair_required_week_count": 0,
+    "duplicate_raw_dates": 0,
+    "ignored_raw_keys": 0
+  },
+  "week_starts_sunday": [
+    "20250629","20250706","20250713","20250720","20250727","20250803","20250810","20250817","20250824","20250831",
+    "20250907","20250914","20250921","20250928","20251005","20251012","20251019","20251026","20251102","20251109",
+    "20251116","20251123","20251130","20251207","20251214","20251221","20251228","20260104","20260111","20260118",
+    "20260125","20260201","20260208","20260215","20260222","20260301","20260308","20260315","20260322","20260329",
+    "20260405","20260412","20260419","20260426","20260503","20260510","20260517","20260524","20260531","20260607",
+    "20260614","20260621","20260628","20260705","20260712"
+  ],
+  "repair_20250629": {
+    "reason": "The original corpus began on Monday 2025-06-30, so the opening week's Sunday reopen was absent and the week could not be used for honest chain ancestry.",
+    "existing_completed_databento_job_available": false,
+    "probe_workflow_run": 32005405710,
+    "probe_artifact_id": 9279825095,
+    "probe_fallback_cost_estimate_usd_ng_v0": 0.003881208599,
+    "repair_workflow_run": 32005876639,
+    "repair_artifact_id": 9279991016,
+    "repair_artifact_digest": "sha256:5c9e0145fcc1095d7a218e4cdafb4c5ecac6f0552a3b5d54c0d99d90cb0a6e9d",
+    "series": "NG.v.0",
+    "schema": "mbp-10",
+    "s3_key": "nymex/nymex_cont/NG_20250629_sun.jsonl.gz",
+    "estimated_cost_usd": 0.003881208599,
+    "hard_cost_ceiling_usd": 0.01,
+    "rows": 22649,
+    "trade_rows": 1618,
+    "gzip_bytes": 1059776,
+    "gzip_sha256": "a0056f22adbafb91c18b91535e47a6de701f08e74cfff2022a91b0d8f60b9f64",
+    "first_trade_utc": "2025-06-29T22:00:00Z",
+    "last_trade_utc_approximately": "2025-06-29T23:59:59.838518Z",
+    "postrepair_inventory_status": "USABLE_COMPLETE"
+  },
+  "week_semantics": {
+    "chain_observation_origin": "first actual NG trade after the Sunday weekly reopen",
+    "chain_observation_end": "last actual NG trade before genuine weekly close",
+    "sunday_reopen_required": true,
+    "calendar_midnight_resets": false,
+    "he24_to_he1_resets": false,
+    "daily_file_boundary_resets": false,
+    "holiday_and_special_session_policy": "follow actual trade stream and observed closure/reopen; never invent a reset from a date label"
+  },
+  "phase1_gate": {
+    "phase2_characterization_allowed": false,
+    "full_history_phase1_required": true,
+    "all_55_weeks_must_be_in_scope": true,
+    "silent_week_exclusion_allowed": false,
+    "agents_must_share_this_coverage_manifest": true
+  }
+}
