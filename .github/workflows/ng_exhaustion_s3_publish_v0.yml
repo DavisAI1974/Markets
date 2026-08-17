@@ -1,0 +1,208 @@
+name: NG Exhaustion V0 Publish to S3
+
+# One-shot/idempotent publication of the proven exhaustion V0 data plane.
+# Secrets remain in GitHub Actions; values are never printed or written to artifacts.
+# The workflow preserves Markets doctrine: platform_sync.py is the only S3 write door.
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-runway-clock-20260817
+    paths:
+      - .github/workflows/ng_exhaustion_s3_publish_v0.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ng-exhaustion-v0-s3-publish
+  cancel-in-progress: false
+
+env:
+  AWS_DEFAULT_REGION: us-east-2
+  NG_EXHAUSTION_ARTIFACT_ID: '9274443976'
+  NG_EXHAUSTION_ARTIFACT_SHA256: '224be8b033c1a03d638d7b84aef849363067e1961e9945e72bc86b52c3d01c39'
+  NG_EXHAUSTION_S3_BUCKET: bento-568968024170-us-east-2-an
+  NG_EXHAUSTION_S3_PREFIX: nymex/ng_exhaustion/v0/
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact triggering commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install focused dependency
+        run: pip install --quiet boto3
+
+      - name: Require AWS repository secrets
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          missing=0
+          for v in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+            if [ -z "${!v}" ]; then
+              echo "::error::$v GitHub Actions secret is not set"
+              missing=1
+            fi
+          done
+          [ "$missing" = 0 ]
+          echo "AWS secret names resolved; values remain masked."
+
+      - name: Download exact frozen blind input artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          OUT=/tmp/ng_exhaustion_blind_input_artifact.zip
+          curl --fail-with-body --retry 3 --location \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${NG_EXHAUSTION_ARTIFACT_ID}/zip" \
+            -o "$OUT"
+          echo "${NG_EXHAUSTION_ARTIFACT_SHA256}  $OUT" | sha256sum -c -
+          unzip -l "$OUT"
+
+      - name: Run complete isolated clock + replay + S3-stage proof
+        env:
+          NG_EXHAUSTION_BLIND_ARTIFACT: /tmp/ng_exhaustion_blind_input_artifact.zip
+        run: |
+          python -m unittest -v \
+            tests.test_ng_exhaustion_runway_clock \
+            tests.test_ng_exhaustion_replay_proof \
+            tests.test_ng_exhaustion_s3_stage
+
+      - name: Build deterministic S3 stage
+        run: |
+          python research/ng_exhaustion_s3_stage.py \
+            --artifact /tmp/ng_exhaustion_blind_input_artifact.zip \
+            --classifier research/FRANKIE_NG_A_POSTSTATE_CLASSIFIER_FROZEN_PREBLIND_20260816.json \
+            --output-dir data/ng_exhaustion_s3_stage
+          find data/ng_exhaustion_s3_stage -type f -printf '%P %s bytes\n' | sort
+
+      - name: Publish only through canonical platform_sync door
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          python research/kalshi/platform_sync.py push \
+            --prefix "$NG_EXHAUSTION_S3_PREFIX" \
+            --src data/ng_exhaustion_s3_stage \
+            --execute \
+            --note 'NG exhaustion V0 canonical blind source + deterministic day partitions'
+
+      - name: Independently SHA-verify every S3 object and prefix manifest
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          python - <<'PY'
+          import datetime
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          import boto3
+
+          bucket = os.environ['NG_EXHAUSTION_S3_BUCKET']
+          prefix = os.environ['NG_EXHAUSTION_S3_PREFIX']
+          stage = Path('data/ng_exhaustion_s3_stage')
+          cm = json.loads((stage / 'content_manifest.json').read_text())
+
+          expected = {}
+          canonical = cm['canonical_source']
+          expected[canonical['path']] = (canonical['artifact_sha256'], canonical['artifact_bytes'])
+          for info in cm['partitions'].values():
+              expected[info['path']] = (info['compressed_sha256'], info['compressed_bytes'])
+          manifest_bytes = (stage / 'content_manifest.json').read_bytes()
+          expected['content_manifest.json'] = (hashlib.sha256(manifest_bytes).hexdigest(), len(manifest_bytes))
+
+          s3 = boto3.client('s3', region_name='us-east-2')
+          verified = {}
+          for rel, (want_sha, want_size) in sorted(expected.items()):
+              body = s3.get_object(Bucket=bucket, Key=prefix + rel)['Body']
+              h = hashlib.sha256(); n = 0
+              for chunk in iter(lambda: body.read(1024 * 1024), b''):
+                  h.update(chunk); n += len(chunk)
+              got_sha = h.hexdigest()
+              if got_sha != want_sha or n != want_size:
+                  raise SystemExit(f'S3 read-back mismatch {rel}: sha={got_sha} bytes={n}')
+              verified[rel] = {'sha256': got_sha, 'bytes': n}
+
+          remote_manifest = json.loads(s3.get_object(Bucket=bucket, Key=prefix + 'manifest.json')['Body'].read())
+          if remote_manifest.get('object_count') != len(expected):
+              raise SystemExit(f"prefix manifest object_count drift: {remote_manifest.get('object_count')} != {len(expected)}")
+          if sorted(remote_manifest.get('files', [])) != sorted(expected):
+              raise SystemExit('prefix manifest file inventory drift')
+
+          listed = []
+          token = None
+          while True:
+              kw = {'Bucket': bucket, 'Prefix': prefix, 'MaxKeys': 1000}
+              if token:
+                  kw['ContinuationToken'] = token
+              r = s3.list_objects_v2(**kw)
+              listed.extend(x['Key'] for x in r.get('Contents', []))
+              if not r.get('IsTruncated'):
+                  break
+              token = r['NextContinuationToken']
+          want_keys = sorted([prefix + x for x in expected] + [prefix + 'manifest.json'])
+          if sorted(listed) != want_keys:
+              raise SystemExit(f'unexpected object inventory under V0 prefix: {sorted(listed)}')
+
+          proof = {
+              'schema': 'markets.ng_exhaustion.s3_publish_proof.v1',
+              'status': 'PASS',
+              'verified_at_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds'),
+              'github_repository': os.environ['GITHUB_REPOSITORY'],
+              'github_sha': os.environ['GITHUB_SHA'],
+              'github_run_id': os.environ['GITHUB_RUN_ID'],
+              'bucket': bucket,
+              'prefix': prefix,
+              'artifact_id': int(os.environ['NG_EXHAUSTION_ARTIFACT_ID']),
+              'artifact_sha256': os.environ['NG_EXHAUSTION_ARTIFACT_SHA256'],
+              'objects_verified': verified,
+              'prefix_manifest': {
+                  'object_count': remote_manifest['object_count'],
+                  'files': remote_manifest['files'],
+                  'writer': remote_manifest.get('writer'),
+              },
+              'future_price_accessed': False,
+              'permanent_frankie_mutated': False,
+          }
+          Path('/tmp/ng_exhaustion_s3_publish_proof.json').write_text(json.dumps(proof, indent=2, sort_keys=True) + '\n')
+          print(json.dumps(proof, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload non-secret publication proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-s3-v0-publish-proof
+          path: /tmp/ng_exhaustion_s3_publish_proof.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish summary
+        run: |
+          {
+            echo '## NG Exhaustion V0 S3 publication'
+            echo ''
+            echo '- Status: PASS'
+            echo "- Bucket: \`$NG_EXHAUSTION_S3_BUCKET\`"
+            echo "- Prefix: \`$NG_EXHAUSTION_S3_PREFIX\`"
+            echo "- Frozen artifact: \`$NG_EXHAUSTION_ARTIFACT_ID\` / \`$NG_EXHAUSTION_ARTIFACT_SHA256\`"
+            echo '- Canonical ZIP + four deterministic day partitions + content manifest SHA-verified by S3 read-back.'
+            echo '- Permanent Frankie untouched.'
+          } >> "$GITHUB_STEP_SUMMARY"
