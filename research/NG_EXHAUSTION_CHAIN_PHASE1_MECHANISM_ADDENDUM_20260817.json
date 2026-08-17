@@ -1,0 +1,35 @@
+{
+  "name": "NG exhaustion chain phase-1 mechanism interpretation addendum",
+  "date": "2026-08-17",
+  "status": "FROZEN_BEFORE_FORMAL_PHASE1_RESULTS_READ",
+  "parent_protocol": "research/NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_PROTOCOL_20260817.json",
+  "reason": "Clarify that replicated higher-order dependence is itself a chain mechanism and must not be discarded merely because the original first-order event stops adding unique information at later links.",
+  "calculation_changes": false,
+  "hyperparameter_changes": false,
+  "data_access_changes": false,
+  "phase1_structural_axes": {
+    "order_depth": {
+      "question": "How many prior sequential aftermaths add reproducible out-of-sample predictive information beyond shorter history?",
+      "interpretation": "Any replicated D>=2 incremental depth is a higher-order chain finding, regardless of whether the oldest origin remains uniquely informative.",
+      "first_class_finding": true
+    },
+    "origin_persistence": {
+      "question": "Do the same individual origins that carry one predictive link disproportionately carry the next link as well?",
+      "interpretation": "Positive cross-depth origin association identifies inherited-origin propagation. Lack of positive origin association does NOT negate higher-order chain structure; it identifies a rolling/re-origin mechanism instead."
+    }
+  },
+  "mechanism_reporting": {
+    "single_step_only": "No replicated incremental depth beyond D=1.",
+    "rolling_higher_order": "Replicated aggregate D>=2 depth exists, but the original event does not show positive cross-depth enrichment. Each newer event may become the dominant local origin while higher-order sequential structure remains.",
+    "inherited_origin_higher_order": "Replicated aggregate D>=2 depth exists and the same origins are positively enriched across successive depths.",
+    "mixed_or_conditional": "Evidence differs by depth/model/week; preserve as candidate structure for Phase 2 characterization rather than collapsing it into no-chain."
+  },
+  "guardrails": {
+    "do_not_call_rolling_memory_no_chain": true,
+    "do_not_require_origin_persistence_for_higher_order_chain": true,
+    "do_not_use_phase2_characteristics_to_redefine_phase1_depth": true,
+    "do_not_preassign_long_short_cutoffs": true,
+    "characterize_after_phase1_freeze": true
+  },
+  "phase2_implication": "After Phase 1 freezes both order depth and origin-persistence behavior, characterize each discovered mechanism and instance using exhaustion geometry, polarity, family, microstructure, tape outcomes, duration, timing/session context, and other legal characteristics. Those characteristics may explain why some sequences roll/re-origin and others preserve one origin, but cannot retroactively create the Phase-1 chain evidence."
+}
