@@ -1,0 +1,111 @@
+{
+  "name": "NG exhaustion chain Phase-2 entry gate",
+  "date": "2026-08-17",
+  "status": "LOCKED_PENDING_FINAL_55W_ARTIFACT_VERIFICATION",
+  "phase1_reconcile_commit": "27a5ef995bfb72aba57b397a95dcff4f433376ba",
+  "phase1_branch": "chatgpt/ng-exhaustion-chain-full-history-phase1-20260817",
+  "phase2_branch": "chatgpt/ng-exhaustion-chain-phase2-20260817",
+  "step0": {
+    "required": true,
+    "instruction": "Locate the workflow run produced by the Phase-1 reconciliation commit, retrieve the final reconciliation artifact, and verify every required field below before any Phase-2 characterization, fitting, ranking, or trade-play promotion. Fail closed if the artifact is absent, incomplete, failed, or mismatched.",
+    "expected_workflow_name": "NG Exhaustion 55W Insert-Only Reconciliation 20260817",
+    "expected_artifact_name": "ng-exhaustion-phase1-55w-reconciled-final-20260817",
+    "expected_summary_file": "NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_SUMMARY.json",
+    "required_summary": {
+      "status": "PHASE1_HISTORICAL_55W_INSERT_ONLY_RECONCILED_COMPLETE",
+      "historical_phase1_complete": true,
+      "phase2_allowed": true,
+      "week_count": 55,
+      "event_count": 235170,
+      "base_54w_preserved_immutable": true,
+      "held_week_insert_only": true,
+      "held_week": "20260329",
+      "runway_clock_mutated": false,
+      "permanent_frankie_mutated": false,
+      "hard_failures": []
+    }
+  },
+  "frozen_sources": {
+    "base_54w_canonical": {
+      "artifact_id": 9281733364,
+      "artifact_name": "ng-exhaustion-canonical-54w-base-frozen-20260817",
+      "artifact_sha256": "f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1",
+      "event_count": 231532,
+      "event_table_gzip_sha256": "2313d86b9a5b9c5430cc73f050ca19150cf170f21c48862e302b5d702b94ca23",
+      "event_table_uncompressed_sha256": "695274997f4a2a488d8555cf93177635d7730bbbf72dc6c9b99d9695844968ee",
+      "schema_sha256": "658d010c2574f3baab57e5009955c2b5099d88c3a728952a1f34ac371fb3033d"
+    },
+    "held_week_20260329": {
+      "artifact_id": 9281272840,
+      "artifact_name": "ng-exhaustion-chain-canonical-held-week-20260329",
+      "artifact_sha256": "21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e",
+      "event_count": 3638,
+      "event_table_gzip_sha256": "93c09c55dcdf9697897304cac523f2c2b6592623def6da84be50e1acf9ce336d",
+      "event_table_uncompressed_sha256": "07fb77c77aa4530943940c17b1ffe0dbf1d6c3c4fa0660f2e28dda8bc9ef2747",
+      "schema_sha256": "658d010c2574f3baab57e5009955c2b5099d88c3a728952a1f34ac371fb3033d",
+      "explicit_closure_date": "20260403",
+      "synthetic_empty_raw_file_created": false
+    },
+    "agent3_structural": {
+      "artifact_id": 9289900864,
+      "artifact_name": "ng-exhaustion-agent3-structural-54w-20260817",
+      "artifact_sha256": "f7f81353c2209dd85fd7ec36dbcdd0dcadc2e2c294d5f17acfe22c8680620696"
+    },
+    "agent4_causal_recovered": {
+      "artifact_id": 9301045248,
+      "artifact_name": "ng-exhaustion-agent4-causal-54w-recovered-20260817",
+      "artifact_sha256": "9b10192b0912f5ac155b47aeb7f818855ec6583def3bc9c5365fe85100aa51d8"
+    },
+    "agent5_lineage": {
+      "artifact_id": 9289929292,
+      "artifact_name": "ng-exhaustion-agent5-lineage-54w-20260817",
+      "artifact_sha256": "a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95"
+    },
+    "agent6_falsifier_recovered": {
+      "artifact_id": 9301072378,
+      "artifact_name": "ng-exhaustion-agent6-falsifier-54w-recovered-20260817",
+      "artifact_sha256": "dc8f68a02e11d66078dc49105323690e65be6e2eedd2d94aed3c64f7fd1b3197",
+      "hard_failures": []
+    },
+    "agent7_nonlinear": {
+      "artifact_id": 9287506554,
+      "artifact_name": "ng-exhaustion-agent7-open-mechanism-54w-20260817",
+      "artifact_sha256": "b3b70fc106ee4404177303a6a5951ec085e3d88a1332693f20ffb62e95ca34cb"
+    }
+  },
+  "immutability": {
+    "detector_retune_allowed": false,
+    "canonical_54w_rebuild_allowed": false,
+    "held_week_retune_allowed": false,
+    "phase1_scores_rewrite_allowed": false,
+    "runway_clock_mutation_allowed": false,
+    "permanent_frankie_mutation_allowed": false,
+    "frankie1_forecaster_mutation_allowed": false,
+    "spawn_py_mutation_allowed": false
+  },
+  "phase2_objective": "Characterize the surviving structural, causal/executable, lineage, and nonlinear exhaustion-chain mechanisms; determine empirically which chains are short or long and which are rolling/re-origin versus inherited-origin; then translate the strongest falsifier-surviving causal mechanisms into frozen paper-trading play definitions without changing Phase-1 evidence.",
+  "priority_causal_cells_from_54w": {
+    "10_seconds": [5, 6],
+    "20_seconds": [3, 4, 5, 6],
+    "30_seconds": [2, 3, 4, 5, 6],
+    "60_seconds": [2, 3, 4],
+    "120_seconds": [1],
+    "300_seconds": [1]
+  },
+  "strict_54w_all_model_lineage": {
+    "oot_instance_count": 152784,
+    "at_least_D1": 18909,
+    "at_least_D2": 1481,
+    "at_least_D3": 102,
+    "at_least_D4": 9,
+    "at_least_D5": 1,
+    "terminal_depth_histogram": {
+      "0": 133875,
+      "1": 17428,
+      "2": 1379,
+      "3": 93,
+      "4": 8,
+      "5": 1
+    }
+  }
+}
