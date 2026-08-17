@@ -21,6 +21,11 @@ if str(RESEARCH) not in sys.path: sys.path.insert(0,str(RESEARCH))
 import ng_live_collector as base
 from ng_exhaustion_live_clock import AggressorRoll20Feed, LiveClockInputError
 
+# Databento DBN rtype 10 is MBP-10. The base collector also subscribes to
+# TBBO (rtype 1), so this explicit gate prevents the same trade from being
+# counted again through the top-of-book subscription.
+MBP10_RTYPE=10
+
 class ExhaustionState(base.State):
     def __init__(self, symbol: str, archive: Path) -> None:
         super().__init__(symbol, archive)
@@ -31,6 +36,10 @@ class ExhaustionState(base.State):
 
     def _observe_exhaustion_input(self, record: Any) -> None:
         if self.exhaustion_error is not None: return
+        try:
+            if int(getattr(record,'rtype')) != MBP10_RTYPE: return
+        except (AttributeError, TypeError, ValueError, OverflowError):
+            return
         levels=getattr(record,'levels',None); action=base.enum_text(getattr(record,'action',None))
         if levels is None or str(action or '').upper() not in {'T','TRADE'}: return
         try:
@@ -53,7 +62,7 @@ class ExhaustionState(base.State):
             tap=self.exhaustion_flow.snapshot(seconds=180); err=self.exhaustion_error; mbp10_trades=self.exhaustion_mbp10_trade_records
         payload['exhaustion_input']={
             'schema':'markets.ng_exhaustion.live_roll20_input.v1','status':'PASS' if err is None else 'FAIL_CLOSED','roll_seconds':20,'history_seconds':180,
-            'trade_side_rule':'MBP10 trade price > concurrent mid => buy; price < mid => sell; midpoint skipped',
+            'source_rtype':MBP10_RTYPE,'trade_side_rule':'MBP10 trade price > concurrent mid => buy; price < mid => sell; midpoint skipped',
             'formula':'(buy_volume-sell_volume)/(buy_volume+sell_volume) over trailing 20 seconds inclusive',
             'mbp10_trade_records_seen':mbp10_trades,'derived_error':err,**tap,'future_price_accessed':False,'permanent_frankie_mutated':False,
         }
