@@ -1,0 +1,78 @@
+{
+  "name": "NG exhaustion aftermath post-V2 chain seed freeze",
+  "date": "2026-08-17",
+  "status": "FROZEN_RESEARCH_INPUT_FOR_CHAIN_STUDY_ONLY",
+  "source_validation": {
+    "run_id": 32001550796,
+    "artifact_id": 9278686522,
+    "artifact_sha256": "0357826f86ce9971688a467c41ea4c64c23eaaf2d22dc1f37fc39ce62c4f168a",
+    "findings_memo": "research/NG_EXHAUSTION_AFTERMATH_VALIDATION_V2_FINDINGS_20260817.md"
+  },
+  "boundaries": {
+    "runway_clock_mutable": false,
+    "permanent_frankie_mutable": false,
+    "plus60_is_endpoint": false,
+    "calendar_day_is_chain_boundary": false,
+    "he24_to_he1_is_chain_boundary": false,
+    "weekly_reopen_is_observation_origin": true,
+    "time_of_day_is_initial_gate": false
+  },
+  "endpoint": {
+    "termination": "three consecutive causal forward-filled oriented roll20 <= 0",
+    "structural_onset": "first second of qualifying run",
+    "causal_confirmation": "third second of qualifying run",
+    "aftermath_anchor": "causal confirmation second",
+    "hardcoded_max_duration": null
+  },
+  "seed_states": {
+    "collapsed_same_flow_reload": {
+      "definition": "confirmed exhaustion termination with +41..+60 volume-weighted aggressor pressure aligned to original exhaustion polarity",
+      "target1_same_next_rate": {
+        "reveal": {"hits": 142, "n": 222, "rate": 0.6396396396},
+        "holdout": {"hits": 125, "n": 207, "rate": 0.6038647343}
+      },
+      "target2_material_move_continuation_share": {
+        "30s": {"reveal": {"hits": 49, "n": 63, "rate": 0.7777777778}, "holdout": {"hits": 60, "n": 90, "rate": 0.6666666667}},
+        "60s": {"reveal": {"hits": 87, "n": 108, "rate": 0.8055555556}, "holdout": {"hits": 90, "n": 124, "rate": 0.7258064516}},
+        "120s": {"reveal": {"hits": 102, "n": 151, "rate": 0.6754966887}, "holdout": {"hits": 116, "n": 182, "rate": 0.6373626374}},
+        "300s": {"reveal": {"hits": 135, "n": 224, "rate": 0.6026785714}, "holdout": {"hits": 134, "n": 236, "rate": 0.5677966102}}
+      }
+    },
+    "collapsed_opposite_flow_reversal": {
+      "definition": "confirmed exhaustion termination with +41..+60 volume-weighted aggressor pressure opposite original exhaustion polarity",
+      "target1_status": "old high-confidence next-exhaustion flip rule rejected; causal next-event polarity is near coin-flip",
+      "target2_material_move_reversal_share": {
+        "30s": {"reveal": {"hits": 54, "n": 97, "rate": 0.5567010309}, "holdout": {"hits": 56, "n": 94, "rate": 0.5957446809}},
+        "60s": {"reveal": {"hits": 85, "n": 138, "rate": 0.6159420290}, "holdout": {"hits": 87, "n": 139, "rate": 0.6258992806}},
+        "120s": {"reveal": {"hits": 114, "n": 187, "rate": 0.6096256684}, "holdout": {"hits": 118, "n": 200, "rate": 0.59}},
+        "300s": {"reveal": {"hits": 129, "n": 253, "rate": 0.5098814229}, "holdout": {"hits": 139, "n": 285, "rate": 0.4877192982}}
+      }
+    },
+    "collapsed_sparse_indeterminate": {
+      "definition": "confirmed exhaustion termination with sparse or balanced +41..+60 aggressor pressure",
+      "status": "no strong directional doctrine"
+    },
+    "persistent_exhaustion": {
+      "definition": "not causally terminated by +60 checkpoint",
+      "target1_causal_same_next_rate": {
+        "reveal": {"hits": 224, "n": 389, "rate": 0.5758354756},
+        "holdout": {"hits": 214, "n": 368, "rate": 0.5815217391}
+      },
+      "status": "modest serial memory; not equivalent to post-end continuation"
+    }
+  },
+  "explicitly_rejected_as_validated_causal_rules": [
+    "persistent + screened extreme flow -> ~85-88% same next exhaustion",
+    "persistent + opposing book screened cell -> ~89-90% same next exhaustion",
+    "collapsed + screened extreme opposite flow -> ~76-81% next exhaustion flips"
+  ],
+  "chain_study": {
+    "start_after_validation": true,
+    "observation_origin": "first actual trade after Sunday weekly reopen",
+    "observation_end": "last actual trade before genuine weekly close",
+    "reset_semantics": "behavioral dependence must die; date/file/session-hour transitions cannot create a reset",
+    "time_context_fields_required": true,
+    "long_short_chain_types_separate": true,
+    "higher_order_findings_need_new_validation": true
+  }
+}
