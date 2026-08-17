@@ -1,7 +1,8 @@
 {
   "status": "BRANCH_BASE_READY",
-  "base_commit": "636abb98405a60d6c11426a9186e06fc7dddb3a7",
+  "source_branch": "chatgpt/ng-exhaustion-aftermath-20260817",
   "target_branch": "chatgpt/ng-exhaustion-chain-full-history-phase1-20260817",
+  "base_rule": "Create the target branch from the source-branch head containing this marker, the kickoff, handoff, and repaired 55-week coverage freeze. The actual Git ref is authoritative; do not infer a base from an older handoff.",
   "phase2_locked": true,
   "agents_required": true
 }
