@@ -1,0 +1,41 @@
+{
+  "date": "2026-08-17",
+  "expected_artifact_name": "ng-exhaustion-phase1-55w-reconciled-final-20260817",
+  "expected_summary_file": "NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_SUMMARY.json",
+  "expected_workflow_file": "ng_exhaustion_chain_phase1_55w_reconcile_20260817.yml",
+  "expected_workflow_name": "NG Exhaustion 55W Insert-Only Reconciliation 20260817",
+  "gate_required": {
+    "base_54w_preserved_immutable": true,
+    "event_count": 235170,
+    "hard_failures": [],
+    "held_week": "20260329",
+    "held_week_insert_only": true,
+    "historical_phase1_complete": true,
+    "permanent_frankie_mutated": false,
+    "phase2_allowed": true,
+    "runway_clock_mutated": false,
+    "status": "PHASE1_HISTORICAL_55W_INSERT_ONLY_RECONCILED_COMPLETE",
+    "week_count": 55
+  },
+  "mismatches": [],
+  "name": "NG exhaustion chain Phase-2 Step-0 verification",
+  "phase2_allowed": false,
+  "status": "FAIL_CLOSED_WORKFLOW_NOT_COMPLETE",
+  "target_branch": "chatgpt/ng-exhaustion-chain-full-history-phase1-20260817",
+  "target_commit": "27a5ef995bfb72aba57b397a95dcff4f433376ba",
+  "workflow_run": {
+    "conclusion": null,
+    "created_at": "2026-08-17T23:00:52Z",
+    "event": "push",
+    "head_branch": "chatgpt/ng-exhaustion-chain-full-history-phase1-20260817",
+    "head_sha": "27a5ef995bfb72aba57b397a95dcff4f433376ba",
+    "html_url": "https://github.com/DavisAI1974/Markets/actions/runs/32078601056",
+    "id": 32078601056,
+    "name": "NG Exhaustion 55W Insert-Only Reconciliation 20260817",
+    "run_attempt": 1,
+    "run_number": 1,
+    "status": "in_progress",
+    "updated_at": "2026-08-17T23:00:55Z"
+  },
+  "workflow_run_candidate_count": 1
+}
