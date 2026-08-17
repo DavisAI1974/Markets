@@ -10,59 +10,78 @@
     "daily_file_boundary_resets_chain": false,
     "weekly_close_reopen_starts_new_observation_week": true
   },
-  "discovery_principle": "Let the observed continuous event and tape geometry determine the natural chain groupings. Do not pre-impose long/short/reversal/alternating/time-of-day cells and do not choose a fixed number of chain types in advance.",
-  "forbidden_preclustering": [
-    "No hand-chosen long-versus-short duration threshold.",
-    "No hand-chosen number of links that defines a chain class.",
-    "No preassigned same-side/reversal/alternating chain bucket.",
-    "No time-of-day or session bucket used to create a cluster.",
-    "No reveal/holdout outcome threshold selected because it produces a visually attractive cluster.",
-    "No quantile/tertile/quintile cells used as chain definitions. Existing bins are validation diagnostics only."
+  "core_order_of_operations": [
+    "1. Find chain instances and chain boundaries first, without assigning any behavioral category.",
+    "2. Freeze the discovered chain membership, link order, origin, endpoint/reset point, and censored cases.",
+    "3. Only after membership is frozen, calculate and inspect the characteristics of each chain and each link.",
+    "4. Only then categorize or name recurring chain types from those observed characteristics.",
+    "5. Test whether the posthoc categories replicate on held-out weeks without changing the frozen chain membership rule."
   ],
-  "event_and_link_feature_space": {
-    "continuous_first": true,
-    "candidate_dimensions": [
-      "exhaustion duration and confirmed endpoint timing",
+  "chain_discovery_principle": "A chain is an empirically linked lineage of successive exhaustion/tape transitions. Extend a lineage only while information inherited from the earlier chain state measurably improves prediction of the next transition beyond what is explained by the immediately current event alone. When inherited information no longer contributes, mark a reset/new first-order origin. Do not use a pre-named chain type to decide membership.",
+  "discovery_unit": "ordered adjacent exhaustion links on the complete continuous trading-week stream, including overlaps where a later exhaustion begins before the prior exhaustion has causally confirmed its end",
+  "boundary_discovery": {
+    "fixed_max_chain_length": false,
+    "fixed_time_gap_cutoff": false,
+    "fixed_price_move_cutoff_for_membership": false,
+    "fixed_same_or_opposite_polarity_rule": false,
+    "time_of_day_boundary_rule": false,
+    "preferred_method": "sequential predictive-dependence / change-point analysis that can continue an existing lineage, declare a reset, or leave the boundary uncertain/censored rather than force a class",
+    "origin_information_test": "At each successive link, compare prediction using current-link causal information alone versus current-link information plus inherited origin/ancestor state. Chain continuation requires reproducible incremental information from the inherited state; loss of that incremental information is candidate reset evidence.",
+    "uncertain_boundary_allowed": true
+  },
+  "characteristics_not_membership_rules": {
+    "record_but_do_not_use_to_prelabel_chains": [
+      "total chain duration",
+      "number of links",
+      "individual exhaustion durations",
+      "confirmed endpoint timing",
+      "same-side versus opposite-side polarity sequence",
+      "alternation pattern",
       "oriented roll20 geometry and decay/reload trajectory",
-      "aggressor-flow pressure and its change",
-      "10-level book imbalance and its change",
-      "time gap to the next detected exhaustion",
-      "polarity relationship between adjacent exhaustions",
-      "signed price displacement and excursion between confirmed endpoint, transition checkpoint, and next exhaustion",
-      "number and timing of intervening exhaustion onsets before prior exhaustion confirmation",
-      "family/post-state descriptors where causal and already frozen"
-    ],
-    "time_of_day_excluded_from_first_clustering_pass": true,
-    "time_of_day_retained_for_posthoc_annotation": true
-  },
-  "data_driven_methods": {
-    "primary": "density-based clustering that does not require a preset cluster count and can leave noise/unclassified observations rather than force every sequence into a bucket",
-    "stability_crosscheck": "hierarchical/resampling stability analysis on the same reveal feature space",
-    "sequence_crosscheck": "state/transition representation of discovered event sequences without prespecifying long/short labels",
-    "cluster_count_fixed_in_advance": false,
-    "noise_class_allowed": true,
-    "one_cluster_solution_allowed": true
-  },
-  "reveal_holdout_discipline": {
-    "discover_structure_on": "reveal/training weeks only",
-    "freeze_after_discovery": "feature normalization, cluster representation, discovered prototypes/assignment rule, and any chain/reset rule inferred from reveal",
-    "holdout_use": "one-time assignment and replication test only; no retuning cluster geometry on holdout",
-    "failed_replication": "retain as a negative finding; do not merge weak clusters until they look good"
-  },
-  "naming_rule": "Only after stable clusters emerge may they be given descriptive names such as long-chain, short-chain, same-side, reversal, alternating, or reset-prone. Names describe discovered groups; names never define them.",
-  "time_context": {
-    "record_every_link": true,
-    "fields": [
-      "absolute event timestamp",
-      "canonical market clock time",
+      "aggressor-flow pressure and its changes",
+      "10-level book imbalance and its changes",
+      "time gaps between exhaustions",
+      "signed price displacement and excursion between links",
+      "overlap count and overlap timing",
+      "family/post-state descriptors where causal and frozen",
+      "absolute time of day",
       "elapsed time since Sunday reopen",
       "trading-day/session position",
-      "HE/session-hour label when available"
+      "HE/session-hour label"
     ],
-    "first_pass_cluster_feature": false,
-    "posthoc_question": "After behavior clusters are discovered, test whether any cluster is enriched by time-of-day/session position and whether that enrichment replicates."
+    "purpose": "These variables describe a chain after the chain instance has been found. They may later reveal natural recurring categories, but they do not create the chain instance in the first pass."
   },
-  "chain_reset": "A reset must be inferred from loss of inherited predictive dependence or a discovered structural break in the week-continuous sequence. Date/time/file boundaries cannot create a reset by themselves.",
+  "forbidden_first_pass_behavior": [
+    "No hand-chosen long-versus-short duration threshold.",
+    "No hand-chosen number of links that defines a chain.",
+    "No preassigned same-side, reversal, alternating, persistent, collapse, or time-associated chain bucket.",
+    "No clustering of chains by their characteristics before chain membership itself is frozen.",
+    "No time-of-day or session bucket used to start, end, or assign a chain.",
+    "No quantile/tertile/quintile cells used as chain definitions; existing cells are validation diagnostics only.",
+    "No fixed number of chain categories selected in advance."
+  ],
+  "posthoc_characterization": {
+    "starts_only_after_chain_membership_freeze": true,
+    "method": "Let the frozen chain instances reveal natural groupings in the observed characteristic space; density-based, hierarchical, sequence-pattern, and stability methods are allowed here because membership is already fixed.",
+    "cluster_count_fixed_in_advance": false,
+    "noise_or_unique_chains_allowed": true,
+    "one_category_solution_allowed": true,
+    "naming_rule": "Names such as long, short, same-side, reversal, alternating, reload, reset-prone, or time-associated may be applied only after stable characteristic groupings emerge."
+  },
+  "time_context": {
+    "record_every_chain_and_link": true,
+    "first_pass_membership_feature": false,
+    "posthoc_only": true,
+    "question": "After chain instances and behavior categories are frozen, test whether any category is enriched by time-of-day/session position and whether the enrichment replicates."
+  },
+  "reveal_holdout_discipline": {
+    "discover_chain_membership_logic_on": "reveal/training weeks",
+    "freeze_before_holdout": "sequential inherited-information test, reset logic, uncertainty/censor rules, and all causal feature timing",
+    "holdout_membership_use": "one-time chain reconstruction with no retuning",
+    "posthoc_category_discovery": "performed on frozen reveal chain instances after membership is fixed",
+    "posthoc_category_holdout_use": "one-time replication on frozen holdout chain instances",
+    "failed_replication": "retain as a negative finding; do not redraw chain boundaries or merge categories to rescue it"
+  },
   "do_not_touch": [
     "completed runway clock",
     "frozen runway classifiers/contracts",
