@@ -25,7 +25,7 @@ Classifier behavior is frozen:
 - raw cluster 1 = `A-persistent`;
 - no refit, extra scaling, custom threshold, or alternate tie rule.
 
-Before +60s, A state is `A_STATE_PENDING` and no A runway seconds are emitted. At/after +60s, an invalid or unavailable classifier window fails closed as `A_STATE_UNAVAILABLE` with zero confidence and no runway seconds.
+Before +60s, A state is `A_STATE_PENDING` and no A runway seconds are emitted. At/after +60s, an invalid or unavailable classifier window fails closed as `A_STATE_UNAVAILABLE` with unavailable confidence and no runway seconds.
 
 ## Frozen reveal runway baselines
 
@@ -42,16 +42,18 @@ V0 rule for every scale:
 
 There are no nonlinear duration weights in V0.
 
-## Microstructure
+## Microstructure and confidence
 
-Microstructure is confidence-only and can never change family/state identity or runway seconds. The explicit V0 operational policy is:
+Microstructure is confidence-only and can never change family/state identity or runway seconds. V0 deliberately uses qualitative confidence because the experiment did not freeze calibrated numeric confidence weights:
 
-- same_side: +0.10 confidence;
-- mixed: +0.00;
-- opposite: -0.15;
-- unavailable: -0.05.
+- same_side: `stronger`;
+- mixed: `neutral`;
+- opposite: `weaker`;
+- unavailable: `degraded_unavailable`.
 
-These are transparent policy modifiers, not calibrated probabilities and not learned seconds mappings.
+Family A base confidence is `validated`, B is `low`, and C is `low_to_moderate`. No numeric probability or learned seconds mapping is invented in V0.
+
+Data-availability flags are authoritative: an unavailable event clock fails closed, an unavailable A classifier window blocks A state/runway, and an unavailable microstructure feed forces the microstructure state to `unavailable` rather than accepting a stale confirmation badge.
 
 ## B and C
 
@@ -73,9 +75,13 @@ C remains `C_SCALE_TRANSITION_PROVISIONAL` with a low/moderate-confidence fallba
 
 The raw held-out prediction packet is not committed on this branch, so V0 does not fabricate a second blind run. The committed blind metrics are the replay-validation boundary.
 
+## Do-not-learn boundary
+
+The finished blind scratch curve generator is not imported or reused. Its hand-authored curve shape and curve scores are not part of the clock. V0 promotes lifespan/runway only.
+
 ## Tests
 
-`tests/test_ng_exhaustion_runway_clock.py` covers checksum drift, 61D normalization/distance, the +60s legal gate, monotonic/nonnegative countdown, data-gap closure, microstructure confidence-only behavior, B/C boundaries, deterministic output, and frozen replay facts.
+`tests/test_ng_exhaustion_runway_clock.py` covers checksum drift, 61D normalization/distance, the +60s legal gate, monotonic/nonnegative countdown, fail-closed data availability, microstructure confidence-only behavior, B/C boundaries, deterministic output, and frozen replay facts.
 
 ## Permanent Frankie protection
 
