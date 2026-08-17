@@ -36,7 +36,7 @@ jobs:
           grep -E '2026-07-0|2026-07-1|2026070|2026071' week_markers.txt > sunday_week_markers.txt || true
           echo '=== S3 MATCHES ==='; cat sunday_s3_matches.txt
           echo '=== WEEK MARKERS ==='; cat sunday_week_markers.txt
-      - name: Probe existing Databento MBP10 batch jobs read-only via canonical resolver
+      - name: Probe all July 2026 NG MBP10 batch jobs read-only via canonical resolver
         run: |
           set -euo pipefail
           PYTHONPATH=research/kalshi python - <<'PY' > sunday_databento_jobs.json
@@ -50,10 +50,11 @@ jobs:
               if d.get('dataset')!='GLBX.MDP3' or d.get('schema')!='mbp-10':
                   continue
               syms=d.get('symbols') or []
-              text=json.dumps(d,default=str)
-              if not any('NG' in str(s).upper() for s in (syms if isinstance(syms,(list,tuple)) else [syms])):
+              symtxt=' '.join(map(str,syms if isinstance(syms,(list,tuple)) else [syms])).upper()
+              if 'NG' not in symtxt:
                   continue
-              if any(x in text for x in ('2026-07-05','2026-07-06','2026-07-12','2026-07-13','20260705','20260712')):
+              text=json.dumps(d,default=str)
+              if '2026-07' in text or '202607' in text:
                   keep.append(d)
           print(json.dumps(keep,indent=2,default=str))
           PY
