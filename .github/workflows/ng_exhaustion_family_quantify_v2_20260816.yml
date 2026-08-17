@@ -1,5 +1,6 @@
 name: NG Exhaustion Family Quantify V2 20260816
 
+# Geometry-balanced rerun: duplicate pre-flip shapes do not get extra clustering weight.
 on:
   push:
     branches:
