@@ -22,7 +22,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
-      DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     steps:
@@ -39,7 +38,7 @@ jobs:
             echo "::error::Target already exists; refusing to overwrite ${TARGET_KEY}"
             exit 1
           fi
-          PYTHONPATH=. python research/ng_exhaustion_repair_sunday_reopen_20250629.py --max-cost 0.01
+          PYTHONPATH=.:research/kalshi python research/ng_exhaustion_repair_sunday_reopen_20250629.py --max-cost 0.01
           test -s /tmp/ng_repair_20250629/NG_20250629_sun.jsonl.gz
       - name: Upload repaired Sunday file
         run: |
