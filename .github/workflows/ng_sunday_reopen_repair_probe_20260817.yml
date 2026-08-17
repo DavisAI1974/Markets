@@ -1,0 +1,71 @@
+name: NG Sunday Reopen Repair Probe 20260817
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-aftermath-20260817
+    paths:
+      - .github/workflows/ng_sunday_reopen_repair_probe_20260817.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
+      BUCKET: bento-568968024170-us-east-2-an
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Databento
+        run: pip install --quiet databento
+      - name: Probe S3 for missing Sunday dates and week markers
+        run: |
+          set -euo pipefail
+          aws s3 ls "s3://${BUCKET}/nymex/" --recursive | grep -E 'NG_20260705|NG_20260712' > sunday_s3_matches.txt || true
+          aws s3 ls "s3://${BUCKET}/nymex/nymex_cont/_done/" > week_markers.txt || true
+          grep -E '2026-07-0|2026-07-1|2026070|2026071' week_markers.txt > sunday_week_markers.txt || true
+          echo '=== S3 MATCHES ==='; cat sunday_s3_matches.txt
+          echo '=== WEEK MARKERS ==='; cat sunday_week_markers.txt
+      - name: Probe existing Databento MBP10 batch jobs read-only
+        run: |
+          set -euo pipefail
+          python - <<'PY' > sunday_databento_jobs.json
+          import json, os
+          import databento as db
+          key=os.environ.get('DATABENTO_API_KEY')
+          if not key:
+              raise SystemExit('DATABENTO_API_KEY missing')
+          c=db.Historical(key)
+          keep=[]
+          for j in c.batch.list_jobs():
+              d=dict(j)
+              if d.get('dataset')!='GLBX.MDP3' or d.get('schema')!='mbp-10':
+                  continue
+              syms=d.get('symbols') or []
+              text=json.dumps(d,default=str)
+              if not any('NG' in str(s).upper() for s in (syms if isinstance(syms,(list,tuple)) else [syms])):
+                  continue
+              if any(x in text for x in ('2026-07-05','2026-07-06','2026-07-12','2026-07-13','20260705','20260712')):
+                  keep.append(d)
+          print(json.dumps(keep,indent=2,default=str))
+          PY
+          cat sunday_databento_jobs.json
+      - name: Upload repair probe
+        uses: actions/upload-artifact@v4
+        with:
+          name: ng-sunday-reopen-repair-probe-20260817
+          path: |
+            sunday_s3_matches.txt
+            sunday_week_markers.txt
+            sunday_databento_jobs.json
+          if-no-files-found: error
