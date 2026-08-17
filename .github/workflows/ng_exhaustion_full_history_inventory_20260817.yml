@@ -1,5 +1,7 @@
 name: NG Exhaustion Full History Inventory 20260817
 
+# Re-run after the guarded 2025-06-29 Sunday-reopen repair so the handoff
+# carries the post-repair 55-week coverage truth.
 on:
   push:
     branches:
