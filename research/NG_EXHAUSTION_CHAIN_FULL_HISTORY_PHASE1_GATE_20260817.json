@@ -1,0 +1,72 @@
+{
+  "name": "NG exhaustion chain full-history phase-1 gate",
+  "date": "2026-08-17",
+  "status": "FROZEN_BEFORE_FULL_HISTORY_EXTENSION",
+  "purpose": "Block all phase-2 characterization until phase-1 chain discovery has been run across every historical NG trading leg that can be reconstructed from the available authoritative raw corpus.",
+  "phase2_gate": {
+    "phase2_allowed": false,
+    "unlock_only_when": [
+      "the authoritative historical NG MBP-10 corpus has been fully inventoried",
+      "every trading week containing historical NG data has been classified as complete, repaired, or explicitly unrecoverable",
+      "Sunday-reopen coverage is present for every usable trading week",
+      "the week-continuous exhaustion event table has been rebuilt across the entire usable historical corpus",
+      "retrospective structural phase-1 order-depth and origin-persistence tests have been rerun across the full history",
+      "causally executable phase-1 order-depth tests have been rerun across the full history",
+      "full-history results have been frozen with coverage, exclusions, and uncertainty",
+      "a new-chat handoff has been committed"
+    ],
+    "no_characterization_before_unlock": true
+  },
+  "authoritative_coverage": {
+    "primary_raw_source": "s3://bento-568968024170-us-east-2-an/nymex/nymex_cont/NG_*",
+    "secondary_crosscheck_source": "s3://bento-568968024170-us-east-2-an/nymex/ng_exhaustion/v0/",
+    "scope": "all historical NG MBP-10 trading data actually present in the authoritative store, not only the three initial validation weeks",
+    "initial_three_weeks_role": "pilot/equivalence/validation subset only; their phase-1 findings cannot define final historical chain depth by themselves",
+    "silent_week_exclusion_allowed": false,
+    "partial_week_policy": "A week with any historical NG data but missing required continuity must be investigated and repaired from an existing object/job/source if possible. If genuinely unrecoverable, record the exact missing interval and do not pretend it is a complete chain week."
+  },
+  "week_semantics": {
+    "origin": "first actual NG trade after the Sunday weekly reopen",
+    "end": "last actual NG trade before the genuine weekly close",
+    "sunday_required": true,
+    "calendar_midnight_resets": false,
+    "he24_to_he1_resets": false,
+    "daily_file_boundary_resets": false,
+    "holiday_or_special_session": "follow actual trade timestamps and observed market closure/reopen; never invent a clock-time reset"
+  },
+  "phase1_scope": {
+    "retrospective_structural": true,
+    "causally_executable": true,
+    "rolling_reorigin_chain_preserved": true,
+    "inherited_origin_chain_preserved": true,
+    "population_higher_order_memory_is_chain_category": true,
+    "same_origin_persistence_required_for_all_chain_findings": false,
+    "data_driven_chain_depth": true,
+    "predefined_long_short_cutoff": false,
+    "characteristics_used_to_define_phase1_boundaries": false
+  },
+  "historical_validation": {
+    "preferred_outer_unit": "trading week",
+    "must_test_across_time": true,
+    "initial_three_weeks_are_not_final": true,
+    "forward_live_still_required_for_eventual_promotion": true
+  },
+  "next_chat_agent_requirement": {
+    "required": true,
+    "timing": "After reading the full-history handoff and verifying the frozen canonical contracts, fan out the full-history Phase-1 work in parallel before any Phase-2 characterization.",
+    "shared_truth": "All agents must consume the same frozen historical coverage manifest, same week-continuous event semantics, and same immutable event-table/schema. No agent may silently alter detector, endpoints, week boundaries, or chain definitions.",
+    "lanes": {
+      "corpus_continuity": "audit all historical weeks, Sunday reopen presence, gaps, special sessions, and repair provenance",
+      "structural_depth": "retrospective higher-order order-depth and population-memory analysis across full history",
+      "causal_executable_depth": "higher-order analysis using only behavior causally available before each descendant event",
+      "origin_persistence": "distinguish inherited-origin from rolling/re-origin higher-order chains",
+      "falsification": "independent leakage, null, stability, and week-level replication attacks"
+    },
+    "phase2_agents_forbidden_until_gate_unlocks": true
+  },
+  "boundaries": {
+    "runway_clock_mutable": false,
+    "permanent_frankie_mutable": false,
+    "phase2_characterization_allowed": false
+  }
+}
