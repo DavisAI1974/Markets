@@ -1,0 +1,23 @@
+{
+  "name": "NG exhaustion Phase-1 54-week seven-agent campaign launch",
+  "date": "2026-08-17",
+  "status": "LAUNCHED",
+  "branch": "chatgpt/ng-exhaustion-chain-full-history-phase1-20260817",
+  "base_freeze": "research/NG_EXHAUSTION_CHAIN_PHASE1_54W_BASE_FREEZE_20260817.json",
+  "week_count": 54,
+  "temporarily_excluded_week": "20260329",
+  "agents": {
+    "1": "corpus/continuity audit",
+    "2": "canonical event-table build/equivalence audit, six parallel shards then one deterministic freeze",
+    "3": "retrospective structural higher-order depth using prior ridge/KNN/extra-trees machinery",
+    "4": "causal-executable higher-order depth by frozen information latency",
+    "5": "origin persistence, rolling/re-origin lineage and instance-specific lifespan",
+    "6": "independent leakage/null/nonstationarity/model-dependence falsification",
+    "7": "independent open higher-order nonlinear/equation discovery with authority to originate deeper chain candidates"
+  },
+  "phase2_allowed": false,
+  "historical_phase1_complete": false,
+  "repair_week_later_insert_only": true,
+  "runway_clock_mutated": false,
+  "permanent_frankie_mutated": false
+}
