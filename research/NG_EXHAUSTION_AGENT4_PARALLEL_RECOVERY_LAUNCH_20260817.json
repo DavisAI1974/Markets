@@ -1,0 +1,25 @@
+{
+  "status": "LAUNCH_AGENT4_PARALLEL_RECOVERY",
+  "source_run_id": 32008965728,
+  "source_agent4_job_id": 95330304352,
+  "failure_mode": "github_actions_360_minute_timeout_only",
+  "successful_artifacts_reused": {
+    "agent1_continuity": 9281027806,
+    "canonical_54w": 9281733364,
+    "agent3_structural": 9289900864,
+    "agent5_lineage": 9289929292,
+    "agent7_open_mechanism": 9287506554
+  },
+  "parallelization": {
+    "horizons_seconds": [5, 10, 20, 30, 60, 120, 300],
+    "models": ["ridge", "extra_trees", "knn"],
+    "slice_count": 21,
+    "semantics_changed": false,
+    "model_settings_changed": false
+  },
+  "held_week_20260329_rebuilt": false,
+  "base_54w_rebuilt": false,
+  "permanent_frankie_mutated": false,
+  "runway_clock_mutated": false,
+  "phase2_allowed": false
+}

@@ -1,0 +1,184 @@
+name: NG Exhaustion Agent4 Parallel Recovery 20260817
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-chain-full-history-phase1-20260817
+    paths:
+      - research/NG_EXHAUSTION_AGENT4_PARALLEL_RECOVERY_LAUNCH_20260817.json
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  SOURCE_RUN_ID: '32008965728'
+  CANONICAL_ARTIFACT_ID: '9281733364'
+  CANONICAL_ARTIFACT_SHA256: 'f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1'
+  CONTINUITY_ARTIFACT_ID: '9281027806'
+  CONTINUITY_ARTIFACT_SHA256: '5857b665b11593c449710cd2e134afed6dbb9bab03a5da7d2db834f9c7da8615'
+  STRUCTURAL_ARTIFACT_ID: '9289900864'
+  STRUCTURAL_ARTIFACT_SHA256: 'f7f81353c2209dd85fd7ec36dbcdd0dcadc2e2c294d5f17acfe22c8680620696'
+  LINEAGE_ARTIFACT_ID: '9289929292'
+  LINEAGE_ARTIFACT_SHA256: 'a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95'
+  AGENT7_ARTIFACT_ID: '9287506554'
+  AGENT7_ARTIFACT_SHA256: 'b3b70fc106ee4404177303a6a5951ec085e3d88a1332693f20ffb62e95ca34cb'
+
+jobs:
+  agent4_slices:
+    name: Agent 4 slice H${{ matrix.horizon }} ${{ matrix.model }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        horizon: [5, 10, 20, 30, 60, 120, 300]
+        model: [ridge, extra_trees, knn]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet numpy scipy scikit-learn
+      - name: Download exact frozen 54-week canonical artifact from source run
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -L --fail --silent --show-error \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${CANONICAL_ARTIFACT_ID}/zip" \
+            -o /tmp/canonical.zip
+          echo "${CANONICAL_ARTIFACT_SHA256}  /tmp/canonical.zip" | sha256sum -c -
+          mkdir -p /tmp/canonical
+          unzip -q /tmp/canonical.zip -d /tmp/canonical
+          test -s /tmp/canonical/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz
+      - name: Run frozen causal slice
+        run: |
+          set -euo pipefail
+          python research/ng_exhaustion_chain_phase1_causal_54w_slice_20260817.py \
+            /tmp/canonical/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz \
+            --horizon "${{ matrix.horizon }}" \
+            --model "${{ matrix.model }}" \
+            --out "NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_54W_H${{ matrix.horizon }}_${{ matrix.model }}_20260817.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-agent4-slice-h${{ matrix.horizon }}-${{ matrix.model }}-20260817
+          path: NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_54W_H${{ matrix.horizon }}_${{ matrix.model }}_20260817.json
+          if-no-files-found: error
+
+  agent4_merge:
+    name: Agent 4 - strict merge recovered causal result
+    needs: agent4_slices
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet numpy scipy scikit-learn
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ng-exhaustion-agent4-slice-*-20260817
+          path: /tmp/agent4-slices
+      - name: Merge exactly 21 causal slices without changing semantics
+        run: |
+          set -euo pipefail
+          mapfile -t FRAGS < <(find /tmp/agent4-slices -name 'NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_54W_H*_20260817.json' -type f | sort)
+          test "${#FRAGS[@]}" -eq 21
+          python research/ng_exhaustion_chain_phase1_causal_54w_merge_20260817.py "${FRAGS[@]}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-agent4-causal-54w-recovered-20260817
+          path: NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_54W_20260817.json
+          if-no-files-found: error
+
+  agent6_falsifier:
+    name: Agent 6 - falsification after Agent4 recovery
+    needs: agent4_merge
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet numpy
+      - uses: actions/download-artifact@v4
+        with:
+          name: ng-exhaustion-agent4-causal-54w-recovered-20260817
+          path: /tmp/causal
+      - name: Download exact successful source-run artifacts
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          get_artifact() {
+            id="$1"; sha="$2"; dest="$3"; zip="/tmp/${dest}.zip"
+            curl -L --fail --silent --show-error \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" \
+              -o "${zip}"
+            echo "${sha}  ${zip}" | sha256sum -c -
+            mkdir -p "/tmp/${dest}"
+            unzip -q "${zip}" -d "/tmp/${dest}"
+          }
+          get_artifact "${CONTINUITY_ARTIFACT_ID}" "${CONTINUITY_ARTIFACT_SHA256}" continuity
+          get_artifact "${CANONICAL_ARTIFACT_ID}" "${CANONICAL_ARTIFACT_SHA256}" canonical
+          get_artifact "${STRUCTURAL_ARTIFACT_ID}" "${STRUCTURAL_ARTIFACT_SHA256}" structural
+          get_artifact "${LINEAGE_ARTIFACT_ID}" "${LINEAGE_ARTIFACT_SHA256}" lineage
+          get_artifact "${AGENT7_ARTIFACT_ID}" "${AGENT7_ARTIFACT_SHA256}" agent7
+      - name: Attack provenance, leakage, nulls, era stability and model dependence
+        run: |
+          set -euo pipefail
+          python research/ng_exhaustion_chain_phase1_falsifier_54w_20260817.py \
+            /tmp/canonical/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_SUMMARY.json \
+            /tmp/continuity/NG_EXHAUSTION_CHAIN_PHASE1_CONTINUITY_54W_20260817.json \
+            /tmp/structural/NG_EXHAUSTION_CHAIN_PHASE1_STRUCTURAL_54W_20260817_SUMMARY.json \
+            /tmp/causal/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_54W_20260817.json \
+            /tmp/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.json \
+            /tmp/agent7/NG_EXHAUSTION_CHAIN_PHASE1_AGENT7_OPEN_MECHANISM_54W_20260817.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-agent6-falsifier-54w-recovered-20260817
+          path: NG_EXHAUSTION_CHAIN_PHASE1_FALSIFIER_54W_20260817.json
+          if-no-files-found: error
+
+  coordinator_checkpoint:
+    name: Coordinator - recovered 54W provisional checkpoint
+    needs: agent6_falsifier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ng-exhaustion-agent4-causal-54w-recovered-20260817
+          path: /tmp/causal
+      - uses: actions/download-artifact@v4
+        with:
+          name: ng-exhaustion-agent6-falsifier-54w-recovered-20260817
+          path: /tmp/falsifier
+      - name: Enforce recovery and Phase-2 lock
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          b=json.load(open('research/NG_EXHAUSTION_CHAIN_PHASE1_54W_BASE_FREEZE_20260817.json'))
+          c=json.load(open('/tmp/causal/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_54W_20260817.json'))
+          f=json.load(open('/tmp/falsifier/NG_EXHAUSTION_CHAIN_PHASE1_FALSIFIER_54W_20260817.json'))
+          assert b['base_week_count']==54
+          assert b['temporarily_excluded_weeks']==['20260329']
+          assert b['phase1_rules']['phase2_characterization_allowed'] is False
+          assert c['status']=='PHASE1_CAUSAL_EXECUTABLE_54W_PROVISIONAL_COMPLETE'
+          assert c['recovery']['semantics_changed'] is False
+          assert c['recovery']['model_settings_changed'] is False
+          assert c['recovery']['slice_count']==21
+          assert c['permanent_frankie_mutated'] is False
+          assert c['runway_clock_mutated'] is False
+          print('Recovered 54-week Phase-1 base complete provisionally; held 20260329 reconciliation remains separate and Phase 2 stays locked.')
+          print('Falsifier status:', f.get('status'))
+          PY
