@@ -1,8 +1,9 @@
 name: NG Exhaustion V0 Publish to S3
 
-# One-shot/idempotent publication of the proven exhaustion V0 data plane.
+# Idempotent publication of the proven exhaustion V0 data plane.
 # Secrets remain in GitHub Actions; values are never printed or written to artifacts.
 # The workflow preserves Markets doctrine: platform_sync.py is the only S3 write door.
+# V0 partition gzip bytes are pinned across Python 3.11/3.13 before publication.
 
 on:
   push:
@@ -10,6 +11,8 @@ on:
       - chatgpt/ng-exhaustion-runway-clock-20260817
     paths:
       - .github/workflows/ng_exhaustion_s3_publish_v0.yml
+      - research/ng_exhaustion_s3_stage.py
+      - tests/test_ng_exhaustion_s3_stage.py
   workflow_dispatch:
 
 permissions:
@@ -101,7 +104,7 @@ jobs:
             --prefix "$NG_EXHAUSTION_S3_PREFIX" \
             --src data/ng_exhaustion_s3_stage \
             --execute \
-            --note 'NG exhaustion V0 canonical blind source + deterministic day partitions'
+            --note 'NG exhaustion V0 canonical blind source + frozen deterministic day partitions'
 
       - name: Independently SHA-verify every S3 object and prefix manifest
         env:
@@ -203,6 +206,6 @@ jobs:
             echo "- Bucket: \`$NG_EXHAUSTION_S3_BUCKET\`"
             echo "- Prefix: \`$NG_EXHAUSTION_S3_PREFIX\`"
             echo "- Frozen artifact: \`$NG_EXHAUSTION_ARTIFACT_ID\` / \`$NG_EXHAUSTION_ARTIFACT_SHA256\`"
-            echo '- Canonical ZIP + four deterministic day partitions + content manifest SHA-verified by S3 read-back.'
+            echo '- Canonical ZIP + four cross-Python frozen day partitions + content manifest SHA-verified by S3 read-back.'
             echo '- Permanent Frankie untouched.'
           } >> "$GITHUB_STEP_SUMMARY"
