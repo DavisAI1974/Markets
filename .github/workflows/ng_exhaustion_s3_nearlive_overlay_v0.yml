@@ -1,0 +1,214 @@
+name: NG Exhaustion V0 S3 Near-Live Overlay
+
+# Isolated proof only. Reads the already-published frozen S3 partitions, exercises
+# cold and warm cache paths, runs the deterministic clock, and emits NOVA packets.
+# It does not modify permanent Frankie or write any trading/brain state.
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-runway-clock-20260817
+    paths:
+      - .github/workflows/ng_exhaustion_s3_nearlive_overlay_v0.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ng-exhaustion-v0-s3-nearlive-overlay
+  cancel-in-progress: false
+
+env:
+  AWS_DEFAULT_REGION: us-east-2
+  NG_EXHAUSTION_ARTIFACT_ID: '9274443976'
+  NG_EXHAUSTION_ARTIFACT_SHA256: '224be8b033c1a03d638d7b84aef849363067e1961e9945e72bc86b52c3d01c39'
+  NG_EXHAUSTION_S3_BUCKET: bento-568968024170-us-east-2-an
+  NG_EXHAUSTION_S3_PREFIX: nymex/ng_exhaustion/v0/
+
+jobs:
+  overlay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact triggering commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install focused dependency
+        run: pip install --quiet boto3
+
+      - name: Require AWS repository secrets
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          missing=0
+          for v in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+            if [ -z "${!v}" ]; then echo "::error::$v GitHub Actions secret is not set"; missing=1; fi
+          done
+          [ "$missing" = 0 ]
+          echo "AWS secret names resolved; values remain masked."
+
+      - name: Download exact frozen blind input artifact for fixture tests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          OUT=/tmp/ng_exhaustion_blind_input_artifact.zip
+          curl --fail-with-body --retry 3 --location \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${NG_EXHAUSTION_ARTIFACT_ID}/zip" \
+            -o "$OUT"
+          echo "${NG_EXHAUSTION_ARTIFACT_SHA256}  $OUT" | sha256sum -c -
+
+      - name: Build exact local fixture from frozen source
+        run: |
+          python research/ng_exhaustion_s3_stage.py \
+            --artifact /tmp/ng_exhaustion_blind_input_artifact.zip \
+            --classifier research/FRANKIE_NG_A_POSTSTATE_CLASSIFIER_FROZEN_PREBLIND_20260816.json \
+            --output-dir /tmp/ng_exhaustion_stage_fixture
+
+      - name: Run isolated regression suite
+        env:
+          NG_EXHAUSTION_BLIND_ARTIFACT: /tmp/ng_exhaustion_blind_input_artifact.zip
+          NG_EXHAUSTION_STAGE_DIR: /tmp/ng_exhaustion_stage_fixture
+        run: |
+          python -m unittest -v \
+            tests.test_ng_exhaustion_runway_clock \
+            tests.test_ng_exhaustion_replay_proof \
+            tests.test_ng_exhaustion_s3_stage \
+            tests.test_ng_exhaustion_s3_store \
+            tests.test_ng_exhaustion_nearlive_overlay
+
+      - name: Run actual S3 cold-cache overlay across all frozen days
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/ng_exhaustion_cache /tmp/ng_exhaustion_overlay_proof
+          mkdir -p /tmp/ng_exhaustion_overlay_proof/cold /tmp/ng_exhaustion_overlay_proof/warm
+          for day in 20250717 20250923 20250930 20251001; do
+            python research/ng_exhaustion_nearlive_overlay.py \
+              --day "$day" \
+              --classifier research/FRANKIE_NG_A_POSTSTATE_CLASSIFIER_FROZEN_PREBLIND_20260816.json \
+              --cache-dir /tmp/ng_exhaustion_cache \
+              --checkpoints 0,30,60,300 \
+              --packet-out "/tmp/ng_exhaustion_overlay_proof/cold/${day}.nova" \
+              --summary-out "/tmp/ng_exhaustion_overlay_proof/cold/${day}.json"
+          done
+
+      - name: Run actual S3 warm-cache overlay across all frozen days
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          set -euo pipefail
+          for day in 20250717 20250923 20250930 20251001; do
+            python research/ng_exhaustion_nearlive_overlay.py \
+              --day "$day" \
+              --classifier research/FRANKIE_NG_A_POSTSTATE_CLASSIFIER_FROZEN_PREBLIND_20260816.json \
+              --cache-dir /tmp/ng_exhaustion_cache \
+              --checkpoints 0,30,60,300 \
+              --packet-out "/tmp/ng_exhaustion_overlay_proof/warm/${day}.nova" \
+              --summary-out "/tmp/ng_exhaustion_overlay_proof/warm/${day}.json"
+          done
+
+      - name: Seal cold/warm S3 read-cache + clock + NOVA proof
+        run: |
+          python - <<'PY'
+          import datetime, json, os
+          from pathlib import Path
+
+          days = ('20250717','20250923','20250930','20251001')
+          root = Path('/tmp/ng_exhaustion_overlay_proof')
+          cold = [json.loads((root/'cold'/f'{d}.json').read_text()) for d in days]
+          warm = [json.loads((root/'warm'/f'{d}.json').read_text()) for d in days]
+          frozen_hashes = {
+              '20250717':'5a475a45629fe25fb1b782b0ed79b9cfec68daa8b67c080b22eddb9af22b419b',
+              '20250923':'e7149ce7967ca6251928a41ca45197b47fcee00f926484adac8c7895bcddf6c2',
+              '20250930':'41086c62725b26f1eef80c405bc4ebc49feebaf9db49f6f49ead1e6e3fbcc102',
+              '20251001':'739a352e03b0da9dffa0177251ceab6a7f18e73b48da35b29ff79975388da6e7',
+          }
+          for d, c, w in zip(days, cold, warm):
+              if c['day'] != d or w['day'] != d: raise SystemExit('day identity drift')
+              if c['source']['cache_hit_initial'] is not False: raise SystemExit(f'{d}: cold cache unexpectedly hit')
+              if w['source']['cache_hit_initial'] is not True: raise SystemExit(f'{d}: warm cache failed to hit')
+              for x in (c,w):
+                  if x['status'] != 'PASS': raise SystemExit(f'{d}: overlay not PASS')
+                  if x['a_assignment_mismatches'] != 0: raise SystemExit(f'{d}: A assignment mismatch')
+                  if x['future_price_accessed'] is not False: raise SystemExit(f'{d}: future price invariant failed')
+                  if x['permanent_frankie_mutated'] is not False: raise SystemExit(f'{d}: permanent Frankie mutation flag')
+                  if x['nova_reduction_pct'] < 90.0: raise SystemExit(f'{d}: NOVA reduction unexpectedly weak')
+                  if x['source']['sha256'] != frozen_hashes[d]: raise SystemExit(f'{d}: source partition hash drift')
+          canonical = sum(x['canonical_clock_json_bytes'] for x in cold)
+          packet = sum(x['nova_packet_bytes'] for x in cold)
+          proof = {
+              'schema':'markets.ng_exhaustion.s3_nearlive_overlay_proof.v0',
+              'status':'PASS',
+              'verified_at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds'),
+              'github_repository':os.environ['GITHUB_REPOSITORY'],
+              'github_sha':os.environ['GITHUB_SHA'],
+              'github_run_id':os.environ['GITHUB_RUN_ID'],
+              'bucket':os.environ['NG_EXHAUSTION_S3_BUCKET'],
+              'prefix':os.environ['NG_EXHAUSTION_S3_PREFIX'],
+              'days':{d:{'cold':c,'warm':w} for d,c,w in zip(days,cold,warm)},
+              'totals':{
+                  'records':sum(x['records'] for x in cold),
+                  'clock_updates':sum(x['clock_updates'] for x in cold),
+                  'a_assignment_mismatches':sum(x['a_assignment_mismatches'] for x in cold),
+                  'canonical_clock_json_bytes':canonical,
+                  'nova_packet_bytes':packet,
+                  'nova_reduction_pct':round(100*(1-packet/canonical),3),
+                  'cold_cache_ensure_ms':round(sum(x['source']['cache_ensure_ms'] for x in cold),3),
+                  'warm_cache_ensure_ms':round(sum(x['source']['cache_ensure_ms'] for x in warm),3),
+                  'cold_record_decode_verify_ms':round(sum(x['source']['record_decode_verify_ms'] for x in cold),3),
+                  'warm_record_decode_verify_ms':round(sum(x['source']['record_decode_verify_ms'] for x in warm),3),
+                  'cold_clock_compute_ms':round(sum(x['clock_compute_ms'] for x in cold),3),
+                  'cold_nova_pack_verify_ms':round(sum(x['nova_pack_and_verify_ms'] for x in cold),3),
+              },
+              'live_contract_ready':True,
+              'live_contract_blocker':'existing ng_live_collector.py does not yet emit the exact legal 61-sample t0..+60 roll20 exhaustion window required by frozen A classifier',
+              'future_price_accessed':False,
+              'permanent_frankie_mutated':False,
+          }
+          out = root/'NG_EXHAUSTION_S3_NEARLIVE_PROOF_20260817.json'
+          out.write_text(json.dumps(proof,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(proof['totals'],indent=2,sort_keys=True))
+          PY
+
+      - name: Upload non-secret overlay proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-s3-nearlive-overlay-v0-proof
+          path: /tmp/ng_exhaustion_overlay_proof/NG_EXHAUSTION_S3_NEARLIVE_PROOF_20260817.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish summary
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          p=json.loads(Path('/tmp/ng_exhaustion_overlay_proof/NG_EXHAUSTION_S3_NEARLIVE_PROOF_20260817.json').read_text())
+          t=p['totals']
+          print('## NG Exhaustion V0 S3 near-live overlay')
+          print('')
+          print('- Status: PASS')
+          print(f"- Records: {t['records']}; clock updates: {t['clock_updates']}")
+          print(f"- A assignment mismatches: {t['a_assignment_mismatches']}")
+          print(f"- NOVA reduction: {t['nova_reduction_pct']}%")
+          print(f"- S3 cold cache ensure: {t['cold_cache_ensure_ms']} ms; warm: {t['warm_cache_ensure_ms']} ms")
+          print('- Future price accessed: false')
+          print('- Permanent Frankie mutated: false')
+          print('- Live collector wiring remains blocked only on reproducing the exact frozen 61-sample roll20 producer.')
+          PY
