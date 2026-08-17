@@ -1,0 +1,91 @@
+name: NG Exhaustion Transition Checkpoint 20260817
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-aftermath-20260817
+    paths:
+      - research/NG_EXHAUSTION_AFTERMATH_TRANSITION_CHECKPOINT_FREEZE_20260817.json
+      - research/ng_exhaustion_aftermath_transition_checkpoint_20260817.py
+      - .github/workflows/ng_exhaustion_aftermath_transition_checkpoint_20260817.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      BUCKET: bento-568968024170-us-east-2-an
+      V2_ARTIFACT_ID: '9278686522'
+      V2_ARTIFACT_SHA256: '0357826f86ce9971688a467c41ea4c64c23eaaf2d22dc1f37fc39ce62c4f168a'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify frozen transition checkpoint contract
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          x=json.load(open('research/NG_EXHAUSTION_AFTERMATH_TRANSITION_CHECKPOINT_FREEZE_20260817.json'))
+          assert x['status']=='FROZEN_PREVALIDATION'
+          assert x['dynamic_endpoint']['hardcoded_end_time'] is False
+          assert x['transition_checkpoint_lane']['checkpoint_offset_after_confirmed_endpoint_seconds']==20
+          assert x['transition_checkpoint_lane']['price_feature_allowed'] is False
+          assert x['transition_checkpoint_lane']['holdout_retuning'] is False
+          PY
+      - name: Download exact successful V2 event table artifact
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${V2_ARTIFACT_ID}/zip" -o /tmp/v2.zip
+          echo "${V2_ARTIFACT_SHA256}  /tmp/v2.zip" | sha256sum -c -
+          mkdir -p /tmp/v2
+          unzip -q /tmp/v2.zip NG_EXHAUSTION_AFTERMATH_VALIDATION_V2_20260817_EVENT_TABLE.jsonl.gz -d /tmp/v2
+          test -s /tmp/v2/NG_EXHAUSTION_AFTERMATH_VALIDATION_V2_20260817_EVENT_TABLE.jsonl.gz
+      - name: Download exact contiguous Sunday-through-Friday study weeks
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ngweeks
+          required=(
+            20250713 20250714 20250715 20250716 20250717 20250718
+            20250921 20250922 20250923 20250924 20250925 20250926
+            20250928 20250929 20250930 20251001 20251002 20251003
+          )
+          for d in "${required[@]}"; do
+            mapfile -t keys < <(
+              aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" \
+                --query 'Contents[].Key' --output text | tr '\t' '\n' | \
+                grep -E "^nymex/nymex_cont/NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" || true
+            )
+            if [ "${#keys[@]}" -ne 1 ]; then echo "::error::NG raw day ${d} resolved ${#keys[@]} objects"; exit 1; fi
+            key="${keys[0]}"; base="$(basename "${key}")"
+            aws s3 cp "s3://${BUCKET}/${key}" "/tmp/ngweeks/${base}" --only-show-errors
+            test -s "/tmp/ngweeks/${base}"
+          done
+          find /tmp/ngweeks -type f -name 'NG_*.jsonl.gz' | sort > /tmp/raw_paths.txt
+      - name: Validate endpoint-relative transition state once on frozen holdout
+        run: |
+          set -euo pipefail
+          mapfile -t RAW < /tmp/raw_paths.txt
+          python research/ng_exhaustion_aftermath_transition_checkpoint_20260817.py \
+            --v2-event-table /tmp/v2/NG_EXHAUSTION_AFTERMATH_VALIDATION_V2_20260817_EVENT_TABLE.jsonl.gz \
+            "${RAW[@]}"
+      - name: Upload transition checkpoint proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-aftermath-transition-checkpoint-20260817
+          path: |
+            NG_EXHAUSTION_AFTERMATH_TRANSITION_CHECKPOINT_20260817.json
+            NG_EXHAUSTION_AFTERMATH_TRANSITION_CHECKPOINT_20260817_EVENT_TABLE.jsonl.gz
+          if-no-files-found: error
