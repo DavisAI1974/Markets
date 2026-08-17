@@ -1,0 +1,45 @@
+{
+  "a_state_assignment": "frozen legal t0..+60 61-sample classifier",
+  "actions_artifact": {
+    "digest": "sha256:bbd0dc31caa46824bc833efe72c56c098202fb8c83e37eaba3b83bfcb9f1a072",
+    "id": 9277695889,
+    "name": "ng-exhaustion-live-clock-v0-final-proof",
+    "run_id": 31998769659,
+    "run_conclusion": "success"
+  },
+  "batch": {
+    "a_poststate_mismatches": 0,
+    "a_records": 1616,
+    "event_detection_scope": "external causal t0 marker; not part of runway clock V0",
+    "family_assignment_mismatches": 0,
+    "future_price_accessed_by_clock": false,
+    "live_roll20_bad_records": 0,
+    "live_roll20_max_abs_error": 0.0,
+    "live_roll20_samples_checked": 104371,
+    "permanent_frankie_mutated": false,
+    "pre_family_classifier_sha256": "583f6a121788b3d962f2ec849a270f96b1786d714ac930d2b0069c6261eda6f7",
+    "records": 1711,
+    "schema": "markets.ng_exhaustion.live_clock_batch_proof.v1",
+    "status": "PASS"
+  },
+  "callback_proof": "tests.test_ng_live_exhaustion_collector verifies MBP-10 rtype 10 is consumed and TBBO rtype 1 is rejected",
+  "clock_scope": "downstream of an upstream causal exhaustion-event t0 marker",
+  "family_assignment": "frozen pre-t0 61-sample geometry classifier",
+  "future_price_accessed": false,
+  "live_deployment_witness": {
+    "effect_on_clock_component": "NONE; deployment state is outside the isolated V0 clock correctness proof",
+    "expected_health_key": "s3://bento-568968024170-us-east-2-an/nymex/live/ng/health.json",
+    "future_price_accessed": false,
+    "permanent_frankie_mutated": false,
+    "reason": "HeadObject 404: expected live collector health object does not exist",
+    "schema": "markets.ng_exhaustion.live_deployment_witness.v1",
+    "status": "UNAVAILABLE"
+  },
+  "permanent_frankie_mutated": false,
+  "production_activation_in_scope": false,
+  "roll20_source": "MBP-10 rtype 10 trade price vs concurrent midpoint; trailing 20-second aggressor-volume imbalance",
+  "schema": "markets.ng_exhaustion.live_clock_v0_final_proof.v1",
+  "second_databento_session_opened": false,
+  "status": "PASS_COMPONENT_COMPLETE",
+  "worker_count": 1
+}
