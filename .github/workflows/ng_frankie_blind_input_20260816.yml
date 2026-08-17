@@ -1,5 +1,6 @@
 name: NG Frankie Exhaustion Blind Input 20260816
 
+# Rerun after guard-safe MBO field rename; outcome wall unchanged.
 on:
   push:
     branches:
