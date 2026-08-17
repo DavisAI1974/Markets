@@ -34,19 +34,20 @@ FROZEN_REVEAL_BASELINES_S: dict[str, dict[str, float]] = {
     C_SCALE_TRANSITION_PROVISIONAL: {"3t": 377.0, "5t": 1159.0, "8t": 1713.0, "13t": 4320.0},
 }
 
-# Operational confidence policy, not calibrated probabilities. Values are explicit so
-# there are no hidden weights. Microstructure may change confidence only, never seconds.
+# Qualitative confidence only in V0. The experiment did not freeze calibrated numeric
+# confidence weights, so V0 deliberately avoids inventing them. Microstructure may
+# qualify confidence only, never state identity or runway seconds.
 BASE_CONFIDENCE = {
-    A_FAST_COLLAPSE: 0.70,
-    A_PERSISTENT: 0.70,
-    B_UNRESOLVED: 0.25,
-    C_SCALE_TRANSITION_PROVISIONAL: 0.35,
+    A_FAST_COLLAPSE: "validated",
+    A_PERSISTENT: "validated",
+    B_UNRESOLVED: "low",
+    C_SCALE_TRANSITION_PROVISIONAL: "low_to_moderate",
 }
 MICROSTRUCTURE_CONFIDENCE_MODIFIER = {
-    "same_side": 0.10,
-    "mixed": 0.00,
-    "opposite": -0.15,
-    "unavailable": -0.05,
+    "same_side": "stronger",
+    "mixed": "neutral",
+    "opposite": "weaker",
+    "unavailable": "degraded_unavailable",
 }
 
 EXPECTED_HELDOUT_A_COUNTS = {A_FAST_COLLAPSE: 831, A_PERSISTENT: 785}
@@ -183,10 +184,6 @@ class FrozenAClassifier:
         return self.classify_t0_to_plus60(values[60:])
 
 
-def _clip_confidence(value: float) -> float:
-    return round(max(0.0, min(1.0, value)), 6)
-
-
 def _make_runways(
     post_state: str,
     elapsed_s: float,
@@ -195,7 +192,11 @@ def _make_runways(
     baselines = FROZEN_REVEAL_BASELINES_S[post_state]
     base_confidence = BASE_CONFIDENCE[post_state]
     modifier = MICROSTRUCTURE_CONFIDENCE_MODIFIER[microstructure]
-    confidence = _clip_confidence(base_confidence + modifier)
+    confidence = {
+        "base": base_confidence,
+        "modifier": modifier,
+        "kind": "qualitative_v0_not_calibrated_probability",
+    }
     result: dict[str, dict[str, Any]] = {}
     for scale in SCALES:
         baseline = float(baselines[scale])
@@ -205,8 +206,7 @@ def _make_runways(
             "elapsed_since_t0_s": elapsed_s,
             "remaining_s": remaining,
             "remaining_fraction": 0.0 if baseline == 0 else remaining / baseline,
-            "confidence": confidence,
-            "confidence_kind": "explicit_operational_policy_not_calibrated_probability",
+            "confidence": dict(confidence),
             "basis": f"frozen_reveal_{post_state}",
             "baseline_exhausted": remaining == 0.0,
         }
@@ -299,8 +299,11 @@ class ExhaustionRunwayClock:
                 "elapsed_since_t0_s": elapsed,
                 "remaining_s": None,
                 "remaining_fraction": None,
-                "confidence": 0.0,
-                "confidence_kind": "unavailable_until_legal_state",
+                "confidence": {
+                    "base": "unavailable",
+                    "modifier": "unavailable",
+                    "kind": "qualitative_v0_not_calibrated_probability",
+                },
                 "basis": post_state,
                 "baseline_exhausted": None,
             }
