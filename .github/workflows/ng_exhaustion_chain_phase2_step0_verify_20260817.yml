@@ -1,0 +1,194 @@
+name: NG Exhaustion Chain Phase2 Step0 Verify 20260817
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-chain-phase2-20260817
+    paths:
+      - .github/workflows/ng_exhaustion_chain_phase2_step0_verify_20260817.yml
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  verify-step0:
+    name: Verify exact 55W reconciliation artifact and freeze gate result
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-chain-phase2-20260817
+
+      - name: Query reconciliation run and verify final artifact
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          import io
+          import json
+          import os
+          import urllib.parse
+          import urllib.request
+          import zipfile
+          from pathlib import Path
+
+          REPO = os.environ['GITHUB_REPOSITORY']
+          TOKEN = os.environ['GITHUB_TOKEN']
+          TARGET_SHA = '27a5ef995bfb72aba57b397a95dcff4f433376ba'
+          TARGET_BRANCH = 'chatgpt/ng-exhaustion-chain-full-history-phase1-20260817'
+          WORKFLOW_FILE = 'ng_exhaustion_chain_phase1_55w_reconcile_20260817.yml'
+          WORKFLOW_NAME = 'NG Exhaustion 55W Insert-Only Reconciliation 20260817'
+          ARTIFACT_NAME = 'ng-exhaustion-phase1-55w-reconciled-final-20260817'
+          SUMMARY_NAME = 'NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_SUMMARY.json'
+          REQUIRED_FILES = {
+              SUMMARY_NAME,
+              'NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_STRUCTURAL_GAINS.jsonl.gz',
+              'NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz',
+          }
+          REQUIRED = {
+              'status': 'PHASE1_HISTORICAL_55W_INSERT_ONLY_RECONCILED_COMPLETE',
+              'historical_phase1_complete': True,
+              'phase2_allowed': True,
+              'week_count': 55,
+              'event_count': 235170,
+              'base_54w_preserved_immutable': True,
+              'held_week_insert_only': True,
+              'held_week': '20260329',
+              'runway_clock_mutated': False,
+              'permanent_frankie_mutated': False,
+              'hard_failures': [],
+          }
+
+          headers = {
+              'Authorization': f'Bearer {TOKEN}',
+              'Accept': 'application/vnd.github+json',
+              'X-GitHub-Api-Version': '2022-11-28',
+              'User-Agent': 'ng-exhaustion-phase2-step0-verifier',
+          }
+
+          def get_json(path):
+              req = urllib.request.Request(f'https://api.github.com/repos/{REPO}{path}', headers=headers)
+              with urllib.request.urlopen(req, timeout=60) as r:
+                  return json.loads(r.read().decode('utf-8'))
+
+          def get_bytes(path):
+              req = urllib.request.Request(f'https://api.github.com/repos/{REPO}{path}', headers=headers)
+              with urllib.request.urlopen(req, timeout=120) as r:
+                  return r.read()
+
+          report = {
+              'name': 'NG exhaustion chain Phase-2 Step-0 verification',
+              'date': '2026-08-17',
+              'target_commit': TARGET_SHA,
+              'target_branch': TARGET_BRANCH,
+              'expected_workflow_name': WORKFLOW_NAME,
+              'expected_workflow_file': WORKFLOW_FILE,
+              'expected_artifact_name': ARTIFACT_NAME,
+              'expected_summary_file': SUMMARY_NAME,
+              'gate_required': REQUIRED,
+              'phase2_allowed': False,
+              'status': 'FAIL_CLOSED_UNVERIFIED',
+              'mismatches': [],
+          }
+
+          try:
+              q = urllib.parse.urlencode({'head_sha': TARGET_SHA, 'event': 'push', 'per_page': 20})
+              run_data = get_json(f'/actions/workflows/{WORKFLOW_FILE}/runs?{q}')
+              candidates = [
+                  r for r in run_data.get('workflow_runs', [])
+                  if r.get('head_sha') == TARGET_SHA
+                  and r.get('head_branch') == TARGET_BRANCH
+                  and r.get('event') == 'push'
+                  and r.get('name') == WORKFLOW_NAME
+              ]
+              report['workflow_run_candidate_count'] = len(candidates)
+              if not candidates:
+                  report['status'] = 'FAIL_CLOSED_WORKFLOW_RUN_ABSENT'
+              else:
+                  run = max(candidates, key=lambda r: (r.get('run_attempt') or 0, r.get('id') or 0))
+                  report['workflow_run'] = {
+                      'id': run.get('id'),
+                      'run_number': run.get('run_number'),
+                      'run_attempt': run.get('run_attempt'),
+                      'status': run.get('status'),
+                      'conclusion': run.get('conclusion'),
+                      'head_sha': run.get('head_sha'),
+                      'head_branch': run.get('head_branch'),
+                      'event': run.get('event'),
+                      'name': run.get('name'),
+                      'created_at': run.get('created_at'),
+                      'updated_at': run.get('updated_at'),
+                      'html_url': run.get('html_url'),
+                  }
+                  if run.get('status') != 'completed':
+                      report['status'] = 'FAIL_CLOSED_WORKFLOW_NOT_COMPLETE'
+                  elif run.get('conclusion') != 'success':
+                      report['status'] = 'FAIL_CLOSED_WORKFLOW_NOT_SUCCESS'
+                  else:
+                      artifacts = get_json(f"/actions/runs/{run['id']}/artifacts?per_page=100").get('artifacts', [])
+                      matches = [a for a in artifacts if a.get('name') == ARTIFACT_NAME and not a.get('expired', False)]
+                      report['artifact_match_count'] = len(matches)
+                      if not matches:
+                          report['status'] = 'FAIL_CLOSED_FINAL_ARTIFACT_ABSENT'
+                      else:
+                          artifact = max(matches, key=lambda a: a.get('id') or 0)
+                          report['artifact'] = {
+                              'id': artifact.get('id'),
+                              'name': artifact.get('name'),
+                              'size_in_bytes': artifact.get('size_in_bytes'),
+                              'digest': artifact.get('digest'),
+                              'expired': artifact.get('expired'),
+                              'created_at': artifact.get('created_at'),
+                              'updated_at': artifact.get('updated_at'),
+                          }
+                          blob = get_bytes(f"/actions/artifacts/{artifact['id']}/zip")
+                          report['artifact']['download_zip_sha256'] = hashlib.sha256(blob).hexdigest()
+                          report['artifact']['download_zip_size_bytes'] = len(blob)
+                          with zipfile.ZipFile(io.BytesIO(blob), 'r') as zf:
+                              names = set(zf.namelist())
+                              report['artifact_files'] = sorted(names)
+                              missing = sorted(REQUIRED_FILES - names)
+                              report['missing_required_files'] = missing
+                              if missing:
+                                  report['status'] = 'FAIL_CLOSED_FINAL_ARTIFACT_INCOMPLETE'
+                              else:
+                                  summary_bytes = zf.read(SUMMARY_NAME)
+                                  report['summary_sha256'] = hashlib.sha256(summary_bytes).hexdigest()
+                                  summary = json.loads(summary_bytes.decode('utf-8'))
+                                  report['observed_gate_fields'] = {k: summary.get(k) for k in REQUIRED}
+                                  mismatches = []
+                                  for key, expected in REQUIRED.items():
+                                      observed = summary.get(key)
+                                      if observed != expected:
+                                          mismatches.append({'field': key, 'expected': expected, 'observed': observed})
+                                  report['mismatches'] = mismatches
+                                  if mismatches:
+                                      report['status'] = 'FAIL_CLOSED_SUMMARY_GATE_MISMATCH'
+                                  else:
+                                      report['status'] = 'STEP0_PASS'
+                                      report['phase2_allowed'] = True
+          except Exception as exc:
+              report['status'] = 'FAIL_CLOSED_VERIFIER_EXCEPTION'
+              report['verifier_exception'] = f'{type(exc).__name__}: {exc}'
+
+          out = Path('research/NG_EXHAUSTION_CHAIN_PHASE2_STEP0_VERIFICATION_20260817.json')
+          out.write_text(json.dumps(report, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+
+      - name: Commit immutable Step-0 diagnostic record
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/NG_EXHAUSTION_CHAIN_PHASE2_STEP0_VERIFICATION_20260817.json
+          if git diff --cached --quiet; then
+            echo 'No Step-0 diagnostic change to commit.'
+          else
+            git commit -m 'Record Phase-2 Step-0 reconciliation gate verification'
+            git push origin HEAD:chatgpt/ng-exhaustion-chain-phase2-20260817
+          fi
