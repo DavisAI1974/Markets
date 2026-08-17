@@ -12,13 +12,10 @@ import argparse
 import gzip
 import hashlib
 import json
-import os
 import shutil
 from pathlib import Path
 
-import databento as db
-
-from research.kalshi.databento_backfill import _write_mbp10_df
+from research.kalshi.databento_backfill import _client, _write_mbp10_df
 
 DATASET = "GLBX.MDP3"
 SYMBOL = "NG.v.0"
@@ -43,10 +40,7 @@ def main() -> None:
     ap.add_argument("--max-cost", type=float, default=0.01)
     args = ap.parse_args()
 
-    key = os.environ.get("DATABENTO_API_KEY")
-    if not key:
-        raise SystemExit("DATABENTO_API_KEY missing")
-    client = db.Historical(key)
+    client = _client()
     cost = float(client.metadata.get_cost(
         dataset=DATASET,
         symbols=[SYMBOL],
@@ -94,7 +88,7 @@ def main() -> None:
                 trade_rows += 1
                 ts = r.get("ts_event", r.get("ts"))
                 try:
-                    t = float(ts.timestamp()) if hasattr(ts, "timestamp") else float(ts)
+                    t = float(ts)
                 except Exception:
                     t = None
                 if t is not None:
