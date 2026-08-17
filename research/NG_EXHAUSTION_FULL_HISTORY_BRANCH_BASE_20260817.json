@@ -1,0 +1,7 @@
+{
+  "status": "BRANCH_BASE_READY",
+  "base_commit": "636abb98405a60d6c11426a9186e06fc7dddb3a7",
+  "target_branch": "chatgpt/ng-exhaustion-chain-full-history-phase1-20260817",
+  "phase2_locked": true,
+  "agents_required": true
+}
