@@ -1,0 +1,131 @@
+name: NG Sunday Reopen Publish Recovered 20260817
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-aftermath-20260817
+    paths:
+      - .github/workflows/ng_sunday_reopen_publish_recovered_20260817.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recover_publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      BUCKET: bento-568968024170-us-east-2-an
+      JOB_ID: GLBX-20260720-NJRXDHEGFY
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install recovery dependencies
+        run: pip install --quiet databento pandas boto3
+      - name: Verify destinations and recover exact Sunday bytes from paid batch
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/dbn /tmp/decoded /tmp/out
+          : > /tmp/need.txt
+          for d in 20260705 20260712; do
+            mapfile -t keys < <(
+              aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" \
+                --query 'Contents[].Key' --output text | tr '\t' '\n' | \
+                grep -E "^nymex/nymex_cont/NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" || true
+            )
+            if [ "${#keys[@]}" -eq 0 ]; then echo "$d" >> /tmp/need.txt; fi
+            if [ "${#keys[@]}" -gt 1 ]; then echo "::error::duplicate Sunday objects for ${d}: ${keys[*]}"; exit 1; fi
+          done
+          if [ ! -s /tmp/need.txt ]; then echo 'Both Sunday files already present'; exit 0; fi
+          PYTHONPATH=research/kalshi python - <<'PY'
+          import databento_backfill as dbf
+          c=dbf._client(); jid='GLBX-20260720-NJRXDHEGFY'
+          j=c.batch.get_job_details(jid)
+          assert j.get('state')=='done' and j.get('dataset')=='GLBX.MDP3' and j.get('schema')=='mbp-10'
+          assert str(j.get('symbols'))=='NG.v.0'
+          need=[x.strip() for x in open('/tmp/need.txt') if x.strip()]
+          next_day={'20260705':'20260706','20260712':'20260713'}
+          wanted=set(need+[next_day[d] for d in need])
+          files=c.batch.list_files(jid); selected=[]
+          for f in files:
+              name=str(f.get('filename','')); compact=name.replace('-','')
+              if name.endswith('.dbn.zst') and any(d in compact for d in wanted): selected.append(name)
+          found=' '.join(x.replace('-','') for x in selected)
+          for d in wanted: assert d in found,(d,selected)
+          print('selected',selected)
+          for name in selected: c.batch.download(job_id=jid,output_dir='/tmp/dbn',filename_to_download=name)
+          PY
+          PYTHONPATH=research/kalshi python - <<'PY'
+          import glob,gzip,hashlib,os,shutil
+          import databento as db
+          import databento_backfill as dbf
+          expected={
+            '20260705':'5469ef5c8c67622a9be603d794ac80c583c7cf960d8b59838e99f6a545076231',
+            '20260712':'19e99707f19c5b59e24a168bdcfb0a682d24696433d6aa5f77d2791a24915112'
+          }
+          need=[x.strip() for x in open('/tmp/need.txt') if x.strip()]
+          for p in sorted(glob.glob('/tmp/dbn/**/*.dbn.zst',recursive=True)):
+              df=db.DBNStore.from_file(p).to_df()
+              if len(df): dbf._write_mbp10_df(df,'NG','/tmp/decoded')
+          for d in need:
+              src=f'/tmp/decoded/NG_{d}.jsonl'; assert os.path.isfile(src) and os.path.getsize(src)>0
+              got=hashlib.sha256(open(src,'rb').read()).hexdigest()
+              assert got==expected[d],(d,got,expected[d])
+              dst=f'/tmp/out/NG_{d}_sun.jsonl.gz'
+              with open(src,'rb') as a,gzip.open(dst,'wb',compresslevel=6) as b: shutil.copyfileobj(a,b)
+              print(d,'raw_sha256',got,'raw_bytes',os.path.getsize(src),'gzip_bytes',os.path.getsize(dst))
+          PY
+      - name: Publish only still-missing exact-hash Sunday objects
+        run: |
+          set -euo pipefail
+          if [ ! -s /tmp/need.txt ]; then echo 'No publish required'; exit 0; fi
+          while read -r d; do
+            [ -n "$d" ] || continue
+            mapfile -t keys < <(
+              aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" \
+                --query 'Contents[].Key' --output text | tr '\t' '\n' | \
+                grep -E "^nymex/nymex_cont/NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" || true
+            )
+            if [ "${#keys[@]}" -eq 0 ]; then
+              key="nymex/nymex_cont/NG_${d}_sun.jsonl.gz"
+              test -s "/tmp/out/NG_${d}_sun.jsonl.gz"; gzip -t "/tmp/out/NG_${d}_sun.jsonl.gz"
+              aws s3 cp "/tmp/out/NG_${d}_sun.jsonl.gz" "s3://${BUCKET}/${key}" --only-show-errors
+              echo "published ${key}"
+            elif [ "${#keys[@]}" -eq 1 ]; then
+              echo "${d} appeared concurrently as ${keys[0]}; preserving it"
+            else
+              echo "::error::duplicate Sunday objects for ${d}: ${keys[*]}"; exit 1
+            fi
+          done < /tmp/need.txt
+      - name: Verify both Sunday reopen files are present and readable
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/verify
+          for d in 20260705 20260712; do
+            mapfile -t keys < <(
+              aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" \
+                --query 'Contents[].Key' --output text | tr '\t' '\n' | \
+                grep -E "^nymex/nymex_cont/NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" || true
+            )
+            test "${#keys[@]}" -eq 1 || { echo "::error::Sunday ${d} has ${#keys[@]} canonical objects"; exit 1; }
+            dst="/tmp/verify/$(basename "${keys[0]}")"
+            aws s3 cp "s3://${BUCKET}/${keys[0]}" "$dst" --only-show-errors
+            gzip -t "$dst"
+            python - "$dst" <<'PY'
+          import gzip,json,sys
+          p=sys.argv[1]; n=0; lo=None; hi=None
+          with gzip.open(p,'rt') as f:
+              for line in f:
+                  r=json.loads(line); n+=1; ts=r.get('ts')
+                  if ts is not None:
+                      ts=float(ts); lo=ts if lo is None else min(lo,ts); hi=ts if hi is None else max(hi,ts)
+          assert n>0
+          print({'file':p,'rows':n,'min_ts':lo,'max_ts':hi})
+          PY
+          done
