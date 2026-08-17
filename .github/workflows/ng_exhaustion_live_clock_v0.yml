@@ -1,0 +1,123 @@
+name: NG Exhaustion Live Clock V0 Proof
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-runway-clock-20260817
+    paths:
+      - research/FRANKIE_NG_PRE_FAMILY_CLASSIFIER_FROZEN_OPERATIONAL_20260817.json
+      - research/ng_exhaustion_live_clock.py
+      - research/ng_exhaustion_live_clock_batch_proof.py
+      - research/kalshi/ng_live_exhaustion_collector.py
+      - tests/test_ng_exhaustion_live_clock.py
+      - .github/workflows/ng_exhaustion_live_clock_v0.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: us-east-2
+
+jobs:
+  live_clock_proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install focused dependencies
+        run: python -m pip install --quiet databento
+      - name: Require live Databento secret
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${DATABENTO_API_KEY:-}" || { echo 'DATABENTO_API_KEY missing'; exit 2; }
+      - name: Download exact frozen blind input artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ng_blind
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/9274443976/zip" > /tmp/ng_blind.zip
+          echo '224be8b033c1a03d638d7b84aef849363067e1961e9945e72bc86b52c3d01c39  /tmp/ng_blind.zip' | sha256sum -c -
+          unzip -q /tmp/ng_blind.zip -d /tmp/ng_blind
+          test -s /tmp/ng_blind/ng_frankie_blind_records.json
+      - name: Run live-input unit tests
+        run: PYTHONPATH=research python -m unittest -v tests.test_ng_exhaustion_live_clock
+      - name: Prove frozen batch equivalence
+        run: |
+          PYTHONPATH=research python research/ng_exhaustion_live_clock_batch_proof.py \
+            --records /tmp/ng_blind/ng_frankie_blind_records.json \
+            --family-classifier research/FRANKIE_NG_PRE_FAMILY_CLASSIFIER_FROZEN_OPERATIONAL_20260817.json \
+            --poststate-classifier research/FRANKIE_NG_A_POSTSTATE_CLASSIFIER_FROZEN_PREBLIND_20260816.json \
+            --out /tmp/live_clock_batch_proof.json
+      - name: Run one-session live Databento canary through existing collector path
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/ng_live_clock_canary
+          mkdir -p /tmp/ng_live_clock_canary
+          timeout 150s env PYTHONPATH=research:research/kalshi \
+            python research/kalshi/ng_live_exhaustion_collector.py \
+              --session-seconds 90 \
+              --health-interval 1 \
+              --local-dir /tmp/ng_live_clock_canary \
+              --no-upload \
+              --keep-local \
+            | tee /tmp/live_clock_canary_stdout.txt
+          test -s /tmp/ng_live_clock_canary/health.json
+      - name: Verify live roll20 tap produced real data
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          h=json.loads(Path('/tmp/ng_live_clock_canary/health.json').read_text())
+          tap=h.get('exhaustion_input') or {}
+          assert tap.get('status')=='PASS', tap
+          assert tap.get('future_price_accessed') is False, tap
+          assert tap.get('permanent_frankie_mutated') is False, tap
+          assert int(tap.get('mbp10_trade_records_seen') or 0)>0, tap
+          assert int(tap.get('classified_trades') or 0)>0, tap
+          finite=[x for _,x in tap.get('history',[]) if x is not None]
+          assert finite, tap
+          proof={'schema':'markets.ng_exhaustion.live_databento_canary.v1','status':'PASS','requested_symbol':h.get('requested_symbol'),
+                 'raw_symbol':h.get('raw_symbol'),'connection':h.get('connection'),'record_age_ms':h.get('record_age_ms'),
+                 'mbp10_trade_records_seen':tap.get('mbp10_trade_records_seen'),'classified_trades':tap.get('classified_trades'),
+                 'midpoint_skipped':tap.get('midpoint_skipped'),'invalid_skipped':tap.get('invalid_skipped'),
+                 'history_points':len(tap.get('history',[])),'finite_roll20_points':len(finite),'last_second':tap.get('last_second'),
+                 'last_roll20_raw':tap.get('roll20_raw'),'future_price_accessed':False,'permanent_frankie_mutated':False}
+          Path('/tmp/live_databento_canary_proof.json').write_text(json.dumps(proof,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(proof,indent=2,sort_keys=True))
+          PY
+      - name: Seal final live clock proof
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          batch=json.loads(Path('/tmp/live_clock_batch_proof.json').read_text()); live=json.loads(Path('/tmp/live_databento_canary_proof.json').read_text())
+          assert batch['status']=='PASS' and live['status']=='PASS'
+          out={'schema':'markets.ng_exhaustion.live_clock_v0_final_proof.v1','status':'PASS','batch':batch,'live_databento_canary':live,
+               'clock_scope':'downstream of an upstream causal exhaustion-event t0 marker','family_assignment':'frozen pre-t0 61-sample geometry classifier',
+               'a_state_assignment':'frozen legal t0..+60 61-sample classifier','worker_count':1,'future_price_accessed':False,'permanent_frankie_mutated':False}
+          Path('/tmp/NG_EXHAUSTION_LIVE_CLOCK_V0_FINAL_PROOF_20260817.json').write_text(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(out,indent=2,sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-live-clock-v0-final-proof
+          path: |
+            /tmp/live_clock_batch_proof.json
+            /tmp/live_databento_canary_proof.json
+            /tmp/NG_EXHAUSTION_LIVE_CLOCK_V0_FINAL_PROOF_20260817.json
+          if-no-files-found: error
