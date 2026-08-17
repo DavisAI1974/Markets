@@ -1,12 +1,13 @@
 name: NG Frankie Exhaustion Blind Input 20260816
 
-# Rerun after guard-safe MBO field rename; outcome wall unchanged.
+# Key-safe target-day brain wall; outcome wall unchanged.
 on:
   push:
     branches:
       - chatgpt/ng-exhaustion-frankie-blind-20260816
     paths:
       - research/ng_exhaustion_frankie_blind_input_20260816.py
+      - research/ng_exhaustion_frankie_blind_input_v2_20260816.py
       - research/FRANKIE_NG_EXHAUSTION_REVEAL_MEMO_20260816.md
       - .github/workflows/ng_frankie_blind_input_20260816.yml
   workflow_dispatch:
@@ -45,7 +46,7 @@ jobs:
           aws s3 cp s3://${BUCKET}/nymex/ng_mbo_ngx25/NG_20251001.dbn.zst /tmp/ng_mbo_ngx25_20251001.dbn.zst --only-show-errors
       - name: Build blind input with read-only full-brain wall
         run: |
-          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_frankie_blind_input_20260816.py \
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_frankie_blind_input_v2_20260816.py \
             /tmp/NG_20250717.jsonl.gz \
             /tmp/NG_20250923.jsonl.gz \
             /tmp/NG_20250930.jsonl.gz \
