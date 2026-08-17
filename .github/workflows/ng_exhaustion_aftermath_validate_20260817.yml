@@ -6,7 +6,8 @@ on:
       - chatgpt/ng-exhaustion-aftermath-20260817
     paths:
       - research/NG_EXHAUSTION_AFTERMATH_CAUSAL_VALIDATION_FREEZE_20260817.json
-      - research/ng_exhaustion_aftermath_validate_20260817.py
+      - research/NG_EXHAUSTION_AFTERMATH_ENDPOINT_CONFIRMATION_ADDENDUM_20260817.json
+      - research/ng_exhaustion_aftermath_validate_v2_20260817.py
       - .github/workflows/ng_exhaustion_aftermath_validate_20260817.yml
   workflow_dispatch:
 
@@ -15,7 +16,7 @@ permissions:
   actions: read
 
 jobs:
-  validate:
+  validate_v2:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -34,62 +35,70 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Verify frozen causal contract exists
+      - name: Verify frozen causal contract and endpoint addendum
         run: |
           set -euo pipefail
           test -s research/NG_EXHAUSTION_AFTERMATH_CAUSAL_VALIDATION_FREEZE_20260817.json
+          test -s research/NG_EXHAUSTION_AFTERMATH_ENDPOINT_CONFIRMATION_ADDENDUM_20260817.json
           python - <<'PY'
           import json
           x=json.load(open('research/NG_EXHAUSTION_AFTERMATH_CAUSAL_VALIDATION_FREEZE_20260817.json'))
+          a=json.load(open('research/NG_EXHAUSTION_AFTERMATH_ENDPOINT_CONFIRMATION_ADDENDUM_20260817.json'))
           assert x['status']=='FROZEN_PREVALIDATION'
-          assert x['episode_endpoint_policy']['hardcoded_end_time'] is False
           assert x['target1']['holdout_retuning'] is False
+          assert a['status']=='FROZEN_PREVALIDATION_ADDENDUM'
+          assert a['endpoint_semantics']['hardcoded_end_time'] is False
+          assert a['endpoint_semantics']['primary_aftermath_anchor']=='causal_confirmation_second'
+          assert a['validation_rule']['no_heldout_retuning'] is True
           PY
-      - name: Install analysis dependency
-        run: python -m pip install --quiet matplotlib
       - name: Download exact frozen reveal and blind artifacts
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          curl -L --fail --silent --show-error \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${REVEAL_ARTIFACT_ID}/zip" \
-            -o /tmp/reveal.zip
-          curl -L --fail --silent --show-error \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${BLIND_ARTIFACT_ID}/zip" \
-            -o /tmp/blind.zip
+          curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${REVEAL_ARTIFACT_ID}/zip" -o /tmp/reveal.zip
+          curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${BLIND_ARTIFACT_ID}/zip" -o /tmp/blind.zip
           echo "${REVEAL_SHA256}  /tmp/reveal.zip" | sha256sum -c -
           echo "${BLIND_SHA256}  /tmp/blind.zip" | sha256sum -c -
+          mkdir -p /tmp/reveal /tmp/blind
           unzip -q /tmp/reveal.zip ng_frankie_reveal_records.json -d /tmp/reveal
           unzip -q /tmp/blind.zip ng_frankie_blind_records.json -d /tmp/blind
-          test -s /tmp/reveal/ng_frankie_reveal_records.json
-          test -s /tmp/blind/ng_frankie_blind_records.json
-      - name: Download authoritative continuous NG MBP10 days
+      - name: Download contiguous target-week NG raw corpus
         run: |
           set -euo pipefail
-          for d in 20250717 20250923 20250930 20251001; do
-            aws s3 cp "s3://${BUCKET}/nymex/nymex_cont/NG_${d}.jsonl.gz" "/tmp/NG_${d}.jsonl.gz" --only-show-errors
-            test -s "/tmp/NG_${d}.jsonl.gz"
+          mkdir -p /tmp/ngweeks
+          optional=(20250713 20250921 20250928)
+          required=(
+            20250714 20250715 20250716 20250717 20250718
+            20250922 20250923 20250924 20250925 20250926
+            20250929 20250930 20251001 20251002 20251003
+          )
+          for d in "${required[@]}"; do
+            aws s3 cp "s3://${BUCKET}/nymex/nymex_cont/NG_${d}.jsonl.gz" "/tmp/ngweeks/NG_${d}.jsonl.gz" --only-show-errors
+            test -s "/tmp/ngweeks/NG_${d}.jsonl.gz"
           done
-      - name: Build full-stream causal table and validate aftermath
+          for d in "${optional[@]}"; do
+            if aws s3api head-object --bucket "${BUCKET}" --key "nymex/nymex_cont/NG_${d}.jsonl.gz" >/dev/null 2>&1; then
+              aws s3 cp "s3://${BUCKET}/nymex/nymex_cont/NG_${d}.jsonl.gz" "/tmp/ngweeks/NG_${d}.jsonl.gz" --only-show-errors
+            fi
+          done
+          find /tmp/ngweeks -type f -name 'NG_*.jsonl.gz' -size +0c | sort > /tmp/raw_paths.txt
+          cat /tmp/raw_paths.txt
+      - name: Build endpoint-confirmed causal aftermath table
         run: |
           set -euo pipefail
-          PYTHONPATH=research python research/ng_exhaustion_aftermath_validate_20260817.py \
+          mapfile -t RAW < /tmp/raw_paths.txt
+          python research/ng_exhaustion_aftermath_validate_v2_20260817.py \
             --reveal-records /tmp/reveal/ng_frankie_reveal_records.json \
             --holdout-records /tmp/blind/ng_frankie_blind_records.json \
-            /tmp/NG_20250717.jsonl.gz \
-            /tmp/NG_20250923.jsonl.gz \
-            /tmp/NG_20250930.jsonl.gz \
-            /tmp/NG_20251001.jsonl.gz
-      - name: Upload causal validation
+            "${RAW[@]}"
+      - name: Upload causal validation V2
         uses: actions/upload-artifact@v4
         with:
-          name: ng-exhaustion-aftermath-validation-20260817
+          name: ng-exhaustion-aftermath-validation-v2-20260817
           path: |
-            NG_EXHAUSTION_AFTERMATH_VALIDATION_20260817.json
-            NG_EXHAUSTION_AFTERMATH_VALIDATION_20260817_EVENT_TABLE.jsonl.gz
+            NG_EXHAUSTION_AFTERMATH_VALIDATION_V2_20260817.json
+            NG_EXHAUSTION_AFTERMATH_VALIDATION_V2_20260817_EVENT_TABLE.jsonl.gz
           if-no-files-found: error
