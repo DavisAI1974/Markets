@@ -26,8 +26,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install Databento
-        run: pip install --quiet databento
+      - name: Install Databento and AWS resolver deps
+        run: pip install --quiet databento boto3
       - name: Probe S3 for missing Sunday dates and week markers
         run: |
           set -euo pipefail
@@ -36,19 +36,17 @@ jobs:
           grep -E '2026-07-0|2026-07-1|2026070|2026071' week_markers.txt > sunday_week_markers.txt || true
           echo '=== S3 MATCHES ==='; cat sunday_s3_matches.txt
           echo '=== WEEK MARKERS ==='; cat sunday_week_markers.txt
-      - name: Probe existing Databento MBP10 batch jobs read-only
+      - name: Probe existing Databento MBP10 batch jobs read-only via canonical resolver
         run: |
           set -euo pipefail
-          python - <<'PY' > sunday_databento_jobs.json
-          import json, os
-          import databento as db
-          key=os.environ.get('DATABENTO_API_KEY')
-          if not key:
-              raise SystemExit('DATABENTO_API_KEY missing')
-          c=db.Historical(key)
+          PYTHONPATH=research/kalshi python - <<'PY' > sunday_databento_jobs.json
+          import json
+          import databento_backfill as dbf
+          c=dbf._client()
           keep=[]
           for j in c.batch.list_jobs():
-              d=dict(j)
+              try: d=dict(j)
+              except Exception: d={k:getattr(j,k) for k in dir(j) if not k.startswith('_') and not callable(getattr(j,k,None))}
               if d.get('dataset')!='GLBX.MDP3' or d.get('schema')!='mbp-10':
                   continue
               syms=d.get('symbols') or []
