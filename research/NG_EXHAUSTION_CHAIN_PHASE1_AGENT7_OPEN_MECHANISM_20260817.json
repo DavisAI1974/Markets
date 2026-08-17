@@ -1,0 +1,72 @@
+{
+  "name": "NG exhaustion Phase-1 Agent 7 open higher-order mechanism discovery",
+  "date": "2026-08-17",
+  "status": "FROZEN_BEFORE_AGENT7_54W_RESULTS",
+  "purpose": "Give an independent Phase-1 lane authority to discover higher-order chains and mathematical/nonlinear mechanisms that the existing ridge/KNN/extra-trees depth lane may miss. Agent 7 is a peer discovery lane, not a post-hoc explainer.",
+  "canonical_input": {
+    "base_freeze": "research/NG_EXHAUSTION_CHAIN_PHASE1_54W_BASE_FREEZE_20260817.json",
+    "event_table_contract": "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json",
+    "detector_source": "research/ng_exhaustion_chain_canonical_table_20260817.py",
+    "must_consume_same_frozen_54w_event_table": true,
+    "may_invent_detector_or_week_boundary": false,
+    "temporarily_excluded_week": "20260329"
+  },
+  "discovery_authority": {
+    "may_independently_discover_higher_order": true,
+    "may_originate_depth_not_found_by_agent3": true,
+    "depth_is_data_determined": true,
+    "predefined_long_short_cutoff": false,
+    "valid_candidate_examples": [
+      "nonlinear recurrence across multiple prior aftermath vectors",
+      "polynomial or interaction equation across lagged behavior",
+      "piecewise or threshold functional law",
+      "distance/manifold relation",
+      "tree-defined nonlinear dependency",
+      "state-transition or Markov-order relation",
+      "survival/hazard relation over sequential predictive memory",
+      "mixed/conditional higher-order mechanism"
+    ],
+    "rule": "Any mathematical or statistical relation may propose a Phase-1 chain/depth if it is defined using the frozen canonical event sequence and is chosen without access to the corresponding out-of-time test outcomes. It becomes evidence only if it survives temporal out-of-time validation and independent falsification."
+  },
+  "search_families": {
+    "existing_nonlinear_reference": ["distance-weighted KNN", "extra trees"],
+    "explicit_equation_library": [
+      "raw lag terms",
+      "squared lag terms",
+      "signed cubic lag terms",
+      "absolute-value lag terms",
+      "signed square-root lag terms",
+      "bounded tanh lag terms",
+      "same-dimension cross-lag products",
+      "same-dimension cross-lag differences",
+      "lag-vector norms and norm ratios",
+      "lag-to-lag cosine/alignment terms"
+    ],
+    "equation_fitter": "training-era regularized linear regression over the nonlinear feature library, with regularization chosen inside training eras only",
+    "nonparametric_crosscheck": "extra trees over the same lag history as an independent nonlinear benchmark",
+    "equation_reporting": "Record the selected transformed terms and coefficients for surviving explicit equations; do not report a black-box score alone when the equation lane is the source of a candidate."
+  },
+  "validation": {
+    "outer_unit": "whole trading week",
+    "chronological_eras": true,
+    "candidate_depth_and_equation_selected_inside_training_only": true,
+    "outer_test_used_only_for_confirmation": true,
+    "paired_depth_samples_required": true,
+    "per_week_and_per_era_stability_required": true,
+    "later_untouched_confirmation_segment_required": true,
+    "agent6_falsification_required": true,
+    "repair_week_later_scored_out_of_time": true
+  },
+  "relationship_to_other_agents": {
+    "agent3_structural_depth": "complementary benchmark, not a gate on Agent 7 discovery",
+    "agent4_causal_executable": "Any Agent 7 structural mechanism must be separately marked executable or retrospective using the frozen causal-availability semantics.",
+    "agent5_lineage": "Any surviving Agent 7 higher-order mechanism is passed to lineage analysis to distinguish inherited-origin from rolling/re-origin propagation and to measure instance-specific lifespan.",
+    "agent6_falsifier": "Agent 7 discoveries receive the same leakage/null/nonstationarity/omitted-state attacks as Agent 3 discoveries."
+  },
+  "walls": {
+    "phase2_allowed": false,
+    "runway_clock_mutable": false,
+    "permanent_frankie_mutable": false,
+    "historical_phase1_complete_with_54w_only": false
+  }
+}
