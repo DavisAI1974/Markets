@@ -1,0 +1,26 @@
+{
+  "name": "NG exhaustion held-week 2026-04-03 CME closure witness",
+  "date": "2026-08-17",
+  "status": "FROZEN_EXCHANGE_CLOSURE_WITNESS",
+  "held_week_sunday": "20260329",
+  "missing_utc_date": "20260403",
+  "exchange": "CME Group / NYMEX",
+  "product_context": "Henry Hub Natural Gas futures, NG",
+  "evidence": {
+    "cme_2026_globex_schedule": "CME Group's 2026 Globex holiday schedule lists Good Friday as covering 2-4 April 2026.",
+    "cme_2026_clearport_schedule": "For Good Friday 3 April 2026, CME ClearPort lists only CME/CBOT Interest Rates, CME/CBOT Equity Indices, and CME FX & Crypto as open; NYMEX energy is not included among the open products.",
+    "existing_authoritative_raw_inventory": "The frozen S3 inventory contains no NG raw object for 20260403 and classifies it as a known full-closure date rather than an unexplained missing date."
+  },
+  "interpretation": "Treat 20260403 as an observed exchange closure inside the 20260329 trading week. Do not create or upload a synthetic empty raw file. The weekly observation stream ends at the last actual NG trade before the holiday close and no calendar-date reset is introduced.",
+  "canonicalization_rule": {
+    "required_raw_dates": ["20260329","20260330","20260331","20260401","20260402"],
+    "explicit_closure_dates": ["20260403"],
+    "synthetic_empty_raw_file_allowed": false,
+    "same_frozen_detector_required": true,
+    "same_endpoint_definition_required": true,
+    "same_week_continuity_semantics_required": true
+  },
+  "phase2_allowed": false,
+  "permanent_frankie_mutable": false,
+  "runway_clock_mutable": false
+}
