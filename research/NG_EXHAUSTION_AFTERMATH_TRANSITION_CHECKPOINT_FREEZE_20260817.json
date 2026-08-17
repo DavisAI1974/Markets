@@ -1,0 +1,45 @@
+{
+  "name": "NG exhaustion aftermath post-end transition checkpoint freeze",
+  "date": "2026-08-17",
+  "status": "FROZEN_PREVALIDATION",
+  "scope": "Target 2 causal refinement only; runway clock and permanent Frankie remain untouchable",
+  "reason": "The exploratory +41..+60 late-flow split is not causal for fast-collapse price aftermath when the dynamic exhaustion endpoint occurs before +41. This freeze replaces any backward-looking use of +60 with endpoint-relative features.",
+  "dynamic_endpoint": {
+    "source": "NG_EXHAUSTION_AFTERMATH_ENDPOINT_CONFIRMATION_ADDENDUM_20260817.json",
+    "primary_anchor": "causal confirmation second of the first 3-second oriented roll20 <= 0 termination run",
+    "hardcoded_end_time": false
+  },
+  "immediate_aftermath_lane": {
+    "purpose": "Describe raw tape beginning at the confirmed exhaustion endpoint without future-state leakage.",
+    "feature_cutoff": "confirmed endpoint inclusive",
+    "outcomes_from": "confirmed endpoint",
+    "fixed_outcome_horizons_seconds": [5, 10, 20, 30, 60, 120, 300],
+    "forbidden": "No feature observed after the endpoint may be used to explain or predict a price interval that begins at the endpoint."
+  },
+  "transition_checkpoint_lane": {
+    "purpose": "Observe whether the market reloads or reverses after exhaustion has actually ended, then predict only tape that remains in the future.",
+    "checkpoint_offset_after_confirmed_endpoint_seconds": 20,
+    "why_20": "One full native roll20 window after the dynamic endpoint; chosen from signal mechanics before holdout scoring, not from price outcomes.",
+    "checkpoint_is_exhaustion_end": false,
+    "features_available_by_checkpoint": [
+      "oriented aggressor-volume pressure over endpoint+1 through endpoint+20",
+      "oriented roll20 at checkpoint",
+      "aligned 10-level book imbalance at endpoint",
+      "aligned 10-level book imbalance at checkpoint",
+      "aligned book change endpoint to checkpoint"
+    ],
+    "price_feature_allowed": false,
+    "primary_flow_state": {
+      "reload_same": "post-end 20-second aligned aggressor pressure > 0",
+      "switch_opposite": "post-end 20-second aligned aggressor pressure < 0",
+      "sparse_or_balanced": "no classified aggressor volume or exactly balanced pressure"
+    },
+    "outcomes_begin_at": "checkpoint, never endpoint",
+    "outcome_horizons_seconds": [20, 60, 120, 300],
+    "primary_thresholding": "sign only; no held-out-optimized magnitude cut",
+    "secondary_bins": "quintile/decile cutpoints derived from reveal only and applied unchanged to holdout",
+    "holdout_retuning": false
+  },
+  "interpretation_guardrail": "A strong endpoint+20 transition-state result is a delayed aftermath update, not evidence that the same state was knowable at the exhaustion endpoint.",
+  "chain_relationship": "If validated, the endpoint-relative transition state becomes a candidate link descriptor for later week-continuous chain research; it does not itself define chain membership or reset."
+}
