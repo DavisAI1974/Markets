@@ -56,7 +56,7 @@ def render(classifier_path: Path, output_path: Path, *, state_fixture: str, elap
     axes[1].barh(y, remaining, left=elapsed_portion, label="remaining")
     axes[1].set_yticks(y, labels=list(SCALES))
     axes[1].set_xlabel("seconds")
-    axes[1].set_title(f"Frozen reveal runway clocks | microstructure={microstructure} | confidence modifier={result['confidence_modifier']:+.2f}")
+    axes[1].set_title(f"Frozen reveal runway clocks | microstructure={microstructure} | confidence modifier={result['confidence_modifier']}")
     axes[1].legend(loc="best")
     axes[1].grid(True, axis="x", alpha=0.25)
     for idx, scale in enumerate(SCALES):
@@ -64,7 +64,7 @@ def render(classifier_path: Path, output_path: Path, *, state_fixture: str, elap
         axes[1].text(
             row["baseline_total_s"] * 1.005,
             idx,
-            f"base {row['baseline_total_s']:.0f}s | rem {row['remaining_s']:.0f}s | conf {row['confidence']:.2f}",
+            f"base {row['baseline_total_s']:.0f}s | rem {row['remaining_s']:.0f}s | conf {row['confidence']['base']}/{row['confidence']['modifier']}",
             va="center",
             fontsize=9,
         )
