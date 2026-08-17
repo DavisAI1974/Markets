@@ -1,0 +1,15 @@
+{
+  "status": "FULL_HISTORY_PHASE1_HANDOFF_READY",
+  "date": "2026-08-17",
+  "source_branch": "chatgpt/ng-exhaustion-aftermath-20260817",
+  "new_working_branch": "chatgpt/ng-exhaustion-chain-full-history-phase1-20260817",
+  "kickoff": "CHATGPT_KICKOFF_NG_EXHAUSTION_FULL_HISTORY_PHASE1_AGENTS_20260817.md",
+  "handoff": "CHATGPT_HANDOFF_NG_EXHAUSTION_FULL_HISTORY_PHASE1_AGENTS_20260817.md",
+  "coverage_freeze": "research/NG_EXHAUSTION_FULL_HISTORY_COVERAGE_FREEZE_20260817.json",
+  "coverage_weeks_complete": 55,
+  "coverage_weeks_total": 55,
+  "phase2_locked": true,
+  "next_chat_agents_required": true,
+  "runway_clock_mutable": false,
+  "permanent_frankie_mutable": false
+}
