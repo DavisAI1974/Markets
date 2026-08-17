@@ -6,7 +6,7 @@
   "source_branch": "chatgpt/ng-exhaustion-aftermath-20260817",
   "methodological_correction": {
     "exploratory_issue": "The preserved exploratory next-event percentages ordered reveal events only against the next reveal event and held-out events only against the next held-out event. This can skip a real intervening exhaustion in the other half.",
-    "correct_outcome_order": "Order the full 3429-event substantive population by day and t0. For every anchor, the literal next event is the next detected event in that full chronological stream regardless of reveal/holdout membership.",
+    "correct_outcome_order": "For the required handoff replication on the four frozen target dates, order the full 3429-event substantive population by target date and t0. For every anchor, the literal next event is the next detected event in that full target-date stream regardless of reveal/holdout membership.",
     "causal_timing_issue": "Any feature using observations through t0+60 cannot predict an event whose t0 is at or before t0+60.",
     "direct_second_order_eligibility": "For +60 transition rules, score the literal next event only when next_t0 > t0+60. Otherwise mark the direct second-order target already realized before the decision boundary and do not score it as a causal prediction.",
     "forward_live_required_for_promotion": true
@@ -18,11 +18,11 @@
     "missing_seconds": "forward-fill only from the most recent finite roll20 already observed; never use future back-fill after t0",
     "maximum_duration_seconds": null,
     "hardcoded_end_time": false,
-    "session_end_behavior": "If termination never occurs before the raw session ends, mark endpoint censored. Never manufacture an endpoint.",
+    "session_end_behavior": "If termination never occurs before available raw data ends, mark endpoint censored. Never manufacture an endpoint.",
     "relationship_to_plus60": "+60 is a legal state/checkpoint boundary for the frozen A classifier, not an exhaustion endpoint."
   },
   "target1": {
-    "primary_direct_target": "polarity of the literal next detected exhaustion in the full chronological stream, scored only if that next event is still future at the feature as-of time",
+    "primary_direct_target": "polarity of the literal next detected exhaustion in the full target-date chronological stream, scored only if that next event is still future at the feature as-of time",
     "feature_asof_for_checkpoint_rules_seconds": 60,
     "predeclared_states": {
       "alive_through_60": "No three-consecutive-second oriented roll20 <= 0 termination by +60",
@@ -43,12 +43,20 @@
     "reversal": "signed displacement <= -2 ticks",
     "chop": "absolute signed displacement < 2 ticks",
     "excursions": "MFE/MAE measured over each fixed post-end horizon",
-    "first_hit_times": "First +3t, -3t, +5t, -5t after endpoint are scanned without a time cap and censored only at session end",
+    "first_hit_times": "First +3t, -3t, +5t, -5t after endpoint are scanned without an arbitrary duration cap; censor only when the available continuous market stream ends.",
     "next_exhaustion": "first detected exhaustion whose t0 is strictly after the dynamic endpoint"
   },
   "chain_research_gate": {
     "start_only_after": "Target 1 causal validation and Target 2 dynamic-end aftermath are measured under this freeze",
-    "principle": "A later event belongs to the inherited chain only while measurable dependence on the originating state survives; otherwise mark a reset and start a new first-order chain.",
+    "measurement_origin": "For each NG trading week, begin the chain observation stream at the first actual trade after the Sunday evening weekly reopen that belongs to the combined Sunday/Monday session convention already used in this project.",
+    "continuous_through_week": true,
+    "calendar_midnight_is_reset": false,
+    "he24_to_he1_is_reset": false,
+    "daily_file_boundary_is_reset": false,
+    "weekly_boundary": "Run the event/tape stream continuously across calendar dates and session-hour labels through the trading week; only the true weekly close/reopen boundary starts a new observation week. Holiday/special-session boundaries must follow the actual trade stream rather than an assumed clock time.",
+    "behavioral_reset_rule": "Within a trading week, a chain may reset only because inherited predictive dependence is empirically lost or an explicit market-state reset is demonstrated; a date change, midnight, HE24->HE1, or file boundary can never create a reset by itself.",
+    "data_requirement": "Long/short-chain research must load the complete contiguous raw NG corpus covering each studied trading week, including all intervening dates around the four frozen target dates. Isolated target-day files are insufficient for chain ancestry or descendants.",
+    "principle": "A later event belongs to the inherited chain only while measurable dependence on the originating state survives; otherwise mark a behavioral reset and start a new first-order chain at that event.",
     "long_and_short_chains_separate": true
   },
   "do_not_touch": [
