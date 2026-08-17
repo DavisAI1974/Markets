@@ -1,0 +1,114 @@
+name: NG Frankie Exhaustion Blind Postreveal 20260816
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-frankie-blind-20260816
+    paths:
+      - .github/workflows/ng_frankie_blind_postreveal_20260816.yml
+
+permissions:
+  contents: write
+
+jobs:
+  frankie_postreveal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      BUCKET: bento-568968024170-us-east-2-an
+      FREEZE_COMMIT: 0f26c125548c801037bb3084d23b1b5d974ae0eb
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install postreveal dependencies
+        run: python -m pip install --quiet numpy scipy scikit-learn matplotlib databento
+      - name: Prove blind freeze before any actual reveal
+        run: |
+          set -euo pipefail
+          git cat-file -e ${FREEZE_COMMIT}^{commit}
+          git merge-base --is-ancestor ${FREEZE_COMMIT} HEAD
+          git diff --exit-code ${FREEZE_COMMIT} -- research/blind_freeze/ng_exhaustion_20260816/
+          python - <<'PY'
+          import gzip, hashlib, json
+          from pathlib import Path
+          root=Path('research/blind_freeze/ng_exhaustion_20260816')
+          p=root/'FRANKIE_NG_EXHAUSTION_BLIND_PREDICTION_FREEZE_MANIFEST_20260816.json'
+          m=json.loads(p.read_text())
+          assert m['status']=='FROZEN_BLIND_PREDICTIONS_PENDING_REVEAL'
+          assert m['prediction_n']==1711
+          assert m['outcome_accessed_before_freeze'] is False
+          assert m['future_price_served_to_model'] is False
+          assert m['single_best_curve_only'] is True
+          assert m['uncertainty_bands'] is False
+          n=0
+          for name,meta in m['shards'].items():
+              raw=(root/name).read_bytes()
+              assert hashlib.sha256(raw).hexdigest()==meta['sha256']
+              data=gzip.decompress(raw)
+              assert hashlib.sha256(data).hexdigest()==meta['uncompressed_sha256']
+              n += len([x for x in data.splitlines() if x.strip()])
+          assert n==1711
+          print(json.dumps({'freeze_commit':'0f26c125548c801037bb3084d23b1b5d974ae0eb','prediction_n':n,'freeze_hashes':'PASS','outcome_before_freeze':False},indent=2))
+          PY
+          test ! -e ng_frankie_blind_answers.json
+          test ! -e ng_frankie_blind_answers_SEALED.json
+      - name: Download authoritative continuous MBP10 actual days
+        run: |
+          set -euo pipefail
+          for d in 20250717 20250923 20250930 20251001; do
+            aws s3 cp s3://${BUCKET}/nymex/nymex_cont/NG_${d}.jsonl.gz /tmp/NG_${d}.jsonl.gz --only-show-errors
+            test -s /tmp/NG_${d}.jsonl.gz
+          done
+      - name: Download proven matching MBO for exact blind reconstruction
+        run: |
+          set -euo pipefail
+          aws s3 cp s3://${BUCKET}/nymex/ng_mbo_ngv25/NG_20250923.dbn.zst /tmp/ng_mbo_ngv25_20250923.dbn.zst --only-show-errors
+          aws s3 cp s3://${BUCKET}/nymex/ng_mbo_ngx25/NG_20250930.dbn.zst /tmp/ng_mbo_ngx25_20250930.dbn.zst --only-show-errors
+          aws s3 cp s3://${BUCKET}/nymex/ng_mbo_ngx25/NG_20251001.dbn.zst /tmp/ng_mbo_ngx25_20251001.dbn.zst --only-show-errors
+      - name: Reconstruct exact heldout identities under the original wall
+        run: |
+          set -euo pipefail
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_frankie_blind_input_v2_20260816.py \
+            /tmp/NG_20250717.jsonl.gz \
+            /tmp/NG_20250923.jsonl.gz \
+            /tmp/NG_20250930.jsonl.gz \
+            /tmp/NG_20251001.jsonl.gz
+          test ! -e ng_frankie_blind_answers.json
+          test ! -e ng_frankie_blind_answers_SEALED.json
+      - name: Reveal actuals only after freeze proof and score/render
+        run: |
+          set -euo pipefail
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_frankie_postreveal_compare_20260816.py \
+            /tmp/NG_20250717.jsonl.gz \
+            /tmp/NG_20250923.jsonl.gz \
+            /tmp/NG_20250930.jsonl.gz \
+            /tmp/NG_20251001.jsonl.gz | tee /tmp/frankie_postreveal_metrics.log
+          test -s research/blind_reveal/ng_exhaustion_20260816/FRANKIE_NG_EXHAUSTION_POSTREVEAL_METRICS_20260816.json
+          test -s research/blind_reveal/ng_exhaustion_20260816/frankie_vs_actual_group_curves.png
+          test -s research/blind_reveal/ng_exhaustion_20260816/frankie_vs_actual_examples.png
+          test -s research/blind_reveal/ng_exhaustion_20260816/frankie_postreveal_summary.png
+      - name: Commit compact postreveal record without retuning
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            research/blind_reveal/ng_exhaustion_20260816/FRANKIE_NG_EXHAUSTION_POSTREVEAL_METRICS_20260816.json \
+            research/blind_reveal/ng_exhaustion_20260816/FRANKIE_NG_EXHAUSTION_POSTREVEAL_ANALYSIS_SCAFFOLD_20260816.md
+          git diff --cached --quiet && { echo 'No compact postreveal files'; exit 1; }
+          git commit -m 'Record Frankie NG exhaustion blind postreveal metrics'
+          git push origin HEAD:${GITHUB_REF_NAME}
+      - name: Upload full actual-vs-forecast renders and event metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: frankie-ng-exhaustion-blind-postreveal-20260816
+          path: research/blind_reveal/ng_exhaustion_20260816/
+          if-no-files-found: error
