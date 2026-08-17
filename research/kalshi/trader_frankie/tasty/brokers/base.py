@@ -1,0 +1,33 @@
+"""Deterministic tastytrade broker interface."""
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Mapping, Protocol
+
+from ...common.approval import ApprovedOrder
+
+
+@dataclass(frozen=True)
+class TastyOrderResult:
+    order_id: str
+    client_order_id: str
+    state: str
+    filled_quantity: float
+    remaining_quantity: float
+    average_fill_price: float | None
+    raw_source_hash: str
+
+
+class TastyBroker(Protocol):
+    route_name: str
+
+    def get_instrument(self, symbol: str, instrument_type: str) -> Mapping[str, Any]: ...
+    def get_balance(self) -> Mapping[str, Any]: ...
+    def get_positions(self) -> Mapping[str, Any]: ...
+    def get_orders(self) -> Mapping[str, Any]: ...
+    def get_margin_requirements(self, payload: Mapping[str, Any]) -> Mapping[str, Any]: ...
+    def dry_run_order(self, order: ApprovedOrder) -> Mapping[str, Any]: ...
+    def submit_order(self, order: ApprovedOrder) -> TastyOrderResult: ...
+    def cancel_order(self, order_id: str) -> Mapping[str, Any]: ...
+    def replace_order(self, order_id: str, order: ApprovedOrder) -> Mapping[str, Any]: ...
+    def get_order(self, order_id: str) -> Mapping[str, Any]: ...

@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "mode": "paper",
+  "notes": [
+    "All null thresholds must be chosen and reviewed before a Risk Governor can be constructed.",
+    "This template intentionally contains no production thresholds or credentials.",
+    "Keep global_kill_switch true through offline and paper validation."
+  ],
+  "credential_namespaces": {
+    "kalshi_demo": {
+      "access_key_id_env": "KALSHI_DEMO_ACCESS_KEY_ID",
+      "private_key_path_env": "KALSHI_DEMO_PRIVATE_KEY_PATH"
+    },
+    "kalshi_production": {
+      "status": "FORBIDDEN_V1"
+    },
+    "tasty_sandbox": {
+      "username_env": "TASTY_SANDBOX_USERNAME",
+      "password_env": "TASTY_SANDBOX_PASSWORD"
+    },
+    "tasty_production": {
+      "status": "FORBIDDEN_V1"
+    }
+  },
+  "kalshi": {
+    "contract_registry": "kalshi/contract_registry.example.json",
+    "risk": {
+      "common": {
+        "max_forecast_age_seconds": null,
+        "max_snapshot_age_seconds": null,
+        "max_position": null,
+        "max_market_exposure": null,
+        "max_portfolio_exposure": null,
+        "max_daily_loss": null,
+        "max_open_orders": null,
+        "max_concurrent_markets": null,
+        "min_seconds_to_close": null,
+        "min_quantity": null,
+        "max_quantity": null,
+        "global_kill_switch": true
+      },
+      "min_contract_price": null,
+      "max_contract_price": null,
+      "max_order_notional": null,
+      "allowed_routes": ["paper_ledger"]
+    },
+    "paper": {
+      "immediate_fill_fraction": null,
+      "fee_per_contract": null
+    }
+  },
+  "tasty": {
+    "instrument_registry": "tasty/instrument_registry.example.json",
+    "risk": {
+      "common": {
+        "max_forecast_age_seconds": null,
+        "max_snapshot_age_seconds": null,
+        "max_position": null,
+        "max_market_exposure": null,
+        "max_portfolio_exposure": null,
+        "max_daily_loss": null,
+        "max_open_orders": null,
+        "max_concurrent_markets": null,
+        "min_seconds_to_close": null,
+        "min_quantity": null,
+        "max_quantity": null,
+        "global_kill_switch": true
+      },
+      "min_entry_price": null,
+      "max_entry_price": null,
+      "max_order_notional": null,
+      "max_margin_per_order": null,
+      "allowed_instrument_types": ["Future"],
+      "allowed_market_data_sources": ["LIVE"],
+      "allowed_routes": ["tasty_paper"],
+      "require_sandbox_dry_run": true
+    },
+    "paper": {
+      "immediate_fill_fraction": null,
+      "fee_per_contract": null
+    }
+  }
+}

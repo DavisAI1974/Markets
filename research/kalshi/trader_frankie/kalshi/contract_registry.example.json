@@ -1,0 +1,5 @@
+{
+  "schema_version": "1.0",
+  "mappings": [],
+  "note": "Add only reviewed, time-bounded Kalshi mappings. An empty registry hard-stops every ticker."
+}

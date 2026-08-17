@@ -1,0 +1,846 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-08-17T10:17:21.4543627+00:00",
+  "repository": "DavisAI1974/Markets",
+  "starting_commit": "03d03c3ec5de9274ccb26b15ee51e9355624f316",
+  "source_branch": "chatgpt/ng-exhaustion-chain-full-history-phase1-20260817",
+  "hash_algorithm": "SHA-256",
+  "protected_file_count": 166,
+  "spawn": {
+    "path": "research/kalshi/spawn.py",
+    "sha256": "a9bdad63c71f05a2897ffd10d4ca5ac56bfe1030b92db139668254ee68361e6c",
+    "git_blob": "2eb3ab8570be66bd9568bcd3ca2e6b9f19d6b33e"
+  },
+  "protected_files": [
+    {
+      "path": ".github/workflows/agent_frankie_ci.yml",
+      "sha256": "5f3642c60e95c650469b7d31888fd89f5c5383932447aa6346781eec016e1d82",
+      "git_blob": "4e8f84c9dc42b8bb38682e6ca401c4bf940d9d1b"
+    },
+    {
+      "path": ".github/workflows/frankie_aws_stage_s126_ci.yml",
+      "sha256": "6eb38a69714d5c4d119608e8594126ad90005f86b99ff505454c4c197f36128c",
+      "git_blob": "a686b6968035c011e98ea119d8d9e51f32233fc0"
+    },
+    {
+      "path": ".github/workflows/frankie_g24_refine_s128_ci.yml",
+      "sha256": "f9b84d510d41d8697eefea6555ae6a8c0d0d635ce0538b9c09af05a69064f32e",
+      "git_blob": "75ff19bc9631079d51319a60ed2e598b07d3622b"
+    },
+    {
+      "path": ".github/workflows/frankie_g3_reblind_s131.yml",
+      "sha256": "1908bbf84e27d19d5f4291abff341b598a70ebb78770b1263a25491f05e10381",
+      "git_blob": "a6ce359b6816e3db2e0b47904e27e30c0c60dc67"
+    },
+    {
+      "path": ".github/workflows/frankie_g3_s129_current_state.yml",
+      "sha256": "149ceaf248405988cb43c996db397f83870cb8cc9339ba3655bde61411769c35",
+      "git_blob": "347df5808dd1f0efa9556f329a8b9920ff6131f5"
+    },
+    {
+      "path": ".github/workflows/frankie_g3_s130_hydrate.yml",
+      "sha256": "48a1d7273a0da4a79c4977b317888a21fe84b6971a4b8883f7ae83e20c6a29eb",
+      "git_blob": "552fdcc0663d3fb7470b7a8d63879d9d93048706"
+    },
+    {
+      "path": ".github/workflows/frankie_g3_s130_persist.yml",
+      "sha256": "b900fc7bf14633d18249c771bd9ccd81e9f164b4b58c76c3e930d59744fd380b",
+      "git_blob": "c5e5ee6b97e55a8b392b308943e66a5e53496415"
+    },
+    {
+      "path": ".github/workflows/frankie_g3_s131_freeze.yml",
+      "sha256": "b48082e9f8da82c96883a6858dcd39f60018210f732b899447356d240393b754",
+      "git_blob": "f5287ffa8a8333241256e656a4678e7321dfea36"
+    },
+    {
+      "path": ".github/workflows/frankie_g3_s131_promote_freeze.yml",
+      "sha256": "862c979351a2dc33165f0f701877306761e216c747bc77bc7a9aad0493e1e0b3",
+      "git_blob": "e98590fa591dc6e2f02aaffe5754c8523d8fc039"
+    },
+    {
+      "path": ".github/workflows/frankie_g3_s131_s3_probe.yml",
+      "sha256": "d3d81bd0887fa5ee1a7288a1364576d91c10d371d2cd4eabb18d893ce70b2964",
+      "git_blob": "620c350585e2ad68867aeb7034b0115fc5e1a37a"
+    },
+    {
+      "path": ".github/workflows/frankie_g3_s131_score.yml",
+      "sha256": "1fa65a95aa47999cd3967dfa38e2d601c5bcad6dffbacc2c8a51e65dd1a388be",
+      "git_blob": "287d8f25d8f46696b323eb21b69749d91ce1f6a5"
+    },
+    {
+      "path": ".github/workflows/frankie_g3_s132_dynamic_curve_rehearsal.yml",
+      "sha256": "08604fa6db0a5c2eb50bf7c8dfa88ade3b50c512a314adacf309539b771e83a4",
+      "git_blob": "633fab44cbbbebb3ac32797728ab6df624056919"
+    },
+    {
+      "path": ".github/workflows/frankie_g3_s134_full_refine_v2.yml",
+      "sha256": "bb3505243ae1d3e097e32e60cd7c5c5f4476246b4fe8b3d48b4f2247e9815cec",
+      "git_blob": "a0a224b008d0fcf581639b9318e349bc0329e666"
+    },
+    {
+      "path": ".github/workflows/frankie_g3_s134_full_refine.yml",
+      "sha256": "04d40f560cde297a56bd893d53f673bc2156ea7987ba9858188be6c6a75b1cf3",
+      "git_blob": "3364aa20382949cebbee2f5aa336f7692f18a07d"
+    },
+    {
+      "path": ".github/workflows/frankie_g3_s134_refine_evidence.yml",
+      "sha256": "aaad2e402a0bfb18163af1c8e95be7049d1077cef877047567c145bdbb87240e",
+      "git_blob": "0d257cef0a717deeccb69417dc9ead8fd3331c9c"
+    },
+    {
+      "path": ".github/workflows/frankie_m13_recover_s126_ci.yml",
+      "sha256": "5b017c67b247fce0c3d4861c4aa6fb75033d5681f2a73c641a17e15aa53512fb",
+      "git_blob": "dc33080fee4d2a615559045e3cb80904b5f31b50"
+    },
+    {
+      "path": ".github/workflows/frankie_s128_contract_repairs_ci.yml",
+      "sha256": "e17c29609dc105d29fbe0c300c289a752adb7f964f3de23e8c91a9f99c9ad3d4",
+      "git_blob": "5f2435a72542404088d150f17006db351eb372ac"
+    },
+    {
+      "path": ".github/workflows/frankie_s132_dynamic_curve_ci.yml",
+      "sha256": "aae0654089826293b3a4eaaf66fac81ad35265a91d2e9ff8db10e8ad3151b047",
+      "git_blob": "5ef6a22c46eb45b11272f3aad5b58ac0b2e1c5fb"
+    },
+    {
+      "path": ".github/workflows/frankie_s132_runtime_ci.yml",
+      "sha256": "f749149bd9c160a9710af87b32cdbf4843752c05792f93b46d24ef4d5a657edd",
+      "git_blob": "553d66f063d738e000293ce084c5c2db7f8d6130"
+    },
+    {
+      "path": ".github/workflows/frankie_s133_reasoning_runtime_ci.yml",
+      "sha256": "9a49a774308e59da0b07ad8e093f29797eb6a994e6fd6134ec747e26625d576d",
+      "git_blob": "1af1f025b47d4c380285823e670a1e4a73fccfd2"
+    },
+    {
+      "path": ".github/workflows/frankie_s135_date_session.yml",
+      "sha256": "ef03c8c5434a1d5351d8af0a8dfda378db47d449b74fbdc8706c48cdd2c5dd70",
+      "git_blob": "a9f87e0a44829a539243626db30aa245a38978cc"
+    },
+    {
+      "path": ".github/workflows/frankie_s136_date_refine.yml",
+      "sha256": "765819c9e9445afa25691f916697b44eee8ba7572ab3d646ead43b1f8784ac11",
+      "git_blob": "a4d0480bb81aa53754a8b5ece83299346ea72cce"
+    },
+    {
+      "path": ".github/workflows/frankie_sep2025_probe_s129.yml",
+      "sha256": "9c7006d23205066f4d319d98a5212cd97266721eec9bdd98e115009b1d35c53b",
+      "git_blob": "7252e1a1dc8edef776d68712bf5a8f2ae092dcdb"
+    },
+    {
+      "path": ".github/workflows/frankie_specialists_s126_ci.yml",
+      "sha256": "fd4f1e61a29e1e44030d25592a733f721d60dfc782128b932f6bddf4445a0fe2",
+      "git_blob": "4912677f559d7af076d1480d0d91211044b94043"
+    },
+    {
+      "path": ".github/workflows/frankie-s135-sequential.yml",
+      "sha256": "c37ad760b7ecaeb8750a3d547f6ea7910f9c6c2feb8b180cd00e05de0a2087f7",
+      "git_blob": "ba6753f3ee1064e3ea90dcf40dd5a26c53455ef6"
+    },
+    {
+      "path": ".github/workflows/ng_frankie_blind_input_20260816.yml",
+      "sha256": "71ea2cabe28d752308962525e3cbc5c80fcd41954fc944244f4f2da1f4506a05",
+      "git_blob": "3bb9b9a2dbabb278d194b14bfb459f067d1c9e89"
+    },
+    {
+      "path": ".github/workflows/ng_frankie_blind_postreveal_20260816.yml",
+      "sha256": "161a89cad97478445d558e749c7477bc054d804d2ecbb9423ac4e5ea05610a4c",
+      "git_blob": "3251d90c71bb3a28df6e796b8e6394890e4b8a55"
+    },
+    {
+      "path": ".github/workflows/ng_frankie_blind_predict_20260816.yml",
+      "sha256": "e82b501cbbaa87baa438e0637df2a42a3a9611f9b122c730d5d33a4a6d333341",
+      "git_blob": "6b7110965a8cef548280e3d9063180969ccef2ed"
+    },
+    {
+      "path": ".github/workflows/ng_frankie_blind_reveal_score_20260816.yml",
+      "sha256": "53a46f6b2f4f3d3348bfa5ba4668f74b15be39bcf422a0c6d2b32739fef93c29",
+      "git_blob": "368c7d5d4c6a30d0c7692a3c7db9b36e770ec62a"
+    },
+    {
+      "path": ".github/workflows/ng_frankie_family_reveal_part1_20260816.yml",
+      "sha256": "113b06c28d1e636a0030d98e290b221d2355d929cd5b9424de32a7b6116e792b",
+      "git_blob": "cf5f0fa183c22901feac09306843e91858e1b8b5"
+    },
+    {
+      "path": ".github/workflows/ng_frankie_reveal_20260816.yml",
+      "sha256": "d5917d301baa63258d9fe5a534270b94f5f76aa79aefa48cf15b8d6291288921",
+      "git_blob": "809b6d43047edb283631ae86d4d38fa20b47a9bb"
+    },
+    {
+      "path": "deploy/aws/FRANKIE_AWS_SETUP_S117.md",
+      "sha256": "82f77fc6f8ebb30b4468901c128bbedca97a7e2af485be77d1a162952f94b01c",
+      "git_blob": "462b650cf83ad5e52413eaf962a74d5b219e8455"
+    },
+    {
+      "path": "deploy/aws/frankie_iam_policy.example.json",
+      "sha256": "68e484714fb147771de719f0689806be5545c8cd4a3d13f21267a9f1408ed229",
+      "git_blob": "e35e8a6e33cef06b0d93da05bbf042f83bdd6690"
+    },
+    {
+      "path": "deploy/aws/frankie.env.example",
+      "sha256": "a03d75dd6c82bd884a300ef104dfb7d1d022243f09145a08d40a43e7b84ec330",
+      "git_blob": "7ee0f7bf7202f737da6157f50959f84176feca6b"
+    },
+    {
+      "path": "deploy/aws/install_frankie.sh",
+      "sha256": "75862ca163e18b7a4b8c275af0774f02a77238bdb17b0c6bafd1cf385e918953",
+      "git_blob": "ff18bcc308ae1b5e9b9a4299a809984de71af331"
+    },
+    {
+      "path": "deploy/aws/markets-frankie-reflect.service",
+      "sha256": "307d7210e8971d37870f55fc7c24dd3d3c48d6a5498fc2a5f746ec21c49cc4ba",
+      "git_blob": "1bd3b85632754c1b11dfa6e4d2b283446a9dd7b2"
+    },
+    {
+      "path": "deploy/aws/markets-frankie-reflect.timer",
+      "sha256": "7ae7f3a0e3ce0b3bff40fb6e962e82fca5e10104015d80095e8ebbae2b65d45c",
+      "git_blob": "85579b8c54bc9a59d1cc8f954fac1557367e57d5"
+    },
+    {
+      "path": "deploy/aws/markets-frankie.service",
+      "sha256": "a60e6cf4f3fa839827f05cb9ba09919ff76c136083623cb40604b3c186aeefbf",
+      "git_blob": "51689368b684b89705f9a89fa178b7706c1ef681"
+    },
+    {
+      "path": "deploy/aws/requirements-frankie.txt",
+      "sha256": "82746f4d52dfcde2fb01ae2672763977f32d578b1dc3de69cf69859a8fe6b53c",
+      "git_blob": "bfa7c2ccd61ca49f097d62c526a65bcab2e7f2b1"
+    },
+    {
+      "path": "research/kalshi/agent_frankie.py",
+      "sha256": "a42c0c3892f1352e7211c5ad9abb565f16f69e00c03ce2f85985eb8433d90eac",
+      "git_blob": "e111f5a881e3c1e6104e8ed21858abd84d141e65"
+    },
+    {
+      "path": "research/kalshi/agents/failure_judge.md",
+      "sha256": "2b4b748ea11ac15dd32abc456091e1ed14e9f94da688233aa0f2a7eeb37116b9",
+      "git_blob": "8e8c42e7a653cc3f7d7c5bb9a34983514b885a50"
+    },
+    {
+      "path": "research/kalshi/agents/mbo_refine_shared.md",
+      "sha256": "35b28e784ddda683dc938a4f066d3c56bc84cc61e35063cdfbd5705f732af9d2",
+      "git_blob": "125223c8d25285d97f03f3519063edce980f7544"
+    },
+    {
+      "path": "research/kalshi/agents/mbo_specialist_A.md",
+      "sha256": "7c76df81b652a9ef0a9fff89bf4b7bc0c1f7f4e54538454832adc73e470d5b15",
+      "git_blob": "7343fdf9ae429dda5afac35487f04e8db34564a0"
+    },
+    {
+      "path": "research/kalshi/agents/mbo_specialist_B.md",
+      "sha256": "35f78bc030476217ac6709c393d104b6cee886e7aaa21d85da239b95e9a71b8a",
+      "git_blob": "f605c952426d9f6b5f592c68a1066796386ddb33"
+    },
+    {
+      "path": "research/kalshi/agents/mbo_specialist_C.md",
+      "sha256": "3f5850afd0da087abe4bc407626309d3da3443186596f974c4d72fbe007b9ceb",
+      "git_blob": "78b3e6cef09d292e121357aff19c4d7734f18e8d"
+    },
+    {
+      "path": "research/kalshi/agents/mbo_specialist_D.md",
+      "sha256": "bf4f1130ca1fdec1bea2cd68650da34027671b2df72c7e20224d2e2168a1b36b",
+      "git_blob": "9d31a9978d69162891a22281430d26f7cca759e9"
+    },
+    {
+      "path": "research/kalshi/agents/mbo_specialist_E.md",
+      "sha256": "037f8f82e5380cc1ea8cab7b10de637de11624a8a9e9959dc770bceffa4c4698",
+      "git_blob": "aafbbf6798e7b45757194f3d7d914cde016ba82b"
+    },
+    {
+      "path": "research/kalshi/agents/QC_CHECKLIST.md",
+      "sha256": "b30124691502a0654c2f2311164f554078c688e186ad026de0eca8b873a2a462",
+      "git_blob": "a4f6cf6e233d596aed08684af4404797b0b2e867"
+    },
+    {
+      "path": "research/kalshi/agents/README.md",
+      "sha256": "5eb797c3f1486d5451b8eb40887c5735c2a16b4095e6d51563c7f948a3566ea9",
+      "git_blob": "5370a36e20f74f1bda9bda595493bc5f9f42f44e"
+    },
+    {
+      "path": "research/kalshi/agents/refine_gold_s105/CHECKSUMS.sha256",
+      "sha256": "a1d81d9a373688360b8cdd064892971fcd918954731935e337a16a1e8716b955",
+      "git_blob": "ebe9c9beafd68183c2326d873d712a322508aa1c"
+    },
+    {
+      "path": "research/kalshi/agents/refine_gold_s105/FROZEN.md",
+      "sha256": "9afc9e25ef1b0aa64481f948a56e1247ecd73a7cfcdf3d8ccc86c8545b50c590",
+      "git_blob": "3cbc7122358f5fd111b1ac2f110fe853b2f2c556"
+    },
+    {
+      "path": "research/kalshi/agents/refine_gold_s105/mbo_refine_shared.md",
+      "sha256": "35b28e784ddda683dc938a4f066d3c56bc84cc61e35063cdfbd5705f732af9d2",
+      "git_blob": "125223c8d25285d97f03f3519063edce980f7544"
+    },
+    {
+      "path": "research/kalshi/agents/refine_gold_s105/mbo_specialist_A.md",
+      "sha256": "7c76df81b652a9ef0a9fff89bf4b7bc0c1f7f4e54538454832adc73e470d5b15",
+      "git_blob": "7343fdf9ae429dda5afac35487f04e8db34564a0"
+    },
+    {
+      "path": "research/kalshi/agents/refine_gold_s105/mbo_specialist_B.md",
+      "sha256": "35f78bc030476217ac6709c393d104b6cee886e7aaa21d85da239b95e9a71b8a",
+      "git_blob": "f605c952426d9f6b5f592c68a1066796386ddb33"
+    },
+    {
+      "path": "research/kalshi/agents/refine_gold_s105/mbo_specialist_C.md",
+      "sha256": "3f5850afd0da087abe4bc407626309d3da3443186596f974c4d72fbe007b9ceb",
+      "git_blob": "78b3e6cef09d292e121357aff19c4d7734f18e8d"
+    },
+    {
+      "path": "research/kalshi/agents/refine_gold_s105/mbo_specialist_D.md",
+      "sha256": "bf4f1130ca1fdec1bea2cd68650da34027671b2df72c7e20224d2e2168a1b36b",
+      "git_blob": "9d31a9978d69162891a22281430d26f7cca759e9"
+    },
+    {
+      "path": "research/kalshi/agents/refine_gold_s105/mbo_specialist_E.md",
+      "sha256": "037f8f82e5380cc1ea8cab7b10de637de11624a8a9e9959dc770bceffa4c4698",
+      "git_blob": "aafbbf6798e7b45757194f3d7d914cde016ba82b"
+    },
+    {
+      "path": "research/kalshi/agents/refine.md",
+      "sha256": "253229cebe8f5ef45f7df3afe04c6f197048e092cd18bab08bfa8ff9029f7f62",
+      "git_blob": "9ef177415e7f93b9d18777c2a6264d59452e8683"
+    },
+    {
+      "path": "research/kalshi/agents/RUN_SOP.md",
+      "sha256": "343243c426fde7fc3be551d845f767157d29a3bb2b3823e48881ac28a4a96da8",
+      "git_blob": "50e892c21875435081c910adfacbe17ba114c577"
+    },
+    {
+      "path": "research/kalshi/agents/state_auditor.md",
+      "sha256": "cab663da612220d333c35f9ed7a996cb0405aec7a198b9ad29b0cb687a86fa22",
+      "git_blob": "611800e831e7f79e2119e7f60ac8edf0749ad846"
+    },
+    {
+      "path": "research/kalshi/brain_audit.py",
+      "sha256": "ac70e5ed2069fa680f936dbe37272906b704df201689441236447094ddc50a4f",
+      "git_blob": "413ab24cd904c804445a3094b5a1a04dbb7d6d95"
+    },
+    {
+      "path": "research/kalshi/brain_backfill.py",
+      "sha256": "02c124d99fd9870c86cbd9f74359fe20ecc9a0936a13f3299896919989ae9612",
+      "git_blob": "dfa7b8f46a82f0806a70a1350b41dbbf71d3cf94"
+    },
+    {
+      "path": "research/kalshi/brain_conditions.py",
+      "sha256": "4a247240d9af2c55060e75d08d5cb8459bebcdb0153f419857c1f25412043342",
+      "git_blob": "c566d0178d15ac0130831230af34f7c9fb6d3687"
+    },
+    {
+      "path": "research/kalshi/brain_onedoc_fix_s115.py",
+      "sha256": "a6c06d5943f767b49feec47865aefb6169e3a5210096d5e53f1dafe249f04111",
+      "git_blob": "efb7e3f60aaf6e359644f86832b1aa98a92f03f8"
+    },
+    {
+      "path": "research/kalshi/brain_schema.py",
+      "sha256": "b5f9fbccba2351b6fd8cd2035eb11edb933c871851ae109b45a78b01bfe833e6",
+      "git_blob": "9fde63102c5e1c58fc60d7bb236c71f81509e41f"
+    },
+    {
+      "path": "research/kalshi/brain_view.py",
+      "sha256": "f71544b3d398b195d648e8aa82081b53972f86caf1d94da5f2d3e13d8fba126d",
+      "git_blob": "daae2ccfd7442f6d0a4839754682a7245d2d0896"
+    },
+    {
+      "path": "research/kalshi/frankie_anchor_s118.py",
+      "sha256": "fd3538763ca64b9859f82ca7d5c2489ca87736b2f5dc28f77872c1440f2a4c82",
+      "git_blob": "500f8811e6a13c637cf85339a77451eed3c6949d"
+    },
+    {
+      "path": "research/kalshi/FRANKIE_ARCHITECTURE_S117.md",
+      "sha256": "79f952040c857c9dc72c2debeddb657760fb864691eff08a99cb5f542312905f",
+      "git_blob": "c84534eed377f31bbc42336d066586a02b207ce6"
+    },
+    {
+      "path": "research/kalshi/frankie_aws_stage_s126.py",
+      "sha256": "100632de311124ce21bf56847964b43994d36df4f24b95bc9b6e70610f3c146a",
+      "git_blob": "2a6ff1f6570353d795a9b6251240f9a7149c4b29"
+    },
+    {
+      "path": "research/kalshi/frankie_backends.py",
+      "sha256": "8ff8f66e3bba0d868e413e202db1d38493c988f94735a2c5ebdeb35859443f85",
+      "git_blob": "1c1233cf92e3b6dd9cf1ec80ce039c30b9a48300"
+    },
+    {
+      "path": "research/kalshi/frankie_bridge_preflight_s118.py",
+      "sha256": "9e38afa8d744a53cc405bc838da1cef921985fb14f00ba2e1c1a5fa7cfe1b583",
+      "git_blob": "d1f18ceaf70bb2ee467d5a878eaf79026cd823a3"
+    },
+    {
+      "path": "research/kalshi/frankie_causal_capture_gate_s126.py",
+      "sha256": "3b0dc7c39922984d3b8bfe4e708929254700a0116799e1d83d4d69f94f99c3fa",
+      "git_blob": "29922f385e1311954cc63c048a3f385b77dfd682"
+    },
+    {
+      "path": "research/kalshi/FRANKIE_CHATGPT_CLAUDE_COORDINATION.md",
+      "sha256": "901b96b9979ed631b7dbb16f12298fad3415c60f3d290894c1f40cc0847b66a3",
+      "git_blob": "e55ea9afcee5b31ce125dd6be358d19581aeba9a"
+    },
+    {
+      "path": "research/kalshi/frankie_claude_code_temp.py",
+      "sha256": "bb5e5572f9cec3cdd2651982720eec5bb2c3fd27267c621458d0e9eec2105315",
+      "git_blob": "ff88c51bcf095a4e1d2719bfd8af47474bd86930"
+    },
+    {
+      "path": "research/kalshi/frankie_core.py",
+      "sha256": "384f01b413eb80953420c4d86401a4e5eb2c5a01e6abc3dbf6d869d4586fcc2d",
+      "git_blob": "4f836a89454c28b5c119d2e628b8c2c012618616"
+    },
+    {
+      "path": "research/kalshi/frankie_effects_s115.py",
+      "sha256": "64bef59eee234096dac98deff420e1d76dbdcf3f90800152f5046710809580cb",
+      "git_blob": "34463f54f6e96b84e66864ea1546201e6b6cf969"
+    },
+    {
+      "path": "research/kalshi/frankie_engine.py",
+      "sha256": "bb31a369789d8e75663f05fc98651de3ead318aa4162c23e91bcd1739b9c8059",
+      "git_blob": "35f351d1651a6a73183766ee9aceccc37fe928cd"
+    },
+    {
+      "path": "research/kalshi/frankie_event_schema.json",
+      "sha256": "fc7c784f77cb4bd4101a4d84f29409ec1b03260cb428969d0258fd44d2066e6c",
+      "git_blob": "63eb8e74d919af7c0d2771e9315e08381cc534d0"
+    },
+    {
+      "path": "research/kalshi/frankie_evolution.py",
+      "sha256": "2145159ac00934c12f7a273305476b638ad61bd5b98f02848e2db7d726a726cc",
+      "git_blob": "07d29a084d3315bf94cdb22c9b9bb1df23bbfeac"
+    },
+    {
+      "path": "research/kalshi/frankie_forecaster_s115.py",
+      "sha256": "d2cc13c25cc08fbd9905dd779041d4842d72a015fa2bb20f3c721e6136c1dcad",
+      "git_blob": "0deb5cf3b39b28396fc7736244e9fd0994d8a782"
+    },
+    {
+      "path": "research/kalshi/frankie_g24_refine_render_s128.py",
+      "sha256": "cc43668c7c766eb6b5f6e170f32f80dd4ad0acccbc803a1020965a6a5f0aabe1",
+      "git_blob": "bff3737d3a6f2f464184b5654ada369ee8a0eed7"
+    },
+    {
+      "path": "research/kalshi/frankie_g24_run_s127.py",
+      "sha256": "b7a17a32b2f66a6ccf61fc359edfce958206e395ef9a1ba623b76323d5958e2c",
+      "git_blob": "b0e6af6b2e42810d1d12fe19bee8d317077ec8f5"
+    },
+    {
+      "path": "research/kalshi/frankie_g24_score_render_s127.py",
+      "sha256": "296d92d551a6e47424b4a3b3bf25947149b126f77ad842b065f1a6e8e9cc51bd",
+      "git_blob": "2a8608614e23a09c0c26261f7425f5443c8342c8"
+    },
+    {
+      "path": "research/kalshi/frankie_g3_reblind_s131_runner.py",
+      "sha256": "df13f42ccf60744bd2c43e101423b086cdb01650d4659a19a9cd2e7e0c8ff058",
+      "git_blob": "a75b8d9c041f44ee6258f1b712b61354a522f9eb"
+    },
+    {
+      "path": "research/kalshi/frankie_g3_reblind_s131.py",
+      "sha256": "03c261911df0385e9d551423992e3582101b5be2438f9fc32d76c83eb119da96",
+      "git_blob": "86285bc2b499e4434ad956618f55be18e8be6c8d"
+    },
+    {
+      "path": "research/kalshi/frankie_g3_s131_freeze.py",
+      "sha256": "a02f44b3d75c76e1f4db34cd77a3287468b9b0b13ce89f53727eed47177fef85",
+      "git_blob": "6d1a22160296196c6ddb9403b3c0bfde245abb1a"
+    },
+    {
+      "path": "research/kalshi/frankie_g3_s131_reconcile_score.py",
+      "sha256": "6590b62dc8f908aa990c043c1917952020f59f873565baf569936d99e73c9a9e",
+      "git_blob": "af8b958fefda003cd68032430a0f95bb348b0622"
+    },
+    {
+      "path": "research/kalshi/frankie_g3_s131_score.py",
+      "sha256": "13c73360d75f33f94b877ea349f79f24759605076cedb0b1678aa3edd963991d",
+      "git_blob": "b870c8b663ac5d276e35fff8b289c0fc038161fd"
+    },
+    {
+      "path": "research/kalshi/frankie_g3_s132_dynamic_curve_rehearsal.py",
+      "sha256": "83168531839c7389ba7db8b9ed70827c9c4932a46ad3bdf03039576c7f5109ac",
+      "git_blob": "57fb91b05857a0b4c19d92046ec7841982e65b24"
+    },
+    {
+      "path": "research/kalshi/frankie_g3_s134_full_refine_runner.py",
+      "sha256": "79584380dd070934e7d6398db28d74dda5de9c7283c3231db98ea66b30b001e5",
+      "git_blob": "f28770ef4007cb59d45a3b63f60ba670c8e0f0a2"
+    },
+    {
+      "path": "research/kalshi/frankie_g3_s134_full_refine.py",
+      "sha256": "32697657b8cdfeccf9b944d8f8ea0d3cd2839ed9258d3135781babaa224c7f54",
+      "git_blob": "5ca939b62afc773d15f672bb2e4e8ab335ff82d1"
+    },
+    {
+      "path": "research/kalshi/frankie_g3_s134_refine_evidence.py",
+      "sha256": "5c9629dfc57d25425c60d265a54b29a1fb6b3b95a07b3dead0ebd31bea38aac4",
+      "git_blob": "a323ad7323a34e52793f38e086702c4b8704f361"
+    },
+    {
+      "path": "research/kalshi/frankie_group_forecast_s118.py",
+      "sha256": "de31f7e73baba3671aeb62122e0bd99e4e9ae89d434da7109ee4e49728bef8e3",
+      "git_blob": "9a3e28017244dfdafc2a62ce979f72e25ac47d03"
+    },
+    {
+      "path": "research/kalshi/frankie_historical_hydrate_s130.py",
+      "sha256": "5da5bf273757ee7d6148eb404219ef837bce1c1905db7496aa6a33b15665aede",
+      "git_blob": "90918e77c7713c09e3ee85d3d0af585f00e308cf"
+    },
+    {
+      "path": "research/kalshi/frankie_idempotency.py",
+      "sha256": "844f85ae3df26fae0e902a3051d1d0a89af29674f8c18f46aa09223cd9e4b98a",
+      "git_blob": "92a1c9d78aaf372ca2d7bee79976bfbd6680e64b"
+    },
+    {
+      "path": "research/kalshi/frankie_improve.py",
+      "sha256": "2f283fd40c645ba61f0b90f5acc95a750ad06541e5fb1558fd90240286e275e0",
+      "git_blob": "c3dd96d3994336d7576712945ba82d3a3ede6232"
+    },
+    {
+      "path": "research/kalshi/frankie_kitchen_sink_audit_s121.py",
+      "sha256": "cbed7681e1776e798bf418f71568ac7804eb7ba840c3eba11d34d74c1da16ab9",
+      "git_blob": "fb4a4c604efe1b3af91f447724acd637d37795f6"
+    },
+    {
+      "path": "research/kalshi/frankie_m13_recover_s126.py",
+      "sha256": "3a926fa4ced7fde76779f8e7fbb5cac091776541e92c9e5f7f3bdfc5d11a51f3",
+      "git_blob": "ed4a6d9489810983c919e93f6070a17dfba2a8cb"
+    },
+    {
+      "path": "research/kalshi/frankie_nova_optimizer.py",
+      "sha256": "d23a677c3f781fa077ac5e5dd52b94d0ec47f649ddf75e8a97b8128c80505f92",
+      "git_blob": "3a1201c62131fd7db7c2a66dbc3bd251a3290515"
+    },
+    {
+      "path": "research/kalshi/frankie_outcome_schema.json",
+      "sha256": "51c616426885d906e77c4b8e5905a67125dec85bab5d19ef29b447230cc76943",
+      "git_blob": "cc81086d4f2af10b1f9c7f6d9079e1208f90522a"
+    },
+    {
+      "path": "research/kalshi/frankie_packet_compact_s120.py",
+      "sha256": "6177ceed499118d2d1cab7d0fcc2b776571a04d1b3db6a4e0be2c9aa54d24eea",
+      "git_blob": "cafb9704e1de257f23c7fb559cfce431f417b1d5"
+    },
+    {
+      "path": "research/kalshi/frankie_paper_manifest.json",
+      "sha256": "505364a4d15f07cb2e50bea355bac55ba15c33ba46677f4cdab33b5d7c2d791a",
+      "git_blob": "346a31e1504d1689bcbde6e92c877c384050fa82"
+    },
+    {
+      "path": "research/kalshi/frankie_progress_lock_s122.json",
+      "sha256": "4f2ab4293eb5b040fd98420e3b66243c81497518b29eca8dc26cac0b2c071ef7",
+      "git_blob": "af173cf27f4c4f9bf1ade8415f250f0c443d8cb6"
+    },
+    {
+      "path": "research/kalshi/FRANKIE_PROGRESS_LOCK_S122.md",
+      "sha256": "1032d15e52184b349f26b8326afd1bece95f2e32f05c301d667d51d02cf70d38",
+      "git_blob": "3805a6468f66ab4362c84266baf84d4791eb7d1a"
+    },
+    {
+      "path": "research/kalshi/frankie_progress_lock_s122.py",
+      "sha256": "eada46532cb9bd62a2663947a98259ac4c3bf97cdccfadf23b09198b562abe94",
+      "git_blob": "78a0c911ddcd2657664da6a2e463bd1be5d6dc3e"
+    },
+    {
+      "path": "research/kalshi/frankie_reflect_runner.py",
+      "sha256": "b109e6d6944f9b5ac36c2d21da50116ca5531db4c83353bd8a3a6947e8c9518a",
+      "git_blob": "706bd8f92930054193eb27ccec452768f6a96b39"
+    },
+    {
+      "path": "research/kalshi/frankie_reflect.py",
+      "sha256": "d78716504c34fdc1a392f9d1bcf6d60058d52d4021b0793e88723dd4f754878f",
+      "git_blob": "4cb0666850f7ed582437c8806be44bb7500f4f77"
+    },
+    {
+      "path": "research/kalshi/frankie_render_s115.py",
+      "sha256": "43f37848956ce698e3f33864cb5657e9be3fd7d3c8cbdaf192d9a0356de9096b",
+      "git_blob": "bc6724377d42fc2fe0e54074fa16589f99fab3b9"
+    },
+    {
+      "path": "research/kalshi/FRANKIE_RESEARCH_INTEGRATION_S117.md",
+      "sha256": "f8bcfccd27651365c35ebd0496d21ddfd1e2c26647bf166fc4505348af46ddf6",
+      "git_blob": "4b8c1fbe9d1746d98075c2fc93f54984882d9fd4"
+    },
+    {
+      "path": "research/kalshi/frankie_s114_separation_metadata_s126.py",
+      "sha256": "125e60b96d7359a06d073691c2c40e439e092c015d3c4e7cc9e3c645a255d2ce",
+      "git_blob": "685057e3234b60eb87c779eb63f0965290a65e59"
+    },
+    {
+      "path": "research/kalshi/FRANKIE_S115_IMPLEMENTATION.md",
+      "sha256": "5763f31b6ea5d69c2a523d5ff1b6eb1c26a44c3c49b7fbc8dced5a1d406c7b44",
+      "git_blob": "de3a53f81152bcf1e02f2deb593b6c9b99bc6f41"
+    },
+    {
+      "path": "research/kalshi/frankie_s115_status.py",
+      "sha256": "bf70bf2bf88694e9468f508597169928f33a0b79f3b8f2459707c87a673b2fba",
+      "git_blob": "46a80773b4669d957c6a62df9359a4b347524279"
+    },
+    {
+      "path": "research/kalshi/frankie_s115.py",
+      "sha256": "c7b742e9b2cf2d6645a8c6b8e53d68778f594a4637f39bb945332c452cebd029",
+      "git_blob": "bdc782f7689055028789a1c29abbb767dd9792e2"
+    },
+    {
+      "path": "research/kalshi/frankie_s118_redo.py",
+      "sha256": "6be83df649b37b16efba0ffa47cac720d35d2c6b2278e9b8d68926357acfb147",
+      "git_blob": "152382cd24209345ea5b650242bf9158200988e8"
+    },
+    {
+      "path": "research/kalshi/frankie_s121_curve_restore.py",
+      "sha256": "bf720534dd808c3e74b5ad924e961612034f6dc2665d8776a786938666679479",
+      "git_blob": "5b0f51c7e6722ed5739e9881eb9259cb8553cc37"
+    },
+    {
+      "path": "research/kalshi/frankie_s128_contract_repairs.py",
+      "sha256": "474c5df5623566eb3f04450efba4bded601bfb3c16dc7f0c2afe2624a9e8653c",
+      "git_blob": "71bfe742fbc9cf454035f20598f700cee4747261"
+    },
+    {
+      "path": "research/kalshi/frankie_s128_decision_state.py",
+      "sha256": "04ced19bd16a028c44718077336b3863f8b4219e78174c5faa66bbfed4d799cc",
+      "git_blob": "c8d9698bb74faa73990d91ba608e28f2e52ef754"
+    },
+    {
+      "path": "research/kalshi/frankie_s128_handoff.py",
+      "sha256": "d5f5a682299b15c3d2feeb4e1375ac2dc29e1865895045468fd13cc01018cc08",
+      "git_blob": "e0b67f13b389e89922e1c2b2825e307452c46712"
+    },
+    {
+      "path": "research/kalshi/FRANKIE_S131_REFINE_S133.md",
+      "sha256": "96b2c81cd7e727961933f123a43fe7cd515c08eeadeb0c9c2215a17e88891464",
+      "git_blob": "d4b921245fd872feeb3692e476fca784e50fbea9"
+    },
+    {
+      "path": "research/kalshi/frankie_s132_dynamic_curve.py",
+      "sha256": "6c50d7fab1c45a4c4ae0ac53daa8a1ec77fb993d6d6076ddf84226672832a989",
+      "git_blob": "6e5d720a309cdbd2f9f0559ae68799390ef1c237"
+    },
+    {
+      "path": "research/kalshi/frankie_s132_runtime.py",
+      "sha256": "45063867d9fc34c64af0ea9b814e1dc55810da297bf194de7192e67d271b468e",
+      "git_blob": "ab3a5155ddc9059d9ec46a86b81cbc6661e6444f"
+    },
+    {
+      "path": "research/kalshi/frankie_s133_reasoning_runtime.py",
+      "sha256": "ed6cd958f58cf817e4fda533da852bb5be8ef2a5a58993949b41157968fb0096",
+      "git_blob": "be390883ee7a8f713675debd661414da28e17624"
+    },
+    {
+      "path": "research/kalshi/frankie_s135_current_runtime.py",
+      "sha256": "cda2b14932f455d09be24afb4b796e18f756c8b16b257b12b244f83b0acb4934",
+      "git_blob": "b2e50669861a06f0ca9aade1fdaae00de98eed7f"
+    },
+    {
+      "path": "research/kalshi/frankie_s135_date_driver.py",
+      "sha256": "cdf435a659e748289595b6b48028b44f7c06418a252f9e2c6093675494b5a19c",
+      "git_blob": "51a143050f446db1e69b2def65e6b1d37ab6a451"
+    },
+    {
+      "path": "research/kalshi/frankie_s135_date_render.py",
+      "sha256": "c5d6d377ce071608f69d1c3dc97ba678ae6be78b240cc5ce73627de989e6033b",
+      "git_blob": "b57f8c8d58568a0217219aa5cc4603ac6faace78"
+    },
+    {
+      "path": "research/kalshi/frankie_s135_date_session.py",
+      "sha256": "b949f8f1cd05abad9fe245a39701c711d435185b164985e246c05568d79e79c4",
+      "git_blob": "c6f9a29a20441d937b294a1e82cad1650ede4be0"
+    },
+    {
+      "path": "research/kalshi/frankie_s135_group_runner.py",
+      "sha256": "9bdeea4957ca8edf2aa9164368a694954a6f7ba21b26de884c299f3b85ae9e22",
+      "git_blob": "2c25c8303c67292f46ab268e58eed0bb82797aba"
+    },
+    {
+      "path": "research/kalshi/frankie_s135_handoff.py",
+      "sha256": "117317953882b86cee1f2523ac6acdb6a8dfa65bc2c2c4d032863757f943a293",
+      "git_blob": "8880a3b4d39385b061e8803748e3060574f7df45"
+    },
+    {
+      "path": "research/kalshi/frankie_s135_preflight.py",
+      "sha256": "1bcfa9cd071d23f56b1c646e77165d9abca3596f5b72451b78332b8f52e8cafb",
+      "git_blob": "d782828d27bc0198ec14e086b81a2e34683c0936"
+    },
+    {
+      "path": "research/kalshi/frankie_s135_specialist_authority.py",
+      "sha256": "3baabc7d1d32c5b4b1b72b3345f1194f44fc1828cbe27deb9937552424a3c4dc",
+      "git_blob": "d14b1f07579fd8fdb52521ded58051561aad33d4"
+    },
+    {
+      "path": "research/kalshi/frankie_s136_date_plan.py",
+      "sha256": "2b8e490b4b3e10bfce18fd3415fdb67d0e7255658d8c14b0b6b29a2e51fed264",
+      "git_blob": "ab64f8fee22efe60f4e809f4026e6933de9577fa"
+    },
+    {
+      "path": "research/kalshi/frankie_s136_date_refine_prep.py",
+      "sha256": "3a9140246d4aec1a697d493d5120a1f2d442fc55e2e358f779c4cc0d6168a044",
+      "git_blob": "3475afb9558c9bbc4984c2458efb661decb52598"
+    },
+    {
+      "path": "research/kalshi/frankie_s136_state_stage.py",
+      "sha256": "1cad85482c83aed53e17191c2ec10455acb1cc1503919fc1fd1c49e821959f1e",
+      "git_blob": "34ac093e52b8409e131497faf72f6673f900c251"
+    },
+    {
+      "path": "research/kalshi/frankie_s136_target_brain_wall.py",
+      "sha256": "04f1a92910b6490c6622ae18558cf60882edc5f18c2a6e5e0aafe95f508ae925",
+      "git_blob": "a807ff4c572a578e58329b4d0d8b2d5b71cc77d1"
+    },
+    {
+      "path": "research/kalshi/frankie_specialist_parity_s126.py",
+      "sha256": "48a2a261733c4426c636e8838841252d6679e0413b3be4f2f21156d6384dac96",
+      "git_blob": "fa5dcc3ee5cf13f0db2dd54f69c004754cadcc3f"
+    },
+    {
+      "path": "research/kalshi/frankie_stage_group_s128.py",
+      "sha256": "d502e9238c758da7aaf69788bf9f57fcd07c6448e513995d8ef0d97e83db7b93",
+      "git_blob": "d3aff9f4c3c6c7812e32ff85d98acb444bfeff12"
+    },
+    {
+      "path": "research/kalshi/frankie_storage_preflight.py",
+      "sha256": "62d41a3f4f96fc11d0643cdd378c34d9d3f035847b032d5dc54c32a8fa99a57a",
+      "git_blob": "b1e505d7fe9d4a6249f8d12e273f9e05c2199c2b"
+    },
+    {
+      "path": "research/kalshi/frankie_target_cell_manifest_s122.py",
+      "sha256": "7ad8fb90e43d73483283b644ed83f151a913dd52a72b17ec41808fbc37d2e1ed",
+      "git_blob": "cc2f7033a62af55fa48ca1da86fa75be2ddcb3ec"
+    },
+    {
+      "path": "research/kalshi/frankie_two_group_run_s118.py",
+      "sha256": "b71760aa97f81c41e3facfb634565d9a7af62164a21fa96a0faaa9b1ca773074",
+      "git_blob": "f8cb948d64e80cc2fd0040db96585c666a0b6865"
+    },
+    {
+      "path": "research/kalshi/frankie_two_group_smoke_s118.py",
+      "sha256": "835b169342a1656c365ce46d0ac8ec89449b360075fa05d297cb3cf782bb2883",
+      "git_blob": "06fdabf578aa121ee9eb6ba7c7beb94c5fa64f79"
+    },
+    {
+      "path": "research/kalshi/frankie_validation_s115.py",
+      "sha256": "80689ee291a16ea0decf249a77054270c5da1f6820848ac1f4641e34ce5416f4",
+      "git_blob": "ef1dad859c2a0d8a306bd1c6400114e740deb2c4"
+    },
+    {
+      "path": "research/kalshi/group_config.py",
+      "sha256": "7d98e618aede10a5ddf26391f560acd074ed85ad33636b032c7f40ba2e01d9b9",
+      "git_blob": "22b59efd9fb40524e57780f9761e9680247b0e80"
+    },
+    {
+      "path": "research/kalshi/knowledge/ng_brain.json",
+      "sha256": "720f4b91d97bcb157cd7a87a45ac9c5894539c57cfea83649a377b3cfedfe118",
+      "git_blob": "1efec160583150eeffeac70cadb1c45528852a71"
+    },
+    {
+      "path": "research/kalshi/plant_calendar.py",
+      "sha256": "8c2abf4ca968d0e67501d150dce72ced4db24fd931ca300cf9129942272337d1",
+      "git_blob": "ae1ec1775115e7fb29756e7c341b04b7d7f293f6"
+    },
+    {
+      "path": "research/kalshi/spawn.py",
+      "sha256": "a9bdad63c71f05a2897ffd10d4ca5ac56bfe1030b92db139668254ee68361e6c",
+      "git_blob": "2eb3ab8570be66bd9568bcd3ca2e6b9f19d6b33e"
+    },
+    {
+      "path": "research/kalshi/tests/test_agent_frankie.py",
+      "sha256": "c63e586d25184f71b9a78ed27cf82823c209fc86a7b42d6426bf89910b73bf89",
+      "git_blob": "3a9aba8e603143ab1e410a7eb5b0e37a95be5e7a"
+    },
+    {
+      "path": "research/kalshi/tests/test_frankie_aws_stage_s126.py",
+      "sha256": "bd8a5f6e468c339ca924dd1864913592983fdeb9d8462dece019953430f9394b",
+      "git_blob": "ba782e8ed8b2cd3a030e9dd18dbddd39fbf0c319"
+    },
+    {
+      "path": "research/kalshi/tests/test_frankie_causal_capture_gate_s126.py",
+      "sha256": "2f513e06d449d5dd36b99c61b7c8cac52ca7cb117ffa312e5c26393790446f5f",
+      "git_blob": "f3df52bf28dd74f071b6b707e5753826f742b719"
+    },
+    {
+      "path": "research/kalshi/tests/test_frankie_claude_code_temp.py",
+      "sha256": "e88bce920aac356a9a282dafb83a3fb86709df4c4279d6007f017e645590a0cb",
+      "git_blob": "35528f5a758ec3d64931539d947f713493ff8ead"
+    },
+    {
+      "path": "research/kalshi/tests/test_frankie_data_registry_s123.py",
+      "sha256": "9df526945b1da5e82a50e80295e994cc5e697ae9cb375e12c2ca4ef27efb1676",
+      "git_blob": "3c037ec893974d0249d0436a5c505509baff6d24"
+    },
+    {
+      "path": "research/kalshi/tests/test_frankie_effects_s115.py",
+      "sha256": "5d54e0fd8d8633fb8745961666df8caab0e9727bd7e79a6f7ad3576be30e13fd",
+      "git_blob": "1e60758c799cda67d5faae6f423cc4b8263a00ff"
+    },
+    {
+      "path": "research/kalshi/tests/test_frankie_evolution.py",
+      "sha256": "f690588446d13e02fce4e02181b51345d94685dd6c64772d01b652394d36e783",
+      "git_blob": "e37cb85eed9cbc5b9b52b681167cce3398de0cd0"
+    },
+    {
+      "path": "research/kalshi/tests/test_frankie_g24_run_s127.py",
+      "sha256": "532f96445566463d5f8141a0e66220d0cdc6ab433e2f930e156a668d4e62d3d7",
+      "git_blob": "6c517e92306fe6d734851f9eebdf422f467cef27"
+    },
+    {
+      "path": "research/kalshi/tests/test_frankie_idempotency.py",
+      "sha256": "86a4ce54e7dcf1eb6a5b8551fc65ec4b7c2d3d333d2a4e438b24aca4f2096914",
+      "git_blob": "da60a99638ff086dbdc0221df470029b2e67d3f7"
+    },
+    {
+      "path": "research/kalshi/tests/test_frankie_kitchen_sink_s121.py",
+      "sha256": "2f885ae08f832338915b0b815d7e7c5845e9decbc7fa066b95315f5d0a3191a1",
+      "git_blob": "15907a145ae38ced79c04acb4c298c6ff31036c6"
+    },
+    {
+      "path": "research/kalshi/tests/test_frankie_m13_recover_s126.py",
+      "sha256": "81148aa576c40f477bd9e3eba01ac19e05bb219bde7786d304bd89b439e365ca",
+      "git_blob": "27a677cceb04077538f5b12d69584375b90a5688"
+    },
+    {
+      "path": "research/kalshi/tests/test_frankie_nova_optimizer.py",
+      "sha256": "46a890987437082a35b8951c0406550d1823f8e81a80210ece1c44bda805f381",
+      "git_blob": "7db1dab4945f8f9e2ab4314a970c45959672fb52"
+    },
+    {
+      "path": "research/kalshi/tests/test_frankie_progress_lock_s122.py",
+      "sha256": "6b039ee81248eccd71dfe962457cb5d76defaf800dd1bb7fa396bf597548261b",
+      "git_blob": "1b114d6df4afc3c74802d2f220b15e0e39cef7aa"
+    },
+    {
+      "path": "research/kalshi/tests/test_frankie_s114_separation_metadata_s126.py",
+      "sha256": "256b23ddfe9e19f5c35b056c7e527e2949b53005217abf9e41805e95000c5bd0",
+      "git_blob": "5a23e4a6287ef1ab8299b3569b629355d543065e"
+    },
+    {
+      "path": "research/kalshi/tests/test_frankie_s115.py",
+      "sha256": "7f450082f7208997153c4a5d38acb508c25915b2158453e31b83762c4c889404",
+      "git_blob": "cea96fb8e29335c678a0416ff8c44359c33ca05d"
+    },
+    {
+      "path": "research/kalshi/tests/test_frankie_s120_canary_boundary.py",
+      "sha256": "0aa8f440531ab21be76df9479a5fe358e09635e98f4eee3bda35adea8118de29",
+      "git_blob": "7d00d26102c84e4f37d7f782d69e4b03b414088d"
+    },
+    {
+      "path": "research/kalshi/tests/test_frankie_s120_packet_compact.py",
+      "sha256": "7075d326699cf6a6e93b15354d44f222b06a2a0f598473523c614261ba84b628",
+      "git_blob": "64fe63aafcd8a213f177d75711f9bf327bb01559"
+    },
+    {
+      "path": "research/kalshi/tests/test_frankie_s121_curve_restore.py",
+      "sha256": "90f8b301aab53280fab648a7ca3223c9871d16355d98f062ff81ffbd286f76a4",
+      "git_blob": "9cd9f7d2ca203dd1e6a0cf984d50b2f3d29cd3fe"
+    },
+    {
+      "path": "research/kalshi/tests/test_frankie_s128_contract_repairs.py",
+      "sha256": "d25537464d372310d75357339ca47c7c84653ccdbac4d1e686075e911be585a8",
+      "git_blob": "c3bfee05ae1d2a116dfc572fbb572e9b161e4403"
+    },
+    {
+      "path": "research/kalshi/tests/test_frankie_specialist_parity_s126.py",
+      "sha256": "81f437e36e7401dda6024b94497f6bd930f933d93ab1fe03eeed32aec53a20e1",
+      "git_blob": "1819dd648390262a855d16514a7a36e82a660f1d"
+    },
+    {
+      "path": "research/kalshi/tests/test_frankie_target_cell_manifest_s122.py",
+      "sha256": "9810125f62ff82c69d95aafa1de895b244b7fb61aa022b9f7b24ac9eb1f49d97",
+      "git_blob": "6d19946252a72e9844b97d6ff5200fd4cba07022"
+    }
+  ]
+}

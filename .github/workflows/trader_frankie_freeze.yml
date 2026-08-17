@@ -1,0 +1,25 @@
+name: Trader Frankie parent freeze
+
+on:
+  pull_request:
+    paths:
+      - "research/kalshi/**"
+      - "deploy/aws/**"
+      - ".github/workflows/**"
+  push:
+    branches:
+      - "codex/trader-frankie-*"
+
+jobs:
+  verify-parent-freeze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Verify every frozen Frankie 1 byte
+        run: >-
+          python -c "import sys; sys.path.insert(0, 'research/kalshi');
+          from trader_frankie.origin import verify_freeze;
+          print(verify_freeze())"
