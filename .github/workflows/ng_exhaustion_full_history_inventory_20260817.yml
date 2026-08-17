@@ -1,0 +1,49 @@
+name: NG Exhaustion Full History Inventory 20260817
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-aftermath-20260817
+    paths:
+      - research/NG_EXHAUSTION_CHAIN_FULL_HISTORY_PHASE1_GATE_20260817.json
+      - research/ng_exhaustion_full_history_inventory_20260817.py
+      - .github/workflows/ng_exhaustion_full_history_inventory_20260817.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify phase2 gate is locked
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          g=json.load(open('research/NG_EXHAUSTION_CHAIN_FULL_HISTORY_PHASE1_GATE_20260817.json'))
+          assert g['status']=='FROZEN_BEFORE_FULL_HISTORY_EXTENSION'
+          assert g['phase2_gate']['phase2_allowed'] is False
+          assert g['next_chat_agent_requirement']['required'] is True
+          assert g['week_semantics']['sunday_required'] is True
+          PY
+      - name: Install inventory dependency
+        run: python -m pip install --quiet boto3
+      - name: Inventory every historical NG raw week
+        run: python research/ng_exhaustion_full_history_inventory_20260817.py
+      - name: Upload full-history inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-full-history-corpus-inventory-20260817
+          path: NG_EXHAUSTION_FULL_HISTORY_CORPUS_INVENTORY_20260817.json
+          if-no-files-found: error
