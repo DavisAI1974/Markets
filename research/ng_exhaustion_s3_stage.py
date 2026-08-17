@@ -24,6 +24,14 @@ EXPECTED_CLASSIFIER_SHA256 = "698b956f2a9aad4b99ccb9afab916e7219123d10c82408b8d9
 EXPECTED_RECORDS = 1711
 EXPECTED_FAMILY_COUNTS = {"A": 1616, "B": 35, "C": 60}
 EXPECTED_DAY_COUNTS = {"20250717": 420, "20250923": 446, "20250930": 428, "20251001": 417}
+# Frozen V0 compressed derivatives after canonical JSON sorting + gzip mtime=0 + OS=255.
+# Pinning these makes Python/zlib runtime drift fail closed rather than silently changing S3 bytes.
+EXPECTED_PARTITION_SHA256 = {
+    "20250717": "5a475a45629fe25fb1b782b0ed79b9cfec68daa8b67c080b22eddb9af22b419b",
+    "20250923": "e7149ce7967ca6251928a41ca45197b47fcee00f926484adac8c7895bcddf6c2",
+    "20250930": "41086c62725b26f1eef80c405bc4ebc49feebaf9db49f6f49ead1e6e3fbcc102",
+    "20251001": "739a352e03b0da9dffa0177251ceab6a7f18e73b48da35b29ff79975388da6e7",
+}
 S3_BUCKET = "bento-568968024170-us-east-2-an"
 S3_PREFIX = "nymex/ng_exhaustion/v0/"
 
@@ -49,7 +57,18 @@ def canonical_json_line(row: dict) -> bytes:
 
 
 def deterministic_gzip(data: bytes) -> bytes:
-    return gzip.compress(data, compresslevel=9, mtime=0)
+    """Return the frozen V0 gzip representation.
+
+    Python 3.11 and 3.13 differ in the gzip OS header byte when mtime=0 even when the
+    deflate payload is identical. Normalize byte 9 to RFC 1952 OS=255 (unknown) so the
+    same V0 input produces the same compressed bytes across those runtimes. The final
+    partition SHA is also pinned, so any future zlib payload drift fails closed.
+    """
+    out = bytearray(gzip.compress(data, compresslevel=9, mtime=0))
+    if len(out) < 18 or out[0:3] != b"\x1f\x8b\x08":
+        raise StageError("gzip encoder produced an invalid header")
+    out[9] = 255
+    return bytes(out)
 
 
 def _load_member(zf: zipfile.ZipFile, name: str) -> bytes:
@@ -134,6 +153,9 @@ def stage(artifact_zip: Path, classifier_path: Path, output_dir: Path) -> dict:
         day_rows = sorted(by_day[day], key=lambda r: (int(r["t0_second_utc"]), str(r["blind_id"])))
         raw = b"".join(canonical_json_line(r) for r in day_rows)
         gz = deterministic_gzip(raw)
+        gz_sha = sha256_bytes(gz)
+        if gz_sha != EXPECTED_PARTITION_SHA256[day]:
+            raise StageError(f"frozen partition SHA drift at {day}: {gz_sha}")
         rel = Path("partitions") / f"day={day}" / "records.jsonl.gz"
         dest = output_dir / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
@@ -144,7 +166,7 @@ def stage(artifact_zip: Path, classifier_path: Path, output_dir: Path) -> dict:
             "path": rel.as_posix(),
             "records": len(day_rows),
             "compressed_bytes": len(gz),
-            "compressed_sha256": sha256_bytes(gz),
+            "compressed_sha256": gz_sha,
             "uncompressed_bytes": len(raw),
             "uncompressed_sha256": sha256_bytes(raw),
             "families": dict(sorted(Counter(r["family"] for r in day_rows).items())),
@@ -174,6 +196,7 @@ def stage(artifact_zip: Path, classifier_path: Path, output_dir: Path) -> dict:
             "future_price_or_price_bearing_window_served": False,
             "blind_record_outcome_wall_scan": "PASS",
             "classifier_sha256": EXPECTED_CLASSIFIER_SHA256,
+            "partition_sha256": EXPECTED_PARTITION_SHA256,
         },
         "partitions": partition_manifest,
         "partition_totals": {
@@ -190,7 +213,8 @@ def stage(artifact_zip: Path, classifier_path: Path, output_dir: Path) -> dict:
         ),
         "notes": [
             "canonical ZIP is immutable source truth",
-            "partitions are read-optimized deterministic derivatives",
+            "partitions are read-optimized frozen deterministic derivatives",
+            "gzip OS header is normalized to 255 and compressed SHAs are pinned across Python runtimes",
             "content_manifest.json carries hashes; platform_sync writes the prefix inventory manifest.json",
             "NOVA model packets are derived views and must never replace canonical source objects",
         ],
