@@ -1,0 +1,61 @@
+{
+  "name": "NG exhaustion aftermath causal validation freeze",
+  "date": "2026-08-17",
+  "status": "FROZEN_PREVALIDATION",
+  "scope": "second independent aftermath/transition research only; completed runway clock and permanent Frankie are untouchable",
+  "source_branch": "chatgpt/ng-exhaustion-aftermath-20260817",
+  "methodological_correction": {
+    "exploratory_issue": "The preserved exploratory next-event percentages ordered reveal events only against the next reveal event and held-out events only against the next held-out event. This can skip a real intervening exhaustion in the other half.",
+    "correct_outcome_order": "Order the full 3429-event substantive population by day and t0. For every anchor, the literal next event is the next detected event in that full chronological stream regardless of reveal/holdout membership.",
+    "causal_timing_issue": "Any feature using observations through t0+60 cannot predict an event whose t0 is at or before t0+60.",
+    "direct_second_order_eligibility": "For +60 transition rules, score the literal next event only when next_t0 > t0+60. Otherwise mark the direct second-order target already realized before the decision boundary and do not score it as a causal prediction.",
+    "forward_live_required_for_promotion": true
+  },
+  "episode_endpoint_policy": {
+    "signal": "oriented trailing-20-second aggressor-volume imbalance",
+    "orientation": "multiply raw roll20 by the anchor exhaustion polarity",
+    "termination": "first three consecutive causal seconds after t0 with oriented roll20 <= 0",
+    "missing_seconds": "forward-fill only from the most recent finite roll20 already observed; never use future back-fill after t0",
+    "maximum_duration_seconds": null,
+    "hardcoded_end_time": false,
+    "session_end_behavior": "If termination never occurs before the raw session ends, mark endpoint censored. Never manufacture an endpoint.",
+    "relationship_to_plus60": "+60 is a legal state/checkpoint boundary for the frozen A classifier, not an exhaustion endpoint."
+  },
+  "target1": {
+    "primary_direct_target": "polarity of the literal next detected exhaustion in the full chronological stream, scored only if that next event is still future at the feature as-of time",
+    "feature_asof_for_checkpoint_rules_seconds": 60,
+    "predeclared_states": {
+      "alive_through_60": "No three-consecutive-second oriented roll20 <= 0 termination by +60",
+      "collapsed_by_60": "Termination occurs by +60",
+      "late_flow_same": "Volume-weighted aligned aggressor pressure over +41..+60 is > 0",
+      "late_flow_opposite": "Volume-weighted aligned aggressor pressure over +41..+60 is < 0",
+      "late_flow_zero_or_sparse": "No classified aggressor volume over +41..+60 or exactly balanced pressure"
+    },
+    "threshold_selection": "No held-out-optimized numeric cut. Primary validation uses sign-only late-flow states plus the alive/collapsed state. Quantile and monotone tables are descriptive secondary analyses.",
+    "holdout_retuning": false
+  },
+  "target2": {
+    "anchor": "dynamic episode endpoint above, never t0+60 by fiat",
+    "fixed_post_endpoint_horizons_seconds": [5, 10, 20, 30, 60, 120, 300],
+    "signed_price_displacement": "anchor polarity * (future carried-forward last-trade price - endpoint carried-forward last-trade price) / 0.001",
+    "material_move_ticks": 2,
+    "continuation": "signed displacement >= +2 ticks",
+    "reversal": "signed displacement <= -2 ticks",
+    "chop": "absolute signed displacement < 2 ticks",
+    "excursions": "MFE/MAE measured over each fixed post-end horizon",
+    "first_hit_times": "First +3t, -3t, +5t, -5t after endpoint are scanned without a time cap and censored only at session end",
+    "next_exhaustion": "first detected exhaustion whose t0 is strictly after the dynamic endpoint"
+  },
+  "chain_research_gate": {
+    "start_only_after": "Target 1 causal validation and Target 2 dynamic-end aftermath are measured under this freeze",
+    "principle": "A later event belongs to the inherited chain only while measurable dependence on the originating state survives; otherwise mark a reset and start a new first-order chain.",
+    "long_and_short_chains_separate": true
+  },
+  "do_not_touch": [
+    "research/FRANKIE_NG_PRE_FAMILY_CLASSIFIER_FROZEN_OPERATIONAL_20260817.json",
+    "research/FRANKIE_NG_A_POSTSTATE_CLASSIFIER_FROZEN_PREBLIND_20260816.json",
+    "research/ng_exhaustion_runway_clock.py",
+    "completed runway proof semantics",
+    "permanent Frankie brain/schema/roles/plays/datapoints/workflow"
+  ]
+}
