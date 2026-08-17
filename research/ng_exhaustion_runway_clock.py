@@ -246,6 +246,10 @@ class ExhaustionRunwayClock:
             )
 
         flags = dict(data_flags or {})
+        if flags.get("event_clock") is False:
+            raise RunwayClockError("event_clock data flag is false; countdown fails closed")
+        if flags.get("microstructure") is False:
+            microstructure = "unavailable"
         data_gaps: list[str] = [name for name, available in sorted(flags.items()) if not available]
         reasons: list[str] = []
         classification: ClassificationResult | None = None
@@ -255,7 +259,7 @@ class ExhaustionRunwayClock:
             if elapsed < A_LEGAL_CONFIRMATION_S:
                 post_state = A_STATE_PENDING
                 reasons.append("A_STATE_LEGAL_GATE_PRE60")
-            elif a_t0_to_plus60 is None:
+            elif flags.get("a_classifier_window") is False or a_t0_to_plus60 is None:
                 post_state = A_STATE_UNAVAILABLE
                 data_gaps.append("a_classifier_window")
                 reasons.append("A_CLASSIFIER_INPUT_UNAVAILABLE")
