@@ -1,0 +1,123 @@
+{
+  "meta": {
+    "market": "NG",
+    "date": "2026-08-18",
+    "name": "NG exhaustion-chain Phase-2 curated brain extension proposal",
+    "status": "PROPOSAL_ONLY_NO_PERMANENT_BRAIN_MUTATION",
+    "branch": "chatgpt/ng-exhaustion-chain-phase2-20260817",
+    "parent_proposal": {
+      "path": "research/FRANKIE_NG_EXHAUSTION_BRAIN_LESSON_PROPOSAL_20260817.md",
+      "commit": "f45a38e3266e67d103348c069ba827fff65fdd53",
+      "relationship": "EXTENDS_DOES_NOT_REPLACE"
+    },
+    "brain_edit_policy": "Do not edit research/kalshi/knowledge/ng_brain.json directly from this file. Merge only after deliberate adjudication.",
+    "purpose": "Capture durable Phase-2 exhaustion-chain lessons before the research thread gets farther ahead, while preserving provisional mechanisms and explicit do-not-learn boundaries."
+  },
+  "preserve_from_parent_proposal": [
+    "Exhaustion runway state is a lifespan/remaining-authority problem, strongest validated domain Family A.",
+    "Persistent A has materially longer runway than fast-collapse A; keep frozen reveal duration baselines and no holdout retuning.",
+    "Same-side post-event microstructure raises confidence and opposite-side flow lowers confidence; confidence-only unless separately frozen.",
+    "C scale transition remains provisional.",
+    "B locality hypothesis remains rejected/unresolved.",
+    "Never learn scratch curve-generator coefficients, magnitude rules, or curve scores."
+  ],
+  "merge_ready_general_lessons": [
+    {
+      "id": "exhaustion.chain.higher_order_causal_state",
+      "call": "At roughly 20-60 second information horizons, several recent exhaustion aftermaths can jointly carry reproducible causal information, especially D2-D4. Treat this as higher-order rolling state, not a universal monotonic origin chain.",
+      "guard": "Structural depth does not automatically authorize execution; causal availability remains mandatory."
+    },
+    {
+      "id": "exhaustion.chain.rolling_reorigin_default",
+      "call": "Use a rolling/re-origin state-machine prior. When a new exhaustion forms, treat it as a candidate new checkpoint and require older ancestry to re-earn incremental OOT value before assuming it remains active.",
+      "guard": "Re-origin does not mean ancestry is erased and does not imply automatic exit or reversal."
+    },
+    {
+      "id": "exhaustion.chain.failed_fold_decompose",
+      "call": "A failed fold or losing subtype is a forensic trigger, not an automatic deletion. Preserve valid instances and decompose before retirement.",
+      "retirement_requires": [
+        "demonstrated leakage or structural invalidity",
+        "repeated independent OOT failure after mechanism decomposition",
+        "or a predeclared falsifier showing null behavior across relevant blocks"
+      ],
+      "guard": "Do not rescue a mechanism by deleting inconvenient rows or inventing held-selected filters."
+    },
+    {
+      "id": "exhaustion.chain.short_vs_long_population",
+      "call": "Most strict exhaustion chains are short and concentrated inside minutes; genuine long fixed-origin tails exist but are sparse and heterogeneous. Preserve the long tail for research without imposing a universal long-chain cutoff."
+    },
+    {
+      "id": "exhaustion.chain.reexpression_vs_fresh_reentry",
+      "call": "Separate short-lag delayed re-expression of an unresolved thread from a later fresh trusted setup. Recovery by +120/+300 can occur without a new full motif; hours-later trusted reappearance should be attributed as a fresh/re-origin setup unless inherited causality is independently proven."
+    }
+  ],
+  "provisional_research_memory_do_not_promote_yet": [
+    {
+      "id": "exhaustion.pox.branching_transition_precursor",
+      "status": "ACTIVE_CONDITIONAL_MECHANISM_UNDER_REVIEW",
+      "pattern": ["persistent_exhaustion", "collapsed_opposite_flow_reversal", "collapsed_sparse_indeterminate"],
+      "population": {"base54": 666, "held": 13, "total": 679},
+      "call": "P-O-X appears to be a branching transition precursor rather than one universal fixed-horizon continuation state. Keep all valid instances and resolve its branches causally."
+    },
+    {
+      "id": "exhaustion.pox.opposite_current_priority_branch",
+      "status": "PRIORITY_EXECUTABLE_CANDIDATE_NOT_FROZEN",
+      "preheld_36w": {"n": 207, "gross_mean_ticks": 0.4009661835748887, "week_demeaned_delta_ticks": 0.34023950449704193, "week_sign_flip_p_one_sided": 0.012154939225303873},
+      "held": {"n": 6, "gross_mean_ticks": 0.500000000000019, "negative_count": 0},
+      "call": "When current exhaustion polarity is opposite the immediately preceding X-state exhaustion, P-O-X is the strongest current executable subcandidate.",
+      "why_not_promoted": "Held n is small; continue prospective/OOT validation."
+    },
+    {
+      "id": "exhaustion.pox.same_current_delayed_branch",
+      "status": "ACTIVE_TIMING_REORIGIN_BRANCH_UNDER_REVIEW",
+      "held_path_ticks_from_entry_plus5": {"plus10": 0.0, "plus20": -0.2857142857142542, "plus30": -0.7142857142856991, "plus60": -0.8571428571428896, "plus120": -0.2857142857143177, "plus300": 0.5714285714285084},
+      "call": "P-O-X followed by same-polarity current can enter a short adverse phase and later re-express. Preserve it as a delayed/re-origin branch, not an invalid row class.",
+      "why_not_promoted": "No clean causal pre-entry discriminator has generalized across later eras and held."
+    },
+    {
+      "id": "exhaustion.watch.ssos_prefix_ladder",
+      "status": "RESEARCH_WATCH_MEMORY",
+      "call": "SSO is early watch only; fully causal SSOS is armed state for the existing frozen SSOS paper play.",
+      "evidence": "SSO completed into SSOS about 21-24% across OOT blocks with several minutes median lead; full SSOS completion was about 91-96% pre-held with roughly 37-48 seconds median lead.",
+      "guard": "Partial prefixes never authorize entry by themselves."
+    },
+    {
+      "id": "exhaustion.watch.pox_prefix_ladder",
+      "status": "RESEARCH_WATCH_MEMORY",
+      "call": "P or P-O alone are background context. Fully causal P-O-X is an armed watch for the next exhaustion's polarity resolution, not itself a guaranteed entry.",
+      "evidence": "Complete causal P-O-X resolved into the priority opposite-current branch roughly 28-33% across OOT blocks with roughly 14-23 seconds median lead when completion occurred."
+    },
+    {
+      "id": "exhaustion.management.execute_reset_reenter",
+      "status": "RESEARCH_MANAGEMENT_DOCTRINE_AWAITING_EXACT_LIVE_CHECKPOINT",
+      "call": "Do not withhold an already-valid trade because a future re-origin may occur. Future uncertainty belongs to management: execute known setup, flatten/reset at a causally proven uncertainty checkpoint when justified, and re-enter only if a trusted setup appears again.",
+      "support": "Simple +10/+30 bank-positive proxies did not erase the pre-held broad P-O-X edge and sometimes improved it.",
+      "why_not_promoted": "Exact earliest live successor-recognition/mark-to-market checkpoint has not yet been reproduced under frozen detector/live stream semantics."
+    }
+  ],
+  "frozen_execution_reference_not_brain_promotion": {
+    "play_id": "NG_CHAIN_D4_SSOS_CONTINUATION_V1",
+    "status": "FROZEN_PAPER_ONLY_NOT_LIVE_NOT_PERMANENT_FRANKIE",
+    "note": "Keep execution evidence separate from general forecasting knowledge."
+  },
+  "explicit_do_not_learn_or_promote": [
+    "scratch curve-generator scores or coefficients",
+    "a universal D2-or-deeper law from aggregate structural gain",
+    "a universal short/long time cutoff",
+    "the assumption that one fixed origin remains active through every descendant",
+    "the assumption that a successor exhaustion automatically requires exit or reversal",
+    "held-week-only filters or exclusions",
+    "P or P-O partial prefixes as trade entries",
+    "hours-later trusted reappearance as proof of same-origin persistence",
+    "fixed +10/+30 management proxies as permanent rules before exact live checkpoint proof",
+    "P-O-X opposite branch as a frozen play before further prospective/OOT validation"
+  ],
+  "merge_shape_when_approved": {
+    "brain_namespace": "exhaustion/runway + exhaustion/chain",
+    "preserve_existing_direction_ownership": true,
+    "runway_role": "remaining-authority/hold-length overlay",
+    "chain_role": "rolling higher-order context and re-origin doctrine",
+    "execution_plays_stay_separate": true,
+    "provenance_required": true
+  }
+}
