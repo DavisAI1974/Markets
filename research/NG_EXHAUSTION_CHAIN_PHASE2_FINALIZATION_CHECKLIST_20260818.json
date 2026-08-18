@@ -2,7 +2,11 @@
   "name": "NG exhaustion chain Phase-2 finalization checklist",
   "date": "2026-08-18",
   "branch": "chatgpt/ng-exhaustion-chain-phase2-20260817",
-  "status": "READY_FOR_FINAL_PHASE2_FREEZE",
+  "status": "PHASE2_CHARACTERIZATION_FINALIZED_CURRENT_55W_PASS",
+  "final_freeze": {
+    "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md",
+    "commit": "b959a8259547b0f0d998c96ec440c9a4bc5c083c"
+  },
   "required_before_finalization": {
     "postexit_parent_reset_reentry_map": "COMPLETE",
     "short_lag_pox_same_delayed_reexpression_kept_separate": "COMPLETE_POSTEXIT_WATCH_SUBTYPES_NO_TRADE",
@@ -14,6 +18,7 @@
     "independent_module_novelty_screen": "COMPLETE_CANDIDATE_QUEUE_DEFINED_NO_PLAY_PROMOTION",
     "parallel_independent_recurrence_reconciliation": "FOUR_LANE_PARALLEL_VERIFIED_COMMIT_5ed07a15f857c92f73458d370e0722846b14b0d1",
     "phase2_brain_proposal_index_update": "COMPLETE_AND_SYNCHRONIZED",
+    "protected_file_diff_audit": "PASS_40_COMMITS_AHEAD_0_BEHIND_BEFORE_FINAL_CHECKLIST_STAMP",
     "permanent_frankie_merge": "BLOCKED_UNLESS_GREG_EXPLICITLY_APPROVES"
   },
   "settled_execution_order": [
@@ -57,10 +62,14 @@
     "github_actions_replay_success_claimed": false,
     "note": "The connected GitHub interface cannot expose/dispatch the branch-only replay workflow, so the exact four contracts were executed concurrently against the verified immutable artifacts and committed as the durable verification record."
   },
-  "remaining_before_phase2_finalized": [
-    "write and commit the final Phase-2 freeze/handoff record",
-    "perform final protected-file branch diff audit"
-  ],
+  "phase2_completion": {
+    "characterization_complete": true,
+    "new_play_frozen": false,
+    "existing_ssos_play_changed": false,
+    "pox_opposite_frozen": false,
+    "permanent_brain_mutated": false,
+    "runway_clock_mutated": false
+  },
   "future_research_not_a_phase2_finalization_blocker": [
     "prospective/OOT promotion study for P-O-X opposite-current",
     "candidate-specific promotion studies for any independent recurrence module selected later",
