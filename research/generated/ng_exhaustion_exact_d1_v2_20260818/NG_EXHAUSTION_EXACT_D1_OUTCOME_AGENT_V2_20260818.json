@@ -10,6 +10,16 @@
   },
   "exact_d1_n": 18837,
   "mode": "outcome",
+  "preserve_all_policy": {
+    "authoritative_addendum": "research/NG_EXHAUSTION_EXACT_D1_PRESERVE_ALL_ADDENDUM_20260818.md",
+    "duration_role": "CHARACTERIZATION_ONLY_NOT_MEMBERSHIP",
+    "filtered_exact_d1_rows": 0,
+    "membership_rule": "all_model_consecutive_positive_depth == 1 in frozen lineage",
+    "path_shape_role": "DIRECTIONAL_AND_CHOP_ROTATION_BOTH_PRESERVED",
+    "profitability_role": "RANKING_AND_ANNOTATION_ONLY_NOT_MEMBERSHIP",
+    "status": "EVERY_VALID_EXACT_D1_RETAINED",
+    "support_role": "CONFIDENCE_GRADE_ONLY_LOW_SUPPORT_ROWS_REMAIN"
+  },
   "promotion_performed": false,
   "protected_mutations": {
     "canonical_rows": false,

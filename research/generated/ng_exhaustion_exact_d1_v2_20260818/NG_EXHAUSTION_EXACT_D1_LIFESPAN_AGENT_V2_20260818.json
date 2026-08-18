@@ -10,6 +10,16 @@
   },
   "exact_d1_n": 18837,
   "mode": "lifespan",
+  "preserve_all_policy": {
+    "authoritative_addendum": "research/NG_EXHAUSTION_EXACT_D1_PRESERVE_ALL_ADDENDUM_20260818.md",
+    "duration_role": "CHARACTERIZATION_ONLY_NOT_MEMBERSHIP",
+    "filtered_exact_d1_rows": 0,
+    "membership_rule": "all_model_consecutive_positive_depth == 1 in frozen lineage",
+    "path_shape_role": "DIRECTIONAL_AND_CHOP_ROTATION_BOTH_PRESERVED",
+    "profitability_role": "RANKING_AND_ANNOTATION_ONLY_NOT_MEMBERSHIP",
+    "status": "EVERY_VALID_EXACT_D1_RETAINED",
+    "support_role": "CONFIDENCE_GRADE_ONLY_LOW_SUPPORT_ROWS_REMAIN"
+  },
   "promotion_performed": false,
   "protected_mutations": {
     "canonical_rows": false,
@@ -118,35 +128,35 @@
       }
     },
     "train_model": {
-      "bic": -1739.7683715846779,
+      "bic": -1739.768371584627,
       "bic_grid": [
         {
-          "bic": 14962.35803653431,
+          "bic": 14962.358036534308,
           "k": 1
         },
         {
-          "bic": 10835.34465400847,
+          "bic": 10835.344654008462,
           "k": 2
         },
         {
-          "bic": -1047.8836563266284,
+          "bic": -1047.8836563266143,
           "k": 3
         },
         {
-          "bic": -1654.9781529537106,
+          "bic": -1654.9781529538584,
           "k": 4
         },
         {
-          "bic": -1739.7683715846779,
+          "bic": -1739.768371584627,
           "k": 5
         }
       ],
       "centers_seconds": [
         45.00000000000157,
-        63.08706887992884,
-        109.05088353548349,
-        217.72500295392138,
-        735.634959366228
+        63.08706887992761,
+        109.05088353550266,
+        217.72500295397472,
+        735.6349593665593
       ],
       "labels": [
         "f1",
