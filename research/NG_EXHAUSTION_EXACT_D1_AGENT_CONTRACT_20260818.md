@@ -1,12 +1,12 @@
 # NG Exhaustion Exact-D1 / Single-Link Agent Contract — 2026-08-18
 
-Status: **AUTHORIZED POST-PHASE-2 CHARACTERIZATION; SINGLE-LINK POPULATION FIRST-CLASS; PROFITABILITY IS THE END GOAL; NO PERMANENT BRAIN MERGE; NO PLAY FREEZE.**
+Status: **AUTHORIZED POST-PHASE-2 CHARACTERIZATION; SINGLE-LINK POPULATION FIRST-CLASS; PROFITABILITY IS THE END GOAL; CHOP IS A SEPARATE CANDIDATE CLASS; NO PERMANENT BRAIN MERGE; NO PLAY FREEZE.**
 
 ## Purpose
 
 Investigate the exact-D1 / single-link exhaustion population that was preserved by the original Phase-1 contract but not separately characterized in the later D2/D3 timing work.
 
-The central research question is whether some chains that stop after one predictive link nevertheless contain **long-duration legs** that carry distinct state/polarity, price-path, re-origin, or execution information. The operational goal is broader and explicit: **identify the exact-D1 structures with the strongest repeatable causal, cost-adjusted trade expectancy**, regardless of whether they are short, middle, or long duration.
+The central research question is whether some chains that stop after one predictive link nevertheless contain **long-duration legs** that carry distinct state/polarity, price-path, re-origin, or execution information. The operational goal is broader and explicit: **identify the exact-D1 structures with the strongest repeatable causal, cost-adjusted trade expectancy**, regardless of whether they are short, middle, long, directional, or choppy/rotational.
 
 Exact D1 means `all_model_consecutive_positive_depth == 1` in the frozen Phase-1 lineage. It must not be described as a failed D2 chain; it is its own valid mechanism class.
 
@@ -35,7 +35,7 @@ Do not modify or retune:
 - frozen SSOS paper play;
 - finalized Phase-2 findings or proposal files.
 
-No valid short or long exact-D1 instance may be deleted because it is inconvenient.
+No valid short, long, directional, or choppy exact-D1 instance may be deleted because it is inconvenient.
 
 ## Chronological protocol
 
@@ -49,9 +49,24 @@ Use the same block partition already used by the post-Phase-2 campaign:
 
 Duration families must be learned from **train exact-D1 only**. Later blocks are assignment/validation only. Fitted centers or empirical quantiles are characterization labels, never live cutoffs.
 
-Any direction, duration-family membership rule, grammar filter, older-ancestry filter, or other candidate definition used for profitability ranking must be fixed from train before later-block scoring. Historical Phase-2 contamination is recorded for any already-surfaced motif; fresh prospective evidence remains necessary before promotion.
+Any direction, duration-family membership rule, grammar filter, older-ancestry filter, path-shape grouping, or other candidate definition used for profitability ranking must be fixed from train before later-block scoring. Historical Phase-2 contamination is recorded for any already-surfaced motif; fresh prospective evidence remains necessary before promotion.
 
-## Eight independent lanes
+## Chop / rotation policy
+
+Chop is **not** a failure state. A long-duration D1 interval with low directional efficiency may still contain profitable repeated rotations, fades, or range behavior.
+
+The raw-path lane must therefore split reconstructed D1 paths into at least two train-frozen path-shape groups:
+
+- `DIRECTIONAL` — relatively efficient net travel compared with the path's total movement/excursion;
+- `CHOP_ROTATION` — relatively low net directional efficiency with substantial two-sided/path movement.
+
+The grouping must be learned from train raw paths only and then frozen for later historical blocks. Later records may not be reclassified by block-specific thresholds.
+
+`CHOP_ROTATION` records must be preserved in a separate candidate universe, not averaged away inside directional-leg results. The campaign must report their range/excursion, MFE/MAE, path efficiency, endpoint displacement, pair grammar, duration family, chronological stability, and later profitability separately.
+
+A chop path may later support a fade/grid/rotation strategy, but no intraleg entry/exit rule may be optimized retrospectively in this first campaign. First establish that the chop population is repeatable and economically large enough to warrant its own predeclared strategy study.
+
+## Eight canonical/lineage lanes plus raw-path lane
 
 1. **D1 lifespan agent** — characterize the complete exact-D1 elapsed-time distribution, fit train-only log-time mixture models with BIC selection, freeze the selected train model, assign later exact-D1 instances, and report short/middle/long-tail proportions, quantiles, maxima, and held replication.
 
@@ -65,9 +80,11 @@ Any direction, duration-family membership rule, grammar filter, older-ancestry f
 
 6. **D1 termination/re-origin agent** — after the one-link chain ends at its descendant, inspect the descendant's own frozen lineage depth and later state to distinguish true termination from immediate rolling/re-origin. Do not reinterpret descendant depth as inherited same-origin depth.
 
-7. **D1 raw-leg-path agent** — reconstruct the actual NG trade-price path from exact-D1 origin t0 to descendant t0 using the authoritative raw tape and frozen canonical indices. For train-defined long-tail cases and matched short/middle controls, report signed displacement relative to origin polarity, MFE, MAE, endpoint displacement, path monotonicity/choppiness summaries, and duration. Do not redetect events from the raw tape.
+7. **D1 raw-leg-path agent** — reconstruct the actual NG trade-price path from exact-D1 origin h=60 information wall to descendant t0 using the authoritative raw tape and frozen canonical indices. Report signed displacement relative to origin polarity, MFE, MAE, endpoint displacement, path efficiency, excursion efficiency, aligned-change fraction, duration, and a **train-frozen DIRECTIONAL vs CHOP_ROTATION path-shape assignment**. Do not redetect events from the raw tape.
 
 8. **D1 profitability/ranking agent** — build candidate definitions only from train using combinations supported by the other lanes (pair grammar, train-frozen duration family, older causal ancestry, event family/A-state where support is adequate). Score Eras1-3, Eras4-5, confirmation, and held without retuning. Rank by endpoint+5 to endpoint+60 oriented gross expectancy and net expectancy after 0.5/1/2-tick cost stress, while also reporting positive-week fraction, leave-one-week-out minimum, sample support, median trade, MFE, MAE, and worst-block mean. A high gross mean with unstable weeks or negative realistic net expectancy must not rank as a promotion candidate.
+
+9. **D1 pre-long predictor agent** — use only origin-known frozen features to test whether train-frozen long-D1 membership can be predicted before the descendant arrives. Validation must be chronological. If this fails, origin-to-descendant long-leg profits remain descriptive/hindsight and only post-descendant strategies remain executable candidates.
 
 ## Profitability ranking discipline
 
@@ -85,7 +102,7 @@ The ranking agent must keep at least these fields separate rather than collapsin
 - event count and week count;
 - degree of overlap/nesting with already-known Phase-2 mechanisms.
 
-A composite ranking may be shown for triage, but all raw components must travel with it. Profitability does not override causal availability, sample sufficiency, failure preservation, or the requirement for fresh prospective/OOT promotion.
+Directional and chop/rotation opportunity sets must be reported separately when raw-path shape is available. A composite ranking may be shown for triage, but all raw components must travel with it. Profitability does not override causal availability, sample sufficiency, failure preservation, or the requirement for fresh prospective/OOT promotion.
 
 ## Required end products
 
@@ -96,6 +113,7 @@ A composite ranking may be shown for triage, but all raw components must travel 
 - exact pair/state/polarity grammars associated with those long D1 legs;
 - causal lead/runway remaining after the origin h=60 wall;
 - raw-tape evidence of what price actually does during the long single link;
+- **separate DIRECTIONAL and CHOP_ROTATION populations with their own summaries and candidate queues**;
 - true/false and regime decompositions;
 - a ranked table of the most profitable historically validated exact-D1 candidate structures with cost stress and failure diagnostics;
 - a curated brain proposal extending (not replacing) the runway and Phase-2 proposals;
@@ -104,4 +122,4 @@ A composite ranking may be shown for triage, but all raw components must travel 
 
 ## Promotion boundary
 
-This campaign may discover that a single-link chain can be long-lived and may nominate/rank historical strategy candidates. It may not convert realized duration into a live rule, may not promote a fitted duration center as a cutoff, and may not freeze a strategy from the already-mined 55-week history alone. The strongest historical candidates graduate only to a predeclared fresh prospective/OOT contract.
+This campaign may discover that a single-link chain can be long-lived and may nominate/rank historical strategy candidates. It may not convert realized duration or realized chop classification into a live rule, may not promote a fitted duration/path-shape center as a cutoff, and may not freeze a strategy from the already-mined 55-week history alone. The strongest historical candidates graduate only to a predeclared fresh prospective/OOT contract.
