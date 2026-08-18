@@ -36,3 +36,5 @@ base.train_orientation = protocol_orientation
 
 if __name__ == '__main__':
     base.main()
+
+# 20260818 explicit post-crosswalk rerun trigger; analysis semantics unchanged.
