@@ -1,0 +1,514 @@
+{
+  "backcast": {
+    "applied": false,
+    "candidate_exact_d1_n": 0,
+    "eligible_origin_n": 0,
+    "unresolved_origin_n": 0,
+    "weeks": [
+      "20250629",
+      "20250706",
+      "20250713",
+      "20250720",
+      "20250727",
+      "20250803",
+      "20250810",
+      "20250817",
+      "20250824",
+      "20250831",
+      "20250907",
+      "20250914",
+      "20250921",
+      "20250928",
+      "20251005",
+      "20251012",
+      "20251019",
+      "20251026"
+    ]
+  },
+  "backcast_row_tag": "REVERSE_BACKCAST_NOT_FORWARD_OOT",
+  "backcast_rows_path": "research/generated/ng_exhaustion_entry_timing_revival_20260818/lane1_reverse_backcast/NG_EXHAUSTION_D1_REVERSE_BACKCAST_ROWS_20260818.jsonl.gz",
+  "blocks": {
+    "confirmation": {
+      "gain_target_rows": {
+        "1": {
+          "20260607": 4535,
+          "20260614": 4449,
+          "20260621": 4421,
+          "20260628": 4364,
+          "20260705": 4306,
+          "20260712": 4694
+        },
+        "2": {
+          "20260607": 4534,
+          "20260614": 4448,
+          "20260621": 4420,
+          "20260628": 4363,
+          "20260705": 4305,
+          "20260712": 4693
+        }
+      },
+      "gate_failures": [
+        "prevalence_ratio 4.445001671681712 > 2.0"
+      ],
+      "gate_passed": false,
+      "metrics": {
+        "balanced_accuracy": 0.6464520812985819,
+        "f1": 0.27803020999631584,
+        "fn": 727,
+        "fp": 11031,
+        "frozen_positive_eligible": 2991,
+        "frozen_positive_total": 2991,
+        "mcc": 0.18457415391629253,
+        "n": 26763,
+        "precision": 0.17028958254983076,
+        "precision_lift_vs_prevalence": 1.523724539545677,
+        "predicted_prevalence": 0.49676792586780255,
+        "prevalence_ratio": 4.445001671681712,
+        "recall": 0.7569374791039786,
+        "specificity": 0.5359666834931852,
+        "tn": 12741,
+        "tp": 2264,
+        "true_positive_coverage": 1.0,
+        "true_prevalence": 0.11175877143817958
+      },
+      "unresolved_origins_by_week": {
+        "20260607": 4,
+        "20260614": 9,
+        "20260621": 7,
+        "20260628": 6,
+        "20260705": 5,
+        "20260712": 6
+      },
+      "weeks": [
+        "20260607",
+        "20260614",
+        "20260621",
+        "20260628",
+        "20260705",
+        "20260712"
+      ]
+    },
+    "held": {
+      "gain_target_rows": {
+        "1": {
+          "20260329": 3633
+        },
+        "2": {
+          "20260329": 3632
+        }
+      },
+      "gate_failures": [],
+      "gate_passed": true,
+      "metrics": {
+        "balanced_accuracy": 0.7890784357483398,
+        "f1": 0.7429746401644962,
+        "fn": 325,
+        "fp": 425,
+        "frozen_positive_eligible": 1409,
+        "frozen_positive_total": 1409,
+        "mcc": 0.5716777671613483,
+        "n": 3632,
+        "precision": 0.7183565275016567,
+        "precision_lift_vs_prevalence": 1.8517181745110127,
+        "predicted_prevalence": 0.4154735682819383,
+        "prevalence_ratio": 1.07097232079489,
+        "recall": 0.7693399574166075,
+        "specificity": 0.808816914080072,
+        "tn": 1798,
+        "tp": 1084,
+        "true_positive_coverage": 1.0,
+        "true_prevalence": 0.38794052863436124
+      },
+      "unresolved_origins_by_week": {
+        "20260329": 6
+      },
+      "weeks": [
+        "20260329"
+      ]
+    },
+    "validation": {
+      "gain_target_rows": {
+        "1": {
+          "20260308": 4160,
+          "20260315": 4406,
+          "20260322": 4525,
+          "20260405": 4769,
+          "20260412": 4638,
+          "20260419": 4675,
+          "20260426": 4751,
+          "20260503": 4439,
+          "20260510": 4659,
+          "20260517": 4370,
+          "20260524": 4413,
+          "20260531": 4346
+        },
+        "2": {
+          "20260308": 4159,
+          "20260315": 4405,
+          "20260322": 4524,
+          "20260405": 4768,
+          "20260412": 4637,
+          "20260419": 4674,
+          "20260426": 4750,
+          "20260503": 4438,
+          "20260510": 4658,
+          "20260517": 4369,
+          "20260524": 4412,
+          "20260531": 4345
+        }
+      },
+      "gate_failures": [
+        "prevalence_ratio 4.464013547840813 > 2.0"
+      ],
+      "gate_passed": false,
+      "metrics": {
+        "balanced_accuracy": 0.6613673122668959,
+        "f1": 0.28346505501317215,
+        "fn": 1332,
+        "fp": 21787,
+        "frozen_positive_eligible": 5905,
+        "frozen_positive_total": 5907,
+        "mcc": 0.20128024146781484,
+        "n": 54139,
+        "precision": 0.17348254931714718,
+        "precision_lift_vs_prevalence": 1.5905455948316736,
+        "predicted_prevalence": 0.48689484475147304,
+        "prevalence_ratio": 4.464013547840813,
+        "recall": 0.7744284504657071,
+        "specificity": 0.5483061740680848,
+        "tn": 26447,
+        "tp": 4573,
+        "true_positive_coverage": 0.999661418655832,
+        "true_prevalence": 0.10907109477456177
+      },
+      "unresolved_origins_by_week": {
+        "20260308": 5,
+        "20260315": 7,
+        "20260322": 5,
+        "20260405": 5,
+        "20260412": 8,
+        "20260419": 7,
+        "20260426": 6,
+        "20260503": 7,
+        "20260510": 5,
+        "20260517": 6,
+        "20260524": 6,
+        "20260531": 6
+      },
+      "weeks": [
+        "20260308",
+        "20260315",
+        "20260322",
+        "20260405",
+        "20260412",
+        "20260419",
+        "20260426",
+        "20260503",
+        "20260510",
+        "20260517",
+        "20260524",
+        "20260531"
+      ]
+    }
+  },
+  "chronology": {
+    "held_confirmation_weeks": [
+      "20260329"
+    ],
+    "prelineage_backcast_weeks": [
+      "20250629",
+      "20250706",
+      "20250713",
+      "20250720",
+      "20250727",
+      "20250803",
+      "20250810",
+      "20250817",
+      "20250824",
+      "20250831",
+      "20250907",
+      "20250914",
+      "20250921",
+      "20250928",
+      "20251005",
+      "20251012",
+      "20251019",
+      "20251026"
+    ],
+    "reverse_labeler_training_weeks": [
+      "20251102",
+      "20251109",
+      "20251116",
+      "20251123",
+      "20251130",
+      "20251207",
+      "20251214",
+      "20251221",
+      "20251228",
+      "20260104",
+      "20260111",
+      "20260118",
+      "20260125",
+      "20260201",
+      "20260208",
+      "20260215",
+      "20260222",
+      "20260301"
+    ],
+    "untouched_confirmation_weeks": [
+      "20260607",
+      "20260614",
+      "20260621",
+      "20260628",
+      "20260705",
+      "20260712"
+    ],
+    "validation_weeks": [
+      "20260308",
+      "20260315",
+      "20260322",
+      "20260405",
+      "20260412",
+      "20260419",
+      "20260426",
+      "20260503",
+      "20260510",
+      "20260517",
+      "20260524",
+      "20260531"
+    ]
+  },
+  "definition": "reverse exact D1 iff all three later-trained models have positive D1 incremental gain and D2 consensus does not remain all-positive",
+  "frozen_exact_d1_positive_counts": {
+    "confirmation": 2991,
+    "discovery": 8530,
+    "held": 1409,
+    "validation": 5907
+  },
+  "frozen_lineage_counts_by_week": {
+    "base": {
+      "20251102": {
+        "exact_d1": 479,
+        "rows": 4001
+      },
+      "20251109": {
+        "exact_d1": 449,
+        "rows": 4046
+      },
+      "20251116": {
+        "exact_d1": 522,
+        "rows": 4135
+      },
+      "20251123": {
+        "exact_d1": 438,
+        "rows": 3725
+      },
+      "20251130": {
+        "exact_d1": 427,
+        "rows": 4088
+      },
+      "20251207": {
+        "exact_d1": 428,
+        "rows": 3925
+      },
+      "20251214": {
+        "exact_d1": 506,
+        "rows": 4165
+      },
+      "20251221": {
+        "exact_d1": 444,
+        "rows": 3405
+      },
+      "20251228": {
+        "exact_d1": 407,
+        "rows": 3385
+      },
+      "20260104": {
+        "exact_d1": 512,
+        "rows": 4130
+      },
+      "20260111": {
+        "exact_d1": 464,
+        "rows": 4019
+      },
+      "20260118": {
+        "exact_d1": 643,
+        "rows": 3850
+      },
+      "20260125": {
+        "exact_d1": 454,
+        "rows": 3648
+      },
+      "20260201": {
+        "exact_d1": 394,
+        "rows": 3706
+      },
+      "20260208": {
+        "exact_d1": 464,
+        "rows": 4193
+      },
+      "20260215": {
+        "exact_d1": 516,
+        "rows": 4496
+      },
+      "20260222": {
+        "exact_d1": 538,
+        "rows": 4753
+      },
+      "20260301": {
+        "exact_d1": 445,
+        "rows": 4102
+      },
+      "20260308": {
+        "exact_d1": 434,
+        "rows": 4164
+      },
+      "20260315": {
+        "exact_d1": 411,
+        "rows": 4412
+      },
+      "20260322": {
+        "exact_d1": 434,
+        "rows": 4529
+      },
+      "20260405": {
+        "exact_d1": 443,
+        "rows": 4773
+      },
+      "20260412": {
+        "exact_d1": 533,
+        "rows": 4645
+      },
+      "20260419": {
+        "exact_d1": 537,
+        "rows": 4681
+      },
+      "20260426": {
+        "exact_d1": 558,
+        "rows": 4756
+      },
+      "20260503": {
+        "exact_d1": 520,
+        "rows": 4445
+      },
+      "20260510": {
+        "exact_d1": 526,
+        "rows": 4663
+      },
+      "20260517": {
+        "exact_d1": 518,
+        "rows": 4375
+      },
+      "20260524": {
+        "exact_d1": 513,
+        "rows": 4418
+      },
+      "20260531": {
+        "exact_d1": 480,
+        "rows": 4351
+      },
+      "20260607": {
+        "exact_d1": 489,
+        "rows": 4538
+      },
+      "20260614": {
+        "exact_d1": 527,
+        "rows": 4457
+      },
+      "20260621": {
+        "exact_d1": 492,
+        "rows": 4427
+      },
+      "20260628": {
+        "exact_d1": 472,
+        "rows": 4369
+      },
+      "20260705": {
+        "exact_d1": 479,
+        "rows": 4310
+      },
+      "20260712": {
+        "exact_d1": 532,
+        "rows": 4699
+      }
+    },
+    "held": {
+      "20260329": {
+        "exact_d1": 1409,
+        "rows": 3638
+      }
+    }
+  },
+  "membership_target_only": true,
+  "method": "STRUCTURALLY_FAITHFUL_REVERSE_INCREMENTAL_GAIN_LABELER",
+  "overall_gate_passed": false,
+  "predeclared_gate": {
+    "confirmation": {
+      "min_balanced_accuracy": 0.575,
+      "min_mcc": 0.15,
+      "min_precision_lift": 1.15,
+      "min_true_positive_coverage": 0.75,
+      "prevalence_ratio_high": 2.0,
+      "prevalence_ratio_low": 0.5
+    },
+    "held": {
+      "min_balanced_accuracy": 0.525,
+      "min_mcc": 0.05,
+      "min_precision_lift": 1.0,
+      "min_true_positive_coverage": 0.7,
+      "prevalence_ratio_high": 2.5,
+      "prevalence_ratio_low": 0.35
+    },
+    "validation": {
+      "min_balanced_accuracy": 0.6,
+      "min_mcc": 0.2,
+      "min_precision_lift": 1.2,
+      "min_true_positive_coverage": 0.8,
+      "prevalence_ratio_high": 2.0,
+      "prevalence_ratio_low": 0.5
+    }
+  },
+  "preserve_all_policy": "FAIL_CLOSED_NO_MANUFACTURED_PRELINEAGE_LABELS",
+  "profit_used_for_membership": false,
+  "promotion_performed": false,
+  "protected_mutations": {
+    "canonical_54w_base": false,
+    "frankie1": false,
+    "frozen_detector": false,
+    "held_rows": false,
+    "permanent_frankie": false,
+    "phase1_lineage": false,
+    "phase2": false,
+    "runway_clock": false,
+    "spawn_py": false,
+    "ssos_paper_play": false
+  },
+  "realized_duration_used_for_membership": false,
+  "status": "D1_REVERSE_BACKCAST_GATE_FAILED_NO_ROWS_APPLIED",
+  "tuning": {
+    "extra_trees": {
+      "d1_long_param": 20,
+      "d1_short_history": 0,
+      "d1_train_n": 71686,
+      "d2_long_param": 20,
+      "d2_short_param": 20,
+      "d2_train_n": 71668
+    },
+    "knn": {
+      "d1_long_param": 80,
+      "d1_short_history": 0,
+      "d1_train_n": 30000,
+      "d2_long_param": 40,
+      "d2_short_param": 80,
+      "d2_train_n": 30000
+    },
+    "ridge": {
+      "d1_long_param": 1000.0,
+      "d1_short_history": 0,
+      "d1_train_n": 71686,
+      "d2_long_param": 1000.0,
+      "d2_short_param": 1000.0,
+      "d2_train_n": 71668
+    }
+  }
+}
