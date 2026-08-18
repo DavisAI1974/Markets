@@ -1,0 +1,84 @@
+{
+  "status": "HIGHER_ORDER_LATE_ENTRY_REVIVAL_AUDIT_COMPLETE",
+  "date": "2026-08-18",
+  "source_runner": "research/ng_exhaustion_higher_order_late_entry_revival_audit_20260818.py",
+  "scope": "all exact D2-D5 frozen Phase-1 lineage instances; no row filtering",
+  "exact_depth_counts": {"D2":1592,"D3":124,"D4":8,"D5":1},
+  "total_D2_plus": 1725,
+  "preserve_all": true,
+  "filtered_rows": 0,
+  "hard_failures": [],
+  "frozen_information_horizons_seconds": [5,10,20,30,60,120,300],
+  "fallback_survivorship_checkpoints_seconds": [1,2,3,4,5,10,15,20,30,45,60,90,120,180,300,600,900,1800,3600],
+  "entry_hierarchy": "KEEP_EARLIEST_VALIDATED_EARLY_ENTRY; FALLBACK_CHECKPOINTS_ONLY_FOR_NOT_INITIALLY_ACTIONABLE_CASES",
+  "headline_h5": {
+    "D2_ready_by_t0": 1059,
+    "D2_ready_by_endpoint_plus5_additional": 531,
+    "D2_ready_by_endpoint_plus60_additional": 2,
+    "D2_total": 1592,
+    "D3_ready_by_t0": 80,
+    "D3_ready_by_endpoint_plus5_additional": 43,
+    "D3_ready_by_endpoint_plus60_additional": 1,
+    "D3_total": 124,
+    "D4_ready_by_t0": 6,
+    "D4_ready_by_endpoint_plus5_additional": 2,
+    "D4_total": 8,
+    "D5_ready_by_t0": 1,
+    "D5_total": 1,
+    "all_depths_ready_by_t0_or_endpoint_plus5": 1722,
+    "all_depths_ready_by_endpoint_plus60": 1725
+  },
+  "availability_categories_by_horizon": {
+    "5": {
+      "D2": {"READY_BY_TARGET_T0":1059,"READY_BY_TARGET_ENDPOINT_PLUS5":531,"READY_BY_TARGET_ENDPOINT_PLUS60":2},
+      "D3": {"READY_BY_TARGET_T0":80,"READY_BY_TARGET_ENDPOINT_PLUS5":43,"READY_BY_TARGET_ENDPOINT_PLUS60":1},
+      "D4": {"READY_BY_TARGET_T0":6,"READY_BY_TARGET_ENDPOINT_PLUS5":2},
+      "D5": {"READY_BY_TARGET_T0":1}
+    },
+    "10": {
+      "D2": {"READY_BY_TARGET_T0":1029,"READY_BY_TARGET_ENDPOINT_PLUS5":198,"READY_BY_TARGET_ENDPOINT_PLUS60":365},
+      "D3": {"READY_BY_TARGET_T0":77,"READY_BY_TARGET_ENDPOINT_PLUS5":17,"READY_BY_TARGET_ENDPOINT_PLUS60":30},
+      "D4": {"READY_BY_TARGET_T0":6,"READY_BY_TARGET_ENDPOINT_PLUS5":2},
+      "D5": {"READY_BY_TARGET_T0":1}
+    },
+    "20": {
+      "D2": {"READY_BY_TARGET_T0":914,"READY_BY_TARGET_ENDPOINT_PLUS5":299,"READY_BY_TARGET_ENDPOINT_PLUS60":379},
+      "D3": {"READY_BY_TARGET_T0":69,"READY_BY_TARGET_ENDPOINT_PLUS5":22,"READY_BY_TARGET_ENDPOINT_PLUS60":33},
+      "D4": {"READY_BY_TARGET_T0":4,"READY_BY_TARGET_ENDPOINT_PLUS5":4},
+      "D5": {"READY_BY_TARGET_T0":1}
+    },
+    "30": {
+      "D2": {"READY_BY_TARGET_T0":754,"READY_BY_TARGET_ENDPOINT_PLUS5":423,"READY_BY_TARGET_ENDPOINT_PLUS60":415},
+      "D3": {"READY_BY_TARGET_T0":58,"READY_BY_TARGET_ENDPOINT_PLUS5":29,"READY_BY_TARGET_ENDPOINT_PLUS60":37},
+      "D4": {"READY_BY_TARGET_T0":3,"READY_BY_TARGET_ENDPOINT_PLUS5":5},
+      "D5": {"READY_BY_TARGET_T0":1}
+    },
+    "60": {
+      "D2": {"READY_BY_TARGET_T0":416,"READY_BY_TARGET_ENDPOINT_PLUS5":551,"READY_BY_TARGET_ENDPOINT_PLUS60":623,"READY_BY_TARGET_ENDPOINT_PLUS120":2},
+      "D3": {"READY_BY_TARGET_T0":27,"READY_BY_TARGET_ENDPOINT_PLUS5":45,"READY_BY_TARGET_ENDPOINT_PLUS60":51,"READY_BY_TARGET_ENDPOINT_PLUS120":1},
+      "D4": {"READY_BY_TARGET_T0":3,"READY_BY_TARGET_ENDPOINT_PLUS60":5},
+      "D5": {"READY_BY_TARGET_T0":1}
+    },
+    "120": {
+      "D2": {"READY_BY_TARGET_T0":122,"READY_BY_TARGET_ENDPOINT_PLUS5":301,"READY_BY_TARGET_ENDPOINT_PLUS60":494,"READY_BY_TARGET_ENDPOINT_PLUS120":673,"READY_BY_TARGET_ENDPOINT_PLUS300":2},
+      "D3": {"READY_BY_TARGET_T0":9,"READY_BY_TARGET_ENDPOINT_PLUS5":28,"READY_BY_TARGET_ENDPOINT_PLUS60":33,"READY_BY_TARGET_ENDPOINT_PLUS120":53,"READY_BY_TARGET_ENDPOINT_PLUS300":1},
+      "D4": {"READY_BY_TARGET_T0":1,"READY_BY_TARGET_ENDPOINT_PLUS5":1,"READY_BY_TARGET_ENDPOINT_PLUS60":1,"READY_BY_TARGET_ENDPOINT_PLUS120":5},
+      "D5": {"READY_BY_TARGET_ENDPOINT_PLUS5":1}
+    },
+    "300": {
+      "D2": {"READY_BY_TARGET_T0":36,"READY_BY_TARGET_ENDPOINT_PLUS5":28,"READY_BY_TARGET_ENDPOINT_PLUS60":35,"READY_BY_TARGET_ENDPOINT_PLUS120":78,"READY_BY_TARGET_ENDPOINT_PLUS300":1413,"LATER_THAN_TARGET_ENDPOINT_PLUS300":2},
+      "D3": {"READY_BY_TARGET_T0":4,"READY_BY_TARGET_ENDPOINT_PLUS5":2,"READY_BY_TARGET_ENDPOINT_PLUS60":1,"READY_BY_TARGET_ENDPOINT_PLUS120":7,"READY_BY_TARGET_ENDPOINT_PLUS300":109,"LATER_THAN_TARGET_ENDPOINT_PLUS300":1},
+      "D4": {"READY_BY_TARGET_ENDPOINT_PLUS300":8},
+      "D5": {"READY_BY_TARGET_ENDPOINT_PLUS300":1}
+    }
+  },
+  "interpretation": [
+    "No D2+ structural instance is killed because an earlier information horizon was unavailable at the original target t0.",
+    "Availability is not predictive skill; this audit establishes when frozen predecessor information becomes causal relative to target/reference-entry clocks.",
+    "For cases already actionable early, preserve the early entry. Dense +1/+2/+3/+4/+5-second survivorship is fallback-only for cases not sufficiently actionable at the earliest validated entry.",
+    "Cases becoming knowable after endpoint+5 remain eligible for later-entry research if enough causal runway and cost-adjusted edge remain.",
+    "Final chain depth, realized final duration and future path shape may never leak into an earlier checkpoint."
+  ],
+  "promotion_performed": false,
+  "protected_mutations": {"detector":false,"canonical_rows":false,"phase1":false,"phase2":false,"runway_clock":false,"permanent_frankie":false,"frankie_1":false,"spawn_py":false,"ssos_play":false}
+}
