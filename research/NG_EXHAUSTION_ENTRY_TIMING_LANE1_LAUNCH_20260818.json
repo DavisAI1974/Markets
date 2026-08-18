@@ -1,0 +1,18 @@
+{
+  "status": "AUTHORIZED_LANE1_REVERSE_BACKCAST_LAUNCH",
+  "date": "2026-08-18",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "protocol": "research/NG_EXHAUSTION_ENTRY_TIMING_REVIVAL_PROTOCOL_20260818.md",
+  "checkpoint_density_addendum": "research/NG_EXHAUSTION_ENTRY_TIMING_CHECKPOINT_DENSITY_ADDENDUM_20260818.md",
+  "target": "exact_D1_membership_only",
+  "training_block": "base_weeks_18_35",
+  "validation_block": "base_weeks_36_47",
+  "confirmation_block": "base_weeks_48_53_plus_held_20260329",
+  "backcast_block": "base_weeks_0_17",
+  "fail_closed": true,
+  "rewrite_phase1_lineage": false,
+  "use_profit_for_membership": false,
+  "use_realized_duration_for_membership": false,
+  "promotion_authorized": false,
+  "permanent_frankie_mutation_authorized": false
+}
