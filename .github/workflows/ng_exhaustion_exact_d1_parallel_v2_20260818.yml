@@ -1,0 +1,265 @@
+name: NG Exhaustion Exact D1 Parallel Campaign V2 20260818
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-post-phase2-20260818
+    paths:
+      - research/ng_exhaustion_exact_d1_agents_v2_20260818.py
+      - research/NG_EXHAUSTION_EXACT_D1_PROTOCOL_CORRECTION_20260818.md
+      - .github/workflows/ng_exhaustion_exact_d1_parallel_v2_20260818.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  BASE_ID: '9281733364'
+  BASE_SHA: f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1
+  HELD_ID: '9281272840'
+  HELD_SHA: 21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e
+  LINEAGE_ID: '9289929292'
+  LINEAGE_SHA: a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95
+  RECONCILE_ID: '9306082330'
+  RECONCILE_SHA: f17c130df029429bfbc35067d1cc9d16128ca4fb227dd37f3fb4fbb8bbaf8875
+  BUCKET: bento-568968024170-us-east-2-an
+
+jobs:
+  exact-d1-core:
+    name: Exact D1 V2 - ${{ matrix.mode }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [lifespan, grammar, decompose, outcome, causal, reorigin, profit, predictor]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-post-phase2-20260818
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet numpy scikit-learn
+      - name: Download immutable sources
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/in/base /tmp/in/held /tmp/in/lineage /tmp/in/reconcile
+          get_artifact () {
+            id="$1"; sha="$2"; zip="$3"; dest="$4"
+            curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" -o "${zip}"
+            echo "${sha}  ${zip}" | sha256sum -c -
+            unzip -q "${zip}" -d "${dest}"
+          }
+          get_artifact "${BASE_ID}" "${BASE_SHA}" /tmp/base.zip /tmp/in/base
+          get_artifact "${HELD_ID}" "${HELD_SHA}" /tmp/held.zip /tmp/in/held
+          get_artifact "${LINEAGE_ID}" "${LINEAGE_SHA}" /tmp/lineage.zip /tmp/in/lineage
+          get_artifact "${RECONCILE_ID}" "${RECONCILE_SHA}" /tmp/reconcile.zip /tmp/in/reconcile
+      - name: Run corrected exact-D1 lane
+        env:
+          MODE: ${{ matrix.mode }}
+        run: |
+          set -euo pipefail
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_exact_d1_agents_v2_20260818.py \
+            --mode "${MODE}" \
+            --base /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz \
+            --held /tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz \
+            --base-lineage /tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz \
+            --held-lineage /tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz \
+            --summary /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_SUMMARY.json \
+            --out "NG_EXHAUSTION_EXACT_D1_${MODE^^}_AGENT_V2_20260818.json"
+      - name: Verify boundary and chronology
+        run: |
+          python - <<'PY'
+          import glob,json
+          p=glob.glob('NG_EXHAUSTION_EXACT_D1_*_AGENT_V2_20260818.json');assert len(p)==1,p
+          d=json.load(open(p[0]));assert d['status']=='EXACT_D1_AGENT_COMPLETE';assert not d['promotion_performed']
+          assert not any(d['protected_mutations'].values());assert d['d1_chronological_protocol']['status']=='D1_OOT_LABEL_BOUNDARY_CORRECTED'
+          print(d['mode'],d['exact_d1_n'])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-exact-d1-v2-${{ matrix.mode }}-20260818
+          path: NG_EXHAUSTION_EXACT_D1_*_AGENT_V2_20260818.json
+          if-no-files-found: error
+
+  exact-d1-rawpath:
+    name: Exact D1 V2 - raw path
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-post-phase2-20260818
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet numpy scikit-learn
+      - name: Download immutable sources
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/in/base /tmp/in/held /tmp/in/lineage /tmp/in/reconcile
+          get_artifact () {
+            id="$1"; sha="$2"; zip="$3"; dest="$4"
+            curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" -o "${zip}"
+            echo "${sha}  ${zip}" | sha256sum -c -
+            unzip -q "${zip}" -d "${dest}"
+          }
+          get_artifact "${BASE_ID}" "${BASE_SHA}" /tmp/base.zip /tmp/in/base
+          get_artifact "${HELD_ID}" "${HELD_SHA}" /tmp/held.zip /tmp/in/held
+          get_artifact "${LINEAGE_ID}" "${LINEAGE_SHA}" /tmp/lineage.zip /tmp/in/lineage
+          get_artifact "${RECONCILE_ID}" "${RECONCILE_SHA}" /tmp/reconcile.zip /tmp/in/reconcile
+      - name: Identify corrected long-family weeks
+        run: |
+          PYTHONPATH=research:research/kalshi python - <<'PY' > /tmp/longweeks.txt
+          import json,sys
+          import ng_exhaustion_exact_d1_agents_v2_20260818 as c
+          base='/tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz';held='/tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz'
+          bl='/tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz';hl='/tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz'
+          weeks=json.load(open('/tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_SUMMARY.json'))['weeks']
+          ev=c.load_events(base,held);lin=c.load_lineage(bl,hl);d1,m=c.d1_records(ev,lin,weeks);lf=m['labels'][-1]
+          for w in sorted(set(r['week'] for r in d1 if r['block']!='held' and r['duration_family']==lf)): print(w)
+          PY
+          test -s /tmp/longweeks.txt
+      - name: Download raw weeks
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/raw
+          python - <<'PY' > /tmp/days.txt
+          from datetime import datetime,timedelta
+          for line in open('/tmp/longweeks.txt'):
+              w=line.strip()
+              if not w: continue
+              d=datetime.strptime(w,'%Y%m%d')
+              for i in range(6): print((d+timedelta(days=i)).strftime('%Y%m%d'))
+          PY
+          sort -u /tmp/days.txt -o /tmp/days.txt
+          while read -r d; do
+            mapfile -t keys < <(aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" --query 'Contents[].Key' --output text | tr '\t' '\n' | grep -E "NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" | sort -u)
+            test "${#keys[@]}" -eq 1
+            aws s3 cp "s3://${BUCKET}/${keys[0]}" "/tmp/raw/NG_${d}.jsonl.gz" --only-show-errors
+          done < /tmp/days.txt
+      - name: Run raw-path lane under corrected core alias
+        run: |
+          PYTHONPATH=research:research/kalshi python - <<'PY'
+          import runpy,sys
+          import ng_exhaustion_exact_d1_agents_v2_20260818 as v2
+          sys.modules['ng_exhaustion_exact_d1_agents_20260818']=v2
+          sys.argv=['ng_exhaustion_exact_d1_rawpath_20260818.py',
+            '--base','/tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz',
+            '--held','/tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz',
+            '--base-lineage','/tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz',
+            '--held-lineage','/tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz',
+            '--summary','/tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_SUMMARY.json',
+            '--raw-dir','/tmp/raw','--out','NG_EXHAUSTION_EXACT_D1_RAWPATH_AGENT_V2_20260818.json']
+          runpy.run_path('research/ng_exhaustion_exact_d1_rawpath_20260818.py',run_name='__main__')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-exact-d1-v2-rawpath-20260818
+          path: NG_EXHAUSTION_EXACT_D1_RAWPATH_AGENT_V2_20260818.json
+          if-no-files-found: error
+
+  exact-d1-chop:
+    name: Exact D1 V2 - chop
+    needs: exact-d1-rawpath
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-post-phase2-20260818
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet numpy scikit-learn
+      - uses: actions/download-artifact@v4
+        with:
+          name: ng-exhaustion-exact-d1-v2-rawpath-20260818
+          path: /tmp/rawpath
+      - name: Download canonical event artifacts for predictor
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/in/base /tmp/in/held
+          curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${BASE_ID}/zip" -o /tmp/base.zip
+          curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${HELD_ID}/zip" -o /tmp/held.zip
+          echo "${BASE_SHA}  /tmp/base.zip" | sha256sum -c -
+          echo "${HELD_SHA}  /tmp/held.zip" | sha256sum -c -
+          unzip -q /tmp/base.zip -d /tmp/in/base; unzip -q /tmp/held.zip -d /tmp/in/held
+      - name: Run chop lane under corrected core alias
+        run: |
+          PYTHONPATH=research:research/kalshi python - <<'PY'
+          import runpy,sys
+          import ng_exhaustion_exact_d1_agents_v2_20260818 as v2
+          sys.modules['ng_exhaustion_exact_d1_agents_20260818']=v2
+          sys.argv=['ng_exhaustion_exact_d1_chop_agent_20260818.py',
+            '--rawpath','/tmp/rawpath/NG_EXHAUSTION_EXACT_D1_RAWPATH_AGENT_V2_20260818.json',
+            '--base','/tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz',
+            '--held','/tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz',
+            '--out','NG_EXHAUSTION_EXACT_D1_CHOP_AGENT_V2_20260818.json']
+          runpy.run_path('research/ng_exhaustion_exact_d1_chop_agent_20260818.py',run_name='__main__')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-exact-d1-v2-chop-20260818
+          path: NG_EXHAUSTION_EXACT_D1_CHOP_AGENT_V2_20260818.json
+          if-no-files-found: error
+
+  reconcile:
+    name: Reconcile corrected exact-D1 ten-lane campaign
+    needs: [exact-d1-core, exact-d1-rawpath, exact-d1-chop]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-post-phase2-20260818
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ng-exhaustion-exact-d1-v2-*-20260818
+          path: /tmp/agents
+      - name: Verify and stage ten outputs
+        run: |
+          set -euo pipefail
+          mkdir -p research/generated/ng_exhaustion_exact_d1_v2_20260818
+          python - <<'PY'
+          import glob,hashlib,json,shutil
+          from pathlib import Path
+          ps=sorted(glob.glob('/tmp/agents/**/NG_EXHAUSTION_EXACT_D1_*_V2_20260818.json',recursive=True));assert len(ps)==10,ps
+          out=Path('research/generated/ng_exhaustion_exact_d1_v2_20260818');lanes=[];d1n=set()
+          for p in ps:
+              raw=Path(p).read_bytes();d=json.loads(raw);name=Path(p).name
+              assert d.get('promotion_performed') is False;assert not any(d['protected_mutations'].values())
+              if 'RAWPATH' not in name and 'CHOP' not in name:
+                  assert d['status']=='EXACT_D1_AGENT_COMPLETE';assert d['d1_chronological_protocol']['status']=='D1_OOT_LABEL_BOUNDARY_CORRECTED';d1n.add(d['exact_d1_n'])
+              elif 'RAWPATH' in name: assert d['status']=='EXACT_D1_RAWPATH_AGENT_COMPLETE'
+              else: assert d['status']=='EXACT_D1_CHOP_AGENT_COMPLETE'
+              shutil.copyfile(p,out/name);lanes.append({'path':str(out/name),'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw)})
+          assert len(d1n)==1,d1n
+          v={'status':'EXACT_D1_V2_TEN_LANE_VERIFIED','lane_count':10,'exact_d1_n':next(iter(d1n)),'chronology':'D1 discovery = first 18 OOT lineage weeks; later 12 + untouched 6 + held validate','lanes':lanes,'promotion_performed':False,'permanent_frankie_mutated':False,'runway_clock_mutated':False,'canonical_rows_mutated':False,'prospective_boundary':'historical profitability ranking nominates only; fresh prospective/OOT evidence required before play freeze'}
+          (out/'VERIFICATION.json').write_text(json.dumps(v,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(v,indent=2))
+          PY
+      - name: Commit durable corrected outputs
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/generated/ng_exhaustion_exact_d1_v2_20260818
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record corrected exact-D1 ten-agent outputs'
+          for i in 1 2 3; do git pull --rebase origin chatgpt/ng-exhaustion-post-phase2-20260818 || true; git push origin HEAD:chatgpt/ng-exhaustion-post-phase2-20260818 && exit 0; sleep $((i*3)); done
+          exit 1
