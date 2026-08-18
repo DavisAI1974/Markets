@@ -276,9 +276,14 @@ def main():
         random_state=SEED,
     )
     model.fit(X, y, sample_weight=weights)
-    for r in candidates:
-        r["prediction"] = float(model.predict(r["x"].reshape(1, -1))[0])
-        del r["x"]
+    batch = 50000
+    for i in range(0, len(candidates), batch):
+        chunk = candidates[i:i + batch]
+        xb = np.vstack([r["x"] for r in chunk])
+        preds = model.predict(xb)
+        for r, pred in zip(chunk, preds):
+            r["prediction"] = float(pred)
+            del r["x"]
 
     tune_candidates = [r for r in candidates if r["week_sunday"] in tune_weeks]
     threshold, threshold_audit, tune_status = choose_threshold(tune_candidates)
@@ -401,7 +406,7 @@ def main():
             "guard": "realized path shape is outcome-only and never a fallback model input",
         },
         "checkpoint_grid": [1,2,3,4,5,10,15,20] + list(range(25,3601,5)),
-        "entry_policy": "EARLIEST_CAUSAL_CONFIDENCE_CROSSING_WINS; NO_HINDSIGHT_BEST_CHECKPOINT_SELECTION",
+        "entry_policy": "EARLIEST_CAUSAL_CONFIDENCE_CROSSING_WINS; NO HINDSIGHT BEST-CHECKPOINT SELECTION",
         "rows_file": str(rows_path),
         "promotion_performed": False,
         "protected_mutations": {
