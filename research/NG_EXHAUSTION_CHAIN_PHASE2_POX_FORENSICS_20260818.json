@@ -1,0 +1,182 @@
+{
+  "name": "NG exhaustion chain Phase-2 P-O-X forensic reopening",
+  "date": "2026-08-18",
+  "branch": "chatgpt/ng-exhaustion-chain-phase2-20260817",
+  "status": "ACTIVE_CONDITIONAL_MECHANISM_UNDER_REVIEW",
+  "supersedes_disposition_only": {
+    "prior_phrase": "P,O,X candidate killed by held-week reversal",
+    "corrected_disposition": "NOT_KILLED_REOPENED_FOR_MECHANISM_FORENSICS",
+    "note": "The underlying historical and held observations are preserved. Only the automatic kill/disposition is superseded."
+  },
+  "candidate": {
+    "depth": 3,
+    "information_horizon_seconds": 60,
+    "predecessor_seed_states_oldest_to_newest": [
+      "persistent_exhaustion",
+      "collapsed_opposite_flow_reversal",
+      "collapsed_sparse_indeterminate"
+    ],
+    "entry_offset_from_structural_endpoint_seconds": 5,
+    "fixed_exit_offset_from_structural_endpoint_seconds": 60,
+    "direction": "with current exhaustion polarity"
+  },
+  "preheld_evaluation": {
+    "eras_1_to_3": {
+      "n": 209,
+      "gross_mean_ticks": 0.4306220095693901,
+      "positive_week_delta_rate": 0.6111111111111112,
+      "one_sided_week_delta_p": 0.01650366135152007
+    },
+    "eras_4_to_5": {
+      "n": 140,
+      "gross_mean_ticks": 0.20000000000001286,
+      "positive_week_delta_rate": 0.5833333333333334,
+      "one_sided_week_delta_p": 0.05661986558008155
+    },
+    "untouched_confirmation": {
+      "n": 78,
+      "gross_mean_ticks": 0.4487179487179334,
+      "positive_week_delta_rate": 1.0,
+      "one_sided_week_delta_p": 0.005679632018911363
+    }
+  },
+  "full_54w_descriptive": {
+    "n": 666,
+    "gross_mean_ticks": 0.2972972972973066,
+    "weeks_with_candidates": 54,
+    "positive_week_mean_count": 38,
+    "negative_week_mean_count": 14,
+    "zero_week_mean_count": 2,
+    "median_week_mean_ticks": 0.2899159663865414
+  },
+  "held_20260329": {
+    "n": 13,
+    "gross_mean_ticks": -0.23076923076923953,
+    "same_week_universe_mean_ticks": -0.026602176541710362,
+    "week_demeaned_delta_ticks": -0.20416705422752918,
+    "historical_54w_weeks_at_or_below_held_mean": 9,
+    "historical_54w_week_fraction_at_or_below_held_mean": 0.16666666666666666,
+    "exact_same_week_circular_shift": {
+      "lower_tail_p": 0.39009661835748793,
+      "upper_tail_p": 0.6231884057971014,
+      "two_sided_p": 0.7801932367149759
+    },
+    "interpretation": "The negative held mean is a falsification flag but is not an unusually extreme realization relative to the historical week distribution or the exact same-week shift null. It is insufficient by itself to retire the mechanism."
+  },
+  "instance_forensics": {
+    "held_loss_structure": {
+      "negative_cases": 5,
+      "zero_cases": 5,
+      "positive_cases": 3,
+      "single_outlier_explains_reversal": false,
+      "note": "Removing one observation does not restore a positive held mean; the reversal is distributed across several cases."
+    },
+    "current_vs_latest_predecessor_polarity": {
+      "opposite": {
+        "held_n": 6,
+        "held_gross_mean_ticks": 0.500000000000019,
+        "held_negative_case_count": 0,
+        "base54_n": 339,
+        "base54_gross_mean_ticks": 0.31563421828909927
+      },
+      "same": {
+        "held_n": 7,
+        "held_gross_mean_ticks": -0.8571428571428896,
+        "held_negative_case_count": 5,
+        "base54_n": 327,
+        "base54_gross_mean_ticks": 0.27828746177370495,
+        "historical_week_fraction_at_or_below_held_same_branch_mean": 0.07407407407407407
+      },
+      "interpretation": "The held reversal is concentrated in the X-to-same-polarity-current branch. The X-to-opposite-polarity-current branch remained nonnegative in every held instance. Both branches were positive in aggregate across the 54-week base, so this is a conditional/regime question rather than proof that one branch is universally invalid."
+    },
+    "path_shape_from_entry_plus5": {
+      "held_same_branch_mean_ticks": {
+        "plus10": 0.0,
+        "plus20": -0.2857142857142542,
+        "plus30": -0.7142857142856991,
+        "plus60": -0.8571428571428896
+      },
+      "held_opposite_branch_mean_ticks": {
+        "plus10": 0.0,
+        "plus20": 0.1666666666666483,
+        "plus30": 0.3333333333333706,
+        "plus60": 0.500000000000019
+      },
+      "interpretation": "On the held week the two polarity-resolution branches diverged progressively after +10 seconds rather than differing only at the final +60 mark."
+    },
+    "successor_before_fixed_plus60_exit": {
+      "held_all": {
+        "successor_before_exit_n": 11,
+        "successor_before_exit_mean_ticks": -0.363636363636364,
+        "no_successor_before_exit_n": 2,
+        "no_successor_before_exit_mean_ticks": 0.49999999999994493
+      },
+      "held_interaction": {
+        "same_current_vs_latest_and_successor_before_exit": {
+          "n": 6,
+          "mean_ticks": -1.1666666666666856
+        },
+        "opposite_current_vs_latest_and_successor_before_exit": {
+          "n": 5,
+          "mean_ticks": 0.6000000000000227
+        }
+      },
+      "base54_interaction": {
+        "same_current_vs_latest_and_successor_same_polarity": {
+          "successor_before_exit_mean_ticks": 0.7623762376237798,
+          "successor_before_exit_n": 101,
+          "no_successor_before_exit_mean_ticks": 0.7368421052631693,
+          "no_successor_before_exit_n": 38
+        },
+        "same_current_vs_latest_and_successor_flip_polarity": {
+          "successor_before_exit_mean_ticks": -0.08333333333332474,
+          "successor_before_exit_n": 144,
+          "no_successor_before_exit_mean_ticks": -0.04545454545454869,
+          "no_successor_before_exit_n": 44
+        },
+        "opposite_current_vs_latest_and_successor_same_polarity": {
+          "successor_before_exit_mean_ticks": 0.5565217391304328,
+          "successor_before_exit_n": 115,
+          "no_successor_before_exit_mean_ticks": 0.3555555555555548,
+          "no_successor_before_exit_n": 45
+        },
+        "opposite_current_vs_latest_and_successor_flip_polarity": {
+          "successor_before_exit_mean_ticks": 0.07352941176471107,
+          "successor_before_exit_n": 136,
+          "no_successor_before_exit_mean_ticks": 0.3953488372093069,
+          "no_successor_before_exit_n": 43
+        }
+      },
+      "interpretation": "A new exhaustion before the fixed +60 exit is not by itself a universal invalidation. The successor's polarity transition interacts strongly with the current-vs-latest branch. This points toward dynamic re-origin/exit semantics rather than a blind fixed-horizon hold. Successor information may be used only when it becomes causally observable, not as an entry feature."
+    }
+  },
+  "current_mechanism_hypothesis": "P-O-X is a branching transition precursor, not a single fixed-horizon state. The latest X state resolves differently depending on the current exhaustion polarity and subsequent re-origin behavior. The held week exposed this branch structure; it did not establish that P-O-X is absent.",
+  "next_tests": [
+    "Reconstruct the P-O-X branches instance-by-instance across all 54 weeks and all six OOT eras using only causally available state at each decision point.",
+    "Test current-vs-latest polarity relation as a pre-entry branch because it is known at current t0 and was already permitted in the Phase-2 candidate family.",
+    "Test successor-exhaustion onset/polarity as a dynamic exit or state-transition event only when it becomes observable; do not leak it into entry selection.",
+    "Determine whether the same-polarity branch has a stable pre-entry discriminator in predecessor timing/state geometry or whether it is genuinely regime-dependent.",
+    "Keep P-O-X active until a documented multi-block/mechanistic retirement standard is met. Do not retire it solely because one held fold has a negative mean."
+  ],
+  "candidate_disposition_policy": {
+    "automatic_kill_on_single_failed_fold": false,
+    "required_response_to_failed_fold": "FLAG_AND_DECOMPOSE",
+    "retirement_requires": [
+      "demonstrated leakage or structural invalidity",
+      "or repeated independent out-of-time failure after mechanism decomposition",
+      "or a predeclared falsifier showing the mechanism is indistinguishable from null across relevant blocks"
+    ],
+    "preserve_failed_instances": true,
+    "preserve_subtypes": true,
+    "no_posthoc_promotion_from_held_only": true
+  },
+  "protected_mutations": {
+    "frozen_exhaustion_detector": false,
+    "base_54w": false,
+    "held_week_rows": false,
+    "runway_clock": false,
+    "permanent_frankie": false,
+    "frankie_1": false,
+    "research/kalshi/spawn.py": false
+  }
+}
