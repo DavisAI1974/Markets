@@ -7,6 +7,7 @@ on:
     paths:
       - research/ng_exhaustion_postphase2_reconcile_20260818.py
       - .github/workflows/ng_exhaustion_postphase2_reconcile_20260818.yml
+      - research/generated/ng_exhaustion_postphase2_agents_20260818/NG_EXHAUSTION_POSTPHASE2_*_AGENT_20260818.json
   workflow_dispatch:
 
 permissions:
