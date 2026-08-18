@@ -8,9 +8,9 @@
     "short_lag_pox_same_delayed_reexpression_kept_separate": "ALREADY_MAPPED_CONTINUE_INVESTIGATION",
     "phase1_reusable_pair_triplet_longer_modules": "FIRST_ATLAS_COMPLETE_THIS_PASS",
     "chain_extension_families_d1_to_d2": "FIRST_ATLAS_COMPLETE_THIS_PASS",
-    "chain_extension_families_d2_to_d3_and_deeper": "SPARSE_FAMILIES_FOUND_MORE_DECOMPOSITION_REQUIRED",
-    "timing_lifespan_families": "IN_PROGRESS",
-    "true_false_context_investigator": "IN_PROGRESS_NO_HARD_FAILS",
+    "chain_extension_families_d2_to_d3_and_deeper": "FIRST_D2_TO_D3_FAMILIES_COMPLETE_D4_D5_TOO_SPARSE",
+    "timing_lifespan_families": "D2_D3_TIMING_FAMILIES_COMPLETE_THIS_PASS_D4_D5_TOO_SPARSE",
+    "true_false_context_investigator": "FIRST_CONTEXT_DECOMPOSITION_COMPLETE_CONTINUE_TARGETED_NO_HARD_FAILS",
     "parallel_independent_recurrence_reconciliation": "REQUIRED",
     "phase2_brain_proposal_index_update": "REQUIRED_BEFORE_FINAL_FREEZE",
     "permanent_frankie_merge": "BLOCKED_UNLESS_GREG_EXPLICITLY_APPROVES"
