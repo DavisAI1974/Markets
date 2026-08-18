@@ -1,0 +1,59 @@
+name: NG Exhaustion Exact D1 Preserve-All Relative Profit Rank 20260818
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-post-phase2-20260818
+    paths:
+      - research/generated/ng_exhaustion_exact_d1_master_20260818/NG_EXHAUSTION_EXACT_D1_MASTER_LEDGER_20260818.jsonl.gz
+      - research/ng_exhaustion_exact_d1_rank_all_20260818.py
+      - research/NG_EXHAUSTION_EXACT_D1_PRESERVE_ALL_ADDENDUM_20260818.md
+      - .github/workflows/ng_exhaustion_exact_d1_rank_all_20260818.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rank-all:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-post-phase2-20260818
+          fetch-depth: 0
+      - name: Rank complete preserve-all ledger
+        run: |
+          set -euo pipefail
+          python research/ng_exhaustion_exact_d1_rank_all_20260818.py \
+            --ledger research/generated/ng_exhaustion_exact_d1_master_20260818/NG_EXHAUSTION_EXACT_D1_MASTER_LEDGER_20260818.jsonl.gz \
+            --out NG_EXHAUSTION_EXACT_D1_RELATIVE_PROFIT_RANK_20260818.json
+      - name: Verify no D1 elimination semantics
+        run: |
+          python - <<'PY'
+          import gzip,json
+          p='NG_EXHAUSTION_EXACT_D1_RELATIVE_PROFIT_RANK_20260818.json'
+          d=json.load(open(p));assert d['status']=='EXACT_D1_PRESERVE_ALL_RELATIVE_PROFIT_RANK_COMPLETE'
+          assert d['preserve_all_policy'] is True;assert not d['promotion_performed'];assert not any(d['protected_mutations'].values())
+          n=sum(1 for _ in gzip.open('research/generated/ng_exhaustion_exact_d1_master_20260818/NG_EXHAUSTION_EXACT_D1_MASTER_LEDGER_20260818.jsonl.gz','rt'))
+          assert d['exact_d1_n']==n
+          print({'exact_d1_n':n,'pair_groups':len(d['groups']['pair']),'pair_duration_groups':len(d['groups']['pair_x_duration'])})
+          PY
+      - name: Compress and commit relative-profit annotations
+        run: |
+          set -euo pipefail
+          mkdir -p research/generated/ng_exhaustion_exact_d1_master_20260818
+          gzip -9 -c NG_EXHAUSTION_EXACT_D1_RELATIVE_PROFIT_RANK_20260818.json > research/generated/ng_exhaustion_exact_d1_master_20260818/NG_EXHAUSTION_EXACT_D1_RELATIVE_PROFIT_RANK_20260818.json.gz
+          cp NG_EXHAUSTION_EXACT_D1_RELATIVE_PROFIT_RANK_20260818.json research/generated/ng_exhaustion_exact_d1_master_20260818/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/generated/ng_exhaustion_exact_d1_master_20260818/NG_EXHAUSTION_EXACT_D1_RELATIVE_PROFIT_RANK_20260818.json*
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record preserve-all exact-D1 relative profit ranking'
+          for i in 1 2 3; do
+            git pull --rebase origin chatgpt/ng-exhaustion-post-phase2-20260818 || true
+            git push origin HEAD:chatgpt/ng-exhaustion-post-phase2-20260818 && exit 0
+            sleep $((i*3))
+          done
+          exit 1
