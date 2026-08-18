@@ -110,7 +110,7 @@ jobs:
           print('WEEKS='+','.join(weeks))
           PY
           fi
-      - name: Materialize exact raw Sunday-Friday files
+      - name: Materialize exact raw Sunday-Friday files honoring frozen closures
         run: |
           set -euo pipefail
           mkdir -p /tmp/ngraw
@@ -122,11 +122,27 @@ jobs:
               for i in range(6):
                   print((d+timedelta(days=i)).strftime('%Y%m%d'))
           PY
+          python - <<'PY' > /tmp/closures.txt
+          import json
+          p='research/NG_EXHAUSTION_20260403_CME_CLOSURE_WITNESS_20260817.json'
+          d=json.load(open(p))
+          assert d['status']=='FROZEN_EXCHANGE_CLOSURE_WITNESS'
+          for x in d['canonicalization_rule']['explicit_closure_dates']:
+              print(x)
+          PY
           while read -r d; do
             mapfile -t keys < <(aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" \
-              --query 'Contents[].Key' --output text | tr '\t' '\n' | grep -E "NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" | sort -u)
+              --query 'Contents[].Key' --output text | tr '\t' '\n' | grep -E "NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" | sort -u || true)
+            if grep -qx "${d}" /tmp/closures.txt; then
+              if [ "${#keys[@]}" -ne 0 ]; then
+                echo "::error::Frozen closure ${d} must have zero NG raw objects, got ${#keys[@]}: ${keys[*]-}"
+                exit 1
+              fi
+              echo "Frozen exchange closure ${d}: zero raw objects as required"
+              continue
+            fi
             if [ "${#keys[@]}" -ne 1 ]; then
-              echo "::error::Expected exactly one raw NG object for ${d}, got ${#keys[@]}: ${keys[*]-}"
+              echo "::error::Expected exactly one raw NG object for normal session date ${d}, got ${#keys[@]}: ${keys[*]-}"
               exit 1
             fi
             aws s3 cp "s3://${BUCKET}/${keys[0]}" "/tmp/ngraw/NG_${d}.jsonl.gz" --only-show-errors
