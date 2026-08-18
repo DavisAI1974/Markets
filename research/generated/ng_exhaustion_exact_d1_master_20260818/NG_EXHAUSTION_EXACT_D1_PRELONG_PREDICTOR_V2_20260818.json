@@ -1,0 +1,55 @@
+{
+  "blocks": {
+    "conf": {
+      "auc": 0.6129958361471296,
+      "average_precision": 0.0006593353593837029,
+      "base_rate": 0.00041044776119402983,
+      "brier": 0.1751994980110501,
+      "n": 26800,
+      "positives": 11,
+      "top_decile_lift": 1.8181818181818183,
+      "top_decile_n": 2680,
+      "top_decile_positive_rate": 0.0007462686567164179
+    },
+    "era45": {
+      "auc": 0.808516184395069,
+      "average_precision": 0.0015757636512291604,
+      "base_rate": 0.00044270641186453186,
+      "brier": 0.17682471857053586,
+      "n": 54212,
+      "positives": 24,
+      "top_decile_lift": 3.74944669863519,
+      "top_decile_n": 5422,
+      "top_decile_positive_rate": 0.0016599040944300996
+    },
+    "held": {
+      "auc": 0.8373136090018493,
+      "average_precision": 0.009625258402409501,
+      "base_rate": 0.0019241341396371632,
+      "brier": 0.17620620857987337,
+      "n": 3638,
+      "positives": 7,
+      "top_decile_lift": 4.283359497645212,
+      "top_decile_n": 364,
+      "top_decile_positive_rate": 0.008241758241758242
+    }
+  },
+  "feature_fix": "uses canonical book_aligned_change_from_t0_window field",
+  "guard": "prediction ranks probability only; no D1 row is removed and realized duration is never used as an origin-time input",
+  "long_family": "long",
+  "preserve_all_policy": true,
+  "promotion_performed": false,
+  "protected_mutations": {
+    "canonical_rows": false,
+    "detector": false,
+    "frankie_1": false,
+    "permanent_frankie": false,
+    "runway_clock": false,
+    "spawn_py": false,
+    "ssos_play": false
+  },
+  "status": "EXACT_D1_PRELONG_PREDICTOR_V2_COMPLETE",
+  "target": "train-frozen long exact-D1 membership vs all causally eligible origins",
+  "train_n": 71772,
+  "train_positive": 90
+}
