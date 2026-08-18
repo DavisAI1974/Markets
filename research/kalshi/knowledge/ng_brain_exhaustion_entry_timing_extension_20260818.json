@@ -19,8 +19,13 @@
       "id": "exhaustion.execution.late_entry_revival",
       "status": "PROPOSAL",
       "lesson": "Earliest-entry non-predictability or causal unavailability does not kill a structurally valid exhaustion setup. Preserve it and test the first later causal checkpoint where identity/context is available and enough expected remaining runway/edge remains to justify entry.",
-      "checkpoints_seconds": [5,10,15,20,30,45,60,90,120,180,300,600,900,1800,3600],
+      "checkpoints_seconds": [1,2,3,4,5,10,15,20,30,45,60,90,120,180,300,600,900,1800,3600],
       "scope": "D1 and all structurally preserved D2+ chain/module cases that were not executable at the original earliest entry."
+    },
+    {
+      "id": "exhaustion.execution.dense_early_fallback",
+      "status": "PROPOSAL",
+      "lesson": "For fallback-only cases, search densely at +1/+2/+3/+4/+5 seconds after the relevant causal knowability point before widening the checkpoint spacing. The objective is to find the earliest moment predictability appears, not to impose a fixed minimum delay."
     },
     {
       "id": "exhaustion.execution.survival_as_information",
@@ -52,10 +57,17 @@
     "status": "AUTHORIZED_RESEARCH_EXTENSION",
     "finding": "No valid D2+ structural rows were intentionally deleted for lack of earliest-entry predictability. Earlier protocols explicitly preserved retrospective structural higher-order results even when causal/executable depth was smaller. Some structures were sidelined from execution because required identity/context was not available at the original entry point.",
     "policy": "REVIVE_EXECUTION_TIMING_NOT_REWRITE_STRUCTURE",
+    "current_structural_population": {
+      "exact_D2": 1592,
+      "exact_D3": 124,
+      "exact_D4": 8,
+      "exact_D5": 1,
+      "total_D2_plus": 1725
+    },
     "procedure": [
       "Keep any already-causally-executable D2+ early-entry rule at its earliest validated entry.",
       "For structurally valid D2+ cases that fail the original earliest-entry information wall, compute the first timestamp at which the required frozen detector/context inputs become causal.",
-      "From that first causal timestamp, test +5s and later survivorship checkpoints only if the setup remains alive/actionable.",
+      "From that first causal timestamp, test +1/+2/+3/+4/+5 seconds first, then wider survivorship checkpoints only if the setup remains alive/actionable.",
       "At each checkpoint estimate remaining runway, direction/range opportunity, MFE/MAE and cost-adjusted expectancy using only checkpoint-known information.",
       "Do not convert retrospective final chain depth, realized final duration, or future path shape into an earlier signal.",
       "Retain cases that never become executable as structural research memory rather than deleting them."
@@ -84,9 +96,9 @@
     "requirement": "Any new early-entry or fallback late-entry strategy remains historical/proposal-only until a predeclared fresh prospective/OOT promotion contract is passed."
   },
   "do_not_learn": [
-    "Do not impose +5 seconds as a mandatory delay on setups already callable at the earliest validated entry.",
+    "Do not impose +1/+2/+3/+4/+5 seconds as mandatory delays on setups already callable at the earliest validated entry.",
     "Do not treat survival-to-t as known before t.",
-    "Do not use realized final D1/D2/D3 depth or final duration to justify an earlier entry.",
+    "Do not use realized final D1/D2/D3/D4/D5 depth or final duration to justify an earlier entry.",
     "Do not delete structurally valid higher-order rows merely because their earliest-entry causal test failed.",
     "Do not reinterpret reverse-backcast weeks as forward-OOT evidence.",
     "Do not merge this proposal into permanent Frankie without deliberate adjudication together with the runway parent and finalized Phase-2 chain extension."
