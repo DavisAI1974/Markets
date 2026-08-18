@@ -1,6 +1,6 @@
 # NG Exhaustion Brain Proposal Index — 2026-08-18
 
-Status: **AUTHORITATIVE PROPOSAL INDEX. Permanent Frankie remains unchanged.**
+Status: **AUTHORITATIVE PROPOSAL INDEX. Phase-2 research characterization is complete for this pass; permanent Frankie remains unchanged.**
 
 This file exists to prevent exhaustion/runway/chain lessons from being forgotten or duplicated across sessions.
 
@@ -49,7 +49,7 @@ The brain itself is never edited automatically from either proposal. Any permane
 - Therefore the current research management sequence is: **take valid parent -> normal structural endpoint+60 exit -> reset -> watch -> re-enter only on a later trusted full SSOS or P-O-X-opposite setup.**
 - Post-exit trusted re-entry is common but generally much later: 650/666 base parents and 13/13 held parents reach another trusted target before weekly close. Every first target is clean on predecessor h=60 information availability after reset.
 - Short-lag +120/+300 recovery and hours-later fresh trusted re-entry are separate phenomena.
-- The same-current adverse population now has a post-exit watch decomposition. If the parent is no worse than -1 tick at +30 and exits at exactly -1 tick at +60, 20/30 pre-held cases are nonnegative at +120 or +300; if it is -2 ticks or worse at both +30 and +60, only 1/11 is. The later Era4-5+confirmation comparison is 9/11 versus 0/4. This is watch priority only, not automatic re-entry.
+- The same-current adverse population has a post-exit watch decomposition. If the parent is no worse than -1 tick at +30 and exits at exactly -1 tick at +60, 20/30 pre-held cases are nonnegative at +120 or +300; if it is -2 ticks or worse at both +30 and +60, only 1/11 is. The later Era4-5+confirmation comparison is 9/11 versus 0/4. This is watch priority only, not automatic re-entry.
 - Recovery probability is not equivalent to positive expected return: some +120 recoveries relapse by +300 and the shallow subgroup does not have robust positive mean return across all pre-held eras. A trusted full setup is still required before another trade.
 - SSOS and P-O-X prefix ladders are watch states; partial prefixes are not trade entries.
 - Phase-1 strict lineages reuse direction-invariant pair/triplet modules across otherwise different full chains. Whole-chain identity need not repeat for smaller structural modules to recur.
@@ -70,23 +70,31 @@ Do not promote a motif merely because it repeats. A future play candidate still 
 
 ## Parallel recurrence reconciliation
 
-A four-lane recurrence runner separates:
+A four-lane recurrence runner separately tests:
 
 1. repeated pair/triplet modules;
 2. D1->D2 extension propensity;
 3. D2/D3 timing families;
 4. true/false-context investigation.
 
-Local independent execution of all four contracts against hash-verified frozen artifacts reproduced the richer Phase-2 findings. The GitHub matrix was upgraded to self-verify and commit its four durable outputs back to the branch; trigger commit `e4ba8173d1db00c3073a509616c3ffa02b110bf4`. The matrix is not called complete until `research/generated/ng_exhaustion_chain_phase2_parallel_20260818/VERIFICATION.json` appears and verifies all four lanes.
+The four contracts were executed concurrently against locally downloaded artifacts whose ZIP SHA256 values exactly matched the frozen handoff. All four processes returned exit code 0 and reproduced the key recurrence, extension, timing, and investigator invariants. Durable verification is committed at:
 
-## Explicitly unresolved
+- `research/NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_LOCAL_VERIFICATION_20260818.json`
+- commit `5ed07a15f857c92f73458d370e0722846b14b0d1`
 
-- Further prospective/OOT validation required before P-O-X opposite-current can become a frozen paper play.
-- Whether any older ancestry survives selectively at specific re-origin subtypes despite failing as a stable default.
-- D4/D5 timing-family structure remains too sparse for a stable lifespan family doctrine; the sparsity is itself the current boundary and should not be force-fit.
-- Which independent recurrence-atlas modules, if any, deserve separate causal play-candidate contracts after multiple-testing and prospective/OOT controls.
-- Additional targeted true/false-context decomposition may be needed inside any module promoted to a future candidate contract.
-- Durable verification of the launched four-lane GitHub recurrence matrix.
+The GitHub Actions matrix remains a replay mechanism. The connected GitHub interface does not expose/dispatch that branch-only run, so no GitHub-run success is claimed or required for the Phase-2 research freeze.
+
+## Phase-2 finalization boundary
+
+Phase-2 characterization is complete for the current frozen 55-week research pass when paired with the final freeze/handoff record. Future work below is **new candidate/prospective research**, not unfinished Phase-2 characterization.
+
+## Future research / not a Phase-2 completion blocker
+
+- Further prospective/OOT validation before P-O-X opposite-current can become a frozen paper play.
+- Whether older ancestry survives selectively at specific re-origin subtypes despite failing as a stable default.
+- D4/D5 timing-family structure if future sample size becomes sufficient; current sparsity must not be force-fit.
+- Separate causal play-candidate contracts for selected independent recurrence modules after multiple-testing and prospective/OOT controls.
+- Candidate-specific deeper true/false-context decomposition if a module advances toward promotion.
 
 ## Explicit do-not-forget / do-not-promote
 
