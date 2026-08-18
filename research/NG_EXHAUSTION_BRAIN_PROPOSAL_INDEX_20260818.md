@@ -1,6 +1,6 @@
 # NG Exhaustion Brain Proposal Index — 2026-08-18
 
-Status: **AUTHORITATIVE PROPOSAL INDEX. Phase-2 research characterization is finalized for the current frozen 55-week pass; permanent Frankie remains unchanged.**
+Status: **AUTHORITATIVE PROPOSAL INDEX. Phase-2 research characterization is finalized for the current frozen 55-week pass; post-Phase-2 D1/entry-timing research is proposal-only; permanent Frankie remains unchanged.**
 
 This file exists to prevent exhaustion/runway/chain lessons from being forgotten or duplicated across sessions.
 
@@ -18,6 +18,15 @@ This file exists to prevent exhaustion/runway/chain lessons from being forgotten
    - Relationship: **EXTENDS, DOES NOT REPLACE** the runway proposal.
    - Role: higher-order causal state, rolling/re-origin doctrine, causal detector-identity availability, failed-fold decomposition discipline, modular recurrence, timing/lifespan families, delayed re-expression vs fresh re-entry, P-O-X research memory, watch ladders, independent-module novelty screen, and post-exit execute/reset/re-enter management doctrine.
 
+3. **Post-Phase-2 entry-timing / preserve-all extension**
+   - Path: `research/kalshi/knowledge/ng_brain_exhaustion_entry_timing_extension_20260818.json`
+   - Initial commit: `ae1a66e39db453cd1ed1bbe3c9935e104b90916d`
+   - Dense +1/+2/+3/+4/+5 fallback update: `bd9727b876b2ee539e81dd238135af9472584d7c`
+   - Relationship: **EXTENDS BOTH PRIOR PROPOSALS; REPLACES NEITHER.**
+   - Role: preserve-all D1-D5 population, earliest-valid-entry hierarchy, fallback late-entry revival for initially non-actionable structures, survival-as-new-information, separate detector/full-state knowability clocks, reverse-backcast provenance for D1 weeks 0-17, and separate directional vs chop/rotation opportunity classes.
+   - Current protocol: `research/NG_EXHAUSTION_ENTRY_TIMING_REVIVAL_PROTOCOL_20260818.md`
+   - Higher-order availability audit: `research/NG_EXHAUSTION_HIGHER_ORDER_LATE_ENTRY_REVIVAL_AUDIT_20260818.json`
+
 ## Authoritative Phase-2 freeze
 
 - Final freeze/handoff: `research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md`
@@ -27,11 +36,13 @@ This file exists to prevent exhaustion/runway/chain lessons from being forgotten
 - Parallel four-lane verification: `research/NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_LOCAL_VERIFICATION_20260818.json`
 - Verification commit: `5ed07a15f857c92f73458d370e0722846b14b0d1`
 
+The post-Phase-2 entry-timing work does **not** reopen, revise, or supersede this freeze.
+
 ## Merge policy
 
-When Greg explicitly approves permanent brain integration, adjudicate **both proposals together**. Do not merge only the newest file and accidentally omit the parent lessons.
+When Greg explicitly approves permanent brain integration, adjudicate **all three proposal layers together**. Do not merge only the newest file and accidentally omit the parent lessons or frozen Phase-2 boundaries.
 
-The brain itself is never edited automatically from either proposal. Any permanent merge must:
+The brain itself is never edited automatically from any proposal. Any permanent merge must:
 
 - preserve positive and negative lessons together;
 - keep provenance;
@@ -39,6 +50,8 @@ The brain itself is never edited automatically from either proposal. Any permane
 - keep provisional/watch-only lessons marked provisional;
 - keep explicit do-not-learn rules;
 - preserve existing direction ownership;
+- preserve early entries that are already validated rather than delaying them for survivorship confirmation;
+- preserve structurally valid but initially non-executable cases for fallback timing research rather than deleting them;
 - leave frozen runway-clock logic untouched unless a separate approved build explicitly changes it.
 
 ## Current durable conclusions that must survive handoff
@@ -56,7 +69,7 @@ The brain itself is never edited automatically from either proposal. Any permane
 - A newly confirmed successor exhaustion is a re-origin checkpoint for subsequent state ownership; older P-O-X ancestry is not stably incremental there by default.
 - Re-origin does not mean automatic exit or automatic reversal.
 - **For an already-open P-O-X parent, exact canonical successor identity is not causally available soon enough to manage the short parent trade under the frozen detector.** Among 496 base in-trade successors and 11 held in-trade successors, the necessary source-day threshold wall was always after the parent endpoint+60 exit; the closest base miss was +81 seconds.
-- Therefore the current research management sequence is: **take valid parent -> normal structural endpoint+60 exit -> reset -> watch -> re-enter only on a later trusted full SSOS or P-O-X-opposite setup.**
+- Therefore the frozen Phase-2 P-O-X management sequence remains: **take valid parent -> normal structural endpoint+60 exit -> reset -> watch -> re-enter only on a later trusted full SSOS or P-O-X-opposite setup.** New late-entry research does not rewrite that settled parent-management result.
 - Post-exit trusted re-entry is common but generally much later: 650/666 base parents and 13/13 held parents reach another trusted target before weekly close. Every first target is clean on predecessor h=60 information availability after reset.
 - Short-lag +120/+300 recovery and hours-later fresh trusted re-entry are separate phenomena.
 - The same-current adverse population has a post-exit watch decomposition. If the parent is no worse than -1 tick at +30 and exits at exactly -1 tick at +60, 20/30 pre-held cases are nonnegative at +120 or +300; if it is -2 ticks or worse at both +30 and +60, only 1/11 is. The later Era4-5+confirmation comparison is 9/11 versus 0/4. This is watch priority only, not automatic re-entry.
@@ -69,6 +82,22 @@ The brain itself is never edited automatically from either proposal. Any permane
 - Sign-changing recurrence motifs must be decomposed by longer context and timing family instead of hard-killed. `OOO -> FLIP` is a concrete example: restoring an older predecessor separates materially different subtypes.
 - Removing every trusted SSOS and P-O-X-opposite instance still leaves independent recurring causal modules. Higher-support examples are `OOSS -> FLIP` AGAINST_CURRENT, `SOOS -> SAME` WITH_CURRENT, `OOO -> SAME` AGAINST_CURRENT, and `XSX -> FLIP` AGAINST_CURRENT.
 - Higher-magnitude but smaller independent modules also recur, including `OSP -> SAME`, `OSP -> FLIP`, `PSOS -> FLIP`, and `SXOO -> FLIP`. They form a future candidate queue, not a frozen play set.
+
+### New preserve-all / entry-timing lessons
+
+- Exact D1 is a first-class population, not a failed D2. Current frozen forward lineage contains **18,837 exact-D1 instances**, all preserved.
+- Exact D1 elapsed time has a very wide tail; duration is an annotation and ranking axis, not an inclusion gate.
+- `CHOP_ROTATION` is not a failure class. Directional and rotational/choppy D1s must be analyzed as separate opportunity classes.
+- The first 18 base weeks have no honest forward-OOT exact-D1 labels because they trained the first Phase-1 fold. They may be recovered only by a later-trained/later-validated **reverse backcast** and must remain tagged `REVERSE_BACKCAST_NOT_FORWARD_OOT`.
+- **Earliest validated entry wins.** Do not delay a setup that is already causally predictable and profitable at its normal early entry.
+- **Late-entry survivorship is fallback-only.** If a structurally valid setup is not sufficiently actionable early, test the first later causal checkpoint at which enough predictability and remaining edge exist.
+- Fallback checkpoints begin densely at **+1/+2/+3/+4/+5 seconds**, then widen to +10/+15/+20/+30/+45/+60/+90/+120/+180/+300/+600/+900/+1800/+3600 where support remains.
+- Survival-to-checkpoint is itself causal information once that checkpoint occurs. It may be used then, but never leaked backward.
+- No valid D2+ rows were thrown away because of early predictability. Earlier protocols explicitly preserved structural higher-order results even where causal/executable depth was smaller.
+- Current exact higher-order population is **D2 1,592 / D3 124 / D4 8 / D5 1 = 1,725 D2+ instances**, all preserved for entry-timing research.
+- The post-Phase-2 higher-order availability audit finds that at predecessor information horizon h=5, **1,722/1,725 D2-D5 instances have the required predecessor information by target t0 or target endpoint+5; all 1,725 have it by target endpoint+60.** This is an information-availability result, not proof of h=5 predictive skill.
+- Therefore an earlier information horizon must be tested for predictive value before requiring completed h=60 predecessor state. Use the earliest information horizon that actually survives chronological validation for a particular rule.
+- A structure that never becomes executable remains research memory; it is not deleted to improve statistics.
 
 ## Recurrence-atlas boundary
 
@@ -92,17 +121,22 @@ The four contracts were executed concurrently against locally downloaded artifac
 - `research/NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_LOCAL_VERIFICATION_20260818.json`
 - commit `5ed07a15f857c92f73458d370e0722846b14b0d1`
 
-The GitHub Actions matrix remains a replay mechanism. The connected GitHub interface does not expose/dispatch that branch-only run, so no GitHub-run success is claimed or required for the Phase-2 research freeze.
+The GitHub Actions matrix remains a replay mechanism. The connected GitHub interface does not expose/dispatch every branch-only run reliably, so only durable outputs actually present in the branch are claimed.
 
 ## Phase-2 finalization boundary
 
-Phase-2 characterization is complete for the current frozen 55-week research pass. Future work below is **new candidate/prospective research**, not unfinished Phase-2 characterization.
+Phase-2 characterization is complete for the current frozen 55-week research pass. Current D1 / entry-timing / higher-order revival work is **new post-Phase-2 research**, not unfinished Phase-2 characterization and not permission to modify the Phase-2 freeze.
 
 ## Future research / not a Phase-2 completion blocker
 
+- Complete all-D1 raw-path reconstruction so every D1 gets directional/chop path annotations and causal remaining-runway economics.
+- Complete D1 fallback survivorship models at +1/+2/+3/+4/+5 and later checkpoints only for subfamilies not sufficiently actionable at their earliest entry.
+- Build and validate the reverse-backcast exact-D1 membership model before using base weeks 0-17 as a separately tagged descriptive/profitability cohort.
+- Measure actual predictive gain at h=5/10/20/30 predecessor information horizons for D2+ before declaring any earlier-information execution rule.
+- For D2+ structures that are not sufficiently actionable early, test later checkpoint entry while enough target/leg opportunity remains.
 - Further prospective/OOT validation before P-O-X opposite-current can become a frozen paper play.
 - Whether older ancestry survives selectively at specific re-origin subtypes despite failing as a stable default.
-- D4/D5 timing-family structure if future sample size becomes sufficient; current sparsity must not be force-fit.
+- D4/D5 timing-family structure only if future sample size becomes sufficient; preserve existing rows but do not force-fit a population law.
 - Separate causal play-candidate contracts for selected independent recurrence modules after multiple-testing and prospective/OOT controls.
 - Candidate-specific deeper true/false-context decomposition if a module advances toward promotion.
 
@@ -112,11 +146,15 @@ Phase-2 characterization is complete for the current frozen 55-week research pas
 - Do not impose a universal D2/deeper law.
 - Do not impose a universal long/short cutoff or convert fitted timing centers into live rules.
 - Do not delete losing valid rows to rescue a mechanism.
+- Do not delete a structurally valid D1-D5 row merely because it is not actionable at the earliest entry.
+- Do not impose +1/+2/+3/+4/+5 as a mandatory wait on a setup already callable early.
+- Do not use realized final duration, final chain depth, future descendant identity, or future path shape at an earlier checkpoint.
+- Do not treat reverse-backcast weeks as forward-OOT validation.
 - Do not treat a shallow same-current post-exit recovery subtype as a trade; it is watch priority only.
 - Do not treat P or P-O partial prefixes as entries.
 - Do not treat hours-later trusted reappearance as proof one origin survived for hours.
 - Do not invent a synthetic early successor identity that the frozen detector cannot know causally.
-- Do not turn fixed +10/+30 proxy management tests into permanent rules; the current P-O-X management boundary is normal +60 exit first.
+- Do not turn fixed +10/+30 proxy management tests into permanent rules; the frozen P-O-X parent-management boundary remains normal +60 exit first.
 - Do not promote recurrence-atlas pair/triplet motifs into frozen plays without a separate causal/OOT promotion study.
 - Do not treat an against-current structural module as an automatically authorized reversal trade.
 - Do not treat held-selected long-tail module composition as a universal long-chain grammar.
