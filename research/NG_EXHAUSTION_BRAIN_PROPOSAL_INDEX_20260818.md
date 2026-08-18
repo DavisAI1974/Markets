@@ -1,6 +1,6 @@
 # NG Exhaustion Brain Proposal Index — 2026-08-18
 
-Status: **AUTHORITATIVE PROPOSAL INDEX. Phase-2 research characterization is complete for this pass; permanent Frankie remains unchanged.**
+Status: **AUTHORITATIVE PROPOSAL INDEX. Phase-2 research characterization is finalized for the current frozen 55-week pass; permanent Frankie remains unchanged.**
 
 This file exists to prevent exhaustion/runway/chain lessons from being forgotten or duplicated across sessions.
 
@@ -14,9 +14,18 @@ This file exists to prevent exhaustion/runway/chain lessons from being forgotten
 2. **Phase-2 chain extension proposal**
    - Path: `research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json`
    - Initial commit: `14e6c5a10b8a915ac5311829d0ec21387c6f4f08`
-   - Current Phase-2 continuation update: `250f6871e885c92a6bed6bc6527e5aab2fb26c85`
+   - Finalized current-pass proposal update: `cd40bef8d3f7e6dd21e2ceb84e604f469418bc02`
    - Relationship: **EXTENDS, DOES NOT REPLACE** the runway proposal.
-   - Role: higher-order causal state, rolling/re-origin doctrine, failed-fold decomposition discipline, modular recurrence, timing/lifespan families, delayed re-expression vs fresh re-entry, P-O-X research memory, watch ladders, and post-exit execute/reset/re-enter management doctrine.
+   - Role: higher-order causal state, rolling/re-origin doctrine, causal detector-identity availability, failed-fold decomposition discipline, modular recurrence, timing/lifespan families, delayed re-expression vs fresh re-entry, P-O-X research memory, watch ladders, independent-module novelty screen, and post-exit execute/reset/re-enter management doctrine.
+
+## Authoritative Phase-2 freeze
+
+- Final freeze/handoff: `research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md`
+- Freeze commit: `b959a8259547b0f0d998c96ec440c9a4bc5c083c`
+- Final checklist: `research/NG_EXHAUSTION_CHAIN_PHASE2_FINALIZATION_CHECKLIST_20260818.json`
+- Final checklist stamp commit: `5c4ae81124781d71ba23e275b3d1016c51f22e56`
+- Parallel four-lane verification: `research/NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_LOCAL_VERIFICATION_20260818.json`
+- Verification commit: `5ed07a15f857c92f73458d370e0722846b14b0d1`
 
 ## Merge policy
 
@@ -38,6 +47,7 @@ The brain itself is never edited automatically from either proposal. Any permane
 - Family-A persistent vs fast-collapse is validated runway information.
 - Higher-order exhaustion state is causally real around 20–60 seconds, especially D2–D4.
 - The dominant chain interpretation is rolling/re-origin, not one ancestor remaining automatically active forever.
+- A structural successor is not a live decision input until the frozen detector can causally establish its identity.
 - A failed fold triggers **FLAG_AND_DECOMPOSE**, not automatic deletion. Preserve both true and false instances and investigate their context.
 - Preserve every causally valid P-O-X instance: base54 666 + held 13 = 679; removed valid instances = 0.
 - P-O-X is an active branching transition mechanism, not killed.
@@ -57,7 +67,7 @@ The brain itself is never edited automatically from either proposal. Any permane
 - Chain lifespan contains reproducible timing families. Exact D2 has a large short body around 126s, a middle body around 215s, and a rare long tail around 798s; exact D3 has a short body around 211s and a longer tail around 609s. These centers characterize populations and are not hard live cutoffs.
 - The timing-family proportions replicate better than the exact state/polarity grammar inside each family. Long-chain timing can therefore be stable while the modules populating the long tail vary by regime.
 - Sign-changing recurrence motifs must be decomposed by longer context and timing family instead of hard-killed. `OOO -> FLIP` is a concrete example: restoring an older predecessor separates materially different subtypes.
-- Removing every trusted SSOS and P-O-X-opposite instance still leaves independent recurring causal modules. Examples include `OOSS -> FLIP` with an **against-current** orientation, `SOOS -> SAME` with-current, `OOO -> SAME` against-current, and `XSX -> FLIP` against-current. These retain positive oriented gross and same-week-demeaned signs across discovery, replication, confirmation, and held, but remain research candidates because the screen is exploratory and not multiple-testing-adjusted.
+- Removing every trusted SSOS and P-O-X-opposite instance still leaves independent recurring causal modules. Higher-support examples are `OOSS -> FLIP` AGAINST_CURRENT, `SOOS -> SAME` WITH_CURRENT, `OOO -> SAME` AGAINST_CURRENT, and `XSX -> FLIP` AGAINST_CURRENT.
 - Higher-magnitude but smaller independent modules also recur, including `OSP -> SAME`, `OSP -> FLIP`, `PSOS -> FLIP`, and `SXOO -> FLIP`. They form a future candidate queue, not a frozen play set.
 
 ## Recurrence-atlas boundary
@@ -86,7 +96,7 @@ The GitHub Actions matrix remains a replay mechanism. The connected GitHub inter
 
 ## Phase-2 finalization boundary
 
-Phase-2 characterization is complete for the current frozen 55-week research pass when paired with the final freeze/handoff record. Future work below is **new candidate/prospective research**, not unfinished Phase-2 characterization.
+Phase-2 characterization is complete for the current frozen 55-week research pass. Future work below is **new candidate/prospective research**, not unfinished Phase-2 characterization.
 
 ## Future research / not a Phase-2 completion blocker
 
