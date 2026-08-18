@@ -1,0 +1,2139 @@
+{
+  "mode": "decompose",
+  "promotion_performed": false,
+  "protected_mutations": {
+    "canonical_rows": false,
+    "detector": false,
+    "frankie_1": false,
+    "permanent_frankie": false,
+    "runway_clock": false,
+    "spawn_py": false,
+    "ssos_play": false
+  },
+  "result": [
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": -0.8750000000000147,
+          "median_oriented_ticks": -0.49999999999994493,
+          "n": 8,
+          "positive_rate": 0.25,
+          "week_demeaned_mean_ticks": -0.9224522785927152,
+          "weeks": 5
+        },
+        "era13": {
+          "mean_oriented_ticks": -2.3888888888888973,
+          "median_oriented_ticks": 0.0,
+          "n": 18,
+          "positive_rate": 0.16666666666666666,
+          "week_demeaned_mean_ticks": -2.456815266763368,
+          "weeks": 12
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.22222222222229643,
+          "median_oriented_ticks": 0.0,
+          "n": 9,
+          "positive_rate": 0.3333333333333333,
+          "week_demeaned_mean_ticks": 0.15408162160192163,
+          "weeks": 6
+        },
+        "held": {
+          "mean_oriented_ticks": null,
+          "median_oriented_ticks": null,
+          "n": 0,
+          "positive_rate": null,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "train": {
+          "mean_oriented_ticks": 0.33333333333335585,
+          "median_oriented_ticks": 0.0,
+          "n": 15,
+          "positive_rate": 0.3333333333333333,
+          "week_demeaned_mean_ticks": 0.2543833767262943,
+          "weeks": 10
+        }
+      },
+      "kind": "module",
+      "older_ancestry_split": {
+        "O": {
+          "false_mean": -5.5454545454545405,
+          "false_n": 11,
+          "true_mean": 1.4999999999999087,
+          "true_n": 6
+        },
+        "P": {
+          "false_mean": -0.9999999999994458,
+          "false_n": 1,
+          "true_mean": 0.1666666666666483,
+          "true_n": 6
+        },
+        "S": {
+          "false_mean": -1.7499999999999183,
+          "false_n": 4,
+          "true_mean": 2.600000000000069,
+          "true_n": 10
+        },
+        "X": {
+          "false_mean": -2.75000000000003,
+          "false_n": 4,
+          "true_mean": 0.12499999999998623,
+          "true_n": 8
+        }
+      },
+      "oot_week_sign_p": 0.9946889877319336,
+      "orientation": "WITH_CURRENT",
+      "pattern": "PP|S",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": true,
+      "timing_split": {
+        "unclassified": {
+          "false_n": 20,
+          "mean": -0.8599999999999852,
+          "true_n": 30
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.1666666666666853,
+          "median_oriented_ticks": -0.0,
+          "n": 36,
+          "positive_rate": 0.3611111111111111,
+          "week_demeaned_mean_ticks": 0.1725581109926957,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": 0.5648148148147444,
+          "median_oriented_ticks": -0.0,
+          "n": 108,
+          "positive_rate": 0.4444444444444444,
+          "week_demeaned_mean_ticks": 0.619858258766392,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.7241379310344795,
+          "median_oriented_ticks": -0.0,
+          "n": 87,
+          "positive_rate": 0.42528735632183906,
+          "week_demeaned_mean_ticks": 0.7772056705025289,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": 5.999999999999783,
+          "median_oriented_ticks": 5.999999999999783,
+          "n": 2,
+          "positive_rate": 1.0,
+          "week_demeaned_mean_ticks": 5.978287092882781,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.173469387755092,
+          "median_oriented_ticks": -0.0,
+          "n": 98,
+          "positive_rate": 0.4489795918367347,
+          "week_demeaned_mean_ticks": 0.2569582350545582,
+          "weeks": 18
+        }
+      },
+      "kind": "module",
+      "older_ancestry_split": {
+        "O": {
+          "false_mean": -2.3962264150943438,
+          "false_n": 53,
+          "true_mean": 2.4415584415584206,
+          "true_n": 77
+        },
+        "P": {
+          "false_mean": -2.6249999999999885,
+          "false_n": 16,
+          "true_mean": 1.3684210526315297,
+          "true_n": 57
+        },
+        "S": {
+          "false_mean": -3.205128205128228,
+          "false_n": 39,
+          "true_mean": 2.483870967741884,
+          "true_n": 62
+        },
+        "X": {
+          "false_mean": -1.2857142857143344,
+          "false_n": 7,
+          "true_mean": 2.100000000000013,
+          "true_n": 20
+        }
+      },
+      "oot_week_sign_p": 0.005665492091793567,
+      "orientation": "AGAINST_CURRENT",
+      "pattern": "PO|S",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": false,
+      "timing_split": {
+        "unclassified": {
+          "false_n": 115,
+          "mean": 0.48036253776432436,
+          "true_n": 216
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.41978021978021646,
+          "median_oriented_ticks": -0.0,
+          "n": 455,
+          "positive_rate": 0.47692307692307695,
+          "week_demeaned_mean_ticks": 0.44606510879484007,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": 1.3367421475529484,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 1369,
+          "positive_rate": 0.5361577794010226,
+          "week_demeaned_mean_ticks": 1.3742872286041858,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.7344632768361621,
+          "median_oriented_ticks": -0.0,
+          "n": 885,
+          "positive_rate": 0.496045197740113,
+          "week_demeaned_mean_ticks": 0.7847066426360456,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": 1.4603174603174474,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 63,
+          "positive_rate": 0.6349206349206349,
+          "week_demeaned_mean_ticks": 1.438604553200446,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.673965936739659,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 1233,
+          "positive_rate": 0.5004055150040552,
+          "week_demeaned_mean_ticks": 0.7511140832133644,
+          "weeks": 18
+        }
+      },
+      "kind": "module",
+      "older_ancestry_split": {
+        "None": {
+          "false_mean": -5.0000000000003375,
+          "false_n": 1,
+          "true_mean": 1.2000000000000455,
+          "true_n": 5
+        },
+        "O": {
+          "false_mean": -2.541247484909466,
+          "false_n": 497,
+          "true_mean": 2.355975924333618,
+          "true_n": 1163
+        },
+        "P": {
+          "false_mean": -2.4224137931034457,
+          "false_n": 116,
+          "true_mean": 1.9404761904762007,
+          "true_n": 252
+        },
+        "S": {
+          "false_mean": -2.625779625779634,
+          "false_n": 481,
+          "true_mean": 2.500900900900895,
+          "true_n": 1110
+        },
+        "X": {
+          "false_mean": -2.4285714285713853,
+          "false_n": 105,
+          "true_mean": 2.3636363636363553,
+          "true_n": 275
+        }
+      },
+      "oot_week_sign_p": 9.70612745732069e-09,
+      "orientation": "AGAINST_CURRENT",
+      "pattern": "OO|F",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": false,
+      "timing_split": {
+        "unclassified": {
+          "false_n": 1200,
+          "mean": 0.8973782771535548,
+          "true_n": 2805
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.6046511627906828,
+          "median_oriented_ticks": 0.0,
+          "n": 43,
+          "positive_rate": 0.46511627906976744,
+          "week_demeaned_mean_ticks": 0.6075382481900757,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": 0.18110236220473244,
+          "median_oriented_ticks": 0.0,
+          "n": 127,
+          "positive_rate": 0.47244094488188976,
+          "week_demeaned_mean_ticks": 0.1702615383886491,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.47619047619049243,
+          "median_oriented_ticks": 0.0,
+          "n": 84,
+          "positive_rate": 0.4523809523809524,
+          "week_demeaned_mean_ticks": 0.4304121894622502,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": -0.571428571428572,
+          "median_oriented_ticks": -0.9999999999998899,
+          "n": 7,
+          "positive_rate": 0.2857142857142857,
+          "week_demeaned_mean_ticks": -0.5497156643115702,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.14843750000000794,
+          "median_oriented_ticks": 0.0,
+          "n": 128,
+          "positive_rate": 0.3984375,
+          "week_demeaned_mean_ticks": 0.0738504589535769,
+          "weeks": 18
+        }
+      },
+      "kind": "module",
+      "older_ancestry_split": {
+        "None": {
+          "false_mean": null,
+          "false_n": 0,
+          "true_mean": 0.0,
+          "true_n": 1
+        },
+        "O": {
+          "false_mean": -2.574074074074021,
+          "false_n": 54,
+          "true_mean": 2.1086956521739224,
+          "true_n": 92
+        },
+        "P": {
+          "false_mean": -6.1428571428572285,
+          "false_n": 14,
+          "true_mean": 1.1000000000000232,
+          "true_n": 40
+        },
+        "S": {
+          "false_mean": -3.2600000000000318,
+          "false_n": 50,
+          "true_mean": 2.614583333333346,
+          "true_n": 96
+        },
+        "X": {
+          "false_mean": -3.538461538461524,
+          "false_n": 13,
+          "true_mean": 1.6896551724137754,
+          "true_n": 29
+        }
+      },
+      "oot_week_sign_p": 0.4339697002142202,
+      "orientation": "WITH_CURRENT",
+      "pattern": "OP|F",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": true,
+      "timing_split": {
+        "unclassified": {
+          "false_n": 131,
+          "mean": 0.2673521850899814,
+          "true_n": 258
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.361111111111096,
+          "median_oriented_ticks": -0.0,
+          "n": 36,
+          "positive_rate": 0.3333333333333333,
+          "week_demeaned_mean_ticks": 0.3746017277518355,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": -0.11111111111114469,
+          "median_oriented_ticks": -0.0,
+          "n": 126,
+          "positive_rate": 0.38095238095238093,
+          "week_demeaned_mean_ticks": -0.05046836968476727,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.15584415584418482,
+          "median_oriented_ticks": -0.0,
+          "n": 77,
+          "positive_rate": 0.3116883116883117,
+          "week_demeaned_mean_ticks": 0.2079081171176691,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": 1.1999999999999567,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 5,
+          "positive_rate": 0.6,
+          "week_demeaned_mean_ticks": 1.178287092882955,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.1415929203540021,
+          "median_oriented_ticks": -0.0,
+          "n": 113,
+          "positive_rate": 0.3274336283185841,
+          "week_demeaned_mean_ticks": 0.20663884014635078,
+          "weeks": 18
+        }
+      },
+      "kind": "module",
+      "older_ancestry_split": {
+        "None": {
+          "false_mean": -4.999999999999893,
+          "false_n": 1,
+          "true_mean": 0.0,
+          "true_n": 1
+        },
+        "O": {
+          "false_mean": -2.6250000000000253,
+          "false_n": 24,
+          "true_mean": 0.6071428571428695,
+          "true_n": 56
+        },
+        "P": {
+          "false_mean": -2.0740740740741583,
+          "false_n": 27,
+          "true_mean": 0.8349514563107083,
+          "true_n": 103
+        },
+        "S": {
+          "false_mean": -2.047619047619076,
+          "false_n": 21,
+          "true_mean": 1.1276595744680837,
+          "true_n": 47
+        },
+        "X": {
+          "false_mean": -1.9411764705882302,
+          "false_n": 17,
+          "true_mean": 0.999999999999986,
+          "true_n": 60
+        }
+      },
+      "oot_week_sign_p": 0.1214924770174548,
+      "orientation": "AGAINST_CURRENT",
+      "pattern": "XP|F",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": true,
+      "timing_split": {
+        "unclassified": {
+          "false_n": 90,
+          "mean": 0.0924369747899145,
+          "true_n": 267
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.8236559139784908,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 465,
+          "positive_rate": 0.5376344086021505,
+          "week_demeaned_mean_ticks": 0.7913174056067354,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": 1.331651045421782,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 1387,
+          "positive_rate": 0.5746214852198991,
+          "week_demeaned_mean_ticks": 1.2898772060180421,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.9111570247933803,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 968,
+          "positive_rate": 0.5578512396694215,
+          "week_demeaned_mean_ticks": 0.8563173971624369,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": 0.644736842105309,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 76,
+          "positive_rate": 0.618421052631579,
+          "week_demeaned_mean_ticks": 0.6664497492223108,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.6924746743849525,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 1382,
+          "positive_rate": 0.524602026049204,
+          "week_demeaned_mean_ticks": 0.6125532087597254,
+          "weeks": 18
+        }
+      },
+      "kind": "module",
+      "older_ancestry_split": {
+        "None": {
+          "false_mean": -2.0000000000000018,
+          "false_n": 2,
+          "true_mean": 1.3333333333333346,
+          "true_n": 3
+        },
+        "O": {
+          "false_mean": -2.6853281853281774,
+          "false_n": 518,
+          "true_mean": 2.310780669144986,
+          "true_n": 1345
+        },
+        "P": {
+          "false_mean": -2.3181818181818152,
+          "false_n": 88,
+          "true_mean": 2.3229166666666696,
+          "true_n": 288
+        },
+        "S": {
+          "false_mean": -2.726166328600408,
+          "false_n": 493,
+          "true_mean": 2.4645328719723203,
+          "true_n": 1156
+        },
+        "X": {
+          "false_mean": -2.1827956989247155,
+          "false_n": 93,
+          "true_mean": 2.1712328767123146,
+          "true_n": 292
+        }
+      },
+      "oot_week_sign_p": 1.4551915228366852e-11,
+      "orientation": "WITH_CURRENT",
+      "pattern": "SS|S",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": false,
+      "timing_split": {
+        "unclassified": {
+          "false_n": 1194,
+          "mean": 0.9625993454885484,
+          "true_n": 3084
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.12499999999998623,
+          "median_oriented_ticks": -0.0,
+          "n": 8,
+          "positive_rate": 0.125,
+          "week_demeaned_mean_ticks": 0.1645395338715533,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": 0.7777777777778154,
+          "median_oriented_ticks": 1.000000000000112,
+          "n": 18,
+          "positive_rate": 0.5555555555555556,
+          "week_demeaned_mean_ticks": 0.8277959197443399,
+          "weeks": 9
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.1000000000000334,
+          "median_oriented_ticks": -0.0,
+          "n": 10,
+          "positive_rate": 0.2,
+          "week_demeaned_mean_ticks": 0.163572363784196,
+          "weeks": 8
+        },
+        "held": {
+          "mean_oriented_ticks": null,
+          "median_oriented_ticks": null,
+          "n": 0,
+          "positive_rate": null,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "train": {
+          "mean_oriented_ticks": 0.21052631578940376,
+          "median_oriented_ticks": -0.0,
+          "n": 19,
+          "positive_rate": 0.2631578947368421,
+          "week_demeaned_mean_ticks": 0.3160814990718127,
+          "weeks": 11
+        }
+      },
+      "kind": "module",
+      "older_ancestry_split": {
+        "O": {
+          "false_mean": -3.3333333333334103,
+          "false_n": 3,
+          "true_mean": 1.0000000000000873,
+          "true_n": 9
+        },
+        "P": {
+          "false_mean": -1.2500000000000844,
+          "false_n": 4,
+          "true_mean": 1.083333333333251,
+          "true_n": 12
+        },
+        "S": {
+          "false_mean": -2.3999999999999133,
+          "false_n": 5,
+          "true_mean": 2.4444444444443727,
+          "true_n": 9
+        },
+        "X": {
+          "false_mean": -1.7500000000001403,
+          "false_n": 4,
+          "true_mean": 1.1111111111112355,
+          "true_n": 9
+        }
+      },
+      "oot_week_sign_p": 0.7975635528564453,
+      "orientation": "AGAINST_CURRENT",
+      "pattern": "PP|F",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": false,
+      "timing_split": {
+        "unclassified": {
+          "false_n": 16,
+          "mean": 0.3636363636363559,
+          "true_n": 39
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.2162162162162164,
+          "median_oriented_ticks": 0.0,
+          "n": 37,
+          "positive_rate": 0.24324324324324326,
+          "week_demeaned_mean_ticks": 0.199008502817119,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": 0.13821138211382036,
+          "median_oriented_ticks": 0.0,
+          "n": 123,
+          "positive_rate": 0.34959349593495936,
+          "week_demeaned_mean_ticks": 0.09151016727105368,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.06410256410256843,
+          "median_oriented_ticks": 0.0,
+          "n": 78,
+          "positive_rate": 0.3076923076923077,
+          "week_demeaned_mean_ticks": 0.004883775901111621,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": -0.6000000000000227,
+          "median_oriented_ticks": 0.0,
+          "n": 5,
+          "positive_rate": 0.0,
+          "week_demeaned_mean_ticks": -0.578287092883021,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.07874015748031328,
+          "median_oriented_ticks": 0.0,
+          "n": 127,
+          "positive_rate": 0.31496062992125984,
+          "week_demeaned_mean_ticks": 0.0067900886177030394,
+          "weeks": 18
+        }
+      },
+      "kind": "module",
+      "older_ancestry_split": {
+        "O": {
+          "false_mean": -2.482758620689642,
+          "false_n": 29,
+          "true_mean": 0.985074626865656,
+          "true_n": 67
+        },
+        "P": {
+          "false_mean": -1.7857142857142476,
+          "false_n": 28,
+          "true_mean": 0.6122448979591661,
+          "true_n": 98
+        },
+        "S": {
+          "false_mean": -1.8666666666666387,
+          "false_n": 15,
+          "true_mean": 1.043478260869566,
+          "true_n": 46
+        },
+        "X": {
+          "false_mean": -2.4210526315789145,
+          "false_n": 19,
+          "true_mean": 0.8676470588235318,
+          "true_n": 68
+        }
+      },
+      "oot_week_sign_p": 0.5660302997857798,
+      "orientation": "WITH_CURRENT",
+      "pattern": "XP|S",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": true,
+      "timing_split": {
+        "unclassified": {
+          "false_n": 91,
+          "mean": 0.09999999999999978,
+          "true_n": 279
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.0,
+          "median_oriented_ticks": 0.0,
+          "n": 2,
+          "positive_rate": 0.0,
+          "week_demeaned_mean_ticks": -0.001651982378852991,
+          "weeks": 2
+        },
+        "era13": {
+          "mean_oriented_ticks": -0.9999999999994458,
+          "median_oriented_ticks": -0.9999999999994458,
+          "n": 1,
+          "positive_rate": 0.0,
+          "week_demeaned_mean_ticks": -1.19330855018532,
+          "weeks": 1
+        },
+        "era45": {
+          "mean_oriented_ticks": null,
+          "median_oriented_ticks": null,
+          "n": 0,
+          "positive_rate": null,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "held": {
+          "mean_oriented_ticks": null,
+          "median_oriented_ticks": null,
+          "n": 0,
+          "positive_rate": null,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "train": {
+          "mean_oriented_ticks": 0.49999999999994493,
+          "median_oriented_ticks": 0.49999999999994493,
+          "n": 2,
+          "positive_rate": 0.5,
+          "week_demeaned_mean_ticks": 0.4622222053708044,
+          "weeks": 2
+        }
+      },
+      "kind": "module",
+      "older_ancestry_split": {
+        "P": {
+          "false_mean": -0.9999999999994458,
+          "false_n": 1,
+          "true_mean": 0.24999999999997247,
+          "true_n": 4
+        }
+      },
+      "oot_week_sign_p": 0.875,
+      "orientation": "WITH_CURRENT",
+      "pattern": "PPP|SS",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": true,
+      "timing_split": {
+        "long": {
+          "false_n": 0,
+          "mean": 0.0,
+          "true_n": 1
+        },
+        "middle": {
+          "false_n": 1,
+          "mean": 1.1102230246251565e-13,
+          "true_n": 3
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": -0.500000000000056,
+          "median_oriented_ticks": 0.0,
+          "n": 4,
+          "positive_rate": 0.0,
+          "week_demeaned_mean_ticks": -0.48524525464557333,
+          "weeks": 3
+        },
+        "era13": {
+          "mean_oriented_ticks": 0.4166666666666948,
+          "median_oriented_ticks": 0.0,
+          "n": 12,
+          "positive_rate": 0.3333333333333333,
+          "week_demeaned_mean_ticks": 0.27700191524856643,
+          "weeks": 8
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.0,
+          "median_oriented_ticks": 0.0,
+          "n": 9,
+          "positive_rate": 0.1111111111111111,
+          "week_demeaned_mean_ticks": -0.052702084183516705,
+          "weeks": 6
+        },
+        "held": {
+          "mean_oriented_ticks": null,
+          "median_oriented_ticks": null,
+          "n": 0,
+          "positive_rate": null,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "train": {
+          "mean_oriented_ticks": 0.06249999999999312,
+          "median_oriented_ticks": 0.0,
+          "n": 16,
+          "positive_rate": 0.25,
+          "week_demeaned_mean_ticks": 0.01915696203842995,
+          "weeks": 9
+        }
+      },
+      "kind": "module",
+      "older_ancestry_split": {
+        "O": {
+          "false_mean": -0.9999999999998899,
+          "false_n": 1,
+          "true_mean": 0.0,
+          "true_n": 6
+        },
+        "P": {
+          "false_mean": -1.2499999999999734,
+          "false_n": 4,
+          "true_mean": 0.5833333333333431,
+          "true_n": 12
+        },
+        "S": {
+          "false_mean": -1.5000000000000568,
+          "false_n": 2,
+          "true_mean": 0.2857142857143177,
+          "true_n": 7
+        },
+        "X": {
+          "false_mean": null,
+          "false_n": 0,
+          "true_mean": 0.4444444444443955,
+          "true_n": 9
+        }
+      },
+      "oot_week_sign_p": 0.9754791259765625,
+      "orientation": "WITH_CURRENT",
+      "pattern": "PPX|SS",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": true,
+      "timing_split": {
+        "long": {
+          "false_n": 0,
+          "mean": 0.6666666666667412,
+          "true_n": 6
+        },
+        "middle": {
+          "false_n": 7,
+          "mean": -1.2688263138573218e-14,
+          "true_n": 28
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.6330275229357875,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 109,
+          "positive_rate": 0.5412844036697247,
+          "week_demeaned_mean_ticks": 0.6537258231995035,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": 1.1397515527950255,
+          "median_oriented_ticks": 0.9999999999994458,
+          "n": 322,
+          "positive_rate": 0.5248447204968945,
+          "week_demeaned_mean_ticks": 1.1684693252070568,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.7714285714285859,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 210,
+          "positive_rate": 0.5047619047619047,
+          "week_demeaned_mean_ticks": 0.8157330377162028,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": 0.11111111111109888,
+          "median_oriented_ticks": -0.0,
+          "n": 9,
+          "positive_rate": 0.4444444444444444,
+          "week_demeaned_mean_ticks": 0.08816425120772407,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.6028368794326254,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 282,
+          "positive_rate": 0.5106382978723404,
+          "week_demeaned_mean_ticks": 0.6776315009851456,
+          "weeks": 18
+        }
+      },
+      "kind": "module",
+      "older_ancestry_split": {
+        "O": {
+          "false_mean": -2.5901639344262355,
+          "false_n": 122,
+          "true_mean": 2.541958041958068,
+          "true_n": 286
+        },
+        "P": {
+          "false_mean": -2.11538461538457,
+          "false_n": 26,
+          "true_mean": 2.3666666666665983,
+          "true_n": 60
+        },
+        "S": {
+          "false_mean": -2.321100917431173,
+          "false_n": 109,
+          "true_mean": 2.2408163265306102,
+          "true_n": 245
+        },
+        "X": {
+          "false_mean": -3.529411764705886,
+          "false_n": 34,
+          "true_mean": 1.8999999999999417,
+          "true_n": 50
+        }
+      },
+      "oot_week_sign_p": 3.480084706097841e-05,
+      "orientation": "AGAINST_CURRENT",
+      "pattern": "OOO|FF",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": false,
+      "timing_split": {
+        "long": {
+          "false_n": 51,
+          "mean": 1.7252747252747158,
+          "true_n": 131
+        },
+        "middle": {
+          "false_n": 171,
+          "mean": 0.6463878326996254,
+          "true_n": 355
+        },
+        "short": {
+          "false_n": 69,
+          "mean": 0.5133928571428621,
+          "true_n": 155
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.0,
+          "median_oriented_ticks": 0.0,
+          "n": 9,
+          "positive_rate": 0.3333333333333333,
+          "week_demeaned_mean_ticks": -0.03432402853657687,
+          "weeks": 4
+        },
+        "era13": {
+          "mean_oriented_ticks": 2.3571428571428195,
+          "median_oriented_ticks": 1.000000000000334,
+          "n": 14,
+          "positive_rate": 0.7142857142857143,
+          "week_demeaned_mean_ticks": 2.4020168563113806,
+          "weeks": 11
+        },
+        "era45": {
+          "mean_oriented_ticks": 1.4000000000001123,
+          "median_oriented_ticks": 1.000000000000334,
+          "n": 5,
+          "positive_rate": 1.0,
+          "week_demeaned_mean_ticks": 1.3410391777670108,
+          "weeks": 4
+        },
+        "held": {
+          "mean_oriented_ticks": 0.0,
+          "median_oriented_ticks": 0.0,
+          "n": 1,
+          "positive_rate": 0.0,
+          "week_demeaned_mean_ticks": 0.022946859903374823,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.8571428571428262,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 7,
+          "positive_rate": 0.5714285714285714,
+          "week_demeaned_mean_ticks": 0.7420540088729395,
+          "weeks": 5
+        }
+      },
+      "kind": "module",
+      "older_ancestry_split": {
+        "O": {
+          "false_mean": -0.9999999999998899,
+          "false_n": 1,
+          "true_mean": 2.285714285714161,
+          "true_n": 7
+        },
+        "P": {
+          "false_mean": -1.000000000000112,
+          "false_n": 2,
+          "true_mean": 1.583333333333344,
+          "true_n": 12
+        },
+        "S": {
+          "false_mean": -3.5000000000000586,
+          "false_n": 2,
+          "true_mean": 1.1428571428572074,
+          "true_n": 7
+        },
+        "X": {
+          "false_mean": null,
+          "false_n": 0,
+          "true_mean": 2.600000000000069,
+          "true_n": 5
+        }
+      },
+      "oot_week_sign_p": 0.00960540771484375,
+      "orientation": "WITH_CURRENT",
+      "pattern": "PPS|SS",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": false,
+      "timing_split": {
+        "long": {
+          "false_n": 1,
+          "mean": 0.6666666666666673,
+          "true_n": 5
+        },
+        "middle": {
+          "false_n": 4,
+          "mean": 1.399999999999994,
+          "true_n": 26
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.500000000000167,
+          "median_oriented_ticks": 0.500000000000167,
+          "n": 2,
+          "positive_rate": 0.5,
+          "week_demeaned_mean_ticks": 0.4555325749743192,
+          "weeks": 1
+        },
+        "era13": {
+          "mean_oriented_ticks": -4.375000000000185,
+          "median_oriented_ticks": -1.000000000000334,
+          "n": 8,
+          "positive_rate": 0.375,
+          "week_demeaned_mean_ticks": -4.218179995237922,
+          "weeks": 6
+        },
+        "era45": {
+          "mean_oriented_ticks": 1.142857142857144,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 7,
+          "positive_rate": 0.5714285714285714,
+          "week_demeaned_mean_ticks": 1.0835919997161878,
+          "weeks": 7
+        },
+        "held": {
+          "mean_oriented_ticks": 0.9999999999998899,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 1,
+          "positive_rate": 1.0,
+          "week_demeaned_mean_ticks": 1.0229468599032647,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.24999999999997247,
+          "median_oriented_ticks": 0.0,
+          "n": 12,
+          "positive_rate": 0.4166666666666667,
+          "week_demeaned_mean_ticks": 0.199909162103736,
+          "weeks": 9
+        }
+      },
+      "kind": "module",
+      "older_ancestry_split": {
+        "O": {
+          "false_mean": -7.500000000000062,
+          "false_n": 2,
+          "true_mean": 1.4285714285714615,
+          "true_n": 7
+        },
+        "P": {
+          "false_mean": -2.000000000000446,
+          "false_n": 2,
+          "true_mean": 0.3333333333332966,
+          "true_n": 6
+        },
+        "S": {
+          "false_mean": -1.000000000000334,
+          "false_n": 2,
+          "true_mean": 3.0000000000000395,
+          "true_n": 6
+        },
+        "X": {
+          "false_mean": -33.00000000000036,
+          "false_n": 1,
+          "true_mean": 0.500000000000056,
+          "true_n": 4
+        }
+      },
+      "oot_week_sign_p": 0.604736328125,
+      "orientation": "WITH_CURRENT",
+      "pattern": "POP|SF",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": true,
+      "timing_split": {
+        "long": {
+          "false_n": 0,
+          "mean": 0.7500000000000284,
+          "true_n": 4
+        },
+        "middle": {
+          "false_n": 3,
+          "mean": -2.714285714285701,
+          "true_n": 11
+        },
+        "short": {
+          "false_n": 4,
+          "mean": 1.083333333333177,
+          "true_n": 8
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": -0.1095890410958905,
+          "median_oriented_ticks": 0.0,
+          "n": 73,
+          "positive_rate": 0.3013698630136986,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "era13": {
+          "mean_oriented_ticks": -0.649484536082453,
+          "median_oriented_ticks": 0.0,
+          "n": 194,
+          "positive_rate": 0.4072164948453608,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "era45": {
+          "mean_oriented_ticks": -0.34782608695652206,
+          "median_oriented_ticks": 0.0,
+          "n": 138,
+          "positive_rate": 0.391304347826087,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "held": {
+          "mean_oriented_ticks": -0.27272727272732344,
+          "median_oriented_ticks": -0.9999999999998899,
+          "n": 11,
+          "positive_rate": 0.45454545454545453,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "train": {
+          "mean_oriented_ticks": 0.01578947368419944,
+          "median_oriented_ticks": 0.0,
+          "n": 190,
+          "positive_rate": 0.45263157894736844,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        }
+      },
+      "kind": "context",
+      "older_ancestry_split": {
+        "O": {
+          "false_mean": -3.7399999999999833,
+          "false_n": 100,
+          "true_mean": 2.168918918918929,
+          "true_n": 148
+        },
+        "P": {
+          "false_mean": -3.366666666666681,
+          "false_n": 30,
+          "true_mean": 1.5217391304347117,
+          "true_n": 23
+        },
+        "S": {
+          "false_mean": -3.570093457943939,
+          "false_n": 107,
+          "true_mean": 1.8851351351351318,
+          "true_n": 148
+        },
+        "X": {
+          "false_mean": -2.238095238095203,
+          "false_n": 21,
+          "true_mean": 3.0000000000000524,
+          "true_n": 29
+        }
+      },
+      "oot_week_sign_p": null,
+      "orientation": "WITH_CURRENT",
+      "pattern": "OOSS->FLIP",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": true,
+      "timing_split": {
+        "unclassified": {
+          "false_n": 258,
+          "mean": -0.300330033003298,
+          "true_n": 348
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": -0.23863636363637772,
+          "median_oriented_ticks": -0.0,
+          "n": 88,
+          "positive_rate": 0.4090909090909091,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "era13": {
+          "mean_oriented_ticks": -0.745762711864398,
+          "median_oriented_ticks": -0.9999999999994458,
+          "n": 236,
+          "positive_rate": 0.3220338983050847,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "era45": {
+          "mean_oriented_ticks": -0.13450292397660116,
+          "median_oriented_ticks": -0.0,
+          "n": 171,
+          "positive_rate": 0.3216374269005848,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "held": {
+          "mean_oriented_ticks": -0.9473684210526208,
+          "median_oriented_ticks": -0.9999999999998899,
+          "n": 19,
+          "positive_rate": 0.47368421052631576,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "train": {
+          "mean_oriented_ticks": 0.04273504273504562,
+          "median_oriented_ticks": -0.0,
+          "n": 234,
+          "positive_rate": 0.41452991452991456,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        }
+      },
+      "kind": "context",
+      "older_ancestry_split": {
+        "O": {
+          "false_mean": -3.374999999999986,
+          "false_n": 128,
+          "true_mean": 2.22167487684728,
+          "true_n": 203
+        },
+        "P": {
+          "false_mean": -4.249999999999976,
+          "false_n": 24,
+          "true_mean": 1.7948717948718247,
+          "true_n": 39
+        },
+        "S": {
+          "false_mean": -3.229007633587793,
+          "false_n": 131,
+          "true_mean": 1.689873417721513,
+          "true_n": 158
+        },
+        "X": {
+          "false_mean": -3.7142857142856545,
+          "false_n": 28,
+          "true_mean": 1.2162162162162624,
+          "true_n": 37
+        }
+      },
+      "oot_week_sign_p": null,
+      "orientation": "AGAINST_CURRENT",
+      "pattern": "SOOS->SAME",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": true,
+      "timing_split": {
+        "unclassified": {
+          "false_n": 311,
+          "mean": -0.30481283422459504,
+          "true_n": 437
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": -0.28787878787877635,
+          "median_oriented_ticks": 0.0,
+          "n": 198,
+          "positive_rate": 0.35858585858585856,
+          "week_demeaned_mean_ticks": -0.3095724522243744,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": -0.09294871794872052,
+          "median_oriented_ticks": 0.0,
+          "n": 624,
+          "positive_rate": 0.46153846153846156,
+          "week_demeaned_mean_ticks": -0.13700733394113668,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": -0.10047846889952534,
+          "median_oriented_ticks": 0.0,
+          "n": 418,
+          "positive_rate": 0.3923444976076555,
+          "week_demeaned_mean_ticks": -0.1481472989694322,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": -0.7500000000000062,
+          "median_oriented_ticks": 0.0,
+          "n": 20,
+          "positive_rate": 0.45,
+          "week_demeaned_mean_ticks": -0.7233978234582958,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.1444444444444565,
+          "median_oriented_ticks": 0.0,
+          "n": 540,
+          "positive_rate": 0.42777777777777776,
+          "week_demeaned_mean_ticks": 0.0651893728873948,
+          "weeks": 18
+        }
+      },
+      "kind": "context",
+      "older_ancestry_split": {
+        "O": {
+          "false_mean": -3.1655844155844144,
+          "false_n": 308,
+          "true_mean": 2.101626016260163,
+          "true_n": 492
+        },
+        "P": {
+          "false_mean": -2.581395348837173,
+          "false_n": 43,
+          "true_mean": 1.892473118279605,
+          "true_n": 93
+        },
+        "S": {
+          "false_mean": -3.1923076923076743,
+          "false_n": 286,
+          "true_mean": 1.9570707070707014,
+          "true_n": 396
+        },
+        "X": {
+          "false_mean": -3.119047619047651,
+          "false_n": 84,
+          "true_mean": 1.8571428571428565,
+          "true_n": 98
+        }
+      },
+      "oot_week_sign_p": 0.8785075229825452,
+      "orientation": "WITH_CURRENT",
+      "pattern": "OOO->SAME",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": true,
+      "timing_split": {
+        "unclassified": {
+          "false_n": 721,
+          "mean": -0.05222222222221918,
+          "true_n": 1079
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": -0.2857142857143177,
+          "median_oriented_ticks": 0.0,
+          "n": 21,
+          "positive_rate": 0.23809523809523808,
+          "week_demeaned_mean_ticks": -0.2902394248681565,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": -0.20000000000000265,
+          "median_oriented_ticks": 0.0,
+          "n": 90,
+          "positive_rate": 0.36666666666666664,
+          "week_demeaned_mean_ticks": -0.2741748921923177,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": -0.17307692307692962,
+          "median_oriented_ticks": 0.0,
+          "n": 52,
+          "positive_rate": 0.28846153846153844,
+          "week_demeaned_mean_ticks": -0.21917121033828527,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": -2.1666666666667243,
+          "median_oriented_ticks": -1.5000000000000568,
+          "n": 6,
+          "positive_rate": 0.0,
+          "week_demeaned_mean_ticks": -2.1400644901250137,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.3076923076923353,
+          "median_oriented_ticks": 0.0,
+          "n": 65,
+          "positive_rate": 0.38461538461538464,
+          "week_demeaned_mean_ticks": 0.2215714109352806,
+          "weeks": 17
+        }
+      },
+      "kind": "context",
+      "older_ancestry_split": {
+        "O": {
+          "false_mean": -2.9166666666666603,
+          "false_n": 24,
+          "true_mean": 1.1836734693877335,
+          "true_n": 49
+        },
+        "P": {
+          "false_mean": -1.8823529411765767,
+          "false_n": 17,
+          "true_mean": 0.9090909090909605,
+          "true_n": 44
+        },
+        "S": {
+          "false_mean": -2.260869565217451,
+          "false_n": 23,
+          "true_mean": 0.9333333333333638,
+          "true_n": 30
+        },
+        "X": {
+          "false_mean": -1.7142857142856738,
+          "false_n": 21,
+          "true_mean": 1.4615384615384714,
+          "true_n": 26
+        }
+      },
+      "oot_week_sign_p": 0.9673773323884234,
+      "orientation": "WITH_CURRENT",
+      "pattern": "XSX->FLIP",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": true,
+      "timing_split": {
+        "unclassified": {
+          "false_n": 85,
+          "mean": -0.11111111111111026,
+          "true_n": 149
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.5384615384616158,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 13,
+          "positive_rate": 0.6153846153846154,
+          "week_demeaned_mean_ticks": 0.5335468004091959,
+          "weeks": 5
+        },
+        "era13": {
+          "mean_oriented_ticks": 1.930232558139601,
+          "median_oriented_ticks": 1.9999999999997797,
+          "n": 43,
+          "positive_rate": 0.6046511627906976,
+          "week_demeaned_mean_ticks": 1.8530821133079578,
+          "weeks": 17
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.4399999999999693,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 25,
+          "positive_rate": 0.64,
+          "week_demeaned_mean_ticks": 0.387715524142348,
+          "weeks": 9
+        },
+        "held": {
+          "mean_oriented_ticks": 0.500000000000167,
+          "median_oriented_ticks": 0.500000000000167,
+          "n": 2,
+          "positive_rate": 0.5,
+          "week_demeaned_mean_ticks": 0.5266021765418772,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 1.5625000000000084,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 32,
+          "positive_rate": 0.53125,
+          "week_demeaned_mean_ticks": 1.4947924037508171,
+          "weeks": 16
+        }
+      },
+      "kind": "context",
+      "older_ancestry_split": {
+        "O": {
+          "false_mean": -3.230769230769285,
+          "false_n": 13,
+          "true_mean": 2.857142857142885,
+          "true_n": 35
+        },
+        "P": {
+          "false_mean": -1.4999999999998348,
+          "false_n": 2,
+          "true_mean": 9.000000000000075,
+          "true_n": 5
+        },
+        "S": {
+          "false_mean": -3.466666666666611,
+          "false_n": 15,
+          "true_mean": 2.8461538461538742,
+          "true_n": 39
+        },
+        "X": {
+          "false_mean": -3.9999999999998557,
+          "false_n": 3,
+          "true_mean": 1.666666666666779,
+          "true_n": 3
+        }
+      },
+      "oot_week_sign_p": 0.035377772990614176,
+      "orientation": "WITH_CURRENT",
+      "pattern": "OSP->SAME",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": false,
+      "timing_split": {
+        "unclassified": {
+          "false_n": 33,
+          "mean": 1.3217391304348147,
+          "true_n": 82
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": -0.44444444444444486,
+          "median_oriented_ticks": -0.0,
+          "n": 9,
+          "positive_rate": 0.3333333333333333,
+          "week_demeaned_mean_ticks": -0.4238719045430394,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": -0.5937499999999207,
+          "median_oriented_ticks": -0.0,
+          "n": 32,
+          "positive_rate": 0.375,
+          "week_demeaned_mean_ticks": -0.5361647657433884,
+          "weeks": 15
+        },
+        "era45": {
+          "mean_oriented_ticks": -1.2400000000000055,
+          "median_oriented_ticks": -0.9999999999998899,
+          "n": 25,
+          "positive_rate": 0.32,
+          "week_demeaned_mean_ticks": -1.175970115199203,
+          "weeks": 11
+        },
+        "held": {
+          "mean_oriented_ticks": -0.49999999999994493,
+          "median_oriented_ticks": -0.0,
+          "n": 4,
+          "positive_rate": 0.0,
+          "week_demeaned_mean_ticks": -0.5266021765416552,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.05405405405408411,
+          "median_oriented_ticks": -0.0,
+          "n": 37,
+          "positive_rate": 0.40540540540540543,
+          "week_demeaned_mean_ticks": 0.12382681068624135,
+          "weeks": 14
+        }
+      },
+      "kind": "context",
+      "older_ancestry_split": {
+        "O": {
+          "false_mean": -2.7647058823527413,
+          "false_n": 17,
+          "true_mean": 1.2222222222222028,
+          "true_n": 27
+        },
+        "P": {
+          "false_mean": -5.999999999999894,
+          "false_n": 4,
+          "true_mean": 4.250000000000087,
+          "true_n": 4
+        },
+        "S": {
+          "false_mean": -3.1363636363636545,
+          "false_n": 22,
+          "true_mean": 2.500000000000007,
+          "true_n": 22
+        },
+        "X": {
+          "false_mean": -4.6666666666666705,
+          "false_n": 6,
+          "true_mean": 1.8000000000000682,
+          "true_n": 5
+        }
+      },
+      "oot_week_sign_p": 0.9449079174082726,
+      "orientation": "AGAINST_CURRENT",
+      "pattern": "OSP->FLIP",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": true,
+      "timing_split": {
+        "unclassified": {
+          "false_n": 49,
+          "mean": -0.5046728971962269,
+          "true_n": 58
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.36363636363640434,
+          "median_oriented_ticks": 0.0,
+          "n": 11,
+          "positive_rate": 0.36363636363636365,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "era13": {
+          "mean_oriented_ticks": 1.333333333333271,
+          "median_oriented_ticks": 0.9999999999994458,
+          "n": 42,
+          "positive_rate": 0.5714285714285714,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.4210526315789945,
+          "median_oriented_ticks": 0.0,
+          "n": 19,
+          "positive_rate": 0.3684210526315789,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "held": {
+          "mean_oriented_ticks": 2.0000000000000018,
+          "median_oriented_ticks": 2.0000000000000018,
+          "n": 4,
+          "positive_rate": 1.0,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "train": {
+          "mean_oriented_ticks": 0.36363636363639085,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 33,
+          "positive_rate": 0.5151515151515151,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        }
+      },
+      "kind": "context",
+      "older_ancestry_split": {
+        "O": {
+          "false_mean": -3.0666666666666544,
+          "false_n": 15,
+          "true_mean": 1.9642857142856407,
+          "true_n": 28
+        },
+        "P": {
+          "false_mean": -5.333333333333338,
+          "false_n": 3,
+          "true_mean": 2.3846153846154636,
+          "true_n": 13
+        },
+        "S": {
+          "false_mean": -3.999999999999948,
+          "false_n": 8,
+          "true_mean": 1.8888888888889441,
+          "true_n": 27
+        },
+        "X": {
+          "false_mean": -3.0000000000001137,
+          "false_n": 1,
+          "true_mean": 3.428571428571336,
+          "true_n": 14
+        }
+      },
+      "oot_week_sign_p": null,
+      "orientation": "WITH_CURRENT",
+      "pattern": "PSOS->FLIP",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": false,
+      "timing_split": {
+        "unclassified": {
+          "false_n": 27,
+          "mean": 0.807339449541281,
+          "true_n": 82
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.500000000000056,
+          "median_oriented_ticks": 0.0,
+          "n": 12,
+          "positive_rate": 0.25,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "era13": {
+          "mean_oriented_ticks": 0.416666666666667,
+          "median_oriented_ticks": 0.0,
+          "n": 48,
+          "positive_rate": 0.4375,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.2272727272727628,
+          "median_oriented_ticks": 0.0,
+          "n": 22,
+          "positive_rate": 0.36363636363636365,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "held": {
+          "mean_oriented_ticks": 0.9999999999998899,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 2,
+          "positive_rate": 0.5,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "train": {
+          "mean_oriented_ticks": 0.8749999999999701,
+          "median_oriented_ticks": 0.49999999999994493,
+          "n": 40,
+          "positive_rate": 0.5,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        }
+      },
+      "kind": "context",
+      "older_ancestry_split": {
+        "O": {
+          "false_mean": -1.9333333333333276,
+          "false_n": 15,
+          "true_mean": 2.3846153846153153,
+          "true_n": 39
+        },
+        "P": {
+          "false_mean": -2.3333333333330764,
+          "false_n": 3,
+          "true_mean": 2.1111111111111254,
+          "true_n": 9
+        },
+        "S": {
+          "false_mean": -3.1578947368420147,
+          "false_n": 19,
+          "true_mean": 2.275862068965527,
+          "true_n": 29
+        },
+        "X": {
+          "false_mean": -3.6000000000000476,
+          "false_n": 5,
+          "true_mean": 0.8000000000000007,
+          "true_n": 5
+        }
+      },
+      "oot_week_sign_p": null,
+      "orientation": "WITH_CURRENT",
+      "pattern": "SXOO->FLIP",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": false,
+      "timing_split": {
+        "unclassified": {
+          "false_n": 42,
+          "mean": 0.5483870967741941,
+          "true_n": 82
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.12040441176470609,
+          "median_oriented_ticks": 0.0,
+          "n": 1088,
+          "positive_rate": 0.3897058823529412,
+          "week_demeaned_mean_ticks": 0.0955250063431581,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": 0.05792488860598414,
+          "median_oriented_ticks": 0.0,
+          "n": 3142,
+          "positive_rate": 0.43602800763844685,
+          "week_demeaned_mean_ticks": 0.02143198212510031,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.03024662633782739,
+          "median_oriented_ticks": 0.0,
+          "n": 2149,
+          "positive_rate": 0.40530479292694277,
+          "week_demeaned_mean_ticks": -0.021063534482685376,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": -0.4765100671140951,
+          "median_oriented_ticks": 0.0,
+          "n": 149,
+          "positive_rate": 0.3221476510067114,
+          "week_demeaned_mean_ticks": -0.4547971599970933,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.16497633536173406,
+          "median_oriented_ticks": 0.0,
+          "n": 2958,
+          "positive_rate": 0.41041244083840434,
+          "week_demeaned_mean_ticks": 0.08706574509392409,
+          "weeks": 18
+        }
+      },
+      "kind": "context",
+      "older_ancestry_split": {
+        "None": {
+          "false_mean": -2.181818181818184,
+          "false_n": 11,
+          "true_mean": 2.0000000000000266,
+          "true_n": 9
+        },
+        "O": {
+          "false_mean": -2.9475388601036223,
+          "false_n": 1544,
+          "true_mean": 2.0444538526672313,
+          "true_n": 2362
+        },
+        "P": {
+          "false_mean": -2.6686746987951837,
+          "false_n": 332,
+          "true_mean": 1.6489028213166048,
+          "true_n": 638
+        },
+        "S": {
+          "false_mean": -3.009090909090907,
+          "false_n": 1430,
+          "true_mean": 2.0895795246800737,
+          "true_n": 2188
+        },
+        "X": {
+          "false_mean": -2.900874635568503,
+          "false_n": 343,
+          "true_mean": 1.721780604133537,
+          "true_n": 629
+        }
+      },
+      "oot_week_sign_p": 0.691140341485152,
+      "orientation": "WITH_CURRENT",
+      "pattern": "O->FLIP",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": true,
+      "timing_split": {
+        "unclassified": {
+          "false_n": 3660,
+          "mean": 0.08380771663504138,
+          "true_n": 5826
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": -0.16091954022987753,
+          "median_oriented_ticks": -0.0,
+          "n": 87,
+          "positive_rate": 0.28735632183908044,
+          "week_demeaned_mean_ticks": -0.12256733512419907,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": -0.19127516778523618,
+          "median_oriented_ticks": -0.0,
+          "n": 298,
+          "positive_rate": 0.37919463087248323,
+          "week_demeaned_mean_ticks": -0.14508882025556188,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": -0.3231707317073167,
+          "median_oriented_ticks": -0.0,
+          "n": 164,
+          "positive_rate": 0.3475609756097561,
+          "week_demeaned_mean_ticks": -0.2681001759173899,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": 0.8181818181818492,
+          "median_oriented_ticks": -0.0,
+          "n": 11,
+          "positive_rate": 0.2727272727272727,
+          "week_demeaned_mean_ticks": 0.7964689110648475,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.13090909090908617,
+          "median_oriented_ticks": -0.0,
+          "n": 275,
+          "positive_rate": 0.3381818181818182,
+          "week_demeaned_mean_ticks": 0.20940962235307561,
+          "weeks": 18
+        }
+      },
+      "kind": "context",
+      "older_ancestry_split": {
+        "O": {
+          "false_mean": -3.222222222222217,
+          "false_n": 99,
+          "true_mean": 1.9636363636363894,
+          "true_n": 165
+        },
+        "P": {
+          "false_mean": -2.5483870967742424,
+          "false_n": 62,
+          "true_mean": 1.0393700787401479,
+          "true_n": 127
+        },
+        "S": {
+          "false_mean": -3.557894736842092,
+          "false_n": 95,
+          "true_mean": 1.9387755102040856,
+          "true_n": 147
+        },
+        "X": {
+          "false_mean": -2.1836734693877955,
+          "false_n": 49,
+          "true_mean": 1.1208791208791096,
+          "true_n": 91
+        }
+      },
+      "oot_week_sign_p": 0.7974838769296184,
+      "orientation": "AGAINST_CURRENT",
+      "pattern": "P->FLIP",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": true,
+      "timing_split": {
+        "unclassified": {
+          "false_n": 305,
+          "mean": -0.09461077844311452,
+          "true_n": 530
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.1463414634146332,
+          "median_oriented_ticks": 0.0,
+          "n": 205,
+          "positive_rate": 0.3902439024390244,
+          "week_demeaned_mean_ticks": 0.13272305531253298,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": 0.08166969147004867,
+          "median_oriented_ticks": 0.0,
+          "n": 551,
+          "positive_rate": 0.46098003629764067,
+          "week_demeaned_mean_ticks": 0.055218155732186414,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.06493506493505663,
+          "median_oriented_ticks": 0.0,
+          "n": 385,
+          "positive_rate": 0.4103896103896104,
+          "week_demeaned_mean_ticks": 0.01574823314766489,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": -0.769230769230787,
+          "median_oriented_ticks": -0.9999999999998899,
+          "n": 13,
+          "positive_rate": 0.23076923076923078,
+          "week_demeaned_mean_ticks": -0.7426285926890768,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.13243761996161474,
+          "median_oriented_ticks": 0.0,
+          "n": 521,
+          "positive_rate": 0.4088291746641075,
+          "week_demeaned_mean_ticks": 0.05913987306848571,
+          "weeks": 18
+        }
+      },
+      "kind": "context",
+      "older_ancestry_split": {
+        "O": {
+          "false_mean": -2.990228013029337,
+          "false_n": 307,
+          "true_mean": 2.2603686635944675,
+          "true_n": 434
+        },
+        "P": {
+          "false_mean": -2.596153846153808,
+          "false_n": 52,
+          "true_mean": 2.026666666666692,
+          "true_n": 75
+        },
+        "S": {
+          "false_mean": -2.9198606271777052,
+          "false_n": 287,
+          "true_mean": 2.295811518324604,
+          "true_n": 382
+        },
+        "X": {
+          "false_mean": -2.488372093023281,
+          "false_n": 43,
+          "true_mean": 1.547368421052648,
+          "true_n": 95
+        }
+      },
+      "oot_week_sign_p": 0.7974838769296184,
+      "orientation": "WITH_CURRENT",
+      "pattern": "OOO->FLIP",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": true,
+      "timing_split": {
+        "unclassified": {
+          "false_n": 689,
+          "mean": 0.09492537313432507,
+          "true_n": 986
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.48717948717947906,
+          "median_oriented_ticks": 0.0,
+          "n": 39,
+          "positive_rate": 0.4358974358974359,
+          "week_demeaned_mean_ticks": 0.4673144573224927,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": 0.2830188679245474,
+          "median_oriented_ticks": 0.0,
+          "n": 106,
+          "positive_rate": 0.330188679245283,
+          "week_demeaned_mean_ticks": 0.21320691357689964,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.27999999999999287,
+          "median_oriented_ticks": 0.0,
+          "n": 75,
+          "positive_rate": 0.4533333333333333,
+          "week_demeaned_mean_ticks": 0.22238546491726466,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": -0.8571428571428896,
+          "median_oriented_ticks": -0.9999999999998899,
+          "n": 7,
+          "positive_rate": 0.14285714285714285,
+          "week_demeaned_mean_ticks": -0.8305406806011792,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.19626168224299395,
+          "median_oriented_ticks": 0.0,
+          "n": 107,
+          "positive_rate": 0.35514018691588783,
+          "week_demeaned_mean_ticks": 0.12323642371632433,
+          "weeks": 18
+        }
+      },
+      "kind": "context",
+      "older_ancestry_split": {
+        "O": {
+          "false_mean": -2.0869565217390162,
+          "false_n": 23,
+          "true_mean": 1.1538461538461564,
+          "true_n": 65
+        },
+        "P": {
+          "false_mean": -1.3225806451612736,
+          "false_n": 31,
+          "true_mean": 0.9411764705882152,
+          "true_n": 85
+        },
+        "S": {
+          "false_mean": -2.157894736842195,
+          "false_n": 19,
+          "true_mean": 0.9761904761904849,
+          "true_n": 42
+        },
+        "X": {
+          "false_mean": -1.4666666666666532,
+          "false_n": 15,
+          "true_mean": 0.7592592592592743,
+          "true_n": 54
+        }
+      },
+      "oot_week_sign_p": 0.014408359827939421,
+      "orientation": "WITH_CURRENT",
+      "pattern": "POX->SAME",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": true,
+      "timing_split": {
+        "unclassified": {
+          "false_n": 88,
+          "mean": 0.25449101796407575,
+          "true_n": 246
+        }
+      }
+    }
+  ],
+  "source_policy": "FROZEN_55W_CHARACTERIZATION_INPUTS_NO_RETUNE",
+  "status": "POST_PHASE2_PARALLEL_AGENT_COMPLETE"
+}

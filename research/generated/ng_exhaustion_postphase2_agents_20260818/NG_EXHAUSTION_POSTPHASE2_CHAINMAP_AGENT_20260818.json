@@ -1,0 +1,1066 @@
+{
+  "mode": "chainmap",
+  "promotion_performed": false,
+  "protected_mutations": {
+    "canonical_rows": false,
+    "detector": false,
+    "frankie_1": false,
+    "permanent_frankie": false,
+    "runway_clock": false,
+    "spawn_py": false,
+    "ssos_play": false
+  },
+  "result": [
+    {
+      "blocks": {
+        "conf": {
+          "n": 109,
+          "strict_successors": [
+            [
+              "O|F",
+              4
+            ],
+            [
+              "S|F",
+              3
+            ],
+            [
+              "S|S",
+              2
+            ],
+            [
+              "O|S",
+              2
+            ],
+            [
+              "P|S",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.8899082568807339
+        },
+        "era13": {
+          "n": 322,
+          "strict_successors": [
+            [
+              "O|F",
+              12
+            ],
+            [
+              "O|S",
+              10
+            ],
+            [
+              "S|F",
+              9
+            ],
+            [
+              "S|S",
+              8
+            ],
+            [
+              "X|F",
+              4
+            ],
+            [
+              "P|F",
+              2
+            ]
+          ],
+          "strict_terminal_rate": 0.860248447204969
+        },
+        "era45": {
+          "n": 210,
+          "strict_successors": [
+            [
+              "O|S",
+              8
+            ],
+            [
+              "S|S",
+              4
+            ],
+            [
+              "S|F",
+              3
+            ],
+            [
+              "P|F",
+              2
+            ],
+            [
+              "O|F",
+              2
+            ],
+            [
+              "X|F",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.9047619047619048
+        },
+        "held": {
+          "n": 9,
+          "strict_successors": [
+            [
+              "O|S",
+              1
+            ],
+            [
+              "S|F",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.7777777777777778
+        },
+        "train": {
+          "n": 282,
+          "strict_successors": [],
+          "strict_terminal_rate": 1.0
+        }
+      },
+      "pattern": "OOO|FF"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "n": 455,
+          "strict_successors": [
+            [
+              "O|F",
+              11
+            ],
+            [
+              "S|S",
+              8
+            ],
+            [
+              "S|F",
+              8
+            ],
+            [
+              "O|S",
+              7
+            ],
+            [
+              "X|F",
+              4
+            ],
+            [
+              "X|S",
+              2
+            ],
+            [
+              "P|F",
+              1
+            ],
+            [
+              "P|S",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.9076923076923077
+        },
+        "era13": {
+          "n": 1369,
+          "strict_successors": [
+            [
+              "O|F",
+              48
+            ],
+            [
+              "O|S",
+              43
+            ],
+            [
+              "S|F",
+              40
+            ],
+            [
+              "S|S",
+              34
+            ],
+            [
+              "P|F",
+              10
+            ],
+            [
+              "X|F",
+              8
+            ],
+            [
+              "X|S",
+              2
+            ],
+            [
+              "P|S",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.8641344046749452
+        },
+        "era45": {
+          "n": 885,
+          "strict_successors": [
+            [
+              "O|F",
+              25
+            ],
+            [
+              "S|F",
+              22
+            ],
+            [
+              "O|S",
+              20
+            ],
+            [
+              "S|S",
+              16
+            ],
+            [
+              "X|S",
+              6
+            ],
+            [
+              "P|F",
+              5
+            ],
+            [
+              "X|F",
+              4
+            ]
+          ],
+          "strict_terminal_rate": 0.8892655367231639
+        },
+        "held": {
+          "n": 63,
+          "strict_successors": [
+            [
+              "S|F",
+              5
+            ],
+            [
+              "S|S",
+              4
+            ],
+            [
+              "O|S",
+              3
+            ],
+            [
+              "O|F",
+              2
+            ],
+            [
+              "P|S",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.7619047619047619
+        },
+        "train": {
+          "n": 1233,
+          "strict_successors": [],
+          "strict_terminal_rate": 1.0
+        }
+      },
+      "pattern": "OO|F"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "n": 43,
+          "strict_successors": [
+            [
+              "S|F",
+              1
+            ],
+            [
+              "P|S",
+              1
+            ],
+            [
+              "X|S",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.9302325581395349
+        },
+        "era13": {
+          "n": 127,
+          "strict_successors": [
+            [
+              "O|F",
+              5
+            ],
+            [
+              "S|F",
+              4
+            ],
+            [
+              "O|S",
+              3
+            ],
+            [
+              "X|S",
+              2
+            ],
+            [
+              "S|S",
+              2
+            ],
+            [
+              "P|S",
+              2
+            ],
+            [
+              "X|F",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.8503937007874016
+        },
+        "era45": {
+          "n": 84,
+          "strict_successors": [
+            [
+              "O|S",
+              2
+            ],
+            [
+              "S|F",
+              2
+            ],
+            [
+              "X|F",
+              1
+            ],
+            [
+              "O|F",
+              1
+            ],
+            [
+              "S|S",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.9166666666666666
+        },
+        "held": {
+          "n": 7,
+          "strict_successors": [
+            [
+              "S|S",
+              1
+            ],
+            [
+              "O|S",
+              1
+            ],
+            [
+              "X|F",
+              1
+            ],
+            [
+              "S|F",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.42857142857142855
+        },
+        "train": {
+          "n": 128,
+          "strict_successors": [],
+          "strict_terminal_rate": 1.0
+        }
+      },
+      "pattern": "OP|F"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "n": 2,
+          "strict_successors": [
+            [
+              "X|S",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.5
+        },
+        "era13": {
+          "n": 8,
+          "strict_successors": [
+            [
+              "O|F",
+              1
+            ],
+            [
+              "P|S",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.75
+        },
+        "era45": {
+          "n": 7,
+          "strict_successors": [
+            [
+              "X|F",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.8571428571428571
+        },
+        "held": {
+          "n": 1,
+          "strict_successors": [
+            [
+              "X|F",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.0
+        },
+        "train": {
+          "n": 12,
+          "strict_successors": [],
+          "strict_terminal_rate": 1.0
+        }
+      },
+      "pattern": "POP|SF"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "n": 36,
+          "strict_successors": [
+            [
+              "S|F",
+              2
+            ],
+            [
+              "O|F",
+              1
+            ],
+            [
+              "X|F",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.8888888888888888
+        },
+        "era13": {
+          "n": 108,
+          "strict_successors": [
+            [
+              "S|F",
+              2
+            ],
+            [
+              "O|S",
+              2
+            ],
+            [
+              "P|S",
+              1
+            ],
+            [
+              "O|F",
+              1
+            ],
+            [
+              "P|F",
+              1
+            ],
+            [
+              "S|S",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.9259259259259259
+        },
+        "era45": {
+          "n": 87,
+          "strict_successors": [
+            [
+              "S|S",
+              2
+            ],
+            [
+              "X|F",
+              1
+            ],
+            [
+              "P|F",
+              1
+            ],
+            [
+              "X|S",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.9425287356321839
+        },
+        "held": {
+          "n": 2,
+          "strict_successors": [
+            [
+              "O|F",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.5
+        },
+        "train": {
+          "n": 98,
+          "strict_successors": [],
+          "strict_terminal_rate": 1.0
+        }
+      },
+      "pattern": "PO|S"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "n": 2,
+          "strict_successors": [],
+          "strict_terminal_rate": 1.0
+        },
+        "era13": {
+          "n": 1,
+          "strict_successors": [],
+          "strict_terminal_rate": 1.0
+        },
+        "era45": {
+          "n": 0,
+          "strict_successors": [],
+          "strict_terminal_rate": null
+        },
+        "held": {
+          "n": 0,
+          "strict_successors": [],
+          "strict_terminal_rate": null
+        },
+        "train": {
+          "n": 2,
+          "strict_successors": [],
+          "strict_terminal_rate": 1.0
+        }
+      },
+      "pattern": "PPP|SS"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "n": 9,
+          "strict_successors": [
+            [
+              "O|F",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.8888888888888888
+        },
+        "era13": {
+          "n": 14,
+          "strict_successors": [
+            [
+              "X|S",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.9285714285714286
+        },
+        "era45": {
+          "n": 5,
+          "strict_successors": [],
+          "strict_terminal_rate": 1.0
+        },
+        "held": {
+          "n": 1,
+          "strict_successors": [],
+          "strict_terminal_rate": 1.0
+        },
+        "train": {
+          "n": 7,
+          "strict_successors": [],
+          "strict_terminal_rate": 1.0
+        }
+      },
+      "pattern": "PPS|SS"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "n": 4,
+          "strict_successors": [],
+          "strict_terminal_rate": 1.0
+        },
+        "era13": {
+          "n": 12,
+          "strict_successors": [],
+          "strict_terminal_rate": 1.0
+        },
+        "era45": {
+          "n": 9,
+          "strict_successors": [
+            [
+              "X|S",
+              2
+            ],
+            [
+              "O|S",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.6666666666666666
+        },
+        "held": {
+          "n": 0,
+          "strict_successors": [],
+          "strict_terminal_rate": null
+        },
+        "train": {
+          "n": 16,
+          "strict_successors": [],
+          "strict_terminal_rate": 1.0
+        }
+      },
+      "pattern": "PPX|SS"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "n": 8,
+          "strict_successors": [],
+          "strict_terminal_rate": 1.0
+        },
+        "era13": {
+          "n": 18,
+          "strict_successors": [
+            [
+              "X|F",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.9444444444444444
+        },
+        "era45": {
+          "n": 10,
+          "strict_successors": [
+            [
+              "S|S",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.9
+        },
+        "held": {
+          "n": 0,
+          "strict_successors": [],
+          "strict_terminal_rate": null
+        },
+        "train": {
+          "n": 19,
+          "strict_successors": [],
+          "strict_terminal_rate": 1.0
+        }
+      },
+      "pattern": "PP|F"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "n": 8,
+          "strict_successors": [
+            [
+              "O|S",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.875
+        },
+        "era13": {
+          "n": 18,
+          "strict_successors": [
+            [
+              "P|S",
+              1
+            ],
+            [
+              "S|F",
+              1
+            ],
+            [
+              "O|F",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.8333333333333334
+        },
+        "era45": {
+          "n": 9,
+          "strict_successors": [],
+          "strict_terminal_rate": 1.0
+        },
+        "held": {
+          "n": 0,
+          "strict_successors": [],
+          "strict_terminal_rate": null
+        },
+        "train": {
+          "n": 15,
+          "strict_successors": [],
+          "strict_terminal_rate": 1.0
+        }
+      },
+      "pattern": "PP|S"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "n": 465,
+          "strict_successors": [
+            [
+              "S|S",
+              10
+            ],
+            [
+              "O|S",
+              9
+            ],
+            [
+              "O|F",
+              7
+            ],
+            [
+              "P|S",
+              4
+            ],
+            [
+              "S|F",
+              3
+            ],
+            [
+              "X|S",
+              2
+            ],
+            [
+              "P|F",
+              2
+            ],
+            [
+              "X|F",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.9182795698924732
+        },
+        "era13": {
+          "n": 1387,
+          "strict_successors": [
+            [
+              "S|S",
+              50
+            ],
+            [
+              "O|S",
+              47
+            ],
+            [
+              "S|F",
+              40
+            ],
+            [
+              "O|F",
+              32
+            ],
+            [
+              "P|S",
+              10
+            ],
+            [
+              "X|S",
+              4
+            ],
+            [
+              "X|F",
+              3
+            ],
+            [
+              "P|F",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.8651766402307137
+        },
+        "era45": {
+          "n": 968,
+          "strict_successors": [
+            [
+              "S|S",
+              24
+            ],
+            [
+              "O|S",
+              19
+            ],
+            [
+              "S|F",
+              12
+            ],
+            [
+              "O|F",
+              11
+            ],
+            [
+              "P|S",
+              9
+            ],
+            [
+              "X|S",
+              6
+            ],
+            [
+              "P|F",
+              2
+            ],
+            [
+              "X|F",
+              2
+            ]
+          ],
+          "strict_terminal_rate": 0.9121900826446281
+        },
+        "held": {
+          "n": 76,
+          "strict_successors": [
+            [
+              "O|S",
+              12
+            ],
+            [
+              "S|S",
+              8
+            ],
+            [
+              "S|F",
+              7
+            ],
+            [
+              "O|F",
+              4
+            ],
+            [
+              "P|S",
+              2
+            ],
+            [
+              "X|F",
+              2
+            ],
+            [
+              "X|S",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.5263157894736842
+        },
+        "train": {
+          "n": 1382,
+          "strict_successors": [],
+          "strict_terminal_rate": 1.0
+        }
+      },
+      "pattern": "SS|S"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "n": 36,
+          "strict_successors": [
+            [
+              "S|F",
+              1
+            ],
+            [
+              "P|F",
+              1
+            ],
+            [
+              "O|F",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.9166666666666666
+        },
+        "era13": {
+          "n": 126,
+          "strict_successors": [
+            [
+              "O|S",
+              3
+            ],
+            [
+              "O|F",
+              2
+            ],
+            [
+              "X|S",
+              2
+            ],
+            [
+              "P|F",
+              2
+            ],
+            [
+              "X|F",
+              1
+            ],
+            [
+              "S|S",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.9126984126984127
+        },
+        "era45": {
+          "n": 77,
+          "strict_successors": [
+            [
+              "O|F",
+              2
+            ],
+            [
+              "P|S",
+              2
+            ],
+            [
+              "P|F",
+              2
+            ],
+            [
+              "S|F",
+              1
+            ],
+            [
+              "S|S",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.8961038961038961
+        },
+        "held": {
+          "n": 5,
+          "strict_successors": [
+            [
+              "S|F",
+              2
+            ],
+            [
+              "P|F",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.4
+        },
+        "train": {
+          "n": 113,
+          "strict_successors": [],
+          "strict_terminal_rate": 1.0
+        }
+      },
+      "pattern": "XP|F"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "n": 37,
+          "strict_successors": [
+            [
+              "O|S",
+              2
+            ],
+            [
+              "P|F",
+              2
+            ]
+          ],
+          "strict_terminal_rate": 0.8918918918918919
+        },
+        "era13": {
+          "n": 123,
+          "strict_successors": [
+            [
+              "O|F",
+              4
+            ],
+            [
+              "S|S",
+              2
+            ],
+            [
+              "X|S",
+              2
+            ],
+            [
+              "P|S",
+              2
+            ],
+            [
+              "P|F",
+              1
+            ],
+            [
+              "O|S",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.9024390243902439
+        },
+        "era45": {
+          "n": 78,
+          "strict_successors": [
+            [
+              "X|F",
+              2
+            ],
+            [
+              "O|S",
+              2
+            ],
+            [
+              "X|S",
+              1
+            ],
+            [
+              "P|S",
+              1
+            ]
+          ],
+          "strict_terminal_rate": 0.9230769230769231
+        },
+        "held": {
+          "n": 5,
+          "strict_successors": [
+            [
+              "P|S",
+              2
+            ]
+          ],
+          "strict_terminal_rate": 0.6
+        },
+        "train": {
+          "n": 127,
+          "strict_successors": [],
+          "strict_terminal_rate": 1.0
+        }
+      },
+      "pattern": "XP|S"
+    }
+  ],
+  "source_policy": "FROZEN_55W_CHARACTERIZATION_INPUTS_NO_RETUNE",
+  "status": "POST_PHASE2_PARALLEL_AGENT_COMPLETE"
+}

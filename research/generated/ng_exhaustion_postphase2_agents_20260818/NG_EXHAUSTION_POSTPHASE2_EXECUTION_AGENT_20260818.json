@@ -1,0 +1,3142 @@
+{
+  "mode": "execution",
+  "promotion_performed": false,
+  "protected_mutations": {
+    "canonical_rows": false,
+    "detector": false,
+    "frankie_1": false,
+    "permanent_frankie": false,
+    "runway_clock": false,
+    "spawn_py": false,
+    "ssos_play": false
+  },
+  "result": [
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": -0.8750000000000147,
+          "median_oriented_ticks": -0.49999999999994493,
+          "n": 8,
+          "positive_rate": 0.25,
+          "week_demeaned_mean_ticks": -0.9224522785927152,
+          "weeks": 5
+        },
+        "era13": {
+          "mean_oriented_ticks": -2.3888888888888973,
+          "median_oriented_ticks": 0.0,
+          "n": 18,
+          "positive_rate": 0.16666666666666666,
+          "week_demeaned_mean_ticks": -2.456815266763368,
+          "weeks": 12
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.22222222222229643,
+          "median_oriented_ticks": 0.0,
+          "n": 9,
+          "positive_rate": 0.3333333333333333,
+          "week_demeaned_mean_ticks": 0.15408162160192163,
+          "weeks": 6
+        },
+        "held": {
+          "mean_oriented_ticks": null,
+          "median_oriented_ticks": null,
+          "n": 0,
+          "positive_rate": null,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "train": {
+          "mean_oriented_ticks": 0.33333333333335585,
+          "median_oriented_ticks": 0.0,
+          "n": 15,
+          "positive_rate": 0.3333333333333333,
+          "week_demeaned_mean_ticks": 0.2543833767262943,
+          "weeks": 10
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "module",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": 0.9946889877319336,
+      "orientation": "WITH_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": -1.3750000000000147,
+            "1.0": -1.8750000000000147,
+            "2.0": -2.8750000000000147
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.0,
+            "20": -0.7499999999999729,
+            "30": -1.0000000000000009,
+            "60": -0.8750000000000147
+          },
+          "n": 8
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": -2.8888888888888973,
+            "1.0": -3.3888888888888973,
+            "2.0": -4.388888888888896
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.5555555555555437,
+            "20": -0.11111111111117289,
+            "30": -0.8333333333332908,
+            "60": -2.3888888888888973
+          },
+          "n": 18
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.27777777777770357,
+            "1.0": -0.7777777777777035,
+            "2.0": -1.7777777777777035
+          },
+          "mean_oriented_by_horizon": {
+            "10": 4.934324553889585e-14,
+            "20": 0.11111111111114821,
+            "30": 0.0,
+            "60": 0.22222222222229643
+          },
+          "n": 9
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": null,
+            "1.0": null,
+            "2.0": null
+          },
+          "mean_oriented_by_horizon": {
+            "10": null,
+            "20": null,
+            "30": null,
+            "60": null
+          },
+          "n": 0
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.16666666666664418,
+            "1.0": -0.6666666666666442,
+            "2.0": -1.666666666666644
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.13333333333340747,
+            "20": 0.06666666666668893,
+            "30": 0.19999999999997797,
+            "60": 0.33333333333335585
+          },
+          "n": 15
+        }
+      },
+      "pattern": "PP|S",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.1666666666666853,
+          "median_oriented_ticks": -0.0,
+          "n": 36,
+          "positive_rate": 0.3611111111111111,
+          "week_demeaned_mean_ticks": 0.1725581109926957,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": 0.5648148148147444,
+          "median_oriented_ticks": -0.0,
+          "n": 108,
+          "positive_rate": 0.4444444444444444,
+          "week_demeaned_mean_ticks": 0.619858258766392,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.7241379310344795,
+          "median_oriented_ticks": -0.0,
+          "n": 87,
+          "positive_rate": 0.42528735632183906,
+          "week_demeaned_mean_ticks": 0.7772056705025289,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": 5.999999999999783,
+          "median_oriented_ticks": 5.999999999999783,
+          "n": 2,
+          "positive_rate": 1.0,
+          "week_demeaned_mean_ticks": 5.978287092882781,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.173469387755092,
+          "median_oriented_ticks": -0.0,
+          "n": 98,
+          "positive_rate": 0.4489795918367347,
+          "week_demeaned_mean_ticks": 0.2569582350545582,
+          "weeks": 18
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "module",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": 0.005665492091793567,
+      "orientation": "AGAINST_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.33333333333331466,
+            "1.0": -0.8333333333333147,
+            "2.0": -1.8333333333333148
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.027777777777787054,
+            "20": 0.13888888888892292,
+            "30": -0.02777777777775005,
+            "60": 0.1666666666666853
+          },
+          "n": 36
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.06481481481474438,
+            "1.0": -0.43518518518525556,
+            "2.0": -1.4351851851852557
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.23148148148146833,
+            "20": -0.03703703703708641,
+            "30": 0.5648148148148143,
+            "60": 0.5648148148147444
+          },
+          "n": 108
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.22413793103447957,
+            "1.0": -0.2758620689655204,
+            "2.0": -1.2758620689655205
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.05747126436783018,
+            "20": 0.10344827586207289,
+            "30": 0.06896551724137683,
+            "60": 0.7241379310344795
+          },
+          "n": 87
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": 5.499999999999783,
+            "1.0": 4.999999999999783,
+            "2.0": 3.9999999999997833
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.49999999999994493,
+            "20": 1.9999999999997797,
+            "30": 3.4999999999998366,
+            "60": 5.999999999999783
+          },
+          "n": 2
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.326530612244908,
+            "1.0": -0.826530612244908,
+            "2.0": -1.826530612244908
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.11224489795917131,
+            "20": 0.05102040816324609,
+            "30": 0.12244897959180512,
+            "60": 0.173469387755092
+          },
+          "n": 98
+        }
+      },
+      "pattern": "PO|S",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.41978021978021646,
+          "median_oriented_ticks": -0.0,
+          "n": 455,
+          "positive_rate": 0.47692307692307695,
+          "week_demeaned_mean_ticks": 0.44606510879484007,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": 1.3367421475529484,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 1369,
+          "positive_rate": 0.5361577794010226,
+          "week_demeaned_mean_ticks": 1.3742872286041858,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.7344632768361621,
+          "median_oriented_ticks": -0.0,
+          "n": 885,
+          "positive_rate": 0.496045197740113,
+          "week_demeaned_mean_ticks": 0.7847066426360456,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": 1.4603174603174474,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 63,
+          "positive_rate": 0.6349206349206349,
+          "week_demeaned_mean_ticks": 1.438604553200446,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.673965936739659,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 1233,
+          "positive_rate": 0.5004055150040552,
+          "week_demeaned_mean_ticks": 0.7511140832133644,
+          "weeks": 18
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "module",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": 9.70612745732069e-09,
+      "orientation": "AGAINST_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.0802197802197835,
+            "1.0": -0.5802197802197835,
+            "2.0": -1.5802197802197835
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.006593406593406843,
+            "20": 0.07032967032966551,
+            "30": 0.23956043956043074,
+            "60": 0.41978021978021646
+          },
+          "n": 455
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.8367421475529484,
+            "1.0": 0.33674214755294835,
+            "2.0": -0.6632578524470516
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.07888970051131766,
+            "20": 0.24762600438275853,
+            "30": 0.520818115412712,
+            "60": 1.3367421475529484
+          },
+          "n": 1369
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.2344632768361621,
+            "1.0": -0.26553672316383786,
+            "2.0": -1.265536723163838
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.024858757062147165,
+            "20": 0.1265536723163798,
+            "30": 0.3468926553672326,
+            "60": 0.7344632768361621
+          },
+          "n": 885
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.9603174603174475,
+            "1.0": 0.4603174603174475,
+            "2.0": -0.5396825396825525
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.4126984126984025,
+            "20": 0.7301587301587484,
+            "30": 0.9047619047618968,
+            "60": 1.4603174603174474
+          },
+          "n": 63
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.173965936739659,
+            "1.0": -0.326034063260341,
+            "2.0": -1.326034063260341
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.05352798053527607,
+            "20": 0.15815085158150585,
+            "30": 0.36901865369018555,
+            "60": 0.673965936739659
+          },
+          "n": 1233
+        }
+      },
+      "pattern": "OO|F",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.6046511627906828,
+          "median_oriented_ticks": 0.0,
+          "n": 43,
+          "positive_rate": 0.46511627906976744,
+          "week_demeaned_mean_ticks": 0.6075382481900757,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": 0.18110236220473244,
+          "median_oriented_ticks": 0.0,
+          "n": 127,
+          "positive_rate": 0.47244094488188976,
+          "week_demeaned_mean_ticks": 0.1702615383886491,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.47619047619049243,
+          "median_oriented_ticks": 0.0,
+          "n": 84,
+          "positive_rate": 0.4523809523809524,
+          "week_demeaned_mean_ticks": 0.4304121894622502,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": -0.571428571428572,
+          "median_oriented_ticks": -0.9999999999998899,
+          "n": 7,
+          "positive_rate": 0.2857142857142857,
+          "week_demeaned_mean_ticks": -0.5497156643115702,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.14843750000000794,
+          "median_oriented_ticks": 0.0,
+          "n": 128,
+          "positive_rate": 0.3984375,
+          "week_demeaned_mean_ticks": 0.0738504589535769,
+          "weeks": 18
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "module",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": 0.4339697002142202,
+      "orientation": "WITH_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.10465116279068272,
+            "1.0": -0.3953488372093173,
+            "2.0": -1.3953488372093172
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.25581395348836455,
+            "20": 0.16279069767442134,
+            "30": 0.2093023255813723,
+            "60": 0.6046511627906828
+          },
+          "n": 43
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.31889763779526753,
+            "1.0": -0.8188976377952676,
+            "2.0": -1.8188976377952675
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.2519685039370116,
+            "20": 0.10236220472441217,
+            "30": -0.14173228346455133,
+            "60": 0.18110236220473244
+          },
+          "n": 127
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.023809523809507526,
+            "1.0": -0.5238095238095075,
+            "2.0": -1.5238095238095075
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.047619047619052945,
+            "20": 0.42857142857143427,
+            "30": 0.5238095238095507,
+            "60": 0.47619047619049243
+          },
+          "n": 84
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": -1.0714285714285718,
+            "1.0": -1.5714285714285718,
+            "2.0": -2.571428571428572
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.1428571428571271,
+            "20": -0.2857142857143177,
+            "30": -0.1428571428571271,
+            "60": -0.571428571428572
+          },
+          "n": 7
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.35156249999999206,
+            "1.0": -0.851562499999992,
+            "2.0": -1.851562499999992
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.11718750000000791,
+            "20": -0.07031250000000613,
+            "30": 0.08593750000001482,
+            "60": 0.14843750000000794
+          },
+          "n": 128
+        }
+      },
+      "pattern": "OP|F",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.361111111111096,
+          "median_oriented_ticks": -0.0,
+          "n": 36,
+          "positive_rate": 0.3333333333333333,
+          "week_demeaned_mean_ticks": 0.3746017277518355,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": -0.11111111111114469,
+          "median_oriented_ticks": -0.0,
+          "n": 126,
+          "positive_rate": 0.38095238095238093,
+          "week_demeaned_mean_ticks": -0.05046836968476727,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.15584415584418482,
+          "median_oriented_ticks": -0.0,
+          "n": 77,
+          "positive_rate": 0.3116883116883117,
+          "week_demeaned_mean_ticks": 0.2079081171176691,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": 1.1999999999999567,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 5,
+          "positive_rate": 0.6,
+          "week_demeaned_mean_ticks": 1.178287092882955,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.1415929203540021,
+          "median_oriented_ticks": -0.0,
+          "n": 113,
+          "positive_rate": 0.3274336283185841,
+          "week_demeaned_mean_ticks": 0.20663884014635078,
+          "weeks": 18
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "module",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": 0.1214924770174548,
+      "orientation": "AGAINST_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.138888888888904,
+            "1.0": -0.6388888888889039,
+            "2.0": -1.638888888888904
+          },
+          "mean_oriented_by_horizon": {
+            "10": 1.2335811384723962e-14,
+            "20": 0.1388888888888736,
+            "30": 0.1666666666666483,
+            "60": 0.361111111111096
+          },
+          "n": 36
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.6111111111111447,
+            "1.0": -1.1111111111111447,
+            "2.0": -2.1111111111111445
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.0634920634920565,
+            "20": 0.06349206349204944,
+            "30": -0.00793650793652821,
+            "60": -0.11111111111114469
+          },
+          "n": 126
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.3441558441558152,
+            "1.0": -0.8441558441558151,
+            "2.0": -1.8441558441558155
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.03896103896105197,
+            "20": -0.025974025974011578,
+            "30": -0.025974025974000045,
+            "60": 0.15584415584418482
+          },
+          "n": 77
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.6999999999999567,
+            "1.0": 0.19999999999995666,
+            "2.0": -0.8000000000000433
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.5999999999999339,
+            "20": 1.1999999999999567,
+            "30": 1.5999999999999126,
+            "60": 1.1999999999999567
+          },
+          "n": 5
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.35840707964599794,
+            "1.0": -0.8584070796459979,
+            "2.0": -1.858407079645998
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.008849557522130779,
+            "20": 0.11504424778761367,
+            "30": 0.07964601769912592,
+            "60": 0.1415929203540021
+          },
+          "n": 113
+        }
+      },
+      "pattern": "XP|F",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.8236559139784908,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 465,
+          "positive_rate": 0.5376344086021505,
+          "week_demeaned_mean_ticks": 0.7913174056067354,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": 1.331651045421782,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 1387,
+          "positive_rate": 0.5746214852198991,
+          "week_demeaned_mean_ticks": 1.2898772060180421,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.9111570247933803,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 968,
+          "positive_rate": 0.5578512396694215,
+          "week_demeaned_mean_ticks": 0.8563173971624369,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": 0.644736842105309,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 76,
+          "positive_rate": 0.618421052631579,
+          "week_demeaned_mean_ticks": 0.6664497492223108,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.6924746743849525,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 1382,
+          "positive_rate": 0.524602026049204,
+          "week_demeaned_mean_ticks": 0.6125532087597254,
+          "weeks": 18
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "module",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": 1.4551915228366852e-11,
+      "orientation": "WITH_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.32365591397849086,
+            "1.0": -0.17634408602150917,
+            "2.0": -1.1763440860215093
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.07096774193548273,
+            "20": 0.21075268817204557,
+            "30": 0.3526881720430044,
+            "60": 0.8236559139784908
+          },
+          "n": 465
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.8316510454217819,
+            "1.0": 0.3316510454217819,
+            "2.0": -0.6683489545782181
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.08291276135544387,
+            "20": 0.35183850036049025,
+            "30": 0.5847152126892612,
+            "60": 1.331651045421782
+          },
+          "n": 1387
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.4111570247933803,
+            "1.0": -0.0888429752066197,
+            "2.0": -1.0888429752066198
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.07438016528924984,
+            "20": 0.23347107438015977,
+            "30": 0.488636363636358,
+            "60": 0.9111570247933803
+          },
+          "n": 968
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.14473684210530902,
+            "1.0": -0.355263157894691,
+            "2.0": -1.355263157894691
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.03947368421054534,
+            "20": -0.013157894736823127,
+            "30": 0.22368421052632623,
+            "60": 0.644736842105309
+          },
+          "n": 76
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.19247467438495247,
+            "1.0": -0.30752532561504753,
+            "2.0": -1.3075253256150474
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.009406657018809708,
+            "20": 0.12156295224312537,
+            "30": 0.3567293777134609,
+            "60": 0.6924746743849525
+          },
+          "n": 1382
+        }
+      },
+      "pattern": "SS|S",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.12499999999998623,
+          "median_oriented_ticks": -0.0,
+          "n": 8,
+          "positive_rate": 0.125,
+          "week_demeaned_mean_ticks": 0.1645395338715533,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": 0.7777777777778154,
+          "median_oriented_ticks": 1.000000000000112,
+          "n": 18,
+          "positive_rate": 0.5555555555555556,
+          "week_demeaned_mean_ticks": 0.8277959197443399,
+          "weeks": 9
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.1000000000000334,
+          "median_oriented_ticks": -0.0,
+          "n": 10,
+          "positive_rate": 0.2,
+          "week_demeaned_mean_ticks": 0.163572363784196,
+          "weeks": 8
+        },
+        "held": {
+          "mean_oriented_ticks": null,
+          "median_oriented_ticks": null,
+          "n": 0,
+          "positive_rate": null,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "train": {
+          "mean_oriented_ticks": 0.21052631578940376,
+          "median_oriented_ticks": -0.0,
+          "n": 19,
+          "positive_rate": 0.2631578947368421,
+          "week_demeaned_mean_ticks": 0.3160814990718127,
+          "weeks": 11
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "module",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": 0.7975635528564453,
+      "orientation": "AGAINST_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.37500000000001377,
+            "1.0": -0.8750000000000138,
+            "2.0": -1.8750000000000138
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.0,
+            "20": 0.0,
+            "30": 0.12499999999998623,
+            "60": 0.12499999999998623
+          },
+          "n": 8
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.2777777777778155,
+            "1.0": -0.22222222222218452,
+            "2.0": -1.2222222222221846
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.44444444444449416,
+            "20": 0.5555555555555931,
+            "30": 0.33333333333334597,
+            "60": 0.7777777777778154
+          },
+          "n": 18
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.3999999999999666,
+            "1.0": -0.8999999999999666,
+            "2.0": -1.8999999999999666
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.09999999999998899,
+            "20": -0.09999999999998899,
+            "30": -0.30000000000001137,
+            "60": 0.1000000000000334
+          },
+          "n": 10
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": null,
+            "1.0": null,
+            "2.0": null
+          },
+          "mean_oriented_by_horizon": {
+            "10": null,
+            "20": null,
+            "30": null,
+            "60": null
+          },
+          "n": 0
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.28947368421059627,
+            "1.0": -0.7894736842105963,
+            "2.0": -1.7894736842105963
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.21052631578947387,
+            "20": 0.47368421052626364,
+            "30": 0.421052631578901,
+            "60": 0.21052631578940376
+          },
+          "n": 19
+        }
+      },
+      "pattern": "PP|F",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.2162162162162164,
+          "median_oriented_ticks": 0.0,
+          "n": 37,
+          "positive_rate": 0.24324324324324326,
+          "week_demeaned_mean_ticks": 0.199008502817119,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": 0.13821138211382036,
+          "median_oriented_ticks": 0.0,
+          "n": 123,
+          "positive_rate": 0.34959349593495936,
+          "week_demeaned_mean_ticks": 0.09151016727105368,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.06410256410256843,
+          "median_oriented_ticks": 0.0,
+          "n": 78,
+          "positive_rate": 0.3076923076923077,
+          "week_demeaned_mean_ticks": 0.004883775901111621,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": -0.6000000000000227,
+          "median_oriented_ticks": 0.0,
+          "n": 5,
+          "positive_rate": 0.0,
+          "week_demeaned_mean_ticks": -0.578287092883021,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.07874015748031328,
+          "median_oriented_ticks": 0.0,
+          "n": 127,
+          "positive_rate": 0.31496062992125984,
+          "week_demeaned_mean_ticks": 0.0067900886177030394,
+          "weeks": 18
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "module",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": 0.5660302997857798,
+      "orientation": "WITH_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.2837837837837836,
+            "1.0": -0.7837837837837835,
+            "2.0": -1.7837837837837838
+          },
+          "mean_oriented_by_horizon": {
+            "10": 1.200241107702872e-14,
+            "20": 0.18918918918920435,
+            "30": 0.16216216216218032,
+            "60": 0.2162162162162164
+          },
+          "n": 37
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.36178861788617966,
+            "1.0": -0.8617886178861797,
+            "2.0": -1.8617886178861796
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.09756097560974536,
+            "20": 0.2926829268292758,
+            "30": 0.3414634146341376,
+            "60": 0.13821138211382036
+          },
+          "n": 123
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.4358974358974315,
+            "1.0": -0.9358974358974316,
+            "2.0": -1.9358974358974315
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.05128205128204563,
+            "20": 0.06410256410256274,
+            "30": 0.15384615384615968,
+            "60": 0.06410256410256843
+          },
+          "n": 78
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": -1.1000000000000227,
+            "1.0": -1.6000000000000227,
+            "2.0": -2.6000000000000227
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.0,
+            "20": 0.0,
+            "30": -0.6000000000000227,
+            "60": -0.6000000000000227
+          },
+          "n": 5
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.42125984251968673,
+            "1.0": -0.9212598425196867,
+            "2.0": -1.9212598425196867
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.023622047244095383,
+            "20": 0.039370078740149646,
+            "30": 0.015748031496064754,
+            "60": 0.07874015748031328
+          },
+          "n": 127
+        }
+      },
+      "pattern": "XP|S",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.0,
+          "median_oriented_ticks": 0.0,
+          "n": 2,
+          "positive_rate": 0.0,
+          "week_demeaned_mean_ticks": -0.001651982378852991,
+          "weeks": 2
+        },
+        "era13": {
+          "mean_oriented_ticks": -0.9999999999994458,
+          "median_oriented_ticks": -0.9999999999994458,
+          "n": 1,
+          "positive_rate": 0.0,
+          "week_demeaned_mean_ticks": -1.19330855018532,
+          "weeks": 1
+        },
+        "era45": {
+          "mean_oriented_ticks": null,
+          "median_oriented_ticks": null,
+          "n": 0,
+          "positive_rate": null,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "held": {
+          "mean_oriented_ticks": null,
+          "median_oriented_ticks": null,
+          "n": 0,
+          "positive_rate": null,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "train": {
+          "mean_oriented_ticks": 0.49999999999994493,
+          "median_oriented_ticks": 0.49999999999994493,
+          "n": 2,
+          "positive_rate": 0.5,
+          "week_demeaned_mean_ticks": 0.4622222053708044,
+          "weeks": 2
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "module",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": 0.875,
+      "orientation": "WITH_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.5,
+            "1.0": -1.0,
+            "2.0": -2.0
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.0,
+            "20": 0.0,
+            "30": 0.0,
+            "60": 0.0
+          },
+          "n": 2
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": -1.4999999999994458,
+            "1.0": -1.9999999999994458,
+            "2.0": -2.9999999999994458
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.0,
+            "20": 0.0,
+            "30": 0.0,
+            "60": -0.9999999999994458
+          },
+          "n": 1
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": null,
+            "1.0": null,
+            "2.0": null
+          },
+          "mean_oriented_by_horizon": {
+            "10": null,
+            "20": null,
+            "30": null,
+            "60": null
+          },
+          "n": 0
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": null,
+            "1.0": null,
+            "2.0": null
+          },
+          "mean_oriented_by_horizon": {
+            "10": null,
+            "20": null,
+            "30": null,
+            "60": null
+          },
+          "n": 0
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": -5.5067062021407764e-14,
+            "1.0": -0.5000000000000551,
+            "2.0": -1.500000000000055
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.0,
+            "20": 0.0,
+            "30": 0.49999999999994493,
+            "60": 0.49999999999994493
+          },
+          "n": 2
+        }
+      },
+      "pattern": "PPP|SS",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": -0.500000000000056,
+          "median_oriented_ticks": 0.0,
+          "n": 4,
+          "positive_rate": 0.0,
+          "week_demeaned_mean_ticks": -0.48524525464557333,
+          "weeks": 3
+        },
+        "era13": {
+          "mean_oriented_ticks": 0.4166666666666948,
+          "median_oriented_ticks": 0.0,
+          "n": 12,
+          "positive_rate": 0.3333333333333333,
+          "week_demeaned_mean_ticks": 0.27700191524856643,
+          "weeks": 8
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.0,
+          "median_oriented_ticks": 0.0,
+          "n": 9,
+          "positive_rate": 0.1111111111111111,
+          "week_demeaned_mean_ticks": -0.052702084183516705,
+          "weeks": 6
+        },
+        "held": {
+          "mean_oriented_ticks": null,
+          "median_oriented_ticks": null,
+          "n": 0,
+          "positive_rate": null,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "train": {
+          "mean_oriented_ticks": 0.06249999999999312,
+          "median_oriented_ticks": 0.0,
+          "n": 16,
+          "positive_rate": 0.25,
+          "week_demeaned_mean_ticks": 0.01915696203842995,
+          "weeks": 9
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "module",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": 0.9754791259765625,
+      "orientation": "WITH_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": -1.000000000000056,
+            "1.0": -1.500000000000056,
+            "2.0": -2.500000000000056
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.0,
+            "20": 0.0,
+            "30": -0.500000000000056,
+            "60": -0.500000000000056
+          },
+          "n": 4
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.08333333333330521,
+            "1.0": -0.5833333333333052,
+            "2.0": -1.5833333333333053
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.08333333333332416,
+            "20": 0.33333333333333365,
+            "30": 0.33333333333333365,
+            "60": 0.4166666666666948
+          },
+          "n": 12
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.5,
+            "1.0": -1.0,
+            "2.0": -2.0
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.0,
+            "20": 0.0,
+            "30": 0.11111111111109888,
+            "60": 0.0
+          },
+          "n": 9
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": null,
+            "1.0": null,
+            "2.0": null
+          },
+          "mean_oriented_by_horizon": {
+            "10": null,
+            "20": null,
+            "30": null,
+            "60": null
+          },
+          "n": 0
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.4375000000000069,
+            "1.0": -0.9375000000000069,
+            "2.0": -1.9375000000000069
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.0,
+            "20": 0.12499999999998623,
+            "30": 0.24999999999997247,
+            "60": 0.06249999999999312
+          },
+          "n": 16
+        }
+      },
+      "pattern": "PPX|SS",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.6330275229357875,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 109,
+          "positive_rate": 0.5412844036697247,
+          "week_demeaned_mean_ticks": 0.6537258231995035,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": 1.1397515527950255,
+          "median_oriented_ticks": 0.9999999999994458,
+          "n": 322,
+          "positive_rate": 0.5248447204968945,
+          "week_demeaned_mean_ticks": 1.1684693252070568,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.7714285714285859,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 210,
+          "positive_rate": 0.5047619047619047,
+          "week_demeaned_mean_ticks": 0.8157330377162028,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": 0.11111111111109888,
+          "median_oriented_ticks": -0.0,
+          "n": 9,
+          "positive_rate": 0.4444444444444444,
+          "week_demeaned_mean_ticks": 0.08816425120772407,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.6028368794326254,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 282,
+          "positive_rate": 0.5106382978723404,
+          "week_demeaned_mean_ticks": 0.6776315009851456,
+          "weeks": 18
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "module",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": 3.480084706097841e-05,
+      "orientation": "AGAINST_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.1330275229357875,
+            "1.0": -0.3669724770642125,
+            "2.0": -1.3669724770642124
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.03669724770642613,
+            "20": -0.06422018348624775,
+            "30": 0.2844036697247678,
+            "60": 0.6330275229357875
+          },
+          "n": 109
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.6397515527950255,
+            "1.0": 0.13975155279502552,
+            "2.0": -0.8602484472049744
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.062111801242240215,
+            "20": 0.17391304347825412,
+            "30": 0.3447204968944078,
+            "60": 1.1397515527950255
+          },
+          "n": 322
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.27142857142858584,
+            "1.0": -0.22857142857141416,
+            "2.0": -1.2285714285714142
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.01904761904762118,
+            "20": 0.31904761904761564,
+            "30": 0.45238095238095755,
+            "60": 0.7714285714285859
+          },
+          "n": 210
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.3888888888889011,
+            "1.0": -0.8888888888889012,
+            "2.0": -1.888888888888901
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.3333333333332473,
+            "20": 0.2222222222221484,
+            "30": 0.2222222222221484,
+            "60": 0.11111111111109888
+          },
+          "n": 9
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.10283687943262544,
+            "1.0": -0.3971631205673746,
+            "2.0": -1.3971631205673745
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.09574468085106431,
+            "20": 0.16312056737589217,
+            "30": 0.4113475177304968,
+            "60": 0.6028368794326254
+          },
+          "n": 282
+        }
+      },
+      "pattern": "OOO|FF",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.0,
+          "median_oriented_ticks": 0.0,
+          "n": 9,
+          "positive_rate": 0.3333333333333333,
+          "week_demeaned_mean_ticks": -0.03432402853657687,
+          "weeks": 4
+        },
+        "era13": {
+          "mean_oriented_ticks": 2.3571428571428195,
+          "median_oriented_ticks": 1.000000000000334,
+          "n": 14,
+          "positive_rate": 0.7142857142857143,
+          "week_demeaned_mean_ticks": 2.4020168563113806,
+          "weeks": 11
+        },
+        "era45": {
+          "mean_oriented_ticks": 1.4000000000001123,
+          "median_oriented_ticks": 1.000000000000334,
+          "n": 5,
+          "positive_rate": 1.0,
+          "week_demeaned_mean_ticks": 1.3410391777670108,
+          "weeks": 4
+        },
+        "held": {
+          "mean_oriented_ticks": 0.0,
+          "median_oriented_ticks": 0.0,
+          "n": 1,
+          "positive_rate": 0.0,
+          "week_demeaned_mean_ticks": 0.022946859903374823,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.8571428571428262,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 7,
+          "positive_rate": 0.5714285714285714,
+          "week_demeaned_mean_ticks": 0.7420540088729395,
+          "weeks": 5
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "module",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": 0.00960540771484375,
+      "orientation": "WITH_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.5,
+            "1.0": -1.0,
+            "2.0": -2.0
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.11111111111109888,
+            "20": -0.3333333333332966,
+            "30": -0.4444444444443955,
+            "60": 0.0
+          },
+          "n": 9
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": 1.8571428571428197,
+            "1.0": 1.3571428571428197,
+            "2.0": 0.35714285714281957
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.571428571428572,
+            "20": 0.6428571428571355,
+            "30": 1.8571428571429063,
+            "60": 2.3571428571428195
+          },
+          "n": 14
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.9000000000001123,
+            "1.0": 0.40000000000011227,
+            "2.0": -0.5999999999998877
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.0,
+            "20": 0.4000000000001336,
+            "30": 0.6000000000001116,
+            "60": 1.4000000000001123
+          },
+          "n": 5
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.5,
+            "1.0": -1.0,
+            "2.0": -2.0
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.0,
+            "20": 0.0,
+            "30": 0.9999999999998899,
+            "60": 0.0
+          },
+          "n": 1
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.3571428571428262,
+            "1.0": -0.14285714285717382,
+            "2.0": -1.1428571428571739
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.1428571428570637,
+            "20": -1.9032394707859826e-13,
+            "30": 0.28571428571419083,
+            "60": 0.8571428571428262
+          },
+          "n": 7
+        }
+      },
+      "pattern": "PPS|SS",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.500000000000167,
+          "median_oriented_ticks": 0.500000000000167,
+          "n": 2,
+          "positive_rate": 0.5,
+          "week_demeaned_mean_ticks": 0.4555325749743192,
+          "weeks": 1
+        },
+        "era13": {
+          "mean_oriented_ticks": -4.375000000000185,
+          "median_oriented_ticks": -1.000000000000334,
+          "n": 8,
+          "positive_rate": 0.375,
+          "week_demeaned_mean_ticks": -4.218179995237922,
+          "weeks": 6
+        },
+        "era45": {
+          "mean_oriented_ticks": 1.142857142857144,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 7,
+          "positive_rate": 0.5714285714285714,
+          "week_demeaned_mean_ticks": 1.0835919997161878,
+          "weeks": 7
+        },
+        "held": {
+          "mean_oriented_ticks": 0.9999999999998899,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 1,
+          "positive_rate": 1.0,
+          "week_demeaned_mean_ticks": 1.0229468599032647,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.24999999999997247,
+          "median_oriented_ticks": 0.0,
+          "n": 12,
+          "positive_rate": 0.4166666666666667,
+          "week_demeaned_mean_ticks": 0.199909162103736,
+          "weeks": 9
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "module",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": 0.604736328125,
+      "orientation": "WITH_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": 1.6697754290362354e-13,
+            "1.0": -0.499999999999833,
+            "2.0": -1.499999999999833
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.500000000000167,
+            "20": 0.500000000000167,
+            "30": 0.500000000000167,
+            "60": 0.500000000000167
+          },
+          "n": 2
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": -4.875000000000185,
+            "1.0": -5.375000000000185,
+            "2.0": -6.375000000000185
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.3750000000000142,
+            "20": -0.8750000000000147,
+            "30": -1.2500000000000844,
+            "60": -4.375000000000185
+          },
+          "n": 8
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.6428571428571439,
+            "1.0": 0.14285714285714388,
+            "2.0": -0.8571428571428561
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.4285714285714448,
+            "20": 0.571428571428572,
+            "30": 1.1428571428572074,
+            "60": 1.142857142857144
+          },
+          "n": 7
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.49999999999988987,
+            "1.0": -1.1013412404281553e-13,
+            "2.0": -1.0000000000001101
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.0,
+            "20": 0.0,
+            "30": 0.0,
+            "60": 0.9999999999998899
+          },
+          "n": 1
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.25000000000002753,
+            "1.0": -0.7500000000000275,
+            "2.0": -1.7500000000000275
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.08333333333332416,
+            "20": -0.1666666666666853,
+            "30": -0.08333333333332416,
+            "60": 0.24999999999997247
+          },
+          "n": 12
+        }
+      },
+      "pattern": "POP|SF",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": -0.1095890410958905,
+          "median_oriented_ticks": 0.0,
+          "n": 73,
+          "positive_rate": 0.3013698630136986,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "era13": {
+          "mean_oriented_ticks": -0.649484536082453,
+          "median_oriented_ticks": 0.0,
+          "n": 194,
+          "positive_rate": 0.4072164948453608,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "era45": {
+          "mean_oriented_ticks": -0.34782608695652206,
+          "median_oriented_ticks": 0.0,
+          "n": 138,
+          "positive_rate": 0.391304347826087,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "held": {
+          "mean_oriented_ticks": -0.27272727272732344,
+          "median_oriented_ticks": -0.9999999999998899,
+          "n": 11,
+          "positive_rate": 0.45454545454545453,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "train": {
+          "mean_oriented_ticks": 0.01578947368419944,
+          "median_oriented_ticks": 0.0,
+          "n": 190,
+          "positive_rate": 0.45263157894736844,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "context",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": null,
+      "orientation": "WITH_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.6095890410958905,
+            "1.0": -1.1095890410958904,
+            "2.0": -2.1095890410958904
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.041095890410942214,
+            "20": -0.013698630136972626,
+            "30": -1.2166827667125003e-14,
+            "60": -0.1095890410958905
+          },
+          "n": 73
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": -1.149484536082453,
+            "1.0": -1.649484536082453,
+            "2.0": -2.6494845360824533
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.005154639175273188,
+            "20": -0.20618556701029345,
+            "30": -0.34536082474224833,
+            "60": -0.649484536082453
+          },
+          "n": 194
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.8478260869565221,
+            "1.0": -1.3478260869565222,
+            "2.0": -2.347826086956522
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.10144927536232054,
+            "20": -0.1014492753623141,
+            "30": -0.1884057971014575,
+            "60": -0.34782608695652206
+          },
+          "n": 138
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.7727272727273234,
+            "1.0": -1.2727272727273233,
+            "2.0": -2.2727272727273236
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.2727272727272023,
+            "20": 0.5454545454545258,
+            "30": 1.1818181818181324,
+            "60": -0.27272727272732344
+          },
+          "n": 11
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.4842105263158005,
+            "1.0": -0.9842105263158005,
+            "2.0": -1.9842105263158005
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.010526315789479537,
+            "20": -0.005263157894740937,
+            "30": -0.12631578947369834,
+            "60": 0.01578947368419944
+          },
+          "n": 190
+        }
+      },
+      "pattern": "OOSS->FLIP",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": -0.23863636363637772,
+          "median_oriented_ticks": -0.0,
+          "n": 88,
+          "positive_rate": 0.4090909090909091,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "era13": {
+          "mean_oriented_ticks": -0.745762711864398,
+          "median_oriented_ticks": -0.9999999999994458,
+          "n": 236,
+          "positive_rate": 0.3220338983050847,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "era45": {
+          "mean_oriented_ticks": -0.13450292397660116,
+          "median_oriented_ticks": -0.0,
+          "n": 171,
+          "positive_rate": 0.3216374269005848,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "held": {
+          "mean_oriented_ticks": -0.9473684210526208,
+          "median_oriented_ticks": -0.9999999999998899,
+          "n": 19,
+          "positive_rate": 0.47368421052631576,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "train": {
+          "mean_oriented_ticks": 0.04273504273504562,
+          "median_oriented_ticks": -0.0,
+          "n": 234,
+          "positive_rate": 0.41452991452991456,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "context",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": null,
+      "orientation": "AGAINST_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.7386363636363776,
+            "1.0": -1.2386363636363777,
+            "2.0": -2.238636363636378
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.011363636363635111,
+            "20": 0.12500000000001651,
+            "30": 0.1022727272727261,
+            "60": -0.23863636363637772
+          },
+          "n": 88
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": -1.2457627118643981,
+            "1.0": -1.7457627118643981,
+            "2.0": -2.745762711864398
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.02118644067795436,
+            "20": -0.2711864406779626,
+            "30": -0.25000000000000444,
+            "60": -0.745762711864398
+          },
+          "n": 236
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.6345029239766012,
+            "1.0": -1.1345029239766011,
+            "2.0": -2.1345029239766014
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.03508771929825733,
+            "20": 0.1695906432748559,
+            "30": 0.2748538011696071,
+            "60": -0.13450292397660116
+          },
+          "n": 171
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": -1.4473684210526208,
+            "1.0": -1.9473684210526208,
+            "2.0": -2.9473684210526208
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.15789473684213462,
+            "20": -0.21052631578949724,
+            "30": -0.05263157894731588,
+            "60": -0.9473684210526208
+          },
+          "n": 19
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.45726495726495436,
+            "1.0": -0.9572649572649543,
+            "2.0": -1.9572649572649543
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.034188034188038015,
+            "20": 0.021367521367536096,
+            "30": 0.02991452991453421,
+            "60": 0.04273504273504562
+          },
+          "n": 234
+        }
+      },
+      "pattern": "SOOS->SAME",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": -0.28787878787877635,
+          "median_oriented_ticks": 0.0,
+          "n": 198,
+          "positive_rate": 0.35858585858585856,
+          "week_demeaned_mean_ticks": -0.3095724522243744,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": -0.09294871794872052,
+          "median_oriented_ticks": 0.0,
+          "n": 624,
+          "positive_rate": 0.46153846153846156,
+          "week_demeaned_mean_ticks": -0.13700733394113668,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": -0.10047846889952534,
+          "median_oriented_ticks": 0.0,
+          "n": 418,
+          "positive_rate": 0.3923444976076555,
+          "week_demeaned_mean_ticks": -0.1481472989694322,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": -0.7500000000000062,
+          "median_oriented_ticks": 0.0,
+          "n": 20,
+          "positive_rate": 0.45,
+          "week_demeaned_mean_ticks": -0.7233978234582958,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.1444444444444565,
+          "median_oriented_ticks": 0.0,
+          "n": 540,
+          "positive_rate": 0.42777777777777776,
+          "week_demeaned_mean_ticks": 0.0651893728873948,
+          "weeks": 18
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "context",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": 0.8785075229825452,
+      "orientation": "WITH_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.7878787878787764,
+            "1.0": -1.2878787878787763,
+            "2.0": -2.2878787878787765
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.03535353535352249,
+            "20": -0.09090909090907418,
+            "30": -0.0252525252525135,
+            "60": -0.28787878787877635
+          },
+          "n": 198
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.5929487179487205,
+            "1.0": -1.0929487179487205,
+            "2.0": -2.0929487179487203
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.02564102564103207,
+            "20": 0.08012820512819488,
+            "30": 0.1826923076923068,
+            "60": -0.09294871794872052
+          },
+          "n": 624
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.6004784688995254,
+            "1.0": -1.1004784688995253,
+            "2.0": -2.1004784688995253
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.01913875598086126,
+            "20": 0.023923444976076045,
+            "30": -0.014354066985644353,
+            "60": -0.10047846889952534
+          },
+          "n": 418
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": -1.2500000000000062,
+            "1.0": -1.7500000000000064,
+            "2.0": -2.750000000000006
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.09999999999998899,
+            "20": -0.30000000000001137,
+            "30": -0.19999999999997797,
+            "60": -0.7500000000000062
+          },
+          "n": 20
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.3555555555555435,
+            "1.0": -0.8555555555555435,
+            "2.0": -1.8555555555555436
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.05555555555556424,
+            "20": 0.09814814814815626,
+            "30": 0.15370370370370404,
+            "60": 0.1444444444444565
+          },
+          "n": 540
+        }
+      },
+      "pattern": "OOO->SAME",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": -0.2857142857143177,
+          "median_oriented_ticks": 0.0,
+          "n": 21,
+          "positive_rate": 0.23809523809523808,
+          "week_demeaned_mean_ticks": -0.2902394248681565,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": -0.20000000000000265,
+          "median_oriented_ticks": 0.0,
+          "n": 90,
+          "positive_rate": 0.36666666666666664,
+          "week_demeaned_mean_ticks": -0.2741748921923177,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": -0.17307692307692962,
+          "median_oriented_ticks": 0.0,
+          "n": 52,
+          "positive_rate": 0.28846153846153844,
+          "week_demeaned_mean_ticks": -0.21917121033828527,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": -2.1666666666667243,
+          "median_oriented_ticks": -1.5000000000000568,
+          "n": 6,
+          "positive_rate": 0.0,
+          "week_demeaned_mean_ticks": -2.1400644901250137,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.3076923076923353,
+          "median_oriented_ticks": 0.0,
+          "n": 65,
+          "positive_rate": 0.38461538461538464,
+          "week_demeaned_mean_ticks": 0.2215714109352806,
+          "weeks": 17
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "context",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": 0.9673773323884234,
+      "orientation": "WITH_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.7857142857143177,
+            "1.0": -1.2857142857143178,
+            "2.0": -2.2857142857143176
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.09523809523812704,
+            "20": -0.04761904761904238,
+            "30": -0.19047619047621178,
+            "60": -0.2857142857143177
+          },
+          "n": 21
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.7000000000000027,
+            "1.0": -1.2000000000000026,
+            "2.0": -2.2000000000000024
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.03333333333332473,
+            "20": 0.13333333333331865,
+            "30": -0.07777777777780376,
+            "60": -0.20000000000000265
+          },
+          "n": 90
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.6730769230769297,
+            "1.0": -1.1730769230769296,
+            "2.0": -2.1730769230769296
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.1923076923076882,
+            "20": 0.153846153846154,
+            "30": 0.076923076923077,
+            "60": -0.17307692307692962
+          },
+          "n": 52
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": -2.6666666666667243,
+            "1.0": -3.1666666666667243,
+            "2.0": -4.166666666666724
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.0,
+            "20": -0.6666666666667412,
+            "30": -1.3333333333333346,
+            "60": -2.1666666666667243
+          },
+          "n": 6
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.1923076923076647,
+            "1.0": -0.6923076923076648,
+            "2.0": -1.6923076923076648
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.015384615384627355,
+            "20": 0.07692307692309577,
+            "30": 0.18461538461537794,
+            "60": 0.3076923076923353
+          },
+          "n": 65
+        }
+      },
+      "pattern": "XSX->FLIP",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.5384615384616158,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 13,
+          "positive_rate": 0.6153846153846154,
+          "week_demeaned_mean_ticks": 0.5335468004091959,
+          "weeks": 5
+        },
+        "era13": {
+          "mean_oriented_ticks": 1.930232558139601,
+          "median_oriented_ticks": 1.9999999999997797,
+          "n": 43,
+          "positive_rate": 0.6046511627906976,
+          "week_demeaned_mean_ticks": 1.8530821133079578,
+          "weeks": 17
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.4399999999999693,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 25,
+          "positive_rate": 0.64,
+          "week_demeaned_mean_ticks": 0.387715524142348,
+          "weeks": 9
+        },
+        "held": {
+          "mean_oriented_ticks": 0.500000000000167,
+          "median_oriented_ticks": 0.500000000000167,
+          "n": 2,
+          "positive_rate": 0.5,
+          "week_demeaned_mean_ticks": 0.5266021765418772,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 1.5625000000000084,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 32,
+          "positive_rate": 0.53125,
+          "week_demeaned_mean_ticks": 1.4947924037508171,
+          "weeks": 16
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "context",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": 0.035377772990614176,
+      "orientation": "WITH_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.038461538461615805,
+            "1.0": -0.4615384615383842,
+            "2.0": -1.4615384615383842
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.5384615384615816,
+            "20": 0.23076923076923953,
+            "30": -0.07692307692310262,
+            "60": 0.5384615384616158
+          },
+          "n": 13
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": 1.4302325581396012,
+            "1.0": 0.9302325581396012,
+            "2.0": -0.06976744186039885
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.04651162790693031,
+            "20": 0.5813953488372795,
+            "30": 0.9767441860465487,
+            "60": 1.930232558139601
+          },
+          "n": 43
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.060000000000030695,
+            "1.0": -0.5600000000000307,
+            "2.0": -1.5600000000000307
+          },
+          "mean_oriented_by_horizon": {
+            "10": 1.7763568394002505e-14,
+            "20": 0.28000000000002245,
+            "30": 0.11999999999998678,
+            "60": 0.4399999999999693
+          },
+          "n": 25
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": 1.6697754290362354e-13,
+            "1.0": -0.499999999999833,
+            "2.0": -1.499999999999833
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.0,
+            "20": 1.000000000000112,
+            "30": 0.0,
+            "60": 0.500000000000167
+          },
+          "n": 2
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": 1.0625000000000084,
+            "1.0": 0.5625000000000083,
+            "2.0": -0.4374999999999917
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.06250000000003475,
+            "20": 0.718750000000018,
+            "30": 0.8125000000000354,
+            "60": 1.5625000000000084
+          },
+          "n": 32
+        }
+      },
+      "pattern": "OSP->SAME",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": -0.44444444444444486,
+          "median_oriented_ticks": -0.0,
+          "n": 9,
+          "positive_rate": 0.3333333333333333,
+          "week_demeaned_mean_ticks": -0.4238719045430394,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": -0.5937499999999207,
+          "median_oriented_ticks": -0.0,
+          "n": 32,
+          "positive_rate": 0.375,
+          "week_demeaned_mean_ticks": -0.5361647657433884,
+          "weeks": 15
+        },
+        "era45": {
+          "mean_oriented_ticks": -1.2400000000000055,
+          "median_oriented_ticks": -0.9999999999998899,
+          "n": 25,
+          "positive_rate": 0.32,
+          "week_demeaned_mean_ticks": -1.175970115199203,
+          "weeks": 11
+        },
+        "held": {
+          "mean_oriented_ticks": -0.49999999999994493,
+          "median_oriented_ticks": -0.0,
+          "n": 4,
+          "positive_rate": 0.0,
+          "week_demeaned_mean_ticks": -0.5266021765416552,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.05405405405408411,
+          "median_oriented_ticks": -0.0,
+          "n": 37,
+          "positive_rate": 0.40540540540540543,
+          "week_demeaned_mean_ticks": 0.12382681068624135,
+          "weeks": 14
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "context",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": 0.9449079174082726,
+      "orientation": "AGAINST_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.9444444444444449,
+            "1.0": -1.4444444444444449,
+            "2.0": -2.4444444444444446
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.11111111111109888,
+            "20": 0.3333333333332966,
+            "30": 0.11111111111119756,
+            "60": -0.44444444444444486
+          },
+          "n": 9
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": -1.0937499999999207,
+            "1.0": -1.5937499999999207,
+            "2.0": -2.593749999999921
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.0937499999999758,
+            "20": -0.8437499999999487,
+            "30": -0.874999999999973,
+            "60": -0.5937499999999207
+          },
+          "n": 32
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": -1.7400000000000058,
+            "1.0": -2.2400000000000055,
+            "2.0": -3.2400000000000055
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.16000000000000014,
+            "20": -0.40000000000000924,
+            "30": -0.9200000000000053,
+            "60": -1.2400000000000055
+          },
+          "n": 25
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.9999999999999449,
+            "1.0": -1.499999999999945,
+            "2.0": -2.499999999999945
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.24999999999997247,
+            "20": 0.24999999999997247,
+            "30": 0.24999999999997247,
+            "60": -0.49999999999994493
+          },
+          "n": 4
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.4459459459459159,
+            "1.0": -0.945945945945916,
+            "2.0": -1.945945945945916
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.2702702702702885,
+            "20": 0.35135135135134865,
+            "30": 0.3783783783783847,
+            "60": 0.05405405405408411
+          },
+          "n": 37
+        }
+      },
+      "pattern": "OSP->FLIP",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.36363636363640434,
+          "median_oriented_ticks": 0.0,
+          "n": 11,
+          "positive_rate": 0.36363636363636365,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "era13": {
+          "mean_oriented_ticks": 1.333333333333271,
+          "median_oriented_ticks": 0.9999999999994458,
+          "n": 42,
+          "positive_rate": 0.5714285714285714,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.4210526315789945,
+          "median_oriented_ticks": 0.0,
+          "n": 19,
+          "positive_rate": 0.3684210526315789,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "held": {
+          "mean_oriented_ticks": 2.0000000000000018,
+          "median_oriented_ticks": 2.0000000000000018,
+          "n": 4,
+          "positive_rate": 1.0,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "train": {
+          "mean_oriented_ticks": 0.36363636363639085,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 33,
+          "positive_rate": 0.5151515151515151,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "context",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": null,
+      "orientation": "WITH_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.13636363636359566,
+            "1.0": -0.6363636363635957,
+            "2.0": -1.6363636363635956
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.09090909090908089,
+            "20": 0.45454545454548523,
+            "30": 0.0,
+            "60": 0.36363636363640434
+          },
+          "n": 11
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.8333333333332711,
+            "1.0": 0.3333333333332711,
+            "2.0": -0.6666666666667289
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.047619047618978935,
+            "20": 0.6904761904761039,
+            "30": 0.7619047619047414,
+            "60": 1.333333333333271
+          },
+          "n": 42
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.07894736842100551,
+            "1.0": -0.5789473684210055,
+            "2.0": -1.5789473684210056
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.21052631578942713,
+            "20": 0.42105263157892436,
+            "30": 0.5789473684210357,
+            "60": 0.4210526315789945
+          },
+          "n": 19
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": 1.5000000000000018,
+            "1.0": 1.0000000000000018,
+            "2.0": 1.7763568394002505e-15
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.49999999999994493,
+            "20": 0.9999999999998899,
+            "30": 1.7499999999999183,
+            "60": 2.0000000000000018
+          },
+          "n": 4
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.13636363636360913,
+            "1.0": -0.6363636363636092,
+            "2.0": -1.6363636363636092
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.03030303030305388,
+            "20": 0.06060606060605393,
+            "30": 0.03030303030305388,
+            "60": 0.36363636363639085
+          },
+          "n": 33
+        }
+      },
+      "pattern": "PSOS->FLIP",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.500000000000056,
+          "median_oriented_ticks": 0.0,
+          "n": 12,
+          "positive_rate": 0.25,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "era13": {
+          "mean_oriented_ticks": 0.416666666666667,
+          "median_oriented_ticks": 0.0,
+          "n": 48,
+          "positive_rate": 0.4375,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.2272727272727628,
+          "median_oriented_ticks": 0.0,
+          "n": 22,
+          "positive_rate": 0.36363636363636365,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "held": {
+          "mean_oriented_ticks": 0.9999999999998899,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 2,
+          "positive_rate": 0.5,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "train": {
+          "mean_oriented_ticks": 0.8749999999999701,
+          "median_oriented_ticks": 0.49999999999994493,
+          "n": 40,
+          "positive_rate": 0.5,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "context",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": null,
+      "orientation": "WITH_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": 5.595524044110789e-14,
+            "1.0": -0.49999999999994404,
+            "2.0": -1.499999999999944
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.1666666666666853,
+            "20": 0.08333333333332416,
+            "30": 0.6666666666667043,
+            "60": 0.500000000000056
+          },
+          "n": 12
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.08333333333333297,
+            "1.0": -0.5833333333333329,
+            "2.0": -1.583333333333333
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.0,
+            "20": 0.2500000000000187,
+            "30": 0.020833333333266275,
+            "60": 0.416666666666667
+          },
+          "n": 48
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.2727272727272372,
+            "1.0": -0.7727272727272372,
+            "2.0": -1.7727272727272372
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.13636363636362134,
+            "20": 0.18181818181816178,
+            "30": 0.36363636363638413,
+            "60": 0.2272727272727628
+          },
+          "n": 22
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.49999999999988987,
+            "1.0": -1.1013412404281553e-13,
+            "2.0": -1.0000000000001101
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.49999999999994493,
+            "20": 1.5000000000000568,
+            "30": 1.5000000000000568,
+            "60": 0.9999999999998899
+          },
+          "n": 2
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.37499999999997025,
+            "1.0": -0.12500000000002975,
+            "2.0": -1.1250000000000298
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.3249999999999975,
+            "20": 0.5249999999999311,
+            "30": 0.4249999999999643,
+            "60": 0.8749999999999701
+          },
+          "n": 40
+        }
+      },
+      "pattern": "SXOO->FLIP",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.12040441176470609,
+          "median_oriented_ticks": 0.0,
+          "n": 1088,
+          "positive_rate": 0.3897058823529412,
+          "week_demeaned_mean_ticks": 0.0955250063431581,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": 0.05792488860598414,
+          "median_oriented_ticks": 0.0,
+          "n": 3142,
+          "positive_rate": 0.43602800763844685,
+          "week_demeaned_mean_ticks": 0.02143198212510031,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.03024662633782739,
+          "median_oriented_ticks": 0.0,
+          "n": 2149,
+          "positive_rate": 0.40530479292694277,
+          "week_demeaned_mean_ticks": -0.021063534482685376,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": -0.4765100671140951,
+          "median_oriented_ticks": 0.0,
+          "n": 149,
+          "positive_rate": 0.3221476510067114,
+          "week_demeaned_mean_ticks": -0.4547971599970933,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.16497633536173406,
+          "median_oriented_ticks": 0.0,
+          "n": 2958,
+          "positive_rate": 0.41041244083840434,
+          "week_demeaned_mean_ticks": 0.08706574509392409,
+          "weeks": 18
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "context",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": 0.691140341485152,
+      "orientation": "WITH_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.37959558823529393,
+            "1.0": -0.8795955882352939,
+            "2.0": -1.879595588235294
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.028492647058828147,
+            "20": 0.052389705882358195,
+            "30": 0.0523897058823586,
+            "60": 0.12040441176470609
+          },
+          "n": 1088
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.4420751113940159,
+            "1.0": -0.9420751113940158,
+            "2.0": -1.942075111394016
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.0019096117122870786,
+            "20": 0.014003819223426138,
+            "30": 0.02355187778484485,
+            "60": 0.05792488860598414
+          },
+          "n": 3142
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.4697533736621726,
+            "1.0": -0.9697533736621727,
+            "2.0": -1.9697533736621726
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.01814797580269817,
+            "20": 0.03676128431828911,
+            "30": 0.027454630060491675,
+            "60": 0.03024662633782739
+          },
+          "n": 2149
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.9765100671140952,
+            "1.0": -1.4765100671140952,
+            "2.0": -2.476510067114095
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.14765100671141101,
+            "20": -0.23489932885907033,
+            "30": -0.2348993288590554,
+            "60": -0.4765100671140951
+          },
+          "n": 149
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.33502366463826594,
+            "1.0": -0.835023664638266,
+            "2.0": -1.835023664638266
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.023664638269104293,
+            "20": 0.03752535496957471,
+            "30": 0.05476673427992094,
+            "60": 0.16497633536173406
+          },
+          "n": 2958
+        }
+      },
+      "pattern": "O->FLIP",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": -0.16091954022987753,
+          "median_oriented_ticks": -0.0,
+          "n": 87,
+          "positive_rate": 0.28735632183908044,
+          "week_demeaned_mean_ticks": -0.12256733512419907,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": -0.19127516778523618,
+          "median_oriented_ticks": -0.0,
+          "n": 298,
+          "positive_rate": 0.37919463087248323,
+          "week_demeaned_mean_ticks": -0.14508882025556188,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": -0.3231707317073167,
+          "median_oriented_ticks": -0.0,
+          "n": 164,
+          "positive_rate": 0.3475609756097561,
+          "week_demeaned_mean_ticks": -0.2681001759173899,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": 0.8181818181818492,
+          "median_oriented_ticks": -0.0,
+          "n": 11,
+          "positive_rate": 0.2727272727272727,
+          "week_demeaned_mean_ticks": 0.7964689110648475,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.13090909090908617,
+          "median_oriented_ticks": -0.0,
+          "n": 275,
+          "positive_rate": 0.3381818181818182,
+          "week_demeaned_mean_ticks": 0.20940962235307561,
+          "weeks": 18
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "context",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": 0.7974838769296184,
+      "orientation": "AGAINST_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.6609195402298775,
+            "1.0": -1.1609195402298775,
+            "2.0": -2.1609195402298775
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.1494252873563258,
+            "20": 0.29885057471264137,
+            "30": 0.04597701149426312,
+            "60": -0.16091954022987753
+          },
+          "n": 87
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.6912751677852362,
+            "1.0": -1.1912751677852362,
+            "2.0": -2.191275167785236
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.020134228187921717,
+            "20": -0.030201342281866928,
+            "30": -0.10067114093957728,
+            "60": -0.19127516778523618
+          },
+          "n": 298
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.8231707317073167,
+            "1.0": -1.3231707317073167,
+            "2.0": -2.3231707317073167
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.048780487804875386,
+            "20": -0.09756097560974536,
+            "30": -0.1829268292682888,
+            "60": -0.3231707317073167
+          },
+          "n": 164
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": 0.3181818181818492,
+            "1.0": -0.18181818181815082,
+            "2.0": -1.1818181818181508
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.0,
+            "20": 0.45454545454540446,
+            "30": 0.45454545454544487,
+            "60": 0.8181818181818492
+          },
+          "n": 11
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.36909090909091385,
+            "1.0": -0.8690909090909138,
+            "2.0": -1.8690909090909136
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.06181818181819277,
+            "20": 0.10181818181817706,
+            "30": 0.14909090909089912,
+            "60": 0.13090909090908617
+          },
+          "n": 275
+        }
+      },
+      "pattern": "P->FLIP",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.1463414634146332,
+          "median_oriented_ticks": 0.0,
+          "n": 205,
+          "positive_rate": 0.3902439024390244,
+          "week_demeaned_mean_ticks": 0.13272305531253298,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": 0.08166969147004867,
+          "median_oriented_ticks": 0.0,
+          "n": 551,
+          "positive_rate": 0.46098003629764067,
+          "week_demeaned_mean_ticks": 0.055218155732186414,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.06493506493505663,
+          "median_oriented_ticks": 0.0,
+          "n": 385,
+          "positive_rate": 0.4103896103896104,
+          "week_demeaned_mean_ticks": 0.01574823314766489,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": -0.769230769230787,
+          "median_oriented_ticks": -0.9999999999998899,
+          "n": 13,
+          "positive_rate": 0.23076923076923078,
+          "week_demeaned_mean_ticks": -0.7426285926890768,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.13243761996161474,
+          "median_oriented_ticks": 0.0,
+          "n": 521,
+          "positive_rate": 0.4088291746641075,
+          "week_demeaned_mean_ticks": 0.05913987306848571,
+          "weeks": 18
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "context",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": 0.7974838769296184,
+      "orientation": "WITH_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.35365853658536683,
+            "1.0": -0.8536585365853668,
+            "2.0": -1.8536585365853666
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.04390243902439624,
+            "20": 0.08292682926829438,
+            "30": -0.058536585365851546,
+            "60": 0.1463414634146332
+          },
+          "n": 205
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.41833030852995134,
+            "1.0": -0.9183303085299513,
+            "2.0": -1.9183303085299512
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.018148820326659036,
+            "20": -0.02722323049003127,
+            "30": -0.014519056261360757,
+            "60": 0.08166969147004867
+          },
+          "n": 551
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.4350649350649433,
+            "1.0": -0.9350649350649434,
+            "2.0": -1.9350649350649434
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.07272727272728317,
+            "20": -0.05454545454546699,
+            "30": -0.0337662337662485,
+            "60": 0.06493506493505663
+          },
+          "n": 385
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": -1.269230769230787,
+            "1.0": -1.769230769230787,
+            "2.0": -2.769230769230787
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.5384615384615474,
+            "20": -0.5384615384615816,
+            "30": -0.6923076923076844,
+            "60": -0.769230769230787
+          },
+          "n": 13
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.36756238003838526,
+            "1.0": -0.8675623800383853,
+            "2.0": -1.8675623800383854
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.036468330134358955,
+            "20": -0.046065259117092805,
+            "30": -0.051823416506712995,
+            "60": 0.13243761996161474
+          },
+          "n": 521
+        }
+      },
+      "pattern": "OOO->FLIP",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.48717948717947906,
+          "median_oriented_ticks": 0.0,
+          "n": 39,
+          "positive_rate": 0.4358974358974359,
+          "week_demeaned_mean_ticks": 0.4673144573224927,
+          "weeks": 6
+        },
+        "era13": {
+          "mean_oriented_ticks": 0.2830188679245474,
+          "median_oriented_ticks": 0.0,
+          "n": 106,
+          "positive_rate": 0.330188679245283,
+          "week_demeaned_mean_ticks": 0.21320691357689964,
+          "weeks": 18
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.27999999999999287,
+          "median_oriented_ticks": 0.0,
+          "n": 75,
+          "positive_rate": 0.4533333333333333,
+          "week_demeaned_mean_ticks": 0.22238546491726466,
+          "weeks": 12
+        },
+        "held": {
+          "mean_oriented_ticks": -0.8571428571428896,
+          "median_oriented_ticks": -0.9999999999998899,
+          "n": 7,
+          "positive_rate": 0.14285714285714285,
+          "week_demeaned_mean_ticks": -0.8305406806011792,
+          "weeks": 1
+        },
+        "train": {
+          "mean_oriented_ticks": 0.19626168224299395,
+          "median_oriented_ticks": 0.0,
+          "n": 107,
+          "positive_rate": 0.35514018691588783,
+          "week_demeaned_mean_ticks": 0.12323642371632433,
+          "weeks": 18
+        }
+      },
+      "causal_trigger": "all predecessor h=60 information available before current t0; current frozen detector identity confirmed no later than structural onset+5",
+      "entry_reference": "current structural endpoint+5",
+      "exit_reference": "current structural endpoint+60",
+      "kind": "context",
+      "management_optimization_performed": false,
+      "oot_week_sign_p": 0.014408359827939421,
+      "orientation": "WITH_CURRENT",
+      "path_and_cost_stress": {
+        "conf": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.012820512820520928,
+            "1.0": -0.5128205128205209,
+            "2.0": -1.5128205128205208
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.15384615384617106,
+            "20": 0.23076923076923953,
+            "30": 0.3076923076922738,
+            "60": 0.48717948717947906
+          },
+          "n": 39
+        },
+        "era13": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.21698113207545258,
+            "1.0": -0.7169811320754527,
+            "2.0": -1.7169811320754527
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.075471698113216,
+            "20": 0.1886792452830232,
+            "30": 0.14150943396226112,
+            "60": 0.2830188679245474
+          },
+          "n": 106
+        },
+        "era45": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.22000000000000716,
+            "1.0": -0.7200000000000072,
+            "2.0": -1.7200000000000073
+          },
+          "mean_oriented_by_horizon": {
+            "10": -0.013333333333331865,
+            "20": 0.07999999999999119,
+            "30": 0.10666666666667268,
+            "60": 0.27999999999999287
+          },
+          "n": 75
+        },
+        "held": {
+          "cost_stress_mean_h60": {
+            "0.5": -1.3571428571428896,
+            "1.0": -1.8571428571428896,
+            "2.0": -2.8571428571428896
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.0,
+            "20": -0.2857142857142542,
+            "30": -0.7142857142856991,
+            "60": -0.8571428571428896
+          },
+          "n": 7
+        },
+        "train": {
+          "cost_stress_mean_h60": {
+            "0.5": -0.30373831775700605,
+            "1.0": -0.803738317757006,
+            "2.0": -1.803738317757006
+          },
+          "mean_oriented_by_horizon": {
+            "10": 0.009345794392518186,
+            "20": 0.028037383177567005,
+            "30": 0.05607476635513401,
+            "60": 0.19626168224299395
+          },
+          "n": 107
+        }
+      },
+      "pattern": "POX->SAME",
+      "status": "HISTORICAL_STRATEGY_CANDIDATE_REQUIRES_FRESH_PROSPECTIVE_BEFORE_FREEZE"
+    }
+  ],
+  "source_policy": "FROZEN_55W_CHARACTERIZATION_INPUTS_NO_RETUNE",
+  "status": "POST_PHASE2_PARALLEL_AGENT_COMPLETE"
+}

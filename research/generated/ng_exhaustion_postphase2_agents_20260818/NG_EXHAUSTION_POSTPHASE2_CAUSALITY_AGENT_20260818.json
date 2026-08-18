@@ -1,0 +1,467 @@
+{
+  "mode": "causality",
+  "promotion_performed": false,
+  "protected_mutations": {
+    "canonical_rows": false,
+    "detector": false,
+    "frankie_1": false,
+    "permanent_frankie": false,
+    "runway_clock": false,
+    "spawn_py": false,
+    "ssos_play": false
+  },
+  "result": [
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3.0,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "module",
+      "n": 50,
+      "pattern": "PP|S",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 47.0,
+        "min": 0,
+        "p25": 15.25,
+        "p75": 137.0
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "module",
+      "n": 331,
+      "pattern": "PO|S",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 41,
+        "min": 0,
+        "p25": 14.0,
+        "p75": 134.0
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "module",
+      "n": 4005,
+      "pattern": "OO|F",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 36,
+        "min": 0,
+        "p25": 12.0,
+        "p75": 105.0
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "module",
+      "n": 389,
+      "pattern": "OP|F",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 25,
+        "min": 0,
+        "p25": 8.0,
+        "p75": 83.0
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "module",
+      "n": 357,
+      "pattern": "XP|F",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 23,
+        "min": 0,
+        "p25": 9.0,
+        "p75": 58.0
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3.0,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "module",
+      "n": 4278,
+      "pattern": "SS|S",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 37.0,
+        "min": 0,
+        "p25": 13.0,
+        "p75": 96.0
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "module",
+      "n": 55,
+      "pattern": "PP|F",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 56,
+        "min": 0,
+        "p25": 22.5,
+        "p75": 164.0
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3.0,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "module",
+      "n": 370,
+      "pattern": "XP|S",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 26.0,
+        "min": 0,
+        "p25": 9.0,
+        "p75": 55.0
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "module",
+      "n": 5,
+      "pattern": "PPP|SS",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 15,
+        "min": 9,
+        "p25": 9.0,
+        "p75": 36.0
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "module",
+      "n": 41,
+      "pattern": "PPX|SS",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 29,
+        "min": 0,
+        "p25": 14.0,
+        "p75": 66.0
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3.0,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "module",
+      "n": 932,
+      "pattern": "OOO|FF",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 35.0,
+        "min": 0,
+        "p25": 12.0,
+        "p75": 104.25
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3.0,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "module",
+      "n": 36,
+      "pattern": "PPS|SS",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 24.5,
+        "min": 0,
+        "p25": 12.0,
+        "p75": 56.25
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3.0,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "module",
+      "n": 30,
+      "pattern": "POP|SF",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 16.0,
+        "min": 0,
+        "p25": 4.25,
+        "p75": 73.5
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3.0,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "context",
+      "n": 606,
+      "pattern": "OOSS->FLIP",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 44.0,
+        "min": 0,
+        "p25": 16.0,
+        "p75": 122.0
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3.0,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "context",
+      "n": 748,
+      "pattern": "SOOS->SAME",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 42.5,
+        "min": 0,
+        "p25": 14.0,
+        "p75": 117.25
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3.0,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "context",
+      "n": 1800,
+      "pattern": "OOO->SAME",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 42.5,
+        "min": 0,
+        "p25": 17.0,
+        "p75": 123.0
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3.0,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "context",
+      "n": 234,
+      "pattern": "XSX->FLIP",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 15.0,
+        "min": 0,
+        "p25": 6.0,
+        "p75": 31.0
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "context",
+      "n": 115,
+      "pattern": "OSP->SAME",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 69,
+        "min": 0,
+        "p25": 19.0,
+        "p75": 189.5
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "context",
+      "n": 107,
+      "pattern": "OSP->FLIP",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 61,
+        "min": 0,
+        "p25": 27.5,
+        "p75": 200.0
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "context",
+      "n": 109,
+      "pattern": "PSOS->FLIP",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 34,
+        "min": 0,
+        "p25": 12.0,
+        "p75": 84.0
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3.0,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "context",
+      "n": 124,
+      "pattern": "SXOO->FLIP",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 26.0,
+        "min": 0,
+        "p25": 10.75,
+        "p75": 54.25
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3.0,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "context",
+      "n": 9486,
+      "pattern": "O->FLIP",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 32.0,
+        "min": 0,
+        "p25": 11.0,
+        "p75": 90.0
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "context",
+      "n": 835,
+      "pattern": "P->FLIP",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 49,
+        "min": 0,
+        "p25": 17.0,
+        "p75": 130.0
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "context",
+      "n": 1675,
+      "pattern": "OOO->FLIP",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 39,
+        "min": 0,
+        "p25": 13.0,
+        "p75": 110.0
+      }
+    },
+    {
+      "causal_contract_passed_all_occurrences": true,
+      "current_identity_entry_slack_seconds": {
+        "median": 3.0,
+        "min": 3,
+        "p25": 3.0,
+        "p75": 3.0
+      },
+      "kind": "context",
+      "n": 334,
+      "pattern": "POX->SAME",
+      "predecessor_h60_availability_before_current_t0_seconds": {
+        "median": 20.0,
+        "min": 0,
+        "p25": 8.0,
+        "p75": 45.75
+      }
+    }
+  ],
+  "source_policy": "FROZEN_55W_CHARACTERIZATION_INPUTS_NO_RETUNE",
+  "status": "POST_PHASE2_PARALLEL_AGENT_COMPLETE"
+}

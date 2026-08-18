@@ -1,0 +1,85 @@
+{
+  "branch": "chatgpt/ng-exhaustion-post-phase2-20260818",
+  "lane_count": 8,
+  "lanes": [
+    {
+      "bytes": 11102,
+      "mode": "causality",
+      "path": "research/generated/ng_exhaustion_postphase2_agents_20260818/NG_EXHAUSTION_POSTPHASE2_CAUSALITY_AGENT_20260818.json",
+      "sha256": "73035953379495ca834470d3e02f20ddd8432f70c3d0d89d2392a8b339aa2f6f"
+    },
+    {
+      "bytes": 20252,
+      "mode": "chainmap",
+      "path": "research/generated/ng_exhaustion_postphase2_agents_20260818/NG_EXHAUSTION_POSTPHASE2_CHAINMAP_AGENT_20260818.json",
+      "sha256": "f325783145f257586aa61ec6beab5f0a8895466f3047db4e3475c155fd867f7e"
+    },
+    {
+      "bytes": 93268,
+      "mode": "continuation",
+      "path": "research/generated/ng_exhaustion_postphase2_agents_20260818/NG_EXHAUSTION_POSTPHASE2_CONTINUATION_AGENT_20260818.json",
+      "sha256": "201d8b2e6d6e04a8d5fa75ebccf2bc1c032e88eac5e27fef0a512fd2865d37e7"
+    },
+    {
+      "bytes": 62276,
+      "mode": "decompose",
+      "path": "research/generated/ng_exhaustion_postphase2_agents_20260818/NG_EXHAUSTION_POSTPHASE2_DECOMPOSE_AGENT_20260818.json",
+      "sha256": "1ae81ec52c24dd83d67c64733f3ca53f79ef3e9198746a357852356228d57237"
+    },
+    {
+      "bytes": 101214,
+      "mode": "execution",
+      "path": "research/generated/ng_exhaustion_postphase2_agents_20260818/NG_EXHAUSTION_POSTPHASE2_EXECUTION_AGENT_20260818.json",
+      "sha256": "a198819e6403cd968a3fe591da468967aff331aabc157131d1ec9d93d7a3aa4b"
+    },
+    {
+      "bytes": 11813,
+      "mode": "redteam",
+      "path": "research/generated/ng_exhaustion_postphase2_agents_20260818/NG_EXHAUSTION_POSTPHASE2_REDTEAM_AGENT_20260818.json",
+      "sha256": "81f095d183cc051ee025d3143df5d117b00b3a5b39188e4f19355aa1bbebc46d"
+    },
+    {
+      "bytes": 450316,
+      "mode": "systematic",
+      "path": "research/generated/ng_exhaustion_postphase2_agents_20260818/NG_EXHAUSTION_POSTPHASE2_SYSTEMATIC_AGENT_20260818.json",
+      "sha256": "b85316d4538216fdbf618ce813e21bb921eee05032a2374c038cfa1038ec3d7b"
+    },
+    {
+      "bytes": 220558,
+      "mode": "timing",
+      "path": "research/generated/ng_exhaustion_postphase2_agents_20260818/NG_EXHAUSTION_POSTPHASE2_TIMING_AGENT_20260818.json",
+      "sha256": "89199aa1494a61e8adc8cab90bebff0503e1c326477f0eba746de6d3e35876ad"
+    }
+  ],
+  "promotion_performed": false,
+  "prospective_boundary": "No pattern may be frozen from these historically surfaced 55-week candidates alone; fresh prospective evidence remains required.",
+  "protected_mutations": {
+    "canonical_rows": false,
+    "detector": false,
+    "frankie_1": false,
+    "permanent_frankie": false,
+    "runway_clock": false,
+    "spawn_py": false,
+    "ssos_play": false
+  },
+  "source_artifacts": {
+    "base54": {
+      "id": 9281733364,
+      "zip_sha256": "f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1"
+    },
+    "held": {
+      "id": 9281272840,
+      "zip_sha256": "21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e"
+    },
+    "lineage": {
+      "id": 9289929292,
+      "zip_sha256": "a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95"
+    },
+    "reconciliation": {
+      "id": 9306082330,
+      "zip_sha256": "f17c130df029429bfbc35067d1cc9d16128ca4fb227dd37f3fb4fbb8bbaf8875"
+    }
+  },
+  "source_policy": "same immutable frozen 55-week evidence and causal walls as finalized Phase 2",
+  "status": "POST_PHASE2_EIGHT_LANE_PARALLEL_VERIFIED"
+}
