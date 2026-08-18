@@ -3,15 +3,25 @@
     "market": "NG",
     "date": "2026-08-18",
     "name": "NG exhaustion-chain Phase-2 curated brain extension proposal",
-    "status": "PROPOSAL_ONLY_NO_PERMANENT_BRAIN_MUTATION",
+    "status": "PROPOSAL_ONLY_PHASE2_FINALIZED_NO_PERMANENT_BRAIN_MUTATION",
     "branch": "chatgpt/ng-exhaustion-chain-phase2-20260817",
     "parent_proposal": {
       "path": "research/FRANKIE_NG_EXHAUSTION_BRAIN_LESSON_PROPOSAL_20260817.md",
       "commit": "f45a38e3266e67d103348c069ba827fff65fdd53",
       "relationship": "EXTENDS_DOES_NOT_REPLACE"
     },
+    "phase2_final_freeze": {
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md",
+      "commit": "b959a8259547b0f0d998c96ec440c9a4bc5c083c",
+      "status": "PHASE2_CHARACTERIZATION_FINALIZED_CURRENT_55W_PASS"
+    },
+    "parallel_verification": {
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_LOCAL_VERIFICATION_20260818.json",
+      "commit": "5ed07a15f857c92f73458d370e0722846b14b0d1",
+      "status": "PARALLEL_RECURRENCE_FOUR_LANE_VERIFIED"
+    },
     "brain_edit_policy": "Do not edit research/kalshi/knowledge/ng_brain.json directly from this file. Merge only after deliberate adjudication.",
-    "purpose": "Capture durable Phase-2 exhaustion-chain lessons before the research thread gets farther ahead, while preserving provisional mechanisms and explicit do-not-learn boundaries."
+    "purpose": "Capture the durable lessons from the finalized Phase-2 55-week exhaustion-chain characterization while preserving provisional mechanisms, future candidate queues, execution separation, and explicit do-not-learn boundaries."
   },
   "preserve_from_parent_proposal": [
     "Exhaustion runway state is a lifespan/remaining-authority problem, strongest validated domain Family A.",
@@ -31,6 +41,12 @@
       "id": "exhaustion.chain.rolling_reorigin_default",
       "call": "Use a rolling/re-origin state-machine prior. When a new exhaustion becomes causally established, treat it as a candidate new checkpoint and require older ancestry to re-earn incremental OOT value before assuming it remains active.",
       "guard": "Re-origin does not mean ancestry is erased and does not imply automatic exit or reversal. Exact detector availability can make a structural successor unsuitable for managing an already-open short parent trade."
+    },
+    {
+      "id": "exhaustion.chain.causal_identity_availability",
+      "call": "Distinguish structural onset from causally established detector identity. A successor that exists retrospectively cannot be used at a live decision until every frozen detector dependency required to identify it is actually available.",
+      "evidence": "For valid P-O-X parents, 496 base and 11 held immediate successors began strictly before the normal parent +60 exit, but exact canonical successor identity was unavailable before that exit in every case; the closest base miss was 81 seconds.",
+      "guard": "Never synthesize an earlier identity by silently changing the frozen detector."
     },
     {
       "id": "exhaustion.chain.failed_fold_decompose",
@@ -59,31 +75,59 @@
     {
       "id": "exhaustion.chain.timing_families",
       "call": "Chain lifespan has recurring timing families rather than one universal duration. Exact D2 separates into a short body, middle body, and rare long tail; exact D3 has a short body and longer tail. The timing-family mix replicates better than the exact module composition inside each family.",
+      "evidence": "Exact D2 centers are approximately 126s, 215s, and 798s; exact D3 centers are approximately 211s and 609s. Held assignments preserve the broad family proportions better than the exact grammar inside each family.",
       "guard": "Do not turn fitted timing centers into hard live cutoffs; D4/D5 remain too sparse for a stable timing-family doctrine."
     }
   ],
   "provisional_research_memory_do_not_promote_yet": [
     {
       "id": "exhaustion.pox.branching_transition_precursor",
-      "status": "ACTIVE_CONDITIONAL_MECHANISM_UNDER_REVIEW",
-      "pattern": ["persistent_exhaustion", "collapsed_opposite_flow_reversal", "collapsed_sparse_indeterminate"],
-      "population": {"base54": 666, "held": 13, "total": 679},
-      "call": "P-O-X appears to be a branching transition precursor rather than one universal fixed-horizon continuation state. Keep all valid instances and resolve its branches causally."
+      "status": "ACTIVE_CONDITIONAL_MECHANISM_PHASE2_CHARACTERIZED_NOT_FROZEN",
+      "pattern": [
+        "persistent_exhaustion",
+        "collapsed_opposite_flow_reversal",
+        "collapsed_sparse_indeterminate"
+      ],
+      "population": {
+        "base54": 666,
+        "held": 13,
+        "total": 679,
+        "removed_valid_instances": 0
+      },
+      "call": "P-O-X is a branching transition precursor rather than one universal fixed-horizon continuation state. Keep all valid instances and resolve its branches causally."
     },
     {
       "id": "exhaustion.pox.opposite_current_priority_branch",
       "status": "PRIORITY_EXECUTABLE_CANDIDATE_NOT_FROZEN",
-      "preheld_36w": {"n": 207, "gross_mean_ticks": 0.4009661835748887, "week_demeaned_delta_ticks": 0.34023950449704193, "week_sign_flip_p_one_sided": 0.012154939225303873},
-      "held": {"n": 6, "gross_mean_ticks": 0.500000000000019, "negative_count": 0},
+      "preheld_36w": {
+        "n": 207,
+        "gross_mean_ticks": 0.4009661835748887,
+        "week_demeaned_delta_ticks": 0.34023950449704193,
+        "week_sign_flip_p_one_sided": 0.012154939225303873
+      },
+      "held": {
+        "n": 6,
+        "gross_mean_ticks": 0.500000000000019,
+        "negative_count": 0
+      },
       "call": "When current exhaustion polarity is opposite the immediately preceding X-state exhaustion, P-O-X is the strongest current executable subcandidate.",
-      "why_not_promoted": "Held n is small; continue prospective/OOT validation."
+      "why_not_promoted": "It requires a dedicated future prospective/OOT promotion study; Phase 2 did not freeze a new play."
     },
     {
       "id": "exhaustion.pox.same_current_delayed_branch",
-      "status": "ACTIVE_TIMING_REORIGIN_BRANCH_UNDER_REVIEW",
-      "held_path_ticks_from_entry_plus5": {"plus10": 0.0, "plus20": -0.2857142857142542, "plus30": -0.7142857142856991, "plus60": -0.8571428571428896, "plus120": -0.2857142857143177, "plus300": 0.5714285714285084},
-      "call": "P-O-X followed by same-polarity current can enter a short adverse phase and later re-express. Preserve it as a delayed/re-origin branch, not an invalid row class.",
-      "why_not_promoted": "No clean causal pre-entry discriminator has generalized across later eras and held."
+      "status": "POSTEXIT_WATCH_SUBTYPES_CHARACTERIZED_NOT_A_TRADE",
+      "call": "P-O-X followed by same-polarity current can enter a short adverse phase and later re-express. The parent still exits normally at +60; only after flat may the completed path prioritize delayed-reexpression watch state.",
+      "postexit_watch_geometry": {
+        "shallow_adverse_definition": "no worse than -1 tick at +30 and exactly -1 tick at +60",
+        "shallow_preheld_recovery_nonnegative_by_plus120_or_plus300": "20/30",
+        "shallow_era4_5_plus_confirmation": "9/11",
+        "shallow_held": "2/2",
+        "deep_persistent_definition": "-2 ticks or worse at both +30 and +60",
+        "deep_preheld_recovery_nonnegative_by_plus120_or_plus300": "1/11",
+        "deep_era4_5_plus_confirmation": "0/4",
+        "deep_held": "0/1"
+      },
+      "guard": "Recovery probability is not positive expected return and does not authorize automatic re-entry. Some +120 recoveries relapse by +300. Another trade still requires a trusted full setup."
     },
     {
       "id": "exhaustion.watch.ssos_prefix_ladder",
@@ -100,30 +144,64 @@
     },
     {
       "id": "exhaustion.management.execute_reset_reenter",
-      "status": "RESEARCH_MANAGEMENT_DOCTRINE_POSTEXIT_BOUNDARY_RESOLVED",
+      "status": "PHASE2_RESEARCH_MANAGEMENT_DOCTRINE_FINALIZED_CURRENT_55W_PASS",
       "call": "Take a valid P-O-X parent trade and let it reach its frozen normal structural endpoint+60 exit. Reset only after exit, then watch and re-enter only when a later trusted SSOS or P-O-X-opposite setup becomes fully causal.",
-      "support": "Among 666 base parents, 496 had a structural successor start strictly before the parent exit, but the frozen source-day threshold makes exact canonical successor identity unavailable before exit in every case; minimum necessary threshold-wall miss was +81 seconds. After exit, 650/666 base parents and 13/13 held parents reached a later trusted target; all first trusted targets were clean on predecessor information availability after reset.",
+      "support": "After the normal exit, 650/666 base parents and 13/13 held parents reached a later trusted target before weekly close. All first trusted targets had every required predecessor h=60 information-availability timestamp after the parent exit.",
       "guard": "Do not invent a synthetic early successor detector or use future canonical identity to manage the open parent."
     },
     {
       "id": "exhaustion.chain.recurrence_atlas_candidates",
-      "status": "RESEARCH_ATLAS_NOT_PLAY_SET",
-      "call": "Reusable causal predecessor motifs exist beyond SSOS/P-O-X, including both continuation-oriented and negative/anti-continuation structures. Preserve them as an atlas for future OOT work, not as frozen plays.",
-      "examples_positive_all_preheld_and_held": ["S->SAME", "X->FLIP", "PS->SAME", "OOS->SAME", "SOS->FLIP", "OSX->FLIP", "OOX->FLIP", "POO->SAME", "XOO->FLIP", "POX->FLIP"],
-      "examples_negative_or_nonpositive": ["OOO->SAME", "SOX->SAME", "XSX->FLIP"],
-      "guard": "This atlas is exploratory and not a multiple-testing-adjusted promotion screen."
+      "status": "RESEARCH_ATLAS_NOT_PLAY_SET_OVERLAP_AUDITED",
+      "call": "Reusable causal predecessor motifs exist beyond SSOS and P-O-X-opposite. Preserve them as an independent candidate atlas for future OOT work, not as frozen plays.",
+      "overlap_sanity": {
+        "POX_to_FLIP": "zero unique instances after known P-O-X-opposite removal",
+        "SOS_to_FLIP": "loses stable confirmation after SSOS overlap removal"
+      },
+      "higher_support_independent_examples": [
+        "OOSS->FLIP AGAINST_CURRENT",
+        "SOOS->SAME WITH_CURRENT",
+        "OOO->SAME AGAINST_CURRENT",
+        "XSX->FLIP AGAINST_CURRENT"
+      ],
+      "higher_magnitude_lower_frequency_examples": [
+        "OSP->SAME WITH_CURRENT",
+        "OSP->FLIP WITH_CURRENT",
+        "PSOS->FLIP WITH_CURRENT",
+        "SXOO->FLIP WITH_CURRENT"
+      ],
+      "guard": "The novelty screen is exploratory and many-pattern. No multiple-testing-adjusted play promotion was performed, and an AGAINST_CURRENT structural orientation is not an automatically authorized reversal trade."
     },
     {
       "id": "exhaustion.chain.extension_modules",
       "status": "STRUCTURAL_EXTENSION_RESEARCH",
       "call": "Some strict D1 pair modules have above-baseline probability of extending to D2 across chronological blocks. PP|S, XP|F and PP|F are current examples; OP|F is an investigator example because held falls below its unusually high block baseline.",
-      "guard": "Extension propensity is structural lineage information, not an executable entry rule."
+      "evidence": {
+        "PP|S_lift_era13_era45_confirmation_held": [1.27, 1.22, 1.29, 1.20],
+        "XP|F_lift_era13_era45_confirmation_held": [1.37, 1.19, 2.02, 1.43],
+        "PP|F_lift_era13_era45_confirmation_held": [1.70, 1.19, 1.27, 2.01]
+      },
+      "guard": "Extension propensity is structural lineage information, not an executable entry rule. D2->D3 families exist but are sparse; D4/D5 are too sparse to force a family doctrine."
     }
   ],
   "frozen_execution_reference_not_brain_promotion": {
     "play_id": "NG_CHAIN_D4_SSOS_CONTINUATION_V1",
     "status": "FROZEN_PAPER_ONLY_NOT_LIVE_NOT_PERMANENT_FRANKIE",
-    "note": "Keep execution evidence separate from general forecasting knowledge."
+    "note": "Keep execution evidence separate from general forecasting knowledge. Phase 2 did not change this play and froze no additional play."
+  },
+  "phase2_finalized_research_boundaries": {
+    "characterization_complete_current_55w_pass": true,
+    "new_play_frozen": false,
+    "pox_opposite_frozen": false,
+    "existing_ssos_play_changed": false,
+    "permanent_brain_mutated": false,
+    "runway_clock_mutated": false,
+    "future_research_not_a_phase2_blocker": [
+      "prospective/OOT promotion study for P-O-X opposite-current",
+      "candidate-specific promotion studies for any independent recurrence module selected later",
+      "candidate-specific deeper true/false decomposition",
+      "additional D4/D5 timing-family research if future sample size becomes sufficient",
+      "selective older-ancestry tests at specific future re-origin subtypes"
+    ]
   },
   "explicit_do_not_learn_or_promote": [
     "scratch curve-generator scores or coefficients",
@@ -134,9 +212,11 @@
     "a synthetic early successor identity that the frozen detector cannot know causally",
     "held-week-only filters or exclusions",
     "P or P-O partial prefixes as trade entries",
+    "a shallow same-current post-exit recovery subtype as a trade entry or automatic re-entry",
     "hours-later trusted reappearance as proof of same-origin persistence",
     "fixed +10/+30 management proxies as permanent rules",
     "specific recurrence-atlas pair/triplet motifs as frozen plays without separate prospective/OOT promotion",
+    "an AGAINST_CURRENT structural module as an automatically authorized reversal trade",
     "held-selected long-tail module composition as a universal long-chain grammar",
     "P-O-X opposite branch as a frozen play before further prospective/OOT validation"
   ],
@@ -144,7 +224,7 @@
     "brain_namespace": "exhaustion/runway + exhaustion/chain",
     "preserve_existing_direction_ownership": true,
     "runway_role": "remaining-authority/hold-length overlay",
-    "chain_role": "rolling higher-order context, modular recurrence, timing-family context, and re-origin doctrine",
+    "chain_role": "rolling higher-order context, causal identity availability, modular recurrence, timing-family context, and re-origin doctrine",
     "execution_plays_stay_separate": true,
     "provenance_required": true
   }
