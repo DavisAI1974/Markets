@@ -1,0 +1,63 @@
+{
+  "d1_chronological_protocol": {
+    "held": "20260329_INSERT_ONLY",
+    "internal_train_field_semantics": "D1_DISCOVERY_OOT_BASE_WEEKS_18_35",
+    "phase1_base_weeks_0_17": "PRELINEAGE_UNLABELED_NOT_USED_FOR_D1_FIT_OR_AS_NEGATIVES",
+    "reason": "Frozen Phase-1 lineage labels exist only for OOT test folds beginning at week index 18; no in-sample D1 labels are manufactured.",
+    "status": "D1_OOT_LABEL_BOUNDARY_CORRECTED",
+    "untouched_confirmation": "BASE_WEEKS_48_53",
+    "validation_era45": "BASE_WEEKS_36_47"
+  },
+  "exact_d1_n": 18837,
+  "mode": "predictor",
+  "promotion_performed": false,
+  "protected_mutations": {
+    "canonical_rows": false,
+    "detector": false,
+    "frankie_1": false,
+    "permanent_frankie": false,
+    "runway_clock": false,
+    "spawn_py": false,
+    "ssos_play": false
+  },
+  "result": {
+    "blocks": {
+      "conf": {
+        "auc": 0.6128193729447976,
+        "base_rate": 0.00041044776119402983,
+        "brier": 0.1747386092751446,
+        "n": 26800,
+        "positives": 11,
+        "top_decile_lift": 1.8181818181818183,
+        "top_decile_n": 2680,
+        "top_decile_positive_rate": 0.0007462686567164179
+      },
+      "era45": {
+        "auc": 0.8062028647178957,
+        "base_rate": 0.00044270641186453186,
+        "brier": 0.17655365294082195,
+        "n": 54212,
+        "positives": 24,
+        "top_decile_lift": 4.166051887372433,
+        "top_decile_n": 5422,
+        "top_decile_positive_rate": 0.0018443378827001106
+      },
+      "held": {
+        "auc": 0.8427037022465279,
+        "base_rate": 0.0019241341396371632,
+        "brier": 0.17610817117691932,
+        "n": 3638,
+        "positives": 7,
+        "top_decile_lift": 4.283359497645212,
+        "top_decile_n": 364,
+        "top_decile_positive_rate": 0.008241758241758242
+      }
+    },
+    "guard": "predictor uses only origin canonical characteristics; positive validation is required before any origin-to-descendant long-leg execution research",
+    "long_family": "long",
+    "target": "exact_D1_train_frozen_long_family_vs_all_origins",
+    "train_n": 71772,
+    "train_positive": 90
+  },
+  "status": "EXACT_D1_AGENT_COMPLETE"
+}

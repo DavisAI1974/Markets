@@ -1,0 +1,63 @@
+{
+  "canonical_rows_mutated": false,
+  "chronology": "D1 discovery = first 18 OOT lineage weeks; later 12 + untouched 6 + held validate",
+  "exact_d1_n": 18837,
+  "lane_count": 10,
+  "lanes": [
+    {
+      "bytes": 11916,
+      "path": "research/generated/ng_exhaustion_exact_d1_v2_20260818/NG_EXHAUSTION_EXACT_D1_CAUSAL_AGENT_V2_20260818.json",
+      "sha256": "f1ddeb08cbde29f682203dba26a5843203bab1421c03433246cc63df1869f80b"
+    },
+    {
+      "bytes": 67475,
+      "path": "research/generated/ng_exhaustion_exact_d1_v2_20260818/NG_EXHAUSTION_EXACT_D1_CHOP_AGENT_V2_20260818.json",
+      "sha256": "83f51bde064ee7768286e312daff5ce2226557cf03dd71ce26a6c3eed70e3c47"
+    },
+    {
+      "bytes": 613074,
+      "path": "research/generated/ng_exhaustion_exact_d1_v2_20260818/NG_EXHAUSTION_EXACT_D1_DECOMPOSE_AGENT_V2_20260818.json",
+      "sha256": "9a229fea68525f24cf4662a7110bc37f57af4eb3f9bbf950b2e4e232be2623cf"
+    },
+    {
+      "bytes": 196127,
+      "path": "research/generated/ng_exhaustion_exact_d1_v2_20260818/NG_EXHAUSTION_EXACT_D1_GRAMMAR_AGENT_V2_20260818.json",
+      "sha256": "01469841e92ed8eefeda481479abdd85cc28f5d761af1216930a7601dd2de9e5"
+    },
+    {
+      "bytes": 3704,
+      "path": "research/generated/ng_exhaustion_exact_d1_v2_20260818/NG_EXHAUSTION_EXACT_D1_LIFESPAN_AGENT_V2_20260818.json",
+      "sha256": "e8900fea56975c94ad5866438f25f5de95f2115416258cbbaf795f822f2085bf"
+    },
+    {
+      "bytes": 614444,
+      "path": "research/generated/ng_exhaustion_exact_d1_v2_20260818/NG_EXHAUSTION_EXACT_D1_OUTCOME_AGENT_V2_20260818.json",
+      "sha256": "4839868375b6a92f510d1e4b9fe5f1dc2f3659e271126c9ce06b031aea1adea6"
+    },
+    {
+      "bytes": 2165,
+      "path": "research/generated/ng_exhaustion_exact_d1_v2_20260818/NG_EXHAUSTION_EXACT_D1_PREDICTOR_AGENT_V2_20260818.json",
+      "sha256": "7ae61884a8b8e352bdeefcf2290f4c378fc3ff38828b4852897a3d08d3096bde"
+    },
+    {
+      "bytes": 3733657,
+      "path": "research/generated/ng_exhaustion_exact_d1_v2_20260818/NG_EXHAUSTION_EXACT_D1_PROFIT_AGENT_V2_20260818.json",
+      "sha256": "d3875dc111c7ade7a7ac6b61cab713b57507ac949304800677a1c9aca3ce0716"
+    },
+    {
+      "bytes": 2283073,
+      "path": "research/generated/ng_exhaustion_exact_d1_v2_20260818/NG_EXHAUSTION_EXACT_D1_RAWPATH_AGENT_V2_20260818.json",
+      "sha256": "c1a632618da517b765e92b602e0ae01e8f4e65fbce560c6623447c08caa1bce8"
+    },
+    {
+      "bytes": 257271,
+      "path": "research/generated/ng_exhaustion_exact_d1_v2_20260818/NG_EXHAUSTION_EXACT_D1_REORIGIN_AGENT_V2_20260818.json",
+      "sha256": "07180733454153d20fab50df5769ebefecaf417570fac5774941f960ac82a07c"
+    }
+  ],
+  "permanent_frankie_mutated": false,
+  "promotion_performed": false,
+  "prospective_boundary": "historical profitability ranking nominates only; fresh prospective/OOT evidence required before play freeze",
+  "runway_clock_mutated": false,
+  "status": "EXACT_D1_V2_TEN_LANE_VERIFIED"
+}
