@@ -29,12 +29,12 @@
     },
     {
       "id": "exhaustion.chain.rolling_reorigin_default",
-      "call": "Use a rolling/re-origin state-machine prior. When a new exhaustion forms, treat it as a candidate new checkpoint and require older ancestry to re-earn incremental OOT value before assuming it remains active.",
-      "guard": "Re-origin does not mean ancestry is erased and does not imply automatic exit or reversal."
+      "call": "Use a rolling/re-origin state-machine prior. When a new exhaustion becomes causally established, treat it as a candidate new checkpoint and require older ancestry to re-earn incremental OOT value before assuming it remains active.",
+      "guard": "Re-origin does not mean ancestry is erased and does not imply automatic exit or reversal. Exact detector availability can make a structural successor unsuitable for managing an already-open short parent trade."
     },
     {
       "id": "exhaustion.chain.failed_fold_decompose",
-      "call": "A failed fold or losing subtype is a forensic trigger, not an automatic deletion. Preserve valid instances and decompose before retirement.",
+      "call": "A failed fold or losing subtype is a forensic trigger, not an automatic deletion. Preserve valid true and false instances and decompose before retirement.",
       "retirement_requires": [
         "demonstrated leakage or structural invalidity",
         "repeated independent OOT failure after mechanism decomposition",
@@ -49,6 +49,17 @@
     {
       "id": "exhaustion.chain.reexpression_vs_fresh_reentry",
       "call": "Separate short-lag delayed re-expression of an unresolved thread from a later fresh trusted setup. Recovery by +120/+300 can occur without a new full motif; hours-later trusted reappearance should be attributed as a fresh/re-origin setup unless inherited causality is independently proven."
+    },
+    {
+      "id": "exhaustion.chain.modular_recurrence",
+      "call": "Higher-order chains reuse smaller direction-invariant state/polarity modules across otherwise different full chains. Pair and triplet building blocks can recur even when the whole ancestry does not repeat identically.",
+      "evidence": "Examples inside strict D2+ lineages include PP|S, PO|S, OO|F, OP|F, XP|F and triplets such as PPP|SS and PPX|SS across multiple OOT blocks and held.",
+      "guard": "Module recurrence is a structural lesson, not automatic authorization to trade a listed motif."
+    },
+    {
+      "id": "exhaustion.chain.timing_families",
+      "call": "Chain lifespan has recurring timing families rather than one universal duration. Exact D2 separates into a short body, middle body, and rare long tail; exact D3 has a short body and longer tail. The timing-family mix replicates better than the exact module composition inside each family.",
+      "guard": "Do not turn fitted timing centers into hard live cutoffs; D4/D5 remain too sparse for a stable timing-family doctrine."
     }
   ],
   "provisional_research_memory_do_not_promote_yet": [
@@ -89,10 +100,24 @@
     },
     {
       "id": "exhaustion.management.execute_reset_reenter",
-      "status": "RESEARCH_MANAGEMENT_DOCTRINE_AWAITING_EXACT_LIVE_CHECKPOINT",
-      "call": "Do not withhold an already-valid trade because a future re-origin may occur. Future uncertainty belongs to management: execute known setup, flatten/reset at a causally proven uncertainty checkpoint when justified, and re-enter only if a trusted setup appears again.",
-      "support": "Simple +10/+30 bank-positive proxies did not erase the pre-held broad P-O-X edge and sometimes improved it.",
-      "why_not_promoted": "Exact earliest live successor-recognition/mark-to-market checkpoint has not yet been reproduced under frozen detector/live stream semantics."
+      "status": "RESEARCH_MANAGEMENT_DOCTRINE_POSTEXIT_BOUNDARY_RESOLVED",
+      "call": "Take a valid P-O-X parent trade and let it reach its frozen normal structural endpoint+60 exit. Reset only after exit, then watch and re-enter only when a later trusted SSOS or P-O-X-opposite setup becomes fully causal.",
+      "support": "Among 666 base parents, 496 had a structural successor start strictly before the parent exit, but the frozen source-day threshold makes exact canonical successor identity unavailable before exit in every case; minimum necessary threshold-wall miss was +81 seconds. After exit, 650/666 base parents and 13/13 held parents reached a later trusted target; all first trusted targets were clean on predecessor information availability after reset.",
+      "guard": "Do not invent a synthetic early successor detector or use future canonical identity to manage the open parent."
+    },
+    {
+      "id": "exhaustion.chain.recurrence_atlas_candidates",
+      "status": "RESEARCH_ATLAS_NOT_PLAY_SET",
+      "call": "Reusable causal predecessor motifs exist beyond SSOS/P-O-X, including both continuation-oriented and negative/anti-continuation structures. Preserve them as an atlas for future OOT work, not as frozen plays.",
+      "examples_positive_all_preheld_and_held": ["S->SAME", "X->FLIP", "PS->SAME", "OOS->SAME", "SOS->FLIP", "OSX->FLIP", "OOX->FLIP", "POO->SAME", "XOO->FLIP", "POX->FLIP"],
+      "examples_negative_or_nonpositive": ["OOO->SAME", "SOX->SAME", "XSX->FLIP"],
+      "guard": "This atlas is exploratory and not a multiple-testing-adjusted promotion screen."
+    },
+    {
+      "id": "exhaustion.chain.extension_modules",
+      "status": "STRUCTURAL_EXTENSION_RESEARCH",
+      "call": "Some strict D1 pair modules have above-baseline probability of extending to D2 across chronological blocks. PP|S, XP|F and PP|F are current examples; OP|F is an investigator example because held falls below its unusually high block baseline.",
+      "guard": "Extension propensity is structural lineage information, not an executable entry rule."
     }
   ],
   "frozen_execution_reference_not_brain_promotion": {
@@ -103,20 +128,23 @@
   "explicit_do_not_learn_or_promote": [
     "scratch curve-generator scores or coefficients",
     "a universal D2-or-deeper law from aggregate structural gain",
-    "a universal short/long time cutoff",
+    "a universal short/long time cutoff or Gaussian-mixture timing center as a live rule",
     "the assumption that one fixed origin remains active through every descendant",
     "the assumption that a successor exhaustion automatically requires exit or reversal",
+    "a synthetic early successor identity that the frozen detector cannot know causally",
     "held-week-only filters or exclusions",
     "P or P-O partial prefixes as trade entries",
     "hours-later trusted reappearance as proof of same-origin persistence",
-    "fixed +10/+30 management proxies as permanent rules before exact live checkpoint proof",
+    "fixed +10/+30 management proxies as permanent rules",
+    "specific recurrence-atlas pair/triplet motifs as frozen plays without separate prospective/OOT promotion",
+    "held-selected long-tail module composition as a universal long-chain grammar",
     "P-O-X opposite branch as a frozen play before further prospective/OOT validation"
   ],
   "merge_shape_when_approved": {
     "brain_namespace": "exhaustion/runway + exhaustion/chain",
     "preserve_existing_direction_ownership": true,
     "runway_role": "remaining-authority/hold-length overlay",
-    "chain_role": "rolling higher-order context and re-origin doctrine",
+    "chain_role": "rolling higher-order context, modular recurrence, timing-family context, and re-origin doctrine",
     "execution_plays_stay_separate": true,
     "provenance_required": true
   }
