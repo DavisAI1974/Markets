@@ -1,0 +1,202 @@
+{
+  "base54_paper_metrics": {
+    "eligible_count": 1242,
+    "eligible_frequency": 0.024923743779097767,
+    "eligible_universe_count": 49832,
+    "history_timing_seconds": {
+      "current_onset_offset": {
+        "max": 3584.0,
+        "median": 16.0,
+        "n": 1242,
+        "p25": 7.0,
+        "p75": 29.0
+      },
+      "latest_to_current_t0": {
+        "max": 5295.0,
+        "median": 123.0,
+        "n": 1242,
+        "p25": 94.0,
+        "p75": 202.25
+      },
+      "oldest_to_current_t0": {
+        "max": 9446.0,
+        "median": 467.0,
+        "n": 1242,
+        "p25": 336.25,
+        "p75": 820.5
+      }
+    },
+    "mean": 0.2560386473429938,
+    "mean_negative": -2.2544529262086472,
+    "mean_positive": 2.4031936127744444,
+    "median": 0.0,
+    "n": 1242,
+    "negative_rate": 0.3164251207729469,
+    "positive_rate": 0.4033816425120773,
+    "zero_rate": 0.28019323671497587
+  },
+  "branch": "chatgpt/ng-exhaustion-chain-phase2-20260817",
+  "date": "2026-08-18",
+  "economic_status": {
+    "fees_modeled": false,
+    "gross_only": true,
+    "promotion_allowed": false,
+    "queue_modeled": false,
+    "reason": "All execution frictions are absent and the base54 gross mean is only 0.256 ticks.",
+    "slippage_modeled": false,
+    "spread_modeled": false
+  },
+  "held_week_paper_metrics": {
+    "eligible_count": 27,
+    "eligible_frequency": 0.03268765133171913,
+    "eligible_universe_count": 826,
+    "history_timing_seconds": {
+      "current_onset_offset": {
+        "max": 80.0,
+        "median": 15.0,
+        "n": 27,
+        "p25": 6.5,
+        "p75": 32.5
+      },
+      "latest_to_current_t0": {
+        "max": 527.0,
+        "median": 175.0,
+        "n": 27,
+        "p25": 107.5,
+        "p75": 219.5
+      },
+      "oldest_to_current_t0": {
+        "max": 3515.0,
+        "median": 547.0,
+        "n": 27,
+        "p25": 425.0,
+        "p75": 871.0
+      }
+    },
+    "mean": 0.8148148148148073,
+    "mean_negative": -1.1666666666666121,
+    "mean_positive": 2.0714285714285334,
+    "median": 0.9999999999998899,
+    "n": 27,
+    "negative_rate": 0.2222222222222222,
+    "positive_rate": 0.5185185185185185,
+    "zero_rate": 0.25925925925925924
+  },
+  "invalidation": [
+    "Any one of the four predecessor states is not fully causally available before current t0.",
+    "Current endpoint is censored or not causally confirmed by endpoint+5s.",
+    "A successor exhaustion starts before current endpoint confirmation.",
+    "Current polarity or required trade price is unavailable.",
+    "Any downstream Trader Frankie risk governor, health gate, duplicate gate, account gate, or kill switch rejects the order."
+  ],
+  "learning": {
+    "automatic_cross_venue_learning": false,
+    "automatic_parent_learning": false,
+    "review_only": true
+  },
+  "order_semantics": {
+    "entry_clock": "structural_endpoint_plus_5_seconds",
+    "entry_gate": "causal_confirmation_idx <= structural_onset_idx + 5 and no successor exhaustion began before confirmation",
+    "evaluation_return_ticks": "current_polarity * (P(endpoint+30s) - P(endpoint+5s)) / 0.001",
+    "exit_clock": "structural_endpoint_plus_30_seconds",
+    "holding_period_seconds": 25,
+    "instrument": "NG futures paper path; exact active mapping must be resolved by Trader Frankie T",
+    "side": "LONG if current polarity=+1; SHORT if current polarity=-1"
+  },
+  "play_id": "NG_CHAIN_D4_SSOS_CONTINUATION_V1",
+  "protected_mutations": {
+    "base_54w": false,
+    "frankie_1": false,
+    "frozen_exhaustion_detector": false,
+    "held_week_rows": false,
+    "permanent_frankie": false,
+    "research/kalshi/spawn.py": false,
+    "runway_clock": false
+  },
+  "rolling_origin_check": {
+    "deeper_fifth_predecessor_sensitivity_base54": {
+      "O": {"gross_mean_ticks": 0.0827067669172908, "n": 532},
+      "P": {"gross_mean_ticks": 0.23913043478259685, "n": 92},
+      "S": {"gross_mean_ticks": 0.4250474383301678, "n": 527},
+      "X": {"gross_mean_ticks": 0.30769230769233236, "n": 91}
+    },
+    "deeper_fifth_predecessor_sensitivity_held": {
+      "O": {"gross_mean_ticks": 0.9999999999999787, "n": 10},
+      "P": {"gross_mean_ticks": 0.0, "n": 1},
+      "S": {"gross_mean_ticks": 0.7857142857143261, "n": 14},
+      "X": {"gross_mean_ticks": 0.4999999999997229, "n": 2}
+    },
+    "frozen_play_latest_four_predecessor_states": ["S", "S", "O", "S"],
+    "interpretation": "The SSOS edge keeps the same sign across every deeper predecessor state in the 54-week base and is nonnegative in every held-week deeper-state cell. This supports a rolling/re-origin local mechanism rather than dependence on a unique older origin."
+  },
+  "selection_and_falsification": {
+    "candidate_family": "exact D2-D4 predecessor seed sequences at 30s/60s exits, optionally current-vs-latest polarity relation",
+    "discovery_A_era1_to_era3": {
+      "cell_n": 389,
+      "gross_mean_ticks": 0.39588688946015627,
+      "one_sided_week_delta_p": 0.01564798706145229,
+      "positive_week_delta_rate": 0.6666666666666666,
+      "week_demeaned_delta_mean_ticks": 0.42748422465391056,
+      "weeks": 18
+    },
+    "held_H": {
+      "cell_n": 27,
+      "gross_mean_ticks": 0.8148148148148073,
+      "one_sided_week_delta_p": null,
+      "positive_week_delta_rate": 1.0,
+      "week_demeaned_delta_mean_ticks": 0.8341852748632362,
+      "weeks": 1
+    },
+    "held_exact_circular_shift_p_one_sided": 0.010882708585247884,
+    "replication_B_era4_to_era5": {
+      "cell_n": 306,
+      "gross_mean_ticks": 0.19607843137254627,
+      "one_sided_week_delta_p": 0.24480728784874253,
+      "positive_week_delta_rate": 0.5833333333333334,
+      "week_demeaned_delta_mean_ticks": 0.0920635069742839,
+      "weeks": 12
+    },
+    "stronger_preheld_candidate_killed": {
+      "depth": 3,
+      "exit_horizon_seconds": 60,
+      "held_gross_mean_ticks": -0.23076923076923953,
+      "held_week_demeaned_delta_ticks": -0.20416705422752918,
+      "sequence": ["P", "O", "X"]
+    },
+    "untouched_C": {
+      "cell_n": 131,
+      "gross_mean_ticks": 0.16793893129771173,
+      "one_sided_week_delta_p": 0.12891432810852238,
+      "positive_week_delta_rate": 0.6666666666666666,
+      "week_demeaned_delta_mean_ticks": 0.22044333265399682,
+      "weeks": 6
+    }
+  },
+  "signal": {
+    "availability_rule": "Every predecessor state and the Phase-1 h=60 D4 causal history must be knowable before current t0.",
+    "current_information_forbidden": [
+      "current +60 seed state",
+      "current late +41..+60 flow sign before it exists",
+      "post-entry price",
+      "future successor timing except successor-before-confirmation observed by entry"
+    ],
+    "current_information_used": ["current exhaustion polarity at t0", "dynamic endpoint causal confirmation when it occurs"],
+    "depth": 4,
+    "information_horizon_seconds": 60,
+    "predecessor_seed_states_oldest_to_newest": ["S", "S", "O", "S"]
+  },
+  "source_gate": {
+    "event_count": 235170,
+    "held_week": "20260329",
+    "phase1_final_artifact_id": 9306082330,
+    "phase1_final_digest": "sha256:f17c130df029429bfbc35067d1cc9d16128ca4fb227dd37f3fb4fbb8bbaf8875",
+    "week_count": 55
+  },
+  "state_legend": {
+    "O": "collapsed_opposite_flow_reversal",
+    "P": "persistent_exhaustion",
+    "S": "collapsed_same_flow_reload",
+    "X": "collapsed_sparse_indeterminate"
+  },
+  "status": "FROZEN_PAPER_ONLY_NOT_LIVE_NOT_PERMANENT_FRANKIE"
+}
