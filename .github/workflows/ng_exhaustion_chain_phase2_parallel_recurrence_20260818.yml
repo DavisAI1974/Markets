@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   actions: read
 
 env:
@@ -75,8 +75,6 @@ jobs:
             --summary /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_SUMMARY.json \
             --out "NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_${MODE^^}_20260818.json"
       - name: Verify no promotion boundary crossed
-        env:
-          MODE: ${{ matrix.mode }}
         run: |
           python - <<'PY'
           import glob,json
@@ -95,3 +93,73 @@ jobs:
           name: ng-exhaustion-phase2-recurrence-${{ matrix.mode }}-20260818
           path: NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_*_20260818.json
           if-no-files-found: error
+
+  reconcile-parallel-agents:
+    name: Reconcile four recurrence agents and commit durable outputs
+    needs: recurrence-agent
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-chain-phase2-20260817
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ng-exhaustion-phase2-recurrence-*-20260818
+          path: /tmp/lanes
+      - name: Verify four independent lane outputs
+        run: |
+          set -euo pipefail
+          mkdir -p research/generated/ng_exhaustion_chain_phase2_parallel_20260818
+          python - <<'PY'
+          import glob,hashlib,json,shutil
+          from pathlib import Path
+          paths=sorted(glob.glob('/tmp/lanes/**/NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_*_20260818.json',recursive=True))
+          assert len(paths)==4,paths
+          expected={'pairings','extension','timing','investigator'}
+          modes=set(); files=[]
+          outdir=Path('research/generated/ng_exhaustion_chain_phase2_parallel_20260818')
+          for p in paths:
+              raw=Path(p).read_bytes(); d=json.loads(raw)
+              assert d['status']=='PARALLEL_RECURRENCE_AGENT_COMPLETE',p
+              mode=d['mode']; modes.add(mode)
+              assert d['protected_mutations']['detector'] is False
+              assert d['protected_mutations']['canonical_rows'] is False
+              assert d['protected_mutations']['runway_clock'] is False
+              assert d['protected_mutations']['permanent_frankie'] is False
+              dst=outdir/Path(p).name
+              shutil.copyfile(p,dst)
+              files.append({'mode':mode,'path':str(dst),'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw)})
+          assert modes==expected,(modes,expected)
+          verification={
+              'status':'PARALLEL_RECURRENCE_MATRIX_COMPLETE_VERIFIED',
+              'source_branch':'chatgpt/ng-exhaustion-chain-phase2-20260817',
+              'source_artifacts':{
+                  'base54':{'id':9281733364,'zip_sha256':'f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1'},
+                  'held':{'id':9281272840,'zip_sha256':'21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e'},
+                  'lineage':{'id':9289929292,'zip_sha256':'a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95'},
+                  'reconciliation':{'id':9306082330,'zip_sha256':'f17c130df029429bfbc35067d1cc9d16128ca4fb227dd37f3fb4fbb8bbaf8875'}
+              },
+              'lanes':sorted(files,key=lambda x:x['mode']),
+              'lane_count':4,
+              'permanent_frankie_mutated':False,
+              'runway_clock_mutated':False,
+              'canonical_rows_mutated':False,
+              'promotion_performed':False
+          }
+          (outdir/'VERIFICATION.json').write_text(json.dumps(verification,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(verification,indent=2,sort_keys=True))
+          PY
+      - name: Commit verified parallel outputs
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/generated/ng_exhaustion_chain_phase2_parallel_20260818
+          if git diff --cached --quiet; then
+            echo 'Verified parallel outputs already present.'
+          else
+            git commit -m 'Record verified Phase-2 parallel recurrence outputs'
+            git push origin HEAD:chatgpt/ng-exhaustion-chain-phase2-20260817
+          fi
