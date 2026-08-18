@@ -1,0 +1,234 @@
+name: NG Exhaustion Entry Timing Lane2 All D1 Rawpath 20260818
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/NG_EXHAUSTION_ENTRY_TIMING_LANE2_LAUNCH_20260818.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: us-east-2
+  BUCKET: bento-568968024170-us-east-2-an
+  BASE_ID: '9281733364'
+  BASE_SHA: f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1
+  HELD_ID: '9281272840'
+  HELD_SHA: 21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e
+  LINEAGE_ID: '9289929292'
+  LINEAGE_SHA: a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95
+  RECONCILE_ID: '9306082330'
+  RECONCILE_SHA: f17c130df029429bfbc35067d1cc9d16128ca4fb227dd37f3fb4fbb8bbaf8875
+
+jobs:
+  rawpath-shards:
+    name: Rawpath shard ${{ matrix.shard }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: 0
+            start_ix: 18
+            end_ix: 23
+            held: 'false'
+          - shard: 1
+            start_ix: 24
+            end_ix: 29
+            held: 'false'
+          - shard: 2
+            start_ix: 30
+            end_ix: 35
+            held: 'false'
+          - shard: 3
+            start_ix: 36
+            end_ix: 41
+            held: 'false'
+          - shard: 4
+            start_ix: 42
+            end_ix: 47
+            held: 'false'
+          - shard: 5
+            start_ix: 48
+            end_ix: 53
+            held: 'false'
+          - shard: 6
+            start_ix: 0
+            end_ix: 0
+            held: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet numpy scikit-learn
+      - name: Compile detector-first lane2 runner
+        run: python -m py_compile research/ng_exhaustion_d1_all_rawpath_entry_20260818.py
+      - name: Download and verify immutable sources
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/in/base /tmp/in/held /tmp/in/lineage /tmp/in/reconcile
+          get_artifact () {
+            id="$1"; sha="$2"; zip="$3"; dest="$4"
+            curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" -o "${zip}"
+            echo "${sha}  ${zip}" | sha256sum -c -
+            unzip -q "${zip}" -d "${dest}"
+          }
+          get_artifact "${BASE_ID}" "${BASE_SHA}" /tmp/base.zip /tmp/in/base
+          get_artifact "${HELD_ID}" "${HELD_SHA}" /tmp/held.zip /tmp/in/held
+          get_artifact "${LINEAGE_ID}" "${LINEAGE_SHA}" /tmp/lineage.zip /tmp/in/lineage
+          get_artifact "${RECONCILE_ID}" "${RECONCILE_SHA}" /tmp/reconcile.zip /tmp/in/reconcile
+      - name: Resolve shard weeks
+        env:
+          START_IX: ${{ matrix.start_ix }}
+          END_IX: ${{ matrix.end_ix }}
+          IS_HELD: ${{ matrix.held }}
+        run: |
+          set -euo pipefail
+          if [ "${IS_HELD}" = "true" ]; then
+            echo "WEEKS=20260329" >> "${GITHUB_ENV}"
+          else
+            python - <<'PY' >> "${GITHUB_ENV}"
+          import json,os
+          d=json.load(open('/tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_SUMMARY.json'))
+          a=int(os.environ['START_IX']);b=int(os.environ['END_IX'])
+          weeks=d['weeks'][a:b+1]
+          assert len(weeks)==b-a+1,(a,b,weeks)
+          print('WEEKS='+','.join(weeks))
+          PY
+          fi
+      - name: Materialize exact raw Sunday-Friday files
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ngraw
+          python - <<'PY' > /tmp/days.txt
+          import os
+          from datetime import datetime,timedelta
+          for w in os.environ['WEEKS'].split(','):
+              d=datetime.strptime(w,'%Y%m%d')
+              for i in range(6):
+                  print((d+timedelta(days=i)).strftime('%Y%m%d'))
+          PY
+          while read -r d; do
+            mapfile -t keys < <(aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" \
+              --query 'Contents[].Key' --output text | tr '\t' '\n' | grep -E "NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" | sort -u)
+            if [ "${#keys[@]}" -ne 1 ]; then
+              echo "::error::Expected exactly one raw NG object for ${d}, got ${#keys[@]}: ${keys[*]-}"
+              exit 1
+            fi
+            aws s3 cp "s3://${BUCKET}/${keys[0]}" "/tmp/ngraw/NG_${d}.jsonl.gz" --only-show-errors
+            test -s "/tmp/ngraw/NG_${d}.jsonl.gz"
+          done < /tmp/days.txt
+      - name: Build preserve-all D1 raw paths and detector checkpoints
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/out
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_d1_all_rawpath_entry_20260818.py shard \
+            --base /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz \
+            --held /tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz \
+            --base-lineage /tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz \
+            --held-lineage /tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz \
+            --summary /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_SUMMARY.json \
+            --raw-dir /tmp/ngraw \
+            --weeks "${WEEKS}" \
+            --out-prefix "/tmp/out/NG_EXHAUSTION_D1_ALL_RAWPATH_SHARD_${SHARD}_20260818"
+      - name: Verify shard protection invariants
+        run: |
+          python - <<'PY'
+          import glob,json
+          ps=glob.glob('/tmp/out/*_SUMMARY.json');assert len(ps)==1,ps
+          d=json.load(open(ps[0]))
+          assert d['status']=='D1_ALL_RAWPATH_SHARD_COMPLETE'
+          assert d['clock_priority'].startswith('DETECTOR_KNOWN_FIRST')
+          assert d['causal_entry_price_rule']=='FIRST_TRADE_AT_OR_AFTER_REQUESTED_CHECKPOINT'
+          assert d['checkpoint_grid'][:9]==[0,1,2,3,4,5,10,15,20]
+          assert d['checkpoint_grid'][9:15]==[25,30,35,40,45,50]
+          assert d['checkpoint_grid'][-1]==3600
+          assert not any(d['protected_mutations'].values())
+          print(json.dumps({'d1_rows':d['d1_rows'],'checkpoint_rows':d['checkpoint_rows']},indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-entry-timing-lane2-shard-${{ matrix.shard }}-20260818
+          path: /tmp/out/*
+          if-no-files-found: error
+          retention-days: 14
+
+  merge-lane2:
+    name: Merge all 18837 D1 paths and dense checkpoints
+    needs: rawpath-shards
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet numpy scikit-learn
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ng-exhaustion-entry-timing-lane2-shard-*-20260818
+          path: /tmp/shards
+      - name: Merge, fit discovery-only realized path-shape model, and summarize survivorship
+        run: |
+          set -euo pipefail
+          OUT=research/generated/ng_exhaustion_entry_timing_revival_20260818/lane2_all_d1_rawpath
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_d1_all_rawpath_entry_20260818.py merge \
+            --shard-dir /tmp/shards \
+            --out-dir "${OUT}"
+      - name: Verify preserve-all and detector-first invariants
+        run: |
+          python - <<'PY'
+          import json
+          p='research/generated/ng_exhaustion_entry_timing_revival_20260818/lane2_all_d1_rawpath/NG_EXHAUSTION_D1_ALL_RAWPATH_SUMMARY_20260818.json'
+          d=json.load(open(p))
+          assert d['status']=='D1_ALL_RAWPATH_ENTRY_CLOCK_LANE2_COMPLETE'
+          assert d['forward_exact_d1_n']==18837
+          assert d['filtered_exact_d1_rows']==0
+          assert d['entry_hierarchy'].startswith('DETECTOR_KNOWN_FIRST')
+          assert d['checkpoint_grid'][:9]==[0,1,2,3,4,5,10,15,20]
+          assert d['checkpoint_grid'][9]==25 and d['checkpoint_grid'][10]==30
+          assert all((b-a)==5 for a,b in zip(d['checkpoint_grid'][9:],d['checkpoint_grid'][10:]))
+          assert d['checkpoint_grid'][-1]==3600
+          assert d['causal_entry_price_rule']=='FIRST_TRADE_AT_OR_AFTER_REQUESTED_ENTRY_TIME'
+          assert not any(d['protected_mutations'].values())
+          print(json.dumps({
+            'd1':d['forward_exact_d1_n'],
+            'checkpoint_rows':d['checkpoint_rows'],
+            'detector_precedes_desc':d['detector_clock_precedes_descendant_n'],
+            'full_state_precedes_desc':d['full_state_clock_precedes_descendant_n'],
+            'shape_counts':d['path_shape_model']['shape_counts']
+          },indent=2))
+          PY
+      - name: Commit durable lane2 outputs
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/generated/ng_exhaustion_entry_timing_revival_20260818/lane2_all_d1_rawpath
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record all-D1 detector-first raw paths and dense checkpoints'
+          for i in 1 2 3; do
+            git pull --rebase origin chatgpt/ng-exhaustion-entry-timing-revival-20260818 || true
+            git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818 && exit 0
+            sleep $((i*3))
+          done
+          exit 1
