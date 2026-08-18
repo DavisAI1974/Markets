@@ -6,6 +6,7 @@ on:
       - chatgpt/ng-exhaustion-post-phase2-20260818
     paths:
       - research/ng_exhaustion_chain_postphase2_agents_20260818.py
+      - research/ng_exhaustion_chain_postphase2_agents_v2_20260818.py
       - .github/workflows/ng_exhaustion_postphase2_parallel_agents_20260818.yml
   workflow_dispatch:
 
@@ -61,7 +62,7 @@ jobs:
           MODE: ${{ matrix.mode }}
         run: |
           set -euo pipefail
-          python research/ng_exhaustion_chain_postphase2_agents_20260818.py \
+          python research/ng_exhaustion_chain_postphase2_agents_v2_20260818.py \
             --mode "${MODE}" \
             --base /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz \
             --held /tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz \
