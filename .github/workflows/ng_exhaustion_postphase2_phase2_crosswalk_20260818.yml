@@ -1,0 +1,80 @@
+name: NG Exhaustion PostPhase2 Phase2 Crosswalk 20260818
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-post-phase2-20260818
+    paths:
+      - research/ng_exhaustion_postphase2_phase2_crosswalk_20260818.py
+      - .github/workflows/ng_exhaustion_postphase2_phase2_crosswalk_20260818.yml
+      - research/NG_EXHAUSTION_POSTPHASE2_AGENT_CONTRACT_20260818.md
+      - research/generated/ng_exhaustion_postphase2_agents_20260818/NG_EXHAUSTION_POSTPHASE2_CONTINUATION_AGENT_20260818.json
+      - research/generated/ng_exhaustion_postphase2_agents_20260818/NG_EXHAUSTION_POSTPHASE2_DECOMPOSE_AGENT_20260818.json
+      - research/generated/ng_exhaustion_postphase2_agents_20260818/NG_EXHAUSTION_POSTPHASE2_EXECUTION_AGENT_20260818.json
+      - research/generated/ng_exhaustion_postphase2_agents_20260818/NG_EXHAUSTION_POSTPHASE2_REDTEAM_AGENT_20260818.json
+      - research/generated/ng_exhaustion_postphase2_agents_20260818/NG_EXHAUSTION_POSTPHASE2_CAUSALITY_AGENT_20260818.json
+      - research/generated/ng_exhaustion_postphase2_agents_20260818/NG_EXHAUSTION_POSTPHASE2_SYSTEMATIC_AGENT_20260818.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  BRANCH: chatgpt/ng-exhaustion-post-phase2-20260818
+  OUTDIR: research/generated/ng_exhaustion_postphase2_agents_20260818
+
+jobs:
+  phase2-crosswalk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BRANCH }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run Phase-2 reconciliation lane
+        run: |
+          set -euo pipefail
+          python research/ng_exhaustion_postphase2_phase2_crosswalk_20260818.py \
+            --phase2-freeze research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md \
+            --phase2-all research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md \
+            --phase2-index research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_20260818.md \
+            --phase2-proposal research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json \
+            --continuation ${OUTDIR}/NG_EXHAUSTION_POSTPHASE2_CONTINUATION_AGENT_20260818.json \
+            --decompose ${OUTDIR}/NG_EXHAUSTION_POSTPHASE2_DECOMPOSE_AGENT_20260818.json \
+            --execution ${OUTDIR}/NG_EXHAUSTION_POSTPHASE2_EXECUTION_AGENT_20260818.json \
+            --redteam ${OUTDIR}/NG_EXHAUSTION_POSTPHASE2_REDTEAM_AGENT_20260818.json \
+            --causality ${OUTDIR}/NG_EXHAUSTION_POSTPHASE2_CAUSALITY_AGENT_20260818.json \
+            --systematic ${OUTDIR}/NG_EXHAUSTION_POSTPHASE2_SYSTEMATIC_AGENT_20260818.json \
+            --out ${OUTDIR}/NG_EXHAUSTION_POSTPHASE2_PHASE2_CROSSWALK_AGENT_20260818.json \
+            --out-md research/NG_EXHAUSTION_POSTPHASE2_PHASE2_CROSSWALK_20260818.md
+      - name: Verify crosswalk boundary
+        run: |
+          python - <<'PY'
+          import json
+          p='research/generated/ng_exhaustion_postphase2_agents_20260818/NG_EXHAUSTION_POSTPHASE2_PHASE2_CROSSWALK_AGENT_20260818.json'
+          d=json.load(open(p))
+          assert d['status']=='POST_PHASE2_PHASE2_CROSSWALK_AGENT_COMPLETE'
+          assert d['promotion_performed'] is False
+          assert d['brain_merge_performed'] is False
+          assert all(v is False for v in d['protected_mutations'].values())
+          assert all(d['authoritative_assertions'].values())
+          print(json.dumps({'status':d['status'],'classification_counts':d['classification_counts'],'protocol_violations':d['protocol_violations']},indent=2))
+          PY
+      - name: Commit durable crosswalk outputs
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            ${OUTDIR}/NG_EXHAUSTION_POSTPHASE2_PHASE2_CROSSWALK_AGENT_20260818.json \
+            research/NG_EXHAUSTION_POSTPHASE2_PHASE2_CROSSWALK_20260818.md
+          if git diff --cached --quiet; then
+            echo 'Crosswalk outputs already current.'
+          else
+            git commit -m 'Record post-Phase-2 Phase-2 reconciliation crosswalk'
+            git push origin HEAD:${BRANCH}
+          fi
