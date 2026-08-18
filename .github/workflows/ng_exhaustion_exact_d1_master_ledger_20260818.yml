@@ -1,0 +1,99 @@
+name: NG Exhaustion Exact D1 Preserve-All Master Ledger 20260818
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-post-phase2-20260818
+    paths:
+      - research/NG_EXHAUSTION_EXACT_D1_PRESERVE_ALL_ADDENDUM_20260818.md
+      - research/ng_exhaustion_exact_d1_master_ledger_20260818.py
+      - research/ng_exhaustion_exact_d1_agents_v2_20260818.py
+      - .github/workflows/ng_exhaustion_exact_d1_master_ledger_20260818.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  BASE_ID: '9281733364'
+  BASE_SHA: f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1
+  HELD_ID: '9281272840'
+  HELD_SHA: 21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e
+  LINEAGE_ID: '9289929292'
+  LINEAGE_SHA: a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95
+  RECONCILE_ID: '9306082330'
+  RECONCILE_SHA: f17c130df029429bfbc35067d1cc9d16128ca4fb227dd37f3fb4fbb8bbaf8875
+
+jobs:
+  master-ledger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-post-phase2-20260818
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet numpy scikit-learn
+      - name: Download and verify immutable sources
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/in/base /tmp/in/held /tmp/in/lineage /tmp/in/reconcile
+          get_artifact () {
+            id="$1"; sha="$2"; zip="$3"; dest="$4"
+            curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" -o "${zip}"
+            echo "${sha}  ${zip}" | sha256sum -c -
+            unzip -q "${zip}" -d "${dest}"
+          }
+          get_artifact "${BASE_ID}" "${BASE_SHA}" /tmp/base.zip /tmp/in/base
+          get_artifact "${HELD_ID}" "${HELD_SHA}" /tmp/held.zip /tmp/in/held
+          get_artifact "${LINEAGE_ID}" "${LINEAGE_SHA}" /tmp/lineage.zip /tmp/in/lineage
+          get_artifact "${RECONCILE_ID}" "${RECONCILE_SHA}" /tmp/reconcile.zip /tmp/in/reconcile
+      - name: Build complete exact-D1 ledger
+        run: |
+          set -euo pipefail
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_exact_d1_master_ledger_20260818.py \
+            --base /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz \
+            --held /tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz \
+            --base-lineage /tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz \
+            --held-lineage /tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz \
+            --summary /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_SUMMARY.json \
+            --out-summary NG_EXHAUSTION_EXACT_D1_MASTER_LEDGER_SUMMARY_20260818.json \
+            --out-ledger NG_EXHAUSTION_EXACT_D1_MASTER_LEDGER_20260818.jsonl.gz
+      - name: Verify preserve-all invariant
+        run: |
+          python - <<'PY'
+          import gzip,json
+          s=json.load(open('NG_EXHAUSTION_EXACT_D1_MASTER_LEDGER_SUMMARY_20260818.json'))
+          assert s['status']=='EXACT_D1_MASTER_LEDGER_COMPLETE'
+          assert s['preserve_all_policy'] is True
+          assert s['exact_d1_n']>0
+          assert not s['promotion_performed']
+          assert not any(s['protected_mutations'].values())
+          n=sum(1 for _ in gzip.open('NG_EXHAUSTION_EXACT_D1_MASTER_LEDGER_20260818.jsonl.gz','rt'))
+          assert n==s['exact_d1_n'],(n,s['exact_d1_n'])
+          print({'exact_d1_n':n,'elapsed_seconds':s['elapsed_seconds'],'duration_family_counts':s['duration_family_counts']})
+          PY
+      - name: Commit durable preserve-all ledger
+        run: |
+          set -euo pipefail
+          mkdir -p research/generated/ng_exhaustion_exact_d1_master_20260818
+          cp NG_EXHAUSTION_EXACT_D1_MASTER_LEDGER_SUMMARY_20260818.json research/generated/ng_exhaustion_exact_d1_master_20260818/
+          cp NG_EXHAUSTION_EXACT_D1_MASTER_LEDGER_20260818.jsonl.gz research/generated/ng_exhaustion_exact_d1_master_20260818/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/generated/ng_exhaustion_exact_d1_master_20260818
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record preserve-all exact-D1 master ledger'
+          for i in 1 2 3; do
+            git pull --rebase origin chatgpt/ng-exhaustion-post-phase2-20260818 || true
+            git push origin HEAD:chatgpt/ng-exhaustion-post-phase2-20260818 && exit 0
+            sleep $((i*3))
+          done
+          exit 1
