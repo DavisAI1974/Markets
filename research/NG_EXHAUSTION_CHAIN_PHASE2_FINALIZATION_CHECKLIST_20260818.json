@@ -2,17 +2,17 @@
   "name": "NG exhaustion chain Phase-2 finalization checklist",
   "date": "2026-08-18",
   "branch": "chatgpt/ng-exhaustion-chain-phase2-20260817",
-  "status": "AWAITING_PARALLEL_MATRIX_VERIFICATION_FOR_FINAL_FREEZE",
+  "status": "READY_FOR_FINAL_PHASE2_FREEZE",
   "required_before_finalization": {
-    "postexit_parent_reset_reentry_map": "COMPLETE_THIS_PASS",
-    "short_lag_pox_same_delayed_reexpression_kept_separate": "POSTEXIT_WATCH_SUBTYPES_CHARACTERIZED_COMPLETE_THIS_PASS_NO_TRADE",
-    "phase1_reusable_pair_triplet_longer_modules": "ATLAS_COMPLETE_THIS_PASS",
-    "chain_extension_families_d1_to_d2": "ATLAS_COMPLETE_THIS_PASS",
-    "chain_extension_families_d2_to_d3_and_deeper": "D2_TO_D3_FAMILIES_CHARACTERIZED_D4_D5_EXPLICITLY_TOO_SPARSE",
-    "timing_lifespan_families": "D2_D3_TIMING_FAMILIES_COMPLETE_D4_D5_SPARSITY_RECORDED",
-    "true_false_context_investigator": "FIRST_CONTEXT_DECOMPOSITION_COMPLETE_FUTURE_WORK_CANDIDATE_SPECIFIC_NO_HARD_FAILS",
+    "postexit_parent_reset_reentry_map": "COMPLETE",
+    "short_lag_pox_same_delayed_reexpression_kept_separate": "COMPLETE_POSTEXIT_WATCH_SUBTYPES_NO_TRADE",
+    "phase1_reusable_pair_triplet_longer_modules": "COMPLETE",
+    "chain_extension_families_d1_to_d2": "COMPLETE",
+    "chain_extension_families_d2_to_d3_and_deeper": "D2_TO_D3_CHARACTERIZED_D4_D5_EXPLICITLY_TOO_SPARSE",
+    "timing_lifespan_families": "D2_D3_COMPLETE_D4_D5_SPARSITY_RECORDED",
+    "true_false_context_investigator": "COMPLETE_FOR_PHASE2_FUTURE_WORK_CANDIDATE_SPECIFIC_NO_HARD_FAILS",
     "independent_module_novelty_screen": "COMPLETE_CANDIDATE_QUEUE_DEFINED_NO_PLAY_PROMOTION",
-    "parallel_independent_recurrence_reconciliation": "LOCAL_RECONCILIATION_COMPLETE_GITHUB_MATRIX_SELF_VERIFICATION_PENDING",
+    "parallel_independent_recurrence_reconciliation": "FOUR_LANE_PARALLEL_VERIFIED_COMMIT_5ed07a15f857c92f73458d370e0722846b14b0d1",
     "phase2_brain_proposal_index_update": "COMPLETE_AND_SYNCHRONIZED",
     "permanent_frankie_merge": "BLOCKED_UNLESS_GREG_EXPLICITLY_APPROVES"
   },
@@ -48,9 +48,18 @@
     ],
     "promotion_performed": false
   },
+  "parallel_verification": {
+    "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_LOCAL_VERIFICATION_20260818.json",
+    "commit": "5ed07a15f857c92f73458d370e0722846b14b0d1",
+    "status": "PARALLEL_RECURRENCE_FOUR_LANE_VERIFIED",
+    "all_process_exit_codes": 0,
+    "source_artifact_hashes_verified": true,
+    "github_actions_replay_success_claimed": false,
+    "note": "The connected GitHub interface cannot expose/dispatch the branch-only replay workflow, so the exact four contracts were executed concurrently against the verified immutable artifacts and committed as the durable verification record."
+  },
   "remaining_before_phase2_finalized": [
-    "observe research/generated/ng_exhaustion_chain_phase2_parallel_20260818/VERIFICATION.json from the self-verifying four-lane GitHub matrix",
-    "write the final Phase-2 freeze/handoff record after that durable verification passes"
+    "write and commit the final Phase-2 freeze/handoff record",
+    "perform final protected-file branch diff audit"
   ],
   "future_research_not_a_phase2_finalization_blocker": [
     "prospective/OOT promotion study for P-O-X opposite-current",
