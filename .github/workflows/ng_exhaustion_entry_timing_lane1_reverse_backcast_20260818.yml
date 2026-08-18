@@ -1,0 +1,109 @@
+name: NG Exhaustion Entry Timing Lane1 Reverse Backcast 20260818
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/NG_EXHAUSTION_ENTRY_TIMING_LANE1_LAUNCH_20260818.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  BASE_ID: '9281733364'
+  BASE_SHA: f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1
+  HELD_ID: '9281272840'
+  HELD_SHA: 21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e
+  LINEAGE_ID: '9289929292'
+  LINEAGE_SHA: a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95
+  RECONCILE_ID: '9306082330'
+  RECONCILE_SHA: f17c130df029429bfbc35067d1cc9d16128ca4fb227dd37f3fb4fbb8bbaf8875
+
+jobs:
+  reverse-backcast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet numpy scipy scikit-learn
+      - name: Compile runner
+        run: python -m py_compile research/ng_exhaustion_d1_reverse_backcast_20260818.py
+      - name: Download and verify immutable sources
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/in/base /tmp/in/held /tmp/in/lineage /tmp/in/reconcile
+          get_artifact () {
+            id="$1"; sha="$2"; zip="$3"; dest="$4"
+            curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" -o "${zip}"
+            echo "${sha}  ${zip}" | sha256sum -c -
+            unzip -q "${zip}" -d "${dest}"
+          }
+          get_artifact "${BASE_ID}" "${BASE_SHA}" /tmp/base.zip /tmp/in/base
+          get_artifact "${HELD_ID}" "${HELD_SHA}" /tmp/held.zip /tmp/in/held
+          get_artifact "${LINEAGE_ID}" "${LINEAGE_SHA}" /tmp/lineage.zip /tmp/in/lineage
+          get_artifact "${RECONCILE_ID}" "${RECONCILE_SHA}" /tmp/reconcile.zip /tmp/in/reconcile
+      - name: Run structurally faithful reverse labeler
+        run: |
+          set -euo pipefail
+          OUT=research/generated/ng_exhaustion_entry_timing_revival_20260818/lane1_reverse_backcast
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_d1_reverse_backcast_20260818.py \
+            --base /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz \
+            --held /tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz \
+            --base-lineage /tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz \
+            --held-lineage /tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz \
+            --out-dir "${OUT}"
+      - name: Verify fail-closed invariants
+        run: |
+          python - <<'PY'
+          import gzip,json
+          from pathlib import Path
+          p=Path('research/generated/ng_exhaustion_entry_timing_revival_20260818/lane1_reverse_backcast/NG_EXHAUSTION_D1_REVERSE_BACKCAST_20260818.json')
+          d=json.load(open(p))
+          assert d['method']=='STRUCTURALLY_FAITHFUL_REVERSE_INCREMENTAL_GAIN_LABELER'
+          assert d['membership_target_only'] is True
+          assert d['profit_used_for_membership'] is False
+          assert d['realized_duration_used_for_membership'] is False
+          assert d['promotion_performed'] is False
+          assert not any(d['protected_mutations'].values())
+          rp=Path(d['backcast_rows_path'])
+          n=0
+          with gzip.open(rp,'rt') as f:
+              for line in f:
+                  r=json.loads(line); n+=1
+                  assert r['label_source']=='REVERSE_BACKCAST_NOT_FORWARD_OOT'
+                  assert r['forward_oot_validation_credit'] is False
+                  assert r['phase1_lineage_rewritten'] is False
+          if d['overall_gate_passed']:
+              assert d['status']=='D1_REVERSE_BACKCAST_APPLIED'
+              assert n==d['backcast']['candidate_exact_d1_n']
+          else:
+              assert d['status']=='D1_REVERSE_BACKCAST_GATE_FAILED_NO_ROWS_APPLIED'
+              assert n==0
+          print(json.dumps({'status':d['status'],'gate':d['overall_gate_passed'],'backcast_rows':n},indent=2))
+          PY
+      - name: Commit durable lane1 result
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/generated/ng_exhaustion_entry_timing_revival_20260818/lane1_reverse_backcast
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record D1 reverse-backcast lane1 result'
+          for i in 1 2 3; do
+            git pull --rebase origin chatgpt/ng-exhaustion-entry-timing-revival-20260818 || true
+            git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818 && exit 0
+            sleep $((i*3))
+          done
+          exit 1
