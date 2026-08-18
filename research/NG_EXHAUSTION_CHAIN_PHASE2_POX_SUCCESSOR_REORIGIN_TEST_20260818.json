@@ -1,0 +1,85 @@
+{
+  "name": "NG exhaustion chain Phase-2 P-O-X successor re-origin test",
+  "date": "2026-08-18",
+  "branch": "chatgpt/ng-exhaustion-chain-phase2-20260817",
+  "status": "SUCCESSOR_REORIGIN_SUPPORTED_NO_UNIVERSAL_EXIT_RULE",
+  "question": "After a causally valid P-O-X current event, does the first successor exhaustion still behave as though the older P-O-X branch is inherited, or does it act more like a fresh/re-origin state?",
+  "successor_own_trade_population": {
+    "definition": "First structural successor after a valid P-O-X current event, requiring the successor itself to satisfy endpoint+5 causal confirmation so its endpoint+5 to +30/+60 oriented return is executable.",
+    "total": 467,
+    "eras_1_to_3": 151,
+    "eras_4_to_5": 85,
+    "untouched_confirmation": 58,
+    "held_20260329": 9,
+    "pre_discovery_training": 164
+  },
+  "successor_plus60_mean_by_parent_branch_and_successor_relation": {
+    "eras_1_to_3": {
+      "parent_opposite_successor_flip": {"n": 45, "mean_ticks": -0.44444444444448433},
+      "parent_opposite_successor_same": {"n": 28, "mean_ticks": -0.285714285714286},
+      "parent_same_successor_flip": {"n": 40, "mean_ticks": -0.3749999999999809},
+      "parent_same_successor_same": {"n": 38, "mean_ticks": 0.28947368421055286}
+    },
+    "eras_4_to_5": {
+      "parent_opposite_successor_flip": {"n": 23, "mean_ticks": -0.08695652173914016},
+      "parent_opposite_successor_same": {"n": 18, "mean_ticks": 0.0},
+      "parent_same_successor_flip": {"n": 27, "mean_ticks": 0.07407407407406591},
+      "parent_same_successor_same": {"n": 17, "mean_ticks": 0.7647058823530137}
+    },
+    "untouched_confirmation": {
+      "parent_opposite_successor_flip": {"n": 15, "mean_ticks": 0.6666666666667117},
+      "parent_opposite_successor_same": {"n": 16, "mean_ticks": -0.812500000000077},
+      "parent_same_successor_flip": {"n": 17, "mean_ticks": 0.05882352941178435},
+      "parent_same_successor_same": {"n": 10, "mean_ticks": -0.29999999999992255}
+    },
+    "held_20260329": {
+      "parent_opposite_successor_flip": {"n": 2, "mean_ticks": -2.4999999999999467},
+      "parent_opposite_successor_same": {"n": 1, "mean_ticks": 0.0},
+      "parent_same_successor_flip": {"n": 4, "mean_ticks": -0.9999999999998899},
+      "parent_same_successor_same": {"n": 2, "mean_ticks": 0.9999999999998899}
+    }
+  },
+  "inheritance_result": {
+    "stable_parent_branch_effect_on_successor_plus60": false,
+    "stable_quadrant_across_all_blocks": false,
+    "interpretation": "Once the first successor becomes its own exhaustion event, its endpoint+60 continuation is not stably determined by the older P-O-X branch or by the parent-branch x successor-polarity quadrant. Signs change across chronological blocks. This supports treating the successor as a re-origin checkpoint rather than assuming unchanged P-O-X inheritance."
+  },
+  "successor_state_distribution": {
+    "note": "Successor seed state is descriptive and is not known at successor t0; it is used only to characterize the transition, not to select an original entry.",
+    "eras_1_to_3_parent_opposite": {"P": 0.311, "O": 0.243, "X": 0.233, "S": 0.214},
+    "eras_1_to_3_parent_same": {"O": 0.311, "P": 0.274, "X": 0.217, "S": 0.198},
+    "eras_4_to_5_parent_opposite": {"O": 0.323, "P": 0.292, "S": 0.200, "X": 0.185},
+    "eras_4_to_5_parent_same": {"P": 0.440, "X": 0.227, "O": 0.213, "S": 0.120},
+    "confirmation_parent_opposite": {"O": 0.308, "X": 0.282, "P": 0.256, "S": 0.154},
+    "confirmation_parent_same": {"O": 0.436, "P": 0.282, "S": 0.154, "X": 0.128},
+    "interpretation": "There is no single successor-state distribution signature that remains fixed by the older P-O-X branch across eras."
+  },
+  "dynamic_exit_at_successor_confirmation": {
+    "definition": "For a successor that begins before the original P-O-X +60 exit and is itself confirmed by successor endpoint+5 before that original exit, close the original position at successor endpoint+5. This uses only information observable by the dynamic exit time.",
+    "eligible_total": 145,
+    "mean_improvement_vs_fixed_plus60": {
+      "eras_1_to_3_parent_opposite": 0.0,
+      "eras_1_to_3_parent_same": -0.2727272727273,
+      "eras_4_to_5_parent_opposite": -0.4615384615385,
+      "eras_4_to_5_parent_same": -0.1111111111111,
+      "confirmation_parent_opposite": 0.0,
+      "confirmation_parent_same": 0.0909090909091,
+      "held_parent_opposite": 0.0,
+      "held_parent_same": 0.0
+    },
+    "universal_exit_improves": false,
+    "interpretation": "Re-origin does not mean 'always close at the next exhaustion.' A universal successor-confirmation exit is not consistently better than the fixed +60 path. The next exhaustion should be a causal state checkpoint whose action still needs to be learned."
+  },
+  "mechanism_conclusion": "P-O-X ancestry matters before the current event, but once the next exhaustion forms, the evidence favors a rolling state-machine interpretation: the successor is a new/re-origin checkpoint. The old chain should not automatically be assumed to remain inherited, and the successor should not automatically force an exit either.",
+  "next_test": "At each successor checkpoint, compare continue/reset/reverse/stand-down decisions using only state observable at that checkpoint, and test whether any older P-O-X information adds OOT value beyond the successor's own immediately available state. This is the direct inherited-origin versus re-origin test for the next link.",
+  "protected_mutations": {
+    "frozen_exhaustion_detector": false,
+    "base_54w": false,
+    "held_week_rows": false,
+    "runway_clock": false,
+    "permanent_frankie": false,
+    "frankie_1": false,
+    "research/kalshi/spawn.py": false,
+    "ssos_frozen_paper_play": false
+  }
+}
