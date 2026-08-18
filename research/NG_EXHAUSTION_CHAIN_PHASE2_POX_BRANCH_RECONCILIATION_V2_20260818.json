@@ -1,0 +1,150 @@
+{
+  "name": "NG exhaustion chain Phase-2 P-O-X branch reconciliation v2",
+  "date": "2026-08-18",
+  "branch": "chatgpt/ng-exhaustion-chain-phase2-20260817",
+  "status": "POX_ACTIVE_BRANCH_MECHANISM_RECONCILED_NOT_PROMOTED",
+  "disposition": {
+    "broad_pox": "ACTIVE_KEEP_ALL_VALID_INSTANCES",
+    "x_to_opposite_current": "PRIORITY_EXECUTABLE_CANDIDATE_NOT_FROZEN",
+    "x_to_same_current": "ACTIVE_TIMING_REORIGIN_BRANCH_UNDER_REVIEW",
+    "automatic_instance_deletion": false,
+    "removed_valid_instances": 0,
+    "rule": "A failed fold or losing instance is preserved and decomposed. It is not deleted merely because it conflicts with an aggregate candidate mean."
+  },
+  "source_population": {
+    "base54_valid_pox_instances": 666,
+    "held_20260329_valid_pox_instances": 13,
+    "base54_plus_held_valid_pox_instances": 679,
+    "held_negative": 5,
+    "held_zero": 5,
+    "held_positive": 3
+  },
+  "predeclared_current_vs_latest_polarity_branch": {
+    "note": "Current-vs-latest predecessor polarity relation was already permitted in the original Phase-2 candidate family and is known at current t0.",
+    "x_to_opposite_current": {
+      "eras_1_to_3": {"n": 103, "gross_mean_ticks": 0.5825242718446649},
+      "eras_4_to_5": {"n": 65, "gross_mean_ticks": 0.10769230769234366},
+      "untouched_confirmation": {"n": 39, "gross_mean_ticks": 0.41025641025638787},
+      "held_20260329": {"n": 6, "gross_mean_ticks": 0.500000000000019, "negative_count": 0},
+      "combined_preheld_36_oot_weeks": {
+        "n": 207,
+        "gross_mean_ticks": 0.4009661835748887,
+        "same_week_demeaned_delta_ticks": 0.34023950449704193,
+        "positive_week_delta_rate": 0.6666666666666666,
+        "week_sign_flip_p_one_sided": 0.012154939225303873
+      },
+      "held_exact_same_week_circular_shift_p_one_sided": 0.2971014492753623,
+      "interpretation": "This branch remains positive in gross mean in discovery, replication, untouched confirmation, and held insertion. The held sample is small and the exact held shift alone is not promotion-grade, so the branch is prioritized but not frozen."
+    },
+    "x_to_same_current": {
+      "eras_1_to_3": {"n": 106, "gross_mean_ticks": 0.28301886792454745},
+      "eras_4_to_5": {"n": 75, "gross_mean_ticks": 0.27999999999999287},
+      "untouched_confirmation": {"n": 39, "gross_mean_ticks": 0.48717948717947906},
+      "held_20260329": {"n": 7, "gross_mean_ticks": -0.8571428571428896, "negative_count": 5},
+      "combined_preheld_36_oot_weeks": {
+        "n": 220,
+        "gross_mean_ticks": 0.3181818181818235,
+        "same_week_demeaned_delta_ticks": 0.26138230247056105,
+        "positive_week_delta_rate": 0.6944444444444444,
+        "week_sign_flip_p_one_sided": 0.15455422722886386
+      },
+      "interpretation": "The held reversal is concentrated here, but the branch was positive in every pre-held aggregate block. It remains active and must not be erased."
+    },
+    "held_branch_difference_exact_label_permutation": {
+      "opposite_minus_same_mean_ticks": 1.3571428571429087,
+      "assignments": 1716,
+      "p_one_sided": 0.023878858474082703,
+      "p_two_sided": 0.045428072218986607,
+      "interpretation": "Within the held week, the polarity-resolution fork is structured rather than a uniform P-O-X failure. This is forensic evidence, not a held-selected promotion rule."
+    }
+  },
+  "held_path_from_entry_plus5": {
+    "x_to_opposite_current_mean_ticks": {
+      "plus10": 0.0,
+      "plus20": 0.1666666666666483,
+      "plus30": 0.3333333333333706,
+      "plus60": 0.500000000000019,
+      "plus120": 0.8333333333333144,
+      "plus300": 0.0
+    },
+    "x_to_same_current_mean_ticks": {
+      "plus10": 0.0,
+      "plus20": -0.2857142857142542,
+      "plus30": -0.7142857142856991,
+      "plus60": -0.8571428571428896,
+      "plus120": -0.2857142857143177,
+      "plus300": 0.5714285714285084
+    },
+    "interpretation": "The held same-polarity branch is a timing/state-transition anomaly: adverse expression develops after +10, is worst around +60, then the aggregate turns positive again by +300. The branch is not accurately described as simply absent."
+  },
+  "same_branch_delayed_reexpression": {
+    "held_negative_at_plus60": 5,
+    "held_negative_at_plus60_nonnegative_by_plus300": 4,
+    "held_negative_at_plus60_positive_by_plus300": 2,
+    "preheld_negative_at_plus60": 57,
+    "preheld_negative_at_plus60_nonnegative_by_plus300": 18,
+    "fisher_exact_two_sided_for_nonnegative_recovery_rate_difference": 0.04928664834286868,
+    "interpretation": "Exploratory only: held same-branch losses were unusually likely to recover to nonnegative by +300 versus prior negative-at-60 same-branch cases. This supports a delayed/re-origin interpretation but is not a new trade rule."
+  },
+  "successor_reorigin": {
+    "held_same_branch_negative_cases_with_successor_before_plus60_exit": 5,
+    "successor_before_exit_is_universal_invalidation": false,
+    "reason": "Historically, successor-before-exit cases can still be positive; successor onset and polarity interact with the branch. A successor is better treated as an observable state transition once it occurs, not leaked into original entry selection.",
+    "held_same_branch_negative_plus60_successor_traces": [
+      {"event_id": "20260329-082537--1", "plus60": -2.0, "plus300": 3.0, "successor_sequence_first_four": ["flip:O", "flip:S", "same:O", "same:O"]},
+      {"event_id": "20260329-266248-+1", "plus60": -1.0, "plus300": 0.0, "successor_sequence_first_four": ["flip:X", "same:S", "flip:O", "same:P"]},
+      {"event_id": "20260329-355566-+1", "plus60": -1.0, "plus300": 1.0, "successor_sequence_first_three": ["same:X", "same:P", "same:P"]},
+      {"event_id": "20260329-378140--1", "plus60": -1.0, "plus300": 0.0, "successor_sequence_first_four": ["same:O", "flip:S", "same:X", "same:X"]},
+      {"event_id": "20260329-378928--1", "plus60": -2.0, "plus300": -3.0, "successor_sequence_first_four": ["flip:S", "same:S", "same:O", "flip:S"]}
+    ]
+  },
+  "absolute_polarity_exploration": {
+    "status": "POSTHOC_HYPOTHESIS_ONLY_NOT_PROMOTABLE_FROM_THIS_ANALYSIS",
+    "x_to_opposite_current_down": {
+      "eras_1_to_3_mean": 0.6964285714285899,
+      "eras_4_to_5_mean": 0.17948717948720527,
+      "untouched_confirmation_mean": 0.6500000000000172,
+      "held_mean": 0.6000000000000227,
+      "held_n": 5,
+      "polarity_conditioned_same_week_delta_means": {
+        "eras_1_to_3": 0.626,
+        "eras_4_to_5": 0.104,
+        "untouched_confirmation": 0.703,
+        "held": 0.619
+      }
+    },
+    "x_to_same_current_down": {
+      "eras_1_to_3_mean": 0.216666666666702,
+      "eras_4_to_5_mean": 0.0,
+      "untouched_confirmation_mean": -0.23076923076927366,
+      "held_mean": -1.6666666666666312,
+      "held_n": 3
+    },
+    "interpretation": "The DOWN same-polarity branch was already weakening before the held week, while the DOWN opposite-polarity branch stayed positive. Because absolute-polarity subdivision was not the predeclared branch used for the original candidate disposition, this is a hypothesis for future OOT validation, not a frozen rule."
+  },
+  "preentry_discriminator_search": {
+    "status": "NO_CLEAN_SIMPLE_FILTER_FOUND",
+    "method": "Exploratory univariate threshold scan on causal-at-entry current timing/detector fields plus fully available predecessor timing, flow, book, prominence, and post-end history. Thresholds were chosen only from Eras 1-3 quantiles and inspected on Eras 4-5, untouched confirmation, then held.",
+    "candidate_rules_tested": 444,
+    "replicated_positive_in_eras_1_to_3_eras_4_to_5_and_confirmation": 395,
+    "held_positive_rules_with_at_least_two_held_instances": 0,
+    "interpretation": "There is no defensible simple pre-entry carve-out that labels the held same-branch losses invalid. The losing instances must remain in the evidence."
+  },
+  "next_research_contract": {
+    "keep_all_valid_pox_instances": true,
+    "priority_candidate": "P,O,X plus current polarity opposite latest X polarity",
+    "same_branch_task": "Model short adverse phase versus delayed/re-origin expression without using held-selected exclusions.",
+    "successor_task": "Treat each observed successor exhaustion as a new causal state-transition checkpoint and test reset/continue/reverse semantics prospectively.",
+    "promotion_boundary": "No P-O-X branch is promoted into the frozen paper-play set from this forensic pass alone."
+  },
+  "protected_mutations": {
+    "frozen_exhaustion_detector": false,
+    "base_54w": false,
+    "held_week_rows": false,
+    "runway_clock": false,
+    "permanent_frankie": false,
+    "frankie_1": false,
+    "research/kalshi/spawn.py": false,
+    "ssos_frozen_paper_play": false
+  }
+}
