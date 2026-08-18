@@ -1,5 +1,5 @@
 {
-  "status": "AUTHORIZED_LANE2_ALL_D1_RAWPATH_LAUNCH",
+  "status": "AUTHORIZED_LANE2_ALL_D1_RAWPATH_RELAUNCH_AFTER_CLOSURE_PLUMBING_FIX",
   "date": "2026-08-18",
   "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
   "population": "ALL_18837_FROZEN_FORWARD_OOT_EXACT_D1",
@@ -13,5 +13,7 @@
   "drop_detector_after_descendant_cases": false,
   "realized_path_shape_is_causal_input": false,
   "promotion_authorized": false,
-  "protected_component_mutation_authorized": false
+  "protected_component_mutation_authorized": false,
+  "relaunch_reason": "RAW_MATERIALIZATION_NOW_HONORS_FROZEN_EXCHANGE_CLOSURE_WITNESS_WITHOUT_SYNTHETIC_FILES",
+  "research_logic_changed": false
 }
