@@ -1,0 +1,119 @@
+name: NG Exhaustion Entry Timing Lane4 Fallback First Crossing 20260818
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/NG_EXHAUSTION_ENTRY_TIMING_LANE4_FALLBACK_LAUNCH_20260818.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  BASE_ID: '9281733364'
+  BASE_SHA: f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1
+  HELD_ID: '9281272840'
+  HELD_SHA: 21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e
+
+jobs:
+  lane4-fallback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet numpy scikit-learn
+      - name: Compile dense fallback agent
+        run: |
+          python -m py_compile research/ng_exhaustion_d1_plus0_profitability_20260818.py
+          python -m py_compile research/ng_exhaustion_d1_fallback_first_crossing_20260818.py
+      - name: Download and verify immutable canonical sources
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/in/base /tmp/in/held
+          get_artifact () {
+            id="$1"; sha="$2"; zip="$3"; dest="$4"
+            curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" -o "${zip}"
+            echo "${sha}  ${zip}" | sha256sum -c -
+            unzip -q "${zip}" -d "${dest}"
+          }
+          get_artifact "${BASE_ID}" "${BASE_SHA}" /tmp/base.zip /tmp/in/base
+          get_artifact "${HELD_ID}" "${HELD_SHA}" /tmp/held.zip /tmp/in/held
+      - name: Require completed lane2 and lane3 outputs
+        run: |
+          set -euo pipefail
+          L2=research/generated/ng_exhaustion_entry_timing_revival_20260818/lane2_all_d1_rawpath
+          L3=research/generated/ng_exhaustion_entry_timing_revival_20260818/lane3_plus0_profitability
+          test -s "${L2}/NG_EXHAUSTION_D1_ALL_DETECTOR_CHECKPOINTS_20260818.jsonl.gz"
+          test -s "${L3}/NG_EXHAUSTION_D1_PLUS0_EARLY_ENTRY_SUMMARY_20260818.json"
+          test -s "${L3}/NG_EXHAUSTION_D1_PLUS0_EARLY_ENTRY_ROWS_20260818.jsonl.gz"
+          python - <<'PY'
+          import json
+          l3=json.load(open('research/generated/ng_exhaustion_entry_timing_revival_20260818/lane3_plus0_profitability/NG_EXHAUSTION_D1_PLUS0_EARLY_ENTRY_SUMMARY_20260818.json'))
+          assert l3['status']=='D1_PLUS0_EARLY_ENTRY_COMPLETE'
+          assert l3['population']['forward_exact_d1_n']==18837
+          assert l3['clock']=='DETECTOR_CONFIRMATION_IS_PLUS0'
+          PY
+      - name: Run dense fallback first-crossing test
+        run: |
+          set -euo pipefail
+          L2=research/generated/ng_exhaustion_entry_timing_revival_20260818/lane2_all_d1_rawpath
+          L3=research/generated/ng_exhaustion_entry_timing_revival_20260818/lane3_plus0_profitability
+          OUT=research/generated/ng_exhaustion_entry_timing_revival_20260818/lane4_fallback_first_crossing
+          python research/ng_exhaustion_d1_fallback_first_crossing_20260818.py \
+            --base /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz \
+            --held /tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz \
+            --lane2-checkpoints "${L2}/NG_EXHAUSTION_D1_ALL_DETECTOR_CHECKPOINTS_20260818.jsonl.gz" \
+            --lane3-summary "${L3}/NG_EXHAUSTION_D1_PLUS0_EARLY_ENTRY_SUMMARY_20260818.json" \
+            --lane3-rows "${L3}/NG_EXHAUSTION_D1_PLUS0_EARLY_ENTRY_ROWS_20260818.jsonl.gz" \
+            --out-dir "${OUT}"
+      - name: Verify first-crossing chronology and leakage guards
+        run: |
+          python - <<'PY'
+          import json
+          p='research/generated/ng_exhaustion_entry_timing_revival_20260818/lane4_fallback_first_crossing/NG_EXHAUSTION_D1_FALLBACK_FIRST_CROSSING_SUMMARY_20260818.json'
+          d=json.load(open(p))
+          assert d['status']=='D1_DENSE_FALLBACK_FIRST_CROSSING_COMPLETE'
+          assert d['population']['forward_exact_d1_n']==18837
+          assert d['population']['output_rows']==18837
+          assert d['entry_policy'].startswith('EARLIEST_CAUSAL_CONFIDENCE_CROSSING_WINS')
+          assert d['checkpoint_grid'][:8]==[1,2,3,4,5,10,15,20]
+          assert d['checkpoint_grid'][8]==25 and d['checkpoint_grid'][-1]==3600
+          assert all((b-a)==5 for a,b in zip(d['checkpoint_grid'][8:],d['checkpoint_grid'][9:]))
+          fc=' '.join(d['model']['causal_feature_contract']).lower()
+          assert 'current checkpoint fill price' in fc
+          assert 'future mfe/mae' in fc
+          assert 'full-state/post-state labels remain excluded' in fc
+          assert not any(d['protected_mutations'].values())
+          print(json.dumps({
+            'validation':d['validation'],
+            'threshold':d['threshold_selection']['selected_abs_prediction_threshold_ticks'],
+            'selected_checkpoint_counts':d['selected_checkpoint_counts'],
+            'status_counts':d['status_counts'],
+          },indent=2))
+          PY
+      - name: Commit durable lane4 outputs
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/generated/ng_exhaustion_entry_timing_revival_20260818/lane4_fallback_first_crossing
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record D1 dense fallback first-crossing results'
+          for i in 1 2 3; do
+            git pull --rebase origin chatgpt/ng-exhaustion-entry-timing-revival-20260818 || true
+            git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818 && exit 0
+            sleep $((i*3))
+          done
+          exit 1
