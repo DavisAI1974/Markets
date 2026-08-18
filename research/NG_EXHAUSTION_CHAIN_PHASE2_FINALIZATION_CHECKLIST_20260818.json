@@ -11,8 +11,8 @@
     "chain_extension_families_d2_to_d3_and_deeper": "FIRST_D2_TO_D3_FAMILIES_COMPLETE_D4_D5_TOO_SPARSE",
     "timing_lifespan_families": "D2_D3_TIMING_FAMILIES_COMPLETE_THIS_PASS_D4_D5_TOO_SPARSE",
     "true_false_context_investigator": "FIRST_CONTEXT_DECOMPOSITION_COMPLETE_CONTINUE_TARGETED_NO_HARD_FAILS",
-    "parallel_independent_recurrence_reconciliation": "REQUIRED",
-    "phase2_brain_proposal_index_update": "REQUIRED_BEFORE_FINAL_FREEZE",
+    "parallel_independent_recurrence_reconciliation": "LOCAL_RECONCILIATION_COMPLETE_GITHUB_MATRIX_VERIFICATION_PENDING",
+    "phase2_brain_proposal_index_update": "COMPLETE_THIS_PASS",
     "permanent_frankie_merge": "BLOCKED_UNLESS_GREG_EXPLICITLY_APPROVES"
   },
   "settled_execution_order": [
@@ -31,6 +31,13 @@
     "investigate_timing_lifespan": true,
     "delete_failed_valid_instances": false
   },
+  "remaining_before_phase2_finalized": [
+    "retrieve and verify the launched GitHub parallel-recurrence matrix artifacts",
+    "continue targeted true/false decomposition where sign-changing motifs remain informative",
+    "finish the P-O-X same-current delayed/re-expression characterization without deleting losses",
+    "decide whether any recurrence-atlas module merits a separate future OOT play-candidate contract",
+    "record D4/D5 timing-family sparsity as an explicit unresolved boundary rather than forcing a fit"
+  ],
   "protected_mutations": {
     "frozen_exhaustion_detector": false,
     "base_54w": false,
