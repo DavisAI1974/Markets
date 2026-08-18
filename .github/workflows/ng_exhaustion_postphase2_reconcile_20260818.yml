@@ -1,0 +1,52 @@
+name: NG Exhaustion PostPhase2 Reconcile 20260818
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-post-phase2-20260818
+    paths:
+      - research/ng_exhaustion_postphase2_reconcile_20260818.py
+      - .github/workflows/ng_exhaustion_postphase2_reconcile_20260818.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  BRANCH: chatgpt/ng-exhaustion-post-phase2-20260818
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-post-phase2-20260818
+          fetch-depth: 0
+      - name: Reconcile durable agent outputs
+        run: |
+          set -euo pipefail
+          python research/ng_exhaustion_postphase2_reconcile_20260818.py
+          python - <<'PY'
+          import json
+          p='research/generated/ng_exhaustion_postphase2_agents_20260818/RECONCILED_SUMMARY.json'
+          d=json.load(open(p))
+          assert d['status']=='POST_PHASE2_AGENT_RECONCILIATION_COMPLETE'
+          assert d['promotion_performed'] is False
+          assert all(v is False for v in d['protected_mutations'].values())
+          print(d['grade_counts'])
+          print(d['systematic_atlas']['stable_fdr_q05_count'])
+          PY
+      - name: Commit reconciled summary
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/generated/ng_exhaustion_postphase2_agents_20260818/RECONCILED_SUMMARY.json
+          if git diff --cached --quiet; then
+            echo 'Reconciled summary already present.'
+          else
+            git commit -m 'Reconcile post-Phase-2 exhaustion agent results'
+            git push origin HEAD:${BRANCH}
+          fi
