@@ -1,0 +1,94 @@
+{
+  "name": "NG exhaustion entry-timing and preserve-all brain extension",
+  "date": "2026-08-18",
+  "status": "PROPOSAL_ONLY_POST_PHASE2_NO_PERMANENT_BRAIN_MUTATION",
+  "relationship": {
+    "parent_runway_proposal": "research/FRANKIE_NG_EXHAUSTION_BRAIN_LESSON_PROPOSAL_20260817.md",
+    "parent_phase2_chain_proposal": "research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json",
+    "relation": "EXTENDS_BOTH_DOES_NOT_REPLACE_EITHER"
+  },
+  "purpose": "Preserve the complete exhaustion-chain population while separating structural validity from entry timing. A setup that is not actionable at its earliest possible moment is not automatically a failed setup; it may become causally identifiable/actionable later while sufficient edge/runway remains.",
+  "general_lessons": [
+    {
+      "id": "exhaustion.execution.entry_hierarchy",
+      "status": "PROPOSAL",
+      "lesson": "Use an entry hierarchy. If a setup is already causally predictable and profitable at its earliest validated decision point, keep the early entry. Only setups that are not sufficiently actionable early enter the fallback survivorship/late-entry lane.",
+      "do_not_learn": "Do not delay already-predictable profitable trades merely to wait for an arbitrary survival checkpoint."
+    },
+    {
+      "id": "exhaustion.execution.late_entry_revival",
+      "status": "PROPOSAL",
+      "lesson": "Earliest-entry non-predictability or causal unavailability does not kill a structurally valid exhaustion setup. Preserve it and test the first later causal checkpoint where identity/context is available and enough expected remaining runway/edge remains to justify entry.",
+      "checkpoints_seconds": [5,10,15,20,30,45,60,90,120,180,300,600,900,1800,3600],
+      "scope": "D1 and all structurally preserved D2+ chain/module cases that were not executable at the original earliest entry."
+    },
+    {
+      "id": "exhaustion.execution.survival_as_information",
+      "status": "PROPOSAL",
+      "lesson": "For a setup that was not initially actionable, the causal fact that it is still alive at checkpoint t is new information. At checkpoint t, model remaining lifespan and trade opportunity using only information available by t plus survival-to-t; never leak realized final duration or future path shape backward."
+    },
+    {
+      "id": "exhaustion.execution.dual_knowability_clocks",
+      "status": "PROPOSAL",
+      "lesson": "Keep detector-known and full-state-known clocks separate. Use the detector-known clock for rules needing only event identity and contemporaneous causal features; use the later full-state-known clock only for rules requiring completed h=60/post-state context."
+    },
+    {
+      "id": "exhaustion.population.preserve_all",
+      "status": "PROPOSAL",
+      "lesson": "Profitability ranks the complete valid exhaustion population; it does not define membership. Preserve short, long, directional, chop/rotation, low-support, sign-changing, and initially non-executable cases. Confidence and profitability are annotations, not deletion rules."
+    },
+    {
+      "id": "exhaustion.population.reverse_backcast_provenance",
+      "status": "RESEARCH_METHOD_PROPOSAL",
+      "lesson": "When an early historical cohort lacks honest forward-OOT lineage labels because it trained the first fold, a later-trained and later-validated frozen labeler may be applied backward only as REVERSE_BACKCAST_NOT_FORWARD_OOT. Such rows may expand descriptive/profitability evidence but never count as forward validation."
+    },
+    {
+      "id": "exhaustion.execution.path_class_separation",
+      "status": "PROPOSAL",
+      "lesson": "Directional travel and chop/rotation are separate opportunity classes. Low directional efficiency is not equivalent to low profitability; preserve chop for separate range/fade/rotation research."
+    }
+  ],
+  "higher_order_revival": {
+    "status": "AUTHORIZED_RESEARCH_EXTENSION",
+    "finding": "No valid D2+ structural rows were intentionally deleted for lack of earliest-entry predictability. Earlier protocols explicitly preserved retrospective structural higher-order results even when causal/executable depth was smaller. Some structures were sidelined from execution because required identity/context was not available at the original entry point.",
+    "policy": "REVIVE_EXECUTION_TIMING_NOT_REWRITE_STRUCTURE",
+    "procedure": [
+      "Keep any already-causally-executable D2+ early-entry rule at its earliest validated entry.",
+      "For structurally valid D2+ cases that fail the original earliest-entry information wall, compute the first timestamp at which the required frozen detector/context inputs become causal.",
+      "From that first causal timestamp, test +5s and later survivorship checkpoints only if the setup remains alive/actionable.",
+      "At each checkpoint estimate remaining runway, direction/range opportunity, MFE/MAE and cost-adjusted expectancy using only checkpoint-known information.",
+      "Do not convert retrospective final chain depth, realized final duration, or future path shape into an earlier signal.",
+      "Retain cases that never become executable as structural research memory rather than deleting them."
+    ]
+  },
+  "d1_policy": {
+    "preserve_all": true,
+    "master_ledger": "research/generated/ng_exhaustion_exact_d1_master_20260818/NG_EXHAUSTION_EXACT_D1_MASTER_LEDGER_20260818.jsonl.gz",
+    "forward_exact_d1_count_current": 18837,
+    "chronology": {
+      "base_0_17": "PRELINEAGE_UNLABELED; recover only via separately validated reverse backcast",
+      "base_18_35": "D1_DISCOVERY_OOT",
+      "base_36_47": "D1_VALIDATION",
+      "base_48_53": "D1_UNTOUCHED_CONFIRMATION",
+      "held_20260329": "INSERT_ONLY_HELD"
+    }
+  },
+  "promotion_boundary": {
+    "permanent_frankie_mutation": false,
+    "frankie_1_mutation": false,
+    "runway_clock_mutation": false,
+    "detector_mutation": false,
+    "canonical_row_mutation": false,
+    "spawn_py_mutation": false,
+    "play_freeze": false,
+    "requirement": "Any new early-entry or fallback late-entry strategy remains historical/proposal-only until a predeclared fresh prospective/OOT promotion contract is passed."
+  },
+  "do_not_learn": [
+    "Do not impose +5 seconds as a mandatory delay on setups already callable at the earliest validated entry.",
+    "Do not treat survival-to-t as known before t.",
+    "Do not use realized final D1/D2/D3 depth or final duration to justify an earlier entry.",
+    "Do not delete structurally valid higher-order rows merely because their earliest-entry causal test failed.",
+    "Do not reinterpret reverse-backcast weeks as forward-OOT evidence.",
+    "Do not merge this proposal into permanent Frankie without deliberate adjudication together with the runway parent and finalized Phase-2 chain extension."
+  ]
+}
