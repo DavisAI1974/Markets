@@ -1,0 +1,172 @@
+{
+  "d1_chronological_protocol": {
+    "held": "20260329_INSERT_ONLY",
+    "internal_train_field_semantics": "D1_DISCOVERY_OOT_BASE_WEEKS_18_35",
+    "phase1_base_weeks_0_17": "PRELINEAGE_UNLABELED_NOT_USED_FOR_D1_FIT_OR_AS_NEGATIVES",
+    "reason": "Frozen Phase-1 lineage labels exist only for OOT test folds beginning at week index 18; no in-sample D1 labels are manufactured.",
+    "status": "D1_OOT_LABEL_BOUNDARY_CORRECTED",
+    "untouched_confirmation": "BASE_WEEKS_48_53",
+    "validation_era45": "BASE_WEEKS_36_47"
+  },
+  "exact_d1_n": 18837,
+  "mode": "lifespan",
+  "preserve_all_policy": {
+    "authoritative_addendum": "research/NG_EXHAUSTION_EXACT_D1_PRESERVE_ALL_ADDENDUM_20260818.md",
+    "duration_role": "CHARACTERIZATION_ONLY_NOT_MEMBERSHIP",
+    "filtered_exact_d1_rows": 0,
+    "membership_rule": "all_model_consecutive_positive_depth == 1 in frozen lineage",
+    "path_shape_role": "DIRECTIONAL_AND_CHOP_ROTATION_BOTH_PRESERVED",
+    "profitability_role": "RANKING_AND_ANNOTATION_ONLY_NOT_MEMBERSHIP",
+    "status": "EVERY_VALID_EXACT_D1_RETAINED",
+    "support_role": "CONFIDENCE_GRADE_ONLY_LOW_SUPPORT_ROWS_REMAIN"
+  },
+  "promotion_performed": false,
+  "protected_mutations": {
+    "canonical_rows": false,
+    "detector": false,
+    "frankie_1": false,
+    "permanent_frankie": false,
+    "runway_clock": false,
+    "spawn_py": false,
+    "ssos_play": false
+  },
+  "result": {
+    "blocks": {
+      "conf": {
+        "elapsed": {
+          "max": 3678.0,
+          "mean": 91.36108324974924,
+          "median": 67.0,
+          "n": 2991,
+          "p25": 50.0,
+          "p75": 92.0,
+          "p90": 141.0,
+          "p95": 194.0,
+          "p99": 404.59999999999945
+        },
+        "families": {
+          "f1": 524,
+          "f2": 1697,
+          "f3": 602,
+          "f4": 157,
+          "long": 11
+        }
+      },
+      "era13": {
+        "elapsed": {
+          "max": null,
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "p25": null,
+          "p75": null,
+          "p90": null,
+          "p95": null,
+          "p99": null
+        },
+        "families": {}
+      },
+      "era45": {
+        "elapsed": {
+          "max": 3687.0,
+          "mean": 88.10411376333164,
+          "median": 65.0,
+          "n": 5907,
+          "p25": 49.0,
+          "p75": 88.0,
+          "p90": 132.0,
+          "p95": 184.69999999999982,
+          "p99": 391.9399999999996
+        },
+        "families": {
+          "f1": 1100,
+          "f2": 3441,
+          "f3": 1070,
+          "f4": 272,
+          "long": 24
+        }
+      },
+      "held": {
+        "elapsed": {
+          "max": 3648.0,
+          "mean": 87.75514549325763,
+          "median": 63.0,
+          "n": 1409,
+          "p25": 48.0,
+          "p75": 86.0,
+          "p90": 125.0,
+          "p95": 170.0,
+          "p99": 423.60000000000036
+        },
+        "families": {
+          "f1": 290,
+          "f2": 831,
+          "f3": 229,
+          "f4": 52,
+          "long": 7
+        }
+      },
+      "train": {
+        "elapsed": {
+          "max": 101683.0,
+          "mean": 116.42426729191091,
+          "median": 66.0,
+          "n": 8530,
+          "p25": 50.0,
+          "p75": 92.0,
+          "p90": 145.0,
+          "p95": 215.0,
+          "p99": 715.8399999999965
+        },
+        "families": {
+          "f1": 1473,
+          "f2": 4864,
+          "f3": 1644,
+          "f4": 459,
+          "long": 90
+        }
+      }
+    },
+    "train_model": {
+      "bic": -1739.768371584627,
+      "bic_grid": [
+        {
+          "bic": 14962.358036534308,
+          "k": 1
+        },
+        {
+          "bic": 10835.344654008462,
+          "k": 2
+        },
+        {
+          "bic": -1047.8836563266143,
+          "k": 3
+        },
+        {
+          "bic": -1654.9781529538584,
+          "k": 4
+        },
+        {
+          "bic": -1739.768371584627,
+          "k": 5
+        }
+      ],
+      "centers_seconds": [
+        45.00000000000157,
+        63.08706887992761,
+        109.05088353550266,
+        217.72500295397472,
+        735.6349593665593
+      ],
+      "labels": [
+        "f1",
+        "f2",
+        "f3",
+        "f4",
+        "long"
+      ],
+      "selected_components": 5
+    }
+  },
+  "status": "EXACT_D1_AGENT_COMPLETE"
+}

@@ -1,0 +1,61 @@
+{
+  "canonical_rows_mutated": false,
+  "chronology": "D1 discovery = first 18 OOT lineage-labeled weeks; validation = later 12 + untouched 6 + held",
+  "exact_d1_n": 18837,
+  "filtered_exact_d1_rows": 0,
+  "lane_count": 8,
+  "lanes": [
+    {
+      "bytes": 12485,
+      "mode": "causal",
+      "path": "research/generated/ng_exhaustion_exact_d1_core8_v2_20260818/NG_EXHAUSTION_EXACT_D1_CAUSAL_AGENT_V2_20260818.json",
+      "sha256": "2f6bd89fc2e87378b47f5f8eb8564baec64db52f107ed0a7ddff33599c5e2886"
+    },
+    {
+      "bytes": 613643,
+      "mode": "decompose",
+      "path": "research/generated/ng_exhaustion_exact_d1_core8_v2_20260818/NG_EXHAUSTION_EXACT_D1_DECOMPOSE_AGENT_V2_20260818.json",
+      "sha256": "0c8036383209311503e365634c30e6c99a34503cc63a7290f3db87af72563718"
+    },
+    {
+      "bytes": 196696,
+      "mode": "grammar",
+      "path": "research/generated/ng_exhaustion_exact_d1_core8_v2_20260818/NG_EXHAUSTION_EXACT_D1_GRAMMAR_AGENT_V2_20260818.json",
+      "sha256": "f38ba153d14b096b5c864306e0baaffd2668a8a8b9e0046cc89d70724261365a"
+    },
+    {
+      "bytes": 4274,
+      "mode": "lifespan",
+      "path": "research/generated/ng_exhaustion_exact_d1_core8_v2_20260818/NG_EXHAUSTION_EXACT_D1_LIFESPAN_AGENT_V2_20260818.json",
+      "sha256": "f8205a3b94ba81710c7b8096048b0c47ffc981207befce9687d4f1b4952959b7"
+    },
+    {
+      "bytes": 615013,
+      "mode": "outcome",
+      "path": "research/generated/ng_exhaustion_exact_d1_core8_v2_20260818/NG_EXHAUSTION_EXACT_D1_OUTCOME_AGENT_V2_20260818.json",
+      "sha256": "f5d32dd3f6e79e4ce62376c56bb2e7df4fa84b45245ecc179dbca543ff0f07fc"
+    },
+    {
+      "bytes": 2734,
+      "mode": "predictor",
+      "path": "research/generated/ng_exhaustion_exact_d1_core8_v2_20260818/NG_EXHAUSTION_EXACT_D1_PREDICTOR_AGENT_V2_20260818.json",
+      "sha256": "eaf811bd762210e7b9f62811197a40d222df5d18965b451c8bea007f1b6e24c9"
+    },
+    {
+      "bytes": 3734226,
+      "mode": "profit",
+      "path": "research/generated/ng_exhaustion_exact_d1_core8_v2_20260818/NG_EXHAUSTION_EXACT_D1_PROFIT_AGENT_V2_20260818.json",
+      "sha256": "c768a3d14ade3b7c889381244efbb75fd57733b4c00cb670b82295b87eb9f761"
+    },
+    {
+      "bytes": 257840,
+      "mode": "reorigin",
+      "path": "research/generated/ng_exhaustion_exact_d1_core8_v2_20260818/NG_EXHAUSTION_EXACT_D1_REORIGIN_AGENT_V2_20260818.json",
+      "sha256": "09709adeda125f73d4968ac723829dbe387cae1ef202a6acea75692b7d6dfffa"
+    }
+  ],
+  "permanent_frankie_mutated": false,
+  "promotion_performed": false,
+  "runway_clock_mutated": false,
+  "status": "EXACT_D1_CORE8_V2_VERIFIED"
+}
