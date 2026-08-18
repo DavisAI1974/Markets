@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# 20260818 durable matrix trigger: analysis semantics unchanged.
 from __future__ import annotations
 import argparse,gzip,json,math
 from collections import Counter,defaultdict
@@ -52,7 +53,8 @@ def pairings(by,lin,weeks):
    for m in (2,3):
     seen=set()
     for j in range(i,i+d+2-m):
-     k=token(rs[j:j+m])
+     k=token(rs[j:j+m]
+     )
      if k in seen:continue
      seen.add(k);z=out[m][k];z['n'][b]+=1;z['weeks'][b].add(w);z['contexts'][b].add(full)
  ans={}
