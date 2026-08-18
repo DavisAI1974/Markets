@@ -1,0 +1,153 @@
+name: NG Exhaustion PostPhase2 Parallel Agents 20260818
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-post-phase2-20260818
+    paths:
+      - research/ng_exhaustion_chain_postphase2_agents_20260818.py
+      - .github/workflows/ng_exhaustion_postphase2_parallel_agents_20260818.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  BASE_ID: '9281733364'
+  BASE_SHA: f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1
+  HELD_ID: '9281272840'
+  HELD_SHA: 21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e
+  LINEAGE_ID: '9289929292'
+  LINEAGE_SHA: a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95
+  RECONCILE_ID: '9306082330'
+  RECONCILE_SHA: f17c130df029429bfbc35067d1cc9d16128ca4fb227dd37f3fb4fbb8bbaf8875
+
+jobs:
+  postphase2-agent:
+    name: PostPhase2 agent - ${{ matrix.mode }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [continuation, chainmap, timing, decompose, systematic, execution, redteam, causality]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-post-phase2-20260818
+      - name: Download and verify immutable frozen sources
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/in/base /tmp/in/held /tmp/in/lineage /tmp/in/reconcile
+          get_artifact () {
+            id="$1"; sha="$2"; zip="$3"; dest="$4"
+            curl -L --fail --silent --show-error \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" \
+              -o "${zip}"
+            echo "${sha}  ${zip}" | sha256sum -c -
+            unzip -q "${zip}" -d "${dest}"
+          }
+          get_artifact "${BASE_ID}" "${BASE_SHA}" /tmp/base.zip /tmp/in/base
+          get_artifact "${HELD_ID}" "${HELD_SHA}" /tmp/held.zip /tmp/in/held
+          get_artifact "${LINEAGE_ID}" "${LINEAGE_SHA}" /tmp/lineage.zip /tmp/in/lineage
+          get_artifact "${RECONCILE_ID}" "${RECONCILE_SHA}" /tmp/reconcile.zip /tmp/in/reconcile
+      - name: Run isolated continuation lane
+        env:
+          MODE: ${{ matrix.mode }}
+        run: |
+          set -euo pipefail
+          python research/ng_exhaustion_chain_postphase2_agents_20260818.py \
+            --mode "${MODE}" \
+            --base /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz \
+            --held /tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz \
+            --base-lineage /tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz \
+            --held-lineage /tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz \
+            --summary /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_SUMMARY.json \
+            --out "NG_EXHAUSTION_POSTPHASE2_${MODE^^}_AGENT_20260818.json"
+      - name: Enforce protected boundary
+        run: |
+          python - <<'PY'
+          import glob,json
+          p=glob.glob('NG_EXHAUSTION_POSTPHASE2_*_AGENT_20260818.json')
+          assert len(p)==1,p
+          d=json.load(open(p[0]))
+          assert d['status']=='POST_PHASE2_PARALLEL_AGENT_COMPLETE'
+          assert d['promotion_performed'] is False
+          assert all(v is False for v in d['protected_mutations'].values())
+          print(d['mode'])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-postphase2-${{ matrix.mode }}-20260818
+          path: NG_EXHAUSTION_POSTPHASE2_*_AGENT_20260818.json
+          if-no-files-found: error
+
+  reconcile-postphase2-agents:
+    name: Reconcile eight post-Phase2 agents
+    needs: postphase2-agent
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-post-phase2-20260818
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ng-exhaustion-postphase2-*-20260818
+          path: /tmp/lanes
+      - name: Verify and stage all eight lanes
+        run: |
+          set -euo pipefail
+          mkdir -p research/generated/ng_exhaustion_postphase2_agents_20260818
+          python - <<'PY'
+          import glob,hashlib,json,shutil
+          from pathlib import Path
+          paths=sorted(glob.glob('/tmp/lanes/**/NG_EXHAUSTION_POSTPHASE2_*_AGENT_20260818.json',recursive=True))
+          expected={'continuation','chainmap','timing','decompose','systematic','execution','redteam','causality'}
+          assert len(paths)==len(expected),(len(paths),paths)
+          modes=set(); files=[]; outdir=Path('research/generated/ng_exhaustion_postphase2_agents_20260818')
+          for p in paths:
+              raw=Path(p).read_bytes(); d=json.loads(raw)
+              assert d['status']=='POST_PHASE2_PARALLEL_AGENT_COMPLETE',p
+              assert d['promotion_performed'] is False
+              assert all(v is False for v in d['protected_mutations'].values())
+              modes.add(d['mode']); dst=outdir/Path(p).name; shutil.copyfile(p,dst)
+              files.append({'mode':d['mode'],'path':str(dst),'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw)})
+          assert modes==expected,(modes,expected)
+          verification={
+              'status':'POST_PHASE2_EIGHT_LANE_PARALLEL_VERIFIED',
+              'branch':'chatgpt/ng-exhaustion-post-phase2-20260818',
+              'source_policy':'same immutable frozen 55-week evidence and causal walls as finalized Phase 2',
+              'source_artifacts':{
+                  'base54':{'id':9281733364,'zip_sha256':'f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1'},
+                  'held':{'id':9281272840,'zip_sha256':'21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e'},
+                  'lineage':{'id':9289929292,'zip_sha256':'a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95'},
+                  'reconciliation':{'id':9306082330,'zip_sha256':'f17c130df029429bfbc35067d1cc9d16128ca4fb227dd37f3fb4fbb8bbaf8875'}
+              },
+              'lanes':sorted(files,key=lambda x:x['mode']),
+              'lane_count':len(files),
+              'protected_mutations':{'detector':False,'canonical_rows':False,'runway_clock':False,'permanent_frankie':False,'frankie_1':False,'spawn_py':False,'ssos_play':False},
+              'promotion_performed':False,
+              'prospective_boundary':'No pattern may be frozen from these historically surfaced 55-week candidates alone; fresh prospective evidence remains required.'
+          }
+          (outdir/'VERIFICATION.json').write_text(json.dumps(verification,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(verification,indent=2,sort_keys=True))
+          PY
+      - name: Commit durable agent outputs
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/generated/ng_exhaustion_postphase2_agents_20260818
+          if git diff --cached --quiet; then
+            echo 'Verified outputs already present.'
+          else
+            git commit -m 'Record post-Phase-2 exhaustion parallel agent findings'
+            git push origin HEAD:chatgpt/ng-exhaustion-post-phase2-20260818
+          fi
