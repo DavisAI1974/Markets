@@ -1,0 +1,100 @@
+{
+  "name": "NG exhaustion chain Phase-2 four-lane parallel local verification",
+  "date": "2026-08-18",
+  "branch": "chatgpt/ng-exhaustion-chain-phase2-20260817",
+  "status": "PARALLEL_RECURRENCE_FOUR_LANE_VERIFIED",
+  "purpose": "Durably verify the four independent recurrence contracts against the exact immutable Phase-1/held artifacts when the connected GitHub interface cannot expose or dispatch the branch-only Actions run directly.",
+  "execution": {
+    "parallel": true,
+    "modes": ["pairings", "extension", "timing", "investigator"],
+    "all_process_exit_codes": 0,
+    "runner_repository_path": "research/ng_exhaustion_chain_phase2_parallel_agents_20260818.py",
+    "github_replay_workflow": ".github/workflows/ng_exhaustion_chain_phase2_parallel_recurrence_20260818.yml",
+    "github_self_verifying_trigger_commit": "e4ba8173d1db00c3073a509616c3ffa02b110bf4",
+    "github_actions_observation_boundary": "The connected GitHub interface does not expose/dispatch this branch-only workflow run. No GitHub-run success is claimed here. The workflow remains a replay mechanism."
+  },
+  "immutable_sources": {
+    "base54": {
+      "artifact_id": 9281733364,
+      "zip_sha256_verified_local": "f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1"
+    },
+    "held_20260329": {
+      "artifact_id": 9281272840,
+      "zip_sha256_verified_local": "21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e"
+    },
+    "phase1_lineage": {
+      "artifact_id": 9289929292,
+      "zip_sha256_verified_local": "a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95"
+    },
+    "phase1_55w_reconciliation": {
+      "artifact_id": 9306082330,
+      "zip_sha256_verified_local": "f17c130df029429bfbc35067d1cc9d16128ca4fb227dd37f3fb4fbb8bbaf8875"
+    }
+  },
+  "lane_outputs": {
+    "pairings": {
+      "sha256": "3a66afdc130fd5f7f7cbf2995b01f96d53683603b92e463af05d8e6de753209c",
+      "bytes": 42546,
+      "status": "PARALLEL_RECURRENCE_AGENT_COMPLETE"
+    },
+    "extension": {
+      "sha256": "2ac93604f7b5dbde216a53c3e8c3253b4a39da1fb771241253f8de0f19abfaa1",
+      "bytes": 27618,
+      "status": "PARALLEL_RECURRENCE_AGENT_COMPLETE"
+    },
+    "timing": {
+      "sha256": "befa55fddfe03ef0a24c23f9060b3d866f676bd1a5d30390252bfc1055ccb7b2",
+      "bytes": 977,
+      "status": "PARALLEL_RECURRENCE_AGENT_COMPLETE"
+    },
+    "investigator": {
+      "sha256": "adb6e8910ae7e7c74a46eb2e3444de54c61f1a5e44abbdac45427d1213ab2253",
+      "bytes": 176067,
+      "status": "PARALLEL_RECURRENCE_AGENT_COMPLETE"
+    }
+  },
+  "reproduced_invariants": {
+    "pairings": {
+      "PP|S": {"preheld_strict_d2plus_n": 291, "held_n": 38},
+      "PO|S": {"preheld_strict_d2plus_n": 145, "held_n": 32},
+      "OO|F": {"preheld_strict_d2plus_n": 143, "held_n": 23},
+      "OP|F": {"preheld_strict_d2plus_n": 138, "held_n": 28},
+      "XP|F": {"preheld_strict_d2plus_n": 132, "held_n": 20},
+      "SS|S": {"preheld_strict_d2plus_n": 124, "held_n": 18},
+      "PPP|SS": {"preheld_strict_d2plus_n": 87, "held_n": 13},
+      "PPX|SS": {"preheld_strict_d2plus_n": 40, "held_n": 11}
+    },
+    "extension": {
+      "PP|S_lifts_era13_era45_confirmation_held": [1.271896, 1.217045, 1.290107, 1.20056],
+      "XP|F_lifts_era13_era45_confirmation_held": [1.370857, 1.193802, 2.018984, 1.42623],
+      "PP|F_lifts_era13_era45_confirmation_held": [1.701691, 1.188608, 1.269203, 2.014067],
+      "OP|F_lifts_era13_era45_confirmation_held": [1.209528, 1.330172, 1.2038, 0.729571]
+    },
+    "timing": {
+      "D2_centers_seconds": [126.24642964393674, 215.19172722847608, 797.9643944343011],
+      "D2_preheld_counts": [947, 380, 52],
+      "D2_held_counts": [156, 52, 5],
+      "D3_centers_seconds": [210.5092412831738, 609.3386806098245],
+      "D3_preheld_counts": [83, 10],
+      "D3_held_counts": [25, 6]
+    },
+    "investigator": {
+      "O->FLIP_gross_means_era13_era45_confirmation_held": [0.057925, 0.030247, 0.120404, -0.47651],
+      "P->FLIP_gross_means_era13_era45_confirmation_held": [0.191275, 0.323171, 0.16092, -0.818182],
+      "OOO->FLIP_gross_means_era13_era45_confirmation_held": [0.08167, 0.064935, 0.146341, -0.769231],
+      "POX->SAME_gross_means_era13_era45_confirmation_held": [0.283019, 0.28, 0.487179, -0.857143],
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL"
+    }
+  },
+  "protected_mutations": {
+    "frozen_exhaustion_detector": false,
+    "base_54w": false,
+    "held_week_rows": false,
+    "runway_clock": false,
+    "permanent_frankie": false,
+    "frankie_1": false,
+    "research/kalshi/spawn.py": false,
+    "ssos_frozen_paper_play": false
+  },
+  "promotion_performed": false
+}
