@@ -72,8 +72,10 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m pip install --quiet numpy scikit-learn
-      - name: Compile detector-first lane2 runner
-        run: python -m py_compile research/ng_exhaustion_d1_all_rawpath_entry_20260818.py
+      - name: Compile detector-first lane2 runner and precise-order wrapper
+        run: |
+          python -m py_compile research/ng_exhaustion_d1_all_rawpath_entry_20260818.py
+          python -m py_compile research/ng_exhaustion_d1_all_rawpath_entry_v2_20260818.py
       - name: Download and verify immutable sources
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -154,7 +156,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/out
-          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_d1_all_rawpath_entry_20260818.py shard \
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_d1_all_rawpath_entry_v2_20260818.py shard \
             --base /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz \
             --held /tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz \
             --base-lineage /tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz \
@@ -207,7 +209,7 @@ jobs:
         run: |
           set -euo pipefail
           OUT=research/generated/ng_exhaustion_entry_timing_revival_20260818/lane2_all_d1_rawpath
-          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_d1_all_rawpath_entry_20260818.py merge \
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_d1_all_rawpath_entry_v2_20260818.py merge \
             --shard-dir /tmp/shards \
             --out-dir "${OUT}"
       - name: Verify preserve-all and detector-first invariants
