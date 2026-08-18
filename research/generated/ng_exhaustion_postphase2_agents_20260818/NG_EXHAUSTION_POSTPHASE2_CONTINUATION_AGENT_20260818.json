@@ -2802,45 +2802,45 @@
       },
       "kind": "context",
       "oot_week_sign_p": null,
-      "orientation": "WITH_CURRENT",
+      "orientation": "AGAINST_CURRENT",
       "outcome_blocks": {
         "conf": {
-          "mean_oriented_ticks": -0.1095890410958905,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": 0.1095890410958905,
+          "median_oriented_ticks": -0.0,
           "n": 73,
-          "positive_rate": 0.3013698630136986,
+          "positive_rate": 0.4246575342465753,
           "week_demeaned_mean_ticks": null,
           "weeks": 0
         },
         "era13": {
-          "mean_oriented_ticks": -0.649484536082453,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": 0.649484536082453,
+          "median_oriented_ticks": -0.0,
           "n": 194,
-          "positive_rate": 0.4072164948453608,
+          "positive_rate": 0.4587628865979381,
           "week_demeaned_mean_ticks": null,
           "weeks": 0
         },
         "era45": {
-          "mean_oriented_ticks": -0.34782608695652206,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": 0.34782608695652206,
+          "median_oriented_ticks": -0.0,
           "n": 138,
-          "positive_rate": 0.391304347826087,
+          "positive_rate": 0.43478260869565216,
           "week_demeaned_mean_ticks": null,
           "weeks": 0
         },
         "held": {
-          "mean_oriented_ticks": -0.27272727272732344,
-          "median_oriented_ticks": -0.9999999999998899,
+          "mean_oriented_ticks": 0.27272727272732344,
+          "median_oriented_ticks": 0.9999999999998899,
           "n": 11,
-          "positive_rate": 0.45454545454545453,
+          "positive_rate": 0.5454545454545454,
           "week_demeaned_mean_ticks": null,
           "weeks": 0
         },
         "train": {
-          "mean_oriented_ticks": 0.01578947368419944,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": -0.01578947368419944,
+          "median_oriented_ticks": -0.0,
           "n": 190,
-          "positive_rate": 0.45263157894736844,
+          "positive_rate": 0.37894736842105264,
           "week_demeaned_mean_ticks": null,
           "weeks": 0
         }
@@ -2892,45 +2892,45 @@
       },
       "kind": "context",
       "oot_week_sign_p": null,
-      "orientation": "AGAINST_CURRENT",
+      "orientation": "WITH_CURRENT",
       "outcome_blocks": {
         "conf": {
-          "mean_oriented_ticks": -0.23863636363637772,
-          "median_oriented_ticks": -0.0,
+          "mean_oriented_ticks": 0.23863636363637772,
+          "median_oriented_ticks": 0.0,
           "n": 88,
-          "positive_rate": 0.4090909090909091,
+          "positive_rate": 0.4318181818181818,
           "week_demeaned_mean_ticks": null,
           "weeks": 0
         },
         "era13": {
-          "mean_oriented_ticks": -0.745762711864398,
-          "median_oriented_ticks": -0.9999999999994458,
+          "mean_oriented_ticks": 0.745762711864398,
+          "median_oriented_ticks": 0.9999999999994458,
           "n": 236,
-          "positive_rate": 0.3220338983050847,
+          "positive_rate": 0.5084745762711864,
           "week_demeaned_mean_ticks": null,
           "weeks": 0
         },
         "era45": {
-          "mean_oriented_ticks": -0.13450292397660116,
-          "median_oriented_ticks": -0.0,
+          "mean_oriented_ticks": 0.13450292397660116,
+          "median_oriented_ticks": 0.0,
           "n": 171,
-          "positive_rate": 0.3216374269005848,
+          "positive_rate": 0.3508771929824561,
           "week_demeaned_mean_ticks": null,
           "weeks": 0
         },
         "held": {
-          "mean_oriented_ticks": -0.9473684210526208,
-          "median_oriented_ticks": -0.9999999999998899,
+          "mean_oriented_ticks": 0.9473684210526208,
+          "median_oriented_ticks": 0.9999999999998899,
           "n": 19,
-          "positive_rate": 0.47368421052631576,
+          "positive_rate": 0.5263157894736842,
           "week_demeaned_mean_ticks": null,
           "weeks": 0
         },
         "train": {
-          "mean_oriented_ticks": 0.04273504273504562,
-          "median_oriented_ticks": -0.0,
+          "mean_oriented_ticks": -0.04273504273504562,
+          "median_oriented_ticks": 0.0,
           "n": 234,
-          "positive_rate": 0.41452991452991456,
+          "positive_rate": 0.3547008547008547,
           "week_demeaned_mean_ticks": null,
           "weeks": 0
         }
@@ -2981,47 +2981,47 @@
         }
       },
       "kind": "context",
-      "oot_week_sign_p": 0.8785075229825452,
-      "orientation": "WITH_CURRENT",
+      "oot_week_sign_p": 0.20251612307038158,
+      "orientation": "AGAINST_CURRENT",
       "outcome_blocks": {
         "conf": {
-          "mean_oriented_ticks": -0.28787878787877635,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": 0.28787878787877635,
+          "median_oriented_ticks": -0.0,
           "n": 198,
-          "positive_rate": 0.35858585858585856,
-          "week_demeaned_mean_ticks": -0.3095724522243744,
+          "positive_rate": 0.45454545454545453,
+          "week_demeaned_mean_ticks": 0.3095724522243744,
           "weeks": 6
         },
         "era13": {
-          "mean_oriented_ticks": -0.09294871794872052,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": 0.09294871794872052,
+          "median_oriented_ticks": -0.0,
           "n": 624,
-          "positive_rate": 0.46153846153846156,
-          "week_demeaned_mean_ticks": -0.13700733394113668,
+          "positive_rate": 0.40865384615384615,
+          "week_demeaned_mean_ticks": 0.13700733394113668,
           "weeks": 18
         },
         "era45": {
-          "mean_oriented_ticks": -0.10047846889952534,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": 0.10047846889952534,
+          "median_oriented_ticks": -0.0,
           "n": 418,
-          "positive_rate": 0.3923444976076555,
-          "week_demeaned_mean_ticks": -0.1481472989694322,
+          "positive_rate": 0.41866028708133973,
+          "week_demeaned_mean_ticks": 0.1481472989694322,
           "weeks": 12
         },
         "held": {
-          "mean_oriented_ticks": -0.7500000000000062,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": 0.7500000000000062,
+          "median_oriented_ticks": -0.0,
           "n": 20,
-          "positive_rate": 0.45,
-          "week_demeaned_mean_ticks": -0.7233978234582958,
+          "positive_rate": 0.4,
+          "week_demeaned_mean_ticks": 0.7233978234582958,
           "weeks": 1
         },
         "train": {
-          "mean_oriented_ticks": 0.1444444444444565,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": -0.1444444444444565,
+          "median_oriented_ticks": -0.0,
           "n": 540,
-          "positive_rate": 0.42777777777777776,
-          "week_demeaned_mean_ticks": 0.0651893728873948,
+          "positive_rate": 0.3574074074074074,
+          "week_demeaned_mean_ticks": -0.0651893728873948,
           "weeks": 18
         }
       },
@@ -3071,47 +3071,47 @@
         }
       },
       "kind": "context",
-      "oot_week_sign_p": 0.9673773323884234,
-      "orientation": "WITH_CURRENT",
+      "oot_week_sign_p": 0.06624908198136836,
+      "orientation": "AGAINST_CURRENT",
       "outcome_blocks": {
         "conf": {
-          "mean_oriented_ticks": -0.2857142857143177,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": 0.2857142857143177,
+          "median_oriented_ticks": -0.0,
           "n": 21,
-          "positive_rate": 0.23809523809523808,
-          "week_demeaned_mean_ticks": -0.2902394248681565,
+          "positive_rate": 0.3333333333333333,
+          "week_demeaned_mean_ticks": 0.2902394248681565,
           "weeks": 6
         },
         "era13": {
-          "mean_oriented_ticks": -0.20000000000000265,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": 0.20000000000000265,
+          "median_oriented_ticks": -0.0,
           "n": 90,
-          "positive_rate": 0.36666666666666664,
-          "week_demeaned_mean_ticks": -0.2741748921923177,
+          "positive_rate": 0.4444444444444444,
+          "week_demeaned_mean_ticks": 0.2741748921923177,
           "weeks": 18
         },
         "era45": {
-          "mean_oriented_ticks": -0.17307692307692962,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": 0.17307692307692962,
+          "median_oriented_ticks": -0.0,
           "n": 52,
-          "positive_rate": 0.28846153846153844,
-          "week_demeaned_mean_ticks": -0.21917121033828527,
+          "positive_rate": 0.4230769230769231,
+          "week_demeaned_mean_ticks": 0.21917121033828527,
           "weeks": 12
         },
         "held": {
-          "mean_oriented_ticks": -2.1666666666667243,
-          "median_oriented_ticks": -1.5000000000000568,
+          "mean_oriented_ticks": 2.1666666666667243,
+          "median_oriented_ticks": 1.5000000000000568,
           "n": 6,
-          "positive_rate": 0.0,
-          "week_demeaned_mean_ticks": -2.1400644901250137,
+          "positive_rate": 0.6666666666666666,
+          "week_demeaned_mean_ticks": 2.1400644901250137,
           "weeks": 1
         },
         "train": {
-          "mean_oriented_ticks": 0.3076923076923353,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": -0.3076923076923353,
+          "median_oriented_ticks": -0.0,
           "n": 65,
-          "positive_rate": 0.38461538461538464,
-          "week_demeaned_mean_ticks": 0.2215714109352806,
+          "positive_rate": 0.18461538461538463,
+          "week_demeaned_mean_ticks": -0.2215714109352806,
           "weeks": 17
         }
       },
@@ -3251,47 +3251,47 @@
         }
       },
       "kind": "context",
-      "oot_week_sign_p": 0.9449079174082726,
-      "orientation": "AGAINST_CURRENT",
+      "oot_week_sign_p": 0.10766357486136258,
+      "orientation": "WITH_CURRENT",
       "outcome_blocks": {
         "conf": {
-          "mean_oriented_ticks": -0.44444444444444486,
-          "median_oriented_ticks": -0.0,
+          "mean_oriented_ticks": 0.44444444444444486,
+          "median_oriented_ticks": 0.0,
           "n": 9,
-          "positive_rate": 0.3333333333333333,
-          "week_demeaned_mean_ticks": -0.4238719045430394,
+          "positive_rate": 0.4444444444444444,
+          "week_demeaned_mean_ticks": 0.4238719045430394,
           "weeks": 6
         },
         "era13": {
-          "mean_oriented_ticks": -0.5937499999999207,
-          "median_oriented_ticks": -0.0,
+          "mean_oriented_ticks": 0.5937499999999207,
+          "median_oriented_ticks": 0.0,
           "n": 32,
-          "positive_rate": 0.375,
-          "week_demeaned_mean_ticks": -0.5361647657433884,
+          "positive_rate": 0.46875,
+          "week_demeaned_mean_ticks": 0.5361647657433884,
           "weeks": 15
         },
         "era45": {
-          "mean_oriented_ticks": -1.2400000000000055,
-          "median_oriented_ticks": -0.9999999999998899,
+          "mean_oriented_ticks": 1.2400000000000055,
+          "median_oriented_ticks": 0.9999999999998899,
           "n": 25,
-          "positive_rate": 0.32,
-          "week_demeaned_mean_ticks": -1.175970115199203,
+          "positive_rate": 0.56,
+          "week_demeaned_mean_ticks": 1.175970115199203,
           "weeks": 11
         },
         "held": {
-          "mean_oriented_ticks": -0.49999999999994493,
-          "median_oriented_ticks": -0.0,
+          "mean_oriented_ticks": 0.49999999999994493,
+          "median_oriented_ticks": 0.0,
           "n": 4,
-          "positive_rate": 0.0,
-          "week_demeaned_mean_ticks": -0.5266021765416552,
+          "positive_rate": 0.25,
+          "week_demeaned_mean_ticks": 0.5266021765416552,
           "weeks": 1
         },
         "train": {
-          "mean_oriented_ticks": 0.05405405405408411,
-          "median_oriented_ticks": -0.0,
+          "mean_oriented_ticks": -0.05405405405408411,
+          "median_oriented_ticks": 0.0,
           "n": 37,
           "positive_rate": 0.40540540540540543,
-          "week_demeaned_mean_ticks": 0.12382681068624135,
+          "week_demeaned_mean_ticks": -0.12382681068624135,
           "weeks": 14
         }
       },
@@ -3611,47 +3611,47 @@
         }
       },
       "kind": "context",
-      "oot_week_sign_p": 0.7974838769296184,
-      "orientation": "AGAINST_CURRENT",
+      "oot_week_sign_p": 0.308859658514848,
+      "orientation": "WITH_CURRENT",
       "outcome_blocks": {
         "conf": {
-          "mean_oriented_ticks": -0.16091954022987753,
-          "median_oriented_ticks": -0.0,
+          "mean_oriented_ticks": 0.16091954022987753,
+          "median_oriented_ticks": 0.0,
           "n": 87,
-          "positive_rate": 0.28735632183908044,
-          "week_demeaned_mean_ticks": -0.12256733512419907,
+          "positive_rate": 0.3333333333333333,
+          "week_demeaned_mean_ticks": 0.12256733512419907,
           "weeks": 6
         },
         "era13": {
-          "mean_oriented_ticks": -0.19127516778523618,
-          "median_oriented_ticks": -0.0,
+          "mean_oriented_ticks": 0.19127516778523618,
+          "median_oriented_ticks": 0.0,
           "n": 298,
-          "positive_rate": 0.37919463087248323,
-          "week_demeaned_mean_ticks": -0.14508882025556188,
+          "positive_rate": 0.40268456375838924,
+          "week_demeaned_mean_ticks": 0.14508882025556188,
           "weeks": 18
         },
         "era45": {
-          "mean_oriented_ticks": -0.3231707317073167,
-          "median_oriented_ticks": -0.0,
+          "mean_oriented_ticks": 0.3231707317073167,
+          "median_oriented_ticks": 0.0,
           "n": 164,
-          "positive_rate": 0.3475609756097561,
-          "week_demeaned_mean_ticks": -0.2681001759173899,
+          "positive_rate": 0.36585365853658536,
+          "week_demeaned_mean_ticks": 0.2681001759173899,
           "weeks": 12
         },
         "held": {
-          "mean_oriented_ticks": 0.8181818181818492,
-          "median_oriented_ticks": -0.0,
+          "mean_oriented_ticks": -0.8181818181818492,
+          "median_oriented_ticks": 0.0,
           "n": 11,
           "positive_rate": 0.2727272727272727,
-          "week_demeaned_mean_ticks": 0.7964689110648475,
+          "week_demeaned_mean_ticks": -0.7964689110648475,
           "weeks": 1
         },
         "train": {
-          "mean_oriented_ticks": 0.13090909090908617,
-          "median_oriented_ticks": -0.0,
+          "mean_oriented_ticks": -0.13090909090908617,
+          "median_oriented_ticks": 0.0,
           "n": 275,
           "positive_rate": 0.3381818181818182,
-          "week_demeaned_mean_ticks": 0.20940962235307561,
+          "week_demeaned_mean_ticks": -0.20940962235307561,
           "weeks": 18
         }
       },

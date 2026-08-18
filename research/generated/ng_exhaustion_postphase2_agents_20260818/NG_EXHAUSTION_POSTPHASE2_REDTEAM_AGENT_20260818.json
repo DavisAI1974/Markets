@@ -168,52 +168,52 @@
       "positive_oot_week_fraction": 0.5
     },
     {
-      "held_mean": -0.27272727272732344,
+      "held_mean": 0.27272727272732344,
       "kind": "context",
-      "leave_one_week_out_min_mean": -0.5240506329113819,
+      "leave_one_week_out_min_mean": 0.3620253164556867,
       "max_abs_week_contribution_share": 0.09374999999999921,
-      "min_oot_block_mean": -0.649484536082453,
+      "min_oot_block_mean": 0.1095890410958905,
       "oot_week_sign_p": null,
-      "orientation": "WITH_CURRENT",
+      "orientation": "AGAINST_CURRENT",
       "pattern": "OOSS->FLIP",
       "policy": "FAILURES_PRESERVED_FLAG_AND_DECOMPOSE",
       "positive_oot_week_fraction": null
     },
     {
-      "held_mean": -0.9473684210526208,
+      "held_mean": 0.9473684210526208,
       "kind": "context",
-      "leave_one_week_out_min_mean": -0.5062240663900374,
+      "leave_one_week_out_min_mean": 0.3084886128364344,
       "max_abs_week_contribution_share": 0.20402298850574563,
-      "min_oot_block_mean": -0.745762711864398,
+      "min_oot_block_mean": 0.13450292397660116,
       "oot_week_sign_p": null,
-      "orientation": "AGAINST_CURRENT",
+      "orientation": "WITH_CURRENT",
       "pattern": "SOOS->SAME",
       "policy": "FAILURES_PRESERVED_FLAG_AND_DECOMPOSE",
       "positive_oot_week_fraction": null
     },
     {
-      "held_mean": -0.7500000000000062,
+      "held_mean": 0.7500000000000062,
       "kind": "context",
-      "leave_one_week_out_min_mean": -0.17166666666666588,
+      "leave_one_week_out_min_mean": 0.061087866108785825,
       "max_abs_week_contribution_share": 0.11428571428571536,
-      "min_oot_block_mean": -0.28787878787877635,
-      "oot_week_sign_p": 0.8785075229825452,
-      "orientation": "WITH_CURRENT",
+      "min_oot_block_mean": 0.09294871794872052,
+      "oot_week_sign_p": 0.20251612307038158,
+      "orientation": "AGAINST_CURRENT",
       "pattern": "OOO->SAME",
       "policy": "FAILURES_PRESERVED_FLAG_AND_DECOMPOSE",
-      "positive_oot_week_fraction": 0.4166666666666667
+      "positive_oot_week_fraction": 0.5833333333333334
     },
     {
-      "held_mean": -2.1666666666667243,
+      "held_mean": 2.1666666666667243,
       "kind": "context",
-      "leave_one_week_out_min_mean": -0.25161290322581314,
+      "leave_one_week_out_min_mean": 0.12418300653595145,
       "max_abs_week_contribution_share": 0.11570247933884646,
-      "min_oot_block_mean": -0.2857142857143177,
-      "oot_week_sign_p": 0.9673773323884234,
-      "orientation": "WITH_CURRENT",
+      "min_oot_block_mean": 0.17307692307692962,
+      "oot_week_sign_p": 0.06624908198136836,
+      "orientation": "AGAINST_CURRENT",
       "pattern": "XSX->FLIP",
       "policy": "FAILURES_PRESERVED_FLAG_AND_DECOMPOSE",
-      "positive_oot_week_fraction": 0.3611111111111111
+      "positive_oot_week_fraction": 0.6388888888888888
     },
     {
       "held_mean": 0.500000000000167,
@@ -228,16 +228,16 @@
       "positive_oot_week_fraction": 0.6774193548387096
     },
     {
-      "held_mean": -0.49999999999994493,
+      "held_mean": 0.49999999999994493,
       "kind": "context",
-      "leave_one_week_out_min_mean": -1.0655737704917732,
+      "leave_one_week_out_min_mean": 0.5555555555555296,
       "max_abs_week_contribution_share": 0.13194444444443987,
-      "min_oot_block_mean": -1.2400000000000055,
-      "oot_week_sign_p": 0.9449079174082726,
-      "orientation": "AGAINST_CURRENT",
+      "min_oot_block_mean": 0.44444444444444486,
+      "oot_week_sign_p": 0.10766357486136258,
+      "orientation": "WITH_CURRENT",
       "pattern": "OSP->FLIP",
       "policy": "FAILURES_PRESERVED_FLAG_AND_DECOMPOSE",
-      "positive_oot_week_fraction": 0.375
+      "positive_oot_week_fraction": 0.625
     },
     {
       "held_mean": 2.0000000000000018,
@@ -276,16 +276,16 @@
       "positive_oot_week_fraction": 0.4722222222222222
     },
     {
-      "held_mean": 0.8181818181818492,
+      "held_mean": -0.8181818181818492,
       "kind": "context",
-      "leave_one_week_out_min_mean": -0.3007518796992484,
+      "leave_one_week_out_min_mean": 0.10074626865671775,
       "max_abs_week_contribution_share": 0.17499999999999838,
-      "min_oot_block_mean": -0.3231707317073167,
-      "oot_week_sign_p": 0.7974838769296184,
-      "orientation": "AGAINST_CURRENT",
+      "min_oot_block_mean": 0.16091954022987753,
+      "oot_week_sign_p": 0.308859658514848,
+      "orientation": "WITH_CURRENT",
       "pattern": "P->FLIP",
       "policy": "FAILURES_PRESERVED_FLAG_AND_DECOMPOSE",
-      "positive_oot_week_fraction": 0.4444444444444444
+      "positive_oot_week_fraction": 0.5555555555555556
     },
     {
       "held_mean": -0.769230769230787,

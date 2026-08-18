@@ -1134,42 +1134,42 @@
     {
       "blocks": {
         "conf": {
-          "mean_oriented_ticks": -0.1095890410958905,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": 0.1095890410958905,
+          "median_oriented_ticks": -0.0,
           "n": 73,
-          "positive_rate": 0.3013698630136986,
+          "positive_rate": 0.4246575342465753,
           "week_demeaned_mean_ticks": null,
           "weeks": 0
         },
         "era13": {
-          "mean_oriented_ticks": -0.649484536082453,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": 0.649484536082453,
+          "median_oriented_ticks": -0.0,
           "n": 194,
-          "positive_rate": 0.4072164948453608,
+          "positive_rate": 0.4587628865979381,
           "week_demeaned_mean_ticks": null,
           "weeks": 0
         },
         "era45": {
-          "mean_oriented_ticks": -0.34782608695652206,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": 0.34782608695652206,
+          "median_oriented_ticks": -0.0,
           "n": 138,
-          "positive_rate": 0.391304347826087,
+          "positive_rate": 0.43478260869565216,
           "week_demeaned_mean_ticks": null,
           "weeks": 0
         },
         "held": {
-          "mean_oriented_ticks": -0.27272727272732344,
-          "median_oriented_ticks": -0.9999999999998899,
+          "mean_oriented_ticks": 0.27272727272732344,
+          "median_oriented_ticks": 0.9999999999998899,
           "n": 11,
-          "positive_rate": 0.45454545454545453,
+          "positive_rate": 0.5454545454545454,
           "week_demeaned_mean_ticks": null,
           "weeks": 0
         },
         "train": {
-          "mean_oriented_ticks": 0.01578947368419944,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": -0.01578947368419944,
+          "median_oriented_ticks": -0.0,
           "n": 190,
-          "positive_rate": 0.45263157894736844,
+          "positive_rate": 0.37894736842105264,
           "week_demeaned_mean_ticks": null,
           "weeks": 0
         }
@@ -1177,289 +1177,289 @@
       "kind": "context",
       "older_ancestry_split": {
         "O": {
-          "false_mean": -3.7399999999999833,
-          "false_n": 100,
-          "true_mean": 2.168918918918929,
-          "true_n": 148
-        },
-        "P": {
-          "false_mean": -3.366666666666681,
-          "false_n": 30,
-          "true_mean": 1.5217391304347117,
-          "true_n": 23
-        },
-        "S": {
-          "false_mean": -3.570093457943939,
+          "false_mean": -3.0000000000000138,
           "false_n": 107,
-          "true_mean": 1.8851351351351318,
-          "true_n": 148
-        },
-        "X": {
-          "false_mean": -2.238095238095203,
-          "false_n": 21,
-          "true_mean": 3.0000000000000524,
-          "true_n": 29
-        }
-      },
-      "oot_week_sign_p": null,
-      "orientation": "WITH_CURRENT",
-      "pattern": "OOSS->FLIP",
-      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
-      "sign_change_present": true,
-      "timing_split": {
-        "unclassified": {
-          "false_n": 258,
-          "mean": -0.300330033003298,
-          "true_n": 348
-        }
-      }
-    },
-    {
-      "blocks": {
-        "conf": {
-          "mean_oriented_ticks": -0.23863636363637772,
-          "median_oriented_ticks": -0.0,
-          "n": 88,
-          "positive_rate": 0.4090909090909091,
-          "week_demeaned_mean_ticks": null,
-          "weeks": 0
-        },
-        "era13": {
-          "mean_oriented_ticks": -0.745762711864398,
-          "median_oriented_ticks": -0.9999999999994458,
-          "n": 236,
-          "positive_rate": 0.3220338983050847,
-          "week_demeaned_mean_ticks": null,
-          "weeks": 0
-        },
-        "era45": {
-          "mean_oriented_ticks": -0.13450292397660116,
-          "median_oriented_ticks": -0.0,
-          "n": 171,
-          "positive_rate": 0.3216374269005848,
-          "week_demeaned_mean_ticks": null,
-          "weeks": 0
-        },
-        "held": {
-          "mean_oriented_ticks": -0.9473684210526208,
-          "median_oriented_ticks": -0.9999999999998899,
-          "n": 19,
-          "positive_rate": 0.47368421052631576,
-          "week_demeaned_mean_ticks": null,
-          "weeks": 0
-        },
-        "train": {
-          "mean_oriented_ticks": 0.04273504273504562,
-          "median_oriented_ticks": -0.0,
-          "n": 234,
-          "positive_rate": 0.41452991452991456,
-          "week_demeaned_mean_ticks": null,
-          "weeks": 0
-        }
-      },
-      "kind": "context",
-      "older_ancestry_split": {
-        "O": {
-          "false_mean": -3.374999999999986,
-          "false_n": 128,
-          "true_mean": 2.22167487684728,
-          "true_n": 203
+          "true_mean": 2.6524822695035346,
+          "true_n": 141
         },
         "P": {
-          "false_mean": -4.249999999999976,
-          "false_n": 24,
-          "true_mean": 1.7948717948718247,
+          "false_mean": -2.499999999999883,
+          "false_n": 14,
+          "true_mean": 2.5897435897436005,
           "true_n": 39
         },
         "S": {
-          "false_mean": -3.229007633587793,
-          "false_n": 131,
-          "true_mean": 1.689873417721513,
-          "true_n": 158
+          "false_mean": -2.6320754716981085,
+          "false_n": 106,
+          "true_mean": 2.563758389261755,
+          "true_n": 149
         },
         "X": {
-          "false_mean": -3.7142857142856545,
-          "false_n": 28,
-          "true_mean": 1.2162162162162624,
-          "true_n": 37
+          "false_mean": -4.578947368421133,
+          "false_n": 19,
+          "true_mean": 1.5161290322580407,
+          "true_n": 31
         }
       },
       "oot_week_sign_p": null,
       "orientation": "AGAINST_CURRENT",
-      "pattern": "SOOS->SAME",
+      "pattern": "OOSS->FLIP",
       "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
-      "sign_change_present": true,
+      "sign_change_present": false,
       "timing_split": {
         "unclassified": {
-          "false_n": 311,
-          "mean": -0.30481283422459504,
-          "true_n": 437
+          "false_n": 246,
+          "mean": 0.300330033003298,
+          "true_n": 360
         }
       }
     },
     {
       "blocks": {
         "conf": {
-          "mean_oriented_ticks": -0.28787878787877635,
+          "mean_oriented_ticks": 0.23863636363637772,
           "median_oriented_ticks": 0.0,
+          "n": 88,
+          "positive_rate": 0.4318181818181818,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "era13": {
+          "mean_oriented_ticks": 0.745762711864398,
+          "median_oriented_ticks": 0.9999999999994458,
+          "n": 236,
+          "positive_rate": 0.5084745762711864,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "era45": {
+          "mean_oriented_ticks": 0.13450292397660116,
+          "median_oriented_ticks": 0.0,
+          "n": 171,
+          "positive_rate": 0.3508771929824561,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "held": {
+          "mean_oriented_ticks": 0.9473684210526208,
+          "median_oriented_ticks": 0.9999999999998899,
+          "n": 19,
+          "positive_rate": 0.5263157894736842,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        },
+        "train": {
+          "mean_oriented_ticks": -0.04273504273504562,
+          "median_oriented_ticks": 0.0,
+          "n": 234,
+          "positive_rate": 0.3547008547008547,
+          "week_demeaned_mean_ticks": null,
+          "weeks": 0
+        }
+      },
+      "kind": "context",
+      "older_ancestry_split": {
+        "O": {
+          "false_mean": -3.3909774436090063,
+          "false_n": 133,
+          "true_mean": 2.1818181818181728,
+          "true_n": 198
+        },
+        "P": {
+          "false_mean": -3.181818181818235,
+          "false_n": 22,
+          "true_mean": 2.4878048780487667,
+          "true_n": 41
+        },
+        "S": {
+          "false_mean": -2.8105263157894633,
+          "false_n": 95,
+          "true_mean": 2.1804123711340253,
+          "true_n": 194
+        },
+        "X": {
+          "false_mean": -1.956521739130509,
+          "false_n": 23,
+          "true_mean": 2.4761904761904363,
+          "true_n": 42
+        }
+      },
+      "oot_week_sign_p": null,
+      "orientation": "WITH_CURRENT",
+      "pattern": "SOOS->SAME",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+      "sign_change_present": false,
+      "timing_split": {
+        "unclassified": {
+          "false_n": 273,
+          "mean": 0.30481283422459504,
+          "true_n": 475
+        }
+      }
+    },
+    {
+      "blocks": {
+        "conf": {
+          "mean_oriented_ticks": 0.28787878787877635,
+          "median_oriented_ticks": -0.0,
           "n": 198,
-          "positive_rate": 0.35858585858585856,
-          "week_demeaned_mean_ticks": -0.3095724522243744,
+          "positive_rate": 0.45454545454545453,
+          "week_demeaned_mean_ticks": 0.3095724522243744,
           "weeks": 6
         },
         "era13": {
-          "mean_oriented_ticks": -0.09294871794872052,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": 0.09294871794872052,
+          "median_oriented_ticks": -0.0,
           "n": 624,
-          "positive_rate": 0.46153846153846156,
-          "week_demeaned_mean_ticks": -0.13700733394113668,
+          "positive_rate": 0.40865384615384615,
+          "week_demeaned_mean_ticks": 0.13700733394113668,
           "weeks": 18
         },
         "era45": {
-          "mean_oriented_ticks": -0.10047846889952534,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": 0.10047846889952534,
+          "median_oriented_ticks": -0.0,
           "n": 418,
-          "positive_rate": 0.3923444976076555,
-          "week_demeaned_mean_ticks": -0.1481472989694322,
+          "positive_rate": 0.41866028708133973,
+          "week_demeaned_mean_ticks": 0.1481472989694322,
           "weeks": 12
         },
         "held": {
-          "mean_oriented_ticks": -0.7500000000000062,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": 0.7500000000000062,
+          "median_oriented_ticks": -0.0,
           "n": 20,
-          "positive_rate": 0.45,
-          "week_demeaned_mean_ticks": -0.7233978234582958,
+          "positive_rate": 0.4,
+          "week_demeaned_mean_ticks": 0.7233978234582958,
           "weeks": 1
         },
         "train": {
-          "mean_oriented_ticks": 0.1444444444444565,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": -0.1444444444444565,
+          "median_oriented_ticks": -0.0,
           "n": 540,
-          "positive_rate": 0.42777777777777776,
-          "week_demeaned_mean_ticks": 0.0651893728873948,
+          "positive_rate": 0.3574074074074074,
+          "week_demeaned_mean_ticks": -0.0651893728873948,
           "weeks": 18
         }
       },
       "kind": "context",
       "older_ancestry_split": {
         "O": {
-          "false_mean": -3.1655844155844144,
-          "false_n": 308,
-          "true_mean": 2.101626016260163,
-          "true_n": 492
+          "false_mean": -2.9209039548022604,
+          "false_n": 354,
+          "true_mean": 2.1860986547085193,
+          "true_n": 446
         },
         "P": {
-          "false_mean": -2.581395348837173,
-          "false_n": 43,
-          "true_mean": 1.892473118279605,
-          "true_n": 93
+          "false_mean": -2.750000000000051,
+          "false_n": 64,
+          "true_mean": 1.541666666666645,
+          "true_n": 72
         },
         "S": {
-          "false_mean": -3.1923076923076743,
-          "false_n": 286,
-          "true_mean": 1.9570707070707014,
-          "true_n": 396
+          "false_mean": -2.81818181818181,
+          "false_n": 275,
+          "true_mean": 2.2432432432432305,
+          "true_n": 407
         },
         "X": {
-          "false_mean": -3.119047619047651,
-          "false_n": 84,
-          "true_mean": 1.8571428571428565,
-          "true_n": 98
+          "false_mean": -2.599999999999999,
+          "false_n": 70,
+          "true_mean": 2.339285714285738,
+          "true_n": 112
         }
       },
-      "oot_week_sign_p": 0.8785075229825452,
-      "orientation": "WITH_CURRENT",
+      "oot_week_sign_p": 0.20251612307038158,
+      "orientation": "AGAINST_CURRENT",
       "pattern": "OOO->SAME",
       "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
-      "sign_change_present": true,
+      "sign_change_present": false,
       "timing_split": {
         "unclassified": {
-          "false_n": 721,
-          "mean": -0.05222222222221918,
-          "true_n": 1079
+          "false_n": 763,
+          "mean": 0.05222222222221918,
+          "true_n": 1037
         }
       }
     },
     {
       "blocks": {
         "conf": {
-          "mean_oriented_ticks": -0.2857142857143177,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": 0.2857142857143177,
+          "median_oriented_ticks": -0.0,
           "n": 21,
-          "positive_rate": 0.23809523809523808,
-          "week_demeaned_mean_ticks": -0.2902394248681565,
+          "positive_rate": 0.3333333333333333,
+          "week_demeaned_mean_ticks": 0.2902394248681565,
           "weeks": 6
         },
         "era13": {
-          "mean_oriented_ticks": -0.20000000000000265,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": 0.20000000000000265,
+          "median_oriented_ticks": -0.0,
           "n": 90,
-          "positive_rate": 0.36666666666666664,
-          "week_demeaned_mean_ticks": -0.2741748921923177,
+          "positive_rate": 0.4444444444444444,
+          "week_demeaned_mean_ticks": 0.2741748921923177,
           "weeks": 18
         },
         "era45": {
-          "mean_oriented_ticks": -0.17307692307692962,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": 0.17307692307692962,
+          "median_oriented_ticks": -0.0,
           "n": 52,
-          "positive_rate": 0.28846153846153844,
-          "week_demeaned_mean_ticks": -0.21917121033828527,
+          "positive_rate": 0.4230769230769231,
+          "week_demeaned_mean_ticks": 0.21917121033828527,
           "weeks": 12
         },
         "held": {
-          "mean_oriented_ticks": -2.1666666666667243,
-          "median_oriented_ticks": -1.5000000000000568,
+          "mean_oriented_ticks": 2.1666666666667243,
+          "median_oriented_ticks": 1.5000000000000568,
           "n": 6,
-          "positive_rate": 0.0,
-          "week_demeaned_mean_ticks": -2.1400644901250137,
+          "positive_rate": 0.6666666666666666,
+          "week_demeaned_mean_ticks": 2.1400644901250137,
           "weeks": 1
         },
         "train": {
-          "mean_oriented_ticks": 0.3076923076923353,
-          "median_oriented_ticks": 0.0,
+          "mean_oriented_ticks": -0.3076923076923353,
+          "median_oriented_ticks": -0.0,
           "n": 65,
-          "positive_rate": 0.38461538461538464,
-          "week_demeaned_mean_ticks": 0.2215714109352806,
+          "positive_rate": 0.18461538461538463,
+          "week_demeaned_mean_ticks": -0.2215714109352806,
           "weeks": 17
         }
       },
       "kind": "context",
       "older_ancestry_split": {
         "O": {
-          "false_mean": -2.9166666666666603,
-          "false_n": 24,
-          "true_mean": 1.1836734693877335,
-          "true_n": 49
+          "false_mean": -2.23076923076919,
+          "false_n": 26,
+          "true_mean": 1.4893617021276562,
+          "true_n": 47
         },
         "P": {
-          "false_mean": -1.8823529411765767,
-          "false_n": 17,
-          "true_mean": 0.9090909090909605,
-          "true_n": 44
+          "false_mean": -1.739130434782707,
+          "false_n": 23,
+          "true_mean": 0.8421052631579422,
+          "true_n": 38
         },
         "S": {
-          "false_mean": -2.260869565217451,
-          "false_n": 23,
-          "true_mean": 0.9333333333333638,
-          "true_n": 30
+          "false_mean": -1.8666666666667275,
+          "false_n": 15,
+          "true_mean": 1.3684210526316152,
+          "true_n": 38
         },
         "X": {
-          "false_mean": -1.7142857142856738,
-          "false_n": 21,
-          "true_mean": 1.4615384615384714,
-          "true_n": 26
+          "false_mean": -2.7142857142857326,
+          "false_n": 14,
+          "true_mean": 1.090909090909065,
+          "true_n": 33
         }
       },
-      "oot_week_sign_p": 0.9673773323884234,
-      "orientation": "WITH_CURRENT",
+      "oot_week_sign_p": 0.06624908198136836,
+      "orientation": "AGAINST_CURRENT",
       "pattern": "XSX->FLIP",
       "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
-      "sign_change_present": true,
+      "sign_change_present": false,
       "timing_split": {
         "unclassified": {
-          "false_n": 85,
-          "mean": -0.11111111111111026,
-          "true_n": 149
+          "false_n": 78,
+          "mean": 0.11111111111111026,
+          "true_n": 156
         }
       }
     },
@@ -1549,83 +1549,83 @@
     {
       "blocks": {
         "conf": {
-          "mean_oriented_ticks": -0.44444444444444486,
-          "median_oriented_ticks": -0.0,
+          "mean_oriented_ticks": 0.44444444444444486,
+          "median_oriented_ticks": 0.0,
           "n": 9,
-          "positive_rate": 0.3333333333333333,
-          "week_demeaned_mean_ticks": -0.4238719045430394,
+          "positive_rate": 0.4444444444444444,
+          "week_demeaned_mean_ticks": 0.4238719045430394,
           "weeks": 6
         },
         "era13": {
-          "mean_oriented_ticks": -0.5937499999999207,
-          "median_oriented_ticks": -0.0,
+          "mean_oriented_ticks": 0.5937499999999207,
+          "median_oriented_ticks": 0.0,
           "n": 32,
-          "positive_rate": 0.375,
-          "week_demeaned_mean_ticks": -0.5361647657433884,
+          "positive_rate": 0.46875,
+          "week_demeaned_mean_ticks": 0.5361647657433884,
           "weeks": 15
         },
         "era45": {
-          "mean_oriented_ticks": -1.2400000000000055,
-          "median_oriented_ticks": -0.9999999999998899,
+          "mean_oriented_ticks": 1.2400000000000055,
+          "median_oriented_ticks": 0.9999999999998899,
           "n": 25,
-          "positive_rate": 0.32,
-          "week_demeaned_mean_ticks": -1.175970115199203,
+          "positive_rate": 0.56,
+          "week_demeaned_mean_ticks": 1.175970115199203,
           "weeks": 11
         },
         "held": {
-          "mean_oriented_ticks": -0.49999999999994493,
-          "median_oriented_ticks": -0.0,
+          "mean_oriented_ticks": 0.49999999999994493,
+          "median_oriented_ticks": 0.0,
           "n": 4,
-          "positive_rate": 0.0,
-          "week_demeaned_mean_ticks": -0.5266021765416552,
+          "positive_rate": 0.25,
+          "week_demeaned_mean_ticks": 0.5266021765416552,
           "weeks": 1
         },
         "train": {
-          "mean_oriented_ticks": 0.05405405405408411,
-          "median_oriented_ticks": -0.0,
+          "mean_oriented_ticks": -0.05405405405408411,
+          "median_oriented_ticks": 0.0,
           "n": 37,
           "positive_rate": 0.40540540540540543,
-          "week_demeaned_mean_ticks": 0.12382681068624135,
+          "week_demeaned_mean_ticks": -0.12382681068624135,
           "weeks": 14
         }
       },
       "kind": "context",
       "older_ancestry_split": {
         "O": {
-          "false_mean": -2.7647058823527413,
+          "false_mean": -1.9411764705882044,
           "false_n": 17,
-          "true_mean": 1.2222222222222028,
+          "true_mean": 1.740740740740615,
           "true_n": 27
         },
         "P": {
-          "false_mean": -5.999999999999894,
-          "false_n": 4,
-          "true_mean": 4.250000000000087,
-          "true_n": 4
+          "false_mean": -5.666666666666782,
+          "false_n": 3,
+          "true_mean": 4.7999999999999154,
+          "true_n": 5
         },
         "S": {
-          "false_mean": -3.1363636363636545,
-          "false_n": 22,
-          "true_mean": 2.500000000000007,
-          "true_n": 22
+          "false_mean": -3.92857142857144,
+          "false_n": 14,
+          "true_mean": 2.300000000000013,
+          "true_n": 30
         },
         "X": {
-          "false_mean": -4.6666666666666705,
-          "false_n": 6,
-          "true_mean": 1.8000000000000682,
-          "true_n": 5
+          "false_mean": -2.2500000000000853,
+          "false_n": 4,
+          "true_mean": 4.0000000000000036,
+          "true_n": 7
         }
       },
-      "oot_week_sign_p": 0.9449079174082726,
-      "orientation": "AGAINST_CURRENT",
+      "oot_week_sign_p": 0.10766357486136258,
+      "orientation": "WITH_CURRENT",
       "pattern": "OSP->FLIP",
       "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
-      "sign_change_present": true,
+      "sign_change_present": false,
       "timing_split": {
         "unclassified": {
-          "false_n": 49,
-          "mean": -0.5046728971962269,
-          "true_n": 58
+          "false_n": 38,
+          "mean": 0.5046728971962269,
+          "true_n": 69
         }
       }
     },
@@ -1887,83 +1887,83 @@
     {
       "blocks": {
         "conf": {
-          "mean_oriented_ticks": -0.16091954022987753,
-          "median_oriented_ticks": -0.0,
+          "mean_oriented_ticks": 0.16091954022987753,
+          "median_oriented_ticks": 0.0,
           "n": 87,
-          "positive_rate": 0.28735632183908044,
-          "week_demeaned_mean_ticks": -0.12256733512419907,
+          "positive_rate": 0.3333333333333333,
+          "week_demeaned_mean_ticks": 0.12256733512419907,
           "weeks": 6
         },
         "era13": {
-          "mean_oriented_ticks": -0.19127516778523618,
-          "median_oriented_ticks": -0.0,
+          "mean_oriented_ticks": 0.19127516778523618,
+          "median_oriented_ticks": 0.0,
           "n": 298,
-          "positive_rate": 0.37919463087248323,
-          "week_demeaned_mean_ticks": -0.14508882025556188,
+          "positive_rate": 0.40268456375838924,
+          "week_demeaned_mean_ticks": 0.14508882025556188,
           "weeks": 18
         },
         "era45": {
-          "mean_oriented_ticks": -0.3231707317073167,
-          "median_oriented_ticks": -0.0,
+          "mean_oriented_ticks": 0.3231707317073167,
+          "median_oriented_ticks": 0.0,
           "n": 164,
-          "positive_rate": 0.3475609756097561,
-          "week_demeaned_mean_ticks": -0.2681001759173899,
+          "positive_rate": 0.36585365853658536,
+          "week_demeaned_mean_ticks": 0.2681001759173899,
           "weeks": 12
         },
         "held": {
-          "mean_oriented_ticks": 0.8181818181818492,
-          "median_oriented_ticks": -0.0,
+          "mean_oriented_ticks": -0.8181818181818492,
+          "median_oriented_ticks": 0.0,
           "n": 11,
           "positive_rate": 0.2727272727272727,
-          "week_demeaned_mean_ticks": 0.7964689110648475,
+          "week_demeaned_mean_ticks": -0.7964689110648475,
           "weeks": 1
         },
         "train": {
-          "mean_oriented_ticks": 0.13090909090908617,
-          "median_oriented_ticks": -0.0,
+          "mean_oriented_ticks": -0.13090909090908617,
+          "median_oriented_ticks": 0.0,
           "n": 275,
           "positive_rate": 0.3381818181818182,
-          "week_demeaned_mean_ticks": 0.20940962235307561,
+          "week_demeaned_mean_ticks": -0.20940962235307561,
           "weeks": 18
         }
       },
       "kind": "context",
       "older_ancestry_split": {
         "O": {
-          "false_mean": -3.222222222222217,
-          "false_n": 99,
-          "true_mean": 1.9636363636363894,
-          "true_n": 165
+          "false_mean": -3.3061224489796355,
+          "false_n": 98,
+          "true_mean": 1.9216867469879488,
+          "true_n": 166
         },
         "P": {
-          "false_mean": -2.5483870967742424,
-          "false_n": 62,
-          "true_mean": 1.0393700787401479,
-          "true_n": 127
+          "false_mean": -2.490566037735826,
+          "false_n": 53,
+          "true_mean": 1.161764705882375,
+          "true_n": 136
         },
         "S": {
-          "false_mean": -3.557894736842092,
-          "false_n": 95,
-          "true_mean": 1.9387755102040856,
-          "true_n": 147
+          "false_mean": -3.0645161290322642,
+          "false_n": 93,
+          "true_mean": 2.268456375838918,
+          "true_n": 149
         },
         "X": {
-          "false_mean": -2.1836734693877955,
-          "false_n": 49,
-          "true_mean": 1.1208791208791096,
-          "true_n": 91
+          "false_mean": -2.170212765957425,
+          "false_n": 47,
+          "true_mean": 1.1505376344086236,
+          "true_n": 93
         }
       },
-      "oot_week_sign_p": 0.7974838769296184,
-      "orientation": "AGAINST_CURRENT",
+      "oot_week_sign_p": 0.308859658514848,
+      "orientation": "WITH_CURRENT",
       "pattern": "P->FLIP",
       "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
       "sign_change_present": true,
       "timing_split": {
         "unclassified": {
-          "false_n": 305,
-          "mean": -0.09461077844311452,
-          "true_n": 530
+          "false_n": 291,
+          "mean": 0.09461077844311452,
+          "true_n": 544
         }
       }
     },
