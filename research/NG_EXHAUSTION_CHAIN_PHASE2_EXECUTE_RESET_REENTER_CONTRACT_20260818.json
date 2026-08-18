@@ -1,0 +1,54 @@
+{
+  "name": "NG exhaustion chain Phase-2 execute-reset-reenter research contract",
+  "date": "2026-08-18",
+  "branch": "chatgpt/ng-exhaustion-chain-phase2-20260817",
+  "status": "RESEARCH_MANAGEMENT_CONTRACT_NOT_LIVE_NOT_PROMOTED",
+  "core_policy": {
+    "take_valid_original_trade": true,
+    "future_possible_reorigin_does_not_cancel_current_entry": true,
+    "uncertainty_is_trade_management_not_entry_falsification": true,
+    "bank_positive_parent_at_causally_valid_uncertainty_checkpoint": true,
+    "reset_chain_at_reorigin_checkpoint_after_flatten": true,
+    "reenter_only_if_a_trusted_setup_materializes": true,
+    "do_not_reenter_if_trusted_setup_does_not_materialize": true,
+    "automatic_reverse_at_uncertainty": false,
+    "delete_failed_instances": false
+  },
+  "current_trusted_reentry_set": {
+    "SSOS": "existing frozen paper-only play NG_CHAIN_D4_SSOS_CONTINUATION_V1",
+    "POX_OPP": "priority executable candidate; not frozen from the forensic/reappearance pass alone"
+  },
+  "supporting_fixed_checkpoint_proxy": {
+    "purpose": "Test whether the general idea of banking an already-positive P-O-X trade suppresses the historical mechanism before exact successor-recognition timing is reproduced from raw/live data.",
+    "rule_plus10": "If oriented return is positive at endpoint+10, bank it; otherwise preserve the original endpoint+60 exit.",
+    "rule_plus30": "If oriented return is positive at endpoint+30, bank it; otherwise preserve the original endpoint+60 exit.",
+    "broad_pox_results": {
+      "era1_to_3": {"fixed_plus60_mean_ticks": 0.4306220095693901, "plus10_bank_else60_mean_ticks": 0.468899521531107, "plus30_bank_else60_mean_ticks": 0.497607655502379},
+      "era4_to_5": {"fixed_plus60_mean_ticks": 0.20000000000001286, "plus10_bank_else60_mean_ticks": 0.2642857142857286, "plus30_bank_else60_mean_ticks": 0.20714285714287026},
+      "untouched_confirmation": {"fixed_plus60_mean_ticks": 0.4487179487179334, "plus10_bank_else60_mean_ticks": 0.4487179487179334, "plus30_bank_else60_mean_ticks": 0.46153846153844745},
+      "held_20260329": {"fixed_plus60_mean_ticks": -0.23076923076923953, "plus10_bank_else60_mean_ticks": -0.23076923076923953, "plus30_bank_else60_mean_ticks": -0.23076923076923953}
+    },
+    "interpretation": "Banking a positive parent at a simple causal checkpoint does not erase the broad P-O-X edge in any pre-held block. These fixed-time rules do not solve the held adverse branch and are not promoted; they only support keeping entry validity separate from later uncertainty management."
+  },
+  "exact_uncertainty_checkpoint": {
+    "status": "NEEDS_RAW_OR_LIVE_CAUSAL_RECOGNITION_PROOF",
+    "reason": "The canonical event table supports exact endpoint-based returns but does not by itself reproduce the earliest live recognition price of a newly detected successor exhaustion. The frozen detector/live-clock boundary must be respected; no synthetic early checkpoint will be promoted.",
+    "required_next_test": "Reproduce the earliest causally valid successor-exhaustion recognition time using the frozen detector/live stream semantics, mark the parent position to market at that exact decision time, then OOT-test bank-positive/reset versus preserving the original exit."
+  },
+  "reentry_watch_map": "research/NG_EXHAUSTION_CHAIN_PHASE2_REAPPEARANCE_WATCH_MAP_20260818.json",
+  "no_overclaim": {
+    "hours_later_trusted_reappearance_is_not_claimed_as_same_origin_persistence": true,
+    "short_lag_plus120_plus300_recovery_remains_separate_unresolved_thread": true,
+    "partial_prefix_watch_is_not_an_entry": true
+  },
+  "protected_mutations": {
+    "frozen_exhaustion_detector": false,
+    "base_54w": false,
+    "held_week_rows": false,
+    "runway_clock": false,
+    "permanent_frankie": false,
+    "frankie_1": false,
+    "research/kalshi/spawn.py": false,
+    "ssos_frozen_paper_play": false
+  }
+}
