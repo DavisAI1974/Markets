@@ -1,0 +1,73 @@
+{
+  "name": "NG exhaustion chain Phase-2 P-O-X successor ancestry incremental test",
+  "date": "2026-08-18",
+  "branch": "chatgpt/ng-exhaustion-chain-phase2-20260817",
+  "status": "OLDER_POX_ANCESTRY_NOT_STABLY_INCREMENTAL_AT_SUCCESSOR_CHECKPOINT",
+  "purpose": "Test whether older P-O-X ancestry adds out-of-time predictive value once the first successor exhaustion has become its own causally confirmed event.",
+  "population": {
+    "successor_events": 467,
+    "eras_1_to_3": 151,
+    "eras_4_to_5": 85,
+    "untouched_confirmation": 58,
+    "held_20260329": 9,
+    "pre_discovery_training": 164
+  },
+  "target": "successor oriented return from successor structural endpoint+5 to endpoint+60",
+  "baseline_features_available_by_successor_confirmation": [
+    "successor polarity",
+    "successor polarity relation to immediate parent current event",
+    "parent-to-successor inter-event seconds",
+    "successor structural-onset offset",
+    "successor causal-confirmation offset",
+    "successor local hour",
+    "immediate parent polarity"
+  ],
+  "ancestry_additions": [
+    "whether the P-O-X current event had same versus opposite polarity relative to its latest X predecessor",
+    "interaction of that older branch with successor polarity relation"
+  ],
+  "model": "fixed Ridge(alpha=1.0) with standardized numeric inputs; no tuning on test blocks",
+  "chronological_tests": [
+    {
+      "train": "eras_1_to_3",
+      "test": "eras_4_to_5",
+      "baseline_mse": 4.830232849850016,
+      "plus_ancestry_mse": 5.905623255068458,
+      "ancestry_incremental_mse_gain": -1.0753904052184424
+    },
+    {
+      "train": "eras_1_to_3_plus_eras_4_to_5",
+      "test": "untouched_confirmation",
+      "baseline_mse": 2.2010591797355232,
+      "plus_ancestry_mse": 2.1569991860899296,
+      "ancestry_incremental_mse_gain": 0.044059993645593654
+    },
+    {
+      "train": "all_36_preheld_oot_weeks",
+      "test": "held_20260329",
+      "baseline_mse": 4.220553156082222,
+      "plus_ancestry_mse": 4.131842472231039,
+      "ancestry_incremental_mse_gain": 0.08871068385118264
+    }
+  ],
+  "result": {
+    "stable_positive_incremental_ancestry_gain": false,
+    "interpretation": "Older P-O-X branch information is not a stable incremental predictor once the successor exhaustion has become its own event. It materially worsens the first replication test and yields only small later improvements. This supports a rolling/re-origin checkpoint interpretation rather than assuming unchanged inherited P-O-X state through the successor."
+  },
+  "boundary": {
+    "does_not_mean_ancestry_is_erased": true,
+    "does_mean_automatic_inherited_state_is_rejected": true,
+    "successor_action_still_unresolved": true,
+    "note": "A successor checkpoint may still use any older information that survives a future predeclared OOT test, but no older state is presumed active by default."
+  },
+  "protected_mutations": {
+    "frozen_exhaustion_detector": false,
+    "base_54w": false,
+    "held_week_rows": false,
+    "runway_clock": false,
+    "permanent_frankie": false,
+    "frankie_1": false,
+    "research/kalshi/spawn.py": false,
+    "ssos_frozen_paper_play": false
+  }
+}
