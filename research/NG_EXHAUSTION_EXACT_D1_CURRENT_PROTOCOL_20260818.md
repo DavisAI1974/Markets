@@ -74,15 +74,17 @@ For D1s that require fallback entry, two clocks must be kept separate:
 1. `DETECTOR_KNOWN` clock — starts when the frozen detector has causally confirmed the origin event. This permits the earliest possible D1-survival research using only information available by that moment.
 2. `FULL_STATE_KNOWN` clock — starts when the origin's required h=60 information wall is available. This permits state/grammar-conditioned research that requires the frozen post-event state.
 
-The first fallback survivorship checkpoint is **+5 seconds** after the applicable causal clock. Required checkpoints are at least:
+The fallback survivorship ladder begins immediately after the applicable causal clock. Required checkpoints are at least:
 
-`+5, +10, +15, +20, +30, +45, +60, +90, +120, +180, +300, +600, +900, +1800, +3600 seconds`, with additional longer landmarks where support exists.
+`+1, +2, +3, +4, +5, +10, +15, +20, +30, +45, +60, +90, +120, +180, +300, +600, +900, +1800, +3600 seconds`, with additional longer landmarks where support exists.
+
+The +1 through +5 checkpoints are deliberately dense. Their purpose is to identify the **earliest** instant at which an initially non-actionable D1 becomes sufficiently predictable, rather than imposing +5 seconds as a minimum delay.
 
 At every fallback checkpoint, retain all surviving D1s and report:
 
 - count and fraction still alive;
 - empirical remaining-time distribution;
-- probability of surviving another 5/10/30/60/120/300/600 seconds where support permits;
+- probability of surviving another 1/2/3/4/5/10/30/60/120/300/600 seconds where support permits;
 - expected/median remaining runway;
 - duration-family and origin-context mix as annotations;
 - raw path available from checkpoint onward;
@@ -90,7 +92,7 @@ At every fallback checkpoint, retain all surviving D1s and report:
 - MFE/MAE and realized gross/net opportunity from entering at that checkpoint;
 - whether checkpoint-known information can now predict which surviving D1s have enough runway/edge left.
 
-A D1 that is unpredictable at origin but becomes predictable at +5s, +10s, +30s, +2m, +5m, or later remains a valid candidate. The only execution requirement for fallback entry is that the signal at that checkpoint be causal and that sufficient expected remaining runway/edge remain after costs.
+A D1 that is unpredictable at origin but becomes predictable at +1s, +2s, +3s, +4s, +5s, +10s, +30s, +2m, +5m, or later remains a valid candidate. The only execution requirement for fallback entry is that the signal at that checkpoint be causal and that sufficient expected remaining runway/edge remain after costs.
 
 Realized survival age, realized duration family, and realized path shape may not leak future information into an earlier checkpoint. At checkpoint `t`, the model may use only information available by `t` plus the causal fact that no descendant has arrived yet.
 
