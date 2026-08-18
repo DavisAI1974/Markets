@@ -42,6 +42,7 @@ No agent may delete valid losing rows, retune the detector, use future identity 
 6. **Execution agent** — for historically promising structures, evaluate causal endpoint+5 entry to endpoint+60 reference behavior, +10/+20/+30 path shape, and 0.5/1/2-tick cost stress. No stop or management optimization is allowed in this first execution pass.
 7. **Red-team agent** — test week concentration, leave-one-week-out stability, block sign consistency, held behavior, and failure concentration without deleting adverse cases.
 8. **Causal-knowability agent** — verify every proposed live trigger has all predecessor h=60 information available and current frozen-detector identity established no later than the endpoint+5 entry wall.
+9. **Phase-2 reconciliation/crosswalk agent** — reread the authoritative Phase-2 freeze, all-agent findings, proposal index, and Phase-2 proposal as immutable truth; compare every new seeded result and any overlapping systematic motif against the frozen Phase-2 orientation/status; classify each as a genuine extension, deeper decomposition, methodology/sign-convention mismatch, genuine contradiction requiring investigation, duplicate/renamed known mechanism, or still-provisional promotion candidate. This lane must never recompute Phase 2 to decide whether Phase 2 was “right.”
 
 ## Seeded structures
 
@@ -51,11 +52,24 @@ They must also carry the independent/context queue and investigator cases, inclu
 
 The systematic lane is explicitly required so the study is not anchored only on those named structures.
 
+## Phase-2 crosswalk doctrine
+
+The post-Phase-2 study may extend or decompose Phase-2 findings but may not silently reselect them.
+
+- The structural orientations finalized for the independent context queue remain frozen when those named contexts are evaluated: `OOSS->FLIP`, `OOO->SAME`, and `XSX->FLIP` are `AGAINST_CURRENT`; `SOOS->SAME`, `OSP->SAME`, `OSP->FLIP`, `PSOS->FLIP`, and `SXOO->FLIP` are `WITH_CURRENT`.
+- Phase-2 investigator cases remain investigator cases. Their false/held failures must travel with the new results.
+- Pair/triplet recurrence and extension findings are structural and did not freeze a trade direction; a new train-fixed execution direction for those modules is a new hypothesis, not a correction to Phase 2.
+- `POX->FLIP` is the known P-O-X-opposite mechanism and has zero novelty after that mechanism is removed. It must never be relabeled as a new recurrence module.
+- `SOS->FLIP` lost stable confirmation after SSOS overlap removal. It cannot be promoted from the broad systematic atlas without a renewed overlap/novelty adjudication.
+- `POX->SAME` remains a Phase-2 investigator/delayed-reexpression thread and does not become an automatic direct trade merely because a post-Phase-2 historical execution summary looks favorable.
+
 ## Outcome discipline
 
-For strategy research, direction is fixed from the first 18 train weeks for the new pass. Later historical blocks are validation only inside this post-Phase-2 study.
+For genuinely new systematic patterns and for pair/triplet execution hypotheses whose outcome direction was not frozen in Phase 2, direction is fixed from the first 18 train weeks for the new pass. Later historical blocks are validation only inside this post-Phase-2 study.
 
-However, because many named patterns were already surfaced during Phase 2 using the 55-week history, **no named candidate may be called freshly untouched or prospectively promoted from these 55 weeks.** Fresh future evidence remains necessary before any new play freeze.
+For already-characterized Phase-2 context candidates, the frozen Phase-2 structural orientation is preserved rather than re-selected from the train block. This avoids re-litigating Phase 2 under a new sign convention.
+
+Because many named patterns were already surfaced during Phase 2 using the 55-week history, **no named candidate may be called freshly untouched or prospectively promoted from these 55 weeks.** Fresh future evidence remains necessary before any new play freeze.
 
 Week-relative controls and losing cases travel with every candidate. Multiple-testing-adjusted results from the systematic lane are research evidence, not automatic promotion.
 
@@ -63,8 +77,9 @@ Week-relative controls and losing cases travel with every candidate. Multiple-te
 
 The work is not complete at a candidate ranking. The reconciled study must produce:
 
-- durable machine outputs for all eight independent lanes;
+- durable machine outputs for all nine independent lanes;
 - a human-readable all-agent findings record, including true and false cases;
+- a Phase-2 crosswalk showing what is genuinely new versus extension/decomposition/overlap/methodological mismatch;
 - a curated post-Phase-2 brain proposal that extends, and does not replace, the runway and Phase-2 proposals;
 - separate trade-strategy proposals with exact causal trigger, direction, reference entry/exit, path behavior, cost stress, invalidators, failure modes, evidence blocks, and promotion status;
 - a red-team/falsifier conclusion for each strategy proposal;
