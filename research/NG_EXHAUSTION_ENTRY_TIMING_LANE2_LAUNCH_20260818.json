@@ -1,0 +1,17 @@
+{
+  "status": "AUTHORIZED_LANE2_ALL_D1_RAWPATH_LAUNCH",
+  "date": "2026-08-18",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "population": "ALL_18837_FROZEN_FORWARD_OOT_EXACT_D1",
+  "primary_causal_clock": "DETECTOR_KNOWN",
+  "secondary_clock": "FULL_STATE_KNOWN_ONLY_WHEN_RULE_REQUIRES_IT",
+  "checkpoint_grid": "+0,+1,+2,+3,+4,+5,+10,+15,+20,then_every_5_seconds_through_+3600_while_alive",
+  "entry_fill_rule": "FIRST_TRADE_AT_OR_AFTER_REQUESTED_CAUSAL_CHECKPOINT",
+  "exit_rule": "LAST_TRADE_AT_OR_BEFORE_FROZEN_DESCENDANT_T0",
+  "preserve_all": true,
+  "drop_no_fill_cases": false,
+  "drop_detector_after_descendant_cases": false,
+  "realized_path_shape_is_causal_input": false,
+  "promotion_authorized": false,
+  "protected_component_mutation_authorized": false
+}
