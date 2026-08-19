@@ -1,0 +1,281 @@
+name: NG Exhaustion D1-D5 Chain Birth Agents V2 20260819
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_AGENTS_V2_LAUNCH_20260819.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: us-east-2
+  BUCKET: bento-568968024170-us-east-2-an
+  BASE_ID: '9281733364'
+  BASE_SHA: f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1
+  HELD_ID: '9281272840'
+  HELD_SHA: 21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e
+  LINEAGE_ID: '9289929292'
+  LINEAGE_SHA: a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95
+  RECONCILE_ID: '9306082330'
+  RECONCILE_SHA: f17c130df029429bfbc35067d1cc9d16128ca4fb227dd37f3fb4fbb8bbaf8875
+
+jobs:
+  chain-birth-agents-v2:
+    name: Chain-birth v2 agent ${{ matrix.agent }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - agent: D1
+            stages: '1'
+          - agent: D2
+            stages: '2'
+          - agent: D3
+            stages: '3'
+          - agent: D45
+            stages: '4,5'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: python -m pip install --quiet numpy scikit-learn
+
+      - name: Compile and verify PRIOR-first second-level price contract
+        run: |
+          set -euo pipefail
+          python -m py_compile research/ng_exhaustion_d1_d5_chain_birth_agents_20260819.py
+          python -m py_compile research/ng_exhaustion_d1_d5_chain_birth_agents_v2_20260819.py
+          test -f research/NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_PREDICTABILITY_PROTOCOL_20260819.md
+          test -f research/NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_PRICE_STRUCTURE_ADDENDUM_20260819.md
+          python - <<'PY'
+          base=open('research/ng_exhaustion_d1_d5_chain_birth_agents_20260819.py').read()
+          v2=open('research/ng_exhaustion_d1_d5_chain_birth_agents_v2_20260819.py').read()
+          assert 'HGRID = tuple([1, 2, 3, 4, 5, 10, 15] + list(range(20, 3601, 5)))' in base
+          assert 'PER_OCCURRENCE_CAUSAL_ONE_SECOND_PATH_PREFIX' in v2
+          assert 'availability_is_feature' in v2
+          assert 'PRICE_PATH' not in base
+          for forbidden in ['a_frozen_post_state','next_same_polarity','next_family','time_context','seed_state']:
+              assert forbidden not in base, forbidden
+          print('v2 chain-birth contract: PASS')
+          PY
+
+      - name: Download and verify immutable frozen sources
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/in/base /tmp/in/held /tmp/in/lineage /tmp/in/reconcile
+          get_artifact () {
+            id="$1"; sha="$2"; zip="$3"; dest="$4"
+            curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" -o "${zip}"
+            echo "${sha}  ${zip}" | sha256sum -c -
+            unzip -q "${zip}" -d "${dest}"
+          }
+          get_artifact "${BASE_ID}" "${BASE_SHA}" /tmp/base.zip /tmp/in/base
+          get_artifact "${HELD_ID}" "${HELD_SHA}" /tmp/held.zip /tmp/in/held
+          get_artifact "${LINEAGE_ID}" "${LINEAGE_SHA}" /tmp/lineage.zip /tmp/in/lineage
+          get_artifact "${RECONCILE_ID}" "${RECONCILE_SHA}" /tmp/reconcile.zip /tmp/in/reconcile
+
+      - name: Resolve conditional-birth weeks
+        env:
+          STAGES: ${{ matrix.stages }}
+        run: |
+          python - <<'PY' >> "${GITHUB_ENV}"
+          import gzip,json,os
+          stages=[int(x) for x in os.environ['STAGES'].split(',')]
+          mind=min(stages)-1
+          weeks=set()
+          for p in (
+            '/tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz',
+            '/tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz',
+          ):
+              with gzip.open(p,'rt') as f:
+                  for line in f:
+                      r=json.loads(line)
+                      if int(r.get('all_model_consecutive_positive_depth',0)) >= mind:
+                          weeks.add(r['week_sunday'])
+          assert weeks
+          print('WEEKS='+','.join(sorted(weeks)))
+          PY
+
+      - name: Materialize authoritative raw NG tape for every modeled occurrence
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ngraw
+          python - <<'PY' > /tmp/days.txt
+          import os
+          from datetime import datetime,timedelta
+          days=set()
+          for w in os.environ['WEEKS'].split(','):
+              d=datetime.strptime(w,'%Y%m%d')
+              for i in range(6):
+                  days.add((d+timedelta(days=i)).strftime('%Y%m%d'))
+          for x in sorted(days): print(x)
+          PY
+          python - <<'PY' > /tmp/closures.txt
+          import json
+          d=json.load(open('research/NG_EXHAUSTION_20260403_CME_CLOSURE_WITNESS_20260817.json'))
+          assert d['status']=='FROZEN_EXCHANGE_CLOSURE_WITNESS'
+          for x in d['canonicalization_rule']['explicit_closure_dates']: print(x)
+          PY
+          while read -r d; do
+            mapfile -t keys < <(aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" \
+              --query 'Contents[].Key' --output text | tr '\t' '\n' | \
+              grep -E "NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" | sort -u || true)
+            if grep -qx "${d}" /tmp/closures.txt; then
+              test "${#keys[@]}" -eq 0 || { echo "::error::frozen closure ${d} has raw objects"; exit 1; }
+              continue
+            fi
+            test "${#keys[@]}" -eq 1 || { echo "::error::expected exactly one NG raw object ${d}, got ${#keys[@]}"; exit 1; }
+            aws s3 cp "s3://${BUCKET}/${keys[0]}" "/tmp/ngraw/NG_${d}.jsonl.gz" --only-show-errors
+            test -s "/tmp/ngraw/NG_${d}.jsonl.gz"
+          done < /tmp/days.txt
+
+      - name: Run PRIOR-first chain-birth agent with per-occurrence one-second price paths
+        env:
+          AGENT: ${{ matrix.agent }}
+          STAGES: ${{ matrix.stages }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/out
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_d1_d5_chain_birth_agents_v2_20260819.py \
+            --stages "${STAGES}" \
+            --base /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz \
+            --held /tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz \
+            --base-lineage /tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz \
+            --held-lineage /tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz \
+            --raw-dir /tmp/ngraw \
+            --out "/tmp/out/NG_EXHAUSTION_CHAIN_BIRTH_V2_AGENT_${AGENT}_20260819.json"
+
+      - name: Fail closed on population, PRIOR hierarchy, and price-structure invariants
+        env:
+          AGENT: ${{ matrix.agent }}
+          STAGES: ${{ matrix.stages }}
+        run: |
+          python - <<'PY'
+          import json,os
+          p=f"/tmp/out/NG_EXHAUSTION_CHAIN_BIRTH_V2_AGENT_{os.environ['AGENT']}_20260819.json"
+          d=json.load(open(p))
+          assert d['status']=='D1_D5_CHAIN_BIRTH_PREDICTABILITY_AGENT_COMPLETE'
+          assert d['H_grid'][:7]==[1,2,3,4,5,10,15]
+          assert d['H_grid'][7:13]==[20,25,30,35,40,45]
+          assert d['H_grid'][-1]==3600
+          assert d['primary_target']=='PREDICT_WHETHER_NEXT_CHAIN_STAGE_BEGINS_BEFORE_FROZEN_TARGET_T0'
+          expected={1:(20562,135823,37),2:(1725,18837,0),3:(133,1592,0),4:(9,124,0),5:(1,8,0)}
+          for s in [int(x) for x in os.environ['STAGES'].split(',')]:
+              r=d['results'][f'D{s}']
+              assert (r['positive_n'],r['negative_n'],r['censored_n'])==expected[s]
+              assert r['price_structure_mode']=='PER_OCCURRENCE_CAUSAL_ONE_SECOND_PATH_PREFIX'
+              assert r['price_structure_per_occurrence'] is True
+              assert r['price_structure_availability_used_as_feature'] is False
+              assert r['price_structure_missingness_policy']=='FAIL_CLOSED_DATA_INTEGRITY_NOT_MODEL_SIGNAL'
+              assert r['promotion_performed'] is False
+              if s<=3:
+                  assert r['primary_success_definition']=='PRIOR_BIRTH_PREDICTION_ONLY'
+                  assert r['characteristics_accessed'] is False
+                  assert not any(r['protected_mutations'].values())
+              else:
+                  assert r['sparse_price_path_rows'] > 0
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-chain-birth-v2-agent-${{ matrix.agent }}-20260819
+          path: /tmp/out/*
+          if-no-files-found: error
+          retention-days: 14
+
+  reconcile-chain-birth-v2:
+    name: Reconcile D1-D5 chain-birth v2 timing
+    needs: chain-birth-agents-v2
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ng-exhaustion-chain-birth-v2-agent-*-20260819
+          path: /tmp/agents
+      - name: Reconcile earliest PRIOR birth prediction and fallback recognition
+        run: |
+          set -euo pipefail
+          OUT=research/generated/ng_exhaustion_entry_timing_revival_20260819/d1_d5_chain_birth_agents_v2
+          mkdir -p "${OUT}"
+          python - <<'PY'
+          import glob,json,os,shutil
+          from pathlib import Path
+          files=sorted(glob.glob('/tmp/agents/**/*.json',recursive=True))
+          assert len(files)==4,files
+          combined={}; agents=[]
+          for p in files:
+              d=json.load(open(p)); assert d['status']=='D1_D5_CHAIN_BIRTH_PREDICTABILITY_AGENT_COMPLETE'
+              agents.append({'file':os.path.basename(p),'stages':d['agent_stages']})
+              for k,v in d['results'].items():
+                  assert k not in combined
+                  combined[k]=v
+          assert sorted(combined)==['D1','D2','D3','D4','D5']
+          out=Path('research/generated/ng_exhaustion_entry_timing_revival_20260819/d1_d5_chain_birth_agents_v2')
+          for p in glob.glob('/tmp/agents/**/*.jsonl.gz',recursive=True):
+              shutil.copy2(p,out/Path(p).name)
+          result={
+            'status':'D1_D5_CHAIN_BIRTH_V2_AGENTS_RECONCILED',
+            'date':'2026-08-19',
+            'primary_question':'WHEN_CAN_WE_PREDICT_THE_NEXT_CHAIN_STAGE_WILL_BEGIN',
+            'search_hierarchy':'PRIOR_FIRST_EXHAUSTIVELY; FALLBACK_ONLY_FOR_PRIOR_FAILURES',
+            'H_grid':[1,2,3,4,5,10,15]+list(range(20,3601,5)),
+            'price_structure_mode':'PER_OCCURRENCE_CAUSAL_ONE_SECOND_PATH_PREFIX',
+            'price_structure_availability_used_as_feature':False,
+            'agents':agents,
+            'results':combined,
+            'trade_strategy_next_step':'FOR_EACH_VALIDATED_PRIOR_BIRTH_SIGNAL_ATTACH_DIRECTION_BEHAVIOR_AND_RAW_PRICE_ECONOMICS_FROM_EXACT_PRIOR_SIGNAL_TIME',
+            'phase2_reopened':False,
+            'promotion_performed':False,
+            'protected_mutations':{'detector':False,'canonical_rows':False,'phase1':False,'phase2':False,'runway_clock':False,'permanent_frankie':False,'frankie_1':False,'spawn_py':False,'ssos_play':False},
+          }
+          (out/'NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_V2_ALL_AGENT_RESULTS_20260819.json').write_text(json.dumps(result,indent=2,sort_keys=True)+'\n')
+          lines=['# NG Exhaustion D1-D5 Chain-Birth V2 Predictability — 2026-08-19','',
+                 'Primary question: **when can we predict that the next chain stage will begin?**','',
+                 'Search hierarchy: **PRIOR first and exhaustively; fallback only for PRIOR failures.**','',
+                 'Price structure: every predecessor occurrence carries its own causal one-second price path through H; price availability is infrastructure, never a feature.','']
+          for k in ['D1','D2','D3','D4','D5']:
+              r=combined[k]; w=r.get('earliest_validated')
+              if int(k[1:])>=4: verdict='LOW_SUPPORT_PRESERVED_CASE_STUDY'
+              elif w is None: verdict='NO_VALIDATED_POINT'
+              else: verdict=f"{w['timing_class']} at H={w['H_seconds']}s"
+              lines += [f'## {k}',f"- Birth positives: {r['positive_n']}",f"- Prior-stage stops: {r['negative_n']}",f"- Earliest result: {verdict}",'']
+          lines += ['## Strategy handoff','For every validated PRIOR birth signal, measure trade direction/behavior and raw-tape economics from the exact causal signal timestamp. +0/post results remain fallback recognition only.','', 'No protected component or frozen Phase-2 finding was modified.']
+          (out/'NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_V2_ALL_AGENT_FINDINGS_20260819.md').write_text('\n'.join(lines)+'\n')
+          PY
+      - name: Commit durable v2 chain-birth outputs
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/generated/ng_exhaustion_entry_timing_revival_20260819/d1_d5_chain_birth_agents_v2
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record D1-D5 v2 chain-birth predictability results'
+          for i in 1 2 3; do
+            git pull --rebase origin chatgpt/ng-exhaustion-entry-timing-revival-20260818 || true
+            git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818 && exit 0
+            sleep $((i*3))
+          done
+          exit 1
