@@ -1,0 +1,66 @@
+{
+  "name": "NG exhaustion focused POX trade strategy proposal",
+  "date": "2026-08-19",
+  "status": "PROPOSAL_ONLY_IN_PROGRESS_NOT_FROZEN",
+  "population": {
+    "policy": "FIXED_3429_DO_NOT_REOPEN",
+    "total": 3429,
+    "flip": 1444,
+    "same": 1985,
+    "initial_sign_persistence_through_plus60_approx": 0.944,
+    "preserve_all": true
+  },
+  "baseline_management_from_finalized_phase2": [
+    "Execute only from a validated causal setup.",
+    "Preserve the normal +60 parent management boundary unless a new additive rule independently validates.",
+    "After parent exit, reset state rather than automatically inheriting old POX ancestry.",
+    "Re-enter only from a later trusted causal setup; realized delayed recovery alone is not a signal."
+  ],
+  "candidate_strategy_architecture": {
+    "stage_1_initial_continuation": {
+      "objective": "Find the earliest causal POX entry checkpoint with positive and stable raw-tape economics on the fixed 3,429 population.",
+      "checkpoints_seconds": [0,1,2,3,4,5,10,15,20,30,45,60],
+      "holds_seconds": [5,10,20,30,60],
+      "cost_stress_ticks_round_trip": [0.5,1.0,2.0],
+      "status": "PENDING_FIXED_LEDGER_JOIN_TO_RAW_TAPE"
+    },
+    "stage_2_branch_prediction": {
+      "objective": "Predict authoritative future FLIP versus SAME from causal prefixes without backdating future branch information.",
+      "status": "PENDING_FIXED_LEDGER_JOIN_TO_CAUSAL_FEATURES"
+    },
+    "stage_3_branch_management": {
+      "objective": "Only if stage-2 prediction is stable enough to matter, compare hold/exit/reset/reverse/follow-new-state actions at their actual causal timestamps.",
+      "status": "PENDING_STAGE_1_AND_STAGE_2"
+    },
+    "stage_4_delayed_same_watch": {
+      "objective": "Research delayed/re-expression after the original management boundary as a separate watch/re-entry setup without rewriting the original trade.",
+      "status": "PENDING_SEPARATE_CAUSAL_REENTRY_VALIDATION"
+    }
+  },
+  "negative_evidence": [
+    {
+      "finding": "Generic D1 +0 early entry failed its tune profitability gate and was effectively flat gross in the confirmation block before costs.",
+      "implication": "No generic immediate-entry rule transfers into POX. POX initial-continuation economics must validate independently on its own fixed population.",
+      "source": "research/generated/ng_exhaustion_entry_timing_revival_20260818/lane3_plus0_profitability/NG_EXHAUSTION_D1_PLUS0_EARLY_ENTRY_SUMMARY_20260818.json"
+    }
+  ],
+  "required_before_any_freeze": [
+    "Authoritative fixed 3,429 ledger loaded and validated without population reconstruction.",
+    "Exact causal signal timestamp defined for every executable case or marked unavailable without deleting the row.",
+    "Raw-tape first-fill economics reported at +5/+10/+20/+30/+60 with 0.5/1/2 tick cost stress.",
+    "Chronological OOT stability reported, including losing and choppy rows.",
+    "FLIP/SAME branch predictor independently validated if it is to alter management.",
+    "Successor/reset/re-entry actions independently validated at actual causal timestamps.",
+    "Fresh prospective/OOT promotion contract passed."
+  ],
+  "do_not_trade": [
+    "Do not trade from the 94.4% descriptive persistence number alone.",
+    "Do not infer fixed-population membership from canonical P/O/X adjacency.",
+    "Do not use realized FLIP/SAME before it is causally knowable.",
+    "Do not reverse automatically because a successor appears.",
+    "Do not re-enter automatically because a SAME case later recovers.",
+    "Do not use D0-D5 independent outcomes to tune this strategy before the POX standalone freeze."
+  ],
+  "promotion_performed": false,
+  "permanent_frankie_mutation": false
+}
