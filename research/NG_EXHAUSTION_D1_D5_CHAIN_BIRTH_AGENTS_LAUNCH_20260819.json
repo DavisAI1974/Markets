@@ -3,10 +3,16 @@
   "date": "2026-08-19",
   "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
   "primary_question": "WHEN_CAN_WE_CAUSALLY_PREDICT_THAT_THE_NEXT_CHAIN_STAGE_WILL_BEGIN",
-  "primary_success": "PRIOR_BIRTH_PREDICTION_BEFORE_FROZEN_TARGET_T0",
+  "search_hierarchy": [
+    "EXHAUST_PRIOR_PREDICTION_SEARCH_FIRST_FOR_EVERY_D1_D5_STAGE_RULE_AND_SUBFAMILY",
+    "ONLY_IF_PRIOR_FAILS_USE_TARGET_DETECTOR_RELATIVE_FALLBACK_CLOCK"
+  ],
+  "primary_success": "EARLIEST_VALIDATED_PRIOR_BIRTH_PREDICTION_BEFORE_FROZEN_TARGET_T0",
+  "prior_H_grid_seconds": {"dense_initial": [1,2,3,4,5,10,15], "every_5_seconds_from": 20, "through": 3600},
+  "prior_H_meaning": "SECONDS_OF_CAUSAL_PREDECESSOR_INFORMATION_AFTER_PREDECESSOR_DETECTOR_CONFIRMATION; ACTUAL LEAD_TO_TARGET_T0_RECORDED_SEPARATELY",
+  "fallback_clock_only_after_prior_failure": "+0 detector confirmation -> +1,+2,+3,+4,+5,+10,+15,+20,+25,... every 5 seconds through +3600",
   "fallback_only": ["AT_DETECTION_RECOGNITION", "POST_DETECTION_RECOGNITION"],
-  "clock": "PRIOR -> +0 -> +1,+2,+3,+4,+5,+10,+15,+20,+25,... every 5 seconds through +3600",
-  "H_grid_seconds": {"dense_initial": [1,2,3,4,5,10,15], "every_5_seconds_from": 20, "through": 3600},
+  "validated_prior_must_not_be_delayed": true,
   "agents": [
     {"agent": "D1", "stage": 1},
     {"agent": "D2", "stage": 2},
@@ -22,7 +28,7 @@
   },
   "characteristics_wall": "ENFORCED",
   "absolute_birth_skill_and_incremental_D_vs_Dminus1_gain": "REPORT_SEPARATELY",
-  "trade_strategy_handoff": "AFTER_PRIOR_BIRTH_SIGNAL_VALIDATES_ATTACH_DIRECTION_BEHAVIOR_AND_RAW_PRICE_ECONOMICS_FROM_EXACT_SIGNAL_TIMESTAMP",
+  "trade_strategy_handoff": "AFTER_PRIOR_BIRTH_SIGNAL_VALIDATES_ATTACH_DIRECTION_BEHAVIOR_AND_RAW_PRICE_ECONOMICS_FROM_EXACT_PRIOR_SIGNAL_TIMESTAMP; USE_FALLBACK_CLOCK_ONLY_FOR_PRIOR_FAILURES",
   "supersedes_as_primary_target": "D1_D5_FULL_BEHAVIOR_VECTOR_PREDICTABILITY_AGENT_LAUNCH_20260819",
   "secondary_behavior_vector_preserved": true,
   "promotion_authorized": false,
