@@ -1,6 +1,6 @@
 # ChatGPT Kickoff — NG Exhaustion Chain-Birth V2 — 2026-08-19
 
-Status: **AUTHORITATIVE NEW-CHAT CHECKPOINT. CURRENT BRANCH STATE IS TRUTH. PRIOR BIRTH PREDICTION IS PRIMARY. V2 PRICE STRUCTURE IS PER OCCURRENCE AND ONE-SECOND CAUSAL.**
+Status: **AUTHORITATIVE NEW-CHAT CHECKPOINT. CURRENT BRANCH STATE IS TRUTH. PRIOR BIRTH PREDICTION IS PRIMARY. V2 PRICE STRUCTURE IS PER OCCURRENCE AND ONE-SECOND CAUSAL. ALL CURRENT FINDINGS AND PROPOSAL LAYERS ARE DURABLE.**
 
 ## Takeover instruction
 
@@ -17,15 +17,19 @@ The immediate task is to finish the **D1-D5 chain-birth V2 predictability study*
 Read these first, in order:
 
 1. `CHATGPT_KICKOFF_NG_EXHAUSTION_CHAIN_BIRTH_V2_20260819.md` — this checkpoint.
-2. `research/NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_PREDICTABILITY_PROTOCOL_20260819.md` — authoritative primary target and PRIOR-first hierarchy.
-3. `research/NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_PRICE_STRUCTURE_ADDENDUM_20260819.md` — authoritative per-occurrence second-level price rule.
-4. `research/NG_EXHAUSTION_D1_D5_PREDICTABILITY_TIMING_GRID_20260819.md` — dense H grid.
-5. `research/NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_AGENTS_V2_LAUNCH_20260819.json` — active V2 launch contract.
-6. `research/ng_exhaustion_d1_d5_chain_birth_agents_v2_20260819.py` — active V2 price-path wrapper.
-7. `research/ng_exhaustion_d1_d5_chain_birth_agents_20260819.py` — base birth classifier and validation gates.
-8. `.github/workflows/ng_exhaustion_d1_d5_chain_birth_agents_v2_20260819.yml` — active four-agent V2 workflow and reconciliation.
-9. `research/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_PROTOCOL_20260817.json` — frozen characteristics wall and paired causal discipline.
-10. `research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md` and `research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md` — settled Phase-2 truth; read, do not relitigate.
+2. `research/NG_EXHAUSTION_CHAIN_BIRTH_V2_ALL_FINDINGS_20260819.md` — authoritative current findings/non-findings/pending boundary. Do not invent results beyond this record unless durable V2 outputs exist.
+3. `research/NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_PREDICTABILITY_PROTOCOL_20260819.md` — authoritative primary target and PRIOR-first hierarchy.
+4. `research/NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_PRICE_STRUCTURE_ADDENDUM_20260819.md` — authoritative per-occurrence second-level price rule.
+5. `research/NG_EXHAUSTION_D1_D5_PREDICTABILITY_TIMING_GRID_20260819.md` — dense H grid.
+6. `research/NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_PRIOR_AVAILABILITY_20260819.md` — canonical PRIOR availability only; not predictive skill.
+7. `research/NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_AGENTS_V2_LAUNCH_20260819.json` — active V2 launch contract.
+8. `research/ng_exhaustion_d1_d5_chain_birth_agents_v2_20260819.py` — active V2 price-path wrapper.
+9. `research/ng_exhaustion_d1_d5_chain_birth_agents_20260819.py` — base birth classifier and validation gates.
+10. `.github/workflows/ng_exhaustion_d1_d5_chain_birth_agents_v2_20260819.yml` — active four-agent V2 workflow and reconciliation.
+11. `research/kalshi/knowledge/ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json` — current proposal-only Chain-Birth V2 lesson layer; do not merge into Frankie.
+12. `research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_20260818.md` — authoritative four-layer proposal lineage and merge policy.
+13. `research/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_PROTOCOL_20260817.json` — frozen characteristics wall and paired causal discipline.
+14. `research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md` and `research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md` — settled Phase-2 truth; read, do not relitigate.
 
 Use older entry-timing/D1 docs only for provenance or specific secondary lanes after the above current contract is understood.
 
@@ -94,8 +98,6 @@ The first 18 base weeks remain outside forward-OOT exact-D1/birth-validation cre
 
 ## Per-occurrence price structure — V2 correction
 
-This is the important V2 correction.
-
 Every predecessor exhaustion occurrence carries its **own separate causal price path**.
 
 - D1: one predecessor price path.
@@ -153,7 +155,7 @@ Active launch marker:
 
 `research/NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_AGENTS_V2_LAUNCH_20260819.json`
 
-Launch-marker commit before this checkpoint:
+Launch-marker commit:
 
 `1afbb329fe4b5cf93778b9466664b8807667f6e4`
 
@@ -217,7 +219,7 @@ Timing is allowed only to establish causal availability and report actual lead.
 
 ## Completed availability fact — not skill
 
-The canonical PRIOR availability audit already showed meaningful pre-birth runway. At H=1, pre-birth information was available for approximately:
+The canonical PRIOR availability audit showed meaningful pre-birth runway. At H=1, pre-birth information is available for:
 
 - 13,372 D1 births;
 - 1,171 D2 births;
@@ -228,6 +230,29 @@ The canonical PRIOR availability audit already showed meaningful pre-birth runwa
 These are availability counts only. They do not prove predictive skill.
 
 A quick lower-bound polarity-only D2 H=1 probe showed a small structural clue, but **it failed the real 2-of-3 validation gate**: extra trees passed while logistic and KNN did not. Treat that as a non-finding/clue only. Do not claim D2 is predictable at H=1 unless the active V2 price-path run validates it.
+
+## Durable findings and proposal boundary
+
+The complete current evidence grading is in:
+
+`research/NG_EXHAUSTION_CHAIN_BIRTH_V2_ALL_FINDINGS_20260819.md`
+
+The new proposal-only brain layer is:
+
+`research/kalshi/knowledge/ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json`
+
+The authoritative proposal lineage/index is:
+
+`research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_20260818.md`
+
+Important:
+
+- the Chain-Birth V2 proposal is a **fourth layer** that extends runway, Phase-2 chain, and entry-timing proposals;
+- it replaces none of them;
+- the permanent brain is unchanged;
+- any future permanent merge must adjudicate all four layers together;
+- failed/non-validating clues must travel with positive lessons;
+- V2 predictive H results remain pending until durable reconciled outputs exist.
 
 ## Trade-strategy program after birth timing
 
@@ -273,12 +298,17 @@ Do not modify or retune:
 
 Do not merge a proposal into permanent Frankie and do not freeze a historical trade play without a fresh prospective/OOT promotion contract.
 
+## Finalization commits added at this checkpoint
+
+- All-findings record: `66460334d5a583bcb5efa6b111ba9978ac90a684`
+- Chain-Birth V2 proposal layer: `d2ff94963505cf82eeefc78f078a798a54837791`
+- Four-layer proposal index update: `43f45d8830bd8556cb96c66d5ef8558d3b236c3e`
+
 ## Immediate next step in the new chat
 
 1. Read the mandatory order above.
 2. Inspect whether the V2 reconciled output files have landed.
-3. If yes, audit their invariants and report the earliest validated PRIOR birth H for D1-D3 plus preserved D4/D5 case timing; then begin the exact-signal-time trade-economics/strategy handoff.
+3. If yes, audit their invariants against the all-findings record and report the earliest validated PRIOR birth H for D1-D3 plus preserved D4/D5 case timing; then update the findings/proposal layer with actual validated results and begin exact-signal-time trade economics/strategy work.
 4. If no, inspect the V2 workflow status/branch state and finish the V2 run without changing the contract.
 5. Preserve every failure and control case under `FLAG_AND_DECOMPOSE_NOT_AUTO_KILL`.
-
-Do not redo the work recorded here.
+6. Do not redo the work recorded here.
