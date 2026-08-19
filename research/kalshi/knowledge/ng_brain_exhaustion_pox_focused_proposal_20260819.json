@@ -1,0 +1,101 @@
+{
+  "name": "NG exhaustion focused POX lesson proposal",
+  "date": "2026-08-19",
+  "status": "PROPOSAL_ONLY_IN_PROGRESS_NOT_MERGED",
+  "relationship": {
+    "parent_runway_proposal": "research/FRANKIE_NG_EXHAUSTION_BRAIN_LESSON_PROPOSAL_20260817.md",
+    "parent_phase2_chain_proposal": "research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json",
+    "entry_timing_extension": "research/kalshi/knowledge/ng_brain_exhaustion_entry_timing_extension_20260818.json",
+    "relation": "FOCUSED_POX_EXTENSION_DOES_NOT_REPLACE_OR_MUTATE_PARENTS"
+  },
+  "population_contract": {
+    "policy": "FIXED_3429_DO_NOT_REOPEN",
+    "total": 3429,
+    "flip": 1444,
+    "same": 1985,
+    "initial_sign_persistence_through_plus60_approx": 0.944,
+    "preserve_all": true,
+    "population_rediscovery_authorized": false,
+    "canonical_adjacency_enumeration_authorized": false
+  },
+  "current_findings": [
+    {
+      "id": "pox.population.fixed_ledger_identity",
+      "status": "PROPOSAL",
+      "lesson": "Focused POX case identity and authoritative FLIP/SAME labels come from the fixed 3,429 master ledger. Canonical events and raw tape are enrichment/join sources, not population constructors.",
+      "do_not_learn": "Do not derive or replace the 3,429 population by enumerating consecutive canonical P/O/X seed-state triples or any other alternative population definition."
+    },
+    {
+      "id": "pox.population.preserve_failures",
+      "status": "PROPOSAL",
+      "lesson": "Preserve losing, zero, short, delayed, choppy, false, low-confidence and temporarily non-executable POX rows. Executability and checkpoint availability are annotations, not membership filters."
+    },
+    {
+      "id": "pox.execution.two_stage_state_transition",
+      "status": "PROPOSAL",
+      "lesson": "Model POX as a two-stage state-transition problem: first monetize/predict the strong initial continuation, then separately predict/manage the later FLIP versus SAME/delayed branch. Do not skip the initial continuation by jumping directly to the later branch."
+    },
+    {
+      "id": "pox.execution.earliest_validated_causal_entry",
+      "status": "PROPOSAL",
+      "lesson": "Use the earliest causal POX checkpoint that independently validates on chronological OOT data. Later confirmation is fallback only when the earlier point is not sufficiently actionable."
+    },
+    {
+      "id": "pox.execution.generic_d1_plus0_not_transferable",
+      "status": "PROPOSAL_NEGATIVE_EVIDENCE",
+      "lesson": "The contamination-safe generic D1 +0 early-entry study failed its tune profitability gate and was essentially flat gross in confirmation before costs. Therefore generic D1 immediate-entry economics may not be borrowed as a POX execution rule; POX must validate its own fixed-population economics.",
+      "source": "research/generated/ng_exhaustion_entry_timing_revival_20260818/lane3_plus0_profitability/NG_EXHAUSTION_D1_PLUS0_EARLY_ENTRY_SUMMARY_20260818.json"
+    },
+    {
+      "id": "pox.branch.future_label_separation",
+      "status": "PROPOSAL",
+      "lesson": "FLIP/SAME is a future label until its own causal knowability point. Predict it from causal prefixes if possible, but never backdate realized branch identity into the initial POX trade."
+    },
+    {
+      "id": "pox.successor.reorigin_checkpoint",
+      "status": "PROPOSAL_SUPPORTED_BY_PHASE2",
+      "lesson": "A later successor exhaustion/branch checkpoint is a new causal state origin. Older POX ancestry is not automatically inherited; continue/reverse/follow-successor/stand-down actions require their own validated economics."
+    },
+    {
+      "id": "pox.same.delayed_reexpression",
+      "status": "PROPOSAL_SUPPORTED_BY_PHASE2",
+      "lesson": "Delayed SAME re-expression remains a watch/re-entry research lane after the original +60 management boundary. A realized later recovery never erases the original loss and never creates automatic re-entry permission."
+    }
+  ],
+  "research_state": {
+    "fixed_ledger_gate": "IMPLEMENTED",
+    "target_A_earliest_pox_identity": "PENDING_FIXED_LEDGER_JOIN; BINARY MEMBERSHIP MODEL ALSO REQUIRES HONEST CANDIDATE_CONTROL_UNIVERSE",
+    "target_B_initial_continuation_economics": "PENDING_FIXED_LEDGER_JOIN_TO_CAUSAL_RAW_TAPE",
+    "target_C_flip_same_prediction": "PENDING_FIXED_LEDGER_JOIN_TO_CAUSAL_PREFIX_FEATURES",
+    "target_D_branch_knowability": "PENDING_FIXED_LEDGER_JOIN_TO_FROZEN_TIMESTAMPS",
+    "target_E_management_economics": "PENDING_TARGET_B_C_D",
+    "D0_D5_incremental_crosswalk": "DEFERRED_UNTIL_INDEPENDENT_RESULTS_FROZEN"
+  },
+  "failed_or_rejected_paths": [
+    "REJECTED: defining the 3,429 focused population as literal consecutive canonical P/O/X triples with a following event.",
+    "REJECTED: allowing a generated runner to infer authoritative FLIP/SAME labels from canonical adjacency.",
+    "REJECTED: borrowing generic D1 +0 immediate-entry economics into POX without standalone validation.",
+    "REJECTED: deleting or sidelining valid rows because they are difficult, delayed, losing, choppy or unavailable at an early checkpoint."
+  ],
+  "do_not_learn": [
+    "Do not reopen or re-litigate 3,429 / 1,444 / 1,985 in the next research chat.",
+    "Do not treat the older 679-case Phase-2 subset as the focused master population.",
+    "Do not use canonical adjacency to reconstruct master POX membership.",
+    "Do not use D0-D5 independent result artifacts during standalone POX rule selection.",
+    "Do not backdate FLIP/SAME branch knowledge.",
+    "Do not automatically inherit old POX state through a newly confirmed successor.",
+    "Do not automatically re-enter delayed SAME recovery.",
+    "Do not merge this proposal into permanent Frankie or freeze a play without explicit authorization and fresh prospective/OOT promotion."
+  ],
+  "promotion_boundary": {
+    "permanent_frankie_mutation": false,
+    "frankie1_mutation": false,
+    "detector_mutation": false,
+    "canonical_evidence_mutation": false,
+    "phase1_or_phase2_mutation": false,
+    "runway_clock_mutation": false,
+    "spawn_py_mutation": false,
+    "ssos_play_mutation": false,
+    "promotion_performed": false
+  }
+}
