@@ -1,0 +1,57 @@
+{
+  "status": "AUTHORIZED_D1_D5_CHAIN_BIRTH_V2_PARALLEL_AGENT_LAUNCH",
+  "date": "2026-08-19",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "primary_question": "WHEN_CAN_WE_CAUSALLY_PREDICT_THAT_THE_NEXT_CHAIN_STAGE_WILL_BEGIN",
+  "search_hierarchy": [
+    "EXHAUST_PRIOR_PREDICTION_SEARCH_FIRST_FOR_EVERY_D1_D5_STAGE_RULE_AND_SUBFAMILY",
+    "ONLY_IF_PRIOR_FAILS_USE_TARGET_DETECTOR_RELATIVE_FALLBACK_CLOCK"
+  ],
+  "primary_success": "EARLIEST_VALIDATED_PRIOR_BIRTH_PREDICTION_BEFORE_FROZEN_TARGET_T0",
+  "prior_H_grid_seconds": {
+    "dense_initial": [1, 2, 3, 4, 5, 10, 15],
+    "every_5_seconds_from": 20,
+    "through": 3600
+  },
+  "fallback_clock_only_after_prior_failure": "+0 detector confirmation -> +1,+2,+3,+4,+5,+10,+15,+20,+25,... every 5 seconds through +3600",
+  "price_structure": {
+    "mode": "PER_OCCURRENCE_CAUSAL_ONE_SECOND_PATH_PREFIX",
+    "each_predecessor_occurrence_separate": true,
+    "seconds_visible_at_H": "ALL_INTEGER_SECONDS_1_THROUGH_H_ONLY",
+    "later_H_extends_earlier_prefix": true,
+    "availability_used_as_predictive_feature": false,
+    "missingness_policy": "FAIL_CLOSED_DATA_INTEGRITY_NOT_MODEL_SIGNAL",
+    "D4_D5_price_paths_preserved": true
+  },
+  "agents": [
+    {"agent": "D1", "stage": 1},
+    {"agent": "D2", "stage": 2},
+    {"agent": "D3", "stage": 3},
+    {"agent": "D45", "stages": [4, 5]}
+  ],
+  "conditional_birth_populations": {
+    "D1": {"positive_depth_gte_1": 20562, "exact_D0_executable_control": 135823, "week_end_censored": 37},
+    "D2": {"positive_depth_gte_2": 1725, "exact_D1_control": 18837},
+    "D3": {"positive_depth_gte_3": 133, "exact_D2_control": 1592},
+    "D4": {"positive_depth_gte_4": 9, "exact_D3_control": 124},
+    "D5": {"positive_depth_gte_5": 1, "exact_D4_control": 8}
+  },
+  "characteristics_wall": "ENFORCED",
+  "trade_strategy_handoff": "AFTER_PRIOR_BIRTH_SIGNAL_VALIDATES_ATTACH_DIRECTION_BEHAVIOR_AND_RAW_PRICE_ECONOMICS_FROM_EXACT_PRIOR_SIGNAL_TIMESTAMP; FALLBACK ONLY FOR PRIOR_FAILURES",
+  "supersedes_for_primary_birth_research": [
+    "NG_EXHAUSTION_D1_D5_PREDICTABILITY_AGENTS_LAUNCH_20260819",
+    "NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_AGENTS_LAUNCH_20260819"
+  ],
+  "promotion_authorized": false,
+  "protected_mutations": {
+    "detector": false,
+    "canonical_rows": false,
+    "phase1": false,
+    "phase2": false,
+    "runway_clock": false,
+    "permanent_frankie": false,
+    "frankie_1": false,
+    "spawn_py": false,
+    "ssos_play": false
+  }
+}
