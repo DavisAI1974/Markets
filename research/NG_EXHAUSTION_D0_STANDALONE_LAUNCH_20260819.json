@@ -1,0 +1,39 @@
+{
+  "name": "NG exhaustion standalone D0 predictability and trade launch",
+  "date": "2026-08-19",
+  "status": "LAUNCHED",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "protocol": "research/NG_EXHAUSTION_D0_PREDICTABLE_TRADEABLE_PROTOCOL_20260819.md",
+  "runner": "research/ng_exhaustion_d0_standalone_predict_trade_20260819.py",
+  "workflow": ".github/workflows/ng_exhaustion_d0_standalone_20260819.yml",
+  "questions": [
+    "earliest direct causal prediction that root exhaustion terminates as D0",
+    "trade opportunity from that exact D0 signal",
+    "later cross-check against D1 complement without dependency"
+  ],
+  "original_exact_depth_counts": {
+    "D0": 135860,
+    "D1": 18837,
+    "D2": 1592,
+    "D3": 124,
+    "D4": 8,
+    "D5": 1
+  },
+  "D0_executable_positive_rows": 135823,
+  "D1plus_continuation_controls": 20562,
+  "D0_censored_preserved": 37,
+  "D1_v2_required": false,
+  "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+  "promotion_performed": false,
+  "protected_mutations": {
+    "detector": false,
+    "canonical_rows": false,
+    "phase1": false,
+    "phase2": false,
+    "runway_clock": false,
+    "permanent_frankie": false,
+    "frankie_1": false,
+    "spawn_py": false,
+    "ssos_play": false
+  }
+}
