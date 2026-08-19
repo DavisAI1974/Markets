@@ -1,0 +1,25 @@
+{
+  "status": "AUTHORIZED_LANE4_DENSE_FALLBACK_LAUNCH",
+  "date": "2026-08-18",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "source_lane3_summary": "research/generated/ng_exhaustion_entry_timing_revival_20260818/lane3_plus0_profitability/NG_EXHAUSTION_D1_PLUS0_EARLY_ENTRY_SUMMARY_20260818.json",
+  "source_lane3_status": "D1_PLUS0_EARLY_ENTRY_COMPLETE",
+  "source_lane3_tune_status": "TUNE_GATE_FAILED",
+  "source_lane3_early_validation_passed": false,
+  "forward_exact_d1_n": 18837,
+  "plus0_actionable_n": 0,
+  "plus0_fillable_to_fallback_n": 10136,
+  "no_plus0_fill_or_checkpoint_preserved_n": 2129,
+  "no_structural_window_preserved_n": 6572,
+  "fallback_clock": "PLUS1_THEN_PLUS2_PLUS3_PLUS4_PLUS5_PLUS10_PLUS15_PLUS20_THEN_EVERY_5_SECONDS_THROUGH_PLUS3600_WHILE_STRUCTURE_LIVES",
+  "selection_rule": "EARLIEST_CAUSAL_VALIDATED_CONFIDENCE_CROSSING_WINS",
+  "causal_feature_contract": "NO_FUTURE_OR_FULL_STATE_LEAKAGE",
+  "promotion_performed": false,
+  "protected_mutation_authorized": false,
+  "notes": [
+    "Lane3 failed closed; no D1 was promoted at +0.",
+    "Fallback begins at +1 and uses the dense causal checkpoint grid; no fixed later wait is imposed.",
+    "All 18837 exact D1 rows remain preserved in the resulting ledger, including no-window and no-fill cases.",
+    "This launch does not modify any frozen detector, canonical evidence, Phase 1/2 finding, runway clock, Frankie component, spawn.py, or SSOS play."
+  ]
+}
