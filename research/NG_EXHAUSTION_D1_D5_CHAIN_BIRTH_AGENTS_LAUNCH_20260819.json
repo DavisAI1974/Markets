@@ -1,0 +1,30 @@
+{
+  "status": "AUTHORIZED_D1_D5_CHAIN_BIRTH_PARALLEL_AGENT_LAUNCH",
+  "date": "2026-08-19",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "primary_question": "WHEN_CAN_WE_CAUSALLY_PREDICT_THAT_THE_NEXT_CHAIN_STAGE_WILL_BEGIN",
+  "primary_success": "PRIOR_BIRTH_PREDICTION_BEFORE_FROZEN_TARGET_T0",
+  "fallback_only": ["AT_DETECTION_RECOGNITION", "POST_DETECTION_RECOGNITION"],
+  "clock": "PRIOR -> +0 -> +1,+2,+3,+4,+5,+10,+15,+20,+25,... every 5 seconds through +3600",
+  "H_grid_seconds": {"dense_initial": [1,2,3,4,5,10,15], "every_5_seconds_from": 20, "through": 3600},
+  "agents": [
+    {"agent": "D1", "stage": 1},
+    {"agent": "D2", "stage": 2},
+    {"agent": "D3", "stage": 3},
+    {"agent": "D45", "stages": [4,5]}
+  ],
+  "conditional_birth_populations": {
+    "D1": {"positive_depth_gte_1": 20562, "exact_D0_control": 135860, "known_week_end_censored_controls": 37},
+    "D2": {"positive_depth_gte_2": 1725, "exact_D1_control": 18837},
+    "D3": {"positive_depth_gte_3": 133, "exact_D2_control": 1592},
+    "D4": {"positive_depth_gte_4": 9, "exact_D3_control": 124},
+    "D5": {"positive_depth_gte_5": 1, "exact_D4_control": 8}
+  },
+  "characteristics_wall": "ENFORCED",
+  "absolute_birth_skill_and_incremental_D_vs_Dminus1_gain": "REPORT_SEPARATELY",
+  "trade_strategy_handoff": "AFTER_PRIOR_BIRTH_SIGNAL_VALIDATES_ATTACH_DIRECTION_BEHAVIOR_AND_RAW_PRICE_ECONOMICS_FROM_EXACT_SIGNAL_TIMESTAMP",
+  "supersedes_as_primary_target": "D1_D5_FULL_BEHAVIOR_VECTOR_PREDICTABILITY_AGENT_LAUNCH_20260819",
+  "secondary_behavior_vector_preserved": true,
+  "promotion_authorized": false,
+  "protected_mutations": {"detector": false, "canonical_rows": false, "phase1": false, "phase2": false, "runway_clock": false, "permanent_frankie": false, "frankie_1": false, "spawn_py": false, "ssos_play": false}
+}
