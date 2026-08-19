@@ -1,0 +1,222 @@
+name: NG Exhaustion D0 Standalone Predict Trade 20260819
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/NG_EXHAUSTION_D0_STANDALONE_LAUNCH_20260819.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: us-east-2
+  BUCKET: bento-568968024170-us-east-2-an
+  BASE_ID: '9281733364'
+  BASE_SHA: f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1
+  HELD_ID: '9281272840'
+  HELD_SHA: 21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e
+  LINEAGE_ID: '9289929292'
+  LINEAGE_SHA: a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95
+  RECONCILE_ID: '9306082330'
+  RECONCILE_SHA: f17c130df029429bfbc35067d1cc9d16128ca4fb227dd37f3fb4fbb8bbaf8875
+
+jobs:
+  d0-standalone:
+    name: Direct D0 predictor and trade agent
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: python -m pip install --quiet numpy scikit-learn
+
+      - name: Verify focused standalone D0 contract
+        run: |
+          set -euo pipefail
+          test -f research/NG_EXHAUSTION_D0_PREDICTABLE_TRADEABLE_PROTOCOL_20260819.md
+          test -f research/NG_EXHAUSTION_D0_STANDALONE_LAUNCH_20260819.json
+          python -m py_compile research/ng_exhaustion_d1_d5_chain_birth_agents_20260819.py
+          python -m py_compile research/ng_exhaustion_d1_d5_chain_birth_agents_v2_20260819.py
+          python -m py_compile research/ng_exhaustion_d0_standalone_predict_trade_20260819.py
+          python - <<'PY'
+          p=open('research/NG_EXHAUSTION_D0_PREDICTABLE_TRADEABLE_PROTOCOL_20260819.md').read()
+          assert 'D0 = 135,860' in p
+          assert 'D0 does **not** depend on D1' in p
+          assert 'FLAG_AND_DECOMPOSE_NOT_AUTO_KILL' in p
+          print('standalone D0 contract: PASS')
+          PY
+
+      - name: Download and verify immutable frozen sources
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/in/base /tmp/in/held /tmp/in/lineage /tmp/in/reconcile
+          get_artifact () {
+            id="$1"; sha="$2"; zip="$3"; dest="$4"
+            curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" -o "${zip}"
+            echo "${sha}  ${zip}" | sha256sum -c -
+            unzip -q "${zip}" -d "${dest}"
+          }
+          get_artifact "${BASE_ID}" "${BASE_SHA}" /tmp/base.zip /tmp/in/base
+          get_artifact "${HELD_ID}" "${HELD_SHA}" /tmp/held.zip /tmp/in/held
+          get_artifact "${LINEAGE_ID}" "${LINEAGE_SHA}" /tmp/lineage.zip /tmp/in/lineage
+          get_artifact "${RECONCILE_ID}" "${RECONCILE_SHA}" /tmp/reconcile.zip /tmp/in/reconcile
+
+      - name: Resolve all D0/D1-plus labeled weeks
+        run: |
+          python - <<'PY' > /tmp/weeks.txt
+          import gzip,json
+          weeks=set()
+          for p in (
+            '/tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz',
+            '/tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz',
+          ):
+              with gzip.open(p,'rt') as f:
+                  for line in f:
+                      r=json.loads(line)
+                      if int(r.get('all_model_consecutive_positive_depth',0)) >= 0:
+                          weeks.add(r['week_sunday'])
+          assert weeks
+          for w in sorted(weeks): print(w)
+          PY
+
+      - name: Materialize authoritative raw NG tape
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ngraw
+          python - <<'PY' > /tmp/days.txt
+          from datetime import datetime,timedelta
+          days=set()
+          for line in open('/tmp/weeks.txt'):
+              w=line.strip()
+              if not w: continue
+              d=datetime.strptime(w,'%Y%m%d')
+              for i in range(6): days.add((d+timedelta(days=i)).strftime('%Y%m%d'))
+          for x in sorted(days): print(x)
+          PY
+          python - <<'PY' > /tmp/closures.txt
+          import json
+          d=json.load(open('research/NG_EXHAUSTION_20260403_CME_CLOSURE_WITNESS_20260817.json'))
+          assert d['status']=='FROZEN_EXCHANGE_CLOSURE_WITNESS'
+          for x in d['canonicalization_rule']['explicit_closure_dates']: print(x)
+          PY
+          while read -r d; do
+            mapfile -t keys < <(aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" \
+              --query 'Contents[].Key' --output text | tr '\t' '\n' | \
+              grep -E "NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" | sort -u || true)
+            if grep -qx "${d}" /tmp/closures.txt; then
+              test "${#keys[@]}" -eq 0 || { echo "::error::frozen closure ${d} has raw objects"; exit 1; }
+              continue
+            fi
+            test "${#keys[@]}" -eq 1 || { echo "::error::expected exactly one NG raw object ${d}, got ${#keys[@]}"; exit 1; }
+            aws s3 cp "s3://${BUCKET}/${keys[0]}" "/tmp/ngraw/NG_${d}.jsonl.gz" --only-show-errors
+            test -s "/tmp/ngraw/NG_${d}.jsonl.gz"
+          done < /tmp/days.txt
+
+      - name: Run standalone direct D0 prediction and trade research
+        run: |
+          set -euo pipefail
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_d0_standalone_predict_trade_20260819.py \
+            --base /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz \
+            --held /tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz \
+            --base-lineage /tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz \
+            --held-lineage /tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz \
+            --raw-dir /tmp/ngraw \
+            --out /tmp/NG_EXHAUSTION_D0_STANDALONE_RESULTS_20260819.json
+
+      - name: Fail closed on D0 populations and causality
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/NG_EXHAUSTION_D0_STANDALONE_RESULTS_20260819.json'))
+          assert d['status']=='D0_STANDALONE_PREDICT_AND_TRADE_COMPLETE'
+          assert d['D1_v2_required'] is False
+          assert d['predictor']['exact_d0_preserved_n']==135860
+          assert d['predictor']['executable_d0_positive_n']==135823
+          assert d['predictor']['D1plus_continuation_control_n']==20562
+          assert d['predictor']['censored_d0_n']==37
+          assert d['predictor']['realized_exact_d0_used_as_input_feature'] is False
+          assert d['predictor']['price_structure_availability_used_as_feature'] is False
+          assert d['promotion_performed'] is False
+          assert not any(d['protected_mutations'].values())
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-d0-standalone-20260819
+          path: /tmp/NG_EXHAUSTION_D0_STANDALONE_RESULTS_20260819.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Commit durable standalone D0 results
+        run: |
+          set -euo pipefail
+          OUT=research/generated/ng_exhaustion_d0_standalone_20260819
+          mkdir -p "${OUT}"
+          cp /tmp/NG_EXHAUSTION_D0_STANDALONE_RESULTS_20260819.json "${OUT}/"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('research/generated/ng_exhaustion_d0_standalone_20260819/NG_EXHAUSTION_D0_STANDALONE_RESULTS_20260819.json')
+          d=json.loads(p.read_text())
+          pred=d['predictor'];trade=d['trade'];w=pred.get('earliest_validated')
+          lines=['# NG Exhaustion D0 Standalone Predictability + Tradeability — 2026-08-19','',
+                 'Status: **standalone D0 research complete; D1 V2 was not required; no play promoted.**','',
+                 '## Population','- Original D0 preserved: 135,860','- Executable D0 target rows: 135,823','- D1+ continuation controls: 20,562','- Censored D0 preserved: 37','',
+                 '## Direct D0 prediction']
+          if w is None:
+              lines += ['- No PRIOR D0 terminality point validated under the frozen gate.']
+          else:
+              lines += [f"- Earliest validated D0 signal: `{w['timing_class']}` at H={w['H_seconds']}s."]
+          lines += ['', '## D0 trade',f"- Trade agent status: `{trade['status']}`"]
+          if trade['status']=='D0_STANDALONE_TRADE_AGENT_COMPLETE':
+              lines += [f"- Historical candidate validated: {trade['historically_validated_candidate']}",
+                        f"- Discovery-selected candidate: `{json.dumps(trade['discovery_selected_candidate'],sort_keys=True)}`"]
+          else:
+              lines += ['- No trade was manufactured without a validated causal D0 signal.']
+          lines += ['', '## Boundaries','- D0 was modeled directly; D1 V2 is a later cross-check only.',
+                    '- All losing, false, low-support and censored rows remain preserved.',
+                    '- No protected component was modified; fresh prospective/OOT promotion is still required.']
+          Path('research/generated/ng_exhaustion_d0_standalone_20260819/NG_EXHAUSTION_D0_STANDALONE_ALL_FINDINGS_20260819.md').write_text('\n'.join(lines)+'\n')
+          proposal={
+            'name':'NG exhaustion standalone D0 lesson proposal',
+            'date':'2026-08-19',
+            'status':'PROPOSAL_ONLY_NOT_MERGED',
+            'D0_original_n':135860,
+            'D0_executable_n':135823,
+            'D0_censored_preserved_n':37,
+            'earliest_validated_D0':None if w is None else {'timing_class':w['timing_class'],'H_seconds':w['H_seconds']},
+            'historically_validated_trade':trade.get('historically_validated_candidate'),
+            'D1_v2_required':False,
+            'lessons':['Treat D0 as a standalone predictable/tradeable target, not merely a D1 control.','Use the earliest validated causal D0 signal; do not delay a valid earlier signal.','Preserve every original D0 row and all false/censored evidence.'],
+            'permanent_frankie_mutation':False,
+            'promotion_performed':False,
+          }
+          Path('research/kalshi/knowledge/ng_brain_exhaustion_d0_standalone_proposal_20260819.json').write_text(json.dumps(proposal,indent=2,sort_keys=True)+'\n')
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add research/generated/ng_exhaustion_d0_standalone_20260819 research/kalshi/knowledge/ng_brain_exhaustion_d0_standalone_proposal_20260819.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Record standalone D0 prediction and trade results"
+          for i in 1 2 3; do
+            git pull --rebase origin chatgpt/ng-exhaustion-entry-timing-revival-20260818 && \
+            git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818 && exit 0
+            sleep $((i*5))
+          done
+          exit 1
