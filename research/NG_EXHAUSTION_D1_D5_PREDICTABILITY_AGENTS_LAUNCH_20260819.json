@@ -1,0 +1,37 @@
+{
+  "status": "AUTHORIZED_D1_D5_PREDICTABILITY_PARALLEL_AGENT_LAUNCH",
+  "date": "2026-08-19",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "source_boundary": "START_FROM_ENTRY_TIMING_REVIVAL_DROP_IN_AND_KICKOFF; IGNORE_PRIOR_CHAT_DRIFT",
+  "agents": [
+    {"agent": "D1", "depths": [1]},
+    {"agent": "D2", "depths": [2]},
+    {"agent": "D3", "depths": [3]},
+    {"agent": "D45", "depths": [4, 5]}
+  ],
+  "reconciliation_agent": true,
+  "authoritative_H_grid_seconds": {
+    "dense_initial": [1, 2, 3, 4, 5, 10, 15],
+    "every_5_seconds_from": 20,
+    "every_5_seconds_through": 3600
+  },
+  "timing_search_order": "PRIOR -> AT_DETECTION_PLUS0 -> POST_DETECTION_FIRST_VALIDATING_H",
+  "earliest_validated_timing_wins": true,
+  "paired_depth_rule": "D versus D-1 on exactly the same causally eligible targets",
+  "chronology": "discovery fit/tune only; validation, untouched confirmation, and held receive no retuning",
+  "preserve_all": true,
+  "flag_and_decompose_not_auto_kill": true,
+  "D4_D5_policy": "PRESERVE_LOW_SUPPORT_CASES; DO_NOT_FORCE_UNIVERSAL_TIMING_LAW",
+  "promotion_authorized": false,
+  "protected_mutations": {
+    "detector": false,
+    "canonical_rows": false,
+    "phase1": false,
+    "phase2": false,
+    "runway_clock": false,
+    "permanent_frankie": false,
+    "frankie_1": false,
+    "spawn_py": false,
+    "ssos_play": false
+  }
+}
