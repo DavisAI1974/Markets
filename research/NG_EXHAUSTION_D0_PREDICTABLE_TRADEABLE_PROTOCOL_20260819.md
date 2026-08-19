@@ -1,17 +1,20 @@
 # NG Exhaustion D0 Predictable + Tradeable Protocol — 2026-08-19
 
-Status: **FOCUSED D0 RESEARCH CONTRACT. TWO QUESTIONS ONLY. PRESERVE ALL ORIGINAL D0s. NO PERMANENT PROMOTION.**
+Status: **FOCUSED STANDALONE D0 RESEARCH CONTRACT. PREDICT D0 DIRECTLY, TRADE IT DIRECTLY, AND TEST ROOT INFORMATION FOR DEEPER CHAINS. PRESERVE ALL ORIGINAL D0s. NO PERMANENT PROMOTION.**
 
 ## Purpose
 
-D0 has so far served mainly as the negative/control side of D1 chain-birth prediction. This protocol promotes D0 to its own research population without reopening Phase 1/Phase 2 or changing the active D1-D5 Chain-Birth V2 contract.
+D0 has so far served mainly as the negative/control side of D1 chain-birth prediction. That is not sufficient. D0 is a first-class exhaustion outcome and does **not** depend on D1 being validated to be useful.
 
-The D0 program is deliberately narrow. It asks only:
+The D0 program is deliberately narrow but complete. It asks only:
 
-1. **When can we causally predict that a root exhaustion will remain D0 rather than extend to D1, and is there an executable trade from that earliest validated clock?**
-2. **Does causal information from the root/D0-stage exhaustion add incremental predictive value for later D2/D3 births (and preserved D4/D5 cases)?**
+1. **When can we directly and causally predict that a root exhaustion will remain D0 rather than extend to D1?**
+2. **From the earliest validated D0 signal, what executable price trade remains, in either orientation, after realistic cost stress?**
+3. **Does causal root/D0-stage information improve prediction of D1, D2, D3 and preserved D4/D5 continuation?**
 
-No broad D0 taxonomy, motif hunt, family study, or side research is authorized unless it directly answers one of those two questions.
+The wider program still aims to predict as much of the full exhaustion chain as the evidence supports. D0 is not dropped, subordinated, or treated only as a control.
+
+No broad D0 taxonomy, motif hunt, family study, or side research is authorized unless it directly improves D0 prediction, D0 tradeability, or deeper-chain prediction.
 
 ## Frozen population — never renumber or drop
 
@@ -24,74 +27,113 @@ Original frozen exact-depth counts remain:
 - D4 = 8
 - D5 = 1
 
-For the active forward-OOT + held D1-birth cohort, exact-D0 contributes:
+For the forward-OOT + held root terminality cohort:
 
-- executable D0 controls = 135,823
-- target-unavailable/week-end censored D0 = 37
-- total preserved D0 = 135,860
+- exact-D0 terminal positives = 135,823 executable rows;
+- D1+ continuation controls = 20,562;
+- target-unavailable/week-end censored exact-D0 = 37;
+- total preserved original D0 = 135,860.
 
 The 37 censored rows are parked as preserved research evidence. They are not silently deleted or re-labeled to improve a result.
 
 Policy: `FLAG_AND_DECOMPOSE_NOT_AUTO_KILL`.
 
-## Agent A — D0 terminality -> trade
+## Agent A — direct D0 PRIOR-first terminality predictor
 
-### Primary D0 timing signal
+D0 is modeled directly. Do not require the D1 V2 result to exist first.
 
-D0 terminality is the complement of D1 birth on the same uncensored cohort.
+### Target
 
-If Chain-Birth V2 validates a D1 **PRIOR** birth signal at exact causal time:
+Condition on the root exhaustion being present.
 
-`SIGNAL_TIME = origin causal_confirmation_idx + H`
+- positive = the chain terminates at exact D0;
+- negative/control = the chain extends to D1 or deeper;
+- censored = next canonical target is unavailable at frozen week end.
 
-then at that same timestamp:
+The realized exact-D0 label is the **future target**, never an input feature.
 
-`P(D0 terminal) = 1 - P(D1 birth)`
+### Causal clock
 
-This is the primary D0 predictor. Do **not** build a separate hindsight exact-D0 classifier when the validated D1 complement already answers the same binary question.
+For root detector confirmation `c`, test active H in ascending order:
 
-A D1 `+0` or post-detection winner does not count as pre-birth D0 prediction. If D1 has no validated PRIOR signal, D0 terminality remains unresolved under the primary path and any future fallback must be a separately causal D0 survivorship study.
+`H = 1,2,3,4,5,10,15,20,25,30,35,...,3600 seconds`
 
-### Frozen model-to-signal rule
+At H, the model may see only information causally available through `c+H`.
 
-For D0 strategy research, use the V2 D1 winning PRIOR H exactly. Do not delay it for a cleaner later H.
+For a row to be PRIOR-eligible:
 
-For probability aggregation, use the median of all three predeclared V2 model probabilities (logistic, extra trees, distance-weighted KNN). Do not select models using realized trade returns.
+`c + H <= next canonical exhaustion t0`
 
-Hyperparameters remain discovery-frozen under the V2 chronology.
+Actual lead:
 
-### Trade clock and execution
+`D0_PRIOR_LEAD_SECONDS = next_event_t0 - (c + H)`
 
-Candidate entry clock is the exact D1 PRIOR signal timestamp inherited above.
+Earliest chronologically/OOT validated PRIOR H wins. Do not delay a valid earlier D0 signal for a cleaner later one.
 
-Executable fill rule:
+If no PRIOR H validates, direct D0 fallback recognition/survivorship may be studied from the root detector clock under a separately causal ladder. No hindsight final-duration or final-D0 information may leak into an earlier checkpoint.
 
-- entry = first authoritative NG trade at or after the signal timestamp;
-- candidate exit horizon = first authoritative NG trade at or after the planned horizon;
-- cap the research holding window at the onset of the next canonical exhaustion event so a D0 trade does not silently consume a later exhaustion regime;
-- if required raw tape/fill is unavailable, fail closed or mark the row censored; never use missingness as a strategy feature.
+### Input
+
+Use the root exhaustion's own separate causal one-second price path:
+
+- baseline = last authoritative trade known at or before root detector confirmation;
+- at integer second s, last authoritative trade known at or before `c+s`;
+- carry forward last known price if no new trade occurs;
+- no future interpolation;
+- at H, only seconds `1..H` are visible;
+- root polarity may be included because it is known at the root event.
+
+Price availability is infrastructure, never a feature. Missing required tape fails closed.
+
+### Models and chronology
+
+Use the same predeclared model family and chronology as Chain-Birth V2:
+
+- logistic regression;
+- extra trees;
+- distance-weighted KNN;
+- eras 1-2 discovery fit;
+- era 3 discovery tune;
+- eras 4-5 validation;
+- untouched confirmation;
+- held `20260329` insert-only.
+
+Require at least 2 of 3 models with positive log-loss and Brier gains vs frozen null, ROC AUC > 0.5, positive-week Brier stability >= 0.5, sufficient support, and no supported held contradiction.
+
+### D1 complement cross-check
+
+After D1 Chain-Birth V2 lands, compare the direct D0 model with `1 - P(D1 birth)` at matched H/rows. This is a **consistency and calibration cross-check only**. D0 validity does not depend on D1 validating first.
+
+## Agent B — D0 terminality -> executable trade
+
+Agent B begins from Agent A's earliest validated direct D0 PRIOR H. If Agent A has no validated PRIOR H, Agent B may only use an explicitly validated D0 fallback clock.
+
+### Signal and fill
+
+- signal time = exact causal D0 model timestamp;
+- entry = first authoritative NG trade at or after signal time;
+- planned exit = first authoritative trade at or after the candidate horizon;
+- cap the research holding window at the onset of the next canonical exhaustion event so a D0 trade never silently consumes a later exhaustion regime.
 
 ### Tight candidate grid
-
-Do not wander across arbitrary strategy searches.
 
 D0 probability thresholds:
 
 `0.75, 0.85, 0.90, 0.95, 0.975`
 
-Candidate holding horizons from signal:
+Candidate holding horizons:
 
-`5, 10, 20, 30, 60, 120, 300 seconds`
+`5,10,20,30,60,120,300 seconds`
 
 Two orientations only:
 
 - `WITH_ROOT_POLARITY`
 - `AGAINST_ROOT_POLARITY`
 
-Measure for every candidate:
+For every candidate measure:
 
 - signaled n;
-- realized exact-D0 fraction among signaled rows;
+- realized exact-D0 fraction;
 - gross ticks;
 - 0.5 / 1.0 / 2.0 tick cost stress;
 - MFE;
@@ -99,71 +141,68 @@ Measure for every candidate:
 - net displacement;
 - range/path efficiency;
 - positive-week fraction;
-- chronology-block results.
+- discovery/validation/confirmation/held results.
 
-Candidate ranking may be developed only on the discovery blocks. Exact threshold/orientation/horizon candidates are then frozen before validation, untouched confirmation, and held reporting.
+Candidate selection occurs only on discovery information. Freeze threshold/orientation/horizon before validation, untouched confirmation, and held reporting.
 
-No D0 row is removed because its realized trade is bad. Bad/false signaled cases remain in the evidence.
+A historical D0 trade candidate may be called `HISTORICALLY_VALIDATED_CANDIDATE` only when the frozen candidate has positive 1-tick net expectancy in validation and untouched confirmation, positive-week fraction >= 0.5 in both, sufficient support, and no meaningful held contradiction.
 
-### D0 strategy success boundary
+No D0 row is removed because its realized trade is bad. Losing/false signal rows remain evidence.
 
-A historical D0 candidate may be called `HISTORICALLY_VALIDATED_CANDIDATE` only if the frozen candidate has positive 1-tick net expectancy in validation and untouched confirmation, positive-week fraction >= 0.5 in both blocks, sufficient support, and held does not contradict when held support is meaningful.
+## Agent C — root/D0-stage information value for the rest of the chain
 
-This is **not** live promotion. Fresh prospective/OOT promotion is still required.
+This agent asks whether the root-stage exhaustion carries useful information for later chain prediction.
 
-## Agent B — root/D0-stage information value for deeper births
+The hindsight label `exact D0` may never be used to predict a later D stage. Only root information that was causally available by the tested signal time is allowed.
 
-This agent must distinguish causal root-stage information from the hindsight label `exact D0`.
+### D1
 
-The realized final label "this remained D0" may never be used to predict a later D stage; that would leak the future.
+D1 birth versus D0 terminality is the direct root-stage continuation question. Agent A and the D1 Chain-Birth V2 lane provide complementary direct views of that boundary.
 
-For D2 and D3, Chain-Birth V2 already constructs the required paired ablation:
+### D2 and D3
+
+Chain-Birth V2 already provides the paired ablation on identical eligible rows:
 
 - `long` history = root predecessor + all later required predecessors;
-- `short` history = identical eligible cases and timing, but with the root predecessor removed.
+- `short` history = same cases/timing with the root predecessor removed.
 
-Therefore the focused D0/root question is:
+Audit model by model and block by block:
 
-> On the same D-eligible rows and exact H, does adding the root predecessor improve validated birth prediction relative to removing it?
-
-Audit, model by model and block by block:
-
-- incremental log-loss gain of long vs short;
-- incremental Brier gain of long vs short;
+- incremental log-loss gain of full/root-retained history vs root-ablated history;
+- incremental Brier gain;
 - whether gains are positive in validation and confirmation;
-- whether held contradicts when support is sufficient;
-- whether the full-history signal validates while root-ablated history does not.
+- held contradiction when support permits;
+- whether full history validates when root-ablated history does not.
 
-Evidence grading:
+Evidence grades:
 
-- `ROOT_INFORMATION_VALIDATED_INCREMENTAL` = at least 2 of 3 predeclared models have positive incremental log-loss and Brier gain in validation and confirmation, with no supported held contradiction;
-- `ROOT_INFORMATION_MIXED` = signs/model conclusions differ materially by block;
-- `ROOT_INFORMATION_NOT_INCREMENTAL` = root does not add stable validated skill;
-- D4/D5 = preserved case-study annotations only; no universal law.
+- `ROOT_INFORMATION_VALIDATED_INCREMENTAL` = at least 2 of 3 predeclared models show positive incremental log-loss and Brier gains in validation and confirmation with no supported held contradiction;
+- `ROOT_INFORMATION_MIXED` = model/block conclusions differ materially;
+- `ROOT_INFORMATION_NOT_INCREMENTAL` = no stable validated root contribution.
 
-D1 is a special case: the root is the only predecessor, so D1 prediction itself is the direct test of root-stage information.
+### D4 and D5
 
-## Chronology
+Preserve root-stage contribution as individual case evidence only. Current support is too small for universal law. Do not drop the cases.
 
-Keep the current V2 chronology unchanged:
+## Predict-everything boundary
 
-- eras 1-2: discovery fit;
-- era 3: discovery tune;
-- eras 4-5: validation;
-- untouched confirmation: final historical confirmation;
-- held `20260329`: insert-only, no retuning.
+The research goal remains to predict every useful component that can be supported causally:
 
-The first 18 original Phase-1 training weeks are not manufactured into forward-OOT D0/D1 labels.
+- whether the chain stops at D0 or extends;
+- when D1-D5 stages are going to begin;
+- what later stages are likely to do once birth timing is established;
+- whether root information improves deeper-stage prediction;
+- whether each validated prediction leaves enough executable price opportunity after costs.
+
+Failure to validate a particular D0/D1/D2/D3/D4/D5 rule does not remove that group from its original population. It is parked for later decomposition/research under its original number.
 
 ## Characteristics wall
-
-The focused D0 work inherits the active Chain-Birth V2 wall.
 
 Do not use as predictive characteristics before they are causally available:
 
 - realized exact-D0/final-depth identity;
 - target identity/polarity/family/state before birth;
-- predecessor future-revealing `next_same_polarity` fields;
+- future-revealing `next_same_polarity` fields;
 - realized final duration;
 - future path shape;
 - family;
@@ -173,7 +212,7 @@ Do not use as predictive characteristics before they are causally available:
 - time of day;
 - session position;
 - pre-exhaustion shape;
-- confirmation lag/timing as a characteristic.
+- confirmation lag/timing as a predictive characteristic.
 
 Timing may establish causal availability and signal time only.
 
@@ -191,8 +230,10 @@ Do not modify or retune:
 - `research/kalshi/spawn.py`;
 - frozen SSOS play.
 
-No permanent brain merge and no historical play freeze are authorized.
+No permanent brain merge and no historical play freeze are authorized. Fresh prospective/OOT promotion remains required.
 
-## Dependency
+## Parallel execution rule
 
-Agent A and Agent B are armed to run only after the durable Chain-Birth V2 reconcile output exists. This avoids duplicating the active V2 experiment and ensures D0 timing inherits the exact validated D1 clock rather than inventing a parallel clock.
+Agents A and B may run immediately in parallel with the active D1-D5 V2 workflow because they use immutable frozen sources and do not alter its contract.
+
+Agent C's D2/D3 root-ablation audit waits only for the durable V2 reconciled output because that output contains the paired full-vs-root-ablated metrics. This dependency does **not** block standalone D0 prediction or trade research.
