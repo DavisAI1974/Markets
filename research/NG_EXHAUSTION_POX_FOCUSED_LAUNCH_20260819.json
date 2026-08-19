@@ -1,0 +1,14 @@
+{
+  "name": "NG exhaustion focused POX predictability and tradeability launch",
+  "date": "2026-08-19",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "status": "LAUNCHED",
+  "master_population_expected": 3429,
+  "expected_flip": 1444,
+  "expected_same": 1985,
+  "older_679_population_role": "HISTORICAL_NARROW_SUBSET_NOT_MASTER",
+  "D0_D5_crosswalk": "DEFERRED_UNTIL_INDEPENDENT_RESULTS_FROZEN",
+  "promotion_authorized": false,
+  "permanent_frankie_mutation_authorized": false,
+  "preserve_all_cases": true
+}
