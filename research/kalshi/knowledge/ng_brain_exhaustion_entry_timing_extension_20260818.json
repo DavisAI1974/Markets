@@ -5,7 +5,8 @@
   "relationship": {
     "parent_runway_proposal": "research/FRANKIE_NG_EXHAUSTION_BRAIN_LESSON_PROPOSAL_20260817.md",
     "parent_phase2_chain_proposal": "research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json",
-    "relation": "EXTENDS_BOTH_DOES_NOT_REPLACE_EITHER"
+    "focused_pox_extension": "research/kalshi/knowledge/ng_brain_exhaustion_pox_focused_proposal_20260819.json",
+    "relation": "EXTENDS_PARENTS_AND_NOW_REFERENCES_FOCUSED_POX_EXTENSION_DOES_NOT_REPLACE_ANY"
   },
   "purpose": "Preserve the complete exhaustion-chain population while separating structural validity from entry timing. A setup that is not actionable at its earliest possible moment is not automatically a failed setup; it may become causally identifiable/actionable later while sufficient edge/runway remains.",
   "general_lessons": [
@@ -20,7 +21,7 @@
       "status": "PROPOSAL",
       "lesson": "Earliest-entry non-predictability or causal unavailability does not kill a structurally valid exhaustion setup. Preserve it and test the first later causal checkpoint where identity/context is available and enough expected remaining runway/edge remains to justify entry.",
       "checkpoints_seconds": [1,2,3,4,5,10,15,20,30,45,60,90,120,180,300,600,900,1800,3600],
-      "scope": "D1 and all structurally preserved D2+ chain/module cases that were not executable at the original earliest entry."
+      "scope": "D1, all structurally preserved D2+ chain/module cases, and focused POX cases that are not executable at an earlier checkpoint."
     },
     {
       "id": "exhaustion.execution.dense_early_fallback",
@@ -40,7 +41,13 @@
     {
       "id": "exhaustion.population.preserve_all",
       "status": "PROPOSAL",
-      "lesson": "Profitability ranks the complete valid exhaustion population; it does not define membership. Preserve short, long, directional, chop/rotation, low-support, sign-changing, and initially non-executable cases. Confidence and profitability are annotations, not deletion rules."
+      "lesson": "Profitability ranks the complete valid exhaustion population; it does not define membership. Preserve short, long, directional, chop/rotation, low-support, sign-changing, losing and initially non-executable cases. Confidence and profitability are annotations, not deletion rules."
+    },
+    {
+      "id": "exhaustion.population.authoritative_ledger_separation",
+      "status": "PROPOSAL_METHOD_UPDATE_20260819",
+      "lesson": "When a focused research population has an authoritative fixed case ledger, load case identity and future labels from that ledger first. Canonical evidence and raw tape may enrich those identities but must not silently redefine population membership through an alternative enumeration.",
+      "focused_pox_policy": "FIXED_3429_DO_NOT_REOPEN"
     },
     {
       "id": "exhaustion.population.reverse_backcast_provenance",
@@ -51,6 +58,12 @@
       "id": "exhaustion.execution.path_class_separation",
       "status": "PROPOSAL",
       "lesson": "Directional travel and chop/rotation are separate opportunity classes. Low directional efficiency is not equivalent to low profitability; preserve chop for separate range/fade/rotation research."
+    },
+    {
+      "id": "exhaustion.execution.subfamily_economics_do_not_transfer",
+      "status": "PROPOSAL_NEGATIVE_EVIDENCE_20260819",
+      "lesson": "An execution failure or success in a broad parent family cannot be automatically transferred to a focused structural subfamily. The generic D1 +0 early-entry lane failed its tune profitability gate and was effectively flat gross in confirmation before costs, so focused POX must validate its own initial-continuation economics rather than inherit a generic immediate-entry rule.",
+      "source": "research/generated/ng_exhaustion_entry_timing_revival_20260818/lane3_plus0_profitability/NG_EXHAUSTION_D1_PLUS0_EARLY_ENTRY_SUMMARY_20260818.json"
     }
   ],
   "higher_order_revival": {
@@ -83,7 +96,20 @@
       "base_36_47": "D1_VALIDATION",
       "base_48_53": "D1_UNTOUCHED_CONFIRMATION",
       "held_20260329": "INSERT_ONLY_HELD"
+    },
+    "plus0_profitability_update_20260819": {
+      "status": "TUNE_GATE_FAILED",
+      "interpretation": "Negative evidence for generic D1 +0 execution only; does not kill D1 structure and does not determine focused POX economics."
     }
+  },
+  "focused_pox_policy_20260819": {
+    "proposal": "research/kalshi/knowledge/ng_brain_exhaustion_pox_focused_proposal_20260819.json",
+    "strategy_proposal": "research/strategy_evolution/NG_EXHAUSTION_POX_TRADE_STRATEGY_PROPOSAL_20260819.json",
+    "population_policy": "FIXED_3429_DO_NOT_REOPEN",
+    "population": {"total":3429,"flip":1444,"same":1985},
+    "initial_sign_persistence_through_plus60_approx": 0.944,
+    "state_architecture": "INITIAL_CONTINUATION_FIRST_THEN_LATER_FLIP_VS_SAME_BRANCH",
+    "D0_D5_incremental_crosswalk": "DEFERRED_UNTIL_POX_AND_D0_D5_ARE_INDEPENDENTLY_FROZEN"
   },
   "promotion_boundary": {
     "permanent_frankie_mutation": false,
@@ -93,14 +119,17 @@
     "canonical_row_mutation": false,
     "spawn_py_mutation": false,
     "play_freeze": false,
-    "requirement": "Any new early-entry or fallback late-entry strategy remains historical/proposal-only until a predeclared fresh prospective/OOT promotion contract is passed."
+    "requirement": "Any new early-entry, focused-POX, or fallback late-entry strategy remains historical/proposal-only until a predeclared fresh prospective/OOT promotion contract is passed."
   },
   "do_not_learn": [
     "Do not impose +1/+2/+3/+4/+5 seconds as mandatory delays on setups already callable at the earliest validated entry.",
     "Do not treat survival-to-t as known before t.",
     "Do not use realized final D1/D2/D3/D4/D5 depth or final duration to justify an earlier entry.",
-    "Do not delete structurally valid higher-order rows merely because their earliest-entry causal test failed.",
+    "Do not delete structurally valid higher-order or focused-POX rows merely because an earliest-entry causal test failed.",
     "Do not reinterpret reverse-backcast weeks as forward-OOT evidence.",
-    "Do not merge this proposal into permanent Frankie without deliberate adjudication together with the runway parent and finalized Phase-2 chain extension."
+    "Do not reconstruct the fixed 3,429 focused POX population from consecutive canonical P/O/X adjacency or another alternative population definition.",
+    "Do not generalize the generic D1 +0 profitability failure into a POX rejection; focused POX economics must be measured separately.",
+    "Do not open independent D0-D5 result artifacts to tune focused POX before its standalone freeze.",
+    "Do not merge this proposal or the focused POX extension into permanent Frankie without deliberate adjudication together with the runway parent and finalized Phase-2 chain extension."
   ]
 }
