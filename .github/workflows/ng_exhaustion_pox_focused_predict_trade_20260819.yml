@@ -1,229 +1,107 @@
-name: NG Exhaustion Focused POX Predict Trade 20260819
+name: NG Exhaustion Focused POX Fixed-Ledger Gate 20260819
 
 on:
-  push:
-    branches:
-      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
-    paths:
-      - research/NG_EXHAUSTION_POX_FOCUSED_LAUNCH_20260819.json
   workflow_dispatch:
+    inputs:
+      ledger_artifact_id:
+        description: 'GitHub Actions artifact id containing the authoritative fixed 3,429 POX ledger'
+        required: true
+        type: string
+      ledger_member_path:
+        description: 'Path/name of the ledger inside the downloaded artifact'
+        required: true
+        type: string
 
 permissions:
-  contents: write
+  contents: read
   actions: read
 
-env:
-  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  AWS_DEFAULT_REGION: us-east-2
-  BUCKET: bento-568968024170-us-east-2-an
-  BASE_ID: '9281733364'
-  BASE_SHA: f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1
-  HELD_ID: '9281272840'
-  HELD_SHA: 21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e
-
 jobs:
-  pox-focused:
-    name: Preserve-all POX predictability and raw-tape tradeability
+  fixed-ledger-gate:
+    name: Validate immutable 3,429 POX ledger without population rediscovery
     runs-on: ubuntu-latest
-    timeout-minutes: 300
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
           ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
-          fetch-depth: 0
+          fetch-depth: 1
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - run: python -m pip install --quiet numpy scikit-learn
-
-      - name: Verify isolated focused POX contract
+      - name: Verify fixed-population contract and compile runner
         run: |
           set -euo pipefail
-          test -f research/NG_EXHAUSTION_POX_FOCUSED_PREDICT_TRADE_PROTOCOL_20260819.md
-          test -f research/NG_EXHAUSTION_POX_FOCUSED_LAUNCH_20260819.json
           python -m py_compile research/ng_exhaustion_pox_focused_predict_trade_20260819.py
           python - <<'PY'
-          p=open('research/NG_EXHAUSTION_POX_FOCUSED_PREDICT_TRADE_PROTOCOL_20260819.md').read()
-          assert '3,429' in p and '1,444' in p and '1,985' in p
-          assert 'FLAG_AND_DECOMPOSE_NOT_AUTO_KILL' in p
-          assert 'deferred until both sides are independently frozen' in p
-          print('focused POX contract: PASS')
+          import json
+          from pathlib import Path
+          launch=json.loads(Path('research/NG_EXHAUSTION_POX_FOCUSED_LAUNCH_20260819.json').read_text())
+          protocol=Path('research/NG_EXHAUSTION_POX_FOCUSED_PREDICT_TRADE_PROTOCOL_20260819.md').read_text()
+          assert launch['population_reconciliation']=='FIXED_3429_DO_NOT_REOPEN'
+          assert launch['master_population_expected']==3429
+          assert launch['expected_flip']==1444
+          assert launch['expected_same']==1985
+          assert launch['population_rediscovery_authorized'] is False
+          assert 'FIXED_3429_DO_NOT_REOPEN' in protocol
+          assert 'Do **not** re-derive the 3,429' in protocol
+          print('fixed POX contract: PASS')
           PY
 
-      - name: Download and verify immutable canonical sources
+      - name: Download authoritative ledger artifact
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          LEDGER_ARTIFACT_ID: ${{ inputs.ledger_artifact_id }}
         run: |
           set -euo pipefail
-          mkdir -p /tmp/in/base /tmp/in/held
-          get_artifact () {
-            id="$1"; sha="$2"; zip="$3"; dest="$4"
-            curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
-              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" -o "${zip}"
-            echo "${sha}  ${zip}" | sha256sum -c -
-            unzip -q "${zip}" -d "${dest}"
-          }
-          get_artifact "${BASE_ID}" "${BASE_SHA}" /tmp/base.zip /tmp/in/base
-          get_artifact "${HELD_ID}" "${HELD_SHA}" /tmp/held.zip /tmp/in/held
+          mkdir -p /tmp/pox-ledger
+          curl -L --fail --silent --show-error \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${LEDGER_ARTIFACT_ID}/zip" \
+            -o /tmp/pox-ledger.zip
+          unzip -q /tmp/pox-ledger.zip -d /tmp/pox-ledger
+          find /tmp/pox-ledger -maxdepth 4 -type f -print
 
-      - name: Resolve all canonical weeks without reading D0-D5 results
-        run: |
-          python - <<'PY' > /tmp/weeks.txt
-          import gzip,json
-          weeks=set()
-          for p in (
-            '/tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz',
-            '/tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz',
-          ):
-              with gzip.open(p,'rt') as f:
-                  for line in f: weeks.add(json.loads(line)['week_sunday'])
-          assert len(weeks)==55, len(weeks)
-          for w in sorted(weeks): print(w)
-          PY
-
-      - name: Materialize authoritative raw NG tape
+      - name: Validate fixed 3,429 ledger
+        env:
+          LEDGER_MEMBER: ${{ inputs.ledger_member_path }}
         run: |
           set -euo pipefail
-          mkdir -p /tmp/ngraw
-          python - <<'PY' > /tmp/days.txt
-          from datetime import datetime,timedelta
-          days=set()
-          for line in open('/tmp/weeks.txt'):
-              w=line.strip()
-              if not w: continue
-              d=datetime.strptime(w,'%Y%m%d')
-              for i in range(6): days.add((d+timedelta(days=i)).strftime('%Y%m%d'))
-          for x in sorted(days): print(x)
-          PY
-          python - <<'PY' > /tmp/closures.txt
-          import json
-          d=json.load(open('research/NG_EXHAUSTION_20260403_CME_CLOSURE_WITNESS_20260817.json'))
-          assert d['status']=='FROZEN_EXCHANGE_CLOSURE_WITNESS'
-          for x in d['canonicalization_rule']['explicit_closure_dates']: print(x)
-          PY
-          while read -r d; do
-            mapfile -t keys < <(aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" \
-              --query 'Contents[].Key' --output text | tr '\t' '\n' | \
-              grep -E "NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" | sort -u || true)
-            if grep -qx "${d}" /tmp/closures.txt; then
-              test "${#keys[@]}" -eq 0 || { echo "::error::frozen closure ${d} has raw objects"; exit 1; }
-              continue
-            fi
-            test "${#keys[@]}" -eq 1 || { echo "::error::expected exactly one NG raw object ${d}, got ${#keys[@]}"; exit 1; }
-            aws s3 cp "s3://${BUCKET}/${keys[0]}" "/tmp/ngraw/NG_${d}_raw.jsonl.gz" --only-show-errors
-            test -s "/tmp/ngraw/NG_${d}_raw.jsonl.gz"
-          done < /tmp/days.txt
-
-      - name: Run focused preserve-all POX research
-        run: |
-          set -euo pipefail
+          LEDGER="/tmp/pox-ledger/${LEDGER_MEMBER}"
+          test -f "${LEDGER}" || { echo "::error::ledger member not found: ${LEDGER_MEMBER}"; exit 1; }
           python research/ng_exhaustion_pox_focused_predict_trade_20260819.py \
-            --base /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz \
-            --held /tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz \
-            --raw-dir /tmp/ngraw \
-            --out /tmp/NG_EXHAUSTION_POX_FOCUSED_RESULTS_20260819.json \
-            --ledger /tmp/NG_EXHAUSTION_POX_FOCUSED_CASE_LEDGER_20260819.jsonl.gz
-
-      - name: Fail closed on preserve-all population and protected boundaries
-        run: |
+            --ledger "${LEDGER}" \
+            --out /tmp/NG_EXHAUSTION_POX_FIXED_LEDGER_VALIDATION_20260819.json \
+            --normalized-ledger /tmp/NG_EXHAUSTION_POX_FIXED_3429_NORMALIZED_20260819.jsonl.gz
           python - <<'PY'
           import json
-          d=json.load(open('/tmp/NG_EXHAUSTION_POX_FOCUSED_RESULTS_20260819.json'))
-          assert d['status']=='POX_FOCUSED_PREDICT_TRADE_COMPLETE'
+          d=json.load(open('/tmp/NG_EXHAUSTION_POX_FIXED_LEDGER_VALIDATION_20260819.json'))
+          assert d['status']=='POX_FIXED_LEDGER_VALIDATED'
+          assert d['population']['policy']=='FIXED_3429_DO_NOT_REOPEN'
           assert d['population']['total']==3429
           assert d['population']['flip']==1444
           assert d['population']['same']==1985
-          assert d['population']['preserved_all'] is True
-          assert d['population']['older_679_is_subset_not_master'] is True
-          assert d['D0_D5_incremental_crosswalk'].startswith('DEFERRED')
+          assert d['population']['population_rediscovery_performed'] is False
           assert d['promotion_performed'] is False
           assert not any(d['protected_mutations'].values())
-          print(json.dumps({'population':d['population'],'earliest_pox':d['pox_identity_prediction']['earliest_validated'],'earliest_branch':d['branch_prediction']['earliest_validated'],'persistence':d['persistence_checks']},indent=2))
+          print(json.dumps(d, indent=2, sort_keys=True))
           PY
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ng-exhaustion-pox-focused-20260819
+          name: ng-exhaustion-pox-fixed-ledger-validation-20260819
           path: |
-            /tmp/NG_EXHAUSTION_POX_FOCUSED_RESULTS_20260819.json
-            /tmp/NG_EXHAUSTION_POX_FOCUSED_CASE_LEDGER_20260819.jsonl.gz
+            /tmp/NG_EXHAUSTION_POX_FIXED_LEDGER_VALIDATION_20260819.json
+            /tmp/NG_EXHAUSTION_POX_FIXED_3429_NORMALIZED_20260819.jsonl.gz
           if-no-files-found: error
           retention-days: 14
 
-      - name: Commit durable POX findings and proposals
+      - name: State next-stage boundary
         run: |
-          set -euo pipefail
-          OUT=research/generated/ng_exhaustion_pox_focused_20260819
-          mkdir -p "${OUT}" research/kalshi/knowledge research/strategy_evolution
-          cp /tmp/NG_EXHAUSTION_POX_FOCUSED_RESULTS_20260819.json "${OUT}/"
-          cp /tmp/NG_EXHAUSTION_POX_FOCUSED_CASE_LEDGER_20260819.jsonl.gz "${OUT}/"
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          p=Path('research/generated/ng_exhaustion_pox_focused_20260819/NG_EXHAUSTION_POX_FOCUSED_RESULTS_20260819.json')
-          d=json.loads(p.read_text())
-          ep=d['pox_identity_prediction']['earliest_validated']
-          eb=d['branch_prediction']['earliest_validated']
-          pers=d['persistence_checks']
-          lines=[
-            '# NG Exhaustion Focused P-O-X Predictability + Tradeability — 2026-08-19','',
-            'Status: **standalone POX line complete; preserve-all population retained; D0-D5 crosswalk intentionally deferred; no play promoted.**','',
-            '## Preserve-all population',
-            '- Total POX: 3,429', '- Later FLIP: 1,444', '- Later SAME: 1,985',
-            '- The older 679-case Phase-2 population is retained only as a narrower historical subset; it is not the master POX population.','',
-            '## Earliest causal POX identity signal', f'- Earliest validated checkpoint: `{ep}`','',
-            '## Initial continuation', f'- Reproduction checks: `{json.dumps(pers,sort_keys=True)}`',
-            f"- Trade status: `{d['initial_continuation_trade']['status']}`",'',
-            '## Later branch', f'- Earliest validated FLIP-vs-SAME checkpoint: `{eb}`',
-            '- Observational branch identity is not backdated: it becomes known at successor frozen-detector causal confirmation.','',
-            '## Successor semantics',
-            '- A successor exhaustion is treated as a new causal checkpoint. Old POX ancestry is not automatically inherited.',
-            '- Continue / reverse / follow-successor / dynamic-exit economics are stored in the machine result; no universal action is promoted unless it is stable across chronological OOT blocks.','',
-            '## Boundaries', '- All failures, delayed cases, false predictor calls and low-support cases remain preserved.',
-            '- D0-D5 incremental value is deferred until those independent results are frozen and then opened only for the crosswalk.',
-            '- Permanent Frankie, Frankie 1, frozen detector, canonical evidence, Phase-1/2, runway clock, spawn.py and frozen SSOS were not modified.'
-          ]
-          Path('research/generated/ng_exhaustion_pox_focused_20260819/NG_EXHAUSTION_POX_FOCUSED_ALL_FINDINGS_20260819.md').write_text('\n'.join(lines)+'\n')
-
-          brain={
-            'name':'NG exhaustion focused POX lesson proposal', 'date':'2026-08-19', 'status':'PROPOSAL_ONLY_NOT_MERGED',
-            'population':d['population'], 'earliest_pox_identity_signal':ep, 'earliest_branch_signal':eb,
-            'lessons':[
-              'Preserve the full 3,429-case POX population; executability is checkpoint-specific and must not delete underlying cases.',
-              'Model POX as a two-stage state transition: initial X continuation first, later FLIP versus SAME/delayed re-expression second.',
-              'Use only the earliest validated causal POX signal; never backdate successor branch information.',
-              'At successor causal confirmation, reset state inheritance by default; older POX ancestry is not presumed active.',
-              'Failures and delayed re-expression cases remain evidence under FLAG_AND_DECOMPOSE_NOT_AUTO_KILL.'
-            ],
-            'D0_D5_incremental_crosswalk':'DEFERRED_UNTIL_INDEPENDENT_RESULTS_FROZEN',
-            'permanent_frankie_mutation':False, 'promotion_performed':False,
-          }
-          Path('research/kalshi/knowledge/ng_brain_exhaustion_pox_focused_proposal_20260819.json').write_text(json.dumps(brain,indent=2,sort_keys=True)+'\n')
-
-          strat={
-            'name':'NG exhaustion focused POX trade strategy proposal', 'date':'2026-08-19', 'status':'PROPOSAL_ONLY_NOT_FROZEN',
-            'population':d['population'], 'entry_signal':ep,
-            'initial_continuation_trade':d['initial_continuation_trade'],
-            'branch_signal':eb, 'branch_knowability':d['branch_observational_knowability'],
-            'dynamic_exit_vs_fixed60':d['dynamic_exit_at_successor_confirmation_vs_fixed60'],
-            'successor_actions':d['successor_state_actions'],
-            'same_delayed_watch':d['same_branch_delayed_reexpression_watch'],
-            'rules':['Trade only from an actually validated causal POX signal.','Do not use realized FLIP/SAME before successor confirmation.','Treat successor confirmation as a reset checkpoint; re-entry/reversal requires its own validated economics.','No automatic delayed SAME re-entry from a realized later recovery.'],
-            'promotion_performed':False,
-          }
-          Path('research/strategy_evolution/NG_EXHAUSTION_POX_TRADE_STRATEGY_PROPOSAL_20260819.json').write_text(json.dumps(strat,indent=2,sort_keys=True)+'\n')
-          PY
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add research/generated/ng_exhaustion_pox_focused_20260819 research/kalshi/knowledge/ng_brain_exhaustion_pox_focused_proposal_20260819.json research/strategy_evolution/NG_EXHAUSTION_POX_TRADE_STRATEGY_PROPOSAL_20260819.json
-          git diff --cached --quiet && exit 0
-          git commit -m "Record focused POX prediction and trade results"
-          for i in 1 2 3 4; do
-            git pull --rebase origin chatgpt/ng-exhaustion-entry-timing-revival-20260818 && \
-            git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818 && exit 0
-            sleep $((i*5))
-          done
-          exit 1
+          echo 'Ledger gate complete. Do not derive POX membership from canonical adjacency.'
+          echo 'Next stage: join these fixed identities to causal canonical/raw-tape features and run Targets B/C/D/E.'
+          echo 'Target A binary membership prediction additionally requires a separate honest candidate/control universe; do not fabricate negatives.'
+          echo 'Do not read D0-D5 result artifacts until standalone POX rules are frozen.'
