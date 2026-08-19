@@ -1,0 +1,19 @@
+{
+  "status": "AUTHORIZED_LANE3_PLUS0_LAUNCH",
+  "date": "2026-08-18",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "source_lane2_summary": "research/generated/ng_exhaustion_entry_timing_revival_20260818/lane2_all_d1_rawpath/NG_EXHAUSTION_D1_ALL_RAWPATH_SUMMARY_20260818.json",
+  "source_lane2_status": "D1_ALL_RAWPATH_ENTRY_CLOCK_LANE2_COMPLETE",
+  "forward_exact_d1_n": 18837,
+  "filtered_exact_d1_rows": 0,
+  "primary_clock": "DETECTOR_CONFIRMATION_IS_PLUS0",
+  "entry_rule": "TEST_PLUS0_FIRST; USE_DENSE_FALLBACK_ONLY_WHEN_PLUS0_IS_NOT_ACTIONABLE",
+  "causal_feature_contract": "NO_FUTURE_OR_FULL_STATE_LEAKAGE",
+  "promotion_performed": false,
+  "protected_mutation_authorized": false,
+  "notes": [
+    "All 18837 frozen forward-OOT exact D1 rows remain in the preserve-all population.",
+    "Detector confirmation is +0; no generic +60 entry wait is imposed.",
+    "This launch does not modify the frozen detector, canonical evidence, Phase 1/2 findings, runway clock, permanent Frankie, Frankie 1, spawn.py, or SSOS play."
+  ]
+}
