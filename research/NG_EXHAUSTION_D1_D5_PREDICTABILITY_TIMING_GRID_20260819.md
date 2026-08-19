@@ -6,28 +6,52 @@ Status: **AUTHORITATIVE TIMING CONTRACT FOR THE ENTRY-TIMING REVIVAL. PRESERVE A
 
 Determine, for every preserved exact D1-D5 chain/behavior, the **earliest causal moment at which the already-defined behavior becomes predictably callable**.
 
-The answer is allowed to differ by D, motif, subfamily, timing family, regime, or true/false context. A behavior may validate:
+The answer may differ by D, motif, subfamily, timing family, regime, or true/false context. A behavior may validate:
 
 1. **PRIOR** — before the target exhaustion begins, from already-causal predecessor-chain information;
 2. **AT DETECTION** — when the target exhaustion itself becomes causally known under the frozen detector;
-3. **AFTER DETECTION** — only after the target/setup has survived for one or more seconds and new causal information has accumulated;
-4. **NEVER ACTIONABLE** — no tested causal point validates with enough remaining runway/edge. The row is still preserved.
+3. **AFTER DETECTION** — only after the target/setup has survived for one or more H seconds and new causal information has accumulated;
+4. **NEVER ACTIONABLE** — no tested causal point validates. The row is still preserved.
 
-**Earliest validated predictability wins.** If a behavior is predictable prior to the target, do not delay it to target detection. If it first validates at target detection, do not delay it to +5 or +10. If it needs survival, use the first post-detection checkpoint that validates.
+**Earliest validated predictability wins.** If a behavior validates prior to the target, do not delay it to target detection. If it first validates at target detection, do not delay it. If it needs survival, use the first H checkpoint that validates.
 
 This contract does not redefine direction, chain structure, D1-D5 membership, Phase-2 findings, the frozen detector, or the runway clock.
 
 ## Frozen populations
 
-| Exact depth | Preserved population | Meaning for this timing study |
-|---|---:|---|
-| D1 | 18,837 forward-OOT exact D1 | one-link chain population; test when its already-defined descendant behavior becomes predictable |
-| D2 | 1,592 | two-link preserved chain population |
-| D3 | 124 | three-link preserved chain population |
-| D4 | 8 | four-link preserved chain population; low support must be labeled, never erased |
-| D5 | 1 | five-link preserved chain population; case study only, no universal law from n=1 |
+| Exact depth | Preserved population |
+|---|---:|
+| D1 | 18,837 forward-OOT exact D1 |
+| D2 | 1,592 |
+| D3 | 124 |
+| D4 | 8 |
+| D5 | 1 |
 
-The first 18 base weeks remain `PRELINEAGE_UNLABELED` for exact-D1 membership unless a separately validated reverse backcast succeeds. They may not be manufactured into forward-OOT D1 labels.
+The first 18 base weeks remain `PRELINEAGE_UNLABELED` for exact-D1 membership unless a separately validated reverse backcast succeeds.
+
+## Authoritative H grid — applies to every D1-D5 timing test
+
+The active H values are:
+
+`H = 1, 2, 3, 4, 5, 10, 15 seconds`
+
+then every five seconds thereafter:
+
+`H = 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, ...`
+
+For the current authorized study, continue the five-second grid through:
+
+`H = 3600 seconds`
+
+where the structure is still alive and the necessary information/tape exists.
+
+Equivalently:
+
+`H_GRID = [1,2,3,4,5,10,15] + range(20,3601,5)`
+
+This same H grid is used for **D1, D2, D3, D4, and D5**. No D gets a coarser timing lattice merely because it is deeper or lower-support.
+
+The older coarse values `5,10,20,30,60,120,300` are retained only as historical audit/reference points from earlier work. They are **not the active H grid for this predictability study**.
 
 ## Clock definitions
 
@@ -37,84 +61,88 @@ The frozen canonical `t0_idx` is the retrospective onset of the target exhaustio
 
 ### Target detector-known clock: `TARGET_DETECTOR_KNOWN = +0`
 
-For post-target timing, **+0 means the frozen detector's causal confirmation of the target exhaustion**, i.e. the target row's frozen `dynamic_endpoint.causal_confirmation_idx` under the existing detector contract.
+`+0` means the frozen detector's causal confirmation of the target exhaustion, i.e. the target row's frozen `dynamic_endpoint.causal_confirmation_idx`.
 
 Do not substitute retrospective target onset for detector confirmation.
 
-### Prior predecessor-information clocks
+### H on predecessor information — PRIOR test
 
-For each predecessor required by a D-depth rule, test the already-frozen aftermath information horizons:
+For predecessor `j` at active horizon `H`:
 
-`h = 5, 10, 20, 30, 60, 120, 300 seconds`
-
-For predecessor `j` at horizon `h`:
-
-`PREDECESSOR_READY(j,h) = predecessor_j.causal_confirmation_idx + h`
+`PREDECESSOR_READY(j,H) = predecessor_j.causal_confirmation_idx + H`
 
 For a D-depth rule requiring D predecessor states:
 
-`RULE_READY(D,h) = max(PREDECESSOR_READY(j,h) for all required predecessors j)`
+`RULE_READY(D,H) = max(PREDECESSOR_READY(j,H) for all required predecessors j)`
 
-A candidate is **PRIOR** at horizon `h` only when the information needed by that rule is causally ready before the target begins:
+A candidate is **PRIOR at H** only when the complete information required by that rule is causally ready before the target begins:
 
-`RULE_READY(D,h) <= TARGET_T0`
+`RULE_READY(D,H) <= TARGET_T0`
 
-Record the actual causal lead:
+Record:
 
-`PRIOR_LEAD_SECONDS = TARGET_T0 - RULE_READY(D,h)`
+`PRIOR_LEAD_SECONDS = TARGET_T0 - RULE_READY(D,H)`
 
-Do not invent a synthetic negative-time grid. Prior lead is whatever the frozen predecessor clocks actually provide.
+Test H in ascending order. The first chronologically/OOT validated H is the winning prior horizon.
 
-A predecessor-information horizon being available is **not** proof of predictive skill. Each horizon must be tested chronologically/OOT.
+Availability is not predictive skill. An H value being available before target t0 only makes that H eligible for a causal predictability test.
 
-## Universal post-detection checkpoint grid
+### H after target detection — survival/update test
 
-For every D1-D5 rule that does **not** validate prior and does **not** validate at target detector confirmation, test survival/update checkpoints from the applicable causal clock at:
+If no PRIOR H validates and the behavior does not validate at `+0`, use the **same H grid** after `TARGET_DETECTOR_KNOWN`:
 
-`+1, +2, +3, +4, +5, +10, +15 seconds`
+`+1,+2,+3,+4,+5,+10,+15,+20,+25,+30,...,+3600`
 
-then **every 5 seconds thereafter**:
-
-`+20, +25, +30, +35, +40, ... , +3600 seconds`
-
-where the setup is still structurally alive and the required tape/information exists.
-
-`+0` is always measured separately as the target detector-confirmation decision point.
-
-Thus the full default target-relative search is:
-
-`PRIOR via h=5/10/20/30/60/120/300 -> +0 -> +1 -> +2 -> +3 -> +4 -> +5 -> +10 -> +15 -> +20 -> +25 -> ... -> +3600`
-
-Longer checkpoints may be added where support exists, but they may not replace the dense grid through +3600.
+At each H use only information available by that checkpoint plus the causal fact that the target/setup has survived to H. Never leak later survival, final duration, final depth, descendant identity, or future path shape backward.
 
 ## Required timing values for every D
 
-| D | PRIOR search | At target detection | Post-detection search |
-|---|---|---|---|
-| D1 | test predecessor/origin information at `h=5,10,20,30,60,120,300`; if the required D1 information is ready before its target descendant `t0`, record actual prior lead | `+0` at frozen target detector confirmation | `+1,+2,+3,+4,+5,+10,+15`, then every `+5s` from `+20` through `+3600` while alive |
-| D2 | test both required predecessor states at `h=5,10,20,30,60,120,300`; PRIOR only when the complete rule is ready before target `t0` | `+0` | same dense grid through `+3600` |
-| D3 | test all three required predecessor states at `h=5,10,20,30,60,120,300`; PRIOR only when the complete rule is ready before target `t0` | `+0` | same dense grid through `+3600` |
-| D4 | test all four required predecessor states at `h=5,10,20,30,60,120,300`; preserve low support | `+0` | same dense grid through `+3600`; label low support rather than force a timing law |
-| D5 | test all five required predecessor states at `h=5,10,20,30,60,120,300`; preserve n=1 as a case | `+0` | same dense grid through `+3600`; no universal timing law from the single case |
+| D | Preserved n | PRIOR H values | Detection | AFTER-DETECTION H values |
+|---|---:|---|---|---|
+| D1 | 18,837 | `1,2,3,4,5,10,15,20,25,...,3600` | `+0` | `1,2,3,4,5,10,15,20,25,...,3600` |
+| D2 | 1,592 | `1,2,3,4,5,10,15,20,25,...,3600` | `+0` | same H grid |
+| D3 | 124 | `1,2,3,4,5,10,15,20,25,...,3600` | `+0` | same H grid |
+| D4 | 8 | `1,2,3,4,5,10,15,20,25,...,3600` | `+0` | same H grid; low support labeled, never erased |
+| D5 | 1 | `1,2,3,4,5,10,15,20,25,...,3600` | `+0` | same H grid; case study only, no universal law |
 
-## Existing D2-D5 h=5 availability reference — availability only
+The search order for every D is therefore:
 
-The already-complete higher-order availability audit may be used only to locate possible prior/early clocks. It must not be mistaken for predictive proof.
+**earliest eligible PRIOR H -> later PRIOR H values as needed -> +0 target detector confirmation -> +1 -> +2 -> +3 -> +4 -> +5 -> +10 -> +15 -> +20 -> +25 -> ... -> +3600**
 
-At predecessor horizon `h=5`:
+Stop searching later timing for a rule once an earlier point has genuinely validated under the predeclared chronological/OOT standard, except to retain later checkpoints as confirmation/alternative measurements. Later confirmation does not replace the earliest valid call.
 
-| D | Ready before target `t0` | Additional ready by target endpoint+5 | Additional ready by endpoint+60 | Total |
-|---|---:|---:|---:|---:|
-| D2 | 1,059 | 531 | 2 | 1,592 |
-| D3 | 80 | 43 | 1 | 124 |
-| D4 | 6 | 2 | 0 | 8 |
-| D5 | 1 | 0 | 0 | 1 |
+## D-specific interpretation
 
-Combined: `1,146/1,725` D2-D5 cases have all required h=5 predecessor information before the target `t0`; `1,722/1,725` are ready by target endpoint+5; all `1,725/1,725` are ready by target endpoint+60.
+### D1
 
-These values answer only **when information exists**, not whether the behavior is predictable from it.
+Test when the already-defined D1 descendant behavior becomes predictable from the D1 origin/predecessor context. A D1 can be PRIOR if an H snapshot of its origin is causally complete and predictive before the descendant begins. Otherwise test the descendant at +0 and then the H grid after detection.
 
-D1 prior availability must be measured directly under this timing program rather than inferred from the D2+ audit.
+### D2
+
+For a D2 rule, all required predecessor information for that rule must be causal at the tested H. Find whether the second-order behavior is predictable prior, at +0, or only after one of the H survival checkpoints.
+
+### D3
+
+Apply the identical H grid to all three required predecessor states. Preserve any earlier predictability; do not assume D3 must be later merely because it is deeper.
+
+### D4
+
+Apply the identical H grid to all four required predecessor states. The sample is small, so results must be labeled low-support rather than generalized or discarded.
+
+### D5
+
+Apply the identical H grid to all five required predecessor states. Preserve the single case and its timing result, but do not infer a universal D5 timing law from n=1.
+
+## Historical h=5 availability reference — reference only
+
+The existing higher-order availability audit at old `h=5` remains useful as a historical reference:
+
+- D2: 1,059/1,592 ready before target t0;
+- D3: 80/124;
+- D4: 6/8;
+- D5: 1/1.
+
+This does not authorize skipping H=1,2,3,4 in the new timing study and does not prove predictive skill at H=5.
 
 ## Agent output required for every D1-D5 rule/subfamily
 
@@ -122,37 +150,20 @@ For every preserved rule/subfamily, output:
 
 - exact D depth;
 - support and weeks;
+- every tested H in chronological order;
 - earliest validated timing class: `PRIOR`, `AT_DETECTION`, `POST_DETECTION`, or `NO_VALIDATED_ACTIONABLE_POINT`;
-- if `PRIOR`: winning predecessor horizon `h`, `RULE_READY` timestamp, and actual lead seconds to target `t0`;
-- if `AT_DETECTION`: `+0` target detector-confirmation result;
-- if `POST_DETECTION`: first validated checkpoint from the required dense grid;
-- all earlier tested checkpoints and why they failed;
+- if `PRIOR`: winning H, `RULE_READY` timestamp, and actual lead seconds to target t0;
+- if `AT_DETECTION`: +0 result;
+- if `POST_DETECTION`: first validating H from the active dense grid;
+- all earlier tested H/checkpoints and why they failed;
 - remaining structural runway/opportunity at the winning time;
 - chronological/OOT stability and held behavior where applicable;
 - true/false/context decomposition under `FLAG_AND_DECOMPOSE_NOT_AUTO_KILL`;
-- explicit leakage audit showing no realized final duration, final D depth, future descendant identity, or future path shape entered an earlier prediction.
-
-A later checkpoint may be reported as a stronger-confirmation alternative, but it does not replace an earlier validated point unless the earlier point fails the predeclared actionability standard.
-
-## D1-specific clarification
-
-For exact D1, `PRIOR` means **before the D1 target/descendant begins**, using only already-causal information from its origin/predecessor context. It does not authorize pretending the original exhaustion was known before the frozen detector established it.
-
-The D1 origin itself becomes a live exhaustion identity only at its own frozen detector-confirmation clock. From there, its h=5/10/20/30/60/120/300 information may become available early enough to predict its descendant before that descendant begins.
+- explicit leakage audit.
 
 ## Protected boundaries
 
-Do not modify or retune:
-
-- frozen exhaustion detector;
-- canonical 54-week base or held rows;
-- frozen Phase-1 lineage/scores;
-- finalized Phase-2 findings/freeze;
-- frozen exhaustion runway clock;
-- permanent Frankie;
-- Frankie 1;
-- `research/kalshi/spawn.py`;
-- frozen SSOS paper play.
+Do not modify or retune the frozen exhaustion detector, canonical 54-week base or held rows, frozen Phase-1 lineage/scores, finalized Phase-2 findings/freeze, frozen exhaustion runway clock, permanent Frankie, Frankie 1, `research/kalshi/spawn.py`, or the frozen SSOS paper play.
 
 Do not use later signed-direction Lane 3/4 detours or subsequent reframing to redefine this timing program.
 
