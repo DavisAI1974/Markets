@@ -1,0 +1,285 @@
+name: NG Exhaustion D1-D5 Predictability Agents 20260819
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/NG_EXHAUSTION_D1_D5_PREDICTABILITY_AGENTS_LAUNCH_20260819.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: us-east-2
+  BUCKET: bento-568968024170-us-east-2-an
+  BASE_ID: '9281733364'
+  BASE_SHA: f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1
+  HELD_ID: '9281272840'
+  HELD_SHA: 21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e
+  LINEAGE_ID: '9289929292'
+  LINEAGE_SHA: a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95
+  RECONCILE_ID: '9306082330'
+  RECONCILE_SHA: f17c130df029429bfbc35067d1cc9d16128ca4fb227dd37f3fb4fbb8bbaf8875
+
+jobs:
+  predictability-agents:
+    name: Predictability agent ${{ matrix.agent }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - agent: D1
+            depths: '1'
+          - agent: D2
+            depths: '2'
+          - agent: D3
+            depths: '3'
+          - agent: D45
+            depths: '4,5'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: python -m pip install --quiet numpy scikit-learn
+
+      - name: Compile fresh drop-in-boundary runners
+        run: |
+          set -euo pipefail
+          python -m py_compile research/ng_exhaustion_d1_d5_predictability_agents_20260819.py
+          python -m py_compile research/ng_exhaustion_d1_d5_predictability_agents_v2_20260819.py
+
+      - name: Verify active H contract
+        run: |
+          python - <<'PY'
+          import json
+          p='research/NG_EXHAUSTION_D1_D5_PREDICTABILITY_TIMING_GRID_20260819.json'
+          d=json.load(open(p))
+          assert d['status']=='AUTHORITATIVE_ENTRY_TIMING_REVIVAL_CONTRACT'
+          g=d['authoritative_H_grid_seconds']
+          assert g['dense_initial']==[1,2,3,4,5,10,15]
+          assert g['every_5_seconds_from']==20
+          assert g['every_5_seconds_through']==3600
+          assert d['old_coarse_horizons_status']['status']=='HISTORICAL_AUDIT_REFERENCE_ONLY_NOT_ACTIVE_TIMING_GRID'
+          assert d['preserve_all'] is True
+          assert d['flag_and_decompose_not_auto_kill'] is True
+          assert not any(d['protected_mutations'].values())
+          PY
+
+      - name: Download and verify immutable frozen sources
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/in/base /tmp/in/held /tmp/in/lineage /tmp/in/reconcile
+          get_artifact () {
+            id="$1"; sha="$2"; zip="$3"; dest="$4"
+            curl -L --fail --silent --show-error \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" -o "${zip}"
+            echo "${sha}  ${zip}" | sha256sum -c -
+            unzip -q "${zip}" -d "${dest}"
+          }
+          get_artifact "${BASE_ID}" "${BASE_SHA}" /tmp/base.zip /tmp/in/base
+          get_artifact "${HELD_ID}" "${HELD_SHA}" /tmp/held.zip /tmp/in/held
+          get_artifact "${LINEAGE_ID}" "${LINEAGE_SHA}" /tmp/lineage.zip /tmp/in/lineage
+          get_artifact "${RECONCILE_ID}" "${RECONCILE_SHA}" /tmp/reconcile.zip /tmp/in/reconcile
+
+      - name: Resolve only weeks needed by this depth agent
+        env:
+          DEPTHS: ${{ matrix.depths }}
+        run: |
+          python - <<'PY' >> "${GITHUB_ENV}"
+          import gzip,json,os
+          ds={int(x) for x in os.environ['DEPTHS'].split(',')}
+          weeks=set()
+          for p in (
+            '/tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz',
+            '/tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz',
+          ):
+              with gzip.open(p,'rt') as f:
+                  for line in f:
+                      r=json.loads(line)
+                      if int(r.get('all_model_consecutive_positive_depth',0)) in ds:
+                          weeks.add(r['week_sunday'])
+          if not weeks:
+              raise SystemExit('no exact-depth weeks resolved')
+          print('WEEKS='+','.join(sorted(weeks)))
+          PY
+
+      - name: Materialize authoritative raw NG tape for resolved weeks
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ngraw
+          python - <<'PY' > /tmp/days.txt
+          import os
+          from datetime import datetime,timedelta
+          seen=set()
+          for w in os.environ['WEEKS'].split(','):
+              d=datetime.strptime(w,'%Y%m%d')
+              for i in range(6):
+                  seen.add((d+timedelta(days=i)).strftime('%Y%m%d'))
+          for x in sorted(seen): print(x)
+          PY
+          python - <<'PY' > /tmp/closures.txt
+          import json
+          d=json.load(open('research/NG_EXHAUSTION_20260403_CME_CLOSURE_WITNESS_20260817.json'))
+          assert d['status']=='FROZEN_EXCHANGE_CLOSURE_WITNESS'
+          for x in d['canonicalization_rule']['explicit_closure_dates']: print(x)
+          PY
+          while read -r d; do
+            mapfile -t keys < <(aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" \
+              --query 'Contents[].Key' --output text | tr '\t' '\n' | \
+              grep -E "NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" | sort -u || true)
+            if grep -qx "${d}" /tmp/closures.txt; then
+              if [ "${#keys[@]}" -ne 0 ]; then
+                echo "::error::Frozen closure ${d} unexpectedly has ${#keys[@]} raw objects"
+                exit 1
+              fi
+              continue
+            fi
+            if [ "${#keys[@]}" -ne 1 ]; then
+              echo "::error::Expected exactly one raw NG object for ${d}, got ${#keys[@]}"
+              exit 1
+            fi
+            aws s3 cp "s3://${BUCKET}/${keys[0]}" "/tmp/ngraw/NG_${d}.jsonl.gz" --only-show-errors
+            test -s "/tmp/ngraw/NG_${d}.jsonl.gz"
+          done < /tmp/days.txt
+
+      - name: Run fresh dense-H predictability agent
+        env:
+          AGENT: ${{ matrix.agent }}
+          DEPTHS: ${{ matrix.depths }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/out
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_d1_d5_predictability_agents_v2_20260819.py \
+            --depths "${DEPTHS}" \
+            --base /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz \
+            --held /tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz \
+            --base-lineage /tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz \
+            --held-lineage /tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz \
+            --raw-dir /tmp/ngraw \
+            --out "/tmp/out/NG_EXHAUSTION_D1_D5_PREDICTABILITY_AGENT_${AGENT}_20260819.json"
+
+      - name: Fail closed on population, H-grid, and protection invariants
+        env:
+          AGENT: ${{ matrix.agent }}
+          DEPTHS: ${{ matrix.depths }}
+        run: |
+          python - <<'PY'
+          import json,os
+          p=f"/tmp/out/NG_EXHAUSTION_D1_D5_PREDICTABILITY_AGENT_{os.environ['AGENT']}_20260819.json"
+          d=json.load(open(p))
+          assert d['status']=='D1_D5_PREDICTABILITY_AGENT_COMPLETE'
+          assert d['H_grid'][:7]==[1,2,3,4,5,10,15]
+          assert d['H_grid'][7:13]==[20,25,30,35,40,45]
+          assert d['H_grid'][-1]==3600
+          expected={1:18837,2:1592,3:124,4:8,5:1}
+          for dep in [int(x) for x in os.environ['DEPTHS'].split(',')]:
+              r=d['results'][f'D{dep}']
+              assert r['population_n']==expected[dep],(dep,r['population_n'])
+              assert r['promotion_performed'] is False
+              if dep<=3:
+                  assert not any(r['protected_mutations'].values())
+          assert d['promotion_performed'] is False
+          print(json.dumps({'agent':os.environ['AGENT'],'depths':os.environ['DEPTHS']},indent=2))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-d1-d5-predictability-agent-${{ matrix.agent }}-20260819
+          path: /tmp/out/*.json
+          if-no-files-found: error
+          retention-days: 14
+
+  reconcile-agents:
+    name: Reconcile D1-D5 earliest predictability
+    needs: predictability-agents
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ng-exhaustion-d1-d5-predictability-agent-*-20260819
+          path: /tmp/agents
+
+      - name: Reconcile without redefining D1-D5 or Phase 2
+        run: |
+          set -euo pipefail
+          OUT=research/generated/ng_exhaustion_entry_timing_revival_20260819/d1_d5_predictability_agents
+          mkdir -p "${OUT}"
+          python - <<'PY'
+          import glob,json,os
+          from pathlib import Path
+          files=sorted(glob.glob('/tmp/agents/**/*.json',recursive=True))
+          assert len(files)==4,files
+          combined={}
+          agent_meta=[]
+          for p in files:
+              d=json.load(open(p))
+              assert d['status']=='D1_D5_PREDICTABILITY_AGENT_COMPLETE'
+              agent_meta.append({'file':os.path.basename(p),'depths':d['agent_depths']})
+              for k,v in d['results'].items():
+                  assert k not in combined,k
+                  combined[k]=v
+          assert sorted(combined)==['D1','D2','D3','D4','D5']
+          result={
+            'status':'D1_D5_PREDICTABILITY_PARALLEL_AGENTS_RECONCILED',
+            'date':'2026-08-19',
+            'source_boundary':'DROP_IN_AND_KICKOFF_ONLY; PRIOR_CHAT_DRIFT_EXCLUDED',
+            'H_grid':[1,2,3,4,5,10,15]+list(range(20,3601,5)),
+            'agents':agent_meta,
+            'results':combined,
+            'phase2_reopened':False,
+            'promotion_performed':False,
+            'protected_mutations':{'detector':False,'canonical_rows':False,'phase1':False,'phase2':False,'runway_clock':False,'permanent_frankie':False,'frankie_1':False,'spawn_py':False,'ssos_play':False},
+          }
+          out=Path('research/generated/ng_exhaustion_entry_timing_revival_20260819/d1_d5_predictability_agents')
+          (out/'NG_EXHAUSTION_D1_D5_PREDICTABILITY_ALL_AGENT_RESULTS_20260819.json').write_text(json.dumps(result,indent=2,sort_keys=True)+'\n')
+          lines=['# NG Exhaustion D1-D5 Predictability — Parallel Agent Results — 2026-08-19','',
+                 'Boundary: fresh continuation from the entry-timing revival drop-in; prior-chat drift excluded.','',
+                 'Active H grid: `1,2,3,4,5,10,15`, then every 5 seconds from `20` through `3600`.','']
+          for k in ['D1','D2','D3','D4','D5']:
+              r=combined[k];w=r.get('earliest_validated')
+              if w is None:
+                  timing='NO_VALIDATED_ACTIONABLE_POINT' if int(k[1:])<=3 else 'LOW_SUPPORT_PRESERVED_CASE_STUDY'
+              else:
+                  timing=f"{w['timing_class']} at H={w['H_seconds']}s"
+              lines += [f"## {k}",f"- Preserved population: {r['population_n']}",f"- Earliest result: {timing}",'']
+          lines += ['No Phase-2 finding was reopened. No protected component was modified. No play was promoted.']
+          (out/'NG_EXHAUSTION_D1_D5_PREDICTABILITY_ALL_AGENT_FINDINGS_20260819.md').write_text('\n'.join(lines)+'\n')
+          PY
+
+      - name: Commit durable parallel-agent outputs
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/generated/ng_exhaustion_entry_timing_revival_20260819/d1_d5_predictability_agents
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record D1-D5 dense-H predictability agent results'
+          for i in 1 2 3; do
+            git pull --rebase origin chatgpt/ng-exhaustion-entry-timing-revival-20260818 || true
+            git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818 && exit 0
+            sleep $((i*3))
+          done
+          exit 1
