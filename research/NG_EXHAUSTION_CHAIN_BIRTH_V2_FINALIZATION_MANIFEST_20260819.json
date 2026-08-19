@@ -1,0 +1,71 @@
+{
+  "name": "NG exhaustion chain-birth V2 finalization manifest",
+  "date": "2026-08-19",
+  "status": "CHAIN_BIRTH_V2_HANDOFF_COMMITTED_RESULTS_PENDING",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "authoritative_target": "PREDICT_NEXT_CHAIN_STAGE_BIRTH_AT_EARLIEST_CAUSAL_POINT",
+  "search_hierarchy": "PRIOR_FIRST_EXHAUSTIVELY; TARGET_DETECTOR_RELATIVE_FALLBACK_ONLY_FOR_PRIOR_FAILURES",
+  "active_H_grid": "1,2,3,4,5,10,15,20,25,30,... every 5 seconds through 3600",
+  "price_structure": {
+    "mode": "PER_OCCURRENCE_CAUSAL_ONE_SECOND_PATH_PREFIX",
+    "each_occurrence_separate": true,
+    "availability_is_predictive_feature": false,
+    "missingness_policy": "FAIL_CLOSED_DATA_INTEGRITY_NOT_MODEL_SIGNAL"
+  },
+  "authoritative_files": [
+    "CHATGPT_KICKOFF_NG_EXHAUSTION_CHAIN_BIRTH_V2_20260819.md",
+    "research/NG_EXHAUSTION_CHAIN_BIRTH_V2_ALL_FINDINGS_20260819.md",
+    "research/NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_PREDICTABILITY_PROTOCOL_20260819.md",
+    "research/NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_PRICE_STRUCTURE_ADDENDUM_20260819.md",
+    "research/NG_EXHAUSTION_D1_D5_PREDICTABILITY_TIMING_GRID_20260819.md",
+    "research/NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_PRIOR_AVAILABILITY_20260819.md",
+    "research/NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_AGENTS_V2_LAUNCH_20260819.json",
+    "research/ng_exhaustion_d1_d5_chain_birth_agents_v2_20260819.py",
+    "research/ng_exhaustion_d1_d5_chain_birth_agents_20260819.py",
+    ".github/workflows/ng_exhaustion_d1_d5_chain_birth_agents_v2_20260819.yml",
+    "research/kalshi/knowledge/ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json",
+    "research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_20260818.md"
+  ],
+  "key_commits": {
+    "v2_runner": "d956568b01d72e409316b34d8bfb67e1105e7c05",
+    "price_structure_addendum": "040cef0f6001a462405629982ae926b2aabaddf2",
+    "v2_workflow": "0750f7ae9f21e328c5d91c59d59bafed37911ccf",
+    "v2_launch_marker": "1afbb329fe4b5cf93778b9466664b8807667f6e4",
+    "original_new_chat_checkpoint": "43dc161cc8de1753e25a8ef81c8e5c91fa08d979",
+    "all_findings_record": "66460334d5a583bcb5efa6b111ba9978ac90a684",
+    "chain_birth_v2_brain_proposal": "d2ff94963505cf82eeefc78f078a798a54837791",
+    "proposal_index_update": "43f45d8830bd8556cb96c66d5ef8558d3b236c3e",
+    "final_kickoff_update": "890e62e74bd12868ca6e79c0979e324ae2c28b88"
+  },
+  "current_evidence": {
+    "prior_availability_is_skill": false,
+    "H1_positive_prior_availability": {
+      "D1": 13372,
+      "D2": 1171,
+      "D3": 88,
+      "D4": 7,
+      "D5": 1
+    },
+    "D2_H1_polarity_only": "NON_FINDING_FAILED_2_OF_3_GATE",
+    "validated_v2_earliest_prior_H": {
+      "D1": "PENDING",
+      "D2": "PENDING",
+      "D3": "PENDING"
+    },
+    "D4_D5_v2_case_results": "PENDING"
+  },
+  "expected_pending_outputs": [
+    "research/generated/ng_exhaustion_entry_timing_revival_20260819/d1_d5_chain_birth_agents_v2/NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_V2_ALL_AGENT_RESULTS_20260819.json",
+    "research/generated/ng_exhaustion_entry_timing_revival_20260819/d1_d5_chain_birth_agents_v2/NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_V2_ALL_AGENT_FINDINGS_20260819.md"
+  ],
+  "proposal_lineage_count": 4,
+  "permanent_frankie_mutated": false,
+  "frankie_1_mutated": false,
+  "detector_mutated": false,
+  "runway_clock_mutated": false,
+  "phase1_mutated": false,
+  "phase2_reopened_or_mutated": false,
+  "spawn_py_mutated": false,
+  "play_frozen": false,
+  "next_step": "NEW CHAT READS AUTHORITATIVE KICKOFF; CHECKS FOR DURABLE V2 RECONCILED OUTPUTS; IF PRESENT AUDITS AND UPDATES FINDINGS/PROPOSAL THEN BUILDS EXACT-SIGNAL-TIME TRADE ECONOMICS; IF ABSENT FINISHES V2 RUN WITHOUT CHANGING CONTRACT"
+}
