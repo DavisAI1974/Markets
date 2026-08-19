@@ -1,0 +1,113 @@
+{
+  "name": "NG exhaustion D1-D5 predictability timing grid",
+  "date": "2026-08-19",
+  "status": "AUTHORITATIVE_ENTRY_TIMING_REVIVAL_CONTRACT",
+  "objective": "For each preserved exact D1-D5 chain/behavior, find the earliest causal moment the already-defined behavior becomes predictably callable: prior to target onset, at target detector confirmation, or at the first validating post-detection checkpoint.",
+  "entry_hierarchy": [
+    "PRIOR_IF_VALIDATED",
+    "AT_TARGET_DETECTOR_CONFIRMATION_IF_PRIOR_FAILS",
+    "FIRST_VALIDATED_POST_DETECTION_CHECKPOINT_IF_EARLIER_POINTS_FAIL",
+    "NO_FORCED_TRADE_IF_NOT_ACTIONABLE"
+  ],
+  "populations": {
+    "D1": 18837,
+    "D2": 1592,
+    "D3": 124,
+    "D4": 8,
+    "D5": 1
+  },
+  "prior_information_horizons_seconds": [5, 10, 20, 30, 60, 120, 300],
+  "prior_rule": {
+    "predecessor_ready": "predecessor.causal_confirmation_idx + h",
+    "rule_ready": "max(predecessor_ready for every predecessor required by the D-depth rule)",
+    "prior_eligible": "rule_ready <= target.t0_idx",
+    "prior_lead_seconds": "target.t0_idx - rule_ready",
+    "availability_is_predictive_skill": false
+  },
+  "target_detector_confirmation_offset_seconds": 0,
+  "post_detection_checkpoints_seconds": {
+    "dense_initial": [1, 2, 3, 4, 5, 10, 15],
+    "every_5_seconds_from": 20,
+    "every_5_seconds_through": 3600,
+    "expanded_sequence_rule": "+20,+25,+30,+35,...,+3600 while structurally alive and data are available"
+  },
+  "search_sequence": "PRIOR[h=5,10,20,30,60,120,300] -> +0 -> +1 -> +2 -> +3 -> +4 -> +5 -> +10 -> +15 -> +20 -> +25 -> ... -> +3600",
+  "per_depth": {
+    "D1": {
+      "required_predecessor_count": 1,
+      "prior": "test origin/predecessor information at every frozen h; PRIOR means before the D1 target descendant t0",
+      "at_detection": "+0 target detector confirmation",
+      "post_detection": "+1,+2,+3,+4,+5,+10,+15 then every 5 seconds from +20 through +3600"
+    },
+    "D2": {
+      "required_predecessor_count": 2,
+      "prior": "all two required predecessor states must be ready before target t0",
+      "at_detection": "+0",
+      "post_detection": "same universal dense grid"
+    },
+    "D3": {
+      "required_predecessor_count": 3,
+      "prior": "all three required predecessor states must be ready before target t0",
+      "at_detection": "+0",
+      "post_detection": "same universal dense grid"
+    },
+    "D4": {
+      "required_predecessor_count": 4,
+      "prior": "all four required predecessor states must be ready before target t0",
+      "at_detection": "+0",
+      "post_detection": "same universal dense grid; low support preserved"
+    },
+    "D5": {
+      "required_predecessor_count": 5,
+      "prior": "all five required predecessor states must be ready before target t0",
+      "at_detection": "+0",
+      "post_detection": "same universal dense grid; n=1 case only"
+    }
+  },
+  "existing_h5_availability_reference_not_skill": {
+    "D2": {"ready_before_target_t0": 1059, "additional_by_target_endpoint_plus5": 531, "additional_by_target_endpoint_plus60": 2, "total": 1592},
+    "D3": {"ready_before_target_t0": 80, "additional_by_target_endpoint_plus5": 43, "additional_by_target_endpoint_plus60": 1, "total": 124},
+    "D4": {"ready_before_target_t0": 6, "additional_by_target_endpoint_plus5": 2, "additional_by_target_endpoint_plus60": 0, "total": 8},
+    "D5": {"ready_before_target_t0": 1, "additional_by_target_endpoint_plus5": 0, "additional_by_target_endpoint_plus60": 0, "total": 1},
+    "combined_ready_before_target_t0": 1146,
+    "combined_ready_by_target_endpoint_plus5": 1722,
+    "combined_ready_by_target_endpoint_plus60": 1725,
+    "D1_prior_availability": "MEASURE_DIRECTLY_IN_CURRENT_PROGRAM"
+  },
+  "required_result_fields": [
+    "D_depth",
+    "support_and_weeks",
+    "earliest_validated_timing_class",
+    "winning_prior_h_if_prior",
+    "actual_prior_lead_seconds_if_prior",
+    "plus0_result",
+    "first_validated_post_detection_checkpoint_if_needed",
+    "all_earlier_failed_points",
+    "remaining_runway_at_winning_time",
+    "chronological_OOT_stability",
+    "held_behavior_where_applicable",
+    "true_false_context_decomposition",
+    "leakage_audit"
+  ],
+  "preserve_all": true,
+  "flag_and_decompose_not_auto_kill": true,
+  "do_not_use": [
+    "realized final duration at an earlier checkpoint",
+    "realized final D depth at an earlier checkpoint",
+    "future descendant identity",
+    "future path shape",
+    "later signed-direction Lane 3/4 detour or subsequent reframing as program authority"
+  ],
+  "protected_mutations": {
+    "detector": false,
+    "canonical_rows": false,
+    "phase1": false,
+    "phase2": false,
+    "runway_clock": false,
+    "permanent_frankie": false,
+    "frankie_1": false,
+    "spawn_py": false,
+    "ssos_play": false
+  },
+  "promotion_authorized": false
+}
