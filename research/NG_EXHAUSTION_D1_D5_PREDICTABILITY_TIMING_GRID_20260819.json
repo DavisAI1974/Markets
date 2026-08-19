@@ -2,120 +2,62 @@
   "name": "NG exhaustion D1-D5 predictability timing grid",
   "date": "2026-08-19",
   "status": "AUTHORITATIVE_ENTRY_TIMING_REVIVAL_CONTRACT",
-  "objective": "For each preserved exact D1-D5 chain/behavior, find the earliest causal moment the already-defined behavior becomes predictably callable: prior to target onset, at target detector confirmation, or at the first validating post-detection H checkpoint.",
-  "entry_hierarchy": [
-    "PRIOR_IF_VALIDATED",
-    "AT_TARGET_DETECTOR_CONFIRMATION_IF_PRIOR_FAILS",
-    "FIRST_VALIDATED_POST_DETECTION_H_IF_EARLIER_POINTS_FAIL",
+  "primary_objective": "For each D1-D5 stage, find the earliest causal PRIOR point at which we can predict that the next chain stage will begin before its frozen target t0.",
+  "secondary_objective": "After birth timing is established, characterize what behavior and trade opportunity follows from the exact validated signal time.",
+  "search_hierarchy": [
+    "EXHAUST_PRIOR_BIRTH_PREDICTION_FIRST",
+    "ONLY_IF_PRIOR_FAILS_USE_PLUS0_DETECTOR_RECOGNITION",
+    "ONLY_IF_PLUS0_FAILS_USE_POST_DETECTION_FALLBACK_LADDER",
     "NO_FORCED_TRADE_IF_NOT_ACTIONABLE"
   ],
-  "populations": {
-    "D1": 18837,
-    "D2": 1592,
-    "D3": 124,
-    "D4": 8,
-    "D5": 1
-  },
   "authoritative_H_grid_seconds": {
     "dense_initial": [1, 2, 3, 4, 5, 10, 15],
     "every_5_seconds_from": 20,
     "every_5_seconds_through": 3600,
     "expanded_sequence_rule": "1,2,3,4,5,10,15,20,25,30,35,...,3600"
   },
-  "old_coarse_horizons_status": {
-    "values": [5, 10, 20, 30, 60, 120, 300],
-    "status": "HISTORICAL_AUDIT_REFERENCE_ONLY_NOT_ACTIVE_TIMING_GRID"
-  },
+  "prior_H_meaning": "H seconds of causal predecessor information after predecessor detector confirmation; actual lead to target t0 is measured separately.",
   "prior_rule": {
     "predecessor_ready": "predecessor.causal_confirmation_idx + H",
-    "rule_ready": "max(predecessor_ready for every predecessor required by the D-depth rule)",
+    "rule_ready": "max(predecessor_ready for every predecessor required by the D-stage rule)",
     "prior_eligible": "rule_ready <= target.t0_idx",
     "prior_lead_seconds": "target.t0_idx - rule_ready",
     "test_order": "ascending active H grid",
+    "earliest_validated_prior_wins": true,
     "availability_is_predictive_skill": false
   },
-  "target_detector_confirmation_offset_seconds": 0,
-  "post_detection_rule": {
-    "clock": "target dynamic_endpoint.causal_confirmation_idx",
-    "H_grid": "same authoritative_H_grid_seconds",
-    "checkpoint_information": "information causal by target detector confirmation + H plus survival-to-H only",
-    "first_validated_H_wins": true
+  "fallback_clock": {
+    "status": "USED_ONLY_IF_PRIOR_BIRTH_PREDICTION_FAILS",
+    "sequence": "+0,+1,+2,+3,+4,+5,+10,+15,+20,+25,+30,... every 5 seconds through +3600",
+    "plus0": "target dynamic_endpoint.causal_confirmation_idx",
+    "post_detection_information": "only information causal by target detector confirmation + H plus survival-to-H",
+    "labels": ["AT_DETECTION_RECOGNITION", "POST_DETECTION_RECOGNITION"]
   },
-  "search_sequence": "eligible PRIOR H values in ascending order -> +0 target detector confirmation -> +1 -> +2 -> +3 -> +4 -> +5 -> +10 -> +15 -> +20 -> +25 -> ... -> +3600",
-  "per_depth": {
-    "D1": {
-      "population": 18837,
-      "required_predecessor_count": 1,
-      "H_grid": "1,2,3,4,5,10,15,20,25,...,3600",
-      "prior": "test origin/predecessor information at every active H; PRIOR means before the D1 target descendant t0",
-      "at_detection": "+0 target detector confirmation",
-      "post_detection": "same active H grid"
-    },
-    "D2": {
-      "population": 1592,
-      "required_predecessor_count": 2,
-      "H_grid": "1,2,3,4,5,10,15,20,25,...,3600",
-      "prior": "all required predecessor information for the D2 rule must be causal at tested H before target t0",
-      "at_detection": "+0",
-      "post_detection": "same active H grid"
-    },
-    "D3": {
-      "population": 124,
-      "required_predecessor_count": 3,
-      "H_grid": "1,2,3,4,5,10,15,20,25,...,3600",
-      "prior": "all required predecessor information for the D3 rule must be causal at tested H before target t0",
-      "at_detection": "+0",
-      "post_detection": "same active H grid"
-    },
-    "D4": {
-      "population": 8,
-      "required_predecessor_count": 4,
-      "H_grid": "1,2,3,4,5,10,15,20,25,...,3600",
-      "prior": "all required predecessor information for the D4 rule must be causal at tested H before target t0",
-      "at_detection": "+0",
-      "post_detection": "same active H grid; low support preserved"
-    },
-    "D5": {
-      "population": 1,
-      "required_predecessor_count": 5,
-      "H_grid": "1,2,3,4,5,10,15,20,25,...,3600",
-      "prior": "all required predecessor information for the D5 rule must be causal at tested H before target t0",
-      "at_detection": "+0",
-      "post_detection": "same active H grid; n=1 case only"
-    }
+  "conditional_birth_populations": {
+    "D1": {"positive_depth_gte": 1, "positive_n": 20562, "stop_depth": 0, "stop_n_frozen": 135860, "known_week_end_censored_controls": 37},
+    "D2": {"positive_depth_gte": 2, "positive_n": 1725, "stop_depth": 1, "stop_n": 18837},
+    "D3": {"positive_depth_gte": 3, "positive_n": 133, "stop_depth": 2, "stop_n": 1592},
+    "D4": {"positive_depth_gte": 4, "positive_n": 9, "stop_depth": 3, "stop_n": 124},
+    "D5": {"positive_depth_gte": 5, "positive_n": 1, "stop_depth": 4, "stop_n": 8}
   },
-  "historical_h5_availability_reference_not_skill": {
-    "D2_ready_before_target_t0": 1059,
-    "D3_ready_before_target_t0": 80,
-    "D4_ready_before_target_t0": 6,
-    "D5_ready_before_target_t0": 1,
-    "note": "Reference only. Does not authorize skipping H=1,2,3,4 and does not prove skill at H=5."
+  "exact_depth_populations_preserved": {"D1": 18837, "D2": 1592, "D3": 124, "D4": 8, "D5": 1},
+  "trade_strategy_rule": "For any validated PRIOR birth signal, measure direction, raw price path, remaining runway, MFE/MAE, cost stress, and candidate exits from the exact prior signal timestamp. Fallback checkpoints are used only for prior failures.",
+  "characteristics_wall": {
+    "family": false,
+    "frozen_post_state": false,
+    "flow": false,
+    "book": false,
+    "time_of_day": false,
+    "session_position": false,
+    "pre_exhaustion_shape": false,
+    "realized_final_depth": false,
+    "realized_final_duration": false,
+    "future_target_identity": false,
+    "future_path_shape": false,
+    "timing_as_model_characteristic": false
   },
-  "required_result_fields": [
-    "D_depth",
-    "support_and_weeks",
-    "tested_H_values_in_order",
-    "earliest_validated_timing_class",
-    "winning_prior_H_if_prior",
-    "actual_prior_lead_seconds_if_prior",
-    "plus0_result",
-    "first_validated_post_detection_H_if_needed",
-    "all_earlier_failed_points",
-    "remaining_runway_at_winning_time",
-    "chronological_OOT_stability",
-    "held_behavior_where_applicable",
-    "true_false_context_decomposition",
-    "leakage_audit"
-  ],
   "preserve_all": true,
   "flag_and_decompose_not_auto_kill": true,
-  "do_not_use": [
-    "realized final duration at an earlier checkpoint",
-    "realized final D depth at an earlier checkpoint",
-    "future descendant identity",
-    "future path shape",
-    "later signed-direction Lane 3/4 detour or subsequent reframing as program authority"
-  ],
   "protected_mutations": {
     "detector": false,
     "canonical_rows": false,
