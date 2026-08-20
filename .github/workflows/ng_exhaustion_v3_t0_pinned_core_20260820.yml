@@ -1,0 +1,315 @@
+name: NG Exhaustion V3 T0 Pinned Core 20260820
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/NG_EXHAUSTION_V3_T0_PINNED_CORE_LAUNCH_20260820.json
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: us-east-2
+  BUCKET: bento-568968024170-us-east-2-an
+  BASE_ID: '9281733364'
+  BASE_SHA: f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1
+  HELD_ID: '9281272840'
+  HELD_SHA: 21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e
+  LINEAGE_ID: '9289929292'
+  LINEAGE_SHA: a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95
+  RECONCILE_ID: '9306082330'
+  RECONCILE_SHA: f17c130df029429bfbc35067d1cc9d16128ca4fb227dd37f3fb4fbb8bbaf8875
+
+jobs:
+  agents:
+    name: ${{ matrix.kind }} D${{ matrix.stage }} ${{ matrix.model }} V3-T0
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        include:
+          - {kind: d0, stage: 0, model: logistic, min_depth: 0}
+          - {kind: d0, stage: 0, model: extra_trees, min_depth: 0}
+          - {kind: d0, stage: 0, model: knn, min_depth: 0}
+          - {kind: chain, stage: 1, model: logistic, min_depth: 0}
+          - {kind: chain, stage: 1, model: extra_trees, min_depth: 0}
+          - {kind: chain, stage: 1, model: knn, min_depth: 0}
+          - {kind: chain, stage: 2, model: logistic, min_depth: 1}
+          - {kind: chain, stage: 2, model: extra_trees, min_depth: 1}
+          - {kind: chain, stage: 2, model: knn, min_depth: 1}
+          - {kind: chain, stage: 3, model: logistic, min_depth: 2}
+          - {kind: chain, stage: 3, model: extra_trees, min_depth: 2}
+          - {kind: chain, stage: 3, model: knn, min_depth: 2}
+          - {kind: sparse, stage: 4, model: case_study, min_depth: 3}
+          - {kind: sparse, stage: 5, model: case_study, min_depth: 4}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Critical: execute the exact launch commit, never a moving branch head.
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: python -m pip install --quiet numpy scikit-learn
+
+      - name: Verify pinned V3-T0 contract
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            research/ng_exhaustion_live_checkpoint_state_20260819.py \
+            research/ng_exhaustion_chain_recovery_features_v2_20260819.py \
+            research/ng_exhaustion_chain_recovery_features_v3_20260819.py \
+            research/ng_exhaustion_chain_recovery_models_v2_20260819.py \
+            research/ng_exhaustion_chain_recovery_models_v3_20260819.py \
+            research/ng_exhaustion_chain_birth_depth_type_recovery_v3_20260819.py \
+            research/ng_exhaustion_d0_full_causal_recovery_v3_20260819.py
+          PYTHONPATH=research python - <<'PY'
+          import ng_exhaustion_chain_recovery_features_v3_20260819 as f
+          import ng_exhaustion_live_checkpoint_state_20260819 as live
+          assert f.IMPLEMENTATION_REVISION == 'V3_CONTINUOUS_LIVE_MARKET_STATE_T0'
+          assert f.BIRTH_T0_PHASE == 'BIRTH_T0'
+          assert tuple(f.TIMING_LADDER) == ('PRIOR','T0','H+1','H+2','H+3','H+4','H+5')
+          assert f.PRIOR_AGES == (0,1,2,3,4,5)
+          assert f.POST_H == (1,2,3,4,5)
+          assert 'WITHOUT_REQUIRING_TARGET_POLARITY' in live.POLICY
+          assert 'P_O_S_X_STRUCTURAL_STATE_ONLY' in f.PRIMARY_CHAIN_TYPE_POLICY
+          print('PINNED V3 T0 CONTRACT PASS')
+          PY
+
+      - name: Verify immutable frozen artifacts
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/in/base /tmp/in/held /tmp/in/lineage /tmp/in/reconcile
+          get_artifact () {
+            id="$1"; sha="$2"; zip="$3"; dest="$4"
+            curl -L --fail --silent --show-error \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" -o "${zip}"
+            echo "${sha}  ${zip}" | sha256sum -c -
+            unzip -q "${zip}" -d "${dest}"
+          }
+          get_artifact "${BASE_ID}" "${BASE_SHA}" /tmp/base.zip /tmp/in/base
+          get_artifact "${HELD_ID}" "${HELD_SHA}" /tmp/held.zip /tmp/in/held
+          get_artifact "${LINEAGE_ID}" "${LINEAGE_SHA}" /tmp/lineage.zip /tmp/in/lineage
+          get_artifact "${RECONCILE_ID}" "${RECONCILE_SHA}" /tmp/reconcile.zip /tmp/in/reconcile
+
+      - name: Resolve required weeks
+        env:
+          MIN_DEPTH: ${{ matrix.min_depth }}
+        run: |
+          python - <<'PY' > /tmp/weeks.txt
+          import gzip,json,os
+          mind=int(os.environ['MIN_DEPTH']); weeks=set()
+          for p in (
+            '/tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz',
+            '/tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz',
+          ):
+              with gzip.open(p,'rt') as f:
+                  for line in f:
+                      r=json.loads(line)
+                      if int(r.get('all_model_consecutive_positive_depth',0)) >= mind:
+                          weeks.add(r['week_sunday'])
+          assert weeks
+          for w in sorted(weeks): print(w)
+          PY
+
+      - name: Materialize authoritative NG raw tape
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ngraw
+          python - <<'PY' > /tmp/days.txt
+          from datetime import datetime,timedelta
+          days=set()
+          for w in map(str.strip,open('/tmp/weeks.txt')):
+              if not w: continue
+              d=datetime.strptime(w,'%Y%m%d')
+              for i in range(6): days.add((d+timedelta(days=i)).strftime('%Y%m%d'))
+          for x in sorted(days): print(x)
+          PY
+          python - <<'PY' > /tmp/closures.txt
+          import json
+          d=json.load(open('research/NG_EXHAUSTION_20260403_CME_CLOSURE_WITNESS_20260817.json'))
+          assert d['status']=='FROZEN_EXCHANGE_CLOSURE_WITNESS'
+          for x in d['canonicalization_rule']['explicit_closure_dates']: print(x)
+          PY
+          while read -r d; do
+            mapfile -t keys < <(aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" \
+              --query 'Contents[].Key' --output text | tr '\t' '\n' | \
+              grep -E "NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" | sort -u || true)
+            if grep -qx "${d}" /tmp/closures.txt; then
+              test "${#keys[@]}" -eq 0 || { echo "::error::frozen closure ${d} has raw objects"; exit 1; }
+              continue
+            fi
+            test "${#keys[@]}" -eq 1 || { echo "::error::expected one NG raw object ${d}, got ${#keys[@]}"; exit 1; }
+            aws s3 cp "s3://${BUCKET}/${keys[0]}" "/tmp/ngraw/NG_${d}.jsonl.gz" --only-show-errors
+            test -s "/tmp/ngraw/NG_${d}.jsonl.gz"
+          done < /tmp/days.txt
+
+      - name: Run pinned V3-T0 agent
+        env:
+          KIND: ${{ matrix.kind }}
+          STAGE: ${{ matrix.stage }}
+          MODEL: ${{ matrix.model }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/out
+          COMMON="--base /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz --held /tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz --base-lineage /tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz --held-lineage /tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz --raw-dir /tmp/ngraw"
+          if [ "${KIND}" = d0 ]; then
+            PYTHONPATH=research:research/kalshi python research/ng_exhaustion_d0_full_causal_recovery_v3_20260819.py \
+              --model "${MODEL}" ${COMMON} --out "/tmp/out/D0_${MODEL}_V3_T0.json"
+          else
+            PYTHONPATH=research:research/kalshi python research/ng_exhaustion_chain_birth_depth_type_recovery_v3_20260819.py \
+              --stage "${STAGE}" --model "${MODEL}" ${COMMON} --out "/tmp/out/D${STAGE}_${MODEL}_V3_T0.json"
+          fi
+
+      - name: Fail closed on agent invariants
+        env:
+          KIND: ${{ matrix.kind }}
+          STAGE: ${{ matrix.stage }}
+        run: |
+          python - <<'PY'
+          import glob,json,os
+          ps=glob.glob('/tmp/out/*.json'); assert len(ps)==1,ps
+          d=json.load(open(ps[0]))
+          assert d['frozen_exact_depth_counts']=={'0':135860,'1':18837,'2':1592,'3':124,'4':8,'5':1}
+          assert d['implementation_revision']=='V3_CONTINUOUS_LIVE_MARKET_STATE_T0'
+          assert d['promotion_performed'] is False
+          assert not any(d['protected_mutations'].values())
+          if os.environ['KIND']=='d0':
+              assert d['cross_model_consensus_gate_used'] is False
+              assert d['exact_d0_preserved_n']==135860
+              assert d['week_end_censored_d0_n']==37
+          elif int(os.environ['STAGE']) <= 3:
+              assert d['cross_model_consensus_gate_used'] is False
+              assert d['timing_ladder']==['PRIOR','T0','H+1','H+2','H+3','H+4','H+5']
+              assert set(d['results'])=={'CONTINUATION','EVENTUAL_DEPTH','CHAIN_TYPE_FAMILY'}
+          else:
+              assert d['low_support_case_study_only'] is True
+              assert d['timing_ladder']==['PRIOR','T0','H+1','H+2','H+3','H+4','H+5']
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-v3-t0-pinned-${{ matrix.kind }}-d${{ matrix.stage }}-${{ matrix.model }}
+          path: /tmp/out/*.json
+          if-no-files-found: error
+          retention-days: 14
+
+  reconcile:
+    name: Reconcile pinned V3-T0 core
+    needs: agents
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ng-exhaustion-v3-t0-pinned-*
+          path: /tmp/agents
+          merge-multiple: true
+      - name: Reconcile without voting
+        run: |
+          set -euo pipefail
+          OUT=research/generated/ng_exhaustion_v3_t0_pinned_core_20260820
+          mkdir -p "$OUT"
+          python - <<'PY'
+          import glob,json,shutil
+          from pathlib import Path
+          files=sorted(glob.glob('/tmp/agents/*.json'))
+          docs=[json.load(open(p)) for p in files]
+          if len(docs)!=14: raise SystemExit(f'expected 14 artifacts, got {len(docs)}')
+          for p in files: shutil.copy2(p,Path('research/generated/ng_exhaustion_v3_t0_pinned_core_20260820')/Path(p).name)
+          models={'logistic','extra_trees','knn'}
+          d0={d['model']:d for d in docs if d['status']=='NG_D0_FULL_CAUSAL_RECOVERY_V3_MODEL_AGENT_COMPLETE'}
+          chain={(int(d['stage']),d['model']):d for d in docs if d['status']=='NG_CHAIN_BIRTH_DEPTH_TYPE_MODEL_AGENT_V3_COMPLETE'}
+          sparse={int(d['stage']):d for d in docs if d['status']=='NG_CHAIN_BIRTH_DEPTH_TYPE_SPARSE_CASE_STUDY_V3_COMPLETE'}
+          assert set(d0)==models
+          assert set(chain)=={(s,m) for s in (1,2,3) for m in models}
+          assert set(sparse)=={4,5}
+          findings=[]; unresolved=[]; price=[]
+          for model,d in sorted(d0.items()):
+              for target,rec in d['results'].items():
+                  row={'stage':0,'model':model,'target':target,'earliest':rec['earliest']}
+                  findings.append(row)
+                  if rec['earliest'] is None: unresolved.append(row)
+                  for p in rec['tested']:
+                      price.append({'stage':0,'model':model,'target':target,'phase':p['phase'],'seconds':p['root_age_seconds_after_confirmation'],'incremental_price_value':p['incremental_price_value']})
+          for (stage,model),d in sorted(chain.items()):
+              for target,rec in d['results'].items():
+                  row={'stage':stage,'model':model,'target':target,'earliest':rec['earliest']}
+                  findings.append(row)
+                  if rec['earliest'] is None: unresolved.append(row)
+                  for p in rec['tested']:
+                      if p['phase']=='PRIOR': sec=p['prior_age_seconds']
+                      elif p['phase']=='BIRTH_T0': sec=0
+                      elif p['phase']=='POST_BIRTH': sec=p['H_seconds_after_t0']
+                      else: raise RuntimeError(p['phase'])
+                      price.append({'stage':stage,'model':model,'target':target,'phase':p['phase'],'seconds':sec,'incremental_price_value':p['incremental_price_value']})
+          result={
+            'status':'NG_EXHAUSTION_V3_T0_PINNED_CORE_RECONCILED',
+            'date':'2026-08-20',
+            'launch_commit':'${{ github.sha }}',
+            'implementation_revision':'V3_CONTINUOUS_LIVE_MARKET_STATE_T0',
+            'timing_ladder':['PRIOR','T0','H+1','H+2','H+3','H+4','H+5'],
+            'target_polarity_is_primary_question':False,
+            'same_flip_role':'SECONDARY_ANNOTATION_CONTEXT_ONLY',
+            'model_voting_used':False,
+            'independent_model_findings':findings,
+            'unresolved_first_band':unresolved,
+            'price_increment_evidence':price,
+            'D4_D5_case_studies':{'D4':sparse[4],'D5':sparse[5]},
+            'V4_relation':'V3_FIXED_CHECKPOINT_BASELINE_ONLY; V4_CONTINUOUS_PER_INSTANCE_TIMING_IS_SEPARATE_AND_NOT_LAUNCHED_HERE',
+            'policy':'FLAG_AND_DECOMPOSE_NOT_AUTO_KILL',
+            'promotion_performed':False,
+            'protected_mutations':{'detector':False,'canonical_rows':False,'phase1':False,'phase2':False,'runway_clock':False,'permanent_frankie':False,'frankie_1':False,'spawn_py':False,'ssos_play':False},
+          }
+          Path(f'{OUT}/NG_EXHAUSTION_V3_T0_PINNED_CORE_ALL_RESULTS_20260820.json').write_text(json.dumps(result,indent=2,sort_keys=True)+'\n')
+          lines=['# NG Exhaustion V3 T0 Pinned Core — 2026-08-20','',
+                 'Status: **pinned fixed-checkpoint V3 baseline; independent models; no voting.**','',
+                 f"Launch commit: `{result['launch_commit']}`",'',
+                 'Timing ladder: PRIOR -> T0 -> H+1..H+5. V4 continuous timing is separate and was not launched by this workflow.','',
+                 '## Independent findings','']
+          for r in findings:
+              lines.append(f"- D{r['stage']} / {r['model']} / {r['target']}: {json.dumps(r['earliest'],sort_keys=True) if r['earliest'] is not None else 'unresolved'}.")
+          lines += ['','## Preservation','- D4/D5 remain case studies.','- No protected artifact was mutated or promoted.','- `FLAG_AND_DECOMPOSE_NOT_AUTO_KILL` remains in force.','']
+          Path(f'{OUT}/NG_EXHAUSTION_V3_T0_PINNED_CORE_ALL_FINDINGS_20260820.md').write_text('\n'.join(lines))
+          PY
+      - name: Fail closed on reconciliation
+        run: |
+          python - <<'PY'
+          import json
+          p='research/generated/ng_exhaustion_v3_t0_pinned_core_20260820/NG_EXHAUSTION_V3_T0_PINNED_CORE_ALL_RESULTS_20260820.json'
+          d=json.load(open(p))
+          assert d['implementation_revision']=='V3_CONTINUOUS_LIVE_MARKET_STATE_T0'
+          assert d['timing_ladder']==['PRIOR','T0','H+1','H+2','H+3','H+4','H+5']
+          assert d['model_voting_used'] is False
+          assert d['promotion_performed'] is False
+          assert not any(d['protected_mutations'].values())
+          PY
+      - name: Commit durable pinned V3 outputs
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/generated/ng_exhaustion_v3_t0_pinned_core_20260820
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "research: reconcile pinned V3 T0 core"
+          git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
