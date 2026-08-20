@@ -1,0 +1,11 @@
+{
+  "checked_at_utc": "2026-08-20T20:35:08.111219+00:00",
+  "dataset": "GLBX.MDP3",
+  "github_secret_present": false,
+  "probe_status": "GITHUB_SECRET_UNAVAILABLE",
+  "probes": [],
+  "schema": "NG_DATABENTO_ENTITLEMENT_RECEIPT_V2",
+  "secret_value_exposed": false,
+  "symbol": "NG.v.0",
+  "v4_activity": false
+}
