@@ -1,0 +1,117 @@
+name: NG Exhaustion V3 POX Status Probe V2 20260820
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-v3-t0-recovery-20260820
+    paths:
+      - research/NG_EXHAUSTION_V3_POX_STATUS_PROBE_V2_LAUNCH_20260820.json
+
+permissions:
+  actions: read
+  contents: write
+
+env:
+  SOURCE_BRANCH: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+  V3_WORKFLOW: ng_exhaustion_v3_t0_pinned_core_20260820.yml
+  V3_SOURCE_SHA: b0e5d375b936c5ba82a3ffdc9c9f1db2b7a46732
+  POX_WORKFLOW: ng_exhaustion_pox_focused_predict_trade_20260819.yml
+  OUT: research/generated/ng_exhaustion_v3_pox_status_probe_v2_20260820.json
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Query exact V3 run and latest POX dispatch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$(dirname "${OUT}")"
+          gh api --method GET -f branch="${SOURCE_BRANCH}" -f event=push -f per_page=50 \
+            "/repos/${GITHUB_REPOSITORY}/actions/workflows/${V3_WORKFLOW}/runs" > /tmp/v3-runs.json
+          gh api --method GET -f branch="${SOURCE_BRANCH}" -f event=workflow_dispatch -f per_page=50 \
+            "/repos/${GITHUB_REPOSITORY}/actions/workflows/${POX_WORKFLOW}/runs" > /tmp/pox-runs.json
+
+          V3_ID=$(jq -r --arg sha "${V3_SOURCE_SHA}" '[.workflow_runs[] | select(.head_sha == $sha)] | sort_by(.run_number) | last | .id // empty' /tmp/v3-runs.json)
+          POX_ID=$(jq -r '.workflow_runs[0].id // empty' /tmp/pox-runs.json)
+
+          if [ -n "${V3_ID}" ]; then
+            gh api --method GET -f per_page=100 "/repos/${GITHUB_REPOSITORY}/actions/runs/${V3_ID}/jobs" > /tmp/v3-jobs.json
+            gh api --method GET -f per_page=100 "/repos/${GITHUB_REPOSITORY}/actions/runs/${V3_ID}/artifacts" > /tmp/v3-artifacts.json
+          else
+            printf '{"jobs":[]}\n' > /tmp/v3-jobs.json
+            printf '{"artifacts":[]}\n' > /tmp/v3-artifacts.json
+          fi
+          if [ -n "${POX_ID}" ]; then
+            gh api --method GET -f per_page=100 "/repos/${GITHUB_REPOSITORY}/actions/runs/${POX_ID}/jobs" > /tmp/pox-jobs.json
+            gh api --method GET -f per_page=100 "/repos/${GITHUB_REPOSITORY}/actions/runs/${POX_ID}/artifacts" > /tmp/pox-artifacts.json
+          else
+            printf '{"jobs":[]}\n' > /tmp/pox-jobs.json
+            printf '{"artifacts":[]}\n' > /tmp/pox-artifacts.json
+          fi
+
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+
+          def rv(r):
+              if r is None:
+                  return None
+              return {k:r.get(k) for k in ('id','run_number','event','head_sha','head_branch','status','conclusion','created_at','run_started_at','updated_at','html_url')}
+          def jv(j):
+              return {k:j.get(k) for k in ('id','name','status','conclusion','started_at','completed_at')}
+          def av(a):
+              return {k:a.get(k) for k in ('id','name','size_in_bytes','expired','created_at')}
+
+          v3_runs=json.load(open('/tmp/v3-runs.json')).get('workflow_runs',[])
+          pox_runs=json.load(open('/tmp/pox-runs.json')).get('workflow_runs',[])
+          v3=[r for r in v3_runs if r.get('head_sha')==os.environ['V3_SOURCE_SHA']]
+          selected_v3=sorted(v3,key=lambda r:r.get('run_number',0))[-1] if v3 else None
+          selected_pox=pox_runs[0] if pox_runs else None
+          v3_jobs=json.load(open('/tmp/v3-jobs.json')).get('jobs',[])
+          pox_jobs=json.load(open('/tmp/pox-jobs.json')).get('jobs',[])
+          v3_artifacts=json.load(open('/tmp/v3-artifacts.json')).get('artifacts',[])
+          pox_artifacts=json.load(open('/tmp/pox-artifacts.json')).get('artifacts',[])
+          payload={
+              'status':'NG_EXHAUSTION_V3_POX_STATUS_PROBE_V2_COMPLETE',
+              'source_branch':os.environ['SOURCE_BRANCH'],
+              'v3':{
+                  'source_sha':os.environ['V3_SOURCE_SHA'],
+                  'run':rv(selected_v3),
+                  'jobs':[jv(j) for j in v3_jobs],
+                  'job_status_counts':{s:sum(j.get('status')==s for j in v3_jobs) for s in ('queued','in_progress','completed')},
+                  'job_conclusion_counts':{s:sum(j.get('conclusion')==s for j in v3_jobs) for s in ('success','failure','cancelled','skipped')},
+                  'artifacts':[av(a) for a in v3_artifacts],
+              },
+              'pox':{
+                  'run':rv(selected_pox),
+                  'recent_dispatch_runs':[rv(r) for r in pox_runs[:10]],
+                  'jobs':[jv(j) for j in pox_jobs],
+                  'artifacts':[av(a) for a in pox_artifacts],
+              },
+              'source_runs_mutated':False,
+          }
+          Path(os.environ['OUT']).write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
+          PY
+
+      - name: Commit probe result
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "${OUT}"
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "research: record V3 POX status probe v2"
+          for attempt in 1 2 3; do
+            git fetch origin chatgpt/ng-exhaustion-v3-t0-recovery-20260820
+            git rebase origin/chatgpt/ng-exhaustion-v3-t0-recovery-20260820
+            if git push origin HEAD:chatgpt/ng-exhaustion-v3-t0-recovery-20260820; then exit 0; fi
+          done
+          exit 1
