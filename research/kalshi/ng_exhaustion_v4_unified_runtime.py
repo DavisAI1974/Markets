@@ -15,6 +15,7 @@ from dataclasses import asdict, dataclass
 import hashlib
 import json
 import re
+from types import MappingProxyType
 from typing import Any, Mapping, Protocol
 
 from research.kalshi.ng_exhaustion_v4_causal_clock import CausalDiscoveryReceipt
@@ -168,7 +169,21 @@ class V4LaneRegistry:
         lane.validate()
         if lane.spec.lane_id in self._lanes:
             raise UnifiedV4Error(f"duplicate lane_id: {lane.spec.lane_id}")
-        self._lanes[lane.spec.lane_id] = lane
+        # Detach all caller-owned mutable metadata before it can enter the registry.
+        # MappingProxyType prevents mutation through the value returned by get(), while
+        # _json_copy prevents later caller mutation of the original nested structure.
+        frozen_rules = MappingProxyType(_json_copy(lane.restrictions))
+        stored = RegisteredLane(
+            spec=lane.spec,
+            adapter_identity_sha256=lane.adapter_identity_sha256,
+            adapter_population_id=str(lane.adapter_population_id),
+            label_identity=str(lane.label_identity),
+            coordinate_schema_identity=str(lane.coordinate_schema_identity),
+            restrictions=frozen_rules,
+            permanently_non_promotable=bool(lane.permanently_non_promotable),
+        )
+        stored.validate()
+        self._lanes[stored.spec.lane_id] = stored
 
     def get(self, lane_id: str) -> RegisteredLane:
         try:
