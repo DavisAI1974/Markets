@@ -11,8 +11,8 @@ Current repo state is truth. Continue from the furthest completed work. Do not r
 Do **not** spend time proving, re-deriving, reconciling, questioning, or re-litigating any of these numbers:
 
 - focused POX population = **3,429**;
-- later FLIP = **1,444** (42.1%);
-- later SAME = **1,985** (57.9%);
+- later FLIP = **1,546** (45.1%);
+- later SAME = **1,883** (54.9%);
 - initial sign persistence through +60 = approximately **94.4%**.
 
 Treat these as fixed working truth under:
@@ -21,7 +21,7 @@ Treat these as fixed working truth under:
 
 Do not re-test literal canonical `P/O/X` adjacency. Do not compare against or revive any smaller historical POX subset. Do not spend another chat on 1,718 + 1,711 provenance. That work is documented only so it never has to be repeated.
 
-If an input ledger does not load exactly 3,429 unique cases split 1,444 FLIP / 1,985 SAME, treat that as a wrong/missing-ledger problem and fail closed. **Do not invent or derive a replacement population.**
+If an input ledger does not load exactly 3,429 unique cases split 1,546 FLIP / 1,883 SAME, treat that as a wrong/missing-ledger problem and fail closed. **Do not invent or derive a replacement population.**
 
 ## Mandatory read order
 
@@ -80,8 +80,8 @@ This is a **file-location / materialization task**, not a population-definition 
 Run the fixed-ledger gate. Once it passes exactly:
 
 - total 3,429;
-- FLIP 1,444;
-- SAME 1,985;
+- FLIP 1,546;
+- SAME 1,883;
 
 freeze the ledger reference/hash and move on immediately.
 
@@ -127,7 +127,9 @@ If Target A is formulated as a binary POX-membership predictor, use an honest se
 
 ### 4. Stage 2 — predict later FLIP vs SAME
 
-Within all 3,429 preserved cases, predict the authoritative future branch label from causal prefixes only.
+Within all 3,429 preserved cases, predict the authoritative future branch label from causal prefixes only. Pre-birth prediction is primary: test `-60,-45,-30,-20,-15,-10,-5,-4,-3,-2,-1` first. Every emitted pre-birth call, including an error, is removed before the nonnegative-H fallback. Run `0,1,2,3,4,5,10,15,20,30,45,60` only on the no-call residual and record each residual case's first predictive H.
+
+Make the causal prefix as rich as normally available information permits: dense detector, raw price/quote/trade, MBP-10 depth, volume/flow, and available MBO state through the completed checkpoint second. Withhold everything from the next second onward and every field whose identity is only known in the future. The first executable fill must occur after the information bin closes.
 
 Measure at each checkpoint:
 

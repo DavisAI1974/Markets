@@ -11,8 +11,8 @@ The focused POX line remains active. This session did real work, but it did **no
 The next chat must **not** spend time reconfirming the population numbers or re-litigating their provenance. Treat these as fixed working truth:
 
 - total focused POX population: **3,429**;
-- later FLIP: **1,444** (42.1%);
-- later SAME: **1,985** (57.9%);
+- later FLIP: **1,546** (45.1%);
+- later SAME: **1,883** (54.9%);
 - initial sign persistence through +60: approximately **94.4%**;
 - population policy: `FIXED_3429_DO_NOT_REOPEN`.
 
@@ -67,7 +67,7 @@ The focused protocol now states:
 - `FIXED_3429_DO_NOT_REOPEN`;
 - do not re-derive 3,429 from canonical adjacency or another population construction;
 - load authoritative case identity/branch labels from the fixed ledger;
-- fail closed if a supplied ledger does not contain exactly 3,429 unique rows split 1,444 FLIP / 1,985 SAME;
+- fail closed if a supplied ledger does not contain exactly 3,429 unique rows split 1,546 FLIP / 1,883 SAME;
 - a mismatch is an input/ledger problem, not permission to invent a replacement population;
 - preserve every valid losing/delayed/choppy/false/non-executable row.
 
@@ -117,6 +117,12 @@ The following are **not yet finished**:
 - delayed SAME watch/re-entry economics are not yet produced;
 - no final all-findings result artifact exists yet.
 
+## Fixed-ledger latest authority — 2026-08-19
+
+The initial next-session file-location gate found frozen artifact `9279235031` (`ng-exhaustion-week-chain-state-roster-20260817`) carrying the marked 3,429-row roster and a stored immediate `next_event_target.same_polarity` split of 1,546 FLIP / 1,883 SAME. The earlier written 1,444 / 1,985 split prevented the gate from passing.
+
+The user explicitly resolved that conflict on 2026-08-19: **use the newest numbers**. The authoritative fixed contract is therefore 3,429 / 1,546 / 1,883 from artifact `9279235031`. This is a direct authority update, not a population reconstruction, and must not be reopened again.
+
 ## Proposal updates committed
 
 Updated/added proposal documents:
@@ -148,12 +154,28 @@ Earlier setup commits from this chat remain part of history but their incorrect 
 - `a531e5571aa23eb67464f135f27f6fe644326474` — original workflow draft; **superseded**;
 - `091b10731fa15215f20b270348a51290970a3797` — original launch marker; **superseded by fixed-population update**.
 
+## Continuation — newest authority, causal richness, and residual-only H
+
+The newest explicit user authority fixes the immutable population at 3,429 cases split 1,546 FLIP / 1,883 SAME from frozen chain-state roster artifact `9279235031`. The deterministic ledger SHA-256 is `328d66e61b14d4a04905ea95776cb7cca153a52726bf6cd41d18bc6aa2a645dc`. Its causal join is exact: 1,718 reveal + 1,711 blind, with zero missing, overlap, membership changes, or label changes.
+
+The research design is now **prebirth first, residual H only** for both POX-membership prediction and conditional FLIP/SAME prediction:
+
+- test `-60,-45,-30,-20,-15,-10,-5,-4,-3,-2,-1` first;
+- remove every emitted prebirth call before H, including errors, so outcomes never grant a retry;
+- run `0,1,2,3,4,5,10,15,20,30,45,60` only on the genuine no-call residual;
+- record each residual case's first predictive H and preserve unresolved cases;
+- the full OOT population reaches H only if the prebirth pass emits zero calls.
+
+The causal input is maximally rich rather than price-blind: full dense detector/book/flow/MBO prefixes when available, causal milestone state, raw price/quote/trade/volume, every MBP-10 level, within-second market summaries, and action counts through the completed checkpoint second. Before birth, future origin polarity, event family, t0 price, confirmation delay, structural onset, and polarity-oriented features are withheld. Nothing from the next second onward is visible, and the first executable fill begins at the next second boundary.
+
+The earlier local price-blind Stage-2 diagnostic is **superseded and must not be learned or promoted**. The updated workflow must obtain the authoritative raw MBP-10 shards and rerun the full causal cascade before results are frozen.
+
 ## Exact next research sequence
 
 Do this next, in order, without reopening population archaeology:
 
 1. Locate/materialize the **authoritative fixed 3,429 case ledger** or the already-existing artifact that carries those exact case identities and authoritative FLIP/SAME labels. This is a file-location task, not a population-rederivation task.
-2. Run the fixed-ledger gate. If it passes 3,429 / 1,444 / 1,985, freeze the ledger reference/hash and move on immediately.
+2. Run the fixed-ledger gate. If it passes 3,429 / 1,546 / 1,883, freeze the ledger reference/hash and move on immediately.
 3. Join fixed identities to causal detector/canonical timestamps and authoritative raw NG tape. Do not let the join alter membership.
 4. Produce Stage-1 initial-continuation economics at the earliest causal checkpoints, preserving all rows and exact signal timestamps.
 5. Build Stage-2 FLIP/SAME predictor from causal prefixes with chronological OOT validation.
@@ -166,4 +188,4 @@ Do this next, in order, without reopening population archaeology:
 
 **SKIP ALL POPULATION RECONFIRMATION.**
 
-Do not spend time proving 3,429, 1,444, 1,985, 94.4%, 1,718+1,711, or re-testing literal canonical P/O/X adjacency. Those facts/failed paths are documented here precisely so the next chat can start with the actual predictability and tradeability work.
+Do not spend time proving 3,429, 1,546, 1,883, 94.4%, 1,718+1,711, or re-testing literal canonical P/O/X adjacency. Those facts/failed paths are documented here precisely so the next chat can start with the actual predictability and tradeability work.

@@ -5,8 +5,9 @@
   "population": {
     "policy": "FIXED_3429_DO_NOT_REOPEN",
     "total": 3429,
-    "flip": 1444,
-    "same": 1985,
+    "flip": 1546,
+    "same": 1883,
+    "label_split_authority": "LATEST_USER_AUTHORITY_20260819_FROM_FROZEN_ROSTER_ARTIFACT_9279235031",
     "initial_sign_persistence_through_plus60_approx": 0.944,
     "preserve_all": true
   },

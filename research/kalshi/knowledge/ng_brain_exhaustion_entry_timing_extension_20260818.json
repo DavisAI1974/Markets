@@ -106,7 +106,8 @@
     "proposal": "research/kalshi/knowledge/ng_brain_exhaustion_pox_focused_proposal_20260819.json",
     "strategy_proposal": "research/strategy_evolution/NG_EXHAUSTION_POX_TRADE_STRATEGY_PROPOSAL_20260819.json",
     "population_policy": "FIXED_3429_DO_NOT_REOPEN",
-    "population": {"total":3429,"flip":1444,"same":1985},
+    "population": {"total":3429,"flip":1546,"same":1883},
+    "label_split_authority": "LATEST_USER_AUTHORITY_20260819_FROM_FROZEN_ROSTER_ARTIFACT_9279235031",
     "initial_sign_persistence_through_plus60_approx": 0.944,
     "state_architecture": "INITIAL_CONTINUATION_FIRST_THEN_LATER_FLIP_VS_SAME_BRANCH",
     "D0_D5_incremental_crosswalk": "DEFERRED_UNTIL_POX_AND_D0_D5_ARE_INDEPENDENTLY_FROZEN"

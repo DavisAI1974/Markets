@@ -3,14 +3,15 @@ from __future__ import annotations
 
 import argparse
 import gzip
+import hashlib
 import json
 from collections import Counter
 from pathlib import Path
 from typing import Any, Iterable
 
 EXPECTED_TOTAL = 3429
-EXPECTED_FLIP = 1444
-EXPECTED_SAME = 1985
+EXPECTED_FLIP = 1546
+EXPECTED_SAME = 1883
 POLICY = "FIXED_3429_DO_NOT_REOPEN"
 
 CASE_ID_KEYS = ("case_id", "id", "pox_case_id", "event_id")
@@ -23,12 +24,21 @@ def _open_text(path: Path):
     return path.open("rt", encoding="utf-8")
 
 
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def _iter_rows(path: Path) -> Iterable[dict[str, Any]]:
     """Load a ledger without deriving population membership from canonical data."""
     with _open_text(path) as f:
+        is_jsonl = path.name.lower().endswith((".jsonl", ".jsonl.gz", ".ndjson", ".ndjson.gz"))
         first = f.read(1)
         f.seek(0)
-        if first in ("[", "{"):
+        if not is_jsonl and first in ("[", "{"):
             data = json.load(f)
             if isinstance(data, list):
                 rows = data
@@ -147,6 +157,10 @@ def main() -> None:
 
     result = {
         "status": "POX_FIXED_LEDGER_VALIDATED",
+        "ledger_reference": {
+            "path": str(ledger),
+            "sha256": _sha256(ledger),
+        },
         "population": population,
         "initial_sign_persistence_through_plus60_approx": 0.944,
         "next_stages": {

@@ -1,0 +1,22 @@
+{
+  "artifact_id": 9279235031,
+  "artifact_name": "ng-exhaustion-week-chain-state-roster-20260817",
+  "authority": "LATEST_EXPLICIT_USER_AUTHORITY_20260819_USE_NEWEST_NUMBERS",
+  "branch_label_source": "stored next_event_target.same_polarity; SAME when true, FLIP when false",
+  "canonical_adjacency_enumeration_performed": false,
+  "expected_population": {
+    "flip": 1546,
+    "same": 1883,
+    "total": 3429
+  },
+  "member_name": "NG_EXHAUSTION_WEEK_CHAIN_STATE_ROSTER_20260817_EVENTS.jsonl.gz",
+  "member_sha256": "ded9aa94b80cb5966859d2c889a1942046789d0c6f626b72ba0e7c3bdcdd786a",
+  "policy": "FIXED_3429_DO_NOT_REOPEN",
+  "population_rediscovery_performed": false,
+  "status": "AUTHORITATIVE_FIXED_LEDGER_SOURCE_APPROVED",
+  "supersedes_label_split": {
+    "flip": 1444,
+    "same": 1985
+  },
+  "zip_sha256": "56a3d7a0c22fd39727ae760fb3b1c72374a7a39017ec328f4992e6da98a62a86"
+}

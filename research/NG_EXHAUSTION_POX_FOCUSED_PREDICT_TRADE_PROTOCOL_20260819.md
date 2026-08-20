@@ -7,13 +7,13 @@ Status: **ACTIVE ISOLATED RESEARCH CONTRACT; FIXED 3,429 POPULATION; NO PROMOTIO
 For this focused line, the working population and branch partition are settled inputs, not research questions:
 
 - total cases: **3,429**;
-- later FLIP branch: **1,444** (42.1%);
-- later SAME branch: **1,985** (57.9%);
+- later FLIP branch: **1,546** (45.1%);
+- later SAME branch: **1,883** (54.9%);
 - initial sign persistence through +60: approximately **94.4%**.
 
 `population_reconciliation = FIXED_3429_DO_NOT_REOPEN`
 
-Do **not** re-derive the 3,429 from canonical adjacency, seed-state triples, lineage enumeration, reveal/held provenance, or any other alternative population construction. Do **not** spend research time reconfirming these counts. The only permitted population check is an operational load-time assertion that the authoritative case ledger contains exactly 3,429 unique rows partitioned 1,444 FLIP / 1,985 SAME. A mismatch is a ledger/input error and must fail closed; it is not permission to invent a different population.
+Do **not** re-derive the 3,429 from canonical adjacency, seed-state triples, lineage enumeration, reveal/held provenance, or any other alternative population construction. Do **not** spend research time reconfirming these counts. Under the explicit latest user authority on 2026-08-19, the operational load-time assertion is exactly 3,429 unique rows partitioned 1,546 FLIP / 1,883 SAME from frozen roster artifact `9279235031`. A mismatch is a ledger/input error and must fail closed; it is not permission to invent a different population.
 
 No case may be deleted because it is losing, short, delayed, choppy, false, low-confidence, non-executable at an early checkpoint, or inconsistent with an aggregate rule. Checkpoint availability is an annotation on a preserved row, never a population filter.
 
@@ -74,11 +74,15 @@ The POX-vs-D0-D5 incremental crosswalk remains deferred until POX is independent
 
 Determine the earliest causal timestamp at which POX membership/identity can be called with stable out-of-time value. If a candidate-universe/control ledger is required for a binary POX-membership model, it must be supplied separately and must never redefine the fixed 3,429 positive population.
 
-Test causal checkpoints from the earliest detector-available point through dense prefixes:
+Pre-birth forecasting is the primary objective. Test causal checkpoints before birth first, then use nonnegative H only as a fallback:
 
-`H = 0,1,2,3,4,5,10,15,20,30,45,60 seconds`
+`H = -60,-45,-30,-20,-15,-10,-5,-4,-3,-2,-1,0,1,2,3,4,5,10,15,20,30,45,60 seconds`
 
 Use only information available by the checkpoint. The earliest validated checkpoint wins; do not delay a valid earlier signal merely because a later checkpoint scores better.
+
+Use a strict first-call cascade. Every case that receives a pre-birth call is removed from all nonnegative-H runs, whether that call is correct or wrong. Only the pre-birth no-call residual may enter H, and each residual case records its first predictive H. Never allow the realized outcome to decide whether a case receives a retry.
+
+The causal information set should be as rich as the normally observable market state permits: full dense detector, price, quote, MBP-10 depth, trade, volume, flow, and available MBO prefixes through the completed checkpoint second. Future event polarity, future family/confirmation fields, future price, branch identity, and all observations from the following second onward are forbidden. Execution starts no earlier than the next second boundary.
 
 If the candidate/control universe is unavailable, mark Target A `BLOCKED_MISSING_CONTROL_UNIVERSE` and continue Targets B/C where their required fixed-ledger inputs exist. Do not fabricate negatives.
 
@@ -103,7 +107,7 @@ A contamination-safe prior entry-timing result already showed that generic D1 +0
 
 ## Target C — predict later FLIP vs SAME
 
-Within all 3,429 preserved cases, predict the authoritative future `branch_label` using only causal information available by each checkpoint.
+Within all 3,429 preserved cases, predict the authoritative future `branch_label` using only causal information available by each checkpoint. Run the pre-birth pass first. Nonnegative H is evaluated only on the no-call residual; it is not an independent rerun of the entire population.
 
 Report:
 
