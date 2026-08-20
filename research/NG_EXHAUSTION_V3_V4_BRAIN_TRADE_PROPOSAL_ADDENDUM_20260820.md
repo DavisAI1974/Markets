@@ -275,3 +275,57 @@ Permanent merge/promotion requires a later explicit decision after the evidence 
 Standing policy:
 
 `FLAG_AND_DECOMPOSE_NOT_AUTO_KILL`
+
+---
+
+## K. V3 evidence now seeding the V4 research questions
+
+The pinned V3 run is no longer only hypothetical. Partial model-specific evidence has landed, and it changes what V4 should explicitly test without changing the no-promotion boundary.
+
+### D2 structural information arrives early and independently
+
+- KNN: P/O/S/X is independently visible at `PRIOR age 0`; continuation reaches independent validation at T0; eventual depth does not establish an earliest timing.
+- ExtraTrees: P/O/S/X is independently visible at `PRIOR age 0`; continuation and eventual depth both reach independent validation at T0.
+- Logistic: P/O/S/X is independently visible at T0 while continuation/depth do not establish earliest timings.
+
+`PRIOR age 0` means the first instant after all required predecessor information has causally confirmed while still before target birth. It is not a fixed number of seconds before birth.
+
+The key research lesson is not a model vote. It is that **structural-family information can exist before continuation/depth certainty and can survive in different causal channels**. V4 must therefore preserve P/O/S/X as its own head and timing movie.
+
+### D3 exposes a representation / extraction boundary
+
+- Logistic and ExtraTrees have no primary FULL_CAUSAL earliest timing in their completed D3 core outputs.
+- KNN independently finds continuation at PRIOR age 0 and eventual depth at PRIOR age 1.
+- KNN's P/O/S/X FULL_CAUSAL result does not reach its first current V3 declaration until H+4, while NO_PRICE_CAUSAL independently identifies P/O/S/X earlier at PRIOR age 3 and at T0/H+1/H+2/H+3/H+4.
+- ExtraTrees separately shows that PRICE_POLARITY_ONLY can validate some continuation/depth checkpoints even though its primary FULL_CAUSAL result is null.
+
+These are evidence-seeded signs that **flat channel fusion can obscure information and that nonlinear relative chain geometry may be present in the same observations but not equally extractable by every model**. V4 should test channel-specific encoders, explicit cross-link geometry and stage-aware fusion rather than simply adding more raw fields.
+
+### Sparse D5 is a support boundary, not a dead lane
+
+The completed D5 case-study artifact contains 9 cases: 5 discovery, 2 validation, 2 confirmation, no held cases. Eight stop at depth 4 and one reaches depth 5. This is preserved diagnostic evidence and is insufficient for a population timing/prediction claim.
+
+The one D5 continuation is especially valuable as a rare case to keep, not a reason to reclassify or prune the tail.
+
+Current V4 research-thread handoff:
+
+- `research/NG_EXHAUSTION_V4_RESEARCH_THREAD_20260820.md`
+- `research/NG_EXHAUSTION_V4_RESEARCH_THREAD_20260820.json`
+
+---
+
+## L. Trade-translation hypothesis added from D2 Logistic
+
+The completed D2 Logistic core/trade pair exposes an architectural gap in the current V3 trade experiment:
+
+- core: P/O/S/X structural family is independently visible at T0;
+- core: continuation has no independently validated timing;
+- trade: blocks with `BLOCKED_NO_INDEPENDENTLY_VALIDATED_CONTINUATION_SIGNAL`.
+
+The current trade translator is intentionally continuation-gated, so it cannot ask whether independently validated structural-state information should condition trade direction, entry regime or hold selection when continuation itself does not validate.
+
+That is not a failed chain. It is evidence that predictive state and execution translation are separate layers.
+
+A later research proposal should therefore preserve the existing continuation-driven translator and test a **separate structural-state-conditioned translator** after the relevant P/O/S/X timing has independently validated. Any such translator remains causal, model-specific, hindsight-proof and subject to the same cost/stability/validation gates.
+
+Nothing in this section promotes a trade or changes permanent Frankie.
