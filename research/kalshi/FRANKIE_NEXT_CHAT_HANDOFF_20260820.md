@@ -37,14 +37,23 @@ empirical evidence is not.
   limits on the phenomenon.
 - The extra-agent information-gap findings remain high-value V4 research input:
   timing/observability architecture, geometric representation, predecessor
-  overlap, channel fusion, support/calibration, model extraction, and
+  overlap, inter-event survival/resolution representation, channel fusion,
+  support/calibration, model extraction, immutable signal-ledger routing, and
   prediction-to-execution translation. They are hypotheses/requirements to
   test in V4, not promoted V3 laws.
+- The active `Timing Gap Review`, `Feature Gap Review`, `Support Gap Review`,
+  `Trade Gap Review`, `D1 Secondary Review`, and `Markets Run Watch` were
+  intentionally created **after V3 non-authority was already understood**.
+  They are diagnostic gap-mining watches, not legacy V3 validators and not mock
+  runs. Their prompts explicitly forbid promoting V3 behavioral/trade outputs
+  and permit only methodology/debugging/support/representation/translation
+  diagnoses and V4 hypotheses.
 - Preserve every chain/case; weak, losing, sparse, negative, inconclusive, and
   model-disagreement cases are evidence, not failed/dropped chains.
 - No V4 POX run occurred. V4 remains undecided, unauthorized, and unlaunched.
 - No V4 source or workflow was changed in this checkpoint.
-- No V3 monitor was created or managed; monitoring was handed to ChatGPT.
+- Monitoring/review watches are ChatGPT-owned diagnostic observers only; they do
+  not launch jobs, mutate the repository, or create empirical authority.
 - SEAL/NOVA was not integrated and must remain behind its documented matched
   control ladder.
 
