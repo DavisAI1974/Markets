@@ -28,13 +28,13 @@ from research.kalshi.ng_exhaustion_v4_unified_runtime import (
 A="a"*64; B="b"*64; C="c"*64; D="d"*64; E="e"*64; F="f"*64
 
 
-def lane(lane_id: str, mode: str, *, population: str, non_promotable: bool=False):
+def lane(lane_id: str, mode: str, *, population: str, non_promotable: bool=False, restrictions=None):
     spec=V4LaneSpec(
         lane_id=lane_id,mode=mode,population_manifest_sha256=A,
         feature_schema_sha256=B,adapter_sha256=C,reveal_policy_sha256=D,lock_policy_sha256=F,
     )
-    restrictions={"adaptation_allowed": mode=="WALK_FORWARD"}
-    return RegisteredLane(spec,C,population,"label-v1","coords-v1",restrictions,non_promotable)
+    rules=restrictions if restrictions is not None else {"adaptation_allowed": mode=="WALK_FORWARD"}
+    return RegisteredLane(spec,C,population,"label-v1","coords-v1",rules,non_promotable)
 
 
 def registry():
@@ -114,6 +114,15 @@ def test_registry_rejects_case_study_that_allows_adaptation():
     spec=V4LaneSpec("D5","CASE_STUDY_NO_ADAPTATION",A,B,C,D,F)
     bad=RegisteredLane(spec,C,"D5_PRESERVED_1","label","coords",{"adaptation_allowed":True},False)
     with pytest.raises(UnifiedV4Error): V4LaneRegistry().register(bad)
+
+
+def test_registered_restrictions_are_detached_from_caller_mutation():
+    rules={"adaptation_allowed":True,"note":"original"}
+    r=V4LaneRegistry(); r.register(lane("D1","WALK_FORWARD",population="D1_FROZEN",restrictions=rules))
+    before=r.registry_hash
+    rules["note"]="mutated-after-register"
+    assert r.registry_hash==before
+    assert r.get("D1").restrictions["note"]=="original"
 
 
 def test_reveal_boundary_is_engine_invariant():
