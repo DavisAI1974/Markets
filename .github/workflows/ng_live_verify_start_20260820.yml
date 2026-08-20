@@ -71,6 +71,28 @@ jobs:
             sleep 2
           done
           systemctl is-active --quiet markets-ng-live.service
+          python3 - <<'PYERR'
+          import glob, json, os
+          import databento as db
+          errors = []
+          paths = sorted(glob.glob('/var/lib/markets/ng_live/NG_live_*.dbn'), key=os.path.getmtime)[-3:]
+          for path in paths:
+              try:
+                  store = db.DBNStore.from_file(path)
+                  for rec in store:
+                      if type(rec).__name__ != 'ErrorMsg':
+                          continue
+                      err = getattr(rec, 'err', None)
+                      if isinstance(err, (bytes, bytearray)):
+                          err = bytes(err).split(b'\x00', 1)[0].decode('utf-8', 'replace')
+                      else:
+                          err = str(err)
+                      if err and err not in errors:
+                          errors.append(err)
+              except Exception as exc:
+                  errors.append(f'DBN_DECODE_ERROR:{type(exc).__name__}:{exc}')
+          print('gateway_errors=' + json.dumps(errors, sort_keys=True))
+          PYERR
           python3 - <<'PY2'
           import json
           path = '/var/lib/markets/ng_live/health.json'
@@ -106,7 +128,7 @@ jobs:
           command_id="$(aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \
             --document-name AWS-RunShellScript \
-            --comment 'Verify/start Markets NG live MBO collector; no V4 activity' \
+            --comment 'Verify/start Markets NG live MBO collector; decode gateway errors; no V4 activity' \
             --parameters file:///tmp/ssm-params.json \
             --query 'Command.CommandId' \
             --output text)" || exit 30
