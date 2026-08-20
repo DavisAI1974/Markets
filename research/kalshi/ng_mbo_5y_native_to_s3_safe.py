@@ -66,5 +66,7 @@ def migrate_legacy_receipts()->dict:
 
 if __name__=='__main__':
     migrate_legacy_receipts()
-    from research.kalshi.ng_mbo_5y_native_to_s3 import main
+    # This file is executed directly from research/kalshi, so import the sibling
+    # module directly instead of assuming the repository root is on sys.path.
+    from ng_mbo_5y_native_to_s3 import main
     main()
