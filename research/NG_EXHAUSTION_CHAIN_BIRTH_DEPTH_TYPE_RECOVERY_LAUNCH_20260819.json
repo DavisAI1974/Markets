@@ -1,0 +1,30 @@
+{
+  "status": "AUTHORIZED_CHAIN_BIRTH_DEPTH_TYPE_RECOVERY_LAUNCH",
+  "date": "2026-08-19",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "contract": "CHAIN_EXISTENCE_EVENTUAL_DEPTH_CHAIN_TYPE_EARLIEST_CAUSAL_TIME",
+  "primary_information_view": "FULL_CAUSAL",
+  "clock_semantics": {
+    "prior": "STRICTLY_BEFORE_TARGET_T0_USING_ALL_INFORMATION_CAUSALLY_AVAILABLE_BY_THE_GLOBAL_CHECKPOINT",
+    "H": "SECONDS_AFTER_FROZEN_TARGET_T0_ONLY_FOR_UNRESOLVED_MODEL_TARGET_PAIRS"
+  },
+  "prior_age_seconds_first_pass": [0, 1, 2, 3, 4, 5],
+  "post_birth_H_seconds_first_pass": [1, 2, 3, 4, 5],
+  "targets": ["CONTINUATION", "EVENTUAL_DEPTH", "CHAIN_TYPE_FAMILY"],
+  "models": ["logistic", "extra_trees", "knn"],
+  "cross_model_vote": false,
+  "D4_D5": "LOW_SUPPORT_CASE_STUDY_PRESERVE_ALL",
+  "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+  "promotion_performed": false,
+  "protected_mutations": {
+    "detector": false,
+    "canonical_rows": false,
+    "phase1": false,
+    "phase2": false,
+    "runway_clock": false,
+    "permanent_frankie": false,
+    "frankie_1": false,
+    "spawn_py": false,
+    "ssos_play": false
+  }
+}
