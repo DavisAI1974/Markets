@@ -24,18 +24,16 @@ def feature_row(case: dict, stage: int, phase: str, sec: int, cache, view: str):
     for e in case["preds"]:
         parts.append(v2.event_vector(e, case["week"], cutoff, cache, False, view, True))
 
-    # No future target label/vector exists in PRIOR. After t0, raw newborn price
-    # may evolve immediately; target-specific static labels remain causally gated.
-    parts.append(v2.event_vector(
-        case["target"] if phase == "POST_BIRTH" else None,
-        case["week"], cutoff, cache, False, view, False,
-    ))
-    for e in case.get("extra", []):
-        born = e is not None and int(e["t0_idx"]) <= cutoff
-        parts.append(v2.event_vector(e if born else None, case["week"], cutoff, cache, False, view, False))
+    # PRIOR contains no synthetic/future target block at all. The live market
+    # vector below still contains everything actually observable through cutoff.
+    if phase == "POST_BIRTH":
+        parts.append(v2.event_vector(case["target"], case["week"], cutoff, cache, False, view, False))
+        for e in case.get("extra", []):
+            born = e is not None and int(e["t0_idx"]) <= cutoff
+            parts.append(v2.event_vector(e if born else None, case["week"], cutoff, cache, False, view, False))
 
-    # The market itself is always observable. This is where ongoing raw direction,
-    # velocity/range, signed flow/dipole, book pressure and causal clock state enter.
+    # The market itself is always observable: dense raw price direction, the full
+    # last-61-second roll20/dipole path, signed flow, book path and causal clock.
     lp, lm = live.parts(cache, case["week"], cutoff)
     if view == "FULL_CAUSAL":
         parts.append(np.asarray(lp + lm, float))
