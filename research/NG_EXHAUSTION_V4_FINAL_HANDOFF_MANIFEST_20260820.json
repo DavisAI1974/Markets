@@ -1,0 +1,40 @@
+{
+  "handoff_id": "NG_EXHAUSTION_V4_FINAL_HANDOFF_20260820",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "interpretation": {
+    "v3_numbers_weight": "DIAGNOSTIC_PROVENANCE_ONLY",
+    "extra_agent_findings_weight": "PRIMARY_INFORMATIONAL_PAYLOAD_FOR_V4",
+    "direction_is_primary_exhaustion_measurement": false,
+    "v4_uses_fixed_prior_t0_h_decision_grid": false,
+    "frankie_discovers_continuous_causal_lock_time": true,
+    "target_relative_timing_is_posthoc_only": true,
+    "preserve_all_chains_cases": true,
+    "valid_negative_or_inconclusive_is_failed_chain": false
+  },
+  "mandatory_read_order": [
+    "research/NG_EXHAUSTION_V4_INTERPRETATION_CORRECTION_20260820.md",
+    "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md",
+    "research/NG_EXHAUSTION_V4_RESEARCH_THREAD_FINAL_20260820.md",
+    "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_FINAL_ADDENDUM_20260820.md",
+    "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md",
+    "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.json",
+    "research/NG_EXHAUSTION_V4_CONTINUOUS_ADAPTIVE_WALKFORWARD_CONTRACT_20260820.md",
+    "research/NG_EXHAUSTION_V3_V4_CHAT_DECISIONS_ALL_NOTES_20260820.md"
+  ],
+  "new_docs": [
+    "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md",
+    "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.json",
+    "research/NG_EXHAUSTION_V4_INTERPRETATION_CORRECTION_20260820.md",
+    "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_FINAL_ADDENDUM_20260820.md",
+    "research/NG_EXHAUSTION_V4_RESEARCH_THREAD_FINAL_20260820.md",
+    "CHATGPT_KICKOFF_NG_EXHAUSTION_V4_RESEARCH_20260820.md",
+    "research/NG_EXHAUSTION_V4_FINAL_HANDOFF_MANIFEST_20260820.json"
+  ],
+  "authorization": {
+    "documentation_only": true,
+    "v4_launch": false,
+    "permanent_frankie_mutation": false,
+    "protected_artifact_mutation": false,
+    "play_promotion": false
+  }
+}
