@@ -1,0 +1,47 @@
+name: NG MBO 5Y Compact Audit 20260820
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/kalshi/ng_mbo_5y_s3_compact_audit.py
+      - .github/workflows/ng_mbo_5y_compact_audit_20260820.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      BUCKET: bento-568968024170-us-east-2-an
+      PREFIX: nymex/ng_mbo_5y_v0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - run: python research/kalshi/ng_mbo_5y_s3_compact_audit.py
+      - name: Commit compact audit safely
+        run: |
+          set -euo pipefail
+          cp research/kalshi/NG_MBO_5Y_COMPACT_AUDIT_20260820.json /tmp/audit.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          branch='chatgpt/ng-exhaustion-entry-timing-revival-20260818'
+          path='research/kalshi/NG_MBO_5Y_COMPACT_AUDIT_20260820.json'
+          for attempt in 1 2 3 4; do
+            git fetch origin "$branch"
+            git reset --hard "origin/$branch"
+            cp /tmp/audit.json "$path"
+            git add "$path"
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m 'research: record compact NG MBO 5Y audit'
+            if git push origin HEAD:"$branch"; then exit 0; fi
+          done
+          exit 1
