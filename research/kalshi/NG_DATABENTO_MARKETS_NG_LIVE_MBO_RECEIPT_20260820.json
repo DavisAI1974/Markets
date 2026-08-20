@@ -1,0 +1,54 @@
+{
+  "checked_at_utc": "2026-08-20T20:52:37.738865+00:00",
+  "dataset": "GLBX.MDP3",
+  "github_secret_name": "MARKETS_NG_LIVE_MBO",
+  "github_secret_present": true,
+  "probe_status": "COMPLETE",
+  "probes": [
+    {
+      "authorized": true,
+      "gateway_errors": [],
+      "received_market_records": true,
+      "record_counts": {
+        "SymbolMappingMsg": 1,
+        "SystemMsg": 1,
+        "TradeMsg": 2
+      },
+      "schema": "trades",
+      "snapshot": false,
+      "system_messages": [
+        "Subscription request 0 for trades data succeeded"
+      ]
+    },
+    {
+      "authorized": false,
+      "gateway_errors": [
+        "Not authorized for mbp-10 schema"
+      ],
+      "received_market_records": false,
+      "record_counts": {
+        "ErrorMsg": 1
+      },
+      "schema": "mbp-10",
+      "snapshot": false,
+      "system_messages": []
+    },
+    {
+      "authorized": false,
+      "gateway_errors": [
+        "Not authorized for mbo schema"
+      ],
+      "received_market_records": false,
+      "record_counts": {
+        "ErrorMsg": 1
+      },
+      "schema": "mbo",
+      "snapshot": true,
+      "system_messages": []
+    }
+  ],
+  "schema": "NG_DATABENTO_MARKETS_NG_LIVE_MBO_RECEIPT_V1",
+  "secret_value_exposed": false,
+  "symbol": "NG.v.0",
+  "v4_activity": false
+}
