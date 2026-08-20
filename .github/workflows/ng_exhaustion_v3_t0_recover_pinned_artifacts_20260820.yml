@@ -1,0 +1,169 @@
+name: NG Exhaustion V3 T0 Recover Pinned Artifacts 20260820
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Optional exact source workflow run id. Leave blank to discover by frozen launch SHA.
+        required: false
+        type: string
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-v3-t0-recovery-20260820
+    paths:
+      - research/NG_EXHAUSTION_V3_T0_RECOVERY_LAUNCH_20260820.json
+
+permissions:
+  actions: read
+  contents: write
+
+env:
+  SOURCE_SHA: b0e5d375b936c5ba82a3ffdc9c9f1db2b7a46732
+  SOURCE_WORKFLOW: ng_exhaustion_v3_t0_pinned_core_20260820.yml
+  TARGET_BRANCH: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+  OUT_DIR: research/generated/ng_exhaustion_v3_t0_pinned_core_20260820
+
+jobs:
+  recover:
+    name: Recover exact pinned V3-T0 artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-v3-t0-recovery-20260820
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Discover and verify exact source run
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED_RUN_ID: ${{ inputs.source_run_id }}
+        run: |
+          set -euo pipefail
+          if [ -n "${REQUESTED_RUN_ID:-}" ]; then
+            RUN_ID="${REQUESTED_RUN_ID}"
+            gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}" > /tmp/source-run.json
+          else
+            gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${SOURCE_WORKFLOW}/runs?branch=chatgpt%2Fng-exhaustion-entry-timing-revival-20260818&per_page=100" > /tmp/source-runs.json
+            RUN_ID=$(python - <<'PY'
+          import json, os
+          d = json.load(open('/tmp/source-runs.json'))
+          source_sha = os.environ['SOURCE_SHA']
+          matches = [
+              r for r in d.get('workflow_runs', [])
+              if r.get('head_sha') == source_sha and r.get('event') == 'push'
+          ]
+          if len(matches) != 1:
+              raise SystemExit(f'expected exactly one source run for {source_sha}, got {[(r.get("id"), r.get("status"), r.get("conclusion")) for r in matches]}')
+          print(matches[0]['id'])
+          PY
+            )
+            gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}" > /tmp/source-run.json
+          fi
+
+          python - <<'PY'
+          import json, os
+          r = json.load(open('/tmp/source-run.json'))
+          if r.get('head_sha') != os.environ['SOURCE_SHA']:
+              raise SystemExit(f"source run SHA mismatch: {r.get('head_sha')} != {os.environ['SOURCE_SHA']}")
+          if r.get('name') != 'NG Exhaustion V3 T0 Pinned Core 20260820':
+              raise SystemExit(f"unexpected source workflow name: {r.get('name')}")
+          if r.get('status') != 'completed':
+              raise SystemExit(f"source run is not completed: status={r.get('status')} conclusion={r.get('conclusion')}")
+          print(json.dumps({
+              'run_id': r.get('id'),
+              'head_sha': r.get('head_sha'),
+              'status': r.get('status'),
+              'conclusion': r.get('conclusion'),
+          }, indent=2, sort_keys=True))
+          PY
+
+          echo "run_id=${RUN_ID}" >> "$GITHUB_OUTPUT"
+
+      - name: Download exact pinned agent artifacts
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ steps.source.outputs.run_id }}
+          github-token: ${{ github.token }}
+          pattern: ng-exhaustion-v3-t0-pinned-*
+          path: /tmp/agents
+          merge-multiple: true
+
+      - name: Reconcile exact artifacts without voting
+        run: |
+          set -euo pipefail
+          rm -rf "${OUT_DIR}"
+          python research/ng_exhaustion_v3_t0_reconcile_artifacts_20260820.py \
+            --agent-dir /tmp/agents \
+            --out-dir "${OUT_DIR}" \
+            --launch-commit "${SOURCE_SHA}" \
+            --source-run-id "${{ steps.source.outputs.run_id }}"
+
+      - name: Fail closed on recovered V3 invariants
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          p = os.path.join(os.environ['OUT_DIR'], 'NG_EXHAUSTION_V3_T0_PINNED_CORE_ALL_RESULTS_20260820.json')
+          d = json.load(open(p))
+          assert d['status'] == 'NG_EXHAUSTION_V3_T0_PINNED_CORE_RECONCILED'
+          assert d['launch_commit'] == os.environ['SOURCE_SHA']
+          assert d['implementation_revision'] == 'V3_CONTINUOUS_LIVE_MARKET_STATE_T0'
+          assert d['timing_ladder'] == ['PRIOR','T0','H+1','H+2','H+3','H+4','H+5']
+          assert d['model_voting_used'] is False
+          assert d['probability_aggregation_used'] is False
+          assert d['agent_artifact_count'] == 14
+          assert d['promotion_performed'] is False
+          assert d['policy'] == 'FLAG_AND_DECOMPOSE_NOT_AUTO_KILL'
+          assert not any(d['protected_mutations'].values())
+          assert d['D4_D5_case_studies']['D4']['low_support_case_study_only'] is True
+          assert d['D4_D5_case_studies']['D5']['low_support_case_study_only'] is True
+          print('RECOVERED V3 T0 INVARIANTS PASS')
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-v3-t0-recovered-durable-bundle
+          path: ${{ env.OUT_DIR }}
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish recovered outputs onto moving target branch
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          RECOVERED_TREE=/tmp/recovered-v3-t0
+          rm -rf "${RECOVERED_TREE}"
+          mkdir -p "${RECOVERED_TREE}"
+          cp -a "${OUT_DIR}/." "${RECOVERED_TREE}/"
+
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "${TARGET_BRANCH}"
+            git switch -C v3-t0-publish "origin/${TARGET_BRANCH}"
+            rm -rf "${OUT_DIR}"
+            mkdir -p "${OUT_DIR}"
+            cp -a "${RECOVERED_TREE}/." "${OUT_DIR}/"
+            git add "${OUT_DIR}"
+
+            if git diff --cached --quiet; then
+              echo "Recovered V3 outputs are already durable on ${TARGET_BRANCH}."
+              exit 0
+            fi
+
+            git commit -m "research: recover pinned V3 T0 core ${SOURCE_SHA:0:12}"
+            if git push origin HEAD:"${TARGET_BRANCH}"; then
+              exit 0
+            fi
+
+            echo "Target branch advanced during publish attempt ${attempt}; retrying from the new head."
+          done
+
+          echo "::error::could not publish recovered V3 outputs after 5 fast-forward retries"
+          exit 1
