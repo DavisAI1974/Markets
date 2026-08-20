@@ -1,0 +1,103 @@
+# Frankie next-chat handoff — 2026-08-20
+
+## Start here
+
+Continue on branch
+`chatgpt/ng-exhaustion-entry-timing-revival-20260818` from its pushed tip. Verify
+that the history contains implementation commit
+`5501fd5f4ce50ae908b0a40b1d9939c465ab3c1a` and that the working tree is clean.
+
+Read, in order:
+
+1. `FRANKIE_NEXT_CHAT_HANDOFF_20260820.md` (this file);
+2. `FRANKIE_P0_GAP_CLOSURE_PROVISIONAL_20260820.md`;
+3. `FRANKIE_P0_GAP_CLOSURE_PROVISIONAL_MANIFEST_20260820.json`;
+4. `FRANKIE_V4_UNIFIED_FRAMEWORK_AUDIT_20260820.md`;
+5. the existing cognitive Top-10, market Top-10, GDL, and SEAL dockets cited by
+   the gap-closure document.
+
+Do not infer authority from the word “ready.” Component contracts are ready;
+empirical evidence is not.
+
+## Non-negotiable state
+
+- Base checkpoint was `71a71e94c08c27615b05f10165cbc88e38f2aa56`.
+- Implementation checkpoint is
+  `5501fd5f4ce50ae908b0a40b1d9939c465ab3c1a`.
+- Full tests: 329 passed.
+- Frankie selftest: 12/12 passed.
+- Registry: 60 exact public surfaces, `COMPONENT_CONTRACT_READY`.
+- Empirical readiness: `BLOCKED_PENDING_EMPIRICAL_EVIDENCE`.
+- No V4 POX run occurred. V4 remains undecided, unauthorized, and unlaunched.
+- No V4 source or workflow was changed in this checkpoint.
+- No V3 monitor was created or managed; monitoring was handed to ChatGPT.
+- SEAL/NOVA was not integrated and must remain behind its documented matched
+  control ladder.
+
+The old dirty provisional V4 tree at
+`C:\Users\A\Documents\Codex\2026-08-19\i\work\Markets` is read-only source
+material only. Preserve unrelated user work and never stage/copy it wholesale.
+
+## What landed
+
+- Repairs to cognition, evaluation, experiment, release, and evolution
+  contracts described in the P0 gap-closure document.
+- Bounded SHADOW hooks for ReAct, LATS, StructGPT, Faithful IR, CRITIC,
+  MemoryAgentBench, HippoRAG, HiAgent, and Progress & Compress.
+- Market event/reconciliation/calibration/paired/retention/rollback/
+  contamination validators.
+- OFI and depletion/refill/resiliency baselines with causal lag-only contracts.
+- Sequential first-lock, accumulated-gap, delayed-label ACI, and adaptive
+  current-risk controls.
+- GDL causal-prefix, stability, 1-WL, Deep-Sets, withdrawal, and temporal-graph
+  plumbing.
+- Exact registry and six-receipt empirical-readiness gate.
+
+These are implementations of bounded control flow, validators, helpers, and
+benchmarks. They are not paper-faithful end-to-end replications and do not carry
+held-out performance evidence.
+
+## Priority continuation work
+
+1. Re-run the exact full tests and selftest at the pushed tip. Recompute the
+   provisional manifest hashes before changing any registered P0 module.
+2. Build a lawful real-evidence plan for all six missing receipt types:
+   held-out performance, calibration, contamination, retention,
+   evaluator-independence, and live byte rollback. Do not consume a release
+   holdout or reuse selected data. Stop for user direction if real data,
+   external model calls, live mutation, cost, or new authority is required.
+3. Wire only explicitly authorized real callbacks/evaluators into isolated
+   experiments. Compare against the documented fixed, random, frozen, one-path,
+   flat, static, Deep-Sets, 1-WL, and market baselines at matched budgets.
+4. Keep exact distinctions among implemented runtime hooks, standalone loops,
+   validators, helpers, benchmarks, caller attestations, and unimplemented
+   paper mechanisms. Never convert synthetic test results into performance
+   claims.
+5. Continue paper work from Frankie gaps, not from citation count. Cognitive
+   Top-10, market Top-10, and selected priority GDL audits are complete; only
+   25/340 GDL references have individual deep audits. The remaining 315 were
+   screened, not deeply audited.
+6. Treat trained TGN/TGAT, spectral mechanisms, ReLIC, graphon invariance,
+   learned topology, paper-exact HippoRAG, real Progress & Compress training,
+   and SEAL/NOVA as separate shadow candidates behind simpler controls.
+7. Do not implement or launch V4 until the user separately approves the unified
+   `V4LaneSpec`/one-engine/one-reconciler design and later names one exact tested
+   V4 candidate commit and reconciliation ruleset.
+
+## V4 answer to preserve
+
+One unified V4 is feasible. The provisional V4 is not yet unified because POX
+and D0–D5 independently own population/split/reveal/schema/identity contracts,
+D4/D5 use a second execution path, workflows and reconciler duplicate lane
+registries, and the reconciler does not recompute critical artifacts. Preserve
+the documented every-second/full-curve/discovery-lock/frozen-adaptive/
+learn-after-reveal characteristics. Consolidate only through one immutable lane
+registry with target-specific adapters and one registry-driven reconciler.
+
+## Git discipline
+
+Fetch before modifying. Do not force-push. Preserve unrelated work. Use
+`apply_patch` for edits, run focused tests while iterating, then the exact full
+suite, Frankie selftest, `git diff --check`, registry hash verification, and a
+clean-status check. Do not launch workflows, V4, external training, or live
+rollback without explicit authorization.
