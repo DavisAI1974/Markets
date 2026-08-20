@@ -1,0 +1,44 @@
+{
+  "status": "AUTHORIZED_UNIFIED_D0_D5_FULL_CAUSAL_V3_LAUNCH",
+  "date": "2026-08-19",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "implementation_revision": "V3_CONTINUOUS_LIVE_MARKET_STATE",
+  "primary_questions": [
+    "CHAIN_EXISTENCE_OR_CONTINUATION",
+    "EVENTUAL_DEPTH",
+    "P_O_S_X_STRUCTURAL_STATE_FAMILY"
+  ],
+  "target_polarity_is_primary_question": false,
+  "target_polarity_required_for_prior": false,
+  "same_flip_role": "SECONDARY_ANNOTATION_CONTEXT_ONLY",
+  "live_checkpoint_information": [
+    "causal_price_direction",
+    "price_velocity_and_range",
+    "signed_buy_sell_flow",
+    "rolling_flow_imbalance_and_dipole_direction",
+    "book_imbalance_and_change",
+    "causal_clock_and_session_position",
+    "all_predecessor_root_information_already_causally_known"
+  ],
+  "information_rule": "USE_EVERY_REPRESENTED_FACT_WHEN_IT_BECOMES_CAUSALLY_KNOWN; NEVER_REQUIRE_A_FUTURE_TARGET_LABEL_TO_OBSERVE_THE_LIVE_MARKET",
+  "D0_clock": "ROOT_AGE_0_1_2_3_4_5_NOT_H",
+  "D1_D5_prior_age_seconds": [0, 1, 2, 3, 4, 5],
+  "D1_D5_post_birth_H_seconds": [1, 2, 3, 4, 5],
+  "models": ["logistic", "extra_trees", "knn"],
+  "cross_model_vote": false,
+  "D4_D5": "LOW_SUPPORT_CASE_STUDY_PRESERVE_ALL",
+  "earlier_recovery_authority": "COMPARISON_AND_AUDIT_ONLY_WHERE_TRANSITION_INCLUSIVE_TYPE_OR_OVERGATED_POSTBIRTH_FEATURES_DIFFER",
+  "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+  "promotion_performed": false,
+  "protected_mutations": {
+    "detector": false,
+    "canonical_rows": false,
+    "phase1": false,
+    "phase2": false,
+    "runway_clock": false,
+    "permanent_frankie": false,
+    "frankie_1": false,
+    "spawn_py": false,
+    "ssos_play": false
+  }
+}
