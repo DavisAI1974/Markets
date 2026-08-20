@@ -48,6 +48,7 @@ jobs:
           manifests=[k for k in keys if '/manifests/' in k and k.endswith('.json')]
           year_receipts=[k for k in keys if '/year_receipts/' in k and k.endswith('.json')]
           compat_keys=[k for k in keys if '/_compat/' in k and k.endswith('.json')]
+          consolidation_keys=[k for k in keys if '/_consolidation/' in k and k.endswith('.json')]
           def getj(k): return json.loads(s3.get_object(Bucket=bucket,Key=k)['Body'].read())
           jobs=[]
           for k in job_keys:
@@ -55,7 +56,7 @@ jobs:
                   d=getj(k)
               except Exception as exc:
                   jobs.append({'key':k,'read_error':type(exc).__name__}); continue
-              jobs.append({'key':k,'job_id':d.get('job_id'),'start':d.get('start'),'end':d.get('end'),'quote_usd':d.get('quote_usd'),'legacy_alias_from':d.get('legacy_alias_from')})
+              jobs.append({'key':k,'job_id':d.get('job_id'),'start':d.get('start'),'end':d.get('end'),'quote_usd':d.get('quote_usd'),'legacy_alias_from':d.get('legacy_alias_from'),'reservation_owner':d.get('reservation_owner')})
           by_interval=collections.defaultdict(list)
           by_job_id={}
           for j in jobs:
@@ -73,12 +74,17 @@ jobs:
           for k in compat_keys:
               try: compat.append({'key':k,**getj(k)})
               except Exception as exc: compat.append({'key':k,'read_error':type(exc).__name__})
+          consolidation=[]
+          for k in consolidation_keys:
+              try: consolidation.append({'key':k,**getj(k)})
+              except Exception as exc: consolidation.append({'key':k,'read_error':type(exc).__name__})
           out={
-            'schema':'NG_MBO_5Y_S3_STATUS_V2',
+            'schema':'NG_MBO_5Y_S3_STATUS_V3',
             'bucket':bucket,'prefix':prefix,
             'submitted_job_key_count':len(job_keys),
             'unique_databento_job_id_count':len(by_job_id),
             'unique_requested_interval_count':len(by_interval),
+            'unresolved_reservation_key_count':sum(1 for j in jobs if j.get('reservation_owner') and not j.get('job_id')),
             'duplicate_interval_distinct_job_count':len(duplicate_intervals),
             'duplicate_intervals':duplicate_intervals,
             'recorded_estimated_submitted_quote_usd':round(sum(recorded_quotes),12),
@@ -90,6 +96,7 @@ jobs:
             'submitted_segments':sorted(k.rsplit('/',1)[-1].removesuffix('.json') for k in job_keys),
             'completed_segments':sorted(k.rsplit('/',1)[-1].removesuffix('.done') for k in done),
             'compatibility_audits':compat,
+            'consolidation_audits':consolidation,
             'data_purchase_performed_by_status_probe':False,
           }
           text=json.dumps(out,indent=2,sort_keys=True)+'\n'
@@ -115,4 +122,4 @@ jobs:
           done
           exit 1
 
-# Read-only AWS audit. No Databento API call and no data purchase.
+# Post-consolidation read-only AWS audit. No Databento API call and no purchase.
