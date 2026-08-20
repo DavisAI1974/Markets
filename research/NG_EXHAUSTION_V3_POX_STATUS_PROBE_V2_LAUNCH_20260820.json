@@ -1,0 +1,7 @@
+{
+  "status": "AUTHORIZED_READ_ONLY_STATUS_PROBE_V2",
+  "date": "2026-08-20",
+  "source_branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "v3_source_sha": "b0e5d375b936c5ba82a3ffdc9c9f1db2b7a46732",
+  "source_runs_mutated": false
+}
