@@ -1,0 +1,118 @@
+name: NG Live Verify and Start 20260820
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - '.github/workflows/ng_live_verify_start_20260820.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-start:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+    steps:
+      - name: Validate AWS credential binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          for v in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+            if [ -z "${!v:-}" ]; then
+              echo "::error::$v GitHub Actions secret is not available to this workflow"
+              exit 2
+            fi
+          done
+          aws sts get-caller-identity >/dev/null
+          ping_status="$(aws ssm describe-instance-information \
+            --filters "Key=InstanceIds,Values=$INSTANCE_ID" \
+            --query 'InstanceInformationList[0].PingStatus' \
+            --output text)"
+          echo "ssm_ping_status=$ping_status"
+          test "$ping_status" = "Online"
+
+      - name: Verify collector and start only if inactive
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          command = r'''set -eu
+          ENV_FILE=/etc/markets/markets.env
+          HEALTH=/var/lib/markets/ng_live/health.json
+          if ! grep -Eq '^DATABENTO_API_KEY=db-[A-Za-z0-9_-]{10,}$' "$ENV_FILE" 2>/dev/null; then
+            echo 'databento_key_on_instance=missing'
+            exit 20
+          fi
+          before="$(systemctl is-active markets-ng-live.service 2>/dev/null || true)"
+          echo "collector_before=$before"
+          if [ "$before" != "active" ]; then
+            systemctl enable --now markets-ng-live.service
+          fi
+          systemctl enable --now markets-ng-live-watchdog.timer
+          for _ in $(seq 1 30); do
+            if [ -s "$HEALTH" ]; then
+              break
+            fi
+            sleep 2
+          done
+          systemctl is-active --quiet markets-ng-live.service
+          systemctl is-active --quiet markets-ng-live-watchdog.timer || systemctl is-active --quiet markets-ng-live-watchdog.service || true
+          python3 - <<'PY2'
+          import json, time
+          path = '/var/lib/markets/ng_live/health.json'
+          p = json.load(open(path, encoding='utf-8'))
+          safe = {
+              'connection': p.get('connection'),
+              'requested_symbol': p.get('requested_symbol'),
+              'raw_symbol': p.get('raw_symbol'),
+              'instrument_id': p.get('instrument_id'),
+              'record_age_ms': p.get('record_age_ms'),
+              'archive_bytes': p.get('archive_bytes'),
+              'record_counts': p.get('record_counts'),
+              'reconnect_count': p.get('reconnect_count'),
+              'last_error': p.get('last_error'),
+          }
+          print('health=' + json.dumps(safe, sort_keys=True))
+          age = p.get('record_age_ms')
+          if p.get('connection') != 'live':
+              raise SystemExit('collector health is not live')
+          if age is None or float(age) > 120000:
+              raise SystemExit(f'collector record_age_ms is stale: {age}')
+          counts = p.get('record_counts') or {}
+          if not any('Mbo' in str(k) for k in counts):
+              raise SystemExit('collector is live but no MBO record type has been observed')
+          PY2
+          echo "collector_after=$(systemctl is-active markets-ng-live.service 2>/dev/null || true)"
+          echo "watchdog_timer_after=$(systemctl is-active markets-ng-live-watchdog.timer 2>/dev/null || true)"
+          '''
+          with open('/tmp/ssm-params.json', 'w', encoding='utf-8') as f:
+              json.dump({'commands': [command]}, f)
+          PY
+
+          command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment 'Verify/start Markets NG live MBO collector; no V4 activity' \
+            --parameters file:///tmp/ssm-params.json \
+            --query 'Command.CommandId' \
+            --output text)"
+          echo "ssm_command_id=$command_id"
+          aws ssm wait command-executed --command-id "$command_id" --instance-id "$INSTANCE_ID"
+          aws ssm get-command-invocation \
+            --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,Output:StandardOutputContent,Error:StandardErrorContent}' \
+            --output json
+          status="$(aws ssm get-command-invocation \
+            --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" \
+            --query 'Status' --output text)"
+          test "$status" = "Success"
