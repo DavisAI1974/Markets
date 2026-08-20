@@ -1,0 +1,308 @@
+name: NG Exhaustion D0-D3 Model Specific Trade V3 20260819
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/NG_EXHAUSTION_D0_D3_TRADE_V3_LAUNCH_20260819.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: us-east-2
+  BUCKET: bento-568968024170-us-east-2-an
+  BASE_ID: '9281733364'
+  BASE_SHA: f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1
+  HELD_ID: '9281272840'
+  HELD_SHA: 21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e
+  LINEAGE_ID: '9289929292'
+  LINEAGE_SHA: a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95
+  RECONCILE_ID: '9306082330'
+  RECONCILE_SHA: f17c130df029429bfbc35067d1cc9d16128ca4fb227dd37f3fb4fbb8bbaf8875
+
+jobs:
+  trade-agents:
+    name: D${{ matrix.stage }} ${{ matrix.model }} causal trade
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        include:
+          - {stage: 0, model: logistic, min_depth: 0}
+          - {stage: 0, model: extra_trees, min_depth: 0}
+          - {stage: 0, model: knn, min_depth: 0}
+          - {stage: 1, model: logistic, min_depth: 0}
+          - {stage: 1, model: extra_trees, min_depth: 0}
+          - {stage: 1, model: knn, min_depth: 0}
+          - {stage: 2, model: logistic, min_depth: 1}
+          - {stage: 2, model: extra_trees, min_depth: 1}
+          - {stage: 2, model: knn, min_depth: 1}
+          - {stage: 3, model: logistic, min_depth: 2}
+          - {stage: 3, model: extra_trees, min_depth: 2}
+          - {stage: 3, model: knn, min_depth: 2}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: python -m pip install --quiet numpy scikit-learn
+
+      - name: Verify causal trade contract
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            research/ng_exhaustion_live_checkpoint_state_20260819.py \
+            research/ng_exhaustion_chain_recovery_features_v3_20260819.py \
+            research/ng_exhaustion_chain_recovery_models_v3_20260819.py \
+            research/ng_exhaustion_d0_d3_model_specific_trade_v3_20260819.py
+          PYTHONPATH=research python - <<'PY'
+          import inspect
+          import ng_exhaustion_d0_d3_model_specific_trade_v3_20260819 as r
+          src=inspect.getsource(r.fill_trade)
+          assert r.IMPLEMENTATION_REVISION=='V3_CONTINUOUS_LIVE_MARKET_STATE_FIXED_HORIZON_TRADE'
+          assert r.ORIENTATIONS==(
+              'WITH_LAST_PREDECESSOR_POLARITY','AGAINST_LAST_PREDECESSOR_POLARITY',
+              'WITH_LIVE_PRICE_5S','AGAINST_LIVE_PRICE_5S',
+              'WITH_LIVE_FLOW20','AGAINST_LIVE_FLOW20')
+          assert 'target' not in src and 'next_t0' not in src and 'next_event' not in src
+          assert r.HOLDS==(5,10,20,30,60,120,300)
+          print('causal fixed-horizon trade contract: PASS')
+          PY
+
+      - name: Download and verify immutable frozen sources
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/in/base /tmp/in/held /tmp/in/lineage /tmp/in/reconcile
+          get_artifact () {
+            id="$1"; sha="$2"; zip="$3"; dest="$4"
+            curl -L --fail --silent --show-error \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" -o "${zip}"
+            echo "${sha}  ${zip}" | sha256sum -c -
+            unzip -q "${zip}" -d "${dest}"
+          }
+          get_artifact "${BASE_ID}" "${BASE_SHA}" /tmp/base.zip /tmp/in/base
+          get_artifact "${HELD_ID}" "${HELD_SHA}" /tmp/held.zip /tmp/in/held
+          get_artifact "${LINEAGE_ID}" "${LINEAGE_SHA}" /tmp/lineage.zip /tmp/in/lineage
+          get_artifact "${RECONCILE_ID}" "${RECONCILE_SHA}" /tmp/reconcile.zip /tmp/in/reconcile
+
+      - name: Resolve required weeks
+        env:
+          MIN_DEPTH: ${{ matrix.min_depth }}
+        run: |
+          python - <<'PY' > /tmp/weeks.txt
+          import gzip,json,os
+          mind=int(os.environ['MIN_DEPTH']); weeks=set()
+          for p in (
+            '/tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz',
+            '/tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz',
+          ):
+              with gzip.open(p,'rt') as f:
+                  for line in f:
+                      r=json.loads(line)
+                      if int(r.get('all_model_consecutive_positive_depth',0))>=mind:
+                          weeks.add(r['week_sunday'])
+          assert weeks
+          for w in sorted(weeks): print(w)
+          PY
+
+      - name: Materialize authoritative raw NG tape
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ngraw
+          python - <<'PY' > /tmp/days.txt
+          from datetime import datetime,timedelta
+          days=set()
+          for line in open('/tmp/weeks.txt'):
+              w=line.strip()
+              if not w: continue
+              d=datetime.strptime(w,'%Y%m%d')
+              for i in range(6): days.add((d+timedelta(days=i)).strftime('%Y%m%d'))
+          for x in sorted(days): print(x)
+          PY
+          python - <<'PY' > /tmp/closures.txt
+          import json
+          d=json.load(open('research/NG_EXHAUSTION_20260403_CME_CLOSURE_WITNESS_20260817.json'))
+          assert d['status']=='FROZEN_EXCHANGE_CLOSURE_WITNESS'
+          for x in d['canonicalization_rule']['explicit_closure_dates']: print(x)
+          PY
+          while read -r d; do
+            mapfile -t keys < <(aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" \
+              --query 'Contents[].Key' --output text | tr '\t' '\n' | \
+              grep -E "NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" | sort -u || true)
+            if grep -qx "${d}" /tmp/closures.txt; then
+              test "${#keys[@]}" -eq 0 || { echo "::error::frozen closure ${d} has raw objects"; exit 1; }
+              continue
+            fi
+            test "${#keys[@]}" -eq 1 || { echo "::error::expected one NG raw object ${d}, got ${#keys[@]}"; exit 1; }
+            aws s3 cp "s3://${BUCKET}/${keys[0]}" "/tmp/ngraw/NG_${d}.jsonl.gz" --only-show-errors
+            test -s "/tmp/ngraw/NG_${d}.jsonl.gz"
+          done < /tmp/days.txt
+
+      - name: Run independent trade agent
+        env:
+          STAGE: ${{ matrix.stage }}
+          MODEL: ${{ matrix.model }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/out
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_d0_d3_model_specific_trade_v3_20260819.py \
+            --stage "${STAGE}" --model "${MODEL}" \
+            --base /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz \
+            --held /tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz \
+            --base-lineage /tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz \
+            --held-lineage /tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz \
+            --raw-dir /tmp/ngraw \
+            --out "/tmp/out/NG_EXHAUSTION_D${STAGE}_TRADE_V3_${MODEL}_20260819.json"
+
+      - name: Fail closed on trade invariants
+        env:
+          STAGE: ${{ matrix.stage }}
+          MODEL: ${{ matrix.model }}
+        run: |
+          python - <<'PY'
+          import json,os
+          p=f"/tmp/out/NG_EXHAUSTION_D{os.environ['STAGE']}_TRADE_V3_{os.environ['MODEL']}_20260819.json"
+          d=json.load(open(p))
+          assert d['frozen_exact_depth_counts']=={'0':135860,'1':18837,'2':1592,'3':124,'4':8,'5':1}
+          assert d['implementation_revision']=='V3_CONTINUOUS_LIVE_MARKET_STATE_FIXED_HORIZON_TRADE'
+          assert d['cross_model_vote_used'] is False
+          assert d['target_polarity_is_primary_question'] is False
+          assert d['execution_contract']=='FIXED_HORIZON_FROM_CAUSAL_SIGNAL; NO_FUTURE_CANONICAL_EVENT_CAP'
+          assert 'REALIZED_TARGET_POLARITY_FORBIDDEN' in d['direction_contract']
+          assert d['promotion_performed'] is False
+          assert not any(d['protected_mutations'].values())
+          r=d['result']
+          if r['status']=='MODEL_SPECIFIC_TRADE_AGENT_COMPLETE':
+              assert r['probability_aggregation']=='NONE_MODEL_SPECIFIC_ONLY'
+              assert r['candidate_grid']['future_event_exit_cap'] is False
+              assert r['candidate_grid']['target_polarity_direction_source'] is False
+              if r['signal_phase']=='POST_BIRTH':
+                  assert r['signal_timing_interpretation'].startswith('HISTORICAL_POST_BIRTH_SIGNAL')
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-d${{ matrix.stage }}-trade-v3-${{ matrix.model }}-20260819
+          path: /tmp/out/*.json
+          if-no-files-found: error
+          retention-days: 14
+
+  reconcile:
+    name: Reconcile D0-D3 independent trade evidence
+    needs: trade-agents
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ng-exhaustion-d*-trade-v3-*-20260819
+          path: /tmp/agents
+          merge-multiple: true
+      - name: Reconcile without model voting
+        run: |
+          set -euo pipefail
+          OUT=research/generated/ng_exhaustion_d0_d3_model_specific_trade_v3_20260819
+          mkdir -p "${OUT}"
+          python - <<'PY'
+          import glob,json,shutil
+          from pathlib import Path
+          files=sorted(glob.glob('/tmp/agents/*.json'))
+          docs=[json.load(open(p)) for p in files]
+          if len(docs)!=12: raise SystemExit(f'expected 12 trade artifacts got {len(docs)}')
+          for p in files: shutil.copy2(p,Path('research/generated/ng_exhaustion_d0_d3_model_specific_trade_v3_20260819')/Path(p).name)
+          got={(int(d['stage']),d['model']) for d in docs}
+          exp={(s,m) for s in (0,1,2,3) for m in ('logistic','extra_trees','knn')}
+          if got!=exp: raise SystemExit(f'trade matrix mismatch missing={sorted(exp-got)} extra={sorted(got-exp)}')
+          rows=[]; validated=[]; blocked=[]
+          for d in sorted(docs,key=lambda z:(int(z['stage']),z['model'])):
+              r=d['result']
+              row={
+                  'stage':int(d['stage']),'model':d['model'],'status':r['status'],
+                  'signal_phase':r.get('signal_phase'),'signal_seconds':r.get('signal_seconds'),
+                  'signal_timing_interpretation':r.get('signal_timing_interpretation'),
+                  'discovery_selected_candidate':r.get('discovery_selected_candidate'),
+                  'frozen_candidate_OOT_blocks':r.get('frozen_candidate_OOT_blocks',{}),
+                  'historically_validated_candidate':bool(r.get('historically_validated_candidate',False)),
+              }
+              rows.append(row)
+              if row['historically_validated_candidate']: validated.append(row)
+              if r['status'].startswith('BLOCKED'): blocked.append(row)
+          out={
+              'status':'NG_EXHAUSTION_D0_D3_MODEL_SPECIFIC_TRADE_V3_RECONCILED',
+              'date':'2026-08-19',
+              'implementation_revision':'V3_CONTINUOUS_LIVE_MARKET_STATE_FIXED_HORIZON_TRADE',
+              'model_voting_used':False,
+              'model_probability_aggregation_used':False,
+              'target_polarity_direction_source_used':False,
+              'future_canonical_event_exit_cap_used':False,
+              'independent_trade_results':rows,
+              'historically_validated_candidates':validated,
+              'blocked_no_signal_or_support':blocked,
+              'post_birth_H_rule':'H_RESULTS_ARE_HISTORICAL_ECONOMICS_UNTIL_UPSTREAM_EVENT_MARK_CLOCK_IS_PROVEN',
+              'promotion_performed':False,
+              'policy':'FLAG_AND_DECOMPOSE_NOT_AUTO_KILL',
+              'protected_mutations':{'detector':False,'canonical_rows':False,'phase1':False,'phase2':False,'runway_clock':False,'permanent_frankie':False,'frankie_1':False,'spawn_py':False,'ssos_play':False},
+          }
+          Path(f'{OUT}/NG_EXHAUSTION_D0_D3_MODEL_SPECIFIC_TRADE_ALL_RESULTS_20260819.json').write_text(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          lines=['# NG Exhaustion D0-D3 Model-Specific V3 Trade Research — 2026-08-19','',
+                 'Status: **independent-model fixed-horizon historical trade research; no model voting or future-event exit cap.**','',
+                 'Direction is selected only from confirmed predecessor polarity or causal live price/flow. Realized target polarity is forbidden.','',
+                 '## Independent results','']
+          for r in rows:
+              if r['status'].startswith('BLOCKED'):
+                  msg=r['status']
+              else:
+                  msg=f"{r['signal_phase']} {r['signal_seconds']}s; validated trade={r['historically_validated_candidate']}"
+                  sel=r.get('discovery_selected_candidate')
+                  if sel: msg += f"; {sel['orientation']} / hold {sel['hold_seconds']}s / threshold q{sel['threshold_quantile']:.2f}"
+              lines.append(f"- D{r['stage']} / {r['model']}: {msg}.")
+          lines += ['', '## Execution boundary', '- Every exit is a fixed horizon chosen on discovery only. No future exhaustion/event/endpoint chooses the exit.', '- POST_BIRTH H economics remain historical until the upstream event-mark/discovery timestamp is proven.', '', '## Preservation', '- All candidate failures and model disagreements remain in the per-agent JSON artifacts.', '- No protected artifact was mutated or promoted.', '- `FLAG_AND_DECOMPOSE_NOT_AUTO_KILL` remains in force.', '']
+          Path(f'{OUT}/NG_EXHAUSTION_D0_D3_MODEL_SPECIFIC_TRADE_ALL_FINDINGS_20260819.md').write_text('\n'.join(lines))
+          PY
+      - name: Fail closed on reconciliation
+        run: |
+          python - <<'PY'
+          import json
+          p='research/generated/ng_exhaustion_d0_d3_model_specific_trade_v3_20260819/NG_EXHAUSTION_D0_D3_MODEL_SPECIFIC_TRADE_ALL_RESULTS_20260819.json'
+          d=json.load(open(p))
+          assert d['model_voting_used'] is False
+          assert d['model_probability_aggregation_used'] is False
+          assert d['target_polarity_direction_source_used'] is False
+          assert d['future_canonical_event_exit_cap_used'] is False
+          assert d['promotion_performed'] is False
+          assert not any(d['protected_mutations'].values())
+          PY
+      - name: Commit durable trade outputs
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/generated/ng_exhaustion_d0_d3_model_specific_trade_v3_20260819
+          if git diff --cached --quiet; then
+            echo 'No durable trade output changes to commit.'
+            exit 0
+          fi
+          git commit -m "research: reconcile V3 D0-D3 model-specific trade evidence"
+          git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
