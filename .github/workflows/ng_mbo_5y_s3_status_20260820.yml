@@ -1,0 +1,75 @@
+name: NG MBO 5Y S3 Status 20260820
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - .github/workflows/ng_mbo_5y_s3_status_20260820.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      BUCKET: bento-568968024170-us-east-2-an
+      PREFIX: nymex/ng_mbo_5y_v0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+      - name: Inventory five-year archive without Databento call
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          import boto3
+          s3=boto3.client('s3',region_name=os.environ['AWS_DEFAULT_REGION'])
+          bucket=os.environ['BUCKET']; prefix=os.environ['PREFIX'].strip('/')+'/'
+          rows=[]; token=None
+          while True:
+              kw={'Bucket':bucket,'Prefix':prefix,'MaxKeys':1000}
+              if token: kw['ContinuationToken']=token
+              r=s3.list_objects_v2(**kw); rows.extend(r.get('Contents',[]))
+              if not r.get('IsTruncated'): break
+              token=r['NextContinuationToken']
+          keys=[x['Key'] for x in rows]
+          native=[x for x in rows if '/native/' in x['Key'] and x['Key'].endswith('.dbn.zst')]
+          jobs=[k for k in keys if '/_jobs/' in k and k.endswith('.json')]
+          done=[k for k in keys if '/_done/' in k and k.endswith('.done')]
+          manifests=[k for k in keys if '/manifests/' in k and k.endswith('.json')]
+          year_receipts=[k for k in keys if '/year_receipts/' in k and k.endswith('.json')]
+          out={
+            'schema':'NG_MBO_5Y_S3_STATUS_V1',
+            'bucket':bucket,'prefix':prefix,
+            'submitted_segment_count':len(jobs),
+            'completed_segment_count':len(done),
+            'manifest_count':len(manifests),
+            'native_dbn_object_count':len(native),
+            'native_dbn_bytes':sum(int(x.get('Size',0)) for x in native),
+            'year_receipt_count':len(year_receipts),
+            'submitted_segments':sorted(k.rsplit('/',1)[-1].removesuffix('.json') for k in jobs),
+            'completed_segments':sorted(k.rsplit('/',1)[-1].removesuffix('.done') for k in done),
+            'data_purchase_performed_by_status_probe':False,
+          }
+          Path('research/kalshi/NG_MBO_5Y_S3_STATUS_20260820.json').write_text(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(out,indent=2,sort_keys=True))
+          PY
+      - name: Commit status receipt
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/kalshi/NG_MBO_5Y_S3_STATUS_20260820.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'research: record NG MBO 5Y S3 status'
+            git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fi
