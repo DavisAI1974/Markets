@@ -58,6 +58,14 @@ A finding such as "the scanner withheld a causally knowable state," "the represe
 
 Likewise, the D4/D5 case-study work may identify observability classes or missing causal-state representation, but exact V3 timing counts and model outcomes remain provenance until V4 retests the phenomenon under the corrected continuous geometric/adaptive framework.
 
+## Post-correction gap-review agents
+
+The active `Timing Gap Review`, `Feature Gap Review`, `Support Gap Review`, `Trade Gap Review`, `D1 Secondary Review`, and `Markets Run Watch` were created **after the V3 non-authority problem was already understood**. They are not legacy V3 validators and they are not a mock run. Their purpose is to inspect landed V3 artifacts for defects or omissions in the research machinery while leaving the V3 behavioral outputs non-authoritative.
+
+Their admissible output is limited to research-system diagnosis and V4 hypotheses, including scanner/checkpoint coverage, target-relative timing design, unresolved-overlap representation, inter-event survival/resolution representation, channel fusion, support/calibration/regime composition, model-extraction differences, and prediction-to-execution routing. They may use V3 numbers to expose a design or support mismatch, but those numbers do not become empirical exhaustion laws by appearing in a gap notice.
+
+The reviewers were further prompt-hardened on 2026-08-20 to state this boundary explicitly. That hardening does **not** change their original post-correction mission; it only makes the already-intended authority boundary unambiguous for future runs and handoffs.
+
 ## V4 operating interpretation
 
 V4 starts from the phenomenon, not from reproducing V3 numbers.
