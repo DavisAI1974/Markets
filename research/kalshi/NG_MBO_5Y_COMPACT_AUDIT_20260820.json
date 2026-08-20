@@ -1,0 +1,83 @@
+{
+  "consolidation_key": "nymex/ng_mbo_5y_v0/_consolidation/COMPLETE.json",
+  "consolidation_state": "COMPLETE",
+  "duplicate_expected_interval_count": 3,
+  "duplicate_expected_intervals": [
+    {
+      "end": "2021-09-01",
+      "job_ids": [
+        "GLBX-20260820-BC5D9NNE8L",
+        "GLBX-20260820-HJR44KGA9W"
+      ],
+      "start": "2021-08-20"
+    },
+    {
+      "end": "2023-10-01",
+      "job_ids": [
+        "GLBX-20260820-LMXRP7WC9W",
+        "GLBX-20260820-WQHCPK6VPU"
+      ],
+      "start": "2023-09-01"
+    },
+    {
+      "end": "2025-10-01",
+      "job_ids": [
+        "GLBX-20260820-CTYL3WS4VE",
+        "GLBX-20260820-HLW9EWMX9B"
+      ],
+      "start": "2025-09-01"
+    }
+  ],
+  "estimated_duplicate_quote_overhead_usd": 4.402577984334,
+  "expected_interval_count": 61,
+  "expected_intervals_manifest_complete_count": 1,
+  "expected_intervals_missing_count": 0,
+  "expected_intervals_reserved_no_job_count": 0,
+  "expected_intervals_with_job_count": 61,
+  "manifest_parse_error_count": 0,
+  "native_dbn_bytes": 1470112040,
+  "native_dbn_object_count": 102,
+  "policy": "Do not cancel Databento until safe_to_cancel_databento is true and native hashes/manifests are independently verified.",
+  "range": {
+    "end": "2026-08-20",
+    "start": "2021-08-20"
+  },
+  "safe_to_cancel_databento": false,
+  "schema": "NG_MBO_5Y_COMPACT_AUDIT_V1",
+  "unexpected_interval_count": 4,
+  "unexpected_intervals": [
+    {
+      "end": "2022-09-01",
+      "job_ids": [
+        "GLBX-20260820-4E8DTMA3KL"
+      ],
+      "reservation_keys": [],
+      "start": "2022-08-20"
+    },
+    {
+      "end": "2023-09-01",
+      "job_ids": [
+        "GLBX-20260820-5A87H99EM3"
+      ],
+      "reservation_keys": [],
+      "start": "2023-08-20"
+    },
+    {
+      "end": "2024-09-01",
+      "job_ids": [
+        "GLBX-20260820-E3CFRSJDL7"
+      ],
+      "reservation_keys": [],
+      "start": "2024-08-20"
+    },
+    {
+      "end": "2025-09-01",
+      "job_ids": [
+        "GLBX-20260820-E4CJUY4DSA"
+      ],
+      "reservation_keys": [],
+      "start": "2025-08-20"
+    }
+  ],
+  "unresolved_reservation_object_count": 0
+}
