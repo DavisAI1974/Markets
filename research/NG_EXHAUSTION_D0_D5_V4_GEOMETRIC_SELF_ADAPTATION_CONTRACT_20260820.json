@@ -5,6 +5,25 @@
   "launch_authorized": false,
   "permanent_frankie_mutation_authorized": false,
   "play_promotion_authorized": false,
+  "documentation_update_authorization_20260820": {
+    "inspect_current_pinned_v3_evidence_for_handoff": true,
+    "update_existing_research_docs": true,
+    "create_v4_research_thread_docs": true,
+    "commit_push_documentation_only_to_current_branch": true,
+    "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+    "research_code_change_authorized_by_this_update": false,
+    "rerun_cancel_current_v3_authorized": false,
+    "v4_launch_authorized": false,
+    "protected_artifact_mutation_authorized": false
+  },
+  "interpretation_policy": {
+    "negative_weak_inconclusive_is_failed_chain": false,
+    "drop_chain_for_negative_result": false,
+    "technical_failure_reserved_for_execution_integrity": true,
+    "model_specific_evidence_preserved": true,
+    "cross_model_voting": false,
+    "preserve_every_original_chain_case": true
+  },
   "feature_layer_policy": {
     "mode": "ADDITIVE_ONLY",
     "ordered_layers": [
@@ -81,7 +100,8 @@
     "frozen_selective_lock_rule_per_model_head": true,
     "frozen_and_adaptive_twins_share_discovery_initialization": true,
     "stage_local_adaptation_default": true,
-    "cross_stage_transfer_requires_predeclared_ablation": true
+    "cross_stage_transfer_requires_predeclared_ablation": true,
+    "independent_model_evidence_lanes_preserved": true
   },
   "active_instance_policy": {
     "snapshot_before_instance_start": true,
@@ -146,6 +166,80 @@
     "ALL_EARLIER_CALLS_IMMUTABLE",
     "FULL_PARENT_CANDIDATE_RETENTION_AND_ROLLBACK_PROVENANCE"
   ],
+  "v4_gap_taxonomy": [
+    "MISSING_MEASUREMENT",
+    "COARSE_OR_WRONG_ENCODING",
+    "TIMING_OR_OBSERVABILITY_BOUNDARY",
+    "SUPPORT_OR_CALIBRATION_GAP",
+    "MODEL_EXTRACTION_GAP",
+    "CHANNEL_FUSION_GAP",
+    "TRADE_TRANSLATION_GAP"
+  ],
+  "evidence_seed_requirements": {
+    "v3_evidence_pin": "3dc22b341dd4136b1be16c014e48feb70ee544d6",
+    "D2": {
+      "knn": {
+        "continuation": "BIRTH_T0_FULL_CAUSAL",
+        "eventual_depth": null,
+        "posx": "PRIOR_AGE_0_FULL_CAUSAL",
+        "posx_no_price_causal_also_validates": true
+      },
+      "extra_trees": {
+        "continuation": "BIRTH_T0_FULL_CAUSAL",
+        "eventual_depth": "BIRTH_T0_FULL_CAUSAL",
+        "posx": "PRIOR_AGE_0_FULL_CAUSAL"
+      },
+      "logistic": {
+        "continuation": null,
+        "eventual_depth": null,
+        "posx": "BIRTH_T0_FULL_CAUSAL",
+        "matching_trade": "BLOCKED_NO_INDEPENDENTLY_VALIDATED_CONTINUATION_SIGNAL"
+      }
+    },
+    "D3": {
+      "logistic_primary_full_causal": {
+        "continuation": null,
+        "eventual_depth": null,
+        "posx": null
+      },
+      "extra_trees_primary_full_causal": {
+        "continuation": null,
+        "eventual_depth": null,
+        "posx": null,
+        "price_polarity_only_validates_some_continuation_depth_checkpoints": true
+      },
+      "knn": {
+        "continuation": "PRIOR_AGE_0_FULL_CAUSAL",
+        "eventual_depth": "PRIOR_AGE_1_FULL_CAUSAL",
+        "posx": "H_PLUS_4_FULL_CAUSAL_PROVISIONAL",
+        "no_price_causal_posx_earlier": [
+          "PRIOR_AGE_3",
+          "BIRTH_T0",
+          "H_PLUS_1",
+          "H_PLUS_2",
+          "H_PLUS_3",
+          "H_PLUS_4"
+        ]
+      }
+    },
+    "D5": {
+      "case_study_only": true,
+      "total_cases": 9,
+      "held_cases": 0,
+      "depth4_stops": 8,
+      "depth5_continuations": 1,
+      "population_generalization_allowed": false
+    }
+  },
+  "evidence_derived_required_ablations": [
+    "EXPLICIT_CROSS_LINK_RELATIVE_GEOMETRY",
+    "NORMALIZED_EXHAUSTION_DIPOLE_PRICE_FLOW_BOOK_TRAJECTORIES",
+    "SEPARATE_STRUCTURAL_PRICE_FLOW_BOOK_CHANNEL_ENCODERS_OR_EQUIVALENT_IDENTIFIABLE_ABLATIONS",
+    "STAGE_AWARE_FUSION_GATING_VS_FLAT_CONCATENATION",
+    "GEOMETRY_REGIME_CONDITIONED_CALIBRATION",
+    "INDEPENDENT_MODEL_EXTRACTION_LANES",
+    "SEPARATE_STRUCTURAL_STATE_TRADE_TRANSLATION_RESEARCH"
+  ],
   "sparse_stage_policy": {
     "D4_D5_population_validation": false,
     "D4_D5_case_diagnostic_packets_allowed": true,
@@ -183,6 +277,10 @@
     "FROZEN_V3_BENCHMARK_OUTPUTS"
   ],
   "preservation_policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+  "research_thread_docs": [
+    "research/NG_EXHAUSTION_V4_RESEARCH_THREAD_20260820.md",
+    "research/NG_EXHAUSTION_V4_RESEARCH_THREAD_20260820.json"
+  ],
   "design_sources": [
     "https://arxiv.org/pdf/2506.10943",
     "https://arxiv.org/pdf/2104.13478"

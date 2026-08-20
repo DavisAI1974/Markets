@@ -206,9 +206,9 @@ Do not:
 - require 2-of-3 agreement;
 - median their probabilities;
 - erase disagreement;
-- reject a valid independent OOT result merely because another model fails.
+- reject a valid independent OOT result merely because another model does not validate the same relation.
 
-Preserve independent earliest timing, failures and disagreements model by model and target by target.
+Preserve independent earliest timing, positive findings, negative findings, inconclusive findings and disagreements model by model and target by target.
 
 ---
 
@@ -427,8 +427,8 @@ Use the 2026-08-20 proposal addendum/handoff as the current interpretation. Do n
 1. Create the final pinned V3-T0 launch marker **last**.
 2. Let `.github/workflows/ng_exhaustion_v3_t0_pinned_core_20260820.yml` execute the exact launch commit.
 3. Monitor for its durable reconciliation.
-4. If it fails, patch only active V3 runner/workflow infrastructure and retrigger; do not touch protected artifacts.
-5. When results land, report every model/target independently, including failures/unresolved cases.
+4. If it has a technical failure, patch only active V3 runner/workflow infrastructure and retrigger; do not touch protected artifacts.
+5. When results land, report every model/target independently, including positive, negative, inconclusive and unresolved cases.
 6. Do not launch V4 in this chat.
 7. Do not add the deferred Frankie enhancement in this chat.
 
@@ -457,8 +457,141 @@ After the earlier deferral, the user supplied and approved the following researc
 - immutable active-instance snapshots and prediction ledgers;
 - no permanent Frankie mutation or live promotion.
 
-This later decision supersedes sections 17 and 19 only with respect to **D-series V4 design/implementation scope**. It does not authorize a V4 launch, result inspection, permanent Frankie merge, play promotion, commit, push, or protected-artifact change.
+This later decision supersedes sections 17 and 19 only with respect to **D-series V4 design/implementation scope**. It did not by itself authorize a V4 launch, result inspection, permanent Frankie merge, play promotion, commit, push, or protected-artifact change.
 
 Binding contract:
 
 `research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md`
+
+---
+
+## 22. Later interpretation correction — there are no research “failed chains”
+
+The user explicitly clarified that a test which does not return the hoped-for answer is not a failed chain and must never be used to shrink the research universe.
+
+Current binding interpretation:
+
+- positive result = evidence;
+- negative result = evidence;
+- weak/inconclusive result = evidence;
+- model disagreement = evidence;
+- low-support case = evidence;
+- technical failure = reserved only for execution/integrity problems such as job failure, timeout, invariant violation, corrupt/missing artifact, pin mismatch or leakage.
+
+Every original chain/case remains in the research universe. The working assumption is that a negative/inconclusive lane may be one missing measurement, representation, timing boundary, support condition, model extraction issue or trade-translation step away from becoming informative.
+
+Do not use “drop,” “failed chain,” or similar pruning language for valid research outcomes.
+
+---
+
+## 23. Pinned V3 evidence now seeding V4 research
+
+Both active V3 workflows remain pinned to:
+
+`3dc22b341dd4136b1be16c014e48feb70ee544d6`
+
+The following completed results are now durable **model-specific V3 observations**, not cross-model votes and not permanent Frankie truth.
+
+### D2
+
+**KNN core**
+
+- continuation: T0, FULL_CAUSAL;
+- eventual depth: no independently validated earliest timing;
+- P/O/S/X: PRIOR age 0, FULL_CAUSAL;
+- P/O/S/X also independently validates at PRIOR age 0 in NO_PRICE_CAUSAL.
+
+**ExtraTrees core**
+
+- continuation: T0, FULL_CAUSAL;
+- eventual depth: T0, FULL_CAUSAL;
+- P/O/S/X: PRIOR age 0, FULL_CAUSAL.
+
+**Logistic core/trade**
+
+- continuation: no independently validated earliest timing;
+- eventual depth: no independently validated earliest timing;
+- P/O/S/X: T0, FULL_CAUSAL;
+- matching trade blocks with `BLOCKED_NO_INDEPENDENTLY_VALIDATED_CONTINUATION_SIGNAL`.
+
+The Logistic pair exposes a trade-translation boundary: the predictive layer can contain P/O/S/X information even when the current continuation-gated translator has no path to test it.
+
+Critical timing meaning: PRIOR age 0 is the first instant after all required predecessor information is causally confirmed while still strictly before target birth. It is not “zero seconds before birth.”
+
+### D3
+
+**Logistic core**
+
+- no primary FULL_CAUSAL earliest timing for continuation, eventual depth or P/O/S/X.
+
+**ExtraTrees core**
+
+- no primary FULL_CAUSAL earliest timing for continuation, eventual depth or P/O/S/X;
+- PRICE_POLARITY_ONLY independently validates some tested continuation/depth checkpoints.
+
+**KNN core**
+
+- continuation: PRIOR age 0, FULL_CAUSAL;
+- eventual depth: PRIOR age 1, FULL_CAUSAL;
+- P/O/S/X: H+4, FULL_CAUSAL, provisional under the V3 hierarchy;
+- NO_PRICE_CAUSAL independently sees P/O/S/X earlier at PRIOR age 3 and at T0/H+1/H+2/H+3/H+4.
+
+The same D3 observations therefore expose different information boundaries by model/channel. This seeds V4 hypotheses around nonlinear relative geometry, model extraction and channel fusion; it does not authorize a model vote.
+
+### D5
+
+The completed D5 sparse case-study artifact contains:
+
+- 9 total cases;
+- 5 discovery, 2 validation, 2 confirmation, 0 held;
+- 8 depth-4 stops and 1 depth-5 continuation;
+- 8/9 eligible at PRIOR age 0;
+- 9/9 eligible at T0.
+
+D5 remains case-study evidence only. The single continuation is preserved as a rare informative case; it cannot support a universal D5 law by itself.
+
+### Current V4 data-gap categories
+
+V4 research must explicitly distinguish:
+
+1. missing measurement;
+2. coarse/wrong encoding;
+3. timing/observability boundary;
+4. support/calibration gap;
+5. model extraction gap;
+6. channel fusion gap;
+7. trade translation gap.
+
+Current evidence-seeded V4 research thread:
+
+- `research/NG_EXHAUSTION_V4_RESEARCH_THREAD_20260820.md`
+- `research/NG_EXHAUSTION_V4_RESEARCH_THREAD_20260820.json`
+
+---
+
+## 24. Later explicit documentation authorization — 2026-08-20
+
+The user later explicitly instructed:
+
+> Update docs and create V4 research thread docs, commit and push.
+
+That instruction supersedes the earlier no-result-inspection/no-commit/no-push boundary **only for the documentation task necessary to capture the current evidence and create the V4 research-thread handoff**.
+
+Authorized for this documentation update:
+
+- inspect current pinned V3 Actions logs/artifacts needed to document the evidence boundary;
+- update the current V3/V4 decision, brain/trade and geometric research records;
+- create human- and machine-readable V4 research-thread records;
+- commit/push those documentation-only changes to `chatgpt/ng-exhaustion-entry-timing-revival-20260818`.
+
+Still unauthorized by this instruction:
+
+- launch V4;
+- rerun/cancel current V3 jobs;
+- modify research code as part of this documentation commit;
+- mutate frozen detector/canonical/Phase-1/Phase-2/runway/SSOS evidence;
+- mutate permanent Frankie or Frankie 1;
+- modify `research/kalshi/spawn.py`;
+- promote a trade/play or deploy live.
+
+V4 launch remains a separate explicit decision.

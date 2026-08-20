@@ -213,6 +213,43 @@ For every stage/head/instance/model lane preserve:
 
 The first V4 experiment may batch self-edit proposals and candidate training after several reveals to control cost. Batching is a compute decision only. It may not change what information was available to an instance, reorder chronology, or inject later outcomes into earlier snapshots.
 
+## Evidence-derived V4 data-gap obligations — 2026-08-20 update
+
+Partial pinned V3 evidence now requires V4 to distinguish at least seven kinds of research gap rather than treating all non-validation alike:
+
+1. `MISSING_MEASUREMENT` — the causal information is not represented at all;
+2. `COARSE_OR_WRONG_ENCODING` — the information is present but its relative geometry/scale/context is poorly encoded;
+3. `TIMING_OR_OBSERVABILITY_BOUNDARY` — the information exists only later in the causal movie;
+4. `SUPPORT_OR_CALIBRATION_GAP` — sparse samples or regime/base-rate shifts limit a population claim;
+5. `MODEL_EXTRACTION_GAP` — the same observations contain information one model can recover and another cannot;
+6. `CHANNEL_FUSION_GAP` — combining causal channels degrades or delays extraction relative to a narrower channel;
+7. `TRADE_TRANSLATION_GAP` — predictive structural information exists but the downstream execution translator has no causal path to use it.
+
+The following evidence seeds these obligations without promoting them to permanent truth:
+
+- D2 KNN and ExtraTrees identify P/O/S/X at PRIOR age 0 while continuation is first independently trusted at T0; P/O/S/X must remain its own prediction/timing head.
+- D2 Logistic identifies P/O/S/X at T0 without a validated continuation signal, while its matching continuation-gated trade lane blocks. V4/later trade research must preserve the distinction between prediction and execution translation.
+- D3 KNN finds continuation and eventual depth before birth while Logistic and ExtraTrees do not in their primary FULL_CAUSAL outputs, motivating explicit nonlinear cross-link geometric features and independent model-extraction ablations.
+- D3 KNN's NO_PRICE_CAUSAL P/O/S/X result appears earlier than its FULL_CAUSAL P/O/S/X declaration, while D3 ExtraTrees validates some continuation/depth checkpoints in PRICE_POLARITY_ONLY. V4 must test channel-specific encoding and predeclared stage-aware fusion/gating rather than assume that flat concatenation is optimal.
+- D4/D5 remain support-limited evidence. D5 currently has 9 case-study observations and no held cases; no universal D5 law may be learned from that support.
+
+Required additive V4 research tests therefore include:
+
+- explicit predecessor-to-predecessor and predecessor-to-live-state relative geometry;
+- normalized exhaustion/dipole/price/flow/book trajectories with provenance-preserving masks;
+- separate structural, price/path, flow/dipole and book encoders or clearly separable channel ablations;
+- predeclared fusion/gating ablations against flat concatenation;
+- geometry/regime-conditioned calibration and support reporting by stage/class;
+- preservation of Logistic / ExtraTrees / KNN and V4 graph/sequence variants as independent evidence lanes;
+- separate downstream structural-state-conditioned trade research after predictive timing validates, without replacing the continuation-driven translator by construction.
+
+No result may cause a chain/case to be dropped. Negative, weak and inconclusive outcomes remain part of the research story.
+
+Current evidence-thread records:
+
+- `research/NG_EXHAUSTION_V4_RESEARCH_THREAD_20260820.md`
+- `research/NG_EXHAUSTION_V4_RESEARCH_THREAD_20260820.json`
+
 ## Protected boundaries and launch state
 
 Do not modify:
@@ -227,7 +264,27 @@ Do not modify:
 - frozen SSOS play;
 - any frozen V3 benchmark output.
 
-This contract authorizes D0-D5 V4 **design and implementation work only**. It does not authorize launching V4, reading protected result artifacts, committing, pushing, merging, changing permanent Frankie, or promoting a play.
+The original contract authorized D0-D5 V4 design/implementation only and withheld result inspection, commit/push and launch authority. The user issued a later explicit documentation authorization on 2026-08-20.
+
+### Explicit documentation authorization — 2026-08-20
+
+For this documentation/handoff update only, the following are authorized:
+
+- inspect the current pinned V3 Actions logs/artifacts needed to document the evidence boundary;
+- update existing V3/V4 research records;
+- create the V4 research-thread records;
+- commit and push those **documentation-only** changes to `chatgpt/ng-exhaustion-entry-timing-revival-20260818`.
+
+The following remain unauthorized by this contract/update:
+
+- launching V4;
+- rerunning or canceling the current V3 workflows;
+- changing research code as part of this documentation commit;
+- changing any protected artifact listed above;
+- merging or mutating permanent Frankie / Frankie 1;
+- play/trade promotion or live deployment.
+
+V4 launch remains a separate explicit decision.
 
 ## Design sources
 
