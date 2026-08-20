@@ -37,7 +37,7 @@
     "D5": {"positive_depth_gte_5": 1, "exact_D4_control": 8}
   },
   "characteristics_wall": "ENFORCED",
-  "trade_strategy_handoff": "AFTER_PRIOR_BIRTH_SIGNAL_VALIDATES_ATTACH_DIRECTION_BEHAVIOR_AND_RAW_PRICE_ECONOMICS_FROM_EXACT_PRIOR_SIGNAL_TIMESTAMP; FALLBACK ONLY FOR PRIOR_FAILURES",
+  "trade_strategy_handoff": "AFTER_PRIOR_BIRTH_SIGNAL_VALIDATES_ATTACH_DIRECTION_BEHAVIOR_AND_RAW_PRICE_ECONOMICS_FROM_EXACT_PRIOR_SIGNAL_TIMESTAMP; FALLBACK ONLY_FOR_PRIOR_FAILURES",
   "supersedes_for_primary_birth_research": [
     "NG_EXHAUSTION_D1_D5_PREDICTABILITY_AGENTS_LAUNCH_20260819",
     "NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_AGENTS_LAUNCH_20260819"
@@ -53,5 +53,13 @@
     "frankie_1": false,
     "spawn_py": false,
     "ssos_play": false
+  },
+  "operational_retry": {
+    "attempt": 2,
+    "date": "2026-08-19",
+    "reason": "TAKEOVER_DURABLE_V2_RECONCILED_OUTPUTS_ABSENT",
+    "contract_unchanged": true,
+    "protocol_mutated": false,
+    "runner_mutated": false
   }
 }
