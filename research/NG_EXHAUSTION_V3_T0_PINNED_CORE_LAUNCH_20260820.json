@@ -1,0 +1,96 @@
+{
+  "status": "AUTHORIZED_PINNED_V3_T0_CORE_LAUNCH",
+  "date": "2026-08-20",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "workflow": ".github/workflows/ng_exhaustion_v3_t0_pinned_core_20260820.yml",
+  "workflow_creation_commit": "7b8501b876288658b4c6ec050798c08e3836b8d2",
+  "execution_ref_rule": "GITHUB_SHA_EXACT_LAUNCH_COMMIT_NOT_MOVING_BRANCH_HEAD",
+  "implementation_revision": "V3_CONTINUOUS_LIVE_MARKET_STATE_T0",
+  "primary_questions": [
+    "CHAIN_EXISTENCE_OR_CONTINUATION",
+    "EVENTUAL_DEPTH",
+    "P_O_S_X_STRUCTURAL_STATE_FAMILY"
+  ],
+  "target_polarity_is_primary_question": false,
+  "same_flip_role": "SECONDARY_ANNOTATION_CONTEXT_ONLY",
+  "timing": {
+    "D0": "ROOT_OR_CANDIDATE_RELATIVE_NO_FAKE_DESCENDANT_H_CLOCK",
+    "D1_D5_fixed_benchmark_ladder": [
+      "PRIOR",
+      "T0",
+      "H+1",
+      "H+2",
+      "H+3",
+      "H+4",
+      "H+5"
+    ],
+    "T0_definition": "FROZEN_TARGET_BIRTH_SECOND_NOT_H_ZERO",
+    "V4_relation": "V4_REMOVES_PREDECLARED_PRIOR_H_GRID_AND_IS_NOT_LAUNCHED_BY_THIS_MARKER"
+  },
+  "information_rule": "USE_EVERY_REPRESENTED_FACT_WHEN_CAUSALLY_KNOWN; LIVE_PRICE_DIRECTION_DIPOLE_FLOW_BOOK_REMAIN_VISIBLE_CONTINUOUSLY; UNKNOWN_FUTURE_TARGET_POLARITY_NEVER_BLOCKS_PRIOR_OR_T0",
+  "current_verified_code_blobs": {
+    "live_checkpoint_state": "8afb71ee6238a541897ea1302f395a2035b23061",
+    "v3_feature_surface_t0": "679da1a9885daa5acda5b377fb5044cda84d9809",
+    "v3_d1_d5_runner_t0": "d1aecfbc12b97c4955cf44a7adc11996efc22407",
+    "v3_d0_runner": "e299af923bdb7972ba39556df37834f1eb39b076"
+  },
+  "frozen_exact_depth_counts": {
+    "D0": 135860,
+    "D1": 18837,
+    "D2": 1592,
+    "D3": 124,
+    "D4": 8,
+    "D5": 1
+  },
+  "models": [
+    "logistic",
+    "extra_trees",
+    "knn"
+  ],
+  "matrix_lane_count": 14,
+  "D4_D5": "LOW_SUPPORT_CASE_STUDY_PRESERVE_ALL",
+  "cross_model_vote": false,
+  "probability_aggregation": false,
+  "frozen_artifacts": {
+    "base": {
+      "artifact_id": 9281733364,
+      "sha256": "f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1"
+    },
+    "held": {
+      "artifact_id": 9281272840,
+      "sha256": "21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e"
+    },
+    "lineage": {
+      "artifact_id": 9289929292,
+      "sha256": "a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95"
+    },
+    "reconcile": {
+      "artifact_id": 9306082330,
+      "sha256": "f17c130df029429bfbc35067d1cc9d16128ca4fb227dd37f3fb4fbb8bbaf8875"
+    }
+  },
+  "mandatory_history": "research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md",
+  "chat_decision_record": "research/NG_EXHAUSTION_V3_V4_CHAT_DECISIONS_ALL_NOTES_20260820.md",
+  "proposal_addendum": "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_ADDENDUM_20260820.md",
+  "handoff": "CHATGPT_HANDOFF_NG_EXHAUSTION_V3_MONITOR_V4_NEXT_20260820.md",
+  "kickoff": "CHATGPT_KICKOFF_NG_EXHAUSTION_V3_MONITOR_V4_20260820.md",
+  "expected_outputs": [
+    "research/generated/ng_exhaustion_v3_t0_pinned_core_20260820/NG_EXHAUSTION_V3_T0_PINNED_CORE_ALL_RESULTS_20260820.json",
+    "research/generated/ng_exhaustion_v3_t0_pinned_core_20260820/NG_EXHAUSTION_V3_T0_PINNED_CORE_ALL_FINDINGS_20260820.md"
+  ],
+  "v4_launch_authorized": false,
+  "deferred_frankie_enhancement_authorized": false,
+  "promotion_performed": false,
+  "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+  "protected_mutations": {
+    "detector": false,
+    "canonical_rows": false,
+    "phase1": false,
+    "phase2": false,
+    "runway_clock": false,
+    "permanent_frankie": false,
+    "frankie_1": false,
+    "spawn_py": false,
+    "ssos_play": false
+  }
+}
