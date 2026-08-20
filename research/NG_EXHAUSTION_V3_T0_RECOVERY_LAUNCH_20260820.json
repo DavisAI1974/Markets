@@ -1,0 +1,13 @@
+{
+  "status": "AUTHORIZED_V3_T0_RECOVERY_ONLY",
+  "date": "2026-08-20",
+  "source_launch_commit": "b0e5d375b936c5ba82a3ffdc9c9f1db2b7a46732",
+  "source_workflow": ".github/workflows/ng_exhaustion_v3_t0_pinned_core_20260820.yml",
+  "recovery_workflow": ".github/workflows/ng_exhaustion_v3_t0_recover_pinned_artifacts_20260820.yml",
+  "scope": "RECOVER_AND_PUBLISH_EXISTING_EXACT_COMMIT_PINNED_V3_AGENT_ARTIFACTS_ONLY",
+  "rerun_agents": false,
+  "modify_v3_model_logic": false,
+  "modify_v4": false,
+  "promotion_performed": false,
+  "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL"
+}
