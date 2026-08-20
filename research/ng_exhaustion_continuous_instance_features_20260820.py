@@ -25,9 +25,9 @@ import ng_exhaustion_live_checkpoint_state_20260819 as live
 
 IMPLEMENTATION_REVISION = "V4_CONTINUOUS_PER_INSTANCE_TIMING"
 PRIMARY_VIEW = "FULL_CAUSAL"
-TIMING_POLICY = "NO_PREDECLARED_PRIOR_OR_H_GRID; SCORE_CAUSAL_TRAJECTORY_AND_ALIGN_DECISION_TIME_TO_T0_ONLY_AFTER_PREDICTIONS_EXIST"
+TIMING_POLICY = "NO_PREDECLARED_PRIOR_OR_H_GRID; SCORE_EVERY_CAUSAL_SECOND_AND_ALIGN_DECISION_TIME_TO_T0_ONLY_AFTER_PREDICTIONS_EXIST"
 TARGET_T0_FEATURE_POLICY = "FROZEN_TARGET_T0_AND_TARGET_RELATIVE_FEATURES_WITHHELD_FROM_PRIMARY_MODEL; T0_USED_ONLY_FOR_POSTHOC_TIMING_COORDINATE"
-TRAJECTORY_END_POLICY = "AUTHORITATIVE_TAPE_END_ONLY; FUTURE_CANONICAL_EVENT_TIMES_NEVER_BOUND_OR_STOP_PRIMARY_SCORING"
+TRAJECTORY_END_POLICY = "NO_FIXED_TIME_HORIZON; UNRESOLVED_STAGE_IS_CENSORED_AT_NEXT_ACTUAL_CANONICAL_BIRTH_OR_AUTHORITATIVE_WEEK_TAPE_END; CENSOR_TIME_IS_NOT_A_MODEL_FEATURE"
 
 
 def load_cache(cases: list[dict[str, Any]], raw_dir: str):
@@ -41,28 +41,35 @@ def predecessor_available_time(case: dict[str, Any]) -> int | None:
     return max(int(x) for x in confirms)
 
 
-def trajectory_bounds(case: dict[str, Any], cache) -> tuple[int, int] | None:
-    """Natural historical scoring window; boundaries are never model features.
+def stage_censor_time(case: dict[str, Any], cache) -> int:
+    """First second that no longer belongs to this stage's prediction window.
 
-    Start is the latest represented predecessor causal confirmation. End is the
-    last authoritative trade second in that frozen week. No future target/event
-    timestamp is used to shorten, extend, or otherwise shape the scoring window.
+    The next actual canonical birth after the candidate is a posthoc censoring
+    boundary, never a model feature or countdown. If absent, authoritative tape end
+    closes the historical opportunity window.
     """
+    for e in case.get("extra", []):
+        if e is not None:
+            return int(e["t0_idx"])
+    return int(math.floor(float(cache["last_trade"][case["week"]]))) + 1
+
+
+def trajectory_bounds(case: dict[str, Any], cache) -> tuple[int, int] | None:
     start = predecessor_available_time(case)
     if start is None:
         return None
-    end = int(math.floor(float(cache["last_trade"][case["week"]])))
+    end = stage_censor_time(case, cache) - 1
     if end < int(start):
         return None
     return int(start), int(end)
 
 
 def continuous_feature_row(case: dict[str, Any], cutoff: int, cache, view: str = PRIMARY_VIEW):
-    """Fixed-width stage feature at an arbitrary causal second.
+    """Fixed-width feature at an arbitrary causal second.
 
     No target t0, seconds-to-birth, PRIOR/H identity, target polarity, target state,
-    or target-relative price anchor is supplied. The model sees confirmed predecessor
-    memory plus the continuously observed raw market movie through `cutoff`.
+    target-relative price anchor, or censor countdown is supplied. The model sees
+    confirmed predecessor memory plus the observed raw market movie through cutoff.
     """
     start = predecessor_available_time(case)
     if start is None or int(cutoff) < int(start):
@@ -85,7 +92,7 @@ def continuous_feature_row(case: dict[str, Any], cutoff: int, cache, view: str =
 
 
 def birth_relative_coordinate(case: dict[str, Any], decision_time: int, stage: int) -> dict[str, Any]:
-    """Convert a decision timestamp to PRIOR/T0/H only after scoring is complete."""
+    """Convert a completed decision timestamp to PRIOR/T0/H for reporting only."""
     t0 = int(case["target"]["t0_idx"])
     delta = int(decision_time) - t0
     if stage == 0:
@@ -102,10 +109,10 @@ def birth_relative_coordinate(case: dict[str, Any], decision_time: int, stage: i
 
 
 def deterministic_sample_times(case: dict[str, Any], cache, count: int, salt: str) -> list[int]:
-    """Timing-agnostic uniform samples inside the natural trajectory.
+    """Timing-agnostic training samples inside the natural stage trajectory.
 
     `count` is a compute/training budget only. No PRIOR/H/t0-relative timestamp is
-    favored, and the primary OOT scorer is evaluated at every causal second.
+    favored. OOT timing is still scored at every causal second until lock/censoring.
     """
     b = trajectory_bounds(case, cache)
     if b is None or count <= 0:
