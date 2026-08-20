@@ -1,0 +1,48 @@
+{
+  "status": "AUTHORIZED_D0_FULL_CAUSAL_RECOVERY_LAUNCH",
+  "date": "2026-08-19",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "contract": "D0_TERMINALITY_EVENTUAL_DEPTH_FIRST_CHAIN_TYPE_EARLIEST_ROOT_CAUSAL_TIME",
+  "primary_information_view": "FULL_CAUSAL",
+  "root_clock": {
+    "name": "ROOT_AGE",
+    "first_pass_seconds_after_root_confirmation": [0, 1, 2, 3, 4, 5],
+    "eligibility": "STRICTLY_BEFORE_NEXT_CANONICAL_EVENT_T0",
+    "H_used": false
+  },
+  "targets": [
+    "D0_TERMINALITY",
+    "EVENTUAL_DEPTH",
+    "FIRST_CHAIN_TYPE"
+  ],
+  "models": [
+    "logistic",
+    "extra_trees",
+    "knn"
+  ],
+  "cross_model_vote": false,
+  "frozen_population": {
+    "exact_d0_total": 135860,
+    "executable_exact_d0": 135823,
+    "d1plus_controls": 20562,
+    "week_end_censored_d0": 37
+  },
+  "followups_after_durable_results": [
+    "D0_VS_ONE_MINUS_D1_COMPLEMENT_CROSSCHECK",
+    "ROOT_RETAINED_VS_ROOT_ABLATED_D2_D3",
+    "MODEL_SPECIFIC_D0_TRADE_ECONOMICS_FROM_EXACT_CAUSAL_SIGNAL"
+  ],
+  "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+  "promotion_performed": false,
+  "protected_mutations": {
+    "detector": false,
+    "canonical_rows": false,
+    "phase1": false,
+    "phase2": false,
+    "runway_clock": false,
+    "permanent_frankie": false,
+    "frankie_1": false,
+    "spawn_py": false,
+    "ssos_play": false
+  }
+}
