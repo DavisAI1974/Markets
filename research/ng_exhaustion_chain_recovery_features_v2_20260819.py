@@ -7,6 +7,21 @@ from ng_exhaustion_chain_recovery_features_20260819 import *
 import ng_exhaustion_chain_recovery_features_20260819 as v1
 
 POST_BIRTH_STATIC_POLICY = "TARGET_SPECIFIC_STATIC_AND_POLARITY_REQUIRE_CAUSAL_CONFIRMATION; PRECONFIRM_TARGET_PRICE_IS_RAW_UNORIENTED_FROM_FROZEN_T0"
+PRIMARY_CHAIN_TYPE_POLICY = "P_O_S_X_STRUCTURAL_STATE_ONLY; SAME_FLIP_IS_PRESERVED_SECONDARY_ANNOTATION_NOT_A_PRIMARY_PREDICTION_TARGET"
+
+
+def build_cases(events, lineage, stage: int):
+    cases, censored = v1.build_cases(events, lineage, stage)
+    for c in cases:
+        combined = c.get("chain_type")
+        c["chain_transition_annotation"] = None
+        if combined and "|" in str(combined):
+            state, rel = str(combined).split("|", 1)
+            c["chain_state_family"] = state
+            c["chain_transition_annotation"] = rel
+        else:
+            c["chain_state_family"] = None
+    return cases, censored
 
 
 def event_structure_features(e: dict | None, cutoff: int, allow_birth_static: bool = False) -> list[float]:
@@ -78,6 +93,19 @@ def feature_row(case: dict, stage: int, phase: str, sec: int, cache, view: str):
         born = e is not None and int(e["t0_idx"]) <= cutoff
         parts.append(event_vector(e if born else None, case["week"], cutoff, cache, False, view, False))
     return np.concatenate(parts), lead
+
+
+def target_label(case: dict, target: str):
+    if target == "CONTINUATION":
+        return str(int(case["continuation"]))
+    if target == "EVENTUAL_DEPTH":
+        return str(int(case["final_depth"]))
+    if target == "CHAIN_TYPE_FAMILY":
+        # Primary type recovery is structural state/family only. SAME/FLIP is
+        # deliberately not part of this label and therefore cannot cause a PRIOR
+        # to fail, become ineligible, or be scored as a polarity prediction.
+        return case.get("chain_state_family")
+    raise ValueError(target)
 
 
 def dataset(cases, stage, phase, sec, cache, view, target):
