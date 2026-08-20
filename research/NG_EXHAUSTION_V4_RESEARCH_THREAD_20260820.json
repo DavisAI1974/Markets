@@ -1,0 +1,165 @@
+{
+  "thread_id": "NG_EXHAUSTION_V4_RESEARCH_THREAD_20260820",
+  "status": "ACTIVE_V4_RESEARCH_THREAD_DESIGN_HANDOFF_ONLY",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "v3_evidence_pin": "3dc22b341dd4136b1be16c014e48feb70ee544d6",
+  "evidence_runs": {
+    "v3_t0_pinned_core": 32359639305,
+    "d0_d3_model_specific_trade": 32359639396
+  },
+  "authorization": {
+    "inspect_current_v3_evidence_for_documentation": true,
+    "update_create_research_documentation": true,
+    "commit_push_documentation_to_current_branch": true,
+    "v4_launch_authorized": false,
+    "rerun_or_cancel_v3_jobs_authorized": false,
+    "research_code_change_authorized_by_this_thread": false,
+    "permanent_frankie_mutation_authorized": false,
+    "play_promotion_authorized": false,
+    "protected_artifact_mutation_authorized": false
+  },
+  "interpretation_policy": {
+    "negative_weak_or_inconclusive_is_failed_chain": false,
+    "drop_chain_for_negative_result": false,
+    "technical_failure_reserved_for_execution_or_integrity": true,
+    "model_specific_evidence_preserved": true,
+    "cross_model_voting_allowed": false,
+    "standing_policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL"
+  },
+  "frozen_exact_depth_counts": {
+    "D0": 135860,
+    "D1": 18837,
+    "D2": 1592,
+    "D3": 124,
+    "D4": 8,
+    "D5": 1
+  },
+  "gap_taxonomy": [
+    "MISSING_MEASUREMENT",
+    "COARSE_OR_WRONG_ENCODING",
+    "TIMING_OR_OBSERVABILITY_BOUNDARY",
+    "SUPPORT_OR_CALIBRATION_GAP",
+    "MODEL_EXTRACTION_GAP",
+    "CHANNEL_FUSION_GAP",
+    "TRADE_TRANSLATION_GAP"
+  ],
+  "landed_v3_evidence_seed": {
+    "D2": {
+      "knn": {
+        "continuation": "BIRTH_T0_FULL_CAUSAL",
+        "eventual_depth": null,
+        "posx": "PRIOR_AGE_0_FULL_CAUSAL",
+        "posx_no_price_causal_also_validates": true,
+        "trade": "IN_PROGRESS"
+      },
+      "extra_trees": {
+        "continuation": "BIRTH_T0_FULL_CAUSAL",
+        "eventual_depth": "BIRTH_T0_FULL_CAUSAL",
+        "posx": "PRIOR_AGE_0_FULL_CAUSAL",
+        "trade": "IN_PROGRESS"
+      },
+      "logistic": {
+        "continuation": null,
+        "eventual_depth": null,
+        "posx": "BIRTH_T0_FULL_CAUSAL",
+        "trade": "BLOCKED_NO_INDEPENDENTLY_VALIDATED_CONTINUATION_SIGNAL",
+        "trade_translation_boundary": true
+      }
+    },
+    "D3": {
+      "logistic": {
+        "continuation": null,
+        "eventual_depth": null,
+        "posx": null,
+        "trade": "IN_PROGRESS"
+      },
+      "extra_trees": {
+        "primary_full_causal_continuation": null,
+        "primary_full_causal_eventual_depth": null,
+        "primary_full_causal_posx": null,
+        "price_polarity_only_validates_some_continuation_depth_checkpoints": true,
+        "trade": "IN_PROGRESS"
+      },
+      "knn": {
+        "continuation": "PRIOR_AGE_0_FULL_CAUSAL",
+        "eventual_depth": "PRIOR_AGE_1_FULL_CAUSAL",
+        "posx": "H_PLUS_4_FULL_CAUSAL_PROVISIONAL",
+        "no_price_causal_posx_earlier": [
+          "PRIOR_AGE_3",
+          "BIRTH_T0",
+          "H_PLUS_1",
+          "H_PLUS_2",
+          "H_PLUS_3",
+          "H_PLUS_4"
+        ],
+        "trade": "IN_PROGRESS"
+      }
+    },
+    "D5": {
+      "mode": "LOW_SUPPORT_CASE_STUDY_ONLY",
+      "total_cases": 9,
+      "discovery_cases": 5,
+      "validation_cases": 2,
+      "confirmation_cases": 2,
+      "held_cases": 0,
+      "stopped_at_depth_4": 8,
+      "continued_to_depth_5": 1,
+      "eligible_prior_age_0_cases": 8,
+      "eligible_t0_cases": 9,
+      "population_timing_claim_authorized": false
+    }
+  },
+  "v4_research_threads": [
+    "CONTINUOUS_PER_INSTANCE_TIMING",
+    "ORDERED_GEOMETRIC_CHAIN_STATE",
+    "CHANNEL_SPECIFIC_ENCODING_AND_FUSION",
+    "GEOMETRY_REGIME_CONDITIONED_CALIBRATION",
+    "MODEL_EXTRACTION_ABLATIONS",
+    "ADAPTIVE_LEARN_AFTER_REVEAL",
+    "STRUCTURAL_STATE_TRADE_TRANSLATION",
+    "SPARSE_STAGE_PRESERVATION"
+  ],
+  "evidence_seeded_hypotheses": [
+    "POSX_CAN_BE_VISIBLE_BEFORE_CONTINUATION_CERTAINTY",
+    "FLAT_CAUSAL_CHANNEL_CONCATENATION_MAY_HIDE_OR_DEGRADE_EARLIER_SIGNAL",
+    "RELATIVE_CROSS_LINK_GEOMETRY_MAY_EXPOSE_INFORMATION_SOME_V3_MODELS_ONLY_FIND_IMPLICITLY",
+    "DEEPER_STAGE_SUPPORT_AND_REGIME_SHIFT_REQUIRE_CONDITIONAL_CALIBRATION",
+    "CURRENT_TRADE_TRANSLATOR_CAN_STRAND_POSX_INFORMATION_BEHIND_CONTINUATION_GATE"
+  ],
+  "pending_v3_snapshot": [
+    "D0_LOGISTIC_CORE",
+    "D0_EXTRA_TREES_CORE",
+    "D0_KNN_CORE",
+    "D1_LOGISTIC_CORE",
+    "D1_EXTRA_TREES_CORE",
+    "D1_KNN_CORE",
+    "D4_CASE_STUDY",
+    "D0_LOGISTIC_TRADE",
+    "D1_LOGISTIC_TRADE",
+    "D2_KNN_TRADE",
+    "D2_EXTRA_TREES_TRADE",
+    "D3_LOGISTIC_TRADE",
+    "D3_KNN_TRADE",
+    "D3_EXTRA_TREES_TRADE"
+  ],
+  "protected_boundaries": [
+    "FROZEN_DETECTOR",
+    "CANONICAL_ROWS_EVIDENCE",
+    "PHASE1_LINEAGE_SCORES",
+    "PHASE2_FINDINGS",
+    "FROZEN_RUNWAY_CLOCK",
+    "PERMANENT_FRANKIE",
+    "FRANKIE_1",
+    "RESEARCH_KALSHI_SPAWN_PY",
+    "FROZEN_SSOS_PLAY",
+    "FROZEN_V3_BENCHMARK_OUTPUTS"
+  ],
+  "related_docs": [
+    "research/NG_EXHAUSTION_V4_RESEARCH_THREAD_20260820.md",
+    "research/NG_EXHAUSTION_V3_V4_CHAT_DECISIONS_ALL_NOTES_20260820.md",
+    "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_ADDENDUM_20260820.md",
+    "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md",
+    "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.json",
+    "research/NG_EXHAUSTION_V4_CONTINUOUS_ADAPTIVE_WALKFORWARD_CONTRACT_20260820.md"
+  ]
+}
