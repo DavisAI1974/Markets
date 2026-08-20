@@ -8,7 +8,7 @@ on:
       - '.github/workflows/ng_live_verify_start_20260820.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   verify-start:
@@ -19,8 +19,14 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: us-east-2
       INSTANCE_ID: i-08cee7171c0a76a04
+      RECEIPT: research/kalshi/NG_LIVE_HEALTH_RECEIPT_20260820.json
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+
       - name: Validate AWS credential binding
+        id: aws
         shell: bash
         run: |
           set -euo pipefail
@@ -39,9 +45,10 @@ jobs:
           test "$ping_status" = "Online"
 
       - name: Verify collector and start only if inactive
+        id: remote
         shell: bash
         run: |
-          set -euo pipefail
+          set -u
           python - <<'PY'
           import json
           command = r'''set -eu
@@ -64,9 +71,8 @@ jobs:
             sleep 2
           done
           systemctl is-active --quiet markets-ng-live.service
-          systemctl is-active --quiet markets-ng-live-watchdog.timer || systemctl is-active --quiet markets-ng-live-watchdog.service || true
           python3 - <<'PY2'
-          import json, time
+          import json
           path = '/var/lib/markets/ng_live/health.json'
           p = json.load(open(path, encoding='utf-8'))
           safe = {
@@ -103,16 +109,55 @@ jobs:
             --comment 'Verify/start Markets NG live MBO collector; no V4 activity' \
             --parameters file:///tmp/ssm-params.json \
             --query 'Command.CommandId' \
-            --output text)"
+            --output text)" || exit 30
           echo "ssm_command_id=$command_id"
-          aws ssm wait command-executed --command-id "$command_id" --instance-id "$INSTANCE_ID"
+          aws ssm wait command-executed --command-id "$command_id" --instance-id "$INSTANCE_ID" || true
           aws ssm get-command-invocation \
             --command-id "$command_id" \
             --instance-id "$INSTANCE_ID" \
-            --query '{Status:Status,Output:StandardOutputContent,Error:StandardErrorContent}' \
-            --output json
-          status="$(aws ssm get-command-invocation \
-            --command-id "$command_id" \
-            --instance-id "$INSTANCE_ID" \
-            --query 'Status' --output text)"
+            --output json > /tmp/ng-live-invocation.json || exit 31
+          cat /tmp/ng-live-invocation.json
+          status="$(python - <<'PY'
+          import json
+          print(json.load(open('/tmp/ng-live-invocation.json'))['Status'])
+          PY
+          )"
+          python - <<'PY'
+          import datetime as dt, json, os
+          inv = json.load(open('/tmp/ng-live-invocation.json', encoding='utf-8'))
+          receipt = {
+              'schema': 'NG_LIVE_HEALTH_RECEIPT_V1',
+              'checked_at_utc': dt.datetime.now(dt.timezone.utc).isoformat(),
+              'instance_id': os.environ['INSTANCE_ID'],
+              'source_commit': os.environ.get('GITHUB_SHA'),
+              'workflow_run_id': os.environ.get('GITHUB_RUN_ID'),
+              'ssm_status': inv.get('Status'),
+              'stdout': inv.get('StandardOutputContent', ''),
+              'stderr': inv.get('StandardErrorContent', ''),
+              'secrets_exposed': False,
+              'v4_activity': False,
+          }
+          os.makedirs(os.path.dirname(os.environ['RECEIPT']), exist_ok=True)
+          with open(os.environ['RECEIPT'], 'w', encoding='utf-8') as f:
+              json.dump(receipt, f, indent=2, sort_keys=True)
+              f.write('\n')
+          PY
           test "$status" = "Success"
+
+      - name: Commit sanitized health receipt
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -s "$RECEIPT" ]; then
+            echo "No receipt produced; remote step failed before an SSM invocation result was available."
+            exit 0
+          fi
+          git config user.name "Markets Ops Bot"
+          git config user.email "noreply@openai.com"
+          git add "$RECEIPT"
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "ops: record sanitized NG live health receipt"
+          git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
