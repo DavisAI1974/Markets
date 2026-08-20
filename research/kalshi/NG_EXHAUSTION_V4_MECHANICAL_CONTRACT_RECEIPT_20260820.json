@@ -11,7 +11,7 @@
     "research/kalshi/tests/test_ng_exhaustion_v4_gate_verifier.py": "54674e0f0cb6cb3e7c661bbb3522cbe866eb6ce400088f0f7bf6a65948263f0f",
     "research/kalshi/tests/test_ng_exhaustion_v4_history_support.py": "d4ab48c08471118b6f336eefdf0fbef79f1333059b0ccb69b467e8c253020c2c",
     "research/kalshi/tests/test_ng_exhaustion_v4_lock_outcome.py": "c9dd077f0435058e681489842423b7134395861f8bdcf59b32633909ff62398d",
-    "research/kalshi/tests/test_ng_exhaustion_v4_mechanics.py": "9beb9a65990018d2372cb695608f8c70352675314f95c2c219bce1c71648e3ab"
+    "research/kalshi/tests/test_ng_exhaustion_v4_mechanics.py": "137fd18f78d29ea6893f5938f11f8135b7501c8436a3c979f4269bd7da917de0"
   },
   "p0_real_evidence_executed": false,
   "promotion_performed": false,
@@ -23,10 +23,10 @@
     "permanent_frankie": false,
     "spawn_py": false
   },
-  "pytest_exit_code": 1,
-  "runner_commit": "71f95c79f045c870866994e94db8c55226d174e3",
+  "pytest_exit_code": 0,
+  "runner_commit": "77a9bcae1084a67273eda5a110efcd9e8f846d75",
   "schema": "NG_EXHAUSTION_V4_MECHANICAL_CONTRACT_RECEIPT_V1",
-  "test_output": "...........F...............                                              [100%]\n=================================== FAILURES ===================================\n______ test_probability_movie_and_first_lock_are_recomputed_not_asserted _______\n\n    def test_probability_movie_and_first_lock_are_recomputed_not_asserted():\n        e1=prob(10.0,probs=(0.79,0.21))\n        e2=prob(11.0,e1.entry_hash,(0.81,0.19))\n        e3=prob(12.0,e2.entry_hash,(0.82,0.18))\n        assert validate_probability_movie([e1,e2,e3]) == e3.entry_hash\n        lock=recompute_first_lock([e1,e2,e3],threshold=.80,persistence=2,lock_policy_sha256=F)\n        assert lock.status==\"LOCKED\" and lock.entry_hash==e3.entry_hash\n>       assert lock.evidence_entry_hashes==(e2.entry_hash,e3.entry_hash)\nE       AssertionError: assert ['66a448885e4...fae693a44769'] == ('66a448885e4...fae693a44769')\nE         \nE         Full diff:\nE         - (\nE         + [\nE               '66a448885e43de22716dd9ef8feff2ad54fc397e22dc4c1443ba3137112f8b4d',\nE               '844ff7bb0b7f4bee426c63d15854437d6935a1a838b1b350f089fae693a44769',\nE         - )\nE         + ]\n\nresearch/kalshi/tests/test_ng_exhaustion_v4_mechanics.py:92: AssertionError\n=========================== short test summary info ============================\nFAILED research/kalshi/tests/test_ng_exhaustion_v4_mechanics.py::test_probability_movie_and_first_lock_are_recomputed_not_asserted - AssertionError: assert ['66a448885e4...fae693a44769'] == ('66a448885e4...fae693a44769')\n  \n  Full diff:\n  - (\n  + [\n        '66a448885e43de22716dd9ef8feff2ad54fc397e22dc4c1443ba3137112f8b4d',\n        '844ff7bb0b7f4bee426c63d15854437d6935a1a838b1b350f089fae693a44769',\n  - )\n  + ]\n1 failed, 26 passed in 0.10s\n",
-  "tests_passed": false,
+  "test_output": "...........................                                              [100%]\n27 passed in 0.17s\n",
+  "tests_passed": true,
   "v4_empirical_launch": false
 }
