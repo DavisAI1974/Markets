@@ -75,3 +75,5 @@ jobs:
             git commit -m 'research: record V4 mechanical contract verification'
             git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
           fi
+
+# Trigger revision: isolated contract verification authorized; no V4 launch.
