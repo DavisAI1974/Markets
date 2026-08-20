@@ -8,9 +8,11 @@ on:
       - research/kalshi/ng_exhaustion_v4_causal_clock.py
       - research/kalshi/ng_exhaustion_v4_mechanics.py
       - research/kalshi/ng_exhaustion_v4_history_support.py
+      - research/kalshi/frankie_p0_real_evidence_plan.py
       - research/kalshi/tests/test_ng_exhaustion_v4_causal_clock.py
       - research/kalshi/tests/test_ng_exhaustion_v4_mechanics.py
       - research/kalshi/tests/test_ng_exhaustion_v4_history_support.py
+      - research/kalshi/tests/test_frankie_p0_real_evidence_plan.py
       - .github/workflows/ng_exhaustion_v4_mechanical_contracts_20260820.yml
   workflow_dispatch:
 
@@ -29,13 +31,14 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m pip install --quiet pytest
-      - name: Run isolated V4 contract tests
+      - name: Run isolated V4 and P0 plan contract tests
         run: |
           set -euo pipefail
           python -m pytest -q \
             research/kalshi/tests/test_ng_exhaustion_v4_causal_clock.py \
             research/kalshi/tests/test_ng_exhaustion_v4_mechanics.py \
-            research/kalshi/tests/test_ng_exhaustion_v4_history_support.py | tee /tmp/v4_contract_tests.txt
+            research/kalshi/tests/test_ng_exhaustion_v4_history_support.py \
+            research/kalshi/tests/test_frankie_p0_real_evidence_plan.py | tee /tmp/v4_contract_tests.txt
       - name: Write hash-bound verification receipt
         run: |
           python - <<'PY'
@@ -45,9 +48,11 @@ jobs:
             'research/kalshi/ng_exhaustion_v4_causal_clock.py',
             'research/kalshi/ng_exhaustion_v4_mechanics.py',
             'research/kalshi/ng_exhaustion_v4_history_support.py',
+            'research/kalshi/frankie_p0_real_evidence_plan.py',
             'research/kalshi/tests/test_ng_exhaustion_v4_causal_clock.py',
             'research/kalshi/tests/test_ng_exhaustion_v4_mechanics.py',
             'research/kalshi/tests/test_ng_exhaustion_v4_history_support.py',
+            'research/kalshi/tests/test_frankie_p0_real_evidence_plan.py',
           ]
           files={p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in paths}
           out={
@@ -58,6 +63,7 @@ jobs:
             'files':files,
             'v4_empirical_launch':False,
             'promotion_performed':False,
+            'p0_real_evidence_executed':False,
             'protected_mutations':{
               'frozen_detector':False,'frozen_canonical_evidence':False,'frozen_runway_clock':False,
               'permanent_frankie':False,'frankie_1':False,'spawn_py':False,
@@ -76,4 +82,4 @@ jobs:
             git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
           fi
 
-# Trigger revision: isolated contract verification authorized; no V4 launch.
+# Trigger revision: P0 plan contract added; still no empirical run or V4 launch.
