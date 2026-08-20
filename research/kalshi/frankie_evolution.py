@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from frankie_core import GateStop, atomic_write_json, safe_id, sha256_json
-from frankie_evaluation_controls import validate_release_exposure_audit
+from frankie_evaluation_controls import SHA256_RE, validate_release_exposure_audit
 
 SCHEMA_VERSION = "1.0"
 EXECUTION_ENABLED = False
@@ -128,9 +128,12 @@ class ReleaseEvaluation:
     protected_failures: int
     catastrophic_failures: int
     stratum_counts: dict[str, dict[str, int]]
+    locked_evaluator_id: str
+    locked_evaluator_hash: str
     evaluator_locked: bool
     permissions_locked: bool
     rollback_verified: bool
+    rollback_artifact_hash: str
     untouched_forward: bool
     release_split_reuse_count: int
     holdout_firewall_passed: bool
@@ -269,9 +272,12 @@ def evaluate_release(
     split_precommitted: bool,
     isolated_trial_worker: bool,
     required_tests_passed: bool,
+    locked_evaluator_id: str,
+    locked_evaluator_hash: str,
     evaluator_locked: bool,
     permissions_locked: bool,
     rollback_verified: bool,
+    rollback_artifact_hash: str,
     untouched_forward: bool,
     release_split_reuse_count: int,
     held_out_split_hash: str,
@@ -296,6 +302,7 @@ def evaluate_release(
     reasons: list[str] = []
     verdict = "REJECT"
     normalized_split_id = safe_id(held_out_split_id)
+    normalized_evaluator_id = safe_id(locked_evaluator_id)
     holdout_firewall_passed = False
     holdout_exposure_audit_hash = None
 
@@ -307,6 +314,12 @@ def evaluate_release(
                 release_exposure_audit,
                 split_id=normalized_split_id,
                 split_hash=held_out_split_hash,
+                expected_consumer=normalized_evaluator_id,
+                required_parent_hashes=(
+                    candidate.candidate_hash,
+                    locked_evaluator_hash,
+                    rollback_artifact_hash,
+                ),
             )
             holdout_firewall_passed = True
         except ValueError as exc:
@@ -332,10 +345,14 @@ def evaluate_release(
         reasons.append("required deterministic tests failed")
     if not evaluator_locked:
         reasons.append("candidate evaluator was not locked outside the mutable surface")
+    if not SHA256_RE.fullmatch(str(locked_evaluator_hash or "")):
+        reasons.append("locked evaluator artifact hash is missing or invalid")
     if not permissions_locked:
         reasons.append("candidate permissions were not locked outside the mutable surface")
     if not rollback_verified:
         reasons.append("rollback was not verified")
+    if not SHA256_RE.fullmatch(str(rollback_artifact_hash or "")):
+        reasons.append("rollback artifact hash is missing or invalid")
     if not untouched_forward:
         reasons.append("untouched-forward shadow gate was not completed")
     if counts["PASS_TO_FAIL"]:
@@ -369,9 +386,12 @@ def evaluate_release(
         "protected_failures": protected_failures,
         "catastrophic_failures": catastrophic_failures,
         "stratum_counts": stratum_counts,
+        "locked_evaluator_id": normalized_evaluator_id,
+        "locked_evaluator_hash": locked_evaluator_hash,
         "evaluator_locked": bool(evaluator_locked),
         "permissions_locked": bool(permissions_locked),
         "rollback_verified": bool(rollback_verified),
+        "rollback_artifact_hash": rollback_artifact_hash,
         "untouched_forward": bool(untouched_forward),
         "release_split_reuse_count": int(release_split_reuse_count),
         "holdout_firewall_passed": holdout_firewall_passed,

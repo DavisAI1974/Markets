@@ -97,19 +97,40 @@ def validate_react_trace(steps: Sequence[ReasoningStep]) -> dict[str, Any]:
     if not steps:
         raise CognitiveContractError("ReAct trace cannot be empty")
     positions = {step.step_id: index for index, step in enumerate(steps)}
+    evidence_step_ids = {
+        step.step_id for step in steps if step.action in {"OBSERVE", "RETRIEVE"}
+    }
     retrieve_ids = {step.step_id for step in steps if step.action == "RETRIEVE"}
     used_retrievals: set[str] = set()
+    grounded_reasoning: set[str] = set()
     for step in steps:
-        if step.action in {"REASON", "VERIFY"}:
-            used_retrievals.update(set(step.depends_on).intersection(retrieve_ids))
         for dependency in step.depends_on:
             if dependency not in positions or positions[dependency] >= positions[step.step_id]:
                 raise CognitiveContractError(f"ReAct step {step.step_id} has a non-prior dependency")
+        if step.action in {"REASON", "VERIFY"}:
+            used_retrievals.update(set(step.depends_on).intersection(retrieve_ids))
+            pending = list(step.depends_on)
+            ancestors: set[str] = set()
+            while pending:
+                dependency = pending.pop()
+                if dependency in ancestors:
+                    continue
+                ancestors.add(dependency)
+                pending.extend(steps[positions[dependency]].depends_on)
+            used_retrievals.update(ancestors.intersection(retrieve_ids))
+            if ancestors.intersection(evidence_step_ids):
+                grounded_reasoning.add(step.step_id)
     unused = sorted(retrieve_ids - used_retrievals)
     if unused:
         raise CognitiveContractError(f"retrieved evidence was never used by later reasoning: {', '.join(unused)}")
-    if not any(step.action == "REASON" for step in steps):
+    reasoning_ids = {step.step_id for step in steps if step.action == "REASON"}
+    if not reasoning_ids:
         raise CognitiveContractError("ReAct trace requires at least one REASON step")
+    ungrounded = sorted(reasoning_ids - grounded_reasoning)
+    if ungrounded:
+        raise CognitiveContractError(
+            "reasoning lacks an OBSERVE/RETRIEVE dependency path: " + ", ".join(ungrounded)
+        )
     payload = [dataclasses.asdict(step) for step in steps]
     return {
         "valid": True,
@@ -176,9 +197,21 @@ def select_bounded_plan_branches(
     if not branches:
         raise CognitiveContractError("bounded plan search requires branches")
     selected: list[PlanBranch] = []
+    selected_ids: set[str] = set()
     for depth in range(max_depth + 1):
-        at_depth = [branch for branch in branches if branch.depth == depth and branch.status != "CONTRADICTED"]
-        selected.extend(sorted(at_depth, key=lambda branch: (-branch.external_score, branch.branch_id))[:max_width])
+        at_depth = [
+            branch
+            for branch in branches
+            if branch.depth == depth
+            and branch.status != "CONTRADICTED"
+            and (branch.parent_id is None or branch.parent_id in selected_ids)
+        ]
+        chosen = sorted(
+            at_depth,
+            key=lambda branch: (-branch.external_score, branch.branch_id),
+        )[:max_width]
+        selected.extend(chosen)
+        selected_ids.update(branch.branch_id for branch in chosen)
     payload = [dataclasses.asdict(branch) for branch in selected]
     return {
         "selected": payload,
@@ -224,6 +257,7 @@ def run_deterministic_check(spec: Mapping[str, Any]) -> dict[str, Any]:
         "check_id": check_id,
         "check_type": check_type,
         "evidence_refs": tuple(dict.fromkeys(refs)),
+        "inputs": dict(inputs),
         "status": "SUPPORTED" if supported else "CONTRADICTED",
         "execution_authority": "NONE",
         "revision_authority": "DISPOSABLE_CANDIDATE_ONLY",
@@ -239,8 +273,17 @@ MEMORY_COMPETENCIES = {
 }
 
 
-def score_memory_competencies(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+def score_memory_competencies(
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    minimum_rate: float = 1.0,
+) -> dict[str, Any]:
     """Score all four memory competencies separately and fail closed on provenance/staleness."""
+    if isinstance(minimum_rate, bool) or not isinstance(minimum_rate, (int, float)):
+        raise CognitiveContractError("memory minimum_rate must be numeric")
+    minimum_rate = float(minimum_rate)
+    if not math.isfinite(minimum_rate) or not 0.0 <= minimum_rate <= 1.0:
+        raise CognitiveContractError("memory minimum_rate must be within [0, 1]")
     totals = {name: 0 for name in MEMORY_COMPETENCIES}
     passed = {name: 0 for name in MEMORY_COMPETENCIES}
     provenance_failures = 0
@@ -269,9 +312,15 @@ def score_memory_competencies(rows: Sequence[Mapping[str, Any]]) -> dict[str, An
         blockers.append(f"{provenance_failures} provenance failures")
     if obsolete_uses:
         blockers.append(f"{obsolete_uses} obsolete-memory uses")
+    below_minimum = sorted(name for name, rate in rates.items() if rate < minimum_rate)
+    if below_minimum:
+        blockers.append(
+            "competencies below minimum rate: " + ", ".join(below_minimum)
+        )
     core = {
         "rates": rates,
         "counts": {name: totals[name] for name in sorted(MEMORY_COMPETENCIES)},
+        "minimum_rate": minimum_rate,
         "provenance_failures": provenance_failures,
         "obsolete_memory_uses": obsolete_uses,
         "verdict": "COMPONENT_GATE_PASSED" if not blockers else "REJECT",
@@ -302,11 +351,18 @@ def rank_associative_memory(
     if unknown_active or not seeds or set(seeds) - active_ids:
         raise CognitiveContractError("associative retrieval seeds and active ids must be known and active")
     outgoing: dict[str, list[tuple[str, float]]] = {node: [] for node in active_ids}
+    inactive_edges: list[dict[str, Any]] = []
+    known_nodes = set(nodes)
     for edge in edges:
         source = str(edge.get("source") or "")
         target = str(edge.get("target") or "")
         weight_raw = edge.get("weight", 1.0)
+        if source not in known_nodes or target not in known_nodes:
+            raise CognitiveContractError(
+                f"associative edge cites unknown endpoint: {source}->{target}"
+            )
         if source not in active_ids or target not in active_ids:
+            inactive_edges.append({"source": source, "target": target})
             continue
         if isinstance(weight_raw, bool) or not isinstance(weight_raw, (int, float)):
             raise CognitiveContractError("associative edge weight must be numeric")
@@ -331,6 +387,13 @@ def rank_associative_memory(
         "ranked_ids": ranked,
         "scores": {node: scores[node] for node in ranked},
         "active_only": True,
+        "inactive_edges_excluded": inactive_edges,
+        "graph_hash": sha256_json({
+            "node_ids": nodes,
+            "edges": [dict(edge) for edge in edges],
+            "active_ids": sorted(active_ids),
+            "seed_ids": seeds,
+        }),
         "causal_claim": False,
         "iterations": iterations,
     }

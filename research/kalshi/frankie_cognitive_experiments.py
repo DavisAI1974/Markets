@@ -12,7 +12,7 @@ from typing import Any, Mapping, Sequence
 
 from frankie_cognition import CognitiveContractError, sha256_json
 
-EXPERIMENT_SCHEMA_VERSION = "1.0"
+EXPERIMENT_SCHEMA_VERSION = "1.3"
 BUDGET_DIMENSIONS = (
     "model_calls",
     "input_tokens",
@@ -71,9 +71,10 @@ EXPERIMENTS = (
         "Explicit memory/action ownership reduces cross-lane state faults without changing good decisions.",
         "current Frankie packet and lane boundaries",
         "typed CoALA map and read-only cognitive context",
-        ("any new authority", "any protected decision flip", "incomplete provenance"),
+        ("any new authority", "any decision change", "incomplete instrumentation coverage"),
         (
-            _metric("task_success", "HIGHER", "PRIMARY", improve=0.01),
+            _metric("instrumentation_coverage", "HIGHER", "PRIMARY", improve=0.01),
+            _metric("task_success", "HIGHER", "GUARDRAIL"),
             _metric("provenance_coverage", "HIGHER", "GUARDRAIL"),
             _metric("cross_lane_fault_rate", "LOWER", "GUARDRAIL"),
         ),
@@ -245,52 +246,129 @@ IMPLEMENTATION_AUDIT: dict[str, dict[str, Any]] = {
     "COG01_COALA_ARCHITECTURE_MAP": {
         "depth": "GENERIC_CONTRACT_INTEGRATED",
         "runtime_invoked": ["build_cognitive_context", "validate_reasoning_contract"],
+        "implemented_plumbing": [
+            "instrumentation coverage is evaluated separately from task behavior",
+            "paired rows require identical behavior projections",
+        ],
         "paper_method_not_implemented": ["decision-cycle policy", "memory learning actions"],
     },
     "COG02_REACT_EVIDENCE_LOOP": {
-        "depth": "TRACE_VALIDATOR_ONLY",
-        "runtime_invoked": ["validate_react_trace"],
-        "paper_method_not_implemented": ["closed-loop tool retrieval", "environment-driven replanning"],
+        "depth": "BOUNDED_LOOP_RUNTIME_HOOK_NOT_GROUP_RUNNER_WIRED",
+        "runtime_invoked": ["validate_react_trace", "run_p0_component.run_bounded_react"],
+        "implemented_plumbing": [
+            "every REASON step requires a transitive OBSERVE/RETRIEVE dependency path",
+            "every retrieval must feed later reasoning or verification",
+        ],
+        "paper_method_not_implemented": [
+            "paper prompts/environment",
+            "learned action policy",
+            "automatic standard group-runner integration",
+        ],
     },
     "COG03_LATS_BOUNDED_PLAN_SEARCH": {
-        "depth": "PURE_HELPER_NOT_RUNTIME_WIRED",
-        "runtime_invoked": [],
-        "paper_method_not_implemented": ["tree generation", "simulation", "backpropagation", "reflection"],
+        "depth": "BOUNDED_SEARCH_RUNTIME_HOOK_NOT_GROUP_RUNNER_WIRED",
+        "runtime_invoked": ["run_p0_component.run_bounded_lats_search"],
+        "implemented_plumbing": [
+            "selection, expansion, simulation, value, reflection, and backpropagation are distinct bounded stages",
+            "tree and one-path controls bind exact six-dimensional matched budgets",
+            "selection is ancestry-closed and pruned parents cannot leave selected orphan descendants",
+        ],
+        "paper_method_not_implemented": [
+            "paper prompts and learned policy/value model",
+            "paper benchmark replication",
+            "automatic standard group-runner integration",
+        ],
     },
     "COG04_STRUCTGPT_TYPED_READS": {
-        "depth": "PURE_HELPER_NOT_RUNTIME_WIRED",
-        "runtime_invoked": [],
-        "paper_method_not_implemented": ["iterative interface invocation", "model-directed structured retrieval"],
+        "depth": "BOUNDED_LOOP_RUNTIME_HOOK_NOT_GROUP_RUNNER_WIRED",
+        "runtime_invoked": [
+            "TypedEvidenceStore",
+            "TypedEvidenceStore.read",
+            "run_p0_component.run_iterative_structured_reads",
+        ],
+        "implemented_plumbing": [
+            "runtime packet catalog is hash-bound, active, immutable, exact-ref, and read-only",
+            "candidate citations are re-read through the typed store during output validation",
+        ],
+        "paper_method_not_implemented": [
+            "paper KG/table/database interfaces",
+            "trained model-directed retrieval policy",
+            "automatic standard group-runner integration",
+        ],
     },
     "COG05_FAITHFUL_EXECUTABLE_REASONING": {
-        "depth": "NARROW_RUNTIME_VALIDATOR",
-        "runtime_invoked": ["run_deterministic_check"],
-        "paper_method_not_implemented": ["language-to-symbolic translation", "general solver execution"],
+        "depth": "BOUNDED_IR_RUNTIME_HOOK_NOT_GROUP_RUNNER_WIRED",
+        "runtime_invoked": [
+            "run_deterministic_check",
+            "run_p0_component.execute_faithful_ir",
+        ],
+        "implemented_plumbing": ["check receipts hash exact inputs, evidence refs, and result"],
+        "paper_method_not_implemented": [
+            "language-to-symbolic translation",
+            "general Python/Datalog/PDDL solver execution",
+        ],
     },
     "COG06_CRITIC_TOOL_VERIFICATION": {
-        "depth": "NARROW_RUNTIME_VALIDATOR",
-        "runtime_invoked": ["run_deterministic_check"],
-        "paper_method_not_implemented": ["tool-interactive critique loop", "candidate revision loop"],
+        "depth": "BOUNDED_LOOP_RUNTIME_HOOK_NOT_GROUP_RUNNER_WIRED",
+        "runtime_invoked": [
+            "run_deterministic_check",
+            "run_p0_component.run_critic_revision",
+        ],
+        "implemented_plumbing": ["check receipts hash exact inputs, evidence refs, and result"],
+        "paper_method_not_implemented": [
+            "paper prompts and external tools",
+            "trained critique/revision policy",
+            "automatic standard group-runner integration",
+        ],
     },
     "COG07_MEMORY_AGENT_BENCH": {
-        "depth": "HELPERS_NOT_RUNTIME_WIRED",
-        "runtime_invoked": [],
-        "paper_method_not_implemented": ["incremental benchmark histories", "four-competency runtime memory"],
+        "depth": "BENCHMARK_RUNTIME_HOOK_NOT_GROUP_RUNNER_WIRED",
+        "runtime_invoked": ["run_p0_component.run_chronological_memory_benchmark"],
+        "implemented_plumbing": [
+            "each competency has an explicit minimum-rate gate",
+            "withdrawal receipts bind records, invalidations, reasons, and descendant paths",
+        ],
+        "paper_method_not_implemented": [
+            "MemoryAgentBench corpus replication",
+            "four-competency runtime memory architecture",
+            "LLM judge",
+        ],
     },
     "COG08_HIPPORAG_ASSOCIATIVE_RETRIEVAL": {
-        "depth": "PURE_HELPER_NOT_RUNTIME_WIRED",
-        "runtime_invoked": [],
-        "paper_method_not_implemented": ["entity graph construction", "retrieval-to-reader pipeline"],
+        "depth": "BOUNDED_RETRIEVAL_RUNTIME_HOOK_NOT_GROUP_RUNNER_WIRED",
+        "runtime_invoked": ["run_p0_component.run_hipporag_shadow_pipeline"],
+        "implemented_plumbing": [
+            "source-bound extraction proposals, associative graph construction, PPR, top-k selection, and cited reader output",
+            "point-in-time, target-birth, invalidation-closure, provenance-path, and matched flat-control receipts",
+            "graph associations explicitly carry no causal authority",
+        ],
+        "paper_method_not_implemented": [
+            "paper-exact extraction/entity-linking stack and trained reader",
+            "paper benchmark replication",
+            "automatic standard group-runner integration",
+        ],
     },
     "COG09_HIAGENT_WORKING_MEMORY": {
-        "depth": "VALIDATOR_NOT_RUNTIME_WIRED",
-        "runtime_invoked": [],
-        "paper_method_not_implemented": ["subgoal generation", "history compaction", "active-context serving"],
+        "depth": "BOUNDED_STATE_MACHINE_RUNTIME_HOOK_NOT_GROUP_RUNNER_WIRED",
+        "runtime_invoked": ["run_p0_component.run_state_aware_working_memory"],
+        "paper_method_not_implemented": [
+            "model-generated subgoals/summaries",
+            "learned retrieval policy",
+            "automatic standard group-runner integration",
+        ],
     },
     "COG10_PROGRESS_COMPRESS_SHADOW_LEARNING": {
-        "depth": "RELEASE_GATE_ONLY",
-        "runtime_invoked": [],
-        "paper_method_not_implemented": ["active learner", "knowledge-base consolidation", "continual weight updates"],
+        "depth": "BOUNDED_LIFECYCLE_RUNTIME_HOOK_NOT_GROUP_RUNNER_WIRED",
+        "runtime_invoked": ["run_p0_component.run_progress_compress_shadow"],
+        "implemented_plumbing": [
+            "immutable protected knowledge base, disposable active phase, teacher targets, distillation/EWC proposal, protected retention, and rollback",
+            "sequential reveal/release firewall plus evaluator and contamination bindings",
+        ],
+        "paper_method_not_implemented": [
+            "externally proven gradients, distillation, and Fisher estimation",
+            "live model consolidation or weight update",
+            "automatic standard group-runner integration",
+        ],
     },
 }
 
@@ -338,6 +416,8 @@ def evaluate_shadow_candidate(
     rows: Sequence[Mapping[str, Any]],
     *,
     budget_tolerance: float = 0.02,
+    required_stratum_values: Mapping[str, Sequence[str]] | None = None,
+    required_joint_strata: Sequence[Mapping[str, str]] | None = None,
 ) -> dict[str, Any]:
     """Evaluate one cognitive candidate; passing never authorizes promotion."""
     experiment = EXPERIMENT_BY_ID.get(candidate_id)
@@ -355,7 +435,46 @@ def evaluate_shadow_candidate(
     budget_violations: list[str] = []
     catastrophic: list[str] = []
     protected_failures: list[str] = []
+    behavior_changes: list[str] = []
     stratum_counts: dict[str, dict[str, int]] = {name: {} for name in REQUIRED_STRATA}
+    evaluated_rows: list[dict[str, Any]] = []
+
+    expected_strata: dict[str, tuple[str, ...]] = {}
+    expected_joint_strata: tuple[tuple[str, ...], ...] = ()
+    if required_stratum_values is not None:
+        if not isinstance(required_stratum_values, Mapping):
+            raise CognitiveContractError("required_stratum_values must be an object")
+        unknown_dimensions = sorted(set(required_stratum_values) - set(REQUIRED_STRATA))
+        if unknown_dimensions:
+            raise CognitiveContractError(
+                "unknown required stratum dimensions: " + ", ".join(unknown_dimensions)
+            )
+        for name in REQUIRED_STRATA:
+            raw_values = required_stratum_values.get(name)
+            if not isinstance(raw_values, Sequence) or isinstance(raw_values, (str, bytes)):
+                raise CognitiveContractError(f"required stratum {name} must be a sequence")
+            values = tuple(dict.fromkeys(str(value).strip() for value in raw_values))
+            if not values or any(not value for value in values):
+                raise CognitiveContractError(f"required stratum {name} cannot be empty")
+            expected_strata[name] = values
+    if required_joint_strata is not None:
+        if not isinstance(required_joint_strata, Sequence) or isinstance(
+            required_joint_strata, (str, bytes)
+        ):
+            raise CognitiveContractError("required_joint_strata must be a sequence")
+        normalized_joint: list[tuple[str, ...]] = []
+        for index, raw in enumerate(required_joint_strata):
+            if not isinstance(raw, Mapping) or set(raw) != set(REQUIRED_STRATA):
+                raise CognitiveContractError(
+                    f"required joint stratum {index} must contain exactly {REQUIRED_STRATA}"
+                )
+            cell = tuple(str(raw[name]).strip() for name in REQUIRED_STRATA)
+            if any(not value for value in cell):
+                raise CognitiveContractError(f"required joint stratum {index} is empty")
+            normalized_joint.append(cell)
+        expected_joint_strata = tuple(dict.fromkeys(normalized_joint))
+        if not expected_joint_strata:
+            raise CognitiveContractError("required_joint_strata cannot be empty")
 
     for row in rows:
         case_id = str(row.get("case_id") or "").strip()
@@ -375,6 +494,18 @@ def evaluate_shadow_candidate(
                 raise CognitiveContractError(f"protected case {case_id} must pass on the frozen baseline")
             if not candidate_pass:
                 protected_failures.append(case_id)
+        if candidate_id == "COG01_COALA_ARCHITECTURE_MAP":
+            baseline_behavior_hash = str(row.get("baseline_behavior_hash") or "")
+            candidate_behavior_hash = str(row.get("candidate_behavior_hash") or "")
+            if not all(
+                len(value) == 64 and all(character in "0123456789abcdef" for character in value)
+                for value in (baseline_behavior_hash, candidate_behavior_hash)
+            ):
+                raise CognitiveContractError(
+                    f"COG01 case {case_id} requires behavior SHA-256 hashes"
+                )
+            if baseline_behavior_hash != candidate_behavior_hash:
+                behavior_changes.append(case_id)
 
         strata = row.get("strata")
         if not isinstance(strata, Mapping):
@@ -402,13 +533,27 @@ def evaluate_shadow_candidate(
         candidate_metrics = row.get("candidate_metrics")
         if not isinstance(baseline_metrics, Mapping) or not isinstance(candidate_metrics, Mapping):
             raise CognitiveContractError(f"shadow case {case_id} requires metric maps")
+        row_baseline_metrics: dict[str, float] = {}
+        row_candidate_metrics: dict[str, float] = {}
         for rule in experiment.metric_rules:
-            metric_pairs[rule.name][0].append(
-                _number(baseline_metrics.get(rule.name), f"{case_id} baseline metric {rule.name}")
+            baseline_value = _number(
+                baseline_metrics.get(rule.name),
+                f"{case_id} baseline metric {rule.name}",
             )
-            metric_pairs[rule.name][1].append(
-                _number(candidate_metrics.get(rule.name), f"{case_id} candidate metric {rule.name}")
+            candidate_value = _number(
+                candidate_metrics.get(rule.name),
+                f"{case_id} candidate metric {rule.name}",
             )
+            metric_pairs[rule.name][0].append(baseline_value)
+            metric_pairs[rule.name][1].append(candidate_value)
+            row_baseline_metrics[rule.name] = baseline_value
+            row_candidate_metrics[rule.name] = candidate_value
+        evaluated_rows.append({
+            "case_id": case_id,
+            "strata": {name: str(strata[name]).strip() for name in REQUIRED_STRATA},
+            "baseline_metrics": row_baseline_metrics,
+            "candidate_metrics": row_candidate_metrics,
+        })
 
     metric_results: dict[str, Any] = {}
     blockers: list[str] = []
@@ -425,6 +570,26 @@ def evaluate_shadow_candidate(
     if sparse_strata:
         blockers.append(
             "under-supported observed strata: " + ", ".join(sorted(sparse_strata))
+        )
+    missing_predeclared = [
+        f"{name}={value}"
+        for name, values in expected_strata.items()
+        for value in values
+        if value not in stratum_counts[name]
+    ]
+    if missing_predeclared:
+        blockers.append(
+            "missing predeclared strata: " + ", ".join(sorted(missing_predeclared))
+        )
+    observed_joint_cells = {
+        tuple(row["strata"][name] for name in REQUIRED_STRATA)
+        for row in evaluated_rows
+    }
+    missing_joint = sorted(set(expected_joint_strata) - observed_joint_cells)
+    if missing_joint:
+        blockers.append(
+            "missing predeclared joint strata: "
+            + ", ".join("|".join(cell) for cell in missing_joint)
         )
     for rule in experiment.metric_rules:
         baseline_mean = sum(metric_pairs[rule.name][0]) / len(rows)
@@ -448,6 +613,78 @@ def evaluate_shadow_candidate(
         if not passed:
             blockers.append(f"metric gate failed: {rule.name}")
 
+    stratum_metric_results: dict[str, dict[str, dict[str, Any]]] = {
+        name: {} for name in REQUIRED_STRATA
+    }
+    for dimension in REQUIRED_STRATA:
+        for value in sorted(stratum_counts[dimension]):
+            cohort = [
+                row for row in evaluated_rows if row["strata"][dimension] == value
+            ]
+            cohort_results: dict[str, Any] = {}
+            for rule in experiment.metric_rules:
+                baseline_mean = sum(
+                    row["baseline_metrics"][rule.name] for row in cohort
+                ) / len(cohort)
+                candidate_mean = sum(
+                    row["candidate_metrics"][rule.name] for row in cohort
+                ) / len(cohort)
+                improvement = (
+                    candidate_mean - baseline_mean
+                    if rule.direction == "HIGHER"
+                    else baseline_mean - candidate_mean
+                )
+                passed = improvement >= -rule.max_regression
+                cohort_results[rule.name] = {
+                    "cases": len(cohort),
+                    "baseline_mean": baseline_mean,
+                    "candidate_mean": candidate_mean,
+                    "improvement": improvement,
+                    "max_regression": rule.max_regression,
+                    "passed": passed,
+                }
+                if not passed:
+                    blockers.append(
+                        f"stratum metric regression: {dimension}={value}:{rule.name}"
+                    )
+            stratum_metric_results[dimension][value] = cohort_results
+
+    joint_stratum_metric_results: dict[str, dict[str, Any]] = {}
+    for cell in sorted(observed_joint_cells):
+        cohort = [
+            row
+            for row in evaluated_rows
+            if tuple(row["strata"][name] for name in REQUIRED_STRATA) == cell
+        ]
+        cell_label = "|".join(cell)
+        cell_results: dict[str, Any] = {}
+        for rule in experiment.metric_rules:
+            baseline_mean = sum(
+                row["baseline_metrics"][rule.name] for row in cohort
+            ) / len(cohort)
+            candidate_mean = sum(
+                row["candidate_metrics"][rule.name] for row in cohort
+            ) / len(cohort)
+            improvement = (
+                candidate_mean - baseline_mean
+                if rule.direction == "HIGHER"
+                else baseline_mean - candidate_mean
+            )
+            passed = improvement >= -rule.max_regression
+            cell_results[rule.name] = {
+                "cases": len(cohort),
+                "baseline_mean": baseline_mean,
+                "candidate_mean": candidate_mean,
+                "improvement": improvement,
+                "max_regression": rule.max_regression,
+                "passed": passed,
+            }
+            if not passed:
+                blockers.append(
+                    f"joint-stratum metric regression: {cell_label}:{rule.name}"
+                )
+        joint_stratum_metric_results[cell_label] = cell_results
+
     if pass_to_fail:
         blockers.append(f"{pass_to_fail} pass-to-fail regressions")
     if fail_to_pass < MIN_FAIL_TO_PASS_CASES:
@@ -460,18 +697,38 @@ def evaluate_shadow_candidate(
         blockers.append(f"{len(catastrophic)} catastrophic candidate failures")
     if protected_failures:
         blockers.append(f"{len(protected_failures)} protected-case failures")
+    if behavior_changes:
+        blockers.append(f"{len(behavior_changes)} COG01 behavior changes")
 
     core = {
         "schema_version": EXPERIMENT_SCHEMA_VERSION,
         "candidate_id": candidate_id,
         "experiment_rank": experiment.rank,
+        "evaluation_policy_hash": sha256_json({
+            "experiment": experiment.as_dict(),
+            "budget_tolerance": budget_tolerance,
+            "minimum_cases": MIN_EVALUATION_CASES,
+            "minimum_fail_to_pass": MIN_FAIL_TO_PASS_CASES,
+            "minimum_observed_stratum_cases": MIN_OBSERVED_STRATUM_CASES,
+            "required_stratum_values": expected_strata,
+            "required_joint_strata": expected_joint_strata,
+            "stratum_non_regression": True,
+            "joint_stratum_non_regression": True,
+        }),
+        "row_hashes": [sha256_json(dict(row)) for row in rows],
+        "row_set_hash": sha256_json([dict(row) for row in rows]),
         "cases": len(rows),
         "pass_to_fail": pass_to_fail,
         "fail_to_pass": fail_to_pass,
         "budget_violations": budget_violations,
         "catastrophic_cases": catastrophic,
         "protected_failures": protected_failures,
+        "behavior_changes": behavior_changes,
         "stratum_counts": stratum_counts,
+        "required_stratum_values": expected_strata,
+        "required_joint_strata": expected_joint_strata,
+        "stratum_metric_results": stratum_metric_results,
+        "joint_stratum_metric_results": joint_stratum_metric_results,
         "minimum_cases_required": MIN_EVALUATION_CASES,
         "minimum_fail_to_pass_required": MIN_FAIL_TO_PASS_CASES,
         "minimum_observed_stratum_cases": MIN_OBSERVED_STRATUM_CASES,
@@ -498,6 +755,8 @@ def component_contract_canary() -> dict[str, Any]:
         }
         common = {
             "candidate_catastrophic": False,
+            "baseline_behavior_hash": "a" * 64,
+            "candidate_behavior_hash": "a" * 64,
             "strata": {
                 "task": "contract-canary",
                 "regime": "synthetic",

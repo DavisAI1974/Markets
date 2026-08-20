@@ -13,15 +13,53 @@ import json
 from typing import Any, Mapping
 
 import frankie_s135_current_runtime as s135
-from frankie_cognition import CognitiveContractError, sha256_json, validate_reasoning_contract
-from frankie_cognitive_candidates import run_deterministic_check, validate_react_trace
+from frankie_cognition import (
+    COGNITIVE_CONTRACT_VERSION,
+    CognitiveContractError,
+    sha256_json,
+    validate_reasoning_contract,
+)
+from frankie_cognitive_candidates import (
+    TypedEvidenceStore,
+    run_deterministic_check,
+    validate_react_trace,
+)
+from frankie_cognitive_p0_loops import (
+    execute_faithful_ir,
+    run_bounded_react,
+    run_chronological_memory_benchmark,
+    run_critic_revision,
+    run_iterative_structured_reads,
+    run_state_aware_working_memory,
+)
+from frankie_hipporag_p0_retrieval import (
+    HippoRAGContractError,
+    run_hipporag_shadow_pipeline,
+)
+from frankie_lats_p0_search import run_bounded_lats_search
+from frankie_progress_compress_p0 import (
+    ProgressCompressP0Error,
+    run_progress_compress_shadow,
+)
 from frankie_cognitive_experiments import (
     EXPERIMENT_BY_ID,
     IMPLEMENTATION_AUDIT,
     experiment_manifest,
 )
 
-VERSION = "S137_COGNITIVE_SHADOW_RUNTIME_V1"
+VERSION = "S137_COGNITIVE_SHADOW_RUNTIME_V3_PROVISIONAL"
+
+P0_COMPONENT_RUNNERS = {
+    "COG02_REACT_EVIDENCE_LOOP": run_bounded_react,
+    "COG03_LATS_BOUNDED_PLAN_SEARCH": run_bounded_lats_search,
+    "COG04_STRUCTGPT_TYPED_READS": run_iterative_structured_reads,
+    "COG05_FAITHFUL_EXECUTABLE_REASONING": execute_faithful_ir,
+    "COG06_CRITIC_TOOL_VERIFICATION": run_critic_revision,
+    "COG07_MEMORY_AGENT_BENCH": run_chronological_memory_benchmark,
+    "COG08_HIPPORAG_ASSOCIATIVE_RETRIEVAL": run_hipporag_shadow_pipeline,
+    "COG09_HIAGENT_WORKING_MEMORY": run_state_aware_working_memory,
+    "COG10_PROGRESS_COMPRESS_SHADOW_LEARNING": run_progress_compress_shadow,
+}
 
 
 class CognitiveRuntimeError(RuntimeError):
@@ -42,6 +80,7 @@ class CognitiveCandidateRuntime:
         self.candidate_id = candidate_id
         self.experiment = experiment
         self._pending_refs: dict[tuple[str, str], set[str]] = {}
+        self._pending_catalogs: dict[tuple[str, str], list[dict[str, Any]]] = {}
 
     def install(self) -> None:
         s135.install()
@@ -58,7 +97,9 @@ class CognitiveCandidateRuntime:
                     "ref_id": f"packet:{key}",
                     "source": f"CURRENT_FRANKIE_PACKET.{key}",
                     "content_hash": sha256_json(value),
+                    "immutable": True,
                     "immutable_for_run": True,
+                    "status": "ACTIVE",
                 }
             )
         if not catalog:
@@ -82,8 +123,12 @@ class CognitiveCandidateRuntime:
                 f"S137 candidate packet for {key[0]}/{task} was not validated before replacement"
             )
         self._pending_refs[key] = refs
+        self._pending_catalogs[key] = json.loads(
+            json.dumps(catalog, sort_keys=True, separators=(",", ":"))
+        )
         contract = {
             "version": VERSION,
+            "contract_version": COGNITIVE_CONTRACT_VERSION,
             "candidate_id": self.candidate_id,
             "rank": self.experiment.rank,
             "paper": self.experiment.paper,
@@ -189,6 +234,19 @@ class CognitiveCandidateRuntime:
             )
             if self.candidate_id == "COG02_REACT_EVIDENCE_LOOP":
                 validate_react_trace(steps)
+            if self.candidate_id == "COG04_STRUCTGPT_TYPED_READS":
+                catalog = self._pending_catalogs.get(key)
+                if catalog is None:
+                    raise CognitiveContractError("typed-read catalog is missing")
+                store = TypedEvidenceStore({
+                    "contract_version": COGNITIVE_CONTRACT_VERSION,
+                    "evidence_catalog": catalog,
+                    "evidence_catalog_hash": sha256_json(catalog),
+                })
+                cited_refs = sorted({
+                    ref for step in steps for ref in step.evidence_refs
+                })
+                store.read(cited_refs, max_records=min(32, len(cited_refs)))
             if self.candidate_id in {
                 "COG05_FAITHFUL_EXECUTABLE_REASONING",
                 "COG06_CRITIC_TOOL_VERIFICATION",
@@ -210,6 +268,7 @@ class CognitiveCandidateRuntime:
         except CognitiveContractError as exc:
             raise CognitiveRuntimeError(f"S137 candidate cognitive contract failed: {exc}") from exc
         del self._pending_refs[key]
+        del self._pending_catalogs[key]
 
     def contract_manifest(self) -> dict[str, Any]:
         registry = experiment_manifest()
@@ -223,6 +282,28 @@ class CognitiveCandidateRuntime:
             "automatic_apply": False,
         }
         return {**core, "runtime_hash": sha256_json(core)}
+
+    def run_p0_component(self, **kwargs: Any) -> dict[str, Any]:
+        """Run this arm's bounded P0 component through an explicit SHADOW hook.
+
+        The injected callbacks and budgets remain caller-owned and must satisfy
+        the component's fail-closed contract.  This hook is not invoked by the
+        standard S135 group runner and grants no execution or apply authority.
+        """
+        runner = P0_COMPONENT_RUNNERS.get(self.candidate_id)
+        if runner is None:
+            raise CognitiveRuntimeError(
+                f"{self.candidate_id} has no bounded P0 runtime component"
+            )
+        try:
+            result = runner(**kwargs)
+        except (CognitiveContractError, HippoRAGContractError, ProgressCompressP0Error) as exc:
+            raise CognitiveRuntimeError(
+                f"S137 P0 component failed: {exc}"
+            ) from exc
+        if not isinstance(result, dict):
+            raise CognitiveRuntimeError("S137 P0 component returned a non-object")
+        return result
 
 
 def runtime_for(candidate_id: str) -> CognitiveCandidateRuntime:

@@ -39,7 +39,9 @@
       "baseline_budget": {"$ref": "#/$defs/budget"},
       "candidate_budget": {"$ref": "#/$defs/budget"},
       "baseline_metrics": {"$ref": "#/$defs/metrics"},
-      "candidate_metrics": {"$ref": "#/$defs/metrics"}
+      "candidate_metrics": {"$ref": "#/$defs/metrics"},
+      "baseline_behavior_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+      "candidate_behavior_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
     }
   },
   "$defs": {

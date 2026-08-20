@@ -413,6 +413,7 @@ class MemorySelection:
     selected: tuple[MemoryRecord, ...]
     excluded: tuple[dict[str, str], ...]
     decision_at: str
+    withdrawal_audit_hash: str
     selection_hash: str
 
 
@@ -449,6 +450,13 @@ def memory_withdrawal_closure(
                 raise CognitiveContractError(
                     f"memory {record.memory_id} is knowable before influence parent {parent_id}"
                 )
+            if _parse_iso(parent.created_at, f"memory {parent_id}.created_at") > _parse_iso(
+                record.created_at,
+                f"memory {record.memory_id}.created_at",
+            ):
+                raise CognitiveContractError(
+                    f"memory {record.memory_id} was created before influence parent {parent_id}"
+                )
             children[parent_id].add(record.memory_id)
 
     visiting: set[str] = set()
@@ -469,13 +477,29 @@ def memory_withdrawal_closure(
         visit(memory_id)
 
     direct: set[str] = set()
+    seen_invalidations: set[str] = set()
     for item in invalidations:
+        invalidated_at = _parse_iso(item.invalidated_at, "memory invalidated_at")
+        if invalidated_at > cutoff:
+            continue
         if item.memory_id not in by_id:
             raise CognitiveContractError(
                 f"invalidation references unknown memory: {item.memory_id}"
             )
-        if _parse_iso(item.invalidated_at, "memory invalidated_at") <= cutoff:
-            direct.add(item.memory_id)
+        if item.memory_id in seen_invalidations:
+            raise CognitiveContractError(
+                f"duplicate invalidation for memory: {item.memory_id}"
+            )
+        seen_invalidations.add(item.memory_id)
+        record = by_id[item.memory_id]
+        if invalidated_at < _parse_iso(
+            record.created_at,
+            f"memory {record.memory_id}.created_at",
+        ):
+            raise CognitiveContractError(
+                f"memory {item.memory_id} was invalidated before it was created"
+            )
+        direct.add(item.memory_id)
 
     withdrawn = set(direct)
     pending = list(direct)
@@ -486,6 +510,76 @@ def memory_withdrawal_closure(
                 withdrawn.add(child_id)
                 pending.append(child_id)
     return direct, withdrawn
+
+
+def memory_withdrawal_audit(
+    records: Sequence[MemoryRecord],
+    *,
+    invalidations: Sequence[MemoryInvalidation],
+    decision_at: str,
+) -> dict[str, Any]:
+    """Build a hash-bound receipt for every direct and descendant withdrawal."""
+    direct, withdrawn = memory_withdrawal_closure(
+        records,
+        invalidations=invalidations,
+        decision_at=decision_at,
+    )
+    by_id = {record.memory_id: record for record in records}
+    children: dict[str, list[str]] = {memory_id: [] for memory_id in by_id}
+    for record in records:
+        for parent_id in record.influence_parent_ids:
+            children[parent_id].append(record.memory_id)
+    for values in children.values():
+        values.sort()
+
+    paths: dict[str, list[str]] = {memory_id: [memory_id] for memory_id in sorted(direct)}
+    pending = sorted(direct)
+    while pending:
+        parent_id = pending.pop(0)
+        for child_id in children[parent_id]:
+            candidate = [*paths[parent_id], child_id]
+            if child_id not in paths or tuple(candidate) < tuple(paths[child_id]):
+                paths[child_id] = candidate
+                pending.append(child_id)
+                pending.sort()
+
+    active_invalidations = {
+        item.memory_id: item
+        for item in invalidations
+        if item.memory_id in direct
+    }
+    normalized_cutoff = _parse_iso(
+        decision_at,
+        "memory withdrawal decision_at",
+    ).isoformat().replace("+00:00", "Z")
+    core = {
+        "decision_at": normalized_cutoff,
+        "record_set_hash": sha256_json(sorted(record.record_hash for record in records)),
+        "invalidation_set_hash": sha256_json(
+            sorted(item.invalidation_hash for item in active_invalidations.values())
+        ),
+        "direct_withdrawals": [
+            {
+                "memory_id": memory_id,
+                "record_hash": by_id[memory_id].record_hash,
+                "invalidation_hash": active_invalidations[memory_id].invalidation_hash,
+                "reason": active_invalidations[memory_id].reason,
+                "path": paths[memory_id],
+            }
+            for memory_id in sorted(direct)
+        ],
+        "descendant_withdrawals": [
+            {
+                "memory_id": memory_id,
+                "record_hash": by_id[memory_id].record_hash,
+                "path": paths[memory_id],
+            }
+            for memory_id in sorted(withdrawn - direct)
+        ],
+        "withdrawn_ids": sorted(withdrawn),
+        "serving_authority": "WITHDRAW_ONLY",
+    }
+    return {**core, "audit_hash": sha256_json(core)}
 
 
 def select_active_memories(
@@ -512,26 +606,23 @@ def select_active_memories(
         if record.memory_id in by_id:
             raise CognitiveContractError(f"duplicate memory id: {record.memory_id}")
         by_id[record.memory_id] = record
-    invalidated: dict[str, MemoryInvalidation] = {}
-    for item in invalidations:
-        if item.memory_id not in by_id:
-            raise CognitiveContractError(f"invalidation references unknown memory: {item.memory_id}")
-        if item.memory_id in invalidated:
-            raise CognitiveContractError(f"duplicate active invalidation for memory: {item.memory_id}")
-        if _parse_iso(item.invalidated_at, "memory invalidated_at") <= cutoff:
-            invalidated[item.memory_id] = item
-
-    direct_withdrawals, withdrawal_closure = memory_withdrawal_closure(
+    withdrawal_audit = memory_withdrawal_audit(
         records,
         invalidations=invalidations,
         decision_at=decision_at,
     )
+    direct_withdrawals = {
+        item["memory_id"] for item in withdrawal_audit["direct_withdrawals"]
+    }
+    withdrawal_closure = set(withdrawal_audit["withdrawn_ids"])
 
     selected: list[MemoryRecord] = []
     excluded: list[dict[str, str]] = []
     ordered = sorted(records, key=lambda item: (item.knowable_at, item.memory_id), reverse=True)
     for record in ordered:
-        if _parse_iso(record.knowable_at, f"memory {record.memory_id}.knowable_at") > cutoff:
+        if _parse_iso(record.created_at, f"memory {record.memory_id}.created_at") > cutoff:
+            excluded.append({"memory_id": record.memory_id, "reason": "FUTURE_CREATED"})
+        elif _parse_iso(record.knowable_at, f"memory {record.memory_id}.knowable_at") > cutoff:
             excluded.append({"memory_id": record.memory_id, "reason": "FUTURE_AT_DECISION"})
         elif record.memory_id in direct_withdrawals:
             excluded.append({"memory_id": record.memory_id, "reason": "INVALIDATED"})
@@ -548,8 +639,15 @@ def select_active_memories(
         "selected": [record.record_hash for record in selected],
         "excluded": excluded,
         "decision_at": normalized_cutoff,
+        "withdrawal_audit_hash": withdrawal_audit["audit_hash"],
     }
-    return MemorySelection(tuple(selected), tuple(excluded), normalized_cutoff, sha256_json(payload))
+    return MemorySelection(
+        tuple(selected),
+        tuple(excluded),
+        normalized_cutoff,
+        withdrawal_audit["audit_hash"],
+        sha256_json(payload),
+    )
 
 
 @dataclass(frozen=True)

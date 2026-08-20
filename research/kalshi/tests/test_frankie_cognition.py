@@ -14,6 +14,7 @@ from frankie_cognition import (  # noqa: E402
     MemoryInvalidation,
     MemoryRecord,
     build_cognitive_context,
+    memory_withdrawal_audit,
     memory_withdrawal_closure,
     select_active_memories,
     sha256_json,
@@ -116,7 +117,7 @@ class FrankieCognitionTests(unittest.TestCase):
             {
                 "memory_id": memory_id,
                 "memory_class": "EPISODIC",
-                "created_at": "2026-08-22T13:00:00Z",
+                "created_at": knowable_at,
                 "knowable_at": knowable_at,
                 "content_hash": sha256_json(payload),
                 "provenance_refs": ["source:0"],
@@ -186,6 +187,23 @@ class FrankieCognitionTests(unittest.TestCase):
         with self.assertRaises(CognitiveContractError):
             validate_react_trace(steps)
 
+    def test_react_counts_transitive_retrieval_use(self):
+        raw = self.trace_raw()
+        raw["reasoning_steps"].insert(1, {
+            "step_id": "S1B",
+            "action": "OBSERVE",
+            "claim": "record the retrieved contract",
+            "evidence_refs": ["event:contract_identity"],
+            "depends_on": ["S1"],
+            "status": "SUPPORTED",
+        })
+        raw["reasoning_steps"][2]["depends_on"] = ["S1B"]
+        steps, _, _ = validate_reasoning_contract(
+            raw,
+            allowed_evidence_refs=set(self.context()["evidence_ref_ids"]),
+        )
+        self.assertTrue(validate_react_trace(steps)["valid"])
+
     def test_bounded_plan_search_requires_external_feedback(self):
         rows = [
             {
@@ -213,17 +231,43 @@ class FrankieCognitionTests(unittest.TestCase):
         with self.assertRaises(CognitiveContractError):
             select_bounded_plan_branches(rows)
 
-    def test_faithful_deterministic_check_never_authorizes_execution(self):
-        result = run_deterministic_check(
+    def test_bounded_plan_search_never_selects_orphaned_descendants(self):
+        rows = [
             {
+                "branch_id": "rejected-root",
+                "parent_id": None,
+                "depth": 0,
+                "external_score": 1.0,
+                "feedback_refs": ["source:0"],
+                "status": "CONTRADICTED",
+            },
+            {
+                "branch_id": "orphan",
+                "parent_id": "rejected-root",
+                "depth": 1,
+                "external_score": 1.0,
+                "feedback_refs": ["source:0"],
+                "status": "SUPPORTED",
+            },
+        ]
+        result = select_bounded_plan_branches(rows)
+        self.assertEqual(result["selected"], [])
+
+    def test_faithful_deterministic_check_never_authorizes_execution(self):
+        spec = {
                 "check_id": "clock",
                 "check_type": "TIMESTAMP_NOT_AFTER",
                 "evidence_refs": ["source:0"],
                 "inputs": {"left": "2026-08-20T12:00:00Z", "right": "2026-08-20T12:00:01Z"},
             }
-        )
+        result = run_deterministic_check(spec)
         self.assertEqual(result["status"], "SUPPORTED")
         self.assertEqual(result["execution_authority"], "NONE")
+        changed = run_deterministic_check({
+            **spec,
+            "inputs": {"left": "2026-08-20T12:00:00Z", "right": "2026-08-20T12:00:02Z"},
+        })
+        self.assertNotEqual(result["check_hash"], changed["check_hash"])
 
     def test_memory_selection_excludes_future_and_invalidated_without_deleting(self):
         active = self.memory("active", "2026-08-20T12:00:00Z")
@@ -245,7 +289,7 @@ class FrankieCognitionTests(unittest.TestCase):
         self.assertEqual([record.memory_id for record in selection.selected], ["active"])
         reasons = {item["memory_id"]: item["reason"] for item in selection.excluded}
         self.assertEqual(reasons["stale"], "INVALIDATED")
-        self.assertEqual(reasons["future"], "FUTURE_AT_DECISION")
+        self.assertEqual(reasons["future"], "FUTURE_CREATED")
         self.assertEqual(len([active, stale, future]), 3)
 
     def test_memory_invalidation_withdraws_all_declared_descendants(self):
@@ -276,6 +320,17 @@ class FrankieCognitionTests(unittest.TestCase):
         )
         self.assertEqual(direct, {"source"})
         self.assertEqual(withdrawn, {"source", "summary", "procedure"})
+        audit = memory_withdrawal_audit(
+            [source, summary, procedure, unrelated],
+            invalidations=[invalidation],
+            decision_at="2026-08-20T14:00:00Z",
+        )
+        paths = {
+            item["memory_id"]: item["path"]
+            for item in audit["descendant_withdrawals"]
+        }
+        self.assertEqual(paths["procedure"], ["source", "summary", "procedure"])
+        self.assertTrue(audit["audit_hash"])
         selection = select_active_memories(
             [source, summary, procedure, unrelated],
             invalidations=[invalidation],
@@ -286,6 +341,30 @@ class FrankieCognitionTests(unittest.TestCase):
         self.assertEqual(reasons["source"], "INVALIDATED")
         self.assertEqual(reasons["summary"], "ANCESTOR_INVALIDATED")
         self.assertEqual(reasons["procedure"], "ANCESTOR_INVALIDATED")
+
+    def test_future_invalidation_cannot_change_historical_selection_receipt(self):
+        record = self.memory("historical", "2026-08-20T10:00:00Z")
+        without_future = select_active_memories(
+            [record],
+            invalidations=[],
+            decision_at="2026-08-20T12:00:00Z",
+        )
+        future = MemoryInvalidation.from_dict({
+            "memory_id": "historical",
+            "invalidated_at": "2026-08-21T12:00:00Z",
+            "reason": "future correction",
+            "evidence_refs": ["outcome:future"],
+        })
+        with_future = select_active_memories(
+            [record],
+            invalidations=[future],
+            decision_at="2026-08-20T12:00:00Z",
+        )
+        self.assertEqual(without_future.selection_hash, with_future.selection_hash)
+        self.assertEqual(
+            without_future.withdrawal_audit_hash,
+            with_future.withdrawal_audit_hash,
+        )
 
     def test_memory_influence_lineage_rejects_unknown_parent_and_cycles(self):
         orphan = self.memory(
@@ -338,6 +417,25 @@ class FrankieCognitionTests(unittest.TestCase):
         rows[-1]["obsolete_memory_used"] = True
         self.assertEqual(score_memory_competencies(rows)["verdict"], "REJECT")
 
+    def test_memory_scorecard_rejects_below_threshold_even_with_clean_provenance(self):
+        competencies = sorted({
+            "ACCURATE_RETRIEVAL",
+            "TEST_TIME_LEARNING",
+            "LONG_RANGE_UNDERSTANDING",
+            "SELECTIVE_FORGETTING",
+        })
+        rows = [
+            {
+                "case_id": name.lower(),
+                "competency": name,
+                "passed": name != "TEST_TIME_LEARNING",
+                "provenance_ok": True,
+                "obsolete_memory_used": False,
+            }
+            for name in competencies
+        ]
+        self.assertEqual(score_memory_competencies(rows)["verdict"], "REJECT")
+
     def test_associative_retrieval_serves_active_nodes_only_and_claims_no_causality(self):
         result = rank_associative_memory(
             node_ids=["a", "b", "stale"],
@@ -351,6 +449,15 @@ class FrankieCognitionTests(unittest.TestCase):
         )
         self.assertNotIn("stale", result["ranked_ids"])
         self.assertFalse(result["causal_claim"])
+        self.assertEqual(result["inactive_edges_excluded"], [{"source": "b", "target": "stale"}])
+        with self.assertRaises(CognitiveContractError):
+            rank_associative_memory(
+                node_ids=["a", "b"],
+                edges=[{"source": "a", "target": "unknown", "weight": 1.0}],
+                seed_ids=["a"],
+                active_ids={"a", "b"},
+                top_k=2,
+            )
 
     def test_working_memory_has_at_most_one_active_subgoal(self):
         chunks = [
@@ -403,15 +510,17 @@ class FrankieCognitionTests(unittest.TestCase):
             rows.append(
                 {
                     "case_id": f"case-{index:02d}",
+                    "baseline_behavior_hash": "a" * 64,
+                    "candidate_behavior_hash": "a" * 64,
                     "baseline_pass": not correction,
                     "candidate_pass": True,
                     "candidate_catastrophic": False,
                     "protected": protected,
                     "strata": {**strata, "safety": "protected" if protected else "standard"},
-                    "baseline_budget": budget,
-                    "candidate_budget": budget,
-                    "baseline_metrics": baseline_metrics,
-                    "candidate_metrics": candidate_metrics,
+                    "baseline_budget": dict(budget),
+                    "candidate_budget": dict(budget),
+                    "baseline_metrics": dict(baseline_metrics),
+                    "candidate_metrics": dict(candidate_metrics),
                 }
             )
         return rows
@@ -427,7 +536,7 @@ class FrankieCognitionTests(unittest.TestCase):
                 row for row in manifest["candidates"]
                 if row["candidate_id"] == "COG10_PROGRESS_COMPRESS_SHADOW_LEARNING"
             )["implementation_audit"]["depth"],
-            "RELEASE_GATE_ONLY",
+            "BOUNDED_LIFECYCLE_RUNTIME_HOOK_NOT_GROUP_RUNNER_WIRED",
         )
         for experiment in EXPERIMENTS:
             with self.subTest(candidate=experiment.candidate_id):
@@ -464,6 +573,65 @@ class FrankieCognitionTests(unittest.TestCase):
         result = evaluate_shadow_candidate(experiment.candidate_id, rows)
         self.assertEqual(result["verdict"], "REJECT")
         self.assertTrue(any("insufficient cases" in blocker for blocker in result["blockers"]))
+
+    def test_shadow_gate_rejects_regression_hidden_by_cohort_mean(self):
+        experiment = EXPERIMENTS[0]
+        rows = self.shadow_rows(experiment)
+        protected_rows = [row for row in rows if row["strata"]["safety"] == "protected"]
+        for row in protected_rows:
+            for rule in experiment.metric_rules:
+                row["candidate_metrics"][rule.name] = (
+                    0.1 if rule.direction == "HIGHER" else 0.9
+                )
+        result = evaluate_shadow_candidate(experiment.candidate_id, rows)
+        self.assertEqual(result["verdict"], "REJECT")
+        self.assertTrue(
+            any("stratum metric regression" in blocker for blocker in result["blockers"])
+        )
+        self.assertTrue(result["row_set_hash"])
+
+    def test_shadow_gate_rejects_missing_predeclared_stratum(self):
+        experiment = EXPERIMENTS[0]
+        rows = self.shadow_rows(experiment)
+        result = evaluate_shadow_candidate(
+            experiment.candidate_id,
+            rows,
+            required_stratum_values={
+                "task": ["unit", "missing-task"],
+                "regime": ["synthetic"],
+                "safety": ["standard", "protected"],
+                "provenance": ["complete"],
+            },
+        )
+        self.assertEqual(result["verdict"], "REJECT")
+        self.assertTrue(any("missing predeclared strata" in item for item in result["blockers"]))
+
+    def test_shadow_gate_rejects_joint_cell_regression_hidden_in_marginals(self):
+        experiment = EXPERIMENTS[0]
+        rows = self.shadow_rows(experiment)
+        for index, row in enumerate(rows):
+            row["strata"]["task"] = "A" if index < 10 or index >= 20 else "B"
+            row["strata"]["safety"] = (
+                "protected" if 5 <= index < 15 else "standard"
+            )
+            for rule in experiment.metric_rules:
+                if 5 <= index < 10:
+                    row["candidate_metrics"][rule.name] = (
+                        0.1 if rule.direction == "HIGHER" else 0.9
+                    )
+                elif index < 5 or index >= 20:
+                    row["candidate_metrics"][rule.name] = (
+                        0.8 if rule.direction == "HIGHER" else 0.2
+                    )
+                else:
+                    row["candidate_metrics"][rule.name] = (
+                        0.9 if rule.direction == "HIGHER" else 0.1
+                    )
+        result = evaluate_shadow_candidate(experiment.candidate_id, rows)
+        self.assertEqual(result["verdict"], "REJECT")
+        self.assertTrue(
+            any("joint-stratum metric regression" in item for item in result["blockers"])
+        )
 
 
 if __name__ == "__main__":

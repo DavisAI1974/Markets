@@ -53,18 +53,24 @@ class FrankieEvolutionTests(unittest.TestCase):
         }
 
     @staticmethod
-    def release_controls(split_id="heldout-4"):
+    def release_controls(candidate_hash, split_id="heldout-4"):
         split_hash = "a" * 64
+        evaluator_hash = "e" * 64
+        rollback_hash = "f" * 64
         ledger = HoldoutExposureLedger(split_id, split_hash, "RELEASE").record(
             query_id="final-score",
             consumer="locked-evaluator",
             purpose="FINAL_RELEASE_SCORE",
             output_level="AGGREGATE_ONLY",
+            parent_hashes=[candidate_hash, evaluator_hash, rollback_hash],
         )
         return {
+            "locked_evaluator_id": "locked-evaluator",
+            "locked_evaluator_hash": evaluator_hash,
             "evaluator_locked": True,
             "permissions_locked": True,
             "rollback_verified": True,
+            "rollback_artifact_hash": rollback_hash,
             "untouched_forward": True,
             "release_split_reuse_count": 0,
             "held_out_split_hash": split_hash,
@@ -107,7 +113,7 @@ class FrankieEvolutionTests(unittest.TestCase):
             split_precommitted=True,
             isolated_trial_worker=False,
             required_tests_passed=True,
-            **self.release_controls("heldout-1"),
+            **self.release_controls(candidate.candidate_hash, "heldout-1"),
             held_out_rows=[
                 self.row("a", False, True),
                 self.row("b", True, True, protected=True),
@@ -123,7 +129,7 @@ class FrankieEvolutionTests(unittest.TestCase):
             split_precommitted=True,
             isolated_trial_worker=True,
             required_tests_passed=True,
-            **self.release_controls("heldout-2"),
+            **self.release_controls(candidate.candidate_hash, "heldout-2"),
             held_out_rows=[
                 self.row("a", True, False, protected=True),
                 self.row("b", False, True),
@@ -140,7 +146,7 @@ class FrankieEvolutionTests(unittest.TestCase):
             split_precommitted=True,
             isolated_trial_worker=True,
             required_tests_passed=True,
-            **self.release_controls("heldout-3"),
+            **self.release_controls(candidate.candidate_hash, "heldout-3"),
             held_out_rows=[
                 self.row("a", True, True, protected=True),
                 self.row("b", False, False),
@@ -156,7 +162,7 @@ class FrankieEvolutionTests(unittest.TestCase):
             split_precommitted=True,
             isolated_trial_worker=True,
             required_tests_passed=True,
-            **self.release_controls(),
+            **self.release_controls(candidate.candidate_hash),
             held_out_rows=self.clean_release_rows(),
         )
         self.assertEqual(evaluation.pass_to_fail, 0)
@@ -166,7 +172,7 @@ class FrankieEvolutionTests(unittest.TestCase):
 
     def test_release_requires_locked_evaluator_permissions_rollback_and_forward_gate(self):
         candidate = build_candidate(self.candidate_raw(), evidence_hashes={"evidence-a"})
-        controls = self.release_controls("heldout-controls")
+        controls = self.release_controls(candidate.candidate_hash, "heldout-controls")
         for missing in ("evaluator_locked", "permissions_locked", "rollback_verified", "untouched_forward"):
             with self.subTest(control=missing):
                 weakened = {**controls, missing: False}
@@ -186,7 +192,10 @@ class FrankieEvolutionTests(unittest.TestCase):
 
     def test_catastrophic_case_and_release_split_reuse_are_rejected(self):
         candidate = build_candidate(self.candidate_raw(), evidence_hashes={"evidence-a"})
-        controls = {**self.release_controls("heldout-reused"), "release_split_reuse_count": 1}
+        controls = {
+            **self.release_controls(candidate.candidate_hash, "heldout-reused"),
+            "release_split_reuse_count": 1,
+        }
         evaluation = evaluate_release(
             candidate,
             held_out_split_id="heldout-reused",
@@ -204,7 +213,7 @@ class FrankieEvolutionTests(unittest.TestCase):
 
     def test_release_rejects_missing_or_tampered_holdout_exposure_audit(self):
         candidate = build_candidate(self.candidate_raw(), evidence_hashes={"evidence-a"})
-        controls = self.release_controls("heldout-firewall")
+        controls = self.release_controls(candidate.candidate_hash, "heldout-firewall")
         for audit in (None, {**controls["release_exposure_audit"], "exposure_count": 2}):
             with self.subTest(audit=audit):
                 evaluation = evaluate_release(

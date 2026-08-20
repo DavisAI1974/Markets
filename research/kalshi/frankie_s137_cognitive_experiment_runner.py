@@ -11,6 +11,7 @@ from __future__ import annotations
 import dataclasses
 import json
 import math
+import re
 from dataclasses import dataclass
 from typing import Any, Callable, Mapping, Sequence
 
@@ -27,8 +28,10 @@ from frankie_cognitive_experiments import (
 )
 from frankie_s137_cognitive_runtime import CognitiveCandidateRuntime, runtime_for
 
-VERSION = "S137_COGNITIVE_PAIRED_RUNNER_V1"
+VERSION = "S137_COGNITIVE_PAIRED_RUNNER_V3_PROVISIONAL"
 ARMS = ("baseline", "candidate")
+EVIDENCE_ROLES = {"DEVELOPMENT", "CALIBRATION", "HELD_OUT", "UNTOUCHED_FORWARD"}
+SHA256_RE = re.compile(r"[0-9a-f]{64}")
 
 
 class PairedRunError(RuntimeError):
@@ -256,6 +259,15 @@ def run_paired_case(
         "baseline_metrics": {name: float(value) for name, value in grades["baseline"].metrics.items()},
         "candidate_metrics": {name: float(value) for name, value in grades["candidate"].metrics.items()},
     }
+    if candidate_id == "COG01_COALA_ARCHITECTURE_MAP":
+        baseline_behavior = frozen["baseline"].thaw_verified()
+        candidate_behavior = frozen["candidate"].thaw_verified()
+        candidate_behavior.pop("cognitive_evaluation", None)
+        row["baseline_behavior_hash"] = sha256_json(baseline_behavior)
+        row["candidate_behavior_hash"] = sha256_json(candidate_behavior)
+    grade_hashes = {
+        arm: sha256_json(dataclasses.asdict(grades[arm])) for arm in ARMS
+    }
     audit_core = {
         "version": VERSION,
         "case_id": case.case_id,
@@ -266,6 +278,13 @@ def run_paired_case(
         "same_information_set": True,
         "candidate_contract_hash": sha256_json(candidate_contract),
         "freeze_before_reveal": True,
+        "frozen_output_hashes": {arm: frozen[arm].sha256 for arm in ARMS},
+        "budget_hashes": {
+            arm: sha256_json(budgets[arm].as_dict()) for arm in ARMS
+        },
+        "actual_hash": actual_hash,
+        "grade_hashes": grade_hashes,
+        "row_hash": sha256_json(row),
         "events": events,
         "execution_enabled": False,
         "automatic_apply": False,
@@ -283,12 +302,29 @@ def run_paired_suite(
     grade_fn: GradeFn,
     baseline_validate_fn: BaselineValidateFn = _default_baseline_validate,
     budget_tolerance: float = 0.02,
+    required_stratum_values: Mapping[str, Sequence[str]] | None = None,
+    required_joint_strata: Sequence[Mapping[str, str]] | None = None,
+    evidence_role: str = "DEVELOPMENT",
+    evidence_manifest_hash: str | None = None,
 ) -> dict[str, Any]:
     """Run an isolated candidate cohort and apply the locked component gate."""
     if not cases:
         raise PairedRunError("paired candidate suite requires cases")
     if len({case.case_id for case in cases}) != len(cases):
         raise PairedRunError("paired candidate suite case ids must be unique")
+    if required_stratum_values is None or required_joint_strata is None:
+        raise PairedRunError(
+            "paired candidate suite requires predeclared marginal and joint strata"
+        )
+    normalized_role = str(evidence_role).strip().upper()
+    if normalized_role not in EVIDENCE_ROLES:
+        raise PairedRunError(f"invalid paired evidence role: {evidence_role}")
+    evidence_is_bound = SHA256_RE.fullmatch(str(evidence_manifest_hash or "")) is not None
+    order_counts = {
+        arm: sum(1 for case in cases if case.arm_order[0] == arm) for arm in ARMS
+    }
+    if abs(order_counts["baseline"] - order_counts["candidate"]) > 1:
+        raise PairedRunError("paired candidate suite must balance first-arm order within one case")
     runtime = runtime_for(candidate_id)
     results = [
         run_paired_case(
@@ -308,6 +344,8 @@ def run_paired_suite(
             candidate_id,
             [result.row for result in results],
             budget_tolerance=budget_tolerance,
+            required_stratum_values=required_stratum_values,
+            required_joint_strata=required_joint_strata,
         )
     except CognitiveContractError as exc:
         raise PairedRunError(f"locked cognitive evaluator rejected paired rows: {exc}") from exc
@@ -315,10 +353,25 @@ def run_paired_suite(
         "version": VERSION,
         "candidate_id": candidate_id,
         "cases": len(results),
+        "case_manifest_hash": sha256_json([
+            dataclasses.asdict(case) for case in cases
+        ]),
+        "arm_order_first_counts": order_counts,
         "case_audits": [result.audit for result in results],
         "rows": [result.row for result in results],
+        "row_set_hash": sha256_json([result.row for result in results]),
+        "audit_set_hash": sha256_json([result.audit for result in results]),
         "evaluation": evaluation,
-        "performance_evidence": True,
+        "evidence_role": normalized_role,
+        "evidence_manifest_hash": evidence_manifest_hash,
+        "performance_evidence": (
+            evidence_is_bound and normalized_role in {"HELD_OUT", "UNTOUCHED_FORWARD"}
+        ),
+        "evidence_status": (
+            "BOUND_HELD_OUT_PERFORMANCE_ROWS"
+            if evidence_is_bound and normalized_role in {"HELD_OUT", "UNTOUCHED_FORWARD"}
+            else "PAIRED_ROWS_NOT_BOUND_HELD_OUT_EVIDENCE"
+        ),
         "promotion_authority": "NONE",
         "execution_enabled": False,
         "automatic_apply": False,

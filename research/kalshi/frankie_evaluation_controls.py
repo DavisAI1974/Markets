@@ -113,6 +113,7 @@ class HoldoutExposureLedger:
             "row_level_disclosed": row_level,
             "release_usable": len(self.exposures) == 1 and len(final) == 1 and not row_level,
             "ledger_tip": self.exposures[-1].exposure_hash if self.exposures else self.split_hash,
+            "exposures": [dataclasses.asdict(item) for item in self.exposures],
         }
         return {**core, "audit_hash": sha256_json(core)}
 
@@ -122,8 +123,10 @@ def validate_release_exposure_audit(
     *,
     split_id: str,
     split_hash: str,
+    expected_consumer: str | None = None,
+    required_parent_hashes: Sequence[str] = (),
 ) -> str:
-    """Validate a one-shot aggregate release audit and return its hash."""
+    """Validate the serialized one-shot hash chain and return its audit hash."""
     core = {key: audit.get(key) for key in (
         "split_id",
         "split_hash",
@@ -133,6 +136,7 @@ def validate_release_exposure_audit(
         "row_level_disclosed",
         "release_usable",
         "ledger_tip",
+        "exposures",
     )}
     if audit.get("audit_hash") != sha256_json(core):
         raise CognitiveContractError("holdout exposure audit hash mismatch")
@@ -153,6 +157,49 @@ def validate_release_exposure_audit(
         or not SHA256_RE.fullmatch(str(core["ledger_tip"] or ""))
     ):
         raise CognitiveContractError("holdout exposure firewall did not pass")
+
+    exposures = core["exposures"]
+    if not isinstance(exposures, list) or len(exposures) != 1:
+        raise CognitiveContractError("release audit must serialize its one exposure")
+    exposure = exposures[0]
+    if not isinstance(exposure, Mapping):
+        raise CognitiveContractError("release exposure receipt must be an object")
+    parents_raw = exposure.get("parent_hashes")
+    if not isinstance(parents_raw, (list, tuple)):
+        raise CognitiveContractError("release exposure parent hashes must be serialized")
+    parents = tuple(str(value) for value in parents_raw)
+    if any(not SHA256_RE.fullmatch(value) for value in parents):
+        raise CognitiveContractError("release exposure contains an invalid parent hash")
+    exposure_core = {
+        "split_id": core["split_id"],
+        "split_hash": core["split_hash"],
+        "role": core["role"],
+        "query_id": exposure.get("query_id"),
+        "consumer": exposure.get("consumer"),
+        "purpose": exposure.get("purpose"),
+        "output_level": exposure.get("output_level"),
+        "parent_hashes": parents,
+        "prior_hash": exposure.get("prior_hash"),
+    }
+    expected_exposure_hash = sha256_json(exposure_core)
+    if (
+        exposure.get("prior_hash") != core["split_hash"]
+        or exposure.get("exposure_hash") != expected_exposure_hash
+        or core["ledger_tip"] != expected_exposure_hash
+        or exposure.get("purpose") != "FINAL_RELEASE_SCORE"
+        or exposure.get("output_level") != "AGGREGATE_ONLY"
+    ):
+        raise CognitiveContractError("release exposure hash chain is invalid")
+    if expected_consumer is not None and exposure.get("consumer") != expected_consumer:
+        raise CognitiveContractError("release exposure consumer does not match the locked evaluator")
+    required = tuple(str(value) for value in required_parent_hashes)
+    if any(not SHA256_RE.fullmatch(value) for value in required):
+        raise CognitiveContractError("required release parent hashes must be SHA-256 values")
+    missing = sorted(set(required) - set(parents))
+    if missing:
+        raise CognitiveContractError(
+            "release exposure is missing required parent artifacts: " + ", ".join(missing)
+        )
     return str(audit["audit_hash"])
 
 
@@ -162,6 +209,9 @@ def evaluate_judge_independence_canary(
     max_order_flip_rate: float = 0.01,
     max_length_control_flip_rate: float = 0.01,
     max_truth_disagreement_rate: float = 0.05,
+    judge_id: str = "UNBOUND",
+    judge_version_hash: str | None = None,
+    canary_manifest_hash: str | None = None,
 ) -> dict[str, Any]:
     """Audit a judge with answer-order, length, and objective-truth controls.
 
@@ -169,6 +219,18 @@ def evaluate_judge_independence_canary(
     labels such as A/B are not accepted.  A canary can revoke grading authority,
     never grant promotion authority.
     """
+    tolerances = (
+        max_order_flip_rate,
+        max_length_control_flip_rate,
+        max_truth_disagreement_rate,
+    )
+    if any(
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not 0.0 <= float(value) <= 1.0
+        for value in tolerances
+    ):
+        raise CognitiveContractError("judge canary tolerances must be numeric within [0, 1]")
     if len(rows) < MIN_JUDGE_CANARY_CASES:
         raise CognitiveContractError(
             f"judge canary requires at least {MIN_JUDGE_CANARY_CASES} cases"
@@ -205,6 +267,10 @@ def evaluate_judge_independence_canary(
     if rates["truth_disagreement_rate"] > max_truth_disagreement_rate:
         blockers.append("objective-truth disagreement exceeded tolerance")
     core = {
+        "judge_id": str(judge_id).strip(),
+        "judge_version_hash": judge_version_hash,
+        "canary_manifest_hash": canary_manifest_hash,
+        "case_set_hash": sha256_json([dict(row) for row in rows]),
         "cases": len(rows),
         "rates": rates,
         "tolerances": {
@@ -216,4 +282,12 @@ def evaluate_judge_independence_canary(
         "blockers": blockers,
         "promotion_authority": "NONE",
     }
+    if not core["judge_id"] or core["judge_id"] == "UNBOUND":
+        blockers.append("judge identity is not bound")
+    if not SHA256_RE.fullmatch(str(judge_version_hash or "")):
+        blockers.append("judge version hash is not bound")
+    if not SHA256_RE.fullmatch(str(canary_manifest_hash or "")):
+        blockers.append("canary manifest hash is not bound")
+    core["verdict"] = "JUDGE_AUTHORITY_RETAINED" if not blockers else "JUDGE_AUTHORITY_REVOKED"
+    core["blockers"] = blockers
     return {**core, "canary_hash": sha256_json(core)}
