@@ -1,0 +1,312 @@
+name: NG Exhaustion Early PRIOR Recovery 20260819
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/NG_EXHAUSTION_PRIOR_EARLY_RECOVERY_LAUNCH_20260819.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: us-east-2
+  BUCKET: bento-568968024170-us-east-2-an
+  BASE_ID: '9281733364'
+  BASE_SHA: f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1
+  HELD_ID: '9281272840'
+  HELD_SHA: 21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e
+  LINEAGE_ID: '9289929292'
+  LINEAGE_SHA: a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95
+  RECONCILE_ID: '9306082330'
+  RECONCILE_SHA: f17c130df029429bfbc35067d1cc9d16128ca4fb227dd37f3fb4fbb8bbaf8875
+
+jobs:
+  prior-early-model-agents:
+    name: Early PRIOR ${{ matrix.target }} ${{ matrix.model }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        include:
+          - {target: D0, model: logistic, min_depth: 0}
+          - {target: D0, model: extra_trees, min_depth: 0}
+          - {target: D0, model: knn, min_depth: 0}
+          - {target: D1, model: logistic, min_depth: 0}
+          - {target: D1, model: extra_trees, min_depth: 0}
+          - {target: D1, model: knn, min_depth: 0}
+          - {target: D2, model: logistic, min_depth: 1}
+          - {target: D2, model: extra_trees, min_depth: 1}
+          - {target: D2, model: knn, min_depth: 1}
+          - {target: D3, model: logistic, min_depth: 2}
+          - {target: D3, model: extra_trees, min_depth: 2}
+          - {target: D3, model: knn, min_depth: 2}
+          - {target: D4, model: case_study, min_depth: 3}
+          - {target: D5, model: case_study, min_depth: 4}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: python -m pip install --quiet numpy scikit-learn
+
+      - name: Verify PRIOR-only recovery contract
+        run: |
+          set -euo pipefail
+          python -m py_compile research/ng_exhaustion_prior_early_model_agent_20260819.py
+          python - <<'PY'
+          p=open('research/ng_exhaustion_prior_early_model_agent_20260819.py').read()
+          assert 'EARLY_H = (1, 2, 3, 4, 5)' in p
+          assert 'PRIOR_ONLY_BEFORE_TARGET_BIRTH' in p
+          assert 'fallback_clock_used' in p
+          assert 'base.paired_eval(model, cases, stage, "prior", h, cache)' in p
+          print('early PRIOR recovery contract: PASS')
+          PY
+
+      - name: Download and verify immutable frozen sources
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/in/base /tmp/in/held /tmp/in/lineage /tmp/in/reconcile
+          get_artifact () {
+            id="$1"; sha="$2"; zip="$3"; dest="$4"
+            curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" -o "${zip}"
+            echo "${sha}  ${zip}" | sha256sum -c -
+            unzip -q "${zip}" -d "${dest}"
+          }
+          get_artifact "${BASE_ID}" "${BASE_SHA}" /tmp/base.zip /tmp/in/base
+          get_artifact "${HELD_ID}" "${HELD_SHA}" /tmp/held.zip /tmp/in/held
+          get_artifact "${LINEAGE_ID}" "${LINEAGE_SHA}" /tmp/lineage.zip /tmp/in/lineage
+          get_artifact "${RECONCILE_ID}" "${RECONCILE_SHA}" /tmp/reconcile.zip /tmp/in/reconcile
+
+      - name: Resolve required weeks only
+        env:
+          MIN_DEPTH: ${{ matrix.min_depth }}
+        run: |
+          python - <<'PY' > /tmp/weeks.txt
+          import gzip,json,os
+          mind=int(os.environ['MIN_DEPTH'])
+          weeks=set()
+          for p in (
+            '/tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz',
+            '/tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz',
+          ):
+              with gzip.open(p,'rt') as f:
+                  for line in f:
+                      r=json.loads(line)
+                      if int(r.get('all_model_consecutive_positive_depth',0)) >= mind:
+                          weeks.add(r['week_sunday'])
+          assert weeks
+          for w in sorted(weeks): print(w)
+          PY
+
+      - name: Materialize authoritative raw NG tape
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ngraw
+          python - <<'PY' > /tmp/days.txt
+          from datetime import datetime,timedelta
+          days=set()
+          for line in open('/tmp/weeks.txt'):
+              w=line.strip()
+              if not w: continue
+              d=datetime.strptime(w,'%Y%m%d')
+              for i in range(6): days.add((d+timedelta(days=i)).strftime('%Y%m%d'))
+          for x in sorted(days): print(x)
+          PY
+          python - <<'PY' > /tmp/closures.txt
+          import json
+          d=json.load(open('research/NG_EXHAUSTION_20260403_CME_CLOSURE_WITNESS_20260817.json'))
+          assert d['status']=='FROZEN_EXCHANGE_CLOSURE_WITNESS'
+          for x in d['canonicalization_rule']['explicit_closure_dates']: print(x)
+          PY
+          while read -r d; do
+            mapfile -t keys < <(aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" \
+              --query 'Contents[].Key' --output text | tr '\t' '\n' | \
+              grep -E "NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" | sort -u || true)
+            if grep -qx "${d}" /tmp/closures.txt; then
+              test "${#keys[@]}" -eq 0 || { echo "::error::frozen closure ${d} has raw objects"; exit 1; }
+              continue
+            fi
+            test "${#keys[@]}" -eq 1 || { echo "::error::expected exactly one NG raw object ${d}, got ${#keys[@]}"; exit 1; }
+            aws s3 cp "s3://${BUCKET}/${keys[0]}" "/tmp/ngraw/NG_${d}.jsonl.gz" --only-show-errors
+            test -s "/tmp/ngraw/NG_${d}.jsonl.gz"
+          done < /tmp/days.txt
+
+      - name: Run early PRIOR-only agent
+        env:
+          TARGET: ${{ matrix.target }}
+          MODEL: ${{ matrix.model }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/out
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_prior_early_model_agent_20260819.py \
+            --target "${TARGET}" \
+            --model "${MODEL}" \
+            --base /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz \
+            --held /tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz \
+            --base-lineage /tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz \
+            --held-lineage /tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz \
+            --raw-dir /tmp/ngraw \
+            --out "/tmp/out/NG_EXHAUSTION_PRIOR_EARLY_${TARGET}_${MODEL}_20260819.json"
+
+      - name: Fail closed on no-fallback and preservation invariants
+        env:
+          TARGET: ${{ matrix.target }}
+          MODEL: ${{ matrix.model }}
+        run: |
+          python - <<'PY'
+          import json,os
+          p=f"/tmp/out/NG_EXHAUSTION_PRIOR_EARLY_{os.environ['TARGET']}_{os.environ['MODEL']}_20260819.json"
+          d=json.load(open(p))
+          assert d['search_class']=='PRIOR_ONLY_BEFORE_TARGET_BIRTH'
+          assert d['fallback_clock_used'] is False
+          assert d['H_values']==[1,2,3,4,5]
+          assert d['frozen_exact_depth_counts']=={'0':135860,'1':18837,'2':1592,'3':124,'4':8,'5':1}
+          assert d['price_structure_mode']=='PER_OCCURRENCE_CAUSAL_ONE_SECOND_PATH_PREFIX'
+          assert d['price_structure_per_occurrence'] is True
+          assert d['price_structure_availability_used_as_feature'] is False
+          assert d['promotion_performed'] is False
+          assert not any(d['protected_mutations'].values())
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-prior-early-${{ matrix.target }}-${{ matrix.model }}-20260819
+          path: /tmp/out/*.json
+          if-no-files-found: error
+          retention-days: 14
+
+  reconcile-prior-early:
+    name: Reconcile earliest pre-birth H1-H5 results
+    needs: prior-early-model-agents
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ng-exhaustion-prior-early-*-20260819
+          path: /tmp/agents
+          merge-multiple: true
+
+      - name: Reconcile model gates and preserve unresolved targets
+        run: |
+          set -euo pipefail
+          OUT=research/generated/ng_exhaustion_prior_birth_recovery_20260819
+          mkdir -p "${OUT}"
+          python - <<'PY'
+          import glob,json,os
+          from collections import defaultdict
+          from pathlib import Path
+
+          files=sorted(glob.glob('/tmp/agents/*.json'))
+          if not files:
+              raise SystemExit('no early PRIOR agent artifacts were produced')
+          docs=[json.load(open(p)) for p in files]
+          by=defaultdict(dict)
+          sparse={}
+          failures=[]
+          for d in docs:
+              assert d['search_class']=='PRIOR_ONLY_BEFORE_TARGET_BIRTH'
+              assert d['fallback_clock_used'] is False
+              t=d['target']
+              if d.get('model'):
+                  by[t][d['model']]=d
+              else:
+                  sparse[t]=d
+          resolved={}
+          unresolved=[]
+          missing_models={}
+          target_results={}
+          for t in ('D0','D1','D2','D3'):
+              models=by.get(t,{})
+              missing=[m for m in ('logistic','extra_trees','knn') if m not in models]
+              if missing:
+                  missing_models[t]=missing
+              points=[]
+              winner=None
+              for h in (1,2,3,4,5):
+                  status={}
+                  passes=0
+                  for m in ('logistic','extra_trees','knn'):
+                      d=models.get(m)
+                      z=None if d is None else next((x for x in d['tested_points'] if x['H_seconds']==h),None)
+                      ok=bool(z and z['passes_gate'])
+                      status[m]=None if z is None else ok
+                      passes += int(ok)
+                  rec={'H_seconds':h,'model_pass':status,'models_passing':passes,'validated_2_of_3':passes>=2}
+                  points.append(rec)
+                  if winner is None and passes>=2:
+                      winner=rec
+              target_results[t]={'tested_points':points,'earliest_validated':winner,'models_present':sorted(models)}
+              if winner is None:
+                  unresolved.append(t)
+              else:
+                  resolved[t]={'timing_class':'PRIOR_BEFORE_TARGET_BIRTH','H_seconds':winner['H_seconds'],'models_passing':winner['models_passing'],'model_pass':winner['model_pass']}
+          for t in ('D4','D5'):
+              target_results[t]=sparse.get(t,{'status':'MISSING_SPARSE_CASE_STUDY_ARTIFACT'})
+          result={
+              'status':'NG_EXHAUSTION_PRIOR_EARLY_RECOVERY_RECONCILED',
+              'date':'2026-08-19',
+              'search_class':'PRIOR_ONLY_BEFORE_TARGET_BIRTH',
+              'H_values':[1,2,3,4,5],
+              'fallback_clock_used':False,
+              'resolved_targets':resolved,
+              'unresolved_after_H5':unresolved,
+              'next_step':'CONTINUE_PRIOR_SEARCH_FOR_UNRESOLVED_TARGETS_ONLY; DO_NOT_START_FALLBACK_CLOCK_UNTIL PRIOR IS EXHAUSTED FOR THAT TARGET',
+              'missing_models':missing_models,
+              'target_results':target_results,
+              'evidence_preservation':'RESOLVED_TARGETS_REMAIN_IN_RESULTS_AND_ARE_REMOVED_ONLY_FROM_UNNECESSARY_LATER_COMPUTE',
+              'promotion_performed':False,
+              'protected_mutations':{'detector':False,'canonical_rows':False,'phase1':False,'phase2':False,'runway_clock':False,'permanent_frankie':False,'frankie_1':False,'spawn_py':False,'ssos_play':False},
+          }
+          Path(f'{OUT}/NG_EXHAUSTION_PRIOR_EARLY_ALL_RESULTS_20260819.json').write_text(json.dumps(result,indent=2,sort_keys=True)+'\n')
+          lines=['# NG Exhaustion Early PRIOR Recovery — 2026-08-19','',
+                 'Status: **PRIOR-only H=1..5 reconciliation. The target detector-relative fallback clock was not used.**','',
+                 'This run asks only whether each next chain stage can be predicted before it is born from already-causal predecessor information.','']
+          for t in ('D0','D1','D2','D3'):
+              w=resolved.get(t)
+              if w:
+                  lines += [f'## {t}',f"- Earliest validated PRIOR signal: H={w['H_seconds']}s before target birth semantics.",'- Resolved here; retained in evidence and excluded only from later unnecessary H compute.','']
+              else:
+                  lines += [f'## {t}','- No 2-of-3 validation in H=1..5.','- Remains active for later PRIOR bands; fallback clock is still prohibited.','']
+          lines += ['## D4/D5','Low-support cases remain preserved as causal PRIOR case studies; no universal timing law is forced.','',
+                    '## Next','Continue later PRIOR H bands for unresolved D0-D3 only. A target may enter +0/+1/... fallback only after its complete PRIOR search fails.','',
+                    'No protected component was modified and no play/brain promotion was performed.']
+          Path(f'{OUT}/NG_EXHAUSTION_PRIOR_EARLY_ALL_FINDINGS_20260819.md').write_text('\n'.join(lines)+'\n')
+          PY
+
+      - name: Commit durable early PRIOR results
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add research/generated/ng_exhaustion_prior_birth_recovery_20260819
+          git diff --cached --quiet && exit 0
+          git commit -m "Record early PRIOR-only chain birth recovery results"
+          for i in 1 2 3; do
+            git pull --rebase origin chatgpt/ng-exhaustion-entry-timing-revival-20260818 && \
+            git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818 && exit 0
+            sleep $((i*5))
+          done
+          exit 1
