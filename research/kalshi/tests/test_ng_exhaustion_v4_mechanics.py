@@ -83,13 +83,16 @@ def test_lane_registry_is_identity_bound_and_duplicate_rejected():
 
 
 def test_probability_movie_and_first_lock_are_recomputed_not_asserted():
+    # This test preserves the original provisional helper's semantic LOCKED behavior.
+    # The authoritative V4 path uses ng_exhaustion_v4_lock_outcome.recompute_lock_outcome,
+    # which additionally seals NO_RELIABLE_LOCK to an exact probability/decision identity.
     e1=prob(10.0,probs=(0.79,0.21))
     e2=prob(11.0,e1.entry_hash,(0.81,0.19))
     e3=prob(12.0,e2.entry_hash,(0.82,0.18))
     assert validate_probability_movie([e1,e2,e3]) == e3.entry_hash
     lock=recompute_first_lock([e1,e2,e3],threshold=.80,persistence=2,lock_policy_sha256=F)
     assert lock.status=="LOCKED" and lock.entry_hash==e3.entry_hash
-    assert lock.evidence_entry_hashes==(e2.entry_hash,e3.entry_hash)
+    assert tuple(lock.evidence_entry_hashes)==(e2.entry_hash,e3.entry_hash)
 
 
 def test_probability_hash_chain_rejects_reveal_mutation():
@@ -99,6 +102,9 @@ def test_probability_hash_chain_rejects_reveal_mutation():
 
 
 def test_no_reliable_lock_is_explicit():
+    # Legacy/provisional helper behavior is preserved for compatibility only.
+    # The authoritative sealed no-lock behavior is separately tested in
+    # test_ng_exhaustion_v4_lock_outcome.py.
     e1=prob(10.0,probs=(0.55,0.45)); e2=prob(11.0,e1.entry_hash,(0.58,0.42))
     lock=recompute_first_lock([e1,e2],threshold=.8,persistence=2,lock_policy_sha256=F)
     assert lock.status=="NO_RELIABLE_LOCK" and lock.entry_hash is None
