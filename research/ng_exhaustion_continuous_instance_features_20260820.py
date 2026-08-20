@@ -92,7 +92,11 @@ def continuous_feature_row(case: dict[str, Any], cutoff: int, cache, view: str =
 
 
 def birth_relative_coordinate(case: dict[str, Any], decision_time: int, stage: int) -> dict[str, Any]:
-    """Convert a completed decision timestamp to PRIOR/T0/H for reporting only."""
+    """Convert a completed decision timestamp to a reporting coordinate only.
+
+    A stopped-chain control never receives a synthetic H label. Only a true positive
+    continuation at D1+ may be reported as H after its actual target birth.
+    """
     t0 = int(case["target"]["t0_idx"])
     delta = int(decision_time) - t0
     if stage == 0:
@@ -101,6 +105,12 @@ def birth_relative_coordinate(case: dict[str, Any], decision_time: int, stage: i
         if delta == 0:
             return {"timing_class": "CANDIDATE_T0", "seconds": 0, "signed_seconds_from_candidate_t0": 0}
         return {"timing_class": "CANDIDATE_PLUS", "seconds": int(delta), "signed_seconds_from_candidate_t0": delta}
+    if int(case.get("continuation", 0)) != 1:
+        if delta < 0:
+            return {"timing_class": "PRIOR_TO_CONTROL_CANDIDATE", "seconds": int(-delta), "signed_seconds_from_candidate_t0": delta}
+        if delta == 0:
+            return {"timing_class": "CONTROL_CANDIDATE_T0", "seconds": 0, "signed_seconds_from_candidate_t0": 0}
+        return {"timing_class": "CONTROL_CANDIDATE_PLUS", "seconds": int(delta), "signed_seconds_from_candidate_t0": delta}
     if delta < 0:
         return {"timing_class": "PRIOR", "seconds": int(-delta), "signed_seconds_from_t0": delta}
     if delta == 0:
