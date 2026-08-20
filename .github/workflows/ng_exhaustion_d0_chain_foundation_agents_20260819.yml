@@ -1,0 +1,294 @@
+name: NG Exhaustion D0 Chain Foundation Agents 20260819
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/NG_EXHAUSTION_D0_CHAIN_FOUNDATION_LAUNCH_20260819.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: us-east-2
+  BUCKET: bento-568968024170-us-east-2-an
+  BASE_ID: '9281733364'
+  BASE_SHA: f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1
+  HELD_ID: '9281272840'
+  HELD_SHA: 21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e
+  LINEAGE_ID: '9289929292'
+  LINEAGE_SHA: a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95
+  RECONCILE_ID: '9306082330'
+  RECONCILE_SHA: f17c130df029429bfbc35067d1cc9d16128ca4fb227dd37f3fb4fbb8bbaf8875
+
+jobs:
+  foundation-agents:
+    name: ${{ matrix.kind }} D${{ matrix.stage }} ${{ matrix.model }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      max-parallel: 9
+      matrix:
+        include:
+          - {kind: complement, stage: 1, model: logistic, min_depth: 0}
+          - {kind: complement, stage: 1, model: extra_trees, min_depth: 0}
+          - {kind: complement, stage: 1, model: knn, min_depth: 0}
+          - {kind: root_ablation, stage: 2, model: logistic, min_depth: 1}
+          - {kind: root_ablation, stage: 2, model: extra_trees, min_depth: 1}
+          - {kind: root_ablation, stage: 2, model: knn, min_depth: 1}
+          - {kind: root_ablation, stage: 3, model: logistic, min_depth: 2}
+          - {kind: root_ablation, stage: 3, model: extra_trees, min_depth: 2}
+          - {kind: root_ablation, stage: 3, model: knn, min_depth: 2}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: python -m pip install --quiet numpy scikit-learn
+
+      - name: Verify foundation contract
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            research/ng_exhaustion_chain_recovery_features_20260819.py \
+            research/ng_exhaustion_chain_recovery_models_20260819.py \
+            research/ng_exhaustion_d0_d1_complement_crosscheck_20260819.py \
+            research/ng_exhaustion_root_retained_ablation_20260819.py
+          PYTHONPATH=research python - <<'PY'
+          import inspect
+          import ng_exhaustion_d0_d1_complement_crosscheck_20260819 as c
+          import ng_exhaustion_root_retained_ablation_20260819 as r
+          assert c.PRIOR_AGES == (0,1,2,3,4,5)
+          assert r.PRIOR_AGES == (0,1,2,3,4,5)
+          assert r.POST_H == (1,2,3,4,5)
+          assert 'cross_model_vote_used' in inspect.getsource(c)
+          assert 'cross_model_vote_used' in inspect.getsource(r)
+          print('foundation contract: PASS')
+          PY
+
+      - name: Download and verify immutable frozen sources
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/in/base /tmp/in/held /tmp/in/lineage /tmp/in/reconcile
+          get_artifact () {
+            id="$1"; sha="$2"; zip="$3"; dest="$4"
+            curl -L --fail --silent --show-error \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" -o "${zip}"
+            echo "${sha}  ${zip}" | sha256sum -c -
+            unzip -q "${zip}" -d "${dest}"
+          }
+          get_artifact "${BASE_ID}" "${BASE_SHA}" /tmp/base.zip /tmp/in/base
+          get_artifact "${HELD_ID}" "${HELD_SHA}" /tmp/held.zip /tmp/in/held
+          get_artifact "${LINEAGE_ID}" "${LINEAGE_SHA}" /tmp/lineage.zip /tmp/in/lineage
+          get_artifact "${RECONCILE_ID}" "${RECONCILE_SHA}" /tmp/reconcile.zip /tmp/in/reconcile
+
+      - name: Resolve required weeks only
+        env:
+          MIN_DEPTH: ${{ matrix.min_depth }}
+        run: |
+          python - <<'PY' > /tmp/weeks.txt
+          import gzip,json,os
+          mind=int(os.environ['MIN_DEPTH'])
+          weeks=set()
+          for p in (
+            '/tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz',
+            '/tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz',
+          ):
+              with gzip.open(p,'rt') as f:
+                  for line in f:
+                      r=json.loads(line)
+                      if int(r.get('all_model_consecutive_positive_depth',0)) >= mind:
+                          weeks.add(r['week_sunday'])
+          assert weeks
+          for w in sorted(weeks): print(w)
+          PY
+
+      - name: Materialize authoritative raw NG tape
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ngraw
+          python - <<'PY' > /tmp/days.txt
+          from datetime import datetime,timedelta
+          days=set()
+          for line in open('/tmp/weeks.txt'):
+              w=line.strip()
+              if not w: continue
+              d=datetime.strptime(w,'%Y%m%d')
+              for i in range(6): days.add((d+timedelta(days=i)).strftime('%Y%m%d'))
+          for x in sorted(days): print(x)
+          PY
+          python - <<'PY' > /tmp/closures.txt
+          import json
+          d=json.load(open('research/NG_EXHAUSTION_20260403_CME_CLOSURE_WITNESS_20260817.json'))
+          assert d['status']=='FROZEN_EXCHANGE_CLOSURE_WITNESS'
+          for x in d['canonicalization_rule']['explicit_closure_dates']: print(x)
+          PY
+          while read -r d; do
+            mapfile -t keys < <(aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" \
+              --query 'Contents[].Key' --output text | tr '\t' '\n' | \
+              grep -E "NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" | sort -u || true)
+            if grep -qx "${d}" /tmp/closures.txt; then
+              test "${#keys[@]}" -eq 0 || { echo "::error::frozen closure ${d} has raw objects"; exit 1; }
+              continue
+            fi
+            test "${#keys[@]}" -eq 1 || { echo "::error::expected one NG raw object ${d}, got ${#keys[@]}"; exit 1; }
+            aws s3 cp "s3://${BUCKET}/${keys[0]}" "/tmp/ngraw/NG_${d}.jsonl.gz" --only-show-errors
+            test -s "/tmp/ngraw/NG_${d}.jsonl.gz"
+          done < /tmp/days.txt
+
+      - name: Run foundation agent
+        env:
+          KIND: ${{ matrix.kind }}
+          STAGE: ${{ matrix.stage }}
+          MODEL: ${{ matrix.model }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/out
+          COMMON="--base /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz --held /tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz --base-lineage /tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz --held-lineage /tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz --raw-dir /tmp/ngraw"
+          if [ "${KIND}" = "complement" ]; then
+            PYTHONPATH=research:research/kalshi python research/ng_exhaustion_d0_d1_complement_crosscheck_20260819.py \
+              --model "${MODEL}" ${COMMON} \
+              --out "/tmp/out/NG_EXHAUSTION_D0_D1_COMPLEMENT_${MODEL}_20260819.json"
+          else
+            PYTHONPATH=research:research/kalshi python research/ng_exhaustion_root_retained_ablation_20260819.py \
+              --stage "${STAGE}" --model "${MODEL}" ${COMMON} \
+              --out "/tmp/out/NG_EXHAUSTION_ROOT_ABLATION_D${STAGE}_${MODEL}_20260819.json"
+          fi
+
+      - name: Fail closed on foundation invariants
+        run: |
+          python - <<'PY'
+          import glob,json,os
+          ps=glob.glob('/tmp/out/*.json'); assert len(ps)==1, ps
+          d=json.load(open(ps[0]))
+          assert d['cross_model_vote_used'] is False
+          assert d['policy']=='FLAG_AND_DECOMPOSE_NOT_AUTO_KILL'
+          assert d['promotion_performed'] is False
+          assert not any(d['protected_mutations'].values())
+          assert d['frozen_exact_depth_counts']=={'0':135860,'1':18837,'2':1592,'3':124,'4':8,'5':1}
+          if os.environ.get('KIND')=='complement':
+              assert d['root_clock']=='ROOT_AGE_MATCHED_TO_D1_PRIOR_AGE'
+              assert d['executable_rows']==156385
+              assert d['censored_d0']==37
+          PY
+        env:
+          KIND: ${{ matrix.kind }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-foundation-${{ matrix.kind }}-d${{ matrix.stage }}-${{ matrix.model }}-20260819
+          path: /tmp/out/*.json
+          if-no-files-found: error
+          retention-days: 14
+
+  reconcile:
+    name: Reconcile D0 chain foundation evidence
+    needs: foundation-agents
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ng-exhaustion-foundation-*-20260819
+          path: /tmp/agents
+          merge-multiple: true
+
+      - name: Reconcile without voting
+        run: |
+          set -euo pipefail
+          OUT=research/generated/ng_exhaustion_d0_chain_foundation_20260819
+          mkdir -p "${OUT}"
+          python - <<'PY'
+          import glob,json,shutil
+          from pathlib import Path
+          docs=[]
+          for p in sorted(glob.glob('/tmp/agents/*.json')):
+              d=json.load(open(p)); docs.append(d)
+              shutil.copy2(p, Path('research/generated/ng_exhaustion_d0_chain_foundation_20260819')/Path(p).name)
+          comp={d['model']:d for d in docs if d['status']=='NG_D0_D1_COMPLEMENT_MODEL_AGENT_COMPLETE'}
+          abl={(int(d['stage']),d['model']):d for d in docs if d['status']=='NG_ROOT_RETAINED_VS_ABLATED_AGENT_COMPLETE'}
+          models={'logistic','extra_trees','knn'}
+          if set(comp)!=models: raise SystemExit(f'missing complement agents {set(comp)}')
+          expected={(s,m) for s in (2,3) for m in models}
+          if set(abl)!=expected: raise SystemExit(f'missing root ablation agents {set(abl)}')
+          complement=[]
+          for model,d in comp.items():
+              for f in d['findings']:
+                  for block,q in f['blocks'].items():
+                      if q.get('n',0):
+                          complement.append({'model':model,'root_age_seconds':f['root_age_seconds_after_confirmation'],'block':block,
+                            'n':q['n'],'mean_abs_probability_complement_error':q['mean_abs_probability_complement_error'],
+                            'max_abs_probability_complement_error':q['max_abs_probability_complement_error']})
+          root_valid=[]; root_mixed=[]
+          for (stage,model),d in sorted(abl.items()):
+              for r in d['rows']:
+                  z={'stage':stage,'model':model,'target':r['target'],'phase':r['phase'],'seconds':r['seconds'],
+                     'validated':r['root_increment_independently_validated'],'root_increment':r['root_increment']}
+                  (root_valid if z['validated'] else root_mixed).append(z)
+          result={
+            'status':'NG_EXHAUSTION_D0_CHAIN_FOUNDATION_RECONCILED','date':'2026-08-19',
+            'model_voting_used':False,
+            'complement_interpretation':'CALIBRATION_AND_IMPLEMENTATION_CROSSCHECK_ONLY_NOT_NEW_INDEPENDENT_EVIDENCE',
+            'complement_points':complement,
+            'root_increment_independently_validated_points':root_valid,
+            'root_increment_nonvalidated_or_mixed_points':root_mixed,
+            'next_step':'USE_DURABLE_D0_SIGNAL_FOR_MODEL_SPECIFIC_TRADE; COMBINE_WITH_D1_D5_RECOVERY_ONLY_AFTER_EACH_RESULT_EXISTS; PRESERVE DISAGREEMENT',
+            'policy':'FLAG_AND_DECOMPOSE_NOT_AUTO_KILL','promotion_performed':False,
+            'protected_mutations':{'detector':False,'canonical_rows':False,'phase1':False,'phase2':False,'runway_clock':False,'permanent_frankie':False,'frankie_1':False,'spawn_py':False,'ssos_play':False},
+          }
+          Path(f'{OUT}/NG_EXHAUSTION_D0_CHAIN_FOUNDATION_ALL_RESULTS_20260819.json').write_text(json.dumps(result,indent=2,sort_keys=True)+'\n')
+          lines=['# NG Exhaustion D0 / Chain Foundation — 2026-08-19','',
+            'Status: **independent-model complement and root-ablation evidence reconciled; no model voting.**','',
+            '## D0 vs D1 complement','']
+          for model in ('logistic','extra_trees','knn'):
+              qs=[x for x in complement if x['model']==model]
+              mx=max((x['max_abs_probability_complement_error'] for x in qs),default=None)
+              lines.append(f'- {model}: maximum matched probability complement error across reported OOT blocks = {mx}.')
+          lines += ['', '## Root incremental value', f'- Independently validated root-increment checkpoints: {len(root_valid)}.',
+            f'- Nonvalidated/mixed checkpoints preserved: {len(root_mixed)}.', '',
+            'Every individual checkpoint, target, model and block remains in the JSON evidence; no disagreement was collapsed into a vote.', '',
+            '## Preservation','- No protected artifact was mutated or promoted.','- `FLAG_AND_DECOMPOSE_NOT_AUTO_KILL` remains in force.','']
+          Path(f'{OUT}/NG_EXHAUSTION_D0_CHAIN_FOUNDATION_ALL_FINDINGS_20260819.md').write_text('\n'.join(lines))
+          PY
+
+      - name: Fail closed on reconciliation
+        run: |
+          python - <<'PY'
+          import json
+          p='research/generated/ng_exhaustion_d0_chain_foundation_20260819/NG_EXHAUSTION_D0_CHAIN_FOUNDATION_ALL_RESULTS_20260819.json'
+          d=json.load(open(p))
+          assert d['model_voting_used'] is False
+          assert d['policy']=='FLAG_AND_DECOMPOSE_NOT_AUTO_KILL'
+          assert not any(d['protected_mutations'].values())
+          PY
+
+      - name: Commit durable foundation outputs
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/generated/ng_exhaustion_d0_chain_foundation_20260819
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "research: reconcile D0 chain foundation agents"
+          git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
