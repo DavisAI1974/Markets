@@ -1,0 +1,208 @@
+{
+  "plan_id": "NG_EXHAUSTION_V4_BUILD_PLAN_CURRENT_20260820",
+  "status": "CURRENT_IMPLEMENTATION_PLAN",
+  "repository": "DavisAI1974/Markets",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "v4_empirical_launch_authorized": false,
+  "permanent_frankie_mutation_authorized": false,
+  "protected_artifact_mutation_authorized": false,
+  "execution_hierarchy": [
+    "MECHANICAL_BUILDS",
+    "EXACT_CANDIDATE_FREEZE",
+    "SMALL_FROZEN_PILOT",
+    "TARGETED_D_YEAR_SLICE_IF_NEEDED",
+    "ADDITIONAL_BOUNDED_SLICES",
+    "FULL_D_YEAR_RECONCILIATION",
+    "FULL_MULTIYEAR_D_RUNS_LAST"
+  ],
+  "already_green": {
+    "causal_discovery_event_known_by": {
+      "status": "MECHANICALLY_GREEN",
+      "tests": "30/30",
+      "candidate_commit": "2a95ab21dda9080c765248a3c0bdfe50127a52ad",
+      "frozen_detector_modified": false,
+      "frozen_runway_modified": false
+    },
+    "unified_runtime": {
+      "status": "MECHANICALLY_GREEN",
+      "tests": "11/11",
+      "one_registry": true,
+      "one_engine": true,
+      "one_reconciler": true,
+      "D4_D5_same_engine_case_study_no_adaptation": true,
+      "posthoc_oracle_lane_permanently_non_promotable": true
+    },
+    "causal_state_assembler": {
+      "status": "MECHANICALLY_GREEN",
+      "tests": "7/7",
+      "runner_commit": "654fc2c0fc9e4e79f70e545e7fe59d92f70d9e67",
+      "receipt": "research/kalshi/NG_EXHAUSTION_V4_STATE_ASSEMBLER_RECEIPT_20260820.json",
+      "future_backfill_prohibited": true,
+      "true_zero_distinct_from_missing": true,
+      "state_movie_append_only": true
+    },
+    "run_protocol": {
+      "status": "BINDING",
+      "human": "research/NG_EXHAUSTION_V4_PER_D_CHUNKED_RUN_PROTOCOL_20260820.md",
+      "machine": "research/NG_EXHAUSTION_V4_PER_D_CHUNKED_RUN_PROTOCOL_20260820.json",
+      "pilot_first": true,
+      "split_by_D": true,
+      "split_by_year_allowed": true,
+      "bounded_chronological_chunks": true,
+      "full_multi_year_runs_last": true
+    }
+  },
+  "active_data_work": {
+    "historical_mbo": {
+      "vendor": "Databento",
+      "dataset": "GLBX.MDP3",
+      "schema": "mbo",
+      "requested_symbol": "NG.v.0",
+      "start": "2021-08-20",
+      "end": "2026-08-20",
+      "s3_prefix": "nymex/ng_mbo_5y_v0/",
+      "canonical_format": "native_dbn_zst",
+      "clean_quote_usd_approx": 145.74,
+      "audit": "research/kalshi/NG_MBO_5Y_COMPACT_AUDIT_20260820.json",
+      "consolidation_state": "COMPLETE",
+      "expected_interval_count": 61,
+      "expected_intervals_with_job_count": 61,
+      "missing_expected_intervals": 0,
+      "unresolved_reservations": 0,
+      "native_dbn_object_count_at_latest_audit": 102,
+      "native_dbn_bytes_at_latest_audit": 1470112040,
+      "manifest_complete_count_at_latest_audit": 1,
+      "exact_duplicate_interval_count": 3,
+      "exact_duplicate_quote_overhead_usd_approx": 4.40,
+      "unexpected_partial_august_overlap_count": 4,
+      "safe_to_cancel_databento": false
+    }
+  },
+  "build_next": [
+    {
+      "id": "A",
+      "name": "PILOT_MANIFEST_D_YEAR_CHUNK_GUARDRAIL",
+      "purpose": "Enforce run scope, D/year/chunk identity, exact launch binding and strict reconciliation before any result-bearing pilot.",
+      "result_bearing_dispatch_required_for_build": false
+    },
+    {
+      "id": "B",
+      "name": "FIVE_YEAR_SOURCE_CONTRACT_ROLL_COVERAGE_MANIFEST",
+      "purpose": "Drain already-purchased MBO jobs, verify native hashes and bind exact point-in-time contract/roll/session coverage.",
+      "new_purchase_required": false
+    },
+    {
+      "id": "C",
+      "name": "ACTUAL_V4_ADAPTER_INTEGRATION",
+      "purpose": "Wire event_known_by through immutable state/lifecycle/probability/lock/handoff/reveal/reconcile using isolated V4 modules.",
+      "protected_artifact_mutation": false
+    },
+    {
+      "id": "D",
+      "name": "DETECTOR_INTENSITY_SEMANTIC_RESOLUTION",
+      "purpose": "Prove a real frozen causal detector-native intensity stream or use an explicitly named V4 proxy; never fabricate native intensity retrospectively."
+    },
+    {
+      "id": "E",
+      "name": "NINE_GATE_INTEGRATION_REDTEAM",
+      "purpose": "Recompute causal/provenance/immutability gates from typed artifacts and reject gate weakening/tampering."
+    },
+    {
+      "id": "F",
+      "name": "FULL_ENGINEERING_REGRESSION_AND_CANDIDATE_FREEZE",
+      "purpose": "Run focused + full applicable Frankie tests/selftest/registry/protected-hash checks on one exact candidate commit."
+    }
+  ],
+  "pilot_policy": {
+    "result_bearing_pilot_authorized_now": false,
+    "requires_exact_user_authorization": true,
+    "authorization_must_name": ["candidate_commit", "workflow", "ruleset"],
+    "small_frozen_sample": true,
+    "one_D_only": true,
+    "one_year_or_date_span_only": true,
+    "non_output_dependent_selection": true,
+    "release_holdout_consumption": false,
+    "allowed_conclusion": "PIPELINE_VERIFIED_FOR_THIS_EXACT_CANDIDATE",
+    "forbidden_conclusions": [
+      "MODEL_SUPERIORITY",
+      "CALIBRATION_ADEQUACY",
+      "UNIVERSAL_D_LAW",
+      "TRADE_EDGE",
+      "PERMANENT_FRANKIE_READINESS",
+      "D4_D5_POPULATION_VALIDATION"
+    ]
+  },
+  "full_runs_policy": {
+    "deferred_until_last_phase": true,
+    "separate_top_level_runs": ["D0", "D1", "D2", "D3", "D4", "D5"],
+    "predeclared_year_partitions": true,
+    "bounded_chronological_chunks": true,
+    "completed_D_year_may_move_downstream_without_waiting_for_others": true,
+    "full_D_claim_requires_exact_multi_year_reconciliation": true,
+    "preserve_every_case": true,
+    "D4_D5_case_study_only_until_separately_changed": true
+  },
+  "p0_empirical_receipts": {
+    "plan_complete": true,
+    "real_execution_build_ready": false,
+    "receipts": [
+      "UNTOUCHED_HELDOUT_PAIRED_PERFORMANCE",
+      "CALIBRATION_SELECTIVE_RISK",
+      "PLANTED_NULL_CONTAMINATION",
+      "COMPLETE_PROTECTED_RETENTION_MATRIX",
+      "EVALUATOR_INDEPENDENCE_CANARY",
+      "NON_VACUOUS_BYTE_EXACT_LIVE_ROLLBACK"
+    ],
+    "external_dependencies": [
+      "REAL_MODEL_TOOL_CALLBACKS_WITH_METERING_AUTHORITY",
+      "INDEPENDENT_LOCKED_EVALUATOR_AND_CANARIES",
+      "DISPOSABLE_AUTHORIZED_MUTATION_ROLLBACK_TARGET"
+    ],
+    "consume_release_holdout_during_development": false
+  },
+  "live_mbo": {
+    "current_databento_standard": "TRADES_AUTHORIZED_MBP10_AND_MBO_NOT_AUTHORIZED",
+    "user_databento_live_benchmark_usd_per_month": 1799,
+    "viable_candidates": [
+      "DTN_IQFEED",
+      "RITHMIC",
+      "DXFEED",
+      "CME_SMART_STREAM_SBE",
+      "DATABENTO_FALLBACK"
+    ],
+    "historical_and_live_may_use_different_vendors": true,
+    "final_live_provider_certification_deferred_until_needed": true
+  },
+  "planning_agents": {
+    "causal_clock": "BUILD_READY_SUBSTANTIALLY_BUILT",
+    "v4_mechanics": "BUILD_READY_SUBSTANTIALLY_BUILT",
+    "history_support": "BUILD_READY_ACTIVE",
+    "integration_redteam": "BUILD_READY_PARTIALLY_BUILT",
+    "p0_evidence": "PLAN_COMPLETE_EXTERNAL_DEPENDENCIES_BLOCK_REAL_EXECUTION"
+  },
+  "protected_boundaries": [
+    "FROZEN_EXHAUSTION_DETECTOR",
+    "FROZEN_CANONICAL_EVIDENCE_ROWS",
+    "FINALIZED_PHASE1_PHASE2_FINDINGS",
+    "FROZEN_EXHAUSTION_RUNWAY_CLOCK",
+    "PERMANENT_FRANKIE",
+    "FRANKIE_1",
+    "RESEARCH_KALSHI_SPAWN_PY",
+    "FROZEN_V3_BENCHMARK_ARTIFACTS",
+    "OTHER_EXPLICITLY_PROTECTED_PLAY_WORKFLOW_ARTIFACTS"
+  ],
+  "preservation_policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+  "next_chat_sequence": [
+    "READ_CURRENT_HANDOFF_BUILD_PLAN_AND_RUN_PROTOCOL",
+    "VERIFY_PUSHED_BRANCH_STATE_AND_DO_NOT_REDO_COMPLETED_WORK",
+    "FINISH_BUILD_A_PILOT_MANIFEST_GUARDRAIL",
+    "CONTINUE_BUILD_B_MBO_DRAIN_HASH_COVERAGE_IN_PARALLEL",
+    "FINISH_BUILDS_C_D_ADAPTER_AND_INTENSITY_SEMANTICS",
+    "FINISH_BUILD_E_NINE_GATE_REDTEAM",
+    "FINISH_BUILD_F_FULL_ENGINEERING_REGRESSION_AND_FREEZE_EXACT_CANDIDATE",
+    "STOP_BEFORE_RESULT_BEARING_PILOT_ABSENT_EXACT_USER_AUTHORIZATION",
+    "WHEN_AUTHORIZED_USE_TINY_NON_RELEASE_ONE_D_ONE_YEAR_PILOT",
+    "SAVE_FULL_D_YEAR_AND_MULTIYEAR_RUNS_FOR_LAST",
+    "EXECUTE_SIX_REAL_P0_RECEIPTS_ONLY_WHEN_EXTERNAL_DEPENDENCIES_ARE_READY"
+  ]
+}
