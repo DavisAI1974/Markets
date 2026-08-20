@@ -1,0 +1,253 @@
+name: NG Exhaustion V3 Later PRIOR Refinement 20260819
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/NG_EXHAUSTION_V3_LATER_PRIOR_REFINEMENT_LAUNCH_20260819.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: us-east-2
+  BUCKET: bento-568968024170-us-east-2-an
+  BASE_ID: '9281733364'
+  BASE_SHA: f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1
+  HELD_ID: '9281272840'
+  HELD_SHA: 21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e
+  LINEAGE_ID: '9289929292'
+  LINEAGE_SHA: a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95
+  RECONCILE_ID: '9306082330'
+  RECONCILE_SHA: f17c130df029429bfbc35067d1cc9d16128ca4fb227dd37f3fb4fbb8bbaf8875
+  CORE: research/generated/ng_exhaustion_d0_d5_full_causal_v3_20260819/NG_EXHAUSTION_D0_D5_FULL_CAUSAL_V3_ALL_RESULTS_20260819.json
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      real_count: ${{ steps.plan.outputs.real_count }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+      - id: plan
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json,os
+          p=os.environ['CORE']
+          d=json.load(open(p))
+          assert d['status']=='NG_EXHAUSTION_D0_D5_FULL_CAUSAL_V3_RECONCILED'
+          rows=[]
+          for r in d['independent_model_findings']:
+              st=int(r['stage']); e=r.get('earliest')
+              needs=False
+              if st==0:
+                  needs=e is None
+              else:
+                  needs=e is None or e.get('timing_class')=='POST_BIRTH_EARLY_RECOGNITION'
+              if not needs: continue
+              rows.append({'stage':st,'model':r['model'],'target':r['target'],'min_depth':max(0,st-1),'noop':False})
+          n=len(rows)
+          if not rows:
+              rows=[{'stage':0,'model':'logistic','target':'__NOOP__','min_depth':0,'noop':True}]
+          print('matrix='+json.dumps({'include':rows},separators=(',',':')))
+          print('real_count='+str(n))
+          PY
+
+  refine:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet numpy scikit-learn
+      - name: No-op when every early result is already PRIOR
+        if: ${{ matrix.noop }}
+        run: |
+          mkdir -p /tmp/out
+          echo '{"status":"NOOP_ALL_EARLY_RESULTS_ALREADY_PRIOR"}' > /tmp/out/NOOP.json
+      - name: Verify later-PRIOR contract
+        if: ${{ !matrix.noop }}
+        run: |
+          set -euo pipefail
+          python -m py_compile research/ng_exhaustion_v3_later_prior_refinement_20260819.py
+          PYTHONPATH=research python - <<'PY'
+          import ng_exhaustion_v3_later_prior_refinement_20260819 as r
+          assert min(r.SEARCH_GRID)==6 and max(r.SEARCH_GRID)==3600
+          assert all(x>5 for x in r.SEARCH_GRID)
+          print('later PRIOR contract: PASS')
+          PY
+      - name: Download immutable sources
+        if: ${{ !matrix.noop }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/in/base /tmp/in/held /tmp/in/lineage /tmp/in/reconcile
+          get_artifact () {
+            id="$1"; sha="$2"; zip="$3"; dest="$4"
+            curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" -o "${zip}"
+            echo "${sha}  ${zip}" | sha256sum -c -
+            unzip -q "${zip}" -d "${dest}"
+          }
+          get_artifact "${BASE_ID}" "${BASE_SHA}" /tmp/base.zip /tmp/in/base
+          get_artifact "${HELD_ID}" "${HELD_SHA}" /tmp/held.zip /tmp/in/held
+          get_artifact "${LINEAGE_ID}" "${LINEAGE_SHA}" /tmp/lineage.zip /tmp/in/lineage
+          get_artifact "${RECONCILE_ID}" "${RECONCILE_SHA}" /tmp/reconcile.zip /tmp/in/reconcile
+      - name: Resolve required weeks
+        if: ${{ !matrix.noop }}
+        env:
+          MIN_DEPTH: ${{ matrix.min_depth }}
+        run: |
+          python - <<'PY' > /tmp/weeks.txt
+          import gzip,json,os
+          mind=int(os.environ['MIN_DEPTH']); weeks=set()
+          for p in ('/tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz','/tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz'):
+              with gzip.open(p,'rt') as f:
+                  for line in f:
+                      r=json.loads(line)
+                      if int(r.get('all_model_consecutive_positive_depth',0))>=mind: weeks.add(r['week_sunday'])
+          for w in sorted(weeks): print(w)
+          PY
+      - name: Materialize authoritative raw NG tape
+        if: ${{ !matrix.noop }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ngraw
+          python - <<'PY' > /tmp/days.txt
+          from datetime import datetime,timedelta
+          days=set()
+          for w in map(str.strip,open('/tmp/weeks.txt')):
+              if not w: continue
+              d=datetime.strptime(w,'%Y%m%d')
+              for i in range(6): days.add((d+timedelta(days=i)).strftime('%Y%m%d'))
+          for x in sorted(days): print(x)
+          PY
+          python - <<'PY' > /tmp/closures.txt
+          import json
+          d=json.load(open('research/NG_EXHAUSTION_20260403_CME_CLOSURE_WITNESS_20260817.json'))
+          for x in d['canonicalization_rule']['explicit_closure_dates']: print(x)
+          PY
+          while read -r d; do
+            mapfile -t keys < <(aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" --query 'Contents[].Key' --output text | tr '\t' '\n' | grep -E "NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" | sort -u || true)
+            if grep -qx "${d}" /tmp/closures.txt; then
+              test "${#keys[@]}" -eq 0 || exit 1; continue
+            fi
+            test "${#keys[@]}" -eq 1 || { echo "::error::raw object count ${d} ${#keys[@]}"; exit 1; }
+            aws s3 cp "s3://${BUCKET}/${keys[0]}" "/tmp/ngraw/NG_${d}.jsonl.gz" --only-show-errors
+          done < /tmp/days.txt
+      - name: Run later-PRIOR agent
+        if: ${{ !matrix.noop }}
+        env:
+          STAGE: ${{ matrix.stage }}
+          MODEL: ${{ matrix.model }}
+          TARGET: ${{ matrix.target }}
+        run: |
+          mkdir -p /tmp/out
+          SAFE_TARGET=$(echo "$TARGET" | tr -c 'A-Za-z0-9_' '_')
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_v3_later_prior_refinement_20260819.py \
+            --stage "$STAGE" --model "$MODEL" --target "$TARGET" \
+            --base /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz \
+            --held /tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz \
+            --base-lineage /tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz \
+            --held-lineage /tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz \
+            --raw-dir /tmp/ngraw --out "/tmp/out/D${STAGE}_${MODEL}_${SAFE_TARGET}_LATER_PRIOR.json"
+      - name: Fail closed on agent output
+        if: ${{ !matrix.noop }}
+        run: |
+          python - <<'PY'
+          import glob,json
+          ps=glob.glob('/tmp/out/*.json'); assert len(ps)==1,ps
+          d=json.load(open(ps[0])); assert d['status']=='NG_EXHAUSTION_V3_LATER_PRIOR_REFINEMENT_AGENT_COMPLETE'
+          assert d['cross_model_vote_used'] is False and d['target_polarity_required'] is False
+          assert d['promotion_performed'] is False and not any(d['protected_mutations'].values())
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-v3-later-prior-d${{ matrix.stage }}-${{ matrix.model }}-${{ matrix.target }}
+          path: /tmp/out/*.json
+          if-no-files-found: error
+          retention-days: 14
+
+  reconcile:
+    needs: [plan, refine]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ng-exhaustion-v3-later-prior-*
+          path: /tmp/refine
+          merge-multiple: true
+      - name: Reconcile hierarchy
+        run: |
+          set -euo pipefail
+          OUT=research/generated/ng_exhaustion_v3_later_prior_refinement_20260819
+          mkdir -p "$OUT"
+          python - <<'PY'
+          import glob,json,os,shutil
+          from pathlib import Path
+          core=json.load(open(os.environ['CORE']))
+          docs=[]
+          for p in glob.glob('/tmp/refine/*.json'):
+              d=json.load(open(p))
+              if d.get('status')=='NG_EXHAUSTION_V3_LATER_PRIOR_REFINEMENT_AGENT_COMPLETE':
+                  docs.append(d); shutil.copy2(p,Path('research/generated/ng_exhaustion_v3_later_prior_refinement_20260819')/Path(p).name)
+          ref={(int(d['stage']),d['model'],d['target']):d for d in docs}
+          combined=[]; unresolved=[]; superseded_h=[]
+          for r in core['independent_model_findings']:
+              st=int(r['stage']); key=(st,r['model'],r['target']); early=r.get('earliest'); rr=ref.get(key)
+              final=early; reason='EARLY_PRIOR_ALREADY_FINAL_ON_TESTED_HIERARCHY'
+              if rr is not None:
+                  if rr.get('earliest_later_prior') is not None:
+                      final=rr['earliest_later_prior']; reason='LATER_PRIOR_SUPERSEDES_EARLY_H_OR_UNRESOLVED'
+                      if early is not None: superseded_h.append({'stage':st,'model':r['model'],'target':r['target'],'old':early,'new':final})
+                  elif early is not None:
+                      reason='NO_LATER_PRIOR_ON_REFINEMENT_GRID_RETAIN_EARLY_H_FALLBACK'
+                  else:
+                      reason='NO_PRIOR_ON_REFINEMENT_GRID_AND_NO_EARLY_H'
+              row={'stage':st,'model':r['model'],'target':r['target'],'early_band_earliest':early,'later_prior_refinement':None if rr is None else {'earliest_later_prior':rr.get('earliest_later_prior'),'support_exhausted':rr.get('support_exhausted'),'support_exhaustion_age':rr.get('support_exhaustion_age')},'hierarchy_earliest':final,'reason':reason}
+              combined.append(row)
+              if final is None: unresolved.append(row)
+          expected=sum(1 for r in core['independent_model_findings'] if (int(r['stage'])==0 and r.get('earliest') is None) or (int(r['stage'])>0 and (r.get('earliest') is None or r.get('earliest',{}).get('timing_class')=='POST_BIRTH_EARLY_RECOGNITION')))
+          if int(os.environ['REAL_COUNT'])!=expected: raise SystemExit(f'plan count drift {os.environ["REAL_COUNT"]} vs {expected}')
+          if expected and len(ref)!=expected: raise SystemExit(f'missing refinement artifacts got={len(ref)} expected={expected}')
+          out={'status':'NG_EXHAUSTION_V3_PRIOR_HIERARCHY_REFINED','date':'2026-08-19','core_early_band_status':core['status'],'later_prior_agents_expected':expected,'later_prior_agents_received':len(ref),'combined_findings':combined,'early_H_superseded_by_later_PRIOR':superseded_h,'unresolved_after_prior_hierarchy_refinement':unresolved,'rule':'ANY_VALID_PRIOR_OUTRANKS_POST_BIRTH_H; EARLY_PRIOR_WINNERS_NOT_RERUN','model_voting_used':False,'target_polarity_required_for_prior':False,'promotion_performed':False,'policy':'FLAG_AND_DECOMPOSE_NOT_AUTO_KILL','protected_mutations':{'detector':False,'canonical_rows':False,'phase1':False,'phase2':False,'runway_clock':False,'permanent_frankie':False,'frankie_1':False,'spawn_py':False,'ssos_play':False}}
+          Path(f'{OUT}/NG_EXHAUSTION_V3_PRIOR_HIERARCHY_REFINED_ALL_RESULTS_20260819.json').write_text(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          lines=['# NG Exhaustion V3 PRIOR Hierarchy Refinement — 2026-08-19','', 'Rule: **any validated pre-birth PRIOR outranks any post-birth H result.**','',f'- Later-PRIOR agents: {len(ref)}.',f'- Early H results superseded by later PRIOR: {len(superseded_h)}.',f'- Still unresolved after refinement: {len(unresolved)}.','']
+          for r in combined: lines.append(f"- D{r['stage']} / {r['model']} / {r['target']}: {r['reason']}.")
+          Path(f'{OUT}/NG_EXHAUSTION_V3_PRIOR_HIERARCHY_REFINED_ALL_FINDINGS_20260819.md').write_text('\n'.join(lines)+'\n')
+          PY
+        env:
+          REAL_COUNT: ${{ needs.plan.outputs.real_count }}
+      - name: Commit durable hierarchy refinement
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/generated/ng_exhaustion_v3_later_prior_refinement_20260819
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "research: reconcile V3 later PRIOR hierarchy"
+          git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
