@@ -105,7 +105,7 @@ jobs:
                       if msg and msg not in systems:
                           systems.append(msg)
               try:
-                  client = db.Live(heartbeat_interval_s=3)
+                  client = db.Live(heartbeat_interval_s=10)
                   client.add_callback(on_record)
                   client.subscribe(dataset=DATASET, schema=schema, stype_in='continuous', symbols=SYMBOL, snapshot=snapshot)
                   client.start()
