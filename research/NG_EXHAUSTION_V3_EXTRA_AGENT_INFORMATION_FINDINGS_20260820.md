@@ -119,6 +119,62 @@ V4 obligation:
 - do not average probabilities or require 2-of-3 agreement;
 - do not treat a model's null result as a chain failure.
 
+### 7. Prediction-to-execution routing seam
+
+A later post-correction trade-gap review isolated a narrower architectural defect than the generic continuation gate. At the pinned V3 implementation, the execution `signal_scan` re-searches only `FULL_CAUSAL`, scans PRIOR checkpoints, and then jumps to POST_BIRTH H checkpoints; it does not consume an immutable predictive-layer ledger carrying the exact source view and validated lock timestamp. This means execution can silently lose information by narrowing or shifting the predictive question before trade research begins.
+
+This is a **research-system diagnosis**, not validation of the underlying V3 signal.
+
+V4/later obligation:
+
+- prediction emits an immutable per-model signal ledger;
+- at minimum preserve `{head, causal_view, lock_timestamp, probability/calibration, support, provenance}`;
+- execution consumes each validated signal lane independently rather than re-discovering it under a narrower contract;
+- source view and lock timestamp are first-class provenance and may not be silently replaced by `FULL_CAUSAL` or another checkpoint;
+- only after that seam is tested should orientation, entry, causal exit geometry, or state-conditioned management be evaluated separately;
+- favorable MFE/MAE patterns in V3 remain hypothesis seeds only, not proof of an exit edge.
+
+### 8. Inter-event exhaustion survival / resolution-trajectory hypothesis
+
+A later post-correction timing/feature review identified a more specific question than “use continuous timing.” The V3 D0 research architecture samples only a very short fixed set of early root ages even though the unresolved interval after predecessor confirmation can be materially longer. Sparse deeper-stage case material also contains long unresolved intervals. These V3 intervals are diagnostic provenance only, but they expose a mismatch between the observation design and the duration of the process being studied.
+
+The resulting V4 hypothesis is that termination/depth information may be carried in the **evolution of the unresolved exhaustion aftermath itself**, rather than in a few isolated checkpoints immediately after predecessor confirmation.
+
+Candidate causal state to test in V4 includes:
+
+- elapsed time since predecessor confirmation, without any future-target-relative clock;
+- unresolved-overlap age;
+- continuous exhaustion intensity/decay when causally available from the frozen detector;
+- exhaustion slope, change-of-slope and curvature;
+- dipole sign-run length, area, slope/curvature, zero-crossing and reversal impulse;
+- cumulative signed-flow persistence and reversal magnitude;
+- book resilience/replenishment after flow shocks;
+- chain-relative inter-link gap and scale ratios;
+- a continuously updated transition/termination hazard or resolution probability learned from the evolving trajectory.
+
+V3 nulls do not establish that such information exists or does not exist. V4 must independently test this survival/resolution representation.
+
+### 9. Support / calibration / regime-composition hypothesis
+
+A later post-correction support review found large chronological class-composition changes in some V3 blocks together with model-specific degradation and very sparse deeper-stage/trade samples. Those exact V3 rates and AUCs remain diagnostic provenance, not empirical exhaustion laws. Their legitimate implication is that the V3 evaluation design mixes **support quantity, class/regime composition, calibration and model extraction** in ways that can make a null or degradation ambiguous.
+
+V4 obligation:
+
+- report support and class composition by stage, chronological block and relevant regime;
+- distinguish lack of support from calibration/regime mismatch and from representation/model limitation;
+- test stage/regime-conditional calibration and conditional grouping;
+- use geometric normalization where appropriate rather than assuming pooled calibration transfers;
+- add historical weeks especially where they contribute rare minority/tail examples, not merely more abundant D0/D1 rows;
+- keep D4/D5 as preserved sparse evidence until enough support exists for population calibration;
+- treat thin held-trade counts as execution-sampling uncertainty, not evidence that exhaustion structure lacks information;
+- do not infer cross-model truth from shared or divergent V3 outcomes.
+
+## Post-correction review-agent status
+
+The active `Timing Gap Review`, `Feature Gap Review`, `Support Gap Review`, `Trade Gap Review`, `D1 Secondary Review`, and `Markets Run Watch` were intentionally created **after the V3 non-authority problem was already known**. They are diagnostic gap-mining agents, not legacy V3 validators and not mock research runs.
+
+Their purpose is to use the landed V3 artifacts to find research-system defects, omitted state, support/calibration problems, or translation seams that V4 should independently test. Their prompts were later hardened to make the already-intended rule explicit: V3 behavioral outputs remain non-authoritative, every chain/case is preserved, and any behavioral implication is only a V4 hypothesis.
+
 ## What to carry forward versus what not to over-weight
 
 Carry forward strongly:
@@ -127,6 +183,8 @@ Carry forward strongly:
 - continuous causal lock-time discovery;
 - ordered geometric representation;
 - predecessor-overlap representation;
+- inter-event survival/resolution trajectory as a V4 hypothesis;
+- immutable model-specific signal-ledger routing into execution;
 - channel-specific encoding/fusion tests;
 - stage/regime-conditioned support and calibration;
 - independent model extraction;
@@ -138,6 +196,7 @@ Carry forward only as low-weight benchmark provenance:
 
 - exact V3 hit rates and point estimates;
 - exact V3 PRIOR/T0/H earliest-timing numbers;
+- exact V3 AUC/prevalence/calibration values;
 - exact directional trade P&L;
 - fixed-horizon trade selections;
 - any implication that direction is the primary exhaustion target;
@@ -147,7 +206,7 @@ Carry forward only as low-weight benchmark provenance:
 
 The next session should start by asking:
 
-> What causal state is Frankie actually seeing, when does that state become trustworthy without target-relative buckets, how is the chain geometry evolving, what exhaustion state/lifespan transition is forming, and only then what execution consequences follow?
+> What causal state is Frankie actually seeing, when does that state become trustworthy without target-relative buckets, how is the chain geometry evolving, what unresolved survival/resolution process is underway, what exhaustion state/lifespan transition is forming, and only then what execution consequences follow?
 
 Do not start by trying to reproduce V3 numbers.
 
