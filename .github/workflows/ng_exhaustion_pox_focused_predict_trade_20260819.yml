@@ -23,7 +23,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          # Freeze every dispatched research run to the commit that was
+          # selected at dispatch, even while this shared branch keeps moving.
+          ref: ${{ github.sha }}
           fetch-depth: 1
 
       - uses: actions/setup-python@v5
