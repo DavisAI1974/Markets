@@ -1,0 +1,18 @@
+{
+  "files": {
+    "research/kalshi/ng_exhaustion_v4_state_assembler.py": "66388ca9ed2eb95e5b930e74d1d5abab6cd6bb54f7730885312051a2350f8df8",
+    "research/kalshi/tests/test_ng_exhaustion_v4_state_assembler.py": "fab9fb9b7acde6ea42bf1ede6a8a7083f59a1ab971277ee2260a53a8c68f581d"
+  },
+  "future_backfill_prohibited": true,
+  "promotion_performed": false,
+  "protected_mutation_performed": false,
+  "pytest_exit_code": 0,
+  "runner_commit": "654fc2c0fc9e4e79f70e545e7fe59d92f70d9e67",
+  "schema": "NG_EXHAUSTION_V4_STATE_ASSEMBLER_RECEIPT_V1",
+  "stale_carry_missing_notyet_na_distinct": true,
+  "state_movie_append_only": true,
+  "test_output": ".......                                                                  [100%]\n7 passed in 0.10s\n",
+  "tests_passed": true,
+  "true_zero_distinct_from_missing": true,
+  "v4_empirical_launch": false
+}
