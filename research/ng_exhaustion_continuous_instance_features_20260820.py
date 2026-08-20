@@ -27,6 +27,7 @@ IMPLEMENTATION_REVISION = "V4_CONTINUOUS_PER_INSTANCE_TIMING"
 PRIMARY_VIEW = "FULL_CAUSAL"
 TIMING_POLICY = "NO_PREDECLARED_PRIOR_OR_H_GRID; SCORE_CAUSAL_TRAJECTORY_AND_ALIGN_DECISION_TIME_TO_T0_ONLY_AFTER_PREDICTIONS_EXIST"
 TARGET_T0_FEATURE_POLICY = "FROZEN_TARGET_T0_AND_TARGET_RELATIVE_FEATURES_WITHHELD_FROM_PRIMARY_MODEL; T0_USED_ONLY_FOR_POSTHOC_TIMING_COORDINATE"
+TRAJECTORY_END_POLICY = "AUTHORITATIVE_TAPE_END_ONLY; FUTURE_CANONICAL_EVENT_TIMES_NEVER_BOUND_OR_STOP_PRIMARY_SCORING"
 
 
 def load_cache(cases: list[dict[str, Any]], raw_dir: str):
@@ -43,22 +44,14 @@ def predecessor_available_time(case: dict[str, Any]) -> int | None:
 def trajectory_bounds(case: dict[str, Any], cache) -> tuple[int, int] | None:
     """Natural historical scoring window; boundaries are never model features.
 
-    Start = latest represented predecessor causal confirmation.
-    End = one second before the next canonical event after the candidate target,
-    or the last authoritative trade second when that later event does not exist.
+    Start is the latest represented predecessor causal confirmation. End is the
+    last authoritative trade second in that frozen week. No future target/event
+    timestamp is used to shorten, extend, or otherwise shape the scoring window.
     """
     start = predecessor_available_time(case)
     if start is None:
         return None
-    next_after = None
-    for e in case.get("extra", []):
-        if e is not None:
-            next_after = int(e["t0_idx"])
-            break
-    if next_after is not None:
-        end = next_after - 1
-    else:
-        end = int(math.floor(float(cache["last_trade"][case["week"]])))
+    end = int(math.floor(float(cache["last_trade"][case["week"]])))
     if end < int(start):
         return None
     return int(start), int(end)
@@ -92,12 +85,10 @@ def continuous_feature_row(case: dict[str, Any], cutoff: int, cache, view: str =
 
 
 def birth_relative_coordinate(case: dict[str, Any], decision_time: int, stage: int) -> dict[str, Any]:
+    """Convert a decision timestamp to PRIOR/T0/H only after scoring is complete."""
     t0 = int(case["target"]["t0_idx"])
     delta = int(decision_time) - t0
     if stage == 0:
-        # Exact-D0 terminal cases do not possess a true descendant H clock. The
-        # same candidate event is retained for matched research, but report it as
-        # candidate-relative rather than pretending it is a descendant birth.
         if delta < 0:
             return {"timing_class": "PRIOR_TO_CANDIDATE_T0", "seconds": int(-delta), "signed_seconds_from_candidate_t0": delta}
         if delta == 0:
@@ -113,7 +104,8 @@ def birth_relative_coordinate(case: dict[str, Any], decision_time: int, stage: i
 def deterministic_sample_times(case: dict[str, Any], cache, count: int, salt: str) -> list[int]:
     """Timing-agnostic uniform samples inside the natural trajectory.
 
-    `count` is a compute budget only. No PRIOR/H/t0-relative timestamp is favored.
+    `count` is a compute/training budget only. No PRIOR/H/t0-relative timestamp is
+    favored, and the primary OOT scorer is evaluated at every causal second.
     """
     b = trajectory_bounds(case, cache)
     if b is None or count <= 0:
