@@ -1,0 +1,28 @@
+{
+  "bucket": "bento-568968024170-us-east-2-an",
+  "completed_segment_count": 1,
+  "completed_segments": [
+    "2021-08"
+  ],
+  "data_purchase_performed_by_status_probe": false,
+  "manifest_count": 1,
+  "native_dbn_bytes": 105053055,
+  "native_dbn_object_count": 10,
+  "prefix": "nymex/ng_mbo_5y_v0/",
+  "schema": "NG_MBO_5Y_S3_STATUS_V1",
+  "submitted_segment_count": 11,
+  "submitted_segments": [
+    "2021-08",
+    "2021-09",
+    "20210820_20210901",
+    "2022-08",
+    "20220820_20220901",
+    "2023-08",
+    "20230820_20230901",
+    "2024-08",
+    "20240820_20240901",
+    "2025-08",
+    "20250820_20250901"
+  ],
+  "year_receipt_count": 0
+}
