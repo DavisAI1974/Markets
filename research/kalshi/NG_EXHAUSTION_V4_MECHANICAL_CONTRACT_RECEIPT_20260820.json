@@ -24,9 +24,9 @@
     "spawn_py": false
   },
   "pytest_exit_code": 0,
-  "runner_commit": "14515ac41fd81f8cbea7db782244d1d7fd201c62",
+  "runner_commit": "3a724bc41b604b742c6f4a64a8a7f1ec50da0760",
   "schema": "NG_EXHAUSTION_V4_MECHANICAL_CONTRACT_RECEIPT_V1",
-  "test_output": "...........................                                              [100%]\n27 passed in 0.11s\n",
+  "test_output": "...........................                                              [100%]\n27 passed in 0.17s\n",
   "tests_passed": true,
   "v4_empirical_launch": false
 }
