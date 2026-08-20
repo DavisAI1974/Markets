@@ -1,0 +1,98 @@
+name: NG Exhaustion V3 T0 Pinned Core Reconcile Recovery 20260820
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/NG_EXHAUSTION_V3_T0_PINNED_CORE_RECONCILE_RECOVERY_LAUNCH_20260820.json
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  SOURCE_BRANCH: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+  SOURCE_WORKFLOW: ng_exhaustion_v3_t0_pinned_core_20260820.yml
+  SOURCE_LAUNCH_SHA: b0e5d375b936c5ba82a3ffdc9c9f1db2b7a46732
+  OUT_DIR: research/generated/ng_exhaustion_v3_t0_pinned_core_20260820
+
+jobs:
+  recover:
+    name: Recover pinned V3-T0 reconciliation only
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Locate completed pinned source run
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api --method GET \
+            -f branch="${SOURCE_BRANCH}" \
+            -f event=push \
+            -f per_page=50 \
+            "/repos/${GITHUB_REPOSITORY}/actions/workflows/${SOURCE_WORKFLOW}/runs" \
+            > /tmp/v3_runs.json
+          RUN_ID=$(jq -r --arg sha "${SOURCE_LAUNCH_SHA}" \
+            '[.workflow_runs[] | select(.head_sha == $sha)] | sort_by(.run_number) | last | .id // empty' \
+            /tmp/v3_runs.json)
+          test -n "${RUN_ID}" || { echo "::error::no V3 source run found for ${SOURCE_LAUNCH_SHA}"; exit 1; }
+          STATUS=$(jq -r --argjson id "${RUN_ID}" '.workflow_runs[] | select(.id == $id) | .status' /tmp/v3_runs.json)
+          CONCLUSION=$(jq -r --argjson id "${RUN_ID}" '.workflow_runs[] | select(.id == $id) | .conclusion // ""' /tmp/v3_runs.json)
+          echo "source run ${RUN_ID}: status=${STATUS} conclusion=${CONCLUSION}"
+          test "${STATUS}" = completed || { echo "::error::source V3 run is not complete"; exit 1; }
+          echo "run_id=${RUN_ID}" >> "${GITHUB_OUTPUT}"
+
+      - name: Download only the pinned V3 agent artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ng-exhaustion-v3-t0-pinned-*
+          path: /tmp/agents
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.source.outputs.run_id }}
+
+      - name: Fail closed on complete artifact set
+        run: |
+          set -euo pipefail
+          COUNT=$(find /tmp/agents -maxdepth 1 -type f -name '*.json' | wc -l | tr -d ' ')
+          test "${COUNT}" = 14 || { echo "::error::expected 14 V3 agent artifacts, got ${COUNT}"; exit 1; }
+
+      - name: Reconcile preserved agent outputs without voting
+        run: |
+          set -euo pipefail
+          python -m py_compile research/ng_exhaustion_v3_t0_pinned_core_reconcile_recovery_20260820.py
+          python research/ng_exhaustion_v3_t0_pinned_core_reconcile_recovery_20260820.py \
+            --artifact-dir /tmp/agents \
+            --out-dir "${OUT_DIR}" \
+            --launch-commit "${SOURCE_LAUNCH_SHA}" \
+            --source-run-id "${{ steps.source.outputs.run_id }}"
+
+      - name: Commit durable V3 outputs on current branch lineage
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "${OUT_DIR}"
+          if git diff --cached --quiet; then
+            echo "durable V3 outputs already present"
+            exit 0
+          fi
+          git commit -m "research: recover pinned V3 T0 reconciliation"
+          for attempt in 1 2 3; do
+            git fetch origin "${SOURCE_BRANCH}"
+            git rebase "origin/${SOURCE_BRANCH}"
+            if git push origin HEAD:"${SOURCE_BRANCH}"; then
+              exit 0
+            fi
+          done
+          echo "::error::unable to fast-forward durable V3 recovery output after retries"
+          exit 1
