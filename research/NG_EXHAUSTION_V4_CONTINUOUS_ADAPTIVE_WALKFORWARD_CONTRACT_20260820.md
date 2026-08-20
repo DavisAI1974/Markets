@@ -2,6 +2,12 @@
 
 Status: **RESEARCH CONTRACT; NO PERMANENT FRANKIE MUTATION OR PLAY PROMOTION.**
 
+Binding D0-D5 architecture addendum:
+
+`research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md`
+
+The addendum makes the geometric causal state and gated post-reveal self-adaptation loop part of D-series V4 research design. It remains additive over the raw/V3 surfaces and does not authorize permanent Frankie mutation or V4 launch.
+
 ## Purpose
 
 Replace predeclared PRIOR/H timing buckets with a causal trajectory experiment that discovers timing from each completed instance itself, then compare a frozen discovery model against an adaptive model that learns only from previously completed instances.
@@ -139,4 +145,4 @@ The standing policy remains:
 
 `FLAG_AND_DECOMPOSE_NOT_AUTO_KILL`
 
-Any future Frankie enhancement mentioned during this research is intentionally deferred and is not part of V4.
+The D0-D5 geometric-state and gated self-adaptation enhancement is now part of V4 research design under the binding addendum above. Any permanent Frankie merge, production self-editing, operational timing-map promotion, or live-play change remains deferred to later deliberate adjudication after fresh prospective/OOT evidence.

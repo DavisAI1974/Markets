@@ -443,3 +443,22 @@ V3 is the immediate fixed-checkpoint benchmark that must run now.
 V4 is the next methodological step: causal second-by-second per-instance timing discovery plus a frozen benchmark and adaptive learn-after-reveal walk-forward.
 
 Permanent Frankie remains untouched. Phase-2 history remains intact. Every true/false/losing/censored/low-support case remains evidence.
+
+---
+
+## 21. Later user decision — apply the Frankie enhancement to D-series V4
+
+After the earlier deferral, the user supplied and approved the following research direction for D0-D5 V4:
+
+- geometric/structured causal representation over the complete raw + V3 market state;
+- post-reveal self-edit proposals inspired by self-adapting model research;
+- sandboxed, reversible candidate updates;
+- chronological parent-vs-candidate evaluation with retention, leakage, calibration, stage/class and latency gates;
+- immutable active-instance snapshots and prediction ledgers;
+- no permanent Frankie mutation or live promotion.
+
+This later decision supersedes sections 17 and 19 only with respect to **D-series V4 design/implementation scope**. It does not authorize a V4 launch, result inspection, permanent Frankie merge, play promotion, commit, push, or protected-artifact change.
+
+Binding contract:
+
+`research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md`

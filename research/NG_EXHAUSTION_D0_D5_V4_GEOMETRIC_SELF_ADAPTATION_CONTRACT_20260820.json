@@ -1,0 +1,190 @@
+{
+  "contract_id": "NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_20260820",
+  "status": "BINDING_V4_RESEARCH_ADDENDUM",
+  "implementation_revision": "V4_GEOMETRIC_CAUSAL_STATE_GATED_SELF_ADAPTATION",
+  "launch_authorized": false,
+  "permanent_frankie_mutation_authorized": false,
+  "play_promotion_authorized": false,
+  "feature_layer_policy": {
+    "mode": "ADDITIVE_ONLY",
+    "ordered_layers": [
+      "RAW_CAUSAL_MARKET_STATE",
+      "V3_LIVE_STATE",
+      "V4_GEOMETRIC_CAUSAL_STATE"
+    ],
+    "replace_rename_or_shadow_prior_fields": false
+  },
+  "targets": {
+    "D0": "EXACT_D0_VS_D1_PLUS",
+    "D1": "REACH_D1_VS_STOP_D0",
+    "D2": "REACH_D2_VS_STOP_D1",
+    "D3": "REACH_D3_VS_STOP_D2",
+    "D4": "PRESERVED_CASE_REACH_D4_VS_STOP_D3",
+    "D5": "PRESERVED_CASE_REACH_D5_VS_STOP_D4",
+    "eventual_final_depth": true,
+    "posx_separate_head": true,
+    "same_flip_secondary_only": true
+  },
+  "primary_timing_policy": "SCORE_EVERY_CAUSAL_SECOND_IN_NATURAL_WINDOW; ALIGN_TO_TARGET_T0_ONLY_AFTER_LEDGER_FREEZE",
+  "graph": {
+    "schema_version": "D0_D5_V4_GRAPH_V1",
+    "node_types": [
+      "ROOT",
+      "CAUSALLY_CONFIRMED_PREDECESSOR",
+      "LIVE_MARKET_CHECKPOINT",
+      "CAUSALLY_KNOWN_SESSION_CONTRACT_CONTEXT",
+      "CAUSALLY_TIMESTAMPED_BOOK_OR_PATH_SUMMARY"
+    ],
+    "edge_types": [
+      "CHAIN_PREDECESSOR_OF",
+      "CONFIRMED_BEFORE",
+      "LIVE_STATE_OF",
+      "TEMPORAL_ADJACENT",
+      "BOOK_INTERACTION",
+      "FLOW_INTERACTION"
+    ],
+    "target_placeholder_before_causal_representation": false,
+    "required_causal_state": [
+      "V3_RAW_TRADE_MID_DIRECTION",
+      "V3_DENSE_PRICE_PATH",
+      "V3_SIGNED_AGGRESSOR_FLOW",
+      "V3_ROLL20_DIPOLE_PATH",
+      "V3_MBP10_BOOK_PATH",
+      "CAUSALLY_KNOWN_EXHAUSTION_DIRECTION",
+      "RELATIVE_CAUSAL_AGES_AND_GAPS",
+      "SESSION_CONTRACT_CONTEXT",
+      "MISSINGNESS_AND_PROVENANCE_MASKS"
+    ]
+  },
+  "geometric_ablations": {
+    "preserve_ordered_chain_ancestry": true,
+    "permutation_invariance_only_for_unordered_neighborhoods": true,
+    "price_translation_stability": true,
+    "relative_time_representation": true,
+    "small_causal_time_deformation_stability": true,
+    "polarity_sign_equivariance_is_tested_not_assumed": true,
+    "microstructure_perturbation_stability": true,
+    "freeze_augmentation_policy_before_oot": true
+  },
+  "model_topology": {
+    "shared_causal_graph_encoder": true,
+    "separate_task_heads": [
+      "D0_TERMINALITY",
+      "D1_CONTINUATION",
+      "D2_CONTINUATION",
+      "D3_CONTINUATION",
+      "D4_CASE",
+      "D5_CASE",
+      "EVENTUAL_FINAL_DEPTH",
+      "POSX"
+    ],
+    "frozen_selective_lock_rule_per_model_head": true,
+    "frozen_and_adaptive_twins_share_discovery_initialization": true,
+    "stage_local_adaptation_default": true,
+    "cross_stage_transfer_requires_predeclared_ablation": true
+  },
+  "active_instance_policy": {
+    "snapshot_before_instance_start": true,
+    "mid_instance_update": false,
+    "prediction_revision_after_reveal": false,
+    "backdating": false,
+    "accepted_update_applies_only_to_later_instances": true
+  },
+  "self_edit_packet": {
+    "generation_time": "AFTER_CONSERVATIVE_TRUTH_REVEAL_ONLY",
+    "proposal_not_direct_mutation": true,
+    "required_fields": [
+      "self_edit_packet_id",
+      "source_instance_id",
+      "stage_head",
+      "frankie_snapshot_id",
+      "v4_graph_schema_version",
+      "truth_reveal_timestamp",
+      "causal_evidence_cutoff",
+      "prediction_ledger_hash",
+      "diagnosis",
+      "causal_training_examples",
+      "counterfactuals",
+      "proposed_update_scope",
+      "forbidden_field_audit",
+      "candidate_adapter_id",
+      "retention_suite_hash",
+      "evaluation_budget",
+      "example_provenance"
+    ],
+    "direct_live_code_patch": false,
+    "base_weight_overwrite": false,
+    "self_acceptance": false,
+    "stale_parent_reward_reuse": false
+  },
+  "candidate_update": {
+    "isolated_research_twin": true,
+    "reversible_adapter_preferred": true,
+    "exact_parent_comparison": true,
+    "identical_rows_timestamps_reveal_rules_and_scoring": true,
+    "required_reward_vector": [
+      "LOG_LOSS",
+      "BRIER",
+      "CALIBRATION",
+      "DISCRIMINATION",
+      "SELECTIVE_COVERAGE",
+      "WRONG_LOCK_RATE",
+      "NO_LOCK_RATE",
+      "DECISION_LATENCY",
+      "CLASS_STAGE_STABILITY",
+      "COMPUTE_COST",
+      "MAX_PROTECTED_REGRESSION"
+    ]
+  },
+  "acceptance_gates": [
+    "NO_LEAKAGE_OR_FORBIDDEN_FIELD_FAILURE",
+    "POSITIVE_PREDECLARED_CHRONOLOGICAL_REWARD_VS_EXACT_PARENT",
+    "NO_PROTECTED_REGRESSION_BEYOND_FROZEN_TOLERANCE",
+    "NO_UNSUPPORTED_STAGE_OR_CLASS_COLLAPSE",
+    "CALIBRATION_AND_LOCK_WITHIN_FROZEN_TOLERANCE",
+    "LATENCY_AND_COMPUTE_INSIDE_DECLARED_BUDGET",
+    "ALL_EARLIER_CALLS_IMMUTABLE",
+    "FULL_PARENT_CANDIDATE_RETENTION_AND_ROLLBACK_PROVENANCE"
+  ],
+  "sparse_stage_policy": {
+    "D4_D5_population_validation": false,
+    "D4_D5_case_diagnostic_packets_allowed": true,
+    "D4_D5_single_case_general_update_allowed": false,
+    "D4_D5_motivated_candidate_requires_D0_D3_full_gates": true
+  },
+  "required_record_ids": [
+    "raw_feature_revision",
+    "v3_feature_revision",
+    "v4_graph_schema_version",
+    "frankie_snapshot_id",
+    "parent_snapshot_id",
+    "prediction_ledger_hash",
+    "lock_rule_version",
+    "task_head_version",
+    "truth_reveal_timestamp",
+    "self_edit_packet_id",
+    "candidate_adapter_id",
+    "retention_suite_hash",
+    "reward_vector",
+    "accept_reject_reason",
+    "causal_acceptance_time",
+    "rollback_pointer"
+  ],
+  "protected_boundaries": [
+    "FROZEN_DETECTOR",
+    "CANONICAL_ROWS_EVIDENCE",
+    "PHASE1_LINEAGE_SCORES",
+    "PHASE2_FINDINGS",
+    "FROZEN_RUNWAY_CLOCK",
+    "PERMANENT_FRANKIE",
+    "FRANKIE_1",
+    "RESEARCH_KALSHI_SPAWN_PY",
+    "FROZEN_SSOS_PLAY",
+    "FROZEN_V3_BENCHMARK_OUTPUTS"
+  ],
+  "preservation_policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+  "design_sources": [
+    "https://arxiv.org/pdf/2506.10943",
+    "https://arxiv.org/pdf/2104.13478"
+  ]
+}

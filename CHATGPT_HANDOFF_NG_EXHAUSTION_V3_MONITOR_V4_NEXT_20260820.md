@@ -446,3 +446,17 @@ After that, monitor only. Do not continue adding V4 machinery in the same launch
 # Drop-in summary
 
 > Take over the NG exhaustion program on `chatgpt/ng-exhaustion-entry-timing-revival-20260818`. Read `research/NG_EXHAUSTION_V3_V4_CHAT_DECISIONS_ALL_NOTES_20260820.md`, `research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_ADDENDUM_20260820.md`, `research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md`, and `CHATGPT_HANDOFF_NG_EXHAUSTION_V3_MONITOR_V4_NEXT_20260820.md` first. Current priority is the pinned V3-T0 core agents in `.github/workflows/ng_exhaustion_v3_t0_pinned_core_20260820.yml`; monitor/recover them and do not launch V4 until V3 is under control. V4 is the later continuous per-instance timing/adaptive-walk-forward architecture and is code/design only at this checkpoint. Do not modify protected detector/canonical/Phase1/Phase2/runway/Frankie/Frankie1/spawn.py/SSOS. Preserve all true/false/losing/censored/low-support/model-disagreement cases and use `FLAG_AND_DECOMPOSE_NOT_AUTO_KILL`.
+
+---
+
+# PART VII — LATER D-SERIES V4 ARCHITECTURE DECISION
+
+The user later returned to the deferred Frankie enhancement and explicitly directed that it also apply to D0-D5 V4.
+
+Current binding addendum:
+
+`research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md`
+
+It adds a temporal attributed graph over the raw + V3 causal state and a post-reveal, sandboxed self-edit proposal/evaluation loop. Active-instance snapshots and calls remain immutable; accepted research updates affect only later instances. D4/D5 remain case studies, and no sparse outcome can promote a general update by itself.
+
+This is design/implementation authority only. The prior no-automatic-launch rule, protected boundaries, permanent-Frankie wall, and promotion wall remain in force.

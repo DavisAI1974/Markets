@@ -235,13 +235,22 @@ D4/D5 remain case studies until support changes materially.
 
 ---
 
-## I. Deferred Frankie enhancement
+## I. D-series V4 Frankie enhancement — authorized for research design
 
-The user indicated there may be another Frankie capability that could help the timing/adaptive architecture.
+The previously deferred capability is now explicit for D0-D5 V4 research:
 
-It is intentionally deferred.
+- append a temporal attributed graph over the complete raw + V3 causal state;
+- preserve causal chain order while testing only defensible geometric invariances/equivariances;
+- generate structured self-edit proposals only after conservative truth reveal;
+- train proposed updates in an isolated, reversible research twin;
+- accept an update only for later research snapshots after chronological, retention, leakage, calibration and latency gates pass;
+- keep every active-instance call immutable and preserve rejected updates as evidence.
 
-Do not infer or build it from this note. It belongs in a later deliberate conversation after the current V3/V4 research line is under control.
+Binding contract:
+
+`research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md`
+
+This authorizes V4 design/implementation work, not a V4 launch, permanent Frankie mutation, production self-editing, or play promotion.
 
 ---
 
