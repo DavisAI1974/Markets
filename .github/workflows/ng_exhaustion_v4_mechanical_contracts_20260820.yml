@@ -7,11 +7,15 @@ on:
     paths:
       - research/kalshi/ng_exhaustion_v4_causal_clock.py
       - research/kalshi/ng_exhaustion_v4_mechanics.py
+      - research/kalshi/ng_exhaustion_v4_lock_outcome.py
       - research/kalshi/ng_exhaustion_v4_history_support.py
+      - research/kalshi/ng_exhaustion_v4_gate_verifier.py
       - research/kalshi/frankie_p0_real_evidence_plan.py
       - research/kalshi/tests/test_ng_exhaustion_v4_causal_clock.py
       - research/kalshi/tests/test_ng_exhaustion_v4_mechanics.py
+      - research/kalshi/tests/test_ng_exhaustion_v4_lock_outcome.py
       - research/kalshi/tests/test_ng_exhaustion_v4_history_support.py
+      - research/kalshi/tests/test_ng_exhaustion_v4_gate_verifier.py
       - research/kalshi/tests/test_frankie_p0_real_evidence_plan.py
       - .github/workflows/ng_exhaustion_v4_mechanical_contracts_20260820.yml
   workflow_dispatch:
@@ -37,7 +41,9 @@ jobs:
           python -m pytest -q \
             research/kalshi/tests/test_ng_exhaustion_v4_causal_clock.py \
             research/kalshi/tests/test_ng_exhaustion_v4_mechanics.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_lock_outcome.py \
             research/kalshi/tests/test_ng_exhaustion_v4_history_support.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_gate_verifier.py \
             research/kalshi/tests/test_frankie_p0_real_evidence_plan.py | tee /tmp/v4_contract_tests.txt
       - name: Write hash-bound verification receipt
         run: |
@@ -47,11 +53,15 @@ jobs:
           paths=[
             'research/kalshi/ng_exhaustion_v4_causal_clock.py',
             'research/kalshi/ng_exhaustion_v4_mechanics.py',
+            'research/kalshi/ng_exhaustion_v4_lock_outcome.py',
             'research/kalshi/ng_exhaustion_v4_history_support.py',
+            'research/kalshi/ng_exhaustion_v4_gate_verifier.py',
             'research/kalshi/frankie_p0_real_evidence_plan.py',
             'research/kalshi/tests/test_ng_exhaustion_v4_causal_clock.py',
             'research/kalshi/tests/test_ng_exhaustion_v4_mechanics.py',
+            'research/kalshi/tests/test_ng_exhaustion_v4_lock_outcome.py',
             'research/kalshi/tests/test_ng_exhaustion_v4_history_support.py',
+            'research/kalshi/tests/test_ng_exhaustion_v4_gate_verifier.py',
             'research/kalshi/tests/test_frankie_p0_real_evidence_plan.py',
           ]
           files={p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in paths}
@@ -82,4 +92,4 @@ jobs:
             git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
           fi
 
-# Trigger revision: P0 plan contract added; still no empirical run or V4 launch.
+# Trigger revision: nine-gate verifier and sealed no-lock outcomes included; still no launch.
