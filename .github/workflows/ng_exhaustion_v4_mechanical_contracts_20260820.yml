@@ -37,15 +37,20 @@ jobs:
       - run: python -m pip install --quiet pytest
       - name: Run isolated V4 and P0 plan contract tests
         run: |
-          set -euo pipefail
+          set +e
           python -m pytest -q \
             research/kalshi/tests/test_ng_exhaustion_v4_causal_clock.py \
             research/kalshi/tests/test_ng_exhaustion_v4_mechanics.py \
             research/kalshi/tests/test_ng_exhaustion_v4_lock_outcome.py \
             research/kalshi/tests/test_ng_exhaustion_v4_history_support.py \
             research/kalshi/tests/test_ng_exhaustion_v4_gate_verifier.py \
-            research/kalshi/tests/test_frankie_p0_real_evidence_plan.py | tee /tmp/v4_contract_tests.txt
+            research/kalshi/tests/test_frankie_p0_real_evidence_plan.py > /tmp/v4_contract_tests.txt 2>&1
+          code=$?
+          echo "$code" > /tmp/v4_contract_exit_code.txt
+          cat /tmp/v4_contract_tests.txt
+          exit 0
       - name: Write hash-bound verification receipt
+        if: always()
         run: |
           python - <<'PY'
           import hashlib,json,os
@@ -65,11 +70,14 @@ jobs:
             'research/kalshi/tests/test_frankie_p0_real_evidence_plan.py',
           ]
           files={p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in paths}
+          exit_code=int(Path('/tmp/v4_contract_exit_code.txt').read_text().strip()) if Path('/tmp/v4_contract_exit_code.txt').exists() else 999
+          output=Path('/tmp/v4_contract_tests.txt').read_text() if Path('/tmp/v4_contract_tests.txt').exists() else 'pytest did not run'
           out={
             'schema':'NG_EXHAUSTION_V4_MECHANICAL_CONTRACT_RECEIPT_V1',
             'runner_commit':os.environ.get('GITHUB_SHA'),
-            'tests_passed':True,
-            'test_output':Path('/tmp/v4_contract_tests.txt').read_text(),
+            'tests_passed':exit_code==0,
+            'pytest_exit_code':exit_code,
+            'test_output':output,
             'files':files,
             'v4_empirical_launch':False,
             'promotion_performed':False,
@@ -82,6 +90,7 @@ jobs:
           Path('research/kalshi/NG_EXHAUSTION_V4_MECHANICAL_CONTRACT_RECEIPT_20260820.json').write_text(json.dumps(out,indent=2,sort_keys=True)+'\n')
           PY
       - name: Commit receipt
+        if: always()
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
@@ -92,4 +101,4 @@ jobs:
             git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
           fi
 
-# Trigger revision: nine-gate verifier and sealed no-lock outcomes included; still no launch.
+# Trigger revision: always emit a diagnostic receipt; still no launch or promotion.
