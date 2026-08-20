@@ -1,0 +1,18 @@
+{
+  "alternate_d4_d5_engine": false,
+  "files": {
+    "research/kalshi/ng_exhaustion_v4_unified_runtime.py": "bd280101d3e6294b8b3f7ea9912e6de1d6cc1c763bc9fecb0bb6011684682c8e",
+    "research/kalshi/tests/test_ng_exhaustion_v4_unified_runtime.py": "08ff5ba55fbca379a49cbab7b5f5d356f8a9aac3f4a396115815ede445ae32bd"
+  },
+  "one_engine": true,
+  "one_reconciler": true,
+  "one_registry": true,
+  "permanent_frankie_mutation": false,
+  "promotion_performed": false,
+  "pytest_exit_code": 1,
+  "runner_commit": "df26a6e04ada53c1cce7608303c9d95d95d20123",
+  "schema": "NG_EXHAUSTION_V4_UNIFIED_RUNTIME_RECEIPT_V1",
+  "test_output": "......F....                                                              [100%]\n=================================== FAILURES ===================================\n________ test_registered_restrictions_are_detached_from_caller_mutation ________\n\n    def test_registered_restrictions_are_detached_from_caller_mutation():\n        rules={\"adaptation_allowed\":True,\"note\":\"original\"}\n        r=V4LaneRegistry(); r.register(lane(\"D1\",\"WALK_FORWARD\",population=\"D1_FROZEN\",restrictions=rules))\n        before=r.registry_hash\n        rules[\"note\"]=\"mutated-after-register\"\n>       assert r.registry_hash==before\nE       AssertionError: assert 'e71b93151705...3e32ac671c161' == '0404df60cde2...2c8488686d1a0'\nE         \nE         - 0404df60cde242d50b5769f2bd9a1ae10a311f89be79abd970d2c8488686d1a0\nE         + e71b9315170522c38eab0ab03513a10f3faae05bffb651f72803e32ac671c161\n\nresearch/kalshi/tests/test_ng_exhaustion_v4_unified_runtime.py:124: AssertionError\n=========================== short test summary info ============================\nFAILED research/kalshi/tests/test_ng_exhaustion_v4_unified_runtime.py::test_registered_restrictions_are_detached_from_caller_mutation - AssertionError: assert 'e71b93151705...3e32ac671c161' == '0404df60cde2...2c8488686d1a0'\n  \n  - 0404df60cde242d50b5769f2bd9a1ae10a311f89be79abd970d2c8488686d1a0\n  + e71b9315170522c38eab0ab03513a10f3faae05bffb651f72803e32ac671c161\n1 failed, 10 passed in 0.13s\n",
+  "tests_passed": false,
+  "v4_empirical_launch": false
+}
