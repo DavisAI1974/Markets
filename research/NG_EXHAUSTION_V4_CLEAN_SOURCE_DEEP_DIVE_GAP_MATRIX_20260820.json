@@ -1,0 +1,78 @@
+{
+  "title": "NG Exhaustion V4 Clean-Source Deep-Dive Gap Matrix",
+  "date": "2026-08-20",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "status": "AUTHORITATIVE_CLEAN_SOURCE_MATRIX_FIVE_DEEP_DIVES_COMPLETE",
+  "authority": {
+    "v3_model_trade_outputs_empirical_authority": false,
+    "preserve_every_chain_case": true,
+    "allowed_evidence": [
+      "frozen_detector_and_canonical_evidence",
+      "finalized_phase2_and_runway_records",
+      "preserved_lineage_and_chronology",
+      "raw_causal_market_interfaces_and_archives",
+      "timestamp_contract_source_revision_and_provenance_code",
+      "current_v4_contracts_and_interface_inspection"
+    ]
+  },
+  "completed_deep_dives": [
+    "V4_GAP_SOURCE_DEEP_DIVE",
+    "V4_TRAJECTORY_DEEP_DIVE",
+    "V4_GEOMETRY_DEEP_DIVE",
+    "V4_HISTORY_DEEP_DIVE",
+    "V4_LEDGER_DEEP_DIVE"
+  ],
+  "core_conclusion": "Core V4 is not broadly blocked by missing market data. Most ancestry, temporal, price/path, signed-flow, dipole and aggregate-book state already exists or is causally derivable. Dominant blockers are causal clock semantics, provenance/coverage, missingness-safe representation, unresolved lifecycle, immutable prediction ledger identity, and sealed prediction-to-execution handoff.",
+  "items": [
+    {"id":"ancestry_order","classification":"ALREADY_EXISTS","action":"Carry only causally known ancestors with lineage revision/hash."},
+    {"id":"predecessor_confirmation_onset","classification":"ALREADY_EXISTS_RETROSPECTIVELY","action":"Attach lawful known_by/available_at before live use."},
+    {"id":"predecessor_temporal_gaps","classification":"CAUSALLY_DERIVABLE","action":"Preserve anchor type and availability timestamp."},
+    {"id":"predecessor_live_age","classification":"CAUSALLY_DERIVABLE","action":"Use current lawful cutoff minus known predecessor anchor; never target-relative time."},
+    {"id":"unresolved_predecessor_lifecycle","classification":"NEEDS_NEW_REPRESENTATION","action":"Build immutable UNRESOLVED/RESOLVED/CENSORED state and right-censor unresolved cases."},
+    {"id":"unresolved_overlap_age","classification":"CAUSALLY_DERIVABLE","action":"Construct prospectively; never expose posthoc future-successor overlap labels."},
+    {"id":"price_path","classification":"CAUSALLY_DERIVABLE","action":"Use displacement/range/MFE-so-far/MAE-so-far/path geometry only through current cutoff."},
+    {"id":"signed_flow","classification":"CAUSALLY_DERIVABLE","action":"Freeze signing algorithm, transform revision, source watermark and available_at."},
+    {"id":"dipole_roll20","classification":"ALREADY_EXISTS_AS_CAUSAL_BASIS","action":"Bind builder/source revision and derive backward-only geometry."},
+    {"id":"dipole_geometry","classification":"CAUSALLY_DERIVABLE","action":"Sign-runs, area, slope, curvature and crossings; persistence confirmation cannot be backdated."},
+    {"id":"aggregate_book_resilience","classification":"CAUSALLY_DERIVABLE_WHERE_COVERAGE_VERIFIED","action":"Use MBP depth/imbalance/recovery with state-age and stale/missing masks."},
+    {"id":"literal_queue_survival","classification":"BLOCKED_BY_UNVERIFIED_SOURCE","action":"Require provenance-complete MBO/order-event coverage; otherwise mark missing/use explicitly named aggregate proxy."},
+    {"id":"detector_native_continuous_exhaustion_intensity","classification":"BLOCKED_BY_UNVERIFIED_SOURCE_POSSIBLE_MISSING_MEASUREMENT","action":"Prove a causal frozen detector-native stream or omit it; do not rename roll-20 as native intensity."},
+    {"id":"ordered_ancestry_graph","classification":"NEEDS_NEW_REPRESENTATION","action":"Build causal predecessor/live-state graph with no future target node or future existence hints."},
+    {"id":"cross_link_geometry","classification":"CAUSALLY_DERIVABLE_PLUS_REPRESENTATION","action":"Build time/price/flow/dipole/book ratios and distances using only known state and explicit masks."},
+    {"id":"channel_encoders_fusion","classification":"NEEDS_NEW_REPRESENTATION","action":"Preserve separable channels and test flat/gated/late fusion as V4 ablations."},
+    {"id":"per_channel_missingness_staleness","classification":"NEEDS_NEW_REPRESENTATION","action":"Distinguish OBSERVED, PAST_CARRY, STALE, MISSING, STRUCTURALLY_NOT_YET_KNOWN, NOT_APPLICABLE and true zero."},
+    {"id":"detector_marked_at_event_known_by","classification":"TIMESTAMP_OR_PROVENANCE_GAP","action":"Persist actual live causal discovery time; canonical retrospective t0 cannot substitute."},
+    {"id":"multi_clock_availability","classification":"TIMESTAMP_OR_PROVENANCE_GAP","action":"Preserve ts_event, ts_recv/observed_at, feature_available_at, model_evaluated_at and decision_available_at."},
+    {"id":"contract_series_roll_identity","classification":"TIMESTAMP_OR_PROVENANCE_GAP","action":"Pin dataset/schema/series/roll/raw_symbol/instrument/definition per source interval; fail closed on NG.v.0 versus NG.n.0 ambiguity."},
+    {"id":"event_to_raw_message_provenance","classification":"TIMESTAMP_OR_PROVENANCE_GAP","action":"Bind every instance/channel to raw object/message ranges and content hashes."},
+    {"id":"historical_book_coverage","classification":"BLOCKED_BY_UNVERIFIED_SOURCE","action":"Produce exact per-session MBP/MBO/L1 coverage manifest before claiming full book availability."},
+    {"id":"v4_probability_movie_first_lock_ledger","classification":"NEEDS_NEW_REPRESENTATION","action":"Persist deterministic hashed probability entries and append-only first-lock/no-lock records."},
+    {"id":"execution_handoff","classification":"NEEDS_NEW_INTERFACE","action":"Execution consumes sealed signal_id/execution_handoff_id and may not re-predict, re-time, re-fuse or substitute view/head."},
+    {"id":"d3_fine_stratification","classification":"INSUFFICIENT_HISTORY","action":"Treat additional independent history as valuable when it adds deep/rare cases."},
+    {"id":"d4_d5_population_calibration","classification":"INSUFFICIENT_HISTORY","action":"Preserve as case evidence only until chronology expands; never collapse or drop."}
+  ],
+  "historical_support": {
+    "frozen_complete_weeks": 55,
+    "frozen_unique_raw_dates": 329,
+    "approx_span": "2025-06-29 through 2026-07-17",
+    "chronological_lineage_support_weeks": 37,
+    "depth_counts": {"D0":135860,"D1":18837,"D2":1592,"D3":124,"D4":8,"D5":1},
+    "policy": "Do not relabel discovery weeks as fresh OOT. Add only provenance-certified outside chronology under unchanged frozen detector/canonical rules."
+  },
+  "hard_prelaunch_gates": [
+    "causal_exhaustion_discovery_clock",
+    "field_and_channel_multi_clock_provenance",
+    "exact_raw_source_contract_roll_identity_and_coverage",
+    "missingness_safe_immutable_causal_state_movie",
+    "unresolved_predecessor_lifecycle",
+    "detector_intensity_semantic_resolution",
+    "immutable_probability_first_lock_ledger",
+    "sealed_prediction_to_execution_handoff",
+    "sparse_stage_scope_preservation"
+  ],
+  "launch_state": {
+    "go_for_implementation_design_when_authorized": true,
+    "trusted_v4_empirical_launch": false,
+    "reason": "Prelaunch causal/provenance/state/ledger/handoff gates must be mechanically closed and tested first."
+  }
+}
