@@ -2,12 +2,14 @@
   "files": {
     "research/kalshi/frankie_p0_real_evidence_plan.py": "721bd12e5f72f9246ec6ff7bfc2cddc0d44f615b6ecfcc8fb1cfe85344a8bee5",
     "research/kalshi/ng_exhaustion_v4_causal_clock.py": "fe15781b6919f8fb719670a689740f34377b39b42e2f0206c429aa4b510a2426",
+    "research/kalshi/ng_exhaustion_v4_causal_entry_adapter.py": "9b7164632f4d0d0bcc7fd7e2c59077e206b008f2e7469d3d01a3e5555c43bc4c",
     "research/kalshi/ng_exhaustion_v4_gate_verifier.py": "8cc786505f61432cdfe0985c0bba76d47e466564c0893c0afb63cd4dac1ece81",
     "research/kalshi/ng_exhaustion_v4_history_support.py": "d932551bad244b4fec6f35b86f5e0d0b3d08a29187d8d5746546624cc8ae9ed7",
     "research/kalshi/ng_exhaustion_v4_lock_outcome.py": "1c7598bf75d9be8993ace566c816d7ee35cfbff0c4f0b93241b4337d46de8fde",
     "research/kalshi/ng_exhaustion_v4_mechanics.py": "9a4d3920ce2be9de6a82bfd956ca18c70a5597a4bffbb5e9ebb3fbd9bbeaf888",
     "research/kalshi/tests/test_frankie_p0_real_evidence_plan.py": "9aad903527c84dae23c828fc2feb91e3f2f69be921073b765f26462d02d72a0d",
     "research/kalshi/tests/test_ng_exhaustion_v4_causal_clock.py": "e3544285d38bc5e19b39387b485afcee26621ac209742ed139836fa7ccdb2b88",
+    "research/kalshi/tests/test_ng_exhaustion_v4_causal_entry_adapter.py": "8eab0041827c6e7a7e89933e0eb0fbc97589b0dda234e549d4ccf3bf4f231412",
     "research/kalshi/tests/test_ng_exhaustion_v4_gate_verifier.py": "54674e0f0cb6cb3e7c661bbb3522cbe866eb6ce400088f0f7bf6a65948263f0f",
     "research/kalshi/tests/test_ng_exhaustion_v4_history_support.py": "d4ab48c08471118b6f336eefdf0fbef79f1333059b0ccb69b467e8c253020c2c",
     "research/kalshi/tests/test_ng_exhaustion_v4_lock_outcome.py": "c9dd077f0435058e681489842423b7134395861f8bdcf59b32633909ff62398d",
@@ -24,9 +26,9 @@
     "spawn_py": false
   },
   "pytest_exit_code": 0,
-  "runner_commit": "3a724bc41b604b742c6f4a64a8a7f1ec50da0760",
+  "runner_commit": "2a95ab21dda9080c765248a3c0bdfe50127a52ad",
   "schema": "NG_EXHAUSTION_V4_MECHANICAL_CONTRACT_RECEIPT_V1",
-  "test_output": "...........................                                              [100%]\n27 passed in 0.17s\n",
+  "test_output": "..............................                                           [100%]\n30 passed in 0.18s\n",
   "tests_passed": true,
   "v4_empirical_launch": false
 }
