@@ -3,6 +3,16 @@
   "date": "2026-08-19",
   "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
   "implementation_revision": "V3_CONTINUOUS_LIVE_MARKET_STATE",
+  "authoritative_retrigger": "FINALIZED_DENSE_LIVE_SURFACE_R2",
+  "retrigger_reason": "EARLIER_V3_FOLLOWUP_TRIGGER_PRECEDED_FINAL_DENSE_PRICE_ROLL20_BOOK_PATH_SURFACE_AND_IS_COMPARISON_ONLY",
+  "finalized_surface": {
+    "live_checkpoint_blob_sha": "8afb71ee6238a541897ea1302f395a2035b23061",
+    "recovery_features_v3_blob_sha": "41552e0a9b344793c8b01afa84f089209386290d",
+    "dense_price_path": "T_MINUS_60_THROUGH_CHECKPOINT_61_SAMPLES_CAUSAL",
+    "dense_roll20_dipole_path": "T_MINUS_60_THROUGH_CHECKPOINT_61_SAMPLES_CAUSAL",
+    "dense_book_path": "T_MINUS_20_THROUGH_CHECKPOINT_CAUSAL",
+    "future_target_polarity_required": false
+  },
   "lanes": {
     "D0_D1_COMPLEMENT": {
       "models": ["logistic", "extra_trees", "knn"],
@@ -16,7 +26,7 @@
     },
     "D0_MODEL_SPECIFIC_TRADE": {
       "models": ["logistic", "extra_trees", "knn"],
-      "signal_requirement": "EACH_MODEL_REPRODUCES_ITS_OWN_V3_D0_TERMINALITY_SIGNAL",
+      "signal_requirement": "EACH_MODEL_REPRODUCES_ITS_OWN_V3_D0_TERMINALITY_SIGNAL_ON_FINALIZED_DENSE_LIVE_SURFACE",
       "probability_aggregation": "NONE",
       "historical_execution_only": true
     }
