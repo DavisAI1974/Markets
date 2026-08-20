@@ -12,7 +12,9 @@ PRICE_LAGS = (1,2,3,5,10,20,30,60,120)
 RANGE_WINDOWS = (5,20,60)
 FLOW_WINDOWS = (1,3,5,10,20,30,60)
 BOOK_LAGS = (0,1,2,3,5,10,20,30,60)
-POLICY = "USE_OBSERVED_PRICE_DIRECTION_FLOW_DIPOLE_BOOK_AND_CLOCK_STATE_THROUGH_EACH_CHECKPOINT_WITHOUT_REQUIRING_TARGET_POLARITY_OR_TARGET_CONFIRMATION"
+DENSE_PATH_SECONDS = 60
+DENSE_BOOK_SECONDS = 20
+POLICY = "USE_OBSERVED_PRICE_DIRECTION_DENSE_PRICE_PATH_DENSE_ROLL20_DIPOLE_PATH_FLOW_BOOK_PATH_AND_CLOCK_STATE_THROUGH_EACH_CHECKPOINT_WITHOUT_REQUIRING_TARGET_POLARITY_OR_TARGET_CONFIRMATION"
 
 
 def _day(p: Path):
@@ -30,13 +32,7 @@ def _from_dict(d):
 
 
 def load_week(raw_dir: str, week: str):
-    """Collapse raw tape to causal one-second sufficient state.
-
-    Price keeps the last trade in each second. Classified flow keeps signed/absolute
-    volume sums per second. Book keeps both the mean imbalance observed inside an
-    updated second and the last raw imbalance in that second so carried book state
-    matches the canonical stream semantics without storing every update row.
-    """
+    """Collapse raw tape to causal one-second sufficient state."""
     sun = datetime.strptime(week, "%Y%m%d")
     price_last = {}
     flow_signed = defaultdict(float)
@@ -160,6 +156,16 @@ def parts(cache, w: str, cutoff: int):
         hi = float(np.max(seg)); lo = float(np.min(seg))
         price += [1.0, math.asinh((now-q)/TICK), math.asinh((hi-q)/TICK), math.asinh((lo-q)/TICK), math.asinh((hi-lo)/TICK)]
 
+    # Dense causal one-second price path over the last minute. This is raw market
+    # direction, not target-polarity-oriented direction.
+    pbase = last_at(t, p, cutoff - DENSE_PATH_SECONDS)
+    for sec in range(cutoff - DENSE_PATH_SECONDS, cutoff + 1):
+        q = last_at(t, p, sec)
+        if pbase is None or q is None:
+            price += [0.0, 0.0]
+        else:
+            price += [1.0, math.asinh((q - pbase) / TICK)]
+
     micro = []
     for win in FLOW_WINDOWS:
         known, signed, total, ratio = flow_ratio(cache, w, cutoff-win+1, cutoff)
@@ -167,6 +173,12 @@ def parts(cache, w: str, cutoff: int):
     _,_,_,cur20 = flow_ratio(cache, w, cutoff-19, cutoff)
     _,_,_,prev20 = flow_ratio(cache, w, cutoff-39, cutoff-20)
     micro += [cur20, prev20, cur20-prev20, abs(cur20)]
+
+    # Exact causal roll-20 path over the last 61 seconds. This is the live shape
+    # from which exhaustion polarity/family can later be inferred when an event is marked.
+    for sec in range(cutoff - DENSE_PATH_SECONDS, cutoff + 1):
+        known, _, _, ratio = flow_ratio(cache, w, sec-19, sec)
+        micro += [known, ratio]
 
     hist = {}
     for lag in BOOK_LAGS:
@@ -176,6 +188,12 @@ def parts(cache, w: str, cutoff: int):
     for lag in (5,20,60):
         q = hist[lag]
         micro += [0.0,0.0] if bnow is None or q is None else [1.0,bnow-q]
+
+    # Dense recent book path keeps the evolving microstructure visible rather than
+    # reducing it to a single confirmation-time value.
+    for sec in range(cutoff - DENSE_BOOK_SECONDS, cutoff + 1):
+        q = book_at(cache, w, sec)
+        micro += [0.0,0.0] if q is None else [1.0,q]
 
     hour = (float(cutoff) % 86400.0) / 3600.0; th = 2 * math.pi * hour / 24.0
     first = float(cache["first_trade"][w])
