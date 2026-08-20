@@ -1,0 +1,575 @@
+{
+  "automatic_apply": false,
+  "baseline": "FROZEN_CURRENT_FRANKIE",
+  "budget_dimensions": [
+    "model_calls",
+    "input_tokens",
+    "output_tokens",
+    "tool_queries",
+    "storage_bytes",
+    "wall_clock_ms"
+  ],
+  "candidates": [
+    {
+      "authority": "SHADOW_ONLY",
+      "automatic_apply": false,
+      "candidate_id": "COG01_COALA_ARCHITECTURE_MAP",
+      "component": "cognitive ownership and typed state",
+      "control": "current Frankie packet and lane boundaries",
+      "execution_enabled": false,
+      "falsifiers": [
+        "any new authority",
+        "any protected decision flip",
+        "incomplete provenance"
+      ],
+      "hypothesis": "Explicit memory/action ownership reduces cross-lane state faults without changing good decisions.",
+      "implementation_audit": {
+        "depth": "GENERIC_CONTRACT_INTEGRATED",
+        "paper_method_not_implemented": [
+          "decision-cycle policy",
+          "memory learning actions"
+        ],
+        "runtime_invoked": [
+          "build_cognitive_context",
+          "validate_reasoning_contract"
+        ]
+      },
+      "implementation_targets": [
+        "frankie_cognition.build_cognitive_context",
+        "frankie_cognitive_candidates.coala_architecture_map"
+      ],
+      "intervention": "typed CoALA map and read-only cognitive context",
+      "metric_rules": [
+        {
+          "direction": "HIGHER",
+          "max_regression": 0.0,
+          "min_improvement": 0.01,
+          "name": "task_success",
+          "role": "PRIMARY"
+        },
+        {
+          "direction": "HIGHER",
+          "max_regression": 0.0,
+          "min_improvement": 0.0,
+          "name": "provenance_coverage",
+          "role": "GUARDRAIL"
+        },
+        {
+          "direction": "LOWER",
+          "max_regression": 0.0,
+          "min_improvement": 0.0,
+          "name": "cross_lane_fault_rate",
+          "role": "GUARDRAIL"
+        }
+      ],
+      "paper": "Cognitive Architectures for Language Agents",
+      "rank": 1,
+      "venue": "TMLR 2024"
+    },
+    {
+      "authority": "SHADOW_ONLY",
+      "automatic_apply": false,
+      "candidate_id": "COG02_REACT_EVIDENCE_LOOP",
+      "component": "reason-action-observation loop",
+      "control": "current one-pass lane reasoning",
+      "execution_enabled": false,
+      "falsifiers": [
+        "unused retrieval",
+        "unauthorized action",
+        "more pass-to-fail cases"
+      ],
+      "hypothesis": "Bounded typed evidence loops recover missing facts without increasing unsupported claims.",
+      "implementation_audit": {
+        "depth": "TRACE_VALIDATOR_ONLY",
+        "paper_method_not_implemented": [
+          "closed-loop tool retrieval",
+          "environment-driven replanning"
+        ],
+        "runtime_invoked": [
+          "validate_react_trace"
+        ]
+      },
+      "implementation_targets": [
+        "frankie_cognition.validate_reasoning_contract",
+        "frankie_cognitive_candidates.validate_react_trace"
+      ],
+      "intervention": "bounded OBSERVE/RETRIEVE/REASON/VERIFY trace",
+      "metric_rules": [
+        {
+          "direction": "HIGHER",
+          "max_regression": 0.0,
+          "min_improvement": 0.01,
+          "name": "task_success",
+          "role": "PRIMARY"
+        },
+        {
+          "direction": "LOWER",
+          "max_regression": 0.0,
+          "min_improvement": 0.0,
+          "name": "unsupported_claim_rate",
+          "role": "GUARDRAIL"
+        },
+        {
+          "direction": "LOWER",
+          "max_regression": 0.0,
+          "min_improvement": 0.0,
+          "name": "invalid_action_rate",
+          "role": "GUARDRAIL"
+        }
+      ],
+      "paper": "ReAct: Synergizing Reasoning and Acting in Language Models",
+      "rank": 2,
+      "venue": "ICLR 2023"
+    },
+    {
+      "authority": "SHADOW_ONLY",
+      "automatic_apply": false,
+      "candidate_id": "COG03_LATS_BOUNDED_PLAN_SEARCH",
+      "component": "bounded multi-path planning",
+      "control": "current independent linear candidate drafts",
+      "execution_enabled": false,
+      "falsifiers": [
+        "self-owned value score",
+        "budget excess",
+        "hallucinated evidence increases"
+      ],
+      "hypothesis": "A shallow externally scored hypothesis tree recovers early wrong paths at matched budget.",
+      "implementation_audit": {
+        "depth": "PURE_HELPER_NOT_RUNTIME_WIRED",
+        "paper_method_not_implemented": [
+          "tree generation",
+          "simulation",
+          "backpropagation",
+          "reflection"
+        ],
+        "runtime_invoked": []
+      },
+      "implementation_targets": [
+        "frankie_cognitive_candidates.select_bounded_plan_branches"
+      ],
+      "intervention": "fixed-width/fixed-depth plan branches with external feedback",
+      "metric_rules": [
+        {
+          "direction": "HIGHER",
+          "max_regression": 0.0,
+          "min_improvement": 0.01,
+          "name": "executable_grader_success",
+          "role": "PRIMARY"
+        },
+        {
+          "direction": "LOWER",
+          "max_regression": 0.0,
+          "min_improvement": 0.0,
+          "name": "hallucinated_evidence_rate",
+          "role": "GUARDRAIL"
+        },
+        {
+          "direction": "HIGHER",
+          "max_regression": 0.0,
+          "min_improvement": 0.0,
+          "name": "abstention_quality",
+          "role": "GUARDRAIL"
+        }
+      ],
+      "paper": "Language Agent Tree Search",
+      "rank": 3,
+      "venue": "ICML 2024"
+    },
+    {
+      "authority": "SHADOW_ONLY",
+      "automatic_apply": false,
+      "candidate_id": "COG04_STRUCTGPT_TYPED_READS",
+      "component": "typed structured evidence access",
+      "control": "current serialized evidence packet",
+      "execution_enabled": false,
+      "falsifiers": [
+        "future or forbidden field access",
+        "unknown ref",
+        "provenance loss"
+      ],
+      "hypothesis": "Narrow typed reads improve evidence recall and citation correctness without forbidden access.",
+      "implementation_audit": {
+        "depth": "PURE_HELPER_NOT_RUNTIME_WIRED",
+        "paper_method_not_implemented": [
+          "iterative interface invocation",
+          "model-directed structured retrieval"
+        ],
+        "runtime_invoked": []
+      },
+      "implementation_targets": [
+        "frankie_cognitive_candidates.TypedEvidenceStore"
+      ],
+      "intervention": "read-only evidence catalog queried by exact ref id",
+      "metric_rules": [
+        {
+          "direction": "HIGHER",
+          "max_regression": 0.0,
+          "min_improvement": 0.01,
+          "name": "evidence_recall",
+          "role": "PRIMARY"
+        },
+        {
+          "direction": "HIGHER",
+          "max_regression": 0.0,
+          "min_improvement": 0.0,
+          "name": "citation_correctness",
+          "role": "GUARDRAIL"
+        },
+        {
+          "direction": "LOWER",
+          "max_regression": 0.0,
+          "min_improvement": 0.0,
+          "name": "forbidden_access_rate",
+          "role": "GUARDRAIL"
+        }
+      ],
+      "paper": "StructGPT",
+      "rank": 4,
+      "venue": "EMNLP 2023"
+    },
+    {
+      "authority": "SHADOW_ONLY",
+      "automatic_apply": false,
+      "candidate_id": "COG05_FAITHFUL_EXECUTABLE_REASONING",
+      "component": "executable mechanical reasoning",
+      "control": "free-form reasoning for checkable steps",
+      "execution_enabled": false,
+      "falsifiers": [
+        "false premise treated as proof",
+        "non-allowlisted check",
+        "task regression"
+      ],
+      "hypothesis": "Allowlisted deterministic checks reduce silent arithmetic/clock/contract errors.",
+      "implementation_audit": {
+        "depth": "NARROW_RUNTIME_VALIDATOR",
+        "paper_method_not_implemented": [
+          "language-to-symbolic translation",
+          "general solver execution"
+        ],
+        "runtime_invoked": [
+          "run_deterministic_check"
+        ]
+      },
+      "implementation_targets": [
+        "frankie_cognitive_candidates.run_deterministic_check"
+      ],
+      "intervention": "typed check specification and deterministic execution",
+      "metric_rules": [
+        {
+          "direction": "HIGHER",
+          "max_regression": 0.0,
+          "min_improvement": 0.01,
+          "name": "executable_validity",
+          "role": "PRIMARY"
+        },
+        {
+          "direction": "LOWER",
+          "max_regression": 0.0,
+          "min_improvement": 0.0,
+          "name": "silent_error_rate",
+          "role": "GUARDRAIL"
+        },
+        {
+          "direction": "HIGHER",
+          "max_regression": 0.0,
+          "min_improvement": 0.0,
+          "name": "task_success",
+          "role": "GUARDRAIL"
+        }
+      ],
+      "paper": "Faithful Chain-of-Thought Reasoning",
+      "rank": 5,
+      "venue": "IJCNLP-AACL 2023"
+    },
+    {
+      "authority": "SHADOW_ONLY",
+      "automatic_apply": false,
+      "candidate_id": "COG06_CRITIC_TOOL_VERIFICATION",
+      "component": "tool-grounded verification",
+      "control": "one-pass output and feedback-free self-critique",
+      "execution_enabled": false,
+      "falsifiers": [
+        "unsupported revision",
+        "immutable evidence mutation",
+        "introduced failure"
+      ],
+      "hypothesis": "External deterministic checks correct more failures than they introduce.",
+      "implementation_audit": {
+        "depth": "NARROW_RUNTIME_VALIDATOR",
+        "paper_method_not_implemented": [
+          "tool-interactive critique loop",
+          "candidate revision loop"
+        ],
+        "runtime_invoked": [
+          "run_deterministic_check"
+        ]
+      },
+      "implementation_targets": [
+        "frankie_cognitive_candidates.run_deterministic_check",
+        "frankie_cognition.ReasoningStep"
+      ],
+      "intervention": "bounded verify-then-revise disposable candidate",
+      "metric_rules": [
+        {
+          "direction": "HIGHER",
+          "max_regression": 0.0,
+          "min_improvement": 0.01,
+          "name": "corrected_failure_rate",
+          "role": "PRIMARY"
+        },
+        {
+          "direction": "LOWER",
+          "max_regression": 0.0,
+          "min_improvement": 0.0,
+          "name": "introduced_failure_rate",
+          "role": "GUARDRAIL"
+        },
+        {
+          "direction": "LOWER",
+          "max_regression": 0.0,
+          "min_improvement": 0.0,
+          "name": "unsupported_revision_rate",
+          "role": "GUARDRAIL"
+        }
+      ],
+      "paper": "CRITIC",
+      "rank": 6,
+      "venue": "ICLR 2024"
+    },
+    {
+      "authority": "SHADOW_ONLY",
+      "automatic_apply": false,
+      "candidate_id": "COG07_MEMORY_AGENT_BENCH",
+      "component": "four-competency memory evaluation",
+      "control": "current memory serving",
+      "execution_enabled": false,
+      "falsifiers": [
+        "obsolete memory use",
+        "provenance failure",
+        "any omitted competency"
+      ],
+      "hypothesis": "Memory changes can improve all competencies without stale or untraceable recall.",
+      "implementation_audit": {
+        "depth": "HELPERS_NOT_RUNTIME_WIRED",
+        "paper_method_not_implemented": [
+          "incremental benchmark histories",
+          "four-competency runtime memory"
+        ],
+        "runtime_invoked": []
+      },
+      "implementation_targets": [
+        "frankie_cognition.select_active_memories",
+        "frankie_cognitive_candidates.score_memory_competencies"
+      ],
+      "intervention": "sealed retrieval/learning/long-range/forgetting scorecard",
+      "metric_rules": [
+        {
+          "direction": "HIGHER",
+          "max_regression": 0.0,
+          "min_improvement": 0.01,
+          "name": "memory_macro_accuracy",
+          "role": "PRIMARY"
+        },
+        {
+          "direction": "LOWER",
+          "max_regression": 0.0,
+          "min_improvement": 0.0,
+          "name": "obsolete_memory_rate",
+          "role": "GUARDRAIL"
+        },
+        {
+          "direction": "LOWER",
+          "max_regression": 0.0,
+          "min_improvement": 0.0,
+          "name": "provenance_failure_rate",
+          "role": "GUARDRAIL"
+        }
+      ],
+      "paper": "Evaluating Memory in LLM Agents via Incremental Multi-Turn Interactions",
+      "rank": 7,
+      "venue": "ICLR 2026"
+    },
+    {
+      "authority": "SHADOW_ONLY",
+      "automatic_apply": false,
+      "candidate_id": "COG08_HIPPORAG_ASSOCIATIVE_RETRIEVAL",
+      "component": "associative graph retrieval",
+      "control": "current lexical/vector retrieval",
+      "execution_enabled": false,
+      "falsifiers": [
+        "graph proximity asserted as causality",
+        "invalidated node served",
+        "citation regression"
+      ],
+      "hypothesis": "Active-only graph retrieval improves attributed multi-hop recall at the same serving budget.",
+      "implementation_audit": {
+        "depth": "PURE_HELPER_NOT_RUNTIME_WIRED",
+        "paper_method_not_implemented": [
+          "entity graph construction",
+          "retrieval-to-reader pipeline"
+        ],
+        "runtime_invoked": []
+      },
+      "implementation_targets": [
+        "frankie_cognitive_candidates.rank_associative_memory"
+      ],
+      "intervention": "provenance graph plus deterministic Personalized PageRank",
+      "metric_rules": [
+        {
+          "direction": "HIGHER",
+          "max_regression": 0.0,
+          "min_improvement": 0.01,
+          "name": "multihop_accuracy",
+          "role": "PRIMARY"
+        },
+        {
+          "direction": "LOWER",
+          "max_regression": 0.0,
+          "min_improvement": 0.0,
+          "name": "stale_node_rate",
+          "role": "GUARDRAIL"
+        },
+        {
+          "direction": "HIGHER",
+          "max_regression": 0.0,
+          "min_improvement": 0.0,
+          "name": "citation_correctness",
+          "role": "GUARDRAIL"
+        }
+      ],
+      "paper": "HippoRAG",
+      "rank": 8,
+      "venue": "NeurIPS 2024"
+    },
+    {
+      "authority": "SHADOW_ONLY",
+      "automatic_apply": false,
+      "candidate_id": "COG09_HIAGENT_WORKING_MEMORY",
+      "component": "hierarchical working memory",
+      "control": "full undifferentiated action-observation history",
+      "execution_enabled": false,
+      "falsifiers": [
+        "lost evidence ref",
+        "decision changed by compaction",
+        "multiple active subgoals"
+      ],
+      "hypothesis": "Subgoal chunks preserve evidence while improving long-run completion and recovery.",
+      "implementation_audit": {
+        "depth": "VALIDATOR_NOT_RUNTIME_WIRED",
+        "paper_method_not_implemented": [
+          "subgoal generation",
+          "history compaction",
+          "active-context serving"
+        ],
+        "runtime_invoked": []
+      },
+      "implementation_targets": [
+        "frankie_cognition.validate_working_memory"
+      ],
+      "intervention": "one-active-subgoal working-memory chunks",
+      "metric_rules": [
+        {
+          "direction": "HIGHER",
+          "max_regression": 0.0,
+          "min_improvement": 0.01,
+          "name": "task_success",
+          "role": "PRIMARY"
+        },
+        {
+          "direction": "LOWER",
+          "max_regression": 0.0,
+          "min_improvement": 0.0,
+          "name": "omitted_evidence_rate",
+          "role": "GUARDRAIL"
+        },
+        {
+          "direction": "HIGHER",
+          "max_regression": 0.0,
+          "min_improvement": 0.0,
+          "name": "interruption_recovery",
+          "role": "GUARDRAIL"
+        }
+      ],
+      "paper": "HiAgent",
+      "rank": 9,
+      "venue": "ACL 2025"
+    },
+    {
+      "authority": "SHADOW_ONLY",
+      "automatic_apply": false,
+      "candidate_id": "COG10_PROGRESS_COMPRESS_SHADOW_LEARNING",
+      "component": "protected continual learning",
+      "control": "frozen permanent Frankie",
+      "execution_enabled": false,
+      "falsifiers": [
+        "any protected regression",
+        "holdout reuse",
+        "candidate controls evaluator or promotion"
+      ],
+      "hypothesis": "A disposable active candidate can improve a new regime without old-cohort regression.",
+      "implementation_audit": {
+        "depth": "RELEASE_GATE_ONLY",
+        "paper_method_not_implemented": [
+          "active learner",
+          "knowledge-base consolidation",
+          "continual weight updates"
+        ],
+        "runtime_invoked": []
+      },
+      "implementation_targets": [
+        "frankie_evolution.evaluate_release"
+      ],
+      "intervention": "shadow learner followed by separately controlled consolidation evaluation",
+      "metric_rules": [
+        {
+          "direction": "HIGHER",
+          "max_regression": 0.0,
+          "min_improvement": 0.01,
+          "name": "new_regime_success",
+          "role": "PRIMARY"
+        },
+        {
+          "direction": "HIGHER",
+          "max_regression": 0.0,
+          "min_improvement": 0.0,
+          "name": "old_cohort_success",
+          "role": "GUARDRAIL"
+        },
+        {
+          "direction": "LOWER",
+          "max_regression": 0.0,
+          "min_improvement": 0.0,
+          "name": "forgetting_rate",
+          "role": "GUARDRAIL"
+        },
+        {
+          "direction": "HIGHER",
+          "max_regression": 0.0,
+          "min_improvement": 0.0,
+          "name": "rollback_fidelity",
+          "role": "GUARDRAIL"
+        }
+      ],
+      "paper": "Progress & Compress",
+      "rank": 10,
+      "venue": "ICML 2018"
+    }
+  ],
+  "current_frankie_runtime_adapter": "frankie_s137_cognitive_runtime.CognitiveCandidateRuntime",
+  "execution_enabled": false,
+  "manifest_hash": "c4d4f33c526fb349da4cf90bb5d0f1bc1c82d5195ad72b9ec956558dd8449305",
+  "minimum_evidence": {
+    "cases": 30,
+    "fail_to_pass": 5,
+    "observed_stratum_cases": 5
+  },
+  "required_strata": [
+    "task",
+    "regime",
+    "safety",
+    "provenance"
+  ],
+  "row_schema": "research/kalshi/frankie_cognitive_experiment_row_schema.json",
+  "schema_version": "1.0",
+  "status": "SHADOW_ONLY"
+}\n

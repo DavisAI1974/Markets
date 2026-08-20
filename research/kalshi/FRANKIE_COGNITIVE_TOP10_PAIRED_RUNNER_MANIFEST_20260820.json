@@ -1,0 +1,40 @@
+{
+  "arms": [
+    "baseline",
+    "candidate"
+  ],
+  "automatic_apply": false,
+  "candidate_ids": [
+    "COG01_COALA_ARCHITECTURE_MAP",
+    "COG02_REACT_EVIDENCE_LOOP",
+    "COG03_LATS_BOUNDED_PLAN_SEARCH",
+    "COG04_STRUCTGPT_TYPED_READS",
+    "COG05_FAITHFUL_EXECUTABLE_REASONING",
+    "COG06_CRITIC_TOOL_VERIFICATION",
+    "COG07_MEMORY_AGENT_BENCH",
+    "COG08_HIPPORAG_ASSOCIATIVE_RETRIEVAL",
+    "COG09_HIAGENT_WORKING_MEMORY",
+    "COG10_PROGRESS_COMPRESS_SHADOW_LEARNING"
+  ],
+  "component_pass_next_gate": "UNTOUCHED_FORWARD_SHADOW",
+  "exact_metering_required": [
+    "model_calls",
+    "input_tokens",
+    "output_tokens",
+    "tool_queries",
+    "storage_bytes",
+    "wall_clock_ms"
+  ],
+  "execution_enabled": false,
+  "locked_evaluator": "frankie_cognitive_experiments.evaluate_shadow_candidate",
+  "manifest_hash": "31ec0ec534ee895f26450adb23f32c37bd900aae916094e9eff75ffb00f005e6",
+  "minimum_evidence": {
+    "cases": 30,
+    "fail_to_pass": 5,
+    "observed_stratum_cases": 5
+  },
+  "promotion_authority": "NONE",
+  "required_ordering": "BOTH_ARMS_FROZEN_BEFORE_TARGET_REVEAL",
+  "same_information_set_required": true,
+  "version": "S137_COGNITIVE_PAIRED_RUNNER_V1"
+}\n

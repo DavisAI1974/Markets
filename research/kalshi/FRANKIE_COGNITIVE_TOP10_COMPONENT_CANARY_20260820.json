@@ -1,0 +1,72 @@
+{
+  "all_component_contracts_passed": true,
+  "automatic_apply": false,
+  "canary_hash": "0476eb1f4e4784bfbc9cf5334fe9da53b5b843eb6b8560d12456991eeb765c8a",
+  "candidates_exercised": 10,
+  "execution_enabled": false,
+  "performance_evidence": false,
+  "results": [
+    {
+      "candidate_id": "COG01_COALA_ARCHITECTURE_MAP",
+      "evaluation_hash": "1fbf1a2c2a1f11bbeec3e5ee38840e9ad4238d3fc197a4062635c7a133abce37",
+      "next_gate": "HELD_OUT_COMPONENT_EVALUATION",
+      "verdict": "CONTRACT_CANARY_PASSED"
+    },
+    {
+      "candidate_id": "COG02_REACT_EVIDENCE_LOOP",
+      "evaluation_hash": "591de4d35c01a62a502e3c385bd6e2b299af331bc8205b6c5b2c829b82e45f12",
+      "next_gate": "HELD_OUT_COMPONENT_EVALUATION",
+      "verdict": "CONTRACT_CANARY_PASSED"
+    },
+    {
+      "candidate_id": "COG03_LATS_BOUNDED_PLAN_SEARCH",
+      "evaluation_hash": "3e43a5f66f4bdc9cfde5163595a6ff61372aebe0430467bbc72769d8f7a0b8de",
+      "next_gate": "HELD_OUT_COMPONENT_EVALUATION",
+      "verdict": "CONTRACT_CANARY_PASSED"
+    },
+    {
+      "candidate_id": "COG04_STRUCTGPT_TYPED_READS",
+      "evaluation_hash": "dc53924e90c55b6ab3fd9e21f2427c76f83c818233a3a53f1bb7278bb7eb4e6c",
+      "next_gate": "HELD_OUT_COMPONENT_EVALUATION",
+      "verdict": "CONTRACT_CANARY_PASSED"
+    },
+    {
+      "candidate_id": "COG05_FAITHFUL_EXECUTABLE_REASONING",
+      "evaluation_hash": "4025a68e32a41ac3b0d034343ba4fde5fd3f9320e552d0e5be1dab6d3bca374d",
+      "next_gate": "HELD_OUT_COMPONENT_EVALUATION",
+      "verdict": "CONTRACT_CANARY_PASSED"
+    },
+    {
+      "candidate_id": "COG06_CRITIC_TOOL_VERIFICATION",
+      "evaluation_hash": "fcf49a3ec506866e9400722ae7ed7d8aec8fa0754cf66e6298a092838593277e",
+      "next_gate": "HELD_OUT_COMPONENT_EVALUATION",
+      "verdict": "CONTRACT_CANARY_PASSED"
+    },
+    {
+      "candidate_id": "COG07_MEMORY_AGENT_BENCH",
+      "evaluation_hash": "3ee7a911c4c8298d416e4428a012787ab40e7566860cc2a1846c35b74fc7015c",
+      "next_gate": "HELD_OUT_COMPONENT_EVALUATION",
+      "verdict": "CONTRACT_CANARY_PASSED"
+    },
+    {
+      "candidate_id": "COG08_HIPPORAG_ASSOCIATIVE_RETRIEVAL",
+      "evaluation_hash": "20932d177b76ff96f1aeba07d0dc7a8caceff95625a86ad1471c6314725e7db8",
+      "next_gate": "HELD_OUT_COMPONENT_EVALUATION",
+      "verdict": "CONTRACT_CANARY_PASSED"
+    },
+    {
+      "candidate_id": "COG09_HIAGENT_WORKING_MEMORY",
+      "evaluation_hash": "eb0f20aea17404b777e898b0eb003465ff757bc296a4fb7c99fcf32321a5e8cb",
+      "next_gate": "HELD_OUT_COMPONENT_EVALUATION",
+      "verdict": "CONTRACT_CANARY_PASSED"
+    },
+    {
+      "candidate_id": "COG10_PROGRESS_COMPRESS_SHADOW_LEARNING",
+      "evaluation_hash": "daf01a634c707017c037f82a71d8b0b68fc8ab9b20e7212c3051783a3997e60b",
+      "next_gate": "HELD_OUT_COMPONENT_EVALUATION",
+      "verdict": "CONTRACT_CANARY_PASSED"
+    }
+  ],
+  "schema_version": "1.0",
+  "status": "SYNTHETIC_COMPONENT_CONTRACT_CANARY_ONLY"
+}\n

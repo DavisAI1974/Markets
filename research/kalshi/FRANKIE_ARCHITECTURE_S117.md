@@ -289,3 +289,32 @@ python agent_frankie.py selftest
 - no pooling of NYMEX, Kalshi, options, or future venue ledgers;
 - no use of the private Claude session as an uncitable knowledge source;
 - no LLM in the market-data hot path.
+
+## 11. S137 pre-V4 cognitive candidate layer
+
+The 2026-08-20 whole-Frankie research pass is represented as ten independent SHADOW experiment
+arms, not as one permanent rewrite. These are bounded schemas, validators, and pure helpers; they do
+not implement the papers' complete cognitive behavior. `frankie_cognition.py` owns typed evidence
+refs, explicit memory classes, reasoning-step and uncertainty validation, append-only invalidation,
+declared transitive influence withdrawal, causal memory serving, and working-memory validation.
+`frankie_cognitive_candidates.py` contains pure non-executing candidate helpers.
+`frankie_cognitive_experiments.py` owns the matched-budget, stratified component gate and registry.
+
+`frankie_s137_cognitive_runtime.py` is the isolated CURRENT FRANKIE adapter. The canonical S135
+runtime remains the frozen control; the wrapper attaches exactly one selected candidate to its
+packet, requires an evidence-bound candidate trace, delegates the original owner validation, and is
+passed explicitly to the existing S135 freeze/reveal/score runner.
+
+The live evaluation lanes now emit an auditable claim graph whose steps cite exact evidence-catalog
+ids. The trace is evidence-bound but is not treated as ground truth or authority. Decision evidence
+records the cognitive contract, catalog, and independent trace hashes.
+
+`frankie_evolution.py` remains the later release boundary. It now also requires locked evaluators and
+permissions, verified rollback, a one-shot aggregate-only release-holdout exposure audit,
+untouched-forward completion, minimum evidence support, explicit task/regime/safety/provenance
+strata, and zero catastrophic or protected regressions. The external judge canary can revoke grading
+authority for order, length, or objective-truth bias, but cannot grant promotion authority.
+
+See `FRANKIE_COGNITIVE_TOP10_IMPLEMENTATION_HANDOFF_20260820.md` and
+`FRANKIE_COGNITIVE_TOP10_EXPERIMENT_MANIFEST_20260820.json`. Component tests do not authorize V4 or
+permanent Frankie integration.

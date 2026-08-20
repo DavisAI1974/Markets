@@ -17,6 +17,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping
 
+from frankie_cognition import (
+    COGNITIVE_CONTRACT_VERSION,
+    CognitiveContractError,
+    ReasoningStep,
+    UncertaintyRecord,
+    validate_reasoning_contract,
+)
+
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 SPAWN_PATH = HERE / "spawn.py"
@@ -28,8 +36,8 @@ DEFAULT_EVIDENCE_ROOT = ROOT / "data" / "frankie" / "evidence"
 # protected origin. Git object identity is SHA-1 by design; decision/evidence hashes use SHA-256.
 EXPECTED_SPAWN_GIT_BLOB = "2eb3ab8570be66bd9568bcd3ca2e6b9f19d6b33e"
 
-SCHEMA_VERSION = "1.0"
-AGENT_VERSION = "frankie-s117.1"
+SCHEMA_VERSION = "1.1"
+AGENT_VERSION = "frankie-s137.0"
 EXECUTION_ENABLED = False
 MAX_JSON_BYTES = 2_000_000
 
@@ -76,6 +84,10 @@ def sha256_json(value: Any) -> str:
 
 def git_blob_sha(path: Path) -> str:
     raw = path.read_bytes()
+    # Git stores this protected Python source with LF endings.  On Windows the
+    # working-tree checkout may use CRLF, which must not look like an origin
+    # mutation when the normalized Git blob is unchanged.
+    raw = raw.replace(b"\r\n", b"\n")
     payload = b"blob " + str(len(raw)).encode("ascii") + b"\0" + raw
     return hashlib.sha1(payload).hexdigest()  # noqa: S324 - Git object identity.
 
@@ -311,17 +323,24 @@ class FrankieEvent:
         provenance = raw["source_provenance"]
         if not isinstance(provenance, list) or not provenance:
             raise GateStop("source_provenance must be a non-empty list")
+        source_clocks: list[tuple[int, dt.datetime]] = []
         for index, source in enumerate(provenance):
             if not isinstance(source, dict):
                 raise GateStop(f"source_provenance[{index}] must be an object")
             for key in ("source", "knowable_at", "content_hash"):
                 if not source.get(key):
                     raise GateStop(f"source_provenance[{index}] missing {key}")
-            parse_iso(str(source["knowable_at"]))
+            source_clocks.append((index, parse_iso(str(source["knowable_at"]))))
         knowable = parse_iso(str(raw["knowable_at"]))
         observed = parse_iso(str(raw["observed_at"]))
         if observed < knowable:
             raise GateStop("observed_at precedes knowable_at")
+        future_sources = [index for index, clock in source_clocks if clock > observed]
+        if future_sources:
+            raise GateStop(
+                "source provenance is not knowable by observed_at: "
+                + ", ".join(str(index) for index in future_sources)
+            )
         for name in ("contract_identity", "market_state", "causal_state", "cost_state"):
             if not isinstance(raw[name], dict):
                 raise GateStop(f"{name} must be an object")
@@ -401,6 +420,9 @@ class LaneResult:
     falsifiers: tuple[str, ...]
     paper_citations: tuple[str, ...]
     rationale: str
+    reasoning_steps: tuple[ReasoningStep, ...]
+    uncertainty: UncertaintyRecord
+    trace_hash: str
     raw_hash: str
 
     @classmethod
@@ -411,10 +433,12 @@ class LaneResult:
         lane: str,
         backend: str,
         paper_ids: set[str],
+        allowed_evidence_refs: set[str],
     ) -> "LaneResult":
         required = (
             "verdict", "recommended_state", "balance_mode", "causal_chain", "information_clock",
             "exact_contracts", "missing_evidence", "falsifiers", "paper_citations", "rationale",
+            "reasoning_steps", "uncertainty",
         )
         missing = [key for key in required if key not in raw]
         if missing:
@@ -439,6 +463,13 @@ class LaneResult:
         unknown = sorted(set(citations) - paper_ids)
         if unknown:
             raise BackendError(f"{lane}/{backend} cited unknown paper ids: {', '.join(unknown)}")
+        try:
+            reasoning_steps, uncertainty, trace_hash = validate_reasoning_contract(
+                raw,
+                allowed_evidence_refs=allowed_evidence_refs,
+            )
+        except CognitiveContractError as exc:
+            raise BackendError(f"{lane}/{backend} cognitive contract failed: {exc}") from exc
         normalized = {
             "verdict": verdict,
             "recommended_state": state,
@@ -451,7 +482,21 @@ class LaneResult:
             "paper_citations": citations,
             "rationale": str(raw["rationale"]),
         }
-        return cls(lane=lane, backend=backend, raw_hash=sha256_json(normalized), **normalized)
+        hash_payload = {
+            **normalized,
+            "reasoning_steps": [dataclasses.asdict(step) for step in reasoning_steps],
+            "uncertainty": dataclasses.asdict(uncertainty),
+            "trace_hash": trace_hash,
+        }
+        return cls(
+            lane=lane,
+            backend=backend,
+            reasoning_steps=reasoning_steps,
+            uncertainty=uncertainty,
+            trace_hash=trace_hash,
+            raw_hash=sha256_json(hash_payload),
+            **normalized,
+        )
 
 
 @dataclass(frozen=True)
@@ -487,6 +532,7 @@ def adjudicate(
     critic: LaneResult | None,
     manifest: PaperManifest,
     spawn_provenance: dict[str, Any],
+    cognitive_context: Mapping[str, Any],
 ) -> FrankieDecision:
     reasons: list[str] = []
     blockers: list[str] = []
@@ -559,6 +605,10 @@ def adjudicate(
             "event_hash": qualification.event_hash,
             "paper_manifest_hash": manifest.manifest_hash,
             "spawn_origin": spawn_provenance,
+            "cognitive_contract_version": COGNITIVE_CONTRACT_VERSION,
+            "evidence_catalog_hash": str(cognitive_context.get("evidence_catalog_hash") or ""),
+            "primary_trace_hash": primary.trace_hash if primary else None,
+            "critic_trace_hash": critic.trace_hash if critic else None,
             "candidate_registry": str(DEFAULT_NOVEL_REGISTRY.relative_to(ROOT)),
             "agent_source": "research/kalshi/agent_frankie.py",
         },

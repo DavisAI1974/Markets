@@ -33,6 +33,29 @@ class CountingBackend:
             "falsifiers": ["no convergence"],
             "paper_citations": [],
             "rationale": "test",
+            "reasoning_steps": [
+                {
+                    "step_id": "S1",
+                    "action": "OBSERVE",
+                    "claim": "the contract identity is present",
+                    "evidence_refs": ["event:contract_identity"],
+                    "depends_on": [],
+                    "status": "SUPPORTED",
+                },
+                {
+                    "step_id": "S2",
+                    "action": "REASON",
+                    "claim": "the deterministic qualification is satisfied",
+                    "evidence_refs": ["derived:qualification"],
+                    "depends_on": ["S1"],
+                    "status": "SUPPORTED",
+                },
+            ],
+            "uncertainty": {
+                "level": "HIGH",
+                "drivers": ["synthetic idempotency test"],
+                "calibrated_probability": None,
+            },
         }
 
 

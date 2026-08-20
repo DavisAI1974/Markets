@@ -21,10 +21,14 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from frankie_core import GateStop, atomic_write_json, safe_id, sha256_json
+from frankie_evaluation_controls import validate_release_exposure_audit
 
 SCHEMA_VERSION = "1.0"
 EXECUTION_ENABLED = False
 APPLY_ALLOWED = False
+MIN_RELEASE_CASES = 30
+MIN_RELEASE_FIXES = 5
+MIN_RELEASE_OBSERVED_STRATUM_CASES = 5
 
 MUTABLE_SCAFFOLD_SURFACES = {
     "strategy",
@@ -51,6 +55,9 @@ FORBIDDEN_RELEASE_TARGETS = {
     "frankie_core.py",
     "frankie_backends.py",
     "frankie_engine.py",
+    "frankie_cognition.py",
+    "frankie_cognitive_candidates.py",
+    "frankie_cognitive_experiments.py",
     "frankie_idempotency.py",
     "frankie_improve.py",
     "frankie_evolution.py",
@@ -100,6 +107,9 @@ class FlipRecord:
     baseline_pass: bool
     candidate_pass: bool
     class_name: str
+    protected: bool
+    candidate_catastrophic: bool
+    strata: dict[str, str]
 
 
 @dataclass(frozen=True)
@@ -115,6 +125,16 @@ class ReleaseEvaluation:
     fail_to_pass: int
     unchanged_pass: int
     unchanged_fail: int
+    protected_failures: int
+    catastrophic_failures: int
+    stratum_counts: dict[str, dict[str, int]]
+    evaluator_locked: bool
+    permissions_locked: bool
+    rollback_verified: bool
+    untouched_forward: bool
+    release_split_reuse_count: int
+    holdout_firewall_passed: bool
+    holdout_exposure_audit_hash: str | None
     verdict: str
     reasons: tuple[str, ...]
     execution_enabled: bool
@@ -215,6 +235,19 @@ def classify_flips(rows: Sequence[Mapping[str, Any]]) -> tuple[FlipRecord, ...]:
             raise GateStop(f"held-out case {case_id} requires boolean pass states")
         baseline = row["baseline_pass"]
         candidate = row["candidate_pass"]
+        protected = bool(row.get("protected", False))
+        catastrophic = bool(row.get("candidate_catastrophic", False))
+        if protected and not baseline:
+            raise GateStop(f"protected held-out case {case_id} must pass on the frozen baseline")
+        strata_raw = row.get("strata")
+        if not isinstance(strata_raw, Mapping):
+            raise GateStop(f"held-out case {case_id} requires strata")
+        strata: dict[str, str] = {}
+        for name in ("task", "regime", "safety", "provenance"):
+            value = str(strata_raw.get(name) or "").strip()
+            if not value:
+                raise GateStop(f"held-out case {case_id} missing stratum {name}")
+            strata[name] = value
         if baseline and not candidate:
             cls = "PASS_TO_FAIL"
         elif not baseline and candidate:
@@ -223,7 +256,7 @@ def classify_flips(rows: Sequence[Mapping[str, Any]]) -> tuple[FlipRecord, ...]:
             cls = "UNCHANGED_PASS"
         else:
             cls = "UNCHANGED_FAIL"
-        flips.append(FlipRecord(case_id, baseline, candidate, cls))
+        flips.append(FlipRecord(case_id, baseline, candidate, cls, protected, catastrophic, strata))
     if not flips:
         raise GateStop("release evaluation requires held-out cases")
     return tuple(flips)
@@ -236,6 +269,13 @@ def evaluate_release(
     split_precommitted: bool,
     isolated_trial_worker: bool,
     required_tests_passed: bool,
+    evaluator_locked: bool,
+    permissions_locked: bool,
+    rollback_verified: bool,
+    untouched_forward: bool,
+    release_split_reuse_count: int,
+    held_out_split_hash: str,
+    release_exposure_audit: Mapping[str, Any] | None,
     held_out_rows: Sequence[Mapping[str, Any]],
 ) -> ReleaseEvaluation:
     """Strict RSEA/AgentDevel gate: no pass->fail regression, and at least one fix."""
@@ -243,19 +283,72 @@ def evaluate_release(
     counts = {name: sum(1 for flip in flips if flip.class_name == name) for name in (
         "PASS_TO_FAIL", "FAIL_TO_PASS", "UNCHANGED_PASS", "UNCHANGED_FAIL"
     )}
+    protected_failures = sum(1 for flip in flips if flip.protected and not flip.candidate_pass)
+    catastrophic_failures = sum(1 for flip in flips if flip.candidate_catastrophic)
+    stratum_counts: dict[str, dict[str, int]] = {
+        name: {} for name in ("task", "regime", "safety", "provenance")
+    }
+    for flip in flips:
+        for name, value in flip.strata.items():
+            stratum_counts[name][value] = stratum_counts[name].get(value, 0) + 1
+    if isinstance(release_split_reuse_count, bool) or release_split_reuse_count < 0:
+        raise GateStop("release_split_reuse_count must be a non-negative integer")
     reasons: list[str] = []
     verdict = "REJECT"
+    normalized_split_id = safe_id(held_out_split_id)
+    holdout_firewall_passed = False
+    holdout_exposure_audit_hash = None
+
+    if not isinstance(release_exposure_audit, Mapping):
+        reasons.append("release holdout exposure audit was not supplied")
+    else:
+        try:
+            holdout_exposure_audit_hash = validate_release_exposure_audit(
+                release_exposure_audit,
+                split_id=normalized_split_id,
+                split_hash=held_out_split_hash,
+            )
+            holdout_firewall_passed = True
+        except ValueError as exc:
+            reasons.append(f"release holdout exposure firewall failed: {exc}")
 
     if not split_precommitted:
         reasons.append("held-out split was not precommitted")
+    if len(flips) < MIN_RELEASE_CASES:
+        reasons.append(f"release cohort is underpowered: {len(flips)} < {MIN_RELEASE_CASES}")
+    sparse_strata = [
+        f"{name}={value}:{count}"
+        for name, values in stratum_counts.items()
+        for value, count in values.items()
+        if count < MIN_RELEASE_OBSERVED_STRATUM_CASES
+    ]
+    if sparse_strata:
+        reasons.append("under-supported observed strata: " + ", ".join(sorted(sparse_strata)))
+    if release_split_reuse_count:
+        reasons.append(f"release split was reused {release_split_reuse_count} time(s)")
     if candidate.source_trial_required and not isolated_trial_worker:
         reasons.append("source-affecting candidate was not tested in an isolated trial worker")
     if not required_tests_passed:
         reasons.append("required deterministic tests failed")
+    if not evaluator_locked:
+        reasons.append("candidate evaluator was not locked outside the mutable surface")
+    if not permissions_locked:
+        reasons.append("candidate permissions were not locked outside the mutable surface")
+    if not rollback_verified:
+        reasons.append("rollback was not verified")
+    if not untouched_forward:
+        reasons.append("untouched-forward shadow gate was not completed")
     if counts["PASS_TO_FAIL"]:
         reasons.append(f"non-regression gate failed: {counts['PASS_TO_FAIL']} pass-to-fail flips")
-    if counts["FAIL_TO_PASS"] == 0:
-        reasons.append("candidate produced no held-out fail-to-pass improvement")
+    if protected_failures:
+        reasons.append(f"protected-case gate failed: {protected_failures} failures")
+    if catastrophic_failures:
+        reasons.append(f"catastrophic-case gate failed: {catastrophic_failures} failures")
+    if counts["FAIL_TO_PASS"] < MIN_RELEASE_FIXES:
+        reasons.append(
+            f"candidate produced insufficient held-out fixes: "
+            f"{counts['FAIL_TO_PASS']} < {MIN_RELEASE_FIXES}"
+        )
 
     if not reasons:
         verdict = "SANDBOX_RELEASE_ELIGIBLE"
@@ -264,7 +357,7 @@ def evaluate_release(
     core = {
         "candidate_hash": candidate.candidate_hash,
         "parent_version": candidate.parent_version,
-        "held_out_split_id": safe_id(held_out_split_id),
+        "held_out_split_id": normalized_split_id,
         "split_precommitted": bool(split_precommitted),
         "isolated_trial_worker": bool(isolated_trial_worker),
         "required_tests_passed": bool(required_tests_passed),
@@ -273,6 +366,16 @@ def evaluate_release(
         "fail_to_pass": counts["FAIL_TO_PASS"],
         "unchanged_pass": counts["UNCHANGED_PASS"],
         "unchanged_fail": counts["UNCHANGED_FAIL"],
+        "protected_failures": protected_failures,
+        "catastrophic_failures": catastrophic_failures,
+        "stratum_counts": stratum_counts,
+        "evaluator_locked": bool(evaluator_locked),
+        "permissions_locked": bool(permissions_locked),
+        "rollback_verified": bool(rollback_verified),
+        "untouched_forward": bool(untouched_forward),
+        "release_split_reuse_count": int(release_split_reuse_count),
+        "holdout_firewall_passed": holdout_firewall_passed,
+        "holdout_exposure_audit_hash": holdout_exposure_audit_hash,
         "verdict": verdict,
         "reasons": tuple(reasons),
         "execution_enabled": False,

@@ -67,6 +67,29 @@ class FrankieTests(unittest.TestCase):
             "falsifiers": ["no convergence"],
             "paper_citations": citations or [],
             "rationale": "test",
+            "reasoning_steps": [
+                {
+                    "step_id": "S1",
+                    "action": "OBSERVE",
+                    "claim": "contract and clock state are present",
+                    "evidence_refs": ["event:contract_identity", "event:causal_state"],
+                    "depends_on": [],
+                    "status": "SUPPORTED",
+                },
+                {
+                    "step_id": "S2",
+                    "action": "REASON",
+                    "claim": "the synthetic candidate may proceed only in shadow",
+                    "evidence_refs": ["derived:qualification"],
+                    "depends_on": ["S1"],
+                    "status": "SUPPORTED",
+                },
+            ],
+            "uncertainty": {
+                "level": "HIGH",
+                "drivers": ["synthetic unit-test evidence"],
+                "calibrated_probability": None,
+            },
         }
 
     @staticmethod
@@ -112,6 +135,12 @@ class FrankieTests(unittest.TestCase):
         with self.assertRaises(GateStop):
             FrankieEvent.from_dict(raw)
 
+    def test_event_rejects_future_source_provenance(self):
+        raw = self.event().as_dict()
+        raw["source_provenance"][0]["knowable_at"] = "2026-08-07T14:30:00Z"
+        with self.assertRaises(GateStop):
+            FrankieEvent.from_dict(raw)
+
     def test_payoff_neutral_requires_exact_identity(self):
         event = self.event("KALSHI_DUPLICATE_WRAPPER_PARITY", identity="MAPPED")
         q = qualify_event(event, self.registry[event.candidate_id])
@@ -125,6 +154,11 @@ class FrankieTests(unittest.TestCase):
                 lane="causal_scientist",
                 backend="scripted",
                 paper_ids=set(),
+                allowed_evidence_refs={
+                    "event:contract_identity",
+                    "event:causal_state",
+                    "derived:qualification",
+                },
             )
 
     def test_ready_paper_manifest_allows_agreed_shadow(self):
@@ -132,7 +166,43 @@ class FrankieTests(unittest.TestCase):
             _, decision, evidence = self.evaluated(tmp)
             self.assertEqual(decision.state, "SHADOW")
             self.assertFalse(decision.execution_enabled)
+            self.assertEqual(decision.provenance["cognitive_contract_version"], "1.0")
+            self.assertTrue(decision.provenance["evidence_catalog_hash"])
+            self.assertTrue(decision.provenance["primary_trace_hash"])
+            self.assertTrue(decision.provenance["critic_trace_hash"])
             self.assertTrue(evidence.is_file())
+
+    def test_unknown_reasoning_evidence_ref_is_rejected(self):
+        raw = self.lane()
+        raw["reasoning_steps"][0]["evidence_refs"] = ["source:not-in-catalog"]
+        with self.assertRaises(BackendError):
+            LaneResult.from_dict(
+                raw,
+                lane="causal_scientist",
+                backend="scripted",
+                paper_ids=set(),
+                allowed_evidence_refs={
+                    "event:contract_identity",
+                    "event:causal_state",
+                    "derived:qualification",
+                },
+            )
+
+    def test_reasoning_trace_cannot_request_execution(self):
+        raw = self.lane()
+        raw["reasoning_steps"][0]["action"] = "EXECUTE"
+        with self.assertRaises(BackendError):
+            LaneResult.from_dict(
+                raw,
+                lane="causal_scientist",
+                backend="scripted",
+                paper_ids=set(),
+                allowed_evidence_refs={
+                    "event:contract_identity",
+                    "event:causal_state",
+                    "derived:qualification",
+                },
+            )
 
     def test_lane_disagreement_cannot_be_averaged(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0",
+  "gate": "FRANKIE_PRE_V4_COGNITIVE_IMPROVEMENTS",
+  "status": "BLOCKED_PENDING_HELD_OUT_PERFORMANCE",
+  "v4_authorized": false,
+  "frozen_control": "S135_CURRENT_FRANKIE",
+  "candidate_runtime": "S137_COGNITIVE_SHADOW_RUNTIME_V1",
+  "experiment_manifest": {
+    "path": "research/kalshi/FRANKIE_COGNITIVE_TOP10_EXPERIMENT_MANIFEST_20260820.json",
+    "manifest_hash": "c4d4f33c526fb349da4cf90bb5d0f1bc1c82d5195ad72b9ec956558dd8449305",
+    "candidates": 10,
+    "authority": "SHADOW_ONLY"
+  },
+  "component_canary": {
+    "path": "research/kalshi/FRANKIE_COGNITIVE_TOP10_COMPONENT_CANARY_20260820.json",
+    "canary_hash": "0476eb1f4e4784bfbc9cf5334fe9da53b5b843eb6b8560d12456991eeb765c8a",
+    "all_component_contracts_passed": true,
+    "performance_evidence": false
+  },
+  "paired_runner": {
+    "path": "research/kalshi/FRANKIE_COGNITIVE_TOP10_PAIRED_RUNNER_MANIFEST_20260820.json",
+    "manifest_hash": "31ec0ec534ee895f26450adb23f32c37bd900aae916094e9eff75ffb00f005e6",
+    "same_information_set_required": true,
+    "both_arms_frozen_before_target_reveal": true,
+    "exact_metering_required": true,
+    "performance_rows_completed": 0
+  },
+  "deterministic_validation": {
+    "pytest_cases_passed": 212,
+    "frankie_selftest": "12/12 PASS",
+    "execution_enabled": false,
+    "automatic_apply": false
+  },
+  "required_before_unblock": [
+    "freeze chronological candidate-development tasks, graders, seeds, budgets, and protected cases",
+    "run frozen S135 control and exactly one S137 candidate arm per comparison",
+    "materialize complete matched-budget rows with task/regime/safety/provenance strata",
+    "pass candidate-specific component metric and zero-regression gates",
+    "complete an untouched-forward SHADOW partition without release-split reuse",
+    "supply a precommitted one-shot aggregate-only release exposure audit",
+    "pass the evaluator-independence canary or use executable objective grading",
+    "lock evaluator, permissions, rollback, and promotion outside candidate control",
+    "obtain explicit human selection of any permanent Frankie integration"
+  ],
+  "selected_for_permanent_integration": [],
+  "execution_enabled": false,
+  "automatic_apply": false,
+  "promotion_authority": "HUMAN_ONLY"
+}

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://davisai.ai/schemas/frankie-cognitive-shadow-row-v1.json",
+  "title": "Frankie cognitive SHADOW experiment row",
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "case_id",
+      "baseline_pass",
+      "candidate_pass",
+      "candidate_catastrophic",
+      "protected",
+      "strata",
+      "baseline_budget",
+      "candidate_budget",
+      "baseline_metrics",
+      "candidate_metrics"
+    ],
+    "properties": {
+      "case_id": {"type": "string", "minLength": 1},
+      "baseline_pass": {"type": "boolean"},
+      "candidate_pass": {"type": "boolean"},
+      "candidate_catastrophic": {"type": "boolean"},
+      "protected": {"type": "boolean"},
+      "strata": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["task", "regime", "safety", "provenance"],
+        "properties": {
+          "task": {"type": "string", "minLength": 1},
+          "regime": {"type": "string", "minLength": 1},
+          "safety": {"type": "string", "minLength": 1},
+          "provenance": {"type": "string", "minLength": 1}
+        }
+      },
+      "baseline_budget": {"$ref": "#/$defs/budget"},
+      "candidate_budget": {"$ref": "#/$defs/budget"},
+      "baseline_metrics": {"$ref": "#/$defs/metrics"},
+      "candidate_metrics": {"$ref": "#/$defs/metrics"}
+    }
+  },
+  "$defs": {
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model_calls",
+        "input_tokens",
+        "output_tokens",
+        "tool_queries",
+        "storage_bytes",
+        "wall_clock_ms"
+      ],
+      "properties": {
+        "model_calls": {"type": "number", "minimum": 0},
+        "input_tokens": {"type": "number", "minimum": 0},
+        "output_tokens": {"type": "number", "minimum": 0},
+        "tool_queries": {"type": "number", "minimum": 0},
+        "storage_bytes": {"type": "number", "minimum": 0},
+        "wall_clock_ms": {"type": "number", "minimum": 0}
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"type": "number"}
+    }
+  }
+}

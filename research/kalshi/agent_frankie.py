@@ -21,6 +21,7 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
 from frankie_backends import ScriptedBackend, backend_from_name  # noqa: E402
+from frankie_cognition import COGNITIVE_CONTRACT_VERSION  # noqa: E402
 from frankie_core import (  # noqa: E402
     EXECUTION_ENABLED,
     SPAWN_PATH,
@@ -91,6 +92,13 @@ def cmd_health(args: argparse.Namespace) -> int:
                 "independent_critic": True,
                 "automatic_apply": False,
                 "production_promotion": "human-reviewed Git PR only",
+            },
+            "cognition": {
+                "contract_version": COGNITIVE_CONTRACT_VERSION,
+                "typed_evidence_refs": True,
+                "explicit_memory_classes": True,
+                "reasoning_trace_authority": "NONE",
+                "memory_write_authority": "NONE in evaluation lanes",
             },
             "s115": {
                 "status_command": "python research/kalshi/frankie_s115_status.py",
@@ -213,6 +221,29 @@ def lane_result(balance_mode: str = "DELTA_NEUTRAL", state: str = "SHADOW") -> d
         "falsifiers": ["no repeatable convergence on untouched events"],
         "paper_citations": [],
         "rationale": "synthetic selftest only",
+        "reasoning_steps": [
+            {
+                "step_id": "S1",
+                "action": "OBSERVE",
+                "claim": "the synthetic contract and causal clock are explicit",
+                "evidence_refs": ["event:contract_identity", "event:causal_state"],
+                "depends_on": [],
+                "status": "SUPPORTED",
+            },
+            {
+                "step_id": "S2",
+                "action": "VERIFY",
+                "claim": "deterministic qualification permits at most shadow evaluation",
+                "evidence_refs": ["derived:qualification"],
+                "depends_on": ["S1"],
+                "status": "SUPPORTED",
+            },
+        ],
+        "uncertainty": {
+            "level": "HIGH",
+            "drivers": ["synthetic selftest evidence only"],
+            "calibrated_probability": None,
+        },
     }
 
 
@@ -258,6 +289,10 @@ def cmd_selftest(args: argparse.Namespace) -> int:
         )
         evidence_path = Path(evidence["local_path"])
         check("READY manifest permits agreed SHADOW", decision.state == "SHADOW")
+        check(
+            "typed cognitive contract is recorded",
+            decision.provenance.get("cognitive_contract_version") == COGNITIVE_CONTRACT_VERSION,
+        )
         check("Frankie can never enable execution", decision.execution_enabled is False)
         check("evidence is written after adjudication", evidence_path.is_file())
 

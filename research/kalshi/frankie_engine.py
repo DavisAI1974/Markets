@@ -8,6 +8,7 @@ import time
 from typing import Any, Mapping
 
 from frankie_backends import ReasoningBackend, backend_from_name
+from frankie_cognition import build_cognitive_context
 from frankie_core import (
     BackendError,
     CandidateDefinition,
@@ -38,6 +39,21 @@ LANE_SCHEMA = {
     "falsifiers": ["preregistered observation that kills the mechanism"],
     "paper_citations": ["paper-manifest ids only"],
     "rationale": "concise evidence-grounded explanation",
+    "reasoning_steps": [
+        {
+            "step_id": "S1",
+            "action": "OBSERVE | RETRIEVE | REASON | VERIFY | ABSTAIN",
+            "claim": "one bounded claim",
+            "evidence_refs": ["exact cognitive_contract evidence ref ids"],
+            "depends_on": ["earlier step ids only"],
+            "status": "SUPPORTED | CONTRADICTED | INCONCLUSIVE | NOT_APPLICABLE",
+        }
+    ],
+    "uncertainty": {
+        "level": "LOW | MEDIUM | HIGH | UNKNOWN",
+        "drivers": ["specific source of uncertainty"],
+        "calibrated_probability": "number in [0,1] or null",
+    },
 }
 
 BASE_INSTRUCTIONS = """You are one independent reasoning lane inside Frankie, a non-executing
@@ -48,7 +64,9 @@ registry, paper manifest, and repository grounding. Never invent a contract rule
 timestamp, paper result, threshold, coefficient, fee, fill, sample size, or causal direction.
 Distinguish structural identity from predictive evidence. Respect point-in-time knowability. A
 missing fact belongs in missing_evidence, not in a guess. Return one JSON object and no other text.
-The strongest permitted recommended_state is SHADOW."""
+Every reasoning step must cite exact ids from the supplied cognitive_contract evidence catalog.
+A displayed reasoning trace is an auditable claim graph, not proof and not authority. The strongest
+permitted recommended_state is SHADOW."""
 
 
 def build_lane_prompt(
@@ -58,6 +76,7 @@ def build_lane_prompt(
     candidate: CandidateDefinition,
     qualification: Qualification,
     manifest: PaperManifest,
+    cognitive_context: Mapping[str, Any] | None = None,
 ) -> tuple[str, str]:
     if lane == "causal_scientist":
         lane_instruction = (
@@ -72,6 +91,13 @@ def build_lane_prompt(
         )
     else:
         raise GateStop(f"unknown reasoning lane: {lane}")
+    if cognitive_context is None:
+        cognitive_context = build_cognitive_context(
+            event=event.as_dict(),
+            candidate=dataclasses.asdict(candidate),
+            qualification=dataclasses.asdict(qualification),
+            papers=[dataclasses.asdict(paper) for paper in manifest.papers],
+        )
     payload = {
         "lane": lane,
         "candidate": dataclasses.asdict(candidate),
@@ -83,6 +109,7 @@ def build_lane_prompt(
             "papers": [dataclasses.asdict(paper) for paper in manifest.papers],
             "repo_grounding": list(manifest.repo_grounding),
         },
+        "cognitive_contract": dict(cognitive_context),
         "required_output_schema": LANE_SCHEMA,
     }
     prompt = (
@@ -103,6 +130,7 @@ def run_lane(
     candidate: CandidateDefinition,
     qualification: Qualification,
     manifest: PaperManifest,
+    cognitive_context: Mapping[str, Any],
 ) -> LaneResult:
     instructions, prompt = build_lane_prompt(
         lane=lane,
@@ -110,6 +138,7 @@ def run_lane(
         candidate=candidate,
         qualification=qualification,
         manifest=manifest,
+        cognitive_context=cognitive_context,
     )
     raw = backend.generate(instructions=instructions, prompt=prompt)
     return LaneResult.from_dict(
@@ -117,6 +146,7 @@ def run_lane(
         lane=lane,
         backend=backend.name,
         paper_ids={paper.id for paper in manifest.papers},
+        allowed_evidence_refs=set(cognitive_context["evidence_ref_ids"]),
     )
 
 
@@ -143,6 +173,12 @@ def evaluate_event(
         allow_missing=(config.allow_missing_papers or only),
     )
     qualification = qualify_event(event, candidate)
+    cognitive_context = build_cognitive_context(
+        event=event.as_dict(),
+        candidate=dataclasses.asdict(candidate),
+        qualification=dataclasses.asdict(qualification),
+        papers=[dataclasses.asdict(paper) for paper in manifest.papers],
+    )
     primary: LaneResult | None = None
     critic: LaneResult | None = None
     if qualification.eligible and not only:
@@ -155,6 +191,7 @@ def evaluate_event(
             candidate=candidate,
             qualification=qualification,
             manifest=manifest,
+            cognitive_context=cognitive_context,
         )
         critic = run_lane(
             lane="trading_mechanics",
@@ -163,6 +200,7 @@ def evaluate_event(
             candidate=candidate,
             qualification=qualification,
             manifest=manifest,
+            cognitive_context=cognitive_context,
         )
     decision = adjudicate(
         event=event,
@@ -172,6 +210,7 @@ def evaluate_event(
         critic=critic,
         manifest=manifest,
         spawn_provenance=origin,
+        cognitive_context=cognitive_context,
     )
     evidence = write_evidence(decision, event=event, config=config)
     index = record_first(config=config, event=event, decision=decision, evidence=evidence)
