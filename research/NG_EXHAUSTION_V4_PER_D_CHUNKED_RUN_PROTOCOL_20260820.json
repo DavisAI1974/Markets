@@ -1,0 +1,118 @@
+{
+  "protocol_id": "NG_EXHAUSTION_V4_PER_D_CHUNKED_RUN_PROTOCOL_20260820",
+  "status": "BINDING_ADDITIVE_RUN_ORCHESTRATION_PROTOCOL",
+  "launch_authorized": false,
+  "permanent_frankie_mutation_authorized": false,
+  "protected_artifact_mutation_authorized": false,
+  "top_level_run_policy": {
+    "one_depth_target_per_run": true,
+    "targets": [
+      "D0_TERMINALITY",
+      "D1_CONTINUATION",
+      "D2_CONTINUATION",
+      "D3_CONTINUATION",
+      "D4_CASE",
+      "D5_CASE"
+    ],
+    "monolithic_D0_D5_run_forbidden": true,
+    "completed_D_may_advance_without_waiting_for_other_Ds": true,
+    "cross_D_voting": false
+  },
+  "chunk_policy": {
+    "chronological": true,
+    "predeclared_before_result_inspection": true,
+    "natural_boundaries": [
+      "TRADING_SESSION_OR_DATE",
+      "FIXED_CONSECUTIVE_SESSION_BLOCK"
+    ],
+    "bounded_resumable_units_preferred": true,
+    "output_dependent_repartitioning": false,
+    "future_truth_label_rebalancing": false,
+    "drop_inconvenient_cases": false,
+    "preserve_every_original_case": true,
+    "restart_scope_on_technical_failure": "FAILED_CHUNK_ONLY_IF_IDENTITIES_UNCHANGED"
+  },
+  "required_run_manifest_fields": [
+    "run_id",
+    "depth_target",
+    "candidate_commit_sha",
+    "runner_identity",
+    "adjudicator_identity",
+    "ruleset_identity_hash",
+    "engine_identity_hash",
+    "adapter_identity_hash",
+    "reconciler_identity_hash",
+    "model_snapshot_head_identities",
+    "source_contract_roll_coverage_manifest_hash",
+    "population_split_identities",
+    "chunk_list_and_hashes",
+    "discovery_oot_heldout_boundaries",
+    "channel_view_manifest",
+    "reveal_rule",
+    "lock_rule",
+    "timeout_resource_envelope",
+    "restart_resume_policy",
+    "protected_boundary_assertion",
+    "v4_empirical_launch_authorized"
+  ],
+  "required_chunk_receipt_fields": [
+    "chunk_id",
+    "input_manifest_hash",
+    "first_causal_session_or_timestamp",
+    "last_causal_session_or_timestamp",
+    "eligible_count",
+    "processed_count",
+    "preserved_count",
+    "omission_count_and_reasons",
+    "model_snapshot_head_ruleset_identities",
+    "source_coverage_provenance_hash",
+    "probability_ledger_hash",
+    "first_lock_no_lock_ledger_hash",
+    "output_artifact_hashes",
+    "execution_status",
+    "integrity_test_status",
+    "technical_failure_reason"
+  ],
+  "progress_states": {
+    "CHUNK_COMPLETE": "INTEGRITY_AND_PROVENANCE_QA_ALLOWED; FULL_D_POPULATION_CLAIMS_PROVISIONAL",
+    "D_COMPLETE": "ALL_REQUIRED_CHUNKS_RECONCILED_EXACTLY; NEXT_AUTHORIZED_STAGE_MAY_BEGIN_WITHOUT_WAITING_FOR_OTHER_D_TARGETS"
+  },
+  "D_complete_reconciliation_invariants": [
+    "NO_DUPLICATE_INSTANCE",
+    "NO_MISSING_ELIGIBLE_INSTANCE",
+    "NO_CROSS_SPLIT_CONTAMINATION",
+    "NO_CHRONOLOGY_INVERSION",
+    "NO_MIXED_COMMIT_RULESET_MODEL_SOURCE_IDENTITY",
+    "NO_MUTATED_EARLIER_PROBABILITY_OR_LOCK_RECORD",
+    "EXACT_PRESERVED_COUNT_RECONCILIATION",
+    "EVERY_EXCLUSION_ACCOUNTED_FOR",
+    "RAW_CHUNK_ARTIFACTS_IMMUTABLE"
+  ],
+  "pipeline_policy": {
+    "staggered_pipeline": true,
+    "completed_D_downstream_work_can_overlap_other_D_execution": true,
+    "artificial_serial_dependencies_forbidden": true,
+    "real_causal_or_validation_dependencies_must_be_preserved": true
+  },
+  "blind_reveal_change_control": {
+    "candidate_commit_and_manifest_frozen_pre_dispatch": true,
+    "blind_prediction_artifacts_append_only": true,
+    "target_reveal_unavailable_until_ledger_sealed": true,
+    "runner_adjudicator_separation_where_required": true,
+    "mid_instance_or_mid_run_in_place_model_edit": false,
+    "accepted_update_applies_only_to_later_instances_under_new_snapshot": true,
+    "negative_weak_inconclusive_rejected_cases_preserved": true,
+    "preservation_policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL"
+  },
+  "runtime_policy": {
+    "prefer_small_resumable_units": true,
+    "chunk_size_is_engineering_preflight_parameter_not_empirical_tuning_knob": true,
+    "may_use_non_result_bearing_runtime_preflight": true,
+    "freeze_chunk_size_before_empirical_result_inspection": true
+  },
+  "sparse_stage_policy": {
+    "D4_case_study_only": true,
+    "D5_case_study_only": true,
+    "faster_execution_changes_evidentiary_status": false
+  }
+}
