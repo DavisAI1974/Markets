@@ -1,0 +1,33 @@
+{
+  "status": "AUTHORIZED_D0_MODEL_SPECIFIC_TRADE_LAUNCH",
+  "date": "2026-08-19",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "models": ["logistic", "extra_trees", "knn"],
+  "signal_requirement": "EACH_MODEL_MUST_REPRODUCE_ITS_OWN_INDEPENDENT_FULL_CAUSAL_D0_TERMINALITY_VALIDATION_BEFORE_TRADE_RESEARCH",
+  "root_age_first_pass_seconds": [0, 1, 2, 3, 4, 5],
+  "probability_aggregation": "NONE",
+  "candidate_grid": {
+    "d0_probability_thresholds": [0.75, 0.85, 0.90, 0.95, 0.975],
+    "holding_seconds": [5, 10, 20, 30, 60, 120, 300],
+    "orientations": ["WITH_ROOT_POLARITY", "AGAINST_ROOT_POLARITY"]
+  },
+  "selection": "DISCOVERY_ONLY_AFTER_SIGNAL_MODEL_IS_FIXED",
+  "oot_reporting": ["validation", "confirmation", "held"],
+  "cost_stress_ticks": [0.5, 1.0, 2.0],
+  "trade_window": "CAP_AT_NEXT_CANONICAL_EXHAUSTION",
+  "interpretation": "HISTORICAL_EXECUTION_ECONOMICS_ONLY_NOT_LIVE_PROMOTION",
+  "cross_model_vote": false,
+  "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+  "promotion_performed": false,
+  "protected_mutations": {
+    "detector": false,
+    "canonical_rows": false,
+    "phase1": false,
+    "phase2": false,
+    "runway_clock": false,
+    "permanent_frankie": false,
+    "frankie_1": false,
+    "spawn_py": false,
+    "ssos_play": false
+  }
+}
