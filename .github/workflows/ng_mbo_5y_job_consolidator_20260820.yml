@@ -1,0 +1,35 @@
+name: NG MBO 5Y Job Consolidator 20260820
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/kalshi/ng_mbo_5y_job_consolidator.py
+      - .github/workflows/ng_mbo_5y_job_consolidator_20260820.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  consolidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABENTO_API_KEY: ${{ secrets.MARKETS_NG_LIVE_MBO }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      BUCKET: bento-568968024170-us-east-2-an
+      PREFIX: nymex/ng_mbo_5y_v0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet databento boto3
+      - name: Fence remaining intervals and submit one canonical job each
+        run: python research/kalshi/ng_mbo_5y_job_consolidator.py
