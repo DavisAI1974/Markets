@@ -1,12 +1,12 @@
 {
-  "checked_at_utc": "2026-08-20T20:25:39.454867+00:00",
+  "checked_at_utc": "2026-08-20T20:27:11.605329+00:00",
   "instance_id": "i-08cee7171c0a76a04",
   "schema": "NG_LIVE_HEALTH_RECEIPT_V1",
   "secrets_exposed": false,
-  "source_commit": "1fafb21c22d7be0b19cadffb0b1aabd572dc3057",
+  "source_commit": "8c8e89f30f680f5132ff6235b2756306b2a063b2",
   "ssm_status": "Failed",
   "stderr": "collector health is not live\nfailed to run commands: exit status 1",
-  "stdout": "collector_before=active\nhealth={\"archive_bytes\": 3968, \"connection\": \"reconnecting\", \"instrument_id\": 0, \"last_error\": null, \"raw_symbol\": null, \"reconnect_count\": 22, \"record_age_ms\": 20495.152501, \"record_counts\": {\"ErrorMsg\": 23}, \"requested_symbol\": \"NG.v.0\"}\n",
+  "stdout": "collector_before=active\ngateway_errors=[\"Not authorized for mbo schema\"]\nhealth={\"archive_bytes\": 111488, \"connection\": \"reconnecting\", \"instrument_id\": 0, \"last_error\": null, \"raw_symbol\": null, \"reconnect_count\": 348, \"record_age_ms\": 7032.636968, \"record_counts\": {\"ErrorMsg\": 349}, \"requested_symbol\": \"NG.v.0\"}\n",
   "v4_activity": false,
-  "workflow_run_id": "32413994510"
+  "workflow_run_id": "32414126459"
 }
