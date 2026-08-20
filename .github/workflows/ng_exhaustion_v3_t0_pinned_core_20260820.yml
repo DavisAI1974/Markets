@@ -29,7 +29,7 @@ jobs:
   agents:
     name: ${{ matrix.kind }} D${{ matrix.stage }} ${{ matrix.model }} V3-T0
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    timeout-minutes: 360
     strategy:
       fail-fast: false
       max-parallel: 10
@@ -84,6 +84,8 @@ jobs:
           assert f.POST_H == (1,2,3,4,5)
           assert 'WITHOUT_REQUIRING_TARGET_POLARITY' in live.POLICY
           assert 'P_O_S_X_STRUCTURAL_STATE_ONLY' in f.PRIMARY_CHAIN_TYPE_POLICY
+          assert f.CAUSAL_OVERLAP_FIX_REVISION == 'V3_CAUSAL_OVERLAP_SAFE_20260820'
+          assert 'PRECONFIRM_PREDECESSOR_STRUCTURE_AND_POLARITY_REMAIN_WITHHELD' in f.CAUSAL_OVERLAP_POLICY
           print('PINNED V3 T0 CONTRACT PASS')
           PY
 
@@ -187,6 +189,8 @@ jobs:
           d=json.load(open(ps[0]))
           assert d['frozen_exact_depth_counts']=={'0':135860,'1':18837,'2':1592,'3':124,'4':8,'5':1}
           assert d['implementation_revision']=='V3_CONTINUOUS_LIVE_MARKET_STATE_T0'
+          assert d['causal_overlap_fix_revision']=='V3_CAUSAL_OVERLAP_SAFE_20260820'
+          assert 'PRECONFIRM_PREDECESSOR_STRUCTURE_AND_POLARITY_REMAIN_WITHHELD' in d['causal_overlap_policy']
           assert d['promotion_performed'] is False
           assert not any(d['protected_mutations'].values())
           if os.environ['KIND']=='d0':
@@ -268,6 +272,8 @@ jobs:
             'date':'2026-08-20',
             'launch_commit':'${{ github.sha }}',
             'implementation_revision':'V3_CONTINUOUS_LIVE_MARKET_STATE_T0',
+            'causal_overlap_fix_revision':'V3_CAUSAL_OVERLAP_SAFE_20260820',
+            'causal_overlap_policy':'A_SUCCESSOR_MAY_BE_BORN_BEFORE_A_PREDECESSOR_CAUSALLY_CONFIRMS; PRECONFIRM_PREDECESSOR_STRUCTURE_AND_POLARITY_REMAIN_WITHHELD; ONLY_RAW_UNORIENTED_PRICE_IS_SERVED_UNTIL_OWN_CONFIRMATION',
             'timing_ladder':['PRIOR','T0','H+1','H+2','H+3','H+4','H+5'],
             'target_polarity_is_primary_question':False,
             'same_flip_role':'SECONDARY_ANNOTATION_CONTEXT_ONLY',
@@ -299,6 +305,7 @@ jobs:
           p='research/generated/ng_exhaustion_v3_t0_pinned_core_20260820/NG_EXHAUSTION_V3_T0_PINNED_CORE_ALL_RESULTS_20260820.json'
           d=json.load(open(p))
           assert d['implementation_revision']=='V3_CONTINUOUS_LIVE_MARKET_STATE_T0'
+          assert d['causal_overlap_fix_revision']=='V3_CAUSAL_OVERLAP_SAFE_20260820'
           assert d['timing_ladder']==['PRIOR','T0','H+1','H+2','H+3','H+4','H+5']
           assert d['model_voting_used'] is False
           assert d['promotion_performed'] is False
@@ -312,4 +319,5 @@ jobs:
           git add research/generated/ng_exhaustion_v3_t0_pinned_core_20260820
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "research: reconcile pinned V3 T0 core"
+          git pull --rebase origin chatgpt/ng-exhaustion-entry-timing-revival-20260818
           git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818

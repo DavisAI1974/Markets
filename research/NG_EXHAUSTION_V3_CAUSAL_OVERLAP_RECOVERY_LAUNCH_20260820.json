@@ -1,0 +1,40 @@
+{
+  "status": "AUTHORIZED_CAUSAL_OVERLAP_FIX_AND_RECOVERY_RELAUNCH",
+  "date": "2026-08-20",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "root_cause": "successor birth may occur before predecessor endpoint confirmation; the old V2 feature gate incorrectly treated that valid overlap state as a fatal clock invariant",
+  "fix_revision": "V3_CAUSAL_OVERLAP_SAFE_20260820",
+  "fixed_information_rule": "withhold the overlapping predecessor's frozen structure and polarity until its own causal confirmation; serve only raw unoriented causal price before confirmation",
+  "regression_event_ids": [
+    "20251102-083177--1",
+    "20251102-091321-+1",
+    "20251102-103539--1",
+    "20260322-169709-+1"
+  ],
+  "relaunch_workflows": [
+    ".github/workflows/ng_exhaustion_v3_t0_pinned_core_20260820.yml",
+    ".github/workflows/ng_exhaustion_d0_d3_model_specific_trade_v3_20260819.yml"
+  ],
+  "execution_ref_rule": "PUSH_TRIGGER_GITHUB_SHA_EXACT_FIXED_COMMIT",
+  "agent_timeout_minutes": 360,
+  "partial_checkpoint_recovered": false,
+  "partial_checkpoint_note": "cancelled jobs never reached upload-artifact; clean fixed-commit reruns are required",
+  "preserved_successful_inputs": {
+    "pox_run": 32333628389,
+    "d0_trade_run": 32330634798,
+    "overwrite_or_vote_with_relaunch": false
+  },
+  "v4_launch_authorized": false,
+  "promotion_performed": false,
+  "protected_mutations": {
+    "detector": false,
+    "canonical_rows": false,
+    "phase1": false,
+    "phase2": false,
+    "runway_clock": false,
+    "permanent_frankie": false,
+    "frankie_1": false,
+    "spawn_py": false,
+    "ssos_play": false
+  }
+}

@@ -8,6 +8,12 @@ import ng_exhaustion_chain_recovery_features_20260819 as v1
 
 POST_BIRTH_STATIC_POLICY = "TARGET_SPECIFIC_STATIC_AND_POLARITY_REQUIRE_CAUSAL_CONFIRMATION; PRECONFIRM_TARGET_PRICE_IS_RAW_UNORIENTED_FROM_FROZEN_T0"
 PRIMARY_CHAIN_TYPE_POLICY = "P_O_S_X_STRUCTURAL_STATE_ONLY; SAME_FLIP_IS_PRESERVED_SECONDARY_ANNOTATION_NOT_A_PRIMARY_PREDICTION_TARGET"
+CAUSAL_OVERLAP_FIX_REVISION = "V3_CAUSAL_OVERLAP_SAFE_20260820"
+CAUSAL_OVERLAP_POLICY = (
+    "A_SUCCESSOR_MAY_BE_BORN_BEFORE_A_PREDECESSOR_CAUSALLY_CONFIRMS; "
+    "PRECONFIRM_PREDECESSOR_STRUCTURE_AND_POLARITY_REMAIN_WITHHELD; "
+    "ONLY_RAW_UNORIENTED_PRICE_IS_SERVED_UNTIL_OWN_CONFIRMATION"
+)
 
 
 def build_cases(events, lineage, stage: int):
@@ -28,9 +34,9 @@ def event_structure_features(e: dict | None, cutoff: int, allow_birth_static: bo
     """V2: no target-specific structural fact exists as a feature before causal confirmation.
 
     `allow_birth_static` is retained only for call compatibility and is deliberately ignored.
-    Predecessors are already confirmed by their checkpoint construction, so they retain the
-    same structural information as V1. Newborn/extra events remain structurally zero until
-    their own causal confirmation is reached.
+    PRIOR predecessors are confirmed by their checkpoint construction. At successor T0/H,
+    a valid overlapping predecessor can still be unconfirmed; it remains structurally zero
+    until its own causal confirmation. Newborn/extra events follow the same availability rule.
     """
     if e is None or int(e["t0_idx"]) > cutoff:
         return [0.0] * 48
@@ -50,8 +56,14 @@ def event_vector(e: dict | None, week: str, cutoff: int, cache, allow_birth_stat
     else:
         c = event_confirm(e)
         known = c is not None and int(c) <= cutoff
-        if predecessor and not known:
-            raise RuntimeError(f"predecessor reached checkpoint before causal confirmation event={e.get('event_id')} cutoff={cutoff} confirm={c}")
+        # Frozen chains explicitly contain overlap cases where a successor is born
+        # before the predecessor's endpoint can be causally confirmed. That is a
+        # valid information state, not a clock failure. The overlapping predecessor
+        # is therefore treated like any born-but-unconfirmed event: its frozen
+        # structure and polarity stay withheld while its causal raw, unoriented
+        # price path remains visible. PRIOR checkpoints still require predecessor
+        # confirmation through checkpoint(); this applies at successor T0/later H.
+        del predecessor
         struct = event_structure_features(e, cutoff, False)
         pol = [1.0, float(e["polarity"])] if known else [0.0, 0.0]
         times, prices = cache["times"][week], cache["prices"][week]

@@ -6,6 +6,15 @@
   "workflow_creation_commit": "7b8501b876288658b4c6ec050798c08e3836b8d2",
   "execution_ref_rule": "GITHUB_SHA_EXACT_LAUNCH_COMMIT_NOT_MOVING_BRANCH_HEAD",
   "implementation_revision": "V3_CONTINUOUS_LIVE_MARKET_STATE_T0",
+  "causal_overlap_recovery": {
+    "fix_revision": "V3_CAUSAL_OVERLAP_SAFE_20260820",
+    "root_cause": "successor birth can precede predecessor endpoint confirmation; pre-fix code incorrectly raised instead of serving a born-but-unconfirmed predecessor state",
+    "information_rule": "withhold predecessor structure and polarity until its own confirmation while retaining only its raw unoriented causal price path",
+    "source_runs": [32333605991, 32330634798],
+    "cancelled_without_checkpoint": [96318774004, 96318774102],
+    "clean_fixed_commit_relaunch": true,
+    "agent_timeout_minutes": 360
+  },
   "primary_questions": [
     "CHAIN_EXISTENCE_OR_CONTINUATION",
     "EVENTUAL_DEPTH",
@@ -30,9 +39,10 @@
   "information_rule": "USE_EVERY_REPRESENTED_FACT_WHEN_CAUSALLY_KNOWN; LIVE_PRICE_DIRECTION_DIPOLE_FLOW_BOOK_REMAIN_VISIBLE_CONTINUOUSLY; UNKNOWN_FUTURE_TARGET_POLARITY_NEVER_BLOCKS_PRIOR_OR_T0",
   "current_verified_code_blobs": {
     "live_checkpoint_state": "8afb71ee6238a541897ea1302f395a2035b23061",
+    "v2_causal_availability_surface": "76fb4ef909c65381bdbafdc355517b81a3b04369",
     "v3_feature_surface_t0": "679da1a9885daa5acda5b377fb5044cda84d9809",
-    "v3_d1_d5_runner_t0": "d1aecfbc12b97c4955cf44a7adc11996efc22407",
-    "v3_d0_runner": "e299af923bdb7972ba39556df37834f1eb39b076"
+    "v3_d1_d5_runner_t0": "d7d50744501e2a46c08920cd0a53c40adddb4bcd",
+    "v3_d0_runner": "0ae733e2b328f69644883990b2face37924ec3b6"
   },
   "frozen_exact_depth_counts": {
     "D0": 135860,

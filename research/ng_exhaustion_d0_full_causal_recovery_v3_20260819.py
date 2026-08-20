@@ -21,6 +21,8 @@ def run_model(model, events, lineage, raw_dir):
     r = _orig_run_model(model, events, lineage, raw_dir)
     r["status"] = "NG_D0_FULL_CAUSAL_RECOVERY_V3_MODEL_AGENT_COMPLETE"
     r["implementation_revision"] = IMPLEMENTATION_REVISION
+    r["causal_overlap_fix_revision"] = CAUSAL_OVERLAP_FIX_REVISION
+    r["causal_overlap_policy"] = CAUSAL_OVERLAP_POLICY
     r["live_market_policy"] = LIVE_MARKET_POLICY
     r["prior_target_polarity_requirement"] = "NONE; UNKNOWN_DESCENDANT_POLARITY_NEVER_BLOCKS_OR_FAILS_ROOT_PRIOR"
     r["primary_chain_type_policy"] = PRIMARY_CHAIN_TYPE_POLICY

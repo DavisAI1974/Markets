@@ -102,6 +102,8 @@ def model_stage(stage: int, model: str, events, lineage, raw_dir: str):
         "primary_information_view": "FULL_CAUSAL",
         "ablation_views": ["NO_PRICE_CAUSAL", "PRICE_POLARITY_ONLY"],
         "implementation_revision": IMPLEMENTATION_REVISION,
+        "causal_overlap_fix_revision": CAUSAL_OVERLAP_FIX_REVISION,
+        "causal_overlap_policy": CAUSAL_OVERLAP_POLICY,
         "live_market_policy": LIVE_MARKET_POLICY,
         "timing_ladder": list(TIMING_LADDER),
         "clock_semantics": {
@@ -171,6 +173,8 @@ def sparse_stage(stage: int, events, lineage, raw_dir: str):
         "stage": stage,
         "low_support_case_study_only": True,
         "implementation_revision": IMPLEMENTATION_REVISION,
+        "causal_overlap_fix_revision": CAUSAL_OVERLAP_FIX_REVISION,
+        "causal_overlap_policy": CAUSAL_OVERLAP_POLICY,
         "live_market_policy": LIVE_MARKET_POLICY,
         "timing_ladder": list(TIMING_LADDER),
         "prior_age_values": list(PRIOR_AGES),

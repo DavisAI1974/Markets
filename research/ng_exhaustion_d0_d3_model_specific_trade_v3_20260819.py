@@ -13,6 +13,8 @@ import numpy as np
 import ng_exhaustion_d1_d5_chain_birth_agents_20260819 as raw
 from ng_exhaustion_chain_recovery_features_v3_20260819 import (
     DATE,
+    CAUSAL_OVERLAP_FIX_REVISION,
+    CAUSAL_OVERLAP_POLICY,
     EXPECTED_EXACT,
     MODELS,
     POST_H,
@@ -413,6 +415,8 @@ def main():
         "status": "NG_EXHAUSTION_D0_D3_MODEL_SPECIFIC_TRADE_V3_COMPLETE",
         "date": DATE,
         "implementation_revision": IMPLEMENTATION_REVISION,
+        "causal_overlap_fix_revision": CAUSAL_OVERLAP_FIX_REVISION,
+        "causal_overlap_policy": CAUSAL_OVERLAP_POLICY,
         "stage": int(a.stage),
         "model": a.model,
         "signal_target": "D0_TERMINALITY" if a.stage == 0 else "CHAIN_CONTINUATION",

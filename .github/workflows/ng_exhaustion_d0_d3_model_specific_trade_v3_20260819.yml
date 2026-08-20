@@ -30,7 +30,7 @@ jobs:
   trade-agents:
     name: D${{ matrix.stage }} ${{ matrix.model }} causal trade
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    timeout-minutes: 360
     strategy:
       fail-fast: false
       max-parallel: 8
@@ -51,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          ref: ${{ github.sha }}
           fetch-depth: 0
 
       - uses: actions/setup-python@v5
@@ -79,6 +79,8 @@ jobs:
               'WITH_LIVE_FLOW20','AGAINST_LIVE_FLOW20')
           assert 'target' not in src and 'next_t0' not in src and 'next_event' not in src
           assert r.HOLDS==(5,10,20,30,60,120,300)
+          assert r.CAUSAL_OVERLAP_FIX_REVISION=='V3_CAUSAL_OVERLAP_SAFE_20260820'
+          assert 'PRECONFIRM_PREDECESSOR_STRUCTURE_AND_POLARITY_REMAIN_WITHHELD' in r.CAUSAL_OVERLAP_POLICY
           print('causal fixed-horizon trade contract: PASS')
           PY
 
@@ -182,6 +184,7 @@ jobs:
           d=json.load(open(p))
           assert d['frozen_exact_depth_counts']=={'0':135860,'1':18837,'2':1592,'3':124,'4':8,'5':1}
           assert d['implementation_revision']=='V3_CONTINUOUS_LIVE_MARKET_STATE_FIXED_HORIZON_TRADE'
+          assert d['causal_overlap_fix_revision']=='V3_CAUSAL_OVERLAP_SAFE_20260820'
           assert d['cross_model_vote_used'] is False
           assert d['target_polarity_is_primary_question'] is False
           assert d['execution_contract']=='FIXED_HORIZON_FROM_CAUSAL_SIGNAL; NO_FUTURE_CANONICAL_EVENT_CAP'
@@ -253,6 +256,7 @@ jobs:
               'status':'NG_EXHAUSTION_D0_D3_MODEL_SPECIFIC_TRADE_V3_RECONCILED',
               'date':'2026-08-19',
               'implementation_revision':'V3_CONTINUOUS_LIVE_MARKET_STATE_FIXED_HORIZON_TRADE',
+              'causal_overlap_fix_revision':'V3_CAUSAL_OVERLAP_SAFE_20260820',
               'model_voting_used':False,
               'model_probability_aggregation_used':False,
               'target_polarity_direction_source_used':False,
@@ -305,4 +309,5 @@ jobs:
             exit 0
           fi
           git commit -m "research: reconcile V3 D0-D3 model-specific trade evidence"
+          git pull --rebase origin chatgpt/ng-exhaustion-entry-timing-revival-20260818
           git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
