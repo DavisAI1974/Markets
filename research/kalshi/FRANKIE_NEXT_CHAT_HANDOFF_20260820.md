@@ -10,10 +10,13 @@ that the history contains implementation commit
 Read, in order:
 
 1. `FRANKIE_NEXT_CHAT_HANDOFF_20260820.md` (this file);
-2. `FRANKIE_P0_GAP_CLOSURE_PROVISIONAL_20260820.md`;
-3. `FRANKIE_P0_GAP_CLOSURE_PROVISIONAL_MANIFEST_20260820.json`;
-4. `FRANKIE_V4_UNIFIED_FRAMEWORK_AUDIT_20260820.md`;
-5. the existing cognitive Top-10, market Top-10, GDL, and SEAL dockets cited by
+2. `../NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md`;
+3. `../NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md`;
+4. `../NG_EXHAUSTION_V4_RESEARCH_THREAD_FINAL_20260820.md`;
+5. `FRANKIE_P0_GAP_CLOSURE_PROVISIONAL_20260820.md`;
+6. `FRANKIE_P0_GAP_CLOSURE_PROVISIONAL_MANIFEST_20260820.json`;
+7. `FRANKIE_V4_UNIFIED_FRAMEWORK_AUDIT_20260820.md`;
+8. the existing cognitive Top-10, market Top-10, GDL, and SEAL dockets cited by
    the gap-closure document.
 
 Do not infer authority from the word “ready.” Component contracts are ready;
@@ -28,6 +31,17 @@ empirical evidence is not.
 - Frankie selftest: 12/12 passed.
 - Registry: 60 exact public surfaces, `COMPONENT_CONTRACT_READY`.
 - Empirical readiness: `BLOCKED_PENDING_EMPIRICAL_EVIDENCE`.
+- **V3 model/trade outputs are not empirical truth about exhaustion.** Preserve
+  them as provenance/debugging/benchmark material only. Do not use V3 scores,
+  exact timing, fixed-horizon economics, or null/negative lanes as scientific
+  limits on the phenomenon.
+- The extra-agent information-gap findings remain high-value V4 research input:
+  timing/observability architecture, geometric representation, predecessor
+  overlap, channel fusion, support/calibration, model extraction, and
+  prediction-to-execution translation. They are hypotheses/requirements to
+  test in V4, not promoted V3 laws.
+- Preserve every chain/case; weak, losing, sparse, negative, inconclusive, and
+  model-disagreement cases are evidence, not failed/dropped chains.
 - No V4 POX run occurred. V4 remains undecided, unauthorized, and unlaunched.
 - No V4 source or workflow was changed in this checkpoint.
 - No V3 monitor was created or managed; monitoring was handed to ChatGPT.
