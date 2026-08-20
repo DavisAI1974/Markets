@@ -6,6 +6,8 @@ on:
       - chatgpt/ng-exhaustion-entry-timing-revival-20260818
     paths:
       - '.github/workflows/ng_historical_mbo_5y_to_s3_20260820.yml'
+      - 'research/kalshi/ng_mbo_5y_native_to_s3.py'
+      - 'research/kalshi/ng_mbo_5y_native_to_s3_safe.py'
   workflow_dispatch:
 
 permissions:
@@ -68,8 +70,8 @@ jobs:
       - name: Install clients
         run: python -m pip install --quiet databento boto3
 
-      - name: Pull native MBO segments to S3
-        run: python research/kalshi/ng_mbo_5y_native_to_s3.py
+      - name: Pull native MBO segments to S3 with legacy-job reuse guard
+        run: python research/kalshi/ng_mbo_5y_native_to_s3_safe.py
 
       - name: Upload run receipt
         if: always()
