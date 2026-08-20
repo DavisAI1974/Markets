@@ -38,7 +38,9 @@ jobs:
             research/ng_exhaustion_pox_focused_predict_trade_20260819.py \
             research/ng_exhaustion_pox_fixed_ledger_materialize_20260819.py \
             research/ng_exhaustion_pox_standalone_analysis_20260819.py \
-            research/ng_exhaustion_pox_raw_execution_20260819.py
+            research/ng_exhaustion_pox_raw_execution_20260819.py \
+            research/test_ng_exhaustion_pox_dynamic_live_state_20260820.py
+          PYTHONPATH=research python -m unittest research/test_ng_exhaustion_pox_dynamic_live_state_20260820.py
           python - <<'PY'
           import json
           from pathlib import Path
@@ -52,6 +54,10 @@ jobs:
           assert launch['prediction_sequence']=='PREBIRTH_FIRST_THEN_H_RESIDUAL_ONLY'
           assert launch['prebirth_calls_removed_before_h_regardless_of_correctness'] is True
           assert launch['execution_after_completed_information_bin'] is True
+          assert launch['fixed_prior_horizon_s'] is None
+          assert launch['fixed_h_max_s'] is None
+          assert launch['h_fallback_checkpoint_policy'].startswith('START_H0; H1_H2_H3_H4_H5; THEN_EVERY_5_SECONDS')
+          assert launch['feature_layering_policy'].startswith('RETAIN_BASE_AND_V3; APPEND_V4')
           assert 'FIXED_3429_DO_NOT_REOPEN' in protocol
           assert 'Do **not** re-derive the 3,429' in protocol
           print('fixed POX contract: PASS')
@@ -104,7 +110,26 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/pox/raw
-          for d in 20250717 20250923 20250930 20251001; do
+          python - <<'PY' > /tmp/pox/raw_days.txt
+          import gzip,json
+          from datetime import datetime,timedelta
+          roster='/tmp/pox/roster/NG_EXHAUSTION_WEEK_CHAIN_STATE_ROSTER_20260817_EVENTS.jsonl.gz'
+          weeks=set()
+          with gzip.open(roster,'rt') as f:
+              for line in f:
+                  if line.strip(): weeks.add(json.loads(line)['week_sunday'])
+          assert weeks
+          for week in sorted(weeks):
+              start=datetime.strptime(week,'%Y%m%d')
+              for i in range(6): print((start+timedelta(days=i)).strftime('%Y%m%d'))
+          PY
+          python - <<'PY' > /tmp/pox/closure_days.txt
+          import json
+          d=json.load(open('research/NG_EXHAUSTION_20260403_CME_CLOSURE_WITNESS_20260817.json'))
+          assert d['status']=='FROZEN_EXCHANGE_CLOSURE_WITNESS'
+          for day in d['canonicalization_rule']['explicit_closure_dates']: print(day)
+          PY
+          while read -r d; do
             mapfile -t keys < <(aws s3api list-objects-v2 \
               --bucket bento-568968024170-us-east-2-an \
               --prefix "nymex/nymex_cont/NG_${d}" \
@@ -112,6 +137,13 @@ jobs:
               | tr '\t' '\n' \
               | grep -E "^nymex/nymex_cont/NG_${d}(_[A-Za-z]{3})?\.jsonl\.gz$" \
               | sort -u || true)
+            if grep -qx "${d}" /tmp/pox/closure_days.txt; then
+              test "${#keys[@]}" -eq 0 || {
+                echo "::error::frozen closure ${d} unexpectedly has raw objects"
+                exit 1
+              }
+              continue
+            fi
             test "${#keys[@]}" -eq 1 || {
               echo "::error::expected exactly one authoritative NG raw shard for ${d}; found ${#keys[@]}"
               printf '%s\n' "${keys[@]}"
@@ -119,7 +151,7 @@ jobs:
             }
             aws s3 cp "s3://bento-568968024170-us-east-2-an/${keys[0]}" "/tmp/pox/raw/NG_${d}.jsonl.gz" --only-show-errors
             test -s "/tmp/pox/raw/NG_${d}.jsonl.gz"
-          done
+          done < /tmp/pox/raw_days.txt
 
       - name: Run rich causal prebirth-first prediction and branch knowability
         run: |
@@ -137,6 +169,7 @@ jobs:
           set -euo pipefail
           python research/ng_exhaustion_pox_raw_execution_20260819.py \
             --enriched-ledger /tmp/pox/out/NG_EXHAUSTION_POX_CAUSAL_ENRICHED_3429_20260819.jsonl \
+            --branch-first-call-ledger /tmp/pox/out/NG_EXHAUSTION_POX_STAGE2_FIRST_CALL_CASCADE_3429_20260819.jsonl \
             --raw-dir /tmp/pox/raw \
             --out-dir /tmp/pox/out
 
@@ -159,14 +192,19 @@ jobs:
           assert join['membership_or_label_changes']==0
           assert raw['membership_changes']==raw['label_changes']==0
           assert raw['chart_or_derived_price_substitution'] is False
+          assert join['fixed_prediction_horizon_used'] is False
+          assert 'DENSE_ROLL20_DIPOLE' in join['v3_live_market_policy']
+          assert 'V4_MUST_NOT_REPLACE_RENAME_OR_SHADOW_V3' in join['feature_layer_policy']
           assert target_a['cascade']['prebirth_calls_removed_before_h_regardless_of_correctness'] is True
           assert target_a['h_input_residual_candidate_n'] <= target_a['cascade']['oot_candidate_n']
           assert stage2['cascade']['anti_retry_rule'].startswith('all emitted prebirth calls')
+          assert stage2['cascade']['checkpoint_order']['policy'].endswith("each case's causal terminal")
           assert stage2['h_input_residual_n'] <= stage2['cascade']['primary_result']['oot_cases']
           if stage2['prebirth_emitted_n']:
               assert stage2['h_full_population_used'] is False
           expected='PROPOSAL_ONLY_FRESH_PROSPECTIVE_OOT_REQUIRED'
           assert stage1['promotion_status']==stage2['promotion_status']==stage3['promotion_status']==stage4['promotion_status']==expected
+          assert stage1['status']=='STAGE1_DYNAMIC_FIRST_CALL_EXACT_RAW_TAPE_COMPLETE_NO_PROMOTION'
           assert stage4['automatic_reentry_authorized'] is False
           print('standalone POX final assertions: PASS')
           PY

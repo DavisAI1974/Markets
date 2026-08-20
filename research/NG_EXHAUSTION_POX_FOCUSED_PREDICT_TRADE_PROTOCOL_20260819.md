@@ -74,15 +74,17 @@ The POX-vs-D0-D5 incremental crosswalk remains deferred until POX is independent
 
 Determine the earliest causal timestamp at which POX membership/identity can be called with stable out-of-time value. If a candidate-universe/control ledger is required for a binary POX-membership model, it must be supplied separately and must never redefine the fixed 3,429 positive population.
 
-Pre-birth forecasting is the primary objective. Test causal checkpoints before birth first, then use nonnegative H only as a fallback:
+Pre-birth forecasting is the primary objective. Each instance's prior clock starts at its last causally confirmed predecessor and advances toward birth on the mirrored cadence: the exact predecessor-confirmation boundary, then aligned five-second checkpoints, then `-5,-4,-3,-2,-1`. There is no fixed prior horizon. If no causally confirmed predecessor exists, do not invent a predecessor-anchored prior window.
 
-`H = -60,-45,-30,-20,-15,-10,-5,-4,-3,-2,-1,0,1,2,3,4,5,10,15,20,30,45,60 seconds`
+Only the pre-birth no-call residual enters nonnegative H. H is `0,1,2,3,4,5`, then every five seconds until that instance's first confident call or its causal terminal. There is no fixed H maximum. The POX-membership terminal is the second before the next frozen exhaustion candidate or authoritative tape end; the FLIP/SAME terminal is the second before the branch becomes causally known or authoritative tape end.
 
 Use only information available by the checkpoint. The earliest validated checkpoint wins; do not delay a valid earlier signal merely because a later checkpoint scores better.
 
 Use a strict first-call cascade. Every case that receives a pre-birth call is removed from all nonnegative-H runs, whether that call is correct or wrong. Only the pre-birth no-call residual may enter H, and each residual case records its first predictive H. Never allow the realized outcome to decide whether a case receives a retry.
 
-The causal information set should be as rich as the normally observable market state permits: full dense detector, price, quote, MBP-10 depth, trade, volume, flow, and available MBO prefixes through the completed checkpoint second. Future event polarity, future family/confirmation fields, future price, branch identity, and all observations from the following second onward are forbidden. Execution starts no earlier than the next second boundary.
+The causal information set should be as rich as the normally observable market state permits: full dense detector, price, quote, MBP-10 depth, trade, volume, flow, and available MBO prefixes through the completed checkpoint second. Match the V3 continuous live-state surface, including raw price direction/velocity/ranges, dense 61-second price and roll-20 dipole paths, signed-flow windows, book lags/changes/dense path, time since the week's first trade, and causal clock. Raw unoriented market state is available at birth H0. Target-specific event polarity, family/structure, confirmation timing, and polarity-oriented state remain withheld until causal confirmation; future price, branch identity, and all observations from the following second onward are forbidden. Execution starts no earlier than the next second boundary.
+
+Feature versions are additive layers. The existing causal/raw surface and the complete V3 live-state block remain intact. V4 is appended as a separately named layer and may not replace, rename, or shadow V3 fields.
 
 If the candidate/control universe is unavailable, mark Target A `BLOCKED_MISSING_CONTROL_UNIVERSE` and continue Targets B/C where their required fixed-ledger inputs exist. Do not fabricate negatives.
 

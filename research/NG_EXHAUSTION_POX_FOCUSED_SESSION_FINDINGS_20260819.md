@@ -189,3 +189,16 @@ Do this next, in order, without reopening population archaeology:
 **SKIP ALL POPULATION RECONFIRMATION.**
 
 Do not spend time proving 3,429, 1,546, 1,883, 94.4%, 1,718+1,711, or re-testing literal canonical P/O/X adjacency. Those facts/failed paths are documented here precisely so the next chat can start with the actual predictability and tradeability work.
+
+## 2026-08-20 computational-clock and V3 live-state correction
+
+The previously written fixed `-60..+60` prediction ladder is superseded. Both prediction clocks are instance-derived:
+
+- prior starts at the last causally confirmed predecessor, uses its exact boundary plus the five-second / final one-second cadence toward birth, and has no fixed lookback;
+- H is fallback-only for pre-birth no-call residuals, begins `0,1,2,3,4,5`, continues every five seconds, and ends only at the instance's first confident call or causal terminal;
+- every emitted pre-birth call remains excluded from H, including an incorrect call;
+- no case is stopped merely because it passed +60.
+
+The raw input scope is the full frozen candidate weeks rather than only the four positive-event dates. The feature surface now matches the V3 continuous target-agnostic live market contract: price direction/velocity/ranges and dense path, signed flow and dense roll-20 dipole path, book lags/changes/dense path, full MBP-10 causal state, time since first weekly trade, and clock. At H0 the raw live state is available; frozen target polarity/family/structure and polarity-oriented target state remain unavailable until their own causal confirmation. UTC-boundary state and exact quote execution use consecutive supplied raw days without admitting any observation after the completed decision second.
+
+V3 is a retained additive layer. The planned V4 feature block must be appended under distinct names on top of the existing causal/raw + V3 surface; it must not replace or shadow V3.

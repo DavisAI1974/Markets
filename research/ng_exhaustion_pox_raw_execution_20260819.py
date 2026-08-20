@@ -18,8 +18,9 @@ import json
 import math
 import re
 from collections import Counter, defaultdict
+from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, NamedTuple
 
 import numpy as np
 
@@ -30,7 +31,6 @@ EXPECTED_SAME = 1883
 POLICY = "FIXED_3429_DO_NOT_REOPEN"
 FAIL_POLICY = "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL"
 TICK = 0.001
-CHECKPOINTS_S = (0, 1, 2, 3, 4, 5, 10, 15, 20, 30, 45, 60)
 HOLDS_S = (5, 10, 20, 30, 60)
 STRESSES_TICKS = (0.5, 1.0, 2.0)
 
@@ -38,6 +38,7 @@ STRESSES_TICKS = (0.5, 1.0, 2.0)
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--enriched-ledger", required=True, type=Path)
+    parser.add_argument("--branch-first-call-ledger", required=True, type=Path)
     parser.add_argument("--raw-dir", required=True, type=Path)
     parser.add_argument("--out-dir", required=True, type=Path)
     return parser.parse_args()
@@ -108,6 +109,57 @@ class QuoteTape:
         return None if index >= len(self.rows) else (index, self.rows[index])
 
 
+class QuoteHit(NamedTuple):
+    day: str
+    index: int
+    row: tuple[float, float, float, str, int]
+    absolute_second: float
+
+
+class QuoteCorpus:
+    """Consecutive-day quote lookup without copying the full raw corpus."""
+
+    def __init__(self, tapes: dict[str, QuoteTape]):
+        self.tapes = tapes
+
+    @staticmethod
+    def absolute_second(day: str, local_second: float) -> float:
+        return datetime.strptime(day, "%Y%m%d").toordinal() * 86400.0 + float(local_second)
+
+    def first_at_or_after(self, event_day: str, requested_second: float) -> QuoteHit | None:
+        absolute = self.absolute_second(event_day, requested_second)
+        ordinal, local = divmod(absolute, 86400.0)
+        cursor = datetime.fromordinal(int(ordinal))
+        while True:
+            day = cursor.strftime("%Y%m%d")
+            tape = self.tapes.get(day)
+            if tape is None:
+                return None
+            found = tape.first_at_or_after(local)
+            if found is not None:
+                index, row = found
+                return QuoteHit(day, index, row, self.absolute_second(day, row[0]))
+            cursor += timedelta(days=1)
+            local = 0.0
+
+    def interval(self, entry: QuoteHit, exit_: QuoteHit) -> list[tuple[float, float, float, str, int]]:
+        if exit_.absolute_second < entry.absolute_second:
+            return []
+        if entry.day == exit_.day:
+            return self.tapes[entry.day].rows[entry.index : exit_.index + 1]
+        rows = list(self.tapes[entry.day].rows[entry.index :])
+        cursor = datetime.strptime(entry.day, "%Y%m%d") + timedelta(days=1)
+        exit_date = datetime.strptime(exit_.day, "%Y%m%d")
+        while cursor < exit_date:
+            tape = self.tapes.get(cursor.strftime("%Y%m%d"))
+            if tape is None:
+                return []
+            rows.extend(tape.rows)
+            cursor += timedelta(days=1)
+        rows.extend(self.tapes[exit_.day].rows[: exit_.index + 1])
+        return rows
+
+
 def load_quote_tape(path: Path) -> QuoteTape:
     day = day_from_name(path)
     quotes: list[tuple[float, float, float, str, int]] = []
@@ -141,10 +193,12 @@ def validate_ledger(rows: list[dict[str, Any]]) -> None:
         raise RuntimeError("population policy mismatch")
 
 
-def quote_snapshot(row: tuple[float, float, float, str, int]) -> dict[str, Any]:
-    second, bid, ask, action, source_index = row
+def quote_snapshot(hit: QuoteHit) -> dict[str, Any]:
+    second, bid, ask, action, source_index = hit.row
     return {
+        "day": hit.day,
         "second_utc": second,
+        "absolute_second": hit.absolute_second,
         "bid": bid,
         "ask": ask,
         "mid": 0.5 * (bid + ask),
@@ -154,24 +208,32 @@ def quote_snapshot(row: tuple[float, float, float, str, int]) -> dict[str, Any]:
     }
 
 
-def execution_path(tape: QuoteTape, requested_entry_s: float, requested_exit_s: float, direction: int) -> dict[str, Any]:
+def execution_path(
+    corpus: QuoteCorpus,
+    event_day: str,
+    requested_entry_s: float,
+    requested_exit_s: float,
+    direction: int,
+) -> dict[str, Any]:
     if requested_exit_s <= requested_entry_s:
         return {"status": "INVALID_NONPOSITIVE_HORIZON"}
-    entry = tape.first_at_or_after(requested_entry_s)
-    exit_ = tape.first_at_or_after(requested_exit_s)
+    entry = corpus.first_at_or_after(event_day, requested_entry_s)
+    exit_ = corpus.first_at_or_after(event_day, requested_exit_s)
     if entry is None or exit_ is None:
         return {"status": "NON_EXECUTABLE_NO_QUOTE_AT_OR_AFTER_REQUEST"}
-    entry_index, entry_row = entry
-    exit_index, exit_row = exit_
-    if exit_index < entry_index:
+    if exit_.absolute_second < entry.absolute_second:
         return {"status": "NON_EXECUTABLE_ORDERING"}
+    entry_row = entry.row
+    exit_row = exit_.row
     entry_second, entry_bid, entry_ask, _, _ = entry_row
     exit_second, exit_bid, exit_ask, _, _ = exit_row
     entry_price = entry_ask if direction > 0 else entry_bid
     exit_price = exit_bid if direction > 0 else exit_ask
     gross_ticks = direction * (exit_price - entry_price) / TICK
     mid_gross_ticks = direction * ((0.5 * (exit_bid + exit_ask)) - (0.5 * (entry_bid + entry_ask))) / TICK
-    interval = tape.rows[entry_index : exit_index + 1]
+    interval = corpus.interval(entry, exit_)
+    if not interval:
+        return {"status": "NON_EXECUTABLE_MISSING_CONSECUTIVE_QUOTE_CONTEXT"}
     liquidation = np.asarray([row[1] if direction > 0 else row[2] for row in interval], dtype=float)
     path_ticks = direction * (liquidation - entry_price) / TICK
     return {
@@ -179,12 +241,12 @@ def execution_path(tape: QuoteTape, requested_entry_s: float, requested_exit_s: 
         "direction": direction,
         "requested_entry_second_utc": requested_entry_s,
         "requested_exit_second_utc": requested_exit_s,
-        "entry": quote_snapshot(entry_row),
-        "exit": quote_snapshot(exit_row),
+        "entry": quote_snapshot(entry),
+        "exit": quote_snapshot(exit_),
         "entry_fill_price": entry_price,
         "exit_fill_price": exit_price,
-        "entry_latency_s": entry_second - requested_entry_s,
-        "exit_latency_s": exit_second - requested_exit_s,
+        "entry_latency_s": entry.absolute_second - corpus.absolute_second(event_day, requested_entry_s),
+        "exit_latency_s": exit_.absolute_second - corpus.absolute_second(event_day, requested_exit_s),
         "quote_points": len(interval),
         "gross_executable_ticks": gross_ticks,
         "gross_mid_to_mid_ticks": mid_gross_ticks,
@@ -278,50 +340,128 @@ def base_row(case: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def stage1(cases: list[dict[str, Any]], tapes: dict[str, QuoteTape]) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+def stage1(
+    cases: list[dict[str, Any]],
+    corpus: QuoteCorpus,
+    first_call_rows: list[dict[str, Any]],
+) -> tuple[dict[str, Any], list[dict[str, Any]], dict[str, int]]:
+    """Execute each case once at its actual first call, never on a fixed H grid."""
+    ledger_ids = [row.get("case_id") for row in first_call_rows]
+    case_ids = {case["case_id"] for case in cases}
+    if len(ledger_ids) != len(set(ledger_ids)) or set(ledger_ids) != case_ids:
+        raise RuntimeError(
+            "branch first-call ledger identity mismatch: "
+            f"rows={len(ledger_ids)} unique={len(set(ledger_ids))} cases={len(case_ids)} "
+            f"missing={len(case_ids - set(ledger_ids))} extra={len(set(ledger_ids) - case_ids)}"
+        )
+    calls = {
+        row["case_id"]: row
+        for row in first_call_rows
+        if row.get("cascade_status") == "FIRST_CALL_EMITTED"
+    }
+    if len(calls) != sum(row.get("cascade_status") == "FIRST_CALL_EMITTED" for row in first_call_rows):
+        raise RuntimeError("duplicate branch first-call rows")
+    by_case_id = {case["case_id"]: case for case in cases}
+    for case_id, call in calls.items():
+        checkpoint = int(call["first_call_checkpoint_s"])
+        stage = call.get("first_call_stage")
+        window = by_case_id[case_id].get("computational_prediction_window") or {}
+        prior_start = window.get("prior_start_offset_s")
+        h_end = window.get("h_end_offset_s")
+        valid = (
+            stage == "PREBIRTH"
+            and checkpoint < 0
+            and prior_start is not None
+            and int(prior_start) <= checkpoint
+        ) or (
+            stage == "H_FALLBACK"
+            and checkpoint >= 0
+            and h_end is not None
+            and checkpoint <= int(h_end)
+        )
+        if not valid:
+            raise RuntimeError(
+                f"first call outside computational window case={case_id} stage={stage} "
+                f"checkpoint={checkpoint} prior_start={prior_start} h_end={h_end}"
+            )
+
     rows: list[dict[str, Any]] = []
     cells = []
-    for h in CHECKPOINTS_S:
-        eligible = [case for case in cases if case["origin_confirmation_offset_s"] is not None and case["origin_confirmation_offset_s"] <= h]
-        for hold in HOLDS_S:
-            cell_rows = []
-            for case in cases:
-                row = {**base_row(case), "checkpoint_s": h, "fixed_hold_s": hold}
-                if case["origin_confirmation_offset_s"] is None or case["origin_confirmation_offset_s"] > h:
-                    row["checkpoint_status"] = "ORIGIN_NOT_CONFIRMED"
-                    row["execution"] = {"status": "NOT_REQUESTED_ORIGIN_NOT_CONFIRMED"}
-                else:
-                    known = case["branch_causally_known_offset_s"]
-                    row["checkpoint_status"] = "BRANCH_ALREADY_KNOWN" if known is not None and known <= h else "PREDICTION_WINDOW"
-                    # The H bin is fully observed by its end.  Execute from the
-                    # next second boundary so no within-bin future information
-                    # can influence a same-bin fill.
-                    requested_entry = int(case["clock"]["second_utc"]) + h + 1
-                    row["execution"] = execution_path(tapes[row["day"]], requested_entry, requested_entry + hold, int(case["polarity"]))
-                    cell_rows.append(row)
-                rows.append(row)
-            aggregate = aggregate_execution(cell_rows, len(eligible))
-            cells.append({"checkpoint_s": h, "fixed_hold_s": hold, **aggregate})
-    gate_cells = [cell for cell in cells if cell["fixed_hold_s"] == 60 and cell["predeclared_research_gate"]]
-    earliest = min((cell["checkpoint_s"] for cell in gate_cells), default=None)
+    entry_offsets: dict[str, int] = {}
+    for case in cases:
+        call = calls.get(case["case_id"])
+        origin_confirmation = case.get("origin_confirmation_offset_s")
+        if call is not None and origin_confirmation is not None:
+            # A prebirth forecast remains the forecast time.  Initial-direction
+            # execution waits only until origin polarity is causally actionable.
+            entry_offsets[case["case_id"]] = max(
+                int(call["first_call_checkpoint_s"]), int(origin_confirmation)
+            )
+
+    for hold in HOLDS_S:
+        cell_rows = []
+        for case in cases:
+            call = calls.get(case["case_id"])
+            row = {**base_row(case), "fixed_hold_s": hold}
+            if call is None:
+                row["execution"] = {"status": "NOT_REQUESTED_NO_CONFIDENT_FIRST_CALL"}
+            elif case["case_id"] not in entry_offsets:
+                row.update(
+                    {
+                        "first_call_stage": call["first_call_stage"],
+                        "first_call_checkpoint_s": int(call["first_call_checkpoint_s"]),
+                        "execution": {"status": "NOT_REQUESTED_ORIGIN_CONFIRMATION_UNAVAILABLE"},
+                    }
+                )
+            else:
+                information_end = entry_offsets[case["case_id"]]
+                requested_entry = int(case["clock"]["second_utc"]) + information_end + 1
+                row.update(
+                    {
+                        "first_call_stage": call["first_call_stage"],
+                        "first_call_checkpoint_s": int(call["first_call_checkpoint_s"]),
+                        "origin_direction_actionable_offset_s": int(case["origin_confirmation_offset_s"]),
+                        "execution_information_end_offset_s": information_end,
+                        "execution": execution_path(
+                            corpus,
+                            row["day"],
+                            requested_entry,
+                            requested_entry + hold,
+                            int(case["polarity"]),
+                        ),
+                    }
+                )
+                cell_rows.append(row)
+            rows.append(row)
+        cells.append({"fixed_hold_s": hold, **aggregate_execution(cell_rows, len(entry_offsets))})
+
+    hold60 = next((cell for cell in cells if cell["fixed_hold_s"] == 60), None)
     return (
         {
-            "status": "STAGE1_EXACT_RAW_TAPE_COMPLETE_NO_PROMOTION",
+            "status": "STAGE1_DYNAMIC_FIRST_CALL_EXACT_RAW_TAPE_COMPLETE_NO_PROMOTION",
             "population_policy": POLICY,
             "direction": "origin dipole polarity / initial continuation",
-            "execution_semantics": "features observe the completed H second; long ask-to-bid or short bid-to-ask execution begins at t0+H+1 using the first valid raw MBP-10 quote at or after that boundary",
+            "prediction_clock_semantics": "per-instance first confident prebirth or H call; no fixed H maximum and no repeated later-H scoring",
+            "execution_semantics": "features observe the completed first-call second; if the call is prebirth, execution waits for causally actionable origin direction; fill begins on the next second using the first valid raw MBP-10 quote",
             "cost_semantics": "reported gross is already quote-side/spread-inclusive; 0.5/1.0/2.0 additional round-trip tick stresses are subtracted",
             "research_gate": "at 60-second hold: >=99% coverage, positive overall mean after 2 ticks, >50% gross-positive trades, and positive mean after 1 tick in every day and week",
+            "first_call_n": len(calls),
+            "executable_direction_available_n": len(entry_offsets),
+            "first_call_stage_counts": dict(Counter(row["first_call_stage"] for row in calls.values())),
+            "first_call_checkpoint_counts": dict(sorted(Counter(int(row["first_call_checkpoint_s"]) for row in calls.values()).items())),
             "cells": cells,
-            "earliest_checkpoint_passing_60s_hold_research_gate_s": earliest,
+            "dynamic_first_call_60s_hold_research_gate_passed": None if hold60 is None else hold60["predeclared_research_gate"],
             "promotion_status": "PROPOSAL_ONLY_FRESH_PROSPECTIVE_OOT_REQUIRED",
             "failure_policy": FAIL_POLICY,
         },
         rows,
+        entry_offsets,
     )
 
 
-def stage3(cases: list[dict[str, Any]], tapes: dict[str, QuoteTape], stage1_checkpoint: int | None) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+def stage3(
+    cases: list[dict[str, Any]], corpus: QuoteCorpus, stage1_entries: dict[str, int]
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     action_directions = {
         "CONTINUE_ORIGIN": lambda case: int(case["polarity"]),
         "REVERSE_ORIGIN": lambda case: -int(case["polarity"]),
@@ -340,26 +480,32 @@ def stage3(cases: list[dict[str, Any]], tapes: dict[str, QuoteTape], stage1_chec
                     row["execution"] = {"status": "NOT_REQUESTED_BRANCH_CONFIRMATION_UNAVAILABLE"}
                 else:
                     signal = int(case["clock"]["second_utc"]) + int(known) + 1
-                    row["execution"] = execution_path(tapes[row["day"]], signal, signal + hold, direction_fn(case))
+                    row["execution"] = execution_path(corpus, row["day"], signal, signal + hold, direction_fn(case))
                     cell_rows.append(row)
                 rows.append(row)
             cells.append({"action": action, "fixed_hold_from_branch_confirmation_s": hold, **aggregate_execution(cell_rows, len(available))})
 
     parent_exit_comparison: dict[str, Any]
-    if stage1_checkpoint is None:
+    if not stage1_entries:
         parent_exit_comparison = {
-            "status": "NOT_RUN_NO_STAGE1_ENTRY_CHECKPOINT_PASSED_RESEARCH_GATE",
+            "status": "NOT_RUN_NO_DYNAMIC_FIRST_CALL_ENTRIES",
             "universal_successor_confirmation_exit_promoted": False,
         }
     else:
         comparison_rows = []
         for case in cases:
             known = case["branch_causally_known_offset_s"]
-            if known is None or known + 1 >= 60 or case["origin_confirmation_offset_s"] is None or case["origin_confirmation_offset_s"] > stage1_checkpoint:
+            entry_information_end = stage1_entries.get(case["case_id"])
+            if known is None or entry_information_end is None:
                 continue
-            start = int(case["clock"]["second_utc"]) + stage1_checkpoint + 1
-            branch_exit = execution_path(tapes[case["clock"]["day"]], start, int(case["clock"]["second_utc"]) + int(known) + 1, int(case["polarity"]))
-            parent60_exit = execution_path(tapes[case["clock"]["day"]], start, int(case["clock"]["second_utc"]) + 60, int(case["polarity"]))
+            t0 = int(case["clock"]["second_utc"])
+            start = t0 + entry_information_end + 1
+            branch_exit_second = t0 + int(known) + 1
+            parent60_exit_second = start + 60
+            if branch_exit_second <= start or branch_exit_second >= parent60_exit_second:
+                continue
+            branch_exit = execution_path(corpus, case["clock"]["day"], start, branch_exit_second, int(case["polarity"]))
+            parent60_exit = execution_path(corpus, case["clock"]["day"], start, parent60_exit_second, int(case["polarity"]))
             if branch_exit["status"].startswith("EXECUTED") and parent60_exit["status"].startswith("EXECUTED"):
                 comparison_rows.append(
                     {
@@ -371,7 +517,7 @@ def stage3(cases: list[dict[str, Any]], tapes: dict[str, QuoteTape], stage1_chec
         incremental = [row["incremental_ticks"] for row in comparison_rows]
         parent_exit_comparison = {
             "status": "MEASURED_CASES_WITH_BRANCH_KNOWN_BEFORE_PARENT_PLUS60",
-            "stage1_entry_checkpoint_s": stage1_checkpoint,
+            "stage1_entry_policy": "PER_INSTANCE_DYNAMIC_FIRST_CALL_THEN_ORIGIN_DIRECTION_AVAILABILITY",
             "n": len(comparison_rows),
             "incremental_branch_exit_minus_parent_plus60_ticks": metric_summary(incremental),
             "universal_successor_confirmation_exit_promoted": False,
@@ -392,7 +538,12 @@ def stage3(cases: list[dict[str, Any]], tapes: dict[str, QuoteTape], stage1_chec
     )
 
 
-def stage4(cases: list[dict[str, Any]], stage3_rows: list[dict[str, Any]], stage1_checkpoint: int | None, tapes: dict[str, QuoteTape]) -> dict[str, Any]:
+def stage4(
+    cases: list[dict[str, Any]],
+    stage3_rows: list[dict[str, Any]],
+    stage1_entries: dict[str, int],
+    corpus: QuoteCorpus,
+) -> dict[str, Any]:
     delayed_ids = {
         case["case_id"]
         for case in cases
@@ -412,22 +563,24 @@ def stage4(cases: list[dict[str, Any]], stage3_rows: list[dict[str, Any]], stage
         cells.append({"fixed_hold_from_later_same_successor_confirmation_s": hold, **aggregate_execution(selected, len(delayed_ids))})
 
     parent_preservation: dict[str, Any]
-    if stage1_checkpoint is None:
-        parent_preservation = {"status": "NO_STAGE1_ENTRY_CHECKPOINT_PASSED_RESEARCH_GATE", "original_parent_loss_rewritten": False}
+    if not stage1_entries:
+        parent_preservation = {"status": "NO_DYNAMIC_FIRST_CALL_ENTRIES", "original_parent_loss_rewritten": False}
     else:
         parent_rows = []
         by_id = {case["case_id"]: case for case in cases}
         for case_id in delayed_ids:
             case = by_id[case_id]
-            if case["origin_confirmation_offset_s"] is None or case["origin_confirmation_offset_s"] > stage1_checkpoint:
+            entry_information_end = stage1_entries.get(case_id)
+            if entry_information_end is None:
                 continue
             t0 = int(case["clock"]["second_utc"])
-            execution = execution_path(tapes[case["clock"]["day"]], t0 + stage1_checkpoint + 1, t0 + 60, int(case["polarity"]))
+            start = t0 + entry_information_end + 1
+            execution = execution_path(corpus, case["clock"]["day"], start, start + 60, int(case["polarity"]))
             if execution["status"].startswith("EXECUTED"):
                 parent_rows.append(float(execution["gross_executable_ticks"]))
         parent_preservation = {
             "status": "ORIGINAL_PARENT_PLUS60_OUTCOME_PRESERVED",
-            "stage1_entry_checkpoint_s": stage1_checkpoint,
+            "stage1_entry_policy": "PER_INSTANCE_DYNAMIC_FIRST_CALL_THEN_ORIGIN_DIRECTION_AVAILABILITY",
             "original_parent_gross_executable_ticks": metric_summary(parent_rows),
             "original_parent_loss_rewritten": False,
         }
@@ -446,7 +599,6 @@ def stage4(cases: list[dict[str, Any]], stage3_rows: list[dict[str, Any]], stage
 
 
 def summary_md(stage1_result: dict[str, Any], stage3_result: dict[str, Any], stage4_result: dict[str, Any], provenance: dict[str, Any]) -> str:
-    earliest = stage1_result["earliest_checkpoint_passing_60s_hold_research_gate_s"]
     passing_stage3 = [
         cell for cell in stage3_result["cells"] if cell["predeclared_research_gate"]
     ]
@@ -462,7 +614,8 @@ Status: **EXACT MBP-10 EXECUTION PASS COMPLETE; NO PROMOTION**
 
 ## Stage 1
 
-- Earliest dense checkpoint passing the predeclared 60-second-hold execution research gate: `{earliest}` seconds.
+- Dynamic first calls presented for execution: `{stage1_result['first_call_n']}`; origin direction causally available for `{stage1_result['executable_direction_available_n']}`.
+- Dynamic first-call 60-second-hold research gate passed: `{stage1_result['dynamic_first_call_60s_hold_research_gate_passed']}`.
 - Gross results already include displayed spread; 0.5/1.0/2.0-tick fields impose additional round-trip stress.
 - Losing, zero, choppy, unavailable, and non-executable cases remain in the row ledger.
 
@@ -494,11 +647,16 @@ def finalize_rule_ledger(out_dir: Path, stage1_result: dict[str, Any], stage3_re
         "UNIVERSAL_SUCCESSOR_CONFIRMATION_EXIT_OR_REVERSAL",
         "AUTOMATIC_DELAYED_SAME_REENTRY",
     }
-    rows = [row for row in existing if row.get("rule_id") not in replaced]
+    rows = [
+        row
+        for row in existing
+        if row.get("rule_id") not in replaced
+        and not str(row.get("rule_id", "")).startswith(("STAGE1_", "STAGE3_", "STAGE4_"))
+    ]
     for cell in stage1_result["cells"]:
         rows.append(
             {
-                "rule_id": f"STAGE1_H{cell['checkpoint_s']}_HOLD{cell['fixed_hold_s']}",
+                "rule_id": f"STAGE1_DYNAMIC_FIRST_CALL_HOLD{cell['fixed_hold_s']}",
                 "status": "PASSED_RESEARCH_GATE" if cell["predeclared_research_gate"] else "FAILED_EXECUTION_RESEARCH_GATE",
                 "executed_n": cell["executed_n"],
                 "disposition": FAIL_POLICY,
@@ -548,17 +706,19 @@ def main() -> None:
     args = parse_args()
     args.out_dir.mkdir(parents=True, exist_ok=True)
     cases = read_jsonl(args.enriched_ledger)
+    first_call_rows = read_jsonl(args.branch_first_call_ledger)
     validate_ledger(cases)
     raw_paths = sorted(args.raw_dir.glob("NG_*.jsonl.gz"))
     tapes = {day_from_name(path): load_quote_tape(path) for path in raw_paths}
     required_days = sorted({case["clock"]["day"] for case in cases})
-    if sorted(tapes) != required_days:
-        raise RuntimeError(f"raw-day mismatch: required={required_days} supplied={sorted(tapes)}")
+    missing_days = sorted(set(required_days) - set(tapes))
+    if missing_days:
+        raise RuntimeError(f"raw-day mismatch: required={required_days} supplied={sorted(tapes)} missing={missing_days}")
+    corpus = QuoteCorpus(tapes)
 
-    stage1_result, stage1_rows = stage1(cases, tapes)
-    checkpoint = stage1_result["earliest_checkpoint_passing_60s_hold_research_gate_s"]
-    stage3_result, stage3_rows = stage3(cases, tapes, checkpoint)
-    stage4_result = stage4(cases, stage3_rows, checkpoint, tapes)
+    stage1_result, stage1_rows, stage1_entries = stage1(cases, corpus, first_call_rows)
+    stage3_result, stage3_rows = stage3(cases, corpus, stage1_entries)
+    stage4_result = stage4(cases, stage3_rows, stage1_entries, corpus)
     provenance = {
         "status": "AUTHORITATIVE_RAW_MBP10_JOIN_VALIDATED",
         "population_policy": POLICY,
@@ -566,7 +726,9 @@ def main() -> None:
         "flip": EXPECTED_FLIP,
         "same": EXPECTED_SAME,
         "enriched_ledger": {"name": args.enriched_ledger.name, "sha256": sha256(args.enriched_ledger)},
+        "branch_first_call_ledger": {"name": args.branch_first_call_ledger.name, "sha256": sha256(args.branch_first_call_ledger)},
         "raw_days": required_days,
+        "raw_context_days": sorted(set(tapes) - set(required_days)),
         "raw_files": {
             day: {
                 "name": next(path.name for path in raw_paths if day_from_name(path) == day),
@@ -574,7 +736,7 @@ def main() -> None:
                 "raw_rows": tapes[day].raw_rows,
                 "valid_quote_rows": len(tapes[day].rows),
             }
-            for day in required_days
+            for day in sorted(tapes)
         },
         "membership_changes": 0,
         "label_changes": 0,
@@ -599,7 +761,7 @@ def main() -> None:
             {
                 "status": "POX_EXACT_RAW_EXECUTION_PASS_COMPLETE",
                 "rows": len(cases),
-                "earliest_stage1_checkpoint_s": checkpoint,
+                "dynamic_first_call_n": stage1_result["first_call_n"],
                 "stage1_rows": len(stage1_rows),
                 "stage3_rows": len(stage3_rows),
                 "delayed_same_n": stage4_result["delayed_same_n"],
