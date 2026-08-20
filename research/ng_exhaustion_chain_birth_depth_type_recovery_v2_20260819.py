@@ -8,8 +8,8 @@ from pathlib import Path
 
 from ng_exhaustion_chain_recovery_features_v2_20260819 import (
     DATE, MODELS, EXPECTED_EXACT, PRIOR_AGES, POST_H, VIEWS,
-    POST_BIRTH_STATIC_POLICY, build_cases, load_events_full, load_lineage,
-    load_price_cache, feature_row,
+    POST_BIRTH_STATIC_POLICY, PRIMARY_CHAIN_TYPE_POLICY,
+    build_cases, load_events_full, load_lineage, load_price_cache, feature_row,
 )
 from ng_exhaustion_chain_recovery_models_v2_20260819 import evaluate, price_increment
 
@@ -69,14 +69,16 @@ def model_stage(stage: int, model: str, events, lineage, raw_dir: str):
             "PRIOR": "GLOBAL_CAUSAL_CHECKPOINT_AFTER_LATEST_PREDECESSOR_CONFIRMATION_STRICTLY_BEFORE_TARGET_T0",
             "H": "SECONDS_AFTER_FROZEN_TARGET_T0_ONLY",
         },
+        "prior_target_polarity_requirement": "NONE; TARGET_POLARITY_IS_NOT_A_PRIOR_ELIGIBILITY_OR_PRIMARY_LABEL_REQUIREMENT",
         "post_birth_static_policy": POST_BIRTH_STATIC_POLICY,
+        "primary_chain_type_policy": PRIMARY_CHAIN_TYPE_POLICY,
         "prior_age_values": list(PRIOR_AGES),
         "post_birth_H_values": list(POST_H),
         "positive_continuation_n": int(sum(c["continuation"] for c in cases)),
         "negative_stop_n": int(len(cases) - sum(c["continuation"] for c in cases)),
         "censored_n": int(len(censored)),
-        "chain_type_label_contract": "FROZEN_NEXT_LINK_STATE_P_O_S_X_PLUS_SAME_FLIP; ORDERED_STAGE_LABELS_FORM_THE_CHAIN_GRAMMAR",
-        "all_causal_knowledge_policy": "USE_EVERY_REPRESENTED_FACT_ONCE_ITS_OWN_CAUSAL_AVAILABILITY_TIME_HAS_PASSED; NEWBORN_STATIC_CLASSIFICATIONS_REQUIRE_CAUSAL_CONFIRMATION",
+        "chain_type_label_contract": "PRIMARY_TARGET_IS_FROZEN_NEXT_LINK_P_O_S_X_STRUCTURAL_STATE_ONLY; SAME_FLIP_TRANSITION_IS_SECONDARY_ANNOTATION_ONLY",
+        "all_causal_knowledge_policy": "USE_EVERY_REPRESENTED_FACT_ONCE_ITS_OWN_CAUSAL_AVAILABILITY_TIME_HAS_PASSED; NEWBORN_STATIC_CLASSIFICATIONS_REQUIRE_CAUSAL_CONFIRMATION; UNKNOWN_TARGET_POLARITY_NEVER_FAILS_PRIOR",
         "results": results,
         "censored": censored,
         "promotion_performed": False,
@@ -111,7 +113,10 @@ def sparse_stage(stage: int, events, lineage, raw_dir: str):
             "id": c["id"], "week": c["week"], "block": c["block"],
             "continuation": int(c["continuation"]),
             "final_depth_annotation_only": int(c["final_depth"]),
-            "chain_type_annotation_only": c["chain_type"], "points": points,
+            "primary_chain_state_family_annotation_only": c.get("chain_state_family"),
+            "same_flip_transition_annotation_only": c.get("chain_transition_annotation"),
+            "legacy_combined_chain_type_annotation_only": c.get("chain_type"),
+            "points": points,
         })
     return {
         "status": "NG_CHAIN_BIRTH_DEPTH_TYPE_SPARSE_CASE_STUDY_V2_COMPLETE",
@@ -121,8 +126,10 @@ def sparse_stage(stage: int, events, lineage, raw_dir: str):
         "prior_age_values": list(PRIOR_AGES),
         "post_birth_H_values": list(POST_H),
         "clock_semantics": {"PRIOR": "STRICTLY_BEFORE_TARGET_T0", "H": "SECONDS_AFTER_FROZEN_TARGET_T0_ONLY"},
+        "prior_target_polarity_requirement": "NONE",
         "post_birth_static_policy": POST_BIRTH_STATIC_POLICY,
-        "chain_type_label_contract": "FROZEN_NEXT_LINK_STATE_P_O_S_X_PLUS_SAME_FLIP",
+        "primary_chain_type_policy": PRIMARY_CHAIN_TYPE_POLICY,
+        "chain_type_label_contract": "PRIMARY_P_O_S_X_STATE_ONLY; SAME_FLIP_SECONDARY_ANNOTATION_ONLY",
         "cases": rows,
         "censored": censored,
         "promotion_performed": False,
