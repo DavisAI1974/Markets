@@ -1,36 +1,44 @@
 {
-  "checked_at_utc": "2026-08-20T20:37:03.122717+00:00",
+  "checked_at_utc": "2026-08-20T20:38:24.515755+00:00",
   "instance_id": "i-08cee7171c0a76a04",
   "probe": {
     "dataset": "GLBX.MDP3",
     "probe_status": "COMPLETE",
     "probes": [
       {
-        "gateway_errors": [
-          "BentoError:heartbeat_interval_s must be between 5 and 1800"
-        ],
-        "received_market_records": false,
-        "record_counts": {},
+        "gateway_errors": [],
+        "received_market_records": true,
+        "record_counts": {
+          "SymbolMappingMsg": 1,
+          "SystemMsg": 1,
+          "TradeMsg": 1
+        },
         "schema": "trades",
         "snapshot": false,
-        "system_messages": []
+        "system_messages": [
+          "Subscription request 0 for trades data succeeded"
+        ]
       },
       {
         "gateway_errors": [
-          "BentoError:heartbeat_interval_s must be between 5 and 1800"
+          "Not authorized for mbp-10 schema"
         ],
         "received_market_records": false,
-        "record_counts": {},
+        "record_counts": {
+          "ErrorMsg": 1
+        },
         "schema": "mbp-10",
         "snapshot": false,
         "system_messages": []
       },
       {
         "gateway_errors": [
-          "BentoError:heartbeat_interval_s must be between 5 and 1800"
+          "Not authorized for mbo schema"
         ],
         "received_market_records": false,
-        "record_counts": {},
+        "record_counts": {
+          "ErrorMsg": 1
+        },
         "schema": "mbo",
         "snapshot": true,
         "system_messages": []
@@ -39,7 +47,7 @@
     "secret_value_exposed": false,
     "symbol": "NG.v.0"
   },
-  "schema": "NG_LIVE_SCHEMA_ENTITLEMENT_RECEIPT_V1",
+  "schema": "NG_LIVE_SCHEMA_ENTITLEMENT_RECEIPT_V2",
   "secret_value_exposed": false,
   "ssm_status": "Success",
   "stderr": "",
