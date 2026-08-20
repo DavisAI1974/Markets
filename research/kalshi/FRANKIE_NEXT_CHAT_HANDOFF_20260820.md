@@ -10,10 +10,13 @@ that the history contains implementation commit
 Read, in order:
 
 1. `FRANKIE_NEXT_CHAT_HANDOFF_20260820.md` (this file);
-2. `FRANKIE_P0_GAP_CLOSURE_PROVISIONAL_20260820.md`;
-3. `FRANKIE_P0_GAP_CLOSURE_PROVISIONAL_MANIFEST_20260820.json`;
-4. `FRANKIE_V4_UNIFIED_FRAMEWORK_AUDIT_20260820.md`;
-5. the existing cognitive Top-10, market Top-10, GDL, and SEAL dockets cited by
+2. `../NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md`;
+3. `../NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md`;
+4. `../NG_EXHAUSTION_V4_RESEARCH_THREAD_FINAL_20260820.md`;
+5. `FRANKIE_P0_GAP_CLOSURE_PROVISIONAL_20260820.md`;
+6. `FRANKIE_P0_GAP_CLOSURE_PROVISIONAL_MANIFEST_20260820.json`;
+7. `FRANKIE_V4_UNIFIED_FRAMEWORK_AUDIT_20260820.md`;
+8. the existing cognitive Top-10, market Top-10, GDL, and SEAL dockets cited by
    the gap-closure document.
 
 Do not infer authority from the word “ready.” Component contracts are ready;
@@ -30,9 +33,29 @@ empirical evidence is not.
   bindings, two standalone runtime loops, explicit caller-attestation and
   unimplemented-paper-mechanism boundaries, `COMPONENT_CONTRACT_READY`.
 - Empirical readiness: `BLOCKED_PENDING_EMPIRICAL_EVIDENCE`.
+- **V3 model/trade outputs are not empirical truth about exhaustion.** Preserve
+  them as provenance/debugging/benchmark material only. Do not use V3 scores,
+  exact timing, fixed-horizon economics, or null/negative lanes as scientific
+  limits on the phenomenon.
+- The extra-agent information-gap findings remain high-value V4 research input:
+  timing/observability architecture, geometric representation, predecessor
+  overlap, inter-event survival/resolution representation, channel fusion,
+  support/calibration, model extraction, immutable signal-ledger routing, and
+  prediction-to-execution translation. They are hypotheses/requirements to
+  test in V4, not promoted V3 laws.
+- The active `Timing Gap Review`, `Feature Gap Review`, `Support Gap Review`,
+  `Trade Gap Review`, `D1 Secondary Review`, and `Markets Run Watch` were
+  intentionally created **after V3 non-authority was already understood**.
+  They are diagnostic gap-mining watches, not legacy V3 validators and not mock
+  runs. Their prompts explicitly forbid promoting V3 behavioral/trade outputs
+  and permit only methodology/debugging/support/representation/translation
+  diagnoses and V4 hypotheses.
+- Preserve every chain/case; weak, losing, sparse, negative, inconclusive, and
+  model-disagreement cases are evidence, not failed/dropped chains.
 - No V4 POX run occurred. V4 remains undecided, unauthorized, and unlaunched.
 - No V4 source or workflow was changed in this checkpoint.
-- No V3 monitor was created or managed; monitoring was handed to ChatGPT.
+- Monitoring/review watches are ChatGPT-owned diagnostic observers only; they do
+  not launch jobs, mutate the repository, or create empirical authority.
 - SEAL/NOVA was not integrated and must remain behind its documented matched
   control ladder.
 
