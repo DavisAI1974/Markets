@@ -61,7 +61,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          ref: ${{ github.sha }}
 
       - uses: actions/setup-python@v5
         with:
