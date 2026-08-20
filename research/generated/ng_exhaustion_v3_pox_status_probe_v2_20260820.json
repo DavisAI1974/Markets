@@ -1,0 +1,222 @@
+{
+  "pox": {
+    "artifacts": [
+      {
+        "created_at": "2026-08-20T07:30:37Z",
+        "expired": false,
+        "id": 9397448951,
+        "name": "ng-exhaustion-pox-standalone-exact-20260819",
+        "size_in_bytes": 8755671
+      }
+    ],
+    "jobs": [
+      {
+        "completed_at": "2026-08-20T07:30:40Z",
+        "conclusion": "success",
+        "id": 96318837251,
+        "name": "Fixed ledger, causal prediction, knowability, and exact execution",
+        "started_at": "2026-08-20T05:35:37Z",
+        "status": "completed"
+      }
+    ],
+    "recent_dispatch_runs": [
+      {
+        "conclusion": "success",
+        "created_at": "2026-08-20T04:55:06Z",
+        "event": "workflow_dispatch",
+        "head_branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+        "head_sha": "376dc34fe796294d082f169d9ff87468f2cf4779",
+        "html_url": "https://github.com/DavisAI1974/Markets/actions/runs/32333628389",
+        "id": 32333628389,
+        "run_number": 5,
+        "run_started_at": "2026-08-20T04:55:06Z",
+        "status": "completed",
+        "updated_at": "2026-08-20T07:30:40Z"
+      },
+      {
+        "conclusion": "cancelled",
+        "created_at": "2026-08-20T04:54:13Z",
+        "event": "workflow_dispatch",
+        "head_branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+        "head_sha": "a33533d28d6a5d3187cf39d6554b26a7277cb9ce",
+        "html_url": "https://github.com/DavisAI1974/Markets/actions/runs/32333571890",
+        "id": 32333571890,
+        "run_number": 4,
+        "run_started_at": "2026-08-20T04:54:13Z",
+        "status": "completed",
+        "updated_at": "2026-08-20T04:54:33Z"
+      },
+      {
+        "conclusion": "failure",
+        "created_at": "2026-08-20T03:42:11Z",
+        "event": "workflow_dispatch",
+        "head_branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+        "head_sha": "0f1410f23526395a70855740e27e9755b5b89c9c",
+        "html_url": "https://github.com/DavisAI1974/Markets/actions/runs/32329176685",
+        "id": 32329176685,
+        "run_number": 3,
+        "run_started_at": "2026-08-20T03:42:11Z",
+        "status": "completed",
+        "updated_at": "2026-08-20T04:27:43Z"
+      }
+    ],
+    "run": {
+      "conclusion": "success",
+      "created_at": "2026-08-20T04:55:06Z",
+      "event": "workflow_dispatch",
+      "head_branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+      "head_sha": "376dc34fe796294d082f169d9ff87468f2cf4779",
+      "html_url": "https://github.com/DavisAI1974/Markets/actions/runs/32333628389",
+      "id": 32333628389,
+      "run_number": 5,
+      "run_started_at": "2026-08-20T04:55:06Z",
+      "status": "completed",
+      "updated_at": "2026-08-20T07:30:40Z"
+    }
+  },
+  "source_branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "source_runs_mutated": false,
+  "status": "NG_EXHAUSTION_V3_POX_STATUS_PROBE_V2_COMPLETE",
+  "v3": {
+    "artifacts": [],
+    "job_conclusion_counts": {
+      "cancelled": 0,
+      "failure": 2,
+      "skipped": 0,
+      "success": 0
+    },
+    "job_status_counts": {
+      "completed": 2,
+      "in_progress": 7,
+      "queued": 5
+    },
+    "jobs": [
+      {
+        "completed_at": null,
+        "conclusion": null,
+        "id": 96318774004,
+        "name": "chain D1 extra_trees V3-T0",
+        "started_at": "2026-08-20T05:37:47Z",
+        "status": "in_progress"
+      },
+      {
+        "completed_at": null,
+        "conclusion": null,
+        "id": 96318774102,
+        "name": "d0 D0 knn V3-T0",
+        "started_at": "2026-08-20T05:38:24Z",
+        "status": "in_progress"
+      },
+      {
+        "completed_at": "2026-08-20T08:03:12Z",
+        "conclusion": "failure",
+        "id": 96318774123,
+        "name": "chain D1 knn V3-T0",
+        "started_at": "2026-08-20T05:56:28Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": null,
+        "conclusion": null,
+        "id": 96318774126,
+        "name": "chain D3 extra_trees V3-T0",
+        "started_at": "2026-08-20T04:54:46Z",
+        "status": "queued"
+      },
+      {
+        "completed_at": null,
+        "conclusion": null,
+        "id": 96318774128,
+        "name": "chain D1 logistic V3-T0",
+        "started_at": "2026-08-20T06:15:19Z",
+        "status": "in_progress"
+      },
+      {
+        "completed_at": "2026-08-20T08:30:45Z",
+        "conclusion": "failure",
+        "id": 96318774141,
+        "name": "chain D2 extra_trees V3-T0",
+        "started_at": "2026-08-20T06:49:18Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": null,
+        "conclusion": null,
+        "id": 96318774144,
+        "name": "d0 D0 logistic V3-T0",
+        "started_at": "2026-08-20T07:30:41Z",
+        "status": "in_progress"
+      },
+      {
+        "completed_at": null,
+        "conclusion": null,
+        "id": 96318774191,
+        "name": "sparse D4 case_study V3-T0",
+        "started_at": "2026-08-20T04:54:46Z",
+        "status": "queued"
+      },
+      {
+        "completed_at": null,
+        "conclusion": null,
+        "id": 96318774196,
+        "name": "chain D2 logistic V3-T0",
+        "started_at": "2026-08-20T08:30:47Z",
+        "status": "in_progress"
+      },
+      {
+        "completed_at": null,
+        "conclusion": null,
+        "id": 96318774201,
+        "name": "chain D3 knn V3-T0",
+        "started_at": "2026-08-20T04:54:46Z",
+        "status": "queued"
+      },
+      {
+        "completed_at": null,
+        "conclusion": null,
+        "id": 96318774203,
+        "name": "d0 D0 extra_trees V3-T0",
+        "started_at": "2026-08-20T07:46:30Z",
+        "status": "in_progress"
+      },
+      {
+        "completed_at": null,
+        "conclusion": null,
+        "id": 96318774205,
+        "name": "chain D3 logistic V3-T0",
+        "started_at": "2026-08-20T08:31:03Z",
+        "status": "in_progress"
+      },
+      {
+        "completed_at": null,
+        "conclusion": null,
+        "id": 96318774252,
+        "name": "sparse D5 case_study V3-T0",
+        "started_at": "2026-08-20T04:54:46Z",
+        "status": "queued"
+      },
+      {
+        "completed_at": null,
+        "conclusion": null,
+        "id": 96318774266,
+        "name": "chain D2 knn V3-T0",
+        "started_at": "2026-08-20T04:54:46Z",
+        "status": "queued"
+      }
+    ],
+    "run": {
+      "conclusion": null,
+      "created_at": "2026-08-20T04:54:46Z",
+      "event": "push",
+      "head_branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+      "head_sha": "b0e5d375b936c5ba82a3ffdc9c9f1db2b7a46732",
+      "html_url": "https://github.com/DavisAI1974/Markets/actions/runs/32333605991",
+      "id": 32333605991,
+      "run_number": 1,
+      "run_started_at": "2026-08-20T04:54:46Z",
+      "status": "queued",
+      "updated_at": "2026-08-20T04:54:46Z"
+    },
+    "source_sha": "b0e5d375b936c5ba82a3ffdc9c9f1db2b7a46732"
+  }
+}
