@@ -1,0 +1,40 @@
+{
+  "status": "AUTHORIZED_D0_D3_MODEL_SPECIFIC_TRADE_V3_LAUNCH",
+  "date": "2026-08-19",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "implementation_revision": "V3_CONTINUOUS_LIVE_MARKET_STATE_FIXED_HORIZON_TRADE",
+  "finalized_signal_surface": {
+    "live_checkpoint_blob_sha": "8afb71ee6238a541897ea1302f395a2035b23061",
+    "recovery_features_v3_blob_sha": "41552e0a9b344793c8b01afa84f089209386290d"
+  },
+  "stages": [0, 1, 2, 3],
+  "models": ["logistic", "extra_trees", "knn"],
+  "lanes": 12,
+  "signal_rule": "EACH_MODEL_INDEPENDENTLY_REPRODUCES_ITS_OWN_EARLIEST_VALIDATED_V3_TERMINALITY_OR_CONTINUATION_SIGNAL",
+  "direction_sources": [
+    "LAST_CONFIRMED_PREDECESSOR_POLARITY",
+    "OBSERVED_LIVE_PRICE_DIRECTION_5S",
+    "OBSERVED_LIVE_SIGNED_FLOW_20S"
+  ],
+  "realized_target_polarity_direction_source": false,
+  "fixed_hold_seconds": [5, 10, 20, 30, 60, 120, 300],
+  "future_event_exit_cap": false,
+  "cost_ticks": [0.5, 1.0, 2.0],
+  "post_birth_H_status": "HISTORICAL_ECONOMICS_UNTIL_UPSTREAM_EVENT_MARK_DISCOVERY_CLOCK_IS_PROVEN",
+  "cross_model_vote": false,
+  "probability_aggregation": "NONE",
+  "historical_research_only": true,
+  "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+  "promotion_performed": false,
+  "protected_mutations": {
+    "detector": false,
+    "canonical_rows": false,
+    "phase1": false,
+    "phase2": false,
+    "runway_clock": false,
+    "permanent_frankie": false,
+    "frankie_1": false,
+    "spawn_py": false,
+    "ssos_play": false
+  }
+}
