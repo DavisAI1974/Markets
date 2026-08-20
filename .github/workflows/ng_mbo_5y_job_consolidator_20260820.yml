@@ -33,3 +33,5 @@ jobs:
       - run: python -m pip install --quiet databento boto3
       - name: Fence remaining intervals and submit one canonical job each
         run: python research/kalshi/ng_mbo_5y_job_consolidator.py
+
+# One-shot trigger: fences all unsubmitted intervals before any new batch submit.
