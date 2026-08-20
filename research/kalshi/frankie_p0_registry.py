@@ -24,18 +24,91 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 
-REGISTRY_SCHEMA_VERSION = "FRANKIE_P0_REGISTRY_V1"
+REGISTRY_SCHEMA_VERSION = "FRANKIE_P0_REGISTRY_V2"
 EVIDENCE_SCHEMA_VERSION = "FRANKIE_P0_EVIDENCE_RECEIPT_V1"
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 CLASSIFICATIONS = frozenset({"RUNTIME_LOOP", "VALIDATOR", "HELPER", "BENCHMARK"})
+RUNTIME_EXPOSURES = frozenset(
+    {
+        "EXPLICIT_OPT_IN_COGNITIVE_RUNTIME_HOOK",
+        "STANDALONE_ONLY",
+    }
+)
+CALLER_ATTESTATION_ROLES = frozenset(
+    {
+        "NONE",
+        "DECLARES_CALLER_ATTESTATION_ENVELOPE",
+        "CONSUMES_CALLER_ATTESTATION",
+    }
+)
 INTEGRATION_STATUSES = frozenset(
     {
+        "EXPLICIT_OPT_IN_RUNTIME_HOOK_NOT_GROUP_RUNNER_WIRED",
         "STANDALONE_SHADOW_LOOP_NOT_RUNTIME_WIRED",
         "STANDALONE_VALIDATOR_NOT_RUNTIME_OR_V4_WIRED",
         "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
         "STANDALONE_BENCHMARK_NOT_RUNTIME_WIRED",
     }
+)
+
+RUNTIME_BINDING_FILES = {
+    "cognitive_runtime": {
+        "filename": "frankie_s137_cognitive_runtime.py",
+        "content_sha256": "97b82cd9821130b1117dd3207a8f4dabe748f49a464ea8dfb34ee9787fa87020",
+    },
+    "standard_group_runner": {
+        "filename": "frankie_s135_group_runner.py",
+        "content_sha256": "9bdeea4957ca8edf2aa9164368a694954a6f7ba21b26de884c299f3b85ae9e22",
+    },
+}
+
+RUNTIME_HOOK_BINDINGS: tuple[dict[str, str], ...] = (
+    {
+        "candidate_id": "COG02_REACT_EVIDENCE_LOOP",
+        "module": "frankie_cognitive_p0_loops.py",
+        "entry_point": "run_bounded_react",
+    },
+    {
+        "candidate_id": "COG03_LATS_BOUNDED_PLAN_SEARCH",
+        "module": "frankie_lats_p0_search.py",
+        "entry_point": "run_bounded_lats_search",
+    },
+    {
+        "candidate_id": "COG04_STRUCTGPT_TYPED_READS",
+        "module": "frankie_cognitive_p0_loops.py",
+        "entry_point": "run_iterative_structured_reads",
+    },
+    {
+        "candidate_id": "COG05_FAITHFUL_EXECUTABLE_REASONING",
+        "module": "frankie_cognitive_p0_loops.py",
+        "entry_point": "execute_faithful_ir",
+    },
+    {
+        "candidate_id": "COG06_CRITIC_TOOL_VERIFICATION",
+        "module": "frankie_cognitive_p0_loops.py",
+        "entry_point": "run_critic_revision",
+    },
+    {
+        "candidate_id": "COG07_MEMORY_AGENT_BENCH",
+        "module": "frankie_cognitive_p0_loops.py",
+        "entry_point": "run_chronological_memory_benchmark",
+    },
+    {
+        "candidate_id": "COG08_HIPPORAG_ASSOCIATIVE_RETRIEVAL",
+        "module": "frankie_hipporag_p0_retrieval.py",
+        "entry_point": "run_hipporag_shadow_pipeline",
+    },
+    {
+        "candidate_id": "COG09_HIAGENT_WORKING_MEMORY",
+        "module": "frankie_cognitive_p0_loops.py",
+        "entry_point": "run_state_aware_working_memory",
+    },
+    {
+        "candidate_id": "COG10_PROGRESS_COMPRESS_SHADOW_LEARNING",
+        "module": "frankie_progress_compress_p0.py",
+        "entry_point": "run_progress_compress_shadow",
+    },
 )
 
 COMMON_COGNITIVE_CONTROLS = (
@@ -573,7 +646,194 @@ def _expanded_entry_specs() -> tuple[dict[str, Any], ...]:
     return tuple(result)
 
 
-ENTRY_SPECS = (*ENTRY_SPECS, *_expanded_entry_specs())
+_CALLER_ATTESTATION_BY_ENTRY = {
+    ("frankie_cognitive_p0_loops.py", "CallbackResult"):
+        "DECLARES_CALLER_ATTESTATION_ENVELOPE",
+    ("frankie_cognitive_p0_loops.py", "run_bounded_react"):
+        "CONSUMES_CALLER_ATTESTATION",
+    ("frankie_cognitive_p0_loops.py", "run_iterative_structured_reads"):
+        "CONSUMES_CALLER_ATTESTATION",
+    ("frankie_cognitive_p0_loops.py", "run_critic_revision"):
+        "CONSUMES_CALLER_ATTESTATION",
+    ("frankie_cognitive_p0_loops.py", "run_state_aware_working_memory"):
+        "CONSUMES_CALLER_ATTESTATION",
+    ("frankie_cognitive_p0_loops.py", "run_chronological_memory_benchmark"):
+        "CONSUMES_CALLER_ATTESTATION",
+    ("frankie_lats_p0_search.py", "run_bounded_lats_search"):
+        "CONSUMES_CALLER_ATTESTATION",
+    ("frankie_hipporag_p0_retrieval.py", "HippoCallbackResult"):
+        "DECLARES_CALLER_ATTESTATION_ENVELOPE",
+    ("frankie_hipporag_p0_retrieval.py", "run_hipporag_shadow_pipeline"):
+        "CONSUMES_CALLER_ATTESTATION",
+    ("frankie_progress_compress_p0.py", "ShadowCallbackResult"):
+        "DECLARES_CALLER_ATTESTATION_ENVELOPE",
+    ("frankie_progress_compress_p0.py", "run_progress_compress_shadow"):
+        "CONSUMES_CALLER_ATTESTATION",
+    ("frankie_temporal_graph_p0_adapter.py", "TemporalCallbackResult"):
+        "DECLARES_CALLER_ATTESTATION_ENVELOPE",
+    ("frankie_temporal_graph_p0_adapter.py", "run_temporal_graph_shadow_adapter"):
+        "CONSUMES_CALLER_ATTESTATION",
+}
+
+_UNIMPLEMENTED_BY_ENTRY: dict[tuple[str, str], tuple[str, ...]] = {
+    ("frankie_cognitive_p0_loops.py", "run_bounded_react"): (
+        "paper prompts and paper tool environment",
+        "learned action policy",
+    ),
+    ("frankie_cognitive_p0_loops.py", "run_iterative_structured_reads"): (
+        "paper-exact table, knowledge-graph, and database interfaces",
+        "entity linking, SQL generation, and trained retrieval policy",
+    ),
+    ("frankie_cognitive_p0_loops.py", "run_critic_revision"): (
+        "paper prompts and external tool suite",
+        "trained critique policy",
+    ),
+    ("frankie_cognitive_p0_loops.py", "run_state_aware_working_memory"): (
+        "model-generated subgoals and summaries",
+        "paper prompts and learned detail-retrieval policy",
+    ),
+    ("frankie_cognitive_p0_loops.py", "execute_faithful_ir"): (
+        "language-to-IR translation model",
+        "general solver stack",
+    ),
+    ("frankie_cognitive_p0_loops.py", "run_chronological_memory_benchmark"): (
+        "MemoryAgentBench corpus and judge replication",
+        "complete runtime memory architecture",
+    ),
+    ("frankie_market_p0_controls.py", "score_open_stream_events"): (
+        "ECOTS classifier, training procedure, and paper benchmark replication",
+        "real chronological open-stream performance evidence",
+    ),
+    ("frankie_market_p0_controls.py", "evaluate_calibration_selective_gate"): (
+        "adaptive conformal prediction-set construction",
+        "real chronological calibration and selective-risk evidence",
+    ),
+    ("frankie_gdl_p0_controls.py", "validate_graph_stability_pair"): (
+        "trained graph model and paper stability-bound reproduction",
+        "real lawful-perturbation performance evidence",
+    ),
+    ("frankie_gdl_p0_controls.py", "build_one_wl_control_receipt"): (
+        "learned message-passing graph model",
+        "held-out comparison against the control pair",
+    ),
+    ("frankie_gdl_p0_controls.py", "validate_edgeless_deep_sets_control"): (
+        "trained Deep-Sets control model",
+        "held-out matched-budget comparison",
+    ),
+    ("frankie_lats_p0_search.py", "run_bounded_lats_search"): (
+        "paper prompts, benchmark environment, and language-model generation policy",
+        "learned or paper-identical value function and published-result reproduction",
+    ),
+    ("frankie_lats_p0_search.py", "compare_tree_to_one_path_control"): (
+        "paper prompts, learned policy/value model, and benchmark replication",
+        "real matched-budget tree-versus-one-path evidence",
+    ),
+    ("frankie_hipporag_p0_retrieval.py", "run_hipporag_shadow_pipeline"): (
+        "paper-exact extractor, entity linker, graph schema, reader, and retrieval stack",
+        "paper corpus/benchmark replication and held-out answer-quality evidence",
+    ),
+    ("frankie_progress_compress_p0.py", "run_progress_compress_shadow"): (
+        "paper neural architecture and verified gradient optimization",
+        "online Fisher estimation, paper curriculum, and performance reproduction",
+    ),
+    ("frankie_temporal_graph_p0_adapter.py", "run_temporal_graph_shadow_adapter"): (
+        "trained TGN/TGAT parameters, samplers, losses, embeddings, and paper batching",
+        "paper-exact modules, datasets, benchmark replication, and held-out evidence",
+    ),
+    ("frankie_temporal_p0_controls.py", "audit_planted_null_first_locks"): (
+        "Howard-et-al. confidence-sequence construction",
+        "real chronological sequential-error evidence",
+    ),
+    ("frankie_temporal_p0_controls.py", "calibrate_accumulated_accuracy_gap"): (
+        "paper's full two-stage conditional accumulated-gap algorithm",
+        "real purged calibration and held-out evidence",
+    ),
+    ("frankie_temporal_p0_controls.py", "run_delayed_label_aci"): (
+        "prediction-set construction and instance-conditional guarantee",
+        "real delayed-label coverage evidence",
+    ),
+    ("frankie_temporal_p0_controls.py", "assess_frozen_pool_current_risk"): (
+        "cumulative-loss, best-fixed, switching-regret, or live-selection theorem",
+        "real prequential current-risk evidence",
+    ),
+}
+
+_MODULE_PAPER_GAPS: dict[str, tuple[str, ...]] = {
+    "frankie_microstructure_p0_baselines.py": (
+        "paper model parameterization and dataset replication",
+        "real chronological market-transfer evidence",
+    ),
+    "frankie_temporal_p0_controls.py": (
+        "paper-faithful end-to-end temporal method",
+        "real chronological calibration/performance evidence",
+    ),
+    "frankie_lats_p0_search.py": (
+        "paper prompts, learned policy/value model, and benchmark replication",
+        "real matched-budget performance evidence",
+    ),
+    "frankie_hipporag_p0_retrieval.py": (
+        "paper-exact learned retrieval stack and benchmark replication",
+        "real held-out answer-quality evidence",
+    ),
+    "frankie_progress_compress_p0.py": (
+        "verified real gradient, distillation, Fisher, and consolidation behavior",
+        "real sequential-regime retention/performance evidence",
+    ),
+    "frankie_temporal_graph_p0_adapter.py": (
+        "trained paper-faithful temporal graph system",
+        "real held-out temporal-graph performance evidence",
+    ),
+}
+
+
+def _enrich_entry_boundaries(
+    entries: Sequence[Mapping[str, Any]],
+) -> tuple[dict[str, Any], ...]:
+    hook_by_surface = {
+        (item["module"], item["entry_point"]): item["candidate_id"]
+        for item in RUNTIME_HOOK_BINDINGS
+    }
+    result: list[dict[str, Any]] = []
+    for raw in entries:
+        entry = copy.deepcopy(dict(raw))
+        key = (entry["module"], entry["entry_point"])
+        candidate_id = hook_by_surface.get(key)
+        entry["runtime_exposure"] = (
+            "EXPLICIT_OPT_IN_COGNITIVE_RUNTIME_HOOK"
+            if candidate_id
+            else "STANDALONE_ONLY"
+        )
+        entry["runtime_hook_candidate_id"] = candidate_id
+        if candidate_id:
+            entry["integration_status"] = (
+                "EXPLICIT_OPT_IN_RUNTIME_HOOK_NOT_GROUP_RUNNER_WIRED"
+            )
+        entry["caller_attestation_role"] = _CALLER_ATTESTATION_BY_ENTRY.get(
+            key, "NONE"
+        )
+        if key in _UNIMPLEMENTED_BY_ENTRY:
+            unimplemented = _UNIMPLEMENTED_BY_ENTRY[key]
+        elif all(
+            str(item).lower().startswith("none;")
+            for item in entry["paper_derived_mechanisms"]
+        ):
+            unimplemented = ("NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED",)
+        else:
+            unimplemented = _MODULE_PAPER_GAPS.get(
+                entry["module"],
+                (
+                    "paper-faithful end-to-end mechanism",
+                    "real held-out empirical evidence",
+                ),
+            )
+        entry["paper_mechanisms_not_implemented"] = tuple(unimplemented)
+        result.append(entry)
+    return tuple(result)
+
+
+ENTRY_SPECS = _enrich_entry_boundaries(
+    (*ENTRY_SPECS, *_expanded_entry_specs())
+)
 
 
 REQUIRED_EVIDENCE_TYPES: tuple[str, ...] = (
@@ -693,6 +953,158 @@ def _sha256_json(value: Any) -> str:
     return hashlib.sha256(_canonical_json(value)).hexdigest()
 
 
+def _discover_runtime_hook_bindings(source: str) -> tuple[dict[str, str], bool]:
+    tree = ast.parse(source)
+    imports: dict[str, tuple[str, str]] = {}
+    for node in tree.body:
+        if not isinstance(node, ast.ImportFrom) or not node.module:
+            continue
+        for alias in node.names:
+            imports[alias.asname or alias.name] = (f"{node.module}.py", alias.name)
+
+    bindings: dict[str, str] = {}
+    hook_method_present = False
+    for node in tree.body:
+        if isinstance(node, ast.ClassDef) and node.name == "CognitiveCandidateRuntime":
+            hook_method_present = any(
+                isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef))
+                and item.name == "run_p0_component"
+                for item in node.body
+            )
+        value: ast.AST | None = None
+        if (
+            isinstance(node, ast.Assign)
+            and any(
+                isinstance(target, ast.Name) and target.id == "P0_COMPONENT_RUNNERS"
+                for target in node.targets
+            )
+        ):
+            value = node.value
+        elif (
+            isinstance(node, ast.AnnAssign)
+            and isinstance(node.target, ast.Name)
+            and node.target.id == "P0_COMPONENT_RUNNERS"
+        ):
+            value = node.value
+        if not isinstance(value, ast.Dict):
+            continue
+        for raw_key, raw_value in zip(value.keys, value.values):
+            if not isinstance(raw_key, ast.Constant) or not isinstance(raw_key.value, str):
+                continue
+            if not isinstance(raw_value, ast.Name) or raw_value.id not in imports:
+                bindings[raw_key.value] = "<UNRESOLVED>"
+                continue
+            module, imported_name = imports[raw_value.id]
+            bindings[raw_key.value] = f"{module}:{imported_name}"
+    return bindings, hook_method_present
+
+
+def _standard_group_runner_invokes_p0(source: str) -> bool:
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Attribute) and node.attr == "run_p0_component":
+            return True
+        if isinstance(node, ast.Name) and node.id == "P0_COMPONENT_RUNNERS":
+            return True
+        if isinstance(node, ast.ImportFrom) and node.module == "frankie_s137_cognitive_runtime":
+            return True
+        if isinstance(node, ast.Import):
+            if any(alias.name == "frankie_s137_cognitive_runtime" for alias in node.names):
+                return True
+    return False
+
+
+def _audit_runtime_boundaries(
+    root: Path,
+    discovered_runtime_hook_bindings: Mapping[str, str] | None,
+) -> dict[str, Any]:
+    expected = {
+        item["candidate_id"]: f"{item['module']}:{item['entry_point']}"
+        for item in RUNTIME_HOOK_BINDINGS
+    }
+    observed: dict[str, str] = {}
+    hook_method_present = False
+    runtime_unreadable = False
+    automatic_invocation_detected = False
+    group_runner_unreadable = False
+    file_receipts: list[dict[str, Any]] = []
+    for role in ("cognitive_runtime", "standard_group_runner"):
+        spec = RUNTIME_BINDING_FILES[role]
+        path = root / spec["filename"]
+        try:
+            raw = path.read_bytes()
+            source = raw.decode("utf-8")
+            observed_hash = hashlib.sha256(raw).hexdigest()
+            if role == "cognitive_runtime":
+                observed, hook_method_present = _discover_runtime_hook_bindings(source)
+            else:
+                automatic_invocation_detected = _standard_group_runner_invokes_p0(source)
+        except (OSError, UnicodeDecodeError, SyntaxError):
+            observed_hash = ""
+            if role == "cognitive_runtime":
+                runtime_unreadable = True
+            else:
+                group_runner_unreadable = True
+        file_receipts.append(
+            {
+                "role": role,
+                "filename": spec["filename"],
+                "expected_content_sha256": spec["content_sha256"],
+                "observed_content_sha256": observed_hash,
+                "content_hash_matches": observed_hash == spec["content_sha256"],
+            }
+        )
+    if discovered_runtime_hook_bindings is not None:
+        observed = {
+            str(candidate_id): str(surface)
+            for candidate_id, surface in discovered_runtime_hook_bindings.items()
+        }
+
+    missing = sorted(set(expected) - set(observed))
+    unexpected = sorted(set(observed) - set(expected))
+    mismatched = sorted(
+        candidate_id
+        for candidate_id in set(expected).intersection(observed)
+        if expected[candidate_id] != observed[candidate_id]
+    )
+    hash_mismatches = sorted(
+        receipt["role"]
+        for receipt in file_receipts
+        if not receipt["content_hash_matches"]
+    )
+    integrity = not (
+        runtime_unreadable
+        or group_runner_unreadable
+        or hash_mismatches
+        or missing
+        or unexpected
+        or mismatched
+        or not hook_method_present
+        or automatic_invocation_detected
+    )
+    core = {
+        "hook_entry_point": (
+            "frankie_s137_cognitive_runtime.CognitiveCandidateRuntime.run_p0_component"
+        ),
+        "hook_method_present": hook_method_present,
+        "automatic_standard_group_runner_invocation": automatic_invocation_detected,
+        "expected_bindings": expected,
+        "observed_bindings": observed,
+        "missing_candidate_bindings": missing,
+        "unexpected_candidate_bindings": unexpected,
+        "mismatched_candidate_bindings": mismatched,
+        "binding_file_receipts": file_receipts,
+        "binding_file_hash_mismatches": hash_mismatches,
+        "runtime_unreadable": runtime_unreadable,
+        "standard_group_runner_unreadable": group_runner_unreadable,
+        "runtime_binding_integrity": integrity,
+        "execution": False,
+        "apply": False,
+        "promotion": False,
+    }
+    return {**core, "runtime_binding_receipt_hash": _sha256_json(core)}
+
+
 def _public_call_surfaces(source: str) -> tuple[set[str], dict[str, Any]]:
     tree = ast.parse(source)
     names = {
@@ -724,6 +1136,7 @@ def audit_p0_registry(
     module_root: str | Path | None = None,
     discovered_entry_points: Mapping[str, Sequence[str]] | None = None,
     expected_module_hashes: Mapping[str, str] | None = None,
+    discovered_runtime_hook_bindings: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """Audit exact source/version/entry-point bindings for all P0 packs.
 
@@ -736,7 +1149,14 @@ def audit_p0_registry(
         module: str(spec["content_sha256"])
         for module, spec in MODULE_SPECS.items()
     }
-    override_used = expected_module_hashes is not None or discovered_entry_points is not None
+    override_used = any(
+        value is not None
+        for value in (
+            expected_module_hashes,
+            discovered_entry_points,
+            discovered_runtime_hook_bindings,
+        )
+    )
     if expected_module_hashes is not None:
         hash_expectations.update({str(key): str(value) for key, value in expected_module_hashes.items()})
 
@@ -787,6 +1207,11 @@ def audit_p0_registry(
         }
         module_receipts.append({**module_core, "module_receipt_hash": _sha256_json(module_core)})
 
+    runtime_boundaries = _audit_runtime_boundaries(
+        root,
+        discovered_runtime_hook_bindings,
+    )
+
     expected_keys = {
         _entry_key(entry["module"], entry["entry_point"])
         for entry in ENTRY_SPECS
@@ -825,10 +1250,21 @@ def audit_p0_registry(
         if (
             entry["classification"] not in CLASSIFICATIONS
             or entry["integration_status"] not in INTEGRATION_STATUSES
+            or entry["runtime_exposure"] not in RUNTIME_EXPOSURES
+            or entry["caller_attestation_role"] not in CALLER_ATTESTATION_ROLES
             or not entry["paper_derived_mechanisms"]
             or not entry["frankie_added_mechanisms"]
+            or not entry["paper_mechanisms_not_implemented"]
             or not entry["required_matched_controls"]
             or not entry["required_gates"]
+            or (
+                entry["runtime_exposure"] == "EXPLICIT_OPT_IN_COGNITIVE_RUNTIME_HOOK"
+                and not entry["runtime_hook_candidate_id"]
+            )
+            or (
+                entry["runtime_exposure"] == "STANDALONE_ONLY"
+                and entry["runtime_hook_candidate_id"] is not None
+            )
             or any(entry[field] is not False for field in ("performance_evidence", "execution", "apply", "promotion"))
         ):
             malformed_entries.append(key)
@@ -853,6 +1289,27 @@ def audit_p0_registry(
         blockers.append("unhashed entry points")
     if malformed_entries:
         blockers.append("malformed or over-authorized registry entries")
+    if not runtime_boundaries["runtime_binding_integrity"]:
+        blockers.append("runtime hook boundary integrity is blocked")
+
+    runtime_hook_entries = [
+        {
+            "candidate_id": entry["runtime_hook_candidate_id"],
+            "module": entry["module"],
+            "entry_point": entry["entry_point"],
+            "classification": entry["classification"],
+            "caller_attestation_role": entry["caller_attestation_role"],
+        }
+        for entry in entries
+        if entry["runtime_exposure"] == "EXPLICIT_OPT_IN_COGNITIVE_RUNTIME_HOOK"
+    ]
+    runtime_hook_entries.sort(key=lambda item: str(item["candidate_id"]))
+    standalone_loop_entry_points = sorted(
+        _entry_key(entry["module"], entry["entry_point"])
+        for entry in entries
+        if entry["classification"] == "RUNTIME_LOOP"
+        and entry["runtime_exposure"] == "STANDALONE_ONLY"
+    )
 
     core = {
         "schema_version": REGISTRY_SCHEMA_VERSION,
@@ -863,11 +1320,20 @@ def audit_p0_registry(
         "apply": False,
         "promotion": False,
         "module_receipts": module_receipts,
+        "runtime_boundary_receipt": runtime_boundaries,
         "entries": entries,
         "entry_point_count": len(entries),
         "classification_counts": {
             value: sum(entry["classification"] == value for entry in entries)
             for value in sorted(CLASSIFICATIONS)
+        },
+        "runtime_hook_entries": runtime_hook_entries,
+        "runtime_hook_count": len(runtime_hook_entries),
+        "standalone_runtime_loop_entry_points": standalone_loop_entry_points,
+        "standalone_runtime_loop_count": len(standalone_loop_entry_points),
+        "caller_attestation_counts": {
+            value: sum(entry["caller_attestation_role"] == value for entry in entries)
+            for value in sorted(CALLER_ATTESTATION_ROLES)
         },
         "missing_entry_points": missing,
         "extra_entry_points": extra,
@@ -881,6 +1347,8 @@ def audit_p0_registry(
         "limitations": (
             "component readiness proves registry/source contract integrity only; it is not empirical evidence",
             "content hashes do not prove paper fidelity, external-channel absence, or evaluator independence",
+            "caller callback attestations are declarations, not proof of external isolation or side-effect freedom",
+            "explicit opt-in runtime hooks are not automatic standard-group-runner integration",
         ),
     }
     return {**core, "registry_receipt_hash": _sha256_json(core)}
@@ -1120,12 +1588,15 @@ def evaluate_p0_readiness(
 
 
 __all__ = [
+    "CALLER_ATTESTATION_ROLES",
     "CLASSIFICATIONS",
     "ENTRY_SPECS",
     "EVIDENCE_SCHEMA_VERSION",
     "MODULE_SPECS",
     "REGISTRY_SCHEMA_VERSION",
     "REQUIRED_EVIDENCE_TYPES",
+    "RUNTIME_EXPOSURES",
+    "RUNTIME_HOOK_BINDINGS",
     "audit_p0_registry",
     "evaluate_p0_readiness",
 ]

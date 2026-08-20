@@ -109,6 +109,68 @@ bindings:
 Even a complete bundle leaves execution, apply, and promotion false and still
 requires independent review plus explicit user authorization.
 
+## Continuation outcome: exact surface boundaries and lawful evidence plan
+
+This continuation began from clean local checkpoint
+`5057cb851053ce448b9c45f0ce5a0ae1f5ccd069`, which contains implementation
+commit `5501fd5f4ce50ae908b0a40b1d9939c465ab3c1a`. After a required fetch,
+`origin/chatgpt/ng-exhaustion-entry-timing-revival-20260818` resolved to
+`7eb411cbccbcb6de241ef9c311d39b1191016cf2`, not to the supplied local
+checkpoint. No remote history was rewritten or force-pushed.
+
+The registry honesty boundary is now explicit and machine-audited:
+
+- nine component surfaces are bound to the opt-in
+  `CognitiveCandidateRuntime.run_p0_component` hook;
+- the standard S135 group runner is hash-bound and audited to contain no
+  automatic P0-hook invocation;
+- delayed-label ACI and the temporal-graph adapter remain standalone runtime
+  loops, not cognitive runtime hooks;
+- COG07 remains classified as a benchmark even though the benchmark has an
+  explicit opt-in hook;
+- validators, helpers, and benchmarks retain their own classifications rather
+  than being relabeled as runtime mechanisms;
+- four typed callback envelopes are recorded as caller-attestation declarers,
+  and nine callback-driven surfaces are recorded as consumers; an attestation
+  is not proof of process isolation, read-only external behavior, real model
+  training, or absence of side effects; and
+- each registered surface records paper mechanisms that remain unimplemented.
+  Those fields prevent a bounded hook, validator, helper, or benchmark from
+  becoming a paper-faithful implementation claim.
+
+This closes the remaining classification/traceability gap. It does not close
+the six empirical gaps. The lawful real-evidence plan is:
+
+| Receipt | Frozen real input and isolation rule | Required executed source validator and controls | Current blocker |
+|---|---|---|---|
+| Held-out performance | A named untouched-forward chronological case manifest that has never been used for candidate generation, threshold choice, debugging, or prior release queries | Run the frozen baseline and exactly one candidate from the same frozen packet through the paired runner; then use `evaluate_paired_repeated_seed_gate` against the candidate-specific fixed, random, frozen, one-path, flat, static, Deep-Sets, 1-WL, and/or market controls at matched budgets | No real case manifest, real callback/model backend, metering authority, cost approval, or executed rows were supplied |
+| Calibration | A separate locked calibration partition for fitting plus untouched held-out rows for evaluation; neither partition may be the release holdout | Use the precommitted calibration/selective policy and `evaluate_calibration_selective_gate`, with all marginal and joint strata declared before reveal | No real probability/lock rows or independently frozen calibration plan were supplied |
+| Contamination | Independently generated planted-null draws hidden from adaptive search, with a declared channel inventory and distinct adaptation/evaluation parents | Use negative controls and `evaluate_planted_null_contamination_gate`; the search may see only the precommit and search manifest, never null draws, null manifest, or locked evaluator | No independent null curator, sealed null artifacts, or real adaptive-search executions were supplied |
+| Retention | Fresh protected chronological cases covering every predeclared suite/stratum cell, including old regimes and safety/provenance cells | Use the identical frozen baseline/candidate pair and `evaluate_retention_matrix`; no pooled average may hide a failed cell | No real protected matrix, minimum cell counts, or executed candidate outputs were supplied |
+| Evaluator independence | A locked evaluator artifact plus independently labeled order, length/verbosity-control, objective-truth, contradiction, and protected-case canaries fixed before candidate outputs are revealed | Use `evaluate_judge_independence_canary`; candidate and baseline artifacts must remain distinct from the evaluator, and passing grants no promotion authority | No independent evaluator owner, real canary manifest, or locked evaluator artifact was supplied |
+| Byte-exact live rollback | A specifically named disposable sandbox target with baseline bytes, a non-vacuous authorized candidate mutation, and captured restored bytes | Exercise the actual mutation/removal path and use `validate_byte_exact_rollback` over every declared artifact; a synthetic in-memory rollback is not live evidence | No live mutation target or authority to mutate and restore external artifacts was supplied |
+
+Before any execution, one immutable evaluation-plan artifact must bind the
+candidate, baseline, runner, evaluator, partitions, budgets, seeds, controls,
+policies, and six source-validator versions. All six receipt wrappers must share
+the exact candidate, baseline, runner, evaluator, and plan hashes. Candidate
+development stops before the calibration, planted-null, protected, and
+untouched-forward artifacts are exposed. The release holdout remains unconsumed.
+
+The exact unblock package is therefore: (1) a real point-in-time dataset and
+predeclared chronological split manifest; (2) named real callback/model/tool
+backends with credentials, metering, and cost authority; (3) an independent
+evaluator and sealed canary manifest; and (4) one disposable live rollback
+target with explicit mutation/restoration authority. Until those are supplied,
+the only honest state is `BLOCKED_PENDING_EMPIRICAL_EVIDENCE`. Unit tests,
+synthetic canaries, caller attestations, source hashes, and this plan are not
+substitutes for any of the six receipts.
+
+This continuation did not launch or implement V4, touch V4 source/workflows,
+integrate SEAL/NOVA, recreate or manage the V3 monitor, call external models,
+train a model, consume a holdout, mutate live artifacts, apply a candidate, or
+grant promotion authority.
+
 ## Research accounting
 
 - Cognitive Top-10: 10/10 paper-level mechanism/evidence audits complete.
@@ -128,15 +190,17 @@ gates. It was not integrated here.
 
 ```text
 python -B -m pytest -q research/kalshi/tests tests/test_frankie_s135_group_runner.py
-329 passed
+331 passed
 
 python -B research/kalshi/agent_frankie.py selftest
 12/12 passed
 ```
 
-Registry: 60 public surfaces; 6 benchmarks, 29 helpers, 10 runtime loops, and 15
-validators. Synthetic component canary passed contracts with
-`performance_evidence=false`.
+Registry V2: 60 public surfaces; 6 benchmarks, 29 helpers, 10 runtime loops,
+and 15 validators. Nine surfaces have exact explicit opt-in cognitive-runtime
+bindings; two runtime loops remain standalone. Four attestation envelopes and
+nine attestation-consuming surfaces are separately recorded. Synthetic
+component canary passed contracts with `performance_evidence=false`.
 
 No V4 source/workflow was changed or launched. No V3 monitor was created or
 managed. The separate V4 decision is in

@@ -24,9 +24,11 @@ empirical evidence is not.
 - Base checkpoint was `71a71e94c08c27615b05f10165cbc88e38f2aa56`.
 - Implementation checkpoint is
   `5501fd5f4ce50ae908b0a40b1d9939c465ab3c1a`.
-- Full tests: 329 passed.
+- Full tests: 331 passed after the runtime-boundary registry continuation.
 - Frankie selftest: 12/12 passed.
-- Registry: 60 exact public surfaces, `COMPONENT_CONTRACT_READY`.
+- Registry V2: 60 exact public surfaces, nine exact opt-in runtime-hook
+  bindings, two standalone runtime loops, explicit caller-attestation and
+  unimplemented-paper-mechanism boundaries, `COMPONENT_CONTRACT_READY`.
 - Empirical readiness: `BLOCKED_PENDING_EMPIRICAL_EVIDENCE`.
 - No V4 POX run occurred. V4 remains undecided, unauthorized, and unlaunched.
 - No V4 source or workflow was changed in this checkpoint.

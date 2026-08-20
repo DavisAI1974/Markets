@@ -34,9 +34,14 @@
   "performance_evidence": false,
   "permanent_frankie_mutation": false,
   "promotion_authority": "NONE",
-  "pytest_cases_passed": 329,
+  "pytest_cases_passed": 331,
   "readiness_status": "BLOCKED_PENDING_EMPIRICAL_EVIDENCE",
   "registry": {
+    "caller_attestation_counts": {
+      "CONSUMES_CALLER_ATTESTATION": 9,
+      "DECLARES_CALLER_ATTESTATION_ENVELOPE": 4,
+      "NONE": 47
+    },
     "classification_counts": {
       "BENCHMARK": 6,
       "HELPER": 29,
@@ -44,7 +49,11 @@
       "VALIDATOR": 15
     },
     "entry_point_count": 60,
-    "receipt_hash": "7ea4947f3e0b8fd94ac73214959a0064b074f1cb488c1eac74b85157901336f0",
+    "receipt_hash": "e7850a319dd006471eb1eea1112f694d3949530adea81cee56e1759539db7e1a",
+    "runtime_binding_receipt_hash": "04c20e5c7da69c3baefa85a21e08e5163eb8bcd2783d2415ca84ae9f7be2a480",
+    "runtime_hook_count": 9,
+    "schema_version": "FRANKIE_P0_REGISTRY_V2",
+    "standalone_runtime_loop_count": 2,
     "status": "COMPONENT_CONTRACT_READY"
   },
   "runner_manifest_hash": "bd4d97000e4e9e65cb69ecbecb65c2725924944f377bbd4442f2a0417249f1d9",

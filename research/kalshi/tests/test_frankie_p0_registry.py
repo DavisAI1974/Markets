@@ -16,6 +16,7 @@ from frankie_p0_registry import (  # noqa: E402
     ENTRY_SPECS,
     EVIDENCE_SCHEMA_VERSION,
     REQUIRED_EVIDENCE_TYPES,
+    RUNTIME_HOOK_BINDINGS,
     audit_p0_registry,
     evaluate_p0_readiness,
 )
@@ -191,12 +192,89 @@ class FrankieP0RegistryTests(unittest.TestCase):
             self.assertRegex(entry["entry_point_binding_sha256"], r"^[0-9a-f]{64}$")
             self.assertTrue(entry["paper_derived_mechanisms"])
             self.assertTrue(entry["frankie_added_mechanisms"])
+            self.assertTrue(entry["paper_mechanisms_not_implemented"])
             self.assertTrue(entry["required_matched_controls"])
             self.assertTrue(entry["required_gates"])
+            self.assertIn(
+                entry["runtime_exposure"],
+                {"EXPLICIT_OPT_IN_COGNITIVE_RUNTIME_HOOK", "STANDALONE_ONLY"},
+            )
+            self.assertIn(
+                entry["caller_attestation_role"],
+                {
+                    "NONE",
+                    "DECLARES_CALLER_ATTESTATION_ENVELOPE",
+                    "CONSUMES_CALLER_ATTESTATION",
+                },
+            )
             self.assertFalse(entry["performance_evidence"])
             self.assertFalse(entry["execution"])
             self.assertFalse(entry["apply"])
             self.assertFalse(entry["promotion"])
+
+    def test_runtime_hooks_are_exact_and_standalone_loops_remain_distinct(self):
+        receipt = audit_p0_registry()
+        self.assertEqual(receipt["runtime_hook_count"], 9)
+        self.assertEqual(
+            receipt["standalone_runtime_loop_entry_points"],
+            [
+                "frankie_temporal_graph_p0_adapter.py:run_temporal_graph_shadow_adapter",
+                "frankie_temporal_p0_controls.py:run_delayed_label_aci",
+            ],
+        )
+        boundary = receipt["runtime_boundary_receipt"]
+        self.assertTrue(boundary["runtime_binding_integrity"])
+        self.assertTrue(boundary["hook_method_present"])
+        self.assertFalse(boundary["automatic_standard_group_runner_invocation"])
+        self.assertEqual(boundary["missing_candidate_bindings"], [])
+        self.assertEqual(boundary["unexpected_candidate_bindings"], [])
+        self.assertEqual(boundary["mismatched_candidate_bindings"], [])
+        memory_hook = next(
+            item
+            for item in receipt["runtime_hook_entries"]
+            if item["candidate_id"] == "COG07_MEMORY_AGENT_BENCH"
+        )
+        self.assertEqual(memory_hook["classification"], "BENCHMARK")
+
+    def test_runtime_binding_drift_and_attestation_boundaries_fail_or_declare_closed(self):
+        observed = {
+            item["candidate_id"]: f"{item['module']}:{item['entry_point']}"
+            for item in RUNTIME_HOOK_BINDINGS
+        }
+        del observed["COG03_LATS_BOUNDED_PLAN_SEARCH"]
+        observed["COG99_UNDECLARED"] = "frankie_cognitive_p0_loops.py:run_bounded_react"
+        drift = audit_p0_registry(discovered_runtime_hook_bindings=observed)
+        self.assertFalse(drift["component_contract_ready"])
+        boundary = drift["runtime_boundary_receipt"]
+        self.assertEqual(
+            boundary["missing_candidate_bindings"],
+            ["COG03_LATS_BOUNDED_PLAN_SEARCH"],
+        )
+        self.assertEqual(boundary["unexpected_candidate_bindings"], ["COG99_UNDECLARED"])
+
+        clean = audit_p0_registry()
+        by_surface = {
+            (entry["module"], entry["entry_point"]): entry
+            for entry in clean["entries"]
+        }
+        self.assertEqual(
+            by_surface[("frankie_cognitive_p0_loops.py", "CallbackResult")][
+                "caller_attestation_role"
+            ],
+            "DECLARES_CALLER_ATTESTATION_ENVELOPE",
+        )
+        self.assertEqual(
+            by_surface[("frankie_cognitive_p0_loops.py", "run_bounded_react")][
+                "caller_attestation_role"
+            ],
+            "CONSUMES_CALLER_ATTESTATION",
+        )
+        self.assertEqual(
+            by_surface[("frankie_cognitive_p0_loops.py", "execute_faithful_ir")][
+                "caller_attestation_role"
+            ],
+            "NONE",
+        )
 
     def test_diagnostic_inventory_detects_missing_extra_and_unhashed_surfaces(self):
         discovered = {}
