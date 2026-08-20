@@ -14,7 +14,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 import hashlib
 import json
-from typing import Any, Callable, Mapping, Protocol, Sequence
+import re
+from typing import Any, Mapping, Protocol
 
 from research.kalshi.ng_exhaustion_v4_causal_clock import CausalDiscoveryReceipt
 from research.kalshi.ng_exhaustion_v4_gate_verifier import DetectorIntensityResolution, SparseStagePolicy
@@ -28,7 +29,6 @@ from research.kalshi.ng_exhaustion_v4_mechanics import (
     StateMovieRow,
     V4ContractError,
     V4LaneSpec,
-    registry_hash,
     seal_execution_handoff,
     validate_execution_binding,
     validate_probability_movie,
@@ -36,6 +36,7 @@ from research.kalshi.ng_exhaustion_v4_mechanics import (
 )
 
 SCHEMA_VERSION = "NG_EXHAUSTION_V4_UNIFIED_RUNTIME_V1"
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
 class UnifiedV4Error(V4ContractError):
@@ -46,6 +47,20 @@ def _stable_hash(payload: Mapping[str, Any]) -> str:
     return hashlib.sha256(
         json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
     ).hexdigest()
+
+
+def _sha(value: str, field: str) -> str:
+    text = str(value or "").strip().lower()
+    if not SHA256_RE.fullmatch(text):
+        raise UnifiedV4Error(f"{field} must be lowercase SHA-256")
+    return text
+
+
+def _json_copy(value: Mapping[str, Any]) -> dict[str, Any]:
+    try:
+        return json.loads(json.dumps(dict(value), sort_keys=True, separators=(",", ":")))
+    except (TypeError, ValueError) as exc:
+        raise UnifiedV4Error("lane restrictions must be deterministic JSON") from exc
 
 
 @dataclass(frozen=True)
@@ -67,7 +82,12 @@ class CaseEnvelope:
         for name in ("case_id", "instance_id", "group_id"):
             if not str(getattr(self, name) or "").strip():
                 raise UnifiedV4Error(f"{name} must be non-empty")
-        start = float(self.start_timestamp); end = float(self.end_timestamp); reveal = float(self.reveal_timestamp)
+        try:
+            start = float(self.start_timestamp)
+            end = float(self.end_timestamp)
+            reveal = float(self.reveal_timestamp)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise UnifiedV4Error("case timestamps must be finite numbers") from exc
         self.discovery.validate()
         if not start <= end < reveal:
             raise UnifiedV4Error("case must satisfy start <= end < reveal")
@@ -81,9 +101,9 @@ class CaseEnvelope:
             raise UnifiedV4Error("case requires predecessor lifecycle state")
         for item in self.lifecycles:
             item.validate()
-        self.sparse_policy.validate(); self.intensity.validate()
-        if len(str(self.case_manifest_sha256)) != 64:
-            raise UnifiedV4Error("case_manifest_sha256 must be SHA-256")
+        self.sparse_policy.validate()
+        self.intensity.validate()
+        _sha(self.case_manifest_sha256, "case_manifest_sha256")
         return self
 
 
@@ -111,7 +131,7 @@ class RegisteredLane:
 
     def validate(self) -> "RegisteredLane":
         self.spec.validate()
-        if self.spec.adapter_sha256 != self.adapter_identity_sha256:
+        if self.spec.adapter_sha256 != _sha(self.adapter_identity_sha256, "adapter_identity_sha256"):
             raise UnifiedV4Error("registered adapter hash does not match V4LaneSpec")
         for value, name in (
             (self.adapter_population_id, "adapter_population_id"),
@@ -120,11 +140,24 @@ class RegisteredLane:
         ):
             if not str(value or "").strip():
                 raise UnifiedV4Error(f"{name} must be non-empty")
+        restrictions = _json_copy(self.restrictions)
         if self.spec.mode == "WALK_FORWARD_POSTHOC_ORACLE_CONDITIONED" and not self.permanently_non_promotable:
             raise UnifiedV4Error("posthoc oracle-conditioned lane must be permanently non-promotable")
-        if self.spec.mode == "CASE_STUDY_NO_ADAPTATION" and self.restrictions.get("adaptation_allowed") is not False:
+        if self.spec.mode == "CASE_STUDY_NO_ADAPTATION" and restrictions.get("adaptation_allowed") is not False:
             raise UnifiedV4Error("case-study lane must explicitly prohibit adaptation")
         return self
+
+    def identity_payload(self) -> dict[str, Any]:
+        self.validate()
+        return {
+            "spec": asdict(self.spec),
+            "adapter_identity_sha256": self.adapter_identity_sha256,
+            "adapter_population_id": self.adapter_population_id,
+            "label_identity": self.label_identity,
+            "coordinate_schema_identity": self.coordinate_schema_identity,
+            "restrictions": _json_copy(self.restrictions),
+            "permanently_non_promotable": self.permanently_non_promotable,
+        }
 
 
 class V4LaneRegistry:
@@ -148,7 +181,12 @@ class V4LaneRegistry:
 
     @property
     def registry_hash(self) -> str:
-        return registry_hash([lane.spec for lane in self.ordered()])
+        lanes = self.ordered()
+        if not lanes:
+            raise UnifiedV4Error("lane registry cannot be empty")
+        return _stable_hash(
+            {"schema": SCHEMA_VERSION, "lanes": [lane.identity_payload() for lane in lanes]}
+        )
 
 
 @dataclass(frozen=True)
@@ -198,6 +236,8 @@ class UnifiedV4Engine:
     def evaluate(self, inp: EngineInput) -> NormalizedV4Artifact:
         lane = self.registry.get(inp.lane_id)
         case = inp.case.validate()
+        if not inp.state_rows or not inp.probability_entries:
+            raise UnifiedV4Error("state and probability movies must be non-empty")
         if case.instance_id != inp.probability_entries[0].instance_id:
             raise UnifiedV4Error("case/probability instance identity mismatch")
         if case.start_timestamp < case.discovery.event_known_by:
@@ -213,6 +253,17 @@ class UnifiedV4Engine:
             raise UnifiedV4Error("probability entry is not bound to this state movie")
         if any(entry.causal_evaluation_at >= case.reveal_timestamp for entry in inp.probability_entries):
             raise UnifiedV4Error("prediction movie reaches or crosses reveal time")
+
+        _sha(inp.lock_policy_sha256, "lock_policy_sha256")
+        _sha(inp.model_sha256, "model_sha256")
+        _sha(inp.snapshot_sha256, "snapshot_sha256")
+        _sha(inp.source_manifest_sha256, "source_manifest_sha256")
+        if any(entry.model_sha256 != inp.model_sha256 for entry in inp.probability_entries):
+            raise UnifiedV4Error("engine model identity differs from probability movie")
+        if any(entry.snapshot_sha256 != inp.snapshot_sha256 for entry in inp.probability_entries):
+            raise UnifiedV4Error("engine snapshot identity differs from probability movie")
+        if any(entry.source_manifest_sha256 != inp.source_manifest_sha256 for entry in inp.probability_entries):
+            raise UnifiedV4Error("engine source identity differs from probability movie")
 
         lock = recompute_lock_outcome(
             inp.probability_entries,
@@ -238,16 +289,21 @@ class UnifiedV4Engine:
             eligibility_state=inp.eligibility_state,
             decision_available_at=lock.decision_available_at,
         )
-        validate_execution_binding(handoff, probability_entry=bound, first_lock=lock, state_movie_hash=state_hash)
+        validate_execution_binding(
+            handoff, probability_entry=bound, first_lock=lock, state_movie_hash=state_hash
+        )
 
-        # This implementation deliberately never mutates a model. It computes whether a future
-        # authorized orchestrator would even be ALLOWED to update after reveal.
+        # No model mutation exists in this module. It computes only whether a future separately
+        # authorized post-reveal update stage could even be eligible.
         update_eligible = (
             lane.spec.mode == "WALK_FORWARD"
             and not lane.permanently_non_promotable
             and inp.candidate_update_requested
         )
-        if lane.spec.mode in {"CASE_STUDY_NO_ADAPTATION", "WALK_FORWARD_POSTHOC_ORACLE_CONDITIONED"}:
+        if lane.spec.mode in {
+            "CASE_STUDY_NO_ADAPTATION",
+            "WALK_FORWARD_POSTHOC_ORACLE_CONDITIONED",
+        }:
             update_eligible = False
 
         core = {
@@ -267,11 +323,24 @@ class UnifiedV4Engine:
             "update_applied": False,
             "permanently_non_promotable": lane.permanently_non_promotable,
         }
+        artifact_hash = _stable_hash(core)
         return NormalizedV4Artifact(
-            **core,
+            schema_version=SCHEMA_VERSION,
+            registry_hash=self.registry.registry_hash,
+            lane_id=inp.lane_id,
+            lane_mode=lane.spec.mode,
+            case_id=case.case_id,
+            instance_id=case.instance_id,
+            case_manifest_sha256=case.case_manifest_sha256,
+            state_movie_hash=state_hash,
+            probability_movie_hash=probability_hash,
             first_lock=lock,
             execution_handoff=handoff,
-            normalized_artifact_hash=_stable_hash(core),
+            reveal_timestamp=case.reveal_timestamp,
+            update_eligible=update_eligible,
+            update_applied=False,
+            permanently_non_promotable=lane.permanently_non_promotable,
+            normalized_artifact_hash=artifact_hash,
         )
 
 
@@ -283,7 +352,7 @@ class UnifiedV4Orchestrator:
         self.engine = UnifiedV4Engine(registry)
 
     def evaluate(self, inp: EngineInput) -> NormalizedV4Artifact:
-        self.registry.get(inp.lane_id)  # fail closed before engine work
+        self.registry.get(inp.lane_id)
         return self.engine.evaluate(inp)
 
 
@@ -296,9 +365,20 @@ class UnifiedV4Reconciler:
     def reconcile(self, inp: EngineInput, artifact: NormalizedV4Artifact) -> dict[str, Any]:
         recomputed = UnifiedV4Engine(self.registry).evaluate(inp)
         fields = (
-            "schema_version", "registry_hash", "lane_id", "lane_mode", "case_id", "instance_id",
-            "case_manifest_sha256", "state_movie_hash", "probability_movie_hash", "reveal_timestamp",
-            "update_eligible", "update_applied", "permanently_non_promotable", "normalized_artifact_hash",
+            "schema_version",
+            "registry_hash",
+            "lane_id",
+            "lane_mode",
+            "case_id",
+            "instance_id",
+            "case_manifest_sha256",
+            "state_movie_hash",
+            "probability_movie_hash",
+            "reveal_timestamp",
+            "update_eligible",
+            "update_applied",
+            "permanently_non_promotable",
+            "normalized_artifact_hash",
         )
         mismatches = [name for name in fields if getattr(artifact, name) != getattr(recomputed, name)]
         if artifact.first_lock.lock_hash != recomputed.first_lock.lock_hash:
