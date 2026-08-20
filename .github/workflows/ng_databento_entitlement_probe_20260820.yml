@@ -1,0 +1,137 @@
+name: NG Databento Entitlement Probe 20260820
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - '.github/workflows/ng_databento_entitlement_probe_20260820.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
+      RECEIPT: research/kalshi/NG_DATABENTO_ENTITLEMENT_RECEIPT_20260820.json
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Databento client
+        run: pip install --quiet databento
+
+      - name: Probe live schemas independently
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${DATABENTO_API_KEY:-}" ]; then
+            echo '::error::DATABENTO_API_KEY GitHub Actions secret is unavailable'
+            exit 2
+          fi
+          python - <<'PY'
+          import datetime as dt
+          import json
+          import os
+          import time
+          import databento as db
+
+          SYMBOL = 'NG.v.0'
+          DATASET = 'GLBX.MDP3'
+
+          def probe(schema: str, *, snapshot: bool = False, seconds: float = 5.0):
+              counts = {}
+              errors = []
+              systems = []
+
+              def on_record(rec):
+                  kind = type(rec).__name__
+                  counts[kind] = counts.get(kind, 0) + 1
+                  if kind == 'ErrorMsg':
+                      err = getattr(rec, 'err', None)
+                      if isinstance(err, (bytes, bytearray)):
+                          err = bytes(err).split(b'\x00', 1)[0].decode('utf-8', 'replace')
+                      else:
+                          err = str(err)
+                      if err and err not in errors:
+                          errors.append(err)
+                  elif kind == 'SystemMsg':
+                      msg = getattr(rec, 'msg', None)
+                      if isinstance(msg, (bytes, bytearray)):
+                          msg = bytes(msg).split(b'\x00', 1)[0].decode('utf-8', 'replace')
+                      else:
+                          msg = str(msg)
+                      if msg and msg not in systems:
+                          systems.append(msg)
+
+              client = db.Live(heartbeat_interval_s=3)
+              client.add_callback(on_record)
+              try:
+                  client.subscribe(dataset=DATASET, schema=schema, stype_in='continuous',
+                                   symbols=SYMBOL, snapshot=snapshot)
+                  client.start()
+                  time.sleep(seconds)
+              except Exception as exc:
+                  errors.append(f'{type(exc).__name__}:{exc}')
+              finally:
+                  try:
+                      client.stop()
+                  except Exception:
+                      pass
+                  try:
+                      client.block_for_close(timeout=5)
+                  except Exception:
+                      pass
+
+              non_error = sum(v for k, v in counts.items() if k not in {'ErrorMsg', 'SystemMsg', 'SymbolMappingMsg'})
+              return {
+                  'schema': schema,
+                  'snapshot': snapshot,
+                  'record_counts': counts,
+                  'gateway_errors': errors,
+                  'system_messages': systems[:10],
+                  'received_market_records': non_error > 0,
+              }
+
+          result = {
+              'schema': 'NG_DATABENTO_ENTITLEMENT_RECEIPT_V1',
+              'checked_at_utc': dt.datetime.now(dt.timezone.utc).isoformat(),
+              'dataset': DATASET,
+              'symbol': SYMBOL,
+              'github_secret_present': True,
+              'secret_value_exposed': False,
+              'probes': [
+                  probe('trades'),
+                  probe('mbp-10'),
+                  probe('mbo', snapshot=True),
+              ],
+              'v4_activity': False,
+          }
+          path = os.environ['RECEIPT']
+          os.makedirs(os.path.dirname(path), exist_ok=True)
+          with open(path, 'w', encoding='utf-8') as f:
+              json.dump(result, f, indent=2, sort_keys=True)
+              f.write('\n')
+          print(json.dumps(result, indent=2, sort_keys=True))
+          PY
+
+      - name: Commit sanitized entitlement receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Markets Ops Bot'
+          git config user.email 'noreply@openai.com'
+          git add "$RECEIPT"
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m 'ops: record Databento live entitlement receipt'
+          git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
