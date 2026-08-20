@@ -1,0 +1,85 @@
+name: NG Databento Entitlement MARKETS_NG_LIVE_MBO 20260820
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - '.github/workflows/ng_databento_entitlement_markets_ng_live_mbo_20260820.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABENTO_API_KEY: ${{ secrets.MARKETS_NG_LIVE_MBO }}
+      RECEIPT: research/kalshi/NG_DATABENTO_MARKETS_NG_LIVE_MBO_RECEIPT_20260820.json
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Databento
+        run: pip install --quiet databento
+      - name: Probe trades MBP-10 and MBO independently
+        shell: bash
+        run: |
+          python - <<'PY'
+          import datetime as dt, json, os, time
+          path=os.environ['RECEIPT']; key=os.environ.get('DATABENTO_API_KEY','')
+          result={'schema':'NG_DATABENTO_MARKETS_NG_LIVE_MBO_RECEIPT_V1','checked_at_utc':dt.datetime.now(dt.timezone.utc).isoformat(),'dataset':'GLBX.MDP3','symbol':'NG.v.0','github_secret_name':'MARKETS_NG_LIVE_MBO','github_secret_present':bool(key),'secret_value_exposed':False,'probes':[],'v4_activity':False}
+          os.makedirs(os.path.dirname(path),exist_ok=True)
+          if not key:
+              result['probe_status']='GITHUB_SECRET_UNAVAILABLE'
+          else:
+              import databento as db
+              def txt(v):
+                  if isinstance(v,(bytes,bytearray)): return bytes(v).split(b'\x00',1)[0].decode('utf-8','replace')
+                  return str(v)
+              def probe(schema,snapshot=False):
+                  counts={}; errors=[]; systems=[]; client=None
+                  def cb(rec):
+                      k=type(rec).__name__; counts[k]=counts.get(k,0)+1
+                      if k=='ErrorMsg':
+                          m=txt(getattr(rec,'err',''))
+                          if m and m not in errors: errors.append(m)
+                      elif k=='SystemMsg':
+                          m=txt(getattr(rec,'msg',''))
+                          if m and m not in systems: systems.append(m)
+                  try:
+                      client=db.Live(heartbeat_interval_s=10)
+                      client.add_callback(cb)
+                      client.subscribe(dataset='GLBX.MDP3',schema=schema,stype_in='continuous',symbols='NG.v.0',snapshot=snapshot)
+                      client.start(); time.sleep(8)
+                  except Exception as exc:
+                      errors.append(f'{type(exc).__name__}:{exc}')
+                  finally:
+                      if client is not None:
+                          try: client.stop()
+                          except Exception: pass
+                          try: client.block_for_close(timeout=5)
+                          except Exception: pass
+                  market=sum(v for k,v in counts.items() if k not in {'ErrorMsg','SystemMsg','SymbolMappingMsg'})
+                  return {'schema':schema,'snapshot':snapshot,'record_counts':counts,'gateway_errors':errors,'system_messages':systems[:10],'received_market_records':market>0,'authorized':not any('not authorized' in e.lower() or 'auth' in e.lower() for e in errors)}
+              result['probes']=[probe('trades'),probe('mbp-10'),probe('mbo',True)]
+              result['probe_status']='COMPLETE'
+          with open(path,'w',encoding='utf-8') as f: json.dump(result,f,indent=2,sort_keys=True); f.write('\n')
+          print(json.dumps(result,indent=2,sort_keys=True))
+          PY
+      - name: Commit sanitized receipt
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s "$RECEIPT" || exit 0
+          git config user.name 'Markets Ops Bot'
+          git config user.email 'noreply@openai.com'
+          git add "$RECEIPT"
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'ops: record MARKETS_NG_LIVE_MBO entitlement receipt'
+          git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
