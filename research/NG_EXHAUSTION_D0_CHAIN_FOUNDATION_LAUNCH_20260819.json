@@ -1,0 +1,35 @@
+{
+  "status": "AUTHORIZED_D0_CHAIN_FOUNDATION_LAUNCH",
+  "date": "2026-08-19",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "lanes": {
+    "D0_D1_COMPLEMENT": {
+      "models": ["logistic", "extra_trees", "knn"],
+      "root_age_seconds": [0, 1, 2, 3, 4, 5],
+      "role": "MATCHED_IMPLEMENTATION_AND_CALIBRATION_CROSSCHECK_ONLY_NOT_NEW_INDEPENDENT_EVIDENCE"
+    },
+    "ROOT_RETAINED_VS_ABLATED": {
+      "stages": [2, 3],
+      "models": ["logistic", "extra_trees", "knn"],
+      "targets": ["CONTINUATION", "EVENTUAL_DEPTH", "CHAIN_TYPE_FAMILY"],
+      "prior_age_seconds": [0, 1, 2, 3, 4, 5],
+      "post_birth_H_seconds": [1, 2, 3, 4, 5],
+      "ablation": "ZERO_ROOT_FEATURE_BLOCK_ONLY_KEEP_ROOT_CONFIRMATION_FOR_IDENTICAL_CHECKPOINT_ELIGIBILITY"
+    }
+  },
+  "primary_information_view": "FULL_CAUSAL",
+  "cross_model_vote": false,
+  "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
+  "promotion_performed": false,
+  "protected_mutations": {
+    "detector": false,
+    "canonical_rows": false,
+    "phase1": false,
+    "phase2": false,
+    "runway_clock": false,
+    "permanent_frankie": false,
+    "frankie_1": false,
+    "spawn_py": false,
+    "ssos_play": false
+  }
+}
