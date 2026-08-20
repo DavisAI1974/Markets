@@ -6,12 +6,14 @@ on:
       - chatgpt/ng-exhaustion-entry-timing-revival-20260818
     paths:
       - research/kalshi/ng_exhaustion_v4_causal_clock.py
+      - research/kalshi/ng_exhaustion_v4_causal_entry_adapter.py
       - research/kalshi/ng_exhaustion_v4_mechanics.py
       - research/kalshi/ng_exhaustion_v4_lock_outcome.py
       - research/kalshi/ng_exhaustion_v4_history_support.py
       - research/kalshi/ng_exhaustion_v4_gate_verifier.py
       - research/kalshi/frankie_p0_real_evidence_plan.py
       - research/kalshi/tests/test_ng_exhaustion_v4_causal_clock.py
+      - research/kalshi/tests/test_ng_exhaustion_v4_causal_entry_adapter.py
       - research/kalshi/tests/test_ng_exhaustion_v4_mechanics.py
       - research/kalshi/tests/test_ng_exhaustion_v4_lock_outcome.py
       - research/kalshi/tests/test_ng_exhaustion_v4_history_support.py
@@ -40,6 +42,7 @@ jobs:
           set +e
           python -m pytest -q \
             research/kalshi/tests/test_ng_exhaustion_v4_causal_clock.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_causal_entry_adapter.py \
             research/kalshi/tests/test_ng_exhaustion_v4_mechanics.py \
             research/kalshi/tests/test_ng_exhaustion_v4_lock_outcome.py \
             research/kalshi/tests/test_ng_exhaustion_v4_history_support.py \
@@ -57,12 +60,14 @@ jobs:
           from pathlib import Path
           paths=[
             'research/kalshi/ng_exhaustion_v4_causal_clock.py',
+            'research/kalshi/ng_exhaustion_v4_causal_entry_adapter.py',
             'research/kalshi/ng_exhaustion_v4_mechanics.py',
             'research/kalshi/ng_exhaustion_v4_lock_outcome.py',
             'research/kalshi/ng_exhaustion_v4_history_support.py',
             'research/kalshi/ng_exhaustion_v4_gate_verifier.py',
             'research/kalshi/frankie_p0_real_evidence_plan.py',
             'research/kalshi/tests/test_ng_exhaustion_v4_causal_clock.py',
+            'research/kalshi/tests/test_ng_exhaustion_v4_causal_entry_adapter.py',
             'research/kalshi/tests/test_ng_exhaustion_v4_mechanics.py',
             'research/kalshi/tests/test_ng_exhaustion_v4_lock_outcome.py',
             'research/kalshi/tests/test_ng_exhaustion_v4_history_support.py',
@@ -115,4 +120,4 @@ jobs:
           done
           exit 1
 
-# Trigger revision: source checkout is exact trigger SHA; diagnostic receipt remains no-launch.
+# Trigger revision: Gate-1 causal-entry bridge included; exact-SHA verification; no launch.
