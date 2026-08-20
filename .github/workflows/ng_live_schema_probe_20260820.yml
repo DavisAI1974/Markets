@@ -50,7 +50,7 @@ jobs:
               if isinstance(v,(bytes,bytearray)):
                   return bytes(v).split(b'\x00',1)[0].decode('utf-8','replace')
               return str(v)
-          def probe(schema,snapshot=False,seconds=6):
+          def probe(schema,snapshot=False,seconds=8):
               counts={}; errors=[]; systems=[]; client=None
               def cb(rec):
                   k=type(rec).__name__; counts[k]=counts.get(k,0)+1
@@ -61,7 +61,7 @@ jobs:
                       m=text(getattr(rec,'msg',''))
                       if m and m not in systems: systems.append(m)
               try:
-                  client=db.Live(heartbeat_interval_s=3)
+                  client=db.Live(heartbeat_interval_s=10)
                   client.add_callback(cb)
                   client.subscribe(dataset=DATASET,schema=schema,stype_in='continuous',symbols=SYMBOL,snapshot=snapshot)
                   client.start(); time.sleep(seconds)
@@ -100,7 +100,7 @@ jobs:
                   try: payload=json.loads(line); break
                   except Exception: pass
           receipt={
-              'schema':'NG_LIVE_SCHEMA_ENTITLEMENT_RECEIPT_V1',
+              'schema':'NG_LIVE_SCHEMA_ENTITLEMENT_RECEIPT_V2',
               'checked_at_utc':dt.datetime.now(dt.timezone.utc).isoformat(),
               'instance_id':os.environ['INSTANCE_ID'],
               'ssm_status':inv.get('Status'),
