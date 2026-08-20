@@ -73,3 +73,5 @@ jobs:
             if git push origin HEAD:"$branch"; then exit 0; fi
           done
           exit 1
+
+# Trigger revision: exact-SHA unified registry/engine/reconciler verification only; no launch.
