@@ -1,0 +1,156 @@
+name: NG Databento Entitlement Probe V2 20260820
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - '.github/workflows/ng_databento_entitlement_probe_v2_20260820.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
+      RECEIPT: research/kalshi/NG_DATABENTO_ENTITLEMENT_RECEIPT_V2_20260820.json
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Initialize sanitized receipt
+        shell: bash
+        run: |
+          python - <<'PY'
+          import datetime as dt, json, os
+          present = bool(os.environ.get('DATABENTO_API_KEY'))
+          r = {
+              'schema': 'NG_DATABENTO_ENTITLEMENT_RECEIPT_V2',
+              'checked_at_utc': dt.datetime.now(dt.timezone.utc).isoformat(),
+              'dataset': 'GLBX.MDP3',
+              'symbol': 'NG.v.0',
+              'github_secret_present': present,
+              'secret_value_exposed': False,
+              'probe_status': 'INITIALIZED',
+              'probes': [],
+              'v4_activity': False,
+          }
+          path = os.environ['RECEIPT']
+          os.makedirs(os.path.dirname(path), exist_ok=True)
+          with open(path, 'w', encoding='utf-8') as f:
+              json.dump(r, f, indent=2, sort_keys=True); f.write('\n')
+          PY
+
+      - name: Install Databento client
+        id: install
+        continue-on-error: true
+        run: pip install --quiet databento
+
+      - name: Probe live schemas independently
+        id: probe
+        continue-on-error: true
+        shell: bash
+        run: |
+          python - <<'PY'
+          import datetime as dt
+          import json
+          import os
+          import time
+
+          path = os.environ['RECEIPT']
+          result = json.load(open(path, encoding='utf-8'))
+          if not os.environ.get('DATABENTO_API_KEY'):
+              result['probe_status'] = 'GITHUB_SECRET_UNAVAILABLE'
+              with open(path, 'w', encoding='utf-8') as f:
+                  json.dump(result, f, indent=2, sort_keys=True); f.write('\n')
+              raise SystemExit(0)
+
+          try:
+              import databento as db
+          except Exception as exc:
+              result['probe_status'] = 'DATABENTO_IMPORT_FAILED'
+              result['probe_error'] = f'{type(exc).__name__}:{exc}'
+              with open(path, 'w', encoding='utf-8') as f:
+                  json.dump(result, f, indent=2, sort_keys=True); f.write('\n')
+              raise SystemExit(0)
+
+          SYMBOL = 'NG.v.0'
+          DATASET = 'GLBX.MDP3'
+
+          def text(v):
+              if isinstance(v, (bytes, bytearray)):
+                  return bytes(v).split(b'\x00', 1)[0].decode('utf-8', 'replace')
+              return str(v)
+
+          def probe(schema: str, snapshot: bool = False, seconds: float = 6.0):
+              counts, errors, systems = {}, [], []
+              client = None
+              def on_record(rec):
+                  kind = type(rec).__name__
+                  counts[kind] = counts.get(kind, 0) + 1
+                  if kind == 'ErrorMsg':
+                      msg = text(getattr(rec, 'err', ''))
+                      if msg and msg not in errors:
+                          errors.append(msg)
+                  elif kind == 'SystemMsg':
+                      msg = text(getattr(rec, 'msg', ''))
+                      if msg and msg not in systems:
+                          systems.append(msg)
+              try:
+                  client = db.Live(heartbeat_interval_s=3)
+                  client.add_callback(on_record)
+                  client.subscribe(dataset=DATASET, schema=schema, stype_in='continuous', symbols=SYMBOL, snapshot=snapshot)
+                  client.start()
+                  time.sleep(seconds)
+              except Exception as exc:
+                  errors.append(f'{type(exc).__name__}:{exc}')
+              finally:
+                  if client is not None:
+                      try: client.stop()
+                      except Exception: pass
+                      try: client.block_for_close(timeout=5)
+                      except Exception: pass
+              market_records = sum(v for k, v in counts.items() if k not in {'ErrorMsg','SystemMsg','SymbolMappingMsg'})
+              authorized = not any('not authorized' in e.lower() or 'auth' in e.lower() for e in errors)
+              return {
+                  'schema': schema,
+                  'snapshot': snapshot,
+                  'record_counts': counts,
+                  'gateway_errors': errors,
+                  'system_messages': systems[:10],
+                  'received_market_records': market_records > 0,
+                  'no_explicit_auth_rejection': authorized,
+              }
+
+          try:
+              result['probes'] = [probe('trades'), probe('mbp-10'), probe('mbo', True)]
+              result['probe_status'] = 'COMPLETE'
+          except Exception as exc:
+              result['probe_status'] = 'PROBE_INTERNAL_FAILURE'
+              result['probe_error'] = f'{type(exc).__name__}:{exc}'
+          result['checked_at_utc'] = dt.datetime.now(dt.timezone.utc).isoformat()
+          with open(path, 'w', encoding='utf-8') as f:
+              json.dump(result, f, indent=2, sort_keys=True); f.write('\n')
+          print(json.dumps(result, indent=2, sort_keys=True))
+          PY
+
+      - name: Commit sanitized entitlement receipt
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s "$RECEIPT" || exit 0
+          git config user.name 'Markets Ops Bot'
+          git config user.email 'noreply@openai.com'
+          git add "$RECEIPT"
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'ops: record robust Databento entitlement receipt'
+          git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
