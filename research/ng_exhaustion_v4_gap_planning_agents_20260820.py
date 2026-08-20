@@ -3,6 +3,8 @@
 
 These lanes may declare BUILD_READY, but they never launch V4, promote a candidate,
 mutate permanent Frankie, or modify frozen detector/canonical/runway artifacts.
+
+Trigger revision: user authorized BUILD_READY lanes to continue into isolated builds.
 """
 from __future__ import annotations
 import argparse, json
