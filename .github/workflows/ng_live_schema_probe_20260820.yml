@@ -1,0 +1,129 @@
+name: NG Live Schema Probe 20260820
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - '.github/workflows/ng_live_schema_probe_20260820.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      RECEIPT: research/kalshi/NG_LIVE_SCHEMA_ENTITLEMENT_RECEIPT_20260820.json
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+
+      - name: Probe schemas on EC2 credential
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws sts get-caller-identity >/dev/null
+          python - <<'PY'
+          import json
+          command = r'''set -eu
+          trap 'systemctl start markets-ng-live.service >/dev/null 2>&1 || true' EXIT
+          systemctl stop markets-ng-live.service || true
+          KEY="$(sed -n 's/^DATABENTO_API_KEY=//p' /etc/markets/markets.env | head -n1)"
+          if [ -z "$KEY" ]; then
+            echo '{"probe_status":"INSTANCE_KEY_MISSING"}'
+            exit 0
+          fi
+          export DATABENTO_API_KEY="$KEY"
+          python3 - <<'PY2'
+          import json, time
+          import databento as db
+
+          DATASET='GLBX.MDP3'; SYMBOL='NG.v.0'
+          def text(v):
+              if isinstance(v,(bytes,bytearray)):
+                  return bytes(v).split(b'\x00',1)[0].decode('utf-8','replace')
+              return str(v)
+          def probe(schema,snapshot=False,seconds=6):
+              counts={}; errors=[]; systems=[]; client=None
+              def cb(rec):
+                  k=type(rec).__name__; counts[k]=counts.get(k,0)+1
+                  if k=='ErrorMsg':
+                      m=text(getattr(rec,'err',''))
+                      if m and m not in errors: errors.append(m)
+                  elif k=='SystemMsg':
+                      m=text(getattr(rec,'msg',''))
+                      if m and m not in systems: systems.append(m)
+              try:
+                  client=db.Live(heartbeat_interval_s=3)
+                  client.add_callback(cb)
+                  client.subscribe(dataset=DATASET,schema=schema,stype_in='continuous',symbols=SYMBOL,snapshot=snapshot)
+                  client.start(); time.sleep(seconds)
+              except Exception as exc:
+                  errors.append(f'{type(exc).__name__}:{exc}')
+              finally:
+                  if client is not None:
+                      try: client.stop()
+                      except Exception: pass
+                      try: client.block_for_close(timeout=5)
+                      except Exception: pass
+              market=sum(v for k,v in counts.items() if k not in {'ErrorMsg','SystemMsg','SymbolMappingMsg'})
+              return {'schema':schema,'snapshot':snapshot,'record_counts':counts,'gateway_errors':errors,
+                      'system_messages':systems[:10],'received_market_records':market>0}
+          result={'probe_status':'COMPLETE','dataset':DATASET,'symbol':SYMBOL,'secret_value_exposed':False,
+                  'probes':[probe('trades'),probe('mbp-10'),probe('mbo',True)]}
+          print(json.dumps(result,sort_keys=True))
+          PY2
+          '''
+          with open('/tmp/ssm-schema-probe.json','w',encoding='utf-8') as f:
+              json.dump({'commands':[command]},f)
+          PY
+          cid="$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript \
+            --comment 'Probe NG Databento live schemas independently; no V4 activity' \
+            --parameters file:///tmp/ssm-schema-probe.json --query 'Command.CommandId' --output text)"
+          aws ssm wait command-executed --command-id "$cid" --instance-id "$INSTANCE_ID" || true
+          aws ssm get-command-invocation --command-id "$cid" --instance-id "$INSTANCE_ID" --output json > /tmp/inv.json
+          python - <<'PY'
+          import datetime as dt, json, os
+          inv=json.load(open('/tmp/inv.json',encoding='utf-8'))
+          stdout=inv.get('StandardOutputContent','').strip()
+          payload={}
+          for line in reversed(stdout.splitlines()):
+              line=line.strip()
+              if line.startswith('{') and line.endswith('}'):
+                  try: payload=json.loads(line); break
+                  except Exception: pass
+          receipt={
+              'schema':'NG_LIVE_SCHEMA_ENTITLEMENT_RECEIPT_V1',
+              'checked_at_utc':dt.datetime.now(dt.timezone.utc).isoformat(),
+              'instance_id':os.environ['INSTANCE_ID'],
+              'ssm_status':inv.get('Status'),
+              'probe':payload,
+              'stderr':inv.get('StandardErrorContent',''),
+              'secret_value_exposed':False,
+              'v4_activity':False,
+          }
+          path=os.environ['RECEIPT']; os.makedirs(os.path.dirname(path),exist_ok=True)
+          with open(path,'w',encoding='utf-8') as f:
+              json.dump(receipt,f,indent=2,sort_keys=True); f.write('\n')
+          print(json.dumps(receipt,indent=2,sort_keys=True))
+          PY
+
+      - name: Commit sanitized schema receipt
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s "$RECEIPT" || exit 0
+          git config user.name 'Markets Ops Bot'
+          git config user.email 'noreply@openai.com'
+          git add "$RECEIPT"
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'ops: record EC2 Databento schema entitlement receipt'
+          git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
