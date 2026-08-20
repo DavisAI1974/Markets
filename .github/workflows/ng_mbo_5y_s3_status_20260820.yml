@@ -24,12 +24,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          ref: ${{ github.sha }}
       - name: Inventory five-year archive without Databento call
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json,os
+          import collections,json,os
           from pathlib import Path
           import boto3
           s3=boto3.client('s3',region_name=os.environ['AWS_DEFAULT_REGION'])
@@ -43,33 +43,76 @@ jobs:
               token=r['NextContinuationToken']
           keys=[x['Key'] for x in rows]
           native=[x for x in rows if '/native/' in x['Key'] and x['Key'].endswith('.dbn.zst')]
-          jobs=[k for k in keys if '/_jobs/' in k and k.endswith('.json')]
+          job_keys=[k for k in keys if '/_jobs/' in k and k.endswith('.json')]
           done=[k for k in keys if '/_done/' in k and k.endswith('.done')]
           manifests=[k for k in keys if '/manifests/' in k and k.endswith('.json')]
           year_receipts=[k for k in keys if '/year_receipts/' in k and k.endswith('.json')]
+          compat_keys=[k for k in keys if '/_compat/' in k and k.endswith('.json')]
+          def getj(k): return json.loads(s3.get_object(Bucket=bucket,Key=k)['Body'].read())
+          jobs=[]
+          for k in job_keys:
+              try:
+                  d=getj(k)
+              except Exception as exc:
+                  jobs.append({'key':k,'read_error':type(exc).__name__}); continue
+              jobs.append({'key':k,'job_id':d.get('job_id'),'start':d.get('start'),'end':d.get('end'),'quote_usd':d.get('quote_usd'),'legacy_alias_from':d.get('legacy_alias_from')})
+          by_interval=collections.defaultdict(list)
+          by_job_id={}
+          for j in jobs:
+              if j.get('start') and j.get('end'):
+                  by_interval[(j['start'],j['end'])].append(j)
+              jid=j.get('job_id')
+              if jid and jid not in by_job_id: by_job_id[jid]=j
+          duplicate_intervals=[]
+          for (start,end),items in sorted(by_interval.items()):
+              ids=sorted({str(x.get('job_id')) for x in items if x.get('job_id')})
+              if len(ids)>1:
+                  duplicate_intervals.append({'start':start,'end':end,'job_ids':ids,'keys':sorted(x['key'] for x in items)})
+          recorded_quotes=[float(j['quote_usd']) for j in by_job_id.values() if isinstance(j.get('quote_usd'),(int,float))]
+          compat=[]
+          for k in compat_keys:
+              try: compat.append({'key':k,**getj(k)})
+              except Exception as exc: compat.append({'key':k,'read_error':type(exc).__name__})
           out={
-            'schema':'NG_MBO_5Y_S3_STATUS_V1',
+            'schema':'NG_MBO_5Y_S3_STATUS_V2',
             'bucket':bucket,'prefix':prefix,
-            'submitted_segment_count':len(jobs),
+            'submitted_job_key_count':len(job_keys),
+            'unique_databento_job_id_count':len(by_job_id),
+            'unique_requested_interval_count':len(by_interval),
+            'duplicate_interval_distinct_job_count':len(duplicate_intervals),
+            'duplicate_intervals':duplicate_intervals,
+            'recorded_estimated_submitted_quote_usd':round(sum(recorded_quotes),12),
             'completed_segment_count':len(done),
             'manifest_count':len(manifests),
             'native_dbn_object_count':len(native),
             'native_dbn_bytes':sum(int(x.get('Size',0)) for x in native),
             'year_receipt_count':len(year_receipts),
-            'submitted_segments':sorted(k.rsplit('/',1)[-1].removesuffix('.json') for k in jobs),
+            'submitted_segments':sorted(k.rsplit('/',1)[-1].removesuffix('.json') for k in job_keys),
             'completed_segments':sorted(k.rsplit('/',1)[-1].removesuffix('.done') for k in done),
+            'compatibility_audits':compat,
             'data_purchase_performed_by_status_probe':False,
           }
-          Path('research/kalshi/NG_MBO_5Y_S3_STATUS_20260820.json').write_text(json.dumps(out,indent=2,sort_keys=True)+'\n')
-          print(json.dumps(out,indent=2,sort_keys=True))
+          text=json.dumps(out,indent=2,sort_keys=True)+'\n'
+          Path('/tmp/ng_mbo_5y_status.json').write_text(text)
+          Path('research/kalshi/NG_MBO_5Y_S3_STATUS_20260820.json').write_text(text)
+          print(text)
           PY
-      - name: Commit status receipt
+      - name: Commit status receipt safely
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add research/kalshi/NG_MBO_5Y_S3_STATUS_20260820.json
-          if ! git diff --cached --quiet; then
+          branch='chatgpt/ng-exhaustion-entry-timing-revival-20260818'
+          path='research/kalshi/NG_MBO_5Y_S3_STATUS_20260820.json'
+          for attempt in 1 2 3 4; do
+            git fetch origin "$branch"
+            git reset --hard "origin/$branch"
+            cp /tmp/ng_mbo_5y_status.json "$path"
+            git add "$path"
+            if git diff --cached --quiet; then exit 0; fi
             git commit -m 'research: record NG MBO 5Y S3 status'
-            git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
-          fi
+            if git push origin HEAD:"$branch"; then exit 0; fi
+          done
+          exit 1
+
+# Read-only AWS audit. No Databento API call and no data purchase.
