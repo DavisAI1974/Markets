@@ -1,0 +1,286 @@
+name: NG Exhaustion D0 Full Causal Recovery 20260819
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/NG_EXHAUSTION_D0_FULL_CAUSAL_RECOVERY_LAUNCH_20260819.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: us-east-2
+  BUCKET: bento-568968024170-us-east-2-an
+  BASE_ID: '9281733364'
+  BASE_SHA: f50eaf74a57654334691cbf5cce3b038443f6944a9c00eb5da6ca35b557802b1
+  HELD_ID: '9281272840'
+  HELD_SHA: 21577d01d45241264df714ab6ee5b95f6a774e1475e0d74a9454221fdfdde12e
+  LINEAGE_ID: '9289929292'
+  LINEAGE_SHA: a67caab9de6b183e8c102ebd73a7e542aa909e23f66575290563e40b056efd95
+  RECONCILE_ID: '9306082330'
+  RECONCILE_SHA: f17c130df029429bfbc35067d1cc9d16128ca4fb227dd37f3fb4fbb8bbaf8875
+
+jobs:
+  d0-model-agents:
+    name: D0 ${{ matrix.model }} full-causal recovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        model: [logistic, extra_trees, knn]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: python -m pip install --quiet numpy scikit-learn
+
+      - name: Verify D0 full-causal contract
+        run: |
+          set -euo pipefail
+          python -m py_compile research/ng_exhaustion_chain_recovery_features_20260819.py research/ng_exhaustion_chain_recovery_models_20260819.py research/ng_exhaustion_d0_full_causal_recovery_20260819.py
+          PYTHONPATH=research python - <<'PY'
+          import inspect
+          import ng_exhaustion_d0_full_causal_recovery_20260819 as r
+          src=inspect.getsource(r)
+          assert r.PRIOR_AGES == (0,1,2,3,4,5)
+          assert r.VIEWS[0] == 'FULL_CAUSAL'
+          assert r.TARGETS == ('D0_TERMINALITY','EVENTUAL_DEPTH','FIRST_CHAIN_TYPE')
+          assert 'POST_BIRTH' not in src
+          assert 'cross_model_consensus_gate_used' in src
+          assert '2_of_3' not in src and '2-of-3' not in src
+          print('D0 full-causal contract: PASS')
+          PY
+
+      - name: Download and verify immutable frozen sources
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/in/base /tmp/in/held /tmp/in/lineage /tmp/in/reconcile
+          get_artifact () {
+            id="$1"; sha="$2"; zip="$3"; dest="$4"
+            curl -L --fail --silent --show-error -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" -o "${zip}"
+            echo "${sha}  ${zip}" | sha256sum -c -
+            unzip -q "${zip}" -d "${dest}"
+          }
+          get_artifact "${BASE_ID}" "${BASE_SHA}" /tmp/base.zip /tmp/in/base
+          get_artifact "${HELD_ID}" "${HELD_SHA}" /tmp/held.zip /tmp/in/held
+          get_artifact "${LINEAGE_ID}" "${LINEAGE_SHA}" /tmp/lineage.zip /tmp/in/lineage
+          get_artifact "${RECONCILE_ID}" "${RECONCILE_SHA}" /tmp/reconcile.zip /tmp/in/reconcile
+
+      - name: Resolve all D0/root weeks
+        run: |
+          python - <<'PY' > /tmp/weeks.txt
+          import gzip,json
+          weeks=set()
+          for p in (
+            '/tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz',
+            '/tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz',
+          ):
+              with gzip.open(p,'rt') as f:
+                  for line in f:
+                      r=json.loads(line)
+                      weeks.add(r['week_sunday'])
+          assert weeks
+          for w in sorted(weeks): print(w)
+          PY
+
+      - name: Materialize authoritative raw NG tape
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ngraw
+          python - <<'PY' > /tmp/days.txt
+          from datetime import datetime,timedelta
+          days=set()
+          for line in open('/tmp/weeks.txt'):
+              w=line.strip()
+              if not w: continue
+              d=datetime.strptime(w,'%Y%m%d')
+              for i in range(6): days.add((d+timedelta(days=i)).strftime('%Y%m%d'))
+          for x in sorted(days): print(x)
+          PY
+          python - <<'PY' > /tmp/closures.txt
+          import json
+          d=json.load(open('research/NG_EXHAUSTION_20260403_CME_CLOSURE_WITNESS_20260817.json'))
+          assert d['status']=='FROZEN_EXCHANGE_CLOSURE_WITNESS'
+          for x in d['canonicalization_rule']['explicit_closure_dates']: print(x)
+          PY
+          while read -r d; do
+            mapfile -t keys < <(aws s3api list-objects-v2 --bucket "${BUCKET}" --prefix "nymex/nymex_cont/NG_${d}" \
+              --query 'Contents[].Key' --output text | tr '\t' '\n' | \
+              grep -E "NG_${d}(_[A-Za-z]{3})?\\.jsonl\\.gz$" | sort -u || true)
+            if grep -qx "${d}" /tmp/closures.txt; then
+              test "${#keys[@]}" -eq 0 || { echo "::error::frozen closure ${d} has raw objects"; exit 1; }
+              continue
+            fi
+            test "${#keys[@]}" -eq 1 || { echo "::error::expected exactly one NG raw object ${d}, got ${#keys[@]}"; exit 1; }
+            aws s3 cp "s3://${BUCKET}/${keys[0]}" "/tmp/ngraw/NG_${d}.jsonl.gz" --only-show-errors
+            test -s "/tmp/ngraw/NG_${d}.jsonl.gz"
+          done < /tmp/days.txt
+
+      - name: Run D0 full-causal model agent
+        env:
+          MODEL: ${{ matrix.model }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/out
+          PYTHONPATH=research:research/kalshi python research/ng_exhaustion_d0_full_causal_recovery_20260819.py \
+            --model "${MODEL}" \
+            --base /tmp/in/base/NG_EXHAUSTION_CHAIN_CANONICAL_54W_BASE_20260817_EVENT_TABLE.jsonl.gz \
+            --held /tmp/in/held/NG_EXHAUSTION_CHAIN_CANONICAL_HELD_WEEK_20260329_EVENT_TABLE.jsonl.gz \
+            --base-lineage /tmp/in/lineage/NG_EXHAUSTION_CHAIN_PHASE1_LINEAGE_54W_20260817.instances.jsonl.gz \
+            --held-lineage /tmp/in/reconcile/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILED_20260817_HELD_LINEAGE_INSTANCES.jsonl.gz \
+            --raw-dir /tmp/ngraw \
+            --out "/tmp/out/NG_EXHAUSTION_D0_FULL_CAUSAL_${MODEL}_20260819.json"
+
+      - name: Fail closed on D0 invariants
+        env:
+          MODEL: ${{ matrix.model }}
+        run: |
+          python - <<'PY'
+          import json,os
+          p=f"/tmp/out/NG_EXHAUSTION_D0_FULL_CAUSAL_{os.environ['MODEL']}_20260819.json"
+          d=json.load(open(p))
+          assert d['frozen_exact_depth_counts']=={'0':135860,'1':18837,'2':1592,'3':124,'4':8,'5':1}
+          assert d['exact_d0_preserved_n']==135860
+          assert d['executable_exact_d0_positive_n']==135823
+          assert d['d1plus_continuation_control_n']==20562
+          assert d['week_end_censored_d0_n']==37
+          assert d['root_age_values_first_pass']==[0,1,2,3,4,5]
+          assert d['cross_model_consensus_gate_used'] is False
+          assert d['primary_information_view']=='FULL_CAUSAL'
+          assert set(d['results'])=={'D0_TERMINALITY','EVENTUAL_DEPTH','FIRST_CHAIN_TYPE'}
+          assert d['root_clock_semantics']['H'].startswith('NOT_USED_FOR_D0_TERMINALITY')
+          assert d['promotion_performed'] is False
+          assert not any(d['protected_mutations'].values())
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-d0-full-causal-${{ matrix.model }}-20260819
+          path: /tmp/out/*.json
+          if-no-files-found: error
+          retention-days: 14
+
+  reconcile:
+    name: Reconcile D0 independent models
+    needs: d0-model-agents
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ng-exhaustion-d0-full-causal-*-20260819
+          path: /tmp/agents
+          merge-multiple: true
+
+      - name: Reconcile without voting
+        run: |
+          set -euo pipefail
+          OUT=research/generated/ng_exhaustion_d0_full_causal_recovery_20260819
+          mkdir -p "${OUT}"
+          python - <<'PY'
+          import glob,json
+          from pathlib import Path
+
+          docs=[json.load(open(p)) for p in sorted(glob.glob('/tmp/agents/*.json'))]
+          by={d['model']:d for d in docs}
+          expected={'logistic','extra_trees','knn'}
+          if set(by)!=expected:
+              raise SystemExit(f'missing D0 model artifacts: have={sorted(by)}')
+          independent=[]
+          unresolved=[]
+          price=[]
+          for model in ('logistic','extra_trees','knn'):
+              d=by[model]
+              assert d['cross_model_consensus_gate_used'] is False
+              for target,rec in d['results'].items():
+                  independent.append({'model':model,'target':target,'earliest':rec['earliest']})
+                  if rec['earliest'] is None:
+                      unresolved.append({'model':model,'target':target})
+                  for point in rec['tested']:
+                      price.append({
+                          'model':model,
+                          'target':target,
+                          'root_age_seconds_after_confirmation':point['root_age_seconds_after_confirmation'],
+                          'full_validated':point['views']['FULL_CAUSAL']['independently_validated'],
+                          'no_price_validated':point['views']['NO_PRICE_CAUSAL']['independently_validated'],
+                          'incremental_price_value':point['incremental_price_value'],
+                      })
+          result={
+              'status':'NG_EXHAUSTION_D0_FULL_CAUSAL_RECOVERY_RECONCILED',
+              'date':'2026-08-19',
+              'contract':'D0_TERMINALITY_EVENTUAL_DEPTH_FIRST_CHAIN_TYPE_EARLIEST_ROOT_CAUSAL_TIME',
+              'primary_information_view':'FULL_CAUSAL',
+              'model_voting_used':False,
+              'root_clock':'ROOT_AGE_NOT_H',
+              'independent_model_findings':independent,
+              'unresolved_after_root_age_0_5':unresolved,
+              'price_increment_evidence':price,
+              'D0_D1_complement_crosscheck':'PENDING_BOTH_DURABLE_RESULTS',
+              'root_deeper_ablation':'PENDING_D1_D3_DURABLE_RESULTS',
+              'trade_handoff':'AFTER_INDEPENDENTLY_VALIDATED_D0_SIGNAL_ATTACH_MODEL_SPECIFIC_EXECUTION_ECONOMICS_AT_EXACT_CAUSAL_TIMESTAMP',
+              'next_step':'CONTINUE_LATER_ROOT_AGE_FOR_UNRESOLVED_MODEL_TARGET_PAIRS_ONLY; DO_NOT_CALL_IT_H',
+              'policy':'FLAG_AND_DECOMPOSE_NOT_AUTO_KILL',
+              'promotion_performed':False,
+              'protected_mutations':{'detector':False,'canonical_rows':False,'phase1':False,'phase2':False,'runway_clock':False,'permanent_frankie':False,'frankie_1':False,'spawn_py':False,'ssos_play':False},
+          }
+          Path(f'{OUT}/NG_EXHAUSTION_D0_FULL_CAUSAL_ALL_RESULTS_20260819.json').write_text(json.dumps(result,indent=2,sort_keys=True)+'\n')
+          lines=['# NG Exhaustion D0 Full-Causal Recovery — 2026-08-19','',
+            'Status: **reconciled independent-model D0 root pass; no model voting.**','',
+            'D0 uses `ROOT_AGE`, not H. `FULL_CAUSAL` is primary; matching no-price and price/polarity ablations are preserved.','',
+            '## Independent earliest findings','']
+          for r in independent:
+              e=r['earliest']
+              msg='unresolved through ROOT_AGE 0..5' if e is None else f"ROOT_AGE {e['root_age_seconds_after_confirmation']}s after root confirmation"
+              lines.append(f"- {r['model']} / {r['target']}: {msg}.")
+          lines += ['', '## Next', '- Continue later ROOT_AGE only for unresolved model/target pairs.', '- Cross-check direct D0 against the matched D1 complement when both durable result sets exist.', '- Then test root-retained versus root-ablated deeper-stage prediction and attach D0 trade economics to independently validated causal signals.', '', '## Preservation', '- All 135,860 original D0s remain preserved, including 37 week-end censored rows.', '- No protected artifact was mutated or promoted.', '- `FLAG_AND_DECOMPOSE_NOT_AUTO_KILL` remains in force.', '']
+          Path(f'{OUT}/NG_EXHAUSTION_D0_FULL_CAUSAL_ALL_FINDINGS_20260819.md').write_text('\n'.join(lines))
+          PY
+
+      - name: Fail closed on reconciled D0 contract
+        run: |
+          python - <<'PY'
+          import json
+          p='research/generated/ng_exhaustion_d0_full_causal_recovery_20260819/NG_EXHAUSTION_D0_FULL_CAUSAL_ALL_RESULTS_20260819.json'
+          d=json.load(open(p))
+          assert d['model_voting_used'] is False
+          assert d['primary_information_view']=='FULL_CAUSAL'
+          assert d['root_clock']=='ROOT_AGE_NOT_H'
+          assert d['policy']=='FLAG_AND_DECOMPOSE_NOT_AUTO_KILL'
+          assert not any(d['protected_mutations'].values())
+          PY
+
+      - name: Commit durable D0 outputs
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/generated/ng_exhaustion_d0_full_causal_recovery_20260819
+          if git diff --cached --quiet; then
+            echo 'No durable D0 output changes to commit.'
+            exit 0
+          fi
+          git commit -m "research: reconcile D0 full-causal recovery"
+          git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
