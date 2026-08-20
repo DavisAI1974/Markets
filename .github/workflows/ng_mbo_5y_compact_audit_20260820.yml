@@ -45,3 +45,5 @@ jobs:
             if git push origin HEAD:"$branch"; then exit 0; fi
           done
           exit 1
+
+# Trigger revision: read-only expected-vs-actual archive audit.
