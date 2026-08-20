@@ -6,6 +6,8 @@ import json
 from collections import Counter
 from pathlib import Path
 
+import numpy as np
+
 import ng_exhaustion_d1_d5_chain_birth_agents_v2_20260819 as v2
 
 base = v2.base
@@ -52,6 +54,83 @@ def load_cache(cases, raw_dir):
     return cache
 
 
+def polarity_only_snapshot(cache, week, event, h):
+    # PRIOR eligibility is still enforced by base.feature_pair before this call.
+    # The full price-path evaluation is always run first and therefore enforces
+    # per-occurrence raw-tape/baseline integrity before this ablation is scored.
+    return np.asarray([float(event["polarity"])], dtype=float)
+
+
+def independent_validation(model_eval, stage):
+    # This is an independent per-model/per-view validation check. It is NOT a
+    # cross-model vote and is never combined into a 2-of-3 consensus gate.
+    return bool(base.model_pass(model_eval, stage))
+
+
+def price_increment(price_eval, polarity_eval):
+    out = {}
+    for block in ("validation", "confirmation", "held"):
+        p = price_eval.get("blocks", {}).get(block, {})
+        q = polarity_eval.get("blocks", {}).get(block, {})
+        if not p or not q or not p.get("n") or not q.get("n"):
+            out[block] = {"n": 0}
+            continue
+        if p.get("n") != q.get("n"):
+            raise RuntimeError(f"price/polarity ablation row-count mismatch block={block}: {p.get('n')} vs {q.get('n')}")
+        rec = {
+            "n": int(p["n"]),
+            "price_minus_polarity_log_loss_improvement": float(q["log_loss"] - p["log_loss"]),
+            "price_minus_polarity_brier_improvement": float(q["brier"] - p["brier"]),
+            "price_log_loss": float(p["log_loss"]),
+            "polarity_only_log_loss": float(q["log_loss"]),
+            "price_brier": float(p["brier"]),
+            "polarity_only_brier": float(q["brier"]),
+        }
+        if p.get("roc_auc") is not None and q.get("roc_auc") is not None:
+            rec["price_minus_polarity_auc_delta"] = float(p["roc_auc"] - q["roc_auc"])
+        else:
+            rec["price_minus_polarity_auc_delta"] = None
+        out[block] = rec
+    return out
+
+
+def evaluate_views(model, cases, stage, h, cache):
+    # Full causal predecessor price path is primary and runs first so that raw
+    # tape integrity fails closed before the polarity-only ablation is allowed.
+    saved = base.cache_snapshot
+    base.cache_snapshot = v2.causal_second_path
+    try:
+        price_eval = base.paired_eval(model, cases, stage, "prior", h, cache)
+    finally:
+        base.cache_snapshot = saved
+
+    saved = base.cache_snapshot
+    base.cache_snapshot = polarity_only_snapshot
+    try:
+        polarity_eval = base.paired_eval(model, cases, stage, "prior", h, cache)
+    finally:
+        base.cache_snapshot = saved
+
+    price_valid = independent_validation(price_eval, stage)
+    polarity_valid = independent_validation(polarity_eval, stage)
+    return {
+        "H_seconds": int(h),
+        "model": model,
+        "views": {
+            "POLARITY_PLUS_PRICE_PATH": {
+                "independently_validated": price_valid,
+                "evaluation": price_eval,
+            },
+            "POLARITY_ONLY": {
+                "independently_validated": polarity_valid,
+                "evaluation": polarity_eval,
+            },
+        },
+        "incremental_prebirth_price_value": price_increment(price_eval, polarity_eval),
+        "any_view_independently_validated": bool(price_valid or polarity_valid),
+    }
+
+
 def model_agent(target, model, events, lineage, raw_dir, exact):
     stage, cases, censored = target_cases(target, events, lineage)
     if target in ("D4", "D5"):
@@ -60,15 +139,13 @@ def model_agent(target, model, events, lineage, raw_dir, exact):
     tested = []
     pos = sum(int(c["y"] == 1) for c in cases)
     neg = len(cases) - pos
+    earliest = {"POLARITY_PLUS_PRICE_PATH": None, "POLARITY_ONLY": None}
     for h in EARLY_H:
-        z = base.paired_eval(model, cases, stage, "prior", h, cache)
-        ok = base.model_pass(z, stage)
-        tested.append({
-            "H_seconds": int(h),
-            "model": model,
-            "passes_gate": bool(ok),
-            "evaluation": z,
-        })
+        z = evaluate_views(model, cases, stage, h, cache)
+        tested.append(z)
+        for view in earliest:
+            if earliest[view] is None and z["views"][view]["independently_validated"]:
+                earliest[view] = int(h)
     return {
         "status": "NG_EXHAUSTION_PRIOR_EARLY_MODEL_AGENT_COMPLETE",
         "date": "2026-08-19",
@@ -77,6 +154,7 @@ def model_agent(target, model, events, lineage, raw_dir, exact):
         "stage_for_model": int(stage),
         "search_class": "PRIOR_ONLY_BEFORE_TARGET_BIRTH",
         "fallback_clock_used": False,
+        "cross_model_consensus_gate_used": False,
         "H_values": list(EARLY_H),
         "positive_n": int(pos),
         "negative_n": int(neg),
@@ -85,7 +163,10 @@ def model_agent(target, model, events, lineage, raw_dir, exact):
         "price_structure_mode": v2.PRICE_STRUCTURE_MODE,
         "price_structure_per_occurrence": True,
         "price_structure_availability_used_as_feature": False,
+        "prebirth_information_views": ["POLARITY_ONLY", "POLARITY_PLUS_PRICE_PATH"],
+        "earliest_independently_validated_H_by_view": earliest,
         "tested_points": tested,
+        "postbirth_price_policy": "WHEN_TARGET_IS_BORN_ADD_TARGET_OWN_CAUSAL_PRICE_PATH_FOR_RECOGNITION_MANAGEMENT_AND_DOWNSTREAM_PREDICTION_WITHOUT_LEAKING_BACKWARD",
         "characteristics_accessed": False,
         "promotion_performed": False,
         "protected_mutations": {
@@ -116,6 +197,7 @@ def sparse_case_study(target, events, lineage, raw_dir, exact):
             rec = {"H_seconds": int(h), "prior_eligible": bool(eligible)}
             if eligible:
                 rec["lead_seconds"] = int(tt - max(int(x) + h for x in cs))
+                rec["predecessor_polarities"] = [int(e["polarity"]) for e in c["preds"]]
                 # Force causal path construction for every predecessor occurrence.
                 rec["predecessor_path_lengths"] = [
                     int(len(v2.causal_second_path(cache, c["week"], e, h)) - 1)
@@ -137,6 +219,7 @@ def sparse_case_study(target, events, lineage, raw_dir, exact):
         "stage": int(stage),
         "search_class": "PRIOR_ONLY_BEFORE_TARGET_BIRTH",
         "fallback_clock_used": False,
+        "cross_model_consensus_gate_used": False,
         "H_values": list(EARLY_H),
         "positive_n": int(sum(c["y"] for c in cases)),
         "negative_n": int(len(cases) - sum(c["y"] for c in cases)),
@@ -145,6 +228,8 @@ def sparse_case_study(target, events, lineage, raw_dir, exact):
         "price_structure_mode": v2.PRICE_STRUCTURE_MODE,
         "price_structure_per_occurrence": True,
         "price_structure_availability_used_as_feature": False,
+        "prebirth_information_views_preserved": ["POLARITY_ONLY", "POLARITY_PLUS_PRICE_PATH"],
+        "postbirth_price_policy": "WHEN_TARGET_IS_BORN ADD ITS OWN CAUSAL PRICE PATH FOR DOWNSTREAM STATE WORK; NEVER LEAK IT INTO PRIOR",
         "sparse_cases": rows,
         "low_support_case_study_only": True,
         "promotion_performed": False,
@@ -189,6 +274,8 @@ def main():
         "target": result["target"],
         "model": result.get("model"),
         "H_values": result["H_values"],
+        "cross_model_consensus_gate_used": result["cross_model_consensus_gate_used"],
+        "earliest_by_view": result.get("earliest_independently_validated_H_by_view"),
     }, indent=2))
 
 
