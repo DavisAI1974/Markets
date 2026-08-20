@@ -76,6 +76,18 @@ jobs:
             --launch-commit "${SOURCE_LAUNCH_SHA}" \
             --source-run-id "${{ steps.source.outputs.run_id }}"
 
+      - name: Audit held influence on earliest timing without mutating agent outputs
+        run: |
+          set -euo pipefail
+          python -m py_compile research/ng_exhaustion_v3_t0_held_selection_audit_20260820.py
+          python research/ng_exhaustion_v3_t0_held_selection_audit_20260820.py \
+            --artifact-dir /tmp/agents \
+            --out-dir "${OUT_DIR}" \
+            --launch-commit "${SOURCE_LAUNCH_SHA}" \
+            --source-run-id "${{ steps.source.outputs.run_id }}"
+          test -s "${OUT_DIR}/NG_EXHAUSTION_V3_T0_HELD_SELECTION_AUDIT_20260820.json"
+          test -s "${OUT_DIR}/NG_EXHAUSTION_V3_T0_HELD_SELECTION_AUDIT_20260820.md"
+
       - name: Commit durable V3 outputs on current branch lineage
         run: |
           set -euo pipefail
