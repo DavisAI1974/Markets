@@ -50,9 +50,9 @@ jobs:
             'research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py':'2a2e248d04b25388db385309a5d459a72621514f',
             'research/ng_exhaustion_mbo_v4_state_adapter_20260820.py':'a125911193733016b77845708a956f26158c78a7',
           }
-          receipt={'schema':'NG_EXHAUSTION_V4_5Y_AWS_LAUNCH_GATE_V3','instance_id':instance_id,'region':region,'pinned_sha':pinned_sha,'github_trigger_sha':os.environ.get('GITHUB_SHA'),'source_mode':'native_mbo_full_state','prefix_wide_enumeration_allowed':False,'empirical_census_launched':False,'pinned_blob_shas':files}
+          receipt={'schema':'NG_EXHAUSTION_V4_5Y_AWS_LAUNCH_GATE_V4','instance_id':instance_id,'region':region,'pinned_sha':pinned_sha,'github_trigger_sha':os.environ.get('GITHUB_SHA'),'source_mode':'native_mbo_full_state','prefix_wide_enumeration_allowed':False,'empirical_census_launched':False,'pinned_blob_shas':files}
           try:
-            commands=['set -eu',f'rm -rf {workdir}',f'mkdir -p {workdir}/research']
+            commands=['set -eu','python3 -m pip install --quiet awscli', 'command -v aws', 'aws --version', f'rm -rf {workdir}',f'mkdir -p {workdir}/research']
             for rel,want in files.items():
               data=Path(rel).read_bytes()
               payload=base64.b64encode(data).decode()
