@@ -144,3 +144,5 @@ jobs:
           git diff --cached --check
           git commit -m 'research: rebind Frankie runtime boundary and repair V4 regression guard'
           git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
+
+# Explicit retrigger 2026-08-21 after registry diagnostic narrowed blocker to two verified byte pins.
