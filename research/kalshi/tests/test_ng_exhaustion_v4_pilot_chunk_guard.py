@@ -114,3 +114,6 @@ def test_wrong_parent_or_missing_child_fails_closed():
         reconcile_chunk(m, [ChildResult("s1", H2, H), ChildResult("s2", m.manifest_hash, H2)])
     with pytest.raises(PilotGuardError):
         reconcile_chunk(m, [ChildResult("s1", m.manifest_hash, H)])
+
+
+# 2026-08-21 readiness rerun after verified Frankie registry runtime-hash rebind.
