@@ -1,15 +1,15 @@
 {
-  "command_id": "dd8115f9-0a1b-4a41-bfac-a3aa7a148fa4",
+  "command_id": "ae591f98-ec64-42ca-a22e-2f16b314dfac",
   "empirical_census_launched": false,
-  "github_trigger_sha": "ea6f3fbe3ce9f225a9857f395dc4295af06206ef",
+  "github_trigger_sha": "5c31ef31f99f0566fc092a2869af1578e18cdaa8",
   "instance_id": "i-08cee7171c0a76a04",
   "pinned_sha": "9e3e44f817738594a1815785e3d9f3e8e510a1c7",
   "prefix_wide_enumeration_allowed": false,
   "region": "us-east-2",
-  "response_code": 2,
+  "response_code": 128,
   "schema": "NG_EXHAUSTION_V4_5Y_AWS_LAUNCH_GATE_V1",
   "source_mode": "native_mbo_full_state",
   "ssm_status": "Failed",
-  "standard_error": "/var/lib/amazon/ssm/i-08cee7171c0a76a04/document/orchestration/dd8115f9-0a1b-4a41-bfac-a3aa7a148fa4/awsrunShellScript/0.awsrunShellScript/_script.sh: 1: set: Illegal option -o pipefail\nfailed to run commands: exit status 2",
+  "standard_error": "fatal: not a git repository (or any of the parent directories): .git\nfailed to run commands: exit status 128",
   "standard_output": ""
 }
