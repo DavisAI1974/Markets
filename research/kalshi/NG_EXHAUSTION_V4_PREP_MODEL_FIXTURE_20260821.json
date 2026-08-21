@@ -1,0 +1,9 @@
+{
+  "schema": "NG_EXHAUSTION_V4_PREP_MODEL_FIXTURE_V1",
+  "model_kind": "DETERMINISTIC_MECHANICS_FIXTURE",
+  "empirical_model": false,
+  "external_model_calls": false,
+  "training_performed": false,
+  "performance_claim_authorized": false,
+  "purpose": "exercise state->probability->lock->handoff->reconciliation mechanics only"
+}
