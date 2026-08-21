@@ -22,6 +22,7 @@ jobs:
       INSTANCE_ID: i-08cee7171c0a76a04
       PINNED_SHA: 9e3e44f817738594a1815785e3d9f3e8e510a1c7
       RECEIPT_PATH: research/kalshi/NG_EXHAUSTION_V4_5Y_AWS_LAUNCH_GATE_20260821.json
+      EC2_WORKDIR: /mnt/markets/ng_exhaustion_v4_5y_run_20260821/worktree
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,84 +31,56 @@ jobs:
       - name: Install AWS SDK
         run: python -m pip install --quiet boto3
 
-      - name: Send fail-closed V4 source gate to durable EC2
+      - name: Stage pinned V4 source and run source gate on durable EC2
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json
-          import os
-          import time
-          import traceback
+          import base64, json, os, time, traceback
           from pathlib import Path
           import boto3
 
-          region = os.environ['AWS_DEFAULT_REGION']
-          instance_id = os.environ['INSTANCE_ID']
-          pinned_sha = os.environ['PINNED_SHA']
-          out_path = Path('/tmp/ng_exhaustion_v4_5y_aws_launch_gate_20260821.json')
-          receipt = {
-              'schema': 'NG_EXHAUSTION_V4_5Y_AWS_LAUNCH_GATE_V2',
-              'instance_id': instance_id,
-              'region': region,
-              'pinned_sha': pinned_sha,
-              'github_trigger_sha': os.environ.get('GITHUB_SHA'),
-              'source_mode': 'native_mbo_full_state',
-              'prefix_wide_enumeration_allowed': False,
-              'empirical_census_launched': False,
-              'pinned_blob_shas': {
-                  'research/ng_exhaustion_mbo_5y_aws_source_20260820.py': 'efb8ede9f7359e7c7ceeafa0e160b367ac48d89c',
-                  'research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py': '2a2e248d04b25388db385309a5d459a72621514f',
-                  'research/ng_exhaustion_mbo_v4_state_adapter_20260820.py': 'a125911193733016b77845708a956f26158c78a7',
-              },
+          region=os.environ['AWS_DEFAULT_REGION']
+          instance_id=os.environ['INSTANCE_ID']
+          pinned_sha=os.environ['PINNED_SHA']
+          workdir=os.environ['EC2_WORKDIR']
+          out_path=Path('/tmp/ng_exhaustion_v4_5y_aws_launch_gate_20260821.json')
+          files={
+            'research/ng_exhaustion_mbo_5y_aws_source_20260820.py':'efb8ede9f7359e7c7ceeafa0e160b367ac48d89c',
+            'research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py':'2a2e248d04b25388db385309a5d459a72621514f',
+            'research/ng_exhaustion_mbo_v4_state_adapter_20260820.py':'a125911193733016b77845708a956f26158c78a7',
           }
-
+          receipt={'schema':'NG_EXHAUSTION_V4_5Y_AWS_LAUNCH_GATE_V3','instance_id':instance_id,'region':region,'pinned_sha':pinned_sha,'github_trigger_sha':os.environ.get('GITHUB_SHA'),'source_mode':'native_mbo_full_state','prefix_wide_enumeration_allowed':False,'empirical_census_launched':False,'pinned_blob_shas':files}
           try:
-              ssm = boto3.client('ssm', region_name=region)
-              commands = [
-                  'set -eu',
-                  'cd /opt/markets',
-                  'python3 - <<\'PY2\'\nfrom pathlib import Path\nimport hashlib\nexpected={\n"research/ng_exhaustion_mbo_5y_aws_source_20260820.py":"efb8ede9f7359e7c7ceeafa0e160b367ac48d89c",\n"research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py":"2a2e248d04b25388db385309a5d459a72621514f",\n"research/ng_exhaustion_mbo_v4_state_adapter_20260820.py":"a125911193733016b77845708a956f26158c78a7",\n}\nfor p,want in expected.items():\n    data=Path(p).read_bytes()\n    got=hashlib.sha1((f"blob {len(data)}\\0").encode()+data).hexdigest()\n    print(p,got)\n    assert got==want,(p,got,want)\nprint("PINNED_V4_BLOBS_OK")\nPY2',
-                  'mkdir -p /mnt/markets/ng_exhaustion_v4_5y_run_20260821',
-                  'rm -f /mnt/markets/ng_exhaustion_v4_5y_run_20260821/SOURCE_RECEIPT.json',
-                  'python3 research/ng_exhaustion_mbo_5y_aws_source_20260820.py --inventory-only --receipt /mnt/markets/ng_exhaustion_v4_5y_run_20260821/SOURCE_RECEIPT.json > /mnt/markets/ng_exhaustion_v4_5y_run_20260821/SOURCE_GATE_STDOUT.txt',
-                  'python3 - <<\'PY3\'\nimport json\np="/mnt/markets/ng_exhaustion_v4_5y_run_20260821/SOURCE_RECEIPT.json"\nd=json.load(open(p))\nprint(json.dumps({k:d.get(k) for k in ["status","revision","manifest_source","selection_field","canonical_object_count","canonical_total_bytes","receipt_sha256","prefix_wide_enumeration_used","empirical_census_launched"]},indent=2,sort_keys=True))\nPY3',
-              ]
-              sent = ssm.send_command(
-                  InstanceIds=[instance_id],
-                  DocumentName='AWS-RunShellScript',
-                  Comment=f'NG Exhaustion V4 five-year source gate pinned {pinned_sha}',
-                  Parameters={'commands': commands, 'executionTimeout': ['1200']},
-                  TimeoutSeconds=1200,
-              )
-              command_id = sent['Command']['CommandId']
-              receipt['command_id'] = command_id
-              terminal = {'Success','Cancelled','TimedOut','Failed','Cancelling','Undeliverable','Terminated','Delivery Timed Out','Execution Timed Out'}
-              deadline = time.time() + 1200
-              inv = None
-              while time.time() < deadline:
-                  try:
-                      inv = ssm.get_command_invocation(CommandId=command_id, InstanceId=instance_id)
-                  except ssm.exceptions.InvocationDoesNotExist:
-                      time.sleep(2)
-                      continue
-                  if inv.get('Status') in terminal:
-                      break
-                  time.sleep(5)
-              if inv is None or inv.get('Status') not in terminal:
-                  receipt['ssm_status'] = 'CLIENT_WAIT_TIMEOUT'
-              else:
-                  receipt['ssm_status'] = inv.get('Status')
-                  receipt['response_code'] = inv.get('ResponseCode')
-                  receipt['standard_output'] = inv.get('StandardOutputContent','')
-                  receipt['standard_error'] = inv.get('StandardErrorContent','')
+            commands=['set -eu',f'rm -rf {workdir}',f'mkdir -p {workdir}/research']
+            for rel,want in files.items():
+              data=Path(rel).read_bytes()
+              payload=base64.b64encode(data).decode()
+              dest=f'{workdir}/{rel}'
+              commands.append(f"echo '{payload}' | base64 -d > '{dest}'")
+            commands += [
+              f"cd '{workdir}'",
+              "python3 - <<'PY2'\nfrom pathlib import Path\nimport hashlib\nexpected={\n'research/ng_exhaustion_mbo_5y_aws_source_20260820.py':'efb8ede9f7359e7c7ceeafa0e160b367ac48d89c',\n'research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py':'2a2e248d04b25388db385309a5d459a72621514f',\n'research/ng_exhaustion_mbo_v4_state_adapter_20260820.py':'a125911193733016b77845708a956f26158c78a7',\n}\nfor p,want in expected.items():\n data=Path(p).read_bytes(); got=hashlib.sha1((f'blob {len(data)}\\0').encode()+data).hexdigest(); print(p,got); assert got==want,(p,got,want)\nprint('PINNED_V4_BLOBS_OK')\nPY2",
+              f"mkdir -p '{workdir}/out'",
+              f"python3 research/ng_exhaustion_mbo_5y_aws_source_20260820.py --inventory-only --receipt '{workdir}/out/SOURCE_RECEIPT.json' > '{workdir}/out/SOURCE_GATE_STDOUT.txt'",
+              f"cat '{workdir}/out/SOURCE_RECEIPT.json'",
+            ]
+            ssm=boto3.client('ssm',region_name=region)
+            sent=ssm.send_command(InstanceIds=[instance_id],DocumentName='AWS-RunShellScript',Comment=f'NG Exhaustion V4 five-year source gate staged from GitHub {pinned_sha}',Parameters={'commands':commands,'executionTimeout':['1200']},TimeoutSeconds=1200)
+            command_id=sent['Command']['CommandId']; receipt['command_id']=command_id
+            terminal={'Success','Cancelled','TimedOut','Failed','Cancelling','Undeliverable','Terminated','Delivery Timed Out','Execution Timed Out'}
+            deadline=time.time()+1200; inv=None
+            while time.time()<deadline:
+              try: inv=ssm.get_command_invocation(CommandId=command_id,InstanceId=instance_id)
+              except ssm.exceptions.InvocationDoesNotExist: time.sleep(2); continue
+              if inv.get('Status') in terminal: break
+              time.sleep(5)
+            if inv is None or inv.get('Status') not in terminal: receipt['ssm_status']='CLIENT_WAIT_TIMEOUT'
+            else:
+              receipt['ssm_status']=inv.get('Status'); receipt['response_code']=inv.get('ResponseCode'); receipt['standard_output']=inv.get('StandardOutputContent',''); receipt['standard_error']=inv.get('StandardErrorContent','')
           except Exception as exc:
-              receipt['ssm_status'] = 'CONTROL_PLANE_ERROR'
-              receipt['control_plane_error'] = f'{type(exc).__name__}: {exc}'
-              receipt['traceback_tail'] = traceback.format_exc().splitlines()[-8:]
-
-          out_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n')
-          print(out_path.read_text())
+            receipt['ssm_status']='CONTROL_PLANE_ERROR'; receipt['control_plane_error']=f'{type(exc).__name__}: {exc}'; receipt['traceback_tail']=traceback.format_exc().splitlines()[-8:]
+          out_path.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n'); print(out_path.read_text())
           PY
 
       - name: Commit launch-gate receipt safely
@@ -134,7 +107,6 @@ jobs:
           python - <<'PY'
           import json
           d=json.load(open('/tmp/ng_exhaustion_v4_5y_aws_launch_gate_20260821.json'))
-          if d.get('ssm_status') != 'Success':
-              raise SystemExit('V4 AWS source gate did not pass: ' + str(d.get('ssm_status')))
+          if d.get('ssm_status') != 'Success': raise SystemExit('V4 AWS source gate did not pass: '+str(d.get('ssm_status')))
           print('PASS: V4 AWS native-MBO source gate completed on durable EC2')
           PY
