@@ -1,0 +1,128 @@
+name: Frankie Meta Loop Research Build Agents 20260821
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/kalshi/frankie_meta_loop_s138.py
+      - research/kalshi/frankie_meta_loop_agents_20260821.py
+      - research/kalshi/tests/test_frankie_meta_loop_s138.py
+      - .github/workflows/frankie_meta_loop_agents_20260821.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  meta-agent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [architecture_research, specialist_build_redteam]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run isolated meta-loop agent
+        run: |
+          python research/kalshi/frankie_meta_loop_agents_20260821.py \
+            --mode '${{ matrix.mode }}' \
+            --out 'FRANKIE_META_AGENT_${{ matrix.mode }}.json'
+      - name: Enforce zero-authority boundary
+        run: |
+          python - <<'PY'
+          import glob,json
+          p=glob.glob('FRANKIE_META_AGENT_*.json'); assert len(p)==1,p
+          d=json.load(open(p[0]))
+          assert d['status']=='META_LOOP_AGENT_COMPLETE'
+          assert d['external_model_calls'] is False
+          assert d['data_purchase_performed'] is False
+          assert d['five_year_run_touched'] is False
+          assert d['v4_empirical_launch'] is False
+          assert d['promotion_performed'] is False
+          assert all(v is False for v in d['protected_mutations'].values())
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frankie-meta-${{ matrix.mode }}
+          path: FRANKIE_META_AGENT_${{ matrix.mode }}.json
+          retention-days: 14
+
+  reconcile-and-test:
+    needs: meta-agent
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet pytest
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: frankie-meta-*
+          path: /tmp/meta-agents
+      - name: Test bounded prototype
+        run: |
+          python research/kalshi/frankie_meta_loop_s138.py
+          python -m pytest -q research/kalshi/tests/test_frankie_meta_loop_s138.py
+      - name: Reconcile agent findings
+        run: |
+          python - <<'PY'
+          import glob,hashlib,json,shutil
+          from pathlib import Path
+          paths=sorted(glob.glob('/tmp/meta-agents/**/FRANKIE_META_AGENT_*.json',recursive=True))
+          rows=[]; modes=set()
+          out=Path('research/generated/frankie_meta_loop_20260821'); out.mkdir(parents=True,exist_ok=True)
+          for p in paths:
+              raw=Path(p).read_bytes(); d=json.loads(raw)
+              assert d['status']=='META_LOOP_AGENT_COMPLETE'
+              assert not d['five_year_run_touched'] and not d['v4_empirical_launch'] and not d['promotion_performed']
+              assert all(v is False for v in d['protected_mutations'].values())
+              modes.add(d['mode'])
+              dst=out/Path(p).name; shutil.copyfile(p,dst)
+              rows.append({'mode':d['mode'],'path':str(dst),'sha256':hashlib.sha256(raw).hexdigest(),'build_assessment':d.get('build_assessment')})
+          expected={'architecture_research','specialist_build_redteam'}
+          assert modes==expected,(modes,expected)
+          summary={
+              'status':'FRANKIE_META_LOOP_RESEARCH_BUILD_RECONCILED',
+              'paper_anchor':'arXiv:2608.14905',
+              'prototype':'research/kalshi/frankie_meta_loop_s138.py',
+              'specialist_architecture':'local A-E post-reveal self-audit sidecars plus Frankie cross-specialist reconciliation',
+              'first_lock_rewrite_authorized':False,
+              'case_or_chain_drop_authorized':False,
+              'specialist_role_rewrite_authorized':False,
+              'automatic_brain_promotion_authorized':False,
+              'v4_or_five_year_run_touched':False,
+              'agent_lanes':sorted(rows,key=lambda x:x['mode']),
+          }
+          (out/'RECONCILED_META_LOOP_RESEARCH.json').write_text(json.dumps(summary,indent=2,sort_keys=True)+'\n')
+          (out/'README.md').write_text(
+              '# Frankie metacognitive loop — isolated research/build agents\n\n'
+              'Two lanes ran: architecture research and specialist build/red-team.\n\n'
+              'The bounded prototype is post-evidence only. It binds hypothesis, first-lock, evidence, result, and path-trace artifacts; preserves every case/chain; and permits only next-run revision proposals.\n\n'
+              'For specialists A-E, the design is two-level: each specialist performs a local post-reveal audit without role/data changes, then Frankie reconciles shared assumptions, disagreements, missing evidence, and proposed discriminating tests. Agreement is not treated as truth and majority vote cannot erase minority evidence.\n\n'
+              'No V4 empirical workflow, five-year archive job, protected spawner, specialist role text, frozen detector/runway, or permanent brain was touched by these agents.\n'
+          )
+          print(json.dumps(summary,indent=2,sort_keys=True))
+          PY
+      - name: Commit durable meta-loop agent findings
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          branch='chatgpt/ng-exhaustion-entry-timing-revival-20260818'
+          git add research/generated/frankie_meta_loop_20260821
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'research: reconcile Frankie meta-loop agents'
+          git push origin HEAD:"$branch"
