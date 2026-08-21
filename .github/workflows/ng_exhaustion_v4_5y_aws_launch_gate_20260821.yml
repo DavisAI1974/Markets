@@ -47,7 +47,7 @@ jobs:
           pinned_sha = os.environ['PINNED_SHA']
           out_path = Path('/tmp/ng_exhaustion_v4_5y_aws_launch_gate_20260821.json')
           receipt = {
-              'schema': 'NG_EXHAUSTION_V4_5Y_AWS_LAUNCH_GATE_V1',
+              'schema': 'NG_EXHAUSTION_V4_5Y_AWS_LAUNCH_GATE_V2',
               'instance_id': instance_id,
               'region': region,
               'pinned_sha': pinned_sha,
@@ -55,6 +55,11 @@ jobs:
               'source_mode': 'native_mbo_full_state',
               'prefix_wide_enumeration_allowed': False,
               'empirical_census_launched': False,
+              'pinned_blob_shas': {
+                  'research/ng_exhaustion_mbo_5y_aws_source_20260820.py': 'efb8ede9f7359e7c7ceeafa0e160b367ac48d89c',
+                  'research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py': '2a2e248d04b25388db385309a5d459a72621514f',
+                  'research/ng_exhaustion_mbo_v4_state_adapter_20260820.py': 'a125911193733016b77845708a956f26158c78a7',
+              },
           }
 
           try:
@@ -62,13 +67,11 @@ jobs:
               commands = [
                   'set -eu',
                   'cd /opt/markets',
-                  'git fetch origin',
-                  f'git checkout --detach {pinned_sha}',
-                  f'test "$(git rev-parse HEAD)" = "{pinned_sha}"',
+                  'python3 - <<\'PY2\'\nfrom pathlib import Path\nimport hashlib\nexpected={\n"research/ng_exhaustion_mbo_5y_aws_source_20260820.py":"efb8ede9f7359e7c7ceeafa0e160b367ac48d89c",\n"research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py":"2a2e248d04b25388db385309a5d459a72621514f",\n"research/ng_exhaustion_mbo_v4_state_adapter_20260820.py":"a125911193733016b77845708a956f26158c78a7",\n}\nfor p,want in expected.items():\n    data=Path(p).read_bytes()\n    got=hashlib.sha1((f"blob {len(data)}\\0").encode()+data).hexdigest()\n    print(p,got)\n    assert got==want,(p,got,want)\nprint("PINNED_V4_BLOBS_OK")\nPY2',
                   'mkdir -p /mnt/markets/ng_exhaustion_v4_5y_run_20260821',
                   'rm -f /mnt/markets/ng_exhaustion_v4_5y_run_20260821/SOURCE_RECEIPT.json',
-                  'python research/ng_exhaustion_mbo_5y_aws_source_20260820.py --inventory-only --receipt /mnt/markets/ng_exhaustion_v4_5y_run_20260821/SOURCE_RECEIPT.json > /mnt/markets/ng_exhaustion_v4_5y_run_20260821/SOURCE_GATE_STDOUT.txt',
-                  'python - <<\'PY2\'\nimport json\np="/mnt/markets/ng_exhaustion_v4_5y_run_20260821/SOURCE_RECEIPT.json"\nd=json.load(open(p))\nprint(json.dumps({k:d.get(k) for k in ["status","revision","manifest_source","selection_field","canonical_object_count","canonical_total_bytes","receipt_sha256","prefix_wide_enumeration_used","empirical_census_launched"]},indent=2,sort_keys=True))\nPY2',
+                  'python3 research/ng_exhaustion_mbo_5y_aws_source_20260820.py --inventory-only --receipt /mnt/markets/ng_exhaustion_v4_5y_run_20260821/SOURCE_RECEIPT.json > /mnt/markets/ng_exhaustion_v4_5y_run_20260821/SOURCE_GATE_STDOUT.txt',
+                  'python3 - <<\'PY3\'\nimport json\np="/mnt/markets/ng_exhaustion_v4_5y_run_20260821/SOURCE_RECEIPT.json"\nd=json.load(open(p))\nprint(json.dumps({k:d.get(k) for k in ["status","revision","manifest_source","selection_field","canonical_object_count","canonical_total_bytes","receipt_sha256","prefix_wide_enumeration_used","empirical_census_launched"]},indent=2,sort_keys=True))\nPY3',
               ]
               sent = ssm.send_command(
                   InstanceIds=[instance_id],
