@@ -1,0 +1,131 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+from pathlib import Path
+import argparse
+
+MARKER = "## 2026-08-21 current-state continuation addendum"
+
+COMMON = f"""
+
+---
+
+{MARKER}
+
+This addendum supersedes earlier operational status only; historical findings/provenance remain intact.
+
+- Frankie meta-loop research/build is reconciled. A-E specialists have post-evidence sidecar audits; Frankie has his own coordinator/non-specialist audit plus cross-specialist reconciliation. First-lock/evidence are immutable; no case/chain dropping; revisions are `NEXT_RUN_ONLY`; majority vote is not truth; automatic apply/brain promotion are forbidden. `agent_frankie.py` exposes `meta-contract`, `meta-audit`, `meta-reconcile`. Coordinator receipt: 18/18 loop tests and Frankie selftest 15/15.
+- V4 pilot/D-year chunk guard is implemented: one D, one explicit year/date span, exact candidate/workflow/ruleset/engine/adapter/reconciler/model/source hashes, frozen selection/membership, exact child-parent reconciliation, release holdout excluded, exact result-bearing authorization required. Generic `Proceed` cannot authorize a result-bearing pilot. A completed reconciled D/year slice may advance downstream immediately; no sibling/all-years/all-D barrier.
+- Isolated V4 adapter integration binds `event_known_by -> source availability -> immutable state movie -> predecessor lifecycle -> probability movie -> independently recomputed first-lock/no-lock -> sealed execution handoff -> reveal wall -> reconciler`.
+- Detector-intensity semantics fail closed: call it native only with a proven frozen causal stream; otherwise use an explicit `v4_proxy.*` namespace. No future-endpoint reconstruction may masquerade as native intensity.
+- Isolated lanes passed pilot/chunk 7/7, adapter 6/6, detector intensity 6/6. Combined focused validation passed 85/85. Frankie selftest passed 15/15; source-integrity checks passed.
+- Candidate `9287a1fc2643e34deae067b3fd2e96c2c199b3f4` correctly remained `NOT_PROVISIONAL_READY` because the full Frankie suite exposed four P0 registry integrity failures. Diagnosis found semantic runtime-hook bindings intact; only two whole-file byte pins were stale. The P0 registry has now been hash-only rebound to cognitive runtime `1f33be3e86abb532035047a0456c8627b71dc220742ab5d89807bad312e53999` and standard group runner `b77a20ef634079fce592acc15e2f7ef3b1248b0ef3c5e2bab47be7a385b38d70`.
+- Do **not** yet call the combined V4 package provisionally ready. The committed readiness JSON is still pre-repair/stale until a fresh full exact-candidate rerun lands `PROVISIONAL_READY_FOR_EXACT_CANDIDATE`.
+- No release/virgin holdout consumed; no six P0 real receipts executed; no result-bearing V4 pilot launched; no model superiority/calibration/universal-D/trade-edge/D4-D5 population/permanent-Frankie claim; no promotion authority. Five-year archive jobs were not touched by this meta-loop/V4-preparation work. Preserve every chain/case and every negative, weak, sparse, losing, censored, inconclusive, or model-disagreement observation as evidence.
+"""
+
+DOCS = [
+    "research/kalshi/FRANKIE_NEXT_CHAT_HANDOFF_20260820.md",
+    "research/kalshi/FRANKIE_P0_GAP_CLOSURE_PROVISIONAL_20260820.md",
+    "research/kalshi/FRANKIE_V4_UNIFIED_FRAMEWORK_AUDIT_20260820.md",
+    "research/NG_EXHAUSTION_V3_V4_CHAT_DECISIONS_ALL_NOTES_20260820.md",
+    "research/NG_EXHAUSTION_V4_RESEARCH_THREAD_20260820.md",
+    "research/NG_EXHAUSTION_V4_RESEARCH_THREAD_FINAL_20260820.md",
+    "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md",
+    "research/NG_EXHAUSTION_V4_CONTINUOUS_ADAPTIVE_WALKFORWARD_CONTRACT_20260820.md",
+    "research/NG_EXHAUSTION_V4_CLEAN_SOURCE_PRELAUNCH_GATES_20260820.md",
+    "research/NG_EXHAUSTION_V4_CLEAN_SOURCE_DEEP_DIVE_COMPLETE_FINDINGS_20260820.md",
+    "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md",
+    "research/NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md",
+]
+
+PROPOSAL = "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_ADDENDUM_20260820.md"
+NEW_HANDOFF = "research/kalshi/FRANKIE_NEXT_CHAT_HANDOFF_20260821.md"
+
+
+def append_once(path: Path, marker: str, block: str) -> None:
+    text = path.read_text()
+    if marker not in text:
+        path.write_text(text.rstrip() + block + "\n")
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--trigger-sha", required=True)
+    args = ap.parse_args()
+
+    missing = [name for name in DOCS + [PROPOSAL] if not Path(name).exists()]
+    if missing:
+        raise SystemExit("refusing partial docs sync; missing: " + ", ".join(missing))
+
+    common = COMMON.replace(
+        "This addendum supersedes earlier operational status only; historical findings/provenance remain intact.",
+        f"This addendum supersedes earlier operational status only; historical findings/provenance remain intact. Documentation-sync trigger: `{args.trigger_sha}`.",
+        1,
+    )
+    for name in DOCS:
+        append_once(Path(name), MARKER, common)
+
+    proposal = Path(PROPOSAL)
+    pm = "## M. Frankie metacognitive-loop proposal and provisional implementation — 2026-08-21"
+    proposal_block = f"""
+
+---
+
+{pm}
+
+Frankie's proposed meta-brain is now explicit: after evidence reveal, Frankie compares the frozen hypothesis/prediction with what was actually found; audits contradictions, assumptions, path soundness, missing evidence, alternative mechanisms, and **market learning versus measurement-apparatus learning**; and proposes only the smallest next discriminating test.
+
+A-E specialists perform independent local post-evidence sidecars. Frankie performs a separate local coordinator audit and then cross-specialist reconciliation for shared assumptions and genuine disagreements. Agreement is not truth; majority vote cannot resolve a scientific claim. Completed first-lock/evidence are immutable, no chain/case can be dropped, and any revision is next-run-only.
+
+A bounded provisional implementation exists in `frankie_meta_loop_s138.py` and `frankie_meta_loop_coordinator_s138.py`, wired through `agent_frankie.py`; 18/18 loop tests and Frankie selftest 15/15 passed. This is engineering plumbing and a brain proposal, **not permanent Frankie brain promotion**. It should surround future V4 research because nonconfirmatory outcomes are reconciliation/problem-definition evidence rather than failed chains.
+"""
+    text = proposal.read_text()
+    if pm not in text:
+        proposal.write_text(text.rstrip() + proposal_block + common + "\n")
+
+    Path(NEW_HANDOFF).write_text(f"""# Frankie / NG Exhaustion next-chat handoff — 2026-08-21
+
+Status: **CURRENT READ-FIRST HANDOFF. BUILD/VERIFICATION CONTINUES; NO RESULT-BEARING V4 PILOT AUTHORIZED.**
+
+Repository: `DavisAI1974/Markets`
+
+Branch: `chatgpt/ng-exhaustion-entry-timing-revival-20260818`
+
+Documentation-sync trigger: `{args.trigger_sha}`
+
+## Read first
+
+1. `research/kalshi/FRANKIE_NEXT_CHAT_HANDOFF_20260821.md`
+2. `research/kalshi/FRANKIE_META_LOOP_COORDINATOR_RECEIPT_20260821.json`
+3. `research/generated/frankie_meta_loop_20260821/RECONCILED_META_LOOP_RESEARCH.json`
+4. `research/kalshi/NG_EXHAUSTION_V4_PROVISIONAL_READINESS_20260821.json`
+5. `research/NG_EXHAUSTION_V3_V4_CHAT_DECISIONS_ALL_NOTES_20260820.md`
+6. `research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_ADDENDUM_20260820.md`
+7. `research/kalshi/FRANKIE_V4_UNIFIED_FRAMEWORK_AUDIT_20260820.md`
+8. `research/NG_EXHAUSTION_V4_RESEARCH_THREAD_FINAL_20260820.md`
+9. `research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md` + JSON companion
+10. `research/kalshi/FRANKIE_P0_GAP_CLOSURE_PROVISIONAL_20260820.md`
+
+## Current truth
+
+- Frankie meta-loop is provisionally built for Frankie himself and A-E specialists: post-evidence only, immutable first-lock/evidence, next-run-only revisions, no dropping, no majority-vote truth, no auto-apply/promotion. Coordinator receipt: 18/18 tests; Frankie selftest 15/15.
+- Pilot/D-year chunk guard, streaming per-chunk downstream handoff, end-to-end isolated V4 adapter integration, and detector-intensity native/proxy semantics are implemented.
+- New-lane tests: 7/7 + 6/6 + 6/6; combined focused suite 85/85; selftest 15/15; source integrity passed.
+- First combined candidate `9287a1fc2643e34deae067b3fd2e96c2c199b3f4` was correctly `NOT_PROVISIONAL_READY` because four registry tests exposed stale whole-file pins. Diagnosis showed semantic bindings intact. Hash-only registry repair landed with cognitive-runtime pin `1f33be3e86abb532035047a0456c8627b71dc220742ab5d89807bad312e53999` and group-runner pin `b77a20ef634079fce592acc15e2f7ef3b1248b0ef3c5e2bab47be7a385b38d70`.
+- A **fresh full exact-candidate provisional-readiness rerun is still required**. The existing readiness JSON is pre-repair/stale; do not call the package provisionally ready until it lands `PROVISIONAL_READY_FOR_EXACT_CANDIDATE`.
+- Preserve every chain/case: positive, negative, weak, sparse, losing, censored, inconclusive, and model-disagreement observations are evidence. `FLAG_AND_DECOMPOSE_NOT_AUTO_KILL` remains binding.
+- Do not consume the virgin/release holdout during development/pilots. A tiny pilot may establish only `PIPELINE_VERIFIED_FOR_THIS_EXACT_CANDIDATE`; it cannot establish superiority, calibration, universal D law, trade edge, permanent Frankie readiness, or D4/D5 population validity.
+- Six P0 real receipts remain separate and unexecuted: paired held-out performance, calibration/selective risk, planted-null contamination, protected retention, evaluator independence, live byte-exact rollback.
+- No result-bearing V4 pilot, permanent brain merge, detector/canonical/runway/Phase-1/Phase-2/spawn.py mutation, play promotion, or empirical authority is authorized.
+- Five-year archive jobs are separate. Do not disturb a working job. Prefix-wide enumeration remains forbidden where duplicate intervals/partial overlaps exist. Future long jobs should write durable per-lane heartbeat/progress docs at fixed intervals plus major unit completions; heartbeat writes are observability only.
+
+## Exact next action
+
+Run/observe the fresh combined full regression after the registry rebind. Repair only demonstrated authorized build/verification defects. When the readiness JSON says `PROVISIONAL_READY_FOR_EXACT_CANDIDATE`, freeze/report that exact candidate SHA and material hashes, then stop before any result-bearing V4 pilot unless the user separately authorizes the exact candidate/workflow/ruleset.
+""")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
