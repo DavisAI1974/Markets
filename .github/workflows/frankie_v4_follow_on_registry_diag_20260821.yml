@@ -1,0 +1,64 @@
+name: Frankie V4 Follow-On Registry Diagnostic 20260821
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - .github/workflows/frankie_v4_follow_on_registry_diag_20260821.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet pytest boto3 matplotlib numpy scipy scikit-learn pandas databento
+      - name: Emit exact registry audit and test logs
+        env:
+          PYTHONPATH: .
+        run: |
+          mkdir -p /tmp/v4diag
+          python - <<'PY'
+          import json,sys
+          sys.path.insert(0,'research/kalshi')
+          import frankie_p0_registry as r
+          open('/tmp/v4diag/REGISTRY_AUDIT.json','w').write(json.dumps(r.audit_p0_registry(),indent=2,sort_keys=True)+'\n')
+          PY
+          set +e
+          python -B -m pytest -vv research/kalshi/tests/test_frankie_p0_registry.py > /tmp/v4diag/REGISTRY_PYTEST.log 2>&1
+          echo $? > /tmp/v4diag/REGISTRY_PYTEST.code
+          python -B -m pytest -q research/kalshi/tests tests/test_frankie_s135_group_runner.py > /tmp/v4diag/FULL_SUITE.log 2>&1
+          echo $? > /tmp/v4diag/FULL_SUITE.code
+          set -e
+          cat /tmp/v4diag/REGISTRY_PYTEST.log
+      - name: Commit diagnostic artifacts without changing protected code
+        run: |
+          set -euo pipefail
+          branch='chatgpt/ng-exhaustion-entry-timing-revival-20260818'
+          target='research/generated/frankie_v4_follow_on_20260821/diagnostics'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          cp -r /tmp/v4diag /tmp/v4diag-copy
+          for attempt in 1 2 3 4; do
+            git fetch origin "$branch"
+            git reset --hard "origin/$branch"
+            rm -rf "$target"
+            mkdir -p "$target"
+            cp -r /tmp/v4diag-copy/. "$target/"
+            git add "$target"
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m 'research: record V4 follow-on registry diagnostic'
+            if git push origin HEAD:"$branch"; then exit 0; fi
+          done
+          exit 1
