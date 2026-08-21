@@ -35,6 +35,13 @@ from frankie_core import (  # noqa: E402
 )
 from frankie_engine import consume_once, evaluate_event, serve  # noqa: E402
 from frankie_improve import propose_improvement, record_outcome  # noqa: E402
+from frankie_meta_loop_coordinator_s138 import (  # noqa: E402
+    VERSION as META_COORDINATOR_VERSION,
+    MetaLoopError,
+    build_frankie_meta_contract,
+    reconcile_frankie_meta_system,
+    validate_frankie_meta_audit,
+)
 
 
 def print_json(value) -> None:
@@ -92,6 +99,18 @@ def cmd_health(args: argparse.Namespace) -> int:
                 "independent_critic": True,
                 "automatic_apply": False,
                 "production_promotion": "human-reviewed Git PR only",
+            },
+            "metacognition": {
+                "coordinator_version": META_COORDINATOR_VERSION,
+                "activation": "POST_EVIDENCE_ONLY",
+                "frankie_self_audit": True,
+                "cross_specialist_reconciliation": True,
+                "first_lock_rewrite_allowed": False,
+                "case_or_chain_drop_allowed": False,
+                "majority_vote_truth_allowed": False,
+                "automatic_apply": False,
+                "automatic_brain_promotion": False,
+                "revision_scope": "NEXT_RUN_ONLY",
             },
             "cognition": {
                 "contract_version": COGNITIVE_CONTRACT_VERSION,
@@ -180,6 +199,38 @@ def cmd_improve(args: argparse.Namespace) -> int:
         proposer=proposer,
         critic=critic,
         config=config,
+    )
+    print_json(result)
+    return 0
+
+
+def cmd_meta_contract(args: argparse.Namespace) -> int:
+    contract = build_frankie_meta_contract(
+        subject=args.subject,
+        hypothesis=read_json_object(args.hypothesis, "hypothesis"),
+        first_lock=read_json_object(args.first_lock, "first-lock"),
+        evidence=read_json_object(args.evidence, "evidence"),
+        result=read_json_object(args.result, "result"),
+        path_trace=read_json_object(args.path_trace, "path-trace"),
+    )
+    print_json(contract)
+    return 0
+
+
+def cmd_meta_audit(args: argparse.Namespace) -> int:
+    result = validate_frankie_meta_audit(
+        read_json_object(args.contract, "meta-contract"),
+        read_json_object(args.audit, "meta-audit"),
+    )
+    print_json(result)
+    return 0
+
+
+def cmd_meta_reconcile(args: argparse.Namespace) -> int:
+    specialist_audits = [read_json_object(path, "specialist-meta-audit") for path in args.specialist_audit]
+    result = reconcile_frankie_meta_system(
+        frankie_audit=read_json_object(args.frankie_audit, "Frankie-meta-audit"),
+        specialist_audits=specialist_audits,
     )
     print_json(result)
     return 0
@@ -368,6 +419,39 @@ def cmd_selftest(args: argparse.Namespace) -> int:
             stopped = True
         check("self-improvement cannot touch spawn.py", stopped)
 
+    meta_contract = build_frankie_meta_contract(
+        subject="selftest-metacognition",
+        hypothesis={"claim": "candidate mechanism"},
+        first_lock={"status": "FROZEN", "decision_hash": "selftest"},
+        evidence={"observed": "mixed"},
+        result={"outcome": "inconclusive"},
+        path_trace={"steps": ["hypothesis", "first_lock", "reveal"]},
+    )
+    meta_audit = validate_frankie_meta_audit(
+        meta_contract,
+        {
+            "produced_vs_found": "mixed",
+            "path_soundness": "bounded",
+            "contradictions": ["counterexample"],
+            "measurement_vs_market": "measurement may explain part of the difference",
+            "alternative_mechanisms": ["liquidity refill"],
+            "missing_evidence": ["predecessor lifecycle"],
+            "assumptions": ["coverage representative"],
+            "claim_stances": {"candidate mechanism": "UNRESOLVED"},
+            "case_disposition": "UNRESOLVED",
+            "confidence_delta": -0.1,
+            "next_discriminating_test": "replay with explicit lifecycle",
+            "revision_proposal": {"scope": "NEXT_RUN_ONLY", "actions": ["add_control"]},
+        },
+    )
+    meta_system = reconcile_frankie_meta_system(
+        frankie_audit=meta_audit,
+        specialist_audits=[],
+    )
+    check("Frankie coordinator meta-loop is post-evidence only", meta_contract["activation"] == "POST_EVIDENCE_ONLY")
+    check("Frankie meta-loop preserves first lock and every case/chain", not meta_audit["first_lock_rewritten"] and not meta_audit["case_or_chain_dropped"])
+    check("Frankie meta-loop cannot auto-apply or promote", meta_system["scientific_boundaries"]["automatic_apply_allowed"] is False and meta_system["scientific_boundaries"]["automatic_brain_promotion_allowed"] is False)
+
     print(f"\n  {sum(ok for _, ok in checks)}/{len(checks)} passed")
     return 0 if all(ok for _, ok in checks) else 1
 
@@ -396,6 +480,19 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("evidence", nargs="+")
     p.add_argument("--proposer", choices=("bedrock", "openai"))
     p.add_argument("--critic", choices=("bedrock", "openai"))
+    p = sub.add_parser("meta-contract", help="bind Frankie's immutable post-evidence metacognitive contract")
+    p.add_argument("subject")
+    p.add_argument("hypothesis")
+    p.add_argument("first_lock")
+    p.add_argument("evidence")
+    p.add_argument("result")
+    p.add_argument("path_trace")
+    p = sub.add_parser("meta-audit", help="validate Frankie's next-run-only self-audit")
+    p.add_argument("contract")
+    p.add_argument("audit")
+    p = sub.add_parser("meta-reconcile", help="reconcile Frankie's audit with validated specialist audits")
+    p.add_argument("frankie_audit")
+    p.add_argument("specialist_audit", nargs="*")
     sub.add_parser("selftest")
     return parser
 
@@ -412,11 +509,14 @@ def main() -> int:
         "serve": cmd_serve,
         "record-outcome": cmd_record_outcome,
         "improve": cmd_improve,
+        "meta-contract": cmd_meta_contract,
+        "meta-audit": cmd_meta_audit,
+        "meta-reconcile": cmd_meta_reconcile,
         "selftest": cmd_selftest,
     }
     try:
         return commands[args.command](args)
-    except GateStop as exc:
+    except (GateStop, MetaLoopError) as exc:
         print(f"STOP - {exc}", file=sys.stderr)
         return 2
     except Exception as exc:
