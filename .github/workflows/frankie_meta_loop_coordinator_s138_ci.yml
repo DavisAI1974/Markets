@@ -1,0 +1,161 @@
+name: Frankie Coordinator Meta Loop S138
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/kalshi/frankie_meta_loop_s138.py
+      - research/kalshi/frankie_meta_loop_coordinator_s138.py
+      - research/kalshi/agent_frankie.py
+      - research/kalshi/tests/test_frankie_meta_loop_s138.py
+      - research/kalshi/tests/test_frankie_meta_loop_coordinator_s138.py
+      - .github/workflows/frankie_meta_loop_coordinator_s138_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet pytest
+
+      - name: Run meta-loop unit and adversarial tests
+        env:
+          PYTHONPATH: .:research/kalshi
+        run: |
+          set +e
+          python -m pytest -q \
+            research/kalshi/tests/test_frankie_meta_loop_s138.py \
+            research/kalshi/tests/test_frankie_meta_loop_coordinator_s138.py \
+            > /tmp/meta_loop_tests.txt 2>&1
+          code=$?
+          echo "$code" > /tmp/meta_loop_tests.code
+          cat /tmp/meta_loop_tests.txt
+          exit 0
+
+      - name: Run Frankie selftest with coordinator loop wired
+        env:
+          PYTHONPATH: .:research/kalshi
+        run: |
+          set +e
+          python research/kalshi/agent_frankie.py selftest > /tmp/frankie_selftest.txt 2>&1
+          code=$?
+          echo "$code" > /tmp/frankie_selftest.code
+          cat /tmp/frankie_selftest.txt
+          exit 0
+
+      - name: Verify protected artifacts and specialist role text were not rewritten
+        run: |
+          set -euo pipefail
+          git diff --exit-code d44c83052469f3b0ce5aa62b53b1306ce9bf7e45 HEAD -- \
+            research/kalshi/spawn.py \
+            research/kalshi/agents/mbo_specialist_A.md \
+            research/kalshi/agents/mbo_specialist_B.md \
+            research/kalshi/agents/mbo_specialist_C.md \
+            research/kalshi/agents/mbo_specialist_D.md \
+            research/kalshi/agents/mbo_specialist_E.md \
+            knowledge/ng_brain.json
+
+      - name: Verify original spawn origin and runtime wiring
+        env:
+          PYTHONPATH: .:research/kalshi
+        run: |
+          python research/kalshi/agent_frankie.py verify-origin > /tmp/origin.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          origin=json.loads(Path('/tmp/origin.json').read_text())
+          assert origin['verified'] is True
+          src=Path('research/kalshi/agent_frankie.py').read_text()
+          assert 'frankie_meta_loop_coordinator_s138' in src
+          for command in ('meta-contract','meta-audit','meta-reconcile'):
+              assert command in src
+          report=json.loads(Path('research/generated/frankie_meta_loop_20260821/RECONCILED_META_LOOP_RESEARCH.json').read_text())
+          assert report['status']=='FRANKIE_META_LOOP_RESEARCH_BUILD_RECONCILED'
+          assert report['first_lock_rewrite_authorized'] is False
+          assert report['case_or_chain_drop_authorized'] is False
+          assert report['automatic_brain_promotion_authorized'] is False
+          PY
+
+      - name: Write exact-candidate coordinator integration receipt
+        if: always()
+        run: |
+          python - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          files=[
+            'research/kalshi/frankie_meta_loop_s138.py',
+            'research/kalshi/frankie_meta_loop_coordinator_s138.py',
+            'research/kalshi/agent_frankie.py',
+            'research/kalshi/tests/test_frankie_meta_loop_s138.py',
+            'research/kalshi/tests/test_frankie_meta_loop_coordinator_s138.py',
+          ]
+          test_code=int(Path('/tmp/meta_loop_tests.code').read_text().strip()) if Path('/tmp/meta_loop_tests.code').exists() else 999
+          selftest_code=int(Path('/tmp/frankie_selftest.code').read_text().strip()) if Path('/tmp/frankie_selftest.code').exists() else 999
+          source=Path('research/kalshi/agent_frankie.py').read_text()
+          wired=(
+            'frankie_meta_loop_coordinator_s138' in source
+            and all(x in source for x in ('meta-contract','meta-audit','meta-reconcile'))
+          )
+          out={
+            'schema':'FRANKIE_META_LOOP_COORDINATOR_INTEGRATION_RECEIPT_V1',
+            'runner_commit':os.environ.get('GITHUB_SHA'),
+            'tests_passed':test_code==0,
+            'pytest_exit_code':test_code,
+            'pytest_output':Path('/tmp/meta_loop_tests.txt').read_text() if Path('/tmp/meta_loop_tests.txt').exists() else 'pytest did not run',
+            'frankie_selftest_passed':selftest_code==0,
+            'frankie_selftest_exit_code':selftest_code,
+            'frankie_selftest_output':Path('/tmp/frankie_selftest.txt').read_text() if Path('/tmp/frankie_selftest.txt').exists() else 'selftest did not run',
+            'coordinator_runtime_wired':wired,
+            'activation':'POST_EVIDENCE_ONLY',
+            'first_lock_rewrite_allowed':False,
+            'blind_or_evidence_mutation_allowed':False,
+            'case_or_chain_drop_allowed':False,
+            'majority_vote_resolution_allowed':False,
+            'specialist_role_rewrite_allowed':False,
+            'automatic_apply_allowed':False,
+            'automatic_brain_promotion_allowed':False,
+            'revision_scope':'NEXT_RUN_ONLY',
+            'five_year_run_touched':False,
+            'v4_empirical_launch':False,
+            'files':{p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in files},
+          }
+          out['provisional_prerequisite_passed']=bool(out['tests_passed'] and out['frankie_selftest_passed'] and wired)
+          text=json.dumps(out,indent=2,sort_keys=True)+'\n'
+          Path('/tmp/coordinator_receipt.json').write_text(text)
+          Path('research/kalshi/FRANKIE_META_LOOP_COORDINATOR_RECEIPT_20260821.json').write_text(text)
+          print(text)
+          PY
+
+      - name: Commit durable coordinator receipt
+        if: always()
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          branch='chatgpt/ng-exhaustion-entry-timing-revival-20260818'
+          path='research/kalshi/FRANKIE_META_LOOP_COORDINATOR_RECEIPT_20260821.json'
+          for attempt in 1 2 3 4; do
+            git fetch origin "$branch"
+            git reset --hard "origin/$branch"
+            cp /tmp/coordinator_receipt.json "$path"
+            git add "$path"
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m 'research: record Frankie coordinator meta-loop integration'
+            if git push origin HEAD:"$branch"; then exit 0; fi
+            echo "receipt push raced; retrying attempt $attempt" >&2
+          done
+          exit 1
+
+# S138 coordinator integration only. No five-year/V4 empirical launch or brain promotion.
