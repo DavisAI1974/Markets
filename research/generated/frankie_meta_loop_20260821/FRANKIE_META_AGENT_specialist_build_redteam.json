@@ -1,0 +1,47 @@
+{
+  "build_assessment": "BOUNDED_PROTOTYPE_PASSES_LOCAL_CONTRACT_EXERCISE",
+  "build_checks": {
+    "A_sidecar_post_reveal_only": true,
+    "B_sidecar_post_reveal_only": true,
+    "automatic_brain_promotion_allowed": false,
+    "blind_packet_mutation_allowed": false,
+    "cross_specialist_disagreement_detected": true,
+    "majority_vote_resolution_allowed": false,
+    "roles_rewritten": false,
+    "shared_assumption_detected": true
+  },
+  "data_purchase_performed": false,
+  "external_model_calls": false,
+  "five_year_run_touched": false,
+  "mode": "specialist_build_redteam",
+  "paper_anchor": {
+    "arxiv": "2608.14905",
+    "reported_core_gap": "lack of a metacognitive loop that checks outputs against findings, revises when they do not hold, and questions path soundness",
+    "reported_scope": "100 tasks, seven scientific domains, 800 trajectories, 45 ARFT failure patterns",
+    "solution_boundary": "the paper diagnoses the deficit; orchestration-level remediation is an open question, so this prototype must be treated as experimental",
+    "title": "How Do Agents Fail on AutoResearch: End-to-End Diagnostic Evaluation on 100 Real-World Frontier Research Tasks"
+  },
+  "promotion_performed": false,
+  "protected_mutations": {
+    "first_lock_artifacts": false,
+    "frozen_detector": false,
+    "permanent_frankie_brain": false,
+    "runway_clock": false,
+    "spawn_py": false,
+    "specialist_role_text": false
+  },
+  "source_bindings": {
+    "research/kalshi/FRANKIE_P0_GAP_CLOSURE_PROVISIONAL_20260820.md": "23550be19de5d418cfbd10593c8ff43cfac5a92590ff6572933ec63d469120a4",
+    "research/kalshi/frankie_meta_loop_s138.py": "292beaa21bcd6f2ef299dd0dee67d52879464d57671259b36a7f3dc2f2ab2f41",
+    "research/kalshi/frankie_specialist_parity_s126.py": "144ddab10b7dc898327a3ed2633611f7aeed95565b11188bf54e8b8a109b3547",
+    "research/kalshi/spawn.py": "f2ae5287b24b2772a75e1c1674f0f7df590b93d2cbb773662ef30210bce78a54"
+  },
+  "specialist_design": {
+    "layer_1": "Each A-E specialist gets a post-reveal local self-audit sidecar bound to its frozen blind packet and evidence.",
+    "layer_2": "Frankie reconciles the five validated audits for shared assumptions, disagreements, missing-evidence overlap, and proposed discriminating tests.",
+    "parity_rule": "The sidecar consumes the already-served parity packet; no role-based field filtering and no role/prompt rewrite.",
+    "truth_rule": "Agreement is not truth; majority vote cannot erase minority evidence or resolve a scientific disagreement."
+  },
+  "status": "META_LOOP_AGENT_COMPLETE",
+  "v4_empirical_launch": false
+}

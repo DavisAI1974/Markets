@@ -1,0 +1,25 @@
+{
+  "agent_lanes": [
+    {
+      "build_assessment": "BUILD_READY_SHADOW_SIDECAR",
+      "mode": "architecture_research",
+      "path": "research/generated/frankie_meta_loop_20260821/FRANKIE_META_AGENT_architecture_research.json",
+      "sha256": "540e42df3bf508431a287e94da169067336c2c9a1e0277ec9634c6f692116596"
+    },
+    {
+      "build_assessment": "BOUNDED_PROTOTYPE_PASSES_LOCAL_CONTRACT_EXERCISE",
+      "mode": "specialist_build_redteam",
+      "path": "research/generated/frankie_meta_loop_20260821/FRANKIE_META_AGENT_specialist_build_redteam.json",
+      "sha256": "d5dfb8800fc5127b20115538bbaf8bdd8340f8ed44ff981ee8209d99597d4bbc"
+    }
+  ],
+  "automatic_brain_promotion_authorized": false,
+  "case_or_chain_drop_authorized": false,
+  "first_lock_rewrite_authorized": false,
+  "paper_anchor": "arXiv:2608.14905",
+  "prototype": "research/kalshi/frankie_meta_loop_s138.py",
+  "specialist_architecture": "local A-E post-reveal self-audit sidecars plus Frankie cross-specialist reconciliation",
+  "specialist_role_rewrite_authorized": false,
+  "status": "FRANKIE_META_LOOP_RESEARCH_BUILD_RECONCILED",
+  "v4_or_five_year_run_touched": false
+}
