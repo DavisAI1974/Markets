@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   aws-source-gate:
@@ -21,7 +21,12 @@ jobs:
       AWS_DEFAULT_REGION: us-east-2
       INSTANCE_ID: i-08cee7171c0a76a04
       PINNED_SHA: 9e3e44f817738594a1815785e3d9f3e8e510a1c7
+      RECEIPT_PATH: research/kalshi/NG_EXHAUSTION_V4_5Y_AWS_LAUNCH_GATE_20260821.json
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+
       - name: Install AWS SDK
         run: python -m pip install --quiet boto3
 
@@ -33,57 +38,100 @@ jobs:
           import json
           import os
           import time
+          import traceback
+          from pathlib import Path
           import boto3
 
           region = os.environ['AWS_DEFAULT_REGION']
           instance_id = os.environ['INSTANCE_ID']
           pinned_sha = os.environ['PINNED_SHA']
-          ssm = boto3.client('ssm', region_name=region)
+          out_path = Path('/tmp/ng_exhaustion_v4_5y_aws_launch_gate_20260821.json')
+          receipt = {
+              'schema': 'NG_EXHAUSTION_V4_5Y_AWS_LAUNCH_GATE_V1',
+              'instance_id': instance_id,
+              'region': region,
+              'pinned_sha': pinned_sha,
+              'github_trigger_sha': os.environ.get('GITHUB_SHA'),
+              'source_mode': 'native_mbo_full_state',
+              'prefix_wide_enumeration_allowed': False,
+              'empirical_census_launched': False,
+          }
 
-          commands = [
-              'set -euo pipefail',
-              'cd /opt/markets',
-              'git fetch origin',
-              f'git checkout --detach {pinned_sha}',
-              f'test "$(git rev-parse HEAD)" = "{pinned_sha}"',
-              'mkdir -p /mnt/markets/ng_exhaustion_v4_5y_run_20260821',
-              'rm -f /mnt/markets/ng_exhaustion_v4_5y_run_20260821/SOURCE_RECEIPT.json',
-              'python research/ng_exhaustion_mbo_5y_aws_source_20260820.py --inventory-only --receipt /mnt/markets/ng_exhaustion_v4_5y_run_20260821/SOURCE_RECEIPT.json',
-              'python - <<\'PY2\'\nimport json\np="/mnt/markets/ng_exhaustion_v4_5y_run_20260821/SOURCE_RECEIPT.json"\nd=json.load(open(p))\nprint(json.dumps({k:d.get(k) for k in ["status","revision","manifest_source","selection_field","canonical_object_count","canonical_total_bytes","receipt_sha256","prefix_wide_enumeration_used","empirical_census_launched"]},indent=2,sort_keys=True))\nPY2',
-          ]
+          try:
+              ssm = boto3.client('ssm', region_name=region)
+              commands = [
+                  'set -euo pipefail',
+                  'cd /opt/markets',
+                  'git fetch origin',
+                  f'git checkout --detach {pinned_sha}',
+                  f'test "$(git rev-parse HEAD)" = "{pinned_sha}"',
+                  'mkdir -p /mnt/markets/ng_exhaustion_v4_5y_run_20260821',
+                  'rm -f /mnt/markets/ng_exhaustion_v4_5y_run_20260821/SOURCE_RECEIPT.json',
+                  'python research/ng_exhaustion_mbo_5y_aws_source_20260820.py --inventory-only --receipt /mnt/markets/ng_exhaustion_v4_5y_run_20260821/SOURCE_RECEIPT.json > /mnt/markets/ng_exhaustion_v4_5y_run_20260821/SOURCE_GATE_STDOUT.txt',
+                  'python - <<\'PY2\'\nimport json\np="/mnt/markets/ng_exhaustion_v4_5y_run_20260821/SOURCE_RECEIPT.json"\nd=json.load(open(p))\nprint(json.dumps({k:d.get(k) for k in ["status","revision","manifest_source","selection_field","canonical_object_count","canonical_total_bytes","receipt_sha256","prefix_wide_enumeration_used","empirical_census_launched"]},indent=2,sort_keys=True))\nPY2',
+              ]
+              sent = ssm.send_command(
+                  InstanceIds=[instance_id],
+                  DocumentName='AWS-RunShellScript',
+                  Comment=f'NG Exhaustion V4 five-year source gate pinned {pinned_sha}',
+                  Parameters={'commands': commands, 'executionTimeout': ['1200']},
+                  TimeoutSeconds=1200,
+              )
+              command_id = sent['Command']['CommandId']
+              receipt['command_id'] = command_id
+              terminal = {'Success','Cancelled','TimedOut','Failed','Cancelling','Undeliverable','Terminated','Delivery Timed Out','Execution Timed Out'}
+              deadline = time.time() + 1200
+              inv = None
+              while time.time() < deadline:
+                  try:
+                      inv = ssm.get_command_invocation(CommandId=command_id, InstanceId=instance_id)
+                  except ssm.exceptions.InvocationDoesNotExist:
+                      time.sleep(2)
+                      continue
+                  if inv.get('Status') in terminal:
+                      break
+                  time.sleep(5)
+              if inv is None or inv.get('Status') not in terminal:
+                  receipt['ssm_status'] = 'CLIENT_WAIT_TIMEOUT'
+              else:
+                  receipt['ssm_status'] = inv.get('Status')
+                  receipt['response_code'] = inv.get('ResponseCode')
+                  receipt['standard_output'] = inv.get('StandardOutputContent','')
+                  receipt['standard_error'] = inv.get('StandardErrorContent','')
+          except Exception as exc:
+              receipt['ssm_status'] = 'CONTROL_PLANE_ERROR'
+              receipt['control_plane_error'] = f'{type(exc).__name__}: {exc}'
+              receipt['traceback_tail'] = traceback.format_exc().splitlines()[-8:]
 
-          sent = ssm.send_command(
-              InstanceIds=[instance_id],
-              DocumentName='AWS-RunShellScript',
-              Comment=f'NG Exhaustion V4 five-year source gate pinned {pinned_sha}',
-              Parameters={'commands': commands, 'executionTimeout': ['1200']},
-              TimeoutSeconds=1200,
-          )
-          command_id = sent['Command']['CommandId']
-          print(json.dumps({'instance_id': instance_id, 'command_id': command_id, 'pinned_sha': pinned_sha}, indent=2))
+          out_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n')
+          print(out_path.read_text())
+          PY
 
-          terminal = {'Success','Cancelled','TimedOut','Failed','Cancelling','Undeliverable','Terminated','Delivery Timed Out','Execution Timed Out'}
-          last = None
-          deadline = time.time() + 1200
-          while time.time() < deadline:
-              try:
-                  inv = ssm.get_command_invocation(CommandId=command_id, InstanceId=instance_id)
-              except ssm.exceptions.InvocationDoesNotExist:
-                  time.sleep(2)
-                  continue
-              status = inv.get('Status')
-              if status != last:
-                  print('SSM_STATUS=' + str(status))
-                  last = status
-              if status in terminal:
-                  print('--- EC2 STDOUT ---')
-                  print(inv.get('StandardOutputContent',''))
-                  print('--- EC2 STDERR ---')
-                  print(inv.get('StandardErrorContent',''))
-                  if status != 'Success':
-                      raise SystemExit(f'SSM source gate ended with {status}')
-                  break
-              time.sleep(5)
-          else:
-              raise SystemExit('Timed out waiting for EC2 source gate')
+      - name: Commit launch-gate receipt safely
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          branch='chatgpt/ng-exhaustion-entry-timing-revival-20260818'
+          path="$RECEIPT_PATH"
+          for attempt in 1 2 3 4; do
+            git fetch origin "$branch"
+            git reset --hard "origin/$branch"
+            cp /tmp/ng_exhaustion_v4_5y_aws_launch_gate_20260821.json "$path"
+            git add "$path"
+            if git diff --cached --quiet; then break; fi
+            git commit -m 'research: record V4 five-year AWS launch gate'
+            if git push origin HEAD:"$branch"; then break; fi
+          done
+
+      - name: Enforce source gate result
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/ng_exhaustion_v4_5y_aws_launch_gate_20260821.json'))
+          if d.get('ssm_status') != 'Success':
+              raise SystemExit('V4 AWS source gate did not pass: ' + str(d.get('ssm_status')))
+          print('PASS: V4 AWS native-MBO source gate completed on durable EC2')
           PY
