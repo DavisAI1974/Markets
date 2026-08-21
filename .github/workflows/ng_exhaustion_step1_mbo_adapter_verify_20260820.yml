@@ -1,0 +1,39 @@
+name: NG Step1 MBO Adapter Verify 20260820
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/ng_exhaustion_mbo_v4_state_adapter_20260820.py
+      - research/test_ng_exhaustion_mbo_v4_state_adapter_20260820.py
+      - research/test_ng_exhaustion_mbo_v4_legacy_control_semantics_20260820.py
+      - .github/workflows/ng_exhaustion_step1_mbo_adapter_verify_20260820.yml
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-adversarial:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile adapter and tests
+        run: |
+          python -m py_compile \
+            research/ng_exhaustion_mbo_v4_state_adapter_20260820.py \
+            research/test_ng_exhaustion_mbo_v4_state_adapter_20260820.py \
+            research/test_ng_exhaustion_mbo_v4_legacy_control_semantics_20260820.py
+      - name: Run synthetic and adversarial tests
+        env:
+          PYTHONPATH: research
+        run: |
+          python -m unittest -v \
+            test_ng_exhaustion_mbo_v4_state_adapter_20260820 \
+            test_ng_exhaustion_mbo_v4_legacy_control_semantics_20260820
