@@ -1,0 +1,86 @@
+{
+  "calibration_adequacy_established": false,
+  "candidate_commit": "9287a1fc2643e34deae067b3fd2e96c2c199b3f4",
+  "d4_d5_population_validated": false,
+  "five_year_archive_jobs_touched": false,
+  "focused_test_output": "........................................................................ [ 84%]\n.............                                                            [100%]\n85 passed in 0.38s\n",
+  "focused_tests_passed": true,
+  "frankie_selftest_output": "  PASS | original spawn.py Git blob is unchanged\n  PASS | Novel candidate registry is readable\n  PASS | reviewed paper manifest is READY\n  PASS | qualified synthetic event clears deterministic gates\n  PASS | READY manifest permits agreed SHADOW\n  PASS | typed cognitive contract is recorded\n  PASS | Frankie can never enable execution\n  PASS | evidence is written after adjudication\n  PASS | resolved outcomes are immutable sidecars\n  PASS | self-improvement produces a sandbox proposal\n  PASS | self-improvement cannot apply itself\n  PASS | self-improvement cannot touch spawn.py\n  PASS | Frankie coordinator meta-loop is post-evidence only\n  PASS | Frankie meta-loop preserves first lock and every case/chain\n  PASS | Frankie meta-loop cannot auto-apply or promote\n\n  15/15 passed\n",
+  "frankie_selftest_passed": true,
+  "full_frankie_output": ".............................................................. [ 14%]\n.......................................................... [ 27%]\n.....................................................................F.. [ 43%]\nFF.F........................................................ [ 57%]\n...................................................................... [ 73%]\n........................................................................ [ 90%]\n...........................................                              [100%]\n=================================== FAILURES ===================================\n_ FrankieP0RegistryTests.test_component_contract_can_pass_while_empirical_readiness_is_blocked _\n\nself = <test_frankie_p0_registry.FrankieP0RegistryTests testMethod=test_component_contract_can_pass_while_empirical_readiness_is_blocked>\n\n    def test_component_contract_can_pass_while_empirical_readiness_is_blocked(self):\n        readiness = evaluate_p0_readiness()\n>       self.assertTrue(readiness[\"component_contract_ready\"])\nE       AssertionError: False is not true\n\nresearch/kalshi/tests/test_frankie_p0_registry.py:307: AssertionError\n_ FrankieP0RegistryTests.test_every_bound_evidence_type_is_required_and_authority_stays_false _\n\nself = <test_frankie_p0_registry.FrankieP0RegistryTests testMethod=test_every_bound_evidence_type_is_required_and_authority_stays_false>\n\n    def test_every_bound_evidence_type_is_required_and_authority_stays_false(self):\n        bundle = evidence_bundle()\n        readiness = evaluate_p0_readiness(bundle)\n        self.assertTrue(readiness[\"empirical_evidence_ready\"])\n>       self.assertTrue(readiness[\"composite_readiness_passed\"])\nE       AssertionError: False is not true\n\nresearch/kalshi/tests/test_frankie_p0_registry.py:344: AssertionError\n_ FrankieP0RegistryTests.test_inventory_is_exact_hash_bound_and_non_authorizing _\n\nself = <test_frankie_p0_registry.FrankieP0RegistryTests testMethod=test_inventory_is_exact_hash_bound_and_non_authorizing>\n\n    def test_inventory_is_exact_hash_bound_and_non_authorizing(self):\n        receipt = audit_p0_registry()\n>       self.assertEqual(receipt[\"status\"], \"COMPONENT_CONTRACT_READY\")\nE       AssertionError: 'BLOCKED_REGISTRY_INTEGRITY' != 'COMPONENT_CONTRACT_READY'\nE       - BLOCKED_REGISTRY_INTEGRITY\nE       + COMPONENT_CONTRACT_READY\n\nresearch/kalshi/tests/test_frankie_p0_registry.py:174: AssertionError\n_ FrankieP0RegistryTests.test_runtime_hooks_are_exact_and_standalone_loops_remain_distinct _\n\nself = <test_frankie_p0_registry.FrankieP0RegistryTests testMethod=test_runtime_hooks_are_exact_and_standalone_loops_remain_distinct>\n\n    def test_runtime_hooks_are_exact_and_standalone_loops_remain_distinct(self):\n        receipt = audit_p0_registry()\n        self.assertEqual(receipt[\"runtime_hook_count\"], 9)\n        self.assertEqual(\n            receipt[\"standalone_runtime_loop_entry_points\"],\n            [\n                \"frankie_temporal_graph_p0_adapter.py:run_temporal_graph_shadow_adapter\",\n                \"frankie_temporal_p0_controls.py:run_delayed_label_aci\",\n            ],\n        )\n        boundary = receipt[\"runtime_boundary_receipt\"]\n>       self.assertTrue(boundary[\"runtime_binding_integrity\"])\nE       AssertionError: False is not true\n\nresearch/kalshi/tests/test_frankie_p0_registry.py:226: AssertionError\n=============================== warnings summary ===============================\nresearch/kalshi/tests/test_frankie_s121_curve_restore.py:73\n  /home/runner/work/Markets/Markets/research/kalshi/tests/test_frankie_s121_curve_restore.py:73: DeprecationWarning: invalid escape sequence '\\['\n    with self.assertRaisesRegex(s121.ForecastStop, \"outside \\[0,24\\)\"):\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ============================\nFAILED research/kalshi/tests/test_frankie_p0_registry.py::FrankieP0RegistryTests::test_component_contract_can_pass_while_empirical_readiness_is_blocked - AssertionError: False is not true\nFAILED research/kalshi/tests/test_frankie_p0_registry.py::FrankieP0RegistryTests::test_every_bound_evidence_type_is_required_and_authority_stays_false - AssertionError: False is not true\nFAILED research/kalshi/tests/test_frankie_p0_registry.py::FrankieP0RegistryTests::test_inventory_is_exact_hash_bound_and_non_authorizing - AssertionError: 'BLOCKED_REGISTRY_INTEGRITY' != 'COMPONENT_CONTRACT_READY'\n- BLOCKED_REGISTRY_INTEGRITY\n+ COMPONENT_CONTRACT_READY\nFAILED research/kalshi/tests/test_frankie_p0_registry.py::FrankieP0RegistryTests::test_runtime_hooks_are_exact_and_standalone_loops_remain_distinct - AssertionError: False is not true\n4 failed, 433 passed, 1 warning, 38 subtests passed in 4.42s\n",
+  "full_frankie_regression_passed": false,
+  "lane_agents": [
+    {
+      "files": {
+        "research/kalshi/ng_exhaustion_v4_adapter_integration.py": "93c3e6cf0e3e3b4753d107608371f29c2e6ec535add325ac9f7e3419f1ac72ec",
+        "research/kalshi/tests/test_ng_exhaustion_v4_adapter_integration.py": "8e641de067cb81dab25cd77f2290b3753a604383c1be6a7c6d610d1d22e213b4"
+      },
+      "lane": "adapter_integration",
+      "promotion_performed": false,
+      "pytest_exit_code": 0,
+      "release_holdout_consumed": false,
+      "status": "PASS",
+      "test_output": "......                                                                   [100%]\n6 passed in 0.12s\n",
+      "v4_empirical_launch": false
+    },
+    {
+      "files": {
+        "research/kalshi/ng_exhaustion_v4_detector_intensity_semantics.py": "679f46cae719fc7b109acc733f0ede10ac814166ea5bafa0f0935bb95464692e",
+        "research/kalshi/tests/test_ng_exhaustion_v4_detector_intensity_semantics.py": "7c2ca9eac6e035e124f5edb3a53094488420297798a69b18f2e356f301154332"
+      },
+      "lane": "detector_intensity",
+      "promotion_performed": false,
+      "pytest_exit_code": 0,
+      "release_holdout_consumed": false,
+      "status": "PASS",
+      "test_output": "......                                                                   [100%]\n6 passed in 0.12s\n",
+      "v4_empirical_launch": false
+    },
+    {
+      "files": {
+        "research/kalshi/ng_exhaustion_v4_pilot_chunk_guard.py": "1a3f5660668971f2c5a0a52a9dbf2603274b6e18a7c3a7ef4aa68f44d371909e",
+        "research/kalshi/tests/test_ng_exhaustion_v4_pilot_chunk_guard.py": "39a6f2125eeeba11e0b4c67b8a09bdcfd73ac5401786d5b5ce7977ecfafcf479"
+      },
+      "lane": "pilot_chunk",
+      "promotion_performed": false,
+      "pytest_exit_code": 0,
+      "release_holdout_consumed": false,
+      "status": "PASS",
+      "test_output": ".......                                                                  [100%]\n7 passed in 0.10s\n",
+      "v4_empirical_launch": false
+    }
+  ],
+  "material_file_sha256": {
+    ".github/workflows/ng_exhaustion_v4_followon_provisional_readiness_20260821.yml": "ce1bb3160a486bd2a4364b22ebd820d26af909a3465ab10fa355501288737e61",
+    "research/kalshi/agent_frankie.py": "a748ed2c0861f1bf8da1affbe0d8b9b0d92de9705b0d468c78e55468c06e4ea3",
+    "research/kalshi/frankie_meta_loop_coordinator_s138.py": "5d847d27d059047d6dc1850716594a2141f7869c54a7d71f68ea2ae65c698809",
+    "research/kalshi/frankie_meta_loop_s138.py": "292beaa21bcd6f2ef299dd0dee67d52879464d57671259b36a7f3dc2f2ab2f41",
+    "research/kalshi/ng_exhaustion_v4_adapter_integration.py": "93c3e6cf0e3e3b4753d107608371f29c2e6ec535add325ac9f7e3419f1ac72ec",
+    "research/kalshi/ng_exhaustion_v4_causal_clock.py": "fe15781b6919f8fb719670a689740f34377b39b42e2f0206c429aa4b510a2426",
+    "research/kalshi/ng_exhaustion_v4_causal_entry_adapter.py": "9b7164632f4d0d0bcc7fd7e2c59077e206b008f2e7469d3d01a3e5555c43bc4c",
+    "research/kalshi/ng_exhaustion_v4_detector_intensity_semantics.py": "679f46cae719fc7b109acc733f0ede10ac814166ea5bafa0f0935bb95464692e",
+    "research/kalshi/ng_exhaustion_v4_gate_verifier.py": "8cc786505f61432cdfe0985c0bba76d47e466564c0893c0afb63cd4dac1ece81",
+    "research/kalshi/ng_exhaustion_v4_mechanics.py": "9a4d3920ce2be9de6a82bfd956ca18c70a5597a4bffbb5e9ebb3fbd9bbeaf888",
+    "research/kalshi/ng_exhaustion_v4_pilot_chunk_guard.py": "1a3f5660668971f2c5a0a52a9dbf2603274b6e18a7c3a7ef4aa68f44d371909e",
+    "research/kalshi/ng_exhaustion_v4_state_assembler.py": "66388ca9ed2eb95e5b930e74d1d5abab6cd6bb54f7730885312051a2350f8df8",
+    "research/kalshi/ng_exhaustion_v4_unified_runtime.py": "d57e63640c48dbe4a3b239962bfe8ff756ef6b8ad39b2f820f8767fa1854fcb8"
+  },
+  "meaning": "engineering/pipeline contracts only for this exact candidate; empirical authority remains separate",
+  "model_superiority_established": false,
+  "permanent_frankie_ready": false,
+  "promotion_authorized": false,
+  "release_or_virgin_holdout_consumed": false,
+  "result_bearing_v4_pilot_launched": false,
+  "schema": "NG_EXHAUSTION_V4_PROVISIONAL_READINESS_V1",
+  "six_p0_real_empirical_receipts_executed": false,
+  "source_integrity_codes": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "source_integrity_passed": true,
+  "status": "NOT_PROVISIONAL_READY",
+  "trade_edge_established": false,
+  "universal_d_law_established": false
+}
