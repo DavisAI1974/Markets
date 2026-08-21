@@ -1,14 +1,14 @@
 {
   "calibration_adequacy_established": false,
-  "candidate_commit": "9287a1fc2643e34deae067b3fd2e96c2c199b3f4",
+  "candidate_commit": "e1f42d71629836e0c262c3d409c31795c60062c2",
   "d4_d5_population_validated": false,
   "five_year_archive_jobs_touched": false,
-  "focused_test_output": "........................................................................ [ 84%]\n.............                                                            [100%]\n85 passed in 0.38s\n",
+  "focused_test_output": "........................................................................ [ 84%]\n.............                                                            [100%]\n85 passed in 0.36s\n",
   "focused_tests_passed": true,
   "frankie_selftest_output": "  PASS | original spawn.py Git blob is unchanged\n  PASS | Novel candidate registry is readable\n  PASS | reviewed paper manifest is READY\n  PASS | qualified synthetic event clears deterministic gates\n  PASS | READY manifest permits agreed SHADOW\n  PASS | typed cognitive contract is recorded\n  PASS | Frankie can never enable execution\n  PASS | evidence is written after adjudication\n  PASS | resolved outcomes are immutable sidecars\n  PASS | self-improvement produces a sandbox proposal\n  PASS | self-improvement cannot apply itself\n  PASS | self-improvement cannot touch spawn.py\n  PASS | Frankie coordinator meta-loop is post-evidence only\n  PASS | Frankie meta-loop preserves first lock and every case/chain\n  PASS | Frankie meta-loop cannot auto-apply or promote\n\n  15/15 passed\n",
   "frankie_selftest_passed": true,
-  "full_frankie_output": ".............................................................. [ 14%]\n.......................................................... [ 27%]\n.....................................................................F.. [ 43%]\nFF.F........................................................ [ 57%]\n...................................................................... [ 73%]\n........................................................................ [ 90%]\n...........................................                              [100%]\n=================================== FAILURES ===================================\n_ FrankieP0RegistryTests.test_component_contract_can_pass_while_empirical_readiness_is_blocked _\n\nself = <test_frankie_p0_registry.FrankieP0RegistryTests testMethod=test_component_contract_can_pass_while_empirical_readiness_is_blocked>\n\n    def test_component_contract_can_pass_while_empirical_readiness_is_blocked(self):\n        readiness = evaluate_p0_readiness()\n>       self.assertTrue(readiness[\"component_contract_ready\"])\nE       AssertionError: False is not true\n\nresearch/kalshi/tests/test_frankie_p0_registry.py:307: AssertionError\n_ FrankieP0RegistryTests.test_every_bound_evidence_type_is_required_and_authority_stays_false _\n\nself = <test_frankie_p0_registry.FrankieP0RegistryTests testMethod=test_every_bound_evidence_type_is_required_and_authority_stays_false>\n\n    def test_every_bound_evidence_type_is_required_and_authority_stays_false(self):\n        bundle = evidence_bundle()\n        readiness = evaluate_p0_readiness(bundle)\n        self.assertTrue(readiness[\"empirical_evidence_ready\"])\n>       self.assertTrue(readiness[\"composite_readiness_passed\"])\nE       AssertionError: False is not true\n\nresearch/kalshi/tests/test_frankie_p0_registry.py:344: AssertionError\n_ FrankieP0RegistryTests.test_inventory_is_exact_hash_bound_and_non_authorizing _\n\nself = <test_frankie_p0_registry.FrankieP0RegistryTests testMethod=test_inventory_is_exact_hash_bound_and_non_authorizing>\n\n    def test_inventory_is_exact_hash_bound_and_non_authorizing(self):\n        receipt = audit_p0_registry()\n>       self.assertEqual(receipt[\"status\"], \"COMPONENT_CONTRACT_READY\")\nE       AssertionError: 'BLOCKED_REGISTRY_INTEGRITY' != 'COMPONENT_CONTRACT_READY'\nE       - BLOCKED_REGISTRY_INTEGRITY\nE       + COMPONENT_CONTRACT_READY\n\nresearch/kalshi/tests/test_frankie_p0_registry.py:174: AssertionError\n_ FrankieP0RegistryTests.test_runtime_hooks_are_exact_and_standalone_loops_remain_distinct _\n\nself = <test_frankie_p0_registry.FrankieP0RegistryTests testMethod=test_runtime_hooks_are_exact_and_standalone_loops_remain_distinct>\n\n    def test_runtime_hooks_are_exact_and_standalone_loops_remain_distinct(self):\n        receipt = audit_p0_registry()\n        self.assertEqual(receipt[\"runtime_hook_count\"], 9)\n        self.assertEqual(\n            receipt[\"standalone_runtime_loop_entry_points\"],\n            [\n                \"frankie_temporal_graph_p0_adapter.py:run_temporal_graph_shadow_adapter\",\n                \"frankie_temporal_p0_controls.py:run_delayed_label_aci\",\n            ],\n        )\n        boundary = receipt[\"runtime_boundary_receipt\"]\n>       self.assertTrue(boundary[\"runtime_binding_integrity\"])\nE       AssertionError: False is not true\n\nresearch/kalshi/tests/test_frankie_p0_registry.py:226: AssertionError\n=============================== warnings summary ===============================\nresearch/kalshi/tests/test_frankie_s121_curve_restore.py:73\n  /home/runner/work/Markets/Markets/research/kalshi/tests/test_frankie_s121_curve_restore.py:73: DeprecationWarning: invalid escape sequence '\\['\n    with self.assertRaisesRegex(s121.ForecastStop, \"outside \\[0,24\\)\"):\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ============================\nFAILED research/kalshi/tests/test_frankie_p0_registry.py::FrankieP0RegistryTests::test_component_contract_can_pass_while_empirical_readiness_is_blocked - AssertionError: False is not true\nFAILED research/kalshi/tests/test_frankie_p0_registry.py::FrankieP0RegistryTests::test_every_bound_evidence_type_is_required_and_authority_stays_false - AssertionError: False is not true\nFAILED research/kalshi/tests/test_frankie_p0_registry.py::FrankieP0RegistryTests::test_inventory_is_exact_hash_bound_and_non_authorizing - AssertionError: 'BLOCKED_REGISTRY_INTEGRITY' != 'COMPONENT_CONTRACT_READY'\n- BLOCKED_REGISTRY_INTEGRITY\n+ COMPONENT_CONTRACT_READY\nFAILED research/kalshi/tests/test_frankie_p0_registry.py::FrankieP0RegistryTests::test_runtime_hooks_are_exact_and_standalone_loops_remain_distinct - AssertionError: False is not true\n4 failed, 433 passed, 1 warning, 38 subtests passed in 4.42s\n",
-  "full_frankie_regression_passed": false,
+  "full_frankie_output": ".............................................................. [ 14%]\n.......................................................... [ 27%]\n........................................................................ [ 43%]\n............................................................ [ 57%]\n...................................................................... [ 73%]\n........................................................................ [ 90%]\n...........................................                              [100%]\n=============================== warnings summary ===============================\nresearch/kalshi/tests/test_frankie_s121_curve_restore.py:73\n  /home/runner/work/Markets/Markets/research/kalshi/tests/test_frankie_s121_curve_restore.py:73: DeprecationWarning: invalid escape sequence '\\['\n    with self.assertRaisesRegex(s121.ForecastStop, \"outside \\[0,24\\)\"):\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n437 passed, 1 warning, 38 subtests passed in 4.80s\n",
+  "full_frankie_regression_passed": true,
   "lane_agents": [
     {
       "files": {
@@ -33,20 +33,20 @@
       "pytest_exit_code": 0,
       "release_holdout_consumed": false,
       "status": "PASS",
-      "test_output": "......                                                                   [100%]\n6 passed in 0.12s\n",
+      "test_output": "......                                                                   [100%]\n6 passed in 0.11s\n",
       "v4_empirical_launch": false
     },
     {
       "files": {
         "research/kalshi/ng_exhaustion_v4_pilot_chunk_guard.py": "1a3f5660668971f2c5a0a52a9dbf2603274b6e18a7c3a7ef4aa68f44d371909e",
-        "research/kalshi/tests/test_ng_exhaustion_v4_pilot_chunk_guard.py": "39a6f2125eeeba11e0b4c67b8a09bdcfd73ac5401786d5b5ce7977ecfafcf479"
+        "research/kalshi/tests/test_ng_exhaustion_v4_pilot_chunk_guard.py": "a9ce00e0f2d8a97717d7dd5bf2c9feb539e72f3dbc7b4229cb04fc9dd026227c"
       },
       "lane": "pilot_chunk",
       "promotion_performed": false,
       "pytest_exit_code": 0,
       "release_holdout_consumed": false,
       "status": "PASS",
-      "test_output": ".......                                                                  [100%]\n7 passed in 0.10s\n",
+      "test_output": ".......                                                                  [100%]\n7 passed in 0.09s\n",
       "v4_empirical_launch": false
     }
   ],
@@ -80,7 +80,7 @@
     0
   ],
   "source_integrity_passed": true,
-  "status": "NOT_PROVISIONAL_READY",
+  "status": "PROVISIONAL_READY_FOR_EXACT_CANDIDATE",
   "trade_edge_established": false,
   "universal_d_law_established": false
 }
