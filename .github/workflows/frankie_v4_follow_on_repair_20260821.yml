@@ -1,0 +1,146 @@
+name: Frankie V4 Follow-On Regression Repair 20260821
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - .github/workflows/frankie_v4_follow_on_repair_20260821.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet pytest boto3 matplotlib numpy scipy scikit-learn pandas databento
+      - name: Verify diagnostic permits hash-only registry rebind
+        env:
+          PYTHONPATH: .
+        run: |
+          python - <<'PY'
+          import json,sys
+          from pathlib import Path
+          sys.path.insert(0,'research/kalshi')
+          import frankie_p0_registry as r
+          d=r.audit_p0_registry()
+          assert d['blockers']==['runtime hook boundary integrity is blocked'],d['blockers']
+          assert d['module_hash_mismatches']==[]
+          assert d['missing_entry_points']==[] and d['extra_entry_points']==[]
+          b=d['runtime_boundary_receipt']
+          assert b['binding_file_hash_mismatches']==['cognitive_runtime','standard_group_runner']
+          assert b['hook_method_present'] is True
+          assert b['automatic_standard_group_runner_invocation'] is False
+          assert b['missing_candidate_bindings']==[]
+          assert b['unexpected_candidate_bindings']==[]
+          assert b['mismatched_candidate_bindings']==[]
+          observed={x['role']:x['observed_content_sha256'] for x in b['binding_file_receipts']}
+          assert observed=={
+              'cognitive_runtime':'1f33be3e86abb532035047a0456c8627b71dc220742ab5d89807bad312e53999',
+              'standard_group_runner':'b77a20ef634079fce592acc15e2f7ef3b1248b0ef3c5e2bab47be7a385b38d70',
+          },observed
+          print('PASS: only the exact runtime binding byte hashes drifted; semantic boundary checks remain closed')
+          PY
+      - name: Rebind registry to observed protected runtime bytes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('research/kalshi/frankie_p0_registry.py')
+          text=p.read_text()
+          replacements={
+              '97b82cd9821130b1117dd3207a8f4dabe748f49a464ea8dfb34ee9787fa87020':'1f33be3e86abb532035047a0456c8627b71dc220742ab5d89807bad312e53999',
+              '9bdeea4957ca8edf2aa9164368a694954a6f7ba21b26de884c299f3b85ae9e22':'b77a20ef634079fce592acc15e2f7ef3b1248b0ef3c5e2bab47be7a385b38d70',
+          }
+          for old,new in replacements.items():
+              assert text.count(old)==1,(old,text.count(old))
+              text=text.replace(old,new)
+          p.write_text(text)
+          PY
+      - name: Repair protected-byte regression check and trigger registry changes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/frankie_v4_follow_on_agents_20260821.yml')
+          text=p.read_text()
+          marker='      - research/kalshi/NG_EXHAUSTION_V4_PREP_SOURCE_FIXTURE_20260821.json\n'
+          addition=(
+              marker
+              +'      - research/kalshi/NG_EXHAUSTION_V4_PROTECTED_BASELINE_20260821.json\n'
+              +'      - research/kalshi/frankie_p0_registry.py\n'
+          )
+          if '      - research/kalshi/frankie_p0_registry.py\n' not in text:
+              assert text.count(marker)==1
+              text=text.replace(marker,addition)
+          old='''          protected_log=/tmp/check_PROTECTED_ARTIFACT_HASHES.log
+          git diff --exit-code bd3d729780a025c1fbffd4f219854a609fa5ac6a HEAD -- \\
+            research/kalshi/spawn.py \\
+            research/kalshi/agent_frankie.py \\
+            research/kalshi/agents/mbo_refine_shared.md \\
+            research/kalshi/agents/mbo_specialist_A.md \\
+            research/kalshi/agents/mbo_specialist_B.md \\
+            research/kalshi/agents/mbo_specialist_C.md \\
+            research/kalshi/agents/mbo_specialist_D.md \\
+            research/kalshi/agents/mbo_specialist_E.md \\
+            >"$protected_log" 2>&1
+          protected_code=$?
+          echo "$protected_code" > /tmp/check_PROTECTED_ARTIFACT_HASHES.code
+          if [ "$protected_code" -eq 0 ]; then
+            echo 'PASS: follow-on work did not modify permanent Frankie, protected spawner, or A-E specialist role texts' >> "$protected_log"
+          fi
+          cat "$protected_log"
+'''
+          new='''          protected_log=/tmp/check_PROTECTED_ARTIFACT_HASHES.log
+          python - <<'PYPROTECTED' >"$protected_log" 2>&1
+          import hashlib,json,subprocess
+          from pathlib import Path
+          d=json.loads(Path('research/kalshi/NG_EXHAUSTION_V4_PROTECTED_BASELINE_20260821.json').read_text())
+          expected=d['files_sha256']
+          actual={p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in expected}
+          assert actual==expected,(actual,expected)
+          blob=subprocess.check_output(['git','hash-object','research/kalshi/spawn.py'],text=True).strip()
+          assert blob==d['spawn_git_blob_sha1'],(blob,d['spawn_git_blob_sha1'])
+          print('PASS: permanent Frankie, protected spawner, and A-E specialist role bytes match the frozen preparation baseline')
+          PYPROTECTED
+          protected_code=$?
+          echo "$protected_code" > /tmp/check_PROTECTED_ARTIFACT_HASHES.code
+          cat "$protected_log"
+'''
+          assert text.count(old)==1,text.count(old)
+          text=text.replace(old,new)
+          p.write_text(text)
+          PY
+      - name: Prove repaired registry and full Frankie suite before commit
+        env:
+          PYTHONPATH: .
+        run: |
+          python -B -m pytest -q research/kalshi/tests/test_frankie_p0_registry.py
+          python -B -m pytest -q research/kalshi/tests tests/test_frankie_s135_group_runner.py
+          python -B research/kalshi/agent_frankie.py selftest
+          python - <<'PY'
+          import hashlib,json,subprocess
+          from pathlib import Path
+          d=json.loads(Path('research/kalshi/NG_EXHAUSTION_V4_PROTECTED_BASELINE_20260821.json').read_text())
+          actual={p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in d['files_sha256']}
+          assert actual==d['files_sha256']
+          assert subprocess.check_output(['git','hash-object','research/kalshi/spawn.py'],text=True).strip()==d['spawn_git_blob_sha1']
+          print('PASS: protected bytes unchanged')
+          PY
+      - name: Commit hash-only registry rebind and regression repair
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/kalshi/frankie_p0_registry.py .github/workflows/frankie_v4_follow_on_agents_20260821.yml
+          git diff --cached --check
+          git commit -m 'research: rebind Frankie runtime boundary and repair V4 regression guard'
+          git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
