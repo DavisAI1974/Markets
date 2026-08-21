@@ -1,0 +1,9 @@
+{
+  "schema": "NG_EXHAUSTION_V4_PREP_SOURCE_FIXTURE_V1",
+  "source_kind": "SYNTHETIC_MECHANICS_FIXTURE",
+  "real_market_evidence": false,
+  "release_holdout_included": false,
+  "virgin_holdout_consumed": false,
+  "purchased_archive_mutated": false,
+  "purpose": "exercise causal availability, immutable state, predecessor lifecycle, probability, lock, handoff, restart and reconciliation mechanics only"
+}
