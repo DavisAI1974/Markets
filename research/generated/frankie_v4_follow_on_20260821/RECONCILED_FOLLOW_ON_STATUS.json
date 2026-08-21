@@ -22,11 +22,11 @@
       "build_assessment": "BUILD_IMPLEMENTED_AWAITING_RECONCILED_REGRESSION",
       "mode": "pilot_chunk_streaming",
       "path": "FRANKIE_V4_FOLLOW_ON_pilot_chunk_streaming.json",
-      "sha256": "874b7051003fd9ad25ece79f742201bfca49a54f09e13afcccf79b7fc77128c3"
+      "sha256": "6ef7c4eacdb3a006fa31115373e1fde389d47949b59686b5662bf6c70e915c12"
     }
   ],
   "calibration_adequacy_claimed": false,
-  "candidate_commit": "0a562941febf562b3f3454c36c15b5679e1db831",
+  "candidate_commit": "e1f42d71629836e0c262c3d409c31795c60062c2",
   "d4_d5_population_validation_claimed": false,
   "d_year_chunk_streaming": {
     "completed_chunk_may_advance_without_sibling_barrier": true,
@@ -45,7 +45,7 @@
   "identity": {
     "adapter_sha256": "81590d9736f3300d5060038d7b08329f76cec8b65b9b30e27d5e2093ac0718e1",
     "engine_sha256": "d57e63640c48dbe4a3b239962bfe8ff756ef6b8ad39b2f820f8767fa1854fcb8",
-    "identity_hash": "aa0e5c542c7a322e7294a470dd9dddee7202828afeb7489f478f85d6d04fea33",
+    "identity_hash": "4b94b6b10f55957c94b5df2752a63e41e5f855330228a19a5dd2336a72f41a36",
     "model_fixture_sha256": "7ba82b6e5aec5a33e40c37e989ba8ad15ae2304ebae3c19354cd1467ab5d9437",
     "reconciler_sha256": "d57e63640c48dbe4a3b239962bfe8ff756ef6b8ad39b2f820f8767fa1854fcb8",
     "ruleset_sha256": "5619d4221e9ecfbc506b82c2461d9dd9919c47e2d368edd89ff5f5f31bb6fa45",
@@ -67,18 +67,6 @@
     "research/kalshi/spawn.py": "f2ae5287b24b2772a75e1c1674f0f7df590b93d2cbb773662ef30210bce78a54"
   },
   "regression_failures": [
-    {
-      "check_id": "FRANKIE_APPLICABLE_FULL_SUITE",
-      "detail": "4 failed, 412 passed, 1 warning, 38 subtests passed in 4.40s",
-      "exit_code": 1,
-      "log_sha256": "ee9b13b80b98d6bfa28b0a12148ba620b78d39cc714e5d2ccbd405572f9ec534"
-    },
-    {
-      "check_id": "REGISTRY_INVARIANTS",
-      "detail": "4 failed, 4 passed in 1.09s",
-      "exit_code": 1,
-      "log_sha256": "7702266940d75acca056712fc8b56c1b53f0731e825140c18b68538fcf252240"
-    },
     {
       "check_id": "PROTECTED_ARTIFACT_HASHES",
       "detail": "fatal: bad object bd3d729780a025c1fbffd4f219854a609fa5ac6a",

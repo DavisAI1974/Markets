@@ -12,7 +12,7 @@
   "files": {
     "research/kalshi/NG_EXHAUSTION_V4_PREP_RULESET_20260821.json": "5619d4221e9ecfbc506b82c2461d9dd9919c47e2d368edd89ff5f5f31bb6fa45",
     "research/kalshi/ng_exhaustion_v4_pilot_chunk_guard.py": "1a3f5660668971f2c5a0a52a9dbf2603274b6e18a7c3a7ef4aa68f44d371909e",
-    "research/kalshi/tests/test_ng_exhaustion_v4_pilot_chunk_guard.py": "39a6f2125eeeba11e0b4c67b8a09bdcfd73ac5401786d5b5ce7977ecfafcf479"
+    "research/kalshi/tests/test_ng_exhaustion_v4_pilot_chunk_guard.py": "a9ce00e0f2d8a97717d7dd5bf2c9feb539e72f3dbc7b4229cb04fc9dd026227c"
   },
   "five_year_run_touched": false,
   "mode": "pilot_chunk_streaming",
