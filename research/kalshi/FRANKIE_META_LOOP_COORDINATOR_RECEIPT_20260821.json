@@ -1,0 +1,30 @@
+{
+  "activation": "POST_EVIDENCE_ONLY",
+  "automatic_apply_allowed": false,
+  "automatic_brain_promotion_allowed": false,
+  "blind_or_evidence_mutation_allowed": false,
+  "case_or_chain_drop_allowed": false,
+  "coordinator_runtime_wired": true,
+  "files": {
+    "research/kalshi/agent_frankie.py": "a748ed2c0861f1bf8da1affbe0d8b9b0d92de9705b0d468c78e55468c06e4ea3",
+    "research/kalshi/frankie_meta_loop_coordinator_s138.py": "5d847d27d059047d6dc1850716594a2141f7869c54a7d71f68ea2ae65c698809",
+    "research/kalshi/frankie_meta_loop_s138.py": "292beaa21bcd6f2ef299dd0dee67d52879464d57671259b36a7f3dc2f2ab2f41",
+    "research/kalshi/tests/test_frankie_meta_loop_coordinator_s138.py": "3984002dd635f9307120e83a03625500200f4a27d70f49d8773bec0d503c13e6",
+    "research/kalshi/tests/test_frankie_meta_loop_s138.py": "1f1672b452fb76e10f558802ac981a54fab3c976b247fa9883eb7bc72da8be50"
+  },
+  "first_lock_rewrite_allowed": false,
+  "five_year_run_touched": false,
+  "frankie_selftest_exit_code": 0,
+  "frankie_selftest_output": "  PASS | original spawn.py Git blob is unchanged\n  PASS | Novel candidate registry is readable\n  PASS | reviewed paper manifest is READY\n  PASS | qualified synthetic event clears deterministic gates\n  PASS | READY manifest permits agreed SHADOW\n  PASS | typed cognitive contract is recorded\n  PASS | Frankie can never enable execution\n  PASS | evidence is written after adjudication\n  PASS | resolved outcomes are immutable sidecars\n  PASS | self-improvement produces a sandbox proposal\n  PASS | self-improvement cannot apply itself\n  PASS | self-improvement cannot touch spawn.py\n  PASS | Frankie coordinator meta-loop is post-evidence only\n  PASS | Frankie meta-loop preserves first lock and every case/chain\n  PASS | Frankie meta-loop cannot auto-apply or promote\n\n  15/15 passed\n",
+  "frankie_selftest_passed": true,
+  "majority_vote_resolution_allowed": false,
+  "provisional_prerequisite_passed": true,
+  "pytest_exit_code": 0,
+  "pytest_output": "..................                                                       [100%]\n18 passed in 0.19s\n",
+  "revision_scope": "NEXT_RUN_ONLY",
+  "runner_commit": "d8e03401809d9a818ab111f1a891706d6162b8de",
+  "schema": "FRANKIE_META_LOOP_COORDINATOR_INTEGRATION_RECEIPT_V1",
+  "specialist_role_rewrite_allowed": false,
+  "tests_passed": true,
+  "v4_empirical_launch": false
+}
