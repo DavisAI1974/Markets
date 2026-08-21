@@ -1,0 +1,35 @@
+{
+  "assertions": [
+    "event_known_by precedes all V4 evaluation",
+    "source availability drives immutable state prefixes",
+    "predecessor lifecycle remains prospective",
+    "probability movie is append-only and lock/no-lock is independently recomputed",
+    "execution handoff is sealed and reconciliation reruns the pipeline"
+  ],
+  "build_assessment": "BUILD_IMPLEMENTED_AWAITING_RECONCILED_REGRESSION",
+  "data_purchase_performed": false,
+  "external_model_calls": false,
+  "files": {
+    "research/kalshi/ng_exhaustion_v4_causal_clock.py": "fe15781b6919f8fb719670a689740f34377b39b42e2f0206c429aa4b510a2426",
+    "research/kalshi/ng_exhaustion_v4_end_to_end_adapter.py": "81590d9736f3300d5060038d7b08329f76cec8b65b9b30e27d5e2093ac0718e1",
+    "research/kalshi/ng_exhaustion_v4_lock_outcome.py": "1c7598bf75d9be8993ace566c816d7ee35cfbff0c4f0b93241b4337d46de8fde",
+    "research/kalshi/ng_exhaustion_v4_state_assembler.py": "66388ca9ed2eb95e5b930e74d1d5abab6cd6bb54f7730885312051a2350f8df8",
+    "research/kalshi/tests/test_ng_exhaustion_v4_end_to_end_adapter.py": "a6b19eb55817e95708dab6d90d7a9f5ecadd467870540938bc1b8f322bf5065f"
+  },
+  "five_year_run_touched": false,
+  "mode": "end_to_end_adapter",
+  "p0_real_evidence_executed": false,
+  "promotion_performed": false,
+  "protected_mutations": {
+    "frankie_1": false,
+    "frozen_canonical_evidence": false,
+    "frozen_detector": false,
+    "frozen_runway_clock": false,
+    "permanent_frankie": false,
+    "spawn_py": false
+  },
+  "release_holdout_consumed": false,
+  "schema": "FRANKIE_V4_FOLLOW_ON_AGENT_V1",
+  "status": "V4_FOLLOW_ON_AGENT_COMPLETE",
+  "v4_result_bearing_launch": false
+}

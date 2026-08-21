@@ -1,0 +1,96 @@
+{
+  "agent_lanes": [
+    {
+      "build_assessment": "BUILD_IMPLEMENTED_AWAITING_RECONCILED_REGRESSION",
+      "mode": "detector_intensity_semantics",
+      "path": "FRANKIE_V4_FOLLOW_ON_detector_intensity_semantics.json",
+      "sha256": "c734ad4c5500f1d4976422a678c3f7ba6150abcf8344e9152d37cd3b47c45bf8"
+    },
+    {
+      "build_assessment": "BUILD_IMPLEMENTED_AWAITING_RECONCILED_REGRESSION",
+      "mode": "end_to_end_adapter",
+      "path": "FRANKIE_V4_FOLLOW_ON_end_to_end_adapter.json",
+      "sha256": "bdc2e3aae875a4e9c195bf3cccd08f5d3e25d695be19bf324895eec71f21d1c5"
+    },
+    {
+      "build_assessment": "BUILD_IMPLEMENTED_AWAITING_RECONCILED_REGRESSION",
+      "mode": "exact_candidate_regression",
+      "path": "FRANKIE_V4_FOLLOW_ON_exact_candidate_regression.json",
+      "sha256": "88cde793ca4d5b24587b7669f0de3d5b4509fe6018a10f5eaa6237dba6ce6340"
+    },
+    {
+      "build_assessment": "BUILD_IMPLEMENTED_AWAITING_RECONCILED_REGRESSION",
+      "mode": "pilot_chunk_streaming",
+      "path": "FRANKIE_V4_FOLLOW_ON_pilot_chunk_streaming.json",
+      "sha256": "874b7051003fd9ad25ece79f742201bfca49a54f09e13afcccf79b7fc77128c3"
+    }
+  ],
+  "calibration_adequacy_claimed": false,
+  "candidate_commit": "0a562941febf562b3f3454c36c15b5679e1db831",
+  "d4_d5_population_validation_claimed": false,
+  "d_year_chunk_streaming": {
+    "completed_chunk_may_advance_without_sibling_barrier": true,
+    "exact_child_parent_reconciliation_required": true,
+    "result_bearing_launch_authorized": false
+  },
+  "detector_intensity_resolution": {
+    "fake_native_reconstruction": false,
+    "mode": "EXPLICIT_PROXY",
+    "namespace": "v4_proxy.polarity_oriented_roll20_trajectory",
+    "resolution_hash": "f862b383c7b82820943998f71bdb67c1e6c7c9a716c6b6f8facda143665e553c",
+    "schema": "NG_EXHAUSTION_V4_DETECTOR_INTENSITY_V1"
+  },
+  "engineering_freeze_receipt_hash": null,
+  "five_year_archive_jobs_touched": false,
+  "identity": {
+    "adapter_sha256": "81590d9736f3300d5060038d7b08329f76cec8b65b9b30e27d5e2093ac0718e1",
+    "engine_sha256": "d57e63640c48dbe4a3b239962bfe8ff756ef6b8ad39b2f820f8767fa1854fcb8",
+    "identity_hash": "aa0e5c542c7a322e7294a470dd9dddee7202828afeb7489f478f85d6d04fea33",
+    "model_fixture_sha256": "7ba82b6e5aec5a33e40c37e989ba8ad15ae2304ebae3c19354cd1467ab5d9437",
+    "reconciler_sha256": "d57e63640c48dbe4a3b239962bfe8ff756ef6b8ad39b2f820f8767fa1854fcb8",
+    "ruleset_sha256": "5619d4221e9ecfbc506b82c2461d9dd9919c47e2d368edd89ff5f5f31bb6fa45",
+    "source_fixture_sha256": "984c96689a4e5f7745b8a0ad60dc2c2daacb40ea179bd0806557fac431fe3a08",
+    "workflow_sha256": "1139fb033471ae686e20e3b62991a4d9860582a4eed755d0925e68a7e7ec96b6"
+  },
+  "model_superiority_claimed": false,
+  "p0_six_real_receipts_executed": false,
+  "permanent_frankie_promoted": false,
+  "preparation_ceiling": "NOT_YET_PIPELINE_VERIFIED",
+  "protected_artifact_hashes": {
+    "research/kalshi/agent_frankie.py": "a748ed2c0861f1bf8da1affbe0d8b9b0d92de9705b0d468c78e55468c06e4ea3",
+    "research/kalshi/agents/mbo_refine_shared.md": "35b28e784ddda683dc938a4f066d3c56bc84cc61e35063cdfbd5705f732af9d2",
+    "research/kalshi/agents/mbo_specialist_A.md": "7c76df81b652a9ef0a9fff89bf4b7bc0c1f7f4e54538454832adc73e470d5b15",
+    "research/kalshi/agents/mbo_specialist_B.md": "35f78bc030476217ac6709c393d104b6cee886e7aaa21d85da239b95e9a71b8a",
+    "research/kalshi/agents/mbo_specialist_C.md": "3f5850afd0da087abe4bc407626309d3da3443186596f974c4d72fbe007b9ceb",
+    "research/kalshi/agents/mbo_specialist_D.md": "bf4f1130ca1fdec1bea2cd68650da34027671b2df72c7e20224d2e2168a1b36b",
+    "research/kalshi/agents/mbo_specialist_E.md": "037f8f82e5380cc1ea8cab7b10de637de11624a8a9e9959dc770bceffa4c4698",
+    "research/kalshi/spawn.py": "f2ae5287b24b2772a75e1c1674f0f7df590b93d2cbb773662ef30210bce78a54"
+  },
+  "regression_failures": [
+    {
+      "check_id": "FRANKIE_APPLICABLE_FULL_SUITE",
+      "detail": "4 failed, 412 passed, 1 warning, 38 subtests passed in 4.40s",
+      "exit_code": 1,
+      "log_sha256": "ee9b13b80b98d6bfa28b0a12148ba620b78d39cc714e5d2ccbd405572f9ec534"
+    },
+    {
+      "check_id": "REGISTRY_INVARIANTS",
+      "detail": "4 failed, 4 passed in 1.09s",
+      "exit_code": 1,
+      "log_sha256": "7702266940d75acca056712fc8b56c1b53f0731e825140c18b68538fcf252240"
+    },
+    {
+      "check_id": "PROTECTED_ARTIFACT_HASHES",
+      "detail": "fatal: bad object bd3d729780a025c1fbffd4f219854a609fa5ac6a",
+      "exit_code": 128,
+      "log_sha256": "f326dab8108307d057780a45e803212f7754852b47e9a59aaf13c7f92aed5295"
+    }
+  ],
+  "regression_green": false,
+  "release_holdout_consumed": false,
+  "result_bearing_v4_pilot_launched": false,
+  "schema": "FRANKIE_V4_FOLLOW_ON_RECONCILED_V1",
+  "status": "V4_PREPARATION_FOLLOW_ON_REGRESSION_BLOCKED",
+  "trade_edge_claimed": false,
+  "universal_d_law_claimed": false
+}

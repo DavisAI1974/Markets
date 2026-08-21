@@ -1,0 +1,33 @@
+{
+  "assertions": [
+    "one D/year chunk is frozen",
+    "exact candidate/workflow/ruleset/engine/adapter/reconciler/model/source identities are bound",
+    "child->parent reconciliation is exact",
+    "completed D/year chunk may advance without sibling barrier",
+    "generic Proceed is not result-bearing authorization"
+  ],
+  "build_assessment": "BUILD_IMPLEMENTED_AWAITING_RECONCILED_REGRESSION",
+  "data_purchase_performed": false,
+  "external_model_calls": false,
+  "files": {
+    "research/kalshi/NG_EXHAUSTION_V4_PREP_RULESET_20260821.json": "5619d4221e9ecfbc506b82c2461d9dd9919c47e2d368edd89ff5f5f31bb6fa45",
+    "research/kalshi/ng_exhaustion_v4_pilot_chunk_guard.py": "1a3f5660668971f2c5a0a52a9dbf2603274b6e18a7c3a7ef4aa68f44d371909e",
+    "research/kalshi/tests/test_ng_exhaustion_v4_pilot_chunk_guard.py": "39a6f2125eeeba11e0b4c67b8a09bdcfd73ac5401786d5b5ce7977ecfafcf479"
+  },
+  "five_year_run_touched": false,
+  "mode": "pilot_chunk_streaming",
+  "p0_real_evidence_executed": false,
+  "promotion_performed": false,
+  "protected_mutations": {
+    "frankie_1": false,
+    "frozen_canonical_evidence": false,
+    "frozen_detector": false,
+    "frozen_runway_clock": false,
+    "permanent_frankie": false,
+    "spawn_py": false
+  },
+  "release_holdout_consumed": false,
+  "schema": "FRANKIE_V4_FOLLOW_ON_AGENT_V1",
+  "status": "V4_FOLLOW_ON_AGENT_COMPLETE",
+  "v4_result_bearing_launch": false
+}

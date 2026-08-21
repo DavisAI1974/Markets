@@ -1,0 +1,30 @@
+{
+  "assertions": [
+    "native intensity requires a frozen causal stream with source/revision identities",
+    "retrospective endpoint reconstruction cannot prove native intensity",
+    "default preparation path uses visibly named v4_proxy polarity roll20 trajectory"
+  ],
+  "build_assessment": "BUILD_IMPLEMENTED_AWAITING_RECONCILED_REGRESSION",
+  "data_purchase_performed": false,
+  "external_model_calls": false,
+  "files": {
+    "research/kalshi/ng_exhaustion_v4_detector_intensity.py": "2c4f30cc39b2a5b5b784a48c45900dc9b306977cee4a574ed7ce6d2f46ccda83",
+    "research/kalshi/tests/test_ng_exhaustion_v4_detector_intensity.py": "8ecd064c11d3a499270c7e0e78c8e8895e28c2be78ccb9a55f4deac2e9f4e089"
+  },
+  "five_year_run_touched": false,
+  "mode": "detector_intensity_semantics",
+  "p0_real_evidence_executed": false,
+  "promotion_performed": false,
+  "protected_mutations": {
+    "frankie_1": false,
+    "frozen_canonical_evidence": false,
+    "frozen_detector": false,
+    "frozen_runway_clock": false,
+    "permanent_frankie": false,
+    "spawn_py": false
+  },
+  "release_holdout_consumed": false,
+  "schema": "FRANKIE_V4_FOLLOW_ON_AGENT_V1",
+  "status": "V4_FOLLOW_ON_AGENT_COMPLETE",
+  "v4_result_bearing_launch": false
+}

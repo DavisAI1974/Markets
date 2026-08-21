@@ -1,0 +1,33 @@
+{
+  "assertions": [
+    "freeze is exact-commit and hash bound",
+    "full engineering checks are all required",
+    "protected artifacts are hash checked",
+    "engineering freeze grants no empirical authority"
+  ],
+  "build_assessment": "BUILD_IMPLEMENTED_AWAITING_RECONCILED_REGRESSION",
+  "data_purchase_performed": false,
+  "external_model_calls": false,
+  "files": {
+    "research/kalshi/NG_EXHAUSTION_V4_PREP_MODEL_FIXTURE_20260821.json": "7ba82b6e5aec5a33e40c37e989ba8ad15ae2304ebae3c19354cd1467ab5d9437",
+    "research/kalshi/NG_EXHAUSTION_V4_PREP_SOURCE_FIXTURE_20260821.json": "984c96689a4e5f7745b8a0ad60dc2c2daacb40ea179bd0806557fac431fe3a08",
+    "research/kalshi/ng_exhaustion_v4_exact_candidate_freeze.py": "dfcb1ab71c9c89f2650e3b0b41308741942bc83d2f852091505da77887e3f372",
+    "research/kalshi/tests/test_ng_exhaustion_v4_exact_candidate_freeze.py": "0f7df569852927d3303b5de1056fe8f6852cf608fd8239eb2cdeb4dddb9c1900"
+  },
+  "five_year_run_touched": false,
+  "mode": "exact_candidate_regression",
+  "p0_real_evidence_executed": false,
+  "promotion_performed": false,
+  "protected_mutations": {
+    "frankie_1": false,
+    "frozen_canonical_evidence": false,
+    "frozen_detector": false,
+    "frozen_runway_clock": false,
+    "permanent_frankie": false,
+    "spawn_py": false
+  },
+  "release_holdout_consumed": false,
+  "schema": "FRANKIE_V4_FOLLOW_ON_AGENT_V1",
+  "status": "V4_FOLLOW_ON_AGENT_COMPLETE",
+  "v4_result_bearing_launch": false
+}
