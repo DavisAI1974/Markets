@@ -1,0 +1,37 @@
+name: NG V4 Five-Year AWS Source Verify 20260820
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/ng_exhaustion_mbo_5y_aws_source_20260820.py
+      - research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py
+      - research/test_ng_exhaustion_mbo_5y_aws_source_20260820.py
+      - .github/workflows/ng_exhaustion_v4_5y_aws_source_verify_20260820.yml
+
+permissions:
+  contents: read
+
+jobs:
+  source-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile
+        run: |
+          python -m py_compile \
+            research/ng_exhaustion_mbo_5y_aws_source_20260820.py \
+            research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py \
+            research/test_ng_exhaustion_mbo_5y_aws_source_20260820.py
+      - name: Run fail-closed source/full-state tests
+        env:
+          PYTHONPATH: research
+        run: |
+          python -m unittest -v test_ng_exhaustion_mbo_5y_aws_source_20260820
