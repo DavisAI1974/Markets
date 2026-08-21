@@ -1,0 +1,18 @@
+{
+  "schema": "NG_EXHAUSTION_V4_PROTECTED_BASELINE_V1",
+  "purpose": "exact-byte guard for V4 preparation follow-on work; no mutation authority",
+  "files_sha256": {
+    "research/kalshi/agent_frankie.py": "a748ed2c0861f1bf8da1affbe0d8b9b0d92de9705b0d468c78e55468c06e4ea3",
+    "research/kalshi/agents/mbo_refine_shared.md": "35b28e784ddda683dc938a4f066d3c56bc84cc61e35063cdfbd5705f732af9d2",
+    "research/kalshi/agents/mbo_specialist_A.md": "7c76df81b652a9ef0a9fff89bf4b7bc0c1f7f4e54538454832adc73e470d5b15",
+    "research/kalshi/agents/mbo_specialist_B.md": "35f78bc030476217ac6709c393d104b6cee886e7aaa21d85da239b95e9a71b8a",
+    "research/kalshi/agents/mbo_specialist_C.md": "3f5850afd0da087abe4bc407626309d3da3443186596f974c4d72fbe007b9ceb",
+    "research/kalshi/agents/mbo_specialist_D.md": "bf4f1130ca1fdec1bea2cd68650da34027671b2df72c7e20224d2e2168a1b36b",
+    "research/kalshi/agents/mbo_specialist_E.md": "037f8f82e5380cc1ea8cab7b10de637de11624a8a9e9959dc770bceffa4c4698",
+    "research/kalshi/spawn.py": "f2ae5287b24b2772a75e1c1674f0f7df590b93d2cbb773662ef30210bce78a54"
+  },
+  "spawn_git_blob_sha1": "2eb3ab8570be66bd9568bcd3ca2e6b9f19d6b33e",
+  "v4_empirical_launch_authorized": false,
+  "permanent_frankie_mutation_authorized": false,
+  "specialist_role_rewrite_authorized": false
+}
