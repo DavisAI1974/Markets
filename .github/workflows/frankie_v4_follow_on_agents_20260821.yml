@@ -1,0 +1,352 @@
+name: Frankie V4 Follow-On Preparation Agents 20260821
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/kalshi/ng_exhaustion_v4_pilot_chunk_guard.py
+      - research/kalshi/tests/test_ng_exhaustion_v4_pilot_chunk_guard.py
+      - research/kalshi/ng_exhaustion_v4_end_to_end_adapter.py
+      - research/kalshi/tests/test_ng_exhaustion_v4_end_to_end_adapter.py
+      - research/kalshi/ng_exhaustion_v4_detector_intensity.py
+      - research/kalshi/tests/test_ng_exhaustion_v4_detector_intensity.py
+      - research/kalshi/ng_exhaustion_v4_exact_candidate_freeze.py
+      - research/kalshi/tests/test_ng_exhaustion_v4_exact_candidate_freeze.py
+      - research/kalshi/frankie_v4_follow_on_agents_20260821.py
+      - research/kalshi/NG_EXHAUSTION_V4_PREP_RULESET_20260821.json
+      - research/kalshi/NG_EXHAUSTION_V4_PREP_MODEL_FIXTURE_20260821.json
+      - research/kalshi/NG_EXHAUSTION_V4_PREP_SOURCE_FIXTURE_20260821.json
+      - .github/workflows/frankie_v4_follow_on_agents_20260821.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  follow-on-agent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        mode:
+          - pilot_chunk_streaming
+          - end_to_end_adapter
+          - detector_intensity_semantics
+          - exact_candidate_regression
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet pytest
+      - name: Run isolated follow-on build agent
+        run: |
+          python research/kalshi/frankie_v4_follow_on_agents_20260821.py \
+            --mode '${{ matrix.mode }}' \
+            --out 'FRANKIE_V4_FOLLOW_ON_${{ matrix.mode }}.json'
+      - name: Run lane adversarial tests
+        run: |
+          case '${{ matrix.mode }}' in
+            pilot_chunk_streaming)
+              python -m pytest -q research/kalshi/tests/test_ng_exhaustion_v4_pilot_chunk_guard.py
+              ;;
+            end_to_end_adapter)
+              python -m pytest -q research/kalshi/tests/test_ng_exhaustion_v4_end_to_end_adapter.py
+              ;;
+            detector_intensity_semantics)
+              python -m pytest -q research/kalshi/tests/test_ng_exhaustion_v4_detector_intensity.py
+              ;;
+            exact_candidate_regression)
+              python -m pytest -q research/kalshi/tests/test_ng_exhaustion_v4_exact_candidate_freeze.py
+              ;;
+          esac
+      - name: Enforce zero-authority lane boundary
+        run: |
+          python - <<'PY'
+          import glob,json
+          paths=glob.glob('FRANKIE_V4_FOLLOW_ON_*.json')
+          assert len(paths)==1,paths
+          d=json.load(open(paths[0]))
+          assert d['status']=='V4_FOLLOW_ON_AGENT_COMPLETE'
+          assert d['external_model_calls'] is False
+          assert d['data_purchase_performed'] is False
+          assert d['five_year_run_touched'] is False
+          assert d['release_holdout_consumed'] is False
+          assert d['v4_result_bearing_launch'] is False
+          assert d['p0_real_evidence_executed'] is False
+          assert d['promotion_performed'] is False
+          assert all(v is False for v in d['protected_mutations'].values())
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frankie-v4-follow-on-${{ matrix.mode }}
+          path: FRANKIE_V4_FOLLOW_ON_${{ matrix.mode }}.json
+          retention-days: 14
+
+  reconcile-regress-freeze:
+    needs: follow-on-agent
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install regression dependencies
+        run: python -m pip install --quiet pytest boto3 matplotlib numpy scipy scikit-learn pandas databento
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: frankie-v4-follow-on-*
+          path: /tmp/follow-on-agents
+      - name: Verify all four isolated agent receipts
+        run: |
+          python - <<'PY'
+          import glob,hashlib,json
+          from pathlib import Path
+          expected={'pilot_chunk_streaming','end_to_end_adapter','detector_intensity_semantics','exact_candidate_regression'}
+          modes=set()
+          for path in glob.glob('/tmp/follow-on-agents/**/FRANKIE_V4_FOLLOW_ON_*.json',recursive=True):
+              d=json.loads(Path(path).read_text())
+              assert d['status']=='V4_FOLLOW_ON_AGENT_COMPLETE'
+              assert not d['five_year_run_touched'] and not d['release_holdout_consumed']
+              assert not d['v4_result_bearing_launch'] and not d['p0_real_evidence_executed']
+              assert not d['promotion_performed'] and all(v is False for v in d['protected_mutations'].values())
+              for file_path,digest in d['files'].items():
+                  actual=hashlib.sha256(Path(file_path).read_bytes()).hexdigest()
+                  assert actual==digest,(file_path,digest,actual)
+              modes.add(d['mode'])
+          assert modes==expected,(modes,expected)
+          print('PASS: all four follow-on agent receipts are complete and hash-bound')
+          PY
+      - name: Run exact-candidate engineering regression
+        env:
+          PYTHONPATH: .
+        run: |
+          set +e
+          run_check () {
+            id="$1"; shift
+            log="/tmp/check_${id}.log"
+            "$@" >"$log" 2>&1
+            code=$?
+            echo "$code" >"/tmp/check_${id}.code"
+            echo "===== ${id} exit=${code} ====="
+            cat "$log"
+          }
+
+          run_check FOCUSED_V4_TESTS python -B -m pytest -q \
+            research/kalshi/tests/test_ng_exhaustion_v4_pilot_chunk_guard.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_end_to_end_adapter.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_detector_intensity.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_exact_candidate_freeze.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_causal_clock.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_causal_entry_adapter.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_mechanics.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_lock_outcome.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_history_support.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_gate_verifier.py
+
+          run_check UNIFIED_RUNTIME python -B -m pytest -q \
+            research/kalshi/tests/test_ng_exhaustion_v4_unified_runtime.py
+
+          run_check STATE_ASSEMBLER python -B -m pytest -q \
+            research/kalshi/tests/test_ng_exhaustion_v4_state_assembler.py
+
+          run_check PILOT_GUARD_RECONCILER python -B -m pytest -q \
+            research/kalshi/tests/test_ng_exhaustion_v4_pilot_chunk_guard.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_end_to_end_adapter.py
+
+          run_check FRANKIE_APPLICABLE_FULL_SUITE python -B -m pytest -q \
+            research/kalshi/tests tests/test_frankie_s135_group_runner.py
+
+          run_check FRANKIE_SELFTEST python -B research/kalshi/agent_frankie.py selftest
+
+          run_check REGISTRY_INVARIANTS python -B -m pytest -q \
+            research/kalshi/tests/test_frankie_p0_registry.py
+
+          protected_log=/tmp/check_PROTECTED_ARTIFACT_HASHES.log
+          git diff --exit-code bd3d729780a025c1fbffd4f219854a609fa5ac6a HEAD -- \
+            research/kalshi/spawn.py \
+            research/kalshi/agent_frankie.py \
+            research/kalshi/agents/mbo_refine_shared.md \
+            research/kalshi/agents/mbo_specialist_A.md \
+            research/kalshi/agents/mbo_specialist_B.md \
+            research/kalshi/agents/mbo_specialist_C.md \
+            research/kalshi/agents/mbo_specialist_D.md \
+            research/kalshi/agents/mbo_specialist_E.md \
+            >"$protected_log" 2>&1
+          protected_code=$?
+          echo "$protected_code" > /tmp/check_PROTECTED_ARTIFACT_HASHES.code
+          if [ "$protected_code" -eq 0 ]; then
+            echo 'PASS: follow-on work did not modify permanent Frankie, protected spawner, or A-E specialist role texts' >> "$protected_log"
+          fi
+          cat "$protected_log"
+          exit 0
+      - name: Build reconciled status and exact-candidate freeze
+        env:
+          PYTHONPATH: .
+        run: |
+          python - <<'PY'
+          import glob,hashlib,json,os,shutil
+          from pathlib import Path
+          from research.kalshi.ng_exhaustion_v4_exact_candidate_freeze import (
+              EngineeringCheck, ExactFreezeIdentity, freeze_exact_candidate,
+          )
+          from research.kalshi.ng_exhaustion_v4_detector_intensity import default_v4_proxy,resolve_detector_intensity
+
+          check_ids=[
+              'FOCUSED_V4_TESTS','UNIFIED_RUNTIME','STATE_ASSEMBLER','PILOT_GUARD_RECONCILER',
+              'FRANKIE_APPLICABLE_FULL_SUITE','FRANKIE_SELFTEST','REGISTRY_INVARIANTS','PROTECTED_ARTIFACT_HASHES',
+          ]
+          checks=[]; failures=[]
+          for cid in check_ids:
+              code_path=Path(f'/tmp/check_{cid}.code')
+              log_path=Path(f'/tmp/check_{cid}.log')
+              code=int(code_path.read_text().strip()) if code_path.exists() else 999
+              raw=log_path.read_bytes() if log_path.exists() else b'missing regression log'
+              digest=hashlib.sha256(raw).hexdigest()
+              detail=(log_path.read_text(errors='replace').strip().splitlines()[-1] if log_path.exists() and log_path.read_text(errors='replace').strip() else f'exit={code}')
+              if code!=0: failures.append({'check_id':cid,'exit_code':code,'log_sha256':digest,'detail':detail})
+              else: checks.append(EngineeringCheck(cid,True,digest,detail[:500]))
+
+          def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+          workflow='.github/workflows/frankie_v4_follow_on_agents_20260821.yml'
+          ruleset='research/kalshi/NG_EXHAUSTION_V4_PREP_RULESET_20260821.json'
+          engine='research/kalshi/ng_exhaustion_v4_unified_runtime.py'
+          adapter='research/kalshi/ng_exhaustion_v4_end_to_end_adapter.py'
+          model='research/kalshi/NG_EXHAUSTION_V4_PREP_MODEL_FIXTURE_20260821.json'
+          source='research/kalshi/NG_EXHAUSTION_V4_PREP_SOURCE_FIXTURE_20260821.json'
+          candidate=os.environ['GITHUB_SHA']
+          identity=ExactFreezeIdentity(
+              candidate_commit_sha=candidate,
+              workflow_sha256=sha(workflow),
+              ruleset_sha256=sha(ruleset),
+              engine_sha256=sha(engine),
+              adapter_sha256=sha(adapter),
+              reconciler_sha256=sha(engine),
+              model_sha256=sha(model),
+              source_manifest_sha256=sha(source),
+          )
+
+          protected_paths=[
+              'research/kalshi/spawn.py','research/kalshi/agent_frankie.py',
+              'research/kalshi/agents/mbo_refine_shared.md',
+              'research/kalshi/agents/mbo_specialist_A.md','research/kalshi/agents/mbo_specialist_B.md',
+              'research/kalshi/agents/mbo_specialist_C.md','research/kalshi/agents/mbo_specialist_D.md',
+              'research/kalshi/agents/mbo_specialist_E.md',
+          ]
+          protected={p:sha(p) for p in protected_paths}
+
+          out=Path('/tmp/frankie_v4_follow_on_20260821')
+          if out.exists(): shutil.rmtree(out)
+          out.mkdir(parents=True)
+          agent_rows=[]
+          for path in sorted(glob.glob('/tmp/follow-on-agents/**/FRANKIE_V4_FOLLOW_ON_*.json',recursive=True)):
+              raw=Path(path).read_bytes(); d=json.loads(raw)
+              dst=out/Path(path).name; dst.write_bytes(raw)
+              agent_rows.append({'mode':d['mode'],'path':dst.name,'sha256':hashlib.sha256(raw).hexdigest(),'build_assessment':d['build_assessment']})
+
+          proxy=default_v4_proxy(transform_sha256=sha(adapter),source_sha256=sha(source))
+          intensity=resolve_detector_intensity(proxy=proxy)
+          regression_green=not failures and len(checks)==8
+          freeze=None
+          if regression_green:
+              freeze=freeze_exact_candidate(
+                  identity=identity,
+                  checks=checks,
+                  protected_artifact_hashes=protected,
+                  release_holdout_consumed=False,
+                  v4_empirical_launch_performed=False,
+                  p0_real_evidence_executed=False,
+              )
+              (out/'EXACT_CANDIDATE_ENGINEERING_FREEZE.json').write_text(json.dumps(freeze,indent=2,sort_keys=True)+'\n')
+
+          status={
+              'schema':'FRANKIE_V4_FOLLOW_ON_RECONCILED_V1',
+              'status':'V4_PREPARATION_FOLLOW_ON_COMPLETE' if regression_green else 'V4_PREPARATION_FOLLOW_ON_REGRESSION_BLOCKED',
+              'candidate_commit':candidate,
+              'identity':{
+                  'identity_hash':identity.identity_hash,
+                  'workflow_sha256':identity.workflow_sha256,
+                  'ruleset_sha256':identity.ruleset_sha256,
+                  'engine_sha256':identity.engine_sha256,
+                  'adapter_sha256':identity.adapter_sha256,
+                  'reconciler_sha256':identity.reconciler_sha256,
+                  'model_fixture_sha256':identity.model_sha256,
+                  'source_fixture_sha256':identity.source_manifest_sha256,
+              },
+              'agent_lanes':sorted(agent_rows,key=lambda x:x['mode']),
+              'regression_green':regression_green,
+              'regression_failures':failures,
+              'engineering_freeze_receipt_hash':freeze.get('freeze_receipt_hash') if freeze else None,
+              'preparation_ceiling':'PIPELINE_VERIFIED_FOR_THIS_EXACT_CANDIDATE' if regression_green else 'NOT_YET_PIPELINE_VERIFIED',
+              'd_year_chunk_streaming':{
+                  'completed_chunk_may_advance_without_sibling_barrier':True,
+                  'exact_child_parent_reconciliation_required':True,
+                  'result_bearing_launch_authorized':False,
+              },
+              'detector_intensity_resolution':intensity,
+              'release_holdout_consumed':False,
+              'p0_six_real_receipts_executed':False,
+              'result_bearing_v4_pilot_launched':False,
+              'five_year_archive_jobs_touched':False,
+              'permanent_frankie_promoted':False,
+              'model_superiority_claimed':False,
+              'calibration_adequacy_claimed':False,
+              'universal_d_law_claimed':False,
+              'trade_edge_claimed':False,
+              'd4_d5_population_validation_claimed':False,
+              'protected_artifact_hashes':protected,
+          }
+          (out/'RECONCILED_FOLLOW_ON_STATUS.json').write_text(json.dumps(status,indent=2,sort_keys=True)+'\n')
+          (out/'README.md').write_text(
+              '# Frankie V4 follow-on preparation — 2026-08-21\n\n'
+              f"Status: **{status['status']}**\n\n"
+              'Four isolated lanes cover pilot D/year chunk streaming, the end-to-end causal adapter, detector-intensity semantics, and exact-candidate regression/freeze.\n\n'
+              'The pilot guard allows a fully reconciled D/year child chunk to advance downstream immediately; there is no all-years/all-D sibling barrier. This is orchestration only and grants no result-bearing launch authority.\n\n'
+              'Detector intensity defaults to the explicitly non-native `v4_proxy.polarity_oriented_roll20_trajectory` until a separately proven frozen causal native stream exists. Future endpoint reconstruction is prohibited.\n\n'
+              'The release holdout remains untouched. No six-type P0 real evidence receipt was executed, no result-bearing V4 pilot ran, no five-year archive job was touched, and permanent Frankie was not promoted.\n\n'
+              f"Preparation claim ceiling: **{status['preparation_ceiling']}**.\n"
+          )
+          print(json.dumps(status,indent=2,sort_keys=True))
+          PY
+      - name: Commit durable follow-on agent outputs
+        if: always()
+        run: |
+          set -euo pipefail
+          branch='chatgpt/ng-exhaustion-entry-timing-revival-20260818'
+          target='research/generated/frankie_v4_follow_on_20260821'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3 4; do
+            git fetch origin "$branch"
+            git reset --hard "origin/$branch"
+            rm -rf "$target"
+            mkdir -p "$(dirname "$target")"
+            cp -r /tmp/frankie_v4_follow_on_20260821 "$target"
+            git add "$target"
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m 'research: reconcile V4 follow-on preparation agents'
+            if git push origin HEAD:"$branch"; then exit 0; fi
+            echo "follow-on reconciliation push raced; retrying attempt $attempt" >&2
+          done
+          exit 1
+      - name: Fail workflow if exact regression did not freeze
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/frankie_v4_follow_on_20260821/RECONCILED_FOLLOW_ON_STATUS.json').read_text())
+          if not d['regression_green']:
+              raise SystemExit('V4 preparation follow-on regression blocked; see durable reconciled status')
+          print('PASS: exact preparation candidate mechanically frozen; no empirical authority granted')
+          PY
