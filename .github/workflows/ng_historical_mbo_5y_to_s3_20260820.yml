@@ -80,3 +80,5 @@ jobs:
           name: ng-mbo-5y-${{ matrix.label }}
           path: /tmp/${{ matrix.label }}.json
           if-no-files-found: ignore
+
+# 2026-08-21 resume trigger: reuse canonical jobs and finish missing native segment manifests.
