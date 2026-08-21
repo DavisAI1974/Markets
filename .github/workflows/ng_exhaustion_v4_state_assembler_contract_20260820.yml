@@ -7,6 +7,7 @@ on:
     paths:
       - research/kalshi/ng_exhaustion_v4_state_assembler.py
       - research/kalshi/tests/test_ng_exhaustion_v4_state_assembler.py
+      - research/kalshi/frankie_docs_sync_20260821.py
       - .github/workflows/ng_exhaustion_v4_state_assembler_contract_20260820.yml
   workflow_dispatch:
 
@@ -81,3 +82,41 @@ jobs:
             if git push origin HEAD:"$branch"; then exit 0; fi
           done
           exit 1
+
+  sync-docs:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          fetch-depth: 0
+      - name: Apply 20260821 documentation sync
+        run: |
+          python research/kalshi/frankie_docs_sync_20260821.py --trigger-sha '${{ github.sha }}'
+      - name: Commit and push all authoritative documentation updates
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            research/kalshi/FRANKIE_NEXT_CHAT_HANDOFF_20260820.md \
+            research/kalshi/FRANKIE_NEXT_CHAT_HANDOFF_20260821.md \
+            research/kalshi/FRANKIE_P0_GAP_CLOSURE_PROVISIONAL_20260820.md \
+            research/kalshi/FRANKIE_V4_UNIFIED_FRAMEWORK_AUDIT_20260820.md \
+            research/NG_EXHAUSTION_V3_V4_CHAT_DECISIONS_ALL_NOTES_20260820.md \
+            research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_ADDENDUM_20260820.md \
+            research/NG_EXHAUSTION_V4_RESEARCH_THREAD_20260820.md \
+            research/NG_EXHAUSTION_V4_RESEARCH_THREAD_FINAL_20260820.md \
+            research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md \
+            research/NG_EXHAUSTION_V4_CONTINUOUS_ADAPTIVE_WALKFORWARD_CONTRACT_20260820.md \
+            research/NG_EXHAUSTION_V4_CLEAN_SOURCE_PRELAUNCH_GATES_20260820.md \
+            research/NG_EXHAUSTION_V4_CLEAN_SOURCE_DEEP_DIVE_COMPLETE_FINDINGS_20260820.md \
+            research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md \
+            research/NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md
+          git diff --cached --check
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'research: sync Frankie meta-loop and V4 handoff docs'
+          git pull --rebase origin chatgpt/ng-exhaustion-entry-timing-revival-20260818
+          git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
