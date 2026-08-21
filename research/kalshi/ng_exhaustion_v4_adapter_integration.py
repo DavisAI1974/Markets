@@ -124,9 +124,11 @@ class IntegratedV4Adapter:
             raise AdapterIntegrationError("sealed execution handoff crosses reveal wall")
 
         reconciliation = self.reconciler.reconcile(inp, artifact)
-        if reconciliation.get("status") not in {"RECONCILED", "UNIFIED_V4_RECONCILED"}:
-            # Current reconciler versions may use either status. Any other value fails closed.
-            raise AdapterIntegrationError(f"unexpected reconciliation status: {reconciliation.get('status')!r}")
+        if reconciliation.get("recomputed") is not True:
+            raise AdapterIntegrationError("reconciler did not independently recompute the artifact")
+        receipt_hash = reconciliation.get("receipt_hash")
+        if not isinstance(receipt_hash, str) or len(receipt_hash) != 64:
+            raise AdapterIntegrationError("reconciler receipt is not hash-bound")
 
         core = {
             "schema": SCHEMA,
@@ -141,7 +143,7 @@ class IntegratedV4Adapter:
             "first_lock_hash": artifact.first_lock.lock_hash,
             "execution_handoff_hash": artifact.execution_handoff.handoff_hash,
             "normalized_artifact_hash": artifact.normalized_artifact_hash,
-            "reconciliation_hash": reconciliation.get("reconciliation_hash") or reconciliation.get("receipt_hash"),
+            "reconciliation_hash": receipt_hash,
             "reveal_wall_preserved": True,
             "first_lock_independently_recomputed": True,
             "execution_handoff_sealed": True,
