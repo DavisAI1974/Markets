@@ -55,11 +55,11 @@ INTEGRATION_STATUSES = frozenset(
 RUNTIME_BINDING_FILES = {
     "cognitive_runtime": {
         "filename": "frankie_s137_cognitive_runtime.py",
-        "content_sha256": "97b82cd9821130b1117dd3207a8f4dabe748f49a464ea8dfb34ee9787fa87020",
+        "content_sha256": "1f33be3e86abb532035047a0456c8627b71dc220742ab5d89807bad312e53999",
     },
     "standard_group_runner": {
         "filename": "frankie_s135_group_runner.py",
-        "content_sha256": "9bdeea4957ca8edf2aa9164368a694954a6f7ba21b26de884c299f3b85ae9e22",
+        "content_sha256": "b77a20ef634079fce592acc15e2f7ef3b1248b0ef3c5e2bab47be7a385b38d70",
     },
 }
 
