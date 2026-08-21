@@ -1,0 +1,16 @@
+{
+  "schema": "NG_EXHAUSTION_V4_PREP_RULESET_V1",
+  "scope": "MECHANICS_CAUSALITY_PROVENANCE_ARTIFACT_RESTART_RECONCILIATION_ONLY",
+  "allowed_claim": "PIPELINE_VERIFIED_FOR_THIS_EXACT_CANDIDATE",
+  "result_bearing_v4_pilot_authorized": false,
+  "release_holdout_access_authorized": false,
+  "p0_real_receipt_execution_authorized": false,
+  "permanent_frankie_promotion_authorized": false,
+  "model_superiority_claim_authorized": false,
+  "calibration_adequacy_claim_authorized": false,
+  "universal_d_law_claim_authorized": false,
+  "trade_edge_claim_authorized": false,
+  "d4_d5_population_validation_authorized": false,
+  "generic_proceed_is_result_bearing_authorization": false,
+  "completed_d_year_chunk_may_advance_without_sibling_barrier": true
+}
