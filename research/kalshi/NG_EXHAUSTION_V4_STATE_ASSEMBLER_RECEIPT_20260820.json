@@ -7,11 +7,11 @@
   "promotion_performed": false,
   "protected_mutation_performed": false,
   "pytest_exit_code": 0,
-  "runner_commit": "654fc2c0fc9e4e79f70e545e7fe59d92f70d9e67",
+  "runner_commit": "c4e3dbf4f012ca74023224bfdbab0a369b3cdcae",
   "schema": "NG_EXHAUSTION_V4_STATE_ASSEMBLER_RECEIPT_V1",
   "stale_carry_missing_notyet_na_distinct": true,
   "state_movie_append_only": true,
-  "test_output": ".......                                                                  [100%]\n7 passed in 0.10s\n",
+  "test_output": ".......                                                                  [100%]\n7 passed in 0.11s\n",
   "tests_passed": true,
   "true_zero_distinct_from_missing": true,
   "v4_empirical_launch": false
