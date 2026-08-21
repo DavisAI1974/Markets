@@ -1,0 +1,2610 @@
+{
+  "apply": false,
+  "blockers": [
+    "runtime hook boundary integrity is blocked"
+  ],
+  "caller_attestation_counts": {
+    "CONSUMES_CALLER_ATTESTATION": 9,
+    "DECLARES_CALLER_ATTESTATION_ENVELOPE": 4,
+    "NONE": 47
+  },
+  "classification_counts": {
+    "BENCHMARK": 6,
+    "HELPER": 29,
+    "RUNTIME_LOOP": 10,
+    "VALIDATOR": 15
+  },
+  "component_contract_ready": false,
+  "entries": [
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "P0LoopError",
+      "entry_point_binding_sha256": "a95a2a25ca18219fccdcb349fdcc46d2ccc4de76378f4f2ad83e854c14067807",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "shared fail-closed error boundary for malformed P0 loop contracts"
+      ],
+      "implementation_version": "FRANKIE_COGNITIVE_P0_LOOPS_V1_PROVISIONAL",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_cognitive_p0_loops.py",
+      "module_content_sha256": "cc8d9830d52350801be985768d2d9df6a60c7bf96d1a66a3bf9aec9eb23bc148",
+      "paper_derived_mechanisms": [
+        "none; public exception type only"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "REGISTRY_INVENTORY_INTEGRITY"
+      ],
+      "required_matched_controls": [
+        "NOT_APPLICABLE_PUBLIC_ERROR_TYPE"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "BudgetVector",
+      "entry_point_binding_sha256": "7555d50adca5647e901c1f9220c0205963abbf6932b2175ba530e1e0ac6f8b29",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "six-dimensional nonnegative finite budget vector"
+      ],
+      "implementation_version": "FRANKIE_COGNITIVE_P0_LOOPS_V1_PROVISIONAL",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_cognitive_p0_loops.py",
+      "module_content_sha256": "cc8d9830d52350801be985768d2d9df6a60c7bf96d1a66a3bf9aec9eb23bc148",
+      "paper_derived_mechanisms": [
+        "none; resource accounting is experimental-governance plumbing"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "MATCHED_RESOURCE_BUDGET",
+        "REGISTRY_INVENTORY_INTEGRITY"
+      ],
+      "required_matched_controls": [
+        "IDENTICAL_RESOURCE_METERING_SCHEMA"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "DECLARES_CALLER_ATTESTATION_ENVELOPE",
+      "classification": "HELPER",
+      "entry_point": "CallbackResult",
+      "entry_point_binding_sha256": "1c5526eb0dda56fbb8e3e5840c46e4d55e1a448e6b98127e5f9159fa8e95384a",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "detached payload, explicit usage, and mandatory side-effect-free attestation"
+      ],
+      "implementation_version": "FRANKIE_COGNITIVE_P0_LOOPS_V1_PROVISIONAL",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_cognitive_p0_loops.py",
+      "module_content_sha256": "cc8d9830d52350801be985768d2d9df6a60c7bf96d1a66a3bf9aec9eb23bc148",
+      "paper_derived_mechanisms": [
+        "none; callback envelope is Frankie control plumbing"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "CONTRACT_AND_FAULT_INJECTION",
+        "REGISTRY_INVENTORY_INTEGRITY"
+      ],
+      "required_matched_controls": [
+        "IDENTICAL_CALLBACK_CONTRACT"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "CONSUMES_CALLER_ATTESTATION",
+      "classification": "RUNTIME_LOOP",
+      "entry_point": "run_bounded_react",
+      "entry_point_binding_sha256": "9ef22721584dbee5ae48584c9c93cf2a9865b65d79f54b6f5da71f045a77053a",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "hard step and resource bounds",
+        "allow-listed injected tools",
+        "hash-chained disposable SHADOW trace",
+        "fault-injection hooks"
+      ],
+      "implementation_version": "FRANKIE_COGNITIVE_P0_LOOPS_V1_PROVISIONAL",
+      "integration_status": "EXPLICIT_OPT_IN_RUNTIME_HOOK_NOT_GROUP_RUNNER_WIRED",
+      "module": "frankie_cognitive_p0_loops.py",
+      "module_content_sha256": "cc8d9830d52350801be985768d2d9df6a60c7bf96d1a66a3bf9aec9eb23bc148",
+      "paper_derived_mechanisms": [
+        "ReAct decide, read-only action, observation, replan, and stop loop"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "paper prompts and paper tool environment",
+        "learned action policy"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "CONTRACT_AND_FAULT_INJECTION",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "S135_FROZEN_BASELINE",
+        "IDENTICAL_INFORMATION_AND_REVEAL_SET",
+        "MATCHED_MODEL_AND_RESOURCE_BUDGET",
+        "FIXED_NO_LOOP_OR_IDENTITY_CONTROL"
+      ],
+      "runtime_exposure": "EXPLICIT_OPT_IN_COGNITIVE_RUNTIME_HOOK",
+      "runtime_hook_candidate_id": "COG02_REACT_EVIDENCE_LOOP"
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "CONSUMES_CALLER_ATTESTATION",
+      "classification": "RUNTIME_LOOP",
+      "entry_point": "run_iterative_structured_reads",
+      "entry_point_binding_sha256": "e276b7815b1b8e6f8f98cf0b8cea571e9aa32d6c392331339e03382eddcff2f3",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "typed exact-reference store",
+        "round and record ceilings",
+        "hash-chained disposable SHADOW trace"
+      ],
+      "implementation_version": "FRANKIE_COGNITIVE_P0_LOOPS_V1_PROVISIONAL",
+      "integration_status": "EXPLICIT_OPT_IN_RUNTIME_HOOK_NOT_GROUP_RUNNER_WIRED",
+      "module": "frankie_cognitive_p0_loops.py",
+      "module_content_sha256": "cc8d9830d52350801be985768d2d9df6a60c7bf96d1a66a3bf9aec9eb23bc148",
+      "paper_derived_mechanisms": [
+        "StructGPT-style iterative model-directed structured reads and answer-or-read stopping"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "paper-exact table, knowledge-graph, and database interfaces",
+        "entity linking, SQL generation, and trained retrieval policy"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "CONTRACT_AND_FAULT_INJECTION",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "S135_FROZEN_BASELINE",
+        "IDENTICAL_INFORMATION_AND_REVEAL_SET",
+        "MATCHED_MODEL_AND_RESOURCE_BUDGET",
+        "FIXED_NO_LOOP_OR_IDENTITY_CONTROL"
+      ],
+      "runtime_exposure": "EXPLICIT_OPT_IN_COGNITIVE_RUNTIME_HOOK",
+      "runtime_hook_candidate_id": "COG04_STRUCTGPT_TYPED_READS"
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "CONSUMES_CALLER_ATTESTATION",
+      "classification": "RUNTIME_LOOP",
+      "entry_point": "run_critic_revision",
+      "entry_point_binding_sha256": "ea709ae202d501a376a9b49678852343d4a6636481cbbd8cdafbefba5f3e41ff",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "immutable initial artifact",
+        "allowed-evidence references",
+        "revision ceiling and matched metering"
+      ],
+      "implementation_version": "FRANKIE_COGNITIVE_P0_LOOPS_V1_PROVISIONAL",
+      "integration_status": "EXPLICIT_OPT_IN_RUNTIME_HOOK_NOT_GROUP_RUNNER_WIRED",
+      "module": "frankie_cognitive_p0_loops.py",
+      "module_content_sha256": "cc8d9830d52350801be985768d2d9df6a60c7bf96d1a66a3bf9aec9eb23bc148",
+      "paper_derived_mechanisms": [
+        "CRITIC initial answer, external check, critique, revision, and recheck loop"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "paper prompts and external tool suite",
+        "trained critique policy"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "CONTRACT_AND_FAULT_INJECTION",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "S135_FROZEN_BASELINE",
+        "IDENTICAL_INFORMATION_AND_REVEAL_SET",
+        "MATCHED_MODEL_AND_RESOURCE_BUDGET",
+        "FIXED_NO_LOOP_OR_IDENTITY_CONTROL"
+      ],
+      "runtime_exposure": "EXPLICIT_OPT_IN_COGNITIVE_RUNTIME_HOOK",
+      "runtime_hook_candidate_id": "COG06_CRITIC_TOOL_VERIFICATION"
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "CONSUMES_CALLER_ATTESTATION",
+      "classification": "RUNTIME_LOOP",
+      "entry_point": "run_state_aware_working_memory",
+      "entry_point_binding_sha256": "d57eb90958d576f2c5224bf2dffc7bd274f8489b90d742f337aeb67cf1686cd9",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "bounded chunks and events",
+        "hidden-history lifecycle",
+        "source-reference validation and SHADOW-only state"
+      ],
+      "implementation_version": "FRANKIE_COGNITIVE_P0_LOOPS_V1_PROVISIONAL",
+      "integration_status": "EXPLICIT_OPT_IN_RUNTIME_HOOK_NOT_GROUP_RUNNER_WIRED",
+      "module": "frankie_cognitive_p0_loops.py",
+      "module_content_sha256": "cc8d9830d52350801be985768d2d9df6a60c7bf96d1a66a3bf9aec9eb23bc148",
+      "paper_derived_mechanisms": [
+        "HiAgent-style one-active-subgoal state, summary compaction, and detail retrieval"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "model-generated subgoals and summaries",
+        "paper prompts and learned detail-retrieval policy"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "CONTRACT_AND_FAULT_INJECTION",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "S135_FROZEN_BASELINE",
+        "IDENTICAL_INFORMATION_AND_REVEAL_SET",
+        "MATCHED_MODEL_AND_RESOURCE_BUDGET",
+        "FIXED_NO_LOOP_OR_IDENTITY_CONTROL"
+      ],
+      "runtime_exposure": "EXPLICIT_OPT_IN_COGNITIVE_RUNTIME_HOOK",
+      "runtime_hook_candidate_id": "COG09_HIAGENT_WORKING_MEMORY"
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "RUNTIME_LOOP",
+      "entry_point": "execute_faithful_ir",
+      "entry_point_binding_sha256": "0c56d692015b6bd94a4a35abec7ebbfae9073e14325a8d989626f49e0566a634",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "source-hashed premises",
+        "bounded linear non-Turing typed IR",
+        "deterministic final-register derivation"
+      ],
+      "implementation_version": "FRANKIE_COGNITIVE_P0_LOOPS_V1_PROVISIONAL",
+      "integration_status": "EXPLICIT_OPT_IN_RUNTIME_HOOK_NOT_GROUP_RUNNER_WIRED",
+      "module": "frankie_cognitive_p0_loops.py",
+      "module_content_sha256": "cc8d9830d52350801be985768d2d9df6a60c7bf96d1a66a3bf9aec9eb23bc148",
+      "paper_derived_mechanisms": [
+        "Faithful-CoT-style explicit executable intermediate reasoning"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "language-to-IR translation model",
+        "general solver stack"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "CONTRACT_AND_FAULT_INJECTION",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "S135_FROZEN_BASELINE",
+        "IDENTICAL_INFORMATION_AND_REVEAL_SET",
+        "MATCHED_MODEL_AND_RESOURCE_BUDGET",
+        "FIXED_NO_LOOP_OR_IDENTITY_CONTROL",
+        "DIRECT_ANSWER_WITHOUT_IR"
+      ],
+      "runtime_exposure": "EXPLICIT_OPT_IN_COGNITIVE_RUNTIME_HOOK",
+      "runtime_hook_candidate_id": "COG05_FAITHFUL_EXECUTABLE_REASONING"
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "CONSUMES_CALLER_ATTESTATION",
+      "classification": "BENCHMARK",
+      "entry_point": "run_chronological_memory_benchmark",
+      "entry_point_binding_sha256": "7f08845d0e104ceb32469733dda7ca6d5319c1cd708487401f8d3b4801d431d2",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "chronological incremental histories",
+        "fresh isolated adapter per case",
+        "exact four-axis answer and provenance scoring"
+      ],
+      "implementation_version": "FRANKIE_COGNITIVE_P0_LOOPS_V1_PROVISIONAL",
+      "integration_status": "EXPLICIT_OPT_IN_RUNTIME_HOOK_NOT_GROUP_RUNNER_WIRED",
+      "module": "frankie_cognitive_p0_loops.py",
+      "module_content_sha256": "cc8d9830d52350801be985768d2d9df6a60c7bf96d1a66a3bf9aec9eb23bc148",
+      "paper_derived_mechanisms": [
+        "MemoryAgentBench-style long-term memory competency axes"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "MemoryAgentBench corpus and judge replication",
+        "complete runtime memory architecture"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "CONTRACT_AND_FAULT_INJECTION",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "MEMORY_DISABLED",
+        "CURRENT_FRANKIE_MEMORY",
+        "MATCHED_MODEL_AND_RESOURCE_BUDGET"
+      ],
+      "runtime_exposure": "EXPLICIT_OPT_IN_COGNITIVE_RUNTIME_HOOK",
+      "runtime_hook_candidate_id": "COG07_MEMORY_AGENT_BENCH"
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "BENCHMARK",
+      "entry_point": "score_open_stream_events",
+      "entry_point_binding_sha256": "ebdc1f11ef6467856b453852ba3ceb4ebea94ca9205063957341fd319dafc2fa",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "stream-local one-to-one matching, explicit windows, misses, and false alarms per observed hour"
+      ],
+      "implementation_version": "FRANKIE_MARKET_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_BENCHMARK_NOT_RUNTIME_WIRED",
+      "module": "frankie_market_p0_controls.py",
+      "module_content_sha256": "0f35ef404a07074e4d9802fc71837b489178f6cf463db1252c2784c3c5833cb6",
+      "paper_derived_mechanisms": [
+        "early-classification joint evaluation of prediction error and decision delay"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "ECOTS classifier, training procedure, and paper benchmark replication",
+        "real chronological open-stream performance evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "CHRONOLOGICAL_HELD_OUT_STREAM",
+        "HASH_BOUND_INPUTS",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "NO_ALARM",
+        "FIXED_THRESHOLD",
+        "RANDOM_MATCHED_ALARM_RATE"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "VALIDATOR",
+      "entry_point": "validate_reveal_time_purged_splits",
+      "entry_point_binding_sha256": "b854271cbdd410c25b339486c175494b00fcbe949e20eddc182775d5195ba01b",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "exact reveal-time embargo, case/group disjointness, and end-before-reveal enforcement"
+      ],
+      "implementation_version": "FRANKIE_MARKET_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_VALIDATOR_NOT_RUNTIME_OR_V4_WIRED",
+      "module": "frankie_market_p0_controls.py",
+      "module_content_sha256": "0f35ef404a07074e4d9802fc71837b489178f6cf463db1252c2784c3c5833cb6",
+      "paper_derived_mechanisms": [
+        "chronological current-risk assessment under temporal shift"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "paper-faithful end-to-end mechanism",
+        "real held-out empirical evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "ZERO_SPLIT_AND_REVEAL_VIOLATIONS",
+        "HASH_BOUND_INPUTS"
+      ],
+      "required_matched_controls": [
+        "DECLARED_SPLIT_MANIFEST",
+        "UNPURGED_SPLIT_DIAGNOSTIC_ONLY"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "VALIDATOR",
+      "entry_point": "validate_first_lock_movie",
+      "entry_point_binding_sha256": "14e5af48714a270778e06a3c4cf1b39c937bbc36637fb066a322be3a0597b412",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "current-second persistence recomputation with no backdating"
+      ],
+      "implementation_version": "FRANKIE_MARKET_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_VALIDATOR_NOT_RUNTIME_OR_V4_WIRED",
+      "module": "frankie_market_p0_controls.py",
+      "module_content_sha256": "0f35ef404a07074e4d9802fc71837b489178f6cf463db1252c2784c3c5833cb6",
+      "paper_derived_mechanisms": [
+        "none; first-lock reconciliation is Frankie-specific"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "EXACT_LOCK_AND_PROBABILITY_PATH_MATCH",
+        "HASH_BOUND_INPUTS"
+      ],
+      "required_matched_controls": [
+        "RECORDED_LOCK",
+        "RECOMPUTED_FIRST_LOCK"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "CalibrationPolicy",
+      "entry_point_binding_sha256": "91937aa65eb4a2149546e906bb191457b982bc92ef9b4400d7311e6f27acfbb3",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "declared calibration, selective-risk, wrong-lock, and coverage thresholds"
+      ],
+      "implementation_version": "FRANKIE_MARKET_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_market_p0_controls.py",
+      "module_content_sha256": "0f35ef404a07074e4d9802fc71837b489178f6cf463db1252c2784c3c5833cb6",
+      "paper_derived_mechanisms": [
+        "none; policy envelope only"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "POLICY_RANGE_VALIDATION",
+        "HASH_BOUND_INPUTS"
+      ],
+      "required_matched_controls": [
+        "PRECOMMITTED_POLICY"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "VALIDATOR",
+      "entry_point": "evaluate_calibration_selective_gate",
+      "entry_point_binding_sha256": "79c7d2e259736ceb10eb71f91780eae1229c1fc909d9a2369bb37110c5094c5e",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "Brier, clipped log loss, equal-width ECE, complete declared strata, selective risk, wrong-lock, and coverage gates"
+      ],
+      "implementation_version": "FRANKIE_MARKET_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_VALIDATOR_NOT_RUNTIME_OR_V4_WIRED",
+      "module": "frankie_market_p0_controls.py",
+      "module_content_sha256": "0f35ef404a07074e4d9802fc71837b489178f6cf463db1252c2784c3c5833cb6",
+      "paper_derived_mechanisms": [
+        "calibration assessment under changing distributions, motivated by adaptive conformal work"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "adaptive conformal prediction-set construction",
+        "real chronological calibration and selective-risk evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUTS",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "UNCALIBRATED_FROZEN_BASELINE",
+        "FIXED_CALIBRATOR",
+        "IDENTICAL_HELD_OUT_ROWS"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "PairedEvidencePolicy",
+      "entry_point_binding_sha256": "e8a686f301ef3c375bdf2276f895fb5b247f032f0b00d74a936695e44b7f457b",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "minimum cases/seeds/effect/win-rate and maximum loss-rate thresholds"
+      ],
+      "implementation_version": "FRANKIE_MARKET_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_market_p0_controls.py",
+      "module_content_sha256": "0f35ef404a07074e4d9802fc71837b489178f6cf463db1252c2784c3c5833cb6",
+      "paper_derived_mechanisms": [
+        "none; paired policy is experimental-governance plumbing"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "POLICY_RANGE_VALIDATION",
+        "HASH_BOUND_INPUTS"
+      ],
+      "required_matched_controls": [
+        "PRECOMMITTED_POLICY"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "VALIDATOR",
+      "entry_point": "evaluate_paired_repeated_seed_gate",
+      "entry_point_binding_sha256": "1226dec7b17a2ce047c63d0928d9dfa701e3ab705944c0b90b32927dd7eafc99",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "exact case-seed pairing and case-clustered normal lower confidence bound"
+      ],
+      "implementation_version": "FRANKIE_MARKET_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_VALIDATOR_NOT_RUNTIME_OR_V4_WIRED",
+      "module": "frankie_market_p0_controls.py",
+      "module_content_sha256": "0f35ef404a07074e4d9802fc71837b489178f6cf463db1252c2784c3c5833cb6",
+      "paper_derived_mechanisms": [
+        "none; paired repeated-seed gate is Frankie experimental governance"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUTS",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "FROZEN_BASELINE",
+        "FIXED_REWRITE",
+        "RANDOM_SEARCH",
+        "MATCHED_BUDGET_AND_SEEDS"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "RetentionPolicy",
+      "entry_point_binding_sha256": "322e057fc6bf4f465fd8c1233798c6b1d3ea207a7653528ec135eb44cb4f987d",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "minimum protected-cell count and maximum regression"
+      ],
+      "implementation_version": "FRANKIE_MARKET_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_market_p0_controls.py",
+      "module_content_sha256": "0f35ef404a07074e4d9802fc71837b489178f6cf463db1252c2784c3c5833cb6",
+      "paper_derived_mechanisms": [
+        "none; policy envelope only"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "POLICY_RANGE_VALIDATION",
+        "HASH_BOUND_INPUTS"
+      ],
+      "required_matched_controls": [
+        "PRECOMMITTED_POLICY"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "VALIDATOR",
+      "entry_point": "evaluate_retention_matrix",
+      "entry_point_binding_sha256": "c03bc9a4c6680dea05e1d29afeb9efbea9fd3e379b6abbc2438ccba5c6a3eee0",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "complete declared protected-suite by stratum matrix and per-cell regression gate"
+      ],
+      "implementation_version": "FRANKIE_MARKET_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_VALIDATOR_NOT_RUNTIME_OR_V4_WIRED",
+      "module": "frankie_market_p0_controls.py",
+      "module_content_sha256": "0f35ef404a07074e4d9802fc71837b489178f6cf463db1252c2784c3c5833cb6",
+      "paper_derived_mechanisms": [
+        "none; this is Frankie retention governance"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUTS",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "FROZEN_BASELINE",
+        "IDENTICAL_PROTECTED_CASES",
+        "ALL_DECLARED_STRATA"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "VALIDATOR",
+      "entry_point": "validate_byte_exact_rollback",
+      "entry_point_binding_sha256": "285715c6ee0dc85861ee3687cd25086ed62844904e8ba40f09ea9129e5dc0991",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "non-vacuous candidate mutation and exact restoration of every declared artifact byte"
+      ],
+      "implementation_version": "FRANKIE_MARKET_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_VALIDATOR_NOT_RUNTIME_OR_V4_WIRED",
+      "module": "frankie_market_p0_controls.py",
+      "module_content_sha256": "0f35ef404a07074e4d9802fc71837b489178f6cf463db1252c2784c3c5833cb6",
+      "paper_derived_mechanisms": [
+        "none; this is Frankie rollback governance"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "BYTE_EXACT_LIVE_ROLLBACK",
+        "HASH_BOUND_INPUTS"
+      ],
+      "required_matched_controls": [
+        "PRE_CANDIDATE_ARTIFACT_SET",
+        "MUTATED_CANDIDATE",
+        "RESTORED_ARTIFACT_SET"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "AdaptiveNullPolicy",
+      "entry_point_binding_sha256": "e7a3924d32315e74e9f9f43aa7ab8847dfbc0233b0832993fa4a45f2299e71ca",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "minimum planted-null trials and false-selection confidence ceiling"
+      ],
+      "implementation_version": "FRANKIE_MARKET_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_market_p0_controls.py",
+      "module_content_sha256": "0f35ef404a07074e4d9802fc71837b489178f6cf463db1252c2784c3c5833cb6",
+      "paper_derived_mechanisms": [
+        "none; policy envelope only"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "POLICY_RANGE_VALIDATION",
+        "HASH_BOUND_INPUTS"
+      ],
+      "required_matched_controls": [
+        "PRECOMMITTED_POLICY"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "VALIDATOR",
+      "entry_point": "evaluate_planted_null_contamination_gate",
+      "entry_point_binding_sha256": "d7919b5ba4ae25f3d38f04f79ba2a86af12021f57708585ef1d854fe722487dc",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "precommitted false-selection gate and declared hash-parent separation"
+      ],
+      "implementation_version": "FRANKIE_MARKET_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_VALIDATOR_NOT_RUNTIME_OR_V4_WIRED",
+      "module": "frankie_market_p0_controls.py",
+      "module_content_sha256": "0f35ef404a07074e4d9802fc71837b489178f6cf463db1252c2784c3c5833cb6",
+      "paper_derived_mechanisms": [
+        "none; planted-null governance is Frankie-specific"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUTS",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "PLANTED_NULLS",
+        "NEGATIVE_CONTROLS",
+        "LOCKED_EVALUATOR"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "GDLControlError",
+      "entry_point_binding_sha256": "3be920a03363aed2d8411d1ce0c8db8528757cd450637058924abf77af7eab62",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "shared fail-closed error boundary for malformed GDL control contracts"
+      ],
+      "implementation_version": "FRANKIE_GDL_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_gdl_p0_controls.py",
+      "module_content_sha256": "837f7ab713c56a951aaf6ad847246b35ae0dedf62eb8341be6c4fe38c0dd5f86",
+      "paper_derived_mechanisms": [
+        "none; public exception type only"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "REGISTRY_INVENTORY_INTEGRITY"
+      ],
+      "required_matched_controls": [
+        "NOT_APPLICABLE_PUBLIC_ERROR_TYPE"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "VALIDATOR",
+      "entry_point": "audit_causal_prefix",
+      "entry_point_binding_sha256": "5a1ffe1e621e9e538c11944cdb1233e9af5f940b9caab9120651711a5a39deaa",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "complete point-in-time prefix, effective-cutoff binding, and target-prebirth field blacklist"
+      ],
+      "implementation_version": "FRANKIE_GDL_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_VALIDATOR_NOT_RUNTIME_OR_V4_WIRED",
+      "module": "frankie_gdl_p0_controls.py",
+      "module_content_sha256": "837f7ab713c56a951aaf6ad847246b35ae0dedf62eb8341be6c4fe38c0dd5f86",
+      "paper_derived_mechanisms": [
+        "causal temporal-graph/message-passing inputs use information available at the evaluation time"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "paper-faithful end-to-end mechanism",
+        "real held-out empirical evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUT_GRAPH_AND_SPLIT",
+        "LAWFUL_INVARIANCE_AND_HARMFUL_TRANSFORM_SENSITIVITY",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "FULL_AVAILABLE_EVENT_UNIVERSE",
+        "DECLARED_PREFIX",
+        "FUTURE_LEAKAGE_CANARY"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "VALIDATOR",
+      "entry_point": "validate_graph_stability_pair",
+      "entry_point_binding_sha256": "7bb5b923a8fbbc1eaa215140f1f2c58b2eb8e258ee147d26571f454543aa301c",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "paired lawful-transform invariance and intentionally harmful-transform sensitivity thresholds"
+      ],
+      "implementation_version": "FRANKIE_GDL_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_VALIDATOR_NOT_RUNTIME_OR_V4_WIRED",
+      "module": "frankie_gdl_p0_controls.py",
+      "module_content_sha256": "837f7ab713c56a951aaf6ad847246b35ae0dedf62eb8341be6c4fe38c0dd5f86",
+      "paper_derived_mechanisms": [
+        "graph model permutation invariance and sensitivity to semantic graph changes"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "trained graph model and paper stability-bound reproduction",
+        "real lawful-perturbation performance evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUT_GRAPH_AND_SPLIT",
+        "LAWFUL_INVARIANCE_AND_HARMFUL_TRANSFORM_SENSITIVITY",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "INPUT_REORDER",
+        "NODE_RELABEL",
+        "DIRECTION_TIMESTAMP_POLARITY_AND_EDGE_DAMAGE"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "BENCHMARK",
+      "entry_point": "build_one_wl_control_receipt",
+      "entry_point_binding_sha256": "0f1e49185ca6858ad6fdf370b77c9df2e7b898bf49b4135ebf5656d20f3d76ff",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "hash-bound non-isomorphic undirected pair with matching 1-WL colors and simple-structure checks"
+      ],
+      "implementation_version": "FRANKIE_GDL_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_BENCHMARK_NOT_RUNTIME_WIRED",
+      "module": "frankie_gdl_p0_controls.py",
+      "module_content_sha256": "837f7ab713c56a951aaf6ad847246b35ae0dedf62eb8341be6c4fe38c0dd5f86",
+      "paper_derived_mechanisms": [
+        "1-WL color-refinement expressivity limitation for message-passing graph models"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "learned message-passing graph model",
+        "held-out comparison against the control pair"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUT_GRAPH_AND_SPLIT",
+        "LAWFUL_INVARIANCE_AND_HARMFUL_TRANSFORM_SENSITIVITY",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "ONE_WL_INDISTINGUISHABLE_PAIR",
+        "STRUCTURALLY_DISTINCT_PAIR"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "VALIDATOR",
+      "entry_point": "validate_edgeless_deep_sets_control",
+      "entry_point_binding_sha256": "39ee9f9283caaed5851326e197f2329b35884d18f90d6713d65e693a5f55623e",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "exact feature/split/case/budget binding against a graph candidate with no edges"
+      ],
+      "implementation_version": "FRANKIE_GDL_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_VALIDATOR_NOT_RUNTIME_OR_V4_WIRED",
+      "module": "frankie_gdl_p0_controls.py",
+      "module_content_sha256": "837f7ab713c56a951aaf6ad847246b35ae0dedf62eb8341be6c4fe38c0dd5f86",
+      "paper_derived_mechanisms": [
+        "Deep Sets permutation-invariant set aggregation as a graph-free control"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "trained Deep-Sets control model",
+        "held-out matched-budget comparison"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUT_GRAPH_AND_SPLIT",
+        "LAWFUL_INVARIANCE_AND_HARMFUL_TRANSFORM_SENSITIVITY",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "EDGELESS_DEEP_SETS",
+        "GRAPH_CANDIDATE",
+        "IDENTICAL_INPUTS_AND_BUDGET"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "VALIDATOR",
+      "entry_point": "validate_artifact_dag_withdrawal_coverage",
+      "entry_point_binding_sha256": "f978afb174f7b712e471461c624f9578ed25851510322825e096b59c2fcb3d1a",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "exact descendant closure over a declared hash-bound artifact DAG and serving-leak rejection"
+      ],
+      "implementation_version": "FRANKIE_GDL_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_VALIDATOR_NOT_RUNTIME_OR_V4_WIRED",
+      "module": "frankie_gdl_p0_controls.py",
+      "module_content_sha256": "837f7ab713c56a951aaf6ad847246b35ae0dedf62eb8341be6c4fe38c0dd5f86",
+      "paper_derived_mechanisms": [
+        "none; this is provenance and withdrawal governance, not a paper learning mechanism"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "ALL_DECLARED_ARTIFACT_CLASSES",
+        "EXACT_DESCENDANT_CLOSURE",
+        "ZERO_SERVING_LEAKS",
+        "HASH_BOUND_INPUT_GRAPH_AND_SPLIT",
+        "LAWFUL_INVARIANCE_AND_HARMFUL_TRANSFORM_SENSITIVITY",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "DIRECT_ONLY_WITHDRAWAL",
+        "FULL_DESCENDANT_WITHDRAWAL",
+        "SERVING_LEAK_CANARY"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "BookGuardPolicy",
+      "entry_point_binding_sha256": "b9818c26d544fa34f4eb2d56d8f440e9c1ed5d6120b888630ff80d767eaebe56",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "BookGuardPolicy: causal book guards, censoring, lag-only rows, train-only fits, and matched controls"
+      ],
+      "implementation_version": "PROVISIONAL_BASELINE_NO_FORWARD_EVIDENCE",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_microstructure_p0_baselines.py",
+      "module_content_sha256": "32968935dc81b8b399d067913b054bee1e9bea42685ec29bee2e1f094eb86389",
+      "paper_derived_mechanisms": [
+        "none; public contract/support surface"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUTS",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "OFI",
+        "PRICE_ONLY",
+        "VOLUME_ONLY",
+        "STATIC_IMBALANCE"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "ResiliencyPolicy",
+      "entry_point_binding_sha256": "81d8776a7b4e5116827a60874713ddab80dce796a1f9ce7db10bb982c227bee4",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "ResiliencyPolicy: causal book guards, censoring, lag-only rows, train-only fits, and matched controls"
+      ],
+      "implementation_version": "PROVISIONAL_BASELINE_NO_FORWARD_EVIDENCE",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_microstructure_p0_baselines.py",
+      "module_content_sha256": "32968935dc81b8b399d067913b054bee1e9bea42685ec29bee2e1f094eb86389",
+      "paper_derived_mechanisms": [
+        "none; public contract/support surface"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUTS",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "OFI",
+        "PRICE_ONLY",
+        "VOLUME_ONLY",
+        "STATIC_IMBALANCE"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "FitPolicy",
+      "entry_point_binding_sha256": "731befff7b0954c10297985ee1dab4ac4484a90eec4e82e6be6350bda17bb014",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "FitPolicy: causal book guards, censoring, lag-only rows, train-only fits, and matched controls"
+      ],
+      "implementation_version": "PROVISIONAL_BASELINE_NO_FORWARD_EVIDENCE",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_microstructure_p0_baselines.py",
+      "module_content_sha256": "32968935dc81b8b399d067913b054bee1e9bea42685ec29bee2e1f094eb86389",
+      "paper_derived_mechanisms": [
+        "none; public contract/support surface"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUTS",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "OFI",
+        "PRICE_ONLY",
+        "VOLUME_ONLY",
+        "STATIC_IMBALANCE"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "compute_level1_ofi_events",
+      "entry_point_binding_sha256": "c723b00ecf5ce64e0d57166fe0d28451494018ee8392327bae21f6847b719fab",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "compute_level1_ofi_events: causal book guards, censoring, lag-only rows, train-only fits, and matched controls"
+      ],
+      "implementation_version": "PROVISIONAL_BASELINE_NO_FORWARD_EVIDENCE",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_microstructure_p0_baselines.py",
+      "module_content_sha256": "32968935dc81b8b399d067913b054bee1e9bea42685ec29bee2e1f094eb86389",
+      "paper_derived_mechanisms": [
+        "compute_level1_ofi_events: Cont-style Level-I OFI and Large-inspired depletion/resiliency measurement"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "paper model parameterization and dataset replication",
+        "real chronological market-transfer evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUTS",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "OFI",
+        "PRICE_ONLY",
+        "VOLUME_ONLY",
+        "STATIC_IMBALANCE"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "aggregate_causal_ofi_windows",
+      "entry_point_binding_sha256": "270b3bedad28fe086d6dc9d398ba9117141e23ef62e893924b44303aa1f35efd",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "aggregate_causal_ofi_windows: causal book guards, censoring, lag-only rows, train-only fits, and matched controls"
+      ],
+      "implementation_version": "PROVISIONAL_BASELINE_NO_FORWARD_EVIDENCE",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_microstructure_p0_baselines.py",
+      "module_content_sha256": "32968935dc81b8b399d067913b054bee1e9bea42685ec29bee2e1f094eb86389",
+      "paper_derived_mechanisms": [
+        "aggregate_causal_ofi_windows: Cont-style Level-I OFI and Large-inspired depletion/resiliency measurement"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "paper model parameterization and dataset replication",
+        "real chronological market-transfer evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUTS",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "OFI",
+        "PRICE_ONLY",
+        "VOLUME_ONLY",
+        "STATIC_IMBALANCE"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "label_depletion_resiliency_episodes",
+      "entry_point_binding_sha256": "ef3323418e3b668019e82906649db15df90fd2cf56cb33fedd5098ffa50925aa",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "label_depletion_resiliency_episodes: causal book guards, censoring, lag-only rows, train-only fits, and matched controls"
+      ],
+      "implementation_version": "PROVISIONAL_BASELINE_NO_FORWARD_EVIDENCE",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_microstructure_p0_baselines.py",
+      "module_content_sha256": "32968935dc81b8b399d067913b054bee1e9bea42685ec29bee2e1f094eb86389",
+      "paper_derived_mechanisms": [
+        "label_depletion_resiliency_episodes: Cont-style Level-I OFI and Large-inspired depletion/resiliency measurement"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "paper model parameterization and dataset replication",
+        "real chronological market-transfer evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUTS",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "OFI",
+        "PRICE_ONLY",
+        "VOLUME_ONLY",
+        "STATIC_IMBALANCE"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "build_lag_only_forecast_rows",
+      "entry_point_binding_sha256": "84548bac2373869575fa97a9079276eae2d00bc69c87d75f6d156a919a318785",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "build_lag_only_forecast_rows: causal book guards, censoring, lag-only rows, train-only fits, and matched controls"
+      ],
+      "implementation_version": "PROVISIONAL_BASELINE_NO_FORWARD_EVIDENCE",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_microstructure_p0_baselines.py",
+      "module_content_sha256": "32968935dc81b8b399d067913b054bee1e9bea42685ec29bee2e1f094eb86389",
+      "paper_derived_mechanisms": [
+        "build_lag_only_forecast_rows: Cont-style Level-I OFI and Large-inspired depletion/resiliency measurement"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "paper model parameterization and dataset replication",
+        "real chronological market-transfer evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUTS",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "OFI",
+        "PRICE_ONLY",
+        "VOLUME_ONLY",
+        "STATIC_IMBALANCE"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "VALIDATOR",
+      "entry_point": "validate_lag_only_forecast_rows",
+      "entry_point_binding_sha256": "80b5fab1bbdba921eb7c1e2ca0b0061290196cd4ca5dc13562f87d501e571fe1",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "validate_lag_only_forecast_rows: causal book guards, censoring, lag-only rows, train-only fits, and matched controls"
+      ],
+      "implementation_version": "PROVISIONAL_BASELINE_NO_FORWARD_EVIDENCE",
+      "integration_status": "STANDALONE_VALIDATOR_NOT_RUNTIME_OR_V4_WIRED",
+      "module": "frankie_microstructure_p0_baselines.py",
+      "module_content_sha256": "32968935dc81b8b399d067913b054bee1e9bea42685ec29bee2e1f094eb86389",
+      "paper_derived_mechanisms": [
+        "validate_lag_only_forecast_rows: Cont-style Level-I OFI and Large-inspired depletion/resiliency measurement"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "paper model parameterization and dataset replication",
+        "real chronological market-transfer evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUTS",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "OFI",
+        "PRICE_ONLY",
+        "VOLUME_ONLY",
+        "STATIC_IMBALANCE"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "fit_matched_resiliency_baselines",
+      "entry_point_binding_sha256": "5b86d7f87df174d9d8d1423bfdf58c837959cb0bda2d2afe3fd816d47aa6461c",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "fit_matched_resiliency_baselines: causal book guards, censoring, lag-only rows, train-only fits, and matched controls"
+      ],
+      "implementation_version": "PROVISIONAL_BASELINE_NO_FORWARD_EVIDENCE",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_microstructure_p0_baselines.py",
+      "module_content_sha256": "32968935dc81b8b399d067913b054bee1e9bea42685ec29bee2e1f094eb86389",
+      "paper_derived_mechanisms": [
+        "fit_matched_resiliency_baselines: Cont-style Level-I OFI and Large-inspired depletion/resiliency measurement"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "paper model parameterization and dataset replication",
+        "real chronological market-transfer evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUTS",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "OFI",
+        "PRICE_ONLY",
+        "VOLUME_ONLY",
+        "STATIC_IMBALANCE"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "predict_matched_resiliency_baselines",
+      "entry_point_binding_sha256": "a4c85c37c7db417410acf72d09b4b89f627772a922699d31a2afc3d51644537f",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "predict_matched_resiliency_baselines: causal book guards, censoring, lag-only rows, train-only fits, and matched controls"
+      ],
+      "implementation_version": "PROVISIONAL_BASELINE_NO_FORWARD_EVIDENCE",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_microstructure_p0_baselines.py",
+      "module_content_sha256": "32968935dc81b8b399d067913b054bee1e9bea42685ec29bee2e1f094eb86389",
+      "paper_derived_mechanisms": [
+        "predict_matched_resiliency_baselines: Cont-style Level-I OFI and Large-inspired depletion/resiliency measurement"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "paper model parameterization and dataset replication",
+        "real chronological market-transfer evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUTS",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "OFI",
+        "PRICE_ONLY",
+        "VOLUME_ONLY",
+        "STATIC_IMBALANCE"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "BENCHMARK",
+      "entry_point": "score_resiliency_forecasts",
+      "entry_point_binding_sha256": "e9f8e6b7816533545a7f358528fbff3cda00e554e3584e3c9398d2b5d3f83257",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "score_resiliency_forecasts: causal book guards, censoring, lag-only rows, train-only fits, and matched controls"
+      ],
+      "implementation_version": "PROVISIONAL_BASELINE_NO_FORWARD_EVIDENCE",
+      "integration_status": "STANDALONE_BENCHMARK_NOT_RUNTIME_WIRED",
+      "module": "frankie_microstructure_p0_baselines.py",
+      "module_content_sha256": "32968935dc81b8b399d067913b054bee1e9bea42685ec29bee2e1f094eb86389",
+      "paper_derived_mechanisms": [
+        "score_resiliency_forecasts: Cont-style Level-I OFI and Large-inspired depletion/resiliency measurement"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "paper model parameterization and dataset replication",
+        "real chronological market-transfer evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUTS",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "OFI",
+        "PRICE_ONLY",
+        "VOLUME_ONLY",
+        "STATIC_IMBALANCE"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "TemporalP0ControlError",
+      "entry_point_binding_sha256": "d8ff6d74fda748db51bc4098cbd0ad7876156ac920aaf60a77d523f079be2da3",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "TemporalP0ControlError: precommitted alpha spending, frozen-pool controls, receipts, and explicit theorem limits"
+      ],
+      "implementation_version": "FRANKIE_TEMPORAL_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_temporal_p0_controls.py",
+      "module_content_sha256": "1e99be6700cbc5f4071faff6e9e0abd2bd0e663972ca1e67363afee2557edec8",
+      "paper_derived_mechanisms": [
+        "none; public contract/support surface"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUTS",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "FINITE_BONFERRONI",
+        "NAIVE_POINTWISE",
+        "FIXED",
+        "EXPANDING",
+        "RECENT"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "VALIDATOR",
+      "entry_point": "audit_planted_null_first_locks",
+      "entry_point_binding_sha256": "810f77aafde2d21381803f420439944e82ffbaf23dbb1bc8bf64b125d035b4af",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "audit_planted_null_first_locks: precommitted alpha spending, frozen-pool controls, receipts, and explicit theorem limits"
+      ],
+      "implementation_version": "FRANKIE_TEMPORAL_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_VALIDATOR_NOT_RUNTIME_OR_V4_WIRED",
+      "module": "frankie_temporal_p0_controls.py",
+      "module_content_sha256": "1e99be6700cbc5f4071faff6e9e0abd2bd0e663972ca1e67363afee2557edec8",
+      "paper_derived_mechanisms": [
+        "audit_planted_null_first_locks: sequential-error, accumulated-gap, delayed-label ACI, and adaptive current-risk assessment"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "Howard-et-al. confidence-sequence construction",
+        "real chronological sequential-error evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUTS",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "FINITE_BONFERRONI",
+        "NAIVE_POINTWISE",
+        "FIXED",
+        "EXPANDING",
+        "RECENT"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "BENCHMARK",
+      "entry_point": "calibrate_accumulated_accuracy_gap",
+      "entry_point_binding_sha256": "4308cae6cbcf9db3a7bce99b040e505e3574554f2370e4bb879306b6e9bf9670",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "calibrate_accumulated_accuracy_gap: precommitted alpha spending, frozen-pool controls, receipts, and explicit theorem limits"
+      ],
+      "implementation_version": "FRANKIE_TEMPORAL_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_BENCHMARK_NOT_RUNTIME_WIRED",
+      "module": "frankie_temporal_p0_controls.py",
+      "module_content_sha256": "1e99be6700cbc5f4071faff6e9e0abd2bd0e663972ca1e67363afee2557edec8",
+      "paper_derived_mechanisms": [
+        "calibrate_accumulated_accuracy_gap: sequential-error, accumulated-gap, delayed-label ACI, and adaptive current-risk assessment"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "paper's full two-stage conditional accumulated-gap algorithm",
+        "real purged calibration and held-out evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUTS",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "FINITE_BONFERRONI",
+        "NAIVE_POINTWISE",
+        "FIXED",
+        "EXPANDING",
+        "RECENT"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "RUNTIME_LOOP",
+      "entry_point": "run_delayed_label_aci",
+      "entry_point_binding_sha256": "4108feec70553ad529dc1141432da55d3451376d9ea5b54c797231c23dea600d",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "run_delayed_label_aci: precommitted alpha spending, frozen-pool controls, receipts, and explicit theorem limits"
+      ],
+      "implementation_version": "FRANKIE_TEMPORAL_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_SHADOW_LOOP_NOT_RUNTIME_WIRED",
+      "module": "frankie_temporal_p0_controls.py",
+      "module_content_sha256": "1e99be6700cbc5f4071faff6e9e0abd2bd0e663972ca1e67363afee2557edec8",
+      "paper_derived_mechanisms": [
+        "run_delayed_label_aci: sequential-error, accumulated-gap, delayed-label ACI, and adaptive current-risk assessment"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "prediction-set construction and instance-conditional guarantee",
+        "real delayed-label coverage evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUTS",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "FINITE_BONFERRONI",
+        "NAIVE_POINTWISE",
+        "FIXED",
+        "EXPANDING",
+        "RECENT"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "BENCHMARK",
+      "entry_point": "assess_frozen_pool_current_risk",
+      "entry_point_binding_sha256": "5ede30a298c2748ba3144c3e2b0c28f4ba11eedff6fea99606494d0331106df7",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "assess_frozen_pool_current_risk: precommitted alpha spending, frozen-pool controls, receipts, and explicit theorem limits"
+      ],
+      "implementation_version": "FRANKIE_TEMPORAL_P0_CONTROLS_V1",
+      "integration_status": "STANDALONE_BENCHMARK_NOT_RUNTIME_WIRED",
+      "module": "frankie_temporal_p0_controls.py",
+      "module_content_sha256": "1e99be6700cbc5f4071faff6e9e0abd2bd0e663972ca1e67363afee2557edec8",
+      "paper_derived_mechanisms": [
+        "assess_frozen_pool_current_risk: sequential-error, accumulated-gap, delayed-label ACI, and adaptive current-risk assessment"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "cumulative-loss, best-fixed, switching-regret, or live-selection theorem",
+        "real prequential current-risk evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUTS",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "FINITE_BONFERRONI",
+        "NAIVE_POINTWISE",
+        "FIXED",
+        "EXPANDING",
+        "RECENT"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "LATSContractError",
+      "entry_point_binding_sha256": "7abedcf8b1b4b010d1d639dfa42f26d8addfbbdac983fc38f6c35b71ea727deb",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "LATSContractError: bounded deterministic shadow search, causal feedback catalog, matched budget, and removal receipts"
+      ],
+      "implementation_version": "FRANKIE_LATS_P0_SEARCH_V1_PROVISIONAL",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_lats_p0_search.py",
+      "module_content_sha256": "c727aabf4720e8de355a5c4c54b26b16d88341f7b9ced4438c2bba2029d8bc19",
+      "paper_derived_mechanisms": [
+        "none; public contract/support surface"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "CONTRACT_AND_FAULT_INJECTION",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "TREE",
+        "ONE_PATH_CONTROL"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "CONSUMES_CALLER_ATTESTATION",
+      "classification": "RUNTIME_LOOP",
+      "entry_point": "run_bounded_lats_search",
+      "entry_point_binding_sha256": "edce619cd6eba1a7804d18e27ddd202e314ca3590902edd9704ca359546bf08f",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "run_bounded_lats_search: bounded deterministic shadow search, causal feedback catalog, matched budget, and removal receipts"
+      ],
+      "implementation_version": "FRANKIE_LATS_P0_SEARCH_V1_PROVISIONAL",
+      "integration_status": "EXPLICIT_OPT_IN_RUNTIME_HOOK_NOT_GROUP_RUNNER_WIRED",
+      "module": "frankie_lats_p0_search.py",
+      "module_content_sha256": "c727aabf4720e8de355a5c4c54b26b16d88341f7b9ced4438c2bba2029d8bc19",
+      "paper_derived_mechanisms": [
+        "run_bounded_lats_search: LATS selection, expansion, simulation, value, reflection, and backpropagation loop"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "paper prompts, benchmark environment, and language-model generation policy",
+        "learned or paper-identical value function and published-result reproduction"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "CONTRACT_AND_FAULT_INJECTION",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "TREE",
+        "ONE_PATH_CONTROL"
+      ],
+      "runtime_exposure": "EXPLICIT_OPT_IN_COGNITIVE_RUNTIME_HOOK",
+      "runtime_hook_candidate_id": "COG03_LATS_BOUNDED_PLAN_SEARCH"
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "VALIDATOR",
+      "entry_point": "verify_lats_replay",
+      "entry_point_binding_sha256": "88251a5d075d14626caa269064b690d7f704eeefebe68a57b29e34eb1fb54744",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "verify_lats_replay: bounded deterministic shadow search, causal feedback catalog, matched budget, and removal receipts"
+      ],
+      "implementation_version": "FRANKIE_LATS_P0_SEARCH_V1_PROVISIONAL",
+      "integration_status": "STANDALONE_VALIDATOR_NOT_RUNTIME_OR_V4_WIRED",
+      "module": "frankie_lats_p0_search.py",
+      "module_content_sha256": "c727aabf4720e8de355a5c4c54b26b16d88341f7b9ced4438c2bba2029d8bc19",
+      "paper_derived_mechanisms": [
+        "verify_lats_replay: LATS selection, expansion, simulation, value, reflection, and backpropagation loop"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "paper prompts, learned policy/value model, and benchmark replication",
+        "real matched-budget performance evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "CONTRACT_AND_FAULT_INJECTION",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "TREE",
+        "ONE_PATH_CONTROL"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "VALIDATOR",
+      "entry_point": "compare_tree_to_one_path_control",
+      "entry_point_binding_sha256": "522834e5fb610debad7f79eb8abad6044882715026a798e3ca09cfaead00b442",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "compare_tree_to_one_path_control: bounded deterministic shadow search, causal feedback catalog, matched budget, and removal receipts"
+      ],
+      "implementation_version": "FRANKIE_LATS_P0_SEARCH_V1_PROVISIONAL",
+      "integration_status": "STANDALONE_VALIDATOR_NOT_RUNTIME_OR_V4_WIRED",
+      "module": "frankie_lats_p0_search.py",
+      "module_content_sha256": "c727aabf4720e8de355a5c4c54b26b16d88341f7b9ced4438c2bba2029d8bc19",
+      "paper_derived_mechanisms": [
+        "compare_tree_to_one_path_control: LATS selection, expansion, simulation, value, reflection, and backpropagation loop"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "paper prompts, learned policy/value model, and benchmark replication",
+        "real matched-budget tree-versus-one-path evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "CONTRACT_AND_FAULT_INJECTION",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "TREE",
+        "ONE_PATH_CONTROL"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "HippoRAGContractError",
+      "entry_point_binding_sha256": "5d18180d93cd1390497cd8d826144fc80fada7b444044232d12ea5aa0acd1d4f",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "HippoRAGContractError: point-in-time provenance, target-birth and withdrawal filters, cited paths, and matched flat control"
+      ],
+      "implementation_version": "FRANKIE_HIPPORAG_P0_RETRIEVAL_V1_PROVISIONAL",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_hipporag_p0_retrieval.py",
+      "module_content_sha256": "2922eda270bca543c54e5c987d93c8b268f16d2a72edc0230f6d72adf5291bc5",
+      "paper_derived_mechanisms": [
+        "none; public contract/support surface"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "CONTRACT_AND_FAULT_INJECTION",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "PPR_GRAPH",
+        "MATCHED_FLAT_RETRIEVAL"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "DECLARES_CALLER_ATTESTATION_ENVELOPE",
+      "classification": "HELPER",
+      "entry_point": "HippoCallbackResult",
+      "entry_point_binding_sha256": "02c8df3e470acb95d49ece6b371ddd8025a148dfb4e5e3a52593c8909bf15d70",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "HippoCallbackResult: point-in-time provenance, target-birth and withdrawal filters, cited paths, and matched flat control"
+      ],
+      "implementation_version": "FRANKIE_HIPPORAG_P0_RETRIEVAL_V1_PROVISIONAL",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_hipporag_p0_retrieval.py",
+      "module_content_sha256": "2922eda270bca543c54e5c987d93c8b268f16d2a72edc0230f6d72adf5291bc5",
+      "paper_derived_mechanisms": [
+        "none; public contract/support surface"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "CONTRACT_AND_FAULT_INJECTION",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "PPR_GRAPH",
+        "MATCHED_FLAT_RETRIEVAL"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "CONSUMES_CALLER_ATTESTATION",
+      "classification": "RUNTIME_LOOP",
+      "entry_point": "run_hipporag_shadow_pipeline",
+      "entry_point_binding_sha256": "1d2be30f76074087f0b4e171137b8a43c4c8d86f77cb57d3e523b7b31386414d",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "run_hipporag_shadow_pipeline: point-in-time provenance, target-birth and withdrawal filters, cited paths, and matched flat control"
+      ],
+      "implementation_version": "FRANKIE_HIPPORAG_P0_RETRIEVAL_V1_PROVISIONAL",
+      "integration_status": "EXPLICIT_OPT_IN_RUNTIME_HOOK_NOT_GROUP_RUNNER_WIRED",
+      "module": "frankie_hipporag_p0_retrieval.py",
+      "module_content_sha256": "2922eda270bca543c54e5c987d93c8b268f16d2a72edc0230f6d72adf5291bc5",
+      "paper_derived_mechanisms": [
+        "run_hipporag_shadow_pipeline: HippoRAG extraction, associative graph, PPR retrieval, and reader pipeline"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "paper-exact extractor, entity linker, graph schema, reader, and retrieval stack",
+        "paper corpus/benchmark replication and held-out answer-quality evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "CONTRACT_AND_FAULT_INJECTION",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "PPR_GRAPH",
+        "MATCHED_FLAT_RETRIEVAL"
+      ],
+      "runtime_exposure": "EXPLICIT_OPT_IN_COGNITIVE_RUNTIME_HOOK",
+      "runtime_hook_candidate_id": "COG08_HIPPORAG_ASSOCIATIVE_RETRIEVAL"
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "ProgressCompressP0Error",
+      "entry_point_binding_sha256": "35c3291db7b9ea6dde55a7b12327b39657ca87475a69156d72e1172404bc4684",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "ProgressCompressP0Error: immutable protected bytes, release firewall, zero-regression retention, isolation, and rollback"
+      ],
+      "implementation_version": "FRANKIE_PROGRESS_COMPRESS_P0_V1_PROVISIONAL",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_progress_compress_p0.py",
+      "module_content_sha256": "9ab4036f61f2cfeda1639e694d1f7ef182cb3bf24843a56f8f0b9cd3d879550f",
+      "paper_derived_mechanisms": [
+        "none; public contract/support surface"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "CONTRACT_AND_FAULT_INJECTION",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "FROZEN_BASELINE",
+        "MATCHED_ACTIVE_CANDIDATE"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "ResourceUsage",
+      "entry_point_binding_sha256": "ee3874da2db9afa08bf3c9d542ff33dfe3df4bc1df035e783cbca92254b42fc3",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "ResourceUsage: immutable protected bytes, release firewall, zero-regression retention, isolation, and rollback"
+      ],
+      "implementation_version": "FRANKIE_PROGRESS_COMPRESS_P0_V1_PROVISIONAL",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_progress_compress_p0.py",
+      "module_content_sha256": "9ab4036f61f2cfeda1639e694d1f7ef182cb3bf24843a56f8f0b9cd3d879550f",
+      "paper_derived_mechanisms": [
+        "none; public contract/support surface"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "CONTRACT_AND_FAULT_INJECTION",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "FROZEN_BASELINE",
+        "MATCHED_ACTIVE_CANDIDATE"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "DECLARES_CALLER_ATTESTATION_ENVELOPE",
+      "classification": "HELPER",
+      "entry_point": "ShadowCallbackResult",
+      "entry_point_binding_sha256": "6fcddda4330a09bcf5435722f968d224878ab14abde8671ca0f6d7b7dcc9bf09",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "ShadowCallbackResult: immutable protected bytes, release firewall, zero-regression retention, isolation, and rollback"
+      ],
+      "implementation_version": "FRANKIE_PROGRESS_COMPRESS_P0_V1_PROVISIONAL",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_progress_compress_p0.py",
+      "module_content_sha256": "9ab4036f61f2cfeda1639e694d1f7ef182cb3bf24843a56f8f0b9cd3d879550f",
+      "paper_derived_mechanisms": [
+        "none; public contract/support surface"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "CONTRACT_AND_FAULT_INJECTION",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "FROZEN_BASELINE",
+        "MATCHED_ACTIVE_CANDIDATE"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "build_release_firewall_receipt",
+      "entry_point_binding_sha256": "a2dd3b48dde725db7c20e640269b37a118a85e1dee23331b5df75c073f874593",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "build_release_firewall_receipt: immutable protected bytes, release firewall, zero-regression retention, isolation, and rollback"
+      ],
+      "implementation_version": "FRANKIE_PROGRESS_COMPRESS_P0_V1_PROVISIONAL",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_progress_compress_p0.py",
+      "module_content_sha256": "9ab4036f61f2cfeda1639e694d1f7ef182cb3bf24843a56f8f0b9cd3d879550f",
+      "paper_derived_mechanisms": [
+        "build_release_firewall_receipt: Progress-and-Compress active column, lateral transfer, distillation, and EWC consolidation shape"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "verified real gradient, distillation, Fisher, and consolidation behavior",
+        "real sequential-regime retention/performance evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "CONTRACT_AND_FAULT_INJECTION",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "FROZEN_BASELINE",
+        "MATCHED_ACTIVE_CANDIDATE"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "CONSUMES_CALLER_ATTESTATION",
+      "classification": "RUNTIME_LOOP",
+      "entry_point": "run_progress_compress_shadow",
+      "entry_point_binding_sha256": "ece5ec74a742c94162502ba7af7964a83aec6c18f4f9ee58b56b9bccb02a4317",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "run_progress_compress_shadow: immutable protected bytes, release firewall, zero-regression retention, isolation, and rollback"
+      ],
+      "implementation_version": "FRANKIE_PROGRESS_COMPRESS_P0_V1_PROVISIONAL",
+      "integration_status": "EXPLICIT_OPT_IN_RUNTIME_HOOK_NOT_GROUP_RUNNER_WIRED",
+      "module": "frankie_progress_compress_p0.py",
+      "module_content_sha256": "9ab4036f61f2cfeda1639e694d1f7ef182cb3bf24843a56f8f0b9cd3d879550f",
+      "paper_derived_mechanisms": [
+        "run_progress_compress_shadow: Progress-and-Compress active column, lateral transfer, distillation, and EWC consolidation shape"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "paper neural architecture and verified gradient optimization",
+        "online Fisher estimation, paper curriculum, and performance reproduction"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "CONTRACT_AND_FAULT_INJECTION",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "FROZEN_BASELINE",
+        "MATCHED_ACTIVE_CANDIDATE"
+      ],
+      "runtime_exposure": "EXPLICIT_OPT_IN_COGNITIVE_RUNTIME_HOOK",
+      "runtime_hook_candidate_id": "COG10_PROGRESS_COMPRESS_SHADOW_LEARNING"
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "TemporalGraphContractError",
+      "entry_point_binding_sha256": "d82ac11a516a8610292d348613ef58a015492fc1de1279da28f19a63eebb6323",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "TemporalGraphContractError: batch-size-1 predict-before-update causality, lane isolation, invalidation replay, and exact reset identity"
+      ],
+      "implementation_version": "FRANKIE_TEMPORAL_GRAPH_P0_ADAPTER_V1_PROVISIONAL",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_temporal_graph_p0_adapter.py",
+      "module_content_sha256": "b3d11e79bad148148f21970f3c3801313b1fffd5413103a82fc77255ecdb4e53",
+      "paper_derived_mechanisms": [
+        "none; public contract/support surface"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUT_GRAPH_AND_SPLIT",
+        "LAWFUL_INVARIANCE_AND_HARMFUL_TRANSFORM_SENSITIVITY",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "FROZEN_STATIC_SIGNED_HASH",
+        "EDGELESS_DEEP_SETS",
+        "ONE_WL"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "temporal_event_content_hash",
+      "entry_point_binding_sha256": "87be957ae484cb2482db2d3d2d3ae5e3e4081094ce9915e318a26db4d92ddae4",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "temporal_event_content_hash: batch-size-1 predict-before-update causality, lane isolation, invalidation replay, and exact reset identity"
+      ],
+      "implementation_version": "FRANKIE_TEMPORAL_GRAPH_P0_ADAPTER_V1_PROVISIONAL",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_temporal_graph_p0_adapter.py",
+      "module_content_sha256": "b3d11e79bad148148f21970f3c3801313b1fffd5413103a82fc77255ecdb4e53",
+      "paper_derived_mechanisms": [
+        "none; public contract/support surface"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUT_GRAPH_AND_SPLIT",
+        "LAWFUL_INVARIANCE_AND_HARMFUL_TRANSFORM_SENSITIVITY",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "FROZEN_STATIC_SIGNED_HASH",
+        "EDGELESS_DEEP_SETS",
+        "ONE_WL"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "DECLARES_CALLER_ATTESTATION_ENVELOPE",
+      "classification": "HELPER",
+      "entry_point": "TemporalCallbackResult",
+      "entry_point_binding_sha256": "79ba9d6099e4a4604c98360887d4f4187ee2354e2aae522e2b82dfc428673bcd",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "TemporalCallbackResult: batch-size-1 predict-before-update causality, lane isolation, invalidation replay, and exact reset identity"
+      ],
+      "implementation_version": "FRANKIE_TEMPORAL_GRAPH_P0_ADAPTER_V1_PROVISIONAL",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_temporal_graph_p0_adapter.py",
+      "module_content_sha256": "b3d11e79bad148148f21970f3c3801313b1fffd5413103a82fc77255ecdb4e53",
+      "paper_derived_mechanisms": [
+        "none; public contract/support surface"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "NOT_APPLICABLE_NO_PAPER_BEHAVIOR_CLAIMED"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUT_GRAPH_AND_SPLIT",
+        "LAWFUL_INVARIANCE_AND_HARMFUL_TRANSFORM_SENSITIVITY",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "FROZEN_STATIC_SIGNED_HASH",
+        "EDGELESS_DEEP_SETS",
+        "ONE_WL"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "NONE",
+      "classification": "HELPER",
+      "entry_point": "frozen_static_signed_hash_payload",
+      "entry_point_binding_sha256": "98c7699253c7dbd7dd70bc3f18f13af925783b1be9969440bc5ca804d6e7eff0",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "frozen_static_signed_hash_payload: batch-size-1 predict-before-update causality, lane isolation, invalidation replay, and exact reset identity"
+      ],
+      "implementation_version": "FRANKIE_TEMPORAL_GRAPH_P0_ADAPTER_V1_PROVISIONAL",
+      "integration_status": "STANDALONE_HELPER_NOT_RUNTIME_WIRED",
+      "module": "frankie_temporal_graph_p0_adapter.py",
+      "module_content_sha256": "b3d11e79bad148148f21970f3c3801313b1fffd5413103a82fc77255ecdb4e53",
+      "paper_derived_mechanisms": [
+        "frozen_static_signed_hash_payload: TGN/TGAT-inspired temporal message, memory, time encoding, and attention replay"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "trained paper-faithful temporal graph system",
+        "real held-out temporal-graph performance evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUT_GRAPH_AND_SPLIT",
+        "LAWFUL_INVARIANCE_AND_HARMFUL_TRANSFORM_SENSITIVITY",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "FROZEN_STATIC_SIGNED_HASH",
+        "EDGELESS_DEEP_SETS",
+        "ONE_WL"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    },
+    {
+      "apply": false,
+      "caller_attestation_role": "CONSUMES_CALLER_ATTESTATION",
+      "classification": "RUNTIME_LOOP",
+      "entry_point": "run_temporal_graph_shadow_adapter",
+      "entry_point_binding_sha256": "d9943cbc942a46f1e5da0ba167ccbe2123aca86c847bced1d8bb98282681ad4f",
+      "execution": false,
+      "frankie_added_mechanisms": [
+        "run_temporal_graph_shadow_adapter: batch-size-1 predict-before-update causality, lane isolation, invalidation replay, and exact reset identity"
+      ],
+      "implementation_version": "FRANKIE_TEMPORAL_GRAPH_P0_ADAPTER_V1_PROVISIONAL",
+      "integration_status": "STANDALONE_SHADOW_LOOP_NOT_RUNTIME_WIRED",
+      "module": "frankie_temporal_graph_p0_adapter.py",
+      "module_content_sha256": "b3d11e79bad148148f21970f3c3801313b1fffd5413103a82fc77255ecdb4e53",
+      "paper_derived_mechanisms": [
+        "run_temporal_graph_shadow_adapter: TGN/TGAT-inspired temporal message, memory, time encoding, and attention replay"
+      ],
+      "paper_mechanisms_not_implemented": [
+        "trained TGN/TGAT parameters, samplers, losses, embeddings, and paper batching",
+        "paper-exact modules, datasets, benchmark replication, and held-out evidence"
+      ],
+      "performance_evidence": false,
+      "promotion": false,
+      "required_gates": [
+        "HASH_BOUND_INPUT_GRAPH_AND_SPLIT",
+        "LAWFUL_INVARIANCE_AND_HARMFUL_TRANSFORM_SENSITIVITY",
+        "HELD_OUT_PAIRED_PERFORMANCE",
+        "CALIBRATION_AND_SELECTIVE_RISK",
+        "PLANTED_NULL_CONTAMINATION",
+        "PROTECTED_RETENTION_MATRIX",
+        "EVALUATOR_INDEPENDENCE",
+        "BYTE_EXACT_LIVE_ROLLBACK"
+      ],
+      "required_matched_controls": [
+        "FROZEN_STATIC_SIGNED_HASH",
+        "EDGELESS_DEEP_SETS",
+        "ONE_WL"
+      ],
+      "runtime_exposure": "STANDALONE_ONLY",
+      "runtime_hook_candidate_id": null
+    }
+  ],
+  "entry_point_count": 60,
+  "execution": false,
+  "extra_entry_points": [],
+  "invalid_module_hashes": [],
+  "limitations": [
+    "component readiness proves registry/source contract integrity only; it is not empirical evidence",
+    "content hashes do not prove paper fidelity, external-channel absence, or evaluator independence",
+    "caller callback attestations are declarations, not proof of external isolation or side-effect freedom",
+    "explicit opt-in runtime hooks are not automatic standard-group-runner integration"
+  ],
+  "malformed_entries": [],
+  "missing_entry_points": [],
+  "module_hash_mismatches": [],
+  "module_receipts": [
+    {
+      "content_hash_matches": true,
+      "declared_version": "FRANKIE_COGNITIVE_P0_LOOPS_V1_PROVISIONAL",
+      "expected_content_sha256": "cc8d9830d52350801be985768d2d9df6a60c7bf96d1a66a3bf9aec9eb23bc148",
+      "implementation_version": "FRANKIE_COGNITIVE_P0_LOOPS_V1_PROVISIONAL",
+      "module": "frankie_cognitive_p0_loops.py",
+      "module_receipt_hash": "d84dce55bfe0d90d4f64a9a6aaf543d1a0c040770909a185c9c9aaf73ca62acc",
+      "observed_content_sha256": "cc8d9830d52350801be985768d2d9df6a60c7bf96d1a66a3bf9aec9eb23bc148",
+      "public_call_surface_count": 9,
+      "version_source": "VERSION"
+    },
+    {
+      "content_hash_matches": true,
+      "declared_version": null,
+      "expected_content_sha256": "0f35ef404a07074e4d9802fc71837b489178f6cf463db1252c2784c3c5833cb6",
+      "implementation_version": "FRANKIE_MARKET_P0_CONTROLS_V1",
+      "module": "frankie_market_p0_controls.py",
+      "module_receipt_hash": "e7c16d29fd4066adef5cec87999aefa9dbb60972dd820ba1dfacc2a0c171575e",
+      "observed_content_sha256": "0f35ef404a07074e4d9802fc71837b489178f6cf463db1252c2784c3c5833cb6",
+      "public_call_surface_count": 12,
+      "version_source": "REGISTRY_DECLARED_MODULE_ABI_VERSION"
+    },
+    {
+      "content_hash_matches": true,
+      "declared_version": "FRANKIE_GDL_P0_CONTROLS_V1",
+      "expected_content_sha256": "837f7ab713c56a951aaf6ad847246b35ae0dedf62eb8341be6c4fe38c0dd5f86",
+      "implementation_version": "FRANKIE_GDL_P0_CONTROLS_V1",
+      "module": "frankie_gdl_p0_controls.py",
+      "module_receipt_hash": "120adc8030c493fcc5422dc47f38672617e39fce5605c7c2054686fe5e753a76",
+      "observed_content_sha256": "837f7ab713c56a951aaf6ad847246b35ae0dedf62eb8341be6c4fe38c0dd5f86",
+      "public_call_surface_count": 6,
+      "version_source": "SCHEMA_VERSION"
+    },
+    {
+      "content_hash_matches": true,
+      "declared_version": "PROVISIONAL_BASELINE_NO_FORWARD_EVIDENCE",
+      "expected_content_sha256": "32968935dc81b8b399d067913b054bee1e9bea42685ec29bee2e1f094eb86389",
+      "implementation_version": "PROVISIONAL_BASELINE_NO_FORWARD_EVIDENCE",
+      "module": "frankie_microstructure_p0_baselines.py",
+      "module_receipt_hash": "fdd6e7ae2a017b0dfa10746353be8082a46c08fb7c26ee3cf470e36f2646e514",
+      "observed_content_sha256": "32968935dc81b8b399d067913b054bee1e9bea42685ec29bee2e1f094eb86389",
+      "public_call_surface_count": 11,
+      "version_source": "IMPLEMENTATION_STATUS"
+    },
+    {
+      "content_hash_matches": true,
+      "declared_version": "FRANKIE_TEMPORAL_P0_CONTROLS_V1",
+      "expected_content_sha256": "1e99be6700cbc5f4071faff6e9e0abd2bd0e663972ca1e67363afee2557edec8",
+      "implementation_version": "FRANKIE_TEMPORAL_P0_CONTROLS_V1",
+      "module": "frankie_temporal_p0_controls.py",
+      "module_receipt_hash": "5ba7d798f7c6315537c252c5b610b8a2c56dbbfad1af48fec472ad7d615416f4",
+      "observed_content_sha256": "1e99be6700cbc5f4071faff6e9e0abd2bd0e663972ca1e67363afee2557edec8",
+      "public_call_surface_count": 5,
+      "version_source": "SCHEMA_VERSION"
+    },
+    {
+      "content_hash_matches": true,
+      "declared_version": "FRANKIE_LATS_P0_SEARCH_V1_PROVISIONAL",
+      "expected_content_sha256": "c727aabf4720e8de355a5c4c54b26b16d88341f7b9ced4438c2bba2029d8bc19",
+      "implementation_version": "FRANKIE_LATS_P0_SEARCH_V1_PROVISIONAL",
+      "module": "frankie_lats_p0_search.py",
+      "module_receipt_hash": "0f4a2a72974210d047c567c382b83cb67a3a4c38b1b3633d4b750d12f27d4219",
+      "observed_content_sha256": "c727aabf4720e8de355a5c4c54b26b16d88341f7b9ced4438c2bba2029d8bc19",
+      "public_call_surface_count": 4,
+      "version_source": "VERSION"
+    },
+    {
+      "content_hash_matches": true,
+      "declared_version": "FRANKIE_HIPPORAG_P0_RETRIEVAL_V1_PROVISIONAL",
+      "expected_content_sha256": "2922eda270bca543c54e5c987d93c8b268f16d2a72edc0230f6d72adf5291bc5",
+      "implementation_version": "FRANKIE_HIPPORAG_P0_RETRIEVAL_V1_PROVISIONAL",
+      "module": "frankie_hipporag_p0_retrieval.py",
+      "module_receipt_hash": "463ed632d8b0ad2d67ad9c62c0c19a6f86eff54b1ecbb6c4a211a4630e7bea04",
+      "observed_content_sha256": "2922eda270bca543c54e5c987d93c8b268f16d2a72edc0230f6d72adf5291bc5",
+      "public_call_surface_count": 3,
+      "version_source": "VERSION"
+    },
+    {
+      "content_hash_matches": true,
+      "declared_version": "FRANKIE_PROGRESS_COMPRESS_P0_V1_PROVISIONAL",
+      "expected_content_sha256": "9ab4036f61f2cfeda1639e694d1f7ef182cb3bf24843a56f8f0b9cd3d879550f",
+      "implementation_version": "FRANKIE_PROGRESS_COMPRESS_P0_V1_PROVISIONAL",
+      "module": "frankie_progress_compress_p0.py",
+      "module_receipt_hash": "7aac753b1b5f3dbd594765732744a9e1ec2c6e5c89defc9f5501d9a0a90134eb",
+      "observed_content_sha256": "9ab4036f61f2cfeda1639e694d1f7ef182cb3bf24843a56f8f0b9cd3d879550f",
+      "public_call_surface_count": 5,
+      "version_source": "VERSION"
+    },
+    {
+      "content_hash_matches": true,
+      "declared_version": "FRANKIE_TEMPORAL_GRAPH_P0_ADAPTER_V1_PROVISIONAL",
+      "expected_content_sha256": "b3d11e79bad148148f21970f3c3801313b1fffd5413103a82fc77255ecdb4e53",
+      "implementation_version": "FRANKIE_TEMPORAL_GRAPH_P0_ADAPTER_V1_PROVISIONAL",
+      "module": "frankie_temporal_graph_p0_adapter.py",
+      "module_receipt_hash": "96a80a4590f2b7fb774dc7d4fc55392e294ab6f5ce6ba2ae53dd4739171bf442",
+      "observed_content_sha256": "b3d11e79bad148148f21970f3c3801313b1fffd5413103a82fc77255ecdb4e53",
+      "public_call_surface_count": 5,
+      "version_source": "VERSION"
+    }
+  ],
+  "performance_evidence": false,
+  "promotion": false,
+  "registry_receipt_hash": "478da9edbd5f6137062bf1b4d1a50a54b8b6822655228ddfb558ce340b67c7c0",
+  "runtime_boundary_receipt": {
+    "apply": false,
+    "automatic_standard_group_runner_invocation": false,
+    "binding_file_hash_mismatches": [
+      "cognitive_runtime",
+      "standard_group_runner"
+    ],
+    "binding_file_receipts": [
+      {
+        "content_hash_matches": false,
+        "expected_content_sha256": "97b82cd9821130b1117dd3207a8f4dabe748f49a464ea8dfb34ee9787fa87020",
+        "filename": "frankie_s137_cognitive_runtime.py",
+        "observed_content_sha256": "1f33be3e86abb532035047a0456c8627b71dc220742ab5d89807bad312e53999",
+        "role": "cognitive_runtime"
+      },
+      {
+        "content_hash_matches": false,
+        "expected_content_sha256": "9bdeea4957ca8edf2aa9164368a694954a6f7ba21b26de884c299f3b85ae9e22",
+        "filename": "frankie_s135_group_runner.py",
+        "observed_content_sha256": "b77a20ef634079fce592acc15e2f7ef3b1248b0ef3c5e2bab47be7a385b38d70",
+        "role": "standard_group_runner"
+      }
+    ],
+    "execution": false,
+    "expected_bindings": {
+      "COG02_REACT_EVIDENCE_LOOP": "frankie_cognitive_p0_loops.py:run_bounded_react",
+      "COG03_LATS_BOUNDED_PLAN_SEARCH": "frankie_lats_p0_search.py:run_bounded_lats_search",
+      "COG04_STRUCTGPT_TYPED_READS": "frankie_cognitive_p0_loops.py:run_iterative_structured_reads",
+      "COG05_FAITHFUL_EXECUTABLE_REASONING": "frankie_cognitive_p0_loops.py:execute_faithful_ir",
+      "COG06_CRITIC_TOOL_VERIFICATION": "frankie_cognitive_p0_loops.py:run_critic_revision",
+      "COG07_MEMORY_AGENT_BENCH": "frankie_cognitive_p0_loops.py:run_chronological_memory_benchmark",
+      "COG08_HIPPORAG_ASSOCIATIVE_RETRIEVAL": "frankie_hipporag_p0_retrieval.py:run_hipporag_shadow_pipeline",
+      "COG09_HIAGENT_WORKING_MEMORY": "frankie_cognitive_p0_loops.py:run_state_aware_working_memory",
+      "COG10_PROGRESS_COMPRESS_SHADOW_LEARNING": "frankie_progress_compress_p0.py:run_progress_compress_shadow"
+    },
+    "hook_entry_point": "frankie_s137_cognitive_runtime.CognitiveCandidateRuntime.run_p0_component",
+    "hook_method_present": true,
+    "mismatched_candidate_bindings": [],
+    "missing_candidate_bindings": [],
+    "observed_bindings": {
+      "COG02_REACT_EVIDENCE_LOOP": "frankie_cognitive_p0_loops.py:run_bounded_react",
+      "COG03_LATS_BOUNDED_PLAN_SEARCH": "frankie_lats_p0_search.py:run_bounded_lats_search",
+      "COG04_STRUCTGPT_TYPED_READS": "frankie_cognitive_p0_loops.py:run_iterative_structured_reads",
+      "COG05_FAITHFUL_EXECUTABLE_REASONING": "frankie_cognitive_p0_loops.py:execute_faithful_ir",
+      "COG06_CRITIC_TOOL_VERIFICATION": "frankie_cognitive_p0_loops.py:run_critic_revision",
+      "COG07_MEMORY_AGENT_BENCH": "frankie_cognitive_p0_loops.py:run_chronological_memory_benchmark",
+      "COG08_HIPPORAG_ASSOCIATIVE_RETRIEVAL": "frankie_hipporag_p0_retrieval.py:run_hipporag_shadow_pipeline",
+      "COG09_HIAGENT_WORKING_MEMORY": "frankie_cognitive_p0_loops.py:run_state_aware_working_memory",
+      "COG10_PROGRESS_COMPRESS_SHADOW_LEARNING": "frankie_progress_compress_p0.py:run_progress_compress_shadow"
+    },
+    "promotion": false,
+    "runtime_binding_integrity": false,
+    "runtime_binding_receipt_hash": "69228e2d6743e4784b8d0cf00dd69b4eaa04b21da4be4a219c4f27a1c8478915",
+    "runtime_unreadable": false,
+    "standard_group_runner_unreadable": false,
+    "unexpected_candidate_bindings": []
+  },
+  "runtime_hook_count": 9,
+  "runtime_hook_entries": [
+    {
+      "caller_attestation_role": "CONSUMES_CALLER_ATTESTATION",
+      "candidate_id": "COG02_REACT_EVIDENCE_LOOP",
+      "classification": "RUNTIME_LOOP",
+      "entry_point": "run_bounded_react",
+      "module": "frankie_cognitive_p0_loops.py"
+    },
+    {
+      "caller_attestation_role": "CONSUMES_CALLER_ATTESTATION",
+      "candidate_id": "COG03_LATS_BOUNDED_PLAN_SEARCH",
+      "classification": "RUNTIME_LOOP",
+      "entry_point": "run_bounded_lats_search",
+      "module": "frankie_lats_p0_search.py"
+    },
+    {
+      "caller_attestation_role": "CONSUMES_CALLER_ATTESTATION",
+      "candidate_id": "COG04_STRUCTGPT_TYPED_READS",
+      "classification": "RUNTIME_LOOP",
+      "entry_point": "run_iterative_structured_reads",
+      "module": "frankie_cognitive_p0_loops.py"
+    },
+    {
+      "caller_attestation_role": "NONE",
+      "candidate_id": "COG05_FAITHFUL_EXECUTABLE_REASONING",
+      "classification": "RUNTIME_LOOP",
+      "entry_point": "execute_faithful_ir",
+      "module": "frankie_cognitive_p0_loops.py"
+    },
+    {
+      "caller_attestation_role": "CONSUMES_CALLER_ATTESTATION",
+      "candidate_id": "COG06_CRITIC_TOOL_VERIFICATION",
+      "classification": "RUNTIME_LOOP",
+      "entry_point": "run_critic_revision",
+      "module": "frankie_cognitive_p0_loops.py"
+    },
+    {
+      "caller_attestation_role": "CONSUMES_CALLER_ATTESTATION",
+      "candidate_id": "COG07_MEMORY_AGENT_BENCH",
+      "classification": "BENCHMARK",
+      "entry_point": "run_chronological_memory_benchmark",
+      "module": "frankie_cognitive_p0_loops.py"
+    },
+    {
+      "caller_attestation_role": "CONSUMES_CALLER_ATTESTATION",
+      "candidate_id": "COG08_HIPPORAG_ASSOCIATIVE_RETRIEVAL",
+      "classification": "RUNTIME_LOOP",
+      "entry_point": "run_hipporag_shadow_pipeline",
+      "module": "frankie_hipporag_p0_retrieval.py"
+    },
+    {
+      "caller_attestation_role": "CONSUMES_CALLER_ATTESTATION",
+      "candidate_id": "COG09_HIAGENT_WORKING_MEMORY",
+      "classification": "RUNTIME_LOOP",
+      "entry_point": "run_state_aware_working_memory",
+      "module": "frankie_cognitive_p0_loops.py"
+    },
+    {
+      "caller_attestation_role": "CONSUMES_CALLER_ATTESTATION",
+      "candidate_id": "COG10_PROGRESS_COMPRESS_SHADOW_LEARNING",
+      "classification": "RUNTIME_LOOP",
+      "entry_point": "run_progress_compress_shadow",
+      "module": "frankie_progress_compress_p0.py"
+    }
+  ],
+  "schema_version": "FRANKIE_P0_REGISTRY_V2",
+  "standalone_runtime_loop_count": 2,
+  "standalone_runtime_loop_entry_points": [
+    "frankie_temporal_graph_p0_adapter.py:run_temporal_graph_shadow_adapter",
+    "frankie_temporal_p0_controls.py:run_delayed_label_aci"
+  ],
+  "status": "BLOCKED_REGISTRY_INTEGRITY",
+  "unhashed_entry_points": [],
+  "unreadable_modules": [],
+  "version_mismatches": []
+}

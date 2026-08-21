@@ -1,0 +1,75 @@
+.............................................................. [ 14%]
+.......................................................... [ 28%]
+.....................................................................F.. [ 45%]
+FF.F........................................................ [ 59%]
+...................................................................... [ 75%]
+........................................................................ [ 92%]
+...............................                                          [100%]
+=================================== FAILURES ===================================
+_ FrankieP0RegistryTests.test_component_contract_can_pass_while_empirical_readiness_is_blocked _
+
+self = <test_frankie_p0_registry.FrankieP0RegistryTests testMethod=test_component_contract_can_pass_while_empirical_readiness_is_blocked>
+
+    def test_component_contract_can_pass_while_empirical_readiness_is_blocked(self):
+        readiness = evaluate_p0_readiness()
+>       self.assertTrue(readiness["component_contract_ready"])
+E       AssertionError: False is not true
+
+research/kalshi/tests/test_frankie_p0_registry.py:307: AssertionError
+_ FrankieP0RegistryTests.test_every_bound_evidence_type_is_required_and_authority_stays_false _
+
+self = <test_frankie_p0_registry.FrankieP0RegistryTests testMethod=test_every_bound_evidence_type_is_required_and_authority_stays_false>
+
+    def test_every_bound_evidence_type_is_required_and_authority_stays_false(self):
+        bundle = evidence_bundle()
+        readiness = evaluate_p0_readiness(bundle)
+        self.assertTrue(readiness["empirical_evidence_ready"])
+>       self.assertTrue(readiness["composite_readiness_passed"])
+E       AssertionError: False is not true
+
+research/kalshi/tests/test_frankie_p0_registry.py:344: AssertionError
+_ FrankieP0RegistryTests.test_inventory_is_exact_hash_bound_and_non_authorizing _
+
+self = <test_frankie_p0_registry.FrankieP0RegistryTests testMethod=test_inventory_is_exact_hash_bound_and_non_authorizing>
+
+    def test_inventory_is_exact_hash_bound_and_non_authorizing(self):
+        receipt = audit_p0_registry()
+>       self.assertEqual(receipt["status"], "COMPONENT_CONTRACT_READY")
+E       AssertionError: 'BLOCKED_REGISTRY_INTEGRITY' != 'COMPONENT_CONTRACT_READY'
+E       - BLOCKED_REGISTRY_INTEGRITY
+E       + COMPONENT_CONTRACT_READY
+
+research/kalshi/tests/test_frankie_p0_registry.py:174: AssertionError
+_ FrankieP0RegistryTests.test_runtime_hooks_are_exact_and_standalone_loops_remain_distinct _
+
+self = <test_frankie_p0_registry.FrankieP0RegistryTests testMethod=test_runtime_hooks_are_exact_and_standalone_loops_remain_distinct>
+
+    def test_runtime_hooks_are_exact_and_standalone_loops_remain_distinct(self):
+        receipt = audit_p0_registry()
+        self.assertEqual(receipt["runtime_hook_count"], 9)
+        self.assertEqual(
+            receipt["standalone_runtime_loop_entry_points"],
+            [
+                "frankie_temporal_graph_p0_adapter.py:run_temporal_graph_shadow_adapter",
+                "frankie_temporal_p0_controls.py:run_delayed_label_aci",
+            ],
+        )
+        boundary = receipt["runtime_boundary_receipt"]
+>       self.assertTrue(boundary["runtime_binding_integrity"])
+E       AssertionError: False is not true
+
+research/kalshi/tests/test_frankie_p0_registry.py:226: AssertionError
+=============================== warnings summary ===============================
+research/kalshi/tests/test_frankie_s121_curve_restore.py:73
+  /home/runner/work/Markets/Markets/research/kalshi/tests/test_frankie_s121_curve_restore.py:73: DeprecationWarning: invalid escape sequence '\['
+    with self.assertRaisesRegex(s121.ForecastStop, "outside \[0,24\)"):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED research/kalshi/tests/test_frankie_p0_registry.py::FrankieP0RegistryTests::test_component_contract_can_pass_while_empirical_readiness_is_blocked - AssertionError: False is not true
+FAILED research/kalshi/tests/test_frankie_p0_registry.py::FrankieP0RegistryTests::test_every_bound_evidence_type_is_required_and_authority_stays_false - AssertionError: False is not true
+FAILED research/kalshi/tests/test_frankie_p0_registry.py::FrankieP0RegistryTests::test_inventory_is_exact_hash_bound_and_non_authorizing - AssertionError: 'BLOCKED_REGISTRY_INTEGRITY' != 'COMPONENT_CONTRACT_READY'
+- BLOCKED_REGISTRY_INTEGRITY
++ COMPONENT_CONTRACT_READY
+FAILED research/kalshi/tests/test_frankie_p0_registry.py::FrankieP0RegistryTests::test_runtime_hooks_are_exact_and_standalone_loops_remain_distinct - AssertionError: False is not true
+4 failed, 421 passed, 1 warning, 38 subtests passed in 4.23s
