@@ -1,0 +1,265 @@
+name: NG Exhaustion V4 Follow-On Provisional Readiness 20260821
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/kalshi/ng_exhaustion_v4_pilot_chunk_guard.py
+      - research/kalshi/ng_exhaustion_v4_adapter_integration.py
+      - research/kalshi/ng_exhaustion_v4_detector_intensity_semantics.py
+      - research/kalshi/tests/test_ng_exhaustion_v4_pilot_chunk_guard.py
+      - research/kalshi/tests/test_ng_exhaustion_v4_adapter_integration.py
+      - research/kalshi/tests/test_ng_exhaustion_v4_detector_intensity_semantics.py
+      - .github/workflows/ng_exhaustion_v4_followon_provisional_readiness_20260821.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  lane-agent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [pilot_chunk, adapter_integration, detector_intensity]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet pytest
+      - name: Run isolated lane tests
+        env:
+          PYTHONPATH: .:research/kalshi
+        run: |
+          set +e
+          case '${{ matrix.lane }}' in
+            pilot_chunk) testfile='research/kalshi/tests/test_ng_exhaustion_v4_pilot_chunk_guard.py' ;;
+            adapter_integration) testfile='research/kalshi/tests/test_ng_exhaustion_v4_adapter_integration.py' ;;
+            detector_intensity) testfile='research/kalshi/tests/test_ng_exhaustion_v4_detector_intensity_semantics.py' ;;
+          esac
+          python -m pytest -q "$testfile" > /tmp/lane.txt 2>&1
+          code=$?
+          cat /tmp/lane.txt
+          python - "$code" '${{ matrix.lane }}' <<'PY'
+          import hashlib,json,sys
+          from pathlib import Path
+          code=int(sys.argv[1]); lane=sys.argv[2]
+          paths={
+            'pilot_chunk':['research/kalshi/ng_exhaustion_v4_pilot_chunk_guard.py','research/kalshi/tests/test_ng_exhaustion_v4_pilot_chunk_guard.py'],
+            'adapter_integration':['research/kalshi/ng_exhaustion_v4_adapter_integration.py','research/kalshi/tests/test_ng_exhaustion_v4_adapter_integration.py'],
+            'detector_intensity':['research/kalshi/ng_exhaustion_v4_detector_intensity_semantics.py','research/kalshi/tests/test_ng_exhaustion_v4_detector_intensity_semantics.py'],
+          }[lane]
+          out={
+            'lane':lane,'status':'PASS' if code==0 else 'FAIL','pytest_exit_code':code,
+            'test_output':Path('/tmp/lane.txt').read_text(),
+            'files':{p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in paths},
+            'v4_empirical_launch':False,'release_holdout_consumed':False,'promotion_performed':False,
+          }
+          Path(f'/tmp/{lane}.json').write_text(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          PY
+          exit "$code"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v4-followon-${{ matrix.lane }}
+          path: /tmp/${{ matrix.lane }}.json
+          retention-days: 14
+
+  provisional-readiness:
+    needs: lane-agent
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet pytest boto3 matplotlib numpy pandas scikit-learn
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: v4-followon-*
+          path: /tmp/lanes
+          merge-multiple: true
+
+      - name: Check all isolated build lanes
+        run: |
+          python - <<'PY'
+          import glob,json
+          paths=sorted(glob.glob('/tmp/lanes/*.json'))
+          expected={'pilot_chunk','adapter_integration','detector_intensity'}
+          rows=[json.load(open(p)) for p in paths]
+          assert {r['lane'] for r in rows}==expected,(paths,rows)
+          assert all(r['status']=='PASS' for r in rows),rows
+          assert all(not r['v4_empirical_launch'] and not r['release_holdout_consumed'] and not r['promotion_performed'] for r in rows)
+          PY
+
+      - name: Run combined focused V4, loop, and evidence-contract validation
+        env:
+          PYTHONPATH: .:research/kalshi
+        run: |
+          set +e
+          python -m pytest -q \
+            research/kalshi/tests/test_ng_exhaustion_v4_pilot_chunk_guard.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_adapter_integration.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_detector_intensity_semantics.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_causal_clock.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_causal_entry_adapter.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_mechanics.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_lock_outcome.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_history_support.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_gate_verifier.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_state_assembler.py \
+            research/kalshi/tests/test_ng_exhaustion_v4_unified_runtime.py \
+            research/kalshi/tests/test_frankie_meta_loop_s138.py \
+            research/kalshi/tests/test_frankie_meta_loop_coordinator_s138.py \
+            research/kalshi/tests/test_frankie_p0_real_evidence_plan.py \
+            > /tmp/focused.txt 2>&1
+          echo $? > /tmp/focused.code
+          cat /tmp/focused.txt
+          exit 0
+
+      - name: Run full applicable Frankie regression
+        env:
+          PYTHONPATH: .:research/kalshi
+        run: |
+          set +e
+          python -B -m pytest -q research/kalshi/tests tests/test_frankie_s135_group_runner.py > /tmp/full.txt 2>&1
+          echo $? > /tmp/full.code
+          cat /tmp/full.txt
+          exit 0
+
+      - name: Run Frankie selftest
+        env:
+          PYTHONPATH: .:research/kalshi
+        run: |
+          set +e
+          python -B research/kalshi/agent_frankie.py selftest > /tmp/selftest.txt 2>&1
+          echo $? > /tmp/selftest.code
+          cat /tmp/selftest.txt
+          exit 0
+
+      - name: Verify source integrity and protected boundaries
+        env:
+          PYTHONPATH: .:research/kalshi
+        run: |
+          set +e
+          git diff --check > /tmp/diffcheck.txt 2>&1
+          diffcode=$?
+          python research/kalshi/agent_frankie.py verify-origin > /tmp/origin.json 2>/tmp/origin.err
+          origincode=$?
+          git diff --exit-code d44c83052469f3b0ce5aa62b53b1306ce9bf7e45 HEAD -- \
+            research/kalshi/spawn.py \
+            research/kalshi/agents/mbo_specialist_A.md \
+            research/kalshi/agents/mbo_specialist_B.md \
+            research/kalshi/agents/mbo_specialist_C.md \
+            research/kalshi/agents/mbo_specialist_D.md \
+            research/kalshi/agents/mbo_specialist_E.md \
+            knowledge/ng_brain.json > /tmp/protected.txt 2>&1
+          protectedcode=$?
+          python - <<'PY'
+          import subprocess
+          changed=subprocess.check_output(['git','diff','--name-only','d44c83052469f3b0ce5aa62b53b1306ce9bf7e45','HEAD'],text=True).splitlines()
+          allowed={'research/kalshi/ng_exhaustion_v4_detector_intensity_semantics.py','research/kalshi/tests/test_ng_exhaustion_v4_detector_intensity_semantics.py'}
+          bad=[]
+          for p in changed:
+              low=p.lower()
+              if p in allowed: continue
+              if 'runway' in low or 'canonical' in low or (('detector' in low) and 'v4_' not in low):
+                  bad.append(p)
+          if bad:
+              raise SystemExit('protected detector/canonical/runway-like paths changed: '+','.join(bad))
+          PY
+          keywordcode=$?
+          printf '%s\n' "$diffcode" "$origincode" "$protectedcode" "$keywordcode" > /tmp/integrity.codes
+          exit 0
+
+      - name: Write exact-candidate provisional-readiness report
+        if: always()
+        run: |
+          python - <<'PY'
+          import glob,hashlib,json,os
+          from pathlib import Path
+          def code(path):
+              p=Path(path); return int(p.read_text().strip()) if p.exists() else 999
+          focused=code('/tmp/focused.code'); full=code('/tmp/full.code'); selftest=code('/tmp/selftest.code')
+          integrity=[int(x) for x in Path('/tmp/integrity.codes').read_text().split()] if Path('/tmp/integrity.codes').exists() else [999]*4
+          lane_paths=sorted(glob.glob('/tmp/lanes/*.json'))
+          lanes=[json.load(open(p)) for p in lane_paths]
+          lane_pass=(len(lanes)==3 and all(x.get('status')=='PASS' for x in lanes))
+          files=[
+            'research/kalshi/ng_exhaustion_v4_pilot_chunk_guard.py',
+            'research/kalshi/ng_exhaustion_v4_adapter_integration.py',
+            'research/kalshi/ng_exhaustion_v4_detector_intensity_semantics.py',
+            'research/kalshi/ng_exhaustion_v4_causal_clock.py',
+            'research/kalshi/ng_exhaustion_v4_causal_entry_adapter.py',
+            'research/kalshi/ng_exhaustion_v4_state_assembler.py',
+            'research/kalshi/ng_exhaustion_v4_mechanics.py',
+            'research/kalshi/ng_exhaustion_v4_gate_verifier.py',
+            'research/kalshi/ng_exhaustion_v4_unified_runtime.py',
+            'research/kalshi/frankie_meta_loop_s138.py',
+            'research/kalshi/frankie_meta_loop_coordinator_s138.py',
+            'research/kalshi/agent_frankie.py',
+            '.github/workflows/ng_exhaustion_v4_followon_provisional_readiness_20260821.yml',
+          ]
+          hashes={p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in files}
+          ready=bool(lane_pass and focused==0 and full==0 and selftest==0 and all(x==0 for x in integrity))
+          out={
+            'schema':'NG_EXHAUSTION_V4_PROVISIONAL_READINESS_V1',
+            'candidate_commit':os.environ.get('GITHUB_SHA'),
+            'status':'PROVISIONAL_READY_FOR_EXACT_CANDIDATE' if ready else 'NOT_PROVISIONAL_READY',
+            'lane_agents':lanes,
+            'focused_tests_passed':focused==0,
+            'focused_test_output':Path('/tmp/focused.txt').read_text() if Path('/tmp/focused.txt').exists() else '',
+            'full_frankie_regression_passed':full==0,
+            'full_frankie_output':Path('/tmp/full.txt').read_text() if Path('/tmp/full.txt').exists() else '',
+            'frankie_selftest_passed':selftest==0,
+            'frankie_selftest_output':Path('/tmp/selftest.txt').read_text() if Path('/tmp/selftest.txt').exists() else '',
+            'source_integrity_passed':all(x==0 for x in integrity),
+            'source_integrity_codes':integrity,
+            'material_file_sha256':hashes,
+            'release_or_virgin_holdout_consumed':False,
+            'six_p0_real_empirical_receipts_executed':False,
+            'result_bearing_v4_pilot_launched':False,
+            'five_year_archive_jobs_touched':False,
+            'model_superiority_established':False,
+            'calibration_adequacy_established':False,
+            'universal_d_law_established':False,
+            'trade_edge_established':False,
+            'd4_d5_population_validated':False,
+            'permanent_frankie_ready':False,
+            'promotion_authorized':False,
+            'meaning':'engineering/pipeline contracts only for this exact candidate; empirical authority remains separate',
+          }
+          Path('/tmp/provisional.json').write_text(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(out,indent=2,sort_keys=True))
+          PY
+
+      - name: Commit durable provisional-readiness report
+        if: always()
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          branch='chatgpt/ng-exhaustion-entry-timing-revival-20260818'
+          path='research/kalshi/NG_EXHAUSTION_V4_PROVISIONAL_READINESS_20260821.json'
+          for attempt in 1 2 3 4; do
+            git fetch origin "$branch"
+            git reset --hard "origin/$branch"
+            cp /tmp/provisional.json "$path"
+            git add "$path"
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m 'research: record V4 follow-on provisional readiness'
+            if git push origin HEAD:"$branch"; then exit 0; fi
+          done
+          exit 1
