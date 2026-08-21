@@ -1,120 +1,162 @@
 # Frankie / NG Exhaustion V4 — Current Next-Chat Handoff — 2026-08-20
 
-Status: **CURRENT HANDOFF — EVENING CHECKPOINT. NO V4 EMPIRICAL LAUNCH. NO PERMANENT FRANKIE MUTATION. NO PROTECTED-ARTIFACT MUTATION.**
+Status: **CURRENT HANDOFF — STEP-1 STRUCTURAL-CENSUS CLARIFICATION. BUILD/PREPARATION AUTHORIZED. NO LARGE FIVE-YEAR CENSUS, V4 RESULT-BEARING PREDICTION RUN, PERMANENT FRANKIE MUTATION, OR PROTECTED-ARTIFACT MUTATION IS AUTHORIZED BY THIS HANDOFF.**
 
 Repository: `DavisAI1974/Markets`
 
 Branch: `chatgpt/ng-exhaustion-entry-timing-revival-20260818`
 
-Use the current pushed branch state and the current files below as truth. Do not fall back to an older handoff when this checkpoint supersedes it.
+Use current pushed branch state and the current files below as truth. Do not fall back to older handoffs when this one supersedes them.
 
-## 1. Required read order
+## 1. Mandatory read order
 
 Read these first, in order:
 
 1. `research/kalshi/FRANKIE_NEXT_CHAT_HANDOFF_CURRENT_20260820.md` — this file.
-2. `research/NG_EXHAUSTION_V4_BUILD_PLAN_CURRENT_20260820.md` — current implementation/build order and status.
-3. `research/NG_EXHAUSTION_V4_BUILD_PLAN_CURRENT_20260820.json` — machine-readable companion.
-4. `research/NG_EXHAUSTION_V4_PER_D_CHUNKED_RUN_PROTOCOL_20260820.md` — binding pilot-first / per-D / per-year / chunked execution protocol.
-5. `research/NG_EXHAUSTION_V4_PER_D_CHUNKED_RUN_PROTOCOL_20260820.json` — machine-readable protocol.
-6. `research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md` — current brain/trade proposal.
-7. `research/NG_EXHAUSTION_V4_CLEAN_SOURCE_PRELAUNCH_GATES_20260820.md`.
-8. `research/NG_EXHAUSTION_V4_CLEAN_SOURCE_DEEP_DIVE_COMPLETE_FINDINGS_20260820.md` and gap matrix JSON.
-9. `research/kalshi/FRANKIE_V4_UNIFIED_FRAMEWORK_AUDIT_20260820.md`.
-10. `research/kalshi/FRANKIE_P0_GAP_CLOSURE_PROVISIONAL_20260820.md` and its manifest.
-11. `research/kalshi/NG_MBO_5Y_COMPACT_AUDIT_20260820.json`.
-12. `research/kalshi/NG_EXHAUSTION_V4_STATE_ASSEMBLER_RECEIPT_20260820.json`.
-13. `research/NG_EXHAUSTION_V4_REMAINING_GAP_PARALLEL_RESEARCH_20260820.md`.
-14. `research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md` only as methodology/representation input; do not promote V3 predictive/trade outputs.
+2. `research/NG_EXHAUSTION_CHAIN_STEP1_ORIGINAL_FILE_MAP_20260820.md` — exact map of the original chain-population/grouping machinery and the 54/55-week expansion precedent.
+3. `research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.md`.
+4. `research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.json`.
+5. `research/NG_EXHAUSTION_V4_BUILD_PLAN_STEP1_ADDENDUM_20260820.md`.
+6. `research/NG_EXHAUSTION_V4_BUILD_PLAN_CURRENT_20260820.md` and its JSON companion.
+7. `research/NG_EXHAUSTION_V4_PER_D_CHUNKED_RUN_PROTOCOL_20260820.md` and its JSON companion.
+8. `research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md`.
+9. `research/NG_EXHAUSTION_V4_CLEAN_SOURCE_PRELAUNCH_GATES_20260820.md`.
+10. `research/NG_EXHAUSTION_V4_CLEAN_SOURCE_DEEP_DIVE_COMPLETE_FINDINGS_20260820.md` and gap matrix JSON.
+11. `research/kalshi/FRANKIE_V4_UNIFIED_FRAMEWORK_AUDIT_20260820.md`.
+12. `research/kalshi/FRANKIE_P0_GAP_CLOSURE_PROVISIONAL_20260820.md` and manifest.
+13. `research/kalshi/NG_MBO_5Y_COMPACT_AUDIT_20260820.json`.
+14. `research/kalshi/NG_EXHAUSTION_V4_STATE_ASSEMBLER_RECEIPT_20260820.json`.
 15. Older proposal/handoff files only for provenance when needed.
 
-## 2. Hard authority wall
+## 2. Critical conceptual correction: Step 1 is structural population discovery
 
-- **Do not use V3 D0-D5 predictive/trade outputs as empirical truth.** V3 AUCs, PRIOR/T0/H calls, continuation/depth/P/O/S/X calls, model disagreements and fixed-horizon economics are provenance/debugging only.
-- Preserve every chain/case. Sparse, weak, negative, losing, censored, unresolved, missing-channel, no-lock, wrong-lock and model-disagreement cases are evidence, not failed/dropped chains.
-- Direction/polarity is downstream context/execution information, not the primary exhaustion measurement.
-- Do not require model voting.
-- `FLAG_AND_DECOMPOSE_NOT_AUTO_KILL` remains binding.
+Before any D-specific blind prediction run, we must first establish what chains actually exist in the expanded chronology.
 
-## 3. Major 2026-08-20 evening decisions
+The correct high-level sequence is:
 
-### 3.1 Build first; big empirical runs last
+`expanded verified chronology`
+`-> Step-1 structural chain census`
+`-> frozen population / chain ancestry / realized depth registry`
+`-> support + characterization`
+`-> small blind V4 prediction pilots`
+`-> D-specific/year-specific predictive runs`
+`-> full empirical/P0 validation last`
 
-The user explicitly changed the execution strategy.
+**First establish what the chains actually are. Then test whether Frankie can predict their evolution before it happens.**
 
-Do **not** run full D0-D5 now. Do **not** begin with a full year or full five-year D run.
+The initial structural census is therefore **not** a `D0` run, `D3` run or any other known-D predictive run. D0/D1/D2/D3/D4/D5 membership/depth is a census output/frozen label and then a later prediction target.
 
-Binding hierarchy:
+The per-D/per-year chunk protocol governs that later predictive stage. It must not be used to demand known D membership before the initial census that discovers it.
 
-`mechanical builds -> exact candidate freeze -> small frozen verification pilot -> targeted D/year slice if needed -> additional bounded slices -> full D/year reconciliation -> full multi-year D runs LAST`
+## 3. Original Step-1 authority and what not to confuse with it
 
-The first result-bearing sample, when separately authorized, is deliberately small and exists only to verify mechanics, causality, provenance, ledger integrity, reveal separation, artifacts, restart/resume and reconciliation.
+The original frozen doctrine is in:
 
-A pilot may establish only:
+- `research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json`
+- `research/NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_PROTOCOL_20260817.json`
+- `research/ng_exhaustion_chain_canonical_table_20260817.py`
+- `research/ng_exhaustion_chain_phase1_discovery_20260817.py`
+- `research/ng_exhaustion_chain_phase1_causal_20260817.py`
 
-`PIPELINE_VERIFIED_FOR_THIS_EXACT_CANDIDATE`
+The correct long-history precedent is the 54/55-week wrapper layer:
 
-It may not establish population performance, calibration adequacy, trade edge or permanent Frankie readiness.
+- `research/NG_EXHAUSTION_CHAIN_PHASE1_54W_EXECUTION_PROTOCOL_20260817.json`
+- `research/ng_exhaustion_chain_canonical_54w_shard_20260817.py`
+- `research/ng_exhaustion_chain_canonical_54w_merge_20260817.py`
+- `research/ng_exhaustion_chain_phase1_structural_54w_20260817.py`
+- `research/ng_exhaustion_chain_phase1_causal_54w_20260817.py`
+- `research/ng_exhaustion_chain_phase1_reconcile_55w_20260817.py`
 
-### 3.2 Separate D runs and year partitions
+The later files `ng_exhaustion_chain_birth_depth_type_recovery_v2/v3_20260819.py` and their feature/model helpers are **prediction/recovery machinery**, not the original Step-1 grouping engine.
 
-D0, D1, D2, D3, D4 and D5 are separate top-level runs.
+Do not edit the frozen 2026-08-17 machinery in place merely to change dates. Create new versioned five-year wrappers/adapters.
 
-Inside each D, history may be partitioned by predeclared year/date span and then by smaller chronological chunks.
+## 4. New user decision: Frankie must actually understand MBO
 
-A completed D/year slice may move immediately into its next authorized integrity/adjudication/gap-decomposition step without waiting for unrelated D/year work to finish.
+The five-year historical corpus is true CME/Databento MBO, and Frankie is ultimately intended to receive MBO/live order-level information. MBO therefore cannot be treated as archival decoration or thrown away into a generic MBP-10 conversion.
 
-Full-D population claims require exact reconciliation across all predeclared year/date slices.
+The user explicitly authorized changing/building the adapter so Frankie gets the fullest lawful causal information.
 
-D4/D5 remain case-study lanes until materially larger lawful support plus separate adjudication changes their status.
+Current architecture is a **dual structural census** from the same native MBO source:
 
-### 3.3 Planning agents may build when BUILD_READY
+### 4.1 `LEGACY_CONTROL`
 
-Planning lanes with a clear BUILD_READY plan may continue into isolated implementation/tests without a separate pause. That build authority does **not** authorize result-bearing V4 empirical dispatch, promotion or permanent Frankie mutation.
+- reconstruct a trade/top-10 MBP-shaped compatibility surface;
+- preserve comparison to the frozen Step-1 detector/lineage doctrine;
+- require overlap/equivalence testing before trusting the projection;
+- never overwrite the frozen 55-week population.
 
-## 4. Current clean-source conclusion
+### 4.2 `V4_NATIVE_FULL`
 
-Core V4 is **not broadly blocked by missing generic market information**. Most ancestry, temporal, price/path, signed-flow, roll-20/dipole and aggregate-book state already exists or is causally derivable.
+A new V4-native structural census may use every lawful causal channel Frankie is expected to receive, including:
 
-The remaining work is primarily:
+- MBO A/C/M/R/T/F/N semantics;
+- order ID;
+- reconstructed FIFO priority / volume-ahead;
+- full-depth resting book and top-N aggregates;
+- queue age/survival and order-size concentration;
+- add/cancel/modify/trade/fill flow;
+- top-level depletion/add/replenishment-like derived activity;
+- direct trade aggressor side;
+- event/receive/in-delta clocks;
+- sequence/channel/publisher/instrument identity;
+- price/path, signed flow, dipole/roll-20 and lawful causal exhaustion proxies;
+- aggregate book state;
+- causal `event_known_by` / multi-clock availability;
+- missing/stale/not-yet-known/not-applicable states;
+- unresolved predecessor lifecycle;
+- exact source/continuous-symbol/raw-contract/roll provenance;
+- lawful time/session context.
 
-- exact causal-clock / availability enforcement in the actual isolated runtime path;
-- exact source/contract/roll/coverage provenance;
-- final adapter integration of state/lifecycle/ledger/handoff;
-- detector-intensity semantic resolution;
-- integrated nine-gate recomputation/red-team;
-- additional lawful chronology/support;
-- six real P0 empirical-readiness receipts.
+If richer V4 information reveals a cleaner, split, merged or otherwise different structural organization, preserve it as a **new versioned V4-native result**. Do not force it to equal frozen historical D/family structure, and do not rewrite the frozen result.
 
-Several mechanical pieces that were blockers earlier today are now built and green; do not redo them.
+Disagreement between legacy control and V4-native structure is evidence.
 
-## 5. Mechanical implementation already completed
+## 5. MBO semantics / integrity rules
 
-### 5.1 Causal discovery boundary
+Native Databento `.dbn.zst` remains canonical and immutable.
 
-The isolated causal-entry work reached **30/30 green tests** on exact candidate:
+For the adapter:
+
+- `A` inserts a resting order;
+- `C` cancels/reduces reported quantity;
+- `M` replaces order state; price change or size increase loses FIFO priority, same-price non-increasing modification retains it;
+- `R` clears the book;
+- `T` is the aggressing trade and does not itself mutate the resting book;
+- `F` is resting fill detail and does not itself mutate the resting book;
+- `N` does not mutate the book.
+
+Databento does not expose CME tag `37707-MDOrderPriority` as a native normalized field. Do not invent `PriorityID`. FIFO priority is reconstructed from message/snapshot ordering where supported.
+
+Consume completed MBO event state only at `F_LAST`; between records in one event the apparent book may be transient/incomplete. Historical snapshot/bootstrap records initialize state but must not be counted as organic add/cancel/trade activity.
+
+Every source gap, missing referenced order, clock regression, unsupported action or other anomaly becomes a durable integrity record; never repair it with future information.
+
+## 6. Engineering already green — do not redo
+
+### Causal discovery boundary
+
+30/30 green tests on exact candidate:
 
 `2a95ab21dda9080c765248a3c0bdfe50127a52ad`
 
-It keeps actual causal `event_known_by` separate from retrospective canonical `t0`, uses receive-order availability, and prevents the frozen runway from being instantiated/evaluated before causal discovery. The frozen detector/runway were not modified.
+Mechanically separates actual causal `event_known_by` from retrospective canonical `t0`, enforces receive-order availability and blocks runway evaluation before causal discovery.
 
-This is mechanical evidence only, not an empirical P0 receipt.
+### Unified V4 runtime
 
-### 5.2 Unified V4 runtime
+11/11 green adversarial tests after repairing a mutable-registry defect.
 
-The isolated unified runtime reached **11/11 green adversarial tests** after a mutable-registry defect was caught and repaired.
-
-Current architectural rule:
+Current invariant:
 
 - one immutable registry;
-- target-specific adapters only;
+- target-specific adapters;
 - one shared engine;
 - one reconciler;
-- D4/D5 use the same engine in `CASE_STUDY_NO_ADAPTATION`;
-- posthoc/oracle-conditioned POX benchmarking is permanently non-promotable;
-- execution cannot re-predict/re-time/substitute a cleaner view after the sealed handoff.
+- D4/D5 same engine in `CASE_STUDY_NO_ADAPTATION`;
+- POX/posthoc oracle-conditioned work non-promotable;
+- sealed execution handoff cannot re-predict/re-time/substitute later cleaner state.
 
-### 5.3 Missingness-safe causal state assembler
+### Missingness-safe causal state assembler
 
 Receipt:
 
@@ -124,127 +166,85 @@ Exact runner commit:
 
 `654fc2c0fc9e4e79f70e545e7fe59d92f70d9e67`
 
-Result: **7/7 green tests**.
+7/7 green tests: true zero distinct from missing; OBSERVED/PAST_CARRY/STALE/MISSING/STRUCTURALLY_NOT_YET_KNOWN/NOT_APPLICABLE distinct; no future backfill; append-only frozen state.
 
-Mechanically proven:
+These are mechanical receipts, not P0 empirical evidence.
 
-- true zero distinct from missing;
-- `OBSERVED`, `PAST_CARRY`, `STALE`, `MISSING`, `STRUCTURALLY_NOT_YET_KNOWN`, `NOT_APPLICABLE` distinct;
-- future rows cannot backfill an earlier frozen state;
-- state movie append-only/immutable.
+## 7. Current Step-1 build order
 
-## 6. Current consolidated build plan
+Build/preparation may proceed without launching the full five-year census:
 
-The authoritative build plan is now:
+1. **Build 0A — MBO-native state adapter.** Build/test the actual order/book/queue semantics and causal clocks.
+2. **Build 0B — dual census surfaces.** `LEGACY_CONTROL` plus `V4_NATIVE_FULL`.
+3. **Build 0C — generalized five-year census manifest/reconciler.** Use year/week/date shards only as execution partitions; exact union required.
+4. **Build 0D — tiny overlap/equivalence preflight.** Verify parser/book semantics and compare legacy projection against old source/detector output. This is not a population finding.
+5. **Build 0E — later, separately authorized structural census.** Freeze legacy-control population, V4-native population and crosswalk; full five-year census remains deferred until source/coverage and adapter gates are green.
 
-- `research/NG_EXHAUSTION_V4_BUILD_PLAN_CURRENT_20260820.md`
-- `research/NG_EXHAUSTION_V4_BUILD_PLAN_CURRENT_20260820.json`
+Then resume the existing V4 build plan and later prediction pilots.
 
-Do not restart another generic research cycle. Convert the remaining concrete BUILD_READY items into isolated code/tests/receipts in this order:
+## 8. Per-D prediction protocol remains binding after Step 1
 
-1. **Build A — pilot manifest / D-year-chunk guardrail.** Enforce one D, explicit year/date span, exact candidate/workflow/ruleset/source identities, frozen pilot selection, chunk membership and exact reconciliation. Test synthetically first; no result-bearing pilot is needed to build it.
-2. **Build B — five-year source/contract/roll/coverage manifest.** Finish archive drain, native hashes and exact point-in-time continuous-to-raw-contract coverage.
-3. **Build C — actual isolated adapter integration.** Flow one causal case through event-known-by -> availability -> state -> predecessor lifecycle -> probability -> first-lock/no-lock -> sealed handoff -> reveal wall -> reconciliation.
-4. **Build D — detector-intensity semantics.** Prove a frozen causal native stream or use an honestly named V4 proxy. Never fabricate native intensity retrospectively.
-5. **Build E — recomputed nine-gate integration red-team.** No self-asserted gate booleans; recompute from typed artifacts and attack causal/provenance/immutability seams.
-6. **Build F — exact candidate regression/freeze.** Focused tests + full applicable Frankie suite/selftest/registry/protected-hash checks on one exact candidate.
+After a population registry is frozen:
 
-Stop before a result-bearing V4 pilot unless exact launch authority exists.
+`small frozen verification sample -> D/year slice -> additional bounded slices -> full D/year reconciliation -> full multi-year D predictive run LAST`
 
-## 7. Five-year historical true-MBO acquisition
+D0-D5 are separate top-level predictive runs. Each may be split by predeclared year/date span and smaller chronological chunks. Completed D/year work may flow immediately into its next authorized QA/adjudication step while unrelated slices continue.
 
-Historical and live data acquisition are now deliberately decoupled.
+No output-dependent repartitioning, case dropping, future-truth balancing, cross-D voting or silent model/source/ruleset changes.
 
-The user approved the five-year historical Databento MBO backfill.
+The first predictive pilot may claim only:
 
-Target:
+`PIPELINE_VERIFIED_FOR_THIS_EXACT_CANDIDATE`
 
-- dataset: `GLBX.MDP3`;
-- schema: `mbo`;
-- requested continuous symbol: `NG.v.0`;
-- range: `2021-08-20` through `2026-08-20`;
-- canonical archive: native `.dbn.zst`;
-- S3 prefix: `nymex/ng_mbo_5y_v0/`.
+It may not claim superiority, calibration, trade edge, universal D law or permanent Frankie readiness.
 
-Account-specific clean quote was approximately **$145.74** for five years.
+## 9. Five-year historical true-MBO acquisition
 
-Early resume-key migration caused some duplicate/overlapping job submissions. Do not hide or delete them; preserve/account for them.
+User-approved target:
 
-Latest compact audit:
+- Databento dataset `GLBX.MDP3`;
+- schema `mbo`;
+- requested continuous symbol `NG.v.0`;
+- range `2021-08-20` through `2026-08-20`;
+- native `.dbn.zst` canonical archive;
+- S3 prefix `nymex/ng_mbo_5y_v0/`.
 
-`research/kalshi/NG_MBO_5Y_COMPACT_AUDIT_20260820.json`
+Clean five-year quote was approximately $145.74. Early resume-key migration caused several duplicate/overlapping submissions; preserve/account for them.
 
-At that checkpoint:
+Latest compact audit on branch:
 
-- consolidation state: `COMPLETE`;
-- canonical expected intervals: 61;
-- canonical intervals with jobs: 61;
-- missing expected intervals: 0;
-- unresolved reservations: 0;
-- native DBN objects already in S3: 102;
-- native DBN bytes: 1,470,112,040;
-- final canonical manifests complete at that snapshot: 1;
-- three exact duplicate expected intervals;
-- estimated exact-duplicate quote overhead about $4.40;
-- four additional partial-August overlapping intervals retained for accounting;
-- `safe_to_cancel_databento = false`.
+- consolidation `COMPLETE`;
+- 61/61 expected canonical intervals have jobs;
+- 0 missing expected intervals;
+- 0 unresolved reservations;
+- latest prior snapshot: 102 native DBN objects / 1,470,112,040 bytes in S3;
+- final complete manifests were not yet all present;
+- `safe_to_cancel_databento=false`.
 
-**Do not tell the user to cancel Databento yet.** First drain all intended canonical jobs, independently verify native bytes/hashes/manifests, build exact per-session contract/roll coverage and produce a fresh cancellation audit with `safe_to_cancel_databento=true`.
+Do not tell the user to cancel Databento until all intended canonical jobs drain, native bytes/hashes/manifests verify, exact session/contract/roll coverage is built and a fresh audit explicitly flips safe.
 
-The historical corpus is additive outside chronology. Run the unchanged frozen detector/canonical rules over it only in the later authorized history-support phase; never overwrite or silently expand the frozen 55-week corpus.
+No additional historical purchase is implied by this handoff.
 
-## 8. Current support facts
+## 10. Source/roll wall
 
-Frozen clean support remains:
+Bind every derived state/census event to:
 
-- D0: 135,860
-- D1: 18,837
-- D2: 1,592
-- D3: 124
-- D4: 8
-- D5: 1
+- dataset/schema;
+- requested continuous symbol;
+- resolved raw contract/symbol when available;
+- instrument ID;
+- publisher/channel;
+- source DBN object + SHA-256;
+- Databento job/segment;
+- timestamp/message range;
+- mapping/roll interval and source;
+- adapter/engine/ruleset revision/hash.
 
-Frozen corpus: 55 complete trading weeks / 329 unique raw dates over 2025-06-29 through 2026-07-17.
-
-The five-year outside chronology is intended to provide lawful additional opportunities for D3/D4/D5 support under the unchanged detector, not to manufacture support or retune discovery.
-
-## 9. Live MBO vendor research — enough for now
-
-Do **not** repeat the earlier exhaustive vendor search as the first task of the next chat.
-
-Current Databento Standard live entitlement on secret `MARKETS_NG_LIVE_MBO` was tested:
-
-- trades: authorized;
-- `mbp-10`: not authorized;
-- `mbo`: not authorized.
-
-The user's relevant Databento live benchmark is approximately **$1,799/month**.
-
-Credible lower-cost live candidates now exist:
-
-- **DTN/IQFeed** — leading low-cost candidate; final exact order-field semantics and API/non-display/licensing certification still needed;
-- **Rithmic** — technically strong MBO candidate; final data-only/API/access/licensing cost needed;
-- **dxFeed** — strong order-level API semantics; custom Frankie/API commercial price needed;
-- **CME Smart Stream SBE** — robust direct fallback;
-- **Databento** — expensive fallback.
-
-Historical and live providers do not need to be the same company. Final live-provider certification can wait until live MBO is actually needed.
-
-## 10. Planning-agent disposition
-
-The five planning categories all have an actionable path:
-
-- `causal_clock` — BUILD_READY and substantially built;
-- `v4_mechanics` — BUILD_READY and substantially built;
-- `history_support` — BUILD_READY and active via the five-year MBO/provenance work;
-- `integration_redteam` — BUILD_READY and partially built;
-- `p0_evidence` — PLAN_COMPLETE but real execution remains externally gated.
-
-The source planning workflow did not leave a durable reconciled five-agent output bundle on the branch; do not falsely claim that artifact exists. The consolidated build-plan files above are now the durable current plan.
+Never silently substitute `NG.v.0`, `NG.n.0`, `NG.c.0` or another continuous basis.
 
 ## 11. P0 empirical boundary
 
-Frankie remains `COMPONENT_CONTRACT_READY`, not empirically ready.
+Frankie remains component-contract ready, not empirically ready.
 
 Six real receipts remain:
 
@@ -255,55 +255,48 @@ Six real receipts remain:
 5. evaluator-independence canary;
 6. non-vacuous byte-exact live rollback.
 
-The P0 evidence plan is complete, but real execution requires:
+Do not consume the release holdout during Step-1 builds, adapter equivalence checks or tiny pipeline pilots. Unit/synthetic tests do not satisfy P0 receipts.
 
-- real model/tool callbacks and metering authority;
-- an independent locked evaluator + canaries;
-- a disposable authorized mutation/rollback target.
+## 12. Live MBO — do not redo vendor search now
 
-Do not consume the release holdout during build work or tiny pipeline pilots. Synthetic/unit tests do not satisfy the six real receipts.
+Current lower-cost candidates remain DTN/IQFeed, Rithmic, dxFeed and CME Smart Stream SBE; Databento is an expensive fallback. Historical and live providers may differ.
 
-## 12. Protected boundaries
+The current Databento Standard live key was verified as trades-authorized but `mbp-10`/`mbo` not authorized for the tested use case. The user's relevant Databento live benchmark is approximately $1,799/month.
 
-Do not modify or retune without explicit authorization:
+Final live-provider certification can wait until live MBO is actually needed.
+
+## 13. Hard authority wall
+
+Do not use V3 D0-D5 predictive/trade outputs as empirical truth. They are provenance/debugging only.
+
+Preserve every chain/case. Sparse, weak, negative, losing, censored, unresolved, no-lock, wrong-lock, missing-channel and model-disagreement cases are evidence.
+
+`FLAG_AND_DECOMPOSE_NOT_AUTO_KILL` remains binding.
+
+Do not modify/retune without explicit authorization:
 
 - frozen exhaustion detector;
-- frozen canonical evidence/rows;
+- frozen canonical 55-week rows/evidence;
 - finalized Phase-1/Phase-2 findings;
 - frozen exhaustion runway clock;
 - permanent Frankie / Frankie 1;
 - `research/kalshi/spawn.py`;
 - frozen V3 benchmark artifacts;
-- other explicitly protected play/workflow artifacts.
+- other protected play/workflow artifacts.
 
-The old dirty provisional V4 local tree remains read-only source material only and must not be copied wholesale.
+The new five-year adapter/census path is additive/versioned work and does not rewrite these artifacts.
 
-## 13. Authorization boundary
+## 14. Exact near-term sequence
 
-A generic `Proceed` authorizes the build/preparation work described in the current plan. It does **not** authorize a result-bearing V4 empirical run.
+1. Verify current branch state and read the Step-1 file map/protocol before the per-D prediction protocol.
+2. Finish/adversarial-test `research/ng_exhaustion_mbo_v4_state_adapter_20260820.py`.
+3. Build the generalized five-year source/census manifest + exact shard reconciler.
+4. Continue draining/verifying the already-purchased native MBO archive and exact contract/roll/session coverage.
+5. Use only a tiny non-result-bearing overlap sample to validate MBO parsing, book reconstruction, `F_LAST`, snapshot handling and `LEGACY_CONTROL` equivalence.
+6. Do **not** launch the full structural census merely because the adapter is green.
+7. Finish remaining mechanical V4 integration/gate builds in parallel.
+8. When separately authorized later, run/freeze Step-1 `LEGACY_CONTROL` and `V4_NATIVE_FULL` populations in small year/week shards with exact reconciliation.
+9. Only after the population is frozen begin small blind per-D predictive pilots.
+10. Save full D/year, full multi-year D predictive runs and the six real P0 empirical receipts for last.
 
-A V4 result-bearing pilot or larger run requires:
-
-1. a clean unified implementation;
-2. one exact tested candidate commit;
-3. exact engine/adapter/reconciler/workflow/ruleset identities;
-4. all gates relevant to that pilot green;
-5. a **separate explicit user authorization naming the exact candidate commit/workflow/ruleset** before dispatch.
-
-Full D/year and full multi-year runs remain intentionally deferred until the final empirical phase.
-
-## 14. Exact next-chat sequence
-
-1. Verify current pushed branch state.
-2. Read this handoff, the current build-plan MD/JSON and the pilot-first protocol MD/JSON first.
-3. Do not redo the already-green causal clock, unified runtime or state-assembler work.
-4. Finish **Build A**: pilot manifest / D-year-chunk guardrail and adversarial tests.
-5. In parallel continue **Build B**: drain/verify the already-purchased five-year MBO archive and build exact source/contract/roll/session coverage. No additional historical purchase is implied.
-6. Finish **Build C-D**: actual isolated adapter integration and detector-intensity semantic resolution.
-7. Finish **Build E**: recomputed nine-gate integration red-team.
-8. Finish **Build F**: full engineering regression and freeze one exact candidate commit/workflow/ruleset.
-9. Stop before a result-bearing V4 pilot absent separate exact user launch authorization.
-10. If a pilot is later authorized, use a tiny non-release sample, one D and one year/date span at a time; verify the pipeline and then move to the next unresolved build/check.
-11. Save full D/year and full multi-year empirical runs for last.
-12. Execute the six real P0 receipts only when their external dependencies and protected evaluation partitions are ready.
-
+A generic `Proceed` authorizes build/preparation work in this sequence. It does not authorize a large structural census or result-bearing V4 prediction run.
