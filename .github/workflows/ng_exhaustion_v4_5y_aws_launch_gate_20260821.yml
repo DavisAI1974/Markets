@@ -36,7 +36,7 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import base64, json, os, time, traceback
+          import base64, json, os, shlex, time, traceback
           from pathlib import Path
           import boto3
 
@@ -44,15 +44,27 @@ jobs:
           instance_id=os.environ['INSTANCE_ID']
           pinned_sha=os.environ['PINNED_SHA']
           workdir=os.environ['EC2_WORKDIR']
+          access_key=os.environ['AWS_ACCESS_KEY_ID']
+          secret_key=os.environ['AWS_SECRET_ACCESS_KEY']
           out_path=Path('/tmp/ng_exhaustion_v4_5y_aws_launch_gate_20260821.json')
           files={
             'research/ng_exhaustion_mbo_5y_aws_source_20260820.py':'efb8ede9f7359e7c7ceeafa0e160b367ac48d89c',
             'research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py':'2a2e248d04b25388db385309a5d459a72621514f',
             'research/ng_exhaustion_mbo_v4_state_adapter_20260820.py':'a125911193733016b77845708a956f26158c78a7',
           }
-          receipt={'schema':'NG_EXHAUSTION_V4_5Y_AWS_LAUNCH_GATE_V4','instance_id':instance_id,'region':region,'pinned_sha':pinned_sha,'github_trigger_sha':os.environ.get('GITHUB_SHA'),'source_mode':'native_mbo_full_state','prefix_wide_enumeration_allowed':False,'empirical_census_launched':False,'pinned_blob_shas':files}
+          receipt={'schema':'NG_EXHAUSTION_V4_5Y_AWS_LAUNCH_GATE_V5','instance_id':instance_id,'region':region,'pinned_sha':pinned_sha,'github_trigger_sha':os.environ.get('GITHUB_SHA'),'source_mode':'native_mbo_full_state','prefix_wide_enumeration_allowed':False,'empirical_census_launched':False,'pinned_blob_shas':files}
           try:
-            commands=['set -eu','python3 -m pip install --quiet awscli', 'command -v aws', 'aws --version', f'rm -rf {workdir}',f'mkdir -p {workdir}/research']
+            commands=[
+              'set -eu',
+              'export AWS_ACCESS_KEY_ID='+shlex.quote(access_key),
+              'export AWS_SECRET_ACCESS_KEY='+shlex.quote(secret_key),
+              'export AWS_DEFAULT_REGION='+shlex.quote(region),
+              'python3 -m pip install --quiet awscli',
+              'command -v aws',
+              'aws --version',
+              "aws sts get-caller-identity --query Account --output text >/dev/null",
+              f'rm -rf {workdir}',f'mkdir -p {workdir}/research'
+            ]
             for rel,want in files.items():
               data=Path(rel).read_bytes()
               payload=base64.b64encode(data).decode()
