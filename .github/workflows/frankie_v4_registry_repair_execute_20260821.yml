@@ -1,0 +1,118 @@
+name: Frankie V4 Registry Repair Execute 20260821
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - .github/workflows/frankie_v4_registry_repair_execute_20260821.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  repair-and-retrigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install regression dependencies
+        run: python -m pip install --quiet pytest boto3 matplotlib numpy scipy scikit-learn pandas databento
+
+      - name: Prove hash-only repair boundary
+        env:
+          PYTHONPATH: .:research/kalshi
+        run: |
+          python - <<'PY'
+          import sys
+          sys.path.insert(0,'research/kalshi')
+          import frankie_p0_registry as r
+          d=r.audit_p0_registry()
+          assert d['blockers']==['runtime hook boundary integrity is blocked'],d['blockers']
+          assert d['module_hash_mismatches']==[],d['module_hash_mismatches']
+          assert d['missing_entry_points']==[] and d['extra_entry_points']==[]
+          b=d['runtime_boundary_receipt']
+          assert b['binding_file_hash_mismatches']==['cognitive_runtime','standard_group_runner'],b['binding_file_hash_mismatches']
+          assert b['hook_method_present'] is True
+          assert b['automatic_standard_group_runner_invocation'] is False
+          assert b['missing_candidate_bindings']==[]
+          assert b['unexpected_candidate_bindings']==[]
+          assert b['mismatched_candidate_bindings']==[]
+          observed={x['role']:x['observed_content_sha256'] for x in b['binding_file_receipts']}
+          expected={
+            'cognitive_runtime':'1f33be3e86abb532035047a0456c8627b71dc220742ab5d89807bad312e53999',
+            'standard_group_runner':'b77a20ef634079fce592acc15e2f7ef3b1248b0ef3c5e2bab47be7a385b38d70',
+          }
+          assert observed==expected,(observed,expected)
+          print('PASS: semantic runtime boundary is intact; only two exact whole-file pins are stale')
+          PY
+
+      - name: Rebind only the two verified runtime byte pins
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('research/kalshi/frankie_p0_registry.py')
+          text=p.read_text()
+          replacements={
+            '97b82cd9821130b1117dd3207a8f4dabe748f49a464ea8dfb34ee9787fa87020':'1f33be3e86abb532035047a0456c8627b71dc220742ab5d89807bad312e53999',
+            '9bdeea4957ca8edf2aa9164368a694954a6f7ba21b26de884c299f3b85ae9e22':'b77a20ef634079fce592acc15e2f7ef3b1248b0ef3c5e2bab47be7a385b38d70',
+          }
+          for old,new in replacements.items():
+            assert text.count(old)==1,(old,text.count(old))
+            text=text.replace(old,new)
+          p.write_text(text)
+          PY
+
+      - name: Make repaired registry a readiness trigger
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/ng_exhaustion_v4_followon_provisional_readiness_20260821.yml')
+          text=p.read_text()
+          marker='      - .github/workflows/ng_exhaustion_v4_followon_provisional_readiness_20260821.yml\n'
+          addition='      - research/kalshi/frankie_p0_registry.py\n'+marker
+          if '      - research/kalshi/frankie_p0_registry.py\n' not in text:
+            assert text.count(marker)==1
+            text=text.replace(marker,addition)
+          if '# Registry hash-rebind retrigger 2026-08-21' not in text:
+            text += '\n# Registry hash-rebind retrigger 2026-08-21\n'
+          p.write_text(text)
+          PY
+
+      - name: Run repaired registry and complete Frankie regression before commit
+        env:
+          PYTHONPATH: .:research/kalshi
+        run: |
+          set -euo pipefail
+          python -B -m pytest -q research/kalshi/tests/test_frankie_p0_registry.py
+          python -B -m pytest -q research/kalshi/tests tests/test_frankie_s135_group_runner.py
+          python -B research/kalshi/agent_frankie.py selftest
+          python - <<'PY'
+          import hashlib,json,subprocess
+          from pathlib import Path
+          d=json.loads(Path('research/kalshi/NG_EXHAUSTION_V4_PROTECTED_BASELINE_20260821.json').read_text())
+          actual={p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in d['files_sha256']}
+          assert actual==d['files_sha256'],(actual,d['files_sha256'])
+          blob=subprocess.check_output(['git','hash-object','research/kalshi/spawn.py'],text=True).strip()
+          assert blob==d['spawn_git_blob_sha1'],(blob,d['spawn_git_blob_sha1'])
+          print('PASS: protected Frankie/spawn/specialist bytes unchanged')
+          PY
+          git diff --check
+
+      - name: Commit repaired pins and retrigger exact-candidate readiness
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/kalshi/frankie_p0_registry.py .github/workflows/ng_exhaustion_v4_followon_provisional_readiness_20260821.yml
+          git diff --cached --check
+          git commit -m 'research: rebind verified Frankie runtime hashes and rerun V4 readiness'
+          git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
