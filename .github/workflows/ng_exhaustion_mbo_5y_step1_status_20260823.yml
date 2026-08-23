@@ -244,7 +244,7 @@ jobs:
             --output text)"
           aws ssm wait command-executed \
             --command-id "$command_id" \
-            --instance-id "$INSTANCE_ID"
+            --instance-id "$INSTANCE_ID" || true
           aws ssm get-command-invocation \
             --command-id "$command_id" \
             --instance-id "$INSTANCE_ID" \
