@@ -1,0 +1,60 @@
+name: NG Exhaustion Five-Year Step-1 Exact Source Freeze 20260822
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - research/ng_exhaustion_mbo_5y_canonical_manifest_20260822.py
+      - research/test_ng_exhaustion_mbo_5y_canonical_manifest_20260822.py
+      - .github/workflows/ng_exhaustion_mbo_5y_step1_source_freeze_20260822.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ng-exhaustion-mbo-5y-step1-source-freeze-20260822
+  cancel-in-progress: false
+
+jobs:
+  freeze-exact-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --quiet boto3
+      - name: Unit tests
+        env:
+          PYTHONPATH: research
+        run: python -m unittest -v test_ng_exhaustion_mbo_5y_canonical_manifest_20260822
+      - name: Freeze and S3-validate the exact 61-interval source
+        run: python research/ng_exhaustion_mbo_5y_canonical_manifest_20260822.py
+      - name: Commit immutable source manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          branch='chatgpt/ng-exhaustion-entry-timing-revival-20260818'
+          path='research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json'
+          cp "$path" /tmp/CANONICAL_OBJECT_MANIFEST.json
+          for attempt in 1 2 3 4; do
+            git fetch origin "$branch"
+            git reset --hard "origin/$branch"
+            cp /tmp/CANONICAL_OBJECT_MANIFEST.json "$path"
+            git add "$path"
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m 'research: freeze exact five-year native MBO source'
+            if git push origin HEAD:"$branch"; then exit 0; fi
+          done
+          exit 1
