@@ -235,6 +235,8 @@ jobs:
                   "legacy_rows": 0,
                   "legacy_buy_qty": 0.0,
                   "legacy_sell_qty": 0.0,
+                  "mbp_side_buy_qty": 0.0,
+                  "mbp_side_sell_qty": 0.0,
                   "trade_count": 0,
                   "last_trade_price": None,
                   "book_imbalance_sum": 0.0,
@@ -267,6 +269,10 @@ jobs:
                   row["trade_count"] += 1
                   price = float(record.get("price", 0) or 0)
                   size = float(record.get("size", record.get("qty", 0)) or 0)
+                  if str(record.get("side")) == "B":
+                      row["mbp_side_buy_qty"] += size
+                  elif str(record.get("side")) == "A":
+                      row["mbp_side_sell_qty"] += size
                   bid = float(record.get("bid_px_00", 0) or 0)
                   ask = float(record.get("ask_px_00", 0) or 0)
                   if price > 0:
@@ -298,6 +304,7 @@ jobs:
           )
           mismatch_counts = collections.Counter()
           direct_aggressor_mismatch_counts = collections.Counter()
+          trade_side_mismatch_counts = collections.Counter()
           examples = []
           for second in sorted(set(raw) | set(recovered)):
               left = raw.get(second, blank(second))
@@ -338,6 +345,17 @@ jobs:
                       abs_tol=1e-12,
                   ):
                       direct_aggressor_mismatch_counts[legacy_field] += 1
+              for mbp_field, native_field in (
+                  ("mbp_side_buy_qty", "native_buy_qty"),
+                  ("mbp_side_sell_qty", "native_sell_qty"),
+              ):
+                  if not math.isclose(
+                      float(left.get(mbp_field, 0)),
+                      float(right.get(native_field, 0)),
+                      rel_tol=0.0,
+                      abs_tol=1e-12,
+                  ):
+                      trade_side_mismatch_counts[mbp_field] += 1
 
           def totals(rows):
               return {
@@ -380,6 +398,13 @@ jobs:
                   "buy_qty": sum(float(row.get("native_buy_qty", 0)) for row in recovered.values()),
                   "sell_qty": sum(float(row.get("native_sell_qty", 0)) for row in recovered.values()),
               },
+              "mbp10_trade_side_totals": {
+                  "buy_qty": sum(float(row.get("mbp_side_buy_qty", 0)) for row in raw.values()),
+                  "sell_qty": sum(float(row.get("mbp_side_sell_qty", 0)) for row in raw.values()),
+              },
+              "mbp10_trade_side_vs_direct_mbo_per_second_mismatch_counts": dict(
+                  sorted(trade_side_mismatch_counts.items())
+              ),
               "mbp10_vs_direct_mbo_per_second_mismatch_counts": dict(
                   sorted(direct_aggressor_mismatch_counts.items())
               ),
