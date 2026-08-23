@@ -13,10 +13,12 @@ from __future__ import annotations
 
 import argparse
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
 from ng_exhaustion_mbo_v4_state_adapter_20260820 import (
+    InstrumentBook,
     V4MboAdapter,
     _int,
     _resolve_symbol,
@@ -26,21 +28,57 @@ from ng_exhaustion_mbo_v4_state_adapter_20260820 import (
 REVISION = "NG_EXHAUSTION_MBO_V4_FULL_STATE_REPLAY_V1_20260820"
 
 
-def full_state_envelope(adapter: V4MboAdapter, frame: dict[str, Any]) -> dict[str, Any]:
+@dataclass(frozen=True)
+class CallbackScopedFullStateReference:
+    """Zero-copy access to the complete V4 book during a replay callback.
+
+    ``book`` is the authoritative live ``InstrumentBook``: ``book.orders`` holds
+    every resting order and ``book.levels`` holds the full FIFO order-id queues at
+    every price. Consumers that need to retain an as-of snapshot beyond the
+    callback can materialize it explicitly with ``checkpoint()``.
+    """
+
+    book: InstrumentBook
+    ts_recv_ns: int
+
+    @property
+    def orders(self) -> dict[int, Any]:
+        return self.book.orders
+
+    @property
+    def levels(self) -> dict[str, dict[int, list[int]]]:
+        return self.book.levels
+
+    def checkpoint(self) -> dict[str, Any]:
+        return self.book.checkpoint_state(
+            self.ts_recv_ns,
+            include_full_depth=True,
+            include_order_ids=True,
+        )
+
+
+def full_state_envelope(
+    adapter: V4MboAdapter,
+    frame: dict[str, Any],
+    *,
+    materialize_full_state: bool = True,
+) -> dict[str, Any]:
     iid = int(frame["instrument_id"])
     book = adapter.books[iid]
-    checkpoint = book.checkpoint_state(
-        int(frame["ts_recv_ns"]),
-        include_full_depth=True,
-        include_order_ids=True,
-    )
-    bid_levels = checkpoint["book"].get("bid_levels_full")
-    ask_levels = checkpoint["book"].get("ask_levels_full")
-    if bid_levels is None or ask_levels is None:
-        raise RuntimeError("full-depth levels missing from V4 full-state checkpoint")
-    for level in [*bid_levels, *ask_levels]:
-        if "fifo_queue" not in level:
-            raise RuntimeError("FIFO queue missing from V4 full-state checkpoint")
+    reference = CallbackScopedFullStateReference(book, int(frame["ts_recv_ns"]))
+    if materialize_full_state:
+        full_state: Any = reference.checkpoint()
+        bid_levels = full_state["book"].get("bid_levels_full")
+        ask_levels = full_state["book"].get("ask_levels_full")
+        if bid_levels is None or ask_levels is None:
+            raise RuntimeError("full-depth levels missing from V4 full-state checkpoint")
+        for level in [*bid_levels, *ask_levels]:
+            if "fifo_queue" not in level:
+                raise RuntimeError("FIFO queue missing from V4 full-state checkpoint")
+        mode = "MATERIALIZED_FULL_DEPTH_FIFO_CHECKPOINT"
+    else:
+        full_state = reference
+        mode = "CALLBACK_SCOPED_LIVE_INSTRUMENT_BOOK_REFERENCE"
     return {
         "schema": "NG_MBO_V4_FULL_STATE_ENVELOPE_V1",
         "revision": REVISION,
@@ -51,7 +89,9 @@ def full_state_envelope(adapter: V4MboAdapter, frame: dict[str, Any]) -> dict[st
         "ts_recv_ns": frame["ts_recv_ns"],
         "causal_availability_clock": "ts_recv_ns",
         "compact_event_frame": frame,
-        "full_state": checkpoint,
+        "full_state": full_state,
+        "full_state_mode": mode,
+        "full_state_materialized": materialize_full_state,
         "full_depth_exposed": True,
         "fifo_order_state_exposed": True,
         "native_dbn_replayable": True,
@@ -61,6 +101,8 @@ def full_state_envelope(adapter: V4MboAdapter, frame: dict[str, Any]) -> dict[st
 def replay_dbn_files(
     paths: list[str],
     on_group: Callable[[dict[str, Any], list[dict[str, Any]]], None],
+    *,
+    materialize_full_state: bool = True,
 ) -> dict[str, Any]:
     try:
         import databento as db
@@ -97,7 +139,14 @@ def replay_dbn_files(
             )
             records += 1
             if frame is not None:
-                on_group(full_state_envelope(adapter, frame), legacy)
+                on_group(
+                    full_state_envelope(
+                        adapter,
+                        frame,
+                        materialize_full_state=materialize_full_state,
+                    ),
+                    legacy,
+                )
         adapter.assert_groups_closed()
         sources.append(
             {
@@ -114,6 +163,12 @@ def replay_dbn_files(
         "record_count": adapter.record_count,
         "completed_event_group_count": adapter.completed_event_group_count,
         "instrument_count": len(adapter.books),
+        "full_state_mode": (
+            "MATERIALIZED_FULL_DEPTH_FIFO_CHECKPOINT"
+            if materialize_full_state
+            else "CALLBACK_SCOPED_LIVE_INSTRUMENT_BOOK_REFERENCE"
+        ),
+        "full_state_materialized_per_event_group": materialize_full_state,
         "full_depth_exposed": True,
         "fifo_order_state_exposed": True,
         "frankie_exposed": False,

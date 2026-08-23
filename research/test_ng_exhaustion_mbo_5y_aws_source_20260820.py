@@ -81,6 +81,36 @@ class FullStateReplayTests(unittest.TestCase):
         self.assertEqual(bid["fifo_queue"][0]["order_id"], 101)
         self.assertEqual(bid["fifo_queue"][0]["size"], 7)
 
+    def test_callback_scoped_reference_exposes_complete_live_book(self):
+        adapter = V4MboAdapter()
+        frame, _legacy = adapter.apply(
+            {
+                "instrument_id": 1,
+                "publisher_id": 1,
+                "channel_id": 1,
+                "order_id": 101,
+                "action": "A",
+                "side": "B",
+                "price": 3_000_000_000,
+                "size": 7,
+                "flags": F_LAST,
+                "sequence": 1,
+                "ts_event": 1_000_000_000,
+                "ts_recv": 1_000_000_100,
+                "ts_in_delta": 100,
+            },
+            raw_symbol="NGX6",
+        )
+        envelope = full_state_envelope(adapter, frame, materialize_full_state=False)
+        reference = envelope["full_state"]
+        self.assertEqual(envelope["full_state_mode"], "CALLBACK_SCOPED_LIVE_INSTRUMENT_BOOK_REFERENCE")
+        self.assertFalse(envelope["full_state_materialized"])
+        self.assertIs(reference.book, adapter.books[1])
+        self.assertEqual(reference.orders[101].size, 7)
+        self.assertEqual(reference.levels["B"][3_000_000_000], [101])
+        bid = reference.checkpoint()["book"]["bid_levels_full"][0]
+        self.assertEqual(bid["fifo_queue"][0]["order_id"], 101)
+
 
 if __name__ == "__main__":
     unittest.main()

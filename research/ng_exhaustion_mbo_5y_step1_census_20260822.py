@@ -474,7 +474,11 @@ def process_segment(
         source_provenance=source_provenance,
     )
     try:
-        replay = replay_dbn_files(paths, aggregator.consume)
+        replay = replay_dbn_files(
+            paths,
+            aggregator.consume,
+            materialize_full_state=False,
+        )
         aggregator.finish()
         seconds = writer.close()
     except Exception:

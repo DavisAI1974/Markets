@@ -7,6 +7,9 @@ on:
       - chatgpt/ng-exhaustion-entry-timing-revival-20260818
     paths:
       - .github/workflows/ng_exhaustion_mbo_5y_step1_launch_20260822.yml
+      - research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py
+      - research/ng_exhaustion_mbo_5y_step1_census_20260822.py
+      - research/test_ng_exhaustion_mbo_5y_aws_source_20260820.py
 
 permissions:
   contents: write
