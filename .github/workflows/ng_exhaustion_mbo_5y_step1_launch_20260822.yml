@@ -257,7 +257,13 @@ jobs:
               if got != want: raise SystemExit(f'candidate file hash drift: {{rel}} {{got}} {{want}}')
           print('CANDIDATE_FILES_VERIFIED')
           PYVERIFY
-          test -d {shlex.quote(base + '/venv')} || python3 -m venv {shlex.quote(base + '/venv')}
+          if [ ! -x {shlex.quote(base + '/venv/bin/python')} ]; then
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update -qq
+            apt-get install -y -qq python3.10-venv
+            rm -rf {shlex.quote(base + '/venv')}
+            python3 -m venv {shlex.quote(base + '/venv')}
+          fi
           source {shlex.quote(base + '/venv/bin/activate')}
           python -m pip install --quiet --upgrade pip
           python -m pip install --quiet numpy==1.26.4 scipy==1.11.4 scikit-learn==1.4.2 matplotlib==3.8.4 boto3==1.35.99 databento==0.81.0
