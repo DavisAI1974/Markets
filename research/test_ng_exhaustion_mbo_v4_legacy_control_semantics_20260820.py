@@ -39,8 +39,52 @@ class LegacyControlSemanticWall(unittest.TestCase):
 
         self.assertEqual([x["action"] for x in frame["raw_actions"]], ["T", "F", "C"])
         self.assertEqual([x["action"] for x in legacy], ["T", "C"])
+        self.assertEqual(legacy[0]["ask_sz_00"], 10)
+        self.assertEqual(legacy[1]["ask_sz_00"], 7)
+        self.assertFalse(legacy[0]["projection_at_f_last"])
+        self.assertTrue(legacy[1]["projection_at_f_last"])
         self.assertEqual(frame["activity"]["20"]["trade_buy_aggressor_qty"], 3)
         self.assertEqual(a.books[101].orders[2].size, 7)
+
+    def test_below_top10_book_actions_do_not_emit_legacy_rows(self):
+        a = V4MboAdapter()
+        for i in range(10):
+            _frame, legacy = a.apply(r(
+                "A", "B", i + 1, 3.00 - i * 0.01, 10,
+                sequence=i + 1, ts=(i + 1) * 1_000_000_000,
+            ))
+            self.assertEqual(len(legacy), 1)
+
+        _frame, legacy = a.apply(r(
+            "A", "B", 11, 2.90, 10, sequence=11, ts=11_000_000_000,
+        ))
+        self.assertEqual(legacy, [])
+        _frame, legacy = a.apply(r(
+            "C", "B", 11, 2.90, 2, sequence=12, ts=12_000_000_000,
+        ))
+        self.assertEqual(legacy, [])
+        _frame, legacy = a.apply(r(
+            "A", "B", 12, 3.01, 10, sequence=13, ts=13_000_000_000,
+        ))
+        self.assertEqual(len(legacy), 1)
+        self.assertEqual(legacy[0]["bid_px_00"], 3.01)
+
+    def test_reset_rebuild_collapses_to_one_final_legacy_row(self):
+        a = V4MboAdapter()
+        frame, legacy = a.apply(r("R", flags=0, sequence=1))
+        self.assertIsNone(frame)
+        self.assertEqual(legacy, [])
+        for i in range(12):
+            flags = F_LAST if i == 11 else 0
+            frame, legacy = a.apply(r(
+                "A", "B", i + 1, 3.00 - i * 0.01, 10, flags=flags,
+                sequence=1, ts=1_000_000_000 + i,
+            ))
+        self.assertIsNotNone(frame)
+        self.assertEqual(len(legacy), 1)
+        self.assertEqual(legacy[0]["action"], "A")
+        self.assertEqual(legacy[0]["bid_px_00"], 3.0)
+        self.assertTrue(legacy[0]["projection_at_f_last"])
 
 
 if __name__ == "__main__":

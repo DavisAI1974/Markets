@@ -49,7 +49,7 @@ F_BAD_TS_RECV = 1 << 3
 VALID_ACTIONS = frozenset("ACMRTFN")
 VALID_SIDES = frozenset("ABN")
 ACTIVITY_WINDOWS_S = (1, 5, 20, 60, 300)
-ADAPTER_REVISION = "NG_EXHAUSTION_MBO_V4_STATE_ADAPTER_V1_20260820"
+ADAPTER_REVISION = "NG_EXHAUSTION_MBO_V4_STATE_ADAPTER_V2_20260823"
 
 
 def _enum_text(value: Any) -> str:
@@ -281,6 +281,9 @@ class InstrumentBook:
         self._activity_windows = {seconds: _RollingActivityWindow() for seconds in ACTIVITY_WINDOWS_S}
         self._activity_last_now_ns: int | None = None
         self.event_group: list[NormalizedMbo] = []
+        self._legacy_group_rows: list[dict[str, Any]] = []
+        self._legacy_group_collapsed = False
+        self._top10_cache: dict[str, tuple[int, ...] | None] = {"B": None, "A": None}
         self.integrity: Counter[str] = Counter()
         self.last_sequence: int | None = None
         self.last_recv_ns: int | None = None
@@ -288,6 +291,61 @@ class InstrumentBook:
         self.raw_symbol: str | None = None
         self._side_depth = {"B": 0, "A": 0}
         self._side_order_count = {"B": 0, "A": 0}
+
+    def _top10_prices(self, side: str) -> tuple[int, ...]:
+        cached = self._top10_cache[side]
+        if cached is None:
+            prices = self.levels[side]
+            selected = heapq.nlargest(10, prices) if side == "B" else heapq.nsmallest(10, prices)
+            cached = tuple(selected)
+            self._top10_cache[side] = cached
+        return cached
+
+    def _invalidate_top10(self, *sides: str) -> None:
+        for side in sides:
+            if side in self._top10_cache:
+                self._top10_cache[side] = None
+
+    @staticmethod
+    def _price_enters_top10(side: str, price_raw: int, prices: tuple[int, ...]) -> bool:
+        if price_raw in prices or len(prices) < 10:
+            return True
+        cutoff = prices[-1]
+        return price_raw > cutoff if side == "B" else price_raw < cutoff
+
+    def _legacy_top10_effect(self, msg: NormalizedMbo) -> tuple[bool, tuple[str, ...]]:
+        """Return whether this action emits MBP-10 and which cached sides it mutates."""
+        if msg.action == "R":
+            return True, ("B", "A")
+        if msg.action in ("T", "F", "N"):
+            return msg.action == "T", ()
+        old = self.orders.get(msg.order_id)
+        if msg.action == "A":
+            sides = tuple(dict.fromkeys(
+                side for side in ((None if old is None else old.side), msg.side) if side in ("A", "B")
+            ))
+            old_visible = old is not None and old.price_raw in self._top10_prices(old.side)
+            new_visible = msg.side in ("A", "B") and self._price_enters_top10(
+                msg.side, msg.price_raw, self._top10_prices(msg.side)
+            )
+            return old_visible or new_visible, sides
+        if msg.action == "C":
+            if old is None:
+                return False, ()
+            return old.price_raw in self._top10_prices(old.side), (old.side,)
+        if msg.action == "M":
+            if old is None:
+                visible = msg.side in ("A", "B") and self._price_enters_top10(
+                    msg.side, msg.price_raw, self._top10_prices(msg.side)
+                )
+                return visible, (msg.side,) if msg.side in ("A", "B") else ()
+            old_visible = old.price_raw in self._top10_prices(old.side)
+            new_visible = msg.side in ("A", "B") and self._price_enters_top10(
+                msg.side, msg.price_raw, self._top10_prices(msg.side)
+            )
+            sides = tuple(dict.fromkeys(side for side in (old.side, msg.side) if side in ("A", "B")))
+            return old_visible or new_visible, sides
+        raise ValueError(f"unsupported legacy projection action {msg.action!r}")
 
     def _prices(self, side: str) -> list[int]:
         prices = [p for p, ids in self.levels[side].items() if ids]
@@ -467,7 +525,10 @@ class InstrumentBook:
         while self.activity and self.activity[0]["ts_recv_ns"] < cutoff:
             self.activity.popleft()
 
-    def apply(self, msg: NormalizedMbo) -> tuple[ApplyEffect, dict[str, Any] | None]:
+    def apply(
+        self,
+        msg: NormalizedMbo,
+    ) -> tuple[ApplyEffect, dict[str, Any] | None, list[dict[str, Any]]]:
         if msg.instrument_id != self.instrument_id:
             raise ValueError("instrument mismatch")
         if msg.action not in VALID_ACTIONS:
@@ -484,19 +545,51 @@ class InstrumentBook:
         self.last_event_ns = max(self.last_event_ns or msg.ts_event_ns, msg.ts_event_ns)
         self.raw_symbol = msg.raw_symbol or self.raw_symbol
 
+        if not self.event_group:
+            self._legacy_group_rows = []
+            self._legacy_group_collapsed = False
+        if msg.is_snapshot or msg.action == "R":
+            # MBP-10 represents a snapshot/reset rebuild with one final row, not
+            # one row for every order inserted while the book is reconstructed.
+            self._legacy_group_collapsed = True
+            self._legacy_group_rows = []
+
+        emit_legacy = False
+        mutated_sides: tuple[str, ...] = ()
+        if not self._legacy_group_collapsed:
+            emit_legacy, mutated_sides = self._legacy_top10_effect(msg)
+
         old = self.orders.get(msg.order_id)
         before = None if old is None else (old.side, old.size)
         effect = self._book_effect(msg)
         new = self.orders.get(msg.order_id)
         after = None if new is None else (new.side, new.size)
         self._update_cached_book_totals(msg.action, before, after)
+        if self._legacy_group_collapsed:
+            if msg.action == "R":
+                self._invalidate_top10("B", "A")
+            elif msg.action in ("A", "C", "M"):
+                self._invalidate_top10(*(side for side in (effect.side, msg.side) if side in ("A", "B")))
+        elif mutated_sides:
+            self._invalidate_top10(*mutated_sides)
         self._append_activity(msg, effect)
+        if emit_legacy:
+            self._legacy_group_rows.append(self._legacy_control_row(msg))
         self.event_group.append(msg)
         if not msg.is_last:
-            return effect, None
+            return effect, None, []
         frame = self.event_frame(msg.ts_recv_ns)
+        if self._legacy_group_collapsed:
+            source = next(
+                (row for row in reversed(self.event_group) if row.action in ("A", "C", "M", "T")),
+                next((row for row in reversed(self.event_group) if row.action not in ("F", "N")), msg),
+            )
+            self._legacy_group_rows = [self._legacy_control_row(source)]
+        legacy_rows = self._legacy_group_rows
         self.event_group = []
-        return effect, frame
+        self._legacy_group_rows = []
+        self._legacy_group_collapsed = False
+        return effect, frame, legacy_rows
 
     def _level(self, side: str, price_raw: int, now_ns: int, include_order_ids: bool) -> dict[str, Any]:
         ids = list(self.levels[side].get(price_raw, ()))
@@ -535,6 +628,9 @@ class InstrumentBook:
         if include_full_depth:
             bids = self._prices("B")
             asks = self._prices("A")
+        elif depth_levels == 10:
+            bids = list(self._top10_prices("B"))
+            asks = list(self._top10_prices("A"))
         else:
             bids = heapq.nlargest(depth_levels, self.levels["B"])
             asks = heapq.nsmallest(depth_levels, self.levels["A"])
@@ -630,47 +726,43 @@ class InstrumentBook:
             "integrity": dict(self.integrity),
         }
 
-    def legacy_control_rows(self, frame: dict[str, Any]) -> list[dict[str, Any]]:
-        """Project one completed MBO event group to the old trade/MBP-10-shaped surface.
-
-        This is a compatibility control, not a claim of byte/row equivalence. It must
-        pass an overlap comparison before it can support a five-year control census.
-        """
-        book = frame["book"]
+    def _legacy_control_row(self, msg: NormalizedMbo) -> dict[str, Any]:
+        """Project one MBP-10-emitting MBO action with its immediate post-action book."""
+        book = self.book_snapshot(
+            msg.ts_recv_ns,
+            depth_levels=10,
+            include_full_depth=False,
+            include_order_ids=False,
+        )
         bids = book["bid_levels"]
         asks = book["ask_levels"]
-        rows = []
-        for raw in frame["raw_actions"]:
-            # Fill/None are MBO-only execution/transport details.  Keep them on
-            # V4_NATIVE_FULL, but do not invent rows that did not exist on the
-            # historical MBP/trade-shaped LEGACY_CONTROL surface.
-            if raw["action"] in ("F", "N"):
-                continue
-            rec: dict[str, Any] = {
-                "adapter_revision": ADAPTER_REVISION,
-                "census_view": "LEGACY_CONTROL",
-                "ts_event": raw["ts_event_ns"] / 1e9,
-                "ts_recv": raw["ts_recv_ns"] / 1e9,
-                "instrument_id": raw["instrument_id"],
-                "raw_symbol": raw.get("raw_symbol"),
-                "action": raw["action"],
-                "side": raw["side"],
-                "price": raw["price"],
-                "size": raw["size"],
-                "sequence": raw["sequence"],
-                "channel_id": raw["channel_id"],
-                "flags": raw["flags"],
-                "projection_at_f_last": True,
-            }
-            for i in range(10):
-                bid = bids[i] if i < len(bids) else None
-                ask = asks[i] if i < len(asks) else None
-                rec[f"bid_px_{i:02d}"] = 0.0 if bid is None else bid["price"]
-                rec[f"bid_sz_{i:02d}"] = 0 if bid is None else bid["size"]
-                rec[f"ask_px_{i:02d}"] = 0.0 if ask is None else ask["price"]
-                rec[f"ask_sz_{i:02d}"] = 0 if ask is None else ask["size"]
-            rows.append(rec)
-        return rows
+        rec: dict[str, Any] = {
+            "adapter_revision": ADAPTER_REVISION,
+            "census_view": "LEGACY_CONTROL",
+            "ts_event": msg.ts_event_ns / 1e9,
+            "ts_recv": msg.ts_recv_ns / 1e9,
+            "instrument_id": msg.instrument_id,
+            "raw_symbol": msg.raw_symbol,
+            "action": msg.action,
+            "side": msg.side,
+            "price": msg.price,
+            "size": msg.size,
+            "sequence": msg.sequence,
+            "channel_id": msg.channel_id,
+            "flags": msg.flags,
+            "projection_after_mbo_action": True,
+            "projection_at_f_last": bool(msg.is_last),
+        }
+        for i in range(10):
+            bid = bids[i] if i < len(bids) else None
+            ask = asks[i] if i < len(asks) else None
+            rec[f"bid_px_{i:02d}"] = 0.0 if bid is None else bid["price"]
+            rec[f"bid_sz_{i:02d}"] = 0 if bid is None else bid["size"]
+            rec[f"bid_ct_{i:02d}"] = 0 if bid is None else bid["order_count"]
+            rec[f"ask_px_{i:02d}"] = 0.0 if ask is None else ask["price"]
+            rec[f"ask_sz_{i:02d}"] = 0 if ask is None else ask["size"]
+            rec[f"ask_ct_{i:02d}"] = 0 if ask is None else ask["order_count"]
+        return rec
 
 
 class V4MboAdapter:
@@ -712,12 +804,12 @@ class V4MboAdapter:
     def apply(self, record: Any, raw_symbol: str | None = None, source_dbn_object: str | None = None, source_dbn_sha256: str | None = None) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
         msg = self.normalize(record, raw_symbol, source_dbn_object, source_dbn_sha256)
         book = self.books.setdefault(msg.instrument_id, InstrumentBook(msg.instrument_id))
-        _, frame = book.apply(msg)
+        _, frame, legacy_rows = book.apply(msg)
         self.record_count += 1
         if frame is None:
             return None, []
         self.completed_event_group_count += 1
-        return frame, book.legacy_control_rows(frame)
+        return frame, legacy_rows
 
     def assert_groups_closed(self) -> None:
         open_groups = {iid: len(book.event_group) for iid, book in self.books.items() if book.event_group}
