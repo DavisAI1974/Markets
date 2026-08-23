@@ -226,8 +226,7 @@ jobs:
               "uptime",
               "free -b",
               "df -B1 /mnt",
-              "ps -eo pid,ppid,etimes,pcpu,pmem,stat,cmd --sort=-pcpu | "
-              "grep -E 'ng_exhaustion_mbo_5y_step1_census|python' | head -n 30 || true",
+              "ps -eo pid,ppid,etimes,pcpu,pmem,stat,comm --sort=-pcpu | head -n 30",
               "for path in " + " ".join(repr(path) for path in paths) + "; do "
               "if [ -f \"$path\" ]; then stat --printf='%n bytes=%s mtime=%y\\n' \"$path\"; fi; done",
           ))
