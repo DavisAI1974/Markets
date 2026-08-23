@@ -1,7 +1,7 @@
 {
-  "candidate_commit": "9f1d4dc383f0ae6ebf5df66d86c2569bb892d650",
+  "candidate_commit": "29f179778dfc834d9cba649031c655f53df7469c",
   "candidate_lock": {
-    "candidate_commit": "9f1d4dc383f0ae6ebf5df66d86c2569bb892d650",
+    "candidate_commit": "29f179778dfc834d9cba649031c655f53df7469c",
     "dependency_lock": {
       "boto3": "1.35.99",
       "databento": "0.81.0",
@@ -51,27 +51,27 @@
     "source_manifest_sha256": "5739bce85d9bfbbe6c59d000bc411b424d7752b98a309725161d44e6d1d3dc2e",
     "source_object_count": 1565,
     "source_total_bytes": 26581677329,
-    "workflow_sha256": "75cf3c1e2ecead21269c7ab8f83c0e7e4ef4035c0e260d72c36db270b179dd4e"
+    "workflow_sha256": "6e63f2a14fedc1e30c4f2feff16ec99c04fceb3823e06c8d205175f2472641d5"
   },
-  "candidate_package_sha256": "31e36b30fbf8617307115d66edcf555e4497c89adb0b56afb97758a8d2f8aa7a",
+  "candidate_package_sha256": "03cc7cf3463f62b8a450fed8d5541efd1df9ed39bbdd2d5e816672de5ab95528",
   "full_census_launched": false,
   "github_workflow_run_attempt": "1",
-  "github_workflow_run_id": "32616199572",
-  "heartbeat_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/9f1d4dc383f0ae6ebf5df66d86c2569bb892d650/full/progress/",
+  "github_workflow_run_id": "32616293873",
+  "heartbeat_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/29f179778dfc834d9cba649031c655f53df7469c/full/progress/",
   "instance_id": "i-08cee7171c0a76a04",
   "permanent_frankie_mutated": false,
   "predictive_or_trading_experiment_run": false,
-  "preflight_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/9f1d4dc383f0ae6ebf5df66d86c2569bb892d650/preflight/",
-  "recorded_at_utc": "2026-08-23T03:47:32.877186+00:00",
+  "preflight_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/29f179778dfc834d9cba649031c655f53df7469c/preflight/",
+  "recorded_at_utc": "2026-08-23T03:49:52.387421+00:00",
   "region": "us-east-2",
   "release_or_virgin_holdout_consumed": false,
-  "result_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/9f1d4dc383f0ae6ebf5df66d86c2569bb892d650/full/",
-  "sanitized_stderr_tail": "failed to run commands: exit status 1",
-  "sanitized_stdout_tail": "CANDIDATE_FILES_VERIFIED\nThe virtual environment was not created successfully because ensurepip is not\navailable.  On Debian/Ubuntu systems, you need to install the python3-venv\npackage using the following command.\n\n    apt install python3.10-venv\n\nYou may need to use sudo with that command.  After installing the python3-venv\npackage, recreate your virtual environment.\n\nFailing command: /mnt/markets/ng_exhaustion_step1_5y_20260822/9f1d4dc383f0ae6ebf5df66d86c2569bb892d650/venv/bin/python3\n\n",
+  "result_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/29f179778dfc834d9cba649031c655f53df7469c/full/",
+  "sanitized_stderr_tail": "Traceback (most recent call last):\n  File \"<stdin>\", line 8, in <module>\n  File \"/mnt/markets/ng_exhaustion_step1_5y_20260822/29f179778dfc834d9cba649031c655f53df7469c/venv/lib/python3.10/site-packages/boto3/s3/inject.py\", line 145, in upload_file\n    return transfer.upload_file(\n  File \"/mnt/markets/ng_exhaustion_step1_5y_20260822/29f179778dfc834d9cba649031c655f53df7469c/venv/lib/python3.10/site-packages/boto3/s3/transfer.py\", line 372, in upload_file\n    future.result()\n  File \"/mnt/markets/ng_exhaustion_step1_5y_20260822/29f179778dfc834d9cba649031c655f53df7469c/venv/lib/python3.10/site-packages/s3transfer/futures.py\", line 103, in result\n    return self._coordinator.result()\n  File \"/mnt/markets/ng_exhaustion_step1_5y_20260822/29f179778dfc834d9cba649031c655f53df7469c/venv/lib/python3.10/site-packages/s3transfer/futures.py\", line 264, in result\n    raise self._exception\n  File \"/mnt/markets/ng_exhaustion_step1_5y_20260822/29f179778dfc834d9cba649031c655f53df7469c/venv/lib/python3.10/site-packages/s3transfer/tasks.py\", line 265, in _main\n    self._submit(transfer_future=transfer_future, **kwargs)\n  File \"/mnt/markets/ng_exhaustion_step1_5y_20260822/29f179778dfc834d9cba649031c655f53df7469c/venv/lib/python3.10/site-packages/s3transfer/upload.py\", line 589, in _submit\n    upload_input_manager.provide_transfer_size(transfer_future)\n  File \"/mnt/markets/ng_exhaustion_step1_5y_20260822/29f179778dfc834d9cba649031c655f53df7469c/venv/lib/python3.10/site-packages/s3transfer/upload.py\", line 244, in provide_transfer_size\n    self._osutil.get_file_size(transfer_future.meta.call_args.fileobj)\n  File \"/mnt/markets/ng_exhaustion_step1_5y_20260822/29f179778dfc834d9cba649031c655f53df7469c/venv/lib/python3.10/site-packages/s3transfer/utils.py\", line 254, in get_file_size\n    return os.path.getsize(filename)\n  File \"/usr/lib/python3.10/genericpath.py\", line 50, in getsize\n    return os.stat(filename).st_size\nFileNotFoundError: [Errno 2] No such file or directory: 'bento-568968024170-us-east-2-an'\nfailed to run commands: exit status 1",
+  "sanitized_stdout_tail": "CANDIDATE_FILES_VERIFIED\nSelecting previously unselected package python3-pip-whl.\r\n(Reading database ... \r(Reading database ... 5%\r(Reading database ... 10%\r(Reading database ... 15%\r(Reading database ... 20%\r(Reading database ... 25%\r(Reading database ... 30%\r(Reading database ... 35%\r(Reading database ... 40%\r(Reading database ... 45%\r(Reading database ... 50%\r(Reading database ... 55%\r(Reading database ... 60%\r(Reading database ... 65%\r(Reading database ... 70%\r(Reading database ... 75%\r(Reading database ... 80%\r(Reading database ... 85%\r(Reading database ... 90%\r(Reading database ... 95%\r(Reading database ... 100%\r(Reading database ... 108782 files and directories currently installed.)\r\nPreparing to unpack .../python3-pip-whl_22.0.2+dfsg-1ubuntu0.7_all.deb ...\r\nUnpacking python3-pip-whl (22.0.2+dfsg-1ubuntu0.7) ...\r\nSelecting previously unselected package python3-setuptools-whl.\r\nPreparing to unpack .../python3-setuptools-whl_59.6.0-1.2ubuntu0.22.04.3_all.deb ...\r\nUnpacking python3-setuptools-whl (59.6.0-1.2ubuntu0.22.04.3) ...\r\nSelecting previously unselected package python3.10-venv.\r\nPreparing to unpack .../python3.10-venv_3.10.12-1~22.04.16_amd64.deb ...\r\nUnpacking python3.10-venv (3.10.12-1~22.04.16) ...\r\nSetting up python3-setuptools-whl (59.6.0-1.2ubuntu0.22.04.3) ...\r\nSetting up python3-pip-whl (22.0.2+dfsg-1ubuntu0.7) ...\r\nSetting up python3.10-venv (3.10.12-1~22.04.16) ...\r\n\nPending kernel upgrade!\n\nRunning kernel version:\n  6.8.0-1060-aws\n\nDiagnostics:\n  The currently running kernel version is not the expected kernel version 6.8.0-1062-aws.\n\nRestarting the system to load the new kernel will not be handled automatically, so you should consider rebooting. [Return]\n\nServices to be restarted:\n systemctl restart acpid.service\n systemctl restart chrony.service\n systemctl restart cron.service\n systemctl restart irqbalance.service\n systemctl restart markets-desk.service\n systemctl restart multipathd.service\n systemctl restart packagekit.service\n systemctl restart polkit.service\n systemctl restart rsyslog.service\n systemctl restart serial-getty@ttyS0.service\n systemctl restart ssh.service\n\nService restarts being deferred:\n /etc/needrestart/restart.d/dbus.service\n systemctl restart getty@tty1.service\n systemctl restart networkd-dispatcher.service\n systemctl restart systemd-logind.service\n systemctl restart unattended-upgrades.service\n\nNo containers need to be restarted.\n\nNo user sessions are running outdated binaries.\n\nNo VM guests are running outdated hypervisor (qemu) binaries on this host.\n",
   "schema": "NG_EXHAUSTION_MBO_5Y_STEP1_LAUNCH_RECEIPT_V1_20260822",
   "source_prefix_wide_enumeration_used": false,
-  "ssm_command_id": "0baba52a-3e6a-486e-9607-1d10edd0220f",
+  "ssm_command_id": "32a96263-a5ca-4052-9e72-1e6ea2246b51",
   "ssm_response_code": 1,
   "ssm_status": "Failed",
-  "systemd_unit": "ng-exhaustion-step1-9f1d4dc383f0"
+  "systemd_unit": "ng-exhaustion-step1-29f179778dfc"
 }
