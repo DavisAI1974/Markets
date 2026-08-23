@@ -37,6 +37,11 @@ jobs:
             --max-results 20 \
             --query "Commands[?contains(Comment, '$CANDIDATE_SHA')].[CommandId,Status,RequestedDateTime,Comment]" \
             --output table
+          aws ssm list-commands \
+            --filters key=Status,value=InProgress \
+            --max-results 50 \
+            --query "Commands[?contains(Comment, '$CANDIDATE_SHA')].[CommandId,Status,RequestedDateTime,Comment]" \
+            --output table
           prefix="nymex/ng_mbo_5y_v0/step1_census/launches/$CANDIDATE_SHA/preflight/progress/"
           aws s3api list-objects-v2 \
             --bucket "$BUCKET" \
