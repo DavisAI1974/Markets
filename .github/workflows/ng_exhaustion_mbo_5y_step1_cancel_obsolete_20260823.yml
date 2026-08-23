@@ -9,12 +9,24 @@ on:
       command_id:
         description: Exact obsolete SSM command ID
         required: true
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - .github/workflows/ng_exhaustion_mbo_5y_step1_cancel_obsolete_20260823.yml
 
 permissions:
   contents: read
 
 jobs:
+  register:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'Exact-command cancellation workflow registered; no AWS mutation on push.'
+
   cancel-exact-command:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
