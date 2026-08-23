@@ -59,7 +59,7 @@ def _price_raw(value: Any) -> int | None:
 
 
 def legacy_row_signature(row: dict[str, Any]) -> tuple[Any, ...]:
-    """Detector-material MBP-10 identity, independent of JSON float timestamp loss."""
+    """Raw projected-field identity, independent of JSON float timestamp loss."""
     signature: list[Any] = [
         int(row.get("instrument_id", 0)),
         int(row.get("sequence", 0)),
@@ -68,6 +68,25 @@ def legacy_row_signature(row: dict[str, Any]) -> tuple[Any, ...]:
         _price_raw(row.get("price")),
         int(row.get("size", 0) or 0),
         int(math.floor(float(row.get("ts_event", row.get("ts", 0.0))))),
+    ]
+    for i in range(10):
+        signature.extend((
+            _price_raw(row.get(f"bid_px_{i:02d}")),
+            int(row.get(f"bid_sz_{i:02d}", 0) or 0),
+            _price_raw(row.get(f"ask_px_{i:02d}")),
+            int(row.get(f"ask_sz_{i:02d}", 0) or 0),
+        ))
+    return tuple(signature)
+
+
+def detector_input_signature(row: dict[str, Any]) -> tuple[Any, ...]:
+    """Fields that materially enter the frozen second-level detector input."""
+    is_trade = str(row.get("action")) == "T"
+    signature: list[Any] = [
+        int(math.floor(float(row.get("ts_event", row.get("ts", 0.0))))),
+        is_trade,
+        _price_raw(row.get("price")) if is_trade else None,
+        int(row.get("size", 0) or 0) if is_trade else None,
     ]
     for i in range(10):
         signature.extend((
@@ -92,6 +111,19 @@ def signature_example(signature: tuple[Any, ...]) -> dict[str, Any]:
         "best_bid_size": signature[8],
         "best_ask_raw": signature[9],
         "best_ask_size": signature[10],
+    }
+
+
+def detector_signature_example(signature: tuple[Any, ...]) -> dict[str, Any]:
+    return {
+        "epoch_second": signature[0],
+        "is_trade": signature[1],
+        "trade_price_raw": signature[2],
+        "trade_size": signature[3],
+        "best_bid_raw": signature[4],
+        "best_bid_size": signature[5],
+        "best_ask_raw": signature[6],
+        "best_ask_size": signature[7],
     }
 
 
@@ -147,25 +179,29 @@ def load_mbp(
 ) -> tuple[
     dict[tuple[int, int, int], list[dict[str, Any]]],
     collections.Counter[tuple[Any, ...]],
+    collections.Counter[tuple[Any, ...]],
     int,
 ]:
     grouped: dict[tuple[int, int, int], list[dict[str, Any]]] = collections.defaultdict(list)
     signatures: collections.Counter[tuple[Any, ...]] = collections.Counter()
+    detector_signatures: collections.Counter[tuple[Any, ...]] = collections.Counter()
     count = 0
     with gzip.open(path, "rt", encoding="utf-8") as handle:
         for line in handle:
             row = json.loads(line)
             grouped[row_key(row)].append(row)
             signatures[legacy_row_signature(row)] += 1
+            detector_signatures[detector_input_signature(row)] += 1
             count += 1
-    return dict(grouped), signatures, count
+    return dict(grouped), signatures, detector_signatures, count
 
 
 def audit(mbp_path: Path, mbo_path: Path) -> dict[str, Any]:
-    mbp_by_key, mbp_signatures, mbp_count = load_mbp(mbp_path)
+    mbp_by_key, mbp_signatures, mbp_detector_signatures, mbp_count = load_mbp(mbp_path)
     remaining = dict(mbp_by_key)
     adapter = V4MboAdapter()
     projection_signatures: collections.Counter[tuple[Any, ...]] = collections.Counter()
+    projection_detector_signatures: collections.Counter[tuple[Any, ...]] = collections.Counter()
     projected_action_counts: collections.Counter[str] = collections.Counter()
     previous_book: dict[int, tuple[Any, ...]] = {}
     pattern_counts: collections.Counter[str] = collections.Counter()
@@ -186,6 +222,7 @@ def audit(mbp_path: Path, mbo_path: Path) -> dict[str, Any]:
             continue
         for row in legacy:
             projection_signatures[legacy_row_signature(row)] += 1
+            projection_detector_signatures[detector_input_signature(row)] += 1
             projected_action_counts[str(row.get("action"))] += 1
         iid = int(frame["instrument_id"])
         actions = frame["raw_actions"]
@@ -247,6 +284,8 @@ def audit(mbp_path: Path, mbo_path: Path) -> dict[str, Any]:
     unmatched_rows = [row for rows in remaining.values() for row in rows]
     mbp_only = mbp_signatures - projection_signatures
     projection_only = projection_signatures - mbp_signatures
+    detector_mbp_only = mbp_detector_signatures - projection_detector_signatures
+    detector_projection_only = projection_detector_signatures - mbp_detector_signatures
     return {
         "schema": "NG_EXHAUSTION_MBO_LEGACY_GROUP_AUDIT_V2_20260823",
         "mbp10_gzip_sha256": sha256_file(mbp_path),
@@ -256,14 +295,27 @@ def audit(mbp_path: Path, mbo_path: Path) -> dict[str, Any]:
         "mbp10_row_count": mbp_count,
         "projected_legacy_row_count": sum(projection_signatures.values()),
         "projected_legacy_action_counts": dict(sorted(projected_action_counts.items())),
-        "legacy_projection_exact_detector_material_multiset_match": not mbp_only and not projection_only,
-        "mbp10_only_detector_material_row_count": sum(mbp_only.values()),
-        "projection_only_detector_material_row_count": sum(projection_only.values()),
-        "first_mbp10_only_detector_material_examples": [
+        "legacy_projection_exact_raw_field_multiset_match": not mbp_only and not projection_only,
+        "mbp10_only_raw_field_row_count": sum(mbp_only.values()),
+        "projection_only_raw_field_row_count": sum(projection_only.values()),
+        "legacy_projection_exact_detector_input_multiset_match": (
+            not detector_mbp_only and not detector_projection_only
+        ),
+        "mbp10_only_detector_input_row_count": sum(detector_mbp_only.values()),
+        "projection_only_detector_input_row_count": sum(detector_projection_only.values()),
+        "first_mbp10_only_detector_input_examples": [
+            {**detector_signature_example(signature), "count": count}
+            for signature, count in detector_mbp_only.most_common(50)
+        ],
+        "first_projection_only_detector_input_examples": [
+            {**detector_signature_example(signature), "count": count}
+            for signature, count in detector_projection_only.most_common(50)
+        ],
+        "first_mbp10_only_raw_field_examples": [
             {**signature_example(signature), "count": count}
             for signature, count in mbp_only.most_common(50)
         ],
-        "first_projection_only_detector_material_examples": [
+        "first_projection_only_raw_field_examples": [
             {**signature_example(signature), "count": count}
             for signature, count in projection_only.most_common(50)
         ],

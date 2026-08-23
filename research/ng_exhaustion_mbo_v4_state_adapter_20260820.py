@@ -283,6 +283,7 @@ class InstrumentBook:
         self.event_group: list[NormalizedMbo] = []
         self._legacy_group_rows: list[dict[str, Any]] = []
         self._legacy_group_book_before: tuple[Any, ...] | None = None
+        self._legacy_group_book_touched = False
         self._top10_cache: dict[str, tuple[int, ...] | None] = {"B": None, "A": None}
         self.integrity: Counter[str] = Counter()
         self.last_sequence: int | None = None
@@ -567,10 +568,12 @@ class InstrumentBook:
         if not self.event_group:
             self._legacy_group_rows = []
             self._legacy_group_book_before = self._legacy_book_signature(msg.ts_recv_ns)
+            self._legacy_group_book_touched = False
 
         mutated_sides: tuple[str, ...] = ()
         if msg.action in ("A", "C", "M", "R"):
-            _emit_legacy, mutated_sides = self._legacy_top10_effect(msg)
+            emit_legacy, mutated_sides = self._legacy_top10_effect(msg)
+            self._legacy_group_book_touched |= emit_legacy
 
         old = self.orders.get(msg.order_id)
         before = None if old is None else (old.side, old.size)
@@ -588,7 +591,7 @@ class InstrumentBook:
             return effect, None, []
         frame = self.event_frame(msg.ts_recv_ns)
         final_book = self._legacy_book_signature(msg.ts_recv_ns)
-        if final_book != self._legacy_group_book_before:
+        if final_book != self._legacy_group_book_before or self._legacy_group_book_touched:
             source = next(
                 (row for row in reversed(self.event_group) if row.action in ("A", "C", "M")),
                 next((row for row in reversed(self.event_group) if row.action not in ("F", "N")), msg),
@@ -600,6 +603,7 @@ class InstrumentBook:
         self.event_group = []
         self._legacy_group_rows = []
         self._legacy_group_book_before = None
+        self._legacy_group_book_touched = False
         return effect, frame, legacy_rows
 
     def _level(self, side: str, price_raw: int, now_ns: int, include_order_ids: bool) -> dict[str, Any]:

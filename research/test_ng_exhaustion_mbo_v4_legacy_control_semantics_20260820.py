@@ -109,6 +109,21 @@ class LegacyControlSemanticWall(unittest.TestCase):
         self.assertTrue(legacy[0]["projection_at_event_group_end"])
         self.assertFalse(legacy[0]["projection_after_mbo_action"])
 
+    def test_transient_top10_change_still_emits_one_final_book_row(self):
+        a = V4MboAdapter()
+        a.apply(r("A", "B", 1, 3.00, 5, sequence=1))
+        frame, _legacy = a.apply(r(
+            "C", "B", 1, 3.00, 5, flags=0, sequence=2, ts=2_000_000_000,
+        ))
+        self.assertIsNone(frame)
+        frame, legacy = a.apply(r(
+            "A", "B", 1, 3.00, 5, flags=F_LAST, sequence=2, ts=2_000_000_001,
+        ))
+        self.assertEqual(len(legacy), 1)
+        self.assertEqual(legacy[0]["action"], "A")
+        self.assertEqual(legacy[0]["bid_px_00"], 3.0)
+        self.assertEqual(legacy[0]["bid_sz_00"], 5)
+
 
 if __name__ == "__main__":
     unittest.main()
