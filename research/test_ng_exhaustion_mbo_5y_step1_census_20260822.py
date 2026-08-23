@@ -13,6 +13,8 @@ from ng_exhaustion_mbo_5y_step1_census_20260822 import (
     REVISION,
     RULESET,
     SecondAggregator,
+    _object_dates_for_weeks,
+    _segment_objects,
     _match_events,
     _resumable_segment_receipt,
     _verified_child_outputs,
@@ -168,6 +170,25 @@ class PartitionTests(unittest.TestCase):
 
 
 class RecoveryAndReconciliationTests(unittest.TestCase):
+    def test_overlap_object_selection_is_exactly_revealed_calendar_weeks(self):
+        objects = []
+        for day in ("20250712", "20250713", "20250718", "20250720"):
+            objects.append({
+                "segment": "20250701_20250801",
+                "key": f"prefix/glbx-mdp3-{day}.mbo.dbn.zst",
+                "bytes": 1,
+            })
+        manifest = {"canonical_dbn_objects": objects}
+        selected = _segment_objects(
+            manifest,
+            "20250701_20250801",
+            _object_dates_for_weeks({"20250713"}),
+        )
+        self.assertEqual([row["key"] for row in selected], [
+            "prefix/glbx-mdp3-20250713.mbo.dbn.zst",
+            "prefix/glbx-mdp3-20250718.mbo.dbn.zst",
+        ])
+
     def test_deterministic_writer_is_atomic_and_byte_stable(self):
         with tempfile.TemporaryDirectory() as tmp:
             left = Path(tmp) / "left.jsonl.gz"
@@ -192,11 +213,13 @@ class RecoveryAndReconciliationTests(unittest.TestCase):
             output = writer.close()
             manifest = {"manifest_sha256": "m" * 64}
             engine = {"runner": "e" * 64}
+            source_scope = {"mode": "FULL_CANONICAL_SEGMENT"}
             receipt = {
                 "schema": "NG_EXHAUSTION_MBO_5Y_STEP1_SEGMENT_RECEIPT_V1",
                 "revision": REVISION,
                 "segment": segment,
                 "source_manifest_sha256": manifest["manifest_sha256"],
+                "source_scope": source_scope,
                 "engine_hashes": engine,
                 "ruleset_sha256": ruleset_sha256(),
                 "status": "SEGMENT_COMPLETE",
@@ -204,9 +227,9 @@ class RecoveryAndReconciliationTests(unittest.TestCase):
             }
             receipt["receipt_sha256"] = sha256_json(receipt)
             (out / f"{segment}.receipt.json").write_text(json.dumps(receipt))
-            self.assertIsNotNone(_resumable_segment_receipt(manifest, segment, out, engine))
+            self.assertIsNotNone(_resumable_segment_receipt(manifest, segment, out, engine, source_scope))
             seconds.write_bytes(b"drift")
-            self.assertIsNone(_resumable_segment_receipt(manifest, segment, out, engine))
+            self.assertIsNone(_resumable_segment_receipt(manifest, segment, out, engine, source_scope))
 
     def test_parent_verifies_exact_child_receipt_hash(self):
         with tempfile.TemporaryDirectory() as tmp:

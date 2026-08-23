@@ -371,11 +371,49 @@ class SecondAggregator:
         self.seconds.clear()
 
 
-def _segment_objects(manifest: dict[str, Any], segment: str) -> list[dict[str, Any]]:
+def _object_dates_for_weeks(weeks: Iterable[str]) -> set[str]:
+    dates = set()
+    for week in weeks:
+        sunday = dt.datetime.strptime(week, "%Y%m%d").date()
+        dates.update(frozen_detector.ymds(sunday + dt.timedelta(days=offset)) for offset in range(7))
+    return dates
+
+
+def _dbn_object_date(obj: dict[str, Any]) -> str:
+    name = Path(str(obj["key"])).name
+    prefix = "glbx-mdp3-"
+    value = name[len(prefix):len(prefix) + 8] if name.startswith(prefix) else ""
+    if len(value) != 8 or not value.isdigit():
+        raise CensusError(f"canonical DBN object lacks exact YYYYMMDD identity: {obj['key']}")
+    return value
+
+
+def _segment_objects(
+    manifest: dict[str, Any],
+    segment: str,
+    object_dates: set[str] | None = None,
+) -> list[dict[str, Any]]:
     rows = [x for x in manifest["canonical_dbn_objects"] if x["segment"] == segment]
+    if object_dates is not None:
+        rows = [x for x in rows if _dbn_object_date(x) in object_dates]
     if not rows:
-        raise CensusError(f"segment not found in canonical source manifest: {segment}")
+        raise CensusError(f"segment/object-date selection empty in canonical source manifest: {segment}")
     return rows
+
+
+def _segment_source_scope(
+    manifest: dict[str, Any],
+    segment: str,
+    object_dates: set[str] | None,
+) -> dict[str, Any]:
+    objects = _segment_objects(manifest, segment, object_dates)
+    return {
+        "mode": "FULL_CANONICAL_SEGMENT" if object_dates is None else "REVEALED_OVERLAP_DAILY_OBJECTS",
+        "requested_object_dates": None if object_dates is None else sorted(object_dates),
+        "selected_object_dates": [_dbn_object_date(obj) for obj in objects],
+        "selected_object_count": len(objects),
+        "selected_total_bytes": sum(int(obj["bytes"]) for obj in objects),
+    }
 
 
 def _local_object_path(stage_dir: Path, manifest: dict[str, Any], obj: dict[str, Any]) -> Path:
@@ -387,7 +425,11 @@ def _local_object_path(stage_dir: Path, manifest: dict[str, Any], obj: dict[str,
 
 
 def _resumable_segment_receipt(
-    manifest: dict[str, Any], segment: str, out_dir: Path, engine: dict[str, str]
+    manifest: dict[str, Any],
+    segment: str,
+    out_dir: Path,
+    engine: dict[str, str],
+    source_scope: dict[str, Any],
 ) -> dict[str, Any] | None:
     seconds_path = out_dir / f"{segment}.seconds.jsonl.gz"
     receipt_path = out_dir / f"{segment}.receipt.json"
@@ -399,6 +441,7 @@ def _resumable_segment_receipt(
         "revision": REVISION,
         "segment": segment,
         "source_manifest_sha256": manifest["manifest_sha256"],
+        "source_scope": source_scope,
         "engine_hashes": engine,
         "ruleset_sha256": ruleset_sha256(),
     }
@@ -420,6 +463,7 @@ def process_segment(
     stage_dir: str | Path,
     out_dir: str | Path,
     *,
+    object_dates: set[str] | None = None,
     heartbeat_seconds: int = HEARTBEAT_SECONDS,
     heartbeat_on_write: Any | None = None,
 ) -> dict[str, Any]:
@@ -430,19 +474,21 @@ def process_segment(
     seconds_path = out / f"{segment}.seconds.jsonl.gz"
     receipt_path = out / f"{segment}.receipt.json"
     engine = material_hashes()
+    objects = _segment_objects(manifest, segment, object_dates)
+    source_scope = _segment_source_scope(manifest, segment, object_dates)
     identity = {
         "schema": "NG_EXHAUSTION_MBO_5Y_STEP1_SEGMENT_RECEIPT_V1",
         "revision": REVISION,
         "segment": segment,
         "source_manifest_sha256": manifest["manifest_sha256"],
+        "source_scope": source_scope,
         "engine_hashes": engine,
         "ruleset_sha256": ruleset_sha256(),
     }
-    prior = _resumable_segment_receipt(manifest, segment, out, engine)
+    prior = _resumable_segment_receipt(manifest, segment, out, engine, source_scope)
     if prior is not None:
         return {**prior, "resumed_without_recompute": True}
 
-    objects = _segment_objects(manifest, segment)
     paths = []
     source_provenance = {}
     for obj in objects:
@@ -1361,6 +1407,10 @@ def reconcile(
     hashes = material_hashes()
     segments = _segments_for_weeks(manifest, weeks_filter)
     seconds_paths, child_receipts = _verified_child_outputs(manifest, segment_dir, segments)
+    child_source_scopes = [
+        json.loads((segment_dir / f"{segment}.receipt.json").read_text())["source_scope"]
+        for segment in segments
+    ]
 
     pre_classifier = frozen_detector.FrozenPreFamilyClassifier.load(
         "research/FRANKIE_NG_PRE_FAMILY_CLASSIFIER_FROZEN_OPERATIONAL_20260817.json"
@@ -1443,6 +1493,9 @@ def reconcile(
         "source_total_bytes": manifest["canonical_total_bytes"],
         "child_receipt_count": len(child_receipts),
         "child_receipt_hashes": child_receipts,
+        "replay_source_scopes": child_source_scopes,
+        "replayed_source_object_count": sum(x["selected_object_count"] for x in child_source_scopes),
+        "replayed_source_total_bytes": sum(x["selected_total_bytes"] for x in child_source_scopes),
         "population_seconds": population_seconds,
         "weeks": weeks,
         "weeks_filter": None if weeks_filter is None else sorted(weeks_filter),
@@ -1472,10 +1525,14 @@ def reconcile(
 
 
 def stage_segment(
-    manifest: dict[str, Any], segment: str, stage_dir: Path, s3: Any
+    manifest: dict[str, Any],
+    segment: str,
+    stage_dir: Path,
+    s3: Any,
+    object_dates: set[str] | None = None,
 ) -> list[Path]:
     paths = []
-    for obj in _segment_objects(manifest, segment):
+    for obj in _segment_objects(manifest, segment, object_dates):
         dst = _local_object_path(stage_dir, manifest, obj)
         dst.parent.mkdir(parents=True, exist_ok=True)
         if dst.exists() and dst.stat().st_size == int(obj["bytes"]) and sha256_file(dst) == obj["sha256"]:
@@ -1521,7 +1578,19 @@ def run_controller(
             raise CensusError(f"progress path escaped work directory: {path}") from exc
         s3.upload_file(str(path), manifest["bucket"], f"{prefix}/{relative}")
     weeks_filter = set(OVERLAP_WEEKS) if overlap_only else None
+    object_dates = _object_dates_for_weeks(weeks_filter) if weeks_filter is not None else None
     segments = _segments_for_weeks(manifest, weeks_filter)
+    controller_objects = [
+        obj
+        for segment in segments
+        for obj in _segment_objects(manifest, segment, object_dates)
+    ]
+    controller_source_scope = {
+        "mode": "FULL_CANONICAL_MANIFEST" if object_dates is None else "REVEALED_OVERLAP_DAILY_OBJECTS",
+        "requested_object_dates": None if object_dates is None else sorted(object_dates),
+        "selected_object_count": len(controller_objects),
+        "selected_total_bytes": sum(int(obj["bytes"]) for obj in controller_objects),
+    }
     engine = material_hashes()
     controller_hb = Heartbeat(
         work / "CONTROLLER_HEARTBEAT.json",
@@ -1529,6 +1598,7 @@ def run_controller(
             "schema": "NG_EXHAUSTION_MBO_5Y_STEP1_CONTROLLER_HEARTBEAT_V1",
             "revision": REVISION,
             "source_manifest_sha256": manifest["manifest_sha256"],
+            "source_scope": controller_source_scope,
             "overlap_only": overlap_only,
         },
         on_write=upload_progress,
@@ -1536,7 +1606,8 @@ def run_controller(
     controller_hb.write(force=True, phase="LAUNCHED", segment_count=len(segments), completed_segments=0)
     completed = 0
     for segment in segments:
-        prior = _resumable_segment_receipt(manifest, segment, segments_out, engine)
+        source_scope = _segment_source_scope(manifest, segment, object_dates)
+        prior = _resumable_segment_receipt(manifest, segment, segments_out, engine, source_scope)
         if prior is not None:
             completed += 1
             controller_hb.write(
@@ -1549,13 +1620,14 @@ def run_controller(
             upload_progress(segments_out / f"{segment}.receipt.json")
             continue
         controller_hb.write(force=True, phase="STAGING_SEGMENT", active_segment=segment, completed_segments=completed)
-        staged_paths = stage_segment(manifest, segment, stage, s3)
+        staged_paths = stage_segment(manifest, segment, stage, s3, object_dates)
         try:
             child = process_segment(
                 manifest_path,
                 segment,
                 stage,
                 segments_out,
+                object_dates=object_dates,
                 heartbeat_on_write=upload_progress,
             )
         finally:
