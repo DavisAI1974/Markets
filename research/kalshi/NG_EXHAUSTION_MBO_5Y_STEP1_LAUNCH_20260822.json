@@ -1,7 +1,7 @@
 {
-  "candidate_commit": "564ae39b16f4c41045d7eccba28e1434b3e31eec",
+  "candidate_commit": "9f1d4dc383f0ae6ebf5df66d86c2569bb892d650",
   "candidate_lock": {
-    "candidate_commit": "564ae39b16f4c41045d7eccba28e1434b3e31eec",
+    "candidate_commit": "9f1d4dc383f0ae6ebf5df66d86c2569bb892d650",
     "dependency_lock": {
       "boto3": "1.35.99",
       "databento": "0.81.0",
@@ -51,27 +51,27 @@
     "source_manifest_sha256": "5739bce85d9bfbbe6c59d000bc411b424d7752b98a309725161d44e6d1d3dc2e",
     "source_object_count": 1565,
     "source_total_bytes": 26581677329,
-    "workflow_sha256": "dc6af3e4bf2944214b82c0ccecc7788ec1977918506b2e5593b8568d2a11f0d0"
+    "workflow_sha256": "75cf3c1e2ecead21269c7ab8f83c0e7e4ef4035c0e260d72c36db270b179dd4e"
   },
-  "candidate_package_sha256": "45b2eba7e9b3c74907e1136f9b03d014259cd74eae9b03cea5ecec35621f1cfe",
+  "candidate_package_sha256": "31e36b30fbf8617307115d66edcf555e4497c89adb0b56afb97758a8d2f8aa7a",
   "full_census_launched": false,
   "github_workflow_run_attempt": "1",
-  "github_workflow_run_id": "32616108120",
-  "heartbeat_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/564ae39b16f4c41045d7eccba28e1434b3e31eec/full/progress/",
+  "github_workflow_run_id": "32616199572",
+  "heartbeat_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/9f1d4dc383f0ae6ebf5df66d86c2569bb892d650/full/progress/",
   "instance_id": "i-08cee7171c0a76a04",
   "permanent_frankie_mutated": false,
   "predictive_or_trading_experiment_run": false,
-  "preflight_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/564ae39b16f4c41045d7eccba28e1434b3e31eec/preflight/",
-  "recorded_at_utc": "2026-08-23T03:45:21.821838+00:00",
+  "preflight_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/9f1d4dc383f0ae6ebf5df66d86c2569bb892d650/preflight/",
+  "recorded_at_utc": "2026-08-23T03:47:32.877186+00:00",
   "region": "us-east-2",
   "release_or_virgin_holdout_consumed": false,
-  "result_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/564ae39b16f4c41045d7eccba28e1434b3e31eec/full/",
-  "sanitized_stderr_tail": "/var/lib/amazon/ssm/i-08cee7171c0a76a04/document/orchestration/b6e8df17-a2df-486f-b922-92684a4e29a5/awsrunShellScript/0.awsrunShellScript/_script.sh: 1: set: Illegal option -o pipefail\nfailed to run commands: exit status 2",
-  "sanitized_stdout_tail": "",
+  "result_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/9f1d4dc383f0ae6ebf5df66d86c2569bb892d650/full/",
+  "sanitized_stderr_tail": "failed to run commands: exit status 1",
+  "sanitized_stdout_tail": "CANDIDATE_FILES_VERIFIED\nThe virtual environment was not created successfully because ensurepip is not\navailable.  On Debian/Ubuntu systems, you need to install the python3-venv\npackage using the following command.\n\n    apt install python3.10-venv\n\nYou may need to use sudo with that command.  After installing the python3-venv\npackage, recreate your virtual environment.\n\nFailing command: /mnt/markets/ng_exhaustion_step1_5y_20260822/9f1d4dc383f0ae6ebf5df66d86c2569bb892d650/venv/bin/python3\n\n",
   "schema": "NG_EXHAUSTION_MBO_5Y_STEP1_LAUNCH_RECEIPT_V1_20260822",
   "source_prefix_wide_enumeration_used": false,
-  "ssm_command_id": "b6e8df17-a2df-486f-b922-92684a4e29a5",
-  "ssm_response_code": 2,
+  "ssm_command_id": "0baba52a-3e6a-486e-9607-1d10edd0220f",
+  "ssm_response_code": 1,
   "ssm_status": "Failed",
-  "systemd_unit": "ng-exhaustion-step1-564ae39b16f4"
+  "systemd_unit": "ng-exhaustion-step1-9f1d4dc383f0"
 }
