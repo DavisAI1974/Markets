@@ -1,0 +1,27 @@
+{
+  "candidate_commit": "0d318335825b4a0e19a5a2881522f3da0374788e",
+  "cpu_affinity": [
+    0,
+    1,
+    2
+  ],
+  "instance_id": "i-08cee7171c0a76a04",
+  "launched_at_utc": "2026-08-23T22:34:17.464777+00:00",
+  "parallel_worker_count": 3,
+  "permanent_frankie_mutated": false,
+  "predictive_or_trading_experiment_run": false,
+  "release_or_virgin_holdout_consumed": false,
+  "schema": "NG_EXHAUSTION_STEP1_PARALLEL_3MO_LAUNCH_V1_20260823",
+  "serial_controller_stopped_for_tranche": true,
+  "ssm_command_id": "e4833cec-09ba-43b6-93c5-e76defedc95a",
+  "ssm_response_code": 0,
+  "ssm_standard_error": "Running as unit: ng-exhaustion-step1-p3m-20210901_20211001.service\nRunning as unit: ng-exhaustion-step1-p3m-20211001_20211101.service\nRunning as unit: ng-exhaustion-step1-p3m-20211101_20211201.service\n",
+  "ssm_standard_output": "TARGET_VALIDATION=PASS\nBEFORE_SERIAL_STATE=active\n  \"active_segment\": \"20210901_20211001\",\n  \"completed_segments\": 1,\nBEFORE_RECEIPTS=1\nAFTER_SERIAL_STATE=inactive\nTARGET_20210901_20211001=LAUNCHED_CORE_0\nTARGET_20211001_20211101=LAUNCHED_CORE_1\nTARGET_20211101_20211201=LAUNCHED_CORE_2\nUNIT_20210901_20211001=ACTIVE\nUNIT_20211001_20211101=ACTIVE\nUNIT_20211101_20211201=ACTIVE\n    PID    PPID PSR ELAPSED %CPU %MEM STAT COMMAND\n 155581       1   0       5 83.2  1.0 Ssl  python\n 155594       1   2       5 82.4  1.0 Ssl  python\n 155587       1   1       5 81.4  1.2 Rs   python\n 155537     732   1       7  0.8  0.1 Sl   ssm-document-wo\n   6595       1   3 2890078  0.1  0.2 Ssl  python3\n 100761       1   2 1008187  0.1  0.1 Ssl  tunnel-client\n 155549  155548   0       7  0.1  0.0 S    bash\n      1       0   3 2931943  0.0  0.0 Ss   systemd\n      2       0   2 2931943  0.0  0.0 S    kthreadd\n      3       2   0 2931943  0.0  0.0 S    pool_workqueue_release\n      4       2   0 2931943  0.0  0.0 I<   kworker/R-rcu_g\nNPROC=4\nLAUNCH_STATUS=PARALLEL_THREE_MONTH_TRANCHE_STARTED\n",
+  "ssm_status": "Success",
+  "target_calendar_window": "2021-09-01T00:00:00Z/2021-12-01T00:00:00Z",
+  "target_segments": [
+    "20210901_20211001",
+    "20211001_20211101",
+    "20211101_20211201"
+  ]
+}
