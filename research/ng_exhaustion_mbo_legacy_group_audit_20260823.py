@@ -203,6 +203,7 @@ def audit(mbp_path: Path, mbo_path: Path) -> dict[str, Any]:
     projection_signatures: collections.Counter[tuple[Any, ...]] = collections.Counter()
     projection_detector_signatures: collections.Counter[tuple[Any, ...]] = collections.Counter()
     projected_action_counts: collections.Counter[str] = collections.Counter()
+    group_details: dict[tuple[int, int], dict[str, Any]] = {}
     previous_book: dict[int, tuple[Any, ...]] = {}
     pattern_counts: collections.Counter[str] = collections.Counter()
     group_counts: collections.Counter[str] = collections.Counter()
@@ -227,6 +228,34 @@ def audit(mbp_path: Path, mbo_path: Path) -> dict[str, Any]:
         iid = int(frame["instrument_id"])
         actions = frame["raw_actions"]
         sequence = int(frame["sequence"])
+        detail = {
+            "instrument_id": iid,
+            "frame_sequence": sequence,
+            "frame_ts_event_ns": int(frame["ts_event_ns"]),
+            "raw_action_count": len(actions),
+            "raw_actions": [
+                {
+                    key: row.get(key)
+                    for key in (
+                        "action", "side", "price_raw", "size", "order_id", "flags",
+                        "sequence", "ts_event_ns", "ts_recv_ns", "is_snapshot", "is_last",
+                    )
+                }
+                for row in actions
+            ],
+            "projected_legacy_rows": [
+                {
+                    key: row.get(key)
+                    for key in (
+                        "action", "side", "price", "size", "sequence", "ts_event",
+                        "projection_at_event_group_end", "projection_at_f_last",
+                    )
+                }
+                for row in legacy
+            ],
+        }
+        for action in actions:
+            group_details[(iid, int(action["sequence"]))] = detail
         action_keys = []
         for action in actions:
             key = (
@@ -286,6 +315,17 @@ def audit(mbp_path: Path, mbo_path: Path) -> dict[str, Any]:
     projection_only = projection_signatures - mbp_signatures
     detector_mbp_only = mbp_detector_signatures - projection_detector_signatures
     detector_projection_only = projection_detector_signatures - mbp_detector_signatures
+    mismatch_group_examples = []
+    seen_group_keys = set()
+    for signature, _count in mbp_only.most_common(100):
+        group_key = (int(signature[0]), int(signature[1]))
+        if group_key in seen_group_keys:
+            continue
+        seen_group_keys.add(group_key)
+        mismatch_group_examples.append({
+            "mbp10_only_raw_field": signature_example(signature),
+            "mbo_event_group": group_details.get(group_key),
+        })
     return {
         "schema": "NG_EXHAUSTION_MBO_LEGACY_GROUP_AUDIT_V2_20260823",
         "mbp10_gzip_sha256": sha256_file(mbp_path),
@@ -319,6 +359,7 @@ def audit(mbp_path: Path, mbo_path: Path) -> dict[str, Any]:
             {**signature_example(signature), "count": count}
             for signature, count in projection_only.most_common(100)
         ],
+        "mbp10_only_mbo_event_group_examples": mismatch_group_examples,
         "matched_mbp10_row_count": matched_mbp_rows,
         "unmatched_mbp10_row_count": len(unmatched_rows),
         "unmatched_mbp10_action_counts": dict(sorted(collections.Counter(
