@@ -30,6 +30,8 @@ def test_recovery_workflow_is_manual_exact_candidate_and_never_cancels_live_work
     assert "stop " not in source
     assert "kill -TERM" not in source
     assert "kill -KILL" not in source
+    assert "${{current_pid" not in source
+    assert "${{pid" not in source
 
 
 def test_finalizer_reuses_exact_children_and_retains_one_day_authorization():

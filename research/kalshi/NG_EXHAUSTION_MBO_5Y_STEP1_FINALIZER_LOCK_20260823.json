@@ -12,10 +12,10 @@
     "research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py": "a1a0b944af8621976ece56f15ebb0075f671d7a78cd400962c8bd10359fcfd93",
     "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py": "dbf751bfb877cda9df304afc66c7d7fef9460441ccf030e82edd100f445bcd17"
   },
-  "finalizer_lock_sha256": "f15de116f0c85e06791b9bed85361529f4467a6c36191e9f0816adb7983b4122",
+  "finalizer_lock_sha256": "7183baa195da45b6f603bcc8c73022d15d2df0a077ba6dfb8f2772ea6f810324",
   "parent_candidate_commit": "0d318335825b4a0e19a5a2881522f3da0374788e",
   "recovery_scope": "FULL_65_CHILDREN_REUSED_NO_RAW_MBO_REPLAY",
   "recovery_script_sha256": "04b31cbebc704aba0edc34e89b11c596fba23c2fe36281e9d36e99b9e9421612",
-  "recovery_workflow_sha256": "8a884e2a3cb7d7d6716f06214a5090e8e2cbe613df2c6989ab4ca9aa7f3e3227",
+  "recovery_workflow_sha256": "353a357310de6a1dcecb4c273361168de27f52aec41cc1148deaa5e1961a50cf",
   "schema": "NG_EXHAUSTION_MBO_5Y_STEP1_FINALIZER_LOCK_V1_20260823"
 }

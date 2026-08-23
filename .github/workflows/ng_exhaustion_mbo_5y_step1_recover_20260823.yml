@@ -355,7 +355,7 @@ jobs:
           for live_unit in "$original_unit" "$finalizer_unit"; do
             current_active="$(systemctl show "$live_unit" --property=ActiveState --value 2>/dev/null || true)"
             current_pid="$(systemctl show "$live_unit" --property=MainPID --value 2>/dev/null || true)"
-            current_pid="${{current_pid:-0}}"
+            case "$current_pid" in ''|*[!0-9]*) current_pid=0 ;; esac
             if [ "$current_active" = active ] && [ "$current_pid" -gt 0 ] && kill -0 "$current_pid" 2>/dev/null; then
               printf '{{"action":"HEALTHY_RUNNING_RACE_NOOP","unit":"%s","main_pid":%s}}\\n' "$live_unit" "$current_pid"
               exit 0
@@ -406,7 +406,7 @@ jobs:
           sleep 5
           active="$(systemctl show "$finalizer_unit" --property=ActiveState --value 2>/dev/null || true)"
           pid="$(systemctl show "$finalizer_unit" --property=MainPID --value 2>/dev/null || true)"
-          pid="${{pid:-0}}"
+          case "$pid" in ''|*[!0-9]*) pid=0 ;; esac
           if [ "$active" = active ] && [ "$pid" -gt 0 ] && kill -0 "$pid" 2>/dev/null; then
             printf '{{"action":"FINALIZE_FROM_CHILDREN","unit":"%s","main_pid":%s}}\\n' "$finalizer_unit" "$pid"
           elif [ -s {shlex.quote(results + '/STEP1_DUAL_CENSUS_RECEIPT.json')} ]; then
