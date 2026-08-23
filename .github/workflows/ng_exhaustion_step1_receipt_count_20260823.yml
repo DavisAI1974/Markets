@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   count:
@@ -22,6 +22,10 @@ jobs:
       INSTANCE_ID: i-08cee7171c0a76a04
       CANDIDATE_SHA: 0d318335825b4a0e19a5a2881522f3da0374788e
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+
       - name: Count completed child receipts read-only
         shell: bash
         run: |
@@ -87,4 +91,28 @@ PYCOUNT
             --command-id "$command_id" \
             --instance-id "$INSTANCE_ID" \
             --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
-            --output json
+            --output json > /tmp/step1-receipt-count.json
+          cat /tmp/step1-receipt-count.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          body = json.loads(Path('/tmp/step1-receipt-count.json').read_text(encoding='utf-8'))
+          if body.get('Status') != 'Success' or body.get('ResponseCode') != 0:
+              raise SystemExit(body)
+          output = Path('research/kalshi/NG_EXHAUSTION_STEP1_RECEIPT_COUNT_LATEST_20260823.txt')
+          output.write_text(body.get('StandardOutput', ''), encoding='utf-8')
+          PY
+
+      - name: Retain concise receipt-count evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/kalshi/NG_EXHAUSTION_STEP1_RECEIPT_COUNT_LATEST_20260823.txt
+          if git diff --cached --quiet; then
+            echo 'No receipt-count evidence change to commit.'
+            exit 0
+          fi
+          git commit -m 'research: retain Step-1 completed receipt count'
+          git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
