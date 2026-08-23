@@ -1,7 +1,7 @@
 {
-  "candidate_commit": "defaf3e872250a8710093d92be82f3f383dd38ad",
+  "candidate_commit": "98ec7c0a821c0c73280003c1b350b5c60e08f9d1",
   "candidate_lock": {
-    "candidate_commit": "defaf3e872250a8710093d92be82f3f383dd38ad",
+    "candidate_commit": "98ec7c0a821c0c73280003c1b350b5c60e08f9d1",
     "dependency_lock": {
       "boto3": "1.35.99",
       "databento": "0.81.0",
@@ -19,7 +19,7 @@
       "research/ng_exhaustion_chain_phase1_discovery_20260817.py": "e64d05a25aee66047750fe1923162c3694c6fc3179d979352b95853806a04cc9",
       "research/ng_exhaustion_chain_phase1_structural_54w_20260817.py": "2b93cfeb39cc73409f04b9d9fc61e0fe02f79823fd1df064ae819a82c27d05d9",
       "research/ng_exhaustion_mbo_5y_canonical_manifest_20260822.py": "b7fd45c47484181b9c9a1366000bc0fb9a58d8739cb88a17bdeaf22d49260d07",
-      "research/ng_exhaustion_mbo_5y_step1_census_20260822.py": "f5247e41394e3398858d5b9d1bc071d034a345b10a459fb8dd2b8b82023f050e",
+      "research/ng_exhaustion_mbo_5y_step1_census_20260822.py": "53c51d0e061a7fbcb737ec2b73467ab55d97d109c0fc7f5a8b9eb039b8a88c1f",
       "research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py": "838997142a543ba6c5ba6b86277c66d9465ad4e62ee85c5b1ec9ac177eaa8120",
       "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py": "6d1aa48494b918bec07dca9591d6b15ec99df31e9d25505623996f372077d9f8"
     },
@@ -38,7 +38,7 @@
       "research/ng_exhaustion_chain_phase1_structural_54w_20260817.py": "2b93cfeb39cc73409f04b9d9fc61e0fe02f79823fd1df064ae819a82c27d05d9",
       "research/ng_exhaustion_live_clock.py": "b4de54b61537310ffd8c352b98d7e462312ce7e3f8f976488feb134b3ffe9e24",
       "research/ng_exhaustion_mbo_5y_canonical_manifest_20260822.py": "b7fd45c47484181b9c9a1366000bc0fb9a58d8739cb88a17bdeaf22d49260d07",
-      "research/ng_exhaustion_mbo_5y_step1_census_20260822.py": "f5247e41394e3398858d5b9d1bc071d034a345b10a459fb8dd2b8b82023f050e",
+      "research/ng_exhaustion_mbo_5y_step1_census_20260822.py": "53c51d0e061a7fbcb737ec2b73467ab55d97d109c0fc7f5a8b9eb039b8a88c1f",
       "research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py": "838997142a543ba6c5ba6b86277c66d9465ad4e62ee85c5b1ec9ac177eaa8120",
       "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py": "6d1aa48494b918bec07dca9591d6b15ec99df31e9d25505623996f372077d9f8",
       "research/ng_exhaustion_runway_clock.py": "d73a9a04eee3aa2f65c6c64ee57faa37a5d71000939bdd54da7f94931edea1eb"
@@ -53,25 +53,25 @@
     "source_total_bytes": 26581677329,
     "workflow_sha256": "f865eba4c33057f224a95a5f4522ff7fe0621af927180804353ecaf0726819bd"
   },
-  "candidate_package_sha256": "c3cf274e63b09b78896b9388d5c1c451102bae7b91e35753015158b97ab779f6",
+  "candidate_package_sha256": "92489dfd4698380a6763204368b09a25c13eca0572e3346ce9385dc073ae2de7",
   "full_census_launched": false,
   "github_workflow_run_attempt": "1",
-  "github_workflow_run_id": "32618258696",
-  "heartbeat_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/defaf3e872250a8710093d92be82f3f383dd38ad/full/progress/",
+  "github_workflow_run_id": "32618967840",
+  "heartbeat_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/98ec7c0a821c0c73280003c1b350b5c60e08f9d1/full/progress/",
   "instance_id": "i-08cee7171c0a76a04",
   "permanent_frankie_mutated": false,
   "predictive_or_trading_experiment_run": false,
-  "preflight_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/defaf3e872250a8710093d92be82f3f383dd38ad/preflight/",
-  "recorded_at_utc": "2026-08-23T04:36:32.202356+00:00",
+  "preflight_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/98ec7c0a821c0c73280003c1b350b5c60e08f9d1/preflight/",
+  "recorded_at_utc": "2026-08-23T04:53:55.244174+00:00",
   "region": "us-east-2",
   "release_or_virgin_holdout_consumed": false,
-  "result_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/defaf3e872250a8710093d92be82f3f383dd38ad/full/",
-  "sanitized_stderr_tail": "",
-  "sanitized_stdout_tail": "CANDIDATE_FILES_VERIFIED\n",
+  "result_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/98ec7c0a821c0c73280003c1b350b5c60e08f9d1/full/",
+  "sanitized_stderr_tail": "failed to run commands: exit status 1",
+  "sanitized_stdout_tail": "CANDIDATE_FILES_VERIFIED\nTraceback (most recent call last):\n  File \"/mnt/markets/ng_exhaustion_step1_5y_20260822/98ec7c0a821c0c73280003c1b350b5c60e08f9d1/repo/research/ng_exhaustion_mbo_5y_step1_census_20260822.py\", line 1705, in <module>\n    main()\n  File \"/mnt/markets/ng_exhaustion_step1_5y_20260822/98ec7c0a821c0c73280003c1b350b5c60e08f9d1/repo/research/ng_exhaustion_mbo_5y_step1_census_20260822.py\", line 1693, in main\n    result = run_controller(\n  File \"/mnt/markets/ng_exhaustion_step1_5y_20260822/98ec7c0a821c0c73280003c1b350b5c60e08f9d1/repo/research/ng_exhaustion_mbo_5y_step1_census_20260822.py\", line 1646, in run_controller\n    receipt = reconcile(\n  File \"/mnt/markets/ng_exhaustion_step1_5y_20260822/98ec7c0a821c0c73280003c1b350b5c60e08f9d1/repo/research/ng_exhaustion_mbo_5y_step1_census_20260822.py\", line 1433, in reconcile\n    for week, rows in _iter_seconds_weeks(seconds_paths, weeks_filter):\n  File \"/mnt/markets/ng_exhaustion_step1_5y_20260822/98ec7c0a821c0c73280003c1b350b5c60e08f9d1/repo/research/ng_exhaustion_mbo_5y_step1_census_20260822.py\", line 1378, in _iter_seconds_weeks\n    raise CensusError(\n__main__.CensusError: population reconciliation non-increasing/duplicate second: 1759276780 after 1759276799\n",
   "schema": "NG_EXHAUSTION_MBO_5Y_STEP1_LAUNCH_RECEIPT_V1_20260822",
   "source_prefix_wide_enumeration_used": false,
-  "ssm_command_id": "1b0030b8-0828-4033-b466-a964884b102c",
-  "ssm_response_code": 137,
-  "ssm_status": "Cancelled",
-  "systemd_unit": "ng-exhaustion-step1-defaf3e87225"
+  "ssm_command_id": "94a09655-1402-413d-8b71-289883ddddbb",
+  "ssm_response_code": 1,
+  "ssm_status": "Failed",
+  "systemd_unit": "ng-exhaustion-step1-98ec7c0a821c"
 }
