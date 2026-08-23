@@ -61,3 +61,5 @@ jobs:
           git add research/kalshi/NG_EXHAUSTION_STEP1_PARALLEL_3MO_FAILURE_DIAG_20260823.json
           git commit -m 'research: retain parallel launch failure diagnostic'
           git push origin HEAD:"$BRANCH"
+
+# Trigger revision 2
