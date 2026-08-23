@@ -38,7 +38,7 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json, os, shlex
+          import json, os, shlex, textwrap
           candidate=os.environ['CANDIDATE_SHA']
           base=f'/mnt/markets/ng_exhaustion_step1_5y_20260822/{candidate}'
           repo=f'{base}/repo'
@@ -50,8 +50,9 @@ jobs:
               ('20211001_20211101',1),
               ('20211101_20211201',2),
           ]
-          worker=f'''{base}/parallel_3mo_worker.py'''
-          worker_source=r'''#!/usr/bin/env python3
+          worker=f'{base}/parallel_3mo_worker.py'
+          worker_source=textwrap.dedent(r'''\
+          #!/usr/bin/env python3
           import json
           import os
           import sys
@@ -104,7 +105,7 @@ jobs:
           finally:
               for path in staged:
                   Path(path).unlink(missing_ok=True)
-          '''
+          ''')
           command_lines=[
               'set -euo pipefail',
               f'base={shlex.quote(base)}',
@@ -120,7 +121,8 @@ jobs:
               'echo BEFORE_SERIAL_STATE=$(systemctl is-active "$serial" || true)',
               'if [ -f "$full/CONTROLLER_HEARTBEAT.json" ]; then python3 -c "import json,sys; x=json.load(open(sys.argv[1])); print(\"BEFORE_ACTIVE_SEGMENT=\"+str(x.get(\"active_segment\"))); print(\"BEFORE_COMPLETED_SEGMENTS=\"+str(x.get(\"completed_segments\")))" "$full/CONTROLLER_HEARTBEAT.json"; fi',
               'echo BEFORE_RECEIPTS=$(find "$full/segments" -maxdepth 1 -name "*.receipt.json" -type f | wc -l)',
-              'if systemctl is-active --quiet "$serial"; then sudo systemctl stop "$serial"; fi',
+              'if [ -f "$full/segments/20210820_20210901.seconds.jsonl.gz.partial" ]; then stat --printf="PRESERVED_INITIAL_PARTIAL_BYTES=%s\\n" "$full/segments/20210820_20210901.seconds.jsonl.gz.partial"; fi',
+              'if systemctl is-active --quiet "$serial"; then systemctl stop "$serial"; fi',
               'test "$(systemctl is-active "$serial" || true)" != active',
               'echo AFTER_SERIAL_STATE=$(systemctl is-active "$serial" || true)',
               f"python3 -c {shlex.quote('from pathlib import Path; p=Path('+repr(worker)+'); p.write_text('+repr(worker_source)+'); p.chmod(0o700)')}",
@@ -136,7 +138,7 @@ jobs:
                   f'> {shlex.quote(log)} 2>&1'
               )
               command_lines += [
-                  f'if [ -f "$full/segments/{segment}.receipt.json" ] && [ -f "$full/segments/{segment}.seconds.jsonl.gz" ]; then echo TARGET_{segment}=ALREADY_PRESENT; else sudo systemd-run --unit={shlex.quote(unit)} --collect --property=CPUAffinity={core} --property=Nice=0 /bin/bash -lc {shlex.quote(run)} >/dev/null; echo TARGET_{segment}=LAUNCHED_CORE_{core}; fi',
+                  f'if [ -f "$full/segments/{segment}.receipt.json" ] && [ -f "$full/segments/{segment}.seconds.jsonl.gz" ]; then echo TARGET_{segment}=ALREADY_PRESENT; else systemd-run --unit={shlex.quote(unit)} --collect --property=CPUAffinity={core} --property=Nice=0 /bin/bash -lc {shlex.quote(run)} >/dev/null; echo TARGET_{segment}=LAUNCHED_CORE_{core}; fi',
               ]
           command_lines += [
               'sleep 3',
