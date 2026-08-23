@@ -1,0 +1,538 @@
+name: NG Exhaustion Five-Year Step-1 Promote One-Day Canary 20260823
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - .github/workflows/ng_exhaustion_mbo_5y_step1_promote_canary_20260823.yml
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Exact already-packaged Step-1 candidate commit
+        required: true
+        type: string
+      preflight_ssm_command_id:
+        description: Exact active multiweek preflight SSM command to cancel
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: ng-exhaustion-mbo-5y-step1-promote-canary-20260823
+  cancel-in-progress: false
+
+jobs:
+  registration:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'One-day canary promotion workflow registered; no AWS action on push.'
+
+  promote:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      BUCKET: bento-568968024170-us-east-2-an
+      BRANCH: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+      RECEIPT_PATH: research/kalshi/NG_EXHAUSTION_MBO_5Y_STEP1_LAUNCH_20260822.json
+      ORIGINAL_LAUNCH_RUN_ID: '32629079068'
+      CANARY_RUN_ID: '32628933260'
+      CANARY_ARTIFACT_ID: '9490488236'
+      CANARY_IMPLEMENTATION_SHA: 6904bdda457f108e98508d43c9f6f53a5aaee1b8
+      CANARY_JSON_SHA256: a71b3ead28088eb1f19e919f978fca07b0e44ec6e8b91879bacb6e84e11148f0
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      PREFLIGHT_SSM_COMMAND_ID: ${{ inputs.preflight_ssm_command_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Validate exact promotion identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$CANDIDATE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$PREFLIGHT_SSM_COMMAND_ID" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]]
+          test "$CANDIDATE_SHA" = '0d318335825b4a0e19a5a2881522f3da0374788e'
+          test "$PREFLIGHT_SSM_COMMAND_ID" = '09c90010-b2c9-4705-9eb3-33613c56713c'
+          git cat-file -e "$CANARY_IMPLEMENTATION_SHA^{commit}"
+          git cat-file -e "$CANDIDATE_SHA^{commit}"
+          git diff --quiet "$CANARY_IMPLEMENTATION_SHA" "$CANDIDATE_SHA" -- \
+            research/ng_exhaustion_mbo_v4_state_adapter_20260820.py
+
+      - name: Verify exact retained one-day canary evidence
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/step1-canary
+          curl --fail --silent --show-error --location \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$CANARY_ARTIFACT_ID/zip" \
+            -o /tmp/step1-canary/artifact.zip
+          unzip -q /tmp/step1-canary/artifact.zip -d /tmp/step1-canary/evidence
+          canary_path="$(find /tmp/step1-canary/evidence -type f -name LEGACY_GROUP_AUDIT.json -print -quit)"
+          test -n "$canary_path"
+          test "$(sha256sum "$canary_path" | cut -d' ' -f1)" = "$CANARY_JSON_SHA256"
+          CANARY_PATH="$canary_path" python - <<'PY'
+          import json, os
+          from pathlib import Path
+
+          audit=json.loads(Path(os.environ['CANARY_PATH']).read_text())
+          exact={
+              'schema':'NG_EXHAUSTION_MBO_LEGACY_GROUP_AUDIT_V2_20260823',
+              'mbp10_row_count':20361,
+              'projected_legacy_row_count':20360,
+              'mbp10_only_detector_input_row_count':1,
+              'projection_only_detector_input_row_count':0,
+              'mbo_dbn_sha256':'8eb969be27fe31f2a13d3fe2b2231fee8d74f3e3c7f69a0facb9ea5a8b4eb542',
+              'mbp10_gzip_sha256':'0ab2668241466143e2a05a52003d85f71ac813df8670b5de9ff4faaf93108317',
+              'release_or_virgin_holdout_consumed':False,
+              'source_prefix_wide_enumeration_used':False,
+              'predictive_or_trading_experiment_run':False,
+          }
+          for key,want in exact.items():
+              if audit.get(key) != want:
+                  raise SystemExit(f'one-day canary evidence drift: {key}')
+          examples=audit.get('mbp10_only_mbo_event_group_examples') or []
+          if len(examples) != 1:
+              raise SystemExit('retained MBP-only duplicate evidence drift')
+          compact={
+              **exact,
+              'date':'20250713',
+              'github_run_id':32628933260,
+              'artifact_id':9490488236,
+              'implementation_commit':os.environ['CANARY_IMPLEMENTATION_SHA'],
+              'artifact_json_sha256':os.environ['CANARY_JSON_SHA256'],
+              'retained_interpretation':'ONE_MBP10_ONLY_DUPLICATE_AND_ZERO_PROJECTION_ONLY_DETECTOR_INPUT_ROWS',
+              'lineage_equivalence_asserted':False,
+              'multiweek_equivalence_asserted':False,
+              'user_authorized_as_launch_canary':True,
+          }
+          Path('/tmp/STEP1_CANARY_EVIDENCE.json').write_text(json.dumps(compact,indent=2,sort_keys=True)+'\n')
+          PY
+
+      - name: Verify exact candidate package and lock keys
+        shell: bash
+        run: |
+          set -euo pipefail
+          prefix="nymex/ng_mbo_5y_v0/step1_census/launches/$CANDIDATE_SHA/candidate"
+          aws s3api head-object --bucket "$BUCKET" --key "$prefix/package.tgz" >/dev/null
+          aws s3api head-object --bucket "$BUCKET" --key "$prefix/CANDIDATE_LOCK.json" >/dev/null
+          aws s3 cp "s3://$BUCKET/$prefix/package.tgz" /tmp/STEP1_CANDIDATE.tgz --only-show-errors
+          aws s3 cp "s3://$BUCKET/$prefix/CANDIDATE_LOCK.json" /tmp/STEP1_CANDIDATE_LOCK.json --only-show-errors
+          sha256sum /tmp/STEP1_CANDIDATE.tgz | cut -d' ' -f1 > /tmp/STEP1_PACKAGE_SHA256
+          sha256sum /tmp/STEP1_CANDIDATE_LOCK.json | cut -d' ' -f1 > /tmp/STEP1_LOCK_SHA256
+          python - <<'PY'
+          import json, os
+          lock=json.load(open('/tmp/STEP1_CANDIDATE_LOCK.json'))
+          if lock.get('candidate_commit') != os.environ['CANDIDATE_SHA']:
+              raise SystemExit('candidate lock commit drift')
+          if lock.get('release_or_virgin_holdout_consumed') is not False:
+              raise SystemExit('candidate lock holdout safety drift')
+          if lock.get('predictive_or_trading_experiment_authorized') is not False:
+              raise SystemExit('candidate lock experiment safety drift')
+          if not lock.get('engine_hashes') or not lock.get('packaged_files'):
+              raise SystemExit('candidate lock material hashes absent')
+          PY
+
+      - name: Fail-close local candidate precheck before cancellation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, shlex
+
+          candidate=os.environ['CANDIDATE_SHA']
+          package_sha=open('/tmp/STEP1_PACKAGE_SHA256').read().strip()
+          base=f'/mnt/markets/ng_exhaustion_step1_5y_20260822/{candidate}'
+          repo=f'{base}/repo'
+          command=f'''set -euo pipefail
+          test -d {shlex.quote(repo)}
+          test -x {shlex.quote(base + '/venv/bin/python')}
+          test -s {shlex.quote(base + '/aws.env')}
+          test -s {shlex.quote(base + '/package.tgz')}
+          test "$(stat -c %a {shlex.quote(base + '/aws.env')})" = 600
+          test "$(sha256sum {shlex.quote(base + '/package.tgz')} | cut -d' ' -f1)" = {shlex.quote(package_sha)}
+          export CANDIDATE_SHA={shlex.quote(candidate)}
+          cd {shlex.quote(repo)}
+          python3 - <<'PYVERIFY'
+          import hashlib,json,os
+          from pathlib import Path
+          lock=json.load(open('research/kalshi/NG_EXHAUSTION_MBO_5Y_STEP1_CANDIDATE_LOCK_20260822.json'))
+          if lock.get('candidate_commit') != os.environ['CANDIDATE_SHA']:
+              raise SystemExit('local candidate lock commit drift')
+          for rel,want in lock['packaged_files'].items():
+              if hashlib.sha256(Path(rel).read_bytes()).hexdigest() != want:
+                  raise SystemExit(f'local packaged file hash drift: {{rel}}')
+          PYVERIFY
+          '''
+          with open('/tmp/STEP1_PRECHECK_PARAMETERS.json','w') as handle:
+              json.dump({'commands':['/bin/bash -lc '+shlex.quote(command)]},handle)
+          PY
+          precheck_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Read-only canary promotion precheck $CANDIDATE_SHA" \
+            --parameters file:///tmp/STEP1_PRECHECK_PARAMETERS.json \
+            --timeout-seconds 180 \
+            --query 'Command.CommandId' --output text)"
+          aws ssm wait command-executed --command-id "$precheck_id" --instance-id "$INSTANCE_ID"
+          test "$(aws ssm get-command-invocation --command-id "$precheck_id" --instance-id "$INSTANCE_ID" --query Status --output text)" = Success
+
+      - name: Cancel only the exact active multiweek preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          status="$(aws ssm get-command-invocation \
+            --command-id "$PREFLIGHT_SSM_COMMAND_ID" \
+            --instance-id "$INSTANCE_ID" \
+            --query Status --output text)"
+          final="$status"
+          case "$status" in
+            InProgress|Pending|Delayed|Cancelling)
+              aws ssm cancel-command --command-id "$PREFLIGHT_SSM_COMMAND_ID" --instance-ids "$INSTANCE_ID" >/dev/null
+              for _ in $(seq 1 60); do
+                final="$(aws ssm get-command-invocation \
+                  --command-id "$PREFLIGHT_SSM_COMMAND_ID" \
+                  --instance-id "$INSTANCE_ID" \
+                  --query Status --output text)"
+                case "$final" in
+                  InProgress|Pending|Delayed|Cancelling) sleep 2 ;;
+                  *) break ;;
+                esac
+              done
+              ;;
+            Cancelled|Failed|TimedOut|Success)
+              ;;
+            *) exit 1 ;;
+          esac
+          case "$final" in
+            InProgress|Pending|Delayed|Cancelling|'') exit 1 ;;
+          esac
+          printf '%s\n' "$final" > /tmp/STEP1_ORIGINAL_SSM_FINAL_STATUS
+
+      - name: Materialize exact full launcher and promote canary
+        id: launch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64, hashlib, json, os, shlex
+          from pathlib import Path
+
+          candidate=os.environ['CANDIDATE_SHA']
+          bucket=os.environ['BUCKET']
+          base=f'/mnt/markets/ng_exhaustion_step1_5y_20260822/{candidate}'
+          repo=f'{base}/repo'
+          cred=f'{base}/aws.env'
+          unit=f'ng-exhaustion-step1-{candidate[:12]}'
+          prefix=f'nymex/ng_mbo_5y_v0/step1_census/launches/{candidate}'
+          launcher=f'''#!/bin/bash
+          set -uo pipefail
+          set -a
+          source {shlex.quote(cred)}
+          set +a
+          cd {shlex.quote(repo)}
+          source {shlex.quote(base + '/venv/bin/activate')}
+          full_work={shlex.quote(base + '/full')}
+          result_prefix={shlex.quote(prefix + '/full')}
+          mkdir -p "$full_work"
+          python research/ng_exhaustion_mbo_5y_step1_census_20260822.py run \\
+            --manifest research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json \\
+            --work-dir "$full_work" \\
+            --frozen-overlap-table frozen/FROZEN_OVERLAP_EVENT_TABLE.jsonl.gz \\
+            --frozen-overlap-lineage frozen/FROZEN_OVERLAP_LINEAGE.jsonl.gz \\
+            --s3-progress-prefix "$result_prefix/progress" \\
+            > "$full_work/RUN.log" 2>&1
+          rc=$?
+          python - "$full_work" "$result_prefix" <<'PYUPLOAD'
+          import sys
+          from pathlib import Path
+          import boto3
+          root=Path(sys.argv[1]); prefix=sys.argv[2].strip('/')
+          manifest=__import__('json').load(open('research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json'))
+          s3=boto3.client('s3',region_name=manifest.get('region','us-east-2'))
+          selected=[]
+          for directory in (root/'results',):
+              if directory.exists(): selected.extend(p for p in directory.rglob('*') if p.is_file())
+          selected.extend((root/'segments').glob('*.receipt.json')) if (root/'segments').exists() else None
+          selected.extend((root/'segments').glob('*.heartbeat.json')) if (root/'segments').exists() else None
+          if (root/'RUN.log').exists(): selected.append(root/'RUN.log')
+          for path in selected:
+              rel=path.relative_to(root).as_posix()
+              s3.upload_file(str(path),manifest['bucket'],f'{{prefix}}/{{rel}}')
+          PYUPLOAD
+          upload_rc=$?
+          if [ "$rc" -eq 0 ] && [ "$upload_rc" -eq 0 ]; then
+            rm -f {shlex.quote(cred)}
+            exit 0
+          fi
+          exit 1
+          '''
+          launcher_bytes=launcher.encode()
+          launcher_sha=hashlib.sha256(launcher_bytes).hexdigest()
+          Path('/tmp/STEP1_FULL_LAUNCHER_SHA256').write_text(launcher_sha+'\n')
+          launcher_b64=base64.b64encode(launcher_bytes).decode()
+          state_path=f'{base}/CANARY_PROMOTION_INSTANCE_STATE.json'
+          state_key=f'{prefix}/promotion/INSTANCE_LAUNCH_STATE.json'
+          command=f'''set -euo pipefail
+          base={shlex.quote(base)}
+          repo={shlex.quote(repo)}
+          cred={shlex.quote(cred)}
+          unit={shlex.quote(unit)}
+          test -d "$repo"
+          test -x "$base/venv/bin/python"
+          test -s "$cred"
+          for _ in $(seq 1 60); do
+            if ! pgrep -af 'ng_exhaustion_mbo_5y_step1_census_20260822.py run' | grep -F -- '--work-dir' | grep -F -- "$base/preflight" >/dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          if pgrep -af 'ng_exhaustion_mbo_5y_step1_census_20260822.py run' | grep -F -- '--work-dir' | grep -F -- "$base/preflight" >/dev/null; then exit 1; fi
+          printf %s {shlex.quote(launcher_b64)} | base64 -d > "$base/run_full.sh.partial"
+          test "$(sha256sum "$base/run_full.sh.partial" | cut -d' ' -f1)" = {shlex.quote(launcher_sha)}
+          chmod 700 "$base/run_full.sh.partial"
+          mv "$base/run_full.sh.partial" "$base/run_full.sh"
+          if systemctl is-active --quiet "$unit"; then
+            launch_state=ALREADY_ACTIVE
+          else
+            systemctl reset-failed "$unit" 2>/dev/null || true
+            systemd-run --collect --unit "$unit" \\
+              --property=Restart=on-failure --property=RestartSec=60 \\
+              --property=WorkingDirectory="$repo" \\
+              "$base/run_full.sh" >/dev/null
+            launch_state=STARTED
+          fi
+          sleep 5
+          test "$(systemctl show "$unit" --property=LoadState --value)" = loaded
+          test "$(systemctl show "$unit" --property=ActiveState --value)" = active
+          test "$(systemctl show "$unit" --property=SubState --value)" = running
+          main_pid="$(systemctl show "$unit" --property=MainPID --value)"
+          test "$main_pid" -gt 0
+          kill -0 "$main_pid"
+          for _ in $(seq 1 60); do
+            if [ -s "$base/full/CONTROLLER_HEARTBEAT.json" ]; then break; fi
+            sleep 2
+          done
+          test -s "$base/full/CONTROLLER_HEARTBEAT.json"
+          "$base/venv/bin/python" - "$base" "$unit" "$main_pid" "$launch_state" {shlex.quote(launcher_sha)} {shlex.quote(state_path)} <<'PYSTATE'
+          import datetime as dt,json,sys
+          from pathlib import Path
+          base,unit,pid,launch_state,launcher_sha,out=sys.argv[1:]
+          heartbeat=json.loads(Path(base,'full','CONTROLLER_HEARTBEAT.json').read_text())
+          state={{
+              'schema':'NG_EXHAUSTION_MBO_5Y_STEP1_CANARY_PROMOTION_INSTANCE_STATE_V1_20260823',
+              'recorded_at_utc':dt.datetime.now(dt.timezone.utc).isoformat(),
+              'candidate_commit':{candidate!r},
+              'systemd_unit':unit,
+              'systemd_load_state':'loaded',
+              'systemd_active_state':'active',
+              'systemd_sub_state':'running',
+              'main_pid':int(pid),
+              'pid_kill_zero':True,
+              'launch_state':launch_state,
+              'launcher_sha256':launcher_sha,
+              'controller_heartbeat':heartbeat,
+              'source_prefix_wide_enumeration_used':False,
+              'release_or_virgin_holdout_consumed':False,
+              'predictive_or_trading_experiment_run':False,
+              'permanent_frankie_mutated':False,
+          }}
+          Path(out).write_text(json.dumps(state,indent=2,sort_keys=True)+'\\n')
+          PYSTATE
+          set -a
+          source "$cred"
+          set +a
+          aws s3 cp {shlex.quote(state_path)} s3://{bucket}/{state_key} --only-show-errors
+          '''
+          with open('/tmp/STEP1_PROMOTE_PARAMETERS.json','w') as handle:
+              json.dump({'commands':['/bin/bash -lc '+shlex.quote(command)]},handle)
+          Path('/tmp/STEP1_INSTANCE_STATE_KEY').write_text(state_key+'\n')
+          PY
+          promote_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Promote user-authorized one-day MBO canary $CANDIDATE_SHA" \
+            --parameters file:///tmp/STEP1_PROMOTE_PARAMETERS.json \
+            --timeout-seconds 300 \
+            --query 'Command.CommandId' --output text)"
+          printf '%s\n' "$promote_id" > /tmp/STEP1_PROMOTE_SSM_COMMAND_ID
+          aws ssm wait command-executed --command-id "$promote_id" --instance-id "$INSTANCE_ID"
+          test "$(aws ssm get-command-invocation --command-id "$promote_id" --instance-id "$INSTANCE_ID" --query Status --output text)" = Success
+          state_key="$(cat /tmp/STEP1_INSTANCE_STATE_KEY)"
+          aws s3 cp "s3://$BUCKET/$state_key" /tmp/STEP1_INSTANCE_STATE.json --only-show-errors
+
+      - name: Build sanitized durable launch receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import datetime as dt, hashlib, json, os
+          from pathlib import Path
+
+          candidate=os.environ['CANDIDATE_SHA']
+          state=json.load(open('/tmp/STEP1_INSTANCE_STATE.json'))
+          canary=json.load(open('/tmp/STEP1_CANARY_EVIDENCE.json'))
+          lock=json.load(open('/tmp/STEP1_CANDIDATE_LOCK.json'))
+          if state.get('candidate_commit') != candidate:
+              raise SystemExit('instance state candidate drift')
+          if not (
+              state.get('systemd_load_state') == 'loaded'
+              and state.get('systemd_active_state') == 'active'
+              and state.get('systemd_sub_state') == 'running'
+              and int(state.get('main_pid',0)) > 0
+              and state.get('pid_kill_zero') is True
+          ):
+              raise SystemExit('full census service verification failed')
+          receipt={
+              'schema':'NG_EXHAUSTION_MBO_5Y_STEP1_LAUNCH_RECEIPT_V1_20260822',
+              'launch_method':'USER_AUTHORIZED_ONE_DAY_CANARY_PROMOTION_V1_20260823',
+              'recorded_at_utc':dt.datetime.now(dt.timezone.utc).isoformat(),
+              'candidate_commit':candidate,
+              'candidate_lock':lock,
+              'candidate_package_sha256':Path('/tmp/STEP1_PACKAGE_SHA256').read_text().strip(),
+              'candidate_lock_sha256':Path('/tmp/STEP1_LOCK_SHA256').read_text().strip(),
+              'github_workflow_run_id':os.environ['GITHUB_RUN_ID'],
+              'github_workflow_run_attempt':os.environ['GITHUB_RUN_ATTEMPT'],
+              'original_launch_workflow_run_id':os.environ['ORIGINAL_LAUNCH_RUN_ID'],
+              'cancelled_preflight_ssm_command_id':os.environ['PREFLIGHT_SSM_COMMAND_ID'],
+              'cancelled_preflight_final_status':Path('/tmp/STEP1_ORIGINAL_SSM_FINAL_STATUS').read_text().strip(),
+              'ssm_command_id':Path('/tmp/STEP1_PROMOTE_SSM_COMMAND_ID').read_text().strip(),
+              'ssm_status':'Success',
+              'ssm_response_code':0,
+              'instance_id':os.environ['INSTANCE_ID'],
+              'region':os.environ['AWS_DEFAULT_REGION'],
+              'systemd_unit':state['systemd_unit'],
+              'main_pid':state['main_pid'],
+              'launch_state':state['launch_state'],
+              'launcher_sha256':state['launcher_sha256'],
+              'full_census_launched':True,
+              'controller_heartbeat':state['controller_heartbeat'],
+              'canary_evidence':canary,
+              'legacy_overlap_equivalence':{
+                  'status':'USER_AUTHORIZED_ONE_DAY_CANARY_ACCEPTED',
+                  'lineage_equivalence_asserted':False,
+                  'multiweek_equivalence_asserted':False,
+                  'retained_mismatch_count':1,
+                  'mismatch_policy':'RETAINED_NOT_HARDCODED_OR_DELETED',
+              },
+              'heartbeat_prefix':f's3://{os.environ["BUCKET"]}/nymex/ng_mbo_5y_v0/step1_census/launches/{candidate}/full/progress/',
+              'result_prefix':f's3://{os.environ["BUCKET"]}/nymex/ng_mbo_5y_v0/step1_census/launches/{candidate}/full/',
+              'source_prefix_wide_enumeration_used':False,
+              'release_or_virgin_holdout_consumed':False,
+              'predictive_or_trading_experiment_run':False,
+              'permanent_frankie_mutated':False,
+              'frozen_detector_mutated':False,
+              'stdout_persisted_in_receipt':False,
+              'stderr_persisted_in_receipt':False,
+          }
+          Path('/tmp/STEP1_LAUNCH_RECEIPT.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          compact={
+              'schema':'NG_EXHAUSTION_MBO_5Y_STEP1_CANARY_PROMOTION_EVIDENCE_V1_20260823',
+              'candidate_commit':receipt['candidate_commit'],
+              'candidate_package_sha256':receipt['candidate_package_sha256'],
+              'candidate_lock_sha256':receipt['candidate_lock_sha256'],
+              'github_workflow_run_id':receipt['github_workflow_run_id'],
+              'cancelled_preflight_ssm_command_id':receipt['cancelled_preflight_ssm_command_id'],
+              'cancelled_preflight_final_status':receipt['cancelled_preflight_final_status'],
+              'promotion_ssm_command_id':receipt['ssm_command_id'],
+              'systemd_unit':receipt['systemd_unit'],
+              'main_pid':receipt['main_pid'],
+              'launch_state':receipt['launch_state'],
+              'launcher_sha256':receipt['launcher_sha256'],
+              'full_census_launched':receipt['full_census_launched'],
+              'canary_evidence':receipt['canary_evidence'],
+              'legacy_overlap_equivalence':receipt['legacy_overlap_equivalence'],
+              'controller_heartbeat':receipt['controller_heartbeat'],
+              'safety':{
+                  key:receipt[key] for key in (
+                      'source_prefix_wide_enumeration_used',
+                      'release_or_virgin_holdout_consumed',
+                      'predictive_or_trading_experiment_run',
+                      'permanent_frankie_mutated',
+                      'frozen_detector_mutated',
+                      'stdout_persisted_in_receipt',
+                      'stderr_persisted_in_receipt',
+                  )
+              },
+          }
+          Path('/tmp/STEP1_PROMOTION_EVIDENCE.json').write_text(json.dumps(compact,indent=2,sort_keys=True)+'\n')
+          PY
+
+      - name: Retain compact sanitized promotion evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ng-step1-canary-promotion-${{ inputs.candidate_sha }}
+          path: /tmp/STEP1_PROMOTION_EVIDENCE.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Wait for superseded launch workflow receipt writer
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for _ in $(seq 1 120); do
+            status="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$ORIGINAL_LAUNCH_RUN_ID" --jq .status)"
+            if [ "$status" = completed ]; then exit 0; fi
+            sleep 5
+          done
+          exit 1
+
+      - name: Commit sanitized durable launch receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3 4; do
+            git fetch origin "$BRANCH"
+            git reset --hard "origin/$BRANCH"
+            cp /tmp/STEP1_LAUNCH_RECEIPT.json "$RECEIPT_PATH"
+            git add "$RECEIPT_PATH"
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m 'research: record one-day canary census promotion'
+            if git push origin HEAD:"$BRANCH"; then exit 0; fi
+          done
+          exit 1
+
+      - name: Enforce sanitized promotion receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          receipt=json.load(open('/tmp/STEP1_LAUNCH_RECEIPT.json'))
+          if receipt.get('full_census_launched') is not True:
+              raise SystemExit('full census launch not proven')
+          if receipt.get('canary_evidence',{}).get('user_authorized_as_launch_canary') is not True:
+              raise SystemExit('one-day canary authorization absent')
+          if receipt.get('legacy_overlap_equivalence',{}).get('multiweek_equivalence_asserted') is not False:
+              raise SystemExit('multiweek equivalence was falsely asserted')
+          for key in (
+              'source_prefix_wide_enumeration_used',
+              'release_or_virgin_holdout_consumed',
+              'predictive_or_trading_experiment_run',
+              'permanent_frankie_mutated',
+              'frozen_detector_mutated',
+              'stdout_persisted_in_receipt',
+              'stderr_persisted_in_receipt',
+          ):
+              if receipt.get(key) is not False:
+                  raise SystemExit(f'safety receipt drift: {key}')
+          PY
