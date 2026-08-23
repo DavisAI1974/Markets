@@ -26,6 +26,7 @@ permissions:
 
 jobs:
   follow-on-agent:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -173,21 +174,37 @@ jobs:
             research/kalshi/tests/test_frankie_p0_registry.py
 
           protected_log=/tmp/check_PROTECTED_ARTIFACT_HASHES.log
-          git diff --exit-code bd3d729780a025c1fbffd4f219854a609fa5ac6a HEAD -- \
-            research/kalshi/spawn.py \
-            research/kalshi/agent_frankie.py \
-            research/kalshi/agents/mbo_refine_shared.md \
-            research/kalshi/agents/mbo_specialist_A.md \
-            research/kalshi/agents/mbo_specialist_B.md \
-            research/kalshi/agents/mbo_specialist_C.md \
-            research/kalshi/agents/mbo_specialist_D.md \
-            research/kalshi/agents/mbo_specialist_E.md \
-            >"$protected_log" 2>&1
+          python - <<'PY' >"$protected_log" 2>&1
+          import hashlib
+          import json
+          from pathlib import Path, PurePosixPath
+
+          baseline_path = Path('research/kalshi/NG_EXHAUSTION_V4_PROTECTED_BASELINE_20260821.json')
+          baseline = json.loads(baseline_path.read_text())
+          if baseline.get('schema') != 'NG_EXHAUSTION_V4_PROTECTED_BASELINE_V1':
+              raise SystemExit('protected baseline schema drift')
+          for field in (
+              'v4_empirical_launch_authorized',
+              'permanent_frankie_mutation_authorized',
+              'specialist_role_rewrite_authorized',
+          ):
+              if baseline.get(field) is not False:
+                  raise SystemExit(f'unsafe protected baseline authority: {field}')
+          files = baseline.get('files_sha256')
+          if not isinstance(files, dict) or not files:
+              raise SystemExit('protected baseline file map absent')
+          for relative, expected in files.items():
+              pure = PurePosixPath(relative)
+              if pure.is_absolute() or '..' in pure.parts:
+                  raise SystemExit(f'unsafe protected baseline path: {relative}')
+              path = Path(relative)
+              actual = hashlib.sha256(path.read_bytes()).hexdigest()
+              if actual != expected:
+                  raise SystemExit(f'protected artifact hash drift: {relative}')
+          print('PASS: protected Frankie, spawner, and A-E specialist bytes match the frozen baseline')
+          PY
           protected_code=$?
           echo "$protected_code" > /tmp/check_PROTECTED_ARTIFACT_HASHES.code
-          if [ "$protected_code" -eq 0 ]; then
-            echo 'PASS: follow-on work did not modify permanent Frankie, protected spawner, or A-E specialist role texts' >> "$protected_log"
-          fi
           cat "$protected_log"
           exit 0
       - name: Build reconciled status and exact-candidate freeze
