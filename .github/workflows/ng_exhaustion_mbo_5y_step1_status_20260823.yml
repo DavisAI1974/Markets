@@ -43,3 +43,11 @@ jobs:
             --prefix "$prefix" \
             --query 'Contents[].[LastModified,Size,Key]' \
             --output table
+          latest_heartbeat="$(aws s3api list-objects-v2 \
+            --bucket "$BUCKET" \
+            --prefix "$prefix" \
+            --query 'reverse(sort_by(Contents,&LastModified))[0].Key' \
+            --output text)"
+          if [ -n "$latest_heartbeat" ] && [ "$latest_heartbeat" != 'None' ]; then
+            aws s3 cp "s3://$BUCKET/$latest_heartbeat" - --only-show-errors
+          fi
