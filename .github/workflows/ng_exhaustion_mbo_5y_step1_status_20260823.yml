@@ -1,0 +1,45 @@
+name: NG Exhaustion Five-Year Step-1 AWS Status 20260823
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Exact census candidate commit
+        required: true
+        default: 55a8b640b7f5d9d3ee8115977cc79ee2231d4291
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - .github/workflows/ng_exhaustion_mbo_5y_step1_status_20260823.yml
+
+permissions:
+  contents: read
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      BUCKET: bento-568968024170-us-east-2-an
+      CANDIDATE_SHA: ${{ inputs.candidate_sha || '55a8b640b7f5d9d3ee8115977cc79ee2231d4291' }}
+    steps:
+      - name: Read SSM execution and exact progress prefix
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws ssm list-commands \
+            --instance-id "$INSTANCE_ID" \
+            --max-results 20 \
+            --query "Commands[?contains(Comment, '$CANDIDATE_SHA')].[CommandId,Status,RequestedDateTime,Comment]" \
+            --output table
+          prefix="nymex/ng_mbo_5y_v0/step1_census/launches/$CANDIDATE_SHA/preflight/progress/"
+          aws s3api list-objects-v2 \
+            --bucket "$BUCKET" \
+            --prefix "$prefix" \
+            --query 'Contents[].[LastModified,Size,Key]' \
+            --output table
