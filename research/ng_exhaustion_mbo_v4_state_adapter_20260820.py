@@ -282,7 +282,7 @@ class InstrumentBook:
         self._activity_last_now_ns: int | None = None
         self.event_group: list[NormalizedMbo] = []
         self._legacy_group_rows: list[dict[str, Any]] = []
-        self._legacy_group_collapsed = False
+        self._legacy_group_book_before: tuple[Any, ...] | None = None
         self._top10_cache: dict[str, tuple[int, ...] | None] = {"B": None, "A": None}
         self.integrity: Counter[str] = Counter()
         self.last_sequence: int | None = None
@@ -346,6 +346,25 @@ class InstrumentBook:
             sides = tuple(dict.fromkeys(side for side in (old.side, msg.side) if side in ("A", "B")))
             return old_visible or new_visible, sides
         raise ValueError(f"unsupported legacy projection action {msg.action!r}")
+
+    def _legacy_book_signature(self, now_ns: int) -> tuple[Any, ...]:
+        book = self.book_snapshot(
+            now_ns,
+            depth_levels=10,
+            include_full_depth=False,
+            include_order_ids=False,
+        )
+        signature: list[Any] = []
+        for side_key in ("bid_levels", "ask_levels"):
+            levels = book[side_key]
+            for i in range(10):
+                level = levels[i] if i < len(levels) else None
+                signature.extend((
+                    None if level is None else level["price_raw"],
+                    0 if level is None else level["size"],
+                    0 if level is None else level["order_count"],
+                ))
+        return tuple(signature)
 
     def _prices(self, side: str) -> list[int]:
         prices = [p for p, ids in self.levels[side].items() if ids]
@@ -547,17 +566,11 @@ class InstrumentBook:
 
         if not self.event_group:
             self._legacy_group_rows = []
-            self._legacy_group_collapsed = False
-        if msg.is_snapshot or msg.action == "R":
-            # MBP-10 represents a snapshot/reset rebuild with one final row, not
-            # one row for every order inserted while the book is reconstructed.
-            self._legacy_group_collapsed = True
-            self._legacy_group_rows = []
+            self._legacy_group_book_before = self._legacy_book_signature(msg.ts_recv_ns)
 
-        emit_legacy = False
         mutated_sides: tuple[str, ...] = ()
-        if not self._legacy_group_collapsed:
-            emit_legacy, mutated_sides = self._legacy_top10_effect(msg)
+        if msg.action in ("A", "C", "M", "R"):
+            _emit_legacy, mutated_sides = self._legacy_top10_effect(msg)
 
         old = self.orders.get(msg.order_id)
         before = None if old is None else (old.side, old.size)
@@ -565,30 +578,28 @@ class InstrumentBook:
         new = self.orders.get(msg.order_id)
         after = None if new is None else (new.side, new.size)
         self._update_cached_book_totals(msg.action, before, after)
-        if self._legacy_group_collapsed:
-            if msg.action == "R":
-                self._invalidate_top10("B", "A")
-            elif msg.action in ("A", "C", "M"):
-                self._invalidate_top10(*(side for side in (effect.side, msg.side) if side in ("A", "B")))
-        elif mutated_sides:
+        if mutated_sides:
             self._invalidate_top10(*mutated_sides)
         self._append_activity(msg, effect)
-        if emit_legacy:
+        if msg.action == "T":
             self._legacy_group_rows.append(self._legacy_control_row(msg))
         self.event_group.append(msg)
         if not msg.is_last:
             return effect, None, []
         frame = self.event_frame(msg.ts_recv_ns)
-        if self._legacy_group_collapsed:
+        final_book = self._legacy_book_signature(msg.ts_recv_ns)
+        if final_book != self._legacy_group_book_before:
             source = next(
-                (row for row in reversed(self.event_group) if row.action in ("A", "C", "M", "T")),
+                (row for row in reversed(self.event_group) if row.action in ("A", "C", "M")),
                 next((row for row in reversed(self.event_group) if row.action not in ("F", "N")), msg),
             )
-            self._legacy_group_rows = [self._legacy_control_row(source)]
+            self._legacy_group_rows.append(
+                self._legacy_control_row(source, projection_at_group_end=True)
+            )
         legacy_rows = self._legacy_group_rows
         self.event_group = []
         self._legacy_group_rows = []
-        self._legacy_group_collapsed = False
+        self._legacy_group_book_before = None
         return effect, frame, legacy_rows
 
     def _level(self, side: str, price_raw: int, now_ns: int, include_order_ids: bool) -> dict[str, Any]:
@@ -726,7 +737,12 @@ class InstrumentBook:
             "integrity": dict(self.integrity),
         }
 
-    def _legacy_control_row(self, msg: NormalizedMbo) -> dict[str, Any]:
+    def _legacy_control_row(
+        self,
+        msg: NormalizedMbo,
+        *,
+        projection_at_group_end: bool = False,
+    ) -> dict[str, Any]:
         """Project one MBP-10-emitting MBO action with its immediate post-action book."""
         book = self.book_snapshot(
             msg.ts_recv_ns,
@@ -750,8 +766,9 @@ class InstrumentBook:
             "sequence": msg.sequence,
             "channel_id": msg.channel_id,
             "flags": msg.flags,
-            "projection_after_mbo_action": True,
-            "projection_at_f_last": bool(msg.is_last),
+            "projection_after_mbo_action": not projection_at_group_end or msg.is_last,
+            "projection_at_event_group_end": projection_at_group_end,
+            "projection_at_f_last": bool(msg.is_last or projection_at_group_end),
         }
         for i in range(10):
             bid = bids[i] if i < len(bids) else None

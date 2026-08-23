@@ -203,7 +203,9 @@ class TestV4MboAdapter(unittest.TestCase):
         self.assertEqual(len(frame["raw_actions"]), 2)
         self.assertEqual(frame["book"]["best_bid"], 3.0)
         self.assertEqual(frame["book"]["best_ask"], 3.1)
-        self.assertEqual(len(legacy), 2)
+        self.assertEqual(len(legacy), 1)
+        self.assertEqual(legacy[0]["action"], "A")
+        self.assertEqual(legacy[0]["ask_px_00"], 3.1)
 
     def test_missing_modify_is_preserved_as_integrity_anomaly(self) -> None:
         a = V4MboAdapter()

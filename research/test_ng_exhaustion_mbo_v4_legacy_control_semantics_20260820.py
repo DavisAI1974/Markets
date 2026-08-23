@@ -86,6 +86,29 @@ class LegacyControlSemanticWall(unittest.TestCase):
         self.assertEqual(legacy[0]["bid_px_00"], 3.0)
         self.assertTrue(legacy[0]["projection_at_f_last"])
 
+    def test_multiple_book_mutations_collapse_at_event_group_boundary(self):
+        a = V4MboAdapter()
+        a.apply(r("A", "A", 1, 3.10, 10, sequence=1))
+        a.apply(r("A", "A", 2, 3.11, 10, sequence=2))
+
+        frame, legacy = a.apply(r(
+            "C", "A", 1, 3.10, 3, flags=0, sequence=3, ts=3_000_000_000,
+        ))
+        self.assertIsNone(frame)
+        frame, legacy = a.apply(r(
+            "C", "A", 1, 3.10, 2, flags=0, sequence=3, ts=3_000_000_001,
+        ))
+        self.assertIsNone(frame)
+        frame, legacy = a.apply(r(
+            "N", flags=F_LAST, sequence=3, ts=3_000_000_002,
+        ))
+        self.assertEqual([row["action"] for row in frame["raw_actions"]], ["C", "C", "N"])
+        self.assertEqual(len(legacy), 1)
+        self.assertEqual(legacy[0]["action"], "C")
+        self.assertEqual(legacy[0]["ask_sz_00"], 5)
+        self.assertTrue(legacy[0]["projection_at_event_group_end"])
+        self.assertFalse(legacy[0]["projection_after_mbo_action"])
+
 
 if __name__ == "__main__":
     unittest.main()
