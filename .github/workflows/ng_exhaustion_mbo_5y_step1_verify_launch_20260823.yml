@@ -11,6 +11,11 @@ on:
         required: false
         type: boolean
         default: false
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - .github/workflows/ng_exhaustion_mbo_5y_step1_verify_launch_20260823.yml
 
 permissions:
   contents: read
@@ -21,6 +26,7 @@ concurrency:
 
 jobs:
   verify:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
