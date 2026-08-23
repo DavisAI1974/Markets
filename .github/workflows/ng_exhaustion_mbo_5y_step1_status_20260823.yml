@@ -17,6 +17,14 @@ on:
         required: false
         type: boolean
         default: false
+      legacy_day:
+        description: Optional revealed YYYYMMDD for exact MBP-10 versus recovered-second diagnosis
+        required: false
+        default: ''
+      legacy_segment:
+        description: Exact recovered native segment containing legacy_day
+        required: false
+        default: ''
   push:
     branches:
       - chatgpt/ng-exhaustion-entry-timing-revival-20260818
@@ -39,6 +47,8 @@ jobs:
       CANDIDATE_SHA: ${{ inputs.candidate_sha || 'e217d4cb03438dd4bff70f21e96762aa851b015f' }}
       INCLUDE_SEGMENT_RECEIPTS: ${{ inputs.include_segment_receipts || 'false' }}
       INCLUDE_EQUIVALENCE_EVIDENCE: ${{ inputs.include_equivalence_evidence || 'false' }}
+      LEGACY_DAY: ${{ inputs.legacy_day || '' }}
+      LEGACY_SEGMENT: ${{ inputs.legacy_segment || '' }}
     steps:
       - name: Read SSM execution and exact progress prefix
         shell: bash
@@ -184,5 +194,191 @@ jobs:
         with:
           name: ng-step1-equivalence-${{ env.CANDIDATE_SHA }}
           path: /tmp/equivalence-evidence/EQUIVALENCE_DIAGNOSIS.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Diagnose exact legacy input projection
+        if: env.LEGACY_DAY != '' && env.LEGACY_SEGMENT != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$LEGACY_DAY" =~ ^[0-9]{8}$ ]]
+          [[ "$LEGACY_SEGMENT" =~ ^[0-9]{8}_[0-9]{8}$ ]]
+          root="/tmp/legacy-input-diagnosis"
+          launch_prefix="nymex/ng_mbo_5y_v0/step1_census/launches/$CANDIDATE_SHA"
+          mbp_key="nymex/nymex_cont/NG_$LEGACY_DAY.jsonl.gz"
+          seconds_key="$launch_prefix/preflight/segments/$LEGACY_SEGMENT.seconds.jsonl.gz"
+          mkdir -p "$root"
+          aws s3api head-object --bucket "$BUCKET" --key "$mbp_key" >/dev/null
+          aws s3api head-object --bucket "$BUCKET" --key "$seconds_key" >/dev/null
+          aws s3 cp "s3://$BUCKET/$mbp_key" "$root/MBP10.jsonl.gz" --only-show-errors
+          aws s3 cp "s3://$BUCKET/$seconds_key" "$root/RECOVERED_SECONDS.jsonl.gz" --only-show-errors
+          python - "$root" <<'PY'
+          import collections
+          import datetime as dt
+          import gzip
+          import hashlib
+          import json
+          import math
+          import os
+          import sys
+          from pathlib import Path
+
+          root = Path(sys.argv[1])
+          day = dt.datetime.strptime(os.environ["LEGACY_DAY"], "%Y%m%d").replace(tzinfo=dt.timezone.utc)
+          day_start = int(day.timestamp())
+          day_end = day_start + 86400
+
+          def blank(second):
+              return {
+                  "epoch_second": second,
+                  "legacy_rows": 0,
+                  "legacy_buy_qty": 0.0,
+                  "legacy_sell_qty": 0.0,
+                  "trade_count": 0,
+                  "last_trade_price": None,
+                  "book_imbalance_sum": 0.0,
+                  "book_imbalance_n": 0,
+              }
+
+          raw = {}
+          action_counts = collections.Counter()
+          raw_classified_trades = 0
+          raw_midpoint_skipped = 0
+          raw_invalid_trades = 0
+          with gzip.open(root / "MBP10.jsonl.gz", "rt", encoding="utf-8") as handle:
+              for line in handle:
+                  record = json.loads(line)
+                  second = int(float(record.get("ts_event", record.get("ts", 0.0))))
+                  if not day_start <= second < day_end:
+                      continue
+                  row = raw.setdefault(second, blank(second))
+                  row["legacy_rows"] += 1
+                  action = str(record.get("action"))
+                  action_counts[action] += 1
+                  bid_size = sum(float(record.get(f"bid_sz_{i:02d}", 0) or 0) for i in range(10))
+                  ask_size = sum(float(record.get(f"ask_sz_{i:02d}", 0) or 0) for i in range(10))
+                  total = bid_size + ask_size
+                  if total > 0:
+                      row["book_imbalance_sum"] += (bid_size - ask_size) / total
+                      row["book_imbalance_n"] += 1
+                  if action != "T":
+                      continue
+                  row["trade_count"] += 1
+                  price = float(record.get("price", 0) or 0)
+                  size = float(record.get("size", record.get("qty", 0)) or 0)
+                  bid = float(record.get("bid_px_00", 0) or 0)
+                  ask = float(record.get("ask_px_00", 0) or 0)
+                  if price > 0:
+                      row["last_trade_price"] = price
+                  if not (price > 0 and size > 0 and bid > 0 and ask > 0 and ask >= bid):
+                      raw_invalid_trades += 1
+                      continue
+                  midpoint = 0.5 * (bid + ask)
+                  if price > midpoint:
+                      row["legacy_buy_qty"] += size
+                      raw_classified_trades += 1
+                  elif price < midpoint:
+                      row["legacy_sell_qty"] += size
+                      raw_classified_trades += 1
+                  else:
+                      raw_midpoint_skipped += 1
+
+          recovered = {}
+          with gzip.open(root / "RECOVERED_SECONDS.jsonl.gz", "rt", encoding="utf-8") as handle:
+              for line in handle:
+                  row = json.loads(line)
+                  second = int(row["epoch_second"])
+                  if day_start <= second < day_end:
+                      recovered[second] = row
+
+          integer_fields = ("legacy_rows", "trade_count", "book_imbalance_n")
+          float_fields = (
+              "legacy_buy_qty", "legacy_sell_qty", "last_trade_price", "book_imbalance_sum",
+          )
+          mismatch_counts = collections.Counter()
+          examples = []
+          for second in sorted(set(raw) | set(recovered)):
+              left = raw.get(second, blank(second))
+              right = recovered.get(second, blank(second))
+              fields = []
+              for field in integer_fields:
+                  if int(left.get(field, 0)) != int(right.get(field, 0)):
+                      fields.append(field)
+                      mismatch_counts[field] += 1
+              for field in float_fields:
+                  lv = left.get(field)
+                  rv = right.get(field)
+                  if lv is None or rv is None:
+                      equal = lv is None and rv is None
+                  else:
+                      equal = math.isclose(float(lv), float(rv), rel_tol=0.0, abs_tol=1e-12)
+                  if not equal:
+                      fields.append(field)
+                      mismatch_counts[field] += 1
+              if fields and len(examples) < 50:
+                  examples.append({
+                      "epoch_second": second,
+                      "utc": dt.datetime.fromtimestamp(second, tz=dt.timezone.utc).isoformat(),
+                      "mismatch_fields": fields,
+                      "mbp10": {field: left.get(field) for field in (*integer_fields, *float_fields)},
+                      "recovered_mbo_projection": {
+                          field: right.get(field) for field in (*integer_fields, *float_fields)
+                      },
+                  })
+
+          def totals(rows):
+              return {
+                  "seconds": len(rows),
+                  "legacy_rows": sum(int(row.get("legacy_rows", 0)) for row in rows.values()),
+                  "trade_count": sum(int(row.get("trade_count", 0)) for row in rows.values()),
+                  "legacy_buy_qty": sum(float(row.get("legacy_buy_qty", 0)) for row in rows.values()),
+                  "legacy_sell_qty": sum(float(row.get("legacy_sell_qty", 0)) for row in rows.values()),
+                  "book_imbalance_observations": sum(
+                      int(row.get("book_imbalance_n", 0)) for row in rows.values()
+                  ),
+              }
+
+          diagnosis = {
+              "schema": "NG_EXHAUSTION_STEP1_LEGACY_INPUT_DIAGNOSIS_V1_20260823",
+              "candidate_commit": os.environ["CANDIDATE_SHA"],
+              "revealed_day": os.environ["LEGACY_DAY"],
+              "segment": os.environ["LEGACY_SEGMENT"],
+              "exact_mbp10_key": f"nymex/nymex_cont/NG_{os.environ['LEGACY_DAY']}.jsonl.gz",
+              "exact_recovered_seconds_key": (
+                  "nymex/ng_mbo_5y_v0/step1_census/launches/"
+                  f"{os.environ['CANDIDATE_SHA']}/preflight/segments/"
+                  f"{os.environ['LEGACY_SEGMENT']}.seconds.jsonl.gz"
+              ),
+              "gzip_sha256": {
+                  "mbp10": hashlib.sha256((root / "MBP10.jsonl.gz").read_bytes()).hexdigest(),
+                  "recovered_seconds": hashlib.sha256(
+                      (root / "RECOVERED_SECONDS.jsonl.gz").read_bytes()
+                  ).hexdigest(),
+              },
+              "mbp10_action_counts": dict(sorted(action_counts.items())),
+              "mbp10_classification": {
+                  "classified_trades": raw_classified_trades,
+                  "midpoint_skipped": raw_midpoint_skipped,
+                  "invalid_trades": raw_invalid_trades,
+              },
+              "mbp10_totals": totals(raw),
+              "recovered_mbo_projection_totals": totals(recovered),
+              "per_second_mismatch_counts": dict(sorted(mismatch_counts.items())),
+              "union_second_count": len(set(raw) | set(recovered)),
+              "first_mismatch_examples": examples,
+              "source_prefix_wide_enumeration_used": False,
+          }
+          output = root / "LEGACY_INPUT_DIAGNOSIS.json"
+          output.write_text(json.dumps(diagnosis, indent=2, sort_keys=True) + "\n")
+          print(output.read_text())
+          PY
+
+      - name: Retain exact legacy input diagnosis
+        if: env.LEGACY_DAY != '' && env.LEGACY_SEGMENT != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ng-step1-legacy-input-${{ env.CANDIDATE_SHA }}-${{ env.LEGACY_DAY }}
+          path: /tmp/legacy-input-diagnosis/LEGACY_INPUT_DIAGNOSIS.json
           if-no-files-found: error
           retention-days: 30
