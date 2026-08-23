@@ -1,0 +1,62 @@
+name: NG Exhaustion Five-Year Step-1 Cancel Exact Obsolete Command 20260823
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Exact obsolete census candidate commit
+        required: true
+      command_id:
+        description: Exact obsolete SSM command ID
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  cancel-exact-command:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      COMMAND_ID: ${{ inputs.command_id }}
+    steps:
+      - name: Verify identity and cancel only the exact obsolete command
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_comment="NG exhaustion five-year Step-1 preflight and launch $CANDIDATE_SHA"
+          actual_comment="$(aws ssm list-commands \
+            --command-id "$COMMAND_ID" \
+            --query 'Commands[0].Comment' \
+            --output text)"
+          actual_instance="$(aws ssm list-command-invocations \
+            --command-id "$COMMAND_ID" \
+            --query 'CommandInvocations[0].InstanceId' \
+            --output text)"
+          actual_status="$(aws ssm list-commands \
+            --command-id "$COMMAND_ID" \
+            --query 'Commands[0].Status' \
+            --output text)"
+          test "$actual_comment" = "$expected_comment"
+          test "$actual_instance" = "$INSTANCE_ID"
+          test "$actual_status" = 'InProgress'
+          aws ssm cancel-command \
+            --command-id "$COMMAND_ID" \
+            --instance-ids "$INSTANCE_ID"
+          for attempt in $(seq 1 20); do
+            status="$(aws ssm list-commands \
+              --command-id "$COMMAND_ID" \
+              --query 'Commands[0].Status' \
+              --output text)"
+            printf 'SSM status: %s\n' "$status"
+            case "$status" in
+              Cancelled|Failed|TimedOut|Cancelling) exit 0 ;;
+            esac
+            sleep 3
+          done
+          exit 1
