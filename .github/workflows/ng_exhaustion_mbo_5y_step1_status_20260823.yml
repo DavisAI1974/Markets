@@ -297,6 +297,7 @@ jobs:
               "legacy_buy_qty", "legacy_sell_qty", "last_trade_price", "book_imbalance_sum",
           )
           mismatch_counts = collections.Counter()
+          direct_aggressor_mismatch_counts = collections.Counter()
           examples = []
           for second in sorted(set(raw) | set(recovered)):
               left = raw.get(second, blank(second))
@@ -326,6 +327,17 @@ jobs:
                           field: right.get(field) for field in (*integer_fields, *float_fields)
                       },
                   })
+              for legacy_field, native_field in (
+                  ("legacy_buy_qty", "native_buy_qty"),
+                  ("legacy_sell_qty", "native_sell_qty"),
+              ):
+                  if not math.isclose(
+                      float(left.get(legacy_field, 0)),
+                      float(right.get(native_field, 0)),
+                      rel_tol=0.0,
+                      abs_tol=1e-12,
+                  ):
+                      direct_aggressor_mismatch_counts[legacy_field] += 1
 
           def totals(rows):
               return {
@@ -364,6 +376,13 @@ jobs:
               },
               "mbp10_totals": totals(raw),
               "recovered_mbo_projection_totals": totals(recovered),
+              "direct_mbo_aggressor_totals": {
+                  "buy_qty": sum(float(row.get("native_buy_qty", 0)) for row in recovered.values()),
+                  "sell_qty": sum(float(row.get("native_sell_qty", 0)) for row in recovered.values()),
+              },
+              "mbp10_vs_direct_mbo_per_second_mismatch_counts": dict(
+                  sorted(direct_aggressor_mismatch_counts.items())
+              ),
               "per_second_mismatch_counts": dict(sorted(mismatch_counts.items())),
               "union_second_count": len(set(raw) | set(recovered)),
               "first_mismatch_examples": examples,
