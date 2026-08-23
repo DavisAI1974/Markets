@@ -25,6 +25,11 @@ on:
         description: Exact recovered native segment containing legacy_day
         required: false
         default: ''
+      include_group_audit:
+        description: Map the exact revealed MBO event groups to authoritative MBP-10 rows
+        required: false
+        type: boolean
+        default: false
   push:
     branches:
       - chatgpt/ng-exhaustion-entry-timing-revival-20260818
@@ -49,7 +54,12 @@ jobs:
       INCLUDE_EQUIVALENCE_EVIDENCE: ${{ inputs.include_equivalence_evidence || 'false' }}
       LEGACY_DAY: ${{ inputs.legacy_day || '' }}
       LEGACY_SEGMENT: ${{ inputs.legacy_segment || '' }}
+      INCLUDE_GROUP_AUDIT: ${{ inputs.include_group_audit || 'false' }}
     steps:
+      - name: Check out exact diagnostic implementation
+        if: env.INCLUDE_GROUP_AUDIT == 'true'
+        uses: actions/checkout@v4
+
       - name: Read SSM execution and exact progress prefix
         shell: bash
         run: |
@@ -424,5 +434,35 @@ jobs:
         with:
           name: ng-step1-legacy-input-${{ env.CANDIDATE_SHA }}-${{ env.LEGACY_DAY }}
           path: /tmp/legacy-input-diagnosis/LEGACY_INPUT_DIAGNOSIS.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Audit exact MBO event groups against MBP-10
+        if: env.INCLUDE_GROUP_AUDIT == 'true' && env.LEGACY_DAY != '' && env.LEGACY_SEGMENT != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$LEGACY_DAY" =~ ^[0-9]{8}$ ]]
+          [[ "$LEGACY_SEGMENT" =~ ^[0-9]{8}_[0-9]{8}$ ]]
+          root="/tmp/legacy-group-audit"
+          mbp_key="nymex/nymex_cont/NG_$LEGACY_DAY.jsonl.gz"
+          mbo_key="nymex/ng_mbo_5y_v0/native/$LEGACY_SEGMENT/glbx-mdp3-$LEGACY_DAY.mbo.dbn.zst"
+          mkdir -p "$root"
+          aws s3api head-object --bucket "$BUCKET" --key "$mbp_key" >/dev/null
+          aws s3api head-object --bucket "$BUCKET" --key "$mbo_key" >/dev/null
+          aws s3 cp "s3://$BUCKET/$mbp_key" "$root/MBP10.jsonl.gz" --only-show-errors
+          aws s3 cp "s3://$BUCKET/$mbo_key" "$root/MBO.dbn.zst" --only-show-errors
+          python -m pip install --quiet databento==0.81.0
+          PYTHONPATH=research python research/ng_exhaustion_mbo_legacy_group_audit_20260823.py \
+            --mbp10 "$root/MBP10.jsonl.gz" \
+            --mbo "$root/MBO.dbn.zst" \
+            --output "$root/LEGACY_GROUP_AUDIT.json"
+
+      - name: Retain exact legacy group audit
+        if: env.INCLUDE_GROUP_AUDIT == 'true' && env.LEGACY_DAY != '' && env.LEGACY_SEGMENT != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ng-step1-legacy-groups-${{ env.CANDIDATE_SHA }}-${{ env.LEGACY_DAY }}
+          path: /tmp/legacy-group-audit/LEGACY_GROUP_AUDIT.json
           if-no-files-found: error
           retention-days: 30
