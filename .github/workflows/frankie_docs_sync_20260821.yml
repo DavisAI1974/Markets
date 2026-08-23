@@ -63,3 +63,4 @@ jobs:
           git pull --rebase origin chatgpt/ng-exhaustion-entry-timing-revival-20260818
           git push origin HEAD:chatgpt/ng-exhaustion-entry-timing-revival-20260818
 # Documentation only. No empirical launch.
+# retrigger docs sync 2026-08-22
