@@ -210,7 +210,12 @@ jobs:
                   break
               time.sleep(3)
           if invocation is None or invocation.get('Status') != 'Success' or invocation.get('ResponseCode') != 0:
-              raise SystemExit(f'fresh instance verification failed: {invocation}')
+              status = None if invocation is None else invocation.get('Status')
+              response_code = None if invocation is None else invocation.get('ResponseCode')
+              raise SystemExit(
+                  'fresh instance verification failed: '
+                  f'Status={status!r} ResponseCode={response_code!r}'
+              )
           values = {}
           for line in invocation.get('StandardOutputContent', '').splitlines():
               if line.startswith('VERIFY_') and '=' in line:

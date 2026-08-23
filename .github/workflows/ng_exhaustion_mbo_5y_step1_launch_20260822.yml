@@ -394,9 +394,6 @@ jobs:
                   receipt['ssm_status']=invocation.get('Status')
                   receipt['ssm_response_code']=invocation.get('ResponseCode')
                   stdout=invocation.get('StandardOutputContent','')
-                  stderr=invocation.get('StandardErrorContent','')
-                  receipt['sanitized_stdout_tail']=stdout[-6000:]
-                  receipt['sanitized_stderr_tail']=stderr[-6000:]
                   for line in stdout.splitlines():
                       if line.startswith('PREFLIGHT_COMPACT_B64='):
                           receipt['preflight']=json.loads(base64.b64decode(line.split('=',1)[1]))
