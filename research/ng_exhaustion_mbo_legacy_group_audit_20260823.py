@@ -313,11 +313,11 @@ def audit(mbp_path: Path, mbo_path: Path) -> dict[str, Any]:
         ],
         "first_mbp10_only_raw_field_examples": [
             {**signature_example(signature), "count": count}
-            for signature, count in mbp_only.most_common(50)
+            for signature, count in mbp_only.most_common(100)
         ],
         "first_projection_only_raw_field_examples": [
             {**signature_example(signature), "count": count}
-            for signature, count in projection_only.most_common(50)
+            for signature, count in projection_only.most_common(100)
         ],
         "matched_mbp10_row_count": matched_mbp_rows,
         "unmatched_mbp10_row_count": len(unmatched_rows),
