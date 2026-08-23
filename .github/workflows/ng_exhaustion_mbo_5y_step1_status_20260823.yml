@@ -6,9 +6,14 @@ on:
       candidate_sha:
         description: Exact census candidate commit
         required: true
-        default: 55a8b640b7f5d9d3ee8115977cc79ee2231d4291
+        default: e217d4cb03438dd4bff70f21e96762aa851b015f
       include_segment_receipts:
         description: Print exact preflight child receipts for boundary/recovery diagnosis
+        required: false
+        type: boolean
+        default: false
+      include_equivalence_evidence:
+        description: Retrieve and join the exact retained overlap mismatch evidence
         required: false
         type: boolean
         default: false
@@ -31,8 +36,9 @@ jobs:
       AWS_DEFAULT_REGION: us-east-2
       INSTANCE_ID: i-08cee7171c0a76a04
       BUCKET: bento-568968024170-us-east-2-an
-      CANDIDATE_SHA: ${{ inputs.candidate_sha || '55a8b640b7f5d9d3ee8115977cc79ee2231d4291' }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha || 'e217d4cb03438dd4bff70f21e96762aa851b015f' }}
       INCLUDE_SEGMENT_RECEIPTS: ${{ inputs.include_segment_receipts || 'false' }}
+      INCLUDE_EQUIVALENCE_EVIDENCE: ${{ inputs.include_equivalence_evidence || 'false' }}
     steps:
       - name: Read SSM execution and exact progress prefix
         shell: bash
@@ -75,3 +81,108 @@ jobs:
               aws s3 cp "s3://$BUCKET/$receipt_key" - --only-show-errors
             done
           fi
+
+      - name: Retrieve exact retained equivalence evidence
+        if: env.INCLUDE_EQUIVALENCE_EVIDENCE == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="/tmp/equivalence-evidence"
+          prefix="nymex/ng_mbo_5y_v0/step1_census/launches/$CANDIDATE_SHA"
+          mkdir -p "$root"
+          aws s3 cp \
+            "s3://$BUCKET/$prefix/preflight/overlap_preflight/LEGACY_CONTROL_OVERLAP_EQUIVALENCE.json" \
+            "$root/LEGACY_CONTROL_OVERLAP_EQUIVALENCE.json" --only-show-errors
+          aws s3 cp \
+            "s3://$BUCKET/$prefix/preflight/overlap_preflight/LEGACY_CONTROL_OVERLAP_MISMATCHES.jsonl.gz" \
+            "$root/LEGACY_CONTROL_OVERLAP_MISMATCHES.jsonl.gz" --only-show-errors
+          aws s3 cp \
+            "s3://$BUCKET/$prefix/preflight/overlap_preflight/LEGACY_CONTROL_EVENTS.jsonl.gz" \
+            "$root/LEGACY_CONTROL_EVENTS.jsonl.gz" --only-show-errors
+          aws s3 cp \
+            "s3://$BUCKET/$prefix/candidate/package.tgz" \
+            "$root/package.tgz" --only-show-errors
+          tar -xOzf "$root/package.tgz" frozen/FROZEN_OVERLAP_EVENT_TABLE.jsonl.gz \
+            > "$root/FROZEN_OVERLAP_EVENT_TABLE.jsonl.gz"
+          python - "$root" <<'PY'
+          import collections
+          import datetime as dt
+          import gzip
+          import hashlib
+          import json
+          import os
+          import sys
+          from pathlib import Path
+
+          root = Path(sys.argv[1])
+
+          def rows(path):
+              with gzip.open(path, "rt", encoding="utf-8") as handle:
+                  return [json.loads(line) for line in handle]
+
+          equivalence = json.loads((root / "LEGACY_CONTROL_OVERLAP_EQUIVALENCE.json").read_text())
+          mismatches = rows(root / "LEGACY_CONTROL_OVERLAP_MISMATCHES.jsonl.gz")
+          frozen_rows = rows(root / "FROZEN_OVERLAP_EVENT_TABLE.jsonl.gz")
+          actual_rows = rows(root / "LEGACY_CONTROL_EVENTS.jsonl.gz")
+          frozen = {row["event_id"]: row for row in frozen_rows}
+          actual = {row["event_id"]: row for row in actual_rows}
+
+          def utc_from_event(row):
+              if not row or row.get("t0_idx") is None:
+                  return None
+              sunday = dt.datetime.strptime(str(row["week_sunday"]), "%Y%m%d").replace(tzinfo=dt.timezone.utc)
+              return (sunday + dt.timedelta(seconds=int(row["t0_idx"]))).isoformat()
+
+          joined = []
+          for mismatch in mismatches:
+              frozen_id = mismatch.get("expected_event_id")
+              actual_id = mismatch.get("actual_event_id")
+              if mismatch.get("kind") == "FROZEN_ONLY":
+                  frozen_id = mismatch.get("event_id")
+              elif mismatch.get("kind") == "LEGACY_CONTROL_ONLY":
+                  actual_id = mismatch.get("event_id")
+              elif mismatch.get("origin_event_id"):
+                  frozen_id = mismatch["origin_event_id"]
+                  actual_id = mismatch["origin_event_id"]
+              frozen_row = frozen.get(frozen_id)
+              actual_row = actual.get(actual_id)
+              joined.append({
+                  "mismatch": mismatch,
+                  "frozen_event": frozen_row,
+                  "legacy_control_event": actual_row,
+                  "frozen_t0_utc": utc_from_event(frozen_row),
+                  "legacy_control_t0_utc": utc_from_event(actual_row),
+              })
+
+          artifact_hashes = {}
+          for name in (
+              "LEGACY_CONTROL_OVERLAP_EQUIVALENCE.json",
+              "LEGACY_CONTROL_OVERLAP_MISMATCHES.jsonl.gz",
+              "LEGACY_CONTROL_EVENTS.jsonl.gz",
+              "FROZEN_OVERLAP_EVENT_TABLE.jsonl.gz",
+          ):
+              artifact_hashes[name] = hashlib.sha256((root / name).read_bytes()).hexdigest()
+          diagnosis = {
+              "schema": "NG_EXHAUSTION_STEP1_RETAINED_EQUIVALENCE_DIAGNOSIS_V1_20260823",
+              "candidate_commit": os.environ["CANDIDATE_SHA"],
+              "equivalence": equivalence,
+              "failing_gates": sorted(key for key, passed in equivalence.get("gates", {}).items() if not passed),
+              "mismatch_kind_counts": dict(sorted(collections.Counter(row["kind"] for row in mismatches).items())),
+              "retained_mismatch_count": len(mismatches),
+              "joined_mismatches": joined,
+              "artifact_sha256": artifact_hashes,
+              "source_prefix_wide_enumeration_used": False,
+          }
+          output = root / "EQUIVALENCE_DIAGNOSIS.json"
+          output.write_text(json.dumps(diagnosis, indent=2, sort_keys=True) + "\n")
+          print(output.read_text())
+          PY
+
+      - name: Retain exact equivalence diagnosis
+        if: env.INCLUDE_EQUIVALENCE_EVIDENCE == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ng-step1-equivalence-${{ env.CANDIDATE_SHA }}
+          path: /tmp/equivalence-evidence/EQUIVALENCE_DIAGNOSIS.json
+          if-no-files-found: error
+          retention-days: 30
