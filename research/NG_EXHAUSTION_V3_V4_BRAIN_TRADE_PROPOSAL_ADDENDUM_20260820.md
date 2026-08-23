@@ -329,3 +329,27 @@ That is not a failed chain. It is evidence that predictive state and execution t
 A later research proposal should therefore preserve the existing continuation-driven translator and test a **separate structural-state-conditioned translator** after the relevant P/O/S/X timing has independently validated. Any such translator remains causal, model-specific, hindsight-proof and subject to the same cost/stability/validation gates.
 
 Nothing in this section promotes a trade or changes permanent Frankie.
+
+---
+
+## M. Frankie metacognitive-loop proposal and provisional implementation — 2026-08-21
+
+Frankie's proposed meta-brain is now explicit: after evidence reveal, Frankie compares the frozen hypothesis/prediction with what was actually found; audits contradictions, assumptions, path soundness, missing evidence, alternative mechanisms, and **market learning versus measurement-apparatus learning**; and proposes only the smallest next discriminating test.
+
+A-E specialists perform independent local post-evidence sidecars. Frankie performs a separate local coordinator audit and then cross-specialist reconciliation for shared assumptions and genuine disagreements. Agreement is not truth; majority vote cannot resolve a scientific claim. Completed first-lock/evidence are immutable, no chain/case can be dropped, and any revision is `NEXT_RUN_ONLY`.
+
+A bounded provisional implementation exists in `research/kalshi/frankie_meta_loop_s138.py` and `research/kalshi/frankie_meta_loop_coordinator_s138.py`, wired through `research/kalshi/agent_frankie.py`; coordinator validation passed 18/18 and Frankie selftest passed 15/15. This is engineering plumbing and a brain proposal, **not permanent Frankie brain promotion**. It should surround future V4 research because nonconfirmatory outcomes are reconciliation/problem-definition evidence rather than failed chains.
+
+---
+
+## 2026-08-21 current-state continuation addendum
+
+This addendum supersedes earlier operational status only; historical findings and provenance remain intact.
+
+- The V4 pilot/D-year guard, end-to-end isolated adapter, detector-intensity native/proxy semantics, and Frankie meta-loop are implemented and tested. Focused combined validation is 85/85; Frankie selftest is 15/15.
+- The original combined candidate `9287a1fc2643e34deae067b3fd2e96c2c199b3f4` correctly remained not ready because four registry-integrity tests exposed two stale whole-file byte pins. Semantic bindings remained intact; the repair was hash-only.
+- A fresh post-repair full regression has now landed for exact candidate `e1f42d71629836e0c262c3d409c31795c60062c2`: `PROVISIONAL_READY_FOR_EXACT_CANDIDATE`, 437 full Frankie tests passed plus 38 subtests, focused suite 85/85, selftest 15/15, source integrity passed.
+- This is engineering/pipeline readiness only. It establishes no empirical superiority, calibration adequacy, universal D law, trade edge, permanent Frankie readiness, or D4/D5 population validation. No release/virgin holdout was consumed and the six P0 real empirical receipts remain separate and unexecuted.
+- Five-year Step-1 MBO archive preparation is separate. The archive is complete enough for exact-source selection, but the structural census has not yet produced an authoritative five-year population. Prefix-wide DBN enumeration remains forbidden because duplicate intervals/partial overlaps exist. The remaining execution seam is exact canonical object selection, LEGACY_CONTROL overlap/equivalence verification, dual structural-census wiring, and result-bearing Step-1 launch under the user's 2026-08-22 authorization to finish those pieces.
+- Preserve every chain/case and every positive, negative, weak, sparse, losing, censored, inconclusive, or model-disagreement observation as evidence. `FLAG_AND_DECOMPOSE_NOT_AUTO_KILL` remains binding.
+- No permanent Frankie/Frankie 1/detector/canonical evidence/Phase-1/Phase-2/runway-clock/`spawn.py`/SSOS mutation or play promotion is authorized by this addendum.
