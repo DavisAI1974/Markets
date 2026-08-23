@@ -51,6 +51,23 @@ def expected_intervals(start: dt.date = START, end: dt.date = END) -> list[tuple
     return rows
 
 
+def acquisition_intervals(start: dt.date = START, end: dt.date = END) -> list[tuple[dt.date, dt.date]]:
+    """Return the exact year-lane/month segments written by native acquisition.
+
+    The acquisition lanes were year-bounded at August 20, so four August
+    calendar intervals are represented by two adjacent native manifests.  This
+    deterministic 65-segment grid is reconciled into the scientific 61-month
+    grid below; it is not discovered by listing S3.
+    """
+    rows = []
+    lane_start = start
+    while lane_start < end:
+        lane_end = min(dt.date(lane_start.year + 1, lane_start.month, lane_start.day), end)
+        rows.extend(expected_intervals(lane_start, lane_end))
+        lane_start = lane_end
+    return rows
+
+
 def segment_id(start: dt.date, end: dt.date) -> str:
     return f"{start:%Y%m%d}_{end:%Y%m%d}"
 
@@ -111,72 +128,132 @@ def freeze_manifest(
     exclusions: list[dict[str, Any]] = []
     seen_keys: set[str] = set()
 
+    native_grid = acquisition_intervals(START, END)
+    native_by_expected: dict[tuple[dt.date, dt.date], list[tuple[dt.date, dt.date]]] = {}
+    for source_start, source_end in native_grid:
+        parents = [
+            pair for pair in expected
+            if pair[0] <= source_start and source_end <= pair[1]
+        ]
+        if len(parents) != 1:
+            raise ManifestFreezeError(
+                f"native segment {source_start}..{source_end} does not map to one expected interval"
+            )
+        native_by_expected.setdefault(parents[0], []).append((source_start, source_end))
+
     for start, end in expected:
         seg = segment_id(start, end)
         job_key = f"{prefix}_jobs/{seg}.json"
-        manifest_key = f"{prefix}manifests/{seg}.json"
         try:
             job_raw = get_json_bytes(job_key)
-            manifest_raw = get_json_bytes(manifest_key)
         except Exception as exc:
-            raise ManifestFreezeError(f"required exact provenance missing for {seg}: {exc}") from exc
+            raise ManifestFreezeError(f"required exact job provenance missing for {seg}: {exc}") from exc
         job = json.loads(job_raw)
-        source_manifest = json.loads(manifest_raw)
-        for source_name, row in ((job_key, job), (manifest_key, source_manifest)):
-            _require_equal(row, "start", start.isoformat(), source_name)
-            _require_equal(row, "end", end.isoformat(), source_name)
-        _require_equal(source_manifest, "segment", seg, manifest_key)
-        _require_equal(source_manifest, "dataset", DATASET, manifest_key)
-        _require_equal(source_manifest, "symbol", SYMBOL, manifest_key)
-        _require_equal(source_manifest, "stype_in", STYPE_IN, manifest_key)
-        _require_equal(source_manifest, "data_schema", SCHEMA, manifest_key)
+        _require_equal(job, "start", start.isoformat(), job_key)
+        _require_equal(job, "end", end.isoformat(), job_key)
         job_id = str(job.get("job_id") or "")
         if not job_id:
             raise ManifestFreezeError(f"{job_key}: canonical job_id unavailable")
-        _require_equal(source_manifest, "job_id", job_id, manifest_key)
-        files = source_manifest.get("files")
-        if not isinstance(files, list) or not files:
-            raise ManifestFreezeError(f"{manifest_key}: native file list is empty")
 
         interval_objects = []
-        for entry in files:
-            normalized = _normalize_file_entry(entry, prefix, seg)
-            key = normalized["key"]
-            if key in seen_keys:
-                raise ManifestFreezeError(f"canonical native key selected twice: {key}")
-            head = head_object(key)
-            actual_bytes = int(head.get("ContentLength", 0))
-            metadata = {str(k).lower(): str(v) for k, v in (head.get("Metadata") or {}).items()}
-            if actual_bytes != normalized["bytes"]:
+        native_manifests = []
+        native_parts = sorted(native_by_expected.get((start, end), []))
+        cursor = start
+        for source_start, source_end in native_parts:
+            if source_start != cursor:
+                raise ManifestFreezeError(f"native manifest coverage gap inside {seg} at {cursor}")
+            cursor = source_end
+        if cursor != end:
+            raise ManifestFreezeError(f"native manifest coverage incomplete inside {seg}: ends {cursor}")
+
+        for source_start, source_end in native_parts:
+            source_seg = segment_id(source_start, source_end)
+            manifest_key = f"{prefix}manifests/{source_seg}.json"
+            try:
+                manifest_raw = get_json_bytes(manifest_key)
+            except Exception as exc:
                 raise ManifestFreezeError(
-                    f"{key}: content length drift manifest={normalized['bytes']} s3={actual_bytes}"
+                    f"required deterministic native manifest missing for {source_seg}: {exc}"
+                ) from exc
+            source_manifest = json.loads(manifest_raw)
+            _require_equal(source_manifest, "start", source_start.isoformat(), manifest_key)
+            _require_equal(source_manifest, "end", source_end.isoformat(), manifest_key)
+            _require_equal(source_manifest, "segment", source_seg, manifest_key)
+            _require_equal(source_manifest, "dataset", DATASET, manifest_key)
+            _require_equal(source_manifest, "symbol", SYMBOL, manifest_key)
+            _require_equal(source_manifest, "stype_in", STYPE_IN, manifest_key)
+            _require_equal(source_manifest, "data_schema", SCHEMA, manifest_key)
+            native_job_id = str(source_manifest.get("job_id") or "")
+            if not native_job_id:
+                raise ManifestFreezeError(f"{manifest_key}: native job_id unavailable")
+            if len(native_parts) == 1 and native_job_id != job_id:
+                raise ManifestFreezeError(
+                    f"{manifest_key}: exact native job differs from canonical receipt {job_id}"
                 )
-            if metadata.get("sha256", "").lower() != normalized["sha256"]:
-                raise ManifestFreezeError(f"{key}: S3 SHA-256 metadata drift")
-            for field, wanted in (
-                ("dataset", DATASET), ("schema", SCHEMA), ("symbol", SYMBOL),
-                ("stype", STYPE_IN), ("job_id", job_id), ("segment", seg),
-            ):
-                if metadata.get(field) != wanted:
+            files = source_manifest.get("files")
+            if not isinstance(files, list) or not files:
+                raise ManifestFreezeError(f"{manifest_key}: native file list is empty")
+            native_manifests.append({
+                "segment": source_seg,
+                "interval": {"start": source_start.isoformat(), "end": source_end.isoformat()},
+                "native_job_id": native_job_id,
+                "segment_manifest_key": manifest_key,
+                "segment_manifest_sha256": hashlib.sha256(manifest_raw).hexdigest(),
+            })
+
+            for entry in files:
+                normalized = _normalize_file_entry(entry, prefix, source_seg)
+                key = normalized["key"]
+                if key in seen_keys:
+                    raise ManifestFreezeError(f"canonical native key selected twice: {key}")
+                head = head_object(key)
+                actual_bytes = int(head.get("ContentLength", 0))
+                metadata = {str(k).lower(): str(v) for k, v in (head.get("Metadata") or {}).items()}
+                if actual_bytes != normalized["bytes"]:
                     raise ManifestFreezeError(
-                        f"{key}: S3 metadata {field} drift expected={wanted!r} actual={metadata.get(field)!r}"
+                        f"{key}: content length drift manifest={normalized['bytes']} s3={actual_bytes}"
                     )
-            obj = {
-                **normalized,
-                "bucket": bucket,
+                if metadata.get("sha256", "").lower() != normalized["sha256"]:
+                    raise ManifestFreezeError(f"{key}: S3 SHA-256 metadata drift")
+                for field, wanted in (
+                    ("dataset", DATASET), ("schema", SCHEMA), ("symbol", SYMBOL),
+                    ("stype", STYPE_IN), ("job_id", native_job_id), ("segment", source_seg),
+                ):
+                    if metadata.get(field) != wanted:
+                        raise ManifestFreezeError(
+                            f"{key}: S3 metadata {field} drift expected={wanted!r} actual={metadata.get(field)!r}"
+                        )
+                selection_reason = (
+                    "EXACT_EXPECTED_INTERVAL_EXACT_JOB_AND_SEGMENT_MANIFEST"
+                    if len(native_parts) == 1
+                    else "ADJACENT_NATIVE_SEGMENTS_EXACTLY_TILE_EXPECTED_INTERVAL_WITHOUT_OVERLAP"
+                )
+                obj = {
+                    **normalized,
+                    "bucket": bucket,
+                    "interval": {"start": start.isoformat(), "end": end.isoformat()},
+                    "segment": source_seg,
+                    "canonical_interval_job_id": job_id,
+                    "native_segment_job_id": native_job_id,
+                    "requested_symbol": SYMBOL,
+                    "stype_in": STYPE_IN,
+                    "raw_contract_resolution": "DBN_METADATA_DURING_CAUSAL_REPLAY",
+                    "selection_reason": selection_reason,
+                    "s3_etag": str(head.get("ETag", "")).strip('"'),
+                    "s3_last_modified": _head_last_modified(head),
+                }
+                objects.append(obj)
+                interval_objects.append(key)
+                seen_keys.add(key)
+
+        if len(native_parts) > 1:
+            exclusions.append({
+                "kind": "UNMATERIALIZED_FULL_MONTH_CANONICAL_JOB",
                 "interval": {"start": start.isoformat(), "end": end.isoformat()},
-                "segment": seg,
-                "canonical_job_id": job_id,
-                "requested_symbol": SYMBOL,
-                "stype_in": STYPE_IN,
-                "raw_contract_resolution": "DBN_METADATA_DURING_CAUSAL_REPLAY",
-                "selection_reason": "EXACT_EXPECTED_INTERVAL_EXACT_JOB_AND_SEGMENT_MANIFEST",
-                "s3_etag": str(head.get("ETag", "")).strip('"'),
-                "s3_last_modified": _head_last_modified(head),
-            }
-            objects.append(obj)
-            interval_objects.append(key)
-            seen_keys.add(key)
+                "excluded_job_id": job_id,
+                "selected_native_job_ids": [x["native_job_id"] for x in native_manifests],
+                "reason": "EXISTING_ADJACENT_NATIVE_MANIFESTS_EXACTLY_TILE_INTERVAL;_DO_NOT_REDUPLICATE_BYTES",
+            })
 
         legacy_key = f"{prefix}_jobs/{start:%Y-%m}.json"
         legacy_result = get_json_optional(legacy_key)
@@ -204,8 +281,7 @@ def freeze_manifest(
             "canonical_job_id": job_id,
             "job_receipt_key": job_key,
             "job_receipt_sha256": hashlib.sha256(job_raw).hexdigest(),
-            "segment_manifest_key": manifest_key,
-            "segment_manifest_sha256": hashlib.sha256(manifest_raw).hexdigest(),
+            "native_manifests": native_manifests,
             "canonical_object_count": len(interval_objects),
             "canonical_object_keys": interval_objects,
         })
@@ -236,10 +312,11 @@ def freeze_manifest(
         "requested_symbol": SYMBOL,
         "stype_in": STYPE_IN,
         "approved_range": {"start": START.isoformat(), "end": END.isoformat()},
-        "selection_policy": "EXACT_61_INTERVAL_RECEIPTS_AND_EXACT_SEGMENT_MANIFESTS_ONLY",
+        "selection_policy": "EXACT_61_INTERVAL_RECEIPTS_RECONCILED_TO_DETERMINISTIC_65_NATIVE_SEGMENT_GRID",
         "prefix_wide_enumeration_used": False,
         "expected_interval_count": len(expected),
         "selected_interval_count": len(selected_intervals),
+        "deterministic_native_segment_count": len(native_grid),
         "selected_intervals": selected_intervals,
         "canonical_object_count": len(objects),
         "canonical_total_bytes": sum(x["bytes"] for x in objects),
