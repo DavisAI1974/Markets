@@ -106,7 +106,7 @@ jobs:
           for key,want in exact.items():
               if audit.get(key) != want:
                   raise SystemExit(f'one-day canary evidence drift: {key}')
-          examples=audit.get('mbp10_only_mbo_event_group_examples') or []
+          examples=audit.get('first_mbp10_only_detector_input_examples') or []
           if len(examples) != 1:
               raise SystemExit('retained MBP-only duplicate evidence drift')
           compact={
