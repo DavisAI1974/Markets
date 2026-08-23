@@ -5,6 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 WORKFLOW = ROOT / ".github/workflows/frankie_v4_follow_on_agents_20260821.yml"
+REPAIR_WORKFLOW = ROOT / ".github/workflows/frankie_v4_follow_on_repair_20260821.yml"
 BASELINE = ROOT / "research/kalshi/NG_EXHAUSTION_V4_PROTECTED_BASELINE_20260821.json"
 
 
@@ -13,6 +14,14 @@ def test_follow_on_workflow_uses_existing_hash_baseline_not_missing_git_object()
     assert "bd3d729780a025c1fbffd4f219854a609fa5ac6a" not in source
     assert "NG_EXHAUSTION_V4_PROTECTED_BASELINE_20260821.json" in source
     assert "follow-on-agent:\n    if: github.event_name == 'workflow_dispatch'" in source
+
+
+def test_obsolete_repair_workflow_is_inert_and_read_only():
+    source = REPAIR_WORKFLOW.read_text(encoding="utf-8")
+    assert "workflow_dispatch" not in source
+    assert "contents: write" not in source
+    assert "git push" not in source
+    assert "if: ${{ false }}" in source
 
 
 def test_protected_baseline_matches_current_files():

@@ -10,6 +10,6 @@
 - [x] Repair the stale protected-Frankie baseline check without auto-running the large suite on push.
 - [x] Run focused and relevant regression tests plus workflow static checks.
 - [x] Complete three bounded independent adversarial review cycles and address the findings.
-- [ ] Commit and push preparation only; do not dispatch Frankie.
+- [x] Commit and push preparation only; do not dispatch Frankie.
 - [ ] After Step-1 completes, run completion verification and freeze the registry artifact.
 - [ ] Select and authorize the exact small pilot/model only after the frozen registry exists.
