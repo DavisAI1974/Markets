@@ -1,0 +1,204 @@
+name: NG Exhaustion Step-1 Parallel Three-Month Tranche 20260823
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - .github/workflows/ng_exhaustion_step1_parallel_3mo_20260823.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ng-exhaustion-step1-parallel-3mo-20260823
+  cancel-in-progress: false
+
+jobs:
+  launch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      CANDIDATE_SHA: 0d318335825b4a0e19a5a2881522f3da0374788e
+      BRANCH: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BRANCH }}
+          fetch-depth: 0
+
+      - name: Stop serial controller and launch three isolated segment workers
+        id: launch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, shlex
+          candidate=os.environ['CANDIDATE_SHA']
+          base=f'/mnt/markets/ng_exhaustion_step1_5y_20260822/{candidate}'
+          repo=f'{base}/repo'
+          full=f'{base}/full'
+          cred=f'{base}/aws.env'
+          serial=f'ng-exhaustion-step1-{candidate[:12]}'
+          targets=[
+              ('20210901_20211001',0),
+              ('20211001_20211101',1),
+              ('20211101_20211201',2),
+          ]
+          worker=f'''{base}/parallel_3mo_worker.py'''
+          worker_source=r'''#!/usr/bin/env python3
+          import json
+          import os
+          import sys
+          import traceback
+          from pathlib import Path
+          import boto3
+
+          base=Path(sys.argv[1])
+          segment=sys.argv[2]
+          repo=base/'repo'
+          full=base/'full'
+          sys.path.insert(0,str(repo/'research'))
+          os.chdir(repo)
+          import ng_exhaustion_mbo_5y_step1_census_20260822 as census
+
+          manifest_path=repo/'research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json'
+          manifest=census.load_manifest(manifest_path)
+          stage=full/'stage'
+          out=full/'segments'
+          out.mkdir(parents=True,exist_ok=True)
+          s3=boto3.client('s3',region_name=manifest.get('region','us-east-2'))
+          progress_prefix=f"nymex/ng_mbo_5y_v0/step1_census/launches/{os.environ['CANDIDATE_SHA']}/full/progress"
+
+          def upload_progress(path: Path):
+              try:
+                  rel=path.resolve().relative_to(full.resolve()).as_posix()
+                  s3.upload_file(str(path),manifest['bucket'],f'{progress_prefix}/{rel}')
+              except Exception:
+                  traceback.print_exc()
+
+          staged=[]
+          try:
+              engine=census.material_hashes()
+              scope=census._segment_source_scope(manifest,segment,None)
+              prior=census._resumable_segment_receipt(manifest,segment,out,engine,scope)
+              if prior is not None:
+                  print(json.dumps({'segment':segment,'status':'ALREADY_COMPLETE','receipt_sha256':prior['receipt_sha256']},sort_keys=True),flush=True)
+                  upload_progress(out/f'{segment}.receipt.json')
+                  raise SystemExit(0)
+              staged=census.stage_segment(manifest,segment,stage,s3,None)
+              receipt=census.process_segment(
+                  manifest_path,
+                  segment,
+                  stage,
+                  out,
+                  heartbeat_on_write=upload_progress,
+              )
+              upload_progress(out/f'{segment}.receipt.json')
+              print(json.dumps({'segment':segment,'status':'SEGMENT_COMPLETE','receipt_sha256':receipt['receipt_sha256']},sort_keys=True),flush=True)
+          finally:
+              for path in staged:
+                  Path(path).unlink(missing_ok=True)
+          '''
+          command_lines=[
+              'set -euo pipefail',
+              f'base={shlex.quote(base)}',
+              f'repo={shlex.quote(repo)}',
+              f'full={shlex.quote(full)}',
+              f'cred={shlex.quote(cred)}',
+              f'serial={shlex.quote(serial)}',
+              'test -d "$repo"',
+              'test -x "$base/venv/bin/python"',
+              'test -s "$cred"',
+              'test "$(nproc)" -ge 4',
+              'mkdir -p "$full/segments" "$full/stage" "$full/parallel_3mo"',
+              'echo BEFORE_SERIAL_STATE=$(systemctl is-active "$serial" || true)',
+              'if [ -f "$full/CONTROLLER_HEARTBEAT.json" ]; then python3 -c "import json,sys; x=json.load(open(sys.argv[1])); print(\"BEFORE_ACTIVE_SEGMENT=\"+str(x.get(\"active_segment\"))); print(\"BEFORE_COMPLETED_SEGMENTS=\"+str(x.get(\"completed_segments\")))" "$full/CONTROLLER_HEARTBEAT.json"; fi',
+              'echo BEFORE_RECEIPTS=$(find "$full/segments" -maxdepth 1 -name "*.receipt.json" -type f | wc -l)',
+              'if systemctl is-active --quiet "$serial"; then sudo systemctl stop "$serial"; fi',
+              'test "$(systemctl is-active "$serial" || true)" != active',
+              'echo AFTER_SERIAL_STATE=$(systemctl is-active "$serial" || true)',
+              f"python3 -c {shlex.quote('from pathlib import Path; p=Path('+repr(worker)+'); p.write_text('+repr(worker_source)+'); p.chmod(0o700)')}",
+          ]
+          for segment,core in targets:
+              unit=f'ng-exhaustion-step1-p3m-{segment}'
+              log=f'{full}/parallel_3mo/{segment}.log'
+              run=(
+                  f'set -euo pipefail; set -a; source {shlex.quote(cred)}; set +a; '
+                  f'export CANDIDATE_SHA={shlex.quote(candidate)}; '
+                  f'cd {shlex.quote(repo)}; source {shlex.quote(base+"/venv/bin/activate")}; '
+                  f'exec {shlex.quote(base+"/venv/bin/python")} {shlex.quote(worker)} {shlex.quote(base)} {shlex.quote(segment)} '
+                  f'> {shlex.quote(log)} 2>&1'
+              )
+              command_lines += [
+                  f'if [ -f "$full/segments/{segment}.receipt.json" ] && [ -f "$full/segments/{segment}.seconds.jsonl.gz" ]; then echo TARGET_{segment}=ALREADY_PRESENT; else sudo systemd-run --unit={shlex.quote(unit)} --collect --property=CPUAffinity={core} --property=Nice=0 /bin/bash -lc {shlex.quote(run)} >/dev/null; echo TARGET_{segment}=LAUNCHED_CORE_{core}; fi',
+              ]
+          command_lines += [
+              'sleep 3',
+              'for u in ng-exhaustion-step1-p3m-20210901_20211001 ng-exhaustion-step1-p3m-20211001_20211101 ng-exhaustion-step1-p3m-20211101_20211201; do echo UNIT_${u}=$(systemctl is-active "$u" || true); done',
+              'ps -eo pid,ppid,psr,etimes,pcpu,pmem,stat,comm --sort=-pcpu | head -n 12',
+              'echo NPROC=$(nproc)',
+              'echo LAUNCH_STATUS=PARALLEL_THREE_MONTH_TRANCHE_STARTED',
+          ]
+          command='\n'.join(command_lines)
+          with open('/tmp/step1-parallel-3mo-params.json','w',encoding='utf-8') as f:
+              json.dump({'commands':['/bin/bash -lc '+shlex.quote(command)]},f)
+          PY
+
+          command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Accelerate Step-1 three-month V4 tranche $CANDIDATE_SHA" \
+            --parameters file:///tmp/step1-parallel-3mo-params.json \
+            --timeout-seconds 300 \
+            --query 'Command.CommandId' --output text)"
+          aws ssm wait command-executed --command-id "$command_id" --instance-id "$INSTANCE_ID"
+          aws ssm get-command-invocation \
+            --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json | tee /tmp/parallel-launch-result.json
+          test "$(python -c "import json; print(json.load(open('/tmp/parallel-launch-result.json'))['Status'])")" = Success
+          test "$(python -c "import json; print(json.load(open('/tmp/parallel-launch-result.json'))['ResponseCode'])")" = 0
+          echo "command_id=$command_id" >> "$GITHUB_OUTPUT"
+
+      - name: Retain launch evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import datetime as dt, json, os
+          from pathlib import Path
+          result=json.load(open('/tmp/parallel-launch-result.json'))
+          receipt={
+            'schema':'NG_EXHAUSTION_STEP1_PARALLEL_3MO_LAUNCH_V1_20260823',
+            'candidate_commit':os.environ['CANDIDATE_SHA'],
+            'instance_id':os.environ['INSTANCE_ID'],
+            'serial_controller_stopped_for_tranche':True,
+            'target_segments':['20210901_20211001','20211001_20211101','20211101_20211201'],
+            'target_calendar_window':'2021-09-01T00:00:00Z/2021-12-01T00:00:00Z',
+            'parallel_worker_count':3,
+            'cpu_affinity':[0,1,2],
+            'ssm_command_id':'${{ steps.launch.outputs.command_id }}',
+            'ssm_status':result['Status'],
+            'ssm_response_code':result['ResponseCode'],
+            'ssm_standard_output':result.get('StandardOutput',''),
+            'ssm_standard_error':result.get('StandardError',''),
+            'launched_at_utc':dt.datetime.now(dt.timezone.utc).isoformat(),
+            'predictive_or_trading_experiment_run':False,
+            'permanent_frankie_mutated':False,
+            'release_or_virgin_holdout_consumed':False,
+          }
+          path=Path('research/kalshi/NG_EXHAUSTION_STEP1_PARALLEL_3MO_LAUNCH_20260823.json')
+          path.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/kalshi/NG_EXHAUSTION_STEP1_PARALLEL_3MO_LAUNCH_20260823.json
+          git commit -m 'research: retain three-month parallel launch evidence'
+          git push origin HEAD:"$BRANCH"
