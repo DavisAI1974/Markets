@@ -1,0 +1,558 @@
+name: NG Exhaustion Five-Year Step-1 Durable Launch Verification 20260823
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Exact launched census candidate commit
+        required: true
+      require_complete_outputs:
+        description: Fail unless the final dual-population receipt and crosswalk metadata exist
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ng-exhaustion-mbo-5y-step1-verify-${{ inputs.candidate_sha }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      BUCKET: bento-568968024170-us-east-2-an
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      REQUIRE_COMPLETE_OUTPUTS: ${{ inputs.require_complete_outputs }}
+      LAUNCH_BRANCH: chatgpt/ng-exhaustion-entry-timing-revival-20260818
+      LAUNCH_RECEIPT_PATH: research/kalshi/NG_EXHAUSTION_MBO_5Y_STEP1_LAUNCH_20260822.json
+    steps:
+      - name: Check out durable receipt branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.LAUNCH_BRANCH }}
+          fetch-depth: 0
+
+      - name: Install exact AWS validation runtime
+        run: python -m pip install --quiet boto3==1.35.99
+
+      - name: Validate candidate and exact-only verification scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$CANDIDATE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          git cat-file -e "$CANDIDATE_SHA^{commit}"
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          workflow = Path('.github/workflows/ng_exhaustion_mbo_5y_step1_verify_launch_20260823.yml')
+          launch = Path('.github/workflows/ng_exhaustion_mbo_5y_step1_launch_20260822.yml')
+          candidates = {
+              str(workflow): workflow.read_text(),
+              str(launch): launch.read_text(),
+          }
+          forbidden = {
+              'AWS ListObjectsV2 API': r'\blist_objects_v2\s*\(',
+              'AWS list-objects CLI': r'\baws\s+s3api\s+list-objects(?:-v2)?\b',
+              'AWS s3 ls CLI': r'\baws\s+s3\s+ls\b',
+              'list-objects paginator': r'get_paginator\s*\(\s*["\']list_objects',
+          }
+          for path, source in candidates.items():
+              for label, pattern in forbidden.items():
+                  if re.search(pattern, source):
+                      raise SystemExit(f'{path}: forbidden {label}; exact-key verification only')
+          print('PASS: verification and launch workflows contain no source prefix enumeration')
+          PY
+
+      - name: Retrieve exact immutable launch evidence and first heartbeat
+        shell: bash
+        run: |
+          set -euo pipefail
+          root=/tmp/step1-verification
+          prefix="nymex/ng_mbo_5y_v0/step1_census/launches/$CANDIDATE_SHA"
+          mkdir -p "$root/package"
+          cp "$LAUNCH_RECEIPT_PATH" "$root/LAUNCH_RECEIPT.json"
+          aws s3 cp \
+            "s3://$BUCKET/$prefix/candidate/package.tgz" \
+            "$root/package.tgz" --only-show-errors
+          aws s3 cp \
+            "s3://$BUCKET/$prefix/candidate/CANDIDATE_LOCK.json" \
+            "$root/CANDIDATE_LOCK.json" --only-show-errors
+          git show "$CANDIDATE_SHA:.github/workflows/ng_exhaustion_mbo_5y_step1_launch_20260822.yml" \
+            > "$root/CANDIDATE_LAUNCH_WORKFLOW.yml"
+          python - "$root/package.tgz" "$root/package" <<'PY'
+          import sys
+          import tarfile
+          from pathlib import Path, PurePosixPath
+
+          archive = Path(sys.argv[1])
+          target = Path(sys.argv[2]).resolve()
+          with tarfile.open(archive, 'r:gz') as handle:
+              for member in handle.getmembers():
+                  pure = PurePosixPath(member.name)
+                  if pure.is_absolute() or '..' in pure.parts or member.issym() or member.islnk():
+                      raise SystemExit(f'unsafe candidate archive member: {member.name!r}')
+              handle.extractall(target)
+          PY
+          heartbeat_key="$prefix/full/progress/CONTROLLER_HEARTBEAT.json"
+          for attempt in $(seq 1 80); do
+            if aws s3api head-object \
+              --bucket "$BUCKET" --key "$heartbeat_key" >/dev/null 2>&1; then
+              aws s3 cp "s3://$BUCKET/$heartbeat_key" \
+                "$root/CONTROLLER_HEARTBEAT.json" --only-show-errors
+              break
+            fi
+            sleep 10
+          done
+          test -s "$root/CONTROLLER_HEARTBEAT.json"
+          first_segment="$(python - "$root/package/research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json" <<'PY'
+          import json,sys
+          manifest=json.load(open(sys.argv[1]))
+          print(sorted({row['segment'] for row in manifest['canonical_dbn_objects']})[0])
+          PY
+          )"
+          first_segment_key="$prefix/full/progress/segments/$first_segment.heartbeat.json"
+          if aws s3api head-object \
+            --bucket "$BUCKET" --key "$first_segment_key" >/dev/null 2>&1; then
+            aws s3 cp "s3://$BUCKET/$first_segment_key" \
+              "$root/FIRST_SEGMENT_HEARTBEAT.json" --only-show-errors
+          fi
+          final_key="$prefix/full/results/STEP1_DUAL_CENSUS_RECEIPT.json"
+          if aws s3api head-object \
+            --bucket "$BUCKET" --key "$final_key" >/dev/null 2>&1; then
+            aws s3 cp "s3://$BUCKET/$final_key" \
+              "$root/STEP1_DUAL_CENSUS_RECEIPT.json" --only-show-errors
+            echo true > "$root/FINAL_RECEIPT_AVAILABLE"
+          else
+            echo false > "$root/FINAL_RECEIPT_AVAILABLE"
+          fi
+
+      - name: Verify launch SSM receipt and fresh active unit state
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import datetime as dt
+          import json
+          import os
+          import shlex
+          import time
+          from pathlib import Path
+
+          import boto3
+
+          root = Path('/tmp/step1-verification')
+          launch = json.loads((root / 'LAUNCH_RECEIPT.json').read_text())
+          candidate = os.environ['CANDIDATE_SHA']
+          instance = os.environ['INSTANCE_ID']
+          expected_unit = f'ng-exhaustion-step1-{candidate[:12]}'
+          if launch.get('candidate_commit') != candidate:
+              raise SystemExit('durable launch receipt belongs to a different candidate')
+          if launch.get('instance_id') != instance or launch.get('systemd_unit') != expected_unit:
+              raise SystemExit('launch receipt instance/unit identity drift')
+
+          ssm = boto3.client('ssm', region_name=os.environ['AWS_DEFAULT_REGION'])
+          launch_invocation = ssm.get_command_invocation(
+              CommandId=launch['ssm_command_id'], InstanceId=instance,
+          )
+          if launch_invocation.get('Status') != 'Success' or launch_invocation.get('ResponseCode') != 0:
+              raise SystemExit('launch SSM invocation is not a durable success')
+
+          command = f'''set -euo pipefail
+          unit={shlex.quote(expected_unit)}
+          active="$(systemctl is-active "$unit" || true)"
+          load="$(systemctl show "$unit" --property=LoadState --value)"
+          sub="$(systemctl show "$unit" --property=SubState --value)"
+          pid="$(systemctl show "$unit" --property=MainPID --value)"
+          printf 'VERIFY_UNIT=%s\nVERIFY_ACTIVE=%s\nVERIFY_LOAD=%s\nVERIFY_SUB=%s\nVERIFY_PID=%s\n' "$unit" "$active" "$load" "$sub" "$pid"
+          test "$active" = active
+          test "$load" = loaded
+          test "$sub" = running
+          test "$pid" -gt 0
+          kill -0 "$pid"
+          '''
+          sent = ssm.send_command(
+              InstanceIds=[instance],
+              DocumentName='AWS-RunShellScript',
+              Comment=f'Read-only durable Step-1 launch verification {candidate}',
+              Parameters={'commands': ['/bin/bash -lc ' + shlex.quote(command)]},
+              TimeoutSeconds=300,
+          )
+          command_id = sent['Command']['CommandId']
+          deadline = time.time() + 300
+          invocation = None
+          while time.time() < deadline:
+              try:
+                  invocation = ssm.get_command_invocation(
+                      CommandId=command_id, InstanceId=instance,
+                  )
+              except ssm.exceptions.InvocationDoesNotExist:
+                  time.sleep(2)
+                  continue
+              if invocation.get('Status') in {
+                  'Success', 'Cancelled', 'TimedOut', 'Failed', 'Cancelling',
+                  'Undeliverable', 'Terminated', 'Delivery Timed Out', 'Execution Timed Out',
+              }:
+                  break
+              time.sleep(3)
+          if invocation is None or invocation.get('Status') != 'Success' or invocation.get('ResponseCode') != 0:
+              raise SystemExit(f'fresh instance verification failed: {invocation}')
+          values = {}
+          for line in invocation.get('StandardOutputContent', '').splitlines():
+              if line.startswith('VERIFY_') and '=' in line:
+                  key, value = line.split('=', 1)
+                  values[key] = value
+          if values.get('VERIFY_UNIT') != expected_unit:
+              raise SystemExit('fresh systemd unit identity drift')
+          if values.get('VERIFY_ACTIVE') != 'active' or values.get('VERIFY_SUB') != 'running':
+              raise SystemExit('fresh systemd service is not active/running')
+          if int(values.get('VERIFY_PID', '0')) <= 0:
+              raise SystemExit('fresh systemd MainPID is absent')
+          receipt = {
+              'schema': 'NG_EXHAUSTION_MBO_5Y_STEP1_DURABLE_LAUNCH_VERIFICATION_V1_20260823',
+              'verified_at_utc': dt.datetime.now(dt.timezone.utc).isoformat(),
+              'candidate_commit': candidate,
+              'instance_id': instance,
+              'launch_ssm_command_id': launch['ssm_command_id'],
+              'launch_ssm_status': launch_invocation['Status'],
+              'launch_ssm_response_code': launch_invocation['ResponseCode'],
+              'verification_ssm_command_id': command_id,
+              'verification_ssm_status': invocation['Status'],
+              'verification_ssm_response_code': invocation['ResponseCode'],
+              'systemd_unit': expected_unit,
+              'systemd_active_state': values['VERIFY_ACTIVE'],
+              'systemd_load_state': values['VERIFY_LOAD'],
+              'systemd_sub_state': values['VERIFY_SUB'],
+              'systemd_main_pid': int(values['VERIFY_PID']),
+              'verification_shell_read_only': True,
+          }
+          (root / 'INSTANCE_VERIFICATION.json').write_text(
+              json.dumps(receipt, indent=2, sort_keys=True) + '\n'
+          )
+          print(json.dumps(receipt, indent=2, sort_keys=True))
+          PY
+
+      - name: Enforce hashes, accounting, heartbeat, dual populations, and scope gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import datetime as dt
+          import hashlib
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          import boto3
+
+          root = Path('/tmp/step1-verification')
+          package = root / 'package'
+          candidate = os.environ['CANDIDATE_SHA']
+          bucket = os.environ['BUCKET']
+          prefix = f'nymex/ng_mbo_5y_v0/step1_census/launches/{candidate}'
+          hex64 = re.compile(r'^[0-9a-f]{64}$')
+
+          def digest(path):
+              h = hashlib.sha256()
+              with open(path, 'rb') as handle:
+                  for chunk in iter(lambda: handle.read(1024 * 1024), b''):
+                      h.update(chunk)
+              return h.hexdigest()
+
+          def canonical_sha(body):
+              raw = json.dumps(body, sort_keys=True, separators=(',', ':')).encode()
+              return hashlib.sha256(raw).hexdigest()
+
+          def require_false(body, *fields):
+              for field in fields:
+                  if body.get(field) is not False:
+                      raise SystemExit(f'{field} must be explicitly false')
+
+          launch = json.loads((root / 'LAUNCH_RECEIPT.json').read_text())
+          lock = json.loads((root / 'CANDIDATE_LOCK.json').read_text())
+          packaged_lock = json.loads((package / 'research/kalshi/NG_EXHAUSTION_MBO_5Y_STEP1_CANDIDATE_LOCK_20260822.json').read_text())
+          heartbeat = json.loads((root / 'CONTROLLER_HEARTBEAT.json').read_text())
+          manifest_path = package / 'research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json'
+          manifest = json.loads(manifest_path.read_text())
+          instance = json.loads((root / 'INSTANCE_VERIFICATION.json').read_text())
+
+          if launch.get('schema') != 'NG_EXHAUSTION_MBO_5Y_STEP1_LAUNCH_RECEIPT_V1_20260822':
+              raise SystemExit('launch receipt schema drift')
+          if launch.get('candidate_commit') != candidate or lock.get('candidate_commit') != candidate:
+              raise SystemExit('candidate identity drift')
+          if launch.get('ssm_status') != 'Success' or int(launch.get('ssm_response_code', -1)) != 0:
+              raise SystemExit('launch receipt does not record successful SSM execution')
+          if not launch.get('full_census_launched'):
+              raise SystemExit('launch receipt does not assert full_census_launched')
+          if launch.get('launch_state') not in {'STARTED', 'ALREADY_ACTIVE'}:
+              raise SystemExit('invalid durable launch state')
+          if int(launch.get('main_pid', 0)) <= 0 or int(instance.get('systemd_main_pid', 0)) <= 0:
+              raise SystemExit('launch/fresh systemd PID evidence absent')
+          preflight = launch.get('preflight', {})
+          if preflight.get('status') != 'STEP1_DUAL_STRUCTURAL_CENSUS_COMPLETE':
+              raise SystemExit('launch receipt does not contain a completed revealed preflight')
+          if preflight.get('source_manifest_sha256') != lock.get('source_manifest_sha256'):
+              raise SystemExit('launch preflight source-manifest drift')
+          if preflight.get('legacy_overlap_equivalence', {}).get('status') != 'PASS':
+              raise SystemExit('launch preflight LEGACY_CONTROL equivalence gate did not pass')
+          expected_uri = f's3://{bucket}/{prefix}/'
+          if launch.get('result_prefix') != expected_uri + 'full/':
+              raise SystemExit('result prefix drift')
+          if launch.get('heartbeat_prefix') != expected_uri + 'full/progress/':
+              raise SystemExit('heartbeat prefix drift')
+          require_false(
+              launch,
+              'source_prefix_wide_enumeration_used',
+              'release_or_virgin_holdout_consumed',
+              'predictive_or_trading_experiment_run',
+              'permanent_frankie_mutated',
+          )
+
+          if lock != packaged_lock or launch.get('candidate_lock') != lock:
+              raise SystemExit('candidate lock differs across S3 package and launch receipt')
+          require_false(lock, 'release_or_virgin_holdout_consumed', 'predictive_or_trading_experiment_authorized')
+          package_sha = digest(root / 'package.tgz')
+          if package_sha != launch.get('candidate_package_sha256'):
+              raise SystemExit('candidate package SHA-256 drift')
+          for relative, expected in lock.get('packaged_files', {}).items():
+              path = package / relative
+              if not path.is_file() or digest(path) != expected:
+                  raise SystemExit(f'packaged file hash drift: {relative}')
+          engine = lock.get('engine_hashes')
+          if not isinstance(engine, dict) or not engine:
+              raise SystemExit('candidate engine hash lock absent')
+          for relative, expected in engine.items():
+              if not hex64.fullmatch(str(expected)):
+                  raise SystemExit(f'invalid engine hash: {relative}')
+              if digest(package / relative) != expected:
+                  raise SystemExit(f'candidate engine hash drift: {relative}')
+          if digest(root / 'CANDIDATE_LAUNCH_WORKFLOW.yml') != lock.get('workflow_sha256'):
+              raise SystemExit('candidate launch workflow hash drift')
+
+          manifest_body = dict(manifest)
+          claimed_manifest_sha = manifest_body.pop('manifest_sha256', None)
+          if canonical_sha(manifest_body) != claimed_manifest_sha:
+              raise SystemExit('canonical source manifest payload hash drift')
+          objects = manifest.get('canonical_dbn_objects', [])
+          keys = manifest.get('canonical_dbn_keys', [])
+          if manifest.get('data_schema') != 'mbo' or manifest.get('dataset') != 'GLBX.MDP3':
+              raise SystemExit('source is not the frozen native MBO population')
+          if (
+              manifest.get('bucket') != bucket
+              or manifest.get('region') != os.environ['AWS_DEFAULT_REGION']
+              or manifest.get('prefix') != 'nymex/ng_mbo_5y_v0/'
+              or manifest.get('requested_symbol') != 'NG.v.0'
+              or manifest.get('stype_in') != 'continuous'
+              or manifest.get('approved_range') != {'start': '2021-08-20', 'end': '2026-08-20'}
+          ):
+              raise SystemExit('canonical native-MBO source scope drift')
+          if manifest.get('status') != 'CANONICAL_NATIVE_MBO_OBJECT_MANIFEST_FROZEN_AND_S3_VALIDATED':
+              raise SystemExit('source manifest is not frozen and S3-validated')
+          if (
+              manifest.get('expected_interval_count') != 61
+              or manifest.get('selected_interval_count') != 61
+              or manifest.get('deterministic_native_segment_count') != 65
+          ):
+              raise SystemExit('canonical interval/segment scope drift')
+          if manifest.get('every_selected_object_s3_head_validated') is not True:
+              raise SystemExit('source object HEAD-validation gate absent')
+          require_false(manifest, 'prefix_wide_enumeration_used', 'release_or_virgin_holdout_consumed', 'empirical_census_launched')
+          if len(objects) != len(keys) or len(set(keys)) != len(keys):
+              raise SystemExit('canonical source key cardinality/uniqueness drift')
+          if [row.get('key') for row in objects] != keys:
+              raise SystemExit('canonical source key ordering drift')
+          if any(not row['key'].startswith(manifest['prefix']) for row in objects):
+              raise SystemExit('canonical source object escaped frozen prefix')
+          if any(int(row.get('bytes', 0)) <= 0 or not hex64.fullmatch(str(row.get('sha256', ''))) for row in objects):
+              raise SystemExit('canonical source object accounting is malformed')
+          object_count = len(objects)
+          total_bytes = sum(int(row['bytes']) for row in objects)
+          if manifest.get('canonical_object_count') != object_count or manifest.get('canonical_total_bytes') != total_bytes:
+              raise SystemExit('canonical source manifest accounting drift')
+          for body in (lock,):
+              if body.get('source_manifest_sha256') != claimed_manifest_sha:
+                  raise SystemExit('candidate lock source-manifest hash drift')
+              if body.get('source_object_count') != object_count or body.get('source_total_bytes') != total_bytes:
+                  raise SystemExit('candidate lock source accounting drift')
+          if lock.get('retention_policy') != 'FLAG_AND_DECOMPOSE_NOT_AUTO_KILL':
+              raise SystemExit('candidate retention policy drift')
+
+          if heartbeat.get('schema') != 'NG_EXHAUSTION_MBO_5Y_STEP1_CONTROLLER_HEARTBEAT_V1':
+              raise SystemExit('controller heartbeat schema drift')
+          if heartbeat.get('source_manifest_sha256') != claimed_manifest_sha:
+              raise SystemExit('controller heartbeat source-manifest drift')
+          if heartbeat.get('overlap_only') is not False:
+              raise SystemExit('controller heartbeat belongs to overlap-only run')
+          scope = heartbeat.get('source_scope', {})
+          if scope.get('mode') != 'FULL_CANONICAL_MANIFEST':
+              raise SystemExit('controller is not running the full canonical manifest')
+          if scope.get('requested_object_dates') is not None:
+              raise SystemExit('full controller unexpectedly narrows source object dates')
+          if scope.get('selected_object_count') != object_count or scope.get('selected_total_bytes') != total_bytes:
+              raise SystemExit('controller heartbeat source accounting drift')
+          if heartbeat.get('phase') not in {
+              'LAUNCHED', 'STAGING_SEGMENT', 'SEGMENT_RESUMED_WITHOUT_RECOMPUTE',
+              'SEGMENT_COMPLETE', 'RECONCILING', 'COMPLETE',
+          }:
+              raise SystemExit('unknown controller heartbeat phase')
+          if heartbeat.get('scientific_outcome_mutated_by_heartbeat') is not False:
+              raise SystemExit('heartbeat mutation gate drift')
+          launch_time = dt.datetime.fromisoformat(launch['recorded_at_utc'])
+          heartbeat_time = dt.datetime.fromisoformat(heartbeat['heartbeat_utc'])
+          if heartbeat_time < launch_time - dt.timedelta(minutes=10):
+              raise SystemExit('controller heartbeat predates launch evidence')
+
+          segment_heartbeat_path = root / 'FIRST_SEGMENT_HEARTBEAT.json'
+          if segment_heartbeat_path.exists():
+              segment_heartbeat = json.loads(segment_heartbeat_path.read_text())
+              if segment_heartbeat.get('source_manifest_sha256') != claimed_manifest_sha:
+                  raise SystemExit('first segment heartbeat source-manifest drift')
+              if segment_heartbeat.get('engine_hashes') != engine:
+                  raise SystemExit('first segment heartbeat engine hash drift')
+              if segment_heartbeat.get('status') != 'RUNNING':
+                  raise SystemExit('first segment heartbeat status drift')
+              if segment_heartbeat.get('scientific_outcome_mutated_by_heartbeat') is not False:
+                  raise SystemExit('segment heartbeat mutation gate drift')
+
+          candidate_sources = [
+              root / 'CANDIDATE_LAUNCH_WORKFLOW.yml',
+              package / 'research/ng_exhaustion_mbo_5y_step1_census_20260822.py',
+              package / 'research/ng_exhaustion_mbo_5y_canonical_manifest_20260822.py',
+          ]
+          forbidden = (
+              re.compile(r'\blist_objects_v2\s*\('),
+              re.compile(r'\baws\s+s3api\s+list-objects(?:-v2)?\b'),
+              re.compile(r'\baws\s+s3\s+ls\b'),
+              re.compile(r'get_paginator\s*\(\s*["\']list_objects'),
+          )
+          for path in candidate_sources:
+              source = path.read_text()
+              if any(pattern.search(source) for pattern in forbidden):
+                  raise SystemExit(f'prefix-wide source enumeration call found: {path}')
+
+          final_path = root / 'STEP1_DUAL_CENSUS_RECEIPT.json'
+          final_available = final_path.exists()
+          if os.environ.get('REQUIRE_COMPLETE_OUTPUTS', 'false').lower() == 'true' and not final_available:
+              raise SystemExit('final dual-population receipt is required but not available')
+          if final_available:
+              final = json.loads(final_path.read_text())
+              claimed = final.get('receipt_sha256')
+              body = dict(final)
+              body.pop('receipt_sha256', None)
+              if not hex64.fullmatch(str(claimed)) or canonical_sha(body) != claimed:
+                  raise SystemExit('final dual-census receipt hash drift')
+              if final.get('status') != 'STEP1_DUAL_STRUCTURAL_CENSUS_COMPLETE':
+                  raise SystemExit('final dual-census completion status drift')
+              if final.get('source_manifest_sha256') != claimed_manifest_sha:
+                  raise SystemExit('final receipt source-manifest drift')
+              if final.get('source_object_count') != object_count or final.get('source_total_bytes') != total_bytes:
+                  raise SystemExit('final receipt canonical source accounting drift')
+              if final.get('replayed_source_object_count') != object_count or final.get('replayed_source_total_bytes') != total_bytes:
+                  raise SystemExit('final receipt replay source accounting drift')
+              expected_segments = int(manifest['deterministic_native_segment_count'])
+              if final.get('child_receipt_count') != expected_segments:
+                  raise SystemExit('final receipt child cardinality drift')
+              if len(final.get('child_receipt_hashes', [])) != expected_segments:
+                  raise SystemExit('final child receipt hash list cardinality drift')
+              if any(not hex64.fullmatch(str(value)) for value in final['child_receipt_hashes']):
+                  raise SystemExit('malformed final child receipt hash')
+              if final.get('weeks_filter') is not None or final.get('preflight_child_recovery') is not None:
+                  raise SystemExit('final census is filtered or relies on preflight child recovery')
+              if final.get('engine_hashes') != engine or final.get('ruleset_sha256') != lock.get('ruleset_sha256'):
+                  raise SystemExit('final receipt engine/ruleset hash drift')
+              require_false(
+                  final,
+                  'release_or_virgin_holdout_consumed',
+                  'predictive_or_trading_experiment_run',
+                  'permanent_frankie_mutated',
+                  'frozen_detector_mutated',
+              )
+              if final.get('legacy_overlap_equivalence', {}).get('status') != 'PASS':
+                  raise SystemExit('final LEGACY_CONTROL equivalence gate did not pass')
+              for view in ('legacy', 'native'):
+                  summary = final[f'{view}_population_summary']
+                  output = final['population_outputs'][view]
+                  if summary.get('case_retention_exact') is not True:
+                      raise SystemExit(f'{view} population case-retention invariant absent')
+                  if summary.get('event_count') != summary.get('population_count'):
+                      raise SystemExit(f'{view} population event/case count drift')
+                  if output.get('rows') != summary.get('population_count'):
+                      raise SystemExit(f'{view} population output row count drift')
+                  if not hex64.fullmatch(str(output.get('gzip_sha256', ''))):
+                      raise SystemExit(f'{view} population output hash absent')
+              crosswalk = final.get('crosswalk_summary', {})
+              crosswalk_output = final.get('crosswalk_output', {})
+              crosswalk_rows = sum(int(crosswalk.get(field, 0)) for field in (
+                  'match_edges', 'split_edges', 'merge_edges', 'complex_split_merge_edges',
+                  'legacy_control_only', 'v4_native_full_only',
+              ))
+              if crosswalk_output.get('rows') != crosswalk_rows:
+                  raise SystemExit('crosswalk row accounting drift')
+              if not hex64.fullmatch(str(crosswalk_output.get('gzip_sha256', ''))):
+                  raise SystemExit('crosswalk output hash absent')
+              if 'NO_CASE_DROPPED' not in str(crosswalk.get('splits_merges_policy', '')):
+                  raise SystemExit('crosswalk no-case-drop policy absent')
+              s3 = boto3.client('s3', region_name=os.environ['AWS_DEFAULT_REGION'])
+              output_groups = (
+                  final['event_outputs'], final['lineage_input_outputs'],
+                  final['population_outputs'], final['crosswalk_index_outputs'],
+              )
+              outputs = []
+              for group in output_groups:
+                  outputs.extend(group.values())
+              outputs.extend((final['crosswalk_output'], final['retained_overlap_mismatches']))
+              for output in outputs:
+                  name = Path(output['path']).name
+                  head = s3.head_object(Bucket=bucket, Key=f'{prefix}/full/results/{name}')
+                  if int(head.get('ContentLength', 0)) <= 0:
+                      raise SystemExit(f'empty exact final output object: {name}')
+
+          verification = {
+              **instance,
+              'launch_receipt_verified': True,
+              'candidate_package_sha256': package_sha,
+              'candidate_engine_hashes': engine,
+              'source_manifest_sha256': claimed_manifest_sha,
+              'source_schema': manifest['data_schema'],
+              'source_object_count': object_count,
+              'source_total_bytes': total_bytes,
+              'source_prefix_wide_enumeration_used': False,
+              'controller_heartbeat_verified': True,
+              'controller_heartbeat_phase': heartbeat['phase'],
+              'controller_heartbeat_utc': heartbeat['heartbeat_utc'],
+              'first_segment_heartbeat_verified_when_available': segment_heartbeat_path.exists(),
+              'final_dual_population_receipt_available': final_available,
+              'final_dual_population_and_crosswalk_metadata_verified': final_available,
+              'release_or_virgin_holdout_consumed': False,
+              'predictive_or_trading_experiment_run': False,
+              'permanent_frankie_mutated': False,
+          }
+          (root / 'VERIFICATION_RECEIPT.json').write_text(
+              json.dumps(verification, indent=2, sort_keys=True) + '\n'
+          )
+          print(json.dumps(verification, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload immutable verification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ng-exhaustion-step1-durable-launch-${{ inputs.candidate_sha }}
+          path: |
+            /tmp/step1-verification/LAUNCH_RECEIPT.json
+            /tmp/step1-verification/CANDIDATE_LOCK.json
+            /tmp/step1-verification/CONTROLLER_HEARTBEAT.json
+            /tmp/step1-verification/FIRST_SEGMENT_HEARTBEAT.json
+            /tmp/step1-verification/STEP1_DUAL_CENSUS_RECEIPT.json
+            /tmp/step1-verification/INSTANCE_VERIFICATION.json
+            /tmp/step1-verification/VERIFICATION_RECEIPT.json
+          if-no-files-found: warn
+          retention-days: 30
