@@ -33,6 +33,7 @@ jobs:
       BUCKET: bento-568968024170-us-east-2-an
       CANDIDATE_SHA: ${{ github.sha }}
       SOURCE_MANIFEST: research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json
+      PREFLIGHT_RECOVERY_CONTRACT: research/kalshi/NG_EXHAUSTION_MBO_5Y_STEP1_PREFLIGHT_CHILD_RECOVERY_20260823.json
       RECEIPT_PATH: research/kalshi/NG_EXHAUSTION_MBO_5Y_STEP1_LAUNCH_20260822.json
       CANONICAL_ARTIFACT_ID: '9279077256'
       DISCOVERY_ARTIFACT_ID: '9279678072'
@@ -42,6 +43,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -114,6 +116,7 @@ jobs:
             research/FRANKIE_NG_PRE_FAMILY_CLASSIFIER_FROZEN_OPERATIONAL_20260817.json
             research/FRANKIE_NG_A_POSTSTATE_CLASSIFIER_FROZEN_PREBLIND_20260816.json
             research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json
+            research/kalshi/NG_EXHAUSTION_MBO_5Y_STEP1_PREFLIGHT_CHILD_RECOVERY_20260823.json
           )
           for file in "${files[@]}"; do
             install -D "$file" "$package_root/$file"
@@ -123,12 +126,42 @@ jobs:
           install -D /tmp/step1-frozen/FROZEN_OVERLAP_LINEAGE.jsonl.gz \
             "$package_root/frozen/FROZEN_OVERLAP_LINEAGE.jsonl.gz"
           PACKAGE_ROOT="$package_root" python - <<'PY'
-          import hashlib, json, os, sys
+          import ast, hashlib, json, os, subprocess, sys
           from pathlib import Path
           root=Path(os.environ['PACKAGE_ROOT'])
           sys.path.insert(0, 'research')
           import ng_exhaustion_mbo_5y_step1_census_20260822 as census
           source=json.load(open(os.environ['SOURCE_MANIFEST']))
+          recovery_path=Path(os.environ['PREFLIGHT_RECOVERY_CONTRACT'])
+          recovery=json.load(open(recovery_path))
+          parent=recovery['parent_candidate_commit']
+          subprocess.run(
+              ['git','merge-base','--is-ancestor',parent,os.environ['CANDIDATE_SHA']],
+              check=True,
+          )
+          runner_path='research/ng_exhaustion_mbo_5y_step1_census_20260822.py'
+          producer_defs=(
+              'SecondAggregator','_object_dates_for_weeks','_dbn_object_date',
+              '_segment_objects','_segment_source_scope','_local_object_path',
+              '_resumable_segment_receipt','process_segment','stage_segment',
+          )
+          def producer_ast_sha(source_text):
+              tree=ast.parse(source_text)
+              selected=[]
+              for node in tree.body:
+                  if isinstance(node,(ast.FunctionDef,ast.AsyncFunctionDef,ast.ClassDef)) and node.name in producer_defs:
+                      selected.append(ast.dump(node,annotate_fields=True,include_attributes=False))
+              if len(selected) != len(producer_defs):
+                  found={node.name for node in tree.body if hasattr(node,'name')}
+                  raise SystemExit(f'producer AST definition set incomplete: {sorted(set(producer_defs)-found)}')
+              return hashlib.sha256('\n'.join(selected).encode()).hexdigest()
+          current_producer_sha=producer_ast_sha(Path(runner_path).read_text())
+          parent_source=subprocess.check_output(
+              ['git','show',f'{parent}:{runner_path}'],text=True,
+          )
+          parent_producer_sha=producer_ast_sha(parent_source)
+          if current_producer_sha != parent_producer_sha:
+              raise SystemExit('preflight child recovery refused: segment-producer AST changed from parent candidate')
           packaged={}
           for path in sorted(p for p in root.rglob('*') if p.is_file()):
               packaged[path.relative_to(root).as_posix()]=hashlib.sha256(path.read_bytes()).hexdigest()
@@ -151,6 +184,13 @@ jobs:
               },
               'release_or_virgin_holdout_consumed':False,
               'predictive_or_trading_experiment_authorized':False,
+              'preflight_child_recovery':{
+                  'contract_sha256':hashlib.sha256(recovery_path.read_bytes()).hexdigest(),
+                  'parent_candidate_commit':parent,
+                  'recovery_scope':recovery['recovery_scope'],
+                  'segment_producer_ast_sha256':current_producer_sha,
+                  'children':recovery['children'],
+              },
           }
           out=root/'research/kalshi/NG_EXHAUSTION_MBO_5Y_STEP1_CANDIDATE_LOCK_20260822.json'
           out.write_text(json.dumps(lock,indent=2,sort_keys=True)+'\n')
@@ -180,6 +220,10 @@ jobs:
           candidate=os.environ['CANDIDATE_SHA']
           package_sha=Path('/tmp/PACKAGE_SHA256').read_text().strip()
           prefix=f'nymex/ng_mbo_5y_v0/step1_census/launches/{candidate}'
+          recovery_contract=os.environ['PREFLIGHT_RECOVERY_CONTRACT']
+          recovery=json.load(open(recovery_contract))
+          recovery_parent=recovery['parent_candidate_commit']
+          recovery_segments=sorted(recovery['children'])
           base=f'/mnt/markets/ng_exhaustion_step1_5y_20260822/{candidate}'
           repo=f'{base}/repo'
           cred=f'{base}/aws.env'
@@ -273,15 +317,25 @@ jobs:
           python -m pip install --quiet --upgrade pip
           python -m pip install --quiet numpy==1.26.4 scipy==1.11.4 scikit-learn==1.4.2 matplotlib==3.8.4 boto3==1.35.99 databento==0.81.0
           preflight={shlex.quote(base + '/preflight')}
-          mkdir -p "$preflight"
+          mkdir -p "$preflight/segments" "$preflight/overlap_preflight"
+          recovery_parent_prefix={shlex.quote('nymex/ng_mbo_5y_v0/step1_census/launches/' + recovery_parent + '/preflight/segments')}
+          for segment in {' '.join(shlex.quote(segment) for segment in recovery_segments)}; do
+            for suffix in receipt.json seconds.jsonl.gz; do
+              aws s3 cp \
+                "s3://{bucket}/$recovery_parent_prefix/$segment.$suffix" \
+                "$preflight/segments/$segment.$suffix" \
+                --only-show-errors
+            done
+          done
           set +e
-          python research/ng_exhaustion_mbo_5y_step1_census_20260822.py run \
+          python research/ng_exhaustion_mbo_5y_step1_census_20260822.py reconcile \
             --manifest research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json \
-            --work-dir "$preflight" \
+            --segment-dir "$preflight/segments" \
+            --out-dir "$preflight/overlap_preflight" \
             --frozen-overlap-table frozen/FROZEN_OVERLAP_EVENT_TABLE.jsonl.gz \
             --frozen-overlap-lineage frozen/FROZEN_OVERLAP_LINEAGE.jsonl.gz \
-            --overlap-only \
-            --s3-progress-prefix {shlex.quote(prefix + '/preflight/progress')} \
+            --weeks {shlex.quote(','.join(('20250713','20250921','20250928')))} \
+            --child-recovery-contract {shlex.quote(recovery_contract)} \
             > "$preflight/RUN.log" 2>&1
           preflight_rc=$?
           set -e
@@ -309,6 +363,8 @@ jobs:
             'legacy_event_count':p['legacy_population_summary']['event_count'],
             'native_event_count':p['native_population_summary']['event_count'],
             'retained_mismatch_count':p['legacy_overlap_equivalence']['retained_mismatch_count'],
+            'segment_boundary_reconciliation':p['segment_boundary_reconciliation'],
+            'preflight_child_recovery':p['preflight_child_recovery'],
           }}
           print('PREFLIGHT_COMPACT_B64='+base64.b64encode(json.dumps(compact,sort_keys=True).encode()).decode())
           PYPREFLIGHT

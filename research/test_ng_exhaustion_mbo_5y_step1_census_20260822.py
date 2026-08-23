@@ -14,6 +14,7 @@ from ng_exhaustion_mbo_5y_step1_census_20260822 import (
     RULESET,
     SecondAggregator,
     _object_dates_for_weeks,
+    _iter_seconds_weeks,
     _segment_objects,
     _match_events,
     _resumable_segment_receipt,
@@ -244,6 +245,7 @@ class RecoveryAndReconciliationTests(unittest.TestCase):
                 "status": "SEGMENT_COMPLETE",
                 "segment": segment,
                 "source_manifest_sha256": manifest["manifest_sha256"],
+                "ruleset_sha256": ruleset_sha256(),
                 "seconds_output": output,
             }
             receipt["receipt_sha256"] = sha256_json(receipt)
@@ -251,6 +253,95 @@ class RecoveryAndReconciliationTests(unittest.TestCase):
             (out / f"{segment}.receipt.json").write_text(json.dumps(receipt))
             with self.assertRaisesRegex(CensusError, "child receipt hash drift"):
                 _verified_child_outputs(manifest, out, [segment])
+
+    def test_reconciliation_clips_cross_job_warmup_to_half_open_segment_bounds(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            left_segment = "20250901_20251001"
+            right_segment = "20251001_20251101"
+            boundary = 1759276800
+            paths = []
+            for segment, seconds in (
+                (left_segment, (boundary - 2, boundary - 1)),
+                (right_segment, (boundary - 20, boundary - 1, boundary, boundary + 1)),
+            ):
+                path = tmp / f"{segment}.seconds.jsonl.gz"
+                writer = DeterministicGzipJsonlWriter(path)
+                for second in seconds:
+                    writer.write({"epoch_second": second})
+                writer.close()
+                paths.append(path)
+            audit = {}
+            weeks = list(_iter_seconds_weeks(paths, None, [left_segment, right_segment], audit))
+            emitted = [row["epoch_second"] for _, rows in weeks for row in rows]
+            self.assertEqual(emitted, [boundary - 2, boundary - 1, boundary, boundary + 1])
+            self.assertEqual(audit["excluded_out_of_interval_seconds"], 2)
+            self.assertEqual(audit["segments"][right_segment]["excluded_before_start"], 2)
+            self.assertEqual(
+                audit["retention"],
+                "RAW_CHILD_OUTPUTS_AND_RECEIPTS_RETAIN_EXCLUDED_WARMUP_ROWS",
+            )
+
+    def test_reconciliation_still_fails_on_in_segment_duplicate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            segment = "20251001_20251101"
+            path = Path(tmp) / f"{segment}.seconds.jsonl.gz"
+            writer = DeterministicGzipJsonlWriter(path)
+            writer.write({"epoch_second": 1759276800})
+            writer.write({"epoch_second": 1759276800})
+            writer.close()
+            with self.assertRaisesRegex(CensusError, "child segment non-increasing/duplicate"):
+                list(_iter_seconds_weeks([path], None, [segment], {}))
+
+    def test_parent_recovery_requires_pinned_engine_scope_receipt_and_seconds(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            segment = "20251001_20251101"
+            seconds = out / f"{segment}.seconds.jsonl.gz"
+            writer = DeterministicGzipJsonlWriter(seconds)
+            writer.write({"epoch_second": 1759276800})
+            output = writer.close()
+            manifest = {"manifest_sha256": "m" * 64}
+            engine = {"runner": "e" * 64}
+            scope = {"mode": "REVEALED_OVERLAP_DAILY_OBJECTS"}
+            receipt = {
+                "status": "SEGMENT_COMPLETE",
+                "segment": segment,
+                "source_manifest_sha256": manifest["manifest_sha256"],
+                "ruleset_sha256": ruleset_sha256(),
+                "engine_hashes": engine,
+                "source_scope": scope,
+                "seconds_output": output,
+            }
+            receipt["receipt_sha256"] = sha256_json(receipt)
+            (out / f"{segment}.receipt.json").write_text(json.dumps(receipt))
+            pins = {
+                segment: {
+                    "receipt_sha256": receipt["receipt_sha256"],
+                    "seconds_gzip_sha256": output["gzip_sha256"],
+                    "seconds_rows": output["rows"],
+                }
+            }
+            paths, hashes = _verified_child_outputs(
+                manifest,
+                out,
+                [segment],
+                expected_engine_hashes=engine,
+                expected_source_scopes={segment: scope},
+                pinned_children=pins,
+            )
+            self.assertEqual(paths, [seconds])
+            self.assertEqual(hashes, [receipt["receipt_sha256"]])
+            pins[segment]["seconds_gzip_sha256"] = "0" * 64
+            with self.assertRaisesRegex(CensusError, "recovery seconds pin drift"):
+                _verified_child_outputs(
+                    manifest,
+                    out,
+                    [segment],
+                    expected_engine_hashes=engine,
+                    expected_source_scopes={segment: scope},
+                    pinned_children=pins,
+                )
 
     def test_crosswalk_retains_split_edges_without_false_orphan(self):
         with tempfile.TemporaryDirectory() as tmp:

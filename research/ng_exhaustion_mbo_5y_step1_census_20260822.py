@@ -1337,7 +1337,13 @@ def _segments_for_weeks(manifest: dict[str, Any], weeks_filter: set[str] | None)
 
 
 def _verified_child_outputs(
-    manifest: dict[str, Any], segment_dir: Path, segments: list[str]
+    manifest: dict[str, Any],
+    segment_dir: Path,
+    segments: list[str],
+    *,
+    expected_engine_hashes: dict[str, str] | None = None,
+    expected_source_scopes: dict[str, dict[str, Any]] | None = None,
+    pinned_children: dict[str, dict[str, str]] | None = None,
 ) -> tuple[list[Path], list[str]]:
     paths = []
     receipt_hashes = []
@@ -1353,6 +1359,12 @@ def _verified_child_outputs(
             raise CensusError(f"child segment identity drift: {segment}")
         if receipt.get("source_manifest_sha256") != manifest["manifest_sha256"]:
             raise CensusError(f"child source-manifest drift: {segment}")
+        if receipt.get("ruleset_sha256") != ruleset_sha256():
+            raise CensusError(f"child ruleset drift: {segment}")
+        if expected_engine_hashes is not None and receipt.get("engine_hashes") != expected_engine_hashes:
+            raise CensusError(f"child engine drift: {segment}")
+        if expected_source_scopes is not None and receipt.get("source_scope") != expected_source_scopes[segment]:
+            raise CensusError(f"child source-scope drift: {segment}")
         if receipt["seconds_output"]["gzip_sha256"] != sha256_file(seconds_path):
             raise CensusError(f"child seconds hash drift: {segment}")
         claimed = receipt.get("receipt_sha256")
@@ -1360,23 +1372,82 @@ def _verified_child_outputs(
         body.pop("receipt_sha256", None)
         if claimed != sha256_json(body):
             raise CensusError(f"child receipt hash drift: {segment}")
+        if pinned_children is not None:
+            pin = pinned_children.get(segment)
+            if pin is None:
+                raise CensusError(f"child recovery pin missing: {segment}")
+            if pin.get("receipt_sha256") != claimed:
+                raise CensusError(f"child recovery receipt pin drift: {segment}")
+            if pin.get("seconds_gzip_sha256") != receipt["seconds_output"]["gzip_sha256"]:
+                raise CensusError(f"child recovery seconds pin drift: {segment}")
+            if int(pin.get("seconds_rows", -1)) != int(receipt["seconds_output"].get("rows", -2)):
+                raise CensusError(f"child recovery seconds row-count drift: {segment}")
         paths.append(seconds_path)
         receipt_hashes.append(claimed)
     return paths, receipt_hashes
 
 
+def _segment_epoch_bounds(segment: str) -> tuple[int, int]:
+    try:
+        start_raw, end_raw = segment.split("_", 1)
+        start = dt.datetime.strptime(start_raw, "%Y%m%d").replace(tzinfo=dt.timezone.utc)
+        end = dt.datetime.strptime(end_raw, "%Y%m%d").replace(tzinfo=dt.timezone.utc)
+    except (TypeError, ValueError) as exc:
+        raise CensusError(f"invalid canonical segment identity: {segment}") from exc
+    if end <= start:
+        raise CensusError(f"non-positive canonical segment interval: {segment}")
+    return int(start.timestamp()), int(end.timestamp())
+
+
 def _iter_seconds_weeks(
-    seconds_paths: list[Path], weeks_filter: set[str] | None
+    seconds_paths: list[Path],
+    weeks_filter: set[str] | None,
+    segments: list[str],
+    boundary_audit: dict[str, Any],
 ) -> Iterable[tuple[str, list[dict[str, Any]]]]:
+    if len(seconds_paths) != len(segments):
+        raise CensusError("child path/segment cardinality drift")
     current_week = None
     rows = []
     last_second = None
-    for path in seconds_paths:
+    boundary_audit.update({
+        "policy": "CLIP_CHILD_SECONDS_TO_CANONICAL_SEGMENT_HALF_OPEN_INTERVAL",
+        "segments": {},
+        "excluded_out_of_interval_seconds": 0,
+        "retention": "RAW_CHILD_OUTPUTS_AND_RECEIPTS_RETAIN_EXCLUDED_WARMUP_ROWS",
+    })
+    for path, segment in zip(seconds_paths, segments):
+        start_second, end_second = _segment_epoch_bounds(segment)
+        segment_last_second = None
+        segment_audit = {
+            "start_epoch_second_inclusive": start_second,
+            "end_epoch_second_exclusive": end_second,
+            "excluded_before_start": 0,
+            "excluded_at_or_after_end": 0,
+            "first_excluded_epoch_second": None,
+            "last_excluded_epoch_second": None,
+        }
+        boundary_audit["segments"][segment] = segment_audit
         for row in read_gzip_jsonl(path):
             second = int(row["epoch_second"])
+            if segment_last_second is not None and second <= segment_last_second:
+                raise CensusError(
+                    f"child segment non-increasing/duplicate second: {segment} {second} after {segment_last_second}"
+                )
+            segment_last_second = second
+            if second < start_second or second >= end_second:
+                if second < start_second:
+                    segment_audit["excluded_before_start"] += 1
+                else:
+                    segment_audit["excluded_at_or_after_end"] += 1
+                if segment_audit["first_excluded_epoch_second"] is None:
+                    segment_audit["first_excluded_epoch_second"] = second
+                segment_audit["last_excluded_epoch_second"] = second
+                boundary_audit["excluded_out_of_interval_seconds"] += 1
+                continue
             if last_second is not None and second <= last_second:
                 raise CensusError(
-                    f"population reconciliation non-increasing/duplicate second: {second} after {last_second}"
+                    f"population reconciliation in-bound non-increasing/duplicate second: {second} after {last_second}"
                 )
             last_second = second
             week = frozen_detector.ymds(week_sunday(second))
@@ -1399,6 +1470,7 @@ def reconcile(
     frozen_overlap_lineage: str | Path,
     *,
     weeks_filter: set[str] | None = None,
+    child_recovery_contract: str | Path | None = None,
 ) -> dict[str, Any]:
     manifest = load_manifest(manifest_path)
     segment_dir = Path(segment_dir)
@@ -1406,7 +1478,43 @@ def reconcile(
     out.mkdir(parents=True, exist_ok=True)
     hashes = material_hashes()
     segments = _segments_for_weeks(manifest, weeks_filter)
-    seconds_paths, child_receipts = _verified_child_outputs(manifest, segment_dir, segments)
+    object_dates = _object_dates_for_weeks(weeks_filter) if weeks_filter is not None else None
+    expected_source_scopes = {
+        segment: _segment_source_scope(manifest, segment, object_dates) for segment in segments
+    }
+    recovery = None
+    expected_engine_hashes = hashes
+    pinned_children = None
+    if child_recovery_contract is not None:
+        recovery_path = Path(child_recovery_contract)
+        recovery = json.loads(recovery_path.read_text())
+        if recovery.get("schema") != "NG_EXHAUSTION_MBO_5Y_STEP1_PREFLIGHT_CHILD_RECOVERY_V1_20260823":
+            raise CensusError("unknown child recovery contract schema")
+        if recovery.get("source_manifest_sha256") != manifest["manifest_sha256"]:
+            raise CensusError("child recovery source-manifest drift")
+        if recovery.get("ruleset_sha256") != ruleset_sha256():
+            raise CensusError("child recovery ruleset drift")
+        if set(recovery.get("children", {})) != set(segments):
+            raise CensusError("child recovery segment set drift")
+        expected_engine_hashes = recovery.get("producer_engine_hashes")
+        if not isinstance(expected_engine_hashes, dict) or not expected_engine_hashes:
+            raise CensusError("child recovery producer engine hashes absent")
+        pinned_children = recovery["children"]
+        recovery = {
+            "contract_sha256": sha256_file(recovery_path),
+            "parent_candidate_commit": recovery["parent_candidate_commit"],
+            "recovery_scope": recovery["recovery_scope"],
+            "producer_engine_hashes": expected_engine_hashes,
+            "children": pinned_children,
+        }
+    seconds_paths, child_receipts = _verified_child_outputs(
+        manifest,
+        segment_dir,
+        segments,
+        expected_engine_hashes=expected_engine_hashes,
+        expected_source_scopes=expected_source_scopes,
+        pinned_children=pinned_children,
+    )
     child_source_scopes = [
         json.loads((segment_dir / f"{segment}.receipt.json").read_text())["source_scope"]
         for segment in segments
@@ -1429,8 +1537,9 @@ def reconcile(
     overlap_events = []
     weeks = []
     population_seconds = 0
+    boundary_audit: dict[str, Any] = {}
     try:
-        for week, rows in _iter_seconds_weeks(seconds_paths, weeks_filter):
+        for week, rows in _iter_seconds_weeks(seconds_paths, weeks_filter, segments, boundary_audit):
             weeks.append(week)
             population_seconds += len(rows)
             for key, view in (("legacy", "LEGACY_CONTROL"), ("native", "V4_NATIVE_FULL")):
@@ -1496,6 +1605,8 @@ def reconcile(
         "replay_source_scopes": child_source_scopes,
         "replayed_source_object_count": sum(x["selected_object_count"] for x in child_source_scopes),
         "replayed_source_total_bytes": sum(x["selected_total_bytes"] for x in child_source_scopes),
+        "segment_boundary_reconciliation": boundary_audit,
+        "preflight_child_recovery": recovery,
         "population_seconds": population_seconds,
         "weeks": weeks,
         "weeks_filter": None if weeks_filter is None else sorted(weeks_filter),
@@ -1670,6 +1781,7 @@ def main() -> None:
     rec.add_argument("--frozen-overlap-table", required=True)
     rec.add_argument("--frozen-overlap-lineage", required=True)
     rec.add_argument("--weeks", help="Optional comma-separated revealed overlap weeks")
+    rec.add_argument("--child-recovery-contract")
     run = sub.add_parser("run")
     run.add_argument("--manifest", required=True)
     run.add_argument("--work-dir", required=True)
@@ -1688,6 +1800,7 @@ def main() -> None:
             args.frozen_overlap_table,
             args.frozen_overlap_lineage,
             weeks_filter=None if not args.weeks else set(args.weeks.split(",")),
+            child_recovery_contract=args.child_recovery_contract,
         )
     else:
         result = run_controller(
