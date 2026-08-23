@@ -1,8 +1,13 @@
+import hashlib
+import json
+
 import pytest
 
 from research.kalshi.ng_exhaustion_step1_completion_gate import (
     CompletionGateError,
+    classify_recovery_state,
     declared_final_output_hashes,
+    validate_finalization_provenance,
     validate_final_receipt_heartbeat,
     validate_launch_canary,
     validate_runtime_state,
@@ -43,6 +48,63 @@ def promoted_launch():
             "retained_mismatch_count": 1,
             "lineage_equivalence_asserted": False,
             "multiweek_equivalence_asserted": False,
+        },
+    }
+
+
+def finalizer_lock():
+    lock = {
+        "schema": "NG_EXHAUSTION_MBO_5Y_STEP1_FINALIZER_LOCK_V1_20260823",
+        "parent_candidate_commit": CANDIDATE,
+        "recovery_scope": "FULL_65_CHILDREN_REUSED_NO_RAW_MBO_REPLAY",
+        "finalizer_engine_hashes": {"research/runner.py": "2" * 64},
+    }
+    lock["finalizer_lock_sha256"] = hashlib.sha256(
+        json.dumps(lock, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
+    ).hexdigest()
+    return lock
+
+
+def recovered_final_receipt(lock):
+    producer = {"research/runner.py": "1" * 64}
+    finalizer = {"research/runner.py": "2" * 64}
+    children = {
+        f"segment-{i:02d}": {
+            "receipt_sha256": f"{i + 1:064x}",
+            "seconds_gzip_sha256": f"{i + 101:064x}",
+            "seconds_rows": i + 1,
+        }
+        for i in range(65)
+    }
+    return {
+        "source_manifest_sha256": SOURCE,
+        "ruleset_sha256": "6" * 64,
+        "engine_hashes": finalizer,
+        "child_receipt_count": 65,
+        "child_receipt_hashes": [row["receipt_sha256"] for row in children.values()],
+        "preflight_child_recovery": None,
+        "finalization_recovery": {
+            "schema": "NG_EXHAUSTION_MBO_5Y_STEP1_FINALIZATION_RECOVERY_V1_20260823",
+            "contract_sha256": "7" * 64,
+            "parent_candidate_commit": CANDIDATE,
+            "source_manifest_sha256": SOURCE,
+            "ruleset_sha256": "6" * 64,
+            "recovery_scope": "FULL_65_CHILDREN_REUSED_NO_RAW_MBO_REPLAY",
+            "raw_mbo_replayed": False,
+            "producer_engine_hashes": producer,
+            "finalizer_engine_hashes": finalizer,
+            "accepted_launch_receipt_file_sha256": "3" * 64,
+            "finalizer_lock_sha256": lock["finalizer_lock_sha256"],
+            "children": children,
+        },
+        "legacy_overlap_equivalence": {
+            "status": "USER_AUTHORIZED_ONE_DAY_CANARY_ACCEPTED",
+            "retained_mismatch_count": 1,
+            "lineage_equivalence_asserted": False,
+            "multiweek_equivalence_asserted": False,
+            "accepted_launch_receipt_file_sha256": "3" * 64,
+            "candidate_commit": CANDIDATE,
+            "canary_evidence": promoted_launch()["canary_evidence"],
         },
     }
 
@@ -190,4 +252,115 @@ def test_complete_heartbeat_must_name_the_exact_final_receipt():
     with pytest.raises(CompletionGateError, match="receipt"):
         validate_final_receipt_heartbeat(
             {"phase": "COMPLETE", "receipt_sha256": "c" * 64}, "b" * 64
+        )
+
+
+def test_recovery_state_keeps_a_healthy_full_run_untouched():
+    assert classify_recovery_state(
+        final_available=False,
+        active_state="active",
+        load_state="loaded",
+        sub_state="running",
+        main_pid=123,
+        pid_alive=True,
+        completed_segments=7,
+        expected_segments=65,
+    ) == "HEALTHY_RUNNING"
+
+
+def test_clean_stopped_run_resumes_or_finalizes_without_raw_replay():
+    common = {
+        "final_available": False,
+        "active_state": "inactive",
+        "load_state": "not-found",
+        "sub_state": "dead",
+        "main_pid": 0,
+        "pid_alive": False,
+        "expected_segments": 65,
+    }
+    assert classify_recovery_state(**common, completed_segments=64) == "RESUME_CONTROLLER"
+    assert classify_recovery_state(**common, completed_segments=65) == "FINALIZE_FROM_CHILDREN"
+
+
+def test_recovery_state_rejects_failed_or_impossible_state():
+    with pytest.raises(CompletionGateError, match="failed"):
+        classify_recovery_state(
+            final_available=False,
+            active_state="failed",
+            load_state="loaded",
+            sub_state="failed",
+            main_pid=0,
+            pid_alive=False,
+            completed_segments=65,
+            expected_segments=65,
+        )
+    with pytest.raises(CompletionGateError, match="cardinality"):
+        classify_recovery_state(
+            final_available=False,
+            active_state="inactive",
+            load_state="not-found",
+            sub_state="dead",
+            main_pid=0,
+            pid_alive=False,
+            completed_segments=66,
+            expected_segments=65,
+        )
+
+
+def test_exact_one_day_recovery_provenance_is_accepted():
+    launch = promoted_launch()
+    launch["candidate_lock"] = {
+        "engine_hashes": {"research/runner.py": "1" * 64},
+        "source_manifest_sha256": SOURCE,
+        "ruleset_sha256": "6" * 64,
+    }
+    lock = finalizer_lock()
+    final = recovered_final_receipt(lock)
+    mode = validate_finalization_provenance(
+        final,
+        launch,
+        launch["candidate_lock"],
+        finalizer_lock=lock,
+        launch_receipt_file_sha256="3" * 64,
+    )
+    assert mode == "ONE_DAY_CANARY_RECOVERY_FINALIZER"
+
+
+def test_recovery_provenance_rejects_unpinned_child_or_engine():
+    launch = promoted_launch()
+    launch["candidate_lock"] = {
+        "engine_hashes": {"research/runner.py": "1" * 64},
+        "source_manifest_sha256": SOURCE,
+        "ruleset_sha256": "6" * 64,
+    }
+    lock = finalizer_lock()
+    final = recovered_final_receipt(lock)
+    final["child_receipt_hashes"][0] = "f" * 64
+    with pytest.raises(CompletionGateError, match="child"):
+        validate_finalization_provenance(
+            final,
+            launch,
+            launch["candidate_lock"],
+            finalizer_lock=lock,
+            launch_receipt_file_sha256="3" * 64,
+        )
+
+
+def test_recovery_provenance_rejects_tampered_finalizer_lock():
+    launch = promoted_launch()
+    launch["candidate_lock"] = {
+        "engine_hashes": {"research/runner.py": "1" * 64},
+        "source_manifest_sha256": SOURCE,
+        "ruleset_sha256": "6" * 64,
+    }
+    lock = finalizer_lock()
+    final = recovered_final_receipt(lock)
+    lock["recovery_scope"] = "TAMPERED"
+    with pytest.raises(CompletionGateError, match="lock"):
+        validate_finalization_provenance(
+            final,
+            launch,
+            launch["candidate_lock"],
+            finalizer_lock=lock,
+            launch_receipt_file_sha256="3" * 64,
         )

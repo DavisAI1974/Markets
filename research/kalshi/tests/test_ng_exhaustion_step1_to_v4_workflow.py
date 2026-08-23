@@ -28,6 +28,7 @@ def test_prepare_workflow_is_exact_key_and_non_dispatching():
     assert "ng_exhaustion_step1_to_v4_registry.py" in source
     assert "validate_launch_canary" in source
     assert "--launch-receipt" in source
+    assert "--finalizer-lock" in source
     assert "result_bearing_launch_authorized" in source
 
 
@@ -37,5 +38,6 @@ def test_completion_verifier_uses_shared_promotion_and_runtime_gates():
     assert source.count("validate_runtime_state") >= 2
     assert "declared_final_output_hashes" in source
     assert "validate_final_receipt_heartbeat" in source
+    assert "validate_finalization_provenance" in source
     assert "s3.get_object" in source
     assert "test \"$active\" = active" not in source

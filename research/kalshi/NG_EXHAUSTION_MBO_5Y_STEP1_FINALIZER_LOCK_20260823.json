@@ -1,0 +1,21 @@
+{
+  "finalizer_engine_hashes": {
+    "research/FRANKIE_NG_A_POSTSTATE_CLASSIFIER_FROZEN_PREBLIND_20260816.json": "ca15eccfe9da04e0eb45f5853dedc3e3f2d48a1ee97e48854fa7a12bd50fd3b6",
+    "research/FRANKIE_NG_PRE_FAMILY_CLASSIFIER_FROZEN_OPERATIONAL_20260817.json": "4ee397ce0d419982db82194225c87043df1f3c0eed21c0105e710b8e3cf406f6",
+    "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json": "d5020708bf3664163a59e249bcf4b15744a4d75bf8083da2d6c08aae9352c480",
+    "research/kalshi/ng_exhaustion_step1_completion_gate.py": "a29c2fe764016ea3597c7db63e7afcea8b6887b0ac7ad97c6ddd2e561caa1e41",
+    "research/ng_exhaustion_chain_canonical_table_20260817.py": "ed242425b7fcd617a6a40066b665034eae2e810d8d42e443cda7e8107c8d96e3",
+    "research/ng_exhaustion_chain_phase1_discovery_20260817.py": "fc1ed4604eb45cd4d2f7ef9141d03678d73cc168122dd663d589a8489ba838b0",
+    "research/ng_exhaustion_chain_phase1_structural_54w_20260817.py": "10dd830539089a5687333105f09b09b4cd9726430c19e66d13a94891489c1c47",
+    "research/ng_exhaustion_mbo_5y_canonical_manifest_20260822.py": "d3662eb06b9bfbeae1aaefb74f281948ac36ccf32ee984b689721eacec981c36",
+    "research/ng_exhaustion_mbo_5y_step1_census_20260822.py": "df7694fd43d85090307a124d9924d3197bef8adf8f3f802a99f9643cdbcc5329",
+    "research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py": "a1a0b944af8621976ece56f15ebb0075f671d7a78cd400962c8bd10359fcfd93",
+    "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py": "dbf751bfb877cda9df304afc66c7d7fef9460441ccf030e82edd100f445bcd17"
+  },
+  "finalizer_lock_sha256": "f15de116f0c85e06791b9bed85361529f4467a6c36191e9f0816adb7983b4122",
+  "parent_candidate_commit": "0d318335825b4a0e19a5a2881522f3da0374788e",
+  "recovery_scope": "FULL_65_CHILDREN_REUSED_NO_RAW_MBO_REPLAY",
+  "recovery_script_sha256": "04b31cbebc704aba0edc34e89b11c596fba23c2fe36281e9d36e99b9e9421612",
+  "recovery_workflow_sha256": "8a884e2a3cb7d7d6716f06214a5090e8e2cbe613df2c6989ab4ca9aa7f3e3227",
+  "schema": "NG_EXHAUSTION_MBO_5Y_STEP1_FINALIZER_LOCK_V1_20260823"
+}

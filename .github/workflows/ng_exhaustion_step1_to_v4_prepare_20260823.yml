@@ -110,6 +110,7 @@ jobs:
             --crosswalk "$root/DUAL_CENSUS_CROSSWALK.jsonl.gz" \
             --candidate-commit "$CANDIDATE_SHA" \
             --result-prefix "$result_prefix" \
+            --finalizer-lock research/kalshi/NG_EXHAUSTION_MBO_5Y_STEP1_FINALIZER_LOCK_20260823.json \
             --output "$root/STEP1_TO_V4_FROZEN_REGISTRY.json"
           python - "$root/STEP1_TO_V4_FROZEN_REGISTRY.json" <<'PY'
           import hashlib

@@ -6,7 +6,7 @@ on:
       candidate_sha:
         description: Exact census candidate commit
         required: true
-        default: e217d4cb03438dd4bff70f21e96762aa851b015f
+        default: 0d318335825b4a0e19a5a2881522f3da0374788e
       include_segment_receipts:
         description: Print exact preflight child receipts for boundary/recovery diagnosis
         required: false
@@ -46,6 +46,7 @@ permissions:
 
 jobs:
   status:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -54,7 +55,7 @@ jobs:
       AWS_DEFAULT_REGION: us-east-2
       INSTANCE_ID: i-08cee7171c0a76a04
       BUCKET: bento-568968024170-us-east-2-an
-      CANDIDATE_SHA: ${{ inputs.candidate_sha || 'e217d4cb03438dd4bff70f21e96762aa851b015f' }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha || '0d318335825b4a0e19a5a2881522f3da0374788e' }}
       INCLUDE_SEGMENT_RECEIPTS: ${{ inputs.include_segment_receipts || 'false' }}
       INCLUDE_EQUIVALENCE_EVIDENCE: ${{ inputs.include_equivalence_evidence || 'false' }}
       LEGACY_DAY: ${{ inputs.legacy_day || '' }}
@@ -80,32 +81,27 @@ jobs:
             --max-results 50 \
             --query "Commands[?contains(Comment, '$CANDIDATE_SHA')].[CommandId,Status,RequestedDateTime,Comment]" \
             --output table
-          prefix="nymex/ng_mbo_5y_v0/step1_census/launches/$CANDIDATE_SHA/preflight/progress/"
-          aws s3api list-objects-v2 \
-            --bucket "$BUCKET" \
-            --prefix "$prefix" \
-            --query 'Contents[].[LastModified,Size,Key]' \
-            --output table
-          latest_heartbeat="$(aws s3api list-objects-v2 \
-            --bucket "$BUCKET" \
-            --prefix "$prefix" \
-            --query 'Contents[-1].Key' \
-            --output text)"
-          if [ -n "$latest_heartbeat" ] && [ "$latest_heartbeat" != 'None' ]; then
-            aws s3 cp "s3://$BUCKET/$latest_heartbeat" - --only-show-errors
+          preflight_heartbeat_key="nymex/ng_mbo_5y_v0/step1_census/launches/$CANDIDATE_SHA/preflight/progress/CONTROLLER_HEARTBEAT.json"
+          if aws s3api head-object --bucket "$BUCKET" --key "$preflight_heartbeat_key" >/dev/null 2>&1; then
+            echo "PREFLIGHT_CONTROLLER_HEARTBEAT_KEY=$preflight_heartbeat_key"
+            aws s3 cp "s3://$BUCKET/$preflight_heartbeat_key" - --only-show-errors
+          fi
+          full_heartbeat_key="nymex/ng_mbo_5y_v0/step1_census/launches/$CANDIDATE_SHA/full/progress/CONTROLLER_HEARTBEAT.json"
+          if aws s3api head-object --bucket "$BUCKET" --key "$full_heartbeat_key" >/dev/null 2>&1; then
+            echo "FULL_CONTROLLER_HEARTBEAT_KEY=$full_heartbeat_key"
+            aws s3 cp "s3://$BUCKET/$full_heartbeat_key" - --only-show-errors
           fi
           if [ "$INCLUDE_SEGMENT_RECEIPTS" = 'true' ]; then
-            receipts_prefix="nymex/ng_mbo_5y_v0/step1_census/launches/$CANDIDATE_SHA/preflight/segments/"
-            mapfile -t receipt_keys < <(aws s3api list-objects-v2 \
-              --bucket "$BUCKET" \
-              --prefix "$receipts_prefix" \
-              --query "Contents[?ends_with(Key, '.receipt.json')].Key" \
-              --output text | tr '\t' '\n' | sort)
-            test "${#receipt_keys[@]}" -gt 0
-            for receipt_key in "${receipt_keys[@]}"; do
-              echo "SEGMENT_RECEIPT_KEY=$receipt_key"
-              aws s3 cp "s3://$BUCKET/$receipt_key" - --only-show-errors
+            found_receipt=false
+            for segment in 20250701_20250801 20250901_20251001 20251001_20251101; do
+              receipt_key="nymex/ng_mbo_5y_v0/step1_census/launches/$CANDIDATE_SHA/preflight/segments/$segment.receipt.json"
+              if aws s3api head-object --bucket "$BUCKET" --key "$receipt_key" >/dev/null 2>&1; then
+                found_receipt=true
+                echo "SEGMENT_RECEIPT_KEY=$receipt_key"
+                aws s3 cp "s3://$BUCKET/$receipt_key" - --only-show-errors
+              fi
             done
+            test "$found_receipt" = true
           fi
 
       - name: Retrieve exact retained equivalence evidence
@@ -212,20 +208,24 @@ jobs:
           base="/mnt/markets/ng_exhaustion_step1_5y_20260822/$CANDIDATE_SHA"
           python - "$base" <<'PY'
           import json
+          import os
           import sys
 
           base = sys.argv[1]
           paths = [
+              f"{base}/full/CONTROLLER_HEARTBEAT.json",
               f"{base}/preflight/CONTROLLER_HEARTBEAT.json",
               f"{base}/preflight/segments/20250701_20250801.heartbeat.json",
               f"{base}/preflight/segments/20250901_20251001.heartbeat.json",
               f"{base}/preflight/segments/20251001_20251101.heartbeat.json",
           ]
+          unit = f"ng-exhaustion-step1-{os.environ['CANDIDATE_SHA'][:12]}"
           command = "\n".join((
               "set -u",
               "uptime",
               "free -b",
               "df -B1 /mnt",
+              f"systemctl show {unit!r} --property=LoadState,ActiveState,SubState,MainPID --no-pager || true",
               "ps -eo pid,ppid,etimes,pcpu,pmem,stat,comm --sort=-pcpu | head -n 30",
               "for path in " + " ".join(repr(path) for path in paths) + "; do "
               "if [ -f \"$path\" ]; then stat --printf='%n bytes=%s mtime=%y\\n' \"$path\"; fi; done",

@@ -19,6 +19,7 @@ from ng_exhaustion_mbo_5y_step1_census_20260822 import (
     _match_events,
     _resumable_segment_receipt,
     _verified_child_outputs,
+    accepted_one_day_canary_overlap,
     build_crosswalk,
     compare_lineage,
     expanding_folds,
@@ -105,6 +106,78 @@ class SecondAggregatorTests(unittest.TestCase):
 
 
 class EquivalenceTests(unittest.TestCase):
+    def test_exact_promoted_canary_can_replace_only_the_obsolete_multiweek_gate(self):
+        from kalshi.ng_exhaustion_step1_completion_gate import PROMOTION_CANARY_IDENTITY
+
+        launch = {
+            "launch_method": "USER_AUTHORIZED_ONE_DAY_CANARY_PROMOTION_V1_20260823",
+            "candidate_commit": "0d318335825b4a0e19a5a2881522f3da0374788e",
+            "candidate_lock": {
+                "source_manifest_sha256": "5" * 64,
+                "ruleset_sha256": ruleset_sha256(),
+            },
+            "canary_evidence": {
+                **PROMOTION_CANARY_IDENTITY,
+                "user_authorized_as_launch_canary": True,
+                "lineage_equivalence_asserted": False,
+                "multiweek_equivalence_asserted": False,
+                "source_prefix_wide_enumeration_used": False,
+                "release_or_virgin_holdout_consumed": False,
+                "predictive_or_trading_experiment_run": False,
+            },
+            "legacy_overlap_equivalence": {
+                "status": "USER_AUTHORIZED_ONE_DAY_CANARY_ACCEPTED",
+                "retained_mismatch_count": 1,
+                "lineage_equivalence_asserted": False,
+                "multiweek_equivalence_asserted": False,
+            },
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "launch.json"
+            path.write_text(json.dumps(launch))
+            receipt, retained = accepted_one_day_canary_overlap(
+                path,
+                source_manifest_sha256="5" * 64,
+            )
+        self.assertEqual(receipt["status"], "USER_AUTHORIZED_ONE_DAY_CANARY_ACCEPTED")
+        self.assertFalse(receipt["lineage_equivalence_asserted"])
+        self.assertFalse(receipt["multiweek_equivalence_asserted"])
+        self.assertEqual(len(retained), 1)
+        self.assertEqual(retained[0]["kind"], "MBP10_ONLY_DETECTOR_INPUT_ROW")
+
+    def test_promoted_canary_drift_still_fails_closed(self):
+        from kalshi.ng_exhaustion_step1_completion_gate import PROMOTION_CANARY_IDENTITY
+
+        launch = {
+            "launch_method": "USER_AUTHORIZED_ONE_DAY_CANARY_PROMOTION_V1_20260823",
+            "candidate_commit": "0d318335825b4a0e19a5a2881522f3da0374788e",
+            "candidate_lock": {
+                "source_manifest_sha256": "5" * 64,
+                "ruleset_sha256": ruleset_sha256(),
+            },
+            "canary_evidence": {
+                **PROMOTION_CANARY_IDENTITY,
+                "artifact_id": 1,
+                "user_authorized_as_launch_canary": True,
+                "lineage_equivalence_asserted": False,
+                "multiweek_equivalence_asserted": False,
+                "source_prefix_wide_enumeration_used": False,
+                "release_or_virgin_holdout_consumed": False,
+                "predictive_or_trading_experiment_run": False,
+            },
+            "legacy_overlap_equivalence": {
+                "status": "USER_AUTHORIZED_ONE_DAY_CANARY_ACCEPTED",
+                "retained_mismatch_count": 1,
+                "lineage_equivalence_asserted": False,
+                "multiweek_equivalence_asserted": False,
+            },
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "launch.json"
+            path.write_text(json.dumps(launch))
+            with self.assertRaisesRegex(CensusError, "canary"):
+                accepted_one_day_canary_overlap(path, source_manifest_sha256="5" * 64)
+
     def test_exact_revealed_overlap_passes(self):
         rows = []
         for week in OVERLAP_WEEKS:

@@ -274,12 +274,16 @@ jobs:
           import json
           import os
           import re
+          import sys
           from pathlib import Path
 
           import boto3
+          sys.path.insert(0, 'research')
+          import ng_exhaustion_mbo_5y_step1_census_20260822 as finalizer_census
 
           from research.kalshi.ng_exhaustion_step1_completion_gate import (
               declared_final_output_hashes,
+              validate_finalization_provenance,
               validate_final_receipt_heartbeat,
               validate_launch_canary,
               validate_runtime_state,
@@ -317,6 +321,7 @@ jobs:
           instance = json.loads((root / 'INSTANCE_VERIFICATION.json').read_text())
           final_path = root / 'STEP1_DUAL_CENSUS_RECEIPT.json'
           final_available = final_path.exists()
+          finalization_mode = None
           require_complete = os.environ.get('REQUIRE_COMPLETE_OUTPUTS', 'false').lower() == 'true'
 
           if launch.get('schema') != 'NG_EXHAUSTION_MBO_5Y_STEP1_LAUNCH_RECEIPT_V1_20260822':
@@ -502,10 +507,35 @@ jobs:
                   raise SystemExit('final child receipt hash list cardinality drift')
               if any(not hex64.fullmatch(str(value)) for value in final['child_receipt_hashes']):
                   raise SystemExit('malformed final child receipt hash')
-              if final.get('weeks_filter') is not None or final.get('preflight_child_recovery') is not None:
-                  raise SystemExit('final census is filtered or relies on preflight child recovery')
-              if final.get('engine_hashes') != engine or final.get('ruleset_sha256') != lock.get('ruleset_sha256'):
-                  raise SystemExit('final receipt engine/ruleset hash drift')
+              if final.get('weeks_filter') is not None:
+                  raise SystemExit('final census is filtered')
+              if final.get('ruleset_sha256') != lock.get('ruleset_sha256'):
+                  raise SystemExit('final receipt ruleset hash drift')
+              finalizer_lock_path = Path(
+                  'research/kalshi/NG_EXHAUSTION_MBO_5Y_STEP1_FINALIZER_LOCK_20260823.json'
+              )
+              finalizer_lock = (
+                  json.loads(finalizer_lock_path.read_text())
+                  if final.get('finalization_recovery') is not None
+                  else {}
+              )
+              if finalizer_lock:
+                  expected_recovery_segments = sorted({row['segment'] for row in objects})
+                  if sorted(final['finalization_recovery'].get('children', {})) != expected_recovery_segments:
+                      raise SystemExit('recovery finalization child segment identities drift')
+                  if finalizer_lock.get('finalizer_engine_hashes') != finalizer_census.material_hashes():
+                      raise SystemExit('checked-out finalizer engine differs from its lock')
+                  if digest(Path('research/kalshi/ng_exhaustion_step1_recovery.py')) != finalizer_lock.get('recovery_script_sha256'):
+                      raise SystemExit('checked-out recovery script differs from finalizer lock')
+                  if digest(Path('.github/workflows/ng_exhaustion_mbo_5y_step1_recover_20260823.yml')) != finalizer_lock.get('recovery_workflow_sha256'):
+                      raise SystemExit('checked-out recovery workflow differs from finalizer lock')
+              finalization_mode = validate_finalization_provenance(
+                  final,
+                  launch,
+                  lock,
+                  finalizer_lock=finalizer_lock,
+                  launch_receipt_file_sha256=digest(root / 'LAUNCH_RECEIPT.json'),
+              )
               require_false(
                   final,
                   'release_or_virgin_holdout_consumed',
@@ -513,8 +543,6 @@ jobs:
                   'permanent_frankie_mutated',
                   'frozen_detector_mutated',
               )
-              if final.get('legacy_overlap_equivalence', {}).get('status') != 'PASS':
-                  raise SystemExit('final LEGACY_CONTROL equivalence gate did not pass')
               for view in ('legacy', 'native'):
                   summary = final[f'{view}_population_summary']
                   output = final['population_outputs'][view]
@@ -577,6 +605,7 @@ jobs:
               'controller_heartbeat_utc': heartbeat['heartbeat_utc'],
               'first_segment_heartbeat_verified_when_available': segment_heartbeat_path.exists(),
               'final_dual_population_receipt_available': final_available,
+              'finalization_mode': finalization_mode,
               'final_dual_population_and_crosswalk_metadata_verified': final_available,
               'exact_final_output_hashes_verified': 10 if final_available else 0,
               'release_or_virgin_holdout_consumed': False,

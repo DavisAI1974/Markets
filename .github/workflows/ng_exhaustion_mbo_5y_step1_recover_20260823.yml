@@ -1,0 +1,448 @@
+name: NG Exhaustion Five-Year Step-1 Resume or Finalize 20260823
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Exact launched Step-1 candidate
+        required: true
+        default: 0d318335825b4a0e19a5a2881522f3da0374788e
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - .github/workflows/ng_exhaustion_mbo_5y_step1_recover_20260823.yml
+
+permissions:
+  contents: read
+
+jobs:
+  recover:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      BUCKET: bento-568968024170-us-east-2-an
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+      EXACT_CANDIDATE: 0d318335825b4a0e19a5a2881522f3da0374788e
+      LAUNCH_RECEIPT_PATH: research/kalshi/NG_EXHAUSTION_MBO_5Y_STEP1_LAUNCH_20260822.json
+      FINALIZER_LOCK_PATH: research/kalshi/NG_EXHAUSTION_MBO_5Y_STEP1_FINALIZER_LOCK_20260823.json
+      RECOVERY_WORKFLOW_PATH: .github/workflows/ng_exhaustion_mbo_5y_step1_recover_20260823.yml
+      RECOVERY_SCRIPT_PATH: research/kalshi/ng_exhaustion_step1_recovery.py
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify immutable recovery implementation and accepted launch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$CANDIDATE_SHA" = "$EXACT_CANDIDATE"
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          from research.kalshi.ng_exhaustion_step1_completion_gate import validate_launch_canary
+          import sys
+          sys.path.insert(0, 'research')
+          import ng_exhaustion_mbo_5y_step1_census_20260822 as census
+
+          def digest(path):
+              return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+          launch = json.loads(Path(os.environ['LAUNCH_RECEIPT_PATH']).read_text())
+          lock_path = Path(os.environ['FINALIZER_LOCK_PATH'])
+          lock = json.loads(lock_path.read_text())
+          claimed = lock.pop('finalizer_lock_sha256', None)
+          actual = hashlib.sha256(
+              json.dumps(lock, sort_keys=True, separators=(',', ':'), ensure_ascii=True).encode()
+          ).hexdigest()
+          if claimed != actual:
+              raise SystemExit('finalizer lock canonical hash drift')
+          lock['finalizer_lock_sha256'] = claimed
+          if launch.get('candidate_commit') != os.environ['EXACT_CANDIDATE']:
+              raise SystemExit('durable launch candidate drift')
+          if validate_launch_canary(launch, launch.get('candidate_lock', {})) != 'USER_AUTHORIZED_ONE_DAY_CANARY':
+              raise SystemExit('recovery lacks the exact accepted one-day canary')
+          if lock.get('parent_candidate_commit') != os.environ['EXACT_CANDIDATE']:
+              raise SystemExit('finalizer lock parent-candidate drift')
+          if lock.get('recovery_scope') != 'FULL_65_CHILDREN_REUSED_NO_RAW_MBO_REPLAY':
+              raise SystemExit('finalizer recovery scope drift')
+          if lock.get('finalizer_engine_hashes') != census.material_hashes():
+              raise SystemExit('finalizer engine lock drift')
+          if digest(os.environ['RECOVERY_SCRIPT_PATH']) != lock.get('recovery_script_sha256'):
+              raise SystemExit('recovery script hash drift')
+          if digest(os.environ['RECOVERY_WORKFLOW_PATH']) != lock.get('recovery_workflow_sha256'):
+              raise SystemExit('recovery workflow hash drift')
+          PY
+
+      - name: Inspect exact unit and completed children without mutation
+        id: inspect
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          import shlex
+          import textwrap
+
+          candidate = os.environ['CANDIDATE_SHA']
+          base = f'/mnt/markets/ng_exhaustion_step1_5y_20260822/{candidate}'
+          unit = f'ng-exhaustion-step1-{candidate[:12]}'
+          finalizer_unit = f'ng-exhaustion-step1-finalize-{candidate[:12]}'
+          producer = json.load(open(os.environ['LAUNCH_RECEIPT_PATH']))['candidate_lock']['engine_hashes']
+          remote_python = textwrap.dedent(r'''
+          import json,sys
+          from pathlib import Path
+          base,unit,finalizer_unit,producer_json=sys.argv[1:]
+          producer=json.loads(producer_json)
+          repo=Path(base,'repo')
+          sys.path.insert(0,str(repo/'research'))
+          import ng_exhaustion_mbo_5y_step1_census_20260822 as census
+          manifest=json.loads((repo/'research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json').read_text())
+          segments=sorted({row['segment'] for row in manifest['canonical_dbn_objects']})
+          completed=0
+          for segment in segments:
+              scope=census._segment_source_scope(manifest,segment,None)
+              if census._resumable_segment_receipt(
+                  manifest,segment,Path(base,'full','segments'),producer,scope
+              ) is not None:
+                  completed += 1
+          import subprocess
+          def prop(unit_name,name,default):
+              result=subprocess.run(
+                  ['systemctl','show',unit_name,f'--property={name}','--value'],
+                  text=True,capture_output=True,
+              )
+              value=result.stdout.strip()
+              return value if value else default
+          def state(unit_name):
+              pid=int(prop(unit_name,'MainPID','0'))
+              alive=False
+              if pid > 0:
+                  try:
+                      import os
+                      os.kill(pid,0)
+                      alive=True
+                  except OSError:
+                      pass
+              return {
+                  'observed_unit':unit_name,
+                  'active_state':prop(unit_name,'ActiveState','unknown'),
+                  'load_state':prop(unit_name,'LoadState','not-found'),
+                  'sub_state':prop(unit_name,'SubState','not-found'),
+                  'main_pid':pid,
+                  'pid_alive':alive,
+              }
+          original=state(unit)
+          finalizer=state(finalizer_unit)
+          def live(body):
+              return body['active_state']=='active' and body['pid_alive']
+          if live(original):
+              selected=original
+          elif live(finalizer):
+              selected=finalizer
+          elif (
+              finalizer['active_state'] not in {'inactive','unknown'}
+              or finalizer['load_state'] not in {'not-found','loaded'}
+              or finalizer['sub_state'] not in {'dead','not-found'}
+              or finalizer['main_pid'] != 0
+          ):
+              selected=finalizer
+          else:
+              selected=original
+          print(json.dumps({
+              **selected,
+              'original_unit_state':original,
+              'finalizer_unit_state':finalizer,
+              'completed_segments':completed,
+              'expected_segments':len(segments),
+              'local_final_receipt_available':Path(base,'full','results','STEP1_DUAL_CENSUS_RECEIPT.json').is_file(),
+          },sort_keys=True))
+          ''')
+          command = ' '.join((
+              shlex.quote(f'{base}/venv/bin/python'),
+              '-c', shlex.quote(remote_python),
+              shlex.quote(base), shlex.quote(unit), shlex.quote(finalizer_unit),
+              shlex.quote(json.dumps(producer,sort_keys=True)),
+          ))
+          with open('/tmp/STEP1_INSPECT_PARAMETERS.json','w',encoding='utf-8') as handle:
+              json.dump({'commands':[command]},handle)
+          PY
+          inspect_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Read-only Step-1 recovery inspection $CANDIDATE_SHA" \
+            --parameters file:///tmp/STEP1_INSPECT_PARAMETERS.json \
+            --timeout-seconds 180 \
+            --query 'Command.CommandId' --output text)"
+          aws ssm wait command-executed --command-id "$inspect_id" --instance-id "$INSTANCE_ID"
+          test "$(aws ssm get-command-invocation --command-id "$inspect_id" --instance-id "$INSTANCE_ID" --query Status --output text)" = Success
+          aws ssm get-command-invocation \
+            --command-id "$inspect_id" --instance-id "$INSTANCE_ID" \
+            --query StandardOutputContent --output text > /tmp/STEP1_RECOVERY_INSPECTION.json
+          python -m json.tool /tmp/STEP1_RECOVERY_INSPECTION.json
+          printf 'ssm_command_id=%s\n' "$inspect_id" >> "$GITHUB_OUTPUT"
+
+      - name: Choose no-op, resume, or child-only finalization
+        id: decide
+        shell: bash
+        run: |
+          set -euo pipefail
+          final_key="nymex/ng_mbo_5y_v0/step1_census/launches/$CANDIDATE_SHA/full/results/STEP1_DUAL_CENSUS_RECEIPT.json"
+          s3_final=false
+          if aws s3api head-object --bucket "$BUCKET" --key "$final_key" >/dev/null 2>&1; then
+            s3_final=true
+          fi
+          S3_FINAL_AVAILABLE="$s3_final" python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          from research.kalshi.ng_exhaustion_step1_completion_gate import classify_recovery_state
+
+          inspection=json.loads(Path('/tmp/STEP1_RECOVERY_INSPECTION.json').read_text())
+          final_available=(
+              os.environ['S3_FINAL_AVAILABLE']=='true'
+              or inspection['local_final_receipt_available'] is True
+          )
+          action=classify_recovery_state(
+              final_available=final_available,
+              active_state=inspection['active_state'],
+              load_state=inspection['load_state'],
+              sub_state=inspection['sub_state'],
+              main_pid=inspection['main_pid'],
+              pid_alive=inspection['pid_alive'],
+              completed_segments=inspection['completed_segments'],
+              expected_segments=inspection['expected_segments'],
+          )
+          decision={**inspection,'s3_final_receipt_available':os.environ['S3_FINAL_AVAILABLE']=='true','action':action}
+          Path('/tmp/STEP1_RECOVERY_DECISION.json').write_text(json.dumps(decision,indent=2,sort_keys=True)+'\n')
+          with open(os.environ['GITHUB_OUTPUT'],'a') as handle:
+              handle.write(f'action={action}\n')
+          print(json.dumps(decision,indent=2,sort_keys=True))
+          PY
+
+      - name: Package and upload exact finalizer only when recovery is required
+        id: package
+        if: steps.decide.outputs.action == 'FINALIZE_FROM_CHILDREN'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git archive --format=tar.gz --output=/tmp/STEP1_FINALIZER_PACKAGE.tgz HEAD
+          package_sha="$(sha256sum /tmp/STEP1_FINALIZER_PACKAGE.tgz | cut -d' ' -f1)"
+          package_key="nymex/ng_mbo_5y_v0/step1_census/launches/$CANDIDATE_SHA/recovery/packages/$GITHUB_SHA.tgz"
+          aws s3 cp /tmp/STEP1_FINALIZER_PACKAGE.tgz "s3://$BUCKET/$package_key" --only-show-errors
+          printf 'package_sha256=%s\npackage_key=%s\n' "$package_sha" "$package_key" >> "$GITHUB_OUTPUT"
+
+      - name: Resume missing segments or start the child-only finalizer
+        id: recover
+        if: steps.decide.outputs.action == 'RESUME_CONTROLLER' || steps.decide.outputs.action == 'FINALIZE_FROM_CHILDREN'
+        shell: bash
+        env:
+          RECOVERY_ACTION: ${{ steps.decide.outputs.action }}
+          PACKAGE_SHA256: ${{ steps.package.outputs.package_sha256 }}
+          PACKAGE_KEY: ${{ steps.package.outputs.package_key }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import json
+          import os
+          import shlex
+          import textwrap
+
+          candidate=os.environ['CANDIDATE_SHA']
+          action=os.environ['RECOVERY_ACTION']
+          base=f'/mnt/markets/ng_exhaustion_step1_5y_20260822/{candidate}'
+          original_unit=f'ng-exhaustion-step1-{candidate[:12]}'
+          finalizer_unit=f'ng-exhaustion-step1-finalize-{candidate[:12]}'
+          recovery_root=f'{base}/recovery/{os.environ["GITHUB_SHA"]}'
+          repo=f'{recovery_root}/repo'
+          cred=f'{base}/aws.env'
+          prefix=f'nymex/ng_mbo_5y_v0/step1_census/launches/{candidate}'
+          manifest=f'{repo}/research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json'
+          segments=f'{base}/full/segments'
+          launch=f'{repo}/research/kalshi/NG_EXHAUSTION_MBO_5Y_STEP1_LAUNCH_20260822.json'
+          lock=f'{repo}/research/kalshi/NG_EXHAUSTION_MBO_5Y_STEP1_FINALIZER_LOCK_20260823.json'
+          contract=f'{recovery_root}/FINALIZATION_RECOVERY_CONTRACT.json'
+          results=f'{recovery_root}/results'
+          heartbeat=f'{recovery_root}/CONTROLLER_HEARTBEAT.json'
+          launcher=textwrap.dedent(f'''\
+          #!/bin/bash
+          set -euo pipefail
+          set -a
+          source {shlex.quote(cred)}
+          set +a
+          cd {shlex.quote(repo)}
+          source {shlex.quote(base + '/venv/bin/activate')}
+          mkdir -p {shlex.quote(results)}
+          python research/kalshi/ng_exhaustion_step1_recovery.py prepare-contract \\
+            --manifest {shlex.quote(manifest)} \\
+            --segment-dir {shlex.quote(segments)} \\
+            --launch-receipt {shlex.quote(launch)} \\
+            --finalizer-lock {shlex.quote(lock)} \\
+            --candidate-commit {shlex.quote(candidate)} \\
+            --output {shlex.quote(contract)}
+          python research/ng_exhaustion_mbo_5y_step1_census_20260822.py reconcile \\
+            --manifest {shlex.quote(manifest)} \\
+            --segment-dir {shlex.quote(segments)} \\
+            --out-dir {shlex.quote(results)} \\
+            --frozen-overlap-table {shlex.quote(base + '/repo/frozen/FROZEN_OVERLAP_EVENT_TABLE.jsonl.gz')} \\
+            --frozen-overlap-lineage {shlex.quote(base + '/repo/frozen/FROZEN_OVERLAP_LINEAGE.jsonl.gz')} \\
+            --child-recovery-contract {shlex.quote(contract)} \\
+            --accepted-one-day-launch-receipt {shlex.quote(launch)} \\
+            > {shlex.quote(recovery_root + '/FINALIZER.log')} 2>&1
+          python - {shlex.quote(results)} {shlex.quote(manifest)} {shlex.quote(heartbeat)} <<'PYVERIFY'
+          import hashlib,json,sys
+          from pathlib import Path
+          from research.kalshi.ng_exhaustion_step1_completion_gate import declared_final_output_hashes
+          from research.kalshi.ng_exhaustion_step1_recovery import completed_controller_heartbeat
+          root=Path(sys.argv[1]); manifest=sys.argv[2]; heartbeat=Path(sys.argv[3])
+          final=json.loads((root/'STEP1_DUAL_CENSUS_RECEIPT.json').read_text())
+          claimed=final.pop('receipt_sha256')
+          actual=hashlib.sha256(json.dumps(final,sort_keys=True,separators=(',',':'),ensure_ascii=True).encode()).hexdigest()
+          if claimed != actual: raise SystemExit('final receipt canonical hash drift')
+          final['receipt_sha256']=claimed
+          for name,want in declared_final_output_hashes(final).items():
+              got=hashlib.sha256((root/name).read_bytes()).hexdigest()
+              if got != want: raise SystemExit(f'final output hash drift: {{name}}')
+          equivalence=json.loads((root/'LEGACY_CONTROL_OVERLAP_EQUIVALENCE.json').read_text())
+          if equivalence != final['legacy_overlap_equivalence']:
+              raise SystemExit('final equivalence object drift')
+          heartbeat.write_text(json.dumps(completed_controller_heartbeat(manifest,receipt_sha256=claimed),indent=2,sort_keys=True)+'\\n')
+          PYVERIFY
+          python - {shlex.quote(results)} {shlex.quote(heartbeat)} {shlex.quote(prefix)} {shlex.quote(base)} <<'PYUPLOAD'
+          import json,shutil,sys
+          from pathlib import Path
+          import boto3
+          root=Path(sys.argv[1]); heartbeat=Path(sys.argv[2]); prefix=sys.argv[3]; base=Path(sys.argv[4])
+          manifest=json.load(open('research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json'))
+          s3=boto3.client('s3',region_name=manifest.get('region','us-east-2'))
+          names=(
+              'LEGACY_CONTROL_OVERLAP_EQUIVALENCE.json',
+              'LEGACY_CONTROL_EVENTS.jsonl.gz','V4_NATIVE_FULL_EVENTS.jsonl.gz',
+              'LEGACY_CONTROL_LINEAGE_INPUTS.jsonl.gz','V4_NATIVE_FULL_LINEAGE_INPUTS.jsonl.gz',
+              'LEGACY_CONTROL_POPULATION.jsonl.gz','V4_NATIVE_FULL_POPULATION.jsonl.gz',
+              'LEGACY_CONTROL_CROSSWALK_INDEX.jsonl.gz','V4_NATIVE_FULL_CROSSWALK_INDEX.jsonl.gz',
+              'DUAL_CENSUS_CROSSWALK.jsonl.gz','LEGACY_CONTROL_OVERLAP_MISMATCHES.jsonl.gz',
+          )
+          for name in names:
+              s3.upload_file(str(root/name),manifest['bucket'],f'{{prefix}}/full/results/{{name}}')
+          s3.upload_file(str(heartbeat),manifest['bucket'],f'{{prefix}}/full/progress/CONTROLLER_HEARTBEAT.json')
+          s3.upload_file(
+              str(root/'STEP1_DUAL_CENSUS_RECEIPT.json'), manifest['bucket'],
+              f'{{prefix}}/full/results/STEP1_DUAL_CENSUS_RECEIPT.json',
+          )
+          shutil.copy2(heartbeat,base/'full/CONTROLLER_HEARTBEAT.json')
+          (base/'aws.env').unlink(missing_ok=True)
+          PYUPLOAD
+          ''')
+          launcher_b64=base64.b64encode(launcher.encode()).decode()
+          command=f'''set -euo pipefail
+          base={shlex.quote(base)}
+          cred={shlex.quote(cred)}
+          recovery_root={shlex.quote(recovery_root)}
+          repo={shlex.quote(repo)}
+          original_unit={shlex.quote(original_unit)}
+          finalizer_unit={shlex.quote(finalizer_unit)}
+          test -s "$cred"
+          for live_unit in "$original_unit" "$finalizer_unit"; do
+            current_active="$(systemctl show "$live_unit" --property=ActiveState --value 2>/dev/null || true)"
+            current_pid="$(systemctl show "$live_unit" --property=MainPID --value 2>/dev/null || true)"
+            current_pid="${{current_pid:-0}}"
+            if [ "$current_active" = active ] && [ "$current_pid" -gt 0 ] && kill -0 "$current_pid" 2>/dev/null; then
+              printf '{{"action":"HEALTHY_RUNNING_RACE_NOOP","unit":"%s","main_pid":%s}}\\n' "$live_unit" "$current_pid"
+              exit 0
+            fi
+          done
+          set -a
+          source "$cred"
+          set +a
+          if aws s3api head-object \
+            --bucket {shlex.quote(os.environ['BUCKET'])} \
+            --key {shlex.quote(prefix + '/full/results/STEP1_DUAL_CENSUS_RECEIPT.json')} \
+            >/dev/null 2>&1; then
+            echo '{{"action":"FINAL_RECEIPT_RACE_NOOP"}}'
+            exit 0
+          fi
+          if [ {shlex.quote(action)} = RESUME_CONTROLLER ]; then
+            test -x "$base/run_full.sh"
+            load="$(systemctl show "$original_unit" --property=LoadState --value 2>/dev/null || true)"
+            systemctl reset-failed "$original_unit" 2>/dev/null || true
+            if [ "$load" = loaded ]; then
+              systemctl start "$original_unit"
+            else
+              systemd-run --collect --unit "$original_unit" --property=Restart=on-failure --property=RestartSec=60 "$base/run_full.sh" >/dev/null
+            fi
+            sleep 5
+            active="$(systemctl show "$original_unit" --property=ActiveState --value)"
+            pid="$(systemctl show "$original_unit" --property=MainPID --value)"
+            test "$active" = active
+            test "$pid" -gt 0
+            kill -0 "$pid"
+            printf '{{"action":"RESUME_CONTROLLER","unit":"%s","main_pid":%s}}\\n' "$original_unit" "$pid"
+            exit 0
+          fi
+          mkdir -p "$recovery_root"
+          aws s3 cp s3://{os.environ['BUCKET']}/{os.environ['PACKAGE_KEY']} "$recovery_root/package.tgz" --only-show-errors
+          test "$(sha256sum "$recovery_root/package.tgz" | cut -d' ' -f1)" = {shlex.quote(os.environ['PACKAGE_SHA256'])}
+          mkdir -p "$repo"
+          tar -xzf "$recovery_root/package.tgz" -C "$repo"
+          printf %s {shlex.quote(launcher_b64)} | base64 -d > "$recovery_root/run_finalizer.sh"
+          chmod 700 "$recovery_root/run_finalizer.sh"
+          finalizer_load="$(systemctl show "$finalizer_unit" --property=LoadState --value 2>/dev/null || true)"
+          systemctl reset-failed "$finalizer_unit" 2>/dev/null || true
+          if [ "$finalizer_load" = loaded ]; then
+            systemctl start "$finalizer_unit"
+          else
+            systemd-run --collect --unit "$finalizer_unit" --property=Restart=no "$recovery_root/run_finalizer.sh" >/dev/null
+          fi
+          sleep 5
+          active="$(systemctl show "$finalizer_unit" --property=ActiveState --value 2>/dev/null || true)"
+          pid="$(systemctl show "$finalizer_unit" --property=MainPID --value 2>/dev/null || true)"
+          pid="${{pid:-0}}"
+          if [ "$active" = active ] && [ "$pid" -gt 0 ] && kill -0 "$pid" 2>/dev/null; then
+            printf '{{"action":"FINALIZE_FROM_CHILDREN","unit":"%s","main_pid":%s}}\\n' "$finalizer_unit" "$pid"
+          elif [ -s {shlex.quote(results + '/STEP1_DUAL_CENSUS_RECEIPT.json')} ]; then
+            echo '{{"action":"FINALIZE_FROM_CHILDREN_COMPLETED_QUICKLY"}}'
+          else
+            exit 1
+          fi
+          '''
+          with open('/tmp/STEP1_RECOVER_PARAMETERS.json','w',encoding='utf-8') as handle:
+              json.dump({'commands':['/bin/bash -lc '+shlex.quote(command)]},handle)
+          PY
+          recovery_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Step-1 safe resume or no-raw-replay finalization $CANDIDATE_SHA" \
+            --parameters file:///tmp/STEP1_RECOVER_PARAMETERS.json \
+            --timeout-seconds 300 \
+            --query 'Command.CommandId' --output text)"
+          aws ssm wait command-executed --command-id "$recovery_id" --instance-id "$INSTANCE_ID"
+          status="$(aws ssm get-command-invocation --command-id "$recovery_id" --instance-id "$INSTANCE_ID" --query Status --output text)"
+          response="$(aws ssm get-command-invocation --command-id "$recovery_id" --instance-id "$INSTANCE_ID" --query ResponseCode --output text)"
+          test "$status" = Success
+          test "$response" = 0
+          aws ssm get-command-invocation \
+            --command-id "$recovery_id" --instance-id "$INSTANCE_ID" \
+            --query StandardOutputContent --output text > /tmp/STEP1_RECOVERY_ACTION.json
+          python -m json.tool /tmp/STEP1_RECOVERY_ACTION.json
+          printf 'ssm_command_id=%s\n' "$recovery_id" >> "$GITHUB_OUTPUT"
+
+      - name: Upload compact recovery evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ng-step1-recovery-${{ inputs.candidate_sha }}-${{ github.run_id }}
+          path: |
+            /tmp/STEP1_RECOVERY_INSPECTION.json
+            /tmp/STEP1_RECOVERY_DECISION.json
+            /tmp/STEP1_RECOVERY_ACTION.json
+          if-no-files-found: warn
+          retention-days: 30

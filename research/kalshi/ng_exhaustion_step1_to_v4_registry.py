@@ -14,6 +14,7 @@ from typing import Any, Iterable, Mapping
 
 from research.kalshi.ng_exhaustion_step1_completion_gate import (
     CompletionGateError,
+    validate_finalization_provenance,
     validate_launch_canary,
 )
 
@@ -143,6 +144,7 @@ def build_registry(
     *,
     candidate_commit: str,
     result_prefix: str,
+    finalizer_lock_path: str | Path | None = None,
 ) -> dict[str, Any]:
     launch_receipt_path = Path(launch_receipt_path)
     receipt_path = Path(receipt_path)
@@ -201,8 +203,8 @@ def build_registry(
         raise RegistryError("Step-1 native taxonomy drift")
     if receipt.get("retention_policy") != RETENTION_POLICY:
         raise RegistryError("Step-1 retention policy drift")
-    if receipt.get("weeks_filter") is not None or receipt.get("preflight_child_recovery") is not None:
-        raise RegistryError("Step-1 receipt is filtered or relies on cross-candidate recovery")
+    if receipt.get("weeks_filter") is not None:
+        raise RegistryError("Step-1 receipt is filtered")
     for field, message in (
         ("release_or_virgin_holdout_consumed", "holdout consumption is forbidden"),
         ("predictive_or_trading_experiment_run", "prediction/trading is forbidden"),
@@ -222,9 +224,23 @@ def build_registry(
     if (
         launch_lock.get("source_manifest_sha256") != receipt["source_manifest_sha256"]
         or launch_lock.get("ruleset_sha256") != receipt["ruleset_sha256"]
-        or launch_lock.get("engine_hashes") != engine_hashes
     ):
         raise RegistryError("Step-1 launch lock/final receipt identity drift")
+    finalizer_lock: Mapping[str, Any] = {}
+    if receipt.get("finalization_recovery") is not None:
+        if finalizer_lock_path is None:
+            raise RegistryError("Step-1 recovery finalizer lock is required")
+        finalizer_lock = json.loads(Path(finalizer_lock_path).read_text(encoding="utf-8"))
+    try:
+        finalization_mode = validate_finalization_provenance(
+            receipt,
+            launch,
+            launch_lock,
+            finalizer_lock=finalizer_lock,
+            launch_receipt_file_sha256=_file_hash(launch_receipt_path),
+        )
+    except CompletionGateError as exc:
+        raise RegistryError(f"Step-1 finalization provenance invalid: {exc}") from exc
 
     outputs = receipt.get("population_outputs")
     summaries = {
@@ -346,9 +362,15 @@ def build_registry(
             raise RegistryError("crosswalk primary match annotation must be boolean")
         if not isinstance(edge.get("reset_agreement"), bool):
             raise RegistryError("crosswalk reset agreement annotation must be boolean")
+        native_reset = native_row.get("reset_event_id")
+        expected_reset_agreement = legacy_row.get("reset_event_id") == (
+            None if native_reset is None else str(native_reset).removeprefix("V4N1|")
+        )
+        if edge["reset_agreement"] is not expected_reset_agreement:
+            raise RegistryError("crosswalk reset_agreement annotation drift")
         primary_matches += int(edge["primary_one_to_one_match"])
         depth_agreements += int(depth_agreement)
-        reset_agreements += int(edge["reset_agreement"])
+        reset_agreements += int(expected_reset_agreement)
         d_lane = legacy_row["legacy_d_label"]
         year = native_row["week_sunday"][:4]
         if legacy_row.get("unresolved") or native_row.get("unresolved"):
@@ -435,6 +457,7 @@ def build_registry(
         "status": "STEP1_TO_V4_FROZEN_REGISTRY_READY",
         "candidate_commit": candidate_commit,
         "launch_canary_mode": launch_canary_mode,
+        "finalization_mode": finalization_mode,
         "source_manifest_sha256": receipt["source_manifest_sha256"],
         "ruleset_sha256": receipt["ruleset_sha256"],
         "engine_hashes": engine_hashes,
@@ -465,6 +488,7 @@ def main() -> int:
     parser.add_argument("--crosswalk", required=True)
     parser.add_argument("--candidate-commit", required=True)
     parser.add_argument("--result-prefix", required=True)
+    parser.add_argument("--finalizer-lock")
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
     registry = build_registry(
@@ -475,6 +499,7 @@ def main() -> int:
         args.crosswalk,
         candidate_commit=args.candidate_commit,
         result_prefix=args.result_prefix,
+        finalizer_lock_path=args.finalizer_lock,
     )
     Path(args.output).write_text(
         json.dumps(registry, indent=2, sort_keys=True) + "\n", encoding="utf-8"

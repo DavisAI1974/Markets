@@ -119,6 +119,8 @@ def fixture(tmp_path: Path):
         "retention_policy": RETENTION,
         "weeks_filter": None,
         "preflight_child_recovery": None,
+        "finalization_recovery": None,
+        "legacy_overlap_equivalence": {"status": "PASS"},
         "population_outputs": {
             "legacy": {"path": str(legacy), "rows": 1, "gzip_sha256": legacy_hash},
             "native": {"path": str(native), "rows": 1, "gzip_sha256": native_hash},
@@ -160,12 +162,14 @@ def rebuild_receipt(receipt_path, receipt):
     receipt_path.write_text(json.dumps(receipt))
 
 
-def build(paths, candidate=CANDIDATE):
+def build(paths, candidate=CANDIDATE, finalizer_lock=None):
     launch, receipt, legacy, native, crosswalk = paths
+    kwargs = {} if finalizer_lock is None else {"finalizer_lock_path": finalizer_lock}
     return build_registry(
         launch, receipt, legacy, native, crosswalk,
         candidate_commit=candidate,
         result_prefix="s3://bucket/exact/full/results/",
+        **kwargs,
     )
 
 
@@ -175,8 +179,70 @@ def test_builds_frozen_non_result_bearing_registry(tmp_path):
     assert registry["eligible_crosswalk_edge_count"] == 1
     assert registry["inventory_by_d_year"] == {"D0": {"2022": 1}}
     assert registry["launch_canary_mode"] == "USER_AUTHORIZED_ONE_DAY_CANARY"
+    assert registry["finalization_mode"] == "ORIGINAL_CANDIDATE_FINALIZATION"
     assert registry["result_bearing_launch_authorized"] is False
     assert len(registry["registry_sha256"]) == 64
+
+
+def test_builds_registry_from_exact_no_raw_replay_finalizer(tmp_path):
+    paths = fixture(tmp_path)
+    launch_file_sha = hashlib.sha256(paths[0].read_bytes()).hexdigest()
+    final_engine = {"engine.py": "b" * 64}
+    receipt = json.loads(paths[1].read_text())
+    for path, view, event_id, chain_id, lane in (
+        (paths[2], "LEGACY_CONTROL", "L1", "legacy-chain", "legacy"),
+        (paths[3], "V4_NATIVE_FULL", "N1", "native-chain", "native"),
+    ):
+        row = population_row(view, event_id, chain_id)
+        row["engine_hashes"] = final_engine
+        receipt["population_outputs"][lane]["gzip_sha256"] = write_jsonl(path, [row])
+    children = {
+        f"segment-{i:02d}": {
+            "receipt_sha256": f"{i + 1:064x}",
+            "seconds_gzip_sha256": f"{i + 101:064x}",
+            "seconds_rows": i + 1,
+        }
+        for i in range(65)
+    }
+    lock = {
+        "schema": "NG_EXHAUSTION_MBO_5Y_STEP1_FINALIZER_LOCK_V1_20260823",
+        "parent_candidate_commit": CANDIDATE,
+        "recovery_scope": "FULL_65_CHILDREN_REUSED_NO_RAW_MBO_REPLAY",
+        "finalizer_engine_hashes": final_engine,
+    }
+    lock["finalizer_lock_sha256"] = canonical_hash(lock)
+    lock_path = tmp_path / "FINALIZER_LOCK.json"
+    lock_path.write_text(json.dumps(lock))
+    receipt["engine_hashes"] = final_engine
+    receipt["child_receipt_count"] = 65
+    receipt["child_receipt_hashes"] = [children[key]["receipt_sha256"] for key in sorted(children)]
+    receipt["legacy_overlap_equivalence"] = {
+        "status": "USER_AUTHORIZED_ONE_DAY_CANARY_ACCEPTED",
+        "retained_mismatch_count": 1,
+        "lineage_equivalence_asserted": False,
+        "multiweek_equivalence_asserted": False,
+        "accepted_launch_receipt_file_sha256": launch_file_sha,
+        "candidate_commit": CANDIDATE,
+        "canary_evidence": json.loads(paths[0].read_text())["canary_evidence"],
+    }
+    receipt["finalization_recovery"] = {
+        "schema": "NG_EXHAUSTION_MBO_5Y_STEP1_FINALIZATION_RECOVERY_V1_20260823",
+        "contract_sha256": "d" * 64,
+        "parent_candidate_commit": CANDIDATE,
+        "source_manifest_sha256": H,
+        "ruleset_sha256": H,
+        "recovery_scope": "FULL_65_CHILDREN_REUSED_NO_RAW_MBO_REPLAY",
+        "raw_mbo_replayed": False,
+        "producer_engine_hashes": ENGINE,
+        "finalizer_engine_hashes": final_engine,
+        "accepted_launch_receipt_file_sha256": launch_file_sha,
+        "finalizer_lock_sha256": lock["finalizer_lock_sha256"],
+        "children": children,
+    }
+    rebuild_receipt(paths[1], receipt)
+    registry = build(paths, finalizer_lock=lock_path)
+    assert registry["finalization_mode"] == "ONE_DAY_CANARY_RECOVERY_FINALIZER"
+    assert registry["result_bearing_launch_authorized"] is False
 
 
 def test_population_hash_drift_fails_closed(tmp_path):
@@ -300,6 +366,16 @@ def test_unresolved_flag_and_crosswalk_semantics_are_explicit(tmp_path):
     receipt["crosswalk_output"]["gzip_sha256"] = crosswalk_hash
     rebuild_receipt(paths[1], receipt)
     with pytest.raises(RegistryError, match="depth_agreement"):
+        build(paths)
+
+    paths = fixture(tmp_path / "reset-agreement-drift")
+    native = population_row("V4_NATIVE_FULL", "N1", "native-chain")
+    native["reset_event_id"] = "V4N1|different-reset"
+    native_hash = write_jsonl(paths[3], [native])
+    receipt = json.loads(paths[1].read_text())
+    receipt["population_outputs"]["native"]["gzip_sha256"] = native_hash
+    rebuild_receipt(paths[1], receipt)
+    with pytest.raises(RegistryError, match="reset_agreement"):
         build(paths)
 
 

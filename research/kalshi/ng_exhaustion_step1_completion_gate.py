@@ -2,6 +2,8 @@
 """Pure fail-closed gates shared by Step-1 launch/completion verification."""
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 import re
 from typing import Any, Mapping
@@ -13,6 +15,10 @@ class CompletionGateError(ValueError):
 
 PROMOTION_METHOD = "USER_AUTHORIZED_ONE_DAY_CANARY_PROMOTION_V1_20260823"
 PROMOTION_CANDIDATE = "0d318335825b4a0e19a5a2881522f3da0374788e"
+FINALIZATION_RECOVERY_SCHEMA = "NG_EXHAUSTION_MBO_5Y_STEP1_FINALIZATION_RECOVERY_V1_20260823"
+FINALIZER_LOCK_SCHEMA = "NG_EXHAUSTION_MBO_5Y_STEP1_FINALIZER_LOCK_V1_20260823"
+FINALIZATION_RECOVERY_SCOPE = "FULL_65_CHILDREN_REUSED_NO_RAW_MBO_REPLAY"
+EXPECTED_FULL_SEGMENTS = 65
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 PROMOTION_CANARY_IDENTITY = {
     "schema": "NG_EXHAUSTION_MBO_LEGACY_GROUP_AUDIT_V2_20260823",
@@ -126,6 +132,159 @@ def validate_runtime_state(
     if int(main_pid) <= 0 or pid_alive is not True:
         raise CompletionGateError("fresh systemd MainPID is not alive")
     return "ACTIVE_SERVICE"
+
+
+def classify_recovery_state(
+    *,
+    final_available: bool,
+    active_state: str,
+    load_state: str,
+    sub_state: str,
+    main_pid: int,
+    pid_alive: bool,
+    completed_segments: int,
+    expected_segments: int = EXPECTED_FULL_SEGMENTS,
+) -> str:
+    """Choose no-op, resume, or finalization without interrupting healthy work."""
+    if type(completed_segments) is not int or type(expected_segments) is not int:
+        raise CompletionGateError("recovery segment cardinality must be integer")
+    if expected_segments != EXPECTED_FULL_SEGMENTS or not 0 <= completed_segments <= expected_segments:
+        raise CompletionGateError("recovery segment cardinality drift")
+    if final_available:
+        return "FINAL_RECEIPT_PRESENT"
+    if active_state == "failed" or sub_state == "failed":
+        raise CompletionGateError("recovery refuses a failed unit without preserved diagnosis")
+    live = (
+        active_state == "active"
+        and load_state == "loaded"
+        and sub_state == "running"
+        and int(main_pid) > 0
+        and pid_alive is True
+    )
+    if live:
+        return "HEALTHY_RUNNING"
+    clean_stopped = (
+        active_state in {"inactive", "unknown", ""}
+        and load_state in {"loaded", "not-found", ""}
+        and sub_state in {"dead", "not-found", ""}
+        and int(main_pid) == 0
+        and pid_alive is False
+    )
+    if not clean_stopped:
+        raise CompletionGateError("recovery unit/PID state is contradictory")
+    if completed_segments == expected_segments:
+        return "FINALIZE_FROM_CHILDREN"
+    return "RESUME_CONTROLLER"
+
+
+def validate_finalization_provenance(
+    final: Mapping[str, Any],
+    launch: Mapping[str, Any],
+    launch_lock: Mapping[str, Any],
+    *,
+    finalizer_lock: Mapping[str, Any],
+    launch_receipt_file_sha256: str,
+) -> str:
+    """Accept either the original finalization or the exact no-replay recovery."""
+    launch_mode = validate_launch_canary(launch, launch_lock)
+    recovery = final.get("finalization_recovery")
+    if recovery is None:
+        if final.get("preflight_child_recovery") is not None:
+            raise CompletionGateError("original finalization relies on preflight child recovery")
+        if final.get("engine_hashes") != launch_lock.get("engine_hashes"):
+            raise CompletionGateError("original finalization engine drift")
+        if final.get("legacy_overlap_equivalence", {}).get("status") != "PASS":
+            raise CompletionGateError("original finalization overlap gate did not pass")
+        return "ORIGINAL_CANDIDATE_FINALIZATION"
+
+    if launch_mode != "USER_AUTHORIZED_ONE_DAY_CANARY":
+        raise CompletionGateError("recovery finalization requires the exact promoted canary")
+    if not isinstance(recovery, Mapping):
+        raise CompletionGateError("recovery finalization provenance is malformed")
+    if final.get("preflight_child_recovery") is not None:
+        raise CompletionGateError("recovery finalization cannot also use preflight recovery")
+    if (
+        recovery.get("schema") != FINALIZATION_RECOVERY_SCHEMA
+        or not SHA256_RE.fullmatch(str(recovery.get("contract_sha256") or ""))
+        or recovery.get("parent_candidate_commit") != PROMOTION_CANDIDATE
+        or recovery.get("recovery_scope") != FINALIZATION_RECOVERY_SCOPE
+        or recovery.get("raw_mbo_replayed") is not False
+    ):
+        raise CompletionGateError("recovery finalization identity drift")
+    if (
+        finalizer_lock.get("schema") != FINALIZER_LOCK_SCHEMA
+        or finalizer_lock.get("parent_candidate_commit") != PROMOTION_CANDIDATE
+        or finalizer_lock.get("recovery_scope") != FINALIZATION_RECOVERY_SCOPE
+    ):
+        raise CompletionGateError("finalizer lock identity drift")
+    lock_hash = str(finalizer_lock.get("finalizer_lock_sha256") or "")
+    lock_body = dict(finalizer_lock)
+    lock_body.pop("finalizer_lock_sha256", None)
+    calculated_lock_hash = hashlib.sha256(
+        json.dumps(
+            lock_body, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+        ).encode()
+    ).hexdigest()
+    if (
+        not SHA256_RE.fullmatch(lock_hash)
+        or calculated_lock_hash != lock_hash
+        or recovery.get("finalizer_lock_sha256") != lock_hash
+    ):
+        raise CompletionGateError("finalizer lock hash drift")
+    if (
+        recovery.get("producer_engine_hashes") != launch_lock.get("engine_hashes")
+        or recovery.get("finalizer_engine_hashes") != finalizer_lock.get("finalizer_engine_hashes")
+        or final.get("engine_hashes") != finalizer_lock.get("finalizer_engine_hashes")
+    ):
+        raise CompletionGateError("recovery finalization engine drift")
+    if (
+        recovery.get("source_manifest_sha256") != final.get("source_manifest_sha256")
+        or recovery.get("source_manifest_sha256") != launch_lock.get("source_manifest_sha256")
+        or recovery.get("ruleset_sha256") != final.get("ruleset_sha256")
+        or recovery.get("ruleset_sha256") != launch_lock.get("ruleset_sha256")
+    ):
+        raise CompletionGateError("recovery finalization source/ruleset drift")
+    if (
+        not SHA256_RE.fullmatch(launch_receipt_file_sha256)
+        or recovery.get("accepted_launch_receipt_file_sha256") != launch_receipt_file_sha256
+    ):
+        raise CompletionGateError("recovery launch-receipt binding drift")
+    children = recovery.get("children")
+    if not isinstance(children, Mapping) or len(children) != EXPECTED_FULL_SEGMENTS:
+        raise CompletionGateError("recovery child cardinality drift")
+    pinned_receipts = []
+    for segment in sorted(children):
+        pin = children[segment]
+        if not isinstance(pin, Mapping):
+            raise CompletionGateError("recovery child pin malformed")
+        receipt_hash = str(pin.get("receipt_sha256") or "")
+        seconds_hash = str(pin.get("seconds_gzip_sha256") or "")
+        rows = pin.get("seconds_rows")
+        if (
+            not SHA256_RE.fullmatch(receipt_hash)
+            or not SHA256_RE.fullmatch(seconds_hash)
+            or type(rows) is not int
+            or rows < 0
+        ):
+            raise CompletionGateError("recovery child pin malformed")
+        pinned_receipts.append(receipt_hash)
+    if (
+        final.get("child_receipt_count") != EXPECTED_FULL_SEGMENTS
+        or final.get("child_receipt_hashes") != pinned_receipts
+    ):
+        raise CompletionGateError("recovery child receipt binding drift")
+    overlap = final.get("legacy_overlap_equivalence", {})
+    if (
+        overlap.get("status") != "USER_AUTHORIZED_ONE_DAY_CANARY_ACCEPTED"
+        or overlap.get("retained_mismatch_count") != 1
+        or overlap.get("lineage_equivalence_asserted") is not False
+        or overlap.get("multiweek_equivalence_asserted") is not False
+        or overlap.get("accepted_launch_receipt_file_sha256") != launch_receipt_file_sha256
+        or overlap.get("candidate_commit") != PROMOTION_CANDIDATE
+        or overlap.get("canary_evidence") != launch.get("canary_evidence")
+    ):
+        raise CompletionGateError("recovery one-day overlap authorization drift")
+    return "ONE_DAY_CANARY_RECOVERY_FINALIZER"
 
 
 def validate_final_receipt_heartbeat(

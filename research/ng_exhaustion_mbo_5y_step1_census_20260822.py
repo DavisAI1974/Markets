@@ -186,6 +186,7 @@ def material_hashes() -> dict[str, str]:
         "research/FRANKIE_NG_PRE_FAMILY_CLASSIFIER_FROZEN_OPERATIONAL_20260817.json",
         "research/FRANKIE_NG_A_POSTSTATE_CLASSIFIER_FROZEN_PREBLIND_20260816.json",
         "research/ng_exhaustion_mbo_5y_canonical_manifest_20260822.py",
+        "research/kalshi/ng_exhaustion_step1_completion_gate.py",
     )
     return sha256_paths(paths)
 
@@ -937,6 +938,67 @@ def legacy_overlap_receipt(
     return receipt, mismatches
 
 
+def accepted_one_day_canary_overlap(
+    launch_receipt_path: str | Path,
+    *,
+    source_manifest_sha256: str,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Bind finalization to the exact user-authorized one-day canary."""
+    from kalshi.ng_exhaustion_step1_completion_gate import (
+        CompletionGateError,
+        validate_launch_canary,
+    )
+
+    path = Path(launch_receipt_path)
+    launch = json.loads(path.read_text(encoding="utf-8"))
+    lock = launch.get("candidate_lock")
+    if not isinstance(lock, dict):
+        raise CensusError("accepted canary launch lock is absent")
+    if lock.get("source_manifest_sha256") != source_manifest_sha256:
+        raise CensusError("accepted canary source-manifest drift")
+    if lock.get("ruleset_sha256") != ruleset_sha256():
+        raise CensusError("accepted canary ruleset drift")
+    try:
+        mode = validate_launch_canary(launch, lock)
+    except CompletionGateError as exc:
+        raise CensusError(f"accepted canary validation failed: {exc}") from exc
+    if mode != "USER_AUTHORIZED_ONE_DAY_CANARY":
+        raise CensusError("finalization recovery requires the exact promoted one-day canary")
+    canary = launch["canary_evidence"]
+    launch_overlap = launch["legacy_overlap_equivalence"]
+    launch_file_hash = sha256_file(path)
+    receipt = {
+        "schema": "NG_EXHAUSTION_LEGACY_CONTROL_ONE_DAY_CANARY_ACCEPTANCE_V1_20260823",
+        "status": "USER_AUTHORIZED_ONE_DAY_CANARY_ACCEPTED",
+        "accepted_launch_receipt_file_sha256": launch_file_hash,
+        "candidate_commit": launch["candidate_commit"],
+        "canary_evidence": canary,
+        "retained_mismatch_count": 1,
+        "lineage_equivalence": None,
+        "lineage_equivalence_asserted": False,
+        "multiweek_equivalence_asserted": False,
+        "historical_three_week_gate_run_by_finalizer": False,
+        "frozen_detector_mutated": False,
+        "mismatch_policy": RULESET,
+    }
+    receipt["receipt_sha256"] = sha256_json(receipt)
+    retained = [{
+        "schema": "NG_EXHAUSTION_MBO_ONE_DAY_CANARY_RETAINED_MISMATCH_V1_20260823",
+        "kind": "MBP10_ONLY_DETECTOR_INPUT_ROW",
+        "count": launch_overlap["retained_mismatch_count"],
+        "date": canary["date"],
+        "artifact_id": canary["artifact_id"],
+        "artifact_json_sha256": canary["artifact_json_sha256"],
+        "interpretation": canary["retained_interpretation"],
+        "projection_only_detector_input_row_count": canary[
+            "projection_only_detector_input_row_count"
+        ],
+        "lineage_equivalence_asserted": False,
+        "multiweek_equivalence_asserted": False,
+    }]
+    return receipt, retained
+
+
 def expanding_folds(weeks: list[str]) -> list[tuple[list[str], list[str], str]]:
     if len(weeks) <= INITIAL_TRAIN_WEEKS:
         return []
@@ -1471,6 +1533,7 @@ def reconcile(
     *,
     weeks_filter: set[str] | None = None,
     child_recovery_contract: str | Path | None = None,
+    accepted_one_day_launch_receipt: str | Path | None = None,
 ) -> dict[str, Any]:
     manifest = load_manifest(manifest_path)
     segment_dir = Path(segment_dir)
@@ -1483,12 +1546,25 @@ def reconcile(
         segment: _segment_source_scope(manifest, segment, object_dates) for segment in segments
     }
     recovery = None
+    finalization_recovery = None
+    accepted_overlap = None
+    accepted_mismatches = None
+    if accepted_one_day_launch_receipt is not None:
+        accepted_overlap, accepted_mismatches = accepted_one_day_canary_overlap(
+            accepted_one_day_launch_receipt,
+            source_manifest_sha256=manifest["manifest_sha256"],
+        )
     expected_engine_hashes = hashes
     pinned_children = None
     if child_recovery_contract is not None:
         recovery_path = Path(child_recovery_contract)
         recovery = json.loads(recovery_path.read_text())
-        if recovery.get("schema") != "NG_EXHAUSTION_MBO_5Y_STEP1_PREFLIGHT_CHILD_RECOVERY_V1_20260823":
+        recovery_schema = recovery.get("schema")
+        allowed_recovery_schemas = {
+            "NG_EXHAUSTION_MBO_5Y_STEP1_PREFLIGHT_CHILD_RECOVERY_V1_20260823",
+            "NG_EXHAUSTION_MBO_5Y_STEP1_FINALIZATION_RECOVERY_V1_20260823",
+        }
+        if recovery_schema not in allowed_recovery_schemas:
             raise CensusError("unknown child recovery contract schema")
         if recovery.get("source_manifest_sha256") != manifest["manifest_sha256"]:
             raise CensusError("child recovery source-manifest drift")
@@ -1500,13 +1576,56 @@ def reconcile(
         if not isinstance(expected_engine_hashes, dict) or not expected_engine_hashes:
             raise CensusError("child recovery producer engine hashes absent")
         pinned_children = recovery["children"]
-        recovery = {
+        recovery_summary = {
+            "schema": recovery_schema,
             "contract_sha256": sha256_file(recovery_path),
             "parent_candidate_commit": recovery["parent_candidate_commit"],
+            "source_manifest_sha256": recovery["source_manifest_sha256"],
+            "ruleset_sha256": recovery["ruleset_sha256"],
             "recovery_scope": recovery["recovery_scope"],
             "producer_engine_hashes": expected_engine_hashes,
             "children": pinned_children,
         }
+        if recovery_schema == "NG_EXHAUSTION_MBO_5Y_STEP1_FINALIZATION_RECOVERY_V1_20260823":
+            if accepted_overlap is None:
+                raise CensusError("finalization recovery lacks accepted one-day canary")
+            if weeks_filter is not None or len(segments) != 65:
+                raise CensusError("finalization recovery requires the full 65-segment census")
+            if recovery.get("parent_candidate_commit") != accepted_overlap["candidate_commit"]:
+                raise CensusError("finalization recovery parent-candidate drift")
+            if recovery.get("raw_mbo_replayed") is not False:
+                raise CensusError("finalization recovery raw-MBO replay gate drift")
+            if recovery.get("recovery_scope") != "FULL_65_CHILDREN_REUSED_NO_RAW_MBO_REPLAY":
+                raise CensusError("finalization recovery scope drift")
+            if recovery.get("finalizer_engine_hashes") != hashes:
+                raise CensusError("finalization recovery engine drift")
+            if recovery.get("accepted_launch_receipt_file_sha256") != accepted_overlap[
+                "accepted_launch_receipt_file_sha256"
+            ]:
+                raise CensusError("finalization recovery launch-receipt drift")
+            finalizer_lock_sha = recovery.get("finalizer_lock_sha256")
+            if (
+                not isinstance(finalizer_lock_sha, str)
+                or len(finalizer_lock_sha) != 64
+                or any(char not in "0123456789abcdef" for char in finalizer_lock_sha)
+            ):
+                raise CensusError("finalization recovery lock hash absent")
+            recovery_summary.update({
+                "raw_mbo_replayed": False,
+                "finalizer_engine_hashes": hashes,
+                "accepted_launch_receipt_file_sha256": recovery[
+                    "accepted_launch_receipt_file_sha256"
+                ],
+                "finalizer_lock_sha256": finalizer_lock_sha,
+            })
+            finalization_recovery = recovery_summary
+            recovery = None
+        else:
+            if accepted_overlap is not None:
+                raise CensusError("accepted canary cannot use preflight child recovery")
+            recovery = recovery_summary
+    elif accepted_overlap is not None:
+        raise CensusError("accepted one-day canary requires pinned finalization recovery")
     seconds_paths, child_receipts = _verified_child_outputs(
         manifest,
         segment_dir,
@@ -1556,17 +1675,21 @@ def reconcile(
             writer.abort()
         raise
 
-    frozen_rows = list(read_gzip_jsonl(frozen_overlap_table))
-    frozen_lineage = list(read_gzip_jsonl(frozen_overlap_lineage))
-    actual_overlap_lineage = derive_pilot_lineage(overlap_events)
-    overlap, mismatches = legacy_overlap_receipt(
-        frozen_rows, overlap_events, frozen_lineage, actual_overlap_lineage
-    )
+    if accepted_overlap is None:
+        frozen_rows = list(read_gzip_jsonl(frozen_overlap_table))
+        frozen_lineage = list(read_gzip_jsonl(frozen_overlap_lineage))
+        actual_overlap_lineage = derive_pilot_lineage(overlap_events)
+        overlap, mismatches = legacy_overlap_receipt(
+            frozen_rows, overlap_events, frozen_lineage, actual_overlap_lineage
+        )
+    else:
+        overlap = accepted_overlap
+        mismatches = accepted_mismatches
     atomic_json(out / "LEGACY_CONTROL_OVERLAP_EQUIVALENCE.json", overlap)
     mismatch_output = deterministic_gzip_jsonl(
         out / "LEGACY_CONTROL_OVERLAP_MISMATCHES.jsonl.gz", mismatches
     )
-    if overlap["status"] != "PASS":
+    if overlap["status"] not in {"PASS", "USER_AUTHORIZED_ONE_DAY_CANARY_ACCEPTED"}:
         raise CensusError(
             "LEGACY_CONTROL overlap equivalence failed closed; retained mismatch receipt written"
         )
@@ -1607,6 +1730,7 @@ def reconcile(
         "replayed_source_total_bytes": sum(x["selected_total_bytes"] for x in child_source_scopes),
         "segment_boundary_reconciliation": boundary_audit,
         "preflight_child_recovery": recovery,
+        "finalization_recovery": finalization_recovery,
         "population_seconds": population_seconds,
         "weeks": weeks,
         "weeks_filter": None if weeks_filter is None else sorted(weeks_filter),
@@ -1782,6 +1906,7 @@ def main() -> None:
     rec.add_argument("--frozen-overlap-lineage", required=True)
     rec.add_argument("--weeks", help="Optional comma-separated revealed overlap weeks")
     rec.add_argument("--child-recovery-contract")
+    rec.add_argument("--accepted-one-day-launch-receipt")
     run = sub.add_parser("run")
     run.add_argument("--manifest", required=True)
     run.add_argument("--work-dir", required=True)
@@ -1801,6 +1926,7 @@ def main() -> None:
             args.frozen_overlap_lineage,
             weeks_filter=None if not args.weeks else set(args.weeks.split(",")),
             child_recovery_contract=args.child_recovery_contract,
+            accepted_one_day_launch_receipt=args.accepted_one_day_launch_receipt,
         )
     else:
         result = run_controller(
