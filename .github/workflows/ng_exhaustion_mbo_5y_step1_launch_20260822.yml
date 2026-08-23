@@ -45,7 +45,7 @@ jobs:
       - name: Install exact validation runtime
         run: >-
           python -m pip install --quiet
-          numpy==1.26.4 scipy==1.11.4 scikit-learn==1.4.2
+          numpy==1.26.4 scipy==1.11.4 scikit-learn==1.4.2 matplotlib==3.8.4
           boto3==1.35.99 databento==0.81.0
 
       - name: Focused state, source, equivalence, and recovery tests
@@ -142,7 +142,7 @@ jobs:
               'dependency_lock':{
                   'python':'3.10 (durable EC2 system Python)',
                   'numpy':'1.26.4','scipy':'1.11.4','scikit-learn':'1.4.2',
-                  'boto3':'1.35.99','databento':'0.81.0',
+                  'matplotlib':'3.8.4','boto3':'1.35.99','databento':'0.81.0',
               },
               'release_or_virgin_holdout_consumed':False,
               'predictive_or_trading_experiment_authorized':False,
@@ -260,7 +260,7 @@ jobs:
           test -d {shlex.quote(base + '/venv')} || python3 -m venv {shlex.quote(base + '/venv')}
           source {shlex.quote(base + '/venv/bin/activate')}
           python -m pip install --quiet --upgrade pip
-          python -m pip install --quiet numpy==1.26.4 scipy==1.11.4 scikit-learn==1.4.2 boto3==1.35.99 databento==0.81.0
+          python -m pip install --quiet numpy==1.26.4 scipy==1.11.4 scikit-learn==1.4.2 matplotlib==3.8.4 boto3==1.35.99 databento==0.81.0
           preflight={shlex.quote(base + '/preflight')}
           mkdir -p "$preflight"
           set +e
