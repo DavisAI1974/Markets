@@ -7,6 +7,11 @@ on:
         description: Exact census candidate commit
         required: true
         default: 55a8b640b7f5d9d3ee8115977cc79ee2231d4291
+      include_segment_receipts:
+        description: Print exact preflight child receipts for boundary/recovery diagnosis
+        required: false
+        type: boolean
+        default: false
   push:
     branches:
       - chatgpt/ng-exhaustion-entry-timing-revival-20260818
@@ -27,6 +32,7 @@ jobs:
       INSTANCE_ID: i-08cee7171c0a76a04
       BUCKET: bento-568968024170-us-east-2-an
       CANDIDATE_SHA: ${{ inputs.candidate_sha || '55a8b640b7f5d9d3ee8115977cc79ee2231d4291' }}
+      INCLUDE_SEGMENT_RECEIPTS: ${{ inputs.include_segment_receipts || 'false' }}
     steps:
       - name: Read SSM execution and exact progress prefix
         shell: bash
@@ -55,4 +61,17 @@ jobs:
             --output text)"
           if [ -n "$latest_heartbeat" ] && [ "$latest_heartbeat" != 'None' ]; then
             aws s3 cp "s3://$BUCKET/$latest_heartbeat" - --only-show-errors
+          fi
+          if [ "$INCLUDE_SEGMENT_RECEIPTS" = 'true' ]; then
+            receipts_prefix="nymex/ng_mbo_5y_v0/step1_census/launches/$CANDIDATE_SHA/preflight/segments/"
+            mapfile -t receipt_keys < <(aws s3api list-objects-v2 \
+              --bucket "$BUCKET" \
+              --prefix "$receipts_prefix" \
+              --query "Contents[?ends_with(Key, '.receipt.json')].Key" \
+              --output text | tr '\t' '\n' | sort)
+            test "${#receipt_keys[@]}" -gt 0
+            for receipt_key in "${receipt_keys[@]}"; do
+              echo "SEGMENT_RECEIPT_KEY=$receipt_key"
+              aws s3 cp "s3://$BUCKET/$receipt_key" - --only-show-errors
+            done
           fi
