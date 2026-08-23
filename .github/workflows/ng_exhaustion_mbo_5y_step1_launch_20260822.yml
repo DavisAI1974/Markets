@@ -1,0 +1,423 @@
+name: NG Exhaustion Five-Year Step-1 Preflight and Launch 20260822
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: ng-exhaustion-mbo-5y-step1-launch-20260822
+  cancel-in-progress: false
+
+jobs:
+  preflight-and-launch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      BUCKET: bento-568968024170-us-east-2-an
+      CANDIDATE_SHA: ${{ github.sha }}
+      SOURCE_MANIFEST: research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json
+      RECEIPT_PATH: research/kalshi/NG_EXHAUSTION_MBO_5Y_STEP1_LAUNCH_20260822.json
+      CANONICAL_ARTIFACT_ID: '9279077256'
+      DISCOVERY_ARTIFACT_ID: '9279678072'
+      CANONICAL_EVENT_GZIP_SHA256: dba482aa3ed4bc0d56d5fdea8924f596e7d44c8d0eedcdd055ed2a8a8100be57
+      DISCOVERY_LINEAGE_GZIP_SHA256: 3b711c298c74dbd4098166c492ebb4d3dabb31c92c738cd16e468b08e1be252e
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install exact validation runtime
+        run: >-
+          python -m pip install --quiet
+          numpy==1.26.4 scipy==1.11.4 scikit-learn==1.4.2
+          boto3==1.35.99 databento==0.81.0
+
+      - name: Focused state, source, equivalence, and recovery tests
+        env:
+          PYTHONPATH: research
+        run: >-
+          python -m unittest -v
+          test_ng_exhaustion_mbo_5y_step1_census_20260822
+          test_ng_exhaustion_mbo_v4_state_adapter_20260820
+          test_ng_exhaustion_mbo_v4_legacy_control_semantics_20260820
+          test_ng_exhaustion_mbo_5y_canonical_manifest_20260822
+          test_ng_exhaustion_mbo_5y_aws_source_20260820
+
+      - name: Fetch and verify already-revealed frozen overlap evidence
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/step1-frozen/canonical /tmp/step1-frozen/discovery
+          for spec in \
+            "$CANONICAL_ARTIFACT_ID canonical" \
+            "$DISCOVERY_ARTIFACT_ID discovery"
+          do
+            read -r artifact_id target <<< "$spec"
+            curl --fail --silent --show-error --location \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H 'X-GitHub-Api-Version: 2022-11-28' \
+              "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" \
+              -o "/tmp/$target.zip"
+            unzip -q "/tmp/$target.zip" -d "/tmp/step1-frozen/$target"
+          done
+          event_path="$(find /tmp/step1-frozen/canonical -type f -name 'NG_EXHAUSTION_CHAIN_CANONICAL_20260817_EVENT_TABLE.jsonl.gz' -print -quit)"
+          lineage_path="$(find /tmp/step1-frozen/discovery -type f -name 'NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_20260817_LINEAGE.jsonl.gz' -print -quit)"
+          test -n "$event_path"
+          test -n "$lineage_path"
+          test "$(sha256sum "$event_path" | cut -d' ' -f1)" = "$CANONICAL_EVENT_GZIP_SHA256"
+          test "$(sha256sum "$lineage_path" | cut -d' ' -f1)" = "$DISCOVERY_LINEAGE_GZIP_SHA256"
+          cp "$event_path" /tmp/step1-frozen/FROZEN_OVERLAP_EVENT_TABLE.jsonl.gz
+          cp "$lineage_path" /tmp/step1-frozen/FROZEN_OVERLAP_LINEAGE.jsonl.gz
+
+      - name: Freeze and upload exact candidate package
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_root=/tmp/step1-package-root
+          mkdir -p "$package_root/research/kalshi" "$package_root/frozen"
+          files=(
+            research/ng_exhaustion_mbo_5y_step1_census_20260822.py
+            research/ng_exhaustion_mbo_5y_canonical_manifest_20260822.py
+            research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py
+            research/ng_exhaustion_mbo_v4_state_adapter_20260820.py
+            research/ng_exhaustion_chain_canonical_table_20260817.py
+            research/ng_exhaustion_chain_phase1_discovery_20260817.py
+            research/ng_exhaustion_chain_phase1_structural_54w_20260817.py
+            research/ng_dipole_native_shape_audit.py
+            research/ng_dipole_runway_audit.py
+            research/ng_exhaustion_live_clock.py
+            research/ng_exhaustion_runway_clock.py
+            research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json
+            research/FRANKIE_NG_PRE_FAMILY_CLASSIFIER_FROZEN_OPERATIONAL_20260817.json
+            research/FRANKIE_NG_A_POSTSTATE_CLASSIFIER_FROZEN_PREBLIND_20260816.json
+            research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json
+          )
+          for file in "${files[@]}"; do
+            install -D "$file" "$package_root/$file"
+          done
+          install -D /tmp/step1-frozen/FROZEN_OVERLAP_EVENT_TABLE.jsonl.gz \
+            "$package_root/frozen/FROZEN_OVERLAP_EVENT_TABLE.jsonl.gz"
+          install -D /tmp/step1-frozen/FROZEN_OVERLAP_LINEAGE.jsonl.gz \
+            "$package_root/frozen/FROZEN_OVERLAP_LINEAGE.jsonl.gz"
+          PACKAGE_ROOT="$package_root" python - <<'PY'
+          import hashlib, json, os, sys
+          from pathlib import Path
+          root=Path(os.environ['PACKAGE_ROOT'])
+          sys.path.insert(0, 'research')
+          import ng_exhaustion_mbo_5y_step1_census_20260822 as census
+          source=json.load(open(os.environ['SOURCE_MANIFEST']))
+          packaged={}
+          for path in sorted(p for p in root.rglob('*') if p.is_file()):
+              packaged[path.relative_to(root).as_posix()]=hashlib.sha256(path.read_bytes()).hexdigest()
+          lock={
+              'schema':'NG_EXHAUSTION_MBO_5Y_STEP1_CANDIDATE_LOCK_V1_20260822',
+              'candidate_commit':os.environ['CANDIDATE_SHA'],
+              'workflow_sha256':hashlib.sha256(Path('.github/workflows/ng_exhaustion_mbo_5y_step1_launch_20260822.yml').read_bytes()).hexdigest(),
+              'source_manifest_sha256':source['manifest_sha256'],
+              'source_object_count':source['canonical_object_count'],
+              'source_total_bytes':source['canonical_total_bytes'],
+              'engine_hashes':census.material_hashes(),
+              'ruleset_sha256':census.ruleset_sha256(),
+              'retention_policy':census.RULESET,
+              'native_taxonomy':census.NATIVE_TAXONOMY,
+              'packaged_files':packaged,
+              'dependency_lock':{
+                  'python':'3.10 (durable EC2 system Python)',
+                  'numpy':'1.26.4','scipy':'1.11.4','scikit-learn':'1.4.2',
+                  'boto3':'1.35.99','databento':'0.81.0',
+              },
+              'release_or_virgin_holdout_consumed':False,
+              'predictive_or_trading_experiment_authorized':False,
+          }
+          out=root/'research/kalshi/NG_EXHAUSTION_MBO_5Y_STEP1_CANDIDATE_LOCK_20260822.json'
+          out.write_text(json.dumps(lock,indent=2,sort_keys=True)+'\n')
+          Path('/tmp/STEP1_CANDIDATE_LOCK.json').write_text(json.dumps(lock,indent=2,sort_keys=True)+'\n')
+          PY
+          tar -C "$package_root" -czf /tmp/NG_EXHAUSTION_MBO_5Y_STEP1_CANDIDATE.tgz .
+          package_sha="$(sha256sum /tmp/NG_EXHAUSTION_MBO_5Y_STEP1_CANDIDATE.tgz | cut -d' ' -f1)"
+          echo "$package_sha" > /tmp/PACKAGE_SHA256
+          prefix="nymex/ng_mbo_5y_v0/step1_census/launches/$CANDIDATE_SHA"
+          aws s3 cp /tmp/NG_EXHAUSTION_MBO_5Y_STEP1_CANDIDATE.tgz "s3://$BUCKET/$prefix/candidate/package.tgz" --only-show-errors
+          aws s3 cp /tmp/STEP1_CANDIDATE_LOCK.json "s3://$BUCKET/$prefix/candidate/CANDIDATE_LOCK.json" --only-show-errors
+
+      - name: Run revealed-week equivalence preflight and launch full census
+        id: remote
+        shell: bash
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64, datetime as dt, json, os, shlex, time, traceback
+          from pathlib import Path
+          import boto3
+
+          region=os.environ['AWS_DEFAULT_REGION']
+          instance=os.environ['INSTANCE_ID']
+          bucket=os.environ['BUCKET']
+          candidate=os.environ['CANDIDATE_SHA']
+          package_sha=Path('/tmp/PACKAGE_SHA256').read_text().strip()
+          prefix=f'nymex/ng_mbo_5y_v0/step1_census/launches/{candidate}'
+          base=f'/mnt/markets/ng_exhaustion_step1_5y_20260822/{candidate}'
+          repo=f'{base}/repo'
+          cred=f'{base}/aws.env'
+          unit=f'ng-exhaustion-step1-{candidate[:12]}'
+          access=os.environ['AWS_ACCESS_KEY_ID']
+          secret=os.environ['AWS_SECRET_ACCESS_KEY']
+          credential_body=(
+              f'AWS_ACCESS_KEY_ID={access}\n'
+              f'AWS_SECRET_ACCESS_KEY={secret}\n'
+              f'AWS_DEFAULT_REGION={region}\n'
+          )
+          credential_b64=base64.b64encode(credential_body.encode()).decode()
+          launcher=f'''#!/bin/bash
+          set -uo pipefail
+          set -a
+          source {shlex.quote(cred)}
+          set +a
+          cd {shlex.quote(repo)}
+          source {shlex.quote(base + '/venv/bin/activate')}
+          full_work={shlex.quote(base + '/full')}
+          result_prefix={shlex.quote(prefix + '/full')}
+          mkdir -p "$full_work"
+          python research/ng_exhaustion_mbo_5y_step1_census_20260822.py run \\
+            --manifest research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json \\
+            --work-dir "$full_work" \\
+            --frozen-overlap-table frozen/FROZEN_OVERLAP_EVENT_TABLE.jsonl.gz \\
+            --frozen-overlap-lineage frozen/FROZEN_OVERLAP_LINEAGE.jsonl.gz \\
+            --s3-progress-prefix "$result_prefix/progress" \\
+            > "$full_work/RUN.log" 2>&1
+          rc=$?
+          python - "$full_work" "$result_prefix" <<'PYUPLOAD'
+          import sys
+          from pathlib import Path
+          import boto3
+          root=Path(sys.argv[1]); prefix=sys.argv[2].strip('/')
+          manifest=__import__('json').load(open('research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json'))
+          s3=boto3.client('s3',region_name=manifest.get('region','us-east-2'))
+          selected=[]
+          for directory in (root/'results',):
+              if directory.exists(): selected.extend(p for p in directory.rglob('*') if p.is_file())
+          selected.extend((root/'segments').glob('*.receipt.json')) if (root/'segments').exists() else None
+          selected.extend((root/'segments').glob('*.heartbeat.json')) if (root/'segments').exists() else None
+          if (root/'RUN.log').exists(): selected.append(root/'RUN.log')
+          for path in selected:
+              rel=path.relative_to(root).as_posix()
+              s3.upload_file(manifest['bucket'],str(path),f'{{prefix}}/{{rel}}')
+          PYUPLOAD
+          upload_rc=$?
+          if [ "$rc" -eq 0 ] && [ "$upload_rc" -eq 0 ]; then
+            rm -f {shlex.quote(cred)}
+            exit 0
+          fi
+          exit 1
+          '''
+          launcher_b64=base64.b64encode(launcher.encode()).decode()
+          command=f'''set -euo pipefail
+          export AWS_ACCESS_KEY_ID={shlex.quote(access)}
+          export AWS_SECRET_ACCESS_KEY={shlex.quote(secret)}
+          export AWS_DEFAULT_REGION={shlex.quote(region)}
+          command -v aws >/dev/null || python3 -m pip install --quiet awscli
+          aws sts get-caller-identity --query Account --output text >/dev/null
+          mkdir -p {shlex.quote(base)} {shlex.quote(repo)}
+          available=$(df --output=avail -B1 /mnt | tail -1 | tr -d ' ')
+          test "$available" -ge 35000000000
+          printf %s {shlex.quote(credential_b64)} | base64 -d > {shlex.quote(cred)}
+          chmod 600 {shlex.quote(cred)}
+          set -a
+          source {shlex.quote(cred)}
+          set +a
+          aws s3 cp s3://{bucket}/{prefix}/candidate/package.tgz {shlex.quote(base + '/package.tgz')} --only-show-errors
+          test "$(sha256sum {shlex.quote(base + '/package.tgz')} | cut -d' ' -f1)" = {shlex.quote(package_sha)}
+          tar -C {shlex.quote(repo)} -xzf {shlex.quote(base + '/package.tgz')}
+          cd {shlex.quote(repo)}
+          python3 - <<'PYVERIFY'
+          import hashlib,json
+          from pathlib import Path
+          lock=json.load(open('research/kalshi/NG_EXHAUSTION_MBO_5Y_STEP1_CANDIDATE_LOCK_20260822.json'))
+          for rel,want in lock['packaged_files'].items():
+              got=hashlib.sha256(Path(rel).read_bytes()).hexdigest()
+              if got != want: raise SystemExit(f'candidate file hash drift: {{rel}} {{got}} {{want}}')
+          print('CANDIDATE_FILES_VERIFIED')
+          PYVERIFY
+          test -d {shlex.quote(base + '/venv')} || python3 -m venv {shlex.quote(base + '/venv')}
+          source {shlex.quote(base + '/venv/bin/activate')}
+          python -m pip install --quiet --upgrade pip
+          python -m pip install --quiet numpy==1.26.4 scipy==1.11.4 scikit-learn==1.4.2 boto3==1.35.99 databento==0.81.0
+          preflight={shlex.quote(base + '/preflight')}
+          mkdir -p "$preflight"
+          set +e
+          python research/ng_exhaustion_mbo_5y_step1_census_20260822.py run \
+            --manifest research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json \
+            --work-dir "$preflight" \
+            --frozen-overlap-table frozen/FROZEN_OVERLAP_EVENT_TABLE.jsonl.gz \
+            --frozen-overlap-lineage frozen/FROZEN_OVERLAP_LINEAGE.jsonl.gz \
+            --overlap-only \
+            --s3-progress-prefix {shlex.quote(prefix + '/preflight/progress')} \
+            > "$preflight/RUN.log" 2>&1
+          preflight_rc=$?
+          set -e
+          python - "$preflight" {shlex.quote(prefix + '/preflight')} <<'PYUPLOAD'
+          import sys,json
+          from pathlib import Path
+          import boto3
+          root=Path(sys.argv[1]); prefix=sys.argv[2].strip('/')
+          manifest=json.load(open('research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json'))
+          s3=boto3.client('s3',region_name=manifest.get('region','us-east-2'))
+          for path in (p for p in root.rglob('*') if p.is_file()):
+              s3.upload_file(manifest['bucket'],str(path),f'{{prefix}}/{{path.relative_to(root).as_posix()}}')
+          PYUPLOAD
+          if [ "$preflight_rc" -ne 0 ]; then
+            tail -n 120 "$preflight/RUN.log"
+            exit "$preflight_rc"
+          fi
+          python - <<'PYPREFLIGHT'
+          import base64,json
+          p=json.load(open({(repo + '/').__repr__()} + '../preflight/overlap_preflight/STEP1_DUAL_CENSUS_RECEIPT.json'))
+          compact={{
+            'status':p['status'],'receipt_sha256':p['receipt_sha256'],
+            'source_manifest_sha256':p['source_manifest_sha256'],
+            'legacy_overlap_equivalence':p['legacy_overlap_equivalence'],
+            'legacy_event_count':p['legacy_population_summary']['event_count'],
+            'native_event_count':p['native_population_summary']['event_count'],
+            'retained_mismatch_count':p['legacy_overlap_equivalence']['retained_mismatch_count'],
+          }}
+          print('PREFLIGHT_COMPACT_B64='+base64.b64encode(json.dumps(compact,sort_keys=True).encode()).decode())
+          PYPREFLIGHT
+          printf %s {shlex.quote(launcher_b64)} | base64 -d > {shlex.quote(base + '/run_full.sh')}
+          chmod 700 {shlex.quote(base + '/run_full.sh')}
+          if systemctl is-active --quiet {shlex.quote(unit)}; then
+            launch_state=ALREADY_ACTIVE
+          else
+            systemctl reset-failed {shlex.quote(unit)} 2>/dev/null || true
+            systemd-run --collect --unit {shlex.quote(unit)} \
+              --property=Restart=on-failure --property=RestartSec=60 \
+              --property=WorkingDirectory={shlex.quote(repo)} \
+              {shlex.quote(base + '/run_full.sh')}
+            launch_state=STARTED
+          fi
+          sleep 5
+          systemctl is-active --quiet {shlex.quote(unit)}
+          main_pid=$(systemctl show {shlex.quote(unit)} --property=MainPID --value)
+          echo FULL_CENSUS_LAUNCH_STATE="$launch_state"
+          echo FULL_CENSUS_SYSTEMD_UNIT={shlex.quote(unit)}
+          echo FULL_CENSUS_MAIN_PID="$main_pid"
+          echo FULL_CENSUS_RESULT_PREFIX=s3://{bucket}/{prefix}/full/
+          '''
+          receipt={
+              'schema':'NG_EXHAUSTION_MBO_5Y_STEP1_LAUNCH_RECEIPT_V1_20260822',
+              'recorded_at_utc':dt.datetime.now(dt.timezone.utc).isoformat(),
+              'candidate_commit':candidate,
+              'github_workflow_run_id':os.environ.get('GITHUB_RUN_ID'),
+              'github_workflow_run_attempt':os.environ.get('GITHUB_RUN_ATTEMPT'),
+              'instance_id':instance,
+              'region':region,
+              'systemd_unit':unit,
+              'candidate_package_sha256':package_sha,
+              'candidate_lock':json.load(open('/tmp/STEP1_CANDIDATE_LOCK.json')),
+              'source_prefix_wide_enumeration_used':False,
+              'release_or_virgin_holdout_consumed':False,
+              'predictive_or_trading_experiment_run':False,
+              'permanent_frankie_mutated':False,
+              'full_census_launched':False,
+              'heartbeat_prefix':f's3://{bucket}/{prefix}/full/progress/',
+              'result_prefix':f's3://{bucket}/{prefix}/full/',
+              'preflight_prefix':f's3://{bucket}/{prefix}/preflight/',
+          }
+          try:
+              ssm=boto3.client('ssm',region_name=region)
+              sent=ssm.send_command(
+                  InstanceIds=[instance],DocumentName='AWS-RunShellScript',
+                  Comment=f'NG exhaustion five-year Step-1 preflight and launch {candidate}',
+                  Parameters={'commands':[command],'executionTimeout':['19800']},
+                  TimeoutSeconds=19800,
+              )
+              command_id=sent['Command']['CommandId']
+              receipt['ssm_command_id']=command_id
+              deadline=time.time()+19800
+              terminal={'Success','Cancelled','TimedOut','Failed','Cancelling','Undeliverable','Terminated','Delivery Timed Out','Execution Timed Out'}
+              invocation=None
+              while time.time()<deadline:
+                  try:
+                      invocation=ssm.get_command_invocation(CommandId=command_id,InstanceId=instance)
+                  except ssm.exceptions.InvocationDoesNotExist:
+                      time.sleep(3); continue
+                  if invocation.get('Status') in terminal: break
+                  time.sleep(15)
+              if invocation is None or invocation.get('Status') not in terminal:
+                  receipt['ssm_status']='CLIENT_WAIT_TIMEOUT'
+              else:
+                  receipt['ssm_status']=invocation.get('Status')
+                  receipt['ssm_response_code']=invocation.get('ResponseCode')
+                  stdout=invocation.get('StandardOutputContent','')
+                  stderr=invocation.get('StandardErrorContent','')
+                  receipt['sanitized_stdout_tail']=stdout[-6000:]
+                  receipt['sanitized_stderr_tail']=stderr[-6000:]
+                  for line in stdout.splitlines():
+                      if line.startswith('PREFLIGHT_COMPACT_B64='):
+                          receipt['preflight']=json.loads(base64.b64decode(line.split('=',1)[1]))
+                      elif line.startswith('FULL_CENSUS_LAUNCH_STATE='):
+                          receipt['launch_state']=line.split('=',1)[1]
+                      elif line.startswith('FULL_CENSUS_MAIN_PID='):
+                          receipt['main_pid']=int(line.split('=',1)[1])
+                  receipt['full_census_launched']=(
+                      receipt['ssm_status']=='Success'
+                      and receipt.get('launch_state') in {'STARTED','ALREADY_ACTIVE'}
+                      and int(receipt.get('main_pid',0)) > 0
+                      and receipt.get('preflight',{}).get('legacy_overlap_equivalence',{}).get('status')=='PASS'
+                  )
+          except Exception as exc:
+              receipt['ssm_status']='CONTROL_PLANE_ERROR'
+              receipt['control_plane_error']=f'{type(exc).__name__}: {exc}'
+              receipt['traceback_tail']=traceback.format_exc().splitlines()[-8:]
+          Path('/tmp/STEP1_LAUNCH_RECEIPT.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          print(json.dumps({k:receipt.get(k) for k in ('ssm_command_id','ssm_status','full_census_launched','launch_state','main_pid')},indent=2))
+          PY
+
+      - name: Commit sanitized durable launch receipt
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s /tmp/STEP1_LAUNCH_RECEIPT.json || exit 1
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          branch='chatgpt/ng-exhaustion-entry-timing-revival-20260818'
+          cp /tmp/STEP1_LAUNCH_RECEIPT.json /tmp/STEP1_LAUNCH_RECEIPT.saved.json
+          for attempt in 1 2 3 4; do
+            git fetch origin "$branch"
+            git reset --hard "origin/$branch"
+            cp /tmp/STEP1_LAUNCH_RECEIPT.saved.json "$RECEIPT_PATH"
+            git add "$RECEIPT_PATH"
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m 'research: record five-year Step-1 census launch'
+            if git push origin HEAD:"$branch"; then exit 0; fi
+          done
+          exit 1
+
+      - name: Enforce preflight and launch evidence
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          receipt=json.load(open('/tmp/STEP1_LAUNCH_RECEIPT.json'))
+          if receipt.get('ssm_status') != 'Success':
+              raise SystemExit('SSM preflight/launch failed: '+str(receipt.get('ssm_status')))
+          if receipt.get('preflight',{}).get('legacy_overlap_equivalence',{}).get('status') != 'PASS':
+              raise SystemExit('LEGACY_CONTROL overlap equivalence did not pass')
+          if not receipt.get('full_census_launched'):
+              raise SystemExit('durable full census launch evidence is absent')
+          print('PASS: revealed overlap closed and five-year Step-1 census is active')
+          PY
