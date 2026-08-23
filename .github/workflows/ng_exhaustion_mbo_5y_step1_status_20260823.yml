@@ -102,7 +102,7 @@ jobs:
           aws s3 cp \
             "s3://$BUCKET/$prefix/candidate/package.tgz" \
             "$root/package.tgz" --only-show-errors
-          tar -xOzf "$root/package.tgz" frozen/FROZEN_OVERLAP_EVENT_TABLE.jsonl.gz \
+          tar -xOzf "$root/package.tgz" ./frozen/FROZEN_OVERLAP_EVENT_TABLE.jsonl.gz \
             > "$root/FROZEN_OVERLAP_EVENT_TABLE.jsonl.gz"
           python - "$root" <<'PY'
           import collections
