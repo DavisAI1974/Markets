@@ -87,12 +87,21 @@ def signatures_equal(left: tuple[Any, ...], right: tuple[Any, ...]) -> bool:
     return True
 
 
-def row_key(row: dict[str, Any]) -> tuple[int, int]:
-    return int(row.get("instrument_id", 0)), int(row.get("sequence", 0))
+def _timestamp_us(value: Any) -> int:
+    number = float(value)
+    return int(round(number / 1_000.0)) if abs(number) > 1e14 else int(round(number * 1e6))
 
 
-def load_mbp(path: Path) -> tuple[dict[tuple[int, int], list[dict[str, Any]]], int]:
-    grouped: dict[tuple[int, int], list[dict[str, Any]]] = collections.defaultdict(list)
+def row_key(row: dict[str, Any]) -> tuple[int, int, int]:
+    return (
+        int(row.get("instrument_id", 0)),
+        int(row.get("sequence", 0)),
+        _timestamp_us(row.get("ts_event", row.get("ts", 0.0))),
+    )
+
+
+def load_mbp(path: Path) -> tuple[dict[tuple[int, int, int], list[dict[str, Any]]], int]:
+    grouped: dict[tuple[int, int, int], list[dict[str, Any]]] = collections.defaultdict(list)
     count = 0
     with gzip.open(path, "rt", encoding="utf-8") as handle:
         for line in handle:
@@ -126,8 +135,18 @@ def audit(mbp_path: Path, mbo_path: Path) -> dict[str, Any]:
         iid = int(frame["instrument_id"])
         actions = frame["raw_actions"]
         sequence = int(frame["sequence"])
-        key = (iid, sequence)
-        mbp_rows = remaining.pop(key, [])
+        action_keys = []
+        for action in actions:
+            key = (
+                iid,
+                int(action["sequence"]),
+                _timestamp_us(action["ts_event_ns"]),
+            )
+            if key not in action_keys:
+                action_keys.append(key)
+        mbp_rows = []
+        for key in action_keys:
+            mbp_rows.extend(remaining.pop(key, []))
         post = frame_book_signature(frame)
         before = previous_book.get(iid)
         changed = before is None or not signatures_equal(before, post)
