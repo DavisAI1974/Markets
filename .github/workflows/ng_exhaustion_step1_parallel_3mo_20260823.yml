@@ -51,7 +51,7 @@ jobs:
               ('20211101_20211201',2),
           ]
           worker=f'{base}/parallel_3mo_worker.py'
-          worker_source=textwrap.dedent(r'''\
+          worker_source=textwrap.dedent('''
           #!/usr/bin/env python3
           import json
           import os
@@ -70,8 +70,9 @@ jobs:
 
           manifest_path=repo/'research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json'
           manifest=census.load_manifest(manifest_path)
-          stage=full/'stage'
+          stage=full/'parallel_3mo'/segment/'stage'
           out=full/'segments'
+          stage.mkdir(parents=True,exist_ok=True)
           out.mkdir(parents=True,exist_ok=True)
           s3=boto3.client('s3',region_name=manifest.get('region','us-east-2'))
           progress_prefix=f"nymex/ng_mbo_5y_v0/step1_census/launches/{os.environ['CANDIDATE_SHA']}/full/progress"
@@ -105,7 +106,7 @@ jobs:
           finally:
               for path in staged:
                   Path(path).unlink(missing_ok=True)
-          ''')
+          ''').lstrip()
           command_lines=[
               'set -euo pipefail',
               f'base={shlex.quote(base)}',
@@ -117,7 +118,10 @@ jobs:
               'test -x "$base/venv/bin/python"',
               'test -s "$cred"',
               'test "$(nproc)" -ge 4',
-              'mkdir -p "$full/segments" "$full/stage" "$full/parallel_3mo"',
+              'mkdir -p "$full/segments" "$full/parallel_3mo"',
+              f"python3 -c {shlex.quote('from pathlib import Path; p=Path('+repr(worker)+'); p.write_text('+repr(worker_source)+'); p.chmod(0o700)')}",
+              f'{shlex.quote(base+"/venv/bin/python")} -m py_compile {shlex.quote(worker)}',
+              f'cd {shlex.quote(repo)} && {shlex.quote(base+"/venv/bin/python")} - <<\'PYVALIDATE\'\nimport sys\nsys.path.insert(0,\'research\')\nimport ng_exhaustion_mbo_5y_step1_census_20260822 as c\nm=c.load_manifest(\'research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json\')\nfor s in (\'20210901_20211001\',\'20211001_20211101\',\'20211101_20211201\'):\n    c._segment_source_scope(m,s,None)\nprint(\'TARGET_VALIDATION=PASS\')\nPYVALIDATE',
               'echo BEFORE_SERIAL_STATE=$(systemctl is-active "$serial" || true)',
               'if [ -f "$full/CONTROLLER_HEARTBEAT.json" ]; then python3 -c "import json,sys; x=json.load(open(sys.argv[1])); print(\"BEFORE_ACTIVE_SEGMENT=\"+str(x.get(\"active_segment\"))); print(\"BEFORE_COMPLETED_SEGMENTS=\"+str(x.get(\"completed_segments\")))" "$full/CONTROLLER_HEARTBEAT.json"; fi',
               'echo BEFORE_RECEIPTS=$(find "$full/segments" -maxdepth 1 -name "*.receipt.json" -type f | wc -l)',
@@ -125,7 +129,6 @@ jobs:
               'if systemctl is-active --quiet "$serial"; then systemctl stop "$serial"; fi',
               'test "$(systemctl is-active "$serial" || true)" != active',
               'echo AFTER_SERIAL_STATE=$(systemctl is-active "$serial" || true)',
-              f"python3 -c {shlex.quote('from pathlib import Path; p=Path('+repr(worker)+'); p.write_text('+repr(worker_source)+'); p.chmod(0o700)')}",
           ]
           for segment,core in targets:
               unit=f'ng-exhaustion-step1-p3m-{segment}'
@@ -141,8 +144,10 @@ jobs:
                   f'if [ -f "$full/segments/{segment}.receipt.json" ] && [ -f "$full/segments/{segment}.seconds.jsonl.gz" ]; then echo TARGET_{segment}=ALREADY_PRESENT; else systemd-run --unit={shlex.quote(unit)} --collect --property=CPUAffinity={core} --property=Nice=0 /bin/bash -lc {shlex.quote(run)} >/dev/null; echo TARGET_{segment}=LAUNCHED_CORE_{core}; fi',
               ]
           command_lines += [
-              'sleep 3',
-              'for u in ng-exhaustion-step1-p3m-20210901_20211001 ng-exhaustion-step1-p3m-20211001_20211101 ng-exhaustion-step1-p3m-20211101_20211201; do echo UNIT_${u}=$(systemctl is-active "$u" || true); done',
+              'sleep 5',
+              'bad=0',
+              'for s in 20210901_20211001 20211001_20211101 20211101_20211201; do u="ng-exhaustion-step1-p3m-$s"; if [ -f "$full/segments/$s.receipt.json" ] && [ -f "$full/segments/$s.seconds.jsonl.gz" ]; then echo UNIT_${s}=COMPLETE; elif systemctl is-active --quiet "$u"; then echo UNIT_${s}=ACTIVE; else echo UNIT_${s}=FAILED_TO_START; bad=1; fi; done',
+              'if [ "$bad" -ne 0 ]; then echo PARALLEL_LAUNCH_FAILBACK=RESTART_SERIAL; systemctl start "$serial" || true; exit 1; fi',
               'ps -eo pid,ppid,psr,etimes,pcpu,pmem,stat,comm --sort=-pcpu | head -n 12',
               'echo NPROC=$(nproc)',
               'echo LAUNCH_STATUS=PARALLEL_THREE_MONTH_TRANCHE_STARTED',
