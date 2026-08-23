@@ -109,7 +109,7 @@ class LegacyControlSemanticWall(unittest.TestCase):
         self.assertTrue(legacy[0]["projection_at_event_group_end"])
         self.assertFalse(legacy[0]["projection_after_mbo_action"])
 
-    def test_transient_top10_change_still_emits_one_final_book_row(self):
+    def test_visible_add_is_retained_when_group_restores_same_book(self):
         a = V4MboAdapter()
         a.apply(r("A", "B", 1, 3.00, 5, sequence=1))
         frame, _legacy = a.apply(r(
