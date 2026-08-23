@@ -123,7 +123,7 @@ jobs:
               f'{shlex.quote(base+"/venv/bin/python")} -m py_compile {shlex.quote(worker)}',
               f'cd {shlex.quote(repo)} && {shlex.quote(base+"/venv/bin/python")} - <<\'PYVALIDATE\'\nimport sys\nsys.path.insert(0,\'research\')\nimport ng_exhaustion_mbo_5y_step1_census_20260822 as c\nm=c.load_manifest(\'research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json\')\nfor s in (\'20210901_20211001\',\'20211001_20211101\',\'20211101_20211201\'):\n    c._segment_source_scope(m,s,None)\nprint(\'TARGET_VALIDATION=PASS\')\nPYVALIDATE',
               'echo BEFORE_SERIAL_STATE=$(systemctl is-active "$serial" || true)',
-              'if [ -f "$full/CONTROLLER_HEARTBEAT.json" ]; then python3 -c "import json,sys; x=json.load(open(sys.argv[1])); print(\"BEFORE_ACTIVE_SEGMENT=\"+str(x.get(\"active_segment\"))); print(\"BEFORE_COMPLETED_SEGMENTS=\"+str(x.get(\"completed_segments\")))" "$full/CONTROLLER_HEARTBEAT.json"; fi',
+              'if [ -f "$full/CONTROLLER_HEARTBEAT.json" ]; then grep -E "active_segment|completed_segments" "$full/CONTROLLER_HEARTBEAT.json" || true; fi',
               'echo BEFORE_RECEIPTS=$(find "$full/segments" -maxdepth 1 -name "*.receipt.json" -type f | wc -l)',
               'if [ -f "$full/segments/20210820_20210901.seconds.jsonl.gz.partial" ]; then stat --printf="PRESERVED_INITIAL_PARTIAL_BYTES=%s\\n" "$full/segments/20210820_20210901.seconds.jsonl.gz.partial"; fi',
               'if systemctl is-active --quiet "$serial"; then systemctl stop "$serial"; fi',
@@ -164,7 +164,7 @@ jobs:
             --parameters file:///tmp/step1-parallel-3mo-params.json \
             --timeout-seconds 300 \
             --query 'Command.CommandId' --output text)"
-          aws ssm wait command-executed --command-id "$command_id" --instance-id "$INSTANCE_ID"
+          aws ssm wait command-executed --command-id "$command_id" --instance-id "$INSTANCE_ID" || true
           aws ssm get-command-invocation \
             --command-id "$command_id" \
             --instance-id "$INSTANCE_ID" \
