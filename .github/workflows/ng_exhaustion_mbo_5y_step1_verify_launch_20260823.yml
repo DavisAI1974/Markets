@@ -141,7 +141,7 @@ jobs:
             echo false > "$root/FINAL_RECEIPT_AVAILABLE"
           fi
 
-      - name: Verify launch SSM receipt and fresh active unit state
+      - name: Verify launch SSM receipt and current unit or completion state
         shell: bash
         run: |
           set -euo pipefail
@@ -155,8 +155,15 @@ jobs:
 
           import boto3
 
+          from research.kalshi.ng_exhaustion_step1_completion_gate import (
+              validate_runtime_state,
+          )
+
           root = Path('/tmp/step1-verification')
           launch = json.loads((root / 'LAUNCH_RECEIPT.json').read_text())
+          heartbeat = json.loads((root / 'CONTROLLER_HEARTBEAT.json').read_text())
+          final_available = (root / 'STEP1_DUAL_CENSUS_RECEIPT.json').exists()
+          require_complete = os.environ.get('REQUIRE_COMPLETE_OUTPUTS', 'false').lower() == 'true'
           candidate = os.environ['CANDIDATE_SHA']
           instance = os.environ['INSTANCE_ID']
           expected_unit = f'ng-exhaustion-step1-{candidate[:12]}'
@@ -175,15 +182,13 @@ jobs:
           command = f'''set -euo pipefail
           unit={shlex.quote(expected_unit)}
           active="$(systemctl is-active "$unit" || true)"
-          load="$(systemctl show "$unit" --property=LoadState --value)"
-          sub="$(systemctl show "$unit" --property=SubState --value)"
-          pid="$(systemctl show "$unit" --property=MainPID --value)"
-          printf 'VERIFY_UNIT=%s\nVERIFY_ACTIVE=%s\nVERIFY_LOAD=%s\nVERIFY_SUB=%s\nVERIFY_PID=%s\n' "$unit" "$active" "$load" "$sub" "$pid"
-          test "$active" = active
-          test "$load" = loaded
-          test "$sub" = running
-          test "$pid" -gt 0
-          kill -0 "$pid"
+          load="$(systemctl show "$unit" --property=LoadState --value 2>/dev/null || true)"
+          sub="$(systemctl show "$unit" --property=SubState --value 2>/dev/null || true)"
+          pid="$(systemctl show "$unit" --property=MainPID --value 2>/dev/null || true)"
+          case "$pid" in ''|*[!0-9]*) pid=0 ;; esac
+          pid_alive=false
+          if test "$pid" -gt 0 && kill -0 "$pid" 2>/dev/null; then pid_alive=true; fi
+          printf 'VERIFY_UNIT=%s\nVERIFY_ACTIVE=%s\nVERIFY_LOAD=%s\nVERIFY_SUB=%s\nVERIFY_PID=%s\nVERIFY_PID_ALIVE=%s\n' "$unit" "$active" "$load" "$sub" "$pid" "$pid_alive"
           '''
           sent = ssm.send_command(
               InstanceIds=[instance],
@@ -223,10 +228,16 @@ jobs:
                   values[key] = value
           if values.get('VERIFY_UNIT') != expected_unit:
               raise SystemExit('fresh systemd unit identity drift')
-          if values.get('VERIFY_ACTIVE') != 'active' or values.get('VERIFY_SUB') != 'running':
-              raise SystemExit('fresh systemd service is not active/running')
-          if int(values.get('VERIFY_PID', '0')) <= 0:
-              raise SystemExit('fresh systemd MainPID is absent')
+          runtime_mode = validate_runtime_state(
+              final_available=final_available,
+              require_complete_outputs=require_complete,
+              heartbeat_phase=heartbeat.get('phase', ''),
+              active_state=values.get('VERIFY_ACTIVE', ''),
+              load_state=values.get('VERIFY_LOAD', ''),
+              sub_state=values.get('VERIFY_SUB', ''),
+              main_pid=int(values.get('VERIFY_PID', '0')),
+              pid_alive=values.get('VERIFY_PID_ALIVE') == 'true',
+          )
           receipt = {
               'schema': 'NG_EXHAUSTION_MBO_5Y_STEP1_DURABLE_LAUNCH_VERIFICATION_V1_20260823',
               'verified_at_utc': dt.datetime.now(dt.timezone.utc).isoformat(),
@@ -243,6 +254,8 @@ jobs:
               'systemd_load_state': values['VERIFY_LOAD'],
               'systemd_sub_state': values['VERIFY_SUB'],
               'systemd_main_pid': int(values['VERIFY_PID']),
+              'systemd_main_pid_alive': values.get('VERIFY_PID_ALIVE') == 'true',
+              'runtime_verification_mode': runtime_mode,
               'verification_shell_read_only': True,
           }
           (root / 'INSTANCE_VERIFICATION.json').write_text(
@@ -264,6 +277,13 @@ jobs:
           from pathlib import Path
 
           import boto3
+
+          from research.kalshi.ng_exhaustion_step1_completion_gate import (
+              declared_final_output_hashes,
+              validate_final_receipt_heartbeat,
+              validate_launch_canary,
+              validate_runtime_state,
+          )
 
           root = Path('/tmp/step1-verification')
           package = root / 'package'
@@ -295,6 +315,9 @@ jobs:
           manifest_path = package / 'research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json'
           manifest = json.loads(manifest_path.read_text())
           instance = json.loads((root / 'INSTANCE_VERIFICATION.json').read_text())
+          final_path = root / 'STEP1_DUAL_CENSUS_RECEIPT.json'
+          final_available = final_path.exists()
+          require_complete = os.environ.get('REQUIRE_COMPLETE_OUTPUTS', 'false').lower() == 'true'
 
           if launch.get('schema') != 'NG_EXHAUSTION_MBO_5Y_STEP1_LAUNCH_RECEIPT_V1_20260822':
               raise SystemExit('launch receipt schema drift')
@@ -306,15 +329,21 @@ jobs:
               raise SystemExit('launch receipt does not assert full_census_launched')
           if launch.get('launch_state') not in {'STARTED', 'ALREADY_ACTIVE'}:
               raise SystemExit('invalid durable launch state')
-          if int(launch.get('main_pid', 0)) <= 0 or int(instance.get('systemd_main_pid', 0)) <= 0:
-              raise SystemExit('launch/fresh systemd PID evidence absent')
-          preflight = launch.get('preflight', {})
-          if preflight.get('status') != 'STEP1_DUAL_STRUCTURAL_CENSUS_COMPLETE':
-              raise SystemExit('launch receipt does not contain a completed revealed preflight')
-          if preflight.get('source_manifest_sha256') != lock.get('source_manifest_sha256'):
-              raise SystemExit('launch preflight source-manifest drift')
-          if preflight.get('legacy_overlap_equivalence', {}).get('status') != 'PASS':
-              raise SystemExit('launch preflight LEGACY_CONTROL equivalence gate did not pass')
+          if int(launch.get('main_pid', 0)) <= 0:
+              raise SystemExit('original launch systemd PID evidence absent')
+          launch_canary_mode = validate_launch_canary(launch, lock)
+          runtime_mode = validate_runtime_state(
+              final_available=final_available,
+              require_complete_outputs=require_complete,
+              heartbeat_phase=heartbeat.get('phase', ''),
+              active_state=instance.get('systemd_active_state', ''),
+              load_state=instance.get('systemd_load_state', ''),
+              sub_state=instance.get('systemd_sub_state', ''),
+              main_pid=int(instance.get('systemd_main_pid', 0)),
+              pid_alive=instance.get('systemd_main_pid_alive') is True,
+          )
+          if instance.get('runtime_verification_mode') != runtime_mode:
+              raise SystemExit('instance runtime verification mode drift')
           expected_uri = f's3://{bucket}/{prefix}/'
           if launch.get('result_prefix') != expected_uri + 'full/':
               raise SystemExit('result prefix drift')
@@ -450,10 +479,6 @@ jobs:
               if any(pattern.search(source) for pattern in forbidden):
                   raise SystemExit(f'prefix-wide source enumeration call found: {path}')
 
-          final_path = root / 'STEP1_DUAL_CENSUS_RECEIPT.json'
-          final_available = final_path.exists()
-          if os.environ.get('REQUIRE_COMPLETE_OUTPUTS', 'false').lower() == 'true' and not final_available:
-              raise SystemExit('final dual-population receipt is required but not available')
           if final_available:
               final = json.loads(final_path.read_text())
               claimed = final.get('receipt_sha256')
@@ -461,6 +486,7 @@ jobs:
               body.pop('receipt_sha256', None)
               if not hex64.fullmatch(str(claimed)) or canonical_sha(body) != claimed:
                   raise SystemExit('final dual-census receipt hash drift')
+              validate_final_receipt_heartbeat(heartbeat, claimed)
               if final.get('status') != 'STEP1_DUAL_STRUCTURAL_CENSUS_COMPLETE':
                   raise SystemExit('final dual-census completion status drift')
               if final.get('source_manifest_sha256') != claimed_manifest_sha:
@@ -513,23 +539,32 @@ jobs:
               if 'NO_CASE_DROPPED' not in str(crosswalk.get('splits_merges_policy', '')):
                   raise SystemExit('crosswalk no-case-drop policy absent')
               s3 = boto3.client('s3', region_name=os.environ['AWS_DEFAULT_REGION'])
-              output_groups = (
-                  final['event_outputs'], final['lineage_input_outputs'],
-                  final['population_outputs'], final['crosswalk_index_outputs'],
-              )
-              outputs = []
-              for group in output_groups:
-                  outputs.extend(group.values())
-              outputs.extend((final['crosswalk_output'], final['retained_overlap_mismatches']))
-              for output in outputs:
-                  name = Path(output['path']).name
-                  head = s3.head_object(Bucket=bucket, Key=f'{prefix}/full/results/{name}')
-                  if int(head.get('ContentLength', 0)) <= 0:
+              declared_outputs = declared_final_output_hashes(final)
+              for name, expected_hash in declared_outputs.items():
+                  response = s3.get_object(Bucket=bucket, Key=f'{prefix}/full/results/{name}')
+                  if int(response.get('ContentLength', 0)) <= 0:
                       raise SystemExit(f'empty exact final output object: {name}')
+                  digest = hashlib.sha256()
+                  for chunk in response['Body'].iter_chunks(chunk_size=1024 * 1024):
+                      if chunk:
+                          digest.update(chunk)
+                  if digest.hexdigest() != expected_hash:
+                      raise SystemExit(f'exact final output SHA-256 drift: {name}')
+              equivalence_name = 'LEGACY_CONTROL_OVERLAP_EQUIVALENCE.json'
+              equivalence_response = s3.get_object(
+                  Bucket=bucket, Key=f'{prefix}/full/results/{equivalence_name}',
+              )
+              if int(equivalence_response.get('ContentLength', 0)) > 5 * 1024 * 1024:
+                  raise SystemExit('overlap equivalence object is unexpectedly large')
+              equivalence = json.loads(equivalence_response['Body'].read())
+              if equivalence != final.get('legacy_overlap_equivalence'):
+                  raise SystemExit('exact overlap equivalence object/receipt drift')
 
           verification = {
               **instance,
               'launch_receipt_verified': True,
+              'launch_canary_mode': launch_canary_mode,
+              'runtime_verification_mode': runtime_mode,
               'candidate_package_sha256': package_sha,
               'candidate_engine_hashes': engine,
               'source_manifest_sha256': claimed_manifest_sha,
@@ -543,6 +578,7 @@ jobs:
               'first_segment_heartbeat_verified_when_available': segment_heartbeat_path.exists(),
               'final_dual_population_receipt_available': final_available,
               'final_dual_population_and_crosswalk_metadata_verified': final_available,
+              'exact_final_output_hashes_verified': 10 if final_available else 0,
               'release_or_virgin_holdout_consumed': False,
               'predictive_or_trading_experiment_run': False,
               'permanent_frankie_mutated': False,
