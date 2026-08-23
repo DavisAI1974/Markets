@@ -1515,7 +1515,7 @@ def run_controller(
             relative = path.resolve().relative_to(work.resolve()).as_posix()
         except ValueError as exc:
             raise CensusError(f"progress path escaped work directory: {path}") from exc
-        s3.upload_file(manifest["bucket"], str(path), f"{prefix}/{relative}")
+        s3.upload_file(str(path), manifest["bucket"], f"{prefix}/{relative}")
     weeks_filter = set(OVERLAP_WEEKS) if overlap_only else None
     segments = _segments_for_weeks(manifest, weeks_filter)
     engine = material_hashes()

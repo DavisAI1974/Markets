@@ -220,7 +220,7 @@ jobs:
           if (root/'RUN.log').exists(): selected.append(root/'RUN.log')
           for path in selected:
               rel=path.relative_to(root).as_posix()
-              s3.upload_file(manifest['bucket'],str(path),f'{{prefix}}/{{rel}}')
+              s3.upload_file(str(path),manifest['bucket'],f'{{prefix}}/{{rel}}')
           PYUPLOAD
           upload_rc=$?
           if [ "$rc" -eq 0 ] && [ "$upload_rc" -eq 0 ]; then
@@ -288,7 +288,7 @@ jobs:
           manifest=json.load(open('research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json'))
           s3=boto3.client('s3',region_name=manifest.get('region','us-east-2'))
           for path in (p for p in root.rglob('*') if p.is_file()):
-              s3.upload_file(manifest['bucket'],str(path),f'{{prefix}}/{{path.relative_to(root).as_posix()}}')
+              s3.upload_file(str(path),manifest['bucket'],f'{{prefix}}/{{path.relative_to(root).as_posix()}}')
           PYUPLOAD
           if [ "$preflight_rc" -ne 0 ]; then
             tail -n 120 "$preflight/RUN.log"
