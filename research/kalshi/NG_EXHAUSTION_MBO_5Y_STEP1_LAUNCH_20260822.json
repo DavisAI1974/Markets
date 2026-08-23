@@ -1,7 +1,7 @@
 {
-  "candidate_commit": "e217d4cb03438dd4bff70f21e96762aa851b015f",
+  "candidate_commit": "0d318335825b4a0e19a5a2881522f3da0374788e",
   "candidate_lock": {
-    "candidate_commit": "e217d4cb03438dd4bff70f21e96762aa851b015f",
+    "candidate_commit": "0d318335825b4a0e19a5a2881522f3da0374788e",
     "dependency_lock": {
       "boto3": "1.35.99",
       "databento": "0.81.0",
@@ -21,7 +21,7 @@
       "research/ng_exhaustion_mbo_5y_canonical_manifest_20260822.py": "b7fd45c47484181b9c9a1366000bc0fb9a58d8739cb88a17bdeaf22d49260d07",
       "research/ng_exhaustion_mbo_5y_step1_census_20260822.py": "f5952d37e7440d66fdae3faad055eb843955d83ea84208fb1a11e01bec146a96",
       "research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py": "838997142a543ba6c5ba6b86277c66d9465ad4e62ee85c5b1ec9ac177eaa8120",
-      "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py": "6d1aa48494b918bec07dca9591d6b15ec99df31e9d25505623996f372077d9f8"
+      "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py": "4a80e3e4b83867046d318ba97d350c2d7aca22e9d182d98399d01eeacc72d3ce"
     },
     "native_taxonomy": "NG_EXHAUSTION_V4_NATIVE_STRUCTURE_TAXONOMY_V1_20260822",
     "packaged_files": {
@@ -31,7 +31,6 @@
       "research/FRANKIE_NG_PRE_FAMILY_CLASSIFIER_FROZEN_OPERATIONAL_20260817.json": "583f6a121788b3d962f2ec849a270f96b1786d714ac930d2b0069c6261eda6f7",
       "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json": "c226eff3f99347dc41f9ec32e04eaeb0d3451ee92fa5408fdf66c097e668ac79",
       "research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json": "d44ef725129b9437c07a9396cda8563cda587373d42bb247d9e8796a9ce17336",
-      "research/kalshi/NG_EXHAUSTION_MBO_5Y_STEP1_PREFLIGHT_CHILD_RECOVERY_20260823.json": "808624c82092fd5b72a8aed856ba2aaa94d8dab9e1d6904a3b5106055aabb827",
       "research/ng_dipole_native_shape_audit.py": "5e595b7dd89defff320273934e8893d727ee1a291efaf3f232634cb5a7d7d688",
       "research/ng_dipole_runway_audit.py": "670794f2f783d33f49523d370db6e6fb88c15f0ed6c88de67cfe5cd6a29ea5fa",
       "research/ng_exhaustion_chain_canonical_table_20260817.py": "4325776b4d70bfa3808bce1b9473d6da75cc18c8cbe00be3cf5652f849573ffa",
@@ -41,32 +40,19 @@
       "research/ng_exhaustion_mbo_5y_canonical_manifest_20260822.py": "b7fd45c47484181b9c9a1366000bc0fb9a58d8739cb88a17bdeaf22d49260d07",
       "research/ng_exhaustion_mbo_5y_step1_census_20260822.py": "f5952d37e7440d66fdae3faad055eb843955d83ea84208fb1a11e01bec146a96",
       "research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py": "838997142a543ba6c5ba6b86277c66d9465ad4e62ee85c5b1ec9ac177eaa8120",
-      "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py": "6d1aa48494b918bec07dca9591d6b15ec99df31e9d25505623996f372077d9f8",
+      "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py": "4a80e3e4b83867046d318ba97d350c2d7aca22e9d182d98399d01eeacc72d3ce",
       "research/ng_exhaustion_runway_clock.py": "d73a9a04eee3aa2f65c6c64ee57faa37a5d71000939bdd54da7f94931edea1eb"
     },
     "predictive_or_trading_experiment_authorized": false,
-    "preflight_child_recovery": {
-      "children": {
-        "20250701_20250801": {
-          "receipt_sha256": "8db1d013f7c88952cb8d12502388e36c805a262a529ba0c41676bc60af4baac3",
-          "seconds_gzip_sha256": "914adb3e7cf0c73a1099e566611ed0d145ffdac6c33550f8a8d44057fdb1e0cb",
-          "seconds_rows": 159109
-        },
-        "20250901_20251001": {
-          "receipt_sha256": "259068c142e1f8ed5a7cc6abfedc4b5ec0f92b66235512c3dbfd612f659c4934",
-          "seconds_gzip_sha256": "d48ef59540f97e8e5cb7e66ae06768b8347bd5cee7879457f95e41e996f8b1e4",
-          "seconds_rows": 219665
-        },
-        "20251001_20251101": {
-          "receipt_sha256": "5653eea8da64c9974435100426f6faaaeea81baf77dc39f1b798c5fac4ac434b",
-          "seconds_gzip_sha256": "76bde8ebb5dc45f5c8995c29825361fdbabbb07d4d0f673a7d2a720be29c517c",
-          "seconds_rows": 113167
-        }
-      },
-      "contract_sha256": "808624c82092fd5b72a8aed856ba2aaa94d8dab9e1d6904a3b5106055aabb827",
-      "parent_candidate_commit": "98ec7c0a821c0c73280003c1b350b5c60e08f9d1",
-      "recovery_scope": "RECONCILIATION_ONLY_REUSE_OF_EXACT_COMPLETED_PARENT_CHILDREN",
-      "segment_producer_ast_sha256": "69df86e9361d8975bebc4379a16a3f1ada02772da5a3ec9faa2a094b52cbde8f"
+    "preflight_regeneration": {
+      "mode": "REGENERATE_REVEALED_OVERLAP_FROM_EXACT_CANONICAL_MBO_KEYS",
+      "overlap_weeks": [
+        "20250713",
+        "20250921",
+        "20250928"
+      ],
+      "same_candidate_resume_policy": "ONLY_HASH_VERIFIED_CHILDREN_WITH_CURRENT_ENGINE_AND_SOURCE_SCOPE",
+      "source_selection": "FROZEN_MANIFEST_EXACT_KEYS_NO_PREFIX_ENUMERATION"
     },
     "release_or_virgin_holdout_consumed": false,
     "retention_policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_KILL",
@@ -75,27 +61,27 @@
     "source_manifest_sha256": "5739bce85d9bfbbe6c59d000bc411b424d7752b98a309725161d44e6d1d3dc2e",
     "source_object_count": 1565,
     "source_total_bytes": 26581677329,
-    "workflow_sha256": "765402077aaee5592df1cc46e74ca4100289b3b8c0a7d2de7b280d50dbf952e1"
+    "workflow_sha256": "8e36451d17f3c125a771f2015ff08e9b3e387a8d7533f3576a02317b3ed4096b"
   },
-  "candidate_package_sha256": "d7207724744395eb758d4d0cacbacbd60679a13f650ba5cc77ef823afc132953",
+  "candidate_package_sha256": "3a4ffa88bbfac5fd74f452669356e270e7350a9afa5e214c2b6633671c2113bd",
   "full_census_launched": false,
   "github_workflow_run_attempt": "1",
-  "github_workflow_run_id": "32626059588",
-  "heartbeat_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/e217d4cb03438dd4bff70f21e96762aa851b015f/full/progress/",
+  "github_workflow_run_id": "32629079068",
+  "heartbeat_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/0d318335825b4a0e19a5a2881522f3da0374788e/full/progress/",
   "instance_id": "i-08cee7171c0a76a04",
   "permanent_frankie_mutated": false,
   "predictive_or_trading_experiment_run": false,
-  "preflight_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/e217d4cb03438dd4bff70f21e96762aa851b015f/preflight/",
-  "recorded_at_utc": "2026-08-23T07:38:47.760999+00:00",
+  "preflight_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/0d318335825b4a0e19a5a2881522f3da0374788e/preflight/",
+  "recorded_at_utc": "2026-08-23T08:45:53.130002+00:00",
   "region": "us-east-2",
   "release_or_virgin_holdout_consumed": false,
-  "result_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/e217d4cb03438dd4bff70f21e96762aa851b015f/full/",
-  "sanitized_stderr_tail": "failed to run commands: exit status 1",
-  "sanitized_stdout_tail": "CANDIDATE_FILES_VERIFIED\nTraceback (most recent call last):\n  File \"/mnt/markets/ng_exhaustion_step1_5y_20260822/e217d4cb03438dd4bff70f21e96762aa851b015f/repo/research/ng_exhaustion_mbo_5y_step1_census_20260822.py\", line 1818, in <module>\n    main()\n  File \"/mnt/markets/ng_exhaustion_step1_5y_20260822/e217d4cb03438dd4bff70f21e96762aa851b015f/repo/research/ng_exhaustion_mbo_5y_step1_census_20260822.py\", line 1796, in main\n    result = reconcile(\n  File \"/mnt/markets/ng_exhaustion_step1_5y_20260822/e217d4cb03438dd4bff70f21e96762aa851b015f/repo/research/ng_exhaustion_mbo_5y_step1_census_20260822.py\", line 1570, in reconcile\n    raise CensusError(\n__main__.CensusError: LEGACY_CONTROL overlap equivalence failed closed; retained mismatch receipt written\n",
+  "result_prefix": "s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/step1_census/launches/0d318335825b4a0e19a5a2881522f3da0374788e/full/",
+  "sanitized_stderr_tail": "",
+  "sanitized_stdout_tail": "CANDIDATE_FILES_VERIFIED\n",
   "schema": "NG_EXHAUSTION_MBO_5Y_STEP1_LAUNCH_RECEIPT_V1_20260822",
   "source_prefix_wide_enumeration_used": false,
-  "ssm_command_id": "ff572578-ec17-4c9a-ab31-fdde1ccb1cfe",
-  "ssm_response_code": 1,
-  "ssm_status": "Failed",
-  "systemd_unit": "ng-exhaustion-step1-e217d4cb0343"
+  "ssm_command_id": "09c90010-b2c9-4705-9eb3-33613c56713c",
+  "ssm_response_code": 137,
+  "ssm_status": "Cancelled",
+  "systemd_unit": "ng-exhaustion-step1-0d318335825b"
 }
