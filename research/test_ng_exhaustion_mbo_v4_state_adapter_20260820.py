@@ -4,12 +4,59 @@ from __future__ import annotations
 import unittest
 
 from ng_exhaustion_mbo_v4_state_adapter_20260820 import (
+    ACTIVITY_WINDOWS_S,
     F_LAST,
     F_SNAPSHOT,
     PRICE_SCALE,
     InstrumentBook,
     V4MboAdapter,
 )
+
+
+def slow_activity_reference(book: InstrumentBook, now_ns: int) -> dict:
+    def ratio(num: float, den: float) -> float | None:
+        return None if abs(float(den)) < 1e-15 else float(num) / float(den)
+
+    out = {}
+    for seconds in ACTIVITY_WINDOWS_S:
+        cutoff = now_ns - seconds * 1_000_000_000
+        rows = [row for row in book.activity if row["ts_recv_ns"] >= cutoff]
+        counts = {}
+        qty = {}
+        side_qty = {}
+        top_qty = {}
+        priority_lost = 0
+        missing_refs = 0
+        for row in rows:
+            action = row["action"]
+            pair = f"{action}_{row['side']}"
+            size = max(0, int(row["size"]))
+            counts[action] = counts.get(action, 0) + 1
+            qty[action] = qty.get(action, 0) + size
+            side_qty[pair] = side_qty.get(pair, 0) + size
+            if row["top_touch"]:
+                top_qty[action] = top_qty.get(action, 0) + size
+            priority_lost += int(bool(row["priority_lost"]))
+            missing_refs += int(bool(row["missing_reference"]))
+        trade_buy = side_qty.get("T_B", 0)
+        trade_sell = side_qty.get("T_A", 0)
+        add_qty = qty.get("A", 0)
+        cancel_qty = qty.get("C", 0)
+        out[str(seconds)] = {
+            "event_count": len(rows),
+            "action_count": counts,
+            "action_qty": qty,
+            "action_side_qty": side_qty,
+            "trade_buy_aggressor_qty": trade_buy,
+            "trade_sell_aggressor_qty": trade_sell,
+            "trade_aggressor_imbalance": ratio(trade_buy - trade_sell, trade_buy + trade_sell),
+            "add_cancel_churn": ratio(cancel_qty, add_qty + cancel_qty),
+            "top_level_add_qty_derived": top_qty.get("A", 0),
+            "top_level_cancel_qty_derived": top_qty.get("C", 0),
+            "priority_lost_modify_count": priority_lost,
+            "missing_reference_count": missing_refs,
+        }
+    return out
 
 
 def rec(
@@ -43,6 +90,47 @@ def rec(
 
 
 class TestV4MboAdapter(unittest.TestCase):
+    def test_incremental_activity_matches_scan_reference(self) -> None:
+        a = V4MboAdapter()
+        rows = [
+            rec(action="A", side="B", order_id=1, price=3.00, size=10, sequence=1, ts_recv_ns=1_000_000_000),
+            rec(action="A", side="A", order_id=2, price=3.10, size=8, sequence=2, ts_recv_ns=2_000_000_000),
+            rec(action="T", side="B", price=3.10, size=3, sequence=3, ts_recv_ns=3_000_000_000),
+            rec(action="T", side="A", price=3.00, size=2, sequence=4, ts_recv_ns=6_000_000_000),
+            rec(action="M", side="B", order_id=1, price=3.00, size=12, sequence=5, ts_recv_ns=7_000_000_000),
+            rec(action="C", side="A", order_id=2, price=3.10, size=2, sequence=6, ts_recv_ns=6_500_000_000),
+            rec(action="T", side="A", price=3.00, size=0, sequence=7, ts_recv_ns=22_000_000_000),
+        ]
+        for row in rows:
+            frame, _legacy = a.apply(row)
+            self.assertEqual(frame["activity"], slow_activity_reference(a.books[101], int(row["ts_recv"])))
+        book = a.books[101]
+        for now_ns in (22_000_000_000, 70_000_000_000, 400_000_000_000):
+            self.assertEqual(book.rolling_activity(now_ns), slow_activity_reference(book, now_ns))
+
+    def test_cached_full_book_totals_match_authoritative_orders(self) -> None:
+        a = V4MboAdapter()
+        rows = [
+            rec(action="A", side="B", order_id=1, price=3.00, size=10, sequence=1),
+            rec(action="A", side="A", order_id=2, price=3.10, size=8, sequence=2, ts_recv_ns=2_000_000_000),
+            rec(action="A", side="B", order_id=1, price=2.99, size=7, sequence=3, ts_recv_ns=3_000_000_000),
+            rec(action="C", side="B", order_id=1, price=2.99, size=2, sequence=4, ts_recv_ns=4_000_000_000),
+            rec(action="M", side="A", order_id=2, price=3.11, size=11, sequence=5, ts_recv_ns=5_000_000_000),
+            rec(action="M", side="B", order_id=99, price=2.98, size=4, sequence=6, ts_recv_ns=6_000_000_000),
+        ]
+        for row in rows:
+            a.apply(row)
+            book = a.books[101]
+            snapshot = book.book_snapshot(int(row["ts_recv"]))
+            self.assertEqual(snapshot["bid_depth_full"], sum(x.size for x in book.orders.values() if x.side == "B"))
+            self.assertEqual(snapshot["ask_depth_full"], sum(x.size for x in book.orders.values() if x.side == "A"))
+            self.assertEqual(snapshot["bid_order_count_full"], sum(x.side == "B" for x in book.orders.values()))
+            self.assertEqual(snapshot["ask_order_count_full"], sum(x.side == "A" for x in book.orders.values()))
+        a.apply(rec(action="R", sequence=7, ts_recv_ns=7_000_000_000))
+        snapshot = a.books[101].book_snapshot(7_000_000_000)
+        self.assertEqual(snapshot["bid_depth_full"], 0)
+        self.assertEqual(snapshot["ask_depth_full"], 0)
+
     def test_fifo_queue_and_volume_ahead(self) -> None:
         a = V4MboAdapter()
         a.apply(rec(action="A", side="B", order_id=1, price=3.000, size=4, sequence=1, ts_recv_ns=1_000_000_000))

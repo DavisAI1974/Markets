@@ -30,6 +30,7 @@ from __future__ import annotations
 import argparse
 import gzip
 import hashlib
+import heapq
 import json
 import math
 import tempfile
@@ -181,6 +182,94 @@ class ApplyEffect:
     top_before_price_raw: int | None
 
 
+class _RollingActivityWindow:
+    """Exact rolling activity totals with O(expired + output fields) reads."""
+
+    def __init__(self) -> None:
+        self.rows: deque[dict[str, Any]] = deque()
+        self.action_count: Counter[str] = Counter()
+        self.action_side_count: Counter[str] = Counter()
+        self.action_qty: Counter[str] = Counter()
+        self.action_side_qty: Counter[str] = Counter()
+        self.top_qty: Counter[str] = Counter()
+        self.priority_lost = 0
+        self.missing_refs = 0
+        self.ordered = True
+
+    def append(self, row: dict[str, Any]) -> None:
+        if self.rows and int(row["ts_recv_ns"]) < int(self.rows[-1]["ts_recv_ns"]):
+            self.ordered = False
+        self.rows.append(row)
+        action = str(row["action"])
+        action_side = f"{action}_{row['side']}"
+        size = max(0, int(row["size"]))
+        self.action_count[action] += 1
+        self.action_side_count[action_side] += 1
+        self.action_qty[action] += size
+        self.action_side_qty[action_side] += size
+        if row["top_touch"]:
+            self.top_qty[action] += size
+        self.priority_lost += int(bool(row["priority_lost"]))
+        self.missing_refs += int(bool(row["missing_reference"]))
+
+    def _remove(self, row: dict[str, Any]) -> None:
+        action = str(row["action"])
+        action_side = f"{action}_{row['side']}"
+        size = max(0, int(row["size"]))
+        self.action_count[action] -= 1
+        self.action_side_count[action_side] -= 1
+        self.action_qty[action] -= size
+        self.action_side_qty[action_side] -= size
+        if row["top_touch"]:
+            self.top_qty[action] -= size
+            if self.top_qty[action] == 0:
+                del self.top_qty[action]
+        self.priority_lost -= int(bool(row["priority_lost"]))
+        self.missing_refs -= int(bool(row["missing_reference"]))
+        if self.action_count[action] == 0:
+            del self.action_count[action]
+            del self.action_qty[action]
+        if self.action_side_count[action_side] == 0:
+            del self.action_side_count[action_side]
+            del self.action_side_qty[action_side]
+
+    def expire_before(self, cutoff_ns: int) -> None:
+        if self.ordered:
+            while self.rows and int(self.rows[0]["ts_recv_ns"]) < cutoff_ns:
+                self._remove(self.rows.popleft())
+            return
+        kept: list[dict[str, Any]] = []
+        while self.rows:
+            row = self.rows.popleft()
+            if int(row["ts_recv_ns"]) < cutoff_ns:
+                self._remove(row)
+            else:
+                kept.append(row)
+        kept.sort(key=lambda row: int(row["ts_recv_ns"]))
+        self.rows.extend(kept)
+        self.ordered = True
+
+    def snapshot(self) -> dict[str, Any]:
+        trade_buy = self.action_side_qty.get("T_B", 0)
+        trade_sell = self.action_side_qty.get("T_A", 0)
+        add_qty = self.action_qty.get("A", 0)
+        cancel_qty = self.action_qty.get("C", 0)
+        return {
+            "event_count": len(self.rows),
+            "action_count": dict(self.action_count),
+            "action_qty": dict(self.action_qty),
+            "action_side_qty": dict(self.action_side_qty),
+            "trade_buy_aggressor_qty": trade_buy,
+            "trade_sell_aggressor_qty": trade_sell,
+            "trade_aggressor_imbalance": _ratio(trade_buy - trade_sell, trade_buy + trade_sell),
+            "add_cancel_churn": _ratio(cancel_qty, add_qty + cancel_qty),
+            "top_level_add_qty_derived": self.top_qty.get("A", 0),
+            "top_level_cancel_qty_derived": self.top_qty.get("C", 0),
+            "priority_lost_modify_count": self.priority_lost,
+            "missing_reference_count": self.missing_refs,
+        }
+
+
 class InstrumentBook:
     """Full resting-order book for one instrument, preserving FIFO list order."""
 
@@ -189,20 +278,49 @@ class InstrumentBook:
         self.orders: dict[int, RestingOrder] = {}
         self.levels: dict[str, dict[int, list[int]]] = {"B": defaultdict(list), "A": defaultdict(list)}
         self.activity: deque[dict[str, Any]] = deque()
+        self._activity_windows = {seconds: _RollingActivityWindow() for seconds in ACTIVITY_WINDOWS_S}
+        self._activity_last_now_ns: int | None = None
         self.event_group: list[NormalizedMbo] = []
         self.integrity: Counter[str] = Counter()
         self.last_sequence: int | None = None
         self.last_recv_ns: int | None = None
         self.last_event_ns: int | None = None
         self.raw_symbol: str | None = None
+        self._side_depth = {"B": 0, "A": 0}
+        self._side_order_count = {"B": 0, "A": 0}
 
     def _prices(self, side: str) -> list[int]:
         prices = [p for p, ids in self.levels[side].items() if ids]
         return sorted(prices, reverse=(side == "B"))
 
     def best_price_raw(self, side: str) -> int | None:
-        prices = self._prices(side)
-        return None if not prices else prices[0]
+        prices = self.levels[side]
+        if not prices:
+            return None
+        return max(prices) if side == "B" else min(prices)
+
+    def _update_cached_book_totals(
+        self,
+        action: str,
+        before: tuple[str, int] | None,
+        after: tuple[str, int] | None,
+    ) -> None:
+        if action == "R":
+            self._side_depth = {"B": 0, "A": 0}
+            self._side_order_count = {"B": 0, "A": 0}
+            return
+        if action not in {"A", "C", "M"}:
+            return
+        if before is not None:
+            side, size = before
+            self._side_depth[side] -= size
+            self._side_order_count[side] -= 1
+        if after is not None:
+            side, size = after
+            self._side_depth[side] += size
+            self._side_order_count[side] += 1
+        if any(value < 0 for value in [*self._side_depth.values(), *self._side_order_count.values()]):
+            raise RuntimeError("negative cached full-book total")
 
     def _remove_from_level(self, order: RestingOrder) -> None:
         ids = self.levels[order.side].get(order.price_raw)
@@ -342,6 +460,9 @@ class InstrumentBook:
             "missing_reference": effect.missing_reference,
             "top_touch": effect.touched_or_improved_top_before,
         })
+        row = self.activity[-1]
+        for window in self._activity_windows.values():
+            window.append(row)
         cutoff = msg.ts_recv_ns - max(ACTIVITY_WINDOWS_S) * 1_000_000_000
         while self.activity and self.activity[0]["ts_recv_ns"] < cutoff:
             self.activity.popleft()
@@ -363,7 +484,12 @@ class InstrumentBook:
         self.last_event_ns = max(self.last_event_ns or msg.ts_event_ns, msg.ts_event_ns)
         self.raw_symbol = msg.raw_symbol or self.raw_symbol
 
+        old = self.orders.get(msg.order_id)
+        before = None if old is None else (old.side, old.size)
         effect = self._book_effect(msg)
+        new = self.orders.get(msg.order_id)
+        after = None if new is None else (new.side, new.size)
+        self._update_cached_book_totals(msg.action, before, after)
         self._append_activity(msg, effect)
         self.event_group.append(msg)
         if not msg.is_last:
@@ -406,12 +532,16 @@ class InstrumentBook:
         return out
 
     def book_snapshot(self, now_ns: int, depth_levels: int = 10, include_full_depth: bool = False, include_order_ids: bool = False) -> dict[str, Any]:
-        bids = self._prices("B")
-        asks = self._prices("A")
+        if include_full_depth:
+            bids = self._prices("B")
+            asks = self._prices("A")
+        else:
+            bids = heapq.nlargest(depth_levels, self.levels["B"])
+            asks = heapq.nsmallest(depth_levels, self.levels["A"])
         bid_levels = [self._level("B", p, now_ns, include_order_ids) for p in bids[:depth_levels]]
         ask_levels = [self._level("A", p, now_ns, include_order_ids) for p in asks[:depth_levels]]
-        bid_size_full = sum(o.size for o in self.orders.values() if o.side == "B")
-        ask_size_full = sum(o.size for o in self.orders.values() if o.side == "A")
+        bid_size_full = self._side_depth["B"]
+        ask_size_full = self._side_depth["A"]
         bid_size_n = sum(x["size"] for x in bid_levels)
         ask_size_n = sum(x["size"] for x in ask_levels)
         best_bid = None if not bid_levels else bid_levels[0]["price"]
@@ -432,10 +562,10 @@ class InstrumentBook:
             "bid_depth_full": bid_size_full,
             "ask_depth_full": ask_size_full,
             "depth_imbalance_full": _ratio(bid_size_full - ask_size_full, bid_size_full + ask_size_full),
-            "bid_price_level_count_full": len(bids),
-            "ask_price_level_count_full": len(asks),
-            "bid_order_count_full": sum(1 for o in self.orders.values() if o.side == "B"),
-            "ask_order_count_full": sum(1 for o in self.orders.values() if o.side == "A"),
+            "bid_price_level_count_full": len(self.levels["B"]),
+            "ask_price_level_count_full": len(self.levels["A"]),
+            "bid_order_count_full": self._side_order_count["B"],
+            "ask_order_count_full": self._side_order_count["A"],
         }
         if include_full_depth:
             out["bid_levels_full"] = [self._level("B", p, now_ns, include_order_ids) for p in bids]
@@ -443,41 +573,20 @@ class InstrumentBook:
         return out
 
     def rolling_activity(self, now_ns: int) -> dict[str, Any]:
+        if self._activity_last_now_ns is not None and now_ns < self._activity_last_now_ns:
+            # Preserve the prior scan semantics across the explicitly flagged,
+            # uncommon receive-clock regression path.
+            self._activity_windows = {seconds: _RollingActivityWindow() for seconds in ACTIVITY_WINDOWS_S}
+            for row in self.activity:
+                for window in self._activity_windows.values():
+                    window.append(row)
+        self._activity_last_now_ns = now_ns
         out: dict[str, Any] = {}
         for seconds in ACTIVITY_WINDOWS_S:
             cutoff = now_ns - seconds * 1_000_000_000
-            rows = [r for r in self.activity if r["ts_recv_ns"] >= cutoff]
-            counts = Counter(r["action"] for r in rows)
-            qty = Counter()
-            side_qty = Counter()
-            top_qty = Counter()
-            priority_lost = 0
-            missing_refs = 0
-            for r in rows:
-                qty[r["action"]] += max(0, int(r["size"]))
-                side_qty[f"{r['action']}_{r['side']}"] += max(0, int(r["size"]))
-                if r["top_touch"]:
-                    top_qty[r["action"]] += max(0, int(r["size"]))
-                priority_lost += int(bool(r["priority_lost"]))
-                missing_refs += int(bool(r["missing_reference"]))
-            trade_buy = side_qty.get("T_B", 0)
-            trade_sell = side_qty.get("T_A", 0)
-            add_qty = qty.get("A", 0)
-            cancel_qty = qty.get("C", 0)
-            out[str(seconds)] = {
-                "event_count": len(rows),
-                "action_count": dict(counts),
-                "action_qty": dict(qty),
-                "action_side_qty": dict(side_qty),
-                "trade_buy_aggressor_qty": trade_buy,
-                "trade_sell_aggressor_qty": trade_sell,
-                "trade_aggressor_imbalance": _ratio(trade_buy - trade_sell, trade_buy + trade_sell),
-                "add_cancel_churn": _ratio(cancel_qty, add_qty + cancel_qty),
-                "top_level_add_qty_derived": top_qty.get("A", 0),
-                "top_level_cancel_qty_derived": top_qty.get("C", 0),
-                "priority_lost_modify_count": priority_lost,
-                "missing_reference_count": missing_refs,
-            }
+            window = self._activity_windows[seconds]
+            window.expire_before(cutoff)
+            out[str(seconds)] = window.snapshot()
         return out
 
     def event_frame(self, now_ns: int) -> dict[str, Any]:
