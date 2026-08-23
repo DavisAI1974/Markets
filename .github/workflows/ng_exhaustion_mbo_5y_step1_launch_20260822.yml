@@ -2,6 +2,11 @@ name: NG Exhaustion Five-Year Step-1 Preflight and Launch 20260822
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - .github/workflows/ng_exhaustion_mbo_5y_step1_launch_20260822.yml
 
 permissions:
   contents: write
