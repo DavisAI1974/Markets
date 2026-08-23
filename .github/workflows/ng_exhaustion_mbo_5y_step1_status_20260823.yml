@@ -30,6 +30,11 @@ on:
         required: false
         type: boolean
         default: false
+      include_instance_status:
+        description: Run a fresh read-only SSM process/resource diagnostic for this candidate
+        required: false
+        type: boolean
+        default: false
   push:
     branches:
       - chatgpt/ng-exhaustion-entry-timing-revival-20260818
@@ -55,6 +60,7 @@ jobs:
       LEGACY_DAY: ${{ inputs.legacy_day || '' }}
       LEGACY_SEGMENT: ${{ inputs.legacy_segment || '' }}
       INCLUDE_GROUP_AUDIT: ${{ inputs.include_group_audit || 'false' }}
+      INCLUDE_INSTANCE_STATUS: ${{ inputs.include_instance_status || 'false' }}
     steps:
       - name: Check out exact diagnostic implementation
         if: env.INCLUDE_GROUP_AUDIT == 'true'
@@ -197,6 +203,53 @@ jobs:
           output.write_text(json.dumps(diagnosis, indent=2, sort_keys=True) + "\n")
           print(output.read_text())
           PY
+
+      - name: Read fresh candidate process and resource state through SSM
+        if: env.INCLUDE_INSTANCE_STATUS == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="/mnt/markets/ng_exhaustion_step1_5y_20260822/$CANDIDATE_SHA"
+          python - "$base" <<'PY'
+          import json
+          import sys
+
+          base = sys.argv[1]
+          paths = [
+              f"{base}/preflight/CONTROLLER_HEARTBEAT.json",
+              f"{base}/preflight/segments/20250701_20250801.heartbeat.json",
+              f"{base}/preflight/segments/20250901_20251001.heartbeat.json",
+              f"{base}/preflight/segments/20251001_20251101.heartbeat.json",
+          ]
+          command = "\n".join((
+              "set -uo pipefail",
+              "uptime",
+              "free -b",
+              "df -B1 /mnt",
+              "ps -eo pid,ppid,etimes,pcpu,pmem,stat,cmd --sort=-pcpu | "
+              "grep -E 'ng_exhaustion_mbo_5y_step1_census|python' | head -n 30 || true",
+              "for path in " + " ".join(repr(path) for path in paths) + "; do "
+              "if [ -f \"$path\" ]; then stat --printf='%n bytes=%s mtime=%y\\n' \"$path\"; fi; done",
+          ))
+          with open('/tmp/step1-status-ssm-parameters.json', 'w', encoding='utf-8') as handle:
+              json.dump({'commands': [command]}, handle)
+          PY
+          command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Read-only Step-1 process status $CANDIDATE_SHA" \
+            --parameters file:///tmp/step1-status-ssm-parameters.json \
+            --timeout-seconds 120 \
+            --query 'Command.CommandId' \
+            --output text)"
+          aws ssm wait command-executed \
+            --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID"
+          aws ssm get-command-invocation \
+            --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json
 
       - name: Retain exact equivalence diagnosis
         if: env.INCLUDE_EQUIVALENCE_EVIDENCE == 'true'
