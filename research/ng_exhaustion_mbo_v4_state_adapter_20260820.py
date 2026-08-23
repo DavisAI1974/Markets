@@ -532,6 +532,11 @@ class InstrumentBook:
         asks = book["ask_levels"]
         rows = []
         for raw in frame["raw_actions"]:
+            # Fill/None are MBO-only execution/transport details.  Keep them on
+            # V4_NATIVE_FULL, but do not invent rows that did not exist on the
+            # historical MBP/trade-shaped LEGACY_CONTROL surface.
+            if raw["action"] in ("F", "N"):
+                continue
             rec: dict[str, Any] = {
                 "adapter_revision": ADAPTER_REVISION,
                 "census_view": "LEGACY_CONTROL",
