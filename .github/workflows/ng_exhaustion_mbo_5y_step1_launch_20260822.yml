@@ -346,7 +346,10 @@ jobs:
               sent=ssm.send_command(
                   InstanceIds=[instance],DocumentName='AWS-RunShellScript',
                   Comment=f'NG exhaustion five-year Step-1 preflight and launch {candidate}',
-                  Parameters={'commands':[command],'executionTimeout':['19800']},
+                  Parameters={
+                      'commands':['/bin/bash -lc '+shlex.quote(command)],
+                      'executionTimeout':['19800'],
+                  },
                   TimeoutSeconds=19800,
               )
               command_id=sent['Command']['CommandId']
