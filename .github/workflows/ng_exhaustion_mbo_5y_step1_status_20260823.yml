@@ -222,7 +222,7 @@ jobs:
               f"{base}/preflight/segments/20251001_20251101.heartbeat.json",
           ]
           command = "\n".join((
-              "set -uo pipefail",
+              "set -u",
               "uptime",
               "free -b",
               "df -B1 /mnt",
