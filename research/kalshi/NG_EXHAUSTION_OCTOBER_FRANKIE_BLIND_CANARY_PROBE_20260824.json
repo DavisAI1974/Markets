@@ -3,5 +3,6 @@
   "launch_commit": "dcf839e911c5d501396fa7af9d6692012fb6e0d9",
   "launch_run_id": 32712930114,
   "must_not_restart_or_duplicate": true,
+  "snapshot_attempt": 2,
   "systemd_unit": "ng-exhaustion-frankie-october-blind-dcf839e911c5"
 }
