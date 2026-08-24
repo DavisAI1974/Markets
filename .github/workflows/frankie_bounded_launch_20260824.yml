@@ -68,6 +68,7 @@ jobs:
               f"aws s3 cp {shlex.quote('s3://' + os.environ['BUCKET'] + '/' + os.environ['PACKAGE_KEY'])} \"$package\" --only-show-errors",
               f"echo {shlex.quote(os.environ['PACKAGE_SHA256'] + '  ' + package)} | sha256sum -c -",
               "tar -xzf \"$package\" -C \"$repo\"",
+              "if [ ! -s /etc/markets/frankie.env ]; then queue_url=$(aws sqs get-queue-url --queue-name frankie-events --region us-east-2 --query QueueUrl --output text); install -d -m 0750 /etc/markets; printf '%s\\n' 'FRANKIE_DETERMINISTIC_ONLY=0' 'FRANKIE_EVIDENCE_ROOT=/var/lib/markets/frankie/evidence' 'FRANKIE_SQS_REGION=us-east-2' \"FRANKIE_QUEUE_URL=$queue_url\" 'FRANKIE_EVIDENCE_BUCKET=bento-568968024170-us-east-2-an' 'FRANKIE_EVIDENCE_PREFIX=frankie/evidence' | install -m 0600 /dev/stdin /etc/markets/frankie.env; fi",
               "test -s /etc/markets/frankie.env",
               "echo FRANKIE_ENV=CONFIGURED",
               "test -f \"$repo/research/kalshi/frankie_bounded_3mo_parallel.py\"",
