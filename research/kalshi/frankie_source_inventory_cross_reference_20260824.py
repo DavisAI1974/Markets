@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cross-reference the pushed 138-path Frankie inventory against live wiring.
+"""Cross-reference the pushed 148-path Frankie inventory against live wiring.
 
 The source inventory is a governing list, but not every listed file is supposed
 to enter a pre-reveal provider request.  This audit distinguishes active base
@@ -45,14 +45,14 @@ SCHEMA = "FRANKIE_SOURCE_INVENTORY_CROSS_REFERENCE_V1_20260824"
 INVENTORY_PATH = Path(
     "research/kalshi/NG_EXHAUSTION_FRANKIE_SOURCE_FILE_INVENTORY_20260824.md"
 )
-EXPECTED_LISTED_SOURCES = 138
+EXPECTED_LISTED_SOURCES = 148
 EXPECTED_DISCOVERED_DEPENDENCIES = 12
 EXPECTED_ADDITIONAL_LOCAL_SEALED_GOVERNING_IDENTITIES = 1
-EXPECTED_LOCAL_CATALOG_SOURCES = 151
+EXPECTED_LOCAL_CATALOG_SOURCES = 161
 EXPECTED_EXTERNAL_SEALED_DESCRIPTORS = 13
-EXPECTED_TOTAL_MANIFEST_IDENTITIES = 164
+EXPECTED_TOTAL_MANIFEST_IDENTITIES = 174
 EXPECTED_DISPOSITIONS = {
-    "BASE_PROVIDER_ACTIVE": 107,
+    "BASE_PROVIDER_ACTIVE": 117,
     "PROVISIONAL_EXECUTED": 8,
     "META_LOOP_DEFERRED": 2,
     # The two obsolete V3 proposal addenda plus the older October-sharded
@@ -101,7 +101,7 @@ def _listed_paths(repo_root: Path) -> tuple[tuple[str, str], ...]:
             rows.append((path_match.group(1), section))
     paths = [path for path, _section in rows]
     if len(paths) != EXPECTED_LISTED_SOURCES or len(set(paths)) != len(paths):
-        raise InventoryCrossReferenceError("pushed 138-path inventory identity drift")
+        raise InventoryCrossReferenceError("pushed 148-path inventory identity drift")
     return tuple(rows)
 
 

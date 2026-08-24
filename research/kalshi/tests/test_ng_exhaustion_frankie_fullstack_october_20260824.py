@@ -14,6 +14,9 @@ from contextlib import redirect_stdout
 
 from research.kalshi.frankie_full_stack_runtime_contracts_20260824 import (
     CausalPrefixBinding,
+    HELPER_CPU_MAPPING_VERSION,
+    HelperCpuAffinityTimingReceipt,
+    HelperRole,
     LedgerKind,
 )
 from research.kalshi import ng_exhaustion_frankie_fullstack_october_20260824 as fullstack
@@ -251,10 +254,10 @@ class FullStackOctoberContractTest(unittest.TestCase):
         )
         bundle = router.build_routes(run_id="construction-test", state_prefix_hash="0" * 64)
         combined = bundle.routes[fullstack.ContextVariant.FULL_PROVISIONAL_COMBINED]
-        self.assertEqual(len(specs), 151)
+        self.assertEqual(len(specs), 161)
         self.assertEqual(len(plane.external_descriptors), 13)
         self.assertTrue(all(item.content_accessed is False for item in plane.external_descriptors))
-        self.assertEqual(len(combined.base_sources), 107)
+        self.assertEqual(len(combined.base_sources), 117)
         self.assertEqual(len(combined.augmentation_sources), 20)
         self.assertEqual(len(combined.withheld_sources), 2)
         excerpts = fullstack._base_knowledge(router, bundle)
@@ -298,18 +301,50 @@ class FullStackOctoberContractTest(unittest.TestCase):
                 ),
             )
 
-        binding = SimpleNamespace(
+        binding = CausalPrefixBinding(
+            run_id="fixture",
+            causal_cutoff=1.0,
+            event_known_by=1.0,
             causal_prefix_hash="1" * 64,
             state_prefix_hash="2" * 64,
             knowledge_manifest_hash="3" * 64,
-        )
+        ).validate()
+
+        def helper_receipts(lane_id: str):
+            return tuple(
+                HelperCpuAffinityTimingReceipt.create(
+                    role=role,
+                    lane_id=lane_id,
+                    binding=binding,
+                    requested_cpu=index,
+                    observed_affinity=(index,),
+                    native_thread_id=index + 1,
+                    mapping_version=HELPER_CPU_MAPPING_VERSION,
+                    started_monotonic_ns=1_000 + index,
+                    ended_monotonic_ns=2_000 + index,
+                    provider_receipt_hash=hashlib.sha256(
+                        f"{lane_id}:{role.value}:provider".encode()
+                    ).hexdigest(),
+                    helper_packet_hash=hashlib.sha256(
+                        f"{lane_id}:{role.value}:packet".encode()
+                    ).hexdigest(),
+                )
+                for index, role in enumerate(HelperRole)
+            )
+
         paired = SimpleNamespace(
             control=SimpleNamespace(
+                binding=binding,
                 invocation_receipts=tuple(invocation(f"control-{i}") for i in range(5)),
+                helper_cpu_affinity_receipts=helper_receipts("S135_CONTROL"),
                 final_ledger_hash="4" * 64,
             ),
             combined=SimpleNamespace(
+                binding=binding,
                 invocation_receipts=tuple(invocation(f"combined-{i}") for i in range(5)),
+                helper_cpu_affinity_receipts=helper_receipts(
+                    "FULL_PROVISIONAL_COMBINED"
+                ),
                 final_ledger_hash="5" * 64,
             ),
             identical_prefix_proof=SimpleNamespace(proof_hash="6" * 64),
@@ -422,6 +457,10 @@ class FullStackOctoberContractTest(unittest.TestCase):
                 **governing_core,
                 "receipt_hash": fullstack._stable_hash(governing_core),
             },
+            october_replay_progress=fullstack.make_october_replay_progress(
+                processed_source_second=fullstack.TARGET_START,
+                accepted_prefix_count=1,
+            ),
         )
         self.assertEqual(event["lanes"], ["S135_CONTROL", "FULL_PROVISIONAL_COMBINED"])
         self.assertEqual(len(event["control_provider_response_ids"]), 5)

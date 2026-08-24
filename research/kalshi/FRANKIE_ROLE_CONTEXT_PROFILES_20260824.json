@@ -1,0 +1,238 @@
+{
+  "schema": "FRANKIE_ROLE_CONTEXT_PROFILES_V1_20260824",
+  "uniform_superset_build": true,
+  "native_context_only": true,
+  "nova_token_optimization": false,
+  "collaboration_contract": {
+    "forecaster_consumes_frozen_rt_state": true,
+    "forecaster_consumes_specialist_packets": false,
+    "forecaster_day_specific_surface": "day_specific_forecast_context",
+    "legacy_day_specialists_policy": "NO_ACTIVE_CALLS_PRESERVED_INSTALLED_TOOL_ACCESSIBLE",
+    "legacy_spawn_py_mutated": false,
+    "rt_helper_packets_are_forecaster_inputs": false,
+    "rt_helper_scouts_policy": "ONE_OPTIONAL_RT_EVIDENCE_SCOUT_NOT_AUTO_CALLED"
+  },
+  "surface_registry": {
+    "candidate_contradiction_memory": "Immutable candidates, contradictions, falsifiers, negative cases, searched coverage, and evidence pointers.",
+    "causal_history_all_scales": "Timestamp/reverse-indexed causal history from one second through session and candidate lifecycles.",
+    "current_brain_and_learned_knowledge": "The complete current brain, frozen learned knowledge, carryforward knowledge, and complete-play retrieval.",
+    "current_causal_operating_state": "Authoritative current book, flow, price path, curve, contract, session, roll, clocks, and data-quality state.",
+    "day_specific_forecast_context": "Complete date-specific session, calendar, curve, roll, options/volatility, weather-vintage, fundamentals/release, grid/power, recent-tape, and availability-clock values delivered without specialist mediation.",
+    "forecast_scenarios_and_disconfirmers": "Horizon distributions, scenarios, support, calibration, disconfirmers, and abstention reasons.",
+    "frozen_rt_state": "The immutable, versioned Real-Time Frankie state exported at an exact causal cutoff.",
+    "full_bigsuite": "Every BigSuite block and registered field, including explicit null and input-absent states.",
+    "full_raw_mbo_events": "Complete normalized MBO events with publisher, channel, flags, sequence, latency, and before/after effects.",
+    "full_source_catalog_and_availability": "The complete content-addressed source catalogue, availability receipt, omissions, and activation routes.",
+    "fundamentals_and_storage": "Storage, supply, demand, LNG, positioning, balances, releases, and other fundamental state.",
+    "historical_analogs_and_calibration": "Historical analogs, distributions, per-event calibration, support, misses, and scoped evidence.",
+    "market_mechanics_state": "Pressure, absorption, depletion, replenishment, resilience, churn, queue survival, concentration, and priority loss.",
+    "power_stack_and_generation": "Generation, load, fuel stack, interchange, wind, solar, hydro, coal, nuclear, and gas-burn forcing.",
+    "provisional_capabilities": "All installed provisional components and their evidence-only lifecycle and authority receipts.",
+    "rt_on_demand_evidence_scout": "One optional RT-only evidence scout callable in recurrence, extension, timing, or contradiction/context mode; same-prefix evidence only, no probability or lock authority.",
+    "selected_exemplars_falsifiers_negatives": "Role-selected exemplars, falsifiers, contradictions, negative cases, and none-found-yet coverage.",
+    "source_integrity_and_clocks": "Source provenance, availability clocks, causal legality, coverage, uncertainty, and omission truth.",
+    "step1_revealed_retrospective_evidence": "Verified Step-1 retrospective evidence and explicit unknown coverage for collaborative October analysis.",
+    "step1_structural_census_methodology": "Complete Step-1 how-to knowledge: per-second reconstruction, exhaustion detection, D-depth and lineage-gain calculation, reset and causal-availability rules, Phase-1 freeze, Phase-2 grouping and naming, validation, receipts, and provenance.",
+    "structure_lifecycle": "D, dipole, recurrence, chain, extension, stopped-chain, turn, ancestry, status, and novel-structure lifecycles.",
+    "synchronized_curve_and_roll": "Synchronized as-of multi-contract curve, spreads, roll map, raw-contract views, and adjusted views.",
+    "top20_book_and_fifo": "Top-20 direct book state plus full-depth FIFO reconstruction and exact queue effects.",
+    "weather_forward_forcing": "Weather observations, same-day and forward forecasts, ensembles, revisions, and separate wind/solar forcing."
+  },
+  "static_surface_bindings": {
+    "step1_structural_census_methodology": {
+      "bundle_schema": "STEP1_METHOD_V1_20260824",
+      "canonical_pack": {
+        "path": "research/kalshi/FRANKIE_STEP1_STRUCTURAL_CENSUS_METHOD_V1_20260824.md",
+        "sha256": "1929ed8e4f4ae2c7701674951179c1576fc5c8d04c898b003b3a481004180c8b"
+      },
+      "direct_sources": [
+        {
+          "path": "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json",
+          "sha256": "c226eff3f99347dc41f9ec32e04eaeb0d3451ee92fa5408fdf66c097e668ac79"
+        },
+        {
+          "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_PROTOCOL_20260817.json",
+          "sha256": "635e041b4a78eea44116af1fc89352b762edd19c4b3cbd12e1c323729f35d37d"
+        },
+        {
+          "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_PROTOCOL_20260817.json",
+          "sha256": "1dff5c5e22510d7770d6967aa494ec7c5b1e4f4f45a64d247ce0b174a442474d"
+        },
+        {
+          "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_MECHANISM_ADDENDUM_20260817.json",
+          "sha256": "49036a33fd80a01da8a864f31c4dffb4faeb5934da16d832774c3d1c76709056"
+        },
+        {
+          "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_54W_EXECUTION_PROTOCOL_20260817.json",
+          "sha256": "5dddfbf77f1a60e30f567f2e91001cbdf7094a59aaa7e294a882ec7e4cd958d5"
+        },
+        {
+          "path": "research/NG_EXHAUSTION_CHAIN_STEP1_ORIGINAL_FILE_MAP_20260820.md",
+          "sha256": "8d2d268401e18410a9d77473c703d239b7fc1adc020d40e0b85c25415b328246"
+        },
+        {
+          "path": "research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.md",
+          "sha256": "3f717ad70d56c9ee3e0a002b9ff4de22d1d7cd209485ef7c7f3c1d6165ef69d1"
+        },
+        {
+          "path": "research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.json",
+          "sha256": "cc40727f275303dd1978bdf4e47bdfc19821d3d530c846e173d0f8eb953cef02"
+        }
+      ],
+      "tool_reference_sources": [
+        {
+          "path": "research/ng_exhaustion_chain_canonical_table_20260817.py",
+          "sha256": "4325776b4d70bfa3808bce1b9473d6da75cc18c8cbe00be3cf5652f849573ffa"
+        },
+        {
+          "path": "research/ng_exhaustion_chain_phase1_discovery_20260817.py",
+          "sha256": "e64d05a25aee66047750fe1923162c3694c6fc3179d979352b95853806a04cc9"
+        },
+        {
+          "path": "research/ng_exhaustion_chain_phase1_structural_54w_20260817.py",
+          "sha256": "2b93cfeb39cc73409f04b9d9fc61e0fe02f79823fd1df064ae819a82c27d05d9"
+        },
+        {
+          "path": "research/ng_exhaustion_chain_phase1_causal_54w_20260817.py",
+          "sha256": "9325f8a83d2e567d785af197468e2d865a8b44273c938408f58ea157e8652c6b"
+        },
+        {
+          "path": "research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py",
+          "sha256": "838997142a543ba6c5ba6b86277c66d9465ad4e62ee85c5b1ec9ac177eaa8120"
+        },
+        {
+          "path": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+          "sha256": "4a80e3e4b83867046d318ba97d350c2d7aca22e9d182d98399d01eeacc72d3ce"
+        },
+        {
+          "path": "research/ng_exhaustion_mbo_5y_step1_census_20260822.py",
+          "sha256": "c3e4449e728b29822b466914aae57cfcc0ef700f0bb5c7026d44e11156692c15"
+        },
+        {
+          "path": "research/kalshi/ng_exhaustion_step1_completion_gate.py",
+          "sha256": "dcbbcfe1e2aee6253e25b2c48f174b610eebc0984aaa62a1757540ae8d499f01"
+        }
+      ]
+    }
+  },
+  "capability_inventory": {
+    "bigsuite": {
+      "registry_source": "research/kalshi/data_registry.py",
+      "minimum_leaf_count": 1940,
+      "surface_id": "full_bigsuite"
+    },
+    "executable_tools": {
+      "scan_rule": "ALL_REPOSITORY_PYTHON_EXCLUDING_GIT_CACHE_AND_TESTS",
+      "semantic_role_registry_status": "PENDING_BUILD_CONTROL_DOCUMENT_AND_EXPLICIT_ROLE_APPROVAL",
+      "default_role_activation": {
+        "REAL_TIME_FRANKIE": "TOOL_ACCESSIBLE",
+        "FORECASTER_FRANKIE": "TOOL_ACCESSIBLE"
+      },
+      "role_overrides": {
+        "REAL_TIME_FRANKIE": {},
+        "FORECASTER_FRANKIE": {}
+      }
+    }
+  },
+  "dormancy_approvals": [],
+  "roles": {
+    "REAL_TIME_FRANKIE": {
+      "mission": "Own the authoritative causal answer to what is happening now and the evidence-bound state from which real-time decisions follow.",
+      "budget": {
+        "direct_min_tokens": 32000,
+        "direct_target_tokens": 48000,
+        "tool_expanded_max_tokens": 96000,
+        "soft_ceiling_tokens": 96000
+      },
+      "direct_token_plan": {
+        "candidate_contradiction_memory": 2000,
+        "current_causal_operating_state": 5000,
+        "full_source_catalog_and_availability": 2000,
+        "market_mechanics_state": 4000,
+        "selected_exemplars_falsifiers_negatives": 2000,
+        "source_integrity_and_clocks": 2000,
+        "step1_structural_census_methodology": 18000,
+        "structure_lifecycle": 5000,
+        "synchronized_curve_and_roll": 3000,
+        "top20_book_and_fifo": 5000
+      },
+      "activation": {
+        "candidate_contradiction_memory": "DIRECT",
+        "causal_history_all_scales": "TOOL_ACCESSIBLE",
+        "current_brain_and_learned_knowledge": "TOOL_ACCESSIBLE",
+        "current_causal_operating_state": "DIRECT",
+        "day_specific_forecast_context": "TOOL_ACCESSIBLE",
+        "forecast_scenarios_and_disconfirmers": "TOOL_ACCESSIBLE",
+        "frozen_rt_state": "TOOL_ACCESSIBLE",
+        "full_bigsuite": "TOOL_ACCESSIBLE",
+        "full_raw_mbo_events": "TOOL_ACCESSIBLE",
+        "full_source_catalog_and_availability": "DIRECT",
+        "fundamentals_and_storage": "TOOL_ACCESSIBLE",
+        "historical_analogs_and_calibration": "TOOL_ACCESSIBLE",
+        "market_mechanics_state": "DIRECT",
+        "power_stack_and_generation": "TOOL_ACCESSIBLE",
+        "provisional_capabilities": "TOOL_ACCESSIBLE",
+        "rt_on_demand_evidence_scout": "TOOL_ACCESSIBLE",
+        "selected_exemplars_falsifiers_negatives": "DIRECT",
+        "source_integrity_and_clocks": "DIRECT",
+        "step1_revealed_retrospective_evidence": "TOOL_ACCESSIBLE",
+        "step1_structural_census_methodology": "DIRECT",
+        "structure_lifecycle": "DIRECT",
+        "synchronized_curve_and_roll": "DIRECT",
+        "top20_book_and_fifo": "DIRECT",
+        "weather_forward_forcing": "TOOL_ACCESSIBLE"
+      }
+    },
+    "FORECASTER_FRANKIE": {
+      "mission": "Consume one frozen Real-Time Frankie state plus slower, forward, and historical context to produce advisory horizon distributions without reconstructing competing current reality.",
+      "budget": {
+        "direct_min_tokens": 80000,
+        "direct_target_tokens": 120000,
+        "tool_expanded_max_tokens": 150000,
+        "soft_ceiling_tokens": 150000
+      },
+      "direct_token_plan": {
+        "current_brain_and_learned_knowledge": 6000,
+        "day_specific_forecast_context": 16000,
+        "forecast_scenarios_and_disconfirmers": 6000,
+        "frozen_rt_state": 22000,
+        "full_bigsuite": 9000,
+        "full_source_catalog_and_availability": 2000,
+        "fundamentals_and_storage": 10000,
+        "historical_analogs_and_calibration": 8000,
+        "power_stack_and_generation": 7000,
+        "selected_exemplars_falsifiers_negatives": 4000,
+        "source_integrity_and_clocks": 2000,
+        "step1_structural_census_methodology": 18000,
+        "synchronized_curve_and_roll": 4000,
+        "weather_forward_forcing": 6000
+      },
+      "activation": {
+        "candidate_contradiction_memory": "TOOL_ACCESSIBLE",
+        "causal_history_all_scales": "TOOL_ACCESSIBLE",
+        "current_brain_and_learned_knowledge": "DIRECT",
+        "current_causal_operating_state": "TOOL_ACCESSIBLE",
+        "day_specific_forecast_context": "DIRECT",
+        "forecast_scenarios_and_disconfirmers": "DIRECT",
+        "frozen_rt_state": "DIRECT",
+        "full_bigsuite": "DIRECT",
+        "full_raw_mbo_events": "TOOL_ACCESSIBLE",
+        "full_source_catalog_and_availability": "DIRECT",
+        "fundamentals_and_storage": "DIRECT",
+        "historical_analogs_and_calibration": "DIRECT",
+        "market_mechanics_state": "TOOL_ACCESSIBLE",
+        "power_stack_and_generation": "DIRECT",
+        "provisional_capabilities": "TOOL_ACCESSIBLE",
+        "rt_on_demand_evidence_scout": "TOOL_ACCESSIBLE",
+        "selected_exemplars_falsifiers_negatives": "DIRECT",
+        "source_integrity_and_clocks": "DIRECT",
+        "step1_revealed_retrospective_evidence": "TOOL_ACCESSIBLE",
+        "step1_structural_census_methodology": "DIRECT",
+        "structure_lifecycle": "TOOL_ACCESSIBLE",
+        "synchronized_curve_and_roll": "DIRECT",
+        "top20_book_and_fifo": "TOOL_ACCESSIBLE",
+        "weather_forward_forcing": "DIRECT"
+      }
+    }
+  }
+}

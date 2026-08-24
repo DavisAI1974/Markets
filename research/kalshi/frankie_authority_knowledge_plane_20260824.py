@@ -304,6 +304,19 @@ _CARRYFORWARD_PATHS = frozenset(
     }
 )
 
+# Step-1 method is required operating knowledge, not an October answer. Keep
+# this exact allowlist narrow so result artifacts retain the answer wall.
+_STEP1_METHOD_PATHS = frozenset(
+    {
+        "research/kalshi/FRANKIE_STEP1_STRUCTURAL_CENSUS_METHOD_V1_20260824.md",
+        "research/NG_EXHAUSTION_CHAIN_STEP1_ORIGINAL_FILE_MAP_20260820.md",
+        "research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.md",
+        "research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.json",
+        "research/ng_exhaustion_mbo_5y_step1_census_20260822.py",
+        "research/kalshi/ng_exhaustion_step1_completion_gate.py",
+    }
+)
+
 
 def october_full_stack_completeness_contract() -> CompletenessContract:
     """Return the binding production completeness contract for October integration."""
@@ -873,6 +886,8 @@ class KnowledgePlane:
 
     @staticmethod
     def _looks_like_october_answer(path: str) -> bool:
+        if path in _STEP1_METHOD_PATHS:
+            return False
         lowered = path.lower().replace("-", "_")
         if "step1" in lowered or "step_1" in lowered:
             return True

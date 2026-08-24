@@ -25,9 +25,16 @@ class ProductionKnowledgeInventoryTests(unittest.TestCase):
         specs = production_source_specs(ROOT)
         by_path = {item.path: item for item in specs}
 
-        self.assertEqual(len(specs), 151)
+        self.assertEqual(len(specs), 161)
         self.assertEqual(len(by_path), len(specs))
         self.assertTrue(all((ROOT / path).is_file() for path in by_path))
+        for path in (
+            "research/kalshi/FRANKIE_ROLE_CONTEXT_PROFILES_20260824.json",
+            "research/kalshi/FRANKIE_STEP1_STRUCTURAL_CENSUS_METHOD_V1_20260824.md",
+            "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json",
+            "research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.json",
+        ):
+            self.assertEqual(by_path[path].access_policy, AccessPolicy.SERVE)
         self.assertEqual(
             {item.authority for item in specs},
             set(AuthorityClass),

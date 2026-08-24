@@ -67,6 +67,7 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
+          import base64
           import json
           import os
           import shlex
@@ -74,12 +75,34 @@ jobs:
           candidate = os.environ["CANDIDATE_SHA"]
           segment = os.environ["TARGET_SEGMENT"]
           base = f"/mnt/markets/ng_exhaustion_step1_5y_20260822/{candidate}"
+          heartbeat_reader = '''
+          import json
+          import sys
+          from pathlib import Path
+
+          body = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          fields = (
+              "schema", "revision", "phase", "active_segment",
+              "completed_segments", "segment_count", "heartbeat_utc",
+              "elapsed_seconds", "overlap_only", "receipt_sha256",
+          )
+          summary = {field: body.get(field) for field in fields}
+          print(
+              "WORKER_CONTROLLER_SUMMARY_JSON="
+              + json.dumps(summary, sort_keys=True, separators=(",", ":"))
+          )
+          '''
+          heartbeat_reader_b64 = base64.b64encode(heartbeat_reader.encode()).decode()
           remote = f'''set -euo pipefail
           base={shlex.quote(base)}
           segment={shlex.quote(segment)}
           full="$base/full"
           test -d "$full"
           printf 'WORKER_CHILD_RECEIPT_COUNT=%s\n' "$(find "$full/segments" -maxdepth 1 -type f -name '*.receipt.json' | wc -l)"
+          find "$full/segments" -maxdepth 1 -type f -name '*.receipt.json' -printf '%f\n' | LC_ALL=C sort | while IFS= read -r name; do
+            path="$full/segments/$name"
+            printf 'WORKER_CHILD_RECEIPT_FILE=%s|%s|%s|%s\n' "$name" "$(stat -c %s "$path")" "$(stat -c %y "$path")" "$(sha256sum "$path" | cut -d' ' -f1)"
+          done
           test -f "$full/segments/$segment.receipt.json"
           test -f "$full/segments/$segment.seconds.jsonl.gz"
           printf 'WORKER_OCTOBER_RECEIPT_BYTES=%s\n' "$(stat -c %s "$full/segments/$segment.receipt.json")"
@@ -91,6 +114,12 @@ jobs:
               path="$full/results/$name"
               printf 'WORKER_RESULT_FILE=%s|%s|%s\n' "$name" "$(stat -c %s "$path")" "$(sha256sum "$path" | cut -d' ' -f1)"
             done
+          fi
+          if [ -f "$full/CONTROLLER_HEARTBEAT.json" ]; then
+            printf %s {shlex.quote(heartbeat_reader_b64)} | base64 -d | "$base/venv/bin/python" - "$full/CONTROLLER_HEARTBEAT.json"
+          fi
+          if [ -f "$full/RUN.log" ]; then
+            printf 'WORKER_RUN_LOG=%s|%s|%s\n' "$(stat -c %s "$full/RUN.log")" "$(stat -c %y "$full/RUN.log")" "$(sha256sum "$full/RUN.log" | cut -d' ' -f1)"
           fi
           '''
           parameters = "/tmp/frankie-step1-result-inventory-params.json"
@@ -125,11 +154,14 @@ jobs:
           for line in output.splitlines():
               if line.startswith((
                   "WORKER_CHILD_RECEIPT_COUNT=",
+                  "WORKER_CHILD_RECEIPT_FILE=",
                   "WORKER_OCTOBER_RECEIPT_BYTES=",
                   "WORKER_OCTOBER_RECEIPT_FILE_SHA256=",
                   "WORKER_OCTOBER_SECONDS_BYTES=",
                   "WORKER_OCTOBER_SECONDS_SHA256=",
                   "WORKER_RESULT_FILE=",
+                  "WORKER_CONTROLLER_SUMMARY_JSON=",
+                  "WORKER_RUN_LOG=",
               )):
                   print(line)
           if result.get("Status") != "Success" or result.get("ResponseCode") != 0:

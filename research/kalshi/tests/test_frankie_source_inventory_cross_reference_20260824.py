@@ -15,14 +15,14 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 def test_all_curated_local_discovered_and_external_identities_are_accounted_for() -> None:
     report = build_source_inventory_cross_reference(REPO_ROOT)
 
-    assert report["listed_source_count"] == 138
-    assert report["catalogued_source_count"] == 151
+    assert report["listed_source_count"] == 148
+    assert report["catalogued_source_count"] == 161
     assert report["discovered_dependency_count"] == 12
     assert report["additional_local_sealed_governing_identity_count"] == 1
     assert report["external_sealed_descriptor_count"] == 13
-    assert report["total_manifest_identity_count"] == 164
+    assert report["total_manifest_identity_count"] == 174
     assert report["disposition_counts"] == EXPECTED_DISPOSITIONS
-    assert report["provider_visible_base_source_count"] == 107
+    assert report["provider_visible_base_source_count"] == 117
     assert report["combined_active_source_count"] == 20
     assert report["meta_loop_deferred_source_count"] == 2
     assert report["combined_active_components"] == list(ACTIVE_COMPONENT_IDS)
@@ -51,7 +51,7 @@ def test_every_row_has_one_explicit_existing_or_new_wiring_disposition() -> None
     report = build_source_inventory_cross_reference(REPO_ROOT)
     rows = report["rows"]
 
-    assert len(rows) == len({item["path"] for item in rows}) == 138
+    assert len(rows) == len({item["path"] for item in rows}) == 148
     assert all(item["disposition"] in EXPECTED_DISPOSITIONS for item in rows)
     assert all(item["section"][0] in "ABCDEFGHIJKLM" for item in rows)
     executed = [item for item in rows if item["disposition"] == "PROVISIONAL_EXECUTED"]

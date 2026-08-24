@@ -11,6 +11,9 @@ This is the curated source inventory for constructing the corrected Frankie know
 - `research/kalshi/NG_EXHAUSTION_FRANKIE_GPT56_SOL_STACK_SUFFICIENCY_REVIEW_20260824.md`
 - `research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md`
 - `research/kalshi/NG_EXHAUSTION_FRANKIE_SOURCE_FILE_INVENTORY_20260824.md`
+- `research/kalshi/FRANKIE_ROLE_CONTEXT_PROFILES_20260824.json`
+- `research/kalshi/frankie_role_context_profiles_20260824.py`
+- `research/kalshi/FRANKIE_STEP1_STRUCTURAL_CENSUS_METHOD_V1_20260824.md`
 - `research/kalshi/NG_EXHAUSTION_OCTOBER_SHARDED_HANDOFF_20260824.md` — older handoff, subject to corrected scope
 
 ## B. Current brain and S120-S135 runtime
@@ -49,6 +52,7 @@ Tests are verification references, not Frankie knowledge sources:
 
 Primary freezes and protocols:
 
+- `research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json`
 - `research/NG_EXHAUSTION_CHAIN_PHASE1_54W_BASE_FREEZE_20260817.json`
 - `research/NG_EXHAUSTION_CHAIN_PHASE1_54W_EXECUTION_PROTOCOL_20260817.json`
 - `research/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_PROTOCOL_20260817.json`
@@ -67,12 +71,16 @@ Primary freezes and protocols:
 - `research/NG_EXHAUSTION_CHAIN_PHASE2_POX_SAME_POSTEXIT_REEXPRESSION_20260818.md`
 - `research/NG_EXHAUSTION_CHAIN_PHASE2_REAPPEARANCE_WATCH_MAP_20260818.json`
 - `research/NG_EXHAUSTION_CHAIN_PHASE2_FINALIZATION_CHECKLIST_20260818.json`
+- `research/NG_EXHAUSTION_CHAIN_STEP1_ORIGINAL_FILE_MAP_20260820.md`
+- `research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.md`
+- `research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.json`
 
 Construction and helper implementations:
 
 - `research/ng_exhaustion_chain_canonical_54w_merge_20260817.py`
 - `research/ng_exhaustion_chain_canonical_54w_shard_20260817.py`
 - `research/ng_exhaustion_chain_canonical_table_20260817.py`
+- `research/ng_exhaustion_chain_phase1_discovery_20260817.py`
 - `research/ng_exhaustion_chain_phase1_causal_54w_20260817.py`
 - `research/ng_exhaustion_chain_phase1_continuity_54w_20260817.py`
 - `research/ng_exhaustion_chain_phase1_falsifier_54w_20260817.py`
@@ -127,6 +135,8 @@ These records must mechanically exclude ordinary V3 findings and the pre-correct
 
 - `research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py`
 - `research/ng_exhaustion_mbo_v4_state_adapter_20260820.py`
+- `research/ng_exhaustion_mbo_5y_step1_census_20260822.py`
+- `research/kalshi/ng_exhaustion_step1_completion_gate.py`
 - `research/test_ng_exhaustion_mbo_v4_state_adapter_20260820.py`
 - `research/test_ng_exhaustion_mbo_v4_legacy_control_semantics_20260820.py`
 - `research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json`
