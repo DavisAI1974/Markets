@@ -1,0 +1,226 @@
+name: Read-only October raw and Step-1 AWS probe 20260824
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/frankie_october_aws_readonly_probe_20260824.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frankie-october-aws-readonly-probe-20260824
+  cancel-in-progress: false
+
+jobs:
+  probe-existing-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      BUCKET: bento-568968024170-us-east-2-an
+      CANDIDATE_SHA: 0d318335825b4a0e19a5a2881522f3da0374788e
+      TARGET_SEGMENT: '20211001_20211101'
+      EXPECTED_RAW_OBJECT_COUNT: '26'
+      EXPECTED_RAW_TOTAL_BYTES: '535712025'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned read-only S3 client
+        run: python -m pip install --quiet boto3==1.35.99
+
+      - name: Probe exact S3 evidence keys without listing unrelated data
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+
+          import boto3
+          from botocore.exceptions import ClientError
+
+          bucket = os.environ["BUCKET"]
+          candidate = os.environ["CANDIDATE_SHA"]
+          segment = os.environ["TARGET_SEGMENT"]
+          progress = f"nymex/ng_mbo_5y_v0/step1_census/launches/{candidate}/full/progress/segments"
+          exact_keys = [
+              f"{progress}/{segment}.receipt.json",
+              f"{progress}/{segment}.heartbeat.json",
+              (
+                  "nymex/ng_mbo_5y_v0/step1_census/october_sharded/runs/"
+                  "32705615109/monolithic-reference/"
+                  f"{segment}.receipt.json"
+              ),
+              (
+                  "nymex/ng_mbo_5y_v0/step1_census/october_sharded/runs/"
+                  "32705615109/monolithic-reference/"
+                  f"{segment}.seconds.jsonl.gz"
+              ),
+          ]
+          s3 = boto3.client("s3", region_name=os.environ["AWS_DEFAULT_REGION"])
+          probes = []
+          for key in exact_keys:
+              try:
+                  head = s3.head_object(Bucket=bucket, Key=key)
+                  probes.append(
+                      {
+                          "key": key,
+                          "exists": True,
+                          "content_length": head["ContentLength"],
+                          "etag": str(head.get("ETag", "")).strip('"'),
+                          "last_modified": head["LastModified"].isoformat(),
+                          "version_id": head.get("VersionId"),
+                      }
+                  )
+              except ClientError as exc:
+                  code = str(exc.response.get("Error", {}).get("Code", "UNKNOWN"))
+                  if code not in {"403", "404", "NoSuchKey"}:
+                      raise
+                  probes.append({"key": key, "exists": False, "error_code": code})
+
+          raw_prefix = f"nymex/ng_mbo_5y_v0/native/{segment}/"
+          paginator = s3.get_paginator("list_objects_v2")
+          raw = []
+          for page in paginator.paginate(Bucket=bucket, Prefix=raw_prefix):
+              for row in page.get("Contents", []):
+                  if row["Key"].endswith(".mbo.dbn.zst"):
+                      raw.append({"key": row["Key"], "bytes": int(row["Size"])})
+          raw.sort(key=lambda row: row["key"])
+          raw_total = sum(row["bytes"] for row in raw)
+          raw_ok = (
+              len(raw) == int(os.environ["EXPECTED_RAW_OBJECT_COUNT"])
+              and raw_total == int(os.environ["EXPECTED_RAW_TOTAL_BYTES"])
+          )
+          print("RAW_OBJECT_COUNT=" + str(len(raw)))
+          print("RAW_TOTAL_BYTES=" + str(raw_total))
+          print("RAW_MANIFEST_TOTALS_MATCH=" + str(raw_ok).lower())
+          for ordinal, row in enumerate(probes, start=1):
+              print(f"STEP1_KEY_{ordinal}_PRESENT=" + str(row["exists"]).lower())
+              if row["exists"]:
+                  print(f"STEP1_KEY_{ordinal}_BYTES=" + str(row["content_length"]))
+          if not raw_ok:
+              raise SystemExit("RAW_OCTOBER_S3_SCOPE_DRIFT")
+          PY
+
+      - name: Validate the existing October Step-1 child in place on the worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          import shlex
+
+          candidate = os.environ["CANDIDATE_SHA"]
+          segment = os.environ["TARGET_SEGMENT"]
+          base = f"/mnt/markets/ng_exhaustion_step1_5y_20260822/{candidate}"
+          repo = f"{base}/repo"
+          full = f"{base}/full"
+          remote = f'''set -euo pipefail
+          base={shlex.quote(base)}
+          repo={shlex.quote(repo)}
+          full={shlex.quote(full)}
+          segment={shlex.quote(segment)}
+          test -d "$repo"
+          test -x "$base/venv/bin/python"
+          test -f "$full/segments/$segment.seconds.jsonl.gz"
+          test -f "$full/segments/$segment.receipt.json"
+          cd "$repo"
+          BASE="$base" SEGMENT="$segment" PYTHONPATH=research "$base/venv/bin/python" - <<'PYREMOTE'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          import ng_exhaustion_mbo_5y_step1_census_20260822 as census
+
+          base = Path(os.environ["BASE"])
+          repo = base / "repo"
+          full = base / "full"
+          segment = os.environ["SEGMENT"]
+          manifest_path = repo / "research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json"
+          manifest = census.load_manifest(manifest_path)
+          engine = census.material_hashes()
+          scope = census._segment_source_scope(manifest, segment, None)
+          receipt = census._resumable_segment_receipt(
+              manifest,
+              segment,
+              full / "segments",
+              engine,
+              scope,
+          )
+          if receipt is None:
+              raise SystemExit("FROZEN_RESUMABLE_RECEIPT_VALIDATOR=FAIL_CLOSED")
+          seconds = full / "segments" / f"{segment}.seconds.jsonl.gz"
+          receipt_path = full / "segments" / f"{segment}.receipt.json"
+          print("FROZEN_RESUMABLE_RECEIPT_VALIDATOR=PASS")
+          print("SECONDS_BYTES=" + str(seconds.stat().st_size))
+          print("SECONDS_SHA256=" + census.sha256_file(seconds))
+          print("RECEIPT_BYTES=" + str(receipt_path.stat().st_size))
+          print("RECEIPT_FILE_SHA256=" + census.sha256_file(receipt_path))
+          print("RECEIPT_SHA256=" + str(receipt["receipt_sha256"]))
+          PYREMOTE
+          if [ -f "$full/segments/$segment.heartbeat.json" ]; then
+            echo HEARTBEAT_PRESENT=true
+          else
+            echo HEARTBEAT_PRESENT=false
+          fi
+          if [ -f "$full/parallel_3mo/$segment.log" ]; then
+            echo WORKER_LOG_PRESENT=true
+          else
+            echo WORKER_LOG_PRESENT=false
+          fi
+          '''
+          with open("/tmp/frankie-october-probe-params.json", "w", encoding="utf-8") as handle:
+              json.dump({"commands": ["/bin/bash -lc " + shlex.quote(remote)]}, handle)
+          PY
+
+          command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Read-only validate existing October Step-1 child" \
+            --parameters file:///tmp/frankie-october-probe-params.json \
+            --timeout-seconds 600 \
+            --query 'Command.CommandId' --output text)"
+          aws ssm wait command-executed --command-id "$command_id" --instance-id "$INSTANCE_ID" || true
+          aws ssm get-command-invocation \
+            --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json > /tmp/worker-probe.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("/tmp/worker-probe.json")
+          result = json.loads(path.read_text(encoding="utf-8"))
+          output = result.get("StandardOutput", "")
+          print("WORKER_SSM_STATUS=" + str(result.get("Status")))
+          print("WORKER_SSM_RESPONSE_CODE=" + str(result.get("ResponseCode")))
+          for line in output.splitlines():
+              if line.startswith((
+                  "FROZEN_RESUMABLE_RECEIPT_VALIDATOR=",
+                  "SECONDS_BYTES=",
+                  "SECONDS_SHA256=",
+                  "RECEIPT_BYTES=",
+                  "RECEIPT_FILE_SHA256=",
+                  "RECEIPT_SHA256=",
+                  "HEARTBEAT_PRESENT=",
+                  "WORKER_LOG_PRESENT=",
+              )):
+                  print(line)
+          if result.get("Status") != "Success" or result.get("ResponseCode") != 0:
+              raise SystemExit("WORKER_READONLY_PROBE_FAILED")
+          if "FROZEN_RESUMABLE_RECEIPT_VALIDATOR=PASS" not in output:
+              raise SystemExit("EXISTING_OCTOBER_STEP1_NOT_VALIDATED")
+          PY
