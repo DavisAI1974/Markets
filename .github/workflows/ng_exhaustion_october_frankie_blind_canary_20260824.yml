@@ -78,13 +78,14 @@ jobs:
             --run-id {shlex.quote('github-' + os.environ['GITHUB_RUN_ID'] + '-' + sha[:12])} \\
             {shlex.quote(predecessor)} {shlex.quote(target)} \\
             2>&1 | tee {shlex.quote(root + '/RUN.log')}
-          rc=${{PIPESTATUS[0]}}
+          rc=__PIPESTATUS__
           if [ -d {shlex.quote(output)} ]; then
             aws s3 sync {shlex.quote(output)} {shlex.quote('s3://' + os.environ['BUCKET'] + '/' + artifact_prefix + '/')} --only-show-errors || rc=$?
           fi
           echo BLIND_OCTOBER_FRANKIE_EXIT_CODE="$rc"
           exit "$rc"
           '''
+          runner = runner.replace("__PIPESTATUS__", "${PIPESTATUS[0]}")
           runner_b64 = base64.b64encode(runner.encode()).decode()
 
           commands = [
