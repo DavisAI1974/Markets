@@ -3,12 +3,12 @@
   "launch_authorized": true,
   "launch_branch": "chatgpt/ng-exhaustion-october-sharded-20260824",
   "authorized_scope": "FULL_OCTOBER_2021_IDENTICAL_PREFIX_S135_CONTROL_VS_ALL_PROVISIONAL_COMBINED",
-  "implementation_commit": "6a786723a1b2f093bb74eb02a9f502e8911e206c",
-  "implementation_tree": "589557640ad2c6b2e1ebcc50aedf94871ecfea71",
+  "implementation_commit": "48e845560cacb7e85dea5bcff5375446e80bcb20",
+  "implementation_tree": "6986998dc05b42ed9759345cadd2ad01290ea453",
   "launch_mode": "PUSH_TRIGGERED_FULL_OCTOBER_FIRST_PAIRED_PREFIX_GATE",
   "step1_rerun": false,
   "focused_cpu_test_nodes": 2,
-  "supersedes_launch_marker_commit": "7e4c5fbe4cd9faff9c4042522e7aed224a9cf258",
-  "launch_attempt": 2,
-  "correction": "RESTORE_PROVIDER_REPO_TRAVERSAL_BEFORE_UNPRIVILEGED_OFFLINE_INSTALL"
+  "supersedes_launch_marker_commit": "afb617aa05ce1cce123f8eda52681c99962f2b14",
+  "launch_attempt": 3,
+  "correction": "BIND_HASH_LOCKED_WHEELHOUSE_TO_PROVIDER_CPYTHON_RUNTIME"
 }
