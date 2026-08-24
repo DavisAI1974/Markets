@@ -1,0 +1,12 @@
+{
+  "schema": "NG_EXHAUSTION_OCTOBER_SHARDED_LAUNCH_AUTHORIZATION_V1_20260824",
+  "authorized_scope": "OCTOBER_2021_FULL_MBO_STEP1_PROVEN_SHARDS_THEN_EXACT_MONOLITHIC_EQUIVALENCE",
+  "boundary_canary_scope": "THREE_REAL_PREDECESSOR_TO_BOUNDARY_TRANSITIONS_USING_ONE_TO_TWO_DAILY_DBN_OBJECTS_EACH",
+  "candidate_commit": "0d318335825b4a0e19a5a2881522f3da0374788e",
+  "launch_branch": "chatgpt/ng-exhaustion-october-sharded-20260824",
+  "launch_authorized": true,
+  "permanent_frankie_mutation_authorized": false,
+  "release_or_virgin_holdout_consumption_authorized": false,
+  "resume_five_year_serial_authorized": false,
+  "stop_existing_workers_authorized": false
+}

@@ -1,6 +1,11 @@
 name: NG Exhaustion Step-1 October Proven Shards 20260824
 
 on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-october-sharded-20260824
+    paths:
+      - research/kalshi/NG_EXHAUSTION_OCTOBER_SHARDED_LAUNCH_20260824.json
   workflow_dispatch:
     inputs:
       confirmation:
@@ -34,7 +39,12 @@ jobs:
     steps:
       - name: Require the explicit production phrase
         shell: bash
-        run: test '${{ inputs.confirmation }}' = RUN_OCTOBER_2021_PROVEN_SHARDS
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            test '${{ inputs.confirmation }}' = RUN_OCTOBER_2021_PROVEN_SHARDS
+          else
+            test "$GITHUB_EVENT_NAME" = push
+          fi
 
       - uses: actions/checkout@v4
         with:
