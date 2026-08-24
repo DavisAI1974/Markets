@@ -1094,6 +1094,7 @@ jobs:
               f"( set -a; source \"$aws_credential_file\"; set +a; unset OPENAI_API_KEY MARKETS_OPENAI_API_KEY; aws s3 cp {shlex.quote('s3://' + os.environ['BUCKET'] + '/' + os.environ['PACKAGE_KEY'])} \"$package\" --only-show-errors )",
               f"echo {shlex.quote(os.environ['PACKAGE_SHA256'] + '  ' + package)} | sha256sum -c -",
               'tar -xzf "$package" -C "$repo"',
+              'chmod 0755 "$repo"',
               f"test -s \"$repo/research/kalshi/ng_exhaustion_frankie_fullstack_october_20260824.py\"",
               'if id "$provider_user" >/dev/null 2>&1; then echo "dedicated provider identity already exists" >&2; exit 1; fi',
               'useradd --system --no-create-home --shell /usr/sbin/nologin "$provider_user"',
