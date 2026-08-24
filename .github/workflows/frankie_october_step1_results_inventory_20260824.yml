@@ -1,0 +1,135 @@
+name: Read-only October Step-1 result inventory 20260824
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/frankie_october_step1_results_inventory_20260824.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frankie-october-step1-results-inventory-20260824
+  cancel-in-progress: false
+
+jobs:
+  inventory-existing-results:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      BUCKET: bento-568968024170-us-east-2-an
+      CANDIDATE_SHA: 0d318335825b4a0e19a5a2881522f3da0374788e
+      TARGET_SEGMENT: '20211001_20211101'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Inventory exact S3 result-prefix metadata only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+
+          prefix = (
+              "nymex/ng_mbo_5y_v0/step1_census/launches/"
+              f"{os.environ['CANDIDATE_SHA']}/full/results/"
+          )
+          command = [
+              "aws", "s3api", "list-objects-v2",
+              "--bucket", os.environ["BUCKET"],
+              "--prefix", prefix,
+              "--output", "json",
+          ]
+          body = json.loads(subprocess.check_output(command, text=True))
+          rows = sorted(body.get("Contents", []), key=lambda row: row["Key"])
+          print(f"S3_RESULT_OBJECT_COUNT={len(rows)}")
+          print(f"S3_RESULT_TOTAL_BYTES={sum(int(row['Size']) for row in rows)}")
+          for row in rows:
+              name = row["Key"][len(prefix):]
+              if not name or "/" in name:
+                  raise SystemExit("RESULT_PREFIX_CONTAINS_UNEXPECTED_NESTED_KEY")
+              etag = str(row.get("ETag", "")).strip('"')
+              print(f"S3_RESULT_OBJECT={name}|{int(row['Size'])}|{etag}")
+          PY
+
+      - name: Inventory exact worker files without reading result bodies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          import shlex
+
+          candidate = os.environ["CANDIDATE_SHA"]
+          segment = os.environ["TARGET_SEGMENT"]
+          base = f"/mnt/markets/ng_exhaustion_step1_5y_20260822/{candidate}"
+          remote = f'''set -euo pipefail
+          base={shlex.quote(base)}
+          segment={shlex.quote(segment)}
+          full="$base/full"
+          test -d "$full"
+          printf 'WORKER_CHILD_RECEIPT_COUNT=%s\n' "$(find "$full/segments" -maxdepth 1 -type f -name '*.receipt.json' | wc -l)"
+          test -f "$full/segments/$segment.receipt.json"
+          test -f "$full/segments/$segment.seconds.jsonl.gz"
+          printf 'WORKER_OCTOBER_RECEIPT_BYTES=%s\n' "$(stat -c %s "$full/segments/$segment.receipt.json")"
+          printf 'WORKER_OCTOBER_RECEIPT_FILE_SHA256=%s\n' "$(sha256sum "$full/segments/$segment.receipt.json" | cut -d' ' -f1)"
+          printf 'WORKER_OCTOBER_SECONDS_BYTES=%s\n' "$(stat -c %s "$full/segments/$segment.seconds.jsonl.gz")"
+          printf 'WORKER_OCTOBER_SECONDS_SHA256=%s\n' "$(sha256sum "$full/segments/$segment.seconds.jsonl.gz" | cut -d' ' -f1)"
+          if [ -d "$full/results" ]; then
+            find "$full/results" -maxdepth 1 -type f -printf '%f\n' | LC_ALL=C sort | while IFS= read -r name; do
+              path="$full/results/$name"
+              printf 'WORKER_RESULT_FILE=%s|%s|%s\n' "$name" "$(stat -c %s "$path")" "$(sha256sum "$path" | cut -d' ' -f1)"
+            done
+          fi
+          '''
+          parameters = "/tmp/frankie-step1-result-inventory-params.json"
+          with open(parameters, "w", encoding="utf-8") as handle:
+              json.dump({"commands": ["/bin/bash -lc " + shlex.quote(remote)]}, handle)
+          print(parameters)
+          PY
+
+          command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Read-only inventory existing Step-1 result files" \
+            --parameters file:///tmp/frankie-step1-result-inventory-params.json \
+            --timeout-seconds 600 \
+            --query 'Command.CommandId' --output text)"
+          aws ssm wait command-executed --command-id "$command_id" --instance-id "$INSTANCE_ID" || true
+          aws ssm get-command-invocation \
+            --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json > /tmp/frankie-step1-result-inventory.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          result = json.loads(
+              Path("/tmp/frankie-step1-result-inventory.json").read_text(encoding="utf-8")
+          )
+          print("WORKER_SSM_STATUS=" + str(result.get("Status")))
+          print("WORKER_SSM_RESPONSE_CODE=" + str(result.get("ResponseCode")))
+          output = str(result.get("StandardOutput") or "")
+          for line in output.splitlines():
+              if line.startswith((
+                  "WORKER_CHILD_RECEIPT_COUNT=",
+                  "WORKER_OCTOBER_RECEIPT_BYTES=",
+                  "WORKER_OCTOBER_RECEIPT_FILE_SHA256=",
+                  "WORKER_OCTOBER_SECONDS_BYTES=",
+                  "WORKER_OCTOBER_SECONDS_SHA256=",
+                  "WORKER_RESULT_FILE=",
+              )):
+                  print(line)
+          if result.get("Status") != "Success" or result.get("ResponseCode") != 0:
+              raise SystemExit("WORKER_RESULT_INVENTORY_FAILED")
+          PY
