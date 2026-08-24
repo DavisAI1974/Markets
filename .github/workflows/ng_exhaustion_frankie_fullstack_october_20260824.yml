@@ -37,11 +37,6 @@ jobs:
         with:
           ref: ${{ github.sha }}
 
-      - name: Bind build and resolver to CPython 3.10
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
-        with:
-          python-version: '3.10.14'
-
       - name: Verify focused full-stack contracts
         shell: bash
         run: |
@@ -67,6 +62,11 @@ jobs:
           "$ci_venv/bin/python" -m pytest --quiet \
             research/kalshi/tests/test_frankie_full_stack_runtime_adapter_20260824.py::test_four_helpers_overlap_on_distinct_singleton_cpu_threads_before_frankie \
             research/kalshi/tests/test_ng_exhaustion_frankie_fullstack_october_launch_workflow_20260824.py::FullStackOctoberLaunchWorkflowTests::test_cpu_affinity_and_first_prefix_receipts_are_gated
+
+      - name: Bind build and resolver to CPython 3.10
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.10.14'
 
       - name: Build hash-locked offline runtime package without credentials
         id: package

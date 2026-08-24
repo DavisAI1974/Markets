@@ -194,6 +194,17 @@ class FullStackOctoberLaunchWorkflowTests(unittest.TestCase):
             2,
             "launch CI must execute exactly two focused CPU-path test nodes",
         )
+        focused_verification = self.source.index(
+            "- name: Verify focused full-stack contracts"
+        )
+        runtime_binding = self.source.index(
+            "- name: Bind build and resolver to CPython 3.10"
+        )
+        runtime_packaging = self.source.index(
+            "- name: Build hash-locked offline runtime package without credentials"
+        )
+        self.assertLess(focused_verification, runtime_binding)
+        self.assertLess(runtime_binding, runtime_packaging)
         extraction = self.source.index('tar -xzf "$package" -C "$repo"')
         provider_traversal = self.source.index('chmod 0755 "$repo"', extraction)
         provider_install = self.source.index(
