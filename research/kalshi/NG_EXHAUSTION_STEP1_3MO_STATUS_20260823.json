@@ -1,0 +1,60 @@
+{
+  "all_three_complete_and_self_consistent": false,
+  "candidate_commit": "0d318335825b4a0e19a5a2881522f3da0374788e",
+  "children": {
+    "20210901_20211001": {
+      "complete_and_self_consistent": false,
+      "receipt_exists": false,
+      "seconds_exists": false,
+      "unit": {
+        "ActiveState": "active",
+        "LoadState": "loaded",
+        "MainPID": "155581",
+        "SubState": "running"
+      }
+    },
+    "20211001_20211101": {
+      "complete_and_self_consistent": false,
+      "receipt_exists": false,
+      "seconds_exists": false,
+      "unit": {
+        "ActiveState": "active",
+        "LoadState": "loaded",
+        "MainPID": "155587",
+        "SubState": "running"
+      }
+    },
+    "20211101_20211201": {
+      "complete_and_self_consistent": false,
+      "receipt_exists": false,
+      "seconds_exists": false,
+      "unit": {
+        "ActiveState": "active",
+        "LoadState": "loaded",
+        "MainPID": "155594",
+        "SubState": "running"
+      }
+    }
+  },
+  "common_child_engine_hashes": null,
+  "exact_segments": [
+    "20210901_20211001",
+    "20211001_20211101",
+    "20211101_20211201"
+  ],
+  "frankie_launched": false,
+  "nproc": 4,
+  "raw_mbo_replayed": false,
+  "schema": "NG_EXHAUSTION_STEP1_3MO_STATUS_V1_20260823",
+  "segment_dir": "/mnt/markets/ng_exhaustion_step1_5y_20260822/0d318335825b4a0e19a5a2881522f3da0374788e/full/segments",
+  "serial_controller": {
+    "ActiveState": "inactive",
+    "LoadState": "not-found",
+    "MainPID": "0",
+    "SubState": "dead"
+  },
+  "source_window": {
+    "end_exclusive": "2021-12-01",
+    "start": "2021-09-01"
+  }
+}
