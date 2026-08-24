@@ -1,4 +1,84 @@
-# October-only full-MBO/full-V4 shard plan
+# Frankie full-stack October implementation and launch
+
+## Outcome
+
+Build a fresh additive runner at the remote target-branch base that implements every requirement in
+`research/kalshi/NG_EXHAUSTION_FRANKIE_FULL_STACK_OCTOBER_NEXT_CHAT_HANDOFF_20260824.md`, passes the
+15 launch gates, and launches the bounded full October interval `[2021-10-01, 2021-11-01)`. Preserve
+the two historical dirty worktrees and all permanent services. Step-1 stays mechanically sealed until
+the primary discoveries, movies, and first-lock/no-lock outputs freeze.
+
+## Architecture decisions
+
+- Main agent owns contracts, integration, commits, push, dispatch, and rollback. Temporary agents work
+  on isolated branches/worktrees and do not push or launch.
+- Implement a new runner identity; the old hourly canary is transport/forensic evidence only.
+- Keep two explicit planes: a lossless authority-gated knowledge plane and a continuous V4-native causal
+  market-data plane. Their shared boundary is content-addressed, typed, append-only records.
+- S135 is the sole primary authority and Frankie is the sole primary probability/lock owner. The four
+  live specialists return evidence packets on the same causal-prefix hash; no voting or averaging.
+- S137/HippoRAG and provisional V4 components remain labeled shadow-only and cannot affect primary locks.
+- New bridge behavior follows focused RED/GREEN tests; established V4 scientific modules remain unchanged
+  unless a concrete launch error proves the smallest necessary repair.
+- Final runtime correction: within each lane, execute the four helpers concurrently with the exact affinity
+  map recurrence=CPU0, extension=CPU1, timing=CPU2, context=CPU3; keep control then combined lane order,
+  then let Frankie synthesize. Persist affinity/timing receipts and fail before provider calls on fewer than
+  four available CPUs.
+
+## Final narrow launch checkpoint — do not reopen completed work
+
+The only remaining implementation is four-CPU helper affinity/parallelism and its direct receipts. Do not
+retest, rebuild, inspect, or revise the knowledge plane, 1,940/46 data registry, weather/storage ingestion,
+H modules, provisional integration, sealed wall, dependency locks, credential hardening, source inventory,
+or other completed subsystems. Do not perform a broad build inspection. Run only the focused CPU-path tests
+named in `research/kalshi/NG_EXHAUSTION_FRANKIE_FOUR_CPU_HELPER_LAUNCH_HANDOFF_20260824.md`, publish the
+result, regenerate the launch marker from the actual remote implementation SHA, and run October.
+
+## Task list and dependencies
+
+1. **Knowledge plane and answer wall** (parallel, no dependencies): content-addressed source catalog,
+   authority/supersession/access policy, complete S135/90-play and frozen exhaustion retrieval,
+   byte-range coverage receipts, forbidden-V3 denial, and pre-freeze Step-1 denial.
+2. **Causal plane and opportunity process** (parallel, no dependencies): exact legacy/V4 crosswalk,
+   continuous per-second derived geometry, predecessor bootstrap/lifecycle, causal clocks, lawful pre-birth
+   opportunity instances, stopped-chain/negative controls, and discovery-mark contract.
+3. **Four-helper/Sol/ledger runtime** (parallel, depends only on frozen contracts in this plan): four
+   specialist roles with identical prefix hashes, actual `gpt-5.6-sol` invocation receipts, Frankie-only
+   synthesis/locks, append-only movies/ledgers, shadow ablations, and observable progress events.
+4. **Integration checkpoint** (main; depends on 1-3): reconcile agent commits into the clean integration
+   worktree, resolve interfaces additively, and run focused contract tests.
+5. **Launch surface** (main; depends on 4): unique bounded service/workflow, source/bootstrap validation,
+   live logs/run URL, rollback/stop procedure, and no effect on permanent services.
+6. **Bounded review** (main; depends on 5): one five-axis code review, fix only Critical/Required findings,
+   then run the handoff's launch-critical tests and static workflow checks.
+7. **Full October dispatch** (main; depends on all 15 gates): commit and push exact code, launch October,
+   verify accepted Sol provider response plus first state/helper/reasoning/probability receipts, and report
+   remote state without claiming predictive success.
+
+## Acceptance checkpoints
+
+- **Foundation:** all source bytes are covered; S135 and 90 plays are retrievable; forbidden V3 and sealed
+  Step-1 reads fail closed; exact legacy/V4 mappings receipt causal availability.
+- **Runtime:** canonical MBO replay is continuous; four live helpers share one prefix hash; Frankie alone
+  synthesizes and locks; negative, weak, sparse, contradictory, abstention, and no-lock records persist.
+- **Provider:** a real request resolves to `gpt-5.6-sol`, returns a provider response ID, parses successfully,
+  cites retrieved evidence, and binds state/knowledge/code identities.
+- **Launch:** unique October service is observable and reversible; full October starts only after all gates
+  pass; permanent services and dirty worktrees remain unchanged.
+
+## Risks and mitigations
+
+| Risk | Impact | Mitigation |
+|---|---|---|
+| Agent changes collide at orchestration boundaries | Integration delay | Contract-first additive modules, isolated worktrees, main-only cherry-pick/integration |
+| Knowledge catalog accidentally serves answer-derived material | Invalid blind experiment | Explicit authority/access enums plus denial tests before any model call |
+| Rich MBO fields drift from legacy learned semantics | Recognition failure | Exact crosswalk with field provenance, causal-availability, and 100% receipts |
+| A launch failure tempts broad rework | Lost time/scientific drift | Activate debugging skill only on observed error; smallest fix plus regression test |
+| Runtime costs or volume become unbounded | Operational failure | Bounded October scope, resumable append-only ledgers, progress/cost receipts, unique stop command |
+
+---
+
+# Archived: October-only full-MBO/full-V4 shard plan
 
 ## Outcome
 

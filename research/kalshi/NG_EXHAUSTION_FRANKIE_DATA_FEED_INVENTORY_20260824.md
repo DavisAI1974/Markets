@@ -130,6 +130,8 @@ Each emits a typed evidence packet containing state-prefix hash, lawful cutoff, 
 
 Frankie is the sole synthesizer and primary lock owner.
 
+Execution is four-CPU and role-affined within each lane: recurrence=CPU0, extension=CPU1, timing/lifespan=CPU2, and context=CPU3. All four helpers run concurrently on the identical immutable prefix; Frankie waits for the complete batch. The control and combined lanes retain sequential lane order and reuse the same four CPUs. Affinity and batch-timing receipts are part of the immutable helper-evidence feed.
+
 ## 11. Pre-birth opportunity feed
 
 Prediction before D onset requires opportunities that exist before the target is known:

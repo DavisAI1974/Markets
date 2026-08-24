@@ -69,6 +69,12 @@ For October, these should be four active causal-stream GPT-5.6 Sol specialists r
 
 They feed evidence packets to Frankie. Frankie remains the sole synthesizer and lock owner. There is no voting, probability averaging, automatic consensus, or helper-owned primary lock.
 
+### Four-CPU execution requirement — binding correction, 2026-08-24
+
+The four helper roles are not merely a logical set. Within each lane they must execute concurrently on four distinct CPU-affined worker threads, using the fixed map recurrence=CPU0, extension=CPU1, timing=CPU2, and context=CPU3. Frankie synthesis starts only after all four helpers finish. The control lane completes its four-helper batch and synthesis before the combined lane uses the same four-CPU map; do not create eight competing helper workers.
+
+Each helper packet must carry a content-addressed affinity receipt proving the requested CPU, observed singleton affinity during the provider call, native thread identity, mapping version, and receipt hash. The runtime must fail before any provider call when CPUs 0-3 are not all available. Record helper-batch wall time and individual call durations so the four-CPU design is retained only with measured runtime evidence.
+
 Every helper output binds model/provider identity, provider response ID, state-row hash, knowledge-manifest hash, causal evaluation time, evidence citations, contradiction, uncertainty, and abstention status.
 
 Preserving these helper roles does not authorize ordinary V3 findings or D1 ExtraTrees numbers. Those remain excluded. Valid frozen Phase-1/Phase-2 structural knowledge remains admissible.

@@ -227,6 +227,12 @@ Each helper output must bind:
 
 Helpers submit evidence packets to Frankie. Frankie is the sole synthesizer and sole owner of the primary probability path and first lock. Do not use majority voting, averaging, automatic consensus, or helper-owned primary locks.
 
+### Binding four-CPU execution correction — 2026-08-24
+
+Within each lane, run the four helpers concurrently and pin one role to each CPU: recurrence=CPU0, extension=CPU1, timing/lifespan=CPU2, and true/false-context=CPU3. Frankie synthesis begins only after all four complete. Preserve the existing sequential lane order—control first, combined second—so the four-CPU host never runs eight helper workers at once.
+
+Persist and gate a hashed affinity receipt for every helper containing role, requested CPU, observed singleton affinity during the provider call, native thread identity, mapping version, timing, and receipt hash. Fail before provider activity if CPUs 0-3 are not available. Measure helper-batch wall time before and after; this requirement exists to reduce October wall-clock runtime, not only to label workers.
+
 ## Complete causal market-data plane
 
 Feed the complete canonical raw DBN MBO/V4-native causal state, including:
