@@ -54,12 +54,16 @@ jobs:
           root = f"/mnt/markets/frankie_bounded_3mo_20260824/{os.environ['GITHUB_SHA']}"
           repo = f"{root}/repo"
           package = f"{root}/package.tgz"
+          credential_file = "/mnt/markets/ng_exhaustion_step1_5y_20260822/0d318335825b4a0e19a5a2881522f3da0374788e/aws.env"
           commands = [
               "set -euo pipefail",
               f"root={shlex.quote(root)}",
               f"repo={shlex.quote(repo)}",
               f"package={shlex.quote(package)}",
+              f"credential_file={shlex.quote(credential_file)}",
               "install -d -m 0755 \"$root\" \"$repo\"",
+              "test -s \"$credential_file\"",
+              "set -a; source \"$credential_file\"; set +a",
               f"aws s3 cp {shlex.quote('s3://' + os.environ['BUCKET'] + '/' + os.environ['PACKAGE_KEY'])} \"$package\" --only-show-errors",
               f"echo {shlex.quote(os.environ['PACKAGE_SHA256'] + '  ' + package)} | sha256sum -c -",
               "tar -xzf \"$package\" -C \"$repo\"",
