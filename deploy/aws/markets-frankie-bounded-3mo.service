@@ -1,0 +1,25 @@
+[Unit]
+Description=DavisAI Markets Frankie bounded Sep-Nov 2021 four-vCPU batch
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=@RUN_USER@
+WorkingDirectory=@MARKETS_DIR@/research/kalshi
+EnvironmentFile=-/etc/markets/markets.env
+EnvironmentFile=-/etc/markets/frankie.env
+Environment=FRANKIE_DETERMINISTIC_ONLY=0
+Environment=FRANKIE_BOUNDED_QUEUE_EXCLUSIVE=1
+ExecStart=/usr/bin/python3 frankie_bounded_3mo_parallel.py --workers 4 --systemd-unit markets-frankie-bounded-3mo.service --require-systemd
+TimeoutStartSec=infinity
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/lib/markets/frankie
+MemoryMax=2G
+CPUAccounting=true
+CPUQuota=400%
+UMask=0077
