@@ -97,6 +97,152 @@ class HelperRole(str, Enum):
     CONTEXT = "context"
 
 
+HELPER_CPU_MAPPING_VERSION = "FRANKIE_HELPER_CPU_MAP_V1_20260824"
+HELPER_ROLE_CPU_MAP = (
+    (HelperRole.RECURRENCE, 0),
+    (HelperRole.EXTENSION, 1),
+    (HelperRole.TIMING, 2),
+    (HelperRole.CONTEXT, 3),
+)
+
+
+def helper_role_cpu_map() -> dict[HelperRole, int]:
+    """Return a copy of the fixed, versioned helper-to-CPU mapping."""
+    return dict(HELPER_ROLE_CPU_MAP)
+
+
+@dataclass(frozen=True)
+class HelperCpuAffinityTimingReceipt:
+    role: HelperRole
+    lane_id: str
+    binding: CausalPrefixBinding
+    requested_cpu: int
+    observed_affinity: tuple[int, ...]
+    native_thread_id: int
+    mapping_version: str
+    started_monotonic_ns: int
+    ended_monotonic_ns: int
+    duration_ns: int
+    provider_receipt_hash: str
+    helper_packet_hash: str
+    receipt_hash: str
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        role: HelperRole,
+        lane_id: str,
+        binding: CausalPrefixBinding,
+        requested_cpu: int,
+        observed_affinity: Sequence[int],
+        native_thread_id: int,
+        mapping_version: str,
+        started_monotonic_ns: int,
+        ended_monotonic_ns: int,
+        provider_receipt_hash: str,
+        helper_packet_hash: str,
+    ) -> "HelperCpuAffinityTimingReceipt":
+        if not isinstance(role, HelperRole):
+            raise RuntimeContractError("helper CPU receipt role is invalid")
+        expected_cpu = helper_role_cpu_map()[role]
+        if isinstance(requested_cpu, bool) or requested_cpu != expected_cpu:
+            raise RuntimeContractError("helper CPU receipt requested CPU differs from the fixed map")
+        observed = tuple(observed_affinity)
+        if observed != (expected_cpu,):
+            raise RuntimeContractError("helper CPU receipt requires the expected singleton affinity")
+        lane = _required_text(lane_id, "helper CPU receipt lane_id")
+        bound = binding.validate()
+        if isinstance(native_thread_id, bool) or not isinstance(native_thread_id, int) or native_thread_id <= 0:
+            raise RuntimeContractError("helper CPU receipt native thread ID must be positive")
+        if mapping_version != HELPER_CPU_MAPPING_VERSION:
+            raise RuntimeContractError("helper CPU mapping version drift")
+        for value, field in (
+            (started_monotonic_ns, "helper start"),
+            (ended_monotonic_ns, "helper end"),
+        ):
+            if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+                raise RuntimeContractError(f"{field} timing must be a positive integer")
+        if ended_monotonic_ns <= started_monotonic_ns:
+            raise RuntimeContractError("helper CPU receipt end must follow start")
+        duration = ended_monotonic_ns - started_monotonic_ns
+        provider_hash = _sha256(provider_receipt_hash, "helper provider_receipt_hash")
+        packet_hash = _sha256(helper_packet_hash, "helper packet_hash")
+        core = {
+            "role": role.value,
+            "lane_id": lane,
+            "binding": bound.identity_payload(),
+            "requested_cpu": requested_cpu,
+            "observed_affinity": list(observed),
+            "native_thread_id": native_thread_id,
+            "mapping_version": mapping_version,
+            "started_monotonic_ns": started_monotonic_ns,
+            "ended_monotonic_ns": ended_monotonic_ns,
+            "duration_ns": duration,
+            "provider_receipt_hash": provider_hash,
+            "helper_packet_hash": packet_hash,
+        }
+        return cls(
+            role,
+            lane,
+            bound,
+            requested_cpu,
+            observed,
+            native_thread_id,
+            mapping_version,
+            started_monotonic_ns,
+            ended_monotonic_ns,
+            duration,
+            provider_hash,
+            packet_hash,
+            _hash_payload(core),
+        )
+
+    def validate(self) -> "HelperCpuAffinityTimingReceipt":
+        rebuilt = self.create(
+            role=self.role,
+            lane_id=self.lane_id,
+            binding=self.binding,
+            requested_cpu=self.requested_cpu,
+            observed_affinity=self.observed_affinity,
+            native_thread_id=self.native_thread_id,
+            mapping_version=self.mapping_version,
+            started_monotonic_ns=self.started_monotonic_ns,
+            ended_monotonic_ns=self.ended_monotonic_ns,
+            provider_receipt_hash=self.provider_receipt_hash,
+            helper_packet_hash=self.helper_packet_hash,
+        )
+        if rebuilt.duration_ns != self.duration_ns or rebuilt.receipt_hash != self.receipt_hash:
+            raise RuntimeContractError("helper CPU affinity/timing receipt hash mismatch")
+        return self
+
+
+def validate_helper_cpu_affinity_timing_receipts(
+    receipts: Sequence[HelperCpuAffinityTimingReceipt],
+    *,
+    binding: CausalPrefixBinding | None = None,
+    lane_id: str | None = None,
+) -> tuple[HelperCpuAffinityTimingReceipt, ...]:
+    items = tuple(item.validate() for item in receipts)
+    if tuple(item.role for item in items) != tuple(HelperRole):
+        raise RuntimeContractError("helper CPU receipts must preserve canonical role order")
+    if tuple(item.requested_cpu for item in items) != (0, 1, 2, 3):
+        raise RuntimeContractError("helper CPU receipts differ from the fixed CPU map")
+    if len({item.native_thread_id for item in items}) != len(HelperRole):
+        raise RuntimeContractError("helper CPU receipts require four distinct native threads")
+    if len({item.receipt_hash for item in items}) != len(HelperRole):
+        raise RuntimeContractError("helper CPU receipt hashes must be distinct")
+    if binding is not None and any(item.binding != binding.validate() for item in items):
+        raise RuntimeContractError("helper CPU receipts lost the immutable causal prefix")
+    if lane_id is not None and any(item.lane_id != lane_id for item in items):
+        raise RuntimeContractError("helper CPU receipts lost the lane identity")
+    if max(item.started_monotonic_ns for item in items) >= min(
+        item.ended_monotonic_ns for item in items
+    ):
+        raise RuntimeContractError("the four helper execution intervals did not overlap")
+    return items
+
+
 @dataclass(frozen=True)
 class HelperRoleContract:
     role: HelperRole

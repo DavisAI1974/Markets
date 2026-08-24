@@ -27,19 +27,11 @@ RETIRED_WORKFLOWS = (
     Path(".github/workflows/ng_exhaustion_october_frankie_blind_canary_20260824.yml"),
     Path(".github/workflows/ng_exhaustion_october_frankie_blind_canary_probe_20260824.yml"),
 )
-FOCUSED_LAUNCH_TESTS = (
-    "test_frankie_authority_knowledge_plane_20260824.py",
-    "test_frankie_lane_aware_context_router_20260824.py",
-    "test_frankie_full_stack_paired_lane_orchestrator_20260824.py",
-    "test_frankie_full_stack_provisional_combined_pipeline_20260824.py",
-    "test_frankie_provider_knowledge_tools_20260824.py",
-    "test_frankie_full_stack_runtime_adapter_20260824.py",
-    "test_frankie_causal_operational_context_20260824.py",
-    "test_frankie_causal_runtime_tools_20260824.py",
-    "test_frankie_v4_authority_runtime_validation_20260824.py",
-    "test_frankie_source_inventory_cross_reference_20260824.py",
-    "test_ng_exhaustion_frankie_fullstack_october_20260824.py",
-    "test_ng_exhaustion_frankie_fullstack_october_launch_workflow_20260824.py",
+FOCUSED_LAUNCH_TEST_NODES = (
+    "research/kalshi/tests/test_frankie_full_stack_runtime_adapter_20260824.py::"
+    "test_four_helpers_overlap_on_distinct_singleton_cpu_threads_before_frankie",
+    "research/kalshi/tests/test_ng_exhaustion_frankie_fullstack_october_launch_workflow_20260824.py::"
+    "FullStackOctoberLaunchWorkflowTests::test_cpu_affinity_and_first_prefix_receipts_are_gated",
 )
 
 
@@ -160,12 +152,47 @@ class FullStackOctoberLaunchWorkflowTests(unittest.TestCase):
         self.assertNotIn(">=", requirements)
         self.assertIn("requirements-frankie-fullstack-ci-20260824.lock", self.source)
         self.assertIn('"$ci_venv/bin/python" -m pytest --quiet', self.source)
-        for test_name in FOCUSED_LAUNCH_TESTS:
+        for test_node in FOCUSED_LAUNCH_TEST_NODES:
             self.assertEqual(
-                self.source.count(f"research/kalshi/tests/{test_name}"),
+                self.source.count(test_node),
                 1,
-                f"focused launch gate must run {test_name} exactly once",
+                f"focused launch gate must run {test_node} exactly once",
             )
+
+    def test_cpu_affinity_and_first_prefix_receipts_are_gated(self):
+        for token in (
+            'by_event["PAIRED_PREFIX_ACCEPTED"][0]',
+            '"recurrence": 0',
+            '"extension": 1',
+            '"timing": 2',
+            '"context": 3',
+            'process_effective_affinity != [0, 1, 2, 3]',
+            'observed_affinity != [cpu]',
+            'receipt.get("native_thread_id")',
+            'receipt.get("started_monotonic_ns")',
+            'receipt.get("ended_monotonic_ns")',
+            'duration != ended - started',
+            'recomputed_hash != receipt_hash',
+            'len(set(native_thread_ids)) != 4',
+            'max(starts) >= min(ends)',
+            'batch_started_monotonic_ns',
+            'batch_ended_monotonic_ns',
+            'batch_duration_ns',
+            'control and combined helper batches overlapped',
+            'october_replay_progress.get("completed_percent")',
+            'october_replay_progress.get("remaining_percent")',
+            'accepted_prefix_count < 1',
+            '--property="CPUAffinity=0 1 2 3"',
+            'required.issubset(available)',
+            'effective == {0, 1, 2, 3}',
+            'systemctl show --property=MainPID --value "$unit"',
+        ):
+            self.assertIn(token, self.source)
+        self.assertEqual(
+            self.source.count("research/kalshi/tests/test_"),
+            2,
+            "launch CI must execute exactly two focused CPU-path test nodes",
+        )
 
     def test_runtime_supply_chain_is_hash_locked_unprivileged_and_credential_scoped(self):
         build = self.source.index("Build hash-locked offline runtime package without credentials")

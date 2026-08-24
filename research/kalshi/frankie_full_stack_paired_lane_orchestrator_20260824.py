@@ -28,6 +28,7 @@ from research.kalshi.frankie_full_stack_runtime_adapter_20260824 import (
 from research.kalshi.frankie_provider_knowledge_tools_20260824 import ProviderToolBackend
 from research.kalshi.frankie_full_stack_runtime_contracts_20260824 import (
     CausalPrefixBinding,
+    HelperCpuAffinityTimingReceipt,
     KnowledgeSourceExcerpt,
     LedgerKind,
     LedgerRecord,
@@ -35,6 +36,7 @@ from research.kalshi.frankie_full_stack_runtime_contracts_20260824 import (
     RuntimeEventSink,
     RuntimeContractError,
     ToolCallReceipt,
+    validate_helper_cpu_affinity_timing_receipts,
     validate_knowledge_excerpts,
 )
 
@@ -538,6 +540,7 @@ class PairedLaneOrchestrator:
         result: PrefixRuntimeResult,
         *,
         binding: CausalPrefixBinding,
+        lane_id: LaneId,
     ) -> None:
         if result.binding != binding:
             raise PairedLaneError("lane result lost the identical causal prefix binding")
@@ -550,6 +553,21 @@ class PairedLaneOrchestrator:
             "context",
         ):
             raise PairedLaneError("lane helper roles are incomplete or reordered")
+        receipts = result.helper_cpu_affinity_receipts
+        if len(receipts) != 4 or any(
+            not isinstance(item, HelperCpuAffinityTimingReceipt) for item in receipts
+        ):
+            raise PairedLaneError("lane helper CPU affinity/timing receipts are incomplete")
+        try:
+            validate_helper_cpu_affinity_timing_receipts(
+                receipts,
+                binding=binding,
+                lane_id=lane_id.value,
+            )
+        except RuntimeContractError as exc:
+            raise PairedLaneError(
+                f"lane helper CPU affinity/timing receipts are invalid: {exc}"
+            ) from exc
         synthesis = result.synthesis
         if (
             synthesis.synthesis_owner,
@@ -679,8 +697,16 @@ class PairedLaneOrchestrator:
             )
             raise PairedLaneError("paired lane provider or persistence execution failed") from exc
 
-        self._validate_result(control_result, binding=bound)
-        self._validate_result(combined_result, binding=bound)
+        self._validate_result(
+            control_result,
+            binding=bound,
+            lane_id=LaneId.S135_CONTROL,
+        )
+        self._validate_result(
+            combined_result,
+            binding=bound,
+            lane_id=LaneId.FULL_PROVISIONAL_COMBINED,
+        )
         control_ids = {
             item.accepted_response.provider_response_id for item in control_result.invocation_receipts
         }
@@ -718,6 +744,16 @@ class PairedLaneOrchestrator:
             "provider_response_ids": {
                 "control": sorted(control_ids),
                 "combined": sorted(combined_ids),
+            },
+            "helper_cpu_affinity_timing_receipt_hashes": {
+                LaneId.S135_CONTROL.value: [
+                    item.receipt_hash
+                    for item in control_result.helper_cpu_affinity_receipts
+                ],
+                LaneId.FULL_PROVISIONAL_COMBINED.value: [
+                    item.receipt_hash
+                    for item in combined_result.helper_cpu_affinity_receipts
+                ],
             },
             "answer_revealed": False,
         }

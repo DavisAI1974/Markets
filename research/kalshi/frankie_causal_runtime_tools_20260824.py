@@ -15,6 +15,7 @@ import json
 import math
 import os
 from pathlib import Path
+from threading import RLock
 from typing import Any, Mapping, Sequence
 
 from research.kalshi.frankie_causal_operational_context_20260824 import (
@@ -173,6 +174,7 @@ class CausalEvidenceJournal:
         self._fd: int | None = fd
         self._sequence = 0
         self._head = GENESIS
+        self._lock = RLock()
 
     @classmethod
     def create(cls, path: str | Path, *, run_id: str) -> "CausalEvidenceJournal":
@@ -188,33 +190,34 @@ class CausalEvidenceJournal:
         return cls(target, run_id, fd)
 
     def append(self, event_type: str, payload: Mapping[str, Any]) -> str:
-        if self._fd is None:
-            raise CausalRuntimeToolError("evidence journal is closed")
-        if not isinstance(payload, Mapping):
-            raise CausalRuntimeToolError("evidence payload must be an object")
-        core = {
-            "schema": EVIDENCE_SCHEMA,
-            "run_id": self.run_id,
-            "sequence": self._sequence,
-            "event_type": _text(event_type, "event_type"),
-            "payload": dict(payload),
-            "prior_record_hash": self._head,
-        }
-        record_hash = _hash(core)
-        raw = (_canonical({**core, "record_hash": record_hash}) + "\n").encode()
-        offset = 0
-        while offset < len(raw):
-            try:
-                written = os.write(self._fd, raw[offset:])
-            except InterruptedError:
-                continue
-            if written <= 0:
-                raise CausalRuntimeToolError("evidence journal append made no progress")
-            offset += written
-        os.fsync(self._fd)
-        self._sequence += 1
-        self._head = record_hash
-        return record_hash
+        with self._lock:
+            if self._fd is None:
+                raise CausalRuntimeToolError("evidence journal is closed")
+            if not isinstance(payload, Mapping):
+                raise CausalRuntimeToolError("evidence payload must be an object")
+            core = {
+                "schema": EVIDENCE_SCHEMA,
+                "run_id": self.run_id,
+                "sequence": self._sequence,
+                "event_type": _text(event_type, "event_type"),
+                "payload": dict(payload),
+                "prior_record_hash": self._head,
+            }
+            record_hash = _hash(core)
+            raw = (_canonical({**core, "record_hash": record_hash}) + "\n").encode()
+            offset = 0
+            while offset < len(raw):
+                try:
+                    written = os.write(self._fd, raw[offset:])
+                except InterruptedError:
+                    continue
+                if written <= 0:
+                    raise CausalRuntimeToolError("evidence journal append made no progress")
+                offset += written
+            os.fsync(self._fd)
+            self._sequence += 1
+            self._head = record_hash
+            return record_hash
 
     def record_answer_access(self, *, allowed: bool, reason: str) -> str:
         return self.append("ANSWER_ACCESS", {"allowed": bool(allowed), "reason": _text(reason, "reason")})
@@ -222,18 +225,21 @@ class CausalEvidenceJournal:
     @property
     def head_hash(self) -> str:
         """Return the current durable chain head for launch evidence."""
-        return self._head
+        with self._lock:
+            return self._head
 
     @property
     def record_count(self) -> int:
         """Return the number of content-addressed records appended so far."""
-        return self._sequence
+        with self._lock:
+            return self._sequence
 
     def close(self) -> None:
-        if self._fd is not None:
-            os.fsync(self._fd)
-            os.close(self._fd)
-            self._fd = None
+        with self._lock:
+            if self._fd is not None:
+                os.fsync(self._fd)
+                os.close(self._fd)
+                self._fd = None
 
 
 def validate_causal_evidence_journal(path: str | Path, *, run_id: str) -> dict[str, Any]:

@@ -2,7 +2,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
 
@@ -26,6 +32,7 @@ from research.kalshi.frankie_causal_operational_context_20260824 import (
 from research.kalshi.frankie_causal_runtime_tools_20260824 import (
     CausalEvidenceJournal,
     CausalRuntimeToolBackend,
+    validate_causal_evidence_journal,
 )
 from research.kalshi.frankie_full_stack_runtime_contracts_20260824 import (
     EXPECTED_MODEL,
@@ -34,7 +41,9 @@ from research.kalshi.frankie_full_stack_runtime_contracts_20260824 import (
     KnowledgeSourceExcerpt,
     LedgerKind,
     RetrievalReceipt,
+    RuntimeContractError,
     ToolCallReceipt,
+    validate_helper_cpu_affinity_timing_receipts,
 )
 
 
@@ -85,6 +94,7 @@ class FakeResponsesAPI:
         self.calls = []
         self.pending = {}
         self.last_tool_output = ()
+        self._thread_state = threading.local()
 
     def create(self, **kwargs):
         self.calls.append(kwargs)
@@ -129,6 +139,7 @@ class FakeResponsesAPI:
                 arguments=json.dumps(arguments),
             )
             self.last_tool_output = (reasoning, function_call)
+            self._thread_state.last_tool_output = self.last_tool_output
             return SimpleNamespace(
                 id=response_id,
                 model=EXPECTED_MODEL,
@@ -141,7 +152,8 @@ class FakeResponsesAPI:
             replay = kwargs["input"]
             if not isinstance(replay, list):
                 raise AssertionError("stateless continuation must replay an input list")
-            if not all(any(item is expected for item in replay) for expected in self.last_tool_output):
+            last_tool_output = getattr(self._thread_state, "last_tool_output", ())
+            if not all(any(item is expected for item in replay) for expected in last_tool_output):
                 raise AssertionError("stateless continuation did not replay every raw output item")
             if not any(getattr(item, "type", None) == "reasoning" for item in replay):
                 raise AssertionError("stateless continuation dropped provider reasoning output")
@@ -183,6 +195,7 @@ class FakeResponsesAPI:
                     ),
                 )
                 self.last_tool_output = (reasoning, function_call)
+                self._thread_state.last_tool_output = self.last_tool_output
                 return SimpleNamespace(
                     id=f"tool-round-{len(self.calls)}",
                     model=EXPECTED_MODEL,
@@ -240,9 +253,62 @@ class FakeResponsesAPI:
         return SimpleNamespace(id=response_id, model=model, output_text=json.dumps(output))
 
 
+class ThreadSafeFakeResponsesAPI(FakeResponsesAPI):
+    def __init__(self, *, mode: str = "ok") -> None:
+        super().__init__(mode=mode)
+        self._serialize_lock = threading.Lock()
+
+    def create(self, **kwargs):
+        with self._serialize_lock:
+            return super().create(**kwargs)
+
+
 class FakeOpenAIClient:
     def __init__(self, *, mode: str = "ok") -> None:
-        self.responses = FakeResponsesAPI(mode=mode)
+        self.responses = ThreadSafeFakeResponsesAPI(mode=mode)
+
+
+class DelayedConcurrentResponsesAPI(FakeResponsesAPI):
+    def __init__(self, *, helper_delay: float = 0.2) -> None:
+        super().__init__()
+        self.helper_delay = helper_delay
+        self._lock = threading.Lock()
+        self._response_lock = threading.Lock()
+        self.active_helpers = 0
+        self.max_active_helpers = 0
+        self.helper_threads = {}
+        self.helper_affinities = {}
+        self.helper_ended = {}
+        self.synthesis_started = None
+
+    def create(self, **kwargs):
+        payload = json.loads(kwargs["input"])
+        if payload["request_type"] != "HELPER_EVIDENCE":
+            self.synthesis_started = time.monotonic_ns()
+            with self._response_lock:
+                return super().create(**kwargs)
+
+        role = payload["role"]
+        native_thread_id = threading.get_native_id()
+        with self._lock:
+            self.active_helpers += 1
+            self.max_active_helpers = max(self.max_active_helpers, self.active_helpers)
+            self.helper_threads[role] = native_thread_id
+            self.helper_affinities[role] = set(os.sched_getaffinity(native_thread_id))
+        try:
+            time.sleep(self.helper_delay)
+            with self._response_lock:
+                return super().create(**kwargs)
+        finally:
+            ended = time.monotonic_ns()
+            with self._lock:
+                self.helper_ended[role] = ended
+                self.active_helpers -= 1
+
+
+class DelayedConcurrentOpenAIClient:
+    def __init__(self, *, helper_delay: float = 0.2) -> None:
+        self.responses = DelayedConcurrentResponsesAPI(helper_delay=helper_delay)
 
 
 def run_adapter(tmp_path, *, mode: str = "ok"):
@@ -671,12 +737,14 @@ def test_five_exact_sol_requests_keep_roles_separate_and_frankie_owns_lock(tmp_p
     calls = raw_client.responses.calls
     assert len(calls) == 5
     assert all(call["model"] == EXPECTED_MODEL and call["store"] is False for call in calls)
-    assert tuple(
+    response_ids = tuple(
         receipt.accepted_response.provider_response_id for receipt in result.invocation_receipts
-    ) == ("resp-1", "resp-2", "resp-3", "resp-4", "resp-5")
+    )
+    assert set(response_ids[:4]) == {"resp-1", "resp-2", "resp-3", "resp-4"}
+    assert response_ids[4] == "resp-5"
 
     helper_payloads = [json.loads(call["input"]) for call in calls[:4]]
-    assert [payload["role"] for payload in helper_payloads] == [role.value for role in HelperRole]
+    assert {payload["role"] for payload in helper_payloads} == {role.value for role in HelperRole}
     assert len({call["instructions"] for call in calls[:4]}) == 4
     assert all(payload["binding"] == binding().identity_payload() for payload in helper_payloads)
     assert all("probabilities" not in payload["required_output_schema"] for payload in helper_payloads)
@@ -707,6 +775,141 @@ def test_five_exact_sol_requests_keep_roles_separate_and_frankie_owns_lock(tmp_p
     assert len(started) == 5
     assert all(json.loads(event.details_json)["lane_id"] == "S135_CONTROL" for event in started)
     assert all(KNOWLEDGE_TEXT not in event.details_json for event in started)
+
+
+def test_four_helpers_overlap_on_distinct_singleton_cpu_threads_before_frankie(tmp_path):
+    helper_delay = 0.2
+    baseline_started = time.perf_counter()
+    for _ in HelperRole:
+        time.sleep(helper_delay)
+    sequential_baseline = time.perf_counter() - baseline_started
+    raw_client = DelayedConcurrentOpenAIClient(helper_delay=helper_delay)
+    ledger_path = tmp_path / "concurrent-runtime.jsonl"
+    ledger = DurableJsonlLedger.create(ledger_path, run_id="october-full-stack")
+    events = RecordingEventSink()
+    adapter = FullStackRuntimeAdapter(
+        client=OpenAIResponsesClient(api_client=raw_client),
+        ledger=ledger,
+        event_sink=events,
+    )
+    tool_calls, retrievals = tools_and_retrievals()
+
+    started = time.perf_counter()
+    result = adapter.run_prefix(
+        binding=binding(),
+        lane_id="S135_CONTROL",
+        causal_state={"queue": {"bid_depth": 7, "ask_depth": 5}},
+        provisional_context=None,
+        knowledge_sources=knowledge_sources(),
+        tool_calls=tool_calls,
+        retrievals=retrievals,
+    )
+    elapsed = time.perf_counter() - started
+
+    expected_map = {
+        HelperRole.RECURRENCE.value: {0},
+        HelperRole.EXTENSION.value: {1},
+        HelperRole.TIMING.value: {2},
+        HelperRole.CONTEXT.value: {3},
+    }
+    responses = raw_client.responses
+    assert responses.max_active_helpers == 4
+    assert len(set(responses.helper_threads.values())) == 4
+    assert responses.helper_affinities == expected_map
+    assert responses.synthesis_started >= max(responses.helper_ended.values())
+    assert elapsed < sequential_baseline
+
+    receipts = result.helper_cpu_affinity_receipts
+    assert [receipt.role for receipt in receipts] == list(HelperRole)
+    assert [receipt.requested_cpu for receipt in receipts] == [0, 1, 2, 3]
+    assert [receipt.observed_affinity for receipt in receipts] == [(0,), (1,), (2,), (3,)]
+    assert len({receipt.native_thread_id for receipt in receipts}) == 4
+    assert all(receipt.validate() is receipt for receipt in receipts)
+    helper_batch_seconds = (
+        max(receipt.ended_monotonic_ns for receipt in receipts)
+        - min(receipt.started_monotonic_ns for receipt in receipts)
+    ) / 1_000_000_000
+    assert helper_batch_seconds < sequential_baseline * 0.6
+    with pytest.raises(RuntimeContractError, match="receipt hash mismatch"):
+        replace(receipts[0], duration_ns=receipts[0].duration_ns + 1).validate()
+
+    resumed = DurableJsonlLedger.resume(ledger_path, run_id="october-full-stack").snapshot()
+    affinity_rows = [
+        json.loads(record.content_json)
+        for record in resumed
+        if record.kind is LedgerKind.INTEGRITY
+        and json.loads(record.content_json).get("record_type")
+        == "HELPER_CPU_AFFINITY_TIMING"
+    ]
+    assert [row["receipt_hash"] for row in affinity_rows] == [
+        receipt.receipt_hash for receipt in receipts
+    ]
+
+    tampered_receipts = (
+        replace(receipts[0], requested_cpu=1),
+        replace(receipts[0], observed_affinity=(1,)),
+        replace(receipts[0], ended_monotonic_ns=receipts[0].started_monotonic_ns - 1),
+        replace(receipts[0], receipt_hash="0" * 64),
+    )
+    for tampered in tampered_receipts:
+        with pytest.raises(RuntimeContractError):
+            tampered.validate()
+    duplicate_thread_receipt = type(receipts[1]).create(
+        role=receipts[1].role,
+        lane_id=receipts[1].lane_id,
+        binding=receipts[1].binding,
+        requested_cpu=receipts[1].requested_cpu,
+        observed_affinity=receipts[1].observed_affinity,
+        native_thread_id=receipts[0].native_thread_id,
+        mapping_version=receipts[1].mapping_version,
+        started_monotonic_ns=receipts[1].started_monotonic_ns,
+        ended_monotonic_ns=receipts[1].ended_monotonic_ns,
+        provider_receipt_hash=receipts[1].provider_receipt_hash,
+        helper_packet_hash=receipts[1].helper_packet_hash,
+    )
+    with pytest.raises(RuntimeContractError, match="four distinct native threads"):
+        validate_helper_cpu_affinity_timing_receipts(
+            (receipts[0], duplicate_thread_receipt, *receipts[2:])
+        )
+
+    journal_path = tmp_path / "concurrent-causal-evidence.jsonl"
+    journal = CausalEvidenceJournal.create(journal_path, run_id="october-full-stack")
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        journal_hashes = tuple(
+            executor.map(
+                lambda index: journal.append("CONCURRENT_TEST", {"worker": index}),
+                range(4),
+            )
+        )
+    journal.close()
+    journal_validation = validate_causal_evidence_journal(
+        journal_path, run_id="october-full-stack"
+    )
+    assert journal_validation["record_count"] == 4
+    assert journal_validation["head_hash"] in journal_hashes
+
+    missing_cpu_client = FakeOpenAIClient()
+    missing_cpu_ledger = DurableJsonlLedger.create(
+        tmp_path / "missing-cpu-runtime.jsonl", run_id="october-full-stack"
+    )
+    missing_cpu_adapter = FullStackRuntimeAdapter(
+        client=OpenAIResponsesClient(api_client=missing_cpu_client),
+        ledger=missing_cpu_ledger,
+        event_sink=RecordingEventSink(),
+    )
+    with patch.object(os, "sched_getaffinity", return_value={0, 1, 2}):
+        with pytest.raises(AdapterRuntimeError, match="available CPUs 0, 1, 2, and 3"):
+            missing_cpu_adapter.run_prefix(
+                binding=binding(),
+                lane_id="S135_CONTROL",
+                causal_state={"queue": {"bid_depth": 7}},
+                provisional_context=None,
+                knowledge_sources=knowledge_sources(),
+                tool_calls=tool_calls,
+                retrievals=retrievals,
+            )
+    assert missing_cpu_client.responses.calls == []
+    assert missing_cpu_ledger.snapshot() == ()
 
 
 def test_durable_jsonl_uses_exclusive_creation_validates_resume_and_rejects_backfill(tmp_path):

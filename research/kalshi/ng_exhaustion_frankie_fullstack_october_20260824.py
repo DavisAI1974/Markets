@@ -57,11 +57,14 @@ from research.kalshi.frankie_full_stack_runtime_adapter_20260824 import (
 )
 from research.kalshi.frankie_full_stack_runtime_contracts_20260824 import (
     CausalPrefixBinding,
+    HELPER_CPU_MAPPING_VERSION,
     KnowledgeSourceExcerpt,
     LedgerKind,
     RetrievalReceipt,
     RuntimeEvent,
     ToolCallReceipt,
+    helper_role_cpu_map,
+    validate_helper_cpu_affinity_timing_receipts,
 )
 from research.kalshi.frankie_causal_operational_context_20260824 import (
     ACCEPTED_MINIMUM_PATHS,
@@ -131,6 +134,7 @@ TARGET_START = int(datetime(2021, 10, 1, tzinfo=timezone.utc).timestamp())
 TARGET_END = int(datetime(2021, 11, 1, tzinfo=timezone.utc).timestamp())
 ANSWER_WALL_MODE = "SEALED_UNTIL_PRIMARY_FREEZE"
 CAUSAL_SECOND_CHAIN_SCHEMA = "FRANKIE_CAUSAL_SECOND_CHAIN_V1_20260824"
+OCTOBER_REPLAY_PROGRESS_SCHEMA = "FRANKIE_OCTOBER_REPLAY_PROGRESS_V1_20260824"
 CAUSAL_SECOND_CHAIN_GENESIS = "0" * 64
 CAUSAL_SECOND_FLUSH_INTERVAL = 512
 _OBJECT_DATE = re.compile(r"glbx-mdp3-(20\d{6})\.mbo\.dbn\.zst$")
@@ -311,6 +315,41 @@ def _stable_hash(value: Any) -> str:
     return hashlib.sha256(
         json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
     ).hexdigest()
+
+
+def make_october_replay_progress(
+    *, processed_source_second: int, accepted_prefix_count: int
+) -> dict[str, Any]:
+    """Return a fixed-October, content-addressed replay done/left receipt."""
+    if isinstance(processed_source_second, bool) or not isinstance(
+        processed_source_second, int
+    ):
+        raise FullStackOctoberError("processed_source_second must be an integer")
+    if (
+        isinstance(accepted_prefix_count, bool)
+        or not isinstance(accepted_prefix_count, int)
+        or accepted_prefix_count < 0
+    ):
+        raise FullStackOctoberError("accepted_prefix_count must be a non-negative integer")
+    total_seconds = TARGET_END - TARGET_START
+    done_seconds = min(
+        total_seconds,
+        max(0, processed_source_second - TARGET_START + 1),
+    )
+    completed_percent = (done_seconds * 100) // total_seconds
+    core = {
+        "schema": OCTOBER_REPLAY_PROGRESS_SCHEMA,
+        "target_start": TARGET_START,
+        "target_end": TARGET_END,
+        "processed_source_second": processed_source_second,
+        "total_seconds": total_seconds,
+        "done_seconds": done_seconds,
+        "left_seconds": total_seconds - done_seconds,
+        "completed_percent": completed_percent,
+        "remaining_percent": 100 - completed_percent,
+        "accepted_prefix_count": accepted_prefix_count,
+    }
+    return {**core, "receipt_hash": _stable_hash(core)}
 
 
 def _jsonable(value: Any) -> Any:
@@ -935,6 +974,36 @@ def _provider_tool_evidence(invocations: Sequence[Any], journal: Any) -> dict[st
     }
 
 
+def _helper_cpu_execution(paired: Any) -> dict[str, Any]:
+    lanes: dict[str, Any] = {}
+    for lane_id, result in (
+        (LaneId.S135_CONTROL.value, paired.control),
+        (LaneId.FULL_PROVISIONAL_COMBINED.value, paired.combined),
+    ):
+        receipts = validate_helper_cpu_affinity_timing_receipts(
+            result.helper_cpu_affinity_receipts,
+            binding=result.binding,
+            lane_id=lane_id,
+        )
+        batch_started = min(item.started_monotonic_ns for item in receipts)
+        batch_ended = max(item.ended_monotonic_ns for item in receipts)
+        lanes[lane_id] = {
+            "receipts": [asdict(item) for item in receipts],
+            "receipt_hashes": [item.receipt_hash for item in receipts],
+            "batch_started_monotonic_ns": batch_started,
+            "batch_ended_monotonic_ns": batch_ended,
+            "batch_duration_ns": batch_ended - batch_started,
+        }
+    return {
+        "mapping_version": HELPER_CPU_MAPPING_VERSION,
+        "role_cpu_map": {
+            role.value: cpu for role, cpu in helper_role_cpu_map().items()
+        },
+        "process_effective_affinity": sorted(os.sched_getaffinity(0)),
+        "lanes": lanes,
+    }
+
+
 def make_paired_launch_event(
     *,
     binding: CausalPrefixBinding,
@@ -945,6 +1014,7 @@ def make_paired_launch_event(
     control_evidence: CausalEvidenceJournal,
     combined_evidence: CausalEvidenceJournal,
     governing_receipt: Mapping[str, Any],
+    october_replay_progress: Mapping[str, Any],
 ) -> dict[str, Any]:
     active_hashes = {
         key: value for key, value in paired.component_receipt_hashes.items() if key != "META_LOOP"
@@ -983,6 +1053,16 @@ def make_paired_launch_event(
     superseded_count = governing["disposition_counts"].get(
         "SUPERSEDED_BY_CORRECTED_RUNTIME_EQUIVALENCE", 0
     )
+    replay_progress = dict(october_replay_progress)
+    replay_progress_hash = replay_progress.pop("receipt_hash", None)
+    if (
+        replay_progress.get("schema") != OCTOBER_REPLAY_PROGRESS_SCHEMA
+        or replay_progress.get("target_start") != TARGET_START
+        or replay_progress.get("target_end") != TARGET_END
+        or replay_progress_hash != _stable_hash(replay_progress)
+    ):
+        raise FullStackOctoberError("October replay progress receipt is invalid")
+    replay_progress["receipt_hash"] = replay_progress_hash
     event = {
         "lanes": [LaneId.S135_CONTROL.value, LaneId.FULL_PROVISIONAL_COMBINED.value],
         "primary_lane": LaneId.S135_CONTROL.value,
@@ -990,6 +1070,8 @@ def make_paired_launch_event(
         "model": EXPECTED_MODEL,
         "step1_sealed": True,
         "answer_revealed": False,
+        "helper_cpu_execution": _helper_cpu_execution(paired),
+        "october_replay_progress": replay_progress,
         "identical_prefix_proof_hash": paired.identical_prefix_proof.proof_hash,
         "control_causal_prefix_hash": binding.causal_prefix_hash,
         "combined_causal_prefix_hash": binding.causal_prefix_hash,
@@ -1243,6 +1325,24 @@ def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
     last_runtime: tuple[LaneRuntime, LaneRuntime, tuple[KnowledgeSourceExcerpt, ...], RouteBundle] | None = None
     last_decision_snapshot: DecisionStateSnapshot | None = None
     prior_stream_hash = "0" * 64
+    last_progress_percent = 0
+    last_replay_progress = make_october_replay_progress(
+        processed_source_second=TARGET_START - 1,
+        accepted_prefix_count=0,
+    )
+
+    def update_replay_progress(processed_source_second: int) -> dict[str, Any]:
+        nonlocal last_progress_percent, last_replay_progress
+        progress = make_october_replay_progress(
+            processed_source_second=processed_source_second,
+            accepted_prefix_count=len(marked_prefixes),
+        )
+        last_replay_progress = progress
+        percent = int(progress["completed_percent"])
+        if percent > last_progress_percent:
+            launch.emit_launch("OCTOBER_REPLAY_PROGRESS", **progress)
+            last_progress_percent = percent
+        return progress
 
     def on_second(row: ContinuousCausalSecond) -> None:
         nonlocal prior_stream_hash, last_runtime, last_decision_snapshot
@@ -1252,6 +1352,7 @@ def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
         )
         prior_stream_hash = row.stream_hash
         if row.mark is None:
+            update_replay_progress(row.source_second)
             return
         raw_event_receipt = {
             "start_source_second": row.source_second,
@@ -1375,6 +1476,7 @@ def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
         marked_prefixes.append(binding.causal_prefix_hash)
         last_decision_snapshot = decision_snapshot
         last_runtime = (control_runtime, combined_runtime, knowledge, bundle)
+        replay_progress = update_replay_progress(row.source_second)
         launch.emit_launch(
             "PAIRED_PREFIX_ACCEPTED",
             **make_paired_launch_event(
@@ -1384,15 +1486,17 @@ def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
                 combined_ledger=combined_ledger,
                 decision_snapshot=decision_snapshot,
                 control_evidence=control_causal_evidence,
-            combined_evidence=combined_causal_evidence,
-            governing_receipt=governing_receipt,
-        ),
+                combined_evidence=combined_causal_evidence,
+                governing_receipt=governing_receipt,
+                october_replay_progress=replay_progress,
+            ),
         )
 
     try:
         replay_receipt = replay_dbn_files_to_causal_seconds(
             [str(path) for path in source_paths], builder=builder, on_second=on_second
         )
+        update_replay_progress(TARGET_END - 1)
     finally:
         causal_chain_receipt = causal_writer.close()
         control_causal_evidence.close()
@@ -1439,6 +1543,7 @@ def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
         "v4_authority_runtime_receipt_hash": authority_validation["receipt_hash"],
         "s135_substrate_descriptor_hash": substrate_descriptor["descriptor_hash"],
         "marked_prefix_count": len(marked_prefixes),
+        "october_replay_progress": last_replay_progress,
         "v4_governing_prefix_receipt_hashes": governing_runtime_receipt_hashes,
         "global_freeze_receipt_hash": freeze.receipt_hash,
         "knowledge_global_freeze_receipt_hash": router_freeze.receipt_hash,

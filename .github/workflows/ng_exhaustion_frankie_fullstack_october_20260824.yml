@@ -60,18 +60,8 @@ jobs:
             --require-hashes \
             -r deploy/aws/requirements-frankie-fullstack-ci-20260824.lock
           "$ci_venv/bin/python" -m pytest --quiet \
-            research/kalshi/tests/test_frankie_authority_knowledge_plane_20260824.py \
-            research/kalshi/tests/test_frankie_lane_aware_context_router_20260824.py \
-            research/kalshi/tests/test_frankie_full_stack_paired_lane_orchestrator_20260824.py \
-            research/kalshi/tests/test_frankie_full_stack_provisional_combined_pipeline_20260824.py \
-            research/kalshi/tests/test_frankie_provider_knowledge_tools_20260824.py \
-            research/kalshi/tests/test_frankie_full_stack_runtime_adapter_20260824.py \
-            research/kalshi/tests/test_frankie_causal_operational_context_20260824.py \
-            research/kalshi/tests/test_frankie_causal_runtime_tools_20260824.py \
-            research/kalshi/tests/test_frankie_v4_authority_runtime_validation_20260824.py \
-            research/kalshi/tests/test_frankie_source_inventory_cross_reference_20260824.py \
-            research/kalshi/tests/test_ng_exhaustion_frankie_fullstack_october_20260824.py \
-            research/kalshi/tests/test_ng_exhaustion_frankie_fullstack_october_launch_workflow_20260824.py
+            research/kalshi/tests/test_frankie_full_stack_runtime_adapter_20260824.py::test_four_helpers_overlap_on_distinct_singleton_cpu_threads_before_frankie \
+            research/kalshi/tests/test_ng_exhaustion_frankie_fullstack_october_launch_workflow_20260824.py::FullStackOctoberLaunchWorkflowTests::test_cpu_affinity_and_first_prefix_receipts_are_gated
 
       - name: Build hash-locked offline runtime package without credentials
         id: package
@@ -408,7 +398,7 @@ jobs:
               print("forbidden V3 denial is incomplete", file=sys.stderr)
               raise SystemExit(1)
 
-          paired = by_event["PAIRED_PREFIX_ACCEPTED"][-1]
+          paired = by_event["PAIRED_PREFIX_ACCEPTED"][0]
           if not sha_pattern.fullmatch(str(paired.get("receipt_hash") or "")):
               print("paired-prefix receipt hash is missing", file=sys.stderr)
               raise SystemExit(1)
@@ -437,6 +427,188 @@ jobs:
               raise SystemExit(1)
           if not sha_pattern.fullmatch(control_prefix) or control_prefix != combined_prefix:
               print("paired lanes do not bind the identical causal prefix", file=sys.stderr)
+              raise SystemExit(1)
+
+          expected_role_cpu_map = {
+              "recurrence": 0,
+              "extension": 1,
+              "timing": 2,
+              "context": 3,
+          }
+          helper_cpu_execution = paired.get("helper_cpu_execution")
+          if not isinstance(helper_cpu_execution, dict):
+              print("helper CPU execution evidence is missing", file=sys.stderr)
+              raise SystemExit(1)
+          mapping_version = helper_cpu_execution.get("mapping_version")
+          if not isinstance(mapping_version, str) or not mapping_version.strip():
+              print("helper CPU mapping version is missing", file=sys.stderr)
+              raise SystemExit(1)
+          role_cpu_map = helper_cpu_execution.get("role_cpu_map")
+          if (
+              role_cpu_map != expected_role_cpu_map
+              or any(type(value) is not int for value in role_cpu_map.values())
+          ):
+              print("helper role-to-CPU mapping drift", file=sys.stderr)
+              raise SystemExit(1)
+          process_effective_affinity = helper_cpu_execution.get("process_effective_affinity")
+          if (
+              process_effective_affinity != [0, 1, 2, 3]
+              or any(type(value) is not int for value in process_effective_affinity)
+          ):
+              print("provider process effective CPU affinity drift", file=sys.stderr)
+              raise SystemExit(1)
+          helper_lanes = helper_cpu_execution.get("lanes")
+          if not isinstance(helper_lanes, dict) or set(helper_lanes) != set(expected_lanes):
+              print("helper CPU lane evidence is incomplete", file=sys.stderr)
+              raise SystemExit(1)
+
+          helper_batch_timings = {}
+          helper_receipt_hashes = {}
+          helper_native_thread_ids = {}
+          helper_binding_run_ids = set()
+          for lane in expected_lanes:
+              lane_execution = helper_lanes.get(lane)
+              if not isinstance(lane_execution, dict):
+                  print(f"{lane} helper CPU execution evidence is missing", file=sys.stderr)
+                  raise SystemExit(1)
+              receipts = lane_execution.get("receipts")
+              receipt_hashes = lane_execution.get("receipt_hashes")
+              if not isinstance(receipts, list) or len(receipts) != 4:
+                  print(f"{lane} must expose exactly four helper CPU receipts", file=sys.stderr)
+                  raise SystemExit(1)
+              if not isinstance(receipt_hashes, list) or len(receipt_hashes) != 4:
+                  print(f"{lane} helper CPU receipt hash roster is invalid", file=sys.stderr)
+                  raise SystemExit(1)
+              if [row.get("role") for row in receipts if isinstance(row, dict)] != list(expected_role_cpu_map):
+                  print(f"{lane} helper role order or identity drift", file=sys.stderr)
+                  raise SystemExit(1)
+
+              starts = []
+              ends = []
+              native_thread_ids = []
+              observed_receipt_hashes = []
+              for receipt in receipts:
+                  if not isinstance(receipt, dict):
+                      print(f"{lane} helper CPU receipt is not an object", file=sys.stderr)
+                      raise SystemExit(1)
+                  role = receipt.get("role")
+                  cpu = expected_role_cpu_map.get(role)
+                  binding = receipt.get("binding")
+                  requested_cpu = receipt.get("requested_cpu")
+                  observed_affinity = receipt.get("observed_affinity")
+                  started = receipt.get("started_monotonic_ns")
+                  ended = receipt.get("ended_monotonic_ns")
+                  duration = receipt.get("duration_ns")
+                  native_thread_id = receipt.get("native_thread_id")
+                  receipt_hash = str(receipt.get("receipt_hash") or "")
+                  if (
+                      cpu is None
+                      or receipt.get("lane_id") != lane
+                      or receipt.get("mapping_version") != mapping_version
+                      or type(requested_cpu) is not int
+                      or requested_cpu != cpu
+                      or observed_affinity != [cpu]
+                      or any(type(value) is not int for value in observed_affinity)
+                      or not isinstance(binding, dict)
+                      or binding.get("causal_prefix_hash") != control_prefix
+                  ):
+                      print(f"{lane} {role} CPU or causal-prefix binding drift", file=sys.stderr)
+                      raise SystemExit(1)
+                  helper_binding_run_ids.add(str(binding.get("run_id") or ""))
+                  if (
+                      not isinstance(native_thread_id, int)
+                      or isinstance(native_thread_id, bool)
+                      or native_thread_id <= 0
+                      or not isinstance(started, int)
+                      or isinstance(started, bool)
+                      or not isinstance(ended, int)
+                      or isinstance(ended, bool)
+                      or not isinstance(duration, int)
+                      or isinstance(duration, bool)
+                      or started < 0
+                      or ended <= started
+                      or duration != ended - started
+                  ):
+                      print(f"{lane} {role} helper timing or native thread evidence is invalid", file=sys.stderr)
+                      raise SystemExit(1)
+                  if (
+                      not sha_pattern.fullmatch(str(receipt.get("provider_receipt_hash") or ""))
+                      or not sha_pattern.fullmatch(str(receipt.get("helper_packet_hash") or ""))
+                      or not sha_pattern.fullmatch(receipt_hash)
+                  ):
+                      print(f"{lane} {role} helper content identity is invalid", file=sys.stderr)
+                      raise SystemExit(1)
+                  receipt_core = dict(receipt)
+                  del receipt_core["receipt_hash"]
+                  recomputed_hash = hashlib.sha256(
+                      json.dumps(
+                          receipt_core,
+                          sort_keys=True,
+                          separators=(",", ":"),
+                          ensure_ascii=True,
+                      ).encode()
+                  ).hexdigest()
+                  if recomputed_hash != receipt_hash:
+                      print(f"{lane} {role} helper receipt content hash mismatch", file=sys.stderr)
+                      raise SystemExit(1)
+                  starts.append(started)
+                  ends.append(ended)
+                  native_thread_ids.append(native_thread_id)
+                  observed_receipt_hashes.append(receipt_hash)
+
+              if len(set(native_thread_ids)) != 4:
+                  print(f"{lane} helpers did not run on four distinct native threads", file=sys.stderr)
+                  raise SystemExit(1)
+              if max(starts) >= min(ends):
+                  print(f"{lane} helpers were not concurrently active", file=sys.stderr)
+                  raise SystemExit(1)
+              batch_started = lane_execution.get("batch_started_monotonic_ns")
+              batch_ended = lane_execution.get("batch_ended_monotonic_ns")
+              batch_duration = lane_execution.get("batch_duration_ns")
+              if (
+                  batch_started != min(starts)
+                  or batch_ended != max(ends)
+                  or batch_duration != batch_ended - batch_started
+                  or receipt_hashes != observed_receipt_hashes
+              ):
+                  print(f"{lane} helper batch timing or receipt summary mismatch", file=sys.stderr)
+                  raise SystemExit(1)
+              helper_batch_timings[lane] = {
+                  "batch_started_monotonic_ns": batch_started,
+                  "batch_ended_monotonic_ns": batch_ended,
+                  "batch_duration_ns": batch_duration,
+              }
+              helper_receipt_hashes[lane] = observed_receipt_hashes
+              helper_native_thread_ids[lane] = native_thread_ids
+
+          if helper_binding_run_ids == {""} or len(helper_binding_run_ids) != 1:
+              print("helper CPU receipts do not bind one non-empty run", file=sys.stderr)
+              raise SystemExit(1)
+          if (
+              helper_batch_timings["S135_CONTROL"]["batch_ended_monotonic_ns"]
+              > helper_batch_timings["FULL_PROVISIONAL_COMBINED"]["batch_started_monotonic_ns"]
+          ):
+              print("control and combined helper batches overlapped", file=sys.stderr)
+              raise SystemExit(1)
+
+          october_replay_progress = paired.get("october_replay_progress")
+          if not isinstance(october_replay_progress, dict):
+              print("October replay progress is missing", file=sys.stderr)
+              raise SystemExit(1)
+          completed_percent = october_replay_progress.get("completed_percent")
+          remaining_percent = october_replay_progress.get("remaining_percent")
+          accepted_prefix_count = october_replay_progress.get("accepted_prefix_count")
+          if (
+              not isinstance(completed_percent, (int, float))
+              or isinstance(completed_percent, bool)
+              or not isinstance(remaining_percent, (int, float))
+              or isinstance(remaining_percent, bool)
+              or abs(float(completed_percent) + float(remaining_percent) - 100.0) > 1e-9
+              or not isinstance(accepted_prefix_count, int)
+              or isinstance(accepted_prefix_count, bool)
+              or accepted_prefix_count < 1
+          ):
+              print("October replay progress is invalid", file=sys.stderr)
               raise SystemExit(1)
 
           control_ids = paired.get("control_provider_response_ids")
@@ -822,6 +994,13 @@ jobs:
               "provider_tool_call_counts": {
                   lane: provider_tools[lane]["call_count"] for lane in expected_lanes
               },
+              "helper_cpu_mapping_version": mapping_version,
+              "helper_role_cpu_map": expected_role_cpu_map,
+              "provider_process_effective_affinity": [0, 1, 2, 3],
+              "helper_receipt_hashes": helper_receipt_hashes,
+              "helper_native_thread_ids": helper_native_thread_ids,
+              "helper_batch_timings": helper_batch_timings,
+              "october_replay_progress": october_replay_progress,
               "evidence_journal_head_hashes": journal_heads,
               "v4_governing_runtime_receipt_hash": governing["governing_runtime_receipt_hash"],
               "v4_governing_module_identity_hash": governing["module_identity_hash"],
@@ -840,6 +1019,8 @@ jobs:
           run_log=__RUN_LOG__
           output=__OUTPUT__
           openai_credential_file=__OPENAI_CREDENTIAL_FILE__
+
+          python -c 'import json, os; effective = os.sched_getaffinity(0); assert effective == {0, 1, 2, 3}, f"provider unit CPU affinity drift: {sorted(effective)}"; print(json.dumps({"event": "PROVIDER_UNIT_CPU_AFFINITY_VERIFIED", "effective_cpu_affinity": sorted(effective)}, sort_keys=True))'
 
           set +e
           set -a
@@ -897,6 +1078,7 @@ jobs:
               f"openai_credential_file={shlex.quote(openai_credential_file)}",
               f"artifact_uri={shlex.quote(artifact_uri)}",
               f"provider_user={shlex.quote('frk_' + sha[:8] + '_' + run_id)}",
+              "python3 -c 'import os; available = os.sched_getaffinity(0); required = {0, 1, 2, 3}; assert required.issubset(available), f\"required CPUs 0-3 unavailable: {sorted(available)}\"'",
               'test ! -e "$root"',
               'test -s "$credential_file"',
               'install -d -m 0755 "$root" "$repo" "$output"',
@@ -941,7 +1123,11 @@ jobs:
               f"printf %s {shlex.quote(encoded(runner_script))} | base64 -d > \"$root/run.sh\"",
               'chown "$provider_user":"$provider_group" "$root/run.sh"',
               'chmod 700 "$root/check_gates.py" "$root/run.sh"',
-              'systemd-run --collect --unit "$unit" --uid "$provider_user" --gid "$provider_group" --property=Type=exec --property=Restart=no --property=WorkingDirectory="$repo" --property=NoNewPrivileges=yes --property=PrivateTmp=yes --property=PrivateDevices=yes --property=ProtectHome=yes --property=ProtectSystem=strict --property=IPAddressDeny=169.254.169.254/32 --property=IPAddressDeny=fd00:ec2::254/128 --property="ReadWritePaths=$output $run_log" --property="InaccessiblePaths=$aws_credential_file /mnt/markets/ng_exhaustion_step1_5y_20260822" /bin/bash "$root/run.sh" >/dev/null',
+              'systemd-run --collect --unit "$unit" --uid "$provider_user" --gid "$provider_group" --property=Type=exec --property=Restart=no --property="CPUAffinity=0 1 2 3" --property=WorkingDirectory="$repo" --property=NoNewPrivileges=yes --property=PrivateTmp=yes --property=PrivateDevices=yes --property=ProtectHome=yes --property=ProtectSystem=strict --property=IPAddressDeny=169.254.169.254/32 --property=IPAddressDeny=fd00:ec2::254/128 --property="ReadWritePaths=$output $run_log" --property="InaccessiblePaths=$aws_credential_file /mnt/markets/ng_exhaustion_step1_5y_20260822" /bin/bash "$root/run.sh" >/dev/null',
+              'main_pid=0',
+              'for _ in $(seq 1 60); do main_pid="$(systemctl show --property=MainPID --value "$unit" 2>/dev/null || true)"; if [ "${main_pid:-0}" -gt 0 ] 2>/dev/null; then break; fi; sleep 1; done',
+              'test "${main_pid:-0}" -gt 0',
+              "python3 -c 'import json, os, sys; effective = os.sched_getaffinity(int(sys.argv[1])); assert effective == {0, 1, 2, 3}, f\"provider MainPID CPU affinity drift: {sorted(effective)}\"; print(json.dumps({\"event\": \"PROVIDER_MAINPID_CPU_AFFINITY_VERIFIED\", \"main_pid\": int(sys.argv[1]), \"effective_cpu_affinity\": sorted(effective)}, sort_keys=True))' \"$main_pid\"",
               'echo "FULLSTACK_SYSTEMD_UNIT=$unit"',
               'echo "FULLSTACK_ROOT=$root"',
               'echo "FULLSTACK_ARTIFACT_PREFIX=$artifact_uri/"',

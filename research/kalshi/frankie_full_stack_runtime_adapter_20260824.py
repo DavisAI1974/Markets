@@ -8,6 +8,7 @@ the complete hash chain before every append/resume, and never overwrites or back
 """
 from __future__ import annotations
 
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import asdict, dataclass, is_dataclass
 import fcntl
 import hashlib
@@ -15,6 +16,8 @@ import json
 import os
 from pathlib import Path
 import re
+import threading
+import time
 from typing import Any, Mapping, Protocol, Sequence
 
 from research.kalshi.frankie_provider_knowledge_tools_20260824 import (
@@ -35,7 +38,9 @@ from research.kalshi.frankie_full_stack_runtime_contracts_20260824 import (
     CausalPrefixBinding,
     EvidenceCitation,
     FrankieSynthesisRecord,
+    HELPER_CPU_MAPPING_VERSION,
     HelperEvidencePacket,
+    HelperCpuAffinityTimingReceipt,
     HelperRole,
     KnowledgeSourceExcerpt,
     LedgerKind,
@@ -49,6 +54,8 @@ from research.kalshi.frankie_full_stack_runtime_contracts_20260824 import (
     ToolCallReceipt,
     UncertaintyPacket,
     helper_contracts,
+    helper_role_cpu_map,
+    validate_helper_cpu_affinity_timing_receipts,
     validate_knowledge_excerpts,
     validate_helper_batch,
 )
@@ -320,6 +327,7 @@ class DurableJsonlLedger:
         self.path = path
         self.run_id = run_id
         self._records = list(records)
+        self._lock = threading.RLock()
 
     @classmethod
     def create(cls, path: str | Path, *, run_id: str) -> "DurableJsonlLedger":
@@ -355,7 +363,8 @@ class DurableJsonlLedger:
         return cls(path=target, run_id=run_id, records=_decode_records(data, run_id=run_id))
 
     def snapshot(self) -> tuple[LedgerRecord, ...]:
-        return tuple(self._records)
+        with self._lock:
+            return tuple(self._records)
 
     def append(
         self,
@@ -364,70 +373,72 @@ class DurableJsonlLedger:
         binding: CausalPrefixBinding,
         content: Mapping[str, Any],
     ) -> LedgerRecord:
-        if not isinstance(kind, LedgerKind):
-            raise AdapterRuntimeError("durable ledger kind is invalid")
-        bound = binding.validate()
-        if bound.run_id != self.run_id:
-            raise AdapterRuntimeError("durable ledger binding run_id mismatch")
-        if self._records and bound.causal_cutoff < self._records[-1].causal_cutoff:
-            raise AdapterRuntimeError("durable ledger refuses causal backfill")
-        if not isinstance(content, Mapping):
-            raise AdapterRuntimeError("durable ledger content must be an object")
-
-        try:
-            fd = os.open(self.path, os.O_RDWR | os.O_APPEND | _OPEN_FLAGS)
-        except OSError as exc:
-            raise AdapterRuntimeError(f"durable ledger append open failed: {_redact_error(exc)}") from exc
-        try:
-            fcntl.flock(fd, fcntl.LOCK_EX)
-            disk_records = _decode_records(_read_fd(fd), run_id=self.run_id)
-            if disk_records != tuple(self._records):
-                raise AdapterRuntimeError("durable ledger changed concurrently; refusing fork or overwrite")
-            content_json = _canonical(dict(content), "ledger content")
-            content_hash = hashlib.sha256(content_json.encode()).hexdigest()
-            prior = disk_records[-1].record_hash if disk_records else GENESIS
-            core = _record_core(
-                run_id=self.run_id,
-                sequence=len(disk_records),
-                kind=kind,
-                binding=bound,
-                content_hash=content_hash,
-                prior_record_hash=prior,
-            )
-            record = LedgerRecord(
-                run_id=self.run_id,
-                sequence=len(disk_records),
-                kind=kind,
-                causal_cutoff=bound.causal_cutoff,
-                binding=bound,
-                content_json=content_json,
-                content_hash=content_hash,
-                prior_record_hash=prior,
-                record_hash=_hash(core),
-            )
-            payload = (_record_json(record) + "\n").encode()
-            offset = 0
-            while offset < len(payload):
-                written = os.write(fd, payload[offset:])
-                if written <= 0:
-                    raise AdapterRuntimeError("durable ledger append made no progress")
-                offset += written
-            os.fsync(fd)
-            self._records.append(record)
-            return record
-        finally:
+        with self._lock:
+            if not isinstance(kind, LedgerKind):
+                raise AdapterRuntimeError("durable ledger kind is invalid")
+            bound = binding.validate()
+            if bound.run_id != self.run_id:
+                raise AdapterRuntimeError("durable ledger binding run_id mismatch")
+            if self._records and bound.causal_cutoff < self._records[-1].causal_cutoff:
+                raise AdapterRuntimeError("durable ledger refuses causal backfill")
+            if not isinstance(content, Mapping):
+                raise AdapterRuntimeError("durable ledger content must be an object")
             try:
-                fcntl.flock(fd, fcntl.LOCK_UN)
+                fd = os.open(self.path, os.O_RDWR | os.O_APPEND | _OPEN_FLAGS)
+            except OSError as exc:
+                raise AdapterRuntimeError(f"durable ledger append open failed: {_redact_error(exc)}") from exc
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+                disk_records = _decode_records(_read_fd(fd), run_id=self.run_id)
+                if disk_records != tuple(self._records):
+                    raise AdapterRuntimeError("durable ledger changed concurrently; refusing fork or overwrite")
+                content_json = _canonical(dict(content), "ledger content")
+                content_hash = hashlib.sha256(content_json.encode()).hexdigest()
+                prior = disk_records[-1].record_hash if disk_records else GENESIS
+                core = _record_core(
+                    run_id=self.run_id,
+                    sequence=len(disk_records),
+                    kind=kind,
+                    binding=bound,
+                    content_hash=content_hash,
+                    prior_record_hash=prior,
+                )
+                record = LedgerRecord(
+                    run_id=self.run_id,
+                    sequence=len(disk_records),
+                    kind=kind,
+                    causal_cutoff=bound.causal_cutoff,
+                    binding=bound,
+                    content_json=content_json,
+                    content_hash=content_hash,
+                    prior_record_hash=prior,
+                    record_hash=_hash(core),
+                )
+                payload = (_record_json(record) + "\n").encode()
+                offset = 0
+                while offset < len(payload):
+                    written = os.write(fd, payload[offset:])
+                    if written <= 0:
+                        raise AdapterRuntimeError("durable ledger append made no progress")
+                    offset += written
+                os.fsync(fd)
+                self._records.append(record)
+                return record
             finally:
-                os.close(fd)
+                try:
+                    fcntl.flock(fd, fcntl.LOCK_UN)
+                finally:
+                    os.close(fd)
 
 
 class RecordingEventSink:
     def __init__(self) -> None:
         self.events: list[RuntimeEvent] = []
+        self._lock = threading.RLock()
 
     def emit(self, event: RuntimeEvent) -> None:
-        self.events.append(event)
+        with self._lock:
+            self.events.append(event)
 
 
 _HELPER_INSTRUCTIONS = {
@@ -520,6 +531,7 @@ def _is_value_bearing_state_execution(execution: ProviderToolExecution) -> bool:
 class PrefixRuntimeResult:
     binding: CausalPrefixBinding
     helper_packets: tuple[HelperEvidencePacket, ...]
+    helper_cpu_affinity_receipts: tuple[HelperCpuAffinityTimingReceipt, ...]
     synthesis: FrankieSynthesisRecord
     invocation_receipts: tuple[ProviderInvocationReceipt, ...]
     final_ledger_hash: str
@@ -565,17 +577,19 @@ class FullStackRuntimeAdapter:
         self.ledger = ledger
         self.event_sink = event_sink
         self.provider_tools = provider_tools
+        self._event_lock = threading.RLock()
 
     def _event(self, name: str, binding: CausalPrefixBinding, details: Mapping[str, Any]) -> None:
-        self.event_sink.emit(
-            RuntimeEvent.create(
-                name=name,
-                run_id=binding.run_id,
-                correlation_id=binding.causal_prefix_hash,
-                causal_cutoff=binding.causal_cutoff,
-                details=details,
+        with self._event_lock:
+            self.event_sink.emit(
+                RuntimeEvent.create(
+                    name=name,
+                    run_id=binding.run_id,
+                    correlation_id=binding.causal_prefix_hash,
+                    causal_cutoff=binding.causal_cutoff,
+                    details=details,
+                )
             )
-        )
 
     def _persist(self, kind: LedgerKind, binding: CausalPrefixBinding, content: Mapping[str, Any]) -> LedgerRecord:
         record = self.ledger.append(kind=kind, binding=binding, content=content)
@@ -1072,6 +1086,18 @@ class FullStackRuntimeAdapter:
             not isinstance(provisional_context, Mapping) or not provisional_context
         ):
             raise AdapterRuntimeError("FULL_PROVISIONAL_COMBINED requires provisional context")
+        cpu_map = helper_role_cpu_map()
+        if tuple(cpu_map.items()) != tuple(zip(HelperRole, (0, 1, 2, 3))):
+            raise AdapterRuntimeError("helper CPU mapping differs from the fixed role order")
+        try:
+            available_cpus = frozenset(os.sched_getaffinity(0))
+        except (AttributeError, OSError) as exc:
+            raise AdapterRuntimeError("helper CPU affinity preflight is unavailable") from exc
+        required_cpus = frozenset(cpu_map.values())
+        if not required_cpus.issubset(available_cpus):
+            raise AdapterRuntimeError(
+                "helper CPU affinity preflight requires available CPUs 0, 1, 2, and 3"
+            )
         tools = tuple(item.validate() for item in tool_calls)
         reads = tuple(item.validate() for item in retrievals)
         if not tools or not reads:
@@ -1131,40 +1157,157 @@ class FullStackRuntimeAdapter:
                 },
             )
 
-            packets: list[HelperEvidencePacket] = []
-            invocations: list[ProviderInvocationReceipt] = []
-            for role in HelperRole:
-                contract = helper_contracts()[role]
-                payload = {
-                    "schema": HELPER_REQUEST_SCHEMA,
-                    "request_type": "HELPER_EVIDENCE",
-                    "role": role.value,
-                    "role_title": contract.title,
-                    "role_objective": contract.objective,
-                    "binding": bound.identity_payload(),
-                    "causal_state": full_state,
-                    "required_output_schema": _HELPER_OUTPUT_SCHEMA,
-                    "authority": {
-                        "evidence_only": True,
-                        "can_synthesize_probability": False,
-                        "can_own_primary_lock": False,
+            readiness = threading.Condition()
+            ready_roles: set[HelperRole] = set()
+            pin_failures: list[BaseException] = []
+            start_provider_calls = threading.Event()
+
+            def run_helper(
+                role: HelperRole,
+            ) -> tuple[
+                HelperEvidencePacket,
+                ProviderInvocationReceipt,
+                HelperCpuAffinityTimingReceipt,
+            ]:
+                requested_cpu = cpu_map[role]
+                native_thread_id = threading.get_native_id()
+                original_affinity: frozenset[int] | None = None
+                pinned = False
+                try:
+                    original_affinity = frozenset(os.sched_getaffinity(native_thread_id))
+                    os.sched_setaffinity(native_thread_id, {requested_cpu})
+                    observed_affinity = tuple(sorted(os.sched_getaffinity(native_thread_id)))
+                    if observed_affinity != (requested_cpu,):
+                        raise AdapterRuntimeError(
+                            f"helper {role.value} did not observe singleton CPU {requested_cpu}"
+                        )
+                    pinned = True
+                    with readiness:
+                        ready_roles.add(role)
+                        readiness.notify_all()
+                    start_provider_calls.wait()
+                    with readiness:
+                        if pin_failures:
+                            raise AdapterRuntimeError(
+                                "helper provider batch aborted before provider calls"
+                            )
+
+                    started_monotonic_ns = time.monotonic_ns()
+                    contract = helper_contracts()[role]
+                    payload = {
+                        "schema": HELPER_REQUEST_SCHEMA,
+                        "request_type": "HELPER_EVIDENCE",
+                        "role": role.value,
+                        "role_title": contract.title,
+                        "role_objective": contract.objective,
+                        "binding": bound.identity_payload(),
+                        "causal_state": full_state,
+                        "required_output_schema": _HELPER_OUTPUT_SCHEMA,
+                        "authority": {
+                            "evidence_only": True,
+                            "can_synthesize_probability": False,
+                            "can_own_primary_lock": False,
+                        },
+                    }
+                    output, invocation = self._invoke(
+                        binding=bound,
+                        task=f"helper:{role.value}",
+                        instructions=_HELPER_INSTRUCTIONS[role],
+                        payload=payload,
+                        request_context=request_context,
+                        knowledge_sources=sources,
+                        tool_calls=tools,
+                        retrievals=reads,
+                    )
+                    packet = self._parse_helper(
+                        role=role, binding=bound, output=output, invocation=invocation
+                    )
+                    ended_monotonic_ns = time.monotonic_ns()
+                    receipt = HelperCpuAffinityTimingReceipt.create(
+                        role=role,
+                        lane_id=lane,
+                        binding=bound,
+                        requested_cpu=requested_cpu,
+                        observed_affinity=observed_affinity,
+                        native_thread_id=native_thread_id,
+                        mapping_version=HELPER_CPU_MAPPING_VERSION,
+                        started_monotonic_ns=started_monotonic_ns,
+                        ended_monotonic_ns=ended_monotonic_ns,
+                        provider_receipt_hash=invocation.receipt_hash,
+                        helper_packet_hash=packet.packet_hash,
+                    )
+                    return packet, invocation, receipt
+                except BaseException as exc:
+                    with readiness:
+                        if role not in ready_roles:
+                            pin_failures.append(exc)
+                            readiness.notify_all()
+                    raise
+                finally:
+                    if pinned and original_affinity is not None:
+                        try:
+                            os.sched_setaffinity(native_thread_id, original_affinity)
+                        except OSError as exc:
+                            raise AdapterRuntimeError(
+                                f"helper {role.value} failed to restore native thread affinity"
+                            ) from exc
+
+            futures: dict[
+                HelperRole,
+                Future[
+                    tuple[
+                        HelperEvidencePacket,
+                        ProviderInvocationReceipt,
+                        HelperCpuAffinityTimingReceipt,
+                    ]
+                ],
+            ] = {}
+            with ThreadPoolExecutor(
+                max_workers=len(HelperRole), thread_name_prefix=f"frankie-{lane.lower()}"
+            ) as executor:
+                for role in HelperRole:
+                    futures[role] = executor.submit(run_helper, role)
+                with readiness:
+                    all_workers_ready = readiness.wait_for(
+                        lambda: len(ready_roles) + len(pin_failures) == len(HelperRole),
+                        timeout=30.0,
+                    )
+                    if not all_workers_ready:
+                        pin_failures.append(
+                            AdapterRuntimeError("helper CPU pinning readiness timed out")
+                        )
+                    start_provider_calls.set()
+                if pin_failures:
+                    for future in futures.values():
+                        try:
+                            future.result()
+                        except BaseException:
+                            pass
+                    raise AdapterRuntimeError(
+                        f"helper CPU pinning failed before provider calls: {_redact_error(pin_failures[0])}"
+                    ) from pin_failures[0]
+                ordered_results = tuple(futures[role].result() for role in HelperRole)
+
+            packets = [item[0] for item in ordered_results]
+            invocations = [item[1] for item in ordered_results]
+            affinity_receipts = validate_helper_cpu_affinity_timing_receipts(
+                [item[2] for item in ordered_results], binding=bound, lane_id=lane
+            )
+            for packet, receipt in zip(packets, affinity_receipts):
+                self._persist(
+                    LedgerKind.INTEGRITY,
+                    bound,
+                    {
+                        "record_type": "HELPER_CPU_AFFINITY_TIMING",
+                        "lane_id": lane,
+                        "mapping_version": HELPER_CPU_MAPPING_VERSION,
+                        "role_cpu_map": {
+                            mapped_role.value: cpu for mapped_role, cpu in cpu_map.items()
+                        },
+                        "receipt": asdict(receipt),
+                        "receipt_hash": receipt.receipt_hash,
                     },
-                }
-                output, invocation = self._invoke(
-                    binding=bound,
-                    task=f"helper:{role.value}",
-                    instructions=_HELPER_INSTRUCTIONS[role],
-                    payload=payload,
-                    request_context=request_context,
-                    knowledge_sources=sources,
-                    tool_calls=tools,
-                    retrievals=reads,
                 )
-                packet = self._parse_helper(
-                    role=role, binding=bound, output=output, invocation=invocation
-                )
-                packets.append(packet)
-                invocations.append(invocation)
                 self._persist(
                     LedgerKind.HELPER_EVIDENCE,
                     bound,
@@ -1175,7 +1318,7 @@ class FullStackRuntimeAdapter:
                         LedgerKind.ABSTENTION,
                         bound,
                         {
-                            "owner": f"HELPER:{role.value}",
+                            "owner": f"HELPER:{packet.role.value}",
                             "packet_hash": packet.packet_hash,
                             "reason": packet.abstention.reason,
                         },
@@ -1264,6 +1407,7 @@ class FullStackRuntimeAdapter:
             return PrefixRuntimeResult(
                 binding=bound,
                 helper_packets=tuple(packets),
+                helper_cpu_affinity_receipts=affinity_receipts,
                 synthesis=synthesis,
                 invocation_receipts=tuple(invocations),
                 final_ledger_hash=final.record_hash,
