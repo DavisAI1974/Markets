@@ -6,6 +6,11 @@ on:
       - chatgpt/ng-exhaustion-entry-timing-revival-20260818
     paths:
       - .github/workflows/ng_exhaustion_step1_receipt_count_20260823.yml
+  pull_request:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - .github/probe-trigger-progress-20260824.txt
   workflow_dispatch:
 
 permissions:
@@ -176,6 +181,7 @@ jobs:
           PY
 
       - name: Retain concise read-only progress observation
+        if: github.event_name != 'pull_request'
         shell: bash
         run: |
           set -euo pipefail
