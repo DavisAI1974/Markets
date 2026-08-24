@@ -1,0 +1,618 @@
+name: NG Exhaustion Step-1 October Proven Shards 20260824
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN_OCTOBER_2021_PROVEN_SHARDS
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ng-exhaustion-step1-october-proven-shards-20260824
+  cancel-in-progress: false
+
+env:
+  CANDIDATE_SHA: 0d318335825b4a0e19a5a2881522f3da0374788e
+  FROZEN_ENGINE_ROOT: /tmp/ng-exhaustion-frozen-engine
+  NG_EXHAUSTION_FROZEN_ENGINE_ROOT: /tmp/ng-exhaustion-frozen-engine
+  MANIFEST_REL: research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json
+  AWS_DEFAULT_REGION: us-east-2
+  MPLCONFIGDIR: /tmp/matplotlib
+  OMP_NUM_THREADS: '1'
+  OPENBLAS_NUM_THREADS: '1'
+  MKL_NUM_THREADS: '1'
+  NUMEXPR_NUM_THREADS: '1'
+
+jobs:
+  validate-frozen-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Require the explicit production phrase
+        shell: bash
+        run: test '${{ inputs.confirmation }}' = RUN_OCTOBER_2021_PROVEN_SHARDS
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Materialize the exact frozen scientific engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          git worktree add --detach "$FROZEN_ENGINE_ROOT" "$CANDIDATE_SHA"
+          test "$(git -C "$FROZEN_ENGINE_ROOT" rev-parse HEAD)" = "$CANDIDATE_SHA"
+          cmp "$MANIFEST_REL" "$FROZEN_ENGINE_ROOT/$MANIFEST_REL"
+
+      - name: Install the frozen runtime
+        run: |
+          python -m pip install --quiet \
+            numpy==1.26.4 scipy==1.11.4 scikit-learn==1.4.2 matplotlib==3.8.4 \
+            boto3==1.35.99 databento==0.81.0
+
+      - name: Run focused wrapper and frozen-engine regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$FROZEN_ENGINE_ROOT"
+          PYTHONPATH="$FROZEN_ENGINE_ROOT/research:$GITHUB_WORKSPACE/research" python -m unittest -v \
+            test_ng_exhaustion_step1_october_shards_20260824
+          PYTHONPATH=research python -m unittest -v \
+            research/test_ng_exhaustion_mbo_5y_step1_census_20260822.py \
+            research/test_ng_exhaustion_mbo_v4_state_adapter_20260820.py \
+            research/test_ng_exhaustion_mbo_v4_legacy_control_semantics_20260820.py
+
+      - name: Freeze the exact October plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p plan
+          cd "$FROZEN_ENGINE_ROOT"
+          python "$GITHUB_WORKSPACE/research/ng_exhaustion_step1_october_shards_20260824.py" plan \
+            --manifest "$FROZEN_ENGINE_ROOT/$MANIFEST_REL" \
+            --output "$GITHUB_WORKSPACE/plan/october-shard-plan.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          plan=json.loads(Path(os.environ['GITHUB_WORKSPACE'],'plan/october-shard-plan.json').read_text())
+          assert plan['source_object_count']==26
+          assert plan['shard_count']==4
+          assert plan['frozen_candidate_commit']==os.environ['CANDIDATE_SHA']
+          assert plan['scientific_engine_changed'] is False
+          print('OCTOBER_PLAN_LOCK=PASS',plan['plan_sha256'])
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: october-proven-shard-plan
+          path: plan/october-shard-plan.json
+          if-no-files-found: error
+          retention-days: 30
+
+  prove-boundaries:
+    needs: validate-frozen-contract
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - predecessor: '20211001'
+            boundary: '20211010'
+          - predecessor: '20211010'
+            boundary: '20211017'
+          - predecessor: '20211017'
+            boundary: '20211024'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      RUN_PREFIX: nymex/ng_mbo_5y_v0/step1_census/october_sharded/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Materialize the frozen engine and runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          git worktree add --detach "$FROZEN_ENGINE_ROOT" "$CANDIDATE_SHA"
+          python -m pip install --quiet \
+            numpy==1.26.4 scipy==1.11.4 scikit-learn==1.4.2 matplotlib==3.8.4 \
+            boto3==1.35.99 databento==0.81.0
+
+      - name: Stage only the transition's exact manifest-bound objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/october-transition-stage proof
+          cd "$FROZEN_ENGINE_ROOT"
+          PRED='${{ matrix.predecessor }}' BOUNDARY='${{ matrix.boundary }}' \
+          PYTHONPATH="$FROZEN_ENGINE_ROOT/research:$GITHUB_WORKSPACE/research" python - <<'PY'
+          import os
+          from pathlib import Path
+          from kalshi import creds
+          import ng_exhaustion_mbo_5y_step1_census_20260822 as census
+          import ng_exhaustion_step1_october_shards_20260824 as october
+          manifest=census.load_manifest(Path(os.environ['FROZEN_ENGINE_ROOT'],os.environ['MANIFEST_REL']))
+          plan=october.october_shard_plan(manifest)
+          transition=next(x for x in plan['boundary_transitions'] if x['predecessor_date']==os.environ['PRED'] and x['boundary_date']==os.environ['BOUNDARY'])
+          by_key={x['key']:x for x in manifest['canonical_dbn_objects']}
+          stage=Path('/tmp/october-transition-stage')
+          s3=creds.aws_client('s3',manifest.get('region','us-east-2'))
+          for bound in transition['source_objects']:
+              obj=by_key[bound['key']]
+              path=census._local_object_path(stage,manifest,obj)
+              path.parent.mkdir(parents=True,exist_ok=True)
+              s3.download_file(manifest['bucket'],obj['key'],str(path))
+              if path.stat().st_size != int(obj['bytes']) or census.sha256_file(path) != obj['sha256']:
+                  raise SystemExit(f"SOURCE_IDENTITY_DRIFT={obj['key']}")
+          print('STAGED_EXACT_OBJECTS',len(transition['source_objects']))
+          PY
+
+      - name: Prove complete V4 state equality or fail closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$FROZEN_ENGINE_ROOT"
+          /usr/bin/time -v -o "$GITHUB_WORKSPACE/proof/${{ matrix.predecessor }}-${{ matrix.boundary }}.resource.txt" \
+          python "$GITHUB_WORKSPACE/research/ng_exhaustion_step1_october_shards_20260824.py" prove-transition \
+            --manifest "$FROZEN_ENGINE_ROOT/$MANIFEST_REL" \
+            --stage-dir /tmp/october-transition-stage \
+            --predecessor-date '${{ matrix.predecessor }}' \
+            --boundary-date '${{ matrix.boundary }}' \
+            --output "$GITHUB_WORKSPACE/proof/${{ matrix.predecessor }}-${{ matrix.boundary }}.json"
+
+      - name: Durably retain proof and measured resource evidence
+        if: always()
+        shell: bash
+        run: |
+          aws s3 cp proof/ \
+            "s3://bento-568968024170-us-east-2-an/$RUN_PREFIX/boundary-proofs/${{ matrix.predecessor }}-${{ matrix.boundary }}/" \
+            --recursive --only-show-errors
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: october-boundary-proof-${{ matrix.predecessor }}-${{ matrix.boundary }}
+          path: proof/
+          if-no-files-found: error
+          retention-days: 30
+
+  assemble-boundary-gate:
+    needs:
+      - validate-frozen-contract
+      - prove-boundaries
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      RUN_PREFIX: nymex/ng_mbo_5y_v0/step1_census/october_sharded/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Materialize the frozen engine
+        run: |
+          git worktree add --detach "$FROZEN_ENGINE_ROOT" "$CANDIDATE_SHA"
+          python -m pip install --quiet \
+            numpy==1.26.4 scipy==1.11.4 scikit-learn==1.4.2 matplotlib==3.8.4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: october-boundary-proof-*
+          path: proofs
+          merge-multiple: true
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: october-proven-shard-plan
+          path: plan
+
+      - name: Validate the three-link induction chain
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p gate
+          cd "$FROZEN_ENGINE_ROOT"
+          PYTHONPATH="$FROZEN_ENGINE_ROOT/research:$GITHUB_WORKSPACE/research" python "$GITHUB_WORKSPACE/research/ng_exhaustion_step1_october_shards_20260824.py" assemble-gate \
+            --manifest "$FROZEN_ENGINE_ROOT/$MANIFEST_REL" \
+            --proofs \
+              "$GITHUB_WORKSPACE/proofs/20211001-20211010.json" \
+              "$GITHUB_WORKSPACE/proofs/20211010-20211017.json" \
+              "$GITHUB_WORKSPACE/proofs/20211017-20211024.json" \
+            --output "$GITHUB_WORKSPACE/gate/october-boundary-gate.json"
+          cmp "$GITHUB_WORKSPACE/plan/october-shard-plan.json" <(
+            PYTHONPATH="$FROZEN_ENGINE_ROOT/research:$GITHUB_WORKSPACE/research" python "$GITHUB_WORKSPACE/research/ng_exhaustion_step1_october_shards_20260824.py" plan \
+              --manifest "$FROZEN_ENGINE_ROOT/$MANIFEST_REL" --output /tmp/recomputed-plan.json >/dev/null
+            cat /tmp/recomputed-plan.json
+          )
+          aws s3 cp "$GITHUB_WORKSPACE/plan/october-shard-plan.json" \
+            "s3://bento-568968024170-us-east-2-an/$RUN_PREFIX/provenance/october-shard-plan.json" --only-show-errors
+          aws s3 cp "$GITHUB_WORKSPACE/gate/october-boundary-gate.json" \
+            "s3://bento-568968024170-us-east-2-an/$RUN_PREFIX/provenance/october-boundary-gate.json" --only-show-errors
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: october-complete-v4-boundary-gate
+          path: gate/october-boundary-gate.json
+          if-no-files-found: error
+          retention-days: 30
+
+  capacity-canary:
+    needs: assemble-boundary-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      RUN_PREFIX: nymex/ng_mbo_5y_v0/step1_census/october_sharded/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: october-boundary-proof-*
+          path: capacity/proofs
+          merge-multiple: true
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: october-proven-shard-plan
+          path: capacity
+
+      - name: Project shard runtime from the actual full-MBO boundary proofs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os, re, subprocess
+          from pathlib import Path
+          root=Path('capacity')
+          plan=json.loads((root/'october-shard-plan.json').read_text())
+          measurements=[]
+          for proof_path in sorted((root/'proofs').glob('*.json')):
+              proof=json.loads(proof_path.read_text())
+              resource=proof_path.with_suffix('.resource.txt').read_text()
+              elapsed_text=re.search(r'Elapsed \(wall clock\) time .*: ([0-9:.]+)',resource).group(1)
+              pieces=[float(x) for x in elapsed_text.split(':')]
+              elapsed=sum(value*(60**index) for index,value in enumerate(reversed(pieces)))
+              rss_kb=int(re.search(r'Maximum resident set size \(kbytes\): (\d+)',resource).group(1))
+              source_bytes=sum(int(x['bytes']) for x in proof['source_objects'])
+              measurements.append({'proof_receipt_sha256':proof['receipt_sha256'],'source_bytes':source_bytes,'elapsed_seconds':elapsed,'max_rss_kb':rss_kb})
+          if len(measurements)!=3:
+              raise SystemExit('EXACT_THREE_FULL_MBO_PROOF_MEASUREMENTS_REQUIRED')
+          conservative_seconds_per_byte=max(x['elapsed_seconds']/x['source_bytes'] for x in measurements)*2.0
+          projections=[{'shard_id':x['shard_id'],'source_bytes':x['source_total_bytes'],'projected_seconds':round(x['source_total_bytes']*conservative_seconds_per_byte,1)} for x in plan['shards']]
+          max_projected=max(x['projected_seconds'] for x in projections)
+          nproc=int(subprocess.check_output(['nproc'],text=True).strip())
+          cpu_max=Path('/sys/fs/cgroup/cpu.max').read_text().strip() if Path('/sys/fs/cgroup/cpu.max').exists() else 'unavailable'
+          receipt={
+              'schema':'NG_EXHAUSTION_OCTOBER_FULL_MBO_CPU_CANARY_V2_20260824',
+              'status':'PASS' if nproc>=2 and max_projected<18000 else 'FAIL_CLOSED',
+              'measurement':'ACTUAL_FROZEN_FULL_MBO_V4_BOUNDARY_PROOFS',
+              'proof_measurements':measurements,
+              'projection_safety_factor':2.0,
+              'shard_projections':projections,
+              'max_projected_worker_seconds':max_projected,
+              'worker_count':4,
+              'execution_topology':'FOUR_SEPARATE_GITHUB_HOSTED_JOB_RUNNERS',
+              'nproc':nproc,
+              'cpu_affinity':sorted(os.sched_getaffinity(0)),
+              'cpu_max':cpu_max,
+              'thread_caps':{'OMP':1,'OPENBLAS':1,'MKL':1,'NUMEXPR':1},
+              'projected_runner_minutes':round(sum(x['projected_seconds'] for x in projections)/60,1),
+              'approximate_cost_note':'Apply the repository account Linux runner-minute rate; cost is secondary per the authorized handoff.',
+              'scientific_engine_changed':False,
+          }
+          body=json.dumps(receipt,sort_keys=True,separators=(',',':')).encode()
+          receipt['receipt_sha256']=hashlib.sha256(body).hexdigest()
+          (root/'cpu-canary.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          print(json.dumps({'status':receipt['status'],'max_projected_worker_seconds':max_projected,'projected_runner_minutes':receipt['projected_runner_minutes']},sort_keys=True))
+          if receipt['status']!='PASS':
+              raise SystemExit(2)
+          PY
+          aws s3 cp capacity/cpu-canary.json \
+            "s3://bento-568968024170-us-east-2-an/$RUN_PREFIX/provenance/cpu-canary.json" --only-show-errors
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: october-cpu-capacity-canary
+          path: capacity/cpu-canary.json
+          if-no-files-found: error
+          retention-days: 30
+
+  run-shards:
+    needs:
+      - validate-frozen-contract
+      - assemble-boundary-gate
+      - capacity-canary
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        shard_id: [october-cpu-1, october-cpu-2, october-cpu-3, october-cpu-4]
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      RUN_PREFIX: nymex/ng_mbo_5y_v0/step1_census/october_sharded/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Materialize the frozen engine and runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          git worktree add --detach "$FROZEN_ENGINE_ROOT" "$CANDIDATE_SHA"
+          python -m pip install --quiet \
+            numpy==1.26.4 scipy==1.11.4 scikit-learn==1.4.2 matplotlib==3.8.4 \
+            boto3==1.35.99 databento==0.81.0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: october-complete-v4-boundary-gate
+          path: gate
+
+      - name: Record this shard's isolated CPU allocation
+        shell: bash
+        run: |
+          mkdir -p shard/artifact
+          {
+            echo "shard_id=${{ matrix.shard_id }}"
+            echo "nproc=$(nproc)"
+            echo "cpu_max=$(cat /sys/fs/cgroup/cpu.max 2>/dev/null || echo unavailable)"
+            echo "omp_threads=$OMP_NUM_THREADS"
+            taskset -pc $$ || true
+            lscpu
+          } | tee "shard/artifact/${{ matrix.shard_id }}.capacity.txt"
+
+      - name: Run unchanged full-MBO/full-V4 science for one proven shard
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$FROZEN_ENGINE_ROOT"
+          /usr/bin/time -v -o "$GITHUB_WORKSPACE/shard/artifact/${{ matrix.shard_id }}.resource.txt" \
+          python "$GITHUB_WORKSPACE/research/ng_exhaustion_step1_october_shards_20260824.py" run-shard \
+            --manifest "$FROZEN_ENGINE_ROOT/$MANIFEST_REL" \
+            --shard-id '${{ matrix.shard_id }}' \
+            --work-dir "$GITHUB_WORKSPACE/shard" \
+            --boundary-gate "$GITHUB_WORKSPACE/gate/october-boundary-gate.json" \
+            --progress-s3-prefix "$RUN_PREFIX/shards/progress" \
+            2>&1 | tee "$GITHUB_WORKSPACE/shard/artifact/${{ matrix.shard_id }}.log"
+          cp "$GITHUB_WORKSPACE/shard/child/20211001_20211101.receipt.json" \
+            "$GITHUB_WORKSPACE/shard/artifact/${{ matrix.shard_id }}.child-receipt.json"
+
+      - name: Durably retain the exact shard evidence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws s3 cp "shard/artifact/" \
+            "s3://bento-568968024170-us-east-2-an/$RUN_PREFIX/shards/${{ matrix.shard_id }}/" \
+            --recursive --only-show-errors
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: october-shard-${{ matrix.shard_id }}
+          path: shard/artifact/
+          if-no-files-found: error
+          retention-days: 30
+
+  merge-candidate:
+    needs:
+      - run-shards
+      - assemble-boundary-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      RUN_PREFIX: nymex/ng_mbo_5y_v0/step1_census/october_sharded/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Materialize the frozen engine
+        run: |
+          git worktree add --detach "$FROZEN_ENGINE_ROOT" "$CANDIDATE_SHA"
+          python -m pip install --quiet \
+            numpy==1.26.4 scipy==1.11.4 scikit-learn==1.4.2 matplotlib==3.8.4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: october-shard-october-cpu-*
+          path: bundles
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: october-proven-shard-plan
+          path: merged/evidence
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: october-complete-v4-boundary-gate
+          path: merged/evidence
+
+      - name: Merge only receipt-bound, disjoint target intervals
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p merged
+          cd "$FROZEN_ENGINE_ROOT"
+          PYTHONPATH="$FROZEN_ENGINE_ROOT/research:$GITHUB_WORKSPACE/research" python "$GITHUB_WORKSPACE/research/ng_exhaustion_step1_october_shards_20260824.py" merge \
+            --manifest "$FROZEN_ENGINE_ROOT/$MANIFEST_REL" \
+            --boundary-gate "$GITHUB_WORKSPACE/merged/evidence/october-boundary-gate.json" \
+            --receipts \
+              "$GITHUB_WORKSPACE/bundles/october-shard-october-cpu-1/october-cpu-1.receipt.json" \
+              "$GITHUB_WORKSPACE/bundles/october-shard-october-cpu-2/october-cpu-2.receipt.json" \
+              "$GITHUB_WORKSPACE/bundles/october-shard-october-cpu-3/october-cpu-3.receipt.json" \
+              "$GITHUB_WORKSPACE/bundles/october-shard-october-cpu-4/october-cpu-4.receipt.json" \
+            --child-receipts \
+              "$GITHUB_WORKSPACE/bundles/october-shard-october-cpu-1/october-cpu-1.child-receipt.json" \
+              "$GITHUB_WORKSPACE/bundles/october-shard-october-cpu-2/october-cpu-2.child-receipt.json" \
+              "$GITHUB_WORKSPACE/bundles/october-shard-october-cpu-3/october-cpu-3.child-receipt.json" \
+              "$GITHUB_WORKSPACE/bundles/october-shard-october-cpu-4/october-cpu-4.child-receipt.json" \
+            --inputs \
+              "$GITHUB_WORKSPACE/bundles/october-shard-october-cpu-1/october-cpu-1.seconds.jsonl.gz" \
+              "$GITHUB_WORKSPACE/bundles/october-shard-october-cpu-2/october-cpu-2.seconds.jsonl.gz" \
+              "$GITHUB_WORKSPACE/bundles/october-shard-october-cpu-3/october-cpu-3.seconds.jsonl.gz" \
+              "$GITHUB_WORKSPACE/bundles/october-shard-october-cpu-4/october-cpu-4.seconds.jsonl.gz" \
+            --output "$GITHUB_WORKSPACE/merged/20211001_20211101.seconds.jsonl.gz" \
+            --receipt "$GITHUB_WORKSPACE/merged/october-sharded-merge.receipt.json"
+          aws s3 cp "$GITHUB_WORKSPACE/merged/" \
+            "s3://bento-568968024170-us-east-2-an/$RUN_PREFIX/merged/" \
+            --recursive --only-show-errors
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: october-sharded-merged-candidate
+          path: merged/
+          if-no-files-found: error
+          retention-days: 30
+
+  archive-existing-monolithic-reference:
+    needs: merge-candidate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      INSTANCE_ID: i-08cee7171c0a76a04
+      RUN_PREFIX: nymex/ng_mbo_5y_v0/step1_census/october_sharded/runs/${{ github.run_id }}
+    steps:
+      - name: Verify completion and copy the existing result without touching its worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, shlex
+          candidate=os.environ['CANDIDATE_SHA']
+          base=f'/mnt/markets/ng_exhaustion_step1_5y_20260822/{candidate}'
+          repo=f'{base}/repo'
+          out=f'{base}/full/segments'
+          segment='20211001_20211101'
+          prefix=os.environ['RUN_PREFIX']+'/monolithic-reference'
+          remote='\n'.join([
+              'set -euo pipefail',
+              f'cd {shlex.quote(repo)}',
+              f'{shlex.quote(base+"/venv/bin/python")} - <<\'PYVERIFY\'\nimport sys\nfrom pathlib import Path\nsys.path.insert(0,"research")\nimport ng_exhaustion_mbo_5y_step1_census_20260822 as c\nm=c.load_manifest("research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json")\nr=c._resumable_segment_receipt(m,"20211001_20211101",Path('+repr(out)+'),c.material_hashes(),c._segment_source_scope(m,"20211001_20211101",None))\nif r is None: raise SystemExit("MONOLITHIC_OCTOBER_NOT_COMPLETE")\nprint("MONOLITHIC_OCTOBER_EXACT_RECEIPT=PASS",r["receipt_sha256"])\nPYVERIFY',
+              f'set -a; source {shlex.quote(base+"/aws.env")}; set +a',
+              f'aws s3 cp {shlex.quote(out+"/"+segment+".seconds.jsonl.gz")} s3://bento-568968024170-us-east-2-an/{prefix}/{segment}.seconds.jsonl.gz --only-show-errors',
+              f'aws s3 cp {shlex.quote(out+"/"+segment+".receipt.json")} s3://bento-568968024170-us-east-2-an/{prefix}/{segment}.receipt.json --only-show-errors',
+          ])
+          with open('/tmp/reference-params.json','w') as handle:
+              json.dump({'commands':['/bin/bash -lc '+shlex.quote(remote)]},handle)
+          PY
+          command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment 'Archive completed monolithic October equivalence reference read-only' \
+            --parameters file:///tmp/reference-params.json \
+            --timeout-seconds 600 \
+            --query 'Command.CommandId' --output text)"
+          aws ssm wait command-executed --command-id "$command_id" --instance-id "$INSTANCE_ID" || true
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json | tee /tmp/reference-command.json
+          test "$(python -c "import json; print(json.load(open('/tmp/reference-command.json'))['Status'])")" = Success
+          mkdir -p reference
+          aws s3 cp "s3://bento-568968024170-us-east-2-an/$RUN_PREFIX/monolithic-reference/20211001_20211101.seconds.jsonl.gz" reference/ --only-show-errors
+          aws s3 cp "s3://bento-568968024170-us-east-2-an/$RUN_PREFIX/monolithic-reference/20211001_20211101.receipt.json" reference/ --only-show-errors
+          cp /tmp/reference-command.json reference/reference-archive-command.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: october-existing-monolithic-reference
+          path: reference/
+          if-no-files-found: error
+          retention-days: 30
+
+  exact-monolithic-equivalence:
+    needs:
+      - merge-candidate
+      - archive-existing-monolithic-reference
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      RUN_PREFIX: nymex/ng_mbo_5y_v0/step1_census/october_sharded/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Materialize the frozen engine
+        run: |
+          git worktree add --detach "$FROZEN_ENGINE_ROOT" "$CANDIDATE_SHA"
+          python -m pip install --quiet \
+            numpy==1.26.4 scipy==1.11.4 scikit-learn==1.4.2 matplotlib==3.8.4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: october-sharded-merged-candidate
+          path: merged
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: october-existing-monolithic-reference
+          path: reference
+
+      - name: Accept only exact scientific row equivalence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p accepted
+          cd "$FROZEN_ENGINE_ROOT"
+          PYTHONPATH="$FROZEN_ENGINE_ROOT/research:$GITHUB_WORKSPACE/research" python "$GITHUB_WORKSPACE/research/ng_exhaustion_step1_october_shards_20260824.py" equivalence \
+            --manifest "$FROZEN_ENGINE_ROOT/$MANIFEST_REL" \
+            --reference "$GITHUB_WORKSPACE/reference/20211001_20211101.seconds.jsonl.gz" \
+            --reference-receipt "$GITHUB_WORKSPACE/reference/20211001_20211101.receipt.json" \
+            --candidate "$GITHUB_WORKSPACE/merged/20211001_20211101.seconds.jsonl.gz" \
+            --merge-receipt "$GITHUB_WORKSPACE/merged/october-sharded-merge.receipt.json" \
+            --output "$GITHUB_WORKSPACE/accepted/october-exact-equivalence.receipt.json"
+          aws s3 cp "$GITHUB_WORKSPACE/accepted/" \
+            "s3://bento-568968024170-us-east-2-an/$RUN_PREFIX/accepted/" \
+            --recursive --only-show-errors
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: october-sharded-accepted-exact-equivalence
+          path: accepted/
+          if-no-files-found: error
+          retention-days: 90
