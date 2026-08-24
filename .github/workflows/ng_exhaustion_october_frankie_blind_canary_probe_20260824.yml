@@ -17,7 +17,7 @@ concurrency:
 jobs:
   probe-existing-unit:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 65
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -26,7 +26,8 @@ jobs:
       UNIT: ng-exhaustion-frankie-october-blind-dcf839e911c5
       RUN_ROOT: /mnt/markets/ng_exhaustion_frankie_october_blind_20260824/dcf839e911c5d501396fa7af9d6692012fb6e0d9
     steps:
-      - name: Capture bounded observability snapshot from the running unit
+      - name: Observe existing unit through first accepted Sol response
+        id: observe
         shell: bash
         run: |
           set -euo pipefail
@@ -38,61 +39,95 @@ jobs:
           unit = os.environ["UNIT"]
           root = os.environ["RUN_ROOT"]
           commands = [
-              "set -euo pipefail",
+              "set -u",
               f"unit={shlex.quote(unit)}",
               f"root={shlex.quote(root)}",
               'echo PROBED_SYSTEMD_UNIT="$unit"',
               'echo PERMANENT_FRANKIE_STATE="$(systemctl is-active markets-frankie.service 2>/dev/null || true)"',
+              'echo UNIT_STATE="$(systemctl is-active "$unit" 2>/dev/null || true)"',
               'systemctl show "$unit" --property=LoadState,ActiveState,SubState,Result,MainPID,ExecMainStatus,MemoryCurrent,CPUUsageNSec --no-pager || true',
               'pid="$(systemctl show "$unit" --property=MainPID --value 2>/dev/null || true)"',
               'echo MAIN_PID="$pid"',
               'if [ -n "$pid" ] && [ "$pid" != 0 ] && [ -d "/proc/$pid" ]; then',
-              '  ps -o pid,ppid,etime,time,%cpu,%mem,rss,vsz,stat,wchan:28,cmd -p "$pid" --forest',
-              '  for child in $(pgrep -P "$pid" || true); do ps -o pid,ppid,etime,time,%cpu,%mem,rss,vsz,stat,wchan:28,cmd -p "$child"; done',
-              '  sed -n "1,40p" "/proc/$pid/status"',
-              '  cat "/proc/$pid/io"',
-              '  ls -l "/proc/$pid/fd" 2>/dev/null | tail -40 || true',
               '  python_pid="$(pgrep -P "$pid" -f ng_exhaustion_october_frankie_v4_bridge | head -1 || true)"',
               '  echo PYTHON_PID="$python_pid"',
-              '  for sample in 1 2; do',
-              '    echo IO_SAMPLE="$sample"',
+              '  if [ -n "$python_pid" ] && [ -d "/proc/$python_pid" ]; then',
               '    ps -o pid,ppid,etime,time,%cpu,%mem,rss,vsz,stat,wchan:28,cmd -p "$python_pid"',
               '    cat "/proc/$python_pid/io"',
               '    for fd in /proc/$python_pid/fd/*; do target="$(readlink "$fd" 2>/dev/null || true)"; case "$target" in *.dbn.zst|/tmp/*) echo FD="${fd##*/}" TARGET="$target"; sed -n "1,8p" "/proc/$python_pid/fdinfo/${fd##*/}";; esac; done',
-              '    [ "$sample" = 1 ] && sleep 10',
-              '  done',
+              '  fi',
               'fi',
-              'find "$root" -maxdepth 3 -type f -printf "%s %TY-%Tm-%TdT%TH:%TM:%TS %p\\n" | sort -n | tail -80',
-              'journalctl -u "$unit" -n 240 --no-pager || true',
-              'echo OBSERVABILITY_SNAPSHOT=COMPLETE',
+              'journalctl -u "$unit" -o cat --no-pager | grep -E "V4_GROUPS_PROCESSED|SOL_INVOCATION_STARTED|SOL_RESPONSE_ACCEPTED|BLIND_OCTOBER_FRANKIE_EXIT_CODE|Traceback" | tail -24 || true',
+              'echo OBSERVABILITY_HEARTBEAT=COMPLETE',
           ]
           with open("/tmp/blind-october-frankie-probe-params.json", "w", encoding="utf-8") as handle:
               json.dump({"commands": ["/bin/bash -lc " + shlex.quote("\n".join(commands))]}, handle)
           PY
-          command_id="$(aws ssm send-command \
-            --instance-ids "$INSTANCE_ID" \
-            --document-name AWS-RunShellScript \
-            --comment "Observe running blind October V4 Frankie" \
-            --parameters file:///tmp/blind-october-frankie-probe-params.json \
-            --timeout-seconds 180 \
-            --query 'Command.CommandId' --output text)"
-          status=Pending
-          for _ in $(seq 1 30); do
-            status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
-            case "$status" in Success|Failed|TimedOut|Cancelled) break ;; esac
-            sleep 10
+
+          : > /tmp/blind-october-frankie-probe-result.txt
+          for attempt in $(seq 1 60); do
+            echo "OBSERVER_ATTEMPT=$attempt"
+            command_id="$(aws ssm send-command \
+              --instance-ids "$INSTANCE_ID" \
+              --document-name AWS-RunShellScript \
+              --comment "Observe running blind October V4 Frankie" \
+              --parameters file:///tmp/blind-october-frankie-probe-params.json \
+              --timeout-seconds 45 \
+              --query 'Command.CommandId' --output text)"
+            status=Pending
+            for _ in $(seq 1 12); do
+              status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+              case "$status" in Success|Failed|TimedOut|Cancelled) break ;; esac
+              sleep 5
+            done
+            output="$(aws ssm get-command-invocation \
+              --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+              --query StandardOutputContent --output text)"
+            printf '%s\n' "$output" | tee -a /tmp/blind-october-frankie-probe-result.txt
+            if printf '%s\n' "$output" | grep -Fq '"event": "SOL_RESPONSE_ACCEPTED"'; then
+              accepted="$(printf '%s\n' "$output" | grep -F '"event": "SOL_RESPONSE_ACCEPTED"' | tail -1)"
+              ACCEPTED_LINE="$accepted" python - <<'PY'
+          import json
+          import os
+
+          row = json.loads(os.environ["ACCEPTED_LINE"])
+          if row.get("event") != "SOL_RESPONSE_ACCEPTED":
+              raise SystemExit("unexpected evidence event")
+          if row.get("model") != "gpt-5.6-sol":
+              raise SystemExit(f"unexpected resolved model: {row.get('model')!r}")
+          if not str(row.get("provider_request_id") or "").strip():
+              raise SystemExit("missing provider request id")
+          print("AUTHENTIC_SOL_PROVIDER_RESPONSE=ACCEPTED")
+          print("PROVIDER_REQUEST_ID=" + str(row["provider_request_id"]))
+          PY
+              echo "run_url=https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            if ! printf '%s\n' "$output" | grep -Fq 'UNIT_STATE=active'; then
+              echo "Existing canary unit stopped before an accepted Sol response" >&2
+              exit 1
+            fi
+            sleep 60
           done
-          aws ssm get-command-invocation \
-            --command-id "$command_id" --instance-id "$INSTANCE_ID" \
-            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
-            --output json | tee /tmp/blind-october-frankie-probe-result.json
-          test "$status" = Success
-          grep -F 'OBSERVABILITY_SNAPSHOT=COMPLETE' /tmp/blind-october-frankie-probe-result.json
+          echo "Observer timed out while the existing canary remained active" >&2
+          exit 1
 
       - name: Publish probe evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: blind-october-frankie-probe-${{ github.sha }}
-          path: /tmp/blind-october-frankie-probe-result.json
+          path: /tmp/blind-october-frankie-probe-result.txt
           if-no-files-found: warn
+
+      - name: Report live observer
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### Blind October Frankie V4 observer"
+            echo "- Live run: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "- Existing unit: ${UNIT}"
+            echo "- Launch commit: dcf839e911c5d501396fa7af9d6692012fb6e0d9"
+            echo "- Evidence gate: authentic gpt-5.6-sol provider response ID"
+          } >> "$GITHUB_STEP_SUMMARY"
