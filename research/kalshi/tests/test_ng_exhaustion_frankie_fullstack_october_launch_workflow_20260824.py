@@ -23,6 +23,7 @@ TARGET_BRANCH = "chatgpt/ng-exhaustion-october-sharded-20260824"
 WORKFLOW_TEST = Path(
     "research/kalshi/tests/test_ng_exhaustion_frankie_fullstack_october_launch_workflow_20260824.py"
 )
+RUNTIME_LOCK = Path("deploy/aws/requirements-frankie-fullstack-20260824.lock")
 RETIRED_WORKFLOWS = (
     Path(".github/workflows/ng_exhaustion_october_frankie_blind_canary_20260824.yml"),
     Path(".github/workflows/ng_exhaustion_october_frankie_blind_canary_probe_20260824.yml"),
@@ -199,26 +200,60 @@ class FullStackOctoberLaunchWorkflowTests(unittest.TestCase):
             'runuser -u "$provider_user" -- "$root/venv/bin/python" -m pip install',
             provider_traversal,
         )
+        package_verification = self.source.index(
+            '"$runtime_python" "$root/verify_package.py"', provider_traversal
+        )
         self.assertLess(extraction, provider_traversal)
-        self.assertLess(provider_traversal, provider_install)
-        self.assertEqual(self.source.count("for python_version in 310 311 312"), 1)
+        self.assertLess(provider_traversal, package_verification)
+        self.assertLess(package_verification, provider_install)
+        self.assertNotIn("for python_version in 310 311 312", self.source)
         for token in (
-            '--python-version "$python_version"',
-            '--abi "cp${python_version}"',
+            "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+            "python-version: '3.10.14'",
+            "runtime_python_version=310",
+            "runtime_abi=cp310",
+            "runtime_platform=manylinux2014_x86_64",
+            '--python-version "$runtime_python_version"',
+            '--abi "$runtime_abi"',
+            '--platform "$runtime_platform"',
             '--dry-run',
             '--ignore-installed',
-            'runtime_python="$(command -v python3)"',
-            'sys.version_info[:2] in ((3, 10), (3, 11), (3, 12))',
+            "runtime_python=/usr/bin/python3.10",
+            'sys.version_info[:3] == (3, 10, 14)',
+            'sys.version_info[:2] == (3, 10)',
+            'sys.implementation.cache_tag == \\"cpython-310\\"',
             'platform.machine() == \\"x86_64\\"',
+            "async_timeout-5.0.1-py3-none-any.whl",
+            "exceptiongroup-1.3.1-py3-none-any.whl",
+            "RUNTIME_TARGET.json",
+            "PACKAGE_MANIFEST.json",
+            "runtime target receipt hash mismatch",
+            "package manifest receipt hash mismatch",
             'runuser -u "$provider_user" -- test -r "$repo/deploy/aws/requirements-frankie-fullstack-20260824.lock"',
-            'import aiohttp, databento, openai',
+            'import aiohttp, async_timeout, databento, openai',
+            "research.kalshi.ng_exhaustion_frankie_fullstack_october_20260824",
             '"$root/venv/bin/python" "$root/stage.py"',
             '"$root/venv/bin/python" "$root/check_gates.py"',
         ):
             self.assertIn(token, self.source)
+        runtime_lock = RUNTIME_LOCK.read_text(encoding="utf-8")
+        self.assertIn(
+            'async-timeout==5.0.1 ; python_version < "3.11"', runtime_lock
+        )
+        self.assertIn(
+            "sha256:39e3809566ff85354557ec2398b55e096c8364bacac9405a7a1fa429e77fe76c",
+            runtime_lock,
+        )
+        self.assertIn(
+            'exceptiongroup==1.3.1 ; python_version < "3.11"', runtime_lock
+        )
+        self.assertIn(
+            "sha256:a7a39a3bd276781e98394987d3a5701d0c4edffb633bb7a5144577f82c773598",
+            runtime_lock,
+        )
         self.assertNotIn('python "$root/stage.py"', self.source)
         self.assertNotIn('python "$root/check_gates.py"', self.source)
-        provider_smoke = self.source.index('import aiohttp, databento, openai')
+        provider_smoke = self.source.index('import aiohttp, async_timeout, databento, openai')
         systemd_launch = self.source.index('systemd-run --collect --unit "$unit"')
         self.assertLess(provider_install, provider_smoke)
         self.assertLess(provider_smoke, systemd_launch)
@@ -408,6 +443,7 @@ class FullStackOctoberLaunchWorkflowTests(unittest.TestCase):
             for target in node.targets:
                 if isinstance(target, ast.Name) and target.id in {
                     "credential_scope_script",
+                    "package_verify_script",
                     "stage_script",
                     "gate_script",
                     "runner_script",
@@ -415,9 +451,20 @@ class FullStackOctoberLaunchWorkflowTests(unittest.TestCase):
                     scripts[target.id] = node.value.value
         self.assertEqual(
             set(scripts),
-            {"credential_scope_script", "stage_script", "gate_script", "runner_script"},
+            {
+                "credential_scope_script",
+                "package_verify_script",
+                "stage_script",
+                "gate_script",
+                "runner_script",
+            },
         )
-        for name in ("credential_scope_script", "stage_script", "gate_script"):
+        for name in (
+            "credential_scope_script",
+            "package_verify_script",
+            "stage_script",
+            "gate_script",
+        ):
             source = scripts[name]
             compile(textwrap.dedent(source), f"<{name}>", "exec")
         subprocess.run(

@@ -37,6 +37,11 @@ jobs:
         with:
           ref: ${{ github.sha }}
 
+      - name: Bind build and resolver to CPython 3.10
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.10.14'
+
       - name: Verify focused full-stack contracts
         shell: bash
         run: |
@@ -72,40 +77,99 @@ jobs:
           bundle="$(mktemp -d)"
           wheelhouse="$bundle/deploy/wheelhouse"
           lock="$bundle/deploy/aws/requirements-frankie-fullstack-20260824.lock"
+          runtime_python_version=310
+          runtime_abi=cp310
+          runtime_platform=manylinux2014_x86_64
+          runtime_python="$(command -v python)"
+          "$runtime_python" -c 'import platform, sys; assert sys.implementation.name == "cpython"; assert sys.version_info[:3] == (3, 10, 14); assert sys.implementation.cache_tag == "cpython-310"; assert platform.machine() == "x86_64"'
           git archive --format=tar "$GITHUB_SHA" | tar -xf - -C "$bundle"
           install -d -m 0755 "$wheelhouse"
-          for python_version in 310 311 312; do
-            python -m pip download \
-              --disable-pip-version-check \
-              --only-binary=:all: \
-              --no-deps \
-              --require-hashes \
-              --implementation cp \
-              --python-version "$python_version" \
-              --abi "cp${python_version}" \
-              --platform manylinux2014_x86_64 \
-              --dest "$wheelhouse" \
-              -r "$lock"
-            python -m pip install \
-              --dry-run \
-              --ignore-installed \
-              --disable-pip-version-check \
-              --no-index \
-              --only-binary=:all: \
-              --find-links "$wheelhouse" \
-              --require-hashes \
-              --implementation cp \
-              --python-version "$python_version" \
-              --abi "cp${python_version}" \
-              --platform manylinux2014_x86_64 \
-              -r "$lock"
-          done
+          "$runtime_python" -m pip download \
+            --disable-pip-version-check \
+            --only-binary=:all: \
+            --no-deps \
+            --require-hashes \
+            --implementation cp \
+            --python-version "$runtime_python_version" \
+            --abi "$runtime_abi" \
+            --platform "$runtime_platform" \
+            --dest "$wheelhouse" \
+            -r "$lock"
+          "$runtime_python" -m pip install \
+            --dry-run \
+            --ignore-installed \
+            --disable-pip-version-check \
+            --no-index \
+            --only-binary=:all: \
+            --find-links "$wheelhouse" \
+            --require-hashes \
+            --implementation cp \
+            --python-version "$runtime_python_version" \
+            --abi "$runtime_abi" \
+            --platform "$runtime_platform" \
+            -r "$lock"
+          test "$(find "$wheelhouse" -maxdepth 1 -type f -name 'async_timeout-5.0.1-py3-none-any.whl' | wc -l)" -eq 1
+          test "$(find "$wheelhouse" -maxdepth 1 -type f -name 'exceptiongroup-1.3.1-py3-none-any.whl' | wc -l)" -eq 1
+          lock_sha256="$(sha256sum "$lock" | awk '{print $1}')"
+          entrypoint="$bundle/research/kalshi/ng_exhaustion_frankie_fullstack_october_20260824.py"
+          entrypoint_sha256="$(sha256sum "$entrypoint" | awk '{print $1}')"
+          wheelhouse_sha256="$(cd "$wheelhouse" && find . -maxdepth 1 -type f -name '*.whl' -print0 | sort -z | xargs -0 sha256sum | sha256sum | awk '{print $1}')"
+          "$runtime_python" - "$bundle" "$GITHUB_SHA" "$runtime_python_version" "$runtime_abi" "$runtime_platform" "$lock_sha256" "$entrypoint_sha256" "$wheelhouse_sha256" <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+          import sys
+
+          bundle = Path(sys.argv[1])
+          target_core = {
+              "schema": "FRANKIE_RUNTIME_TARGET_V1_20260824",
+              "implementation": "cp",
+              "python_version": sys.argv[3],
+              "abi": sys.argv[4],
+              "platform": sys.argv[5],
+              "machine": "x86_64",
+          }
+          canonical = lambda value: json.dumps(
+              value, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+          )
+          target = {
+              **target_core,
+              "receipt_hash": hashlib.sha256(canonical(target_core).encode()).hexdigest(),
+          }
+          (bundle / "deploy/RUNTIME_TARGET.json").write_text(
+              json.dumps(target, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+          )
+          wheels = []
+          for path in sorted((bundle / "deploy/wheelhouse").glob("*.whl")):
+              wheels.append(
+                  {
+                      "name": path.name,
+                      "bytes": path.stat().st_size,
+                      "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                  }
+              )
+          manifest_core = {
+              "schema": "FRANKIE_RUNTIME_PACKAGE_MANIFEST_V1_20260824",
+              "source_commit": sys.argv[2],
+              "runtime_target_receipt_hash": target["receipt_hash"],
+              "requirements_lock_sha256": sys.argv[6],
+              "entrypoint_sha256": sys.argv[7],
+              "wheelhouse_sha256": sys.argv[8],
+              "wheels": wheels,
+          }
+          manifest = {
+              **manifest_core,
+              "receipt_hash": hashlib.sha256(canonical(manifest_core).encode()).hexdigest(),
+          }
+          (bundle / "deploy/PACKAGE_MANIFEST.json").write_text(
+              json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+          )
+          PY
           package_dir="$RUNNER_TEMP/frankie-fullstack-package"
           install -d -m 0755 "$package_dir"
           package="$package_dir/package.tgz"
           tar -czf "$package" -C "$bundle" .
           package_sha256="$(sha256sum "$package" | awk '{print $1}')"
-          wheelhouse_sha256="$(find "$wheelhouse" -maxdepth 1 -type f -name '*.whl' -print0 | sort -z | xargs -0 sha256sum | sha256sum | awk '{print $1}')"
           [[ "$package_sha256" =~ ^[0-9a-f]{64}$ ]]
           [[ "$wheelhouse_sha256" =~ ^[0-9a-f]{64}$ ]]
           printf '%s  package.tgz\n' "$package_sha256" > "$package_dir/package.sha256"
@@ -267,6 +331,88 @@ jobs:
 
           write_exclusive(aws_destination, scoped["aws"])
           write_exclusive(openai_destination, scoped["openai"])
+          '''
+
+          package_verify_script = r'''#!/usr/bin/env python3
+          import hashlib
+          import json
+          from pathlib import Path
+          import platform
+          import sys
+
+          repo = Path(sys.argv[1])
+          expected_commit = sys.argv[2]
+          canonical = lambda value: json.dumps(
+              value, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+          )
+          target = json.loads((repo / "deploy/RUNTIME_TARGET.json").read_text(encoding="utf-8"))
+          target_core = dict(target)
+          target_hash = target_core.pop("receipt_hash", None)
+          if target_core != {
+              "schema": "FRANKIE_RUNTIME_TARGET_V1_20260824",
+              "implementation": "cp",
+              "python_version": "310",
+              "abi": "cp310",
+              "platform": "manylinux2014_x86_64",
+              "machine": "x86_64",
+          }:
+              raise SystemExit("runtime target drift")
+          if target_hash != hashlib.sha256(canonical(target_core).encode()).hexdigest():
+              raise SystemExit("runtime target receipt hash mismatch")
+          if (
+              sys.implementation.name != "cpython"
+              or sys.version_info[:2] != (3, 10)
+              or platform.machine() != "x86_64"
+          ):
+              raise SystemExit("host runtime differs from package target")
+
+          manifest = json.loads((repo / "deploy/PACKAGE_MANIFEST.json").read_text(encoding="utf-8"))
+          manifest_core = dict(manifest)
+          manifest_hash = manifest_core.pop("receipt_hash", None)
+          if manifest_hash != hashlib.sha256(canonical(manifest_core).encode()).hexdigest():
+              raise SystemExit("package manifest receipt hash mismatch")
+          if manifest_core.get("source_commit") != expected_commit:
+              raise SystemExit("package source commit drift")
+          if manifest_core.get("runtime_target_receipt_hash") != target_hash:
+              raise SystemExit("package/runtime target binding drift")
+
+          def sha256_file(path: Path) -> str:
+              digest = hashlib.sha256()
+              with path.open("rb") as handle:
+                  for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                      digest.update(chunk)
+              return digest.hexdigest()
+
+          lock = repo / "deploy/aws/requirements-frankie-fullstack-20260824.lock"
+          entrypoint = repo / "research/kalshi/ng_exhaustion_frankie_fullstack_october_20260824.py"
+          if sha256_file(lock) != manifest_core.get("requirements_lock_sha256"):
+              raise SystemExit("runtime lock hash mismatch")
+          if sha256_file(entrypoint) != manifest_core.get("entrypoint_sha256"):
+              raise SystemExit("runtime entrypoint hash mismatch")
+          observed_wheels = []
+          wheelhouse_lines = []
+          for path in sorted((repo / "deploy/wheelhouse").glob("*.whl")):
+              digest = sha256_file(path)
+              observed_wheels.append(
+                  {"name": path.name, "bytes": path.stat().st_size, "sha256": digest}
+              )
+              wheelhouse_lines.append(f"{digest}  ./{path.name}\n")
+          wheelhouse_hash = hashlib.sha256("".join(wheelhouse_lines).encode()).hexdigest()
+          if observed_wheels != manifest_core.get("wheels"):
+              raise SystemExit("wheel roster hash or size mismatch")
+          if wheelhouse_hash != manifest_core.get("wheelhouse_sha256"):
+              raise SystemExit("wheelhouse aggregate hash mismatch")
+          print(
+              json.dumps(
+                  {
+                      "event": "RUNTIME_PACKAGE_VERIFIED",
+                      "runtime_target_receipt_hash": target_hash,
+                      "package_manifest_receipt_hash": manifest_hash,
+                      "wheelhouse_sha256": wheelhouse_hash,
+                  },
+                  sort_keys=True,
+              )
+          )
           '''
 
           stage_script = r'''#!/usr/bin/env python3
@@ -1017,15 +1163,15 @@ jobs:
 
           runner_script = r'''#!/bin/bash
           set -euo pipefail
-          source __ROOT__/venv/bin/activate
           cd __REPO__
           export PYTHONPATH=__REPO__:__REPO__/research:__REPO__/research/kalshi
           export SOURCE_COMMIT=__SOURCE_COMMIT__
+          venv_python=__VENV_PYTHON__
           run_log=__RUN_LOG__
           output=__OUTPUT__
           openai_credential_file=__OPENAI_CREDENTIAL_FILE__
 
-          python -c 'import json, os; effective = os.sched_getaffinity(0); assert effective == {0, 1, 2, 3}, f"provider unit CPU affinity drift: {sorted(effective)}"; print(json.dumps({"event": "PROVIDER_UNIT_CPU_AFFINITY_VERIFIED", "effective_cpu_affinity": sorted(effective)}, sort_keys=True))'
+          "$venv_python" -c 'import json, os, platform, sys; assert sys.implementation.name == "cpython" and sys.version_info[:2] == (3, 10) and platform.machine() == "x86_64"; effective = os.sched_getaffinity(0); assert effective == {0, 1, 2, 3}, f"provider unit CPU affinity drift: {sorted(effective)}"; print(json.dumps({"event": "PROVIDER_UNIT_CPU_AFFINITY_VERIFIED", "effective_cpu_affinity": sorted(effective), "python_version": list(sys.version_info[:3])}, sort_keys=True))'
 
           set +e
           set -a
@@ -1034,7 +1180,7 @@ jobs:
           env \
             -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN \
             -u MARKETS_AWS_ACCESS_KEY_ID -u MARKETS_AWS_SECRET_ACCESS_KEY -u MARKETS_AWS_SESSION_TOKEN \
-            python research/kalshi/ng_exhaustion_frankie_fullstack_october_20260824.py \
+            "$venv_python" research/kalshi/ng_exhaustion_frankie_fullstack_october_20260824.py \
             --manifest research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json \
             --source-root __STAGE__ \
             --output-root "$output" \
@@ -1052,6 +1198,7 @@ jobs:
               "__SOURCE_COMMIT__": shlex.quote(sha),
               "__RUN_LOG__": shlex.quote(run_log),
               "__OUTPUT__": shlex.quote(output),
+              "__VENV_PYTHON__": shlex.quote(f"{root}/venv/bin/python"),
               "__ARTIFACT_URI__": shlex.quote(artifact_uri),
               "__STAGE__": shlex.quote(stage),
               "__RUNNER_ID__": shlex.quote(runner_id),
@@ -1083,16 +1230,15 @@ jobs:
               f"openai_credential_file={shlex.quote(openai_credential_file)}",
               f"artifact_uri={shlex.quote(artifact_uri)}",
               f"provider_user={shlex.quote('frk_' + sha[:8] + '_' + run_id)}",
-              "python3 -c 'import os; available = os.sched_getaffinity(0); required = {0, 1, 2, 3}; assert required.issubset(available), f\"required CPUs 0-3 unavailable: {sorted(available)}\"'",
-              'runtime_python="$(command -v python3)"',
+              'runtime_python=/usr/bin/python3.10',
               'test -x "$runtime_python"',
-              "\"$runtime_python\" -c 'import platform, sys; assert sys.implementation.name == \"cpython\"; assert sys.version_info[:2] in ((3, 10), (3, 11), (3, 12)); assert platform.machine() == \"x86_64\"'",
+              "\"$runtime_python\" -c 'import os, platform, sys; assert sys.implementation.name == \"cpython\"; assert sys.version_info[:2] == (3, 10); assert sys.implementation.cache_tag == \"cpython-310\"; assert platform.machine() == \"x86_64\"; available = os.sched_getaffinity(0); required = {0, 1, 2, 3}; assert required.issubset(available), f\"required CPUs 0-3 unavailable: {sorted(available)}\"'",
               'test ! -e "$root"',
               'test -s "$credential_file"',
               'install -d -m 0755 "$root" "$repo" "$output"',
               f"printf %s {shlex.quote(encoded(credential_scope_script))} | base64 -d > \"$root/scope_credentials.py\"",
               'chmod 700 "$root/scope_credentials.py"',
-              'python3 "$root/scope_credentials.py" "$credential_file" "$aws_credential_file" "$openai_credential_file"',
+              '"$runtime_python" "$root/scope_credentials.py" "$credential_file" "$aws_credential_file" "$openai_credential_file"',
               'if ! grep -Eq "^(OPENAI_API_KEY|MARKETS_OPENAI_API_KEY)=" "$openai_credential_file"; then',
               '  ( set -a; source "$aws_credential_file"; set +a; unset OPENAI_API_KEY MARKETS_OPENAI_API_KEY;',
               '    openai_value="$(aws ssm get-parameter --name /markets/OPENAI_API_KEY --with-decryption --query Parameter.Value --output text)";',
@@ -1104,6 +1250,9 @@ jobs:
               'tar -xzf "$package" -C "$repo"',
               'chmod 0755 "$repo"',
               f"test -s \"$repo/research/kalshi/ng_exhaustion_frankie_fullstack_october_20260824.py\"",
+              f"printf %s {shlex.quote(encoded(package_verify_script))} | base64 -d > \"$root/verify_package.py\"",
+              'chmod 700 "$root/verify_package.py"',
+              f'"$runtime_python" "$root/verify_package.py" "$repo" {shlex.quote(sha)}',
               'if id "$provider_user" >/dev/null 2>&1; then echo "dedicated provider identity already exists" >&2; exit 1; fi',
               'useradd --system --no-create-home --shell /usr/sbin/nologin "$provider_user"',
               'provider_group="$(id -gn "$provider_user")"',
@@ -1125,7 +1274,9 @@ jobs:
               'chmod 0750 "$root" "$repo" "$stage" "$output"',
               'install -o "$provider_user" -g "$provider_group" -m 0600 /dev/null "$run_log"',
               'runuser -u "$provider_user" -- test -r "$repo/deploy/aws/requirements-frankie-fullstack-20260824.lock"',
-              "runuser -u \"$provider_user\" -- \"$root/venv/bin/python\" -c 'import aiohttp, databento, openai'",
+              'runuser -u "$provider_user" -- test -r "$repo/deploy/RUNTIME_TARGET.json"',
+              'runuser -u "$provider_user" -- test -r "$repo/deploy/PACKAGE_MANIFEST.json"',
+              f"runuser -u \"$provider_user\" -- env PYTHONPATH={shlex.quote(repo + ':' + repo + '/research:' + repo + '/research/kalshi')} \"$root/venv/bin/python\" -c 'import aiohttp, async_timeout, databento, openai, platform, sys; import research.kalshi.ng_exhaustion_frankie_fullstack_october_20260824; assert sys.implementation.name == \"cpython\" and sys.version_info[:2] == (3, 10) and sys.implementation.cache_tag == \"cpython-310\" and platform.machine() == \"x86_64\"'",
               f"for service in {' '.join(shlex.quote(item) for item in services)}; do",
               '  echo "PERMANENT_SERVICE_READ_ONLY=$service"',
               '  systemctl show "$service" --property=LoadState,ActiveState,SubState,Result,UnitFileState --no-pager 2>/dev/null || true',
@@ -1138,7 +1289,7 @@ jobs:
               'main_pid=0',
               'for _ in $(seq 1 60); do main_pid="$(systemctl show --property=MainPID --value "$unit" 2>/dev/null || true)"; if [ "${main_pid:-0}" -gt 0 ] 2>/dev/null; then break; fi; sleep 1; done',
               'test "${main_pid:-0}" -gt 0',
-              "python3 -c 'import json, os, sys; effective = os.sched_getaffinity(int(sys.argv[1])); assert effective == {0, 1, 2, 3}, f\"provider MainPID CPU affinity drift: {sorted(effective)}\"; print(json.dumps({\"event\": \"PROVIDER_MAINPID_CPU_AFFINITY_VERIFIED\", \"main_pid\": int(sys.argv[1]), \"effective_cpu_affinity\": sorted(effective)}, sort_keys=True))' \"$main_pid\"",
+              "\"$root/venv/bin/python\" -c 'import json, os, sys; effective = os.sched_getaffinity(int(sys.argv[1])); assert effective == {0, 1, 2, 3}, f\"provider MainPID CPU affinity drift: {sorted(effective)}\"; print(json.dumps({\"event\": \"PROVIDER_MAINPID_CPU_AFFINITY_VERIFIED\", \"main_pid\": int(sys.argv[1]), \"effective_cpu_affinity\": sorted(effective)}, sort_keys=True))' \"$main_pid\"",
               'echo "FULLSTACK_SYSTEMD_UNIT=$unit"',
               'echo "FULLSTACK_ROOT=$root"',
               'echo "FULLSTACK_ARTIFACT_PREFIX=$artifact_uri/"',
