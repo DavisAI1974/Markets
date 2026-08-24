@@ -243,10 +243,21 @@ class FullStackOctoberLaunchWorkflowTests(unittest.TestCase):
             'runuser -u "$provider_user" -- test -r "$repo/deploy/aws/requirements-frankie-fullstack-20260824.lock"',
             'import aiohttp, async_timeout, databento, openai',
             "research.kalshi.ng_exhaustion_frankie_fullstack_october_20260824",
+            "export PYTHONPATH=__REPO__",
+            'PYTHONPATH="$repo" "$root/venv/bin/python" research/kalshi/restore_substrate.py',
+            'PYTHONPATH="$repo" "$root/venv/bin/python" "$repo/research/kalshi/frankie_s135_substrate_descriptor_20260824.py"',
+            "env PYTHONPATH={shlex.quote(repo)}",
             '"$root/venv/bin/python" "$root/stage.py"',
             '"$root/venv/bin/python" "$root/check_gates.py"',
         ):
             self.assertIn(token, self.source)
+        self.assertNotIn(
+            "__REPO__:__REPO__/research:__REPO__/research/kalshi", self.source
+        )
+        self.assertNotIn(
+            "repo + ':' + repo + '/research:' + repo + '/research/kalshi'",
+            self.source,
+        )
         runtime_lock = RUNTIME_LOCK.read_text(encoding="utf-8")
         self.assertIn(
             'async-timeout==5.0.1 ; python_version < "3.11"', runtime_lock

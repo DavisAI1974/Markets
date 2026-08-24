@@ -1164,7 +1164,7 @@ jobs:
           runner_script = r'''#!/bin/bash
           set -euo pipefail
           cd __REPO__
-          export PYTHONPATH=__REPO__:__REPO__/research:__REPO__/research/kalshi
+          export PYTHONPATH=__REPO__
           export SOURCE_COMMIT=__SOURCE_COMMIT__
           venv_python=__VENV_PYTHON__
           run_log=__RUN_LOG__
@@ -1263,8 +1263,8 @@ jobs:
               f"printf %s {shlex.quote(encoded(stage_script))} | base64 -d > \"$root/stage.py\"",
               'chmod 700 "$root/stage.py"',
               '( set -a; source "$aws_credential_file"; set +a; unset OPENAI_API_KEY MARKETS_OPENAI_API_KEY; "$root/venv/bin/python" "$root/stage.py" )',
-              '( set -a; source "$aws_credential_file"; set +a; unset OPENAI_API_KEY MARKETS_OPENAI_API_KEY; cd "$repo"; "$root/venv/bin/python" research/kalshi/restore_substrate.py )',
-              '"$root/venv/bin/python" "$repo/research/kalshi/frankie_s135_substrate_descriptor_20260824.py" --repo-root "$repo" --out "$stage/S135_SUBSTRATE_DESCRIPTOR.json"',
+              '( set -a; source "$aws_credential_file"; set +a; unset OPENAI_API_KEY MARKETS_OPENAI_API_KEY; cd "$repo"; PYTHONPATH="$repo" "$root/venv/bin/python" research/kalshi/restore_substrate.py )',
+              'PYTHONPATH="$repo" "$root/venv/bin/python" "$repo/research/kalshi/frankie_s135_substrate_descriptor_20260824.py" --repo-root "$repo" --out "$stage/S135_SUBSTRATE_DESCRIPTOR.json"',
               'chown -R root:"$provider_group" "$repo" "$stage"',
               'chown root:"$provider_group" "$root"',
               'chmod -R o-rwx "$repo" "$stage"',
@@ -1276,7 +1276,7 @@ jobs:
               'runuser -u "$provider_user" -- test -r "$repo/deploy/aws/requirements-frankie-fullstack-20260824.lock"',
               'runuser -u "$provider_user" -- test -r "$repo/deploy/RUNTIME_TARGET.json"',
               'runuser -u "$provider_user" -- test -r "$repo/deploy/PACKAGE_MANIFEST.json"',
-              f"runuser -u \"$provider_user\" -- env PYTHONPATH={shlex.quote(repo + ':' + repo + '/research:' + repo + '/research/kalshi')} \"$root/venv/bin/python\" -c 'import aiohttp, async_timeout, databento, openai, platform, sys; import research.kalshi.ng_exhaustion_frankie_fullstack_october_20260824; assert sys.implementation.name == \"cpython\" and sys.version_info[:2] == (3, 10) and sys.implementation.cache_tag == \"cpython-310\" and platform.machine() == \"x86_64\"'",
+              f"runuser -u \"$provider_user\" -- env PYTHONPATH={shlex.quote(repo)} \"$root/venv/bin/python\" -c 'import aiohttp, async_timeout, databento, openai, platform, sys; import research.kalshi.ng_exhaustion_frankie_fullstack_october_20260824; assert sys.implementation.name == \"cpython\" and sys.version_info[:2] == (3, 10) and sys.implementation.cache_tag == \"cpython-310\" and platform.machine() == \"x86_64\"'",
               f"for service in {' '.join(shlex.quote(item) for item in services)}; do",
               '  echo "PERMANENT_SERVICE_READ_ONLY=$service"',
               '  systemctl show "$service" --property=LoadState,ActiveState,SubState,Result,UnitFileState --no-pager 2>/dev/null || true',
