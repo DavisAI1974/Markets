@@ -13,6 +13,7 @@
   "correction": "GRANT_PROVIDER_READ_ONLY_STAGED_INPUT_ACCESS",
   "stop_requested": true,
   "stop_requested_at": "2026-08-24T17:14:45Z",
+  "stop_attempt": 2,
   "stop_target_run_id": 32753586584,
   "stop_target_unit": "ng-exhaustion-frankie-fullstack-october-1ae2d5d83906-32753586584-1"
 }
