@@ -264,15 +264,29 @@ def _validate_sources(config: BlindOctoberConfig, selected: Sequence[Mapping[str
             raise BlindCanaryError(f"source DBN SHA-256 mismatch: {path}")
 
 
-def _frame_summary(envelope: Mapping[str, Any]) -> dict[str, Any]:
-    frame = envelope["compact_event_frame"]
+def _full_depth_summary(envelope: Mapping[str, Any]) -> dict[str, Any]:
+    """Materialize the expensive FIFO checkpoint only at a causal window boundary."""
     checkpoint = envelope["full_state"].checkpoint()
     book = checkpoint["book"]
     queues = []
     for side in ("bid_levels_full", "ask_levels_full"):
-        for level in book.get(side, ()):  # full FIFO is reduced only to deterministic causal statistics
-            queue = level.get("fifo_queue", ())
-            queues.append(len(queue))
+        for level in book.get(side, ()):
+            queues.append(len(level.get("fifo_queue", ())))
+    return {
+        "bid_depth": book.get("bid_depth_full"),
+        "ask_depth": book.get("ask_depth_full"),
+        "bid_orders": book.get("bid_order_count_full"),
+        "ask_orders": book.get("ask_order_count_full"),
+        "bid_levels": book.get("bid_price_level_count_full"),
+        "ask_levels": book.get("ask_price_level_count_full"),
+        "fifo_queue_count": len(queues),
+        "fifo_queue_max_orders": max(queues, default=0),
+        "fifo_queue_mean_orders": (sum(queues) / len(queues)) if queues else 0.0,
+    }
+
+
+def _frame_summary(envelope: Mapping[str, Any], full_depth: Mapping[str, Any]) -> dict[str, Any]:
+    frame = envelope["compact_event_frame"]
     return {
         "instrument_id": int(frame["instrument_id"]),
         "raw_symbol": frame.get("raw_symbol"),
@@ -282,17 +296,7 @@ def _frame_summary(envelope: Mapping[str, Any]) -> dict[str, Any]:
         "top10_book": frame.get("book", {}),
         "rolling_activity": frame.get("activity", {}),
         "integrity": frame.get("integrity", {}),
-        "full_depth": {
-            "bid_depth": book.get("bid_depth_full"),
-            "ask_depth": book.get("ask_depth_full"),
-            "bid_orders": book.get("bid_order_count_full"),
-            "ask_orders": book.get("ask_order_count_full"),
-            "bid_levels": book.get("bid_price_level_count_full"),
-            "ask_levels": book.get("ask_price_level_count_full"),
-            "fifo_queue_count": len(queues),
-            "fifo_queue_max_orders": max(queues, default=0),
-            "fifo_queue_mean_orders": (sum(queues) / len(queues)) if queues else 0.0,
-        },
+        "full_depth_at_window_entry": dict(full_depth),
     }
 
 
@@ -308,6 +312,7 @@ class _WindowBuilder:
         self.actions: dict[str, int] = {}
         self.action_samples: list[dict[str, Any]] = []
         self.latest: dict[int, dict[str, Any]] = {}
+        self.full_depth: dict[int, dict[str, Any]] = {}
         self.observations: list[Observation] = []
         self.clocks: list[EvaluationClock] = []
 
@@ -318,6 +323,7 @@ class _WindowBuilder:
         self.actions = {}
         self.action_samples = []
         self.latest = {}
+        self.full_depth = {}
 
     def _flush(self) -> None:
         if not self.frames or self.window_end is None or self.last_recv is None or self.last_event is None:
@@ -351,9 +357,9 @@ class _WindowBuilder:
             self.clocks.append(EvaluationClock(cutoff, cutoff, cutoff + 0.0001))
 
     def add(self, envelope: Mapping[str, Any]) -> None:
-        summary = _frame_summary(envelope)
-        recv = summary["ts_recv_ns"] / 1e9
-        event = summary["ts_event_ns"] / 1e9
+        frame = envelope["compact_event_frame"]
+        recv = int(frame["ts_recv_ns"]) / 1e9
+        event = int(frame["ts_event_ns"]) / 1e9
         end = TARGET_START + (math.floor((recv - TARGET_START) / self.seconds) + 1) * self.seconds
         end = min(end, TARGET_END)
         if self.window_end is None:
@@ -361,6 +367,10 @@ class _WindowBuilder:
         elif end != self.window_end:
             self._flush()
             self._reset(end)
+        instrument_id = int(frame["instrument_id"])
+        if instrument_id not in self.full_depth:
+            self.full_depth[instrument_id] = _full_depth_summary(envelope)
+        summary = _frame_summary(envelope, self.full_depth[instrument_id])
         self.frames += 1
         self.first_recv = recv if self.first_recv is None else self.first_recv
         self.last_recv = recv
