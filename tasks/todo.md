@@ -1,3 +1,44 @@
+# Standard monthly Frankie run
+
+- [ ] Put the canonical procedures first-read block at the top of every new handoff.
+- [x] Record the public `DavisAI1974/operator_hilbert_seq` scaffold: `main` at
+  `5bc511c06d3048a510333910588b9a6305532ab2`.
+- [x] Establish that this scaffold is incomplete and its NOVA code is heuristic string compression with
+  placeholder computations, not Amazon Nova or the full Nucleus model.
+- [ ] Receive the other Nucleus/Operator/Hilbert build links from the user and compare their exact git
+  identities, tracked files, dependencies, weights, entrypoints, tests, and completeness.
+- [ ] Design Nucleus as the local producer of structured recurrence/extension/timing/context sections, with
+  one Frankie/5.6-sol synthesis per lane and content-addressed source/omission receipts.
+- [ ] Compare the existing path against Nucleus plus Frankie on only 1-2 frozen prefixes before integration.
+- [ ] Do not relaunch October or modify the accepted four-helper production path during that read-only review.
+- [ ] Define the target-month config and content-addressed prior-month learned-knowledge ingest contract.
+- [ ] Extract a reusable monthly runner; keep dates, predecessor, manifests, names, and artifact prefix in config.
+- [ ] Extract a reusable launch template while fixing CPU mapping, lane order, receipt schema, and gate semantics.
+- [ ] Freeze each completed month's learned output as the only accepted knowledge input for the following month.
+- [ ] Keep verification to the runtime concurrency node and workflow/receipt node.
+- [ ] Publish by fetched implementation SHA plus immutable month marker.
+- [ ] Canary on the first 1-2 accepted prefixes and expose completed/remaining replay percentage.
+
+## Monthly invariant checkpoint
+
+- [ ] Prior knowledge lineage and target answer wall validate before provider calls.
+- [ ] Each lane uses recurrence=CPU0, extension=CPU1, timing=CPU2, context=CPU3 concurrently.
+- [ ] Control completes before combined; Frankie is call five after all four helpers join.
+- [ ] First accepted event contains recomputable affinity/timing receipts and content-addressed progress.
+- [ ] Final month output is frozen and consumable by the next month without rebuilding wrappers.
+- [ ] Any accepted Nucleus cost release preserves the same immutable prefix, lane separation, answer wall,
+  audit authority, and one final Frankie decision per lane.
+
+## File-change checkpoint
+
+- [ ] One-time generalization removes all month/date/roster literals from reusable runtime and workflow code.
+- [ ] Normal rollovers edit only the month descriptor and frozen-knowledge source declaration.
+- [ ] Frozen-knowledge receipt, exact-SHA launch marker, and run evidence are generated, never hand-edited.
+- [ ] Runtime, orchestrator, ledgers/journals, CPU map, generic workflow, and generic tests remain byte-identical.
+- [ ] The first 1-2 accepted prefixes are observed as the canary while the full-month unit continues.
+
+---
+
 # Frankie full-stack October implementation and launch
 
 - [ ] Inventory and preserve every worktree, branch, modified file, and untracked artifact.

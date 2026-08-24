@@ -1,5 +1,10 @@
 # Frankie four-CPU helper correction and immediate October launch
 
+> **Required first read:** Read and obey
+> `research/kalshi/NG_EXHAUSTION_FRANKIE_MONTHLY_RUN_PROCEDURE.md` in full before this handoff.
+> This handoff supplies month-specific identities and exceptions only. If it conflicts with the canonical
+> procedure, stop and resolve the conflict explicitly rather than silently choosing one.
+
 Date: 2026-08-24
 Target branch: `chatgpt/ng-exhaustion-october-sharded-20260824`
 
