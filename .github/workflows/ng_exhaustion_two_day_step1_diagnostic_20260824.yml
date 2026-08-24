@@ -60,7 +60,7 @@ jobs:
           required = {
               "schema": "NG_EXHAUSTION_TWO_DAY_STEP1_LAUNCH_V1_20260824",
               "confirmation": "RUN_EXACT_TWO_CONSECUTIVE_DAYS",
-              "launch_revision": 3,
+              "launch_revision": 4,
               "branch": "chatgpt/frankie-october-aws-readonly-20260824",
               "window_start": os.environ["WINDOW_START"],
               "window_end_exclusive": os.environ["WINDOW_END_EXCLUSIVE"],
@@ -73,7 +73,7 @@ jobs:
               "compare_to_54_week_answers": False,
               "provider_or_frankie_calls": False,
               "production_mutation": False,
-              "transfer_mode": "RUN_SCOPED_PRESIGNED_GET_AND_PUT",
+              "transfer_mode": "EXISTING_FROZEN_LAUNCH_PREFIX_STAGE_THEN_VERIFY_AND_PROMOTE",
               "validation_mode": "USER_AUTHORIZED_SELF_FIT_SELF_SCORE_DIAGNOSTIC_ACCEPTED",
           }
           if launch != required:
@@ -101,59 +101,16 @@ jobs:
         run: |
           set -euo pipefail
           result_prefix="nymex/ng_mbo_5y_v0/step1_census/two_day_diagnostic/runs/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          worker_prefix="nymex/ng_mbo_5y_v0/step1_census/launches/${CANDIDATE_SHA}/full/two_day_diagnostic/runs/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           aws s3 cp \
             research/ng_exhaustion_mbo_2day_step1_finalize_20260824.py \
-            "s3://$BUCKET/$result_prefix/input/ng_exhaustion_mbo_2day_step1_finalize_20260824.py" \
+            "s3://$BUCKET/$worker_prefix/input/ng_exhaustion_mbo_2day_step1_finalize_20260824.py" \
             --only-show-errors
-          eval "$(python - <<'PY'
-          import boto3
-          import os
-          import shlex
-
-          bucket = os.environ["BUCKET"]
-          prefix = (
-              "nymex/ng_mbo_5y_v0/step1_census/two_day_diagnostic/runs/"
-              f"{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}"
-          )
-          s3 = boto3.client("s3", region_name=os.environ["AWS_DEFAULT_REGION"])
-          adapter = s3.generate_presigned_url(
-              "get_object",
-              Params={
-                  "Bucket": bucket,
-                  "Key": prefix + "/input/ng_exhaustion_mbo_2day_step1_finalize_20260824.py",
-              },
-              ExpiresIn=14400,
-          )
-          result = s3.generate_presigned_url(
-              "put_object",
-              Params={"Bucket": bucket, "Key": prefix + "/transfer/results.tar.gz"},
-              ExpiresIn=14400,
-          )
-          probe = s3.generate_presigned_url(
-              "put_object",
-              Params={"Bucket": bucket, "Key": prefix + "/transfer/upload-probe.txt"},
-              ExpiresIn=14400,
-          )
-          print("export ADAPTER_DOWNLOAD_URL=" + shlex.quote(adapter))
-          print("export RESULT_UPLOAD_URL=" + shlex.quote(result))
-          print("export PROBE_UPLOAD_URL=" + shlex.quote(probe))
-          PY
-          )"
-          echo "::add-mask::$ADAPTER_DOWNLOAD_URL"
-          echo "::add-mask::$RESULT_UPLOAD_URL"
-          echo "::add-mask::$PROBE_UPLOAD_URL"
-          curl --fail --silent --show-error --location \
-            "$ADAPTER_DOWNLOAD_URL" --output /tmp/two-day-adapter-presigned.py
-          test "$(sha256sum /tmp/two-day-adapter-presigned.py | cut -d' ' -f1)" = \
-            "$EXPECTED_ADAPTER_SHA256"
-          printf 'READY\n' > /tmp/two-day-presigned-upload-probe.txt
-          curl --fail --silent --show-error --request PUT \
-            --upload-file /tmp/two-day-presigned-upload-probe.txt \
-            "$PROBE_UPLOAD_URL"
           test "$(aws s3api head-object \
-            --bucket "$BUCKET" --key "$result_prefix/transfer/upload-probe.txt" \
-            --query ContentLength --output text)" = 6
-          echo "PRESIGNED_TRANSFER_PREFLIGHT=PASS"
+            --bucket "$BUCKET" \
+            --key "$worker_prefix/input/ng_exhaustion_mbo_2day_step1_finalize_20260824.py" \
+            --query ContentLength --output text)" -gt 0
+          echo "WORKER_STAGING_ADAPTER=PASS"
           python - <<'PY'
           import json
           import os
@@ -169,16 +126,17 @@ jobs:
               "nymex/ng_mbo_5y_v0/step1_census/two_day_diagnostic/runs/"
               f"{run_id}-{attempt}"
           )
-          adapter_url = os.environ["ADAPTER_DOWNLOAD_URL"]
-          result_upload_url = os.environ["RESULT_UPLOAD_URL"]
+          worker_prefix = (
+              "nymex/ng_mbo_5y_v0/step1_census/launches/"
+              f"{candidate}/full/two_day_diagnostic/runs/{run_id}-{attempt}"
+          )
           remote = f'''set -euo pipefail
           base={shlex.quote(base)}
           run_root={shlex.quote(run_root)}
           segment={shlex.quote(segment)}
           bucket={shlex.quote(os.environ['BUCKET'])}
           result_prefix={shlex.quote(result_prefix)}
-          adapter_url={shlex.quote(adapter_url)}
-          result_upload_url={shlex.quote(result_upload_url)}
+          worker_prefix={shlex.quote(worker_prefix)}
           export AWS_DEFAULT_REGION=us-east-2
           seconds="$base/full/segments/$segment.seconds.jsonl.gz"
           child_receipt="$base/full/segments/$segment.receipt.json"
@@ -191,11 +149,19 @@ jobs:
           test ! -e "$run_root"
           mkdir -p "$run_root"
           cp -a --reflink=auto "$base/repo" "$run_root/repo"
-          curl --fail --silent --show-error --location --retry 3 \
-            "$adapter_url" \
-            --output "$run_root/repo/research/ng_exhaustion_mbo_2day_step1_finalize_20260824.py"
+          aws s3 cp \
+            "s3://$bucket/$worker_prefix/input/ng_exhaustion_mbo_2day_step1_finalize_20260824.py" \
+            "$run_root/repo/research/ng_exhaustion_mbo_2day_step1_finalize_20260824.py" \
+            --only-show-errors
           cd "$run_root/repo"
           test "$(sha256sum research/ng_exhaustion_mbo_2day_step1_finalize_20260824.py | cut -d' ' -f1)" = {shlex.quote(os.environ['EXPECTED_ADAPTER_SHA256'])}
+          printf 'READY\n' | aws s3 cp - \
+            "s3://$bucket/$worker_prefix/transfer/worker-read-write-probe.txt" \
+            --only-show-errors
+          test "$(aws s3 cp \
+            "s3://$bucket/$worker_prefix/transfer/worker-read-write-probe.txt" - \
+            --only-show-errors)" = READY
+          echo WORKER_PREFIX_TRANSFER_PREFLIGHT=PASS
           MPLCONFIGDIR="$run_root/matplotlib" PYTHONPATH=research \
             /usr/bin/time -v -o "$run_root/resource.txt" \
             "$base/venv/bin/python" research/ng_exhaustion_mbo_2day_step1_finalize_20260824.py \
@@ -229,9 +195,10 @@ jobs:
           tar -C "$run_root/results" -czf "$run_root/results.tar.gz" .
           printf 'TWO_DAY_RESULTS_TAR_SHA256=%s\n' \
             "$(sha256sum "$run_root/results.tar.gz" | cut -d' ' -f1)"
-          curl --fail --silent --show-error --request PUT \
-            --upload-file "$run_root/results.tar.gz" \
-            "$result_upload_url"
+          aws s3 cp "$run_root/results.tar.gz" \
+            "s3://$bucket/$worker_prefix/transfer/results.tar.gz" \
+            --only-show-errors
+          printf 'TWO_DAY_WORKER_STAGING_PREFIX=s3://%s/%s/\n' "$bucket" "$worker_prefix"
           printf 'TWO_DAY_RESULT_S3_PREFIX=s3://%s/%s/\n' "$bucket" "$result_prefix"
           '''
           with open("/tmp/two-day-step1-params.json", "w", encoding="utf-8") as handle:
@@ -286,9 +253,10 @@ jobs:
         run: |
           set -euo pipefail
           prefix="nymex/ng_mbo_5y_v0/step1_census/two_day_diagnostic/runs/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          worker_prefix="nymex/ng_mbo_5y_v0/step1_census/launches/${CANDIDATE_SHA}/full/two_day_diagnostic/runs/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           mkdir -p /tmp/two-day-step1-evidence/results
           aws s3 cp \
-            "s3://$BUCKET/$prefix/transfer/results.tar.gz" \
+            "s3://$BUCKET/$worker_prefix/transfer/results.tar.gz" \
             /tmp/two-day-step1-evidence/results.tar.gz \
             --only-show-errors
           tar -C /tmp/two-day-step1-evidence/results -xzf \
@@ -374,6 +342,11 @@ jobs:
               "github_run_id": os.environ["GITHUB_RUN_ID"],
               "github_run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
               "github_sha": os.environ["GITHUB_SHA"],
+              "worker_staging_prefix": (
+                  "nymex/ng_mbo_5y_v0/step1_census/launches/"
+                  f"{os.environ['CANDIDATE_SHA']}/full/two_day_diagnostic/runs/"
+                  f"{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}"
+              ),
               "results_tar_sha256": archive_sha,
               "step1_receipt_sha256": claimed_receipt_sha,
               "verified_receipt_artifact_count": len(verified),
@@ -388,6 +361,9 @@ jobs:
           print("DOWNLOADED_RECEIPT_AND_ARTIFACT_HASHES=PASS")
           print("VERIFIED_RECEIPT_ARTIFACT_COUNT=" + str(len(verified)))
           PY
+          aws s3 cp research/ng_exhaustion_mbo_2day_step1_finalize_20260824.py \
+            "s3://$BUCKET/$prefix/input/ng_exhaustion_mbo_2day_step1_finalize_20260824.py" \
+            --only-show-errors
           aws s3 cp /tmp/two-day-step1-evidence/results \
             "s3://$BUCKET/$prefix/artifacts/" --recursive --only-show-errors
           aws s3 cp /tmp/two-day-step1-evidence/COMPLETION_RECEIPT.json \
