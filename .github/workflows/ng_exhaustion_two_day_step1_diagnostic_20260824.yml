@@ -60,6 +60,7 @@ jobs:
           required = {
               "schema": "NG_EXHAUSTION_TWO_DAY_STEP1_LAUNCH_V1_20260824",
               "confirmation": "RUN_EXACT_TWO_CONSECUTIVE_DAYS",
+              "launch_revision": 2,
               "branch": "chatgpt/frankie-october-aws-readonly-20260824",
               "window_start": os.environ["WINDOW_START"],
               "window_end_exclusive": os.environ["WINDOW_END_EXCLUSIVE"],
@@ -98,6 +99,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          result_prefix="nymex/ng_mbo_5y_v0/step1_census/two_day_diagnostic/runs/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          aws s3 cp \
+            research/ng_exhaustion_mbo_2day_step1_finalize_20260824.py \
+            "s3://$BUCKET/$result_prefix/input/ng_exhaustion_mbo_2day_step1_finalize_20260824.py" \
+            --only-show-errors
           python - <<'PY'
           import json
           import os
@@ -107,7 +113,6 @@ jobs:
           segment = os.environ["TARGET_SEGMENT"]
           run_id = os.environ["GITHUB_RUN_ID"]
           attempt = os.environ["GITHUB_RUN_ATTEMPT"]
-          commit = os.environ["GITHUB_SHA"]
           base = f"/mnt/markets/ng_exhaustion_step1_5y_20260822/{candidate}"
           run_root = f"/mnt/markets/ng_exhaustion_two_day_step1_20260824/{run_id}-{attempt}"
           result_prefix = (
@@ -118,7 +123,6 @@ jobs:
           base={shlex.quote(base)}
           run_root={shlex.quote(run_root)}
           segment={shlex.quote(segment)}
-          commit={shlex.quote(commit)}
           bucket={shlex.quote(os.environ['BUCKET'])}
           result_prefix={shlex.quote(result_prefix)}
           export AWS_DEFAULT_REGION=us-east-2
@@ -132,9 +136,11 @@ jobs:
           test "$(sha256sum "$child_receipt" | cut -d' ' -f1)" = {shlex.quote(os.environ['EXPECTED_RECEIPT_FILE_SHA256'])}
           test ! -e "$run_root"
           mkdir -p "$run_root"
-          git -C "$base/repo" fetch --no-tags origin chatgpt/frankie-october-aws-readonly-20260824
-          test "$(git -C "$base/repo" rev-parse FETCH_HEAD)" = "$commit"
-          git -C "$base/repo" worktree add --detach "$run_root/repo" "$commit"
+          cp -a --reflink=auto "$base/repo" "$run_root/repo"
+          aws s3 cp \
+            "s3://$bucket/$result_prefix/input/ng_exhaustion_mbo_2day_step1_finalize_20260824.py" \
+            "$run_root/repo/research/ng_exhaustion_mbo_2day_step1_finalize_20260824.py" \
+            --only-show-errors
           cd "$run_root/repo"
           test "$(sha256sum research/ng_exhaustion_mbo_2day_step1_finalize_20260824.py | cut -d' ' -f1)" = {shlex.quote(os.environ['EXPECTED_ADAPTER_SHA256'])}
           MPLCONFIGDIR="$run_root/matplotlib" PYTHONPATH=research \
