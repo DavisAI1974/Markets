@@ -16,6 +16,7 @@ import math
 import os
 from pathlib import Path
 import sys
+import time
 from typing import Any, Callable, Mapping, Protocol, Sequence
 
 REPO = Path(__file__).resolve().parents[2]
@@ -481,12 +482,25 @@ def run_blind_october_canary(
     stream_path = config.output_root / "v4_native_stream.jsonl.gz"
     stream_writer = DeterministicJsonlGzip(stream_path)
     bootstrap_groups = target_snapshot_groups = target_groups = 0
+    replay_groups = 0
+    replay_started = time.monotonic()
     bootstrap_hashes: list[str] = []
 
     def on_group(envelope: Mapping[str, Any], _legacy_rows: Sequence[Mapping[str, Any]]) -> None:
-        nonlocal bootstrap_groups, target_snapshot_groups, target_groups
+        nonlocal bootstrap_groups, target_snapshot_groups, target_groups, replay_groups
+        replay_groups += 1
         frame = envelope["compact_event_frame"]
         recv = int(frame["ts_recv_ns"]) / 1e9
+        if replay_groups % 100_000 == 0:
+            elapsed = max(time.monotonic() - replay_started, 1e-9)
+            print(json.dumps({
+                "event": "V4_REPLAY_PROGRESS",
+                "elapsed_seconds": round(elapsed, 3),
+                "groups": replay_groups,
+                "groups_per_second": round(replay_groups / elapsed, 3),
+                "last_ts_recv": recv,
+                "target_groups": target_groups,
+            }, sort_keys=True), flush=True)
         snapshot = bool(frame.get("snapshot_bootstrap_only"))
         if recv < TARGET_START:
             bootstrap_groups += 1
@@ -503,14 +517,30 @@ def run_blind_october_canary(
         stream_writer.write(_clean_json(frame))
         builder.add(envelope)
 
+    print(json.dumps({
+        "event": "V4_REPLAY_STARTED",
+        "source_count": len(config.source_paths),
+        "target_half_open": [TARGET_START, TARGET_END],
+    }, sort_keys=True), flush=True)
     try:
         replay_summary = replay(
             [str(path) for path in config.source_paths],
             on_group,
             materialize_full_state=False,
         )
+        print(json.dumps({
+            "event": "V4_REPLAY_COMPLETE",
+            "elapsed_seconds": round(time.monotonic() - replay_started, 3),
+            "groups": replay_groups,
+        }, sort_keys=True), flush=True)
     finally:
+        print(json.dumps({"event": "V4_STREAM_FINALIZE_STARTED"}, sort_keys=True), flush=True)
         stream_receipt = stream_writer.close()
+        print(json.dumps({
+            "event": "V4_STREAM_FINALIZE_COMPLETE",
+            "gzip_sha256": stream_receipt["gzip_sha256"],
+            "rows": stream_receipt["rows"],
+        }, sort_keys=True), flush=True)
     builder.finish()
     print(json.dumps({"event": "V4_GROUPS_PROCESSED", "target_groups": target_groups}, sort_keys=True), flush=True)
 
