@@ -57,6 +57,7 @@ jobs:
           credential_file = "/mnt/markets/ng_exhaustion_step1_5y_20260822/0d318335825b4a0e19a5a2881522f3da0374788e/aws.env"
           commands = [
               "set -euo pipefail",
+              "trap 'echo FRANKIE_LAUNCH_FAILED_COMMAND=\"$BASH_COMMAND\" >&2' ERR",
               f"root={shlex.quote(root)}",
               f"repo={shlex.quote(repo)}",
               f"package={shlex.quote(package)}",
@@ -68,7 +69,9 @@ jobs:
               f"echo {shlex.quote(os.environ['PACKAGE_SHA256'] + '  ' + package)} | sha256sum -c -",
               "tar -xzf \"$package\" -C \"$repo\"",
               "test -s /etc/markets/frankie.env",
+              "echo FRANKIE_ENV=CONFIGURED",
               "test -f \"$repo/research/kalshi/frankie_bounded_3mo_parallel.py\"",
+              "echo NORMAL_FRANKIE_STATE=$(systemctl is-active markets-frankie.service || true)",
               "test \"$(systemctl is-active markets-frankie.service || true)\" != active",
               "bash \"$repo/deploy/aws/install_frankie_bounded_3mo.sh\" \"$repo\" ubuntu",
               "systemctl reset-failed markets-frankie-bounded-3mo.service || true",
