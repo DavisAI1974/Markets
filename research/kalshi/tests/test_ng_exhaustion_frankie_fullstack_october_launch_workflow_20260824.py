@@ -247,10 +247,33 @@ class FullStackOctoberLaunchWorkflowTests(unittest.TestCase):
             'PYTHONPATH="$repo" "$root/venv/bin/python" research/kalshi/restore_substrate.py',
             'PYTHONPATH="$repo" "$root/venv/bin/python" "$repo/research/kalshi/frankie_s135_substrate_descriptor_20260824.py"',
             "env PYTHONPATH={shlex.quote(repo)}",
+            'chmod -R g+rX,g-w,o-rwx "$repo" "$stage"',
+            'test -z "$(find "$repo" "$stage" -perm /g=w -print -quit)"',
+            'runuser -u "$provider_user" -- test -r "$stage/S135_SUBSTRATE_DESCRIPTOR.json"',
             '"$root/venv/bin/python" "$root/stage.py"',
             '"$root/venv/bin/python" "$root/check_gates.py"',
         ):
             self.assertIn(token, self.source)
+        descriptor_created = self.source.index(
+            '--out "$stage/S135_SUBSTRATE_DESCRIPTOR.json"'
+        )
+        provider_ownership = self.source.index(
+            'chown -R root:"$provider_group" "$repo" "$stage"', descriptor_created
+        )
+        provider_read_only_modes = self.source.index(
+            'chmod -R g+rX,g-w,o-rwx "$repo" "$stage"', provider_ownership
+        )
+        descriptor_readable = self.source.index(
+            'runuser -u "$provider_user" -- test -r "$stage/S135_SUBSTRATE_DESCRIPTOR.json"',
+            provider_read_only_modes,
+        )
+        systemd_launch = self.source.index(
+            'systemd-run --collect --unit "$unit"', descriptor_readable
+        )
+        self.assertLess(descriptor_created, provider_ownership)
+        self.assertLess(provider_ownership, provider_read_only_modes)
+        self.assertLess(provider_read_only_modes, descriptor_readable)
+        self.assertLess(descriptor_readable, systemd_launch)
         self.assertNotIn(
             "__REPO__:__REPO__/research:__REPO__/research/kalshi", self.source
         )
