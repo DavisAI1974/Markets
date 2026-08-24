@@ -2,6 +2,7 @@
   "authorization": "LAUNCH_NOW",
   "branch": "chatgpt/ng-exhaustion-october-sharded-20260824",
   "canonical_manifest_sha256": "5739bce85d9bfbbe6c59d000bc411b424d7752b98a309725161d44e6d1d3dc2e",
+  "launch_attempt": 2,
   "model": "gpt-5.6-sol",
   "predecessor_object": {
     "bytes": 33433238,
