@@ -193,6 +193,14 @@ class FullStackOctoberLaunchWorkflowTests(unittest.TestCase):
             2,
             "launch CI must execute exactly two focused CPU-path test nodes",
         )
+        extraction = self.source.index('tar -xzf "$package" -C "$repo"')
+        provider_traversal = self.source.index('chmod 0755 "$repo"', extraction)
+        provider_install = self.source.index(
+            'runuser -u "$provider_user" -- "$root/venv/bin/python" -m pip install',
+            provider_traversal,
+        )
+        self.assertLess(extraction, provider_traversal)
+        self.assertLess(provider_traversal, provider_install)
 
     def test_runtime_supply_chain_is_hash_locked_unprivileged_and_credential_scoped(self):
         build = self.source.index("Build hash-locked offline runtime package without credentials")
