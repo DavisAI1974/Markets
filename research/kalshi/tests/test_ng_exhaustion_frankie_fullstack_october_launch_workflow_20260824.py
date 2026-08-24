@@ -201,6 +201,27 @@ class FullStackOctoberLaunchWorkflowTests(unittest.TestCase):
         )
         self.assertLess(extraction, provider_traversal)
         self.assertLess(provider_traversal, provider_install)
+        self.assertEqual(self.source.count("for python_version in 310 311 312"), 1)
+        for token in (
+            '--python-version "$python_version"',
+            '--abi "cp${python_version}"',
+            '--dry-run',
+            '--ignore-installed',
+            'runtime_python="$(command -v python3)"',
+            'sys.version_info[:2] in ((3, 10), (3, 11), (3, 12))',
+            'platform.machine() == \\"x86_64\\"',
+            'runuser -u "$provider_user" -- test -r "$repo/deploy/aws/requirements-frankie-fullstack-20260824.lock"',
+            'import aiohttp, databento, openai',
+            '"$root/venv/bin/python" "$root/stage.py"',
+            '"$root/venv/bin/python" "$root/check_gates.py"',
+        ):
+            self.assertIn(token, self.source)
+        self.assertNotIn('python "$root/stage.py"', self.source)
+        self.assertNotIn('python "$root/check_gates.py"', self.source)
+        provider_smoke = self.source.index('import aiohttp, databento, openai')
+        systemd_launch = self.source.index('systemd-run --collect --unit "$unit"')
+        self.assertLess(provider_install, provider_smoke)
+        self.assertLess(provider_smoke, systemd_launch)
 
     def test_runtime_supply_chain_is_hash_locked_unprivileged_and_credential_scoped(self):
         build = self.source.index("Build hash-locked offline runtime package without credentials")
