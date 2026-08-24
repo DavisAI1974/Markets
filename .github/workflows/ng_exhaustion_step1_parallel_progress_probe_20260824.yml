@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   probe:
@@ -21,7 +21,13 @@ jobs:
       AWS_DEFAULT_REGION: us-east-2
       INSTANCE_ID: i-08cee7171c0a76a04
       CANDIDATE_SHA: 0d318335825b4a0e19a5a2881522f3da0374788e
+      BRANCH: chatgpt/ng-exhaustion-entry-timing-revival-20260818
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BRANCH }}
+          fetch-depth: 0
+
       - name: Read-only per-segment progress probe
         shell: bash
         run: |
@@ -29,7 +35,6 @@ jobs:
           python - <<'PY'
           import json, os, shlex
           candidate=os.environ['CANDIDATE_SHA']
-          base=f'/mnt/markets/ng_exhaustion_step1_5y_20260822/{candidate}'
           script=r'''
           import json, os, re
           from pathlib import Path
@@ -92,6 +97,8 @@ jobs:
                   current_index=len(objs)
                   current_key=None
                   current_date=None
+                  current_fd_pos=None
+                  current_size=None
               elif current:
                   i,obj,path,pos=current
                   before=sum(int(o['bytes']) for o in objs[:i])
@@ -99,6 +106,8 @@ jobs:
                   upper=100.0*(before+int(obj['bytes']))/total_bytes if total_bytes else None
                   current_index=i+1
                   current_key=obj['key']
+                  current_fd_pos=pos
+                  current_size=int(obj['bytes'])
                   m=re.search(r'(20\d{6})',Path(obj['key']).name)
                   current_date=m.group(1) if m else None
               else:
@@ -106,6 +115,8 @@ jobs:
                   current_index=None
                   current_key=None
                   current_date=None
+                  current_fd_pos=None
+                  current_size=None
               rows.append({
                   'segment':segment,
                   'unit_active':active,
@@ -115,6 +126,8 @@ jobs:
                   'current_object_index_1based':current_index,
                   'current_source_date':current_date,
                   'current_source_key':current_key,
+                  'current_fd_position_bytes':current_fd_pos,
+                  'current_object_bytes':current_size,
                   'source_byte_progress_lower_pct':None if lower is None else round(lower,2),
                   'source_byte_progress_upper_pct':None if upper is None else round(upper,2),
                   'heartbeat_utc':hb.get('heartbeat_utc'),
@@ -124,7 +137,7 @@ jobs:
                   'partial_output_bytes':partial.stat().st_size if partial.exists() else None,
                   'receipt_complete':receipt.exists() and seconds.exists(),
               })
-          print(json.dumps({'schema':'NG_EXHAUSTION_STEP1_PARALLEL_PROGRESS_PROBE_V1','read_only':True,'segments':rows},indent=2,sort_keys=True))
+          print(json.dumps({'schema':'NG_EXHAUSTION_STEP1_PARALLEL_PROGRESS_PROBE_V1','read_only':True,'segments':rows},sort_keys=True))
           '''
           command='set -euo pipefail\nexport CANDIDATE_SHA='+shlex.quote(candidate)+'\npython3 - <<\'PYPROBE\'\n'+script+'\nPYPROBE'
           with open('/tmp/progress-probe-params.json','w',encoding='utf-8') as f:
@@ -142,4 +155,32 @@ jobs:
             --command-id "$command_id" \
             --instance-id "$INSTANCE_ID" \
             --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
-            --output json
+            --output json > /tmp/progress-probe-invocation.json
+          cat /tmp/progress-probe-invocation.json
+          python - <<'PY'
+          import datetime as dt, json
+          from pathlib import Path
+          invocation=json.loads(Path('/tmp/progress-probe-invocation.json').read_text())
+          if invocation.get('Status') != 'Success' or invocation.get('ResponseCode') != 0:
+              raise SystemExit(invocation)
+          payload=json.loads(invocation.get('StandardOutput') or '{}')
+          payload['retrieved_at_utc']=dt.datetime.now(dt.timezone.utc).isoformat()
+          payload['ssm_status']=invocation.get('Status')
+          payload['ssm_response_code']=invocation.get('ResponseCode')
+          out=Path('research/kalshi/NG_EXHAUSTION_STEP1_PARALLEL_PROGRESS_LATEST_20260824.json')
+          out.write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
+          print(out.read_text())
+          PY
+
+      - name: Retain read-only progress observation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/kalshi/NG_EXHAUSTION_STEP1_PARALLEL_PROGRESS_LATEST_20260824.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m 'ops: retain read-only three-month progress observation'
+          git push origin HEAD:"$BRANCH"
