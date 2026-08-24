@@ -1,0 +1,11 @@
+{
+  "schema": "NG_EXHAUSTION_FRANKIE_FULLSTACK_OCTOBER_LAUNCH_V1_20260824",
+  "launch_authorized": true,
+  "launch_branch": "chatgpt/ng-exhaustion-october-sharded-20260824",
+  "authorized_scope": "FULL_OCTOBER_2021_IDENTICAL_PREFIX_S135_CONTROL_VS_ALL_PROVISIONAL_COMBINED",
+  "implementation_commit": "1f94f0814bf2fa846722959a3e774d20873518f8",
+  "implementation_tree": "b82779ee788e33e34a2fe6bc27ac24ab28e7bf75",
+  "launch_mode": "PUSH_TRIGGERED_FULL_OCTOBER_FIRST_PAIRED_PREFIX_GATE",
+  "step1_rerun": false,
+  "focused_cpu_test_nodes": 2
+}
