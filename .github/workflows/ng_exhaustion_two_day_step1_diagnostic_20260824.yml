@@ -88,7 +88,8 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --quiet \
-            numpy==1.26.4 scipy==1.11.4 scikit-learn==1.4.2 matplotlib==3.8.4
+            numpy==1.26.4 scipy==1.11.4 scikit-learn==1.4.2 matplotlib==3.8.4 \
+            boto3==1.35.99 databento==0.81.0
           MPLCONFIGDIR=/tmp/matplotlib-two-day PYTHONPATH=research \
             python -m unittest -v \
               research/test_ng_exhaustion_mbo_2day_step1_finalize_20260824.py
@@ -120,6 +121,7 @@ jobs:
           commit={shlex.quote(commit)}
           bucket={shlex.quote(os.environ['BUCKET'])}
           result_prefix={shlex.quote(result_prefix)}
+          export AWS_DEFAULT_REGION=us-east-2
           seconds="$base/full/segments/$segment.seconds.jsonl.gz"
           child_receipt="$base/full/segments/$segment.receipt.json"
           test -x "$base/venv/bin/python"
@@ -130,7 +132,8 @@ jobs:
           test "$(sha256sum "$child_receipt" | cut -d' ' -f1)" = {shlex.quote(os.environ['EXPECTED_RECEIPT_FILE_SHA256'])}
           test ! -e "$run_root"
           mkdir -p "$run_root"
-          git -C "$base/repo" fetch --no-tags origin "$commit"
+          git -C "$base/repo" fetch --no-tags origin chatgpt/frankie-october-aws-readonly-20260824
+          test "$(git -C "$base/repo" rev-parse FETCH_HEAD)" = "$commit"
           git -C "$base/repo" worktree add --detach "$run_root/repo" "$commit"
           cd "$run_root/repo"
           test "$(sha256sum research/ng_exhaustion_mbo_2day_step1_finalize_20260824.py | cut -d' ' -f1)" = {shlex.quote(os.environ['EXPECTED_ADAPTER_SHA256'])}
