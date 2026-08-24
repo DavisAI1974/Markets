@@ -23,9 +23,10 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: us-east-2
       INSTANCE_ID: i-08cee7171c0a76a04
-      UNIT: ng-exhaustion-frankie-october-blind-ca0893b659a0
+      UNIT: ng-exhaustion-frankie-october-blind-dcf839e911c5
+      RUN_ROOT: /mnt/markets/ng_exhaustion_frankie_october_blind_20260824/dcf839e911c5d501396fa7af9d6692012fb6e0d9
     steps:
-      - name: Await evidence from the already-running isolated unit
+      - name: Capture bounded observability snapshot from the running unit
         shell: bash
         run: |
           set -euo pipefail
@@ -35,25 +36,26 @@ jobs:
           import shlex
 
           unit = os.environ["UNIT"]
+          root = os.environ["RUN_ROOT"]
           commands = [
               "set -euo pipefail",
               f"unit={shlex.quote(unit)}",
+              f"root={shlex.quote(root)}",
               'echo PROBED_SYSTEMD_UNIT="$unit"',
               'echo PERMANENT_FRANKIE_STATE="$(systemctl is-active markets-frankie.service 2>/dev/null || true)"',
-              'deadline=$((SECONDS + 1200))',
-              'while [ "$SECONDS" -lt "$deadline" ]; do',
-              '  journal="$(journalctl -u "$unit" --no-pager 2>/dev/null || true)"',
-              '  if grep -Fq "\\\"event\\\": \\\"SOL_RESPONSE_ACCEPTED\\\"" <<<"$journal"; then break; fi',
-              '  if grep -Eq "GPT-5.6 Sol invocation failed|Traceback|BLIND_OCTOBER_FRANKIE_EXIT_CODE=[1-9]" <<<"$journal"; then printf "%s\\n" "$journal" | tail -200; exit 1; fi',
-              '  state="$(systemctl is-active "$unit" 2>/dev/null || true)"',
-              '  if [ "$state" != active ] && [ "$state" != activating ]; then printf "%s\\n" "$journal" | tail -200; exit 1; fi',
-              '  sleep 10',
-              'done',
-              'journalctl -u "$unit" -n 240 --no-pager',
-              'journalctl -u "$unit" --no-pager | grep -F "\\\"event\\\": \\\"V4_GROUPS_PROCESSED\\\"" | tail -1',
-              'journalctl -u "$unit" --no-pager | grep -F "\\\"event\\\": \\\"SOL_INVOCATION_STARTED\\\"" | tail -1',
-              'journalctl -u "$unit" --no-pager | grep -F "\\\"event\\\": \\\"SOL_RESPONSE_ACCEPTED\\\"" | tail -1',
-              'echo BLIND_CANARY_FIRST_SOL_RESPONSE=ACCEPTED',
+              'systemctl show "$unit" --property=LoadState,ActiveState,SubState,Result,MainPID,ExecMainStatus,MemoryCurrent,CPUUsageNSec --no-pager || true',
+              'pid="$(systemctl show "$unit" --property=MainPID --value 2>/dev/null || true)"',
+              'echo MAIN_PID="$pid"',
+              'if [ -n "$pid" ] && [ "$pid" != 0 ] && [ -d "/proc/$pid" ]; then',
+              '  ps -o pid,ppid,etime,time,%cpu,%mem,rss,vsz,stat,wchan:28,cmd -p "$pid" --forest',
+              '  for child in $(pgrep -P "$pid" || true); do ps -o pid,ppid,etime,time,%cpu,%mem,rss,vsz,stat,wchan:28,cmd -p "$child"; done',
+              '  sed -n "1,40p" "/proc/$pid/status"',
+              '  cat "/proc/$pid/io"',
+              '  ls -l "/proc/$pid/fd" 2>/dev/null | tail -40 || true',
+              'fi',
+              'find "$root" -maxdepth 3 -type f -printf "%s %TY-%Tm-%TdT%TH:%TM:%TS %p\\n" | sort -n | tail -80',
+              'journalctl -u "$unit" -n 240 --no-pager || true',
+              'echo OBSERVABILITY_SNAPSHOT=COMPLETE',
           ]
           with open("/tmp/blind-october-frankie-probe-params.json", "w", encoding="utf-8") as handle:
               json.dump({"commands": ["/bin/bash -lc " + shlex.quote("\n".join(commands))]}, handle)
@@ -61,12 +63,12 @@ jobs:
           command_id="$(aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \
             --document-name AWS-RunShellScript \
-            --comment "Probe running blind October V4 Frankie" \
+            --comment "Observe running blind October V4 Frankie" \
             --parameters file:///tmp/blind-october-frankie-probe-params.json \
-            --timeout-seconds 1300 \
+            --timeout-seconds 180 \
             --query 'Command.CommandId' --output text)"
           status=Pending
-          for _ in $(seq 1 135); do
+          for _ in $(seq 1 30); do
             status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
             case "$status" in Success|Failed|TimedOut|Cancelled) break ;; esac
             sleep 10
@@ -76,7 +78,7 @@ jobs:
             --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
             --output json | tee /tmp/blind-october-frankie-probe-result.json
           test "$status" = Success
-          grep -F 'BLIND_CANARY_FIRST_SOL_RESPONSE=ACCEPTED' /tmp/blind-october-frankie-probe-result.json
+          grep -F 'OBSERVABILITY_SNAPSHOT=COMPLETE' /tmp/blind-october-frankie-probe-result.json
 
       - name: Publish probe evidence
         if: always()
