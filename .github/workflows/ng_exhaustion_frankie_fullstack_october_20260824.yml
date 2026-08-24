@@ -74,7 +74,7 @@ jobs:
           lock="$bundle/deploy/aws/requirements-frankie-fullstack-20260824.lock"
           git archive --format=tar "$GITHUB_SHA" | tar -xf - -C "$bundle"
           install -d -m 0755 "$wheelhouse"
-          for python_version in 311 312; do
+          for python_version in 310 311 312; do
             python -m pip download \
               --disable-pip-version-check \
               --only-binary=:all: \
@@ -86,15 +86,20 @@ jobs:
               --platform manylinux2014_x86_64 \
               --dest "$wheelhouse" \
               -r "$lock"
+            python -m pip install \
+              --dry-run \
+              --ignore-installed \
+              --disable-pip-version-check \
+              --no-index \
+              --only-binary=:all: \
+              --find-links "$wheelhouse" \
+              --require-hashes \
+              --implementation cp \
+              --python-version "$python_version" \
+              --abi "cp${python_version}" \
+              --platform manylinux2014_x86_64 \
+              -r "$lock"
           done
-          python -m pip install \
-            --dry-run \
-            --disable-pip-version-check \
-            --no-index \
-            --only-binary=:all: \
-            --find-links "$wheelhouse" \
-            --require-hashes \
-            -r "$lock"
           package_dir="$RUNNER_TEMP/frankie-fullstack-package"
           install -d -m 0755 "$package_dir"
           package="$package_dir/package.tgz"
@@ -1079,6 +1084,9 @@ jobs:
               f"artifact_uri={shlex.quote(artifact_uri)}",
               f"provider_user={shlex.quote('frk_' + sha[:8] + '_' + run_id)}",
               "python3 -c 'import os; available = os.sched_getaffinity(0); required = {0, 1, 2, 3}; assert required.issubset(available), f\"required CPUs 0-3 unavailable: {sorted(available)}\"'",
+              'runtime_python="$(command -v python3)"',
+              'test -x "$runtime_python"',
+              "\"$runtime_python\" -c 'import platform, sys; assert sys.implementation.name == \"cpython\"; assert sys.version_info[:2] in ((3, 10), (3, 11), (3, 12)); assert platform.machine() == \"x86_64\"'",
               'test ! -e "$root"',
               'test -s "$credential_file"',
               'install -d -m 0755 "$root" "$repo" "$output"',
@@ -1100,12 +1108,12 @@ jobs:
               'useradd --system --no-create-home --shell /usr/sbin/nologin "$provider_user"',
               'provider_group="$(id -gn "$provider_user")"',
               'install -d -o "$provider_user" -g "$provider_group" -m 0750 "$root/venv"',
-              'env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN -u OPENAI_API_KEY -u MARKETS_OPENAI_API_KEY runuser -u "$provider_user" -- python3 -m venv "$root/venv"',
+              'env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN -u OPENAI_API_KEY -u MARKETS_OPENAI_API_KEY runuser -u "$provider_user" -- "$runtime_python" -m venv "$root/venv"',
               'env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN -u OPENAI_API_KEY -u MARKETS_OPENAI_API_KEY runuser -u "$provider_user" -- "$root/venv/bin/python" -m pip install --disable-pip-version-check --no-index --only-binary=:all: --find-links "$repo/deploy/wheelhouse" --require-hashes -r "$repo/deploy/aws/requirements-frankie-fullstack-20260824.lock"',
               f"export FULLSTACK_REPO={shlex.quote(repo)} FULLSTACK_STAGE={shlex.quote(stage)}",
               f"printf %s {shlex.quote(encoded(stage_script))} | base64 -d > \"$root/stage.py\"",
               'chmod 700 "$root/stage.py"',
-              '( set -a; source "$aws_credential_file"; set +a; unset OPENAI_API_KEY MARKETS_OPENAI_API_KEY; python "$root/stage.py" )',
+              '( set -a; source "$aws_credential_file"; set +a; unset OPENAI_API_KEY MARKETS_OPENAI_API_KEY; "$root/venv/bin/python" "$root/stage.py" )',
               '( set -a; source "$aws_credential_file"; set +a; unset OPENAI_API_KEY MARKETS_OPENAI_API_KEY; cd "$repo"; "$root/venv/bin/python" research/kalshi/restore_substrate.py )',
               '"$root/venv/bin/python" "$repo/research/kalshi/frankie_s135_substrate_descriptor_20260824.py" --repo-root "$repo" --out "$stage/S135_SUBSTRATE_DESCRIPTOR.json"',
               'chown -R root:"$provider_group" "$repo" "$stage"',
@@ -1116,6 +1124,8 @@ jobs:
               'chmod 0400 "$aws_credential_file" "$openai_credential_file"',
               'chmod 0750 "$root" "$repo" "$stage" "$output"',
               'install -o "$provider_user" -g "$provider_group" -m 0600 /dev/null "$run_log"',
+              'runuser -u "$provider_user" -- test -r "$repo/deploy/aws/requirements-frankie-fullstack-20260824.lock"',
+              "runuser -u \"$provider_user\" -- \"$root/venv/bin/python\" -c 'import aiohttp, databento, openai'",
               f"for service in {' '.join(shlex.quote(item) for item in services)}; do",
               '  echo "PERMANENT_SERVICE_READ_ONLY=$service"',
               '  systemctl show "$service" --property=LoadState,ActiveState,SubState,Result,UnitFileState --no-pager 2>/dev/null || true',
@@ -1137,7 +1147,7 @@ jobs:
               'while [ "$SECONDS" -lt "$deadline" ]; do',
               '  ( set -a; source "$aws_credential_file"; set +a; unset OPENAI_API_KEY MARKETS_OPENAI_API_KEY; aws s3 sync "$output" "$artifact_uri/artifacts/" --no-follow-symlinks --only-show-errors; if [ -f "$run_log" ]; then aws s3 cp "$run_log" "$artifact_uri/RUN.log" --only-show-errors; fi; aws s3 cp "$stage/SOURCE_ROSTER.json" "$artifact_uri/SOURCE_ROSTER.json" --only-show-errors; ) || true',
               '  set +e',
-              '  python "$root/check_gates.py" "$run_log"',
+              '  "$root/venv/bin/python" "$root/check_gates.py" "$run_log"',
               '  gate_rc=$?',
               '  set -e',
               '  if [ "$gate_rc" -eq 0 ]; then break; fi',
@@ -1150,7 +1160,7 @@ jobs:
               '  fi',
               '  sleep 15',
               'done',
-              'python "$root/check_gates.py" "$run_log"',
+              '"$root/venv/bin/python" "$root/check_gates.py" "$run_log"',
               '( set -a; source "$aws_credential_file"; set +a; unset OPENAI_API_KEY MARKETS_OPENAI_API_KEY; aws s3 sync "$output" "$artifact_uri/artifacts/" --no-follow-symlinks --only-show-errors; aws s3 cp "$run_log" "$artifact_uri/RUN.log" --only-show-errors; aws s3 cp "$stage/SOURCE_ROSTER.json" "$artifact_uri/SOURCE_ROSTER.json" --only-show-errors; )',
               'test "$(systemctl show --property=ActiveState --value "$unit")" = active',
               'journalctl -u "$unit" -n 240 -o cat --no-pager',
