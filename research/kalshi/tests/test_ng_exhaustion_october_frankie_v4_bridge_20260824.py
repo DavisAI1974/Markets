@@ -35,7 +35,10 @@ class BlindBridgeTest(unittest.TestCase):
     replay_calls: list[list[str]] = []
 
     class Reference:
+        checkpoint_calls = 0
+
         def checkpoint(self):
+            Reference.checkpoint_calls += 1
             return {
                 "book": {
                     "bid_depth_full": 7,
@@ -120,6 +123,7 @@ class BlindBridgeTest(unittest.TestCase):
     )
 
     self.assertEqual(replay_calls, [[str(path) for path in sources]])
+    self.assertEqual(Reference.checkpoint_calls, 1)
     self.assertTrue(evaluator.requests)
     model_payload = json.dumps([request.payload for request in evaluator.requests], sort_keys=True)
     self.assertIn("TARGET_NATIVE", model_payload)
