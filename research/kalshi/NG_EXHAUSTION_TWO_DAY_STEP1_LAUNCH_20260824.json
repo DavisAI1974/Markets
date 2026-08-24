@@ -1,7 +1,7 @@
 {
   "schema": "NG_EXHAUSTION_TWO_DAY_STEP1_LAUNCH_V1_20260824",
   "confirmation": "RUN_EXACT_TWO_CONSECUTIVE_DAYS",
-  "launch_revision": 4,
+  "launch_revision": 5,
   "branch": "chatgpt/frankie-october-aws-readonly-20260824",
   "window_start": "2021-10-04T00:00:00Z",
   "window_end_exclusive": "2021-10-06T00:00:00Z",
@@ -14,6 +14,6 @@
   "compare_to_54_week_answers": false,
   "provider_or_frankie_calls": false,
   "production_mutation": false,
-  "transfer_mode": "EXISTING_FROZEN_LAUNCH_PREFIX_STAGE_THEN_VERIFY_AND_PROMOTE",
+  "transfer_mode": "INLINE_GZIP_ADAPTER_THEN_POSTCOMPUTE_SHORT_SIGNED_UPLOAD",
   "validation_mode": "USER_AUTHORIZED_SELF_FIT_SELF_SCORE_DIAGNOSTIC_ACCEPTED"
 }
