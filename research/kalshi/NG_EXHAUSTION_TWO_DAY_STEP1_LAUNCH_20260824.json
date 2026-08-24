@@ -1,0 +1,17 @@
+{
+  "schema": "NG_EXHAUSTION_TWO_DAY_STEP1_LAUNCH_V1_20260824",
+  "confirmation": "RUN_EXACT_TWO_CONSECUTIVE_DAYS",
+  "branch": "chatgpt/frankie-october-aws-readonly-20260824",
+  "window_start": "2021-10-04T00:00:00Z",
+  "window_end_exclusive": "2021-10-06T00:00:00Z",
+  "validated_seconds_bytes": 112852940,
+  "validated_seconds_sha256": "93654eb5eaf24be6dc6821f422cdd7fc416e12778dcecd6c97150cbc34004f90",
+  "validated_receipt_file_sha256": "80b6cf7199805cf40a0b16b139ee1aa8f705b884acf03856640df4054802f7ab",
+  "validated_receipt_sha256": "4966dac8b25fee7acabf53f880a30155985bd5767ee222381f1188d4eecada3c",
+  "adapter_sha256": "5a18fe96bc5022a619536640a630209df1c85ec7b756f139ee412ef9a8d288db",
+  "raw_mbo_replay": false,
+  "compare_to_54_week_answers": false,
+  "provider_or_frankie_calls": false,
+  "production_mutation": false,
+  "validation_mode": "USER_AUTHORIZED_SELF_FIT_SELF_SCORE_DIAGNOSTIC_ACCEPTED"
+}
