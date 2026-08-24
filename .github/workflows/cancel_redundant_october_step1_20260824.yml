@@ -1,0 +1,36 @@
+name: Cancel redundant October Step-1 run 20260824
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-october-sharded-20260824
+    paths:
+      - research/kalshi/CANCEL_REDUNDANT_OCTOBER_STEP1_20260824.json
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cancel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Cancel run 32705615109
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          api="https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs/32705615109"
+          status="$(curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' "$api" | jq -r .status)"
+          if [[ "$status" != completed ]]; then
+            curl -fsSL -X POST -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' "$api/cancel" -o /dev/null
+          fi
+          for _ in $(seq 1 30); do
+            state="$(curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' "$api" | jq -r '[.status,.conclusion] | @tsv')"
+            echo "$state"
+            [[ "$state" == completed* ]] && exit 0
+            sleep 2
+          done
+          exit 1
