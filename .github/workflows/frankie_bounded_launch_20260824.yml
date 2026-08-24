@@ -1,0 +1,106 @@
+name: Launch bounded Frankie on GPT-5.6 Sol 20260824
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-october-sharded-20260824
+    paths:
+      - research/kalshi/FRANKIE_BOUNDED_LAUNCH_20260824.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frankie-bounded-launch-20260824
+  cancel-in-progress: false
+
+jobs:
+  launch-frankie:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      BUCKET: bento-568968024170-us-east-2-an
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Publish the exact bounded Frankie runtime package
+        shell: bash
+        run: |
+          set -euo pipefail
+          package=/tmp/frankie-bounded-${GITHUB_SHA}.tgz
+          git archive --format=tar.gz --output="$package" HEAD
+          package_sha="$(sha256sum "$package" | awk '{print $1}')"
+          key="frankie/bounded-3mo/launches/${GITHUB_SHA}/package.tgz"
+          aws s3 cp "$package" "s3://${BUCKET}/${key}" --only-show-errors
+          echo "PACKAGE_KEY=$key" >> "$GITHUB_ENV"
+          echo "PACKAGE_SHA256=$package_sha" >> "$GITHUB_ENV"
+
+      - name: Install and start the existing bounded Frankie service
+        id: launch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          import shlex
+
+          root = f"/mnt/markets/frankie_bounded_3mo_20260824/{os.environ['GITHUB_SHA']}"
+          repo = f"{root}/repo"
+          package = f"{root}/package.tgz"
+          commands = [
+              "set -euo pipefail",
+              f"root={shlex.quote(root)}",
+              f"repo={shlex.quote(repo)}",
+              f"package={shlex.quote(package)}",
+              "install -d -m 0755 \"$root\" \"$repo\"",
+              f"aws s3 cp {shlex.quote('s3://' + os.environ['BUCKET'] + '/' + os.environ['PACKAGE_KEY'])} \"$package\" --only-show-errors",
+              f"echo {shlex.quote(os.environ['PACKAGE_SHA256'] + '  ' + package)} | sha256sum -c -",
+              "tar -xzf \"$package\" -C \"$repo\"",
+              "test -s /etc/markets/frankie.env",
+              "test -f \"$repo/research/kalshi/frankie_bounded_3mo_parallel.py\"",
+              "test \"$(systemctl is-active markets-frankie.service || true)\" != active",
+              "bash \"$repo/deploy/aws/install_frankie_bounded_3mo.sh\" \"$repo\" ubuntu",
+              "systemctl reset-failed markets-frankie-bounded-3mo.service || true",
+              "systemctl start --no-block markets-frankie-bounded-3mo.service",
+              "sleep 5",
+              "systemctl show markets-frankie-bounded-3mo.service --property=LoadState,ActiveState,SubState,Result,ExecMainPID,ExecMainStatus --no-pager",
+              "journalctl -u markets-frankie-bounded-3mo.service -n 40 --no-pager",
+              "state=$(systemctl show markets-frankie-bounded-3mo.service --property=ActiveState --value)",
+              "result=$(systemctl show markets-frankie-bounded-3mo.service --property=Result --value)",
+              "if [ \"$state\" = failed ] || [ \"$result\" = failed ]; then exit 1; fi",
+              "echo FRANKIE_BOUNDED_LAUNCH=STARTED",
+          ]
+          with open('/tmp/frankie-bounded-launch-params.json', 'w', encoding='utf-8') as handle:
+              json.dump({'commands': ['/bin/bash -lc ' + shlex.quote('\n'.join(commands))]}, handle)
+          PY
+          command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Launch bounded Frankie from ${GITHUB_SHA}" \
+            --parameters file:///tmp/frankie-bounded-launch-params.json \
+            --timeout-seconds 300 \
+            --query 'Command.CommandId' --output text)"
+          aws ssm wait command-executed --command-id "$command_id" --instance-id "$INSTANCE_ID" || true
+          aws ssm get-command-invocation \
+            --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json | tee /tmp/frankie-bounded-launch-result.json
+          test "$(python -c "import json; print(json.load(open('/tmp/frankie-bounded-launch-result.json'))['Status'])")" = Success
+          test "$(python -c "import json; print(json.load(open('/tmp/frankie-bounded-launch-result.json'))['ResponseCode'])")" = 0
+          echo "command_id=$command_id" >> "$GITHUB_OUTPUT"
+
+      - name: Publish launch evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frankie-bounded-launch-${{ github.sha }}
+          path: /tmp/frankie-bounded-launch-result.json
+          if-no-files-found: warn

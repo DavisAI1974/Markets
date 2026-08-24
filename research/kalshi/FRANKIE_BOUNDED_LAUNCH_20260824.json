@@ -1,0 +1,9 @@
+{
+  "action": "launch_existing_bounded_frankie",
+  "branch": "chatgpt/ng-exhaustion-october-sharded-20260824",
+  "october_workflow_cancelled": false,
+  "frankie_science_changed": false,
+  "reasoning_backend": "openai",
+  "reasoning_model": "gpt-5.6-sol",
+  "requested_at_utc": "2026-08-24T08:24:00Z"
+}

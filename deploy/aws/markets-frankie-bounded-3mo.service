@@ -11,6 +11,9 @@ EnvironmentFile=-/etc/markets/markets.env
 EnvironmentFile=-/etc/markets/frankie.env
 Environment=FRANKIE_DETERMINISTIC_ONLY=0
 Environment=FRANKIE_BOUNDED_QUEUE_EXCLUSIVE=1
+Environment=FRANKIE_PRIMARY_BACKEND=openai
+Environment=FRANKIE_CRITIC_BACKEND=openai
+Environment=FRANKIE_OPENAI_MODEL=gpt-5.6-sol
 ExecStart=/usr/bin/python3 frankie_bounded_3mo_parallel.py --workers 4 --systemd-unit markets-frankie-bounded-3mo.service --require-systemd
 TimeoutStartSec=infinity
 TimeoutStopSec=30
