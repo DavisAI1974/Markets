@@ -52,7 +52,7 @@ jobs:
 
           unit = os.environ["UNIT"]
           command = (
-              f"set -euo pipefail; systemctl stop {unit}; "
+              f"set -eu; systemctl stop {unit}; "
               f"state=$(systemctl is-active {unit} || true); "
               'test "$state" = inactive || test "$state" = failed; '
               f"echo FULLSTACK_STOPPED={unit}"
