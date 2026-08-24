@@ -1,0 +1,255 @@
+name: NG Exhaustion Two-Day Step-1 Diagnostic 20260824
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - research/kalshi/NG_EXHAUSTION_TWO_DAY_STEP1_LAUNCH_20260824.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ng-exhaustion-two-day-step1-diagnostic-20260824
+  cancel-in-progress: false
+
+env:
+  AWS_DEFAULT_REGION: us-east-2
+  INSTANCE_ID: i-08cee7171c0a76a04
+  BUCKET: bento-568968024170-us-east-2-an
+  CANDIDATE_SHA: 0d318335825b4a0e19a5a2881522f3da0374788e
+  TARGET_SEGMENT: '20211001_20211101'
+  WINDOW_START: '2021-10-04T00:00:00Z'
+  WINDOW_END_EXCLUSIVE: '2021-10-06T00:00:00Z'
+  EXPECTED_SECONDS_BYTES: '112852940'
+  EXPECTED_SECONDS_SHA256: 93654eb5eaf24be6dc6821f422cdd7fc416e12778dcecd6c97150cbc34004f90
+  EXPECTED_RECEIPT_FILE_SHA256: 80b6cf7199805cf40a0b16b139ee1aa8f705b884acf03856640df4054802f7ab
+  EXPECTED_RECEIPT_SHA256: 4966dac8b25fee7acabf53f880a30155985bd5767ee222381f1188d4eecada3c
+  EXPECTED_ADAPTER_SHA256: 5a18fe96bc5022a619536640a630209df1c85ec7b756f139ee412ef9a8d288db
+
+jobs:
+  run-two-day-step1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate the literal launch contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          launch = json.loads(Path(
+              "research/kalshi/NG_EXHAUSTION_TWO_DAY_STEP1_LAUNCH_20260824.json"
+          ).read_text(encoding="utf-8"))
+          required = {
+              "schema": "NG_EXHAUSTION_TWO_DAY_STEP1_LAUNCH_V1_20260824",
+              "confirmation": "RUN_EXACT_TWO_CONSECUTIVE_DAYS",
+              "branch": "chatgpt/frankie-october-aws-readonly-20260824",
+              "window_start": os.environ["WINDOW_START"],
+              "window_end_exclusive": os.environ["WINDOW_END_EXCLUSIVE"],
+              "validated_seconds_bytes": int(os.environ["EXPECTED_SECONDS_BYTES"]),
+              "validated_seconds_sha256": os.environ["EXPECTED_SECONDS_SHA256"],
+              "validated_receipt_file_sha256": os.environ["EXPECTED_RECEIPT_FILE_SHA256"],
+              "validated_receipt_sha256": os.environ["EXPECTED_RECEIPT_SHA256"],
+              "adapter_sha256": os.environ["EXPECTED_ADAPTER_SHA256"],
+              "raw_mbo_replay": False,
+              "compare_to_54_week_answers": False,
+              "provider_or_frankie_calls": False,
+              "production_mutation": False,
+              "validation_mode": "USER_AUTHORIZED_SELF_FIT_SELF_SCORE_DIAGNOSTIC_ACCEPTED",
+          }
+          if launch != required:
+              raise SystemExit("TWO_DAY_LAUNCH_CONTRACT_DRIFT")
+          adapter = Path("research/ng_exhaustion_mbo_2day_step1_finalize_20260824.py")
+          actual = hashlib.sha256(adapter.read_bytes()).hexdigest()
+          if actual != os.environ["EXPECTED_ADAPTER_SHA256"]:
+              raise SystemExit("TWO_DAY_ADAPTER_HASH_DRIFT")
+          print("TWO_DAY_LAUNCH_CONTRACT=PASS")
+          PY
+
+      - name: Run the focused adapter tests only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet \
+            numpy==1.26.4 scipy==1.11.4 scikit-learn==1.4.2 matplotlib==3.8.4
+          MPLCONFIGDIR=/tmp/matplotlib-two-day PYTHONPATH=research \
+            python -m unittest -v \
+              research/test_ng_exhaustion_mbo_2day_step1_finalize_20260824.py
+
+      - name: Run exact two-day diagnostic on the existing validated AWS child
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          import shlex
+
+          candidate = os.environ["CANDIDATE_SHA"]
+          segment = os.environ["TARGET_SEGMENT"]
+          run_id = os.environ["GITHUB_RUN_ID"]
+          attempt = os.environ["GITHUB_RUN_ATTEMPT"]
+          commit = os.environ["GITHUB_SHA"]
+          base = f"/mnt/markets/ng_exhaustion_step1_5y_20260822/{candidate}"
+          run_root = f"/mnt/markets/ng_exhaustion_two_day_step1_20260824/{run_id}-{attempt}"
+          result_prefix = (
+              "nymex/ng_mbo_5y_v0/step1_census/two_day_diagnostic/runs/"
+              f"{run_id}-{attempt}"
+          )
+          remote = f'''set -euo pipefail
+          base={shlex.quote(base)}
+          run_root={shlex.quote(run_root)}
+          segment={shlex.quote(segment)}
+          commit={shlex.quote(commit)}
+          bucket={shlex.quote(os.environ['BUCKET'])}
+          result_prefix={shlex.quote(result_prefix)}
+          seconds="$base/full/segments/$segment.seconds.jsonl.gz"
+          child_receipt="$base/full/segments/$segment.receipt.json"
+          test -x "$base/venv/bin/python"
+          test -f "$seconds"
+          test -f "$child_receipt"
+          test "$(stat -c %s "$seconds")" = {shlex.quote(os.environ['EXPECTED_SECONDS_BYTES'])}
+          test "$(sha256sum "$seconds" | cut -d' ' -f1)" = {shlex.quote(os.environ['EXPECTED_SECONDS_SHA256'])}
+          test "$(sha256sum "$child_receipt" | cut -d' ' -f1)" = {shlex.quote(os.environ['EXPECTED_RECEIPT_FILE_SHA256'])}
+          test ! -e "$run_root"
+          mkdir -p "$run_root"
+          git -C "$base/repo" fetch --no-tags origin "$commit"
+          git -C "$base/repo" worktree add --detach "$run_root/repo" "$commit"
+          cd "$run_root/repo"
+          test "$(sha256sum research/ng_exhaustion_mbo_2day_step1_finalize_20260824.py | cut -d' ' -f1)" = {shlex.quote(os.environ['EXPECTED_ADAPTER_SHA256'])}
+          MPLCONFIGDIR="$run_root/matplotlib" PYTHONPATH=research \
+            /usr/bin/time -v -o "$run_root/resource.txt" \
+            "$base/venv/bin/python" research/ng_exhaustion_mbo_2day_step1_finalize_20260824.py \
+              --parent-manifest research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json \
+              --october-seconds "$seconds" \
+              --october-receipt "$child_receipt" \
+              --out-dir "$run_root/results" \
+            | tee "$run_root/run.log"
+          "$base/venv/bin/python" - "$run_root/results/STEP1_DUAL_CENSUS_RECEIPT.json" <<'PYREMOTE'
+          import json
+          import sys
+          from pathlib import Path
+          receipt = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          assert receipt["status"] == "STEP1_DUAL_STRUCTURAL_CENSUS_COMPLETE_TWO_DAY_DIAGNOSTIC"
+          assert receipt["source_window"]["start"] == "2021-10-04T00:00:00Z"
+          assert receipt["source_window"]["end_exclusive"] == "2021-10-06T00:00:00Z"
+          assert receipt["diagnostic_validation"]["d0_d5_population_claimable"] is True
+          assert receipt["comparison_to_54w_answers_performed"] is False
+          assert receipt["provider_llm_called"] is False
+          assert receipt["frankie_launched"] is False
+          assert receipt["child_output_reuse"]["raw_mbo_replayed"] is False
+          print("TWO_DAY_STEP1_RECEIPT=PASS")
+          print("TWO_DAY_STEP1_RECEIPT_SHA256=" + receipt["receipt_sha256"])
+          print("TWO_DAY_EVENT_COUNTS=" + json.dumps(receipt["event_counts"], sort_keys=True))
+          print("TWO_DAY_FAMILY_COUNTS=" + json.dumps(receipt["family_counts"], sort_keys=True))
+          print("TWO_DAY_LEGACY_DEPTHS=" + json.dumps(receipt["legacy_population_summary"]["depth_histogram"], sort_keys=True))
+          print("TWO_DAY_NATIVE_DEPTHS=" + json.dumps(receipt["native_population_summary"]["depth_histogram"], sort_keys=True))
+          PYREMOTE
+          cp "$run_root/resource.txt" "$run_root/results/RESOURCE_USAGE.txt"
+          cp "$run_root/run.log" "$run_root/results/RUN.log"
+          aws s3 cp "$run_root/results" "s3://$bucket/$result_prefix/" \
+            --recursive --only-show-errors
+          printf 'TWO_DAY_RESULT_S3_PREFIX=s3://%s/%s/\n' "$bucket" "$result_prefix"
+          '''
+          with open("/tmp/two-day-step1-params.json", "w", encoding="utf-8") as handle:
+              json.dump({"commands": ["/bin/bash -lc " + shlex.quote(remote)]}, handle)
+          PY
+
+          command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Exact October 4-5 Step-1 diagnostic; reuse validated seconds" \
+            --parameters file:///tmp/two-day-step1-params.json \
+            --timeout-seconds 9000 \
+            --query 'Command.CommandId' --output text)"
+          echo "SSM_COMMAND_ID=$command_id"
+          for attempt in $(seq 1 600); do
+            status="$(aws ssm get-command-invocation \
+              --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+              --query Status --output text 2>/dev/null || true)"
+            case "$status" in
+              Success|Failed|Cancelled|TimedOut|Cancelling)
+                break
+                ;;
+            esac
+            if [ $((attempt % 10)) -eq 0 ]; then
+              echo "SSM_PROGRESS_STATUS=${status:-PENDING}"
+            fi
+            sleep 15
+          done
+          aws ssm get-command-invocation \
+            --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json > /tmp/two-day-step1-invocation.json
+          python - <<'PY' | tee /tmp/two-day-step1-summary.txt
+          import json
+          from pathlib import Path
+          result = json.loads(Path("/tmp/two-day-step1-invocation.json").read_text())
+          print("WORKER_STATUS=" + str(result.get("Status")))
+          print("WORKER_RESPONSE_CODE=" + str(result.get("ResponseCode")))
+          output = str(result.get("StandardOutput") or "")
+          for line in output.splitlines():
+              if line.startswith("TWO_DAY_"):
+                  print(line)
+          if result.get("Status") != "Success" or result.get("ResponseCode") != 0:
+              print(str(result.get("StandardError") or ""))
+              raise SystemExit("TWO_DAY_STEP1_AWS_RUN_FAILED")
+          if "TWO_DAY_STEP1_RECEIPT=PASS" not in output:
+              raise SystemExit("TWO_DAY_STEP1_RECEIPT_NOT_PROVEN")
+          PY
+
+      - name: Retrieve and verify the complete result receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          prefix="nymex/ng_mbo_5y_v0/step1_census/two_day_diagnostic/runs/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          mkdir -p /tmp/two-day-step1-evidence
+          aws s3 cp \
+            "s3://$BUCKET/$prefix/STEP1_DUAL_CENSUS_RECEIPT.json" \
+            /tmp/two-day-step1-evidence/STEP1_DUAL_CENSUS_RECEIPT.json \
+            --only-show-errors
+          aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "$prefix/" \
+            --output json > /tmp/two-day-step1-evidence/S3_OBJECT_INVENTORY.json
+          cp /tmp/two-day-step1-summary.txt /tmp/two-day-step1-evidence/RUN_SUMMARY.txt
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          receipt = json.loads(Path(
+              "/tmp/two-day-step1-evidence/STEP1_DUAL_CENSUS_RECEIPT.json"
+          ).read_text())
+          inventory = json.loads(Path(
+              "/tmp/two-day-step1-evidence/S3_OBJECT_INVENTORY.json"
+          ).read_text())
+          if receipt["status"] != "STEP1_DUAL_STRUCTURAL_CENSUS_COMPLETE_TWO_DAY_DIAGNOSTIC":
+              raise SystemExit("DOWNLOADED_RECEIPT_STATUS_DRIFT")
+          if not inventory.get("Contents"):
+              raise SystemExit("TWO_DAY_RESULT_PREFIX_EMPTY")
+          print("DOWNLOADED_RECEIPT=PASS")
+          print("S3_RESULT_OBJECT_COUNT=" + str(len(inventory["Contents"])))
+          print("S3_RESULT_TOTAL_BYTES=" + str(sum(int(x["Size"]) for x in inventory["Contents"])))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: two-day-step1-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/two-day-step1-evidence/
+          if-no-files-found: warn
+          retention-days: 30
