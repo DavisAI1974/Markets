@@ -1,0 +1,145 @@
+name: NG Exhaustion Step-1 Parallel Progress Probe 20260824
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-entry-timing-revival-20260818
+    paths:
+      - .github/workflows/ng_exhaustion_step1_parallel_progress_probe_20260824.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      CANDIDATE_SHA: 0d318335825b4a0e19a5a2881522f3da0374788e
+    steps:
+      - name: Read-only per-segment progress probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, shlex
+          candidate=os.environ['CANDIDATE_SHA']
+          base=f'/mnt/markets/ng_exhaustion_step1_5y_20260822/{candidate}'
+          script=r'''
+          import json, os, re
+          from pathlib import Path
+
+          candidate=os.environ['CANDIDATE_SHA']
+          base=Path('/mnt/markets/ng_exhaustion_step1_5y_20260822')/candidate
+          full=base/'full'
+          manifest=json.loads((base/'repo/research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json').read_text())
+          prefix=manifest['prefix']
+          targets=['20210901_20211001','20211001_20211101','20211101_20211201']
+
+          def local_path(segment, obj):
+              key=obj['key']
+              return full/'parallel_3mo'/segment/'stage'/Path(key[len(prefix):])
+
+          rows=[]
+          for segment in targets:
+              unit=f'ng-exhaustion-step1-p3m-{segment}'
+              receipt=full/'segments'/f'{segment}.receipt.json'
+              heartbeat=full/'segments'/f'{segment}.heartbeat.json'
+              partial=full/'segments'/f'{segment}.seconds.jsonl.gz.partial'
+              seconds=full/'segments'/f'{segment}.seconds.jsonl.gz'
+              objs=[o for o in manifest['canonical_dbn_objects'] if o['segment']==segment]
+              total_bytes=sum(int(o['bytes']) for o in objs)
+              expected={str(local_path(segment,o).resolve()): (i,o) for i,o in enumerate(objs)}
+              status=os.popen(f"systemctl show {unit} --property=ActiveState,SubState,MainPID --value --no-pager 2>/dev/null").read().splitlines()
+              active=status[0] if len(status)>0 else 'unknown'
+              sub=status[1] if len(status)>1 else 'unknown'
+              try: pid=int(status[2]) if len(status)>2 and status[2].strip() else 0
+              except Exception: pid=0
+              open_sources=[]
+              if pid>0 and Path(f'/proc/{pid}/fd').exists():
+                  for fd in Path(f'/proc/{pid}/fd').iterdir():
+                      try:
+                          target=os.readlink(fd)
+                      except OSError:
+                          continue
+                      clean=target.removesuffix(' (deleted)')
+                      try: resolved=str(Path(clean).resolve())
+                      except Exception: resolved=clean
+                      if resolved not in expected:
+                          continue
+                      i,obj=expected[resolved]
+                      pos=None
+                      try:
+                          text=(Path(f'/proc/{pid}/fdinfo')/fd.name).read_text()
+                          m=re.search(r'^pos:\s*(\d+)',text,re.M)
+                          if m: pos=int(m.group(1))
+                      except Exception:
+                          pass
+                      open_sources.append((i,obj,resolved,pos))
+              open_sources.sort(key=lambda x:(x[0],x[3] or -1))
+              current=open_sources[-1] if open_sources else None
+              hb={}
+              if heartbeat.exists():
+                  try: hb=json.loads(heartbeat.read_text())
+                  except Exception: hb={}
+              if receipt.exists() and seconds.exists():
+                  lower=upper=100.0
+                  current_index=len(objs)
+                  current_key=None
+                  current_date=None
+              elif current:
+                  i,obj,path,pos=current
+                  before=sum(int(o['bytes']) for o in objs[:i])
+                  lower=100.0*before/total_bytes if total_bytes else None
+                  upper=100.0*(before+int(obj['bytes']))/total_bytes if total_bytes else None
+                  current_index=i+1
+                  current_key=obj['key']
+                  m=re.search(r'(20\d{6})',Path(obj['key']).name)
+                  current_date=m.group(1) if m else None
+              else:
+                  lower=upper=None
+                  current_index=None
+                  current_key=None
+                  current_date=None
+              rows.append({
+                  'segment':segment,
+                  'unit_active':active,
+                  'unit_substate':sub,
+                  'pid':pid,
+                  'source_object_count':len(objs),
+                  'current_object_index_1based':current_index,
+                  'current_source_date':current_date,
+                  'current_source_key':current_key,
+                  'source_byte_progress_lower_pct':None if lower is None else round(lower,2),
+                  'source_byte_progress_upper_pct':None if upper is None else round(upper,2),
+                  'heartbeat_utc':hb.get('heartbeat_utc'),
+                  'completed_event_groups':hb.get('completed_event_groups'),
+                  'aggregated_seconds':hb.get('aggregated_seconds'),
+                  'heartbeat_elapsed_seconds':hb.get('elapsed_seconds'),
+                  'partial_output_bytes':partial.stat().st_size if partial.exists() else None,
+                  'receipt_complete':receipt.exists() and seconds.exists(),
+              })
+          print(json.dumps({'schema':'NG_EXHAUSTION_STEP1_PARALLEL_PROGRESS_PROBE_V1','read_only':True,'segments':rows},indent=2,sort_keys=True))
+          '''
+          command='set -euo pipefail\nexport CANDIDATE_SHA='+shlex.quote(candidate)+'\npython3 - <<\'PYPROBE\'\n'+script+'\nPYPROBE'
+          with open('/tmp/progress-probe-params.json','w',encoding='utf-8') as f:
+              json.dump({'commands':[command]},f)
+          PY
+          command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Read-only three-month Step-1 progress probe $CANDIDATE_SHA" \
+            --parameters file:///tmp/progress-probe-params.json \
+            --timeout-seconds 120 \
+            --query 'Command.CommandId' --output text)"
+          aws ssm wait command-executed --command-id "$command_id" --instance-id "$INSTANCE_ID" || true
+          aws ssm get-command-invocation \
+            --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json
