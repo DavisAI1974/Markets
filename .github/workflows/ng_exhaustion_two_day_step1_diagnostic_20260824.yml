@@ -60,7 +60,7 @@ jobs:
           required = {
               "schema": "NG_EXHAUSTION_TWO_DAY_STEP1_LAUNCH_V1_20260824",
               "confirmation": "RUN_EXACT_TWO_CONSECUTIVE_DAYS",
-              "launch_revision": 2,
+              "launch_revision": 3,
               "branch": "chatgpt/frankie-october-aws-readonly-20260824",
               "window_start": os.environ["WINDOW_START"],
               "window_end_exclusive": os.environ["WINDOW_END_EXCLUSIVE"],
@@ -73,6 +73,7 @@ jobs:
               "compare_to_54_week_answers": False,
               "provider_or_frankie_calls": False,
               "production_mutation": False,
+              "transfer_mode": "RUN_SCOPED_PRESIGNED_GET_AND_PUT",
               "validation_mode": "USER_AUTHORIZED_SELF_FIT_SELF_SCORE_DIAGNOSTIC_ACCEPTED",
           }
           if launch != required:
@@ -104,6 +105,55 @@ jobs:
             research/ng_exhaustion_mbo_2day_step1_finalize_20260824.py \
             "s3://$BUCKET/$result_prefix/input/ng_exhaustion_mbo_2day_step1_finalize_20260824.py" \
             --only-show-errors
+          eval "$(python - <<'PY'
+          import boto3
+          import os
+          import shlex
+
+          bucket = os.environ["BUCKET"]
+          prefix = (
+              "nymex/ng_mbo_5y_v0/step1_census/two_day_diagnostic/runs/"
+              f"{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}"
+          )
+          s3 = boto3.client("s3", region_name=os.environ["AWS_DEFAULT_REGION"])
+          adapter = s3.generate_presigned_url(
+              "get_object",
+              Params={
+                  "Bucket": bucket,
+                  "Key": prefix + "/input/ng_exhaustion_mbo_2day_step1_finalize_20260824.py",
+              },
+              ExpiresIn=14400,
+          )
+          result = s3.generate_presigned_url(
+              "put_object",
+              Params={"Bucket": bucket, "Key": prefix + "/transfer/results.tar.gz"},
+              ExpiresIn=14400,
+          )
+          probe = s3.generate_presigned_url(
+              "put_object",
+              Params={"Bucket": bucket, "Key": prefix + "/transfer/upload-probe.txt"},
+              ExpiresIn=14400,
+          )
+          print("export ADAPTER_DOWNLOAD_URL=" + shlex.quote(adapter))
+          print("export RESULT_UPLOAD_URL=" + shlex.quote(result))
+          print("export PROBE_UPLOAD_URL=" + shlex.quote(probe))
+          PY
+          )"
+          echo "::add-mask::$ADAPTER_DOWNLOAD_URL"
+          echo "::add-mask::$RESULT_UPLOAD_URL"
+          echo "::add-mask::$PROBE_UPLOAD_URL"
+          curl --fail --silent --show-error --location \
+            "$ADAPTER_DOWNLOAD_URL" --output /tmp/two-day-adapter-presigned.py
+          test "$(sha256sum /tmp/two-day-adapter-presigned.py | cut -d' ' -f1)" = \
+            "$EXPECTED_ADAPTER_SHA256"
+          printf 'READY\n' > /tmp/two-day-presigned-upload-probe.txt
+          curl --fail --silent --show-error --request PUT \
+            --upload-file /tmp/two-day-presigned-upload-probe.txt \
+            "$PROBE_UPLOAD_URL"
+          test "$(aws s3api head-object \
+            --bucket "$BUCKET" --key "$result_prefix/transfer/upload-probe.txt" \
+            --query ContentLength --output text)" = 6
+          echo "PRESIGNED_TRANSFER_PREFLIGHT=PASS"
           python - <<'PY'
           import json
           import os
@@ -119,12 +169,16 @@ jobs:
               "nymex/ng_mbo_5y_v0/step1_census/two_day_diagnostic/runs/"
               f"{run_id}-{attempt}"
           )
+          adapter_url = os.environ["ADAPTER_DOWNLOAD_URL"]
+          result_upload_url = os.environ["RESULT_UPLOAD_URL"]
           remote = f'''set -euo pipefail
           base={shlex.quote(base)}
           run_root={shlex.quote(run_root)}
           segment={shlex.quote(segment)}
           bucket={shlex.quote(os.environ['BUCKET'])}
           result_prefix={shlex.quote(result_prefix)}
+          adapter_url={shlex.quote(adapter_url)}
+          result_upload_url={shlex.quote(result_upload_url)}
           export AWS_DEFAULT_REGION=us-east-2
           seconds="$base/full/segments/$segment.seconds.jsonl.gz"
           child_receipt="$base/full/segments/$segment.receipt.json"
@@ -137,10 +191,9 @@ jobs:
           test ! -e "$run_root"
           mkdir -p "$run_root"
           cp -a --reflink=auto "$base/repo" "$run_root/repo"
-          aws s3 cp \
-            "s3://$bucket/$result_prefix/input/ng_exhaustion_mbo_2day_step1_finalize_20260824.py" \
-            "$run_root/repo/research/ng_exhaustion_mbo_2day_step1_finalize_20260824.py" \
-            --only-show-errors
+          curl --fail --silent --show-error --location --retry 3 \
+            "$adapter_url" \
+            --output "$run_root/repo/research/ng_exhaustion_mbo_2day_step1_finalize_20260824.py"
           cd "$run_root/repo"
           test "$(sha256sum research/ng_exhaustion_mbo_2day_step1_finalize_20260824.py | cut -d' ' -f1)" = {shlex.quote(os.environ['EXPECTED_ADAPTER_SHA256'])}
           MPLCONFIGDIR="$run_root/matplotlib" PYTHONPATH=research \
@@ -173,8 +226,12 @@ jobs:
           PYREMOTE
           cp "$run_root/resource.txt" "$run_root/results/RESOURCE_USAGE.txt"
           cp "$run_root/run.log" "$run_root/results/RUN.log"
-          aws s3 cp "$run_root/results" "s3://$bucket/$result_prefix/" \
-            --recursive --only-show-errors
+          tar -C "$run_root/results" -czf "$run_root/results.tar.gz" .
+          printf 'TWO_DAY_RESULTS_TAR_SHA256=%s\n' \
+            "$(sha256sum "$run_root/results.tar.gz" | cut -d' ' -f1)"
+          curl --fail --silent --show-error --request PUT \
+            --upload-file "$run_root/results.tar.gz" \
+            "$result_upload_url"
           printf 'TWO_DAY_RESULT_S3_PREFIX=s3://%s/%s/\n' "$bucket" "$result_prefix"
           '''
           with open("/tmp/two-day-step1-params.json", "w", encoding="utf-8") as handle:
@@ -229,30 +286,128 @@ jobs:
         run: |
           set -euo pipefail
           prefix="nymex/ng_mbo_5y_v0/step1_census/two_day_diagnostic/runs/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          mkdir -p /tmp/two-day-step1-evidence
+          mkdir -p /tmp/two-day-step1-evidence/results
           aws s3 cp \
-            "s3://$BUCKET/$prefix/STEP1_DUAL_CENSUS_RECEIPT.json" \
-            /tmp/two-day-step1-evidence/STEP1_DUAL_CENSUS_RECEIPT.json \
+            "s3://$BUCKET/$prefix/transfer/results.tar.gz" \
+            /tmp/two-day-step1-evidence/results.tar.gz \
             --only-show-errors
-          aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "$prefix/" \
-            --output json > /tmp/two-day-step1-evidence/S3_OBJECT_INVENTORY.json
+          tar -C /tmp/two-day-step1-evidence/results -xzf \
+            /tmp/two-day-step1-evidence/results.tar.gz
           cp /tmp/two-day-step1-summary.txt /tmp/two-day-step1-evidence/RUN_SUMMARY.txt
           python - <<'PY'
+          import hashlib
           import json
+          import os
           from pathlib import Path
+
+          root = Path("/tmp/two-day-step1-evidence/results").resolve()
+          archive = Path("/tmp/two-day-step1-evidence/results.tar.gz")
+          summary_path = Path("/tmp/two-day-step1-evidence/RUN_SUMMARY.txt")
+          summary = {}
+          for line in summary_path.read_text(encoding="utf-8").splitlines():
+              if "=" in line:
+                  key, value = line.split("=", 1)
+                  summary[key] = value
           receipt = json.loads(Path(
-              "/tmp/two-day-step1-evidence/STEP1_DUAL_CENSUS_RECEIPT.json"
-          ).read_text())
-          inventory = json.loads(Path(
-              "/tmp/two-day-step1-evidence/S3_OBJECT_INVENTORY.json"
+              "/tmp/two-day-step1-evidence/results/STEP1_DUAL_CENSUS_RECEIPT.json"
           ).read_text())
           if receipt["status"] != "STEP1_DUAL_STRUCTURAL_CENSUS_COMPLETE_TWO_DAY_DIAGNOSTIC":
               raise SystemExit("DOWNLOADED_RECEIPT_STATUS_DRIFT")
-          if not inventory.get("Contents"):
-              raise SystemExit("TWO_DAY_RESULT_PREFIX_EMPTY")
-          print("DOWNLOADED_RECEIPT=PASS")
-          print("S3_RESULT_OBJECT_COUNT=" + str(len(inventory["Contents"])))
-          print("S3_RESULT_TOTAL_BYTES=" + str(sum(int(x["Size"]) for x in inventory["Contents"])))
+          archive_sha = hashlib.sha256(archive.read_bytes()).hexdigest()
+          if archive_sha != summary.get("TWO_DAY_RESULTS_TAR_SHA256"):
+              raise SystemExit("TWO_DAY_RESULT_ARCHIVE_HASH_DRIFT")
+          claimed_receipt_sha = str(receipt.get("receipt_sha256") or "")
+          if claimed_receipt_sha != summary.get("TWO_DAY_STEP1_RECEIPT_SHA256"):
+              raise SystemExit("WORKER_AND_DOWNLOADED_RECEIPT_HASH_DRIFT")
+          receipt_body = dict(receipt)
+          receipt_body.pop("receipt_sha256", None)
+          computed_receipt_sha = hashlib.sha256(json.dumps(
+              receipt_body, sort_keys=True, separators=(",", ":")
+          ).encode()).hexdigest()
+          if claimed_receipt_sha != computed_receipt_sha:
+              raise SystemExit("DOWNLOADED_RECEIPT_SELF_HASH_DRIFT")
+
+          verified = {}
+          def verify_artifacts(value):
+              if isinstance(value, dict):
+                  if {"relative_path", "bytes", "sha256"}.issubset(value):
+                      relative = Path(str(value["relative_path"]))
+                      if relative.is_absolute() or ".." in relative.parts:
+                          raise SystemExit("RECEIPT_ARTIFACT_PATH_ESCAPE")
+                      path = (root / relative).resolve()
+                      if not path.is_relative_to(root) or not path.is_file():
+                          raise SystemExit("RECEIPT_ARTIFACT_MISSING=" + str(relative))
+                      actual_sha = hashlib.sha256(path.read_bytes()).hexdigest()
+                      if path.stat().st_size != int(value["bytes"]):
+                          raise SystemExit("RECEIPT_ARTIFACT_BYTE_DRIFT=" + str(relative))
+                      if actual_sha != str(value["sha256"]):
+                          raise SystemExit("RECEIPT_ARTIFACT_HASH_DRIFT=" + str(relative))
+                      prior = verified.get(str(relative))
+                      if prior is not None and prior != actual_sha:
+                          raise SystemExit("RECEIPT_ARTIFACT_DUPLICATE_DRIFT=" + str(relative))
+                      verified[str(relative)] = actual_sha
+                  for child in value.values():
+                      verify_artifacts(child)
+              elif isinstance(value, list):
+                  for child in value:
+                      verify_artifacts(child)
+
+          verify_artifacts(receipt)
+          if len(verified) < 16:
+              raise SystemExit("RECEIPT_ARTIFACT_MANIFEST_TOO_THIN")
+          for required in (
+              "TWO_DAY_SECONDS.jsonl.gz",
+              "LEGACY_CONTROL_EVENTS.jsonl.gz",
+              "V4_NATIVE_FULL_EVENTS.jsonl.gz",
+              "LEGACY_CONTROL_POPULATION.jsonl.gz",
+              "V4_NATIVE_FULL_POPULATION.jsonl.gz",
+              "DUAL_CENSUS_CROSSWALK.jsonl.gz",
+              "TWO_DAY_SOURCE_MANIFEST.json",
+              "TWO_DAY_VALIDATION_BYPASS_RECEIPT.json",
+          ):
+              if required not in verified:
+                  raise SystemExit("REQUIRED_TWO_DAY_ARTIFACT_UNRECEIPTED=" + required)
+
+          completion = {
+              "schema": "NG_EXHAUSTION_TWO_DAY_STEP1_COMPLETION_V1_20260824",
+              "status": "COMPLETE_HASH_VERIFIED_BEFORE_PUBLICATION",
+              "github_run_id": os.environ["GITHUB_RUN_ID"],
+              "github_run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+              "github_sha": os.environ["GITHUB_SHA"],
+              "results_tar_sha256": archive_sha,
+              "step1_receipt_sha256": claimed_receipt_sha,
+              "verified_receipt_artifact_count": len(verified),
+          }
+          completion["completion_sha256"] = hashlib.sha256(json.dumps(
+              completion, sort_keys=True, separators=(",", ":")
+          ).encode()).hexdigest()
+          Path("/tmp/two-day-step1-evidence/COMPLETION_RECEIPT.json").write_text(
+              json.dumps(completion, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print("DOWNLOADED_RECEIPT_AND_ARTIFACT_HASHES=PASS")
+          print("VERIFIED_RECEIPT_ARTIFACT_COUNT=" + str(len(verified)))
+          PY
+          aws s3 cp /tmp/two-day-step1-evidence/results \
+            "s3://$BUCKET/$prefix/artifacts/" --recursive --only-show-errors
+          aws s3 cp /tmp/two-day-step1-evidence/COMPLETION_RECEIPT.json \
+            "s3://$BUCKET/$prefix/COMPLETE.json" --only-show-errors
+          aws s3api head-object --bucket "$BUCKET" --key "$prefix/COMPLETE.json" \
+            --output json > /tmp/two-day-step1-evidence/COMPLETION_OBJECT_HEAD.json
+          aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "$prefix/" \
+            --output json > /tmp/two-day-step1-evidence/S3_OBJECT_INVENTORY.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          inventory = json.loads(Path(
+              "/tmp/two-day-step1-evidence/S3_OBJECT_INVENTORY.json"
+          ).read_text())
+          rows = inventory.get("Contents") or []
+          if not rows or not any(str(row["Key"]).endswith("/COMPLETE.json") for row in rows):
+              raise SystemExit("FINAL_COMPLETION_MARKER_MISSING")
+          print("FINAL_PUBLICATION_MARKER=PASS")
+          print("S3_RESULT_OBJECT_COUNT=" + str(len(rows)))
+          print("S3_RESULT_TOTAL_BYTES=" + str(sum(int(x["Size"]) for x in rows)))
           PY
 
       - uses: actions/upload-artifact@v4
