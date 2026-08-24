@@ -1,0 +1,87 @@
+name: Probe running blind October Frankie V4 canary 20260824
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-october-sharded-20260824
+    paths:
+      - research/kalshi/NG_EXHAUSTION_OCTOBER_FRANKIE_BLIND_CANARY_PROBE_20260824.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ng-exhaustion-october-frankie-blind-canary-probe-20260824
+  cancel-in-progress: false
+
+jobs:
+  probe-existing-unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      UNIT: ng-exhaustion-frankie-october-blind-ca0893b659a0
+    steps:
+      - name: Await evidence from the already-running isolated unit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          import shlex
+
+          unit = os.environ["UNIT"]
+          commands = [
+              "set -euo pipefail",
+              f"unit={shlex.quote(unit)}",
+              'echo PROBED_SYSTEMD_UNIT="$unit"',
+              'echo PERMANENT_FRANKIE_STATE="$(systemctl is-active markets-frankie.service 2>/dev/null || true)"',
+              'deadline=$((SECONDS + 1200))',
+              'while [ "$SECONDS" -lt "$deadline" ]; do',
+              '  journal="$(journalctl -u "$unit" --no-pager 2>/dev/null || true)"',
+              '  if grep -Fq "\\\"event\\\": \\\"SOL_RESPONSE_ACCEPTED\\\"" <<<"$journal"; then break; fi',
+              '  if grep -Eq "GPT-5.6 Sol invocation failed|Traceback|BLIND_OCTOBER_FRANKIE_EXIT_CODE=[1-9]" <<<"$journal"; then printf "%s\\n" "$journal" | tail -200; exit 1; fi',
+              '  state="$(systemctl is-active "$unit" 2>/dev/null || true)"',
+              '  if [ "$state" != active ] && [ "$state" != activating ]; then printf "%s\\n" "$journal" | tail -200; exit 1; fi',
+              '  sleep 10',
+              'done',
+              'journalctl -u "$unit" -n 240 --no-pager',
+              'journalctl -u "$unit" --no-pager | grep -F "\\\"event\\\": \\\"V4_GROUPS_PROCESSED\\\"" | tail -1',
+              'journalctl -u "$unit" --no-pager | grep -F "\\\"event\\\": \\\"SOL_INVOCATION_STARTED\\\"" | tail -1',
+              'journalctl -u "$unit" --no-pager | grep -F "\\\"event\\\": \\\"SOL_RESPONSE_ACCEPTED\\\"" | tail -1',
+              'echo BLIND_CANARY_FIRST_SOL_RESPONSE=ACCEPTED',
+          ]
+          with open("/tmp/blind-october-frankie-probe-params.json", "w", encoding="utf-8") as handle:
+              json.dump({"commands": ["/bin/bash -lc " + shlex.quote("\n".join(commands))]}, handle)
+          PY
+          command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Probe running blind October V4 Frankie" \
+            --parameters file:///tmp/blind-october-frankie-probe-params.json \
+            --timeout-seconds 1300 \
+            --query 'Command.CommandId' --output text)"
+          status=Pending
+          for _ in $(seq 1 135); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in Success|Failed|TimedOut|Cancelled) break ;; esac
+            sleep 10
+          done
+          aws ssm get-command-invocation \
+            --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json | tee /tmp/blind-october-frankie-probe-result.json
+          test "$status" = Success
+          grep -F 'BLIND_CANARY_FIRST_SOL_RESPONSE=ACCEPTED' /tmp/blind-october-frankie-probe-result.json
+
+      - name: Publish probe evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blind-october-frankie-probe-${{ github.sha }}
+          path: /tmp/blind-october-frankie-probe-result.json
+          if-no-files-found: warn
