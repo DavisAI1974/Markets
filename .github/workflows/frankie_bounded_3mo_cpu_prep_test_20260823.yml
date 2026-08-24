@@ -1,0 +1,70 @@
+name: Frankie bounded three-month CPU prep test 20260823
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-step1-3mo-bounded-20260823
+    paths:
+      - .github/workflows/frankie_bounded_3mo_cpu_prep_test_20260823.yml
+      - deploy/aws/markets-frankie-bounded-3mo.service
+      - deploy/aws/install_frankie_bounded_3mo.sh
+      - research/kalshi/frankie_bounded_3mo_parallel.py
+      - research/kalshi/tests/test_frankie_bounded_3mo_parallel.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cpu-prep-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile bounded orchestration
+        run: |
+          python -m py_compile research/kalshi/frankie_bounded_3mo_parallel.py
+
+      - name: Run bounded orchestration unit tests
+        run: |
+          python -m unittest research/kalshi/tests/test_frankie_bounded_3mo_parallel.py
+
+      - name: Verify dedicated four-vCPU service contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          bounded = Path('deploy/aws/markets-frankie-bounded-3mo.service').read_text()
+          normal = Path('deploy/aws/markets-frankie.service').read_text()
+          install = Path('deploy/aws/install_frankie_bounded_3mo.sh').read_text()
+
+          assert 'CPUQuota=400%' in bounded
+          assert '--workers 4' in bounded
+          assert '--require-systemd' in bounded
+          assert 'FRANKIE_DETERMINISTIC_ONLY=0' in bounded
+          assert 'FRANKIE_BOUNDED_QUEUE_EXCLUSIVE=1' in bounded
+          assert 'Type=oneshot' in bounded
+          assert 'CPUQuota=150%' in normal
+          assert 'NOT started' in install
+          print('CPU_PREP_CONTRACT=PASS')
+          PY
+
+      - name: Verify science files are not part of CPU-prep implementation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          text = Path('research/kalshi/frankie_bounded_3mo_parallel.py').read_text()
+          required = [
+              'event_lane_order_changed": False',
+              'event_scientific_calculation_changed": False',
+              'chain_or_case_retention_changed": False',
+              'first_lock_semantics_changed": False',
+              'frankie_inputs_changed": False',
+              'raw_mbo_or_v4_program_changed": False',
+          ]
+          for needle in required:
+              assert needle in text, needle
+          print('ORCHESTRATION_ONLY_CONTRACT=PASS')
+          PY
