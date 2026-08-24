@@ -1,0 +1,74 @@
+{
+  "full_receipts": [
+    {
+      "receipt_sha256": "082b35b419282414cb4950e345ab6e5c1af360edbd88a98a23a75c6134ee4e0c",
+      "segment": "20210820_20210901",
+      "status": "SEGMENT_COMPLETE"
+    }
+  ],
+  "observed_at_utc": "2026-08-24T05:26:03.584631+00:00",
+  "read_only": true,
+  "schema": "NG_EXHAUSTION_STEP1_PARALLEL_PROGRESS_PROBE_V2_20260824",
+  "segments": [
+    {
+      "aggregated_seconds": 360833,
+      "completed_event_groups": 9217037,
+      "current_fd_position_bytes": 22679552,
+      "current_object_bytes": 25498529,
+      "current_object_index_1based": 12,
+      "current_source_date": "20210914",
+      "current_source_key": "nymex/ng_mbo_5y_v0/native/20210901_20211001/glbx-mdp3-20210914.mbo.dbn.zst",
+      "heartbeat_elapsed_seconds": 24600.069,
+      "heartbeat_utc": "2026-08-24T05:24:20.040510+00:00",
+      "partial_output_bytes": 44064319,
+      "pid": 155581,
+      "receipt_complete": false,
+      "segment": "20210901_20211001",
+      "source_byte_progress_lower_pct": 36.72,
+      "source_byte_progress_upper_pct": 41.85,
+      "source_object_count": 26,
+      "unit_active_state": "active",
+      "unit_sub_state": "running"
+    },
+    {
+      "aggregated_seconds": 770833,
+      "completed_event_groups": 19745694,
+      "current_fd_position_bytes": 17960960,
+      "current_object_bytes": 24918228,
+      "current_object_index_1based": 22,
+      "current_source_date": "20211026",
+      "current_source_key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211026.mbo.dbn.zst",
+      "heartbeat_elapsed_seconds": 24600.034,
+      "heartbeat_utc": "2026-08-24T05:24:19.038555+00:00",
+      "partial_output_bytes": 95662951,
+      "pid": 155587,
+      "receipt_complete": false,
+      "segment": "20211001_20211101",
+      "source_byte_progress_lower_pct": 80.89,
+      "source_byte_progress_upper_pct": 85.54,
+      "source_object_count": 26,
+      "unit_active_state": "active",
+      "unit_sub_state": "running"
+    },
+    {
+      "aggregated_seconds": 432142,
+      "completed_event_groups": 10921478,
+      "current_fd_position_bytes": 9048064,
+      "current_object_bytes": 21887655,
+      "current_object_index_1based": 14,
+      "current_source_date": "20211116",
+      "current_source_key": "nymex/ng_mbo_5y_v0/native/20211101_20211201/glbx-mdp3-20211116.mbo.dbn.zst",
+      "heartbeat_elapsed_seconds": 24600.048,
+      "heartbeat_utc": "2026-08-24T05:24:19.273929+00:00",
+      "partial_output_bytes": 53181631,
+      "pid": 155594,
+      "receipt_complete": false,
+      "segment": "20211101_20211201",
+      "source_byte_progress_lower_pct": 56.61,
+      "source_byte_progress_upper_pct": 61.68,
+      "source_object_count": 26,
+      "unit_active_state": "active",
+      "unit_sub_state": "running"
+    }
+  ]
+}
