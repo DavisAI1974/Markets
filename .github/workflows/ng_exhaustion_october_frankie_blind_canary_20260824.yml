@@ -1,0 +1,182 @@
+name: Launch blind October Frankie V4 canary 20260824
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-exhaustion-october-sharded-20260824
+    paths:
+      - research/kalshi/NG_EXHAUSTION_OCTOBER_FRANKIE_BLIND_CANARY_LAUNCH_20260824.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ng-exhaustion-october-frankie-blind-canary-20260824
+  cancel-in-progress: false
+
+jobs:
+  launch-blind-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      BUCKET: bento-568968024170-us-east-2-an
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Publish exact canary package
+        shell: bash
+        run: |
+          set -euo pipefail
+          package="/tmp/october-frankie-${GITHUB_SHA}.tgz"
+          git archive --format=tar.gz --output="$package" HEAD
+          package_sha="$(sha256sum "$package" | awk '{print $1}')"
+          package_key="frankie/blind-october-v4/launches/${GITHUB_SHA}/package.tgz"
+          aws s3 cp "$package" "s3://${BUCKET}/${package_key}" --only-show-errors
+          echo "PACKAGE_KEY=$package_key" >> "$GITHUB_ENV"
+          echo "PACKAGE_SHA256=$package_sha" >> "$GITHUB_ENV"
+
+      - name: Start isolated raw-MBO V4 canary and await first Sol response
+        id: launch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import json
+          import os
+          import shlex
+
+          sha = os.environ["GITHUB_SHA"]
+          root = f"/mnt/markets/ng_exhaustion_frankie_october_blind_20260824/{sha}"
+          repo = f"{root}/repo"
+          stage = f"{root}/raw"
+          output = f"{root}/artifacts"
+          package = f"{root}/package.tgz"
+          unit = f"ng-exhaustion-frankie-october-blind-{sha[:12]}"
+          credential_file = "/mnt/markets/ng_exhaustion_step1_5y_20260822/0d318335825b4a0e19a5a2881522f3da0374788e/aws.env"
+          predecessor_key = "nymex/ng_mbo_5y_v0/native/20210901_20211001/glbx-mdp3-20210930.mbo.dbn.zst"
+          target_key = "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211001.mbo.dbn.zst"
+          predecessor = f"{stage}/glbx-mdp3-20210930.mbo.dbn.zst"
+          target = f"{stage}/glbx-mdp3-20211001.mbo.dbn.zst"
+          artifact_prefix = f"frankie/blind-october-v4/launches/{sha}/artifacts"
+
+          runner = f'''#!/bin/bash
+          set -uo pipefail
+          set -a
+          source {shlex.quote(credential_file)}
+          set +a
+          source {shlex.quote(root + '/venv/bin/activate')}
+          cd {shlex.quote(repo)}
+          export PYTHONPATH={shlex.quote(repo + ':' + repo + '/research:' + repo + '/research/kalshi')}
+          python research/kalshi/ng_exhaustion_october_frankie_v4_bridge_20260824.py \\
+            --manifest research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json \\
+            --output-root {shlex.quote(output)} \\
+            --run-id {shlex.quote('github-' + os.environ['GITHUB_RUN_ID'] + '-' + sha[:12])} \\
+            {shlex.quote(predecessor)} {shlex.quote(target)} \\
+            2>&1 | tee {shlex.quote(root + '/RUN.log')}
+          rc=${{PIPESTATUS[0]}}
+          if [ -d {shlex.quote(output)} ]; then
+            aws s3 sync {shlex.quote(output)} {shlex.quote('s3://' + os.environ['BUCKET'] + '/' + artifact_prefix + '/')} --only-show-errors || rc=$?
+          fi
+          echo BLIND_OCTOBER_FRANKIE_EXIT_CODE="$rc"
+          exit "$rc"
+          '''
+          runner_b64 = base64.b64encode(runner.encode()).decode()
+
+          commands = [
+              "set -euo pipefail",
+              "trap 'echo BLIND_CANARY_LAUNCH_FAILED_COMMAND=\"$BASH_COMMAND\" >&2' ERR",
+              f"root={shlex.quote(root)}",
+              f"repo={shlex.quote(repo)}",
+              f"stage={shlex.quote(stage)}",
+              f"output={shlex.quote(output)}",
+              f"package={shlex.quote(package)}",
+              f"unit={shlex.quote(unit)}",
+              f"credential_file={shlex.quote(credential_file)}",
+              'test -s "$credential_file"',
+              'test ! -e "$output/final_receipt.json"',
+              'install -d -m 0755 "$root" "$repo" "$stage"',
+              'set -a; source "$credential_file"; set +a',
+              f"aws s3 cp {shlex.quote('s3://' + os.environ['BUCKET'] + '/' + os.environ['PACKAGE_KEY'])} \"$package\" --only-show-errors",
+              f"echo {shlex.quote(os.environ['PACKAGE_SHA256'] + '  ' + package)} | sha256sum -c -",
+              'tar -xzf "$package" -C "$repo"',
+              'python3 -m venv "$root/venv"',
+              'source "$root/venv/bin/activate"',
+              'python -m pip install --quiet --upgrade pip',
+              'python -m pip install --quiet databento==0.81.0 boto3==1.35.99 "openai>=1.40"',
+              f"aws s3 cp {shlex.quote('s3://' + os.environ['BUCKET'] + '/' + predecessor_key)} {shlex.quote(predecessor)} --only-show-errors",
+              f"aws s3 cp {shlex.quote('s3://' + os.environ['BUCKET'] + '/' + target_key)} {shlex.quote(target)} --only-show-errors",
+              f"test \"$(stat -c %s {shlex.quote(predecessor)})\" = 33433238",
+              f"test \"$(sha256sum {shlex.quote(predecessor)} | awk '{{print $1}}')\" = f7a577330f62068059ac9f0d4414a3457c8d3dd7c8be0e221bfcba33d22fcc08",
+              f"test \"$(stat -c %s {shlex.quote(target)})\" = 25628861",
+              f"test \"$(sha256sum {shlex.quote(target)} | awk '{{print $1}}')\" = e6b4ec01bd9b34d57cb22c770b5d49c756e7f41a658f081823d923004a0121b2",
+              f"printf %s {shlex.quote(runner_b64)} | base64 -d > \"$root/run.sh\"",
+              'chmod 700 "$root/run.sh"',
+              'echo PERMANENT_FRANKIE_STATE="$(systemctl is-active markets-frankie.service 2>/dev/null || true)"',
+              'systemd-run --collect --unit "$unit" --property=Type=exec --property=Restart=no --property=WorkingDirectory="$repo" "$root/run.sh" >/dev/null',
+              'echo BLIND_CANARY_SYSTEMD_UNIT="$unit"',
+              f"echo BLIND_CANARY_ARTIFACT_PREFIX={shlex.quote('s3://' + os.environ['BUCKET'] + '/' + artifact_prefix + '/')}",
+              'deadline=$((SECONDS + 1200))',
+              'while [ "$SECONDS" -lt "$deadline" ]; do',
+              '  if journalctl -u "$unit" --no-pager | grep -Fq \"\\\"event\\\": \\\"SOL_RESPONSE_ACCEPTED\\\"\"; then break; fi',
+              '  if journalctl -u "$unit" --no-pager | grep -Eq "GPT-5.6 Sol invocation failed|Traceback|BLIND_OCTOBER_FRANKIE_EXIT_CODE=[1-9]"; then journalctl -u "$unit" -n 160 --no-pager; exit 1; fi',
+              '  sleep 10',
+              'done',
+              'journalctl -u "$unit" -n 160 --no-pager',
+              'journalctl -u "$unit" --no-pager | grep -F \"\\\"event\\\": \\\"V4_GROUPS_PROCESSED\\\"\" | tail -1',
+              'journalctl -u "$unit" --no-pager | grep -F \"\\\"event\\\": \\\"SOL_INVOCATION_STARTED\\\"\" | tail -1',
+              'journalctl -u "$unit" --no-pager | grep -F \"\\\"event\\\": \\\"SOL_RESPONSE_ACCEPTED\\\"\" | tail -1',
+              'echo BLIND_CANARY_FIRST_SOL_RESPONSE=ACCEPTED',
+          ]
+          with open("/tmp/blind-october-frankie-launch-params.json", "w", encoding="utf-8") as handle:
+              json.dump({"commands": ["/bin/bash -lc " + shlex.quote("\n".join(commands))]}, handle)
+          PY
+
+          command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Launch blind October raw-MBO V4 Frankie from ${GITHUB_SHA}" \
+            --parameters file:///tmp/blind-october-frankie-launch-params.json \
+            --timeout-seconds 1500 \
+            --query 'Command.CommandId' --output text)"
+          status=Pending
+          for _ in $(seq 1 150); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in
+              Success|Failed|TimedOut|Cancelled) break ;;
+            esac
+            sleep 10
+          done
+          aws ssm get-command-invocation \
+            --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json | tee /tmp/blind-october-frankie-launch-result.json
+          test "$status" = Success
+          grep -F 'BLIND_CANARY_FIRST_SOL_RESPONSE=ACCEPTED' /tmp/blind-october-frankie-launch-result.json
+          echo "command_id=$command_id" >> "$GITHUB_OUTPUT"
+          echo "run_url=https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish launch evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blind-october-frankie-launch-${{ github.sha }}
+          path: /tmp/blind-october-frankie-launch-result.json
+          if-no-files-found: warn
+
+      - name: Report live run
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### Blind October Frankie V4 canary"
+            echo "- Live run: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "- Commit: ${GITHUB_SHA}"
+            echo "- SSM command: ${{ steps.launch.outputs.command_id }}"
+            echo "- Evidence gate: first accepted GPT-5.6 Sol response"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,23 @@
+{
+  "authorization": "LAUNCH_NOW",
+  "branch": "chatgpt/ng-exhaustion-october-sharded-20260824",
+  "canonical_manifest_sha256": "5739bce85d9bfbbe6c59d000bc411b424d7752b98a309725161d44e6d1d3dc2e",
+  "model": "gpt-5.6-sol",
+  "predecessor_object": {
+    "bytes": 33433238,
+    "key": "nymex/ng_mbo_5y_v0/native/20210901_20211001/glbx-mdp3-20210930.mbo.dbn.zst",
+    "sha256": "f7a577330f62068059ac9f0d4414a3457c8d3dd7c8be0e221bfcba33d22fcc08"
+  },
+  "science": "EXISTING_V4_UNCHANGED_THIN_BRIDGE_ONLY",
+  "sealed_step1_inputs_allowed": false,
+  "target_half_open_utc": [
+    "2021-10-01T00:00:00Z",
+    "2021-10-03T00:00:00Z"
+  ],
+  "target_object": {
+    "bytes": 25628861,
+    "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211001.mbo.dbn.zst",
+    "sha256": "e6b4ec01bd9b34d57cb22c770b5d49c756e7f41a658f081823d923004a0121b2"
+  },
+  "worker_mode": "ISOLATED_TRANSIENT_SYSTEMD_UNIT_NO_SQS_NO_SHARED_SERVICE_MUTATION"
+}
