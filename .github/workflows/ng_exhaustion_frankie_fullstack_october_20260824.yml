@@ -18,14 +18,84 @@ permissions:
   contents: read
 
 concurrency:
-  group: ng-exhaustion-frankie-fullstack-october-20260824
+  group: >-
+    ${{ startsWith(github.event.head_commit.message, 'stop: October Frankie attempt 8') &&
+        format('ng-exhaustion-frankie-fullstack-october-20260824-stop-{0}', github.run_id) ||
+        'ng-exhaustion-frankie-fullstack-october-20260824' }}
   cancel-in-progress: false
 
 jobs:
+  stop-attempt-8:
+    if: >-
+      ${{ github.ref == 'refs/heads/chatgpt/ng-exhaustion-october-sharded-20260824' &&
+          github.event_name == 'push' &&
+          startsWith(github.event.head_commit.message, 'stop: October Frankie attempt 8') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      UNIT: ng-exhaustion-frankie-fullstack-october-1ae2d5d83906-32753586584-1
+    steps:
+      - name: Stop only October Frankie attempt 8
+        shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          unit = os.environ["UNIT"]
+          command = (
+              f"set -euo pipefail; systemctl stop {unit}; "
+              f"state=$(systemctl is-active {unit} || true); "
+              'test "$state" = inactive || test "$state" = failed; '
+              f"echo FULLSTACK_STOPPED={unit}"
+          )
+          Path("/tmp/fullstack-october-stop-params.json").write_text(
+              json.dumps({"commands": [command]}),
+              encoding="utf-8",
+          )
+          PY
+          command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Stop only October Frankie attempt 8" \
+            --parameters file:///tmp/fullstack-october-stop-params.json \
+            --timeout-seconds 120 \
+            --query 'Command.CommandId' \
+            --output text)"
+          status=Pending
+          for _ in $(seq 1 30); do
+            status="$(aws ssm get-command-invocation \
+              --command-id "$command_id" \
+              --instance-id "$INSTANCE_ID" \
+              --query Status \
+              --output text 2>/dev/null || true)"
+            case "$status" in
+              Success|Failed|TimedOut|Cancelled) break ;;
+            esac
+            sleep 2
+          done
+          result="$(aws ssm get-command-invocation \
+            --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json)"
+          printf '%s\n' "$result"
+          test "$status" = Success
+          grep -F "FULLSTACK_STOPPED=$UNIT" <<<"$result"
+
   build-and-verify:
     if: >-
       ${{ github.ref == 'refs/heads/chatgpt/ng-exhaustion-october-sharded-20260824' &&
-          (github.event_name == 'push' || inputs.confirm_full_october == true) }}
+          (github.event_name == 'push' || inputs.confirm_full_october == true) &&
+          !startsWith(github.event.head_commit.message, 'stop: October Frankie attempt 8') }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     outputs:
@@ -189,7 +259,8 @@ jobs:
     needs: build-and-verify
     if: >-
       ${{ github.ref == 'refs/heads/chatgpt/ng-exhaustion-october-sharded-20260824' &&
-          (github.event_name == 'push' || inputs.confirm_full_october == true) }}
+          (github.event_name == 'push' || inputs.confirm_full_october == true) &&
+          !startsWith(github.event.head_commit.message, 'stop: October Frankie attempt 8') }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
