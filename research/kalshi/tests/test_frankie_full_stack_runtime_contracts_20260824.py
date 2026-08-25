@@ -123,6 +123,24 @@ def test_provider_receipt_binds_exact_request_response_id_tools_and_retrievals()
     assert receipt.retrievals[0].byte_end == 128
     assert len(receipt.receipt_hash) == 64
 
+    value_bound = ProviderInvocationReceipt.create(
+        request=receipt.request,
+        accepted_response=receipt.accepted_response,
+        tool_calls=receipt.tool_calls,
+        retrievals=receipt.retrievals,
+        value_state_read_receipt_hashes=(H3,),
+    )
+    assert value_bound.value_state_read_receipt_hashes == (H3,)
+    assert value_bound.receipt_hash != receipt.receipt_hash
+    with pytest.raises(RuntimeContractError, match="must be unique"):
+        ProviderInvocationReceipt.create(
+            request=receipt.request,
+            accepted_response=receipt.accepted_response,
+            tool_calls=receipt.tool_calls,
+            retrievals=receipt.retrievals,
+            value_state_read_receipt_hashes=(H3, H3),
+        )
+
     with pytest.raises(RuntimeContractError, match="exactly gpt-5.6-sol"):
         ProviderRequestReceipt.create(
             model="gpt-5.6",

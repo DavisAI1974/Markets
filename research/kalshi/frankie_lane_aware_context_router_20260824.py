@@ -20,6 +20,7 @@ from frankie_authority_knowledge_plane_20260824 import (
     KnowledgeAccessDenied,
     KnowledgeCatalogError,
     KnowledgePlane,
+    PlayRecord,
     ReadResult,
     RetrievalLane,
     SourceEntry,
@@ -511,6 +512,90 @@ class FrankieLaneAwareContextRouter:
             source=source,
             returned_sha256=_sha256(result.data),
             byte_range=result.receipt.byte_range,
+            underlying_receipt_sequence=result.receipt.sequence,
+        )
+        return result
+
+    def list_route_sources(
+        self, bundle: RouteBundle, variant: ContextVariant
+    ) -> tuple[RouteSource, ...]:
+        """Return only sources currently lawful for the identity-bound lane.
+
+        This is the provider-tool catalogue seam.  It deliberately derives from
+        the already-validated route instead of the underlying repository tree, so
+        archives, sealed answers, control-lane provisionals, and pre-freeze
+        post-evidence components cannot appear in model-visible listings.
+        """
+
+        route = self._require_bundle_route(bundle, variant)
+        sources = route.base_sources + route.augmentation_sources
+        if self._global_freeze is not None:
+            sources += route.withheld_sources
+        self._record(
+            bundle,
+            route,
+            "ROUTE_SOURCES_LISTED",
+            "list_route_sources",
+            "ALLOWED",
+            "CURRENTLY_LAWFUL_ROUTE_SOURCES_ONLY",
+        )
+        return sources
+
+    def read_play(
+        self, bundle: RouteBundle, variant: ContextVariant, play_id: str
+    ) -> PlayRecord:
+        """Serve one complete brain play through the same lawful lane identity."""
+
+        route = self._require_bundle_route(bundle, variant)
+        brain = next(
+            (source for source in route.base_sources if source.authority is AuthorityClass.CURRENT_BRAIN),
+            None,
+        )
+        if brain is None:
+            self._deny(bundle, route, "read_play", "CURRENT_BRAIN_NOT_IN_ROUTE")
+        lane = (
+            RetrievalLane.PRIMARY
+            if variant is ContextVariant.S135_CONTROL
+            else RetrievalLane.SHADOW
+        )
+        context = self._plane.context(
+            run_id=bundle.run_id, state_hash=bundle.state_prefix_hash, lane=lane
+        )
+        try:
+            result = self._plane.read_play(context, play_id)
+        except KnowledgeAccessDenied as exc:
+            underlying = self._plane.receipts[-1].sequence if self._plane.receipts else None
+            self._record(
+                bundle,
+                route,
+                "PLAY_READ",
+                "read_play",
+                "DENIED",
+                str(exc),
+                source=brain,
+                underlying_receipt_sequence=underlying,
+            )
+            raise
+        except KeyError as exc:
+            self._record(
+                bundle,
+                route,
+                "PLAY_READ",
+                "read_play",
+                "DENIED",
+                str(exc),
+                source=brain,
+            )
+            raise
+        self._record(
+            bundle,
+            route,
+            "PLAY_READ",
+            "read_play",
+            "ALLOWED",
+            "COMPLETE_LAWFUL_PLAY_BODY",
+            source=brain,
+            returned_sha256=result.content_sha256,
             underlying_receipt_sequence=result.receipt.sequence,
         )
         return result

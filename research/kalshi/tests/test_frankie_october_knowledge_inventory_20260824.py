@@ -10,7 +10,10 @@ from research.kalshi.frankie_authority_knowledge_plane_20260824 import (
     TargetRelationship,
 )
 from research.kalshi.frankie_october_knowledge_inventory_20260824 import (
+    PROVISIONAL_SOURCE_DISPOSITIONS,
+    ProvisionalSourceDisposition,
     production_source_specs,
+    sealed_step1_external_descriptors,
 )
 
 
@@ -22,7 +25,7 @@ class ProductionKnowledgeInventoryTests(unittest.TestCase):
         specs = production_source_specs(ROOT)
         by_path = {item.path: item for item in specs}
 
-        self.assertEqual(len(specs), 150)
+        self.assertEqual(len(specs), 151)
         self.assertEqual(len(by_path), len(specs))
         self.assertTrue(all((ROOT / path).is_file() for path in by_path))
         self.assertEqual(
@@ -66,6 +69,61 @@ class ProductionKnowledgeInventoryTests(unittest.TestCase):
             "research/kalshi/NG_EXHAUSTION_OCTOBER_SHARDED_HANDOFF_20260824.md",
             corrected.supersedes,
         )
+
+    def test_step1_runtime_manifest_expands_exact_external_descriptors_without_fetching(self) -> None:
+        descriptors = sealed_step1_external_descriptors(ROOT)
+
+        self.assertEqual(len(descriptors), 13)
+        self.assertEqual(
+            {item.object_kind for item in descriptors},
+            {"RESULT_PREFIX", "RECEIPT", "RECONCILIATION", "GOVERNED_FINAL_OUTPUT"},
+        )
+        self.assertIn(
+            "step1:LEGACY_CONTROL_OVERLAP_MISMATCHES.jsonl.gz",
+            {item.descriptor_id for item in descriptors},
+        )
+        self.assertIn(
+            "step1:V4_NATIVE_FULL_LINEAGE_INPUTS.jsonl.gz",
+            {item.descriptor_id for item in descriptors},
+        )
+        self.assertTrue(all(item.authority is AuthorityClass.SEALED_TARGET_ANSWER for item in descriptors))
+        self.assertTrue(all(item.access_policy is AccessPolicy.SEALED_UNTIL_PRIMARY_FREEZE for item in descriptors))
+        self.assertTrue(all(item.target_relationship is TargetRelationship.OCTOBER_STEP1_ANSWER for item in descriptors))
+        self.assertTrue(all(item.external_uri.startswith("s3://") for item in descriptors))
+        self.assertTrue(all(len(item.descriptor_sha256) == 64 for item in descriptors))
+        self.assertTrue(all(item.content_accessed is False for item in descriptors))
+        self.assertTrue(all(item.local_path is None for item in descriptors))
+
+    def test_every_provisional_source_has_one_explicit_disposition(self) -> None:
+        specs = production_source_specs(ROOT)
+        provisional = {
+            item.path for item in specs if item.authority is AuthorityClass.PROVISIONAL_SHADOW
+        }
+
+        self.assertEqual(set(PROVISIONAL_SOURCE_DISPOSITIONS), provisional)
+        self.assertEqual(len(PROVISIONAL_SOURCE_DISPOSITIONS), 22)
+        self.assertEqual(
+            {
+                row.disposition
+                for row in PROVISIONAL_SOURCE_DISPOSITIONS.values()
+            },
+            {
+                ProvisionalSourceDisposition.EXECUTABLE_MODULE_BINDING,
+                ProvisionalSourceDisposition.CONTEXT_ONLY_GOVERNANCE,
+                ProvisionalSourceDisposition.DEFERRED_POST_EVIDENCE,
+            },
+        )
+        for path, row in PROVISIONAL_SOURCE_DISPOSITIONS.items():
+            if row.disposition is ProvisionalSourceDisposition.EXECUTABLE_MODULE_BINDING:
+                self.assertTrue(path.endswith(".py"))
+                self.assertTrue(row.module_name)
+                self.assertTrue(row.required_symbol)
+            elif row.disposition is ProvisionalSourceDisposition.CONTEXT_ONLY_GOVERNANCE:
+                self.assertFalse(path.endswith(".py"))
+                self.assertIsNone(row.module_name)
+                self.assertIsNone(row.required_symbol)
+            else:
+                self.assertEqual(row.component_id, "META_LOOP")
 
 
 if __name__ == "__main__":

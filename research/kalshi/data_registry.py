@@ -78,18 +78,22 @@ BLOCK_SOURCE = {
 }
 
 # Reconciled tiers.  These lists describe current truth, not the S113 state.
-HELD_NOT_SERVED = [
+HELD_NOT_SERVED = []
+
+# Served additively at provider prefix time rather than baked into the stale
+# per-day render survey. Every row is filtered by observation receipt clock.
+RUNTIME_ADDITIVE_SERVED = [
     {
         "field": "nws_hourly raw observations",
         "source": "NWS/IEM ASOS via nws_temp_feed --ingest-hourly",
         "item": "A-21",
-        "why": "hourly observations are held but the canonical degree-day decision block still reduces them to daily form",
+        "why": "served losslessly as weather_observation_hourly at each causal prefix; full-day realized rollups remain quarantined",
     },
     {
         "field": "ASOS dew point / humidity / apparent-temperature family",
         "source": "raw ASOS observations",
         "item": "A-21",
-        "why": "held upstream; richer summer latent-load physics is not yet a canonical served decision-state family",
+        "why": "served losslessly inside timestamped weather_observation_hourly raw quantitative values",
     },
 ]
 

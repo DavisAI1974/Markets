@@ -55,6 +55,7 @@ PREFIXES = [
     ("nymex/contract_structure/", "data/contract_structure"),
     ("nymex/nymex_curve/",        "data/nymex_curve"),
     ("weather/nws_temp/",         "data/nws_temp"),               # THE PATH TRAP - see the docstring
+    ("weather/nws_hourly/",       "data/nws_hourly"),             # causal intra-day ASOS observation vintages
     ("weather/mos_cycle/",        "data/weather/mos_cycle"),
     ("weather/mos_freeze/",       "data/weather/mos_freeze"),
     ("nymex/nymex_cont_n0/",      "data/nymex_cont_n0"),          # the tape vol_regime is built from

@@ -19,6 +19,10 @@ from frankie_full_stack_provisional_combined_pipeline_20260824 import (  # noqa:
     execute_combined_provisional_pipeline,
 )
 from frankie_full_stack_runtime_contracts_20260824 import CausalPrefixBinding  # noqa: E402
+from frankie_october_knowledge_inventory_20260824 import (  # noqa: E402
+    PROVISIONAL_SOURCE_DISPOSITIONS,
+    ProvisionalSourceDisposition,
+)
 
 
 def binding() -> CausalPrefixBinding:
@@ -34,6 +38,17 @@ def binding() -> CausalPrefixBinding:
 
 class ProvisionalCombinedPipelineTests(unittest.TestCase):
     def test_production_adapters_execute_every_checked_in_public_api(self):
+        contexts = {component_id: [] for component_id in ACTIVE_COMPONENT_IDS}
+        for path, disposition in PROVISIONAL_SOURCE_DISPOSITIONS.items():
+            if disposition.disposition is ProvisionalSourceDisposition.DEFERRED_POST_EVIDENCE:
+                continue
+            contexts[disposition.component_id].append(
+                {
+                    "path": path,
+                    "source_sha256": "a" * 64,
+                    "content_excerpt": f"{disposition.component_id} checked-in source",
+                }
+            )
         receipts = execute_combined_provisional_pipeline(
             binding=binding(),
             causal_state={
@@ -41,16 +56,7 @@ class ProvisionalCombinedPipelineTests(unittest.TestCase):
                 "source_second": 1633046400,
                 "protected_prefix_hash": "1" * 64,
             },
-            source_contexts={
-                component_id: [
-                    {
-                        "path": f"research/kalshi/{component_id.lower()}.py",
-                        "source_sha256": "a" * 64,
-                        "content_excerpt": f"{component_id} checked-in source",
-                    }
-                ]
-                for component_id in ACTIVE_COMPONENT_IDS
-            },
+            source_contexts=contexts,
         )
 
         active = [json.loads(item.context_json) for item in receipts[:-1]]
@@ -58,6 +64,27 @@ class ProvisionalCombinedPipelineTests(unittest.TestCase):
         self.assertTrue(all(item["executed"] for item in active))
         self.assertTrue(all(item["derived_output"]["status"] == "COMPLETED" for item in active))
         self.assertEqual(len({item["all_together_input_hash"] for item in active}), 1)
+        dispositions = {
+            row["path"]: row
+            for item in active
+            for row in item["source_dispositions"]
+        }
+        self.assertEqual(
+            set(dispositions),
+            {
+                path
+                for path, row in PROVISIONAL_SOURCE_DISPOSITIONS.items()
+                if row.disposition is not ProvisionalSourceDisposition.DEFERRED_POST_EVIDENCE
+            },
+        )
+        for path, row in dispositions.items():
+            expected = PROVISIONAL_SOURCE_DISPOSITIONS[path]
+            self.assertEqual(row["disposition"], expected.disposition.value)
+            if expected.disposition is ProvisionalSourceDisposition.EXECUTABLE_MODULE_BINDING:
+                self.assertTrue(row["module_imported"])
+                self.assertTrue(row["required_symbol_bound"])
+            else:
+                self.assertTrue(row["context_only_bound"])
 
     def test_all_seven_abilities_execute_on_one_identity_and_outputs_enter_receipts(self):
         calls: list[tuple[str, str, str]] = []

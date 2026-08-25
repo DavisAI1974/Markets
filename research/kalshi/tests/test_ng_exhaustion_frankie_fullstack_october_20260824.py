@@ -244,13 +244,16 @@ class FullStackOctoberContractTest(unittest.TestCase):
             specs,
             contract=fullstack.october_full_stack_completeness_contract(),
             manifest_version="fullstack-runner-construction-test",
+            external_descriptors=fullstack.sealed_step1_external_descriptors(repo_root),
         )
         router = fullstack.FrankieLaneAwareContextRouter(
             plane, fullstack.production_provisional_components(plane)
         )
         bundle = router.build_routes(run_id="construction-test", state_prefix_hash="0" * 64)
         combined = bundle.routes[fullstack.ContextVariant.FULL_PROVISIONAL_COMBINED]
-        self.assertEqual(len(specs), 150)
+        self.assertEqual(len(specs), 151)
+        self.assertEqual(len(plane.external_descriptors), 13)
+        self.assertTrue(all(item.content_accessed is False for item in plane.external_descriptors))
         self.assertEqual(len(combined.base_sources), 107)
         self.assertEqual(len(combined.augmentation_sources), 20)
         self.assertEqual(len(combined.withheld_sources), 2)
@@ -269,7 +272,31 @@ class FullStackOctoberContractTest(unittest.TestCase):
 
     def test_paired_launch_event_contains_workflow_proof_and_first_lane_receipts(self) -> None:
         def invocation(label: str):
-            return SimpleNamespace(accepted_response=SimpleNamespace(provider_response_id=label))
+            provider_tool = SimpleNamespace(
+                tool_call_id=f"{label}-values",
+                tool_name="decision_state_read",
+                request_hash="a" * 64,
+                response_hash="b" * 64,
+            )
+            seeded_tool = SimpleNamespace(
+                tool_call_id=f"{label}-seeded",
+                tool_name="authority_knowledge.list_and_read",
+                request_hash="c" * 64,
+                response_hash="d" * 64,
+            )
+            return SimpleNamespace(
+                accepted_response=SimpleNamespace(provider_response_id=label),
+                tool_calls=(seeded_tool, provider_tool),
+                retrievals=(
+                    SimpleNamespace(
+                        retrieval_id=f"{label}-values:0",
+                        source_id="decision-state-page",
+                    ),
+                ),
+                value_state_read_receipt_hashes=(
+                    hashlib.sha256(f"{label}:value-state-read".encode()).hexdigest(),
+                ),
+            )
 
         binding = SimpleNamespace(
             causal_prefix_hash="1" * 64,
@@ -311,11 +338,90 @@ class FullStackOctoberContractTest(unittest.TestCase):
             def snapshot(self):
                 return self._records
 
+        governing_modules = [
+            {
+                "module": name,
+                "disposition": (
+                    "SUPERSEDED_BY_CORRECTED_RUNTIME_EQUIVALENCE"
+                    if name in {
+                        "ng_exhaustion_v4_exact_candidate_freeze",
+                        "ng_exhaustion_v4_gate_verifier",
+                        "ng_exhaustion_v4_pilot_chunk_guard",
+                        "ng_exhaustion_v4_pilot_chunk_guardrail",
+                    }
+                    else "DIRECT_OPERATIONAL_EXECUTION"
+                ),
+                "execution_hash": "a" * 64,
+            }
+            for name, _symbols in fullstack.H_RUNTIME_MODULES
+        ]
+        governing_identities = sorted(row["module"] for row in governing_modules)
+        governing_core = {
+            "schema": "FRANKIE_V4_GOVERNING_PREFIX_EXECUTION_V1_20260824",
+            "run_id": "fixture",
+            "module_count": 15,
+            "module_identities": governing_identities,
+            "module_identity_hash": fullstack._stable_hash(governing_identities),
+            "disposition_counts": {
+                "DIRECT_OPERATIONAL_EXECUTION": 11,
+                "SUPERSEDED_BY_CORRECTED_RUNTIME_EQUIVALENCE": 4,
+            },
+            "modules": governing_modules,
+            "governing_input_context_hash": "c" * 64,
+            "answer_revealed": False,
+        }
         event = fullstack.make_paired_launch_event(
             binding=binding,
             paired=paired,
             control_ledger=FakeLedger("control.jsonl"),
             combined_ledger=FakeLedger("combined.jsonl"),
+            decision_snapshot=SimpleNamespace(
+                path_count=1940,
+                block_count=46,
+                registry_path_count=1940,
+                registry_block_count=46,
+                schema_registered_count=1940,
+                emitted_leaf_count=1650,
+                emitted_registered_count=1650,
+                emitted_additive_count=0,
+                present_count=1500,
+                explicit_null_count=146,
+                unavailable_count=294,
+                emitted_coverage_fraction=1650 / 1940,
+                value_coverage_fraction=1500 / 1940,
+                source_snapshot_leaf_count=1654,
+                source_snapshot_leaf_hash="0" * 64,
+                availability_matrix={
+                    "matrix_hash": "9" * 64,
+                    "block_count": 46,
+                    "blocks": {f"block-{index}": {} for index in range(46)},
+                },
+                availability_audit={
+                    "registered_counts": {
+                        "present": 1500, "explicit_null": 146,
+                        "unavailable": 294, "total": 1940,
+                    },
+                    "causal_quarantine_count": 1,
+                    "blocks": {},
+                    "audit_hash": "8" * 64,
+                },
+                fields=(
+                    SimpleNamespace(
+                        path="weather.gw_hdd",
+                        status="UNAVAILABLE",
+                        missing_reason="UNAVAILABLE_CAUSAL_QUARANTINE_SAME_DAY_REALIZED_WEATHER"
+                    ),
+                ),
+                build_status="CANONICAL_S135_ACCEPTED",
+                snapshot_hash="e" * 64,
+                registry_receipt_hash="f" * 64,
+            ),
+            control_evidence=SimpleNamespace(head_hash="1" * 64, record_count=8),
+            combined_evidence=SimpleNamespace(head_hash="2" * 64, record_count=8),
+            governing_receipt={
+                **governing_core,
+                "receipt_hash": fullstack._stable_hash(governing_core),
+            },
         )
         self.assertEqual(event["lanes"], ["S135_CONTROL", "FULL_PROVISIONAL_COMBINED"])
         self.assertEqual(len(event["control_provider_response_ids"]), 5)
@@ -326,7 +432,63 @@ class FullStackOctoberContractTest(unittest.TestCase):
             set(event["control_ledger"]["first_receipt_hashes"]),
             {"helper_evidence", "frankie_reasoning", "probability_movie"},
         )
+        self.assertEqual(event["decision_state"]["schema_registered_count"], 1940)
+        self.assertEqual(event["decision_state"]["registered_block_count"], 46)
+        self.assertEqual(event["decision_state"]["present_count"], 1500)
+        self.assertEqual(event["decision_state"]["explicit_null_count"], 146)
+        self.assertEqual(event["decision_state"]["unavailable_count"], 294)
+        self.assertEqual(event["decision_state"]["causal_quarantine_count"], 1)
+        self.assertEqual(event["decision_state"]["same_day_realized_weather_present_count"], 0)
+        governing = event["v4_governing_runtime"]
+        self.assertEqual(governing["module_count"], 15)
+        self.assertEqual(len(governing["governing_runtime_receipt_hash"]), 64)
+        self.assertEqual(governing["module_identities"], governing_identities)
+        self.assertEqual(governing["disposition_counts"], governing_core["disposition_counts"])
+        self.assertEqual(governing["direct_operational_execution_count"], 11)
+        self.assertEqual(governing["superseded_equivalence_count"], 4)
+        self.assertEqual({row["module"] for row in governing["module_evidence"]}, {name for name, _ in fullstack.H_RUNTIME_MODULES})
+        self.assertEqual(
+            event["decision_state"]["control_snapshot_hash"],
+            event["decision_state"]["combined_snapshot_hash"],
+        )
+        tool_evidence = event["provider_tool_evidence"]
+        self.assertEqual(tool_evidence["S135_CONTROL"]["call_count"], 5)
+        self.assertEqual(tool_evidence["FULL_PROVISIONAL_COMBINED"]["call_count"], 5)
+        self.assertEqual(tool_evidence["S135_CONTROL"]["value_state_read_invocation_count"], 5)
+        self.assertEqual(tool_evidence["FULL_PROVISIONAL_COMBINED"]["value_state_read_invocation_count"], 5)
+        self.assertEqual(tool_evidence["S135_CONTROL"]["value_state_read_count"], 5)
+        self.assertEqual(tool_evidence["FULL_PROVISIONAL_COMBINED"]["value_state_read_count"], 5)
+        self.assertTrue(
+            all(
+                row["value_state_read_count"] >= 1
+                and len(row["value_state_read_receipt_hashes"])
+                == row["value_state_read_count"]
+                for row in tool_evidence["S135_CONTROL"]["per_invocation"]
+            )
+        )
+        self.assertNotEqual(
+            tool_evidence["S135_CONTROL"]["evidence_journal_head_hash"],
+            tool_evidence["FULL_PROVISIONAL_COMBINED"]["evidence_journal_head_hash"],
+        )
         self.assertEqual(len(event["receipt_hash"]), 64)
+
+    def test_manifest_only_provider_evidence_fails_closed(self) -> None:
+        invocation = SimpleNamespace(
+            accepted_response=SimpleNamespace(provider_response_id="manifest-only"),
+            tool_calls=(
+                SimpleNamespace(
+                    tool_call_id="manifest-call",
+                    tool_name="decision_state_manifest",
+                    request_hash="a" * 64,
+                    response_hash="b" * 64,
+                ),
+            ),
+            retrievals=(),
+        )
+        with self.assertRaisesRegex(fullstack.FullStackOctoberError, "value-bearing"):
+            fullstack._provider_tool_evidence(
+                (invocation,), SimpleNamespace(head_hash="1" * 64, record_count=1)
+            )
 
     def test_production_entrypoint_uses_paired_runtime_and_never_reveals_step1(self) -> None:
         source = inspect.getsource(fullstack.run_full_october)

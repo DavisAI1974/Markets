@@ -63,6 +63,30 @@ from research.kalshi.frankie_full_stack_runtime_contracts_20260824 import (
     RuntimeEvent,
     ToolCallReceipt,
 )
+from research.kalshi.frankie_causal_operational_context_20260824 import (
+    ACCEPTED_MINIMUM_PATHS,
+    DecisionStateSnapshot,
+    RegistryCoverageOracle,
+    build_canonical_s135_snapshot,
+    snapshot_availability_audit,
+)
+from research.kalshi.frankie_causal_runtime_tools_20260824 import (
+    CausalEvidenceJournal,
+    CausalRuntimeToolBackend,
+    validate_causal_evidence_journal,
+)
+from research.kalshi.frankie_v4_authority_runtime_validation_20260824 import (
+    H_RUNTIME_MODULES,
+    validate_v4_authority_runtime,
+)
+from research.kalshi.frankie_v4_governing_runtime_execution_20260824 import (
+    build_v4_governing_input_context,
+    execute_v4_governing_prefix,
+    validate_v4_governing_runtime_receipt,
+)
+from research.kalshi.frankie_s135_substrate_descriptor_20260824 import (
+    validate_substrate_descriptor,
+)
 from research.kalshi.frankie_full_stack_provisional_combined_pipeline_20260824 import (
     execute_combined_provisional_pipeline,
 )
@@ -73,7 +97,11 @@ from research.kalshi.frankie_lane_aware_context_router_20260824 import (
     ProvisionalComponent,
     RouteBundle,
 )
-from research.kalshi.frankie_october_knowledge_inventory_20260824 import production_source_specs
+from research.kalshi.frankie_october_knowledge_inventory_20260824 import (
+    PROVISIONAL_SOURCE_DISPOSITIONS,
+    production_source_specs,
+    sealed_step1_external_descriptors,
+)
 from research.kalshi.ng_exhaustion_frankie_causal_data_plane_20260824 import (
     ChainExtensionState,
     OpportunityKind,
@@ -86,6 +114,10 @@ from research.kalshi.ng_exhaustion_frankie_continuous_stream_20260824 import (
     OpportunityTransition,
     ProtectedProspectiveWeakeningMarker,
     replay_dbn_files_to_causal_seconds,
+)
+from research.kalshi.frankie_provider_knowledge_tools_20260824 import (
+    CompositeProviderToolBackend,
+    LaneKnowledgeToolBackend,
 )
 
 
@@ -576,22 +608,12 @@ def validate_causal_second_jsonl(path: str | Path, *, run_id: str) -> dict[str, 
 
 
 def paired_component_id(path: str) -> str:
-    name = Path(path).name.lower()
-    if "meta_loop" in name:
-        return "META_LOOP"
-    if "hipporag" in name:
-        return "HIPPORAG_RETRIEVAL"
-    if "lats" in name:
-        return "LATS_BOUNDED_SEARCH"
-    if "progress_compress" in name:
-        return "PROGRESS_COMPRESSION"
-    if "temporal" in name:
-        return "TEMPORAL_GRAPH"
-    if "cognitive_p0_loops" in name:
-        return "WORKING_MEMORY"
-    if any(term in name for term in ("v4_provisional", "gap_closure", "p0_registry")):
-        return "PROVISIONAL_V4_ENGINEERING_CANDIDATE"
-    return "S137_COGNITIVE_RUNTIME"
+    try:
+        return PROVISIONAL_SOURCE_DISPOSITIONS[path].component_id
+    except KeyError as exc:
+        raise FullStackOctoberError(
+            f"provisional source has no reviewed disposition: {path}"
+        ) from exc
 
 
 def production_provisional_components(plane: KnowledgePlane) -> tuple[ProvisionalComponent, ...]:
@@ -648,6 +670,14 @@ def _knowledge_preflight(
         for path in sealed_paths
     ):
         raise FullStackOctoberError("October Step-1 answer wall preflight failed")
+    external_descriptors = plane.external_descriptors
+    if not external_descriptors or any(
+        item.authority is not AuthorityClass.SEALED_TARGET_ANSWER
+        or item.content_accessed is not False
+        or not item.descriptor_sha256
+        for item in external_descriptors
+    ):
+        raise FullStackOctoberError("sealed Step-1 external descriptor preflight failed")
 
     ordinary_v3 = tuple(
         spec.path
@@ -675,6 +705,7 @@ def _knowledge_preflight(
         "step1_sealed": True,
         "answer_revealed": False,
         "sealed_source_count": len(sealed_paths),
+        "sealed_external_descriptor_count": len(external_descriptors),
         "ordinary_v3_denied": True,
         "ordinary_v3_source_count": len(ordinary_v3),
         "d1_extratrees_denied": True,
@@ -684,7 +715,7 @@ def _knowledge_preflight(
     sink.emit_launch(
         "KNOWLEDGE_MANIFEST_READY",
         knowledge_manifest_hash=plane.manifest_hash,
-        source_count=len(specs),
+        source_count=len(specs) + len(external_descriptors),
         brain_version="s105.9",
         complete_plays=90,
         receipt_hash=receipt["receipt_hash"],
@@ -694,6 +725,7 @@ def _knowledge_preflight(
         step1_sealed=True,
         answer_revealed=False,
         sealed_source_count=len(sealed_paths),
+        sealed_external_descriptor_count=len(external_descriptors),
         receipt_hash=receipt["receipt_hash"],
     )
     sink.emit_launch(
@@ -838,17 +870,119 @@ def _first_receipts(ledger: DurableJsonlLedger, prefix_hash: str) -> dict[str, s
     return found
 
 
+def _provider_tool_evidence(invocations: Sequence[Any], journal: Any) -> dict[str, Any]:
+    """Prove every provider role read values, not merely the snapshot manifest."""
+    causal_tool_names = {
+        "decision_state_manifest",
+        "decision_state_list",
+        "decision_state_search",
+        "decision_state_read",
+        "prior_causal_state",
+        "prior_causal_delta",
+        "raw_event_range",
+    }
+    provider_tools: list[Any] = []
+    per_invocation: list[dict[str, Any]] = []
+    for invocation in invocations:
+        causal_tools = tuple(
+            tool for tool in invocation.tool_calls if tool.tool_name in causal_tool_names
+        )
+        provider_tools.extend(causal_tools)
+        value_read_receipt_hashes = tuple(
+            str(item)
+            for item in getattr(invocation, "value_state_read_receipt_hashes", ())
+        )
+        response_id = str(invocation.accepted_response.provider_response_id)
+        if any(not re.fullmatch(r"[0-9a-f]{64}", item) for item in value_read_receipt_hashes):
+            raise FullStackOctoberError(
+                f"provider invocation {response_id} has an invalid value-state read receipt hash"
+            )
+        row = {
+            "provider_response_id": response_id,
+            "causal_call_count": len(causal_tools),
+            "value_state_read_count": len(value_read_receipt_hashes),
+            "value_state_read_receipt_hashes": list(value_read_receipt_hashes),
+        }
+        per_invocation.append(row)
+        if not value_read_receipt_hashes:
+            raise FullStackOctoberError(
+                f"provider invocation {response_id} has no successful value-bearing decision-state read"
+            )
+    receipt_hashes = [
+        _stable_hash(
+            {
+                "tool_call_id": tool.tool_call_id,
+                "tool_name": tool.tool_name,
+                "request_hash": tool.request_hash,
+                "response_hash": tool.response_hash,
+            }
+        )
+        for tool in provider_tools
+    ]
+    return {
+        "call_count": len(provider_tools),
+        "tool_receipt_hashes": receipt_hashes,
+        "invocation_count": len(per_invocation),
+        "value_state_read_count": sum(
+            int(row["value_state_read_count"]) for row in per_invocation
+        ),
+        "value_state_read_invocation_count": sum(
+            int(row["value_state_read_count"] > 0) for row in per_invocation
+        ),
+        "per_invocation": per_invocation,
+        "evidence_journal_record_count": journal.record_count,
+        "evidence_journal_head_hash": journal.head_hash,
+    }
+
+
 def make_paired_launch_event(
     *,
     binding: CausalPrefixBinding,
     paired: Any,
     control_ledger: DurableJsonlLedger,
     combined_ledger: DurableJsonlLedger,
+    decision_snapshot: DecisionStateSnapshot,
+    control_evidence: CausalEvidenceJournal,
+    combined_evidence: CausalEvidenceJournal,
+    governing_receipt: Mapping[str, Any],
 ) -> dict[str, Any]:
     active_hashes = {
         key: value for key, value in paired.component_receipt_hashes.items() if key != "META_LOOP"
     }
     meta_hash = paired.component_receipt_hashes["META_LOOP"]
+    causal_quarantine_count = sum(
+        str(field.missing_reason or "").startswith("UNAVAILABLE_CAUSAL_QUARANTINE_")
+        for field in decision_snapshot.fields
+    )
+    same_day_weather_quarantine_count = sum(
+        field.missing_reason == "UNAVAILABLE_CAUSAL_QUARANTINE_SAME_DAY_REALIZED_WEATHER"
+        for field in decision_snapshot.fields
+    )
+    same_day_weather_present_count = sum(
+        field.path.startswith("weather.")
+        and str(getattr(field.status, "value", field.status)) == "PRESENT"
+        for field in decision_snapshot.fields
+    )
+    if (
+        decision_snapshot.schema_registered_count < ACCEPTED_MINIMUM_PATHS
+        or decision_snapshot.schema_registered_count != decision_snapshot.registry_path_count
+        or decision_snapshot.present_count
+        + decision_snapshot.explicit_null_count
+        + decision_snapshot.unavailable_count
+        != decision_snapshot.schema_registered_count
+        or decision_snapshot.present_count <= 0
+        or same_day_weather_present_count != 0
+        or decision_snapshot.build_status != "CANONICAL_S135_ACCEPTED"
+    ):
+        raise FullStackOctoberError("decision-state launch evidence is incomplete or non-causal")
+    try:
+        governing = validate_v4_governing_runtime_receipt(governing_receipt)
+    except ValueError as exc:
+        raise FullStackOctoberError(f"governing H runtime evidence is invalid: {exc}") from exc
+    direct_count = governing["disposition_counts"].get("DIRECT_OPERATIONAL_EXECUTION", 0)
+    superseded_count = governing["disposition_counts"].get(
+        "SUPERSEDED_BY_CORRECTED_RUNTIME_EQUIVALENCE", 0
+    )
     event = {
         "lanes": [LaneId.S135_CONTROL.value, LaneId.FULL_PROVISIONAL_COMBINED.value],
         "primary_lane": LaneId.S135_CONTROL.value,
@@ -866,6 +1000,58 @@ def make_paired_launch_event(
         "combined_provider_response_ids": [
             item.accepted_response.provider_response_id for item in paired.combined.invocation_receipts
         ],
+        "decision_state": {
+            "registered_path_count": decision_snapshot.schema_registered_count,
+            "schema_registered_count": decision_snapshot.schema_registered_count,
+            "provider_path_count": decision_snapshot.path_count,
+            "registered_block_count": decision_snapshot.registry_block_count,
+            "provider_block_count": decision_snapshot.block_count,
+            "registry_baseline_path_count": decision_snapshot.registry_path_count,
+            "emitted_leaf_count": decision_snapshot.emitted_leaf_count,
+            "emitted_registered_count": decision_snapshot.emitted_registered_count,
+            "emitted_additive_count": decision_snapshot.emitted_additive_count,
+            "present_count": decision_snapshot.present_count,
+            "explicit_null_count": decision_snapshot.explicit_null_count,
+            "unavailable_count": decision_snapshot.unavailable_count,
+            "emitted_coverage_fraction": decision_snapshot.emitted_coverage_fraction,
+            "value_coverage_fraction": decision_snapshot.value_coverage_fraction,
+            "source_snapshot_leaf_count": decision_snapshot.source_snapshot_leaf_count,
+            "source_snapshot_leaf_hash": decision_snapshot.source_snapshot_leaf_hash,
+            "availability_matrix_hash": decision_snapshot.availability_matrix["matrix_hash"],
+            "availability_matrix_block_count": decision_snapshot.availability_matrix["block_count"],
+            "availability_matrix": _jsonable(decision_snapshot.availability_matrix["blocks"]),
+            "availability_audit": _jsonable(
+                getattr(decision_snapshot, "availability_audit", None)
+                or snapshot_availability_audit(decision_snapshot)
+            ),
+            "causal_quarantine_count": causal_quarantine_count,
+            "same_day_realized_weather_quarantine_count": same_day_weather_quarantine_count,
+            "same_day_realized_weather_present_count": same_day_weather_present_count,
+            "coverage_status": decision_snapshot.build_status,
+            "registry_receipt_hash": decision_snapshot.registry_receipt_hash,
+            "control_snapshot_hash": decision_snapshot.snapshot_hash,
+            "combined_snapshot_hash": decision_snapshot.snapshot_hash,
+        },
+        "provider_tool_evidence": {
+            LaneId.S135_CONTROL.value: _provider_tool_evidence(
+                paired.control.invocation_receipts, control_evidence
+            ),
+            LaneId.FULL_PROVISIONAL_COMBINED.value: _provider_tool_evidence(
+                paired.combined.invocation_receipts, combined_evidence
+            ),
+        },
+        "v4_governing_runtime": {
+            "governing_runtime_receipt_hash": governing["receipt_hash"],
+            "module_count": governing["module_count"],
+            "module_identities": governing["module_identities"],
+            "module_identity_hash": governing["module_identity_hash"],
+            "disposition_counts": governing["disposition_counts"],
+            "direct_operational_execution_count": direct_count,
+            "superseded_equivalence_count": superseded_count,
+            "module_evidence": governing["modules"],
+            # Backward-compatible alias while workflow gates migrate to module_evidence.
+            "modules": governing["modules"],
+        },
         "active_provisional_components": list(ACTIVE_PAIRED_COMPONENTS),
         "active_provisional_component_receipt_hashes": active_hashes,
         "deferred_meta_loop": {
@@ -932,10 +1118,10 @@ def _persist_causal_second(
     row: ContinuousCausalSecond,
     binding: CausalPrefixBinding,
     prior_stream_hash: str,
-) -> None:
+) -> str:
     state = _provider_state(row)
     mark = None if row.mark is None else _jsonable(row.mark)
-    writer.append_second(
+    return writer.append_second(
         binding=binding,
         state=state,
         delta={
@@ -964,13 +1150,25 @@ def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
     source_paths = verify_staged_source_roster(roster, cfg.source_root)
     cfg.output_root.mkdir(parents=True, exist_ok=True)
     repo_root = Path(__file__).resolve().parents[2]
+    authority_validation = validate_v4_authority_runtime(repo_root)
+    _write_json_exclusive(
+        cfg.output_root / "v4-authority-runtime-validation.json", authority_validation
+    )
+    launch.emit_launch(
+        "V4_AUTHORITY_RUNTIME_VALIDATED",
+        h_module_count=authority_validation["h_module_count"],
+        i_record_count=authority_validation["i_record_count"],
+        receipt_hash=authority_validation["receipt_hash"],
+    )
 
     specs = production_source_specs(repo_root)
+    external_descriptors = sealed_step1_external_descriptors(repo_root)
     plane = KnowledgePlane.build(
         repo_root,
         specs,
         contract=october_full_stack_completeness_contract(),
         manifest_version=f"frankie-october-paired:{os.environ.get('SOURCE_COMMIT', 'UNSET')}",
+        external_descriptors=external_descriptors,
     )
     router = FrankieLaneAwareContextRouter(plane, production_provisional_components(plane))
     _knowledge_preflight(
@@ -982,12 +1180,33 @@ def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
         sink=launch,
     )
 
+    source_commit = str(os.environ.get("SOURCE_COMMIT") or "").strip().lower()
+    if len(source_commit) != 40 or any(ch not in "0123456789abcdef" for ch in source_commit):
+        raise FullStackOctoberError("SOURCE_COMMIT must bind the run to an exact 40-character commit")
+    registry_oracle = RegistryCoverageOracle.from_repo(repo_root)
+    substrate_descriptor_path = cfg.source_root / "S135_SUBSTRATE_DESCRIPTOR.json"
+    try:
+        substrate_descriptor = validate_substrate_descriptor(
+            json.loads(substrate_descriptor_path.read_text(encoding="utf-8")),
+            oracle=registry_oracle,
+        )
+    except (OSError, TypeError, ValueError) as exc:
+        raise FullStackOctoberError("canonical S135 substrate descriptor preflight failed") from exc
     causal_writer = CausalSecondJsonlWriter.create(
         cfg.output_root / "causal-state.jsonl", run_id=cfg.run_id
     )
     control_ledger = DurableJsonlLedger.create(cfg.output_root / "s135-control.jsonl", run_id=cfg.run_id)
     combined_ledger = DurableJsonlLedger.create(cfg.output_root / "full-provisional-combined.jsonl", run_id=cfg.run_id)
-
+    control_causal_evidence = CausalEvidenceJournal.create(
+        cfg.output_root / "s135-control-causal-evidence.jsonl", run_id=cfg.run_id
+    )
+    combined_causal_evidence = CausalEvidenceJournal.create(
+        cfg.output_root / "full-provisional-combined-causal-evidence.jsonl", run_id=cfg.run_id
+    )
+    for journal in (control_causal_evidence, combined_causal_evidence):
+        journal.record_answer_access(
+            allowed=False, reason="SEALED_UNTIL_PRIMARY_FREEZE"
+        )
     stream_source = repo_root / "research/kalshi/ng_exhaustion_frankie_continuous_stream_20260824.py"
     crosswalk = seal_semantic_crosswalk(
         mappings=default_legacy_v4_mappings(),
@@ -1020,17 +1239,57 @@ def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
     control_client = OpenAIResponsesClient()
     combined_client = OpenAIResponsesClient()
     marked_prefixes: list[str] = []
+    governing_runtime_receipt_hashes: list[str] = []
     last_runtime: tuple[LaneRuntime, LaneRuntime, tuple[KnowledgeSourceExcerpt, ...], RouteBundle] | None = None
+    last_decision_snapshot: DecisionStateSnapshot | None = None
     prior_stream_hash = "0" * 64
 
     def on_second(row: ContinuousCausalSecond) -> None:
-        nonlocal prior_stream_hash, last_runtime
+        nonlocal prior_stream_hash, last_runtime, last_decision_snapshot
         binding = _binding(row, plane.manifest_hash)
-        _persist_causal_second(causal_writer, row, binding, prior_stream_hash)
+        causal_record_hash = _persist_causal_second(
+            causal_writer, row, binding, prior_stream_hash
+        )
         prior_stream_hash = row.stream_hash
         if row.mark is None:
             return
+        raw_event_receipt = {
+            "start_source_second": row.source_second,
+            "end_source_second": row.source_second,
+            "causal_cutoff": binding.causal_cutoff,
+            "causal_record_hash": causal_record_hash,
+            "raw_event_count": len(row.actions),
+            "causal_prefix_hash": binding.causal_prefix_hash,
+        }
+        for journal in (control_causal_evidence, combined_causal_evidence):
+            journal.append("RAW_EVENT_RANGE", raw_event_receipt)
+        decision_snapshot = build_canonical_s135_snapshot(
+            repo_root=repo_root,
+            run_id=cfg.run_id,
+            decision_day=datetime.fromtimestamp(row.source_second, tz=timezone.utc).strftime("%Y%m%d"),
+            evaluated_at=binding.causal_cutoff,
+            group=os.environ.get("FRANKIE_S135_GROUP", "3"),
+            oracle=registry_oracle,
+        )
+        present_fields = sum(
+            int(family["present"]) for family in decision_snapshot.family_manifest.values()
+        )
+        if (
+            decision_snapshot.build_status != "CANONICAL_S135_ACCEPTED"
+            or present_fields <= 0
+        ):
+            raise FullStackOctoberError(
+                "canonical S135 operational substrate was not accepted with present causal values"
+            )
         causal_state = _provider_state(row)
+        causal_state["operational_decision_state"] = decision_snapshot.provider_payload()
+        governing_input_context = build_v4_governing_input_context(
+            binding=binding,
+            snapshot=decision_snapshot,
+            source_object_id=row.source_object_id,
+            source_object_sha256=row.source_object_sha256,
+        )
+        causal_state["v4_governing_runtime_context"] = governing_input_context
         bundle = router.build_routes(run_id=cfg.run_id, state_prefix_hash=binding.state_prefix_hash)
         knowledge = _base_knowledge(router, bundle)
         control_tools, control_reads = _lane_receipts(
@@ -1046,6 +1305,20 @@ def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
             LaunchRuntimeEventSink(),
             control_tools,
             control_reads,
+            CompositeProviderToolBackend(
+                LaneKnowledgeToolBackend(
+                    router=router,
+                    bundle=bundle,
+                    variant=ContextVariant.S135_CONTROL,
+                ),
+                CausalRuntimeToolBackend(
+                    snapshot=decision_snapshot,
+                    binding=binding,
+                    causal_state_path=causal_writer.path,
+                    evidence_journal=control_causal_evidence,
+                    commit_sha=source_commit,
+                ),
+            ),
         )
         combined_runtime = LaneRuntime(
             LaneId.FULL_PROVISIONAL_COMBINED,
@@ -1054,6 +1327,20 @@ def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
             LaunchRuntimeEventSink(),
             combined_tools,
             combined_reads,
+            CompositeProviderToolBackend(
+                LaneKnowledgeToolBackend(
+                    router=router,
+                    bundle=bundle,
+                    variant=ContextVariant.FULL_PROVISIONAL_COMBINED,
+                ),
+                CausalRuntimeToolBackend(
+                    snapshot=decision_snapshot,
+                    binding=binding,
+                    causal_state_path=causal_writer.path,
+                    evidence_journal=combined_causal_evidence,
+                    commit_sha=source_commit,
+                ),
+            ),
         )
         orchestrator = PairedLaneOrchestrator(
             prefix_roster=(binding.causal_prefix_hash,),
@@ -1073,7 +1360,20 @@ def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
             ),
             answer_revealed=False,
         )
+        governing_receipt = execute_v4_governing_prefix(
+            binding=binding,
+            snapshot=decision_snapshot,
+            paired=paired,
+            source_object_id=row.source_object_id,
+            source_object_sha256=row.source_object_sha256,
+            source_commit=source_commit,
+            governing_input_context=governing_input_context,
+        )
+        for journal in (control_causal_evidence, combined_causal_evidence):
+            journal.append("V4_GOVERNING_RUNTIME_EXECUTION", governing_receipt)
+        governing_runtime_receipt_hashes.append(governing_receipt["receipt_hash"])
         marked_prefixes.append(binding.causal_prefix_hash)
+        last_decision_snapshot = decision_snapshot
         last_runtime = (control_runtime, combined_runtime, knowledge, bundle)
         launch.emit_launch(
             "PAIRED_PREFIX_ACCEPTED",
@@ -1082,7 +1382,11 @@ def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
                 paired=paired,
                 control_ledger=control_ledger,
                 combined_ledger=combined_ledger,
-            ),
+                decision_snapshot=decision_snapshot,
+                control_evidence=control_causal_evidence,
+            combined_evidence=combined_causal_evidence,
+            governing_receipt=governing_receipt,
+        ),
         )
 
     try:
@@ -1091,15 +1395,23 @@ def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
         )
     finally:
         causal_chain_receipt = causal_writer.close()
+        control_causal_evidence.close()
+        combined_causal_evidence.close()
     causal_chain_validation = validate_causal_second_jsonl(
         causal_writer.path, run_id=cfg.run_id
+    )
+    control_causal_evidence_validation = validate_causal_evidence_journal(
+        control_causal_evidence.path, run_id=cfg.run_id
+    )
+    combined_causal_evidence_validation = validate_causal_evidence_journal(
+        combined_causal_evidence.path, run_id=cfg.run_id
     )
     if (
         causal_chain_validation["record_count"] != causal_chain_receipt["record_count"]
         or causal_chain_validation["head_hash"] != causal_chain_receipt["head_hash"]
     ):
         raise FullStackOctoberError("causal-second final chain receipt mismatch")
-    if not marked_prefixes or last_runtime is None:
+    if not marked_prefixes or last_runtime is None or last_decision_snapshot is None:
         raise FullStackOctoberError("full October completed without a lawful prospective mark")
     control_runtime, combined_runtime, knowledge, final_bundle = last_runtime
     freeze_orchestrator = PairedLaneOrchestrator(
@@ -1124,11 +1436,26 @@ def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
         "source_manifest_sha256": EXPECTED_MANIFEST_SHA256,
         "knowledge_manifest_hash": plane.manifest_hash,
         "crosswalk_receipt_hash": crosswalk.receipt_hash,
+        "v4_authority_runtime_receipt_hash": authority_validation["receipt_hash"],
+        "s135_substrate_descriptor_hash": substrate_descriptor["descriptor_hash"],
         "marked_prefix_count": len(marked_prefixes),
+        "v4_governing_prefix_receipt_hashes": governing_runtime_receipt_hashes,
         "global_freeze_receipt_hash": freeze.receipt_hash,
         "knowledge_global_freeze_receipt_hash": router_freeze.receipt_hash,
         "answer_revealed": False,
         "causal_second_chain": causal_chain_receipt,
+        "control_causal_evidence_chain": control_causal_evidence_validation,
+        "combined_causal_evidence_chain": combined_causal_evidence_validation,
+        "causal_decision_state": {
+            "snapshot_hash": last_decision_snapshot.snapshot_hash,
+            "registry_receipt_hash": last_decision_snapshot.registry_receipt_hash,
+            "path_count": last_decision_snapshot.path_count,
+            "block_count": last_decision_snapshot.block_count,
+            "registry_path_count": last_decision_snapshot.registry_path_count,
+            "coverage_fraction": last_decision_snapshot.coverage_fraction,
+            "control_evidence_path": str(control_causal_evidence.path),
+            "combined_evidence_path": str(combined_causal_evidence.path),
+        },
         "replay": replay_receipt,
     }
     _write_json_exclusive(cfg.output_root / "FINAL_RECEIPT.json", final)

@@ -312,6 +312,11 @@ _FINAL_OUTPUTS = (
     (None, "retained_overlap_mismatches", "LEGACY_CONTROL_OVERLAP_MISMATCHES.jsonl.gz"),
 )
 
+# Public, outcome-independent object identities used by downstream answer-wall
+# catalogs.  Exposing names separately avoids opening the sealed final receipt
+# merely to discover which objects the governing runtime produces.
+FINAL_OUTPUT_NAMES = tuple(row[2] for row in _FINAL_OUTPUTS)
+
 
 def declared_final_output_hashes(final: Mapping[str, Any]) -> dict[str, str]:
     """Return the exact declared gzip output names and hashes, rejecting drift."""

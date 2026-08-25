@@ -22,22 +22,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  launch-fullstack-october:
+  build-and-verify:
     if: >-
       ${{ github.ref == 'refs/heads/chatgpt/ng-exhaustion-october-sharded-20260824' &&
           (github.event_name == 'push' || inputs.confirm_full_october == true) }}
     runs-on: ubuntu-latest
-    timeout-minutes: 120
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-      AWS_DEFAULT_REGION: us-east-2
-      INSTANCE_ID: i-08cee7171c0a76a04
-      BUCKET: bento-568968024170-us-east-2-an
+    timeout-minutes: 45
+    outputs:
+      package_sha256: ${{ steps.package.outputs.package_sha256 }}
+      wheelhouse_sha256: ${{ steps.package.outputs.wheelhouse_sha256 }}
     steps:
       - name: Checkout exact launch commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ github.sha }}
 
@@ -46,24 +42,151 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          python research/kalshi/tests/test_ng_exhaustion_frankie_fullstack_october_20260824.py
-          python research/kalshi/tests/test_ng_exhaustion_frankie_fullstack_october_launch_workflow_20260824.py
+          ci_wheelhouse="$(mktemp -d)"
+          ci_venv="$(mktemp -d)"
+          python -m pip download \
+            --disable-pip-version-check \
+            --only-binary=:all: \
+            --no-deps \
+            --require-hashes \
+            --dest "$ci_wheelhouse" \
+            -r deploy/aws/requirements-frankie-fullstack-ci-20260824.lock
+          python -m venv "$ci_venv"
+          "$ci_venv/bin/python" -m pip install \
+            --disable-pip-version-check \
+            --no-index \
+            --only-binary=:all: \
+            --find-links "$ci_wheelhouse" \
+            --require-hashes \
+            -r deploy/aws/requirements-frankie-fullstack-ci-20260824.lock
+          "$ci_venv/bin/python" -m pytest --quiet \
+            research/kalshi/tests/test_frankie_authority_knowledge_plane_20260824.py \
+            research/kalshi/tests/test_frankie_lane_aware_context_router_20260824.py \
+            research/kalshi/tests/test_frankie_full_stack_paired_lane_orchestrator_20260824.py \
+            research/kalshi/tests/test_frankie_full_stack_provisional_combined_pipeline_20260824.py \
+            research/kalshi/tests/test_frankie_provider_knowledge_tools_20260824.py \
+            research/kalshi/tests/test_frankie_full_stack_runtime_adapter_20260824.py \
+            research/kalshi/tests/test_frankie_causal_operational_context_20260824.py \
+            research/kalshi/tests/test_frankie_causal_runtime_tools_20260824.py \
+            research/kalshi/tests/test_frankie_v4_authority_runtime_validation_20260824.py \
+            research/kalshi/tests/test_frankie_source_inventory_cross_reference_20260824.py \
+            research/kalshi/tests/test_ng_exhaustion_frankie_fullstack_october_20260824.py \
+            research/kalshi/tests/test_ng_exhaustion_frankie_fullstack_october_launch_workflow_20260824.py
 
-      - name: Publish exact GITHUB_SHA package
+      - name: Build hash-locked offline runtime package without credentials
+        id: package
         shell: bash
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          package="/tmp/ng-frankie-fullstack-october-${GITHUB_SHA}.tgz"
-          git archive --format=tar.gz --output="$package" "$GITHUB_SHA"
+          bundle="$(mktemp -d)"
+          wheelhouse="$bundle/deploy/wheelhouse"
+          lock="$bundle/deploy/aws/requirements-frankie-fullstack-20260824.lock"
+          git archive --format=tar "$GITHUB_SHA" | tar -xf - -C "$bundle"
+          install -d -m 0755 "$wheelhouse"
+          for python_version in 311 312; do
+            python -m pip download \
+              --disable-pip-version-check \
+              --only-binary=:all: \
+              --no-deps \
+              --require-hashes \
+              --implementation cp \
+              --python-version "$python_version" \
+              --abi "cp${python_version}" \
+              --platform manylinux2014_x86_64 \
+              --dest "$wheelhouse" \
+              -r "$lock"
+          done
+          python -m pip install \
+            --dry-run \
+            --disable-pip-version-check \
+            --no-index \
+            --only-binary=:all: \
+            --find-links "$wheelhouse" \
+            --require-hashes \
+            -r "$lock"
+          package_dir="$RUNNER_TEMP/frankie-fullstack-package"
+          install -d -m 0755 "$package_dir"
+          package="$package_dir/package.tgz"
+          tar -czf "$package" -C "$bundle" .
           package_sha256="$(sha256sum "$package" | awk '{print $1}')"
+          wheelhouse_sha256="$(find "$wheelhouse" -maxdepth 1 -type f -name '*.whl' -print0 | sort -z | xargs -0 sha256sum | sha256sum | awk '{print $1}')"
+          [[ "$package_sha256" =~ ^[0-9a-f]{64}$ ]]
+          [[ "$wheelhouse_sha256" =~ ^[0-9a-f]{64}$ ]]
+          printf '%s  package.tgz\n' "$package_sha256" > "$package_dir/package.sha256"
+          printf '%s\n' "$wheelhouse_sha256" > "$package_dir/wheelhouse.sha256"
+          echo "package_sha256=$package_sha256" >> "$GITHUB_OUTPUT"
+          echo "wheelhouse_sha256=$wheelhouse_sha256" >> "$GITHUB_OUTPUT"
+
+      - name: Cross the no-secret artifact boundary
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fullstack-runtime-${{ github.sha }}
+          path: ${{ runner.temp }}/frankie-fullstack-package
+          if-no-files-found: error
+          retention-days: 1
+
+  launch-fullstack-october:
+    needs: build-and-verify
+    if: >-
+      ${{ github.ref == 'refs/heads/chatgpt/ng-exhaustion-october-sharded-20260824' &&
+          (github.event_name == 'push' || inputs.confirm_full_october == true) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      BUCKET: bento-568968024170-us-east-2-an
+    steps:
+      - name: Download attested no-secret runtime package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: fullstack-runtime-${{ github.sha }}
+          path: ${{ runner.temp }}/frankie-fullstack-package
+
+      - name: Verify artifact boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/frankie-fullstack-package"
+          expected_package_sha="${{ needs.build-and-verify.outputs.package_sha256 }}"
+          expected_wheelhouse_sha="${{ needs.build-and-verify.outputs.wheelhouse_sha256 }}"
+          [[ "$expected_package_sha" =~ ^[0-9a-f]{64}$ ]]
+          [[ "$expected_wheelhouse_sha" =~ ^[0-9a-f]{64}$ ]]
+          mapfile -t package_lines < package.sha256
+          mapfile -t wheelhouse_lines < wheelhouse.sha256
+          test "${#package_lines[@]}" -eq 1
+          test "${#wheelhouse_lines[@]}" -eq 1
+          [[ "${package_lines[0]}" =~ ^[0-9a-f]{64}[[:space:]][[:space:]]package\.tgz$ ]]
+          [[ "${wheelhouse_lines[0]}" =~ ^[0-9a-f]{64}$ ]]
+          observed_package_sha="${package_lines[0]%% *}"
+          observed_wheelhouse_sha="${wheelhouse_lines[0]}"
+          test "$observed_package_sha" = "$expected_package_sha"
+          test "$observed_wheelhouse_sha" = "$expected_wheelhouse_sha"
+          sha256sum -c package.sha256
+          {
+            echo "PACKAGE_PATH=$RUNNER_TEMP/frankie-fullstack-package/package.tgz"
+            echo "PACKAGE_SHA256=$observed_package_sha"
+            echo "WHEELHOUSE_SHA256=$observed_wheelhouse_sha"
+          } >> "$GITHUB_ENV"
+
+      - name: Publish exact GITHUB_SHA package
+        shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+        run: |
+          set -euo pipefail
+          package="$PACKAGE_PATH"
+          echo "$PACKAGE_SHA256  $package" | sha256sum -c -
           launch_identity="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           artifact_prefix="frankie/fullstack-october-2021/launches/${GITHUB_SHA}/${launch_identity}"
           package_key="${artifact_prefix}/package.tgz"
           aws s3 cp "$package" "s3://${BUCKET}/${package_key}" --only-show-errors
           {
             echo "PACKAGE_KEY=$package_key"
-            echo "PACKAGE_SHA256=$package_sha256"
+            echo "PACKAGE_SHA256=$PACKAGE_SHA256"
             echo "ARTIFACT_PREFIX=$artifact_prefix"
             echo "LAUNCH_IDENTITY=$launch_identity"
           } >> "$GITHUB_ENV"
@@ -71,6 +194,10 @@ jobs:
       - name: Start isolated bounded full-October unit and await evidence gates
         id: launch
         shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -96,6 +223,56 @@ jobs:
               "/mnt/markets/ng_exhaustion_step1_5y_20260822/"
               "0d318335825b4a0e19a5a2881522f3da0374788e/aws.env"
           )
+          aws_credential_file = f"{root}/aws-runtime.env"
+          openai_credential_file = f"{root}/openai-runtime.env"
+
+          credential_scope_script = r'''#!/usr/bin/env python3
+          import os
+          from pathlib import Path
+          import shlex
+          import sys
+
+          source = Path(sys.argv[1])
+          aws_destination = Path(sys.argv[2])
+          openai_destination = Path(sys.argv[3])
+          aws_keys = {
+              "AWS_ACCESS_KEY_ID",
+              "AWS_SECRET_ACCESS_KEY",
+              "AWS_SESSION_TOKEN",
+              "AWS_DEFAULT_REGION",
+              "AWS_REGION",
+              "MARKETS_AWS_ACCESS_KEY_ID",
+              "MARKETS_AWS_SECRET_ACCESS_KEY",
+              "MARKETS_AWS_SESSION_TOKEN",
+          }
+          openai_keys = {"OPENAI_API_KEY", "MARKETS_OPENAI_API_KEY"}
+          scoped = {"aws": {}, "openai": {}}
+          for raw_line in source.read_text(encoding="utf-8").splitlines():
+              line = raw_line.strip()
+              if not line or line.startswith("#"):
+                  continue
+              if line.startswith("export "):
+                  line = line[7:].strip()
+              tokens = shlex.split(line, comments=True, posix=True)
+              if len(tokens) != 1 or "=" not in tokens[0]:
+                  raise SystemExit("credential file contains an unsupported statement")
+              key, value = tokens[0].split("=", 1)
+              if key in aws_keys:
+                  scoped["aws"][key] = value
+              elif key in openai_keys:
+                  scoped["openai"][key] = value
+          if not any(key in scoped["aws"] for key in ("AWS_ACCESS_KEY_ID", "MARKETS_AWS_ACCESS_KEY_ID")):
+              raise SystemExit("scoped AWS credentials are missing")
+
+          def write_exclusive(path: Path, values: dict[str, str]) -> None:
+              descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+              with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+                  for key, value in sorted(values.items()):
+                      handle.write(f"{key}={shlex.quote(value)}\n")
+
+          write_exclusive(aws_destination, scoped["aws"])
+          write_exclusive(openai_destination, scoped["openai"])
+          '''
 
           stage_script = r'''#!/usr/bin/env python3
           import hashlib
@@ -280,6 +457,274 @@ jobs:
               print("provider response IDs leaked across lanes", file=sys.stderr)
               raise SystemExit(1)
 
+          decision_state = paired.get("decision_state")
+          if not isinstance(decision_state, dict):
+              print("paired decision-state evidence is missing", file=sys.stderr)
+              raise SystemExit(1)
+          if (
+              not isinstance(decision_state.get("schema_registered_count"), int)
+              or isinstance(decision_state.get("schema_registered_count"), bool)
+              or decision_state["schema_registered_count"] < 1940
+          ):
+              print("decision-state schema registration regressed below 1,940", file=sys.stderr)
+              raise SystemExit(1)
+          if decision_state.get("registered_block_count") != 46:
+              print("decision-state registered block count is not 46", file=sys.stderr)
+              raise SystemExit(1)
+          present_count = decision_state.get("present_count")
+          explicit_null_count = decision_state.get("explicit_null_count")
+          unavailable_count = decision_state.get("unavailable_count")
+          status_counts = (present_count, explicit_null_count, unavailable_count)
+          if any(not isinstance(value, int) or isinstance(value, bool) or value < 0 for value in status_counts):
+              print("decision-state status accounting is invalid", file=sys.stderr)
+              raise SystemExit(1)
+          if sum(status_counts) != decision_state["schema_registered_count"]:
+              print("decision-state status accounting does not sum to the registered schema", file=sys.stderr)
+              raise SystemExit(1)
+          if present_count <= 0:
+              print("decision-state contains no meaningful present values", file=sys.stderr)
+              raise SystemExit(1)
+          causal_quarantine_count = decision_state.get("causal_quarantine_count")
+          weather_quarantine_count = decision_state.get("same_day_realized_weather_quarantine_count")
+          weather_present_count = decision_state.get("same_day_realized_weather_present_count")
+          if (
+              not isinstance(causal_quarantine_count, int)
+              or isinstance(causal_quarantine_count, bool)
+              or causal_quarantine_count < 0
+              or not isinstance(weather_quarantine_count, int)
+              or isinstance(weather_quarantine_count, bool)
+              or weather_quarantine_count < 0
+              or weather_quarantine_count > causal_quarantine_count
+              or weather_present_count != 0
+          ):
+              print("same-day realized weather reached the causal value surface", file=sys.stderr)
+              raise SystemExit(1)
+          if decision_state.get("coverage_status") != "CANONICAL_S135_ACCEPTED":
+              print("canonical decision-state build was not accepted", file=sys.stderr)
+              raise SystemExit(1)
+          if (
+              not isinstance(decision_state.get("emitted_registered_count"), int)
+              or decision_state["emitted_registered_count"] <= 0
+              or not isinstance(decision_state.get("source_snapshot_leaf_count"), int)
+              or decision_state["source_snapshot_leaf_count"] < decision_state["emitted_registered_count"]
+              or not sha_pattern.fullmatch(str(decision_state.get("source_snapshot_leaf_hash") or ""))
+          ):
+              print("decision-state emitted/source value evidence is incomplete", file=sys.stderr)
+              raise SystemExit(1)
+          expected_registered_blocks = {
+              "blocks_emitted[0]", "blocks_emitted[1]", "blocks_emitted[2]", "blocks_emitted[3]",
+              "built_utc", "cash_basis", "contract_structure", "cot", "cot_publication_et",
+              "curve_regime", "dow", "eia_storage_print_et", "firehose_present", "flow_calendar",
+              "freeze_risk", "frozen_structure_stale", "globex_reopen_et", "grid_stack", "group",
+              "holiday", "mask_after", "model_cycles_et", "model_disagreement", "ngwu_balance",
+              "note", "nuclear_outages", "options_surface", "scored_leg", "session_close_et",
+              "settle_window_et", "solar", "squeeze_watch", "steo_vintage", "stor_surprise",
+              "stor_surprise_basis", "stor_surprise_sign", "storage", "storage_consensus",
+              "storage_regional", "storage_vintage", "tape_conditions", "vol_regime", "weather",
+              "weather_forcing_forecast", "weather_forecast", "weather_forecast_cycle",
+          }
+          availability_matrix = decision_state.get("availability_matrix")
+          matrix_count = decision_state.get("availability_matrix_block_count")
+          matrix_hash = str(decision_state.get("availability_matrix_hash") or "")
+          if (
+              not isinstance(availability_matrix, dict)
+              or not isinstance(matrix_count, int)
+              or isinstance(matrix_count, bool)
+              or matrix_count != len(availability_matrix)
+              or matrix_count < 46
+              or not expected_registered_blocks.issubset(availability_matrix)
+              or not sha_pattern.fullmatch(matrix_hash)
+          ):
+              print("46-block availability matrix receipt is incomplete", file=sys.stderr)
+              raise SystemExit(1)
+          expected_matrix_hash = hashlib.sha256(
+              json.dumps(
+                  {"block_count": matrix_count, "blocks": availability_matrix},
+                  sort_keys=True,
+                  separators=(",", ":"),
+                  ensure_ascii=True,
+              ).encode()
+          ).hexdigest()
+          if matrix_hash != expected_matrix_hash or any(
+              not isinstance(row, dict)
+              or set(row) != {"cadence_class", "availability_rule", "clock_source"}
+              or any(not str(value).strip() for value in row.values())
+              for row in availability_matrix.values()
+          ):
+              print("availability matrix content hash/policy shape is invalid", file=sys.stderr)
+              raise SystemExit(1)
+          availability_audit = decision_state.get("availability_audit")
+          if not isinstance(availability_audit, dict):
+              print("availability audit receipt is missing", file=sys.stderr)
+              raise SystemExit(1)
+          audit_hash = str(availability_audit.get("audit_hash") or "")
+          audit_core = dict(availability_audit)
+          audit_core.pop("audit_hash", None)
+          expected_audit_hash = hashlib.sha256(
+              json.dumps(audit_core, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
+          ).hexdigest()
+          registered_audit = availability_audit.get("registered_counts")
+          all_field_audit = availability_audit.get("all_field_counts")
+          if (
+              not sha_pattern.fullmatch(audit_hash)
+              or audit_hash != expected_audit_hash
+              or availability_audit.get("snapshot_hash")
+              != decision_state.get("control_snapshot_hash")
+              or not isinstance(registered_audit, dict)
+              or registered_audit.get("total") != decision_state["schema_registered_count"]
+              or sum(registered_audit.get(key, -1) for key in ("present", "explicit_null", "unavailable"))
+              != registered_audit.get("total")
+              or not isinstance(all_field_audit, dict)
+              or all_field_audit.get("total") != decision_state.get("provider_path_count")
+              or sum(all_field_audit.get(key, -1) for key in ("present", "explicit_null", "unavailable"))
+              != all_field_audit.get("total")
+              or availability_audit.get("causal_quarantine_count") != causal_quarantine_count
+              or not isinstance(availability_audit.get("blocks"), dict)
+              or not expected_registered_blocks.issubset(availability_audit["blocks"])
+          ):
+              print("availability audit counts/hash are invalid", file=sys.stderr)
+              raise SystemExit(1)
+          control_snapshot = str(decision_state.get("control_snapshot_hash") or "")
+          combined_snapshot = str(decision_state.get("combined_snapshot_hash") or "")
+          if (
+              not sha_pattern.fullmatch(control_snapshot)
+              or control_snapshot != combined_snapshot
+              or not sha_pattern.fullmatch(str(decision_state.get("registry_receipt_hash") or ""))
+          ):
+              print("paired lanes do not expose the identical decision-state snapshot", file=sys.stderr)
+              raise SystemExit(1)
+
+          provider_tools = paired.get("provider_tool_evidence")
+          if not isinstance(provider_tools, dict) or set(provider_tools) != set(expected_lanes):
+              print("paired provider-tool evidence is incomplete", file=sys.stderr)
+              raise SystemExit(1)
+          journal_heads = []
+          for lane in expected_lanes:
+              evidence = provider_tools.get(lane)
+              if not isinstance(evidence, dict):
+                  print(f"{lane} provider-tool evidence is missing", file=sys.stderr)
+                  raise SystemExit(1)
+              call_count = evidence.get("call_count")
+              receipt_hashes = evidence.get("tool_receipt_hashes")
+              per_invocation = evidence.get("per_invocation")
+              expected_response_ids = control_ids if lane == "S135_CONTROL" else combined_ids
+              if (
+                  not isinstance(call_count, int)
+                  or isinstance(call_count, bool)
+                  or call_count < 5
+                  or not isinstance(receipt_hashes, list)
+                  or len(receipt_hashes) != call_count
+                  or any(not sha_pattern.fullmatch(str(item or "")) for item in receipt_hashes)
+              ):
+                  print(f"{lane} provider-tool receipts are incomplete", file=sys.stderr)
+                  raise SystemExit(1)
+              if (
+                  evidence.get("invocation_count") != 5
+                  or evidence.get("value_state_read_invocation_count") != 5
+                  or not isinstance(per_invocation, list)
+                  or len(per_invocation) != 5
+                  or {row.get("provider_response_id") for row in per_invocation if isinstance(row, dict)}
+                  != set(expected_response_ids)
+              ):
+                  print(f"{lane} does not prove a value-bearing read for all five roles", file=sys.stderr)
+                  raise SystemExit(1)
+              observed_value_read_count = 0
+              for invocation in per_invocation:
+                  value_count = invocation.get("value_state_read_count")
+                  value_hashes = invocation.get("value_state_read_receipt_hashes")
+                  if (
+                      not isinstance(value_count, int)
+                      or isinstance(value_count, bool)
+                      or value_count < 1
+                      or not isinstance(value_hashes, list)
+                      or len(value_hashes) != value_count
+                      or any(not sha_pattern.fullmatch(str(item or "")) for item in value_hashes)
+                  ):
+                      print(f"{lane} contains a manifest-only or invalid role invocation", file=sys.stderr)
+                      raise SystemExit(1)
+                  observed_value_read_count += value_count
+              if evidence.get("value_state_read_count") != observed_value_read_count:
+                  print(f"{lane} value-state read summary does not match its invocations", file=sys.stderr)
+                  raise SystemExit(1)
+              journal_head = str(evidence.get("evidence_journal_head_hash") or "")
+              record_count = evidence.get("evidence_journal_record_count")
+              if (
+                  not sha_pattern.fullmatch(journal_head)
+                  or not isinstance(record_count, int)
+                  or isinstance(record_count, bool)
+                  or record_count < call_count
+              ):
+                  print(f"{lane} evidence-journal identity is invalid", file=sys.stderr)
+                  raise SystemExit(1)
+              journal_heads.append(journal_head)
+          if journal_heads[0] == journal_heads[1]:
+              print("paired causal evidence journals are not lane-distinct", file=sys.stderr)
+              raise SystemExit(1)
+
+          expected_governing_modules = {
+              "ng_exhaustion_v4_causal_clock",
+              "ng_exhaustion_v4_causal_entry_adapter",
+              "ng_exhaustion_v4_state_assembler",
+              "ng_exhaustion_v4_mechanics",
+              "ng_exhaustion_v4_detector_intensity",
+              "ng_exhaustion_v4_detector_intensity_semantics",
+              "ng_exhaustion_v4_history_support",
+              "ng_exhaustion_v4_lock_outcome",
+              "ng_exhaustion_v4_adapter_integration",
+              "ng_exhaustion_v4_end_to_end_adapter",
+              "ng_exhaustion_v4_unified_runtime",
+              "ng_exhaustion_v4_exact_candidate_freeze",
+              "ng_exhaustion_v4_gate_verifier",
+              "ng_exhaustion_v4_pilot_chunk_guard",
+              "ng_exhaustion_v4_pilot_chunk_guardrail",
+          }
+          governing = paired.get("v4_governing_runtime")
+          if not isinstance(governing, dict):
+              print("governing H runtime evidence is missing", file=sys.stderr)
+              raise SystemExit(1)
+          governing_modules = governing.get("module_identities")
+          module_evidence = governing.get("module_evidence")
+          expected_identity_hash = hashlib.sha256(
+              json.dumps(
+                  sorted(expected_governing_modules),
+                  sort_keys=True,
+                  separators=(",", ":"),
+                  ensure_ascii=True,
+              ).encode()
+          ).hexdigest()
+          if (
+              governing.get("module_count") != 15
+              or not isinstance(governing_modules, list)
+              or len(governing_modules) != 15
+              or set(governing_modules) != expected_governing_modules
+              or governing.get("module_identity_hash") != expected_identity_hash
+              or governing.get("disposition_counts")
+              != {"DIRECT_OPERATIONAL_EXECUTION": 11, "SUPERSEDED_EQUIVALENCE": 4}
+              or governing.get("direct_operational_execution_count") != 11
+              or governing.get("superseded_equivalence_count") != 4
+              or not sha_pattern.fullmatch(
+                  str(governing.get("governing_runtime_receipt_hash") or "")
+              )
+              or not isinstance(module_evidence, list)
+              or len(module_evidence) != 15
+          ):
+              print("governing H runtime identity/count receipt is invalid", file=sys.stderr)
+              raise SystemExit(1)
+          if {row.get("module") for row in module_evidence if isinstance(row, dict)} != expected_governing_modules:
+              print("governing H module evidence identity drift", file=sys.stderr)
+              raise SystemExit(1)
+          if any(
+              not isinstance(row, dict)
+              or row.get("disposition") not in {
+                  "DIRECT_OPERATIONAL_EXECUTION",
+                  "SUPERSEDED_EQUIVALENCE",
+              }
+              or not sha_pattern.fullmatch(str(row.get("execution_receipt_hash") or ""))
+              for row in module_evidence
+          ):
+              print("governing H module execution receipt is invalid", file=sys.stderr)
+              raise SystemExit(1)
+
           expected_active = {
               "S137_COGNITIVE_RUNTIME",
               "HIPPORAG_RETRIEVAL",
@@ -363,6 +808,23 @@ jobs:
               "identical_prefix_proof_hash": proof_hash,
               "control_provider_response_ids": control_ids,
               "combined_provider_response_ids": combined_ids,
+              "decision_state_snapshot_hash": control_snapshot,
+              "schema_registered_count": decision_state["schema_registered_count"],
+              "registered_block_count": decision_state["registered_block_count"],
+              "present_count": present_count,
+              "explicit_null_count": explicit_null_count,
+              "unavailable_count": unavailable_count,
+              "causal_quarantine_count": causal_quarantine_count,
+              "same_day_realized_weather_present_count": weather_present_count,
+              "availability_matrix_hash": matrix_hash,
+              "availability_matrix_block_count": matrix_count,
+              "availability_audit_hash": audit_hash,
+              "provider_tool_call_counts": {
+                  lane: provider_tools[lane]["call_count"] for lane in expected_lanes
+              },
+              "evidence_journal_head_hashes": journal_heads,
+              "v4_governing_runtime_receipt_hash": governing["governing_runtime_receipt_hash"],
+              "v4_governing_module_identity_hash": governing["module_identity_hash"],
               "step1_sealed": True,
           }
           print(json.dumps(summary, sort_keys=True))
@@ -371,35 +833,22 @@ jobs:
 
           runner_script = r'''#!/bin/bash
           set -euo pipefail
-          set -a
-          source __CREDENTIAL_FILE__
-          set +a
           source __ROOT__/venv/bin/activate
           cd __REPO__
           export PYTHONPATH=__REPO__:__REPO__/research:__REPO__/research/kalshi
           export SOURCE_COMMIT=__SOURCE_COMMIT__
           run_log=__RUN_LOG__
           output=__OUTPUT__
-          sync_done=__ROOT__/SYNC_DONE
-
-          sync_once() {
-            aws s3 sync "$output" __ARTIFACT_URI__/artifacts/ --only-show-errors
-            if [ -f "$run_log" ]; then
-              aws s3 cp "$run_log" __ARTIFACT_URI__/RUN.log --only-show-errors
-            fi
-            aws s3 cp __STAGE__/SOURCE_ROSTER.json __ARTIFACT_URI__/SOURCE_ROSTER.json --only-show-errors
-          }
-
-          (
-            while [ ! -f "$sync_done" ]; do
-              sync_once || true
-              sleep 60
-            done
-          ) &
-          sync_pid=$!
+          openai_credential_file=__OPENAI_CREDENTIAL_FILE__
 
           set +e
-          python research/kalshi/ng_exhaustion_frankie_fullstack_october_20260824.py \
+          set -a
+          source "$openai_credential_file"
+          set +a
+          env \
+            -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN \
+            -u MARKETS_AWS_ACCESS_KEY_ID -u MARKETS_AWS_SECRET_ACCESS_KEY -u MARKETS_AWS_SESSION_TOKEN \
+            python research/kalshi/ng_exhaustion_frankie_fullstack_october_20260824.py \
             --manifest research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json \
             --source-root __STAGE__ \
             --output-root "$output" \
@@ -407,15 +856,11 @@ jobs:
             2>&1 | tee "$run_log"
           rc=${PIPESTATUS[0]}
           set -e
-          touch "$sync_done"
-          kill "$sync_pid" 2>/dev/null || true
-          wait "$sync_pid" 2>/dev/null || true
-          sync_once || rc=1
           printf '{"event":"FULLSTACK_RUNNER_EXIT","exit_code":%s}\n' "$rc" | tee -a "$run_log"
           exit "$rc"
           '''
           replacements = {
-              "__CREDENTIAL_FILE__": shlex.quote(credential_file),
+              "__OPENAI_CREDENTIAL_FILE__": shlex.quote(openai_credential_file),
               "__ROOT__": shlex.quote(root),
               "__REPO__": shlex.quote(repo),
               "__SOURCE_COMMIT__": shlex.quote(sha),
@@ -448,38 +893,62 @@ jobs:
               f"run_log={shlex.quote(run_log)}",
               f"unit={shlex.quote(unit)}",
               f"credential_file={shlex.quote(credential_file)}",
+              f"aws_credential_file={shlex.quote(aws_credential_file)}",
+              f"openai_credential_file={shlex.quote(openai_credential_file)}",
               f"artifact_uri={shlex.quote(artifact_uri)}",
+              f"provider_user={shlex.quote('frk_' + sha[:8] + '_' + run_id)}",
               'test ! -e "$root"',
               'test -s "$credential_file"',
               'install -d -m 0755 "$root" "$repo" "$output"',
-              'set -a; source "$credential_file"; set +a',
-              f"aws s3 cp {shlex.quote('s3://' + os.environ['BUCKET'] + '/' + os.environ['PACKAGE_KEY'])} \"$package\" --only-show-errors",
+              f"printf %s {shlex.quote(encoded(credential_scope_script))} | base64 -d > \"$root/scope_credentials.py\"",
+              'chmod 700 "$root/scope_credentials.py"',
+              'python3 "$root/scope_credentials.py" "$credential_file" "$aws_credential_file" "$openai_credential_file"',
+              'if ! grep -Eq "^(OPENAI_API_KEY|MARKETS_OPENAI_API_KEY)=" "$openai_credential_file"; then',
+              '  ( set -a; source "$aws_credential_file"; set +a; unset OPENAI_API_KEY MARKETS_OPENAI_API_KEY;',
+              '    openai_value="$(aws ssm get-parameter --name /markets/OPENAI_API_KEY --with-decryption --query Parameter.Value --output text)";',
+              '    test -n "$openai_value"; printf "OPENAI_API_KEY=%q\\n" "$openai_value" >> "$openai_credential_file"; )',
+              'fi',
+              'chmod 600 "$aws_credential_file" "$openai_credential_file"',
+              f"( set -a; source \"$aws_credential_file\"; set +a; unset OPENAI_API_KEY MARKETS_OPENAI_API_KEY; aws s3 cp {shlex.quote('s3://' + os.environ['BUCKET'] + '/' + os.environ['PACKAGE_KEY'])} \"$package\" --only-show-errors )",
               f"echo {shlex.quote(os.environ['PACKAGE_SHA256'] + '  ' + package)} | sha256sum -c -",
               'tar -xzf "$package" -C "$repo"',
               f"test -s \"$repo/research/kalshi/ng_exhaustion_frankie_fullstack_october_20260824.py\"",
-              'python3 -m venv "$root/venv"',
-              'source "$root/venv/bin/activate"',
-              'python -m pip install --quiet --upgrade pip',
-              'python -m pip install --quiet -r "$repo/deploy/aws/requirements-frankie.txt"',
-              'python -m pip install --quiet databento==0.81.0 "numpy>=1.26" "pandas>=2.0" "scipy>=1.11" "scikit-learn>=1.3" matplotlib',
+              'if id "$provider_user" >/dev/null 2>&1; then echo "dedicated provider identity already exists" >&2; exit 1; fi',
+              'useradd --system --no-create-home --shell /usr/sbin/nologin "$provider_user"',
+              'provider_group="$(id -gn "$provider_user")"',
+              'install -d -o "$provider_user" -g "$provider_group" -m 0750 "$root/venv"',
+              'env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN -u OPENAI_API_KEY -u MARKETS_OPENAI_API_KEY runuser -u "$provider_user" -- python3 -m venv "$root/venv"',
+              'env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN -u OPENAI_API_KEY -u MARKETS_OPENAI_API_KEY runuser -u "$provider_user" -- "$root/venv/bin/python" -m pip install --disable-pip-version-check --no-index --only-binary=:all: --find-links "$repo/deploy/wheelhouse" --require-hashes -r "$repo/deploy/aws/requirements-frankie-fullstack-20260824.lock"',
               f"export FULLSTACK_REPO={shlex.quote(repo)} FULLSTACK_STAGE={shlex.quote(stage)}",
               f"printf %s {shlex.quote(encoded(stage_script))} | base64 -d > \"$root/stage.py\"",
               'chmod 700 "$root/stage.py"',
-              'python "$root/stage.py"',
+              '( set -a; source "$aws_credential_file"; set +a; unset OPENAI_API_KEY MARKETS_OPENAI_API_KEY; python "$root/stage.py" )',
+              '( set -a; source "$aws_credential_file"; set +a; unset OPENAI_API_KEY MARKETS_OPENAI_API_KEY; cd "$repo"; "$root/venv/bin/python" research/kalshi/restore_substrate.py )',
+              '"$root/venv/bin/python" "$repo/research/kalshi/frankie_s135_substrate_descriptor_20260824.py" --repo-root "$repo" --out "$stage/S135_SUBSTRATE_DESCRIPTOR.json"',
+              'chown -R root:"$provider_group" "$repo" "$stage"',
+              'chown root:"$provider_group" "$root"',
+              'chmod -R o-rwx "$repo" "$stage"',
+              'chown -R "$provider_user":"$provider_group" "$output" "$root/venv"',
+              'chown "$provider_user":"$provider_group" "$openai_credential_file"',
+              'chmod 0400 "$aws_credential_file" "$openai_credential_file"',
+              'chmod 0750 "$root" "$repo" "$stage" "$output"',
+              'install -o "$provider_user" -g "$provider_group" -m 0600 /dev/null "$run_log"',
               f"for service in {' '.join(shlex.quote(item) for item in services)}; do",
               '  echo "PERMANENT_SERVICE_READ_ONLY=$service"',
               '  systemctl show "$service" --property=LoadState,ActiveState,SubState,Result,UnitFileState --no-pager 2>/dev/null || true',
               'done',
               f"printf %s {shlex.quote(encoded(gate_script))} | base64 -d > \"$root/check_gates.py\"",
               f"printf %s {shlex.quote(encoded(runner_script))} | base64 -d > \"$root/run.sh\"",
+              'chown "$provider_user":"$provider_group" "$root/run.sh"',
               'chmod 700 "$root/check_gates.py" "$root/run.sh"',
-              'systemd-run --collect --unit "$unit" --property=Type=exec --property=Restart=no --property=WorkingDirectory="$repo" /bin/bash "$root/run.sh" >/dev/null',
+              'systemd-run --collect --unit "$unit" --uid "$provider_user" --gid "$provider_group" --property=Type=exec --property=Restart=no --property=WorkingDirectory="$repo" --property=NoNewPrivileges=yes --property=PrivateTmp=yes --property=PrivateDevices=yes --property=ProtectHome=yes --property=ProtectSystem=strict --property=IPAddressDeny=169.254.169.254/32 --property=IPAddressDeny=fd00:ec2::254/128 --property="ReadWritePaths=$output $run_log" --property="InaccessiblePaths=$aws_credential_file /mnt/markets/ng_exhaustion_step1_5y_20260822" /bin/bash "$root/run.sh" >/dev/null',
               'echo "FULLSTACK_SYSTEMD_UNIT=$unit"',
               'echo "FULLSTACK_ROOT=$root"',
               'echo "FULLSTACK_ARTIFACT_PREFIX=$artifact_uri/"',
               'echo "FULLSTACK_STOP_COMMAND=systemctl stop $unit"',
               'deadline=$((SECONDS + 5400))',
               'while [ "$SECONDS" -lt "$deadline" ]; do',
+              '  ( set -a; source "$aws_credential_file"; set +a; unset OPENAI_API_KEY MARKETS_OPENAI_API_KEY; aws s3 sync "$output" "$artifact_uri/artifacts/" --no-follow-symlinks --only-show-errors; if [ -f "$run_log" ]; then aws s3 cp "$run_log" "$artifact_uri/RUN.log" --only-show-errors; fi; aws s3 cp "$stage/SOURCE_ROSTER.json" "$artifact_uri/SOURCE_ROSTER.json" --only-show-errors; ) || true',
               '  set +e',
               '  python "$root/check_gates.py" "$run_log"',
               '  gate_rc=$?',
@@ -495,6 +964,7 @@ jobs:
               '  sleep 15',
               'done',
               'python "$root/check_gates.py" "$run_log"',
+              '( set -a; source "$aws_credential_file"; set +a; unset OPENAI_API_KEY MARKETS_OPENAI_API_KEY; aws s3 sync "$output" "$artifact_uri/artifacts/" --no-follow-symlinks --only-show-errors; aws s3 cp "$run_log" "$artifact_uri/RUN.log" --only-show-errors; aws s3 cp "$stage/SOURCE_ROSTER.json" "$artifact_uri/SOURCE_ROSTER.json" --only-show-errors; )',
               'test "$(systemctl show --property=ActiveState --value "$unit")" = active',
               'journalctl -u "$unit" -n 240 -o cat --no-pager',
               'echo FULLSTACK_LAUNCH_GATES=PASS',
@@ -549,7 +1019,7 @@ jobs:
 
       - name: Publish launch evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: fullstack-october-launch-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |

@@ -12,12 +12,15 @@ from research.kalshi.frankie_source_inventory_cross_reference_20260824 import (
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
-def test_all_138_pushed_sources_and_12_discovered_dependencies_are_accounted_for() -> None:
+def test_all_curated_local_discovered_and_external_identities_are_accounted_for() -> None:
     report = build_source_inventory_cross_reference(REPO_ROOT)
 
     assert report["listed_source_count"] == 138
-    assert report["catalogued_source_count"] == 150
+    assert report["catalogued_source_count"] == 151
     assert report["discovered_dependency_count"] == 12
+    assert report["additional_local_sealed_governing_identity_count"] == 1
+    assert report["external_sealed_descriptor_count"] == 13
+    assert report["total_manifest_identity_count"] == 164
     assert report["disposition_counts"] == EXPECTED_DISPOSITIONS
     assert report["provider_visible_base_source_count"] == 107
     assert report["combined_active_source_count"] == 20
@@ -25,7 +28,23 @@ def test_all_138_pushed_sources_and_12_discovered_dependencies_are_accounted_for
     assert report["combined_active_components"] == list(ACTIVE_COMPONENT_IDS)
     assert report["all_listed_sources_accounted_for"] is True
     assert report["all_discovered_dependencies_accounted_for"] is True
+    assert report["all_external_sealed_descriptors_accounted_for"] is True
     assert len(report["report_hash"]) == 64
+
+    governors = report["additional_local_sealed_governing_identities"]
+    assert list(governors) == [
+        "research/kalshi/NG_EXHAUSTION_MBO_5Y_STEP1_LAUNCH_20260822.json"
+    ]
+    assert len(governors[next(iter(governors))]["source_sha256"]) == 64
+
+    descriptors = report["external_sealed_descriptors"]
+    assert len(descriptors) == 13
+    assert len({item["descriptor_id"] for item in descriptors}) == 13
+    assert all(item["authority"] == "SEALED_TARGET_ANSWER" for item in descriptors)
+    assert all(item["content_accessed"] is False for item in descriptors)
+    assert all(item["content_sha256"] is None for item in descriptors)
+    assert all(item["local_path"] is None for item in descriptors)
+    assert all(len(item["descriptor_sha256"]) == 64 for item in descriptors)
 
 
 def test_every_row_has_one_explicit_existing_or_new_wiring_disposition() -> None:

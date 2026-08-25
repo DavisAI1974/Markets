@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
+import importlib
 import json
 from typing import Any, Callable, Mapping, Sequence
 
@@ -21,6 +22,10 @@ from research.kalshi.frankie_full_stack_paired_lane_orchestrator_20260824 import
     ProvisionalComponentReceipt,
 )
 from research.kalshi.frankie_full_stack_runtime_contracts_20260824 import CausalPrefixBinding
+from research.kalshi.frankie_october_knowledge_inventory_20260824 import (
+    PROVISIONAL_SOURCE_DISPOSITIONS,
+    ProvisionalSourceDisposition,
+)
 
 
 ACTIVE_COMPONENT_IDS = (
@@ -140,6 +145,20 @@ def execute_combined_provisional_pipeline(
     }
     if any(not rows for rows in detached_sources.values()):
         raise ProvisionalCombinedExecutionError("every ability requires source context")
+    source_dispositions = (
+        _bind_production_source_dispositions(detached_sources)
+        if apis is None
+        else {
+            component_id: tuple(
+                {
+                    "path": str(row.get("path") or "TEST_INJECTED"),
+                    "disposition": "TEST_INJECTED",
+                }
+                for row in detached_sources[component_id]
+            )
+            for component_id in ACTIVE_COMPONENT_IDS
+        }
+    )
     all_together_input_hash = _hash(
         {
             "binding": bound.identity_payload(),
@@ -190,6 +209,7 @@ def execute_combined_provisional_pipeline(
                     "binding": bound.identity_payload(),
                     "all_together_input_hash": all_together_input_hash,
                     "component_source_context_hash": _hash(detached_sources[component_id]),
+                    "source_dispositions": source_dispositions[component_id],
                     "derived_output": output,
                     "derived_output_hash": hashlib.sha256(encoded).hexdigest(),
                     "authority": "SHADOW_DIAGNOSTIC_ONLY",
@@ -215,6 +235,83 @@ def execute_combined_provisional_pipeline(
         )
     )
     return tuple(receipts)
+
+
+def _bind_production_source_dispositions(
+    source_contexts: Mapping[str, Sequence[Mapping[str, Any]]],
+) -> dict[str, tuple[dict[str, Any], ...]]:
+    expected = {
+        path: row
+        for path, row in PROVISIONAL_SOURCE_DISPOSITIONS.items()
+        if row.disposition is not ProvisionalSourceDisposition.DEFERRED_POST_EVIDENCE
+    }
+    supplied: dict[str, tuple[str, Mapping[str, Any]]] = {}
+    for component_id, rows in source_contexts.items():
+        for row in rows:
+            path = str(row.get("path") or "")
+            if path in supplied:
+                raise ProvisionalCombinedExecutionError(
+                    f"duplicate provisional source context: {path}"
+                )
+            supplied[path] = (component_id, row)
+    if set(supplied) != set(expected):
+        raise ProvisionalCombinedExecutionError(
+            "production provisional source dispositions are incomplete"
+        )
+
+    receipts: dict[str, list[dict[str, Any]]] = {
+        component_id: [] for component_id in ACTIVE_COMPONENT_IDS
+    }
+    for path in sorted(expected):
+        disposition = expected[path]
+        component_id, source = supplied[path]
+        if component_id != disposition.component_id:
+            raise ProvisionalCombinedExecutionError(
+                f"provisional source component drift: {path}"
+            )
+        source_sha256 = str(source.get("source_sha256") or "")
+        if len(source_sha256) != 64 or any(
+            char not in "0123456789abcdef" for char in source_sha256.lower()
+        ):
+            raise ProvisionalCombinedExecutionError(
+                f"provisional source SHA-256 is invalid: {path}"
+            )
+        row = {
+            "path": path,
+            "source_sha256": source_sha256.lower(),
+            "component_id": component_id,
+            "disposition": disposition.disposition.value,
+            "module_imported": False,
+            "required_symbol_bound": False,
+            "context_only_bound": False,
+        }
+        if disposition.disposition is ProvisionalSourceDisposition.EXECUTABLE_MODULE_BINDING:
+            try:
+                module = importlib.import_module(str(disposition.module_name))
+            except Exception as exc:
+                raise ProvisionalCombinedExecutionError(
+                    f"provisional module import failed: {path}"
+                ) from exc
+            if not hasattr(module, str(disposition.required_symbol)):
+                raise ProvisionalCombinedExecutionError(
+                    f"provisional module public symbol is absent: {path}"
+                )
+            row.update(
+                {
+                    "module_name": disposition.module_name,
+                    "required_symbol": disposition.required_symbol,
+                    "module_imported": True,
+                    "required_symbol_bound": True,
+                }
+            )
+        elif disposition.disposition is ProvisionalSourceDisposition.CONTEXT_ONLY_GOVERNANCE:
+            row["context_only_bound"] = True
+        else:
+            raise ProvisionalCombinedExecutionError(
+                f"deferred source entered the active combined context: {path}"
+            )
+        receipts[component_id].append(row)
+    return {key: tuple(value) for key, value in receipts.items()}
 
 
 def _budget() -> dict[str, int]:

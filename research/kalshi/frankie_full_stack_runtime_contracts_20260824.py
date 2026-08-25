@@ -364,6 +364,7 @@ class ProviderInvocationReceipt:
     accepted_response: AcceptedProviderResponseReceipt
     tool_calls: tuple[ToolCallReceipt, ...]
     retrievals: tuple[RetrievalReceipt, ...]
+    value_state_read_receipt_hashes: tuple[str, ...]
     receipt_hash: str
 
     @classmethod
@@ -374,6 +375,7 @@ class ProviderInvocationReceipt:
         accepted_response: AcceptedProviderResponseReceipt,
         tool_calls: Sequence[ToolCallReceipt],
         retrievals: Sequence[RetrievalReceipt],
+        value_state_read_receipt_hashes: Sequence[str] = (),
     ) -> "ProviderInvocationReceipt":
         req = request.validate()
         response = accepted_response.validate()
@@ -381,20 +383,27 @@ class ProviderInvocationReceipt:
             raise RuntimeContractError("accepted response is not bound to the exact provider request")
         tools = tuple(item.validate() for item in tool_calls)
         reads = tuple(item.validate() for item in retrievals)
+        value_reads = tuple(
+            _sha256(item, "value-state read receipt hash")
+            for item in value_state_read_receipt_hashes
+        )
         if not tools or not reads:
             raise RuntimeContractError("provider invocation requires tool-call and retrieval receipts")
         if len({item.tool_call_id for item in tools}) != len(tools):
             raise RuntimeContractError("provider invocation tool-call IDs must be unique")
         if len({item.retrieval_id for item in reads}) != len(reads):
             raise RuntimeContractError("provider invocation retrieval IDs must be unique")
+        if len(set(value_reads)) != len(value_reads):
+            raise RuntimeContractError("value-state read receipt hashes must be unique")
         core = {
             "request_hash": req.request_hash,
             "response_hash": response.response_hash,
             "provider_response_id": response.provider_response_id,
             "tool_calls": [asdict(item) for item in tools],
             "retrievals": [asdict(item) for item in reads],
+            "value_state_read_receipt_hashes": list(value_reads),
         }
-        return cls(req, response, tools, reads, _hash_payload(core))
+        return cls(req, response, tools, reads, value_reads, _hash_payload(core))
 
     def validate(self) -> "ProviderInvocationReceipt":
         rebuilt = self.create(
@@ -402,6 +411,7 @@ class ProviderInvocationReceipt:
             accepted_response=self.accepted_response,
             tool_calls=self.tool_calls,
             retrievals=self.retrievals,
+            value_state_read_receipt_hashes=self.value_state_read_receipt_hashes,
         )
         if rebuilt.receipt_hash != self.receipt_hash:
             raise RuntimeContractError("provider invocation receipt hash mismatch")
@@ -792,6 +802,7 @@ RUNTIME_EVENT_NAMES = {
     "FRANKIE_REPLAY_PROGRESS",
     "FRANKIE_PROVIDER_CALL_STARTED",
     "FRANKIE_PROVIDER_RESPONSE_ACCEPTED",
+    "FRANKIE_PROVIDER_TOOL_EXECUTED",
     "FRANKIE_PERSISTENCE_APPENDED",
     "FRANKIE_OCTOBER_PROGRESS",
     "FRANKIE_RUNTIME_ERROR",

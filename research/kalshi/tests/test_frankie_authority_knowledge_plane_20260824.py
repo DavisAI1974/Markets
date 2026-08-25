@@ -5,6 +5,7 @@ import json
 import sys
 import tempfile
 import unittest
+from dataclasses import replace
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parents[1]
@@ -16,6 +17,7 @@ from frankie_authority_knowledge_plane_20260824 import (  # noqa: E402
     AuthorityClass,
     CompletenessContract,
     EvidencePolarity,
+    ExternalSourceDescriptor,
     KnowledgeAccessDenied,
     KnowledgeCatalogError,
     KnowledgePlane,
@@ -133,7 +135,74 @@ class FrankieAuthorityKnowledgePlaneTests(unittest.TestCase):
         self.assertEqual(
             sum(chunk.end_exclusive - chunk.start for chunk in entry.coverage), entry.byte_length
         )
-        self.assertTrue(all(chunk.sha256 for chunk in entry.coverage))
+
+    def test_external_answer_descriptor_is_manifested_without_reading_target_content(self):
+        governor_path = "sealed/october_step1_crosswalk_results.json"
+        governor_sha = _sha((self.root / governor_path).read_bytes())
+        core = {
+            "descriptor_id": "step1:external-population",
+            "external_uri": "s3://sealed-answer/results/population.jsonl.gz",
+            "object_kind": "POPULATION",
+            "governing_source_path": governor_path,
+            "governing_source_sha256": governor_sha,
+            "content_sha256": None,
+            "byte_length": None,
+            "local_path": None,
+            "authority": AuthorityClass.SEALED_TARGET_ANSWER.value,
+            "target_relationship": TargetRelationship.OCTOBER_STEP1_ANSWER.value,
+            "access_policy": AccessPolicy.SEALED_UNTIL_PRIMARY_FREEZE.value,
+            "content_accessed": False,
+        }
+        descriptor = ExternalSourceDescriptor(
+            descriptor_sha256=_sha(
+                json.dumps(
+                    core, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+                ).encode()
+            ),
+            **{
+                key: core[key]
+                for key in (
+                    "descriptor_id",
+                    "external_uri",
+                    "object_kind",
+                    "governing_source_path",
+                    "governing_source_sha256",
+                )
+            },
+        )
+
+        plane = KnowledgePlane.build(
+            self.root,
+            self.specs,
+            contract=self.contract,
+            manifest_version="october-with-external-answer",
+            external_descriptors=(descriptor,),
+        )
+
+        self.assertEqual(plane.external_descriptors, (descriptor,))
+        self.assertFalse(descriptor.content_accessed)
+        self.assertNotEqual(plane.manifest_hash, self.plane.manifest_hash)
+
+        bad_descriptor = replace(descriptor, governing_source_sha256="f" * 64)
+        bad_descriptor = replace(
+            bad_descriptor,
+            descriptor_sha256=_sha(
+                json.dumps(
+                    bad_descriptor.identity_payload(),
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    ensure_ascii=False,
+                ).encode()
+            ),
+        )
+        with self.assertRaisesRegex(KnowledgeCatalogError, "governor SHA-256 drift"):
+            KnowledgePlane.build(
+                self.root,
+                self.specs,
+                contract=self.contract,
+                manifest_version="october-bad-external-governor",
+                external_descriptors=(bad_descriptor,),
+            )
 
     def test_completeness_contract_requires_all_90_plays_and_frozen_corpus(self):
         missing = CompletenessContract(

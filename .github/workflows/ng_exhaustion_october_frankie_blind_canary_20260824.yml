@@ -1,11 +1,7 @@
-name: Launch blind October Frankie V4 canary 20260824
+name: RETIRED_FORENSIC_ONLY blind October Frankie V4 canary 20260824
 
 on:
-  push:
-    branches:
-      - chatgpt/ng-exhaustion-october-sharded-20260824
-    paths:
-      - research/kalshi/NG_EXHAUSTION_OCTOBER_FRANKIE_BLIND_CANARY_LAUNCH_20260824.json
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,6 +12,7 @@ concurrency:
 
 jobs:
   launch-blind-canary:
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:

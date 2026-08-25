@@ -25,6 +25,7 @@ from research.kalshi.frankie_full_stack_runtime_adapter_20260824 import (
     PrefixRuntimeResult,
     ResponsesClient,
 )
+from research.kalshi.frankie_provider_knowledge_tools_20260824 import ProviderToolBackend
 from research.kalshi.frankie_full_stack_runtime_contracts_20260824 import (
     CausalPrefixBinding,
     KnowledgeSourceExcerpt,
@@ -233,6 +234,7 @@ class LaneRuntime:
     event_sink: RuntimeEventSink
     tool_calls: tuple[ToolCallReceipt, ...]
     retrievals: tuple[RetrievalReceipt, ...]
+    provider_tools: ProviderToolBackend | None = None
 
 
 @dataclass(frozen=True)
@@ -645,6 +647,7 @@ class PairedLaneOrchestrator:
                 client=self.control.client,
                 ledger=self._control_ledger,
                 event_sink=self.control.event_sink,
+                provider_tools=self.control.provider_tools,
             ).run_prefix(
                 binding=bound,
                 lane_id=LaneId.S135_CONTROL.value,
@@ -658,6 +661,7 @@ class PairedLaneOrchestrator:
                 client=self.combined.client,
                 ledger=self._combined_ledger,
                 event_sink=self.combined.event_sink,
+                provider_tools=self.combined.provider_tools,
             ).run_prefix(
                 binding=bound,
                 lane_id=LaneId.FULL_PROVISIONAL_COMBINED.value,

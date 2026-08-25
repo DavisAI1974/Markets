@@ -32,6 +32,7 @@ from research.kalshi.frankie_lane_aware_context_router_20260824 import (
 )
 from research.kalshi.frankie_october_knowledge_inventory_20260824 import (
     production_source_specs,
+    sealed_step1_external_descriptors,
 )
 from research.kalshi.ng_exhaustion_frankie_fullstack_october_20260824 import (
     _base_knowledge,
@@ -46,6 +47,10 @@ INVENTORY_PATH = Path(
 )
 EXPECTED_LISTED_SOURCES = 138
 EXPECTED_DISCOVERED_DEPENDENCIES = 12
+EXPECTED_ADDITIONAL_LOCAL_SEALED_GOVERNING_IDENTITIES = 1
+EXPECTED_LOCAL_CATALOG_SOURCES = 151
+EXPECTED_EXTERNAL_SEALED_DESCRIPTORS = 13
+EXPECTED_TOTAL_MANIFEST_IDENTITIES = 164
 EXPECTED_DISPOSITIONS = {
     "BASE_PROVIDER_ACTIVE": 107,
     "PROVISIONAL_EXECUTED": 8,
@@ -105,6 +110,8 @@ def build_source_inventory_cross_reference(repo_root: str | Path) -> dict[str, A
     listed = _listed_paths(root)
     specs = production_source_specs(root)
     spec_by_path = {item.path: item for item in specs}
+    if len(specs) != EXPECTED_LOCAL_CATALOG_SOURCES:
+        raise InventoryCrossReferenceError("local catalog source count drift")
     listed_paths = {path for path, _section in listed}
     missing_catalog = sorted(listed_paths - spec_by_path.keys())
     if missing_catalog:
@@ -112,11 +119,15 @@ def build_source_inventory_cross_reference(repo_root: str | Path) -> dict[str, A
             f"listed sources absent from executable catalog: {missing_catalog}"
         )
 
+    external_descriptors = sealed_step1_external_descriptors(root)
+    if len(external_descriptors) != EXPECTED_EXTERNAL_SEALED_DESCRIPTORS:
+        raise InventoryCrossReferenceError("external sealed descriptor count drift")
     plane = KnowledgePlane.build(
         root,
         specs,
         contract=october_full_stack_completeness_contract(),
         manifest_version=SCHEMA,
+        external_descriptors=external_descriptors,
     )
     router = FrankieLaneAwareContextRouter(
         plane, production_provisional_components(plane)
@@ -181,9 +192,31 @@ def build_source_inventory_cross_reference(repo_root: str | Path) -> dict[str, A
             f"pushed inventory disposition drift: {counts}"
         )
 
-    discovered = tuple(sorted(set(spec_by_path) - listed_paths))
+    additional_local_paths = set(spec_by_path) - listed_paths
+    discovered = tuple(
+        sorted(
+            path
+            for path in additional_local_paths
+            if spec_by_path[path].authority is AuthorityClass.PROVISIONAL_SHADOW
+        )
+    )
     if len(discovered) != EXPECTED_DISCOVERED_DEPENDENCIES:
         raise InventoryCrossReferenceError("discovered dependency count drift")
+    local_sealed_governors = tuple(
+        sorted(
+            path
+            for path in additional_local_paths
+            if spec_by_path[path].authority is AuthorityClass.SEALED_TARGET_ANSWER
+        )
+    )
+    if (
+        len(local_sealed_governors)
+        != EXPECTED_ADDITIONAL_LOCAL_SEALED_GOVERNING_IDENTITIES
+        or set(discovered) | set(local_sealed_governors) != additional_local_paths
+    ):
+        raise InventoryCrossReferenceError(
+            "additional local catalog identities are not exactly provisional dependencies plus sealed governors"
+        )
     discovered_components: dict[str, str] = {}
     for path in discovered:
         if path not in active_paths:
@@ -197,12 +230,48 @@ def build_source_inventory_cross_reference(repo_root: str | Path) -> dict[str, A
             )
         discovered_components[path] = component_id
 
+    sealed_governor_rows: dict[str, dict[str, Any]] = {}
+    for path in local_sealed_governors:
+        entry = plane.entry(path)
+        sealed_governor_rows[path] = {
+            "source_id": entry.source_id,
+            "source_sha256": entry.sha256,
+            "byte_length": entry.byte_length,
+            "authority": entry.authority.value,
+            "access_policy": entry.access_policy.value,
+            "target_relationship": entry.target_relationship.value,
+        }
+
+    external_rows = tuple(
+        {
+            **descriptor.identity_payload(),
+            "descriptor_sha256": descriptor.descriptor_sha256,
+        }
+        for descriptor in plane.external_descriptors
+    )
+    if any(
+        item["governing_source_path"] not in sealed_governor_rows
+        or item["content_accessed"] is not False
+        or item["content_sha256"] is not None
+        or item["local_path"] is not None
+        for item in external_rows
+    ):
+        raise InventoryCrossReferenceError(
+            "external sealed descriptors crossed the pre-freeze answer wall"
+        )
+    total_manifest_identities = len(specs) + len(external_rows)
+    if total_manifest_identities != EXPECTED_TOTAL_MANIFEST_IDENTITIES:
+        raise InventoryCrossReferenceError("total manifest identity count drift")
+
     row_payload = [asdict(item) for item in rows]
     core = {
         "schema": SCHEMA,
         "listed_source_count": len(rows),
         "catalogued_source_count": len(specs),
         "discovered_dependency_count": len(discovered),
+        "additional_local_sealed_governing_identity_count": len(local_sealed_governors),
+        "external_sealed_descriptor_count": len(external_rows),
+        "total_manifest_identity_count": total_manifest_identities,
         "disposition_counts": counts,
         "provider_visible_base_source_count": len(provider_excerpts),
         "combined_active_source_count": len(active_paths),
@@ -211,16 +280,23 @@ def build_source_inventory_cross_reference(repo_root: str | Path) -> dict[str, A
         "knowledge_manifest_hash": plane.manifest_hash,
         "all_listed_sources_accounted_for": True,
         "all_discovered_dependencies_accounted_for": True,
+        "all_external_sealed_descriptors_accounted_for": True,
         "rows": row_payload,
         "discovered_dependencies": discovered_components,
+        "additional_local_sealed_governing_identities": sealed_governor_rows,
+        "external_sealed_descriptors": external_rows,
     }
     return {**core, "report_hash": _hash(core)}
 
 
 __all__ = [
+    "EXPECTED_ADDITIONAL_LOCAL_SEALED_GOVERNING_IDENTITIES",
     "EXPECTED_DISCOVERED_DEPENDENCIES",
     "EXPECTED_DISPOSITIONS",
+    "EXPECTED_EXTERNAL_SEALED_DESCRIPTORS",
     "EXPECTED_LISTED_SOURCES",
+    "EXPECTED_LOCAL_CATALOG_SOURCES",
+    "EXPECTED_TOTAL_MANIFEST_IDENTITIES",
     "INVENTORY_PATH",
     "InventoryCrossReferenceError",
     "InventoryCrossReferenceRow",

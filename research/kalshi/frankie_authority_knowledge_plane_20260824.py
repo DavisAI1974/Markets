@@ -11,6 +11,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import re
 import sys
 from dataclasses import asdict, dataclass
 from enum import Enum
@@ -79,6 +80,41 @@ class SourceSpec:
     supersedes: tuple[str, ...] = ()
     target_relationship: TargetRelationship = TargetRelationship.GENERAL
     access_policy: AccessPolicy = AccessPolicy.SERVE
+
+
+@dataclass(frozen=True)
+class ExternalSourceDescriptor:
+    """Content-addressed metadata for a sealed object that is not read pre-freeze."""
+
+    descriptor_id: str
+    external_uri: str
+    object_kind: str
+    governing_source_path: str
+    governing_source_sha256: str
+    descriptor_sha256: str
+    content_sha256: str | None = None
+    byte_length: int | None = None
+    local_path: str | None = None
+    authority: AuthorityClass = AuthorityClass.SEALED_TARGET_ANSWER
+    target_relationship: TargetRelationship = TargetRelationship.OCTOBER_STEP1_ANSWER
+    access_policy: AccessPolicy = AccessPolicy.SEALED_UNTIL_PRIMARY_FREEZE
+    content_accessed: bool = False
+
+    def identity_payload(self) -> dict[str, Any]:
+        return {
+            "descriptor_id": self.descriptor_id,
+            "external_uri": self.external_uri,
+            "object_kind": self.object_kind,
+            "governing_source_path": self.governing_source_path,
+            "governing_source_sha256": self.governing_source_sha256,
+            "content_sha256": self.content_sha256,
+            "byte_length": self.byte_length,
+            "local_path": self.local_path,
+            "authority": self.authority.value,
+            "target_relationship": self.target_relationship.value,
+            "access_policy": self.access_policy.value,
+            "content_accessed": self.content_accessed,
+        }
 
 
 @dataclass(frozen=True)
@@ -332,6 +368,7 @@ class KnowledgePlane:
         manifest_hash: str,
         brain_path: str,
         plays: Mapping[str, Mapping[str, Any]],
+        external_descriptors: Mapping[str, ExternalSourceDescriptor],
         receipt_sink: ReceiptSink | None,
     ) -> None:
         self._root = root
@@ -339,6 +376,7 @@ class KnowledgePlane:
         self.manifest_hash = manifest_hash
         self._brain_path = brain_path
         self._plays = copy.deepcopy(dict(plays))
+        self._external_descriptors = dict(external_descriptors)
         self._receipts: list[RetrievalReceipt] = []
         self._receipt_sink = receipt_sink
         self._primary_freeze: PrimaryFreezeReceipt | None = None
@@ -352,6 +390,7 @@ class KnowledgePlane:
         contract: CompletenessContract,
         manifest_version: str,
         coverage_chunk_bytes: int = 64 * 1024,
+        external_descriptors: Sequence[ExternalSourceDescriptor] = (),
         receipt_sink: ReceiptSink | None = None,
     ) -> "KnowledgePlane":
         root_path = Path(root).resolve()
@@ -383,6 +422,31 @@ class KnowledgePlane:
             normalized[path] = spec
             # Sealed bytes are hashed for the lossless manifest but never decoded or semantically inspected here.
             raw_by_path[path] = absolute.read_bytes()
+
+        normalized_external: dict[str, ExternalSourceDescriptor] = {}
+        external_uris: set[str] = set()
+        for descriptor in external_descriptors:
+            cls._validate_external_descriptor(descriptor)
+            if descriptor.descriptor_id in normalized_external:
+                raise KnowledgeCatalogError(
+                    f"duplicate external descriptor id: {descriptor.descriptor_id}"
+                )
+            if descriptor.external_uri in external_uris:
+                raise KnowledgeCatalogError(
+                    f"duplicate external descriptor URI: {descriptor.external_uri}"
+                )
+            if descriptor.governing_source_path not in normalized:
+                raise KnowledgeCatalogError(
+                    "external descriptor governing source is not catalogued: "
+                    f"{descriptor.governing_source_path}"
+                )
+            if normalized[descriptor.governing_source_path].authority is not AuthorityClass.SEALED_TARGET_ANSWER:
+                raise KnowledgeCatalogError("external descriptor governor must remain sealed")
+            actual_governor_sha256 = _sha256(raw_by_path[descriptor.governing_source_path])
+            if descriptor.governing_source_sha256 != actual_governor_sha256:
+                raise KnowledgeCatalogError("external descriptor governor SHA-256 drift")
+            normalized_external[descriptor.descriptor_id] = descriptor
+            external_uris.add(descriptor.external_uri)
 
         superseded_by: dict[str, list[str]] = {path: [] for path in normalized}
         for path, spec in normalized.items():
@@ -457,8 +521,17 @@ class KnowledgePlane:
         )
 
         manifest_rows = [cls._manifest_row(entries[path]) for path in sorted(entries)]
+        external_rows = [
+            asdict(normalized_external[key]) for key in sorted(normalized_external)
+        ]
         manifest_hash = _sha256(
-            _canonical_bytes({"version": manifest_version, "sources": manifest_rows})
+            _canonical_bytes(
+                {
+                    "version": manifest_version,
+                    "sources": manifest_rows,
+                    "sealed_external_objects": external_rows,
+                }
+            )
         )
         return cls(
             root=root_path,
@@ -466,8 +539,43 @@ class KnowledgePlane:
             manifest_hash=manifest_hash,
             brain_path=brain_path,
             plays=plays,
+            external_descriptors=normalized_external,
             receipt_sink=receipt_sink,
         )
+
+    @staticmethod
+    def _validate_external_descriptor(descriptor: ExternalSourceDescriptor) -> None:
+        if not isinstance(descriptor, ExternalSourceDescriptor):
+            raise KnowledgeCatalogError("external descriptor has an invalid type")
+        if not re.fullmatch(r"[A-Za-z0-9_.:-]{1,256}", descriptor.descriptor_id):
+            raise KnowledgeCatalogError("external descriptor id is unsafe")
+        if not descriptor.external_uri.startswith("s3://") or any(
+            char.isspace() for char in descriptor.external_uri
+        ):
+            raise KnowledgeCatalogError("external descriptor URI must be a bounded S3 identity")
+        _normal_path(descriptor.governing_source_path)
+        if not _is_sha256(descriptor.governing_source_sha256):
+            raise KnowledgeCatalogError("external descriptor governor SHA-256 is invalid")
+        if descriptor.content_sha256 is not None and not _is_sha256(descriptor.content_sha256):
+            raise KnowledgeCatalogError("external object content SHA-256 is invalid")
+        if descriptor.byte_length is not None and (
+            isinstance(descriptor.byte_length, bool) or descriptor.byte_length < 0
+        ):
+            raise KnowledgeCatalogError("external object byte length is invalid")
+        if descriptor.local_path is not None:
+            _normal_path(descriptor.local_path)
+        if descriptor.content_accessed is not False:
+            raise KnowledgeCatalogError("sealed external content cannot be accessed pre-freeze")
+        if (
+            descriptor.authority is not AuthorityClass.SEALED_TARGET_ANSWER
+            or descriptor.target_relationship is not TargetRelationship.OCTOBER_STEP1_ANSWER
+            or descriptor.access_policy is not AccessPolicy.SEALED_UNTIL_PRIMARY_FREEZE
+        ):
+            raise KnowledgeCatalogError("external Step-1 descriptor lost its answer-wall authority")
+        if descriptor.descriptor_sha256 != _sha256(
+            _canonical_bytes(descriptor.identity_payload())
+        ):
+            raise KnowledgeCatalogError("external descriptor identity hash mismatch")
 
     @staticmethod
     def _require_paths(
@@ -519,6 +627,12 @@ class KnowledgePlane:
     @property
     def receipts(self) -> tuple[RetrievalReceipt, ...]:
         return tuple(self._receipts)
+
+    @property
+    def external_descriptors(self) -> tuple[ExternalSourceDescriptor, ...]:
+        return tuple(
+            self._external_descriptors[key] for key in sorted(self._external_descriptors)
+        )
 
     def entry(self, path: str) -> SourceEntry:
         normalized = _normal_path(path)
@@ -816,6 +930,7 @@ __all__ = [
     "CoverageChunk",
     "EvidencePolarity",
     "EvidenceRecord",
+    "ExternalSourceDescriptor",
     "KnowledgeAccessDenied",
     "KnowledgeCatalogError",
     "KnowledgePlane",
