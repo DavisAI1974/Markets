@@ -1,0 +1,231 @@
+name: NG Exhaustion Two-Day Step-1 Read-Only Analysis 20260825
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_two_day_step1_readonly_analysis_20260825.yml
+
+permissions:
+  contents: read
+
+env:
+  AWS_DEFAULT_REGION: us-east-2
+  BUCKET: bento-568968024170-us-east-2-an
+  PREFIX: nymex/ng_mbo_5y_v0/step1_census/two_day_diagnostic/runs/32782745590-1
+
+jobs:
+  analyze-published-step1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Download hash-verified published science read-only
+        shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_MAX_ATTEMPTS: '1'
+          AWS_RETRY_MODE: standard
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/two-day-analysis
+          files=(
+            COMPLETE.json
+            STEP1_DUAL_CENSUS_RECEIPT.json
+            LEGACY_CONTROL_STRUCTURAL_SELF_FIT_SUMMARY.json
+            V4_NATIVE_FULL_STRUCTURAL_SELF_FIT_SUMMARY.json
+            LEGACY_CONTROL_POPULATION.jsonl.gz
+            V4_NATIVE_FULL_POPULATION.jsonl.gz
+            LEGACY_CONTROL_CROSSWALK_INDEX.jsonl.gz
+            V4_NATIVE_FULL_CROSSWALK_INDEX.jsonl.gz
+            DUAL_CENSUS_CROSSWALK.jsonl.gz
+          )
+          for name in "${files[@]}"; do
+            if test "$name" = COMPLETE.json; then
+              key="$PREFIX/COMPLETE.json"
+            else
+              key="$PREFIX/artifacts/$name"
+            fi
+            aws s3api head-object --bucket "$BUCKET" --key "$key" \
+              --output json > "/tmp/two-day-analysis/$name.head.json"
+            aws s3api get-object --bucket "$BUCKET" --key "$key" \
+              "/tmp/two-day-analysis/$name" >/dev/null
+            actual_sha="$(sha256sum "/tmp/two-day-analysis/$name" | cut -d' ' -f1)"
+            claimed_sha="$(jq -r '.Metadata.sha256 // empty' "/tmp/two-day-analysis/$name.head.json")"
+            claimed_bytes="$(jq -r '.ContentLength' "/tmp/two-day-analysis/$name.head.json")"
+            actual_bytes="$(stat -c %s "/tmp/two-day-analysis/$name")"
+            test "$actual_sha" = "$claimed_sha"
+            test "$actual_bytes" = "$claimed_bytes"
+          done
+          echo READ_ONLY_ANALYSIS_DOWNLOAD_HASHES=PASS
+
+      - name: Calculate two-day structural analysis
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import collections
+          import datetime as dt
+          import gzip
+          import json
+          import math
+          import statistics
+          from pathlib import Path
+
+          root = Path("/tmp/two-day-analysis")
+
+          def read_json(name):
+              return json.loads((root / name).read_text(encoding="utf-8"))
+
+          def read_gzip_jsonl(name):
+              with gzip.open(root / name, "rt", encoding="utf-8") as handle:
+                  return [json.loads(line) for line in handle if line.strip()]
+
+          def quantiles(values):
+              values = sorted(float(value) for value in values if value is not None)
+              if not values:
+                  return {"count": 0, "mean": None, "median": None, "p90": None, "max": None}
+              p90_index = min(len(values) - 1, math.ceil(0.90 * len(values)) - 1)
+              return {
+                  "count": len(values),
+                  "mean": statistics.fmean(values),
+                  "median": statistics.median(values),
+                  "p90": values[p90_index],
+                  "max": values[-1],
+              }
+
+          receipt = read_json("STEP1_DUAL_CENSUS_RECEIPT.json")
+          completion = read_json("COMPLETE.json")
+          structural_files = {
+              "legacy": "LEGACY_CONTROL_STRUCTURAL_SELF_FIT_SUMMARY.json",
+              "native": "V4_NATIVE_FULL_STRUCTURAL_SELF_FIT_SUMMARY.json",
+          }
+          population_files = {
+              "legacy": "LEGACY_CONTROL_POPULATION.jsonl.gz",
+              "native": "V4_NATIVE_FULL_POPULATION.jsonl.gz",
+          }
+          index_files = {
+              "legacy": "LEGACY_CONTROL_CROSSWALK_INDEX.jsonl.gz",
+              "native": "V4_NATIVE_FULL_CROSSWALK_INDEX.jsonl.gz",
+          }
+
+          structural = {}
+          for view, name in structural_files.items():
+              summary = read_json(name)
+              structural[view] = {
+                  "status": summary.get("status"),
+                  "full_dimension": summary["primary_full_path"]["dimension"],
+                  "sparse_dimension": summary["sparse_sensitivity"]["dimension"],
+                  "depth": {},
+              }
+              for depth in range(1, 6):
+                  depth_key = str(depth)
+                  structural[view]["depth"][depth_key] = {}
+                  for model in ("ridge", "extra_trees", "knn"):
+                      full = summary["primary_full_path"]["depth"][depth_key][model]
+                      sparse = summary["sparse_sensitivity"]["depth"][depth_key][model]
+                      structural[view]["depth"][depth_key][model] = {
+                          "n": full.get("n"),
+                          "full_gain_mean": full.get("gain_mean"),
+                          "full_gain_median": full.get("gain_median"),
+                          "full_positive_rate": full.get("gain_positive_rate"),
+                          "full_short_mse": full.get("short_mse"),
+                          "full_long_mse": full.get("long_mse"),
+                          "sparse_gain_mean": sparse.get("gain_mean"),
+                          "sparse_positive_rate": sparse.get("gain_positive_rate"),
+                      }
+
+          populations = {}
+          for view, name in population_files.items():
+              rows = read_gzip_jsonl(name)
+              indices = read_gzip_jsonl(index_files[view])
+              depth_counts = collections.Counter(int(row["realized_structural_depth"]) for row in rows)
+              family_depth = collections.Counter(
+                  (str(row.get("family")), int(row["realized_structural_depth"]))
+                  for row in indices
+              )
+              integrity = collections.Counter(
+                  reason for row in rows for reason in row.get("integrity_reasons", [])
+              )
+              positive_depth = [row for row in rows if int(row["realized_structural_depth"]) > 0]
+              causal_links = [
+                  link.get("predecessor_information_known_before_successor")
+                  for row in rows for link in row.get("causal_executable_availability", [])
+              ]
+              by_day = collections.Counter()
+              for row in indices:
+                  stamp = int(row["t0_idx"])
+                  by_day[dt.datetime.fromtimestamp(stamp, tz=dt.timezone.utc).date().isoformat()] += 1
+              populations[view] = {
+                  "rows": len(rows),
+                  "depth_counts": {str(key): depth_counts[key] for key in range(6)},
+                  "positive_depth_count": len(positive_depth),
+                  "positive_depth_rate": len(positive_depth) / len(rows),
+                  "family_depth_counts": {
+                      f"{family}_D{depth}": count
+                      for (family, depth), count in sorted(family_depth.items())
+                  },
+                  "by_day": dict(sorted(by_day.items())),
+                  "censored": sum(bool(row.get("censored")) for row in rows),
+                  "unresolved": sum(bool(row.get("unresolved")) for row in rows),
+                  "integrity_reasons": dict(integrity.most_common()),
+                  "positive_depth_elapsed_seconds": quantiles(
+                      row.get("elapsed_time_seconds") for row in positive_depth
+                  ),
+                  "causal_link_true": sum(value is True for value in causal_links),
+                  "causal_link_false": sum(value is False for value in causal_links),
+                  "causal_link_unknown": sum(value is None for value in causal_links),
+              }
+
+          crosswalk_rows = read_gzip_jsonl("DUAL_CENSUS_CROSSWALK.jsonl.gz")
+          crosswalk_status = collections.Counter(str(row["status"]) for row in crosswalk_rows)
+          matched_edges = [
+              row for row in crosswalk_rows
+              if row["status"] in {"MATCH", "SPLIT", "MERGE", "COMPLEX_SPLIT_MERGE"}
+          ]
+          depth_deltas = [
+              int(row["native_depth"]) - int(row["legacy_depth"])
+              for row in matched_edges
+          ]
+          crosswalk = {
+              "summary": receipt["crosswalk_summary"],
+              "row_count": len(crosswalk_rows),
+              "status_counts": dict(sorted(crosswalk_status.items())),
+              "primary_one_to_one_edges": sum(
+                  bool(row.get("primary_one_to_one_match")) for row in matched_edges
+              ),
+              "depth_delta_native_minus_legacy": {
+                  "negative": sum(value < 0 for value in depth_deltas),
+                  "zero": sum(value == 0 for value in depth_deltas),
+                  "positive": sum(value > 0 for value in depth_deltas),
+                  "mean": statistics.fmean(depth_deltas) if depth_deltas else None,
+              },
+          }
+
+          report = {
+              "schema": "NG_EXHAUSTION_TWO_DAY_STEP1_READONLY_ANALYSIS_V1_20260825",
+              "completion": {
+                  "status": completion.get("status"),
+                  "archive_sha256": completion.get("results_tar_sha256"),
+                  "receipt_sha256": completion.get("step1_receipt_sha256"),
+              },
+              "source_window": receipt["source_window"],
+              "validation": receipt["diagnostic_validation"],
+              "event_counts": receipt["event_counts"],
+              "family_counts": receipt["family_counts"],
+              "populations": populations,
+              "crosswalk": crosswalk,
+              "structural": structural,
+              "scientific_limits": {
+                  "self_fit_self_score": True,
+                  "out_of_time_validation_claimed": False,
+                  "comparison_to_54w_answers_performed": False,
+                  "predictive_or_trading_experiment_run": False,
+                  "frankie_launched": False,
+              },
+          }
+          print("ANALYSIS_JSON_BEGIN")
+          print(json.dumps(report, sort_keys=True, separators=(",", ":")))
+          print("ANALYSIS_JSON_END")
+          PY
