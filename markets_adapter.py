@@ -38,6 +38,44 @@ from typing import Optional
 import numpy as np
 
 
+# The ordered, named portion of MarketChunkEncoder's emitted vector.  Keeping
+# the feature name beside the MarketFeatures attribute makes registry order and
+# encoder order one contract rather than two synchronized lists.
+MARKET_FEATURE_SPEC: tuple[tuple[str, str], ...] = (
+    ("ret_mean", "ret_mean"),
+    ("ret_std", "ret_std"),
+    ("ret_skew", "ret_skew"),
+    ("ret_kurt", "ret_kurt"),
+    ("autocorr_lag1", "autocorr_lag1"),
+    ("mean_dipole", "mean_dipole"),
+    ("mean_ofi", "mean_ofi"),
+    ("volume_zscore", "volume_zscore"),
+    ("realized_vol", "realized_vol"),
+    ("range_atr", "range_atr"),
+    ("spectral_energy", "spectral_energy"),
+    ("spectral_entropy", "spectral_entropy"),
+    ("peak_frequency", "peak_frequency"),
+    ("spectral_centroid", "spectral_centroid"),
+)
+
+
+def market_feature_registry(d_enc: int) -> tuple[str, ...]:
+    """Return the exact named output order for a MarketChunkEncoder.
+
+    ``d_enc`` is the encoder configuration, not a downstream width constant.
+    The remaining positions are the normalized, downsampled FFT magnitudes
+    that ``MarketChunkEncoder.encode`` actually emits.
+    """
+    if isinstance(d_enc, bool) or not isinstance(d_enc, int):
+        raise TypeError("d_enc must be an integer")
+    if d_enc < len(MARKET_FEATURE_SPEC):
+        raise ValueError("d_enc must accommodate all named market features")
+    return tuple(name for name, _ in MARKET_FEATURE_SPEC) + tuple(
+        f"fft_magnitude_{index}"
+        for index in range(d_enc - len(MARKET_FEATURE_SPEC))
+    )
+
+
 # ---------------------------------------------------------------------------
 # Data structures
 # ---------------------------------------------------------------------------
@@ -399,8 +437,10 @@ class MarketChunkEncoder:
 
     def __init__(self, d_enc: int = 64):
         self.d_enc = d_enc
+        self.feature_registry = market_feature_registry(d_enc)
         self.n_summary = 11
         self.n_spectral_block = 3
+        self.n_named_features = len(MARKET_FEATURE_SPEC)
 
     def _extract(self, chunk: MarketChunk) -> MarketFeatures:
         bars = chunk.bars
@@ -546,18 +586,18 @@ class MarketChunkEncoder:
         )
 
     def encode(self, chunks: list[MarketChunk]) -> list[list[float]]:
-        n_coeff = self.d_enc - self.n_summary - self.n_spectral_block
+        n_coeff = self.d_enc - self.n_named_features
         out: list[list[float]] = []
         for chunk in chunks:
             f = self._extract(chunk)
-            summary = [
-                f.ret_mean, f.ret_std, f.ret_skew, f.ret_kurt, f.autocorr_lag1,
-                f.mean_dipole, f.mean_ofi, f.volume_zscore,
-                f.realized_vol, f.range_atr, f.spectral_energy,
+            named_features = [
+                float(getattr(f, attribute))
+                for _, attribute in MARKET_FEATURE_SPEC
             ]
-            spectral_block = [f.spectral_entropy, f.peak_frequency, f.spectral_centroid]
             coeffs = f.coefficients
-            if not coeffs:
+            if n_coeff == 0:
+                resampled = []
+            elif not coeffs:
                 resampled = [0.0] * n_coeff
             elif len(coeffs) <= n_coeff:
                 resampled = coeffs + [0.0] * (n_coeff - len(coeffs))
@@ -567,7 +607,7 @@ class MarketChunkEncoder:
             max_c = max((abs(c) for c in resampled), default=0.0)
             if max_c > 1e-12:
                 resampled = [c / max_c for c in resampled]
-            out.append(summary + spectral_block + resampled)
+            out.append(named_features + resampled)
         return out
 
     @staticmethod
@@ -609,8 +649,18 @@ class MarketQuery:
 
     def __init__(self, d_enc: int = 64, n_summary: int = 11, n_spectral_block: int = 3):
         self.d_enc = d_enc
+        expected_summary = len(MARKET_FEATURE_SPEC) - 3
+        expected_spectral = 3
         self.n_summary = n_summary
         self.n_spectral_block = n_spectral_block
+        self._canonical_layout = (
+            n_summary == expected_summary
+            and n_spectral_block == expected_spectral
+        )
+        self.feature_registry = (
+            market_feature_registry(d_enc) if self._canonical_layout else None
+        )
+        self.n_named_features = len(MARKET_FEATURE_SPEC)
 
     def from_candidate(self, candidate: SignalCandidate) -> list[float]:
         sig = candidate.spectral_signature
@@ -619,32 +669,80 @@ class MarketQuery:
         return sig + [0.0] * (self.d_enc - len(sig))
 
     def from_regime_target(self, target: MarketFeatures) -> list[float]:
-        summary = [
-            target.ret_mean, target.ret_std, target.ret_skew, target.ret_kurt,
-            target.autocorr_lag1, target.mean_dipole, target.mean_ofi,
-            target.volume_zscore, target.realized_vol, target.range_atr,
-            target.spectral_energy,
+        if not self._canonical_layout:
+            summary = [
+                target.ret_mean, target.ret_std, target.ret_skew, target.ret_kurt,
+                target.autocorr_lag1, target.mean_dipole, target.mean_ofi,
+                target.volume_zscore, target.realized_vol, target.range_atr,
+                target.spectral_energy,
+            ]
+            spectral_block = [
+                target.spectral_entropy,
+                target.peak_frequency,
+                target.spectral_centroid,
+            ]
+            n_coeff = self.d_enc - self.n_summary - self.n_spectral_block
+            coeffs = target.coefficients
+            if n_coeff <= 0:
+                return summary + spectral_block
+            if len(coeffs) >= n_coeff:
+                step = len(coeffs) / n_coeff
+                resampled = [coeffs[int(i * step)] for i in range(n_coeff)]
+            else:
+                resampled = coeffs + [0.0] * (n_coeff - len(coeffs))
+            return summary + spectral_block + resampled
+
+        named_features = [
+            float(getattr(target, attribute))
+            for _, attribute in MARKET_FEATURE_SPEC
         ]
-        spectral_block = [target.spectral_entropy, target.peak_frequency, target.spectral_centroid]
-        n_coeff = self.d_enc - self.n_summary - self.n_spectral_block
+        n_coeff = self.d_enc - self.n_named_features
         coeffs = target.coefficients
         if n_coeff <= 0:
-            return summary + spectral_block
+            return named_features
         if len(coeffs) >= n_coeff:
             step = len(coeffs) / n_coeff
             resampled = [coeffs[int(i * step)] for i in range(n_coeff)]
         else:
             resampled = coeffs + [0.0] * (n_coeff - len(coeffs))
-        return summary + spectral_block + resampled
+        return named_features + resampled
 
     def from_spectral_target(self, target_frequencies: list[float], target_energy: float = 1.0) -> list[float]:
-        n_coeff = self.d_enc - self.n_summary - self.n_spectral_block
-        summary = [0.0] * self.n_summary
-        summary[10] = target_energy
-        spectral_block = [
-            0.5,
-            target_frequencies[0] if target_frequencies else 0.0,
-            (sum(target_frequencies) / len(target_frequencies)) if target_frequencies else 0.0,
+        if not self._canonical_layout:
+            n_coeff = self.d_enc - self.n_summary - self.n_spectral_block
+            summary = [0.0] * self.n_summary
+            summary[10] = target_energy
+            spectral_block = [
+                0.5,
+                target_frequencies[0] if target_frequencies else 0.0,
+                (
+                    sum(target_frequencies) / len(target_frequencies)
+                    if target_frequencies
+                    else 0.0
+                ),
+            ]
+            coeff_profile = [0.0] * max(n_coeff, 0)
+            for frequency in target_frequencies:
+                if n_coeff <= 0:
+                    break
+                index = min(int(frequency * n_coeff), n_coeff - 1)
+                coeff_profile[index] = 1.0
+            return summary + spectral_block + coeff_profile
+
+        n_coeff = self.d_enc - self.n_named_features
+        values_by_name = {name: 0.0 for name, _ in MARKET_FEATURE_SPEC}
+        values_by_name["spectral_energy"] = target_energy
+        values_by_name["spectral_entropy"] = 0.5
+        values_by_name["peak_frequency"] = (
+            target_frequencies[0] if target_frequencies else 0.0
+        )
+        values_by_name["spectral_centroid"] = (
+            sum(target_frequencies) / len(target_frequencies)
+            if target_frequencies
+            else 0.0
+        )
+        named_features = [
+            values_by_name[name] for name, _ in MARKET_FEATURE_SPEC
         ]
         coeff_profile = [0.0] * max(n_coeff, 0)
         for tf in target_frequencies:
@@ -652,7 +750,7 @@ class MarketQuery:
                 break
             idx = min(int(tf * n_coeff), n_coeff - 1)
             coeff_profile[idx] = 1.0
-        return summary + spectral_block + coeff_profile
+        return named_features + coeff_profile
 
 
 # ---------------------------------------------------------------------------

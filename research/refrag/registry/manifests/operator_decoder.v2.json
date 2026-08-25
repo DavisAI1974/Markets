@@ -1,0 +1,215 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "operator_decoder",
+  "operator_name": "Operator Decoder",
+  "description": "Generates candidate operator coefficients from mixed compressed/expanded prefill embeddings. V2 three-tier architecture: deterministic stub, Fourier Neural Operator (FNO) fast proposal, and Bayesian deep ensemble with calibrated uncertainty. FNO operates in frequency domain natively, aligned with spectral operator recovery. Bayesian posterior enables principled decisions about data sufficiency.",
+  "visibility": "internal",
+  "maturity": "experimental",
+  "execution_class": "runtime",
+  "operator_type": "atomic",
+  "tags": [
+    "spectral",
+    "decoding",
+    "FNO",
+    "bayesian",
+    "uncertainty",
+    "neural-operator",
+    "operator-discovery"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "prefill_embeds",
+      "type": "array<array<float>>",
+      "required": true,
+      "description": "Mixed prefill sequence from build_mixed_prompt"
+    },
+    {
+      "name": "prefill_mask",
+      "type": "array<integer>",
+      "required": true,
+      "description": "Attention mask (1=attend, 0=ignore)"
+    },
+    {
+      "name": "decode_mode",
+      "type": "enum(deterministic|fno|bayesian_ensemble|fno_bayesian)",
+      "required": false,
+      "description": "Decode strategy. Default: fno_bayesian"
+    },
+    {
+      "name": "n_refinement_iterations",
+      "type": "integer",
+      "required": false,
+      "description": "Refinement passes. Default: 8"
+    },
+    {
+      "name": "n_ensemble_members",
+      "type": "integer",
+      "required": false,
+      "description": "Bayesian ensemble size. Default: 5"
+    },
+    {
+      "name": "mc_dropout_samples",
+      "type": "integer",
+      "required": false,
+      "description": "MC dropout forward passes. Default: 20"
+    },
+    {
+      "name": "uncertainty_threshold",
+      "type": "float",
+      "required": false,
+      "description": "Posterior width threshold for underdetermined flag. Default: 0.15"
+    },
+    {
+      "name": "fno_checkpoint",
+      "type": "string",
+      "required": false,
+      "description": "FNO weights path. Default: latest"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "operator_coefficients",
+      "type": "array<float>",
+      "description": "MAP estimate of operator coefficient vector"
+    },
+    {
+      "name": "coefficient_posterior",
+      "type": "object",
+      "description": "Per-coefficient mean, std, 95% CI (bayesian modes)"
+    },
+    {
+      "name": "refinement_converged",
+      "type": "boolean",
+      "description": "Whether refinement reached convergence"
+    },
+    {
+      "name": "calibration_score",
+      "type": "float",
+      "description": "Expected Calibration Error (bayesian modes)"
+    },
+    {
+      "name": "underdetermined_flag",
+      "type": "boolean",
+      "description": "True if posterior width exceeds threshold"
+    },
+    {
+      "name": "proposal_source",
+      "type": "enum(deterministic|fno|ensemble)",
+      "description": "Which path produced the proposal"
+    }
+  ],
+  "dependencies": [
+    {
+      "operator_id": "spectral_chunk_encode",
+      "required": true,
+      "reason": "Provides spectral embeddings for prefill construction"
+    },
+    {
+      "operator_id": "operator_query",
+      "required": true,
+      "reason": "Provides query vectors for retrieval"
+    }
+  ],
+  "capabilities": [
+    "operator_recovery",
+    "bayesian_uncertainty",
+    "spectral_decoding",
+    "fno_inference"
+  ],
+  "constraints": {
+    "max_latency_ms": 5000,
+    "max_cost_usd": 0.1,
+    "deterministic": false,
+    "supports_batch": false,
+    "supports_streaming": false,
+    "parallel_safe": true
+  },
+  "runtime": {
+    "invocation_mode": "sync",
+    "retry_policy": {
+      "max_retries": 1,
+      "backoff_strategy": "exponential"
+    },
+    "timeout_ms": 30000
+  },
+  "telemetry": {
+    "emits": [
+      "decode_mode_used",
+      "refinement_iterations",
+      "posterior_width",
+      "underdetermined_flag",
+      "wall_time_ms"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "coefficient_error",
+      "posterior_calibration",
+      "convergence_rate"
+    ],
+    "secondary_metrics": [
+      "wall_time_ms",
+      "gpu_memory_mb"
+    ],
+    "benchmarkable": true
+  },
+  "governance": {
+    "promotion_eligible": false,
+    "exposed_as_mcp_tool": false,
+    "approval_required": false
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [
+      "refrag.decoder_runner.TinyDecoderModel"
+    ],
+    "version": "2.0.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/operator_decoder.v2.json",
+    "implementation_path": "refrag-core/operators/operator_decoder.py",
+    "test_path": "tests/unit/test_operator_decoder.py",
+    "benchmark_path": "benchmarks/operator_decoder_bench.py",
+    "docs_path": "docs/operators/operator_decoder.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "operator-discovery",
+  "examples": [
+    "Recover Liouvillian from spin-boson data using FNO proposal with Bayesian uncertainty",
+    "Report calibrated uncertainty on Genesis seismic operator for investor review"
+  ],
+  "training_contract": {
+    "fno": {
+      "layers": 4,
+      "modes": 16,
+      "width": 64,
+      "loss": "spectral_coefficient_mse + eigenvalue_preservation",
+      "min_training_pairs": 100
+    },
+    "ensemble": {
+      "members": 5,
+      "mc_dropout_rate": 0.1
+    }
+  }
+}

@@ -1,0 +1,161 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "task_meta_learner",
+  "operator_name": "Task Meta-Learner",
+  "description": "Learns cross-task meta-knowledge for operator configuration. V2 uses Hierarchical Bayesian modeling (population-class-instance) with DPGMM automatic taxonomy discovery and MAML-style inner loop adaptation.",
+  "visibility": "internal",
+  "maturity": "experimental",
+  "execution_class": "control",
+  "operator_type": "atomic",
+  "tags": [
+    "meta-learning",
+    "task-taxonomy",
+    "hierarchical-bayes",
+    "DPGMM",
+    "configuration"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "task_description",
+      "type": "string",
+      "required": true,
+      "description": "Task description"
+    },
+    {
+      "name": "task_features",
+      "type": "object",
+      "required": true,
+      "description": "Domain, data_type, size, dimensionality, noise"
+    },
+    {
+      "name": "query_mode",
+      "type": "enum(recommend_config|classify_task|predict_performance|update_from_outcome|explore_task_space)",
+      "required": false,
+      "description": "Default: recommend_config"
+    },
+    {
+      "name": "task_outcome",
+      "type": "object",
+      "required": false,
+      "description": "For update_from_outcome mode"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "recommended_configuration",
+      "type": "object",
+      "description": "Optimal per-operator config with confidence and adaptation source"
+    },
+    {
+      "name": "task_classification",
+      "type": "object",
+      "description": "Learned taxonomy assignment"
+    },
+    {
+      "name": "performance_prediction",
+      "type": "object",
+      "description": "Predicted accuracy bounds"
+    },
+    {
+      "name": "task_space_analysis",
+      "type": "object",
+      "description": "Taxonomy map and under-explored regions"
+    }
+  ],
+  "dependencies": [
+    {
+      "operator_id": "operator_benchmark_suite",
+      "required": true,
+      "reason": "Performance data for configuration learning"
+    },
+    {
+      "operator_id": "pipeline_performance_optimizer",
+      "required": true,
+      "reason": "Optimized configs as training signal"
+    }
+  ],
+  "capabilities": [
+    "task_classification",
+    "configuration_recommendation",
+    "performance_prediction",
+    "taxonomy_discovery"
+  ],
+  "constraints": {
+    "max_latency_ms": 5000,
+    "max_cost_usd": 0.05,
+    "deterministic": false,
+    "supports_batch": true,
+    "supports_streaming": false,
+    "parallel_safe": true
+  },
+  "runtime": {
+    "invocation_mode": "sync",
+    "retry_policy": {
+      "max_retries": 1,
+      "backoff_strategy": "fixed"
+    },
+    "timeout_ms": 15000
+  },
+  "telemetry": {
+    "emits": [
+      "task_class_assigned",
+      "config_confidence",
+      "adaptation_source"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "config_recommendation_accuracy",
+      "performance_prediction_calibration"
+    ],
+    "secondary_metrics": [
+      "taxonomy_stability"
+    ],
+    "benchmarkable": true
+  },
+  "governance": {
+    "promotion_eligible": false,
+    "exposed_as_mcp_tool": false,
+    "approval_required": false
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities",
+      "inputs.type",
+      "outputs.type"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [],
+    "version": "2.0.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/task_meta_learner.v2.json",
+    "implementation_path": "refrag-core/operators/task_meta_learner.py",
+    "test_path": "tests/unit/test_task_meta_learner.py",
+    "benchmark_path": "benchmarks/task_meta_learner_bench.py",
+    "docs_path": "docs/operators/task_meta_learner.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "operator-discovery",
+  "examples": [
+    "New quantum task with 2 observations: config adapted from quantum_spectral class (47 observations), confidence 0.71"
+  ]
+}

@@ -1,0 +1,170 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "operator_promotion_recommender",
+  "operator_name": "Operator Promotion Recommender",
+  "description": "Evaluates internal operators for promotion to public MCP surface. V2 uses XGBoost scoring trained on historical promotion outcomes with counterfactual what-if analysis and autoencoder schema compression for public interface simplification.",
+  "visibility": "internal",
+  "maturity": "experimental",
+  "execution_class": "control",
+  "operator_type": "atomic",
+  "tags": [
+    "meta",
+    "governance",
+    "product-strategy",
+    "XGBoost",
+    "counterfactual"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "operator_id",
+      "type": "string",
+      "required": true,
+      "description": "Operator to evaluate"
+    },
+    {
+      "name": "evaluation_window",
+      "type": "string",
+      "required": false,
+      "description": "ISO duration for analysis"
+    },
+    {
+      "name": "include_schema_suggestions",
+      "type": "boolean",
+      "required": false,
+      "description": "Default: true"
+    },
+    {
+      "name": "run_counterfactual",
+      "type": "boolean",
+      "required": false,
+      "description": "Default: true"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "promotion_score",
+      "type": "float",
+      "description": "0.0-1.0 promotion readiness"
+    },
+    {
+      "name": "recommendation",
+      "type": "enum(promote|hold|retire)",
+      "description": "Promotion decision"
+    },
+    {
+      "name": "blocking_issues",
+      "type": "array<string>",
+      "description": "Issues preventing promotion"
+    },
+    {
+      "name": "schema_suggestions",
+      "type": "object",
+      "description": "Simplified public interface"
+    },
+    {
+      "name": "feature_importances",
+      "type": "object",
+      "description": "XGBoost feature importances"
+    },
+    {
+      "name": "counterfactual_analysis",
+      "type": "object",
+      "description": "Simulated promotion outcomes"
+    }
+  ],
+  "dependencies": [
+    {
+      "operator_id": "operator_lifecycle_tracker",
+      "required": true,
+      "reason": "Maturity state and drift data"
+    },
+    {
+      "operator_id": "operator_lineage_tracker",
+      "required": true,
+      "reason": "Version performance and schema stability"
+    }
+  ],
+  "capabilities": [
+    "promotion_scoring",
+    "counterfactual_analysis",
+    "schema_simplification",
+    "risk_assessment"
+  ],
+  "constraints": {
+    "max_latency_ms": 30000,
+    "max_cost_usd": 0.1,
+    "deterministic": false,
+    "supports_batch": true,
+    "supports_streaming": false,
+    "parallel_safe": true
+  },
+  "runtime": {
+    "invocation_mode": "sync",
+    "retry_policy": {
+      "max_retries": 0,
+      "backoff_strategy": "none"
+    },
+    "timeout_ms": 60000
+  },
+  "telemetry": {
+    "emits": [
+      "promotion_score",
+      "recommendation",
+      "blocking_issues_count"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "promotion_success_prediction_accuracy"
+    ],
+    "secondary_metrics": [
+      "counterfactual_accuracy"
+    ],
+    "benchmarkable": true
+  },
+  "governance": {
+    "promotion_eligible": false,
+    "exposed_as_mcp_tool": false,
+    "approval_required": true
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities",
+      "inputs.type",
+      "outputs.type"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [],
+    "version": "2.0.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/operator_promotion_recommender.v2.json",
+    "implementation_path": "refrag-core/operators/operator_promotion_recommender.py",
+    "test_path": "tests/unit/test_operator_promotion_recommender.py",
+    "benchmark_path": "benchmarks/operator_promotion_recommender_bench.py",
+    "docs_path": "docs/operators/operator_promotion_recommender.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "infrastructure",
+  "examples": [
+    "XGBoost scores encoder at 0.84 for promotion; top feature: 2400 invocations with 0.3% error rate"
+  ]
+}

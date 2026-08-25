@@ -1,0 +1,166 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "operator_gap_finder",
+  "operator_name": "Operator Gap Finder",
+  "description": "Analyzes the operator registry to identify missing capabilities. V2 adds embedding-space coverage analysis via KDE and VAE anomaly detection to find regions of high task density with low operator coverage.",
+  "visibility": "internal",
+  "maturity": "experimental",
+  "execution_class": "control",
+  "operator_type": "atomic",
+  "tags": [
+    "meta",
+    "analysis",
+    "coverage",
+    "embedding",
+    "anomaly-detection"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "registry_snapshot",
+      "type": "array<object>",
+      "required": true,
+      "description": "Current operator manifests"
+    },
+    {
+      "name": "target_domains",
+      "type": "array<string>",
+      "required": false,
+      "description": "Domains to analyze"
+    },
+    {
+      "name": "known_data_types",
+      "type": "array<string>",
+      "required": false,
+      "description": "Data formats the system should support"
+    },
+    {
+      "name": "known_tasks",
+      "type": "array<string>",
+      "required": false,
+      "description": "Task descriptions for coverage analysis"
+    },
+    {
+      "name": "depth",
+      "type": "enum(surface|deep|geometric)",
+      "required": false,
+      "description": "Analysis depth. Default: geometric"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "gaps",
+      "type": "array<object>",
+      "description": "Missing capabilities with severity scores"
+    },
+    {
+      "name": "dead_ends",
+      "type": "array<string>",
+      "description": "Operators whose outputs nothing consumes"
+    },
+    {
+      "name": "unreachable_outputs",
+      "type": "array<string>",
+      "description": "Desirable outputs no chain can produce"
+    },
+    {
+      "name": "coverage_heatmap",
+      "type": "object",
+      "description": "UMAP projection of task-operator embedding space"
+    },
+    {
+      "name": "anomalous_tasks",
+      "type": "array<object>",
+      "description": "Tasks with high VAE reconstruction error"
+    },
+    {
+      "name": "recommendations",
+      "type": "array<object>",
+      "description": "Suggested new operators with draft manifests"
+    }
+  ],
+  "dependencies": [],
+  "capabilities": [
+    "gap_detection",
+    "coverage_analysis",
+    "anomaly_detection",
+    "operator_recommendation"
+  ],
+  "constraints": {
+    "max_latency_ms": 30000,
+    "max_cost_usd": 0.1,
+    "deterministic": false,
+    "supports_batch": false,
+    "supports_streaming": false,
+    "parallel_safe": true
+  },
+  "runtime": {
+    "invocation_mode": "sync",
+    "retry_policy": {
+      "max_retries": 1,
+      "backoff_strategy": "fixed"
+    },
+    "timeout_ms": 60000
+  },
+  "telemetry": {
+    "emits": [
+      "gaps_found",
+      "dead_ends_found",
+      "coverage_score"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "gaps_found",
+      "coverage_score"
+    ],
+    "secondary_metrics": [
+      "wall_time_ms"
+    ],
+    "benchmarkable": true
+  },
+  "governance": {
+    "promotion_eligible": false,
+    "exposed_as_mcp_tool": false,
+    "approval_required": false
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities",
+      "inputs.type",
+      "outputs.type"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [],
+    "version": "2.0.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/operator_gap_finder.v2.json",
+    "implementation_path": "refrag-core/operators/operator_gap_finder.py",
+    "test_path": "tests/unit/test_operator_gap_finder.py",
+    "benchmark_path": "benchmarks/operator_gap_finder_bench.py",
+    "docs_path": "docs/operators/operator_gap_finder.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "operator-discovery",
+  "examples": [
+    "UMAP shows dense cluster of quantum tasks with no nearby operators -- flagged as high-severity gap"
+  ]
+}

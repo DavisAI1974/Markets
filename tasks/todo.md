@@ -1,5 +1,20 @@
 # Frankie full-stack October implementation and launch
 
+## Active: Frankie boss / Sol replacement seam
+
+- [x] Read the governing Frankie handoffs, architecture records, supplied screenshots, ReFRAG bundle,
+  Quantum API artifacts, and actual OD/QSV encoder source.
+- [x] Reproduce the supplied checkpoint: 101 tests passed unchanged.
+- [x] Persist the exact supplied artifacts and SHA-256 inventory in Markets.
+- [x] Add and run RED tests for the named ReFRAG-owned QSV feature registry and derived trunk dimension.
+- [x] Implement the registry/configuration slice and make the focused tests green.
+- [x] Add and run RED tests for the explicit four-field internal-head to BLD-1 projection.
+- [x] Implement the additive typed projector path and make the focused tests green.
+- [x] Lock the boss trunk to exactly one temporal graph branch with a regression test.
+- [x] Run the complete persisted checkpoint suite and relevant Markets regressions (160 passed).
+- [x] Complete adversarial and five-axis reviews; resolve all Critical/Required findings.
+- [ ] Commit atomically, push the branch, and verify the remote files/commit with GitHub.
+
 - [ ] Inventory and preserve every worktree, branch, modified file, and untracked artifact.
 - [ ] Build and test the authority-gated complete knowledge plane and mechanical answer wall.
 - [ ] Build and test the legacy/V4 crosswalk, continuous derived geometry, and lawful opportunity process.

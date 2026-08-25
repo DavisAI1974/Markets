@@ -1,0 +1,213 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "od_spectral_retrieval_pipeline",
+  "operator_name": "OD Spectral Retrieval Pipeline",
+  "description": "End-to-end operator discovery pipeline template. Chains spectral chunking, encoding, retrieval, falsification, decoding, and evidence reasoning into a closed-loop discovery workflow with Bayesian convergence. V2.1 includes runtime/control plane separation, orchestrator execution, and self-optimization cycle.",
+  "visibility": "internal",
+  "maturity": "experimental",
+  "execution_class": "runtime",
+  "operator_type": "pipeline",
+  "tags": [
+    "pipeline",
+    "spectral",
+    "operator-discovery",
+    "end-to-end",
+    "frontier"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "sources",
+      "type": "object",
+      "required": true,
+      "description": "Map of source_id -> raw data"
+    },
+    {
+      "name": "query_mode",
+      "type": "enum(from_candidate|from_spectral_target)",
+      "required": true,
+      "description": "How to construct retrieval query"
+    },
+    {
+      "name": "candidate",
+      "type": "OperatorCandidate",
+      "required": false,
+      "description": "For from_candidate mode"
+    },
+    {
+      "name": "target_frequencies",
+      "type": "array<float>",
+      "required": false,
+      "description": "For from_spectral_target"
+    },
+    {
+      "name": "top_k",
+      "type": "integer",
+      "required": false,
+      "description": "Default: 8"
+    },
+    {
+      "name": "expand_budget",
+      "type": "integer",
+      "required": false,
+      "description": "Default: 4"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "operator_coefficients",
+      "type": "array<float>",
+      "description": "Recovered operator"
+    },
+    {
+      "name": "coefficient_posterior",
+      "type": "object",
+      "description": "Bayesian uncertainty"
+    },
+    {
+      "name": "evidence_graph",
+      "type": "object",
+      "description": "Accumulated evidence structure"
+    },
+    {
+      "name": "discovery_recorded",
+      "type": "boolean",
+      "description": "Whether persisted to discoveries/"
+    },
+    {
+      "name": "pipeline_latency_s",
+      "type": "float",
+      "description": "Total execution time"
+    }
+  ],
+  "dependencies": [
+    {
+      "operator_id": "spectral_chunker",
+      "required": true,
+      "reason": "Stage 1"
+    },
+    {
+      "operator_id": "spectral_chunk_encode",
+      "required": true,
+      "reason": "Stage 2"
+    },
+    {
+      "operator_id": "operator_query",
+      "required": true,
+      "reason": "Stage 5"
+    },
+    {
+      "operator_id": "retrieval_policy_learner",
+      "required": true,
+      "reason": "Stage 4.5"
+    },
+    {
+      "operator_id": "falsification_prioritizer",
+      "required": true,
+      "reason": "Stage 6.5"
+    },
+    {
+      "operator_id": "operator_decoder",
+      "required": true,
+      "reason": "Stage 8"
+    },
+    {
+      "operator_id": "evidence_graph_builder",
+      "required": true,
+      "reason": "Stage 9"
+    },
+    {
+      "operator_id": "operator_orchestrator",
+      "required": true,
+      "reason": "Executes this template"
+    }
+  ],
+  "capabilities": [
+    "operator_discovery",
+    "spectral_analysis",
+    "bayesian_convergence",
+    "evidence_accumulation"
+  ],
+  "constraints": {
+    "max_latency_ms": 60000,
+    "max_cost_usd": 1.0,
+    "deterministic": false,
+    "supports_batch": false,
+    "supports_streaming": false,
+    "parallel_safe": false
+  },
+  "runtime": {
+    "invocation_mode": "sync",
+    "retry_policy": {
+      "max_retries": 1,
+      "backoff_strategy": "exponential"
+    },
+    "timeout_ms": 300000
+  },
+  "telemetry": {
+    "emits": [
+      "pipeline_started",
+      "pipeline_completed",
+      "discovery_recorded",
+      "loop_iterations"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "recovery_accuracy",
+      "convergence_iterations",
+      "discovery_rate"
+    ],
+    "secondary_metrics": [
+      "total_wall_time_ms",
+      "cost_per_discovery"
+    ],
+    "benchmarkable": true
+  },
+  "governance": {
+    "promotion_eligible": false,
+    "exposed_as_mcp_tool": false,
+    "approval_required": false
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [
+      "refrag.run_e2e_pipeline",
+      "od_refrag_adapter.run_od_e2e_example"
+    ],
+    "version": "2.1.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/od_spectral_retrieval_pipeline.v2.json",
+    "implementation_path": "refrag-core/pipelines/od_spectral_retrieval_pipeline.py",
+    "test_path": "tests/integration/test_od_pipeline.py",
+    "benchmark_path": "benchmarks/od_pipeline_bench.py",
+    "docs_path": "docs/pipelines/od_spectral_retrieval_pipeline.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "operator-discovery",
+  "examples": [
+    "Run full OD pipeline against QD3SET-1 spin-boson data to recover Liouvillian operators",
+    "Search for non-Markovian signatures at target frequencies across 1000 .npy files"
+  ]
+}

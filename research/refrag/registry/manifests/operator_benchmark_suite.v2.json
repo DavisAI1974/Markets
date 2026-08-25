@@ -1,0 +1,173 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "operator_benchmark_suite",
+  "operator_name": "Operator Benchmark Suite",
+  "description": "Systematically benchmarks all operators against standardized task suites. V2 adds GP (Gaussian Process) performance prediction for active benchmark design and conditional VAE adversarial task generation to expose operator weaknesses.",
+  "visibility": "internal",
+  "maturity": "experimental",
+  "execution_class": "control",
+  "operator_type": "atomic",
+  "tags": [
+    "benchmarking",
+    "leaderboard",
+    "regression",
+    "gaussian-process",
+    "adversarial-tasks"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "operator_ids",
+      "type": "array<string>",
+      "required": false,
+      "description": "Operators to benchmark. Default: all"
+    },
+    {
+      "name": "task_suite_id",
+      "type": "string",
+      "required": false,
+      "description": "Versioned task suite. Default: standard_v1"
+    },
+    {
+      "name": "benchmark_mode",
+      "type": "enum(standard|stress|adversarial|full)",
+      "required": false,
+      "description": "Default: full"
+    },
+    {
+      "name": "resource_budget",
+      "type": "object",
+      "required": false,
+      "description": "Compute budget"
+    },
+    {
+      "name": "generate_adversarial_tasks",
+      "type": "boolean",
+      "required": false,
+      "description": "Default: true"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "leaderboard",
+      "type": "object",
+      "description": "Ranked performance with Pareto frontier"
+    },
+    {
+      "name": "per_operator_reports",
+      "type": "array<object>",
+      "description": "Detailed per-operator breakdown"
+    },
+    {
+      "name": "regressions_detected",
+      "type": "array<object>",
+      "description": "Operators where latest version regressed"
+    },
+    {
+      "name": "adversarial_findings",
+      "type": "array<object>",
+      "description": "Per-operator weakness profiles"
+    },
+    {
+      "name": "gp_performance_predictions",
+      "type": "object",
+      "description": "GP predictions for unseen task types"
+    }
+  ],
+  "dependencies": [
+    {
+      "operator_id": "operator_lineage_tracker",
+      "required": true,
+      "reason": "Cross-version comparison data"
+    },
+    {
+      "operator_id": "operator_lifecycle_tracker",
+      "required": true,
+      "reason": "Operator maturity context"
+    }
+  ],
+  "capabilities": [
+    "benchmarking",
+    "regression_detection",
+    "adversarial_evaluation",
+    "performance_prediction",
+    "leaderboard"
+  ],
+  "constraints": {
+    "max_latency_ms": 3600000,
+    "max_cost_usd": 10.0,
+    "deterministic": false,
+    "supports_batch": true,
+    "supports_streaming": false,
+    "parallel_safe": true
+  },
+  "runtime": {
+    "invocation_mode": "async",
+    "retry_policy": {
+      "max_retries": 2,
+      "backoff_strategy": "exponential"
+    },
+    "timeout_ms": 7200000
+  },
+  "telemetry": {
+    "emits": [
+      "operators_benchmarked",
+      "regressions_found",
+      "adversarial_failures_found"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "leaderboard_stability",
+      "regression_detection_rate"
+    ],
+    "secondary_metrics": [
+      "adversarial_coverage"
+    ],
+    "benchmarkable": false
+  },
+  "governance": {
+    "promotion_eligible": false,
+    "exposed_as_mcp_tool": false,
+    "approval_required": false
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities",
+      "inputs.type",
+      "outputs.type"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [],
+    "version": "2.0.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/operator_benchmark_suite.v2.json",
+    "implementation_path": "refrag-core/operators/operator_benchmark_suite.py",
+    "test_path": "tests/unit/test_operator_benchmark_suite.py",
+    "benchmark_path": "benchmarks/operator_benchmark_suite_bench.py",
+    "docs_path": "docs/operators/operator_benchmark_suite.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "infrastructure",
+  "examples": [
+    "Adversarial generator discovers operator_decoder fails on inputs with exactly 3 dominant frequencies"
+  ]
+}

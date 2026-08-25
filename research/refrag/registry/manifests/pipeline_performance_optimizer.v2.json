@@ -1,0 +1,169 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "pipeline_performance_optimizer",
+  "operator_name": "Pipeline Performance Optimizer",
+  "description": "Optimizes end-to-end pipeline execution at the stage level. V2 uses TPE for cross-stage hyperparameter tuning, fANOVA for parameter importance, and a Transformer-based scheduler for stage reordering and parallelization.",
+  "visibility": "internal",
+  "maturity": "experimental",
+  "execution_class": "control",
+  "operator_type": "atomic",
+  "tags": [
+    "optimization",
+    "pipeline",
+    "bottleneck",
+    "scheduling",
+    "TPE",
+    "resource-allocation"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "pipeline_id",
+      "type": "string",
+      "required": true,
+      "description": "Pipeline to optimize"
+    },
+    {
+      "name": "pipeline_trace",
+      "type": "object",
+      "required": false,
+      "description": "Recent execution trace. Null = run profiling first"
+    },
+    {
+      "name": "optimization_target",
+      "type": "enum(latency|throughput|cost|accuracy_per_flop|balanced)",
+      "required": false,
+      "description": "Default: balanced"
+    },
+    {
+      "name": "resource_budget",
+      "type": "object",
+      "required": false,
+      "description": "Available GPU/CPU/time/cost"
+    },
+    {
+      "name": "tpe_trials",
+      "type": "integer",
+      "required": false,
+      "description": "TPE optimization trials. Default: 50"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "profiling_report",
+      "type": "object",
+      "description": "Per-stage timing, critical path, bottlenecks, parallelizable groups"
+    },
+    {
+      "name": "resource_allocation",
+      "type": "object",
+      "description": "Optimized per-stage resource allocation"
+    },
+    {
+      "name": "hyperparameter_optimization",
+      "type": "object",
+      "description": "TPE results with fANOVA importances and interaction effects"
+    },
+    {
+      "name": "scheduling_plan",
+      "type": "object",
+      "description": "Optimized execution order with parallel groups"
+    },
+    {
+      "name": "caching_recommendations",
+      "type": "array<object>",
+      "description": "Stage caching ROI estimates"
+    }
+  ],
+  "dependencies": [
+    {
+      "operator_id": "operator_benchmark_suite",
+      "required": true,
+      "reason": "Benchmark data for optimization baselines"
+    }
+  ],
+  "capabilities": [
+    "pipeline_profiling",
+    "hyperparameter_tuning",
+    "bottleneck_detection",
+    "scheduling_optimization",
+    "resource_allocation"
+  ],
+  "constraints": {
+    "max_latency_ms": 600000,
+    "max_cost_usd": 5.0,
+    "deterministic": false,
+    "supports_batch": false,
+    "supports_streaming": false,
+    "parallel_safe": false
+  },
+  "runtime": {
+    "invocation_mode": "async",
+    "retry_policy": {
+      "max_retries": 1,
+      "backoff_strategy": "exponential"
+    },
+    "timeout_ms": 1200000
+  },
+  "telemetry": {
+    "emits": [
+      "bottlenecks_found",
+      "speedup_achieved",
+      "best_config_score"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "end_to_end_speedup",
+      "cost_reduction"
+    ],
+    "secondary_metrics": [
+      "fanova_interaction_count"
+    ],
+    "benchmarkable": true
+  },
+  "governance": {
+    "promotion_eligible": false,
+    "exposed_as_mcp_tool": false,
+    "approval_required": false
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities",
+      "inputs.type",
+      "outputs.type"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [],
+    "version": "2.0.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/pipeline_performance_optimizer.v2.json",
+    "implementation_path": "refrag-core/operators/pipeline_performance_optimizer.py",
+    "test_path": "tests/unit/test_pipeline_performance_optimizer.py",
+    "benchmark_path": "benchmarks/pipeline_performance_optimizer_bench.py",
+    "docs_path": "docs/operators/pipeline_performance_optimizer.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "infrastructure",
+  "examples": [
+    "TPE finds window_size=192 + d_enc=96 + top_k=6 is Pareto-optimal combination"
+  ]
+}

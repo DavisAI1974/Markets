@@ -1,0 +1,168 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "manifest_synthesizer",
+  "operator_name": "Manifest Synthesizer",
+  "description": "Detects repeated successful execution patterns and synthesizes new operator manifest drafts. V2 uses PrefixSpan sequential pattern mining plus a Sequential VAE that generates novel operator compositions from learned latent pipeline structure.",
+  "visibility": "internal",
+  "maturity": "experimental",
+  "execution_class": "control",
+  "operator_type": "atomic",
+  "tags": [
+    "meta-learning",
+    "synthesis",
+    "PrefixSpan",
+    "VAE",
+    "generative",
+    "registry"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "execution_logs",
+      "type": "array<object>",
+      "required": true,
+      "description": "Pipeline execution traces"
+    },
+    {
+      "name": "min_occurrences",
+      "type": "integer",
+      "required": false,
+      "description": "Minimum pattern count. Default: 5"
+    },
+    {
+      "name": "min_success_rate",
+      "type": "float",
+      "required": false,
+      "description": "Minimum success rate. Default: 0.9"
+    },
+    {
+      "name": "synthesis_mode",
+      "type": "enum(frequent_patterns|vae_generation|hybrid)",
+      "required": false,
+      "description": "Default: hybrid"
+    },
+    {
+      "name": "n_vae_samples",
+      "type": "integer",
+      "required": false,
+      "description": "Novel compositions to sample. Default: 10"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "proposed_manifests",
+      "type": "array<object>",
+      "description": "Draft manifest JSON objects"
+    },
+    {
+      "name": "pattern_evidence",
+      "type": "array<object>",
+      "description": "Execution traces supporting each proposal"
+    },
+    {
+      "name": "confidence_per_proposal",
+      "type": "array<float>",
+      "description": "Robustness of each pattern"
+    },
+    {
+      "name": "vae_generated_compositions",
+      "type": "array<object>",
+      "description": "Novel chains from VAE latent space"
+    },
+    {
+      "name": "inferred_contracts",
+      "type": "array<object>",
+      "description": "Auto-inferred input/output contracts"
+    }
+  ],
+  "dependencies": [
+    {
+      "operator_id": "operator_lifecycle_tracker",
+      "required": true,
+      "reason": "Needs lifecycle state to filter active operators"
+    }
+  ],
+  "capabilities": [
+    "pattern_mining",
+    "operator_synthesis",
+    "contract_inference",
+    "generative_composition"
+  ],
+  "constraints": {
+    "max_latency_ms": 60000,
+    "max_cost_usd": 0.5,
+    "deterministic": false,
+    "supports_batch": false,
+    "supports_streaming": false,
+    "parallel_safe": false
+  },
+  "runtime": {
+    "invocation_mode": "sync",
+    "retry_policy": {
+      "max_retries": 0,
+      "backoff_strategy": "none"
+    },
+    "timeout_ms": 120000
+  },
+  "telemetry": {
+    "emits": [
+      "patterns_found",
+      "manifests_proposed",
+      "vae_samples_generated"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "proposals_accepted_rate",
+      "pattern_quality"
+    ],
+    "secondary_metrics": [
+      "wall_time_ms"
+    ],
+    "benchmarkable": true
+  },
+  "governance": {
+    "promotion_eligible": false,
+    "exposed_as_mcp_tool": false,
+    "approval_required": true
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities",
+      "inputs.type",
+      "outputs.type"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [],
+    "version": "2.0.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/manifest_synthesizer.v2.json",
+    "implementation_path": "refrag-core/operators/manifest_synthesizer.py",
+    "test_path": "tests/unit/test_manifest_synthesizer.py",
+    "benchmark_path": "benchmarks/manifest_synthesizer_bench.py",
+    "docs_path": "docs/operators/manifest_synthesizer.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "infrastructure",
+  "examples": [
+    "PrefixSpan discovers chunk->encode->falsify->decode runs 23 times with 96% success: proposes falsification_discovery operator"
+  ]
+}

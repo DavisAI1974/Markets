@@ -1,0 +1,181 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "operator_chain_builder",
+  "operator_name": "Operator Chain Builder",
+  "description": "Infers and constructs multi-step operator chains from task objectives. V2 uses a Transformer encoder to score chains and MCTS (Monte Carlo Tree Search) with the Transformer as value function for efficient search over exponentially large chain spaces.",
+  "visibility": "internal",
+  "maturity": "experimental",
+  "execution_class": "control",
+  "operator_type": "atomic",
+  "tags": [
+    "meta",
+    "composition",
+    "chaining",
+    "planning",
+    "transformer",
+    "MCTS"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "task_objective",
+      "type": "string",
+      "required": true,
+      "description": "Discovery goal in natural language"
+    },
+    {
+      "name": "available_operators",
+      "type": "array<string>",
+      "required": false,
+      "description": "Operators to consider. Default: all"
+    },
+    {
+      "name": "constraints",
+      "type": "object",
+      "required": false,
+      "description": "max_chain_length, required/forbidden operators"
+    },
+    {
+      "name": "optimization_target",
+      "type": "enum(speed|accuracy|coverage|uncertainty_reduction)",
+      "required": false,
+      "description": "Default: accuracy"
+    },
+    {
+      "name": "search_mode",
+      "type": "enum(exhaustive|mcts|beam_search)",
+      "required": false,
+      "description": "Default: mcts"
+    },
+    {
+      "name": "mcts_simulations",
+      "type": "integer",
+      "required": false,
+      "description": "MCTS rollouts. Default: 200"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "chain",
+      "type": "array<object>",
+      "description": "Ordered operator sequence with I/O mappings"
+    },
+    {
+      "name": "chain_score",
+      "type": "float",
+      "description": "Transformer-predicted success probability"
+    },
+    {
+      "name": "alternative_chains",
+      "type": "array<object>",
+      "description": "Top-k alternatives from MCTS"
+    },
+    {
+      "name": "missing_capabilities",
+      "type": "array<string>",
+      "description": "Operators the chain needs but don't exist"
+    }
+  ],
+  "dependencies": [
+    {
+      "operator_id": "operator_composability_scorer",
+      "required": true,
+      "reason": "Scores operator pair compatibility for chain construction"
+    },
+    {
+      "operator_id": "operator_gap_finder",
+      "required": false,
+      "reason": "Identifies when chain cannot be completed due to missing operators"
+    },
+    {
+      "operator_id": "operator_lineage_tracker",
+      "required": true,
+      "reason": "Selects best operator version per chain slot"
+    }
+  ],
+  "capabilities": [
+    "chain_construction",
+    "pipeline_planning",
+    "mcts_search",
+    "chain_scoring"
+  ],
+  "constraints": {
+    "max_latency_ms": 30000,
+    "max_cost_usd": 0.1,
+    "deterministic": false,
+    "supports_batch": false,
+    "supports_streaming": false,
+    "parallel_safe": true
+  },
+  "runtime": {
+    "invocation_mode": "sync",
+    "retry_policy": {
+      "max_retries": 1,
+      "backoff_strategy": "fixed"
+    },
+    "timeout_ms": 60000
+  },
+  "telemetry": {
+    "emits": [
+      "chain_length",
+      "chain_score",
+      "search_nodes_explored",
+      "missing_capabilities_count"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "chain_success_rate",
+      "chain_score_accuracy"
+    ],
+    "secondary_metrics": [
+      "search_efficiency",
+      "wall_time_ms"
+    ],
+    "benchmarkable": true
+  },
+  "governance": {
+    "promotion_eligible": true,
+    "exposed_as_mcp_tool": false,
+    "approval_required": false
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities",
+      "inputs.type",
+      "outputs.type"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [],
+    "version": "2.0.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/operator_chain_builder.v2.json",
+    "implementation_path": "refrag-core/operators/operator_chain_builder.py",
+    "test_path": "tests/unit/test_operator_chain_builder.py",
+    "benchmark_path": "benchmarks/operator_chain_builder_bench.py",
+    "docs_path": "docs/operators/operator_chain_builder.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "operator-discovery",
+  "examples": [
+    "MCTS discovers non-obvious chain: gap_finder->contrastive_encoder->falsification->decoder, scoring 0.87"
+  ]
+}

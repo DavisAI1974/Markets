@@ -1,0 +1,187 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "operator_query",
+  "operator_name": "Operator Query Builder",
+  "description": "Single interface to the operator registry and query vector construction. Converts candidate operators or spectral targets into query vectors for index search. V2 adds learned query synthesis conditioned on evidence state, plus DPP (Determinantal Point Processes) for diverse multi-query generation.",
+  "visibility": "internal",
+  "maturity": "experimental",
+  "execution_class": "runtime",
+  "operator_type": "atomic",
+  "tags": [
+    "spectral",
+    "query",
+    "learned-synthesis",
+    "DPP",
+    "diversity",
+    "registry",
+    "operator-discovery"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "mode",
+      "type": "enum(from_candidate|from_spectral_target|learned_synthesis|multi_query_dpp)",
+      "required": true,
+      "description": "Query construction mode"
+    },
+    {
+      "name": "candidate",
+      "type": "OperatorCandidate",
+      "required": false,
+      "description": "Candidate operator (from_candidate/learned_synthesis)"
+    },
+    {
+      "name": "target_frequencies",
+      "type": "array<float>",
+      "required": false,
+      "description": "Target frequencies (from_spectral_target)"
+    },
+    {
+      "name": "target_energy",
+      "type": "float",
+      "required": false,
+      "description": "Target spectral energy (from_spectral_target)"
+    },
+    {
+      "name": "evidence_state",
+      "type": "object",
+      "required": false,
+      "description": "Current evidence graph state for learned synthesis"
+    },
+    {
+      "name": "n_queries",
+      "type": "integer",
+      "required": false,
+      "description": "Number of diverse queries. >1 triggers DPP. Default: 1"
+    },
+    {
+      "name": "d_enc",
+      "type": "integer",
+      "required": false,
+      "description": "Query vector dimension. Default: 128"
+    },
+    {
+      "name": "sample_rate",
+      "type": "float",
+      "required": false,
+      "description": "For frequency bin calculation. Default: 1.0"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "query_vectors",
+      "type": "array<array<float>>",
+      "description": "d_enc-dimensional query vectors"
+    },
+    {
+      "name": "query_diversity_score",
+      "type": "float",
+      "description": "DPP log-determinant (multi_query_dpp mode)"
+    },
+    {
+      "name": "expected_information_gain",
+      "type": "array<float>",
+      "description": "Per-query estimated information gain"
+    }
+  ],
+  "dependencies": [
+    {
+      "operator_id": "spectral_chunk_encode",
+      "required": true,
+      "reason": "Must produce embeddings in same space as query vectors"
+    }
+  ],
+  "capabilities": [
+    "query_construction",
+    "registry_search",
+    "multi_query_diversity",
+    "learned_query_synthesis"
+  ],
+  "constraints": {
+    "max_latency_ms": 200,
+    "max_cost_usd": 0.001,
+    "deterministic": false,
+    "supports_batch": true,
+    "supports_streaming": false,
+    "parallel_safe": true
+  },
+  "runtime": {
+    "invocation_mode": "sync",
+    "retry_policy": {
+      "max_retries": 0,
+      "backoff_strategy": "none"
+    },
+    "timeout_ms": 2000
+  },
+  "telemetry": {
+    "emits": [
+      "query_mode_used",
+      "n_queries_generated",
+      "diversity_score"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "retrieval_precision_at_k",
+      "information_gain_realized"
+    ],
+    "secondary_metrics": [
+      "query_diversity_score",
+      "wall_time_ms"
+    ],
+    "benchmarkable": true
+  },
+  "governance": {
+    "promotion_eligible": false,
+    "exposed_as_mcp_tool": false,
+    "approval_required": false
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [
+      "od_refrag_adapter.OperatorQuery"
+    ],
+    "version": "2.0.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/operator_query.v2.json",
+    "implementation_path": "refrag-core/operators/operator_query.py",
+    "test_path": "tests/unit/test_operator_query.py",
+    "benchmark_path": "benchmarks/operator_query_bench.py",
+    "docs_path": "docs/operators/operator_query.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "operator-discovery",
+  "examples": [
+    "DPP generates 5 diverse queries covering different frequency bands of the candidate operator's spectral signature"
+  ],
+  "training_contract": {
+    "query_synthesis": {
+      "architecture": "Cross-attention on operator embedding + evidence state",
+      "loss": "contrastive"
+    },
+    "dpp": {
+      "type": "L-ensemble DPP"
+    }
+  }
+}

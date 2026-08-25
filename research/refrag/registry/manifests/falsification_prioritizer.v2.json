@@ -1,0 +1,178 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "falsification_prioritizer",
+  "operator_name": "Falsification Prioritizer",
+  "description": "Ranks data regions by falsification potential. V2 uses MINE (Mutual Information Neural Estimation) and BALD (Bayesian Active Learning by Disagreement) acquisition for information-theoretic selection. Each chunk is scored by expected posterior contraction on operator validity.",
+  "visibility": "internal",
+  "maturity": "experimental",
+  "execution_class": "runtime",
+  "operator_type": "atomic",
+  "tags": [
+    "falsification",
+    "information-theory",
+    "active-learning",
+    "MINE",
+    "BALD"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "candidate_operator",
+      "type": "object",
+      "required": true,
+      "description": "Operator coefficients and spectral signature"
+    },
+    {
+      "name": "dataset_chunks",
+      "type": "array<object>",
+      "required": true,
+      "description": "Indexed fragments with spectral embeddings"
+    },
+    {
+      "name": "falsification_mode",
+      "type": "enum(divergence_ranked|info_theoretic|adversarial)",
+      "required": false,
+      "description": "Default: info_theoretic"
+    },
+    {
+      "name": "operator_posterior",
+      "type": "object",
+      "required": false,
+      "description": "Bayesian posterior from decoder for BALD"
+    },
+    {
+      "name": "top_k",
+      "type": "integer",
+      "required": false,
+      "description": "Targets to return. Default: 10"
+    },
+    {
+      "name": "acquisition_function",
+      "type": "enum(max_entropy|bald|expected_improvement|thompson)",
+      "required": false,
+      "description": "Default: bald"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "falsification_targets",
+      "type": "array<object>",
+      "description": "Ranked chunks with info gain scores"
+    },
+    {
+      "name": "expected_posterior_contraction",
+      "type": "array<float>",
+      "description": "Per-target uncertainty reduction"
+    },
+    {
+      "name": "priority_validation_plan",
+      "type": "array<string>",
+      "description": "Information-greedy ordering"
+    },
+    {
+      "name": "estimated_chunks_to_resolution",
+      "type": "integer",
+      "description": "Chunks needed for >95% confidence"
+    },
+    {
+      "name": "estimated_falsification_probability",
+      "type": "float",
+      "description": "Probability operator will be falsified"
+    }
+  ],
+  "dependencies": [
+    {
+      "operator_id": "spectral_chunk_encode",
+      "required": true,
+      "reason": "Chunk embeddings for comparison"
+    },
+    {
+      "operator_id": "operator_decoder",
+      "required": true,
+      "reason": "Candidate operator and posterior"
+    }
+  ],
+  "capabilities": [
+    "falsification",
+    "information_theoretic_selection",
+    "active_learning",
+    "uncertainty_reduction"
+  ],
+  "constraints": {
+    "max_latency_ms": 3000,
+    "max_cost_usd": 0.05,
+    "deterministic": false,
+    "supports_batch": false,
+    "supports_streaming": false,
+    "parallel_safe": true
+  },
+  "runtime": {
+    "invocation_mode": "sync",
+    "retry_policy": {
+      "max_retries": 0,
+      "backoff_strategy": "none"
+    },
+    "timeout_ms": 10000
+  },
+  "telemetry": {
+    "emits": [
+      "targets_ranked",
+      "estimated_chunks_to_resolution",
+      "acquisition_function_used"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "falsification_detection_rate",
+      "chunks_to_resolution_accuracy"
+    ],
+    "secondary_metrics": [
+      "wall_time_ms"
+    ],
+    "benchmarkable": true
+  },
+  "governance": {
+    "promotion_eligible": false,
+    "exposed_as_mcp_tool": false,
+    "approval_required": false
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities",
+      "inputs.type",
+      "outputs.type"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [],
+    "version": "2.0.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/falsification_prioritizer.v2.json",
+    "implementation_path": "refrag-core/operators/falsification_prioritizer.py",
+    "test_path": "tests/unit/test_falsification_prioritizer.py",
+    "benchmark_path": "benchmarks/falsification_prioritizer_bench.py",
+    "docs_path": "docs/operators/falsification_prioritizer.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "operator-discovery",
+  "examples": [
+    "BALD identifies 10 most informative spin-boson files out of 1000, estimates 47 chunks to resolve"
+  ]
+}

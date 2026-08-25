@@ -1,5 +1,56 @@
 # Frankie full-stack October implementation and launch
 
+## Active continuation: Frankie boss / Sol replacement seam
+
+### Outcome
+
+Persist the supplied from-scratch boss-model checkpoint and ReFRAG v2.1 source bundle in Markets,
+then close only the two declared seams: the named QSV feature registry and the explicit internal-head
+to BLD-1 projection. Keep the existing Frankie core, S135 provider seam, ReFRAG governance, and all
+1,940 registered capability paths unchanged and addressable.
+
+### Source decisions
+
+- Repository-root `markets_adapter.py::MarketChunkEncoder.encode` at stable Markets ref
+  `7f492b2bcb3934ff3e280f4ef0b44fc3d38b486e` is the executable authority for QSV/OD input order.
+  The generic OD mirror, unrelated 45-column BTC experiment, 128-D dipole coefficient object, un-emitted
+  Phase 1.5 attributes, and manifest prose are not substituted for the executable vector.
+- `QSV_FEATURE_REGISTRY` is owned once by ReFRAG: the market encoder's 14 emitted named features
+  followed by generated FFT-magnitude slot names derived from that encoder's configured `d_enc`.
+- `TrunkConfig.qsv_dim` is derived from `len(QSV_FEATURE_REGISTRY)` and must equal it. QSV remains
+  dormant by default through a separate `use_qsv` switch; masking and exact projection ablation stay
+  unchanged when enabled.
+- Internal-to-BLD projection is semantic, not a guessed numerical transform. The only public mappings
+  are whole-session net USD, overnight gap USD, the already-decoded endogenous timestamp/value P50
+  curve, and the already-governed `low|med|high` confidence label. Probabilities, logits, `p_up`, size,
+  regime, contradiction, sigma, and evidence heads remain internal.
+- The typed entry point projects through the authoritative S121-compatible 12-field BLD-1 boundary;
+  CALL/ABSTAIN disposition remains independent of confidence and the market-path forecast.
+- The boss trunk has exactly one shared temporal/causal graph branch, not three graph models.
+
+### Increments
+
+1. Persist exact supplied checkpoint and ReFRAG artifacts with SHA-256 provenance; materialize the
+   executable checkpoint as an isolated `research.kalshi.frankie_boss` package.
+2. Add RED tests proving registry order matches encoder output, width is derived rather than hardcoded,
+   configuration drift fails closed, and optional masking/ablation remain exact.
+3. Implement the ReFRAG-owned registry and trunk import/configuration changes; run the focused slice.
+4. Add RED tests proving the four explicit internal mappings, endpoint semantics, malformed-output
+   abstention, and non-leakage of additional learned quantities.
+5. Implement the typed mapping and additive projector entry point; run focused and full checkpoint suites.
+6. Run a fresh-context adversarial review, the agent-skills five-axis review, diff/secrets checks, then
+   commit, push, and verify the branch through GitHub.
+
+### Acceptance
+
+- `qsv_dim == len(QSV_FEATURE_REGISTRY)` by construction and validation; no trunk width literal exists.
+- Registry names are byte-order aligned with every vector emitted by the actual ReFRAG encoder.
+- QSV is disabled by default, masked when partially unavailable, and exactly ablatable when enabled.
+- Exactly four internal learned quantities cross into BLD-1; additional heads cannot leak through.
+- Exactly one temporal graph branch exists in the trunk.
+- The existing Frankie core/provider files and ReFRAG manifest governance are not modified or duplicated.
+- The original 101-test checkpoint and all new tests pass from the persisted Markets package.
+
 ## Outcome
 
 Build a fresh additive runner at the remote target-branch base that implements every requirement in

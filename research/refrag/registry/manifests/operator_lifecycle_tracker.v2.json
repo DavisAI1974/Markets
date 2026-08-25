@@ -1,0 +1,161 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "operator_lifecycle_tracker",
+  "operator_name": "Operator Lifecycle Tracker",
+  "description": "Tracks operator lifecycle state transitions with audit trails. V2 adds ADWIN streaming drift detection and Cox Proportional Hazards survival analysis to predict operator lifespan.",
+  "visibility": "internal",
+  "maturity": "beta",
+  "execution_class": "control",
+  "operator_type": "atomic",
+  "tags": [
+    "governance",
+    "lifecycle",
+    "drift-detection",
+    "ADWIN",
+    "survival-analysis"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "operator_id",
+      "type": "string",
+      "required": true,
+      "description": "Operator to track"
+    },
+    {
+      "name": "transition_to",
+      "type": "enum(experimental|beta|stable|deprecated|promoted)",
+      "required": false,
+      "description": "Target state"
+    },
+    {
+      "name": "reason",
+      "type": "string",
+      "required": false,
+      "description": "Transition justification"
+    },
+    {
+      "name": "evidence",
+      "type": "array<string>",
+      "required": false,
+      "description": "Links to test results, reviews"
+    },
+    {
+      "name": "approved_by",
+      "type": "string",
+      "required": false,
+      "description": "Actor identifier"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "transition_recorded",
+      "type": "boolean",
+      "description": "Whether transition was applied"
+    },
+    {
+      "name": "current_state",
+      "type": "string",
+      "description": "Updated lifecycle state"
+    },
+    {
+      "name": "transition_history",
+      "type": "array<object>",
+      "description": "Full audit trail"
+    },
+    {
+      "name": "drift_status",
+      "type": "object",
+      "description": "ADWIN drift detection state"
+    },
+    {
+      "name": "survival_estimate",
+      "type": "object",
+      "description": "Median remaining days, hazard rate, CI"
+    }
+  ],
+  "dependencies": [],
+  "capabilities": [
+    "lifecycle_tracking",
+    "drift_detection",
+    "survival_analysis",
+    "audit_trailing"
+  ],
+  "constraints": {
+    "max_latency_ms": 1000,
+    "max_cost_usd": 0.001,
+    "deterministic": true,
+    "supports_batch": true,
+    "supports_streaming": true,
+    "parallel_safe": true
+  },
+  "runtime": {
+    "invocation_mode": "sync",
+    "retry_policy": {
+      "max_retries": 2,
+      "backoff_strategy": "fixed"
+    },
+    "timeout_ms": 5000
+  },
+  "telemetry": {
+    "emits": [
+      "transitions_recorded",
+      "drift_detected",
+      "survival_updated"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "drift_detection_latency",
+      "survival_prediction_accuracy"
+    ],
+    "secondary_metrics": [
+      "transitions_per_day"
+    ],
+    "benchmarkable": false
+  },
+  "governance": {
+    "promotion_eligible": false,
+    "exposed_as_mcp_tool": false,
+    "approval_required": false
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities",
+      "inputs.type",
+      "outputs.type"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [],
+    "version": "2.0.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/operator_lifecycle_tracker.v2.json",
+    "implementation_path": "refrag-core/operators/operator_lifecycle_tracker.py",
+    "test_path": "tests/unit/test_operator_lifecycle_tracker.py",
+    "benchmark_path": "benchmarks/operator_lifecycle_tracker_bench.py",
+    "docs_path": "docs/operators/operator_lifecycle_tracker.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "infrastructure",
+  "examples": [
+    "ADWIN detects 0.8% error rate drift in encoder after new dataset type; flags for review"
+  ]
+}

@@ -1,0 +1,161 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "exploration_policy_controller",
+  "operator_name": "Exploration Policy Controller",
+  "description": "Governs system-wide exploration vs exploitation. V2 uses Thompson Sampling with hierarchical reward and Markowitz mean-variance portfolio optimization for diversified experimental investment.",
+  "visibility": "internal",
+  "maturity": "experimental",
+  "execution_class": "control",
+  "operator_type": "atomic",
+  "tags": [
+    "exploration",
+    "exploitation",
+    "bandit",
+    "thompson-sampling",
+    "portfolio"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "system_state",
+      "type": "object",
+      "required": true,
+      "description": "Registry snapshot, pending tasks, resources, gap report"
+    },
+    {
+      "name": "exploration_budget",
+      "type": "object",
+      "required": false,
+      "description": "Compute fraction, max runs, risk tolerance"
+    },
+    {
+      "name": "strategic_priorities",
+      "type": "array<string>",
+      "required": false,
+      "description": "Override priorities for exploration bias"
+    },
+    {
+      "name": "time_horizon",
+      "type": "enum(immediate|sprint|quarter|long_term)",
+      "required": false,
+      "description": "Default: sprint"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "exploration_plan",
+      "type": "object",
+      "description": "Prioritized experimental activities with resource allocations"
+    },
+    {
+      "name": "portfolio_allocation",
+      "type": "object",
+      "description": "Markowitz risk-return frontier and selected portfolio"
+    },
+    {
+      "name": "opportunity_cost_analysis",
+      "type": "object",
+      "description": "Unexplored high-value activities and stagnation risks"
+    }
+  ],
+  "dependencies": [
+    {
+      "operator_id": "operator_benchmark_suite",
+      "required": true,
+      "reason": "Performance data for reward estimation"
+    },
+    {
+      "operator_id": "operator_gap_finder",
+      "required": true,
+      "reason": "Gap report for exploration targeting"
+    },
+    {
+      "operator_id": "task_meta_learner",
+      "required": true,
+      "reason": "Task knowledge for strategic allocation"
+    }
+  ],
+  "capabilities": [
+    "exploration_planning",
+    "portfolio_optimization",
+    "risk_diversification",
+    "strategic_allocation"
+  ],
+  "constraints": {
+    "max_latency_ms": 30000,
+    "max_cost_usd": 0.1,
+    "deterministic": false,
+    "supports_batch": false,
+    "supports_streaming": false,
+    "parallel_safe": true
+  },
+  "runtime": {
+    "invocation_mode": "sync",
+    "retry_policy": {
+      "max_retries": 0,
+      "backoff_strategy": "none"
+    },
+    "timeout_ms": 60000
+  },
+  "telemetry": {
+    "emits": [
+      "activities_planned",
+      "portfolio_diversification_score",
+      "stagnation_risks_found"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "exploration_roi",
+      "portfolio_return"
+    ],
+    "secondary_metrics": [
+      "diversification_score"
+    ],
+    "benchmarkable": true
+  },
+  "governance": {
+    "promotion_eligible": false,
+    "exposed_as_mcp_tool": false,
+    "approval_required": false
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities",
+      "inputs.type",
+      "outputs.type"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [],
+    "version": "2.0.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/exploration_policy_controller.v2.json",
+    "implementation_path": "refrag-core/operators/exploration_policy_controller.py",
+    "test_path": "tests/unit/test_exploration_policy_controller.py",
+    "benchmark_path": "benchmarks/exploration_policy_controller_bench.py",
+    "docs_path": "docs/operators/exploration_policy_controller.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "infrastructure",
+  "examples": [
+    "Sprint plan: 40% exploit quantum, 30% test FNO v2.1 on seismic, 20% benchmark all, 10% moonshot transfer"
+  ]
+}

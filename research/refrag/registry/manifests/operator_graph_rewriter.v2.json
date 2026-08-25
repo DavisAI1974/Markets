@@ -1,0 +1,196 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "operator_graph_rewriter",
+  "operator_name": "Operator Graph Rewriter",
+  "description": "Restructures the operator graph based on accumulated performance data. Promotes chains to operators, prunes underperformers, merges redundant operators, inserts adapters. V2 uses GIN (Graph Isomorphism Network) for learned rewrite prediction and Monte Carlo rollout for impact simulation. All rewrites are reversible and require approval tokens.",
+  "visibility": "internal",
+  "maturity": "experimental",
+  "execution_class": "control",
+  "operator_type": "composite",
+  "tags": [
+    "self-optimization",
+    "graph-rewriting",
+    "topology",
+    "GNN",
+    "evolution"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "operator_graph",
+      "type": "object",
+      "required": true,
+      "description": "Current operator graph"
+    },
+    {
+      "name": "performance_history",
+      "type": "object",
+      "required": true,
+      "description": "Accumulated execution and benchmark data"
+    },
+    {
+      "name": "rewrite_mode",
+      "type": "enum(analyze_only|propose|propose_and_simulate|execute)",
+      "required": false,
+      "description": "Default: propose_and_simulate"
+    },
+    {
+      "name": "approval_token",
+      "type": "string",
+      "required": false,
+      "description": "Required for execute mode. Single-use"
+    },
+    {
+      "name": "rewrite_budget",
+      "type": "integer",
+      "required": false,
+      "description": "Max simultaneous rewrites. Default: 3"
+    },
+    {
+      "name": "max_graph_disruption",
+      "type": "float",
+      "required": false,
+      "description": "Max fraction of edges changed. Default: 0.15"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "analysis",
+      "type": "object",
+      "description": "Bottlenecks, redundancies, overloads, friction points, health score"
+    },
+    {
+      "name": "proposed_rewrites",
+      "type": "array<object>",
+      "description": "Rewrite proposals with type, target, expected improvement, risk"
+    },
+    {
+      "name": "simulation_results",
+      "type": "array<object>",
+      "description": "MC rollout impact estimates per proposal"
+    },
+    {
+      "name": "execution_log",
+      "type": "object",
+      "description": "Applied rewrites with rollback tokens (execute mode)"
+    }
+  ],
+  "dependencies": [
+    {
+      "operator_id": "operator_benchmark_suite",
+      "required": true,
+      "reason": "Performance data for rewrite decisions"
+    },
+    {
+      "operator_id": "operator_composability_scorer",
+      "required": true,
+      "reason": "Composability data for merge/adapter decisions"
+    },
+    {
+      "operator_id": "operator_lineage_tracker",
+      "required": true,
+      "reason": "Version ancestry for promotion and deprecation"
+    },
+    {
+      "operator_id": "operator_gap_finder",
+      "required": true,
+      "reason": "Prevent pruning sole capability providers"
+    },
+    {
+      "operator_id": "pipeline_performance_optimizer",
+      "required": true,
+      "reason": "Bottleneck data for restructuring"
+    },
+    {
+      "operator_id": "manifest_synthesizer",
+      "required": false,
+      "reason": "Proposed operators as chain promotion candidates"
+    }
+  ],
+  "capabilities": [
+    "graph_rewriting",
+    "chain_promotion",
+    "operator_pruning",
+    "adapter_insertion",
+    "impact_simulation"
+  ],
+  "constraints": {
+    "max_latency_ms": 300000,
+    "max_cost_usd": 1.0,
+    "deterministic": false,
+    "supports_batch": false,
+    "supports_streaming": false,
+    "parallel_safe": false
+  },
+  "runtime": {
+    "invocation_mode": "sync",
+    "retry_policy": {
+      "max_retries": 0,
+      "backoff_strategy": "none"
+    },
+    "timeout_ms": 600000
+  },
+  "telemetry": {
+    "emits": [
+      "rewrites_proposed",
+      "rewrites_applied",
+      "graph_health_score",
+      "regression_risk"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "rewrite_success_rate",
+      "graph_health_delta"
+    ],
+    "secondary_metrics": [
+      "simulation_accuracy",
+      "wall_time_ms"
+    ],
+    "benchmarkable": true
+  },
+  "governance": {
+    "promotion_eligible": false,
+    "exposed_as_mcp_tool": false,
+    "approval_required": true
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities",
+      "inputs.type",
+      "outputs.type"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [],
+    "version": "2.0.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/operator_graph_rewriter.v2.json",
+    "implementation_path": "refrag-core/operators/operator_graph_rewriter.py",
+    "test_path": "tests/unit/test_operator_graph_rewriter.py",
+    "benchmark_path": "benchmarks/operator_graph_rewriter_bench.py",
+    "docs_path": "docs/operators/operator_graph_rewriter.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "infrastructure",
+  "examples": [
+    "Promotes chunk->encode->falsify->decode to first-class operator after 53 successful executions with 96% success rate"
+  ]
+}

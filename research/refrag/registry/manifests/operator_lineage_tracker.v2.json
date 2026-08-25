@@ -1,0 +1,173 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "operator_lineage_tracker",
+  "operator_name": "Operator Lineage Tracker",
+  "description": "Tracks version ancestry DAGs, schema diffs, and cross-generation performance. V2 adds Siamese version embeddings for continuous improvement space and Wilcoxon signed-rank statistical testing for rigorous cross-version comparison.",
+  "visibility": "internal",
+  "maturity": "experimental",
+  "execution_class": "control",
+  "operator_type": "atomic",
+  "tags": [
+    "governance",
+    "lineage",
+    "versioning",
+    "ancestry",
+    "statistical-testing"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "operator_id",
+      "type": "string",
+      "required": true,
+      "description": "Base operator ID"
+    },
+    {
+      "name": "version",
+      "type": "string",
+      "required": true,
+      "description": "Semantic version"
+    },
+    {
+      "name": "parent_version",
+      "type": "string",
+      "required": false,
+      "description": "Version derived from"
+    },
+    {
+      "name": "derivation_type",
+      "type": "enum(upgrade|fork|merge|rewrite|auto_synthesized)",
+      "required": false,
+      "description": "Default: upgrade"
+    },
+    {
+      "name": "changelog",
+      "type": "array<string>",
+      "required": false,
+      "description": "Changes from parent"
+    },
+    {
+      "name": "schema_snapshot",
+      "type": "object",
+      "required": false,
+      "description": "Full contracts for diffing"
+    },
+    {
+      "name": "performance_benchmark",
+      "type": "object",
+      "required": false,
+      "description": "Benchmark results for comparison"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "lineage_graph",
+      "type": "object",
+      "description": "Full ancestry DAG with current_best and depth"
+    },
+    {
+      "name": "schema_diff",
+      "type": "object",
+      "description": "Inputs/outputs added, removed, modified, breaking flag"
+    },
+    {
+      "name": "version_comparison",
+      "type": "object",
+      "description": "Wilcoxon test results, effect sizes, trajectory"
+    },
+    {
+      "name": "version_embeddings",
+      "type": "object",
+      "description": "Continuous improvement space with predicted next version"
+    },
+    {
+      "name": "recommendations",
+      "type": "object",
+      "description": "Best version for production, performance, and promotion"
+    }
+  ],
+  "dependencies": [],
+  "capabilities": [
+    "version_tracking",
+    "schema_diffing",
+    "statistical_comparison",
+    "improvement_prediction"
+  ],
+  "constraints": {
+    "max_latency_ms": 5000,
+    "max_cost_usd": 0.01,
+    "deterministic": true,
+    "supports_batch": true,
+    "supports_streaming": false,
+    "parallel_safe": true
+  },
+  "runtime": {
+    "invocation_mode": "sync",
+    "retry_policy": {
+      "max_retries": 1,
+      "backoff_strategy": "fixed"
+    },
+    "timeout_ms": 10000
+  },
+  "telemetry": {
+    "emits": [
+      "lineage_registered",
+      "regressions_detected",
+      "improvement_trajectory"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "version_comparison_accuracy",
+      "trajectory_prediction_accuracy"
+    ],
+    "secondary_metrics": [
+      "lineage_depth"
+    ],
+    "benchmarkable": false
+  },
+  "governance": {
+    "promotion_eligible": false,
+    "exposed_as_mcp_tool": false,
+    "approval_required": false
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities",
+      "inputs.type",
+      "outputs.type"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [],
+    "version": "2.0.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/operator_lineage_tracker.v2.json",
+    "implementation_path": "refrag-core/operators/operator_lineage_tracker.py",
+    "test_path": "tests/unit/test_operator_lineage_tracker.py",
+    "benchmark_path": "benchmarks/operator_lineage_tracker_bench.py",
+    "docs_path": "docs/operators/operator_lineage_tracker.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "infrastructure",
+  "examples": [
+    "Track encoder: v1 (deterministic) -> v2 (contrastive). Wilcoxon p=0.003, Cohen's d=1.2, significant improvement"
+  ]
+}

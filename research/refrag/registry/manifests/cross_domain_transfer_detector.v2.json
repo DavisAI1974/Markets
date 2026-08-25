@@ -1,0 +1,178 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "cross_domain_transfer_detector",
+  "operator_name": "Cross-Domain Transfer Detector",
+  "description": "Identifies when operators from one domain transfer to another. V2 uses MAML for domain-invariant representations, Prototypical Networks for few-shot transfer detection, and Optimal Transport (Wasserstein) for comparing spectral distributions across domains.",
+  "visibility": "internal",
+  "maturity": "experimental",
+  "execution_class": "control",
+  "operator_type": "atomic",
+  "tags": [
+    "transfer",
+    "cross-domain",
+    "meta-learning",
+    "MAML",
+    "prototypical-networks",
+    "optimal-transport"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "source_domain",
+      "type": "string",
+      "required": true,
+      "description": "Domain to transfer from"
+    },
+    {
+      "name": "target_domain",
+      "type": "string",
+      "required": true,
+      "description": "Domain to transfer to"
+    },
+    {
+      "name": "comparison_mode",
+      "type": "enum(spectral_similarity|maml_embedding|prototypical|optimal_transport|full)",
+      "required": false,
+      "description": "Default: full"
+    },
+    {
+      "name": "similarity_threshold",
+      "type": "float",
+      "required": false,
+      "description": "Default: 0.7"
+    },
+    {
+      "name": "operator_ids",
+      "type": "array<string>",
+      "required": false,
+      "description": "Specific operators to check"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "transfer_candidates",
+      "type": "array<object>",
+      "description": "Operator pairs with multi-method transfer evidence"
+    },
+    {
+      "name": "structural_mappings",
+      "type": "array<object>",
+      "description": "Mathematical structure correspondences"
+    },
+    {
+      "name": "transport_plans",
+      "type": "array<object>",
+      "description": "OT plans showing spectral mass mapping"
+    },
+    {
+      "name": "confidence",
+      "type": "array<float>",
+      "description": "Per-candidate transfer confidence"
+    },
+    {
+      "name": "novel_predictions",
+      "type": "array<string>",
+      "description": "Testable hypotheses from the transfer"
+    },
+    {
+      "name": "publication_readiness",
+      "type": "object",
+      "description": "Effect size, significance, replication potential"
+    }
+  ],
+  "dependencies": [
+    {
+      "operator_id": "evidence_graph_builder",
+      "required": true,
+      "reason": "Evidence graph provides cross-domain structural data"
+    },
+    {
+      "operator_id": "operator_decoder",
+      "required": true,
+      "reason": "Needs recovered operators to compare across domains"
+    }
+  ],
+  "capabilities": [
+    "cross_domain_transfer",
+    "structural_comparison",
+    "few_shot_detection",
+    "hypothesis_generation"
+  ],
+  "constraints": {
+    "max_latency_ms": 120000,
+    "max_cost_usd": 1.0,
+    "deterministic": false,
+    "supports_batch": false,
+    "supports_streaming": false,
+    "parallel_safe": true
+  },
+  "runtime": {
+    "invocation_mode": "sync",
+    "retry_policy": {
+      "max_retries": 1,
+      "backoff_strategy": "exponential"
+    },
+    "timeout_ms": 300000
+  },
+  "telemetry": {
+    "emits": [
+      "transfers_detected",
+      "confidence_mean",
+      "novel_predictions_count"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "transfer_precision",
+      "novel_prediction_accuracy"
+    ],
+    "secondary_metrics": [
+      "wall_time_ms"
+    ],
+    "benchmarkable": true
+  },
+  "governance": {
+    "promotion_eligible": true,
+    "exposed_as_mcp_tool": false,
+    "approval_required": true
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities",
+      "inputs.type",
+      "outputs.type"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [],
+    "version": "2.0.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/cross_domain_transfer_detector.v2.json",
+    "implementation_path": "refrag-core/operators/cross_domain_transfer_detector.py",
+    "test_path": "tests/unit/test_cross_domain_transfer_detector.py",
+    "benchmark_path": "benchmarks/cross_domain_transfer_detector_bench.py",
+    "docs_path": "docs/operators/cross_domain_transfer_detector.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "operator-discovery",
+  "examples": [
+    "Discover spin-boson Liouvillian and Kolmogorov turbulence operators share eigenvalue cascade structure via MAML embedding"
+  ]
+}

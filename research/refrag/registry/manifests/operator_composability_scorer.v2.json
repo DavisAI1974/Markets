@@ -1,0 +1,154 @@
+{
+  "$schema_version": "1.0.0",
+  "operator_id": "operator_composability_scorer",
+  "operator_name": "Operator Composability Scorer",
+  "description": "Scores operator pair composability via type analysis, semantic coherence, and a learned bilinear interaction tensor. V2 adds context-dependent scoring and failure mode prediction.",
+  "visibility": "internal",
+  "maturity": "experimental",
+  "execution_class": "control",
+  "operator_type": "atomic",
+  "tags": [
+    "meta",
+    "composition",
+    "scoring",
+    "bilinear",
+    "learned-compatibility"
+  ],
+  "owner": {
+    "team": "DavisAI Core",
+    "maintainer": "Greg Davis"
+  },
+  "inputs": [
+    {
+      "name": "operator_a",
+      "type": "string",
+      "required": true,
+      "description": "First operator ID"
+    },
+    {
+      "name": "operator_b",
+      "type": "string",
+      "required": true,
+      "description": "Second operator ID"
+    },
+    {
+      "name": "evaluation_mode",
+      "type": "enum(static|empirical|learned|full)",
+      "required": false,
+      "description": "Default: full"
+    },
+    {
+      "name": "context_chain",
+      "type": "array<string>",
+      "required": false,
+      "description": "Chain context for context-dependent scoring"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "composability_score",
+      "type": "float",
+      "description": "Overall score 0.0-1.0"
+    },
+    {
+      "name": "type_compatibility",
+      "type": "object",
+      "description": "Type analysis results"
+    },
+    {
+      "name": "learned_compatibility_score",
+      "type": "float",
+      "description": "Bilinear model prediction"
+    },
+    {
+      "name": "predicted_failure_modes",
+      "type": "array<object>",
+      "description": "Classified failure types with probabilities"
+    },
+    {
+      "name": "adapter_suggestions",
+      "type": "array<string>",
+      "description": "Recommended intermediate operators"
+    }
+  ],
+  "dependencies": [],
+  "capabilities": [
+    "composability_scoring",
+    "type_analysis",
+    "failure_prediction",
+    "adapter_recommendation"
+  ],
+  "constraints": {
+    "max_latency_ms": 5000,
+    "max_cost_usd": 0.01,
+    "deterministic": false,
+    "supports_batch": true,
+    "supports_streaming": false,
+    "parallel_safe": true
+  },
+  "runtime": {
+    "invocation_mode": "sync",
+    "retry_policy": {
+      "max_retries": 0,
+      "backoff_strategy": "none"
+    },
+    "timeout_ms": 10000
+  },
+  "telemetry": {
+    "emits": [
+      "composability_score",
+      "failure_modes_detected"
+    ],
+    "stores_execution_trace": true,
+    "stores_metrics": true
+  },
+  "evaluation": {
+    "primary_metrics": [
+      "score_accuracy",
+      "failure_prediction_precision"
+    ],
+    "secondary_metrics": [
+      "wall_time_ms"
+    ],
+    "benchmarkable": true
+  },
+  "governance": {
+    "promotion_eligible": false,
+    "exposed_as_mcp_tool": false,
+    "approval_required": false
+  },
+  "registry": {
+    "indexed": true,
+    "embedding_enabled": true,
+    "searchable_fields": [
+      "operator_id",
+      "operator_name",
+      "description",
+      "tags",
+      "capabilities",
+      "inputs.type",
+      "outputs.type"
+    ]
+  },
+  "lineage": {
+    "parent_operator_id": null,
+    "derived_from": [],
+    "version": "2.0.0"
+  },
+  "artifacts": {
+    "manifest_path": "registry/manifests/operator_composability_scorer.v2.json",
+    "implementation_path": "refrag-core/operators/operator_composability_scorer.py",
+    "test_path": "tests/unit/test_operator_composability_scorer.py",
+    "benchmark_path": "benchmarks/operator_composability_scorer_bench.py",
+    "docs_path": "docs/operators/operator_composability_scorer.md"
+  },
+  "status": {
+    "active": true,
+    "deprecated": false,
+    "replacement_operator_id": null
+  },
+  "domain": "infrastructure",
+  "examples": [
+    "Bilinear model discovers contrastive_encoder + falsification_prioritizer compose exceptionally well"
+  ]
+}
