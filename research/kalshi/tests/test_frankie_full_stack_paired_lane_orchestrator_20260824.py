@@ -131,10 +131,22 @@ def component_receipts(bound: CausalPrefixBinding):
         ProvisionalComponentReceipt.create(
             component_id=component,
             binding=bound,
-            lifecycle_stage=ComponentLifecycleStage.PRE_REVEAL_PREFIX,
+            lifecycle_stage=(
+                ComponentLifecycleStage.POST_EVIDENCE_DIAGNOSTIC
+                if component == "META_LOOP"
+                else ComponentLifecycleStage.PRE_REVEAL_PREFIX
+            ),
             executed_stage=ComponentLifecycleStage.PRE_REVEAL_PREFIX,
-            status=ComponentStatus.ACTIVE,
-            context={"component": component, "evidence": f"lawful-{component.lower()}"},
+            status=(
+                ComponentStatus.DEFERRED_NOT_YET_LAWFUL
+                if component == "META_LOOP"
+                else ComponentStatus.ACTIVE
+            ),
+            context={
+                "component": component,
+                "evidence": f"lawful-{component.lower()}",
+                "post_evidence_deferred": component == "META_LOOP",
+            },
         )
         for component in COMBINED_COMPONENTS
     )

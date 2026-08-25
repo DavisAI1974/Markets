@@ -167,10 +167,19 @@ class ProvisionalComponentReceipt:
             raise PairedLaneError("provisional component cannot share derived state")
         if self.can_change_primary:
             raise PairedLaneError("provisional component cannot change primary")
-        if self.lifecycle_stage != self.executed_stage:
-            raise PairedLaneError("component executed outside its lawful lifecycle stage")
-        if self.status != ComponentStatus.ACTIVE:
-            raise PairedLaneError("required provisional component is not active")
+        if self.component_id == "META_LOOP":
+            if (
+                self.lifecycle_stage is not ComponentLifecycleStage.POST_EVIDENCE_DIAGNOSTIC
+                or self.executed_stage is not ComponentLifecycleStage.PRE_REVEAL_PREFIX
+                or self.status is not ComponentStatus.DEFERRED_NOT_YET_LAWFUL
+            ):
+                raise PairedLaneError("meta-loop must remain deferred until post-evidence")
+        elif (
+            self.lifecycle_stage is not ComponentLifecycleStage.PRE_REVEAL_PREFIX
+            or self.executed_stage is not ComponentLifecycleStage.PRE_REVEAL_PREFIX
+            or self.status is not ComponentStatus.ACTIVE
+        ):
+            raise PairedLaneError("pre-reveal provisional component is not lawfully active")
         try:
             context = json.loads(self.context_json)
         except (TypeError, json.JSONDecodeError) as exc:
@@ -481,7 +490,9 @@ class PairedLaneOrchestrator:
             raise PairedLaneError("all provisional components must appear exactly once")
         validated = tuple(item.validate(binding=binding) for item in rows)
         for item in validated:
-            if item.lifecycle_stage != ComponentLifecycleStage.PRE_REVEAL_PREFIX:
+            if item.component_id != "META_LOOP" and (
+                item.lifecycle_stage != ComponentLifecycleStage.PRE_REVEAL_PREFIX
+            ):
                 raise PairedLaneError("combined prefix components must execute at the lawful lifecycle stage")
         return tuple(sorted(validated, key=lambda item: COMBINED_COMPONENTS.index(item.component_id)))
 
@@ -550,6 +561,7 @@ class PairedLaneOrchestrator:
                 "context_hash": item.context_hash,
                 "receipt_hash": item.receipt_hash,
                 "lifecycle_stage": item.lifecycle_stage.value,
+                "status": item.status.value,
                 "authority": item.authority,
             }
             self._combined_ledger.append(
@@ -561,6 +573,7 @@ class PairedLaneOrchestrator:
                     "context_hash": item.context_hash,
                     "receipt_hash": item.receipt_hash,
                     "lifecycle_stage": item.lifecycle_stage.value,
+                    "status": item.status.value,
                     "authority": item.authority,
                     "can_mutate_brain": False,
                     "can_share_derived_state": False,
