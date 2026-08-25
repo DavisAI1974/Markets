@@ -241,6 +241,8 @@ jobs:
               "if id \"$packet_user\" >/dev/null 2>&1; then echo packet identity exists >&2; exit 1; fi",
               "useradd --system --no-create-home --shell /usr/sbin/nologin \"$packet_user\"",
               "packet_group=\"$(id -gn \"$packet_user\")\"",
+              "chown root:\"$packet_group\" \"$root\"",
+              "chmod 0750 \"$root\"",
               "chown -R root:\"$packet_group\" \"$repo\" \"$root/input\"",
               "chmod -R g+rX,g-w,o-rwx \"$repo\" \"$root/input\"",
               "install -d -o \"$packet_user\" -g \"$packet_group\" -m 0700 \"$packet\"",
