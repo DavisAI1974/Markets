@@ -20,6 +20,19 @@ the primary discoveries, movies, and first-lock/no-lock outputs freeze.
 - S137/HippoRAG and provisional V4 components remain labeled shadow-only and cannot affect primary locks.
 - New bridge behavior follows focused RED/GREEN tests; established V4 scientific modules remain unchanged
   unless a concrete launch error proves the smallest necessary repair.
+- Final runtime correction: within each lane, execute the four helpers concurrently with the exact affinity
+  map recurrence=CPU0, extension=CPU1, timing=CPU2, context=CPU3; keep control then combined lane order,
+  then let Frankie synthesize. Persist affinity/timing receipts and fail before provider calls on fewer than
+  four available CPUs.
+
+## Final narrow launch checkpoint — do not reopen completed work
+
+The only remaining implementation is four-CPU helper affinity/parallelism and its direct receipts. Do not
+retest, rebuild, inspect, or revise the knowledge plane, 1,940/46 data registry, weather/storage ingestion,
+H modules, provisional integration, sealed wall, dependency locks, credential hardening, source inventory,
+or other completed subsystems. Do not perform a broad build inspection. Run only the focused CPU-path tests
+named in `research/kalshi/NG_EXHAUSTION_FRANKIE_FOUR_CPU_HELPER_LAUNCH_HANDOFF_20260824.md`, publish the
+result, regenerate the launch marker from the actual remote implementation SHA, and run October.
 
 ## Task list and dependencies
 

@@ -11,6 +11,14 @@
 - [ ] Commit and push the exact integrated construction to the target branch.
 - [ ] Launch full October and capture the required live receipts, provider ID, run URL, and remote state.
 
+## Final narrow correction — four CPUs only
+
+- [ ] Replace the sequential helper loop with four concurrent, CPU-affined workers: recurrence=0, extension=1, timing=2, context=3.
+- [ ] Persist and gate per-helper affinity receipts plus helper-batch timing; fail before provider calls if CPUs 0-3 are unavailable.
+- [ ] Run only the focused CPU-path tests and timing measurement named in `NG_EXHAUSTION_FRANKIE_FOUR_CPU_HELPER_LAUNCH_HANDOFF_20260824.md`.
+- [ ] Do not retest, rebuild, inspect, or modify any other completed subsystem; do not perform broad build inspections.
+- [ ] Publish, regenerate the marker with the exact remote implementation SHA, and launch October.
+
 ## Checkpoint: scientific wall and runtime contracts
 
 - [ ] Step-1 is unreadable before freeze and answer-wall access is receipted.
