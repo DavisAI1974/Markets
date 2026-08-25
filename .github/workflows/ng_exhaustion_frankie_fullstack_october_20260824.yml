@@ -207,11 +207,7 @@ jobs:
               "KNOWLEDGE_MANIFEST_READY",
               "ANSWER_WALL_PREFREEZE_VERIFIED",
               "FORBIDDEN_V3_DENIED",
-              "CAUSAL_STATE_APPENDED",
-              "HELPER_EVIDENCE_APPENDED",
-              "FRANKIE_REASONING_APPENDED",
-              "PROBABILITY_MOVIE_APPENDED",
-              "SOL_RESPONSE_ACCEPTED",
+              "PAIRED_PREFIX_ACCEPTED",
           }
           missing = sorted(required - by_event.keys())
           if missing:
@@ -227,32 +223,147 @@ jobs:
           if wall.get("step1_sealed") is not True:
               print("answer wall is not sealed", file=sys.stderr)
               raise SystemExit(1)
+          if wall.get("answer_revealed") is not False:
+              print("Step-1 answer state drift", file=sys.stderr)
+              raise SystemExit(1)
           denied = by_event["FORBIDDEN_V3_DENIED"][-1]
           if denied.get("ordinary_v3_denied") is not True or denied.get("d1_extratrees_denied") is not True:
               print("forbidden V3 denial is incomplete", file=sys.stderr)
               raise SystemExit(1)
-          for event in (
-              "CAUSAL_STATE_APPENDED",
-              "HELPER_EVIDENCE_APPENDED",
-              "FRANKIE_REASONING_APPENDED",
-              "PROBABILITY_MOVIE_APPENDED",
-          ):
-              if not sha_pattern.fullmatch(str(by_event[event][-1].get("receipt_hash") or "")):
-                  print(f"missing receipt_hash for {event}", file=sys.stderr)
-                  raise SystemExit(1)
-          sol = by_event["SOL_RESPONSE_ACCEPTED"][-1]
-          if sol.get("model") != "gpt-5.6-sol":
+
+          paired = by_event["PAIRED_PREFIX_ACCEPTED"][-1]
+          if not sha_pattern.fullmatch(str(paired.get("receipt_hash") or "")):
+              print("paired-prefix receipt hash is missing", file=sys.stderr)
+              raise SystemExit(1)
+          expected_lanes = ["S135_CONTROL", "FULL_PROVISIONAL_COMBINED"]
+          if paired.get("lanes") != expected_lanes:
+              print("paired lane identity drift", file=sys.stderr)
+              raise SystemExit(1)
+          if paired.get("primary_lane") != "S135_CONTROL":
+              print("control is not primary", file=sys.stderr)
+              raise SystemExit(1)
+          if paired.get("combined_lane") != "FULL_PROVISIONAL_COMBINED":
+              print("combined shadow lane identity drift", file=sys.stderr)
+              raise SystemExit(1)
+          if paired.get("model") != "gpt-5.6-sol":
               print("MODEL_DRIFT", file=sys.stderr)
               raise SystemExit(1)
-          provider_response_id = str(sol.get("provider_response_id") or "").strip()
-          if not provider_response_id:
-              print("missing provider_response_id", file=sys.stderr)
+          if paired.get("step1_sealed") is not True or paired.get("answer_revealed") is not False:
+              print("paired prefix crossed the answer wall", file=sys.stderr)
+              raise SystemExit(1)
+
+          proof_hash = str(paired.get("identical_prefix_proof_hash") or "")
+          control_prefix = str(paired.get("control_causal_prefix_hash") or "")
+          combined_prefix = str(paired.get("combined_causal_prefix_hash") or "")
+          if not sha_pattern.fullmatch(proof_hash):
+              print("invalid identical-prefix proof hash", file=sys.stderr)
+              raise SystemExit(1)
+          if not sha_pattern.fullmatch(control_prefix) or control_prefix != combined_prefix:
+              print("paired lanes do not bind the identical causal prefix", file=sys.stderr)
+              raise SystemExit(1)
+
+          control_ids = paired.get("control_provider_response_ids")
+          combined_ids = paired.get("combined_provider_response_ids")
+          if not isinstance(control_ids, list) or len(control_ids) < 5:
+              print("control lacks five accepted provider responses", file=sys.stderr)
+              raise SystemExit(1)
+          if not isinstance(combined_ids, list) or len(combined_ids) < 5:
+              print("combined lacks five accepted provider responses", file=sys.stderr)
+              raise SystemExit(1)
+          if any(not str(item).strip() for item in control_ids + combined_ids):
+              print("blank provider response ID", file=sys.stderr)
+              raise SystemExit(1)
+          if len(set(control_ids)) != len(control_ids) or len(set(combined_ids)) != len(combined_ids):
+              print("provider response IDs are not unique within a lane", file=sys.stderr)
+              raise SystemExit(1)
+          if set(control_ids) & set(combined_ids):
+              print("provider response IDs leaked across lanes", file=sys.stderr)
+              raise SystemExit(1)
+
+          expected_active = {
+              "S137_COGNITIVE_RUNTIME",
+              "HIPPORAG_RETRIEVAL",
+              "TEMPORAL_GRAPH",
+              "LATS_BOUNDED_SEARCH",
+              "WORKING_MEMORY",
+              "PROGRESS_COMPRESSION",
+              "PROVISIONAL_V4_ENGINEERING_CANDIDATE",
+          }
+          active = paired.get("active_provisional_components")
+          if not isinstance(active, list) or set(active) != expected_active or len(active) != 7:
+              print("the seven lawful provisional components are not all active", file=sys.stderr)
+              raise SystemExit(1)
+          active_receipts = paired.get("active_provisional_component_receipt_hashes")
+          if not isinstance(active_receipts, dict) or set(active_receipts) != expected_active:
+              print("active provisional component receipts are incomplete", file=sys.stderr)
+              raise SystemExit(1)
+          if any(not sha_pattern.fullmatch(str(value or "")) for value in active_receipts.values()):
+              print("active provisional component receipt hash is invalid", file=sys.stderr)
+              raise SystemExit(1)
+          meta_loop = paired.get("deferred_meta_loop")
+          if not isinstance(meta_loop, dict) or (
+              meta_loop.get("component_id") != "META_LOOP"
+              or meta_loop.get("status") != "DEFERRED_NOT_YET_LAWFUL"
+              or meta_loop.get("lifecycle_stage") != "POST_EVIDENCE_DIAGNOSTIC"
+              or meta_loop.get("executed_stage") != "PRE_REVEAL_PREFIX"
+              or not sha_pattern.fullmatch(str(meta_loop.get("receipt_hash") or ""))
+          ):
+              print("META_LOOP was not explicitly deferred to post-evidence", file=sys.stderr)
+              raise SystemExit(1)
+
+          control_ledger = paired.get("control_ledger")
+          combined_ledger = paired.get("combined_ledger")
+          if not isinstance(control_ledger, dict) or not isinstance(combined_ledger, dict):
+              print("paired independent ledger receipts are missing", file=sys.stderr)
+              raise SystemExit(1)
+          if control_ledger.get("path") == combined_ledger.get("path"):
+              print("control and combined ledgers are not independent", file=sys.stderr)
+              raise SystemExit(1)
+          if not control_ledger.get("path") or not combined_ledger.get("path"):
+              print("lane ledger path is blank", file=sys.stderr)
+              raise SystemExit(1)
+          if control_ledger.get("lane_id") != "S135_CONTROL":
+              print("control ledger lane identity drift", file=sys.stderr)
+              raise SystemExit(1)
+          if combined_ledger.get("lane_id") != "FULL_PROVISIONAL_COMBINED":
+              print("combined ledger lane identity drift", file=sys.stderr)
+              raise SystemExit(1)
+          if paired.get("control_lock_authority") != "S135_PRIMARY":
+              print("control lock authority drift", file=sys.stderr)
+              raise SystemExit(1)
+          if paired.get("combined_lock_authority") != "SHADOW_ONLY":
+              print("combined lock authority drift", file=sys.stderr)
+              raise SystemExit(1)
+          if not sha_pattern.fullmatch(str(control_ledger.get("control_final_ledger_hash") or "")):
+              print("invalid control final ledger hash", file=sys.stderr)
+              raise SystemExit(1)
+          if not sha_pattern.fullmatch(str(combined_ledger.get("combined_final_ledger_hash") or "")):
+              print("invalid combined final ledger hash", file=sys.stderr)
+              raise SystemExit(1)
+          if control_ledger["control_final_ledger_hash"] == combined_ledger["combined_final_ledger_hash"]:
+              print("paired lane ledgers did not diverge under isolated lane tags", file=sys.stderr)
+              raise SystemExit(1)
+          for lane_name, ledger in (("control", control_ledger), ("combined", combined_ledger)):
+              receipts = ledger.get("first_receipt_hashes")
+              if not isinstance(receipts, dict):
+                  print(f"{lane_name} first receipt map is missing", file=sys.stderr)
+                  raise SystemExit(1)
+              for receipt_name in ("helper_evidence", "frankie_reasoning", "probability_movie"):
+                  if not sha_pattern.fullmatch(str(receipts.get(receipt_name) or "")):
+                      print(f"missing {lane_name} {receipt_name} receipt_hash", file=sys.stderr)
+                      raise SystemExit(1)
+
+          if str(paired.get("knowledge_manifest_hash") or "") != knowledge["knowledge_manifest_hash"]:
+              print("paired prefix knowledge manifest drift", file=sys.stderr)
               raise SystemExit(1)
           summary = {
               "event": "FULLSTACK_LAUNCH_GATES_PASS",
               "knowledge_manifest_hash": knowledge["knowledge_manifest_hash"],
-              "model": sol["model"],
-              "provider_response_id": provider_response_id,
+              "model": paired["model"],
+              "identical_prefix_proof_hash": proof_hash,
+              "control_provider_response_ids": control_ids,
+              "combined_provider_response_ids": combined_ids,
+              "step1_sealed": True,
           }
           print(json.dumps(summary, sort_keys=True))
           print("FULLSTACK_LAUNCH_GATES=PASS")
@@ -461,5 +572,5 @@ jobs:
             echo "- Root: \`${root}\`"
             echo "- Artifacts: \`s3://${BUCKET}/${ARTIFACT_PREFIX}/\`"
             echo "- Stop only this run: \`systemctl stop ${unit}\`"
-            echo "- Launch gate: knowledge/answer-wall/V3 plus first state, helper, reasoning, probability, and accepted gpt-5.6-sol response receipts"
+            echo "- Launch gate: active isolated unit plus the first identical-prefix S135 control vs all-provisional-combined pair, independent lane ledgers, 5+5 distinct accepted gpt-5.6-sol responses, seven active provisional components, deferred META_LOOP, and sealed Step-1"
           } >> "$GITHUB_STEP_SUMMARY"

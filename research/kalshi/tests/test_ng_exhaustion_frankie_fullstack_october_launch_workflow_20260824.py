@@ -130,16 +130,23 @@ class FullStackOctoberLaunchWorkflowTests(unittest.TestCase):
             "KNOWLEDGE_MANIFEST_READY",
             "ANSWER_WALL_PREFREEZE_VERIFIED",
             "FORBIDDEN_V3_DENIED",
-            "CAUSAL_STATE_APPENDED",
-            "HELPER_EVIDENCE_APPENDED",
-            "FRANKIE_REASONING_APPENDED",
-            "PROBABILITY_MOVIE_APPENDED",
-            "SOL_RESPONSE_ACCEPTED",
+            "PAIRED_PREFIX_ACCEPTED",
         ):
             self.assertIn(event, self.source)
         for token in (
+            '"S135_CONTROL"',
+            '"FULL_PROVISIONAL_COMBINED"',
             '"gpt-5.6-sol"',
-            "provider_response_id",
+            "control_provider_response_ids",
+            "combined_provider_response_ids",
+            "identical_prefix_proof_hash",
+            "control_final_ledger_hash",
+            "combined_final_ledger_hash",
+            "helper_evidence",
+            "frankie_reasoning",
+            "probability_movie",
+            '"S135_PRIMARY"',
+            '"SHADOW_ONLY"',
             "knowledge_manifest_hash",
             "receipt_hash",
             "Traceback",
@@ -150,6 +157,41 @@ class FullStackOctoberLaunchWorkflowTests(unittest.TestCase):
             self.assertIn(token, self.source)
         self.assertIn('ActiveState --value "$unit"', self.source)
         self.assertIn('test "$status" = Success', self.source)
+
+    def test_paired_prefix_gate_requires_seven_active_components_and_defers_only_meta_loop(self):
+        active = (
+            "S137_COGNITIVE_RUNTIME",
+            "HIPPORAG_RETRIEVAL",
+            "TEMPORAL_GRAPH",
+            "LATS_BOUNDED_SEARCH",
+            "WORKING_MEMORY",
+            "PROGRESS_COMPRESSION",
+            "PROVISIONAL_V4_ENGINEERING_CANDIDATE",
+        )
+        for component in active:
+            self.assertIn(component, self.source)
+        for token in (
+            '"META_LOOP"',
+            '"DEFERRED_NOT_YET_LAWFUL"',
+            '"POST_EVIDENCE_DIAGNOSTIC"',
+            '"PRE_REVEAL_PREFIX"',
+            "active_provisional_component_receipt_hashes",
+            "len(control_ids) < 5",
+            "len(combined_ids) < 5",
+            "set(control_ids) & set(combined_ids)",
+            'control_ledger.get("path") == combined_ledger.get("path")',
+            'wall.get("step1_sealed") is not True',
+        ):
+            self.assertIn(token, self.source)
+
+    def test_launch_gate_is_initial_paired_evidence_not_full_month_global_freeze(self):
+        self.assertIn('required = {', self.source)
+        required_match = re.search(r"required = \{(.*?)\n          \}", self.source, re.DOTALL)
+        self.assertIsNotNone(required_match)
+        required = required_match.group(1)
+        self.assertIn("PAIRED_PREFIX_ACCEPTED", required)
+        self.assertNotIn("GLOBAL_EXPERIMENT_FROZEN", required)
+        self.assertIn('test "$(systemctl show --property=ActiveState --value "$unit")" = active', self.source)
 
     def test_embedded_python_generator_and_remote_python_scripts_compile(self):
         match = re.search(
