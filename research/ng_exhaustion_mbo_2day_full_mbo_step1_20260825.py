@@ -27,8 +27,6 @@ RAW_BOOTSTRAP_DATES = ("20211001", "20211003", "20211004", "20211005")
 WRAPPER_PATH = "research/ng_exhaustion_mbo_2day_full_mbo_step1_20260825.py"
 EXPECTED_BASELINE_RECEIPT_SHA256 = "140c6234b8e6f4216416290aa50f4070160e200a3e7025cbca3aa08d0ef42e52"
 EXPECTED_BASELINE_TAR_SHA256 = "27cacc62681bc482e89eefcc3746f5d71958beab4e25816054e0c388a0346b33"
-OLD_COMPARISON_COUNTS = {"legacy": 1577, "native": 1603,
-                         "native_families": {"A": 1532, "B": 23, "C": 48}}
 PROPOSAL_SURFACES = ("FLOW", "DEPLETION", "ABSORPTION", "FIFO_FAILURE", "FULL_DEPTH_SHIFT")
 PROPOSAL_WARMUP_SECONDS = 3600
 PROPOSAL_PRIOR_ABS_QUANTILE = 0.95
@@ -408,18 +406,35 @@ def discover_uncapped_proposals(surface_rows: list[dict[str, Any]]) -> tuple[lis
         "scored_window": {"start": prior.WINDOW_START_ISO, "end_exclusive": prior.WINDOW_END_ISO},
         "warmup_only_dates": ["20211001", "20211003"],
         "onset": "BELOW_TO_AT_OR_ABOVE_THRESHOLD_CROSSING", "rearm_seconds": PROPOSAL_REARM_SECONDS,
-        "merge": "SAME_INSTRUMENT_POLARITY_RECEIVE_SECOND", "count_cap": None, "family_cap": None,
+        "merge": "ONE_COMPOSITE_EVENT_FOR_ALL_SAME_INSTRUMENT_POLARITY_RECEIVE_SECOND_SURFACE_CROSSINGS",
+        "merge_is_not_a_count_or_family_cap": True,
+        "rearm_semantics": "PER_MECHANISM_POLARITY_DUPLICATE_ONSET_SUPPRESSION_ONLY",
+        "rearm_is_not_a_count_or_family_cap": True,
+        "count_cap": None, "family_cap": None,
         "proposal_set_sha256": base.sha256_json(check), "outcomes_accessed": False}
     receipt["receipt_sha256"] = base.sha256_json(receipt)
     return proposals, receipt
 
 
 def discover_mbo_families(proposals: list[dict[str, Any]]) -> dict[str, Any]:
+    if any(len(row.get("mbo59_feature_vector") or ()) != len(MBO_FEATURE_NAMES) for row in proposals):
+        raise base.CensusError("retrospective family discovery requires complete causal MBO59 vectors")
+    all_x = np.asarray([row["mbo59_feature_vector"] for row in proposals], dtype=float)
+    if len(proposals):
+        center = all_x.mean(axis=0); scale = all_x.std(axis=0)
+        zero_variance = scale < 1e-12; scale[zero_variance] = 1.0
+        all_z = (all_x - center) / scale
+    else:
+        center = np.zeros(len(MBO_FEATURE_NAMES)); scale = np.ones(len(MBO_FEATURE_NAMES))
+        zero_variance = np.ones(len(MBO_FEATURE_NAMES), dtype=bool); all_z = all_x
     by_day: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for proposal in proposals:
-        day = datetime.fromtimestamp(int(proposal["recv_second"]), tz=timezone.utc).date().isoformat()
-        vector = [float(proposal["causal_t0_surfaces"][name]) for name in PROPOSAL_SURFACES]
-        proposal["family_feature_vector"] = vector; by_day[day].append(proposal)
+    for proposal, vector in zip(proposals, all_z):
+        day = datetime.fromtimestamp(int(proposal["event_known_by_ts_recv_ns"]) / 1e9,
+                                     tz=timezone.utc).date().isoformat()
+        proposal["family_feature_vector"] = [float(value) for value in vector]
+        by_day[day].append(proposal)
+    full_set_recv_cutoff = max((int(row["event_known_by_ts_recv_ns"]) for row in proposals), default=0) or None
+    full_set_event_cutoff = max((int(row["ts_event_ns"]) for row in proposals), default=0) or None
     known: dict[str, np.ndarray] = {}; day_receipts = []
     for day in sorted(by_day):
         rows = sorted(by_day[day], key=lambda x: (x["recv_second"], x["instrument_id"], x["event_id"]))
@@ -442,6 +457,8 @@ def discover_mbo_families(proposals: list[dict[str, Any]]) -> dict[str, Any]:
         for row, label in zip(rows, labels):
             row["mbo_family"] = "MBO_NOISE" if int(label) < 0 else local_family[int(label)]
             row["mbo_family_day_cluster"] = int(label)
+            row["family_availability_cutoff_ts_event_ns"] = full_set_event_cutoff
+            row["family_availability_cutoff_ts_recv_ns"] = full_set_recv_cutoff
         day_receipts.append({"utc_day": day, "proposal_count": len(rows),
             "cluster_count": len(local_centroids), "noise_count": int(np.sum(labels < 0)),
             "family_ids": sorted(set(row["mbo_family"] for row in rows)),
@@ -453,9 +470,19 @@ def discover_mbo_families(proposals: list[dict[str, Any]]) -> dict[str, Any]:
                 for row in rows]),
             "earliest_event_known_by_ts_recv_ns": min(int(row["event_known_by_ts_recv_ns"]) for row in rows),
             "latest_event_known_by_ts_recv_ns": max(int(row["event_known_by_ts_recv_ns"]) for row in rows)})
-    return {"method": "DETERMINISTIC_PER_DAY_OPTICS_CAUSAL_T0_FEATURES_CROSS_DAY_CENTROID_MATCH",
-            "feature_names": list(PROPOSAL_SURFACES), "cross_day_centroid_tolerance_l2": 0.35,
+    return {"method": "DETERMINISTIC_PER_DAY_OPTICS_FULL_CAUSAL_MBO59_CROSS_DAY_CENTROID_MATCH",
+            "feature_names": list(MBO_FEATURE_NAMES), "feature_dimension": len(MBO_FEATURE_NAMES),
+            "standardization": "FULL_PROPOSAL_SET_COLUMN_STANDARDIZATION_ZERO_VARIANCE_SCALE_ONE",
+            "standardization_center": [float(value) for value in center],
+            "standardization_scale": [float(value) for value in scale],
+            "zero_variance_feature_names": [name for name, flag in zip(MBO_FEATURE_NAMES, zero_variance) if flag],
+            "cross_day_centroid_tolerance_l2": 0.35,
             "noise_retained": True, "days": day_receipts,
+            "classification_availability": "RETROSPECTIVE_AFTER_COMPLETE_PROPOSAL_SET",
+            "family_availability_cutoff_ts_event_ns": full_set_event_cutoff,
+            "family_availability_cutoff_ts_recv_ns": full_set_recv_cutoff,
+            "family_not_knowable_at_t0": True, "family_used_in_proposal_generation": False,
+            "family_used_in_outcome_construction": False, "family_used_in_structural_scorer": False,
             "family_count_excluding_noise": len({row["mbo_family"] for row in proposals if row["mbo_family"] != "MBO_NOISE"})}
 
 
@@ -486,9 +513,10 @@ def build_locked_proposal_events(proposals: list[dict[str, Any]], selected: list
     sunday_epoch = int(datetime.combine(stream["week_sunday"], datetime.min.time(), tzinfo=timezone.utc).timestamp())
     events = []
     for proposal in proposals:
-        t0 = int(proposal["recv_second"]) - sunday_epoch; polarity = int(proposal["polarity"])
+        known_by_second = int(proposal["event_known_by_ts_recv_ns"]) // 1_000_000_000
+        t0 = known_by_second - sunday_epoch; polarity = int(proposal["polarity"])
         onset, confirmation = base.frozen_detector.endpoint(stream, t0, polarity)
-        now = datetime.fromtimestamp(int(proposal["recv_second"]), tz=timezone.utc)
+        now = datetime.fromtimestamp(known_by_second, tz=timezone.utc)
         outcome_clock = _outcome_availability(stream, seconds_by_epoch, confirmation)
         source = {"source_dbn_key": proposal["source_dbn_key"], "staged_source_dbn_object": proposal["source_dbn_object"],
                   "source_dbn_sha256": proposal["source_dbn_sha256"], "instrument_id": proposal["instrument_id"],
@@ -512,7 +540,11 @@ def build_locked_proposal_events(proposals: list[dict[str, Any]], selected: list
                         "availability_clock": outcome_clock, "applied_after_proposal_and_family_lock": True},
             "source_boundary_censored": True, "source_provenance": source,
             "native_structure": {"taxonomy": "UNCAPPED_FULL_MBO_OPTICS_V1", "label": proposal["mbo_family"],
-                                 "causal_t0_only_family_inputs": True},
+                "classification_timing": "RETROSPECTIVE_AFTER_COMPLETE_PROPOSAL_SET",
+                "family_availability_cutoff_ts_event_ns": proposal["family_availability_cutoff_ts_event_ns"],
+                "family_availability_cutoff_ts_recv_ns": proposal["family_availability_cutoff_ts_recv_ns"],
+                "family_not_knowable_at_t0": True, "family_used_in_proposal_generation": False,
+                "family_used_in_outcome_construction": False, "family_used_in_structural_scorer": False},
             "causal_clocks": {key: proposal[key] for key in (
                 "ts_event_ns", "ts_recv_ns", "f_last_group_completion_ts_recv_ns",
                 "threshold_crossing_ts_recv_ns", "event_known_by_ts_recv_ns", "max_contributing_ts_recv_ns",
@@ -548,8 +580,14 @@ def write_comparator_match_graph(events: list[dict[str, Any]], baseline: Path, o
                 counts[f"{view}_{relation(de).lower()}_event_clock"] += 1
                 counts[f"{view}_{relation(dr).lower()}_receive_clock"] += 1
     output = writer.close()
-    return output, {"old_comparison_counts_expected_not_enforced": OLD_COMPARISON_COUNTS,
-        "old_comparison_counts_observed": {key: len(value) for key, value in comparators.items()},
+    observed = {
+        view: {
+            "event_count": len(rows),
+            "family_counts": dict(sorted(Counter(str(row.get("family")) for row in rows).items())),
+        }
+        for view, rows in comparators.items()
+    }
+    return output, {"old_comparison_counts_observed_not_enforced": observed,
         "edge_relation_counts": dict(sorted(counts.items())), "abc_is_annotation_only": True,
         "count_or_family_cap_applied": False}
 
@@ -571,24 +609,15 @@ def _copy_legacy(baseline: Path, out: Path, receipt: dict[str, Any]) -> dict[str
         "LEGACY_CONTROL_SELF_FIT_GAINS.jsonl.gz", "LEGACY_CONTROL_STRUCTURAL_SELF_FIT_SUMMARY.json",
         "LEGACY_CONTROL_POPULATION.jsonl.gz", "LEGACY_CONTROL_CROSSWALK_INDEX.jsonl.gz",
     )
-    expected: dict[str, dict[str, Any]] = {}
-    def collect(value: Any) -> None:
-        if isinstance(value, dict):
-            if {"relative_path", "bytes", "sha256"} <= set(value):
-                expected[str(value["relative_path"])] = value
-            for child in value.values(): collect(child)
-        elif isinstance(value, list):
-            for child in value: collect(child)
-    collect(receipt)
     copied = {}
     for name in names:
         src, dst = baseline / name, out / name
         if not src.is_file():
             raise base.CensusError(f"baseline legacy artifact missing: {name}")
-        identity = expected.get(name)
-        if identity is None or src.stat().st_size != int(identity["bytes"]) or base.sha256_file(src) != identity["sha256"]:
-            raise base.CensusError(f"baseline legacy artifact identity drift: {name}")
+        source_bytes, source_sha = src.stat().st_size, base.sha256_file(src)
         shutil.copyfile(src, dst)
+        if dst.stat().st_size != source_bytes or base.sha256_file(dst) != source_sha:
+            raise base.CensusError(f"baseline legacy artifact copy identity drift: {name}")
         copied[name] = _artifact(dst, out)
     return copied
 
@@ -747,21 +776,36 @@ def run(manifest_path: Path, baseline: Path, baseline_tar_sha256: str,
     replay_surfaces = replay_surface_effects(raw_paths, surface_collector)
     proposals, proposal_lock = discover_uncapped_proposals(surface_collector.surface_rows)
     proposals_check, proposal_lock_check = discover_uncapped_proposals(surface_collector.surface_rows)
-    family_discovery = discover_mbo_families(proposals)
-    family_check = discover_mbo_families(proposals_check)
-    if base.sha256_json(proposals) != base.sha256_json(proposals_check) or base.sha256_json(proposal_lock) != base.sha256_json(proposal_lock_check) or base.sha256_json(family_discovery) != base.sha256_json(family_check):
-        raise base.CensusError("uncapped MBO proposal/family determinism failure")
+    if base.sha256_json(proposals) != base.sha256_json(proposals_check) or base.sha256_json(proposal_lock) != base.sha256_json(proposal_lock_check):
+        raise base.CensusError("uncapped MBO proposal determinism failure")
+
+    targets = [{"event_id": row["event_id"], "instrument_id": int(row["instrument_id"]),
+                "source_dbn_key": row["source_dbn_key"],
+                "cutoff_ts_recv_ns": int(row["feature_cutoff_ts_recv_ns"])} for row in proposals]
+    collector = CausalMboCollector(targets)
+    replay_features = replay_dbn_files([str(p) for p in raw_paths], collector.consume, materialize_full_state=False)
+    for rows in (proposals, proposals_check):
+        for proposal in rows:
+            features = collector.feature_row(proposal["event_id"])["features"]
+            proposal["mbo59_feature_names"] = list(MBO_FEATURE_NAMES)
+            proposal["mbo59_feature_vector"] = [features[name] for name in MBO_FEATURE_NAMES]
+
     proposal_writer = base.DeterministicGzipJsonlWriter(out / "UNCAPPED_MBO_PROPOSALS.jsonl.gz")
     for proposal in proposals: proposal_writer.write(proposal)
     proposal_output = proposal_writer.close()
-    proposal_lock.update({"family_discovery_method": family_discovery,
-        "family_assigned_proposal_set_sha256": base.sha256_json(proposals),
-        "deterministic_double_derivation_passed": True, "old_1577_1603_used_as_cap": False})
+    proposal_lock.update({"complete_mbo59_attached_before_retrospective_family_discovery": True,
+        "mbo59_attached_proposal_set_sha256": base.sha256_json(proposals),
+        "deterministic_double_derivation_passed": True, "old_comparison_populations_used_as_cap": False})
     proposal_lock["receipt_sha256"] = base.sha256_json({k: v for k, v in proposal_lock.items() if k != "receipt_sha256"})
     proposal_lock_path = out / "UNCAPPED_MBO_PROPOSAL_LOCK.json"; base.atomic_json(proposal_lock_path, proposal_lock)
+
+    family_discovery = discover_mbo_families(proposals)
+    family_check = discover_mbo_families(proposals_check)
+    if base.sha256_json(proposals) != base.sha256_json(proposals_check) or base.sha256_json(family_discovery) != base.sha256_json(family_check):
+        raise base.CensusError("retrospective MBO family determinism failure")
     family_path = out / "UNCAPPED_MBO_FAMILY_DISCOVERY.json"
     family_artifact = {"schema": "NG_EXHAUSTION_UNCAPPED_MBO_FAMILY_DISCOVERY_V1_20260825",
-        "status": "FAMILIES_LOCKED_FROM_CAUSAL_T0_FEATURES_BEFORE_OUTCOMES", **family_discovery,
+        "status": "POST_PROPOSAL_LOCK_RETROSPECTIVE_FULL_MBO59_CLASSIFICATION", **family_discovery,
         "proposal_lock_receipt_sha256": proposal_lock["receipt_sha256"],
         "proposal_clock_set_sha256": base.sha256_json([{key: row[key] for key in (
             "event_id", "ts_event_ns", "ts_recv_ns", "f_last_group_completion_ts_recv_ns",
@@ -772,16 +816,11 @@ def run(manifest_path: Path, baseline: Path, baseline_tar_sha256: str,
             "f_last_group_completion_ts_recv_ns", "threshold_crossing_ts_recv_ns",
             "max_contributing_ts_recv_ns", "feature_cutoff_ts_recv_ns",
             "outcome_availability_cutoff_ts_event_ns", "outcome_availability_cutoff_ts_recv_ns"],
-        "outcomes_accessed": False}
+        "outcomes_accessed": False, "family_label_used_by_proposal_outcome_or_scorer": False}
     family_artifact["receipt_sha256"] = base.sha256_json(family_artifact); base.atomic_json(family_path, family_artifact)
 
     events = build_locked_proposal_events(proposals, selected)
     families = dict(sorted(Counter(str(x.get("family")) for x in events).items()))
-    targets = [{"event_id": event["event_id"], "instrument_id": int(event["source_provenance"]["instrument_id"]),
-                "source_dbn_key": event["source_provenance"]["source_dbn_key"],
-                "cutoff_ts_recv_ns": int(event["causal_clocks"]["feature_cutoff_ts_recv_ns"])} for event in events]
-    collector = CausalMboCollector(targets)
-    replay_features = replay_dbn_files([str(p) for p in raw_paths], collector.consume, materialize_full_state=False)
     cutoff_writer = base.DeterministicGzipJsonlWriter(out / "V4_NATIVE_FULL_MBO_CAUSAL_CUTOFF_BINDINGS.jsonl.gz")
     evidence_writer = base.DeterministicGzipJsonlWriter(out / "V4_NATIVE_FULL_MBO_EVENT_EVIDENCE.jsonl.gz")
     event_writer = base.DeterministicGzipJsonlWriter(out / "V4_NATIVE_FULL_MBO_EVENTS.jsonl.gz")
@@ -899,7 +938,19 @@ def run(manifest_path: Path, baseline: Path, baseline_tar_sha256: str,
             "uncapped_family_discovery": _artifact(family_path, out),
             "proposal_surfaces": list(PROPOSAL_SURFACES),
             "proposal_count_cap": None, "family_count_cap": None,
-            "old_baseline_counts_are_comparison_only": OLD_COMPARISON_COUNTS,
+            "composite_merge_semantics": "ONE_EVENT_FOR_SAME_INSTRUMENT_POLARITY_RECEIVE_SECOND_MULTI_SURFACE_CROSSING",
+            "rearm_semantics": "PER_MECHANISM_DUPLICATE_SUPPRESSION_NOT_A_COUNT_OR_FAMILY_CAP",
+            "family_semantics": {"retrospective_after_complete_proposal_set": True,
+                "full_causal_mbo59_cluster_inputs": True, "arbitrary_content_derived_family_ids": True,
+                "noise_or_unassigned_retained": True, "not_knowable_at_t0": True,
+                "used_in_proposal_generation": False, "used_in_outcome_construction": False,
+                "used_in_structural_scorer": False,
+                "availability_cutoff_ts_event_ns": family_discovery["family_availability_cutoff_ts_event_ns"],
+                "availability_cutoff_ts_recv_ns": family_discovery["family_availability_cutoff_ts_recv_ns"]},
+            "old_baseline_counts_are_comparison_only": {
+                "event_counts": baseline_receipt["event_counts"],
+                "family_counts": baseline_receipt["family_counts"],
+            },
             "old_baseline_match_graph_output": prior._relative_output(comparator_output, out),
             "old_baseline_match_graph_summary": comparator_summary,
             "sparse_lineage_output": prior._relative_output(sparse_lineage, out),

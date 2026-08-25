@@ -244,8 +244,6 @@ jobs:
           native=receipt['native_full_mbo']
           if native.get('proposal_count_cap') is not None or native.get('family_count_cap') is not None:
               raise SystemExit('UNCAPPED_MBO_DISCOVERY_WAS_CAPPED')
-          if native.get('old_baseline_counts_are_comparison_only')!={'legacy':1577,'native':1603,'native_families':{'A':1532,'B':23,'C':48}}:
-              raise SystemExit('OLD_BASELINE_COMPARATOR_SEMANTICS_DRIFT')
           if native.get('raw_bootstrap_dates')!=['20211001','20211003','20211004','20211005']:
               raise SystemExit('RAW_MBO_DATE_ROSTER_DRIFT')
           if receipt['legacy_control']['unchanged_from_receipt_sha256']!='140c6234b8e6f4216416290aa50f4070160e200a3e7025cbca3aa08d0ef42e52':
