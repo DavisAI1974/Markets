@@ -1,0 +1,797 @@
+name: NG Exhaustion Two-Day Step-1 Transfer Recovery 20260824
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - research/kalshi/NG_EXHAUSTION_TWO_DAY_STEP1_TRANSFER_RECOVERY_LAUNCH_20260824.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ng-exhaustion-two-day-step1-transfer-recovery-20260824
+  cancel-in-progress: false
+
+env:
+  AWS_DEFAULT_REGION: us-east-2
+  INSTANCE_ID: i-08cee7171c0a76a04
+  BUCKET: bento-568968024170-us-east-2-an
+  DESTINATION_PREFIX: nymex/ng_mbo_5y_v0/step1_census/two_day_diagnostic/runs/32782745590-1
+  ORIGINAL_RUN_ID: '32782745590'
+  ORIGINAL_RUN_ATTEMPT: '1'
+  ORIGINAL_GITHUB_SHA: 870cb379e5aa92a7ddd028a0989152df01dc1843
+  EXPECTED_ARCHIVE_SHA256: 27cacc62681bc482e89eefcc3746f5d71958beab4e25816054e0c388a0346b33
+  EXPECTED_STEP1_RECEIPT_SHA256: 140c6234b8e6f4216416290aa50f4070160e200a3e7025cbca3aa08d0ef42e52
+  EXPECTED_ADAPTER_SHA256: 5a18fe96bc5022a619536640a630209df1c85ec7b756f139ee412ef9a8d288db
+  EXPECTED_VERIFIER_SHA256: 3fecd63681510f0de88d4225c9cf00c4cd6fcbcfcc5f99a659e1dbf7bd29743b
+  PROTECTED_PRODUCTION_SHA: a7611133f64064200de48cd2e7839fcea2510d51
+  MAX_ARCHIVE_BYTES: '1073741824'
+  MAX_EXTRACTED_BYTES: '4294967296'
+  MAX_GZIP_UNCOMPRESSED_BYTES: '4294967296'
+
+jobs:
+  transfer-existing-archive-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 2
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate immutable marker-only launch contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          marker="research/kalshi/NG_EXHAUSTION_TWO_DAY_STEP1_TRANSFER_RECOVERY_LAUNCH_20260824.json"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$GITHUB_REF_NAME" = "chatgpt/frankie-october-aws-readonly-20260824"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          mapfile -t changed < <(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA")
+          test "${#changed[@]}" -eq 1
+          test "${changed[0]}" = "$marker"
+          production_remote="$(git ls-remote origin \
+            refs/heads/chatgpt/ng-exhaustion-october-sharded-20260824 \
+            | cut -f1)"
+          test "$production_remote" = "$PROTECTED_PRODUCTION_SHA"
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          import re
+          import subprocess
+          from pathlib import Path
+
+          marker = Path(
+              "research/kalshi/"
+              "NG_EXHAUSTION_TWO_DAY_STEP1_TRANSFER_RECOVERY_LAUNCH_20260824.json"
+          )
+          launch = json.loads(marker.read_text(encoding="utf-8"))
+          base = str(launch.get("approved_base_sha") or "")
+          if not re.fullmatch(r"[0-9a-f]{40}", base):
+              raise SystemExit("TRANSFER_RECOVERY_APPROVED_BASE_SHA_MALFORMED")
+          required = {
+              "schema": "NG_EXHAUSTION_TWO_DAY_STEP1_TRANSFER_RECOVERY_LAUNCH_V1_20260824",
+              "confirmation": "TRANSFER_EXISTING_ARCHIVE_ONLY_LAST_ATTEMPT",
+              "approval": "GREG_APPROVED_EXACT_PREFLIGHT",
+              "launch_revision": 1,
+              "approved_base_sha": base,
+              "branch": "chatgpt/frankie-october-aws-readonly-20260824",
+              "source_github_run_id": os.environ["ORIGINAL_RUN_ID"],
+              "source_github_run_attempt": os.environ["ORIGINAL_RUN_ATTEMPT"],
+              "source_github_sha": os.environ["ORIGINAL_GITHUB_SHA"],
+              "worker_archive": (
+                  "/mnt/markets/ng_exhaustion_two_day_step1_20260824/"
+                  "32782745590-1/results.tar.gz"
+              ),
+              "results_tar_sha256": os.environ["EXPECTED_ARCHIVE_SHA256"],
+              "step1_receipt_sha256": os.environ["EXPECTED_STEP1_RECEIPT_SHA256"],
+              "destination_prefix": os.environ["DESTINATION_PREFIX"],
+              "max_archive_bytes": int(os.environ["MAX_ARCHIVE_BYTES"]),
+              "max_extracted_bytes": int(os.environ["MAX_EXTRACTED_BYTES"]),
+              "max_gzip_uncompressed_bytes": int(os.environ["MAX_GZIP_UNCOMPRESSED_BYTES"]),
+              "recompute": False,
+              "new_run_root": False,
+              "provider_or_frankie_calls": False,
+              "production_mutation": False,
+              "github_artifact_upload": False,
+          }
+          if launch != required:
+              raise SystemExit("TRANSFER_RECOVERY_LAUNCH_CONTRACT_DRIFT")
+          canonical = json.dumps(
+              required, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+          ) + "\n"
+          if marker.read_bytes() != canonical.encode("utf-8"):
+              raise SystemExit("TRANSFER_RECOVERY_LAUNCH_NOT_CANONICAL")
+          event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
+          if event.get("before") != base:
+              raise SystemExit("TRANSFER_RECOVERY_EVENT_BASE_SHA_DRIFT")
+          parent = subprocess.check_output(
+              ["git", "rev-parse", "HEAD^"], text=True
+          ).strip()
+          if parent != base:
+              raise SystemExit("TRANSFER_RECOVERY_PARENT_SHA_DRIFT")
+          pinned = {
+              Path("research/ng_exhaustion_mbo_2day_step1_finalize_20260824.py"):
+                  os.environ["EXPECTED_ADAPTER_SHA256"],
+              Path("research/kalshi/ng_exhaustion_two_day_step1_transfer_verify_20260824.py"):
+                  os.environ["EXPECTED_VERIFIER_SHA256"],
+          }
+          for path, expected in pinned.items():
+              if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+                  raise SystemExit("TRANSFER_RECOVERY_PINNED_SOURCE_HASH_DRIFT=" + str(path))
+          print("TRANSFER_ONLY_LAUNCH_CONTRACT=PASS")
+          print("PROTECTED_PRODUCTION_SHA=PASS")
+          PY
+
+      - name: Install hash-locked S3 client
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --quiet \
+            --require-hashes \
+            -r research/kalshi/NG_EXHAUSTION_TWO_DAY_STEP1_TRANSFER_RECOVERY_REQUIREMENTS_20260824.txt
+
+      - name: Prove empty destination and claim durable one-shot latch
+        shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_MAX_ATTEMPTS: '1'
+          AWS_RETRY_MODE: standard
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import hashlib
+          import json
+          import os
+
+          import boto3
+          from botocore.config import Config
+
+          config = Config(
+              signature_version="s3v4",
+              retries={"total_max_attempts": 1, "mode": "standard"},
+              s3={"addressing_style": "virtual"},
+          )
+          s3 = boto3.client(
+              "s3", region_name="us-east-2",
+              endpoint_url="https://s3.us-east-2.amazonaws.com", config=config,
+          )
+          bucket = os.environ["BUCKET"]
+          prefix = os.environ["DESTINATION_PREFIX"]
+          inventory = s3.list_objects_v2(Bucket=bucket, Prefix=prefix + "/", MaxKeys=1000)
+          if inventory.get("IsTruncated") is True or inventory.get("Contents"):
+              raise SystemExit("TRANSFER_RECOVERY_PREFIX_NOT_EMPTY")
+          latch = {
+              "schema": "NG_EXHAUSTION_TWO_DAY_STEP1_TRANSFER_RECOVERY_ATTEMPT_V1_20260824",
+              "status": "ONE_SHOT_ATTEMPT_CLAIMED_BEFORE_SSM",
+              "github_run_id": os.environ["GITHUB_RUN_ID"],
+              "github_run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+              "github_sha": os.environ["GITHUB_SHA"],
+              "source_github_run_id": os.environ["ORIGINAL_RUN_ID"],
+              "provider_logical_calls": 0,
+          }
+          body = (json.dumps(latch, sort_keys=True, separators=(",", ":")) + "\n").encode()
+          digest = hashlib.sha256(body).digest()
+          response = s3.put_object(
+              Bucket=bucket, Key=prefix + "/RECOVERY_ATTEMPT.json", Body=body,
+              IfNoneMatch="*", ChecksumSHA256=base64.b64encode(digest).decode(),
+              Metadata={"sha256": digest.hex()},
+          )
+          if response.get("ResponseMetadata", {}).get("HTTPStatusCode") != 200:
+              raise SystemExit("TRANSFER_RECOVERY_ATTEMPT_LATCH_FAILED")
+          print("TRANSFER_RECOVERY_PREFIX_EMPTY=PASS")
+          print("TRANSFER_RECOVERY_ONE_SHOT_LATCH=PASS")
+          PY
+
+      - name: Read-only verify the existing worker archive identity
+        shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_MAX_ATTEMPTS: '1'
+          AWS_RETRY_MODE: standard
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          import shlex
+
+          archive = (
+              "/mnt/markets/ng_exhaustion_two_day_step1_20260824/"
+              "32782745590-1/results.tar.gz"
+          )
+          remote = f'''set -euo pipefail
+          archive={shlex.quote(archive)}
+          expected_sha={shlex.quote(os.environ["EXPECTED_ARCHIVE_SHA256"])}
+          test -f "$archive"
+          test -s "$archive"
+          actual_bytes="$(stat -c %s "$archive")"
+          actual_sha="$(sha256sum "$archive" | cut -d' ' -f1)"
+          test "$actual_sha" = "$expected_sha"
+          printf 'TWO_DAY_ARCHIVE_BYTES=%s\n' "$actual_bytes"
+          printf 'TWO_DAY_ARCHIVE_SHA256=%s\n' "$actual_sha"
+          echo TWO_DAY_ARCHIVE_IDENTITY=PASS
+          '''
+          params = {
+              "commands": ["/bin/bash -lc " + shlex.quote(remote)],
+              "executionTimeout": ["120"],
+          }
+          with open("/tmp/two-day-transfer-verify-params.json", "w", encoding="utf-8") as handle:
+              json.dump(params, handle)
+          PY
+          verify_command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript \
+            --comment "Read-only verify existing two-day Step-1 archive identity" \
+            --parameters file:///tmp/two-day-transfer-verify-params.json \
+            --timeout-seconds 60 --query 'Command.CommandId' --output text)"
+          echo "VERIFY_SSM_COMMAND_ID=$verify_command_id"
+          for verify_poll in $(seq 1 36); do
+            verify_status="$(aws ssm get-command-invocation \
+              --command-id "$verify_command_id" --instance-id "$INSTANCE_ID" \
+              --query Status --output text 2>/dev/null || true)"
+            case "$verify_status" in
+              Success|Failed|Cancelled|TimedOut|Cancelling) break ;;
+            esac
+            sleep 5
+          done
+          aws ssm get-command-invocation \
+            --command-id "$verify_command_id" --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json > /tmp/two-day-transfer-verify-invocation.json
+          python - <<'PY'
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          result = json.loads(Path("/tmp/two-day-transfer-verify-invocation.json").read_text())
+          if result.get("Status") != "Success" or result.get("ResponseCode") != 0:
+              raise SystemExit("TWO_DAY_ARCHIVE_IDENTITY_SSM_FAILED")
+          output = str(result.get("StandardOutput") or "")
+          if "TWO_DAY_ARCHIVE_IDENTITY=PASS" not in output:
+              raise SystemExit("TWO_DAY_ARCHIVE_IDENTITY_NOT_PROVEN")
+          byte_match = re.search(r"^TWO_DAY_ARCHIVE_BYTES=([1-9][0-9]*)$", output, re.M)
+          sha_match = re.search(r"^TWO_DAY_ARCHIVE_SHA256=([0-9a-f]{64})$", output, re.M)
+          if not byte_match or not sha_match:
+              raise SystemExit("TWO_DAY_ARCHIVE_IDENTITY_OUTPUT_MALFORMED")
+          size = int(byte_match.group(1))
+          if size > int(os.environ["MAX_ARCHIVE_BYTES"]):
+              raise SystemExit("TWO_DAY_ARCHIVE_EXCEEDS_APPROVED_BYTE_CAP")
+          if sha_match.group(1) != os.environ["EXPECTED_ARCHIVE_SHA256"]:
+              raise SystemExit("TWO_DAY_ARCHIVE_IDENTITY_HASH_DRIFT")
+          with Path(os.environ["GITHUB_ENV"]).open("a", encoding="utf-8") as handle:
+              handle.write(f"VERIFIED_ARCHIVE_BYTES={size}\n")
+              handle.write("VERIFIED_ARCHIVE_SHA256=" + sha_match.group(1) + "\n")
+          print("TWO_DAY_ARCHIVE_IDENTITY=PASS")
+          print(f"TWO_DAY_ARCHIVE_BYTES={size}")
+          PY
+
+      - name: Prove regional conditional signed upload path
+        shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_MAX_ATTEMPTS: '1'
+          AWS_RETRY_MODE: standard
+        run: |
+          set -euo pipefail
+          trap 'rm -f /tmp/two-day-transfer-probe-url' EXIT
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import boto3
+          from botocore.config import Config
+
+          s3 = boto3.client(
+              "s3", region_name="us-east-2",
+              endpoint_url="https://s3.us-east-2.amazonaws.com",
+              config=Config(
+                  signature_version="s3v4",
+                  retries={"total_max_attempts": 1, "mode": "standard"},
+                  s3={"addressing_style": "virtual"},
+              ),
+          )
+          url = s3.generate_presigned_url(
+              "put_object",
+              Params={
+                  "Bucket": os.environ["BUCKET"],
+                  "Key": os.environ["DESTINATION_PREFIX"] + "/transfer/upload-probe.txt",
+                  "IfNoneMatch": "*",
+                  "Metadata": {"sha256": "3dfa3fb239f56c778a1e9b33eb31328349edd155a95806dac4378904e88527e5"},
+              },
+              ExpiresIn=300,
+          )
+          path = Path("/tmp/two-day-transfer-probe-url")
+          path.write_text(url, encoding="utf-8")
+          path.chmod(0o600)
+          PY
+          PROBE_UPLOAD_URL="$(cat /tmp/two-day-transfer-probe-url)"
+          echo "::add-mask::$PROBE_UPLOAD_URL"
+          printf 'READY\n' > /tmp/two-day-transfer-upload-probe.txt
+          curl --fail --silent --show-error --connect-timeout 10 --max-time 60 \
+            --request PUT --header 'If-None-Match: *' \
+            --header 'x-amz-meta-sha256: 3dfa3fb239f56c778a1e9b33eb31328349edd155a95806dac4378904e88527e5' \
+            --upload-file /tmp/two-day-transfer-upload-probe.txt "$PROBE_UPLOAD_URL"
+          python - <<'PY'
+          import os
+          import boto3
+          from botocore.config import Config
+
+          s3 = boto3.client(
+              "s3", region_name="us-east-2",
+              endpoint_url="https://s3.us-east-2.amazonaws.com",
+              config=Config(
+                  signature_version="s3v4",
+                  retries={"total_max_attempts": 1, "mode": "standard"},
+                  s3={"addressing_style": "virtual"},
+              ),
+          )
+          head = s3.head_object(
+              Bucket=os.environ["BUCKET"],
+              Key=os.environ["DESTINATION_PREFIX"] + "/transfer/upload-probe.txt",
+          )
+          if int(head.get("ContentLength") or -1) != 6:
+              raise SystemExit("REGIONAL_SIGNED_UPLOAD_PROBE_LENGTH_DRIFT")
+          expected = "3dfa3fb239f56c778a1e9b33eb31328349edd155a95806dac4378904e88527e5"
+          if (head.get("Metadata") or {}).get("sha256") != expected:
+              raise SystemExit("REGIONAL_SIGNED_UPLOAD_PROBE_HASH_METADATA_DRIFT")
+          print("REGIONAL_SIGNED_UPLOAD_PROBE=PASS")
+          PY
+
+      - name: Transfer the verified existing archive exactly once
+        shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_MAX_ATTEMPTS: '1'
+          AWS_RETRY_MODE: standard
+        run: |
+          set -euo pipefail
+          trap 'rm -f /tmp/two-day-transfer-archive-url /tmp/two-day-transfer-upload-params.json' EXIT
+          python - <<'PY'
+          import json
+          import os
+          import shlex
+          from pathlib import Path
+          import boto3
+          from botocore.config import Config
+
+          s3 = boto3.client(
+              "s3", region_name="us-east-2",
+              endpoint_url="https://s3.us-east-2.amazonaws.com",
+              config=Config(
+                  signature_version="s3v4",
+                  retries={"total_max_attempts": 1, "mode": "standard"},
+                  s3={"addressing_style": "virtual"},
+              ),
+          )
+          url = s3.generate_presigned_url(
+              "put_object",
+              Params={
+                  "Bucket": os.environ["BUCKET"],
+                  "Key": os.environ["DESTINATION_PREFIX"] + "/transfer/results.tar.gz",
+                  "IfNoneMatch": "*",
+                  "Metadata": {"sha256": os.environ["VERIFIED_ARCHIVE_SHA256"]},
+              },
+              ExpiresIn=900,
+          )
+          url_path = Path("/tmp/two-day-transfer-archive-url")
+          url_path.write_text(url, encoding="utf-8")
+          url_path.chmod(0o600)
+          archive = (
+              "/mnt/markets/ng_exhaustion_two_day_step1_20260824/"
+              "32782745590-1/results.tar.gz"
+          )
+          remote = f'''set -euo pipefail
+          archive={shlex.quote(archive)}
+          expected_bytes={shlex.quote(os.environ["VERIFIED_ARCHIVE_BYTES"])}
+          expected_sha={shlex.quote(os.environ["VERIFIED_ARCHIVE_SHA256"])}
+          upload_url={shlex.quote(url)}
+          test -f "$archive"
+          test -s "$archive"
+          test "$(stat -c %s "$archive")" = "$expected_bytes"
+          test "$(sha256sum "$archive" | cut -d' ' -f1)" = "$expected_sha"
+          curl --fail --silent --show-error --connect-timeout 10 --max-time 600 \\
+            --request PUT --header 'If-None-Match: *' \\
+            --header "x-amz-meta-sha256: $expected_sha" \\
+            --upload-file "$archive" "$upload_url"
+          echo TWO_DAY_RESULT_ARCHIVE_TRANSFER=PASS
+          '''
+          params = {
+              "commands": ["/bin/bash -lc " + shlex.quote(remote)],
+              "executionTimeout": ["660"],
+          }
+          Path("/tmp/two-day-transfer-upload-params.json").write_text(json.dumps(params))
+          PY
+          RESULT_UPLOAD_URL="$(cat /tmp/two-day-transfer-archive-url)"
+          echo "::add-mask::$RESULT_UPLOAD_URL"
+          transfer_command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript \
+            --comment "Transfer verified existing two-day Step-1 archive only" \
+            --parameters file:///tmp/two-day-transfer-upload-params.json \
+            --timeout-seconds 120 --query 'Command.CommandId' --output text)"
+          echo "TRANSFER_SSM_COMMAND_ID=$transfer_command_id"
+          for transfer_poll in $(seq 1 156); do
+            transfer_status="$(aws ssm get-command-invocation \
+              --command-id "$transfer_command_id" --instance-id "$INSTANCE_ID" \
+              --query Status --output text 2>/dev/null || true)"
+            case "$transfer_status" in
+              Success|Failed|Cancelled|TimedOut|Cancelling) break ;;
+            esac
+            sleep 5
+          done
+          aws ssm get-command-invocation \
+            --command-id "$transfer_command_id" --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json > /tmp/two-day-transfer-upload-invocation.json
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          import boto3
+          from botocore.config import Config
+
+          result = json.loads(Path("/tmp/two-day-transfer-upload-invocation.json").read_text())
+          if result.get("Status") != "Success" or result.get("ResponseCode") != 0:
+              raise SystemExit("TWO_DAY_RESULT_ARCHIVE_TRANSFER_FAILED")
+          if "TWO_DAY_RESULT_ARCHIVE_TRANSFER=PASS" not in str(result.get("StandardOutput") or ""):
+              raise SystemExit("TWO_DAY_RESULT_ARCHIVE_TRANSFER_NOT_PROVEN")
+          s3 = boto3.client(
+              "s3", region_name="us-east-2",
+              endpoint_url="https://s3.us-east-2.amazonaws.com",
+              config=Config(
+                  signature_version="s3v4",
+                  retries={"total_max_attempts": 1, "mode": "standard"},
+                  s3={"addressing_style": "virtual"},
+              ),
+          )
+          head = s3.head_object(
+              Bucket=os.environ["BUCKET"],
+              Key=os.environ["DESTINATION_PREFIX"] + "/transfer/results.tar.gz",
+          )
+          if int(head.get("ContentLength") or -1) != int(os.environ["VERIFIED_ARCHIVE_BYTES"]):
+              raise SystemExit("TRANSFERRED_ARCHIVE_LENGTH_DRIFT")
+          if (head.get("Metadata") or {}).get("sha256") != os.environ["VERIFIED_ARCHIVE_SHA256"]:
+              raise SystemExit("TRANSFERRED_ARCHIVE_HASH_METADATA_DRIFT")
+          print("TWO_DAY_RESULT_ARCHIVE_TRANSFER=PASS")
+          PY
+
+      - name: Download once and verify archive receipt and every artifact
+        shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_MAX_ATTEMPTS: '1'
+          AWS_RETRY_MODE: standard
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/two-day-transfer-recovery/results
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path, PurePosixPath
+          import shutil
+          import tarfile
+
+          import boto3
+          from botocore.config import Config
+          from research.kalshi.ng_exhaustion_two_day_step1_transfer_verify_20260824 import (
+              sha256_file,
+              verify_receipt_artifacts,
+          )
+
+          expected_files = {
+              "TWO_DAY_SECONDS.jsonl.gz",
+              "LEGACY_CONTROL_EVENTS.jsonl.gz",
+              "V4_NATIVE_FULL_EVENTS.jsonl.gz",
+              "LEGACY_CONTROL_LINEAGE_INPUTS.jsonl.gz",
+              "V4_NATIVE_FULL_LINEAGE_INPUTS.jsonl.gz",
+              "LEGACY_CONTROL_SELF_FIT_GAINS.jsonl.gz",
+              "V4_NATIVE_FULL_SELF_FIT_GAINS.jsonl.gz",
+              "LEGACY_CONTROL_STRUCTURAL_SELF_FIT_SUMMARY.json",
+              "V4_NATIVE_FULL_STRUCTURAL_SELF_FIT_SUMMARY.json",
+              "LEGACY_CONTROL_POPULATION.jsonl.gz",
+              "V4_NATIVE_FULL_POPULATION.jsonl.gz",
+              "LEGACY_CONTROL_CROSSWALK_INDEX.jsonl.gz",
+              "V4_NATIVE_FULL_CROSSWALK_INDEX.jsonl.gz",
+              "DUAL_CENSUS_CROSSWALK.jsonl.gz",
+              "TWO_DAY_VALIDATION_BYPASS_RECEIPT.json",
+              "TWO_DAY_SOURCE_MANIFEST.json",
+              "STEP1_DUAL_CENSUS_RECEIPT.json",
+              "RESOURCE_USAGE.txt",
+              "RUN.log",
+          }
+          archive = Path("/tmp/two-day-transfer-recovery/results.tar.gz")
+          root = Path("/tmp/two-day-transfer-recovery/results").resolve()
+          s3 = boto3.client(
+              "s3", region_name="us-east-2",
+              endpoint_url="https://s3.us-east-2.amazonaws.com",
+              config=Config(
+                  signature_version="s3v4",
+                  retries={"total_max_attempts": 1, "mode": "standard"},
+                  s3={"addressing_style": "virtual"},
+              ),
+          )
+          response = s3.get_object(
+              Bucket=os.environ["BUCKET"],
+              Key=os.environ["DESTINATION_PREFIX"] + "/transfer/results.tar.gz",
+          )
+          digest = hashlib.sha256()
+          size = 0
+          with archive.open("xb") as handle:
+              for chunk in iter(lambda: response["Body"].read(1024 * 1024), b""):
+                  handle.write(chunk)
+                  digest.update(chunk)
+                  size += len(chunk)
+          response["Body"].close()
+          if size != int(os.environ["VERIFIED_ARCHIVE_BYTES"]):
+              raise SystemExit("DOWNLOADED_ARCHIVE_BYTE_DRIFT")
+          if digest.hexdigest() != os.environ["EXPECTED_ARCHIVE_SHA256"]:
+              raise SystemExit("DOWNLOADED_ARCHIVE_HASH_DRIFT")
+
+          with tarfile.open(archive, "r:gz") as bundle:
+              regular = {}
+              for member in bundle.getmembers():
+                  raw = member.name
+                  while raw.startswith("./"):
+                      raw = raw[2:]
+                  if member.isdir() and raw in ("", "."):
+                      continue
+                  pure = PurePosixPath(raw)
+                  if (
+                      not member.isreg()
+                      or not raw
+                      or pure.is_absolute()
+                      or ".." in pure.parts
+                      or len(pure.parts) != 1
+                      or raw in regular
+                  ):
+                      raise SystemExit("UNSAFE_TAR_MEMBER=" + member.name)
+                  regular[raw] = member
+              if set(regular) != expected_files:
+                  raise SystemExit("TWO_DAY_ARCHIVE_FILE_SET_DRIFT")
+              extracted_bytes = sum(member.size for member in regular.values())
+              if extracted_bytes > int(os.environ["MAX_EXTRACTED_BYTES"]):
+                  raise SystemExit("TWO_DAY_ARCHIVE_EXTRACTED_SIZE_CAP_EXCEEDED")
+              for name in sorted(regular):
+                  source = bundle.extractfile(regular[name])
+                  if source is None:
+                      raise SystemExit("TWO_DAY_ARCHIVE_MEMBER_UNREADABLE=" + name)
+                  with source, (root / name).open("xb") as target:
+                      shutil.copyfileobj(source, target)
+
+          receipt = json.loads((root / "STEP1_DUAL_CENSUS_RECEIPT.json").read_text())
+          if receipt.get("status") != "STEP1_DUAL_STRUCTURAL_CENSUS_COMPLETE_TWO_DAY_DIAGNOSTIC":
+              raise SystemExit("DOWNLOADED_RECEIPT_STATUS_DRIFT")
+          claimed = str(receipt.get("receipt_sha256") or "")
+          if claimed != os.environ["EXPECTED_STEP1_RECEIPT_SHA256"]:
+              raise SystemExit("DOWNLOADED_RECEIPT_EXPECTED_HASH_DRIFT")
+          receipt_body = dict(receipt)
+          receipt_body.pop("receipt_sha256", None)
+          computed = hashlib.sha256(json.dumps(
+              receipt_body, sort_keys=True, separators=(",", ":")
+          ).encode()).hexdigest()
+          if claimed != computed:
+              raise SystemExit("DOWNLOADED_RECEIPT_SELF_HASH_DRIFT")
+          try:
+              verified = verify_receipt_artifacts(
+                  root,
+                  receipt,
+                  max_uncompressed_bytes=int(os.environ["MAX_GZIP_UNCOMPRESSED_BYTES"]),
+              )
+          except ValueError as error:
+              raise SystemExit(str(error)) from error
+          expected_receipt_artifacts = expected_files - {
+              "STEP1_DUAL_CENSUS_RECEIPT.json", "RESOURCE_USAGE.txt", "RUN.log"
+          }
+          if len(verified) != 16 or set(verified) != expected_receipt_artifacts:
+              raise SystemExit("RECEIPT_ARTIFACT_MANIFEST_SET_DRIFT")
+          if receipt.get("event_counts") != {"legacy": 1577, "native": 1603}:
+              raise SystemExit("TWO_DAY_EVENT_COUNT_DRIFT")
+          if receipt.get("family_counts") != {
+              "legacy": {"A": 1510, "B": 23, "C": 44},
+              "native": {"A": 1532, "B": 23, "C": 48},
+          }:
+              raise SystemExit("TWO_DAY_FAMILY_COUNT_DRIFT")
+          if receipt.get("legacy_population_summary", {}).get("depth_histogram") != {
+              "0": 612, "1": 852, "2": 97, "3": 16, "4": 0, "5": 0,
+          }:
+              raise SystemExit("TWO_DAY_LEGACY_DEPTH_DRIFT")
+          if receipt.get("native_population_summary", {}).get("depth_histogram") != {
+              "0": 591, "1": 902, "2": 106, "3": 3, "4": 1, "5": 0,
+          }:
+              raise SystemExit("TWO_DAY_NATIVE_DEPTH_DRIFT")
+          source_window = receipt.get("source_window", {})
+          if source_window.get("start") != "2021-10-04T00:00:00Z":
+              raise SystemExit("TWO_DAY_WINDOW_START_DRIFT")
+          if source_window.get("end_exclusive") != "2021-10-06T00:00:00Z":
+              raise SystemExit("TWO_DAY_WINDOW_END_DRIFT")
+          for key in (
+              "comparison_to_54w_answers_performed", "provider_llm_called", "frankie_launched"
+          ):
+              if receipt.get(key) is not False:
+                  raise SystemExit("TWO_DAY_FORBIDDEN_OPERATION_DRIFT=" + key)
+          if receipt.get("child_output_reuse", {}).get("raw_mbo_replayed") is not False:
+              raise SystemExit("TWO_DAY_RAW_REPLAY_DRIFT")
+          if receipt.get("diagnostic_validation", {}).get("d0_d5_population_claimable") is not True:
+              raise SystemExit("TWO_DAY_D0_D5_CLAIM_DRIFT")
+          for view in ("legacy", "native"):
+              structural = receipt.get("structural_outputs", {}).get(view, {})
+              for key in ("depth", "gain_output", "sparse_sensitivity", "aggregate", "summary_output"):
+                  if key not in structural:
+                      raise SystemExit("TWO_DAY_STRUCTURAL_SURFACE_MISSING=" + view + ":" + key)
+
+          result_files = [{
+              "name": name,
+              "bytes": (root / name).stat().st_size,
+              "sha256": sha256_file(root / name),
+          } for name in sorted(expected_files)]
+          verification = {
+              "schema": "NG_EXHAUSTION_TWO_DAY_STEP1_TRANSFER_VERIFICATION_V1_20260824",
+              "archive_bytes": size,
+              "archive_sha256": digest.hexdigest(),
+              "step1_receipt_sha256": claimed,
+              "verified_receipt_artifact_count": len(verified),
+              "result_files": result_files,
+          }
+          Path("/tmp/two-day-transfer-recovery/VERIFICATION.json").write_text(
+              json.dumps(verification, indent=2, sort_keys=True) + "\n"
+          )
+          completion = {
+              "schema": "NG_EXHAUSTION_TWO_DAY_STEP1_TRANSFER_RECOVERY_COMPLETION_V1_20260824",
+              "status": "COMPLETE_HASH_VERIFIED_BEFORE_PUBLICATION",
+              "source_github_run_id": os.environ["ORIGINAL_RUN_ID"],
+              "source_github_run_attempt": os.environ["ORIGINAL_RUN_ATTEMPT"],
+              "source_github_sha": os.environ["ORIGINAL_GITHUB_SHA"],
+              "recovery_github_run_id": os.environ["GITHUB_RUN_ID"],
+              "recovery_github_run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+              "recovery_github_sha": os.environ["GITHUB_SHA"],
+              "results_tar_bytes": size,
+              "results_tar_sha256": digest.hexdigest(),
+              "step1_receipt_sha256": claimed,
+              "verified_receipt_artifact_count": len(verified),
+              "published_result_file_count": len(result_files),
+              "provider_logical_calls": 0,
+              "ssm_run_command_invocations": 2,
+              "github_artifact_uploaded": False,
+          }
+          completion["completion_sha256"] = hashlib.sha256(json.dumps(
+              completion, sort_keys=True, separators=(",", ":")
+          ).encode()).hexdigest()
+          Path("/tmp/two-day-transfer-recovery/COMPLETION_RECEIPT.json").write_text(
+              json.dumps(completion, indent=2, sort_keys=True) + "\n"
+          )
+          print("DOWNLOADED_ARCHIVE_HASH=PASS")
+          print("DOWNLOADED_RECEIPT_AND_ARTIFACT_HASHES=PASS")
+          print("VERIFIED_RECEIPT_ARTIFACT_COUNT=16")
+          print("VERIFIED_RESULT_FILE_COUNT=19")
+          PY
+
+      - name: Publish conditionally and put COMPLETE as the terminal S3 mutation
+        shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_MAX_ATTEMPTS: '1'
+          AWS_RETRY_MODE: standard
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import json
+          import os
+          from pathlib import Path
+
+          import boto3
+          from botocore.config import Config
+          from research.kalshi.ng_exhaustion_two_day_step1_transfer_verify_20260824 import sha256_file
+
+          bucket = os.environ["BUCKET"]
+          prefix = os.environ["DESTINATION_PREFIX"]
+          root = Path("/tmp/two-day-transfer-recovery/results")
+          verification = json.loads(Path(
+              "/tmp/two-day-transfer-recovery/VERIFICATION.json"
+          ).read_text())
+          s3 = boto3.client(
+              "s3", region_name="us-east-2",
+              endpoint_url="https://s3.us-east-2.amazonaws.com",
+              config=Config(
+                  signature_version="s3v4",
+                  retries={"total_max_attempts": 1, "mode": "standard"},
+                  s3={"addressing_style": "virtual"},
+              ),
+          )
+          publish_items = []
+          for item in verification["result_files"]:
+              path = root / item["name"]
+              digest = sha256_file(path)
+              if path.stat().st_size != int(item["bytes"]) or digest != item["sha256"]:
+                  raise SystemExit("PREPUBLICATION_RESULT_FILE_DRIFT=" + item["name"])
+              publish_items.append((
+                  prefix + "/artifacts/" + item["name"],
+                  path,
+                  int(item["bytes"]),
+                  digest,
+              ))
+          adapter = Path("research/ng_exhaustion_mbo_2day_step1_finalize_20260824.py")
+          adapter_sha = sha256_file(adapter)
+          if adapter_sha != os.environ["EXPECTED_ADAPTER_SHA256"]:
+              raise SystemExit("PREPUBLICATION_ADAPTER_HASH_DRIFT")
+          publish_items.append((
+              prefix + "/input/ng_exhaustion_mbo_2day_step1_finalize_20260824.py",
+              adapter,
+              adapter.stat().st_size,
+              adapter_sha,
+          ))
+          for key, path, size, digest in publish_items:
+              with path.open("rb") as body:
+                  s3.put_object(
+                      Bucket=bucket,
+                      Key=key,
+                      Body=body,
+                      IfNoneMatch="*",
+                      ChecksumSHA256=base64.b64encode(bytes.fromhex(digest)).decode(),
+                      Metadata={"sha256": digest},
+                  )
+              head = s3.head_object(Bucket=bucket, Key=key)
+              if int(head.get("ContentLength") or -1) != size:
+                  raise SystemExit("PUBLISHED_OBJECT_BYTE_DRIFT=" + key)
+              if (head.get("Metadata") or {}).get("sha256") != digest:
+                  raise SystemExit("PUBLISHED_OBJECT_HASH_METADATA_DRIFT=" + key)
+          print("FINAL_ARTIFACT_OBJECTS_VERIFIED=PASS")
+
+          expected_before_complete = {
+              prefix + "/RECOVERY_ATTEMPT.json",
+              prefix + "/transfer/upload-probe.txt",
+              prefix + "/transfer/results.tar.gz",
+              *(key for key, _path, _size, _digest in publish_items),
+          }
+          inventory = s3.list_objects_v2(Bucket=bucket, Prefix=prefix + "/", MaxKeys=1000)
+          if inventory.get("IsTruncated") is True:
+              raise SystemExit("PRECOMPLETE_RESULT_INVENTORY_TRUNCATED")
+          rows = inventory.get("Contents") or []
+          if {str(row["Key"]) for row in rows} != expected_before_complete:
+              raise SystemExit("PRECOMPLETE_RESULT_OBJECT_SET_DRIFT")
+          total_before_complete = sum(int(row["Size"]) for row in rows)
+          print("PRECOMPLETE_RESULT_INVENTORY=PASS")
+
+          completion_path = Path("/tmp/two-day-transfer-recovery/COMPLETION_RECEIPT.json")
+          completion_sha = sha256_file(completion_path)
+          with completion_path.open("rb") as body:
+              response = s3.put_object(
+                  Bucket=bucket,
+                  Key=prefix + "/COMPLETE.json",
+                  Body=body,
+                  IfNoneMatch="*",
+                  ChecksumSHA256=base64.b64encode(bytes.fromhex(completion_sha)).decode(),
+                  Metadata={"sha256": completion_sha},
+              )
+          if response.get("ResponseMetadata", {}).get("HTTPStatusCode") != 200:
+              raise SystemExit("FINAL_COMPLETION_MARKER_PUT_FAILED")
+          returned_checksum = response.get("ChecksumSHA256")
+          expected_checksum = base64.b64encode(bytes.fromhex(completion_sha)).decode()
+          if returned_checksum is not None and returned_checksum != expected_checksum:
+              raise SystemExit("FINAL_COMPLETION_MARKER_CHECKSUM_DRIFT")
+          print("COMPLETE_MARKER_PUT_LAST=PASS")
+          print("FINAL_PUBLICATION_MARKER=PASS")
+          print("S3_RESULT_OBJECT_COUNT=24")
+          print("S3_RESULT_TOTAL_BYTES=" + str(
+              total_before_complete + completion_path.stat().st_size
+          ))
+          print("TWO_DAY_STEP1_RECEIPT_SHA256=" + os.environ["EXPECTED_STEP1_RECEIPT_SHA256"])
+          print("TWO_DAY_RESULTS_TAR_SHA256=" + os.environ["EXPECTED_ARCHIVE_SHA256"])
+          print("PROVIDER_LOGICAL_CALLS=0")
+          print("SSM_RUN_COMMAND_INVOCATIONS=2")
+          print("S3_BILLABLE_PUT_LIST_CLASS_REQUESTS=26")
+          print("S3_BILLABLE_GET_HEAD_CLASS_REQUESTS=23")
+          PY
