@@ -63,6 +63,9 @@ from research.kalshi.frankie_full_stack_runtime_contracts_20260824 import (
     RuntimeEvent,
     ToolCallReceipt,
 )
+from research.kalshi.frankie_full_stack_provisional_combined_pipeline_20260824 import (
+    execute_combined_provisional_pipeline,
+)
 from research.kalshi.frankie_lane_aware_context_router_20260824 import (
     ComponentAvailability,
     ContextVariant,
@@ -791,6 +794,7 @@ def _component_receipts(
     router: FrankieLaneAwareContextRouter,
     bundle: RouteBundle,
     binding: CausalPrefixBinding,
+    causal_state: Mapping[str, Any],
 ) -> tuple[ProvisionalComponentReceipt, ...]:
     route = bundle.routes[ContextVariant.FULL_PROVISIONAL_COMBINED]
     grouped: dict[str, list[dict[str, Any]]] = {item: [] for item in ACTIVE_PAIRED_COMPONENTS}
@@ -812,35 +816,11 @@ def _component_receipts(
     missing = sorted(component for component, rows in grouped.items() if not rows)
     if missing:
         raise FullStackOctoberError(f"combined provisional context incomplete: {missing}")
-    receipts = [
-        ProvisionalComponentReceipt.create(
-            component_id=component,
-            binding=binding,
-            lifecycle_stage=ComponentLifecycleStage.PRE_REVEAL_PREFIX,
-            executed_stage=ComponentLifecycleStage.PRE_REVEAL_PREFIX,
-            status=ComponentStatus.ACTIVE,
-            context={"component_id": component, "sources": grouped[component]},
-        )
-        for component in ACTIVE_PAIRED_COMPONENTS
-    ]
-    receipts.append(
-        ProvisionalComponentReceipt.create(
-            component_id="META_LOOP",
-            binding=binding,
-            lifecycle_stage=ComponentLifecycleStage.POST_EVIDENCE_DIAGNOSTIC,
-            executed_stage=ComponentLifecycleStage.PRE_REVEAL_PREFIX,
-            status=ComponentStatus.DEFERRED_NOT_YET_LAWFUL,
-            context={
-                "component_id": "META_LOOP",
-                "withheld_sources": [
-                    {"path": item.path, "source_sha256": item.sha256}
-                    for item in route.withheld_sources
-                ],
-                "reason": "OUTCOME_DEPENDENT_POST_EVIDENCE_ONLY",
-            },
-        )
+    return execute_combined_provisional_pipeline(
+        binding=binding,
+        causal_state=causal_state,
+        source_contexts=grouped,
     )
-    return tuple(receipts)
 
 
 def _first_receipts(ledger: DurableJsonlLedger, prefix_hash: str) -> dict[str, str]:
@@ -1050,6 +1030,7 @@ def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
         prior_stream_hash = row.stream_hash
         if row.mark is None:
             return
+        causal_state = _provider_state(row)
         bundle = router.build_routes(run_id=cfg.run_id, state_prefix_hash=binding.state_prefix_hash)
         knowledge = _base_knowledge(router, bundle)
         control_tools, control_reads = _lane_receipts(
@@ -1083,8 +1064,13 @@ def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
         )
         paired = orchestrator.run_prefix(
             binding=binding,
-            causal_state=_provider_state(row),
-            component_receipts=_component_receipts(router=router, bundle=bundle, binding=binding),
+            causal_state=causal_state,
+            component_receipts=_component_receipts(
+                router=router,
+                bundle=bundle,
+                binding=binding,
+                causal_state=causal_state,
+            ),
             answer_revealed=False,
         )
         marked_prefixes.append(binding.causal_prefix_hash)

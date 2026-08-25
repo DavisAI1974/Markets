@@ -346,6 +346,17 @@ class FullStackOctoberContractTest(unittest.TestCase):
         self.assertNotIn("read_reconciliation", source)
         self.assertNotIn("reveal_opportunity_outcome", source)
 
+    def test_marked_prefix_executes_combined_pipeline_before_paired_provider_calls(self) -> None:
+        component_source = inspect.getsource(fullstack._component_receipts)
+        run_source = inspect.getsource(fullstack.run_full_october)
+        self.assertIn("execute_combined_provisional_pipeline", component_source)
+        self.assertIn("source_contexts=grouped", component_source)
+        self.assertIn("causal_state=causal_state", component_source)
+        self.assertLess(
+            run_source.index("component_receipts=_component_receipts"),
+            run_source.index("answer_revealed=False"),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
