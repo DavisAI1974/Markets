@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import hashlib
+import io
 import json
 from pathlib import Path
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 
 from research.kalshi import ng_exhaustion_frankie_fullstack_october_20260824 as fullstack
 
@@ -59,6 +62,48 @@ class FullStackOctoberContractTest(unittest.TestCase):
 
         with self.assertRaises(fullstack.FullStackOctoberError):
             fullstack.select_october_source_roster(manifest)
+
+    def test_staged_roster_is_byte_and_sha_verified_without_key_inference(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            payloads = {"predecessor.dbn.zst": b"predecessor", "target.dbn.zst": b"target"}
+            roster = []
+            for name, data in payloads.items():
+                (root / name).write_bytes(data)
+                roster.append(
+                    fullstack.SourceObject(
+                        date="20210930" if name.startswith("pre") else "20211001",
+                        segment="segment",
+                        key=f"canonical/path/{name}",
+                        sha256=hashlib.sha256(data).hexdigest(),
+                        bytes=len(data),
+                        bucket="bucket",
+                        purpose="PREDECESSOR_BOOTSTRAP" if name.startswith("pre") else "OCTOBER_CAUSAL_STREAM",
+                    )
+                )
+
+            verified = fullstack.verify_staged_source_roster(tuple(roster), root)
+            self.assertEqual(verified, (root / "predecessor.dbn.zst", root / "target.dbn.zst"))
+
+            (root / "target.dbn.zst").write_bytes(b"drift")
+            with self.assertRaises(fullstack.FullStackOctoberError):
+                fullstack.verify_staged_source_roster(tuple(roster), root)
+
+    def test_launch_event_sink_emits_workflow_gate_names_for_both_lanes(self) -> None:
+        sink = fullstack.LaunchJsonEventSink()
+        stream = io.StringIO()
+        with redirect_stdout(stream):
+            sink.emit_launch(
+                "PAIRED_PREFIX_ACCEPTED",
+                control_provider_response_ids=[f"ctrl-{index}" for index in range(5)],
+                combined_provider_response_ids=[f"combined-{index}" for index in range(5)],
+                identical_prefix_proof_hash="a" * 64,
+            )
+        row = json.loads(stream.getvalue())
+        self.assertEqual(row["event"], "PAIRED_PREFIX_ACCEPTED")
+        self.assertEqual(len(row["control_provider_response_ids"]), 5)
+        self.assertEqual(len(row["combined_provider_response_ids"]), 5)
+        self.assertEqual(len(set(row["control_provider_response_ids"] + row["combined_provider_response_ids"])), 10)
 
 
 if __name__ == "__main__":
