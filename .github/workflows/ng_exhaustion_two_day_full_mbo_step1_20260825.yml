@@ -141,7 +141,10 @@ jobs:
               --parent-manifest {os.environ['MANIFEST']} \
               --baseline-results "$run_root/baseline" \
               --baseline-results-tar-sha256 "$prior_sha" \
-              --raw-mbo "${{raw_paths[@]}}" \
+              --raw-mbo "$run_root/raw/glbx-mdp3-20211001.mbo.dbn.zst" \
+                        "$run_root/raw/glbx-mdp3-20211003.mbo.dbn.zst" \
+                        "$run_root/raw/glbx-mdp3-20211004.mbo.dbn.zst" \
+                        "$run_root/raw/glbx-mdp3-20211005.mbo.dbn.zst" \
               --out-dir "$run_root/results" | tee "$run_root/run.log"
           cp "$run_root/resource.txt" "$run_root/results/RESOURCE_USAGE.txt"
           cp "$run_root/run.log" "$run_root/results/RUN.log"
