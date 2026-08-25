@@ -11,7 +11,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+import argparse
+import hashlib
+import json
 import re
+import sys
 from typing import Any, Mapping
 
 
@@ -29,6 +33,26 @@ _OBJECT_DATE = re.compile(r"glbx-mdp3-(20\d{6})\.mbo\.dbn\.zst$")
 
 class FullStackOctoberError(RuntimeError):
     pass
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+class LaunchJsonEventSink:
+    """Secret-free newline-JSON launch telemetry consumed by the workflow gate."""
+
+    def emit_launch(self, event: str, **details: Any) -> None:
+        if not str(event or "").strip():
+            raise FullStackOctoberError("launch event name is required")
+        for key in details:
+            if any(term in str(key).lower() for term in ("secret", "token", "api_key", "password")):
+                raise FullStackOctoberError("secret-bearing launch telemetry is forbidden")
+        print(json.dumps({"event": event, **details}, sort_keys=True, separators=(",", ":")), flush=True)
 
 
 @dataclass(frozen=True)
@@ -94,6 +118,31 @@ def select_october_source_roster(manifest: Mapping[str, Any]) -> tuple[SourceObj
         raise FullStackOctoberError("October canonical roster date coverage drift")
     predecessor = _source_object(predecessor_rows[0], purpose="PREDECESSOR_BOOTSTRAP")
     return (predecessor, *targets)
+
+
+def verify_staged_source_roster(
+    roster: tuple[SourceObject, ...], source_root: str | Path
+) -> tuple[Path, ...]:
+    """Resolve the manifest-selected objects by basename and reverify bytes and SHA."""
+    root = Path(source_root)
+    if not root.is_dir() or not roster:
+        raise FullStackOctoberError("staged source root and non-empty roster are required")
+    paths: list[Path] = []
+    names: set[str] = set()
+    for item in roster:
+        name = Path(item.key).name
+        if not name or name in names:
+            raise FullStackOctoberError("staged roster basenames must be unique")
+        names.add(name)
+        path = root / name
+        if not path.is_file():
+            raise FullStackOctoberError(f"staged canonical source is missing: {name}")
+        if path.stat().st_size != item.bytes:
+            raise FullStackOctoberError(f"staged canonical source byte mismatch: {name}")
+        if _sha256_file(path) != item.sha256:
+            raise FullStackOctoberError(f"staged canonical source SHA-256 mismatch: {name}")
+        paths.append(path)
+    return tuple(paths)
 
 
 @dataclass(frozen=True)
