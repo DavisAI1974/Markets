@@ -241,6 +241,8 @@ jobs:
               "if id \"$packet_user\" >/dev/null 2>&1; then echo packet identity exists >&2; exit 1; fi",
               "useradd --system --no-create-home --shell /usr/sbin/nologin \"$packet_user\"",
               "packet_group=\"$(id -gn \"$packet_user\")\"",
+              "chown root:\"$packet_group\" \"$(dirname \"$root\")\"",
+              "chmod 0750 \"$(dirname \"$root\")\"",
               "chown root:\"$packet_group\" \"$root\"",
               "chmod 0750 \"$root\"",
               "chown -R root:\"$packet_group\" \"$repo\" \"$root/input\"",
@@ -269,15 +271,40 @@ jobs:
           for _ in $(seq 1 330); do
             status="$(aws ssm get-command-invocation --command-id "$command_id" \
               --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
-            case "$status" in Success|Failed|TimedOut|Cancelled) break ;; esac
+            case "$status" in Success|Failed|TimedOut|Cancelled|Cancelling) break ;; esac
             sleep 10
           done
           aws ssm get-command-invocation --command-id "$command_id" \
             --instance-id "$INSTANCE_ID" \
             --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
             --output json > /tmp/frankie-keyless-packet-result.json
-          test "$status" = Success
-          grep -F KEYLESS_WORK_PACKET_STAGE=PASS /tmp/frankie-keyless-packet-result.json
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          value = json.loads(Path('/tmp/frankie-keyless-packet-result.json').read_text(encoding='utf-8'))
+          credential_names = ('AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN')
+          access_key = re.compile(r'\b(?:AKIA|ASIA)[A-Z0-9]{16}\b')
+          for field in ('StandardOutput', 'StandardError'):
+              safe_lines = []
+              for line in str(value.get(field, '')).splitlines():
+                  if any(name in line for name in credential_names):
+                      safe_lines.append('[REDACTED_CREDENTIAL_LINE]')
+                  else:
+                      safe_lines.append(access_key.sub('[REDACTED_AWS_ACCESS_KEY]', line))
+              value[field] = '\n'.join(safe_lines)
+          print(json.dumps(value, indent=2, sort_keys=True))
+          PY
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          value = json.loads(Path('/tmp/frankie-keyless-packet-result.json').read_text(encoding='utf-8'))
+          assert value['Status'] == 'Success'
+          assert int(value['ResponseCode']) == 0
+          assert 'KEYLESS_WORK_PACKET_STAGE=PASS' in value['StandardOutput']
+          PY
           echo "command_id=$command_id" >> "$GITHUB_OUTPUT"
 
       - name: Download and verify keyless packet

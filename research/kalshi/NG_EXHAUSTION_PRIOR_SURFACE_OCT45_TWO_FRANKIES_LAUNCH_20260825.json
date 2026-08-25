@@ -11,11 +11,11 @@
     "bytes": 112852940,
     "sha256": "93654eb5eaf24be6dc6821f422cdd7fc416e12778dcecd6c97150cbc34004f90"
   },
-  "launch_authorized": true,
+  "launch_authorized": false,
   "authorization": {
-    "authorized_by": "Greg",
-    "authorized_at": "2026-08-25T12:39:35Z",
-    "exact_implementation_commit": "4c751aba4273cfd09ef589f12ee76b476732cae6",
+    "authorized_by": null,
+    "authorized_at": null,
+    "exact_implementation_commit": null,
     "approval_scope": "KEYLESS_EXACT_TWO_DAY_TWO_PRINCIPAL_ROLES_OPTIONAL_ONE_FORECASTER_HELPER_NO_CANARY_NO_TESTS"
   },
   "model": {
@@ -78,7 +78,7 @@
     "complete_frozen_rt_output_injected": true
   },
   "study_design": "ANSWER_KEY_BLIND_RETROSPECTIVE_DISCOVERY_NOT_BLIND_OOS_VALIDATION",
-  "transient_one_shot_workflow_sha256": "c2a40dbf3cddd7f6bbe706c04355fd139bc994712acbb984e95fe6b8ddbca7be",
+  "transient_one_shot_workflow_sha256": null,
   "files": {
     "build_control": {
       "path": "research/kalshi/NG_EXHAUSTION_PRIOR_SURFACE_OCT45_TWO_FRANKIES_BUILD_CONTROL_20260825.md",
@@ -110,7 +110,7 @@
     },
     "manual_only_workflow": {
       "path": ".github/workflows/ng_exhaustion_two_frankies_prior_surface_blind_2day_20260825.yml",
-      "sha256": "baeee488a4a49508d2cd4b6b2910d61f36b476af8169226eda1764f19b0fb2a7"
+      "sha256": "334d89b786c713b3085e89e21b1f582a33a019cdeead507348b2e2bf733b77de"
     },
     "knowledge_inventory_builder": {
       "path": "research/kalshi/frankie_october_knowledge_inventory_20260824.py",
