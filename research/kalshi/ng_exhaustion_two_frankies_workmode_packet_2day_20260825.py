@@ -137,7 +137,7 @@ def rt_output_contract() -> dict[str, Any]:
         },
         "state_summary": "open object",
         "study_design": {
-            "answer_key_blind": True,
+            "sealed_step1_blindness_enforced": True,
             "retrospective_complete_two_day_surface": True,
             "prospective_or_out_of_sample_validation": False,
             "early_warning_claim_status": "RETROSPECTIVE_DISCOVERY_NOT_BLIND_OOS_VALIDATION",
