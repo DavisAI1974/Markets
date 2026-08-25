@@ -807,7 +807,7 @@ def build(source: Path, output_root: Path, run_id: str) -> None:
         "evidence_surface_label": "PRIOR_REDUCED_NON_FULL_MBO_SURFACE",
         "source_manifest": source_manifest,
         "direct_day_specific_context": day_context,
-        "answer_key_present": False,
+        "sealed_step1_results_exposed": False,
         "execution_surface": "CHATGPT_WORK_SEQUENTIAL_AGENTS",
         "external_provider_api": False,
         "token_caps": {

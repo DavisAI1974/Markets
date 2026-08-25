@@ -11,11 +11,11 @@
     "bytes": 112852940,
     "sha256": "93654eb5eaf24be6dc6821f422cdd7fc416e12778dcecd6c97150cbc34004f90"
   },
-  "launch_authorized": true,
+  "launch_authorized": false,
   "authorization": {
-    "authorized_by": "Greg",
-    "authorized_at": "2026-08-25T12:52:53Z",
-    "exact_implementation_commit": "741066537015480ed05462613e91e8a2bc88d1cf",
+    "authorized_by": null,
+    "authorized_at": null,
+    "exact_implementation_commit": null,
     "approval_scope": "KEYLESS_EXACT_TWO_DAY_TWO_PRINCIPAL_ROLES_OPTIONAL_ONE_FORECASTER_HELPER_NO_CANARY_NO_TESTS"
   },
   "model": {
@@ -78,7 +78,7 @@
     "complete_frozen_rt_output_injected": true
   },
   "study_design": "ANSWER_KEY_BLIND_RETROSPECTIVE_DISCOVERY_NOT_BLIND_OOS_VALIDATION",
-  "transient_one_shot_workflow_sha256": "af88e5bc573b45abe4b7be780d3d4582ac59c1879e269b6913c6bad641db4ede",
+  "transient_one_shot_workflow_sha256": null,
   "files": {
     "build_control": {
       "path": "research/kalshi/NG_EXHAUSTION_PRIOR_SURFACE_OCT45_TWO_FRANKIES_BUILD_CONTROL_20260825.md",
@@ -102,7 +102,7 @@
     },
     "packet_builder": {
       "path": "research/kalshi/ng_exhaustion_two_frankies_workmode_packet_2day_20260825.py",
-      "sha256": "255603c743b8ab9b4dc860a89ba29498fce26ff394cab09aa4b280aa9dc091c8"
+      "sha256": "bf41d47c1b9bb8efff66a8e390bd920953cabcaeb7cd45e40dd80891041d271e"
     },
     "coordinator": {
       "path": "research/kalshi/ng_exhaustion_two_frankies_workmode_coordinate_2day_20260825.py",
