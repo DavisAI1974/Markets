@@ -12,7 +12,10 @@ from types import MappingProxyType, SimpleNamespace
 import unittest
 from contextlib import redirect_stdout
 
-from research.kalshi.frankie_full_stack_runtime_contracts_20260824 import LedgerKind
+from research.kalshi.frankie_full_stack_runtime_contracts_20260824 import (
+    CausalPrefixBinding,
+    LedgerKind,
+)
 from research.kalshi import ng_exhaustion_frankie_fullstack_october_20260824 as fullstack
 
 
@@ -22,6 +25,83 @@ MANIFEST = Path(
 
 
 class FullStackOctoberContractTest(unittest.TestCase):
+    def test_causal_second_writer_appends_thousands_in_one_validated_chain(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "causal-seconds.jsonl"
+            writer = fullstack.CausalSecondJsonlWriter.create(
+                path,
+                run_id="linear-causal-test",
+                flush_interval_records=257,
+            )
+            for sequence in range(5_000):
+                prefix = hashlib.sha256(f"prefix:{sequence}".encode()).hexdigest()
+                state = hashlib.sha256(f"state:{sequence}".encode()).hexdigest()
+                binding = CausalPrefixBinding(
+                    run_id="linear-causal-test",
+                    causal_cutoff=float(sequence),
+                    event_known_by=float(sequence),
+                    causal_prefix_hash=prefix,
+                    state_prefix_hash=state,
+                    knowledge_manifest_hash="a" * 64,
+                ).validate()
+                writer.append_second(
+                    binding=binding,
+                    state={"source_second": sequence, "stream_hash": prefix},
+                    delta={"prior_stream_hash": "0" * 64, "stream_hash": prefix},
+                    integrity={"accepted": True},
+                    decision={
+                        "type": "NO_LOCK" if sequence % 2 == 0 else "PROSPECTIVE_MARK",
+                        "owner": "CAUSAL_OBSERVATION_ONLY",
+                        "primary_lock": False,
+                    },
+                )
+
+            receipt = writer.close()
+            validation = fullstack.validate_causal_second_jsonl(
+                path, run_id="linear-causal-test"
+            )
+
+            self.assertEqual(receipt["record_count"], 5_000)
+            self.assertEqual(receipt["periodic_fsync_count"], 5_000 // 257)
+            self.assertTrue(receipt["final_fsync_completed"])
+            self.assertEqual(validation["record_count"], 5_000)
+            self.assertEqual(validation["head_hash"], receipt["head_hash"])
+            with path.open(encoding="utf-8") as handle:
+                self.assertEqual(sum(1 for _ in handle), 5_000)
+
+    def test_causal_second_chain_validation_rejects_tampered_content(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "causal-seconds.jsonl"
+            writer = fullstack.CausalSecondJsonlWriter.create(
+                path, run_id="tamper-test", flush_interval_records=8
+            )
+            binding = CausalPrefixBinding(
+                run_id="tamper-test",
+                causal_cutoff=1.0,
+                event_known_by=1.0,
+                causal_prefix_hash="1" * 64,
+                state_prefix_hash="2" * 64,
+                knowledge_manifest_hash="3" * 64,
+            ).validate()
+            writer.append_second(
+                binding=binding,
+                state={"source_second": 1},
+                delta={"prior_stream_hash": "0" * 64},
+                integrity={"accepted": True},
+                decision={
+                    "type": "NO_LOCK",
+                    "owner": "CAUSAL_OBSERVATION_ONLY",
+                    "primary_lock": False,
+                },
+            )
+            writer.close()
+            row = json.loads(path.read_text(encoding="utf-8"))
+            row["content"]["state"]["source_second"] = 2
+            path.write_text(json.dumps(row) + "\n", encoding="utf-8")
+
+            with self.assertRaises(fullstack.FullStackOctoberError):
+                fullstack.validate_causal_second_jsonl(path, run_id="tamper-test")
+
     def test_selects_exact_predecessor_and_all_october_objects(self) -> None:
         manifest = json.loads(MANIFEST.read_text())
 

@@ -95,6 +95,9 @@ PREDECESSOR_NAME = "glbx-mdp3-20210930.mbo.dbn.zst"
 TARGET_START = int(datetime(2021, 10, 1, tzinfo=timezone.utc).timestamp())
 TARGET_END = int(datetime(2021, 11, 1, tzinfo=timezone.utc).timestamp())
 ANSWER_WALL_MODE = "SEALED_UNTIL_PRIMARY_FREEZE"
+CAUSAL_SECOND_CHAIN_SCHEMA = "FRANKIE_CAUSAL_SECOND_CHAIN_V1_20260824"
+CAUSAL_SECOND_CHAIN_GENESIS = "0" * 64
+CAUSAL_SECOND_FLUSH_INTERVAL = 512
 _OBJECT_DATE = re.compile(r"glbx-mdp3-(20\d{6})\.mbo\.dbn\.zst$")
 PAIRED_COMPONENTS = tuple(COMBINED_COMPONENTS)
 ACTIVE_PAIRED_COMPONENTS = tuple(item for item in PAIRED_COMPONENTS if item != "META_LOOP")
@@ -297,6 +300,276 @@ def _write_json_exclusive(path: Path, value: Mapping[str, Any]) -> None:
         handle.write("\n")
         handle.flush()
         os.fsync(handle.fileno())
+
+
+def _canonical_chain_json(value: Any, field_name: str) -> str:
+    try:
+        return json.dumps(
+            value,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=True,
+            allow_nan=False,
+        )
+    except (TypeError, ValueError) as exc:
+        raise FullStackOctoberError(
+            f"causal-second {field_name} must be deterministic JSON"
+        ) from exc
+
+
+def _causal_chain_hash(value: Any) -> str:
+    return hashlib.sha256(_canonical_chain_json(value, "hash payload").encode()).hexdigest()
+
+
+def _fsync_directory(path: Path) -> None:
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_DIRECTORY", 0)
+    directory_fd = os.open(path, flags)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+
+
+class CausalSecondJsonlWriter:
+    """Linear append-only causal-second chain with bounded durability epochs.
+
+    Unlike the strict helper/Frankie lane ledgers, this single-owner high-volume
+    stream never rereads its growing file during append.  Each second is one
+    self-contained hash-chained record.  The open descriptor is periodically
+    fsynced and is always fsynced once more before final close.
+    """
+
+    def __init__(
+        self,
+        *,
+        path: Path,
+        run_id: str,
+        fd: int,
+        flush_interval_records: int,
+    ) -> None:
+        self.path = path
+        self.run_id = run_id
+        self._fd: int | None = fd
+        self._flush_interval_records = flush_interval_records
+        self._record_count = 0
+        self._head_hash = CAUSAL_SECOND_CHAIN_GENESIS
+        self._last_causal_cutoff: float | None = None
+        self._periodic_fsync_count = 0
+        self._close_receipt: dict[str, Any] | None = None
+
+    @classmethod
+    def create(
+        cls,
+        path: str | Path,
+        *,
+        run_id: str,
+        flush_interval_records: int = CAUSAL_SECOND_FLUSH_INTERVAL,
+    ) -> "CausalSecondJsonlWriter":
+        target = Path(path)
+        if not str(run_id or "").strip():
+            raise FullStackOctoberError("causal-second run_id is required")
+        if (
+            isinstance(flush_interval_records, bool)
+            or not isinstance(flush_interval_records, int)
+            or flush_interval_records <= 0
+        ):
+            raise FullStackOctoberError("causal-second flush interval must be a positive integer")
+        if not target.parent.is_dir():
+            raise FullStackOctoberError("causal-second parent directory does not exist")
+        flags = (
+            os.O_WRONLY
+            | os.O_CREAT
+            | os.O_EXCL
+            | os.O_APPEND
+            | getattr(os, "O_CLOEXEC", 0)
+            | getattr(os, "O_NOFOLLOW", 0)
+        )
+        try:
+            fd = os.open(target, flags, 0o600)
+        except OSError as exc:
+            raise FullStackOctoberError("causal-second exclusive creation failed") from exc
+        try:
+            os.fsync(fd)
+            _fsync_directory(target.parent)
+        except BaseException:
+            os.close(fd)
+            raise
+        return cls(
+            path=target,
+            run_id=run_id,
+            fd=fd,
+            flush_interval_records=flush_interval_records,
+        )
+
+    def append_second(
+        self,
+        *,
+        binding: CausalPrefixBinding,
+        state: Mapping[str, Any],
+        delta: Mapping[str, Any],
+        integrity: Mapping[str, Any],
+        decision: Mapping[str, Any],
+    ) -> str:
+        if self._fd is None:
+            raise FullStackOctoberError("causal-second writer is closed")
+        bound = binding.validate()
+        if bound.run_id != self.run_id:
+            raise FullStackOctoberError("causal-second binding run_id mismatch")
+        if self._last_causal_cutoff is not None and bound.causal_cutoff < self._last_causal_cutoff:
+            raise FullStackOctoberError("causal-second writer refuses causal backfill")
+        for name, value in (
+            ("state", state),
+            ("delta", delta),
+            ("integrity", integrity),
+            ("decision", decision),
+        ):
+            if not isinstance(value, Mapping):
+                raise FullStackOctoberError(f"causal-second {name} must be an object")
+        decision_type = decision.get("type")
+        if decision_type not in {"NO_LOCK", "PROSPECTIVE_MARK"}:
+            raise FullStackOctoberError("causal-second decision must be explicit")
+        if decision.get("owner") != "CAUSAL_OBSERVATION_ONLY" or decision.get("primary_lock") is not False:
+            raise FullStackOctoberError("causal-second decision cannot claim primary lock authority")
+
+        content = {
+            "state": dict(state),
+            "delta": dict(delta),
+            "integrity": dict(integrity),
+            "decision": dict(decision),
+        }
+        content_hash = _causal_chain_hash(content)
+        core = {
+            "schema": CAUSAL_SECOND_CHAIN_SCHEMA,
+            "run_id": self.run_id,
+            "sequence": self._record_count,
+            "causal_cutoff": bound.causal_cutoff,
+            "binding": bound.identity_payload(),
+            "content_hash": content_hash,
+            "prior_record_hash": self._head_hash,
+        }
+        record_hash = _causal_chain_hash(core)
+        payload = _canonical_chain_json(
+            {**core, "content": content, "record_hash": record_hash}, "record"
+        ).encode() + b"\n"
+        offset = 0
+        while offset < len(payload):
+            try:
+                written = os.write(self._fd, payload[offset:])
+            except InterruptedError:
+                continue
+            if written <= 0:
+                raise FullStackOctoberError("causal-second append made no progress")
+            offset += written
+
+        self._record_count += 1
+        self._head_hash = record_hash
+        self._last_causal_cutoff = bound.causal_cutoff
+        if self._record_count % self._flush_interval_records == 0:
+            os.fsync(self._fd)
+            self._periodic_fsync_count += 1
+        return record_hash
+
+    def close(self) -> dict[str, Any]:
+        if self._close_receipt is not None:
+            return dict(self._close_receipt)
+        if self._fd is None:
+            raise FullStackOctoberError("causal-second writer has no open descriptor")
+        fd = self._fd
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+            self._fd = None
+        self._close_receipt = {
+            "schema": CAUSAL_SECOND_CHAIN_SCHEMA,
+            "run_id": self.run_id,
+            "path": str(self.path),
+            "record_count": self._record_count,
+            "head_hash": self._head_hash,
+            "flush_interval_records": self._flush_interval_records,
+            "periodic_fsync_count": self._periodic_fsync_count,
+            "final_fsync_completed": True,
+        }
+        return dict(self._close_receipt)
+
+
+def validate_causal_second_jsonl(path: str | Path, *, run_id: str) -> dict[str, Any]:
+    """Stream-validate the causal-second chain without retaining its records."""
+    target = Path(path)
+    expected_sequence = 0
+    expected_prior = CAUSAL_SECOND_CHAIN_GENESIS
+    last_cutoff: float | None = None
+    try:
+        handle = target.open("r", encoding="utf-8")
+    except OSError as exc:
+        raise FullStackOctoberError("causal-second validation open failed") from exc
+    with handle:
+        for line_number, line in enumerate(handle, start=1):
+            try:
+                record = json.loads(line)
+            except (TypeError, ValueError) as exc:
+                raise FullStackOctoberError(
+                    f"causal-second record {line_number} is not valid JSON"
+                ) from exc
+            if not isinstance(record, Mapping):
+                raise FullStackOctoberError("causal-second record must be an object")
+            if record.get("schema") != CAUSAL_SECOND_CHAIN_SCHEMA:
+                raise FullStackOctoberError("causal-second schema mismatch")
+            if record.get("run_id") != run_id or record.get("sequence") != expected_sequence:
+                raise FullStackOctoberError("causal-second identity or sequence mismatch")
+            if record.get("prior_record_hash") != expected_prior:
+                raise FullStackOctoberError("causal-second prior hash mismatch")
+            binding_payload = record.get("binding")
+            try:
+                bound = CausalPrefixBinding(**binding_payload).validate()
+            except (TypeError, ValueError, RuntimeError) as exc:
+                raise FullStackOctoberError("causal-second binding is invalid") from exc
+            if bound.run_id != run_id or bound.causal_cutoff != record.get("causal_cutoff"):
+                raise FullStackOctoberError("causal-second binding identity mismatch")
+            if last_cutoff is not None and bound.causal_cutoff < last_cutoff:
+                raise FullStackOctoberError("causal-second causal cutoff regressed")
+            content = record.get("content")
+            if not isinstance(content, Mapping) or set(content) != {
+                "state",
+                "delta",
+                "integrity",
+                "decision",
+            }:
+                raise FullStackOctoberError("causal-second content is incomplete")
+            decision = content.get("decision")
+            if (
+                not isinstance(decision, Mapping)
+                or decision.get("type") not in {"NO_LOCK", "PROSPECTIVE_MARK"}
+                or decision.get("owner") != "CAUSAL_OBSERVATION_ONLY"
+                or decision.get("primary_lock") is not False
+            ):
+                raise FullStackOctoberError("causal-second decision is invalid")
+            content_hash = _causal_chain_hash(content)
+            if record.get("content_hash") != content_hash:
+                raise FullStackOctoberError("causal-second content hash mismatch")
+            core = {
+                "schema": record["schema"],
+                "run_id": record["run_id"],
+                "sequence": record["sequence"],
+                "causal_cutoff": record["causal_cutoff"],
+                "binding": binding_payload,
+                "content_hash": content_hash,
+                "prior_record_hash": record["prior_record_hash"],
+            }
+            record_hash = _causal_chain_hash(core)
+            if record.get("record_hash") != record_hash:
+                raise FullStackOctoberError("causal-second record hash mismatch")
+            expected_sequence += 1
+            expected_prior = record_hash
+            last_cutoff = bound.causal_cutoff
+    return {
+        "schema": CAUSAL_SECOND_CHAIN_SCHEMA,
+        "run_id": run_id,
+        "path": str(target),
+        "record_count": expected_sequence,
+        "head_hash": expected_prior,
+        "chain_validated": True,
+    }
 
 
 def paired_component_id(path: str) -> str:
@@ -675,35 +948,32 @@ def _provider_state(row: ContinuousCausalSecond) -> dict[str, Any]:
 
 
 def _persist_causal_second(
-    ledger: DurableJsonlLedger,
+    writer: CausalSecondJsonlWriter,
     row: ContinuousCausalSecond,
     binding: CausalPrefixBinding,
     prior_stream_hash: str,
 ) -> None:
     state = _provider_state(row)
-    ledger.append(kind=LedgerKind.STATE, binding=binding, content=state)
-    ledger.append(
-        kind=LedgerKind.STATE_DELTA,
+    mark = None if row.mark is None else _jsonable(row.mark)
+    writer.append_second(
         binding=binding,
-        content={
+        state=state,
+        delta={
             "prior_stream_hash": prior_stream_hash,
             "stream_hash": row.stream_hash,
             "data_plane_row_hash": row.data_plane_row.row_hash,
             "geometry_hash": row.data_plane_row.geometry.geometry_hash,
         },
+        integrity=_jsonable(row.quality),
+        decision={
+            "type": "NO_LOCK" if mark is None else "PROSPECTIVE_MARK",
+            "owner": "CAUSAL_OBSERVATION_ONLY",
+            "primary_lock": False,
+            "reason": "NO_PROSPECTIVE_MARK" if mark is None else "PROSPECTIVE_MARK_OBSERVED",
+            "weak_negative_sparse_retained": True,
+            "mark": mark,
+        },
     )
-    ledger.append(kind=LedgerKind.INTEGRITY, binding=binding, content=_jsonable(row.quality))
-    if row.mark is None:
-        ledger.append(
-            kind=LedgerKind.NO_LOCK,
-            binding=binding,
-            content={
-                "owner": "CAUSAL_OBSERVATION_ONLY",
-                "primary_lock": False,
-                "reason": "NO_PROSPECTIVE_MARK",
-                "weak_negative_sparse_retained": True,
-            },
-        )
 
 
 def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
@@ -732,7 +1002,9 @@ def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
         sink=launch,
     )
 
-    causal_ledger = DurableJsonlLedger.create(cfg.output_root / "causal-state.jsonl", run_id=cfg.run_id)
+    causal_writer = CausalSecondJsonlWriter.create(
+        cfg.output_root / "causal-state.jsonl", run_id=cfg.run_id
+    )
     control_ledger = DurableJsonlLedger.create(cfg.output_root / "s135-control.jsonl", run_id=cfg.run_id)
     combined_ledger = DurableJsonlLedger.create(cfg.output_root / "full-provisional-combined.jsonl", run_id=cfg.run_id)
 
@@ -774,7 +1046,7 @@ def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
     def on_second(row: ContinuousCausalSecond) -> None:
         nonlocal prior_stream_hash, last_runtime
         binding = _binding(row, plane.manifest_hash)
-        _persist_causal_second(causal_ledger, row, binding, prior_stream_hash)
+        _persist_causal_second(causal_writer, row, binding, prior_stream_hash)
         prior_stream_hash = row.stream_hash
         if row.mark is None:
             return
@@ -827,9 +1099,20 @@ def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
             ),
         )
 
-    replay_receipt = replay_dbn_files_to_causal_seconds(
-        [str(path) for path in source_paths], builder=builder, on_second=on_second
+    try:
+        replay_receipt = replay_dbn_files_to_causal_seconds(
+            [str(path) for path in source_paths], builder=builder, on_second=on_second
+        )
+    finally:
+        causal_chain_receipt = causal_writer.close()
+    causal_chain_validation = validate_causal_second_jsonl(
+        causal_writer.path, run_id=cfg.run_id
     )
+    if (
+        causal_chain_validation["record_count"] != causal_chain_receipt["record_count"]
+        or causal_chain_validation["head_hash"] != causal_chain_receipt["head_hash"]
+    ):
+        raise FullStackOctoberError("causal-second final chain receipt mismatch")
     if not marked_prefixes or last_runtime is None:
         raise FullStackOctoberError("full October completed without a lawful prospective mark")
     control_runtime, combined_runtime, knowledge, final_bundle = last_runtime
@@ -859,6 +1142,7 @@ def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
         "global_freeze_receipt_hash": freeze.receipt_hash,
         "knowledge_global_freeze_receipt_hash": router_freeze.receipt_hash,
         "answer_revealed": False,
+        "causal_second_chain": causal_chain_receipt,
         "replay": replay_receipt,
     }
     _write_json_exclusive(cfg.output_root / "FINAL_RECEIPT.json", final)
