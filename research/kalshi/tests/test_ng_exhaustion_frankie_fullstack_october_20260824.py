@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
 import io
+import inspect
 import json
 from pathlib import Path
 import tempfile
+from types import MappingProxyType, SimpleNamespace
 import unittest
 from contextlib import redirect_stdout
 
+from research.kalshi.frankie_full_stack_runtime_contracts_20260824 import LedgerKind
 from research.kalshi import ng_exhaustion_frankie_fullstack_october_20260824 as fullstack
 
 
@@ -104,6 +108,151 @@ class FullStackOctoberContractTest(unittest.TestCase):
         self.assertEqual(len(row["control_provider_response_ids"]), 5)
         self.assertEqual(len(row["combined_provider_response_ids"]), 5)
         self.assertEqual(len(set(row["control_provider_response_ids"] + row["combined_provider_response_ids"])), 10)
+
+    def test_json_projection_handles_immutable_causal_mappings(self) -> None:
+        @dataclass(frozen=True)
+        class ImmutableFixture:
+            state: object
+
+        source = MappingProxyType({"nested": MappingProxyType({"value": 7})})
+        self.assertEqual(
+            fullstack._jsonable(ImmutableFixture(source)),
+            {"state": {"nested": {"value": 7}}},
+        )
+
+    def test_cli_requires_exact_manifest_source_output_and_run_identity(self) -> None:
+        args = fullstack.parse_args(
+            [
+                "--manifest",
+                str(MANIFEST),
+                "--source-root",
+                "/tmp/raw",
+                "--output-root",
+                "/tmp/out",
+                "--run-id",
+                "paired-october",
+            ]
+        )
+        self.assertEqual(args.manifest, MANIFEST)
+        self.assertEqual(args.source_root, Path("/tmp/raw"))
+        self.assertEqual(args.output_root, Path("/tmp/out"))
+        self.assertEqual(args.run_id, "paired-october")
+
+    def test_provisional_paths_map_to_seven_active_components_and_deferred_meta(self) -> None:
+        paths = {
+            "frankie_s137_cognitive_runtime.py": "S137_COGNITIVE_RUNTIME",
+            "frankie_hipporag_p0_retrieval.py": "HIPPORAG_RETRIEVAL",
+            "frankie_temporal_graph_p0_adapter.py": "TEMPORAL_GRAPH",
+            "frankie_lats_p0_search.py": "LATS_BOUNDED_SEARCH",
+            "frankie_cognitive_p0_loops.py": "WORKING_MEMORY",
+            "frankie_progress_compress_p0.py": "PROGRESS_COMPRESSION",
+            "NG_EXHAUSTION_V4_PROVISIONAL_READINESS_20260821.json": "PROVISIONAL_V4_ENGINEERING_CANDIDATE",
+            "frankie_meta_loop_s138.py": "META_LOOP",
+        }
+        self.assertEqual(
+            {fullstack.paired_component_id(f"research/kalshi/{path}") for path in paths},
+            set(paths.values()),
+        )
+        for path, expected in paths.items():
+            self.assertEqual(fullstack.paired_component_id(f"research/kalshi/{path}"), expected)
+
+    def test_production_knowledge_plane_and_router_share_exact_enum_identity(self) -> None:
+        repo_root = Path(__file__).resolve().parents[3]
+        specs = fullstack.production_source_specs(repo_root)
+        plane = fullstack.KnowledgePlane.build(
+            repo_root,
+            specs,
+            contract=fullstack.october_full_stack_completeness_contract(),
+            manifest_version="fullstack-runner-construction-test",
+        )
+        router = fullstack.FrankieLaneAwareContextRouter(
+            plane, fullstack.production_provisional_components(plane)
+        )
+        bundle = router.build_routes(run_id="construction-test", state_prefix_hash="0" * 64)
+        combined = bundle.routes[fullstack.ContextVariant.FULL_PROVISIONAL_COMBINED]
+        self.assertEqual(len(specs), 150)
+        self.assertEqual(len(combined.base_sources), 107)
+        self.assertEqual(len(combined.augmentation_sources), 20)
+        self.assertEqual(len(combined.withheld_sources), 2)
+
+    def test_paired_launch_event_contains_workflow_proof_and_first_lane_receipts(self) -> None:
+        def invocation(label: str):
+            return SimpleNamespace(accepted_response=SimpleNamespace(provider_response_id=label))
+
+        binding = SimpleNamespace(
+            causal_prefix_hash="1" * 64,
+            state_prefix_hash="2" * 64,
+            knowledge_manifest_hash="3" * 64,
+        )
+        paired = SimpleNamespace(
+            control=SimpleNamespace(
+                invocation_receipts=tuple(invocation(f"control-{i}") for i in range(5)),
+                final_ledger_hash="4" * 64,
+            ),
+            combined=SimpleNamespace(
+                invocation_receipts=tuple(invocation(f"combined-{i}") for i in range(5)),
+                final_ledger_hash="5" * 64,
+            ),
+            identical_prefix_proof=SimpleNamespace(proof_hash="6" * 64),
+            component_receipt_hashes={
+                component: "7" * 64 for component in fullstack.PAIRED_COMPONENTS
+            },
+            control_lock_authority="S135_PRIMARY",
+            combined_lock_authority="SHADOW_ONLY",
+            answer_revealed=False,
+        )
+
+        class FakeLedger:
+            def __init__(self, path: str):
+                self.path = Path(path)
+                self._records = tuple(
+                    SimpleNamespace(
+                        binding=SimpleNamespace(causal_prefix_hash=binding.causal_prefix_hash),
+                        kind=kind,
+                        record_hash=str(index + 8) * 64,
+                    )
+                    for index, kind in enumerate(
+                        (LedgerKind.HELPER_EVIDENCE, LedgerKind.REASONING, LedgerKind.PROBABILITY)
+                    )
+                )
+
+            def snapshot(self):
+                return self._records
+
+        event = fullstack.make_paired_launch_event(
+            binding=binding,
+            paired=paired,
+            control_ledger=FakeLedger("control.jsonl"),
+            combined_ledger=FakeLedger("combined.jsonl"),
+        )
+        self.assertEqual(event["lanes"], ["S135_CONTROL", "FULL_PROVISIONAL_COMBINED"])
+        self.assertEqual(len(event["control_provider_response_ids"]), 5)
+        self.assertEqual(len(event["combined_provider_response_ids"]), 5)
+        self.assertEqual(len(event["active_provisional_components"]), 7)
+        self.assertEqual(event["deferred_meta_loop"]["status"], "DEFERRED_NOT_YET_LAWFUL")
+        self.assertEqual(
+            set(event["control_ledger"]["first_receipt_hashes"]),
+            {"helper_evidence", "frankie_reasoning", "probability_movie"},
+        )
+        self.assertEqual(len(event["receipt_hash"]), 64)
+
+    def test_production_entrypoint_uses_paired_runtime_and_never_reveals_step1(self) -> None:
+        source = inspect.getsource(fullstack.run_full_october)
+        for token in (
+            "production_source_specs",
+            "KnowledgePlane.build",
+            "FrankieLaneAwareContextRouter",
+            "seal_semantic_crosswalk",
+            "ContinuousV4CausalStreamBuilder",
+            "ProtectedProspectiveWeakeningMarker",
+            "replay_dbn_files_to_causal_seconds",
+            "DurableJsonlLedger.create",
+            "PairedLaneOrchestrator",
+            "freeze_global_experiment",
+        ):
+            self.assertIn(token, source)
+        self.assertNotIn("read_reconciliation", source)
+        self.assertNotIn("reveal_opportunity_outcome", source)
 
 
 if __name__ == "__main__":

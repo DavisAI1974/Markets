@@ -11,10 +11,23 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import sys
 from dataclasses import asdict, dataclass
 from enum import Enum
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Mapping, Sequence
+
+
+# This file is intentionally runnable from ``research/kalshi`` as well as
+# importable through ``research.kalshi``.  Register the first import under both
+# names before defining enums; otherwise Python can create two incompatible
+# RetrievalLane/AuthorityClass identities in one process.
+_MODULE_ALIASES = {
+    "frankie_authority_knowledge_plane_20260824",
+    "research.kalshi.frankie_authority_knowledge_plane_20260824",
+}
+for _module_alias in _MODULE_ALIASES:
+    sys.modules.setdefault(_module_alias, sys.modules[__name__])
 
 
 class AuthorityClass(str, Enum):
