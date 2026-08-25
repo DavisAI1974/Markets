@@ -63,12 +63,25 @@ REQUIRED_MESSAGE_TYPES = set("ACMRTFN")
 REQUIRED_HELPERS = {"recurrence", "extension", "timing", "context"}
 REQUIRED_PROVIDER_TASKS = {f"helper:{role}" for role in REQUIRED_HELPERS} | {"frankie:synthesis"}
 REQUIRED_RETENTION = {"weak", "negative", "sparse", "ambiguous", "contradictory", "inconclusive"}
+CONTROL_LANE = "S135_CONTROL"
+COMBINED_LANE = "FULL_PROVISIONAL_COMBINED"
+REQUIRED_LANES = (CONTROL_LANE, COMBINED_LANE)
+REQUIRED_ACTIVE_COMPONENTS = {
+    "S137_COGNITIVE_RUNTIME",
+    "HIPPORAG_RETRIEVAL",
+    "TEMPORAL_GRAPH",
+    "LATS_BOUNDED_SEARCH",
+    "WORKING_MEMORY",
+    "PROGRESS_COMPRESSION",
+    "PROVISIONAL_V4_ENGINEERING_CANDIDATE",
+}
 REQUIRED_EVENTS = {
     "FRANKIE_REPLAY_PROGRESS",
     "FRANKIE_PROVIDER_CALL_STARTED",
     "FRANKIE_PROVIDER_RESPONSE_ACCEPTED",
     "FRANKIE_PERSISTENCE_APPENDED",
     "FRANKIE_OCTOBER_PROGRESS",
+    "PAIRED_PREFIX_ACCEPTED",
 }
 
 
@@ -359,9 +372,13 @@ def _g08(inp: LaunchAuditInput) -> GateResult:
 
 
 def _g09(inp: LaunchAuditInput) -> GateResult:
+    paired = _child(inp.runtime_metadata, "paired_experiment")
     raw = _map(inp.runtime_metadata).get("helpers")
     helpers = raw if isinstance(raw, list) else []
-    roles = {row.get("role") for row in helpers if isinstance(row, Mapping)}
+    by_lane = {
+        lane: [row for row in helpers if isinstance(row, Mapping) and row.get("lane_id") == lane]
+        for lane in REQUIRED_LANES
+    }
     bindings = {
         (
             row.get("causal_prefix_hash"),
@@ -372,45 +389,95 @@ def _g09(inp: LaunchAuditInput) -> GateResult:
         if isinstance(row, Mapping)
     }
     valid_hashes = all(all(_is_sha(value) for value in identity) for identity in bindings)
+    exact_helpers = all(
+        len(by_lane[lane]) == 4
+        and {row.get("role") for row in by_lane[lane]} == REQUIRED_HELPERS
+        and all(row.get("active") is True and row.get("model") == EXPECTED_MODEL for row in by_lane[lane])
+        for lane in REQUIRED_LANES
+    )
+    control_prefix = paired.get("control_causal_prefix_hash")
+    combined_prefix = paired.get("combined_causal_prefix_hash")
+    binding = next(iter(bindings), ()) if len(bindings) == 1 else ()
     passed = (
-        len(helpers) == 4
-        and roles == REQUIRED_HELPERS
-        and all(row.get("active") is True and row.get("model") == EXPECTED_MODEL for row in helpers if isinstance(row, Mapping))
+        paired.get("lanes") == list(REQUIRED_LANES)
+        and paired.get("primary_lane") == CONTROL_LANE
+        and paired.get("combined_lane") == COMBINED_LANE
+        and _is_sha(paired.get("identical_prefix_proof_hash"))
+        and _is_sha(control_prefix)
+        and control_prefix == combined_prefix
+        and len(helpers) == 8
+        and exact_helpers
         and len(bindings) == 1
         and valid_hashes
+        and bool(binding)
+        and binding[0] == control_prefix
     )
     return _result(
         "G09",
-        "Four live helpers share identical causal-prefix binding",
+        "Four live helpers per paired lane share one identical causal prefix",
         passed,
         (
-            _evidence("helper_roles", sorted(REQUIRED_HELPERS), sorted(str(role) for role in roles)),
-            _evidence("helper_count", 4, len(helpers)),
+            _evidence("paired_lanes", list(REQUIRED_LANES), paired.get("lanes", "MISSING")),
+            _evidence("helpers_per_lane", 4, {lane: len(by_lane[lane]) for lane in REQUIRED_LANES}),
+            _evidence("helper_roles_per_lane", sorted(REQUIRED_HELPERS), {lane: sorted(str(row.get("role")) for row in by_lane[lane]) for lane in REQUIRED_LANES}),
             _evidence("distinct_prefix_bindings", 1, len(bindings)),
-            _evidence("active_exact_model", True, all(row.get("active") is True and row.get("model") == EXPECTED_MODEL for row in helpers if isinstance(row, Mapping))),
+            _evidence("identical_prefix_proof", "valid SHA and equal lane prefix", {"proof": _is_sha(paired.get("identical_prefix_proof_hash")), "equal_prefix": _is_sha(control_prefix) and control_prefix == combined_prefix}, paired.get("identical_prefix_proof_hash")),
+            _evidence("active_exact_model", True, exact_helpers),
         ),
     )
 
 
 def _g10(inp: LaunchAuditInput) -> GateResult:
     row = _child(inp.runtime_metadata, "synthesis_authority")
+    lanes = _map(row.get("lanes"))
+    paired = _child(inp.runtime_metadata, "paired_experiment")
+    authorities = {CONTROL_LANE: "S135_PRIMARY", COMBINED_LANE: "SHADOW_ONLY"}
+    lane_checks = {}
+    for lane in REQUIRED_LANES:
+        lane_row = _map(lanes.get(lane))
+        lane_checks[lane] = (
+            lane_row.get("lane_id") == lane
+            and lane_row.get("synthesis_owner") == "FRANKIE"
+            and lane_row.get("probability_owner") == "FRANKIE"
+            and lane_row.get("primary_lock_owner") == "FRANKIE"
+            and lane_row.get("lock_authority") == authorities[lane]
+            and lane_row.get("voting") is False
+            and lane_row.get("averaging") is False
+            and lane_row.get("automatic_consensus") is False
+            and lane_row.get("helper_lock_ids") == []
+        )
+    active = paired.get("active_provisional_components")
+    active_set = _set(active)
+    active_receipts = _map(paired.get("active_provisional_component_receipt_hashes"))
+    meta = _map(paired.get("deferred_meta_loop"))
+    component_checks = (
+        isinstance(active, list)
+        and len(active) == 7
+        and active_set == REQUIRED_ACTIVE_COMPONENTS
+        and set(active_receipts) == REQUIRED_ACTIVE_COMPONENTS
+        and all(_is_sha(value) for value in active_receipts.values())
+        and meta.get("component_id") == "META_LOOP"
+        and meta.get("status") == "DEFERRED_NOT_YET_LAWFUL"
+        and meta.get("lifecycle_stage") == "POST_EVIDENCE_DIAGNOSTIC"
+        and meta.get("executed_stage") == "PRE_REVEAL_PREFIX"
+        and _is_sha(meta.get("receipt_hash"))
+    )
     passed = (
-        row.get("synthesis_owner") == "FRANKIE"
-        and row.get("probability_owner") == "FRANKIE"
-        and row.get("primary_lock_owner") == "FRANKIE"
-        and row.get("voting") is False
-        and row.get("averaging") is False
-        and row.get("automatic_consensus") is False
-        and row.get("helper_lock_ids") == []
+        set(lanes) == set(REQUIRED_LANES)
+        and all(lane_checks.values())
+        and paired.get("primary_lane") == CONTROL_LANE
+        and paired.get("combined_lane") == COMBINED_LANE
+        and component_checks
     )
     return _result(
         "G10",
-        "Frankie is sole synthesizer, probability, and primary-lock owner",
+        "Paired Frankie authority and combined provisional lifecycle are exact",
         passed,
         (
-            _evidence("owners", "all FRANKIE", {key: row.get(key, "MISSING") for key in ("synthesis_owner", "probability_owner", "primary_lock_owner")}),
-            _evidence("aggregation_disabled", True, {key: row.get(key, "MISSING") for key in ("voting", "averaging", "automatic_consensus")}),
-            _evidence("helper_lock_count", 0, len(row.get("helper_lock_ids")) if isinstance(row.get("helper_lock_ids"), list) else "MISSING"),
+            _evidence("lane_authority_checks", "both true", lane_checks),
+            _evidence("lock_authorities", authorities, {lane: _map(lanes.get(lane)).get("lock_authority", "MISSING") for lane in REQUIRED_LANES}),
+            _evidence("active_combined_components", sorted(REQUIRED_ACTIVE_COMPONENTS), sorted(str(item) for item in active_set)),
+            _evidence("deferred_meta_loop", "post-evidence only", {key: meta.get(key, "MISSING") for key in ("status", "lifecycle_stage", "executed_stage")}, meta.get("receipt_hash")),
         ),
     )
 
@@ -420,6 +487,10 @@ def _g11(inp: LaunchAuditInput) -> GateResult:
     rows = raw if isinstance(raw, list) else []
     tasks = {row.get("task") for row in rows if isinstance(row, Mapping)}
     ids = [row.get("provider_response_id") for row in rows if isinstance(row, Mapping)]
+    by_lane = {
+        lane: [row for row in rows if isinstance(row, Mapping) and row.get("lane_id") == lane]
+        for lane in REQUIRED_LANES
+    }
     valid = all(
         isinstance(row, Mapping)
         and row.get("transport") == "OPENAI_RESPONSES_API"
@@ -431,15 +502,27 @@ def _g11(inp: LaunchAuditInput) -> GateResult:
         and _is_sha(row.get("response_hash"))
         for row in rows
     )
-    passed = len(rows) == 5 and tasks == REQUIRED_PROVIDER_TASKS and len(set(ids)) == 5 and valid
+    paired_tasks = all(
+        len(by_lane[lane]) == 5
+        and {row.get("task") for row in by_lane[lane]} == REQUIRED_PROVIDER_TASKS
+        for lane in REQUIRED_LANES
+    )
+    passed = (
+        len(rows) == 10
+        and tasks == REQUIRED_PROVIDER_TASKS
+        and paired_tasks
+        and len(set(ids)) == 10
+        and valid
+    )
     return _result(
         "G11",
-        "Exact GPT-5.6 Sol responses accepted with provider IDs",
+        "Ten distinct exact GPT-5.6 Sol paired-lane responses accepted",
         passed,
         (
-            _evidence("accepted_invocation_count", 5, len(rows)),
-            _evidence("provider_tasks", sorted(REQUIRED_PROVIDER_TASKS), sorted(str(task) for task in tasks)),
-            _evidence("distinct_nonempty_provider_ids", 5, len({item for item in ids if _text(item)})),
+            _evidence("accepted_invocation_count", 10, len(rows)),
+            _evidence("invocations_per_lane", 5, {lane: len(by_lane[lane]) for lane in REQUIRED_LANES}),
+            _evidence("provider_tasks_per_lane", sorted(REQUIRED_PROVIDER_TASKS), {lane: sorted(str(row.get("task")) for row in by_lane[lane]) for lane in REQUIRED_LANES}),
+            _evidence("distinct_nonempty_provider_ids", 10, len({item for item in ids if _text(item)})),
             _evidence("exact_model_and_receipts", True, valid),
         ),
     )
@@ -447,39 +530,68 @@ def _g11(inp: LaunchAuditInput) -> GateResult:
 
 def _g12(inp: LaunchAuditInput) -> GateResult:
     row = _map(inp.ledger_metadata)
-    counts = _map(row.get("record_counts"))
+    ledgers = _map(row.get("paired_ledgers"))
     required = {kind.value for kind in LedgerKind}
-    present = {kind for kind in required if _positive_int(counts.get(kind))}
+    present_by_lane = {}
+    lane_checks = {}
+    for lane in REQUIRED_LANES:
+        ledger = _map(ledgers.get(lane))
+        counts = _map(ledger.get("record_counts"))
+        present_by_lane[lane] = {kind for kind in required if _positive_int(counts.get(kind))}
+        lane_checks[lane] = (
+            ledger.get("lane_id") == lane
+            and ledger.get("chain_validated") is True
+            and ledger.get("append_only") is True
+            and ledger.get("durable_fsync") is True
+            and ledger.get("exclusive_create") is True
+            and _text(ledger.get("path"))
+            and _is_sha(ledger.get("latest_record_hash"))
+            and present_by_lane[lane] == required
+        )
+    control = _map(ledgers.get(CONTROL_LANE))
+    combined = _map(ledgers.get(COMBINED_LANE))
+    paired = _child(inp.runtime_metadata, "paired_experiment")
     passed = (
-        row.get("chain_validated") is True
-        and row.get("append_only") is True
-        and row.get("durable_fsync") is True
-        and row.get("exclusive_create") is True
-        and _is_sha(row.get("latest_record_hash"))
-        and present == required
+        set(ledgers) == set(REQUIRED_LANES)
+        and all(lane_checks.values())
+        and control.get("path") != combined.get("path")
+        and control.get("latest_record_hash") != combined.get("latest_record_hash")
+        and _is_sha(row.get("identical_prefix_proof_hash"))
+        and row.get("identical_prefix_proof_hash") == paired.get("identical_prefix_proof_hash")
     )
     return _result(
         "G12",
-        "Required immutable ledgers have begun persisting",
+        "Independent paired immutable ledgers have begun persisting",
         passed,
         (
-            _evidence("durability", "hash-chain, append-only, fsync, exclusive-create", {key: row.get(key, "MISSING") for key in ("chain_validated", "append_only", "durable_fsync", "exclusive_create")}, row.get("latest_record_hash")),
-            _evidence("ledger_kinds_started", sorted(required), sorted(present)),
+            _evidence("paired_ledger_checks", "both true", lane_checks, row.get("identical_prefix_proof_hash")),
+            _evidence("independent_paths", True, control.get("path") != combined.get("path")),
+            _evidence("independent_latest_hashes", True, control.get("latest_record_hash") != combined.get("latest_record_hash")),
+            _evidence("ledger_kinds_started_per_lane", sorted(required), {lane: sorted(present_by_lane[lane]) for lane in REQUIRED_LANES}),
         ),
     )
 
 
 def _g13(inp: LaunchAuditInput) -> GateResult:
-    counts = _map(_map(inp.ledger_metadata).get("retained_case_counts"))
-    retained = {kind for kind in REQUIRED_RETENTION if _positive_int(counts.get(kind))}
-    passed = retained == REQUIRED_RETENTION
+    ledgers = _map(_map(inp.ledger_metadata).get("paired_ledgers"))
+    counts_by_lane = {
+        lane: _map(_map(ledgers.get(lane)).get("retained_case_counts"))
+        for lane in REQUIRED_LANES
+    }
+    retained_by_lane = {
+        lane: {kind for kind in REQUIRED_RETENTION if _positive_int(counts_by_lane[lane].get(kind))}
+        for lane in REQUIRED_LANES
+    }
+    passed = set(ledgers) == set(REQUIRED_LANES) and all(
+        retained_by_lane[lane] == REQUIRED_RETENTION for lane in REQUIRED_LANES
+    )
     return _result(
         "G13",
-        "Weak, negative, sparse, ambiguous, contradictory, and inconclusive cases retained",
+        "Both lanes retain weak, negative, sparse, ambiguous, contradictory, and inconclusive cases",
         passed,
         (
-            _evidence("retained_categories", sorted(REQUIRED_RETENTION), sorted(retained)),
-            _evidence("retained_counts", "each > 0", {kind: counts.get(kind, 0) for kind in sorted(REQUIRED_RETENTION)}),
+            _evidence("retained_categories_per_lane", sorted(REQUIRED_RETENTION), {lane: sorted(retained_by_lane[lane]) for lane in REQUIRED_LANES}),
+            _evidence("retained_counts_per_lane", "each > 0", {lane: {kind: counts_by_lane[lane].get(kind, 0) for kind in sorted(REQUIRED_RETENTION)} for lane in REQUIRED_LANES}),
         ),
     )
 

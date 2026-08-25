@@ -17,6 +17,17 @@ from research.kalshi.frankie_full_stack_runtime_contracts_20260824 import Ledger
 H1 = "1" * 64
 H2 = "2" * 64
 H3 = "3" * 64
+CONTROL = "S135_CONTROL"
+COMBINED = "FULL_PROVISIONAL_COMBINED"
+ACTIVE_COMPONENTS = (
+    "S137_COGNITIVE_RUNTIME",
+    "HIPPORAG_RETRIEVAL",
+    "TEMPORAL_GRAPH",
+    "LATS_BOUNDED_SEARCH",
+    "WORKING_MEMORY",
+    "PROGRESS_COMPRESSION",
+    "PROVISIONAL_V4_ENGINEERING_CANDIDATE",
+)
 
 
 def passing_input() -> LaunchAuditInput:
@@ -83,20 +94,29 @@ def passing_input() -> LaunchAuditInput:
             },
         },
     }
+    lane_case_counts = {
+        "weak": 2,
+        "negative": 2,
+        "sparse": 1,
+        "ambiguous": 1,
+        "contradictory": 2,
+        "inconclusive": 3,
+    }
     ledger_metadata = {
-        "chain_validated": True,
-        "append_only": True,
-        "durable_fsync": True,
-        "exclusive_create": True,
-        "latest_record_hash": H1,
-        "record_counts": {kind.value: 1 for kind in LedgerKind},
-        "retained_case_counts": {
-            "weak": 2,
-            "negative": 2,
-            "sparse": 1,
-            "ambiguous": 1,
-            "contradictory": 2,
-            "inconclusive": 3,
+        "identical_prefix_proof_hash": H3,
+        "paired_ledgers": {
+            lane: {
+                "lane_id": lane,
+                "path": f"artifacts/{lane.lower()}.jsonl",
+                "chain_validated": True,
+                "append_only": True,
+                "durable_fsync": True,
+                "exclusive_create": True,
+                "latest_record_hash": H1 if lane == CONTROL else H2,
+                "record_counts": {kind.value: 1 for kind in LedgerKind},
+                "retained_case_counts": dict(lane_case_counts),
+            }
+            for lane in (CONTROL, COMBINED)
         },
     }
     helper_binding = {
@@ -134,43 +154,67 @@ def passing_input() -> LaunchAuditInput:
             "message_types": ["A", "C", "M", "R", "T", "F", "N"],
             "receipt_hash": H3,
         },
+        "paired_experiment": {
+            "lanes": [CONTROL, COMBINED],
+            "primary_lane": CONTROL,
+            "combined_lane": COMBINED,
+            "identical_prefix_proof_hash": H3,
+            "control_causal_prefix_hash": H1,
+            "combined_causal_prefix_hash": H1,
+            "active_provisional_components": list(ACTIVE_COMPONENTS),
+            "active_provisional_component_receipt_hashes": {
+                component: H2 for component in ACTIVE_COMPONENTS
+            },
+            "deferred_meta_loop": {
+                "component_id": "META_LOOP",
+                "status": "DEFERRED_NOT_YET_LAWFUL",
+                "lifecycle_stage": "POST_EVIDENCE_DIAGNOSTIC",
+                "executed_stage": "PRE_REVEAL_PREFIX",
+                "receipt_hash": H3,
+            },
+        },
         "helpers": [
             {
+                "lane_id": lane,
                 "role": role,
                 "active": True,
                 "model": "gpt-5.6-sol",
                 **helper_binding,
             }
+            for lane in (CONTROL, COMBINED)
             for role in ("recurrence", "extension", "timing", "context")
         ],
         "synthesis_authority": {
-            "synthesis_owner": "FRANKIE",
-            "probability_owner": "FRANKIE",
-            "primary_lock_owner": "FRANKIE",
-            "voting": False,
-            "averaging": False,
-            "automatic_consensus": False,
-            "helper_lock_ids": [],
+            "lanes": {
+                lane: {
+                    "lane_id": lane,
+                    "synthesis_owner": "FRANKIE",
+                    "probability_owner": "FRANKIE",
+                    "primary_lock_owner": "FRANKIE",
+                    "lock_authority": "S135_PRIMARY" if lane == CONTROL else "SHADOW_ONLY",
+                    "voting": False,
+                    "averaging": False,
+                    "automatic_consensus": False,
+                    "helper_lock_ids": [],
+                }
+                for lane in (CONTROL, COMBINED)
+            },
         },
         "provider_invocations": [
             {
+                "lane_id": lane,
                 "task": task,
                 "transport": "OPENAI_RESPONSES_API",
                 "accepted": True,
                 "requested_model": "gpt-5.6-sol",
                 "resolved_model": "gpt-5.6-sol",
-                "provider_response_id": f"resp-{index}",
+                "provider_response_id": f"{lane.lower()}-resp-{index}",
                 "request_hash": H1,
                 "response_hash": H2,
             }
+            for lane in (CONTROL, COMBINED)
             for index, task in enumerate(
-                (
-                    "helper:recurrence",
-                    "helper:extension",
-                    "helper:timing",
-                    "helper:context",
-                    "frankie:synthesis",
-                ),
+                ("helper:recurrence", "helper:extension", "helper:timing", "helper:context", "frankie:synthesis"),
                 start=1,
             )
         ],
@@ -192,6 +236,7 @@ def passing_input() -> LaunchAuditInput:
                 "FRANKIE_PROVIDER_RESPONSE_ACCEPTED",
                 "FRANKIE_PERSISTENCE_APPENDED",
                 "FRANKIE_OCTOBER_PROGRESS",
+                "PAIRED_PREFIX_ACCEPTED",
                 "FRANKIE_RUNTIME_ERROR",
             ],
         },
@@ -245,23 +290,23 @@ def _g08(inp):
 
 
 def _g09(inp):
-    inp.runtime_metadata["helpers"][3]["state_prefix_hash"] = H1
+    inp.runtime_metadata["helpers"][7]["state_prefix_hash"] = H1
 
 
 def _g10(inp):
-    inp.runtime_metadata["synthesis_authority"]["primary_lock_owner"] = "HELPER:timing"
+    inp.runtime_metadata["synthesis_authority"]["lanes"][COMBINED]["lock_authority"] = "S135_PRIMARY"
 
 
 def _g11(inp):
-    inp.runtime_metadata["provider_invocations"][4]["resolved_model"] = "gpt-5.6"
+    inp.runtime_metadata["provider_invocations"][9]["resolved_model"] = "gpt-5.6"
 
 
 def _g12(inp):
-    inp.ledger_metadata["record_counts"][LedgerKind.NO_LOCK.value] = 0
+    inp.ledger_metadata["paired_ledgers"][COMBINED]["record_counts"][LedgerKind.NO_LOCK.value] = 0
 
 
 def _g13(inp):
-    inp.ledger_metadata["retained_case_counts"]["weak"] = 0
+    inp.ledger_metadata["paired_ledgers"][COMBINED]["retained_case_counts"]["weak"] = 0
 
 
 def _g14(inp):
@@ -304,3 +349,71 @@ def test_report_hash_is_deterministic_and_does_not_alias_mutable_inputs():
 
     with pytest.raises(LaunchGateError, match="REPORT_HASH"):
         require_launch_ready(replace(report, report_hash=H1))
+
+
+@pytest.mark.parametrize(
+    "gate_id,mutation",
+    [
+        ("G09", lambda inp: inp.runtime_metadata["helpers"].pop()),
+        (
+            "G09",
+            lambda inp: inp.runtime_metadata["paired_experiment"].__setitem__(
+                "combined_causal_prefix_hash", H2
+            ),
+        ),
+        (
+            "G09",
+            lambda inp: inp.runtime_metadata["paired_experiment"].__setitem__(
+                "lanes", [CONTROL, "ANOTHER_SHADOW"]
+            ),
+        ),
+        (
+            "G10",
+            lambda inp: inp.runtime_metadata["paired_experiment"][
+                "active_provisional_components"
+            ].pop(),
+        ),
+        (
+            "G10",
+            lambda inp: inp.runtime_metadata["paired_experiment"]["deferred_meta_loop"].__setitem__(
+                "status", "ACTIVE"
+            ),
+        ),
+        (
+            "G11",
+            lambda inp: inp.runtime_metadata["provider_invocations"][9].__setitem__(
+                "provider_response_id",
+                inp.runtime_metadata["provider_invocations"][0]["provider_response_id"],
+            ),
+        ),
+        (
+            "G12",
+            lambda inp: inp.ledger_metadata["paired_ledgers"][COMBINED].__setitem__(
+                "path", inp.ledger_metadata["paired_ledgers"][CONTROL]["path"]
+            ),
+        ),
+        (
+            "G13",
+            lambda inp: inp.ledger_metadata["paired_ledgers"][CONTROL][
+                "retained_case_counts"
+            ].__setitem__("inconclusive", 0),
+        ),
+        (
+            "G13",
+            lambda inp: inp.ledger_metadata["paired_ledgers"][COMBINED][
+                "retained_case_counts"
+            ].__setitem__("negative", 0),
+        ),
+        (
+            "G15",
+            lambda inp: inp.runtime_metadata["observability"]["progress_event_names"].remove(
+                "PAIRED_PREFIX_ACCEPTED"
+            ),
+        ),
+    ],
+)
+def test_paired_experiment_runtime_provider_and_ledger_evidence_fails_closed(gate_id, mutation):
+    inp = copy.deepcopy(passing_input())
+    mutation(inp)
+    report = audit_launch_gates(inp)
+    assert gate_id in report.failed_gate_ids
