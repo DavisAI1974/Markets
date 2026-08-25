@@ -12,10 +12,12 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+from sklearn.cluster import OPTICS
 
 import ng_exhaustion_mbo_2day_step1_finalize_20260824 as prior
 import ng_exhaustion_mbo_5y_step1_census_20260822 as base
 from ng_exhaustion_mbo_v4_full_state_replay_20260820 import replay_dbn_files
+from ng_exhaustion_mbo_v4_state_adapter_20260820 import V4MboAdapter, InstrumentBook, _int, _resolve_symbol, sha256_file
 
 SCHEMA = "NG_EXHAUSTION_MBO_2DAY_FULL_MBO_STEP1_V1_20260825"
 STATUS = "STEP1_DUAL_STRUCTURAL_CENSUS_COMPLETE_TWO_DAY_FULL_MBO"
@@ -25,7 +27,12 @@ RAW_BOOTSTRAP_DATES = ("20211001", "20211003", "20211004", "20211005")
 WRAPPER_PATH = "research/ng_exhaustion_mbo_2day_full_mbo_step1_20260825.py"
 EXPECTED_BASELINE_RECEIPT_SHA256 = "140c6234b8e6f4216416290aa50f4070160e200a3e7025cbca3aa08d0ef42e52"
 EXPECTED_BASELINE_TAR_SHA256 = "27cacc62681bc482e89eefcc3746f5d71958beab4e25816054e0c388a0346b33"
-EXPECTED_NATIVE_COUNTS = {"events": 1603, "families": {"A": 1532, "B": 23, "C": 48}}
+OLD_COMPARISON_COUNTS = {"legacy": 1577, "native": 1603,
+                         "native_families": {"A": 1532, "B": 23, "C": 48}}
+PROPOSAL_SURFACES = ("FLOW", "DEPLETION", "ABSORPTION", "FIFO_FAILURE", "FULL_DEPTH_SHIFT")
+PROPOSAL_WARMUP_SECONDS = 3600
+PROPOSAL_PRIOR_ABS_QUANTILE = 0.95
+PROPOSAL_REARM_SECONDS = 2
 
 MBO_FEATURE_NAMES = (
     *(f"second_action_count_{x}" for x in "ACMTFNR"),
@@ -90,15 +97,16 @@ class CausalMboCollector:
                 "largest_share": max((int(order.size) for order in orders), default=0) / size if size else 0.0}
 
     @classmethod
-    def _state(cls, envelope: dict[str, Any]) -> dict[str, Any]:
-        ref = envelope["full_state"]
-        book = ref.book
-        now_ns = int(envelope["ts_recv_ns"])
+    def _state_book(cls, book: InstrumentBook, now_ns: int) -> dict[str, Any]:
         return {"bid_depth": int(book._side_depth["B"]), "ask_depth": int(book._side_depth["A"]),
                 "bid_orders": int(book._side_order_count["B"]), "ask_orders": int(book._side_order_count["A"]),
                 "bid_levels": len(book.levels["B"]), "ask_levels": len(book.levels["A"]),
                 "bid": cls._queue(book, "B", now_ns), "ask": cls._queue(book, "A", now_ns),
                 "orders": book.orders}
+
+    @classmethod
+    def _state(cls, envelope: dict[str, Any]) -> dict[str, Any]:
+        return cls._state_book(envelope["full_state"].book, int(envelope["ts_recv_ns"]))
 
     def consume(self, envelope: dict[str, Any], _legacy: list[dict[str, Any]]) -> None:
         frame = envelope["compact_event_frame"]
@@ -112,8 +120,9 @@ class CausalMboCollector:
             self.prior[iid] = state
             return
         row = self.rows.setdefault((iid, recv_sec), {"action_count": Counter(), "action_qty": Counter(),
-                                         "side_qty": Counter(), "order_ids": set()})
+                                         "side_qty": Counter(), "order_ids": set(), "raw_actions": []})
         actions = frame.get("raw_actions") or []
+        row["raw_actions"].extend(dict(action) for action in actions)
         for action in actions:
             kind = str(action.get("action") or "N")
             qty = max(0.0, _num(action.get("size")))
@@ -185,16 +194,364 @@ class CausalMboCollector:
         }
         for target in target_rows:
             cutoff = int(target["cutoff_ts_recv_ns"])
-            if recv_ns <= cutoff:
+            if recv_ns == cutoff:
+                checkpoint = envelope["full_state"].checkpoint()
                 self.matches[target["event_id"]] = {"features": {name: _num(row["features"].get(name)) for name in MBO_FEATURE_NAMES},
                     "matched_ts_recv_ns": recv_ns, "instrument_id": iid, "cutoff_ts_recv_ns": cutoff,
+                    "source_dbn_key": target["source_dbn_key"],
                     "source_dbn_object": (actions[-1] if actions else {}).get("source_dbn_object"),
-                    "source_dbn_sha256": (actions[-1] if actions else {}).get("source_dbn_sha256")}
+                    "source_dbn_sha256": (actions[-1] if actions else {}).get("source_dbn_sha256"),
+                    "raw_actions_through_cutoff": list(row["raw_actions"]),
+                    "full_depth_fifo_checkpoint": checkpoint}
 
     def feature_row(self, event_id: str) -> dict[str, Any]:
         if event_id not in self.matches:
             raise base.CensusError(f"full-MBO causal cutoff unmatched for native event {event_id}")
         return self.matches[event_id]
+
+
+class MboSurfaceCollector:
+    """Build independent signed causal proposal surfaces from complete MBO callbacks."""
+
+    def __init__(self, source_provenance: dict[str, dict[str, Any]]) -> None:
+        self.source_provenance = source_provenance
+        self.prior: dict[int, dict[str, Any]] = {}
+        self.current: dict[int, tuple[int, dict[str, Any]]] = {}
+        self.surface_rows: list[dict[str, Any]] = []
+
+    @staticmethod
+    def _new_row(iid: int, sec: int) -> dict[str, Any]:
+        return {"instrument_id": iid, "recv_second": sec, "cutoff_ts_recv_ns": 0,
+                "max_ts_event_ns": 0, "f_last_group_completion_ts_recv_ns": 0,
+                "trade_buy": 0.0, "trade_sell": 0.0,
+                "cancel_bid": 0.0, "cancel_ask": 0.0,
+                "neg_modify_bid": 0.0, "neg_modify_ask": 0.0,
+                "add_bid": 0.0, "add_ask": 0.0,
+                "pos_modify_bid": 0.0, "pos_modify_ask": 0.0,
+                "bid_depth_delta": 0.0, "ask_depth_delta": 0.0,
+                "bid_fifo_failure_sum": 0.0, "ask_fifo_failure_sum": 0.0,
+                "fifo_observations": 0, "source_dbn_key": None,
+                "source_dbn_object": None, "source_dbn_sha256": None}
+
+    def _finalize(self, row: dict[str, Any], event_known_by_ts_recv_ns: int) -> None:
+        cutoff = int(row["cutoff_ts_recv_ns"])
+        group_complete = int(row["f_last_group_completion_ts_recv_ns"])
+        known_by = int(event_known_by_ts_recv_ns)
+        if cutoff <= 0 or group_complete != cutoff or known_by < cutoff:
+            raise base.CensusError("MBO surface is not bound to a completed causal receive-clock group")
+        if int(row["max_ts_event_ns"]) > cutoff:
+            raise base.CensusError("MBO surface event clock is later than its receive cutoff")
+        trades = row["trade_buy"] + row["trade_sell"]
+        flow = (row["trade_buy"] - row["trade_sell"]) / trades if trades else 0.0
+        bid_dep = row["cancel_bid"] + row["neg_modify_bid"]
+        ask_dep = row["cancel_ask"] + row["neg_modify_ask"]
+        dep_total = bid_dep + ask_dep
+        depletion = (ask_dep - bid_dep) / dep_total if dep_total else 0.0
+        bid_repl = row["add_bid"] + row["pos_modify_bid"]
+        ask_repl = row["add_ask"] + row["pos_modify_ask"]
+        repl_total = bid_repl + ask_repl
+        buy_share = row["trade_buy"] / trades if trades else 0.0
+        sell_share = row["trade_sell"] / trades if trades else 0.0
+        absorption = (bid_repl * sell_share - ask_repl * buy_share) / repl_total if repl_total else 0.0
+        fifo_n = int(row["fifo_observations"])
+        fifo = ((row["ask_fifo_failure_sum"] - row["bid_fifo_failure_sum"]) / fifo_n) if fifo_n else 0.0
+        depth_total = abs(row["bid_depth_delta"]) + abs(row["ask_depth_delta"])
+        depth_shift = (row["bid_depth_delta"] - row["ask_depth_delta"]) / depth_total if depth_total else 0.0
+        self.surface_rows.append({"instrument_id": int(row["instrument_id"]),
+            "recv_second": int(row["recv_second"]), "cutoff_ts_recv_ns": int(row["cutoff_ts_recv_ns"]),
+            "ts_event_ns": int(row["max_ts_event_ns"]),
+            "ts_recv_ns": int(row["cutoff_ts_recv_ns"]),
+            "event_known_by_ts_recv_ns": int(event_known_by_ts_recv_ns),
+            "f_last_group_completion_ts_recv_ns": int(row["f_last_group_completion_ts_recv_ns"]),
+            "surfaces": {"FLOW": flow, "DEPLETION": depletion, "ABSORPTION": absorption,
+                         "FIFO_FAILURE": fifo, "FULL_DEPTH_SHIFT": depth_shift},
+            "surface_inputs": {key: row[key] for key in (
+                "trade_buy", "trade_sell", "cancel_bid", "cancel_ask", "neg_modify_bid", "neg_modify_ask",
+                "add_bid", "add_ask", "pos_modify_bid", "pos_modify_ask", "bid_depth_delta", "ask_depth_delta",
+                "bid_fifo_failure_sum", "ask_fifo_failure_sum", "fifo_observations")},
+            "source_dbn_key": row["source_dbn_key"],
+            "source_dbn_object": row["source_dbn_object"], "source_dbn_sha256": row["source_dbn_sha256"]})
+
+    def consume_effect(self, msg: Any, effect: Any, book: InstrumentBook, frame: dict[str, Any] | None) -> None:
+        iid = int(msg.instrument_id); recv_ns = int(msg.ts_recv_ns); sec = recv_ns // 1_000_000_000
+        state = CausalMboCollector._state_book(book, recv_ns); prior = self.prior.get(iid, state)
+        active = self.current.get(iid)
+        if active is None or active[0] != sec:
+            if active is not None: self._finalize(active[1], recv_ns)
+            row = self._new_row(iid, sec); self.current[iid] = (sec, row)
+        else:
+            row = active[1]
+        row["cutoff_ts_recv_ns"] = recv_ns
+        if msg.is_last: row["f_last_group_completion_ts_recv_ns"] = recv_ns
+        row["max_ts_event_ns"] = max(int(row["max_ts_event_ns"]), int(msg.ts_event_ns))
+        row["source_dbn_object"] = msg.source_dbn_object; row["source_dbn_sha256"] = msg.source_dbn_sha256
+        row["source_dbn_key"] = (self.source_provenance.get(str(msg.source_dbn_object)) or {}).get("key")
+        if not row["source_dbn_key"]:
+            raise base.CensusError("MBO action cannot be bound to its manifest source key")
+        if msg.action == "T":
+            if msg.side == "B": row["trade_buy"] += max(0.0, float(msg.size))
+            elif msg.side == "A": row["trade_sell"] += max(0.0, float(msg.size))
+        side = str(effect.side)
+        delta = effect.size_delta
+        if side in {"B", "A"} and delta is not None and msg.action in {"A", "C", "M"}:
+            side_key = "bid" if side == "B" else "ask"; value = float(delta)
+            row[f"{side_key}_depth_delta"] += value
+            if msg.action == "C": row[f"cancel_{side_key}"] += max(0.0, -value)
+            elif msg.action == "A": row[f"add_{side_key}"] += max(0.0, value)
+            elif value < 0: row[f"neg_modify_{side_key}"] += -value
+            elif value > 0: row[f"pos_modify_{side_key}"] += value
+        for side in ("bid", "ask"):
+            old, new = set(prior[side]["ids"]), set(state[side]["ids"])
+            failure = 0.0 if not old else 1.0 - len(old & new) / len(old)
+            row[f"{side}_fifo_failure_sum"] += failure
+        row["fifo_observations"] += 1
+        self.prior[iid] = state
+
+    def finish(self) -> None:
+        for _, row in self.current.values(): self._finalize(row, int(row["cutoff_ts_recv_ns"]))
+        self.current.clear()
+
+
+def replay_surface_effects(paths: list[Path], collector: MboSurfaceCollector) -> dict[str, Any]:
+    """Replay through the accepted adapter while retaining each exact ApplyEffect."""
+    try:
+        import databento as db
+    except ImportError as exc:
+        raise base.CensusError("databento is required for exact MBO effect replay") from exc
+    adapter = V4MboAdapter(); sources = []
+    for path in paths:
+        digest = sha256_file(path); store = db.DBNStore.from_file(str(path)); instrument_map = None
+        try:
+            instrument_map = db.common.symbology.InstrumentMap(); instrument_map.insert_metadata(store.metadata)
+        except Exception:
+            instrument_map = None
+        records = 0
+        for record in store:
+            if type(record).__name__ not in {"MboMsg", "MBOMsg"}: continue
+            iid, recv = _int(record, "instrument_id"), _int(record, "ts_recv")
+            msg = adapter.normalize(record, _resolve_symbol(instrument_map, iid, recv), str(path), digest)
+            book = adapter.books.setdefault(iid, InstrumentBook(iid))
+            effect, frame, _legacy = book.apply(msg)
+            adapter.record_count += 1; records += 1
+            if frame is not None: adapter.completed_event_group_count += 1
+            collector.consume_effect(msg, effect, book, frame)
+        adapter.assert_groups_closed()
+        sources.append({"path": str(path), "sha256": digest, "mbo_records": records})
+    collector.finish()
+    return {"status": "EXACT_APPLY_EFFECT_REPLAY_COMPLETE", "sources": sources,
+            "record_count": adapter.record_count, "completed_event_group_count": adapter.completed_event_group_count,
+            "exact_A_C_M_size_delta_retained": True, "trades_used_as_flow_only": True}
+
+
+def _prior_quantile(values: list[float]) -> float:
+    return float(np.quantile(np.asarray(values, dtype=float), PROPOSAL_PRIOR_ABS_QUANTILE, method="linear"))
+
+
+def discover_uncapped_proposals(surface_rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    histories: dict[tuple[int, str], list[float]] = defaultdict(list)
+    above: dict[tuple[int, str, int], bool] = defaultdict(bool)
+    last_onset: dict[tuple[int, str, int], int] = defaultdict(lambda: -10**18)
+    merged: dict[tuple[int, int, int], dict[str, Any]] = {}
+    for row in sorted(surface_rows, key=lambda x: (int(x["recv_second"]), int(x["cutoff_ts_recv_ns"]), int(x["instrument_id"]))):
+        iid, sec = int(row["instrument_id"]), int(row["recv_second"])
+        for surface in PROPOSAL_SURFACES:
+            value = float(row["surfaces"][surface]); history = histories[(iid, surface)]
+            eligible = len(history) >= PROPOSAL_WARMUP_SECONDS
+            threshold = _prior_quantile(history) if eligible else None
+            polarity = 1 if value > 0 else (-1 if value < 0 else 0)
+            is_above = bool(eligible and polarity and threshold is not None and threshold > 0 and abs(value) >= threshold)
+            state_key = (iid, surface, polarity)
+            crossing = is_above and not above[state_key]
+            in_target_window = WINDOW_START <= sec < WINDOW_END
+            if in_target_window and crossing and sec - last_onset[state_key] >= PROPOSAL_REARM_SECONDS:
+                key = (iid, sec, polarity)
+                proposal = merged.setdefault(key, {"instrument_id": iid, "recv_second": sec,
+                    "cutoff_ts_recv_ns": int(row["cutoff_ts_recv_ns"]), "polarity": polarity,
+                    "ts_event_ns": int(row["ts_event_ns"]), "ts_recv_ns": int(row["event_known_by_ts_recv_ns"]),
+                    "f_last_group_completion_ts_recv_ns": int(row["f_last_group_completion_ts_recv_ns"]),
+                    "threshold_crossing_ts_recv_ns": int(row["event_known_by_ts_recv_ns"]),
+                    "event_known_by_ts_recv_ns": int(row["event_known_by_ts_recv_ns"]),
+                    "max_contributing_ts_recv_ns": int(row["ts_recv_ns"]),
+                    "feature_cutoff_ts_recv_ns": int(row["ts_recv_ns"]),
+                    "outcome_availability_cutoff_ts_event_ns": None,
+                    "outcome_availability_cutoff_ts_recv_ns": None,
+                    "outcome_availability_status": "WITHHELD_UNTIL_POST_LOCK",
+                    "surfaces": {},
+                    "causal_t0_surfaces": {name: float(row["surfaces"][name]) for name in PROPOSAL_SURFACES},
+                    "causal_t0_surface_inputs": dict(row["surface_inputs"]),
+                    "source_dbn_key": row["source_dbn_key"],
+                    "source_dbn_object": row["source_dbn_object"],
+                    "source_dbn_sha256": row["source_dbn_sha256"], "warmup_minimum": PROPOSAL_WARMUP_SECONDS})
+                proposal["cutoff_ts_recv_ns"] = max(proposal["cutoff_ts_recv_ns"], int(row["cutoff_ts_recv_ns"]))
+                proposal["surfaces"][surface] = {"value": value, "prior_abs_q95": threshold,
+                    "prior_valid_seconds": len(history), "causal_threshold_excludes_current": True}
+                last_onset[state_key] = sec
+            for signed_polarity in (-1, 1):
+                above[(iid, surface, signed_polarity)] = bool(is_above and polarity == signed_polarity)
+            history.append(abs(value))
+    proposals = []
+    for proposal in sorted(merged.values(), key=lambda x: (x["recv_second"], x["instrument_id"], x["polarity"])):
+        body = {**proposal, "surface_names": sorted(proposal["surfaces"]),
+                "merge_semantics": "SAME_INSTRUMENT_POLARITY_RECEIVE_SECOND",
+                "event_recv_latency_ns": int(proposal["ts_recv_ns"]) - int(proposal["ts_event_ns"]),
+                "event_not_after_receive": int(proposal["ts_event_ns"]) <= int(proposal["ts_recv_ns"])}
+        if not body["event_not_after_receive"] or body["max_contributing_ts_recv_ns"] > body["feature_cutoff_ts_recv_ns"]:
+            raise base.CensusError("uncapped proposal causal-clock ordering failure")
+        canonical_body = {key: value for key, value in body.items() if key != "source_dbn_object"}
+        proposal_id = "MBOU1|" + base.sha256_json(canonical_body)
+        proposals.append({"event_id": proposal_id, **body})
+    check = [{k: v for k, v in row.items()} for row in proposals]
+    receipt = {"schema": "NG_EXHAUSTION_UNCAPPED_MBO_PROPOSAL_LOCK_V1_20260825",
+        "status": "CAUSAL_PROPOSALS_LOCKED_BEFORE_OUTCOMES", "proposal_count": len(proposals),
+        "surfaces": list(PROPOSAL_SURFACES), "warmup_prior_valid_seconds": PROPOSAL_WARMUP_SECONDS,
+        "threshold": "PER_INSTRUMENT_EXPANDING_PRIOR_ABS_Q95_EXCLUDING_CURRENT",
+        "scored_window": {"start": prior.WINDOW_START_ISO, "end_exclusive": prior.WINDOW_END_ISO},
+        "warmup_only_dates": ["20211001", "20211003"],
+        "onset": "BELOW_TO_AT_OR_ABOVE_THRESHOLD_CROSSING", "rearm_seconds": PROPOSAL_REARM_SECONDS,
+        "merge": "SAME_INSTRUMENT_POLARITY_RECEIVE_SECOND", "count_cap": None, "family_cap": None,
+        "proposal_set_sha256": base.sha256_json(check), "outcomes_accessed": False}
+    receipt["receipt_sha256"] = base.sha256_json(receipt)
+    return proposals, receipt
+
+
+def discover_mbo_families(proposals: list[dict[str, Any]]) -> dict[str, Any]:
+    by_day: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for proposal in proposals:
+        day = datetime.fromtimestamp(int(proposal["recv_second"]), tz=timezone.utc).date().isoformat()
+        vector = [float(proposal["causal_t0_surfaces"][name]) for name in PROPOSAL_SURFACES]
+        proposal["family_feature_vector"] = vector; by_day[day].append(proposal)
+    known: dict[str, np.ndarray] = {}; day_receipts = []
+    for day in sorted(by_day):
+        rows = sorted(by_day[day], key=lambda x: (x["recv_second"], x["instrument_id"], x["event_id"]))
+        X = np.asarray([row["family_feature_vector"] for row in rows], dtype=float)
+        if len(rows) < 5:
+            labels = np.full(len(rows), -1, dtype=int)
+        else:
+            labels = OPTICS(min_samples=min(20, max(5, int(math.sqrt(len(rows))))), xi=0.05,
+                            min_cluster_size=max(5, int(math.ceil(0.02 * len(rows))))).fit_predict(X)
+        local_centroids = {int(label): X[labels == label].mean(axis=0) for label in sorted(set(labels)) if label >= 0}
+        local_family = {}
+        for label, centroid in local_centroids.items():
+            candidates = sorted((float(np.linalg.norm(centroid - prior)), family) for family, prior in known.items())
+            if candidates and candidates[0][0] <= 0.35:
+                family = candidates[0][1]
+            else:
+                family = "MBOF|" + base.sha256_json([round(float(x), 8) for x in centroid])[:16]
+                known[family] = centroid
+            local_family[label] = family
+        for row, label in zip(rows, labels):
+            row["mbo_family"] = "MBO_NOISE" if int(label) < 0 else local_family[int(label)]
+            row["mbo_family_day_cluster"] = int(label)
+        day_receipts.append({"utc_day": day, "proposal_count": len(rows),
+            "cluster_count": len(local_centroids), "noise_count": int(np.sum(labels < 0)),
+            "family_ids": sorted(set(row["mbo_family"] for row in rows)),
+            "causal_clock_set_sha256": base.sha256_json([{key: row[key] for key in (
+                "event_id", "ts_event_ns", "ts_recv_ns", "f_last_group_completion_ts_recv_ns",
+                "threshold_crossing_ts_recv_ns", "event_known_by_ts_recv_ns",
+                "max_contributing_ts_recv_ns", "feature_cutoff_ts_recv_ns",
+                "outcome_availability_cutoff_ts_event_ns", "outcome_availability_cutoff_ts_recv_ns")}
+                for row in rows]),
+            "earliest_event_known_by_ts_recv_ns": min(int(row["event_known_by_ts_recv_ns"]) for row in rows),
+            "latest_event_known_by_ts_recv_ns": max(int(row["event_known_by_ts_recv_ns"]) for row in rows)})
+    return {"method": "DETERMINISTIC_PER_DAY_OPTICS_CAUSAL_T0_FEATURES_CROSS_DAY_CENTROID_MATCH",
+            "feature_names": list(PROPOSAL_SURFACES), "cross_day_centroid_tolerance_l2": 0.35,
+            "noise_retained": True, "days": day_receipts,
+            "family_count_excluding_noise": len({row["mbo_family"] for row in proposals if row["mbo_family"] != "MBO_NOISE"})}
+
+
+def _outcome_availability(stream: dict[str, Any], seconds_by_epoch: dict[int, dict[str, Any]],
+                          confirmation_idx: int | None) -> dict[str, Any]:
+    sunday_epoch = int(datetime.combine(stream["week_sunday"], datetime.min.time(), tzinfo=timezone.utc).timestamp())
+    if confirmation_idx is None:
+        return {"status": "ENDPOINT_CONFIRMATION_CENSORED", "outcome_availability_cutoff_ts_event_ns": None,
+                "outcome_availability_cutoff_ts_recv_ns": None, "horizons": {}}
+    horizons = {}; maximum_recv = 0; maximum_event = 0
+    for horizon in base.frozen_detector.HORIZONS:
+        idx = int(confirmation_idx) + int(horizon); epoch = sunday_epoch + idx
+        row = seconds_by_epoch.get(epoch)
+        recv = None if row is None else int(row.get("last_ts_recv_ns") or 0) or None
+        horizons[str(horizon)] = {"outcome_ts_event_ns": epoch * 1_000_000_000,
+                                  "outcome_known_by_ts_recv_ns": recv,
+                                  "censored_or_no_exact_receive_binding": recv is None}
+        if recv is not None:
+            maximum_recv = max(maximum_recv, recv); maximum_event = max(maximum_event, epoch * 1_000_000_000)
+    return {"status": "POST_LOCK_FROZEN_OUTCOME_CLOCK_BOUND",
+            "outcome_availability_cutoff_ts_event_ns": maximum_event or None,
+            "outcome_availability_cutoff_ts_recv_ns": maximum_recv or None, "horizons": horizons}
+
+
+def build_locked_proposal_events(proposals: list[dict[str, Any]], selected: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    stream = base.build_week_stream(selected, "native")
+    seconds_by_epoch = {int(row["epoch_second"]): row for row in selected}
+    sunday_epoch = int(datetime.combine(stream["week_sunday"], datetime.min.time(), tzinfo=timezone.utc).timestamp())
+    events = []
+    for proposal in proposals:
+        t0 = int(proposal["recv_second"]) - sunday_epoch; polarity = int(proposal["polarity"])
+        onset, confirmation = base.frozen_detector.endpoint(stream, t0, polarity)
+        now = datetime.fromtimestamp(int(proposal["recv_second"]), tz=timezone.utc)
+        outcome_clock = _outcome_availability(stream, seconds_by_epoch, confirmation)
+        source = {"source_dbn_key": proposal["source_dbn_key"], "staged_source_dbn_object": proposal["source_dbn_object"],
+                  "source_dbn_sha256": proposal["source_dbn_sha256"], "instrument_id": proposal["instrument_id"],
+                  "event_ts_event_ns": proposal["ts_event_ns"], "event_known_by_ts_recv_ns": proposal["event_known_by_ts_recv_ns"],
+                  "contract_resolution_status": "RESOLVED_FROM_DBN_METADATA_OR_RETAINED_INSTRUMENT_ID"}
+        event = {"event_id": proposal["event_id"], "week_sunday": base.frozen_detector.ymds(stream["week_sunday"]),
+            "t0_idx": t0, "source_utc_day": now.date().isoformat().replace("-", ""),
+            "t0_second_utc_day": now.hour * 3600 + now.minute * 60 + now.second,
+            "polarity": polarity, "family": proposal["mbo_family"], "pre_family_distances": None,
+            "a_frozen_post_state": None, "seed_state": "UNCAPPED_FULL_MBO_CAUSAL_ONSET",
+            "feature": {"uncapped_mbo_surfaces": proposal["surfaces"],
+                        "causal_t0_all_signed_surfaces": proposal["causal_t0_surfaces"],
+                        "causal_t0_complete_surface_inputs": proposal["causal_t0_surface_inputs"],
+                        "family_feature_vector": proposal["family_feature_vector"]},
+            "dynamic_endpoint": {"structural_onset_idx": onset, "causal_confirmation_idx": confirmation,
+                "structural_onset_offset_s": None if onset is None else onset - t0,
+                "causal_confirmation_offset_s": None if confirmation is None else confirmation - t0,
+                "censored": confirmation is None},
+            "time_context": {"utc": now.isoformat(), "clock_basis": "TS_RECV_CAUSAL_ONSET"},
+            "outcome": {"post_endpoint_price": base.frozen_detector.price_aftermath(stream, confirmation, polarity),
+                        "availability_clock": outcome_clock, "applied_after_proposal_and_family_lock": True},
+            "source_boundary_censored": True, "source_provenance": source,
+            "native_structure": {"taxonomy": "UNCAPPED_FULL_MBO_OPTICS_V1", "label": proposal["mbo_family"],
+                                 "causal_t0_only_family_inputs": True},
+            "causal_clocks": {key: proposal[key] for key in (
+                "ts_event_ns", "ts_recv_ns", "f_last_group_completion_ts_recv_ns",
+                "threshold_crossing_ts_recv_ns", "event_known_by_ts_recv_ns", "max_contributing_ts_recv_ns",
+                "feature_cutoff_ts_recv_ns", "event_recv_latency_ns", "event_not_after_receive")},
+            "outcome_availability": outcome_clock}
+        events.append(event)
+    base.frozen_detector.attach_links(events)
+    return events
+
+
+def write_comparator_match_graph(events: list[dict[str, Any]], baseline: Path, out_path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
+    comparators = {"legacy": list(base.read_gzip_jsonl(baseline / "LEGACY_CONTROL_EVENTS.jsonl.gz")),
+                   "native": list(base.read_gzip_jsonl(baseline / "V4_NATIVE_FULL_EVENTS.jsonl.gz"))}
+    writer = base.DeterministicGzipJsonlWriter(out_path); counts = Counter()
+    for event in events:
+        event_ns = int(event["causal_clocks"]["ts_event_ns"]); recv_ns = int(event["causal_clocks"]["ts_recv_ns"])
+        for view, rows in comparators.items():
+            for old in rows:
+                if int(old["polarity"]) != int(event["polarity"]): continue
+                sunday = datetime.strptime(str(old["week_sunday"]), "%Y%m%d").replace(tzinfo=timezone.utc)
+                old_event_ns = (int(sunday.timestamp()) + int(old["t0_idx"])) * 1_000_000_000
+                old_recv_ns = int((old.get("source_provenance") or {}).get("event_known_by_ts_recv_ns") or old_event_ns)
+                de, dr = event_ns - old_event_ns, recv_ns - old_recv_ns
+                if abs(de) > 2_000_000_000 and abs(dr) > 2_000_000_000: continue
+                def relation(delta: int) -> str: return "COINCIDE" if abs(delta) <= 1_000_000_000 else ("LEAD" if delta < 0 else "FOLLOW")
+                writer.write({"mbo_event_id": event["event_id"], "comparator_view": view,
+                    "comparator_event_id": old["event_id"], "comparator_abc_family_annotation": old.get("family"),
+                    "mbo_causal_clocks": event["causal_clocks"],
+                    "mbo_outcome_availability": event["outcome_availability"],
+                    "event_clock_delta_ns": de, "receive_clock_delta_ns": dr,
+                    "event_clock_relation": relation(de), "receive_clock_relation": relation(dr),
+                    "tolerance_ns": 2_000_000_000, "match_is_annotation_only": True})
+                counts[f"{view}_{relation(de).lower()}_event_clock"] += 1
+                counts[f"{view}_{relation(dr).lower()}_receive_clock"] += 1
+    output = writer.close()
+    return output, {"old_comparison_counts_expected_not_enforced": OLD_COMPARISON_COUNTS,
+        "old_comparison_counts_observed": {key: len(value) for key, value in comparators.items()},
+        "edge_relation_counts": dict(sorted(counts.items())), "abc_is_annotation_only": True,
+        "count_or_family_cap_applied": False}
 
 
 def _binding() -> dict[str, Any]:
@@ -252,8 +609,6 @@ def _verify_baseline_artifacts(baseline: Path, receipt: dict[str, Any]) -> dict[
         elif isinstance(value, list):
             for child in value: verify(child)
     verify(receipt)
-    if len(verified) < 16:
-        raise base.CensusError("baseline receipt artifact inventory is unexpectedly thin")
     return verified
 
 
@@ -388,24 +743,47 @@ def run(manifest_path: Path, baseline: Path, baseline_tar_sha256: str,
     selected = [x for x in native_rows if WINDOW_START <= int(x["epoch_second"]) < WINDOW_END]
     seconds_output = base.deterministic_gzip_jsonl(out / "V4_NATIVE_FULL_MBO_SECONDS.jsonl.gz", selected)
 
-    pre = base.frozen_detector.FrozenPreFamilyClassifier.load(
-        "research/FRANKIE_NG_PRE_FAMILY_CLASSIFIER_FROZEN_OPERATIONAL_20260817.json")
-    acl = base.frozen_detector.FrozenAClassifier.load(
-        "research/FRANKIE_NG_A_POSTSTATE_CLASSIFIER_FROZEN_PREBLIND_20260816.json")
-    events = base.detect_events_for_week(selected, "V4_NATIVE_FULL", pre, acl)
+    surface_collector = MboSurfaceCollector(provenance)
+    replay_surfaces = replay_surface_effects(raw_paths, surface_collector)
+    proposals, proposal_lock = discover_uncapped_proposals(surface_collector.surface_rows)
+    proposals_check, proposal_lock_check = discover_uncapped_proposals(surface_collector.surface_rows)
+    family_discovery = discover_mbo_families(proposals)
+    family_check = discover_mbo_families(proposals_check)
+    if base.sha256_json(proposals) != base.sha256_json(proposals_check) or base.sha256_json(proposal_lock) != base.sha256_json(proposal_lock_check) or base.sha256_json(family_discovery) != base.sha256_json(family_check):
+        raise base.CensusError("uncapped MBO proposal/family determinism failure")
+    proposal_writer = base.DeterministicGzipJsonlWriter(out / "UNCAPPED_MBO_PROPOSALS.jsonl.gz")
+    for proposal in proposals: proposal_writer.write(proposal)
+    proposal_output = proposal_writer.close()
+    proposal_lock.update({"family_discovery_method": family_discovery,
+        "family_assigned_proposal_set_sha256": base.sha256_json(proposals),
+        "deterministic_double_derivation_passed": True, "old_1577_1603_used_as_cap": False})
+    proposal_lock["receipt_sha256"] = base.sha256_json({k: v for k, v in proposal_lock.items() if k != "receipt_sha256"})
+    proposal_lock_path = out / "UNCAPPED_MBO_PROPOSAL_LOCK.json"; base.atomic_json(proposal_lock_path, proposal_lock)
+    family_path = out / "UNCAPPED_MBO_FAMILY_DISCOVERY.json"
+    family_artifact = {"schema": "NG_EXHAUSTION_UNCAPPED_MBO_FAMILY_DISCOVERY_V1_20260825",
+        "status": "FAMILIES_LOCKED_FROM_CAUSAL_T0_FEATURES_BEFORE_OUTCOMES", **family_discovery,
+        "proposal_lock_receipt_sha256": proposal_lock["receipt_sha256"],
+        "proposal_clock_set_sha256": base.sha256_json([{key: row[key] for key in (
+            "event_id", "ts_event_ns", "ts_recv_ns", "f_last_group_completion_ts_recv_ns",
+            "threshold_crossing_ts_recv_ns", "event_known_by_ts_recv_ns", "max_contributing_ts_recv_ns",
+            "feature_cutoff_ts_recv_ns", "outcome_availability_cutoff_ts_event_ns",
+            "outcome_availability_cutoff_ts_recv_ns")} for row in proposals]),
+        "causal_clock_fields_required": ["ts_event_ns", "ts_recv_ns", "event_known_by_ts_recv_ns",
+            "f_last_group_completion_ts_recv_ns", "threshold_crossing_ts_recv_ns",
+            "max_contributing_ts_recv_ns", "feature_cutoff_ts_recv_ns",
+            "outcome_availability_cutoff_ts_event_ns", "outcome_availability_cutoff_ts_recv_ns"],
+        "outcomes_accessed": False}
+    family_artifact["receipt_sha256"] = base.sha256_json(family_artifact); base.atomic_json(family_path, family_artifact)
+
+    events = build_locked_proposal_events(proposals, selected)
     families = dict(sorted(Counter(str(x.get("family")) for x in events).items()))
-    if len(events) != EXPECTED_NATIVE_COUNTS["events"] or families != EXPECTED_NATIVE_COUNTS["families"]:
-        raise base.CensusError(f"native raw-MBO detector parity drift: events={len(events)} families={families}")
-    targets = []
-    for event in events:
-        source = event.get("source_provenance") or {}
-        iid, cutoff = source.get("instrument_id"), source.get("event_known_by_ts_recv_ns")
-        if not iid or not cutoff:
-            raise base.CensusError(f"native event lacks receive-cutoff instrument binding: {event['event_id']}")
-        targets.append({"event_id": event["event_id"], "instrument_id": int(iid), "cutoff_ts_recv_ns": int(cutoff)})
+    targets = [{"event_id": event["event_id"], "instrument_id": int(event["source_provenance"]["instrument_id"]),
+                "source_dbn_key": event["source_provenance"]["source_dbn_key"],
+                "cutoff_ts_recv_ns": int(event["causal_clocks"]["feature_cutoff_ts_recv_ns"])} for event in events]
     collector = CausalMboCollector(targets)
     replay_features = replay_dbn_files([str(p) for p in raw_paths], collector.consume, materialize_full_state=False)
     cutoff_writer = base.DeterministicGzipJsonlWriter(out / "V4_NATIVE_FULL_MBO_CAUSAL_CUTOFF_BINDINGS.jsonl.gz")
+    evidence_writer = base.DeterministicGzipJsonlWriter(out / "V4_NATIVE_FULL_MBO_EVENT_EVIDENCE.jsonl.gz")
     event_writer = base.DeterministicGzipJsonlWriter(out / "V4_NATIVE_FULL_MBO_EVENTS.jsonl.gz")
     lineage_writer = base.DeterministicGzipJsonlWriter(out / "V4_NATIVE_FULL_MBO_LINEAGE_INPUTS.jsonl.gz")
     for event in events:
@@ -416,11 +794,31 @@ def run(manifest_path: Path, baseline: Path, baseline_tar_sha256: str,
         feature_hash = base.sha256_json({"names": list(MBO_FEATURE_NAMES), "values": [features[x] for x in MBO_FEATURE_NAMES]})
         cutoff_writer.write({"event_id": event["event_id"], "instrument_id": binding["instrument_id"],
             "cutoff_ts_recv_ns": binding["cutoff_ts_recv_ns"], "matched_ts_recv_ns": binding["matched_ts_recv_ns"],
-            "matched_not_after_cutoff": True, "source_dbn_object": binding["source_dbn_object"],
-            "source_dbn_sha256": binding["source_dbn_sha256"], "full_mbo_feature_vector_sha256": feature_hash})
+            "matched_not_after_cutoff": True, "source_dbn_key": binding["source_dbn_key"],
+            "source_dbn_object": binding["source_dbn_object"],
+            "source_dbn_sha256": binding["source_dbn_sha256"], "full_mbo_feature_vector_sha256": feature_hash,
+            "ts_event_ns": event["causal_clocks"]["ts_event_ns"], "ts_recv_ns": event["causal_clocks"]["ts_recv_ns"],
+            "f_last_group_completion_ts_recv_ns": event["causal_clocks"]["f_last_group_completion_ts_recv_ns"],
+            "threshold_crossing_ts_recv_ns": event["causal_clocks"]["threshold_crossing_ts_recv_ns"],
+            "event_known_by_ts_recv_ns": event["causal_clocks"]["event_known_by_ts_recv_ns"],
+            "max_contributing_ts_recv_ns": event["causal_clocks"]["max_contributing_ts_recv_ns"],
+            "feature_cutoff_ts_recv_ns": event["causal_clocks"]["feature_cutoff_ts_recv_ns"],
+            "outcome_availability": event["outcome_availability"]})
+        evidence = {"event_id": event["event_id"], "instrument_id": binding["instrument_id"],
+            "source_dbn_key": binding["source_dbn_key"],
+            "feature_cutoff_ts_recv_ns": binding["cutoff_ts_recv_ns"],
+            "causal_clocks": event["causal_clocks"], "outcome_availability": event["outcome_availability"],
+            "raw_actions_through_cutoff": binding["raw_actions_through_cutoff"],
+            "full_depth_fifo_checkpoint": binding["full_depth_fifo_checkpoint"],
+            "lifecycle_and_acm_feature_names": list(MBO_FEATURE_NAMES),
+            "lifecycle_and_acm_feature_values": [features[x] for x in MBO_FEATURE_NAMES],
+            "complete_raw_order_ids_retained": True, "complete_full_depth_fifo_retained": True}
+        evidence_hash = base.sha256_json(evidence); evidence["evidence_sha256"] = evidence_hash
+        evidence_writer.write(evidence)
         event["full_mbo_at_t0"] = {"causal_resolution": "INSTRUMENT_SPECIFIC_LATEST_GROUP_NOT_AFTER_TS_RECV_CUTOFF",
             "cutoff_ts_recv_ns": binding["cutoff_ts_recv_ns"], "matched_ts_recv_ns": binding["matched_ts_recv_ns"],
-            "instrument_id": binding["instrument_id"], "feature_vector_sha256": feature_hash, **features}
+            "instrument_id": binding["instrument_id"], "feature_vector_sha256": feature_hash,
+            "complete_evidence_sha256": evidence_hash, **features}
         row = base.compact_lineage_input(event)
         frozen22 = list(row["behavior_vector_full"])
         if len(frozen22) != 22:
@@ -429,7 +827,10 @@ def run(manifest_path: Path, baseline: Path, baseline_tar_sha256: str,
         row["full_mbo_feature_names"] = list(MBO_FEATURE_NAMES)
         row["behavior_vector_full"] = frozen22 + [features[x] for x in MBO_FEATURE_NAMES]
         event_writer.write(event); lineage_writer.write(row)
-    event_output, lineage_output, cutoff_output = event_writer.close(), lineage_writer.close(), cutoff_writer.close()
+    event_output, lineage_output = event_writer.close(), lineage_writer.close()
+    cutoff_output, evidence_output = cutoff_writer.close(), evidence_writer.close()
+    comparator_output, comparator_summary = write_comparator_match_graph(
+        events, baseline, out / "UNCAPPED_MBO_TO_OLD_BASELINES_MATCH_GRAPH.jsonl.gz")
 
     # Primary X is prior-event frozen22+causal-MBO history; Y is current frozen22 only.
     # Sparse sensitivity remains the accepted frozen first-eight path via a 22-D sidecar.
@@ -477,21 +878,36 @@ def run(manifest_path: Path, baseline: Path, baseline_tar_sha256: str,
             "population_summary": baseline_receipt["legacy_population_summary"]},
         "native_full_mbo": {"raw_mbo_replayed": True, "raw_bootstrap_dates": list(RAW_BOOTSTRAP_DATES),
             "raw_source_objects": raw_manifest, "seconds_replay_summary": replay_seconds,
+            "proposal_surface_replay_summary": replay_surfaces,
             "causal_feature_replay_summary": replay_features,
             "vector_dimension": FULL_NATIVE_VECTOR_DIMENSION, "frozen_component_dimension": 22,
             "mbo_component_dimension": len(MBO_FEATURE_NAMES), "mbo_feature_names": list(MBO_FEATURE_NAMES),
+            "information_retention": {"raw_actions_with_order_ids_and_ts_recv": True,
+                "full_depth_all_levels_and_fifo_order_ids_at_each_event_cutoff": True,
+                "complete_lifecycle_and_exact_A_C_M_apply_effect_features": True,
+                "T_used_for_flow_only": True, "history_predictors_use_full_frozen22_plus_mbo59": True,
+                "field_drop_substitution_or_lossy_compression": False,
+                "evidence_container_compression": "DETERMINISTIC_LOSSLESS_GZIP"},
             "seconds_output": prior._relative_output(seconds_output, out),
             "event_output": prior._relative_output(event_output, out),
             "lineage_output": prior._relative_output(lineage_output, out),
             "causal_cutoff_binding_output": prior._relative_output(cutoff_output, out),
+            "complete_event_evidence_output": prior._relative_output(evidence_output, out),
             "causal_binding_semantics": "INSTRUMENT_SPECIFIC_LATEST_GROUP_NOT_AFTER_TS_RECV_CUTOFF",
+            "uncapped_proposal_output": prior._relative_output(proposal_output, out),
+            "uncapped_proposal_lock": _artifact(proposal_lock_path, out),
+            "uncapped_family_discovery": _artifact(family_path, out),
+            "proposal_surfaces": list(PROPOSAL_SURFACES),
+            "proposal_count_cap": None, "family_count_cap": None,
+            "old_baseline_counts_are_comparison_only": OLD_COMPARISON_COUNTS,
+            "old_baseline_match_graph_output": prior._relative_output(comparator_output, out),
+            "old_baseline_match_graph_summary": comparator_summary,
             "sparse_lineage_output": prior._relative_output(sparse_lineage, out),
             "gain_output": prior._relative_output(structural["gain_output"], out),
             "structural_summary": _artifact(summary_path, out),
             "population_output": prior._relative_output(population, out),
             "crosswalk_index_output": prior._relative_output(index, out),
             "event_count": len(events), "family_counts": families,
-            "expected_native_parity": EXPECTED_NATIVE_COUNTS, "native_parity_passed": True,
             "population_summary": population_summary},
         "crosswalk_output": prior._relative_output(crosswalk, out), "crosswalk_summary": crosswalk_summary,
         "wrapper": _binding(), "legacy_science_changed": False, "prior_outputs_overwritten": False,

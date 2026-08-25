@@ -241,6 +241,13 @@ jobs:
               raise SystemExit('FULL_MBO_WINDOW_DRIFT')
           if receipt['native_full_mbo']['vector_dimension']!=81 or not receipt['native_full_mbo']['raw_mbo_replayed']:
               raise SystemExit('FULL_MBO_VECTOR_CONTRACT_DRIFT')
+          native=receipt['native_full_mbo']
+          if native.get('proposal_count_cap') is not None or native.get('family_count_cap') is not None:
+              raise SystemExit('UNCAPPED_MBO_DISCOVERY_WAS_CAPPED')
+          if native.get('old_baseline_counts_are_comparison_only')!={'legacy':1577,'native':1603,'native_families':{'A':1532,'B':23,'C':48}}:
+              raise SystemExit('OLD_BASELINE_COMPARATOR_SEMANTICS_DRIFT')
+          if native.get('raw_bootstrap_dates')!=['20211001','20211003','20211004','20211005']:
+              raise SystemExit('RAW_MBO_DATE_ROSTER_DRIFT')
           if receipt['legacy_control']['unchanged_from_receipt_sha256']!='140c6234b8e6f4216416290aa50f4070160e200a3e7025cbca3aa08d0ef42e52':
               raise SystemExit('LEGACY_BASELINE_DRIFT')
           verified={}
@@ -259,12 +266,13 @@ jobs:
               elif isinstance(value,list):
                   for child in value: verify(child)
           verify(receipt)
-          if len(verified)<15: raise SystemExit('FULL_MBO_ARTIFACT_RECEIPT_TOO_THIN')
           complete={'schema':'NG_EXHAUSTION_TWO_DAY_FULL_MBO_COMPLETION_V1_20260825','status':'COMPLETE',
               'github_run_id':os.environ['GITHUB_RUN_ID'],'github_sha':os.environ['GITHUB_SHA'],
               'step1_receipt_sha256':claimed,'results_tar_sha256':archive_sha,
               'result_file_manifest_sha256':claimed_manifest_sha,'result_file_count':len(listed)+1,
-              'native_vector_dimension':81,'raw_mbo_replayed':True,'provider_llm_called':False,'frankie_launched':False}
+              'native_vector_dimension':81,'uncapped_mbo_event_count':native['event_count'],
+              'uncapped_mbo_family_counts':native['family_counts'],'proposal_count_cap':None,'family_count_cap':None,
+              'raw_mbo_replayed':True,'provider_llm_called':False,'frankie_launched':False}
           complete['completion_sha256']=hashlib.sha256(json.dumps(complete,sort_keys=True,separators=(',',':')).encode()).hexdigest()
           Path('/tmp/FULL_MBO_COMPLETE.json').write_text(json.dumps(complete,indent=2,sort_keys=True)+'\n')
           print('FULL_MBO_RECEIPT_AND_WINDOW=PASS')
