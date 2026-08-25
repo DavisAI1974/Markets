@@ -174,6 +174,18 @@ class FullStackOctoberContractTest(unittest.TestCase):
         self.assertEqual(len(combined.base_sources), 107)
         self.assertEqual(len(combined.augmentation_sources), 20)
         self.assertEqual(len(combined.withheld_sources), 2)
+        excerpts = fullstack._base_knowledge(router, bundle)
+        self.assertEqual(len(excerpts), len(combined.base_sources))
+        self.assertEqual(
+            {item.source_id for item in excerpts},
+            {item.source_id for item in combined.base_sources},
+        )
+        self.assertTrue(
+            all(
+                0 < item.byte_end - item.byte_start <= fullstack.BASE_SOURCE_EXCERPT_BYTES
+                for item in excerpts
+            )
+        )
 
     def test_paired_launch_event_contains_workflow_proof_and_first_lane_receipts(self) -> None:
         def invocation(label: str):

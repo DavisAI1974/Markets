@@ -98,12 +98,7 @@ ANSWER_WALL_MODE = "SEALED_UNTIL_PRIMARY_FREEZE"
 _OBJECT_DATE = re.compile(r"glbx-mdp3-(20\d{6})\.mbo\.dbn\.zst$")
 PAIRED_COMPONENTS = tuple(COMBINED_COMPONENTS)
 ACTIVE_PAIRED_COMPONENTS = tuple(item for item in PAIRED_COMPONENTS if item != "META_LOOP")
-_BASE_CONTEXT_PATHS = (
-    "research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md",
-    "research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md",
-    "research/NG_EXHAUSTION_V4_INTERPRETATION_CORRECTION_20260820.md",
-    "research/NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md",
-)
+BASE_SOURCE_EXCERPT_BYTES = 2048
 _D1_EXTRATREES_PATH = (
     "research/generated/ng_exhaustion_entry_timing_revival_20260819/"
     "d1_d5_predictability_agents/NG_EXHAUSTION_D1_D5_PREDICTABILITY_ALL_AGENT_RESULTS_20260819.json"
@@ -451,12 +446,30 @@ def _base_knowledge(
     bundle: RouteBundle,
 ) -> tuple[KnowledgeSourceExcerpt, ...]:
     excerpts: list[KnowledgeSourceExcerpt] = []
-    for path in _BASE_CONTEXT_PATHS:
-        result = router.read_source(bundle, ContextVariant.S135_CONTROL, path)
-        try:
-            text = result.data.decode("utf-8")
-        except UnicodeDecodeError as exc:
-            raise FullStackOctoberError(f"base knowledge is not UTF-8: {path}") from exc
+    route = bundle.routes[ContextVariant.S135_CONTROL]
+    for source in route.base_sources:
+        end = min(source.byte_length, BASE_SOURCE_EXCERPT_BYTES)
+        if end <= 0:
+            raise FullStackOctoberError(f"routed base source is empty: {source.path}")
+        while True:
+            result = router.read_source(
+                bundle,
+                ContextVariant.S135_CONTROL,
+                source.path,
+                start=0,
+                end_exclusive=end,
+            )
+            try:
+                text = result.data.decode("utf-8")
+                break
+            except UnicodeDecodeError as exc:
+                if exc.start <= 0:
+                    raise FullStackOctoberError(
+                        f"routed base source is not UTF-8 text: {source.path}"
+                    ) from exc
+                end = exc.start
+        if not text.strip():
+            raise FullStackOctoberError(f"routed base source excerpt is blank: {source.path}")
         excerpts.append(
             KnowledgeSourceExcerpt.create(
                 source_id=result.entry.source_id,
@@ -465,6 +478,8 @@ def _base_knowledge(
                 excerpt=text,
             )
         )
+    if len(excerpts) != len(route.base_sources):
+        raise FullStackOctoberError("provider-visible base source coverage is incomplete")
     return tuple(excerpts)
 
 
