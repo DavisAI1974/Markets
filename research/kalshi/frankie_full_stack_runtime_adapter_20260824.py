@@ -29,6 +29,7 @@ from research.kalshi.frankie_full_stack_runtime_contracts_20260824 import (
     FrankieSynthesisRecord,
     HelperEvidencePacket,
     HelperRole,
+    KnowledgeSourceExcerpt,
     LedgerKind,
     LedgerRecord,
     ProviderInvocationReceipt,
@@ -36,9 +37,11 @@ from research.kalshi.frankie_full_stack_runtime_contracts_20260824 import (
     RetrievalReceipt,
     RuntimeEvent,
     RuntimeEventSink,
+    RuntimeContractError,
     ToolCallReceipt,
     UncertaintyPacket,
     helper_contracts,
+    validate_knowledge_excerpts,
     validate_helper_batch,
 )
 
@@ -49,6 +52,8 @@ SYNTHESIS_REQUEST_SCHEMA = "FRANKIE_SYNTHESIS_REQUEST_V1"
 _OPEN_FLAGS = os.O_CLOEXEC | getattr(os, "O_NOFOLLOW", 0)
 _KEY_RE = re.compile(r"AKIA[0-9A-Z]{12,}")
 _OPENAI_RE = re.compile(r"sk-[A-Za-z0-9_-]{12,}")
+_RUNTIME_LANES = {"S135_CONTROL", "FULL_PROVISIONAL_COMBINED"}
+_RESERVED_STATE_KEYS = {"experiment_lane", "provisional_combined_context"}
 
 
 class AdapterRuntimeError(ValueError):
@@ -478,12 +483,22 @@ class FullStackRuntimeAdapter:
         task: str,
         instructions: str,
         payload: Mapping[str, Any],
+        request_context: Mapping[str, Any],
+        knowledge_sources: Sequence[KnowledgeSourceExcerpt],
         tool_calls: Sequence[ToolCallReceipt],
         retrievals: Sequence[RetrievalReceipt],
     ) -> tuple[dict[str, Any], ProviderInvocationReceipt]:
+        provider_payload = {
+            **dict(payload),
+            "model": EXPECTED_MODEL,
+            "request_context": dict(request_context),
+            "knowledge_source_excerpts": [asdict(item) for item in knowledge_sources],
+            "tool_references": [asdict(item) for item in tool_calls],
+            "retrieval_references": [asdict(item) for item in retrievals],
+        }
         request = ProviderRequestReceipt.create(
             model=EXPECTED_MODEL,
-            request_payload=payload,
+            request_payload=provider_payload,
             instructions=instructions,
             binding=binding,
         )
@@ -501,7 +516,15 @@ class FullStackRuntimeAdapter:
         self._event(
             "FRANKIE_PROVIDER_CALL_STARTED",
             binding,
-            {"task": task, "model": EXPECTED_MODEL, "request_hash": request.request_hash},
+            {
+                "task": task,
+                "model": EXPECTED_MODEL,
+                "lane_id": request_context["lane_id"],
+                "base_state_content_hash": request_context["base_state_content_hash"],
+                "full_state_content_hash": request_context["full_state_content_hash"],
+                "knowledge_content_hash": request_context["knowledge_content_hash"],
+                "request_hash": request.request_hash,
+            },
         )
         try:
             raw = self.client.create(
@@ -564,6 +587,7 @@ class FullStackRuntimeAdapter:
                 "task": task,
                 "model": resolved_model,
                 "provider_response_id": provider_id,
+                "lane_id": request_context["lane_id"],
                 "response_hash": accepted.response_hash,
             },
         )
@@ -656,7 +680,10 @@ class FullStackRuntimeAdapter:
         self,
         *,
         binding: CausalPrefixBinding,
+        lane_id: str,
         causal_state: Mapping[str, Any],
+        provisional_context: Mapping[str, Any] | None,
+        knowledge_sources: Sequence[KnowledgeSourceExcerpt],
         tool_calls: Sequence[ToolCallReceipt],
         retrievals: Sequence[RetrievalReceipt],
     ) -> PrefixRuntimeResult:
@@ -665,25 +692,74 @@ class FullStackRuntimeAdapter:
             raise AdapterRuntimeError("adapter ledger run_id differs from causal prefix")
         if not isinstance(causal_state, Mapping):
             raise AdapterRuntimeError("causal_state must be an object")
+        lane = str(lane_id or "").strip()
+        if lane not in _RUNTIME_LANES:
+            raise AdapterRuntimeError("runtime lane identity is invalid")
+        if any(key in causal_state for key in _RESERVED_STATE_KEYS):
+            raise AdapterRuntimeError("base causal_state contains a reserved lane context key")
+        if lane == "S135_CONTROL" and provisional_context is not None:
+            raise AdapterRuntimeError("S135_CONTROL cannot receive provisional context")
+        if lane == "FULL_PROVISIONAL_COMBINED" and (
+            not isinstance(provisional_context, Mapping) or not provisional_context
+        ):
+            raise AdapterRuntimeError("FULL_PROVISIONAL_COMBINED requires provisional context")
         tools = tuple(item.validate() for item in tool_calls)
         reads = tuple(item.validate() for item in retrievals)
         if not tools or not reads:
             raise AdapterRuntimeError("runtime prefix requires tool and retrieval receipts")
         try:
+            sources = validate_knowledge_excerpts(knowledge_sources, reads)
+        except RuntimeContractError as exc:
+            raise AdapterRuntimeError(str(exc)) from exc
+        base_state = json.loads(_canonical(dict(causal_state), "base causal_state"))
+        full_state = dict(base_state)
+        full_state["experiment_lane"] = lane
+        if provisional_context is not None:
+            full_state["provisional_combined_context"] = json.loads(
+                _canonical(dict(provisional_context), "provisional context")
+            )
+        request_context = {
+            "lane_id": lane,
+            "causal_prefix_hash": bound.causal_prefix_hash,
+            "state_prefix_hash": bound.state_prefix_hash,
+            "knowledge_manifest_hash": bound.knowledge_manifest_hash,
+            "base_state_content_hash": _hash(base_state),
+            "full_state_content_hash": _hash(full_state),
+            "knowledge_content_hash": _hash([asdict(item) for item in sources]),
+        }
+        try:
             self._event(
                 "FRANKIE_REPLAY_PROGRESS",
                 bound,
-                {"phase": "PREFIX_READY", "state_prefix_hash": bound.state_prefix_hash},
+                {
+                    "phase": "PREFIX_READY",
+                    "lane_id": lane,
+                    "state_prefix_hash": bound.state_prefix_hash,
+                    "base_state_content_hash": request_context["base_state_content_hash"],
+                    "full_state_content_hash": request_context["full_state_content_hash"],
+                    "knowledge_content_hash": request_context["knowledge_content_hash"],
+                },
             )
             self._persist(
                 LedgerKind.STATE,
                 bound,
-                {"binding": bound.identity_payload(), "causal_state": dict(causal_state)},
+                {
+                    "binding": bound.identity_payload(),
+                    "lane_id": lane,
+                    "base_state_content_hash": request_context["base_state_content_hash"],
+                    "full_state_content_hash": request_context["full_state_content_hash"],
+                    "causal_state": full_state,
+                },
             )
             self._persist(
                 LedgerKind.RETRIEVAL,
                 bound,
-                {"retrievals": [asdict(item) for item in reads]},
+                {
+                    "lane_id": lane,
+                    "knowledge_content_hash": request_context["knowledge_content_hash"],
+                    "knowledge_sources": [asdict(item) for item in sources],
+                    "retrievals": [asdict(item) for item in reads],
+                },
             )
 
             packets: list[HelperEvidencePacket] = []
@@ -697,7 +773,7 @@ class FullStackRuntimeAdapter:
                     "role_title": contract.title,
                     "role_objective": contract.objective,
                     "binding": bound.identity_payload(),
-                    "causal_state": dict(causal_state),
+                    "causal_state": full_state,
                     "required_output_schema": _HELPER_OUTPUT_SCHEMA,
                     "authority": {
                         "evidence_only": True,
@@ -710,6 +786,8 @@ class FullStackRuntimeAdapter:
                     task=f"helper:{role.value}",
                     instructions=_HELPER_INSTRUCTIONS[role],
                     payload=payload,
+                    request_context=request_context,
+                    knowledge_sources=sources,
                     tool_calls=tools,
                     retrievals=reads,
                 )
@@ -756,6 +834,8 @@ class FullStackRuntimeAdapter:
                 task="frankie:synthesis",
                 instructions=_SYNTHESIS_INSTRUCTIONS,
                 payload=synthesis_payload,
+                request_context=request_context,
+                knowledge_sources=sources,
                 tool_calls=tools,
                 retrievals=reads,
             )
@@ -763,6 +843,11 @@ class FullStackRuntimeAdapter:
                 binding=bound, helper_packets=packets, output=synthesis_output
             )
             invocations.append(synthesis_invocation)
+            provider_ids = tuple(
+                item.accepted_response.provider_response_id for item in invocations
+            )
+            if len(provider_ids) != 5 or len(set(provider_ids)) != 5:
+                raise AdapterRuntimeError("runtime prefix requires five distinct provider response IDs")
             self._persist(
                 LedgerKind.REASONING,
                 bound,

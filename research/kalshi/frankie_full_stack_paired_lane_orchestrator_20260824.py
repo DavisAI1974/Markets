@@ -10,7 +10,7 @@ prefix has complete immutable artifacts in both ledgers.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from enum import Enum
 import hashlib
 import json
@@ -27,11 +27,14 @@ from research.kalshi.frankie_full_stack_runtime_adapter_20260824 import (
 )
 from research.kalshi.frankie_full_stack_runtime_contracts_20260824 import (
     CausalPrefixBinding,
+    KnowledgeSourceExcerpt,
     LedgerKind,
     LedgerRecord,
     RetrievalReceipt,
     RuntimeEventSink,
+    RuntimeContractError,
     ToolCallReceipt,
+    validate_knowledge_excerpts,
 )
 
 
@@ -153,7 +156,12 @@ class ProvisionalComponentReceipt:
             receipt_hash=_hash(core),
         )
 
-    def validate(self, *, binding: CausalPrefixBinding) -> "ProvisionalComponentReceipt":
+    def validate(
+        self,
+        *,
+        binding: CausalPrefixBinding,
+        allow_post_evidence: bool = False,
+    ) -> "ProvisionalComponentReceipt":
         bound = binding.validate()
         if self.component_id not in COMBINED_COMPONENTS:
             raise PairedLaneError("unknown provisional combined component")
@@ -168,10 +176,20 @@ class ProvisionalComponentReceipt:
         if self.can_change_primary:
             raise PairedLaneError("provisional component cannot change primary")
         if self.component_id == "META_LOOP":
+            expected_execution = (
+                ComponentLifecycleStage.POST_EVIDENCE_DIAGNOSTIC
+                if allow_post_evidence
+                else ComponentLifecycleStage.PRE_REVEAL_PREFIX
+            )
+            expected_status = (
+                ComponentStatus.ACTIVE
+                if allow_post_evidence
+                else ComponentStatus.DEFERRED_NOT_YET_LAWFUL
+            )
             if (
                 self.lifecycle_stage is not ComponentLifecycleStage.POST_EVIDENCE_DIAGNOSTIC
-                or self.executed_stage is not ComponentLifecycleStage.PRE_REVEAL_PREFIX
-                or self.status is not ComponentStatus.DEFERRED_NOT_YET_LAWFUL
+                or self.executed_stage is not expected_execution
+                or self.status is not expected_status
             ):
                 raise PairedLaneError("meta-loop must remain deferred until post-evidence")
         elif (
@@ -179,7 +197,9 @@ class ProvisionalComponentReceipt:
             or self.executed_stage is not ComponentLifecycleStage.PRE_REVEAL_PREFIX
             or self.status is not ComponentStatus.ACTIVE
         ):
-            raise PairedLaneError("pre-reveal provisional component is not lawfully active")
+            raise PairedLaneError(
+                "pre-reveal provisional component is not active at its lawful lifecycle stage"
+            )
         try:
             context = json.loads(self.context_json)
         except (TypeError, json.JSONDecodeError) as exc:
@@ -300,6 +320,7 @@ class IdenticalPrefixProof:
     prefix_hash: str
     state_prefix_hash: str
     knowledge_manifest_hash: str
+    base_knowledge_content_hash: str
     causal_cutoff: float
     control_final_ledger_hash: str
     combined_final_ledger_hash: str
@@ -354,6 +375,7 @@ class PairedLaneOrchestrator:
         prefix_roster: Sequence[str],
         control: LaneRuntime,
         combined: LaneRuntime,
+        base_knowledge_sources: Sequence[KnowledgeSourceExcerpt],
         event_sink: PairedLaneEventSink,
     ) -> None:
         roster = tuple(_sha256(item, "prefix roster hash") for item in prefix_roster)
@@ -373,9 +395,22 @@ class PairedLaneOrchestrator:
             item.retrieval_id for item in combined.retrievals
         }:
             raise PairedLaneError("paired lanes require independent retrieval receipts")
+        try:
+            sources = validate_knowledge_excerpts(base_knowledge_sources, control.retrievals)
+            combined_sources = validate_knowledge_excerpts(
+                base_knowledge_sources, combined.retrievals
+            )
+        except RuntimeContractError as exc:
+            raise PairedLaneError(
+                f"paired lanes require identical base knowledge: {exc}"
+            ) from exc
+        if sources != combined_sources:
+            raise PairedLaneError("paired lanes require identical base knowledge content")
         self.prefix_roster = roster
         self.control = control
         self.combined = combined
+        self.base_knowledge_sources = sources
+        self.base_knowledge_content_hash = _hash([asdict(item) for item in sources])
         self.event_sink = event_sink
         self._control_ledger = _LaneTaggedLedger(control)
         self._combined_ledger = _LaneTaggedLedger(combined)
@@ -552,12 +587,17 @@ class PairedLaneOrchestrator:
             {
                 "lanes": [item.value for item in (LaneId.S135_CONTROL, LaneId.FULL_PROVISIONAL_COMBINED)],
                 "answer_revealed": False,
+                "base_knowledge_content_hash": self.base_knowledge_content_hash,
             },
         )
         components: dict[str, Any] = {}
         for item in bundle:
             components[item.component_id] = {
-                "context": json.loads(item.context_json),
+                "context": (
+                    None
+                    if item.component_id == "META_LOOP"
+                    else json.loads(item.context_json)
+                ),
                 "context_hash": item.context_hash,
                 "receipt_hash": item.receipt_hash,
                 "lifecycle_stage": item.lifecycle_stage.value,
@@ -591,11 +631,7 @@ class PairedLaneOrchestrator:
             )
 
         base_state = json.loads(_canonical(dict(causal_state), "causal state"))
-        control_state = dict(base_state)
-        control_state["experiment_lane"] = LaneId.S135_CONTROL.value
-        combined_state = dict(base_state)
-        combined_state["experiment_lane"] = LaneId.FULL_PROVISIONAL_COMBINED.value
-        combined_state[RESERVED_CONTEXT_KEY] = {
+        combined_context = {
             "authority": "SHADOW_DIAGNOSTIC_ONLY",
             "scientific_variant": "ALL_TOGETHER_COMBINED",
             "components": components,
@@ -611,7 +647,10 @@ class PairedLaneOrchestrator:
                 event_sink=self.control.event_sink,
             ).run_prefix(
                 binding=bound,
-                causal_state=control_state,
+                lane_id=LaneId.S135_CONTROL.value,
+                causal_state=base_state,
+                provisional_context=None,
+                knowledge_sources=self.base_knowledge_sources,
                 tool_calls=self.control.tool_calls,
                 retrievals=self.control.retrievals,
             )
@@ -621,7 +660,10 @@ class PairedLaneOrchestrator:
                 event_sink=self.combined.event_sink,
             ).run_prefix(
                 binding=bound,
-                causal_state=combined_state,
+                lane_id=LaneId.FULL_PROVISIONAL_COMBINED.value,
+                causal_state=base_state,
+                provisional_context=combined_context,
+                knowledge_sources=self.base_knowledge_sources,
                 tool_calls=self.combined.tool_calls,
                 retrievals=self.combined.retrievals,
             )
@@ -649,12 +691,14 @@ class PairedLaneOrchestrator:
             "lanes": [LaneId.S135_CONTROL.value, LaneId.FULL_PROVISIONAL_COMBINED.value],
             "control_final_ledger_hash": control_result.final_ledger_hash,
             "combined_final_ledger_hash": combined_result.final_ledger_hash,
+            "base_knowledge_content_hash": self.base_knowledge_content_hash,
             "proved": True,
         }
         proof = IdenticalPrefixProof(
             prefix_hash=bound.causal_prefix_hash,
             state_prefix_hash=bound.state_prefix_hash,
             knowledge_manifest_hash=bound.knowledge_manifest_hash,
+            base_knowledge_content_hash=self.base_knowledge_content_hash,
             causal_cutoff=bound.causal_cutoff,
             control_final_ledger_hash=control_result.final_ledger_hash,
             combined_final_ledger_hash=combined_result.final_ledger_hash,
@@ -666,6 +710,7 @@ class PairedLaneOrchestrator:
             "identical_prefix_proof_hash": proof.proof_hash,
             "control_final_ledger_hash": control_result.final_ledger_hash,
             "combined_final_ledger_hash": combined_result.final_ledger_hash,
+            "base_knowledge_content_hash": self.base_knowledge_content_hash,
             "provider_response_ids": {
                 "control": sorted(control_ids),
                 "combined": sorted(combined_ids),
@@ -822,7 +867,7 @@ class PairedLaneOrchestrator:
             raise PairedLaneError("post-evidence diagnostics require GLOBAL_EXPERIMENT_FREEZE")
         if not answer_revealed:
             raise PairedLaneError("post-evidence diagnostic requires the post-evidence lifecycle stage")
-        item = receipt.validate(binding=receipt.binding)
+        item = receipt.validate(binding=receipt.binding, allow_post_evidence=True)
         if item.lifecycle_stage != ComponentLifecycleStage.POST_EVIDENCE_DIAGNOSTIC:
             raise PairedLaneError("post-evidence component is outside its lawful lifecycle stage")
         expected = _sha256(expected_shadow_first_lock_hash, "shadow first lock hash")

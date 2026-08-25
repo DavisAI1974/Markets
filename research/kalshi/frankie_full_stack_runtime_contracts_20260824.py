@@ -184,6 +184,93 @@ class RetrievalReceipt:
 
 
 @dataclass(frozen=True)
+class KnowledgeSourceExcerpt:
+    """Actual provider-visible knowledge bytes bound to one catalog source range."""
+
+    source_id: str
+    source_sha256: str
+    byte_start: int
+    byte_end: int
+    content_sha256: str
+    excerpt: str
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        source_id: str,
+        source_sha256: str,
+        byte_start: int,
+        excerpt: str,
+    ) -> "KnowledgeSourceExcerpt":
+        source = _required_text(source_id, "knowledge source_id")
+        source_hash = _sha256(source_sha256, "knowledge source_sha256")
+        if isinstance(byte_start, bool) or not isinstance(byte_start, int) or byte_start < 0:
+            raise RuntimeContractError("knowledge byte_start must be a non-negative integer")
+        if not isinstance(excerpt, str) or not excerpt.strip():
+            raise RuntimeContractError("knowledge excerpt must be non-empty UTF-8 text")
+        text = excerpt
+        encoded = text.encode("utf-8")
+        return cls(
+            source_id=source,
+            source_sha256=source_hash,
+            byte_start=byte_start,
+            byte_end=byte_start + len(encoded),
+            content_sha256=hashlib.sha256(encoded).hexdigest(),
+            excerpt=text,
+        )
+
+    def validate(self) -> "KnowledgeSourceExcerpt":
+        rebuilt = self.create(
+            source_id=self.source_id,
+            source_sha256=self.source_sha256,
+            byte_start=self.byte_start,
+            excerpt=self.excerpt,
+        )
+        if rebuilt != self:
+            raise RuntimeContractError("knowledge excerpt byte range or content hash mismatch")
+        return self
+
+    def retrieval_identity(self) -> tuple[str, str, int, int, str]:
+        self.validate()
+        return (
+            self.source_id,
+            self.source_sha256,
+            self.byte_start,
+            self.byte_end,
+            self.content_sha256,
+        )
+
+
+def validate_knowledge_excerpts(
+    excerpts: Sequence[KnowledgeSourceExcerpt],
+    retrievals: Sequence[RetrievalReceipt],
+) -> tuple[KnowledgeSourceExcerpt, ...]:
+    """Require exact content coverage for all provider-visible retrieval receipts."""
+
+    sources = tuple(item.validate() for item in excerpts)
+    reads = tuple(item.validate() for item in retrievals)
+    if not sources or not reads:
+        raise RuntimeContractError("knowledge excerpts and retrieval receipts must be non-empty")
+    source_identities = [item.retrieval_identity() for item in sources]
+    if len(set(source_identities)) != len(source_identities):
+        raise RuntimeContractError("knowledge excerpts must be unique")
+    retrieval_identities = {
+        (
+            item.source_id,
+            item.source_sha256,
+            item.byte_start,
+            item.byte_end,
+            item.content_sha256,
+        )
+        for item in reads
+    }
+    if set(source_identities) != retrieval_identities:
+        raise RuntimeContractError("knowledge excerpts must exactly match supplied retrieval receipts")
+    return sources
+
+
+@dataclass(frozen=True)
 class ProviderRequestReceipt:
     model: str
     instructions: str
@@ -296,6 +383,10 @@ class ProviderInvocationReceipt:
         reads = tuple(item.validate() for item in retrievals)
         if not tools or not reads:
             raise RuntimeContractError("provider invocation requires tool-call and retrieval receipts")
+        if len({item.tool_call_id for item in tools}) != len(tools):
+            raise RuntimeContractError("provider invocation tool-call IDs must be unique")
+        if len({item.retrieval_id for item in reads}) != len(reads):
+            raise RuntimeContractError("provider invocation retrieval IDs must be unique")
         core = {
             "request_hash": req.request_hash,
             "response_hash": response.response_hash,
@@ -399,6 +490,24 @@ class HelperEvidencePacket:
         evidence = tuple(item.validate() for item in citations)
         if not evidence:
             raise RuntimeContractError("helper packet requires evidence citations")
+        supplied_references = {
+            **{
+                f"tool:{item.tool_call_id}": item.response_hash
+                for item in invoked.tool_calls
+            },
+            **{
+                f"retrieval:{item.retrieval_id}": item.content_sha256
+                for item in invoked.retrievals
+            },
+        }
+        for citation in evidence:
+            expected_hash = supplied_references.get(citation.reference_id)
+            if expected_hash is None:
+                raise RuntimeContractError(
+                    "helper citation must reference a supplied tool or retrieval receipt"
+                )
+            if citation.content_sha256 != expected_hash:
+                raise RuntimeContractError("helper citation content hash differs from its receipt")
         support = tuple(_required_text(item, "supporting observation") for item in supporting_observations)
         contradiction = tuple(
             _required_text(item, "contradictory observation") for item in contradictory_observations

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 
 import pytest
@@ -17,6 +18,7 @@ from research.kalshi.frankie_full_stack_runtime_contracts_20260824 import (
     HelperRole,
     ImmutableAppendOnlyLedger,
     LedgerKind,
+    KnowledgeSourceExcerpt,
     PairedShadowAblation,
     ProviderInvocationReceipt,
     ProviderRequestReceipt,
@@ -89,7 +91,7 @@ def packet(role: HelperRole, *, bind: CausalPrefixBinding | None = None) -> Help
         role=role,
         binding=active_binding,
         invocation=invocation(active_binding),
-        citations=(EvidenceCitation("state:1", H2, "lawful state row"),),
+        citations=(EvidenceCitation("tool:call-1", H2, "lawful state row"),),
         supporting_observations=("queue depletion persists",),
         contradictory_observations=("ask replenishment remains active",),
         uncertainty=UncertaintyPacket("HIGH", ("short prefix",), None),
@@ -137,6 +139,42 @@ def test_helper_packet_retains_support_contradiction_uncertainty_and_abstention(
     assert item.uncertainty.level == "HIGH"
     assert item.abstention.is_abstaining
     assert item.packet_hash
+
+
+def test_helper_citations_must_bind_supplied_tool_or_retrieval_receipts():
+    active = invocation()
+    common = {
+        "role": HelperRole.RECURRENCE,
+        "binding": binding(),
+        "invocation": active,
+        "supporting_observations": ("support",),
+        "contradictory_observations": ("contradiction",),
+        "uncertainty": UncertaintyPacket("HIGH", ("bounded",), None),
+        "abstention": AbstentionPacket(False, None),
+    }
+    with pytest.raises(RuntimeContractError, match="supplied tool or retrieval receipt"):
+        HelperEvidencePacket.create(
+            **common,
+            citations=(EvidenceCitation("retrieval:fabricated", H1, "invented"),),
+        )
+    with pytest.raises(RuntimeContractError, match="citation content hash"):
+        HelperEvidencePacket.create(
+            **common,
+            citations=(EvidenceCitation("retrieval:ret-1", H2, "wrong hash"),),
+        )
+
+
+def test_knowledge_excerpt_is_actual_content_bound_to_its_source_range():
+    excerpt = KnowledgeSourceExcerpt.create(
+        source_id="phase2-findings",
+        source_sha256=H4,
+        byte_start=7,
+        excerpt=" lawful base knowledge\n",
+    )
+    assert excerpt.excerpt == " lawful base knowledge\n"
+    assert excerpt.byte_end - excerpt.byte_start == len(excerpt.excerpt.encode("utf-8"))
+    assert excerpt.content_sha256 == hashlib.sha256(excerpt.excerpt.encode("utf-8")).hexdigest()
+    assert excerpt.validate() == excerpt
 
 
 def test_frankie_is_mechanically_the_only_synthesizer_probability_and_lock_owner():
