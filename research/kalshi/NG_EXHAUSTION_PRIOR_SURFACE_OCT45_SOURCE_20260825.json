@@ -1,0 +1,61 @@
+{
+  "schema": "ng_exhaustion.prior_surface_oct45_source.v1",
+  "run_id": "prior_surface_oct45_two_frankies_20260825",
+  "source_identity": {
+    "kind": "VALIDATED_PRIOR_CAUSAL_SECONDS",
+    "worker_path": "/mnt/markets/ng_exhaustion_step1_5y_20260822/0d318335825b4a0e19a5a2881522f3da0374788e/full/segments/20211001_20211101.seconds.jsonl.gz",
+    "segment": "20211001_20211101",
+    "bytes": 112852940,
+    "sha256": "93654eb5eaf24be6dc6821f422cdd7fc416e12778dcecd6c97150cbc34004f90",
+    "child_receipt_path": "/mnt/markets/ng_exhaustion_step1_5y_20260822/0d318335825b4a0e19a5a2881522f3da0374788e/full/segments/20211001_20211101.receipt.json",
+    "child_receipt_file_sha256": "80b6cf7199805cf40a0b16b139ee1aa8f705b884acf03856640df4054802f7ab",
+    "child_receipt_canonical_sha256": "4966dac8b25fee7acabf53f880a30155985bd5767ee222381f1188d4eecada3c",
+    "provider_visibility": "SEALED_ROOT_ONLY_IDENTITY"
+  },
+  "window": {
+    "start": "2021-10-04T00:00:00Z",
+    "end_exclusive": "2021-10-06T00:00:00Z",
+    "included_utc_dates": [
+      "2021-10-04",
+      "2021-10-05"
+    ]
+  },
+  "information_surface": {
+    "surface_label": "PRIOR_REDUCED_NON_FULL_MBO_SURFACE",
+    "may_be_described_as_full_mbo": false,
+    "mission_package": "SAME_NEUTRAL_FULL_MBO_SCIENTIFIC_MISSION_AND_COMPLETE_1940_46_CAPABILITY_VOCABULARY",
+    "raw_mbo_replayed": false,
+    "prior_seconds_rows_preserved": true,
+    "added_current_full_mbo_fields": false,
+    "missing_historical_semantics": "EXPLICIT_UNAVAILABLE_UNKNOWN_OR_DORMANT_NEVER_NUMERIC_ZERO"
+  },
+  "clock_policy": {
+    "raw_source_clocks": "AVAILABLE_WHERE_PRESENT_IN_VERIFIED_PRIOR_ROWS",
+    "step1_answer_clocks": "SEALED_NOT_PROVIDER_VISIBLE"
+  },
+  "blind_firewall": {
+    "provider_may_receive": [
+      "verified prior-surface rows within the exact half-open window",
+      "raw source, receive, and availability clocks already present in those rows",
+      "neutral capability, coverage, integrity, and missingness metadata"
+    ],
+    "provider_must_not_receive": [
+      "source worker or receipt paths",
+      "child receipt body",
+      "Step-1 result, receipt, tar, prefix, run, or workflow descriptors",
+      "Step-1 event counts, answer-relative clocks, fixed family or depth labels",
+      "Step-1 lineages, populations, crosswalks, reconciliations, or expected matches",
+      "current full-MBO Step-1 artifacts or answer-bearing clocks"
+    ]
+  },
+  "fail_closed": [
+    "source byte-length mismatch",
+    "source SHA-256 mismatch",
+    "child receipt file or canonical SHA-256 mismatch",
+    "malformed or nonmonotone source time",
+    "record outside the half-open target interval",
+    "schema drift or conflicting duplicate",
+    "answer-wall match in any provider-bound byte",
+    "silent field removal or unavailable-to-zero coercion"
+  ]
+}

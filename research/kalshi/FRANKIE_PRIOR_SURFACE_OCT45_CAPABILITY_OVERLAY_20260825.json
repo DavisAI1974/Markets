@@ -1,0 +1,183 @@
+{
+  "schema": "frankie.prior_surface_oct45_capability_overlay.v1",
+  "run_id": "prior_surface_oct45_two_frankies_20260825",
+  "evidence_surface_label": "PRIOR_REDUCED_NON_FULL_MBO_SURFACE",
+  "mission_capability_parity_does_not_imply_evidence_parity": true,
+  "canonical_profile": {
+    "path": "research/kalshi/FRANKIE_ROLE_CONTEXT_PROFILES_20260824.json",
+    "sha256": "27f1334b629c535660aeaf33e5752b8bcbfb588fc520952fd8aefdbb293de9f5",
+    "preserve_all_surface_ids": true,
+    "canonical_file_must_remain_byte_identical": true
+  },
+  "registry_contract": {
+    "authoritative_registry_source": "research/kalshi/data_registry.py",
+    "expected_exact_leaf_count": 1940,
+    "expected_exact_block_count": 46,
+    "runtime_materialization_required": true,
+    "leaf_items_key": "leaf_items",
+    "block_items_key": "block_items",
+    "zero_silent_omissions": true
+  },
+  "availability_semantics": {
+    "allowed_route_states": [
+      "DIRECT",
+      "TOOL_ACCESSIBLE",
+      "DORMANT"
+    ],
+    "allowed_availability_states": [
+      "AVAILABLE",
+      "PARTIAL",
+      "UNAVAILABLE",
+      "UNKNOWN",
+      "DORMANT"
+    ],
+    "missing_numeric_value": null,
+    "missing_is_never_zero": true,
+    "coverage_and_provenance_required": true
+  },
+  "default_leaf_policy": {
+    "state": "TOOL_ACCESSIBLE",
+    "availability": "UNKNOWN",
+    "coverage": null,
+    "provenance": "RUNTIME_MUST_BIND_EXACT_SOURCE_OR_EXPLICIT_ABSENCE",
+    "omission_reason": "REQUIRED_WHEN_AVAILABILITY_IS_NOT_AVAILABLE",
+    "drop_allowed": false
+  },
+  "role_surface_overrides": {
+    "REAL_TIME_FRANKIE": {
+      "full_raw_mbo_events": {
+        "state": "DORMANT",
+        "availability": "UNAVAILABLE",
+        "coverage": null,
+        "provenance": "PRIOR_AGGREGATED_SECONDS_SURFACE_RAW_MBO_NOT_REPLAYED",
+        "omission_reason": "NOT_PRESENT_IN_THIS_PRIOR_SURFACE"
+      },
+      "top20_book_and_fifo": {
+        "state": "DORMANT",
+        "availability": "UNAVAILABLE",
+        "coverage": null,
+        "provenance": "PRIOR_SURFACE_DID_NOT_PROVE_FULL_DEPTH_FIFO_OR_TOP20",
+        "omission_reason": "NOT_PRESENT_IN_THIS_PRIOR_SURFACE"
+      },
+      "historical_analogs_and_calibration": {
+        "state": "DORMANT",
+        "availability": "UNKNOWN",
+        "coverage": null,
+        "provenance": "NO_RUN_SPECIFIC_OCTOBER_2021_HISTORICAL_PAYLOAD_PROVEN",
+        "omission_reason": "NOT_PROVEN_FOR_THIS_RUN"
+      },
+      "step1_revealed_retrospective_evidence": {
+        "state": "DORMANT",
+        "availability": "DORMANT",
+        "coverage": null,
+        "provenance": "BLIND_ANSWER_WALL",
+        "omission_reason": "SEALED_UNTIL_SEPARATE_POST_FREEZE_COMPARISON"
+      },
+      "rt_on_demand_evidence_scout": {
+        "state": "TOOL_ACCESSIBLE",
+        "availability": "AVAILABLE",
+        "coverage": "EXACT_VERIFIED_PRIOR_SURFACE_WINDOW_WITH_CURSOR_PAGINATION",
+        "provenance": "RUN_LOCAL_DETERMINISTIC_SCOUT_NO_PROVIDER_AUTHORITY",
+        "omission_reason": null
+      },
+      "frozen_rt_state": {
+        "state": "DORMANT",
+        "availability": "DORMANT",
+        "coverage": null,
+        "provenance": "CREATED_ONLY_AFTER_VALID_RT_FIRST_LOCK",
+        "omission_reason": "NOT_YET_CREATED_AT_RT_INPUT_TIME"
+      }
+    },
+    "FORECASTER_FRANKIE": {
+      "frozen_rt_state": {
+        "state": "DIRECT",
+        "availability": "AVAILABLE",
+        "coverage": "EXACT_CANONICAL_RT_FROZEN_STATE_BYTES",
+        "provenance": "RT_FIRST_LOCK_SHA256_BOUND_ONE_WAY_HANDOFF",
+        "omission_reason": null
+      },
+      "full_raw_mbo_events": {
+        "state": "DORMANT",
+        "availability": "UNAVAILABLE",
+        "coverage": null,
+        "provenance": "PRIOR_AGGREGATED_SECONDS_SURFACE_RAW_MBO_NOT_REPLAYED",
+        "omission_reason": "NOT_PRESENT_IN_THIS_PRIOR_SURFACE"
+      },
+      "top20_book_and_fifo": {
+        "state": "DORMANT",
+        "availability": "UNAVAILABLE",
+        "coverage": null,
+        "provenance": "PRIOR_SURFACE_DID_NOT_PROVE_FULL_DEPTH_FIFO_OR_TOP20",
+        "omission_reason": "NOT_PRESENT_IN_THIS_PRIOR_SURFACE"
+      },
+      "historical_analogs_and_calibration": {
+        "state": "DORMANT",
+        "availability": "UNKNOWN",
+        "coverage": null,
+        "provenance": "NO_RUN_SPECIFIC_OCTOBER_2021_HISTORICAL_PAYLOAD_PROVEN",
+        "omission_reason": "NOT_PROVEN_FOR_THIS_RUN"
+      },
+      "step1_revealed_retrospective_evidence": {
+        "state": "DORMANT",
+        "availability": "DORMANT",
+        "coverage": null,
+        "provenance": "BLIND_ANSWER_WALL",
+        "omission_reason": "SEALED_UNTIL_SEPARATE_POST_FREEZE_COMPARISON"
+      },
+      "rt_on_demand_evidence_scout": {
+        "state": "DORMANT",
+        "availability": "DORMANT",
+        "coverage": null,
+        "provenance": "RT_ONLY_OPTIONAL_TOOL",
+        "omission_reason": "FORECASTER_HAS_NO_SCOUT_OR_SPECIALIST_ROUTE"
+      }
+    }
+  },
+  "open_world_taxonomy": {
+    "existing_categories_are_reference_only": true,
+    "exact_match_allowed_when_independently_supported": true,
+    "exact_match_expected_or_gated": false,
+    "novel_category_id_required": true,
+    "nearest_old_coercion_allowed": false,
+    "count_or_depth_cap_allowed": false,
+    "split_reorder_or_new_severity_rejection_allowed": false
+  },
+  "collaboration_contract": {
+    "logical_role_order": [
+      "REAL_TIME_FRANKIE",
+      "FORECASTER_FRANKIE"
+    ],
+    "rt_first_lock_exclusive_create": true,
+    "forecaster_consumes_exact_frozen_rt_sha256": true,
+    "forecaster_may_modify_rt_state": false,
+    "auto_specialist_calls": false,
+    "rt_optional_scout_auto_called": false,
+    "specialist_model_call_count": 0
+  },
+  "mandatory_runtime_receipt": {
+    "leaf_items_required_fields": [
+      "item_id",
+      "path",
+      "block",
+      "state",
+      "availability",
+      "coverage",
+      "provenance",
+      "omission_reason"
+    ],
+    "block_items_required_fields": [
+      "block_id",
+      "leaf_count",
+      "state",
+      "availability",
+      "coverage",
+      "provenance",
+      "omission_reason"
+    ],
+    "surface_items_required_count": 24,
+    "duplicate_leaf_count": 0,
+    "unregistered_leaf_count": 0,
+    "silently_omitted_leaf_count": 0,
+    "installed_executable_tools_reconciled": true
+  }
+}

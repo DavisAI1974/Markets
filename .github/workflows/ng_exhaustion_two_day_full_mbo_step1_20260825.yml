@@ -1,11 +1,17 @@
 name: NG Exhaustion Two-Day Full-MBO Step-1 20260825
 
 on:
-  push:
-    branches:
-      - chatgpt/frankie-october-aws-readonly-20260824
-    paths:
-      - .github/workflows/ng_exhaustion_two_day_full_mbo_step1_20260825.yml
+  workflow_dispatch:
+    inputs:
+      confirm_direct_rerun:
+        description: Type true only after Greg approves the corrected direct rerun
+        required: true
+        type: boolean
+        default: false
+      expected_commit:
+        description: Exact branch commit approved for this rerun
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -16,6 +22,7 @@ concurrency:
 
 jobs:
   run-full-mbo-step1:
+    if: ${{ inputs.confirm_direct_rerun && inputs.expected_commit == github.sha }}
     runs-on: ubuntu-latest
     timeout-minutes: 300
     env:
@@ -166,7 +173,10 @@ jobs:
           echo TWO_DAY_FULL_MBO_RESULTS_TAR_SHA256=$(sha256sum "$run_root/results.tar.gz" | cut -d' ' -f1)
           '''
           with open('/tmp/full-mbo-params.json','w') as f:
-              json.dump({'commands':['/bin/bash -lc '+shlex.quote(remote)]},f)
+              json.dump({
+                  'commands':['/bin/bash -lc '+shlex.quote(remote)],
+                  'executionTimeout':['18000'],
+              },f)
           PY
 
           command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" \
