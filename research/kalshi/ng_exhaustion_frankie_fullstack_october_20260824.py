@@ -104,6 +104,10 @@ _BASE_CONTEXT_PATHS = (
     "research/NG_EXHAUSTION_V4_INTERPRETATION_CORRECTION_20260820.md",
     "research/NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md",
 )
+_D1_EXTRATREES_PATH = (
+    "research/generated/ng_exhaustion_entry_timing_revival_20260819/"
+    "d1_d5_predictability_agents/NG_EXHAUSTION_D1_D5_PREDICTABILITY_ALL_AGENT_RESULTS_20260819.json"
+)
 
 
 class FullStackOctoberError(RuntimeError):
@@ -339,6 +343,95 @@ def production_provisional_components(plane: KnowledgePlane) -> tuple[Provisiona
         )
         for item in sorted(entries, key=lambda row: row.path)
     )
+
+
+def _verify_denied(plane: KnowledgePlane, context: Any, path: str, reason: str) -> bool:
+    try:
+        plane.read(context, path)
+    except KnowledgeAccessDenied as exc:
+        return reason in str(exc)
+    except KeyError:
+        # A repository artifact outside the servable catalog is denied by
+        # construction; the existence check for the known D1 artifact is
+        # performed separately below.
+        return True
+    return False
+
+
+def _knowledge_preflight(
+    *,
+    plane: KnowledgePlane,
+    specs: Sequence[Any],
+    repo_root: Path,
+    output_root: Path,
+    run_id: str,
+    sink: LaunchJsonEventSink,
+) -> dict[str, Any]:
+    state_hash = _stable_hash({"run_id": run_id, "phase": "PREFLIGHT"})
+    primary = plane.context(run_id=run_id, state_hash=state_hash, lane=RetrievalLane.PRIMARY)
+    sealed_paths = tuple(
+        spec.path for spec in specs if spec.authority is AuthorityClass.SEALED_TARGET_ANSWER
+    )
+    if not sealed_paths or not all(
+        _verify_denied(plane, primary, path, "ANSWER_WALL_PRE_FREEZE")
+        for path in sealed_paths
+    ):
+        raise FullStackOctoberError("October Step-1 answer wall preflight failed")
+
+    ordinary_v3 = tuple(
+        spec.path
+        for spec in specs
+        if "v3" in spec.path.lower() and "extra_agent" not in Path(spec.path).name.lower()
+    )
+    if not ordinary_v3 or not all(
+        _verify_denied(plane, primary, path, "FORBIDDEN_V3_D1_EXTRATREES")
+        for path in ordinary_v3
+    ):
+        raise FullStackOctoberError("ordinary V3 denial preflight failed")
+
+    d1_path = repo_root / _D1_EXTRATREES_PATH
+    if not d1_path.is_file():
+        raise FullStackOctoberError("known D1 ExtraTrees artifact is absent from repository preflight")
+    if not _verify_denied(
+        plane, primary, _D1_EXTRATREES_PATH, "FORBIDDEN_V3_D1_EXTRATREES"
+    ):
+        raise FullStackOctoberError("D1 ExtraTrees denial preflight failed")
+
+    core = {
+        "schema": "FRANKIE_FULLSTACK_OCTOBER_PREFLIGHT_V1",
+        "run_id": run_id,
+        "knowledge_manifest_hash": plane.manifest_hash,
+        "step1_sealed": True,
+        "answer_revealed": False,
+        "sealed_source_count": len(sealed_paths),
+        "ordinary_v3_denied": True,
+        "ordinary_v3_source_count": len(ordinary_v3),
+        "d1_extratrees_denied": True,
+    }
+    receipt = {**core, "receipt_hash": _stable_hash(core)}
+    _write_json_exclusive(output_root / "PREFLIGHT.json", receipt)
+    sink.emit_launch(
+        "KNOWLEDGE_MANIFEST_READY",
+        knowledge_manifest_hash=plane.manifest_hash,
+        source_count=len(specs),
+        brain_version="s105.9",
+        complete_plays=90,
+        receipt_hash=receipt["receipt_hash"],
+    )
+    sink.emit_launch(
+        "ANSWER_WALL_PREFREEZE_VERIFIED",
+        step1_sealed=True,
+        answer_revealed=False,
+        sealed_source_count=len(sealed_paths),
+        receipt_hash=receipt["receipt_hash"],
+    )
+    sink.emit_launch(
+        "FORBIDDEN_V3_DENIED",
+        ordinary_v3_denied=True,
+        d1_extratrees_denied=True,
+        receipt_hash=receipt["receipt_hash"],
+    )
+    return receipt
 
 
 def _binding(row: ContinuousCausalSecond, knowledge_manifest_hash: str) -> CausalPrefixBinding:
@@ -607,49 +700,22 @@ def run_full_october(config: FullStackOctoberConfig) -> dict[str, Any]:
     cfg.output_root.mkdir(parents=True, exist_ok=True)
     repo_root = Path(__file__).resolve().parents[2]
 
+    specs = production_source_specs(repo_root)
     plane = KnowledgePlane.build(
         repo_root,
-        production_source_specs(repo_root),
+        specs,
         contract=october_full_stack_completeness_contract(),
         manifest_version=f"frankie-october-paired:{os.environ.get('SOURCE_COMMIT', 'UNSET')}",
     )
     router = FrankieLaneAwareContextRouter(plane, production_provisional_components(plane))
-    launch.emit_launch(
-        "KNOWLEDGE_MANIFEST_READY",
-        knowledge_manifest_hash=plane.manifest_hash,
-        source_count=len(production_source_specs(repo_root)),
-        brain_version="s105.9",
-        complete_plays=90,
+    _knowledge_preflight(
+        plane=plane,
+        specs=specs,
+        repo_root=repo_root,
+        output_root=cfg.output_root,
+        run_id=cfg.run_id,
+        sink=launch,
     )
-
-    probe = router.build_routes(run_id=cfg.run_id, state_prefix_hash="0" * 64)
-    sealed_paths = [
-        item.path for item in production_source_specs(repo_root)
-        if item.authority is AuthorityClass.SEALED_TARGET_ANSWER
-    ]
-    wall_denied = 0
-    for path in sealed_paths:
-        try:
-            router.read_source(probe, ContextVariant.S135_CONTROL, path)
-        except KnowledgeAccessDenied:
-            wall_denied += 1
-    if wall_denied != len(sealed_paths) or not sealed_paths:
-        raise FullStackOctoberError("October Step-1 wall failed closed pre-freeze")
-    launch.emit_launch("ANSWER_WALL_PREFREEZE_VERIFIED", step1_sealed=True, answer_revealed=False)
-
-    primary_context = plane.context(run_id=cfg.run_id, state_hash="0" * 64)
-    denied = 0
-    for path in (
-        "research/kalshi/ng_exhaustion_october_frankie_v4_bridge_20260824.py",
-        "research/kalshi/frankie_bounded_3mo_parallel.py",
-    ):
-        try:
-            plane.read(primary_context, path)
-        except KnowledgeAccessDenied:
-            denied += 1
-    if denied != 2:
-        raise FullStackOctoberError("forbidden V3/transport surfaces were not denied")
-    launch.emit_launch("FORBIDDEN_V3_DENIED", ordinary_v3_denied=True, d1_extratrees_denied=True)
 
     causal_ledger = DurableJsonlLedger.create(cfg.output_root / "causal-state.jsonl", run_id=cfg.run_id)
     control_ledger = DurableJsonlLedger.create(cfg.output_root / "s135-control.jsonl", run_id=cfg.run_id)
