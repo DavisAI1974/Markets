@@ -1,5 +1,5 @@
 {
-  "schema": "frankie.prior_surface_oct45_capability_overlay.v1",
+  "schema": "frankie.prior_surface_oct45_capability_overlay.v2_workmode",
   "run_id": "prior_surface_oct45_two_frankies_20260825",
   "evidence_surface_label": "PRIOR_REDUCED_NON_FULL_MBO_SURFACE",
   "mission_capability_parity_does_not_imply_evidence_parity": true,
@@ -89,6 +89,69 @@
       }
     },
     "FORECASTER_FRANKIE": {
+      "candidate_contradiction_memory": {
+        "state": "DIRECT",
+        "availability": "UNKNOWN",
+        "coverage": null,
+        "provenance": "DIRECT_CAPABILITY_VOCABULARY_VALUE_AVAILABILITY_SEPARATELY_PROVEN",
+        "omission_reason": "RUN_SPECIFIC_VALUE_NOT_PROVEN_WHERE_UNKNOWN"
+      },
+      "causal_history_all_scales": {
+        "state": "DIRECT",
+        "availability": "UNKNOWN",
+        "coverage": null,
+        "provenance": "DIRECT_CAPABILITY_VOCABULARY_VALUE_AVAILABILITY_SEPARATELY_PROVEN",
+        "omission_reason": "RUN_SPECIFIC_VALUE_NOT_PROVEN_WHERE_UNKNOWN"
+      },
+      "current_brain_and_learned_knowledge": {
+        "state": "DIRECT",
+        "availability": "UNKNOWN",
+        "coverage": null,
+        "provenance": "DIRECT_CAPABILITY_VOCABULARY_VALUE_AVAILABILITY_SEPARATELY_PROVEN",
+        "omission_reason": "RUN_SPECIFIC_VALUE_NOT_PROVEN_WHERE_UNKNOWN"
+      },
+      "current_causal_operating_state": {
+        "state": "DIRECT",
+        "availability": "AVAILABLE",
+        "coverage": "EXACT_FROZEN_RT_STATE_AFTER_ONE_WAY_HANDOFF",
+        "provenance": "RT_FIRST_LOCK_SHA256_BOUND_ONE_WAY_HANDOFF",
+        "omission_reason": null
+      },
+      "day_specific_forecast_context": {
+        "state": "DIRECT",
+        "availability": "AVAILABLE",
+        "coverage": "EXACT_TWO_DAY_REDUCED_SURFACE_CONTEXT",
+        "provenance": "DETERMINISTIC_WORK_PACKET",
+        "omission_reason": null
+      },
+      "forecast_scenarios_and_disconfirmers": {
+        "state": "DIRECT",
+        "availability": "AVAILABLE",
+        "coverage": "FORECASTER_OUTPUT_AUTHORITY",
+        "provenance": "FORECASTER_ROLE_MISSION",
+        "omission_reason": null
+      },
+      "full_bigsuite": {
+        "state": "DIRECT",
+        "availability": "UNKNOWN",
+        "coverage": null,
+        "provenance": "COMPLETE_1940_LEAF_VOCABULARY_DIRECT_VALUE_AVAILABILITY_SEPARATELY_PROVEN",
+        "omission_reason": "RUN_SPECIFIC_VALUE_NOT_PROVEN_WHERE_UNKNOWN"
+      },
+      "full_source_catalog_and_availability": {
+        "state": "DIRECT",
+        "availability": "AVAILABLE",
+        "coverage": "HASH_BOUND_SOURCE_AND_PACKET_MANIFEST",
+        "provenance": "DETERMINISTIC_WORK_PACKET",
+        "omission_reason": null
+      },
+      "fundamentals_and_storage": {
+        "state": "DIRECT",
+        "availability": "UNKNOWN",
+        "coverage": null,
+        "provenance": "DIRECT_CAPABILITY_VOCABULARY_VALUE_AVAILABILITY_SEPARATELY_PROVEN",
+        "omission_reason": "RUN_SPECIFIC_VALUE_NOT_PROVEN_WHERE_UNKNOWN"
+      },
       "frozen_rt_state": {
         "state": "DIRECT",
         "availability": "AVAILABLE",
@@ -97,39 +160,102 @@
         "omission_reason": null
       },
       "full_raw_mbo_events": {
-        "state": "DORMANT",
+        "state": "DIRECT",
         "availability": "UNAVAILABLE",
         "coverage": null,
         "provenance": "PRIOR_AGGREGATED_SECONDS_SURFACE_RAW_MBO_NOT_REPLAYED",
         "omission_reason": "NOT_PRESENT_IN_THIS_PRIOR_SURFACE"
       },
       "top20_book_and_fifo": {
-        "state": "DORMANT",
+        "state": "DIRECT",
         "availability": "UNAVAILABLE",
         "coverage": null,
         "provenance": "PRIOR_SURFACE_DID_NOT_PROVE_FULL_DEPTH_FIFO_OR_TOP20",
         "omission_reason": "NOT_PRESENT_IN_THIS_PRIOR_SURFACE"
       },
       "historical_analogs_and_calibration": {
-        "state": "DORMANT",
+        "state": "DIRECT",
         "availability": "UNKNOWN",
         "coverage": null,
         "provenance": "NO_RUN_SPECIFIC_OCTOBER_2021_HISTORICAL_PAYLOAD_PROVEN",
         "omission_reason": "NOT_PROVEN_FOR_THIS_RUN"
       },
+      "market_mechanics_state": {
+        "state": "DIRECT",
+        "availability": "PARTIAL",
+        "coverage": "PRIOR_AGGREGATED_SECONDS_FIELDS_ONLY",
+        "provenance": "EXACT_REDUCED_SURFACE_ROWS",
+        "omission_reason": "FULL_RAW_ORDER_LIFECYCLE_UNAVAILABLE"
+      },
+      "power_stack_and_generation": {
+        "state": "DIRECT",
+        "availability": "UNKNOWN",
+        "coverage": null,
+        "provenance": "DIRECT_CAPABILITY_VOCABULARY_VALUE_AVAILABILITY_SEPARATELY_PROVEN",
+        "omission_reason": "RUN_SPECIFIC_VALUE_NOT_PROVEN_WHERE_UNKNOWN"
+      },
+      "provisional_capabilities": {
+        "state": "DIRECT",
+        "availability": "UNKNOWN",
+        "coverage": null,
+        "provenance": "DIRECT_CAPABILITY_VOCABULARY_VALUE_AVAILABILITY_SEPARATELY_PROVEN",
+        "omission_reason": "RUN_SPECIFIC_VALUE_NOT_PROVEN_WHERE_UNKNOWN"
+      },
       "step1_revealed_retrospective_evidence": {
-        "state": "DORMANT",
-        "availability": "DORMANT",
+        "state": "DIRECT",
+        "availability": "UNAVAILABLE",
         "coverage": null,
         "provenance": "BLIND_ANSWER_WALL",
-        "omission_reason": "SEALED_UNTIL_SEPARATE_POST_FREEZE_COMPARISON"
+        "omission_reason": "SEALED_NOT_AVAILABLE_TO_FORECASTER"
       },
       "rt_on_demand_evidence_scout": {
-        "state": "DORMANT",
-        "availability": "DORMANT",
+        "state": "DIRECT",
+        "availability": "UNAVAILABLE",
         "coverage": null,
-        "provenance": "RT_ONLY_OPTIONAL_TOOL",
-        "omission_reason": "FORECASTER_HAS_NO_SCOUT_OR_SPECIALIST_ROUTE"
+        "provenance": "FORECASTER_HAS_NO_SCOUT_OR_SPECIALIST_ROUTE",
+        "omission_reason": "NO_TOOL_ROUTE_FOR_FORECASTER"
+      },
+      "selected_exemplars_falsifiers_negatives": {
+        "state": "DIRECT",
+        "availability": "UNKNOWN",
+        "coverage": null,
+        "provenance": "DIRECT_CAPABILITY_VOCABULARY_VALUE_AVAILABILITY_SEPARATELY_PROVEN",
+        "omission_reason": "RUN_SPECIFIC_VALUE_NOT_PROVEN_WHERE_UNKNOWN"
+      },
+      "source_integrity_and_clocks": {
+        "state": "DIRECT",
+        "availability": "AVAILABLE",
+        "coverage": "EXACT_SOURCE_EVENT_RECEIVE_AND_PACKET_CLOCK_RECEIPTS",
+        "provenance": "DETERMINISTIC_WORK_PACKET",
+        "omission_reason": null
+      },
+      "step1_structural_census_methodology": {
+        "state": "DIRECT",
+        "availability": "AVAILABLE",
+        "coverage": "METHOD_ONLY_ANSWER_KEY_SEALED",
+        "provenance": "HASH_BOUND_STATIC_METHODOLOGY",
+        "omission_reason": null
+      },
+      "structure_lifecycle": {
+        "state": "DIRECT",
+        "availability": "UNKNOWN",
+        "coverage": null,
+        "provenance": "DIRECT_CAPABILITY_VOCABULARY_VALUE_AVAILABILITY_SEPARATELY_PROVEN",
+        "omission_reason": "RUN_SPECIFIC_VALUE_NOT_PROVEN_WHERE_UNKNOWN"
+      },
+      "synchronized_curve_and_roll": {
+        "state": "DIRECT",
+        "availability": "UNKNOWN",
+        "coverage": null,
+        "provenance": "DIRECT_CAPABILITY_VOCABULARY_VALUE_AVAILABILITY_SEPARATELY_PROVEN",
+        "omission_reason": "RUN_SPECIFIC_VALUE_NOT_PROVEN_WHERE_UNKNOWN"
+      },
+      "weather_forward_forcing": {
+        "state": "DIRECT",
+        "availability": "UNKNOWN",
+        "coverage": null,
+        "provenance": "DIRECT_CAPABILITY_VOCABULARY_VALUE_AVAILABILITY_SEPARATELY_PROVEN",
+        "omission_reason": "RUN_SPECIFIC_VALUE_NOT_PROVEN_WHERE_UNKNOWN"
       }
     }
   },

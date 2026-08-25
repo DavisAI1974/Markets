@@ -1,154 +1,169 @@
 {
-  "schema": "ng_exhaustion.prior_surface_oct45_two_frankies_launch.v1",
-  "run_id": "prior_surface_oct45_two_frankies_20260825",
+  "schema": "ng_exhaustion.prior_surface_oct45_two_frankies_workmode_launch.v2",
+  "run_id": "prior_surface_oct45_two_frankies_workmode_20260825",
   "evidence_surface_label": "PRIOR_REDUCED_NON_FULL_MBO_SURFACE",
   "may_be_described_as_full_mbo": false,
+  "window": {
+    "start": "2021-10-04T00:00:00Z",
+    "end_exclusive": "2021-10-06T00:00:00Z"
+  },
+  "source": {
+    "bytes": 112852940,
+    "sha256": "93654eb5eaf24be6dc6821f422cdd7fc416e12778dcecd6c97150cbc34004f90"
+  },
   "launch_authorized": false,
   "authorization": {
     "authorized_by": null,
     "authorized_at": null,
-    "exact_commit": null,
-    "approval_scope": "DIRECT_NO_CANARY_TWO_LOGICAL_ROLE_CALLS_ONLY"
+    "exact_implementation_commit": null,
+    "approval_scope": "KEYLESS_EXACT_TWO_DAY_TWO_PRINCIPAL_ROLES_OPTIONAL_ONE_FORECASTER_HELPER_NO_CANARY_NO_TESTS"
   },
   "model": {
-    "requested": "gpt-5.6-sol",
-    "resolved_must_equal_requested": true,
-    "store": false
+    "principal_roles": "gpt-5.6-sol",
+    "optional_forecaster_helper": "gpt-5.6-sol",
+    "fallback": null,
+    "repair": null
   },
-  "logical_call_contract": {
-    "role_order": [
+  "call_contract": {
+    "principal_role_order": [
       "REAL_TIME_FRANKIE",
       "FORECASTER_FRANKIE"
     ],
-    "logical_role_calls": 2,
-    "specialist_model_calls": 0,
-    "rt_optional_local_scout_auto_called": false,
-    "rt_max_tool_continuation_rounds": 12,
-    "maximum_responses_api_requests": 14,
-    "invalid_response_repair_calls": 0
+    "principal_role_calls": 2,
+    "total_model_calls_maximum": 3,
+    "automatic_helper_calls": 0,
+    "optional_forecaster_helper_maximum_calls": 1,
+    "specialist_calls": 0,
+    "fallback_calls": 0,
+    "repair_calls": 0,
+    "rt_deterministic_local_scout_auto_called": false
   },
   "token_caps": {
+    "estimator_tokens_per_byte": 0.285,
     "rt_direct_input": 48000,
-    "rt_cumulative_billable_input": 96000,
-    "rt_output": 12000,
-    "forecaster_input": 150000,
-    "forecaster_output": 12000,
-    "combined_conservative_input": 246000,
-    "combined_conservative_output": 24000
+    "rt_cumulative_input": 96000,
+    "rt_cumulative_accepted_output": 12000,
+    "forecaster_principal_input": 150000,
+    "forecaster_accepted_output": 12000,
+    "optional_forecaster_helper_input": 48000,
+    "optional_forecaster_helper_output": 6000
   },
-  "pricing": {
-    "currency": "USD",
-    "unit": "PER_MILLION_TOKENS",
-    "input_usd_per_million": 4.0,
-    "cached_input_usd_per_million": 0.4,
-    "output_usd_per_million": 20.0,
-    "pricing_source": "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
-    "pricing_as_of": "2026-08-25",
-    "conservative_max_cost_usd": 1.464,
-    "max_budget_usd": 1.5,
-    "local_scout_fee_usd": 0,
-    "missing_price_or_budget_stops_launch": true
+  "provider_api_called": false,
+  "openai_key_used": false,
+  "cli_model_called": false,
+  "provider_cost_budget": "NOT_APPLICABLE_CHATGPT_WORK_EXECUTION",
+  "canary": false,
+  "tests": false,
+  "capability_contract": {
+    "leaf_count": 1940,
+    "block_count": 46,
+    "surface_count": 24,
+    "forecaster_all_registry_routes_direct": true,
+    "forecaster_dormant_count": 0,
+    "rt_role_specific_dormancy_preserved": true,
+    "zero_silent_omissions": true,
+    "registry_identity_is_not_value_availability": true
   },
-  "build_control": {
-    "path": "research/kalshi/NG_EXHAUSTION_PRIOR_SURFACE_OCT45_TWO_FRANKIES_BUILD_CONTROL_20260825.md",
-    "sha256": "8858cd37bc6f624a0b7b92ac8e2d060eb9a0d7ac79e0d07ef3ac1d2e908825c7"
+  "knowledge_contract": {
+    "all_serve_and_shadow_sources_emitted_byte_for_byte": true,
+    "complete_lawful_bundle_preserved_and_addressable": true,
+    "all_bundle_bytes_claimed_inside_principal_context": false,
+    "consulted_and_uninspected_sources_reconciled": true,
+    "governing_inventory_builder_sha256": "e6b01aea9064ef1369eb36a872d5b43a70540c0c7720679ec0eed671482da7f1",
+    "governing_inventory_map_sha256": "1603a4bc329c6aabd9f62ee76c755651c1059a609c7cf8a52d21217a78cce24e",
+    "shadow_sources_nonbinding": true,
+    "denied_or_sealed_source_content_read_by_packet_builder": false,
+    "step1_answer_content_present": false,
+    "forecaster_inventory_and_authority_ingestion_required": true,
+    "complete_frozen_rt_output_injected": true
   },
-  "source_config": {
-    "path": "research/kalshi/NG_EXHAUSTION_PRIOR_SURFACE_OCT45_SOURCE_20260825.json",
-    "sha256": "7c819aee4f4068be9f13208e7a4dea3b97087e144f05d793d6473da0b2b4eca4",
-    "window_start": "2021-10-04T00:00:00Z",
-    "window_end_exclusive": "2021-10-06T00:00:00Z"
-  },
-  "capability_overlay": {
-    "path": "research/kalshi/FRANKIE_PRIOR_SURFACE_OCT45_CAPABILITY_OVERLAY_20260825.json",
-    "sha256": "56b8242d41315f9618fa42553b04fac43a3dae256b4e9ad7029fb70f4bb22b81",
-    "expected_exact_leaf_count": 1940,
-    "expected_exact_block_count": 46,
-    "expected_surface_count": 24,
-    "zero_silent_omissions": true
-  },
-  "mission_files": {
-    "REAL_TIME_FRANKIE": {
+  "study_design": "ANSWER_KEY_BLIND_RETROSPECTIVE_DISCOVERY_NOT_BLIND_OOS_VALIDATION",
+  "transient_one_shot_workflow_sha256": null,
+  "files": {
+    "build_control": {
+      "path": "research/kalshi/NG_EXHAUSTION_PRIOR_SURFACE_OCT45_TWO_FRANKIES_BUILD_CONTROL_20260825.md",
+      "sha256": "9add37367d53251ea93b683db060fc38ed59bbb5b85e198ded309e32d6fbb80e"
+    },
+    "source_config": {
+      "path": "research/kalshi/NG_EXHAUSTION_PRIOR_SURFACE_OCT45_SOURCE_20260825.json",
+      "sha256": "7c819aee4f4068be9f13208e7a4dea3b97087e144f05d793d6473da0b2b4eca4"
+    },
+    "capability_overlay": {
+      "path": "research/kalshi/FRANKIE_PRIOR_SURFACE_OCT45_CAPABILITY_OVERLAY_20260825.json",
+      "sha256": "04e16ccd19061e6674a6a05c55c4df2b812c19dd37bd806f5296fe7313ae8f04"
+    },
+    "rt_mission": {
       "path": "research/kalshi/agents/frankie_prior_surface_oct45_realtime_20260825.md",
-      "sha256": "c1df14c78cac2e3cf62b05068182dbcb817d01544115eb96e7b6157396308a7a",
-      "read_byte_for_byte": true,
-      "summary_or_rewrite_allowed": false
+      "sha256": "442cc84c524feb6306224a6ba7e6984a21605c7a515c651b52c77bc279e2b2ef"
     },
-    "FORECASTER_FRANKIE": {
+    "forecaster_mission": {
       "path": "research/kalshi/agents/frankie_prior_surface_oct45_forecaster_20260825.md",
-      "sha256": "fc7827ac17a3207fa433e4087754d59dc532f7da871e2b7e8e7e473bcceb83c1",
-      "read_byte_for_byte": true,
-      "summary_or_rewrite_allowed": false
-    }
-  },
-  "executable_package": {
-    "wrapper": {
+      "sha256": "50beee01276d4f7497059129e2c1b538603b0f0c3ca7026938f36b450519fb33"
+    },
+    "packet_builder": {
+      "path": "research/kalshi/ng_exhaustion_two_frankies_workmode_packet_2day_20260825.py",
+      "sha256": "255603c743b8ab9b4dc860a89ba29498fce26ff394cab09aa4b280aa9dc091c8"
+    },
+    "coordinator": {
+      "path": "research/kalshi/ng_exhaustion_two_frankies_workmode_coordinate_2day_20260825.py",
+      "sha256": "2c7cf46f7cdaf5784be2eaf02d941efef8ed4f0762a49933d4dad3774a9767b5"
+    },
+    "manual_only_workflow": {
+      "path": ".github/workflows/ng_exhaustion_two_frankies_prior_surface_blind_2day_20260825.yml",
+      "sha256": "ce1b371023caee77ab422ef616820536c1f52eca369f553c20a7033142401026"
+    },
+    "knowledge_inventory_builder": {
+      "path": "research/kalshi/frankie_october_knowledge_inventory_20260824.py",
+      "sha256": "e6b01aea9064ef1369eb36a872d5b43a70540c0c7720679ec0eed671482da7f1"
+    },
+    "knowledge_inventory_map": {
+      "path": "research/kalshi/NG_EXHAUSTION_FRANKIE_SOURCE_FILE_INVENTORY_20260824.md",
+      "sha256": "1603a4bc329c6aabd9f62ee76c755651c1059a609c7cf8a52d21217a78cce24e"
+    },
+    "prior_provider_wrapper_preserved": {
       "path": "research/kalshi/ng_exhaustion_two_frankies_prior_surface_blind_2day_20260825.py",
-      "sha256": "e8b376d2adecab5979af31f7f684517132411b6eae24a0c157c903059a2ad79b"
-    },
-    "runtime_lock": {
-      "path": "deploy/aws/requirements-frankie-fullstack-20260824.lock",
-      "sha256": "d995333174aa129bc4b9a86a98f10d0c82c45c1fe4d1a40b29c0dbdff6a41de9"
+      "sha256": "e8b376d2adecab5979af31f7f684517132411b6eae24a0c157c903059a2ad79b",
+      "invoked": false
     }
   },
-  "workflow": {
-    "path": ".github/workflows/ng_exhaustion_two_frankies_prior_surface_blind_2day_20260825.yml",
-    "sha256": "fef4f6ac2734001d95a7e35f7f13a8609cc431cfddd4f5f92eb4a2fe18924e7e",
-    "trigger": "workflow_dispatch",
-    "canary": false,
-    "expected_commit_dispatch_gate": true
-  },
-  "output_prefixes": {
-    "worker_root": "/mnt/markets/frankie_prior_surface_oct45_blind_20260825/<run_id>-<attempt>",
-    "s3_prefix": "nymex/ng_mbo_5y_v0/frankie/prior_surface_oct45_blind/runs/<run_id>-<attempt>/",
-    "complete_published_last": true
-  },
-  "canonical_immutability": {
-    "protected_production_commit": "a7611133f64064200de48cd2e7839fcea2510d51",
-    "files": {
-      "research/kalshi/FRANKIE_ROLE_CONTEXT_PROFILES_20260824.json": "27f1334b629c535660aeaf33e5752b8bcbfb588fc520952fd8aefdbb293de9f5",
-      "research/kalshi/frankie_role_context_profiles_20260824.py": "c972bda636abaa4315b727ecd9f7f7eadf862c2e50b3518f99995ab6688108ce",
-      "research/kalshi/frankie_full_stack_runtime_adapter_20260824.py": "2879c6547ae8ae03032f751b48ff1b035fb99aa30bb7579d67e3ec70483ccc8a"
-    },
-    "all_canonical_files_must_remain_byte_identical": true
-  },
-  "blind_firewall": {
-    "step1_answers_and_descriptors_sealed": true,
-    "raw_source_clocks_allowed": true,
-    "step1_answer_clocks_sealed": true,
-    "exact_match_allowed_but_not_expected_or_gated": true,
-    "open_world_categories_required": true,
-    "missing_historical_data_never_zero": true
-  },
-  "required_receipts": [
+  "required_packet_artifacts": [
     "PREFLIGHT.json",
     "SOURCE_VERIFY.json",
     "SLICE_MANIFEST.json",
     "ANSWER_WALL.json",
     "CAPABILITY_RECONCILIATION.json",
+    "RT_WORK_PACKET.json",
+    "RT_CAPABILITIES.json",
+    "RT_SCOUT_ROWS.jsonl.gz",
+    "FORECASTER_LAWFUL_KNOWLEDGE.jsonl.gz",
+    "FORECASTER_LAWFUL_KNOWLEDGE_MANIFEST.json",
+    "FORECASTER_BASE_WORK_PACKET.json",
+    "WORK_PACKET_MANIFEST.json",
+    "PACKET_COMPLETE.json"
+  ],
+  "required_run_artifacts": [
+    "RT_OUTPUT.json",
     "RT_CONTEXT_MANIFEST.json",
-    "RT_PROVIDER_RECEIPT.json",
+    "RT_AGENT_RECEIPT.json",
     "RT_FIRST_LOCK.json",
     "RT_FROZEN_STATE.json",
     "ONEWAY_HANDOFF.json",
+    "FORECASTER_WORK_PACKET.json",
+    "RT_FREEZE_COMPLETE.json",
+    "RT_FREEZE_EXTERNAL_ANCHOR.json",
+    "FORECASTER_OUTPUT.json",
     "FORECASTER_CONTEXT_MANIFEST.json",
-    "FORECASTER_PROVIDER_RECEIPT.json",
+    "FORECASTER_AGENT_RECEIPT.json",
     "FORECASTER_FIRST_LOCK.json",
-    "USAGE_COST.json",
+    "EXECUTION_USAGE.json",
     "ARTIFACT_MANIFEST.json",
     "COMPLETE.json"
   ],
-  "direct_launch": {
-    "confirm_input_required": true,
-    "expected_commit_must_equal_github_sha": true,
-    "all_file_hashes_must_be_bound": true,
-    "complete_json_published_last": true
-  },
-  "rollback": {
-    "stop_exact_transient_unit_only": true,
-    "write_aborted_json": true,
-    "preserve_rt_freeze_after_forecaster_failure": true,
-    "retry_unknown_provider_outcome": false,
-    "delete_or_mutate_source_production_or_canonical_assets": false
+  "branch_contract": {
+    "feature_branch": "chatgpt/frankie-october-aws-readonly-20260824",
+    "protected_production_commit": "a7611133f64064200de48cd2e7839fcea2510d51",
+    "implementation_then_marker_then_workflow_trigger": true,
+    "restore_manual_only_immediately_after_run_registers": true,
+    "default_or_production_branch_mutation": false
   }
 }

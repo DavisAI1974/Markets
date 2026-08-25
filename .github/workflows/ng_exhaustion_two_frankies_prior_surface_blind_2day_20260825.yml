@@ -1,19 +1,15 @@
-name: NG Exhaustion Two Frankies Prior Reduced Non-Full-MBO Blind 2-Day 20260825
+name: NG Exhaustion Two Frankies Keyless Prior Surface Packet 2-Day 20260825
 
 on:
   workflow_dispatch:
     inputs:
-      confirm_exact_blind_run:
-        description: Confirm the exact prior-surface blind Oct 4-5 run only
+      confirm_exact_two_day_packet:
+        description: Confirm keyless packet staging for October 4-5 only
         required: true
         type: boolean
         default: false
       greg_approval:
-        description: Enter APPROVE_EXACT_TWO_CALL_BLIND_RUN after reviewing the preflight
-        required: true
-        type: string
-      approved_max_cost_usd:
-        description: Enter the exact approved maximum provider cost in USD
+        description: Enter APPROVE_KEYLESS_TWO_DAY_PACKET_STAGE
         required: true
         type: string
 
@@ -21,7 +17,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ng-exhaustion-two-frankies-prior-surface-blind-2day-20260825
+  group: ng-exhaustion-two-frankies-keyless-prior-surface-packet-2day-20260825
   cancel-in-progress: false
 
 env:
@@ -39,708 +35,298 @@ env:
   EXPECTED_SECONDS_BYTES: '112852940'
   EXPECTED_SECONDS_SHA256: 93654eb5eaf24be6dc6821f422cdd7fc416e12778dcecd6c97150cbc34004f90
   EXPECTED_RECEIPT_FILE_SHA256: 80b6cf7199805cf40a0b16b139ee1aa8f705b884acf03856640df4054802f7ab
-  EXPECTED_RECEIPT_CANONICAL_SHA256: 4966dac8b25fee7acabf53f880a30155985bd5767ee222381f1188d4eecada3c
   EXPECTED_MODEL: gpt-5.6-sol
-  EXPECTED_LOGICAL_CALLS: '2'
   EXPECTED_CAPABILITY_LEAVES: '1940'
   EXPECTED_CAPABILITY_BLOCKS: '46'
-  WRAPPER: research/kalshi/ng_exhaustion_two_frankies_prior_surface_blind_2day_20260825.py
-  SOURCE_CONFIG: research/kalshi/NG_EXHAUSTION_PRIOR_SURFACE_OCT45_SOURCE_20260825.json
+  EXPECTED_CAPABILITY_SURFACES: '24'
+  PACKET_BUILDER: research/kalshi/ng_exhaustion_two_frankies_workmode_packet_2day_20260825.py
+  COORDINATOR: research/kalshi/ng_exhaustion_two_frankies_workmode_coordinate_2day_20260825.py
   CAPABILITY_OVERLAY: research/kalshi/FRANKIE_PRIOR_SURFACE_OCT45_CAPABILITY_OVERLAY_20260825.json
   RT_MISSION: research/kalshi/agents/frankie_prior_surface_oct45_realtime_20260825.md
   FORECASTER_MISSION: research/kalshi/agents/frankie_prior_surface_oct45_forecaster_20260825.md
   LAUNCH_CONTROL: research/kalshi/NG_EXHAUSTION_PRIOR_SURFACE_OCT45_TWO_FRANKIES_LAUNCH_20260825.json
-  BUILD_CONTROL: research/kalshi/NG_EXHAUSTION_PRIOR_SURFACE_OCT45_TWO_FRANKIES_BUILD_CONTROL_20260825.md
-  RUNTIME_LOCK: deploy/aws/requirements-frankie-fullstack-20260824.lock
 
 jobs:
-  build-attested-runtime:
+  stage-keyless-work-packets:
     if: >-
       ${{ github.ref == 'refs/heads/chatgpt/frankie-october-aws-readonly-20260824' &&
-          inputs.confirm_exact_blind_run == true &&
-          inputs.greg_approval == 'APPROVE_EXACT_TWO_CALL_BLIND_RUN' }}
+          ((github.event_name == 'workflow_dispatch' &&
+            inputs.confirm_exact_two_day_packet == true &&
+            inputs.greg_approval == 'APPROVE_KEYLESS_TWO_DAY_PACKET_STAGE') ||
+           (github.event_name == 'push' &&
+            github.event.head_commit.message == 'launch: one-shot keyless two-day Frankie packet stage')) }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-    outputs:
-      package_sha256: ${{ steps.package.outputs.package_sha256 }}
-      mission_sha256: ${{ steps.package.outputs.mission_sha256 }}
-      approved_max_cost_usd: ${{ steps.package.outputs.approved_max_cost_usd }}
-    steps:
-      - name: Checkout exact dispatch commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          ref: ${{ github.sha }}
-
-      - name: Bind offline runtime package to worker CPython
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
-        with:
-          python-version: '3.10.14'
-
-      - name: Validate immutable blind launch contract without tests or canaries
-        id: package
-        shell: bash
-        env:
-          GREG_APPROVAL: ${{ inputs.greg_approval }}
-          APPROVED_MAX_COST_USD: ${{ inputs.approved_max_cost_usd }}
-        run: |
-          set -euo pipefail
-          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$GITHUB_REF" = "refs/heads/$LAUNCH_BRANCH"
-          test "$GREG_APPROVAL" = APPROVE_EXACT_TWO_CALL_BLIND_RUN
-          implementation_commit="$(git rev-parse HEAD^)"
-          mapfile -t authorization_diff < <(git diff --name-only "$implementation_commit" "$GITHUB_SHA")
-          test "${#authorization_diff[@]}" -eq 1
-          test "${authorization_diff[0]}" = "$LAUNCH_CONTROL"
-          export IMPLEMENTATION_COMMIT="$implementation_commit"
-          for path in "$WRAPPER" "$SOURCE_CONFIG" "$CAPABILITY_OVERLAY" "$BUILD_CONTROL" \
-            "$RT_MISSION" "$FORECASTER_MISSION" "$LAUNCH_CONTROL" "$RUNTIME_LOCK"; do
-            test -s "$path"
-          done
-          python - <<'PY'
-          import hashlib
-          import json
-          import os
-          from decimal import Decimal, InvalidOperation
-          from pathlib import Path
-
-          def load(name: str) -> dict:
-              value = json.loads(Path(os.environ[name]).read_text(encoding="utf-8"))
-              if not isinstance(value, dict):
-                  raise SystemExit(f"{name} must be a JSON object")
-              return value
-
-          source = load("SOURCE_CONFIG")
-          control = load("LAUNCH_CONTROL")
-          overlay = load("CAPABILITY_OVERLAY")
-          identity = source.get("source_identity", {})
-          window = source.get("window", {})
-          surface = source.get("information_surface", {})
-          if window != {
-              "start": os.environ["WINDOW_START"],
-              "end_exclusive": os.environ["WINDOW_END_EXCLUSIVE"],
-              "included_utc_dates": ["2021-10-04", "2021-10-05"],
-          }:
-              raise SystemExit("source window drift")
-          if identity.get("bytes") != int(os.environ["EXPECTED_SECONDS_BYTES"]):
-              raise SystemExit("source byte identity drift")
-          if identity.get("sha256") != os.environ["EXPECTED_SECONDS_SHA256"]:
-              raise SystemExit("source hash identity drift")
-          if identity.get("child_receipt_file_sha256") != os.environ["EXPECTED_RECEIPT_FILE_SHA256"]:
-              raise SystemExit("source receipt file hash drift")
-          if identity.get("child_receipt_canonical_sha256") != os.environ["EXPECTED_RECEIPT_CANONICAL_SHA256"]:
-              raise SystemExit("source receipt canonical hash drift")
-          if surface.get("raw_mbo_replayed") is not False:
-              raise SystemExit("prior reduced surface must not claim full-MBO replay")
-          if surface.get("surface_label") != "PRIOR_REDUCED_NON_FULL_MBO_SURFACE":
-              raise SystemExit("information surface must be explicitly reduced/non-full-MBO")
-          if surface.get("may_be_described_as_full_mbo") is not False:
-              raise SystemExit("prior surface may not be described as full MBO")
-          if not source.get("blind_firewall", {}).get("provider_must_not_receive"):
-              raise SystemExit("source config must seal Step-1 results")
-
-          if control.get("evidence_surface_label") != "PRIOR_REDUCED_NON_FULL_MBO_SURFACE":
-              raise SystemExit("launch-control surface label drift")
-          if control.get("may_be_described_as_full_mbo") is not False:
-              raise SystemExit("launch-control permits a false full-MBO label")
-          if control.get("canonical_immutability", {}).get("protected_production_commit") != os.environ["PROTECTED_PRODUCTION_SHA"]:
-              raise SystemExit("protected production identity drift")
-          if control.get("model", {}).get("requested") != os.environ["EXPECTED_MODEL"]:
-              raise SystemExit("model drift")
-          calls = control.get("logical_call_contract", {})
-          if calls.get("logical_role_calls") != int(os.environ["EXPECTED_LOGICAL_CALLS"]):
-              raise SystemExit("logical call count drift")
-          if calls.get("role_order") != ["REAL_TIME_FRANKIE", "FORECASTER_FRANKIE"]:
-              raise SystemExit("role sequence must be RT then Forecaster")
-          if calls.get("specialist_model_calls") != 0 or calls.get("rt_optional_local_scout_auto_called") is not False:
-              raise SystemExit("automatic helper/scout route is not disabled")
-          if control.get("workflow", {}).get("canary") is not False:
-              raise SystemExit("canary must remain disabled")
-          if control.get("workflow", {}).get("path") != ".github/workflows/ng_exhaustion_two_frankies_prior_surface_blind_2day_20260825.yml":
-              raise SystemExit("launch-control workflow path drift")
-          expected_receipts = [
-              "PREFLIGHT.json", "SOURCE_VERIFY.json", "SLICE_MANIFEST.json", "ANSWER_WALL.json",
-              "CAPABILITY_RECONCILIATION.json", "RT_CONTEXT_MANIFEST.json",
-              "RT_PROVIDER_RECEIPT.json", "RT_FIRST_LOCK.json", "RT_FROZEN_STATE.json",
-              "ONEWAY_HANDOFF.json", "FORECASTER_CONTEXT_MANIFEST.json",
-              "FORECASTER_PROVIDER_RECEIPT.json", "FORECASTER_FIRST_LOCK.json",
-              "USAGE_COST.json", "ARTIFACT_MANIFEST.json", "COMPLETE.json",
-          ]
-          if control.get("required_receipts") != expected_receipts:
-              raise SystemExit("required receipt roster or ordering drift")
-          firewall = control.get("blind_firewall", {})
-          if firewall.get("step1_answers_and_descriptors_sealed") is not True:
-              raise SystemExit("Step-1 answer firewall drift")
-          if firewall.get("missing_historical_data_never_zero") is not True:
-              raise SystemExit("historical missingness policy drift")
-          if control.get("launch_authorized") is not True:
-              raise SystemExit("launch-control has not separately authorized dispatch")
-          authorization = control.get("authorization", {})
-          if authorization.get("exact_commit") != os.environ["IMPLEMENTATION_COMMIT"]:
-              raise SystemExit("authorization must bind the parent implementation commit")
-          if not authorization.get("authorized_by") or not authorization.get("authorized_at"):
-              raise SystemExit("authorization identity/time is incomplete")
-          try:
-              approved = Decimal(os.environ["APPROVED_MAX_COST_USD"])
-              configured = Decimal(str(control["pricing"]["max_budget_usd"]))
-          except (InvalidOperation, KeyError, TypeError):
-              raise SystemExit("invalid or missing exact cost cap")
-          if approved <= 0 or approved != configured:
-              raise SystemExit("approved cost does not exactly match launch-control cap")
-
-          mission_rows = {}
-          for role, env_name in (
-              ("REAL_TIME_FRANKIE", "RT_MISSION"),
-              ("FORECASTER_FRANKIE", "FORECASTER_MISSION"),
-          ):
-              path = Path(os.environ[env_name])
-              body = path.read_bytes()
-              text = body.decode("utf-8")
-              declared = control.get("mission_files", {}).get(role, {})
-              digest = hashlib.sha256(body).hexdigest()
-              if declared.get("path") != str(path) or declared.get("sha256") != digest:
-                  raise SystemExit(f"{role} mission byte identity drift")
-              if declared.get("read_byte_for_byte") is not True or declared.get("summary_or_rewrite_allowed") is not False:
-                  raise SystemExit(f"{role} mission transmission policy drift")
-              for token in ("UNAVAILABLE", "UNKNOWN", "DORMANT", "zero", "full-MBO"):
-                  if token.lower() not in text.lower():
-                      raise SystemExit(f"{role} mission lacks required historical-missingness warning")
-              mission_rows[role] = {"sha256": digest, "bytes": len(body)}
-          mission_binding = {
-              "schema": "PRIOR_REDUCED_NON_FULL_MBO_MISSION_BINDING_V1_20260825",
-              "missions": mission_rows,
-              "warning": "Missing historical capability evidence remains UNAVAILABLE, UNKNOWN, or DORMANT; it is never false or numeric zero. Full-MBO evidence is unavailable on this prior reduced surface.",
-          }
-          mission_sha = hashlib.sha256(json.dumps(
-              mission_binding, sort_keys=True, separators=(",", ":"), ensure_ascii=True
-          ).encode()).hexdigest()
-
-          for section, env_name in (
-              ("source_config", "SOURCE_CONFIG"),
-              ("capability_overlay", "CAPABILITY_OVERLAY"),
-              ("build_control", "BUILD_CONTROL"),
-          ):
-              declared = control.get(section, {})
-              path = Path(os.environ[env_name])
-              digest = hashlib.sha256(path.read_bytes()).hexdigest()
-              if declared.get("path") != str(path) or declared.get("sha256") != digest:
-                  raise SystemExit(f"{section} byte identity drift")
-          executable = control.get("executable_package", {})
-          for section, env_name in (
-              ("wrapper", "WRAPPER"),
-              ("runtime_lock", "RUNTIME_LOCK"),
-          ):
-              declared = executable.get(section, {})
-              path = Path(os.environ[env_name])
-              digest = hashlib.sha256(path.read_bytes()).hexdigest()
-              if declared.get("path") != str(path) or declared.get("sha256") != digest:
-                  raise SystemExit(f"executable package {section} byte identity drift")
-          for relative, expected_hash in control.get("canonical_immutability", {}).get("files", {}).items():
-              path = Path(relative)
-              if hashlib.sha256(path.read_bytes()).hexdigest() != expected_hash:
-                  raise SystemExit(f"canonical file drift: {relative}")
-
-          registry_contract = overlay.get("registry_contract", {})
-          leaf_count = registry_contract.get("expected_exact_leaf_count")
-          block_count = registry_contract.get("expected_exact_block_count")
-          if leaf_count != int(os.environ["EXPECTED_CAPABILITY_LEAVES"]):
-              raise SystemExit("capability overlay is not the 1,940-leaf registry")
-          if block_count != int(os.environ["EXPECTED_CAPABILITY_BLOCKS"]):
-              raise SystemExit("capability overlay is not the 46-block registry")
-          print("BLIND_BUILD_PREFLIGHT=PASS")
-          Path("/tmp/mission.sha256").write_text(mission_sha + "\n", encoding="utf-8")
-          PY
-
-          bundle="$(mktemp -d)"
-          git archive --format=tar "$GITHUB_SHA" | tar -xf - -C "$bundle"
-          install -d -m 0755 "$bundle/deploy/wheelhouse"
-          python -m pip download --disable-pip-version-check --only-binary=:all: \
-            --no-deps --require-hashes --dest "$bundle/deploy/wheelhouse" \
-            -r "$bundle/$RUNTIME_LOCK"
-          python - "$bundle" "$GITHUB_SHA" "$implementation_commit" <<'PY'
-          import hashlib
-          import json
-          from pathlib import Path
-          import sys
-
-          root = Path(sys.argv[1])
-          paths = [
-              "research/kalshi/ng_exhaustion_two_frankies_prior_surface_blind_2day_20260825.py",
-              "research/kalshi/NG_EXHAUSTION_PRIOR_SURFACE_OCT45_SOURCE_20260825.json",
-              "research/kalshi/FRANKIE_PRIOR_SURFACE_OCT45_CAPABILITY_OVERLAY_20260825.json",
-              "research/kalshi/agents/frankie_prior_surface_oct45_realtime_20260825.md",
-              "research/kalshi/agents/frankie_prior_surface_oct45_forecaster_20260825.md",
-              "research/kalshi/NG_EXHAUSTION_PRIOR_SURFACE_OCT45_TWO_FRANKIES_LAUNCH_20260825.json",
-              "research/kalshi/NG_EXHAUSTION_PRIOR_SURFACE_OCT45_TWO_FRANKIES_BUILD_CONTROL_20260825.md",
-              "deploy/aws/requirements-frankie-fullstack-20260824.lock",
-          ]
-          rows = []
-          for relative in paths:
-              path = root / relative
-              if not path.is_file():
-                  raise SystemExit(f"package input missing: {relative}")
-              rows.append({
-                  "path": relative,
-                  "bytes": path.stat().st_size,
-                  "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
-              })
-          wheels = []
-          for path in sorted((root / "deploy/wheelhouse").glob("*.whl")):
-              wheels.append({
-                  "name": path.name,
-                  "bytes": path.stat().st_size,
-                  "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
-              })
-          core = {
-              "schema": "PRIOR_SURFACE_BLIND_2DAY_PACKAGE_V1_20260825",
-              "source_commit": sys.argv[2],
-              "implementation_commit": sys.argv[3],
-              "files": rows,
-              "wheels": wheels,
-          }
-          canonical = json.dumps(core, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
-          manifest = {**core, "receipt_sha256": hashlib.sha256(canonical.encode()).hexdigest()}
-          (root / "PACKAGE_MANIFEST.json").write_text(
-              json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-          )
-          PY
-          package_dir="$RUNNER_TEMP/prior-surface-blind-runtime"
-          install -d -m 0755 "$package_dir"
-          tar -czf "$package_dir/package.tgz" -C "$bundle" .
-          package_sha256="$(sha256sum "$package_dir/package.tgz" | awk '{print $1}')"
-          mission_sha256="$(tr -d '\n' < /tmp/mission.sha256)"
-          printf '%s  package.tgz\n' "$package_sha256" > "$package_dir/package.sha256"
-          echo "package_sha256=$package_sha256" >> "$GITHUB_OUTPUT"
-          echo "mission_sha256=$mission_sha256" >> "$GITHUB_OUTPUT"
-          echo "approved_max_cost_usd=$APPROVED_MAX_COST_USD" >> "$GITHUB_OUTPUT"
-
-      - name: Cross the no-secret runtime boundary
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: prior-surface-blind-runtime-${{ github.sha }}
-          path: ${{ runner.temp }}/prior-surface-blind-runtime
-          if-no-files-found: error
-          retention-days: 1
-
-  launch-isolated-two-call-run:
-    needs: build-attested-runtime
-    runs-on: ubuntu-latest
-    timeout-minutes: 150
+    timeout-minutes: 60
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
     steps:
-      - name: Download attested runtime
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - name: Checkout exact packet-stage commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          name: prior-surface-blind-runtime-${{ github.sha }}
-          path: ${{ runner.temp }}/prior-surface-blind-runtime
+          ref: ${{ github.sha }}
+          fetch-depth: 3
 
-      - name: Verify and publish exact runtime package
+      - name: Validate exact keyless two-day contract
+        shell: bash
+        env:
+          GREG_APPROVAL: ${{ github.event_name == 'push' && 'APPROVE_KEYLESS_TWO_DAY_PACKET_STAGE' || inputs.greg_approval }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_AFTER: ${{ github.event.after }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$GITHUB_REF" = "refs/heads/$LAUNCH_BRANCH"
+          test "$GREG_APPROVAL" = APPROVE_KEYLESS_TWO_DAY_PACKET_STAGE
+          if test "$GITHUB_EVENT_NAME" = push; then
+            test "$(git log -1 --pretty=%s)" = 'launch: one-shot keyless two-day Frankie packet stage'
+            test "$(git rev-list --parents -n 1 HEAD | wc -w)" -eq 2
+            authorization_commit="$(git rev-parse HEAD^)"
+            implementation_commit="$(git rev-parse HEAD^^)"
+            test "$(git rev-list --parents -n 1 "$authorization_commit" | wc -w)" -eq 2
+            test "$PUSH_AFTER" = "$(git rev-parse HEAD)"
+            test "$PUSH_BEFORE" = "$implementation_commit"
+            mapfile -t trigger_diff < <(git diff --name-only "$authorization_commit" HEAD)
+            test "${#trigger_diff[@]}" -eq 1
+            test "${trigger_diff[0]}" = '.github/workflows/ng_exhaustion_two_frankies_prior_surface_blind_2day_20260825.yml'
+          else
+            authorization_commit="$(git rev-parse HEAD)"
+            implementation_commit="$(git rev-parse HEAD^)"
+          fi
+          mapfile -t authorization_diff < <(git diff --name-only "$implementation_commit" "$authorization_commit")
+          test "${#authorization_diff[@]}" -eq 1
+          test "${authorization_diff[0]}" = "$LAUNCH_CONTROL"
+          export AUTHORIZATION_COMMIT="$authorization_commit"
+          export IMPLEMENTATION_COMMIT="$implementation_commit"
+          {
+            echo "AUTHORIZATION_COMMIT=$authorization_commit"
+            echo "IMPLEMENTATION_COMMIT=$implementation_commit"
+          } >> "$GITHUB_ENV"
+          for path in "$PACKET_BUILDER" "$COORDINATOR" "$CAPABILITY_OVERLAY" \
+            "$RT_MISSION" "$FORECASTER_MISSION" "$LAUNCH_CONTROL"; do
+            test -s "$path"
+          done
+          test -z "${OPENAI_API_KEY:-}"
+          test -z "${MARKETS_OPENAI_API_KEY:-}"
+          ! sed '/! rg -n/d' .github/workflows/ng_exhaustion_two_frankies_prior_surface_blind_2day_20260825.yml | rg -n 'ssm get-parameter|with-decryption|openai-runtime\.env'
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          overlay = json.loads(Path(os.environ["CAPABILITY_OVERLAY"]).read_text(encoding="utf-8"))
+          registry = overlay["registry_contract"]
+          assert registry["expected_exact_leaf_count"] == int(os.environ["EXPECTED_CAPABILITY_LEAVES"])
+          assert registry["expected_exact_block_count"] == int(os.environ["EXPECTED_CAPABILITY_BLOCKS"])
+          fc = overlay["role_surface_overrides"]["FORECASTER_FRANKIE"]
+          assert len(fc) == int(os.environ["EXPECTED_CAPABILITY_SURFACES"])
+          assert all(row["state"] == "DIRECT" for row in fc.values())
+          assert all(row["availability"] != "DORMANT" for row in fc.values())
+          rt_text = Path(os.environ["RT_MISSION"]).read_text(encoding="utf-8").lower()
+          fc_text = Path(os.environ["FORECASTER_MISSION"]).read_text(encoding="utf-8").lower()
+          for token in ("dipole", "direction change", "lookahead", "runway", "pre-birth", "clock", "strategy"):
+              assert token in rt_text
+          for token in ("forecast curve", "dipole", "runway", "clock", "knowledge-helper"):
+              assert token in fc_text
+          control = json.loads(Path(os.environ["LAUNCH_CONTROL"]).read_text(encoding="utf-8"))
+          assert control["evidence_surface_label"] == "PRIOR_REDUCED_NON_FULL_MBO_SURFACE"
+          assert control["window"] == {
+              "start": os.environ["WINDOW_START"],
+              "end_exclusive": os.environ["WINDOW_END_EXCLUSIVE"],
+          }
+          assert control["source"]["bytes"] == int(os.environ["EXPECTED_SECONDS_BYTES"])
+          assert control["source"]["sha256"] == os.environ["EXPECTED_SECONDS_SHA256"]
+          assert control["provider_api_called"] is False
+          assert control["openai_key_used"] is False
+          assert control["canary"] is False and control["tests"] is False
+          assert control["launch_authorized"] is True
+          authorization = control["authorization"]
+          assert authorization["authorized_by"] == "Greg"
+          assert authorization["authorized_at"]
+          assert authorization["exact_implementation_commit"] == os.environ["IMPLEMENTATION_COMMIT"]
+          if os.environ["GITHUB_EVENT_NAME"] == "push":
+              assert len(control["transient_one_shot_workflow_sha256"]) == 64
+          import hashlib
+          for name, row in control["files"].items():
+              path = Path(row["path"])
+              assert path.is_file(), (name, path)
+              observed = hashlib.sha256(path.read_bytes()).hexdigest()
+              if name == "manual_only_workflow" and os.environ["GITHUB_EVENT_NAME"] == "push":
+                  assert observed == control["transient_one_shot_workflow_sha256"]
+              else:
+                  assert observed == row["sha256"], (name, observed, row["sha256"])
+          print("KEYLESS_PACKET_STATIC_PREFLIGHT=PASS")
+          PY
+
+      - name: Package exact repository state
         shell: bash
         run: |
           set -euo pipefail
-          cd "$RUNNER_TEMP/prior-surface-blind-runtime"
-          test "$(awk '{print $1}' package.sha256)" = "${{ needs.build-attested-runtime.outputs.package_sha256 }}"
-          sha256sum -c package.sha256
+          package_dir="$RUNNER_TEMP/frankie-keyless-package"
+          install -d -m 0755 "$package_dir"
+          git archive --format=tar.gz -o "$package_dir/repo.tgz" "$GITHUB_SHA"
+          sha256sum "$package_dir/repo.tgz" > "$package_dir/repo.sha256"
           launch_identity="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          package_prefix="nymex/ng_mbo_5y_v0/frankie/prior_surface_oct45_blind/packages/${GITHUB_SHA}/${launch_identity}"
-          output_prefix="nymex/ng_mbo_5y_v0/frankie/prior_surface_oct45_blind/runs/${launch_identity}"
-          aws s3 cp package.tgz "s3://${BUCKET}/${package_prefix}/package.tgz" \
+          prefix="nymex/ng_mbo_5y_v0/frankie/prior_surface_oct45_workmode_packets/${GITHUB_SHA}/${launch_identity}"
+          aws s3 cp "$package_dir/repo.tgz" "s3://${BUCKET}/${prefix}/repo.tgz" \
             --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
           {
             echo "LAUNCH_IDENTITY=$launch_identity"
-            echo "PACKAGE_KEY=$package_prefix/package.tgz"
-            echo "OUTPUT_PREFIX=$output_prefix"
-            echo "PACKAGE_SHA256=${{ needs.build-attested-runtime.outputs.package_sha256 }}"
-            echo "MISSION_SHA256=${{ needs.build-attested-runtime.outputs.mission_sha256 }}"
-            echo "APPROVED_MAX_COST_USD=${{ needs.build-attested-runtime.outputs.approved_max_cost_usd }}"
+            echo "PACKET_PREFIX=$prefix"
+            echo "REPO_SHA256=$(awk '{print $1}' "$package_dir/repo.sha256")"
           } >> "$GITHUB_ENV"
 
-      - name: Run isolated blind sequence and publish COMPLETE last
-        id: launch
+      - name: Build packets on sealed worker without provider credentials
+        id: stage
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import base64
           import json
           import os
           import shlex
           from pathlib import Path
 
-          sha = os.environ["GITHUB_SHA"]
           identity = os.environ["LAUNCH_IDENTITY"]
-          root = f"/mnt/markets/frankie_prior_surface_oct45_blind_20260825/{identity}"
+          root = f"/mnt/markets/frankie_prior_surface_oct45_workmode_packet_20260825/{identity}"
           repo = f"{root}/repo"
           source = f"{root}/input/prior_seconds.jsonl.gz"
-          output = f"{root}/private_output"
-          run_log = f"{root}/RUN.log"
-          package = f"{root}/package.tgz"
-          openai_env = f"{root}/openai-runtime.env"
+          packet = f"{root}/packet"
+          repo_tgz = f"{root}/repo.tgz"
+          packet_tgz = f"{root}/packet.tgz"
+          packet_sha = f"{root}/packet.sha256"
+          identity_json = f"{root}/stage_identity.json"
           aws_env = f"{root}/aws-runtime.env"
-          unit = f"ng-exhaustion-two-frankies-blind-{sha[:10]}-{identity}"
-          runner_id = f"prior-surface-blind-{identity}-{sha[:12]}"
           original_base = f"/mnt/markets/ng_exhaustion_step1_5y_20260822/{os.environ['CANDIDATE_SHA']}"
           original_source = f"{original_base}/full/segments/{os.environ['TARGET_SEGMENT']}.seconds.jsonl.gz"
           original_receipt = f"{original_base}/full/segments/{os.environ['TARGET_SEGMENT']}.receipt.json"
           source_credential = f"{original_base}/aws.env"
-          output_uri = f"s3://{os.environ['BUCKET']}/{os.environ['OUTPUT_PREFIX']}"
-
-          validator = r'''#!/usr/bin/env python3
-          import hashlib
-          import json
-          from decimal import Decimal
-          from pathlib import Path
-          import sys
-
-          out = Path(sys.argv[1])
-          expected = [
-              "PREFLIGHT.json", "SOURCE_VERIFY.json", "SLICE_MANIFEST.json", "ANSWER_WALL.json",
-              "CAPABILITY_RECONCILIATION.json", "RT_CONTEXT_MANIFEST.json",
-              "RT_PROVIDER_RECEIPT.json", "RT_FIRST_LOCK.json", "RT_FROZEN_STATE.json",
-              "ONEWAY_HANDOFF.json", "FORECASTER_CONTEXT_MANIFEST.json",
-              "FORECASTER_PROVIDER_RECEIPT.json", "FORECASTER_FIRST_LOCK.json",
-              "USAGE_COST.json",
-              "ARTIFACT_MANIFEST.json", "COMPLETE.json",
-          ]
-          for name in expected:
-              if not (out / name).is_file():
-                  raise SystemExit(f"missing output: {name}")
-
-          load = lambda name: json.loads((out / name).read_text(encoding="utf-8"))
-          preflight = load("PREFLIGHT.json")
-          if preflight.get("provider_called") is not False:
-              raise SystemExit("preflight must be frozen before provider calls")
-          if preflight.get("mission_sha256") != sys.argv[3]:
-              raise SystemExit("preflight mission binding drift")
-          if preflight.get("logical_call_count") != 2 or preflight.get("automatic_scout") is not False:
-              raise SystemExit("preflight call plan drift")
-          source = load("SOURCE_VERIFY.json")
-          if source.get("bytes") != 112852940 or source.get("sha256") != "93654eb5eaf24be6dc6821f422cdd7fc416e12778dcecd6c97150cbc34004f90":
-              raise SystemExit("source identity drift")
-          if source.get("window_start") != "2021-10-04T00:00:00Z" or source.get("window_end_exclusive") != "2021-10-06T00:00:00Z":
-              raise SystemExit("source window drift")
-
-          wall = load("ANSWER_WALL.json")
-          if wall.get("step1_answer_key_exposed") is not False or wall.get("comparison_accessed") is not False:
-              raise SystemExit("blind answer wall failed")
-          if wall.get("answer_key_release_authorized") is not False:
-              raise SystemExit("answer-key release must remain unauthorized")
-
-          for name, role in (
-              ("RT_CONTEXT_MANIFEST.json", "REAL_TIME_FRANKIE"),
-              ("FORECASTER_CONTEXT_MANIFEST.json", "FORECASTER_FRANKIE"),
-          ):
-              context = load(name)
-              if context.get("role") != role or context.get("mission_sha256") != sys.argv[3]:
-                  raise SystemExit(f"{role} context/mission binding drift")
-              if context.get("step1_answer_key_exposed") is not False:
-                  raise SystemExit(f"{role} context crossed the Step-1 answer wall")
-              if context.get("forbidden_information_matches") not in ([], 0):
-                  raise SystemExit(f"{role} context contains forbidden answer-bearing information")
-              if context.get("automatic_helpers") is not False or context.get("automatic_scout") is not False:
-                  raise SystemExit(f"{role} context enabled an automatic helper")
-              if not isinstance(context.get("provider_bound_payload_sha256"), str):
-                  raise SystemExit(f"{role} provider-bound payload is not hash-bound")
-
-          capabilities = load("CAPABILITY_RECONCILIATION.json")
-          leaves = capabilities.get("leaf_items")
-          blocks = capabilities.get("block_items")
-          if not isinstance(leaves, list) or len(leaves) != 1940:
-              raise SystemExit("capability leaf reconciliation drift")
-          if not isinstance(blocks, list) or len(blocks) != 46:
-              raise SystemExit("capability block reconciliation drift")
-          ids = []
-          for row in leaves:
-              capability_id = row.get("item_id")
-              if not isinstance(capability_id, str) or not capability_id:
-                  raise SystemExit("capability identity missing")
-              ids.append(capability_id)
-              if row.get("state") not in {"DIRECT", "TOOL_ACCESSIBLE", "DORMANT"}:
-                  raise SystemExit("invalid capability role state")
-              if row.get("availability") not in {"AVAILABLE", "PARTIAL", "UNAVAILABLE", "UNKNOWN", "DORMANT"}:
-                  raise SystemExit("invalid capability availability")
-              for field in ("path", "block", "coverage", "provenance", "omission_reason"):
-                  if field not in row:
-                      raise SystemExit(f"capability field missing: {field}")
-              if row.get("availability") in {"UNAVAILABLE", "UNKNOWN", "DORMANT"}:
-                  if row.get("value") in (False, 0, 0.0, "false", "0"):
-                      raise SystemExit("missing historical capability collapsed to false/zero")
-                  if not row.get("omission_reason"):
-                      raise SystemExit("missing historical capability lacks omission reason")
-          if len(set(ids)) != 1940:
-              raise SystemExit("capability leaves are not unique")
-          block_ids = []
-          for row in blocks:
-              required_block_fields = {
-                  "block_id", "leaf_count", "state", "availability", "coverage",
-                  "provenance", "omission_reason",
-              }
-              if not required_block_fields.issubset(row):
-                  raise SystemExit("capability block receipt fields missing")
-              block_ids.append(row["block_id"])
-              if row["state"] not in {"DIRECT", "TOOL_ACCESSIBLE", "DORMANT"}:
-                  raise SystemExit("invalid capability block route state")
-              if row["availability"] not in {"AVAILABLE", "PARTIAL", "UNAVAILABLE", "UNKNOWN", "DORMANT"}:
-                  raise SystemExit("invalid capability block availability")
-          if len(set(block_ids)) != 46 or sum(row["leaf_count"] for row in blocks) != 1940:
-              raise SystemExit("capability block reconciliation does not cover all leaves")
-          if capabilities.get("duplicate_leaf_count") != 0 or capabilities.get("unregistered_leaf_count") != 0:
-              raise SystemExit("capability registry contains duplicate or unregistered leaves")
-          if capabilities.get("silently_omitted_leaf_count") != 0:
-              raise SystemExit("capability registry contains a silent omission")
-          if capabilities.get("installed_executable_tools_reconciled") is not True:
-              raise SystemExit("installed executable tools were not reconciled")
-          surface_items = capabilities.get("surface_items")
-          if not isinstance(surface_items, list) or len(surface_items) != 24:
-              raise SystemExit("24-surface reconciliation receipt missing")
-
-          roles = [
-              ("REAL_TIME_FRANKIE", load("RT_PROVIDER_RECEIPT.json")),
-              ("FORECASTER_FRANKIE", load("FORECASTER_PROVIDER_RECEIPT.json")),
-          ]
-          response_ids = []
-          for index, (role, receipt) in enumerate(roles, start=1):
-              if receipt.get("role") != role or receipt.get("logical_call_index") != index:
-                  raise SystemExit("provider role order drift")
-              if receipt.get("model") != "gpt-5.6-sol" or receipt.get("logical_call_count") != 1:
-                  raise SystemExit("provider call/model drift")
-              if receipt.get("store") is not False:
-                  raise SystemExit("provider response storage must remain disabled")
-              if receipt.get("automatic_helper_calls") not in (0, []) or receipt.get("automatic_scout_calls") not in (0, []):
-                  raise SystemExit("automatic helper/scout detected")
-              response_id = receipt.get("provider_response_id")
-              if not isinstance(response_id, str) or not response_id:
-                  raise SystemExit("provider response id missing")
-              response_ids.append(response_id)
-          if len(set(response_ids)) != 2:
-              raise SystemExit("provider responses are not distinct")
-
-          handoff = load("ONEWAY_HANDOFF.json")
-          if handoff.get("from_role") != "REAL_TIME_FRANKIE" or handoff.get("to_role") != "FORECASTER_FRANKIE":
-              raise SystemExit("one-way handoff drift")
-          if handoff.get("rt_frozen_before_forecaster") is not True:
-              raise SystemExit("RT state was not frozen before Forecaster")
-
-          usage = load("USAGE_COST.json")
-          if usage.get("logical_call_count") != 2 or usage.get("role_sequence") != ["REAL_TIME_FRANKIE", "FORECASTER_FRANKIE"]:
-              raise SystemExit("usage logical-call receipt drift")
-          total = Decimal(str(usage.get("total_cost_usd")))
-          cap = Decimal(sys.argv[2])
-          if total < 0 or total > cap:
-              raise SystemExit("provider cost exceeds approved cap")
-          if len(usage.get("calls", [])) != 2:
-              raise SystemExit("usage receipt must contain exactly two calls")
-          for index, (row, expected_role, expected_response_id) in enumerate(zip(
-              usage["calls"], ["REAL_TIME_FRANKIE", "FORECASTER_FRANKIE"], response_ids
-          ), start=1):
-              if row.get("logical_call_index") != index or row.get("role") != expected_role:
-                  raise SystemExit("per-call usage order drift")
-              if expected_response_id not in row.get("provider_response_ids", []):
-                  raise SystemExit("per-call usage/provider identity drift")
-              for field in (
-                  "input_tokens", "cached_input_tokens", "output_tokens", "cost_usd",
-                  "provider_response_ids",
-              ):
-                  if row.get(field) is None:
-                      raise SystemExit(f"per-call usage/cost field missing: {field}")
-          pricing = usage.get("pricing", {})
-          for field in (
-              "input_usd_per_million", "cached_input_usd_per_million",
-              "output_usd_per_million", "pricing_source", "pricing_as_of",
-          ):
-              if pricing.get(field) is None:
-                  raise SystemExit(f"usage pricing authority missing: {field}")
-
-          required_runway = {
-              "elapsed_age", "remaining_runway", "total_run_duration", "end_time_range",
-              "as_of_event_clock", "as_of_receive_clock", "confidence", "censoring_status",
-              "unknown_fields", "evidence_refs",
-          }
-          rt_lock = load("RT_FIRST_LOCK.json")
-          fc_lock = load("FORECASTER_FIRST_LOCK.json")
-          for role, predictions in (
-              ("REAL_TIME_FRANKIE", rt_lock.get("blind_runway_predictions")),
-              ("FORECASTER_FRANKIE", fc_lock.get("blind_runway_predictions")),
-          ):
-              if not isinstance(predictions, list) or not predictions:
-                  raise SystemExit(f"{role} blind runway predictions missing")
-              for row in predictions:
-                  if not required_runway.issubset(row):
-                      raise SystemExit(f"{role} runway fields missing")
-                  if row.get("aggregation_policy") != "RAW_OR_RANGE_NO_AVERAGING":
-                      raise SystemExit(f"{role} used an averaging policy")
-                  if row.get("category_policy") != "OPEN_WORLD_NO_OLD_CATEGORY_CONSTRAINT":
-                      raise SystemExit(f"{role} category policy is constrained")
-
-          manifest = load("ARTIFACT_MANIFEST.json")
-          entries = manifest.get("artifacts")
-          if not isinstance(entries, list):
-              raise SystemExit("dynamic artifact manifest missing")
-          listed = {row.get("path"): row for row in entries}
-          for name in expected[:-2]:
-              row = listed.get(name)
-              path = out / name
-              digest = hashlib.sha256(path.read_bytes()).hexdigest()
-              if not row or row.get("bytes") != path.stat().st_size or row.get("sha256") != digest:
-                  raise SystemExit(f"artifact manifest mismatch: {name}")
-
-          complete = load("COMPLETE.json")
-          if complete.get("status") != "COMPLETE" or complete.get("published_last") is not True:
-              raise SystemExit("COMPLETE policy receipt drift")
-          print("PRIOR_SURFACE_BLIND_TWO_CALL_GATES=PASS")
-          '''
-
-          runner = r'''#!/bin/bash
-          set -euo pipefail
-          cd __REPO__
-          set -a
-          source __OPENAI_ENV__
-          set +a
-          env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN \
-            -u MARKETS_AWS_ACCESS_KEY_ID -u MARKETS_AWS_SECRET_ACCESS_KEY \
-            -u MARKETS_AWS_SESSION_TOKEN \
-            __PYTHON__ research/kalshi/ng_exhaustion_two_frankies_prior_surface_blind_2day_20260825.py \
-              --source __SOURCE__ \
-              --output-root __OUTPUT__ \
-              --source-config research/kalshi/NG_EXHAUSTION_PRIOR_SURFACE_OCT45_SOURCE_20260825.json \
-              --capability-overlay research/kalshi/FRANKIE_PRIOR_SURFACE_OCT45_CAPABILITY_OVERLAY_20260825.json \
-              --rt-mission research/kalshi/agents/frankie_prior_surface_oct45_realtime_20260825.md \
-              --forecaster-mission research/kalshi/agents/frankie_prior_surface_oct45_forecaster_20260825.md \
-              --launch-control research/kalshi/NG_EXHAUSTION_PRIOR_SURFACE_OCT45_TWO_FRANKIES_LAUNCH_20260825.json \
-              --run-id __RUN_ID__ 2>&1 | tee __RUN_LOG__
-          test "${PIPESTATUS[0]}" -eq 0
-          '''
-          replacements = {
-              "__REPO__": shlex.quote(repo),
-              "__OPENAI_ENV__": shlex.quote(openai_env),
-              "__PYTHON__": shlex.quote(f"{root}/venv/bin/python"),
-              "__SOURCE__": shlex.quote(source),
-              "__OUTPUT__": shlex.quote(output),
-              "__RUN_ID__": shlex.quote(runner_id),
-              "__RUN_LOG__": shlex.quote(run_log),
-          }
-          for old, new in replacements.items():
-              runner = runner.replace(old, new)
-
-          def b64(value: str) -> str:
-              return base64.b64encode(value.encode()).decode()
+          output_uri = f"s3://{os.environ['BUCKET']}/{os.environ['PACKET_PREFIX']}"
+          packet_user = "frkpkt_" + os.environ["GITHUB_RUN_ID"]
+          unit = "frankie-keyless-packet-" + os.environ["GITHUB_RUN_ID"] + "-" + os.environ["GITHUB_RUN_ATTEMPT"]
 
           commands = [
               "set -euo pipefail",
-              "trap 'echo BLIND_REMOTE_FAILED_COMMAND=\"$BASH_COMMAND\" >&2' ERR",
+              f"export LAUNCH_IDENTITY={shlex.quote(identity)}",
+              f"export GITHUB_SHA={shlex.quote(os.environ['GITHUB_SHA'])}",
+              f"export IMPLEMENTATION_COMMIT={shlex.quote(os.environ['IMPLEMENTATION_COMMIT'])}",
+              f"export AUTHORIZATION_COMMIT={shlex.quote(os.environ['AUTHORIZATION_COMMIT'])}",
+              f"export GITHUB_RUN_ID={shlex.quote(os.environ['GITHUB_RUN_ID'])}",
+              f"export GITHUB_RUN_ATTEMPT={shlex.quote(os.environ['GITHUB_RUN_ATTEMPT'])}",
+              f"export WINDOW_START={shlex.quote(os.environ['WINDOW_START'])}",
+              f"export WINDOW_END_EXCLUSIVE={shlex.quote(os.environ['WINDOW_END_EXCLUSIVE'])}",
+              f"export EXPECTED_SECONDS_BYTES={shlex.quote(os.environ['EXPECTED_SECONDS_BYTES'])}",
+              f"export EXPECTED_SECONDS_SHA256={shlex.quote(os.environ['EXPECTED_SECONDS_SHA256'])}",
               f"root={shlex.quote(root)}", f"repo={shlex.quote(repo)}",
-              f"source={shlex.quote(source)}", f"output={shlex.quote(output)}",
-              f"run_log={shlex.quote(run_log)}", f"package={shlex.quote(package)}",
-              f"openai_env={shlex.quote(openai_env)}", f"aws_env={shlex.quote(aws_env)}",
-              f"unit={shlex.quote(unit)}", f"original_source={shlex.quote(original_source)}",
-              f"original_receipt={shlex.quote(original_receipt)}",
-              f"source_credential={shlex.quote(source_credential)}", f"output_uri={shlex.quote(output_uri)}",
-              f"provider_user={shlex.quote('frkblind_' + os.environ['GITHUB_RUN_ID'])}",
-              "runtime_python=/usr/bin/python3.10", "test -x \"$runtime_python\"",
-              "test ! -e \"$root\"", "test -s \"$original_source\"", "test -s \"$original_receipt\"", "test -s \"$source_credential\"",
+              f"source={shlex.quote(source)}", f"packet={shlex.quote(packet)}",
+              f"repo_tgz={shlex.quote(repo_tgz)}", f"packet_tgz={shlex.quote(packet_tgz)}",
+              f"packet_sha={shlex.quote(packet_sha)}", f"identity_json={shlex.quote(identity_json)}",
+              f"aws_env={shlex.quote(aws_env)}", f"source_credential={shlex.quote(source_credential)}",
+              f"original_source={shlex.quote(original_source)}", f"original_receipt={shlex.quote(original_receipt)}",
+              f"output_uri={shlex.quote(output_uri)}", f"packet_user={shlex.quote(packet_user)}",
+              f"unit={shlex.quote(unit)}",
+              "test ! -e \"$root\"", "test -s \"$original_source\"", "test -s \"$original_receipt\"",
+              "test -s \"$source_credential\"",
               f"test \"$(stat -c %s \"$original_source\")\" = {shlex.quote(os.environ['EXPECTED_SECONDS_BYTES'])}",
               f"test \"$(sha256sum \"$original_source\" | awk '{{print $1}}')\" = {shlex.quote(os.environ['EXPECTED_SECONDS_SHA256'])}",
               f"test \"$(sha256sum \"$original_receipt\" | awk '{{print $1}}')\" = {shlex.quote(os.environ['EXPECTED_RECEIPT_FILE_SHA256'])}",
-              f"python3 -c 'import hashlib,json,sys; value=json.load(open(sys.argv[1], encoding=\"utf-8\")); claimed=value.pop(\"receipt_sha256\", None); observed=hashlib.sha256(json.dumps(value, sort_keys=True, separators=(\",\",\":\"), ensure_ascii=True).encode()).hexdigest(); assert claimed == observed == sys.argv[2]' \"$original_receipt\" {shlex.quote(os.environ['EXPECTED_RECEIPT_CANONICAL_SHA256'])}",
-              "install -d -m 0750 \"$root\" \"$repo\" \"$root/input\" \"$output\"",
+              "install -d -m 0750 \"$root\" \"$repo\" \"$root/input\"",
               "cp --reflink=auto \"$original_source\" \"$source\"",
-              f"test \"$(sha256sum \"$source\" | awk '{{print $1}}')\" = {shlex.quote(os.environ['EXPECTED_SECONDS_SHA256'])}",
+              "trap 'test ! -e \"$aws_env\" || shred -u \"$aws_env\"' EXIT",
               "python3 - \"$source_credential\" \"$aws_env\" <<'PYCRED'\nimport os, shlex, sys\nsource, destination = sys.argv[1:]\nallowed = {'AWS_ACCESS_KEY_ID','AWS_SECRET_ACCESS_KEY','AWS_SESSION_TOKEN','AWS_DEFAULT_REGION','AWS_REGION','MARKETS_AWS_ACCESS_KEY_ID','MARKETS_AWS_SECRET_ACCESS_KEY','MARKETS_AWS_SESSION_TOKEN'}\nvalues = {}\nfor raw in open(source, encoding='utf-8'):\n    line = raw.strip()\n    if not line or line.startswith('#'): continue\n    if line.startswith('export '): line = line[7:].strip()\n    parts = shlex.split(line, comments=True)\n    if len(parts) != 1 or '=' not in parts[0]: raise SystemExit('unsupported credential statement')\n    key, value = parts[0].split('=', 1)\n    if key in allowed: values[key] = value\nfd = os.open(destination, os.O_WRONLY|os.O_CREAT|os.O_EXCL, 0o600)\nwith os.fdopen(fd, 'w') as handle:\n    for key, value in sorted(values.items()): handle.write(f'{key}={shlex.quote(value)}\\n')\nPYCRED",
-              f"( set -a; source \"$aws_env\"; set +a; aws s3 cp {shlex.quote('s3://' + os.environ['BUCKET'] + '/' + os.environ['PACKAGE_KEY'])} \"$package\" --region us-east-2 --endpoint-url {shlex.quote(os.environ['S3_ENDPOINT_URL'])} --only-show-errors )",
-              f"echo {shlex.quote(os.environ['PACKAGE_SHA256'] + '  ' + package)} | sha256sum -c -",
-              "tar -xzf \"$package\" -C \"$repo\"",
-              "test -s \"$repo/PACKAGE_MANIFEST.json\"",
-              "( set -a; source \"$aws_env\"; set +a; key=\"$(aws ssm get-parameter --name /markets/OPENAI_API_KEY --with-decryption --region us-east-2 --query Parameter.Value --output text)\"; test -n \"$key\"; printf 'OPENAI_API_KEY=%q\\n' \"$key\" > \"$openai_env\"; unset key )",
-              "chmod 0400 \"$aws_env\" \"$openai_env\"",
-              "\"$runtime_python\" -m venv \"$root/venv\"",
-              "\"$root/venv/bin/python\" -m pip install --disable-pip-version-check --no-index --only-binary=:all: --find-links \"$repo/deploy/wheelhouse\" --require-hashes -r \"$repo/deploy/aws/requirements-frankie-fullstack-20260824.lock\"",
-              "if id \"$provider_user\" >/dev/null 2>&1; then echo provider identity exists >&2; exit 1; fi",
-              "useradd --system --no-create-home --shell /usr/sbin/nologin \"$provider_user\"",
-              "provider_group=\"$(id -gn \"$provider_user\")\"",
-              "chown -R root:\"$provider_group\" \"$repo\" \"$root/input\"",
+              f"( set -a; source \"$aws_env\"; set +a; aws s3 cp {shlex.quote(output_uri + '/repo.tgz')} \"$repo_tgz\" --region us-east-2 --endpoint-url {shlex.quote(os.environ['S3_ENDPOINT_URL'])} --only-show-errors )",
+              f"test \"$(sha256sum \"$repo_tgz\" | awk '{{print $1}}')\" = {shlex.quote(os.environ['REPO_SHA256'])}",
+              "tar -xzf \"$repo_tgz\" -C \"$repo\"",
+              "if id \"$packet_user\" >/dev/null 2>&1; then echo packet identity exists >&2; exit 1; fi",
+              "useradd --system --no-create-home --shell /usr/sbin/nologin \"$packet_user\"",
+              "packet_group=\"$(id -gn \"$packet_user\")\"",
+              "chown -R root:\"$packet_group\" \"$repo\" \"$root/input\"",
               "chmod -R g+rX,g-w,o-rwx \"$repo\" \"$root/input\"",
-              "chown -R \"$provider_user\":\"$provider_group\" \"$output\" \"$root/venv\"",
-              "chown \"$provider_user\":\"$provider_group\" \"$openai_env\"",
-              "install -o \"$provider_user\" -g \"$provider_group\" -m 0600 /dev/null \"$run_log\"",
-              f"printf %s {shlex.quote(b64(runner))} | base64 -d > \"$root/run.sh\"",
-              f"printf %s {shlex.quote(b64(validator))} | base64 -d > \"$root/validate.py\"",
-              "chown \"$provider_user\":\"$provider_group\" \"$root/run.sh\"",
-              "chmod 0700 \"$root/run.sh\" \"$root/validate.py\"",
-              "systemd-run --wait --collect --unit \"$unit\" --uid \"$provider_user\" --gid \"$provider_group\" --property=Type=exec --property=Restart=no --property=NoNewPrivileges=yes --property=PrivateTmp=yes --property=PrivateDevices=yes --property=ProtectHome=yes --property=ProtectSystem=strict --property=IPAddressDeny=169.254.169.254/32 --property=IPAddressDeny=fd00:ec2::254/128 --property=ReadWritePaths=\"$output $run_log\" --property=InaccessiblePaths=\"$aws_env $source_credential /mnt/markets/ng_exhaustion_step1_5y_20260822 /mnt/markets/ng_exhaustion_two_day_step1_20260824 /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825\" /bin/bash \"$root/run.sh\"",
-              f"\"$root/venv/bin/python\" \"$root/validate.py\" \"$output\" {shlex.quote(os.environ['APPROVED_MAX_COST_USD'])} {shlex.quote(os.environ['MISSION_SHA256'])}",
-              "test ! -e \"$output/PUBLISHED.json\"",
-              "( set -a; source \"$aws_env\"; set +a; for name in PREFLIGHT.json SOURCE_VERIFY.json SLICE_MANIFEST.json ANSWER_WALL.json CAPABILITY_RECONCILIATION.json RT_CONTEXT_MANIFEST.json RT_PROVIDER_RECEIPT.json RT_FIRST_LOCK.json RT_FROZEN_STATE.json ONEWAY_HANDOFF.json FORECASTER_CONTEXT_MANIFEST.json FORECASTER_PROVIDER_RECEIPT.json FORECASTER_FIRST_LOCK.json USAGE_COST.json ARTIFACT_MANIFEST.json; do aws s3 cp \"$output/$name\" \"$output_uri/$name\" --region us-east-2 --endpoint-url https://s3.us-east-2.amazonaws.com --only-show-errors; done; aws s3 cp \"$run_log\" \"$output_uri/RUN.log\" --region us-east-2 --endpoint-url https://s3.us-east-2.amazonaws.com --only-show-errors; aws s3 cp \"$output/COMPLETE.json\" \"$output_uri/COMPLETE.json\" --region us-east-2 --endpoint-url https://s3.us-east-2.amazonaws.com --only-show-errors )",
-              "printf '%s\\n' '{\"published_last\":true}' > \"$output/PUBLISHED.json\"",
-              "echo PRIOR_SURFACE_BLIND_TWO_CALL_GATES=PASS",
-              "echo BLIND_SYSTEMD_UNIT=$unit", "echo BLIND_RUN_ROOT=$root",
-              "echo BLIND_OUTPUT_PREFIX=$output_uri/",
+              "install -d -o \"$packet_user\" -g \"$packet_group\" -m 0700 \"$packet\"",
+              "systemd-run --wait --collect --unit \"$unit\" --uid \"$packet_user\" --gid \"$packet_group\" --property=Type=exec --property=Restart=no --property=NoNewPrivileges=yes --property=PrivateTmp=yes --property=PrivateDevices=yes --property=ProtectHome=yes --property=ProtectSystem=strict --property=IPAddressDeny=any --property=ReadOnlyPaths=\"$repo $root/input\" --property=ReadWritePaths=\"$packet\" --property=InaccessiblePaths=\"$aws_env $source_credential /mnt/markets/ng_exhaustion_step1_5y_20260822 /mnt/markets/ng_exhaustion_two_day_step1_20260824 /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825\" /usr/bin/env -u OPENAI_API_KEY -u MARKETS_OPENAI_API_KEY -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN python3 \"$repo/research/kalshi/ng_exhaustion_two_frankies_workmode_packet_2day_20260825.py\" --source \"$source\" --output-root \"$packet/output\" --run-id \"workmode-$LAUNCH_IDENTITY\"",
+              "test -s \"$packet/output/PACKET_COMPLETE.json\"",
+              "tar -czf \"$packet_tgz\" -C \"$packet\" output",
+              "sha256sum \"$packet_tgz\" > \"$packet_sha\"",
+              "python3 - \"$identity_json\" \"$packet_tgz\" <<'PYID'\nimport hashlib,json,os,sys\npath,out=sys.argv[1:]\nraw=open(out,'rb').read()\nvalue={'schema':'FRANKIE_KEYLESS_PACKET_STAGE_IDENTITY_V2_20260825','source_commit':os.environ['GITHUB_SHA'],'implementation_commit':os.environ['IMPLEMENTATION_COMMIT'],'authorization_commit':os.environ['AUTHORIZATION_COMMIT'],'launch_commit':os.environ['GITHUB_SHA'],'github_run_id':os.environ['GITHUB_RUN_ID'],'github_run_attempt':os.environ['GITHUB_RUN_ATTEMPT'],'launch_identity':os.environ['LAUNCH_IDENTITY'],'window':{'start':os.environ['WINDOW_START'],'end_exclusive':os.environ['WINDOW_END_EXCLUSIVE']},'source_bytes':int(os.environ['EXPECTED_SECONDS_BYTES']),'source_sha256':os.environ['EXPECTED_SECONDS_SHA256'],'packet_sha256':hashlib.sha256(raw).hexdigest(),'provider_api_called':False,'openai_key_used':False,'cli_model_called':False,'logical_role_calls_completed':0,'canary':False,'tests':False}\nvalue['receipt_hash']=hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode()).hexdigest()\nopen(path,'w',encoding='utf-8').write(json.dumps(value,indent=2,sort_keys=True)+'\\n')\nPYID",
+              "( set -a; source \"$aws_env\"; set +a; aws s3 cp \"$packet_tgz\" \"$output_uri/packet.tgz\" --region us-east-2 --endpoint-url https://s3.us-east-2.amazonaws.com --only-show-errors; aws s3 cp \"$packet_sha\" \"$output_uri/packet.sha256\" --region us-east-2 --endpoint-url https://s3.us-east-2.amazonaws.com --only-show-errors; aws s3 cp \"$identity_json\" \"$output_uri/stage_identity.json\" --region us-east-2 --endpoint-url https://s3.us-east-2.amazonaws.com --only-show-errors )",
+              "shred -u \"$aws_env\"",
+              "echo KEYLESS_WORK_PACKET_STAGE=PASS",
           ]
-          Path("/tmp/prior-surface-blind-params.json").write_text(
-              json.dumps({
-                  "commands": ["/bin/bash -lc " + shlex.quote("\n".join(commands))],
-                  "executionTimeout": ["8400"],
-              }),
-              encoding="utf-8",
-          )
-          Path("/tmp/prior-surface-blind-identity.json").write_text(
-              json.dumps({
-                  "source_commit": sha, "unit": unit, "run_root": root,
-                  "output_prefix": output_uri + "/", "mission_sha256": os.environ["MISSION_SHA256"],
-                  "source_sha256": os.environ["EXPECTED_SECONDS_SHA256"],
-                  "logical_call_count": 2, "role_sequence": ["REAL_TIME_FRANKIE", "FORECASTER_FRANKIE"],
-                  "production_mutation": False,
-              }, indent=2, sort_keys=True) + "\n",
-              encoding="utf-8",
-          )
+          Path("/tmp/frankie-keyless-packet-params.json").write_text(json.dumps({
+              "commands": ["/bin/bash -lc " + shlex.quote("\n".join(commands))],
+              "executionTimeout": ["3000"],
+          }), encoding="utf-8")
           PY
-
           command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" \
             --document-name AWS-RunShellScript \
-            --comment "Exact two-call blind prior-surface October 4-5 Frankie run" \
-            --parameters file:///tmp/prior-surface-blind-params.json \
-            --timeout-seconds 8400 --query Command.CommandId --output text)"
+            --comment "Keyless exact Oct 4-5 Frankie Work packet stage" \
+            --parameters file:///tmp/frankie-keyless-packet-params.json \
+            --timeout-seconds 3000 --query Command.CommandId --output text)"
           status=Pending
-          for _ in $(seq 1 560); do
+          for _ in $(seq 1 330); do
             status="$(aws ssm get-command-invocation --command-id "$command_id" \
               --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
             case "$status" in Success|Failed|TimedOut|Cancelled) break ;; esac
-            sleep 15
+            sleep 10
           done
           aws ssm get-command-invocation --command-id "$command_id" \
             --instance-id "$INSTANCE_ID" \
             --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
-            --output json > /tmp/prior-surface-blind-result.json
+            --output json > /tmp/frankie-keyless-packet-result.json
           test "$status" = Success
-          grep -F PRIOR_SURFACE_BLIND_TWO_CALL_GATES=PASS /tmp/prior-surface-blind-result.json
+          grep -F KEYLESS_WORK_PACKET_STAGE=PASS /tmp/frankie-keyless-packet-result.json
           echo "command_id=$command_id" >> "$GITHUB_OUTPUT"
 
-      - name: Publish non-secret launch evidence
-        if: always()
+      - name: Download and verify keyless packet
+        shell: bash
+        run: |
+          set -euo pipefail
+          artifact="$RUNNER_TEMP/frankie-keyless-work-packet"
+          install -d -m 0700 "$artifact"
+          uri="s3://${BUCKET}/${PACKET_PREFIX}"
+          aws s3 cp "$uri/packet.tgz" "$artifact/packet.tgz" --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
+          aws s3 cp "$uri/packet.sha256" "$artifact/packet.sha256" --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
+          aws s3 cp "$uri/stage_identity.json" "$artifact/stage_identity.json" --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
+          cd "$artifact"
+          sha256sum -c packet.sha256
+          python - <<'PY'
+          import hashlib, json, os
+          value=json.load(open('stage_identity.json',encoding='utf-8'))
+          receipt=value.pop('receipt_hash')
+          assert receipt == hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode()).hexdigest()
+          assert value['source_commit']==os.environ['GITHUB_SHA']
+          assert value['implementation_commit']==os.environ['IMPLEMENTATION_COMMIT']
+          assert value['authorization_commit']==os.environ['AUTHORIZATION_COMMIT']
+          assert value['launch_commit']==os.environ['GITHUB_SHA']
+          assert value['github_run_id']==os.environ['GITHUB_RUN_ID']
+          assert value['github_run_attempt']==os.environ['GITHUB_RUN_ATTEMPT']
+          assert value['launch_identity']==f"{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}"
+          assert value['packet_sha256']==__import__('hashlib').sha256(open('packet.tgz','rb').read()).hexdigest()
+          assert value['logical_role_calls_completed']==0
+          assert value['provider_api_called'] is False and value['openai_key_used'] is False
+          assert value['canary'] is False and value['tests'] is False
+          PY
+
+      - name: Publish private Work packet artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: prior-surface-blind-launch-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            /tmp/prior-surface-blind-result.json
-            /tmp/prior-surface-blind-identity.json
-          if-no-files-found: warn
-          retention-days: 30
+          name: frankie-keyless-work-packet-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/frankie-keyless-work-packet
+          if-no-files-found: error
+          retention-days: 7
 
-      - name: Report exact isolated run
-        if: always()
+      - name: Report packet stage only
         shell: bash
         run: |
           {
-            echo '### Prior reduced / non-full-MBO blind two-Frankie run'
+            echo '### Keyless prior reduced/non-full-MBO two-day Work packets'
             echo "- Commit: ${GITHUB_SHA}"
-            echo "- SSM command: ${{ steps.launch.outputs.command_id }}"
-            echo "- Input: exact 112852940-byte prior reduced/non-full-MBO seconds artifact, SHA-256 ${EXPECTED_SECONDS_SHA256}"
+            echo "- SSM command: ${{ steps.stage.outputs.command_id }}"
             echo "- Window: [${WINDOW_START}, ${WINDOW_END_EXCLUSIVE})"
-            echo "- Provider sequence: Real-Time Frankie, then Forecaster Frankie"
-            echo "- Logical calls: exactly 2; automatic helpers/scout/canary/tests: 0"
-            echo "- Capability contract: 1,940 leaves / 46 blocks; unavailable historical data stays UNAVAILABLE/UNKNOWN/DORMANT"
-            echo "- Cost cap: USD ${APPROVED_MAX_COST_USD}"
-            echo "- Production mutation: false; protected SHA ${PROTECTED_PRODUCTION_SHA}"
-            echo "- Output: s3://${BUCKET}/${OUTPUT_PREFIX}/ (COMPLETE.json uploaded last)"
+            echo "- Source: ${EXPECTED_SECONDS_BYTES} bytes; SHA-256 ${EXPECTED_SECONDS_SHA256}"
+            echo '- Model/provider calls completed: 0'
+            echo '- OpenAI key/CLI/API: not used'
+            echo '- Tests/canary: not run'
+            echo '- Next: download this private artifact into ChatGPT Work, run RT, freeze, then run Forecaster'
           } >> "$GITHUB_STEP_SUMMARY"
