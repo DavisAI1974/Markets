@@ -318,7 +318,7 @@ jobs:
           aws s3 cp "$uri/packet.sha256" "$artifact/packet.sha256" --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
           aws s3 cp "$uri/stage_identity.json" "$artifact/stage_identity.json" --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
           cd "$artifact"
-          sha256sum -c packet.sha256
+          test "$(sha256sum packet.tgz | awk '{print $1}')" = "$(awk '{print $1}' packet.sha256)"
           python - <<'PY'
           import hashlib, json, os
           value=json.load(open('stage_identity.json',encoding='utf-8'))
