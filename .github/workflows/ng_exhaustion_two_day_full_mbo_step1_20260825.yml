@@ -1,0 +1,308 @@
+name: NG Exhaustion Two-Day Full-MBO Step-1 20260825
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_two_day_full_mbo_step1_20260825.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ng-exhaustion-two-day-full-mbo-step1-20260825
+  cancel-in-progress: false
+
+jobs:
+  run-full-mbo-step1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      BUCKET: bento-568968024170-us-east-2-an
+      INSTANCE_ID: i-08cee7171c0a76a04
+      CANDIDATE_SHA: 0d318335825b4a0e19a5a2881522f3da0374788e
+      PRIOR_ARCHIVE: /mnt/markets/ng_exhaustion_two_day_step1_20260824/32782745590-1/results.tar.gz
+      PRIOR_RUN_ROOT: /mnt/markets/ng_exhaustion_two_day_step1_20260824/32782745590-1
+      PRIOR_ARCHIVE_SHA256: 27cacc62681bc482e89eefcc3746f5d71958beab4e25816054e0c388a0346b33
+      MANIFEST: research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json
+      WRAPPER: research/ng_exhaustion_mbo_2day_full_mbo_step1_20260825.py
+      PRIOR_WRAPPER: research/ng_exhaustion_mbo_2day_step1_finalize_20260824.py
+      RESULT_PREFIX_ROOT: nymex/ng_mbo_5y_v0/step1_census/two_day_full_mbo_corrected/runs
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Launch exact corrected full-MBO computation
+        shell: bash
+        run: |
+          set -euo pipefail
+          result_prefix="$RESULT_PREFIX_ROOT/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          export RESULT_PREFIX="$result_prefix"
+          wrapper_sha="$(sha256sum "$WRAPPER" | cut -d' ' -f1)"
+          prior_wrapper_sha="$(sha256sum "$PRIOR_WRAPPER" | cut -d' ' -f1)"
+          export WRAPPER_SHA256="$wrapper_sha" PRIOR_WRAPPER_SHA256="$prior_wrapper_sha"
+          aws s3 cp "$WRAPPER" "s3://$BUCKET/$result_prefix/input/$(basename "$WRAPPER")" --only-show-errors
+
+          python - <<'PY'
+          import base64, json, os, shlex
+          from pathlib import Path
+          import boto3
+          from botocore.client import Config
+
+          manifest=json.loads(Path(os.environ['MANIFEST']).read_text())
+          wanted={'20211001','20211003','20211004','20211005'}
+          objects=[x for x in manifest['canonical_dbn_objects']
+                   if x.get('segment')=='20211001_20211101'
+                   and Path(x['key']).name.split('-')[-1].split('.')[0] in wanted]
+          if len(objects)!=4:
+              raise SystemExit(f'EXACT_RAW_MBO_ROSTER_DRIFT={len(objects)}')
+          endpoint="https://s3.us-east-2.amazonaws.com"
+          s3=boto3.client('s3',region_name='us-east-2',endpoint_url=endpoint,
+              config=Config(signature_version='s3v4',s3={'addressing_style':'virtual'}))
+          downloads=[]
+          for obj in objects:
+              head=s3.head_object(Bucket=os.environ['BUCKET'],Key=obj['key'])
+              if int(head['ContentLength'])!=int(obj['bytes']):
+                  raise SystemExit('RAW_MBO_HEAD_SIZE_DRIFT='+obj['key'])
+              downloads.append({'name':Path(obj['key']).name,'bytes':obj['bytes'],
+                  'sha256':obj['sha256'],'url':s3.generate_presigned_url('get_object',
+                    Params={'Bucket':os.environ['BUCKET'],'Key':obj['key']},ExpiresIn=21600)})
+          put_url=s3.generate_presigned_url('put_object',Params={'Bucket':os.environ['BUCKET'],
+              'Key':os.environ['RESULT_PREFIX']+'/transfer/results.tar.gz'},ExpiresIn=21600)
+          wrapper_url=s3.generate_presigned_url('get_object',Params={'Bucket':os.environ['BUCKET'],
+              'Key':os.environ['RESULT_PREFIX']+'/input/'+Path(os.environ['WRAPPER']).name},ExpiresIn=21600)
+          for row in downloads:
+              print('::add-mask::'+row['url'])
+          print('::add-mask::'+put_url)
+          print('::add-mask::'+wrapper_url)
+          Path('/tmp/raw-downloads.b64').write_text(base64.b64encode(
+              json.dumps(downloads,separators=(',',':')).encode()).decode())
+          Path('/tmp/result-put-url').write_text(put_url)
+          Path('/tmp/wrapper-get-url').write_text(wrapper_url)
+          print('RAW_MBO_OBJECT_COUNT=4')
+          print('RAW_MBO_COMPRESSED_BYTES='+str(sum(int(x['bytes']) for x in objects)))
+          print('RAW_MBO_DATES=20211001,20211003,20211004,20211005')
+          PY
+          RAW_DOWNLOADS_B64="$(cat /tmp/raw-downloads.b64)"
+          RESULT_PUT_URL="$(cat /tmp/result-put-url)"
+          WRAPPER_GET_URL="$(cat /tmp/wrapper-get-url)"
+          export RAW_DOWNLOADS_B64 RESULT_PUT_URL WRAPPER_GET_URL
+
+          python - <<'PY'
+          import json, os, shlex
+          candidate=os.environ['CANDIDATE_SHA']
+          base=f'/mnt/markets/ng_exhaustion_step1_5y_20260822/{candidate}'
+          run_root=f'/mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/{os.environ["GITHUB_RUN_ID"]}-{os.environ["GITHUB_RUN_ATTEMPT"]}'
+          remote=f'''set -euo pipefail
+          base={shlex.quote(base)}
+          run_root={shlex.quote(run_root)}
+          prior_root={shlex.quote(os.environ['PRIOR_RUN_ROOT'])}
+          prior_archive={shlex.quote(os.environ['PRIOR_ARCHIVE'])}
+          prior_sha={shlex.quote(os.environ['PRIOR_ARCHIVE_SHA256'])}
+          wrapper_get_url={shlex.quote(os.environ['WRAPPER_GET_URL'])}
+          wrapper_sha={shlex.quote(os.environ['WRAPPER_SHA256'])}
+          prior_wrapper_sha={shlex.quote(os.environ['PRIOR_WRAPPER_SHA256'])}
+          raw_downloads_b64={shlex.quote(os.environ['RAW_DOWNLOADS_B64'])}
+          result_put_url={shlex.quote(os.environ['RESULT_PUT_URL'])}
+          test -x "$base/venv/bin/python"
+          test -f "$prior_archive"
+          test "$(sha256sum "$prior_archive" | cut -d' ' -f1)" = "$prior_sha"
+          test -f "$prior_root/repo/{os.environ['PRIOR_WRAPPER']}"
+          test "$(sha256sum "$prior_root/repo/{os.environ['PRIOR_WRAPPER']}" | cut -d' ' -f1)" = "$prior_wrapper_sha"
+          test ! -e "$run_root"
+          mkdir -p "$run_root/repo" "$run_root/baseline" "$run_root/raw"
+          cp -a --reflink=auto "$prior_root/repo/." "$run_root/repo/"
+          curl --fail --silent --show-error --location --output "$run_root/repo/{os.environ['WRAPPER']}" "$wrapper_get_url"
+          test "$(sha256sum "$run_root/repo/{os.environ['WRAPPER']}" | cut -d' ' -f1)" = "$wrapper_sha"
+          tar -C "$run_root/baseline" -xzf "$prior_archive"
+          RAW_DOWNLOADS_B64="$raw_downloads_b64" "$base/venv/bin/python" - "$run_root/raw" <<'PYRAW'
+          import base64,hashlib,json,os,subprocess,sys
+          from pathlib import Path
+          root=Path(sys.argv[1]); rows=json.loads(base64.b64decode(os.environ['RAW_DOWNLOADS_B64']))
+          for row in rows:
+              path=root/row['name']
+              subprocess.run(['curl','--fail','--silent','--show-error','--location','--output',str(path),row['url']],check=True)
+              if path.stat().st_size!=int(row['bytes']): raise SystemExit('RAW_MBO_SIZE_DRIFT='+row['name'])
+              if hashlib.sha256(path.read_bytes()).hexdigest()!=row['sha256']: raise SystemExit('RAW_MBO_SHA_DRIFT='+row['name'])
+          print('RAW_MBO_DOWNLOAD_HASHES=PASS')
+          PYRAW
+          cd "$run_root/repo"
+          mapfile -t raw_paths < <(find "$run_root/raw" -type f -name '*.dbn.zst' | sort)
+          MPLCONFIGDIR="$run_root/matplotlib" PYTHONPATH=research \
+            /usr/bin/time -v -o "$run_root/resource.txt" \
+            "$base/venv/bin/python" {os.environ['WRAPPER']} \
+              --parent-manifest {os.environ['MANIFEST']} \
+              --baseline-results "$run_root/baseline" \
+              --baseline-results-tar-sha256 "$prior_sha" \
+              --raw-mbo "${{raw_paths[@]}}" \
+              --out-dir "$run_root/results" | tee "$run_root/run.log"
+          cp "$run_root/resource.txt" "$run_root/results/RESOURCE_USAGE.txt"
+          cp "$run_root/run.log" "$run_root/results/RUN.log"
+          "$base/venv/bin/python" - "$run_root/results" <<'PYMANIFEST'
+          import hashlib,json,sys
+          from pathlib import Path
+          root=Path(sys.argv[1]); rows=[]
+          for path in sorted(p for p in root.rglob('*') if p.is_file()):
+              rows.append({'relative_path':path.relative_to(root).as_posix(),'bytes':path.stat().st_size,
+                  'sha256':hashlib.sha256(path.read_bytes()).hexdigest()})
+          manifest={'schema':'NG_EXHAUSTION_TWO_DAY_FULL_MBO_RESULT_FILE_MANIFEST_V1_20260825','files':rows}
+          manifest['manifest_sha256']=hashlib.sha256(json.dumps(manifest,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          (root/'RESULT_FILE_MANIFEST.json').write_text(json.dumps(manifest,indent=2,sort_keys=True)+'\n')
+          print('TWO_DAY_FULL_MBO_RESULT_MANIFEST_SHA256='+manifest['manifest_sha256'])
+          PYMANIFEST
+          tar -C "$run_root/results" -czf "$run_root/results.tar.gz" .
+          curl --fail --silent --show-error --request PUT --upload-file "$run_root/results.tar.gz" "$result_put_url"
+          echo TWO_DAY_FULL_MBO_WORKER=PASS
+          echo TWO_DAY_FULL_MBO_RESULTS_TAR_SHA256=$(sha256sum "$run_root/results.tar.gz" | cut -d' ' -f1)
+          '''
+          with open('/tmp/full-mbo-params.json','w') as f:
+              json.dump({'commands':['/bin/bash -lc '+shlex.quote(remote)]},f)
+          PY
+
+          command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Corrected Oct 4-5 Step-1 with direct full MBO native vector" \
+            --parameters file:///tmp/full-mbo-params.json --timeout-seconds 18000 \
+            --query 'Command.CommandId' --output text)"
+          echo "SSM_COMMAND_ID=$command_id"
+          for poll in $(seq 1 1200); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" \
+              --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in Success|Failed|Cancelled|TimedOut|Cancelling) break;; esac
+            if [ $((poll % 20)) -eq 0 ]; then echo "SSM_PROGRESS_STATUS=${status:-PENDING}"; fi
+            sleep 15
+          done
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json > /tmp/full-mbo-invocation.json
+          python - <<'PY'
+          import json
+          result=json.load(open('/tmp/full-mbo-invocation.json'))
+          print('WORKER_STATUS='+str(result.get('Status')))
+          print('WORKER_RESPONSE_CODE='+str(result.get('ResponseCode')))
+          lines=str(result.get('StandardOutput') or '').splitlines()
+          for line in lines:
+              if line.startswith('TWO_DAY_FULL_MBO_'): print(line)
+          if result.get('Status')!='Success' or result.get('ResponseCode')!=0:
+              print(str(result.get('StandardError') or ''))
+              raise SystemExit('TWO_DAY_FULL_MBO_WORKER_FAILED')
+          values=dict(line.split('=',1) for line in lines if '=' in line)
+          for key,path in (('TWO_DAY_FULL_MBO_RESULTS_TAR_SHA256','/tmp/expected-full-mbo-tar-sha256'),
+                           ('TWO_DAY_FULL_MBO_RESULT_MANIFEST_SHA256','/tmp/expected-full-mbo-manifest-sha256')):
+              value=values.get(key,'')
+              if len(value)!=64: raise SystemExit('WORKER_OUTPUT_BINDING_MISSING='+key)
+              open(path,'w').write(value+'\n')
+          PY
+
+      - name: Verify receipt and publish COMPLETE last
+        shell: bash
+        run: |
+          set -euo pipefail
+          prefix="$RESULT_PREFIX_ROOT/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          mkdir -p /tmp/full-mbo-results
+          aws s3 cp "s3://$BUCKET/$prefix/transfer/results.tar.gz" /tmp/full-mbo-results.tar.gz --only-show-errors
+          tar -C /tmp/full-mbo-results -xzf /tmp/full-mbo-results.tar.gz
+          python - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          root=Path('/tmp/full-mbo-results').resolve()
+          archive=Path('/tmp/full-mbo-results.tar.gz')
+          archive_sha=hashlib.sha256(archive.read_bytes()).hexdigest()
+          expected_archive_sha=Path('/tmp/expected-full-mbo-tar-sha256').read_text().strip()
+          if archive_sha!=expected_archive_sha: raise SystemExit('WORKER_DOWNLOADED_TAR_SHA_DRIFT')
+          file_manifest=json.loads((root/'RESULT_FILE_MANIFEST.json').read_text())
+          claimed_manifest_sha=file_manifest.pop('manifest_sha256')
+          computed_manifest_sha=hashlib.sha256(json.dumps(file_manifest,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          if claimed_manifest_sha!=computed_manifest_sha or claimed_manifest_sha!=Path('/tmp/expected-full-mbo-manifest-sha256').read_text().strip():
+              raise SystemExit('RESULT_FILE_MANIFEST_SHA_DRIFT')
+          listed={row['relative_path']:row for row in file_manifest['files']}
+          actual={path.relative_to(root).as_posix():path for path in root.rglob('*')
+                  if path.is_file() and path.name!='RESULT_FILE_MANIFEST.json'}
+          if set(listed)!=set(actual): raise SystemExit('RESULT_FILE_MANIFEST_COVERAGE_DRIFT')
+          for rel,path in actual.items():
+              row=listed[rel]; digest=hashlib.sha256(path.read_bytes()).hexdigest()
+              if path.stat().st_size!=int(row['bytes']) or digest!=row['sha256']:
+                  raise SystemExit('RESULT_FILE_MANIFEST_IDENTITY_DRIFT='+rel)
+          receipt=json.loads((root/'STEP1_DUAL_FULL_MBO_RECEIPT.json').read_text())
+          claimed=receipt.pop('receipt_sha256')
+          got=hashlib.sha256(json.dumps(receipt,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          if claimed!=got: raise SystemExit('FULL_MBO_RECEIPT_SELF_HASH_DRIFT')
+          if receipt['source_window']!={'start':'2021-10-04T00:00:00Z','end_exclusive':'2021-10-06T00:00:00Z'}:
+              raise SystemExit('FULL_MBO_WINDOW_DRIFT')
+          if receipt['native_full_mbo']['vector_dimension']!=81 or not receipt['native_full_mbo']['raw_mbo_replayed']:
+              raise SystemExit('FULL_MBO_VECTOR_CONTRACT_DRIFT')
+          if receipt['legacy_control']['unchanged_from_receipt_sha256']!='140c6234b8e6f4216416290aa50f4070160e200a3e7025cbca3aa08d0ef42e52':
+              raise SystemExit('LEGACY_BASELINE_DRIFT')
+          verified={}
+          def verify(value):
+              if isinstance(value,dict):
+                  if {'relative_path','bytes','sha256'} <= set(value):
+                      rel=Path(str(value['relative_path']))
+                      path=(root/rel).resolve()
+                      if rel.is_absolute() or '..' in rel.parts or not path.is_relative_to(root) or not path.is_file():
+                          raise SystemExit('FULL_MBO_ARTIFACT_MISSING='+str(rel))
+                      digest=hashlib.sha256(path.read_bytes()).hexdigest()
+                      if path.stat().st_size!=int(value['bytes']) or digest!=value['sha256']:
+                          raise SystemExit('FULL_MBO_ARTIFACT_IDENTITY_DRIFT='+str(rel))
+                      verified[str(rel)]=digest
+                  for child in value.values(): verify(child)
+              elif isinstance(value,list):
+                  for child in value: verify(child)
+          verify(receipt)
+          if len(verified)<15: raise SystemExit('FULL_MBO_ARTIFACT_RECEIPT_TOO_THIN')
+          complete={'schema':'NG_EXHAUSTION_TWO_DAY_FULL_MBO_COMPLETION_V1_20260825','status':'COMPLETE',
+              'github_run_id':os.environ['GITHUB_RUN_ID'],'github_sha':os.environ['GITHUB_SHA'],
+              'step1_receipt_sha256':claimed,'results_tar_sha256':archive_sha,
+              'result_file_manifest_sha256':claimed_manifest_sha,'result_file_count':len(listed)+1,
+              'native_vector_dimension':81,'raw_mbo_replayed':True,'provider_llm_called':False,'frankie_launched':False}
+          complete['completion_sha256']=hashlib.sha256(json.dumps(complete,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          Path('/tmp/FULL_MBO_COMPLETE.json').write_text(json.dumps(complete,indent=2,sort_keys=True)+'\n')
+          print('FULL_MBO_RECEIPT_AND_WINDOW=PASS')
+          print('FULL_MBO_RECEIPT_SHA256='+claimed)
+          print('FULL_MBO_VERIFIED_ARTIFACT_COUNT='+str(len(verified)))
+          print('FULL_MBO_RESULTS_TAR_SHA256='+archive_sha)
+          print('FULL_MBO_RESULT_FILE_MANIFEST_SHA256='+claimed_manifest_sha)
+          PY
+          python - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          import boto3
+          from botocore.client import Config
+          bucket=os.environ['BUCKET']; prefix=f"{os.environ['RESULT_PREFIX_ROOT']}/{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}"
+          s3=boto3.client('s3',region_name='us-east-2',endpoint_url='https://s3.us-east-2.amazonaws.com',
+              config=Config(signature_version='s3v4',s3={'addressing_style':'virtual'}))
+          root=Path('/tmp/full-mbo-results'); published={}
+          for path in sorted(p for p in root.rglob('*') if p.is_file()):
+              key=f"{prefix}/artifacts/{path.relative_to(root).as_posix()}"; body=path.read_bytes(); digest=hashlib.sha256(body).hexdigest()
+              s3.put_object(Bucket=bucket,Key=key,Body=body,Metadata={'sha256':digest}); published[key]=(len(body),digest)
+          wrapper=Path(os.environ['WRAPPER']); body=wrapper.read_bytes(); digest=hashlib.sha256(body).hexdigest()
+          key=f"{prefix}/input/{wrapper.name}"; s3.put_object(Bucket=bucket,Key=key,Body=body,Metadata={'sha256':digest}); published[key]=(len(body),digest)
+          for key,(size,digest) in published.items():
+              head=s3.head_object(Bucket=bucket,Key=key)
+              if int(head['ContentLength'])!=size or head.get('Metadata',{}).get('sha256')!=digest:
+                  raise SystemExit('FINAL_PUBLICATION_IDENTITY_DRIFT='+key)
+          complete_path=Path('/tmp/FULL_MBO_COMPLETE.json'); complete_body=complete_path.read_bytes(); complete_sha=hashlib.sha256(complete_body).hexdigest()
+          complete_key=f"{prefix}/COMPLETE.json"
+          s3.put_object(Bucket=bucket,Key=complete_key,Body=complete_body,Metadata={'sha256':complete_sha})
+          reread=s3.get_object(Bucket=bucket,Key=complete_key)['Body'].read()
+          if reread!=complete_body: raise SystemExit('COMPLETE_REREAD_BYTE_DRIFT')
+          complete=json.loads(reread); claimed=complete.pop('completion_sha256')
+          computed=hashlib.sha256(json.dumps(complete,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          if claimed!=computed: raise SystemExit('COMPLETE_REREAD_SELF_HASH_DRIFT')
+          transfer_key=f"{prefix}/transfer/results.tar.gz"
+          expected=set(published)|{complete_key,transfer_key}
+          actual={row['Key'] for row in s3.list_objects_v2(Bucket=bucket,Prefix=prefix+'/').get('Contents',[])}
+          if actual!=expected: raise SystemExit('FINAL_PUBLICATION_OBJECT_SET_DRIFT')
+          transfer=s3.head_object(Bucket=bucket,Key=transfer_key)
+          if int(transfer['ContentLength'])!=Path('/tmp/full-mbo-results.tar.gz').stat().st_size:
+              raise SystemExit('FINAL_TRANSFER_OBJECT_SIZE_DRIFT')
+          print('FULL_MBO_COMPLETE_LAST_REREAD=PASS')
+          print('FULL_MBO_FINAL_OBJECT_COUNT='+str(len(actual)))
+          PY
