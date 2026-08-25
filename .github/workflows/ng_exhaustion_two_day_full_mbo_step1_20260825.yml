@@ -1,4 +1,4 @@
-name: ONE-SHOT APPROVED - NG Exhaustion Two-Day Full-MBO Step-1 20260825
+name: NG Exhaustion Two-Day Full-MBO Step-1 20260825
 
 on:
   workflow_dispatch:
@@ -12,11 +12,6 @@ on:
         description: Exact branch commit approved for this rerun
         required: true
         type: string
-  push:
-    branches:
-      - chatgpt/frankie-october-aws-readonly-20260824
-    paths:
-      - .github/workflows/ng_exhaustion_two_day_full_mbo_step1_20260825.yml
 
 permissions:
   contents: read
@@ -27,15 +22,7 @@ concurrency:
 
 jobs:
   run-full-mbo-step1:
-    if: >-
-      ${{
-        (github.event_name == 'workflow_dispatch' &&
-         inputs.confirm_direct_rerun &&
-         inputs.expected_commit == github.sha) ||
-        (github.event_name == 'push' &&
-         github.ref == 'refs/heads/chatgpt/frankie-october-aws-readonly-20260824' &&
-         contains(github.event.head_commit.message, '[APPROVED_FULL_MBO_DIRECT_RERUN_20260825]'))
-      }}
+    if: ${{ inputs.confirm_direct_rerun && inputs.expected_commit == github.sha }}
     runs-on: ubuntu-latest
     timeout-minutes: 300
     env:
