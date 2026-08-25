@@ -36,6 +36,24 @@ _OLDER_PROPOSALS = (
     "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_FINAL_ADDENDUM_20260820.md",
 )
 
+# The curated document is the governing map, but its runtime-manifest references
+# expose additional S137/P0 implementation dependencies.  The handoff requires
+# discovery of renamed/later sources rather than silently stopping at the map.
+_DISCOVERED_PROVISIONAL_PATHS = (
+    "research/kalshi/frankie_cognition.py",
+    "research/kalshi/frankie_cognitive_candidates.py",
+    "research/kalshi/frankie_cognitive_experiment_row_schema.json",
+    "research/kalshi/frankie_cognitive_experiments.py",
+    "research/kalshi/frankie_cognitive_p0_loops.py",
+    "research/kalshi/frankie_gdl_p0_controls.py",
+    "research/kalshi/frankie_market_p0_controls.py",
+    "research/kalshi/frankie_microstructure_p0_baselines.py",
+    "research/kalshi/frankie_p0_real_evidence_plan.py",
+    "research/kalshi/frankie_p0_registry.py",
+    "research/kalshi/frankie_progress_compress_p0.py",
+    "research/kalshi/frankie_temporal_p0_controls.py",
+)
+
 
 def _inventory_rows(root: Path) -> tuple[tuple[str, str], ...]:
     source = root / INVENTORY_PATH
@@ -120,6 +138,19 @@ def production_source_specs(root: str | Path) -> tuple[SourceSpec, ...]:
                 supersedes=supersedes,
                 target_relationship=target,
                 access_policy=policy,
+            )
+        )
+    catalogued = {item.path for item in specs}
+    for path in _DISCOVERED_PROVISIONAL_PATHS:
+        if path in catalogued:
+            continue
+        if not (root_path / path).is_file():
+            raise KnowledgeCatalogError(f"discovered provisional dependency is missing: {path}")
+        specs.append(
+            SourceSpec(
+                path=path,
+                authority=AuthorityClass.PROVISIONAL_SHADOW,
+                access_policy=AccessPolicy.SHADOW_ONLY,
             )
         )
     return tuple(specs)

@@ -22,13 +22,20 @@ class ProductionKnowledgeInventoryTests(unittest.TestCase):
         specs = production_source_specs(ROOT)
         by_path = {item.path: item for item in specs}
 
-        self.assertEqual(len(specs), 138)
+        self.assertEqual(len(specs), 150)
         self.assertEqual(len(by_path), len(specs))
         self.assertTrue(all((ROOT / path).is_file() for path in by_path))
         self.assertEqual(
             {item.authority for item in specs},
             set(AuthorityClass),
         )
+        for path in (
+            "research/kalshi/frankie_cognitive_p0_loops.py",
+            "research/kalshi/frankie_progress_compress_p0.py",
+            "research/kalshi/frankie_p0_registry.py",
+        ):
+            self.assertEqual(by_path[path].authority, AuthorityClass.PROVISIONAL_SHADOW)
+            self.assertEqual(by_path[path].access_policy, AccessPolicy.SHADOW_ONLY)
 
     def test_current_brain_shadow_answer_and_forbidden_substitute_are_gated(self) -> None:
         by_path = {item.path: item for item in production_source_specs(ROOT)}
