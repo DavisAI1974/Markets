@@ -1,4 +1,32 @@
-# October-only full-MBO/full-V4 shards
+# Frankie full-stack October implementation and launch
+
+- [ ] Inventory and preserve every worktree, branch, modified file, and untracked artifact.
+- [ ] Build and test the authority-gated complete knowledge plane and mechanical answer wall.
+- [ ] Build and test the legacy/V4 crosswalk, continuous derived geometry, and lawful opportunity process.
+- [ ] Build and test the four-helper GPT-5.6 Sol runtime, Frankie-only synthesis, and immutable ledgers.
+- [ ] Integrate the isolated agent commits and pass focused bridge contract tests.
+- [ ] Add the unique bounded October launch workflow/service plus explicit rollback/stop instructions.
+- [ ] Run one bounded five-axis pre-launch review and resolve every Critical/Required finding.
+- [ ] Pass all 15 minimum launch gates without rerunning broad settled suites or October Step-1.
+- [ ] Commit and push the exact integrated construction to the target branch.
+- [ ] Launch full October and capture the required live receipts, provider ID, run URL, and remote state.
+
+## Checkpoint: scientific wall and runtime contracts
+
+- [ ] Step-1 is unreadable before freeze and answer-wall access is receipted.
+- [ ] Forbidden V3 outputs and D1 ExtraTrees values are mechanically denied.
+- [ ] S135 plus all 90 plays and frozen 54/55-week learned structure are retrievable.
+- [ ] Four helpers share identical lawful prefix hashes; Frankie is the sole lock owner.
+
+## Checkpoint: launch
+
+- [ ] Actual `gpt-5.6-sol` response accepted with provider response ID.
+- [ ] First state, helper-evidence, reasoning, probability, lock/no-lock records persist.
+- [ ] Unique service is live, observable, bounded to October, and reversible.
+
+---
+
+# Archived: October-only full-MBO/full-V4 shards
 
 - [x] Read and accept the October handoff and frozen scientific contract.
 - [x] Audit the existing draft; reject snapshot-syntax-only boundaries.
