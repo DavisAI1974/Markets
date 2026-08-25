@@ -11,11 +11,11 @@
     "bytes": 112852940,
     "sha256": "93654eb5eaf24be6dc6821f422cdd7fc416e12778dcecd6c97150cbc34004f90"
   },
-  "launch_authorized": false,
+  "launch_authorized": true,
   "authorization": {
-    "authorized_by": null,
-    "authorized_at": null,
-    "exact_implementation_commit": null,
+    "authorized_by": "Greg",
+    "authorized_at": "2026-08-25T12:59:25Z",
+    "exact_implementation_commit": "55f21cebedbb22c1dd9375605bfd89630bdaf8ea",
     "approval_scope": "KEYLESS_EXACT_TWO_DAY_TWO_PRINCIPAL_ROLES_OPTIONAL_ONE_FORECASTER_HELPER_NO_CANARY_NO_TESTS"
   },
   "model": {
@@ -78,7 +78,7 @@
     "complete_frozen_rt_output_injected": true
   },
   "study_design": "ANSWER_KEY_BLIND_RETROSPECTIVE_DISCOVERY_NOT_BLIND_OOS_VALIDATION",
-  "transient_one_shot_workflow_sha256": null,
+  "transient_one_shot_workflow_sha256": "af88e5bc573b45abe4b7be780d3d4582ac59c1879e269b6913c6bad641db4ede",
   "files": {
     "build_control": {
       "path": "research/kalshi/NG_EXHAUSTION_PRIOR_SURFACE_OCT45_TWO_FRANKIES_BUILD_CONTROL_20260825.md",
