@@ -1,6 +1,6 @@
-# Frankie full-stack October implementation and launch
+# Frankie full-stack October and boss/Sol-replacement lifecycle
 
-## Active continuation: Frankie boss / Sol replacement seam
+## Completed checkpoint: Frankie boss / Sol replacement seam
 
 ### Outcome
 
@@ -51,7 +51,24 @@ to BLD-1 projection. Keep the existing Frankie core, S135 provider seam, ReFRAG 
 - The existing Frankie core/provider files and ReFRAG manifest governance are not modified or duplicated.
 - The original 101-test checkpoint and all new tests pass from the persisted Markets package.
 
-## Outcome
+### Completion record
+
+- Completed implementation: local `a31307729c00aa6f2996b711ab2fcf65c2ef2e3f`.
+- Connector-published equivalent: `fd7d9a00ac2728660de674a06b6ce55e569311f0`.
+- Remote branch: `codex/frankie-boss-sol-replacement-20260824`.
+- Verification: 101 supplied tests reproduced; 160 bounded implementation/preservation tests passed;
+  1,940 capability paths and 46 blocks remained wired for both lanes and all five roles.
+- Review: no unresolved Critical or Required finding.
+
+### Next continuation
+
+Use `research/kalshi/FRANKIE_BOSS_SOL_REPLACEMENT_HANDOFF_20260824.md` as the governing handoff.
+The next chat must preserve this checkpoint and choose the next bounded Sol-replacement tranche from
+the actual remaining architecture. It must not reinterpret these two completed seams, replace
+Frankie's core/provider boundary, reduce the capability registry, duplicate ReFRAG governance, or
+expand the single graph branch into three models.
+
+## Preserved prior outcome: full-stack October launch
 
 Build a fresh additive runner at the remote target-branch base that implements every requirement in
 `research/kalshi/NG_EXHAUSTION_FRANKIE_FULL_STACK_OCTOBER_NEXT_CHAT_HANDOFF_20260824.md`, passes the

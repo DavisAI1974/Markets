@@ -1,6 +1,6 @@
-# Frankie full-stack October implementation and launch
+# Frankie full-stack October and boss/Sol-replacement lifecycle
 
-## Active: Frankie boss / Sol replacement seam
+## Complete: Frankie boss / Sol replacement seam
 
 - [x] Read the governing Frankie handoffs, architecture records, supplied screenshots, ReFRAG bundle,
   Quantum API artifacts, and actual OD/QSV encoder source.
@@ -13,7 +13,22 @@
 - [x] Lock the boss trunk to exactly one temporal graph branch with a regression test.
 - [x] Run the complete persisted checkpoint suite and relevant Markets regressions (160 passed).
 - [x] Complete adversarial and five-axis reviews; resolve all Critical/Required findings.
-- [ ] Commit atomically, push the branch, and verify the remote files/commit with GitHub.
+- [x] Commit atomically, publish the branch, and verify the remote files/commit with GitHub.
+- [x] Update the Frankie/ReFRAG lifecycle documentation and add the self-contained next-chat handoff.
+
+## Next chat: continue the full Sol replacement
+
+- [ ] Start from `research/kalshi/FRANKIE_BOSS_SOL_REPLACEMENT_HANDOFF_20260824.md`.
+- [ ] Verify the remote branch HEAD and read every required handoff/architecture source before editing.
+- [ ] Preserve the completed clock, QSV-registry, masking/ablation, one-graph, and BLD-1 mappings.
+- [ ] Select and document the next bounded implementation tranche from the actual remaining
+  architecture; do not guess new public semantics or silently promote experimental mechanisms.
+- [ ] Keep all 1,940 capability paths/46 blocks wired and addressable; unwanted paths may be dormant,
+  never deleted or hand-curated away.
+- [ ] Follow the agent-skills 0.6.7 lifecycle through tests, review, documentation, commit, and remote
+  verification.
+
+## Preserved full-stack October backlog
 
 - [ ] Inventory and preserve every worktree, branch, modified file, and untracked artifact.
 - [ ] Build and test the authority-gated complete knowledge plane and mechanical answer wall.

@@ -16,3 +16,12 @@ the completed 101-test checkpoint. The executable package one directory above wa
 The untouched supplied set reproduced `101 passed` before the two continuation slices were applied.
 The raw copies remain the comparison authority; executable files are allowed to diverge only through
 reviewed continuation commits.
+
+The supplied ReFRAG archive is persisted separately at
+`research/refrag/provenance/davisai_refrag_v21_manifests.zip` with SHA-256
+`bc2df161ee55c3fe3e65e2071ef2ba87d005d46b1a16fe550c341630d121a26a`. Its 22 manifests parse, and
+the archive passes an integrity check. Architecture DOCX/PDF sources and the Nucleus source markdown
+are retained under `research/refrag/docs/`.
+
+Checkpoint publication preserves the raw artifact files byte-for-byte. Do not normalize, rename,
+delete, or hand-curate them; future executable changes belong outside `supplied_checkpoint/`.
