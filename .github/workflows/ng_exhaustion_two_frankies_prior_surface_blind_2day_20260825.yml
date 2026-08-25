@@ -1,6 +1,9 @@
 name: NG Exhaustion Two Frankies Keyless Prior Surface Packet 2-Day 20260825
 
 on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
   workflow_dispatch:
     inputs:
       confirm_exact_two_day_packet:
