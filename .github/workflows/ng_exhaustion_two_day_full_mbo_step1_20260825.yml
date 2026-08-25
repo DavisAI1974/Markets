@@ -153,9 +153,9 @@ jobs:
           from pathlib import Path
           root=Path(sys.argv[1]); rows=[]
           for path in sorted(p for p in root.rglob('*') if p.is_file()):
-              rows.append({'relative_path':path.relative_to(root).as_posix(),'bytes':path.stat().st_size,
-                  'sha256':hashlib.sha256(path.read_bytes()).hexdigest()})
-          manifest={'schema':'NG_EXHAUSTION_TWO_DAY_FULL_MBO_RESULT_FILE_MANIFEST_V1_20260825','files':rows}
+              rows.append({{'relative_path':path.relative_to(root).as_posix(),'bytes':path.stat().st_size,
+                  'sha256':hashlib.sha256(path.read_bytes()).hexdigest()}})
+          manifest={{'schema':'NG_EXHAUSTION_TWO_DAY_FULL_MBO_RESULT_FILE_MANIFEST_V1_20260825','files':rows}}
           manifest['manifest_sha256']=hashlib.sha256(json.dumps(manifest,sort_keys=True,separators=(',',':')).encode()).hexdigest()
           (root/'RESULT_FILE_MANIFEST.json').write_text(json.dumps(manifest,indent=2,sort_keys=True)+'\n')
           print('TWO_DAY_FULL_MBO_RESULT_MANIFEST_SHA256='+manifest['manifest_sha256'])
