@@ -1,0 +1,144 @@
+name: ONE-SHOT APPROVED - NG Exhaustion Step-1 Resize Host to x8i 20260827
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_step1_v4_resize_x8i_20260827.yml
+
+permissions:
+  contents: read
+
+jobs:
+  resize-host:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_STEP1_RESIZE_X8I_20260827]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      TARGET_TYPE: x8i.xlarge
+      EXPECTED_ORIGINAL_TYPE: t3.xlarge
+      SOURCE_RUN_ROOT: /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/33054308590-1
+      RESUME_NATIVE_SECONDS: /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/32819740234-1/results/V4_NATIVE_FULL_MBO_SECONDS.jsonl.gz
+      RESUME_NATIVE_SECONDS_SHA256: 899cca3c03d66ba97bbd798b6d000bc3cb12c34d165a6def50b9c6f091b77
+      V4_CONT_ROOT: /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/oom_continue/33078419684-1
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Preflight and dry-run all EC2 mutations
+        shell: bash
+        run: |
+          set -euo pipefail
+          info="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].{Type:InstanceType,State:State.Name,AZ:Placement.AvailabilityZone,Arch:Architecture,Virtualization:VirtualizationType,RootDeviceType:RootDeviceType,VolumeId:BlockDeviceMappings[0].Ebs.VolumeId}' --output json)"
+          echo PRE_RESIZE_INSTANCE="$info"
+          type="$(python -c 'import json,sys; print(json.load(sys.stdin)["Type"])' <<<"$info")"
+          state="$(python -c 'import json,sys; print(json.load(sys.stdin)["State"])' <<<"$info")"
+          az="$(python -c 'import json,sys; print(json.load(sys.stdin)["AZ"])' <<<"$info")"
+          root_type="$(python -c 'import json,sys; print(json.load(sys.stdin)["RootDeviceType"])' <<<"$info")"
+          test "$type" = "$EXPECTED_ORIGINAL_TYPE"
+          test "$state" = running
+          test "$root_type" = ebs
+          offered="$(aws ec2 describe-instance-type-offerings --location-type availability-zone --filters Name=location,Values="$az" Name=instance-type,Values="$TARGET_TYPE" --query 'length(InstanceTypeOfferings)' --output text)"
+          test "$offered" != 0
+          aws ec2 describe-instance-types --instance-types "$TARGET_TYPE" --query 'InstanceTypes[0].{Type:InstanceType,MemoryMiB:MemoryInfo.SizeInMiB,VCpu:VCpuInfo.DefaultVCpus,Architecture:ProcessorInfo.SupportedArchitectures[0]}' --output json
+          dryrun() {
+            label="$1"; shift
+            set +e
+            output="$($@ --dry-run 2>&1)"
+            rc=$?
+            set -e
+            echo "$label=$output"
+            if ! grep -q 'DryRunOperation' <<<"$output"; then
+              echo "DRYRUN_FAILED label=$label rc=$rc" >&2
+              exit 1
+            fi
+          }
+          dryrun STOP aws ec2 stop-instances --instance-ids "$INSTANCE_ID"
+          dryrun MODIFY aws ec2 modify-instance-attribute --instance-id "$INSTANCE_ID" --instance-type "{\"Value\":\"$TARGET_TYPE\"}"
+          dryrun START aws ec2 start-instances --instance-ids "$INSTANCE_ID"
+          echo RESIZE_MUTATION_DRYRUNS=PASS
+
+      - name: Stop, resize, and restart same EBS-backed instance
+        shell: bash
+        run: |
+          set -euo pipefail
+          original_type="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].InstanceType' --output text)"
+          test "$original_type" = "$EXPECTED_ORIGINAL_TYPE"
+          echo STOPPING_INSTANCE="$INSTANCE_ID"
+          aws ec2 stop-instances --instance-ids "$INSTANCE_ID" --output json
+          aws ec2 wait instance-stopped --instance-ids "$INSTANCE_ID"
+          echo INSTANCE_STOPPED=PASS
+          if ! aws ec2 modify-instance-attribute --instance-id "$INSTANCE_ID" --instance-type "{\"Value\":\"$TARGET_TYPE\"}"; then
+            echo RESIZE_MODIFY_FAILED_ROLLING_BACK_START >&2
+            aws ec2 start-instances --instance-ids "$INSTANCE_ID" --output json || true
+            exit 1
+          fi
+          new_type="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].InstanceType' --output text)"
+          test "$new_type" = "$TARGET_TYPE"
+          echo INSTANCE_TYPE_MODIFIED="$new_type"
+          if ! aws ec2 start-instances --instance-ids "$INSTANCE_ID" --output json; then
+            echo RESIZE_START_FAILED_ATTEMPTING_TYPE_ROLLBACK >&2
+            aws ec2 modify-instance-attribute --instance-id "$INSTANCE_ID" --instance-type "{\"Value\":\"$original_type\"}" || true
+            aws ec2 start-instances --instance-ids "$INSTANCE_ID" --output json || true
+            exit 1
+          fi
+          aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
+          aws ec2 wait instance-status-ok --instance-ids "$INSTANCE_ID"
+          final_type="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].InstanceType' --output text)"
+          test "$final_type" = "$TARGET_TYPE"
+          echo RESIZE_CONTROL_PLANE=PASS
+
+      - name: Wait for SSM and verify 64GiB host plus preserved evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          for poll in $(seq 1 90); do
+            ping="$(aws ssm describe-instance-information --filters Key=InstanceIds,Values="$INSTANCE_ID" --query 'InstanceInformationList[0].PingStatus' --output text 2>/dev/null || true)"
+            [ "$ping" = Online ] && break
+            sleep 5
+          done
+          test "$ping" = Online
+          python - <<'PY'
+          import json, os, shlex
+          source=os.environ['SOURCE_RUN_ROOT']
+          native=os.environ['RESUME_NATIVE_SECONDS']
+          native_sha=os.environ['RESUME_NATIVE_SECONDS_SHA256']
+          v4=os.environ['V4_CONT_ROOT']
+          script=(
+              'set -euo pipefail\n'
+              'source='+shlex.quote(source)+'\n'
+              'native='+shlex.quote(native)+'\n'
+              'native_sha='+shlex.quote(native_sha)+'\n'
+              'v4='+shlex.quote(v4)+'\n'
+              'echo POST_RESIZE_HOST_BEGIN\n'
+              'nproc\n'
+              'free -b\n'
+              'mem_kb=$(awk "^MemTotal: {print \\$2}" /proc/meminfo)\n'
+              'test "$mem_kb" -ge 60000000\n'
+              'test "$(nproc)" -eq 4\n'
+              'test -d "$source/repo"\n'
+              'test -d "$source/baseline"\n'
+              'test -d "$source/raw"\n'
+              'test -f "$native"\n'
+              'test "$(sha256sum "$native" | cut -d" " -f1)" = "$native_sha"\n'
+              'test -d "$v4"\n'
+              'echo V4_EVIDENCE_ROOT_PRESERVED=PASS\n'
+              'echo NATIVE_SECONDS_IDENTITY_PRESERVED=PASS\n'
+              'echo POST_RESIZE_HOST=PASS\n'
+          )
+          open('/tmp/post-resize.json','w').write(json.dumps({'commands':['/bin/bash -lc '+shlex.quote(script)],'executionTimeout':['300']}))
+          PY
+          command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript --comment 'Verify resized Step-1 host and preserved evidence' --parameters file:///tmp/post-resize.json --timeout-seconds 300 --query 'Command.CommandId' --output text)"
+          for poll in $(seq 1 60); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in Success|Failed|Cancelled|TimedOut|Cancelling) break;; esac
+            sleep 5
+          done
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' --output json
+          test "$status" = Success
