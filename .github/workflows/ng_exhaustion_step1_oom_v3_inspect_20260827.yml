@@ -1,0 +1,85 @@
+name: ONE-SHOT APPROVED - NG Exhaustion Step-1 OOM V3 Inspect 20260827
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_step1_oom_v3_inspect_20260827.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-v3-service:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_STEP1_OOM_V3_INSPECT_20260827]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      SYSTEMD_UNIT: ng-exhaustion-step1-oom-v3-33077574846-1.service
+      CONT_ROOT: /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/oom_continue/33077574846-1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Inspect failed V3 transient service read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, shlex
+          unit=os.environ['SYSTEMD_UNIT']
+          root=os.environ['CONT_ROOT']
+          script=(
+              'set -u -o pipefail\n'
+              'unit='+shlex.quote(unit)+'\n'
+              'root='+shlex.quote(root)+'\n'
+              'echo SYSTEMCTL_STATUS_BEGIN\n'
+              'systemctl status "$unit" --no-pager -l || true\n'
+              'echo SYSTEMCTL_STATUS_END\n'
+              'echo JOURNAL_BEGIN\n'
+              'journalctl -u "$unit" -n 200 --no-pager -l || true\n'
+              'echo JOURNAL_END\n'
+              'echo CONT_ROOT_LIST_BEGIN\n'
+              'if [ -d "$root" ]; then find "$root" -maxdepth 2 -printf "%y %p %s bytes\\n" | sort; else echo CONT_ROOT_MISSING; fi\n'
+              'echo CONT_ROOT_LIST_END\n'
+              'for f in WORKER_STATUS.json run.log resource.txt; do\n'
+              '  echo FILE_BEGIN=$f\n'
+              '  if [ -f "$root/$f" ]; then cat "$root/$f"; else echo FILE_MISSING=$f; fi\n'
+              '  echo FILE_END=$f\n'
+              'done\n'
+              'echo FREE_BEGIN\n'
+              'free -b || true\n'
+              'echo FREE_END\n'
+              'echo SWAPON_BEGIN\n'
+              'swapon --show || true\n'
+              'echo SWAPON_END\n'
+              'echo V3_READ_ONLY_INSPECT_COMPLETE=PASS\n'
+          )
+          open('/tmp/v3-inspect-params.json','w').write(json.dumps({
+              'commands':['/bin/bash -lc '+shlex.quote(script)],
+              'executionTimeout':['300'],
+          }))
+          PY
+          command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment 'Read-only inspection of failed Step-1 OOM V3 service' \
+            --parameters file:///tmp/v3-inspect-params.json --timeout-seconds 300 \
+            --query 'Command.CommandId' --output text)"
+          echo SSM_COMMAND_ID="$command_id"
+          for poll in $(seq 1 60); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in Success|Failed|Cancelled|TimedOut|Cancelling) break;; esac
+            sleep 5
+          done
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json
+          test "$status" = Success
