@@ -1,0 +1,53 @@
+name: ONE-SHOT APPROVED - NG Exhaustion Step-1 RAM Candidates Control Plane V2 20260827
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_step1_v4_ram_candidates_controlplane_v2_20260827.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-candidates:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_STEP1_RAM_CANDIDATES_CONTROLPLANE_V2_20260827]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Query resize candidates via EC2 control plane only
+        shell: bash
+        run: |
+          set -euo pipefail
+          instance="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].{Type:InstanceType,State:State.Name,AZ:Placement.AvailabilityZone,Arch:Architecture,Virtualization:VirtualizationType,RootDeviceType:RootDeviceType,VolumeId:BlockDeviceMappings[0].Ebs.VolumeId,DeleteOnTermination:BlockDeviceMappings[0].Ebs.DeleteOnTermination}' --output json)"
+          echo CURRENT_INSTANCE="$instance"
+          az="$(python -c 'import json,sys; print(json.load(sys.stdin)["AZ"])' <<<"$instance")"
+          echo FOUR_VCPU_64G_PLUS_BEGIN
+          aws ec2 describe-instance-types --filters Name=processor-info.supported-architecture,Values=x86_64 Name=vcpu-info.default-vcpus,Values=4 --query 'InstanceTypes[?MemoryInfo.SizeInMiB>=`65536`].{Type:InstanceType,MemoryMiB:MemoryInfo.SizeInMiB,VCpu:VCpuInfo.DefaultVCpus,EbsMbps:EbsInfo.EbsOptimizedInfo.BaselineBandwidthInMbps,EbsIops:EbsInfo.EbsOptimizedInfo.BaselineIops,EbsMBps:EbsInfo.EbsOptimizedInfo.BaselineThroughputInMBps}' --output json > /tmp/four.json
+          cat /tmp/four.json
+          echo FOUR_VCPU_64G_PLUS_END
+          echo OFFERED_4VCPU_64G_PLUS_BEGIN
+          python -c 'import json; print("\n".join(x["Type"] for x in json.load(open("/tmp/four.json"))))' | while read -r type; do
+            [ -z "$type" ] && continue
+            n="$(aws ec2 describe-instance-type-offerings --location-type availability-zone --filters Name=location,Values="$az" Name=instance-type,Values="$type" --query 'length(InstanceTypeOfferings)' --output text)"
+            [ "$n" != "0" ] && echo "$type"
+          done
+          echo OFFERED_4VCPU_64G_PLUS_END
+          echo COMMON_TYPES_BEGIN
+          aws ec2 describe-instance-types --instance-types r6i.2xlarge r7i.2xlarge --query 'InstanceTypes[].{Type:InstanceType,MemoryMiB:MemoryInfo.SizeInMiB,VCpu:VCpuInfo.DefaultVCpus,EbsMbps:EbsInfo.EbsOptimizedInfo.BaselineBandwidthInMbps,EbsIops:EbsInfo.EbsOptimizedInfo.BaselineIops,EbsMBps:EbsInfo.EbsOptimizedInfo.BaselineThroughputInMBps}' --output json
+          echo COMMON_TYPES_END
+          echo COMMON_OFFERINGS_BEGIN
+          for type in r6i.2xlarge r7i.2xlarge; do
+            n="$(aws ec2 describe-instance-type-offerings --location-type availability-zone --filters Name=location,Values="$az" Name=instance-type,Values="$type" --query 'length(InstanceTypeOfferings)' --output text)"
+            echo "$type|offered=$n"
+          done
+          echo COMMON_OFFERINGS_END
