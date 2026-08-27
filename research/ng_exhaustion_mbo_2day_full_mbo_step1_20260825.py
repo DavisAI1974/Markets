@@ -27,6 +27,8 @@ RAW_BOOTSTRAP_DATES = ("20211001", "20211003", "20211004", "20211005")
 WRAPPER_PATH = "research/ng_exhaustion_mbo_2day_full_mbo_step1_20260825.py"
 EXPECTED_BASELINE_RECEIPT_SHA256 = "140c6234b8e6f4216416290aa50f4070160e200a3e7025cbca3aa08d0ef42e52"
 EXPECTED_BASELINE_TAR_SHA256 = "27cacc62681bc482e89eefcc3746f5d71958beab4e25816054e0c388a0346b33"
+EXPECTED_RESUME_NATIVE_SECONDS_SHA256 = "899cca3c03d0cd66ba97bbd798b6d000bc3cb12c34d165a6def50b9c6f091b77"
+EXPECTED_RESUME_NATIVE_SECONDS_ROWS = 90_763
 PROPOSAL_SURFACES = ("FLOW", "DEPLETION", "ABSORPTION", "FIFO_FAILURE", "FULL_DEPTH_SHIFT")
 PROPOSAL_WARMUP_SECONDS = 3600
 PROPOSAL_PRIOR_ABS_QUANTILE = 0.95
@@ -67,6 +69,30 @@ def _num(value: Any) -> float:
         return value if math.isfinite(value) else 0.0
     except (TypeError, ValueError, OverflowError):
         return 0.0
+
+
+def _load_resume_native_seconds(path: Path, expected_sha256: str, *,
+        expected_rows: int = EXPECTED_RESUME_NATIVE_SECONDS_ROWS,
+        expected_first: int = WINDOW_START, expected_last: int = WINDOW_END - 1,
+        ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    digest = base.sha256_file(path)
+    if digest != expected_sha256:
+        raise base.CensusError("preserved full-MBO native seconds identity drift")
+    rows = list(base.read_gzip_jsonl(path))
+    seconds = [int(row["epoch_second"]) for row in rows]
+    if (len(rows) != expected_rows or not seconds or min(seconds) != expected_first
+            or max(seconds) != expected_last
+            or any(second < WINDOW_START or second >= WINDOW_END for second in seconds)):
+        raise base.CensusError("preserved full-MBO native seconds coverage drift")
+    return rows, {
+        "status": "PRESERVED_NATIVE_SECONDS_REUSED",
+        "source_path": str(path),
+        "source_gzip_sha256": digest,
+        "rows": len(rows),
+        "first_epoch_second": min(seconds),
+        "last_epoch_second": max(seconds),
+        "raw_mbo_replay_run_id": 32819740234,
+    }
 
 
 class CausalMboCollector:
@@ -211,10 +237,18 @@ class CausalMboCollector:
 class MboSurfaceCollector:
     """Build independent signed causal proposal surfaces from complete MBO callbacks."""
 
+    ACCUMULATED_FIELDS = (
+        "trade_buy", "trade_sell", "cancel_bid", "cancel_ask",
+        "neg_modify_bid", "neg_modify_ask", "add_bid", "add_ask",
+        "pos_modify_bid", "pos_modify_ask", "bid_depth_delta", "ask_depth_delta",
+        "bid_fifo_failure_sum", "ask_fifo_failure_sum", "fifo_observations",
+    )
+
     def __init__(self, source_provenance: dict[str, dict[str, Any]]) -> None:
         self.source_provenance = source_provenance
         self.prior: dict[int, dict[str, Any]] = {}
         self.current: dict[int, tuple[int, dict[str, Any]]] = {}
+        self.pending_group: dict[int, dict[str, Any]] = {}
         self.surface_rows: list[dict[str, Any]] = []
 
     @staticmethod
@@ -270,42 +304,75 @@ class MboSurfaceCollector:
             "source_dbn_key": row["source_dbn_key"],
             "source_dbn_object": row["source_dbn_object"], "source_dbn_sha256": row["source_dbn_sha256"]})
 
+    @classmethod
+    def _merge_completed_group(cls, row: dict[str, Any], group: dict[str, Any]) -> None:
+        for key in cls.ACCUMULATED_FIELDS:
+            row[key] += group[key]
+        row["cutoff_ts_recv_ns"] = group["cutoff_ts_recv_ns"]
+        row["f_last_group_completion_ts_recv_ns"] = group["f_last_group_completion_ts_recv_ns"]
+        row["max_ts_event_ns"] = max(int(row["max_ts_event_ns"]), int(group["max_ts_event_ns"]))
+        row["source_dbn_key"] = group["source_dbn_key"]
+        row["source_dbn_object"] = group["source_dbn_object"]
+        row["source_dbn_sha256"] = group["source_dbn_sha256"]
+
     def consume_effect(self, msg: Any, effect: Any, book: InstrumentBook, frame: dict[str, Any] | None) -> None:
         iid = int(msg.instrument_id); recv_ns = int(msg.ts_recv_ns); sec = recv_ns // 1_000_000_000
         state = CausalMboCollector._state_book(book, recv_ns); prior = self.prior.get(iid, state)
         active = self.current.get(iid)
-        if active is None or active[0] != sec:
-            if active is not None: self._finalize(active[1], recv_ns)
-            row = self._new_row(iid, sec); self.current[iid] = (sec, row)
-        else:
-            row = active[1]
-        row["cutoff_ts_recv_ns"] = recv_ns
-        if msg.is_last: row["f_last_group_completion_ts_recv_ns"] = recv_ns
-        row["max_ts_event_ns"] = max(int(row["max_ts_event_ns"]), int(msg.ts_event_ns))
-        row["source_dbn_object"] = msg.source_dbn_object; row["source_dbn_sha256"] = msg.source_dbn_sha256
-        row["source_dbn_key"] = (self.source_provenance.get(str(msg.source_dbn_object)) or {}).get("key")
-        if not row["source_dbn_key"]:
+        if active is not None and active[0] != sec:
+            self._finalize(active[1], recv_ns)
+            self.current.pop(iid)
+
+        group = self.pending_group.setdefault(iid, self._new_row(iid, sec))
+        group["cutoff_ts_recv_ns"] = recv_ns
+        group["max_ts_event_ns"] = max(int(group["max_ts_event_ns"]), int(msg.ts_event_ns))
+        group["source_dbn_object"] = msg.source_dbn_object
+        group["source_dbn_sha256"] = msg.source_dbn_sha256
+        group["source_dbn_key"] = (self.source_provenance.get(str(msg.source_dbn_object)) or {}).get("key")
+        if not group["source_dbn_key"]:
             raise base.CensusError("MBO action cannot be bound to its manifest source key")
         if msg.action == "T":
-            if msg.side == "B": row["trade_buy"] += max(0.0, float(msg.size))
-            elif msg.side == "A": row["trade_sell"] += max(0.0, float(msg.size))
+            if msg.side == "B": group["trade_buy"] += max(0.0, float(msg.size))
+            elif msg.side == "A": group["trade_sell"] += max(0.0, float(msg.size))
         side = str(effect.side)
         delta = effect.size_delta
         if side in {"B", "A"} and delta is not None and msg.action in {"A", "C", "M"}:
             side_key = "bid" if side == "B" else "ask"; value = float(delta)
-            row[f"{side_key}_depth_delta"] += value
-            if msg.action == "C": row[f"cancel_{side_key}"] += max(0.0, -value)
-            elif msg.action == "A": row[f"add_{side_key}"] += max(0.0, value)
-            elif value < 0: row[f"neg_modify_{side_key}"] += -value
-            elif value > 0: row[f"pos_modify_{side_key}"] += value
+            group[f"{side_key}_depth_delta"] += value
+            if msg.action == "C": group[f"cancel_{side_key}"] += max(0.0, -value)
+            elif msg.action == "A": group[f"add_{side_key}"] += max(0.0, value)
+            elif value < 0: group[f"neg_modify_{side_key}"] += -value
+            elif value > 0: group[f"pos_modify_{side_key}"] += value
         for side in ("bid", "ask"):
             old, new = set(prior[side]["ids"]), set(state[side]["ids"])
             failure = 0.0 if not old else 1.0 - len(old & new) / len(old)
-            row[f"{side}_fifo_failure_sum"] += failure
-        row["fifo_observations"] += 1
+            group[f"{side}_fifo_failure_sum"] += failure
+        group["fifo_observations"] += 1
         self.prior[iid] = state
 
+        if not msg.is_last:
+            return
+        if frame is None:
+            raise base.CensusError("F_LAST MBO action did not produce a completed causal group")
+        group["recv_second"] = sec
+        group["cutoff_ts_recv_ns"] = recv_ns
+        group["f_last_group_completion_ts_recv_ns"] = recv_ns
+        active = self.current.get(iid)
+        if active is None:
+            row = self._new_row(iid, sec)
+            self.current[iid] = (sec, row)
+        elif active[0] == sec:
+            row = active[1]
+        else:
+            self._finalize(active[1], recv_ns)
+            row = self._new_row(iid, sec)
+            self.current[iid] = (sec, row)
+        self._merge_completed_group(row, group)
+        self.pending_group.pop(iid)
+
     def finish(self) -> None:
+        if self.pending_group:
+            raise base.CensusError("MBO surface replay ended with an incomplete causal group")
         for _, row in self.current.values(): self._finalize(row, int(row["cutoff_ts_recv_ns"]))
         self.current.clear()
 
@@ -737,7 +804,8 @@ def asymmetric_self_fit_scores(path: Path, gain_path: Path) -> tuple[dict[str, n
 
 
 def run(manifest_path: Path, baseline: Path, baseline_tar_sha256: str,
-        raw_paths: list[Path], out: Path) -> dict[str, Any]:
+        raw_paths: list[Path], out: Path,
+        resume_native_seconds: Path | None = None) -> dict[str, Any]:
     if out.exists() and any(out.iterdir()):
         raise base.CensusError("corrected full-MBO output directory must be new or empty")
     out.mkdir(parents=True, exist_ok=True)
@@ -765,12 +833,18 @@ def run(manifest_path: Path, baseline: Path, baseline_tar_sha256: str,
     baseline_verified = _verify_baseline_artifacts(baseline, baseline_receipt)
     copied = _copy_legacy(baseline, out, baseline_receipt)
 
-    native_rows: list[dict[str, Any]] = []
-    aggregator = base.SecondAggregator(emit=native_rows.append, source_provenance=provenance)
-    replay_seconds = replay_dbn_files([str(p) for p in raw_paths], aggregator.consume, materialize_full_state=False)
-    aggregator.finish()
-    selected = [x for x in native_rows if WINDOW_START <= int(x["epoch_second"]) < WINDOW_END]
+    if resume_native_seconds is None:
+        native_rows: list[dict[str, Any]] = []
+        aggregator = base.SecondAggregator(emit=native_rows.append, source_provenance=provenance)
+        replay_seconds = replay_dbn_files([str(p) for p in raw_paths], aggregator.consume, materialize_full_state=False)
+        aggregator.finish()
+        selected = [x for x in native_rows if WINDOW_START <= int(x["epoch_second"]) < WINDOW_END]
+    else:
+        selected, replay_seconds = _load_resume_native_seconds(
+            resume_native_seconds, EXPECTED_RESUME_NATIVE_SECONDS_SHA256)
     seconds_output = base.deterministic_gzip_jsonl(out / "V4_NATIVE_FULL_MBO_SECONDS.jsonl.gz", selected)
+    if resume_native_seconds is not None and seconds_output["gzip_sha256"] != EXPECTED_RESUME_NATIVE_SECONDS_SHA256:
+        raise base.CensusError("re-emitted full-MBO native seconds identity drift")
 
     surface_collector = MboSurfaceCollector(provenance)
     replay_surfaces = replay_surface_effects(raw_paths, surface_collector)
@@ -975,10 +1049,11 @@ def main() -> int:
     ap.add_argument("--baseline-results", required=True, type=Path)
     ap.add_argument("--baseline-results-tar-sha256", required=True)
     ap.add_argument("--raw-mbo", required=True, nargs="+", type=Path)
+    ap.add_argument("--resume-native-seconds", type=Path)
     ap.add_argument("--out-dir", required=True, type=Path)
     args = ap.parse_args()
     receipt = run(args.parent_manifest, args.baseline_results, args.baseline_results_tar_sha256,
-                  args.raw_mbo, args.out_dir)
+                  args.raw_mbo, args.out_dir, args.resume_native_seconds)
     print("TWO_DAY_FULL_MBO_STEP1=PASS")
     print("TWO_DAY_FULL_MBO_RECEIPT_SHA256=" + receipt["receipt_sha256"])
     print("TWO_DAY_FULL_MBO_NATIVE_VECTOR_DIMENSION=" + str(FULL_NATIVE_VECTOR_DIMENSION))
