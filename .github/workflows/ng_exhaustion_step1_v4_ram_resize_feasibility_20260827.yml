@@ -1,0 +1,82 @@
+name: ONE-SHOT APPROVED - NG Exhaustion Step-1 V4 RAM Resize Feasibility 20260827
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_step1_v4_ram_resize_feasibility_20260827.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-resize-feasibility:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_STEP1_V4_RAM_RESIZE_FEASIBILITY_20260827]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      SYSTEMD_UNIT: ng-exhaustion-step1-oom-v4-33078419684-1.service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Inspect live state and compatible RAM-heavy types read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
+            --query 'Reservations[0].Instances[0].{InstanceType:InstanceType,State:State.Name,AvailabilityZone:Placement.AvailabilityZone,Tenancy:Placement.Tenancy,InstanceLifecycle:InstanceLifecycle,Architecture:Architecture,VirtualizationType:VirtualizationType,HibernationConfigured:HibernationOptions.Configured,EbsOptimized:EbsOptimized,RootDeviceName:RootDeviceName,BlockDeviceMappings:BlockDeviceMappings[*].{DeviceName:DeviceName,VolumeId:Ebs.VolumeId,DeleteOnTermination:Ebs.DeleteOnTermination}}' \
+            --output json > /tmp/instance.json
+          cat /tmp/instance.json
+          az="$(python -c 'import json; print(json.load(open("/tmp/instance.json"))["AvailabilityZone"])')"
+          echo CANDIDATE_TYPES_4VCPU_64G_PLUS_BEGIN
+          aws ec2 describe-instance-types \
+            --filters Name=processor-info.supported-architecture,Values=x86_64 Name=vcpu-info.default-vcpus,Values=4 \
+            --query 'InstanceTypes[?MemoryInfo.SizeInMiB>=`65536`].{Type:InstanceType,MemoryMiB:MemoryInfo.SizeInMiB,VCpu:VCpuInfo.DefaultVCpus,Hypervisor:Hypervisor,EbsBaselineBandwidthMbps:EbsInfo.EbsOptimizedInfo.BaselineBandwidthInMbps,EbsBaselineIops:EbsInfo.EbsOptimizedInfo.BaselineIops,EbsBaselineThroughputMBps:EbsInfo.EbsOptimizedInfo.BaselineThroughputInMBps}' \
+            --output json > /tmp/candidates.json
+          cat /tmp/candidates.json
+          echo CANDIDATE_TYPES_4VCPU_64G_PLUS_END
+          types="$(python - <<'PY'
+          import json
+          rows=json.load(open('/tmp/candidates.json'))
+          print(','.join(row['Type'] for row in rows))
+          PY
+          )"
+          if [ -n "$types" ]; then
+            echo AZ_OFFERINGS_BEGIN
+            aws ec2 describe-instance-type-offerings --location-type availability-zone \
+              --filters Name=location,Values="$az" Name=instance-type,Values="$types" \
+              --query 'InstanceTypeOfferings[].{Type:InstanceType,Location:Location}' --output json
+            echo AZ_OFFERINGS_END
+          fi
+          echo EXPLICIT_COMMON_CANDIDATES_BEGIN
+          aws ec2 describe-instance-types --instance-types r6i.xlarge r6i.2xlarge r7i.xlarge r7i.2xlarge \
+            --query 'InstanceTypes[].{Type:InstanceType,MemoryMiB:MemoryInfo.SizeInMiB,VCpu:VCpuInfo.DefaultVCpus,EbsBaselineBandwidthMbps:EbsInfo.EbsOptimizedInfo.BaselineBandwidthInMbps,EbsBaselineIops:EbsInfo.EbsOptimizedInfo.BaselineIops,EbsBaselineThroughputMBps:EbsInfo.EbsOptimizedInfo.BaselineThroughputInMBps}' \
+            --output json || true
+          echo EXPLICIT_COMMON_CANDIDATES_END
+
+      - name: Confirm current worker state read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, shlex
+          unit=os.environ['SYSTEMD_UNIT']
+          script='set -u -o pipefail; systemctl status '+shlex.quote(unit)+' --no-pager -l || true; free -b || true; swapon --show --bytes || true; journalctl -u '+shlex.quote(unit)+' -n 30 --no-pager -l || true'
+          open('/tmp/current-state.json','w').write(json.dumps({'commands':['/bin/bash -lc '+shlex.quote(script)],'executionTimeout':['180']}))
+          PY
+          command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript --comment 'Read-only Step-1 V4 state before resize decision' --parameters file:///tmp/current-state.json --timeout-seconds 180 --query 'Command.CommandId' --output text)"
+          for poll in $(seq 1 45); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in Success|Failed|Cancelled|TimedOut|Cancelling) break;; esac
+            sleep 4
+          done
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' --output json
+          test "$status" = Success
