@@ -1,0 +1,91 @@
+name: ONE-SHOT APPROVED - NG Exhaustion Step-1 V4 Progress Diagnose 20260827
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_step1_v4_progress_diagnose_20260827.yml
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose-v4-progress:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_STEP1_V4_PROGRESS_DIAGNOSE_20260827]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      SYSTEMD_UNIT: ng-exhaustion-step1-oom-v4-33078419684-1.service
+      CONT_ROOT: /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/oom_continue/33078419684-1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Diagnose V4 forward progress read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, shlex
+          unit=os.environ['SYSTEMD_UNIT']
+          root=os.environ['CONT_ROOT']
+          script=(
+              'set -u -o pipefail\n'
+              'unit='+shlex.quote(unit)+'\n'
+              'root='+shlex.quote(root)+'\n'
+              'echo PROGRESS_DIAG_BEGIN\n'
+              'systemctl show "$unit" -p ActiveState -p SubState -p MainPID -p MemoryCurrent -p MemoryPeak -p CPUUsageNSec --no-pager || true\n'
+              'pid=$(ps -eo pid,args | awk '\''/ng_exhaustion_mbo_2day_full_mbo_step1_20260825.py/ && $0 !~ /awk/ {p=$1} END{print p}'\'')\n'
+              'echo PYTHON_PID=${pid:-MISSING}\n'
+              'if [ -n "${pid:-}" ] && [ -r "/proc/$pid/status" ]; then\n'
+              '  echo PROC_STATUS_BEGIN; grep -E "^(Name|State|VmPeak|VmSize|VmRSS|VmSwap|Threads|voluntary_ctxt_switches|nonvoluntary_ctxt_switches):" "/proc/$pid/status" || true; echo PROC_STATUS_END\n'
+              '  echo PROC_IO_BEGIN; cat "/proc/$pid/io" || true; echo PROC_IO_END\n'
+              '  echo PROC_SMAPS_BEGIN; grep -E "^(Rss|Pss|Private_Clean|Private_Dirty|Swap|SwapPss|Anonymous):" "/proc/$pid/smaps_rollup" || true; echo PROC_SMAPS_END\n'
+              '  echo PROC_WCHAN=$(cat "/proc/$pid/wchan" 2>/dev/null || true)\n'
+              '  echo SAMPLE1=$(ps -p "$pid" -o etimes=,time=,pcpu=,rss=,stat=,wchan= 2>/dev/null || true)\n'
+              '  stat1=$(cat "/proc/$pid/stat" 2>/dev/null || true); io1=$(cat "/proc/$pid/io" 2>/dev/null || true); vm1=$(grep -E "^(pswpin|pswpout|pgmajfault|pgfault) " /proc/vmstat | tr "\\n" " ")\n'
+              '  sleep 15\n'
+              '  echo SAMPLE2=$(ps -p "$pid" -o etimes=,time=,pcpu=,rss=,stat=,wchan= 2>/dev/null || true)\n'
+              '  stat2=$(cat "/proc/$pid/stat" 2>/dev/null || true); io2=$(cat "/proc/$pid/io" 2>/dev/null || true); vm2=$(grep -E "^(pswpin|pswpout|pgmajfault|pgfault) " /proc/vmstat | tr "\\n" " ")\n'
+              '  echo STAT1="$stat1"\n'
+              '  echo STAT2="$stat2"\n'
+              '  echo IO1_BEGIN; printf "%s\\n" "$io1"; echo IO1_END\n'
+              '  echo IO2_BEGIN; printf "%s\\n" "$io2"; echo IO2_END\n'
+              '  echo VMSTAT1="$vm1"\n'
+              '  echo VMSTAT2="$vm2"\n'
+              'fi\n'
+              'echo MEMORY_BEGIN; free -b || true; echo MEMORY_END\n'
+              'echo SWAP_BEGIN; swapon --show || true; echo SWAP_END\n'
+              'echo PSI_MEMORY_BEGIN; cat /proc/pressure/memory 2>/dev/null || true; echo PSI_MEMORY_END\n'
+              'echo PSI_IO_BEGIN; cat /proc/pressure/io 2>/dev/null || true; echo PSI_IO_END\n'
+              'echo RESULT_MTIMES_BEGIN; if [ -d "$root/results" ]; then find "$root/results" -maxdepth 1 -type f -printf "%f|%s|%TY-%Tm-%TdT%TH:%TM:%TS\\n" | sort; fi; echo RESULT_MTIMES_END\n'
+              'echo PROGRESS_DIAG_COMPLETE=PASS\n'
+          )
+          open('/tmp/v4-progress-params.json','w').write(json.dumps({
+              'commands':['/bin/bash -lc '+shlex.quote(script)],
+              'executionTimeout':['300'],
+          }))
+          PY
+          command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment 'Read-only forward-progress diagnosis for Step-1 V4' \
+            --parameters file:///tmp/v4-progress-params.json --timeout-seconds 300 \
+            --query 'Command.CommandId' --output text)"
+          echo SSM_COMMAND_ID="$command_id"
+          for poll in $(seq 1 60); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in Success|Failed|Cancelled|TimedOut|Cancelling) break;; esac
+            sleep 5
+          done
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json
+          test "$status" = Success
