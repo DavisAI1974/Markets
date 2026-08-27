@@ -1,0 +1,223 @@
+name: Forecaster post-cutoff score 20260827
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/frankie_prior_surface_postcutoff_score_20260827.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: forecaster-postcutoff-score-20260827
+  cancel-in-progress: false
+
+jobs:
+  score-existing-frozen-forecast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      CANDIDATE_SHA: 0d318335825b4a0e19a5a2881522f3da0374788e
+      TARGET_SEGMENT: '20211001_20211101'
+      FORECASTER_OUTPUT_SHA256: 32131d948790faa56ed130f901bad71b10075919a2e23a78d1ff2c3939de25af
+    steps:
+      - name: Extract and score only the succeeding fifteen minutes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          import shlex
+
+          candidate = os.environ["CANDIDATE_SHA"]
+          segment = os.environ["TARGET_SEGMENT"]
+          seconds_path = (
+              f"/mnt/markets/ng_exhaustion_step1_5y_20260822/{candidate}/"
+              f"full/segments/{segment}.seconds.jsonl.gz"
+          )
+          remote = f'''set -euo pipefail
+          test -f {shlex.quote(seconds_path)}
+          python3 - {shlex.quote(seconds_path)} <<'PYREMOTE'
+          import gzip
+          import json
+          import math
+          import os
+          import sys
+
+          source_path = sys.argv[1]
+          cutoff = 1633478399
+          target_seconds = [1633478429, 1633478519, 1633478699, 1633479299]
+          baseline_price = 6.329
+          scenario_values = {{
+              "buy_stabilization": [6.331, 6.334, 6.338, 6.344],
+              "sell_continuation": [6.327, 6.323, 6.317, 6.304],
+              "balance_chop": [6.329, 6.329, 6.329, 6.330],
+          }}
+          scenario_ranges = {{
+              "buy_stabilization": [[6.329, 6.334], [6.329, 6.340], [6.331, 6.345], [6.335, 6.355]],
+              "sell_continuation": [[6.324, 6.330], [6.318, 6.328], [6.308, 6.325], [6.290, 6.318]],
+              "balance_chop": [[6.326, 6.333], [6.323, 6.336], [6.320, 6.340], [6.315, 6.345]],
+          }}
+
+          rows = []
+          saw_row_after_window = False
+          with gzip.open(source_path, "rt", encoding="utf-8") as handle:
+              for line in handle:
+                  row = json.loads(line)
+                  epoch = int(row["epoch_second"])
+                  if epoch <= cutoff:
+                      continue
+                  if epoch > target_seconds[-1]:
+                      saw_row_after_window = True
+                      break
+                  rows.append(row)
+
+          if not rows:
+              raise SystemExit("NO_POST_CUTOFF_ROWS")
+          if not saw_row_after_window:
+              raise SystemExit("POST_CUTOFF_WINDOW_INCOMPLETE")
+
+          def summarize(target, ordinal):
+              eligible = [row for row in rows if int(row["epoch_second"]) <= target]
+              trade_rows = [row for row in eligible if row.get("last_trade_price") is not None]
+              if trade_rows:
+                  last_trade = trade_rows[-1]
+                  actual = float(last_trade["last_trade_price"])
+                  last_trade_epoch = int(last_trade["epoch_second"])
+              else:
+                  actual = baseline_price
+                  last_trade_epoch = cutoff
+              prices = [float(row["last_trade_price"]) for row in trade_rows]
+              native_buy = sum(float(row.get("native_buy_qty") or 0.0) for row in eligible)
+              native_sell = sum(float(row.get("native_sell_qty") or 0.0) for row in eligible)
+              flow_total = native_buy + native_sell
+              signed_flow = (native_buy - native_sell) / flow_total if flow_total else None
+              depth_rows = [
+                  row for row in eligible
+                  if (row.get("native_state") or {{}}).get("depth_imbalance_full") is not None
+              ]
+              depth_values = [
+                  float(row["native_state"]["depth_imbalance_full"])
+                  for row in depth_rows
+              ]
+              spreads = [
+                  float(row["native_state"]["spread"])
+                  for row in eligible
+                  if (row.get("native_state") or {{}}).get("spread") is not None
+              ]
+              scoring = {{}}
+              for name, values in scenario_values.items():
+                  center = values[ordinal]
+                  low, high = scenario_ranges[name][ordinal]
+                  scoring[name] = {{
+                      "forecast_center": center,
+                      "forecast_range": [low, high],
+                      "absolute_error": abs(actual - center),
+                      "inside_forecast_range": low <= actual <= high,
+                  }}
+              best_error = min(item["absolute_error"] for item in scoring.values())
+              closest = [
+                  name for name, item in scoring.items()
+                  if math.isclose(item["absolute_error"], best_error, abs_tol=1e-12)
+              ]
+              return {{
+                  "target_event_second": target,
+                  "horizon_seconds": target - cutoff,
+                  "actual_asof_price": actual,
+                  "price_change_from_cutoff": actual - baseline_price,
+                  "last_trade_event_second": last_trade_epoch,
+                  "seconds_since_last_trade": target - last_trade_epoch,
+                  "trade_count": sum(int(row.get("trade_count") or 0) for row in eligible),
+                  "observed_trade_price_low": min(prices) if prices else baseline_price,
+                  "observed_trade_price_high": max(prices) if prices else baseline_price,
+                  "native_buy_qty": native_buy,
+                  "native_sell_qty": native_sell,
+                  "signed_aggressor_flow": signed_flow,
+                  "last_depth_imbalance_full": depth_values[-1] if depth_values else None,
+                  "depth_imbalance_range": [min(depth_values), max(depth_values)] if depth_values else None,
+                  "last_spread": spreads[-1] if spreads else None,
+                  "spread_range": [min(spreads), max(spreads)] if spreads else None,
+                  "scenario_scores": scoring,
+                  "closest_forecast_center": closest,
+              }}
+
+          result = {{
+              "schema": "FORECASTER_PRIOR_SURFACE_POSTCUTOFF_SCORE_V1_20260827",
+              "forecast_run_id": "workmode-32851909748-1",
+              "forecaster_output_sha256": "32131d948790faa56ed130f901bad71b10075919a2e23a78d1ff2c3939de25af",
+              "source": {{
+                  "path": source_path,
+                  "candidate_sha": "0d318335825b4a0e19a5a2881522f3da0374788e",
+                  "segment": "20211001_20211101",
+                  "bytes": os.path.getsize(source_path),
+                  "fields_read": [
+                      "epoch_second", "last_trade_price", "trade_count",
+                      "native_buy_qty", "native_sell_qty", "native_state"
+                  ],
+                  "step1_answers_read": False,
+                  "step1_labels_or_populations_read": False,
+              }},
+              "cutoff_event_second": cutoff,
+              "baseline_price": baseline_price,
+              "realized_window": {{
+                  "start_inclusive_event_second": cutoff + 1,
+                  "end_inclusive_event_second": target_seconds[-1],
+                  "selected_row_count": len(rows),
+                  "first_selected_event_second": int(rows[0]["epoch_second"]),
+                  "last_selected_event_second": int(rows[-1]["epoch_second"]),
+              }},
+              "horizons": [summarize(target, i) for i, target in enumerate(target_seconds)],
+          }}
+          print("SCORE_JSON=" + json.dumps(result, sort_keys=True, separators=(",", ":")))
+          PYREMOTE
+          '''
+          with open("/tmp/forecaster-score-params.json", "w", encoding="utf-8") as handle:
+              json.dump({"commands": ["/bin/bash -lc " + shlex.quote(remote)]}, handle)
+          PY
+
+          command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Read-only score frozen Forecaster post-cutoff horizons" \
+            --parameters file:///tmp/forecaster-score-params.json \
+            --timeout-seconds 480 \
+            --query 'Command.CommandId' --output text)"
+          aws ssm wait command-executed --command-id "$command_id" --instance-id "$INSTANCE_ID" || true
+          aws ssm get-command-invocation \
+            --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json > ssm-result.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          result = json.loads(Path("ssm-result.json").read_text(encoding="utf-8"))
+          stdout = result.get("StandardOutput", "")
+          stderr = result.get("StandardError", "")
+          marker = next((line for line in stdout.splitlines() if line.startswith("SCORE_JSON=")), None)
+          if result.get("Status") != "Success" or result.get("ResponseCode") != 0 or marker is None:
+              print(stderr[-4000:])
+              raise SystemExit("READ_ONLY_POSTCUTOFF_SCORE_FAILED")
+          score = json.loads(marker.removeprefix("SCORE_JSON="))
+          Path("forecaster-postcutoff-score.json").write_text(
+              json.dumps(score, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(score, indent=2, sort_keys=True))
+          PY
+
+      - name: Publish score receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: forecaster-postcutoff-score-${{ github.run_id }}-${{ github.run_attempt }}
+          path: forecaster-postcutoff-score.json
+          if-no-files-found: error
+          retention-days: 7
