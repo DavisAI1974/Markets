@@ -29,51 +29,70 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-2
 
-      - name: Diagnose V4 forward progress read-only
+      - name: Build and syntax-check read-only diagnostic
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json, os, shlex
+          import json, os, shlex, subprocess, textwrap
           unit=os.environ['SYSTEMD_UNIT']
           root=os.environ['CONT_ROOT']
-          script=(
-              'set -u -o pipefail\n'
-              'unit='+shlex.quote(unit)+'\n'
-              'root='+shlex.quote(root)+'\n'
-              'echo PROGRESS_DIAG_BEGIN\n'
-              'systemctl show "$unit" -p ActiveState -p SubState -p MainPID -p MemoryCurrent -p MemoryPeak -p CPUUsageNSec --no-pager || true\n'
-              'pid=$(ps -eo pid,args | awk '\''/ng_exhaustion_mbo_2day_full_mbo_step1_20260825.py/ && $0 !~ /awk/ {p=$1} END{print p}'\'')\n'
-              'echo PYTHON_PID=${pid:-MISSING}\n'
-              'if [ -n "${pid:-}" ] && [ -r "/proc/$pid/status" ]; then\n'
-              '  echo PROC_STATUS_BEGIN; grep -E "^(Name|State|VmPeak|VmSize|VmRSS|VmSwap|Threads|voluntary_ctxt_switches|nonvoluntary_ctxt_switches):" "/proc/$pid/status" || true; echo PROC_STATUS_END\n'
-              '  echo PROC_IO_BEGIN; cat "/proc/$pid/io" || true; echo PROC_IO_END\n'
-              '  echo PROC_SMAPS_BEGIN; grep -E "^(Rss|Pss|Private_Clean|Private_Dirty|Swap|SwapPss|Anonymous):" "/proc/$pid/smaps_rollup" || true; echo PROC_SMAPS_END\n'
-              '  echo PROC_WCHAN=$(cat "/proc/$pid/wchan" 2>/dev/null || true)\n'
-              '  echo SAMPLE1=$(ps -p "$pid" -o etimes=,time=,pcpu=,rss=,stat=,wchan= 2>/dev/null || true)\n'
-              '  stat1=$(cat "/proc/$pid/stat" 2>/dev/null || true); io1=$(cat "/proc/$pid/io" 2>/dev/null || true); vm1=$(grep -E "^(pswpin|pswpout|pgmajfault|pgfault) " /proc/vmstat | tr "\\n" " ")\n'
-              '  sleep 15\n'
-              '  echo SAMPLE2=$(ps -p "$pid" -o etimes=,time=,pcpu=,rss=,stat=,wchan= 2>/dev/null || true)\n'
-              '  stat2=$(cat "/proc/$pid/stat" 2>/dev/null || true); io2=$(cat "/proc/$pid/io" 2>/dev/null || true); vm2=$(grep -E "^(pswpin|pswpout|pgmajfault|pgfault) " /proc/vmstat | tr "\\n" " ")\n'
-              '  echo STAT1="$stat1"\n'
-              '  echo STAT2="$stat2"\n'
-              '  echo IO1_BEGIN; printf "%s\\n" "$io1"; echo IO1_END\n'
-              '  echo IO2_BEGIN; printf "%s\\n" "$io2"; echo IO2_END\n'
-              '  echo VMSTAT1="$vm1"\n'
-              '  echo VMSTAT2="$vm2"\n'
-              'fi\n'
-              'echo MEMORY_BEGIN; free -b || true; echo MEMORY_END\n'
-              'echo SWAP_BEGIN; swapon --show || true; echo SWAP_END\n'
-              'echo PSI_MEMORY_BEGIN; cat /proc/pressure/memory 2>/dev/null || true; echo PSI_MEMORY_END\n'
-              'echo PSI_IO_BEGIN; cat /proc/pressure/io 2>/dev/null || true; echo PSI_IO_END\n'
-              'echo RESULT_MTIMES_BEGIN; if [ -d "$root/results" ]; then find "$root/results" -maxdepth 1 -type f -printf "%f|%s|%TY-%Tm-%TdT%TH:%TM:%TS\\n" | sort; fi; echo RESULT_MTIMES_END\n'
-              'echo PROGRESS_DIAG_COMPLETE=PASS\n'
-          )
+          body=textwrap.dedent(r'''
+          set -u -o pipefail
+          echo PROGRESS_DIAG_BEGIN
+          systemctl show "$unit" -p ActiveState -p SubState -p MainPID -p MemoryCurrent -p MemoryPeak -p CPUUsageNSec --no-pager || true
+          pid="$(pgrep -f '[n]g_exhaustion_mbo_2day_full_mbo_step1_20260825.py' | tail -n 1 || true)"
+          echo PYTHON_PID=${pid:-MISSING}
+          if [ -n "${pid:-}" ] && [ -r "/proc/$pid/status" ]; then
+            echo PROC_STATUS_BEGIN
+            grep -E '^(Name|State|VmPeak|VmSize|VmRSS|VmSwap|Threads|voluntary_ctxt_switches|nonvoluntary_ctxt_switches):' "/proc/$pid/status" || true
+            echo PROC_STATUS_END
+            echo PROC_IO_BEGIN
+            cat "/proc/$pid/io" || true
+            echo PROC_IO_END
+            echo PROC_SMAPS_BEGIN
+            grep -E '^(Rss|Pss|Private_Clean|Private_Dirty|Swap|SwapPss|Anonymous):' "/proc/$pid/smaps_rollup" || true
+            echo PROC_SMAPS_END
+            echo PROC_WCHAN=$(cat "/proc/$pid/wchan" 2>/dev/null || true)
+            echo SAMPLE1="$(ps -p "$pid" -o etimes=,time=,pcpu=,rss=,stat=,wchan= 2>/dev/null || true)"
+            stat1="$(cat "/proc/$pid/stat" 2>/dev/null || true)"
+            io1="$(cat "/proc/$pid/io" 2>/dev/null || true)"
+            vm1="$(grep -E '^(pswpin|pswpout|pgmajfault|pgfault) ' /proc/vmstat | tr '\n' ' ')"
+            sleep 15
+            echo SAMPLE2="$(ps -p "$pid" -o etimes=,time=,pcpu=,rss=,stat=,wchan= 2>/dev/null || true)"
+            stat2="$(cat "/proc/$pid/stat" 2>/dev/null || true)"
+            io2="$(cat "/proc/$pid/io" 2>/dev/null || true)"
+            vm2="$(grep -E '^(pswpin|pswpout|pgmajfault|pgfault) ' /proc/vmstat | tr '\n' ' ')"
+            echo STAT1="$stat1"
+            echo STAT2="$stat2"
+            echo IO1_BEGIN; printf '%s\n' "$io1"; echo IO1_END
+            echo IO2_BEGIN; printf '%s\n' "$io2"; echo IO2_END
+            echo VMSTAT1="$vm1"
+            echo VMSTAT2="$vm2"
+          fi
+          echo MEMORY_BEGIN; free -b || true; echo MEMORY_END
+          echo SWAP_BEGIN; swapon --show || true; echo SWAP_END
+          echo PSI_MEMORY_BEGIN; cat /proc/pressure/memory 2>/dev/null || true; echo PSI_MEMORY_END
+          echo PSI_IO_BEGIN; cat /proc/pressure/io 2>/dev/null || true; echo PSI_IO_END
+          echo RESULT_MTIMES_BEGIN
+          if [ -d "$root/results" ]; then find "$root/results" -maxdepth 1 -type f -printf '%f|%s|%TY-%Tm-%TdT%TH:%TM:%TS\n' | sort; fi
+          echo RESULT_MTIMES_END
+          echo PROGRESS_DIAG_COMPLETE=PASS
+          ''')
+          script='unit='+shlex.quote(unit)+'\nroot='+shlex.quote(root)+'\n'+body
+          open('/tmp/v4-progress-remote.sh','w').write(script)
+          subprocess.run(['bash','-n','/tmp/v4-progress-remote.sh'], check=True)
           open('/tmp/v4-progress-params.json','w').write(json.dumps({
               'commands':['/bin/bash -lc '+shlex.quote(script)],
               'executionTimeout':['300'],
           }))
+          print('PROGRESS_DIAG_LOCAL_SYNTAX=PASS')
           PY
+
+      - name: Diagnose V4 forward progress read-only
+        shell: bash
+        run: |
+          set -euo pipefail
           command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" \
             --document-name AWS-RunShellScript \
             --comment 'Read-only forward-progress diagnosis for Step-1 V4' \
