@@ -1,0 +1,47 @@
+name: ONE-SHOT APPROVED - NG Exhaustion Step-1 Resize Quota State 20260827
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_step1_resize_quota_state_20260827.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-quota-state:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_STEP1_RESIZE_QUOTA_STATE_20260827]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Inspect rollback state and vCPU quotas
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo INSTANCE_STATE_BEGIN
+          aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].{Type:InstanceType,State:State.Name,AZ:Placement.AvailabilityZone,Arch:Architecture,RootDeviceType:RootDeviceType,VolumeId:BlockDeviceMappings[0].Ebs.VolumeId}' --output json
+          aws ec2 describe-instance-status --instance-ids "$INSTANCE_ID" --include-all-instances --query 'InstanceStatuses[0].{State:InstanceState.Name,SystemStatus:SystemStatus.Status,InstanceStatus:InstanceStatus.Status}' --output json
+          echo INSTANCE_STATE_END
+          echo ON_DEMAND_VCPU_QUOTAS_BEGIN
+          aws service-quotas list-service-quotas --service-code ec2 --query "Quotas[?contains(QuotaName, 'Running On-Demand')].{QuotaName:QuotaName,Value:Value,QuotaCode:QuotaCode,Adjustable:Adjustable}" --output json
+          echo ON_DEMAND_VCPU_QUOTAS_END
+          echo RAM_CANDIDATES_BEGIN
+          aws ec2 describe-instance-types --instance-types r6i.xlarge r7i.xlarge r6i.2xlarge r7i.2xlarge --query 'InstanceTypes[].{Type:InstanceType,MemoryMiB:MemoryInfo.SizeInMiB,VCpu:VCpuInfo.DefaultVCpus,EbsMbps:EbsInfo.EbsOptimizedInfo.BaselineBandwidthInMbps,EbsIops:EbsInfo.EbsOptimizedInfo.BaselineIops,EbsMBps:EbsInfo.EbsOptimizedInfo.BaselineThroughputInMBps}' --output json
+          echo RAM_CANDIDATES_END
+          az="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].Placement.AvailabilityZone' --output text)"
+          echo CANDIDATE_OFFERINGS_BEGIN
+          for type in r6i.xlarge r7i.xlarge r6i.2xlarge r7i.2xlarge; do
+            n="$(aws ec2 describe-instance-type-offerings --location-type availability-zone --filters Name=location,Values="$az" Name=instance-type,Values="$type" --query 'length(InstanceTypeOfferings)' --output text)"
+            echo "$type|offered=$n"
+          done
+          echo CANDIDATE_OFFERINGS_END
