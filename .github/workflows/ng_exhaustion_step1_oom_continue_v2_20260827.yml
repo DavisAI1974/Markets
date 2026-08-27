@@ -1,0 +1,200 @@
+name: ONE-SHOT APPROVED - NG Exhaustion Step-1 OOM Continue V2 20260827
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_step1_oom_continue_v2_20260827.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ng-exhaustion-two-day-full-mbo-step1-oom-continue-v2-20260827
+  cancel-in-progress: false
+
+jobs:
+  launch-oom-safe-continuation:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_FULL_MBO_STEP1_OOM_CONTINUE_V2_20260827]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      BUCKET: bento-568968024170-us-east-2-an
+      INSTANCE_ID: i-08cee7171c0a76a04
+      CANDIDATE_SHA: 0d318335825b4a0e19a5a2881522f3da0374788e
+      SOURCE_RUN_ROOT: /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/33054308590-1
+      RESUME_NATIVE_SECONDS: /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/32819740234-1/results/V4_NATIVE_FULL_MBO_SECONDS.jsonl.gz
+      RESUME_NATIVE_SECONDS_SHA256: 899cca3c03d0cd66ba97bbd798b6d000bc3cb12c34d165a6def50b9c6f091b77
+      PRIOR_ARCHIVE_SHA256: 27cacc62681bc482e89eefcc3746f5d71958beab4e25816054e0c388a0346b33
+      WRAPPER: research/ng_exhaustion_mbo_2day_full_mbo_step1_20260825.py
+      WORKER_SCRIPT: research/ng_exhaustion_step1_oom_continue_worker_20260827.sh
+      RESULT_PREFIX_ROOT: nymex/ng_mbo_5y_v0/step1_census/two_day_full_mbo_corrected/continuations
+      SWAP_FILE: /mnt/markets/.ng_step1_swap_20260827
+      SWAP_BYTES: 17179869184
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Verify launcher syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n "$WORKER_SCRIPT"
+          python -m py_compile "$WRAPPER"
+          echo CONTINUE_LOCAL_SYNTAX=PASS
+
+      - name: Validate preserved state and launch detached worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          prefix="$RESULT_PREFIX_ROOT/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          export RESULT_PREFIX="$prefix"
+          export WRAPPER_SHA256="$(sha256sum "$WRAPPER" | cut -d' ' -f1)"
+          export WORKER_B64="$(base64 -w0 "$WORKER_SCRIPT")"
+
+          python - <<'PY'
+          import boto3, os
+          from botocore.client import Config
+          s3=boto3.client('s3',region_name='us-east-2',endpoint_url='https://s3.us-east-2.amazonaws.com',
+              config=Config(signature_version='s3v4',s3={'addressing_style':'virtual'}))
+          bucket=os.environ['BUCKET']; prefix=os.environ['RESULT_PREFIX']
+          open('/tmp/result-put-url','w').write(s3.generate_presigned_url('put_object',
+              Params={'Bucket':bucket,'Key':prefix+'/transfer/results.tar.gz'},ExpiresIn=172800))
+          open('/tmp/status-put-url','w').write(s3.generate_presigned_url('put_object',
+              Params={'Bucket':bucket,'Key':prefix+'/status/worker.json'},ExpiresIn=172800))
+          PY
+          export RESULT_PUT_URL="$(cat /tmp/result-put-url)"
+          export STATUS_PUT_URL="$(cat /tmp/status-put-url)"
+          echo "::add-mask::$RESULT_PUT_URL"
+          echo "::add-mask::$STATUS_PUT_URL"
+
+          python - <<'PY'
+          import json, os, shlex
+          env = {
+              'SOURCE_RUN_ROOT': os.environ['SOURCE_RUN_ROOT'],
+              'RESUME_NATIVE_SECONDS': os.environ['RESUME_NATIVE_SECONDS'],
+              'RESUME_NATIVE_SECONDS_SHA256': os.environ['RESUME_NATIVE_SECONDS_SHA256'],
+              'PRIOR_ARCHIVE_SHA256': os.environ['PRIOR_ARCHIVE_SHA256'],
+              'WRAPPER': os.environ['WRAPPER'],
+              'WRAPPER_SHA256': os.environ['WRAPPER_SHA256'],
+              'BASE': f"/mnt/markets/ng_exhaustion_step1_5y_20260822/{os.environ['CANDIDATE_SHA']}",
+              'CONT_ROOT': f"/mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/oom_continue/{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}",
+              'RESULT_PUT_URL': os.environ['RESULT_PUT_URL'],
+              'STATUS_PUT_URL': os.environ['STATUS_PUT_URL'],
+              'SWAP_FILE': os.environ['SWAP_FILE'],
+              'SWAP_BYTES': os.environ['SWAP_BYTES'],
+              'WORKER_B64': os.environ['WORKER_B64'],
+              'SYSTEMD_UNIT': f"ng-exhaustion-step1-oom-v2-{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}",
+          }
+          exports='\n'.join('export '+key+'='+shlex.quote(value) for key,value in env.items())
+          body=r'''
+set -euo pipefail
+
+test -d "$SOURCE_RUN_ROOT/repo"
+test -d "$SOURCE_RUN_ROOT/baseline"
+test -d "$SOURCE_RUN_ROOT/raw"
+test -f "$RESUME_NATIVE_SECONDS"
+test "$(sha256sum "$RESUME_NATIVE_SECONDS" | cut -d' ' -f1)" = "$RESUME_NATIVE_SECONDS_SHA256"
+test -x "$BASE/venv/bin/python"
+test -f "$SOURCE_RUN_ROOT/repo/$WRAPPER"
+test "$(sha256sum "$SOURCE_RUN_ROOT/repo/$WRAPPER" | cut -d' ' -f1)" = "$WRAPPER_SHA256"
+test ! -e "$CONT_ROOT"
+
+SOURCE_RUN_ROOT="$SOURCE_RUN_ROOT" "$BASE/venv/bin/python" - <<'PYVERIFY'
+import hashlib, json, os
+from pathlib import Path
+source=Path(os.environ['SOURCE_RUN_ROOT'])
+manifest=json.loads((source/'repo/research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json').read_text())
+wanted={'20211001','20211003','20211004','20211005'}
+rows=[x for x in manifest['canonical_dbn_objects'] if x.get('segment')=='20211001_20211101' and Path(x['key']).name.split('-')[-1].split('.')[0] in wanted]
+if len(rows)!=4:
+    raise SystemExit('CONTINUE_RAW_ROSTER_DRIFT')
+for row in rows:
+    path=source/'raw'/Path(row['key']).name
+    if not path.is_file() or path.stat().st_size!=int(row['bytes']):
+        raise SystemExit('CONTINUE_RAW_SIZE_DRIFT='+path.name)
+    if hashlib.sha256(path.read_bytes()).hexdigest()!=row['sha256']:
+        raise SystemExit('CONTINUE_RAW_SHA_DRIFT='+path.name)
+print('CONTINUE_RAW_MBO_HASHES=PASS')
+PYVERIFY
+
+if ! swapon --show=NAME --noheadings 2>/dev/null | tr -d ' ' | grep -Fxq "$SWAP_FILE"; then
+  available=$(df --output=avail -B1 /mnt/markets | tail -1 | tr -d ' ')
+  required=$((SWAP_BYTES + 8589934592))
+  if [ "$available" -lt "$required" ]; then
+    echo "CONTINUE_SWAP_DISK_INSUFFICIENT available=$available required=$required" >&2
+    exit 1
+  fi
+  if [ ! -f "$SWAP_FILE" ]; then
+    fallocate -l "$SWAP_BYTES" "$SWAP_FILE"
+    chmod 600 "$SWAP_FILE"
+    mkswap "$SWAP_FILE" >/dev/null
+  fi
+  swapon "$SWAP_FILE"
+fi
+
+echo CONTINUE_SWAP_ACTIVE=PASS
+free -b
+swapon --show
+
+mkdir -p "$CONT_ROOT/repo" "$CONT_ROOT/results"
+cp -a --reflink=auto "$SOURCE_RUN_ROOT/repo/." "$CONT_ROOT/repo/"
+printf '%s' "$WORKER_B64" | base64 -d > "$CONT_ROOT/worker.sh"
+chmod 700 "$CONT_ROOT/worker.sh"
+printf '%s\n' "$SYSTEMD_UNIT" > "$CONT_ROOT/SYSTEMD_UNIT"
+systemd-run --unit="$SYSTEMD_UNIT" --collect --property=Type=exec /bin/bash "$CONT_ROOT/worker.sh"
+sleep 3
+systemctl is-active --quiet "$SYSTEMD_UNIT"
+echo CONTINUE_SYSTEMD_UNIT="$SYSTEMD_UNIT"
+echo CONTINUE_ROOT="$CONT_ROOT"
+echo CONTINUE_LAUNCHED=PASS
+'''
+          remote=exports+'\n'+body
+          open('/tmp/continue-params.json','w').write(json.dumps({
+              'commands':['/bin/bash -lc '+shlex.quote(remote)],
+              'executionTimeout':['600'],
+          }))
+          PY
+
+          command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment 'OOM-safe continuation of corrected full-MBO Step-1' \
+            --parameters file:///tmp/continue-params.json --timeout-seconds 600 \
+            --query 'Command.CommandId' --output text)"
+          echo SSM_COMMAND_ID="$command_id"
+          for poll in $(seq 1 120); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in Success|Failed|Cancelled|TimedOut|Cancelling) break;; esac
+            sleep 5
+          done
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json
+          test "$status" = Success
+
+      - name: Confirm worker remains active
+        shell: bash
+        run: |
+          set -euo pipefail
+          unit="ng-exhaustion-step1-oom-v2-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          python - <<'PY'
+          import json, os, shlex
+          unit=f"ng-exhaustion-step1-oom-v2-{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}"
+          script='set -euo pipefail; unit='+shlex.quote(unit)+'; sleep 10; systemctl is-active "$unit"; systemctl show "$unit" -p ActiveState -p SubState -p MainPID -p MemoryCurrent --no-pager; echo CONTINUE_POST_LAUNCH_CHECK=PASS'
+          open('/tmp/check-params.json','w').write(json.dumps({'commands':['/bin/bash -lc '+shlex.quote(script)],'executionTimeout':['120']}))
+          PY
+          command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript --comment 'Confirm Step-1 continuation remains active' --parameters file:///tmp/check-params.json --timeout-seconds 120 --query 'Command.CommandId' --output text)"
+          for poll in $(seq 1 30); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in Success|Failed|Cancelled|TimedOut|Cancelling) break;; esac
+            sleep 4
+          done
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' --output json
+          test "$status" = Success
