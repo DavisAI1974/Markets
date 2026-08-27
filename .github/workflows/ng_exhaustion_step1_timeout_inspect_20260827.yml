@@ -1,0 +1,77 @@
+name: ONE-SHOT APPROVED - NG Exhaustion Step-1 Timeout Inspect 20260827
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_step1_timeout_inspect_20260827.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-timeout:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_STEP1_TIMEOUT_INSPECT_20260827]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      SOURCE_RUN_ROOT: /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/33054308590-1
+      RESUME_NATIVE_SECONDS: /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/32819740234-1/results/V4_NATIVE_FULL_MBO_SECONDS.jsonl.gz
+      RESUME_NATIVE_SECONDS_SHA256: 899cca3c03d0cd66ba97bbd798b6d000bc3cb12c34d165a6def50b9c6f091b77
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Inspect preserved timed-out worker state read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, shlex
+          root=os.environ['SOURCE_RUN_ROOT']
+          native=os.environ['RESUME_NATIVE_SECONDS']
+          native_sha=os.environ['RESUME_NATIVE_SECONDS_SHA256']
+          script=f'''set -euo pipefail
+          root={shlex.quote(root)}
+          native={shlex.quote(native)}
+          native_sha={shlex.quote(native_sha)}
+          echo INSPECT_ROOT=$root
+          test -d "$root"
+          test -d "$root/repo"
+          test -d "$root/baseline"
+          test -d "$root/raw"
+          test -f "$native"
+          test "$(sha256sum "$native" | cut -d' ' -f1)" = "$native_sha"
+          echo PRESERVED_NATIVE_SECONDS_HASH=PASS
+          echo RAW_FILES_BEGIN
+          find "$root/raw" -maxdepth 1 -type f -name '*.dbn.zst' -printf '%f %s bytes\n' | sort
+          echo RAW_FILES_END
+          echo RESULTS_BEGIN
+          if [ -d "$root/results" ]; then find "$root/results" -maxdepth 1 -type f -printf '%f %s bytes\n' | sort; fi
+          echo RESULTS_END
+          echo RUN_LOG_META_BEGIN
+          if [ -f "$root/run.log" ]; then stat -c 'RUN_LOG_SIZE=%s RUN_LOG_MTIME=%y' "$root/run.log"; tail -n 40 "$root/run.log" || true; else echo RUN_LOG_MISSING; fi
+          echo RUN_LOG_META_END
+          echo RESOURCE_BEGIN
+          if [ -f "$root/resource.txt" ]; then cat "$root/resource.txt"; else echo RESOURCE_MISSING; fi
+          echo RESOURCE_END
+          echo OOM_CHECK_BEGIN
+          (sudo journalctl -k --since '2026-08-27 12:45:00 UTC' --until '2026-08-27 13:05:00 UTC' --no-pager 2>/dev/null || true) | grep -Ei 'out of memory|oom-kill|killed process' || true
+          echo OOM_CHECK_END
+          echo INSPECT_COMPLETE=PASS
+          '''
+          open('/tmp/inspect-params.json','w').write(json.dumps({'commands':['/bin/bash -lc '+shlex.quote(script)],'executionTimeout':['300']}))
+          PY
+          command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript --comment 'Read-only Step-1 timeout inspection' --parameters file:///tmp/inspect-params.json --timeout-seconds 300 --query 'Command.CommandId' --output text)"
+          for poll in $(seq 1 60); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in Success|Failed|Cancelled|TimedOut|Cancelling) break;; esac
+            sleep 5
+          done
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' --output json
