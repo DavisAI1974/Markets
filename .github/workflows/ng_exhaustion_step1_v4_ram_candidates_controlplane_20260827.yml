@@ -1,0 +1,64 @@
+name: ONE-SHOT APPROVED - NG Exhaustion Step-1 RAM Candidates Control Plane 20260827
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_step1_v4_ram_candidates_controlplane_20260827.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-candidates:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_STEP1_RAM_CANDIDATES_CONTROLPLANE_20260827]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Inspect candidate instance types only
+        shell: bash
+        run: |
+          set -euo pipefail
+          az="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].Placement.AvailabilityZone' --output text)"
+          echo AVAILABILITY_ZONE="$az"
+          echo CURRENT_INSTANCE_BEGIN
+          aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].{Type:InstanceType,State:State.Name,Arch:Architecture,Virtualization:VirtualizationType,RootDeviceType:RootDeviceType,RootDeviceName:RootDeviceName,VolumeId:BlockDeviceMappings[0].Ebs.VolumeId,DeleteOnTermination:BlockDeviceMappings[0].Ebs.DeleteOnTermination}' --output json
+          echo CURRENT_INSTANCE_END
+          echo FOUR_VCPU_64G_PLUS_BEGIN
+          aws ec2 describe-instance-types \
+            --filters Name=processor-info.supported-architecture,Values=x86_64 Name=vcpu-info.default-vcpus,Values=4 \
+            --query 'InstanceTypes[?MemoryInfo.SizeInMiB>=`65536`].{Type:InstanceType,MemoryMiB:MemoryInfo.SizeInMiB,VCpu:VCpuInfo.DefaultVCpus,EbsMbps:EbsInfo.EbsOptimizedInfo.BaselineBandwidthInMbps,EbsIops:EbsInfo.EbsOptimizedInfo.BaselineIops,EbsMBps:EbsInfo.EbsOptimizedInfo.BaselineThroughputInMBps}' \
+            --output json > /tmp/four-vcpu.json
+          cat /tmp/four-vcpu.json
+          echo FOUR_VCPU_64G_PLUS_END
+          echo FOUR_VCPU_OFFERINGS_BEGIN
+          python - <<'PY' > /tmp/types.txt
+          import json
+          print('\n'.join(x['Type'] for x in json.load(open('/tmp/four-vcpu.json'))))
+          PY
+          while read -r type; do
+            [ -z "$type" ] && continue
+            offered="$(aws ec2 describe-instance-type-offerings --location-type availability-zone --filters Name=location,Values="$az" Name=instance-type,Values="$type" --query 'length(InstanceTypeOfferings)' --output text)"
+            if [ "$offered" != "0" ]; then echo "$type"; fi
+          done < /tmp/types.txt
+          echo FOUR_VCPU_OFFERINGS_END
+          echo COMMON_64G_CANDIDATES_BEGIN
+          aws ec2 describe-instance-types --instance-types r6i.2xlarge r7i.2xlarge m6i.4xlarge m7i.4xlarge \
+            --query 'InstanceTypes[].{Type:InstanceType,MemoryMiB:MemoryInfo.SizeInMiB,VCpu:VCpuInfo.DefaultVCpus,EbsMbps:EbsInfo.EbsOptimizedInfo.BaselineBandwidthInMbps,EbsIops:EbsInfo.EbsOptimizedInfo.BaselineIops,EbsMBps:EbsInfo.EbsOptimizedInfo.BaselineThroughputInMBps}' --output json
+          echo COMMON_64G_CANDIDATES_END
+          echo COMMON_64G_OFFERINGS_BEGIN
+          for type in r6i.2xlarge r7i.2xlarge m6i.4xlarge m7i.4xlarge; do
+            offered="$(aws ec2 describe-instance-type-offerings --location-type availability-zone --filters Name=location,Values="$az" Name=instance-type,Values="$type" --query 'length(InstanceTypeOfferings)' --output text)"
+            echo "$type|offered=$offered"
+          done
+          echo COMMON_64G_OFFERINGS_END
