@@ -1,0 +1,109 @@
+name: ONE-SHOT - Inspect timed-out full-MBO checkpoint state 20260827
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_full_mbo_checkpoint_inspect_20260827.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ng-exhaustion-full-mbo-checkpoint-inspect-20260827
+  cancel-in-progress: false
+
+jobs:
+  inspect-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      RUN_ROOT: /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/33054308590-1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Inspect preserved worker state only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, shlex
+          root=os.environ['RUN_ROOT']
+          remote=f'''set -euo pipefail
+          root={shlex.quote(root)}
+          echo CHECKPOINT_INSPECTION=BEGIN
+          if [ ! -d "$root" ]; then
+            echo RUN_ROOT_PRESENT=false
+            exit 0
+          fi
+          echo RUN_ROOT_PRESENT=true
+          echo ACTIVE_WRAPPER_PROCESSES_BEGIN
+          ps -eo pid,etimes,args | grep -F ng_exhaustion_mbo_2day_full_mbo_step1_20260825.py | grep -v grep || true
+          echo ACTIVE_WRAPPER_PROCESSES_END
+          echo TOP_LEVEL_BEGIN
+          find "$root" -maxdepth 1 -mindepth 1 -printf '%f|%y|%s|%TY-%Tm-%TdT%TH:%TM:%TS\n' | sort
+          echo TOP_LEVEL_END
+          if [ -d "$root/results" ]; then
+            echo RESULTS_BEGIN
+            find "$root/results" -maxdepth 1 -type f -printf '%f|%s|%TY-%Tm-%TdT%TH:%TM:%TS\n' | sort
+            echo RESULTS_END
+            echo RESULT_HASHES_BEGIN
+            find "$root/results" -maxdepth 1 -type f -print0 | sort -z | xargs -0 -r sha256sum
+            echo RESULT_HASHES_END
+          fi
+          if [ -f "$root/resource.txt" ]; then
+            echo RESOURCE_PRESENT=true
+            grep -E 'Elapsed \(wall clock\)|Maximum resident set size|Exit status' "$root/resource.txt" || true
+          else
+            echo RESOURCE_PRESENT=false
+          fi
+          if [ -f "$root/run.log" ]; then
+            echo RUN_LOG_PRESENT=true
+            echo RUN_LOG_BYTES=$(stat -c %s "$root/run.log")
+          else
+            echo RUN_LOG_PRESENT=false
+          fi
+          if [ -f "$root/results.tar.gz" ]; then
+            echo RESULTS_TAR_PRESENT=true
+            sha256sum "$root/results.tar.gz"
+          else
+            echo RESULTS_TAR_PRESENT=false
+          fi
+          echo CHECKPOINT_INSPECTION=END
+          '''
+          with open('/tmp/inspect.json','w') as f:
+              json.dump({'commands':['/bin/bash -lc '+shlex.quote(remote)],'executionTimeout':['600']},f)
+          PY
+          command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Inspect timed-out full-MBO checkpoint state only" \
+            --parameters file:///tmp/inspect.json --timeout-seconds 600 \
+            --query 'Command.CommandId' --output text)"
+          for poll in $(seq 1 60); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in Success|Failed|Cancelled|TimedOut|Cancelling) break;; esac
+            sleep 5
+          done
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json > /tmp/invocation.json
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/invocation.json'))
+          print('INSPECT_STATUS='+str(x.get('Status')))
+          print('INSPECT_RESPONSE_CODE='+str(x.get('ResponseCode')))
+          print(x.get('StandardOutput') or '')
+          if x.get('StandardError'):
+              print(x['StandardError'])
+          if x.get('Status')!='Success' or x.get('ResponseCode')!=0:
+              raise SystemExit('CHECKPOINT_INSPECTION_FAILED')
+          PY
