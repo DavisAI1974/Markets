@@ -1,0 +1,91 @@
+name: ONE-SHOT APPROVED - Step-1 post-r6i identity verify 20260827
+on:
+  push:
+    branches: [chatgpt/frankie-october-aws-readonly-20260824]
+    paths: [.github/workflows/ng_exhaustion_step1_post_r6i_verify_20260827.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_STEP1_POST_R6I_VERIFY_20260827]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      SOURCE_RUN_ROOT: /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/33054308590-1
+      RESUME_NATIVE_SECONDS: /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/32819740234-1/results/V4_NATIVE_FULL_MBO_SECONDS.jsonl.gz
+      RESUME_NATIVE_SECONDS_SHA256: 899cca3c03d0cd66ba97bbd798b6d000bc3cb12c34d165a6def50b9c6f091b77
+      V4_CONT_ROOT: /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/oom_continue/33078419684-1
+      BASE: /mnt/markets/ng_exhaustion_step1_5y_20260822/0d318335825b4a0e19a5a2881522f3da0374788e
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Verify EC2 type and host identities read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          type="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].InstanceType' --output text)"
+          test "$type" = r6i.xlarge
+          for poll in $(seq 1 90); do
+            ping="$(aws ssm describe-instance-information --filters Key=InstanceIds,Values="$INSTANCE_ID" --query 'InstanceInformationList[0].PingStatus' --output text 2>/dev/null || true)"
+            [ "$ping" = Online ] && break
+            sleep 5
+          done
+          test "$ping" = Online
+          python - <<'PY'
+          import json, os, shlex
+          source=os.environ['SOURCE_RUN_ROOT']; native=os.environ['RESUME_NATIVE_SECONDS']
+          native_sha=os.environ['RESUME_NATIVE_SECONDS_SHA256']; v4=os.environ['V4_CONT_ROOT']; base=os.environ['BASE']
+          script=f'''set -euo pipefail
+          source={shlex.quote(source)}
+          native={shlex.quote(native)}
+          native_sha={shlex.quote(native_sha)}
+          v4={shlex.quote(v4)}
+          base={shlex.quote(base)}
+          echo HOST_BEGIN
+          nproc
+          free -b
+          mem_kb=$(awk '/^MemTotal:/ {{print $2}}' /proc/meminfo)
+          test "$mem_kb" -ge 30000000
+          test "$(nproc)" -eq 4
+          test -x "$base/venv/bin/python"
+          test -d "$source/repo"
+          test -d "$source/baseline"
+          test -d "$source/raw"
+          test -d "$v4"
+          test -f "$native"
+          test "$(sha256sum "$native" | cut -d' ' -f1)" = "$native_sha"
+          if pgrep -f '[n]g_exhaustion_mbo_2day_full_mbo_step1_20260825.py' >/dev/null; then echo STALE_STEP1_PROCESS >&2; exit 1; fi
+          echo NATIVE_SECONDS_IDENTITY=PASS
+          echo HOST_END
+          SOURCE_RUN_ROOT="$source" /usr/bin/python3 - <<'PYVERIFY'
+          import hashlib, json, os
+          from pathlib import Path
+          source=Path(os.environ['SOURCE_RUN_ROOT'])
+          manifest=json.loads((source/'repo/research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json').read_text())
+          wanted={{'20211001','20211003','20211004','20211005'}}
+          rows=[x for x in manifest['canonical_dbn_objects'] if x.get('segment')=='20211001_20211101' and Path(x['key']).name.split('-')[-1].split('.')[0] in wanted]
+          if len(rows)!=4: raise SystemExit('RAW_ROSTER_DRIFT')
+          for row in rows:
+              path=source/'raw'/Path(row['key']).name
+              if not path.is_file() or path.stat().st_size!=int(row['bytes']): raise SystemExit('RAW_SIZE_DRIFT='+path.name)
+              if hashlib.sha256(path.read_bytes()).hexdigest()!=row['sha256']: raise SystemExit('RAW_SHA_DRIFT='+path.name)
+          print('PRESERVED_RAW_MBO_IDENTITIES=PASS')
+          PYVERIFY
+          echo V4_EVIDENCE_ROOT_PRESERVED=PASS
+          echo POST_R6I_VERIFY=PASS
+          '''
+          open('/tmp/verify.json','w').write(json.dumps({'commands':['/bin/bash -lc '+shlex.quote(script)],'executionTimeout':['300']}))
+          PY
+          command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript --comment 'Read-only post-r6i Step-1 identity verification' --parameters file:///tmp/verify.json --timeout-seconds 300 --query 'Command.CommandId' --output text)"
+          for poll in $(seq 1 60); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in Success|Failed|Cancelled|TimedOut|Cancelling) break;; esac
+            sleep 5
+          done
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' --output json
+          test "$status" = Success
