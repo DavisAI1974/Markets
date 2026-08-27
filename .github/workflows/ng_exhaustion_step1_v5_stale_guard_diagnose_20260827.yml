@@ -1,0 +1,84 @@
+name: ONE-SHOT APPROVED - Step-1 V5 stale guard diagnose 20260827
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_step1_v5_stale_guard_diagnose_20260827.yml
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_STEP1_V5_STALE_GUARD_DIAGNOSE_20260827]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      FAILED_V5_ROOT: /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/oom_continue/33113717218-1
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Inspect actual Step-1 processes read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, shlex, textwrap
+          root=os.environ['FAILED_V5_ROOT']
+          script=textwrap.dedent(r'''
+            set -euo pipefail
+            echo HOST_BEGIN
+            nproc
+            free -b
+            swapon --show || true
+            echo HOST_END
+            echo ACTUAL_STEP1_PROCESSES_BEGIN
+            python3 - <<'PYPROC'
+            import os
+            target='research/ng_exhaustion_mbo_2day_full_mbo_step1_20260825.py'
+            matches=[]
+            for name in os.listdir('/proc'):
+                if not name.isdigit():
+                    continue
+                try:
+                    raw=open(f'/proc/{name}/cmdline','rb').read().split(b'\0')
+                except (FileNotFoundError, PermissionError, ProcessLookupError):
+                    continue
+                argv=[x.decode('utf-8','replace') for x in raw if x]
+                if not argv:
+                    continue
+                exe=os.path.basename(argv[0])
+                if exe.startswith('python') and any(arg == target or arg.endswith('/'+target) for arg in argv[1:]):
+                    matches.append((int(name), argv))
+            for pid, argv in sorted(matches):
+                print('PID='+str(pid)+' ARGV='+repr(argv))
+            print('ACTUAL_STEP1_PROCESS_COUNT='+str(len(matches)))
+            PYPROC
+            echo ACTUAL_STEP1_PROCESSES_END
+            echo OLD_UNITS_BEGIN
+            systemctl list-units --all --type=service 'ng-exhaustion-step1-oom-*' --no-pager || true
+            echo OLD_UNITS_END
+            echo FAILED_V5_ROOT_EXISTS_BEGIN
+            if [ -e "$root" ]; then find "$root" -maxdepth 1 -printf '%y|%p|%s\n' | sort; else echo FAILED_V5_ROOT_MISSING; fi
+            echo FAILED_V5_ROOT_EXISTS_END
+            echo V5_STALE_GUARD_DIAGNOSE=PASS
+          ''')
+          script='root='+shlex.quote(root)+'\n'+script
+          open('/tmp/diag.json','w').write(json.dumps({'commands':['/bin/bash -lc '+shlex.quote(script)],'executionTimeout':['180']}))
+          PY
+          command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript --comment 'Read-only actual Step-1 process diagnosis after V5 guard trip' --parameters file:///tmp/diag.json --timeout-seconds 180 --query 'Command.CommandId' --output text)"
+          for poll in $(seq 1 45); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in Success|Failed|Cancelled|TimedOut|Cancelling) break;; esac
+            sleep 4
+          done
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' --output json
+          test "$status" = Success
