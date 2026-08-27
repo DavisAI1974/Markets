@@ -1,4 +1,4 @@
-name: NG Exhaustion Two-Day Full-MBO Step-1 20260825
+name: ONE-SHOT APPROVED - NG Exhaustion Two-Day Full-MBO Step-1 Resume 20260827
 
 on:
   workflow_dispatch:
@@ -12,6 +12,11 @@ on:
         description: Exact branch commit approved for this rerun
         required: true
         type: string
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_two_day_full_mbo_step1_20260825.yml
 
 permissions:
   contents: read
@@ -22,7 +27,14 @@ concurrency:
 
 jobs:
   run-full-mbo-step1:
-    if: ${{ inputs.confirm_direct_rerun && inputs.expected_commit == github.sha }}
+    if: >-
+      ${{
+        (github.event_name == 'workflow_dispatch' &&
+         inputs.confirm_direct_rerun && inputs.expected_commit == github.sha) ||
+        (github.event_name == 'push' &&
+         github.ref == 'refs/heads/chatgpt/frankie-october-aws-readonly-20260824' &&
+         contains(github.event.head_commit.message, '[APPROVED_FULL_MBO_STEP1_RESUME_20260827]'))
+      }}
     runs-on: ubuntu-latest
     timeout-minutes: 300
     env:
@@ -33,6 +45,8 @@ jobs:
       PRIOR_ARCHIVE: /mnt/markets/ng_exhaustion_two_day_step1_20260824/32782745590-1/results.tar.gz
       PRIOR_RUN_ROOT: /mnt/markets/ng_exhaustion_two_day_step1_20260824/32782745590-1
       PRIOR_ARCHIVE_SHA256: 27cacc62681bc482e89eefcc3746f5d71958beab4e25816054e0c388a0346b33
+      RESUME_NATIVE_SECONDS: /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/32819740234-1/results/V4_NATIVE_FULL_MBO_SECONDS.jsonl.gz
+      RESUME_NATIVE_SECONDS_SHA256: 899cca3c03d0cd66ba97bbd798b6d000bc3cb12c34d165a6def50b9c6f091b77
       MANIFEST: research/kalshi/NG_EXHAUSTION_MBO_5Y_CANONICAL_OBJECT_MANIFEST_20260822.json
       WRAPPER: research/ng_exhaustion_mbo_2day_full_mbo_step1_20260825.py
       PRIOR_WRAPPER: research/ng_exhaustion_mbo_2day_step1_finalize_20260824.py
@@ -113,6 +127,8 @@ jobs:
           prior_root={shlex.quote(os.environ['PRIOR_RUN_ROOT'])}
           prior_archive={shlex.quote(os.environ['PRIOR_ARCHIVE'])}
           prior_sha={shlex.quote(os.environ['PRIOR_ARCHIVE_SHA256'])}
+          resume_native_seconds={shlex.quote(os.environ['RESUME_NATIVE_SECONDS'])}
+          resume_native_seconds_sha={shlex.quote(os.environ['RESUME_NATIVE_SECONDS_SHA256'])}
           wrapper_get_url={shlex.quote(os.environ['WRAPPER_GET_URL'])}
           wrapper_sha={shlex.quote(os.environ['WRAPPER_SHA256'])}
           prior_wrapper_sha={shlex.quote(os.environ['PRIOR_WRAPPER_SHA256'])}
@@ -123,6 +139,8 @@ jobs:
           test "$(sha256sum "$prior_archive" | cut -d' ' -f1)" = "$prior_sha"
           test -f "$prior_root/repo/{os.environ['PRIOR_WRAPPER']}"
           test "$(sha256sum "$prior_root/repo/{os.environ['PRIOR_WRAPPER']}" | cut -d' ' -f1)" = "$prior_wrapper_sha"
+          test -f "$resume_native_seconds"
+          test "$(sha256sum "$resume_native_seconds" | cut -d' ' -f1)" = "$resume_native_seconds_sha"
           test ! -e "$run_root"
           mkdir -p "$run_root/repo" "$run_root/baseline" "$run_root/raw"
           cp -a --reflink=auto "$prior_root/repo/." "$run_root/repo/"
@@ -152,6 +170,7 @@ jobs:
                         "$run_root/raw/glbx-mdp3-20211003.mbo.dbn.zst" \
                         "$run_root/raw/glbx-mdp3-20211004.mbo.dbn.zst" \
                         "$run_root/raw/glbx-mdp3-20211005.mbo.dbn.zst" \
+              --resume-native-seconds "$resume_native_seconds" \
               --out-dir "$run_root/results" | tee "$run_root/run.log"
           cp "$run_root/resource.txt" "$run_root/results/RESOURCE_USAGE.txt"
           cp "$run_root/run.log" "$run_root/results/RUN.log"
