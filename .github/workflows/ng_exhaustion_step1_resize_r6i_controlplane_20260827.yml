@@ -1,0 +1,59 @@
+name: ONE-SHOT APPROVED - Step-1 resize to r6i.xlarge 20260827
+on:
+  push:
+    branches: [chatgpt/frankie-october-aws-readonly-20260824]
+    paths: [.github/workflows/ng_exhaustion_step1_resize_r6i_controlplane_20260827.yml]
+permissions:
+  contents: read
+jobs:
+  resize:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_STEP1_RESIZE_R6I_CONTROLPLANE_20260827]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      ORIGINAL_TYPE: t3.xlarge
+      TARGET_TYPE: r6i.xlarge
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
+          aws ec2 wait instance-status-ok --instance-ids "$INSTANCE_ID"
+          current="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].InstanceType' --output text)"
+          test "$current" = "$ORIGINAL_TYPE"
+          az="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].Placement.AvailabilityZone' --output text)"
+          offered="$(aws ec2 describe-instance-type-offerings --location-type availability-zone --filters Name=location,Values="$az" Name=instance-type,Values="$TARGET_TYPE" --query 'length(InstanceTypeOfferings)' --output text)"
+          test "$offered" != 0
+          mem="$(aws ec2 describe-instance-types --instance-types "$TARGET_TYPE" --query 'InstanceTypes[0].MemoryInfo.SizeInMiB' --output text)"
+          vcpu="$(aws ec2 describe-instance-types --instance-types "$TARGET_TYPE" --query 'InstanceTypes[0].VCpuInfo.DefaultVCpus' --output text)"
+          test "$mem" = 32768
+          test "$vcpu" = 4
+          echo R6I_PREFLIGHT=PASS
+      - name: Resize same EBS-backed instance
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws ec2 stop-instances --instance-ids "$INSTANCE_ID" --output json
+          aws ec2 wait instance-stopped --instance-ids "$INSTANCE_ID"
+          if ! aws ec2 modify-instance-attribute --instance-id "$INSTANCE_ID" --instance-type "{\"Value\":\"$TARGET_TYPE\"}"; then
+            aws ec2 start-instances --instance-ids "$INSTANCE_ID" --output json || true
+            exit 1
+          fi
+          if ! aws ec2 start-instances --instance-ids "$INSTANCE_ID" --output json; then
+            aws ec2 modify-instance-attribute --instance-id "$INSTANCE_ID" --instance-type "{\"Value\":\"$ORIGINAL_TYPE\"}" || true
+            aws ec2 start-instances --instance-ids "$INSTANCE_ID" --output json || true
+            exit 1
+          fi
+          aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
+          aws ec2 wait instance-status-ok --instance-ids "$INSTANCE_ID"
+          final="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].InstanceType' --output text)"
+          test "$final" = "$TARGET_TYPE"
+          echo R6I_RESIZE=PASS
