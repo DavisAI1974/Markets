@@ -1,0 +1,74 @@
+name: ONE-SHOT APPROVED - NG Exhaustion Step-1 V4 Resource Envelope Inspect 20260827
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_step1_v4_resource_envelope_inspect_20260827.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-resource-envelope:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_STEP1_V4_RESOURCE_ENVELOPE_INSPECT_20260827]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      CONT_ROOT: /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/oom_continue/33078419684-1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Inspect EC2 type and storage read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          instance_json="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].{InstanceType:InstanceType,State:State.Name,Architecture:Architecture,RootDeviceName:RootDeviceName,BlockDeviceMappings:BlockDeviceMappings[*].{DeviceName:DeviceName,VolumeId:Ebs.VolumeId}}' --output json)"
+          echo INSTANCE_SUMMARY="$instance_json"
+          instance_type="$(python -c 'import json,sys; print(json.load(sys.stdin)["InstanceType"])' <<<"$instance_json")"
+          aws ec2 describe-instance-types --instance-types "$instance_type" --query 'InstanceTypes[0].{InstanceType:InstanceType,MemoryMiB:MemoryInfo.SizeInMiB,DefaultVCpus:VCpuInfo.DefaultVCpus,EbsOptimizedSupport:EbsInfo.EbsOptimizedSupport,EbsBaselineBandwidthMbps:EbsInfo.EbsOptimizedInfo.BaselineBandwidthInMbps,EbsBaselineIops:EbsInfo.EbsOptimizedInfo.BaselineIops,EbsBaselineThroughputMBps:EbsInfo.EbsOptimizedInfo.BaselineThroughputInMBps}' --output json
+          volume_ids="$(python -c 'import json,sys; print(" ".join(x["VolumeId"] for x in json.load(sys.stdin)["BlockDeviceMappings"] if x.get("VolumeId")))' <<<"$instance_json")"
+          if [ -n "$volume_ids" ]; then
+            aws ec2 describe-volumes --volume-ids $volume_ids --query 'Volumes[*].{VolumeId:VolumeId,SizeGiB:Size,VolumeType:VolumeType,Iops:Iops,Throughput:Throughput,State:State,Encrypted:Encrypted}' --output json
+          fi
+
+      - name: Inspect host filesystem and block devices read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, shlex
+          root=os.environ['CONT_ROOT']
+          script=(
+              'set -u -o pipefail\n'
+              'root='+shlex.quote(root)+'\n'
+              'echo DF_BEGIN; df -B1 / /mnt/markets "$root" 2>/dev/null || true; echo DF_END\n'
+              'echo LSBLK_BEGIN; lsblk -b -o NAME,KNAME,TYPE,SIZE,FSTYPE,MOUNTPOINTS,ROTA,DISC-GRAN,DISC-MAX || true; echo LSBLK_END\n'
+              'echo MOUNT_BEGIN; findmnt -T /mnt/markets -o TARGET,SOURCE,FSTYPE,OPTIONS --noheadings || true; echo MOUNT_END\n'
+              'echo MEMINFO_BEGIN; grep -E "^(MemTotal|MemAvailable|SwapTotal|SwapFree|Dirty|Writeback|AnonPages|Mapped|Slab|SReclaimable):" /proc/meminfo || true; echo MEMINFO_END\n'
+              'echo SWAP_BEGIN; swapon --show --bytes || true; echo SWAP_END\n'
+              'echo DISKSTATS_BEGIN; cat /proc/diskstats || true; echo DISKSTATS_END\n'
+              'echo RESOURCE_ENVELOPE_INSPECT_COMPLETE=PASS\n'
+          )
+          open('/tmp/resource-envelope.json','w').write(json.dumps({
+              'commands':['/bin/bash -lc '+shlex.quote(script)],
+              'executionTimeout':['300'],
+          }))
+          PY
+          command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript --comment 'Read-only Step-1 V4 resource envelope inspection' --parameters file:///tmp/resource-envelope.json --timeout-seconds 300 --query 'Command.CommandId' --output text)"
+          echo SSM_COMMAND_ID="$command_id"
+          for poll in $(seq 1 60); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in Success|Failed|Cancelled|TimedOut|Cancelling) break;; esac
+            sleep 5
+          done
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' --output json
+          test "$status" = Success
