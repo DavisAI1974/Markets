@@ -1,0 +1,131 @@
+name: ONE-SHOT APPROVED - NG Exhaustion Step-1 V5 Retry Status Inspect 20260827
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_step1_v5r_status_inspect_20260827.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-v5r-status:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_STEP1_V5R_STATUS_INSPECT_20260827]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      SYSTEMD_UNIT: ng-exhaustion-step1-oom-v5r-33113936522-1.service
+      CONT_ROOT: /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/oom_continue/33113936522-1
+      BUCKET: bento-568968024170-us-east-2-an
+      RESULT_PREFIX: nymex/ng_mbo_5y_v0/step1_census/two_day_full_mbo_corrected/continuations/33113936522-1
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Inspect V5 retry continuation read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, shlex, textwrap
+          unit=os.environ['SYSTEMD_UNIT']
+          root=os.environ['CONT_ROOT']
+          body=textwrap.dedent(r'''
+            set -u -o pipefail
+            echo SYSTEMCTL_STATUS_BEGIN
+            systemctl status "$unit" --no-pager -l || true
+            echo SYSTEMCTL_STATUS_END
+            echo JOURNAL_BEGIN
+            journalctl -u "$unit" -n 200 --no-pager -l || true
+            echo JOURNAL_END
+            echo EXACT_STEP1_PROCESS_BEGIN
+            ROOT="$root" python3 - <<'PYPROC'
+            import os
+            target='research/ng_exhaustion_mbo_2day_full_mbo_step1_20260825.py'
+            matches=[]
+            for name in os.listdir('/proc'):
+                if not name.isdigit():
+                    continue
+                try:
+                    raw=open(f'/proc/{name}/cmdline','rb').read().split(b'\0')
+                except (FileNotFoundError, PermissionError, ProcessLookupError):
+                    continue
+                argv=[x.decode('utf-8','replace') for x in raw if x]
+                if not argv:
+                    continue
+                exe=os.path.basename(argv[0])
+                if exe.startswith('python') and any(arg == target or arg.endswith('/'+target) for arg in argv[1:]):
+                    matches.append((int(name), argv))
+            for pid, argv in sorted(matches):
+                print('PID='+str(pid)+' ARGV='+repr(argv))
+                try:
+                    status=open(f'/proc/{pid}/status').read()
+                    for line in status.splitlines():
+                        if line.startswith(('State:','VmPeak:','VmSize:','VmRSS:','VmSwap:','Threads:','voluntary_ctxt_switches:','nonvoluntary_ctxt_switches:')):
+                            print('  '+line)
+                    print('  WCHAN='+open(f'/proc/{pid}/wchan').read().strip())
+                    print('  IO='+repr(open(f'/proc/{pid}/io').read().splitlines()))
+                except (FileNotFoundError, PermissionError, ProcessLookupError):
+                    print('  PROCESS_DISAPPEARED_DURING_READ')
+            print('EXACT_STEP1_PROCESS_COUNT='+str(len(matches)))
+            PYPROC
+            echo EXACT_STEP1_PROCESS_END
+            echo CONT_ROOT_LIST_BEGIN
+            if [ -d "$root" ]; then find "$root" -maxdepth 2 -printf '%y|%p|%s|%TY-%Tm-%TdT%TH:%TM:%TS\n' | sort; else echo CONT_ROOT_MISSING; fi
+            echo CONT_ROOT_LIST_END
+            echo WORKER_STATUS_BEGIN
+            if [ -f "$root/WORKER_STATUS.json" ]; then cat "$root/WORKER_STATUS.json"; else echo WORKER_STATUS_MISSING; fi
+            echo WORKER_STATUS_END
+            echo RUN_LOG_BEGIN
+            if [ -f "$root/run.log" ]; then echo RUN_LOG_BYTES=$(stat -c %s "$root/run.log"); tail -n 200 "$root/run.log"; else echo RUN_LOG_MISSING; fi
+            echo RUN_LOG_END
+            echo RESOURCE_BEGIN
+            if [ -f "$root/resource.txt" ]; then cat "$root/resource.txt"; else echo RESOURCE_MISSING; fi
+            echo RESOURCE_END
+            echo RECEIPT_BEGIN
+            if [ -f "$root/results/STEP1_DUAL_FULL_MBO_RECEIPT.json" ]; then cat "$root/results/STEP1_DUAL_FULL_MBO_RECEIPT.json"; else echo RECEIPT_MISSING; fi
+            echo RECEIPT_END
+            echo RESULT_MANIFEST_BEGIN
+            if [ -f "$root/results/RESULT_FILE_MANIFEST.json" ]; then cat "$root/results/RESULT_FILE_MANIFEST.json"; else echo RESULT_MANIFEST_MISSING; fi
+            echo RESULT_MANIFEST_END
+            echo RESULTS_TAR_BEGIN
+            if [ -f "$root/results.tar.gz" ]; then stat -c 'RESULTS_TAR_BYTES=%s' "$root/results.tar.gz"; sha256sum "$root/results.tar.gz"; else echo RESULTS_TAR_MISSING; fi
+            echo RESULTS_TAR_END
+            echo FREE_BEGIN
+            free -b || true
+            echo FREE_END
+            echo SWAPON_BEGIN
+            swapon --show || true
+            echo SWAPON_END
+            echo V5R_READ_ONLY_INSPECT_COMPLETE=PASS
+          ''')
+          script='unit='+shlex.quote(unit)+'\nroot='+shlex.quote(root)+'\n'+body
+          open('/tmp/v5r-inspect.json','w').write(json.dumps({'commands':['/bin/bash -lc '+shlex.quote(script)],'executionTimeout':['300']}))
+          PY
+          command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript --comment 'Read-only Step-1 V5 retry status inspection' --parameters file:///tmp/v5r-inspect.json --timeout-seconds 300 --query 'Command.CommandId' --output text)"
+          echo SSM_COMMAND_ID="$command_id"
+          for poll in $(seq 1 60); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in Success|Failed|Cancelled|TimedOut|Cancelling) break;; esac
+            sleep 5
+          done
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' --output json
+          test "$status" = Success
+
+      - name: Inspect published S3 objects read-only
+        shell: bash
+        run: |
+          set -u -o pipefail
+          echo S3_STATUS_HEAD_BEGIN
+          aws s3api head-object --bucket "$BUCKET" --key "$RESULT_PREFIX/status/worker.json" --output json || true
+          echo S3_STATUS_HEAD_END
+          echo S3_RESULTS_HEAD_BEGIN
+          aws s3api head-object --bucket "$BUCKET" --key "$RESULT_PREFIX/transfer/results.tar.gz" --output json || true
+          echo S3_RESULTS_HEAD_END
