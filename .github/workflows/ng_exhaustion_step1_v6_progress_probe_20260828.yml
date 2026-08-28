@@ -37,13 +37,10 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           import json, os, shlex
-          unit=shlex.quote(os.environ['UNIT'])
-          root=shlex.quote(os.environ['CONT_ROOT'])
-          wrapper=shlex.quote(os.environ['WRAPPER'])
-          remote=f'''set -u
-          unit={unit}
-          root={root}
-          wrapper={wrapper}
+          remote=r'''set -u
+          unit=__UNIT__
+          root=__ROOT__
+          wrapper=__WRAPPER__
           echo PROBE_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           echo PROBE_UNIT=$unit
           systemctl show "$unit" -p ActiveState -p SubState -p MainPID -p MemoryCurrent -p CPUUsageNSec --no-pager || true
@@ -55,7 +52,7 @@ jobs:
           echo PROBE_SWAP_END
           echo PROBE_RESULTS_BEGIN
           if [ -d "$root/results" ]; then
-            find "$root/results" -maxdepth 1 -type f -printf '%f|%s|%TY-%Tm-%TdT%TH:%TM:%TSZ\\n' | sort
+            find "$root/results" -maxdepth 1 -type f -printf '%f|%s|%TY-%Tm-%TdT%TH:%TM:%TSZ\n' | sort
           fi
           echo PROBE_RESULTS_END
           if [ -f "$root/run.log" ]; then
@@ -68,7 +65,7 @@ jobs:
             echo PROBE_RUNLOG_BYTES=0
           fi
           pids=$(pgrep -f "$wrapper" || true)
-          echo PROBE_WRAPPER_PIDS=${{pids:-NONE}}
+          echo PROBE_WRAPPER_PIDS=${pids:-NONE}
           for pid in $pids; do
             [ -r "/proc/$pid/status" ] || continue
             echo PROBE_PID_BEGIN=$pid
@@ -84,9 +81,10 @@ jobs:
               target=$(readlink "$fd" 2>/dev/null || true)
               case "$target" in
                 *.mbo.dbn.zst)
-                  pos=$(awk '/^pos:/ {{print $2}}' "/proc/$pid/fdinfo/${{fd##*/}}" 2>/dev/null || true)
+                  fdnum=$(basename "$fd")
+                  pos=$(awk '/^pos:/ {print $2}' "/proc/$pid/fdinfo/$fdnum" 2>/dev/null || true)
                   size=$(stat -c %s "$target" 2>/dev/null || true)
-                  echo "RAWFD|${{fd##*/}}|$target|${{pos:-NA}}|${{size:-NA}}"
+                  echo "RAWFD|$fdnum|$target|${pos:-NA}|${size:-NA}"
                   ;;
               esac
             done
@@ -99,6 +97,10 @@ jobs:
             echo PROBE_WORKER_STATUS_END
           fi
           '''
+          remote=(remote
+              .replace('__UNIT__', shlex.quote(os.environ['UNIT']))
+              .replace('__ROOT__', shlex.quote(os.environ['CONT_ROOT']))
+              .replace('__WRAPPER__', shlex.quote(os.environ['WRAPPER'])))
           with open('/tmp/probe-params.json','w') as f:
               json.dump({'commands':['/bin/bash -lc '+shlex.quote(remote)],'executionTimeout':['300']},f)
           PY
