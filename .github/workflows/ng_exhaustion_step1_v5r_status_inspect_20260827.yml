@@ -120,6 +120,7 @@ jobs:
           test "$status" = Success
 
       - name: Inspect published S3 objects read-only
+        if: ${{ always() }}
         shell: bash
         run: |
           set -u -o pipefail
