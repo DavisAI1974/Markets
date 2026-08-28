@@ -1,0 +1,138 @@
+name: ONE-SHOT APPROVED - Step-1 V5R Snapshot Reboot Recover 20260828
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_step1_v5r_snapshot_reboot_recover_20260828.yml
+
+permissions:
+  contents: read
+
+jobs:
+  recover:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_STEP1_V5R_SNAPSHOT_REBOOT_RECOVER_20260828]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      VOLUME_ID: vol-05a0b1e56f8c16478
+      CONT_ROOT: /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/oom_continue/33113936522-1
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Verify recovery preconditions
+        shell: bash
+        run: |
+          set -euo pipefail
+          state="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].State.Name' --output text)"
+          type="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].InstanceType' --output text)"
+          volume="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].BlockDeviceMappings[0].Ebs.VolumeId' --output text)"
+          test "$state" = running
+          test "$type" = r6i.xlarge
+          test "$volume" = "$VOLUME_ID"
+          echo RECOVERY_PRECONDITIONS=PASS
+
+      - name: Snapshot preserved EBS evidence
+        id: snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          snapshot_id="$(aws ec2 create-snapshot --volume-id "$VOLUME_ID" --description 'Step-1 V5R post-compute pre-reboot preservation 20260828' --query SnapshotId --output text)"
+          test -n "$snapshot_id"
+          echo "snapshot_id=$snapshot_id" >> "$GITHUB_OUTPUT"
+          aws ec2 describe-snapshots --snapshot-ids "$snapshot_id" --query 'Snapshots[0].{SnapshotId:SnapshotId,State:State,Progress:Progress,VolumeId:VolumeId,StartTime:StartTime}' --output json
+          echo EBS_SNAPSHOT_ACCEPTED="$snapshot_id"
+
+      - name: Reboot impaired guest only
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws ec2 reboot-instances --instance-ids "$INSTANCE_ID"
+          echo EC2_REBOOT_ISSUED=PASS
+          for poll in $(seq 1 90); do
+            read -r sys inst <<<"$(aws ec2 describe-instance-status --instance-ids "$INSTANCE_ID" --include-all-instances --query 'InstanceStatuses[0].[SystemStatus.Status,InstanceStatus.Status]' --output text 2>/dev/null || true)"
+            echo "EC2_STATUS poll=$poll system=${sys:-unknown} instance=${inst:-unknown}"
+            if [ "${sys:-}" = ok ] && [ "${inst:-}" = ok ]; then
+              echo EC2_REACHABILITY_RECOVERED=PASS
+              exit 0
+            fi
+            sleep 5
+          done
+          echo EC2_REACHABILITY_RECOVERED=FAIL >&2
+          exit 1
+
+      - name: Wait for SSM recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          for poll in $(seq 1 90); do
+            ping="$(aws ssm describe-instance-information --filters Key=InstanceIds,Values="$INSTANCE_ID" --query 'InstanceInformationList[0].PingStatus' --output text 2>/dev/null || true)"
+            echo "SSM_STATUS poll=$poll ping=${ping:-unknown}"
+            if [ "$ping" = Online ]; then
+              echo SSM_RECOVERED=PASS
+              exit 0
+            fi
+            sleep 5
+          done
+          echo SSM_RECOVERED=FAIL >&2
+          exit 1
+
+      - name: Inspect preserved V5R outputs read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, shlex, textwrap
+          root=os.environ['CONT_ROOT']
+          body=textwrap.dedent(r'''
+            set -u -o pipefail
+            echo HOST_RECOVERY_BEGIN
+            date -u
+            uptime
+            free -b || true
+            echo HOST_RECOVERY_END
+            echo RESULTS_LIST_BEGIN
+            if [ -d "$root/results" ]; then find "$root/results" -maxdepth 1 -type f -printf '%f|%s|%TY-%Tm-%TdT%TH:%TM:%TS\n' | sort; else echo RESULTS_DIR_MISSING; fi
+            echo RESULTS_LIST_END
+            echo RECEIPT_BEGIN
+            if [ -f "$root/results/STEP1_DUAL_FULL_MBO_RECEIPT.json" ]; then cat "$root/results/STEP1_DUAL_FULL_MBO_RECEIPT.json"; else echo RECEIPT_MISSING; fi
+            echo RECEIPT_END
+            echo RESOURCE_BEGIN
+            if [ -f "$root/resource.txt" ]; then cat "$root/resource.txt"; else echo RESOURCE_MISSING; fi
+            echo RESOURCE_END
+            echo RUN_LOG_BEGIN
+            if [ -f "$root/run.log" ]; then echo RUN_LOG_BYTES=$(stat -c %s "$root/run.log"); tail -n 100 "$root/run.log"; else echo RUN_LOG_MISSING; fi
+            echo RUN_LOG_END
+            echo LOCAL_WORKER_STATUS_BEGIN
+            if [ -f "$root/WORKER_STATUS.json" ]; then cat "$root/WORKER_STATUS.json"; else echo LOCAL_WORKER_STATUS_MISSING; fi
+            echo LOCAL_WORKER_STATUS_END
+            echo POST_REBOOT_OUTPUT_INSPECT=PASS
+          ''')
+          script='root='+shlex.quote(root)+'\n'+body
+          open('/tmp/recovery-inspect.json','w').write(json.dumps({'commands':['/bin/bash -lc '+shlex.quote(script)],'executionTimeout':['300']}))
+          PY
+          command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript --comment 'Read-only inspect preserved Step-1 V5R outputs after guest recovery' --parameters file:///tmp/recovery-inspect.json --timeout-seconds 300 --query 'Command.CommandId' --output text)"
+          for poll in $(seq 1 60); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in Success|Failed|Cancelled|TimedOut|Cancelling) break;; esac
+            sleep 5
+          done
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' --output json
+          test "$status" = Success
+
+      - name: Report snapshot state
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set -u -o pipefail
+          snapshot_id='${{ steps.snapshot.outputs.snapshot_id }}'
+          if [ -n "$snapshot_id" ]; then
+            aws ec2 describe-snapshots --snapshot-ids "$snapshot_id" --query 'Snapshots[0].{SnapshotId:SnapshotId,State:State,Progress:Progress,VolumeId:VolumeId,StartTime:StartTime}' --output json || true
+          fi
