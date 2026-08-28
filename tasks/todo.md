@@ -1,5 +1,31 @@
 # Frankie full-stack October and boss/Sol-replacement lifecycle
 
+## Active: BOSS state serialization
+
+### Task BSS-1 — RED serializer contract
+- [ ] Add `research/kalshi/frankie_boss/tests/test_state_serialization.py` first.
+- [ ] Acceptance: tests specify deterministic bytes/hash, semantic round-trip, graph parent/root preservation, QSV registry order/mask preservation, real-zero vs missing vs ablated distinction, malformed structure rejection, provenance binding, and shape-preserving ablation.
+- [ ] Verify: focused serializer test command fails for the intended missing implementation rather than an unrelated environment/import failure.
+- [ ] Files: test file only.
+
+### Task BSS-2 — GREEN minimal serializer
+- [ ] Add `research/kalshi/frankie_boss/state_serialization.py` only after RED is established.
+- [ ] Acceptance: immutable typed snapshot; canonical JSON; parse/round-trip; SHA-256 identity; parent/QSV validation; explicit value-state markers; generic versioned market ablation; no unrestricted extra payload.
+- [ ] Verify: serializer tests pass; existing BOSS causal/trunk/seam tests remain unchanged and pass where the environment supports their dependencies.
+- [ ] Files: serializer module plus existing RED test file.
+
+### Task BSS-3 — Review and provenance
+- [ ] Run bounded doubt-driven/five-axis review on the serializer tranche.
+- [ ] Record exact RED/GREEN commands/results and environment constraints without upgrading historical receipts into new runs.
+- [ ] Confirm no Granite/provider/Step-1/Frankie call, no trunk/BLD/ReFRAG/core modification, and remote branch verification.
+
+### Checkpoint: serializer tranche
+- [ ] All accepted spec success criteria satisfied.
+- [ ] No Critical/Required review finding remains.
+- [ ] Real-data/Granite semantic testing remains separately gated.
+
+---
+
 ## Complete: Frankie boss / Sol replacement seam
 
 - [x] Read the governing Frankie handoffs, architecture records, supplied screenshots, ReFRAG bundle,
