@@ -1,6 +1,6 @@
 # Spec: BOSS state serialization
 
-Status: **PROPOSED -- HUMAN REVIEW REQUIRED BEFORE PLAN/TEST IMPLEMENTATION**
+Status: **ACCEPTED FOR PLAN/TDD**
 
 Date: 2026-08-28
 
@@ -12,6 +12,14 @@ Branch: `codex/frankie-boss-sol-replacement-20260824`
 
 Governing lifecycle: `addyosmani/agent-skills` release `0.6.7`, `spec-driven-development` after brownfield context characterization.
 
+## Accepted human decisions
+
+Accepted on 2026-08-28 under the user's explicit `Proceed` instruction:
+
+1. Canonical JSON is the sole authoritative first representation. No second prose rendering in this tranche.
+2. The typed snapshot requires an existing `CausalPacket` identity plus separately supplied typed sequence/graph/QSV state. `CausalPacket` alone is not represented as the full trunk state.
+3. No real Step-1 sample is selected yet. Mechanical serializer tests use synthetic/fixture state; the smallest frozen representative Step-1 sample is selected only in a later semantic-validation tranche.
+
 ## Assumptions being surfaced
 
 1. This tranche tests the interface representation only. It does not invoke Granite or any provider model.
@@ -22,8 +30,6 @@ Governing lifecycle: `addyosmani/agent-skills` release `0.6.7`, `spec-driven-dev
 6. The serializer must bind to existing causal/provenance identities but must not claim that `CausalPacket` alone is the entire tensor state consumed by BOSS.
 7. The current executable graph behavior is one `TemporalGraphBranch` module applied once before the fixed-depth layer loop. This tranche records graph structure; it does not change graph execution.
 8. No outcome label, future information, Frankie result, or post-`as_of` evidence may appear in serialized input.
-
-If any assumption is rejected, this spec must be revised before implementation.
 
 ## Objective
 
@@ -146,7 +152,7 @@ When QSV is absent or masked, absence must be explicit. Missing must not be rend
 
 ## Output format
 
-The initial output should be a deterministic machine-parseable text format using canonical JSON rather than prose.
+The initial output is deterministic machine-parseable canonical JSON rather than prose.
 
 Rationale:
 
@@ -339,10 +345,6 @@ This capability is complete only when:
 12. No Granite/provider/Step-1/Frankie call occurs.
 13. Provenance records RED/GREEN receipts, exact code SHA, and any KILL/null finding.
 
-## Open questions for human review
+## Deferred question
 
-1. Is canonical JSON the approved first representation, or do you want a second deterministic human-readable rendering included from the start?
-2. Should the first typed snapshot be built from a fixture-level declared state independent of `CausalPacket`, or should it require a `CausalPacket` identity plus separately supplied typed sequence/graph/QSV fields? The latter is currently preferred because `CausalPacket` alone is not the full trunk input state.
-3. For later real-data semantic validation, what smallest frozen Step-1-derived sample should be treated as the first representative corpus? This does not need to be answered before mechanical serializer tests.
-
-No implementation begins until this proposed spec is reviewed/accepted or revised.
+For later real-data semantic validation, select the smallest frozen Step-1-derived sample that is representative enough to test serializer/teacher semantics. This is deliberately deferred and is not required for mechanical serializer tests.
