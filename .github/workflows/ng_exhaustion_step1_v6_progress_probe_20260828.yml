@@ -1,0 +1,122 @@
+name: ONE-SHOT READ-ONLY - NG Exhaustion Step-1 V6 Progress Probe 20260828
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824-progress-probe-temp
+    paths:
+      - .github/workflows/ng_exhaustion_step1_v6_progress_probe_20260828.yml
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_STEP1_V6_READONLY_PROGRESS_PROBE_20260828]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      UNIT: ng-exhaustion-step1-oom-v6-33139463724-1
+      CONT_ROOT: /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/oom_continue/33139463724-1
+      WRAPPER: research/ng_exhaustion_mbo_2day_full_mbo_step1_20260825.py
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Read-only live progress probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, shlex
+          unit=shlex.quote(os.environ['UNIT'])
+          root=shlex.quote(os.environ['CONT_ROOT'])
+          wrapper=shlex.quote(os.environ['WRAPPER'])
+          remote=f'''set -u
+          unit={unit}
+          root={root}
+          wrapper={wrapper}
+          echo PROBE_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          echo PROBE_UNIT=$unit
+          systemctl show "$unit" -p ActiveState -p SubState -p MainPID -p MemoryCurrent -p CPUUsageNSec --no-pager || true
+          echo PROBE_FREE_BEGIN
+          free -b || true
+          echo PROBE_FREE_END
+          echo PROBE_SWAP_BEGIN
+          swapon --show --bytes || true
+          echo PROBE_SWAP_END
+          echo PROBE_RESULTS_BEGIN
+          if [ -d "$root/results" ]; then
+            find "$root/results" -maxdepth 1 -type f -printf '%f|%s|%TY-%Tm-%TdT%TH:%TM:%TSZ\\n' | sort
+          fi
+          echo PROBE_RESULTS_END
+          if [ -f "$root/run.log" ]; then
+            echo PROBE_RUNLOG_BYTES=$(stat -c %s "$root/run.log")
+            echo PROBE_RUNLOG_MTIME=$(stat -c %y "$root/run.log")
+            echo PROBE_RUNLOG_TAIL_BEGIN
+            tail -n 20 "$root/run.log" || true
+            echo PROBE_RUNLOG_TAIL_END
+          else
+            echo PROBE_RUNLOG_BYTES=0
+          fi
+          pids=$(pgrep -f "$wrapper" || true)
+          echo PROBE_WRAPPER_PIDS=${{pids:-NONE}}
+          for pid in $pids; do
+            [ -r "/proc/$pid/status" ] || continue
+            echo PROBE_PID_BEGIN=$pid
+            ps -p "$pid" -o pid=,ppid=,etimes=,time=,%cpu=,%mem=,rss=,vsz=,stat=,cmd= || true
+            echo PROBE_IO_BEGIN=$pid
+            cat "/proc/$pid/io" 2>/dev/null || true
+            echo PROBE_IO_END=$pid
+            echo PROBE_STATUS_BEGIN=$pid
+            egrep '^(VmPeak|VmSize|VmHWM|VmRSS|RssAnon|RssFile|Threads|voluntary_ctxt_switches|nonvoluntary_ctxt_switches):' "/proc/$pid/status" || true
+            echo PROBE_STATUS_END=$pid
+            echo PROBE_RAW_FDS_BEGIN=$pid
+            for fd in /proc/$pid/fd/*; do
+              target=$(readlink "$fd" 2>/dev/null || true)
+              case "$target" in
+                *.mbo.dbn.zst)
+                  pos=$(awk '/^pos:/ {{print $2}}' "/proc/$pid/fdinfo/${{fd##*/}}" 2>/dev/null || true)
+                  size=$(stat -c %s "$target" 2>/dev/null || true)
+                  echo "RAWFD|${{fd##*/}}|$target|${{pos:-NA}}|${{size:-NA}}"
+                  ;;
+              esac
+            done
+            echo PROBE_RAW_FDS_END=$pid
+            echo PROBE_PID_END=$pid
+          done
+          if [ -f "$root/WORKER_STATUS.json" ]; then
+            echo PROBE_WORKER_STATUS_BEGIN
+            cat "$root/WORKER_STATUS.json"
+            echo PROBE_WORKER_STATUS_END
+          fi
+          '''
+          with open('/tmp/probe-params.json','w') as f:
+              json.dump({'commands':['/bin/bash -lc '+shlex.quote(remote)],'executionTimeout':['300']},f)
+          PY
+
+          command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment 'Read-only Step-1 V6 progress probe' \
+            --parameters file:///tmp/probe-params.json --timeout-seconds 300 \
+            --query 'Command.CommandId' --output text)"
+          echo PROBE_SSM_COMMAND_ID="$command_id"
+          status=Pending
+          for poll in $(seq 1 60); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in Success|Failed|Cancelled|TimedOut|Cancelling) break;; esac
+            sleep 3
+          done
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json
+          test "$status" = Success
+          echo STEP1_V6_PROGRESS_PROBE=PASS
