@@ -158,6 +158,23 @@ Only after that lock and freeze was the isolated A-clean Forecaster lane opened:
 The Forecaster packet has no memory package, keeps the answer wall sealed, and
 cannot modify the frozen Real-Time state.
 
+The original Forecaster process was attached to an ephemeral Chat-agent exec
+session and stopped when that session ended. A verified resume rebuilt the
+controller prefix, matched the saved adapter/controller hashes, event-group
+count, source cursor, and causal watermarks, then advanced through two raw-file
+boundaries. The process is stopped again for handoff at this authoritative
+closed checkpoint:
+
+- sequence: `6`
+- checkpoint:
+  `8281459d1eaee4f060969dd457f4ba04fc156d75ff5ee88417fa46edc03fe96d`
+- phase: `FORECASTER_NATIVE_REPLAY`
+- progress: `2,000,000 / 5,667,689` (`35.287751322%`)
+- `event_group_open=false`, `locked=false`
+
+Ignore and quarantine any work after this checkpoint. A-memory artifacts remain
+absent from the A-clean runtime.
+
 ### A-memory
 
 Path: `.github/workflows/frankie_a_memory_rt_native_launch_20260828.yml`  
@@ -273,13 +290,43 @@ Active A-memory Real-Time launch:
 - active runtime:
   `/workspace/scratch/da00127ac123/a-memory-runtime-c7da7d2/`
 
-Launch progress was `0 / 5,667,689` at the durable pre-call boundary. The first
-F_LAST-closed interval checkpoint is sequence 1 at
-`500,001 / 5,667,689` (`8.821955474%`), hash
-`bd06ba2253f8b0ac5d9b1fc7ab7274d598e30b550c83d1c9da89f191d4edf274`.
-The native replay remains active. `FORECASTER_FRANKIE` is sealed and must not
-start until A-memory RT reaches 100%, writes its locked final checkpoint and
+The original RT process was also attached to an ephemeral Chat-agent exec
+session. It stopped without an exception or scientific invariant failure. Its
+ledger continued beyond the last checkpoint, so the uncheckpointed tail was
+quarantined and is not restart authority.
+
+The authoritative A-memory restart boundary is:
+
+- sequence: `2`
+- checkpoint:
+  `d03b863917ad250364729e976c6ba042555ffceb7b60c84ab7dfb530aeaf1757`
+- phase: `RT_NATIVE_REPLAY`
+- progress: `1,000,000 / 5,667,689` (`17.643875661%`)
+- completed closed groups: `759,713`
+- `event_group_open=false`, `locked=false`
+
+The recovery verified the fixed memory package and complete checkpoint chain,
+rebuilt a closed 1,000,000-record prefix, and quarantined the interrupted tail.
+A local resume-helper naming bug surfaced only after the first independent
+prefix audit passed; it changed no checkpoint or scientific state. The next
+session must repeat the full adapter/controller/prefix audit from sequence 2
+before accepting record 1,000,001. `FORECASTER_FRANKIE` remains sealed and must
+not start until A-memory RT reaches 100%, writes its locked final checkpoint and
 first lock, and freezes the one-way handoff.
+
+## Ephemeral-process failure and recovery rule
+
+The two incomplete processes stopped because their long-running Python children
+were owned by temporary Chat-agent execution sessions. Ending or interrupting
+those sessions retires their process groups. This was an orchestration failure,
+not a data, model, or replay-invariant failure; neither runtime contains an
+error, traceback, or failed-integrity marker.
+
+Do not run either original start-from-zero command over an active runtime. Use
+the promoted resume launchers below, verify the selected closed checkpoint and
+all sibling hashes first, and discard every uncheckpointed tail. Keep the Chat
+turn open through completion or move replay execution to a genuinely persistent
+runner before yielding.
 
 ## Required wrappers and scientific boundary modules
 
@@ -290,8 +337,38 @@ first lock, and freezes the one-way handoff.
 | `research/kalshi/frankie_raw_mbo_benchmark/mbo_resume_state.py` | Exact adapter snapshot/restore at closed groups | `e7d1dcf3a66c10bd4c2342c8e35d79ea5a58cbf44952bfbdb2b3195a7b1dd7e3` |
 | `research/kalshi/frankie_raw_mbo_benchmark/benchmark_checkpoint.py` | Atomic hash-chained checkpoints and progress validation | `06934557cf0441dac31d0abd3aafc9ae05e35a1d17a684480cf605a652e8cbf7` |
 | `research/kalshi/frankie_raw_mbo_benchmark/native_evidence_bundle.py` | Lossless native group ledger and evidence receipts | `a1d6d1e41d519a956754f6199f5a14825c243776b3c328ca9e2956ae909149ae` |
+| `research/kalshi/frankie_raw_mbo_benchmark/a_clean_rt_replay_20260828.py` | Exact A-clean native RT replay/ledger/checkpoint launcher used for the completed frozen run | `0bb2c89ec0acb80d5725e574e521c0844962d9f66b4b60077956bb5cb1cb2c8e` |
+| `research/kalshi/frankie_raw_mbo_benchmark/a_clean_forecaster_prepare_20260828.py` | Builds and seals the A-clean frozen-RT one-way Forecaster packet and sequence-0 checkpoint | `73d899af5a0b771497f8b25cda4e4d01320e975ea02f8afe73dc9cb61834d5fa` |
+| `research/kalshi/frankie_raw_mbo_benchmark/a_clean_forecaster_replay_20260828.py` | Original A-clean Forecaster native replay and pre/post model checkpoint launcher | `44b75be9eb7fc4c00abcd287f26ec6d2ecf7b7cefb5e1eb412e3b88af97a706f` |
+| `research/kalshi/frankie_raw_mbo_benchmark/a_clean_forecaster_resume_20260828.py` | Exact A-clean Forecaster sequence-6 recovery launcher; verifies reconstructed prefix before continuation | `566f5805c4a809b44e9a1ed389e04c8013365f33ad2904b000f68e3546cd0cf3` |
+| `research/kalshi/frankie_raw_mbo_benchmark/a_memory_prepare_20260828.py` | Verifies the repository memory proof, materializes the lessons-only chain, and seals the A-memory packet | `0b19480edd0679be7b64f7a5dd50a66b4fa16ed8f26175ec8cf4e77d47550236` |
+| `research/kalshi/frankie_raw_mbo_benchmark/a_memory_rt_resume_20260828.py` | Exact A-memory RT sequence-2 recovery launcher; verifies package, chain, prefix, and quarantined tail | `6406cdca918c6557b75973717b83298aaab676116511cbc64fae3194815104e9` |
 | `research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py` | Native full-state replay | `838997142a543ba6c5ba6b86277c66d9465ad4e62ee85c5b1ec9ac177eaa8120` |
 | `research/ng_exhaustion_mbo_v4_state_adapter_20260820.py` | Full-depth resting-order/FIFO adapter | `4a80e3e4b83867046d318ba97d350c2d7aca22e9d182d98399d01eeacc72d3ce` |
+
+The promoted launchers are exact-run snapshots. They intentionally retain the
+packet/runtime identities and absolute scratch paths used in this Work session.
+On the same persistent workspace, resume with:
+
+```bash
+cd /workspace/scratch/da00127ac123/Markets-handoff
+python research/kalshi/frankie_raw_mbo_benchmark/a_clean_forecaster_resume_20260828.py
+python research/kalshi/frankie_raw_mbo_benchmark/a_memory_rt_resume_20260828.py
+```
+
+Run them in separate persistent processes. Do not run either command until its
+named packet/runtime roots and checkpoint sibling hashes have been verified. If
+the next workspace has a different absolute root, copy the sealed packet and
+runtime first, then make and document a deliberate path-only launcher update;
+never silently point a launcher at a newly generated or other-arm runtime.
+
+Consolidated workflow and memory inventory:
+
+| Path | Role | SHA-256 |
+|---|---|---|
+| `.github/workflows/frankie_a_clean_rt_native_launch_20260828.yml` | Exact A-clean packet staging, native source hash binding, sequence-0 checkpoint, private persistence | `fd9ea34473f86b93abd3cd86cd8d25db8c326fd5a1d918c6971b232249913f34` |
+| `.github/workflows/frankie_a_memory_rt_native_launch_20260828.yml` | A-clean-equivalent native staging plus verified lessons-only memory binding | `3f030e10d739a2a71fd73022a981a76d052d3fec2d7f1e949243bcf5bb509aa7` |
+| `research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/` | Frozen 15-file prior learned-output/receipt chain plus repository recovery proof; no reduced rows | package `0a5cddbcd971a3e6c2cad88a8e5559b0ab0529a31174c882355a61fe9c680b87` |
 
 ## Older two-Frankie orchestration reused only for behavior
 
