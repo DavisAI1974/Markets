@@ -96,13 +96,17 @@ QSV remains a separate stream rather than being folded into generic numerics. `q
 
 ### One shared temporal graph branch
 
-There is exactly one `TemporalGraphBranch` instance. It adds venue and instrument embeddings and one parent-message path. It exists to preserve order ancestry/structure that the sequence view loses; it is not a second or third independent graph model.
+There is exactly one `TemporalGraphBranch` module instance. It adds venue and instrument embeddings and a parent-message path. It exists to preserve order ancestry/structure that the sequence view loses; it is not a second or third independent graph model.
+
+**Brownfield ambiguity found:** the `TemporalGraphBranch` docstring says `One round of masked message passing per layer`, but current and preserved `Trunk.represent()` call the graph module once, immediately after field encoding and before the `n_layers` attention/memory/feed-forward loop. Existing tests exercise the executable one-pass behavior. Therefore the present executable authority is **one graph module and one graph application per `represent()` call**. The docstring language is inconsistent and must not be used to infer how a future recurrent-reasoning loop should interact with the graph.
+
+This inventory does not change that behavior. A future spec must explicitly choose and test graph interaction rather than silently resolving the ambiguity.
 
 The graph path can carry information from outside the local attention window through ancestry. Therefore `window` bounds only the attention path, not the full model receptive field.
 
 ### Fixed-depth sequence stack
 
-After encoding and the single graph pass, `Trunk.represent` executes `n_layers` fixed layers. Per layer:
+After encoding and the single executable graph pass, `Trunk.represent` executes `n_layers` fixed layers. Per layer:
 
 1. causal sliding-window attention,
 2. optional `GatedDeltaCell`,
@@ -112,9 +116,11 @@ This layer count is configuration-controlled fixed depth. There is no data-depen
 
 ### GatedDeltaCell recurrence is temporal memory, not reasoning-depth recurrence
 
-`GatedDeltaCell` contains an explicit recurrent state `S` updated across sequence time steps. It is causal temporal memory over the input sequence.
+`GatedDeltaCell` contains an explicit recurrent state `S` updated across sequence time steps **within one forward call**. `S` is initialized to zeros at the start of every `forward()` call and is not returned or persisted across packets/chunks by the current interface.
 
-This must not be mislabeled as the missing BOSS reasoning loop. The preserved trunk source explicitly distinguishes it from `recurrent-depth reasoning` and says shared-weight recurrent reasoning comes only after the fixed-depth baseline proves itself.
+It is therefore causal within-sequence temporal memory, not cross-packet persistent state and not the missing whole-representation BOSS reasoning loop.
+
+This distinction is load-bearing. The preserved trunk source explicitly distinguishes `GatedDeltaCell` from `recurrent-depth reasoning` and says shared-weight recurrent reasoning comes only after the fixed-depth baseline proves itself.
 
 ### Explicitly absent from the fixed-depth baseline
 
@@ -136,7 +142,7 @@ Implemented residual/state behavior is currently local to the fixed-depth archit
 - gated delta memory returns `norm(x + out(memory_read))`,
 - feed-forward update is an explicit outer residual `h = h + ff[i](h)`.
 
-No separate recurrent-reasoning state object, scratch state, ponder state, loop counter state, or recurrence-carried graph state currently exists.
+No separate recurrent-reasoning state object, scratch state, ponder state, loop counter state, recurrence-carried graph state, or cross-packet delta-memory state currently exists.
 
 ## Masking authority
 
@@ -147,6 +153,8 @@ Sliding attention is strictly causal and window-limited on its own path.
 ### QSV mask
 
 QSV can be unavailable per time step. Masked/unavailable values are intended to contribute exactly zero; present non-finite values fail closed; complete QSV ablation makes the stream inert.
+
+`FieldEncoder.ablate_qsv()` achieves exact ablation by zeroing the QSV projection parameters in place and marking the stream ablated. This is an exact control for that module instance, but it is destructive to that instance's QSV projection. Future paired experiments must not assume it is a reversible runtime toggle; use separately controlled model instances/checkpoints unless a future interface explicitly changes this contract.
 
 ### No reasoning-depth mask yet
 
@@ -187,11 +195,15 @@ Those are missing specification, not implicit defaults.
 
 ## Stopping/halting authority
 
-### Existing decision abstention is not reasoning halting
+### Existing output abstention is not reasoning halting
 
-`decision_contract.py` and `frankie_contract.py` contain deterministic decision/abstention behavior after head outputs exist. They validate contracts, packet defects, evidence pointers, contradiction/confidence rules in the generic decision layer, and the BLD-1 projection.
+Two output-contract layers exist in the package and must not be conflated.
 
-That is output disposition. It is not an internal recurrent-compute halt controller.
+`decision_contract.py` contains a generic deterministic `DecisionEngine` with numeric confidence/contradiction gates over generic typed heads. Those generic head names are not Frankie's public interface.
+
+`frankie_contract.py` is the authoritative BLD-1 projection seam carried by the governing handoff. It deliberately maps only four learned quantities and does **not** invent a numeric confidence threshold; `confidence` is an already-governed `low|med|high` label. Forecast disposition is independent of forecast validity, and a valid forecast-backed `ABSTAIN` may retain the forecast.
+
+Both are post-head output/disposition behavior. Neither is an internal recurrent-compute halt controller.
 
 ### BLD-1 reasoning text is not a loop state
 
@@ -246,7 +258,7 @@ A valid forecast-backed `ABSTAIN` may preserve forecast values; complete zero sa
 Existing controlled mechanisms include:
 
 - QSV dormant-by-default switch,
-- exact QSV ablation,
+- exact per-instance QSV ablation,
 - optional gated-delta-memory switch,
 - mandatory teacher controls (`none`, `plain_aux`, `shuffled`, `random`, `dipole`),
 - fixed-depth trunk as the baseline against any later recurrent-depth experiment.
@@ -255,7 +267,7 @@ No Granite arm exists. No adaptive-depth arm exists. No recurrent-depth arm exis
 
 ## Granite 4.2 candidate status
 
-Granite 4.2 is **not adopted** by this inventory. It remains a research candidate.
+Granite 4.2 is **not adopted** by this inventory. It remains a research candidate. Detailed candidate provenance and required gates are recorded separately in `FRANKIE_BOSS_GRANITE42_RESEARCH_CANDIDATE_20260828.md`.
 
 The current hypothesis is narrower than replacing BOSS or Step-1: Granite 4.2 8B may later be tested as a frozen reasoning teacher/control to improve sample efficiency when only a bounded amount of expensive full-MBO training data is available.
 
@@ -286,8 +298,8 @@ Real Step-1 information becomes necessary later for market-semantic validation. 
 | packet identity/provenance | canonical `CausalPacket` + hash/stamp | implemented |
 | typed tensor inputs | `Trunk.represent` signature/config | implemented |
 | QSV ownership/mask/ablation | ReFRAG registry + `FieldEncoder` | implemented/frozen |
-| temporal graph | one `TemporalGraphBranch` | implemented/frozen |
-| temporal memory | `GatedDeltaCell` state across T | implemented |
+| temporal graph | one `TemporalGraphBranch`; executable graph pass once before layer loop | implemented/frozen behavior; docstring ambiguity recorded |
+| temporal memory | `GatedDeltaCell` state across T, reset per forward call | implemented within-sequence only |
 | fixed representation depth | `n_layers` | implemented baseline |
 | whole-representation recurrence | none | explicitly deferred |
 | recurrent loop state | none | missing spec |
@@ -297,7 +309,8 @@ Real Step-1 information becomes necessary later for market-semantic validation. 
 | recurrence train/inference difference | none | missing spec |
 | recurrent graph interaction | none | missing spec |
 | recurrent ablation/control | fixed-depth baseline only | missing experiment contract |
-| output abstention | decision/BLD contracts | implemented, distinct from compute halting |
+| generic post-head abstention | `decision_contract.py` | implemented, not BLD-1 authority |
+| BLD-1 output/disposition | `frankie_contract.py` | implemented/frozen, distinct from compute halting |
 | Granite serialization | none | new interface candidate |
 | Granite teacher validity | none | new experiment candidate |
 
@@ -306,21 +319,32 @@ Real Step-1 information becomes necessary later for market-semantic validation. 
 Before any serializer or recurrent-reasoning code:
 
 - do not modify the existing trunk merely to make a future design convenient,
-- do not reinterpret temporal `GatedDeltaCell` memory as reasoning-depth recurrence,
+- do not reinterpret temporal `GatedDeltaCell` memory as reasoning-depth recurrence or persistent cross-packet state,
+- do not silently resolve the graph-docstring/graph-call ambiguity by changing graph frequency,
 - do not couple BLD-1 abstention to a future compute-halt decision without a separate contract,
+- do not import the generic `DecisionEngine`'s numeric confidence threshold into BLD-1,
 - do not feed Granite undocumented ad-hoc prose and call the result a BOSS-state experiment,
 - do not alter the single temporal graph branch,
 - do not leak additional learned heads through BLD-1,
 - do not require full-history Step-1 data for interface tests,
 - do not change Frankie/provider/core seams.
 
+## Adversarial reconciliation record
+
+A doubt-driven review was attempted against the inventory's non-trivial claims. The current tool environment does not expose a separate fresh-context subagent/reviewer, so the review performed in this session is explicitly a **degraded self-adversarial pass**, not a full fresh-context completion of the `doubt-driven-development` skill.
+
+Findings reconciled into this document:
+
+1. **Graph application ambiguity -- valid/actionable documentation finding.** `TemporalGraphBranch` says `per layer`; executable code calls it once before the layer loop. Recorded without changing code.
+2. **Delta state persistence -- valid/actionable documentation finding.** `S` resets to zero per `GatedDeltaCell.forward()`. Clarified as within-sequence memory only.
+3. **Generic decision gates versus BLD-1 -- valid/actionable documentation finding.** Numeric confidence/contradiction gates in `decision_contract.py` must not be treated as BLD-1 authority. Clarified.
+4. **QSV ablation reversibility -- valid trade-off/experiment warning.** Exact ablation mutates the instance's QSV projection. Recorded so future paired experiments do not assume a reversible toggle.
+5. **Packet-as-serializer assumption -- no correction required.** Inventory already states the packet is not automatically a sufficient Granite state serialization.
+
+No code changes were made in response to these findings.
+
 ## Remaining Brownfield Phase-1 work before specification
 
-1. Inspect the preserved chronological architecture screenshots/source notes for any intended recurrent-loop contract that is not represented in executable files.
-2. Perform a doubt-driven adversarial review of this inventory's non-trivial claims, especially:
-   - `GatedDeltaCell` recurrence is temporal rather than reasoning-depth recurrence;
-   - output abstention is distinct from compute halting;
-   - no current executable loop/halting authority exists;
-   - the packet is not automatically a sufficient Granite state serialization.
-3. Reconcile any findings and record corrections additively.
-4. Only then enter the new-feature spec phase for the smallest bounded next capability.
+1. The preserved chronological architecture screenshots remain byte-preserved, but this connector/session does not provide a reliable visual materialization path for repository JPEGs. The preserved source variants that explicitly reference the diagram were inspected and agree that recurrent-depth reasoning is deferred. Treat the uninspected visual content as an unresolved source-access limitation rather than claiming it was read.
+2. A true fresh-context adversarial review remains desirable before a non-trivial new interface specification stands. The current degraded self-review is recorded above rather than misrepresented as fresh-context review.
+3. Only after those limitations are accepted/resolved should the new-feature spec phase begin for the smallest bounded next capability.
