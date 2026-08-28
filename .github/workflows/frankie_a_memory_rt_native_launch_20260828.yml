@@ -1,0 +1,386 @@
+name: Frankie A-memory Real-Time native raw-MBO launch 20260828
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-raw-mbo-benchmark-20260828
+    paths:
+      - '.github/workflows/frankie_a_memory_rt_native_launch_20260828.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frankie-a-memory-rt-native-20260828
+  cancel-in-progress: false
+
+env:
+  AWS_DEFAULT_REGION: us-east-2
+  AWS_REGION: us-east-2
+  S3_ENDPOINT_URL: https://s3.us-east-2.amazonaws.com
+  BUCKET: bento-568968024170-us-east-2-an
+  INSTANCE_ID: i-08cee7171c0a76a04
+  LAUNCH_BRANCH: chatgpt/frankie-raw-mbo-benchmark-20260828
+  REQUIRED_STARTING_TIP: 82e140598b03bb38a7761c19d0ac47017c3908d0
+  SOURCE_PREFIX: nymex/ng_mbo_5y_v0/native/20211001_20211101
+  PRIOR_RUN_ID: workmode-32851909748-1
+  PRIOR_ROOT: /mnt/markets/frankie_prior_surface_oct45_workmode_packet_20260825/32851909748-1
+  PRIOR_PACKET_PREFIX: nymex/ng_mbo_5y_v0/frankie/prior_surface_oct45_workmode_packets/96d713cc9ed3e8ba889ae45a04e80cb4eab4fb26/32851909748-1
+  PRIOR_PACKAGE_PREFIX: nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/prior-package-discovery/workmode-32851909748-1
+  PREEXISTING_CUTOFF_EPOCH: '1787909152'
+
+jobs:
+  launch-a-memory-real-time:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+    steps:
+      - name: Checkout exact launch commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Verify exact branch base and arm isolation
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$GITHUB_REF" = "refs/heads/$LAUNCH_BRANCH"
+          git merge-base --is-ancestor "$REQUIRED_STARTING_TIP" "$GITHUB_SHA"
+          test -s research/kalshi/frankie_raw_mbo_benchmark/chat_packet_seam.py
+          test -s research/kalshi/frankie_raw_mbo_benchmark/raw_mbo_source_manifest.py
+          test -s research/kalshi/frankie_raw_mbo_benchmark/mbo_resume_state.py
+          test -s research/kalshi/frankie_raw_mbo_benchmark/benchmark_checkpoint.py
+          test -s research/kalshi/frankie_raw_mbo_benchmark/native_evidence_bundle.py
+          test -s research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py
+          test -s research/ng_exhaustion_mbo_v4_state_adapter_20260820.py
+
+      - name: Inventory exact prior-run namespaces without reading content
+        id: inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          inventory="$RUNNER_TEMP/a-memory-prior-inventory.json"
+          aws s3api list-objects-v2 \
+            --bucket "$BUCKET" \
+            --prefix "$PRIOR_PACKET_PREFIX" \
+            --query 'Contents[].{key:Key,bytes:Size,last_modified:LastModified,etag:ETag}' \
+            --output json > "$inventory"
+
+          python - <<'PY'
+          import json
+          import os
+          import shlex
+          from pathlib import Path
+
+          root = os.environ["PRIOR_ROOT"]
+          allowed = [
+              "RT_OUTPUT.json", "RT_CONTEXT_MANIFEST.json", "RT_AGENT_RECEIPT.json",
+              "RT_FIRST_LOCK.json", "RT_FROZEN_STATE.json", "ONEWAY_HANDOFF.json",
+              "RT_FREEZE_COMPLETE.json", "RT_FREEZE_EXTERNAL_ANCHOR.json",
+              "FORECASTER_OUTPUT.json", "FORECASTER_CONTEXT_MANIFEST.json",
+              "FORECASTER_AGENT_RECEIPT.json", "FORECASTER_FIRST_LOCK.json",
+              "EXECUTION_USAGE.json", "ARTIFACT_MANIFEST.json", "COMPLETE.json",
+          ]
+          quoted_names = " ".join(shlex.quote(value) for value in allowed)
+          script = f'''set -euo pipefail
+          root={shlex.quote(root)}
+          test -d "$root"
+          for name in {quoted_names}; do
+            find "$root" -type f -name "$name" -printf '%p\\t%s\\t%T@\\n'
+          done | sort
+          echo PRIOR_HOST_INVENTORY_COMPLETE
+          '''
+          Path("/tmp/a-memory-prior-inventory-params.json").write_text(
+              json.dumps({"commands": ["/bin/bash -lc " + shlex.quote(script)], "executionTimeout": ["600"]}),
+              encoding="utf-8",
+          )
+          PY
+          command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Read-only A-memory prior learned-output inventory" \
+            --parameters file:///tmp/a-memory-prior-inventory-params.json \
+            --timeout-seconds 600 --query Command.CommandId --output text)"
+          status=Pending
+          for _ in $(seq 1 90); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" \
+              --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in Success|Failed|TimedOut|Cancelled|Cancelling) break ;; esac
+            sleep 5
+          done
+          aws ssm get-command-invocation --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json > "$RUNNER_TEMP/a-memory-prior-host-inventory.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          value=json.loads((Path(os.environ['RUNNER_TEMP'])/'a-memory-prior-host-inventory.json').read_text())
+          assert value['Status']=='Success', value['Status']
+          assert int(value['ResponseCode'])==0
+          assert 'PRIOR_HOST_INVENTORY_COMPLETE' in value['StandardOutput']
+          PY
+          echo "command_id=$command_id" >> "$GITHUB_OUTPUT"
+
+      - name: Materialize only the prior learned-output proof chain
+        id: memory
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_uri="s3://${BUCKET}/${PRIOR_PACKAGE_PREFIX}/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}/prior-learned-package.tgz"
+          receipt_uri="s3://${BUCKET}/${PRIOR_PACKAGE_PREFIX}/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}/prior-learned-package-receipt.json"
+          export PACKAGE_URI="$package_uri" RECEIPT_URI="$receipt_uri"
+          python - <<'PY'
+          import json
+          import os
+          import shlex
+          from pathlib import Path
+
+          required = [
+              "RT_OUTPUT.json", "RT_CONTEXT_MANIFEST.json", "RT_AGENT_RECEIPT.json",
+              "RT_FIRST_LOCK.json", "RT_FROZEN_STATE.json", "ONEWAY_HANDOFF.json",
+              "RT_FREEZE_COMPLETE.json", "RT_FREEZE_EXTERNAL_ANCHOR.json",
+              "FORECASTER_OUTPUT.json", "FORECASTER_CONTEXT_MANIFEST.json",
+              "FORECASTER_AGENT_RECEIPT.json", "FORECASTER_FIRST_LOCK.json",
+              "EXECUTION_USAGE.json", "ARTIFACT_MANIFEST.json", "COMPLETE.json",
+          ]
+          script = r'''set -euo pipefail
+          root="$PRIOR_ROOT"
+          cutoff="$PREEXISTING_CUTOFF_EPOCH"
+          complete="$(find "$root" -type f -name COMPLETE.json -print -quit)"
+          test -n "$complete"
+          run_root="$(dirname "$complete")"
+          test "${run_root#"$root"}" != "$run_root"
+          stage="$(mktemp -d /tmp/a-memory-prior-learned.XXXXXX)"
+          trap 'rm -rf "$stage"' EXIT
+          for name in RT_OUTPUT.json RT_CONTEXT_MANIFEST.json RT_AGENT_RECEIPT.json RT_FIRST_LOCK.json RT_FROZEN_STATE.json ONEWAY_HANDOFF.json RT_FREEZE_COMPLETE.json FORECASTER_OUTPUT.json FORECASTER_CONTEXT_MANIFEST.json FORECASTER_AGENT_RECEIPT.json FORECASTER_FIRST_LOCK.json EXECUTION_USAGE.json ARTIFACT_MANIFEST.json COMPLETE.json; do
+            test -f "$run_root/$name"
+            test "$(stat -c %Y "$run_root/$name")" -lt "$cutoff"
+            cp --preserve=timestamps "$run_root/$name" "$stage/$name"
+          done
+          anchor="$(find "$root" -type f -name RT_FREEZE_EXTERNAL_ANCHOR.json -print -quit)"
+          test -n "$anchor"
+          test "$(stat -c %Y "$anchor")" -lt "$cutoff"
+          cp --preserve=timestamps "$anchor" "$stage/RT_FREEZE_EXTERNAL_ANCHOR.json"
+          python3 - "$stage" <<'PYVERIFY'
+          import hashlib,json,sys
+          from pathlib import Path
+          root=Path(sys.argv[1])
+          def read(name): return json.loads((root/name).read_text(encoding='utf-8'))
+          def filehash(name): return hashlib.sha256((root/name).read_bytes()).hexdigest()
+          def jhash(value): return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode()).hexdigest()
+          def receipt(value):
+              assert value.get('receipt_hash')==jhash({k:v for k,v in value.items() if k!='receipt_hash'})
+          rt=read('RT_OUTPUT.json'); fc=read('FORECASTER_OUTPUT.json')
+          rtc=read('RT_CONTEXT_MANIFEST.json'); fcc=read('FORECASTER_CONTEXT_MANIFEST.json')
+          rta=read('RT_AGENT_RECEIPT.json'); fca=read('FORECASTER_AGENT_RECEIPT.json')
+          rtl=read('RT_FIRST_LOCK.json'); frozen=read('RT_FROZEN_STATE.json')
+          handoff=read('ONEWAY_HANDOFF.json'); freeze=read('RT_FREEZE_COMPLETE.json')
+          fcl=read('FORECASTER_FIRST_LOCK.json'); usage=read('EXECUTION_USAGE.json')
+          manifest=read('ARTIFACT_MANIFEST.json'); complete=read('COMPLETE.json')
+          anchor=read('RT_FREEZE_EXTERNAL_ANCHOR.json')
+          for value in (rtc,fcc,rta,fca,rtl,handoff,freeze,fcl,usage,manifest,complete,anchor): receipt(value)
+          assert rtc.get('answer_wall')=='SEALED' and fcc.get('answer_wall')=='SEALED'
+          assert complete.get('status')=='COMPLETE' and complete.get('published_last') is True
+          assert complete.get('answer_key_or_step1_results_exposed') is False
+          assert complete.get('principal_role_call_order')==['REAL_TIME_FRANKIE','FORECASTER_FRANKIE']
+          assert complete.get('external_provider_api_called') is False
+          assert rta.get('output_sha256')==filehash('RT_OUTPUT.json')
+          assert fca.get('output_sha256')==filehash('FORECASTER_OUTPUT.json')
+          assert rta.get('accepted_output_hash')==jhash(rt)
+          assert fca.get('accepted_output_hash')==jhash(fc)
+          assert rtl.get('rt_output_hash')==jhash(rt)
+          assert frozen.get('rt_output_hash')==jhash(rt)
+          assert frozen.get('full_validated_rt_output')==rt
+          assert handoff.get('frozen_rt_state_hash')==frozen.get('frozen_rt_state_hash')
+          assert handoff.get('full_validated_rt_output_hash')==jhash(rt)
+          assert handoff.get('rt_frozen_before_forecaster') is True
+          assert handoff.get('forecaster_may_modify_rt_state') is False
+          assert fcl.get('forecaster_output_hash')==jhash(fc)
+          assert fcl.get('frozen_rt_state_hash')==frozen.get('frozen_rt_state_hash')
+          assert complete.get('frozen_rt_state_hash')==frozen.get('frozen_rt_state_hash')
+          assert complete.get('manifest_receipt_hash')==manifest.get('receipt_hash')
+          rows={row['path']:row for row in manifest['artifacts']}
+          for name,row in rows.items():
+              path=root/name
+              if path.exists():
+                  assert row['bytes']==path.stat().st_size and row['sha256']==filehash(name)
+          assert anchor.get('frozen_rt_state_hash')==frozen.get('frozen_rt_state_hash')
+          forbidden=('POSTREVEAL','POST_REVEAL','RECONCILIATION','CURRENT_BENCHMARK_ARM','A_CLEAN','BOSS','GRANITE')
+          for name in root.iterdir():
+              if name.suffix=='.json':
+                  upper=name.read_text(encoding='utf-8').upper()
+                  assert not any(token in upper for token in forbidden), (name.name,'forbidden lineage token')
+          PYVERIFY
+          tar --sort=name -czf /tmp/prior-learned-package.tgz -C "$stage" .
+          package_sha="$(sha256sum /tmp/prior-learned-package.tgz | awk '{print $1}')"
+          python3 - "$stage" "$package_sha" /tmp/prior-learned-package-receipt.json <<'PYRECEIPT'
+          import hashlib,json,os,sys
+          from pathlib import Path
+          root=Path(sys.argv[1]); package_sha=sys.argv[2]; output=Path(sys.argv[3])
+          files=[{'name':p.name,'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'mtime_epoch':int(p.stat().st_mtime)} for p in sorted(root.iterdir())]
+          value={'schema':'FRANKIE_PREEXISTING_UNREVEALED_OCT45_MEMORY_PROOF_V1','prior_run_id':os.environ['PRIOR_RUN_ID'],'source_surface_label':'PRIOR_REDUCED_NON_FULL_MBO_SURFACE','package_sha256':package_sha,'pre_existing_before_current_benchmark':True,'step1_or_post_reveal_content':False,'current_benchmark_arm_output_content':False,'old_reduced_rows_in_package':False,'files':files}
+          value['receipt_hash']=hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode()).hexdigest()
+          output.write_text(json.dumps(value,indent=2,sort_keys=True)+'\n')
+          PYRECEIPT
+          aws s3 cp /tmp/prior-learned-package.tgz "$PACKAGE_URI" --region us-east-2 --endpoint-url https://s3.us-east-2.amazonaws.com --only-show-errors
+          aws s3 cp /tmp/prior-learned-package-receipt.json "$RECEIPT_URI" --region us-east-2 --endpoint-url https://s3.us-east-2.amazonaws.com --only-show-errors
+          echo "PRIOR_LEARNED_PACKAGE_SHA256=$package_sha"
+          '''
+          env = {
+              "PRIOR_ROOT": os.environ["PRIOR_ROOT"],
+              "PRIOR_RUN_ID": os.environ["PRIOR_RUN_ID"],
+              "PREEXISTING_CUTOFF_EPOCH": os.environ["PREEXISTING_CUTOFF_EPOCH"],
+              "PACKAGE_URI": os.environ["PACKAGE_URI"],
+              "RECEIPT_URI": os.environ["RECEIPT_URI"],
+          }
+          exports = "\n".join(f"export {key}={shlex.quote(value)}" for key,value in env.items())
+          Path("/tmp/a-memory-materialize-params.json").write_text(
+              json.dumps({"commands": ["/bin/bash -lc " + shlex.quote(exports + "\n" + script)], "executionTimeout": ["900"]}),
+              encoding="utf-8",
+          )
+          PY
+          command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Fail-closed A-memory prior learned-output materialization" \
+            --parameters file:///tmp/a-memory-materialize-params.json \
+            --timeout-seconds 900 --query Command.CommandId --output text)"
+          status=Pending
+          for _ in $(seq 1 120); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" \
+              --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in Success|Failed|TimedOut|Cancelled|Cancelling) break ;; esac
+            sleep 5
+          done
+          result="$RUNNER_TEMP/a-memory-materialize-result.json"
+          aws ssm get-command-invocation --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json > "$result"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          value=json.loads((Path(os.environ['RUNNER_TEMP'])/'a-memory-materialize-result.json').read_text())
+          assert value['Status']=='Success', value
+          assert int(value['ResponseCode'])==0
+          assert 'PRIOR_LEARNED_PACKAGE_SHA256=' in value['StandardOutput']
+          PY
+          package_dir="$RUNNER_TEMP/a-memory-prior-learned"
+          install -d -m 0700 "$package_dir"
+          aws s3 cp "$package_uri" "$package_dir/prior-learned-package.tgz" --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
+          aws s3 cp "$receipt_uri" "$package_dir/prior-learned-package-receipt.json" --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
+          package_sha="$(sha256sum "$package_dir/prior-learned-package.tgz" | awk '{print $1}')"
+          test "$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["package_sha256"])' "$package_dir/prior-learned-package-receipt.json")" = "$package_sha"
+          echo "PRIOR_PACKAGE_DIR=$package_dir" >> "$GITHUB_ENV"
+          echo "PRIOR_PACKAGE_SHA256=$package_sha" >> "$GITHUB_ENV"
+
+      - name: Install native DBN reader
+        run: python -m pip install --quiet databento==0.81.0
+
+      - name: Fetch and hash-bind exact native DBN roster
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_dir="$RUNNER_TEMP/a-memory-native-sources"
+          packet_dir="$RUNNER_TEMP/a-memory-rt-packet"
+          install -d -m 0700 "$source_dir" "$packet_dir/sources" "$packet_dir/checkpoints" "$packet_dir/memory"
+          while read -r name expected_bytes expected_sha; do
+            target="$source_dir/$name"
+            aws s3 cp "s3://${BUCKET}/${SOURCE_PREFIX}/${name}" "$target" --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
+            test "$(stat -c %s "$target")" = "$expected_bytes"
+            test "$(sha256sum "$target" | awk '{print $1}')" = "$expected_sha"
+            cp --reflink=auto "$target" "$packet_dir/sources/$name"
+          done <<'ROSTER'
+          glbx-mdp3-20211001.mbo.dbn.zst 25628861 e6b4ec01bd9b34d57cb22c770b5d49c756e7f41a658f081823d923004a0121b2
+          glbx-mdp3-20211003.mbo.dbn.zst 973355 4380bd9ba83a5badc4839e12785aa464817b87e3fac11176b951e7b474446d88
+          glbx-mdp3-20211004.mbo.dbn.zst 34300424 8ed47cc0a68cf40cae9fde45e158142978076e60d3f9fc7cf940196babfddc0a
+          glbx-mdp3-20211005.mbo.dbn.zst 36192430 a4a12f9578da762412884e7f559a123361eaa3a153bec0db59dfb3ba6224a874
+          ROSTER
+          python -m research.kalshi.frankie_raw_mbo_benchmark.raw_mbo_source_manifest \
+            --output "$packet_dir/source_manifest.json" "$source_dir"/*.mbo.dbn.zst
+          test "$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["manifest_hash"])' "$packet_dir/source_manifest.json")" = a98a454ef5a88d6f3ee1213370d6df530ab2946ec9cde47171b0d7aa19f4e2ba
+          cp "$PRIOR_PACKAGE_DIR/prior-learned-package.tgz" "$packet_dir/memory/"
+          cp "$PRIOR_PACKAGE_DIR/prior-learned-package-receipt.json" "$packet_dir/memory/"
+          echo "PACKET_DIR=$packet_dir" >> "$GITHUB_ENV"
+
+      - name: Seal isolated A-memory RT packet and pre-call checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          from research.kalshi.frankie_raw_mbo_benchmark.benchmark_checkpoint import build_checkpoint,write_checkpoint_atomic
+          from research.kalshi.frankie_raw_mbo_benchmark.chat_packet_seam import build_chat_packet_contract
+          from research.kalshi.frankie_raw_mbo_benchmark.mbo_resume_state import export_adapter_state
+          from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import V4MboAdapter
+          packet=Path(os.environ['PACKET_DIR'])
+          manifest=json.loads((packet/'source_manifest.json').read_text())
+          proof=json.loads((packet/'memory/prior-learned-package-receipt.json').read_text())
+          memory={key:proof[key] for key in ('source_surface_label','package_sha256','pre_existing_before_current_benchmark','step1_or_post_reveal_content','current_benchmark_arm_output_content')}
+          memory['schema']='FRANKIE_PREEXISTING_UNREVEALED_OCT45_MEMORY_V1'
+          contract=build_chat_packet_contract(arm='A-memory',source_manifest=manifest,memory_package=memory)
+          (packet/'chat_packet_contract.json').write_text(json.dumps(contract,indent=2,sort_keys=True)+'\n')
+          run_id=f"frankie-a-memory-rt-{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}"
+          state=export_adapter_state(V4MboAdapter())
+          (packet/'checkpoints/adapter-state-000000.json').write_text(json.dumps(state,sort_keys=True)+'\n')
+          checkpoint=build_checkpoint(run_id=run_id,controller='A_CHATGPT',memory_mode='MEMORY_ASSISTED',sequence=0,source_manifest_hash=manifest['manifest_hash'],completed_mbo_records=0,total_mbo_records=manifest['total_mbo_records'],event_group_open=False,adapter_state_hash=state['state_hash'],controller_state_hash=contract['contract_hash'],previous_checkpoint_hash=None,phase='PRE_CALL_RT_NATIVE',locked=False)
+          write_checkpoint_atomic(packet/'checkpoints/checkpoint-000000.json',checkpoint)
+          packet_id='amemory-rtpkt-'+contract['contract_hash'][:20]
+          receipt={'schema':'FRANKIE_A_MEMORY_RT_NATIVE_LAUNCH_V1','run_id':run_id,'lane':'REAL_TIME_FRANKIE','arm':'A-memory','memory_mode':'MEMORY_ASSISTED','packet_id':packet_id,'checkpoint_id':checkpoint['checkpoint_hash'],'source_manifest_hash':manifest['manifest_hash'],'prior_memory_package_sha256':proof['package_sha256'],'required_starting_tip':os.environ['REQUIRED_STARTING_TIP'],'launch_commit':os.environ['GITHUB_SHA'],'completed_native_mbo_records':0,'total_native_mbo_records':manifest['total_mbo_records'],'progress_percent':0.0,'rt_lane_status':'RUNNING_PRE_CALL','forecaster_lane_started':False,'first_lock_frozen':False,'native_raw_mbo_only':True,'causal_clock':'ts_recv_ns','full_depth_fifo_required':True,'receipt_hash':''}
+          receipt['receipt_hash']=hashlib.sha256(json.dumps({k:v for k,v in receipt.items() if k!='receipt_hash'},sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode()).hexdigest()
+          (packet/'launch_receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          with Path(os.environ['GITHUB_ENV']).open('a') as out:
+              for key in ('run_id','packet_id','checkpoint_id','source_manifest_hash'):
+                  out.write(f"{key.upper()}={receipt[key]}\n")
+              out.write(f"TOTAL_NATIVE_MBO_RECORDS={manifest['total_mbo_records']}\n")
+          PY
+          find "$PACKET_DIR" -type f ! -name FILE_SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > "$PACKET_DIR/FILE_SHA256SUMS"
+
+      - name: Persist exact keyless A-memory RT packet
+        shell: bash
+        run: |
+          set -euo pipefail
+          durable_prefix="nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/${GITHUB_SHA}/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          aws s3 cp "$PACKET_DIR" "s3://${BUCKET}/${durable_prefix}" --recursive --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
+          echo "DURABLE_PREFIX=$durable_prefix" >> "$GITHUB_ENV"
+
+      - name: Publish private A-memory RT work packet
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: frankie-a-memory-rt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/a-memory-rt-packet
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Preserve fail-closed prior-package inventory
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: frankie-a-memory-prior-inventory-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/a-memory-prior-inventory.json
+            ${{ runner.temp }}/a-memory-prior-host-inventory.json
+            ${{ runner.temp }}/a-memory-materialize-result.json
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Report concrete A-memory RT launch
+        shell: bash
+        run: |
+          {
+            echo '### A-memory Real-Time Frankie native raw-MBO lane'
+            echo "- Run: ${RUN_ID}"
+            echo "- Packet: ${PACKET_ID}"
+            echo "- Checkpoint: ${CHECKPOINT_ID}"
+            echo "- Source manifest: ${SOURCE_MANIFEST_HASH}"
+            echo "- Prior learned package: ${PRIOR_PACKAGE_SHA256}"
+            echo "- Native MBO progress: 0 / ${TOTAL_NATIVE_MBO_RECORDS} (0.0%)"
+            echo "- Durable prefix: s3://${BUCKET}/${DURABLE_PREFIX}"
+            echo '- Status: RUNNING_PRE_CALL; Forecaster not started'
+          } >> "$GITHUB_STEP_SUMMARY"
