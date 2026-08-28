@@ -1,0 +1,41 @@
+name: Frankie Chat native raw-MBO packet seam CI 20260828
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-raw-mbo-benchmark-20260828
+    paths:
+      - 'research/kalshi/frankie_raw_mbo_benchmark/**'
+      - 'research/ng_exhaustion_mbo_v4_state_adapter_20260820.py'
+      - '.github/workflows/frankie_chat_raw_mbo_packet_seam_ci_20260828.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frankie-chat-raw-mbo-packet-seam-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  packet-seam-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+
+      - name: Verify exact checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+      - name: Focused Chat raw-MBO seam tests
+        run: python -m unittest research.kalshi.frankie_raw_mbo_benchmark.tests.test_chat_packet_seam -v
+
+      - name: Compile raw-MBO Chat package
+        run: python -m compileall -q research/kalshi/frankie_raw_mbo_benchmark
