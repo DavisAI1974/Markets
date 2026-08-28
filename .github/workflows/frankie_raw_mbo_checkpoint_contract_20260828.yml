@@ -1,0 +1,36 @@
+name: Frankie Raw MBO Checkpoint Contract 20260828
+
+on:
+  push:
+    branches:
+      - codex/frankie-boss-raw-mbo-benchmark-20260828
+      - chatgpt/frankie-raw-mbo-benchmark-20260828
+    paths:
+      - research/kalshi/frankie_boss/benchmark_checkpoint.py
+      - research/kalshi/frankie_boss/tests/test_benchmark_checkpoint.py
+      - research/kalshi/frankie_boss/SPEC-raw-mbo-blind-benchmark-restart-safety-20260828.md
+      - research/kalshi/frankie_boss/PLAN-raw-mbo-blind-benchmark-restart-safety-20260828.md
+      - .github/workflows/frankie_raw_mbo_checkpoint_contract_20260828.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checkpoint-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+
+      - name: Verify branch-scoped checkpoint contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python -m unittest research.kalshi.frankie_boss.tests.test_benchmark_checkpoint -v
+          python -m compileall -q research/kalshi/frankie_boss
