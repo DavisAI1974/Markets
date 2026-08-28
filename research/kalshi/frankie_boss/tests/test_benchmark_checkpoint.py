@@ -1,19 +1,26 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 from pathlib import Path
 import tempfile
 import unittest
 
-from research.kalshi.frankie_boss.benchmark_checkpoint import (
-    CheckpointError,
-    build_checkpoint,
-    checkpoint_hash,
-    load_checkpoint,
-    progress_percent,
-    verify_chain,
-    write_checkpoint_atomic,
-)
+
+MODULE_PATH = Path(__file__).resolve().parents[1] / "benchmark_checkpoint.py"
+SPEC = importlib.util.spec_from_file_location("frankie_benchmark_checkpoint_under_test", MODULE_PATH)
+if SPEC is None or SPEC.loader is None:
+    raise RuntimeError(f"cannot load checkpoint module from {MODULE_PATH}")
+checkpoint_module = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(checkpoint_module)
+
+CheckpointError = checkpoint_module.CheckpointError
+build_checkpoint = checkpoint_module.build_checkpoint
+checkpoint_hash = checkpoint_module.checkpoint_hash
+load_checkpoint = checkpoint_module.load_checkpoint
+progress_percent = checkpoint_module.progress_percent
+verify_chain = checkpoint_module.verify_chain
+write_checkpoint_atomic = checkpoint_module.write_checkpoint_atomic
 
 
 H0 = "0" * 64
