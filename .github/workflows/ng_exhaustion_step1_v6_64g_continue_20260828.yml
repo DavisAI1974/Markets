@@ -1,0 +1,232 @@
+name: ONE-SHOT APPROVED - NG Exhaustion Step-1 V6 64G Continue 20260828
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_step1_v6_64g_continue_20260828.yml
+
+permissions:
+  contents: read
+
+jobs:
+  launch-and-monitor-step1:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_FULL_MBO_STEP1_V6_64G_CONTINUE_20260828]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      BUCKET: bento-568968024170-us-east-2-an
+      INSTANCE_ID: i-08cee7171c0a76a04
+      VOLUME_ID: vol-05a0b1e56f8c16478
+      REQUIRED_TYPE: r6i.2xlarge
+      CANDIDATE_SHA: 0d318335825b4a0e19a5a2881522f3da0374788e
+      SOURCE_RUN_ROOT: /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/33054308590-1
+      RESUME_NATIVE_SECONDS: /mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/32819740234-1/results/V4_NATIVE_FULL_MBO_SECONDS.jsonl.gz
+      RESUME_NATIVE_SECONDS_SHA256: 899cca3c03d0cd66ba97bbd798b6d000bc3cb12c34d165a6def50b9c6f091b77
+      PRIOR_ARCHIVE_SHA256: 27cacc62681bc482e89eefcc3746f5d71958beab4e25816054e0c388a0346b33
+      WRAPPER: research/ng_exhaustion_mbo_2day_full_mbo_step1_20260825.py
+      WORKER_SCRIPT: research/ng_exhaustion_step1_oom_continue_worker_20260827.sh
+      RESULT_PREFIX_ROOT: nymex/ng_mbo_5y_v0/step1_census/two_day_full_mbo_corrected/continuations
+      SWAP_FILE: /mnt/markets/.ng_step1_swap_20260827
+      SWAP_BYTES: 17179869184
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Verify resized host and preserved launcher inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
+          aws ec2 wait instance-status-ok --instance-ids "$INSTANCE_ID"
+          instance_type="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].InstanceType' --output text)"
+          volume_id="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].BlockDeviceMappings[0].Ebs.VolumeId' --output text)"
+          test "$instance_type" = "$REQUIRED_TYPE"
+          test "$volume_id" = "$VOLUME_ID"
+          bash -n "$WORKER_SCRIPT"
+          python -m py_compile "$WRAPPER"
+          echo STEP1_V6_AWS_INSTANCE_TYPE="$instance_type"
+          echo STEP1_V6_EBS_VOLUME="$volume_id"
+          echo STEP1_V6_LOCAL_SYNTAX=PASS
+
+      - name: Launch preserved full-MBO Step-1 continuation
+        shell: bash
+        run: |
+          set -euo pipefail
+          export RESULT_PREFIX="$RESULT_PREFIX_ROOT/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          export WRAPPER_SHA256="$(sha256sum "$WRAPPER" | cut -d' ' -f1)"
+          export WORKER_B64="$(base64 -w0 "$WORKER_SCRIPT")"
+          echo "RESULT_PREFIX=$RESULT_PREFIX" >> "$GITHUB_ENV"
+
+          python - <<'PY'
+          import boto3, os
+          from botocore.client import Config
+          s3=boto3.client(
+              's3', region_name='us-east-2', endpoint_url='https://s3.us-east-2.amazonaws.com',
+              config=Config(signature_version='s3v4', s3={'addressing_style':'virtual'}))
+          bucket=os.environ['BUCKET']; prefix=os.environ['RESULT_PREFIX']
+          open('/tmp/result-put-url','w').write(s3.generate_presigned_url(
+              'put_object', Params={'Bucket':bucket,'Key':prefix+'/transfer/results.tar.gz'}, ExpiresIn=172800))
+          open('/tmp/status-put-url','w').write(s3.generate_presigned_url(
+              'put_object', Params={'Bucket':bucket,'Key':prefix+'/status/worker.json'}, ExpiresIn=172800))
+          PY
+          export RESULT_PUT_URL="$(cat /tmp/result-put-url)"
+          export STATUS_PUT_URL="$(cat /tmp/status-put-url)"
+          echo "::add-mask::$RESULT_PUT_URL"
+          echo "::add-mask::$STATUS_PUT_URL"
+
+          python - <<'PY'
+          import json, os, shlex, textwrap
+          env = {
+              'SOURCE_RUN_ROOT': os.environ['SOURCE_RUN_ROOT'],
+              'RESUME_NATIVE_SECONDS': os.environ['RESUME_NATIVE_SECONDS'],
+              'RESUME_NATIVE_SECONDS_SHA256': os.environ['RESUME_NATIVE_SECONDS_SHA256'],
+              'PRIOR_ARCHIVE_SHA256': os.environ['PRIOR_ARCHIVE_SHA256'],
+              'WRAPPER': os.environ['WRAPPER'],
+              'WRAPPER_SHA256': os.environ['WRAPPER_SHA256'],
+              'BASE': '/mnt/markets/ng_exhaustion_step1_5y_20260822/' + os.environ['CANDIDATE_SHA'],
+              'CONT_ROOT': '/mnt/markets/ng_exhaustion_two_day_full_mbo_step1_20260825/oom_continue/' + os.environ['GITHUB_RUN_ID'] + '-' + os.environ['GITHUB_RUN_ATTEMPT'],
+              'RESULT_PUT_URL': os.environ['RESULT_PUT_URL'],
+              'STATUS_PUT_URL': os.environ['STATUS_PUT_URL'],
+              'SWAP_FILE': os.environ['SWAP_FILE'],
+              'SWAP_BYTES': os.environ['SWAP_BYTES'],
+              'WORKER_B64': os.environ['WORKER_B64'],
+              'SYSTEMD_UNIT': 'ng-exhaustion-step1-oom-v6-' + os.environ['GITHUB_RUN_ID'] + '-' + os.environ['GITHUB_RUN_ATTEMPT'],
+          }
+          exports='\n'.join('export '+key+'='+shlex.quote(value) for key,value in env.items())
+          body=textwrap.dedent(r'''
+              set -euo pipefail
+              mem_kb=$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)
+              vcpus=$(nproc)
+              echo STEP1_V6_MEMTOTAL_KB="$mem_kb"
+              echo STEP1_V6_VCPUS="$vcpus"
+              test "$mem_kb" -ge 60000000
+              test "$vcpus" -eq 8
+
+              test -d "$SOURCE_RUN_ROOT/repo"
+              test -d "$SOURCE_RUN_ROOT/baseline"
+              test -d "$SOURCE_RUN_ROOT/raw"
+              test -f "$RESUME_NATIVE_SECONDS"
+              test "$(sha256sum "$RESUME_NATIVE_SECONDS" | cut -d' ' -f1)" = "$RESUME_NATIVE_SECONDS_SHA256"
+              test -x "$BASE/venv/bin/python"
+              test -f "$SOURCE_RUN_ROOT/repo/$WRAPPER"
+              test "$(sha256sum "$SOURCE_RUN_ROOT/repo/$WRAPPER" | cut -d' ' -f1)" = "$WRAPPER_SHA256"
+              test -f "$SOURCE_RUN_ROOT/raw/glbx-mdp3-20211001.mbo.dbn.zst"
+              test -f "$SOURCE_RUN_ROOT/raw/glbx-mdp3-20211003.mbo.dbn.zst"
+              test -f "$SOURCE_RUN_ROOT/raw/glbx-mdp3-20211004.mbo.dbn.zst"
+              test -f "$SOURCE_RUN_ROOT/raw/glbx-mdp3-20211005.mbo.dbn.zst"
+              test ! -e "$CONT_ROOT"
+
+              if ! swapon --show=NAME --noheadings 2>/dev/null | tr -d ' ' | grep -Fxq "$SWAP_FILE"; then
+                if [ ! -f "$SWAP_FILE" ]; then
+                  fallocate -l "$SWAP_BYTES" "$SWAP_FILE"
+                  chmod 600 "$SWAP_FILE"
+                  mkswap "$SWAP_FILE" >/dev/null
+                fi
+                swapon "$SWAP_FILE"
+              fi
+
+              echo STEP1_V6_PRESERVED_INPUT=PASS
+              echo STEP1_V6_SWAP_ACTIVE=PASS
+              free -h
+              swapon --show
+
+              mkdir -p "$CONT_ROOT/repo" "$CONT_ROOT/results"
+              cp -a --reflink=auto "$SOURCE_RUN_ROOT/repo/." "$CONT_ROOT/repo/"
+              printf '%s' "$WORKER_B64" | base64 -d > "$CONT_ROOT/worker.sh"
+              chmod 700 "$CONT_ROOT/worker.sh"
+              printf '%s\n' "$SYSTEMD_UNIT" > "$CONT_ROOT/SYSTEMD_UNIT"
+
+              systemd-run --unit="$SYSTEMD_UNIT" --collect --property=Type=exec \
+                --setenv="CONT_ROOT=$CONT_ROOT" \
+                --setenv="BASE=$BASE" \
+                --setenv="WRAPPER=$WRAPPER" \
+                --setenv="SOURCE_RUN_ROOT=$SOURCE_RUN_ROOT" \
+                --setenv="PRIOR_ARCHIVE_SHA256=$PRIOR_ARCHIVE_SHA256" \
+                --setenv="RESUME_NATIVE_SECONDS=$RESUME_NATIVE_SECONDS" \
+                --setenv="RESULT_PUT_URL=$RESULT_PUT_URL" \
+                --setenv="STATUS_PUT_URL=$STATUS_PUT_URL" \
+                --setenv="OMP_NUM_THREADS=7" \
+                --setenv="OMP_THREAD_LIMIT=7" \
+                --setenv="OPENBLAS_NUM_THREADS=7" \
+                --setenv="MKL_NUM_THREADS=7" \
+                --setenv="NUMEXPR_NUM_THREADS=7" \
+                --setenv="NUMEXPR_MAX_THREADS=7" \
+                --setenv="BLIS_NUM_THREADS=7" \
+                --setenv="LOKY_MAX_CPU_COUNT=7" \
+                /usr/bin/taskset -c 0-6 /bin/bash "$CONT_ROOT/worker.sh"
+
+              sleep 5
+              systemctl is-active --quiet "$SYSTEMD_UNIT"
+              systemctl show "$SYSTEMD_UNIT" -p ActiveState -p SubState -p MainPID -p MemoryCurrent --no-pager
+              echo STEP1_V6_SYSTEMD_UNIT="$SYSTEMD_UNIT"
+              echo STEP1_V6_CONT_ROOT="$CONT_ROOT"
+              echo STEP1_V6_LAUNCHED=PASS
+          ''')
+          remote=exports+'\n'+body
+          open('/tmp/continue-params.json','w').write(json.dumps({
+              'commands':['/bin/bash -lc '+shlex.quote(remote)],
+              'executionTimeout':['900'],
+          }))
+          PY
+
+          command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment 'Launch corrected full-MBO Step-1 V6 on verified 64G host' \
+            --parameters file:///tmp/continue-params.json --timeout-seconds 900 \
+            --query 'Command.CommandId' --output text)"
+          echo STEP1_V6_LAUNCH_SSM_COMMAND_ID="$command_id"
+          status="Pending"
+          for poll in $(seq 1 180); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in Success|Failed|Cancelled|TimedOut|Cancelling) break;; esac
+            sleep 5
+          done
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' --output json
+          test "$status" = Success
+
+      - name: Monitor detached Step-1 to terminal receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          status_key="$RESULT_PREFIX/status/worker.json"
+          result_key="$RESULT_PREFIX/transfer/results.tar.gz"
+          echo STEP1_V6_MONITOR_PREFIX="$RESULT_PREFIX"
+          found=0
+          for poll in $(seq 1 330); do
+            if aws s3api head-object --bucket "$BUCKET" --key "$status_key" >/tmp/status-head.json 2>/dev/null; then
+              found=1
+              break
+            fi
+            if [ $((poll % 10)) -eq 0 ]; then
+              echo STEP1_V6_MONITOR_POLL="$poll"
+            fi
+            sleep 60
+          done
+          test "$found" -eq 1
+          aws s3api get-object --bucket "$BUCKET" --key "$status_key" /tmp/worker.json >/tmp/status-get.json
+          cat /tmp/worker.json
+          python - <<'PY'
+          import json
+          body=json.load(open('/tmp/worker.json'))
+          if body.get('status') != 'SUCCESS' or body.get('exit_code') != 0:
+              raise SystemExit('STEP1_V6_WORKER_NOT_SUCCESS')
+          if not body.get('results_tar_sha256'):
+              raise SystemExit('STEP1_V6_MISSING_RESULTS_TAR_SHA256')
+          if not body.get('result_file_manifest_sha256'):
+              raise SystemExit('STEP1_V6_MISSING_RESULT_MANIFEST_SHA256')
+          print('STEP1_V6_WORKER_STATUS=SUCCESS')
+          print('STEP1_V6_RESULTS_TAR_SHA256='+body['results_tar_sha256'])
+          print('STEP1_V6_RESULT_MANIFEST_SHA256='+body['result_file_manifest_sha256'])
+          PY
+          aws s3api head-object --bucket "$BUCKET" --key "$result_key" --query '{ContentLength:ContentLength,LastModified:LastModified,ETag:ETag}' --output json
+          echo STEP1_V6_RECEIPT=PASS
