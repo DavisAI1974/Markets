@@ -1,0 +1,225 @@
+name: Frankie A-clean Real-Time native raw-MBO launch 20260828
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-raw-mbo-benchmark-20260828
+    paths:
+      - '.github/workflows/frankie_a_clean_rt_native_launch_20260828.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frankie-a-clean-rt-native-20260828
+  cancel-in-progress: false
+
+env:
+  AWS_DEFAULT_REGION: us-east-2
+  AWS_REGION: us-east-2
+  S3_ENDPOINT_URL: https://s3.us-east-2.amazonaws.com
+  BUCKET: bento-568968024170-us-east-2-an
+  LAUNCH_BRANCH: chatgpt/frankie-raw-mbo-benchmark-20260828
+  REQUIRED_STARTING_TIP: 82e140598b03bb38a7761c19d0ac47017c3908d0
+  SOURCE_PREFIX: nymex/ng_mbo_5y_v0/native/20211001_20211101
+
+jobs:
+  launch-a-clean-real-time:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+    steps:
+      - name: Checkout exact launch commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Verify exact branch and required starting base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$GITHUB_REF" = "refs/heads/$LAUNCH_BRANCH"
+          git merge-base --is-ancestor "$REQUIRED_STARTING_TIP" "$GITHUB_SHA"
+          test -s research/kalshi/frankie_raw_mbo_benchmark/chat_packet_seam.py
+          test -s research/kalshi/frankie_raw_mbo_benchmark/raw_mbo_source_manifest.py
+          test -s research/kalshi/frankie_raw_mbo_benchmark/mbo_resume_state.py
+          test -s research/kalshi/frankie_raw_mbo_benchmark/benchmark_checkpoint.py
+          test -s research/kalshi/frankie_raw_mbo_benchmark/native_evidence_bundle.py
+          test -s research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py
+          test -s research/ng_exhaustion_mbo_v4_state_adapter_20260820.py
+
+      - name: Install native DBN reader
+        run: python -m pip install --quiet databento==0.81.0
+
+      - name: Fetch and hash-bind exact native DBN roster
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_dir="$RUNNER_TEMP/a-clean-native-sources"
+          packet_dir="$RUNNER_TEMP/a-clean-rt-packet"
+          install -d -m 0700 "$source_dir" "$packet_dir/sources" "$packet_dir/checkpoints"
+
+          while read -r name expected_bytes expected_sha; do
+            source_uri="s3://${BUCKET}/${SOURCE_PREFIX}/${name}"
+            target="$source_dir/$name"
+            aws s3 cp "$source_uri" "$target" \
+              --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
+            test "$(stat -c %s "$target")" = "$expected_bytes"
+            test "$(sha256sum "$target" | awk '{print $1}')" = "$expected_sha"
+            cp --reflink=auto "$target" "$packet_dir/sources/$name"
+          done <<'ROSTER'
+          glbx-mdp3-20211001.mbo.dbn.zst 25628861 e6b4ec01bd9b34d57cb22c770b5d49c756e7f41a658f081823d923004a0121b2
+          glbx-mdp3-20211003.mbo.dbn.zst 973355 4380bd9ba83a5badc4839e12785aa464817b87e3fac11176b951e7b474446d88
+          glbx-mdp3-20211004.mbo.dbn.zst 34300424 8ed47cc0a68cf40cae9fde45e158142978076e60d3f9fc7cf940196babfddc0a
+          glbx-mdp3-20211005.mbo.dbn.zst 36192430 a4a12f9578da762412884e7f559a123361eaa3a153bec0db59dfb3ba6224a874
+          ROSTER
+
+          python -m research.kalshi.frankie_raw_mbo_benchmark.raw_mbo_source_manifest \
+            --output "$packet_dir/source_manifest.json" \
+            "$source_dir/glbx-mdp3-20211001.mbo.dbn.zst" \
+            "$source_dir/glbx-mdp3-20211003.mbo.dbn.zst" \
+            "$source_dir/glbx-mdp3-20211004.mbo.dbn.zst" \
+            "$source_dir/glbx-mdp3-20211005.mbo.dbn.zst"
+
+          echo "SOURCE_DIR=$source_dir" >> "$GITHUB_ENV"
+          echo "PACKET_DIR=$packet_dir" >> "$GITHUB_ENV"
+
+      - name: Seal A-clean RT packet and pre-call checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          from research.kalshi.frankie_raw_mbo_benchmark.benchmark_checkpoint import (
+              build_checkpoint,
+              write_checkpoint_atomic,
+          )
+          from research.kalshi.frankie_raw_mbo_benchmark.chat_packet_seam import (
+              build_chat_packet_contract,
+          )
+          from research.kalshi.frankie_raw_mbo_benchmark.mbo_resume_state import (
+              export_adapter_state,
+          )
+          from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import V4MboAdapter
+
+          packet_dir = Path(os.environ["PACKET_DIR"])
+          manifest = json.loads((packet_dir / "source_manifest.json").read_text(encoding="utf-8"))
+          contract = build_chat_packet_contract(
+              arm="A-clean",
+              source_manifest=manifest,
+              memory_package=None,
+          )
+          (packet_dir / "chat_packet_contract.json").write_text(
+              json.dumps(contract, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+
+          run_id = f"frankie-a-clean-rt-{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}"
+          empty_state = export_adapter_state(V4MboAdapter())
+          state_path = packet_dir / "checkpoints" / "adapter-state-000000.json"
+          state_path.write_text(json.dumps(empty_state, sort_keys=True) + "\n", encoding="utf-8")
+          checkpoint = build_checkpoint(
+              run_id=run_id,
+              controller="A_CHATGPT",
+              memory_mode="CLEAN",
+              sequence=0,
+              source_manifest_hash=manifest["manifest_hash"],
+              completed_mbo_records=0,
+              total_mbo_records=manifest["total_mbo_records"],
+              event_group_open=False,
+              adapter_state_hash=empty_state["state_hash"],
+              controller_state_hash=contract["contract_hash"],
+              previous_checkpoint_hash=None,
+              phase="PRE_CALL_RT_NATIVE",
+              locked=False,
+          )
+          checkpoint_path = packet_dir / "checkpoints" / "checkpoint-000000.json"
+          write_checkpoint_atomic(checkpoint_path, checkpoint)
+
+          packet_id = "aclean-rtpkt-" + contract["contract_hash"][:20]
+          receipt = {
+              "schema": "FRANKIE_A_CLEAN_RT_NATIVE_LAUNCH_V1",
+              "run_id": run_id,
+              "lane": "REAL_TIME_FRANKIE",
+              "arm": "A-clean",
+              "memory_mode": "CLEAN",
+              "packet_id": packet_id,
+              "checkpoint_id": checkpoint["checkpoint_hash"],
+              "source_manifest_hash": manifest["manifest_hash"],
+              "required_starting_tip": os.environ["REQUIRED_STARTING_TIP"],
+              "launch_commit": os.environ["GITHUB_SHA"],
+              "completed_native_mbo_records": 0,
+              "total_native_mbo_records": manifest["total_mbo_records"],
+              "progress_percent": 0.0,
+              "rt_lane_status": "RUNNING_PRE_CALL",
+              "forecaster_lane_started": False,
+              "first_lock_frozen": False,
+              "prior_frankie_memory_present": False,
+              "native_raw_mbo_only": True,
+              "causal_clock": "ts_recv_ns",
+              "full_depth_fifo_required": True,
+              "receipt_hash": "",
+          }
+          body = json.dumps(
+              {key: value for key, value in receipt.items() if key != "receipt_hash"},
+              sort_keys=True,
+              separators=(",", ":"),
+              ensure_ascii=True,
+              allow_nan=False,
+          ).encode("utf-8")
+          receipt["receipt_hash"] = hashlib.sha256(body).hexdigest()
+          (packet_dir / "launch_receipt.json").write_text(
+              json.dumps(receipt, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          for key, value in receipt.items():
+              if key in {"run_id", "packet_id", "checkpoint_id", "source_manifest_hash"}:
+                  with Path(os.environ["GITHUB_ENV"]).open("a", encoding="utf-8") as handle:
+                      handle.write(f"{key.upper()}={value}\n")
+          with Path(os.environ["GITHUB_ENV"]).open("a", encoding="utf-8") as handle:
+              handle.write(f"TOTAL_NATIVE_MBO_RECORDS={manifest['total_mbo_records']}\n")
+          PY
+
+          find "$PACKET_DIR" -type f ! -name FILE_SHA256SUMS -print0 \
+            | sort -z | xargs -0 sha256sum > "$PACKET_DIR/FILE_SHA256SUMS"
+
+      - name: Persist exact keyless A-clean RT packet
+        shell: bash
+        run: |
+          set -euo pipefail
+          durable_prefix="nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-clean/${GITHUB_SHA}/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          aws s3 cp "$PACKET_DIR" "s3://${BUCKET}/${durable_prefix}" --recursive \
+            --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
+          echo "DURABLE_PREFIX=$durable_prefix" >> "$GITHUB_ENV"
+
+      - name: Publish private A-clean RT work packet
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: frankie-a-clean-rt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/a-clean-rt-packet
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Report concrete A-clean RT launch
+        shell: bash
+        run: |
+          {
+            echo '### A-clean Real-Time Frankie native raw-MBO lane'
+            echo "- Run: ${RUN_ID}"
+            echo "- Packet: ${PACKET_ID}"
+            echo "- Checkpoint: ${CHECKPOINT_ID}"
+            echo "- Source manifest: ${SOURCE_MANIFEST_HASH}"
+            echo "- Native MBO progress: 0 / ${TOTAL_NATIVE_MBO_RECORDS} (0.0%)"
+            echo "- Durable prefix: s3://${BUCKET}/${DURABLE_PREFIX}"
+            echo '- Status: RUNNING_PRE_CALL; Forecaster not started'
+          } >> "$GITHUB_STEP_SUMMARY"
