@@ -1,0 +1,116 @@
+name: ONE-SHOT APPROVED - NG Exhaustion Step-1 V6 Add Swap Headroom 20260828
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824-progress-probe-temp
+    paths:
+      - .github/workflows/ng_exhaustion_step1_v6_add_swap_headroom_20260828.yml
+
+permissions:
+  contents: read
+
+jobs:
+  add-swap-headroom:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_STEP1_V6_ADD_SWAP_HEADROOM_20260828]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      UNIT: ng-exhaustion-step1-oom-v6-33139463724-1
+      EXTRA_SWAP: /mnt/markets/.ng_step1_swap_extra_20260828
+
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Add guarded swap headroom without touching Step-1 worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, shlex
+          remote=r'''set -euo pipefail
+          unit=__UNIT__
+          swap_file=__SWAP__
+          echo SWAP_HEADROOM_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          state=$(systemctl is-active "$unit" 2>/dev/null || true)
+          echo STEP1_V6_UNIT_STATE=$state
+          echo SWAP_BEFORE_BEGIN
+          free -b
+          swapon --show --bytes
+          df -PB1 /mnt/markets
+          echo SWAP_BEFORE_END
+
+          if [ "$state" != "active" ]; then
+            echo SWAP_HEADROOM_ACTION=SKIP_WORKER_NOT_ACTIVE
+            exit 0
+          fi
+
+          if swapon --show=NAME --noheadings 2>/dev/null | tr -d ' ' | grep -Fxq "$swap_file"; then
+            echo SWAP_HEADROOM_ACTION=ALREADY_ACTIVE
+            exit 0
+          fi
+
+          avail=$(df -PB1 /mnt/markets | awk 'NR==2 {print $4}')
+          gib=1073741824
+          if [ "$avail" -ge $((48*gib)) ]; then
+            add=$((16*gib))
+          elif [ "$avail" -ge $((32*gib)) ]; then
+            add=$((8*gib))
+          elif [ "$avail" -ge $((24*gib)) ]; then
+            add=$((4*gib))
+          else
+            echo SWAP_HEADROOM_AVAILABLE_DISK_BYTES=$avail
+            echo SWAP_HEADROOM_ACTION=SKIP_INSUFFICIENT_DISK_HEADROOM
+            exit 0
+          fi
+
+          echo SWAP_HEADROOM_AVAILABLE_DISK_BYTES=$avail
+          echo SWAP_HEADROOM_ADD_BYTES=$add
+          if [ -e "$swap_file" ]; then
+            rm -f "$swap_file"
+          fi
+          fallocate -l "$add" "$swap_file"
+          chmod 600 "$swap_file"
+          mkswap "$swap_file" >/dev/null
+          swapon "$swap_file"
+
+          echo SWAP_AFTER_BEGIN
+          free -b
+          swapon --show --bytes
+          df -PB1 /mnt/markets
+          echo SWAP_AFTER_END
+          swapon --show=NAME --noheadings 2>/dev/null | tr -d ' ' | grep -Fxq "$swap_file"
+          systemctl is-active --quiet "$unit"
+          echo SWAP_HEADROOM_ACTION=ADDED
+          echo STEP1_V6_WORKER_STILL_ACTIVE=PASS
+          '''
+          remote=(remote
+              .replace('__UNIT__', shlex.quote(os.environ['UNIT']))
+              .replace('__SWAP__', shlex.quote(os.environ['EXTRA_SWAP'])))
+          with open('/tmp/add-swap-params.json','w') as f:
+              json.dump({'commands':['/bin/bash -lc '+shlex.quote(remote)],'executionTimeout':['300']},f)
+          PY
+
+          command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment 'Guarded extra swap for live Step-1 V6' \
+            --parameters file:///tmp/add-swap-params.json --timeout-seconds 300 \
+            --query 'Command.CommandId' --output text)"
+          echo SWAP_HEADROOM_SSM_COMMAND_ID="$command_id"
+          status=Pending
+          for poll in $(seq 1 60); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in Success|Failed|Cancelled|TimedOut|Cancelling) break;; esac
+            sleep 3
+          done
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json
+          test "$status" = Success
+          echo STEP1_V6_SWAP_HEADROOM_WORKFLOW=PASS
