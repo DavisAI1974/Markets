@@ -1,0 +1,823 @@
+{
+  "as_of": {
+    "clock_policy": "Event time, receive time, evidence-availability time, and decision time are kept separate. The event window is half-open [1633305600000000000,1633478400000000000); the last lawful event second is 1633478399000000000. Receive/availability may equal 1633478400000000000 and is not substituted for event time.",
+    "event_time_cutoff_ns": 1633478399000000000,
+    "receive_time_cutoff_ns": 1633478400000000000
+  },
+  "bounded_lookahead": {
+    "causal_cutoff": {
+      "event_time_cutoff_ns": 1633478399000000000,
+      "evidence_availability_cutoff_ns": 1633478400000000000,
+      "post_cutoff_access": false,
+      "receive_time_cutoff_ns": 1633478400000000000
+    },
+    "feedback_statuses": [
+      "SUPPORTED",
+      "CONTRADICTED",
+      "INCONCLUSIVE"
+    ],
+    "first_lock_mutated": false,
+    "fixed_budget": {
+      "depth": 3,
+      "iterations": 3,
+      "resource_limit": 9,
+      "width": 3
+    },
+    "hypothesis_tree": {
+      "inconclusive_hypotheses": [
+        {
+          "claim": "Displayed bid depth represents durable absorption rather than transient/cancelled liquidity.",
+          "falsifier": "Raw lifecycle shows cancellations or priority loss before trades interact with the displayed depth.",
+          "feedback": "INCONCLUSIVE",
+          "heuristic_score": 0.35,
+          "hypothesis_id": "H2"
+        }
+      ],
+      "live_hypotheses": [
+        {
+          "claim": "Sell aggressor flow is weakening into a balance-cross transition supported by passive bid depth.",
+          "falsifier": "Late buy flow fails to persist or bid depth cancels before price stabilizes.",
+          "feedback": "SUPPORTED",
+          "heuristic_score": 0.62,
+          "hypothesis_id": "H1"
+        },
+        {
+          "claim": "The overall sell trend continues and the late buy imbalance is sparse session-end noise.",
+          "falsifier": "Causal post-cutoff windows show persistent buy pressure with price stabilization or reversal.",
+          "feedback": "SUPPORTED",
+          "heuristic_score": 0.48,
+          "hypothesis_id": "H3"
+        }
+      ],
+      "root": "What causal exhaustion/direction-change state is supported at the cutoff?",
+      "value_semantics": "SEARCH_HEURISTIC_NOT_PROBABILITY_OR_PROMOTION_VOTE"
+    },
+    "pruned_alternatives_and_falsifiers": [
+      {
+        "alternative": "Confirmed completed reversal",
+        "falsifier_of_pruning": "Lawful post-cutoff evidence would be required, but was not accessed.",
+        "reason_pruned": "CONTRADICTED by absence of post-transition persistence and by negative full-window flow/price coupling."
+      },
+      {
+        "alternative": "No market-mechanics transition of any kind",
+        "falsifier_of_pruning": "Exact recomputation invalidates the scout quantities or half ordering.",
+        "reason_pruned": "CONTRADICTED by the observed ordered-half imbalance move from -0.36 to +0.20."
+      },
+      {
+        "alternative": "Durable bid absorption proven",
+        "falsifier_of_pruning": "A lawful full-lifecycle replay shows persistent replenishment and executed interaction.",
+        "reason_pruned": "INCONCLUSIVE because raw actions, cancellations, and FIFO are unavailable."
+      }
+    ],
+    "reasoning_pattern_applied": true,
+    "reflections_and_backpropagation": {
+      "backpropagated_result": "Retain TENTATIVE transition; deny confirmed exhaustion, duration estimate, execution, and validated-edge status.",
+      "canonical_state_changed": false,
+      "reflection": "The sign cross and depth support raise H1, but total flow-price alignment, sparse trades, and right censoring keep H3 live and prevent reversal confirmation."
+    },
+    "runtime_module_executed": false,
+    "status": "SHADOW_ONLY",
+    "unrevealed_outcomes_accessed": false
+  },
+  "direction_and_direction_change": {
+    "cell_signal_promoted_to_fact": false,
+    "collapse_toward_balance": {
+      "absolute_reduction": 0.15999999999999998,
+      "balance_crossed": true,
+      "early_absolute_imbalance": 0.36,
+      "late_absolute_imbalance": 0.2,
+      "qualification": "Half-window aggregates establish a sell-to-buy sign change and smaller late magnitude; the exact crossing second is unavailable.",
+      "tag": "OBSERVED"
+    },
+    "continuation_weakening_reversal_or_flip_risk": {
+      "continuation": "Still live because total-window sell flow confirms the negative price drift.",
+      "flip_risk": "ELEVATED_RELATIVE_TO_WINDOW_START, not calibrated as a probability.",
+      "reversal": "NOT_CONFIRMED; no post-transition persistence or post-cutoff price evidence.",
+      "weakening": "Supported by the -0.36 to +0.20 flow transition and contraction in absolute imbalance."
+    },
+    "contradictions": [
+      "Overall sell imbalance and negative price drift support continuation rather than a completed reversal.",
+      "Only 41 trades occurred in the 166 returned rows, making the half-window flow estimates sparse.",
+      "Positive full-depth imbalance may indicate support/absorption, but raw order actions and cancellations are unavailable.",
+      "The exact time of the half-window sign change is not preserved in the compact scout receipt."
+    ],
+    "current_direction": "SELL_PRESSURE",
+    "dipole_flow_and_clock": {
+      "decision_as_of_time_ns": 1633478400000000000,
+      "early_half_imbalance": -0.36,
+      "event_time_cutoff_ns": 1633478399000000000,
+      "evidence_availability_time_ns": 1633478400000000000,
+      "imb_flow": 0.56,
+      "imb_flow_definition": "imbalance(native_buy_qty_late,native_sell_qty_late)-imbalance(native_buy_qty_early,native_sell_qty_early)",
+      "late_half_imbalance": 0.2,
+      "ledger_match_to_signed_imbalance": true,
+      "method_path": "odcore/info_dipole.py",
+      "mi_flow": null,
+      "mi_flow_definition": "sign(imb_level)*(MI(native_buy_qty_late,native_sell_qty_late)-MI(native_buy_qty_early,native_sell_qty_early))",
+      "mi_flow_status": "UNKNOWN: the supplied shadow runtime was not executed and the scout receipt did not calculate histogram mutual information.",
+      "receive_time_max_ns": 1633478400000000000,
+      "receive_time_min_ns": 1633477502285989910,
+      "window": {
+        "event_time_end_exclusive_ns": 1633478400000000000,
+        "event_time_start_ns": 1633477502000000000,
+        "requested_start_ns": 1633477500000000000,
+        "row_count": 166
+      }
+    },
+    "evidence_refs": [
+      "scout-response:8fd3a7585a2563ff2df87fb2d4f46148d0cc6bfab8afbca8b3f4e3ad90d8baeb:source_rows_90597_90762",
+      "source-manifest:10137317196a77bb4507afcc22463e85cc243a082db4475ead3cc35468cde7d9"
+    ],
+    "opposing_flow": {
+      "limitation": "Late-half price drift was not retained, so same-subwindow aligned_flow and the -0.20 strong-divergence threshold are not adjudicated.",
+      "observed": "The full-window price drift is negative while late-half flow imbalance is positive.",
+      "status": "LATE_BUY_FLOW_OPPOSES_FULL_WINDOW_PRICE_DECLINE"
+    },
+    "price_flow_coupling": {
+      "causal_claim": false,
+      "full_window": "CONFIRMING: negative total flow imbalance and negative price drift share sign.",
+      "late_transition": "POSSIBLE_DECOUPLING: late flow changed positive while the full-window price endpoint remained below its first trade."
+    },
+    "signed_imbalance_and_clock": {
+      "decision_as_of_time_ns": 1633478400000000000,
+      "event_time_cutoff_ns": 1633478399000000000,
+      "evidence_availability_time_ns": 1633478400000000000,
+      "evidence_ref": "scout-response:8fd3a7585a2563ff2df87fb2d4f46148d0cc6bfab8afbca8b3f4e3ad90d8baeb:source_rows_90597_90762",
+      "formula": "imb_level=(sum(native_buy_qty)-sum(native_sell_qty))/(sum(native_buy_qty)+sum(native_sell_qty))",
+      "method_path": "odcore/info_dipole.py",
+      "range_check": "PASS_IN_CLOSED_INTERVAL_MINUS1_TO_PLUS1",
+      "receive_time_max_ns": 1633478400000000000,
+      "receive_time_min_ns": 1633477502285989910,
+      "sign_convention": "positive=BUY_PRESSURE; negative=SELL_PRESSURE; zero=BALANCED; null=UNKNOWN",
+      "value": -0.1111111111111111,
+      "window": {
+        "event_time_end_exclusive_ns": 1633478400000000000,
+        "event_time_start_ns": 1633477502000000000,
+        "requested_start_ns": 1633477500000000000,
+        "row_count": 166
+      }
+    }
+  },
+  "evidence_surface_label": "PRIOR_REDUCED_NON_FULL_MBO_SURFACE",
+  "exhaustion_events": [
+    {
+      "assumptions": [
+        "Native buy/sell quantities are the lawful aggressor-flow channels for the signed imbalance.",
+        "The ordered row halves are used exactly as returned; no dispersed clocks are averaged.",
+        "Displayed full-depth imbalance is treated as passive depth state, not proof of durable liquidity."
+      ],
+      "category": "OPENWORLD_SELL_FLOW_WEAKENING_BALANCE_CROSS_V1",
+      "censoring_status": "RIGHT_CENSORED_AT_2021_10_06T00_00_00Z",
+      "clock_ledger": {
+        "confirmation": {
+          "decision_as_of_time_ns": 1633478400000000000,
+          "event_time_ns": null,
+          "evidence_availability_time_ns": null,
+          "receive_time_ns": null,
+          "status": "NONE_FOUND_BEFORE_RIGHT_CENSORING"
+        },
+        "detection": {
+          "decision_as_of_time_ns": 1633478400000000000,
+          "event_time_ns": 1633478399000000000,
+          "evidence_availability_time_ns": 1633478400000000000,
+          "receive_time_ns": 1633478400000000000,
+          "status": "LAWFUL_AT_FULL_SCOUT_WINDOW_AVAILABILITY"
+        },
+        "onset": {
+          "decision_as_of_time_ns": 1633478400000000000,
+          "event_time_ns": null,
+          "evidence_availability_time_ns": 1633478400000000000,
+          "receive_time_ns": null,
+          "status": "WINDOW_AGGREGATE_ONLY"
+        },
+        "precursor": {
+          "decision_as_of_time_ns": null,
+          "event_time_ns": null,
+          "evidence_availability_time_ns": null,
+          "receive_time_ns": null,
+          "status": "UNKNOWN_EXACT_CLOCK"
+        }
+      },
+      "clock_reasoning": "The ordered-half transition is detectable only after all rows supporting it are available. Exact precursor/onset clocks are not inferred from half-window position, and receive clocks are not averaged.",
+      "confidence": 0.55,
+      "contradictions": [
+        "Negative full-window price drift and negative total imbalance support ongoing sell direction.",
+        "Sparse trade count weakens transition reliability.",
+        "No post-cutoff evidence confirms continuation or reversal."
+      ],
+      "depth": {
+        "depth_imbalance_window_range": [
+          0.29072561268620856,
+          0.3266633316658329
+        ],
+        "last_ask_depth_full": 698,
+        "last_bid_depth_full": 1342,
+        "last_depth_imbalance_full": 0.3156862745098039,
+        "tag": "OBSERVED"
+      },
+      "detection_latency_s": {
+        "range": null,
+        "reason": "Exact onset is unknown, so latency cannot be computed without averaging or inventing a clock.",
+        "value": null
+      },
+      "earliest_lawful_precursor": {
+        "decision_as_of_time_ns": null,
+        "event_time_ns": null,
+        "evidence_availability_time_ns": null,
+        "reason": "The early-half aggregate is observed, but its terminal row clock was not retained in the compact receipt; backdating to the scout-window start would be unlawful.",
+        "receive_time_ns": null,
+        "status": "UNKNOWN"
+      },
+      "estimated_remaining_exhaustion_duration_s": {
+        "range": null,
+        "reason": "The event is right-censored and no realized runway or calibrated analog distribution is available.",
+        "value": null
+      },
+      "estimated_total_exhaustion_duration_s": {
+        "range": null,
+        "reason": "No confirmed start/end pair or lawful historical outcome distribution is available.",
+        "value": null
+      },
+      "event_id": "evt-sellflow-balance-cross-8fd3a7585a25",
+      "evidence_refs": [
+        "scout-response:8fd3a7585a2563ff2df87fb2d4f46148d0cc6bfab8afbca8b3f4e3ad90d8baeb:source_rows_90597_90762",
+        "scout-row:90597:event_1633477502000000000:receive_1633477502285989910",
+        "scout-row:90762:event_1633478399000000000:receive_1633478399954928144",
+        "day-context:2021-10-05:68ff7f2880c2dda1a8a75a4ce457cbbe15e7f835d96ac36989b5f2b7e1968fb3"
+      ],
+      "family": "AGGRESSOR_FLOW_TRANSITION_WITH_PASSIVE_BID_SUPPORT",
+      "first_observed_deviation": {
+        "decision_as_of_time_ns": 1633478400000000000,
+        "event_time_ns": null,
+        "evidence_availability_time_ns": 1633478400000000000,
+        "reason": "The sign change is established between ordered halves, not at an exact row.",
+        "receive_time_ns": null,
+        "status": "OBSERVED_AS_WINDOW_AGGREGATE_EXACT_CHANGE_CLOCK_UNKNOWN"
+      },
+      "mechanism": "Early-half sell aggressor pressure weakened, crossed balance, and became late-half buy pressure while full-depth imbalance remained bid-heavy. This is consistent with sell-flow exhaustion or absorption, but the reduced surface cannot distinguish genuine replenishment from transient or cancelled liquidity.",
+      "novel_structure": true,
+      "observed_dipole_runway": {
+        "contradictions": [
+          "Full-window price and total flow still align downward.",
+          "Late-flow persistence and late-half price coupling are unknown."
+        ],
+        "decay_or_open": {
+          "availability_time_ns": 1633478400000000000,
+          "event_time_ns": 1633478399000000000,
+          "last_ask_depth_full": 698,
+          "last_bid_depth_full": 1342,
+          "last_depth_imbalance_full": 0.3156862745098039,
+          "receive_time_ns": 1633478399954928144,
+          "state": "SELL_PRESSURE_WEAKENED; TRANSITION_OPEN",
+          "tag": "OBSERVED_AT_CUTOFF"
+        },
+        "missingness": [
+          "mi_flow value",
+          "exact balance-cross row",
+          "raw order lifecycle and FIFO",
+          "post-cutoff confirmation"
+        ],
+        "onset": {
+          "availability_time_ns": 1633478400000000000,
+          "event_time_ns": null,
+          "receive_time_ns": null,
+          "signed_imbalance": null,
+          "state": "BALANCE_CROSS_TIME_NOT_LOCALIZED",
+          "tag": "UNKNOWN"
+        },
+        "peak_or_inflection": {
+          "depth_imbalance_full": 0.3266633316658329,
+          "event_time_ns": null,
+          "receive_time_ns": null,
+          "state": "MAX_PASSIVE_BID_DOMINANCE",
+          "tag": "OBSERVED_VALUE_CLOCK_UNKNOWN"
+        },
+        "precursor": {
+          "availability_time_ns": 1633478400000000000,
+          "event_time_ns": null,
+          "missingness": "Exact half-boundary clocks unavailable",
+          "receive_time_ns": null,
+          "signed_imbalance": -0.36,
+          "state": "SELL_PRESSURE",
+          "tag": "OBSERVED_WINDOW_HALF"
+        },
+        "transition": {
+          "availability_time_ns": 1633478400000000000,
+          "depth_imbalance_range": [
+            0.29072561268620856,
+            0.3266633316658329
+          ],
+          "event_time_range_ns": [
+            1633477502000000000,
+            1633478399000000000
+          ],
+          "late_signed_imbalance": 0.2,
+          "receive_time_range_ns": [
+            1633477502285989910,
+            1633478400000000000
+          ],
+          "signed_imbalance_change": 0.56,
+          "state": "SELL_TO_BUY_FLOW",
+          "tag": "OBSERVED_ORDERED_HALVES"
+        }
+      },
+      "observed_duration_so_far_s": null,
+      "observed_elapsed_age_s": null,
+      "observed_end_or_open_status": "OPEN_AT_RIGHT_CENSORING; no post-cutoff evidence accessed",
+      "observed_onset": {
+        "decision_as_of_time_ns": 1633478400000000000,
+        "event_time_ns": null,
+        "evidence_availability_time_ns": 1633478400000000000,
+        "reason": "No exact balance-cross row was returned in the compact receipt summary.",
+        "receive_time_ns": null,
+        "status": "UNKNOWN_EXACT_ONSET_RIGHT_CENSORED"
+      },
+      "observed_peak_or_inflection": {
+        "depth_imbalance_full_max": 0.3266633316658329,
+        "event_time_ns": null,
+        "reason": "The maximum value was retained but its row clock was not retained in the compact receipt.",
+        "receive_time_ns": null,
+        "tag": "OBSERVED_VALUE_EXACT_CLOCK_UNKNOWN"
+      },
+      "observed_transitions": [
+        {
+          "event_time_range_ns": [
+            1633477502000000000,
+            1633478399000000000
+          ],
+          "exact_transition_clock": "UNKNOWN",
+          "from": "EARLY_HALF_SELL_PRESSURE_-0.36",
+          "imb_flow": 0.56,
+          "receive_time_range_ns": [
+            1633477502285989910,
+            1633478400000000000
+          ],
+          "tag": "OBSERVED",
+          "to": "LATE_HALF_BUY_PRESSURE_+0.20"
+        }
+      ],
+      "pre_birth_conditions": {
+        "contradictions": [
+          "Raw order actions and cancellation persistence are unavailable.",
+          "Exact early-half terminal clock is unavailable in the compact receipt."
+        ],
+        "inferred": [
+          "Bid-heavy passive depth may have absorbed sell aggressor flow."
+        ],
+        "observed": [
+          "Early-half signed native flow imbalance was -0.36.",
+          "Full-depth imbalance remained positive throughout the final window, range 0.29072561268620856 to 0.3266633316658329."
+        ],
+        "tag": "OBSERVED_AND_INFERRED_SEPARATED"
+      },
+      "prebirth_detectability": {
+        "alert_possible": "INCONCLUSIVE",
+        "contradictions": [
+          "No exact pre-onset alert clock.",
+          "No labeled event population for false-alert accounting.",
+          "No post-cutoff persistence evidence."
+        ],
+        "decision_as_of_time_ns": 1633478400000000000,
+        "earliest_alert_event_time_ns": null,
+        "earliest_alert_evidence_availability_time_ns": null,
+        "earliest_alert_receive_time_ns": null,
+        "false_positive_risk": "HIGH: a single sparse right-censored window can reflect noise, session-end effects, or non-persistent displayed liquidity.",
+        "features": [
+          "negative early-half signed aggressor imbalance",
+          "persistent positive full-depth imbalance",
+          "subsequent contraction and sign cross of aggressor flow"
+        ],
+        "lead_time_range_s": null,
+        "missingness": [
+          "raw MBO lifecycle",
+          "per-order FIFO",
+          "post-cutoff evidence",
+          "historical calibration"
+        ],
+        "validation_status": "RETROSPECTIVE_DISCOVERY_NOT_BLIND_OOS_VALIDATION"
+      },
+      "searched_interval": {
+        "exact_candidate_row_search_end_exclusive_ns": 1633478400000000000,
+        "exact_candidate_row_search_start_ns": 1633477500000000000,
+        "full_event_time_end_exclusive_ns": 1633478400000000000,
+        "full_event_time_start_ns": 1633305600000000000,
+        "no_exact_row_evidence_before_candidate_search": true
+      },
+      "severity": {
+        "absolute_imbalance_contraction": 0.15999999999999998,
+        "calibration": "UNCALIBRATED_TWO_DAY_RETROSPECTIVE",
+        "imbalance_change": 0.56,
+        "tag": "OBSERVED"
+      },
+      "status": "TENTATIVE_OBSERVED_TRANSITION_RIGHT_CENSORED",
+      "unknown_status": "Exact onset, exact inflection clock, total duration, remaining duration, and outcome are UNKNOWN; missing does not mean zero."
+    }
+  ],
+  "first_lock": {
+    "candidate_event_ids": [
+      "evt-sellflow-balance-cross-8fd3a7585a25"
+    ],
+    "classification": "TENTATIVE_SELL_FLOW_WEAKENING_WITH_LATE_BUY_SIDE_BALANCE_CROSS",
+    "confirmed_exhaustion_count": 0,
+    "lock_id": "first-lock-rt-8fd3a7585a25",
+    "locked_at_event_time_cutoff_ns": 1633478399000000000,
+    "locked_at_receive_time_cutoff_ns": 1633478400000000000,
+    "mutable": false,
+    "post_cutoff_or_step1_material_used": false,
+    "status": "FROZEN_FIRST_WRITE",
+    "strategy_influence_on_lock": false,
+    "tentative_transition_count": 1
+  },
+  "frozen_rt_state": {
+    "as_of_event_time_ns": 1633478399000000000,
+    "as_of_receive_time_ns": 1633478400000000000,
+    "candidate_event_ids": [
+      "evt-sellflow-balance-cross-8fd3a7585a25"
+    ],
+    "current_direction": "SELL_PRESSURE",
+    "direction_change_state": "WEAKENING_WITH_LATE_BALANCE_CROSS; REVERSAL_UNCONFIRMED",
+    "evidence_surface_label": "PRIOR_REDUCED_NON_FULL_MBO_SURFACE",
+    "exhaustion_state": "ONE_TENTATIVE_RIGHT_CENSORED_TRANSITION; ZERO_CONFIRMED_COMPLETE_RUNWAYS",
+    "immutable": true,
+    "scout_response_sha256": "8fd3a7585a2563ff2df87fb2d4f46148d0cc6bfab8afbca8b3f4e3ad90d8baeb",
+    "sealed_step1_blindness_enforced": true,
+    "selected_rows_content_hash": "dbfa20df1ef4e78a743dd57505fd10fa9107737ddf1784140bfcb68db879c12f",
+    "source_manifest_hash": "10137317196a77bb4507afcc22463e85cc243a082db4475ead3cc35468cde7d9",
+    "state_id": "frozen-rt-state-8fd3a7585a25",
+    "strategy_hypotheses_separate": true,
+    "unrevealed_outcomes_accessed": false
+  },
+  "general_market_projection_authority": "DENIED; only exhaustion-specific pre-birth detectability, detection latency, and duration estimation are authorized",
+  "material_omissions": [
+    {
+      "availability": "UNAVAILABLE on PRIOR_REDUCED_NON_FULL_MBO_SURFACE",
+      "capability_or_field": "raw_MBO_actions, raw_order_lifecycle, exact_modify_cancel_priority_effects, per_order_FIFO_checkpoint",
+      "confidence_impact": "Cannot distinguish durable absorption/replenishment from transient displayed depth or reconstruct exact queue mechanics."
+    },
+    {
+      "availability": "SEALED_AND_FORBIDDEN",
+      "capability_or_field": "Step1 event populations/family/depth labels, realized runway/outcomes, 54-week answers",
+      "confidence_impact": "No answer-derived matching, base rate, duration calibration, misses, or false-alert denominator is used."
+    },
+    {
+      "availability": "NOT_RETRIEVED; full-day distributions only",
+      "capability_or_field": "exact row series before 2021-10-05T23:45:00Z",
+      "confidence_impact": "Cannot localize earlier exhaustion runways or transitions; none-found applies only to supported structures on supplied resolution."
+    },
+    {
+      "availability": "UNKNOWN in compact scout receipt",
+      "capability_or_field": "mi_flow and exact ordered-half boundary clocks",
+      "confidence_impact": "Direction-change inference rests on signed imbalance and imb_flow; MI coupling and exact detection latency remain unadjudicated."
+    },
+    {
+      "availability": "DORMANT_OR_NOT_DIRECTLY_SUPPLIED",
+      "capability_or_field": "weather, fundamentals, synchronized curve/roll, historical analog calibration",
+      "confidence_impact": "No external causal mechanism, recurrence probability, or duration prior can be claimed."
+    }
+  ],
+  "observed_correlations": [
+    {
+      "clock_basis": "Same returned scout window; no event/receive clocks were averaged. Lag 0 denotes co-window comparison, not synchronized per-row causal estimation.",
+      "evidence_refs": [
+        "scout-response:8fd3a7585a2563ff2df87fb2d4f46148d0cc6bfab8afbca8b3f4e3ad90d8baeb:source_rows_90597_90762"
+      ],
+      "falsifier": "Reject if exact-row replication shows bid depth cancelling before sell flow weakens, if late-half price and flow remain downward, or if the motif does not recur outside this window.",
+      "fields": [
+        "native_state.depth_imbalance_full",
+        "native_buy_qty",
+        "native_sell_qty",
+        "last_trade_price"
+      ],
+      "lags_seconds": [
+        0
+      ],
+      "mechanism": "Persistent bid-heavy displayed depth coexisted with early sell aggressor pressure; aggressor imbalance then contracted and crossed positive, consistent with possible absorption.",
+      "relationship_id": "rel-passive-bid-vs-aggressor-sell-transition-8fd3a7585a25",
+      "uncertainty": "HYPOTHESIS_ONLY; no correlation coefficient, exact transition clock, or cancellation persistence was estimated."
+    }
+  ],
+  "role": "REAL_TIME_FRANKIE",
+  "run_id": "workmode-32851909748-1",
+  "schema": "FRANKIE_PRIOR_SURFACE_RT_EXHAUSTION_FINDINGS_V2_20260825",
+  "scout_usage": {
+    "available": true,
+    "cumulative_estimated_input_tokens": 47149,
+    "invocation_count": 1,
+    "invoked": true,
+    "request": {
+      "allowed_input_hashes": {
+        "RT_CAPABILITIES.json": "5f51804315b09894450d96fa58b76754a1f314db3268d77594707c964b795c54",
+        "RT_SCOUT_ROWS.jsonl.gz": "613d0f763bac09bd984ed0715bbf04dd278d03b0bfb3cebac295ee3c6cc692f8"
+      },
+      "candidate_event_id": "provisional-final-window-dipole-20211005t234500z-15m",
+      "decision_cutoff_ns": 1633478399000000000,
+      "event_time_end_exclusive_ns": 1633478400000000000,
+      "event_time_start_ns": 1633477500000000000,
+      "field_paths": [
+        "epoch_second",
+        "last_ts_recv_ns",
+        "native_buy_qty",
+        "native_sell_qty",
+        "last_trade_price",
+        "native_state.depth_imbalance_full",
+        "native_state.bid_depth_full",
+        "native_state.ask_depth_full",
+        "native_state.spread",
+        "trade_count"
+      ],
+      "maximum_rows": 900,
+      "operation": "FIELD_SERIES",
+      "schema": "FRANKIE_RT_LOCAL_SCOUT_REQUEST_V1_20260825"
+    },
+    "request_sha256": "348aef63683ca10bb65a53da51a0d19a4f2d2520d1f66cb4c2513fff724d6f28",
+    "response_bytes": 64817,
+    "response_receipt": {
+      "operation": "FIELD_SERIES",
+      "request_sha256": "348aef63683ca10bb65a53da51a0d19a4f2d2520d1f66cb4c2513fff724d6f28",
+      "response_bytes": 64817,
+      "response_sha256": "8fd3a7585a2563ff2df87fb2d4f46148d0cc6bfab8afbca8b3f4e3ad90d8baeb",
+      "row_count": 166,
+      "schema": "FRANKIE_RT_LOCAL_SCOUT_RESPONSE_V1_20260825",
+      "truncated": false
+    },
+    "response_sha256": "8fd3a7585a2563ff2df87fb2d4f46148d0cc6bfab8afbca8b3f4e3ad90d8baeb"
+  },
+  "state_summary": {
+    "classification_scope": "OBSERVED on a reduced aggregated-seconds surface for the final scout window; exhaustion mechanism and reversal are INFERRED and unconfirmed.",
+    "complete_searched_coverage": {
+      "day_2021_10_04": {
+        "event_time_end_exclusive_ns": 1633392000000000000,
+        "event_time_start_ns": 1633305600000000000,
+        "receive_time_max_ns": 1633392000000000000,
+        "receive_time_min_ns": 1633305600506982140,
+        "row_content_hash": "844b980923385b7dfd20b9e2ca5db63ea84050fc2e8e53e89f944501e05cdcf8",
+        "row_count": 44820
+      },
+      "day_2021_10_05": {
+        "event_time_end_exclusive_ns": 1633478400000000000,
+        "event_time_start_ns": 1633392000000000000,
+        "receive_time_max_ns": 1633478400000000000,
+        "receive_time_min_ns": 1633392000017309851,
+        "row_content_hash": "68ff7f2880c2dda1a8a75a4ce457cbbe15e7f835d96ac36989b5f2b7e1968fb3",
+        "row_count": 45943
+      },
+      "event_time_end_exclusive_ns": 1633478400000000000,
+      "event_time_start_ns": 1633305600000000000,
+      "exact_scout_coverage": {
+        "first_returned_event_time_ns": 1633477502000000000,
+        "last_returned_event_time_ns": 1633478399000000000,
+        "requested_event_time_end_exclusive_ns": 1633478400000000000,
+        "requested_event_time_start_ns": 1633477500000000000,
+        "row_count": 166,
+        "source_row_index_end": 90762,
+        "source_row_index_start": 90597,
+        "truncated": false
+      },
+      "explicit_no_evidence_spans": [
+        "No exact row-series transition search was performed before 1633477500000000000; only full-day distributions were available there.",
+        "No event-time evidence at or after 1633478400000000000 was accessed.",
+        "No raw-MBO, per-order lifecycle, FIFO, Step-1 population, realized runway, or 54-week answer evidence was available anywhere in the searched interval."
+      ],
+      "full_surface_resolution": "day-level non-mean distributions for both days plus exact reduced rows only in the scout interval",
+      "full_surface_row_count": 90763,
+      "semantics": "HALF_OPEN_START_INCLUSIVE_END_EXCLUSIVE"
+    },
+    "current_causal_state": "TENTATIVE_SELL_FLOW_WEAKENING_WITH_LATE_BUY_SIDE_BALANCE_CROSS",
+    "day_level_observations": {
+      "ask_depth_p50_by_day": [
+        1152.0,
+        1113.0
+      ],
+      "bid_depth_p50_by_day": [
+        1454.0,
+        1760.0
+      ],
+      "depth_imbalance_p50_by_day": [
+        0.09430682312038244,
+        0.21578452865643596
+      ],
+      "interpretation": "Day 2 had higher price and materially more bid-heavy full-depth distributions than Day 1. These are two separate daily regimes, not averaged clocks and not a causal event classification.",
+      "price_p50_by_day": [
+        5.84,
+        6.168
+      ],
+      "tag": "OBSERVED"
+    },
+    "final_window_observations": {
+      "ask_depth_first_last": [
+        700,
+        698
+      ],
+      "bid_depth_first_last": [
+        1354,
+        1342
+      ],
+      "depth_imbalance_first": 0.3184031158714703,
+      "depth_imbalance_last": 0.3156862745098039,
+      "depth_imbalance_range": [
+        0.29072561268620856,
+        0.3266633316658329
+      ],
+      "early_half_signed_imbalance": -0.36,
+      "first_trade_price": 6.333,
+      "imb_flow": 0.56,
+      "last_trade_price": 6.329,
+      "late_half_signed_imbalance": 0.2,
+      "native_buy_sum": 20,
+      "native_sell_sum": 25,
+      "normalized_signed_imbalance": -0.1111111111111111,
+      "price_drift": -0.004000000000000448,
+      "spread_range": [
+        0.0009999999999994458,
+        0.006000000000000227
+      ],
+      "tag": "OBSERVED",
+      "trade_count_sum": 41
+    },
+    "none_found_result": "No fully confirmed exhaustion birth-to-end runway, recurrence sequence, or duration distribution was found in searched coverage. One right-censored transition candidate is retained."
+  },
+  "strategy_hypotheses": [
+    {
+      "causal_trigger": {
+        "decision_as_of_time_ns": 1633478400000000000,
+        "event_time_ns": null,
+        "evidence_availability_time_ns": null,
+        "receive_time_ns": null,
+        "status": "NOT_YET_SATISFIED_BEFORE_CUTOFF",
+        "trigger": "A repeat causal window retains late positive aggressor imbalance after an earlier negative imbalance while bid-heavy depth persists."
+      },
+      "contradictions": [
+        "Full-window price and flow remain negative.",
+        "Trade count is sparse.",
+        "Right censoring prevents confirmation."
+      ],
+      "entry_condition": {
+        "required": "At least one subsequent fully causal window with positive signed imbalance, non-collapsing bid depth, and non-negative same-window price coupling.",
+        "satisfied": false
+      },
+      "evidence_refs": [
+        "first-lock:first-lock-rt-8fd3a7585a25",
+        "scout-response:8fd3a7585a2563ff2df87fb2d4f46148d0cc6bfab8afbca8b3f4e3ad90d8baeb:source_rows_90597_90762"
+      ],
+      "execution_authority": false,
+      "exhaustion_detection_quality_gate": {
+        "detection_latency_distribution_s": {
+          "reason": "No exact onset clock.",
+          "value": null
+        },
+        "duration_error_or_range_coverage": {
+          "reason": "No completed duration.",
+          "value": null
+        },
+        "event_support": 1,
+        "false_alerts": 0,
+        "lead_time_distribution_s": {
+          "reason": "No exact precursor/onset clock pair.",
+          "value": null
+        },
+        "misses": 0,
+        "prebirth_or_early_detection": {
+          "note": "Counts are bounded to the single retained candidate and are not population performance estimates.",
+          "status": "INCONCLUSIVE"
+        },
+        "promotion_or_rejection_reason": "Rejected for stronger readiness because repeatability, false-alert denominator, exact latency, and duration coverage are unavailable.",
+        "readiness_verdict": "DISCOVERY_ONLY"
+      },
+      "exit_or_reversal_condition": {
+        "condition": "Signed flow returns negative, bid depth collapses, or price-flow coupling resumes downward.",
+        "observed": null
+      },
+      "expected_horizon": {
+        "range_s": null,
+        "reason": "No lawful duration distribution or completed runway."
+      },
+      "fees_slippage_and_fill_assumptions": {
+        "included": false,
+        "reason": "No executable quote/fill model, FIFO, or cost schedule is available."
+      },
+      "hold_or_continuation_condition": {
+        "condition": "Buy pressure persists and displayed bid support remains without spread dislocation.",
+        "observed": false
+      },
+      "invalidation_or_stop": {
+        "condition": "No persistent confirmation, spread above the observed 0.006 range ceiling, or lifecycle evidence shows transient/cancelled support.",
+        "hard_execution_stop": true
+      },
+      "required_unavailable_data": [
+        "post-cutoff confirmation windows",
+        "raw MBO lifecycle and FIFO",
+        "fees/slippage/fill model",
+        "prospective multi-regime validation"
+      ],
+      "side_or_position_logic": "Research a small long/counter-sell hypothesis only after persistence confirmation; the current first lock alone is not an entry instruction.",
+      "sizing_and_risk": {
+        "principle": "If prospectively tested, cap risk ex ante and size only after volatility, liquidity, and fill calibration.",
+        "status": "UNAVAILABLE_FOR_DEPLOYMENT"
+      },
+      "status": "DISCOVERY_ONLY",
+      "strategy_id": "strat-balance-cross-confirmation-8fd3a7585a25",
+      "validated_profitability_claim": false
+    },
+    {
+      "causal_trigger": {
+        "decision_as_of_time_ns": 1633478400000000000,
+        "event_time_ns": null,
+        "evidence_availability_time_ns": null,
+        "receive_time_ns": null,
+        "status": "PARTLY_OBSERVED_BUT_CONFIRMATION_UNAVAILABLE",
+        "trigger": "Negative total signed imbalance and negative same-window price drift persist while late buy flow fails to persist."
+      },
+      "contradictions": [
+        "Late-half signed flow is positive and absolute imbalance contracted.",
+        "Displayed depth remains strongly bid-heavy."
+      ],
+      "entry_condition": {
+        "required": "Renewed negative aggressor imbalance with negative same-window price drift and weakening bid depth.",
+        "satisfied": false
+      },
+      "evidence_refs": [
+        "first-lock:first-lock-rt-8fd3a7585a25",
+        "scout-response:8fd3a7585a2563ff2df87fb2d4f46148d0cc6bfab8afbca8b3f4e3ad90d8baeb:source_rows_90597_90762"
+      ],
+      "execution_authority": false,
+      "exhaustion_detection_quality_gate": {
+        "detection_latency_distribution_s": {
+          "reason": "No exact onset.",
+          "value": null
+        },
+        "duration_error_or_range_coverage": {
+          "reason": "No completed runway.",
+          "value": null
+        },
+        "event_support": 1,
+        "false_alerts": 0,
+        "lead_time_distribution_s": {
+          "reason": "No exact alert/onset pair.",
+          "value": null
+        },
+        "misses": 0,
+        "prebirth_or_early_detection": {
+          "note": "No labeled denominator; integer counts describe only this retained candidate.",
+          "status": "INCONCLUSIVE"
+        },
+        "promotion_or_rejection_reason": "Rejected for stronger readiness because the continuation and flip alternatives remain simultaneously live and uncalibrated.",
+        "readiness_verdict": "DISCOVERY_ONLY"
+      },
+      "exit_or_reversal_condition": {
+        "condition": "Persistent positive flow, price stabilization, or durable bid absorption.",
+        "observed": null
+      },
+      "expected_horizon": {
+        "range_s": null,
+        "reason": "No lawful duration distribution."
+      },
+      "fees_slippage_and_fill_assumptions": {
+        "included": false,
+        "reason": "Unavailable."
+      },
+      "hold_or_continuation_condition": {
+        "condition": "Sell pressure and negative price coupling persist without a new balance cross.",
+        "observed": null
+      },
+      "invalidation_or_stop": {
+        "condition": "Late buy pressure persists or spread/liquidity invalidates fills.",
+        "hard_execution_stop": true
+      },
+      "required_unavailable_data": [
+        "post-cutoff causal windows",
+        "raw MBO lifecycle and FIFO",
+        "fees/slippage/fill model",
+        "prospective validation"
+      ],
+      "side_or_position_logic": "Research continuation short logic only if the late buy-side balance cross fails in a later causal window; no position is authorized now.",
+      "sizing_and_risk": {
+        "principle": "Do not size without prospective calibration and executable liquidity evidence.",
+        "status": "UNAVAILABLE_FOR_DEPLOYMENT"
+      },
+      "status": "DISCOVERY_ONLY",
+      "strategy_id": "strat-sell-continuation-until-confirmed-flip-8fd3a7585a25",
+      "validated_profitability_claim": false
+    }
+  ],
+  "study_design": {
+    "early_warning_claim_status": "RETROSPECTIVE_DISCOVERY_NOT_BLIND_OOS_VALIDATION",
+    "prospective_or_out_of_sample_validation": false,
+    "retrospective_complete_two_day_surface": true,
+    "sealed_step1_blindness_enforced": true
+  },
+  "uncertainty": {
+    "aleatoric": "Sparse trade flow and session-end timing allow transient sign changes without durable exhaustion.",
+    "classification_uncertainty": "The tentative transition is observed; sell exhaustion/absorption is a mechanism hypothesis; reversal is unconfirmed.",
+    "clock_uncertainty": "Window endpoints are exact; exact half-boundary, balance-cross, and peak clocks are unknown and were not averaged or backdated.",
+    "disconfirmers": [
+      "Renewed negative signed flow after cutoff",
+      "Cancellation of displayed bid depth before interaction",
+      "Continued negative price drift despite late buy flow",
+      "Failure of the motif to recur in prospectively defined windows"
+    ],
+    "duration_uncertainty": "No lawful point or range estimate is available.",
+    "epistemic": "The evidence surface is reduced aggregated seconds, not full MBO, and the exact series retrieval covers only the final 15 minutes.",
+    "missing_not_zero": true,
+    "overall": "HIGH"
+  }
+}

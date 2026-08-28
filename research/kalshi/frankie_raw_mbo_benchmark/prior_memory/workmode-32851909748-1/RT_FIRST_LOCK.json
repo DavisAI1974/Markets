@@ -1,0 +1,275 @@
+{
+  "exhaustion_events": [
+    {
+      "assumptions": [
+        "Native buy/sell quantities are the lawful aggressor-flow channels for the signed imbalance.",
+        "The ordered row halves are used exactly as returned; no dispersed clocks are averaged.",
+        "Displayed full-depth imbalance is treated as passive depth state, not proof of durable liquidity."
+      ],
+      "category": "OPENWORLD_SELL_FLOW_WEAKENING_BALANCE_CROSS_V1",
+      "censoring_status": "RIGHT_CENSORED_AT_2021_10_06T00_00_00Z",
+      "clock_ledger": {
+        "confirmation": {
+          "decision_as_of_time_ns": 1633478400000000000,
+          "event_time_ns": null,
+          "evidence_availability_time_ns": null,
+          "receive_time_ns": null,
+          "status": "NONE_FOUND_BEFORE_RIGHT_CENSORING"
+        },
+        "detection": {
+          "decision_as_of_time_ns": 1633478400000000000,
+          "event_time_ns": 1633478399000000000,
+          "evidence_availability_time_ns": 1633478400000000000,
+          "receive_time_ns": 1633478400000000000,
+          "status": "LAWFUL_AT_FULL_SCOUT_WINDOW_AVAILABILITY"
+        },
+        "onset": {
+          "decision_as_of_time_ns": 1633478400000000000,
+          "event_time_ns": null,
+          "evidence_availability_time_ns": 1633478400000000000,
+          "receive_time_ns": null,
+          "status": "WINDOW_AGGREGATE_ONLY"
+        },
+        "precursor": {
+          "decision_as_of_time_ns": null,
+          "event_time_ns": null,
+          "evidence_availability_time_ns": null,
+          "receive_time_ns": null,
+          "status": "UNKNOWN_EXACT_CLOCK"
+        }
+      },
+      "clock_reasoning": "The ordered-half transition is detectable only after all rows supporting it are available. Exact precursor/onset clocks are not inferred from half-window position, and receive clocks are not averaged.",
+      "confidence": 0.55,
+      "contradictions": [
+        "Negative full-window price drift and negative total imbalance support ongoing sell direction.",
+        "Sparse trade count weakens transition reliability.",
+        "No post-cutoff evidence confirms continuation or reversal."
+      ],
+      "depth": {
+        "depth_imbalance_window_range": [
+          0.29072561268620856,
+          0.3266633316658329
+        ],
+        "last_ask_depth_full": 698,
+        "last_bid_depth_full": 1342,
+        "last_depth_imbalance_full": 0.3156862745098039,
+        "tag": "OBSERVED"
+      },
+      "detection_latency_s": {
+        "range": null,
+        "reason": "Exact onset is unknown, so latency cannot be computed without averaging or inventing a clock.",
+        "value": null
+      },
+      "earliest_lawful_precursor": {
+        "decision_as_of_time_ns": null,
+        "event_time_ns": null,
+        "evidence_availability_time_ns": null,
+        "reason": "The early-half aggregate is observed, but its terminal row clock was not retained in the compact receipt; backdating to the scout-window start would be unlawful.",
+        "receive_time_ns": null,
+        "status": "UNKNOWN"
+      },
+      "estimated_remaining_exhaustion_duration_s": {
+        "range": null,
+        "reason": "The event is right-censored and no realized runway or calibrated analog distribution is available.",
+        "value": null
+      },
+      "estimated_total_exhaustion_duration_s": {
+        "range": null,
+        "reason": "No confirmed start/end pair or lawful historical outcome distribution is available.",
+        "value": null
+      },
+      "event_id": "evt-sellflow-balance-cross-8fd3a7585a25",
+      "evidence_refs": [
+        "scout-response:8fd3a7585a2563ff2df87fb2d4f46148d0cc6bfab8afbca8b3f4e3ad90d8baeb:source_rows_90597_90762",
+        "scout-row:90597:event_1633477502000000000:receive_1633477502285989910",
+        "scout-row:90762:event_1633478399000000000:receive_1633478399954928144",
+        "day-context:2021-10-05:68ff7f2880c2dda1a8a75a4ce457cbbe15e7f835d96ac36989b5f2b7e1968fb3"
+      ],
+      "family": "AGGRESSOR_FLOW_TRANSITION_WITH_PASSIVE_BID_SUPPORT",
+      "first_observed_deviation": {
+        "decision_as_of_time_ns": 1633478400000000000,
+        "event_time_ns": null,
+        "evidence_availability_time_ns": 1633478400000000000,
+        "reason": "The sign change is established between ordered halves, not at an exact row.",
+        "receive_time_ns": null,
+        "status": "OBSERVED_AS_WINDOW_AGGREGATE_EXACT_CHANGE_CLOCK_UNKNOWN"
+      },
+      "mechanism": "Early-half sell aggressor pressure weakened, crossed balance, and became late-half buy pressure while full-depth imbalance remained bid-heavy. This is consistent with sell-flow exhaustion or absorption, but the reduced surface cannot distinguish genuine replenishment from transient or cancelled liquidity.",
+      "novel_structure": true,
+      "observed_dipole_runway": {
+        "contradictions": [
+          "Full-window price and total flow still align downward.",
+          "Late-flow persistence and late-half price coupling are unknown."
+        ],
+        "decay_or_open": {
+          "availability_time_ns": 1633478400000000000,
+          "event_time_ns": 1633478399000000000,
+          "last_ask_depth_full": 698,
+          "last_bid_depth_full": 1342,
+          "last_depth_imbalance_full": 0.3156862745098039,
+          "receive_time_ns": 1633478399954928144,
+          "state": "SELL_PRESSURE_WEAKENED; TRANSITION_OPEN",
+          "tag": "OBSERVED_AT_CUTOFF"
+        },
+        "missingness": [
+          "mi_flow value",
+          "exact balance-cross row",
+          "raw order lifecycle and FIFO",
+          "post-cutoff confirmation"
+        ],
+        "onset": {
+          "availability_time_ns": 1633478400000000000,
+          "event_time_ns": null,
+          "receive_time_ns": null,
+          "signed_imbalance": null,
+          "state": "BALANCE_CROSS_TIME_NOT_LOCALIZED",
+          "tag": "UNKNOWN"
+        },
+        "peak_or_inflection": {
+          "depth_imbalance_full": 0.3266633316658329,
+          "event_time_ns": null,
+          "receive_time_ns": null,
+          "state": "MAX_PASSIVE_BID_DOMINANCE",
+          "tag": "OBSERVED_VALUE_CLOCK_UNKNOWN"
+        },
+        "precursor": {
+          "availability_time_ns": 1633478400000000000,
+          "event_time_ns": null,
+          "missingness": "Exact half-boundary clocks unavailable",
+          "receive_time_ns": null,
+          "signed_imbalance": -0.36,
+          "state": "SELL_PRESSURE",
+          "tag": "OBSERVED_WINDOW_HALF"
+        },
+        "transition": {
+          "availability_time_ns": 1633478400000000000,
+          "depth_imbalance_range": [
+            0.29072561268620856,
+            0.3266633316658329
+          ],
+          "event_time_range_ns": [
+            1633477502000000000,
+            1633478399000000000
+          ],
+          "late_signed_imbalance": 0.2,
+          "receive_time_range_ns": [
+            1633477502285989910,
+            1633478400000000000
+          ],
+          "signed_imbalance_change": 0.56,
+          "state": "SELL_TO_BUY_FLOW",
+          "tag": "OBSERVED_ORDERED_HALVES"
+        }
+      },
+      "observed_duration_so_far_s": null,
+      "observed_elapsed_age_s": null,
+      "observed_end_or_open_status": "OPEN_AT_RIGHT_CENSORING; no post-cutoff evidence accessed",
+      "observed_onset": {
+        "decision_as_of_time_ns": 1633478400000000000,
+        "event_time_ns": null,
+        "evidence_availability_time_ns": 1633478400000000000,
+        "reason": "No exact balance-cross row was returned in the compact receipt summary.",
+        "receive_time_ns": null,
+        "status": "UNKNOWN_EXACT_ONSET_RIGHT_CENSORED"
+      },
+      "observed_peak_or_inflection": {
+        "depth_imbalance_full_max": 0.3266633316658329,
+        "event_time_ns": null,
+        "reason": "The maximum value was retained but its row clock was not retained in the compact receipt.",
+        "receive_time_ns": null,
+        "tag": "OBSERVED_VALUE_EXACT_CLOCK_UNKNOWN"
+      },
+      "observed_transitions": [
+        {
+          "event_time_range_ns": [
+            1633477502000000000,
+            1633478399000000000
+          ],
+          "exact_transition_clock": "UNKNOWN",
+          "from": "EARLY_HALF_SELL_PRESSURE_-0.36",
+          "imb_flow": 0.56,
+          "receive_time_range_ns": [
+            1633477502285989910,
+            1633478400000000000
+          ],
+          "tag": "OBSERVED",
+          "to": "LATE_HALF_BUY_PRESSURE_+0.20"
+        }
+      ],
+      "pre_birth_conditions": {
+        "contradictions": [
+          "Raw order actions and cancellation persistence are unavailable.",
+          "Exact early-half terminal clock is unavailable in the compact receipt."
+        ],
+        "inferred": [
+          "Bid-heavy passive depth may have absorbed sell aggressor flow."
+        ],
+        "observed": [
+          "Early-half signed native flow imbalance was -0.36.",
+          "Full-depth imbalance remained positive throughout the final window, range 0.29072561268620856 to 0.3266633316658329."
+        ],
+        "tag": "OBSERVED_AND_INFERRED_SEPARATED"
+      },
+      "prebirth_detectability": {
+        "alert_possible": "INCONCLUSIVE",
+        "contradictions": [
+          "No exact pre-onset alert clock.",
+          "No labeled event population for false-alert accounting.",
+          "No post-cutoff persistence evidence."
+        ],
+        "decision_as_of_time_ns": 1633478400000000000,
+        "earliest_alert_event_time_ns": null,
+        "earliest_alert_evidence_availability_time_ns": null,
+        "earliest_alert_receive_time_ns": null,
+        "false_positive_risk": "HIGH: a single sparse right-censored window can reflect noise, session-end effects, or non-persistent displayed liquidity.",
+        "features": [
+          "negative early-half signed aggressor imbalance",
+          "persistent positive full-depth imbalance",
+          "subsequent contraction and sign cross of aggressor flow"
+        ],
+        "lead_time_range_s": null,
+        "missingness": [
+          "raw MBO lifecycle",
+          "per-order FIFO",
+          "post-cutoff evidence",
+          "historical calibration"
+        ],
+        "validation_status": "RETROSPECTIVE_DISCOVERY_NOT_BLIND_OOS_VALIDATION"
+      },
+      "searched_interval": {
+        "exact_candidate_row_search_end_exclusive_ns": 1633478400000000000,
+        "exact_candidate_row_search_start_ns": 1633477500000000000,
+        "full_event_time_end_exclusive_ns": 1633478400000000000,
+        "full_event_time_start_ns": 1633305600000000000,
+        "no_exact_row_evidence_before_candidate_search": true
+      },
+      "severity": {
+        "absolute_imbalance_contraction": 0.15999999999999998,
+        "calibration": "UNCALIBRATED_TWO_DAY_RETROSPECTIVE",
+        "imbalance_change": 0.56,
+        "tag": "OBSERVED"
+      },
+      "status": "TENTATIVE_OBSERVED_TRANSITION_RIGHT_CENSORED",
+      "unknown_status": "Exact onset, exact inflection clock, total duration, remaining duration, and outcome are UNKNOWN; missing does not mean zero."
+    }
+  ],
+  "first_lock": {
+    "candidate_event_ids": [
+      "evt-sellflow-balance-cross-8fd3a7585a25"
+    ],
+    "classification": "TENTATIVE_SELL_FLOW_WEAKENING_WITH_LATE_BUY_SIDE_BALANCE_CROSS",
+    "confirmed_exhaustion_count": 0,
+    "lock_id": "first-lock-rt-8fd3a7585a25",
+    "locked_at_event_time_cutoff_ns": 1633478399000000000,
+    "locked_at_receive_time_cutoff_ns": 1633478400000000000,
+    "mutable": false,
+    "post_cutoff_or_step1_material_used": false,
+    "status": "FROZEN_FIRST_WRITE",
+    "strategy_influence_on_lock": false,
+    "tentative_transition_count": 1
+  },
+  "first_lock_owner": "REAL_TIME_FRANKIE",
+  "receipt_hash": "e599b9e0a06a6fb1a5a77cf957d39626bfbb6260cd056e111c865b1ab9fded4a",
+  "rt_output_hash": "6a26624cf0c0604d900280f2accda0790164bb06a72e5492d79ae1c0c3c7a314",
+  "schema": "FRANKIE_PRIOR_SURFACE_OCT45_RT_FIRST_LOCK_V2_WORKMODE_20260825"
+}

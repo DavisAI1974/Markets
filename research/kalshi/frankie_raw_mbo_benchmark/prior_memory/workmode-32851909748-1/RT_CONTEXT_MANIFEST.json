@@ -1,0 +1,10 @@
+{
+  "answer_wall": "SEALED",
+  "packet_hash": "3a88f2c535c580a82af70bf4dcf0ef8c2712b6a9a8ed2f43d30a7e30aaf0628a",
+  "provider_api_called": false,
+  "receipt_hash": "694ef9643afded8c3f5f2a9338163b5f2f8e41ce152be31515dbe3e1bbe376c8",
+  "role": "REAL_TIME_FRANKIE",
+  "role_is_forecasting": false,
+  "schema": "FRANKIE_PRIOR_SURFACE_OCT45_RT_CONTEXT_MANIFEST_V2_WORKMODE_20260825",
+  "source_manifest_hash": "10137317196a77bb4507afcc22463e85cc243a082db4475ead3cc35468cde7d9"
+}

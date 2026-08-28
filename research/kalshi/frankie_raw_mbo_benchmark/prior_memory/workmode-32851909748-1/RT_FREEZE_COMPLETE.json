@@ -1,0 +1,9 @@
+{
+  "forecaster_packet_hash": "d900139997ac592f87d2eef3fdc3548515aae50b2b92afb37dfcbba14ca6706f",
+  "frozen_rt_state_hash": "4342a36cb527d8773435f79d2adb7e35e40c24e144689b359684fde59871350e",
+  "next_role": "FORECASTER_FRANKIE",
+  "published_last": true,
+  "receipt_hash": "548268ab69b2d84e8f7fc812c143e83484b76ee0cf99d70e11e2b7e1273b7f71",
+  "schema": "FRANKIE_PRIOR_SURFACE_OCT45_RT_FREEZE_COMPLETE_V1_20260825",
+  "status": "RT_FROZEN_FORECASTER_PACKET_READY"
+}

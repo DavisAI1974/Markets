@@ -1,0 +1,28 @@
+{
+  "answer_key_or_step1_results_exposed": false,
+  "automatic_helpers": 0,
+  "canary": false,
+  "cli_model_called": false,
+  "conditional_forecaster_helper_call_count": 0,
+  "external_provider_api_called": false,
+  "forecaster_curve_hash": "f792c133474e18b44902415ad0f8e7ae1a893f86985648598de00185e540b8e2",
+  "frozen_rt_state_hash": "4342a36cb527d8773435f79d2adb7e35e40c24e144689b359684fde59871350e",
+  "manifest_receipt_hash": "8b704a520e443267b0d8636de116f0fef980ac89214f296ea86644a75a7eb4e5",
+  "model": "gpt-5.6-sol",
+  "openai_key_used": false,
+  "optional_forecaster_helper_calls": 0,
+  "principal_role_call_count": 2,
+  "principal_role_call_order": [
+    "REAL_TIME_FRANKIE",
+    "FORECASTER_FRANKIE"
+  ],
+  "published_last": true,
+  "receipt_hash": "440157fcd9d9e066e2cab0070d86d7c918f48cb024a58828f8a8cc5be5ade773",
+  "rt_role_is_forecasting": false,
+  "schema": "NG_EXHAUSTION_TWO_FRANKIES_WORKMODE_COMPLETE_V1_20260825",
+  "specialist_calls": 0,
+  "status": "COMPLETE",
+  "study_design": "ANSWER_KEY_BLIND_RETROSPECTIVE_DISCOVERY_NOT_BLIND_OOS_VALIDATION",
+  "tests": false,
+  "total_model_call_count": 2
+}

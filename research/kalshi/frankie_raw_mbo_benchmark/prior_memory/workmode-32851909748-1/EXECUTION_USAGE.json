@@ -1,0 +1,21 @@
+{
+  "cli_model_called": false,
+  "conditional_forecaster_helper_call_count": 0,
+  "fallback_calls": 0,
+  "model_requested_for_each": "gpt-5.6-sol",
+  "openai_key_used": false,
+  "optional_forecaster_helper_calls": 0,
+  "principal_role_call_count": 2,
+  "provider_api_called": false,
+  "provider_api_cost_usd": "NOT_APPLICABLE_NO_PROVIDER_API_CALL",
+  "provider_token_usage": "NOT_AVAILABLE_FOR_WORKMODE_AGENT_CALLS",
+  "receipt_hash": "0094a744e81cf5bafc58d57509363153c2b9741b829556df168a989c3cf3078b",
+  "repair_calls": 0,
+  "role_sequence": [
+    "REAL_TIME_FRANKIE",
+    "FORECASTER_FRANKIE"
+  ],
+  "schema": "FRANKIE_WORKMODE_EXECUTION_USAGE_V1_20260825",
+  "specialist_calls": 0,
+  "total_model_call_count": 2
+}

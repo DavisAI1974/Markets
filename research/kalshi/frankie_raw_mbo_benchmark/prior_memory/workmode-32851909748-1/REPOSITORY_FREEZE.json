@@ -1,0 +1,102 @@
+{
+  "schema": "FRANKIE_PRIOR_REDUCED_RUN_REPOSITORY_FREEZE_V1_20260828",
+  "source_run_id": "workmode-32851909748-1",
+  "source_surface_label": "PRIOR_REDUCED_NON_FULL_MBO_SURFACE",
+  "source_window": {
+    "start_inclusive": "2021-10-04T00:00:00Z",
+    "end_exclusive": "2021-10-06T00:00:00Z"
+  },
+  "source_packet_workflow_run_id": 32851909748,
+  "source_launch_commit": "96d713cc9ed3e8ba889ae45a04e80cb4eab4fb26",
+  "repository_freeze_created_at_utc": "2026-08-28T10:54:24.667Z",
+  "recovered_from_chatgpt_work_scratch": true,
+  "finalized_deterministically_after_recovery": true,
+  "model_outputs_changed": false,
+  "rt_output_semantically_equal_to_original_agent_output": true,
+  "forecaster_output_byte_identical_to_original_agent_output": true,
+  "forecaster_output_scoring_receipt_sha256": "32131d948790faa56ed130f901bad71b10075919a2e23a78d1ff2c3939de25af",
+  "frozen_rt_state_hash": "4342a36cb527d8773435f79d2adb7e35e40c24e144689b359684fde59871350e",
+  "step1_or_post_reveal_content_included": false,
+  "current_raw_mbo_arm_output_included": false,
+  "old_reduced_market_rows_included": false,
+  "proof_chain_verification": "PASS",
+  "complete_receipt_hash": "440157fcd9d9e066e2cab0070d86d7c918f48cb024a58828f8a8cc5be5ade773",
+  "required_artifact_count": 15,
+  "artifacts": [
+    {
+      "name": "RT_OUTPUT.json",
+      "bytes": 38111,
+      "sha256": "72a22b5ec0ee5f6ebdcf14d0ff566dd178f31ce2bd6d3f3f85cf9b49a2ac9158"
+    },
+    {
+      "name": "RT_CONTEXT_MANIFEST.json",
+      "bytes": 474,
+      "sha256": "a3f61eb539db91dbd612a31577b6749f1674cf88c6d3175961a4a612668c0a9b"
+    },
+    {
+      "name": "RT_AGENT_RECEIPT.json",
+      "bytes": 953,
+      "sha256": "545df4397a0cd556088db452adfae44e93f803ef9129379c34a01f0f7d3e2029"
+    },
+    {
+      "name": "RT_FIRST_LOCK.json",
+      "bytes": 11903,
+      "sha256": "42f062642ca32ff9ddaef1789bf939e4696f16d442254afd5b5865a0968a3c20"
+    },
+    {
+      "name": "RT_FROZEN_STATE.json",
+      "bytes": 41707,
+      "sha256": "18b1573014daa4d7414a63763b883258aeb14505622c7f1f89572395f14b84e0"
+    },
+    {
+      "name": "ONEWAY_HANDOFF.json",
+      "bytes": 626,
+      "sha256": "cde4673119316673b1ccdb6915fc7a455e2c3040d363cf2a1009ef3e72dbaa25"
+    },
+    {
+      "name": "RT_FREEZE_COMPLETE.json",
+      "bytes": 465,
+      "sha256": "defc5495c40fc662f5255dc6d655fa20dcbce266d18b523989fa8bf890b7fdad"
+    },
+    {
+      "name": "RT_FREEZE_EXTERNAL_ANCHOR.json",
+      "bytes": 1973,
+      "sha256": "1446826e578e9d4dd0faaae1242db594bb6b3ee42d6efa957bf07be6c2dfb0fa"
+    },
+    {
+      "name": "FORECASTER_OUTPUT.json",
+      "bytes": 41990,
+      "sha256": "32131d948790faa56ed130f901bad71b10075919a2e23a78d1ff2c3939de25af"
+    },
+    {
+      "name": "FORECASTER_CONTEXT_MANIFEST.json",
+      "bytes": 681,
+      "sha256": "ed48912283e36438c437ea8bc1cb6c4cfe5806670b56c18469cf1c6e31a063b7"
+    },
+    {
+      "name": "FORECASTER_AGENT_RECEIPT.json",
+      "bytes": 971,
+      "sha256": "0c057c19d230a4c2950c85a1fa0bdd24ff264c11f726cd0f6a8f388764536e33"
+    },
+    {
+      "name": "FORECASTER_FIRST_LOCK.json",
+      "bytes": 523,
+      "sha256": "f5770436f66e1f1cdb340e8d5e3b9b6416ea89befb2bd307aa0e9866612da4df"
+    },
+    {
+      "name": "EXECUTION_USAGE.json",
+      "bytes": 717,
+      "sha256": "262b78bfac4cff6bb49fd9566f1af958bb4fa65af3c494378df59d6be6dbe499"
+    },
+    {
+      "name": "ARTIFACT_MANIFEST.json",
+      "bytes": 2901,
+      "sha256": "6f3cb63536d12d2bcb136b6698faf47b37c17a6ee3c8f6ee2ed309578bfda70d"
+    },
+    {
+      "name": "COMPLETE.json",
+      "bytes": 1120,
+      "sha256": "20a26ed0e29cfb12f30711030913e05bce1ccb5bee49058763f1fb2b5ec3f673"
+    }
+  ]
+}

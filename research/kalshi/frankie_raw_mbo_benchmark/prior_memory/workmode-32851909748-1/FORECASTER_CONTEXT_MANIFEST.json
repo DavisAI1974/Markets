@@ -1,0 +1,13 @@
+{
+  "answer_wall": "SEALED",
+  "complete_registry_direct_no_dormant": true,
+  "forecaster_optional_helper_available": true,
+  "forecaster_optional_helper_calls": 0,
+  "frozen_rt_state_hash": "4342a36cb527d8773435f79d2adb7e35e40c24e144689b359684fde59871350e",
+  "packet_hash": "d900139997ac592f87d2eef3fdc3548515aae50b2b92afb37dfcbba14ca6706f",
+  "provider_api_called": false,
+  "receipt_hash": "07ffb7626a02b57d44220a06ce64ebf9a17226cc32b04fe1596bf140f6f77597",
+  "role": "FORECASTER_FRANKIE",
+  "schema": "FRANKIE_PRIOR_SURFACE_OCT45_FORECASTER_CONTEXT_MANIFEST_V2_WORKMODE_20260825",
+  "source_manifest_hash": "10137317196a77bb4507afcc22463e85cc243a082db4475ead3cc35468cde7d9"
+}

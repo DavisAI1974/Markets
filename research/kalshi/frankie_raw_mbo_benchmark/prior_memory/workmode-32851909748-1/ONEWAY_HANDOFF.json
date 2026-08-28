@@ -1,0 +1,12 @@
+{
+  "forecaster_may_modify_rt_state": false,
+  "forecaster_may_reconstruct_competing_current_state": false,
+  "from_role": "REAL_TIME_FRANKIE",
+  "frozen_rt_state_hash": "4342a36cb527d8773435f79d2adb7e35e40c24e144689b359684fde59871350e",
+  "full_validated_rt_output_hash": "6a26624cf0c0604d900280f2accda0790164bb06a72e5492d79ae1c0c3c7a314",
+  "full_validated_rt_output_included": true,
+  "receipt_hash": "dd8e005c16713be67e6e744edae8f290a099266640d9f9c298f5c985e3c0da92",
+  "rt_frozen_before_forecaster": true,
+  "schema": "FRANKIE_PRIOR_SURFACE_OCT45_ONEWAY_HANDOFF_V2_WORKMODE_20260825",
+  "to_role": "FORECASTER_FRANKIE"
+}
