@@ -32,7 +32,6 @@ SPEC.loader.exec_module(base)
 PACKET = base.PACKET
 OUT = base.OUT
 INTERVAL = base.INTERVAL
-RESUME_SEQUENCE = 2
 
 
 def read_json(path: Path) -> dict[str, object]:
@@ -48,6 +47,41 @@ def read_gzip_json(path: Path) -> dict[str, object]:
     if not isinstance(value, dict):
         raise RuntimeError(f"expected gzip JSON object: {path}")
     return value
+
+
+def load_runtime_chain() -> tuple[
+    list[dict[str, object]], dict[int, dict[str, object]], dict[int, dict[str, object]]
+]:
+    """Verify the complete chain and every continuation/adapter sibling."""
+    paths = sorted((OUT / "checkpoints").glob("checkpoint-*.json"))
+    checkpoints = [load_checkpoint(path) for path in paths]
+    verify_chain(checkpoints)
+    if not checkpoints or checkpoints[0]["sequence"] != 0:
+        raise RuntimeError("Forecaster checkpoint chain does not start at sequence zero")
+
+    adapters: dict[int, dict[str, object]] = {}
+    continuations: dict[int, dict[str, object]] = {}
+    for checkpoint in checkpoints[1:]:
+        sequence = int(checkpoint["sequence"])
+        adapter = read_gzip_json(
+            OUT / "checkpoints" / f"adapter-state-{sequence:06d}.json.gz"
+        )
+        if adapter.get("state_hash") != checkpoint["adapter_state_hash"]:
+            raise RuntimeError(f"adapter-state hash mismatch at sequence {sequence}")
+        continuation = read_json(
+            OUT / "checkpoints" / f"continuation-{sequence:06d}.json"
+        )
+        if base.value_hash(continuation, "continuation_hash") != continuation.get(
+            "continuation_hash"
+        ):
+            raise RuntimeError(f"continuation hash mismatch at sequence {sequence}")
+        if continuation["continuation_hash"] != checkpoint["controller_state_hash"]:
+            raise RuntimeError(
+                f"continuation is not bound to checkpoint at sequence {sequence}"
+            )
+        adapters[sequence] = adapter
+        continuations[sequence] = continuation
+    return checkpoints, adapters, continuations
 
 
 def iter_mbo(source_path: Path):
@@ -127,31 +161,25 @@ def main() -> None:
     if packet["native_mbo_records_total"] != manifest["total_mbo_records"]:
         raise RuntimeError("packet source total drift")
 
-    checkpoints = [
-        load_checkpoint(OUT / "checkpoints" / f"checkpoint-{sequence:06d}.json")
-        for sequence in range(RESUME_SEQUENCE + 1)
-    ]
-    verify_chain(checkpoints)
+    checkpoints, adapters, continuations = load_runtime_chain()
     previous = checkpoints[-1]
-    if previous["checkpoint_hash"] != "bdb5cdaa1a06868232346fb6fe48e8e22ac10aad68af21fd64be755fc0292212":
-        raise RuntimeError("unexpected A-clean Forecaster resume checkpoint")
-    if previous["event_group_open"] or previous["locked"]:
-        raise RuntimeError("resume checkpoint is not an unlocked F_LAST boundary")
+    resume_sequence = int(previous["sequence"])
+    if (
+        previous["run_id"] != base.RUN_ID
+        or previous["memory_mode"] != "CLEAN"
+        or previous["source_manifest_hash"] != manifest["manifest_hash"]
+        or previous["event_group_open"]
+        or previous["locked"]
+        or int(previous["completed_mbo_records"]) >= int(manifest["total_mbo_records"])
+    ):
+        raise RuntimeError("latest checkpoint is not an eligible closed A-clean resume point")
 
-    continuation = read_json(OUT / "checkpoints" / f"continuation-{RESUME_SEQUENCE:06d}.json")
-    if base.value_hash(continuation, "continuation_hash") != continuation["continuation_hash"]:
-        raise RuntimeError("controller continuation hash mismatch")
-    if continuation["continuation_hash"] != previous["controller_state_hash"]:
-        raise RuntimeError("controller continuation is not bound to checkpoint")
+    continuation = continuations[resume_sequence]
     cursor = int(previous["completed_mbo_records"])
     if int(continuation["completed_native_mbo_records"]) != cursor:
         raise RuntimeError("controller continuation cursor mismatch")
 
-    snapshot = read_gzip_json(
-        OUT / "checkpoints" / f"adapter-state-{RESUME_SEQUENCE:06d}.json.gz"
-    )
-    if snapshot["state_hash"] != previous["adapter_state_hash"]:
-        raise RuntimeError("adapter snapshot is not bound to checkpoint")
+    snapshot = adapters[resume_sequence]
     adapter = restore_adapter_state(snapshot)
     if int(adapter.record_count) != cursor:
         raise RuntimeError("restored adapter cursor mismatch")
@@ -173,7 +201,7 @@ def main() -> None:
     # The audit adapter is deliberately discarded. Continuation proceeds from the exact
     # hash-bound snapshot, while the rebuilt prefix supplies the exact controller sums.
     del audit_adapter
-    sequence = RESUME_SEQUENCE
+    sequence = resume_sequence
     completed = cursor
     next_interval = ((completed // INTERVAL) + 1) * INTERVAL
 

@@ -1,5 +1,10 @@
 # Frankie native raw-MBO Chat launch operations handoff
 
+> **Current-state correction:** Read
+> `FRANKIE_RAW_MBO_A_ARMS_CORRECTED_NEXT_CHAT_HANDOFF_20260828.md` first. It
+> supersedes the operational-status and scientific-lock claims below. This file
+> remains historical provenance for the original staging and recovery work.
+
 Date: 2026-08-28 UTC  
 Repository: `DavisAI1974/Markets`  
 Branch: `chatgpt/frankie-raw-mbo-benchmark-20260828`  
