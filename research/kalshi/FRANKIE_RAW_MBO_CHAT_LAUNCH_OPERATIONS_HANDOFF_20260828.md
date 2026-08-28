@@ -130,27 +130,39 @@ ledger, and three siblings for every checkpoint: checkpoint JSON, adapter-state
 body, and controller-state body. The controlling Real-Time Frankie lane was
 instructed to remain open through 100% and the frozen first lock.
 
-The current durable restart cursor is sequence 1 at
-`500,001 / 5,667,689` (`8.821955474%`):
+The Real-Time replay completed and froze after all `5,667,689 / 5,667,689`
+native records (`100%`) and `4,256,603` F_LAST-closed groups. The final durable
+chain has 18 linked checkpoints; every checkpoint's adapter and controller
+sibling hash and the complete gzip ledger were revalidated.
 
-- checkpoint:
-  `d2a2fb9709aee77274e99b8c207c84aff2245ba391c0ee26c28636874cd687ae`
-- previous checkpoint:
-  `e1cefd077ec2fdc1aa59ac341818cc582d1b60df295285dab19cd21fcce43bf8`
-- adapter-state hash:
-  `d60e6cb9936ff9365c61eefa2e11b6c68e319fca8be25fa6e32357cfbe626566`
-- controller-state hash:
-  `f6309098f0c96415441a32ae299d8340671ee7c75751472abd121af2515a63f6`
+- final locked checkpoint:
+  `2e10b3f2534aaf697129831608a8e65fd9c4ac8ca92ec171c2a012fe8593b384`
+- RT first lock:
+  `ef728adf5ae2064c242f0e72acbf95f1d5b586a3f1845bed9ac9577ea998dd42`
+- freeze receipt:
+  `bc7e8ed9dbcb08177d46a48f16176afb026f5efe0c6fa49164260877fd172793`
+- native evidence bundle:
+  `94a32deafdcb580868ba24df829b616edf36a80f84f80b7cd828efea24a13b36`
+- final checksum manifest:
+  `d1994ce1449144fd48e2e87930c59727da32d85cc1c9b2cc770d77781c4c6415`
 
-The sibling files are `checkpoint-000001.json`,
-`adapter-state-000001.json.gz`, and `controller-state-000001.json`; their hashes
-reconcile to the checkpoint JSON.
+Only after that lock and freeze was the isolated A-clean Forecaster lane opened:
+
+- run: `frankie-a-clean-forecaster-33161766927-1`
+- packet: `aclean-fcpkt-281162606bbfc376537b`
+- pre-call checkpoint:
+  `855a2a9868b68fb90f2138f69bc3f6957d4e5f182b04546f01300879b1198266`
+- frozen RT state:
+  `d2f1eae14d269bf1b1b755f9502c65138164a23f3dc6a42d5c0f97e9de1c9498`
+
+The Forecaster packet has no memory package, keeps the answer wall sealed, and
+cannot modify the frozen Real-Time state.
 
 ### A-memory
 
 Path: `.github/workflows/frankie_a_memory_rt_native_launch_20260828.yml`  
 File SHA-256:
-`d061a28bbd13750550d5c14dea6386d0bcec7705a4ff74ec7c510cbc74a16c54`
+`3f030e10d739a2a71fd73022a981a76d052d3fec2d7f1e949243bcf5bb509aa7`
 
 This clones the A-clean checkout, native roster, manifest, adapter, checkpoint,
 private persistence, and packet behavior under isolated A-memory names. Its only
@@ -169,9 +181,11 @@ integrity chain:
 - execution, artifact-manifest, and completion receipts
 
 It does not copy old seconds, source rows, scout rows, prior input packets, or
-work packets. It verifies pre-benchmark mtimes, answer-wall state, principal call
-order, output hashes, freeze/lock linkage, and absence of current-arm or
-post-reveal lineage before creating the A-memory packet.
+work packets. It verifies the repository recovery proof, the exact 15-file
+allowlist, answer-wall state, principal call order, output hashes,
+freeze/first-lock/handoff linkage, completion receipt, historical launch ancestry,
+and explicit absence of Step-1, post-reveal, current-arm, or old-row content
+before creating the A-memory packet.
 
 Launch-gate commit: `ecb57cba593ed145d454e67f3239ddb8ac662be0`  
 Workflow run: `33162517524`  
@@ -195,21 +209,74 @@ post-reveal, scoring, reconciliation, and current-arm paths. Workflow
 `33163106365`, job `98822043403`, also failed closed at materialization. Its
 inventory artifact `9682478127` has ZIP SHA-256
 `cea2edf15319116ce49ea9e28b3e44a2c36a5ae3a83671b3e43a8a8f80615631`.
-Both host and S3 inventories were empty. Therefore no authorized byte-complete
-learned-knowledge package was located; A-memory cannot start until the user
-provides the authoritative pre-reveal package or its exact repository/S3 path.
+Both host and S3 inventories were empty, so those attempts correctly stopped.
+The blocker was later resolved by recovering and freezing the original chain in
+the repository, without reconstructing Frankie findings from later material.
 
-Authoritative A-memory status is `PRE_MEMORY_BIND`, progress
-`0 / 5,667,689`. The earlier transient sequence-0 checkpoint
-`b47e6ad5e04b3d00d438915fcbb08be7148bfc1857298016ad808cbd8b23d35d`
-is not a launched scientific replay checkpoint until the memory package binds.
+Authoritative repository recovery:
 
-For the next attempt, search only pre-existing prior-run namespaces for the exact
-learned-output filenames above and initially emit paths, bytes, mtimes, ETags,
-and hashes only. Do not inspect Step-1, scoring, reconciliation, post-reveal, or
-current-arm paths. Do not substitute the old packet input or a later finding.
-If the byte-complete learned-output freeze/lock/receipt chain cannot be proven,
-keep A-memory closed.
+- recovery commit:
+  `5e2927f196250fc08373b66e358bb9167af018c6`
+- directory:
+  `research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/`
+- historical source run: `workmode-32851909748-1`
+- source surface: `PRIOR_REDUCED_NON_FULL_MBO_SURFACE`
+- historical launch commit:
+  `96d713cc9ed3e8ba889ae45a04e80cb4eab4fb26`, an ancestor of the required
+  raw-MBO benchmark starting tip
+- repository recovery proof SHA-256:
+  `dc567f014d9c65fc50b179e1e2f46b8624d2d27e25eaf63a29068f6d6a4cb007`
+- RT output SHA-256:
+  `72a22b5ec0ee5f6ebdcf14d0ff566dd178f31ce2bd6d3f3f85cf9b49a2ac9158`
+- Forecaster output SHA-256:
+  `32131d948790faa56ed130f901bad71b10075919a2e23a78d1ff2c3939de25af`
+- completion receipt:
+  `440157fcd9d9e066e2cab0070d86d7c918f48cb024a58828f8a8cc5be5ade773`
+- frozen RT state:
+  `4342a36cb527d8773435f79d2adb7e35e40c24e144689b359684fde59871350e`
+
+The proof chain passed with `answer_wall=SEALED`, Step-1 exposure false,
+current raw-MBO arm content false, old reduced rows absent, RT frozen before the
+Forecaster, and all available artifact-manifest bytes and hashes reconciled.
+The Forecaster output is byte-identical to the historical scored-file hash; the
+findings were not edited. `REPOSITORY_FREEZE.json` is verification metadata and
+is not included in the learned-memory tar.
+
+The deterministic memory tar contains exactly the 15 allowlisted artifacts and
+has SHA-256
+`0a5cddbcd971a3e6c2cad88a8e5559b0ab0529a31174c882355a61fe9c680b87`
+(`34,009` bytes). Its generated package-proof receipt is
+`e7d8cbc54f354a4902ab72792e379033a25f5f28102fcf9d4bb82dda1d7e8435`;
+the repository-verification receipt is
+`9c5847e33f4014eac12e8da67c2f97e55280545f67ea0d7899fa1c914d39683b`.
+This hash is the identity to reuse unchanged for every memory-assisted arm.
+
+The corrected A-memory launcher was committed through the GitHub plugin at
+`c7da7d257fda2ce9ddccfaee56020ed3e7de8e50`. It uses the A-clean native
+download, source manifest, replay, checkpoint, packet, and persistence behavior.
+The only arm delta is `memory_mode=MEMORY_ASSISTED` and the hash-bound tar above.
+The GitHub push is the private packet-staging trigger; the active Chat-controlled
+Real-Time runtime is kept separately from A-clean.
+
+Active A-memory Real-Time launch:
+
+- run: `frankie-a-memory-rt-c7da7d257fda-1`
+- packet: `amemory-rtpkt-4eed0d33d524b7388db5`
+- contract:
+  `4eed0d33d524b7388db56a7aebb19107c4867ed81384ec338f6cf7934d4ee499`
+- durable sequence-0 checkpoint:
+  `45141df6d86bde0b31cff70f1d2ba40ad5b430f3155e1f2d3142964616970fe2`
+- launch receipt:
+  `1bc98db77c8ba5148b1066cdf42a81256318e4b5ecbfe27b0ca7c9ac8e8b0ac0`
+- packet root:
+  `/workspace/scratch/da00127ac123/a-memory-packet-c7da7d2/`
+- active runtime:
+  `/workspace/scratch/da00127ac123/a-memory-runtime-c7da7d2/`
+
+Launch progress was `0 / 5,667,689` at the durable pre-call boundary; the native
+replay is active and the ledger is growing. `FORECASTER_FRANKIE` is sealed and
+must not start until A-memory RT reaches 100%, writes its locked final
+checkpoint and first lock, and freezes the one-way handoff.
 
 ## Required wrappers and scientific boundary modules
 
@@ -259,8 +326,8 @@ Each native arm packet must contain:
 - sequence-0 adapter state and checkpoint;
 - `launch_receipt.json`;
 - file SHA-256 inventory;
-- for A-memory only, the independently verified lessons-only tar and its proof
-  receipt.
+- for A-memory only, the independently verified lessons-only tar, package-proof
+  receipt, and repository-verification receipt.
 
 The packet contract must say:
 
