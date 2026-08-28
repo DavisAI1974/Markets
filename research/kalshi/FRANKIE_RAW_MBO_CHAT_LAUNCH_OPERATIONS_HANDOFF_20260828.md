@@ -273,10 +273,13 @@ Active A-memory Real-Time launch:
 - active runtime:
   `/workspace/scratch/da00127ac123/a-memory-runtime-c7da7d2/`
 
-Launch progress was `0 / 5,667,689` at the durable pre-call boundary; the native
-replay is active and the ledger is growing. `FORECASTER_FRANKIE` is sealed and
-must not start until A-memory RT reaches 100%, writes its locked final
-checkpoint and first lock, and freezes the one-way handoff.
+Launch progress was `0 / 5,667,689` at the durable pre-call boundary. The first
+F_LAST-closed interval checkpoint is sequence 1 at
+`500,001 / 5,667,689` (`8.821955474%`), hash
+`bd06ba2253f8b0ac5d9b1fc7ab7274d598e30b550c83d1c9da89f191d4edf274`.
+The native replay remains active. `FORECASTER_FRANKIE` is sealed and must not
+start until A-memory RT reaches 100%, writes its locked final checkpoint and
+first lock, and freezes the one-way handoff.
 
 ## Required wrappers and scientific boundary modules
 
