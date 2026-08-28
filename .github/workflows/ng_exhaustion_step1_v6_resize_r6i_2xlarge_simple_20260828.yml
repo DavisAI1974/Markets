@@ -1,0 +1,66 @@
+name: ONE-SHOT APPROVED - Step-1 V6 simple resize to r6i.2xlarge 20260828
+on:
+  push:
+    branches: [chatgpt/frankie-october-aws-readonly-20260824]
+    paths: [.github/workflows/ng_exhaustion_step1_v6_resize_r6i_2xlarge_simple_20260828.yml]
+permissions:
+  contents: read
+jobs:
+  resize:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_STEP1_V6_SIMPLE_RESIZE_R6I_2XLARGE_20260828]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      VOLUME_ID: vol-05a0b1e56f8c16478
+      ORIGINAL_TYPE: r6i.xlarge
+      TARGET_TYPE: r6i.2xlarge
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Minimal preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
+          aws ec2 wait instance-status-ok --instance-ids "$INSTANCE_ID"
+          current="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].InstanceType' --output text)"
+          volume="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].BlockDeviceMappings[0].Ebs.VolumeId' --output text)"
+          test "$current" = "$ORIGINAL_TYPE"
+          test "$volume" = "$VOLUME_ID"
+          az="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].Placement.AvailabilityZone' --output text)"
+          offered="$(aws ec2 describe-instance-type-offerings --location-type availability-zone --filters Name=location,Values="$az" Name=instance-type,Values="$TARGET_TYPE" --query 'length(InstanceTypeOfferings)' --output text)"
+          test "$offered" != 0
+          echo V6_SIMPLE_PREFLIGHT=PASS
+      - name: Resize same EBS-backed instance with rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws ec2 stop-instances --instance-ids "$INSTANCE_ID" --output json
+          aws ec2 wait instance-stopped --instance-ids "$INSTANCE_ID"
+          if ! aws ec2 modify-instance-attribute --instance-id "$INSTANCE_ID" --instance-type "{\"Value\":\"$TARGET_TYPE\"}"; then
+            aws ec2 start-instances --instance-ids "$INSTANCE_ID" --output json || true
+            exit 1
+          fi
+          if ! aws ec2 start-instances --instance-ids "$INSTANCE_ID" --output json; then
+            aws ec2 modify-instance-attribute --instance-id "$INSTANCE_ID" --instance-type "{\"Value\":\"$ORIGINAL_TYPE\"}" || true
+            aws ec2 start-instances --instance-ids "$INSTANCE_ID" --output json || true
+            exit 1
+          fi
+          aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
+          if ! aws ec2 wait instance-status-ok --instance-ids "$INSTANCE_ID"; then
+            aws ec2 stop-instances --instance-ids "$INSTANCE_ID" --output json || true
+            aws ec2 wait instance-stopped --instance-ids "$INSTANCE_ID" || true
+            aws ec2 modify-instance-attribute --instance-id "$INSTANCE_ID" --instance-type "{\"Value\":\"$ORIGINAL_TYPE\"}" || true
+            aws ec2 start-instances --instance-ids "$INSTANCE_ID" --output json || true
+            exit 1
+          fi
+          final="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].InstanceType' --output text)"
+          volume="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].BlockDeviceMappings[0].Ebs.VolumeId' --output text)"
+          test "$final" = "$TARGET_TYPE"
+          test "$volume" = "$VOLUME_ID"
+          echo V6_SIMPLE_RESIZE=PASS
