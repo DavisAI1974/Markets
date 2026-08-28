@@ -1,0 +1,44 @@
+name: ONE-SHOT APPROVED - Step-1 V5R Control Plane Diagnose 20260828
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_step1_v5r_controlplane_diag_20260828.yml
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_STEP1_V5R_CONTROLPLANE_DIAGNOSE_20260828]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      BUCKET: bento-568968024170-us-east-2-an
+      RESULT_PREFIX: nymex/ng_mbo_5y_v0/step1_census/two_day_full_mbo_corrected/continuations/33113936522-1
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Diagnose control plane read-only
+        shell: bash
+        run: |
+          set -u -o pipefail
+          echo EC2_INSTANCE_BEGIN
+          aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].{State:State.Name,InstanceType:InstanceType,LaunchTime:LaunchTime,PrivateIpAddress:PrivateIpAddress,RootDeviceName:RootDeviceName,Volumes:BlockDeviceMappings[*].Ebs.VolumeId}' --output json || true
+          echo EC2_INSTANCE_END
+          echo EC2_STATUS_BEGIN
+          aws ec2 describe-instance-status --instance-ids "$INSTANCE_ID" --include-all-instances --output json || true
+          echo EC2_STATUS_END
+          echo SSM_INFO_BEGIN
+          aws ssm describe-instance-information --filters Key=InstanceIds,Values="$INSTANCE_ID" --output json || true
+          echo SSM_INFO_END
+          echo S3_PREFIX_BEGIN
+          aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "$RESULT_PREFIX/" --query 'Contents[].{Key:Key,Size:Size,LastModified:LastModified}' --output json || true
+          echo S3_PREFIX_END
