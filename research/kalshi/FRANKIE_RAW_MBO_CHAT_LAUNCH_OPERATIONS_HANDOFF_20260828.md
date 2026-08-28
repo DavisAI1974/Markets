@@ -109,16 +109,11 @@ Packet identity:
 - Launch receipt:
   `ca941aa93bcdad82584707367390fadb4df6be7e6d6ea811012c2b90aa39007d`
 
-Important status correction: an in-agent replay reported a sequence-1 cursor of
-`500,001 / 5,667,689` and checkpoint
-`d2a2fb9709aee77274e99b8c207c84aff2245ba391c0ee26c28636874cd687ae`,
-but that process and checkpoint were not durable or visible after the agent turn
-ended. Do not treat that cursor as restart authority unless the checkpoint file,
-adapter snapshot, ledger, and hash-chain receipt are independently recovered and
-verified. The last independently durable launch state is sequence 0 at
-`0 / 5,667,689`. A replacement replay must persist under a shared durable path or
-remote worker and must not finish its controlling turn while work is still only
-in an ephemeral process session.
+Important status correction: the first in-agent replay reported a sequence-1
+cursor but did not persist a root-visible checkpoint body. That partial attempt
+was quarantined outside the active chain at
+`/workspace/scratch/da00127ac123/a-clean-runtime-33161766927-attempt-prestate/`.
+It is not restart authority and must never be merged into the active ledger.
 
 A replacement A-clean replay was then started with root-visible state at
 `/workspace/scratch/da00127ac123/a-clean-runtime-33161766927/`. Its persisted
@@ -130,17 +125,32 @@ cd /workspace/scratch/da00127ac123/Markets && \
 ```
 
 The runtime directory contains `REPLAY_COMMAND.txt`, the exact source manifest,
-launch receipt, progress receipt, sequence-0 checkpoint, and the active
-`native-evidence-groups.jsonl.gz` ledger. Continue to regard sequence 0 as the
-restart cursor until the next checkpoint and matching adapter/controller state
-are written and verified. The controlling Real-Time Frankie lane was instructed
-to remain open through 100% and the frozen first lock.
+launch receipt, progress receipt, active `native-evidence-groups.jsonl.gz`
+ledger, and three siblings for every checkpoint: checkpoint JSON, adapter-state
+body, and controller-state body. The controlling Real-Time Frankie lane was
+instructed to remain open through 100% and the frozen first lock.
+
+The current durable restart cursor is sequence 1 at
+`500,001 / 5,667,689` (`8.821955474%`):
+
+- checkpoint:
+  `d2a2fb9709aee77274e99b8c207c84aff2245ba391c0ee26c28636874cd687ae`
+- previous checkpoint:
+  `e1cefd077ec2fdc1aa59ac341818cc582d1b60df295285dab19cd21fcce43bf8`
+- adapter-state hash:
+  `d60e6cb9936ff9365c61eefa2e11b6c68e319fca8be25fa6e32357cfbe626566`
+- controller-state hash:
+  `f6309098f0c96415441a32ae299d8340671ee7c75751472abd121af2515a63f6`
+
+The sibling files are `checkpoint-000001.json`,
+`adapter-state-000001.json.gz`, and `controller-state-000001.json`; their hashes
+reconcile to the checkpoint JSON.
 
 ### A-memory
 
 Path: `.github/workflows/frankie_a_memory_rt_native_launch_20260828.yml`  
 File SHA-256:
-`fa4eb0869fe591ef125ee5c037eb0dda1c16e3964c2657e2634df5b8a153798d`
+`d061a28bbd13750550d5c14dea6386d0bcec7705a4ff74ec7c510cbc74a16c54`
 
 This clones the A-clean checkout, native roster, manifest, adapter, checkpoint,
 private persistence, and packet behavior under isolated A-memory names. Its only
@@ -176,6 +186,18 @@ The read-only inventory proved that the exact old packet S3 prefix contains only
 old worker packet root contained none of the required learned-output filenames.
 Materialization therefore failed closed before native replay or any model call.
 No old reduced rows were consumed. No A-clean runtime state was exposed.
+
+A second bounded discovery commit
+`1db882d92037f9954c9a0319e3e2bfb0d0941fed` searched the entire sealed
+worker `/mnt/markets` tree and Frankie S3 namespace for the exact prior run ID
+and the allowlisted learned-output filenames, while excluding Step-1,
+post-reveal, scoring, reconciliation, and current-arm paths. Workflow
+`33163106365`, job `98822043403`, also failed closed at materialization. Its
+inventory artifact `9682478127` has ZIP SHA-256
+`cea2edf15319116ce49ea9e28b3e44a2c36a5ae3a83671b3e43a8a8f80615631`.
+Both host and S3 inventories were empty. Therefore no authorized byte-complete
+learned-knowledge package was located; A-memory cannot start until the user
+provides the authoritative pre-reveal package or its exact repository/S3 path.
 
 Authoritative A-memory status is `PRE_MEMORY_BIND`, progress
 `0 / 5,667,689`. The earlier transient sequence-0 checkpoint
