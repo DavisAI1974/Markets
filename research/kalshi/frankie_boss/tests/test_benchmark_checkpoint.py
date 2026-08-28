@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 from pathlib import Path
+import sys
 import tempfile
 import unittest
 
@@ -48,6 +49,9 @@ class BenchmarkCheckpointTests(unittest.TestCase):
         )
         values.update(overrides)
         return build_checkpoint(**values)
+
+    def test_checkpoint_core_has_no_torch_dependency(self):
+        self.assertNotIn("torch", sys.modules)
 
     def test_progress_is_exact_record_fraction_not_elapsed_time(self):
         self.assertEqual(progress_percent(0, 1000), 0.0)
