@@ -13,13 +13,30 @@ Separate Step-1 / Frankie branch observed when this handoff was written:
 
 Governing Agent Skills release: `addyosmani/agent-skills` `0.6.7`.
 
+## Controlling reveal rule — user clarification
+
+This rule supersedes any broader wording in the initial handoff commit.
+
+For the first October 4–5 paired benchmark, the reveal sequence is exactly:
+
+1. Run and freeze the Chat-driven Frankie/model lane on the still-blind October 4–5 evidence.
+2. **Do not reveal anything after the Chat-driven run.**
+3. Keep all October 4–5 outcomes, answers, scored Step-1 findings, and answer-derived discussion sealed.
+4. Run and freeze the Granite 4.2 8B lane on the same still-blind October 4–5 evidence under the separately approved interface/runtime contract.
+5. Only after both model outputs are frozen may the reveal occur.
+6. Reveal once, then score and compare both frozen outputs against the same realized market.
+
+There is no intermediate reveal between the Chat run and the Granite run.
+
+The two model outputs may be compared pre-reveal only after both are frozen, and that comparison must not be fed back into either model for an October 4–5 rerun.
+
 ## Purpose
 
-Use the already-expensive corrected two-day full-MBO Step-1 corpus as the first real BOSS semantic/blind benchmark without spending another large Step-1 run and without contaminating the two-day Frankie experiment.
+Use the already-expensive corrected two-day full-MBO Step-1 corpus as the first real BOSS semantic/blind benchmark without spending another large Step-1 run and without contaminating the model comparison.
 
-The scientific goal is to maximize information from the same high-fidelity causal evidence while keeping all answer/reveal information sealed until every participating blind lane is frozen.
+The scientific goal is to maximize information from the same high-fidelity causal evidence while keeping all answer/reveal information sealed through both required model runs.
 
-This handoff is a test protocol and data-handling contract. It does not authorize a new large Step-1 replay, a Granite download/invocation, a Frankie/provider launch, BOSS training, recurrent-depth implementation, or reveal.
+This handoff is a test protocol and data-handling contract. It does not authorize a new large Step-1 replay, a Granite download/invocation, a Frankie/provider launch, BOSS training, recurrent-depth implementation, or reveal by itself.
 
 ## Core decision: preserve October 4–5 as the shared blind benchmark
 
@@ -33,47 +50,48 @@ Therefore the primary blind benchmark days are:
 - 2021-10-04
 - 2021-10-05
 
-These same two calendar days may be used by multiple independent blind lanes because calendar-date reuse is not leakage. The critical rule is information isolation.
+The same two calendar days are intentionally reused for the paired model comparison. Calendar-date reuse is not leakage; answer exposure is.
 
-The planned blind lanes are conceptually:
+For the first reveal gate, the required pair is:
 
-1. Frankie driven by model A.
-2. Frankie driven by model B.
-3. Native BOSS baseline when ready.
-4. Later Granite-assisted BOSS/control lanes only after their own specs and validation gates.
+1. Chat-driven Frankie/model run.
+2. Granite 4.2 8B run using the same lawful causal benchmark evidence after the Granite interface/runtime tranche is separately approved.
 
-The exact provider/model identities for the two Frankie lanes must be recorded from run receipts. Do not guess or normalize model names in provenance.
+The exact runtime/model identity for each lane must be recorded from receipts. Do not guess or normalize model names in provenance.
+
+Native BOSS/adaptive-depth/control arms may later be added under their own specs. They do not create permission for an intermediate reveal between Chat and Granite.
 
 ## Reveal wall
 
-Keep the reveal sealed.
+Keep the reveal sealed through both model runs.
 
-The current Step-1 recovery contract already requires Step-1 findings to remain sealed from both Frankies until the existing reveal boundary. Preserve that rule and extend the same isolation to BOSS/Granite experiments.
+The current Step-1 recovery contract already requires Step-1 findings to remain sealed from the Frankies until the existing reveal boundary. Preserve that wall and extend it to the Granite lane.
 
-Before reveal, no participating lane may receive:
+Before both required model outputs are locked, neither lane may receive:
 
 - realized post-`as_of` outcomes,
 - later price path used as an answer,
 - event outcome labels,
 - final chain success/failure labels,
-- another lane's prediction/reasoning,
-- Frankie decisions,
+- the other model's prediction/reasoning,
 - scored Step-1 answer summaries,
 - holdout score results,
 - human summaries derived from those answers.
 
 Lawful point-in-time Step-1/MBO state may be reused. Answer/reveal material may not.
 
-## Lock-before-compare rule
+## Lock-before-reveal rule
 
-For the two Frankie model lanes:
-
-1. Run both on the same lawful October 4–5 causal evidence under the same Frankie brain/schema/settings except for the intended model difference.
+1. Chat-driven run receives the lawful October 4–5 causal evidence and runs blind.
 2. Persist exact model identity, code SHA, prompt/config identity, causal-prefix hashes, and emitted artifacts.
-3. Lock both lanes before comparing them.
-4. Once both are locked, pre-reveal comparison is allowed.
-5. After pre-reveal comparison begins, do not feed disagreements or discoveries back into either lane and rerun October 4–5.
-6. Reveal only after every lane intended for the first blind benchmark has been frozen, unless the user explicitly ends the benchmark early.
+3. Lock/hash the Chat-driven output.
+4. **Do not reveal.**
+5. Granite receives the same lawful October 4–5 benchmark evidence while outcomes and the Chat output remain unavailable to it.
+6. Persist exact Granite model/checkpoint identity, code SHA, serializer/prompt/config identity, causal-prefix hashes, and emitted artifacts.
+7. Lock/hash the Granite output.
+8. Once both are locked, a pre-reveal comparison of the two frozen outputs is permitted.
+9. Do not feed that comparison back into either lane and rerun October 4–5.
+10. Perform one reveal only after both model runs are frozen.
 
 Pre-reveal comparison may examine behavior without outcomes, including:
 
@@ -128,7 +146,7 @@ Use them to establish and validate state/interface behavior, including:
 - graph/FIFO ancestry representation,
 - QSV/OD field preservation,
 - defects/masks/presence handling,
-- objective text-reasoner semantic probes if/when a model invocation is separately authorized,
+- objective Granite semantic probes after separate model-invocation authorization,
 - market-field ablation mechanics.
 
 They may be measured diagnostically. If they are used to choose or tune a serializer, prompt, threshold, teacher target, ablation list, or model setting, they must remain labeled:
@@ -143,30 +161,30 @@ October 4–5 are the first shared blind benchmark.
 
 Do not use these two days to tune the BOSS/Granite interface, prompt wording, field selection, thresholds, halting policy, teacher target list, or model choice after observing their predictions or outcomes.
 
-The prior Step-1 two-day reconciliation adapter contains a user-authorized `self-fit/self-score` diagnostic exception because the 52-week out-of-time split is unavailable for that diagnostic. That exception is historical Step-1 methodology only. It does **not** become the BOSS/Granite benchmark methodology.
+The prior Step-1 two-day reconciliation adapter contains a user-authorized `self-fit/self-score` diagnostic exception because the 52-week out-of-time split is unavailable for that diagnostic. That exception is historical Step-1 methodology only. It does **not** become the Chat-vs-Granite blind benchmark methodology.
 
-For BOSS/Granite, October 4–5 remain evaluation/blind days.
+October 4–5 remain evaluation/blind days until both required model runs are frozen and the single reveal occurs.
 
-## Step-1 data handling contract for BOSS
+## Step-1 data handling contract for BOSS / Granite
 
 ### Read-only source principle
 
-Treat Step-1 outputs as immutable scientific source artifacts. BOSS work should consume hash-bound copies or read-only references. Do not mutate Step-1 results in place.
+Treat Step-1 outputs as immutable scientific source artifacts. BOSS/Granite work should consume hash-bound copies or read-only references. Do not mutate Step-1 results in place.
 
-Every derived BOSS artifact must record:
+Every derived benchmark artifact must record:
 
 - exact Step-1 branch/commit used,
 - exact source artifact path,
 - source SHA-256 / receipt identity,
 - target date/window,
-- BOSS code SHA,
+- BOSS/interface code SHA,
 - serializer schema/version,
 - extraction/builder version,
 - causal-prefix/as-of identity where applicable.
 
 ### Causal-prefix principle
 
-Only evidence available by the requested `as_of` may enter a BOSS snapshot.
+Only evidence available by the requested `as_of` may enter a benchmark snapshot.
 
 `ts_recv_ns` remains the causal availability clock. `ts_event_ns` is exchange event time, not availability. `ts_in_delta_ns` is provenance only.
 
@@ -176,7 +194,7 @@ Do not serialize a full-day file wholesale into a prefix if it exposes post-`as_
 
 The completed serializer proves a closed deterministic representation but does not prove that separately supplied rows/graph/QSV values actually derive from the packet hash accompanying them.
 
-Before result-bearing BOSS/Granite testing, add a separately specified packet/Step-1 -> typed-state construction seam that proves:
+Before result-bearing Granite testing, add a separately specified packet/Step-1 -> typed-state construction seam that proves:
 
 - the typed state is reproducibly derived from the declared source identity,
 - no future rows are accessible,
@@ -253,9 +271,9 @@ Required checks:
 
 A failure here is an interface/data-boundary finding, not evidence that Granite or BOSS reasoning failed.
 
-### Test 4 — optional objective reasoner probes on warmup only
+### Test 4 — objective Granite probes on warmup only
 
-Only after a separate model-invocation authorization/spec, Granite 4.2 8B may be tested first on objective, mechanically checkable warmup probes rather than prediction.
+Only after a separate Granite model-invocation authorization/spec, Granite 4.2 8B should first receive objective, mechanically checkable warmup probes rather than the held-out October 4–5 outcome.
 
 Examples:
 
@@ -266,65 +284,97 @@ Examples:
 - identify a declared defect;
 - identify evidence conflict/contradiction that is directly encoded in the snapshot.
 
-Do not start with market-direction prediction or halt/abstain teaching.
+Do not reveal October 4–5 during or after these warmup probes.
 
 Run the same probes against a market-field-ablated serialization. If performance does not degrade when the relevant market fields are removed, treat that as evidence Granite may be using generic structure/prompt priors rather than reading the market state.
 
-### Test 5 — blind paired Frankie model comparison on October 4/5
+### Test 5 — Chat-driven blind run on October 4/5
 
-For the two Frankies:
+Run the Chat-driven Frankie/model lane on the exact lawful October 4–5 benchmark evidence.
 
-- same exact date/window;
-- same lawful causal evidence/prefix policy;
-- same Frankie brain/schema/settings;
-- same evidence-access wall;
-- only intended independent variable is underlying model/config as explicitly receipted.
+Required controls:
 
-Before reveal:
+- exact date/window;
+- lawful causal evidence/prefix policy;
+- existing Frankie brain/schema/settings appropriate to that run;
+- answer wall still closed;
+- exact Chat/provider/model/config identity receipted.
 
-- freeze both outputs;
-- hash/version them;
-- compare agreement/disagreement without outcomes;
-- never rerun either model after learning what the other emitted.
+Then:
 
-This is a paired model-behavior test, not yet a predictive score.
+- freeze the output;
+- hash/version it;
+- do not reveal;
+- do not expose its prediction/reasoning to Granite before Granite is locked.
 
-### Test 6 — BOSS blind benchmark on October 4/5
+### Test 6 — Granite blind run on October 4/5
 
-When BOSS is ready, consume the same lawful benchmark prefixes while keeping Frankie outputs and outcomes unavailable to BOSS.
+After Granite's serializer/interface and warmup probes are proven and Granite invocation is separately authorized, run Granite 4.2 8B on the same still-blind October 4–5 benchmark evidence.
 
-At minimum preserve distinct arms:
+Required controls:
 
-A. fixed-depth native BOSS baseline;
-B. later native adaptive-depth/recurrent control if separately implemented and proven;
-C. later Granite-assisted/teacher arm only after teacher validity is established;
+- no October 4–5 outcome/reveal access;
+- no Chat-run output access;
+- exact same lawful source/date partition;
+- exact Step-1/serializer/prefix identities recorded;
+- exact Granite checkpoint/config/prompt identity recorded;
+- output frozen and hashed before any reveal.
+
+If Granite is run as an assisted BOSS/Frankie component rather than a direct comparison model, that exact role must be frozen in the pre-run spec. Do not change the role after seeing October 4–5 behavior.
+
+### Test 7 — paired pre-reveal comparison
+
+Once **both** Chat and Granite outputs are locked, compare them without opening outcomes.
+
+Compare:
+
+- exhaustion discoveries,
+- event/chain membership,
+- chain continuation/stopping behavior,
+- evidence selection,
+- contradictions,
+- confidence/abstention/no-call behavior,
+- reasoning structure,
+- pairwise agreement/disagreement.
+
+Do not rerun either lane based on this comparison.
+
+### Test 8 — single reveal and scoring
+
+After both required model runs are frozen:
+
+1. open the reveal/outcome material once;
+2. score both frozen model outputs against the same realized market;
+3. preserve null, negative, contradictory, abstention, and KILL results;
+4. do not delete chains/events because they do not support a hypothesis;
+5. do not retroactively tune and rescore October 4–5 as if still held out.
+
+Post-reveal comparison includes both:
+
+- Chat-vs-Granite agreement/disagreement;
+- each model vs realized outcome.
+
+Any later native-BOSS/adaptive-depth/teacher-distillation experiments using October 4–5 after this reveal must be labeled post-reveal/development, not blind. A future blind BOSS learning-curve claim therefore requires new held-out dates.
+
+## Granite-specific later controls
+
+If Granite later becomes a teacher/assistant rather than merely the second blind comparison model, preserve separate controlled arms:
+
+A. native fixed-depth BOSS baseline;
+B. native adaptive-depth/recurrent control if separately implemented;
+C. Granite-assisted/teacher arm;
 D. shuffled-Granite supervision control;
 E. market-specific-field-ablated Granite input control.
 
 Do not collapse mechanism benefit (`adaptive depth helps`) into teacher benefit (`Granite transfer helps`).
 
-### Test 7 — lock, then reveal once
-
-Only after all benchmark lanes intended for this first comparison are frozen:
-
-1. open the reveal/outcome material;
-2. score each frozen lane against the same realized market;
-3. preserve null, negative, contradictory, abstention, and KILL results;
-4. do not delete chains/events because they do not support a hypothesis;
-5. do not retroactively tune and rescore October 4/5 as if still held out.
-
-Post-reveal comparisons should include both:
-
-- lane-vs-lane agreement/disagreement;
-- lane-vs-realized-outcome performance.
-
-For Granite teacher validation, test whether teacher uncertainty/abstain/process labels are actually useful before any distillation claim. In particular, measure whether higher teacher uncertainty associates with higher held-out error and whether selective removal of low-confidence cases reduces error.
+Validate Granite's process labels before distillation. Contradiction/evidence-conflict targets should be tested before halt/abstain targets. For any later uncertainty/abstain target, test whether higher Granite uncertainty associates with higher held-out error and whether selective removal of low-confidence cases reduces error.
 
 ## Scoring policy
 
 ### Primary blind score
 
-Primary benchmark: October 4–5 only.
+Primary benchmark: October 4–5 only, scored only after both Chat and Granite outputs are frozen.
 
 ### Warmup score
 
@@ -335,7 +385,7 @@ October 1/3 may have diagnostic metrics, but they are never included in the prim
 Two days are enough for:
 
 - a real-data interface test,
-- paired model-behavior comparison,
+- paired Chat-vs-Granite model-behavior comparison,
 - a first blind semantic benchmark,
 - discovering catastrophic serializer/reasoner mismatch.
 
@@ -363,21 +413,22 @@ Do not call a non-confirming result a failed chain merely because it does not su
 
 ## Explicit no-go actions
 
-Until separately authorized, do not:
+Until the two-model reveal gate is satisfied, do not:
 
-- reveal October 4/5 answers to either Frankie before both are locked;
-- expose one Frankie's output to the other before lock;
-- expose Frankie outputs to BOSS/Granite before BOSS blind outputs are locked;
+- reveal October 4/5 after the Chat-driven run;
+- reveal October 4/5 before the Granite output is frozen;
+- expose the Chat output to Granite before Granite is locked;
+- expose Granite output to Chat before the Chat output is locked;
 - use October 4/5 for prompt/interface/threshold tuning and then call them held out;
-- inherit the Step-1 self-fit/self-score exception into BOSS/Granite;
+- inherit the Step-1 self-fit/self-score exception into this blind comparison;
 - launch a new large Step-1 run merely for this benchmark;
 - rebuild the preserved 90,763-row native-seconds stream unless identity verification fails and a separate recovery decision is made;
 - modify Step-1 event definitions, causal clocks, proposal thresholds, retention, feature definitions, or outcome construction to make this easier;
 - mutate Step-1 artifacts in place;
 - hand-build an unproven packet -> typed-state bridge;
-- integrate Granite directly into the BOSS trunk;
+- integrate Granite directly into the BOSS trunk without a separate approved spec;
 - change BLD-1, ReFRAG governance, the one shared graph branch, Frankie core/provider seam, or capability registry;
-- claim predictive success before reveal/scoring.
+- claim predictive success before the single reveal/scoring step.
 
 ## Provenance required for each blind lane
 
@@ -395,28 +446,32 @@ Record at minimum:
 - seed/sampling settings,
 - start/end execution receipt,
 - frozen output hash,
-- whether reveal was still sealed when the output was produced.
+- explicit statement that reveal was sealed when the output was produced.
 
-The reveal artifact should separately record the timestamp/commit at which the answer wall was opened.
+The reveal artifact must separately record the timestamp/commit at which the answer wall was opened and confirm both required output hashes existed beforehand.
 
 ## Immediate next-chat order
 
 1. Read this handoff and the existing BOSS handoff/provenance/spec files.
 2. Verify current BOSS remote HEAD and current Step-1 branch/artifact identities.
 3. Run the open repository-native BOSS preservation suite if a proper repo environment is available.
-4. Do not reveal October 4/5.
-5. Let the two Frankie model lanes complete and lock independently under their existing experiment contract.
-6. In parallel or afterward, start BOSS brownfield context/spec work for the Step-1 -> typed-state derivation boundary.
-7. Use October 1/3 first for real-data semantic/interface development.
-8. Reserve October 4/5 for the shared blind benchmark.
-9. Compare the two locked Frankies pre-reveal if desired, but do not rerun them after comparison.
-10. Only reveal once all desired first-benchmark lanes are frozen.
+4. Keep October 4/5 sealed.
+5. Let the Chat-driven Frankie/model run complete and lock independently under its existing experiment contract.
+6. **Do not reveal after the Chat run.**
+7. Continue BOSS brownfield context/spec work for the Step-1 -> typed-state derivation boundary.
+8. Use October 1/3 for real-data semantic/interface development and Granite warmup probes.
+9. Once the Granite interface is proven and invocation is separately authorized, run Granite on the same still-sealed October 4/5 benchmark.
+10. Lock/hash Granite output.
+11. Optionally compare the two frozen outputs pre-reveal without feeding results back.
+12. Reveal once after both model outputs are locked.
+13. Score and preserve all results.
 
-## Status at handoff creation
+## Status at corrected handoff
 
 - BOSS serializer mechanical tranche exists and is focused-GREEN (20/20 local serializer tests after hardening).
 - Repository-native combined preservation suite remains explicitly open until actually rerun.
-- Granite remains unadopted and uninvoked.
+- Granite remains unadopted and uninvoked at this checkpoint.
 - No BOSS result-bearing real-data run has occurred.
 - No new Step-1 compute was launched by this handoff.
-- October 4/5 reveal remains intended to stay sealed for the paired blind benchmark.
+- October 4/5 reveal is explicitly sealed through the Chat run and the Granite run.
+- The first reveal occurs only after both model outputs are frozen.
