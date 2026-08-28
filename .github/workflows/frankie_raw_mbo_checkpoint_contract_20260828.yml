@@ -32,5 +32,5 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          python -m unittest research.kalshi.frankie_boss.tests.test_benchmark_checkpoint -v
+          python research/kalshi/frankie_boss/tests/test_benchmark_checkpoint.py -v
           python -m compileall -q research/kalshi/frankie_boss
