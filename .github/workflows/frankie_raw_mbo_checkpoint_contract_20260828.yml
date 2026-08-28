@@ -7,7 +7,9 @@ on:
       - chatgpt/frankie-raw-mbo-benchmark-20260828
     paths:
       - research/kalshi/frankie_boss/benchmark_checkpoint.py
+      - research/kalshi/frankie_boss/mbo_resume_state.py
       - research/kalshi/frankie_boss/tests/test_benchmark_checkpoint.py
+      - research/kalshi/frankie_boss/tests/test_mbo_resume_state.py
       - research/kalshi/frankie_boss/SPEC-raw-mbo-blind-benchmark-restart-safety-20260828.md
       - research/kalshi/frankie_boss/PLAN-raw-mbo-blind-benchmark-restart-safety-20260828.md
       - .github/workflows/frankie_raw_mbo_checkpoint_contract_20260828.yml
@@ -33,4 +35,7 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           python research/kalshi/frankie_boss/tests/test_benchmark_checkpoint.py -v
+          if test -f research/kalshi/frankie_boss/tests/test_mbo_resume_state.py; then
+            python research/kalshi/frankie_boss/tests/test_mbo_resume_state.py -v
+          fi
           python -m compileall -q research/kalshi/frankie_boss
