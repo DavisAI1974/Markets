@@ -1,8 +1,8 @@
 """Deterministic typed BOSS state serialization for controlled reasoner experiments.
 
-This module is intentionally model-neutral. It serializes only a declared
+This module is intentionally model-neutral.  It serializes only a declared
 point-in-time state snapshot; it does not invoke Granite, BOSS, Frankie, Step-1,
-or any provider. The canonical artifact is JSON text with an explicit float
+or any provider.  The canonical artifact is JSON text with an explicit float
 policy and no unrestricted passthrough field.
 """
 
@@ -15,10 +15,11 @@ import hashlib
 import json
 import math
 from typing import Mapping
+from types import MappingProxyType
 
 try:
     from research.refrag.qsv_registry import QSV_FEATURE_REGISTRY
-except ImportError:  # Direct execution from the package directory.
+except ImportError:  # direct execution from the package directory
     from qsv_registry import QSV_FEATURE_REGISTRY
 
 SCHEMA_VERSION = "boss_state_serialization/1"
@@ -69,6 +70,10 @@ class SequenceRow:
     venue: str
     instrument: str
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "numeric", tuple(self.numeric))
+        object.__setattr__(self, "categorical", tuple(self.categorical))
+
 
 @dataclass(frozen=True, slots=True)
 class GraphNode:
@@ -83,6 +88,11 @@ class QSVState:
     values: tuple[float | int | None, ...]
     states: tuple[ValueState, ...]
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "names", tuple(self.names))
+        object.__setattr__(self, "values", tuple(self.values))
+        object.__setattr__(self, "states", tuple(self.states))
+
 
 @dataclass(frozen=True, slots=True)
 class StateSnapshot:
@@ -95,6 +105,14 @@ class StateSnapshot:
     graph: tuple[GraphNode, ...]
     qsv: QSVState | None
     ablation_policy_version: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "source_versions", MappingProxyType(dict(self.source_versions))
+        )
+        object.__setattr__(self, "defects", tuple(self.defects))
+        object.__setattr__(self, "rows", tuple(self.rows))
+        object.__setattr__(self, "graph", tuple(self.graph))
 
 
 @dataclass(frozen=True, slots=True)
@@ -122,8 +140,8 @@ def _canon_float(value: float | int) -> str:
 
 
 def _validate_field_names(fields, kind: str) -> None:
-    names = [field.name for field in fields]
-    if any(not isinstance(name, str) or not name for name in names):
+    names = [f.name for f in fields]
+    if any(not isinstance(n, str) or not n for n in names):
         raise ValueError(f"{kind} field names must be non-empty strings")
     if len(names) != len(set(names)):
         raise ValueError(f"duplicate {kind} field name")
@@ -135,10 +153,7 @@ def _validate_snapshot(snapshot: StateSnapshot) -> None:
     if (
         not isinstance(snapshot.source_packet_hash, str)
         or len(snapshot.source_packet_hash) != 64
-        or any(
-            char not in "0123456789abcdefABCDEF"
-            for char in snapshot.source_packet_hash
-        )
+        or any(c not in "0123456789abcdefABCDEF" for c in snapshot.source_packet_hash)
     ):
         raise ValueError(
             "source_packet_hash must be a 64-character hexadecimal SHA-256"
@@ -153,11 +168,11 @@ def _validate_snapshot(snapshot: StateSnapshot) -> None:
     ):
         raise ValueError("ablation_policy_version must be non-empty")
     if any(
-        not isinstance(key, str) or not isinstance(value, str)
-        for key, value in snapshot.source_versions.items()
+        not isinstance(k, str) or not isinstance(v, str)
+        for k, v in snapshot.source_versions.items()
     ):
         raise ValueError("source_versions must map strings to strings")
-    if any(not isinstance(defect, str) for defect in snapshot.defects):
+    if any(not isinstance(d, str) for d in snapshot.defects):
         raise ValueError("defects must contain strings")
 
     row_indices = [row.index for row in snapshot.rows]
@@ -176,52 +191,50 @@ def _validate_snapshot(snapshot: StateSnapshot) -> None:
             raise ValueError("venue and instrument must be non-empty")
         _validate_field_names(row.numeric, "numeric")
         _validate_field_names(row.categorical, "categorical")
-        for field in row.numeric:
-            if field.state is ValueState.PRESENT:
-                _canon_float(field.value)
-            elif field.value is not None:
+        for f in row.numeric:
+            if f.state is ValueState.PRESENT:
+                _canon_float(f.value)
+            elif f.value is not None:
                 raise ValueError(
-                    f"{field.name}: non-present numeric field must not carry value"
+                    f"{f.name}: non-present numeric field must not carry value"
                 )
-        for field in row.categorical:
-            if field.state is ValueState.PRESENT:
-                if isinstance(field.value, bool) or not isinstance(
-                    field.value, (str, int)
-                ):
+        for f in row.categorical:
+            if f.state is ValueState.PRESENT:
+                if isinstance(f.value, bool) or not isinstance(f.value, (str, int)):
                     raise ValueError(
-                        f"{field.name}: present categorical value must be str or int"
+                        f"{f.name}: present categorical value must be str or int"
                     )
-            elif field.value is not None:
+            elif f.value is not None:
                 raise ValueError(
-                    f"{field.name}: non-present categorical field must not carry value"
+                    f"{f.name}: non-present categorical field must not carry value"
                 )
 
     if len(snapshot.graph) != len(snapshot.rows):
         raise ValueError("graph width must equal row count")
-    graph_indices = [node.index for node in snapshot.graph]
+    graph_indices = [n.index for n in snapshot.graph]
     if graph_indices != row_indices:
         raise ValueError("graph node indices must match row indices in order")
-    valid_indices = set(graph_indices)
+    valid = set(graph_indices)
     for node in snapshot.graph:
         if node.parent is None:
             continue
         if isinstance(node.parent, bool) or not isinstance(node.parent, int):
             raise ValueError("parent must be an integer index or root")
-        if node.parent not in valid_indices:
+        if node.parent not in valid:
             raise ValueError(f"parent {node.parent} is absent from graph")
         if node.parent >= node.index:
             raise ValueError("parent must refer to an earlier causal row")
 
     if snapshot.qsv is not None:
-        qsv = snapshot.qsv
-        expected_names = tuple(QSV_FEATURE_REGISTRY)
-        if tuple(qsv.names) != expected_names:
+        q = snapshot.qsv
+        expected = tuple(QSV_FEATURE_REGISTRY)
+        if tuple(q.names) != expected:
             raise ValueError("QSV names/order must equal QSV_FEATURE_REGISTRY")
-        if len(qsv.values) != len(qsv.names) or len(qsv.states) != len(qsv.names):
+        if len(q.values) != len(q.names) or len(q.states) != len(q.names):
             raise ValueError("QSV width mismatch between names, values, and states")
-        if not qsv.registry_id:
+        if not q.registry_id:
             raise ValueError("QSV registry_id must be non-empty")
-        for name, value, state in zip(qsv.names, qsv.values, qsv.states):
+        for name, value, state in zip(q.names, q.values, q.states):
             if state is ValueState.PRESENT:
                 _canon_float(value)
             elif value is not None:
@@ -257,14 +270,11 @@ def _body(snapshot: StateSnapshot, schema_version: str) -> dict:
         qsv = {
             "registry_id": snapshot.qsv.registry_id,
             "names": list(snapshot.qsv.names),
-            "states": [state.value for state in snapshot.qsv.states],
-            "mask": [
-                1 if state is ValueState.PRESENT else 0
-                for state in snapshot.qsv.states
-            ],
+            "states": [s.value for s in snapshot.qsv.states],
+            "mask": [1 if s is ValueState.PRESENT else 0 for s in snapshot.qsv.states],
             "values": [
-                _canon_float(value) if state is ValueState.PRESENT else None
-                for value, state in zip(snapshot.qsv.values, snapshot.qsv.states)
+                _canon_float(v) if s is ValueState.PRESENT else None
+                for v, s in zip(snapshot.qsv.values, snapshot.qsv.states)
             ],
         }
     return {
@@ -281,10 +291,8 @@ def _body(snapshot: StateSnapshot, schema_version: str) -> dict:
                 "index": row.index,
                 "event_time_ns": row.event_time_ns,
                 "ingest_time_ns": row.ingest_time_ns,
-                "numeric": [_numeric_dict(field) for field in row.numeric],
-                "categorical": [
-                    _categorical_dict(field) for field in row.categorical
-                ],
+                "numeric": [_numeric_dict(f) for f in row.numeric],
+                "categorical": [_categorical_dict(f) for f in row.categorical],
                 "venue": row.venue,
                 "instrument": row.instrument,
             }
@@ -316,18 +324,31 @@ def serialize_state(
     return SerializedState(schema_version=schema_version, text=text)
 
 
+def _expect_keys(raw: object, expected: set[str], label: str) -> dict:
+    if not isinstance(raw, dict):
+        raise ValueError(f"{label} must be a JSON object")
+    actual = set(raw)
+    if actual != expected:
+        unknown = sorted(actual - expected)
+        missing = sorted(expected - actual)
+        raise ValueError(
+            f"unknown or missing {label} fields: unknown={unknown}, missing={missing}"
+        )
+    return raw
+
+
 def _parse_numeric(raw: dict) -> NumericField:
+    raw = _expect_keys(raw, {"name", "unit", "state", "value"}, "numeric")
     state = ValueState(raw["state"])
     value = float(raw["value"]) if state is ValueState.PRESENT else None
     return NumericField(raw["name"], raw["unit"], state, value)
 
 
 def _parse_categorical(raw: dict) -> CategoricalField:
+    raw = _expect_keys(raw, {"name", "state", "value"}, "categorical")
     state = ValueState(raw["state"])
     return CategoricalField(
-        raw["name"],
-        state,
-        raw["value"] if state is ValueState.PRESENT else None,
+        raw["name"], state, raw["value"] if state is ValueState.PRESENT else None
     )
 
 
@@ -346,51 +367,58 @@ def parse_serialized_state(text: str) -> StateSnapshot:
         "graph",
         "qsv",
     }
-    if set(raw) != expected_top:
-        raise ValueError(
-            "serialized state contains unknown or missing top-level fields"
-        )
+    raw = _expect_keys(raw, expected_top, "top-level")
+    if raw["schema_version"] != SCHEMA_VERSION:
+        raise ValueError("unsupported schema_version")
     if raw["float_policy"] != FLOAT_POLICY:
         raise ValueError("unsupported float_policy")
-
+    row_keys = {
+        "index",
+        "event_time_ns",
+        "ingest_time_ns",
+        "numeric",
+        "categorical",
+        "venue",
+        "instrument",
+    }
+    checked_rows = [_expect_keys(r, row_keys, "row") for r in raw["rows"]]
     rows = tuple(
         SequenceRow(
-            index=row["index"],
-            event_time_ns=row["event_time_ns"],
-            ingest_time_ns=row["ingest_time_ns"],
-            numeric=tuple(_parse_numeric(field) for field in row["numeric"]),
-            categorical=tuple(
-                _parse_categorical(field) for field in row["categorical"]
-            ),
-            venue=row["venue"],
-            instrument=row["instrument"],
+            index=r["index"],
+            event_time_ns=r["event_time_ns"],
+            ingest_time_ns=r["ingest_time_ns"],
+            numeric=tuple(_parse_numeric(f) for f in r["numeric"]),
+            categorical=tuple(_parse_categorical(f) for f in r["categorical"]),
+            venue=r["venue"],
+            instrument=r["instrument"],
         )
-        for row in raw["rows"]
+        for r in checked_rows
     )
-    graph = tuple(
-        GraphNode(node["index"], node["parent"])
-        for node in raw["graph"]
-    )
-
+    checked_graph = [
+        _expect_keys(g, {"index", "parent"}, "graph node") for g in raw["graph"]
+    ]
+    graph = tuple(GraphNode(g["index"], g["parent"]) for g in checked_graph)
     qsv_raw = raw["qsv"]
     qsv = None
     if qsv_raw is not None:
-        states = tuple(ValueState(state) for state in qsv_raw["states"])
-        expected_mask = [
-            1 if state is ValueState.PRESENT else 0 for state in states
-        ]
+        qsv_raw = _expect_keys(
+            qsv_raw,
+            {"registry_id", "names", "states", "mask", "values"},
+            "QSV",
+        )
+        states = tuple(ValueState(s) for s in qsv_raw["states"])
+        expected_mask = [1 if s is ValueState.PRESENT else 0 for s in states]
         if qsv_raw["mask"] != expected_mask:
             raise ValueError("QSV mask does not agree with value states")
         qsv = QSVState(
             registry_id=qsv_raw["registry_id"],
             names=tuple(qsv_raw["names"]),
             values=tuple(
-                float(value) if state is ValueState.PRESENT else None
-                for value, state in zip(qsv_raw["values"], states)
+                float(v) if s is ValueState.PRESENT else None
+                for v, s in zip(qsv_raw["values"], states)
             ),
             states=states,
         )
-
     snapshot = StateSnapshot(
         source_packet_hash=raw["source_packet_hash"],
         entity=raw["entity"],
@@ -415,47 +443,38 @@ def ablate_market_fields(
 ) -> StateSnapshot:
     if not policy_version:
         raise ValueError("policy_version must be non-empty")
-
-    known_numeric = {
-        field.name for row in snapshot.rows for field in row.numeric
-    }
+    known_numeric = {f.name for row in snapshot.rows for f in row.numeric}
     unknown_numeric = set(numeric_fields) - known_numeric
     if unknown_numeric:
         raise ValueError(
             f"unknown numeric fields for ablation: {sorted(unknown_numeric)}"
         )
-
     known_qsv = set(snapshot.qsv.names) if snapshot.qsv is not None else set()
     unknown_qsv = set(qsv_fields) - known_qsv
     if unknown_qsv:
-        raise ValueError(
-            f"unknown QSV fields for ablation: {sorted(unknown_qsv)}"
-        )
+        raise ValueError(f"unknown QSV fields for ablation: {sorted(unknown_qsv)}")
 
     rows = tuple(
         replace(
             row,
             numeric=tuple(
-                replace(field, state=ValueState.ABLATED, value=None)
-                if field.name in numeric_fields
-                and field.state is ValueState.PRESENT
-                else field
-                for field in row.numeric
+                replace(f, state=ValueState.ABLATED, value=None)
+                if f.name in numeric_fields and f.state is ValueState.PRESENT
+                else f
+                for f in row.numeric
             ),
         )
         for row in snapshot.rows
     )
-
     qsv = snapshot.qsv
     if qsv is not None and qsv_fields:
         values = list(qsv.values)
         states = list(qsv.states)
-        for index, name in enumerate(qsv.names):
-            if name in qsv_fields and states[index] is ValueState.PRESENT:
-                states[index] = ValueState.ABLATED
-                values[index] = None
+        for i, name in enumerate(qsv.names):
+            if name in qsv_fields and states[i] is ValueState.PRESENT:
+                states[i] = ValueState.ABLATED
+                values[i] = None
         qsv = replace(qsv, values=tuple(values), states=tuple(states))
-
     return replace(
         snapshot,
         rows=rows,
