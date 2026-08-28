@@ -1,0 +1,54 @@
+name: ONE-SHOT APPROVED - Step-1 V6 64G Feasibility 20260828
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_step1_v6_64g_feasibility_20260828.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_STEP1_V6_64G_FEASIBILITY_20260828]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      SNAPSHOT_ID: snap-028afdc9066adab30
+      AZ: us-east-2b
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Inspect 64G feasibility read-only
+        shell: bash
+        run: |
+          set -u -o pipefail
+          echo CURRENT_BEGIN
+          aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].{State:State.Name,Type:InstanceType,AZ:Placement.AvailabilityZone,Volume:BlockDeviceMappings[0].Ebs.VolumeId}' --output json || true
+          aws ec2 describe-instance-status --instance-ids "$INSTANCE_ID" --include-all-instances --query 'InstanceStatuses[0].{System:SystemStatus.Status,Instance:InstanceStatus.Status}' --output json || true
+          echo CURRENT_END
+
+          echo STANDARD_QUOTA_BEGIN
+          aws service-quotas get-service-quota --service-code ec2 --quota-code L-1216C47A --output json || true
+          echo STANDARD_QUOTA_END
+
+          echo TARGET_TYPES_BEGIN
+          aws ec2 describe-instance-types --instance-types r6i.2xlarge r7i.2xlarge r7a.2xlarge --query 'InstanceTypes[].{Type:InstanceType,MemoryMiB:MemoryInfo.SizeInMiB,VCPUs:VCpuInfo.DefaultVCpus,Arch:ProcessorInfo.SupportedArchitectures}' --output json || true
+          echo TARGET_TYPES_END
+
+          echo OFFERINGS_BEGIN
+          aws ec2 describe-instance-type-offerings --location-type availability-zone --filters "Name=location,Values=$AZ" "Name=instance-type,Values=r6i.2xlarge,r7i.2xlarge,r7a.2xlarge" --query 'InstanceTypeOfferings[].{Type:InstanceType,Location:Location}' --output json || true
+          echo OFFERINGS_END
+
+          echo SNAPSHOT_BEGIN
+          aws ec2 describe-snapshots --snapshot-ids "$SNAPSHOT_ID" --query 'Snapshots[0].{SnapshotId:SnapshotId,State:State,Progress:Progress,VolumeId:VolumeId,StartTime:StartTime}' --output json || true
+          echo SNAPSHOT_END
+          echo V6_64G_FEASIBILITY=PASS
