@@ -29,22 +29,17 @@ Authority: `CURRENT_BRAIN` / `BINDING_CURRENT`.
 
 Authority: `FROZEN_LEARNED_KNOWLEDGE`.
 
-## 3. Post-correction extra-agent carryforward feed
+## 3. Sole V3-derived carryforward: corrected extra-agent findings
 
 - Only the information and gap diagnoses expressly preserved by the V4 correction/carryforward records.
 - Four-helper architecture and valid specialist roles.
 
 Authority: `EXTRA_AGENT_CARRYFORWARD`.
 
-Explicitly excluded:
-
-- Ordinary V3 run findings.
-- D1 ExtraTrees values.
-- V3 point estimates, AUCs, hit rates, and fixed-horizon trade findings.
-- Exact old `PRIOR`/`T0`/`H` values.
-- Pre-correction predictive claims not expressly carried into V4.
-
-Excluded authority: `ARCHIVE_NOT_SERVABLE`.
+This is the only V3-derived material in the active feed inventory. No other V3
+result, estimate, value, claim, or artifact is an inventory entry or model
+input. The preserved extra-agent findings remain admissible only through their
+reviewed V4 correction/carryforward records.
 
 ## 4. Canonical raw DBN MBO feed
 
@@ -160,12 +155,12 @@ No fixed hourly windows or answer-derived `PRIOR`/`T0`/`H`.
 
 ## 13. Provisional shadow feed
 
-- S137/HippoRAG retrieval and cognitive components.
-- Other provisional V4 engineering candidates expressly identified by readiness records.
+- S137 cognitive shadow runtime.
+- HippoRAG associative-retrieval component.
 
 Authority: `PROVISIONAL_SHADOW`.
 
-They may expand retrieval or produce shadow reasoning/diagnostics on the same causal prefix. They cannot replace S135, become the sole source path, mutate the brain, or own/alter the primary lock.
+They may expand retrieval or produce shadow reasoning/diagnostics on the same causal prefix. They cannot replace S135, become the sole source path, mutate the brain, or own/alter the primary lock. No unnamed or generic provisional candidate counts as an active feed layer.
 
 ## 14. Sealed October answer feed
 

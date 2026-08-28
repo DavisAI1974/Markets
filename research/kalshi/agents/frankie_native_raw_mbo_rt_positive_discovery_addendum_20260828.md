@@ -86,6 +86,34 @@ behave, how long each behavior persists, what sequence or chain follows, and whi
 lawful market mechanics define each cluster. Group identity and defining behavior
 take precedence over aggregate similarity.
 
+### Continuous prediction clock and D-depth chain families
+
+Use the continuous causal stream to find the first durable lawful call for each
+target. Report a pre-birth call as `PRIOR` with its exact lead, a birth-time call
+as `T0`, and the first post-birth call as `H+N`, where `N` is the exact elapsed
+time from birth on the separately identified event, receive, F_LAST-availability,
+or decision clock. Do not search a fixed H ladder as the decision mechanism, do
+not impose a mandatory wait on an earlier valid call, and do not replace the
+first valid call with a later better-looking call.
+
+Treat `D` only as exhaustion-chain depth. `D0` is a root exhaustion with no
+qualifying successor in its lawful lineage; `D1`, `D2`, `D3`, `D4`, and `D5`
+identify successive qualifying downstream exhaustion stages. Preserve every
+short, long, terminated, censored, sparse, still-open, and deeper open-world
+lineage. Never expose realized final depth, descendant identity, final duration,
+or future path shape to an earlier prediction point.
+
+Seed—but never close—the structural vocabulary with
+`P=persistent_exhaustion`, `O=collapsed_opposite_flow_reversal`,
+`S=collapsed_same_flow_reload`, and `X=collapsed_sparse_indeterminate`.
+Keep transition orientation separate as `SAME` or `FLIP` (the historical
+post-pipe `S`/`F` notation). Native MBO is allowed to reveal additional states,
+substates, transitions, pairings, motifs, and chain grammars. No historical
+family count, centroid, threshold, or known-label roster may act as a maximum or
+eligibility filter. An unmatched member receives a deterministic open-world
+candidate identity and remains in the evidence ledger until positively
+characterized; it is never dropped or forced into the nearest legacy label.
+
 ## Book-state research expansion carried forward from the diagnostic replay
 
 The first native diagnostic replay tracked the following market-state dimensions:

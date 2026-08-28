@@ -44,3 +44,29 @@ Source SHA-256: `b02a1a19a21a878e9d0c52294db18fd2f6810624a41a7e9a5773a01538a8d9d
 3. **Mechanism rule:** Ask-withdrawal-led imbalance (Oct-04 close) and bid-accumulation-led imbalance (Oct-05 close) are distinct strata; retain bid/ask depth, order count, and level count rather than forecasting from imbalance alone.
 4. **Native refinement of prior motif:** The authorized 15-minute negative-drift/late balance-cross motif contains a nested exact last-298.144-second price rebound (+0.002 from first T print; +0.004 from first side-resolved T print) while the final book remains bid-heavy. Use as a conditional stabilization/absorption hypothesis with exact queue-durability falsifiers, not as a locked direction.
 5. **Snapshot guard:** Daily `max_group_actions` equals reset plus initial snapshot orders on every source day. Exclude reset/snapshot groups before using group size as an intraday burst feature.
+
+## Completed member-first native-MBO recalculation
+
+Source: `research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_NATIVE_MBO_POSITIVE_FINDINGS_20260828.md`
+Source SHA-256: `7b9bd3f11c28780900d76cfefd273ac7e9591c8e450b9b86b06a04fb8c32cde6`
+
+1. **Open-world native surface:** The original A-memory evidence yields 4,758
+   deterministic candidate identities, including 4,628 identities outside the
+   carried seed matches and 19,847 exact open-world member groups; no family
+   ceiling or seed allowlist was applied.
+2. **Recurring new branches:** Add-interleaved, terminal-add, multi-fill, and
+   repeated-contact candidates recur across both held-out days with exact side
+   paths retained.
+3. **Exact recurrence scale:** 654,478 maximal family runs contain multiple
+   consecutive members, including a 66-member B-side cancel run that removes
+   84 bid-depth units, 66 bid orders, and 47 bid levels; 29,370
+   source/segment-specific directed edges preserve transition grammar.
+4. **Mirror-ready populations:** 966 source-day/action/mirror keys contain both
+   orientations, while 4,025 one-orientation keys remain explicitly unmatched;
+   the index supports but does not replace true causal matching.
+5. **Coequal regime and mechanism:** October 5's stronger bid-heavy average,
+   October 4's ask-withdrawal-led close, and October 5's bid-accumulation-led
+   increase remain complementary scientific views.
+6. **Memory remains exact:** The authorized 41-trade motif, positive late
+   response, same-order lifecycle, and session anchors remain addressable as
+   exact native members and paths for the corrected memory-guided search.

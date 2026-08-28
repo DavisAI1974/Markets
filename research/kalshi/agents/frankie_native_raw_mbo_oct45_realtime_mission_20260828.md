@@ -45,6 +45,12 @@ A-clean uses `RT_A_CLEAN_SECOND_PASS`; A-memory uses
 `RT_A_MEMORY_SECOND_PASS`. The exact generated context-bundle and knowledge-
 receipt hashes must bind the principal model call.
 
+All member, runway, family, cluster, chain, clock, and averaged-companion
+calculations must follow the reusable contract at
+`research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md`.
+That contract preserves exact evidence and permits an averaged companion only
+when it adds a distinct, fully stratified population view.
+
 ## 3. Native causal observation contract
 
 At every F_LAST-closed group, receive and study the complete lawful envelope:
@@ -74,6 +80,37 @@ interactions, ordered motifs, causal lags, and clock-to-clock relationships.
 Use an open-world taxonomy. Preserve rare, split, reordered, deeper, and novel
 structures. Create deterministic content-derived IDs for new families; never
 force a group into the nearest old label or stop because an old count was exceeded.
+
+Treat `D` as exhaustion-chain depth, never as quality, confidence, or strength.
+`D0` is a root exhaustion whose lawful lineage has no qualifying successor;
+`D1` through `D5` are successive qualifying downstream exhaustion stages. The
+named depths are research anchors, not a closed maximum: preserve rarer deeper,
+shorter, terminated, censored, and still-open lineages instead of forcing or
+dropping them. Final realized chain depth, descendant identity, final duration,
+and future path shape are forbidden at every earlier causal decision point.
+
+Use the established structural vocabulary only as a discovery seed:
+`P=persistent_exhaustion`, `O=collapsed_opposite_flow_reversal`,
+`S=collapsed_same_flow_reload`, and `X=collapsed_sparse_indeterminate`.
+Transition orientation is a separate annotation: `SAME` (historically `S`
+after a pipe) or `FLIP` (historically `F` after a pipe). Do not confuse the
+structural `S` state with the `SAME` transition, and do not treat `F` as a fifth
+structural state. These names, previously observed motifs, and any historical
+family count are not a closed label set or eligibility gate. Richer native MBO
+may split them into additional subfamilies, expose a new structural state or
+transition, or support a previously unseen chain grammar. Preserve and
+characterize every unmatched member under a deterministic new candidate ID;
+never discard it, coerce it to the nearest seed, or cap discovery at a prior
+number of groups.
+
+Determine prediction timing continuously from the causal native stream. Prefer
+the first durable lawful prediction before target birth and report its exact
+lead as `PRIOR`. If no lawful pre-birth prediction exists, retain the event and
+report the first durable lawful recognition at birth as `T0` or after birth as
+`H+N`, where `N` is elapsed time from the target birth on the explicitly named
+event, receive, F_LAST-availability, or decision clock. `H+N` is an observed
+first-call time, not a preselected waiting grid, and no later H call may replace
+an earlier valid call merely because it scores better.
 
 For every candidate, reconstruct a causal runway containing:
 

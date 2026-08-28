@@ -6,7 +6,7 @@
         "A_MEMORY"
       ],
       "authority": "BINDING_CURRENT_MISSION",
-      "bytes": 12829,
+      "bytes": 15242,
       "id": "native_rt_mission",
       "kind": "MARKDOWN",
       "load_mode": "ALWAYS_LOAD",
@@ -14,7 +14,23 @@
       "roles": [
         "REAL_TIME_FRANKIE"
       ],
-      "sha256": "e5bb8435387d3b73b5bca8c62f5bedc7f00425cab9d046593856d9c5271edc03"
+      "sha256": "1dde5590311ce9635a27eb6cdfa223004cf18aa99a008f98020f7ea9043f2928"
+    },
+    {
+      "arms": [
+        "A_CLEAN",
+        "A_MEMORY"
+      ],
+      "authority": "BINDING_CURRENT_CALCULATION_CONTRACT",
+      "bytes": 17491,
+      "id": "native_calculation_contract",
+      "kind": "MARKDOWN",
+      "load_mode": "ALWAYS_LOAD",
+      "path": "research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md",
+      "roles": [
+        "REAL_TIME_FRANKIE"
+      ],
+      "sha256": "6c4607312eb0aa7e9ba1d8f5aa2277e26ac48cb4b6c4bcd6e0020eaa29a3e45b"
     },
     {
       "arms": [
@@ -53,7 +69,7 @@
         "A_MEMORY"
       ],
       "authority": "PROMOTED_POSITIVE_NATIVE_KNOWLEDGE",
-      "bytes": 3735,
+      "bytes": 5380,
       "id": "a_memory_promoted_positive_knowledge",
       "kind": "MARKDOWN",
       "load_mode": "ALWAYS_LOAD",
@@ -62,7 +78,7 @@
         "REAL_TIME_FRANKIE",
         "FORECASTER_FRANKIE"
       ],
-      "sha256": "f8f3ad5ede33f298ce6fa4c14db512ce0a0f170250240e70363d89dbd779d95f"
+      "sha256": "bc84a77d33393c7d04185fcbfa82794cef0efd45b4fd31f0b2ee245cfb8d9131"
     },
     {
       "arms": [
@@ -70,7 +86,7 @@
         "A_MEMORY"
       ],
       "authority": "DETAILED_POSITIVE_PROVENANCE",
-      "bytes": 15109,
+      "bytes": 16870,
       "id": "native_positive_discovery_addendum",
       "kind": "MARKDOWN",
       "load_mode": "RETRIEVAL",
@@ -78,7 +94,7 @@
       "roles": [
         "REAL_TIME_FRANKIE"
       ],
-      "sha256": "ae4209670d37c2f324c17c3fa39cce8f7b45d273773f5b9070a00831b2626f48"
+      "sha256": "ea8b1243e8da25b34c4c2edc383a7bb5893a4b1dfbfd94292024ff312d58ff65"
     },
     {
       "arms": [
@@ -173,6 +189,38 @@
         "FORECASTER_FRANKIE"
       ],
       "sha256": "b02a1a19a21a878e9d0c52294db18fd2f6810624a41a7e9a5773a01538a8d9dc"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "POSITIVE_NATIVE_EVIDENCE",
+      "bytes": 12114,
+      "id": "a_memory_member_first_positive_findings",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_NATIVE_MBO_POSITIVE_FINDINGS_20260828.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "7b9bd3f11c28780900d76cfefd273ac7e9591c8e450b9b86b06a04fb8c32cde6"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "POSITIVE_NATIVE_EVIDENCE_RECEIPT",
+      "bytes": 3196,
+      "id": "a_memory_member_first_recalculation_receipt",
+      "kind": "JSON",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_RECALCULATION_RECEIPT_20260828.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "094c32a4177edee9c16e92a288427d6e5d3777f23db8d2f954f0c6d5f310a7c1"
     }
   ],
   "external_bindings": [
@@ -190,7 +238,7 @@
       "sha256": "0a5cddbcd971a3e6c2cad88a8e5559b0ab0529a31174c882355a61fe9c680b87"
     }
   ],
-  "manifest_hash": "3aab241337a31cfa1d579241c23322bc33f4136a1c3c7481874c0a5a072f287b",
+  "manifest_hash": "435ca83925b126300dfc64ceef940bf19794c157b52b543b17fb917fe1bef9a6",
   "profiles": {
     "FORECASTER_A_CLEAN_REVIEW": {
       "always_load": [
@@ -218,13 +266,16 @@
       ],
       "retrieval_catalog": [
         "a_memory_actual_rt_positive_report",
-        "a_memory_forecaster_positive_review"
+        "a_memory_forecaster_positive_review",
+        "a_memory_member_first_positive_findings",
+        "a_memory_member_first_recalculation_receipt"
       ],
       "role": "FORECASTER_FRANKIE"
     },
     "RT_A_CLEAN_SECOND_PASS": {
       "always_load": [
         "native_rt_mission",
+        "native_calculation_contract",
         "a_clean_promoted_positive_knowledge"
       ],
       "arm": "A_CLEAN",
@@ -240,6 +291,7 @@
     "RT_A_MEMORY_SECOND_PASS": {
       "always_load": [
         "native_rt_mission",
+        "native_calculation_contract",
         "a_memory_promoted_positive_knowledge"
       ],
       "arm": "A_MEMORY",
@@ -248,7 +300,9 @@
       ],
       "retrieval_catalog": [
         "native_positive_discovery_addendum",
-        "a_memory_actual_rt_positive_report"
+        "a_memory_actual_rt_positive_report",
+        "a_memory_member_first_positive_findings",
+        "a_memory_member_first_recalculation_receipt"
       ],
       "role": "REAL_TIME_FRANKIE"
     }

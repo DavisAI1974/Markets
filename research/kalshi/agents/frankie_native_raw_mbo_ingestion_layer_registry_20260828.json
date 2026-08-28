@@ -1,0 +1,328 @@
+{
+  "schema": "FRANKIE_NATIVE_RAW_MBO_INGESTION_LAYER_REGISTRY_V1",
+  "version": "a-arms-20260828-v1",
+  "hard_minimum_concrete_layer_count": 90,
+  "source_authority": "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md",
+  "permitted_v3_source_paths": [
+    "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.json",
+    "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md",
+    "research/NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md"
+  ],
+  "groups": [
+    {
+      "group_id": "binding_common_controls",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "activation_stage": "PRE_CALL",
+      "authority": "BINDING_CURRENT",
+      "arms": ["A_CLEAN", "A_MEMORY"],
+      "principal_route": "DIRECT",
+      "proof_mode": "CONTENT_SHA256",
+      "entries": [
+        {"layer_id": "controlling_rt_mission", "description": "Concise controlling native RT mission", "source_paths": ["research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md"], "v3_derived": false},
+        {"layer_id": "native_calculation_contract", "description": "Member-first open-world native calculation contract", "source_paths": ["research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md"], "v3_derived": false},
+        {"layer_id": "anchored_knowledge_manifest", "description": "Content-addressed same-arm knowledge manifest", "source_paths": ["research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_MANIFEST_20260828.json"], "v3_derived": false},
+        {"layer_id": "selected_same_arm_profile", "description": "Exact selected arm and role knowledge profile", "source_paths": ["research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_SOURCES_20260828.json"], "v3_derived": false}
+      ]
+    },
+    {
+      "group_id": "a_clean_overlay",
+      "policy": "ARM_REQUIRED_INPUT",
+      "activation_stage": "PRE_CALL",
+      "authority": "PROMOTED_POSITIVE_NATIVE_KNOWLEDGE",
+      "arms": ["A_CLEAN"],
+      "principal_route": "DIRECT",
+      "proof_mode": "CONTENT_SHA256",
+      "entries": [
+        {"layer_id": "a_clean_promoted_positive_capsule", "description": "Pared-down A-clean promoted positive knowledge", "source_paths": ["research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_CLEAN_POSITIVE_KNOWLEDGE_20260828.md"], "v3_derived": false}
+      ]
+    },
+    {
+      "group_id": "a_memory_overlay",
+      "policy": "ARM_REQUIRED_INPUT",
+      "activation_stage": "PRE_CALL",
+      "authority": "PROMOTED_POSITIVE_NATIVE_KNOWLEDGE",
+      "arms": ["A_MEMORY"],
+      "principal_route": "DIRECT",
+      "proof_mode": "CONTENT_OR_EXTERNAL_BINDING_SHA256",
+      "entries": [
+        {"layer_id": "a_memory_promoted_positive_capsule", "description": "Pared-down A-memory promoted positive knowledge", "source_paths": ["research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_MEMORY_POSITIVE_KNOWLEDGE_20260828.md"], "v3_derived": false},
+        {"layer_id": "a_memory_prior_lessons_package", "description": "Verified A-memory prior lessons package", "source_paths": ["external:a_memory_prior_lessons_package"], "v3_derived": false},
+        {"layer_id": "a_memory_prior_package_proof", "description": "Proof receipt for the A-memory prior lessons package", "source_paths": ["external:a_memory_prior_lessons_package_proof"], "v3_derived": false}
+      ]
+    },
+    {
+      "group_id": "current_brain_runtime",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "activation_stage": "PRE_CALL",
+      "authority": "CURRENT_BRAIN",
+      "arms": ["A_CLEAN", "A_MEMORY"],
+      "principal_route": "DIRECT",
+      "proof_mode": "CONTENT_SHA256",
+      "entries": [
+        {"layer_id": "authoritative_s135_construction", "description": "S135 with retained S120, S126, S128, S132, and S133 improvements", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "complete_s105_9_brain", "description": "Complete s105.9 NG brain with all 90 play bodies", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "doctrine_reasoning_play_index_evidence", "description": "Doctrine, reasoning, play index, falsifiers, negatives, and contradictions", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "lawful_prior_session_carry", "description": "Prior-session carry allowed by current runtime contracts", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "october_outcome_wall_enforcement", "description": "Outcome-wall policy for the October target period", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false}
+      ]
+    },
+    {
+      "group_id": "frozen_learned_structure",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "activation_stage": "PRE_CALL",
+      "authority": "FROZEN_LEARNED_KNOWLEDGE",
+      "arms": ["A_CLEAN", "A_MEMORY"],
+      "principal_route": "DIRECT",
+      "proof_mode": "CONTENT_SHA256",
+      "entries": [
+        {"layer_id": "learned_d_structures_and_families", "description": "Frozen D structures and D families", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "learned_dipoles_and_geometry", "description": "Frozen dipoles and geometry", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "learned_pair_triplet_recurrence", "description": "Pair and triplet recurrence structures", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "learned_chains_extensions_reappearances_ancestry", "description": "Chains, extensions, reappearances, and successor ancestry", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "phase1_discoveries_structural_falsifiers", "description": "Phase-1 discoveries plus structural and falsifier results", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "phase2_findings_modules_timing_pox_negatives", "description": "Phase-2 findings, timing, POX branches, and negative or stopped chains", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "predecessor_ancestry_unresolved_chain_state", "description": "Predecessor, ancestry, and unresolved-chain state", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "historical_timing_lifespan_context", "description": "Historical timing and lifespan as context, never target clock", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "learned_structure_proposal_index_material", "description": "Proposal and index material required to interpret learned structures", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false}
+      ]
+    },
+    {
+      "group_id": "corrected_extra_agent_carryforward",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "activation_stage": "PRE_CALL",
+      "authority": "EXTRA_AGENT_CARRYFORWARD",
+      "arms": ["A_CLEAN", "A_MEMORY"],
+      "principal_route": "DIRECT",
+      "proof_mode": "CONTENT_SHA256_AND_ALLOWLIST",
+      "entries": [
+        {"layer_id": "extra_agent_corrected_information_and_gap_diagnoses", "description": "Correction-approved extra-agent information and gap diagnoses", "source_paths": ["research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.json", "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md", "research/NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md"], "v3_derived": true},
+        {"layer_id": "extra_agent_four_helper_architecture_roles", "description": "Correction-approved four-helper architecture and specialist roles", "source_paths": ["research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.json", "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md", "research/NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md"], "v3_derived": true}
+      ]
+    },
+    {
+      "group_id": "canonical_raw_dbn_mbo",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "activation_stage": "EACH_F_LAST_CUTOFF",
+      "authority": "BINDING_CURRENT",
+      "arms": ["A_CLEAN", "A_MEMORY"],
+      "principal_route": "CAUSAL_GROUP_STREAM",
+      "proof_mode": "SOURCE_READY_AND_PER_GROUP_RECEIPT",
+      "entries": [
+        {"layer_id": "canonical_sep_nov_2021_dbn_mbo_objects", "description": "Canonical September-November 2021 DBN MBO objects", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "october_first_source_window", "description": "October-first source window boundaries", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "canonical_predecessor_bootstrap_objects", "description": "Canonical predecessor objects needed for continuous bootstrap", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "native_acmrtfn_messages", "description": "All relevant native A C M R T F N messages", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "snapshot_bootstrap_reset_messages", "description": "Snapshot messages limited to book bootstrap and reset", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "raw_source_identity_provenance_clocks_integrity", "description": "Source identity, hashes, clocks, provenance, and integrity", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false}
+      ]
+    },
+    {
+      "group_id": "order_lifecycle",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "activation_stage": "EACH_F_LAST_CUTOFF",
+      "authority": "BINDING_CURRENT",
+      "arms": ["A_CLEAN", "A_MEMORY"],
+      "principal_route": "CAUSAL_GROUP_STREAM",
+      "proof_mode": "SOURCE_READY_AND_PER_GROUP_RECEIPT",
+      "entries": [
+        {"layer_id": "order_lifecycle_adds", "description": "Order adds", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "order_lifecycle_cancels", "description": "Order cancels", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "order_lifecycle_modifies", "description": "Order modifies", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "order_lifecycle_replaces", "description": "Order replaces", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "order_lifecycle_trades", "description": "Trades", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "order_lifecycle_fills", "description": "Fills", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "order_lifecycle_clears", "description": "Clears", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "order_identity_transitions", "description": "Order identity and lifecycle transitions", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "contract_session_roll_state", "description": "Contract, session, and roll state", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false}
+      ]
+    },
+    {
+      "group_id": "full_book_fifo_queue",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "activation_stage": "EACH_F_LAST_CUTOFF",
+      "authority": "BINDING_CURRENT",
+      "arms": ["A_CLEAN", "A_MEMORY"],
+      "principal_route": "CAUSAL_GROUP_STREAM",
+      "proof_mode": "SOURCE_READY_AND_PER_GROUP_RECEIPT",
+      "entries": [
+        {"layer_id": "full_bid_ask_depth", "description": "Full bid and ask depth", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "price_level_and_order_counts", "description": "Price-level and order counts", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "fifo_queues", "description": "Full price-level FIFO queues", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "queue_age_and_survival", "description": "Queue age and survival", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "queue_concentration", "description": "Queue concentration", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "orders_and_volume_ahead", "description": "Orders and volume ahead", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "spread_and_depth_imbalance", "description": "Spread and full-depth imbalance", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "complete_state_reset_bootstrap_receipts", "description": "Complete state reset and bootstrap receipts", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false}
+      ]
+    },
+    {
+      "group_id": "microstructure_mechanics",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "activation_stage": "EACH_F_LAST_CUTOFF",
+      "authority": "BINDING_CURRENT",
+      "arms": ["A_CLEAN", "A_MEMORY"],
+      "principal_route": "CAUSAL_GROUP_STREAM",
+      "proof_mode": "SOURCE_READY_AND_PER_GROUP_RECEIPT",
+      "entries": [
+        {"layer_id": "mechanics_actions_by_side_and_level", "description": "Actions by side and level", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "aggressor_and_native_signed_flow", "description": "Aggressor and native signed flow", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "depletion_and_replenishment", "description": "Depletion and replenishment", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "resilience_and_recovery", "description": "Resilience and recovery", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "churn_and_queue_turnover", "description": "Churn and queue turnover", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "price_and_book_path", "description": "Price path and book path", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "missingness_and_integrity_flags", "description": "Missingness and integrity flags", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false}
+      ]
+    },
+    {
+      "group_id": "legacy_observable_crosswalk",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "activation_stage": "EACH_F_LAST_CUTOFF",
+      "authority": "BINDING_CURRENT",
+      "arms": ["A_CLEAN", "A_MEMORY"],
+      "principal_route": "CAUSAL_GROUP_STREAM",
+      "proof_mode": "SOURCE_READY_AND_PER_GROUP_RECEIPT",
+      "entries": [
+        {"layer_id": "legacy_price", "description": "Legacy price with native crosswalk", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "legacy_native_signed_flow", "description": "Legacy-compatible native signed flow", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "legacy_per_second_roll20", "description": "Legacy-compatible per-second roll20", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "legacy_book_imbalance", "description": "Legacy-compatible book imbalance", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "legacy_structure_observables", "description": "D, dipole, family, chain, and predecessor observables", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false}
+      ]
+    },
+    {
+      "group_id": "derived_geometry",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "activation_stage": "EACH_F_LAST_CUTOFF",
+      "authority": "BINDING_CURRENT",
+      "arms": ["A_CLEAN", "A_MEMORY"],
+      "principal_route": "CAUSAL_GROUP_STREAM",
+      "proof_mode": "SOURCE_READY_AND_PER_GROUP_RECEIPT",
+      "entries": [
+        {"layer_id": "derived_roll20_and_dipole_state", "description": "roll20 and dipole state", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "derived_d_family_geometry", "description": "D-family geometry", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "derived_open_world_predecessor_state", "description": "P O S X seed and open-world predecessor state", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "derived_ancestry_gaps", "description": "Ancestry gaps", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "derived_unresolved_age_chain_trajectory", "description": "Unresolved age and chain or extension trajectory", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "derived_price_flow_book_paths", "description": "Price, signed-flow, and book paths", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "derived_v4_mechanics_fifo_features", "description": "V4 mechanics and FIFO features", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "derived_feature_availability_timestamps", "description": "Feature-availability timestamps", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false}
+      ]
+    },
+    {
+      "group_id": "helper_role_configuration",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "activation_stage": "PRE_CALL",
+      "authority": "EXTRA_AGENT_CARRYFORWARD",
+      "arms": ["A_CLEAN", "A_MEMORY"],
+      "principal_route": "DIRECT",
+      "proof_mode": "CONFIG_AND_PROVIDER_IDENTITY_SHA256",
+      "entries": [
+        {"layer_id": "helper_pair_triplet_recurrence_scout", "description": "Pair and triplet recurrence scout role and configuration", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "helper_extension_propensity_scout", "description": "Extension-propensity scout role and configuration", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "helper_timing_lifespan_family_scout", "description": "Timing and lifespan family scout role and configuration", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "helper_true_false_context_investigator", "description": "True and false context investigator role and configuration", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false}
+      ]
+    },
+    {
+      "group_id": "prebirth_opportunity",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "activation_stage": "EACH_F_LAST_CUTOFF",
+      "authority": "BINDING_CURRENT",
+      "arms": ["A_CLEAN", "A_MEMORY"],
+      "principal_route": "CAUSAL_GROUP_STREAM",
+      "proof_mode": "SOURCE_READY_AND_PER_GROUP_RECEIPT",
+      "entries": [
+        {"layer_id": "prebirth_predecessor_at_risk_state", "description": "Predecessor-defined at-risk state", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "prebirth_unresolved_chain_extension_state", "description": "Unresolved chain and extension state", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "prebirth_ancestry_successor_opportunity", "description": "Ancestry and successor opportunity", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "prebirth_stopped_chain_false_context_controls", "description": "Stopped-chain and false-context controls", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "prebirth_negative_opportunity_cases", "description": "Negative opportunity cases", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false}
+      ]
+    },
+    {
+      "group_id": "causal_clocks",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "activation_stage": "EACH_F_LAST_CUTOFF",
+      "authority": "BINDING_CURRENT",
+      "arms": ["A_CLEAN", "A_MEMORY"],
+      "principal_route": "CAUSAL_GROUP_STREAM",
+      "proof_mode": "SOURCE_READY_AND_PER_GROUP_RECEIPT",
+      "entries": [
+        {"layer_id": "clock_event_time", "description": "Event-time clock", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "clock_receive_time", "description": "Receive-time clock", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "clock_event_known_by", "description": "Event-known-by clock", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "clock_feature_availability", "description": "Feature-availability clock", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "clock_prospective_discovery_confirmation", "description": "Prospective discovery and confirmation clock", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "clock_model_evaluation", "description": "Model-evaluation clock", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "clock_lock_time", "description": "Lock-time clock", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false}
+      ]
+    },
+    {
+      "group_id": "sealed_target_timing",
+      "policy": "SEALED_FOR_A_SCOPE",
+      "activation_stage": "OUTSIDE_CURRENT_A_SCOPE",
+      "authority": "SEALED_TARGET_ANSWER",
+      "arms": ["A_CLEAN", "A_MEMORY"],
+      "principal_route": "SEALED",
+      "proof_mode": "SEALED_ABSENCE_RECEIPT",
+      "entries": [
+        {"layer_id": "later_outcome_reveal", "description": "Later realized outcome reveal", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "target_ground_truth_onset_time", "description": "Answer-derived ground-truth onset time, distinct from causal candidate onset", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false}
+      ]
+    },
+    {
+      "group_id": "provisional_shadow",
+      "policy": "PROVISIONAL_SHADOW",
+      "activation_stage": "EXPLICIT_IDENTICAL_ARM_OPT_IN_ONLY",
+      "authority": "PROVISIONAL_SHADOW",
+      "arms": ["A_CLEAN", "A_MEMORY"],
+      "principal_route": "SHADOW_ONLY",
+      "proof_mode": "SHADOW_CONFIG_AND_PAIRED_RECEIPT",
+      "entries": [
+        {"layer_id": "s137_cognitive_shadow_runtime", "description": "S137 cognitive shadow runtime", "source_paths": ["research/kalshi/frankie_s137_cognitive_runtime.py"], "v3_derived": false},
+        {"layer_id": "hipporag_associative_retrieval", "description": "HippoRAG associative-retrieval shadow component", "source_paths": ["research/kalshi/frankie_hipporag_p0_retrieval.py"], "v3_derived": false}
+      ]
+    },
+    {
+      "group_id": "sealed_step1_answer",
+      "policy": "SEALED_FOR_A_SCOPE",
+      "activation_stage": "OUTSIDE_CURRENT_A_SCOPE",
+      "authority": "SEALED_TARGET_ANSWER",
+      "arms": ["A_CLEAN", "A_MEMORY"],
+      "principal_route": "SEALED",
+      "proof_mode": "SEALED_ABSENCE_RECEIPT",
+      "entries": [
+        {"layer_id": "step1_existing_october_seconds", "description": "Existing October Step-1 seconds", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "step1_populations", "description": "Step-1 populations", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "step1_crosswalks", "description": "Step-1 crosswalks", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "step1_target_membership_receipts", "description": "Receipts revealing target membership", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "step1_labels_and_classifications", "description": "Step-1 labels and classifications", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "step1_result_prefixes", "description": "Step-1 result prefixes", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "step1_reconciliation_outputs", "description": "Step-1 reconciliation outputs", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false}
+      ]
+    },
+    {
+      "group_id": "append_only_outputs",
+      "policy": "APPEND_ONLY_OUTPUT",
+      "activation_stage": "SEQUENTIAL_AS_PRODUCED",
+      "authority": "IMMUTABLE_EXPERIMENT_OUTPUT",
+      "arms": ["A_CLEAN", "A_MEMORY"],
+      "principal_route": "NOT_INPUT_AT_PRE_CALL",
+      "proof_mode": "APPEND_ONLY_HASH_CHAIN",
+      "entries": [
+        {"layer_id": "output_state_and_state_delta_movie", "description": "State movie and state-delta movie", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "output_helper_evidence_movie", "description": "Helper-evidence movie", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "output_frankie_reasoning_movie", "description": "Frankie reasoning movie", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "output_probability_movie", "description": "Probability movie", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "output_candidate_discoveries", "description": "Candidate discoveries", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "output_first_locks_and_no_locks", "description": "First locks and no-locks", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "output_negative_sparse_inconclusive_ledger", "description": "Abstentions, weak findings, negatives, sparse and inconclusive cases", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "output_knowledge_retrieval_receipts", "description": "Knowledge retrieval receipts", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "output_provider_invocation_response_receipts", "description": "Provider invocation and response receipts", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "output_answer_wall_access_receipts", "description": "Answer-wall no-access receipts for current A scope", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
+        {"layer_id": "output_source_state_manifest_code_model_run_hashes", "description": "Source, state, manifest, code, model, and run hashes", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false}
+      ]
+    }
+  ],
+  "registry_sha256": "6220e0ee222294afdf9cde8613181f7e6b5b900aeb32dd6cc0b623f68d830b6b"
+}

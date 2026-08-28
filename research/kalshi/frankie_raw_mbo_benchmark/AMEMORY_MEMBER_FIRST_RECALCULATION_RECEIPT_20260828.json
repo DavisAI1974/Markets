@@ -1,0 +1,85 @@
+{
+  "artifacts": {
+    "adjacency_index": {
+      "bytes": 7376820,
+      "filename": "adjacency-index.json",
+      "sha256": "80cac739094e24829755e6cc9ce40dfe1f2efc92be6637ab5fec427db2d74077"
+    },
+    "daily_averaged_companions": {
+      "bytes": 7401,
+      "filename": "daily-averaged-companions.json",
+      "sha256": "e5fbb712c7128d1afaf37c86df6ccf3ee3b2c811c0789cbd1f1aa18aee562950"
+    },
+    "exact_members": {
+      "bytes": 1522802178,
+      "filename": "exact-members.jsonl.gz",
+      "gzip_sha256": "c72c50d97b340bc61da95dab4f32e8ebd21d7e34e11deba23c6f609516e4b0db",
+      "rows": 4256603,
+      "uncompressed_jsonl_sha256": "65374976fdf2888358407df1142d34492f9b9859e4a678896455b91bd0b9309f"
+    },
+    "exact_runs": {
+      "bytes": 338619063,
+      "filename": "exact-runs.jsonl.gz",
+      "gzip_sha256": "14c09226214fed36de1291ea4d5d3a53d6e0c7c72a24f0806ea086f31bc832e8",
+      "rows": 3159886,
+      "uncompressed_jsonl_sha256": "b1440ded5539e5f326cede3c0cb6b4403acd3b2107b9dd37c0832c228a5e6e54"
+    },
+    "family_index": {
+      "bytes": 5685301,
+      "filename": "family-index.json",
+      "sha256": "177d6d5227112903271fe7fd372ab80e4b2bae4eacca7b365e977f92e54da1d1"
+    },
+    "mirror_pair_index": {
+      "bytes": 1403390,
+      "filename": "mirror-pair-index.json",
+      "sha256": "944348981554a4ce4ed047b05c1f7af484ab4a08c3f2cd079d952cb59851edb5"
+    }
+  },
+  "classification": "READ_ONLY_RETROSPECTIVE_DERIVATION",
+  "completed_event_groups": 4256603,
+  "completed_native_mbo_records": 5667689,
+  "daily_averaged_companion_verification": "EXACT_MATCH",
+  "discovery_contract": {
+    "legacy_seed_is_allowlist": false,
+    "maximum_family_count": null,
+    "open_world": true,
+    "structural_state_assignment": "DEFER_TO_CAUSAL_FRANKIE_RESEARCH",
+    "structural_state_seeds": {
+      "O": "collapsed_opposite_flow_reversal",
+      "P": "persistent_exhaustion",
+      "S": "collapsed_same_flow_reload",
+      "X": "collapsed_sparse_indeterminate"
+    },
+    "transition_orientation_seeds": [
+      "SAME",
+      "FLIP"
+    ],
+    "unmatched_policy": "PRESERVE_AND_CHARACTERIZE"
+  },
+  "distinct_candidate_families": 4758,
+  "elapsed_seconds": 2985.119,
+  "input": {
+    "ledger_path": "/workspace/scratch/da00127ac123/a-memory-runtime-c7da7d2/native-evidence-groups.jsonl.gz",
+    "ledger_sha256": "bc0788b51a719d39f5024f10007f4c74e96ff3361a21b66d662d9fadf1a67d8f"
+  },
+  "invariants": {
+    "a_clean_output_used_as_evidence": false,
+    "all_groups_f_last_closed": true,
+    "every_group_emitted_exactly_once": true,
+    "fifo_adapter_used": true,
+    "forecaster_used": false,
+    "full_depth_reconstructed": true,
+    "historical_family_count_used_as_gate": false,
+    "lock_or_freeze_created": false,
+    "native_actions_preserved_by_exact_tuple": true,
+    "other_arm_used": false,
+    "principal_model_invoked": false,
+    "reveal_or_scoring_used": false,
+    "step1_used": false,
+    "supplemental_enriched_or_rerun_only_input_used": false,
+    "unmatched_members_dropped": false
+  },
+  "objective": "A_MEMORY_OUTPUT_IMPROVEMENT_NOT_ARM_COMPARISON",
+  "open_world_candidate_groups": 19847,
+  "schema": "FRANKIE_A_MEMORY_MEMBER_FIRST_RECALCULATION_RECEIPT_V1"
+}
