@@ -118,11 +118,27 @@ def test_mapping_insertion_order_does_not_change_output():
     assert serialize_state(a).text == serialize_state(b).text
 
 
+def test_snapshot_copies_source_versions_instead_of_retaining_mutable_mapping():
+    versions = {"code_version": "boss-test"}
+    s = snapshot(versions=versions)
+    before = serialize_state(s).text
+    versions["model_version"] = "mutated-after-snapshot"
+    assert serialize_state(s).text == before
+
+
 def test_serializer_schema_version_participates_in_identity():
     s = snapshot()
     a = serialize_state(s, schema_version="boss_state_serialization/1")
     b = serialize_state(s, schema_version="boss_state_serialization/test-alt")
     assert a.hash != b.hash
+
+
+def test_parser_rejects_unsupported_schema_version():
+    raw = json.loads(serialize_state(snapshot()).text)
+    raw["schema_version"] = "boss_state_serialization/999"
+    text = json.dumps(raw, sort_keys=True, separators=(",", ":"))
+    with pytest.raises(ValueError, match="schema_version"):
+        parse_serialized_state(text)
 
 
 def test_round_trip_preserves_declared_state():
@@ -270,3 +286,11 @@ def test_typed_snapshot_has_no_unrestricted_extra_payload():
             ablation_policy_version="none/1",
             extra={"realized_return": 999.0},
         )
+
+
+def test_parser_rejects_unknown_nested_fields_instead_of_ignoring_them():
+    raw = json.loads(serialize_state(snapshot()).text)
+    raw["rows"][0]["numeric"][0]["realized_future_return"] = "9.99E+2"
+    text = json.dumps(raw, sort_keys=True, separators=(",", ":"))
+    with pytest.raises(ValueError, match="unknown"):
+        parse_serialized_state(text)
