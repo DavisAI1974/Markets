@@ -25,8 +25,8 @@ env:
   REQUIRED_STARTING_TIP: 82e140598b03bb38a7761c19d0ac47017c3908d0
   SOURCE_PREFIX: nymex/ng_mbo_5y_v0/native/20211001_20211101
   PRIOR_RUN_ID: workmode-32851909748-1
-  PRIOR_ROOT: /mnt/markets/frankie_prior_surface_oct45_workmode_packet_20260825/32851909748-1
-  PRIOR_PACKET_PREFIX: nymex/ng_mbo_5y_v0/frankie/prior_surface_oct45_workmode_packets/96d713cc9ed3e8ba889ae45a04e80cb4eab4fb26/32851909748-1
+  PRIOR_ROOT: /mnt/markets
+  PRIOR_PACKET_PREFIX: nymex/ng_mbo_5y_v0/frankie
   PRIOR_PACKAGE_PREFIX: nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/prior-package-discovery/workmode-32851909748-1
   PREEXISTING_CUTOFF_EPOCH: '1787909152'
 
@@ -69,7 +69,7 @@ jobs:
           aws s3api list-objects-v2 \
             --bucket "$BUCKET" \
             --prefix "$PRIOR_PACKET_PREFIX" \
-            --query 'Contents[].{key:Key,bytes:Size,last_modified:LastModified,etag:ETag}' \
+            --query "Contents[?contains(Key, '${PRIOR_RUN_ID}') && (ends_with(Key, '/RT_OUTPUT.json') || ends_with(Key, '/RT_CONTEXT_MANIFEST.json') || ends_with(Key, '/RT_AGENT_RECEIPT.json') || ends_with(Key, '/RT_FIRST_LOCK.json') || ends_with(Key, '/RT_FROZEN_STATE.json') || ends_with(Key, '/ONEWAY_HANDOFF.json') || ends_with(Key, '/RT_FREEZE_COMPLETE.json') || ends_with(Key, '/RT_FREEZE_EXTERNAL_ANCHOR.json') || ends_with(Key, '/FORECASTER_OUTPUT.json') || ends_with(Key, '/FORECASTER_CONTEXT_MANIFEST.json') || ends_with(Key, '/FORECASTER_AGENT_RECEIPT.json') || ends_with(Key, '/FORECASTER_FIRST_LOCK.json') || ends_with(Key, '/EXECUTION_USAGE.json') || ends_with(Key, '/ARTIFACT_MANIFEST.json') || ends_with(Key, '/COMPLETE.json'))].{key:Key,bytes:Size,last_modified:LastModified,etag:ETag}" \
             --output json > "$inventory"
 
           python - <<'PY'
@@ -92,8 +92,8 @@ jobs:
           root={shlex.quote(root)}
           test -d "$root"
           for name in {quoted_names}; do
-            find "$root" -type f -name "$name" -printf '%p\\t%s\\t%T@\\n'
-          done | sort
+            find "$root" -type f -path '*/{os.environ["PRIOR_RUN_ID"]}/*' -name "$name" -printf '%p\\t%s\\t%T@\\n'
+          done | grep -Evi '/(step1|post.?reveal|score|reconcil|raw_mbo_benchmark|a-clean|a-memory)/' | sort || true
           echo PRIOR_HOST_INVENTORY_COMPLETE
           '''
           Path("/tmp/a-memory-prior-inventory-params.json").write_text(
@@ -152,10 +152,13 @@ jobs:
           script = r'''set -euo pipefail
           root="$PRIOR_ROOT"
           cutoff="$PREEXISTING_CUTOFF_EPOCH"
-          complete="$(find "$root" -type f -name COMPLETE.json -print -quit)"
+          complete="$(find "$root" -type f -path "*/$PRIOR_RUN_ID/COMPLETE.json" \
+            | grep -Evi '/(step1|post.?reveal|score|reconcil|raw_mbo_benchmark|a-clean|a-memory)/' \
+            | head -n 1)"
           test -n "$complete"
           run_root="$(dirname "$complete")"
-          test "${run_root#"$root"}" != "$run_root"
+          test "$(basename "$run_root")" = "$PRIOR_RUN_ID"
+          ! printf '%s\\n' "$run_root" | grep -Eqi '/(step1|post.?reveal|score|reconcil|raw_mbo_benchmark|a-clean|a-memory)/'
           stage="$(mktemp -d /tmp/a-memory-prior-learned.XXXXXX)"
           trap 'rm -rf "$stage"' EXIT
           for name in RT_OUTPUT.json RT_CONTEXT_MANIFEST.json RT_AGENT_RECEIPT.json RT_FIRST_LOCK.json RT_FROZEN_STATE.json ONEWAY_HANDOFF.json RT_FREEZE_COMPLETE.json FORECASTER_OUTPUT.json FORECASTER_CONTEXT_MANIFEST.json FORECASTER_AGENT_RECEIPT.json FORECASTER_FIRST_LOCK.json EXECUTION_USAGE.json ARTIFACT_MANIFEST.json COMPLETE.json; do
@@ -163,7 +166,7 @@ jobs:
             test "$(stat -c %Y "$run_root/$name")" -lt "$cutoff"
             cp --preserve=timestamps "$run_root/$name" "$stage/$name"
           done
-          anchor="$(find "$root" -type f -name RT_FREEZE_EXTERNAL_ANCHOR.json -print -quit)"
+          anchor="$run_root/RT_FREEZE_EXTERNAL_ANCHOR.json"
           test -n "$anchor"
           test "$(stat -c %Y "$anchor")" -lt "$cutoff"
           cp --preserve=timestamps "$anchor" "$stage/RT_FREEZE_EXTERNAL_ANCHOR.json"
