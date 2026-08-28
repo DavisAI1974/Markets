@@ -119,12 +119,21 @@ to estimand, scope, or granularity remain `COMPLEMENTARY_SCOPE_DIFFERENCE`.
 | `research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_RT_ACTUAL_FRANKIE_INTERIM_POSITIVE_REPORT_20260828.md` | Bounded retrospective A-clean Frankie positive report | `f09c94a7453ecf1faa756d255969ad9258ec766f9115d2452caa76408bdc9987` |
 | `research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_RT_ACTUAL_FRANKIE_NONAVERAGED_EXTRACTION_OPPORTUNITIES_20260828.md` | Eleven exact extraction programs with eleven coequal averaged companions | `52c17005a947586def2dea79a579e48f80524264e970a50b08fce21340eea046` |
 | `research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_FORECASTER_FIRST_REPLAY_OUTPUT_POSITIVE_REVIEW_20260828.md` | Bounded A-clean Forecaster output review; no replay | `f8a092c8e32e94b1081b1a246d98a73428a8b10dc18d7adfbe86db1fffa508c2` |
+| `research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_RT_ACTUAL_FRANKIE_RETROSPECTIVE_POSITIVE_REPORT_20260828.md` | A-memory retrospective RT role analysis over completed native evidence and verified prior memory | `2854c9b96d759c61c4afa750e5106c824fa81462e5a5d61ff55240f9cbda9df5` |
 | `research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_FORECASTER_FIRST_REPLAY_OUTPUT_POSITIVE_REVIEW_20260828.md` | Bounded A-memory Forecaster output review; no replay | `b02a1a19a21a878e9d0c52294db18fd2f6810624a41a7e9a5773a01538a8d9dc` |
 | `research/kalshi/frankie_raw_mbo_benchmark/FRANKIE_KNOWLEDGE_USE_AND_NONFORGETTING_REVIEW_20260828.md` | Actual Frankie audit of knowledge use and non-forgetting gates | `4e80987a3486d7bfe992192b8cf46706452d43dbeb0e30ca0721b45815669442` |
 
 The A-clean retrospective report is not a substitute for the later corrected
 full mission-bound RT rerun. The opportunity memo proves that much richer exact
 and averaged analysis can be extracted from the intact native evidence.
+
+The A-memory retrospective is the same diagnostic role-analysis class as the
+A-clean retrospective and did not make a principal Frankie model call. Its
+positive, mechanically supported results are scientific findings; the absence
+of a principal execution receipt limits only lock/freeze provenance. The report
+independently reproduces the native family surface, confirms the authorized
+41-trade memory motif directly in native MBO, and adds a mirrored-side
+formation-latency relationship across five families and both held-out days.
 
 ## Current runtime state
 
@@ -191,7 +200,8 @@ run it merely to perform the bounded output review.
   `bc0788b51a719d39f5024f10007f4c74e96ff3361a21b66d662d9fadf1a67d8f`.
 - Observation object hash:
   `dce8b9c3808cf0c5321e53879e0b4d504c267d037c9e0a276875bde6d4ff12ef`.
-- Status: `READY_FOR_POSITIVE_DERIVATION`.
+- Status: positive retrospective derivation complete; corrected full
+  mission-bound rerun remains pending.
 - `scientific_frankie_lock_created=false`;
   `scientific_rt_freeze_created=false`; `forecaster_authorized=false`.
 - Complete 17-checkpoint chain and all adapter/controller siblings verify.
@@ -242,15 +252,15 @@ The native A-arm knowledge base is anchored at
 
 - `KNOWLEDGE_SOURCES_20260828.json` is the reviewed editable registry.
   File SHA-256:
-  `bd9885765df225effe3039e29b3fe524e3e718e5b0ce49e99c9ad7f3afbf52d9`.
+  `e5b0f474ecbd1d3b43952f4d004a1cf086223ad8f6ecb08b5588e9bdf2de78c6`.
 - `A_CLEAN_POSITIVE_KNOWLEDGE_20260828.md` and
   `A_MEMORY_POSITIVE_KNOWLEDGE_20260828.md` are generated, same-arm promoted
   capsules.
 - `KNOWLEDGE_MANIFEST_20260828.json` content-addresses every always-loaded and
   retrieval artifact. Its canonical manifest hash is
-  `ad9787b0099a768960dd43fc29fc7ec068d938cbabe95a78a25e9376e322e16b`.
+  `3aab241337a31cfa1d579241c23322bc33f4136a1c3c7481874c0a5a072f287b`.
   Its file SHA-256 is
-  `3d89bcf8b579f3b3225ef1af15e3aecd0be98973c3b7374d9680b55013491ec4`.
+  `0c1d9ce9185cf5c33b5c90bb84d49d9bcc87592765442671bde94287b2dec877`.
 - `native_frankie_knowledge_registry.py` validates bytes, routes arm/role
   profiles, builds exact principal contexts, appends a compact hash-bound
   retrieval index, verifies external proofs, and writes context and principal
@@ -321,10 +331,12 @@ stale-report leakage, cross-role mixing, and unnecessary context flooding.
 ## Next-chat order
 
 1. Read this handoff and the focused context hierarchy above.
-2. Review the two bounded Forecaster output-review reports; do not reinterpret
-   them as full runs or locks.
-3. Produce the positive-only A-memory RT retrospective research report from its
-   completed same-arm diagnostic evidence and verified prior memory.
+2. The two bounded Forecaster output-review reports have been reviewed and
+   remain positive scientific research artifacts; they are not principal-run
+   lock/freeze receipts.
+3. The positive-only A-memory RT retrospective research report is complete,
+   hash-registered, and promoted to the A-memory knowledge capsule. Preserve it
+   as diagnostic scientific evidence for the corrected rerun.
 4. Decide explicitly whether to finish the preserved A-clean Forecaster
    diagnostic replay; if authorized, resume only from sequence 11 with the
    latest-chain helper.

@@ -7,6 +7,7 @@
     "research/kalshi/agents/frankie_native_raw_mbo_knowledge/*_POSITIVE_KNOWLEDGE_20260828.md",
     "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_RT_NATIVE_MBO_POSITIVE*20260828.md",
     "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_RT_ACTUAL_FRANKIE_*20260828.md",
+    "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_RT_ACTUAL_FRANKIE_*20260828.md",
     "research/kalshi/frankie_raw_mbo_benchmark/*FORECASTER_FIRST_REPLAY_OUTPUT_POSITIVE_REVIEW_20260828.md"
   ],
   "capsules": [
@@ -25,6 +26,11 @@
       "output_path": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_MEMORY_POSITIVE_KNOWLEDGE_20260828.md",
       "title": "A-memory Frankie Promoted Positive Native-MBO Knowledge",
       "sources": [
+        {
+          "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_RT_ACTUAL_FRANKIE_RETROSPECTIVE_POSITIVE_REPORT_20260828.md",
+          "heading": "## Positive knowledge capsule candidates",
+          "label": "A-memory RT retrospective with verified prior memory"
+        },
         {
           "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_FORECASTER_FIRST_REPLAY_OUTPUT_POSITIVE_REVIEW_20260828.md",
           "heading": "## Positive knowledge capsule candidates",
@@ -116,6 +122,15 @@
       "load_mode": "RETRIEVAL"
     },
     {
+      "id": "a_memory_actual_rt_positive_report",
+      "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_RT_ACTUAL_FRANKIE_RETROSPECTIVE_POSITIVE_REPORT_20260828.md",
+      "kind": "MARKDOWN",
+      "authority": "POSITIVE_NATIVE_EVIDENCE",
+      "arms": ["A_MEMORY"],
+      "roles": ["REAL_TIME_FRANKIE", "FORECASTER_FRANKIE"],
+      "load_mode": "RETRIEVAL"
+    },
+    {
       "id": "a_memory_forecaster_positive_review",
       "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_FORECASTER_FIRST_REPLAY_OUTPUT_POSITIVE_REVIEW_20260828.md",
       "kind": "MARKDOWN",
@@ -159,7 +174,8 @@
         "a_memory_promoted_positive_knowledge"
       ],
       "retrieval_catalog": [
-        "native_positive_discovery_addendum"
+        "native_positive_discovery_addendum",
+        "a_memory_actual_rt_positive_report"
       ],
       "external_bindings": [
         "a_memory_prior_lessons_package"
@@ -188,6 +204,7 @@
         "a_memory_promoted_positive_knowledge"
       ],
       "retrieval_catalog": [
+        "a_memory_actual_rt_positive_report",
         "a_memory_forecaster_positive_review"
       ],
       "external_bindings": [

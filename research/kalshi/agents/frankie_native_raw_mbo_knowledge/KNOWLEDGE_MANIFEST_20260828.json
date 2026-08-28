@@ -53,7 +53,7 @@
         "A_MEMORY"
       ],
       "authority": "PROMOTED_POSITIVE_NATIVE_KNOWLEDGE",
-      "bytes": 1843,
+      "bytes": 3735,
       "id": "a_memory_promoted_positive_knowledge",
       "kind": "MARKDOWN",
       "load_mode": "ALWAYS_LOAD",
@@ -62,7 +62,7 @@
         "REAL_TIME_FRANKIE",
         "FORECASTER_FRANKIE"
       ],
-      "sha256": "9f4de689453e3ba7930b59c8f1a1528abca5cee5fafa66ba608a6965ed0a7fae"
+      "sha256": "f8f3ad5ede33f298ce6fa4c14db512ce0a0f170250240e70363d89dbd779d95f"
     },
     {
       "arms": [
@@ -148,6 +148,22 @@
         "A_MEMORY"
       ],
       "authority": "POSITIVE_NATIVE_EVIDENCE",
+      "bytes": 17287,
+      "id": "a_memory_actual_rt_positive_report",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_RT_ACTUAL_FRANKIE_RETROSPECTIVE_POSITIVE_REPORT_20260828.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "2854c9b96d759c61c4afa750e5106c824fa81462e5a5d61ff55240f9cbda9df5"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "POSITIVE_NATIVE_EVIDENCE",
       "bytes": 25349,
       "id": "a_memory_forecaster_positive_review",
       "kind": "MARKDOWN",
@@ -174,7 +190,7 @@
       "sha256": "0a5cddbcd971a3e6c2cad88a8e5559b0ab0529a31174c882355a61fe9c680b87"
     }
   ],
-  "manifest_hash": "ad9787b0099a768960dd43fc29fc7ec068d938cbabe95a78a25e9376e322e16b",
+  "manifest_hash": "3aab241337a31cfa1d579241c23322bc33f4136a1c3c7481874c0a5a072f287b",
   "profiles": {
     "FORECASTER_A_CLEAN_REVIEW": {
       "always_load": [
@@ -201,6 +217,7 @@
         "a_memory_prior_lessons_package"
       ],
       "retrieval_catalog": [
+        "a_memory_actual_rt_positive_report",
         "a_memory_forecaster_positive_review"
       ],
       "role": "FORECASTER_FRANKIE"
@@ -230,7 +247,8 @@
         "a_memory_prior_lessons_package"
       ],
       "retrieval_catalog": [
-        "native_positive_discovery_addendum"
+        "native_positive_discovery_addendum",
+        "a_memory_actual_rt_positive_report"
       ],
       "role": "REAL_TIME_FRANKIE"
     }
