@@ -22,6 +22,49 @@ The mixed exploratory A-clean report was deleted and is ineligible for any
 agent context or Forecaster handoff. Only the positive artifacts named below may
 carry forward.
 
+## 2026-08-28 corrected-work checkpoint
+
+Published implementation checkpoint:
+`405e01c2842b80b64f2c5190564f30ca18f0c195` (`feat: harden Frankie ingestion
+and finish A-memory recalculation`).
+
+The original-input A-memory member-first recalculation is complete:
+
+- 5,667,689 / 5,667,689 native records;
+- 4,256,603 / 4,256,603 F_LAST-closed groups;
+- 4,758 deterministic candidate identities, including 4,628 open-world
+  candidates and 19,847 exact open-world member groups;
+- 3,159,886 maximal exact-family runs, including 654,478 multi-member runs;
+- daily averaged companions reproduce the first replay exactly; and
+- no supplemental corrected-rerun input, other arm, Step-1, reveal, scoring,
+  model invocation, lock, or freeze was used.
+
+The positive report is
+`AMEMORY_MEMBER_FIRST_NATIVE_MBO_POSITIVE_FINDINGS_20260828.md`; the small
+machine receipt is `AMEMORY_MEMBER_FIRST_RECALCULATION_RECEIPT_20260828.json`.
+Both are hash-registered. The report's positive capsule candidates are promoted
+into the always-loaded pared-down A-memory capsule.
+
+The active ingestion contract now has 105 exact union identities, 102
+applicable to A-clean and 104 to A-memory, plus a hard fail-closed minimum of
+90. Count is not sufficient: the V1 exact ID-set hash is also fixed. Static
+knowledge is visible pre-call; all 55 causal-stream layers remain pending until
+each lawful F_LAST cutoff; all nine Step-1/answer layers stay sealed throughout
+the current A scope; both S137 and HippoRAG are measurable shadow-only
+components; and all 11 output classes begin pending and must become append-only
+hash chains.
+
+All old V3 result categories were removed from the active feed inventory. The
+only V3-derived material permitted anywhere in the corrected input is the
+correction-approved extra-agent information/gap diagnoses and four-helper
+architecture, through these three exact carryforward records:
+
+- `research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.json`;
+- `research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md`; and
+- `research/NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md`.
+
+No corrected scientific rerun has started.
+
 ## Scope and immutable scientific input
 
 Work only on A-clean and A-memory. Do not inspect or run BOSS, B0/B1/B2,
@@ -112,7 +155,7 @@ to estimand, scope, or granularity remain `COMPLEMENTARY_SCOPE_DIFFERENCE`.
 
 | Path | Role | SHA-256 |
 |---|---|---|
-| `research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md` | Concise, self-contained controlling RT mission | `e5bb8435387d3b73b5bca8c62f5bedc7f00425cab9d046593856d9c5271edc03` |
+| `research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md` | Concise, self-contained controlling RT mission | `1dde5590311ce9635a27eb6cdfa223004cf18aa99a008f98020f7ea9043f2928` |
 | `research/kalshi/agents/frankie_native_raw_mbo_rt_positive_discovery_addendum_20260828.md` | Detailed positive discovery and native observation contract | `ae4209670d37c2f324c17c3fa39cce8f7b45d273773f5b9070a00831b2626f48` |
 | `research/kalshi/agents/frankie_native_raw_mbo_forecaster_first_replay_review_20260828.md` | Same-arm bounded Forecaster review of first replay outputs | `b32ca5c35db11430c3bf29d8bf597c5ba0d495af499f4f680ea4c95c6c719903` |
 | `research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_RT_NATIVE_MBO_POSITIVE_DERIVED_FINDINGS_20260828.md` | Mechanically reproduced exact positive family inventory | `8c67fdbf5d2995657a0020200632def3fe1b2d70f1b4573c906b3a124959f8af` |
@@ -122,6 +165,8 @@ to estimand, scope, or granularity remain `COMPLEMENTARY_SCOPE_DIFFERENCE`.
 | `research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_RT_ACTUAL_FRANKIE_RETROSPECTIVE_POSITIVE_REPORT_20260828.md` | A-memory retrospective RT role analysis over completed native evidence and verified prior memory | `2854c9b96d759c61c4afa750e5106c824fa81462e5a5d61ff55240f9cbda9df5` |
 | `research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_FORECASTER_FIRST_REPLAY_OUTPUT_POSITIVE_REVIEW_20260828.md` | Bounded A-memory Forecaster output review; no replay | `b02a1a19a21a878e9d0c52294db18fd2f6810624a41a7e9a5773a01538a8d9dc` |
 | `research/kalshi/frankie_raw_mbo_benchmark/FRANKIE_KNOWLEDGE_USE_AND_NONFORGETTING_REVIEW_20260828.md` | Actual Frankie audit of knowledge use and non-forgetting gates | `4e80987a3486d7bfe992192b8cf46706452d43dbeb0e30ca0721b45815669442` |
+| `research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_NATIVE_MBO_POSITIVE_FINDINGS_20260828.md` | Completed original-input exact-member/open-world positive report | `7b9bd3f11c28780900d76cfefd273ac7e9591c8e450b9b86b06a04fb8c32cde6` |
+| `research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_RECALCULATION_RECEIPT_20260828.json` | Hash-bound completion and artifact receipt | `094c32a4177edee9c16e92a288427d6e5d3777f23db8d2f954f0c6d5f310a7c1` |
 
 The A-clean retrospective report is not a substitute for the later corrected
 full mission-bound RT rerun. The opportunity memo proves that much richer exact
@@ -242,6 +287,8 @@ lock or authorization.
 | `research/kalshi/ng_exhaustion_two_frankies_workmode_packet_2day_20260825.py` | Historical packet layout only; never reuse reduced input builder | `6170f70e5ed3f4b1c1aa99631a32514c068623711d24ffaee979c9d676459bda` |
 | `research/kalshi/ng_exhaustion_two_frankies_workmode_coordinate_2day_20260825.py` | Historical sequential lock/handoff behavior only; requires real model proof | `2c7cf46f7cdaf5784be2eaf02d941efef8ed4f0762a49933d4dad3774a9767b5` |
 | `research/kalshi/frankie_raw_mbo_benchmark/native_frankie_knowledge_registry.py` | Fail-closed artifact validation, arm/role routing, deterministic bundle and receipt builder | `36c4f5d4165783819fa4fa0b63c71578aaf4879f045d4c1c0756695d38095561` |
+| `research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json` | Exact 105-identity ingestion/output registry with hard floor 90 | `ac3124acd80fcf2011d89614317d965e6e579ab776a8197046130079829c26e0` |
+| `research/kalshi/frankie_raw_mbo_benchmark/native_ingestion_layer_registry.py` | Registry, pre-call, and per-F_LAST causal-delivery gates | `4a8f97ddc92b1a79f2fd0e79c8bdfcc93c4487e980887206c9ddb5d84dc967ac` |
 | `research/kalshi/frankie_raw_mbo_benchmark/refresh_native_frankie_knowledge.py` | Deterministic capsule/manifest refresh and unregistered-file detection | `cd86357cf9db1b56232bb4956302f5306f3da30127e99221cd2060eb684702e3` |
 | `.github/workflows/frankie_native_knowledge_refresh_20260828.yml` | CI validation and reviewed refresh-PR automation | `25983bbbbea3a8bb99ff757565dea4c75a53d9ed5ef000797bfa96e3a9b15d8c` |
 
@@ -252,15 +299,17 @@ The native A-arm knowledge base is anchored at
 
 - `KNOWLEDGE_SOURCES_20260828.json` is the reviewed editable registry.
   File SHA-256:
-  `e5b0f474ecbd1d3b43952f4d004a1cf086223ad8f6ecb08b5588e9bdf2de78c6`.
+  `46f8fb5b59b175e4113140dbf4cb139895331a316ef4a2d0c837fb399ed44584`.
 - `A_CLEAN_POSITIVE_KNOWLEDGE_20260828.md` and
   `A_MEMORY_POSITIVE_KNOWLEDGE_20260828.md` are generated, same-arm promoted
-  capsules.
+  capsules. Their current file hashes are
+  `53a42357f5dd46b553ad73f34cb2023855a742a46398e9ec55beb8e4083b0188`
+  and `bc84a77d33393c7d04185fcbfa82794cef0efd45b4fd31f0b2ee245cfb8d9131`.
 - `KNOWLEDGE_MANIFEST_20260828.json` content-addresses every always-loaded and
   retrieval artifact. Its canonical manifest hash is
-  `3aab241337a31cfa1d579241c23322bc33f4136a1c3c7481874c0a5a072f287b`.
+  `435ca83925b126300dfc64ceef940bf19794c157b52b543b17fb917fe1bef9a6`.
   Its file SHA-256 is
-  `0c1d9ce9185cf5c33b5c90bb84d49d9bcc87592765442671bde94287b2dec877`.
+  `d84b923a8de0e2b336dd9f907103eafe242fcd75cc1db175b048b00c8f85f571`.
 - `native_frankie_knowledge_registry.py` validates bytes, routes arm/role
   profiles, builds exact principal contexts, appends a compact hash-bound
   retrieval index, verifies external proofs, and writes context and principal
@@ -308,15 +357,36 @@ For each arm preserve this order:
 The bounded first-replay output reviews are exploratory positive research and do
 not satisfy these full-run gates.
 
-## Verification completed in this housekeeping pass
+A separately requested `gpt-5.6-sol` advisory reviewed the exact-versus-average
+question and execution identity. It confirmed that exact members add substantial
+value beside daily averages, including boundary-member interpretation, complete
+extrema rosters, exact family/lifecycle paths, and true matched-pair work. It
+also reproduced a critical gate bypass: `validate_first_lock_and_freeze()` can
+currently accept a rehashed controller-only execution because it does not
+consume the successful principal-execution gate receipt. The coarse execution
+gate is not yet wired into either workflow or runner, requested/served model
+strings remain self-asserted, provider receipt bytes are not independently
+verified, and the original evidence ledger did not serialize complete
+before/after FIFO state for every member.
+
+The advisory itself exposed no provider-originated receipt, so it is design and
+audit evidence rather than a scientific principal-run receipt. Do not claim its
+served model, provider, invocation ID, usage, or response identity as proven.
+Close the identified gaps before any corrected rerun.
+
+## Verification completed through implementation checkpoint `405e01c2`
 
 - A-memory resumed only after full chain, adapter, controller, source cursor,
   group count, causal watermark, memory package, and evidence-prefix audit.
 - A-memory reached 100% and preserved `event_group_open=false`.
 - A-clean Forecaster complete chain and every available adapter/continuation
   sibling verify through sequence 11.
-- Focused recovery tests: `7/7` passed.
-- Complete benchmark test discovery: `29/29` passed.
+- Original-input A-memory member-first derivation completed and all output
+  artifact hashes were recorded in the committed machine receipt.
+- Registry-focused tests: `11/11` passed.
+- Complete benchmark test discovery: `60/60` passed.
+- Knowledge refresh/check is current at canonical manifest hash
+  `435ca83925b126300dfc64ceef940bf19794c157b52b543b17fb917fe1bef9a6`.
 - Python compilation and `git diff --check` passed.
 
 The housekeeping method used the pinned `addyosmani/agent-skills` release
@@ -330,30 +400,52 @@ stale-report leakage, cross-role mixing, and unnecessary context flooding.
 
 ## Next-chat order
 
-1. Read this handoff and the focused context hierarchy above.
-2. The two bounded Forecaster output-review reports have been reviewed and
-   remain positive scientific research artifacts; they are not principal-run
-   lock/freeze receipts.
-3. The positive-only A-memory RT retrospective research report is complete,
-   hash-registered, and promoted to the A-memory knowledge capsule. Preserve it
-   as diagnostic scientific evidence for the corrected rerun.
-4. Decide explicitly whether to finish the preserved A-clean Forecaster
-   diagnostic replay; if authorized, resume only from sequence 11 with the
-   latest-chain helper.
-5. Do not begin a full A-memory Forecaster replay before a valid same-arm RT
-   scientific freeze and one-way handoff.
-6. Plan corrected full mission-bound A-clean and A-memory reruns separately.
-7. Preserve Step-1 sealing and arm isolation throughout.
+1. Read this handoff, then validate the branch tip and every current hash before
+   editing.
+2. Preserve the completed A-memory member-first report and receipt. Do not rerun
+   that original-input calculation unless an artifact hash fails.
+3. Do not resume the preserved A-clean Forecaster diagnostic replay from
+   sequence 11. It is unnecessary for the A-memory output-improvement task and
+   remains unauthorized.
+4. Integrate `native_ingestion_layer_registry.py` into the actual packet and
+   model-call seam. Pre-call must validate all 105 identities, the exact
+   arm-applicable set, the hard floor of 90, static hashes, causal-stream
+   readiness, nine sealed layers, shadow status, and pending append-only
+   outputs. Every F_LAST group must then bind all 55 causal layers and the
+   previous delivery-receipt hash.
+5. Implement one real provider adapter for requested model `gpt-5.6-sol`.
+   Capture provider-originated requested/served model, provider/service,
+   invocation/request/response IDs, raw request/response hashes, token usage,
+   timestamps, and response/output identity. Self-asserted strings or booleans
+   must fail.
+6. Bind actual serialized input bytes through
+   `build_model_visible_context()` and `bind_principal_knowledge_use()`, the
+   selected profile, current mission, calculation contract, knowledge manifest,
+   ingestion registry, A-memory prior package/proof when applicable, pre-call
+   receipt, and complete causal-delivery chain.
+7. Close the reproduced lock bypass. Lock/freeze validation must consume a
+   successful principal-execution gate receipt and validated output object,
+   verify the real pre/post checkpoint chain, and atomically bind the principal
+   response bytes. A controller summary can never be locked.
+8. Finish the calculation implementation still absent from the initial
+   member-first baseline: complete before/after FIFO and priority lifecycle;
+   deterministic session/phase segmentation; true mirror matching with
+   distances and unmatched rosters; all causal clocks; replenishment,
+   resilience, absorption, withdrawal, and ladder topology; exhaustion
+   runways; PRIOR/T0/H+N; dipole paths; D-depth lineages; open-world discovery
+   fit/freeze receipts; and fixed/event-driven future-response tables with
+   at-risk denominators. Preserve exact members first and averages only where
+   separately valuable.
+9. Run full preflight and stop on any mission, knowledge, execution identity,
+   native-data, arm-isolation, or causal-delivery failure.
+10. Only after all gates pass, perform each corrected arm sequentially:
+    mission-bound RT -> actual model-output validation -> first lock -> freeze
+    -> one-way same-arm handoff -> Forecaster -> final validation and lock.
+    Never start Forecaster before its same-arm RT freeze.
+11. Keep all nine Step-1/answer/reveal layers sealed throughout this A-only
+    mission. Do not perform BOSS, B0/B1/B2, Granite, reconciliation, or scoring.
 
-Before beginning a full rerun in the next chat, ask Frankie whether additional
-valuable information can be extracted from the first run's original analytical
-focus when the same quantities are calculated without averaging and paired with
-their averaged views. Preserve exact members and strata; do not turn this note
-into a pooled or smoothing instruction.
-
-Also ask actual Frankie to audit the full execution identity before any rerun:
-exact requested/served model and provider, principal invocation evidence,
-profile/manifest/context/serialized-input hashes, usage receipt, response
-identity, and first-lock/freeze linkage. The knowledge-use receipt implemented
-here covers the context plane; the next audit must verify the complete
-end-to-end principal execution identity.
+The exact-versus-average question and complete execution-identity audit were
+asked in this chat. Their advisory answers are incorporated above. They do not
+remove the need for provider-originated receipts in the corrected scientific
+runs.
