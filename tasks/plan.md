@@ -1,5 +1,69 @@
 # Frankie full-stack October and boss/Sol-replacement lifecycle
 
+## Active tranche: BOSS state serialization
+
+### Overview
+
+Implement the accepted `boss-state-serialization` spec as the smallest additive BOSS continuation. The tranche creates a deterministic canonical-JSON snapshot boundary for later text-reasoner experiments without invoking Granite, Step-1, Frankie, a provider model, or changing the BOSS trunk/BLD-1/ReFRAG seams.
+
+Governing spec: `research/kalshi/frankie_boss/SPEC-boss-state-serialization.md`.
+
+### Architecture decisions
+
+- Canonical JSON is the sole authoritative first representation; no prose prompt wrapper is added.
+- The serializer consumes a new immutable typed snapshot that binds an existing `CausalPacket` identity plus separately declared typed sequence/graph/QSV state.
+- Existing `canonical_bytes`/float semantics are reused where semantically compatible instead of inventing a second accidental float policy.
+- Presence is explicit: real zero, source-missing/masked, and intentional ablation are distinct states.
+- QSV names/order come only from `QSV_FEATURE_REGISTRY`; width/order drift fails closed.
+- Parent/root graph relations are validated and serialized, not executed.
+- No unrestricted `extra` mapping exists; unknown answer/future/outcome fields cannot silently pass through.
+- Market ablation is generic and versioned; no Granite-specific field list is selected in this tranche.
+
+### Dependency graph
+
+`accepted spec` -> `RED serializer contract tests` -> `minimal serializer implementation` -> `focused + preservation tests` -> `doubt/review + provenance`.
+
+### Task list
+
+#### Phase 1: RED contract
+
+- [ ] Task BSS-1: Add focused failing serializer tests covering determinism, round-trip, graph/QSV preservation, value-state distinctions, fail-closed validation, provenance binding, and shape-preserving ablation.
+
+#### Checkpoint: RED
+
+- [ ] Focused test command fails for the intended missing serializer behavior, not due to unrelated import/environment failure.
+
+#### Phase 2: GREEN implementation
+
+- [ ] Task BSS-2: Add `state_serialization.py` with immutable typed state, validation, canonical serialization/parsing, hashing, and generic market-ablation mechanism using standard-library code plus existing BOSS/ReFRAG authorities.
+
+#### Checkpoint: GREEN
+
+- [ ] Serializer tests pass.
+- [ ] Existing causal/trunk/seam tests remain unchanged and pass in the available test environment.
+
+#### Phase 3: Review/provenance
+
+- [ ] Task BSS-3: Run bounded doubt-driven and five-axis review, address Critical/Required findings only, record exact RED/GREEN/environment receipts, and verify the remote branch.
+
+### Risks and mitigations
+
+| Risk | Impact | Mitigation |
+|---|---|---|
+| Serializer silently loses state | Granite null becomes uninterpretable | Exact typed round-trip tests and explicit registries |
+| Serializer leaks future/outcome data | Invalid experiment | Closed dataclasses, no arbitrary passthrough, causal identity binding |
+| Missing vs zero vs ablated collapse | Controls become invalid | Explicit value-state enum/marker with dedicated tests |
+| QSV order drift | Semantic corruption | Exact registry identity/order validation |
+| Graph relation malformed | Reasoner sees false ancestry | Validate parent indices/root rules before serialization |
+| New interface mutates BOSS architecture | Brownfield regression | New files only; preservation tests; no trunk edits |
+| Environment cannot execute torch suite | False regression claim | Distinguish focused standard-library serializer tests from historical/unrerun torch receipts; never claim a run that did not execute |
+
+### Open questions
+
+None block this mechanical tranche. Real Step-1 sample selection and any Granite prompt/model invocation remain separate later specs.
+
+---
+
 ## Completed checkpoint: Frankie boss / Sol replacement seam
 
 ### Outcome
