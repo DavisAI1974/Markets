@@ -9,7 +9,10 @@ import tempfile
 import unittest
 
 
-RESEARCH_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[4]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+RESEARCH_ROOT = REPO_ROOT / "research"
 ADAPTER_PATH = RESEARCH_ROOT / "ng_exhaustion_mbo_v4_state_adapter_20260820.py"
 RESUME_PATH = Path(__file__).resolve().parents[1] / "mbo_resume_state.py"
 
