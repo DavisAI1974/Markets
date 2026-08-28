@@ -1,0 +1,39 @@
+name: ONE-SHOT APPROVED - Step-1 V5R S3 Status Body 20260828
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_step1_v5r_s3_status_body_20260828.yml
+
+permissions:
+  contents: read
+
+jobs:
+  read-status:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_STEP1_V5R_S3_STATUS_BODY_20260828]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      BUCKET: bento-568968024170-us-east-2-an
+      RESULT_PREFIX: nymex/ng_mbo_5y_v0/step1_census/two_day_full_mbo_corrected/continuations/33113936522-1
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Read final worker status and archive presence
+        shell: bash
+        run: |
+          set -u -o pipefail
+          echo WORKER_STATUS_BODY_BEGIN
+          aws s3 cp "s3://$BUCKET/$RESULT_PREFIX/status/worker.json" -
+          echo
+          echo WORKER_STATUS_BODY_END
+          echo RESULTS_ARCHIVE_HEAD_BEGIN
+          aws s3api head-object --bucket "$BUCKET" --key "$RESULT_PREFIX/transfer/results.tar.gz" --output json || true
+          echo RESULTS_ARCHIVE_HEAD_END
