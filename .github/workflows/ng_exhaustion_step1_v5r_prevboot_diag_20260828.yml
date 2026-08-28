@@ -1,0 +1,68 @@
+name: ONE-SHOT APPROVED - Step-1 V5R Previous Boot Diagnose 20260828
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-october-aws-readonly-20260824
+    paths:
+      - .github/workflows/ng_exhaustion_step1_v5r_prevboot_diag_20260828.yml
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    if: ${{ contains(github.event.head_commit.message, '[APPROVED_STEP1_V5R_PREVBOOT_DIAGNOSE_20260828]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      SYSTEMD_UNIT: ng-exhaustion-step1-oom-v5r-33113936522-1.service
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Inspect previous boot read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, shlex, textwrap
+          unit=os.environ['SYSTEMD_UNIT']
+          body=textwrap.dedent(r'''
+            set -u -o pipefail
+            echo BOOTS_BEGIN
+            journalctl --list-boots --no-pager || true
+            echo BOOTS_END
+            echo LAST_REBOOTS_BEGIN
+            last -x -F | head -n 40 || true
+            echo LAST_REBOOTS_END
+            echo UNIT_PREV_BOOT_BEGIN
+            journalctl -b -1 -u "$unit" --no-pager -l || true
+            echo UNIT_PREV_BOOT_END
+            echo KERNEL_MEMORY_SIGNALS_BEGIN
+            journalctl -b -1 -k --no-pager -l | grep -Ei 'oom|out of memory|killed process|memory cgroup|page allocation failure|hung task|blocked for more than|soft lockup|hard lockup|watchdog|I/O error|nvme|ext4|xfs|blk_update_request' | tail -n 300 || true
+            echo KERNEL_MEMORY_SIGNALS_END
+            echo WINDOW_2320_2340_BEGIN
+            journalctl -b -1 --since '2026-08-27 23:20:00 UTC' --until '2026-08-27 23:40:00 UTC' --no-pager -l | grep -Ei 'ng-exhaustion|oom|memory|killed|systemd|shutdown|reboot|ssm|amazon|python|time|tee|watchdog|failed|error' | tail -n 500 || true
+            echo WINDOW_2320_2340_END
+            echo WINDOW_0015_0040_BEGIN
+            journalctl -b -1 --since '2026-08-28 00:15:00 UTC' --until '2026-08-28 00:40:00 UTC' --no-pager -l | grep -Ei 'ng-exhaustion|oom|memory|killed|systemd|shutdown|reboot|ssm|amazon|python|watchdog|failed|error|network|cloud' | tail -n 500 || true
+            echo WINDOW_0015_0040_END
+            echo PREV_BOOT_DIAG=PASS
+          ''')
+          script='unit='+shlex.quote(unit)+'\n'+body
+          open('/tmp/prevboot.json','w').write(json.dumps({'commands':['/bin/bash -lc '+shlex.quote(script)],'executionTimeout':['300']}))
+          PY
+          command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript --comment 'Read-only diagnose previous boot after Step-1 V5R guest impairment' --parameters file:///tmp/prevboot.json --timeout-seconds 300 --query 'Command.CommandId' --output text)"
+          for poll in $(seq 1 60); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in Success|Failed|Cancelled|TimedOut|Cancelling) break;; esac
+            sleep 5
+          done
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' --output json
+          test "$status" = Success
