@@ -3,26 +3,30 @@
 ## Active: BOSS state serialization
 
 ### Task BSS-1 — RED serializer contract
-- [ ] Add `research/kalshi/frankie_boss/tests/test_state_serialization.py` first.
-- [ ] Acceptance: tests specify deterministic bytes/hash, semantic round-trip, graph parent/root preservation, QSV registry order/mask preservation, real-zero vs missing vs ablated distinction, malformed structure rejection, provenance binding, and shape-preserving ablation.
-- [ ] Verify: focused serializer test command fails for the intended missing implementation rather than an unrelated environment/import failure.
-- [ ] Files: test file only.
+- [x] Add `research/kalshi/frankie_boss/tests/test_state_serialization.py` first.
+- [x] Acceptance: tests specify deterministic bytes/hash, semantic round-trip, graph parent/root preservation, QSV registry order/mask preservation, real-zero vs missing vs ablated distinction, malformed structure rejection, provenance binding, and shape-preserving ablation.
+- [x] Verify: focused serializer test command fails for the intended missing implementation rather than an unrelated environment/import failure.
+- [x] Files: test file only.
 
 ### Task BSS-2 — GREEN minimal serializer
-- [ ] Add `research/kalshi/frankie_boss/state_serialization.py` only after RED is established.
-- [ ] Acceptance: immutable typed snapshot; canonical JSON; parse/round-trip; SHA-256 identity; parent/QSV validation; explicit value-state markers; generic versioned market ablation; no unrestricted extra payload.
-- [ ] Verify: serializer tests pass; existing BOSS causal/trunk/seam tests remain unchanged and pass where the environment supports their dependencies.
-- [ ] Files: serializer module plus existing RED test file.
+- [x] Add `research/kalshi/frankie_boss/state_serialization.py` only after RED is established.
+- [x] Acceptance: immutable typed snapshot; canonical JSON; parse/round-trip; SHA-256 identity; parent/QSV validation; explicit value-state markers; generic versioned market ablation; no unrestricted extra payload.
+- [x] Verify focused serializer behavior: 20/20 passed after review-driven hardening; `py_compile` passed.
+- [ ] Verify repository-native preservation suite: existing causal/trunk/seam tests plus serializer tests. Sandbox cannot clone/materialize the repo, so this remains open rather than inferred.
+- [x] Files: serializer module plus existing RED test file; no existing BOSS executable modified.
 
 ### Task BSS-3 — Review and provenance
-- [ ] Run bounded doubt-driven/five-axis review on the serializer tranche.
-- [ ] Record exact RED/GREEN commands/results and environment constraints without upgrading historical receipts into new runs.
-- [ ] Confirm no Granite/provider/Step-1/Frankie call, no trunk/BLD/ReFRAG/core modification, and remote branch verification.
+- [x] Run bounded doubt-driven/five-axis review on the serializer tranche.
+- [x] Add RED regressions and fix the three actionable findings: mutable source-version mapping, ignored nested keys, unsupported schema-version parse.
+- [x] Record exact RED/GREEN commands/results and environment constraints without upgrading historical receipts into new runs.
+- [x] Confirm no Granite/provider/Step-1/Frankie call and no trunk/BLD/ReFRAG/core modification.
+- [x] Record `FRANKIE_BOSS_STATE_SERIALIZATION_PROVENANCE_20260828.md`.
 
 ### Checkpoint: serializer tranche
-- [ ] All accepted spec success criteria satisfied.
-- [ ] No Critical/Required review finding remains.
-- [ ] Real-data/Granite semantic testing remains separately gated.
+- [ ] Full accepted-spec completion remains gated only by the repository-native preservation test execution.
+- [x] No Critical/Required review finding remains in the serializer-specific focused tranche.
+- [x] Real-data/Granite semantic testing remains separately gated.
+- [x] Causal derivation of separately supplied typed rows from the packet hash is explicitly *not* claimed by this serializer and remains a later seam/semantic-validation requirement.
 
 ---
 
