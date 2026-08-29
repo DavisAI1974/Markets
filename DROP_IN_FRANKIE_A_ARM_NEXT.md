@@ -2,8 +2,9 @@
 
 BRANCH: `chatgpt/frankie-raw-mbo-benchmark-20260828`
 TIP AT HANDOFF: `bca3a53` or later - run `git log --oneline -1` and confirm it's that or later.
-STATUS: NOTHING LAUNCHED. Calculation layer built. **D6 and D5 closed. The driver RUNS.**
-Sections 4.6-4.16 still unfed. 500 tests green.
+STATUS: NOTHING LAUNCHED. Calculation layer built. **D6 and D5 closed. The driver RUNS.
+The runner can no longer stand in for Frankie, and the spawn contract that calls him
+exists.** Sections 4.6-4.16 still unfed. 522 tests green.
 
 ## 0. STOP BEFORE LAUNCH
 
@@ -69,8 +70,8 @@ readily as a right one, because it cannot falsify what it was used to derive.
 **D5:** no clustering in this run.
 
 **`on_invoke` (Greg):** Sol runs as an agent session over committed files exactly as the
-blind/refine group runs did - **no API call**. So `on_invoke` stages a state file at the
-cutoff; the spawn reads it later. Closes section 0 item 5 as a question; the build remains.
+blind/refine group runs did - **no API call**. Decided AND built: `on_invoke` is gone,
+replaced by `stage_spawn`. See section 2b.
 
 **The driver RUNS** - a pass executes end to end and finalizes ACCEPTED, which it had never
 done. 13 tests where it had none.
