@@ -41,6 +41,9 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_session import (
     trade_day,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.periodic_checkpointer import PeriodicCheckpointer
+from research.kalshi.frankie_raw_mbo_benchmark.native_full_capture_adapter import (
+    FullCaptureAdapter,
+)
 from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import V4MboAdapter
 
 CAUSAL_CLOCK = "ts_recv_ns"
@@ -197,7 +200,12 @@ class NativeReplayDriver:
         self.session_rule = session_rule
         self.cadence = cadence
         self.run = run
-        self.adapter = adapter if adapter is not None else V4MboAdapter()
+        # D60: defaults to the CAPTURING adapter. `V4MboAdapter` discards the per-record
+        # book effect, the reconstructed FIFO queue, the book below level ten, the per-side
+        # event counts, the touch quantity for T/F/M and every anomaly magnitude. The locked
+        # file is untouched - `FullCaptureAdapter` subclasses it - so a caller who needs the
+        # byte-identical original can still pass one in.
+        self.adapter = adapter if adapter is not None else FullCaptureAdapter()
         self.checkpointer = checkpointer
         self.materialize_full_state = materialize_full_state
         self.stage_spawn = stage_spawn
