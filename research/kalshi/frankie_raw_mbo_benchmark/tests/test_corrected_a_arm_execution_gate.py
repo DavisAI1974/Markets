@@ -60,16 +60,27 @@ def surface_inventory() -> dict[str, object]:
     return value
 
 
+def _expected() -> dict[str, object]:
+    return {
+        "expected_arm": "A_MEMORY",
+        "expected_role": "REAL_TIME_FRANKIE",
+        "expected_mission_sha256": SHA,
+        "expected_calculation_contract_sha256": SHA,
+        "expected_surface_inventory_hash": SHA,
+    }
+
+
 def principal_execution() -> dict[str, object]:
     value = {
         "schema": "FRANKIE_NATIVE_RAW_MBO_PRINCIPAL_EXECUTION_V1",
         "run_id": "corrected-a-memory-1",
         "arm": "A_MEMORY",
         "role": "REAL_TIME_FRANKIE",
-        "provider": "provider",
-        "requested_model": "frankie-requested",
-        "served_model": "frankie-served",
-        "principal_invocation_id": "invocation-1",
+        "principal": "gpt-5.6-sol",
+        "spawn_request_path": "forecasts/frankie/spawn_request_0001.json",
+        "spawn_request_sha256": SHA,
+        "principal_artifact_path": "forecasts/frankie/principal_findings_0001.json",
+        "principal_artifact_sha256": OTHER_SHA,
         "actual_principal_invocation": True,
         "controller_only": False,
         "profile_id": "RT_A_MEMORY_SECOND_PASS",
@@ -84,16 +95,10 @@ def principal_execution() -> dict[str, object]:
         "calculation_receipt_sha256": SHA,
         "pre_call_checkpoint_hash": SHA,
         "post_call_checkpoint_hash": OTHER_SHA,
-        "usage": {
-            "input_tokens": 100,
-            "output_tokens": 20,
-            "total_tokens": 120,
-            "provider_usage_receipt_sha256": SHA,
-        },
-        "response": {
-            "response_id": "response-1",
-            "response_sha256": SHA,
-            "output_sha256": OTHER_SHA,
+        "artifact": {
+            "artifact_path": "forecasts/frankie/principal_findings_0001.json",
+            "artifact_sha256": OTHER_SHA,
+            "findings_sha256": SHA,
             "analysis_author": "REAL_TIME_FRANKIE",
         },
         "execution_receipt_hash": "",
@@ -150,7 +155,7 @@ class CorrectedAArmExecutionGateTests(unittest.TestCase):
             expected_calculation_contract_sha256=SHA,
             expected_surface_inventory_hash=SHA,
         )
-        self.assertEqual(receipt["response_output_sha256"], OTHER_SHA)
+        self.assertEqual(receipt["principal_findings_sha256"], SHA)
 
     def test_rejects_controller_only_execution(self) -> None:
         value = principal_execution()
@@ -169,22 +174,52 @@ class CorrectedAArmExecutionGateTests(unittest.TestCase):
                 expected_surface_inventory_hash=SHA,
             )
 
-    def test_rejects_missing_or_zero_usage(self) -> None:
+    def test_rejects_an_artifact_that_is_its_own_request(self) -> None:
+        # A run that returned its own input produced no findings. There is no provider to
+        # attest anything in an agent-session run, so this identity IS the proof.
         value = principal_execution()
-        value["usage"]["input_tokens"] = 0
-        value["usage"]["total_tokens"] = 20
+        value["principal_artifact_sha256"] = value["spawn_request_sha256"]
+        value["artifact"]["artifact_sha256"] = value["spawn_request_sha256"]
+        value["execution_receipt_hash"] = canonical_hash(value, omit="execution_receipt_hash")
+        with self.assertRaisesRegex(CorrectedExecutionGateError, "returned its own input"):
+            validate_principal_execution(
+                value, **_expected())
+
+    def test_rejects_an_artifact_block_naming_a_different_path(self) -> None:
+        value = principal_execution()
+        value["artifact"]["artifact_path"] = "forecasts/frankie/somewhere_else.json"
+        value["execution_receipt_hash"] = canonical_hash(value, omit="execution_receipt_hash")
+        with self.assertRaisesRegex(CorrectedExecutionGateError, "different paths"):
+            validate_principal_execution(value, **_expected())
+
+    def test_a_missing_artifact_hash_is_refused(self) -> None:
+        # The file-based replacement for the old zero-token-usage check. A run with no
+        # artifact hash is a run with nothing to bind to, which is not a run.
+        value = principal_execution()
+        value["principal_artifact_sha256"] = ""
         value["execution_receipt_hash"] = canonical_hash(
             value, omit="execution_receipt_hash"
         )
-        with self.assertRaisesRegex(CorrectedExecutionGateError, "token usage"):
-            validate_principal_execution(
-                value,
-                expected_arm="A_MEMORY",
-                expected_role="REAL_TIME_FRANKIE",
-                expected_mission_sha256=SHA,
-                expected_calculation_contract_sha256=SHA,
-                expected_surface_inventory_hash=SHA,
-            )
+        with self.assertRaises(CorrectedExecutionGateError):
+            validate_principal_execution(value, **_expected())
+
+    def test_a_provider_shaped_execution_record_is_REFUSED(self) -> None:
+        """The regression guard for the correction that kept having to be repeated.
+
+        The gate used to REQUIRE `provider`, `served_model`, `principal_invocation_id` and
+        reconciling token `usage`. In an agent-session run none of those exist, so the check
+        rejected the correct procedure and admitted only an API run. This pins the reverse:
+        an API-shaped record is now refused outright, so the old architecture cannot quietly
+        return through a record that still carries it.
+        """
+        value = principal_execution()
+        value["provider"] = "openai"
+        value["usage"] = {"input_tokens": 100, "output_tokens": 20, "total_tokens": 120}
+        value["execution_receipt_hash"] = canonical_hash(
+            value, omit="execution_receipt_hash"
+        )
+        with self.assertRaises(CorrectedExecutionGateError):
+            validate_principal_execution(value, **_expected())
 
     def test_rejects_mission_or_surface_drift(self) -> None:
         value = principal_execution()
@@ -204,8 +239,8 @@ class CorrectedAArmExecutionGateTests(unittest.TestCase):
             "schema": "FRANKIE_NATIVE_RAW_MBO_RT_FIRST_LOCK_V1",
             "run_id": execution["run_id"],
             "execution_receipt_hash": execution["execution_receipt_hash"],
-            "principal_response_id": execution["response"]["response_id"],
-            "principal_output_sha256": execution["response"]["output_sha256"],
+            "principal_artifact_path": execution["artifact"]["artifact_path"],
+            "principal_findings_sha256": execution["artifact"]["findings_sha256"],
             "output_validation_receipt_sha256": SHA,
             "principal_output_locked": True,
             "controller_summary_locked": False,
@@ -216,13 +251,13 @@ class CorrectedAArmExecutionGateTests(unittest.TestCase):
             "schema": "FRANKIE_NATIVE_RAW_MBO_RT_FREEZE_V1",
             "run_id": execution["run_id"],
             "first_lock_hash": first_lock["first_lock_hash"],
-            "principal_output_sha256": execution["response"]["output_sha256"],
+            "principal_findings_sha256": execution["artifact"]["findings_sha256"],
             "one_way_handoff_not_yet_created": True,
             "freeze_hash": "",
         }
         freeze["freeze_hash"] = canonical_hash(freeze, omit="freeze_hash")
         receipt = validate_first_lock_and_freeze(execution, first_lock, freeze)
-        self.assertEqual(receipt["locked_output_sha256"], OTHER_SHA)
+        self.assertEqual(receipt["locked_findings_sha256"], SHA)
 
     def test_rejects_controller_summary_lock(self) -> None:
         execution = principal_execution()
@@ -230,8 +265,8 @@ class CorrectedAArmExecutionGateTests(unittest.TestCase):
             "schema": "FRANKIE_NATIVE_RAW_MBO_RT_FIRST_LOCK_V1",
             "run_id": execution["run_id"],
             "execution_receipt_hash": execution["execution_receipt_hash"],
-            "principal_response_id": execution["response"]["response_id"],
-            "principal_output_sha256": execution["response"]["output_sha256"],
+            "principal_artifact_path": execution["artifact"]["artifact_path"],
+            "principal_findings_sha256": execution["artifact"]["findings_sha256"],
             "output_validation_receipt_sha256": SHA,
             "principal_output_locked": False,
             "controller_summary_locked": True,
@@ -242,7 +277,7 @@ class CorrectedAArmExecutionGateTests(unittest.TestCase):
             "schema": "FRANKIE_NATIVE_RAW_MBO_RT_FREEZE_V1",
             "run_id": execution["run_id"],
             "first_lock_hash": first_lock["first_lock_hash"],
-            "principal_output_sha256": execution["response"]["output_sha256"],
+            "principal_findings_sha256": execution["artifact"]["findings_sha256"],
             "one_way_handoff_not_yet_created": True,
             "freeze_hash": "",
         }

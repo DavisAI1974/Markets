@@ -211,10 +211,11 @@ EXECUTION_KEYS = frozenset(
         "run_id",
         "arm",
         "role",
-        "provider",
-        "requested_model",
-        "served_model",
-        "principal_invocation_id",
+        "principal",
+        "spawn_request_path",
+        "spawn_request_sha256",
+        "principal_artifact_path",
+        "principal_artifact_sha256",
         "actual_principal_invocation",
         "controller_only",
         "profile_id",
@@ -229,16 +230,12 @@ EXECUTION_KEYS = frozenset(
         "calculation_receipt_sha256",
         "pre_call_checkpoint_hash",
         "post_call_checkpoint_hash",
-        "usage",
-        "response",
+        "artifact",
         "execution_receipt_hash",
     }
 )
-USAGE_KEYS = frozenset(
-    {"input_tokens", "output_tokens", "total_tokens", "provider_usage_receipt_sha256"}
-)
-RESPONSE_KEYS = frozenset(
-    {"response_id", "response_sha256", "output_sha256", "analysis_author"}
+ARTIFACT_KEYS = frozenset(
+    {"artifact_path", "artifact_sha256", "findings_sha256", "analysis_author"}
 )
 
 
@@ -371,7 +368,25 @@ def validate_principal_execution(
     expected_calculation_contract_sha256: str,
     expected_surface_inventory_hash: str,
 ) -> dict[str, Any]:
-    """Reject controller work or an incompletely identified model response."""
+    """Reject controller work, or a principal run that is not proven by committed files.
+
+    **This gate is FILE-BASED, not provider-attested** (generalized 2026-08-29; Greg has
+    had to say this every session: *"we're not using the openai api!!! we are running 5.6sol
+    like you ran the blind/refine groups"*). It previously demanded `provider`,
+    `requested_model`, `served_model`, `principal_invocation_id` and reconciling token
+    `usage` with a provider usage receipt. **None of those exist in an agent-session run**,
+    so the gate as written would have REJECTED the correct procedure and accepted only an
+    API run - the enforcement encoded the architecture that kept being corrected, which is
+    why the correction kept being needed. A decision recorded in prose while the check still
+    demands the opposite is a decision that has not landed.
+
+    What proves a principal ran is what proved it for twenty-four group cycles: it read a
+    committed staged request at a known path and left a committed artifact at a known path
+    in the expected schema, both hash-bound, with the coordinator hard-failing on missing or
+    malformed. `native_staging.py` implements exactly that contract and this gate now checks
+    it. A request and its artifact hashing identically is refused: a run that returned its
+    own input produced no findings.
+    """
     _require_exact_keys(execution, EXECUTION_KEYS, "principal execution")
     if execution.get("schema") != EXECUTION_SCHEMA:
         raise CorrectedExecutionGateError("unsupported principal execution schema")
@@ -390,10 +405,9 @@ def validate_principal_execution(
 
     for field in (
         "run_id",
-        "provider",
-        "requested_model",
-        "served_model",
-        "principal_invocation_id",
+        "principal",
+        "spawn_request_path",
+        "principal_artifact_path",
         "profile_id",
     ):
         _require_text(execution.get(field), field)
@@ -435,22 +449,32 @@ def validate_principal_execution(
     if execution["pre_call_checkpoint_hash"] == execution["post_call_checkpoint_hash"]:
         raise CorrectedExecutionGateError("pre/post principal checkpoints are not distinct")
 
-    usage = _require_exact_keys(execution.get("usage"), USAGE_KEYS, "usage")
-    counts = []
-    for field in ("input_tokens", "output_tokens", "total_tokens"):
-        value = usage.get(field)
-        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
-            raise CorrectedExecutionGateError("positive provider token usage is required")
-        counts.append(value)
-    if counts[0] + counts[1] != counts[2]:
-        raise CorrectedExecutionGateError("provider token usage does not reconcile")
-    _require_sha(usage.get("provider_usage_receipt_sha256"), "provider usage receipt")
+    # THE FILE-BASED EXECUTION RECORD. What proves the principal ran is that it read a
+    # committed staged request and left a committed artifact in the expected schema at a
+    # known path - the same proof that stood for twenty-four group cycles. There is no
+    # provider to attest anything, so nothing here asks one to.
+    request_sha = _require_sha(execution.get("spawn_request_sha256"), "spawn request")
+    artifact_sha = _require_sha(
+        execution.get("principal_artifact_sha256"), "principal artifact"
+    )
+    if request_sha == artifact_sha:
+        raise CorrectedExecutionGateError(
+            "the staged request and the principal artifact hash identically; a run that "
+            "returned its own input did not produce findings"
+        )
 
-    response = _require_exact_keys(execution.get("response"), RESPONSE_KEYS, "response")
-    _require_text(response.get("response_id"), "response_id")
-    _require_sha(response.get("response_sha256"), "response_sha256")
-    output_sha = _require_sha(response.get("output_sha256"), "output_sha256")
-    if response.get("analysis_author") != expected_role:
+    artifact = _require_exact_keys(execution.get("artifact"), ARTIFACT_KEYS, "artifact")
+    _require_text(artifact.get("artifact_path"), "artifact_path")
+    if artifact.get("artifact_path") != execution["principal_artifact_path"]:
+        raise CorrectedExecutionGateError(
+            "the artifact block and the execution record name different paths"
+        )
+    if _require_sha(artifact.get("artifact_sha256"), "artifact_sha256") != artifact_sha:
+        raise CorrectedExecutionGateError(
+            "the artifact block and the execution record disagree about the artifact hash"
+        )
+    output_sha = _require_sha(artifact.get("findings_sha256"), "findings_sha256")
+    if artifact.get("analysis_author") != expected_role:
         raise CorrectedExecutionGateError("principal analysis author does not match role")
 
     return {
@@ -459,12 +483,12 @@ def validate_principal_execution(
         "arm": expected_arm,
         "role": expected_role,
         "execution_receipt_hash": execution["execution_receipt_hash"],
-        "provider": execution["provider"],
-        "requested_model": execution["requested_model"],
-        "served_model": execution["served_model"],
-        "principal_invocation_id": execution["principal_invocation_id"],
-        "response_id": response["response_id"],
-        "response_output_sha256": output_sha,
+        "principal": execution["principal"],
+        "spawn_request_path": execution["spawn_request_path"],
+        "spawn_request_sha256": request_sha,
+        "principal_artifact_path": execution["principal_artifact_path"],
+        "principal_artifact_sha256": artifact_sha,
+        "principal_findings_sha256": output_sha,
         "controller_only": False,
         "actual_principal_invocation": True,
     }
@@ -482,9 +506,9 @@ def validate_first_lock_and_freeze(
         execution, omit="execution_receipt_hash"
     ):
         raise CorrectedExecutionGateError("execution hash drift at lock gate")
-    response = execution.get("response")
-    if not isinstance(response, Mapping):
-        raise CorrectedExecutionGateError("principal response is absent at lock gate")
+    artifact = execution.get("artifact")
+    if not isinstance(artifact, Mapping):
+        raise CorrectedExecutionGateError("principal artifact is absent at lock gate")
 
     if first_lock.get("schema") != FIRST_LOCK_SCHEMA:
         raise CorrectedExecutionGateError("unsupported first-lock schema")
@@ -494,9 +518,9 @@ def validate_first_lock_and_freeze(
         raise CorrectedExecutionGateError("first-lock run mismatch")
     if first_lock.get("execution_receipt_hash") != execution.get("execution_receipt_hash"):
         raise CorrectedExecutionGateError("first lock is not linked to principal execution")
-    if first_lock.get("principal_response_id") != response.get("response_id"):
-        raise CorrectedExecutionGateError("first lock is not linked to principal response")
-    if first_lock.get("principal_output_sha256") != response.get("output_sha256"):
+    if first_lock.get("principal_artifact_path") != artifact.get("artifact_path"):
+        raise CorrectedExecutionGateError("first lock is not linked to the principal artifact")
+    if first_lock.get("principal_findings_sha256") != artifact.get("findings_sha256"):
         raise CorrectedExecutionGateError("first lock does not bind principal output")
     _require_sha(first_lock.get("output_validation_receipt_sha256"), "output validation")
     if first_lock.get("controller_summary_locked") is not False:
@@ -512,7 +536,7 @@ def validate_first_lock_and_freeze(
         raise CorrectedExecutionGateError("freeze run mismatch")
     if freeze.get("first_lock_hash") != first_lock.get("first_lock_hash"):
         raise CorrectedExecutionGateError("freeze does not link to first lock")
-    if freeze.get("principal_output_sha256") != response.get("output_sha256"):
+    if freeze.get("principal_findings_sha256") != artifact.get("findings_sha256"):
         raise CorrectedExecutionGateError("freeze does not bind principal output")
     if freeze.get("one_way_handoff_not_yet_created") is not True:
         raise CorrectedExecutionGateError("freeze must precede one-way handoff")
@@ -523,7 +547,7 @@ def validate_first_lock_and_freeze(
         "execution_receipt_hash": execution["execution_receipt_hash"],
         "first_lock_hash": first_lock["first_lock_hash"],
         "freeze_hash": freeze["freeze_hash"],
-        "locked_output_sha256": response["output_sha256"],
+        "locked_findings_sha256": artifact["findings_sha256"],
         "principal_output_locked": True,
         "controller_summary_locked": False,
         "freeze_precedes_one_way_handoff": True,
