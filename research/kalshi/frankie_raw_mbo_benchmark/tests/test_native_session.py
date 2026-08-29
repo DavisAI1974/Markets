@@ -15,13 +15,27 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_session import (
     EXCHANGE_TZ_NAME,
     NS_PER_SECOND,
     REOPEN_LOCAL_TIME,
+    CARRIED_PHASES,
+    POST_CLOSE,
+    POST_SETTLEMENT,
+    PRE_OPEN,
+    PRE_SETTLEMENT,
+    SETTLEMENT,
+    SETTLEMENT_END_ET,
+    SETTLEMENT_START_ET,
+    SETTLEMENT_TZ_NAME,
     SessionError,
     SessionSegmenter,
     close_instant_ns,
     continuity_segment,
+    phase_within,
+    segment_of,
+    segment_stream,
     group_event_ns,
-    in_halt_window,
     reopen_instant_ns,
+    session_open_ns,
+    session_phase,
+    settlement_window_ns,
     trade_day,
 )
 
@@ -71,14 +85,14 @@ class ExchangeScheduleTest(unittest.TestCase):
 class RosterCheckTest(unittest.TestCase):
     """Our tape checked against the exchange rule, day by day."""
 
-    def test_each_roster_close_group_lands_in_the_halt_window(self):
+    def test_each_roster_close_group_lands_after_its_own_close(self):
         for label, at in (
             ("20211001", FRIDAY_CLOSE_1001),
             ("20211004", WITHDRAWAL_1004),
             ("20211005", WITHDRAWAL_1005),
         ):
             with self.subTest(day=label):
-                self.assertTrue(in_halt_window(at))
+                self.assertGreaterEqual(at, close_instant_ns(trade_day(at)))
 
     def test_sunday_has_no_close(self):
         """20211003 is a Sunday; CME halts Monday-Friday only, so the one roster day with no
@@ -97,15 +111,29 @@ class RosterCheckTest(unittest.TestCase):
 
 
 class HaltWindowTest(unittest.TestCase):
-    def test_window_is_half_open_on_the_close(self):
-        day = date(2021, 10, 4)
-        self.assertTrue(in_halt_window(close_instant_ns(day)))
-        self.assertFalse(in_halt_window(close_instant_ns(day) - 1))
+    """The halt is expressed as POST_CLOSE, not as a second overlapping flag.
 
-    def test_window_is_half_open_on_the_reopen(self):
+    A `in_halt_window` helper existed here and was removed under review: it tested the local
+    clock alone, so it read True at 16:30 CT on a SATURDAY, contradicting `session_phase`
+    for the same instant. Two fields in one output dict disagreeing about the same fact is
+    the shape of the S109 `session_b_share` defect - both present, both plausible, silently
+    incompatible. These tests pin the behaviour so it cannot come back."""
+
+    def test_halt_is_half_open_on_the_close(self):
         day = date(2021, 10, 4)
-        self.assertFalse(in_halt_window(reopen_instant_ns(day)))
-        self.assertTrue(in_halt_window(reopen_instant_ns(day) - 1))
+        self.assertEqual(session_phase(close_instant_ns(day)), POST_CLOSE)
+        self.assertNotEqual(session_phase(close_instant_ns(day) - 1), POST_CLOSE)
+
+    def test_halt_is_half_open_on_the_reopen(self):
+        day = date(2021, 10, 4)
+        self.assertNotEqual(session_phase(reopen_instant_ns(day)), POST_CLOSE)
+        self.assertEqual(session_phase(reopen_instant_ns(day) - 1), POST_CLOSE)
+
+    def test_the_weekend_clock_hour_is_not_a_halt(self):
+        """16:30 CT on a Saturday is not the daily halt - the book has been down since
+        Friday. A local-clock test cannot tell these apart; the trade date can."""
+        saturday_1630_ct = ns("2021-10-02T21:30:00Z")
+        self.assertEqual(session_phase(saturday_1630_ct), PRE_OPEN)
 
 
 class TradeDayTest(unittest.TestCase):
@@ -185,6 +213,100 @@ class ContinuitySegmentTest(unittest.TestCase):
         )
 
 
+class SettlementWindowTest(unittest.TestCase):
+    """14:28:00-14:30:00 ET, per the NYMEX Energy Futures Daily Settlement Procedure."""
+
+    def test_window_times_and_zone_match_the_procedure(self):
+        self.assertEqual((SETTLEMENT_START_ET.hour, SETTLEMENT_START_ET.minute), (14, 28))
+        self.assertEqual((SETTLEMENT_END_ET.hour, SETTLEMENT_END_ET.minute), (14, 30))
+        self.assertEqual(SETTLEMENT_TZ_NAME, "America/New_York")
+
+    def test_window_is_exactly_two_minutes(self):
+        start, end = settlement_window_ns(date(2021, 10, 4))
+        self.assertEqual(end - start, 120 * NS_PER_SECOND)
+
+    def test_window_is_resolved_in_eastern_not_converted_from_central(self):
+        """The session is defined in CT and settlement in ET. Resolving each in its own
+        stated zone is what stops one drifting when the other is edited."""
+        start, _ = settlement_window_ns(date(2021, 10, 4))
+        utc = datetime.fromtimestamp(start // NS_PER_SECOND, tz=timezone.utc)
+        self.assertEqual((utc.hour, utc.minute), (18, 28))
+
+
+class SessionPhaseTest(unittest.TestCase):
+    """D6b. Every boundary is exchange-stated; none is fitted to our tape."""
+
+    def test_settlement_window_is_half_open(self):
+        start, end = settlement_window_ns(date(2021, 10, 4))
+        self.assertEqual(session_phase(start - 1), PRE_SETTLEMENT)
+        self.assertEqual(session_phase(start), SETTLEMENT)
+        self.assertEqual(session_phase(end - 1), SETTLEMENT)
+        self.assertEqual(session_phase(end), POST_SETTLEMENT)
+
+    def test_close_ends_the_session_and_reopen_starts_the_next(self):
+        close = close_instant_ns(date(2021, 10, 4))
+        self.assertEqual(session_phase(close - 1), POST_SETTLEMENT)
+        self.assertEqual(session_phase(close), POST_CLOSE)
+        self.assertEqual(session_phase(reopen_instant_ns(date(2021, 10, 4))), PRE_SETTLEMENT)
+
+    def test_each_roster_close_group_is_post_close(self):
+        for label, at in (
+            ("20211001", FRIDAY_CLOSE_1001),
+            ("20211004", WITHDRAWAL_1004),
+            ("20211005", WITHDRAWAL_1005),
+        ):
+            with self.subTest(day=label):
+                self.assertEqual(session_phase(at), POST_CLOSE)
+
+    def test_weekend_gap_is_pre_open_not_a_trading_phase(self):
+        """Saturday carries Monday's trade date, but the book is down - it must not be
+        labelled as part of Monday's session."""
+        saturday = ns("2021-10-02T17:00:00Z")
+        self.assertEqual(trade_day(saturday), date(2021, 10, 4))
+        self.assertEqual(session_phase(saturday), PRE_OPEN)
+
+    def test_sunday_reopen_starts_mondays_session(self):
+        opened = session_open_ns(date(2021, 10, 4))
+        self.assertEqual(session_phase(opened - 1), PRE_OPEN)
+        self.assertEqual(session_phase(opened), PRE_SETTLEMENT)
+
+    def test_a_full_trade_date_visits_every_phase_in_order(self):
+        """The phases partition the trade date - the gap D6b was open on."""
+        day = date(2021, 10, 5)
+        start, end = settlement_window_ns(day)
+        marks = [
+            (session_open_ns(day), PRE_SETTLEMENT),
+            (start, SETTLEMENT),
+            (end, POST_SETTLEMENT),
+            (close_instant_ns(day), POST_CLOSE),
+        ]
+        self.assertEqual([session_phase(at) for at, _ in marks], [want for _, want in marks])
+        self.assertEqual([at for at, _ in marks], sorted(at for at, _ in marks))
+        for at, _ in marks:
+            self.assertEqual(trade_day(at), day)
+
+    def test_the_instant_before_a_midweek_open_belongs_to_the_prior_date(self):
+        """There is no PRE_OPEN on a normal weekday: the hour before Tuesday's session is
+        Monday's POST_CLOSE, because the halt belongs to the date it closes."""
+        opened = session_open_ns(date(2021, 10, 5))
+        self.assertEqual(session_phase(opened - 1), POST_CLOSE)
+        self.assertEqual(trade_day(opened - 1), date(2021, 10, 4))
+
+    def test_pre_open_appears_only_when_the_gap_exceeds_the_daily_halt(self):
+        """PRE_OPEN is the weekend (and, once wired, holiday) signature - a ~49h censoring
+        gap rather than a 1h one."""
+        weekend = ns("2021-10-02T17:00:00Z")
+        self.assertEqual(session_phase(weekend), PRE_OPEN)
+        midweek_halt = close_instant_ns(date(2021, 10, 4)) + 1800 * NS_PER_SECOND
+        self.assertEqual(session_phase(midweek_halt), POST_CLOSE)
+
+    def test_carried_phases_are_a_starting_point_not_a_validator(self):
+        """Open-world rule: nothing may reject a phase that is not carried."""
+        key_like = {"session_phase": "A_PHASE_NOBODY_HAS_NAMED_YET"}
+        self.assertNotIn(key_like["session_phase"], CARRIED_PHASES)
+        self.assertEqual(len(set(CARRIED_PHASES)), len(CARRIED_PHASES))
+
+
 class SegmenterTest(unittest.TestCase):
     def test_refuses_non_monotonic_event_times(self):
         segmenter = SessionSegmenter()
@@ -206,7 +328,8 @@ class SegmenterTest(unittest.TestCase):
     def test_assign_group_reports_all_three_fields(self):
         out = SessionSegmenter().assign_group(group(WITHDRAWAL_1004))
         self.assertEqual(out["trade_day"], "20211004")
-        self.assertTrue(out["in_halt_window"])
+        self.assertEqual(out["session_phase"], POST_CLOSE)
+        self.assertNotIn("in_halt_window", out)
         self.assertEqual(out["continuity_segment"], continuity_segment(WITHDRAWAL_1004))
 
     def test_group_without_raw_actions_is_refused(self):
@@ -218,7 +341,26 @@ class SegmenterTest(unittest.TestCase):
     def test_segmentation_reads_event_time_not_receive_time(self):
         close = close_instant_ns(date(2021, 10, 4))
         straddler = {"raw_actions": [{"ts_event_ns": close - 1, "ts_recv_ns": close + 250_000_000}]}
-        self.assertFalse(SessionSegmenter().assign_group(straddler)["in_halt_window"])
+        self.assertEqual(
+            SessionSegmenter().assign_group(straddler)["session_phase"], POST_SETTLEMENT
+        )
+
+    def test_precomputed_trade_date_helpers_agree_with_the_single_argument_ones(self):
+        """The streaming path resolves the trade date once and passes it down; that shortcut
+        must not be able to drift from the standalone functions."""
+        for at in (FRIDAY_CLOSE_1001, WITHDRAWAL_1004, WITHDRAWAL_1005,
+                   ns("2021-10-02T17:00:00Z"), ns("2021-10-04T18:29:00Z")):
+            with self.subTest(at=at):
+                day = trade_day(at)
+                self.assertEqual(phase_within(at, day), session_phase(at))
+                self.assertEqual(segment_of(day), continuity_segment(at))
+
+    def test_segment_stream_is_lazy(self):
+        """4.26M groups must not be materialized into a list."""
+        import types
+        out = segment_stream(iter([group(WITHDRAWAL_1004)]))
+        self.assertIsInstance(out, types.GeneratorType)
+        self.assertEqual([row["trade_day"] for row in out], ["20211004"])
 
 
 if __name__ == "__main__":

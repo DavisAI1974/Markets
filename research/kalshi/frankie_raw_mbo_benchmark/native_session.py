@@ -41,13 +41,33 @@ calendar is consulted here. The roster (2021-10-01 to 10-05) contains none - Col
 was 10-11 - so this is a declared gap rather than a latent bug, and it must be closed before
 this module is used on any window that spans one.
 
-Phase (`session_phase`) is deliberately NOT assigned here - see D6b, still open.
+**Phase (D6b)** is derived from the same authority. Every boundary below is stated by the
+exchange, none is fitted to our tape:
+
+* the daily close at 16:00 CT and reopen at 17:00 CT (CME Globex energy hours), and
+* the settlement window, which the NYMEX Energy Futures Daily Settlement Procedure fixes for
+  NG as **14:28:00 to 14:30:00 Eastern Time** - "settled by CME Group staff based solely
+  upon trading activity on CME Globex" in that window.
+
+Those two carve the trade date into `PRE_OPEN`, `PRE_SETTLEMENT`, `SETTLEMENT`,
+`POST_SETTLEMENT` and `POST_CLOSE`. Note the settlement window is defined in **Eastern**
+time while the session is defined in **Central**; each is resolved in the zone the exchange
+states it in rather than converted, so neither drifts on its own.
+
+`CARRIED_PHASES` is a **starting vocabulary, not a validator**. Per the open-world rule,
+`session_phase` is not checked against a closed set anywhere in this tree, and it must stay
+that way: a novel phase rounded into the nearest carried label looks like a confirmation of
+the label rather than a discovery.
+
+**Not handled, declared rather than latent:** exchange holidays (no calendar is consulted;
+the roster contains none), and the special settlement procedure the same document applies on
+the last two trading days of the front month.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta, timezone
-from typing import Any, Iterable, Mapping
+from typing import Any, Iterable, Iterator, Mapping
 from zoneinfo import ZoneInfo
 
 EXCHANGE_TZ = ZoneInfo("America/Chicago")
@@ -59,16 +79,33 @@ CLOSE_LOCAL_TIME = time(16, 0)
 REOPEN_LOCAL_TIME = time(17, 0)
 """Daily reopen, one hour after the close. A continuity segment begins here."""
 
+SETTLEMENT_TZ = ZoneInfo("America/New_York")
+SETTLEMENT_TZ_NAME = "America/New_York"
+
+SETTLEMENT_START_ET = time(14, 28)
+SETTLEMENT_END_ET = time(14, 30)
+"""NG daily settlement window, per the NYMEX Energy Futures Daily Settlement Procedure."""
+
+PRE_OPEN = "PRE_OPEN"
+PRE_SETTLEMENT = "PRE_SETTLEMENT"
+SETTLEMENT = "SETTLEMENT"
+POST_SETTLEMENT = "POST_SETTLEMENT"
+POST_CLOSE = "POST_CLOSE"
+
+CARRIED_PHASES = (PRE_OPEN, PRE_SETTLEMENT, SETTLEMENT, POST_SETTLEMENT, POST_CLOSE)
+"""Where phase discovery STARTS. Not a closed set - see the open-world note above."""
+
 SATURDAY = 5
 NS_PER_SECOND = 1_000_000_000
+EPOCH = date(1970, 1, 1)
 
 
 class SessionError(ValueError):
     """A group could not be assigned to a continuity segment or trading day."""
 
 
-def _local_instant_ns(day: date, local_time: time) -> int:
-    local = datetime.combine(day, local_time, tzinfo=EXCHANGE_TZ)
+def _local_instant_ns(day: date, local_time: time, tz: ZoneInfo = EXCHANGE_TZ) -> int:
+    local = datetime.combine(day, local_time, tzinfo=tz)
     return int(local.astimezone(timezone.utc).timestamp()) * NS_PER_SECOND
 
 
@@ -82,6 +119,27 @@ def reopen_instant_ns(day: date) -> int:
     return _local_instant_ns(day, REOPEN_LOCAL_TIME)
 
 
+def settlement_window_ns(day: date) -> tuple[int, int]:
+    """The 14:28:00-14:30:00 ET settlement window on `day`, half-open, in UTC epoch ns.
+
+    Resolved in Eastern time because that is the zone the settlement procedure states, not
+    converted from the Central-time session hours.
+    """
+    return (
+        _local_instant_ns(day, SETTLEMENT_START_ET, SETTLEMENT_TZ),
+        _local_instant_ns(day, SETTLEMENT_END_ET, SETTLEMENT_TZ),
+    )
+
+
+def session_open_ns(trading_day: date) -> int:
+    """The reopen that starts `trading_day`: 17:00 CT on the preceding calendar day.
+
+    For a Monday that is the Sunday 17:00 CT reopen, which is why the Sunday fold needs no
+    special case.
+    """
+    return reopen_instant_ns(trading_day - timedelta(days=1))
+
+
 def _local_datetime(ts_ns: int) -> datetime:
     seconds, _ = divmod(int(ts_ns), NS_PER_SECOND)
     return datetime.fromtimestamp(seconds, tz=timezone.utc).astimezone(EXCHANGE_TZ)
@@ -90,17 +148,6 @@ def _local_datetime(ts_ns: int) -> datetime:
 def local_date(ts_ns: int) -> date:
     """The America/Chicago calendar date of an epoch-nanosecond instant."""
     return _local_datetime(ts_ns).date()
-
-
-def in_halt_window(ts_ns: int) -> bool:
-    """True inside the 16:00-17:00 CT close, when the book is down.
-
-    Labelled rather than refused: a group landing here is informative - it means either the
-    halt assumption needs revisiting or the tape carries post-close administrative traffic -
-    and silently absorbing it into a session would hide that.
-    """
-    local = _local_datetime(ts_ns)
-    return CLOSE_LOCAL_TIME <= local.time() < REOPEN_LOCAL_TIME
 
 
 def trade_day(ts_ns: int) -> date:
@@ -118,6 +165,32 @@ def trade_day(ts_ns: int) -> date:
     return candidate
 
 
+def session_phase(ts_ns: int) -> str:
+    """The exchange-defined phase of the trade date this instant belongs to."""
+    ts_ns = int(ts_ns)
+    return phase_within(ts_ns, trade_day(ts_ns))
+
+
+def phase_within(ts_ns: int, day: date) -> str:
+    """`session_phase` for a caller that already knows the trade date.
+
+    Split out because resolving the trade date costs several timezone conversions and the
+    traversal is 4.26M groups: the streaming path resolves it once and passes it here.
+    Ordered from the outside in - before the session opened, after it closed, then the
+    settlement window and the two legs around it.
+    """
+    if ts_ns < session_open_ns(day):
+        return PRE_OPEN
+    if ts_ns >= close_instant_ns(day):
+        return POST_CLOSE
+    settle_start, settle_end = settlement_window_ns(day)
+    if ts_ns >= settle_end:
+        return POST_SETTLEMENT
+    if ts_ns >= settle_start:
+        return SETTLEMENT
+    return PRE_SETTLEMENT
+
+
 def continuity_segment(ts_ns: int) -> int:
     """Absolute segment ordinal: days since epoch of the trade date.
 
@@ -125,7 +198,12 @@ def continuity_segment(ts_ns: int) -> int:
     Absolute rather than run-relative, so two runs over overlapping windows agree on what
     segment a group is in and a segment id means the same thing across source days.
     """
-    return (trade_day(ts_ns) - date(1970, 1, 1)).days
+    return segment_of(trade_day(ts_ns))
+
+
+def segment_of(day: date) -> int:
+    """`continuity_segment` for a caller that already knows the trade date."""
+    return (day - EPOCH).days
 
 
 def group_event_ns(group: Mapping[str, Any]) -> int:
@@ -160,15 +238,16 @@ class SessionSegmenter:
             raise SessionError(
                 "group event times are not monotonic; segmentation is a forward-only pass"
             )
-        segment = continuity_segment(ts_event_ns)
+        day = trade_day(ts_event_ns)
+        segment = segment_of(day)
         if self._last_segment is not None and segment != self._last_segment:
             self._boundaries_crossed += 1
         self._last_event_ns = ts_event_ns
         self._last_segment = segment
         return {
             "continuity_segment": segment,
-            "trade_day": trade_day(ts_event_ns).strftime("%Y%m%d"),
-            "in_halt_window": in_halt_window(ts_event_ns),
+            "trade_day": day.strftime("%Y%m%d"),
+            "session_phase": phase_within(ts_event_ns, day),
         }
 
     def assign_group(self, group: Mapping[str, Any]) -> dict[str, Any]:
@@ -180,7 +259,12 @@ class SessionSegmenter:
         return self._boundaries_crossed
 
 
-def segment_stream(groups: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
-    """Convenience: segment assignments for an ordered group stream."""
+def segment_stream(groups: Iterable[Mapping[str, Any]]) -> Iterator[dict[str, Any]]:
+    """Segment assignments for an ordered group stream.
+
+    A generator, not a list: the roster is 4.26M groups and this module holds no forward
+    window anywhere else either.
+    """
     segmenter = SessionSegmenter()
-    return [segmenter.assign_group(group) for group in groups]
+    for group in groups:
+        yield segmenter.assign_group(group)
