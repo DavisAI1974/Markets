@@ -6,7 +6,7 @@
         "A_MEMORY"
       ],
       "authority": "BINDING_CURRENT_MISSION",
-      "bytes": 18931,
+      "bytes": 21833,
       "id": "native_rt_mission",
       "kind": "MARKDOWN",
       "load_mode": "ALWAYS_LOAD",
@@ -14,7 +14,7 @@
       "roles": [
         "REAL_TIME_FRANKIE"
       ],
-      "sha256": "a4b73afa6101c1ec93ec2fca1d302b7479594ae924e88c590aaea920439ce183"
+      "sha256": "9802fad0b2d283501cbac48c6a97db62c94a3d80f317b8243fd84b0dac0db46a"
     },
     {
       "arms": [
@@ -190,7 +190,7 @@
       "sha256": "b487acfbbea8ac8a82f42ceb555e8334057e4004740af91b9127cd2ba71e1cf8"
     }
   ],
-  "manifest_hash": "dd9788434d698abd62168292e4cf99439d939f14390812aaef7053b654d7e3b1",
+  "manifest_hash": "cad2b54031a9e8437064e33271bc6dd84890fbb6ff76d07eac7d75736cf03c3b",
   "profiles": {
     "FORECASTER_A_CLEAN_REVIEW": {
       "always_load": [

@@ -13,44 +13,187 @@ FIRST_LOCK_SCHEMA = "FRANKIE_NATIVE_RAW_MBO_RT_FIRST_LOCK_V1"
 FREEZE_SCHEMA = "FRANKIE_NATIVE_RAW_MBO_RT_FREEZE_V1"
 ALLOWED_ARMS = frozenset({"A_CLEAN", "A_MEMORY"})
 ALLOWED_ROLES = frozenset({"REAL_TIME_FRANKIE", "FORECASTER_FRANKIE"})
+# Generated from the ingestion layer registry, not restated here.
+# The previous 24-entry list was a superseded October vocabulary that shared no
+# identifier with the registry and was referenced by nothing but its own test.
+# test_corrected_a_arm_execution_gate asserts these stay equal to the registry.
 SURFACE_IDS = frozenset(
-    {
-        "candidate_contradiction_memory",
-        "causal_history_all_scales",
-        "current_brain_and_learned_knowledge",
-        "current_causal_operating_state",
-        "day_specific_forecast_context",
-        "forecast_scenarios_and_disconfirmers",
-        "frozen_rt_state",
-        "full_bigsuite",
-        "full_raw_mbo_events",
-        "full_source_catalog_and_availability",
-        "fundamentals_and_storage",
-        "historical_analogs_and_calibration",
-        "market_mechanics_state",
-        "power_stack_and_generation",
-        "provisional_capabilities",
-        "rt_on_demand_evidence_scout",
-        "selected_exemplars_falsifiers_negatives",
-        "source_integrity_and_clocks",
-        "step1_revealed_retrospective_evidence",
-        "step1_structural_census_methodology",
-        "structure_lifecycle",
-        "synchronized_curve_and_roll",
-        "top20_book_and_fifo",
-        "weather_forward_forcing",
-    }
+    (
+        "aggressor_and_native_signed_flow",
+        "authoritative_s135_construction",
+        "canonical_predecessor_bootstrap_objects",
+        "canonical_sep_nov_2021_dbn_mbo_objects",
+        "churn_and_queue_turnover",
+        "clock_event_known_by",
+        "clock_event_time",
+        "clock_feature_availability",
+        "clock_lock_time",
+        "clock_model_evaluation",
+        "clock_prospective_discovery_confirmation",
+        "clock_receive_time",
+        "complete_s105_9_brain",
+        "complete_state_reset_bootstrap_receipts",
+        "contract_session_roll_state",
+        "depletion_and_replenishment",
+        "derived_ancestry_gaps",
+        "derived_d_family_geometry",
+        "derived_feature_availability_timestamps",
+        "derived_open_world_predecessor_state",
+        "derived_price_flow_book_paths",
+        "derived_roll20_and_dipole_state",
+        "derived_unresolved_age_chain_trajectory",
+        "derived_v4_mechanics_fifo_features",
+        "doctrine_reasoning_play_index_evidence",
+        "extra_agent_corrected_information_and_gap_diagnoses",
+        "extra_agent_four_helper_architecture_roles",
+        "fifo_queues",
+        "full_bid_ask_depth",
+        "helper_extension_propensity_scout",
+        "helper_pair_triplet_recurrence_scout",
+        "helper_timing_lifespan_family_scout",
+        "helper_true_false_context_investigator",
+        "hipporag_associative_retrieval",
+        "historical_timing_lifespan_context",
+        "later_outcome_reveal",
+        "lawful_prior_session_carry",
+        "learned_chains_extensions_reappearances_ancestry",
+        "learned_d_structures_and_families",
+        "learned_dipoles_and_geometry",
+        "learned_pair_triplet_recurrence",
+        "learned_structure_proposal_index_material",
+        "legacy_book_imbalance",
+        "legacy_native_signed_flow",
+        "legacy_per_second_roll20",
+        "legacy_price",
+        "legacy_structure_observables",
+        "mechanics_actions_by_side_and_level",
+        "missingness_and_integrity_flags",
+        "native_acmrtfn_messages",
+        "october_first_source_window",
+        "october_outcome_wall_enforcement",
+        "order_identity_transitions",
+        "order_lifecycle_adds",
+        "order_lifecycle_cancels",
+        "order_lifecycle_clears",
+        "order_lifecycle_fills",
+        "order_lifecycle_modifies",
+        "order_lifecycle_replaces",
+        "order_lifecycle_trades",
+        "orders_and_volume_ahead",
+        "output_answer_wall_access_receipts",
+        "output_candidate_discoveries",
+        "output_first_locks_and_no_locks",
+        "output_frankie_reasoning_movie",
+        "output_helper_evidence_movie",
+        "output_knowledge_retrieval_receipts",
+        "output_negative_sparse_inconclusive_ledger",
+        "output_probability_movie",
+        "output_provider_invocation_response_receipts",
+        "output_source_state_manifest_code_model_run_hashes",
+        "output_state_and_state_delta_movie",
+        "phase1_discoveries_structural_falsifiers",
+        "phase2_findings_modules_timing_pox_negatives",
+        "prebirth_ancestry_successor_opportunity",
+        "prebirth_negative_opportunity_cases",
+        "prebirth_predecessor_at_risk_state",
+        "prebirth_stopped_chain_false_context_controls",
+        "prebirth_unresolved_chain_extension_state",
+        "predecessor_ancestry_unresolved_chain_state",
+        "price_and_book_path",
+        "price_level_and_order_counts",
+        "queue_age_and_survival",
+        "queue_concentration",
+        "raw_source_identity_provenance_clocks_integrity",
+        "resilience_and_recovery",
+        "s137_cognitive_shadow_runtime",
+        "snapshot_bootstrap_reset_messages",
+        "spread_and_depth_imbalance",
+        "step1_crosswalks",
+        "step1_existing_october_seconds",
+        "step1_labels_and_classifications",
+        "step1_populations",
+        "step1_reconciliation_outputs",
+        "step1_result_prefixes",
+        "step1_target_membership_receipts",
+        "target_ground_truth_onset_time",
+    )
+)
+# Derived from the registry's CAUSAL_STREAM_REQUIRED policy rather than hand-listed,
+# so a layer that becomes stream-required cannot silently stay optional here.
+# Derived from the registry's SEALED_FOR_A_SCOPE policy. Every sealed layer is checked,
+# not one representative: the old gate verified a single surface, so a breach on any other
+# sealed layer passed silently.
+SEALED_SURFACES = frozenset(
+    (
+        "later_outcome_reveal",
+        "step1_crosswalks",
+        "step1_existing_october_seconds",
+        "step1_labels_and_classifications",
+        "step1_populations",
+        "step1_reconciliation_outputs",
+        "step1_result_prefixes",
+        "step1_target_membership_receipts",
+        "target_ground_truth_onset_time",
+    )
 )
 MANDATORY_NATIVE_RT_SURFACES = frozenset(
-    {
-        "current_causal_operating_state",
-        "full_raw_mbo_events",
-        "full_source_catalog_and_availability",
-        "market_mechanics_state",
-        "source_integrity_and_clocks",
-        "structure_lifecycle",
-        "top20_book_and_fifo",
-    }
+    (
+        "aggressor_and_native_signed_flow",
+        "canonical_predecessor_bootstrap_objects",
+        "canonical_sep_nov_2021_dbn_mbo_objects",
+        "churn_and_queue_turnover",
+        "clock_event_known_by",
+        "clock_event_time",
+        "clock_feature_availability",
+        "clock_lock_time",
+        "clock_model_evaluation",
+        "clock_prospective_discovery_confirmation",
+        "clock_receive_time",
+        "complete_state_reset_bootstrap_receipts",
+        "contract_session_roll_state",
+        "depletion_and_replenishment",
+        "derived_ancestry_gaps",
+        "derived_d_family_geometry",
+        "derived_feature_availability_timestamps",
+        "derived_open_world_predecessor_state",
+        "derived_price_flow_book_paths",
+        "derived_roll20_and_dipole_state",
+        "derived_unresolved_age_chain_trajectory",
+        "derived_v4_mechanics_fifo_features",
+        "fifo_queues",
+        "full_bid_ask_depth",
+        "legacy_book_imbalance",
+        "legacy_native_signed_flow",
+        "legacy_per_second_roll20",
+        "legacy_price",
+        "legacy_structure_observables",
+        "mechanics_actions_by_side_and_level",
+        "missingness_and_integrity_flags",
+        "native_acmrtfn_messages",
+        "october_first_source_window",
+        "order_identity_transitions",
+        "order_lifecycle_adds",
+        "order_lifecycle_cancels",
+        "order_lifecycle_clears",
+        "order_lifecycle_fills",
+        "order_lifecycle_modifies",
+        "order_lifecycle_replaces",
+        "order_lifecycle_trades",
+        "orders_and_volume_ahead",
+        "prebirth_ancestry_successor_opportunity",
+        "prebirth_negative_opportunity_cases",
+        "prebirth_predecessor_at_risk_state",
+        "prebirth_stopped_chain_false_context_controls",
+        "prebirth_unresolved_chain_extension_state",
+        "price_and_book_path",
+        "price_level_and_order_counts",
+        "queue_age_and_survival",
+        "queue_concentration",
+        "raw_source_identity_provenance_clocks_integrity",
+        "resilience_and_recovery",
+        "snapshot_bootstrap_reset_messages",
+        "spread_and_depth_imbalance",
+    )
 )
 SURFACE_KEYS = frozenset(
     {
@@ -145,7 +288,7 @@ def _require_exact_keys(value: Any, keys: frozenset[str], label: str) -> Mapping
 def validate_rt_surface_inventory(
     inventory: Mapping[str, Any], *, arm: str
 ) -> dict[str, Any]:
-    """Require all 24 identities and the complete lawful native RT surface."""
+    """Require every registry layer identity and the complete lawful native RT surface."""
     if arm not in ALLOWED_ARMS:
         raise CorrectedExecutionGateError("invalid A-arm identity")
     if not isinstance(inventory, Mapping) or inventory.get("schema") != SURFACE_SCHEMA:
@@ -156,8 +299,10 @@ def validate_rt_surface_inventory(
         raise CorrectedExecutionGateError("RT surface inventory hash mismatch")
 
     rows = inventory.get("surfaces")
-    if not isinstance(rows, list) or len(rows) != 24:
-        raise CorrectedExecutionGateError("RT inventory must contain 24 exact surface identities")
+    if not isinstance(rows, list) or len(rows) != len(SURFACE_IDS):
+        raise CorrectedExecutionGateError(
+            f"RT inventory must contain {len(SURFACE_IDS)} exact surface identities"
+        )
     by_id: dict[str, Mapping[str, Any]] = {}
     for raw in rows:
         row = _require_exact_keys(raw, SURFACE_KEYS, "surface")
@@ -166,27 +311,25 @@ def validate_rt_surface_inventory(
             raise CorrectedExecutionGateError("surface identities must be unique strings")
         by_id[surface_id] = row
     if set(by_id) != SURFACE_IDS:
-        raise CorrectedExecutionGateError("RT inventory must contain 24 exact surface identities")
+        raise CorrectedExecutionGateError(
+            f"RT inventory must contain {len(SURFACE_IDS)} exact surface identities"
+        )
 
-    step1 = by_id["step1_revealed_retrospective_evidence"]
-    if (
-        step1["route"] != "SEALED"
-        or step1["availability"] != "SEALED"
-        or step1["required_for_principal"] is not False
-        or step1["model_visible"] is not False
-        or step1["evidence_receipt_sha256"] is not None
-    ):
-        raise CorrectedExecutionGateError("Step-1/reveal surface is not fully sealed")
+    for surface_id in sorted(SEALED_SURFACES):
+        sealed_row = by_id[surface_id]
+        if (
+            sealed_row["route"] != "SEALED"
+            or sealed_row["availability"] != "SEALED"
+            or sealed_row["required_for_principal"] is not False
+            or sealed_row["model_visible"] is not False
+            or sealed_row["evidence_receipt_sha256"] is not None
+        ):
+            raise CorrectedExecutionGateError(
+                f"Step-1/reveal surface is not fully sealed: {surface_id}"
+            )
 
-    frozen = by_id["frozen_rt_state"]
-    if (
-        frozen["route"] != "PENDING"
-        or frozen["availability"] != "PENDING"
-        or frozen["required_for_principal"] is not False
-        or frozen["model_visible"] is not False
-        or frozen["evidence_receipt_sha256"] is not None
-    ):
-        raise CorrectedExecutionGateError("frozen RT state must be pending before RT")
+    # The RT freeze is checked by validate_first_lock_and_freeze against the actual frozen
+    # object, so the old frozen_rt_state placeholder surface is no longer carried here.
 
     required_ids: list[str] = []
     for surface_id, row in by_id.items():

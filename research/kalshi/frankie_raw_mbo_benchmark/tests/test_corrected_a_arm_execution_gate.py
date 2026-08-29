@@ -4,6 +4,7 @@ import copy
 import unittest
 
 from research.kalshi.frankie_raw_mbo_benchmark.corrected_a_arm_execution_gate_20260828 import (
+    SURFACE_IDS,
     CorrectedExecutionGateError,
     canonical_hash,
     validate_first_lock_and_freeze,
@@ -17,44 +18,15 @@ OTHER_SHA = "b" * 64
 
 
 def surface_inventory() -> dict[str, object]:
-    ids = [
-        "candidate_contradiction_memory",
-        "causal_history_all_scales",
-        "current_brain_and_learned_knowledge",
-        "current_causal_operating_state",
-        "day_specific_forecast_context",
-        "forecast_scenarios_and_disconfirmers",
-        "frozen_rt_state",
-        "full_bigsuite",
-        "full_raw_mbo_events",
-        "full_source_catalog_and_availability",
-        "fundamentals_and_storage",
-        "historical_analogs_and_calibration",
-        "market_mechanics_state",
-        "power_stack_and_generation",
-        "provisional_capabilities",
-        "rt_on_demand_evidence_scout",
-        "selected_exemplars_falsifiers_negatives",
-        "source_integrity_and_clocks",
-        "step1_revealed_retrospective_evidence",
-        "step1_structural_census_methodology",
-        "structure_lifecycle",
-        "synchronized_curve_and_roll",
-        "top20_book_and_fifo",
-        "weather_forward_forcing",
-    ]
+    from research.kalshi.frankie_raw_mbo_benchmark.corrected_a_arm_execution_gate_20260828 import (
+        MANDATORY_NATIVE_RT_SURFACES,
+        SEALED_SURFACES,
+        SURFACE_IDS,
+    )
+
     rows = []
-    required = {
-        "current_causal_operating_state",
-        "full_raw_mbo_events",
-        "full_source_catalog_and_availability",
-        "market_mechanics_state",
-        "source_integrity_and_clocks",
-        "structure_lifecycle",
-        "top20_book_and_fifo",
-    }
-    for surface_id in ids:
-        if surface_id == "step1_revealed_retrospective_evidence":
+    for surface_id in sorted(SURFACE_IDS):
+        if surface_id in SEALED_SURFACES:
             rows.append(
                 {
                     "surface_id": surface_id,
@@ -65,29 +37,18 @@ def surface_inventory() -> dict[str, object]:
                     "evidence_receipt_sha256": None,
                 }
             )
-        elif surface_id == "frozen_rt_state":
-            rows.append(
-                {
-                    "surface_id": surface_id,
-                    "route": "PENDING",
-                    "availability": "PENDING",
-                    "required_for_principal": False,
-                    "model_visible": False,
-                    "evidence_receipt_sha256": None,
-                }
-            )
-        else:
-            is_required = surface_id in required
-            rows.append(
-                {
-                    "surface_id": surface_id,
-                    "route": "DIRECT" if is_required else "TOOL_ACCESSIBLE",
-                    "availability": "AVAILABLE" if is_required else "UNKNOWN",
-                    "required_for_principal": is_required,
-                    "model_visible": is_required,
-                    "evidence_receipt_sha256": SHA if is_required else None,
-                }
-            )
+            continue
+        is_required = surface_id in MANDATORY_NATIVE_RT_SURFACES
+        rows.append(
+            {
+                "surface_id": surface_id,
+                "route": "DIRECT" if is_required else "TOOL_ACCESSIBLE",
+                "availability": "AVAILABLE" if is_required else "UNKNOWN",
+                "required_for_principal": is_required,
+                "model_visible": is_required,
+                "evidence_receipt_sha256": SHA if is_required else None,
+            }
+        )
     value = {
         "schema": "FRANKIE_NATIVE_RAW_MBO_RT_SURFACE_INVENTORY_V1",
         "arm": "A_MEMORY",
@@ -146,7 +107,7 @@ def principal_execution() -> dict[str, object]:
 class CorrectedAArmExecutionGateTests(unittest.TestCase):
     def test_accepts_complete_open_world_rt_surface_inventory(self) -> None:
         receipt = validate_rt_surface_inventory(surface_inventory(), arm="A_MEMORY")
-        self.assertEqual(receipt["surface_count"], 24)
+        self.assertEqual(receipt["surface_count"], len(SURFACE_IDS))
         self.assertTrue(receipt["step1_sealed"])
         self.assertTrue(receipt["native_full_mbo_available"])
 
@@ -154,13 +115,13 @@ class CorrectedAArmExecutionGateTests(unittest.TestCase):
         value = surface_inventory()
         value["surfaces"] = value["surfaces"][:-1]
         value["inventory_hash"] = canonical_hash(value, omit="inventory_hash")
-        with self.assertRaisesRegex(CorrectedExecutionGateError, "24 exact surface"):
+        with self.assertRaisesRegex(CorrectedExecutionGateError, f"{len(SURFACE_IDS)} exact surface"):
             validate_rt_surface_inventory(value, arm="A_MEMORY")
 
     def test_rejects_required_native_surface_marked_dormant(self) -> None:
         value = surface_inventory()
         row = next(
-            row for row in value["surfaces"] if row["surface_id"] == "full_raw_mbo_events"
+            row for row in value["surfaces"] if row["surface_id"] == "aggressor_and_native_signed_flow"
         )
         row.update(route="DORMANT", availability="UNAVAILABLE", model_visible=False)
         value["inventory_hash"] = canonical_hash(value, omit="inventory_hash")
@@ -172,7 +133,7 @@ class CorrectedAArmExecutionGateTests(unittest.TestCase):
         row = next(
             row
             for row in value["surfaces"]
-            if row["surface_id"] == "step1_revealed_retrospective_evidence"
+            if row["surface_id"] == "step1_populations"
         )
         row.update(route="DIRECT", availability="AVAILABLE", model_visible=True)
         value["inventory_hash"] = canonical_hash(value, omit="inventory_hash")
@@ -292,3 +253,100 @@ class CorrectedAArmExecutionGateTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class GateSurfacesTrackTheRegistryTest(unittest.TestCase):
+    """The gate's surfaces are the registry's layers. Drift must fail here, not at run time."""
+
+    CONTROL_GROUPS = {"binding_common_controls", "a_clean_overlay", "a_memory_overlay"}
+    REGISTRY = (
+        "research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json"
+    )
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        import json
+        from pathlib import Path
+
+        registry = json.loads(Path(cls.REGISTRY).read_text(encoding="utf-8"))
+        cls.registry = registry
+        groups = [g for g in registry["groups"] if g["group_id"] not in cls.CONTROL_GROUPS]
+        cls.layers = {e["layer_id"] for g in groups for e in g["entries"]}
+        cls.stream_required = {
+            e["layer_id"]
+            for g in groups
+            if g["policy"] == "CAUSAL_STREAM_REQUIRED"
+            for e in g["entries"]
+        }
+        cls.sealed = {
+            e["layer_id"]
+            for g in groups
+            if g["policy"] == "SEALED_FOR_A_SCOPE"
+            for e in g["entries"]
+        }
+
+    def test_surface_ids_equal_the_registry_layers(self) -> None:
+        from research.kalshi.frankie_raw_mbo_benchmark import (
+            corrected_a_arm_execution_gate_20260828 as gate,
+        )
+
+        self.assertEqual(
+            gate.SURFACE_IDS,
+            self.layers,
+            "gate surfaces drifted from the registry; regenerate rather than editing by hand",
+        )
+
+    def test_there_are_ninety_seven_concrete_layers(self) -> None:
+        """93 inventory bullet layers + 4 helper roles. 90 is the declared floor, not the count."""
+        self.assertEqual(len(self.layers), 97)
+        self.assertGreaterEqual(
+            len(self.layers), self.registry["hard_minimum_concrete_layer_count"]
+        )
+
+    def test_the_superseded_october_vocabulary_is_gone(self) -> None:
+        from research.kalshi.frankie_raw_mbo_benchmark import (
+            corrected_a_arm_execution_gate_20260828 as gate,
+        )
+
+        for stale in (
+            "top20_book_and_fifo",
+            "weather_forward_forcing",
+            "fundamentals_and_storage",
+            "power_stack_and_generation",
+            "full_bigsuite",
+            "frozen_rt_state",
+        ):
+            self.assertNotIn(stale, gate.SURFACE_IDS)
+
+    def test_mandatory_surfaces_come_from_the_stream_required_policy(self) -> None:
+        from research.kalshi.frankie_raw_mbo_benchmark import (
+            corrected_a_arm_execution_gate_20260828 as gate,
+        )
+
+        self.assertEqual(gate.MANDATORY_NATIVE_RT_SURFACES, self.stream_required)
+        self.assertTrue(gate.MANDATORY_NATIVE_RT_SURFACES <= gate.SURFACE_IDS)
+        self.assertEqual(len(gate.MANDATORY_NATIVE_RT_SURFACES), 55)
+
+    def test_every_sealed_layer_is_checked_not_one_representative(self) -> None:
+        """The old gate verified a single surface, so any other sealed breach passed."""
+        from research.kalshi.frankie_raw_mbo_benchmark import (
+            corrected_a_arm_execution_gate_20260828 as gate,
+        )
+
+        self.assertEqual(gate.SEALED_SURFACES, self.sealed)
+        self.assertEqual(len(gate.SEALED_SURFACES), 9)
+        self.assertFalse(gate.SEALED_SURFACES & gate.MANDATORY_NATIVE_RT_SURFACES)
+
+    def test_a_breach_on_any_sealed_layer_is_rejected(self) -> None:
+        from research.kalshi.frankie_raw_mbo_benchmark import (
+            corrected_a_arm_execution_gate_20260828 as gate,
+        )
+
+        for surface_id in sorted(gate.SEALED_SURFACES):
+            with self.subTest(surface=surface_id):
+                value = surface_inventory()
+                row = next(r for r in value["surfaces"] if r["surface_id"] == surface_id)
+                row.update(route="DIRECT", availability="AVAILABLE", model_visible=True)
+                value["inventory_hash"] = canonical_hash(value, omit="inventory_hash")
+                with self.assertRaisesRegex(CorrectedExecutionGateError, "not fully sealed"):
+                    validate_rt_surface_inventory(value, arm="A_MEMORY")

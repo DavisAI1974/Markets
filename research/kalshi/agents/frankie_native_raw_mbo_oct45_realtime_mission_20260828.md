@@ -113,6 +113,13 @@ event, receive, F_LAST-availability, or decision clock. `H+N` is an observed
 first-call time, not a preselected waiting grid, and no later H call may replace
 an earlier valid call merely because it scores better.
 
+**A statistic computed over successful detections alone is never the population
+detection time.** Candidates you missed have no detection time, so they drop out
+of the arithmetic on their own and the surviving mean describes only the easy
+cases. Every timing figure is reported beside its full population, including
+missed and censored members and their counts. A candidate with no outcome is not
+omitted; it is recorded as missed or censored.
+
 For every candidate, reconstruct a causal runway containing:
 
 1. searched interval and coverage;
@@ -248,6 +255,27 @@ causal phases, or cluster identities. An average may characterize its exact
 stratum beside the full member evidence; it may not merge families, erase rare
 structures, smooth transitions, or determine an individual cluster's behavior.
 
+**Not everything numeric is an average, and calling it one hides what makes it
+mean something.** Report each statistic as the kind it is:
+
+- a **transition edge** carries its own count and its own outgoing denominator and
+  is a conditional probability, not an average;
+- **time-to-exit under censoring** uses a declared survival estimator with at-risk
+  counts at every time, never a mean of the resolved cases, because the resolved
+  cases are the ones that ended and the censored ones are why you needed the
+  estimator;
+- a **share or rate** is a count over a denominator, and the denominator is the
+  part worth stating;
+- **quantiles and maxima** are not summarized by a mean, which is why they are
+  retained separately — a mean near the centre and a maximum in the hundreds are
+  both true of the same stratum;
+- where **mean-of-member-ratios** and **ratio-of-aggregate-sums** both apply, both
+  are reported and their difference is labelled `COMPLEMENTARY_SCOPE_DIFFERENCE`,
+  because either alone can invert the other's sign when member sizes are uneven;
+- a **cluster description** is legal only after discovery is frozen, and never
+  determines how many clusters there are, forces an assignment, or replaces a
+  member.
+
 Retain the first replay's daily diagnostic operation unchanged. For each source
 day, compute `first`, `last`, `min`, `max`, and arithmetic `mean` for:
 
@@ -265,9 +293,32 @@ mechanism, transition, and lifecycle. Neither view substitutes for the other.
 
 Treat dipole/opposing pressure as an observed mechanics object. At each runway
 stage preserve sign, magnitude/range, side/depth composition, clock, persistence,
-reversal, and coupling to flow and price. Infer direction from signed buy-versus-
-sell flow, not dipole magnitude alone. Normalized imbalance remains in `[-1,1]`
-and must reconcile with `BUY_PRESSURE`, `SELL_PRESSURE`, or `BALANCED`.
+reversal, and coupling to flow and price.
+
+**Direction comes from signed flow and causal mechanics. It never comes from
+unsigned magnitude, not even partly.** Magnitude tells you how lopsided the book
+is; it cannot tell you which way, because two stages with opposite signs have
+identical magnitude. Preserve magnitude as its own measure and report it beside
+the signed one, never instead of it.
+
+A stage whose signed flow is zero has **no direction**. Say so. Do not resolve it
+to the nearest side, to the prevailing side, or to `BALANCED`: `BALANCED` is a
+statement about imbalance, and treating it as a direction is the same error as
+reading direction off magnitude.
+
+`SAME` and `FLIP` orientations **never pool**. They are the two ways a mirrored
+structure can relate to its counterpart, and averaging across them cancels exactly
+the asymmetry the measure exists to find. Report them separately or not at all.
+
+Normalized imbalance remains in `[-1,1]` and is a **relative** quantity. Keep it
+separate from absolute liquidity and derive neither from the other: a book can
+double in size with imbalance unchanged, or flip from bid-heavy to ask-heavy with
+total depth unchanged. A single "liquidity" figure that mixes them describes
+neither.
+
+Exact sign reversals, their inflection times, and rare paths stay visible
+individually. A stage sequence that reverses twice is not the same object as one
+that never reverses, whatever their endpoints look like.
 
 Apply Frankie's bounded lookahead/LATS reasoning at the current causal cutoff.
 Keep multiple exhaustion, direction, duration, and strategy hypotheses alive;
