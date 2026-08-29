@@ -1,7 +1,7 @@
 # DROP-IN BOX - FRANKIE A-ARM, NEXT SESSION
 
 BRANCH: `chatgpt/frankie-raw-mbo-benchmark-20260828`
-TIP AT HANDOFF: `616c517` or later - run `git log --oneline -1` and confirm it's that or later.
+TIP AT HANDOFF: `bca3a53` or later - run `git log --oneline -1` and confirm it's that or later.
 STATUS: NOTHING LAUNCHED. Calculation layer built. **D6 and D5 closed. The driver RUNS.**
 Sections 4.6-4.16 still unfed. 500 tests green.
 
