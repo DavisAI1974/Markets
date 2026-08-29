@@ -123,17 +123,22 @@ class DriverCounters:
     invocation_cutoffs: list[dict[str, Any]] = field(default_factory=list)
     save_points: int = 0
     legacy_rows_seen: int = 0
-    """Legacy MBP-10 control rows the adapter emitted. NOT yet consumed - see D60.
+    """Legacy MBP-10 control rows the adapter emitted. RETAINED IN FULL - see D60.
 
     They carry the projected ten-level depth (bid/ask price, size and order count at each
-    level) at every trade and at group end, and the registry group
-    `legacy_observable_crosswalk` is CAUSAL_STREAM_REQUIRED: `legacy_book_imbalance` in
-    particular cannot be computed from anything else this traversal keeps. The driver used to
-    bind them to `_legacy` and discard them, which is a silent drop of a required input - the
-    exact failure D60 exists to stop. Counting them does NOT fix that; it makes the loss
-    VISIBLE and measurable while the retention question goes to Greg, because retaining ~70
-    fields per row across 4.26M groups is a memory decision, not a detail.
+    level) at every trade and at group end, and `legacy_observable_crosswalk` is a
+    CAUSAL_STREAM_REQUIRED registry group: `legacy_book_imbalance` cannot be computed from
+    anything else this traversal keeps.
+
+    The driver used to bind them to `_legacy` and throw them away - a silent drop of a
+    required input, which is the exact failure D60 exists to stop. An interim version merely
+    COUNTED them, on the reasoning that keeping ~70 fields per row across 4.26M groups was a
+    memory decision. Greg overruled that, and the reasoning as well: *"i don't care about
+    memory. restore every piece... let him figure out what he uses but he has to see
+    everything."* Memory is not a reason to drop anything. Every row is kept.
     """
+    legacy_rows: list[dict[str, Any]] = field(default_factory=list)
+    """Every legacy row, verbatim, in emission order. Never sampled, capped or summarized."""
 
 
 def _source_day(source_object: str) -> str:
@@ -159,6 +164,7 @@ class NativeReplayDriver:
         checkpointer: PeriodicCheckpointer | None = None,
         materialize_full_state: bool = False,
         stage_spawn: Callable[[Mapping[str, Any]], Any] | None = None,
+        legacy_sink: Callable[[Mapping[str, Any]], Any] | None = None,
     ) -> None:
         if session_rule is None:
             raise ReplayDriverError(
@@ -178,6 +184,9 @@ class NativeReplayDriver:
         self.checkpointer = checkpointer
         self.materialize_full_state = materialize_full_state
         self.stage_spawn = stage_spawn
+        # An OPTIONAL second home for the legacy rows, so a caller can stream them to disk as
+        # they are produced. It never replaces retention: the rows are kept either way.
+        self.legacy_sink = legacy_sink
 
         self.counters = DriverCounters()
         self._mark: SessionMark | None = None
@@ -234,10 +243,14 @@ class NativeReplayDriver:
                 source_dbn_sha256=str(record.get("source_dbn_sha256", "")),
             )
             self.counters.records_seen += 1
-            # D60: never bind an adapter output to `_`. These rows are a required registry
-            # layer's only source; until they are consumed, the count is the honest record
-            # that they existed and that we are not yet using them.
-            self.counters.legacy_rows_seen += len(legacy_rows)
+            # D60: never bind an adapter output to `_`, and never drop one for size. These
+            # rows are a required registry layer's only source, so every one is retained
+            # verbatim in emission order.
+            for legacy_row in legacy_rows:
+                self.counters.legacy_rows_seen += 1
+                self.counters.legacy_rows.append(legacy_row)
+                if self.legacy_sink is not None:
+                    self.legacy_sink(legacy_row)
             if frame is None:
                 continue
             self._on_group(
@@ -367,7 +380,8 @@ class NativeReplayDriver:
             "invocation_cutoffs": len(self.counters.invocation_cutoffs),
             "save_points": self.counters.save_points,
             "legacy_rows_seen": self.counters.legacy_rows_seen,
-            "legacy_rows_consumed": 0,
+            "legacy_rows_retained": len(self.counters.legacy_rows),
+            "legacy_rows_streamed": self.legacy_sink is not None,
             "causal_clock": CAUSAL_CLOCK,
             "forward_only": True,
             "session_rule": type(self.session_rule).__name__,

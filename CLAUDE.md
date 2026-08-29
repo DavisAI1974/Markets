@@ -1101,6 +1101,10 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   instances were found the day it was written: a replay book that ignored four row classes the
   authoritative book acts on, and `native_replay_driver` discarding the adapter's legacy rows,
   which carry the 10-level depth a REQUIRED registry group is built on.
+  **THE ONE EXCEPTION, and it is narrow (Greg, same session):** *"if a row is truly blank and
+  is measuring nothing then you can leave it off."* TRULY BLANK - carrying no measurement at
+  all - not "looks irrelevant", not "we do not use it", not "it would cost memory". The burden
+  is to SHOW it measures nothing, and if that cannot be shown from the row itself, it stays.
 
 - **Falsification-first / Result Discipline.** Every claim needs a falsifiable test. Every result is ONE
   data point — map alternatives (incl. the deflationary reading) before promoting to a claim. Catalog

@@ -185,6 +185,51 @@ class TraversalTest(unittest.TestCase):
             driver.consume([bad])
 
 
+class LegacyRowRetentionTest(unittest.TestCase):
+    """D60: the driver used to bind the adapter's legacy rows to `_` and throw them away.
+
+    Those rows carry the projected ten-level MBP-10 depth at every trade and at group end, and
+    `legacy_observable_crosswalk` is a CAUSAL_STREAM_REQUIRED registry group whose
+    `legacy_book_imbalance` cannot be computed from anything else the traversal keeps. Greg:
+    "i don't care about memory. restore every piece... let him figure out what he uses but he
+    has to see everything." These tests exist so nobody has to audit for this drop again.
+    """
+
+    def _run(self, sink=None):
+        driver = make_driver()
+        driver.legacy_sink = sink
+        base = at("2021-10-04T13:00:00")
+        driver.consume(
+            record(seq=i, event_ns=base + i * NS_PER_SECOND, order_id=300 + i, action="T")
+            for i in range(3)
+        )
+        return driver, driver.finalize()
+
+    def test_every_legacy_row_the_adapter_emits_is_retained_verbatim(self):
+        driver, result = self._run()
+        seen = result["traversal"]["legacy_rows_seen"]
+        self.assertGreater(seen, 0, "the fixture stopped producing legacy rows")
+        self.assertEqual(result["traversal"]["legacy_rows_retained"], seen,
+                         "retained must equal seen; anything less is a silent drop")
+        self.assertEqual(len(driver.counters.legacy_rows), seen)
+
+    def test_a_retained_row_still_carries_its_depth_ladder(self):
+        # Retaining a truncated row would satisfy a count and lose the reason to keep it.
+        driver, _ = self._run()
+        row = driver.counters.legacy_rows[0]
+        for field in ("bid_px_00", "bid_sz_00", "bid_ct_00", "ask_px_09", "ask_sz_09", "ask_ct_09"):
+            self.assertIn(field, row, f"the ten-level ladder lost {field}")
+        self.assertEqual(row["census_view"], "LEGACY_CONTROL")
+
+    def test_a_sink_streams_the_rows_without_replacing_retention(self):
+        streamed = []
+        driver, result = self._run(sink=streamed.append)
+        self.assertEqual(len(streamed), result["traversal"]["legacy_rows_seen"])
+        self.assertEqual(len(driver.counters.legacy_rows), len(streamed),
+                         "a sink is a second home, never a substitute for keeping them")
+        self.assertTrue(result["traversal"]["legacy_rows_streamed"])
+
+
 class CadenceTest(unittest.TestCase):
     def test_cutoffs_carry_the_session_context_they_were_taken_at(self):
         class Always:
