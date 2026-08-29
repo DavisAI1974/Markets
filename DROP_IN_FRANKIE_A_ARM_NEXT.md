@@ -1,17 +1,15 @@
-# DROP-IN BOX — FRANKIE A-ARM, NEXT SESSION
+# DROP-IN BOX - FRANKIE A-ARM, NEXT SESSION
 
-**BRANCH: `chatgpt/frankie-raw-mbo-benchmark-20260828`**
-**TIP AT HANDOFF: `81d81f9` — run `git log --oneline -1` and confirm it is that or later.**
-**STATUS: NOTHING LAUNCHED. Calculation layer built and tested. Driver is a draft. Nothing wired.**
-
----
+BRANCH: `chatgpt/frankie-raw-mbo-benchmark-20260828`
+TIP AT HANDOFF: `ff4c19b` - run `git log --oneline -1` and confirm it's that or later.
+STATUS: NOTHING LAUNCHED. Calculation layer built. **D6 and D5 closed. The driver RUNS.**
+Sections 4.6-4.16 still unfed. 500 tests green.
 
 ## 0. STOP BEFORE LAUNCH
 
-**Do not dispatch a workflow, invoke a model, or start either arm.** Walk the whole thing
-through with Greg first. Two decisions are unmade, the driver has never run, three
-components are wired to nothing, and there is no end-to-end execution path. A launch from
-here produces artifacts that look complete and are not.
+Do not dispatch a workflow or start either arm. The decision blockers are gone, but three
+build items and the compute question remain, and a launch from here still produces artifacts
+that look complete and are not. Section 0 of the state doc has the item-by-item list.
 
 ## 1. FIRST THREE COMMANDS
 
@@ -21,12 +19,9 @@ git checkout -B chatgpt/frankie-raw-mbo-benchmark-20260828 origin/chatgpt/franki
 git log --oneline -1
 ```
 
-Then read **`research/kalshi/FRANKIE_A_ARM_PRELAUNCH_STATE_20260829.md`** end to end. It is
-the state record AND the file map. **Nothing in it should need searching for, and nothing in
-it should be rebuilt.** If you find yourself hunting for a file, that document has a gap —
-fix the document, not just your search.
+Then read `research/kalshi/FRANKIE_A_ARM_PRELAUNCH_STATE_20260829.md` end to end.
 
-## 2. TWO SANITY CHECKS BEFORE BUILDING ANYTHING
+## 2. TWO SANITY CHECKS BEFORE BUILDING
 
 ```
 python3 -m pytest research/kalshi/frankie_raw_mbo_benchmark/tests/ -q
@@ -35,73 +30,76 @@ python3 research/kalshi/frankie_raw_mbo_benchmark/refresh_native_frankie_knowled
   --repo-root . --check
 ```
 
-Expect **441 passed** and **`"status": "CURRENT"`**. If the suite is not 441 green, stop and
-find out why. If the refresh says `UPDATED`, someone hand-edited a generated capsule — that
-needs understanding, not overwriting.
+Expect **500 passed** and `"status": "CURRENT"`. Seven failures in the wider
+`research/kalshi/tests/` suite are PRE-EXISTING, verified at `d5b7b51`. Not yours to fix.
 
-**Seven failures in the wider `research/kalshi/tests/` suite are PRE-EXISTING.** Verified by
-running that suite at `d5b7b51`, the pre-session tip, where the same seven fail. Do not
-treat them as regressions and do not fix them as part of this work.
+## 3. WHAT CLOSED THIS SESSION
 
-## 3. THE FOUR ARCHITECTURE CORRECTIONS THAT REFRAME THE PAPERS
+**D6a session boundary and D6b session phase - both taken from the EXCHANGE, not our tape.**
+Greg's rule, now D51 in the root `DECISIONS.md`: *"we should follow what the market does and
+not what our data says. we might be looking at it wrong."* A tape agrees with a wrong rule as
+readily as a right one, because it cannot falsify what it was used to derive.
 
-The A-arm papers were written against an API design that is not what you are building.
+- CME Globex energy: Sun-Fri 17:00-16:00 CT, 60-minute halt at 16:00 CT **Mon-Fri only**.
+- CME **trade date** begins 17:00 CT on the previous calendar day. This makes the S104 Sunday
+  fold fall out of the definition instead of being hand-coded.
+- NG settlement window is **14:28:00-14:30:00 Eastern** (NYMEX Energy Futures Daily Settlement
+  Procedure), giving PRE_OPEN / PRE_SETTLEMENT / SETTLEMENT / POST_SETTLEMENT / POST_CLOSE.
+- Written in exchange LOCAL time. A literal 21:00 UTC constant reproduces this roster and is
+  silently one hour wrong from 2021-11-07.
+- Friday's close is a ~49h weekly gap, not a 1h daily one. Different censoring event.
 
-1. **The Sol run is an agent-session run**, like the group blind/refine walks — no API. The
-   papers demand a "provider-originated response" in three places and
-   `validate_principal_execution` demands provider, model IDs, invocation ID and token
-   usage. None of that exists. The proof problem becomes the walk's file-based contract:
-   read a committed staged state, emit a committed artifact, coordinator hard-fails on
-   missing or malformed.
-2. **Two roles only** — `REAL_TIME_FRANKIE` and `FORECASTER_FRANKIE`. The five-specialist
-   structure is not used. The knowledge manifest already carries exactly these two; nothing
-   needs changing there.
-3. **Helpers are tools, not lanes.** RT and Forecaster may call an agent helper from their
-   tools. Answers the ingestion paper's Question 3. Probable origin of the number four: a
-   t3.xlarge has 4 vCPUs and there are 4 helper scouts.
-4. **All four days are scored findings days**, one role `SCORED_FINDINGS_DAY`,
-   `roster_position` carries stream order. This is what forced A-clean to be stripped.
+**D5:** no clustering in this run.
 
-## 4. WHAT IS DONE — DO NOT REBUILD
+**`on_invoke` (Greg):** Sol runs as an agent session over committed files exactly as the
+blind/refine group runs did - **no API call**. So `on_invoke` stages a state file at the
+cutoff; the spawn reads it later. Closes section 0 item 5 as a question; the build remains.
 
-All 16 calculation-contract sections, the runner with 7 artifact layers and 8 fail-closed
-gates, the periodic checkpointer, the roster migration to 97 layers, A-clean cleaned of
-scored-day results, the prior-memory package hash made reproducible, the mission audited and
-widened, and the vocabulary opened so families, depths, phases, states and dispositions can
-all grow. **441 tests.** Full inventory with line counts in section 7 of the state doc.
+**The driver RUNS** - a pass executes end to end and finalizes ACCEPTED, which it had never
+done. 13 tests where it had none.
 
-## 5. WHAT IS OPEN
+**The D6 assignment is wired as a RECONCILIATION, not a hand-off.** The traversal reports what
+it keyed on, `AssignmentLedger` recomputes from the group's own `ts_event_ns`, and
+`denominators_strata_and_censoring` fails on disagreement. A field-level check cannot catch a
+constant phase - it is present, typed and plausible.
 
-**Decisions (Greg's):**
-- **D6 session/phase boundaries — THE BLOCKER.** Nothing defines RTH/ETH/reopen for Oct 2021
-  CME. Segments decide what gets censored, where runs restart, where horizons cut. Proposal
-  on the table: the 21:00 UTC anchor the data already shows.
-- **D5 clustering** — in this run or not. Softer: the runner takes discovery as optional.
+## 4. THREE DEFECTS FOUND AND FIXED, RECORDED BECAUSE THE PATTERN MATTERS
+
+1. **`SessionRule.classify` offered only `recv_ns`** - would have keyed session membership on
+   the feed's serialization rather than on the market. Now takes both clocks, decides on
+   `event_ns`.
+2. **`in_halt_window` contradicted `session_phase`** - read True at 16:30 CT on a Saturday.
+   Two fields in one dict disagreeing about the same fact: the S109 `session_b_share` shape.
+   Removed, not reconciled.
+3. **The driver held a second family vocabulary** - `_family_id` was the bare action string
+   while the member-first roster run keys on `candidate_family_id`. Nothing would have failed;
+   the strata would just have been cut differently from the run it must reconcile against.
+
+## 5. OPEN
 
 **Build:**
-- The driver (`native_replay_driver.py` is a DRAFT — untested, feeds only clocks and
-  coverage, and its invocation abstraction assumes an API call).
-- Wire the checkpointer. Wire the execution gate. **Verify by search, not assumption** —
-  both are currently referenced by nothing.
-- Feed sections 4.6 through 4.16 from the traversal.
+- **Sections 4.6-4.16 are unfed** and this is **NOT mechanical**. `LadderCalculator`,
+  `RecurrenceCalculator` and `LineageCalculator` expose no ingest method; `Absorption.score`,
+  `Dipole.observe_path` and `Exhaustion.enter_phase` take constructed domain objects. The
+  contract specifies the CALCULATION, not the input event - 4.10 says "construct a runway for
+  each candidate" without defining a candidate. **These are research design decisions. Take
+  them to Greg; build from `describe_structure` as the precedent.**
+- Rebuild `on_invoke` as the staging contract (section 3 above).
+- Wire the checkpointer and the execution gate into the launch workflows.
+- Wire an exchange holiday calendar - `native_session` consults none. The roster spans none,
+  so this is a declared gap, not a live bug.
 
-**Compute — unresolved:**
-- **The A-arm workflows dispatch nothing.** Zero `ssm`/`ec2`/`INSTANCE_ID` references. They
-  stage the packet, push to S3, and stop.
-- **The recorded box is a t3.xlarge (4 vCPU / 16 GB)**, not 8 CPU / 64 GB. Unverified — no
-  AWS creds this session. 5 of 16 sections previously took 2,985s and produced a 1.5 GB file.
+**Compute - unresolved:** the A-arm workflows dispatch nothing (zero `ssm`/`ec2`/`INSTANCE_ID`);
+the recorded box is a t3.xlarge, 4 vCPU / 16 GB, unverified - this session had no AWS
+credentials. 5 of 16 sections previously took 2,985s and made a 1.5 GB file.
 
-**Parked by decision:** D3 / `ALLOWED_BOSSES`, and native-build proof modes for B0/B1/B2.
+**Parked:** D3/`ALLOWED_BOSSES`, native-build proof modes.
 
-## 6. DO NOT TIDY THESE
+## 6. DO NOT TIDY
 
-Superseded values in the original review findings, the historical handoffs and the A-memory
-prior-run reports are **deliberate** — records of what was true when written. Sweeping them
-destroys the audit trail. The warmup-scoped capsule proposal is kept unregistered as the
-record of an analysis the all-days-scored decision superseded; do not wire it.
+Superseded values in the review findings, historical handoffs and A-memory prior-run reports
+are deliberate records. The warmup-scoped capsule proposal stays unregistered.
 
-## 7. THE ONE RULE THAT MATTERS MOST
+## 7. THE RULE THAT MATTERS MOST
 
-**If you change any decision, update `FRANKIE_A_ARM_PRELAUNCH_STATE_20260829.md` in the same
-commit.** The first version of that document went stale exactly because that did not happen,
-and a stale handoff is how work gets rebuilt and findings get dropped.
+Change a decision -> update `FRANKIE_A_ARM_PRELAUNCH_STATE_20260829.md` in the same commit.
