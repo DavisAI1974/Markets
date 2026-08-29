@@ -33,6 +33,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_recognition import Recogni
 from research.kalshi.frankie_raw_mbo_benchmark.native_recurrence import RecurrenceCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_replenishment import ReplenishmentCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_response import ResponseTableCalculator
+from research.kalshi.frankie_raw_mbo_benchmark.native_session import AssignmentLedger
 
 SCHEMA = "FRANKIE_NATIVE_RAW_MBO_CALCULATION_RESULT_V1"
 CAUSAL_CLOCK = "ts_recv_ns"
@@ -225,6 +226,7 @@ class NativeCalculationRun:
         discovery: DiscoveryCalculator | None = None,
         exact_cap: int | None = None,
         seed: int = 0,
+        session_strata: bool = True,
     ) -> None:
         self.identity = identity
         shared: dict[str, Any] = {"seed": seed}
@@ -251,6 +253,8 @@ class NativeCalculationRun:
 
         self.coverage = CoverageLedger()
         self.isolation = IsolationLedger()
+        self.sessions = AssignmentLedger()
+        self.session_strata = session_strata
         self.member_rows_written = 0
         self.lifecycle_rows_written = 0
         self.findings: list[dict[str, Any]] = []
@@ -276,6 +280,22 @@ class NativeCalculationRun:
         if self.discovery is not None:
             mapping["4.15"] = self.discovery
         return mapping
+
+    def note_session_assignment(
+        self, *, ts_event_ns: int, continuity_segment: int, session_phase: str
+    ) -> None:
+        """Report the segment and phase this group was actually keyed on.
+
+        Reported rather than returned, because the point is reconciliation: the ledger
+        recomputes both from the group's own event time and the denominators gate fails on
+        any disagreement. A traversal that supplies a constant phase is caught here and
+        nowhere else - the value is present, typed and plausible at every field-level check.
+        """
+        self.sessions.observe(
+            ts_event_ns=ts_event_ns,
+            continuity_segment=continuity_segment,
+            session_phase=session_phase,
+        )
 
     def note_member_row(self, count: int = 1) -> None:
         self.member_rows_written += count
@@ -337,6 +357,7 @@ class NativeCalculationRun:
             "exact_member_rows": self.member_rows_written,
             "exact_lifecycle_rows": self.lifecycle_rows_written,
             "exact_members_present_beneath_summaries": self.member_rows_written > 0 or not companions,
+            "session_assignment": self.sessions.as_dict(),
             "granularity_note": (
                 "an averaged row's n counts observations within its own stratum and estimand; "
                 "it is not expected to equal the member count, and a valid difference is a "
@@ -421,6 +442,23 @@ class NativeCalculationRun:
         risk_rows = self.response.at_risk_table()
         if risk_rows and not all(r["denominator_is_horizon_specific"] for r in risk_rows):
             problems.append("a response horizon reused another horizon's denominator")
+        if self.session_strata:
+            if self.member_rows_written and not self.sessions.observed:
+                problems.append(
+                    "member rows were written but no session assignment was reported; "
+                    "segment and phase are stratum keys and cannot go unreconciled"
+                )
+            if self.sessions.segment_mismatches:
+                problems.append(
+                    f"{len(self.sessions.segment_mismatches)} continuity_segment values "
+                    "disagree with the exchange session rule"
+                )
+            if self.sessions.phase_mismatches:
+                problems.append(
+                    f"{len(self.sessions.phase_mismatches)} session_phase values disagree "
+                    "with the exchange session rule; a collapsed phase stratum reads exactly "
+                    "like this"
+                )
         return GateResult(
             GATE_DENOMINATORS,
             not problems,

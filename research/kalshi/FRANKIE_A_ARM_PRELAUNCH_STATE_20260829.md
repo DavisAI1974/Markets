@@ -219,7 +219,7 @@ All under `research/kalshi/frankie_raw_mbo_benchmark/`. **441 tests pass.**
 | 4.14 | `native_recurrence.py` | 328 | Exact gaps canonical; a burst threshold labels, never gates. |
 | 4.15 | `native_discovery.py` | 398 | Forbidden features raise at schema construction. Frozen before description. |
 | 4.16 | `native_response.py` | 369 | Each horizon written once, with its own at-risk denominator. |
-| §2 | `native_session.py` | 270 | D6a+D6b. Boundaries exchange-local, so they survive DST. Segment is the CME trade date. Phase from the settlement window and session hours. Non-monotonic input refused. |
+| §2 | `native_session.py` | 332 | D6a+D6b. Boundaries exchange-local, so they survive DST. Segment is the CME trade date. Phase from the settlement window and session hours. Non-monotonic input refused. |
 | §5/§6 | `native_calculation_runner.py` | 519 | Seven layers, eight gates, no partial promotion. |
 | — | `periodic_checkpointer.py` | 380 | Save points on record or clock interval, refused mid-group. |
 | — | `native_replay_driver.py` | 305 | **DRAFT. Untested, nothing calls it.** See section 8. |
@@ -228,7 +228,7 @@ Sections 4.1-4.4 already existed in `a_memory_member_first_recalculation_2026082
 ran the full roster: 5,667,689 records into 4,256,603 groups, 4,758 candidate families, in
 2,985s, with `daily_averaged_companion_verification: EXACT_MATCH`.
 
-**482 tests** as of 2026-08-29 (441 + 41 for `native_session`).
+**487 tests** as of 2026-08-29 (441 + 41 for `native_session`, 5 for the session gate).
 
 Tests are one file per module under `frankie_raw_mbo_benchmark/tests/`, plus
 `test_open_world_growth.py` (the vocabulary must grow) and
@@ -248,11 +248,15 @@ runs, but the claim as written was wrong. No driver feeds the sixteen sections.
 2. **Wire the checkpointer** into both launch workflows. It is already imported by the
    draft driver; what is missing is a path on which that driver executes.
 3. **Wire the gate** into the launcher. An unreferenced gate is not a gate.
-4. **Feed `continuity_segment`, `trade_day` and `session_phase` from `native_session`** into
-   the traversal. Today every section still takes them as caller-supplied arguments, so the
-   D6 rules are available but not yet applied anywhere. Until this is done a driver can
-   still pass a constant phase and collapse the stratum silently - the tests guard the
-   derivation, not its use.
+4. ~~**Feed the D6 assignment into the traversal.**~~ **DONE.** Wired as a RECONCILIATION,
+   not a hand-off: the traversal reports what it keyed on via
+   `NativeCalculationRun.note_session_assignment`, `native_session.AssignmentLedger`
+   recomputes both from the group's own `ts_event_ns`, and `denominators_strata_and_censoring`
+   fails on any disagreement. A field-level check could never catch this - a constant phase
+   is present, typed and plausible - which is the S108/S109 conclusion applied here. Both
+   escape routes are closed: a wrong value mismatches, and writing member rows while
+   reporting NO assignment fails the same gate. `session_strata` defaults to **True**, so
+   forgetting leaves the check on; `make_run` in the runner tests opts out explicitly.
 5. **Wire an exchange holiday calendar.** `native_session` consults none. The roster spans
    no holiday so nothing is wrong today, but any wider window needs it.
 

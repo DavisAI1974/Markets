@@ -65,7 +65,7 @@ the last two trading days of the front month.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta, timezone
 from typing import Any, Iterable, Iterator, Mapping
 from zoneinfo import ZoneInfo
@@ -268,3 +268,65 @@ def segment_stream(groups: Iterable[Mapping[str, Any]]) -> Iterator[dict[str, An
     segmenter = SessionSegmenter()
     for group in groups:
         yield segmenter.assign_group(group)
+
+
+@dataclass
+class AssignmentLedger:
+    """Reconciles the segment and phase a traversal USED against the exchange rule.
+
+    This exists because a field-level check cannot catch the failure it guards. A driver
+    that passes one constant `session_phase` for every group emits a value that is present,
+    non-empty, correctly typed and entirely plausible, and every stratum silently collapses
+    into one - the parallel-view rule broken without a single test going red. S108 and S109
+    both ended at the same conclusion: only comparison against an INDEPENDENT source settles
+    a wrong-but-well-formed input.
+
+    So the traversal reports what it actually put in the stratum key, and this recomputes it
+    from the group's own event time. Degeneracy needs no separate check: a constant phase
+    across a span that crosses an exchange boundary shows up here as a mismatch.
+    """
+
+    observed: int = 0
+    segment_mismatches: list[dict[str, Any]] = field(default_factory=list)
+    phase_mismatches: list[dict[str, Any]] = field(default_factory=list)
+    _sample_cap: int = 20
+
+    def observe(
+        self, *, ts_event_ns: int, continuity_segment: int, session_phase: str
+    ) -> None:
+        ts_event_ns = int(ts_event_ns)
+        self.observed += 1
+        day = trade_day(ts_event_ns)
+        expected_segment = segment_of(day)
+        expected_phase = phase_within(ts_event_ns, day)
+        if continuity_segment != expected_segment:
+            self._note(self.segment_mismatches, ts_event_ns, continuity_segment, expected_segment)
+        if session_phase != expected_phase:
+            self._note(self.phase_mismatches, ts_event_ns, session_phase, expected_phase)
+
+    def _note(self, bucket: list[dict[str, Any]], ts_ns: int, used: Any, expected: Any) -> None:
+        if len(bucket) < self._sample_cap:
+            bucket.append({"ts_event_ns": ts_ns, "used": used, "expected": expected})
+
+    @property
+    def mismatches(self) -> int:
+        return len(self.segment_mismatches) + len(self.phase_mismatches)
+
+    @property
+    def distinct_phases_expected(self) -> int:
+        """How many phases the exchange rule says this span should contain.
+
+        Reported, never gated on: a legitimately short slice sits inside one phase, and a
+        threshold here would label a correct run as broken.
+        """
+        return len({row["expected"] for row in self.phase_mismatches}) or 0
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "assignments_observed": self.observed,
+            "segment_mismatches": len(self.segment_mismatches),
+            "phase_mismatches": len(self.phase_mismatches),
+            "segment_mismatch_samples": list(self.segment_mismatches),
+            "phase_mismatch_samples": list(self.phase_mismatches),
+            "basis": "recomputed from ts_event_ns via the CME session rule (D6)",
+        }

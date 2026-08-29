@@ -14,6 +14,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import 
     REQUIRED_GATES,
     REQUIRED_LAYERS,
     CalculationRunError,
+    LAYER_RECONCILIATION,
     NativeCalculationRun,
     RunIdentity,
 )
@@ -78,6 +79,9 @@ def make_run(**overrides) -> NativeCalculationRun:
         response_horizons_ns=(100,),
         response_horizon_version="hv1",
         response_value_names=("price_response",),
+        # These runs do not exercise the session path. Opting out is explicit and visible;
+        # the default is ON, so forgetting leaves the reconciliation enabled rather than off.
+        session_strata=False,
     )
     kwargs.update(overrides)
     return NativeCalculationRun(identity(), **kwargs)
@@ -314,3 +318,100 @@ class ReconciliationTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SessionAssignmentGateTest(unittest.TestCase):
+    """A traversal that supplies a constant session_phase must be REJECTED.
+
+    This is the failure the D6 derivation exists to prevent and the one a field-level check
+    cannot see: a constant phase is present, non-empty, correctly typed and plausible, and
+    it collapses every phase stratum with a fully green suite. Only reconciliation against
+    an independent derivation catches it.
+    """
+
+    @staticmethod
+    def _instant(iso: str) -> int:
+        from datetime import datetime, timezone
+        return int(
+            datetime.fromisoformat(iso).replace(tzinfo=timezone.utc).timestamp()
+        ) * 1_000_000_000
+
+    # Three instants inside one CME trade date that the exchange puts in three phases.
+    SPAN = (
+        "2021-10-04T13:00:00",  # PRE_SETTLEMENT
+        "2021-10-04T18:29:00",  # SETTLEMENT   (14:29 ET)
+        "2021-10-04T21:30:00",  # POST_CLOSE   (16:30 CT)
+    )
+
+    def _observe(self, run, *, phase_supplier, segment_supplier=None) -> None:
+        from research.kalshi.frankie_raw_mbo_benchmark.native_session import (
+            segment_of,
+            trade_day,
+        )
+        for iso in self.SPAN:
+            at = self._instant(iso)
+            day = trade_day(at)
+            run.note_session_assignment(
+                ts_event_ns=at,
+                continuity_segment=(
+                    segment_supplier(at) if segment_supplier else segment_of(day)
+                ),
+                session_phase=phase_supplier(at),
+            )
+
+    def test_a_constant_phase_across_three_phases_is_rejected(self) -> None:
+        run = make_run(session_strata=True)
+        drive(run)
+        self._observe(run, phase_supplier=lambda at: "RTH")
+        result = run.finalize()
+        self.assertEqual(result["verdict"], REJECTED)
+        self.assertIn(GATE_DENOMINATORS, result["failed_gates"])
+
+    def test_the_derived_assignment_is_accepted(self) -> None:
+        from research.kalshi.frankie_raw_mbo_benchmark.native_session import (
+            phase_within,
+            trade_day,
+        )
+        run = make_run(session_strata=True)
+        drive(run)
+        self._observe(run, phase_supplier=lambda at: phase_within(at, trade_day(at)))
+        result = run.finalize()
+        self.assertEqual(result["verdict"], ACCEPTED, result["failed_gates"])
+
+    def test_a_wrong_segment_is_rejected(self) -> None:
+        from research.kalshi.frankie_raw_mbo_benchmark.native_session import (
+            phase_within,
+            segment_of,
+            trade_day,
+        )
+        run = make_run(session_strata=True)
+        drive(run)
+        self._observe(
+            run,
+            phase_supplier=lambda at: phase_within(at, trade_day(at)),
+            segment_supplier=lambda at: segment_of(trade_day(at)) + 1,
+        )
+        result = run.finalize()
+        self.assertEqual(result["verdict"], REJECTED)
+        self.assertIn(GATE_DENOMINATORS, result["failed_gates"])
+
+    def test_writing_members_without_reporting_any_assignment_is_rejected(self) -> None:
+        """The other way to defeat the check: never call it at all."""
+        run = make_run(session_strata=True)
+        drive(run)
+        result = run.finalize()
+        self.assertEqual(result["verdict"], REJECTED)
+        self.assertIn(GATE_DENOMINATORS, result["failed_gates"])
+
+    def test_the_reconciliation_layer_reports_the_basis(self) -> None:
+        from research.kalshi.frankie_raw_mbo_benchmark.native_session import (
+            phase_within,
+            trade_day,
+        )
+        run = make_run(session_strata=True)
+        drive(run)
+        self._observe(run, phase_supplier=lambda at: phase_within(at, trade_day(at)))
+        sessions = run.finalize()["layers"][LAYER_RECONCILIATION]["session_assignment"]
+        self.assertEqual(sessions["assignments_observed"], 3)
+        self.assertEqual(sessions["phase_mismatches"], 0)
+        self.assertIn("CME session rule", sessions["basis"])
