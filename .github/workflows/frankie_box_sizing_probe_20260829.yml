@@ -1,0 +1,126 @@
+name: Read-only box sizing probe 20260829
+
+# Answers the ONE open question in D55 that no session has been able to settle from a
+# desk: what the A-arm box actually is. `LIVE_TELEMETRY_S100.md` records
+# i-08cee7171c0a76a04 as a t3.xlarge (4 vCPU / 16 GB). Greg states it was switched to a
+# larger box, 64 GB with 8, six for work and two for the planes, plus a swap that was
+# required rather than incidental. Those disagree, and section 10a of
+# FRANKIE_A_ARM_PRELAUNCH_STATE_20260829.md predicted this exact failure in writing: "if
+# the instance was resized, the record was not updated, and the record is what the next
+# session will believe."
+#
+# A Claude session cannot settle it. AWS credentials live in GitHub secrets, so they are
+# workflow-scoped; an interactive session resolves no credentials at all
+# (NoCredentialsError, verified 2026-08-29). This workflow is the only path.
+#
+# STRICTLY READ-ONLY. It describes the instance and reads /proc on it. It writes nothing,
+# starts no arm, dispatches no calculation and touches no S3 object. It is
+# workflow_dispatch only - it never fires on a push - because the standing instruction is
+# that nothing launches without Greg.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frankie-box-sizing-probe-20260829
+  cancel-in-progress: false
+
+jobs:
+  probe-box-sizing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      RECORDED_TYPE: t3.xlarge
+    steps:
+      - name: Describe the instance from the control plane
+        run: |
+          set -euo pipefail
+          aws ec2 describe-instances \
+            --instance-ids "$INSTANCE_ID" \
+            --query 'Reservations[0].Instances[0].{Type:InstanceType,State:State.Name,Az:Placement.AvailabilityZone}' \
+            --output json > /tmp/instance.json
+          cat /tmp/instance.json
+          observed="$(python3 -c "import json;print(json.load(open('/tmp/instance.json'))['Type'])")"
+          echo "OBSERVED_INSTANCE_TYPE=$observed"
+          echo "RECORDED_INSTANCE_TYPE=$RECORDED_TYPE"
+          if [ "$observed" = "$RECORDED_TYPE" ]; then
+            echo "RECORD_AGREES=true  -- LIVE_TELEMETRY_S100.md stands; Greg's 64GB/8 does not match the control plane."
+          else
+            echo "RECORD_AGREES=false -- LIVE_TELEMETRY_S100.md is STALE and must be corrected at the source."
+          fi
+
+      - name: Read cores, memory and swap from the box itself
+        run: |
+          set -euo pipefail
+          # The control plane states the instance TYPE. Only the box states what is
+          # actually available to a run - swap in particular is invisible from outside,
+          # and Greg's note says it was required, not incidental.
+          python3 - <<'PY'
+          import json, shlex
+          remote = r'''
+          set -eu
+          echo NPROC=$(nproc)
+          echo MEM_TOTAL_KB=$(awk '/^MemTotal:/{print $2}' /proc/meminfo)
+          echo MEM_AVAILABLE_KB=$(awk '/^MemAvailable:/{print $2}' /proc/meminfo)
+          echo SWAP_TOTAL_KB=$(awk '/^SwapTotal:/{print $2}' /proc/meminfo)
+          echo SWAP_FREE_KB=$(awk '/^SwapFree:/{print $2}' /proc/meminfo)
+          echo DISK_AVAIL_KB=$(df -Pk / | awk 'NR==2{print $4}')
+          '''
+          with open("/tmp/sizing-params.json", "w", encoding="utf-8") as handle:
+              json.dump({"commands": ["/bin/bash -lc " + shlex.quote(remote)]}, handle)
+          PY
+
+          command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Read-only box sizing probe (D55)" \
+            --parameters file:///tmp/sizing-params.json \
+            --timeout-seconds 300 \
+            --query 'Command.CommandId' --output text)"
+          aws ssm wait command-executed --command-id "$command_id" --instance-id "$INSTANCE_ID" || true
+          aws ssm get-command-invocation \
+            --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json > /tmp/sizing.json
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          result = json.loads(Path("/tmp/sizing.json").read_text(encoding="utf-8"))
+          print("SSM_STATUS=" + str(result.get("Status")))
+          print("SSM_RESPONSE_CODE=" + str(result.get("ResponseCode")))
+          out = result.get("StandardOutput", "")
+          values = {}
+          for line in out.splitlines():
+              if "=" in line:
+                  key, _, value = line.partition("=")
+                  values[key.strip()] = value.strip()
+                  print(line)
+
+          if result.get("Status") != "Success" or result.get("ResponseCode") != 0:
+              print(result.get("StandardError", ""))
+              raise SystemExit("BOX_SIZING_PROBE_FAILED")
+
+          # State the comparison rather than leaving the reader to do the arithmetic; the
+          # whole point of this probe is that a number nobody converted is a number nobody
+          # checked.
+          gib = lambda kb: round(int(values.get(kb, 0)) / 1024 / 1024, 1)
+          print("---")
+          print(f"CORES={values.get('NPROC')}  (record implies 4, Greg states 8)")
+          print(f"MEM_TOTAL_GIB={gib('MEM_TOTAL_KB')}  (record implies 16, Greg states 64)")
+          print(f"SWAP_TOTAL_GIB={gib('SWAP_TOTAL_KB')}  (Greg states swap was REQUIRED)")
+          print(f"DISK_AVAIL_GIB={gib('DISK_AVAIL_KB')}")
+          if gib("SWAP_TOTAL_KB") == 0:
+              print("SWAP_PRESENT=false -- the configuration Greg describes as needed is NOT in place.")
+          else:
+              print("SWAP_PRESENT=true")
+          PY

@@ -345,7 +345,18 @@ runs, but the claim as written was wrong. No driver feeds the sixteen sections.
    cost of the canonical detector: 88s over the full roster.
 
    **STILL OPEN, and the first item is NOT mechanical:** sections 4.6 to 4.16 are closed at
-   boundaries but never fed. **Correction to the previous version of this file:** it said
+   boundaries but never fed.
+
+   **BUILT AND FED ARE DIFFERENT LAYERS - do not read "unfed" as "unbuilt."** This wording
+   has already misled once (2026-08-29). **All sixteen sections ARE built and tested** and
+   none of that is to be redone: `native_queue` 23 tests, `native_replenishment` 25,
+   `native_exhaustion` 24, `native_recognition` 17, `native_dipole` 25, `native_discovery`
+   22, `native_response` 20 - 156 across the seven still-unfed sections alone. What is
+   missing is ONLY the adapter that constructs their inputs. Verified by search on
+   2026-08-29: `observe_level`, `on_add`, `open_episode`, `open_runway`,
+   `CandidateRecognition`, `observe_path` and `open_track` are each referenced by exactly
+   one non-test file - **the module that defines them.** Zero callers from the traversal.
+   Say "unfed", never "remaining". **Correction to the previous version of this file:** it said
    `LadderCalculator`, `RecurrenceCalculator` and `LineageCalculator` "expose no ingest
    method at all". That is wrong - they expose `observe`, `observe_sequence` and
    `observe_node` respectively, and a session spent adding ingest methods would be spent
@@ -461,10 +472,16 @@ sized against a configuration that never ran. `LIVE_TELEMETRY_S100.md` is wrong 
 be corrected at the source. `CLAUDE.md`'s 200 GB on the same instance is disk, not RAM, and
 that part stands.
 
-**Still not verified live** - this session had no resolvable AWS credentials, so Greg's
-statement is the authority here, not a probe. A live check is still owed once credentials
-exist, because the whole point of this entry is that a written record drifted from the
-machine.
+**Still not verified live, and the probe that settles it is now BUILT and waiting on
+Greg.** Greg (2026-08-29): *"aws credentials are in git secrets."* They are - which means
+they are WORKFLOW-scoped, not session-scoped: an interactive session resolves nothing
+(`NoCredentialsError`, verified). So no Claude session can settle this from a desk, and
+`.github/workflows/frankie_box_sizing_probe_20260829.yml` is the path. It is strictly
+read-only - `ec2 describe-instances` for the type, then `/proc` over SSM for cores, memory
+and swap - writes nothing, starts no arm and touches no S3 object, and it is
+**`workflow_dispatch` only** so it cannot fire on a push. It prints the observed values
+against both claims side by side, including whether the swap Greg describes as REQUIRED is
+actually in place. **Greg runs it; a Claude token cannot click Run workflow.**
 
 **Sizing is NOT settled, and Greg flagged it himself:** *"this might not be enough for
 this."* Sixteen sections over 4.26M groups against a member-first run that took 2,985s and
