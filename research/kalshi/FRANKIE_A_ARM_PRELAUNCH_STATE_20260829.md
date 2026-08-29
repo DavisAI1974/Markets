@@ -191,8 +191,13 @@ kind from the findings status and both have consequences:
   `extra_agent_corrected_information_and_gap_diagnoses` and
   `extra_agent_four_helper_architecture_roles` - both `SHADOW_DISABLED`/`SHADOW_READY` with
   `model_visible: False`. Making them permanent means Frankie can SEE them, which changes
-  `EXPECTED_POLICY_COUNTS`, the surface inventory hash and the manifest. Note the second is
-  the four-helper architecture that correction 3 already reframed as tools, not lanes.
+  `EXPECTED_POLICY_COUNTS`, the surface inventory hash and the manifest.
+  **`extra_agent_four_helper_architecture_roles`: RESOLVED 2026-08-29 (D54).** Greg:
+  *"we aren't doing the helpers or the specialists anymore."* That layer documents a
+  SUPERSEDED architecture, so it stays shadow and `model_visible: False` - making a dead
+  architecture visible to Frankie is worse than showing nothing.
+  **`extra_agent_corrected_information_and_gap_diagnoses`: STILL OPEN.** Not ruled on;
+  unchanged, and the manifest and surface hash are untouched.
 * **"provisional strategy hypotheses"** in the RT mission and the discovery addendum are
   `ALWAYS_LOAD` instructions telling Frankie what to PRODUCE. Editing them changes Frankie's
   job and requires regenerating hash-bound capsules.
@@ -328,6 +333,15 @@ runs, but the claim as written was wrong. No driver feeds the sixteen sections.
    candidate. Feeding these means deciding what counts as a runway, a dipole path, a lineage
    node and a ladder snapshot in raw MBO, which shapes what the benchmark reports and should
    not be invented quietly. `describe_structure` is the canonical precedent to build from.
+   **THE UNIT IS DECIDED (2026-08-29, Greg - D53): the F_LAST GROUP, one unit across all
+   sixteen sections.** A candidate IS one F_LAST group - the same unit `describe_structure`
+   already hashes into `candidate_family_id`, and the unit the member-first run cut its
+   4,758 families from. Chosen so reconciliation against the existing roster holds by
+   construction rather than introducing a second traversal vocabulary, which is exactly the
+   `_family_id` defect caught on 2026-08-29. **Recorded cost, not hidden:** 4.6 order
+   survival and 4.9 ladder topology are not naturally group-shaped, and the adapters must
+   report where that distorts rather than smoothing it over. What remains is building the
+   eleven adapters on that unit.
    `on_invoke` is GONE, replaced by `stage_spawn`: at a cutoff the traversal writes a
    committed request via `native_staging.SpawnStager` and moves on. It calls nothing. The
    full loop is now closed and tested - stage at cutoff, agent session reads, artifact
@@ -404,23 +418,44 @@ So today there is no execution path at all - which compounds section 8: the driv
 draft, the checkpointer and gate are wired to nothing, and the workflow that would carry
 them dispatches nothing.
 
-**The recorded box is smaller than assumed.** `LIVE_TELEMETRY_S100.md` records
-`i-08cee7171c0a76a04` as a **t3.xlarge** in us-east-2, which is **4 vCPU / 16 GB** - not
-8 CPU / 64 GB. `CLAUDE.md` refers to the same instance with 200 GB, which is disk, not RAM.
-**This could not be verified live**: this session had no resolvable AWS credentials, so what
-is stated here is what is written down. If the instance was resized, the record was not
-updated, and the record is what the next session will believe.
+**The recorded box was STALE, and the predicted failure is exactly what happened**
+(corrected 2026-08-29, Greg - D55). The paragraph this replaces said
+`LIVE_TELEMETRY_S100.md` records `i-08cee7171c0a76a04` as a **t3.xlarge**, 4 vCPU / 16 GB,
+and warned in writing: "if the instance was resized, the record was not updated, and the
+record is what the next session will believe." It was resized and the record was not
+updated.
+
+Greg, verbatim: *"We switched to the larger box with 64g ram and 8 agents because of the big
+computes and this might not be enough for this. We had 6 cpus running and 2 for the planes.
+We also had a ram swap which was needed too."*
+
+So the machine is **64 GB RAM / 8**, split **6 for work and 2 for the planes**, **with swap
+that was required rather than incidental** - a run sized to fit in RAM alone would have been
+sized against a configuration that never ran. `LIVE_TELEMETRY_S100.md` is wrong and should
+be corrected at the source. `CLAUDE.md`'s 200 GB on the same instance is disk, not RAM, and
+that part stands.
+
+**Still not verified live** - this session had no resolvable AWS credentials, so Greg's
+statement is the authority here, not a probe. A live check is still owed once credentials
+exist, because the whole point of this entry is that a written record drifted from the
+machine.
+
+**Sizing is NOT settled, and Greg flagged it himself:** *"this might not be enough for
+this."* Sixteen sections over 4.26M groups against a member-first run that took 2,985s and
+wrote 1.5 GB covering 5 of 16.
 
 Why it matters: the member-first recalculation covering 5 of 16 sections took 2,985s and
 produced a 1.5 GB exact-members file. Sixteen sections over 4.26M groups on 16 GB is at
 least worth sizing before it is attempted, and `ubuntu-latest` - which is what the A-arm
 workflows currently use - is smaller again.
 
-**A likely explanation for the four helper lanes.** A t3.xlarge has exactly 4 vCPUs and the
-registry carries exactly 4 helper scouts. That is circumstantial, but it fits: the "four
-live helpers" may be a parallelism artifact of the box rather than a research design. Since
-helpers are now tools callable by RT and Forecaster rather than lanes, nothing depends on
-the number four - and if anything still does, that is a bug rather than a design.
+~~**A likely explanation for the four helper lanes.**~~ **DEAD - the conjecture rested on
+the stale record.** It read: a t3.xlarge has exactly 4 vCPUs and the registry carries
+exactly 4 helper scouts, so the "four live helpers" may be a parallelism artifact of the
+box. The box has **8**, so the coincidence it was built on does not exist. Recorded rather
+than deleted because it is a clean example of the same defect twice over: a theory fitted to
+a number that was itself unverified. Nothing depended on it - helpers are tools, not lanes
+(D54).
 
 ## 11. Where this session ended, and housekeeping
 
