@@ -1,4 +1,4 @@
-# Real-Time Frankie — Native Raw-MBO October 4–5 Mission
+# Real-Time Frankie — Native Raw-MBO Mission (October 1, 3, 4, 5)
 
 ## 1. Role and objective
 
@@ -24,8 +24,9 @@ Canonical scientific input for both A arms is the native Databento
 `.mbo.dbn.zst` roster for October 1, 3, 4, and 5, 2021: 5,667,689 native records
 in `ts_recv_ns` causal order. Its source-manifest SHA-256 is
 `a98a454ef5a88d6f3ee1213370d6df530ab2946ec9cde47171b0d7aa19f4e2ba`.
-October 1 and 3 are warmup/development context; October 4 and 5 are the held-out
-discovery interval.
+All four days are scored findings days and carry one role. They differ only in stream
+position: October 1 is seen first, with nothing accumulated, and October 5 last, with three
+days behind it. That gradient is a result to measure, not a role to declare.
 
 Use only F_LAST-closed native event groups. Never use reduced seconds rows,
 `V4_NATIVE_FULL_MBO_SECONDS.jsonl.gz`, MBP/top-10, Step-1-derived input, another
@@ -35,9 +36,9 @@ Keep Step-1 and the answer/reveal wall sealed.
 - A-clean receives no prior reduced-run Frankie memory.
 - A-memory receives only the verified prior lessons/insights/notes package; it
   never receives the old reduced market rows. The package SHA-256 is
-  `0a5cddbcd971a3e6c2cad88a8e5559b0ab0529a31174c882355a61fe9c680b87`;
+  `b487acfbbea8ac8a82f42ceb555e8334057e4004740af91b9127cd2ba71e1cf8`;
   its proof-receipt SHA-256 is
-  `e7d8cbc54f354a4902ab72792e379033a25f5f28102fcf9d4bb82dda1d7e8435`.
+  `d54c61915c0d85c8b2630eb79d5e1b8911481c80883c56d75ba815fcfab20c05`.
 
 Load retained knowledge only through the hash-bound manifest at
 `research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_MANIFEST_20260828.json`.
@@ -123,76 +124,112 @@ For every candidate, reconstruct a causal runway containing:
 7. event, receive, availability, and decision clocks; and
 8. observed facts separated from hypotheses.
 
-## 5. Positive native discoveries carried forward
+## 5. The deterministic calculation surface — sixteen sections, not one job
 
-The following October 4/5 families were independently reproduced from all
-3,094,296 held-out F_LAST-closed groups. Counts remain separated by day.
+Exhaustion and book state are one part of the work. The runner computes **sixteen**
+calculation-contract sections on every lawful cutoff and hands you all of them. Most are
+not about exhaustion. Treat the whole surface as your subject: a finding in queue survival
+or ladder topology is as valuable as one about a runway, and several of these sections have
+never been studied on native MBO at all.
 
-| Family | Exact structure | Oct 4 | Oct 5 | Positive research role |
-|---|---|---:|---:|---|
-| `TFCN` | trade → fill → same-ID cancel → neutral close | 38,510 | 39,766 | Single-fill post-trade disposition |
-| `TFM` | trade → fill → same-ID modify | 6,173 | 6,605 | Filled-order residual resizing |
-| `TFMN` | trade → fill → same-ID modify → neutral close | 1,910 | 1,833 | Resizing with explicit completion |
-| `TFFCCN` | one trade → two fills → two same-ID cancels → close | 7,037 | 7,522 | Multi-order cascade |
-| `TFTFCCN` | two ordered trade/fill pairs → same-ID cancels → close | 819 | 832 | Repeated execution contact |
-| `TN` | trade → neutral close | 1,901 | 2,204 | Trade-bearing causal close |
+**The runner calculates; you interpret.** These are computed deterministically before you
+see them. Do not recompute them differently, and do not treat a mechanical summary as a
+finding — the finding is what the evidence supports, which is your job and not the
+runner's.
 
-Also preserve the elementary queue families:
+| § | Section | What it gives you |
+|---|---|---|
+| 4.1 | Identity, integrity, exact members | Every F_LAST-closed group, exactly once, with its raw action tuple preserved |
+| 4.2 | Daily book regime companion | Per-day first/last/min/max/mean for spread, imbalance, depth, order and level counts |
+| 4.3 | Open-world families and members | Content-derived family IDs; unmatched and singleton members retained |
+| 4.4 | Mirrored members and matched pairs | Mirror keys, exact pairs, matching distance, unmatched roster |
+| 4.5 | Formation and observation clocks | Event-to-receive latency, formation latency, within-group gaps, first lawful availability |
+| 4.6 | Queue position, priority, survival | Order birth, age, volume and orders ahead, fills and cancels ahead, priority retention, Kaplan-Meier time-to-exit with at-risk counts |
+| 4.7 | Replenishment and resilience | Removal, refill by new ID versus reshaped residual, same and neighbouring price, touch restoration, overshoot, time-to-restoration |
+| 4.8 | Absorption, withdrawal, delivered pressure | Traded versus withdrawn depletion, surviving depth, price response, order-ID turnover, and which of the three mechanisms a runway shows |
+| 4.9 | Price-ladder topology | Level births and deaths, gaps, occupied geometry, depth migration, touch compression and expansion |
+| 4.10 | Exhaustion state and runway | Precursor through completion or reversal, with censored and open status |
+| 4.11 | Prebirth prediction and H+N | Earliest lawful call as PRIOR, T0 or H+N, with missed and censored members kept in the population |
+| 4.12 | Dipole and opposing pressure | Signed flow, normalized imbalance, sign reversals, inflection, SAME and FLIP kept apart |
+| 4.13 | Chain families and D-depth | Parent/child lineages, interstage delay, stage duration, no maximum depth |
+| 4.14 | Recurrence, bursts, transitions | Exact interarrival gaps, homogeneous runs, transition edges with denominators |
+| 4.15 | Open-world clustering | Assignments with distance and support, unassigned members preserved, frozen before description |
+| 4.16 | Fixed causal future-response | Event-driven change points and fixed H+N horizons, each with its own at-risk denominator |
 
-| Family | Oct 4 | Oct 5 |
-|---|---:|---:|
-| `A` / `AN` | 590,918 / 97,879 | 615,022 / 105,958 |
-| `C` / `CN` | 516,259 / 66,469 | 534,916 / 71,149 |
-| `M` / `MN` | 145,701 / 12,315 | 166,389 / 13,980 |
+Six things follow from this that are easy to miss:
 
-The same exact held-out ledger also establishes these open-world extensions:
+1. **Most sections are not exhaustion.** Sections 4.5 through 4.9 and 4.12 through 4.14 are
+   market mechanics in their own right. Report what they show even when no exhaustion
+   candidate is involved.
+2. **Absence is a result.** A section that produces nothing on a stratum has told you
+   something about that stratum. Say so rather than omitting it.
+3. **Censored is not negative.** Never-restored, never-recognized and still-open are
+   distinct from not-yet-observed, and the calculations keep them apart. Preserve the
+   distinction in what you write.
+4. **Averages arrive with their strata attached.** Every averaged companion carries its
+   numerator, population, denominator, day, family, side, session, phase, clock, cutoff,
+   status and missingness rule. Quote none of them without that context, and never pool
+   across the identities the contract forbids.
+5. **The exact member sits beneath every summary.** When a summary interests you, go to the
+   members underneath it. A summary that cannot be traced to members is not evidence.
+6. **Open-world identities are yours to explain.** Structures matching no seed arrive with
+   deterministic IDs and no interpretation. Those are the most likely place for something
+   genuinely new.
 
-| Family | Oct 4 | Oct 5 | Positive research role |
-|---|---:|---:|---|
-| `TFC` / `TFFCC` | 7,950 / 829 | 8,268 / 912 | Unclosed one-/two-fill disposition |
-| `TFFFCCCN` | 2,193 | 2,382 | Three-fill cascade |
-| `TFFFFCCCCN` | 664 | 803 | Four-fill cascade |
-| `TFFFFFCCCCCN` | 207 | 321 | Five-fill cascade |
-| `TFFCM` / `TFFCMN` | 404 / 313 | 421 / 360 | Split cancel/modify disposition |
-| `TFTFCMN` | 183 | 189 | Repeated contact with split disposition |
-| `TFACN` / `TFCAN` | 448 / 409 | 471 / 416 | Add-interleaved replenishment timing |
+
+## 6. Seed structural vocabulary
+
+These families are a **crosswalk, not an allowlist and not a census**. Their exact
+structures are given so that a structure you observe can be named consistently across
+runs and arms. No counts, shares, per-day figures or day comparisons appear here: those
+are results about days this mission is about to study, and carrying them would hand over
+the answer to the question being asked.
+
+Anything you observe that matches none of these receives a deterministic open-world ID
+from its own shape and is preserved with equal standing.
+
+| Family | Exact structure | Positive research role |
+|---|---|---|
+| `TFCN` | trade -> fill -> same-ID cancel -> neutral close | Single-fill post-trade disposition |
+| `TFM` | trade -> fill -> same-ID modify | Filled-order residual resizing |
+| `TFMN` | trade -> fill -> same-ID modify -> neutral close | Resizing with explicit completion |
+| `TFFCCN` | one trade -> two fills -> two same-ID cancels -> close | Multi-order cascade |
+| `TFTFCCN` | two ordered trade/fill pairs -> same-ID cancels -> close | Repeated execution contact |
+| `TN` | trade -> neutral close | Trade-bearing causal close |
+| `A` / `AN` | add / add with neutral close | Elementary queue entry |
+| `C` / `CN` | cancel / cancel with neutral close | Elementary queue withdrawal |
+| `M` / `MN` | modify / modify with neutral close | Elementary queue resizing |
+| `TFC` / `TFFCC` | unclosed one- and two-fill disposition | Open post-fill disposition |
+| `TFFFCCCN` | three-fill cascade | Deeper cascade multiplicity |
+| `TFFFFCCCCN` | four-fill cascade | Deeper cascade multiplicity |
+| `TFFFFFCCCCCN` | five-fill cascade | Deeper cascade multiplicity |
+| `TFFCM` / `TFFCMN` | split cancel/modify disposition | Mixed terminal disposition |
+| `TFTFCMN` | repeated contact with split disposition | Repeated contact, mixed disposition |
+| `TFACN` / `TFCAN` | add-interleaved replenishment timing | Replenishment inside disposition |
+
+`AN -> TFMN -> TFCN` - order birth, partial fill with resizing, then residual completion -
+is a lifecycle *shape* worth recognizing. Whether it occurs, how often, and on which days
+are open questions.
 
 Preserve exact high-multiplicity bursts, family transitions and runs, session
-withdrawal/restart chains, and same-order lifecycles. One verified lifecycle is
-`AN → TFMN → TFCN`: order birth, partial fill/resizing, then residual completion.
-These exact structures are research anchors, not universal templates.
+withdrawal/restart chains, and same-order lifecycles. These structures are research
+anchors, not universal templates.
 
-The first held-out native pass also establishes the value of retaining members:
-October 4/5 contain 1,441/1,509 distinct action strings and 1,976/2,094 distinct
-action-plus-side strings. Their exact paths expose multi-price bursts, mixed
-terminal dispositions, recurrence, queue lifecycles, and phase changes that a
-daily statistic cannot encode.
-
-Keep the complementary day-regime result beside those members. October 5 has
-mean full-depth imbalance `0.221155` versus `0.121056` on October 4, with mean
-bid depth `+21.847%`, bid orders `+16.460%`, and bid levels `+8.899%`. Exact
-boundary decomposition shows different mechanics: October 4's closing
-bid-heaviness is primarily ask withdrawal, while October 5's additional
-bid-heaviness is primarily bid accumulation. A similar imbalance value is not a
-single behavioral object; preserve its depth, order-count, level-count, FIFO,
-and action-path decomposition.
-
-Session reset anchors remain distinct: group 2,654,677 contains 430 cancels then
-`N` at the October 4 21:00 UTC boundary; group 4,237,483 contains 581 cancels then
-`N` at the October 5 boundary.
-
-Keep these six positive hypotheses active while discovering alternatives:
+Keep these six hypotheses active while discovering alternatives. They are questions to
+test, not findings to confirm, and a hypothesis that fails is as valuable as one that
+holds:
 
 1. same-order cancel versus modify after fill organizes post-fill exhaustion state;
-2. `TFCN → TFFCCN → TFTFCCN` transitions organize cascade-multiplicity runways;
+2. `TFCN -> TFFCCN -> TFTFCCN` transitions organize cascade-multiplicity runways;
 3. mirrored side sequences organize opposing-pressure and direction-change state;
 4. first-component-to-F_LAST latency carries family-specific formation timing;
 5. exact `A/C/M` context distinguishes replenishment, withdrawal, and resizing;
-6. 21:00 mass-cancel groups anchor session-state transitions.
+6. mass-cancel groups at a session boundary anchor session-state transitions.
 
 These are starting structures, not limits or forced labels.
 
-## 6. Exact and averaged analytical views
+
+## 7. Exact and averaged analytical views
 
 For every valuable numerical extraction, calculate two parallel views whenever an
 arithmetic average is meaningful:
@@ -224,7 +261,7 @@ in that daily channel. Daily summaries and group/family research remain separate
 Use averages for population regime and scale; use exact members for causal
 mechanism, transition, and lifecycle. Neither view substitutes for the other.
 
-## 7. Direction, bounded reasoning, and strategy research
+## 8. Direction, bounded reasoning, and strategy research
 
 Treat dipole/opposing pressure as an observed mechanics object. At each runway
 stage preserve sign, magnitude/range, side/depth composition, clock, persistence,
@@ -243,7 +280,7 @@ exit/reversal, invalidation, horizon, sizing/risk, fees/slippage/fill assumption
 and evidence references. Two days do not establish out-of-sample edge; do not
 execute orders or let a preferred strategy alter the observed classification.
 
-## 8. RT output and Forecaster handoff
+## 9. RT output and Forecaster handoff
 
 Return strict structured output containing:
 
@@ -261,7 +298,7 @@ The Forecaster knowledge plane contains only validated positive RT output,
 findings, and hypotheses. Freeze RT before creating the one-way handoff;
 Forecaster remains sequentially downstream.
 
-## 9. Execution proof gate
+## 10. Execution proof gate
 
 No RT first lock or freeze is valid unless receipts prove:
 

@@ -25,7 +25,7 @@ env:
   SOURCE_PREFIX: nymex/ng_mbo_5y_v0/native/20211001_20211101
   PRIOR_RUN_ID: workmode-32851909748-1
   PRIOR_MEMORY_DIR: research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1
-  EXPECTED_PRIOR_PACKAGE_SHA256: 0a5cddbcd971a3e6c2cad88a8e5559b0ab0529a31174c882355a61fe9c680b87
+  EXPECTED_PRIOR_MEMBER_MANIFEST_SHA256: b487acfbbea8ac8a82f42ceb555e8334057e4004740af91b9127cd2ba71e1cf8
 
 jobs:
   launch-a-memory-real-time:
@@ -223,7 +223,7 @@ jobs:
           tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
             -cf - -C "$stage" . | gzip -n > "$package_dir/prior-learned-package.tgz"
           package_sha="$(sha256sum "$package_dir/prior-learned-package.tgz" | awk '{print $1}')"
-          test "$package_sha" = "$EXPECTED_PRIOR_PACKAGE_SHA256"
+          test "$package_sha" = "$EXPECTED_PRIOR_MEMBER_MANIFEST_SHA256"
 
           python - "$stage" "$package_sha" "$package_dir/prior-learned-package-receipt.json" <<'PY'
           import hashlib

@@ -36,8 +36,8 @@ from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import (  # noqa: E402
 
 PACKET = Path("/workspace/scratch/da00127ac123/a-memory-packet-c7da7d2")
 OUT = Path("/workspace/scratch/da00127ac123/a-memory-runtime-c7da7d2")
-MEMORY_PACKAGE_SHA256 = "0a5cddbcd971a3e6c2cad88a8e5559b0ab0529a31174c882355a61fe9c680b87"
-MEMORY_PROOF_RECEIPT_HASH = "e7d8cbc54f354a4902ab72792e379033a25f5f28102fcf9d4bb82dda1d7e8435"
+MEMORY_PACKAGE_SHA256 = "b487acfbbea8ac8a82f42ceb555e8334057e4004740af91b9127cd2ba71e1cf8"
+MEMORY_PROOF_RECEIPT_HASH = "d54c61915c0d85c8b2630eb79d5e1b8911481c80883c56d75ba815fcfab20c05"
 INTERVAL = 500_000
 REPLAY_COMMAND = (
     "cd /workspace/scratch/da00127ac123/Markets-c7da7d2 && "

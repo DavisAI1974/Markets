@@ -6,7 +6,7 @@
         "A_MEMORY"
       ],
       "authority": "BINDING_CURRENT_MISSION",
-      "bytes": 15242,
+      "bytes": 18931,
       "id": "native_rt_mission",
       "kind": "MARKDOWN",
       "load_mode": "ALWAYS_LOAD",
@@ -14,7 +14,7 @@
       "roles": [
         "REAL_TIME_FRANKIE"
       ],
-      "sha256": "1dde5590311ce9635a27eb6cdfa223004cf18aa99a008f98020f7ea9043f2928"
+      "sha256": "a4b73afa6101c1ec93ec2fca1d302b7479594ae924e88c590aaea920439ce183"
     },
     {
       "arms": [
@@ -53,7 +53,7 @@
         "A_CLEAN"
       ],
       "authority": "PROMOTED_POSITIVE_NATIVE_KNOWLEDGE",
-      "bytes": 1846,
+      "bytes": 2314,
       "id": "a_clean_promoted_positive_knowledge",
       "kind": "MARKDOWN",
       "load_mode": "ALWAYS_LOAD",
@@ -62,7 +62,7 @@
         "REAL_TIME_FRANKIE",
         "FORECASTER_FRANKIE"
       ],
-      "sha256": "53a42357f5dd46b553ad73f34cb2023855a742a46398e9ec55beb8e4083b0188"
+      "sha256": "cf7a922728472c342151a5d380632a34d2ec9e823992a83be178082ac406b69a"
     },
     {
       "arms": [
@@ -82,7 +82,6 @@
     },
     {
       "arms": [
-        "A_CLEAN",
         "A_MEMORY"
       ],
       "authority": "DETAILED_POSITIVE_PROVENANCE",
@@ -95,69 +94,6 @@
         "REAL_TIME_FRANKIE"
       ],
       "sha256": "ea8b1243e8da25b34c4c2edc383a7bb5893a4b1dfbfd94292024ff312d58ff65"
-    },
-    {
-      "arms": [
-        "A_CLEAN"
-      ],
-      "authority": "POSITIVE_NATIVE_EVIDENCE",
-      "bytes": 8335,
-      "id": "a_clean_positive_family_inventory",
-      "kind": "MARKDOWN",
-      "load_mode": "RETRIEVAL",
-      "path": "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_RT_NATIVE_MBO_POSITIVE_DERIVED_FINDINGS_20260828.md",
-      "roles": [
-        "REAL_TIME_FRANKIE",
-        "FORECASTER_FRANKIE"
-      ],
-      "sha256": "8c67fdbf5d2995657a0020200632def3fe1b2d70f1b4573c906b3a124959f8af"
-    },
-    {
-      "arms": [
-        "A_CLEAN"
-      ],
-      "authority": "POSITIVE_NATIVE_EVIDENCE",
-      "bytes": 15278,
-      "id": "a_clean_actual_rt_positive_report",
-      "kind": "MARKDOWN",
-      "load_mode": "RETRIEVAL",
-      "path": "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_RT_ACTUAL_FRANKIE_INTERIM_POSITIVE_REPORT_20260828.md",
-      "roles": [
-        "REAL_TIME_FRANKIE",
-        "FORECASTER_FRANKIE"
-      ],
-      "sha256": "f09c94a7453ecf1faa756d255969ad9258ec766f9115d2452caa76408bdc9987"
-    },
-    {
-      "arms": [
-        "A_CLEAN"
-      ],
-      "authority": "POSITIVE_NATIVE_EVIDENCE",
-      "bytes": 21745,
-      "id": "a_clean_extraction_opportunities",
-      "kind": "MARKDOWN",
-      "load_mode": "RETRIEVAL",
-      "path": "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_RT_ACTUAL_FRANKIE_NONAVERAGED_EXTRACTION_OPPORTUNITIES_20260828.md",
-      "roles": [
-        "REAL_TIME_FRANKIE",
-        "FORECASTER_FRANKIE"
-      ],
-      "sha256": "52c17005a947586def2dea79a579e48f80524264e970a50b08fce21340eea046"
-    },
-    {
-      "arms": [
-        "A_CLEAN"
-      ],
-      "authority": "POSITIVE_NATIVE_EVIDENCE",
-      "bytes": 30837,
-      "id": "a_clean_forecaster_positive_review",
-      "kind": "MARKDOWN",
-      "load_mode": "RETRIEVAL",
-      "path": "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_FORECASTER_FIRST_REPLAY_OUTPUT_POSITIVE_REVIEW_20260828.md",
-      "roles": [
-        "FORECASTER_FRANKIE"
-      ],
-      "sha256": "f8a092c8e32e94b1081b1a246d98a73428a8b10dc18d7adfbe86db1fffa508c2"
     },
     {
       "arms": [
@@ -221,6 +157,22 @@
         "FORECASTER_FRANKIE"
       ],
       "sha256": "094c32a4177edee9c16e92a288427d6e5d3777f23db8d2f954f0c6d5f310a7c1"
+    },
+    {
+      "arms": [
+        "A_CLEAN"
+      ],
+      "authority": "METHOD_ONLY_CAPSULE_SOURCE",
+      "bytes": 3261,
+      "id": "a_clean_method_only_capsule_source",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_METHOD_ONLY_CAPSULE_SOURCE_20260829.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "694857137e27cc84062177ed834d6a8c71fbca908e5f8d48b93b4b016fd787cb"
     }
   ],
   "external_bindings": [
@@ -230,15 +182,15 @@
       ],
       "description": "Verified lessons/insights/notes chain; old reduced market rows absent",
       "id": "a_memory_prior_lessons_package",
-      "required_proof_sha256": "e7d8cbc54f354a4902ab72792e379033a25f5f28102fcf9d4bb82dda1d7e8435",
+      "required_proof_sha256": "d54c61915c0d85c8b2630eb79d5e1b8911481c80883c56d75ba815fcfab20c05",
       "roles": [
         "REAL_TIME_FRANKIE",
         "FORECASTER_FRANKIE"
       ],
-      "sha256": "0a5cddbcd971a3e6c2cad88a8e5559b0ab0529a31174c882355a61fe9c680b87"
+      "sha256": "b487acfbbea8ac8a82f42ceb555e8334057e4004740af91b9127cd2ba71e1cf8"
     }
   ],
-  "manifest_hash": "435ca83925b126300dfc64ceef940bf19794c157b52b543b17fb917fe1bef9a6",
+  "manifest_hash": "dd9788434d698abd62168292e4cf99439d939f14390812aaef7053b654d7e3b1",
   "profiles": {
     "FORECASTER_A_CLEAN_REVIEW": {
       "always_load": [
@@ -248,10 +200,7 @@
       "arm": "A_CLEAN",
       "external_bindings": [],
       "retrieval_catalog": [
-        "a_clean_positive_family_inventory",
-        "a_clean_actual_rt_positive_report",
-        "a_clean_extraction_opportunities",
-        "a_clean_forecaster_positive_review"
+        "a_clean_method_only_capsule_source"
       ],
       "role": "FORECASTER_FRANKIE"
     },
@@ -281,10 +230,7 @@
       "arm": "A_CLEAN",
       "external_bindings": [],
       "retrieval_catalog": [
-        "native_positive_discovery_addendum",
-        "a_clean_positive_family_inventory",
-        "a_clean_actual_rt_positive_report",
-        "a_clean_extraction_opportunities"
+        "a_clean_method_only_capsule_source"
       ],
       "role": "REAL_TIME_FRANKIE"
     },

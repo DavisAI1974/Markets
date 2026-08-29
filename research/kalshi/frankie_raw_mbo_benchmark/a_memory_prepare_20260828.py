@@ -16,8 +16,19 @@ RUN_ID = "frankie-a-memory-rt-c7da7d257fda-1"
 LAUNCH_COMMIT = "c7da7d257fda2ce9ddccfaee56020ed3e7de8e50"
 # Identity only: staging fields differ per run, so the full manifest hash is not pinnable.
 SOURCE_IDENTITY_HASH = "4d02dae63163a43fe0dc093ad0bda9a6d055a455cbc946a59d5b9008dad190ac"
-PACKAGE_SHA256 = "0a5cddbcd971a3e6c2cad88a8e5559b0ab0529a31174c882355a61fe9c680b87"
-PROOF_RECEIPT_HASH = "e7d8cbc54f354a4902ab72792e379033a25f5f28102fcf9d4bb82dda1d7e8435"
+# The prior-memory package identity is the manifest of its members, not the tar digest.
+#
+# The tar.gz digest was previously pinned and gated the whole preparation. It does not
+# reproduce: rebuilding from the committed files with the documented recipe, and sweeping
+# 45 tar/gzip format, mode and compression-level combinations, produced no match, because a
+# gzip member carries producer-dependent bytes that say nothing about the payload.
+#
+# The payload itself is provably intact - REPOSITORY_RECEIPT_HASH below reproduces exactly
+# from the committed files - so the defect was in what was being asserted, not in the data.
+# A canonical hash over the sorted per-member (name, bytes, sha256) manifest binds the same
+# content and reproduces on any toolchain.
+MEMBER_MANIFEST_SHA256 = "b487acfbbea8ac8a82f42ceb555e8334057e4004740af91b9127cd2ba71e1cf8"
+PROOF_RECEIPT_HASH = "d54c61915c0d85c8b2630eb79d5e1b8911481c80883c56d75ba815fcfab20c05"
 REPOSITORY_RECEIPT_HASH = "9c5847e33f4014eac12e8da67c2f97e55280545f67ea0d7899fa1c914d39683b"
 REQUIRED_STARTING_TIP = "82e140598b03bb38a7761c19d0ac47017c3908d0"
 MEMORY_FILES = (
@@ -91,8 +102,8 @@ def main() -> None:
         f"-C {stage} . | gzip -n > {package}"
     )
     subprocess.run(["bash", "-lc", command], check=True)
-    if file_hash(package) != PACKAGE_SHA256:
-        raise RuntimeError("deterministic prior memory package hash mismatch")
+    # Recorded for transport provenance, never gated on: see MEMBER_MANIFEST_SHA256.
+    package_tar_sha256 = file_hash(package)
 
     recovery = {
         "schema": "FRANKIE_PRIOR_MEMORY_REPOSITORY_VERIFICATION_V1",
@@ -118,11 +129,14 @@ def main() -> None:
         {"name": path.name, "bytes": path.stat().st_size, "sha256": file_hash(path)}
         for path in sorted(stage.iterdir())
     ]
+    member_manifest_sha256 = canonical_hash(files)
+    if member_manifest_sha256 != MEMBER_MANIFEST_SHA256:
+        raise RuntimeError("prior memory member manifest hash mismatch")
     memory_receipt = {
         "schema": "FRANKIE_PREEXISTING_UNREVEALED_OCT45_MEMORY_PROOF_V2",
         "prior_run_id": "workmode-32851909748-1",
         "source_surface_label": "PRIOR_REDUCED_NON_FULL_MBO_SURFACE",
-        "package_sha256": PACKAGE_SHA256,
+        "member_manifest_sha256": MEMBER_MANIFEST_SHA256,
         "repository_recovery_proof_sha256": file_hash(MEMORY / "REPOSITORY_FREEZE.json"),
         "pre_existing_before_current_benchmark": True,
         "proof_chain_verification": "PASS",
@@ -136,10 +150,27 @@ def main() -> None:
         raise RuntimeError("prior memory proof receipt hash mismatch")
     write_json(PACKET / "memory" / "prior-learned-package-receipt.json", memory_receipt)
 
+    # Transport provenance, recorded beside the receipt rather than inside it. The tar is
+    # how the package travels; the member manifest is what it is.
+    write_json(
+        PACKET / "memory" / "prior-learned-package-transport.json",
+        {
+            "schema": "FRANKIE_PRIOR_MEMORY_PACKAGE_TRANSPORT_V1",
+            "package_tar_sha256": package_tar_sha256,
+            "gates_preparation": False,
+            "reason": (
+                "a gzip member carries producer-dependent bytes, so its digest is not "
+                "reproducible across toolchains and says nothing about the payload"
+            ),
+            "authoritative_identity": "member_manifest_sha256",
+            "member_manifest_sha256": MEMBER_MANIFEST_SHA256,
+        },
+    )
+
     contract_memory = {
         "schema": "FRANKIE_PREEXISTING_UNREVEALED_OCT45_MEMORY_V1",
         "source_surface_label": memory_receipt["source_surface_label"],
-        "package_sha256": memory_receipt["package_sha256"],
+        "member_manifest_sha256": memory_receipt["member_manifest_sha256"],
         "pre_existing_before_current_benchmark": True,
         "step1_or_post_reveal_content": False,
         "current_benchmark_arm_output_content": False,
@@ -176,7 +207,7 @@ def main() -> None:
         "packet_id": packet_id,
         "checkpoint_id": checkpoint["checkpoint_hash"],
         "source_manifest_hash": manifest["manifest_hash"],
-        "prior_memory_package_sha256": PACKAGE_SHA256,
+        "prior_memory_member_manifest_sha256": MEMBER_MANIFEST_SHA256,
         "prior_memory_proof_receipt_hash": PROOF_RECEIPT_HASH,
         "repository_verification_receipt_hash": REPOSITORY_RECEIPT_HASH,
         "required_starting_tip": REQUIRED_STARTING_TIP,
@@ -200,7 +231,7 @@ def main() -> None:
         "packet_id": packet_id,
         "checkpoint_id": checkpoint["checkpoint_hash"],
         "source_manifest_hash": manifest["manifest_hash"],
-        "memory_package_sha256": PACKAGE_SHA256,
+        "memory_member_manifest_sha256": MEMBER_MANIFEST_SHA256,
         "progress": "0 / 5667689",
     }, sort_keys=True))
 
