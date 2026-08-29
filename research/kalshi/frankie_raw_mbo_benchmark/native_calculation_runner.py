@@ -1,0 +1,519 @@
+"""Sections 5 and 6: the seven artifact layers and the eight fail-closed gates.
+
+The sixteen calculation modules are each correct on their own. This is what makes them a
+run: it emits the layers section 5 requires, and it refuses to promote a result that fails
+any gate in section 6.
+
+Section 6's wording is "Reject the calculation rather than partially promote it". A partial
+promotion is the dangerous outcome, not the loud failure - a run that emits six good layers
+and one broken one looks like a success with a caveat, and the caveat is what gets lost
+between here and a conclusion. So `finalize` evaluates every gate, and a single failure
+makes the whole result REJECTED with the failures named; there is no partial state.
+
+The last gate is the one that cannot be checked from inside this file, and it is stated
+rather than assumed: calculation evidence is not a principal-model execution. This runner
+produces evidence. It does not lock, freeze, hand off, or claim that Frankie ran.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+from dataclasses import dataclass, field
+from typing import Any, Callable, Mapping, Sequence
+
+from research.kalshi.frankie_raw_mbo_benchmark.native_absorption import AbsorptionCalculator
+from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import ClockCalculator
+from research.kalshi.frankie_raw_mbo_benchmark.native_dipole import DipoleCalculator
+from research.kalshi.frankie_raw_mbo_benchmark.native_discovery import DiscoveryCalculator
+from research.kalshi.frankie_raw_mbo_benchmark.native_exhaustion import ExhaustionCalculator
+from research.kalshi.frankie_raw_mbo_benchmark.native_ladder import LadderCalculator
+from research.kalshi.frankie_raw_mbo_benchmark.native_lineage import LineageCalculator
+from research.kalshi.frankie_raw_mbo_benchmark.native_queue import QueueSurvivalCalculator
+from research.kalshi.frankie_raw_mbo_benchmark.native_recognition import RecognitionCalculator
+from research.kalshi.frankie_raw_mbo_benchmark.native_recurrence import RecurrenceCalculator
+from research.kalshi.frankie_raw_mbo_benchmark.native_replenishment import ReplenishmentCalculator
+from research.kalshi.frankie_raw_mbo_benchmark.native_response import ResponseTableCalculator
+
+SCHEMA = "FRANKIE_NATIVE_RAW_MBO_CALCULATION_RESULT_V1"
+CAUSAL_CLOCK = "ts_recv_ns"
+
+ACCEPTED = "ACCEPTED"
+REJECTED = "REJECTED"
+
+LAYER_IDENTITY = "identity_receipt"
+LAYER_MEMBERS = "exact_member_ledger"
+LAYER_LIFECYCLE = "exact_lifecycle_and_runway_ledger"
+LAYER_INDEXES = "open_world_indexes"
+LAYER_AVERAGES = "averaged_companions"
+LAYER_RECONCILIATION = "reconciliation_receipt"
+LAYER_FINDINGS = "positive_findings_report"
+REQUIRED_LAYERS = (
+    LAYER_IDENTITY,
+    LAYER_MEMBERS,
+    LAYER_LIFECYCLE,
+    LAYER_INDEXES,
+    LAYER_AVERAGES,
+    LAYER_RECONCILIATION,
+    LAYER_FINDINGS,
+)
+
+GATE_IDENTITY = "identity"
+GATE_COVERAGE = "exact_once_coverage"
+GATE_ISOLATION = "arm_isolation_and_sealing"
+GATE_CLOCKS = "lawful_clock_order"
+GATE_DETERMINISM = "deterministic_identity_and_open_world_retention"
+GATE_DENOMINATORS = "denominators_strata_and_censoring"
+GATE_EXACT_UNDER_SUMMARY = "exact_members_beneath_every_summary"
+GATE_NOT_A_MODEL_RUN = "calculation_evidence_is_not_model_execution"
+REQUIRED_GATES = (
+    GATE_IDENTITY,
+    GATE_COVERAGE,
+    GATE_ISOLATION,
+    GATE_CLOCKS,
+    GATE_DETERMINISM,
+    GATE_DENOMINATORS,
+    GATE_EXACT_UNDER_SUMMARY,
+    GATE_NOT_A_MODEL_RUN,
+)
+
+
+class CalculationRunError(ValueError):
+    """The calculation run could not be assembled."""
+
+
+def canonical_hash(value: Any) -> str:
+    return hashlib.sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False).encode(
+            "utf-8"
+        )
+    ).hexdigest()
+
+
+@dataclass(frozen=True)
+class RunIdentity:
+    """Everything section 6's first gate requires be verifiable."""
+
+    run_id: str
+    arm: str
+    mission_sha256: str
+    calculation_contract_sha256: str
+    knowledge_manifest_hash: str
+    source_manifest_hash: str
+    total_mbo_records: int
+    code_commit: str
+
+    def __post_init__(self) -> None:
+        if self.arm not in ("A_CLEAN", "A_MEMORY"):
+            raise CalculationRunError("arm must be A_CLEAN or A_MEMORY")
+        for name in (
+            "mission_sha256",
+            "calculation_contract_sha256",
+            "knowledge_manifest_hash",
+            "source_manifest_hash",
+        ):
+            value = getattr(self, name)
+            if not isinstance(value, str) or len(value) != 64:
+                raise CalculationRunError(f"{name} must be a SHA-256")
+        if self.total_mbo_records <= 0:
+            raise CalculationRunError("total_mbo_records must be positive")
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "run_id": self.run_id,
+            "arm": self.arm,
+            "mission_sha256": self.mission_sha256,
+            "calculation_contract_sha256": self.calculation_contract_sha256,
+            "knowledge_manifest_hash": self.knowledge_manifest_hash,
+            "source_manifest_hash": self.source_manifest_hash,
+            "total_mbo_records": self.total_mbo_records,
+            "code_commit": self.code_commit,
+        }
+
+
+@dataclass
+class GateResult:
+    gate: str
+    passed: bool
+    detail: str
+
+    def as_dict(self) -> dict[str, Any]:
+        return {"gate": self.gate, "passed": self.passed, "detail": self.detail}
+
+
+@dataclass
+class CoverageLedger:
+    """Exact-once accounting, the second gate's evidence."""
+
+    records_seen: int = 0
+    groups_seen: int = 0
+    groups_f_last_closed: int = 0
+    cursor_discontinuities: int = 0
+    fifo_reconstruction_failures: int = 0
+    duplicate_group_indices: int = 0
+    _seen_indices: set[int] = field(default_factory=set, repr=False)
+    _last_cursor: int | None = field(default=None, repr=False)
+
+    def observe_group(self, *, group_index: int, record_count: int, f_last_closed: bool, cursor: int) -> None:
+        self.groups_seen += 1
+        self.records_seen += record_count
+        if f_last_closed:
+            self.groups_f_last_closed += 1
+        if group_index in self._seen_indices:
+            self.duplicate_group_indices += 1
+        self._seen_indices.add(group_index)
+        if self._last_cursor is not None and cursor < self._last_cursor:
+            self.cursor_discontinuities += 1
+        self._last_cursor = cursor
+
+    def note_fifo_failure(self) -> None:
+        self.fifo_reconstruction_failures += 1
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "records_seen": self.records_seen,
+            "groups_seen": self.groups_seen,
+            "groups_f_last_closed": self.groups_f_last_closed,
+            "duplicate_group_indices": self.duplicate_group_indices,
+            "cursor_discontinuities": self.cursor_discontinuities,
+            "fifo_reconstruction_failures": self.fifo_reconstruction_failures,
+        }
+
+
+@dataclass
+class IsolationLedger:
+    """Third gate: arm isolation, answer-wall sealing, no later evidence."""
+
+    other_arm_reads: int = 0
+    sealed_surface_reads: int = 0
+    later_evidence_reads: int = 0
+    denied_access_attempts: list[dict[str, Any]] = field(default_factory=list)
+
+    def note_denial(self, *, surface: str, reason: str) -> None:
+        """A denial is a pass, and is recorded as evidence the wall was tested."""
+        self.denied_access_attempts.append({"surface": surface, "reason": reason})
+
+    def note_breach(self, kind: str) -> None:
+        if kind == "OTHER_ARM":
+            self.other_arm_reads += 1
+        elif kind == "SEALED":
+            self.sealed_surface_reads += 1
+        elif kind == "LATER_EVIDENCE":
+            self.later_evidence_reads += 1
+        else:
+            raise CalculationRunError(f"unknown isolation breach kind: {kind}")
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "other_arm_reads": self.other_arm_reads,
+            "sealed_surface_reads": self.sealed_surface_reads,
+            "later_evidence_reads": self.later_evidence_reads,
+            "denied_access_attempts": list(self.denied_access_attempts),
+        }
+
+
+class NativeCalculationRun:
+    """Wires the sixteen sections, emits seven layers, enforces eight gates."""
+
+    def __init__(
+        self,
+        identity: RunIdentity,
+        *,
+        replenishment_horizon_ns: int,
+        response_horizons_ns: Sequence[int],
+        response_horizon_version: str,
+        response_value_names: Sequence[str],
+        discovery: DiscoveryCalculator | None = None,
+        exact_cap: int | None = None,
+        seed: int = 0,
+    ) -> None:
+        self.identity = identity
+        shared: dict[str, Any] = {"seed": seed}
+        if exact_cap is not None:
+            shared["exact_cap"] = exact_cap
+
+        self.clocks = ClockCalculator(**shared)
+        self.queue = QueueSurvivalCalculator(**shared)
+        self.replenishment = ReplenishmentCalculator(horizon_ns=replenishment_horizon_ns, **shared)
+        self.absorption = AbsorptionCalculator(**shared)
+        self.ladder = LadderCalculator(**shared)
+        self.exhaustion = ExhaustionCalculator(**shared)
+        self.recognition = RecognitionCalculator(**shared)
+        self.dipole = DipoleCalculator(**shared)
+        self.lineage = LineageCalculator(**shared)
+        self.recurrence = RecurrenceCalculator(**shared)
+        self.discovery = discovery
+        self.response = ResponseTableCalculator(
+            horizons_ns=response_horizons_ns,
+            horizon_version=response_horizon_version,
+            value_names=response_value_names,
+            **shared,
+        )
+
+        self.coverage = CoverageLedger()
+        self.isolation = IsolationLedger()
+        self.member_rows_written = 0
+        self.lifecycle_rows_written = 0
+        self.findings: list[dict[str, Any]] = []
+        self._finalized = False
+
+    # --- section 5 layers ------------------------------------------------
+
+    @property
+    def sections(self) -> dict[str, Any]:
+        mapping = {
+            "4.5": self.clocks,
+            "4.6": self.queue,
+            "4.7": self.replenishment,
+            "4.8": self.absorption,
+            "4.9": self.ladder,
+            "4.10": self.exhaustion,
+            "4.11": self.recognition,
+            "4.12": self.dipole,
+            "4.13": self.lineage,
+            "4.14": self.recurrence,
+            "4.16": self.response,
+        }
+        if self.discovery is not None:
+            mapping["4.15"] = self.discovery
+        return mapping
+
+    def note_member_row(self, count: int = 1) -> None:
+        self.member_rows_written += count
+
+    def note_lifecycle_row(self, count: int = 1) -> None:
+        self.lifecycle_rows_written += count
+
+    def add_finding(
+        self, *, claim: str, support: str, falsifier: str, exemplars: Sequence[str]
+    ) -> dict[str, Any]:
+        """A finding without a falsifier is not admitted.
+
+        The A-arm review found that falsifier fields were the most valued content in the
+        prior run and that a live status could sit above a discharged falsifier. Requiring
+        one here means a finding cannot be recorded without the thing that could retire it.
+        """
+        if not falsifier.strip():
+            raise CalculationRunError("a finding requires a falsifier")
+        if not exemplars:
+            raise CalculationRunError("a finding requires at least one exact exemplar")
+        row = {
+            "claim": claim,
+            "support": support,
+            "falsifier": falsifier,
+            "exemplars": list(exemplars),
+            "status": "PROVISIONAL",
+        }
+        self.findings.append(row)
+        return row
+
+    def _averaged_companions(self) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = []
+        for label, section in self.sections.items():
+            if not hasattr(section, "companion_rows"):
+                continue
+            for row in section.companion_rows():
+                rows.append({**row, "section": label})
+        return rows
+
+    def _open_world_indexes(self) -> dict[str, Any]:
+        index: dict[str, Any] = {
+            "exhaustion_open_world_states": sorted(self.exhaustion.open_world_states),
+            "lineage_depth_distribution": self.lineage.depth_distribution(),
+            "transition_edges": self.recurrence.graph.rows(),
+        }
+        if self.discovery is not None:
+            index["discovery"] = self.discovery.summary()
+            if self.discovery.frozen:
+                index["clusters"] = self.discovery.cluster_summary()
+            index["unassigned_members"] = list(self.discovery.unassigned)
+        return index
+
+    def _reconciliation(self) -> dict[str, Any]:
+        companions = self._averaged_companions()
+        summarized = sum(row["value"].get("n", 0) or 0 for row in companions if "value" in row)
+        return {
+            "averaged_rows": len(companions),
+            "summarized_observations": summarized,
+            "exact_member_rows": self.member_rows_written,
+            "exact_lifecycle_rows": self.lifecycle_rows_written,
+            "exact_members_present_beneath_summaries": self.member_rows_written > 0 or not companions,
+            "granularity_note": (
+                "an averaged row's n counts observations within its own stratum and estimand; "
+                "it is not expected to equal the member count, and a valid difference is a "
+                "COMPLEMENTARY_SCOPE_DIFFERENCE rather than a discrepancy"
+            ),
+        }
+
+    # --- section 6 gates -------------------------------------------------
+
+    def _gate_identity(self) -> GateResult:
+        try:
+            self.identity.as_dict()
+        except CalculationRunError as exc:  # pragma: no cover - constructor validates
+            return GateResult(GATE_IDENTITY, False, str(exc))
+        return GateResult(GATE_IDENTITY, True, "run, arm, mission, contract, knowledge and source identities present")
+
+    def _gate_coverage(self) -> GateResult:
+        c = self.coverage
+        problems = []
+        if c.groups_seen == 0:
+            problems.append("no groups observed")
+        if c.groups_f_last_closed != c.groups_seen:
+            problems.append(f"{c.groups_seen - c.groups_f_last_closed} groups not F_LAST-closed")
+        if c.duplicate_group_indices:
+            problems.append(f"{c.duplicate_group_indices} duplicate group indices")
+        if c.cursor_discontinuities:
+            problems.append(f"{c.cursor_discontinuities} cursor discontinuities")
+        if c.fifo_reconstruction_failures:
+            problems.append(f"{c.fifo_reconstruction_failures} FIFO reconstruction failures")
+        if c.records_seen != self.identity.total_mbo_records:
+            problems.append(
+                f"record coverage {c.records_seen} of {self.identity.total_mbo_records}"
+            )
+        return GateResult(GATE_COVERAGE, not problems, "; ".join(problems) or "exact-once coverage complete")
+
+    def _gate_isolation(self) -> GateResult:
+        i = self.isolation
+        problems = []
+        if i.other_arm_reads:
+            problems.append(f"{i.other_arm_reads} other-arm reads")
+        if i.sealed_surface_reads:
+            problems.append(f"{i.sealed_surface_reads} sealed-surface reads")
+        if i.later_evidence_reads:
+            problems.append(f"{i.later_evidence_reads} later-evidence reads")
+        detail = "; ".join(problems) or (
+            f"no breaches; {len(i.denied_access_attempts)} denial(s) recorded"
+        )
+        return GateResult(GATE_ISOLATION, not problems, detail)
+
+    def _gate_clocks(self) -> GateResult:
+        summary = self.clocks.summary()
+        if summary["causal_clock"] != CAUSAL_CLOCK:
+            return GateResult(GATE_CLOCKS, False, "clock is not ts_recv_ns")
+        if summary["members_seen"] == 0:
+            return GateResult(GATE_CLOCKS, False, "no members were measured on the clocks")
+        return GateResult(
+            GATE_CLOCKS,
+            True,
+            f"{summary['members_seen']} members on {CAUSAL_CLOCK}; first availability is F_LAST receive time",
+        )
+
+    def _gate_determinism(self) -> GateResult:
+        problems = []
+        if self.queue.identity_violations:
+            problems.append(f"{self.queue.identity_violations} FIFO identity violations")
+        if self.discovery is not None and not self.discovery.frozen:
+            problems.append("discovery is not frozen; cluster identity is not fixed")
+        return GateResult(
+            GATE_DETERMINISM,
+            not problems,
+            "; ".join(problems) or "family, lineage and cluster identities are deterministic",
+        )
+
+    def _gate_denominators(self) -> GateResult:
+        problems = []
+        for row in self._averaged_companions():
+            declaration = row.get("declaration", {})
+            for field_name in ("numerator_formula", "population", "causal_cutoff", "status", "missingness_rule"):
+                if not declaration.get(field_name):
+                    problems.append(f"{row.get('measure')} missing {field_name}")
+                    break
+        risk_rows = self.response.at_risk_table()
+        if risk_rows and not all(r["denominator_is_horizon_specific"] for r in risk_rows):
+            problems.append("a response horizon reused another horizon's denominator")
+        return GateResult(
+            GATE_DENOMINATORS,
+            not problems,
+            "; ".join(problems[:5]) or "every averaged row declares its numerator, population, cutoff, status and missingness",
+        )
+
+    def _gate_exact_under_summary(self) -> GateResult:
+        reconciliation = self._reconciliation()
+        passed = bool(reconciliation["exact_members_present_beneath_summaries"])
+        return GateResult(
+            GATE_EXACT_UNDER_SUMMARY,
+            passed,
+            f"{reconciliation['exact_member_rows']} exact member rows beneath "
+            f"{reconciliation['averaged_rows']} averaged rows",
+        )
+
+    def _gate_not_a_model_run(self) -> GateResult:
+        """Always passes, and says the thing that must not be assumed.
+
+        This runner cannot produce a principal-model execution, so the gate records that the
+        artifact is evidence rather than a run. It exists so the distinction is asserted in
+        the output rather than inferred by whoever reads it next.
+        """
+        return GateResult(
+            GATE_NOT_A_MODEL_RUN,
+            True,
+            "these artifacts are calculation evidence; no principal-model invocation, lock, "
+            "freeze, handoff or score is claimed or performed here",
+        )
+
+    def finalize(self) -> dict[str, Any]:
+        """Emit all seven layers with a single accept/reject verdict.
+
+        There is no partial promotion: one failed gate rejects the result. A run that emitted
+        six sound layers and one broken one would read as a success with a caveat, and the
+        caveat is what goes missing between here and a conclusion.
+        """
+        if self._finalized:
+            raise CalculationRunError("this run has already been finalized")
+        self._finalized = True
+
+        gates = [
+            self._gate_identity(),
+            self._gate_coverage(),
+            self._gate_isolation(),
+            self._gate_clocks(),
+            self._gate_determinism(),
+            self._gate_denominators(),
+            self._gate_exact_under_summary(),
+            self._gate_not_a_model_run(),
+        ]
+        failures = [g.gate for g in gates if not g.passed]
+
+        layers = {
+            LAYER_IDENTITY: {
+                **self.identity.as_dict(),
+                "schema": SCHEMA,
+                "causal_clock": CAUSAL_CLOCK,
+                "coverage": self.coverage.as_dict(),
+            },
+            LAYER_MEMBERS: {"exact_member_rows": self.member_rows_written},
+            LAYER_LIFECYCLE: {
+                "exact_lifecycle_rows": self.lifecycle_rows_written,
+                "section_summaries": {
+                    label: section.summary()
+                    for label, section in self.sections.items()
+                    if hasattr(section, "summary")
+                },
+            },
+            LAYER_INDEXES: self._open_world_indexes(),
+            LAYER_AVERAGES: {"rows": self._averaged_companions()},
+            LAYER_RECONCILIATION: self._reconciliation(),
+            LAYER_FINDINGS: {
+                "findings": list(self.findings),
+                "every_finding_carries_a_falsifier": True,
+            },
+        }
+        missing = [name for name in REQUIRED_LAYERS if name not in layers]
+        if missing:
+            raise CalculationRunError(f"required layers missing: {missing}")
+
+        result = {
+            "schema": SCHEMA,
+            "verdict": REJECTED if failures else ACCEPTED,
+            "failed_gates": failures,
+            "gates": [g.as_dict() for g in gates],
+            "isolation": self.isolation.as_dict(),
+            "layers": layers,
+            "partial_promotion_permitted": False,
+            "verdict_note": (
+                "section 6 requires rejecting the calculation rather than partially promoting "
+                "it; a single failed gate rejects the whole result"
+            ),
+        }
+        result["result_hash"] = canonical_hash(result)
+        return result
