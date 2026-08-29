@@ -1,5 +1,10 @@
 name: Read-only box sizing probe 20260829
 
+# RUN MARKER 2026-08-29T08:30Z - first firing, authorised by Greg ('proceed').
+# The paths filter means a push only triggers this when THIS FILE changes, so the
+# branch's first push carried no change and fired nothing. Bumping this marker is the
+# intended way to re-run: it is the change the filter is watching for.
+
 # Answers the ONE open question in D55 that no session has been able to settle from a
 # desk: what the A-arm box actually is. `LIVE_TELEMETRY_S100.md` records
 # i-08cee7171c0a76a04 as a t3.xlarge (4 vCPU / 16 GB). Greg states it was switched to a
