@@ -1,0 +1,168 @@
+name: Box memory monitor 20260829
+
+# RUN MARKER 2026-08-29T09:05Z - bump this line to take a reading.
+#
+# Greg's approach to sizing, and it is better than a blind resize: "we can put a monitor
+# probe on the box and watch it grow through the run. if it looks like that's still too
+# small we can stop the run at a checkpoint and up it. also chat changed box sizes on the
+# fly yesterday so we may not even have to stop the run."
+#
+# So this does NOT resize anything. It installs a small sampler on the box and reports what
+# the sampler has seen. Sizing then comes from a measured growth curve rather than from an
+# argument about whether 61.8 GiB is enough - which is the same discipline as the rest of
+# this tree: measure the thing, do not reason about it from a number nobody checked.
+#
+# TWO MODES IN ONE FILE, because a push-triggered workflow cannot take inputs. Every firing
+# ensures the sampler is running (idempotently) and then prints the current reading. Bump
+# the marker above to take another reading; the sampler keeps running in between.
+#
+# WHAT IT WRITES ON THE BOX, stated exactly because writing to a live box during a run
+# deserves it:
+#   /opt/frankie_box_monitor/sample.sh   the sampler, ~20 lines
+#   /var/log/frankie_box_monitor.csv     one CSV line per sample
+# It is CAPPED at 20000 lines (~1.5 MB, about a week at 30s) and self-trims, so it cannot
+# grow into the disk it is there to watch. It samples /proc and runs `ps`; it never touches
+# the run's data, its checkpoints, or S3, and it does not stop, start or resize anything.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - chatgpt/frankie-box-sizing-probe-20260829
+    paths:
+      - .github/workflows/frankie_box_monitor_20260829.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frankie-box-monitor-20260829
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      SAMPLE_SECONDS: '30'
+      MAX_LINES: '20000'
+    steps:
+      - name: Ensure the sampler is running, then report what it has seen
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, shlex
+
+          remote = r'''
+          set -eu
+          DIR=/opt/frankie_box_monitor
+          LOG=/var/log/frankie_box_monitor.csv
+          INTERVAL=__INTERVAL__
+          MAXLINES=__MAXLINES__
+
+          sudo mkdir -p "$DIR"
+          # Idempotent: rewrite the sampler every time, but only ever run ONE of them.
+          sudo tee "$DIR/sample.sh" >/dev/null <<SAMPLER
+          #!/bin/bash
+          # Appends one CSV row per interval. Self-trimming so it cannot fill the disk it
+          # exists to watch.
+          LOG=$LOG
+          while true; do
+            ts=\$(date -u +%Y-%m-%dT%H:%M:%SZ)
+            memtot=\$(awk '/^MemTotal:/{print \$2}' /proc/meminfo)
+            memav=\$(awk '/^MemAvailable:/{print \$2}' /proc/meminfo)
+            swtot=\$(awk '/^SwapTotal:/{print \$2}' /proc/meminfo)
+            swfree=\$(awk '/^SwapFree:/{print \$2}' /proc/meminfo)
+            load1=\$(cut -d' ' -f1 /proc/loadavg)
+            top=\$(ps -eo rss,comm --sort=-rss --no-headers | head -1 | awk '{print \$1","\$2}')
+            echo "\$ts,\$memtot,\$memav,\$swtot,\$swfree,\$load1,\$top" >> "\$LOG"
+            if [ "\$(wc -l < "\$LOG")" -gt $MAXLINES ]; then
+              tail -n $MAXLINES "\$LOG" > "\$LOG.tmp" && mv "\$LOG.tmp" "\$LOG"
+            fi
+            sleep $INTERVAL
+          done
+          SAMPLER
+          sudo chmod +x "$DIR/sample.sh"
+          sudo touch "$LOG"; sudo chmod 644 "$LOG"
+
+          if pgrep -f "$DIR/sample.sh" >/dev/null 2>&1; then
+            echo SAMPLER_STATE=ALREADY_RUNNING
+          else
+            sudo nohup "$DIR/sample.sh" >/dev/null 2>&1 &
+            sleep 2
+            if pgrep -f "$DIR/sample.sh" >/dev/null 2>&1; then
+              echo SAMPLER_STATE=STARTED
+            else
+              echo SAMPLER_STATE=FAILED_TO_START
+            fi
+          fi
+          echo SAMPLER_PROCS=$(pgrep -cf "$DIR/sample.sh" || echo 0)
+          echo SAMPLES=$(wc -l < "$LOG" 2>/dev/null || echo 0)
+          echo "----BEGIN_TAIL----"
+          tail -n 12 "$LOG" 2>/dev/null || true
+          echo "----END_TAIL----"
+          echo "----BEGIN_PEAK----"
+          # The number that decides sizing: the LOW-WATER MARK of available memory, and the
+          # high-water mark of swap actually used. A mean would hide the moment that matters.
+          awk -F, 'NF>=5 && $3 ~ /^[0-9]+$/ {
+              if (min=="" || $3+0 < min) { min=$3+0; mint=$1 }
+              used=$4-$5; if (used+0 > sw+0) { sw=used+0; swt=$1 }
+              tot=$2
+            } END {
+              if (min=="") { print "NO_SAMPLES_YET" }
+              else {
+                printf "MEM_TOTAL_GIB=%.1f\n", tot/1048576
+                printf "MIN_MEM_AVAILABLE_GIB=%.1f  at %s\n", min/1048576, mint
+                printf "PEAK_SWAP_USED_GIB=%.1f  at %s\n", sw/1048576, swt
+              }
+            }' "$LOG"
+          echo "----END_PEAK----"
+          echo "----BEGIN_TOPNOW----"
+          ps -eo rss,pcpu,etime,comm --sort=-rss --no-headers | head -5
+          echo "----END_TOPNOW----"
+          '''
+          remote = (remote
+                    .replace("__INTERVAL__", os.environ["SAMPLE_SECONDS"])
+                    .replace("__MAXLINES__", os.environ["MAX_LINES"]))
+          with open("/tmp/monitor-params.json", "w", encoding="utf-8") as handle:
+              json.dump({"commands": ["/bin/bash -lc " + shlex.quote(remote)]}, handle)
+          PY
+
+          command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Frankie box memory monitor: ensure sampler, report" \
+            --parameters file:///tmp/monitor-params.json \
+            --timeout-seconds 300 \
+            --query 'Command.CommandId' --output text)"
+          aws ssm wait command-executed --command-id "$command_id" --instance-id "$INSTANCE_ID" || true
+          aws ssm get-command-invocation \
+            --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json > /tmp/monitor.json
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          result = json.loads(Path("/tmp/monitor.json").read_text(encoding="utf-8"))
+          print("SSM_STATUS=" + str(result.get("Status")))
+          print("SSM_RESPONSE_CODE=" + str(result.get("ResponseCode")))
+          print(result.get("StandardOutput", ""))
+          if result.get("Status") != "Success" or result.get("ResponseCode") != 0:
+              print("STDERR:", result.get("StandardError", ""))
+              raise SystemExit("BOX_MONITOR_FAILED")
+          PY
+
+      - name: What the reading means for sizing
+        if: always()
+        run: |
+          echo "MIN_MEM_AVAILABLE_GIB is the number that decides a resize, not the mean."
+          echo "PEAK_SWAP_USED_GIB above ~0 means the box is already spilling to disk;"
+          echo "swap is 32 GiB here, so sustained use of it is the signal to stop at a"
+          echo "checkpoint and go up a size, per Greg. Re-fire by bumping the RUN MARKER."
