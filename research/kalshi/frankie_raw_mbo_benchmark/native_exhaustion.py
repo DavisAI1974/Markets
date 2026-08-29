@@ -54,8 +54,43 @@ PHASE_ORDER = (
     COMPLETION,
     REVERSAL,
 )
-PHASE_INDEX = {name: index for index, name in enumerate(PHASE_ORDER)}
+# Positions are floats so a discovered phase can be inserted between two carried ones
+# without renumbering. The carried names are a starting vocabulary, not the set of phases
+# a runway is allowed to have: richer data is expected to expose phases nobody has named.
+PHASE_INDEX: dict[str, float] = {name: float(index) for index, name in enumerate(PHASE_ORDER)}
+DISCOVERED_PHASES: dict[str, dict[str, Any]] = {}
 TERMINAL_PHASES = frozenset({COMPLETION, REVERSAL})
+
+
+def register_discovered_phase(name: str, *, after: str, before: str | None = None) -> float:
+    """Admit a phase the carried vocabulary does not contain.
+
+    A discovered phase declares where it sits relative to phases already known, so ordering
+    stays checkable, and it is recorded as discovered so it is never mistaken for a carried
+    one. Registering the same phase twice at the same position is idempotent; re-registering
+    it somewhere else is refused, because a phase that moves is a different phase.
+    """
+    if not name or not isinstance(name, str):
+        raise ExhaustionError("a discovered phase needs a non-empty name")
+    if after not in PHASE_INDEX:
+        raise ExhaustionError(f"unknown anchor phase: {after}")
+    upper = PHASE_INDEX[before] if before is not None else None
+    if before is not None and before not in PHASE_INDEX:
+        raise ExhaustionError(f"unknown anchor phase: {before}")
+    lower = PHASE_INDEX[after]
+    if upper is None:
+        candidates = sorted(v for v in PHASE_INDEX.values() if v > lower)
+        upper = candidates[0] if candidates else lower + 2.0
+    if upper <= lower:
+        raise ExhaustionError("a discovered phase must sit strictly between its anchors")
+    position = (lower + upper) / 2.0
+    if name in PHASE_INDEX:
+        if abs(PHASE_INDEX[name] - position) > 1e-12:
+            raise ExhaustionError(f"phase {name} is already registered at a different position")
+        return PHASE_INDEX[name]
+    PHASE_INDEX[name] = position
+    DISCOVERED_PHASES[name] = {"after": after, "before": before, "position": position}
+    return position
 
 SEED_STATES = {
     "P": "persistent_exhaustion",
@@ -88,13 +123,51 @@ def open_world_state_id(shape: Sequence[str]) -> str:
     return f"{OPEN_WORLD_PREFIX}_{digest}"
 
 
+DISCOVERED_NAMED_STATES: dict[str, str] = {}
+DISCOVERED_PREFIX = "DS"
+
+
+def register_discovered_state(name: str, shape: Sequence[str]) -> str:
+    """Give a discovered structure a durable name instead of only a hash.
+
+    An open-world hash is stable and comparable but says nothing. When a structure recurs
+    often enough to be worth naming, this records the name against the shape that earned it,
+    so it can be referred to without being mistaken for one of the four carried seeds.
+    """
+    if not name or not isinstance(name, str):
+        raise ExhaustionError("a discovered state needs a non-empty name")
+    if name in SEED_STATES:
+        raise ExhaustionError(f"{name} is a carried seed; discovered names must be distinct")
+    identity = open_world_state_id(shape)
+    existing = DISCOVERED_NAMED_STATES.get(name)
+    if existing is not None and existing != identity:
+        raise ExhaustionError(f"discovered state {name} is already bound to a different shape")
+    DISCOVERED_NAMED_STATES[name] = identity
+    return f"{DISCOVERED_PREFIX}_{name}"
+
+
 def resolve_state_id(seed: str | None, shape: Sequence[str]) -> str:
-    """Seeds are a crosswalk, never an allowlist."""
+    """Seeds are a crosswalk, never an allowlist, and never the set of states that exist.
+
+    Three lawful outcomes: a carried seed passes through; `None` yields a content-derived
+    open-world identity; and a registered discovered name yields its own durable identity.
+    An unregistered name is refused so a typo cannot silently become a new state.
+    """
     if seed is None:
         return open_world_state_id(shape)
-    if seed not in SEED_STATES:
-        raise ExhaustionError(f"{seed} is not a seed annotation; pass seed=None for open-world")
-    return seed
+    if seed in SEED_STATES:
+        return seed
+    if seed.startswith(f"{DISCOVERED_PREFIX}_"):
+        bare = seed[len(DISCOVERED_PREFIX) + 1 :]
+        if bare in DISCOVERED_NAMED_STATES:
+            return seed
+        raise ExhaustionError(f"{seed} is not a registered discovered state")
+    if seed in DISCOVERED_NAMED_STATES:
+        return f"{DISCOVERED_PREFIX}_{seed}"
+    raise ExhaustionError(
+        f"{seed} is neither a carried seed nor a registered discovered state; pass seed=None "
+        "for an open-world identity, or register it with register_discovered_state"
+    )
 
 
 @dataclass
@@ -181,7 +254,10 @@ class ExhaustionRunway:
 
     def enter_phase(self, phase: str, recv_ns: int) -> RunwayPhase:
         if phase not in PHASE_INDEX:
-            raise ExhaustionError(f"unknown runway phase: {phase}")
+            raise ExhaustionError(
+                f"unknown runway phase: {phase}; register it with register_discovered_phase "
+                "rather than forcing it into a carried one"
+            )
         current = self.current_phase
         if current is not None:
             if PHASE_INDEX[phase] <= PHASE_INDEX[current.phase]:
@@ -432,7 +508,15 @@ class ExhaustionCalculator:
             "censored": self.censored_count,
             "still_open": self.open_runway_count,
             "open_world_state_count": len(self.open_world_states),
+            "discovered_named_states": sorted(DISCOVERED_NAMED_STATES),
+            "discovered_phases": {k: v["position"] for k, v in sorted(DISCOVERED_PHASES.items())},
+            "carried_seed_count": len(SEED_STATES),
+            "carried_phase_count": len(PHASE_ORDER),
             "seed_states_are_a_crosswalk_not_an_allowlist": True,
+            "vocabulary_is_a_starting_point": (
+                "carried seeds, phases and depths are where discovery begins, not what it is "
+                "validated against; richer data is expected to add states, phases and depths"
+            ),
             "phase_stratum_note": (
                 "phase is part of the stratum key, so averaging across phases of the same "
                 "event is a key collision that cannot occur rather than a rule to remember"

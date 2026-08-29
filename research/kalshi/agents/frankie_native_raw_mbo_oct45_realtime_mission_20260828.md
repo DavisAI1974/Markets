@@ -235,6 +235,26 @@ holds:
 
 These are starting structures, not limits or forced labels.
 
+**Nothing carried here is what your findings are validated against.** The families above,
+the four seed states, the eleven runway phases, `D0` through `D5`, and the three pressure
+dispositions are all a starting vocabulary. Data this rich is expected to contain
+structures, phases, chain depths and mechanisms nobody has named, and finding them is the
+work rather than a complication of it.
+
+The calculation layer is built for that. Chain depth has no ceiling: a chain forty deep is
+recorded as `D40` and gets its own stratum, never folded into `D5`. A structure matching no
+seed takes a content-derived open-world identity, and one that recurs often enough to be
+worth naming can be given a durable discovered name that is kept distinct from the four
+carried seeds. A runway phase the carried eleven do not contain can be registered between
+two of them, so ordering stays checkable while the sequence grows. A pressure mechanism the
+three carried dispositions cannot describe is recorded under its own identity rather than
+rounded to the nearest one. Cluster count is decided by the data and the declared radius,
+never chosen in advance.
+
+The failure this guards against is silent. A novel structure forced into the nearest carried
+label does not look like a lost discovery; it looks like a confirmation of the label. If
+something does not fit, say it does not fit and give it an identity of its own.
+
 
 ## 7. Exact and averaged analytical views
 

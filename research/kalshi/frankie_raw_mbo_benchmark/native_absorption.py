@@ -34,6 +34,7 @@ DELIVERED_THROUGH_PRICE = "DELIVERED_THROUGH_PRICE"
 ACCOMPANIED_BY_WITHDRAWAL = "ACCOMPANIED_BY_WITHDRAWAL"
 INDETERMINATE = "INDETERMINATE"
 SPARSE = "SPARSE"
+DISCOVERED_PREFIX = "OW_DISPOSITION"
 VALID_DISPOSITIONS = frozenset(
     {
         ABSORBED_WITHOUT_PRICE_MOVE,
@@ -82,6 +83,10 @@ class RunwayPressure:
     order_ids_persisting: int
     min_members_for_determinacy: int = 1
     member_count: int = 1
+    # A mechanism the three carried dispositions do not describe. Supplied rather than
+    # computed, because the point is to record something the classifier cannot express:
+    # forcing a novel mechanism into absorbed/delivered/withdrawn is how it disappears.
+    discovered_disposition: str | None = None
 
     def __post_init__(self) -> None:
         for name in (
@@ -116,13 +121,22 @@ class RunwayPressure:
         return max(self.order_ids_at_open - self.order_ids_persisting, 0)
 
     @property
+    def is_discovered_disposition(self) -> bool:
+        return self.discovered_disposition is not None
+
+    @property
     def disposition(self) -> str:
         """Which mechanism this runway exhibits.
 
-        Order matters. Sparsity is checked first, because a determinate-looking label on one
-        or two members is the kind of finding that gets quoted; then withdrawal, because a
-        runway drained by cancels is not evidence about demand even if price also moved.
+        Order matters. A supplied discovered disposition wins outright: the carried three are
+        a starting vocabulary, and a runway whose mechanism they cannot describe must be
+        recordable as itself rather than rounded to the nearest carried label. Then sparsity,
+        because a determinate-looking label on one or two members is the kind of finding that
+        gets quoted; then withdrawal, because a runway drained by cancels is not evidence
+        about demand even if price also moved.
         """
+        if self.discovered_disposition is not None:
+            return f"{DISCOVERED_PREFIX}_{self.discovered_disposition}"
         if self.member_count < self.min_members_for_determinacy:
             return SPARSE
         if self.displayed_depletion == 0:
@@ -228,6 +242,7 @@ class AbsorptionCalculator:
 
         self.scored = 0
         self.disposition_counts: dict[str, int] = {name: 0 for name in sorted(VALID_DISPOSITIONS)}
+        self.discovered_dispositions: dict[str, int] = {}
 
     @property
     def measures(self) -> tuple[StratifiedMeasure, ...]:
@@ -257,7 +272,12 @@ class AbsorptionCalculator:
         key = self._key(runway)
         disposition = runway.disposition
         self.scored += 1
-        self.disposition_counts[disposition] += 1
+        if runway.is_discovered_disposition:
+            self.discovered_dispositions[disposition] = (
+                self.discovered_dispositions.get(disposition, 0) + 1
+            )
+        else:
+            self.disposition_counts[disposition] += 1
 
         if disposition in (INDETERMINATE, SPARSE):
             # Section 4.8: zero-denominator, sparse and indeterminate members remain explicit.
@@ -287,6 +307,11 @@ class AbsorptionCalculator:
             "causal_clock": CAUSAL_CLOCK,
             "runways_scored": self.scored,
             "disposition_counts": dict(self.disposition_counts),
+            "discovered_disposition_counts": dict(self.discovered_dispositions),
+            "carried_dispositions_are_a_starting_vocabulary": (
+                "a runway whose mechanism the carried three cannot describe is recorded under "
+                "its own discovered identity rather than rounded to the nearest carried label"
+            ),
             "separation_note": (
                 "traded and withdrawn depletion are separate inputs: both remove displayed "
                 "size but only one involves a counterparty, and pooling them would read a "
