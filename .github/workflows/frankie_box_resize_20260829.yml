@@ -9,10 +9,20 @@ name: Box resize for the A-arm run 20260829
 # The member-first recalculation covered 5 of the 16 sections over 4.26M groups and very
 # nearly exhausted 61.8 GiB. Sixteen sections is 3.2x that section count, and the dominant
 # memory term - per-group state held across sections - scales with it. 3.2 x 62 is about 200
-# GiB, so r6i.4xlarge at 128 GiB is only 2x and by Greg's own reasoning is still short.
-# TARGET IS r6i.8xlarge: 32 vCPU / 256 GiB, same family as today's r6i.2xlarge so there is
-# no architecture, driver or AMI surprise. The cost of oversizing is a few dollars an hour;
-# the cost of undersizing is a multi-hour run that dies at 90 percent.
+# GiB, so r6i.4xlarge at 128 GiB is only 2x and by that estimate is short.
+#
+# TARGET CHANGED 2026-08-29 TO r6i.4xlarge (16 vCPU / 128 GiB) ON GREG'S CALL: "start with
+# 128 and see if that looks like it will work. if not we can upsize." The 200 GiB figure
+# above is an EXTRAPOLATION from a 5-section run, not a measurement of a 16-section one, and
+# it assumes the per-group term scales linearly in section count. 128 GiB is the cheapest
+# way to find out whether it does. Same family as today's r6i.2xlarge, so there is no
+# architecture, driver or AMI surprise, and r6i.8xlarge stays one line away.
+#
+# THE CONDITION ON "we can upsize": an upsize STOPS THE BOX - see the next paragraph, there
+# is no live resize - so it kills whatever is running. Upsizing mid-run is only affordable
+# once the periodic checkpointer is on the launch path, because then a stop costs one save
+# point instead of the whole run. Until that is wired, starting at 128 means accepting that
+# an out-of-memory death restarts the run from zero.
 #
 # THIS ONE MUTATES, unlike the sizing probe and the monitor. An EC2 instance type cannot be
 # changed while running - there is no live resize - so it stops, modifies and starts. Three
@@ -54,8 +64,8 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: us-east-2
       INSTANCE_ID: i-08cee7171c0a76a04
-      TARGET_TYPE: r6i.8xlarge
-      TARGET_VCPU: '32'
+      TARGET_TYPE: r6i.4xlarge
+      TARGET_VCPU: '16'
     steps:
       - name: Preflight - capacity, quota, EBS root, and is the box busy
         id: pre
@@ -91,7 +101,7 @@ jobs:
             exit 1
           fi
 
-          # vCPU quota is the usual blocker on a big step up: 8 -> 32 vCPU.
+          # vCPU quota is the usual blocker on a step up: 8 -> 16 vCPU.
           quota="$(aws service-quotas get-service-quota --service-code ec2 --quota-code L-1216C47A \
             --query 'Quota.Value' --output text 2>/dev/null || echo UNKNOWN)"
           echo "RUNNING_ONDEMAND_STANDARD_VCPU_QUOTA=$quota  (need >= $TARGET_VCPU)"

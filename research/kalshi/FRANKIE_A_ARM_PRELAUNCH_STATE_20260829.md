@@ -20,10 +20,13 @@ No workflow has been dispatched, no model invoked, no lock, freeze, handoff or s
 **Do not dispatch a workflow, invoke a model, or start either arm. Stop and walk the whole
 thing through with Greg first.**
 
-This is not a formality and it is not about permission. Two decisions below are unmade
-(D6 and D5), the driver is a draft that has never run, three components are wired to
-nothing, and the papers still describe an API architecture the Sol run does not use. A
-launch from this state would produce artifacts that look complete and are not.
+This is not a formality and it is not about permission. **Re-verified 2026-08-29:** the
+driver now RUNS a pass end to end and finalizes ACCEPTED (13 tests), and D6 and D5 are both
+closed - those three lines were true when first written and are not now. What still holds is
+the part that matters: **seven of the eleven section adapters do not exist, the driver calls
+none of the four that do, and the execution gate is referenced by nothing.** A launch from
+this state would produce artifacts that look complete and are not - eleven of sixteen
+sections would report on an empty ingest.
 
 Before anything runs, sit down with Greg and confirm, item by item:
 
@@ -35,7 +38,11 @@ Before anything runs, sit down with Greg and confirm, item by item:
 3. **The driver is rebuilt against the walk machinery** in section 5, not against the API
    design in the papers, and it has tests.
 4. **The checkpointer and the execution gate are actually wired.** Verify by search, not by
-   assumption: today both are referenced by nothing.
+   assumption. **Re-checked 2026-08-29, and they are no longer in the same state:** the
+   checkpointer IS imported by `native_replay_driver`, while the execution gate is still
+   imported by nothing outside itself. Neither is on a LAUNCH path - the driver that holds
+   the checkpointer is not dispatched by either workflow - so "wired to a module" and "wired
+   to an execution path" must not be collapsed here.
 5. **The provider-receipt requirement: DECIDED (Greg, 2026-08-29).** Verbatim: *"on invoke
    runs chatgpt 5.6 sol just like you used to run the blind/reveal for the group runs, no
    api call."* So `on_invoke` never calls anything. At a cutoff the driver STAGES a state
@@ -76,7 +83,9 @@ Before anything runs, sit down with Greg and confirm, item by item:
    coverage are.
 8. **Compute is settled** - which machine runs this, and whether it is sized for sixteen
    sections over 4.26M groups. See section 10a: the A-arm workflows currently dispatch
-   nothing, and the recorded box is a t3.xlarge (4 vCPU / 16 GB), unverified.
+   nothing, and the box was PROBED LIVE on 2026-08-29 (D55) as an **r6i.2xlarge**, 8 cores /
+   61.8 GiB / 32 GiB swap - not the t3.xlarge this line used to record. The resize to
+   `r6i.8xlarge` is armed and NOT fired, so compute is still not settled.
 9. **A dry run over a small slice completes and the eight gates pass**, before anything
    touches the full roster.
 
@@ -213,17 +222,37 @@ Two things settled along the way, recorded because they were live questions:
 **Two `provisional` labels Greg has not ruled on**, flagged because they are different in
 kind from the findings status and both have consequences:
 
-* **`PROVISIONAL_SHADOW`** is a ROUTING POLICY on exactly 2 registry layers -
-  `extra_agent_corrected_information_and_gap_diagnoses` and
-  `extra_agent_four_helper_architecture_roles` - both `SHADOW_DISABLED`/`SHADOW_READY` with
-  `model_visible: False`. Making them permanent means Frankie can SEE them, which changes
-  `EXPECTED_POLICY_COUNTS`, the surface inventory hash and the manifest.
-  **`extra_agent_four_helper_architecture_roles`: RESOLVED 2026-08-29 (D54).** Greg:
-  *"we aren't doing the helpers or the specialists anymore."* That layer documents a
-  SUPERSEDED architecture, so it stays shadow and `model_visible: False` - making a dead
-  architecture visible to Frankie is worse than showing nothing.
-  **`extra_agent_corrected_information_and_gap_diagnoses`: STILL OPEN.** Not ruled on;
-  unchanged, and the manifest and surface hash are untouched.
+* **`PROVISIONAL_SHADOW` - THIS ENTRY WAS WRONG, CORRECTED 2026-08-29 AGAINST THE CODE.**
+  It said the policy sat on `extra_agent_corrected_information_and_gap_diagnoses` and
+  `extra_agent_four_helper_architecture_roles`, both `model_visible: False`. **It does not,
+  and they are not.** Read from
+  `frankie_native_raw_mbo_ingestion_layer_registry_20260828.json` and
+  `native_ingestion_layer_registry.py`:
+  * The two `PROVISIONAL_SHADOW` layers are **`s137_cognitive_shadow_runtime`** and
+    **`hipporag_associative_retrieval`** (group `provisional_shadow`, `principal_route:
+    SHADOW_ONLY`, `activation_stage: EXPLICIT_IDENTICAL_ARM_OPT_IN_ONLY`). Computed policy
+    counts match `EXPECTED_POLICY_COUNTS` exactly, so those two are the whole set.
+  * **Both `extra_agent_*` layers are `STATIC_REQUIRED_INPUT`** in group
+    `corrected_extra_agent_carryforward`, `principal_route: DIRECT`, `activation_stage:
+    PRE_CALL`, on BOTH arms. `native_ingestion_layer_registry.py:348` enforces
+    `("AVAILABLE", model_visible=True, "SHA")` for that policy. **So Frankie already SEES
+    both, and a pre-call receipt that reports either one invisible FAILS the gate** - the
+    exact opposite of what this document said.
+  **CONSEQUENCE - D54 IS CONTRADICTED BY THE ENFORCEMENT LAYER AND IS NOT LANDED.** D54
+  records that `extra_agent_four_helper_architecture_roles` "stays shadow and
+  `model_visible: False`" because it documents a superseded architecture. The registry
+  requires the opposite and no registry change was made. This is the S115 lesson in its
+  worse form: not a decision nothing enforces, but a decision something enforces the
+  **reverse** of. Nothing has failed yet only because no run has reached the pre-call gate.
+  **WHAT IS ACTUALLY OPEN, and it is one question asked twice** - for the helper-roles layer
+  and for the corrected-information layer, each: **does it stay a required, model-visible
+  input, or does it move to shadow?** Both are `v3_derived: true` and are the only two
+  members of `ALLOWED_V3_LAYER_IDS`; their sources include
+  `NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md`, so
+  "required and visible" means Frankie reads V3 carryforward marked NONAUTHORITATIVE as a
+  binding input on every run. Moving either one changes `EXPECTED_POLICY_COUNTS`,
+  `EXPECTED_ARM_LAYER_COUNTS`, `EXPECTED_LAYER_ID_SET_SHA256`, the surface inventory hash
+  and the manifest - which is why it is a ruling and not an edit.
 * **"provisional strategy hypotheses"** in the RT mission and the discovery addendum are
   `ALWAYS_LOAD` instructions telling Frankie what to PRODUCE. Editing them changes Frankie's
   job and requires regenerating hash-bound capsules.
@@ -291,7 +320,7 @@ not list an artifact whose arms exclude that profile's arm.
 
 ## 7. File map — the calculation layer (BUILT, TESTED, NOT WIRED)
 
-All under `research/kalshi/frankie_raw_mbo_benchmark/`. **441 tests pass.**
+All under `research/kalshi/frankie_raw_mbo_benchmark/`. **552 tests pass** (2026-08-29).
 
 | § | Module | Lines | What it enforces that prose could not |
 |---|---|---:|---|
@@ -312,13 +341,14 @@ All under `research/kalshi/frankie_raw_mbo_benchmark/`. **441 tests pass.**
 | §5/§6 | `native_calculation_runner.py` | 519 | Seven layers, eight gates, no partial promotion. |
 | — | `native_staging.py` | 195 | The spawn contract. A missing or empty principal artifact is a HARD failure, never zero findings. |
 | — | `periodic_checkpointer.py` | 380 | Save points on record or clock interval, refused mid-group. |
-| — | `native_replay_driver.py` | 355 | Runs end to end and finalizes ACCEPTED; 14 tests. Sections 4.6-4.16 not yet fed. See section 8. |
+| 4.8/4.9/4.13/4.14 | `native_group_adapters.py` | 314 | Raw MBO to constructed domain objects on the F_LAST unit. Ladder scope travels ON the value. No mean, ratio-of-sums or rate anywhere. 20 tests. **Called by nothing but its own test.** |
+| — | `native_replay_driver.py` | 358 | Runs end to end and finalizes ACCEPTED; 14 tests. **Calls no adapter**, so sections 4.6-4.16 are all still unfed. See section 8. |
 
 Sections 4.1-4.4 already existed in `a_memory_member_first_recalculation_20260828.py`, which
 ran the full roster: 5,667,689 records into 4,256,603 groups, 4,758 candidate families, in
 2,985s, with `daily_averaged_companion_verification: EXACT_MATCH`.
 
-**529 tests** as of 2026-08-29 (522 + 7 for the exchange holiday calendar).
+**552 tests** as of 2026-08-29 (529 + 20 group adapters + 3 gate/state).
 
 Tests are one file per module under `frankie_raw_mbo_benchmark/tests/`, plus
 `test_open_world_growth.py` (the vocabulary must grow) and
@@ -377,8 +407,23 @@ runs, but the claim as written was wrong. No driver feeds the sixteen sections.
    construction rather than introducing a second traversal vocabulary, which is exactly the
    `_family_id` defect caught on 2026-08-29. **Recorded cost, not hidden:** 4.6 order
    survival and 4.9 ladder topology are not naturally group-shaped, and the adapters must
-   report where that distorts rather than smoothing it over. What remains is building the
-   eleven adapters on that unit.
+   report where that distorts rather than smoothing it over.
+
+   **ADAPTER STATUS, CORRECTED 2026-08-29 - FOUR OF THE ELEVEN ARE BUILT, SEVEN ARE NOT.**
+   This paragraph used to end "What remains is building the eleven adapters on that unit",
+   and it was never updated when commit `8645c5d` landed the first tranche. That is the
+   section-11 same-commit rule broken on this document itself, and it is what made the adapter work read
+   as either finished or untouched depending on which line you landed on.
+   **BUILT** (`native_group_adapters.py`, 314 lines, 20 tests): **4.14** recurrence
+   (`occurrences`), **4.9** ladder (`ladder_transitions`), **4.8** absorption
+   (`runway_pressure_fields`), **4.13** lineage (`lineage_additions`).
+   **NOT BUILT: 4.6, 4.7, 4.10, 4.11, 4.12, 4.15, 4.16.**
+   **BUILT, WIRED and FED are three different states, and no adapter is past the first.**
+   Re-verified by search 2026-08-29: `native_group_adapters` is imported by exactly one file
+   - its own test - and NO non-test file imports `native_queue`, `native_replenishment`,
+   `native_exhaustion`, `native_recognition`, `native_dipole`, `native_discovery` or
+   `native_response`. So the four built adapters do not narrow what the traversal reports by
+   one field; they only shorten the remaining build.
    `on_invoke` is GONE, replaced by `stage_spawn`: at a cutoff the traversal writes a
    committed request via `native_staging.SpawnStager` and moves on. It calls nothing. The
    full loop is now closed and tested - stage at cutoff, agent session reads, artifact
@@ -543,9 +588,16 @@ managed glob. It is kept as the record of that analysis. Do not wire it.
 - Re-read section 0 and this section before touching anything.
 - Confirm the branch tip matches what is stated here; if it does not, something landed after
   this was written and this document is behind.
-- Run the A-arm suite first. If it is not 441 green, stop and find out why before building.
+- Run the A-arm suite first. If it is not 552 green, stop and find out why before building.
 - Run the knowledge refresh with `--check`. It should report `CURRENT`. If it reports
   `UPDATED`, someone hand-edited a generated capsule and that needs understanding, not
   overwriting.
 - If you change any decision in section 2 or 3, **update this file in the same commit.**
   The first version of this document went stale because that did not happen.
+- **The same rule binds a BUILD, not only a decision** - added 2026-08-29 after this file
+  went stale a second time. Commit `8645c5d` built four of the eleven adapters and changed no
+  decision, so the rule as written did not bite, and section 8 went on saying "what remains is
+  building the eleven adapters" while four of them sat in the tree. **If you land code that
+  closes any part of section 8, close it in section 8 in the same commit, with a count.** A
+  build queue that does not shrink when work lands is a build queue that will be re-proposed
+  and re-argued every session - which is exactly what happened here.
