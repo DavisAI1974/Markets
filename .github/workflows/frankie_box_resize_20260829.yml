@@ -1,0 +1,210 @@
+name: Box resize for the A-arm run 20260829
+
+# RUN MARKER 2026-08-29T09:40Z - bump this line to run the resize.
+#
+# Greg: "start with a bigger box than the 64g's. the less rich data run almost used the 64 g
+# up so logic says that it def won't be enough for this."
+#
+# THE SIZING ARGUMENT, written down so the next session can check it rather than inherit it.
+# The member-first recalculation covered 5 of the 16 sections over 4.26M groups and very
+# nearly exhausted 61.8 GiB. Sixteen sections is 3.2x that section count, and the dominant
+# memory term - per-group state held across sections - scales with it. 3.2 x 62 is about 200
+# GiB, so r6i.4xlarge at 128 GiB is only 2x and by Greg's own reasoning is still short.
+# TARGET IS r6i.8xlarge: 32 vCPU / 256 GiB, same family as today's r6i.2xlarge so there is
+# no architecture, driver or AMI surprise. The cost of oversizing is a few dollars an hour;
+# the cost of undersizing is a multi-hour run that dies at 90 percent.
+#
+# THIS ONE MUTATES, unlike the sizing probe and the monitor. An EC2 instance type cannot be
+# changed while running - there is no live resize - so it stops, modifies and starts. Three
+# guards, because a stop is the destructive step:
+#   1. It REFUSES if the root device is not EBS. Stopping an instance-store instance
+#      destroys its local disks.
+#   2. It REFUSES if the box is busy, so a resize can never kill a run in flight. Idle was
+#      verified before this was written, but the guard has to be in the workflow, not in a
+#      session's memory of a reading.
+#   3. Full rollback, taken verbatim from the resize that already succeeded
+#      (ng_exhaustion_step1_v6_resize_r6i_2xlarge_simple_20260828): if modify fails it
+#      restarts as-is, if start fails it reverts the type, and if the box comes up unhealthy
+#      it reverts and restarts on the original type.
+#
+# Swap lives on the root EBS volume, so it survives a stop/start; the verify step re-reads
+# /proc and prints it, rather than assuming.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - chatgpt/frankie-box-sizing-probe-20260829
+    paths:
+      - .github/workflows/frankie_box_resize_20260829.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frankie-box-resize-20260829
+  cancel-in-progress: false
+
+jobs:
+  resize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+      TARGET_TYPE: r6i.8xlarge
+      TARGET_VCPU: '32'
+    steps:
+      - name: Preflight - capacity, quota, EBS root, and is the box busy
+        id: pre
+        run: |
+          set -euo pipefail
+          aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
+            --query 'Reservations[0].Instances[0].{Type:InstanceType,State:State.Name,AZ:Placement.AvailabilityZone,Root:RootDeviceType}' \
+            --output json > /tmp/inst.json
+          cat /tmp/inst.json
+          original="$(python3 -c "import json;print(json.load(open('/tmp/inst.json'))['Type'])")"
+          az="$(python3 -c "import json;print(json.load(open('/tmp/inst.json'))['AZ'])")"
+          root="$(python3 -c "import json;print(json.load(open('/tmp/inst.json'))['Root'])")"
+          echo "ORIGINAL_TYPE=$original" >> "$GITHUB_OUTPUT"
+          echo "ORIGINAL_TYPE=$original"
+
+          # GUARD 1: stopping an instance-store instance destroys its local disks.
+          if [ "$root" != "ebs" ]; then
+            echo "REFUSING: root device type is '$root', not ebs. A stop would destroy local disks."
+            exit 1
+          fi
+          echo "ROOT_DEVICE=ebs  (safe to stop)"
+
+          # Is the target even offered in this AZ?
+          offered="$(aws ec2 describe-instance-type-offerings --location-type availability-zone \
+            --filters Name=location,Values="$az" Name=instance-type,Values="$TARGET_TYPE" \
+            --query 'length(InstanceTypeOfferings)' --output text)"
+          echo "TARGET_OFFERED_IN_${az}=$offered"
+          if [ "$offered" = "0" ]; then
+            echo "REFUSING: $TARGET_TYPE is not offered in $az. Alternatives offered here:"
+            aws ec2 describe-instance-type-offerings --location-type availability-zone \
+              --filters Name=location,Values="$az" Name=instance-type,Values='r6i.*','r7i.*' \
+              --query 'InstanceTypeOfferings[].InstanceType' --output text | tr '\t' '\n' | sort
+            exit 1
+          fi
+
+          # vCPU quota is the usual blocker on a big step up: 8 -> 32 vCPU.
+          quota="$(aws service-quotas get-service-quota --service-code ec2 --quota-code L-1216C47A \
+            --query 'Quota.Value' --output text 2>/dev/null || echo UNKNOWN)"
+          echo "RUNNING_ONDEMAND_STANDARD_VCPU_QUOTA=$quota  (need >= $TARGET_VCPU)"
+          if [ "$quota" != "UNKNOWN" ]; then
+            # awk, not an embedded python heredoc: the quota is a float string, and a
+            # heredoc here is what broke the two workflows deleted earlier today.
+            if awk -v q="$quota" -v n="$TARGET_VCPU" 'BEGIN{exit !(q+0 < n+0)}'; then
+              echo "REFUSING: quota $quota vCPU is below the $TARGET_VCPU this target needs."
+              echo "Raise EC2 'Running On-Demand Standard instances' (L-1216C47A) first."
+              exit 1
+            fi
+            echo "QUOTA_OK: $quota >= $TARGET_VCPU"
+          fi
+
+          # GUARD 2: never resize a box that is doing work.
+          python3 - <<'PY'
+          import json, shlex
+          remote = r'''
+          set -eu
+          echo BUSY_PROCS=$(ps -eo comm,etimes --no-headers | awk '$1 ~ /^(python3|frankie|dbn)/ && $2 > 120' | wc -l)
+          ps -eo rss,etimes,comm --sort=-rss --no-headers | head -5
+          '''
+          json.dump({"commands": ["/bin/bash -lc " + shlex.quote(remote)]},
+                    open("/tmp/busy.json", "w"))
+          PY
+          cid="$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript \
+            --comment "resize preflight busy check" --parameters file:///tmp/busy.json \
+            --timeout-seconds 120 --query 'Command.CommandId' --output text)"
+          aws ssm wait command-executed --command-id "$cid" --instance-id "$INSTANCE_ID" || true
+          out="$(aws ssm get-command-invocation --command-id "$cid" --instance-id "$INSTANCE_ID" \
+            --query 'StandardOutputContent' --output text)"
+          echo "$out"
+          busy="$(echo "$out" | sed -n 's/^BUSY_PROCS=//p' | head -1)"
+          if [ "${busy:-1}" != "0" ]; then
+            echo "REFUSING: the box looks busy (BUSY_PROCS=$busy). A resize stops it and would kill the run."
+            exit 1
+          fi
+          echo "BOX_IDLE=true  (safe to stop)"
+
+      - name: Stop, modify, start - with rollback on every failure path
+        env:
+          ORIGINAL_TYPE: ${{ steps.pre.outputs.ORIGINAL_TYPE }}
+        run: |
+          set -euo pipefail
+          echo "Resizing $INSTANCE_ID: $ORIGINAL_TYPE -> $TARGET_TYPE"
+          aws ec2 stop-instances --instance-ids "$INSTANCE_ID" --output json
+          aws ec2 wait instance-stopped --instance-ids "$INSTANCE_ID"
+
+          if ! aws ec2 modify-instance-attribute --instance-id "$INSTANCE_ID" \
+               --instance-type "{\"Value\":\"$TARGET_TYPE\"}"; then
+            echo "modify failed - restarting on the original type"
+            aws ec2 start-instances --instance-ids "$INSTANCE_ID" --output json || true
+            exit 1
+          fi
+
+          if ! aws ec2 start-instances --instance-ids "$INSTANCE_ID" --output json; then
+            echo "start failed on $TARGET_TYPE - reverting to $ORIGINAL_TYPE"
+            aws ec2 modify-instance-attribute --instance-id "$INSTANCE_ID" \
+              --instance-type "{\"Value\":\"$ORIGINAL_TYPE\"}" || true
+            aws ec2 start-instances --instance-ids "$INSTANCE_ID" --output json || true
+            exit 1
+          fi
+
+          aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
+          if ! aws ec2 wait instance-status-ok --instance-ids "$INSTANCE_ID"; then
+            echo "came up unhealthy on $TARGET_TYPE - reverting to $ORIGINAL_TYPE"
+            aws ec2 stop-instances --instance-ids "$INSTANCE_ID" --output json || true
+            aws ec2 wait instance-stopped --instance-ids "$INSTANCE_ID" || true
+            aws ec2 modify-instance-attribute --instance-id "$INSTANCE_ID" \
+              --instance-type "{\"Value\":\"$ORIGINAL_TYPE\"}" || true
+            aws ec2 start-instances --instance-ids "$INSTANCE_ID" --output json || true
+            exit 1
+          fi
+
+          final="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
+            --query 'Reservations[0].Instances[0].InstanceType' --output text)"
+          echo "FINAL_TYPE=$final"
+          test "$final" = "$TARGET_TYPE"
+
+      - name: Verify from inside the box, and confirm swap survived
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, shlex
+          remote = r'''
+          set -eu
+          echo NPROC=$(nproc)
+          echo MEM_TOTAL_KB=$(awk '/^MemTotal:/{print $2}' /proc/meminfo)
+          echo SWAP_TOTAL_KB=$(awk '/^SwapTotal:/{print $2}' /proc/meminfo)
+          echo DISK_AVAIL_KB=$(df -Pk / | awk 'NR==2{print $4}')
+          echo MONITOR_RUNNING=$(pgrep -cf /opt/frankie_box_monitor/sample.sh || echo 0)
+          '''
+          json.dump({"commands": ["/bin/bash -lc " + shlex.quote(remote)]},
+                    open("/tmp/verify.json", "w"))
+          PY
+          cid="$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript \
+            --comment "post-resize verify" --parameters file:///tmp/verify.json \
+            --timeout-seconds 180 --query 'Command.CommandId' --output text)"
+          aws ssm wait command-executed --command-id "$cid" --instance-id "$INSTANCE_ID" || true
+          out="$(aws ssm get-command-invocation --command-id "$cid" --instance-id "$INSTANCE_ID" \
+            --query 'StandardOutputContent' --output text)"
+          echo "$out"
+          python3 - <<PY
+          vals = dict(l.split("=", 1) for l in """$out""".splitlines() if "=" in l)
+          gib = lambda k: round(int(vals.get(k, 0)) / 1048576, 1)
+          print("---")
+          print(f"CORES={vals.get('NPROC')}")
+          print(f"MEM_TOTAL_GIB={gib('MEM_TOTAL_KB')}")
+          print(f"SWAP_TOTAL_GIB={gib('SWAP_TOTAL_KB')}")
+          print(f"DISK_AVAIL_GIB={gib('DISK_AVAIL_KB')}")
+          if gib("SWAP_TOTAL_KB") == 0:
+              print("WARNING: swap did NOT survive the resize. Greg's note says swap was required.")
+          if vals.get("MONITOR_RUNNING", "0").strip() == "0":
+              print("NOTE: the memory sampler is not running after the reboot - re-fire the "
+                    "monitor workflow to restart it before the run.")
+          PY
