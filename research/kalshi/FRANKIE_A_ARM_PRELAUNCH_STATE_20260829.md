@@ -1,8 +1,8 @@
 # Frankie A-Arm State and File Map
 
-Date: 2026-08-29 UTC (revised at close)
+Date: 2026-08-29 UTC (revised at close; D6a/D5 taken 2026-08-29 in session, see sections 2 and 3)
 Branch: `chatgpt/frankie-raw-mbo-benchmark-20260828`
-Status: **NOTHING LAUNCHED — CALCULATION LAYER BUILT — DRIVER IS A DRAFT — TWO DECISIONS OPEN**
+Status: **NOTHING LAUNCHED — CALCULATION LAYER BUILT — DRIVER IS A DRAFT — D6a AND D5 CLOSED, D6b OPEN**
 
 > **STOP BEFORE LAUNCH.** Do not dispatch a workflow or start either arm. Walk the whole
 > thing through with Greg first. See section 0.
@@ -27,9 +27,10 @@ launch from this state would produce artifacts that look complete and are not.
 
 Before anything runs, sit down with Greg and confirm, item by item:
 
-1. **D6 session and phase boundaries** are decided and implemented. Nothing else can be
-   trusted until this is - segments decide what gets censored.
-2. **D5 clustering** is decided: in this run, or not in this run.
+1. **D6a session boundaries: DONE.** Decided and implemented in `native_session.py` (26
+   tests). **D6b phase is still open** and still blocks - see section 3.
+2. **D5 clustering: DONE.** Not in this run; the runner takes discovery as optional and the
+   gate skips it.
 3. **The driver is rebuilt against the walk machinery** in section 5, not against the API
    design in the papers, and it has tests.
 4. **The checkpointer and the execution gate are actually wired.** Verify by search, not by
@@ -110,20 +111,25 @@ the *staging and artifact contract* from it, not the five-specialist role struct
 | R7 | Manifest schema had no room for §5.1 fields | **Closed** by the roster migration; see D-roster below. |
 | — | All four days scored | **Decided.** One role `SCORED_FINDINGS_DAY`; `roster_position` carries stream order. This forced D1 and D2 to resolve as they did. |
 | — | Carried vocabulary is a ceiling | **Closed.** Phases, states and dispositions can now grow; depth never had a cap. |
+| D6a | Session boundary undefined | **Closed 2026-08-29 (Greg).** Follow the exchange, not our tape. CME Globex energy trades Sun-Fri 17:00-16:00 CT with a 60-minute halt at 16:00 CT, Mon-Fri; the CME **trade date** begins 17:00 CT on the previous calendar day and runs to 16:00 CT. `continuity_segment` is the trade date's ordinal, because one trade date is exactly one continuous book. Built as `native_session.py`. |
+| D5 | Clustering mode | **Closed 2026-08-29 (Greg).** Not in this run. Discovery stays optional and the gate skips it; keep the first launch to the smallest thing that can succeed. |
 
 ## 3. Decisions — open
 
-**D6. Session and phase boundaries. This is the blocker.**
-`session_phase` is a caller-supplied string and nothing in the tree defines RTH/ETH/reopen
-for October 2021 CME. Section 2 says session boundaries start new continuity segments, and
-segments decide where lifecycles are censored, where runs restart and where replenishment
-horizons are cut. The driver cannot be finished without a rule. A workable starting
-proposal: the 21:00 UTC boundary the data already exhibits is the session anchor, and
-everything between two anchors is one segment. That is a proposal, not a decision.
+**D6b. Session PHASE. This is now the blocker.**
+D6a settled segmentation; it did not settle `session_phase`, which is a separate field and
+sits in the stratum key of `native_response`, `native_recurrence`, `native_dipole` and
+`native_exhaustion`. Nothing derives it: the only `"RTH"` in the tree is **test fixtures**.
+If the driver passes one constant, every phase stratum collapses into one and all 467 tests
+still pass - the exact silent pooling `native_stratum` exists to forbid.
 
-**D5. Clustering mode.** Softer than first stated: the runner takes discovery as optional,
-so if the A arms do not cluster the gate skips it. Only a decision if you want clustering in
-this run. `mode` is `INCREMENTAL` or `RETROSPECTIVE`, hash-bound into the schema.
+`H6` in `ACLEAN_RT_ACTUAL_FRANKIE_INTERIM_POSITIVE_REPORT_20260828.md` proposes
+pre-boundary / mass-withdrawal group / post-boundary. **That does not yet partition a
+segment**: viewed from the boundary that opens a segment every group is post-boundary, and
+from the one that closes it every group is pre-boundary, so the same interval carries both
+labels. It needs one further convention before it can be implemented. Per D6a, take that
+convention from what the exchange does - the 16:00-17:00 CT halt is already labelled by
+`native_session.in_halt_window`, and it is the one interval with an unambiguous phase.
 
 **D7. Cadence.** Mostly dissolved by section 1. What remains: at which staging boundary
 does Sol read and emit.
@@ -205,6 +211,7 @@ All under `research/kalshi/frankie_raw_mbo_benchmark/`. **441 tests pass.**
 | 4.14 | `native_recurrence.py` | 328 | Exact gaps canonical; a burst threshold labels, never gates. |
 | 4.15 | `native_discovery.py` | 398 | Forbidden features raise at schema construction. Frozen before description. |
 | 4.16 | `native_response.py` | 369 | Each horizon written once, with its own at-risk denominator. |
+| §2 | `native_session.py` | 186 | D6a. Boundary is exchange-local, so it survives DST. Segment is the CME trade date. Non-monotonic input refused. |
 | §5/§6 | `native_calculation_runner.py` | 519 | Seven layers, eight gates, no partial promotion. |
 | — | `periodic_checkpointer.py` | 380 | Save points on record or clock interval, refused mid-group. |
 | — | `native_replay_driver.py` | 305 | **DRAFT. Untested, nothing calls it.** See section 8. |
@@ -213,20 +220,29 @@ Sections 4.1-4.4 already existed in `a_memory_member_first_recalculation_2026082
 ran the full roster: 5,667,689 records into 4,256,603 groups, 4,758 candidate families, in
 2,985s, with `daily_averaged_companion_verification: EXACT_MATCH`.
 
+**467 tests** as of 2026-08-29 (441 + 26 for `native_session`).
+
 Tests are one file per module under `frankie_raw_mbo_benchmark/tests/`, plus
 `test_open_world_growth.py` (the vocabulary must grow) and
 `test_raw_mbo_source_manifest_roles.py` (roster and hash split).
 
 ## 8. What is NOT wired — the remaining build
 
-Verified by search: the execution gate is referenced by nothing but itself, the
-checkpointer by nothing, and no driver feeds the sixteen sections.
+Verified by search on 2026-08-29. The execution gate is referenced by nothing but itself
+and its test. `native_replay_driver` is referenced by **no Python at all**. **Correction to
+the previous version of this file:** `periodic_checkpointer` is *not* referenced by nothing
+- `native_replay_driver.py` imports it. The conclusion is unchanged, since the driver never
+runs, but the claim as written was wrong. No driver feeds the sixteen sections.
 
 1. **The driver.** `native_replay_driver.py` is a draft: it imports and breaks no tests, but
    has no tests of its own, feeds only clocks and coverage, and its invocation abstraction
    assumes an API call. Rebuild its spawn path against section 5's walk machinery.
-2. **Wire the checkpointer** into the driver and both launch workflows.
+2. **Wire the checkpointer** into both launch workflows. It is already imported by the
+   draft driver; what is missing is a path on which that driver executes.
 3. **Wire the gate** into the launcher. An unreferenced gate is not a gate.
+4. **Feed `continuity_segment` and `trade_day` from `native_session`** into the traversal.
+   Today every section still takes them as caller-supplied arguments, so the D6a rule is
+   available but not yet applied anywhere.
 
 ## 9. Identity values — do not re-derive, do not guess
 
