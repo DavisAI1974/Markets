@@ -9,43 +9,12 @@ from research.kalshi.frankie_raw_mbo_benchmark.chat_packet_seam import (
     native_group_envelope,
 )
 from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import F_LAST, V4MboAdapter
+from research.kalshi.frankie_raw_mbo_benchmark.tests.manifest_fixture import manifest_fixture
 
 
 class ChatPacketSeamTests(unittest.TestCase):
     def _manifest(self) -> dict:
-        sources = []
-        for index, (date, role) in enumerate(
-            (
-                ("20211001", "WARMUP_DEVELOPMENT"),
-                ("20211003", "WARMUP_DEVELOPMENT"),
-                ("20211004", "HELD_OUT_BLIND"),
-                ("20211005", "HELD_OUT_BLIND"),
-            ),
-            start=1,
-        ):
-            sources.append(
-                {
-                    "name": f"glbx-mdp3-{date}.mbo.dbn.zst",
-                    "date": date,
-                    "role": role,
-                    "bytes": 1000 + index,
-                    "sha256": str(index) * 64,
-                    "mbo_records": 10 * index,
-                }
-            )
-        value = {
-            "schema": "FRANKIE_RAW_MBO_SOURCE_MANIFEST_V1",
-            "source_kind": "NATIVE_DBN_MBO",
-            "causal_clock": "ts_recv_ns",
-            "canonical_source_rewritten": False,
-            "sources": sources,
-            "warmup_mbo_records": 30,
-            "held_out_mbo_records": 70,
-            "total_mbo_records": 100,
-            "manifest_hash": "",
-        }
-        value["manifest_hash"] = manifest_hash(value)
-        return value
+        return manifest_fixture((10, 20, 30, 40))
 
     @staticmethod
     def _memory() -> dict:

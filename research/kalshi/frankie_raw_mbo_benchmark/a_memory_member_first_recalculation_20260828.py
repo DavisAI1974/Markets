@@ -454,10 +454,14 @@ def _source_day(source_name: str) -> str:
 
 
 def _source_role(source_day: str) -> str:
-    if source_day in {"2021-10-01", "2021-10-03"}:
-        return "WARMUP_DEVELOPMENT"
-    if source_day in {"2021-10-04", "2021-10-05"}:
-        return "HELD_OUT_BLIND"
+    """All four roster days are scored and all four produce findings, so they share a role.
+
+    The earlier warmup/held-out split described a design in which October 1 and 3 were only
+    context. Keeping it would imply two populations where there is one, and days are already
+    kept apart by source_day in every stratum key.
+    """
+    if source_day in {"2021-10-01", "2021-10-03", "2021-10-04", "2021-10-05"}:
+        return "SCORED_FINDINGS_DAY"
     return "UNSPECIFIED_TEST_SOURCE"
 
 

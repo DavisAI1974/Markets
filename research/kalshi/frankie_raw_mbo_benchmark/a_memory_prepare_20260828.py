@@ -14,7 +14,8 @@ PACKET = Path("/workspace/scratch/da00127ac123/a-memory-packet-c7da7d2")
 MEMORY = REPO / "research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1"
 RUN_ID = "frankie-a-memory-rt-c7da7d257fda-1"
 LAUNCH_COMMIT = "c7da7d257fda2ce9ddccfaee56020ed3e7de8e50"
-SOURCE_MANIFEST_HASH = "a98a454ef5a88d6f3ee1213370d6df530ab2946ec9cde47171b0d7aa19f4e2ba"
+# Identity only: staging fields differ per run, so the full manifest hash is not pinnable.
+SOURCE_IDENTITY_HASH = "4d02dae63163a43fe0dc093ad0bda9a6d055a455cbc946a59d5b9008dad190ac"
 PACKAGE_SHA256 = "0a5cddbcd971a3e6c2cad88a8e5559b0ab0529a31174c882355a61fe9c680b87"
 PROOF_RECEIPT_HASH = "e7d8cbc54f354a4902ab72792e379033a25f5f28102fcf9d4bb82dda1d7e8435"
 REPOSITORY_RECEIPT_HASH = "9c5847e33f4014eac12e8da67c2f97e55280545f67ea0d7899fa1c914d39683b"
@@ -68,7 +69,7 @@ def main() -> None:
     (PACKET / "checkpoints").mkdir(parents=True, mode=0o700)
 
     manifest = json.loads((SOURCE_PACKET / "source_manifest.json").read_text(encoding="utf-8"))
-    if manifest["manifest_hash"] != SOURCE_MANIFEST_HASH or manifest["total_mbo_records"] != 5_667_689:
+    if manifest["source_identity_hash"] != SOURCE_IDENTITY_HASH or manifest["total_mbo_records"] != 5_667_689:
         raise RuntimeError("native source manifest identity mismatch")
     write_json(PACKET / "source_manifest.json", manifest)
     for source in manifest["sources"]:

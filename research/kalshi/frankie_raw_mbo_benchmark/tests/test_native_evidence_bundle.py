@@ -8,42 +8,14 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_evidence_bundle import (
     NativeEvidenceBundleError,
     NativeEvidenceLedger,
 )
+from research.kalshi.frankie_raw_mbo_benchmark.tests.manifest_fixture import manifest_fixture
 from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import F_LAST, V4MboAdapter
 
 
 class NativeEvidenceBundleTests(unittest.TestCase):
     @staticmethod
     def _manifest() -> dict:
-        roster = (
-            ("20211001", "WARMUP_DEVELOPMENT", 2),
-            ("20211003", "WARMUP_DEVELOPMENT", 1),
-            ("20211004", "HELD_OUT_BLIND", 1),
-            ("20211005", "HELD_OUT_BLIND", 1),
-        )
-        sources = [
-            {
-                "name": f"glbx-mdp3-{date}.mbo.dbn.zst",
-                "date": date,
-                "role": role,
-                "bytes": 1000 + index,
-                "sha256": str(index) * 64,
-                "mbo_records": records,
-            }
-            for index, (date, role, records) in enumerate(roster, start=1)
-        ]
-        value = {
-            "schema": "FRANKIE_RAW_MBO_SOURCE_MANIFEST_V1",
-            "source_kind": "NATIVE_DBN_MBO",
-            "causal_clock": "ts_recv_ns",
-            "canonical_source_rewritten": False,
-            "sources": sources,
-            "warmup_mbo_records": 3,
-            "held_out_mbo_records": 2,
-            "total_mbo_records": 5,
-            "manifest_hash": "",
-        }
-        value["manifest_hash"] = manifest_hash(value)
-        return value
+        return manifest_fixture((2, 1, 1, 1))
 
     @staticmethod
     def _record(order_id: int, sequence: int, ts_recv: int, *, side: str = "B", flags: int = F_LAST) -> dict:

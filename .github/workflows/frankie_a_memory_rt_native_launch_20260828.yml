@@ -300,8 +300,8 @@ jobs:
             "$source_dir/glbx-mdp3-20211004.mbo.dbn.zst" \
             "$source_dir/glbx-mdp3-20211005.mbo.dbn.zst"
 
-          test "$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["manifest_hash"])' "$packet_dir/source_manifest.json")" = \
-            a98a454ef5a88d6f3ee1213370d6df530ab2946ec9cde47171b0d7aa19f4e2ba
+          test "$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["source_identity_hash"])' "$packet_dir/source_manifest.json")" = \
+            4d02dae63163a43fe0dc093ad0bda9a6d055a455cbc946a59d5b9008dad190ac
           cp "$PRIOR_PACKAGE_DIR/prior-learned-package.tgz" "$packet_dir/memory/"
           cp "$PRIOR_PACKAGE_DIR/prior-learned-package-receipt.json" "$packet_dir/memory/"
           cp "$PRIOR_PACKAGE_DIR/prior-memory-repository-verification.json" "$packet_dir/memory/"
