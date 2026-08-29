@@ -165,58 +165,103 @@ relationship carries nothing and the dimension is spending a stratum key for no 
 
 ---
 
-## 4.16 Response - what is being measured, and over what horizons
+## 4.16 Response - the event's own length IS the answer
 
-### What the module fixes
-Horizons are a fixed set of nanosecond offsets given once, with a `horizon_version` label that
-enters every stratum key. Each horizon has its OWN measure, its own stratum and its own at-risk
-denominator, and each is written exactly once - a later, cleaner value cannot replace it.
-Maturity is in stream time, and the recorded timestamp is the DUE time, not the time `advance`
-happened, so a coarse cadence delays emission without corrupting the causal stamp.
+**SUPERSEDED ON GREG'S RULING, 2026-08-29.** The first version of this section proposed fixed
+wall-clock horizons of 1s / 10s / 60s / 300s. Greg: *"i'm not sure what the time intervals are
+for but we want to get away from any of those and just make any time duration computational
+from that event duration on its own. we want to observe the length and that's the answer not
+random time intervals. that's why we have an event clock."* He is right, and the original
+numbers were exactly the defect this tree keeps finding - a bar sited at a value, chosen
+because it looked reasonable rather than because the data put it there. A 60-second horizon
+asks "what had happened by an arbitrary moment"; the event asks "how long did I take", and only
+the second question is answered by the tape rather than by us.
+
+### What the module fixes, and the problem that creates
+Horizons are `Sequence[int]` nanosecond offsets given ONCE to the constructor, and
+`open_track` stamps that same grid onto every track: `native_response.py:245`,
+`for horizon in self.horizons_ns: track.horizons[horizon] = HorizonObservation(horizon_ns=
+horizon, due_recv_ns=first_lawful_recv_ns + horizon)`. **Verified: the grid is run-global and
+per-track horizons are not expressible as the module stands.** Each horizon has its own
+stratum, its own measure and its own at-risk denominator, and each is written exactly once.
+
+**And there is a causality constraint that rules out the obvious fix.** A horizon scaled by an
+event's own duration cannot be set when the track OPENS, because the duration is not known
+until the event ends - that would be lookahead, which the whole traversal forbids.
 
 ### The proposal
-**Horizons: 1s, 10s, 60s, 300s** (`1_000_000_000`, `10_000_000_000`, `60_000_000_000`,
-`300_000_000_000` ns), `horizon_version = "H4_S115_V1"`.
-**`value_names`: `mid_price_change_raw`, `touch_depth_change`, `signed_flow`** - the three
-things a level's future can do that the book can state exactly.
-**`values_for(track, horizon)`** reads the driver's current RT book state for the track's level
-and returns those three as differences from the values held at `open_track`.
-**`starting_liquidity_regime`**: `AT_TOUCH` when the level was the best price on its side at
-open, `BEHIND_TOUCH` when it was resting but not best, `OFF_BOOK` when it was not resting at
-all. Three structural states, no fitted bar.
+**Two changes, and the first is the important one.**
 
-### Why this one
-The horizons span the range the rolling activity windows already use, so the response is
-measured on the same time scale the rest of the adapter observes, and 300s is the outer bound
-of the activity window - beyond it there is no corroborating context. The three value names are
-exact book quantities rather than derived ratios, which keeps the no-averaging rule intact at
-the point of measurement. The regime vocabulary is the same AT_TOUCH / DEEP distinction 4.7
-needs for `touch_state_at_open`, so the two sections agree by construction rather than by
-coincidence - which is the `_family_id` lesson.
+**1. The duration is a first-class measurement, not a horizon.** The event's own length is
+already the observable in the survival machinery - `time_to_exit` in 4.6, `time_to_restoration`
+in 4.7, `completed_duration_ns` in 4.10 - each with proper censoring, so an event that outlives
+its segment is censored rather than silently truncated. That is where "observe the length and
+that's the answer" already lives, and it needs no new instrument. **The ruling that matters is
+that this, not a wall-clock grid, is the primary output.**
 
-### What it costs
-Four horizons over a large open track set makes `advance` O(open_tracks x horizons) on every
-call with no early exit, which is the one place in this design where cost is real. Batching the
-advance is safe - the stamp is the due time - but it delays emission. And a 300s horizon at the
-end of a segment is censored far more often than a 1s one, so the four horizons will have very
-different denominators. That is exactly what the per-horizon at-risk table exists to show, and
-it must be read, not summarized.
+**2. 4.16's horizons become EVENT-FRACTION milestones: 25%, 50%, 75% and 100% of the event's
+own realized life.** They are shared LABELS, so the at-risk denominators stay meaningful - all
+the 50%-of-life readings pool with each other and never with the 25% ones - while each track's
+actual instants are computed from its OWN duration. No wall clock anywhere.
+
+This is causally legal because of the flow, not despite it: `ResponseTrack.add_change_point`
+already records the path AS IT HAPPENS, at instants that were lawfully observable when they
+occurred. At completion the realized duration is known, the four milestone instants are
+computed from it, and the values are READ OFF the path already recorded. Nothing is predicted
+and nothing is read early - the emission is deferred to completion, which is the same deferral
+`advance` already performs, moved from a clock to an event boundary.
+
+**The one code change 4.16 needs:** maturity by event completion rather than by
+`advance(recv_ns)` against a global grid. `add_change_point` and the at-risk table survive
+unchanged; `horizons_ns` becomes the four fractions and `horizon_version` names them.
+
+**Values, unchanged from the first version:** `mid_price_change_raw`, `touch_depth_change`,
+`signed_flow` - exact book quantities, never ratios.
+**Regime, unchanged:** `AT_TOUCH` / `BEHIND_TOUCH` / `OFF_BOOK`, the same vocabulary 4.7 needs
+for `touch_state_at_open`, so the two sections agree by construction rather than by
+coincidence.
+
+### What it costs, stated plainly
+An event censored at a segment boundary has no realized duration, so its milestones cannot be
+computed at all - it contributes to the censored denominator and to nothing else. Under a
+wall-clock grid such an event would still have produced its 1s and 10s readings. That is a real
+loss of readings, and it is the correct one: those readings measured an arbitrary interval,
+not the event.
+
+Milestones are also not comparable in wall time - a 50% reading on a two-second event and on a
+two-hour event are the same label over vastly different spans. That is the point rather than a
+flaw, but it means the duration distribution must be read ALONGSIDE the milestone rows or the
+labels mean nothing, which is why change 1 comes first.
 
 ### How it would be falsified
-If the 1s and 300s responses are indistinguishable, the horizon set is not spanning anything
-and one horizon would do. If every horizon censors at the boundary, the segments are too short
-for the set and the horizons are mis-sited.
+If the four milestone readings are indistinguishable from one another across every stratum,
+the event's interior carries no shape and only its total duration is informative - in which
+case 4.16 collapses into the survival measurements of change 1 and should say so rather than
+report four columns of the same number.
 
----
+## What I am building, and the one thing I actually need from you
 
-## The four rulings, in one table
+**Greg, on reading the first draft: "i really don't know what you are wanting from me as far as
+an answer for the other 3."** That is a fair complaint about this document, not about the
+sections. Four open design questions is not a decision to make, it is homework. So this is
+restated as what I will build unless told otherwise.
 
-| section | proposal in one line | what Greg decides |
+**And your 4.16 ruling already answered most of it.** *"observe the length and that's the
+answer not random time intervals. that's why we have an event clock."* That is a principle, not
+a note about 4.16: **do not impose a bar the data did not put there - let the thing measure
+itself.** Applied to the other three, it decides them:
+
+| section | what I build, applying your own rule | still yours |
 |---|---|---|
-| 4.10 exhaustion | A runway is one price level on one side, phased by its own liquidity trajectory | Is a LEVEL the right candidate, or should a runway follow a participant? |
-| 4.11 recognition | Candidate at first rest, birth at first consumption, call on one-sided withdrawal | Accept the call predicate, or name a different one - this is the weakest of the four |
-| 4.12 dipole | The mirror is the reflected level across the touch; SAME/FLIP is whether the two moved together | Is the reflection the right mirror, or is the counterpart something else? |
-| 4.16 response | 1s/10s/60s/300s over mid change, touch depth change and signed flow, keyed by AT_TOUCH / BEHIND_TOUCH / OFF_BOOK | Are those the horizons and the quantities worth measuring? |
+| **4.10** | A runway is one price level on one side. BIRTH is its first consuming action, COMPLETION is the moment it is vacated - both structural, neither a bar I chose. The phases IN BETWEEN are **open-world**, registered from each runway's `observed_shape` via `register_discovered_phase`, instead of the fixed vocabulary I proposed first. My original TRANSITION / PERSISTENCE / EXTENSION table was exactly the thing you just struck down in 4.16: boundaries chosen because they sounded reasonable. | Only if a LEVEL is the wrong candidate and a runway should follow a participant instead. |
+| **4.11** | Candidate at the level's first rest, birth at its first consumption. **Uses no horizon at all** - CENSORED is the segment ending before the level was ever consumed, MISSED is the level being consumed with no call made. The event's own life decides, exactly as you said. The call is the level's depth falling by CANCEL before any fill or trade has touched it - one-sided withdrawal, purely structural, no bar. | Nothing, unless the call predicate is wrong. |
+| **4.12** | The mirror is the level the same number of ticks from the touch on the opposite side - the book's own reflection, not a bar. SAME / FLIP is whether a level and its mirror moved together over the stage. | Nothing, unless the counterpart is something other than the reflection. |
+| **4.16** | The event's own LENGTH is the answer. Duration becomes the primary measurement, and the horizons become 25 / 50 / 75 / 100 percent of each event's realized life, read off the causally-recorded path at completion. No wall clock anywhere. | Confirm you are happy for 4.16 to mature on event completion rather than on a clock - that is a real change to a built section. |
 
-**Nothing is built against any of these.** Say the word on each and I build it; redirect any of
-them and I build what you say instead.
+**So the honest answer to your question is: nothing, for three of them.** I was asking you to
+do design work I should have done by applying the rule you had already given me. Build proceeds
+on the four rows above; say the word on any one and I change it.
+
+**The one thing I do need**, because it changes built and tested code rather than adding to it:
+**4.16 maturing on event completion instead of `advance` against a global grid.** Everything
+else in this document is new code against an unchanged module.
