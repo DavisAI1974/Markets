@@ -26,6 +26,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable, Iterable, Iterator, Mapping, Protocol, Sequence
 
+from research.kalshi.frankie_raw_mbo_benchmark.a_memory_member_first_recalculation_20260828 import (
+    describe_structure,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_absorption import AbsorptionCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import (
     NativeCalculationRun,
@@ -314,8 +317,16 @@ class NativeReplayDriver:
 
     @staticmethod
     def _family_id(actions: Sequence[Mapping[str, Any]]) -> str:
-        """Content-derived, so a family nobody named still gets a stable identity."""
-        return "".join(str(a.get("action", "?")) for a in actions)
+        """The CANONICAL candidate family id, not a second opinion about family identity.
+
+        This used to be the action string alone. That is a different vocabulary from the one
+        `a_memory_member_first_recalculation_20260828` produced when it ran the full roster
+        into 4,758 candidate families - it keyed `family_id` on `candidate_family_id`, a
+        hash over the full structural descriptor. Two family vocabularies over the same data
+        would not have failed anything; strata would simply have been cut differently here
+        than in the run this one has to reconcile against.
+        """
+        return str(describe_structure(actions)["candidate_family_id"])
 
     @staticmethod
     def _side(actions: Sequence[Mapping[str, Any]]) -> str:

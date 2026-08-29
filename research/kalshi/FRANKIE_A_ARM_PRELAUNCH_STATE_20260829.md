@@ -36,8 +36,14 @@ Before anything runs, sit down with Greg and confirm, item by item:
    design in the papers, and it has tests.
 4. **The checkpointer and the execution gate are actually wired.** Verify by search, not by
    assumption: today both are referenced by nothing.
-5. **The provider-receipt requirement is reconciled** with an agent-session run - both in
-   the papers and in `validate_principal_execution`.
+5. **The provider-receipt requirement: DECIDED (Greg, 2026-08-29).** Verbatim: *"on invoke
+   runs chatgpt 5.6 sol just like you used to run the blind/reveal for the group runs, no
+   api call."* So `on_invoke` never calls anything. At a cutoff the driver STAGES a state
+   file; Sol runs as an agent session that reads committed files and emits a committed
+   artifact; the coordinator hard-fails on missing or malformed. The papers' three
+   provider-originated passages and `validate_principal_execution`'s provider / model-id /
+   invocation-id / token-usage requirements must be generalized to that file contract.
+   **Still to build**, but no longer an open question.
 6. **The helper path is built as a tool available to RT and Forecaster**, not as four live
    roles, and the ingestion paper's Question 3 is updated to say so.
 7. **Every section from 4.6 to 4.16 is fed by the traversal.** Today only clocks and
@@ -222,13 +228,13 @@ All under `research/kalshi/frankie_raw_mbo_benchmark/`. **441 tests pass.**
 | §2 | `native_session.py` | 332 | D6a+D6b. Boundaries exchange-local, so they survive DST. Segment is the CME trade date. Phase from the settlement window and session hours. Non-monotonic input refused. |
 | §5/§6 | `native_calculation_runner.py` | 519 | Seven layers, eight gates, no partial promotion. |
 | — | `periodic_checkpointer.py` | 380 | Save points on record or clock interval, refused mid-group. |
-| — | `native_replay_driver.py` | 344 | Runs end to end and finalizes ACCEPTED; 14 tests. Sections 4.6-4.16 not yet fed. See section 8. |
+| — | `native_replay_driver.py` | 355 | Runs end to end and finalizes ACCEPTED; 14 tests. Sections 4.6-4.16 not yet fed. See section 8. |
 
 Sections 4.1-4.4 already existed in `a_memory_member_first_recalculation_20260828.py`, which
 ran the full roster: 5,667,689 records into 4,256,603 groups, 4,758 candidate families, in
 2,985s, with `daily_averaged_companion_verification: EXACT_MATCH`.
 
-**497 tests** as of 2026-08-29 (441 + 41 `native_session` + 5 session gate + 10 driver).
+**500 tests** as of 2026-08-29 (441 + 41 `native_session` + 5 session gate + 13 driver).
 
 Tests are one file per module under `frankie_raw_mbo_benchmark/tests/`, plus
 `test_open_world_growth.py` (the vocabulary must grow) and
@@ -248,10 +254,23 @@ runs, but the claim as written was wrong. No driver feeds the sixteen sections.
    on the real rule. **A defect was fixed in the process:** `SessionRule.classify` offered
    only `recv_ns`, which would have keyed session membership on the feed's serialization
    rather than on the market; it now takes both clocks and decides on `event_ns`.
-   **STILL OPEN:** it feeds only clocks and coverage - sections 4.6 to 4.16 are closed at
-   boundaries but never fed - and `on_invoke` is still the API-shaped abstraction that
-   correction 1 says is wrong for an agent-session run. Rebuild that against the walk's
-   file contract: stage a state file at the cutoff, spawn later.
+   It now also uses the CANONICAL family identity: `_family_id` was the bare action string,
+   a different vocabulary from the `candidate_family_id` the member-first run used when it
+   produced the roster's 4,758 families. Nothing would have failed - the strata would simply
+   have been cut differently here than in the run this one must reconcile against. Measured
+   cost of the canonical detector: 88s over the full roster.
+
+   **STILL OPEN, and the first item is NOT mechanical:** sections 4.6 to 4.16 are closed at
+   boundaries but never fed. `LadderCalculator`, `RecurrenceCalculator` and
+   `LineageCalculator` expose no ingest method at all, and `AbsorptionCalculator.score`,
+   `DipoleCalculator.observe_path` and `ExhaustionCalculator.enter_phase` take constructed
+   domain objects. **The contract specifies the CALCULATION, not the input event** - 4.10
+   says "construct a complete causal runway for each candidate" without defining a
+   candidate. Feeding these means deciding what counts as a runway, a dipole path, a lineage
+   node and a ladder snapshot in raw MBO, which shapes what the benchmark reports and should
+   not be invented quietly. `describe_structure` is the canonical precedent to build from.
+   Second item: `on_invoke` still needs rebuilding as the staging contract per section 0
+   item 5.
 2. **Wire the checkpointer** into both launch workflows. It is already imported by the
    draft driver; what is missing is a path on which that driver executes.
 3. **Wire the gate** into the launcher. An unreferenced gate is not a gate.

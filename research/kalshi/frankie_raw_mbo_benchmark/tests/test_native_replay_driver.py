@@ -200,3 +200,47 @@ class CadenceTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CanonicalFamilyIdentityTest(unittest.TestCase):
+    """The driver must not hold a second opinion about family identity.
+
+    `a_memory_member_first_recalculation_20260828` ran the full roster into 4,758 candidate
+    families and keyed `family_id` on `candidate_family_id`. An earlier version of the
+    driver used the bare action string, which is a different vocabulary over the same data -
+    nothing would have failed, the strata would simply have been cut differently here than
+    in the run this one has to reconcile against.
+    """
+
+    @staticmethod
+    def _canonical(actions):
+        from research.kalshi.frankie_raw_mbo_benchmark.a_memory_member_first_recalculation_20260828 import (
+            describe_structure,
+        )
+        return describe_structure(actions)["candidate_family_id"]
+
+    def test_the_driver_uses_the_canonical_candidate_family_id(self):
+        actions = [
+            {"action": "A", "side": "B", "price_raw": 3_500_000_000, "order_id": 11},
+            {"action": "N", "side": "N", "price_raw": None, "order_id": 0},
+        ]
+        self.assertEqual(NativeReplayDriver._family_id(actions), self._canonical(actions))
+
+    def test_the_family_id_is_not_the_bare_action_string(self):
+        actions = [{"action": "A", "side": "B", "price_raw": 1, "order_id": 11}]
+        self.assertNotEqual(NativeReplayDriver._family_id(actions), "A")
+
+    def test_structurally_different_groups_with_the_same_actions_differ(self):
+        """The action string alone cannot tell these apart; the canonical descriptor can."""
+        one_price = [
+            {"action": "A", "side": "B", "price_raw": 100, "order_id": 1},
+            {"action": "A", "side": "B", "price_raw": 100, "order_id": 2},
+        ]
+        two_prices = [
+            {"action": "A", "side": "B", "price_raw": 100, "order_id": 1},
+            {"action": "A", "side": "B", "price_raw": 200, "order_id": 2},
+        ]
+        self.assertNotEqual(
+            NativeReplayDriver._family_id(one_price),
+            NativeReplayDriver._family_id(two_prices),
+        )
