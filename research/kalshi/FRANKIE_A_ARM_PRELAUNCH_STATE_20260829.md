@@ -4,6 +4,9 @@ Date: 2026-08-29 UTC (revised at close)
 Branch: `chatgpt/frankie-raw-mbo-benchmark-20260828`
 Status: **NOTHING LAUNCHED — CALCULATION LAYER BUILT — DRIVER IS A DRAFT — TWO DECISIONS OPEN**
 
+> **STOP BEFORE LAUNCH.** Do not dispatch a workflow or start either arm. Walk the whole
+> thing through with Greg first. See section 0.
+
 This supersedes the first version of this file, which listed five decisions as open that
 are now closed. It is both the state record and the file map: **nothing below should need
 searching for, and nothing below should be rebuilt.**
@@ -11,6 +14,36 @@ searching for, and nothing below should be rebuilt.**
 No workflow has been dispatched, no model invoked, no lock, freeze, handoff or score taken.
 
 ---
+
+## 0. STOP BEFORE LAUNCH — read this first
+
+**Do not dispatch a workflow, invoke a model, or start either arm. Stop and walk the whole
+thing through with Greg first.**
+
+This is not a formality and it is not about permission. Two decisions below are unmade
+(D6 and D5), the driver is a draft that has never run, three components are wired to
+nothing, and the papers still describe an API architecture the Sol run does not use. A
+launch from this state would produce artifacts that look complete and are not.
+
+Before anything runs, sit down with Greg and confirm, item by item:
+
+1. **D6 session and phase boundaries** are decided and implemented. Nothing else can be
+   trusted until this is - segments decide what gets censored.
+2. **D5 clustering** is decided: in this run, or not in this run.
+3. **The driver is rebuilt against the walk machinery** in section 5, not against the API
+   design in the papers, and it has tests.
+4. **The checkpointer and the execution gate are actually wired.** Verify by search, not by
+   assumption: today both are referenced by nothing.
+5. **The provider-receipt requirement is reconciled** with an agent-session run - both in
+   the papers and in `validate_principal_execution`.
+6. **Every section from 4.6 to 4.16 is fed by the traversal.** Today only clocks and
+   coverage are.
+7. **A dry run over a small slice completes and the eight gates pass**, before anything
+   touches the full roster.
+
+When you think you are ready, go back through this document from section 1 and confirm each
+claim still holds. Several things in here were true when written and were made false by the
+next decision - that is exactly how the first version of this file went stale.
 
 ## 1. The architecture correction that reframes the rest
 
@@ -194,3 +227,39 @@ reports **on purpose**: those are records of what was true when written.
   by running that suite at `d5b7b51`, the pre-session tip, where the same seven fail.
 - `research/kalshi/FRANKIE_A_ARM_REVIEW_FINDINGS_20260829.md` is the original external review
   and is deliberately unedited, including its now-fixed findings.
+
+---
+
+## 11. Where this session ended, and housekeeping
+
+**Ended at:** the calculation layer complete and tested, the driver a draft, nothing wired,
+nothing launched. Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`, working tree clean,
+everything pushed.
+
+**Test state, stated exactly.** 441 pass in
+`research/kalshi/frankie_raw_mbo_benchmark/tests/`. Seven failures in the wider
+`research/kalshi/tests/` suite are pre-existing and unrelated - verified by running that
+suite at `d5b7b51`, the pre-session tip, where the same seven fail. Do not treat them as
+regressions and do not "fix" them as part of this work without checking that history first.
+
+**What was deliberately left alone.** The original review findings file, the historical
+handoffs, and the A-memory prior-run reports all still carry superseded hashes and
+superseded claims. They are records of what was true when written. Do not sweep them for
+consistency - that would destroy the audit trail that shows what changed and why.
+
+**The warmup-scoped capsule proposal** at
+`agents/frankie_native_raw_mbo_knowledge/A_CLEAN_WARMUP_SCOPED_CAPSULE_PROPOSAL_20260829.md`
+is superseded by the all-days-scored decision and is not registered in any manifest or
+managed glob. It is kept as the record of that analysis. Do not wire it.
+
+**Housekeeping before the next working session:**
+
+- Re-read section 0 and this section before touching anything.
+- Confirm the branch tip matches what is stated here; if it does not, something landed after
+  this was written and this document is behind.
+- Run the A-arm suite first. If it is not 441 green, stop and find out why before building.
+- Run the knowledge refresh with `--check`. It should report `CURRENT`. If it reports
+  `UPDATED`, someone hand-edited a generated capsule and that needs understanding, not
+  overwriting.
+- If you change any decision in section 2 or 3, **update this file in the same commit.**
+  The first version of this document went stale because that did not happen.
