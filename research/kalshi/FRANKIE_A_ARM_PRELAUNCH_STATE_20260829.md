@@ -40,10 +40,36 @@ Before anything runs, sit down with Greg and confirm, item by item:
    runs chatgpt 5.6 sol just like you used to run the blind/reveal for the group runs, no
    api call."* So `on_invoke` never calls anything. At a cutoff the driver STAGES a state
    file; Sol runs as an agent session that reads committed files and emits a committed
-   artifact; the coordinator hard-fails on missing or malformed. The papers' three
-   provider-originated passages and `validate_principal_execution`'s provider / model-id /
-   invocation-id / token-usage requirements must be generalized to that file contract.
-   **Still to build**, but no longer an open question.
+   artifact; the coordinator hard-fails on missing or malformed. `validate_principal_execution`'s
+   provider / model-id / invocation-id / token-usage requirements must be generalized to
+   that file contract. **BUILT 2026-08-29.**
+
+   **WHY THIS KEPT COMING BACK, and it is now fixed.** Greg, this session: *"we're not
+   using the openai api!!! we are running 5.6sol like you ran the blind/refine groups. i
+   have said this every session."* The reason it needed saying every session is that **the
+   execution gate still ENFORCED the API architecture.** `validate_principal_execution`
+   required `provider`, `requested_model`, `served_model`, `principal_invocation_id` and
+   reconciling token `usage` with a provider usage receipt. None of those exist in an
+   agent-session run, so the gate would have **rejected a correct Sol run and accepted only
+   an API one.** A decision recorded in prose while the check demands the opposite is a
+   decision that has not landed - the same shape as the S114 do/dont rule that silently
+   expired because it was never made a schema rule.
+
+   It is now file-based, matching `native_staging.py`: a committed staged request at a
+   known path and a committed artifact at a known path in the expected schema, both
+   hash-bound. A request and artifact hashing identically is refused, because a run that
+   returned its own input produced no findings. The lock and freeze gates moved with it
+   (`principal_response_id` -> `principal_artifact_path`, `principal_output_sha256` ->
+   `principal_findings_sha256`). **The token-usage test was REPLACED, not dropped**, and a
+   new test pins that a provider-shaped record is now REFUSED, so the API shape cannot
+   quietly return.
+
+   **Audited for the rest of the surface:** the four MODEL-VISIBLE papers carry no provider
+   acceptance language - the surviving "provider-originated" instances are in review
+   records, which are deliberately not edited. **One item remains and it is Greg's call,
+   not a unilateral edit:** the registry surface id
+   `output_provider_invocation_response_receipts` still carries the API vocabulary in its
+   NAME, and renaming it changes `surface_inventory_hash` and the manifest.
 6. **The helper path is built as a tool available to RT and Forecaster**, not as four live
    roles, and the ingestion paper's Question 3 is updated to say so.
 7. **Every section from 4.6 to 4.16 is fed by the traversal.** Today only clocks and
