@@ -224,6 +224,62 @@ measure that is the natural companion to duration.
 
 ---
 
+## A-BIS. Corrections to my own claims, and the answer on the event clock
+
+**I WAS WRONG ABOUT `ng_exhaustion_v4_exact_candidate_freeze.py`.** I told Greg it was "a frozen
+candidate definition" and that it proved the contract's "never defines a candidate" line false.
+It is nothing of the kind: `ExactFreezeIdentity` carries a 40-char `candidate_commit_sha` plus
+workflow, ruleset, engine, adapter, reconciler and model hashes, and its eight `REQUIRED_CHECKS`
+are release-engineering checks. **"Candidate" there means a candidate BUILD. Nothing in it
+touches the market.** It also lives in `research/kalshi/`, not `research/`. The real candidate
+definition is `ng_exhaustion_chain_canonical_table_20260817.py:220-267`, which is a better
+answer anyway.
+
+**THE EVENT CLOCK DOES NOT EXIST IN THE BUILT WORK.** This is the honest answer to Greg's rule.
+The only thing named `event_clock` anywhere is a **boolean data-availability flag**:
+`ng_exhaustion_runway_clock.py:249-250` raises if it is False, and the live adapter sets it True.
+It gates whether a countdown may run; it is not a unit of duration. Every duration in the built
+work is SECONDS (`horizons (5,10,20,30,60,120,300)`, the birth ladder `H = 1..3600`,
+`PRIOR_LEAD_SECONDS`), and every duration in the new benchmark is NANOSECONDS. **On Greg's rule
+the built work and the new modules are equally guilty - one in seconds, one in nanoseconds.**
+The only raw material for a real event clock in the repo is `native_clocks.py:174-177`
+(`sequence_first/last/span/contiguous` off MBO sequence numbers), and 4.10 does not use it.
+
+**FIBONACCI IS COINCIDENTAL.** Zero occurrences of "fibonacci" or "fib" in `research/`. The set
+is a hardcoded `THRESH_TICKS = (2, 3, 5, 8, 13)` whose stated intent is coverage - *"we sweep
+several NG-native reversal tolerances so no conclusion depends on one imported crypto
+threshold"*. **Decisive: 3 is not the start of anything - 2t was dropped after the sweep** and
+its data survives in the record (`C_alignment_reveal_rates` carries a `2t` entry). The four
+scales are a truncation of a five-point log-spaced sweep. Do not build on the sequence.
+
+**PHASE_INDEX SCORES 0 OF 11.** Not one of its names is a phase in the built corpus, and **four
+are reused with a different referent** - BIRTH is an INSTANT (`t0`), TRANSITION is a chain-level
+edge BETWEEN events, EXTENSION is the chain reaching depth D+1, REVERSAL is a price-outcome
+class computed AFTER the endpoint. That is worse than absence: it reads as continuity to anyone
+who does not open both files. Its whole provenance is one prose line in the 2026-08-28 mission
+doc - *"Precursor through completion or reversal"* - from which three names were taken and
+eight invented.
+
+**TWO THINGS IN THE NEW MODULES ARE GENUINELY RIGHT AND MUST STAY.**
+`native_exhaustion.SEED_STATES` already carries P/O/S/X correctly, and
+`native_clocks.RecognitionLabel` already uses PRIOR / T0 / H+N correctly. **Those are the model
+for how to reuse the frozen vocabulary** - the rest of 4.10 should look like them.
+
+**AND PREBIRTH SKILL IS NOT ESTABLISHED.** Median positive leads exist (43-47s at H=1 for
+D1-D3) but *"These counts do not establish predictive skill"* and *"there is currently no
+authorized claim that D1, D2, or D3 validates at any specific PRIOR H"*. The one clue tested
+FAILED the 2-of-3 model gate. **Do not build 4.11 on an assumption that prebirth validated.**
+There is also a hard CHARACTERISTICS WALL on any prebirth model: it may not use the unborn
+target's identity, polarity, family, state or path, nor realized depth or duration, nor time of
+day or session position - *"timing is used only for causal availability and actual lead
+reporting."*
+
+**MINOR BUT REAL: "runway" now means three different things in this repo** - the ZigZag price
+leg, `native_exhaustion.ExhaustionRunway`, and `native_absorption.RunwayPressure`. Whatever
+4.10 settles on, that word needs disambiguating.
+
+---
+
 # THE SIX COLLISIONS BETWEEN THE FROZEN LEARNING AND THE BUILT SECTIONS
 
 These are the findings that matter, because none of them would fail - the numbers would just be
