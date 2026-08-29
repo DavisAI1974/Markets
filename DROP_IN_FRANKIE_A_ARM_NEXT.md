@@ -1,7 +1,7 @@
 # DROP-IN BOX - FRANKIE A-ARM, NEXT SESSION
 
 BRANCH: `chatgpt/frankie-raw-mbo-benchmark-20260828`
-TIP AT HANDOFF: `ff4c19b` - run `git log --oneline -1` and confirm it's that or later.
+TIP AT HANDOFF: `616c517` or later - run `git log --oneline -1` and confirm it's that or later.
 STATUS: NOTHING LAUNCHED. Calculation layer built. **D6 and D5 closed. The driver RUNS.**
 Sections 4.6-4.16 still unfed. 500 tests green.
 
@@ -30,8 +30,25 @@ python3 research/kalshi/frankie_raw_mbo_benchmark/refresh_native_frankie_knowled
   --repo-root . --check
 ```
 
-Expect **500 passed** and `"status": "CURRENT"`. Seven failures in the wider
+Expect **522 passed** and `"status": "CURRENT"`. Seven failures in the wider
 `research/kalshi/tests/` suite are PRE-EXISTING, verified at `d5b7b51`. Not yours to fix.
+
+## 2b. THE PROCEDURAL CORRECTION - THE MOST IMPORTANT THING IN THIS BOX
+
+**On the first run Frankie was never called and the runner stood in for it** (Greg). Two
+things allowed it: `add_finding` let the traversal author the findings report, and
+`_gate_not_a_model_run` **always returned True** - it asserted the distinction instead of
+checking it. A label is not a check.
+
+Now enforced: the calculation layer produces EVIDENCE, Frankie produces FINDINGS.
+`add_finding` raises. `attach_principal_findings` is the only route in and needs a named
+principal, an artifact path and its hash. `controller_only` work is refused. The gate REJECTS
+findings with no principal. Every result states `completion_status`.
+
+**`native_staging.py` is how Frankie gets called** - the walk's mechanism, no API call. The
+driver's `on_invoke` is gone; `stage_spawn` writes a committed request at the cutoff and
+moves on. `load_principal_artifact` hard-fails on missing, malformed, wrong-evidence,
+controller-only or EMPTY. **A missing artifact is never zero findings.**
 
 ## 3. WHAT CLOSED THIS SESSION
 
@@ -84,7 +101,6 @@ constant phase - it is present, typed and plausible.
   contract specifies the CALCULATION, not the input event - 4.10 says "construct a runway for
   each candidate" without defining a candidate. **These are research design decisions. Take
   them to Greg; build from `describe_structure` as the precedent.**
-- Rebuild `on_invoke` as the staging contract (section 3 above).
 - Wire the checkpointer and the execution gate into the launch workflows.
 - Wire an exchange holiday calendar - `native_session` consults none. The roster spans none,
   so this is a declared gap, not a live bug.
@@ -92,6 +108,12 @@ constant phase - it is present, typed and plausible.
 **Compute - unresolved:** the A-arm workflows dispatch nothing (zero `ssm`/`ec2`/`INSTANCE_ID`);
 the recorded box is a t3.xlarge, 4 vCPU / 16 GB, unverified - this session had no AWS
 credentials. 5 of 16 sections previously took 2,985s and made a 1.5 GB file.
+
+**Needs Greg - two `provisional` labels NOT changed** (the findings status WAS dropped):
+- `PROVISIONAL_SHADOW`, a routing policy on 2 registry layers, both `model_visible: False`.
+  Making them permanent lets Frankie SEE them and changes the manifest and surface hash.
+- "provisional strategy hypotheses" in the RT mission and discovery addendum - `ALWAYS_LOAD`
+  instructions about what Frankie PRODUCES; editing them changes Frankie's job.
 
 **Parked:** D3/`ALLOWED_BOSSES`, native-build proof modes.
 

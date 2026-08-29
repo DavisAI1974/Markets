@@ -177,3 +177,41 @@ class LoadPrincipalArtifactTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DriverStagesRatherThanInvokesTest(unittest.TestCase):
+    """The traversal leaves a request behind at a cutoff. It calls nothing."""
+
+    def test_a_cutoff_stages_a_committed_request(self):
+        from research.kalshi.frankie_raw_mbo_benchmark.native_staging import SpawnStager
+        from research.kalshi.frankie_raw_mbo_benchmark.tests.test_native_replay_driver import (
+            at,
+            make_driver,
+            record,
+        )
+
+        class Always:
+            def should_invoke(self, **_kwargs) -> bool:
+                return True
+
+        with tempfile.TemporaryDirectory() as tmp:
+            stager = SpawnStager(
+                out_dir=Path(tmp), arm="A_CLEAN", role="REAL_TIME_FRANKIE", evidence=EVIDENCE
+            )
+            driver = make_driver(cadence=Always(), total_mbo_records=1)
+            driver.stage_spawn = stager.stage
+            driver.consume([record(seq=0, event_ns=at("2021-10-04T18:29:00"), order_id=700)])
+
+            self.assertEqual(len(stager.staged), 1)
+            body = json.loads(stager.staged[0].read_text())
+            self.assertEqual(body["schema"], SPAWN_REQUEST_SCHEMA)
+            self.assertEqual(body["cutoff"]["session_phase"], "SETTLEMENT")
+            self.assertIn("No API call", body["invocation_note"])
+
+    def test_the_driver_no_longer_carries_an_on_invoke_callback(self):
+        from research.kalshi.frankie_raw_mbo_benchmark.tests.test_native_replay_driver import (
+            make_driver,
+        )
+        driver = make_driver()
+        self.assertFalse(hasattr(driver, "on_invoke"))
+        self.assertTrue(hasattr(driver, "stage_spawn"))

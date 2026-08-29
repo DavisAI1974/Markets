@@ -159,3 +159,37 @@ def load_principal_artifact(
         "controller_only": False,
     }
     return execution, [dict(row) for row in findings]
+
+
+class SpawnStager:
+    """Binds a run's identity to `stage_spawn_request` so the driver stages, never invokes.
+
+    The driver used to hold an `on_invoke` callback shaped like "call the model here", which
+    is the wrong verb for an agent-session run and is what an API design leaves behind. This
+    is the right verb: at a lawful cutoff the traversal writes a request and moves on. What
+    reads that request is a spawn, later, out of band.
+    """
+
+    def __init__(
+        self, *, out_dir: Path, arm: str, role: str, evidence: Mapping[str, Any]
+    ) -> None:
+        if arm not in ALLOWED_ARMS:
+            raise StagingError(f"unknown arm {arm!r}")
+        if role not in ALLOWED_ROLES:
+            raise StagingError(f"unknown role {role!r}")
+        self.out_dir = Path(out_dir)
+        self.arm = arm
+        self.role = role
+        self.evidence = dict(evidence)
+        self.staged: list[Path] = []
+
+    def stage(self, cutoff: Mapping[str, Any]) -> Path:
+        path = stage_spawn_request(
+            cutoff,
+            out_dir=self.out_dir,
+            arm=self.arm,
+            role=self.role,
+            evidence=self.evidence,
+        )
+        self.staged.append(path)
+        return path

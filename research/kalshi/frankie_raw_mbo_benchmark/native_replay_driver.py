@@ -146,7 +146,7 @@ class NativeReplayDriver:
         adapter: V4MboAdapter | None = None,
         checkpointer: PeriodicCheckpointer | None = None,
         materialize_full_state: bool = False,
-        on_invoke: Callable[[Mapping[str, Any]], None] | None = None,
+        stage_spawn: Callable[[Mapping[str, Any]], Any] | None = None,
     ) -> None:
         if session_rule is None:
             raise ReplayDriverError(
@@ -165,7 +165,7 @@ class NativeReplayDriver:
         self.adapter = adapter if adapter is not None else V4MboAdapter()
         self.checkpointer = checkpointer
         self.materialize_full_state = materialize_full_state
-        self.on_invoke = on_invoke
+        self.stage_spawn = stage_spawn
 
         self.counters = DriverCounters()
         self._mark: SessionMark | None = None
@@ -299,8 +299,11 @@ class NativeReplayDriver:
             self.counters.invocation_cutoffs.append(cutoff)
             self._last_invoke_group = group_index
             self._last_invoke_ns = recv_ns
-            if self.on_invoke is not None:
-                self.on_invoke(cutoff)
+            if self.stage_spawn is not None:
+                # STAGE, never invoke. Sol runs as an agent session over committed files;
+                # the traversal's job at a cutoff is to leave a request behind, not to call
+                # anything. `on_invoke` was the API-shaped verb this replaced.
+                self.stage_spawn(cutoff)
 
         if self.checkpointer is not None:
             saved = self.checkpointer.maybe_save(

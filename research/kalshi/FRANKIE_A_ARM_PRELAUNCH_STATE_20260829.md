@@ -279,7 +279,7 @@ All under `research/kalshi/frankie_raw_mbo_benchmark/`. **441 tests pass.**
 | 4.16 | `native_response.py` | 369 | Each horizon written once, with its own at-risk denominator. |
 | §2 | `native_session.py` | 332 | D6a+D6b. Boundaries exchange-local, so they survive DST. Segment is the CME trade date. Phase from the settlement window and session hours. Non-monotonic input refused. |
 | §5/§6 | `native_calculation_runner.py` | 519 | Seven layers, eight gates, no partial promotion. |
-| — | `native_staging.py` | 161 | The spawn contract. A missing or empty principal artifact is a HARD failure, never zero findings. |
+| — | `native_staging.py` | 195 | The spawn contract. A missing or empty principal artifact is a HARD failure, never zero findings. |
 | — | `periodic_checkpointer.py` | 380 | Save points on record or clock interval, refused mid-group. |
 | — | `native_replay_driver.py` | 355 | Runs end to end and finalizes ACCEPTED; 14 tests. Sections 4.6-4.16 not yet fed. See section 8. |
 
@@ -287,7 +287,7 @@ Sections 4.1-4.4 already existed in `a_memory_member_first_recalculation_2026082
 ran the full roster: 5,667,689 records into 4,256,603 groups, 4,758 candidate families, in
 2,985s, with `daily_averaged_companion_verification: EXACT_MATCH`.
 
-**520 tests** as of 2026-08-29.
+**522 tests** as of 2026-08-29.
 
 Tests are one file per module under `frankie_raw_mbo_benchmark/tests/`, plus
 `test_open_world_growth.py` (the vocabulary must grow) and
@@ -322,8 +322,10 @@ runs, but the claim as written was wrong. No driver feeds the sixteen sections.
    candidate. Feeding these means deciding what counts as a runway, a dipole path, a lineage
    node and a ladder snapshot in raw MBO, which shapes what the benchmark reports and should
    not be invented quietly. `describe_structure` is the canonical precedent to build from.
-   Second item: `on_invoke` must now CALL `native_staging.stage_spawn_request` instead of
-   its callback. The contract exists and is tested; the driver does not use it yet.
+   `on_invoke` is GONE, replaced by `stage_spawn`: at a cutoff the traversal writes a
+   committed request via `native_staging.SpawnStager` and moves on. It calls nothing. The
+   full loop is now closed and tested - stage at cutoff, agent session reads, artifact
+   loaded back, runner ingests with attribution, gate rejects if absent.
 2. **Wire the checkpointer** into both launch workflows. It is already imported by the
    draft driver; what is missing is a path on which that driver executes.
 3. **Wire the gate** into the launcher. An unreferenced gate is not a gate.
