@@ -8,6 +8,7 @@ distribution of one 60s window, not a pooled conclusion.
 
 - When: 2026-07-20 18:37 UTC (14:37 ET, Monday, RTH mid-session).
 - Where: EC2 `i-08cee7171c0a76a04` (t3.xlarge, us-east-2) - NOT the eventual live box; the
+  **CORRECTED 2026-08-29 BY LIVE PROBE:** the instance is an **r6i.2xlarge** (8 vCPU / 61.8 GiB usable, 32.0 GiB swap, 128.2 GiB free disk, us-east-2b, running). The `t3.xlarge` above was true when written and became false when the box was resized; it is left in place as the record. Measured by `.github/workflows/frankie_box_sizing_probe_20260829.yml`, run 33242769879.
   smoke ran here because the Claude cloud container cannot reach the live gateway at all
   (raw-TCP port 13000 blocked by the container's HTTPS-only proxy - a structural fact for all
   future sessions: live-feed work happens on AWS boxes, never in the container).

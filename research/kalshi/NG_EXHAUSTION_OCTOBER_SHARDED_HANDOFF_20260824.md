@@ -120,6 +120,7 @@ Fail closed on any unexplained boundary difference. Do not tune the science to m
 Use available CPUs aggressively **after** shard-boundary correctness is proven.
 
 - Current three-month machine is a 4-vCPU `t3.xlarge` and the existing three month workers already consume three cores.
+  **CORRECTED 2026-08-29 by live probe: it is an `r6i.2xlarge`, 8 vCPU / 61.8 GiB with 32 GiB swap.** This line is load-bearing rather than cosmetic - it sized the workers at three of four cores, so the headroom it assumes is wrong by a factor of two. Left in place as the record; do not size new work off it.
 - Do **not** kill or slow those existing workers just to make room for October.
 - The user has authorized spending for additional CPU capacity when worthwhile, so a separate/resized compute target with more vCPUs is acceptable for the October acceleration after the shard plan is validated.
 - Prefer the number of workers that matches proven independent shards and actual available vCPUs; do not create fake concurrency that contends on one core or duplicates the same target evidence.

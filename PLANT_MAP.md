@@ -8,7 +8,7 @@ not on this map it is not a standing process. Update on any change (SOP change c
 | host | what it is | reaches |
 |---|---|---|
 | THE SESSION (Claude container, or Greg's box working a clone) | the operating seat: walk runs, builds, audits, refine/blind spawns. **The seat is a CHECKOUT, never a location** (D34, S112): git = code and records, S3 = data, `data/` disposable — so no artifact may name a local path, and a session on any machine is equivalent to a session on any other | git, HTTPS APIs. CANNOT reach live market gateways (raw TCP blocked) — structural, measured S100 |
-| EC2 `i-08cee7171c0a76a04` (t3.xlarge, us-east-2) | the data box: year pulls, redecodes, live-feed smoke (7.7 ms median to GLBX) | Databento live + historical, S3 |
+| EC2 `i-08cee7171c0a76a04` (**r6i.2xlarge, 8 vCPU / 61.8 GiB + 32 GiB swap**, us-east-2; the `t3.xlarge` in older records is stale - live-probed 2026-08-29) | the data box: year pulls, redecodes, live-feed smoke (7.7 ms median to GLBX) | Databento live + historical, S3 |
 | (planned) the LIVE BOX (us-east-2) | paper/live loop host: collector-as-a-service + the daily decision loop | Databento live, Kalshi API, S3 |
 | GitHub Actions (account-level) | durable collectors (kalshi bins, consensus) — dispatch by Greg when queued-stuck | public APIs |
 
