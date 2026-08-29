@@ -445,7 +445,11 @@ runs, but the claim as written was wrong. No driver feeds the sixteen sections.
      callback, and supplies 4.7's order-id novelty test (`NEW_ID_ADD` vs `SAME_ID_MODIFY`),
      level depth and touch price. One declared choice remains in 4.7: the tick neighbourhood
      that separates `SAME_PRICE` from `NEIGHBORING_PRICE`.
-   * **BLOCKED ON A RULING - 4.10, 4.11, 4.12, 4.16.** Each needs a decision that SHAPES WHAT
+   * **BLOCKED ON A RULING - 4.10, 4.11, 4.12, 4.16. THE PROPOSALS ARE WRITTEN:**
+     `research/kalshi/FRANKIE_A_ARM_ESTIMAND_PROPOSALS_20260829.md` carries one concrete
+     definition per section with what it costs, what it makes unmeasurable, and how it would
+     be falsified. Nothing is built against any of them. The 4.11 call predicate is flagged
+     there as the weakest of the four and the one genuine invention.** Each needs a decision that SHAPES WHAT
      THE BENCHMARK REPORTS, which is the thing this document says must not be invented
      quietly. Named exactly, so each can be answered as itself:
      * **4.10 exhaustion** keys open runways on `candidate_id`. `GroupContext.candidate_id`
