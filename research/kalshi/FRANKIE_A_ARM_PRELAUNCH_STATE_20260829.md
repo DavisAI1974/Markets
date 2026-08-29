@@ -424,6 +424,55 @@ runs, but the claim as written was wrong. No driver feeds the sixteen sections.
    `native_exhaustion`, `native_recognition`, `native_dipole`, `native_discovery` or
    `native_response`. So the four built adapters do not narrow what the traversal reports by
    one field; they only shorten the remaining build.
+
+   **THE REMAINING SEVEN ARE NOT ONE JOB. THE CONTRACTS WERE EXTRACTED 2026-08-29 AND THEY
+   SPLIT THREE WAYS.** Every ingest signature below was read out of the module and its tests,
+   not inferred.
+
+   * **4.15 discovery - DO NOT BUILD IT. It is not seven, it is six.** D5 closed clustering
+     out of this run, and the code agrees: `native_calculation_runner.py:226` takes
+     `discovery` as `None`-defaulted, `:281` enters section `4.15` in the layer map ONLY if
+     it is not None, and `:466` is the sole gate that mentions it - with `discovery=None` the
+     condition short-circuits and the gate passes. Building this adapter would not add a
+     measurement, it would add an OBLIGATION: a live `DiscoveryCalculator` turns
+     `_gate_determinism` from a free pass into a `freeze()`-before-`finalize()` requirement.
+   * **BUILDABLE WITH NO INVENTION - 4.6 queue and 4.7 replenishment.** Both need a FIFO book,
+     and **the book already exists**: `InstrumentBook` in
+     `research/ng_exhaustion_mbo_v4_state_adapter_20260820.py` keeps `levels[side][price]` as
+     an insertion-ordered `list[order_id]` plus `orders[order_id]` carrying size, and the
+     driver already holds a `V4MboAdapter`. That supplies 4.6's mandatory `book_view`
+     callback, and supplies 4.7's order-id novelty test (`NEW_ID_ADD` vs `SAME_ID_MODIFY`),
+     level depth and touch price. One declared choice remains in 4.7: the tick neighbourhood
+     that separates `SAME_PRICE` from `NEIGHBORING_PRICE`.
+   * **BLOCKED ON A RULING - 4.10, 4.11, 4.12, 4.16.** Each needs a decision that SHAPES WHAT
+     THE BENCHMARK REPORTS, which is the thing this document says must not be invented
+     quietly. Named exactly, so each can be answered as itself:
+     * **4.10 exhaustion** keys open runways on `candidate_id`. `GroupContext.candidate_id`
+       is per-group, so using it makes **every runway exactly one group long** - phases can
+       never advance and `PHASE_INDEX` never moves off its first entry. It needs a runway
+       identity that spans groups, plus which raw pattern enters which phase.
+     * **4.11 recognition** defines no predicate for what a "call" IS, no birth event, and no
+       horizon separating MISSED from CENSORED. Worse, with `birth_recv_ns = ctx.recv_ns`
+       the `PRIOR` outcome is **structurally unreachable** - every same-group call is `T0`
+       and every later one `HORIZON` - so the prebirth half of the section, which is its
+       point, would silently report nothing.
+     * **4.12 dipole** requires `orientation` in `{SAME, FLIP}`, which is a MIRROR
+       relationship defined nowhere in the tree and is explicitly NOT the bid/ask side; an
+       `event_phase` string with no `GroupContext` source; and a counterpart's
+       `mirror_signed_flow` that the calculator will never look up.
+     * **4.16 response** requires the horizon set and `horizon_version`, a `values_for`
+       callable saying WHAT response is measured, plus `starting_liquidity_regime` and
+       `cluster_version`. Those four are not plumbing; they are the experiment.
+
+   **AND ONE CAUSALITY CONSTRAINT THAT BINDS 4.6 BEFORE ANY OF THAT.** `InstrumentBook.apply`
+   mutates the book on EVERY record, while the group frame carrying `raw_actions` is returned
+   only at F_LAST. So by the time `_on_group` sees a group, the book already reflects that
+   group's own later actions. Reading `book_view` there would report a level as it stood
+   AFTER the add it is meant to describe - an intra-group lookahead, present, typed and
+   wrong. Feeding 4.6 therefore means either driving it per record inside `apply`, or holding
+   a second FIFO book advanced action-by-action in tape order (the `FakeBook` precedent in
+   `tests/test_native_queue.py`). This is a real fork and it is recorded rather than picked
+   in passing.
    `on_invoke` is GONE, replaced by `stage_spawn`: at a cutoff the traversal writes a
    committed request via `native_staging.SpawnStager` and moves on. It calls nothing. The
    full loop is now closed and tested - stage at cutoff, agent session reads, artifact
