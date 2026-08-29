@@ -32,6 +32,11 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import 
     RunIdentity,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import ClockCalculator, member_clock_row
+from research.kalshi.frankie_raw_mbo_benchmark.native_session import (
+    phase_within,
+    segment_of,
+    trade_day,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.periodic_checkpointer import PeriodicCheckpointer
 from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import V4MboAdapter
 
@@ -58,10 +63,38 @@ class SessionMark:
 
 
 class SessionRule(Protocol):
-    """Decides session phase and continuity segment. Supplied, never inferred here."""
+    """Decides session phase and continuity segment. Supplied, never inferred here.
 
-    def classify(self, *, recv_ns: int, source_day: str, previous: SessionMark | None) -> SessionMark:
+    Takes BOTH clocks and they are not interchangeable. Session membership is an exchange
+    fact about when something happened, so it is decided on `event_ns`; `recv_ns` is the
+    causal availability clock and is passed for rules that need it. An earlier draft of this
+    protocol offered only `recv_ns`, which would have keyed session membership on the feed's
+    serialization rather than on the market.
+    """
+
+    def classify(
+        self, *, event_ns: int, recv_ns: int, source_day: str, previous: SessionMark | None
+    ) -> SessionMark:
         ...
+
+
+class ExchangeSessionRule:
+    """The D6 rule: segment and phase from the CME calendar, keyed on event time.
+
+    Holds no state - `previous` is used only to notice that the segment changed, and the
+    segment ordinal itself is absolute, so two runs over overlapping windows agree.
+    """
+
+    def classify(
+        self, *, event_ns: int, recv_ns: int, source_day: str, previous: SessionMark | None
+    ) -> SessionMark:
+        day = trade_day(event_ns)
+        segment = segment_of(day)
+        return SessionMark(
+            session_phase=phase_within(event_ns, day),
+            continuity_segment=segment,
+            starts_new_segment=previous is not None and segment != previous.continuity_segment,
+        )
 
 
 class CadencePolicy(Protocol):
@@ -155,9 +188,9 @@ class NativeReplayDriver:
         self.run.exhaustion.close_continuity_segment(segment=segment, recv_ns=recv_ns)
         self.run.response.close_continuity_segment(segment=segment, recv_ns=recv_ns)
 
-    def _mark_for(self, recv_ns: int, source_day: str) -> SessionMark:
+    def _mark_for(self, event_ns: int, recv_ns: int, source_day: str) -> SessionMark:
         mark = self.session_rule.classify(
-            recv_ns=recv_ns, source_day=source_day, previous=self._mark
+            event_ns=event_ns, recv_ns=recv_ns, source_day=source_day, previous=self._mark
         )
         if not isinstance(mark, SessionMark):
             raise ReplayDriverError("session rule must return a SessionMark")
@@ -209,8 +242,9 @@ class NativeReplayDriver:
             raise ReplayDriverError("receive time moved backwards; the stream is not causal")
         self._last_recv_ns = recv_ns
 
+        event_ns = int(envelope["ts_event_ns"])
         source_day = _source_day(source_object)
-        mark = self._mark_for(recv_ns, source_day)
+        mark = self._mark_for(event_ns, recv_ns, source_day)
         group_index = self.counters.groups_seen
         self.counters.groups_seen += 1
 
@@ -233,6 +267,11 @@ class NativeReplayDriver:
         )
         self.run.clocks.observe(row)
         self.run.note_member_row()
+        self.run.note_session_assignment(
+            ts_event_ns=event_ns,
+            continuity_segment=mark.continuity_segment,
+            session_phase=mark.session_phase,
+        )
 
         # Horizon-bearing sections mature in stream time, never by lookahead.
         self.run.replenishment.advance(recv_ns)

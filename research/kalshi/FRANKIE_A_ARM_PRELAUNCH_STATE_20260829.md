@@ -222,13 +222,13 @@ All under `research/kalshi/frankie_raw_mbo_benchmark/`. **441 tests pass.**
 | §2 | `native_session.py` | 332 | D6a+D6b. Boundaries exchange-local, so they survive DST. Segment is the CME trade date. Phase from the settlement window and session hours. Non-monotonic input refused. |
 | §5/§6 | `native_calculation_runner.py` | 519 | Seven layers, eight gates, no partial promotion. |
 | — | `periodic_checkpointer.py` | 380 | Save points on record or clock interval, refused mid-group. |
-| — | `native_replay_driver.py` | 305 | **DRAFT. Untested, nothing calls it.** See section 8. |
+| — | `native_replay_driver.py` | 344 | Runs end to end and finalizes ACCEPTED; 14 tests. Sections 4.6-4.16 not yet fed. See section 8. |
 
 Sections 4.1-4.4 already existed in `a_memory_member_first_recalculation_20260828.py`, which
 ran the full roster: 5,667,689 records into 4,256,603 groups, 4,758 candidate families, in
 2,985s, with `daily_averaged_companion_verification: EXACT_MATCH`.
 
-**487 tests** as of 2026-08-29 (441 + 41 for `native_session`, 5 for the session gate).
+**497 tests** as of 2026-08-29 (441 + 41 `native_session` + 5 session gate + 10 driver).
 
 Tests are one file per module under `frankie_raw_mbo_benchmark/tests/`, plus
 `test_open_world_growth.py` (the vocabulary must grow) and
@@ -242,9 +242,16 @@ the previous version of this file:** `periodic_checkpointer` is *not* referenced
 - `native_replay_driver.py` imports it. The conclusion is unchanged, since the driver never
 runs, but the claim as written was wrong. No driver feeds the sixteen sections.
 
-1. **The driver.** `native_replay_driver.py` is a draft: it imports and breaks no tests, but
-   has no tests of its own, feeds only clocks and coverage, and its invocation abstraction
-   assumes an API call. Rebuild its spawn path against section 5's walk machinery.
+1. **The driver.** **Partly done.** It now RUNS - a pass executes end to end and finalizes
+   ACCEPTED, which it had never done - and it has 14 tests. `ExchangeSessionRule` supplies
+   the D6 rule and the traversal reports its assignments, so the reconciliation gate passes
+   on the real rule. **A defect was fixed in the process:** `SessionRule.classify` offered
+   only `recv_ns`, which would have keyed session membership on the feed's serialization
+   rather than on the market; it now takes both clocks and decides on `event_ns`.
+   **STILL OPEN:** it feeds only clocks and coverage - sections 4.6 to 4.16 are closed at
+   boundaries but never fed - and `on_invoke` is still the API-shaped abstraction that
+   correction 1 says is wrong for an agent-session run. Rebuild that against the walk's
+   file contract: stage a state file at the cutoff, spawn later.
 2. **Wire the checkpointer** into both launch workflows. It is already imported by the
    draft driver; what is missing is a path on which that driver executes.
 3. **Wire the gate** into the launcher. An unreferenced gate is not a gate.
