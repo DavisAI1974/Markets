@@ -1,5 +1,69 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-06, Session 114)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-29, Session 115 A-ARM)
 
+
+## S115 A-ARM — THE GATE WAS ENFORCING THE API ARCHITECTURE GREG KEPT CORRECTING (read `SESSION_HANDOFF_2026-08-29_S115_A_ARM.md` + `DROP_IN_FRANKIE_A_ARM_NEXT.md`)
+
+**Branch = `chatgpt/frankie-raw-mbo-benchmark-20260828` (the Frankie raw-MBO benchmark line, NOT
+the forecaster trunk). 552 tests green, was 522. NOTHING LAUNCHED.** Decisions 51 -> 57.
+
+**THE FINDING. Greg: *"we're not using the openai api!!! we are running 5.6sol like you ran the
+blind/refine groups. i have said this every session."* He has — and the reason it kept needing
+saying is that THE EXECUTION GATE STILL ENFORCED THE API ARCHITECTURE.**
+`validate_principal_execution` demanded `provider`, `requested_model`, `served_model`,
+`principal_invocation_id` and reconciling token `usage`. **None exist in an agent-session run, so
+the gate would have REJECTED a correct Sol run and accepted only an API one.** The correction
+lived in prose while the check demanded the opposite — the S114 do/dont lesson exactly: **a
+decision recorded where nothing enforces it is a decision that has not landed.** Now file-based,
+matching `native_staging.py`: a committed staged request plus a committed artifact, both
+hash-bound; identical hashes are refused because a run that returned its own input produced no
+findings. **The token-usage test was REPLACED, not dropped**, and a new test pins that a
+provider-shaped record is REFUSED so the API shape cannot return.
+
+**D52 THE CME TRADING-DAY SCHEDULE IS THE HOLIDAY AUTHORITY** (Greg: *"we follow cms trading day
+schedule"*). Wired into `native_session`. Classes come from `plant_calendar`'s **RULES, not a
+table** — the roster year is 2021 and `CME_HOLIDAYS` starts 2025-09-01, so a table would have read
+"not a holiday" for every date in the window (the S112 expiring-table finding); the rules
+reproduce all 16 committed entries, 0 mismatches. A `full_closure` is not a trade date and skips
+like a Saturday. **A `partial_session` IS a trade date** — `flow_calendar` calling it "not a
+business day" is the SETTLEMENT sense, and conflating it with the trading-day sense moves every
+expiry-adjacent segment by a day. **`phase_within` REFUSES on a shortened date**: the close time
+is recorded nowhere and a partial session runs NO settlement cycle, so those phases do not shift,
+they do not exist. Roster verified unchanged BY EXECUTION.
+
+**D53 THE A-ARM INPUT UNIT IS THE F_LAST GROUP.** Sections 4.6-4.16 were closed at their
+boundaries and fed by nothing, because the contract specifies the CALCULATION and never the input
+event. `native_group_adapters.py` is the missing layer — 4.8, 4.9, 4.13, 4.14 built and each
+verified against the REAL calculator. **4.9 is a group-local ladder DELTA, not a book snapshot**,
+and the scope travels ON the value (`LADDER_SCOPE`) because a caveat living only in prose expires.
+**Lineage depth accumulates ACROSS groups** — within one cascade it would report max_depth 1
+forever and read as a measurement rather than an artifact of the unit.
+
+**SAY "UNFED", NEVER "REMAINING" — this wording misled once.** All sixteen sections ARE built and
+tested (156 tests across the seven unfed ones alone). Only the ADAPTER is missing; their entry
+points are each referenced by exactly one non-test file, the module that defines them.
+
+**D55 THE BOX RECORD WAS STALE AND THE PREDICTED FAILURE HAPPENED.** Section 10a had written *"if
+the instance was resized, the record was not updated, and the record is what the next session will
+believe."* **Live-probed: `r6i.2xlarge`, 8 cores, 61.8 GiB, 32 GiB swap** — against a recorded
+t3.xlarge/4/16. Greg right on every count, record wrong on every count. **AWS creds are GitHub-
+secret scoped, so a session resolves NONE and only a workflow can settle it.** Corrected at source
+in four live records; S91-S93 handoffs left untouched because a t3.xlarge was true when written.
+**The one that mattered: the October sharded handoff sized workers at "three of four cores" on an
+eight-core box.**
+
+**D56 SIZE UP BEFORE THE RUN, THEN WATCH.** 5 of 16 sections nearly exhausted 62 GiB, so 16
+sections needs ~200 GiB and 128 is still short — target `r6i.8xlarge`. **An EC2 type CANNOT change
+on the fly; there is no live resize.** So the monitor is the WATCH, not the decision. Monitor LIVE
+(capped self-trimming log, reports MIN_MEM_AVAILABLE / PEAK_SWAP_USED, never a mean); **resize
+ARMED, NOT FIRED** (~4x hourly rate, Greg's call).
+
+**D57 THE STEP1 WORKFLOWS NEVER TOUCHED STEP1 DATA.** Two fired on EVERY push to EVERY branch and
+failed every time because **their YAML is invalid** — and **GitHub emits a JOBLESS startup-failure
+run to REPORT a broken workflow, ignoring branch and paths filters.** Zero jobs: nothing
+authenticated, no data moved. Both removed (0 of 186 now fail to parse); **the other 47 kept** —
+valid, branch-filtered, zero runs across eight pushes. **Then I made the identical heredoc mistake
+an hour later**, caught by `bash -n`. **RULE: verify a workflow by parsing the YAML, running
+`bash -n` on every step, and RENDERING the remote script — never by reading it.**
 
 ## S114 — G24 WALKED BLIND (6/10) AND IT TIES DOING NOTHING, THE RENEWABLES FORCING IS WIRED, AND EVERY REPORTED DEFECT IS CLOSED (read `SESSION_HANDOFF_2026-08-06_S114.md` + `DROP_IN_S115.md`)
 
@@ -900,6 +964,17 @@ DATA next (Greg): forward-curve cache back ($0.07; curve_regime was 'unknown' al
 FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the driver; back-fill the walked
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
+
+**One-line state (S115 A-ARM):** branch `chatgpt/frankie-raw-mbo-benchmark-20260828`, **552
+tests green, NOTHING LAUNCHED**, decisions 51 -> 57. **The execution gate was enforcing the API
+architecture and would have rejected a correct Sol run — now file-based.** The CME trading-day
+calendar is wired and REFUSES on a shortened session rather than guessing. The A-arm input unit is
+the **F_LAST group** and the adapter layer exists for 4.8/4.9/4.13/4.14. **All sixteen sections are
+BUILT — say "unfed", not "remaining".** The box was live-probed (**r6i.2xlarge, 8 cores, 61.8 GiB,
+32 GiB swap**; the recorded t3.xlarge was wrong) and **AWS creds are workflow-scoped, so no session
+can probe from a desk**. Monitor LIVE, **resize ARMED but NOT FIRED**. Waiting on Greg: the resize
+size, the `corrected_information` shadow ruling, the `output_provider_invocation_response_receipts`
+rename.
 
 **One-line state (S114):** brain **s105.9, 90 plays — CALLS unchanged**. **G24 blind RUN AND
 SCORED: 6/10, sum|err| 4,890 — 0.98x zero_change and 1.20x seasonal_naive, i.e. we tied doing

@@ -1,5 +1,45 @@
 # KALSHI TRADING — file index
 
+## S115 A-ARM — the Frankie raw-MBO benchmark: the group adapters, the CME calendar, the box probes
+
+Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. Distinct from the S115 platform-audit section
+below, which is a different line of work on a different branch.
+
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_group_adapters.py`** — **the missing layer
+  under sections 4.6-4.16.** Every ingest point in the calculation tree takes a CONSTRUCTED domain
+  object (`LadderTransition`, `Sequence[Occurrence]`, `LineageNode`, `RunwayPressure`) and nothing
+  built those from raw MBO; the contract specifies the CALCULATION, never the input event. Builds
+  them from one **F_LAST group** (D53). Covers 4.14 recurrence, 4.9 ladder, 4.8 absorption, 4.13
+  lineage — each verified against the REAL calculator, not in isolation. Declares its scope ON the
+  value: `LADDER_SCOPE = GROUP_LOCAL_DELTA`, because a group cannot see liquidity it never touched
+  and a caveat living only in a docstring expires. Lineage depth accumulates ACROSS groups.
+  Negative size raises rather than clamping; the undefined-price sentinel is dropped, not treated
+  as a level. Tests: `tests/test_native_group_adapters.py` (20).
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_session.py`** (extended) — now consults the
+  **CME trading-day calendar** (D52). `is_trading_day` / `holiday_class` read classes from
+  `plant_calendar`'s RULES rather than a date table, because the roster year is 2021 and
+  `flow_calendar.CME_HOLIDAYS` starts 2025-09-01. `phase_within` **REFUSES** on a
+  `partial_session` / `early_close` instead of answering from ordinary hours.
+- **`research/kalshi/frankie_raw_mbo_benchmark/corrected_a_arm_execution_gate_20260828.py`**
+  (changed, load-bearing) — **now FILE-BASED, not provider-attested.** It previously required
+  `provider` / `requested_model` / `served_model` / `principal_invocation_id` / token `usage`,
+  none of which exist in an agent-session run, so it would have REJECTED a correct Sol run. Now
+  checks a committed staged request plus a committed artifact, hash-bound.
+- **`.github/workflows/frankie_box_sizing_probe_20260829.yml`** — read-only. Settled D55:
+  `r6i.2xlarge`, 8 cores, 61.8 GiB, 32 GiB swap (the recorded `t3.xlarge` was stale).
+- **`.github/workflows/frankie_box_monitor_20260829.yml`** — **LIVE.** Installs a capped,
+  self-trimming /proc sampler on the box; reports MIN_MEM_AVAILABLE and PEAK_SWAP_USED, never a
+  mean. Bump its RUN MARKER for a reading. **Does not survive a resize reboot — re-fire after.**
+- **`.github/workflows/frankie_box_resize_20260829.yml`** — **ARMED, NOT FIRED.** Targets
+  `r6i.8xlarge`. Refuses on a non-EBS root, refuses if the box is busy, full rollback on every
+  failure path. An EC2 type cannot change while running; there is no live resize.
+- **REMOVED:** `ng_exhaustion_step1_receipt_count_20260823.yml` and
+  `ng_exhaustion_step1_oom_continue_v2_20260827.yml` — invalid YAML, so GitHub emitted a JOBLESS
+  startup-failure run on every push to every branch, ignoring their branch filters. Zero jobs, so
+  no step1 data was ever exposed. Both duplicated on their home branch. The other 47 step1
+  workflows were deliberately KEPT.
+
+
 ## S115 — the pre-paper-trade platform audit: the blind wall, the brain view, and the D47 failure
 
 - **`research/kalshi/brain_onedoc_fix_s115.py`** — closes the ONE-DOC holes in the brain (Greg:
