@@ -1,10 +1,78 @@
 # DROP-IN BOX - FRANKIE A-ARM, NEXT SESSION
 
 BRANCH: `chatgpt/frankie-raw-mbo-benchmark-20260828`
-TIP AT HANDOFF: `bca3a53` or later - run `git log --oneline -1` and confirm it's that or later.
-STATUS: NOTHING LAUNCHED. Calculation layer built. **D6 and D5 closed. The driver RUNS.
-The runner can no longer stand in for Frankie, and the spawn contract that calls him
-exists.** Sections 4.6-4.16 still unfed. 522 tests green.
+TIP AT HANDOFF: `ba20645` or later - run `git log --oneline -1` and confirm.
+STATUS: **NOTHING LAUNCHED.** 552 tests green (was 522). Wider `research/kalshi/tests/`
+still has its **7 pre-existing failures - not yours**.
+
+## S115 - WHAT CHANGED, AND THE ONE THING TO READ FIRST
+
+**Read `research/kalshi/FRANKIE_A_ARM_PRELAUNCH_STATE_20260829.md` end to end.** It is
+current as of this tip. Decisions D52-D57 are in the root `DECISIONS.md`.
+
+**THE FINDING THAT MATTERS MOST.** Greg has corrected "we are not using the OpenAI API"
+every session, and the reason it kept needing saying is that **the execution gate ENFORCED
+the API architecture**: `validate_principal_execution` demanded `provider`,
+`requested_model`, `served_model`, `principal_invocation_id` and reconciling token `usage`.
+None of those exist in an agent-session run, so **the gate would have rejected a correct
+Sol run and accepted only an API one.** Now file-based, matching `native_staging.py`. A
+decision recorded in prose while the check demands the opposite is a decision that has not
+landed - the S114 do/dont lesson, again.
+
+**CLOSED THIS SESSION.** D52 the CME trading-day calendar is wired into `native_session`
+(rule-sourced, not a table - the roster year is 2021 and the committed table starts 2025;
+a shortened session REFUSES rather than answering from ordinary hours). D53 the input unit
+is the **F_LAST group** - the adapter layer exists as `native_group_adapters.py` covering
+4.8, 4.9, 4.13, 4.14, each verified against the real calculator. D54 no helper lanes, no
+specialists. D55 **the box was live-probed**: `r6i.2xlarge`, 8 cores, 61.8 GiB, 32 GiB
+swap - the recorded `t3.xlarge` was wrong and is corrected at source in four live records.
+
+**SAY "UNFED", NEVER "REMAINING".** All sixteen sections ARE built and tested. What is
+missing for 4.6, 4.7, 4.10-4.12, 4.15 and 4.16 is only the ADAPTER that constructs their
+inputs - verified by search: their entry points are each referenced by exactly one non-test
+file, the module that defines them. This wording already misled once.
+
+## WHAT IS WAITING FOR GREG
+
+1. **Fire the resize, or pick a smaller target.** `frankie_box_resize_20260829.yml` is
+   built, validated and **armed but NOT fired**. Target `r6i.8xlarge` (32 vCPU / 256 GiB)
+   because 5 of 16 sections nearly exhausted 62 GiB, so 16 sections needs ~200 GiB and 128
+   is still short. It is roughly 4x the current hourly rate, which is why it waits. Bump
+   its RUN MARKER to fire. Guards: refuses on non-EBS root, refuses if the box is busy,
+   full rollback on every failure path.
+2. **The memory monitor is LIVE on the box** (`frankie_box_monitor_20260829.yml`), sampling
+   every 30s to a self-trimming capped log. Bump its marker for a reading. It reports
+   MIN_MEM_AVAILABLE and PEAK_SWAP_USED - low/high-water marks, never a mean.
+   **NOTE: a resize reboots the box and the sampler will not survive it** - re-fire the
+   monitor after resizing. The resize's verify step says so too.
+3. **`extra_agent_corrected_information_and_gap_diagnoses`** - still no ruling on its
+   `PROVISIONAL_SHADOW`. The four-helper layer is settled by D54: stays shadow.
+4. **`output_provider_invocation_response_receipts`** - a registry surface id still carrying
+   API vocabulary. Renaming changes `surface_inventory_hash` and the manifest, so it needs
+   Greg rather than a unilateral edit.
+
+## THE BUILD QUEUE
+
+1. **Adapters for the seven unfed sections**, on the F_LAST unit per D53. Build from
+   `native_group_adapters.py`, which establishes the pattern and declares its scope limits
+   on the value (`LADDER_SCOPE`) rather than only in prose.
+2. **Wire the adapters into `native_replay_driver`** - they are built and tested but the
+   driver does not call them yet.
+3. **Wire the checkpointer and the execution gate into the launch workflows.**
+4. **A dry run over a small slice**, eight gates passing, before anything touches the
+   roster.
+
+## A WORKFLOW RULE THIS SESSION LEARNED TWICE
+
+A heredoc inside a YAML `run:` block must never dedent below the block's indentation. Two
+step1 workflows were failing on EVERY push to EVERY branch for exactly this - GitHub emits
+a jobless startup-failure run to report a broken workflow, ignoring branch and paths
+filters. **Those runs had zero jobs, so no step1 data was ever exposed.** Both removed; 0
+of 186 workflows now fail to parse. Then I made the identical mistake in the resize
+workflow an hour later. **Verify a new workflow by parsing the YAML, running `bash -n` on
+every step, and RENDERING the remote script - not by reading it.** Also: `workflow_dispatch`
+404s unless the workflow is on the default branch, and a branch's first push changes no
+file, so the paths filter matches nothing - bump a RUN MARKER to fire.
 
 ## 0. STOP BEFORE LAUNCH
 
