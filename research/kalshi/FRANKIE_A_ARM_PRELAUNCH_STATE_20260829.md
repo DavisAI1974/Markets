@@ -472,8 +472,24 @@ sized against a configuration that never ran. `LIVE_TELEMETRY_S100.md` is wrong 
 be corrected at the source. `CLAUDE.md`'s 200 GB on the same instance is disk, not RAM, and
 that part stands.
 
-**Still not verified live, and the probe that settles it is now BUILT and waiting on
-Greg.** Greg (2026-08-29): *"aws credentials are in git secrets."* They are - which means
+**VERIFIED LIVE 2026-08-29 - and Greg was right on every count while the record was wrong
+on every count.** The probe ran (run 33242769879) and measured: instance **`r6i.2xlarge`**,
+running, us-east-2b; **8 cores**; **61.8 GiB** memory (64 GB nominal, 60.7 GiB available on
+an idle box); **32.0 GiB of swap, present** - the configuration Greg described as required
+is actually in place; **128.2 GiB** free disk. `LIVE_TELEMETRY_S100.md`'s t3.xlarge is
+wrong and has been corrected at the source, as have `PLANT_MAP.md`, the October sharded
+handoff and the drop-in box. The S91-S93 handoffs are left untouched: a t3.xlarge was true
+when they were written, and that is the audit trail, not an error.
+
+**The one that mattered beyond the record:** the October sharded handoff sized its workers
+at "three of four cores" on a machine that has eight. That is not cosmetic - it is a
+capacity assumption wrong by a factor of two, and it was about to be inherited.
+
+**SIZING IS STILL OPEN.** Knowing the box is 8 cores / 62 GiB / 32 GiB swap does not
+establish that sixteen sections over 4.26M groups fit in it. Greg's *"this might not be
+enough"* stands until a slice is actually measured, which is the dry run in section 0 item 9.
+
+**How it was settled, since it is not obvious.** Greg (2026-08-29): *"aws credentials are in git secrets."* They are - which means
 they are WORKFLOW-scoped, not session-scoped: an interactive session resolves nothing
 (`NoCredentialsError`, verified). So no Claude session can settle this from a desk, and
 `.github/workflows/frankie_box_sizing_probe_20260829.yml` is the path. It is strictly

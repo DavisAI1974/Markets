@@ -107,7 +107,7 @@ constant phase - it is present, typed and plausible.
   so this is a declared gap, not a live bug.
 
 **Compute - unresolved:** the A-arm workflows dispatch nothing (zero `ssm`/`ec2`/`INSTANCE_ID`);
-the recorded box is a t3.xlarge, 4 vCPU / 16 GB, unverified - this session had no AWS
+the recorded box was a t3.xlarge, 4 vCPU / 16 GB, unverified - that session had no AWS
 credentials. 5 of 16 sections previously took 2,985s and made a 1.5 GB file.
 
 **Needs Greg - two `provisional` labels NOT changed** (the findings status WAS dropped):
