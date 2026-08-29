@@ -40,7 +40,10 @@ Before anything runs, sit down with Greg and confirm, item by item:
    roles, and the ingestion paper's Question 3 is updated to say so.
 7. **Every section from 4.6 to 4.16 is fed by the traversal.** Today only clocks and
    coverage are.
-8. **A dry run over a small slice completes and the eight gates pass**, before anything
+8. **Compute is settled** - which machine runs this, and whether it is sized for sixteen
+   sections over 4.26M groups. See section 10a: the A-arm workflows currently dispatch
+   nothing, and the recorded box is a t3.xlarge (4 vCPU / 16 GB), unverified.
+9. **A dry run over a small slice completes and the eight gates pass**, before anything
    touches the full roster.
 
 When you think you are ready, go back through this document from section 1 and confirm each
@@ -250,6 +253,40 @@ reports **on purpose**: those are records of what was true when written.
   and is deliberately unedited, including its now-fixed findings.
 
 ---
+
+## 10a. Compute — where the run would actually execute (UNRESOLVED)
+
+Two findings, both worth settling before launch.
+
+**The A-arm launch workflows never reach the AWS box.** Neither
+`frankie_a_clean_rt_native_launch_20260828.yml` nor its A-memory twin contains a single
+reference to `ssm`, `ec2`, `send-command` or `INSTANCE_ID`. Their steps are: checkout,
+verify branch, install the DBN reader, fetch and hash-bind the roster, seal the packet and
+the pre-call checkpoint, push to S3, publish, report. **They stage and stop.** No compute is
+dispatched, no calculation runs, no model is called. By contrast the October fullstack
+workflow does carry `INSTANCE_ID: i-08cee7171c0a76a04` and drives it over SSM.
+
+So today there is no execution path at all - which compounds section 8: the driver is a
+draft, the checkpointer and gate are wired to nothing, and the workflow that would carry
+them dispatches nothing.
+
+**The recorded box is smaller than assumed.** `LIVE_TELEMETRY_S100.md` records
+`i-08cee7171c0a76a04` as a **t3.xlarge** in us-east-2, which is **4 vCPU / 16 GB** - not
+8 CPU / 64 GB. `CLAUDE.md` refers to the same instance with 200 GB, which is disk, not RAM.
+**This could not be verified live**: this session had no resolvable AWS credentials, so what
+is stated here is what is written down. If the instance was resized, the record was not
+updated, and the record is what the next session will believe.
+
+Why it matters: the member-first recalculation covering 5 of 16 sections took 2,985s and
+produced a 1.5 GB exact-members file. Sixteen sections over 4.26M groups on 16 GB is at
+least worth sizing before it is attempted, and `ubuntu-latest` - which is what the A-arm
+workflows currently use - is smaller again.
+
+**A likely explanation for the four helper lanes.** A t3.xlarge has exactly 4 vCPUs and the
+registry carries exactly 4 helper scouts. That is circumstantial, but it fits: the "four
+live helpers" may be a parallelism artifact of the box rather than a research design. Since
+helpers are now tools callable by RT and Forecaster rather than lanes, nothing depends on
+the number four - and if anything still does, that is a bug rather than a design.
 
 ## 11. Where this session ended, and housekeeping
 
