@@ -14,6 +14,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import 
     REQUIRED_GATES,
     REQUIRED_LAYERS,
     CalculationRunError,
+    LAYER_FINDINGS,
     LAYER_RECONCILIATION,
     NativeCalculationRun,
     RunIdentity,
@@ -260,7 +261,7 @@ class GateTest(unittest.TestCase):
         drive(run)
         gate = next(g for g in run.finalize()["gates"] if g["gate"] == GATE_NOT_A_MODEL_RUN)
         self.assertTrue(gate["passed"])
-        self.assertIn("no principal-model invocation", gate["detail"])
+        self.assertIn("no principal invocation", gate["detail"])
 
     def test_one_failed_gate_rejects_the_whole_result(self) -> None:
         """Section 6 forbids partial promotion."""
@@ -274,22 +275,41 @@ class GateTest(unittest.TestCase):
         self.assertEqual(set(result["layers"]), set(REQUIRED_LAYERS), "layers still emitted for audit")
 
 
+PRINCIPAL = {
+    "principal": "gpt-5.6-sol",
+    "arm": "A_CLEAN",
+    "role": "REAL_TIME_FRANKIE",
+    "artifact_path": "forecasts/a_clean_rt_findings_20211004.json",
+    "artifact_sha256": "f" * 64,
+    "actual_principal_invocation": True,
+    "controller_only": False,
+}
+
+
 class FindingsTest(unittest.TestCase):
     def test_a_finding_requires_a_falsifier_and_an_exemplar(self) -> None:
-        run = make_run()
         with self.assertRaises(CalculationRunError):
-            run.add_finding(claim="x", support="y", falsifier="  ", exemplars=["e1"])
+            make_run().attach_principal_findings(
+                execution=PRINCIPAL,
+                findings=[{"claim": "x", "support": "y", "falsifier": "  ", "exemplars": ["e1"]}],
+            )
         with self.assertRaises(CalculationRunError):
-            run.add_finding(claim="x", support="y", falsifier="z", exemplars=[])
+            make_run().attach_principal_findings(
+                execution=PRINCIPAL,
+                findings=[{"claim": "x", "support": "y", "falsifier": "z", "exemplars": []}],
+            )
 
     def test_a_finding_is_provisional_and_carries_its_exemplars(self) -> None:
         run = make_run()
         drive(run)
-        run.add_finding(
-            claim="withdrawal precedes touch retreat",
-            support="n=12 runways in one stratum",
-            falsifier="a stratum where retreat precedes withdrawal",
-            exemplars=["g0001", "g0002"],
+        run.attach_principal_findings(
+            execution=PRINCIPAL,
+            findings=[{
+                "claim": "withdrawal precedes touch retreat",
+                "support": "n=12 runways in one stratum",
+                "falsifier": "a stratum where retreat precedes withdrawal",
+                "exemplars": ["g0001", "g0002"],
+            }],
         )
         layer = run.finalize()["layers"]["positive_findings_report"]
         self.assertEqual(layer["findings"][0]["status"], "PROVISIONAL")
@@ -415,3 +435,103 @@ class SessionAssignmentGateTest(unittest.TestCase):
         self.assertEqual(sessions["assignments_observed"], 3)
         self.assertEqual(sessions["phase_mismatches"], 0)
         self.assertIn("CME session rule", sessions["basis"])
+
+
+class RunnerMustNotReplaceFrankieTest(unittest.TestCase):
+    """The first run's procedural failure: Frankie was never called and the runner stood in.
+
+    The calculation layer produces EVIDENCE. The positive findings report is Frankie's
+    output, read from a committed artifact an agent session emitted. Nothing here may author
+    findings, and an evidence-only result must not present itself as a completed run.
+    """
+
+    PRINCIPAL = {
+        "principal": "gpt-5.6-sol",
+        "arm": "A_CLEAN",
+        "role": "REAL_TIME_FRANKIE",
+        "artifact_path": "forecasts/a_clean_rt_findings_20211004.json",
+        "artifact_sha256": "f" * 64,
+        "actual_principal_invocation": True,
+        "controller_only": False,
+    }
+
+    FINDING = {
+        "claim": "queue position decays fastest in the settlement window",
+        "support": "group 2654677",
+        "falsifier": "a settlement-window stratum with slower decay than its own pre-leg",
+        "exemplars": ["2654677"],
+    }
+
+    def test_the_runner_cannot_author_findings(self) -> None:
+        run = make_run()
+        drive(run)
+        with self.assertRaises(CalculationRunError):
+            run.add_finding(
+                claim="x", support="y", falsifier="z", exemplars=["e1"]
+            )
+
+    def test_evidence_without_findings_is_labelled_evidence_only(self) -> None:
+        run = make_run()
+        drive(run)
+        result = run.finalize()
+        self.assertEqual(result["completion_status"], "EVIDENCE_ONLY")
+        self.assertFalse(result["layers"][LAYER_FINDINGS]["findings"])
+
+    def test_attached_principal_findings_complete_the_run(self) -> None:
+        run = make_run()
+        drive(run)
+        run.attach_principal_findings(execution=self.PRINCIPAL, findings=[self.FINDING])
+        result = run.finalize()
+        self.assertEqual(result["completion_status"], "PRINCIPAL_FINDINGS_ATTACHED")
+        self.assertEqual(result["verdict"], ACCEPTED, result["failed_gates"])
+        self.assertEqual(
+            result["layers"][LAYER_FINDINGS]["principal"]["principal"], "gpt-5.6-sol"
+        )
+
+    def test_controller_only_work_is_refused(self) -> None:
+        """The exact shape of the first run: a controller produced the output."""
+        run = make_run()
+        drive(run)
+        controller = {**self.PRINCIPAL, "controller_only": True}
+        with self.assertRaises(CalculationRunError):
+            run.attach_principal_findings(execution=controller, findings=[self.FINDING])
+
+    def test_an_unproven_invocation_is_refused(self) -> None:
+        run = make_run()
+        drive(run)
+        unproven = {**self.PRINCIPAL, "actual_principal_invocation": False}
+        with self.assertRaises(CalculationRunError):
+            run.attach_principal_findings(execution=unproven, findings=[self.FINDING])
+
+    def test_findings_must_name_the_committed_artifact_they_came_from(self) -> None:
+        """Proof is the file contract, not a provider receipt: no path, no attribution."""
+        run = make_run()
+        drive(run)
+        for missing in ("artifact_path", "artifact_sha256", "principal"):
+            with self.subTest(missing=missing):
+                execution = {k: v for k, v in self.PRINCIPAL.items() if k != missing}
+                with self.assertRaises(CalculationRunError):
+                    make_run().attach_principal_findings(
+                        execution=execution, findings=[self.FINDING]
+                    )
+
+    def test_a_finding_still_requires_a_falsifier_and_an_exemplar(self) -> None:
+        run = make_run()
+        drive(run)
+        with self.assertRaises(CalculationRunError):
+            run.attach_principal_findings(
+                execution=self.PRINCIPAL, findings=[{**self.FINDING, "falsifier": "  "}]
+            )
+        with self.assertRaises(CalculationRunError):
+            make_run().attach_principal_findings(
+                execution=self.PRINCIPAL, findings=[{**self.FINDING, "exemplars": []}]
+            )
+
+    def test_the_not_a_model_run_gate_is_a_check_not_a_label(self) -> None:
+        """It used to always return True. Findings present with no principal must FAIL."""
+        run = make_run()
+        drive(run)
+        run._findings = [dict(self.FINDING)]  # simulate the first run's shape
+        result = run.finalize()
+        self.assertEqual(result["verdict"], REJECTED)
+        self.assertIn(GATE_NOT_A_MODEL_RUN, result["failed_gates"])

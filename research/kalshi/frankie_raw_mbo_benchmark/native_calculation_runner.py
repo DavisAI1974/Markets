@@ -257,7 +257,8 @@ class NativeCalculationRun:
         self.session_strata = session_strata
         self.member_rows_written = 0
         self.lifecycle_rows_written = 0
-        self.findings: list[dict[str, Any]] = []
+        self._findings: list[dict[str, Any]] = []
+        self._principal: dict[str, Any] | None = None
         self._finalized = False
 
     # --- section 5 layers ------------------------------------------------
@@ -303,28 +304,66 @@ class NativeCalculationRun:
     def note_lifecycle_row(self, count: int = 1) -> None:
         self.lifecycle_rows_written += count
 
-    def add_finding(
-        self, *, claim: str, support: str, falsifier: str, exemplars: Sequence[str]
-    ) -> dict[str, Any]:
+    def add_finding(self, **_kwargs: Any) -> None:
+        """Removed. The calculation layer does not author findings.
+
+        On the first run Frankie was never called and the runner stood in for it: this
+        method let whatever drove the traversal write the positive findings report, and the
+        artifact finalized looking complete. The calculation layer produces EVIDENCE. The
+        findings are Frankie's output, read from a committed artifact an agent session
+        emitted against that evidence.
+        """
+        raise CalculationRunError(
+            "the calculation layer does not author findings; findings come from a committed "
+            "principal artifact via attach_principal_findings"
+        )
+
+    def attach_principal_findings(
+        self, *, execution: Mapping[str, Any], findings: Sequence[Mapping[str, Any]]
+    ) -> None:
+        """Ingest the findings a principal emitted, with the attribution that proves it ran.
+
+        Proof is the file contract rather than a provider receipt: Sol runs as an agent
+        session over committed files exactly as the blind and refine group runs did, so
+        there is no provider, model id or token usage to reconcile. What there IS: a named
+        principal, a committed artifact at a known path, and that artifact's hash. Absent
+        any of those, this is controller work wearing Frankie's name.
+        """
+        if self._finalized:
+            raise CalculationRunError("this run has already been finalized")
+        for field_name in ("principal", "artifact_path", "artifact_sha256"):
+            value = execution.get(field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise CalculationRunError(
+                    f"principal attribution requires {field_name}; without it the findings "
+                    "cannot be traced to anything that ran"
+                )
+        if execution.get("actual_principal_invocation") is not True:
+            raise CalculationRunError("actual principal invocation is not proven")
+        if execution.get("controller_only") is not False:
+            raise CalculationRunError(
+                "controller_only work cannot supply findings; that is the runner standing in "
+                "for the principal, which is what this gate exists to catch"
+            )
+        admitted = [self._admit_finding(row) for row in findings]
+        self._principal = dict(execution)
+        self._findings.extend(admitted)
+
+    @staticmethod
+    def _admit_finding(row: Mapping[str, Any]) -> dict[str, Any]:
         """A finding without a falsifier is not admitted.
 
         The A-arm review found that falsifier fields were the most valued content in the
         prior run and that a live status could sit above a discharged falsifier. Requiring
         one here means a finding cannot be recorded without the thing that could retire it.
         """
-        if not falsifier.strip():
+        if not str(row.get("falsifier", "")).strip():
             raise CalculationRunError("a finding requires a falsifier")
-        if not exemplars:
+        if not row.get("exemplars"):
             raise CalculationRunError("a finding requires at least one exact exemplar")
-        row = {
-            "claim": claim,
-            "support": support,
-            "falsifier": falsifier,
-            "exemplars": list(exemplars),
-            "status": "PROVISIONAL",
-        }
-        self.findings.append(row)
-        return row
+        admitted = dict(row)
+        admitted.setdefault("status", "PROVISIONAL")
+        return admitted
 
     def _averaged_companions(self) -> list[dict[str, Any]]:
         rows: list[dict[str, Any]] = []
@@ -476,17 +515,32 @@ class NativeCalculationRun:
         )
 
     def _gate_not_a_model_run(self) -> GateResult:
-        """Always passes, and says the thing that must not be assumed.
+        """A CHECK, not a label. It used to always return True.
 
-        This runner cannot produce a principal-model execution, so the gate records that the
-        artifact is evidence rather than a run. It exists so the distinction is asserted in
-        the output rather than inferred by whoever reads it next.
+        Asserting the distinction in the output is what let the first run pass with the
+        runner standing in for Frankie: the statement was true of the calculation layer and
+        said nothing about whether a principal had actually produced the findings above it.
+        Findings present without principal attribution now REJECT the result.
         """
+        if self._findings and self._principal is None:
+            return GateResult(
+                GATE_NOT_A_MODEL_RUN,
+                False,
+                "findings are present with no principal attribution; the calculation layer "
+                "has stood in for the principal, which is not the procedure",
+            )
+        if self._principal is None:
+            return GateResult(
+                GATE_NOT_A_MODEL_RUN,
+                True,
+                "evidence only; no findings claimed and no principal invocation performed "
+                "here",
+            )
         return GateResult(
             GATE_NOT_A_MODEL_RUN,
             True,
-            "these artifacts are calculation evidence; no principal-model invocation, lock, "
-            "freeze, handoff or score is claimed or performed here",
+            f"findings attributed to {self._principal['principal']} via committed artifact "
+            f"{self._principal['artifact_path']}",
         )
 
     def finalize(self) -> dict[str, Any]:
@@ -532,8 +586,10 @@ class NativeCalculationRun:
             LAYER_AVERAGES: {"rows": self._averaged_companions()},
             LAYER_RECONCILIATION: self._reconciliation(),
             LAYER_FINDINGS: {
-                "findings": list(self.findings),
+                "findings": list(self._findings),
                 "every_finding_carries_a_falsifier": True,
+                "authored_by": "PRINCIPAL" if self._principal else None,
+                "principal": dict(self._principal) if self._principal else None,
             },
         }
         missing = [name for name in REQUIRED_LAYERS if name not in layers]
@@ -543,6 +599,9 @@ class NativeCalculationRun:
         result = {
             "schema": SCHEMA,
             "verdict": REJECTED if failures else ACCEPTED,
+            "completion_status": (
+                "PRINCIPAL_FINDINGS_ATTACHED" if self._principal else "EVIDENCE_ONLY"
+            ),
             "failed_gates": failures,
             "gates": [g.as_dict() for g in gates],
             "isolation": self.isolation.as_dict(),
