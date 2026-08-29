@@ -1,7 +1,7 @@
 # DROP-IN BOX - FRANKIE A-ARM, NEXT SESSION
 
 BRANCH: `chatgpt/frankie-raw-mbo-benchmark-20260828`
-TIP AT HANDOFF: `ba20645` or later - run `git log --oneline -1` and confirm.
+TIP AT HANDOFF: `e8e628e` or later - run `git log --oneline -1` and confirm.
 STATUS: **NOTHING LAUNCHED.** 552 tests green (was 522). Wider `research/kalshi/tests/`
 still has its **7 pre-existing failures - not yours**.
 
