@@ -320,7 +320,7 @@ not list an artifact whose arms exclude that profile's arm.
 
 ## 7. File map — the calculation layer (BUILT, TESTED, NOT WIRED)
 
-All under `research/kalshi/frankie_raw_mbo_benchmark/`. **552 tests pass** (2026-08-29).
+All under `research/kalshi/frankie_raw_mbo_benchmark/`. **576 tests pass** (2026-08-29).
 
 | § | Module | Lines | What it enforces that prose could not |
 |---|---|---:|---|
@@ -342,6 +342,7 @@ All under `research/kalshi/frankie_raw_mbo_benchmark/`. **552 tests pass** (2026
 | — | `native_staging.py` | 195 | The spawn contract. A missing or empty principal artifact is a HARD failure, never zero findings. |
 | — | `periodic_checkpointer.py` | 380 | Save points on record or clock interval, refused mid-group. |
 | 4.8/4.9/4.13/4.14 | `native_group_adapters.py` | 314 | Raw MBO to constructed domain objects on the F_LAST unit. Ladder scope travels ON the value. No mean, ratio-of-sums or rate anywhere. 20 tests. **Called by nothing but its own test.** |
+| 4.6 (input) | `native_rt_book.py` | 262 | The RT view. Advanced one action at a time, so a level is read as a live feed saw it, never as the closed group left it. Mirrors `InstrumentBook` on every mutation; refuses a negative size where it clamps. 24 tests incl. an executable no-lookahead property. |
 | — | `native_replay_driver.py` | 358 | Runs end to end and finalizes ACCEPTED; 14 tests. **Calls no adapter**, so sections 4.6-4.16 are all still unfed. See section 8. |
 
 Sections 4.1-4.4 already existed in `a_memory_member_first_recalculation_20260828.py`, which
@@ -463,6 +464,16 @@ runs, but the claim as written was wrong. No driver feeds the sixteen sections.
      * **4.16 response** requires the horizon set and `horizon_version`, a `values_for`
        callable saying WHAT response is measured, plus `starting_liquidity_regime` and
        `cluster_version`. Those four are not plumbing; they are the experiment.
+
+   **THE CAUSALITY CONSTRAINT BELOW IS NOW CLOSED (2026-08-29): `native_rt_book.ReplayBook`
+   is built, 24 tests, and the fork was decided by Greg - "We should see it like it would be
+   seen in rt."** The book is advanced action by action, so `book_view` answers as a live feed
+   would have at that action's own instant, and a property test asserts executably that the
+   state after k rows is a function of `rows[:k]` and nothing later. It mirrors
+   `InstrumentBook` on every mutation - a second book that disagreed with the first would
+   reproduce the very defect it exists to prevent - and diverges only by refusing a negative
+   size where `InstrumentBook` clamps it to zero. **4.6 is now unblocked; its adapter is the
+   next build.** The constraint as originally recorded:
 
    **AND ONE CAUSALITY CONSTRAINT THAT BINDS 4.6 BEFORE ANY OF THAT.** `InstrumentBook.apply`
    mutates the book on EVERY record, while the group frame carrying `raw_actions` is returned
