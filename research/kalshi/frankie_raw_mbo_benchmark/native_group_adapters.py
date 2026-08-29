@@ -209,6 +209,7 @@ def ladder_transitions(
             after=LadderSide(side=side, depth_by_price=dict(after[side])),
             recv_ns=ctx.recv_ns,
             causing_order_ids=tuple(dict.fromkeys(causing[side])),
+            ladder_scope=LADDER_SCOPE,
         )
         for side in (BID, ASK)
         if before[side] or after[side]

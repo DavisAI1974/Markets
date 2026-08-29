@@ -97,6 +97,16 @@ class LadderTransition:
     after: LadderSide
     recv_ns: int
     causing_order_ids: tuple[int, ...] = ()
+    ladder_scope: str = ""
+    """WHAT this transition is a transition OF. Travels on the value, never only in prose.
+
+    D60/S114. `native_group_adapters` builds these as a GROUP-LOCAL DELTA - `before` is the
+    depth the group CONSUMED and `after` the depth it LEFT - which is a true statement about
+    the group and a false one about the book. Its module docstring said the caveat "travels ON
+    the value as `ladder_scope`", a constant was defined for it, and it was attached to
+    nothing and emitted nowhere. Read as a book snapshot, `depth_concentration_after` means
+    something other than what it says and `level_deaths` are invented.
+    """
 
     def __post_init__(self) -> None:
         if self.before.side != self.after.side:
@@ -161,6 +171,7 @@ class LadderTransition:
             "price_gaps_after": self.after.price_gaps,
             "max_price_gap_after": max(self.after.price_gaps) if self.after.price_gaps else 0,
             "causing_order_ids": list(self.causing_order_ids),
+            "ladder_scope": self.ladder_scope,
             "clock": CAUSAL_CLOCK,
         }
 

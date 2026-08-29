@@ -71,6 +71,7 @@ month.
 """
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta, timezone
 from functools import lru_cache
@@ -374,6 +375,10 @@ class AssignmentLedger:
     observed: int = 0
     segment_mismatches: list[dict[str, Any]] = field(default_factory=list)
     phase_mismatches: list[dict[str, Any]] = field(default_factory=list)
+    segment_mismatch_count: int = 0
+    phase_mismatch_count: int = 0
+    segment_histogram: Counter = field(default_factory=Counter)
+    phase_histogram: Counter = field(default_factory=Counter)
     _sample_cap: int = 20
 
     def observe(
@@ -384,9 +389,19 @@ class AssignmentLedger:
         day = trade_day(ts_event_ns)
         expected_segment = segment_of(day)
         expected_phase = phase_within(ts_event_ns, day)
+        # D60: `expected_phase` and `expected_segment` were computed for every group and
+        # discarded unless they mismatched, so the stratum denominators the parallel-view rule
+        # depends on were never counted anywhere.
+        self.phase_histogram[expected_phase] += 1
+        self.segment_histogram[expected_segment] += 1
         if continuity_segment != expected_segment:
+            # D60: the count and the sample list used to be the SAME capped list, so twenty
+            # mismatches and twenty million both reported 20 - and the denominators gate
+            # printed that number for a wholly broken run.
+            self.segment_mismatch_count += 1
             self._note(self.segment_mismatches, ts_event_ns, continuity_segment, expected_segment)
         if session_phase != expected_phase:
+            self.phase_mismatch_count += 1
             self._note(self.phase_mismatches, ts_event_ns, session_phase, expected_phase)
 
     def _note(self, bucket: list[dict[str, Any]], ts_ns: int, used: Any, expected: Any) -> None:
@@ -409,8 +424,12 @@ class AssignmentLedger:
     def as_dict(self) -> dict[str, Any]:
         return {
             "assignments_observed": self.observed,
-            "segment_mismatches": len(self.segment_mismatches),
-            "phase_mismatches": len(self.phase_mismatches),
+            "segment_mismatches": self.segment_mismatch_count,
+            "segment_mismatch_samples": list(self.segment_mismatches),
+            "segment_histogram": dict(self.segment_histogram),
+            "phase_histogram": dict(self.phase_histogram),
+            "phase_mismatches": self.phase_mismatch_count,
+            "phase_mismatch_samples": list(self.phase_mismatches),
             "segment_mismatch_samples": list(self.segment_mismatches),
             "phase_mismatch_samples": list(self.phase_mismatches),
             "basis": "recomputed from ts_event_ns via the CME session rule (D6)",

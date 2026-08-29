@@ -46,7 +46,12 @@ class StagingError(ValueError):
 
 
 def _canonical(value: Any) -> str:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), default=str)
+    # D60: this carried `default=str`, so any value JSON could not represent was silently
+    # STRINGIFIED into the committed spawn request instead of raising - a number arriving as
+    # a non-int became a quoted string and `load_principal_artifact` then compared against
+    # the string. Every other canonicalizer in this package uses `allow_nan=False` with no
+    # default and fails loud; this one now matches them.
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
 
 
 def stage_spawn_request(
@@ -95,7 +100,7 @@ def stage_spawn_request(
             "artifact in the expected schema; the coordinator hard-fails if it is absent."
         ),
     }
-    path.write_text(json.dumps(body, indent=2, sort_keys=True, default=str))
+    path.write_text(json.dumps(body, indent=2, sort_keys=True, allow_nan=False))
     return path
 
 

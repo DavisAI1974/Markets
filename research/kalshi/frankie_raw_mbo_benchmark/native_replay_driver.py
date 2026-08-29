@@ -139,6 +139,23 @@ class DriverCounters:
     """
     legacy_rows: list[dict[str, Any]] = field(default_factory=list)
     """Every legacy row, verbatim, in emission order. Never sampled, capped or summarized."""
+    member_rows: list[dict[str, Any]] = field(default_factory=list)
+    """Every exact member row, verbatim. D60.
+
+    `member_clock_row` builds a ~20-field exact record per group - five absolute clock
+    readings, per-component event-to-receive latencies, within-group receive gaps, the
+    sequence span and contiguity, the channel set - hands it to `ClockCalculator.observe`,
+    and the row was then dropped. `LAYER_MEMBERS` emitted `exact_member_rows: <int>`, and the
+    gate that exists to guarantee exact members beneath every summary was satisfied by that
+    counter. A count is not a member.
+    """
+    lifecycle_rows: list[dict[str, Any]] = field(default_factory=list)
+    """Every exact lifecycle and episode row returned at a boundary or at finalize. D60.
+
+    `close_continuity_segment`, `finalize` and `replenishment.advance` each RETURN the exact
+    rows they censored or matured, and every call site discarded the return. The stratified
+    aggregate survived; the only emission point for a censored episode did not.
+    """
 
 
 def _source_day(source_object: str) -> str:
@@ -207,10 +224,25 @@ class NativeReplayDriver:
         and each section censors differently, so the boundary is fanned out rather than
         handled in one place.
         """
-        self.run.queue.close_continuity_segment(segment=segment, recv_ns=recv_ns)
-        self.run.replenishment.close_continuity_segment(segment=segment, recv_ns=recv_ns)
-        self.run.exhaustion.close_continuity_segment(segment=segment, recv_ns=recv_ns)
-        self.run.response.close_continuity_segment(segment=segment, recv_ns=recv_ns)
+        # D60: each of these RETURNS the exact rows it censored, and every call site used to
+        # drop the return. They are the only emission point for a censored lifecycle.
+        for section in ("queue", "replenishment", "exhaustion", "response"):
+            self._retain_lifecycle(
+                getattr(self.run, section).close_continuity_segment(
+                    segment=segment, recv_ns=recv_ns
+                ),
+                section=section,
+                occasion="SEGMENT_CLOSE",
+            )
+
+    def _retain_lifecycle(self, rows: Any, *, section: str, occasion: str) -> None:
+        """Keep every exact row a section hands back, stamped with where it came from."""
+        for row in rows or ():
+            kept = dict(row)
+            kept["emitting_section"] = section
+            kept["emitted_on"] = occasion
+            self.counters.lifecycle_rows.append(kept)
+            self.run.note_lifecycle_row(row=kept)
 
     def _mark_for(self, event_ns: int, recv_ns: int, source_day: str) -> SessionMark:
         mark = self.session_rule.classify(
@@ -280,25 +312,45 @@ class NativeReplayDriver:
         group_index = self.counters.groups_seen
         self.counters.groups_seen += 1
 
+        # D60: this was hardcoded True, so the gate limb comparing groups_f_last_closed to
+        # groups_seen could never fire, while the frame carried the real answer all along.
         self.run.coverage.observe_group(
             group_index=group_index,
             record_count=len(actions),
-            f_last_closed=True,
+            f_last_closed=bool(frame.get("event_group_complete_f_last", True)),
             cursor=recv_ns,
         )
 
+        # D60: `describe_structure` computes roughly eighteen fields - action and side
+        # strings, per-action and per-side counts, terminal action and side, distinct price
+        # and order-id counts, the price span, the fill disposition, the mirror, and
+        # `discovery_status`, which is the open-world signal saying whether this group matched
+        # a carried family or is novel. The driver called it and kept ONE truncated hash, then
+        # made a second pass over the actions to collapse the sides. A 20-hex-char hash cannot
+        # be inverted back into `side_counts`, so all of it was unrecoverable.
+        structure = describe_structure(actions)
         row = member_clock_row(
             {"raw_actions": list(actions)},
             group_index=group_index,
             source_day=source_day,
             source_role=self.identity_role,
             continuity_segment=mark.continuity_segment,
-            family_id=self._family_id(actions),
+            family_id=str(structure["candidate_family_id"]),
             side_orientation=self._side(actions),
             session_phase=mark.session_phase,
         )
+        row["structure"] = structure
+        row["snapshot_bootstrap_only"] = bool(frame.get("snapshot_bootstrap_only", False))
+        for carried in ("book", "activity", "integrity", "sequence", "ts_in_delta_ns",
+                        "publisher_id", "channel_id", "raw_symbol", "adapter_revision",
+                        "native_priority_id_exposed", "fifo_priority_reconstructed"):
+            if carried in frame:
+                row[carried] = frame[carried]
+        row["instrument_id"] = int(envelope["instrument_id"])
+        row["causal_availability_clock"] = envelope["causal_availability_clock"]
+        self.counters.member_rows.append(row)
         self.run.clocks.observe(row)
-        self.run.note_member_row()
+        self.run.note_member_row(row=row)
         self.run.note_session_assignment(
             ts_event_ns=event_ns,
             continuity_segment=mark.continuity_segment,
@@ -306,7 +358,11 @@ class NativeReplayDriver:
         )
 
         # Horizon-bearing sections mature in stream time, never by lookahead.
-        self.run.replenishment.advance(recv_ns)
+        self._retain_lifecycle(
+            self.run.replenishment.advance(recv_ns),
+            section="replenishment",
+            occasion="HORIZON_MATURED",
+        )
 
         groups_since = group_index - self._last_invoke_group
         ns_since = 0 if self._last_invoke_ns is None else recv_ns - self._last_invoke_ns
@@ -368,20 +424,31 @@ class NativeReplayDriver:
     def finalize(self, *, recv_ns: int | None = None) -> dict[str, Any]:
         """Close every open structure, then emit the layered result."""
         at = recv_ns if recv_ns is not None else (self._last_recv_ns or 0)
-        self.run.queue.finalize(recv_ns=at)
-        self.run.replenishment.finalize(recv_ns=at)
-        self.run.exhaustion.finalize(recv_ns=at)
-        self.run.response.finalize(recv_ns=at)
+        # D60: every one of these RETURNS the rows it censored at stream end, and the return
+        # was dropped at all four call sites.
+        for section in ("queue", "replenishment", "exhaustion", "response"):
+            self._retain_lifecycle(
+                getattr(self.run, section).finalize(recv_ns=at),
+                section=section,
+                occasion="STREAM_END",
+            )
         result = self.run.finalize()
         result["traversal"] = {
             "groups_seen": self.counters.groups_seen,
             "records_seen": self.counters.records_seen,
             "segments_opened": self.counters.segments_opened,
-            "invocation_cutoffs": len(self.counters.invocation_cutoffs),
+            # D60: these were emitted as len(). The cutoffs ARE the shape of the experiment -
+            # which lawful instants the principal was asked anything at - and the output
+            # recorded only how many there were.
+            "invocation_cutoff_count": len(self.counters.invocation_cutoffs),
+            "invocation_cutoffs": list(self.counters.invocation_cutoffs),
             "save_points": self.counters.save_points,
             "legacy_rows_seen": self.counters.legacy_rows_seen,
             "legacy_rows_retained": len(self.counters.legacy_rows),
+            "legacy_rows": list(self.counters.legacy_rows),
             "legacy_rows_streamed": self.legacy_sink is not None,
+            "member_rows_retained": len(self.counters.member_rows),
+            "lifecycle_rows_retained": len(self.counters.lifecycle_rows),
             "causal_clock": CAUSAL_CLOCK,
             "forward_only": True,
             "session_rule": type(self.session_rule).__name__,

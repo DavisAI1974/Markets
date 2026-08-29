@@ -166,6 +166,11 @@ class StreamingDistribution:
         return {
             "n": self.n,
             "sum": self.total,
+            # D60: `_sum_squares` is maintained on EVERY add and was emitted nowhere - the
+            # dispersion of every stratum computed and thrown away at no saving. Emitted raw
+            # rather than as a variance, because a variance is a summary and this is the
+            # quantity it would be summarized from.
+            "sum_of_squares": self._sum_squares,
             "arithmetic_mean": (self.total / self.n) if self.n else None,
             "minimum": self.minimum,
             "maximum": self.maximum,

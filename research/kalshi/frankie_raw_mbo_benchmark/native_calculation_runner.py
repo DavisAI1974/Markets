@@ -212,6 +212,23 @@ class IsolationLedger:
         }
 
 
+def _observation_count(value: Mapping[str, Any]) -> int:
+    """How many observations a companion row stands for, whatever measure produced it.
+
+    D60. Three measure kinds emit three different shapes and only DISTRIBUTION carries "n".
+    Reading "n" alone silently valued a ratio or a survival row at zero, which understated
+    the reconciliation receipt by exactly the measures whose denominators matter most.
+    """
+    if "n" in value:
+        return int(value.get("n") or 0)
+    if "total_observations" in value:
+        return int(value.get("total_observations") or 0)
+    nested = value.get("member_ratio_distribution")
+    if isinstance(nested, Mapping):
+        return int(nested.get("n") or 0)
+    return 0
+
+
 class NativeCalculationRun:
     """Wires the sixteen sections, emits seven layers, enforces eight gates."""
 
@@ -257,6 +274,11 @@ class NativeCalculationRun:
         self.session_strata = session_strata
         self.member_rows_written = 0
         self.lifecycle_rows_written = 0
+        # D60: the two exact-evidence layers of section 5 emitted COUNTS. A count is not a
+        # member, and the gate that exists to guarantee exact rows beneath every summary was
+        # satisfied by an integer being greater than zero. The rows live here now.
+        self.member_rows: list[Mapping[str, Any]] = []
+        self.lifecycle_rows: list[Mapping[str, Any]] = []
         self._findings: list[dict[str, Any]] = []
         self._principal: dict[str, Any] | None = None
         self._finalized = False
@@ -298,11 +320,15 @@ class NativeCalculationRun:
             session_phase=session_phase,
         )
 
-    def note_member_row(self, count: int = 1) -> None:
+    def note_member_row(self, count: int = 1, *, row: Mapping[str, Any] | None = None) -> None:
         self.member_rows_written += count
+        if row is not None:
+            self.member_rows.append(row)
 
-    def note_lifecycle_row(self, count: int = 1) -> None:
+    def note_lifecycle_row(self, count: int = 1, *, row: Mapping[str, Any] | None = None) -> None:
         self.lifecycle_rows_written += count
+        if row is not None:
+            self.lifecycle_rows.append(row)
 
     def add_finding(self, **_kwargs: Any) -> None:
         """Removed. The calculation layer does not author findings.
@@ -388,9 +414,13 @@ class NativeCalculationRun:
             index["unassigned_members"] = list(self.discovery.unassigned)
         return index
 
-    def _reconciliation(self) -> dict[str, Any]:
+    def _reconciliation(self) -> dict[str, Any]:  # noqa: D401 - see _observation_count
         companions = self._averaged_companions()
-        summarized = sum(row["value"].get("n", 0) or 0 for row in companions if "value" in row)
+        # D60: this read `.get("n", 0)` only. `RatioPair.as_dict` and
+        # `SurvivalAccumulator.as_dict` carry no "n" key, so every RATIO_PAIR and SURVIVAL
+        # measure contributed ZERO to the reconciliation receipt - and that receipt is the
+        # evidence for the gate that exact members sit beneath every summary.
+        summarized = sum(_observation_count(row["value"]) for row in companions if "value" in row)
         return {
             "averaged_rows": len(companions),
             "summarized_observations": summarized,
@@ -574,9 +604,22 @@ class NativeCalculationRun:
                 "causal_clock": CAUSAL_CLOCK,
                 "coverage": self.coverage.as_dict(),
             },
-            LAYER_MEMBERS: {"exact_member_rows": self.member_rows_written},
+            LAYER_MEMBERS: {
+                "exact_member_rows": self.member_rows_written,
+                # D60: the rows themselves, not just how many there were.
+                "rows": list(self.member_rows),
+            },
             LAYER_LIFECYCLE: {
                 "exact_lifecycle_rows": self.lifecycle_rows_written,
+                "rows": list(self.lifecycle_rows),
+                # D60: computed inside the denominators gate, checked for one boolean and
+                # discarded. It carries every horizon's OWN entered/observed/censored counts
+                # per stratum - the horizon-specific denominators section 3 mandates.
+                "response_at_risk_table": self.response.at_risk_table(),
+                # D60: never called anywhere. Its own docstring says the detected-only figure
+                # "appears here as one labelled row beside the missed and censored counts that
+                # give it meaning" - and it never appeared.
+                "recognition_population_report": self.recognition.population_report(),
                 "section_summaries": {
                     label: section.summary()
                     for label, section in self.sections.items()
