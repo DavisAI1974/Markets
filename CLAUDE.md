@@ -91,6 +91,29 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
 
 ---
 
+## Agent skills (addyosmani/agent-skills, pinned 0.6.8 — Greg, S94)
+
+Installed as a PLUGIN via `.claude/settings.json` (`extraKnownMarketplaces` + `enabledPlugins`),
+never vendored: 25 skills, 9 phase commands (`/spec` `/plan` `/build` `/test` `/constraints`
+`/review` `/code-simplify` `/ship` `/webperf`), 4 review personas, 7 reference checklists, a
+SessionStart hook. `using-agent-skills` is the router. Proven on Codex; Greg: "a world of difference."
+
+- **PRECEDENCE: when a skill is invoked, the SKILL WINS any overlap with this file.** That is
+  engineering process — commit sizing and trunk habits (`git-workflow-and-versioning`), TDD,
+  review gates, ADRs, spec/plan artifacts. Follow the skill; do not argue it back down to the
+  house habit.
+- **The research rules are NOT overlaps and are untouched by that**, because no skill speaks to
+  them: the leakage gate, per-cell/never-pool, per-trade-never-mean, the settle-window exclusion,
+  provisional-until-live, weather = Greg's spec. And a skill asking for a quality bar, a fixture
+  or a test is NEVER licence to synthesize market data — zero synthetic trading data still governs.
+- Markets is **BROWNFIELD** on the adoption guide's own test (years old, uneven coverage,
+  entrenched conventions, high blast radius) so Path B applies: read-and-protect skills first
+  (`context-engineering`, `code-review-and-quality`, `debugging-and-error-recovery`,
+  `doubt-driven-development`), characterization tests before touching untested code, and the
+  full `/spec -> /ship` lifecycle on NEW work only.
+- **One router only.** Do not stack a second skill framework (Superpowers, Pocock) as an active
+  router — they collide on command names and routing. Borrow individual skills a la carte.
+
 ## Branch & data discipline (READ — recurring trap)
 
 - **The stale-tip trap:** the harness often cuts a fresh session branch from a stale old tip (the known

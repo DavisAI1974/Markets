@@ -49,9 +49,24 @@
     "SessionStart": [
       {
         "hooks": [
-          { "type": "command", "command": "bash scripts/session_start.sh" }
+          {
+            "type": "command",
+            "command": "bash scripts/session_start.sh"
+          }
         ]
       }
     ]
+  },
+  "extraKnownMarketplaces": {
+    "addy-agent-skills": {
+      "source": {
+        "source": "github",
+        "repo": "addyosmani/agent-skills",
+        "ref": "0.6.8"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "agent-skills@addy-agent-skills": true
   }
 }
