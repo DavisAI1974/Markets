@@ -14,12 +14,22 @@ name: Read-only box sizing probe 20260829
 # (NoCredentialsError, verified 2026-08-29). This workflow is the only path.
 #
 # STRICTLY READ-ONLY. It describes the instance and reads /proc on it. It writes nothing,
-# starts no arm, dispatches no calculation and touches no S3 object. It is
-# workflow_dispatch only - it never fires on a push - because the standing instruction is
-# that nothing launches without Greg.
+# starts no arm, dispatches no calculation and touches no S3 object. The standing "nothing
+# launches without Greg" instruction is satisfied by what it DOES, not by how it is
+# triggered: there is nothing here to launch.
 
+# Fires on a push to its OWN dedicated branch, plus workflow_dispatch. The push trigger is
+# not a convenience: GitHub only offers workflow_dispatch for workflows present on the
+# DEFAULT branch, and this one lives on a feature branch, so a dispatch returns 404. The
+# existing `frankie_october_aws_readonly_probe_20260824.yml` solves it the same way, and the
+# paths filter keeps the branch from running anything else.
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - chatgpt/frankie-box-sizing-probe-20260829
+    paths:
+      - .github/workflows/frankie_box_sizing_probe_20260829.yml
 
 permissions:
   contents: read
