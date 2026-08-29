@@ -122,6 +122,18 @@ class DriverCounters:
     segments_opened: int = 0
     invocation_cutoffs: list[dict[str, Any]] = field(default_factory=list)
     save_points: int = 0
+    legacy_rows_seen: int = 0
+    """Legacy MBP-10 control rows the adapter emitted. NOT yet consumed - see D60.
+
+    They carry the projected ten-level depth (bid/ask price, size and order count at each
+    level) at every trade and at group end, and the registry group
+    `legacy_observable_crosswalk` is CAUSAL_STREAM_REQUIRED: `legacy_book_imbalance` in
+    particular cannot be computed from anything else this traversal keeps. The driver used to
+    bind them to `_legacy` and discard them, which is a silent drop of a required input - the
+    exact failure D60 exists to stop. Counting them does NOT fix that; it makes the loss
+    VISIBLE and measurable while the retention question goes to Greg, because retaining ~70
+    fields per row across 4.26M groups is a memory decision, not a detail.
+    """
 
 
 def _source_day(source_object: str) -> str:
@@ -215,13 +227,17 @@ class NativeReplayDriver:
             source_object = record.get("source_dbn_object")
             if not source_object:
                 raise ReplayDriverError("every record must name its source object")
-            frame, _legacy = self.adapter.apply(
+            frame, legacy_rows = self.adapter.apply(
                 record,
                 raw_symbol=record.get("raw_symbol"),
                 source_dbn_object=str(source_object),
                 source_dbn_sha256=str(record.get("source_dbn_sha256", "")),
             )
             self.counters.records_seen += 1
+            # D60: never bind an adapter output to `_`. These rows are a required registry
+            # layer's only source; until they are consumed, the count is the honest record
+            # that they existed and that we are not yet using them.
+            self.counters.legacy_rows_seen += len(legacy_rows)
             if frame is None:
                 continue
             self._on_group(
@@ -350,6 +366,8 @@ class NativeReplayDriver:
             "segments_opened": self.counters.segments_opened,
             "invocation_cutoffs": len(self.counters.invocation_cutoffs),
             "save_points": self.counters.save_points,
+            "legacy_rows_seen": self.counters.legacy_rows_seen,
+            "legacy_rows_consumed": 0,
             "causal_clock": CAUSAL_CLOCK,
             "forward_only": True,
             "session_rule": type(self.session_rule).__name__,

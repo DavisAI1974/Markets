@@ -98,10 +98,14 @@ class RealTimeViewTests(unittest.TestCase):
             "if these ever match, the fixture stopped exercising the lookahead",
         )
 
-    def test_no_reading_depends_on_a_row_later_in_the_sequence(self) -> None:
-        # The RT claim as an executable property: the state after k rows must be a function of
-        # rows[:k] and nothing else. Replaying each prefix into a FRESH book must reproduce,
-        # exactly, what the single streaming book showed at that same instant.
+    def test_replaying_any_prefix_reproduces_the_streaming_state_at_that_row(self) -> None:
+        # RENAMED 2026-08-29 after review: this was called "no reading depends on a later row"
+        # and billed as the RT claim as an executable property. It is not. `apply` receives one
+        # row and never sees the sequence, so NO implementation of this class could fail it
+        # except by carrying state between instances or by being nondeterministic - which is
+        # worth pinning, but is determinism, not absence of lookahead. The real RT claim is
+        # about the CALLER reading at the action's own index rather than after the group
+        # closes, and the test above is where that lives.
         streaming = []
         live = rt.ReplayBook()
         for r in STREAM:
@@ -306,20 +310,75 @@ class TouchPriceTests(unittest.TestCase):
 
 
 class AdmissionGuardTests(unittest.TestCase):
-    def test_a_sentinel_priced_row_never_enters_the_book(self) -> None:
+    def test_a_sentinel_priced_add_rests_and_is_counted_not_dropped(self) -> None:
+        # CORRECTED TWICE, and the second correction is the one that matters. This test first
+        # asserted the row was silently IGNORED - and it was the only mutation-adjacent test
+        # here whose comment named no `InstrumentBook` authority, because there is none.
+        # `_book_effect` RESTS this row and `best_price_raw` then reports the sentinel as the
+        # touch. Ignoring it did not protect the book, it put the two books into silent
+        # disagreement, and this test defended that.
+        #
+        # Greg, 2026-08-29: "do not leave any of the book data out. it may not seem relevant to
+        # you but it may to frankie." So it is neither dropped NOR refused: it is mirrored, and
+        # the anomaly is counted. Deciding that nine quintillion is nonsense and declining to
+        # record it is this module overruling the book it exists to reproduce.
         book = feed(rt.ReplayBook(), [row("A", "B", 1, rt.PRICE_SENTINEL_ABS, 5, 100)])
-        self.assertFalse(book.is_resting(1))
-        self.assertIsNone(book.resting_at(1))
-        self.assertIsNone(book.touch_price("B"), "an undefined price is not a touch")
-        self.assertEqual(book.level("B", rt.PRICE_SENTINEL_ABS), (0, 0))
+        self.assertTrue(book.is_resting(1))
+        self.assertEqual(book.resting_at(1), ("B", rt.PRICE_SENTINEL_ABS, 5))
+        self.assertEqual(book.touch_price("B"), rt.PRICE_SENTINEL_ABS,
+                         "mirrors best_price_raw, which reports exactly this")
+        self.assertEqual(book.integrity["sentinel_price_rested"], 1)
 
-    def test_an_unsided_row_never_enters_the_book(self) -> None:
-        # The `ladder_transitions` precedent: Databento's "N" is the tape DECLINING to state a
-        # side, so assigning it to one would fabricate the very fact that is missing.
+    def test_an_absent_price_is_the_same_input_as_the_sentinel(self) -> None:
+        # `normalize` coerces a missing price to UNDEF_PRICE (`_int(record,"price",UNDEF_PRICE)`),
+        # so absent and sentinel are one input to InstrumentBook and must be one input here.
+        book = rt.ReplayBook()
+        book.apply({"action": "A", "side": "B", "order_id": 1, "size": 5, "ts_recv_ns": 100})
+        self.assertEqual(book.resting_at(1), ("B", rt.PRICE_SENTINEL_ABS, 5))
+
+    def test_a_top_of_book_sentinel_add_wipes_its_whole_side(self) -> None:
+        # `_book_effect`: `abs(price) >= UNDEF_PRICE and flags & F_TOB` drops every resting
+        # order on that side. The blast radius is the side for the rest of the run, which is
+        # precisely why this book must not quietly decline to do it.
+        book = feed(rt.ReplayBook(), [
+            row("A", "B", 1, 3000, 5, 100),
+            row("A", "B", 2, 2999, 7, 110),
+            row("A", "A", 3, 3010, 4, 120),
+        ])
+        book.apply({"action": "A", "side": "B", "order_id": 9,
+                    "price_raw": rt.PRICE_SENTINEL_ABS, "size": 0, "flags": 64, "ts_recv_ns": 130})
+        self.assertFalse(book.is_resting(1))
+        self.assertFalse(book.is_resting(2))
+        self.assertIsNone(book.touch_price("B"), "the bid side was wiped")
+        self.assertTrue(book.is_resting(3), "the ask side is untouched")
+        self.assertEqual(book.integrity["tob_side_wipe"], 1)
+
+    def test_order_id_zero_rests_as_a_real_order_and_is_counted(self) -> None:
+        # `normalize` coerces a missing or unparseable order id to 0 and `_add_order` rests it.
+        # Dropping it would leave the level ONE ORDER SHORT, so a later add's orders_ahead
+        # would be off by one order and by that order's size - the 4.6 number itself, wrong,
+        # with nothing failing. Found by mutation review: the drop passed the whole suite.
+        book = feed(rt.ReplayBook(), [
+            row("A", "B", 1, 3000, 5, 100),
+            row("A", "B", 0, 3000, 4, 110),
+            row("A", "B", 2, 3000, 7, 120),
+        ])
+        self.assertEqual(book.level("B", 3000), (3, 16))
+        self.assertEqual(book.view("B", 3000, 2), (2, 9), "order 0 is ahead of order 2")
+        self.assertEqual(book.integrity["order_id_zero"], 1)
+
+    def test_an_unsided_add_never_enters_the_book(self) -> None:
+        # This one IS mirrored, which is why it stays a silent no-op while the sentinel case
+        # above now raises: `_book_effect` for "A" counts `add_invalid_side` and mutates
+        # nothing, so both books already agree. The `ladder_transitions` precedent also holds -
+        # Databento's "N" is the tape DECLINING to state a side, and assigning it to one would
+        # fabricate the very fact that is missing. Contrast `ModifyTests`, where the same side
+        # on a modify makes `InstrumentBook` raise KeyError and so must refuse here too.
         book = feed(rt.ReplayBook(), [row("A", "N", 9, 3000, 50, 100)])
         self.assertFalse(book.is_resting(9))
         self.assertEqual(book.level("B", 3000), (0, 0))
         self.assertEqual(book.level("A", 3000), (0, 0))
+        self.assertEqual(book.integrity["add_invalid_side"], 1, "ignored by the book, not by the record")
 
     def test_the_sentinel_is_one_constant_shared_with_the_group_adapters(self) -> None:
         # Two constants over one fact is the `_family_id` defect: they do not fail, they drift.
@@ -338,23 +397,29 @@ class ErrorTests(unittest.TestCase):
         # follows the `_size` precedent in native_group_adapters instead and refuses. It
         # mirrors InstrumentBook on every book MUTATION and is stricter only on malformed
         # INPUT, so the two books can never disagree about a row either of them accepted.
-        for action in ("A", "C", "M"):
+        # The "A" case USES A FRESH ORDER ID. It used to reuse id 1, which is already resting,
+        # so the duplicate-add refusal raised first and the subcase passed even against a
+        # `max(0, size)` implementation - proven by mutation during review: 2 of 3 subtests
+        # failed, and "A" was the one that did not. The regex pins the REASON, so no future
+        # refusal can stand in for this one either.
+        for action, order_id in (("A", 2), ("C", 1), ("M", 1)):
             with self.subTest(action=action):
                 book = feed(rt.ReplayBook(), [row("A", "B", 1, 3000, 5, 100)])
-                with self.assertRaises(rt.RtBookError):
-                    book.apply(row(action, "B", 1, 3000, -1, 110))
+                with self.assertRaisesRegex(rt.RtBookError, "negative size"):
+                    book.apply(row(action, "B", order_id, 3000, -1, 110))
 
-    def test_a_duplicate_add_of_a_resting_order_id_is_refused(self) -> None:
-        # PINNED, and the implementer may argue with it. InstrumentBook._add_order tolerates
-        # this: it counts `duplicate_add_order_id`, drops the old order from its level and
-        # rests the new one. It can afford to, because its job is to survive a whole day's
-        # tape. ReplayBook's job is to answer `view(side, price, order_id)` for ONE named
-        # order, and after a silent replacement that answer is the queue position of a
-        # different order under the same id - present, typed and wrong. The conservative
-        # option is to refuse and let the caller count it, so that is what is pinned.
+    def test_a_duplicate_add_replaces_the_resting_order_and_is_counted(self) -> None:
+        # The test-engineer pinned this as a REFUSAL and invited the argument; the argument was
+        # had and refusal lost. `_add_order` counts `duplicate_add_order_id`, drops the old
+        # order from its level and rests the new one, and mirroring it is what keeps the two
+        # books in agreement. The concern that motivated refusing - that `view` would then
+        # answer for a different order under the same id - is real, and is answered by the
+        # counter rather than by declining to record the row.
         book = feed(rt.ReplayBook(), [row("A", "B", 1, 3000, 5, 100)])
-        with self.assertRaises(rt.RtBookError):
-            book.apply(row("A", "B", 1, 3001, 7, 110))
+        book.apply(row("A", "B", 1, 3001, 7, 110))
+        self.assertEqual(book.resting_at(1), ("B", 3001, 7))
+        self.assertEqual(book.level("B", 3000), (0, 0), "the old level was vacated")
+        self.assertEqual(book.integrity["duplicate_add_order_id"], 1)
 
     def test_an_unrecognized_action_is_refused(self) -> None:
         # `InstrumentBook.apply` raises on an action outside VALID_ACTIONS ("ACMRTFN").
@@ -386,6 +451,121 @@ class IndependenceTests(unittest.TestCase):
         second.apply(row("A", "B", 2, 3000, 7, 110))
         self.assertEqual(first.level("B", 3000), (1, 5))
         self.assertFalse(first.is_resting(2))
+
+
+class RetentionTests(unittest.TestCase):
+    """Greg, 2026-08-29: "do not leave any of the book data out."
+
+    Every one of these rows changes no state, or changes it anomalously. None of them may pass
+    without leaving a trace: a row that is silently ignored is a row that cannot be accounted
+    for later, and Frankie - not this module - decides what is relevant.
+    """
+
+    def test_a_cancel_for_an_order_that_never_rested_is_counted(self) -> None:
+        book = feed(rt.ReplayBook(), [row("A", "B", 1, 3000, 5, 100)])
+        book.apply(row("C", "B", 999, 3000, 5, 110))
+        self.assertEqual(book.integrity["cancel_missing_order"], 1)
+
+    def test_the_quantity_an_over_cancel_swallows_is_kept(self) -> None:
+        # `_cancel` clamps to zero and reports the truth only inside its `size_delta`, which
+        # nothing downstream reads. The clamp is mirrored; the quantity it loses is not lost.
+        book = feed(rt.ReplayBook(), [row("A", "B", 1, 3000, 5, 100)])
+        book.apply(row("C", "B", 1, 3000, 8, 110))
+        self.assertFalse(book.is_resting(1))
+        self.assertEqual(book.integrity["over_cancel_quantity"], 3)
+
+    def test_a_modify_that_became_an_add_is_counted(self) -> None:
+        book = feed(rt.ReplayBook(), [row("M", "B", 77, 3000, 4, 100)])
+        self.assertTrue(book.is_resting(77))
+        self.assertEqual(book.integrity["modify_missing_treated_as_add"], 1)
+
+    def test_a_side_change_is_counted(self) -> None:
+        book = feed(rt.ReplayBook(), [
+            row("A", "B", 1, 3000, 5, 100),
+            row("M", "A", 1, 3010, 5, 110),
+        ])
+        self.assertEqual(book.integrity["modify_side_change"], 1)
+
+    def test_every_non_mutating_row_still_leaves_a_trace(self) -> None:
+        # A fill changes no book state in this feed, but it is the event section 4.8 measures.
+        # "Changes nothing" and "is nothing" are different claims.
+        book = feed(rt.ReplayBook(), [
+            row("A", "B", 1, 3000, 5, 100),
+            row("F", "B", 1, 3000, 2, 110),
+            row("F", "B", 1, 3000, 3, 120),
+            row("T", "B", 0, 3000, 5, 130),
+            row("N", "N", 0, 3000, 0, 140),
+            row("R", "N", 0, 0, 0, 150),
+        ])
+        self.assertEqual(book.integrity["non_mutating_F"], 2)
+        self.assertEqual(book.integrity["non_mutating_T"], 1)
+        self.assertEqual(book.integrity["non_mutating_N"], 1)
+        self.assertEqual(book.integrity["reset_cleared_book"], 1)
+
+    def test_counters_are_per_instance(self) -> None:
+        first = feed(rt.ReplayBook(), [row("C", "B", 9, 3000, 1, 100)])
+        second = rt.ReplayBook()
+        self.assertEqual(first.integrity["cancel_missing_order"], 1)
+        self.assertEqual(second.integrity["cancel_missing_order"], 0)
+
+
+class ReadContractTests(unittest.TestCase):
+    def test_the_basis_travels_with_the_view(self) -> None:
+        # `(0, 0)` means BOTH "at the front of the queue" and "this level is empty", and
+        # `native_queue` feeds the pair straight into `initial_orders_ahead`. A caller that
+        # cannot tell those apart is reading a caveat that lives only in prose.
+        book = feed(rt.ReplayBook(), [
+            row("A", "B", 1, 3000, 5, 100),
+            row("A", "B", 2, 3000, 7, 110),
+        ])
+        self.assertEqual(book.view_with_basis("B", 3000, 1), (0, 0, rt.AT_POSITION))
+        self.assertEqual(book.view_with_basis("B", 3000, 2), (1, 5, rt.AT_POSITION))
+        self.assertEqual(
+            book.view_with_basis("B", 3000, 999), (2, 12, rt.ABSENT_FROM_POPULATED_LEVEL)
+        )
+        self.assertEqual(book.view_with_basis("B", 2999, 1), (0, 0, rt.EMPTY_LEVEL))
+        self.assertEqual(book.view("B", 3000, 1), (0, 0), "the BookView contract is the bare pair")
+
+    def test_a_read_for_a_side_that_is_not_a_book_side_is_refused(self) -> None:
+        # (0, 0) and None are the LEAST conservative answers available here - "front of the
+        # queue" and "no touch" - so a mistyped or "N" side would manufacture a front-of-queue
+        # survival input out of a lookup that never happened.
+        book = feed(rt.ReplayBook(), [row("A", "B", 1, 3000, 5, 100)])
+        for side in ("N", "X", ""):
+            with self.subTest(side=side):
+                with self.assertRaises(rt.RtBookError):
+                    book.view(side, 3000, 1)
+                with self.assertRaises(rt.RtBookError):
+                    book.level(side, 3000)
+                with self.assertRaises(rt.RtBookError):
+                    book.touch_price(side)
+
+    def test_a_modify_on_a_side_the_book_does_not_have_stops_both_books(self) -> None:
+        # `_modify` calls `_add_order` with no side check and dies on `levels["N"]`. One book
+        # aborting while the other carries on is a divergence too, so they abort together.
+        book = feed(rt.ReplayBook(), [row("A", "B", 1, 3000, 5, 100)])
+        with self.assertRaises(rt.RtBookError):
+            book.apply(row("M", "N", 1, 3000, 4, 110))
+        self.assertEqual(book.integrity["modify_invalid_side"], 1, "counted before it raised")
+
+    def test_a_non_numeric_field_raises_the_modules_own_error(self) -> None:
+        # RtBookError subclasses ValueError, so containment does not run the other way: a
+        # caller writing `except RtBookError` would not catch a bare int() failure.
+        book = rt.ReplayBook()
+        with self.assertRaises(rt.RtBookError):
+            book.apply(row("A", "B", 1, 3000, "x", 100))
+        with self.assertRaises(rt.RtBookError):
+            book.apply(row("A", "B", "nope", 3000, 5, 100))
+
+    def test_touch_price_ignores_a_level_that_has_emptied(self) -> None:
+        # Found by mutation review: removing this filter passed the entire suite. A price whose
+        # queue is empty would answer as a touch that no longer exists.
+        book = feed(rt.ReplayBook(), [
+            row("A", "B", 1, 3005, 5, 100),
+            row("A", "B", 2, 3000, 5, 110),
+            row("C", "B", 1, 3005, 5, 120),
+        ])
+        self.assertEqual(book.touch_price("B"), 3000)
 
 
 if __name__ == "__main__":

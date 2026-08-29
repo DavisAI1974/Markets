@@ -1087,6 +1087,21 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
 
 ## Operating discipline (cross-cutting)
 
+- **NOTHING IS DROPPED WITHOUT DISCUSSING IT FIRST (Greg, S115, STANDING - D60).** Verbatim:
+  *"we have all this data for a reason. do not drop any of it without discussing with me
+  first. make that a rule"*, and *"do not leave any of the book data out. it may not seem
+  relevant to you but it may to frankie."* A row, field, message or observable that reaches
+  our code is either **USED**, or **RETAINED and counted**, or **REFUSED loudly**. Never
+  silently ignored. "This looks like nonsense" is not a licence to discard - **relevance is
+  the consumer's to decide, not the ingest layer's.** **The cost is why it is a rule:** *"this
+  is the problem that i have been fighting the whole time that things are dropped for whatever
+  reason and not discussed and then we find out we have to rerun because it was important."* A
+  dropped input does not fail - it produces a number that is present, typed, in range and
+  wrong - so it surfaces only after a full run, and the rerun is the expensive part. Two
+  instances were found the day it was written: a replay book that ignored four row classes the
+  authoritative book acts on, and `native_replay_driver` discarding the adapter's legacy rows,
+  which carry the 10-level depth a REQUIRED registry group is built on.
+
 - **Falsification-first / Result Discipline.** Every claim needs a falsifiable test. Every result is ONE
   data point — map alternatives (incl. the deflationary reading) before promoting to a claim. Catalog
   MISSES with the same care as hits; a negative that sharpens the program (like the S82 level-hit result)
