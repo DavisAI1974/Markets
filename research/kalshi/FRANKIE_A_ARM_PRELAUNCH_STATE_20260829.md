@@ -36,9 +36,11 @@ Before anything runs, sit down with Greg and confirm, item by item:
    assumption: today both are referenced by nothing.
 5. **The provider-receipt requirement is reconciled** with an agent-session run - both in
    the papers and in `validate_principal_execution`.
-6. **Every section from 4.6 to 4.16 is fed by the traversal.** Today only clocks and
+6. **The helper path is built as a tool available to RT and Forecaster**, not as four live
+   roles, and the ingestion paper's Question 3 is updated to say so.
+7. **Every section from 4.6 to 4.16 is fed by the traversal.** Today only clocks and
    coverage are.
-7. **A dry run over a small slice completes and the eight gates pass**, before anything
+8. **A dry run over a small slice completes and the eight gates pass**, before anything
    touches the full roster.
 
 When you think you are ready, go back through this document from section 1 and confirm each
@@ -71,7 +73,26 @@ Consequences, because most of the A-arm papers were written assuming an API:
   is probably the wrong abstraction for the walk shape, which is "stage a state file here,
   spawn later."
 
-**Build to the walk machinery in section 5, not to the API design in the papers.**
+**Two roles, no specialists, helpers are tools.**
+
+The five-specialist structure (A-E) is **not** used for the A arms. There are exactly two
+roles - `REAL_TIME_FRANKIE` and `FORECASTER_FRANKIE` - and the knowledge manifest already
+carries only those two, with four profiles across the two arms. Nothing needs changing
+there.
+
+The four helper scouts are **not** live roles either. RT and Forecaster may **call an agent
+helper from their tools**; a helper is a tool invocation inside a role, not a parallel lane
+with its own knowledge profile or its own output. This answers open Question 3 in the
+ingestion paper ("are those helpers active, shadow-only, or carried architecture?"), which
+should be updated to say so.
+
+The registry is already closer to right than the papers are: `helper_role_configuration`
+holds its four entries as `STATIC_REQUIRED_INPUT` on a `DIRECT` route - configuration
+delivered pre-call, not a separate execution lane. Those four are the entries that take 93
+inventory layers to 97.
+
+**Build to the walk machinery in section 5, not to the API design in the papers** - but take
+the *staging and artifact contract* from it, not the five-specialist role structure.
 
 ---
 
@@ -129,9 +150,9 @@ The templates the Sol run should follow, because this is what ran 24 group cycle
 | `research/kalshi/spawn.py` | Fills every SOP slot **by lookup**. `slots(gid, day, spec)`, `day_inventory`, `cal_facts`, `mission_brief`. This is the template mechanism. |
 | `research/kalshi/stage_group.py` | One-command staging so a group is completely ready. |
 | `research/kalshi/forecast_harness.py` | The decision-state builder the specialists read. |
-| `research/kalshi/agents/mbo_refine_shared.md` | Shared specialist rules, blind and refine both. |
-| `research/kalshi/agents/mbo_specialist_{A..E}.md` | The five canonical specialist files. |
-| `research/kalshi/agents/refine.md`, `state_auditor.md`, `failure_judge.md` | The other canonical roles. |
+| `research/kalshi/agents/mbo_refine_shared.md` | Shared rules. **Reference for the artifact contract and staging discipline only** - the A arms do not use the specialist role structure. |
+| `research/kalshi/agents/mbo_specialist_{A..E}.md` | The five walk specialists. **Not used by the A arms.** Read for how a role is briefed and what it must emit, not as roles to run. |
+| `research/kalshi/agents/refine.md`, `state_auditor.md`, `failure_judge.md` | Other walk roles. Same caveat. |
 | `research/kalshi/agents/refine_gold_s105/` | The frozen gold vault (chmod 0444 + sha256 manifest). |
 | `research/kalshi/agents/QC_CHECKLIST.md` | Small-model, report-only QC. |
 
