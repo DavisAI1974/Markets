@@ -534,6 +534,38 @@ reports **on purpose**: those are records of what was true when written.
 
 ## 10. Standing constraints
 
+**NOTHING IS DROPPED WITHOUT DISCUSSING IT FIRST (Greg, 2026-08-29 - D60, and he has said it
+many times before this one).** *"we have all this data for a reason. do not drop any of it
+without discussing with me first. make that a rule."* *"do not leave any of the book data out.
+it may not seem relevant to you but it may to frankie."* *"i don't care about memory. restore
+every piece... let him figure out what he uses but he has to see everything."* A row, field,
+message or observable that reaches our code is **USED**, or **RETAINED and counted**, or
+**REFUSED loudly**. Never silently ignored. **Memory is explicitly not a reason.** Relevance is
+Frankie's to decide, not the ingest layer's. **The one exception is narrow:** *"if a row is
+truly blank and is measuring nothing then you can leave it off"* - truly blank, shown from the
+row itself.
+
+**Why it is a standing constraint and not a preference, in Greg's words:** *"this is the
+problem that i have been fighting the whole time that things are dropped for whatever reason
+and not discussed and then we find out we have to rerun because it was important"* and *"we're
+constantly having to go back and audit things over and over."* A dropped input does not fail -
+it yields a number that is present, typed, in range and wrong - so it surfaces only after a
+full run, and the rerun is the expensive part. **Two instances were found the day it was
+written**, both now fixed: `native_rt_book.ReplayBook` silently ignoring four row classes
+`InstrumentBook` acts on, and `native_replay_driver` discarding the adapter's legacy MBP-10
+rows, which are the only source for a CAUSAL_STREAM_REQUIRED registry group. **A full-pipeline
+drop audit is running across the ingest, traversal and output layers; findings and their
+restorations belong here.**
+
+**And the auditing is now the machine's job, because doing it by hand is what Greg is tired
+of.** `tests/test_native_rt_book_differential.py` drives `ReplayBook` and `InstrumentBook` in
+lockstep and compares full state after every record - 12,024 records, zero divergence - and its
+governing assertion is design-independent: an anomalous row is refused loudly or mirrored
+exactly, NEVER silently dropped. It also mutation-tests its own comparator, because a
+differential that compares nothing passes forever. `RetentionTests` fails if any action stops
+leaving a trace, and `LegacyRowRetentionTest` fails if retained ever falls short of seen.
+
+
 - Workflow timeouts are 350 minutes. GitHub-hosted jobs are hard-capped at 360 regardless,
   which is why save points matter more than the timeout.
 - AWS credentials are in GitHub secrets; the run path is Actions to S3, not a local session.
