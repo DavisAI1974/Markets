@@ -97,7 +97,7 @@ jobs:
           (github.event_name == 'push' || inputs.confirm_full_october == true) &&
           !startsWith(github.event.head_commit.message, 'stop: October Frankie attempt 8') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 350
     outputs:
       package_sha256: ${{ steps.package.outputs.package_sha256 }}
       wheelhouse_sha256: ${{ steps.package.outputs.wheelhouse_sha256 }}
@@ -262,7 +262,7 @@ jobs:
           (github.event_name == 'push' || inputs.confirm_full_october == true) &&
           !startsWith(github.event.head_commit.message, 'stop: October Frankie attempt 8') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 350
     env:
       AWS_DEFAULT_REGION: us-east-2
       INSTANCE_ID: i-08cee7171c0a76a04
