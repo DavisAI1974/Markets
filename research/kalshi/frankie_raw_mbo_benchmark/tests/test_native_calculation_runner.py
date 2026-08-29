@@ -299,7 +299,7 @@ class FindingsTest(unittest.TestCase):
                 findings=[{"claim": "x", "support": "y", "falsifier": "z", "exemplars": []}],
             )
 
-    def test_a_finding_is_provisional_and_carries_its_exemplars(self) -> None:
+    def test_a_finding_carries_its_exemplars_and_no_status_label(self) -> None:
         run = make_run()
         drive(run)
         run.attach_principal_findings(
@@ -312,7 +312,7 @@ class FindingsTest(unittest.TestCase):
             }],
         )
         layer = run.finalize()["layers"]["positive_findings_report"]
-        self.assertEqual(layer["findings"][0]["status"], "PROVISIONAL")
+        self.assertNotIn("status", layer["findings"][0])
         self.assertEqual(len(layer["findings"][0]["exemplars"]), 2)
         self.assertTrue(layer["every_finding_carries_a_falsifier"])
 

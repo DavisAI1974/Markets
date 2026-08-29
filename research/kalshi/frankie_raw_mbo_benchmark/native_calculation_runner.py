@@ -351,19 +351,20 @@ class NativeCalculationRun:
 
     @staticmethod
     def _admit_finding(row: Mapping[str, Any]) -> dict[str, Any]:
-        """A finding without a falsifier is not admitted.
+        """A finding without a falsifier is not admitted, and no status is stamped on it.
 
         The A-arm review found that falsifier fields were the most valued content in the
-        prior run and that a live status could sit above a discharged falsifier. Requiring
-        one here means a finding cannot be recorded without the thing that could retire it.
+        prior run and that a live status could sit above a discharged falsifier. The
+        conclusion carried here is that the FALSIFIER is the retirement mechanism, not a
+        status word: a status that is the same on every row carries no information and
+        invites exactly the mismatch the review found. A finding cannot be recorded without
+        the thing that could retire it, and it is not pre-labelled as tentative.
         """
         if not str(row.get("falsifier", "")).strip():
             raise CalculationRunError("a finding requires a falsifier")
         if not row.get("exemplars"):
             raise CalculationRunError("a finding requires at least one exact exemplar")
-        admitted = dict(row)
-        admitted.setdefault("status", "PROVISIONAL")
-        return admitted
+        return dict(row)
 
     def _averaged_companions(self) -> list[dict[str, Any]]:
         rows: list[dict[str, Any]] = []

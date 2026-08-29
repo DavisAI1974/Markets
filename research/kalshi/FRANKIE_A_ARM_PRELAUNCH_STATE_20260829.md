@@ -58,6 +58,45 @@ When you think you are ready, go back through this document from section 1 and c
 claim still holds. Several things in here were true when written and were made false by the
 next decision - that is exactly how the first version of this file went stale.
 
+## 0b. THE PROCEDURAL CORRECTION (Greg, 2026-08-29) - READ WITH SECTION 1
+
+**On the first run Frankie was never called and the runner stood in for it.** Greg:
+*"frankie wasn't even called and the runner basically replaced frankie and that's not the
+correct procedure"*, and *"we don't want the runner doing the work instead of frankie.
+frankie should be called and doing the work."*
+
+Two things in `native_calculation_runner.py` allowed it, and they compounded:
+
+* `add_finding` let whatever drove the traversal author the positive findings report. That
+  layer is Frankie's output, so the method should never have existed on the run.
+* `_gate_not_a_model_run` **always returned True**. Its docstring said the point was that
+  the distinction is "asserted in the output rather than inferred" - which is the hole. The
+  assertion was true of the calculation layer and said nothing about whether a principal had
+  produced the findings above it. **A label is not a check.** Same shape as the phase
+  collapse and the b_share encoding: present, well formed, attesting nothing.
+
+**The division, now enforced.** The calculation layer produces EVIDENCE. Frankie produces
+FINDINGS. `add_finding` raises; `attach_principal_findings` is the only route in and demands
+a named principal, a committed artifact path and that artifact's hash; `controller_only`
+work and an unproven invocation are both refused; the gate REJECTS findings that carry no
+principal; and every result states `completion_status` - `EVIDENCE_ONLY` or
+`PRINCIPAL_FINDINGS_ATTACHED` - so evidence cannot be read as a finished run.
+
+**`native_staging.py` is how Frankie gets called** (12 tests). `stage_spawn_request` writes a
+committed request at a deterministic path from the cutoff; `load_principal_artifact` reads
+the artifact back and hard-fails on missing, malformed, wrong-schema, wrong-evidence,
+controller-only, or EMPTY. A missing artifact is never zero findings - a spawn that produced
+nothing did not happen, and treating it as success is exactly how the runner came to stand
+in. A round-trip test proves what the loader returns is what the runner accepts, so there is
+no second way into the findings layer.
+
+**PROVISIONAL dropped from findings** (Greg): a status word identical on every row carries no
+information and invites the S114 mismatch where a live status sat above a discharged
+falsifier. **The falsifier is the retirement mechanism.** Two other `provisional` senses are
+NOT changed and need Greg's call - see section 3.
+
+---
+
 ## 1. The architecture correction that reframes the rest
 
 **The Sol run is not an API run.** It works the way the group blind/refine walks worked: an
@@ -145,6 +184,19 @@ Two things settled along the way, recorded because they were live questions:
   PRIOR trade date's `POST_CLOSE`. A ~49h censoring gap and a 1h one are now
   distinguishable, which matters because segments decide where lifecycles are censored.
 
+**Two `provisional` labels Greg has not ruled on**, flagged because they are different in
+kind from the findings status and both have consequences:
+
+* **`PROVISIONAL_SHADOW`** is a ROUTING POLICY on exactly 2 registry layers -
+  `extra_agent_corrected_information_and_gap_diagnoses` and
+  `extra_agent_four_helper_architecture_roles` - both `SHADOW_DISABLED`/`SHADOW_READY` with
+  `model_visible: False`. Making them permanent means Frankie can SEE them, which changes
+  `EXPECTED_POLICY_COUNTS`, the surface inventory hash and the manifest. Note the second is
+  the four-helper architecture that correction 3 already reframed as tools, not lanes.
+* **"provisional strategy hypotheses"** in the RT mission and the discovery addendum are
+  `ALWAYS_LOAD` instructions telling Frankie what to PRODUCE. Editing them changes Frankie's
+  job and requires regenerating hash-bound capsules.
+
 **D7. Cadence.** Mostly dissolved by section 1. What remains: at which staging boundary
 does Sol read and emit.
 
@@ -227,6 +279,7 @@ All under `research/kalshi/frankie_raw_mbo_benchmark/`. **441 tests pass.**
 | 4.16 | `native_response.py` | 369 | Each horizon written once, with its own at-risk denominator. |
 | §2 | `native_session.py` | 332 | D6a+D6b. Boundaries exchange-local, so they survive DST. Segment is the CME trade date. Phase from the settlement window and session hours. Non-monotonic input refused. |
 | §5/§6 | `native_calculation_runner.py` | 519 | Seven layers, eight gates, no partial promotion. |
+| — | `native_staging.py` | 161 | The spawn contract. A missing or empty principal artifact is a HARD failure, never zero findings. |
 | — | `periodic_checkpointer.py` | 380 | Save points on record or clock interval, refused mid-group. |
 | — | `native_replay_driver.py` | 355 | Runs end to end and finalizes ACCEPTED; 14 tests. Sections 4.6-4.16 not yet fed. See section 8. |
 
@@ -234,7 +287,7 @@ Sections 4.1-4.4 already existed in `a_memory_member_first_recalculation_2026082
 ran the full roster: 5,667,689 records into 4,256,603 groups, 4,758 candidate families, in
 2,985s, with `daily_averaged_companion_verification: EXACT_MATCH`.
 
-**500 tests** as of 2026-08-29 (441 + 41 `native_session` + 5 session gate + 13 driver).
+**520 tests** as of 2026-08-29.
 
 Tests are one file per module under `frankie_raw_mbo_benchmark/tests/`, plus
 `test_open_world_growth.py` (the vocabulary must grow) and
@@ -269,8 +322,8 @@ runs, but the claim as written was wrong. No driver feeds the sixteen sections.
    candidate. Feeding these means deciding what counts as a runway, a dipole path, a lineage
    node and a ladder snapshot in raw MBO, which shapes what the benchmark reports and should
    not be invented quietly. `describe_structure` is the canonical precedent to build from.
-   Second item: `on_invoke` still needs rebuilding as the staging contract per section 0
-   item 5.
+   Second item: `on_invoke` must now CALL `native_staging.stage_spawn_request` instead of
+   its callback. The contract exists and is tested; the driver does not use it yet.
 2. **Wire the checkpointer** into both launch workflows. It is already imported by the
    draft driver; what is missing is a path on which that driver executes.
 3. **Wire the gate** into the launcher. An unreferenced gate is not a gate.
