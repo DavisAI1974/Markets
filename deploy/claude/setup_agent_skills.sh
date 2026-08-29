@@ -1,45 +1,47 @@
 #!/usr/bin/env bash
 # Install addyosmani/agent-skills into the session's user-level Claude dir.
 #
-# Intended as a Claude Code CLOUD ENVIRONMENT setup script: it runs at container
-# start for EVERY session in the environment, in every repo, so the pack is not
-# tied to any one repository's .claude/settings.json.
+# Intended as a Claude Code CLOUD ENVIRONMENT setup script: it runs before
+# Claude Code launches, for every session in the environment, in every repo.
+# The resulting filesystem is snapshotted and reused, so later sessions get
+# the pack already on disk and skip this script.
 #
-# Idempotent. Safe to re-run. Pin PACK_REF to control the version.
-set -euo pipefail
-
+# MUST EXIT ZERO. A non-zero exit makes the session fail to start, so every
+# step is best-effort and the script always ends with exit 0.
 PACK_REPO="${PACK_REPO:-https://github.com/addyosmani/agent-skills.git}"
 PACK_REF="${PACK_REF:-0.6.8}"
 DEST="${HOME}/.claude"
-TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"' EXIT
 
-echo "[agent-skills] cloning ${PACK_REPO} @ ${PACK_REF}"
-git clone --depth 1 --branch "$PACK_REF" "$PACK_REPO" "$TMP/pack" >/dev/null 2>&1
+install_pack() {
+  set -euo pipefail
+  local tmp; tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  git clone --depth 1 --branch "$PACK_REF" "$PACK_REPO" "$tmp/pack" >/dev/null 2>&1
+  [ -d "$tmp/pack/skills" ] || return 1
 
-mkdir -p "$DEST/skills" "$DEST/commands" "$DEST/agents"
+  mkdir -p "$DEST/skills" "$DEST/commands" "$DEST/agents"
+  cp -r "$tmp"/pack/skills/* "$DEST/skills/"
 
-# skills/<name>/SKILL.md -> ~/.claude/skills/<name>/
-cp -r "$TMP"/pack/skills/* "$DEST/skills/"
+  # 12 skills cite ../../references/*.md; from ~/.claude/skills/<n>/SKILL.md
+  # that resolves to ~/.claude/references/. Without this those links dangle.
+  rm -rf "$DEST/references"
+  cp -r "$tmp"/pack/references "$DEST/references"
 
-# 12 skills cite ../../references/*.md; from ~/.claude/skills/<n>/SKILL.md that
-# resolves to ~/.claude/references/. Without this those links dangle.
-rm -rf "$DEST/references"
-cp -r "$TMP"/pack/references "$DEST/references"
+  cp "$tmp"/pack/.claude/commands/*.md "$DEST/commands/"
+  cp "$tmp"/pack/agents/*.md           "$DEST/agents/"
 
-# 9 phase commands (/spec /plan /build /test /constraints /review
-# /code-simplify /ship /webperf) and 4 review personas.
-cp "$TMP"/pack/.claude/commands/*.md "$DEST/commands/"
-cp "$TMP"/pack/agents/*.md           "$DEST/agents/"
+  printf 'Vendored from %s @ %s\nCommit: %s\nLicense: MIT\n' \
+    "$PACK_REPO" "$PACK_REF" "$(git -C "$tmp/pack" rev-parse HEAD)" \
+    > "$DEST/skills/PROVENANCE.md"
+}
 
-cat > "$DEST/skills/PROVENANCE.md" <<EOF
-Vendored from ${PACK_REPO} @ ${PACK_REF}
-Commit: $(git -C "$TMP/pack" rev-parse HEAD)
-License: MIT. Installed by deploy/claude/setup_agent_skills.sh at session start.
-Third-party instructions that load into agent context.
-EOF
-
-echo "[agent-skills] skills=$(find "$DEST/skills" -maxdepth 2 -name SKILL.md | wc -l)" \
-     "commands=$(ls "$DEST"/commands/*.md 2>/dev/null | wc -l)" \
-     "agents=$(ls "$DEST"/agents/*.md 2>/dev/null | wc -l)" \
-     "references=$(ls "$DEST"/references/*.md 2>/dev/null | wc -l)"
+if install_pack; then
+  echo "[agent-skills] ok:" \
+       "skills=$(find "$DEST/skills" -maxdepth 2 -name SKILL.md 2>/dev/null | wc -l)" \
+       "commands=$(ls "$DEST"/commands/*.md 2>/dev/null | wc -l)" \
+       "agents=$(ls "$DEST"/agents/*.md 2>/dev/null | wc -l)" \
+       "references=$(ls "$DEST"/references/*.md 2>/dev/null | wc -l)"
+else
+  echo "[agent-skills] install failed (ref=${PACK_REF}); continuing without the pack" >&2
+fi
+exit 0
