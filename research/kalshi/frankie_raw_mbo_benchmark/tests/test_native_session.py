@@ -8,7 +8,9 @@ pooled.
 from __future__ import annotations
 
 import unittest
-from datetime import date, datetime, timezone
+from datetime import date, datetime, time, timezone
+
+from research.kalshi.frankie_raw_mbo_benchmark import native_session
 
 from research.kalshi.frankie_raw_mbo_benchmark.native_session import (
     CLOSE_LOCAL_TIME,
@@ -365,3 +367,63 @@ class SegmenterTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ExchangeHolidayCalendarTests(unittest.TestCase):
+    """The CME trading-day schedule (Greg, 2026-08-29: 'we follow cme trading day schedule').
+
+    Every expectation here is an exchange fact, never a property of our tape.
+    """
+
+    def test_full_closure_is_not_a_trading_day(self):
+        # Good Friday 2026-04-03 and Christmas 2026-12-25: no Globex session at all.
+        self.assertFalse(native_session.is_trading_day(date(2026, 4, 3)))
+        self.assertFalse(native_session.is_trading_day(date(2026, 12, 25)))
+
+    def test_partial_and_early_close_remain_trading_days(self):
+        # A partial session is NOT a business day for settlement counting, but the book
+        # opens, so it IS a trade date. Conflating the two would move segments by a day.
+        self.assertTrue(native_session.is_trading_day(date(2026, 1, 19)))   # MLK, partial
+        self.assertTrue(native_session.is_trading_day(date(2026, 11, 27)))  # day after TG
+        self.assertEqual(
+            native_session.holiday_class(date(2026, 1, 19)), native_session.PARTIAL_SESSION
+        )
+        self.assertEqual(
+            native_session.holiday_class(date(2026, 11, 27)), native_session.EARLY_CLOSE
+        )
+
+    def test_ordinary_day_has_no_holiday_class(self):
+        self.assertIsNone(native_session.holiday_class(date(2021, 10, 4)))
+
+    def test_trade_day_skips_a_full_closure(self):
+        # 10:00 CT on Good Friday 2026-04-03 is inside no session; the next trade date is
+        # Monday the 6th, reached by the same loop that skips the weekend.
+        ts = native_session._local_instant_ns(date(2026, 4, 3), time(10, 0))
+        self.assertEqual(native_session.trade_day(ts), date(2026, 4, 6))
+
+    def test_christmas_evening_reopen_carries_the_next_trade_date(self):
+        # Christmas 2024-12-25 was a Wednesday full closure whose 17:00 CT reopen belongs to
+        # the 26th. This must fall out of the existing reopen rule, not a holiday clause.
+        ts = native_session._local_instant_ns(date(2024, 12, 25), time(18, 0))
+        self.assertEqual(native_session.trade_day(ts), date(2024, 12, 26))
+
+    def test_phase_refuses_on_a_shortened_session(self):
+        # No source records the shortened close time, and a partial session has no
+        # settlement cycle. Answering from ordinary hours would be plausible and wrong.
+        mlk = date(2026, 1, 19)
+        ts = native_session._local_instant_ns(mlk, time(10, 0))
+        with self.assertRaises(native_session.SessionError) as caught:
+            native_session.phase_within(ts, mlk)
+        self.assertIn("partial_session", str(caught.exception))
+
+    def test_roster_window_is_unaffected(self):
+        # The launch roster spans 2021-10-01..10-05 and contains no holiday, so nothing
+        # here changes any value the run actually uses.
+        for dom in (1, 2, 3, 4, 5):
+            self.assertIsNone(native_session.holiday_class(date(2021, 10, dom)))
+        ts = native_session._local_instant_ns(date(2021, 10, 4), time(10, 0))
+        self.assertEqual(native_session.trade_day(ts), date(2021, 10, 4))
+        self.assertEqual(
+            native_session.phase_within(ts, date(2021, 10, 4)),
+            native_session.PRE_SETTLEMENT,
+        )

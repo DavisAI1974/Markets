@@ -179,8 +179,8 @@ Two things settled along the way, recorded because they were live questions:
   fact is the shape of the S109 `session_b_share` defect - both present, both plausible,
   silently incompatible. `session_phase == POST_CLOSE` is the single answer, and a test pins
   the weekend case.
-* **`PRE_OPEN` appears only where the gap exceeds the daily halt** - weekends, and holidays
-  once the calendar is wired. On a normal weekday the hour before a session opens is the
+* **`PRE_OPEN` appears only where the gap exceeds the daily halt** - weekends, and now
+  holidays too, the calendar being wired as of 2026-08-29. On a normal weekday the hour before a session opens is the
   PRIOR trade date's `POST_CLOSE`. A ~49h censoring gap and a 1h one are now
   distinguishable, which matters because segments decide where lifecycles are censored.
 
@@ -277,7 +277,7 @@ All under `research/kalshi/frankie_raw_mbo_benchmark/`. **441 tests pass.**
 | 4.14 | `native_recurrence.py` | 328 | Exact gaps canonical; a burst threshold labels, never gates. |
 | 4.15 | `native_discovery.py` | 398 | Forbidden features raise at schema construction. Frozen before description. |
 | 4.16 | `native_response.py` | 369 | Each horizon written once, with its own at-risk denominator. |
-| §2 | `native_session.py` | 332 | D6a+D6b. Boundaries exchange-local, so they survive DST. Segment is the CME trade date. Phase from the settlement window and session hours. Non-monotonic input refused. |
+| §2 | `native_session.py` | 417 | D6a+D6b. Boundaries exchange-local, so they survive DST. Segment is the CME trade date. Phase from the settlement window and session hours. Non-monotonic input refused. CME holiday calendar consulted; a shortened session refuses rather than answering from ordinary hours. |
 | §5/§6 | `native_calculation_runner.py` | 519 | Seven layers, eight gates, no partial promotion. |
 | — | `native_staging.py` | 195 | The spawn contract. A missing or empty principal artifact is a HARD failure, never zero findings. |
 | — | `periodic_checkpointer.py` | 380 | Save points on record or clock interval, refused mid-group. |
@@ -287,7 +287,7 @@ Sections 4.1-4.4 already existed in `a_memory_member_first_recalculation_2026082
 ran the full roster: 5,667,689 records into 4,256,603 groups, 4,758 candidate families, in
 2,985s, with `daily_averaged_companion_verification: EXACT_MATCH`.
 
-**522 tests** as of 2026-08-29.
+**529 tests** as of 2026-08-29 (522 + 7 for the exchange holiday calendar).
 
 Tests are one file per module under `frankie_raw_mbo_benchmark/tests/`, plus
 `test_open_world_growth.py` (the vocabulary must grow) and
@@ -314,10 +314,16 @@ runs, but the claim as written was wrong. No driver feeds the sixteen sections.
    cost of the canonical detector: 88s over the full roster.
 
    **STILL OPEN, and the first item is NOT mechanical:** sections 4.6 to 4.16 are closed at
-   boundaries but never fed. `LadderCalculator`, `RecurrenceCalculator` and
-   `LineageCalculator` expose no ingest method at all, and `AbsorptionCalculator.score`,
-   `DipoleCalculator.observe_path` and `ExhaustionCalculator.enter_phase` take constructed
-   domain objects. **The contract specifies the CALCULATION, not the input event** - 4.10
+   boundaries but never fed. **Correction to the previous version of this file:** it said
+   `LadderCalculator`, `RecurrenceCalculator` and `LineageCalculator` "expose no ingest
+   method at all". That is wrong - they expose `observe`, `observe_sequence` and
+   `observe_node` respectively, and a session spent adding ingest methods would be spent
+   rebuilding what is there. The gap is UNIFORM across all eleven sections and is one level
+   up: every ingest point takes a CONSTRUCTED DOMAIN OBJECT - a `LadderTransition`, a
+   `Sequence[Occurrence]`, a `LineageNode` plus its `LineageGraph`, a `RunwayPressure` for
+   `AbsorptionCalculator.score`, and likewise for `DipoleCalculator.observe_path` and
+   `ExhaustionCalculator.enter_phase` - and **nothing anywhere turns raw MBO events into
+   those objects.** **The contract specifies the CALCULATION, not the input event** - 4.10
    says "construct a complete causal runway for each candidate" without defining a
    candidate. Feeding these means deciding what counts as a runway, a dipole path, a lineage
    node and a ladder snapshot in raw MBO, which shapes what the benchmark reports and should
@@ -338,8 +344,23 @@ runs, but the claim as written was wrong. No driver feeds the sixteen sections.
    escape routes are closed: a wrong value mismatches, and writing member rows while
    reporting NO assignment fails the same gate. `session_strata` defaults to **True**, so
    forgetting leaves the check on; `make_run` in the runner tests opts out explicitly.
-5. **Wire an exchange holiday calendar.** `native_session` consults none. The roster spans
-   no holiday so nothing is wrong today, but any wider window needs it.
+5. ~~**Wire an exchange holiday calendar.**~~ **DONE 2026-08-29** (Greg: *"we follow cme
+   trading day schedule"*). `native_session.is_trading_day` reads the CME energy holiday
+   class from `plant_calendar`, which generates it from RULES - necessary, because the
+   roster year is 2021 and `flow_calendar.CME_HOLIDAYS` starts at 2025-09-01, so a table
+   lookup would have answered "not a holiday" for every date in the source window. The
+   rules reproduce all 16 committed entries with 0 mismatches. A `full_closure` is not a
+   trade date and is skipped by the same loop that skips a Saturday; the Christmas-evening
+   reopen carrying the NEXT trade date falls out of the existing reopen rule rather than a
+   clause. A `partial_session` / `early_close` IS a trade date - `flow_calendar` calling a
+   partial session "not a business day" is the SETTLEMENT-counting sense, and conflating it
+   with the trading-day sense would move every expiry-adjacent segment by a day.
+   **`phase_within` REFUSES on a shortened date** rather than answering from ordinary
+   hours: the shortened close time is recorded nowhere in this repository, and a
+   `partial_session` runs no settlement cycle at all, so there is no correct carried label
+   to return. The roster contains no holiday, so this raises nowhere in the launch window
+   and no value the run uses changed - verified by executing the traversal over the roster
+   before and after. **The remaining declared gap is the shortened close TIME.**
 
 ## 9. Identity values — do not re-derive, do not guess
 

@@ -36,10 +36,15 @@ date's ordinal rather than a second, competing anchor. The 16:00-17:00 CT halt w
 belongs to the OUTGOING trade date: the withdrawal group is the terminal event of the
 session it liquidates, not the first event of the next one.
 
-**Not handled: exchange holidays.** A CME holiday shifts trade dates, and no holiday
-calendar is consulted here. The roster (2021-10-01 to 10-05) contains none - Columbus Day
-was 10-11 - so this is a declared gap rather than a latent bug, and it must be closed before
-this module is used on any window that spans one.
+**Exchange holidays are consulted** (closed 2026-08-29; Greg: "we follow cme trading day
+schedule"). `is_trading_day` reads the CME energy holiday class from `plant_calendar`, which
+generates it from rules rather than a date table - necessary here, because the roster year
+is 2021 and the committed table starts in 2025. A `full_closure` is not a trade date and is
+skipped by the same loop that skips a Saturday. A `partial_session` or `early_close` IS a
+trade date, because the book opens; but its CLOSE TIME is recorded nowhere in this
+repository and a partial session runs no settlement cycle at all, so `phase_within` refuses
+on those dates instead of answering from the ordinary hours. The roster contains no holiday,
+so nothing in the launch window raises.
 
 **Phase (D6b)** is derived from the same authority. Every boundary below is stated by the
 exchange, none is fitted to our tape:
@@ -59,14 +64,16 @@ states it in rather than converted, so neither drifts on its own.
 that way: a novel phase rounded into the nearest carried label looks like a confirmation of
 the label rather than a discovery.
 
-**Not handled, declared rather than latent:** exchange holidays (no calendar is consulted;
-the roster contains none), and the special settlement procedure the same document applies on
-the last two trading days of the front month.
+**Not handled, declared rather than latent:** the shortened close time on a
+`partial_session` / `early_close` (refused rather than guessed, above), and the special
+settlement procedure the same document applies on the last two trading days of the front
+month.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta, timezone
+from functools import lru_cache
 from typing import Any, Iterable, Iterator, Mapping
 from zoneinfo import ZoneInfo
 
@@ -98,6 +105,14 @@ CARRIED_PHASES = (PRE_OPEN, PRE_SETTLEMENT, SETTLEMENT, POST_SETTLEMENT, POST_CL
 SATURDAY = 5
 NS_PER_SECOND = 1_000_000_000
 EPOCH = date(1970, 1, 1)
+
+
+FULL_CLOSURE = "full_closure"
+PARTIAL_SESSION = "partial_session"
+EARLY_CLOSE = "early_close"
+
+SHORTENED_CLASSES = frozenset({PARTIAL_SESSION, EARLY_CLOSE})
+"""Classes on which the exchange closes before 16:00 CT. The trade date still exists."""
 
 
 class SessionError(ValueError):
@@ -156,11 +171,18 @@ def trade_day(ts_ns: int) -> date:
     The weekend roll is the same rule continued rather than a second one - no trade date
     falls on a Saturday or Sunday, so a candidate landing there advances to the Monday. That
     is what makes the Sunday 17:00 CT reopen carry Monday's date.
+
+    A CME `full_closure` advances by that identical rule: it is not a trade date either, so
+    it is skipped rather than special-cased. This is what makes the Christmas-evening reopen
+    fall out instead of needing a clause - an instant at 18:00 CT on a closed Christmas is
+    already past that day's reopen, so the candidate has advanced to the 26th before the
+    skip loop is reached, and those trades carry the 26th, which is the trade date they
+    settle into.
     """
     ts_ns = int(ts_ns)
     day = local_date(ts_ns)
     candidate = day + timedelta(days=1) if ts_ns >= reopen_instant_ns(day) else day
-    while candidate.weekday() >= SATURDAY:
+    while not is_trading_day(candidate):
         candidate += timedelta(days=1)
     return candidate
 
@@ -178,7 +200,28 @@ def phase_within(ts_ns: int, day: date) -> str:
     traversal is 4.26M groups: the streaming path resolves it once and passes it here.
     Ordered from the outside in - before the session opened, after it closed, then the
     settlement window and the two legs around it.
+
+    REFUSES on a shortened trade date, rather than answering from the ordinary hours. Two
+    independent facts are missing, and each alone would make the answer wrong:
+
+    * The close is earlier than 16:00 CT and no source in this repository records by how
+      much. Reusing 16:00 would put `POST_CLOSE` hours late - present, typed, plausible and
+      wrong, which is the S108 off-instrument and S109 `session_b_share` shape exactly.
+    * On a `partial_session` the exchange runs NO settlement cycle at all. The three
+      settlement-derived phases do not merely shift, they do not exist, so there is no
+      correct carried label to return. Rounding into the nearest one would be the failure
+      the open-world rule names: a novel state reported as a confirmation of a carried one.
+
+    The roster (2021-10-01 to 10-05) contains no such date, so this raises nowhere in the
+    launch window. It converts a latent wrong answer into a loud one for any wider window.
     """
+    klass = holiday_class(day)
+    if klass in SHORTENED_CLASSES:
+        raise SessionError(
+            f"{day.isoformat()} is a CME {klass}; its close time is not recorded in this "
+            "repository and a partial_session has no settlement cycle, so no phase can be "
+            "resolved from the ordinary 16:00 CT / 14:28 ET boundaries"
+        )
     if ts_ns < session_open_ns(day):
         return PRE_OPEN
     if ts_ns >= close_instant_ns(day):
@@ -204,6 +247,48 @@ def continuity_segment(ts_ns: int) -> int:
 def segment_of(day: date) -> int:
     """`continuity_segment` for a caller that already knows the trade date."""
     return (day - EPOCH).days
+
+
+@lru_cache(maxsize=None)
+def _holiday_classes(year: int) -> Mapping[str, str]:
+    """CME energy holiday classes for `year`, keyed by ISO date.
+
+    Sourced from `plant_calendar.holidays`, which generates them from RULES - the nth
+    weekday, the observation rule, and the computus for Good Friday - rather than from a
+    date table. That matters here for two reasons. The roster year is 2021 and
+    `flow_calendar.CME_HOLIDAYS` only begins at 2025-09-01, so a table lookup would report
+    "not a holiday" for every date in the source window: present, boolean and wrong, which
+    is the S112 finding about a table that runs out. And the rules are verified - they
+    reproduce all 16 committed entries with zero mismatches, and additionally generate four
+    real early closes the hand-kept table omits.
+
+    Imported lazily because `plant_calendar` mutates `sys.path` at import time; the cache
+    means that happens once per year of the window rather than per group.
+    """
+    from research.kalshi.plant_calendar import holidays as _rule_holidays
+
+    return {iso: cls for iso, (_name, cls) in _rule_holidays(year).items()}
+
+
+def holiday_class(day: date) -> str | None:
+    """The CME energy holiday class of `day`, or None on an ordinary day."""
+    return _holiday_classes(day.year).get(day.isoformat())
+
+
+def is_trading_day(day: date) -> bool:
+    """Whether the exchange opens a book bearing `day` as its trade date.
+
+    A `full_closure` has no Globex session at all, so it is not a trade date and carries no
+    continuity segment - the same status as a Saturday, reached by the same rule.
+
+    A `partial_session` or `early_close` IS a trading day: the book opens and trades. Note
+    `flow_calendar` calls a partial session "NOT a business day", which is the
+    SETTLEMENT-counting sense used for expiry arithmetic. This module segments an order
+    book, so the question is whether the book is open, and it is. Business day and trading
+    day are different predicates and conflating them would move every expiry-adjacent
+    segment by a day.
+    """
+    return day.weekday() < SATURDAY and holiday_class(day) != FULL_CLOSURE
 
 
 def group_event_ns(group: Mapping[str, Any]) -> int:
