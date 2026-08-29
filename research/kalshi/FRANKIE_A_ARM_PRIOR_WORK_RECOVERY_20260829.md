@@ -134,6 +134,153 @@ none of the above has been exercised on real data.
 
 ---
 
-## A. Exhaustion (4.10), C. Dipole (4.12), D. Duration (4.16)
+## A. Exhaustion (4.10) - RECOVERED
 
-Recovery in flight. Sections to be appended as they land.
+**A chain is an ordered sequence of detected exhaustion EVENTS inside one trading week**, and
+membership is defined by surviving inherited predictive information, not by structure.
+`NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json:104, 37, 40`. The stream is the WEEK: a date
+change, midnight, HE24->HE1 or a file boundary *"can never create a reset by itself"*
+(`AFTERMATH_CAUSAL_VALIDATION_FREEZE_20260817.json:57`).
+
+**The unit is a DIPOLE EVENT - a flow spike - not a price level, an order or a participant.**
+Detector: local `|roll20|` max over +/-5s, above the day's 85th percentile, 45s refractory,
+ranked by pre-only prominence (`CHAIN_STUDY_CONTRACT:18-23`;
+`ng_dipole_native_shape_audit.py:97`). **My proposal made the runway a price level. That is a
+different object at a different scale** - roughly 3,429 events in the frozen ledger against
+3,094,296 F_LAST groups on two October days.
+
+**The runway is `t0 -> dynamic endpoint`, and the endpoint is the frozen COMPLETION rule:**
+*"first three consecutive causal seconds after t0 with oriented roll20 <= 0"*, with
+`maximum_duration_seconds: null`, `hardcoded_end_time: false`, and *"If termination never
+occurs before available raw data ends, mark endpoint censored. **Never manufacture an
+endpoint.**"* (`AFTERMATH_FREEZE:15-22`). It records **structural onset AND causal
+confirmation** separately - exactly the two-timestamp structure `RunwayPhase` needs, and it is
+threshold-free in the way that matters: no duration cap, no clock.
+
+**BIRTH = a chain reaching depth D, and "extension" is its synonym** (`CHAIN_BIRTH_V2:17-19`),
+not a later phase. **PREBIRTH is a timing REGION, never a phase**, with its own registry group.
+
+**A/B/C families and A-fast-collapse / A-persistent are FROZEN AND HASH-BOUND** - a 78-feature
+vector over the oriented `t-60..0` curve, counts A=3235 / B=72 / C=122, classifier SHA
+`698b956f...`, `no refit`. **B's locality rule was REFUTED on holdout** (alignment ~51/49/51/55%)
+and must not be carried forward. **P/O/S/X are AFTERMATH states**, explicitly *"benchmark/
+post-hoc interpretation only; never a phase-1 chain cell or boundary rule"*
+(`CHAIN_STUDY_CONTRACT:76-84`).
+
+## C. Dipole (4.12) - RECOVERED
+
+**A dipole is a FLOW object, not book geometry**: the trailing-20-second signed aggressor-volume
+imbalance at 1s resolution, `(buy-sell)/(buy+sell)`, trade side inferred Lee-Ready off the
+concurrent top-of-book mid (`ng_dipole_native_shape_audit.py:73-89`). Its two poles are BUY vs
+SELL aggressor volume. The book is a **separate companion channel, never the dipole itself**
+(`ng_dipole_runway_audit.py:313`).
+
+**"Geometry" is a term of art: the SHAPE OF THE PRE-EVENT CURVE IN TIME** - a 61-sample oriented
+window reduced to 78 features. There is **no spatial or price-ladder axis in it at all**.
+
+**SAME / FLIP already exists and means something else entirely:** *"`SAME` / `FLIP` refers to
+current exhaustion polarity relative to the latest predecessor"*
+(`CHAIN_PHASE2_MODULE_NOVELTY_FINDINGS_20260818.md:14`). It is a chain-lineage TEMPORAL relation,
+frozen with committed counts - **1,546 FLIP / 1,883 SAME of 3,429** - asserted as a hard gate in
+four separate files. **The words are taken and the existing meaning has published results.**
+
+**The mirror is ALREADY BUILT, and it is the side-swapped side string**, not a price reflection:
+`mirror_identity()` in `a_memory_member_first_recalculation_20260828.py:92-102`, emitting
+`mirror_pair_key` and `orientation in {CANONICAL, MIRROR}`, already computed for every open-world
+member with 966 mirror-ready keys, and already nominated as the basis for this very section:
+*"`ABBN`/`BAAN` ... form a native side-resolved basis for opposing-pressure, direction-change,
+and signed-dipole research"*. **That is what `mirror_signed_flow` should be.** My price-ladder
+reflection occurs in exactly one file in the repo - my own proposal.
+
+**And `WITH_CURRENT` / `AGAINST_CURRENT` already occupies the "orientation" role**
+(`MODULE_NOVELTY_FINDINGS:16-17`).
+
+## D. Duration (4.16) - RECOVERED, AND THIS IS THE BIGGEST CORRECTION
+
+**`t` IS A PRICE TICK, NOT A TIME UNIT.** `TICK = 0.001`; `3t/5t/8t/13t` are **ZigZag reversal
+thresholds in ticks**, and 358s / 993s / 1802s / 4386s are the MEDIAN DURATIONS of the legs
+those thresholds produce (`ng_dipole_runway_audit.py:22-23, 157-158`). So `A-persistent 8t =
+3455s` reads: for A-persistent events, the median duration of the attached ZigZag leg built on
+an 8-tick reversal threshold is 3,455 seconds. **It is a SCALE ladder, not a horizon grid.** I
+read it as time landmarks and proposed a percentage grid against it.
+
+**Greg's ruling restates a correction frozen on 2026-08-18.**
+`NG_EXHAUSTION_DURATION_TARGET_CORRECTION_20260818.md:5`: *"**Exhaustion is being studied as a
+duration / remaining-runway signal, not as a direction predictor.**"* The reusable object is
+`remaining_s = max(0, baseline_total_s - elapsed_since_t0_s)` against the dynamic endpoint, with
+censoring (`RUNWAY_CLOCK_V0_20260817.md`).
+
+**Do NOT reuse the curve.** *"Its full-curve RMSE/correlation scores are NOT a valid measure...
+The validated finding is runway/lifespan, not exact future price shape."*
+
+**AND THE FROZEN PROGRAM SOLVES THE CLOCK PROBLEM BETTER THAN MY PROPOSAL DID.** It *does* use
+absolute-second horizons - `5, 10, 20, 30, 60, 120, 300` - but anchored on the **dynamic
+episode endpoint, "never t0+60 by fiat"** (`AFTERMATH_FREEZE:38-46`). **The fix was never to
+abolish horizons; it was to move the ANCHOR to a structural endpoint.** That keeps horizons
+comparable across events, which my 25/50/75/100% milestones deliberately gave up. It also has
+`first_hit_times` - first +/-3t, +/-5t after the endpoint, *"scanned without an arbitrary
+duration cap; censor only when the available continuous market stream ends"* - a first-passage
+measure that is the natural companion to duration.
+
+---
+
+# THE SIX COLLISIONS BETWEEN THE FROZEN LEARNING AND THE BUILT SECTIONS
+
+These are the findings that matter, because none of them would fail - the numbers would just be
+a different quantity than the name says.
+
+**F1. `native_dipole`'s SAME/FLIP is a different variable from the frozen one, and cannot hold
+it.** The module says the two ways a mirrored structure relates to its counterpart
+(cross-sectional); frozen says polarity versus the latest predecessor (temporal). Worse,
+`DipolePath.__post_init__` refuses a path holding more than one orientation - and the frozen
+motifs (`OOSS->FLIP`, `SOOS->SAME`) are **sequences whose whole point is that orientation
+alternates**. A frozen chain motif cannot be expressed as a `DipolePath` at all.
+
+**F2. THREE mirror vocabularies now exist over one set of facts** - `mirror_identity()`'s
+side-swap (built and ran), `native_dipole.orientation`, and my proposal. Contract 4.4 mandates
+exactly one mechanically defined mirror key. **This is the `_family_id` defect at project scale
+and it is already live in committed code, not just in a proposal.**
+
+**F3. 4.16's horizon grid is a wall clock the frozen program forbids** - *"Timing is an output,
+not a predeclared input grid"* - but the frozen fix is a better one than mine: same absolute
+horizons, anchored on the structural endpoint.
+
+**F4. `PHASE_INDEX` is a 2026-08-28 CONTRACT INVENTION, not recovered learning.**
+`FIRST_DEVIATION` and `INFLECTION` occur NOWHERE in the frozen corpus. And two of its phases
+collide with frozen terms: `EXTENSION` is intra-runway here but IS CHAIN BIRTH there;
+`REVERSAL` is a terminal phase here but is `O`, one of four aftermath states, there. So a
+`RunwayPhase` sequence and a P/O/S/X motif describe one object in two vocabularies - and
+`native_exhaustion.SEED_STATES` already carries P/O/S/X in the state slot, so both live inside
+one dataclass with no declared relation.
+
+**F5. THE REASON THE SECTIONS WERE NEVER FED.** The frozen candidate is a 1-second flow event
+needing a per-second roll20 series over a day; the built candidate is a nanosecond F_LAST group.
+The registry REQUIRES the bridge - `derived_roll20_and_dipole_state`, `legacy_per_second_roll20`,
+`derived_open_world_predecessor_state`, all CAUSAL_STREAM_REQUIRED - and **no code in
+`frankie_raw_mbo_benchmark/` computes roll20 or any dipole from the MBO stream.** The only
+`roll20` references are layer-name strings in the gate. **The frozen substrate is specified as
+required input and was never built. That is why 4.10, 4.11 and 4.12 had nothing to feed them,
+and no adapter on the F_LAST unit fixes it.**
+
+**F6. `DipoleStage` types the dipole as a book object** - `bid_depth`, `ask_depth`,
+`normalized_imbalance` from DEPTH - while the frozen dipole is a trade-flow ratio in [-1,+1].
+Feeding depth-derived orientation into a section named for the frozen dipole is the
+"present, typed, in range and wrong" failure exactly.
+
+---
+
+# WHAT THIS MEANS FOR THE NEXT SESSION
+
+**Do not build the six adapters as specified.** F5 says the missing layer is not an adapter on
+the F_LAST group - it is the **per-second roll20 / dipole substrate**, which the registry
+requires and which does not exist. Building F_LAST-group adapters for 4.10/4.11/4.12 would
+produce a second vocabulary at the wrong scale and it would not fail.
+
+**The four proposals are withdrawn.** Every definition in them is either already frozen (and
+mine differs), or occupies a name that is taken. The honest remainder is small: MISSED (which
+does not exist), a negative class inside 4.11, and a ruling on whether `birth_recv_ns` carries
+the onset or the confirmation.
+
+**The one genuinely open design question for Greg** is whether an F_LAST-group-local dipole is
+admissible at all, given that every prior dipole result is per-second. If the answer is no,
+4.12 needs a second clock, not a definition.
