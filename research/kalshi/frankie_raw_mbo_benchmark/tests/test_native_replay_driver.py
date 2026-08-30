@@ -9,6 +9,7 @@ import unittest
 from datetime import datetime, timezone
 
 from research.kalshi.frankie_raw_mbo_benchmark import native_candidate as nc
+from research.kalshi.frankie_raw_mbo_benchmark import native_candidate_adapter as nca
 from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import (
     ACCEPTED,
     NativeCalculationRun,
@@ -396,6 +397,7 @@ class FedSectionsTest(unittest.TestCase):
             "4.13_lineage_nodes_observed": 6,
             "4.14_recurrence_sequences": 2,
             "candidate_unit_events": 0,
+            "4.10_4.11_4.12_episode_rows": 0,
         })
 
     def test_every_fed_section_produces_averaged_companions(self):
@@ -484,6 +486,7 @@ class FedSectionsTest(unittest.TestCase):
             "4.13_lineage_nodes_observed": 0,
             "4.14_recurrence_sequences": 0,
             "candidate_unit_events": 0,
+            "4.10_4.11_4.12_episode_rows": 0,
         })
         sections = [row.get("section") for row in result["layers"]["averaged_companions"]["rows"]]
         for section in ("4.8", "4.9", "4.13", "4.14"):
@@ -608,3 +611,129 @@ class CandidateUnitFedTest(unittest.TestCase):
         for row in rows:
             with self.subTest(second=row["event_second"]):
                 self.assertLessEqual(row["event_second"], last_seen)
+
+
+class CandidateEpisodeFedTest(CandidateUnitFedTest):
+    """4.10, 4.11 and 4.12 on the candidate unit, fed by the traversal.
+
+    Two bursts, not one: 4.12's orientation is polarity against the LATEST PREDECESSOR, so a
+    single candidate has nothing to be SAME or FLIP against and its dipole path is correctly
+    WITHHELD rather than given a fabricated orientation. A one-candidate fixture therefore
+    proves 4.10 and 4.11 and says nothing about 4.12, which is why this subclass exists.
+    """
+
+    SECOND_SPIKE = 320
+
+    def _stream(self):
+        for row in super()._stream():
+            offset = (int(row["ts_event"]) - at("2021-10-04T13:00:00")) // NS_PER_SECOND
+            if offset == self.SECOND_SPIKE and row["action"] == "T":
+                row["size"] = 100
+            yield row
+
+    def test_the_runway_carries_a_content_derived_open_world_state(self):
+        """A flow spike is not P/O/S/X, and forcing it into one would read as a confirmation."""
+        _, result = self._run()
+        summary = result["layers"]["exact_lifecycle_and_runway_ledger"]["section_summaries"]["4.10"]
+        self.assertGreater(summary["runways_opened"], 0)
+        self.assertGreater(summary["open_world_state_count"], 0)
+
+    def test_recognition_is_honestly_h_plus_n_and_never_backdated(self):
+        """PRIOR is unreachable for a candidate whose birth IS its own detection."""
+        _, result = self._run()
+        summary = result["layers"]["exact_lifecycle_and_runway_ledger"]["section_summaries"]["4.11"]
+        self.assertEqual(summary["outcome_counts"]["PRIOR"], 0)
+        self.assertGreater(summary["outcome_counts"]["H+N"], 0)
+        episodes = result["traversal"]["candidate_episodes"][0]
+        self.assertFalse(episodes["prior_reachable"])
+
+    def test_the_second_candidate_has_a_predecessor_so_4_12_gets_a_path(self):
+        _, result = self._run()
+        episodes = result["traversal"]["candidate_episodes"][0]
+        self.assertGreaterEqual(
+            episodes["orientation_counts"]["SAME"] + episodes["orientation_counts"]["FLIP"], 1,
+            "no candidate found a predecessor; 4.12 cannot be exercised by this fixture",
+        )
+        summary = result["layers"]["exact_lifecycle_and_runway_ledger"]["section_summaries"]["4.12"]
+        self.assertGreater(summary["paths_seen"], 0)
+        self.assertGreater(summary["stages_seen"], 0)
+
+    def test_a_first_candidate_never_receives_a_fabricated_orientation(self):
+        _, result = self._run()
+        episodes = result["traversal"]["candidate_episodes"][0]
+        self.assertEqual(episodes["orientation_counts"]["NO_PREDECESSOR"], 1)
+        self.assertEqual(episodes["dipole_paths_withheld_no_predecessor"], 1)
+
+
+class FullDepthRetentionTest(unittest.TestCase):
+    """D60/D61: the frame's full-depth book must reach the member row and 4.12's stages.
+
+    Greg: "mbo is deeper than 10 levels isn't it?" It is - market-by-order is every resting
+    order at every level, and MBP-10 is a ten-level aggregate of it. Two defects followed
+    from that question:
+
+    1. `_on_group` copied a HARDCODED list of eleven frame keys into the member row, written
+       against the base adapter's frame. `FullCaptureAdapter` adds five more, including
+       `book_full` - which is exactly what D61 exists to restore - and every one was dropped
+       one line after being restored. Second time this shape has occurred.
+    2. 4.12's stage depths were read off the ten-level legacy projection while the full book
+       sat in the same frame, and prices were cast with `int(3.499)` = 3.
+    """
+
+    LEVELS = 14
+
+    def _run(self):
+        driver = make_driver(total_mbo_records=self.LEVELS * 2)
+        base = at("2021-10-04T13:00:00")
+        rows, seq = [], 0
+        for level in range(self.LEVELS):
+            for side, price in (
+                ("B", 3_499_000_000 - level * 1_000_000),
+                ("A", 3_501_000_000 + level * 1_000_000),
+            ):
+                row = record(seq=seq, event_ns=base, order_id=100 + seq, action="A",
+                             side=side, last=False)
+                row["price"] = price
+                row["size"] = 3
+                rows.append(row)
+                seq += 1
+        rows[-1]["flags"] = F_LAST
+        driver.consume(rows)
+        return driver, driver.finalize()
+
+    def test_every_frame_key_reaches_the_member_row(self):
+        """No hardcoded list. A key a future adapter adds arrives instead of vanishing."""
+        driver, result = self._run()
+        carried = set(result["traversal"]["frame_keys_carried"])
+        for restored in ("book_full", "activity_full", "integrity_delta", "capture_observations"):
+            with self.subTest(key=restored):
+                self.assertIn(restored, carried, f"{restored} was restored by D61 and dropped")
+
+    def test_the_full_book_is_deeper_than_the_ten_level_projection(self):
+        """The measurement behind the fix, kept as the instance."""
+        driver, _ = self._run()
+        book = driver.counters.member_rows[-1]["book_full"]
+        self.assertEqual(book["bid_price_level_count_full"], self.LEVELS)
+        self.assertGreater(book["bid_depth_full"], book["bid_depth_n"])
+        self.assertEqual(book["bid_depth_n"], 30)      # ten levels x 3
+        self.assertEqual(book["bid_depth_full"], 42)   # fourteen levels x 3
+
+    def test_the_book_state_the_dipole_sees_is_the_full_book(self):
+        driver, _ = self._run()
+        state = driver._latest_book
+        self.assertEqual(state.depth_scope, "FULL_BOOK")
+        self.assertEqual(state.bid_level_count, self.LEVELS)
+        self.assertEqual(state.bid_depth, 42)
+
+    def test_a_price_is_not_truncated_to_whole_dollars(self):
+        """`int(3.499)` was 3 - three orders of magnitude wrong, silently, on every stage."""
+        driver, _ = self._run()
+        self.assertGreater(driver._latest_book.price_raw, 1_000_000_000)
+
+    def test_the_ten_level_fallback_declares_itself(self):
+        """A caller with only the legacy row gets a value that says what it is."""
+        driver, _ = self._run()
+        legacy = [r for r in driver.counters.legacy_rows if r.get("bid_px_00")]
+        if legacy:
+            projected = nca.BookState.from_legacy_row(legacy[-1])
+            self.assertEqual(projected.depth_scope, "TOP_TEN_PROJECTION")

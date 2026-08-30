@@ -48,6 +48,11 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import 
     RunIdentity,
 )
 from research.kalshi.frankie_raw_mbo_benchmark import native_candidate, native_roll20
+from research.kalshi.frankie_raw_mbo_benchmark.native_candidate_adapter import (
+    BookState,
+    CandidateEpisodeTracker,
+    EMPTY_BOOK,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import ClockCalculator, member_clock_row
 from research.kalshi.frankie_raw_mbo_benchmark.native_session import (
     NS_PER_SECOND,
@@ -165,8 +170,14 @@ class DriverCounters:
     invocation_cutoffs: list[dict[str, Any]] = field(default_factory=list)
     save_points: int = 0
     candidates_detected: int = 0
+    episode_rows: int = 0
+    """4.10/4.11/4.12 rows: one per episode opened and one per episode ended."""
+    instrument_id: int = 0
+    frame_keys_carried: set = field(default_factory=set)
+    """Every frame key that reached a member row. Named so a new one cannot vanish quietly."""
     """4.10-4.12/4.16's unit: dipole flow events detected causally from the roll20 substrate."""
     candidate_summaries: list[dict[str, Any]] = field(default_factory=list)
+    episode_summaries: list[dict[str, Any]] = field(default_factory=list)
     """One per continuity segment, so a segment that found NOTHING is still visible as one."""
     legacy_rows_retained: int = 0
     """Legacy rows RETAINED, counted whether they went to a list or to a sink."""
@@ -310,6 +321,19 @@ class NativeReplayDriver:
         self.candidate_min_observations = candidate_min_observations
         self.detector = self._new_detector(0)
         self._last_complete_second: int | None = None
+        # 4.10 / 4.11 / 4.12 ride the candidate unit as ONE vocabulary - a runway is opened by
+        # a candidate's birth, recognition is measured against that birth, and the dipole
+        # path's stages are the runway's. Three separate adapters would each have to answer
+        # "what is a birth" and would each answer it.
+        self.episodes = CandidateEpisodeTracker(
+            exhaustion=run.exhaustion,
+            recognition=run.recognition,
+            dipole=run.dipole,
+            source_role=self.identity_role,
+        )
+        self._latest_book = EMPTY_BOOK
+        self._episode_context = ("", "", "")
+        self._candidate_second = 0
 
         # 4.13 is the one fed section whose state is not held by its calculator:
         # `LineageCalculator.observe_node` takes the graph as an argument, so the traversal
@@ -340,6 +364,12 @@ class NativeReplayDriver:
         """
         # D60: each of these RETURNS the exact rows it censored, and every call site used to
         # drop the return. They are the only emission point for a censored lifecycle.
+        # EPISODES FIRST. They hold open 4.10 runways, and the fan-out below closes the
+        # exhaustion calculator - an episode closing after it raises "runway is not open".
+        # The ordering is a real dependency, not a preference.
+        if self._last_complete_second is not None:
+            self._retain_candidates(self.detector.finish(self._last_complete_second))
+            self._retain_episode_rows(self.episodes.close_segment(recv_ns))
         for section in ("queue", "replenishment", "exhaustion", "response"):
             self._retain_lifecycle(
                 getattr(self.run, section).close_continuity_segment(
@@ -351,10 +381,13 @@ class NativeReplayDriver:
         self._close_lineage(
             segment=segment, censored_status=CENSORED_SEGMENT_END, occasion="SEGMENT_CLOSE"
         )
-        if self._last_complete_second is not None:
-            self._retain_candidates(self.detector.finish(self._last_complete_second))
         self.counters.candidate_summaries.append(self.detector.summary())
+        self.counters.episode_summaries.append(self.episodes.summary())
         self.detector = self._new_detector(segment + 1)
+        self.episodes = CandidateEpisodeTracker(
+            exhaustion=self.run.exhaustion, recognition=self.run.recognition,
+            dipole=self.run.dipole, source_role=self.identity_role,
+        )
         self._last_complete_second = None
 
     def _close_lineage(self, *, segment: int, censored_status: str, occasion: str) -> None:
@@ -413,8 +446,33 @@ class NativeReplayDriver:
             self._last_complete_second = current_second - 1
             return
         for second in range(self._last_complete_second + 1, current_second):
-            rows = self.detector.observe(second, self.roll20.rolling_value(second))
-            self._retain_candidates(rows)
+            value = self.roll20.rolling_value(second)
+            signed, polarity = self._flow_at(second, value)
+            # Episodes advance on EVERY completed second, not only on the ones that produced
+            # a candidate: a runway's persistence and its reversal are properties of the
+            # seconds in between, and skipping them would only ever find instant episodes.
+            self._retain_episode_rows(
+                self.episodes.advance(
+                    second, signed_flow=signed, polarity=polarity, book=self._latest_book
+                )
+            )
+            for candidate in self.detector.observe(second, value):
+                self.counters.candidates_detected += 1
+                self._retain_lifecycle(
+                    [candidate.as_dict()], section="candidate", occasion="CANDIDATE_LAWFUL"
+                )
+                source_day, family_id, session_phase = self._episode_context
+                self._retain_episode_rows([
+                    self.episodes.open(
+                        candidate,
+                        source_day=source_day,
+                        family_id=family_id,
+                        session_phase=session_phase,
+                        instrument_id=self.counters.instrument_id,
+                        book=self._latest_book,
+                        signed_flow=signed,
+                    )
+                ])
         self._last_complete_second = current_second - 1
 
     def _retain_candidates(self, candidates: Any) -> None:
@@ -423,6 +481,26 @@ class NativeReplayDriver:
             self._retain_lifecycle(
                 [candidate.as_dict()], section="candidate", occasion="CANDIDATE_LAWFUL"
             )
+
+    def _retain_episode_rows(self, rows: Any) -> None:
+        for row in rows or ():
+            self.counters.episode_rows += 1
+            self._retain_lifecycle([row], section="episode", occasion="CANDIDATE_EPISODE")
+
+    def _flow_at(self, second: int, value: float) -> tuple[int, int]:
+        """Absolute signed flow in lots, and polarity from the NORMALISED imbalance.
+
+        4.12 keeps these apart on purpose: normalised imbalance is relative and stays in
+        [-1,1], absolute depth is not, and neither may be derived from the other. The lot
+        count is the stage's `signed_flow`; the sign of roll20 is the direction.
+        """
+        window = native_roll20.DEFAULT_WINDOW
+        buys = sum(self.roll20.buy_volume_at(s) for s in range(second - window + 1, second + 1))
+        sells = sum(self.roll20.sell_volume_at(s) for s in range(second - window + 1, second + 1))
+        polarity = 0
+        if value == value:                      # NaN is no direction, never BALANCED
+            polarity = 1 if value > 0 else (-1 if value < 0 else 0)
+        return int(buys - sells), polarity
 
     def _retain_legacy(self, row: Mapping[str, Any]) -> None:
         """D60: every legacy row is kept. A sink changes where, never whether."""
@@ -469,6 +547,10 @@ class NativeReplayDriver:
             for legacy_row in legacy_rows:
                 self.counters.legacy_rows_seen += 1
                 self._legacy_pending.append(legacy_row)
+                # NOT the book state - that comes from `book_full` at group close, at full
+                # depth. The legacy row is a TEN-LEVEL projection and using it here truncated
+                # 4.12's stages by 29% on a fourteen-level fixture. Retained under D60 and
+                # consumed by the roll20 crosswalk; the book comes from the frame.
                 self._retain_legacy(legacy_row)
                 if self.legacy_sink is not None:
                     self.legacy_sink(legacy_row)
@@ -507,7 +589,7 @@ class NativeReplayDriver:
             second=stamp // NS_PER_SECOND,
         )
         self._legacy_pending = []
-        self._advance_candidates(stamp // NS_PER_SECOND)
+        self._candidate_second = stamp // NS_PER_SECOND
 
         source_day = _source_day(source_object)
         mark = self._mark_for(event_ns, recv_ns, source_day)
@@ -543,12 +625,34 @@ class NativeReplayDriver:
         )
         row["structure"] = structure
         row["snapshot_bootstrap_only"] = bool(frame.get("snapshot_bootstrap_only", False))
-        for carried in ("book", "activity", "integrity", "sequence", "ts_in_delta_ns",
-                        "publisher_id", "channel_id", "raw_symbol", "adapter_revision",
-                        "native_priority_id_exposed", "fifo_priority_reconstructed"):
-            if carried in frame:
-                row[carried] = frame[carried]
+        # D60, AND THE SECOND TIME THIS EXACT SHAPE HAS OCCURRED. This was a hardcoded list
+        # of eleven keys, written against the BASE adapter's frame. `FullCaptureAdapter`
+        # (D61) adds five more - `book_full` (the whole book, not the top ten levels),
+        # `activity_full`, `book_effects`, `integrity_delta` and `capture_observations` -
+        # which is precisely what D61 exists to restore, and this loop then discarded every
+        # one of them. The wrapper put the data back into the frame and the traversal threw
+        # it away one line later.
+        #
+        # So it no longer enumerates. Every frame key is carried, and anything new an adapter
+        # adds arrives automatically instead of being silently dropped until someone notices.
+        # `raw_actions` is excluded only because the member row already holds it.
+        for carried, value in frame.items():
+            if carried == "raw_actions" or carried in row:
+                continue
+            row[carried] = value
+            self.counters.frame_keys_carried.add(carried)
         row["instrument_id"] = int(envelope["instrument_id"])
+        self.counters.instrument_id = int(envelope["instrument_id"])
+        full_book = frame.get("book_full")
+        if isinstance(full_book, Mapping):
+            self._latest_book = BookState.from_full_book(full_book)
+        self._episode_context = (
+            source_day, str(structure["candidate_family_id"]), mark.session_phase
+        )
+        # AFTER the context exists. An episode opened without its stratum identity would
+        # carry empty strings into a stratum key, which is a key collision waiting to happen
+        # rather than a missing label.
+        self._advance_candidates(self._candidate_second)
         row["causal_availability_clock"] = envelope["causal_availability_clock"]
         self.counters.member_rows_retained += 1
         if self.sinks is None:
@@ -743,6 +847,11 @@ class NativeReplayDriver:
         at = recv_ns if recv_ns is not None else (self._last_recv_ns or 0)
         # D60: every one of these RETURNS the rows it censored at stream end, and the return
         # was dropped at all four call sites.
+        # Same dependency as at a segment boundary: open runways close before the calculator
+        # that holds them does.
+        if self._last_complete_second is not None:
+            self._retain_candidates(self.detector.finish(self._last_complete_second))
+            self._retain_episode_rows(self.episodes.close_segment(at))
         for section in ("queue", "replenishment", "exhaustion", "response"):
             self._retain_lifecycle(
                 getattr(self.run, section).finalize(recv_ns=at),
@@ -757,9 +866,8 @@ class NativeReplayDriver:
             censored_status=CENSORED_STREAM_END,
             occasion="STREAM_END",
         )
-        if self._last_complete_second is not None:
-            self._retain_candidates(self.detector.finish(self._last_complete_second))
         self.counters.candidate_summaries.append(self.detector.summary())
+        self.counters.episode_summaries.append(self.episodes.summary())
         result = self.run.finalize()
         result["traversal"] = {
             "groups_seen": self.counters.groups_seen,
@@ -781,10 +889,13 @@ class NativeReplayDriver:
                 "4.13_lineage_nodes_observed": self.counters.lineage_nodes_observed,
                 "4.14_recurrence_sequences": self.counters.recurrence_sequences,
                 "candidate_unit_events": self.counters.candidates_detected,
+                "4.10_4.11_4.12_episode_rows": self.counters.episode_rows,
             },
             # D66's second unit, reported per continuity segment. A segment that found NOTHING
             # is still a row here: absence is a result about that segment, not an omission.
             "candidate_detection": list(self.counters.candidate_summaries),
+            "candidate_episodes": list(self.counters.episode_summaries),
+            "frame_keys_carried": sorted(self.counters.frame_keys_carried),
             "lineage_signature": self.lineage_signature,
             "lineage_segment_scope": LINEAGE_SEGMENT_SCOPE,
             "legacy_rows_seen": self.counters.legacy_rows_seen,
