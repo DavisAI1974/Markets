@@ -51,7 +51,69 @@ jobs:
       SAMPLE_SECONDS: '30'
       MAX_LINES: '20000'
     steps:
+      - name: Probe the box by EXIT CODE alone, because output stopped coming back
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          # WHEN THE OUTPUT CHANNEL IS BROKEN, THE EXIT CODE IS THE ONLY BIT THAT ESCAPES.
+          #
+          # The monitor failed three times running with empty stdout AND empty stderr and
+          # ResponseCode 1 - including after its script was rewritten to echo read-only facts
+          # as its very first action with `set -e` removed. A script that cannot even emit its
+          # first echo has not merely failed; its output was never captured. The leading
+          # explanation is a full volume: SSM writes captured stdout and stderr to files under
+          # /var/lib/amazon/ssm, so a disk with no space returns exactly this - nothing, and a
+          # non-zero code.
+          #
+          # That hypothesis is untestable through stdout by construction, so this step does not
+          # try. It sends a command whose ANSWER IS ITS EXIT STATUS, and reads ResponseCode,
+          # which comes back through the control plane rather than through a file on the box:
+          #   40  more than 20 GiB free   - disk is not the problem, look elsewhere
+          #   41  1 to 20 GiB free        - filling, and the run is in danger
+          #   42  under 1 GiB free        - full, which explains everything above
+          #   1   something else entirely - not even this ran
+          # It cannot fail the job, because a failed probe is a datum and not an outcome.
+          python3 - <<'PY'
+          import json
+          import os
+          import shlex
+          from pathlib import Path
+
+          Path("/tmp/probe-params.json").write_text(
+              json.dumps({"commands": ["/bin/sh -c " + shlex.quote(os.environ["PROBE"])]}),
+              encoding="utf-8",
+          )
+          PY
+          command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "A-arm disk probe by exit code" \
+            --parameters file:///tmp/probe-params.json \
+            --timeout-seconds 120 \
+            --query 'Command.CommandId' --output text)"
+          aws ssm wait command-executed --command-id "$command_id" --instance-id "$INSTANCE_ID" || true
+          code="$(aws ssm get-command-invocation --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" --query ResponseCode --output text 2>/dev/null || echo unknown)"
+          status="$(aws ssm get-command-invocation --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || echo unknown)"
+          printf 'A_ARM_DISK_PROBE_STATUS=%s\nA_ARM_DISK_PROBE_CODE=%s\n' "$status" "$code"
+          case "$code" in
+            40) echo "A_ARM_DISK_VERDICT=OVER_20_GiB_FREE" ;;
+            41) echo "A_ARM_DISK_VERDICT=BETWEEN_1_AND_20_GiB_FREE_RUN_IN_DANGER" ;;
+            42) echo "A_ARM_DISK_VERDICT=UNDER_1_GiB_FREE_VOLUME_IS_FULL" ;;
+            43) echo "A_ARM_DISK_VERDICT=RUN_DIRECTORY_ABSENT" ;;
+            *)  echo "A_ARM_DISK_VERDICT=PROBE_ITSELF_DID_NOT_RUN" ;;
+          esac
+        env:
+          PROBE: |
+            free=$(df -P /opt/frankie-a-arm-run 2>/dev/null | awk 'NR==2{print $4}')
+            [ -z "$free" ] && exit 43
+            [ "$free" -gt 20971520 ] && exit 40
+            [ "$free" -gt 1048576 ] && exit 41
+            exit 42
+
       - name: Ensure the sampler is running, then report what it has seen
+        continue-on-error: true
         run: |
           set -euo pipefail
           python3 - <<'PY'
