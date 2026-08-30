@@ -5,7 +5,7 @@
 > This handoff supplies month-specific identities and exceptions only. If it conflicts with the canonical
 > procedure, stop and resolve the conflict explicitly rather than silently choosing one.
 
-**BRANCH:** `chatgpt/frankie-raw-mbo-benchmark-20260828` **TIP:** `cea7d0a` or later.
+**BRANCH:** `chatgpt/frankie-raw-mbo-benchmark-20260828` **TIP:** `4266a32` or later.
 **STATUS: NOTHING LAUNCHED. The roll20 substrate is BUILT, FED and RECONCILED.**
 653 tests in the package; `research/kalshi/tests/` has 7 PRE-EXISTING failures - not regressions.
 
@@ -65,7 +65,7 @@ existed, because both searches were for the name.
 ```
 git fetch origin chatgpt/frankie-raw-mbo-benchmark-20260828
 git checkout -B chatgpt/frankie-raw-mbo-benchmark-20260828 origin/chatgpt/frankie-raw-mbo-benchmark-20260828
-git log --oneline -1                                                  # 990d15f or later
+git log --oneline -1                                                  # 4266a32 or later
 python3 -m pytest research/kalshi/frankie_raw_mbo_benchmark/tests/ -q  # expect 653
 python3 -m pytest research/kalshi/tests/ -q                            # expect 7 PRE-EXISTING failures
 ```
