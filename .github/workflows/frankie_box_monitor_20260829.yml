@@ -58,7 +58,29 @@ jobs:
           import json, os, shlex
 
           remote = r'''
-          set -eu
+          # NO `set -e`, AND THE FACTS COME FIRST. This monitor failed twice in a row with
+          # empty stdout, empty stderr and exit 1, which told us nothing at all - and it told
+          # us nothing precisely because its first action was a WRITE (`sudo tee` of the
+          # sampler) under `set -e`. A diagnostic that dies before it reports is worse than
+          # no diagnostic, because a silent failure reads like a dead box.
+          #
+          # So: three read-only facts, unconditionally, before anything can go wrong. Disk
+          # first, because a full volume is the one failure that would explain a write dying
+          # with no message AND would mean the traversal is in trouble too.
+          set -u
+          echo "----BEGIN_FACTS----"
+          echo "DF:"
+          df -Ph / /opt/frankie-a-arm-run 2>&1 | sed 's/^/  /' || true
+          echo "MEM:"
+          awk '/^MemTotal:|^MemAvailable:|^SwapTotal:|^SwapFree:/{printf "  %s %s kB\n", $1, $2}' \
+            /proc/meminfo 2>&1 || true
+          echo "TOP:"
+          ps -eo pid,rss,pcpu,etime,comm --sort=-rss --no-headers 2>&1 | head -6 | sed 's/^/  /' || true
+          echo "RUNDIR:"
+          du -sh /opt/frankie-a-arm-run 2>&1 | sed 's/^/  /' || true
+          ls -1 /opt/frankie-a-arm-run 2>&1 | head -20 | sed 's/^/  /' || true
+          echo "----END_FACTS----"
+
           DIR=/opt/frankie_box_monitor
           LOG=/var/log/frankie_box_monitor.csv
           INTERVAL=__INTERVAL__
