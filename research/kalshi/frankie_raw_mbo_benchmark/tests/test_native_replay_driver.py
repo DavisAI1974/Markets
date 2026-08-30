@@ -400,8 +400,67 @@ class FedSectionsTest(unittest.TestCase):
             "4.10_4.11_4.12_episode_rows": 0,
             "4.16_response_tracks": 0,
             "4.7_replenishment_observations": 2,
+            "4.6_queue_rows_applied": 8,
+            "4.6_queue_terminals": 0,
             "candidates_without_stratum": 0,
         })
+
+    def test_the_queue_lane_applies_every_row_and_emits_no_terminal_it_did_not_see(self):
+        """4.6 reads what the BOOK did, so its ingest is rows applied, not groups closed.
+
+        Terminals are zero here on purpose and the number is load-bearing: this fixture
+        cancels order ids that were never added, so no lifecycle was ever born and none can
+        resolve. A lane that emitted a terminal for an unborn order would be inventing the
+        member row the exact ledger is built from. The add-then-cancel case is tested
+        separately, where a terminal MUST appear.
+        """
+        _, result = self._run()
+        fed = result["traversal"]["sections_fed"]
+        self.assertEqual(fed["4.6_queue_rows_applied"], 8)
+        self.assertEqual(fed["4.6_queue_terminals"], 0)
+        report = result["traversal"]["queue_observation"]
+        self.assertEqual(report["queue_scope"], "BIRTH_GROUP_STRATUM")
+        self.assertEqual(report["open_tracked_orders"], 0)
+        self.assertEqual(report["instruments"], [42])
+
+    def test_a_lifecycle_that_resolves_inside_a_group_reaches_the_exact_ledger(self):
+        """The one assertion that fails if `feed_group`'s return is dropped.
+
+        A dropped return costs nothing visible: the calculator still censors at the boundary,
+        the stratified averages still print, and the member row beneath them is simply gone.
+        So this asserts the exact row - with the basis that decided FILLED against CANCELLED -
+        is in the lifecycle ledger, not that a count went up.
+        """
+        driver = make_driver(total_mbo_records=4)
+        base = at("2021-10-04T13:00:00")
+        groups = (
+            (("A", 811, False), ("T", 812, True)),
+            (("A", 813, False), ("C", 811, True)),
+        )
+        seq = 0
+        for group_index, group in enumerate(groups):
+            batch = []
+            for offset, (action, order_id, last) in enumerate(group):
+                batch.append(record(
+                    seq=seq,
+                    event_ns=base + (group_index * 10 + offset) * NS_PER_SECOND,
+                    order_id=order_id, action=action, side="B", last=last,
+                ))
+                seq += 1
+            driver.consume(batch)
+        result = driver.finalize()
+
+        self.assertEqual(result["traversal"]["sections_fed"]["4.6_queue_terminals"], 1)
+        rows = [row for row in result["layers"]["exact_lifecycle_and_runway_ledger"]["rows"]
+                if row.get("emitting_section") == "queue"
+                and row.get("emitted_on") == "GROUP_CLOSE"]
+        self.assertEqual(len(rows), 1)
+        row = rows[0]
+        self.assertEqual(row["terminal_basis"], "NO_OWN_FILL_PENDING_AT_REMOVAL")
+        self.assertEqual(row["queue_scope"], "BIRTH_GROUP_STRATUM")
+        # Born in group 1, ended in group 2. Equal indexes would mean the adapter had been
+        # rebuilt between groups, which reports every order as front-of-queue.
+        self.assertLess(row["birth_group_index"], row["terminal_group_index"])
 
     def test_every_fed_section_produces_averaged_companions(self):
         """Before the wiring each of these was zero, and the run was still ACCEPTED."""
@@ -492,6 +551,8 @@ class FedSectionsTest(unittest.TestCase):
             "4.10_4.11_4.12_episode_rows": 0,
             "4.16_response_tracks": 0,
             "4.7_replenishment_observations": 0,
+            "4.6_queue_rows_applied": 0,
+            "4.6_queue_terminals": 0,
             "candidates_without_stratum": 0,
         })
         sections = [row.get("section") for row in result["layers"]["averaged_companions"]["rows"]]

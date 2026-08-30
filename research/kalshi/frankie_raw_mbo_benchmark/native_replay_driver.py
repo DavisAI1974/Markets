@@ -51,6 +51,8 @@ from research.kalshi.frankie_raw_mbo_benchmark import native_candidate, native_r
 from research.kalshi.frankie_raw_mbo_benchmark.native_replenishment_adapter import (
     ReplenishmentObserver,
 )
+from research.kalshi.frankie_raw_mbo_benchmark.native_queue_adapter import QueueGroupAdapter
+from research.kalshi.frankie_raw_mbo_benchmark.native_rt_book import ReplayBook
 from research.kalshi.frankie_raw_mbo_benchmark.native_candidate_adapter import (
     BookState,
     CandidateEpisodeTracker,
@@ -178,6 +180,10 @@ class DriverCounters:
     candidates_detected: int = 0
     replenishment_observations: int = 0
     """4.7 removals and refills actually stated to the calculator, not horizons matured."""
+    queue_rows_applied: int = 0
+    """4.6 raw actions applied to the queue adapter's own book, one at a time."""
+    queue_terminals: int = 0
+    """4.6 lifecycles that RESOLVED inside a group. Censored ones come from the calculator."""
     candidates_without_stratum: int = 0
     """Candidates released before any group closed. Counted, never opened on empty strings."""
     response_tracks_opened: int = 0
@@ -361,6 +367,17 @@ class NativeReplayDriver:
         # `replenishment.advance`; nothing ever told the calculator that a removal or a
         # refill had happened, so it matured horizons for episodes that were never opened.
         self.replenishment_observer = ReplenishmentObserver()
+        # 4.6's OBSERVATION half. `QueueSurvivalCalculator` was reached only by
+        # `close_continuity_segment` and `finalize`, so it censored lifecycles nobody had
+        # opened - the same shape 4.7 was in. The adapter advances a book action by action
+        # and reports queue position from what the book DID, never from what a row said.
+        self.queue_adapter = QueueGroupAdapter()
+        # One book per instrument, owned HERE and handed back unchanged at every group: the
+        # adapter refuses a second book for an instrument it has already seen, because a book
+        # rebuilt between groups reports every resting order as front-of-queue, which is a
+        # number rather than a failure. It is deliberately NOT the replenishment observer's
+        # book - two consumers calling `apply` on one book would apply every row twice.
+        self._queue_books: dict[int, ReplayBook] = {}
 
         # 4.13 is the one fed section whose state is not held by its calculator:
         # `LineageCalculator.observe_node` takes the graph as an argument, so the traversal
@@ -412,6 +429,11 @@ class NativeReplayDriver:
             section="replenishment",
             occasion="SEGMENT_CLOSE",
         )
+        # AFTER the calculator censored, never instead of it. This releases the adapter's own
+        # tracking; skip it and the adapter goes on naming lifecycles the calculator has
+        # already closed, every one landing in `unknown_order_events` - a defect counter
+        # turned into noise. The adapter refuses the next group if this call is missed.
+        self.queue_adapter.close_continuity_segment(segment=segment)
         self._close_lineage(
             segment=segment, censored_status=CENSORED_SEGMENT_END, occasion="SEGMENT_CLOSE"
         )
@@ -921,6 +943,21 @@ class NativeReplayDriver:
         self.counters.replenishment_observations += len(rows)
         self._retain_lifecycle(rows, section="replenishment", occasion="GROUP_CLOSE")
 
+        # --- 4.6 queue survival: the adapter walks this group's actions through its own
+        # book one at a time, so a position is what the book held BEFORE the next row - not
+        # a reading taken at F_LAST, which reports every order in the group as front-of-queue.
+        queue = self.queue_adapter.feed_group(
+            self.run.queue,
+            actions,
+            ctx,
+            book=self._queue_books.setdefault(ctx.instrument_id, ReplayBook()),
+        )
+        self.counters.queue_rows_applied += int(queue["rows_applied"])
+        self.counters.queue_terminals += int(queue["terminal_count"])
+        # D60: `terminals` is the ONLY emission point for a lifecycle that resolved inside a
+        # group. Dropping it keeps the stratified average and loses every member under it.
+        self._retain_lifecycle(queue["terminals"], section="queue", occasion="GROUP_CLOSE")
+
         # --- 4.13 lineage: add to the live graph now, observe at the boundary.
         for addition in lineage_additions(actions, ctx, seen_order_ids=self._lineage_node_of):
             node = self.lineage_graph.add(**addition)
@@ -967,6 +1004,8 @@ class NativeReplayDriver:
                 section=section,
                 occasion="STREAM_END",
             )
+        # Paired with the calculator's `finalize` above, for the boundary's reason.
+        self.queue_adapter.finalize()
         # 4.13 closes here too, in the segment it is still open in. A node with no child at
         # stream end is CENSORED_STREAM_END, which is a different fact from a node whose
         # stage ended - reporting both as OPEN would have erased the distinction 4.13 is for.
@@ -1005,6 +1044,8 @@ class NativeReplayDriver:
                 "4.10_4.11_4.12_episode_rows": self.counters.episode_rows,
                 "4.16_response_tracks": self.counters.response_tracks_opened,
                 "4.7_replenishment_observations": self.counters.replenishment_observations,
+                "4.6_queue_rows_applied": self.counters.queue_rows_applied,
+                "4.6_queue_terminals": self.counters.queue_terminals,
                 "candidates_without_stratum": self.counters.candidates_without_stratum,
             },
             # D66's second unit, reported per continuity segment. A segment that found NOTHING
@@ -1012,6 +1053,7 @@ class NativeReplayDriver:
             "candidate_detection": list(self.counters.candidate_summaries),
             "candidate_episodes": list(self.counters.episode_summaries),
             "replenishment_observation": self.replenishment_observer.summary(),
+            "queue_observation": self.queue_adapter.report(),
             "frame_keys_carried": sorted(self.counters.frame_keys_carried),
             "lineage_signature": self.lineage_signature,
             "lineage_segment_scope": LINEAGE_SEGMENT_SCOPE,
