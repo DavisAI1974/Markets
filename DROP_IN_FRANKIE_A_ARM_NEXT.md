@@ -5,7 +5,7 @@
 > This handoff supplies month-specific identities and exceptions only. If it conflicts with the canonical
 > procedure, stop and resolve the conflict explicitly rather than silently choosing one.
 
-**BRANCH:** `chatgpt/frankie-raw-mbo-benchmark-20260828` **TIP:** `990d15f` or later.
+**BRANCH:** `chatgpt/frankie-raw-mbo-benchmark-20260828` **TIP:** `d3b6744` or later.
 **STATUS: NOTHING LAUNCHED. The roll20 substrate is BUILT, FED and RECONCILED.**
 653 tests in the package; `research/kalshi/tests/` has 7 PRE-EXISTING failures - not regressions.
 
