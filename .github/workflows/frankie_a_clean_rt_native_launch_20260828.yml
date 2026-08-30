@@ -312,16 +312,41 @@ jobs:
           # This mode is reachable ONLY by an explicit workflow_dispatch with mode=full. A
           # push never reaches it, and the default input is canary, because starting the
           # box is a spend and D58 leaves the sizing decision with Greg.
-          # The manifest the runner hash-bound goes to S3 so the box runs on the BYTE
-          # IDENTICAL file rather than regenerating one. Regeneration would be a second
-          # opinion about the roster, and the launcher takes total_mbo_records and
-          # manifest_hash straight off it - two manifests that disagree would produce a run
-          # whose identity does not match the one this job reported.
-          aws s3 cp "$PACKET_DIR/source_manifest.json" \
-            "s3://${BUCKET}/${DURABLE_PREFIX_FULL}/source_manifest.json" \
-            --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
+          # THE BOX CANNOT READ THIS BUCKET, and it said so itself. Its own probe reported
+          # A_ARM_IDENTITY=arn:aws:sts::568968024170:assumed-role/Ssm/i-08cee7171c0a76a04
+          # with A_ARM_CAN_READ_SOURCES=no and A_ARM_CAN_READ_PACKET=no, so the instance role
+          # has no access at all and /etc/markets/coach.env holds no credentials.
+          #
+          # The clean fix is a scoped policy on that role, which also covers the upload. That
+          # is a privilege change and is left for Greg. What follows needs no new permission:
+          #
+          #   - The manifest travels INLINE, base64 in the command. It is a few kilobytes,
+          #     and the box gets the runner's BYTE IDENTICAL file rather than regenerating
+          #     one - regeneration would be a second opinion about the roster, and the
+          #     launcher reads total_mbo_records and manifest_hash straight off it, so two
+          #     manifests that disagree produce a run whose identity is not the one reported.
+          #   - The four DBN objects travel as PRESIGNED GET URLs, fetched with curl. A
+          #     presigned URL carries a signature, never the secret key, is read-only, names
+          #     five specific objects and expires. Exporting the runner's long-lived keys
+          #     into the command would also work and must not be done: command parameters are
+          #     readable by anyone with SSM read.
+          #
+          # Six hours of validity for downloads that happen in the first minute. The window
+          # is short because the only thing it needs to outlive is the staging step.
+          manifest_b64="$(base64 -w0 "$PACKET_DIR/source_manifest.json")"
+          presigned=""
+          for name in glbx-mdp3-20211001.mbo.dbn.zst glbx-mdp3-20211003.mbo.dbn.zst \
+                      glbx-mdp3-20211004.mbo.dbn.zst glbx-mdp3-20211005.mbo.dbn.zst; do
+            url="$(aws s3 presign "s3://${BUCKET}/${SOURCE_PREFIX}/${name}" \
+              --expires-in 21600 --endpoint-url "$S3_ENDPOINT_URL")"
+            presigned="${presigned}${name} ${url}"$'\n'
+          done
+          export MANIFEST_B64="$manifest_b64"
+          export PRESIGNED_SOURCES="$presigned"
 
           python3 - <<'PY'
+          import base64
+          import hashlib
           import json
           import os
           from pathlib import Path
@@ -333,6 +358,18 @@ jobs:
           bucket = os.environ["BUCKET"]
           source_prefix = os.environ["SOURCE_PREFIX"]
           repo = os.environ["GITHUB_SERVER_URL"] + "/" + os.environ["GITHUB_REPOSITORY"]
+
+          # Built on the runner, which HAS credentials, and carried in rather than fetched.
+          manifest_b64 = os.environ["MANIFEST_B64"]
+          manifest_sha = hashlib.sha256(
+              base64.b64decode(manifest_b64)
+          ).hexdigest()
+          presigned = {}
+          for line in os.environ["PRESIGNED_SOURCES"].splitlines():
+              if not line.strip():
+                  continue
+              name, _, url = line.partition(" ")
+              presigned[name] = url
 
           # The same four objects the runner fetched, with the same expected digests. The box
           # verifies them itself: a silently truncated download is a shorter tape, which reads
@@ -388,38 +425,34 @@ jobs:
               f"git fetch --depth 1 origin {sha}",
               f"git checkout --detach {sha}",
               f'test "$(git rev-parse HEAD)" = "{sha}"',
-              # S3 CREDENTIALS ON THE BOX, probed rather than assumed. The previous dispatch
-              # died here with "403 when calling the HeadObject operation" - the volume grew,
-              # the checkout bound the exact commit, and then the first S3 read was refused.
-              # A 403 does not distinguish "no permission" from "object absent to a caller
-              # that cannot list", so the identity and both prefixes are printed before the
-              # first read that matters. None of these probes can abort the run; they exist
-              # so the next failure arrives with its cause attached.
-              #
-              # /etc/markets/coach.env is where S93 put this box's credentials. An SSM shell
-              # is not a login shell and sources no profile, so the aws CLI here falls back
-              # to the instance profile - which is the likeliest reason a box that has read
-              # this bucket for months could not read it from this command.
-              ". /etc/markets/coach.env 2>/dev/null || true",
+              # The identity probe stays even though the answer is now known. It costs
+              # nothing, and it is what turned an opaque 403 into a named cause; the next
+              # person to hit an S3 error here should not have to add it back.
               'echo "A_ARM_IDENTITY=$(aws sts get-caller-identity --query Arn --output text 2>&1 | tail -1)"',
               (
                   f'echo "A_ARM_CAN_READ_SOURCES=$(aws s3 ls s3://{bucket}/{source_prefix}/'
                   ' >/dev/null 2>&1 && echo yes || echo no)"'
               ),
+              # THE MANIFEST ARRIVES INLINE, not from S3, because the box has no read access
+              # to this bucket. Byte identical to the runner's own file, which is what keeps
+              # the run's identity the one this job reported.
               (
-                  f'echo "A_ARM_CAN_READ_PACKET=$(aws s3 ls s3://{bucket}/{prefix}/'
-                  ' >/dev/null 2>&1 && echo yes || echo no)"'
+                  "printf %s "
+                  + manifest_b64
+                  + " | base64 -d > /opt/frankie-a-arm-run/source_manifest.json"
               ),
               (
-                  "aws s3 cp"
-                  f" s3://{bucket}/{prefix}/source_manifest.json"
-                  " /opt/frankie-a-arm-run/source_manifest.json --only-show-errors"
+                  f'test "$(sha256sum /opt/frankie-a-arm-run/source_manifest.json'
+                  f' | cut -d\" \" -f1)" = "{manifest_sha}"'
               ),
           ]
+          # The four objects arrive over presigned GET URLs. curl -f turns an HTTP error into
+          # a non-zero exit, without which a 403 body would be written to the file and the
+          # digest check would report a corrupt tape rather than a refused download.
           for name, digest in ROSTER:
+              url = presigned[name]
               steps.append(
-                  f"aws s3 cp s3://{bucket}/{source_prefix}/{name}"
-                  f" /opt/frankie-a-arm-run/sources/{name} --only-show-errors"
+                  f"curl -sSfL -o /opt/frankie-a-arm-run/sources/{name} '{url}'"
               )
               steps.append(
                   f'test "$(sha256sum /opt/frankie-a-arm-run/sources/{name}'
@@ -437,9 +470,22 @@ jobs:
                   " glbx-mdp3-20211001.mbo.dbn.zst glbx-mdp3-20211003.mbo.dbn.zst"
                   " glbx-mdp3-20211004.mbo.dbn.zst glbx-mdp3-20211005.mbo.dbn.zst)"
               ),
+              # THE UPLOAD IS ATTEMPTED AND ITS FAILURE IS NOT FATAL, which is the one place
+              # in this script where swallowing an error is right. The box currently has no
+              # write access to this bucket either, and the alternative is that fourteen
+              # hours of completed traversal is thrown away at the last line because the
+              # results could not be moved. They are on a 300 GB volume; they can be pushed
+              # later once the role is granted, or pulled by presigned PUT once the file
+              # names are known. What must never happen is losing them.
+              #
+              # It is not silent: the marker says which of the two happened, and a run that
+              # reports A_ARM_RESULTS_ON_BOX has NOT been made durable. D34 says S3 is where
+              # data lives, so that state is unfinished, not done.
               (
                   "aws s3 cp /opt/frankie-a-arm-run"
                   f" s3://{bucket}/{prefix} --recursive --only-show-errors"
+                  " && echo A_ARM_RESULTS_UPLOADED=yes"
+                  " || echo A_ARM_RESULTS_ON_BOX=/opt/frankie-a-arm-run"
               ),
               f"echo A_ARM_TRAVERSAL_COMPLETE={run_id}",
           ])
