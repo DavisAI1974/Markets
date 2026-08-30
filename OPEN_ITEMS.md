@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 170 |
+| open | 169 |
 | in progress | 1 |
 | done | 17 |
 
-By size: **XS** 18, **S** 79, **M** 52, **L** 11
+By size: **XS** 18, **S** 79, **M** 51, **L** 11
 
 ---
 
-By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 43, **REST** 103
+By tier: **ESSENTIAL** 24, **BIGGEST_WIN** 42, **REST** 104
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (25)
+## ESSENTIAL (24)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -44,7 +44,6 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 43, **REST** 103
 | **A-63** | M | THE KERNEL IS THE MISSING ENGINE - and it produces the BAND for free, which is the same build as A-60 | D32 makes analog retrieval THE product and we have no similarity function at all - retrieval is a calendar window plus a regime label. It is also the cheapest honest route to the band, which A-60 shows has never been validated and is the only field a binary market actually prices. Two ESSENTIAL items, one build. |
 | **A-68** | M | GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal | It is the PREREQUISITE for A-67's retention arm - without it there is no retention to measure, and the arm cannot run. It is also the smallest change that turns a per-day amnesiac spawn into something with a horizon, which is the whole premise of the hybrid. |
 | **F-4** | M | 4.10 CANNOT BE FED BECAUSE RUNWAY IDENTITY IS PER-GROUP, NOT BECAUSE OF ITS PHASE NAMES | - |
-| **F-6** | M | THE A-ARM LINE HAS NO STATION IN THE SPEC BOOK, AND ITS BRANCH IS NOT ON THE PLANT MAP | - |
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | M | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24. |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -52,7 +51,7 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 43, **REST** 103
 | **A-69** | L | SELF-TRAINING LOOP: Frankie runs blinds on the WALKED corpus, grades himself with FJ-1, and the head is held out as the only true test | It creates the TRAIN/TEST SPLIT this project has never had, it uses a corpus we already own and have used once each, and its grader is already built and has never been run. It is also the mechanism that makes A-67's retention arm meaningful - retention with nothing to retain across is ceremony. |
 | **A-50** | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 
-## BIGGEST WIN (43)
+## BIGGEST WIN (42)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -72,7 +71,6 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 43, **REST** 103
 | **A-61** | S | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | A false REFUTED is worse than no verification: it argues for UNDOING a real fix, with an adversarial verdict behind it. Cheap to fix (pin a commit) and it protects every future audit. |
 | **A-65** | S | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | It is the test that would have caught THIS session's own worst mistake before Greg did, it is cheap (one extra spawn per change), and it converts every future view/brain change from an argument into a measurement. |
 | **A-66** | S | THE COMPOSITION CONTRACT - partition OWNERSHIP so borrowed pieces own different parts of one job (not a write protocol, and never a ranking) | It is the collision detector for everything else registered tonight. Cheap (a table), and it is the difference between composing best-of-breed and building something that fights itself. Do it BEFORE any of A-59/62/63/64/65 is built. |
-| **F-7** | S | QC_CHECKLIST.md CARRIES FIVE DESKTOP PATHS, VIOLATING D34 INSIDE A LIVE BINDING DOCUMENT | - |
 | **F-8** | S | per_event.report's DOCSTRING DOCUMENTS A PARAMETER IT DOES NOT HAVE, AND THE A-ARM RE-IMPLEMENTS ITS QUANTILE | - |
 | **G-30** | S | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | It is the instrument dependency under A-24a, the discovery note's own RANK 1 candidate and the one it calls strongest. It also turns five of twelve path points from a timing judgment into arithmetic, on a feed we already ingest. |
 | **M-15** | S | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | A compromised credential with a deferral that has silently expired is the kind of thing that is only ever noticed after it matters. Cheap to do, and the deferral it replaces was explicit and time-boxed. |
@@ -102,7 +100,7 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 43, **REST** 103
 | **A-53** | ? | Sweep every play's `requires` against the served BLIND field set | - |
 | **A-54** | ? | The output contract cannot express what the specialists actually derived | - |
 
-## REST (103)
+## REST (104)
 
 *everything else - real work, correctly tracked, and none of it deleted. Several become cheap once an ESSENTIAL or BIGGEST_WIN item lands.*
 
@@ -130,6 +128,7 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 43, **REST** 103
 | **A-64** | S | Kernel Forge (arXiv 2607.24762) - CUDA half OUT OF SCOPE for our workload today; the MCTS-over-candidates harness pattern stacks with A-63/A-60 | Registered under D36 because a delivered external recommendation gets a line even when most of it is rejected - an unrecorded rejection returns as a surprise. The applicable slice is one harness idea, not a build; the domain half is closed with a stated reason. |
 | **A-8** | S | Wire the depth-based turn_exhaustion as the monitor's CONFIRMING turn channel | - |
 | **A-9** | S | Generate the drop-in's work list FROM the registry instead of restating it in prose | - |
+| **F-7** | S | QC_CHECKLIST.md CARRIES FIVE DESKTOP PATHS, VIOLATING D34 - A WALK-PROGRAM DEFECT, FOUND FROM THE A-ARM AND NOT BLOCKING IT | - |
 | **G-10** | S | Separate TAS (NGT) from the tape; add jump-robust realized variance | - |
 | **G-12** | S | UNG roll + NG futures/options expiry calendars as day-class tags | - |
 | **G-15** | S | Put-call parity slope test as a hard state_health gate on the options surface | - |
@@ -236,7 +235,6 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 43, **REST** 103
 | **A-63** | ESSENTIAL | M | OPEN | S115 | THE KERNEL IS THE MISSING ENGINE - and it produces the BAND for free, which is the same build as A-60 | - |
 | **A-68** | ESSENTIAL | M | OPEN | S115 | GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal | - |
 | **F-4** | ESSENTIAL | M | OPEN | S117 | 4.10 CANNOT BE FED BECAUSE RUNWAY IDENTITY IS PER-GROUP, NOT BECAUSE OF ITS PHASE NAMES | - |
-| **F-6** | ESSENTIAL | M | OPEN | S117 | THE A-ARM LINE HAS NO STATION IN THE SPEC BOOK, AND ITS BRANCH IS NOT ON THE PLANT MAP | - |
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | ESSENTIAL | M | OPEN | S115 | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -257,7 +255,6 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 43, **REST** 103
 | **A-61** | BIGGEST_WIN | S | OPEN | S115 | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | - |
 | **A-65** | BIGGEST_WIN | S | OPEN | S115 | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | - |
 | **A-66** | BIGGEST_WIN | S | OPEN | S115 | THE COMPOSITION CONTRACT - partition OWNERSHIP so borrowed pieces own different parts of one job (not a write protocol, and never a ranking) | - |
-| **F-7** | BIGGEST_WIN | S | OPEN | S117 | QC_CHECKLIST.md CARRIES FIVE DESKTOP PATHS, VIOLATING D34 INSIDE A LIVE BINDING DOCUMENT | - |
 | **F-8** | BIGGEST_WIN | S | OPEN | S117 | per_event.report's DOCSTRING DOCUMENTS A PARAMETER IT DOES NOT HAVE, AND THE A-ARM RE-IMPLEMENTS ITS QUANTILE | - |
 | **G-30** | BIGGEST_WIN | S | OPEN | S115 | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | - |
 | **M-15** | BIGGEST_WIN | S | OPEN | S115 | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | - |
@@ -308,6 +305,7 @@ By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 43, **REST** 103
 | **A-64** | REST | S | OPEN | S115 | Kernel Forge (arXiv 2607.24762) - CUDA half OUT OF SCOPE for our workload today; the MCTS-over-candidates harness pattern stacks with A-63/A-60 | - |
 | **A-8** | REST | S | OPEN | S111 | Wire the depth-based turn_exhaustion as the monitor's CONFIRMING turn channel | - |
 | **A-9** | REST | S | OPEN | S111 | Generate the drop-in's work list FROM the registry instead of restating it in prose | - |
+| **F-7** | REST | S | OPEN | S117 | QC_CHECKLIST.md CARRIES FIVE DESKTOP PATHS, VIOLATING D34 - A WALK-PROGRAM DEFECT, FOUND FROM THE A-ARM AND NOT BLOCKING IT | - |
 | **G-10** | REST | S | OPEN | S111 | Separate TAS (NGT) from the tape; add jump-robust realized variance | - |
 | **G-12** | REST | S | OPEN | S111 | UNG roll + NG futures/options expiry calendars as day-class tags | - |
 | **G-15** | REST | S | OPEN | S111 | Put-call parity slope test as a hard state_health gate on the options surface | - |
@@ -717,16 +715,6 @@ PAIRS WITH A-35 (which is exactly the 'how would we know' question) and A-62 (th
 **Source:** FRANKIE_A_ARM_PRELAUNCH_STATE_20260829.md:456-458, re-surfaced S117
 
 The prelaunch doc states it and nothing tracks it: 4.10 keys open runways on candidate_id, GroupContext.candidate_id is per-group, so every runway is exactly one group long, phases can never advance, and the ladder never moves off its first entry. This is the actual blocker on 4.10 and it survived the phase-name argument entirely - the names were a distraction from it. Needs a runway identity that SPANS groups, plus which raw pattern enters which landmark. RELATED AND SEPARATE: 4.11 with birth_recv_ns = ctx.recv_ns makes PRIOR structurally unreachable (prelaunch:459-463), which is the prebirth half of the section. FALSIFIER: closed when a runway spans more than one group in a test.
-
----
-
-### [ESSENTIAL] F-6 - THE A-ARM LINE HAS NO STATION IN THE SPEC BOOK, AND ITS BRANCH IS NOT ON THE PLANT MAP
-
-*size M | OPEN | raised S117*
-
-**Source:** S117, measured while running the andon board for the first time this session
-
-MEASURED. RUN_SOP.md is 895 lines and carries one incidental hit for frankie/raw_mbo/A-arm/benchmark combined; there is no station covering this work. QC_CHECKLIST.md ITEM 0 pins the expected branch to claude/kalshi-agents-coordinator-guard-1175nr with a STOP RULE on mismatch, and PLANT_MAP.md's branch table does not list chatgpt/frankie-raw-mbo-benchmark-20260828 at all - so by PLANT_MAP.md:3, 'if a process is not on this map it is not a standing process', a whole parallel line has been running unmapped. plant_status.py FAILS on branch for the same reason. RUN_SOP.md:19-20 is explicit about what to do with uncovered work: 'the line STOPS at that station. Report the gap. Do not compose a procedure and run it.' Recorded as a NONCONFORMANCE per change-control item 3. The remedy is a proposed SOP diff on Greg's go, never an in-session edit. FALSIFIER: closed when the A-arm has a station and its branch is on the map.
 
 ---
 
@@ -1664,16 +1652,6 @@ NOTE 2.2 MEMORY IS THE LARGEST SUBSECTION (~50) AND IS EXACTLY WHERE OUR OWN THR
 NAMED NEIGHBOURS FOR OUR OWN ITEMS, so the map is usable immediately: 2.4 carries 'Language Agents as Optimizable Graphs' and 'Godel Agent: A Self-Referential Agent Framework' - the neighbourhood A-64's branching refine sits in; 2.1 carries TextGrad and 'LLMs as Optimizers'; 2.2 carries MemGen, MemoryBank, MEMORYLLM.
 USE IT THIS WAY: the ownership table's LAYER column is section 2's subsection numbers. Any future paper Greg sends gets classified into 2.1/2.2/2.3/2.4 (or the foundation branch, which closes it for us with a stated reason rather than a judgement), and then into the PART of that layer it owns. That is the whole 'keep them straight' mechanism, and it costs one line per paper.
 PROVENANCE: repo structure and section sizes read from the GitHub landing page; the ~220 papers themselves are NOT read. Sizes are approximate as reported there.
-
----
-
-### [BIGGEST_WIN] F-7 - QC_CHECKLIST.md CARRIES FIVE DESKTOP PATHS, VIOLATING D34 INSIDE A LIVE BINDING DOCUMENT
-
-*size S | OPEN | raised S117*
-
-**Source:** S117, measured; reported rather than fixed because agents/ is under SOP change control
-
-MEASURED: QC_CHECKLIST.md lines 10, 19, 27, 60 and 67 carry 'E:\\Markets' or '/e/Markets'. D34 and RUN_SOP change-control item 6 both read that no artifact may NAME a desktop path, and this is a live document under agents/, not an archive script, so the declared exception list in CLAUDE.md (the root-level OD/crypto-era scripts) does not cover it. NOT FIXED IN SESSION deliberately: QC ITEM 6 makes any uncommitted modification under agents/ a FAIL, and change control requires a proposed diff plus Greg's go. FALSIFIER: closed when the five paths are repo-relative under a version-logged edit.
 
 ---
 
@@ -2722,6 +2700,18 @@ THE FIX IS A-7 APPLIED TO THE DROP-IN. OPEN_ITEMS.json already carries `status` 
 SAME PATTERN AS brain_audit.py's PROMPT GENERATION, which is the working precedent: slots filled by LOOKUP, nobody types a play id. Extend it to the handoff. Suggested shape: `python open_items.py dropin` emits the numbered work list; the drop-in carries that block verbatim; plant_status FAILs if the committed drop-in's list does not match what the registry currently generates - which also closes the pasted-box-versus-committed-file divergence, since both would come from one source.
 
 WHY IT MATTERS BEYOND TIDINESS: the whole S111 disease was documents describing what should happen sitting apart from the machinery that makes it happen. The drop-in is the LAST hand-written instruction set in the loop, and it is the one every session starts from.
+
+---
+
+### [REST] F-7 - QC_CHECKLIST.md CARRIES FIVE DESKTOP PATHS, VIOLATING D34 - A WALK-PROGRAM DEFECT, FOUND FROM THE A-ARM AND NOT BLOCKING IT
+
+*size S | OPEN | raised S117*
+
+**Source:** S117, measured; reported rather than fixed because agents/ is under SOP change control
+
+MEASURED: QC_CHECKLIST.md lines 10, 19, 27, 60 and 67 carry 'E:\\Markets' or '/e/Markets'. D34 and RUN_SOP change-control item 6 both read that no artifact may NAME a desktop path, and this is a live document under agents/, not an archive script, so the declared exception list in CLAUDE.md (the root-level OD/crypto-era scripts) does not cover it. NOT FIXED IN SESSION deliberately: QC ITEM 6 makes any uncommitted modification under agents/ a FAIL, and change control requires a proposed diff plus Greg's go. FALSIFIER: closed when the five paths are repo-relative under a version-logged edit.
+
+RESCOPED S117 (Greg): QC_CHECKLIST.md belongs to the group-walk program, not the A-arm, so this blocks nothing here and is filed only so a real D34 breach is not lost. D34 itself is project-wide (CLAUDE.md, Branch and data discipline), which is why the finding stands even though the document does not govern this work.
 
 ---
 
