@@ -246,6 +246,55 @@ jobs:
             --source "$SOURCE_DIR/glbx-mdp3-20211005.mbo.dbn.zst"
           echo "CANARY_OUT_DIR=$out_dir" >> "$GITHUB_ENV"
 
+      - name: Grow the box volume so the exact ledgers fit
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'full' }}
+        shell: bash
+        env:
+          INSTANCE_ID: i-08cee7171c0a76a04
+          TARGET_GB: "300"
+        run: |
+          set -euo pipefail
+          # MEASURED, and the box said it itself. The first two full dispatches were refused
+          # by the run's own disk precheck, which printed A_ARM_DISK_AVAIL_KIB=134351004 -
+          # 128.1 GiB free against a projected 127.2 GiB of exact ledgers. That is a 0.7%
+          # margin, with the sources and the S3 staging still to come out of it, so the
+          # volume is too small: not marginally, but with no room for the run to be wrong
+          # about its own size.
+          #
+          # 300 GB leaves roughly 1.7x the projected need. Growing an EBS volume is one-way -
+          # it cannot be shrunk in place - so this is a standing cost and the number is
+          # chosen to be enough rather than generous. D60 is why the answer is a bigger
+          # volume and not a smaller output: nothing is dropped to make a run fit.
+          root_name="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
+            --query 'Reservations[0].Instances[0].RootDeviceName' --output text)"
+          volume="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
+            --query "Reservations[0].Instances[0].BlockDeviceMappings[?DeviceName=='$root_name'].Ebs.VolumeId | [0]" \
+            --output text)"
+          size="$(aws ec2 describe-volumes --volume-ids "$volume" \
+            --query 'Volumes[0].Size' --output text)"
+          printf 'root volume %s is %s GiB\n' "$volume" "$size"
+
+          if [ "$size" -ge "$TARGET_GB" ]; then
+            echo "already at or above ${TARGET_GB} GiB; nothing to grow"
+          else
+            aws ec2 modify-volume --volume-id "$volume" --size "$TARGET_GB" >/dev/null
+            # The OS cannot see the new size until the modification reaches optimizing.
+            # Dispatching before that grows the partition to the OLD size and the precheck
+            # refuses again with a number that looks like the resize did nothing.
+            state=modifying
+            for _ in $(seq 1 90); do
+              state="$(aws ec2 describe-volumes-modifications --volume-ids "$volume" \
+                --query 'VolumesModifications[0].ModificationState' --output text 2>/dev/null || echo modifying)"
+              case "$state" in optimizing|completed) break ;; esac
+              sleep 10
+            done
+            printf 'modification state: %s\n' "$state"
+            case "$state" in
+              optimizing|completed) ;;
+              *) echo "volume modification did not reach optimizing" >&2; exit 1 ;;
+            esac
+          fi
+
       - name: Dispatch full-roster traversal to the box
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'full' }}
         shell: bash
@@ -314,6 +363,21 @@ jobs:
               # copy, hours before anything else would have gone wrong.
               "export AWS_DEFAULT_REGION=us-east-2",
               "install -d -m 0700 /opt/frankie-a-arm-run/sources",
+              # A grown EBS volume is invisible to the OS until the partition and the
+              # filesystem are grown too, so the box does that itself rather than trusting
+              # that someone did. growpart exits non-zero when there is nothing to change,
+              # which is a normal state and not a failure; resize2fs and xfs_growfs are both
+              # idempotent, so a run on an already-grown volume is a no-op.
+              "run_src=$(findmnt -no SOURCE --target /opt/frankie-a-arm-run)",
+              "run_disk=/dev/$(lsblk -no pkname \"$run_src\" | head -1)",
+              "run_part=$(echo \"$run_src\" | grep -o '[0-9]*$')",
+              "growpart \"$run_disk\" \"$run_part\" || true",
+              (
+                  'case "$(findmnt -no FSTYPE --target /opt/frankie-a-arm-run)" in'
+                  ' xfs) xfs_growfs /opt/frankie-a-arm-run ;;'
+                  ' *) resize2fs "$run_src" ;;'
+                  " esac"
+              ),
               f'avail=$(df -kP /opt/frankie-a-arm-run | awk "NR==2 {{print \\$4}}")',
               'echo "A_ARM_DISK_AVAIL_KIB=$avail"',
               f'test "$avail" -ge {required_kib}',
