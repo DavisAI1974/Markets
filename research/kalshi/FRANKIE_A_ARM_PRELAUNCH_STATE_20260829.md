@@ -25,11 +25,15 @@ driver now RUNS a pass end to end and finalizes ACCEPTED (13 tests), and D6 and 
 closed - those three lines were true when first written and are not now. **UPDATED 2026-08-30 (T1):
 the driver now CALLS all four built adapters and 4.8, 4.9, 4.13 and 4.14 report on rows that
 actually arrived** - `sections_fed` is emitted beside the measures, 12 new tests, package
-suite 653 -> 665, wider suite still exactly 7 pre-existing failures. What still holds:
-**seven of the eleven section adapters do not exist and the execution gate is referenced by
-nothing.** A launch from this state would still produce artifacts that look complete and are
-not - **six** of sixteen sections (4.6, 4.7 observation, 4.10, 4.11, 4.12, 4.16, with 4.15
-ruled out of this run by D5) would report on an empty ingest.
+suite 653 -> 665, wider suite still exactly 7 pre-existing failures. **UPDATED AGAIN
+2026-08-30: the six that were still empty - 4.6, 4.7's observation half, 4.10, 4.11, 4.12
+and 4.16 - are now fed too, and the execution gate is on the launch path.** Package suite
+885. The sentence that was true when this paragraph was written, and is worth keeping
+because it names the failure mode: a launch from the earlier state would have produced
+artifacts that looked complete and were not, because a section reporting strata off an empty
+ingest is indistinguishable from one reporting a real absence. That is why `sections_fed`
+emits an ingest count per section rather than letting it be inferred from the measures.
+**4.15 stays out of this run under D5 - excluded, not unfed.**
 
 Before anything runs, sit down with Greg and confirm, item by item:
 
@@ -82,9 +86,14 @@ Before anything runs, sit down with Greg and confirm, item by item:
    NAME, and renaming it changes `surface_inventory_hash` and the manifest.
 6. **The helper path is built as a tool available to RT and Forecaster**, not as four live
    roles, and the ingestion paper's Question 3 is updated to say so.
-7. **Every section from 4.6 to 4.16 is fed by the traversal.** **2026-08-30: 4.8, 4.9,
-   4.13 and 4.14 now are**, plus clocks, coverage, sessions and 4.7's horizon maturation.
-   Still unfed: 4.6, 4.7's observation half, 4.10, 4.11, 4.12, 4.16.
+7. **Every section from 4.6 to 4.16 is fed by the traversal.** **CLOSED 2026-08-30.** 4.8,
+   4.9, 4.13 and 4.14 went first, then 4.7's observation half, then 4.10/4.11/4.12/4.16 on
+   the causal candidate unit (D66), then 4.6 on a per-instrument `ReplayBook` the traversal
+   owns and advances action by action. Plus clocks, coverage, sessions and 4.7's horizon
+   maturation. `traversal.sections_fed` names every one with its own ingest count, and two
+   driver tests pin that inventory exactly, so a section cannot join or leave it quietly.
+   **4.15 is unchanged and stays OUT of this run under D5** - discovery is optional to the
+   runner and the gate skips it, so it is not an unfed section, it is an excluded one.
 8. **Compute is settled** - which machine runs this, and whether it is sized for sixteen
    sections over 4.26M groups. See section 10a: the A-arm workflows currently dispatch
    nothing, and the box was PROBED LIVE on 2026-08-29 (D55) as an **r6i.2xlarge**, 8 cores /
