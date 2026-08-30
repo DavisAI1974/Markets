@@ -1,5 +1,39 @@
 # Scoping the roll20 substrate before building it
 
+> # STOP - CORRECTED AGAIN, AND THIS ONE REVERSES THE RECOMMENDATION
+>
+> **This document recommended reading the October Step-1 seconds artifact. The binding
+> mission FORBIDS it, and the feed inventory seals it as the ANSWER.**
+>
+> `research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md:31-34`,
+> verbatim: *"Use only F_LAST-closed native event groups. **Never use reduced seconds rows,
+> `V4_NATIVE_FULL_MBO_SECONDS.jsonl.gz`, MBP/top-10, Step-1-derived input**, another
+> benchmark arm's output, post-cutoff information, or old reduced market rows. **Keep Step-1
+> and the answer/reveal wall sealed.**"*
+>
+> And `NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md` section 14, "Sealed October
+> answer feed", lists **"Existing October Step-1 seconds"** under authority
+> `SEALED_TARGET_ANSWER`, *"mechanically inaccessible until all primary discoveries, helper
+> evidence, probability movies, and first-lock/no-lock ledgers are immutable."*
+>
+> The `legacy_*` columns are doubly excluded: they are Step-1-derived AND they are computed
+> from legacy MBP-10 rows. So section 5's "the substrate already exists, just read it" is
+> **the answer key**, and reading it would void the run.
+>
+> **What the directive actually requires** is inventory section 8, the *Legacy-observable
+> compatibility feed*: *"The same causal replay must recreate the exact lawful surface on
+> which the 54/55-week structures were learned"* - including *"Per-second `roll20`"* - and
+> *"Every legacy field requires an explicit crosswalk to its V4-native source fields,
+> calculation, availability time, and state hash. The crosswalk must not contain October
+> target identities."*
+>
+> So roll20 IS computed inside the benchmark, from the native F_LAST stream, and crosswalked.
+> **The drop-in box was right and I was wrong.** What survives from this document is section
+> 1's recipe, section 2's measured 1.5s cost, and the observation that the frozen detector and
+> `AggressorRoll20Feed` are reusable arithmetic. What does not survive is every suggestion to
+> read a Step-1 output.
+
+
 **Why this document exists.** Greg: *"Don't we already have an exhaustion calc? We've
 measured it on other runs"* - and then, given the choice, *stop and scope it with you
 first*. So nothing here is built. This is the three things the ruling needs: what the

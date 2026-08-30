@@ -6,7 +6,7 @@ CALCULATION and never the input event. Section 4.10 says "construct a complete c
 runway for each candidate" without anywhere defining a candidate, and every ingest point in
 the tree - `LadderCalculator.observe`, `RecurrenceCalculator.observe_sequence`,
 `LineageCalculator.observe_node`, `AbsorptionCalculator.score`,
-`ExhaustionCalculator.mark_landmark` - takes a CONSTRUCTED DOMAIN OBJECT. Nothing built those
+`ExhaustionCalculator.enter_phase` - takes a CONSTRUCTED DOMAIN OBJECT. Nothing built those
 from raw MBO. This module is that missing layer.
 
 **The unit is the F_LAST group (D53, Greg).** A candidate IS one F_LAST group: the same unit

@@ -1,9 +1,7 @@
-"""Contract 4.4 mandates ONE mechanically defined mirror key. There were three.
+"""Contract 4.4 mandates ONE mechanically defined mirror key.
 
-These tests exist to keep the count at one. Two of the three vocabularies were removed:
-section 4.12's orientation slot now carries the built side-swap key, and the A-memory
-recalculation delegates to the same function rather than carrying its own copy. The third
-was a proposed price-ladder reflection that never shipped.
+These tests keep the count at one, and keep it from swallowing section 4.12's
+orientation, which is a different axis under a different contract clause.
 """
 from __future__ import annotations
 
@@ -16,18 +14,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.a_memory_member_first_recalculati
 )
 
 SIDE_STRINGS = (
-    "A",
-    "B",
-    "N",
-    "AB",
-    "BA",
-    "ABBN",
-    "BAAN",
-    "AAAA",
-    "BBBB",
-    "NNN",
-    "",
-    "ABNBAN",
+    "A", "B", "N", "AB", "BA", "ABBN", "BAAN", "AAAA", "BBBB", "NNN", "", "ABNBAN",
 )
 
 
@@ -36,7 +23,7 @@ class MirrorIdentityTest(unittest.TestCase):
         self.assertEqual(native_mirror.mirror_identity("ABBN")["mirror_side_string"], "BAAN")
 
     def test_a_pair_resolves_to_one_key_from_either_end(self) -> None:
-        """What makes it a pair key rather than two labels for two structures."""
+        """What makes it a pair KEY rather than two labels for two structures."""
         left = native_mirror.mirror_identity("ABBN")
         right = native_mirror.mirror_identity("BAAN")
         self.assertEqual(left["mirror_pair_key"], right["mirror_pair_key"])
@@ -68,23 +55,20 @@ class OneDefinitionTest(unittest.TestCase):
                     a_memory_mirror_identity(sides), native_mirror.mirror_identity(sides)
                 )
 
-    def test_section_4_12_orientation_is_the_same_vocabulary(self) -> None:
-        self.assertEqual(native_dipole.VALID_ORIENTATIONS, native_mirror.VALID_ORIENTATIONS)
-        self.assertEqual(native_dipole.CANONICAL, native_mirror.CANONICAL)
-        self.assertEqual(native_dipole.MIRROR, native_mirror.MIRROR)
 
+class SeparateFromSection412Test(unittest.TestCase):
+    """4.4's pair key and 4.12's orientation are different axes. Both are required."""
 
-class SameFlipStaysTakenTest(unittest.TestCase):
-    """SAME/FLIP name a TEMPORAL relation with published counts. Section 4.12 is not it."""
+    def test_section_4_12_keeps_its_contract_orientation(self) -> None:
+        """Contract 4.12: "`SAME` and `FLIP` orientations never pool"."""
+        self.assertEqual(native_dipole.VALID_ORIENTATIONS, frozenset({"SAME", "FLIP"}))
 
-    def test_the_frozen_transition_orientation_still_owns_same_and_flip(self) -> None:
+    def test_the_frozen_transition_orientation_uses_the_same_words(self) -> None:
         self.assertEqual(discovery_contract()["transition_orientation_seeds"], ["SAME", "FLIP"])
 
-    def test_section_4_12_no_longer_claims_those_words(self) -> None:
-        self.assertNotIn("SAME", native_dipole.VALID_ORIENTATIONS)
-        self.assertNotIn("FLIP", native_dipole.VALID_ORIENTATIONS)
-        self.assertFalse(hasattr(native_dipole, "SAME"))
-        self.assertFalse(hasattr(native_dipole, "FLIP"))
+    def test_the_mirror_key_does_not_borrow_them(self) -> None:
+        self.assertNotIn("SAME", native_mirror.VALID_ORIENTATIONS)
+        self.assertNotIn("FLIP", native_mirror.VALID_ORIENTATIONS)
 
 
 if __name__ == "__main__":

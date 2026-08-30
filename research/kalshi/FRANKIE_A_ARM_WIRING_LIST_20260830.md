@@ -63,7 +63,7 @@ built. Per `FRANKIE_A_ARM_ALREADY_BUILT_AUDIT_20260830.md`, they do not.
 | Need | Existing thing to wire to |
 |---|---|
 | per-second roll20, live/incremental | `ng_exhaustion_live_clock.AggressorRoll20Feed.ingest_trade(second, price, size, bid_px, ask_px)` - reconstructs *"the exact 20-second rolling aggressor-volume imbalance used by the frozen exhaustion research"* |
-| per-second roll20, pre-binned | same class, `ingest_volume(second, buy_volume, sell_volume)` - or the step 1 seconds artifact's `legacy_buy_qty`/`legacy_sell_qty` columns |
+| per-second roll20, pre-binned | same class, `ingest_volume(second, buy_volume, sell_volume)`, fed from the benchmark's OWN per-second binning of the native F_LAST stream. **NOT from the Step-1 seconds artifact** - the mission forbids Step-1-derived input and the inventory seals it as `SEALED_TARGET_ANSWER` |
 | candidate detection | `ng_dipole_native_shape_audit.flow_series` + `detect_dipole_peaks`, frozen, measured at 1.521s for the whole A-arm roster |
 | A/B/C family | `ng_exhaustion_live_clock.FrozenPreFamilyClassifier`, SHA `583f6a12...` enforced |
 | duration / remaining runway | `ng_exhaustion_runway_clock.ExhaustionRunwayClock`, classifier SHA `698b956f...` enforced, frozen baselines, *"do not retune"* |
@@ -101,6 +101,7 @@ be confirmed rather than assumed.
 3. **Tier 2**, as imports of frozen modules.
 4. **Tier 3**, the gate reference and a workflow that dispatches the driver.
 
-The one retrieval question that blocks Tier 2 in practice: the October seconds artifact is
-recorded with a worker-local byte count and SHA and `S3_RESULT_OBJECT_COUNT=0`, so **where it
-lives now needs confirming**. No credentials resolve in this container.
+**Withdrawn:** an earlier version of this list ended with a retrieval question about where the
+October Step-1 seconds artifact lives. That question is void - the mission forbids Step-1-derived
+input and the feed inventory seals that artifact as the answer. The benchmark computes its own
+per-second surface from the native stream and crosswalks it, per inventory section 8.
