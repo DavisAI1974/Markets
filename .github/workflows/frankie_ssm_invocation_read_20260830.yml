@@ -1,0 +1,48 @@
+name: Read one SSM command invocation 20260830
+
+# A DIAGNOSTIC, not part of any run. A session cannot resolve AWS credentials - they are
+# GitHub-secret scoped (D55) - so when a dispatched command dies on the box there is no way
+# from a desk to ask the box what it said. The launch workflow prints the invocation when
+# its own dispatch fails, but a command that is ACCEPTED and then dies seconds later leaves
+# a green job and no evidence at all. This reads any invocation by id.
+#
+# Read-only: get-command-invocation and nothing else. It starts nothing and changes nothing.
+
+on:
+  workflow_dispatch:
+    inputs:
+      command_id:
+        description: The SSM command id to read, as printed by the launch workflow.
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frankie-ssm-invocation-read-20260830
+  cancel-in-progress: false
+
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      INSTANCE_ID: i-08cee7171c0a76a04
+    steps:
+      - name: Read the invocation
+        env:
+          COMMAND_ID: ${{ inputs.command_id }}
+        run: |
+          set -euo pipefail
+          # SSM truncates the captured streams at 24000 characters, which is far more than a
+          # failing shell script produces and is stated here so a short tail is not read as
+          # the whole story on a command that ran for hours.
+          aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID" \
+            --query '{status:Status,detail:StatusDetails,code:ResponseCode,started:ExecutionStartDateTime,ended:ExecutionEndDateTime,out:StandardOutputContent,err:StandardErrorContent}' \
+            --output json
