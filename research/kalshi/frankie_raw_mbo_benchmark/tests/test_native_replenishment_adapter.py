@@ -168,9 +168,11 @@ class TickNeighbourhoodTests(unittest.TestCase):
     def test_same_price_and_one_tick_away_are_the_only_two_relations(self):
         group = ra.level_observations(SEEDED, ctx(), replay=ra.InstrumentReplay())
         add_at_p0 = next(o for o in group.observations if o.price_raw == P0)
+        # The offset is THIS REFILL relative to the episode's level: a refill above the level
+        # that was depleted is +1, a refill below it is -1.
         self.assertEqual(add_at_p0.price_relation_to(P0), (SAME_PRICE, 0))
-        self.assertEqual(add_at_p0.price_relation_to(P_DOWN1), (NEIGHBORING_PRICE, -1))
-        self.assertEqual(add_at_p0.price_relation_to(P0 + TICK), (NEIGHBORING_PRICE, 1))
+        self.assertEqual(add_at_p0.price_relation_to(P_DOWN1), (NEIGHBORING_PRICE, 1))
+        self.assertEqual(add_at_p0.price_relation_to(P0 + TICK), (NEIGHBORING_PRICE, -1))
         self.assertIsNone(add_at_p0.price_relation_to(P_DOWN2))
 
     def test_a_refill_beyond_the_neighbourhood_is_counted_not_folded_in(self):
@@ -213,7 +215,10 @@ class TickNeighbourhoodTests(unittest.TestCase):
         )
         refill = next(r for r in rows if r["observation"] == ra.REFILL and r["recv_ns"] == 300)
         self.assertEqual(refill["price_relations"], [NEIGHBORING_PRICE])
-        self.assertEqual(refill["neighbour_offset_ticks"], [1])
+        self.assertEqual(
+            refill["neighbour_offset_ticks"], [-1],
+            "the liquidity came back one tick BELOW the bid level that was depleted",
+        )
         emitted = c.advance(200 + HORIZON)[0]
         self.assertEqual(emitted["neighboring_price_refill_quantity"], 7)
         self.assertEqual(emitted["same_price_refill_quantity"], 0)

@@ -363,13 +363,16 @@ class LevelObservation:
     def price_relation_to(self, episode_price_raw: int) -> tuple[str, int] | None:
         """`(SAME_PRICE|NEIGHBORING_PRICE, offset_in_ticks)`, or None when out of neighbourhood.
 
-        The offset is SIGNED and kept even though the calculator holds one NEIGHBORING bucket:
-        a refill one tick INSIDE the removed level and one tick BEHIND it are opposite facts
-        about where liquidity went, and the sign is the only thing that separates them.
+        The offset is SIGNED, measured as THIS REFILL relative to the episode's level, and kept
+        even though the calculator holds one NEIGHBORING bucket: a refill one tick INSIDE the
+        removed level and one tick BEHIND it are opposite facts about where liquidity went, and
+        the sign is the only thing that separates them. Oriented refill-minus-episode rather
+        than the reverse because the question 4.7 asks is where the liquidity CAME BACK, not
+        where it left from.
         """
         if self.price_is_sentinel or _is_sentinel(episode_price_raw):
             return None
-        delta = episode_price_raw - self.price_raw
+        delta = self.price_raw - episode_price_raw
         if delta % self.tick_raw:
             return None
         offset = delta // self.tick_raw
