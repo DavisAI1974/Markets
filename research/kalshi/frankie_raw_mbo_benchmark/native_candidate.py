@@ -264,6 +264,21 @@ class CausalPeakDetector:
         self.rejected_in_refractory = 0
         self.suppressed_by_prominence = 0
         self.seconds_in_warmup = 0
+        """Warmup seconds that reached `_judge`. IT UNDERCOUNTS, and by a measured amount.
+
+        A second is judged only once its FULL local window exists, so the seconds consumed
+        building that window never reach the counter at all. MEASURED at the defaults with
+        `warmup_seconds=60` and `local_radius=5`: the counter reports 50 where every second
+        spent in warmup would be 61, a shortfall of 11 - one more than the `2 * local_radius`
+        that reading the code suggests, which is the reason it was measured rather than
+        reasoned about.
+
+        It is left as it is, deliberately. Nothing consumes this field - it is reported in
+        `summary()` and read by no calculation - and changing it while a run is in flight
+        would make that run's `candidate_detection` block non-comparable with the next one's
+        on the only axis this number has. Treat it as a lower bound on the warmup span, per
+        detector and so per continuity segment, not as the span itself.
+        """
 
     # --- the pass ---------------------------------------------------------
     def observe(self, second: int, flow: float) -> list[Candidate]:
