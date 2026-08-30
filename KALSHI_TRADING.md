@@ -848,7 +848,7 @@ new tool cannot go unlisted. **471 files.**
 - `a_clean_forecaster_replay_20260828.py` — (no docstring summary)
 - `a_clean_forecaster_resume_20260828.py` — Verify the complete chain and every continuation/adapter sibling."""
 - `a_clean_rt_replay_20260828.py` — (no docstring summary)
-- `a_memory_member_first_recalculation_20260828.py` — Delegates to the single mechanical mirror key required by contract 4.4.
+- `a_memory_member_first_recalculation_20260828.py` — A-memory member-first recalculation over the hash-bound native ledger.
 - `a_memory_prepare_20260828.py` — (no docstring summary)
 - `a_memory_rt_resume_20260828.py` — (no docstring summary)
 - `a_memory_rt_resume_latest_20260828.py` — Resume the existing A-memory diagnostic replay from its latest closed checkpoint.
@@ -903,7 +903,7 @@ new tool cannot go unlisted. **471 files.**
 - `test_native_ingestion_layer_registry.py` — (no docstring summary)
 - `test_native_ladder.py` — Tests for section 4.9 price-ladder topology."""
 - `test_native_lineage.py` — Tests for section 4.13 chain families and D-depth lineages."""
-- `test_native_mirror.py` — Contract 4.4 mandates ONE mechanically defined mirror key.
+- `test_native_mirror.py` — Section 4.4's mirror key: one mechanical definition, one implementation.
 - `test_native_queue.py` — Tests for section 4.6 queue position, priority, and order survival."""
 - `test_native_recognition.py` — Tests for section 4.11 prebirth prediction and continuous H+N recognition."""
 - `test_native_recurrence.py` — Tests for section 4.14 recurrence, bursts, and transition graphs."""

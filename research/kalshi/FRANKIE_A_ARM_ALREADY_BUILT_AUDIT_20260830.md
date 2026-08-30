@@ -93,9 +93,15 @@ must not be used as a generic label-availability gate merely because it is the o
 confirmation field in the canonical row"*, and that (1) *"is also not automatically assumed
 to be a live notification timestamp."*
 
-**This has a direct consequence for what I built earlier today.** The landmark ladder I put
-into `native_exhaustion` carries `T0` and `ENDPOINT_ONSET` / `ENDPOINT_CONFIRMATION` - that
-is (1) and (3). **It cannot express (2)**, the live mark. The ladder is not wrong, but it is
+**This had a consequence for what I built earlier that day, and the code has since been
+reverted - the paragraph is kept as written, with the correction beside it.** The landmark
+ladder carried `T0` and `ENDPOINT_ONSET` / `ENDPOINT_CONFIRMATION` - (1) and (3) - and could
+not express (2), the live mark. **That ladder no longer exists.** It was reverted at
+`5148a33` because contract 4.10 lists the eleven original phase names verbatim, so
+`native_exhaustion.py` is byte-identical to the pre-session tip `ca54364`. The three-timestamp
+finding stands on its own and now applies to the CONTRACT's vocabulary rather than to mine:
+4.10 names `birth/T0` and `completion/reversal` but nothing that carries the live discovery
+mark. The ladder is not wrong, but it is
 incomplete in precisely the way this document warns about, and an RT arm needs (2). The
 boundary doc was dated 2026-08-19 and `ng_exhaustion_v4_causal_clock.py` is dated
 2026-08-20, so the open boundary appears to have been closed the next day by that receipt

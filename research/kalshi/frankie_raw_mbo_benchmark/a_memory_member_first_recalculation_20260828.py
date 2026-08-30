@@ -1,3 +1,20 @@
+"""A-memory member-first recalculation over the hash-bound native ledger.
+
+Walks the A-memory ledger (`EXPECTED_A_MEMORY_GROUPS` = 4,256,603 F_LAST-closed groups
+over `EXPECTED_A_MEMORY_RECORDS` = 5,667,689 native records) and recomputes, per MEMBER
+rather than per summary, the structures the open-world discovery contract declares: the
+action string, the side string, the mirror pair key, and the fill disposition. It emits a
+family index, an adjacency index, a mirror-pair index and a per-day index, each with a
+receipt carrying the counts and hashes it was built from.
+
+`discovery_contract()` states the seeds it works against - `P/O/S/X` structural states and
+`SAME`/`FLIP` transition orientations - and states them as SEEDS: `legacy_seed_is_allowlist`
+is False and the unmatched policy is `PRESERVE_AND_CHARACTERIZE`, so a structure that
+matches nothing is kept and described rather than forced into the nearest known label.
+
+Structural state assignment is deliberately deferred (`DEFER_TO_CAUSAL_FRANKIE_RESEARCH`):
+this module establishes members and their identities, not what they mean.
+"""
 from __future__ import annotations
 
 import argparse
@@ -98,8 +115,10 @@ def mirror_identity(sides: str) -> dict[str, str]:
     """Delegates to the single mechanical mirror key required by contract 4.4.
 
     The definition moved to `native_mirror` unchanged - same side swap, same pair key,
-    same CANONICAL/MIRROR orientation - so that section 4.12 and this recalculation share
-    one implementation instead of two that agree today.
+    same CANONICAL/MIRROR orientation - and this remains its only caller. The move was a
+    verbatim extraction, proven output-identical over twelve side strings in
+    `tests/test_native_mirror.py`; it is not a change of meaning and it makes no claim
+    about section 4.12.
     """
     return native_mirror_identity(sides)
 

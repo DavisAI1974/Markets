@@ -1,7 +1,8 @@
-"""Contract 4.4 mandates ONE mechanically defined mirror key.
+"""Section 4.4's mirror key: one mechanical definition, one implementation.
 
-These tests keep the count at one, and keep it from swallowing section 4.12's
-orientation, which is a different axis under a different contract clause.
+Note what these tests do NOT assert. An earlier version pinned "4.4 and 4.12 are
+different axes" as fact; the contract does not settle that, so enforcing it here would
+have been a ruling nobody made, recorded where something enforces it.
 """
 from __future__ import annotations
 
@@ -56,19 +57,20 @@ class OneDefinitionTest(unittest.TestCase):
                 )
 
 
-class SeparateFromSection412Test(unittest.TestCase):
-    """4.4's pair key and 4.12's orientation are different axes. Both are required."""
+class ScopeTest(unittest.TestCase):
+    """4.4's pair key is member-level. Whether it is also 4.12's orientation is unruled."""
 
-    def test_section_4_12_keeps_its_contract_orientation(self) -> None:
+    def test_the_pair_key_does_not_borrow_4_12_s_vocabulary(self) -> None:
+        """Not a claim that they are different axes - only that this module does not decide."""
+        self.assertNotIn("SAME", native_mirror.VALID_ORIENTATIONS)
+        self.assertNotIn("FLIP", native_mirror.VALID_ORIENTATIONS)
+
+    def test_section_4_12_still_carries_its_contract_orientation(self) -> None:
         """Contract 4.12: "`SAME` and `FLIP` orientations never pool"."""
         self.assertEqual(native_dipole.VALID_ORIENTATIONS, frozenset({"SAME", "FLIP"}))
 
     def test_the_frozen_transition_orientation_uses_the_same_words(self) -> None:
         self.assertEqual(discovery_contract()["transition_orientation_seeds"], ["SAME", "FLIP"])
-
-    def test_the_mirror_key_does_not_borrow_them(self) -> None:
-        self.assertNotIn("SAME", native_mirror.VALID_ORIENTATIONS)
-        self.assertNotIn("FLIP", native_mirror.VALID_ORIENTATIONS)
 
 
 if __name__ == "__main__":

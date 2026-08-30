@@ -16,9 +16,15 @@
 > `SEALED_TARGET_ANSWER`, *"mechanically inaccessible until all primary discoveries, helper
 > evidence, probability movies, and first-lock/no-lock ledgers are immutable."*
 >
-> The `legacy_*` columns are doubly excluded: they are Step-1-derived AND they are computed
-> from legacy MBP-10 rows. So section 5's "the substrate already exists, just read it" is
-> **the answer key**, and reading it would void the run.
+> **Narrowed 2026-08-30, because the first version of this banner over-corrected.** What is
+> sealed is the October Step-1 SECONDS FILE. Reading it would void the run. That is not the
+> same as a ban on the legacy SURFACE: inventory section 8 positively REQUIRES the causal
+> replay to recreate per-second `roll20` and the other legacy observables, and
+> `_legacy_control_row` in the V4 adapter already *projects* those rows - `bid_px_00`,
+> `ask_px_00`, the ten depth levels - from the native MBO stream, with
+> `native_replay_driver.py:279-293` retaining every one under D60. Recomputing from native is
+> lawful and mandated; reading the Step-1 output is neither. The first banner conflated the
+> file with the quantity and would have forbidden the required work.
 >
 > **What the directive actually requires** is inventory section 8, the *Legacy-observable
 > compatibility feed*: *"The same causal replay must recreate the exact lawful surface on
@@ -83,7 +89,7 @@ The construction is recovered verbatim from
 `ng_exhaustion_pox_standalone_analysis_20260819.py:301-320`:
 
 ```
-maintain the book; for each row with action == "T":
+maintain the book; for each row with action == "T":   # projected from native, never read from Step-1
     price, size = row.price, row.size
     if the book has BOTH a bid and an ask (valid_quote):
         midpoint = 0.5 * (bid + ask)

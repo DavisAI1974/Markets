@@ -12,12 +12,19 @@ was built, ran, and emitted a `mirror-pair-index.json` with 966 mirror-ready key
 `mirror_identity()` in `a_memory_member_first_recalculation_20260828.py`, which now
 delegates here.
 
-**This is NOT section 4.12's orientation, and the two must not be merged.** Contract
-4.12 stratifies on `SAME` / `FLIP` (*"`SAME` and `FLIP` orientations never pool"*) and
-that vocabulary is also the frozen chain-transition polarity carried here as
-`discovery_contract()["transition_orientation_seeds"]`. `CANONICAL` / `MIRROR` is the
-4.4 pair key: which half of a mirrored pair a member is. Different axis, different
-section, both required.
+**How this relates to section 4.12's `SAME`/`FLIP` is an OPEN RULING, not settled here.**
+An earlier version of this docstring asserted they were "different axes, both required".
+The contract does not say that. Section 3 lists the stratifier as "side or mirror
+orientation" (:65) and forbids averaging across "mirror orientations" (:71) - one axis
+named two ways - while 4.12 stratifies on `SAME`/`FLIP` and speaks of "paired mirror
+differences" in the same clause. So "4.12's orientation IS the mirror orientation" reads at
+least as well as the split.
+
+Nothing is pinned either way, and nothing needs to be yet: `DipoleStage.orientation` has no
+producer anywhere in the tree and `mirror_signed_flow` is never looked up, so 4.12's
+orientation is unfed and the question is not live. It becomes live the moment something
+feeds it. Until then this module claims only 4.4's member-level pair key and makes no claim
+about 4.12.
 """
 from __future__ import annotations
 
