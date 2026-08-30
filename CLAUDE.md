@@ -1,4 +1,57 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-29, Session 115 A-ARM)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-30, Session 116)
+
+
+## S116 — THE WORK WAS ALREADY BUILT, AND FIFTY-FIVE DROPS WERE RESTORED (read `SESSION_HANDOFF_2026-08-30_S116.md` + `research/kalshi/FRANKIE_A_ARM_PRIOR_WORK_RECOVERY_20260829.md` + `DROP_IN_FRANKIE_A_ARM_NEXT.md`)
+
+**Branch = `chatgpt/frankie-raw-mbo-benchmark-20260828`. 552 -> 613 tests. NOTHING LAUNCHED.**
+Decisions 57 -> 61. No group run, no merge.
+
+**THE FINDING THAT MATTERS MOST. Greg: *"this should have already been built in some capacity
+for the exhaustion prediction part. is this related?"* IT WAS THE SAME WORK.** Four estimand
+proposals written earlier in the session for sections 4.10/4.11/4.12/4.16 were reinventing a
+**frozen, hash-bound vocabulary built 2026-08-16 to 2026-08-25** across ~200 files. All four are
+WITHDRAWN. **t0 is a DIPOLE FLOW SPIKE**, not a price-level event, and price never selects or
+orients it. **PRIOR/T0/H+N already exists as `TIMING_LADDER`** with the classes strictly ordered.
+**SAME/FLIP means polarity versus the LATEST PREDECESSOR**, frozen with committed counts of 1,546
+FLIP / 1,883 SAME of 3,429. **The mirror is the SIDE-SWAPPED SIDE STRING**, already computed.
+**`t` IS A PRICE TICK** — `3t/5t/8t/13t` are ZigZag reversal thresholds and 358/993/1802/4386 are
+the median leg durations IN SECONDS they produce; Fibonacci is coincidental (2t was dropped after
+a five-point sweep). **Greg's duration ruling restates a correction frozen on 2026-08-18**:
+*"exhaustion is a duration / remaining-runway signal, not a direction predictor"* — and the frozen
+program solves the clock problem better than my revision did, keeping absolute-second horizons but
+anchoring them on the **dynamic episode endpoint, "never t0+60 by fiat."** **The fix was the
+ANCHOR, not abolition.**
+
+**AND THE BUILD PLAN CHANGED. The missing layer is not six adapters — it is the per-second roll20
+/ dipole SUBSTRATE.** The built candidate is a 1-second flow event; the A-arm unit is the
+nanosecond F_LAST group. **3,429 frozen events against 4.26M groups.** The registry REQUIRES the
+bridge as `CAUSAL_STREAM_REQUIRED` and **nothing in the benchmark computes roll20 or any dipole
+from the MBO stream** — which is why 4.10/4.11/4.12 have nothing to feed them. **The open question
+for Greg is a UNIT question, not a phase question.** `PHASE_INDEX` scores **0 of 11** against the
+built corpus and four names are reused with a different referent; `SEED_STATES` (P/O/S/X) and
+`RecognitionLabel` (PRIOR/T0/H+N) ARE right and must stay.
+
+**D60 — NOTHING IS DROPPED WITHOUT DISCUSSING IT FIRST.** Greg, on the cost: *"this is the problem
+that i have been fighting the whole time that things are dropped for whatever reason and not
+discussed and then we find out we have to rerun because it was important."* And: ***"i don't care
+about memory. restore every piece."*** **Fifty-five confirmed drops across ingest, traversal and
+output, every one restored.** The per-record `ApplyEffect` never reached the traversal at all
+(`top_before_price_raw` and `removed` had **zero readers anywhere**); every frame asserted
+`fifo_priority_reconstructed: True` while asking for the book WITHOUT order ids; the two
+exact-evidence layers emitted **counts, not rows**, so the gate guaranteeing exact members was
+satisfied by an integer; `AssignmentLedger` used one capped list as both sample and count, so
+twenty mismatches and twenty million both read 20. **My first fix merely COUNTED the legacy rows,
+reasoning that memory was a decision for Greg — that reasoning was itself the defect.**
+**D61: restore by WRAPPING, never editing — the V4 adapter is hash-locked and editing it broke six
+supply-chain locks in one commit.** `FullCaptureAdapter` keeps everything while the locked file
+stays byte-identical.
+
+**LAUNCH READINESS, MEASURED:** sections fed by the driver = **clocks, coverage, one clock
+advance**; ten receive **zero**. Adapters wired **0**, execution gate referenced by non-test files
+**0**, workflows dispatching the driver **0**. **THE LESSON: I assumed wiring existed because
+components did, and assumed nothing existed because the contract did not define it. Both are the
+same error. Verify by EXECUTION, and search the prior corpus BEFORE proposing a definition.**
+
 
 
 ## S115 A-ARM — THE GATE WAS ENFORCING THE API ARCHITECTURE GREG KEPT CORRECTING (read `SESSION_HANDOFF_2026-08-29_S115_A_ARM.md` + `DROP_IN_FRANKIE_A_ARM_NEXT.md`)
@@ -964,6 +1017,14 @@ DATA next (Greg): forward-curve cache back ($0.07; curve_regime was 'unknown' al
 FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the driver; back-fill the walked
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
+
+**One-line state (S116):** branch `chatgpt/frankie-raw-mbo-benchmark-20260828`, **613 tests
+green, NOTHING LAUNCHED**, decisions 57 -> 61. **The four estimand proposals are WITHDRAWN — the
+prior exhaustion program already built and froze that vocabulary**, and the build plan changed
+with it: the missing layer is the **per-second roll20/dipole substrate**, not six F_LAST-group
+adapters. **D60 restored 55 confirmed data drops**; **D61** says restore by wrapping the
+hash-locked MBO adapter, never editing it. **The open question for Greg is a UNIT question.**
+Ten of thirteen sections still receive zero data; nothing dispatches the driver.
 
 **One-line state (S115 A-ARM):** branch `chatgpt/frankie-raw-mbo-benchmark-20260828`, **552
 tests green, NOTHING LAUNCHED**, decisions 51 -> 57. **The execution gate was enforcing the API

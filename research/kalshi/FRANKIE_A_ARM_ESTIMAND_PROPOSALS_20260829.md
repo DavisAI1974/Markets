@@ -1,3 +1,22 @@
+# WITHDRAWN 2026-08-30 - DO NOT BUILD FROM THIS FILE
+
+**Every definition below was already built, and in places frozen, by the prior exhaustion
+program (2026-08-16 to 2026-08-25).** Greg asked *"this should have already been built in some
+capacity for the exhaustion prediction part. is this related?"* It is the same work. These
+proposals were constructing a second vocabulary over facts this project already has one for -
+the `_family_id` defect at project scale, which does not fail, it disagrees.
+
+**Read `FRANKIE_A_ARM_PRIOR_WORK_RECOVERY_20260829.md` instead.** This file is retained only as
+the record of what was proposed and why it was wrong, per the standing rule that a superseded
+value is a deliberate record rather than something to tidy away.
+
+Specifically superseded: t0 is a dipole flow spike, not a price-level event. SAME/FLIP means
+polarity versus the latest predecessor, with committed counts. The mirror is the side-swapped
+side string, already computed. `t` is a PRICE TICK. And the duration target - "observe the
+length" - was frozen on 2026-08-18, eleven days before this file proposed a grid against it.
+
+---
+
 # The four rulings the A-arm cannot make for itself
 
 **Status: PROPOSALS. Nothing here is built. Greg accepts, redirects or rejects each one.**

@@ -1,5 +1,33 @@
 # KALSHI TRADING — file index
 
+## S116 — the RT book, the full-capture adapter, and the prior-work recovery
+
+Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`.
+
+- **`research/kalshi/FRANKIE_A_ARM_PRIOR_WORK_RECOVERY_20260829.md`** — **READ BEFORE ANY BUILD ON
+  4.10/4.11/4.12/4.16.** What the prior exhaustion program (2026-08-16 to 2026-08-25, ~200 files,
+  in places frozen and hash-bound) already defines: t0 as a dipole flow spike, the `TIMING_LADDER`,
+  the persistence-run call with its two timestamps, SAME/FLIP as polarity versus the latest
+  predecessor, the side-swap mirror, and `t` as a PRICE TICK. Plus the six collisions between that
+  frozen learning and the new modules, and the reason the sections were never fed: the per-second
+  roll20/dipole substrate the registry requires does not exist in the benchmark.
+- **`research/kalshi/FRANKIE_A_ARM_ESTIMAND_PROPOSALS_20260829.md`** — **WITHDRAWN.** Retained as
+  the record of what was proposed and why it was wrong, per the rule that a superseded value is a
+  deliberate record.
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_rt_book.py`** — the REAL-TIME view (Greg:
+  *"we should see it like it would be seen in rt"*). A FIFO book advanced one action at a time, so
+  section 4.6 reads `orders_ahead` as a live feed saw it rather than as the closed group left it -
+  the shared book mutates on every record while the frame arrives only at F_LAST, so reading there
+  reports a level AFTER the add it describes. Mirrors `InstrumentBook` on every mutation and
+  refuses only a negative size. `view_with_basis` carries the basis on the value. Tests: 38, plus
+  `tests/test_native_rt_book_differential.py` driving both books in lockstep over 12,024 records
+  with zero divergence and mutation-testing its own comparator.
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_full_capture_adapter.py`** — D61. Keeps
+  everything the HASH-LOCKED V4 adapter computes and discards: the per-record `ApplyEffect`, the
+  reconstructed FIFO queue, the book below level ten, per-side event counts, touch quantity for
+  T/F/M, and every anomaly magnitude. **Never edit the locked adapter** - doing so broke six
+  supply-chain locks in one commit. Tests: 12, each a differential against the locked adapter.
+
 ## S115 A-ARM — the Frankie raw-MBO benchmark: the group adapters, the CME calendar, the box probes
 
 Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. Distinct from the S115 platform-audit section
