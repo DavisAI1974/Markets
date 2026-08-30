@@ -6,9 +6,17 @@ first*. So nothing here is built. This is the three things the ruling needs: wha
 frozen roll20 actually requires from the MBO stream, what it costs, and what it would
 reproduce against the frozen 3,429.
 
-**The short version: the compute is free, the recipe is small and fully recovered, and the
-reconciliation is impossible on the days the A-arm holds.** The third finding is the one
-that decides the build.
+**CORRECTED 2026-08-30, same session, by Greg:** *"We have actually done step 1 work for
+the less than mbo data for these 2 days. I don't understand what is still missing."* He was
+right and the first version of this document was wrong where it mattered most. **The
+per-second substrate for October 2021 already exists.** Step 1 built it, hash-pinned it, and
+a prior-surface Frankie run already consumed it row by row. The correction is section 5, and
+it is the section to read; sections 1 and 2 survive intact, section 3 does not.
+
+**The short version, corrected: the substrate is not missing, the compute is free, and what
+is actually left is a READER plus one column ruling.** And the column ruling matters more
+than the reader, because step 1 built the series TWICE under two different rules and the two
+disagree.
 
 ---
 
@@ -82,12 +90,15 @@ Two spec details that are easy to lose:
 The book half is built and does not need rebuilding. `native_rt_book.ReplayBook` mirrors
 `InstrumentBook` on every mutation, was differential-tested over 12,024 records with zero
 divergence, and exposes `touch_price(side)` - which is exactly the bid and ask the
-`valid_quote` mid needs. **The missing piece is only the per-second accumulator and the
-detector**, not the book.
+`valid_quote` mid needs.
+
+**And per section 5, the per-second accumulator is built too, and has already run on these
+days.** So the only piece with no implementation anywhere is the detector wiring - and the
+detector itself is 60 lines of committed, frozen Python that runs today.
 
 One format gap: the frozen loader reads `NG_*.jsonl.gz` raw causal days
-(`load_raw_causal_days`), while the A-arm's sources are native DBN MBO. That is a reader
-difference, not a semantic one, but it is real work.
+(`load_raw_causal_days`), while step 1's output is `*.seconds.jsonl.gz`. That is a reader
+difference, not a semantic one.
 
 ---
 
@@ -124,9 +135,14 @@ MBO-reader constant, and the way to settle it is to run one October day, not to 
 
 ---
 
-## 3. What it would reproduce against the 3,429 - and this is the finding
+## 3. What it would reproduce against the 3,429
 
-**Nothing. There is not one day in common.**
+**Superseded in its consequence by section 5. What survives is narrower than what I wrote:
+the frozen 3,429 EVENT roster does not cover October 2021, so that particular
+roster-to-roster reconciliation is unavailable. What does NOT survive is the conclusion I
+drew from it - that validation therefore needs a data pull. It does not; see section 5.**
+
+There is not one day in common between the frozen event roster and the A-arm's roster.
 
 | | days |
 |---|---|
@@ -161,10 +177,10 @@ section 1 live and where a reimplementation would actually go wrong.
 check. Given what the `_family_id` defect cost, this is the option that manufactures a
 second population.
 
-**My read:** (b) is cheap enough to be unconditional - do it whatever else is decided,
-because it costs nothing and it pins the half of the work that can be pinned. But (b) alone
-would leave the bridge unchecked, and the bridge is the risky half. **(a) is the only thing
-that reconciles**, and it needs a data pull the A-arm has not budgeted.
+**My read at the time was that (a) was the only real reconciliation and needed a data pull.
+That was wrong, and section 5 says why: the bridge I called "the risky half" was already
+built and already run on these days, so it can be checked against its own output rather than
+re-derived. (b) remains unconditionally worth doing.**
 
 ### A density check, so the expectation is on the record before anything runs
 
@@ -178,19 +194,143 @@ that it may not. Writing the expectation down first is what makes a surprise leg
 
 ## 4. What this leaves for the ruling
 
-The unit question the last drop-in box posed - is an F_LAST-group-local candidate admissible
-when every prior result is per-second - turns out to be downstream of a data question:
+Rewritten after the correction. The question is no longer whether to build a substrate.
 
-1. **Which days?** October 2021 (what we hold) or the pilot weeks (what the frozen roster
-   covers)? Nothing reconciles until this is answered, and it is a procurement question, not
-   a design one.
+1. **Which column feeds roll20?** `legacy_*` or `native_*`. Section 5 argues this is
+   determined rather than open, but it is a ruling and it should be made explicitly, once,
+   in writing, because both columns are present, numeric, in range and plausible.
 2. **Is the benchmark's `ExhaustionCalculator` a carrier or a competitor?** It has measured
-   nothing. It can become the vessel the frozen definitions flow through, or it can be
-   dropped in favour of consuming the built stack's output. It should not stay as it is -
-   a parallel apparatus with its own vocabulary and no data.
+   nothing. It can be the vessel the frozen definitions flow through, or it can be dropped
+   in favour of consuming the built stack's output. It should not stay as it is - a parallel
+   apparatus with its own vocabulary and no data.
 3. **Only then, the unit.** Whether a nanosecond F_LAST group may carry a candidate at all,
    given the frozen unit is a 1-second flow event - 3,429 events against 4,256,603 groups.
+   Note that a per-second series for these days now demonstrably exists, so the two clocks
+   can be held side by side rather than one being hypothetical.
 
-**Nothing in this document was built.** The one thing done this session was deletion: the
-eleven invented phase names, the misappropriated `SAME`/`FLIP`, and two of the three mirror
-vocabularies (commit `c0b6216`).
+---
+
+## 5. THE CORRECTION: the substrate exists, and it exists TWICE
+
+Greg: *"We have actually done step 1 work for the less than mbo data for these 2 days."*
+
+He is right, and every part of it checks out.
+
+### It was built
+
+`ng_exhaustion_mbo_5y_step1_census_20260822.py:244-271` defines a per-second row keyed on
+`epoch_second` carrying, among other fields:
+
+```
+legacy_rows, legacy_buy_qty, legacy_sell_qty,
+native_buy_qty, native_sell_qty,
+trade_count, last_trade_price,
+book_imbalance_sum, book_imbalance_n, native_state{...}
+```
+
+A per-second buy and sell aggressor volume. **That is `buy_vol` and `sell_vol` - the entire
+and only input `flow_series` takes.**
+
+### It exists for these exact days
+
+`NG_EXHAUSTION_OCTOBER_STEP1_RESULT_INVENTORY_20260824.txt`:
+
+```
+WORKER_CHILD_RECEIPT_FILE = 20211001_20211101.receipt.json | 20604 bytes
+WORKER_OCTOBER_SECONDS_BYTES  = 112,852,940
+WORKER_OCTOBER_SECONDS_SHA256 = 93654eb5eaf24be6dc6821f422cdd7fc416e12778dcecd6c97150cbc34004f90
+```
+
+A 112.8 MB hash-pinned seconds artifact covering `20211001` to `20211101` - which contains
+all four A-arm days, not just two.
+
+### And it has already been READ
+
+`ng_exhaustion_two_frankies_prior_surface_blind_2day_20260825.py` pins the whole schema as
+`PRIOR_ROW_FIELDS` (`:85-110`) and `build_day_context` (`:472-495`) serves
+`legacy_buy_qty`, `legacy_sell_qty`, `native_buy_qty`, `native_sell_qty` and the book state
+as per-day distributions over two target days. The reduced-surface Frankie run consumed this
+series. It is not a dormant artifact.
+
+So the drop-in box's sentence - *"no code in `frankie_raw_mbo_benchmark/` computes roll20 or
+any dipole from the MBO stream"* - is literally true and led to the wrong conclusion, mine
+included. **The benchmark does not compute it because it does not need to compute it. It
+needs to READ it.**
+
+### THE PART THAT MATTERS: the two columns are different quantities
+
+Step 1 builds the series twice, from two different rules, in the same loop
+(`ng_exhaustion_mbo_5y_step1_census_20260822.py:303-334`):
+
+**`legacy_buy_qty` / `legacy_sell_qty`** - from the legacy mbp-10 rows, gated on
+`price>0 and size>0 and bid>0 and ask>=bid`:
+
+```
+mid = 0.5 * (bid_px_00 + ask_px_00)
+price > mid  ->  legacy_buy_qty  += size
+price < mid  ->  legacy_sell_qty += size
+```
+
+**`native_buy_qty` / `native_sell_qty`** - from the native raw actions:
+
+```
+raw.side == "B"  ->  native_buy_qty  += size
+raw.side == "A"  ->  native_sell_qty += size
+```
+
+**The first is the frozen recipe, character for character. The second is the tape's own side
+field, which the frozen program deliberately does not use.** Compare section 1: aggressor
+side is inferred from trade price against the prevailing mid, and the tape's side is not
+consulted.
+
+They will not agree, and they are not supposed to. A mid-priced trade enters neither
+`legacy_*` column and enters one `native_*` column. A trade with no two-sided book is
+excluded from `legacy_*` entirely and is included in `native_*`. And `native_*` inherits
+whatever aggressor convention the venue encodes, which is a different question from where
+the trade printed relative to the mid.
+
+**So the ruling is: `legacy_*` is the frozen-compatible column, and roll20 must be built on
+it.** The trap is that `native_*` is the one whose name sounds authoritative and whose
+lineage is the newer, richer surface - and feeding it into a section named for the frozen
+dipole would be "present, typed, in range, and wrong", producing a number that never fails
+and simply is not the quantity the 3,429 were detected from. That is the `_family_id` defect
+one more time, and this time it is not in a proposal - it is in committed code that already
+ran.
+
+That `DUAL_CENSUS_CROSSWALK` exists at all says the prior work knew the two censuses had to
+be reconciled rather than assumed equal.
+
+### What this changes about validation
+
+Section 3 said reconciliation needed a data pull. It does not.
+
+* The frozen 3,429 EVENT roster still does not cover October 2021 - that stands.
+* But the detector can now be run on the `legacy_*` series for these days and its output
+  compared against the reduced-surface work already done on the same days, which is a
+  reconciliation on shared data rather than a construction in the dark.
+* And the differential test (option (b)) becomes sharper than I described: run the frozen
+  `flow_series` / `detect_dipole_peaks` on the `legacy_*` column, and on the `native_*`
+  column, and MEASURE how far apart the two event sets are. That is a free experiment on
+  data that already exists, and its answer is directly useful: it sizes exactly what the
+  column choice is worth.
+
+### The honest note on availability
+
+`S3_RESULT_OBJECT_COUNT=0` in the same inventory. The seconds artifact is recorded with a
+worker-local byte count and SHA, not as an S3 object, so **where it currently lives needs
+confirming before anything reads it**. No credentials are resolvable in this container, so I
+could not check. That is a retrieval question, not a build question, and it is the one thing
+between here and running the experiment above.
+
+---
+
+## 6. What was actually wrong in my first pass, recorded because the pattern is the point
+
+I searched the frozen EVENT corpus and the raw MBO manifest, found no shared day, and
+stopped. I did not search for the STEP 1 outputs on the A-arm's own days - so I concluded a
+substrate was missing when it existed, was hash-pinned, and had already been served to a
+Frankie.
+
+The standing rule from D62 is *search the prior corpus before proposing a definition.* I
+searched it for the definition and not for the DATA. Same rule, and the half I skipped is
+the half that had the answer.
