@@ -263,6 +263,15 @@ jobs:
           # This mode is reachable ONLY by an explicit workflow_dispatch with mode=full. A
           # push never reaches it, and the default input is canary, because starting the
           # box is a spend and D58 leaves the sizing decision with Greg.
+          # The manifest the runner hash-bound goes to S3 so the box runs on the BYTE
+          # IDENTICAL file rather than regenerating one. Regeneration would be a second
+          # opinion about the roster, and the launcher takes total_mbo_records and
+          # manifest_hash straight off it - two manifests that disagree would produce a run
+          # whose identity does not match the one this job reported.
+          aws s3 cp "$PACKET_DIR/source_manifest.json" \
+            "s3://${BUCKET}/${DURABLE_PREFIX_FULL}/source_manifest.json" \
+            --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
+
           python3 - <<'PY'
           import json
           import os
@@ -273,34 +282,83 @@ jobs:
           arm = os.environ["ARM_ID"]
           prefix = os.environ["DURABLE_PREFIX_FULL"]
           bucket = os.environ["BUCKET"]
-          command = "; ".join(
-              [
-                  "set -eu",
-                  "cd /opt/frankie-a-arm",
-                  f"git fetch --depth 1 origin {sha}",
-                  f"git checkout --detach {sha}",
-                  f'test "$(git rev-parse HEAD)" = "{sha}"',
-                  "install -d -m 0700 /opt/frankie-a-arm-run",
-                  (
-                      "python3 -m research.kalshi.frankie_raw_mbo_benchmark.native_a_arm_launch"
-                      f" --arm {arm}"
-                      f" --run-id {run_id}"
-                      f" --code-commit {sha}"
-                      " --source-manifest /opt/frankie-a-arm-run/source_manifest.json"
-                      " --out-dir /opt/frankie-a-arm-run"
-                      " $(printf ' --source /opt/frankie-a-arm-run/sources/%s'"
-                      " glbx-mdp3-20211001.mbo.dbn.zst glbx-mdp3-20211003.mbo.dbn.zst"
-                      " glbx-mdp3-20211004.mbo.dbn.zst glbx-mdp3-20211005.mbo.dbn.zst)"
-                  ),
-                  (
-                      "aws s3 cp /opt/frankie-a-arm-run"
-                      f" s3://{bucket}/{prefix} --recursive --only-show-errors"
-                  ),
-                  f"echo A_ARM_TRAVERSAL_COMPLETE={run_id}",
-              ]
+          source_prefix = os.environ["SOURCE_PREFIX"]
+          repo = os.environ["GITHUB_SERVER_URL"] + "/" + os.environ["GITHUB_REPOSITORY"]
+
+          # The same four objects the runner fetched, with the same expected digests. The box
+          # verifies them itself: a silently truncated download is a shorter tape, which reads
+          # downstream as a quiet market rather than as a failure.
+          ROSTER = (
+              ("glbx-mdp3-20211001.mbo.dbn.zst",
+               "e6b4ec01bd9b34d57cb22c770b5d49c756e7f41a658f081823d923004a0121b2"),
+              ("glbx-mdp3-20211003.mbo.dbn.zst",
+               "4380bd9ba83a5badc4839e12785aa464817b87e3fac11176b951e7b474446d88"),
+              ("glbx-mdp3-20211004.mbo.dbn.zst",
+               "8ed47cc0a68cf40cae9fde45e158142978076e60d3f9fc7cf940196babfddc0a"),
+              ("glbx-mdp3-20211005.mbo.dbn.zst",
+               "a4a12f9578da762412884e7f559a123361eaa3a153bec0db59dfb3ba6224a874"),
           )
+
+          # MEASURED, not guessed: canary run 33304621724 wrote 1,205,197,795 bytes of packet
+          # for 50,001 records, so the 5.67M-record roster needs on the order of 136 GB of
+          # exact ledgers. 170 GiB, expressed in the 1024-byte blocks df -kP reports, leaves
+          # headroom for the sources and the S3 staging. Checked in the first seconds because
+          # the alternative is discovering it at hour six of an eight-hour run.
+          required_kib = 170 * 1024 * 1024
+
+          steps = [
+              "set -eu",
+              # The runner passes --endpoint-url on every aws call; the box has no such
+              # variable, so the region is stated here rather than left to whatever the
+              # instance happens to have configured. A wrong region is a 301 on the first
+              # copy, hours before anything else would have gone wrong.
+              "export AWS_DEFAULT_REGION=us-east-2",
+              "install -d -m 0700 /opt/frankie-a-arm-run/sources",
+              f'avail=$(df -kP /opt/frankie-a-arm-run | awk "NR==2 {{print \\$4}}")',
+              'echo "A_ARM_DISK_AVAIL_KIB=$avail"',
+              f'test "$avail" -ge {required_kib}',
+              # A missing clone is a first-run box, not a failure. Clone it, then bind the
+              # exact commit either way - the checkout is what makes this run reproducible.
+              f'test -d /opt/frankie-a-arm/.git || git clone --filter=blob:none {repo} /opt/frankie-a-arm',
+              "cd /opt/frankie-a-arm",
+              f"git fetch --depth 1 origin {sha}",
+              f"git checkout --detach {sha}",
+              f'test "$(git rev-parse HEAD)" = "{sha}"',
+              (
+                  "aws s3 cp"
+                  f" s3://{bucket}/{prefix}/source_manifest.json"
+                  " /opt/frankie-a-arm-run/source_manifest.json --only-show-errors"
+              ),
+          ]
+          for name, digest in ROSTER:
+              steps.append(
+                  f"aws s3 cp s3://{bucket}/{source_prefix}/{name}"
+                  f" /opt/frankie-a-arm-run/sources/{name} --only-show-errors"
+              )
+              steps.append(
+                  f'test "$(sha256sum /opt/frankie-a-arm-run/sources/{name}'
+                  f' | cut -d" " -f1)" = "{digest}"'
+              )
+          steps.extend([
+              (
+                  "python3 -m research.kalshi.frankie_raw_mbo_benchmark.native_a_arm_launch"
+                  f" --arm {arm}"
+                  f" --run-id {run_id}"
+                  f" --code-commit {sha}"
+                  " --source-manifest /opt/frankie-a-arm-run/source_manifest.json"
+                  " --out-dir /opt/frankie-a-arm-run"
+                  " $(printf ' --source /opt/frankie-a-arm-run/sources/%s'"
+                  " glbx-mdp3-20211001.mbo.dbn.zst glbx-mdp3-20211003.mbo.dbn.zst"
+                  " glbx-mdp3-20211004.mbo.dbn.zst glbx-mdp3-20211005.mbo.dbn.zst)"
+              ),
+              (
+                  "aws s3 cp /opt/frankie-a-arm-run"
+                  f" s3://{bucket}/{prefix} --recursive --only-show-errors"
+              ),
+              f"echo A_ARM_TRAVERSAL_COMPLETE={run_id}",
+          ])
           Path("/tmp/a-arm-traversal-params.json").write_text(
-              json.dumps({"commands": [command]}), encoding="utf-8"
+              json.dumps({"commands": ["; ".join(steps)]}), encoding="utf-8"
           )
           PY
           # FIRE AND RETURN, never dispatch-and-wait.

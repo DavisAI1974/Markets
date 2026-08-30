@@ -95,10 +95,29 @@ Before anything runs, sit down with Greg and confirm, item by item:
    **4.15 is unchanged and stays OUT of this run under D5** - discovery is optional to the
    runner and the gate skips it, so it is not an unfed section, it is an excluded one.
 8. **Compute is settled** - which machine runs this, and whether it is sized for sixteen
-   sections over 4.26M groups. See section 10a: the A-arm workflows currently dispatch
-   nothing, and the box was PROBED LIVE on 2026-08-29 (D55) as an **r6i.2xlarge**, 8 cores /
-   61.8 GiB / 32 GiB swap - not the t3.xlarge this line used to record. The resize to
-   `r6i.8xlarge` is armed and NOT fired, so compute is still not settled.
+   sections over 4.26M groups. See section 10a: the box was PROBED LIVE on 2026-08-29 (D55)
+   as an **r6i.2xlarge**, 8 cores / 61.8 GiB / 32 GiB swap - not the t3.xlarge this line used
+   to record. The resize to `r6i.8xlarge` is armed and NOT fired, so compute is still not
+   settled. **The workflows now dispatch** (T4), and as of 2026-08-30 there are two MEASURED
+   numbers to size against rather than estimates read off the code:
+
+   **THROUGHPUT.** Canary run 33304621724 traversed **50,001 records / 40,242 groups in 256
+   seconds** on a GitHub `ubuntu-latest` runner, single process. The roster is **5,667,689
+   records**, so the full traversal is **roughly 8.1 hours** at that rate. **A GitHub-hosted
+   job is hard-capped at 360 minutes and this workflow is set to 350, so the full roster
+   CANNOT finish on a runner** - not as a policy, as arithmetic. That is why `mode=full`
+   dispatches to the box and why the checkpointer is on the path.
+
+   **ARTIFACT SIZE, and this is the one that decides the volume.** That same canary produced
+   a packet of **1,205,197,795 bytes for 50,001 records** - about 24 KB per record, which at
+   full roster is **on the order of 136 GB of exact ledgers**. It is DISK, not RAM: D65 put
+   the ledgers on `RowSink` so they stream. The armed 128 GiB figure was a MEMORY decision
+   and does not cover this; the box's volume has to be sized for it separately, and a run
+   that fills the disk at hour six loses the same way a timeout does.
+
+   Both numbers are per-record extrapolations from one 50k slice on four October days. They
+   are the right order of magnitude to plan with and are not a substitute for watching the
+   real run - which is what D56's live monitor is for.
 9. **A dry run over a small slice completes and the eight gates pass**, before anything
    touches the full roster.
 
