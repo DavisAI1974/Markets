@@ -550,9 +550,38 @@ runs, but the claim as written was wrong. No driver feeds the sixteen sections.
    committed request via `native_staging.SpawnStager` and moves on. It calls nothing. The
    full loop is now closed and tested - stage at cutoff, agent session reads, artifact
    loaded back, runner ingests with attribution, gate rejects if absent.
-2. **Wire the checkpointer** into both launch workflows. It is already imported by the
-   draft driver; what is missing is a path on which that driver executes.
-3. **Wire the gate** into the launcher. An unreferenced gate is not a gate.
+2. ~~**Wire the checkpointer** into both launch workflows.~~ **DONE 2026-08-30 (T3).**
+3. ~~**Wire the gate** into the launcher. An unreferenced gate is not a gate.~~
+   **DONE 2026-08-30 (T2).**
+
+   **T2, T3 and T5 were ONE missing thing, not three: a launch entrypoint.**
+   `native_a_arm_launch.py` is it. The gate, the checkpointer and the driver were each built
+   and each wired to nothing, because there was no module that ran them in order. It gates,
+   traverses, checkpoints and finalizes, and it never calls a model - at a cutoff the
+   traversal stages a committed request and moves on. **15 tests; package suite 665 -> 680.**
+
+   The three pre-traversal gates run in order and fail closed:
+   1. `validate_registry` - exact layer identities, policy counts, arm counts, sealed set.
+   2. `validate_pre_call_receipt` - every registered layer enumerated with the status its own
+      policy demands and a REAL evidence hash, computed over the declared source paths AND
+      their bytes. A receipt cannot be produced for a file that is not there. Measured:
+      **99 layers, 75 required for A-clean and 77 for A-memory** - the D2 asymmetry visible
+      in the receipt - and the nine-layer answer wall SEALED.
+   3. `validate_rt_surface_inventory` - the same registry in the execution gate's own
+      vocabulary, **91 surfaces**, re-proving the Step-1 wall from a second object. Two
+      objects over one registry on purpose: a field-level check cannot catch a
+      wrong-but-well-formed input, and only a second source settles it.
+
+   **Two defects the wiring found, both invisible while nothing dispatched the driver:** the
+   checkpointer REFUSES an interval save before `seal_start` writes sequence 0, and
+   `stage_spawn_request` REFUSES a request whose evidence carries no `result_hash`. Both are
+   the modules failing closed exactly as designed; both could only surface on a path that
+   runs.
+
+   **The declared gap:** `native_records`, the DBN decode, is the one part of the launch path
+   these tests do not cover. AWS credentials are GitHub-secret scoped, so no interactive
+   session can read the roster; the tests drive the path with a supplied record iterable and
+   the DBN read is covered by the workflow slice, not here. Stated rather than papered over.
 4. ~~**Feed the D6 assignment into the traversal.**~~ **DONE.** Wired as a RECONCILIATION,
    not a hand-off: the traversal reports what it keyed on via
    `NativeCalculationRun.note_session_assignment`, `native_session.AssignmentLedger`
