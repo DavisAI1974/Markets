@@ -47,7 +47,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import 
     NativeCalculationRun,
     RunIdentity,
 )
-from research.kalshi.frankie_raw_mbo_benchmark import native_roll20
+from research.kalshi.frankie_raw_mbo_benchmark import native_candidate, native_roll20
 from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import ClockCalculator, member_clock_row
 from research.kalshi.frankie_raw_mbo_benchmark.native_session import (
     NS_PER_SECOND,
@@ -164,6 +164,10 @@ class DriverCounters:
     segments_opened: int = 0
     invocation_cutoffs: list[dict[str, Any]] = field(default_factory=list)
     save_points: int = 0
+    candidates_detected: int = 0
+    """4.10-4.12/4.16's unit: dipole flow events detected causally from the roll20 substrate."""
+    candidate_summaries: list[dict[str, Any]] = field(default_factory=list)
+    """One per continuity segment, so a segment that found NOTHING is still visible as one."""
     legacy_rows_retained: int = 0
     """Legacy rows RETAINED, counted whether they went to a list or to a sink."""
     member_rows_retained: int = 0
@@ -254,6 +258,8 @@ class NativeReplayDriver:
         roll20_clock: str = native_roll20.RECV_CLOCK,
         lineage_signature: str = LINEAGE_SIGNATURE,
         sinks: Any = None,
+        candidate_selection: str = native_candidate.CAUSAL_WINDOWED_PROMINENCE,
+        candidate_warmup_seconds: int = 900,
     ) -> None:
         if session_rule is None:
             raise ReplayDriverError(
@@ -294,6 +300,14 @@ class NativeReplayDriver:
         # When present, the three exact ledgers are retained ON DISK. Nothing is dropped -
         # see `native_row_sink`. Absent, this class behaves exactly as before.
         self.sinks = sinks
+        # D66: the CANDIDATE unit, alongside the F_LAST group MEMBER unit. Detected causally
+        # from the roll20 substrate one completed second at a time, so a decision at second s
+        # can consume nothing after s. Rebuilt at every continuity boundary, like lineage: a
+        # trailing bar carried across the halt would be calibrated on the wrong session.
+        self.candidate_selection = candidate_selection
+        self.candidate_warmup_seconds = candidate_warmup_seconds
+        self.detector = self._new_detector(0)
+        self._last_complete_second: int | None = None
 
         # 4.13 is the one fed section whose state is not held by its calculator:
         # `LineageCalculator.observe_node` takes the graph as an argument, so the traversal
@@ -335,6 +349,11 @@ class NativeReplayDriver:
         self._close_lineage(
             segment=segment, censored_status=CENSORED_SEGMENT_END, occasion="SEGMENT_CLOSE"
         )
+        if self._last_complete_second is not None:
+            self._retain_candidates(self.detector.finish(self._last_complete_second))
+        self.counters.candidate_summaries.append(self.detector.summary())
+        self.detector = self._new_detector(segment + 1)
+        self._last_complete_second = None
 
     def _close_lineage(self, *, segment: int, censored_status: str, occasion: str) -> None:
         """Observe every node in the live graph with its TERMINAL status, then rebuild.
@@ -372,6 +391,35 @@ class NativeReplayDriver:
             if self.sinks is None:
                 self.counters.lifecycle_rows.append(kept)
             self.run.note_lifecycle_row(row=kept)
+
+    def _new_detector(self, segment: int) -> native_candidate.CausalPeakDetector:
+        return native_candidate.CausalPeakDetector(
+            continuity_segment=segment,
+            selection_rule=self.candidate_selection,
+            warmup_seconds=self.candidate_warmup_seconds,
+        )
+
+    def _advance_candidates(self, current_second: int) -> None:
+        """Judge every second that is now COMPLETE. Never the current one.
+
+        A second is complete only once the stream has moved past it, because its own trades
+        are still arriving until then. Judging `current_second` here would read a partial
+        bin as a finished one - present, typed, and smaller than the truth.
+        """
+        if self._last_complete_second is None:
+            self._last_complete_second = current_second - 1
+            return
+        for second in range(self._last_complete_second + 1, current_second):
+            rows = self.detector.observe(second, self.roll20.rolling_value(second))
+            self._retain_candidates(rows)
+        self._last_complete_second = current_second - 1
+
+    def _retain_candidates(self, candidates: Any) -> None:
+        for candidate in candidates or ():
+            self.counters.candidates_detected += 1
+            self._retain_lifecycle(
+                [candidate.as_dict()], section="candidate", occasion="CANDIDATE_LAWFUL"
+            )
 
     def _retain_legacy(self, row: Mapping[str, Any]) -> None:
         """D60: every legacy row is kept. A sink changes where, never whether."""
@@ -456,6 +504,7 @@ class NativeReplayDriver:
             second=stamp // NS_PER_SECOND,
         )
         self._legacy_pending = []
+        self._advance_candidates(stamp // NS_PER_SECOND)
 
         source_day = _source_day(source_object)
         mark = self._mark_for(event_ns, recv_ns, source_day)
@@ -705,6 +754,9 @@ class NativeReplayDriver:
             censored_status=CENSORED_STREAM_END,
             occasion="STREAM_END",
         )
+        if self._last_complete_second is not None:
+            self._retain_candidates(self.detector.finish(self._last_complete_second))
+        self.counters.candidate_summaries.append(self.detector.summary())
         result = self.run.finalize()
         result["traversal"] = {
             "groups_seen": self.counters.groups_seen,
@@ -725,7 +777,11 @@ class NativeReplayDriver:
                 "4.13_lineage_nodes_added": self.counters.lineage_nodes_added,
                 "4.13_lineage_nodes_observed": self.counters.lineage_nodes_observed,
                 "4.14_recurrence_sequences": self.counters.recurrence_sequences,
+                "candidate_unit_events": self.counters.candidates_detected,
             },
+            # D66's second unit, reported per continuity segment. A segment that found NOTHING
+            # is still a row here: absence is a result about that segment, not an omission.
+            "candidate_detection": list(self.counters.candidate_summaries),
             "lineage_signature": self.lineage_signature,
             "lineage_segment_scope": LINEAGE_SEGMENT_SCOPE,
             "legacy_rows_seen": self.counters.legacy_rows_seen,

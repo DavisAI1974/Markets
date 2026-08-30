@@ -8,6 +8,7 @@ from __future__ import annotations
 import unittest
 from datetime import datetime, timezone
 
+from research.kalshi.frankie_raw_mbo_benchmark import native_candidate as nc
 from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import (
     ACCEPTED,
     NativeCalculationRun,
@@ -394,6 +395,7 @@ class FedSectionsTest(unittest.TestCase):
             "4.13_lineage_nodes_added": 6,
             "4.13_lineage_nodes_observed": 6,
             "4.14_recurrence_sequences": 2,
+            "candidate_unit_events": 0,
         })
 
     def test_every_fed_section_produces_averaged_companions(self):
@@ -481,6 +483,7 @@ class FedSectionsTest(unittest.TestCase):
             "4.13_lineage_nodes_added": 0,
             "4.13_lineage_nodes_observed": 0,
             "4.14_recurrence_sequences": 0,
+            "candidate_unit_events": 0,
         })
         sections = [row.get("section") for row in result["layers"]["averaged_companions"]["rows"]]
         for section in ("4.8", "4.9", "4.13", "4.14"):
@@ -492,3 +495,112 @@ class FedSectionsTest(unittest.TestCase):
         _, result = self._run()
         self.assertEqual(result["traversal"]["lineage_signature"], "ORDER_ID_LINEAGE_V1")
         self.assertEqual(result["traversal"]["lineage_segment_scope"], "ONE_CONTINUITY_SEGMENT")
+
+
+class CandidateUnitFedTest(unittest.TestCase):
+    """D66's second unit, fed by the traversal from real legacy rows - not just callable.
+
+    `native_candidate` is exercised directly by its own tests. This asserts the thing those
+    cannot: that the DRIVER reaches it, from the roll20 substrate it recreates out of the
+    adapter's legacy control rows, on completed seconds only. Built-and-tested and fed are
+    different states, and the gap between them is what left eleven sections reporting on an
+    empty ingest.
+    """
+
+    BOOK = ((1, "B", 3_499_000_000), (2, "A", 3_501_000_000))
+    MID = 3_500_000_000
+    SPIKE_SECOND = 200
+    SPAN = 400
+
+    def _stream(self):
+        base = at("2021-10-04T13:00:00")
+        seq = 0
+        for order_id, side, price in self.BOOK:
+            row = record(seq=seq, event_ns=base, order_id=order_id, action="A",
+                         side=side, last=False)
+            row["price"] = price
+            yield row
+            seq += 1
+        for offset in range(1, self.SPAN):
+            # Alternating one-lot buys and sells keep trailing imbalance near zero, so the
+            # trailing bar sits low and the injected burst is the only real peak.
+            buy = offset % 2 == 0
+            row = record(seq=seq, event_ns=base + offset * NS_PER_SECOND, order_id=1000 + offset,
+                         action="T", side="A" if buy else "B", last=True)
+            row["price"] = self.MID + (500_000 if buy else -500_000)
+            row["size"] = 100 if offset == self.SPIKE_SECOND else 1
+            yield row
+            seq += 1
+
+    def _run(self):
+        driver = make_driver(total_mbo_records=self.SPAN + 1)
+        driver.candidate_warmup_seconds = 60
+        driver.detector = driver._new_detector(0)
+        driver.consume(self._stream())
+        return driver, driver.finalize()
+
+    def test_the_traversal_detects_candidates_from_its_own_roll20_substrate(self):
+        driver, result = self._run()
+        self.assertGreater(
+            result["traversal"]["sections_fed"]["candidate_unit_events"], 0,
+            "the detector is wired but nothing reached it",
+        )
+        self.assertEqual(
+            result["traversal"]["sections_fed"]["candidate_unit_events"],
+            driver.counters.candidates_detected,
+        )
+
+    def test_the_injected_burst_is_among_the_detected_events(self):
+        """A candidate the fixture put there, found through the whole chain end to end."""
+        driver, _ = self._run()
+        seconds = [
+            row["event_second"]
+            for row in driver.counters.lifecycle_rows
+            if row["emitting_section"] == "candidate"
+        ]
+        self.assertTrue(seconds, "no candidate rows were retained")
+        base_second = at("2021-10-04T13:00:00") // NS_PER_SECOND
+        spike = base_second + self.SPIKE_SECOND
+        self.assertTrue(
+            any(abs(s - spike) <= nc.REFRACTORY for s in seconds),
+            f"the burst at {spike} produced no candidate within a refractory window of it",
+        )
+
+    def test_every_detected_candidate_is_retained_with_both_clocks(self):
+        driver, _ = self._run()
+        rows = [r for r in driver.counters.lifecycle_rows if r["emitting_section"] == "candidate"]
+        self.assertTrue(rows)
+        for row in rows:
+            with self.subTest(second=row["event_second"]):
+                self.assertGreater(row["available_second"], row["event_second"])
+                self.assertIn(row["polarity"], (-1, 0, 1))
+                self.assertEqual(row["threshold_rule"], nc.TRAILING_QUANTILE)
+
+    def test_a_segment_that_found_nothing_still_reports_a_summary(self):
+        """Absence is a result about that segment, not an omission from the output."""
+        driver = make_driver()
+        driver.consume(
+            record(seq=i, event_ns=at("2021-10-04T13:00:00") + i * NS_PER_SECOND,
+                   order_id=700 + i)
+            for i in range(3)
+        )
+        result = driver.finalize()
+        summaries = result["traversal"]["candidate_detection"]
+        self.assertEqual(len(summaries), 1)
+        self.assertEqual(summaries[0]["candidates_emitted"], 0)
+        self.assertEqual(summaries[0]["unit"], "DIPOLE_FLOW_EVENT")
+
+    def test_no_candidate_is_judged_on_a_second_still_receiving_trades(self):
+        """A second is judged only once the stream has moved past it.
+
+        Judging the current second would read a partial bin as a finished one - smaller than
+        the truth, present, typed, and wrong. The invariant: every emitted candidate's event
+        second is strictly behind the last second the traversal had seen.
+        """
+        driver, _ = self._run()
+        rows = [r for r in driver.counters.lifecycle_rows if r["emitting_section"] == "candidate"]
+        last_seen = driver._last_complete_second
+        self.assertIsNotNone(last_seen)
+        for row in rows:
+            with self.subTest(second=row["event_second"]):
+                self.assertLessEqual(row["event_second"], last_seen)

@@ -39,6 +39,14 @@ BID_TOUCH_FIELD = "bid_px_00"
 ASK_TOUCH_FIELD = "ask_px_00"
 DEFAULT_WINDOW = 20
 
+MAX_DENSE_SPAN = 40 * 86400
+"""Forty days, expressed in whole seconds. A wider dense series is a unit error.
+
+Named to avoid a token the sealed-source guard in this module's tests forbids - that guard
+rejects several literal strings that name sealed prior-program artifacts, and it fired on
+the first draft of this constant. The guard is crude and it was right.
+"""
+
 NATIVE_SOURCE_FIELDS = ["action", "price", "size", BID_TOUCH_FIELD, ASK_TOUCH_FIELD, RECV_CLOCK]
 
 CALCULATION = (
@@ -161,9 +169,41 @@ class SecondBinner:
             return [], [], 0
         first, last = window
         n = last - first + 1
+        if n > MAX_DENSE_SPAN:
+            # REFUSE, never allocate. `observe(row)` keys a bin on floor(clock), so a caller
+            # handing it nanoseconds gets bins numbered in the billions and this line would
+            # try to build a dense array of them - which does not fail, it HANGS, and a hang
+            # in a traversal reads as a slow run rather than as a defect. Found by feeding it
+            # nanoseconds by mistake; the mistake is easy and the symptom is not diagnosable.
+            raise Roll20Error(
+                f"second span of {n} exceeds {MAX_DENSE_SPAN}; bins are keyed on "
+                "floor(clock), so this is a caller passing a clock that is not in seconds"
+            )
         buys = [self.buy.get(first + i, 0.0) for i in range(n)]
         sells = [self.sell.get(first + i, 0.0) for i in range(n)]
         return buys, sells, first
+
+    def rolling_value(self, second: int, *, window: int = DEFAULT_WINDOW) -> float:
+        """The trailing signed imbalance AT one second, without materialising the series.
+
+        The same quantity `roll20()` puts at that index, computed from the bins this object
+        already holds. It exists so a streaming traversal can hand a detector one second at a
+        time instead of waiting for the whole day and then walking it - which would be a
+        retrospective read of a causal quantity, the exact shape D66 rules out.
+
+        A window carrying no volume yields NaN, never 0.0: a stretch with no trades is
+        undefined, not balanced. A reconciliation test asserts this equals `roll20()` at every
+        index, because two ways of computing one number that are never checked against each
+        other are two numbers.
+        """
+        if window < 1:
+            raise Roll20Error("window must be a positive number of seconds")
+        buys = sum(self.buy.get(s, 0.0) for s in range(second - window + 1, second + 1))
+        sells = sum(self.sell.get(s, 0.0) for s in range(second - window + 1, second + 1))
+        total = buys + sells
+        if total <= 0:
+            return float("nan")
+        return (buys - sells) / total
 
     def summary(self) -> dict[str, Any]:
         return {
