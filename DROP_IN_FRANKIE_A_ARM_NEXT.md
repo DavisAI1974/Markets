@@ -5,9 +5,31 @@
 > This handoff supplies month-specific identities and exceptions only. If it conflicts with the canonical
 > procedure, stop and resolve the conflict explicitly rather than silently choosing one.
 
-**BRANCH:** `chatgpt/frankie-raw-mbo-benchmark-20260828` **TIP:** `4266a32` or later.
-**STATUS: NOTHING LAUNCHED. The roll20 substrate is BUILT, FED and RECONCILED.**
-653 tests in the package; `research/kalshi/tests/` has 7 PRE-EXISTING failures - not regressions.
+**BRANCH:** `chatgpt/frankie-raw-mbo-benchmark-20260828` **TIP:** `88eb1e9` or later.
+**STATUS: T1-T4 DONE AND PUSHED. THE LAUNCH PATH EXISTS AND RUNS.** The roll20 substrate is
+BUILT, FED and RECONCILED. **688 tests** in the package (was 653); `research/kalshi/tests/`
+still has the same 7 PRE-EXISTING failures - not regressions, they fail at `d5b7b51` too.
+
+**WHAT CHANGED 2026-08-30, and it is the whole critical path:**
+
+| T | Was | Now |
+|---|---|---|
+| T1 | 4 built group adapters called by nothing | **WIRED.** 4.8, 4.9, 4.13, 4.14 fed; `sections_fed` emitted so an empty ingest is visible, not inferred |
+| T2 | execution gate referenced only by its own test | **ON THE LAUNCH PATH.** 3 gates in order, real evidence hashes, fail closed |
+| T3 | checkpointer imported by a driver nothing dispatched | **ON THE LAUNCH PATH.** save points written during a slice |
+| T4 | both workflows staged and stopped, 0 compute refs | **DISPATCHING.** 12 refs each; canary on the runner, full roster on the box over SSM |
+| T5 | never run | **canary green locally; first real-data run is 33300298768** |
+| D59 | half open | **CLOSED (D64).** Four helpers out of every model-visible surface |
+
+**`research/kalshi/frankie_raw_mbo_benchmark/native_a_arm_launch.py` is the entrypoint.** T2,
+T3 and T5 were never three problems - they were one missing module that ran the built pieces
+in order. It gates, traverses, checkpoints, finalizes, and **calls no model**: at a cutoff it
+stages a committed request and moves on. Zero HTTP or provider imports on the whole path.
+
+**THE ONE THING THAT STILL NEEDS GREG: `mode=full`.** A push runs the bounded canary on the
+runner only. The full roster on the box (`i-08cee7171c0a76a04`, SSM) is reachable ONLY by an
+explicit `workflow_dispatch` with `mode=full`, and a test asserts BOTH limbs of that guard.
+Starting the box is a spend and D58 leaves the sizing decision with Greg.
 
 ---
 
@@ -31,13 +53,26 @@ conflict: "No helpers or specialists."**
   silently forked, and now ruled.
 * **The five walk specialists (`mbo_specialist_{A..E}.md`) are not used by the A arms.**
 
-**Consequence that is now unblocked, and it is still a registry change rather than a code edit:** D59
-records that both `extra_agent_*` layers are `STATIC_REQUIRED_INPUT` and model-visible, so Frankie
-would READ the dead four-helper architecture as a required input on every run - *"showing Frankie a
-dead architecture is worse than showing nothing."* Moving either layer changes
-`EXPECTED_POLICY_COUNTS`, `EXPECTED_ARM_LAYER_COUNTS`, `EXPECTED_LAYER_ID_SET_SHA256`, the surface
-inventory hash and the manifest. **Greg's ruling settles the architecture question; whether to spend
-those hash changes now, and on which layer, is the remaining half of D59.**
+**AND THE REGISTRY CHANGE IS NOW MADE (D64, Greg 2026-08-30):** *"get any mention of the 4
+helpers out. He can call with different persona options as part of his tools. We've covered
+this more than once."* Six layer identities removed - the carryforward helper-architecture
+layer, the whole `helper_role_configuration` group of four scouts, and
+`output_helper_evidence_movie`. Union **105 -> 99**, arms **102/104 -> 96/98**,
+`STATIC_REQUIRED_INPUT` **24 -> 19**, `APPEND_ONLY_OUTPUT` **11 -> 10**, concrete layers
+**97 -> 91** against a floor of 90, new `EXPECTED_LAYER_ID_SET_SHA256` and `registry_sha256`,
+six surfaces out of the execution gate.
+
+**NOTHING SOURCE-LEVEL WAS DROPPED, which is what makes it D60-clean.** The removed layer
+named exactly the same three V3 files as `extra_agent_corrected_information_and_gap_diagnoses`,
+which stays required and model-visible, and **those files contain no helper text at all** -
+measured, zero matches. The architecture lived in a layer DESCRIPTION and in feed-inventory
+section 10, never in the evidence. What was removed is the INSTRUCTION to read those files as
+a helper architecture. Feed inventory section 10 is retired in place (number kept, so every
+cross-reference still resolves) and the canonical procedure is at **version 2**.
+
+**D59's other half is untouched and still open:** whether
+`extra_agent_corrected_information_and_gap_diagnoses` itself stays a required, model-visible
+input is a different question and was not asked.
 
 ---
 
@@ -99,35 +134,64 @@ python3 -m pytest research/kalshi/tests/ -q                            # expect 
 * **The clock is declared, never defaulted.** `SecondBinner` refuses construction without a named
   clock; the crosswalk hash changes with it.
 
-## 4. THE CRITICAL PATH TO A RUN - do these in order
+## 4. THE CRITICAL PATH - T1 THROUGH T5, ALL DONE 2026-08-30
 
-Each is small, each leaves the tree green, each is verified by EXECUTION.
+Greg: *"We have to get all 5 t's done. This isn't a min build to get this running. We have to
+get the complete thing done for the a's."* Every one is verified by EXECUTION, not by reading.
 
-**T1 - Wire the four built adapters.** `native_group_adapters` is imported by nothing but its own test.
-Four call sites in `native_replay_driver._on_group`, beside the existing `clocks.observe(row)`:
-`occurrences` -> `native_recurrence.observe_sequence`; `ladder_transitions` -> `native_ladder.observe`;
-`runway_pressure_fields` -> `native_absorption`'s `RunwayPressure`; `lineage_additions` ->
-`native_lineage.observe_node`. All four are group-local and D53-consistent.
-*Accept:* 4.8, 4.9, 4.13 and 4.14 report non-zero strata after a driver pass. *Verify:* a driver test
-asserting counts that can only appear if rows arrived. *Scope:* S. *Depends:* none.
+**T1 - the four built adapters are WIRED.** `NativeReplayDriver._feed_sections` calls all four
+on the D53 unit from ONE `GroupContext` built off the canonical `candidate_family_id`. Every
+return value is retained as a lifecycle row - an average with no member beneath it is what
+section 6 rejects. `sections_fed` is emitted beside the measures so an empty ingest is VISIBLE
+rather than inferred from zero strata.
+*Three things wiring settled that reading had not:* 4.13's graph needed an owner (the driver
+holds it and rebuilds it at every continuity boundary, or depth would chain across the halt
+that censors every other section); nodes are observed at the BOUNDARY with a terminal status,
+not at creation, because `exited_recv_ns` is set by a CHILD arriving and observing early would
+report every node `OPEN` with no duration; and `lineage_additions` parented on `ord-0` for any
+group opening on a row with no order id - **it would have killed the traversal on real tape at
+the first such group.**
 
-**T2 - Wire the execution gate into the launcher.** `corrected_a_arm_execution_gate_20260828` is
-referenced by itself and its test and nothing else. An unreferenced gate is not a gate.
-*Accept:* a non-test file references it and it runs in the dry run. *Scope:* S. *Depends:* none.
+**T2 + T3 + T5 were ONE missing thing: a launch entrypoint.**
+**`research/kalshi/frankie_raw_mbo_benchmark/native_a_arm_launch.py`.** The gate, the
+checkpointer and the driver were each built and each wired to nothing because no module ran
+them in order. Three gates, in order, failing closed:
+1. `validate_registry` - layer identities, policy counts, arm counts, sealed set.
+2. `validate_pre_call_receipt` - every layer with the status its policy demands and a REAL
+   evidence hash over the declared paths AND their bytes. **99 layers, 75 required for A-clean
+   and 77 for A-memory** (the D2 asymmetry, visible in the receipt), nine-layer wall SEALED.
+3. `validate_rt_surface_inventory` - the same registry in the gate's own vocabulary, **91
+   surfaces**, re-proving the wall from a SECOND object. Two objects over one registry on
+   purpose: a field-level check cannot catch a wrong-but-well-formed input.
 
-**T3 - Put the checkpointer on the launch path.** It is imported by the driver, and no workflow
-dispatches the driver. D58 makes this a **precondition of the resize**, not an independent item.
-*Accept:* a save point is written during a slice run. *Scope:* S. *Depends:* T2.
+**It calls no model.** At a cutoff it stages a committed request and moves on. **Zero HTTP or
+provider imports on the whole path** - `SpawnStager` writes a JSON file, it is not an API
+client, and a test pins that staging happens and nothing is invoked.
 
-**T4 - Make a launch workflow actually dispatch compute. NEEDS GREG (spend).** Measured: both
-`frankie_a_clean_rt_native_launch_20260828.yml` and its A-memory twin contain **zero** references to
-`ssm`, `ec2`, `send-command` or `INSTANCE_ID`. They stage and stop. *Scope:* M. *Depends:* T3.
+**T4 - both workflows DISPATCH COMPUTE.** Measured: 0 references to `ssm`/`send-command`/
+`INSTANCE_ID`/the launcher before, **12 each** now.
+* **`canary`, the default and what a push runs:** a bounded slice of the real hash-bound
+  roster on the runner. Default **50,000 records** - deliberately small, because D60 retains
+  every legacy, member and lifecycle row IN MEMORY and nobody has measured what sixteen fed
+  sections cost per record. Raise it once there is a curve.
+* **`full`:** the whole roster on the box over SSM. **Explicit `workflow_dispatch` with
+  `mode=full` ONLY** - a push can never reach it, and the test asserts BOTH limbs, because
+  `inputs.mode == 'full'` alone is true on a push where `inputs` is empty. **This is the one
+  remaining Greg decision: it is a spend, and D58 leaves sizing with him.**
 
-**T5 - Dry run over a small slice; the contract's eight section 6 gates pass.** Prelaunch section 0
-item 9 requires this before anything touches the full roster. *Scope:* M. *Depends:* T4.
+**T5 - the dry run.** Green locally over a supplied record stream: ACCEPTED, no failed gates,
+save points written, spawn requests staged, `completion_status: EVIDENCE_ONLY`. First
+real-data canary: run **33300298768**.
 
-**CHECKPOINT after T1-T3:** package suite green, wider suite still exactly 7 pre-existing failures, and
-every section T1 touched reports data. Then stop and show Greg before T4.
+**THE DECLARED GAP:** `native_records`, the DBN decode, is the one part of the launch path the
+package tests do not cover - AWS credentials are GitHub-secret scoped so no interactive session
+can read the roster. It is covered by the workflow canary and by nothing here. Stated rather
+than papered over.
+
+**D57 HAPPENED AGAIN AND `bash -n` CAUGHT IT.** The canary summary began as a heredoc nested
+inside the report step's brace group, putting `PY` at a non-zero column where bash never sees
+it. Now its own step. Both workflows are verified by parsing the YAML, `bash -n` on every
+`run:` block, and `ast.parse` on every embedded Python heredoc.
 
 ## 5. THE TWO OPEN RULINGS - parallel, they block only 4.10/4.11/4.12
 
