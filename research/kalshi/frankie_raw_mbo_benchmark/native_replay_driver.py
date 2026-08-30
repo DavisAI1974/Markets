@@ -48,6 +48,9 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import 
     RunIdentity,
 )
 from research.kalshi.frankie_raw_mbo_benchmark import native_candidate, native_roll20
+from research.kalshi.frankie_raw_mbo_benchmark.native_replenishment_adapter import (
+    ReplenishmentObserver,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_candidate_adapter import (
     BookState,
     CandidateEpisodeTracker,
@@ -173,6 +176,8 @@ class DriverCounters:
     invocation_cutoffs: list[dict[str, Any]] = field(default_factory=list)
     save_points: int = 0
     candidates_detected: int = 0
+    replenishment_observations: int = 0
+    """4.7 removals and refills actually stated to the calculator, not horizons matured."""
     response_tracks_opened: int = 0
     """4.16 tracks. One per candidate, opened at its first lawful instant."""
     episode_rows: int = 0
@@ -343,6 +348,10 @@ class NativeReplayDriver:
         # instant, not at the spike: a response measured from a moment nobody could have
         # acted on is not a response anyone could have captured.
         self.responses = ResponseFeed()
+        # 4.7's OBSERVATION half. The maturation half was already fed by
+        # `replenishment.advance`; nothing ever told the calculator that a removal or a
+        # refill had happened, so it matured horizons for episodes that were never opened.
+        self.replenishment_observer = ReplenishmentObserver()
 
         # 4.13 is the one fed section whose state is not held by its calculator:
         # `LineageCalculator.observe_node` takes the graph as an argument, so the traversal
@@ -387,6 +396,13 @@ class NativeReplayDriver:
                 section=section,
                 occasion="SEGMENT_CLOSE",
             )
+        self._retain_lifecycle(
+            self.replenishment_observer.close_continuity_segment(
+                segment=segment, recv_ns=recv_ns
+            ),
+            section="replenishment",
+            occasion="SEGMENT_CLOSE",
+        )
         self._close_lineage(
             segment=segment, censored_status=CENSORED_SEGMENT_END, occasion="SEGMENT_CLOSE"
         )
@@ -847,6 +863,15 @@ class NativeReplayDriver:
         )
         self.counters.absorption_runways += 1
 
+        # --- 4.7 replenishment, the observation half: removals open episodes, refills are
+        # attributed against the ones already pending. The calculator still owns resolution -
+        # this can observe a restoration but can never report one before stream time reaches it.
+        rows = self.replenishment_observer.observe_group(
+            actions, ctx, calculator=self.run.replenishment
+        )
+        self.counters.replenishment_observations += len(rows)
+        self._retain_lifecycle(rows, section="replenishment", occasion="GROUP_CLOSE")
+
         # --- 4.13 lineage: add to the live graph now, observe at the boundary.
         for addition in lineage_additions(actions, ctx, seen_order_ids=self._lineage_node_of):
             node = self.lineage_graph.add(**addition)
@@ -926,11 +951,13 @@ class NativeReplayDriver:
                 "candidate_unit_events": self.counters.candidates_detected,
                 "4.10_4.11_4.12_episode_rows": self.counters.episode_rows,
                 "4.16_response_tracks": self.counters.response_tracks_opened,
+                "4.7_replenishment_observations": self.counters.replenishment_observations,
             },
             # D66's second unit, reported per continuity segment. A segment that found NOTHING
             # is still a row here: absence is a result about that segment, not an omission.
             "candidate_detection": list(self.counters.candidate_summaries),
             "candidate_episodes": list(self.counters.episode_summaries),
+            "replenishment_observation": self.replenishment_observer.summary(),
             "frame_keys_carried": sorted(self.counters.frame_keys_carried),
             "lineage_signature": self.lineage_signature,
             "lineage_segment_scope": LINEAGE_SEGMENT_SCOPE,

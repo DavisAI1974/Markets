@@ -136,15 +136,39 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_rt_book import ReplayBook
 from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import F_TOB, PRICE_SCALE
 
 __all__ = [
+    # the two entry points and the objects they exchange
+    "GroupObservations",
     "InstrumentReplay",
     "LevelObservation",
-    "GroupObservations",
     "ReplenishmentAdapterError",
     "ReplenishmentObserver",
     "level_observations",
+    # the declared choices, exported because a consumer must be able to read them back
+    "CLEARED_QUANTITY_BASIS",
     "NEIGHBOURHOOD_TICKS",
+    "REFILL_ATTRIBUTION",
+    "SELF_RESTORATION_POLICY",
     "TICK_DECIMAL_NG",
     "TICK_RAW_NG",
+    # the vocabulary every emitted value is written in
+    "AHEAD_OF_TOUCH",
+    "AT_TOUCH",
+    "BEHIND_TOUCH",
+    "MODIFY_MISSING",
+    "NOT_RESIDENT",
+    "NO_PENDING_EPISODE_IN_NEIGHBOURHOOD",
+    "PRICE_UNDEFINED",
+    "REFILL",
+    "REFUSED_RESET",
+    "REFUSED_SENTINEL_PRICE",
+    "REFUSED_TOB_WIPE",
+    "REMOVAL",
+    "RESIDENT",
+    "TOUCH_ABSENT",
+    "TOUCH_DISPLACED",
+    "TOUCH_NEVER_DISPLACED",
+    "TOUCH_REFERENCE_ABSENT",
+    "UNIDENTIFIED",
 ]
 
 ADD = "A"
@@ -773,6 +797,14 @@ class ReplenishmentObserver:
             "refill_attribution": REFILL_ATTRIBUTION,
             "self_restoration_policy": SELF_RESTORATION_POLICY,
             "cleared_quantity_basis": CLEARED_QUANTITY_BASIS,
+            # The three classes that open no episode, named by the reason each is refused
+            # rather than left to be read off three unrelated counter names. A consumer
+            # asking "what did 4.7 decline to measure, and why" gets one answer here.
+            "refused_row_classes": {
+                REFUSED_SENTINEL_PRICE: self.integrity["removal_at_undefined_price_not_opened"],
+                REFUSED_TOB_WIPE: self.integrity["tob_wipe_rows"],
+                REFUSED_RESET: self.integrity["reset_rows"],
+            },
             "separation_note": (
                 "new-ID adds and same-ID modifies are classified on observed residency and "
                 "handed to the calculator as separate kinds; a refill beyond one tick is "
@@ -948,6 +980,10 @@ class ReplenishmentObserver:
             if watch.episode.instrument_id != observation.instrument_id:
                 continue
             if watch.side != observation.side:
+                continue
+            if watch.episode.outcome is not None:
+                # Already emitted. Mutating a resolved episode would edit a fact after the row
+                # that stated it was written, which is the reason `LevelObservation` is frozen.
                 continue
             if watch.episode.touch_restored_recv_ns is not None:
                 continue

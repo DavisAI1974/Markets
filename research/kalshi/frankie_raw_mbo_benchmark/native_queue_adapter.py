@@ -615,7 +615,7 @@ class QueueGroupAdapter:
         # the residual books it as a cancel ahead - the same shape as a re-price departure.
         if behind:
             self.counters["reprice_departures_ahead"] += len(behind)
-        self._refresh_level(calc, book, ctx.instrument_id, pre[0], pre[1], tally, credited=set())
+        self._refresh(calc, book, ctx.instrument_id, pre[0], pre[1], behind, tally, credited=False)
 
     def _on_cancel_or_modify(
         self,
@@ -693,13 +693,12 @@ class QueueGroupAdapter:
         if moved and behind:
             self.counters["reprice_departures_ahead"] += len(behind)
 
-        credit = 1 if (departed and consumed > 0) else 0
-        self._refresh_level(
-            calc, book, ctx.instrument_id, side_before, price_before, tally,
-            credited=set(behind) if credit else set(),
+        # The order joined the BACK of any new level, so nobody there moved; only the level
+        # it left, or shrank inside, has anything to re-read.
+        self._refresh(
+            calc, book, ctx.instrument_id, side_before, price_before, behind, tally,
+            credited=departed and consumed > 0,
         )
-        if moved and post is not None:
-            self._refresh_level(calc, book, ctx.instrument_id, post[0], post[1], tally, credited=set())
 
     def _modify_priority(
         self,
@@ -874,33 +873,45 @@ class QueueGroupAdapter:
         row["birth_session_phase"] = tracked.birth_session_phase
         tally.terminals.append(row)
 
-    def _refresh_level(
+    def _refresh(
         self,
         calc: QueueSurvivalCalculator,
         book: ReplayBook,
         instrument_id: int,
         side: str,
         price: int,
+        order_ids: Sequence[int],
         tally: _Tally,
         *,
-        credited: set[int],
+        credited: bool,
     ) -> None:
-        """Re-read every tracked order still resting at one level and hand 4.6 the truth.
+        """Re-read the tracked orders whose queue the row actually moved, from the book.
 
-        Orders that were ahead of the change see the same numbers again, which is harmless -
-        `QueueEpisode.observe` records a violation only on an INCREASE - and re-reading the
-        whole level is what keeps a partial cancel ahead visible in `volume_ahead`.
+        Scoped to the orders that stood BEHIND the row's target, because in FIFO those are
+        the only ones a departure or a size reduction can touch. Refreshing the whole level
+        instead would be harmless arithmetically - `QueueEpisode.observe` records a violation
+        only on an INCREASE - but it costs one full walk of the level per bystander, which at
+        4.26M groups is the difference between a run and an outage.
+
+        Every value is re-read from the book rather than adjusted from the pre-row reading.
+        Subtracting the departed order's size would be a second opinion about the level, and
+        two vocabularies over one quantity do not fail - they just differ.
         """
-        if side not in BOOK_SIDES:
+        if side not in BOOK_SIDES or not order_ids:
             return
-        for order_id in self._tracked_at_level(book, instrument_id, side, price):
+        for order_id in order_ids:
+            if (instrument_id, order_id) not in self._tracked:
+                continue
+            at = book.resting_at(order_id)
+            if at is None or at[0] != side or at[1] != price:
+                continue
             orders_ahead, volume_ahead = book.view(side, price, order_id)
             calc.observe_level(
                 instrument_id=instrument_id,
                 order_id=order_id,
                 orders_ahead=orders_ahead,
                 volume_ahead=volume_ahead,
-                fills_ahead_delta=1 if order_id in credited else 0,
+                fills_ahead_delta=1 if credited else 0,
             )
             tally.level_observations += 1
 
@@ -943,13 +954,13 @@ class QueueGroupAdapter:
         ids = self._by_level.get(key)
         if not ids:
             return []
-        kept = [
-            oid
-            for oid in ids
-            if (instrument_id, oid) in self._tracked
-            and book.resting_at(oid) is not None
-            and book.resting_at(oid)[:2] == (side, price)
-        ]
+        kept = []
+        for oid in ids:
+            if (instrument_id, oid) not in self._tracked:
+                continue
+            at = book.resting_at(oid)
+            if at is not None and at[0] == side and at[1] == price:
+                kept.append(oid)
         if kept:
             self._by_level[key] = kept
         else:

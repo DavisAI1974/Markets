@@ -641,6 +641,30 @@ class RefusedRowTests(unittest.TestCase):
         self.assertEqual(observer.integrity["reset_quantity_cleared"], 9)
         self.assertEqual(c.opened, 0)
 
+    def test_the_three_refused_classes_are_reported_together_under_their_reasons(self):
+        observer = ra.ReplenishmentObserver()
+        c = calc()
+        observe(
+            observer,
+            [
+                [row("A", "B", 1, rt.PRICE_SENTINEL_ABS, 5, 100)],
+                [row("C", "B", 1, rt.PRICE_SENTINEL_ABS, 5, 110)],
+                [row("A", "B", 2, P0, 5, 120)],
+                [row("A", "B", 99, rt.PRICE_SENTINEL_ABS, 0, 130, flags=F_TOB)],
+                [row("R", "N", 0, P0, 0, 140)],
+            ],
+            c,
+        )
+        self.assertEqual(
+            observer.summary()["refused_row_classes"],
+            {
+                ra.REFUSED_SENTINEL_PRICE: 1,
+                ra.REFUSED_TOB_WIPE: 1,
+                ra.REFUSED_RESET: 1,
+            },
+        )
+        self.assertEqual(c.opened, 0)
+
     def test_the_cleared_quantity_declares_that_it_is_derived(self):
         # `ReplayBook` exposes no level enumeration, so a whole-side clear cannot be READ out of
         # it. The tally is derived from the deltas this module already measured, and its basis

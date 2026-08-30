@@ -399,6 +399,7 @@ class FedSectionsTest(unittest.TestCase):
             "candidate_unit_events": 0,
             "4.10_4.11_4.12_episode_rows": 0,
             "4.16_response_tracks": 0,
+            "4.7_replenishment_observations": 2,
         })
 
     def test_every_fed_section_produces_averaged_companions(self):
@@ -489,6 +490,7 @@ class FedSectionsTest(unittest.TestCase):
             "candidate_unit_events": 0,
             "4.10_4.11_4.12_episode_rows": 0,
             "4.16_response_tracks": 0,
+            "4.7_replenishment_observations": 0,
         })
         sections = [row.get("section") for row in result["layers"]["averaged_companions"]["rows"]]
         for section in ("4.8", "4.9", "4.13", "4.14"):
@@ -792,3 +794,62 @@ class ResponseTableFedTest(CandidateEpisodeFedTest):
         self.assertTrue(candidates)
         for row in candidates:
             self.assertGreater(row["available_second"], row["event_second"])
+
+
+class ReplenishmentObservationFedTest(unittest.TestCase):
+    """4.7's observation half, fed by the traversal.
+
+    The maturation half was already wired - `replenishment.advance` ran on every group - so
+    the section looked live while nothing had ever told the calculator that a removal or a
+    refill happened. It was maturing horizons for episodes that were never opened. That is
+    the sharpest form of built-and-unfed: not silent, but plausibly busy.
+    """
+
+    def _run(self):
+        driver = make_driver(total_mbo_records=8)
+        base = at("2021-10-04T13:00:00")
+        rows, seq = [], 0
+
+        def add(action, side, price, order_id, offset, last, size=5):
+            nonlocal seq
+            row = record(seq=seq, event_ns=base + offset * NS_PER_SECOND, order_id=order_id,
+                         action=action, side=side, last=last)
+            row["price"] = price
+            row["size"] = size
+            rows.append(row)
+            seq += 1
+
+        # Rest a bid, cancel it (a REMOVAL opens an episode), then refill the same price.
+        add("A", "B", 3_499_000_000, 10, 0, False)
+        add("A", "A", 3_501_000_000, 11, 0, True)
+        add("C", "B", 3_499_000_000, 10, 1, True)
+        add("A", "B", 3_499_000_000, 12, 2, True)
+        driver.consume(rows)
+        return driver, driver.finalize()
+
+    def test_the_calculator_is_told_that_a_removal_happened(self):
+        _, result = self._run()
+        self.assertGreater(
+            result["traversal"]["sections_fed"]["4.7_replenishment_observations"], 0
+        )
+        summary = result["layers"]["exact_lifecycle_and_runway_ledger"]["section_summaries"]["4.7"]
+        self.assertGreater(
+            summary["episodes_opened"], 0,
+            "horizons were maturing for episodes nobody ever opened",
+        )
+
+    def test_every_observation_is_retained_beneath_its_summary(self):
+        driver, _ = self._run()
+        kept = [
+            row for row in driver.counters.lifecycle_rows
+            if row["emitting_section"] == "replenishment"
+            and row["emitted_on"] == "GROUP_CLOSE"
+        ]
+        self.assertTrue(kept, "the observation rows were dropped on the way back")
+
+    def test_the_observer_reports_its_own_tick_neighbourhood(self):
+        """The one declared choice in 4.7: what separates SAME_PRICE from NEIGHBORING_PRICE."""
+        _, result = self._run()
+        summary = result["traversal"]["replenishment_observation"]
+        self.assertIn("groups_observed", summary)
+        self.assertGreater(summary["groups_observed"], 0)
