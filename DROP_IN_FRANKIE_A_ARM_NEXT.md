@@ -1,6 +1,7 @@
 # DROP-IN BOX - FRANKIE A-ARM, NEXT SESSION
 
 **BRANCH:** `chatgpt/frankie-raw-mbo-benchmark-20260828`
+**TIP AT HANDOFF:** run `git log --oneline -1` and confirm it is `1eb116a` or later.
 **STATUS: NOTHING LAUNCHED, AND THE BUILD PLAN CHANGED.** 613 tests green (was 552).
 **START A FRESH SESSION. Do not carry the previous one's proposals forward - they are withdrawn.**
 
