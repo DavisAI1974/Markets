@@ -357,8 +357,18 @@ jobs:
               ),
               f"echo A_ARM_TRAVERSAL_COMPLETE={run_id}",
           ])
+          # executionTimeout IS THE ONE THAT KILLS THE RUN, and it is not the one the send
+          # sets. `aws ssm send-command --timeout-seconds` is TimeoutSeconds: how long the
+          # command may sit undelivered before it is abandoned. It has nothing to do with how
+          # long the script may then run. That is AWS-RunShellScript's own `executionTimeout`
+          # parameter, and its DEFAULT IS 3600 - so a command sent with --timeout-seconds
+          # 43200 and no executionTimeout is killed at one hour, on an eight-hour traversal,
+          # while the dispatch reports success. Both are set, and they mean different things.
           Path("/tmp/a-arm-traversal-params.json").write_text(
-              json.dumps({"commands": ["; ".join(steps)]}), encoding="utf-8"
+              json.dumps(
+                  {"commands": ["; ".join(steps)], "executionTimeout": ["43200"]}
+              ),
+              encoding="utf-8",
           )
           PY
           # FIRE AND RETURN, never dispatch-and-wait.
@@ -370,8 +380,11 @@ jobs:
           # capped at 360 minutes regardless of any timeout set here, so waiting can never
           # work for this run: the job would die before the traversal did.
           #
-          # It has never fired, so nothing was damaged. The fix is to stop waiting: send the
-          # command with a timeout longer than the run, record the command id, and exit.
+          # It has never fired, so nothing was damaged. The fix is to stop waiting: record the
+          # command id and exit. Note that --timeout-seconds below is the DELIVERY timeout,
+          # not the execution one - the execution timeout is the document parameter set where
+          # the params file is written above, and getting those two confused is what would
+          # have capped this run at one hour.
           # T3 put the checkpointer on this path, so a run that dies mid-way costs one save
           # point rather than the whole thing, and `frankie_box_monitor_20260829.yml` is what
           # watches it.
