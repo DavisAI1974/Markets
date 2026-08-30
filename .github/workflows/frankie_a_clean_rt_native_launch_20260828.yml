@@ -388,6 +388,28 @@ jobs:
               f"git fetch --depth 1 origin {sha}",
               f"git checkout --detach {sha}",
               f'test "$(git rev-parse HEAD)" = "{sha}"',
+              # S3 CREDENTIALS ON THE BOX, probed rather than assumed. The previous dispatch
+              # died here with "403 when calling the HeadObject operation" - the volume grew,
+              # the checkout bound the exact commit, and then the first S3 read was refused.
+              # A 403 does not distinguish "no permission" from "object absent to a caller
+              # that cannot list", so the identity and both prefixes are printed before the
+              # first read that matters. None of these probes can abort the run; they exist
+              # so the next failure arrives with its cause attached.
+              #
+              # /etc/markets/coach.env is where S93 put this box's credentials. An SSM shell
+              # is not a login shell and sources no profile, so the aws CLI here falls back
+              # to the instance profile - which is the likeliest reason a box that has read
+              # this bucket for months could not read it from this command.
+              ". /etc/markets/coach.env 2>/dev/null || true",
+              'echo "A_ARM_IDENTITY=$(aws sts get-caller-identity --query Arn --output text 2>&1 | tail -1)"',
+              (
+                  f'echo "A_ARM_CAN_READ_SOURCES=$(aws s3 ls s3://{bucket}/{source_prefix}/'
+                  ' >/dev/null 2>&1 && echo yes || echo no)"'
+              ),
+              (
+                  f'echo "A_ARM_CAN_READ_PACKET=$(aws s3 ls s3://{bucket}/{prefix}/'
+                  ' >/dev/null 2>&1 && echo yes || echo no)"'
+              ),
               (
                   "aws s3 cp"
                   f" s3://{bucket}/{prefix}/source_manifest.json"
