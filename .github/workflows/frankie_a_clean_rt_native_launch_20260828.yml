@@ -425,7 +425,21 @@ jobs:
           printf 'dispatched command %s, status %s\n' "$command_id" "$status"
           case "$status" in
             InProgress|Success) ;;
-            *) echo "the box did not accept the command" >&2; exit 1 ;;
+            *)
+              # PRINT WHAT THE BOX SAID. The first real dispatch came back Failed in two
+              # seconds and this step discarded the invocation, so the only evidence was the
+              # word "Failed" - which names no cause and cannot be acted on. The box already
+              # says exactly what went wrong; it was simply being thrown away. The staging
+              # steps echo A_ARM_DISK_AVAIL_KIB before the precheck, so a refusal on volume
+              # size arrives here with the number that caused it.
+              aws ssm get-command-invocation \
+                --command-id "$command_id" \
+                --instance-id "$INSTANCE_ID" \
+                --query '{status:Status,detail:StatusDetails,code:ResponseCode,out:StandardOutputContent,err:StandardErrorContent}' \
+                --output json || true
+              echo "the box did not accept the command" >&2
+              exit 1
+              ;;
           esac
           {
             echo "### Full-roster traversal dispatched"
