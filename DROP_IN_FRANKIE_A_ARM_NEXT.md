@@ -18,8 +18,12 @@ still has the same 7 PRE-EXISTING failures - not regressions, they fail at `d5b7
 | T2 | execution gate referenced only by its own test | **ON THE LAUNCH PATH.** 3 gates in order, real evidence hashes, fail closed |
 | T3 | checkpointer imported by a driver nothing dispatched | **ON THE LAUNCH PATH.** save points written during a slice |
 | T4 | both workflows staged and stopped, 0 compute refs | **DISPATCHING.** 12 refs each; canary on the runner, full roster on the box over SSM |
-| T5 | never run | **canary green locally; first real-data run is 33300298768** |
+| T5 | never run | **canary green locally; first real-data run 33300298768 correctly REJECTED - see 5b** |
 | D59 | half open | **CLOSED (D64).** Four helpers out of every model-visible surface |
+| D62 | open, needed Greg | **CLOSED as D66.** Both unit levels, RT-causal |
+| box | resize armed at 128 GiB | **D65: no resize needed.** 128 GiB was undersized; streaming makes 61.8 GiB ample |
+
+**704 tests** in the package. **Registry is 99 layers, not 105** - D64 removed six.
 
 **`research/kalshi/frankie_raw_mbo_benchmark/native_a_arm_launch.py` is the entrypoint.** T2,
 T3 and T5 were never three problems - they were one missing module that ran the built pieces
@@ -193,18 +197,77 @@ inside the report step's brace group, putting `PY` at a non-zero column where ba
 it. Now its own step. Both workflows are verified by parsing the YAML, `bash -n` on every
 `run:` block, and `ast.parse` on every embedded Python heredoc.
 
-## 5. THE TWO OPEN RULINGS - parallel, they block only 4.10/4.11/4.12
+## 5. THE RULINGS ARE MADE - D62 IS CLOSED AS D66, AND THE BOX IS SETTLED AS D65
 
-* **`SAME`/`FLIP` carries three readings.** Contract 4.12 (a stratum axis); the frozen corpus (polarity
-  vs the latest predecessor, 1,546 FLIP / 1,883 SAME of 3,429, gated in four files); and
-  `FRANKIE_A_ARM_PRELAUNCH_STATE:464-467` (*"a MIRROR relationship defined nowhere in the tree"*).
-  Contract section 3 lists the stratifier as *"side or mirror orientation"* (:65) and forbids averaging
-  across *"mirror orientations"* (:71), so one-axis and two-axis both read defensibly. **Nothing is
-  pinned; `native_mirror` deliberately makes no claim.** Moot until something feeds
-  `DipoleStage.orientation`, which has no producer.
-* **4.10's runway identity is per-group.** `GroupContext.candidate_id` is per-group by D53, so every
-  runway is one group long and phases can never advance. **This is the real blocker on 4.10 and
-  redefining it answers D62's open unit question**, which is Greg's. Do not decide it in code.
+**D66 (Greg, ruling D62): BOTH UNIT LEVELS, AND FRANKIE SEES IT AS WE WOULD IN RT.** Verbatim:
+*"I don't want to limit that just on our wrong coding or assumptions. It should see that as we
+would in rt."*
+
+* **Groups are the MEMBER unit** - 4.1-4.9, 4.13-4.15. The four fed in T1 (4.8, 4.9, 4.13,
+  4.14) are exactly the group-shaped ones.
+* **Dipole flow events are the CANDIDATE unit** - 4.10, 4.11, 4.12, 4.16, exactly the four
+  recorded as blocked. **That split was never designed; it fell out of which sections need an
+  event with a before and an after**, which is the evidence for the ruling.
+* D53's group unit stays correct for what it was chosen for. Nothing built is discarded.
+
+**THE RT CONSTRAINT DISQUALIFIES PART OF THE FROZEN DETECTOR, MEASURED - do not port it
+verbatim:**
+* `ng_exhaustion_chain_canonical_table_20260817.py:194-198` sets `day_thresholds[d] =
+  quantile(|roll20| over the WHOLE DAY, PEAK_Q)`. **The bar for 09:00 is set using 15:00's
+  data. That is hindsight and it is not RT-legal.** The A-arm detector needs a trailing causal
+  threshold.
+* `LOCAL_RADIUS = 5`: a spike at `t` is only KNOWABLE at `t+5`. A lawful availability delay,
+  not a violation - but stamp it at `t+5` or 4.11's PRIOR/T0/H+N arithmetic is wrong at the root.
+* `endpoint()` walks FORWARD. An outcome, never available at the decision point.
+
+**DECLARED NOW RATHER THAN DISCOVERED LATER: the A-arm event set will NOT equal the frozen
+3,429.** A causal bar finds a different set than a hindsight bar. Correct behaviour to declare,
+not to reconcile away.
+
+**The substrate already exists:** `native_roll20.SecondBinner.series()` yields the per-second
+buy/sell arrays and `roll20()` builds the rolling series - precisely `detect_week_events`'
+input. This is porting a frozen detector onto a substrate we have, not a rewrite.
+
+**D65: THE BOX IS SETTLED AND NEEDS NO RESIZE.** Peak RSS (`VmHWM`, isolated processes):
+
+| | MiB per 1k groups | full roster | rec/s |
+|---|---|---|---|
+| in-RAM 20k / 60k | 33.95 / 33.00 | **137-141 GiB** | 1,752 / 1,486 |
+| streamed 20k / 60k | 2.49 / 1.59 | **6.6-10.3 GiB** | 1,777 / 1,772 |
+
+**D56/D58 are superseded: `r6i.4xlarge` at 128 GiB was UNDERSIZED, not merely unfired** - the
+in-RAM path needs ~137 GiB. Streaming makes the current `r6i.2xlarge` (61.8 GiB) roughly six
+times oversized, and throughput is unchanged or better. **Do not fire the resize.**
+
+## 5b. WHAT IS LEFT TO BUILD - SIX ADAPTERS, AND WE ARE NOT DONE
+
+Greg: *"Sounds like we aren't done building."* Correct. **The T-list wired what EXISTED; it did
+not build what is missing.** Say it that way.
+
+| section | state |
+|---|---|
+| 4.6 queue | **not built.** No invention needed - `native_rt_book.ReplayBook` supplies the mandatory `book_view`, advanced action by action |
+| 4.7 replenishment | **half built.** Horizon maturation is fed; the OBSERVATION half is missing. One declared choice: the tick neighbourhood separating `SAME_PRICE` from `NEIGHBORING_PRICE` |
+| 4.10 / 4.11 / 4.12 / 4.16 | **not built.** Were blocked on the unit ruling; **D66 unblocks all four** |
+| 4.15 discovery | **out of this run by D5 (Greg).** Not skipped - building it would add an OBLIGATION, turning `_gate_determinism` from a free pass into a `freeze()`-before-`finalize()` requirement |
+
+**Order:** the causal detector first (it is the unit the other four hang off), then
+4.10/4.11/4.12/4.16 on it, then 4.6 and 4.7 which need nothing from anyone, then the
+slice-boundary bug, then ONE canary.
+
+**THE OPEN BUG, and it is why the first real canary was correctly REJECTED.** Run 33300298768:
+50,000 records, 40,241 groups, all four fed sections reporting real data, 2 save points,
+`EVIDENCE_ONLY` - and `failed_gates: ["exact_once_coverage"]`. `_gate_coverage` requires
+`coverage.records_seen == identity.total_mbo_records`; `coverage.records_seen` counts records
+assigned to CLOSED groups while the identity carried the raw records FED. **A bounded slice
+that cuts mid-group can never satisfy that equality.** The gate is right; the launcher is
+wrong. Fix: end the slice on a group boundary and declare the records actually closed.
+
+**AND A BUG IN THE T4 DISPATCH THAT HAS NEVER FIRED.** Real data ran at **200 rec/s** on the
+runner, so the full roster is ~7.9h there and ~4-5h on the box. The SSM step sends
+`--timeout-seconds 3600` and waits 2,400 x 5s = 200 minutes. **Both are shorter than the run.**
+`mode=full` must become fire-and-return with the monitor watching, not dispatch-and-wait,
+before it is ever used.
 
 ## 6. DO NOT
 
