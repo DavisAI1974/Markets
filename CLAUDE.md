@@ -1018,6 +1018,31 @@ FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the drive
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
+**One-line state (S117):** branch `chatgpt/frankie-raw-mbo-benchmark-20260828`, **885 package
+tests green, AND THE A-CLEAN FULL ROSTER IS RUNNING ON THE BOX** — confirmed by the box, not by
+a green job: `python3` at 99.4% CPU with CPU time tracking wall clock to 99.8%, run
+33306922261, started 2026-08-30T10:38:35Z, ~13.9h over 5,667,689 records. **Every section 4.6
+to 4.16 is now FED** (4.15 excluded under D5, not unfed); the canary is **ACCEPTED** on the real
+roster with all eight section 6 gates passing. **MEASURED: 8.8 ms per record with 4.6 fed (72%
+dearer than without), and 24 KB of exact ledgers per record — about 136 GB, a DISK figure the
+armed 128 GiB memory decision never covered.** The volume was grown 200 -> 300 GB because the
+run's own precheck refused at a 0.7% margin.
+
+**SEVEN DISPATCHES, each blocked by something that had never been wrong out loud** — a box told
+to read files from a directory it had just created empty; `--timeout-seconds` set instead of
+`executionTimeout`, whose 3600 default would have killed a 14-hour run at hour one under a green
+dispatch; an invocation thrown away so a failure said only "Failed"; a volume short by a margin
+nobody had measured; and **a dispatch that reported InProgress, went green, and had already died
+in staging — caught only because the monitor contradicted it. ACCEPTANCE IS NOT SURVIVAL.**
+
+**TWO THINGS ARE GREG'S, and neither was done for him.** The box's instance role has **NO S3
+access at all** (`A_ARM_CAN_READ_SOURCES=no`, `A_ARM_CAN_READ_PACKET=no`) — reads are worked
+around with an inline manifest and presigned GETs, but **the UPLOAD cannot be**. A run ending
+`A_ARM_RESULTS_ON_BOX` is a finished traversal and an UNFINISHED run, because D34 puts data on
+S3. The scoped policy that fixes it is written and NOT applied:
+`research/kalshi/FRANKIE_A_ARM_FULL_DISPATCH_BLOCKER_20260830.md`. Granting an account-level
+role new permissions is not a session's call.
+
 **One-line state (S116):** branch `chatgpt/frankie-raw-mbo-benchmark-20260828`, **613 tests
 green, NOTHING LAUNCHED**, decisions 57 -> 61. **The four estimand proposals are WITHDRAWN — the
 prior exhaustion program already built and froze that vocabulary**, and the build plan changed
