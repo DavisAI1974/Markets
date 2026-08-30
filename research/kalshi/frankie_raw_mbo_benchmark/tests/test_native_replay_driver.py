@@ -289,3 +289,60 @@ class CanonicalFamilyIdentityTest(unittest.TestCase):
             NativeReplayDriver._family_id(one_price),
             NativeReplayDriver._family_id(two_prices),
         )
+
+
+class Roll20IsFedByTheTraversalTest(unittest.TestCase):
+    """BUILT, WIRED and FED are three different states. These prove the third.
+
+    `legacy_per_second_roll20` is a CAUSAL_STREAM_REQUIRED layer, so the binner is not an
+    option the driver may be constructed without - it is fed on every pass, from the legacy
+    rows the traversal already retains. Asserting the attribute exists would only prove the
+    first state; these assert volumes and counts that can only appear if rows actually
+    reached it.
+    """
+
+    def _priced(self, *, seq, event_ns, order_id, action, side, price):
+        row = record(seq=seq, event_ns=event_ns, order_id=order_id, action=action, side=side)
+        row["price"] = price
+        return row
+
+    def test_the_binner_sees_every_legacy_row_the_traversal_retained(self):
+        driver = make_driver()
+        base = at("2021-10-04T13:00:00")
+        driver.consume(
+            record(seq=i, event_ns=base + i * NS_PER_SECOND, order_id=300 + i, action="T")
+            for i in range(3)
+        )
+        result = driver.finalize()
+        self.assertGreater(result["traversal"]["legacy_rows_seen"], 0)
+        self.assertEqual(driver.roll20.rows_seen, result["traversal"]["legacy_rows_seen"],
+                         "a row retained but not binned is the drop D60 exists to stop")
+
+    def test_a_trade_above_the_mid_reaches_the_binner_as_buy_volume(self):
+        driver = make_driver()
+        base = at("2021-10-04T13:00:00")
+        driver.consume([
+            self._priced(seq=0, event_ns=base, order_id=400, action="A", side="B",
+                         price=3_499_000_000),
+            self._priced(seq=1, event_ns=base + NS_PER_SECOND, order_id=401, action="A",
+                         side="A", price=3_501_000_000),
+            self._priced(seq=2, event_ns=base + 2 * NS_PER_SECOND, order_id=402, action="T",
+                         side="B", price=3_500_500_000),
+        ])
+        driver.finalize()
+        buys, sells, _ = driver.roll20.series()
+        self.assertGreater(sum(buys), 0.0, "the trade never reached the binner")
+        self.assertEqual(sum(sells), 0.0)
+
+    def test_the_traversal_reports_the_roll20_summary_and_its_crosswalk(self):
+        driver = make_driver()
+        base = at("2021-10-04T13:00:00")
+        driver.consume(
+            record(seq=i, event_ns=base + i * NS_PER_SECOND, order_id=500 + i, action="T")
+            for i in range(3)
+        )
+        result = driver.finalize()
+        summary = result["traversal"]["legacy_per_second_roll20"]
+        self.assertEqual(summary["clock"], "ts_recv")
+        self.assertEqual(len(summary["crosswalk_state_hash"]), 64)
+        self.assertEqual(summary["rows_seen"], result["traversal"]["legacy_rows_seen"])

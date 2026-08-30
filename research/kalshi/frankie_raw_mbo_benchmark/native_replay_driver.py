@@ -34,8 +34,10 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import 
     NativeCalculationRun,
     RunIdentity,
 )
+from research.kalshi.frankie_raw_mbo_benchmark import native_roll20
 from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import ClockCalculator, member_clock_row
 from research.kalshi.frankie_raw_mbo_benchmark.native_session import (
+    NS_PER_SECOND,
     phase_within,
     segment_of,
     trade_day,
@@ -185,6 +187,7 @@ class NativeReplayDriver:
         materialize_full_state: bool = False,
         stage_spawn: Callable[[Mapping[str, Any]], Any] | None = None,
         legacy_sink: Callable[[Mapping[str, Any]], Any] | None = None,
+        roll20_clock: str = native_roll20.RECV_CLOCK,
     ) -> None:
         if session_rule is None:
             raise ReplayDriverError(
@@ -212,6 +215,12 @@ class NativeReplayDriver:
         # An OPTIONAL second home for the legacy rows, so a caller can stream them to disk as
         # they are produced. It never replaces retention: the rows are kept either way.
         self.legacy_sink = legacy_sink
+        # `legacy_per_second_roll20` is a CAUSAL_STREAM_REQUIRED layer, so this is fed on
+        # every pass rather than being an option a caller may forget to switch on. The
+        # clock is a declaration: the frozen census binned on event time, this traversal's
+        # causal clock is receive time, and the crosswalk hash changes with the choice.
+        self.roll20 = native_roll20.SecondBinner(clock=roll20_clock)
+        self._legacy_cursor = 0
 
         self.counters = DriverCounters()
         self._mark: SessionMark | None = None
@@ -315,6 +324,18 @@ class NativeReplayDriver:
         self._last_recv_ns = recv_ns
 
         event_ns = int(envelope["ts_event_ns"])
+
+        # The legacy rows emitted since the previous group close belong to this group, and
+        # the frozen census assigns every row in a group to the group's own second. Binning
+        # each row at its own timestamp splits a boundary-straddling group and yields a
+        # different, entirely plausible number - see PerRowSecondBinner in the roll20 tests.
+        stamp = recv_ns if self.roll20.clock == native_roll20.RECV_CLOCK else event_ns
+        self.roll20.observe_group(
+            self.counters.legacy_rows[self._legacy_cursor:],
+            second=stamp // NS_PER_SECOND,
+        )
+        self._legacy_cursor = len(self.counters.legacy_rows)
+
         source_day = _source_day(source_object)
         mark = self._mark_for(event_ns, recv_ns, source_day)
         group_index = self.counters.groups_seen
@@ -455,6 +476,12 @@ class NativeReplayDriver:
             "legacy_rows_retained": len(self.counters.legacy_rows),
             "legacy_rows": list(self.counters.legacy_rows),
             "legacy_rows_streamed": self.legacy_sink is not None,
+            "legacy_per_second_roll20": {
+                **self.roll20.summary(),
+                "crosswalk_state_hash": native_roll20.crosswalk(
+                    clock=self.roll20.clock
+                )["state_hash"],
+            },
             "member_rows_retained": len(self.counters.member_rows),
             "lifecycle_rows_retained": len(self.counters.lifecycle_rows),
             "causal_clock": CAUSAL_CLOCK,
