@@ -1,4 +1,22 @@
-# The A-clean full-roster run is blocked on ONE thing: the box has no S3 access
+# The A-clean full-roster run IS RUNNING. One thing about it is still Greg's: the upload
+
+**RUNNING, confirmed by the box and not by a green job, 2026-08-30T10:44:44Z.** The monitor
+reported a single `python3` at **99.6% CPU with 6m05s of CPU time**, against a start at
+10:38:35 - CPU time matching wall clock, so it is the traversal and not a leftover. Memory
+60.5 GiB available of 61.8, swap untouched. SSM command from run 33306922261 on commit
+5a97b3f. Projected finish about **2026-08-31T00:30Z**, checkpoints every 250,000 records.
+
+That confirmation matters more than it looks: an earlier dispatch reported `InProgress` and
+went green while the box had already died, and only the monitor caught it. A green step is
+not evidence a run is running.
+
+**What is still open is the UPLOAD, and it is the reason the rest of this file stands.** The
+box can no more write than read. If the run ends with `A_ARM_RESULTS_ON_BOX` the ledgers are
+on the volume and not on S3: a finished traversal and an unfinished run.
+
+---
+
+# The blocker as it was found: the box has no S3 access
 
 Written 2026-08-30, mid-session, because the blocker needs Greg and the container will not
 survive to ask. Everything else on the path to a full run is now measured and working.
