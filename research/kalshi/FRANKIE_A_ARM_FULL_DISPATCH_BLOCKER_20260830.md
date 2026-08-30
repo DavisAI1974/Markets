@@ -100,8 +100,14 @@ session's opening finding arriving from the other direction.
 
 ## What the next session must do first
 
-The workflow edit for path (b) is **in the working tree and verified only partly**: the YAML
-parses, `bash -n` passes on every run block, and `ast.parse` passes on every embedded heredoc -
-but the **rendered remote command has not been run through `bash -n`**, which is exactly what
-D57 says is the check that counts. Do that before dispatching anything. Then either take path
-(a) with Greg's approval, or finish (b) and accept that the results land on the box first.
+Path (b) is **committed and fully verified to the D57 standard**: the YAML parses, `bash -n`
+passes on every run block, `ast.parse` passes on every embedded heredoc, and the **rendered
+remote command was written out and run through `bash -n`** rather than read. It needs no new
+permission and has been dispatched.
+
+What is still Greg's, and what path (b) cannot settle: **the upload**. If the box still cannot
+write, the run ends with `A_ARM_RESULTS_ON_BOX=/opt/frankie-a-arm-run` and about 136 GB of
+exact ledgers sit on the volume rather than on S3. That is a finished traversal and an
+UNFINISHED run - D34 says data lives on S3. Path (a) fixes it in one policy; the alternative is
+presigned PUTs issued once the output file names are known, which needs a second dispatch after
+the traversal ends.
