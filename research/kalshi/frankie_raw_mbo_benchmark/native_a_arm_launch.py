@@ -422,6 +422,27 @@ def launch(
     evidence["result_hash"] = hashlib.sha256(
         json.dumps(evidence, sort_keys=True, separators=(",", ":")).encode("utf-8")
     ).hexdigest()
+    # AFTER the hash, deliberately. These are absolute paths - a LOCATOR, not an
+    # identity - and folding them into the hash made the same evidence hash differently
+    # in two directories, so it could never be reproduced or compared across runs.
+    # Caught by the differential, which is the only reason it was noticed at all.
+    if sinks is not None:
+        # WHERE THE EXACT ROWS LIVE, named in the request itself.
+        #
+        # Found by Greg asking whether streaming still lets Frankie ingest everything. It did
+        # not: with the ledgers inline he would have found the rows inside the result he was
+        # handed, and with them streamed he was told every identity hash and NOT ONE PATH.
+        # That is the D60 failure in its quietest form - nothing dropped, everything retained,
+        # and the consumer unable to reach it. A run would have completed, reconciled, and
+        # produced findings from an evidence surface Frankie could not open.
+        evidence["exact_ledgers"] = {
+            name: sink.path.as_posix()
+            for name, sink in (
+                ("exact_member_rows", sinks.member),
+                ("exact_lifecycle_rows", sinks.lifecycle),
+                ("legacy_observable_rows", sinks.legacy),
+            )
+        }
     stager = SpawnStager(
         out_dir=out_dir / "spawn_requests",
         arm=arm,

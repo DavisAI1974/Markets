@@ -41,7 +41,7 @@ TOP_KEYS = {"ledger_retention", "result_hash"}
 # mean it was not covering the ledgers at all.
 
 
-def run_slice(out_dir: Path, *, stream: bool) -> dict:
+def run_slice(out_dir: Path, *, stream: bool, cadence: int = 10**9) -> dict:
     return launcher.launch(
         arm="A_CLEAN",
         run_id="differential",          # identical, so identity hashes cannot differ
@@ -51,7 +51,7 @@ def run_slice(out_dir: Path, *, stream: bool) -> dict:
         code_commit="cafebabe",
         limit_records=GROUPS * 4,
         checkpoint_every_records=10**9,
-        cadence_groups=10**9,
+        cadence_groups=cadence,
         records=slice_records(GROUPS),
         stream_ledgers=stream,
     )
@@ -66,6 +66,12 @@ def strip_retention(result: dict) -> dict:
     for layer in ("exact_member_ledger", "exact_lifecycle_and_runway_ledger"):
         layers[layer] = {k: v for k, v in layers[layer].items() if k not in MEMBER_KEYS}
     body["layers"] = layers
+    # The ledger PATHS are the retention location by another name, and they are absolute, so
+    # two runs in two directories can never match on them. Everything else in the evidence
+    # identity - including its own `result_hash` - must still be equal.
+    body["evidence_identity"] = {
+        k: v for k, v in body["evidence_identity"].items() if k != "exact_ledgers"
+    }
     return body
 
 
@@ -206,3 +212,64 @@ class RowSinkReconciliationTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LedgerReachabilityTest(unittest.TestCase):
+    """Retained is not the same as reachable, and only one of them is worth anything.
+
+    Greg, on B: *"Frankie is still ingesting the full raw mbo data to check against?"* The
+    answer was no. With the ledgers inline he would have found the rows inside the result he
+    was handed; streamed, the spawn request named every identity hash and NOT ONE PATH. That
+    is the D60 failure in its quietest form - nothing dropped, everything retained,
+    reconciled, hashed, and the consumer unable to open it. The run would have completed and
+    produced findings against an evidence surface Frankie could never have read.
+    """
+
+    def test_the_spawn_request_names_every_streamed_ledger(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            run_slice(out, stream=True, cadence=10)
+            staged = sorted((out / "spawn_requests").glob("*.json"))
+            self.assertGreater(len(staged), 0, "the fixture stopped staging requests")
+            evidence = json.loads(staged[0].read_text(encoding="utf-8"))["evidence"]
+            ledgers = evidence["exact_ledgers"]
+            self.assertEqual(
+                sorted(ledgers),
+                ["exact_lifecycle_rows", "exact_member_rows", "legacy_observable_rows"],
+            )
+            for name, path in ledgers.items():
+                with self.subTest(ledger=name):
+                    self.assertTrue(Path(path).exists(), f"{name} named but not on disk")
+                    self.assertGreater(Path(path).stat().st_size, 0)
+
+    def test_the_evidence_hash_does_not_depend_on_where_the_run_happened(self):
+        """A locator is not an identity.
+
+        The first version folded the absolute ledger paths into `result_hash`, so the same
+        evidence hashed differently in two directories - a hash that can never be reproduced
+        or compared across runs, which is the one thing a content address is for. The
+        differential caught it; nothing else would have, because a single run agrees with
+        itself.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            first = run_slice(root / "one", stream=True)
+            second = run_slice(root / "two", stream=True)
+        self.assertEqual(
+            first["evidence_identity"]["result_hash"],
+            second["evidence_identity"]["result_hash"],
+        )
+        self.assertNotEqual(
+            first["evidence_identity"]["exact_ledgers"],
+            second["evidence_identity"]["exact_ledgers"],
+            "the fixture stopped using two different directories",
+        )
+
+    def test_an_inline_run_names_no_ledger_paths(self):
+        """The key is absent rather than empty: nothing was streamed, so nothing to point at."""
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            run_slice(out, stream=False, cadence=10)
+            staged = sorted((out / "spawn_requests").glob("*.json"))
+            evidence = json.loads(staged[0].read_text(encoding="utf-8"))["evidence"]
+            self.assertNotIn("exact_ledgers", evidence)
