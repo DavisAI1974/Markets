@@ -14,6 +14,10 @@ FREEZE_SCHEMA = "FRANKIE_NATIVE_RAW_MBO_RT_FREEZE_V1"
 ALLOWED_ARMS = frozenset({"A_CLEAN", "A_MEMORY"})
 ALLOWED_ROLES = frozenset({"REAL_TIME_FRANKIE", "FORECASTER_FRANKIE"})
 # Generated from the ingestion layer registry, not restated here.
+# D64 (2026-08-30): six helper surfaces removed with the registry layers they mirrored -
+# the four scouts, the carryforward helper-architecture layer, and the helper-evidence
+# movie they would have produced. An output surface for a lane that does not run is a
+# surface that can only ever be reported absent.
 # The previous 24-entry list was a superseded October vocabulary that shared no
 # identifier with the registry and was referenced by nothing but its own test.
 # test_corrected_a_arm_execution_gate asserts these stay equal to the registry.
@@ -45,13 +49,8 @@ SURFACE_IDS = frozenset(
         "derived_v4_mechanics_fifo_features",
         "doctrine_reasoning_play_index_evidence",
         "extra_agent_corrected_information_and_gap_diagnoses",
-        "extra_agent_four_helper_architecture_roles",
         "fifo_queues",
         "full_bid_ask_depth",
-        "helper_extension_propensity_scout",
-        "helper_pair_triplet_recurrence_scout",
-        "helper_timing_lifespan_family_scout",
-        "helper_true_false_context_investigator",
         "hipporag_associative_retrieval",
         "historical_timing_lifespan_context",
         "later_outcome_reveal",
@@ -84,7 +83,6 @@ SURFACE_IDS = frozenset(
         "output_candidate_discoveries",
         "output_first_locks_and_no_locks",
         "output_frankie_reasoning_movie",
-        "output_helper_evidence_movie",
         "output_knowledge_retrieval_receipts",
         "output_negative_sparse_inconclusive_ledger",
         "output_probability_movie",

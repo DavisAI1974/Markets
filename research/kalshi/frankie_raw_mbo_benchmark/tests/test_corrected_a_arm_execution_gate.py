@@ -331,9 +331,14 @@ class GateSurfacesTrackTheRegistryTest(unittest.TestCase):
             "gate surfaces drifted from the registry; regenerate rather than editing by hand",
         )
 
-    def test_there_are_ninety_seven_concrete_layers(self) -> None:
-        """93 inventory bullet layers + 4 helper roles. 90 is the declared floor, not the count."""
-        self.assertEqual(len(self.layers), 97)
+    def test_there_are_ninety_one_concrete_layers(self) -> None:
+        """Was 97: 93 inventory bullets + 4 helper roles.
+
+        D64 removed the four helper roles, the carryforward helper-architecture layer and
+        the helper-evidence movie output, so 91. 90 is the declared floor, not the count -
+        and the margin is now nine, which is worth knowing before anything else is removed.
+        """
+        self.assertEqual(len(self.layers), 91)
         self.assertGreaterEqual(
             len(self.layers), self.registry["hard_minimum_concrete_layer_count"]
         )

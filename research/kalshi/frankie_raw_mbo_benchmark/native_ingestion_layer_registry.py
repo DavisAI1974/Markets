@@ -14,26 +14,51 @@ REGISTRY_SCHEMA = "FRANKIE_NATIVE_RAW_MBO_INGESTION_LAYER_REGISTRY_V1"
 PRE_CALL_RECEIPT_SCHEMA = "FRANKIE_NATIVE_RAW_MBO_PRE_CALL_LAYER_RECEIPT_V1"
 GROUP_DELIVERY_SCHEMA = "FRANKIE_NATIVE_RAW_MBO_CAUSAL_GROUP_DELIVERY_V1"
 HARD_MINIMUM_CONCRETE_LAYER_COUNT = 90
-EXPECTED_UNION_LAYER_COUNT = 105
-EXPECTED_ARM_LAYER_COUNTS = {"A_CLEAN": 102, "A_MEMORY": 104}
+EXPECTED_UNION_LAYER_COUNT = 99
+"""Was 105. Six helper layers were removed 2026-08-30 - see D64 and the note below."""
+EXPECTED_ARM_LAYER_COUNTS = {"A_CLEAN": 96, "A_MEMORY": 98}
 EXPECTED_LAYER_ID_SET_SHA256 = (
-    "6121d1198ad8666b6926ccfbb282424b0a3d5fc424eb740418dd1888ac392f7d"
+    "fbb79cde505cb9a119b31a716d9516839d3bcbc2710a15be70266b3069b14eef"
 )
 EXPECTED_POLICY_COUNTS = {
-    "STATIC_REQUIRED_INPUT": 24,
+    "STATIC_REQUIRED_INPUT": 19,
     "ARM_REQUIRED_INPUT": 4,
     "CAUSAL_STREAM_REQUIRED": 55,
     "SEALED_FOR_A_SCOPE": 9,
     "PROVISIONAL_SHADOW": 2,
-    "APPEND_ONLY_OUTPUT": 11,
+    "APPEND_ONLY_OUTPUT": 10,
 }
+# D64 (Greg, 2026-08-30): "get any mention of the 4 helpers out. He can call with different
+# persona options as part of his tools." D54 retired the four-helper architecture for the A
+# arms and D63 reaffirmed it, but the registry went on REQUIRING it - these constants
+# enforced `("AVAILABLE", model_visible=True, "SHA")` on the layer that documents it, so
+# Frankie would have read a superseded architecture as a binding input on every run. A
+# decision the enforcement layer contradicts is worse than one nothing enforces, and it had
+# not bitten only because no run reached the pre-call gate.
+#
+# SIX layer identities were removed, and the counts above are what that costs:
+#   extra_agent_four_helper_architecture_roles   (corrected_extra_agent_carryforward)
+#   helper_pair_triplet_recurrence_scout         )
+#   helper_extension_propensity_scout            ) the whole helper_role_configuration
+#   helper_timing_lifespan_family_scout          ) group, which no longer exists
+#   helper_true_false_context_investigator       )
+#   output_helper_evidence_movie                 (append_only_outputs)
+#
+# NOTHING SOURCE-LEVEL WAS DROPPED, which is what D60 requires. The removed carryforward
+# layer named exactly the same three V3 files as
+# `extra_agent_corrected_information_and_gap_diagnoses`, which remains required and
+# model-visible, and those files contain no helper text - the four-helper architecture lived
+# in the layer DESCRIPTION and in the feed inventory, not in the evidence. What was removed
+# is the instruction to read them as a helper architecture, not the evidence itself.
+#
+# 99 still clears HARD_MINIMUM_CONCRETE_LAYER_COUNT (90) with nine to spare.
 ALLOWED_ARMS = frozenset(EXPECTED_ARM_LAYER_COUNTS)
 ALLOWED_V3_LAYER_IDS = frozenset(
     {
         "extra_agent_corrected_information_and_gap_diagnoses",
-        "extra_agent_four_helper_architecture_roles",
     }
 )
+"""One member since D64. `extra_agent_four_helper_architecture_roles` was the second."""
 ALLOWED_V3_SOURCE_PATHS = frozenset(
     {
         "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.json",
@@ -239,7 +264,9 @@ def validate_registry(registry: Mapping[str, Any]) -> dict[str, Any]:
     if layer_count < HARD_MINIMUM_CONCRETE_LAYER_COUNT:
         raise IngestionLayerGateError("registry violates hard floor of 90 concrete layers")
     if layer_count != EXPECTED_UNION_LAYER_COUNT:
-        raise IngestionLayerGateError("V1 registry must contain exactly 105 layer identities")
+        raise IngestionLayerGateError(
+            f"V1 registry must contain exactly {EXPECTED_UNION_LAYER_COUNT} layer identities"
+        )
     id_set_hash = hashlib.sha256(canonical_bytes(sorted(layers))).hexdigest()
     if id_set_hash != EXPECTED_LAYER_ID_SET_SHA256:
         raise IngestionLayerGateError("V1 exact layer identity set drift")

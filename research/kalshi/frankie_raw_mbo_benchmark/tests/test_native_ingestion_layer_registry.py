@@ -111,19 +111,36 @@ class NativeIngestionLayerRegistryTests(unittest.TestCase):
         receipt = validate_registry(load_registry())
         self.assertEqual(HARD_MINIMUM_CONCRETE_LAYER_COUNT, 90)
         self.assertEqual(receipt["hard_minimum_concrete_layer_count"], 90)
-        self.assertEqual(receipt["concrete_layer_count"], 105)
-        self.assertEqual(receipt["a_clean_applicable_layer_count"], 102)
-        self.assertEqual(receipt["a_memory_applicable_layer_count"], 104)
+        self.assertEqual(receipt["concrete_layer_count"], 99)
+        self.assertEqual(receipt["a_clean_applicable_layer_count"], 96)
+        self.assertEqual(receipt["a_memory_applicable_layer_count"], 98)
         self.assertEqual(receipt["placeholder_layer_ids"], [])
 
     def test_only_corrected_extra_agent_carryforward_is_v3_derived(self) -> None:
         receipt = validate_registry(load_registry())
         self.assertEqual(
             receipt["v3_derived_layer_ids"],
-            [
-                "extra_agent_corrected_information_and_gap_diagnoses",
-                "extra_agent_four_helper_architecture_roles",
-            ],
+            ["extra_agent_corrected_information_and_gap_diagnoses"],
+        )
+
+    def test_no_layer_carries_the_retired_four_helper_architecture(self) -> None:
+        """D64: the four helpers are out of everything Frankie can see.
+
+        Asserted over layer IDS AND descriptions, not just ids, because the architecture
+        lived in the DESCRIPTION of `extra_agent_four_helper_architecture_roles` - the three
+        V3 files it pointed at contain no helper text at all. An id-only check would have
+        passed on a layer still telling Frankie to read them as a helper architecture.
+        """
+        registry = load_registry()
+        offenders = [
+            entry["layer_id"]
+            for group in registry["groups"]
+            for entry in group["entries"]
+            if "helper" in (entry["layer_id"] + " " + entry["description"]).lower()
+        ]
+        self.assertEqual(offenders, [])
+        self.assertEqual(
+            [g["group_id"] for g in registry["groups"] if "helper" in g["group_id"]], []
         )
 
     def test_exact_nine_answer_layers_are_stage_sealed(self) -> None:

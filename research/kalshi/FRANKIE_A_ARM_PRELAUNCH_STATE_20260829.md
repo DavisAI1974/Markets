@@ -242,7 +242,28 @@ kind from the findings status and both have consequences:
     `("AVAILABLE", model_visible=True, "SHA")` for that policy. **So Frankie already SEES
     both, and a pre-call receipt that reports either one invisible FAILS the gate** - the
     exact opposite of what this document said.
-  **CONSEQUENCE - D54 IS CONTRADICTED BY THE ENFORCEMENT LAYER AND IS NOT LANDED.** D54
+  **CLOSED 2026-08-30 (Greg, D64): THE FOUR HELPERS ARE OUT OF THE REGISTRY.** Greg, asked
+  the open question below directly: *"get any mention of the 4 helpers out. He can call with
+  different persona options as part of his tools. We've covered this more than once."* Six
+  layer identities removed - `extra_agent_four_helper_architecture_roles`, the whole
+  `helper_role_configuration` group of four scouts, and `output_helper_evidence_movie`.
+  Union layer count **105 -> 99**, arms **102/104 -> 96/98**, policy counts
+  `STATIC_REQUIRED_INPUT` **24 -> 19** and `APPEND_ONLY_OUTPUT` **11 -> 10**, plus a new
+  `EXPECTED_LAYER_ID_SET_SHA256`, a new `registry_sha256` and six surfaces out of the
+  execution gate. `ALLOWED_V3_LAYER_IDS` now has one member.
+  **NOTHING SOURCE-LEVEL WAS DROPPED (D60).** The removed carryforward layer named exactly
+  the same three V3 files as `extra_agent_corrected_information_and_gap_diagnoses`, which
+  stays required and model-visible - and those files contain **no helper text at all**. The
+  four-helper architecture lived in a layer DESCRIPTION and in feed-inventory section 10,
+  never in the evidence. What was removed is the instruction to read those files as a helper
+  architecture. **The second half of D59 - does the corrected-information layer itself stay
+  required and model-visible - was NOT asked again and is unchanged.**
+  Feed inventory section 10 is retired in place (number kept, so cross-references still
+  resolve) and the canonical monthly procedure goes to **version 2**: step 11's four-helper
+  concurrency, the role-to-CPU invariant, the four-thread limb of the step-12 gate and the
+  Nucleus-replacement paragraph are all retired. The record of what it said:
+
+  **CONSEQUENCE - D54 WAS CONTRADICTED BY THE ENFORCEMENT LAYER AND WAS NOT LANDED.** D54
   records that `extra_agent_four_helper_architecture_roles` "stays shadow and
   `model_visible: False`" because it documents a superseded architecture. The registry
   requires the opposite and no registry change was made. This is the S115 lesson in its
@@ -307,7 +328,7 @@ The templates the Sol run should follow, because this is what ran 24 group cycle
 | `agents/frankie_native_raw_mbo_knowledge/A_CLEAN_POSITIVE_KNOWLEDGE_20260828.md` | Generated. Method-only. |
 | `agents/frankie_native_raw_mbo_knowledge/A_MEMORY_POSITIVE_KNOWLEDGE_20260828.md` | Generated. Carries prior-run knowledge; that is the treatment. |
 | `frankie_raw_mbo_benchmark/ACLEAN_METHOD_ONLY_CAPSULE_SOURCE_20260829.md` | The registered source A-clean's capsule is generated from. |
-| `agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json` | 105 entries = 97 concrete layers + 8 arm/control bindings. 90 is the declared floor. |
+| `agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json` | **99 entries = 91 concrete layers + 8 arm/control bindings** (was 105/97; D64 removed six helper layers 2026-08-30). 90 is the declared floor, so the margin is nine. |
 
 **To regenerate the capsules and manifest after editing the spec:**
 

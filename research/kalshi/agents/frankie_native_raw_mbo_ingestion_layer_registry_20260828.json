@@ -95,8 +95,7 @@
       "principal_route": "DIRECT",
       "proof_mode": "CONTENT_SHA256_AND_ALLOWLIST",
       "entries": [
-        {"layer_id": "extra_agent_corrected_information_and_gap_diagnoses", "description": "Correction-approved extra-agent information and gap diagnoses", "source_paths": ["research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.json", "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md", "research/NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md"], "v3_derived": true},
-        {"layer_id": "extra_agent_four_helper_architecture_roles", "description": "Correction-approved four-helper architecture and specialist roles", "source_paths": ["research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.json", "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md", "research/NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md"], "v3_derived": true}
+        {"layer_id": "extra_agent_corrected_information_and_gap_diagnoses", "description": "Correction-approved extra-agent information and gap diagnoses", "source_paths": ["research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.json", "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md", "research/NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md"], "v3_derived": true}
       ]
     },
     {
@@ -209,21 +208,6 @@
       ]
     },
     {
-      "group_id": "helper_role_configuration",
-      "policy": "STATIC_REQUIRED_INPUT",
-      "activation_stage": "PRE_CALL",
-      "authority": "EXTRA_AGENT_CARRYFORWARD",
-      "arms": ["A_CLEAN", "A_MEMORY"],
-      "principal_route": "DIRECT",
-      "proof_mode": "CONFIG_AND_PROVIDER_IDENTITY_SHA256",
-      "entries": [
-        {"layer_id": "helper_pair_triplet_recurrence_scout", "description": "Pair and triplet recurrence scout role and configuration", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
-        {"layer_id": "helper_extension_propensity_scout", "description": "Extension-propensity scout role and configuration", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
-        {"layer_id": "helper_timing_lifespan_family_scout", "description": "Timing and lifespan family scout role and configuration", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
-        {"layer_id": "helper_true_false_context_investigator", "description": "True and false context investigator role and configuration", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false}
-      ]
-    },
-    {
       "group_id": "prebirth_opportunity",
       "policy": "CAUSAL_STREAM_REQUIRED",
       "activation_stage": "EACH_F_LAST_CUTOFF",
@@ -311,7 +295,6 @@
       "proof_mode": "APPEND_ONLY_HASH_CHAIN",
       "entries": [
         {"layer_id": "output_state_and_state_delta_movie", "description": "State movie and state-delta movie", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
-        {"layer_id": "output_helper_evidence_movie", "description": "Helper-evidence movie", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
         {"layer_id": "output_frankie_reasoning_movie", "description": "Frankie reasoning movie", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
         {"layer_id": "output_probability_movie", "description": "Probability movie", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
         {"layer_id": "output_candidate_discoveries", "description": "Candidate discoveries", "source_paths": ["research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"], "v3_derived": false},
@@ -324,5 +307,5 @@
       ]
     }
   ],
-  "registry_sha256": "6220e0ee222294afdf9cde8613181f7e6b5b900aeb32dd6cc0b623f68d830b6b"
+  "registry_sha256": "6e67ffc56c53e108fc15fc3ace8fd6751e9338bc60ffd559cb22f9f3aa913d2b"
 }

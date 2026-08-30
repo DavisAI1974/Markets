@@ -1,7 +1,9 @@
 # Canonical Frankie month-at-a-time procedure
 
-Version: 1
-Adopted: 2026-08-24
+Version: 2
+Adopted: 2026-08-24. Revised 2026-08-30 (D64): the four-helper paired-lane architecture is
+retired. Version 1 is in git history and the decision is recorded as D63/D64 in
+`DECISIONS.md` - this is a superseded procedure, not a lost one.
 
 This is the permanent first-read procedure for every Frankie monthly-run handoff. A handoff may supply
 month-specific identities and explicitly approved exceptions, but it must not copy, weaken, or silently
@@ -25,21 +27,25 @@ After the one-time generic framework is complete, a normal month changes only:
 2. One frozen prior-knowledge source declaration.
 3. Generated frozen-knowledge and exact-SHA launch receipts.
 
-Runtime, scientific logic, helper concurrency, CPU mapping, lane order, ledger/journal behavior, workflow,
+Runtime, scientific logic, CPU mapping, lane order, ledger/journal behavior, workflow,
 and generic tests remain byte-identical. A raw-manifest, schema, dependency, model, CPU-topology, authority,
 or scientific change is a separate reviewed release, not a monthly rollover.
 
 ## Provider-cost architecture changes
 
-Replacing the four paid helper calls with local Nucleus processing is a separate architecture release, not
-a monthly rollover. Until a blinded shadow comparison accepts that release, the existing four-helper CPU
-mapping and Frankie-after-join contract remain authoritative.
+**Settled 2026-08-30 (Greg, D64): there are no helper lanes.** The paragraph this replaces
+treated replacing four paid helper calls with local Nucleus processing as a pending
+architecture release and named the four-helper CPU mapping as authoritative until a blinded
+shadow comparison accepted it. There is nothing to replace: a helper is a TOOL INVOCATION
+inside a role, with a selectable persona, and it never had a lane, a knowledge profile or an
+output of its own. Greg: *"get any mention of the 4 helpers out. He can call with different
+persona options as part of his tools."*
 
-A candidate Nucleus release must keep both lanes isolated on the identical immutable prefix, keep the target
-month and Step-1 answer wall sealed, and emit content-addressed source/omission receipts that Frankie can
-audit. The preferred cost target is one Frankie synthesis per lane after Nucleus produces structured
-recurrence, extension, timing, and context sections. Validate it on only 1-2 frozen prefixes before any live
-month is authorized. Do not relaunch October merely to evaluate this architecture.
+What survives from that paragraph, because it is about isolation rather than about helpers:
+any candidate change must keep both lanes isolated on the identical immutable prefix, keep
+the target month and the Step-1 answer wall sealed, and emit content-addressed
+source/omission receipts that Frankie can audit. Validate on 1-2 frozen prefixes before any
+live month is authorized, and do not relaunch October merely to evaluate an architecture.
 
 ## File policy
 
@@ -67,7 +73,7 @@ month is authorized. Do not relaunch October merely to evaluate this architectur
 - Causal journal tools and paired-lane orchestrator.
 - Generic monthly runner and workflow.
 - CPU/concurrency, monthly-contract, and workflow/receipt tests.
-- Helper mapping, lane authority/order, receipt schemas, progress arithmetic, and exact-SHA gates.
+- Lane authority/order, receipt schemas, progress arithmetic, and exact-SHA gates.
 
 ## Required sequence
 
@@ -91,13 +97,16 @@ month is authorized. Do not relaunch October merely to evaluate this architectur
 10. **Prepare the isolated unit.** Verify package/wheel hashes; extract; restore provider-readable repository
     traversal; perform the unprivileged offline install; reapply restrictive permissions; require CPUs 0-3;
     start systemd with `CPUAffinity=0 1 2 3`; verify the unit and MainPID effective set exactly.
-11. **Run each paired prefix.** Control lane first, combined lane second. Within one lane run recurrence on
-    CPU 0, extension on CPU 1, timing on CPU 2, and context on CPU 3 concurrently on the identical immutable
-    prefix. Frankie is call five and starts only after all four helpers finish. Never run eight helpers across
-    both lanes.
-12. **Gate first live evidence.** The first `PAIRED_PREFIX_ACCEPTED` event must durably bind both lanes' full
-    affinity/timing receipts, four distinct native thread IDs, singleton affinities, helper overlap, no lane
-    overlap, identical prefix proof, progress, knowledge/descriptor hashes, and sealed wall.
+11. **Run each paired prefix.** Control lane first, combined lane second, on the identical immutable prefix.
+    **Frankie is the call.** There is no helper batch to wait on and no role-to-CPU mapping to honour (D64):
+    a helper is a tool invocation inside `REAL_TIME_FRANKIE` or `FORECASTER_FRANKIE`, with a selectable
+    persona, not a parallel lane. Version 1 of this step required four concurrent helper lanes on CPUs 0-3
+    with Frankie as call five; that requirement is retired.
+12. **Gate first live evidence.** The first `PAIRED_PREFIX_ACCEPTED` event must durably bind both lanes'
+    full affinity/timing receipts, no lane overlap, identical prefix proof, progress, knowledge/descriptor
+    hashes, and sealed wall. The four-distinct-thread-ID and helper-overlap limbs are retired with the
+    helper lanes (D64): a receipt asserting four helper threads on a run that has none can only ever be
+    false or fabricated.
 13. **Observe the canary while the run continues.** Report the first 1-2 accepted prefixes and completed/
     remaining percentage. Do not create a stop/resume identity boundary merely for the canary.
 14. **Close the month.** Continue monotonically to 100/0, validate every chain, write `FINAL_RECEIPT.json`,
@@ -107,7 +116,6 @@ month is authorized. Do not relaunch October merely to evaluate this architectur
 
 - `S135_CONTROL` is primary and completes before `FULL_PROVISIONAL_COMBINED`, which remains shadow-only.
 - Both lanes use the identical immutable causal prefix and decision-state snapshot.
-- The role-to-CPU mapping is recurrence=0, extension=1, timing=2, context=3.
 - Only directly shared append surfaces are thread-safe; immutable inputs remain shared read-only.
 - Every receipt is canonical/content-addressed and independently recomputable.
 - Progress is monotone, done plus left equals total, and completed plus remaining equals 100%.

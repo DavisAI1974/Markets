@@ -3,7 +3,7 @@
 Date: 2026-08-24
 Scope: the authoritative input surfaces required by the corrected October Frankie runner
 
-This inventory defines what Frankie and the four live D-finding helpers must be able to consume. It separates admissible knowledge, continuous causal market data, provisional shadow inputs, and the sealed target answer.
+This inventory defines what Frankie must be able to consume. It separates admissible knowledge, continuous causal market data, provisional shadow inputs, and the sealed target answer.
 
 ## 1. Current Frankie brain and runtime feed
 
@@ -32,7 +32,6 @@ Authority: `FROZEN_LEARNED_KNOWLEDGE`.
 ## 3. Sole V3-derived carryforward: corrected extra-agent findings
 
 - Only the information and gap diagnoses expressly preserved by the V4 correction/carryforward records.
-- Four-helper architecture and valid specialist roles.
 
 Authority: `EXTRA_AGENT_CARRYFORWARD`.
 
@@ -112,20 +111,33 @@ Every legacy field requires an explicit crosswalk to its V4-native source fields
 
 These become immutable state/state-delta movie fields.
 
-## 10. Four live helper-evidence feeds
+## 10. Role and tool invocation
 
-Four GPT-5.6 Sol specialists inspect identical immutable causal prefixes:
+**RETIRED 2026-08-30 (Greg, D64). This section previously specified four live GPT-5.6 Sol
+specialist lanes - a pair/triplet recurrence scout, an extension-propensity scout, a
+timing/lifespan-family scout and a true/false-context investigator - each on its own CPU,
+with Frankie waiting for the complete batch as call five. The section number is kept and its
+content replaced rather than deleted, so every cross-reference to a later section still
+resolves and the change is a record rather than a disappearance.**
 
-1. Pair/triplet recurrence scout.
-2. Extension-propensity scout.
-3. Timing/lifespan-family scout.
-4. True/false-context investigator.
+Greg, verbatim: *"we aren't doing the helpers or the specialists anymore. Rt and forecaster
+can call one as part of their tools and there's options as to the role"*, and then *"get any
+mention of the 4 helpers out. He can call with different persona options as part of his
+tools."*
 
-Each emits a typed evidence packet containing state-prefix hash, lawful cutoff, model/provider identity, provider response ID, knowledge-manifest hash, evidence citations, contradiction, uncertainty, and abstention status.
+There are exactly two roles, and this arm carries no lane but theirs:
 
-Frankie is the sole synthesizer and primary lock owner.
+1. `REAL_TIME_FRANKIE`
+2. `FORECASTER_FRANKIE`
 
-Execution is four-CPU and role-affined within each lane: recurrence=CPU0, extension=CPU1, timing/lifespan=CPU2, and context=CPU3. All four helpers run concurrently on the identical immutable prefix; Frankie waits for the complete batch. The control and combined lanes retain sequential lane order and reuse the same four CPUs. Affinity and batch-timing receipts are part of the immutable helper-evidence feed.
+**A helper is a TOOL INVOCATION inside a role, never a parallel lane.** It has no knowledge
+profile of its own, no separate output artifact and no CPU affinity of its own, and the
+persona it is called under is selectable by the role that calls it. Nothing in this arm
+waits on a batch of helpers, and the four-CPU role-to-CPU mapping this section used to fix
+does not bind the A arms.
+
+This also settles what the five walk specialists (`mbo_specialist_{A..E}.md`) are for here:
+they are read for how a role is briefed and what it must emit, and they are not run.
 
 ## 11. Pre-birth opportunity feed
 
@@ -174,12 +186,11 @@ They may expand retrieval or produce shadow reasoning/diagnostics on the same ca
 
 Authority: `SEALED_TARGET_ANSWER`.
 
-This feed is mechanically inaccessible until all primary discoveries, helper evidence, probability movies, and first-lock/no-lock ledgers are immutable. It is used only for post-freeze reconciliation and gap diagnosis.
+This feed is mechanically inaccessible until all primary discoveries, probability movies, and first-lock/no-lock ledgers are immutable. It is used only for post-freeze reconciliation and gap diagnosis.
 
 ## 15. Immutable output and receipt feed
 
 - State movie and state-delta movie.
-- Helper-evidence movie.
 - Frankie reasoning movie.
 - Probability movie.
 - Candidate discoveries.
