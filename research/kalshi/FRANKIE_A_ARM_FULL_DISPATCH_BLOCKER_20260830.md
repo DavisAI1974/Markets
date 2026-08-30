@@ -1,4 +1,56 @@
-# The A-clean full-roster run IS RUNNING. One thing about it is still Greg's: the upload
+# THE RUN FILLED A 300 GB VOLUME IN 2h35m AND STOPPED. The ledgers are 9x my estimate
+
+**Measured from CloudWatch EBS write bytes, which needs nothing from the box.** Five-minute
+buckets on the root volume:
+
+```
+12:26 - 13:06   7.4 to 8.0 GB per bucket   steady
+13:11           4.3 GB                     partial
+13:16 onward    1.6 to 1.9 MB              noise
+```
+
+**Writes collapsed at about 13:13 by a factor of roughly 4,000 and have been flat since.**
+The arithmetic closes exactly:
+
+| | |
+|---|---|
+| write rate, steady | **90 GB per hour** |
+| elapsed 10:38:35 to the stall | 2.58 h |
+| written by the stall | **232 GB** |
+| free when the run started | **241 GB** (224.8 GiB) |
+| per record, ACTUAL | **215 KB** |
+| per record, my canary estimate | 24 KB |
+| error | **9.0x** |
+| full roster at this rate | **1.25 TB** |
+
+The volume filled, and everything else follows from that one fact: SSM stages its command
+scripts to files on the box, so with no space nothing executes - which is why four monitors
+and an exit-code probe all returned empty output and code 1, and why no channel that runs on
+the box could report anything.
+
+**THE ERROR IS MINE AND ITS SHAPE IS THE SAME ONE THIS BRANCH KEEPS FINDING.** I measured the
+canary's uploaded ARTIFACT - 1,205,197,795 bytes for 50,001 records - and called it the disk
+requirement. `actions/upload-artifact` runs at compression-level 6, and JSONL deflates about
+nine to one, which is precisely the factor. The number was present, typed, plausible, and
+measuring something other than what its name implied: compressed bytes leaving a runner, not
+bytes landing on a disk. It then propagated into the 170 GiB precheck, the 300 GB volume, and
+the "about 136 GB" line in the one-line state, all of which were wrong together and agreed
+with each other.
+
+**WHAT IS RECOVERABLE.** The checkpointer wrote a save point every 250,000 records and the run
+reached roughly 1.05M records, so about four save points exist on the volume - and EBS
+survives a stop. Nothing is lost that a bigger volume could not resume from.
+
+**THIS IS GREG'S DECISION AND I HAVE NOT PRE-EMPTED IT.** The options are a materially larger
+volume (1.5 TB or more, which is a real standing cost), streaming the exact ledgers to S3 as
+they are produced rather than at the end (which needs the same S3 write permission that is
+already waiting on him), or retaining less - and D60 says nothing is dropped without
+discussing it first. I did not grow the volume again, did not restart anything, and did not
+stop the instance.
+
+---
+
+# The A-clean full-roster run WAS RUNNING. One thing about it was always Greg's: the upload
 
 **RUNNING, confirmed by the box and not by a green job, 2026-08-30T10:44:44Z.** The monitor
 reported a single `python3` at **99.6% CPU with 6m05s of CPU time**, against a start at

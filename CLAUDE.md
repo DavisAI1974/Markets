@@ -1019,9 +1019,19 @@ winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~J
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
 **One-line state (S117):** branch `chatgpt/frankie-raw-mbo-benchmark-20260828`, **885 package
-tests green, AND THE A-CLEAN FULL ROSTER IS RUNNING ON THE BOX** — confirmed by the box, not by
-a green job: `python3` at 99.4% CPU with CPU time tracking wall clock to 99.8%, run
-33306922261, started 2026-08-30T10:38:35Z, ~13.9h over 5,667,689 records. **Every section 4.6
+tests green. THE A-CLEAN FULL ROSTER RAN FOR 2h35m AND FILLED THE 300 GB VOLUME.** Run
+33306922261 started 2026-08-30T10:38:35Z and wrote at **90 GB/h**; CloudWatch EBS write bytes
+collapse from ~7.5 GB per 5-minute bucket to ~1.8 MB at about 13:13, which is 232 GB written
+against 241 GB free. **THE EXACT LEDGERS ARE 215 KB PER RECORD, NOT THE 24 KB I ESTIMATED - a
+9x error, and mine.** I measured the canary's uploaded ARTIFACT and called it the disk
+requirement; `upload-artifact` compresses at level 6 and JSONL deflates about nine to one.
+Present, typed, plausible, and measuring something other than what its name implied - then
+propagated into the precheck, the volume size and the state line, all wrong together and
+agreeing with each other. **The full roster needs ~1.25 TB at this rate.** About four
+checkpoints survive on the volume (EBS persists a stop), so a bigger volume resumes rather
+than restarts. **Greg's call, not pre-empted: a larger volume, streaming ledgers to S3 as
+produced, or retaining less - and D60 forbids the last without discussing it.** Nothing was
+grown, restarted or stopped. **Every section 4.6
 to 4.16 is now FED** (4.15 excluded under D5, not unfed); the canary is **ACCEPTED** on the real
 roster with all eight section 6 gates passing. **MEASURED: 8.8 ms per record with 4.6 fed (72%
 dearer than without), and 24 KB of exact ledgers per record — about 136 GB, a DISK figure the
