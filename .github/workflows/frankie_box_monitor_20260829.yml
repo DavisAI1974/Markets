@@ -51,6 +51,64 @@ jobs:
       SAMPLE_SECONDS: '30'
       MAX_LINES: '20000'
     steps:
+      - name: Ask AWS about the box, since the box itself answers nothing
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          # EVERY CHANNEL THAT NEEDS THE BOX TO EXECUTE SOMETHING IS DEAD. Output came back
+          # empty three times; then a bare `/bin/sh -c` doing nothing but `df` returned
+          # ResponseCode 1 without running. That last result killed the exit-code idea too,
+          # and for a reason worth writing down: SSM STAGES THE COMMAND SCRIPT TO A FILE ON
+          # THE BOX before running it, so a volume with no space means nothing executes and
+          # no channel that runs on the box can report anything - including the one built to
+          # survive a broken output channel.
+          #
+          # So this asks AWS instead. Neither reading needs the box to run a single command:
+          #
+          #   PingStatus  - the SSM agent's own heartbeat. Online means the machine is up and
+          #                 the agent is talking, which narrows a total failure to something
+          #                 that stops COMMANDS rather than the instance.
+          #   VolumeWriteBytes - EBS-side write volume, straight from CloudWatch. If the
+          #                 traversal is still writing ledgers this is large and continuing;
+          #                 if it died or is blocked on a full filesystem it collapses toward
+          #                 zero. This is the closest thing to "is the run alive" that does
+          #                 not ask the run.
+          echo "== SSM agent heartbeat =="
+          aws ssm describe-instance-information \
+            --filters "Key=InstanceIds,Values=$INSTANCE_ID" \
+            --query 'InstanceInformationList[0].{Ping:PingStatus,LastPing:LastPingDateTime,Agent:AgentVersion,Platform:PlatformName}' \
+            --output json || echo "DESCRIBE_FAILED"
+
+          echo "== instance state and status checks =="
+          aws ec2 describe-instance-status --instance-ids "$INSTANCE_ID" \
+            --query 'InstanceStatuses[0].{State:InstanceState.Name,Sys:SystemStatus.Status,Inst:InstanceStatus.Status}' \
+            --output json || echo "STATUS_FAILED"
+
+          echo "== root volume, size and modification state =="
+          root_name="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
+            --query 'Reservations[0].Instances[0].RootDeviceName' --output text)"
+          volume="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
+            --query "Reservations[0].Instances[0].BlockDeviceMappings[?DeviceName=='$root_name'].Ebs.VolumeId | [0]" \
+            --output text)"
+          echo "VOLUME=$volume"
+          aws ec2 describe-volumes --volume-ids "$volume" \
+            --query 'Volumes[0].{Size:Size,Type:VolumeType,State:State}' --output json || true
+
+          echo "== EBS write bytes, 5-minute buckets, last 90 minutes =="
+          # Sum per bucket. A traversal writing ledgers shows tens to hundreds of MB per
+          # bucket; a stopped or blocked one shows near zero. The SHAPE is the answer, so
+          # every bucket is printed rather than averaged - a mean would hide the moment it
+          # stopped, which is the only moment that matters.
+          start="$(date -u -d '90 minutes ago' +%Y-%m-%dT%H:%M:%SZ)"
+          end="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          aws cloudwatch get-metric-statistics \
+            --namespace AWS/EBS --metric-name VolumeWriteBytes \
+            --dimensions "Name=VolumeId,Value=$volume" \
+            --start-time "$start" --end-time "$end" \
+            --period 300 --statistics Sum \
+            --query 'sort_by(Datapoints,&Timestamp)[].{t:Timestamp,MB:Sum}' \
+            --output table || echo "CLOUDWATCH_FAILED"
+
       - name: Probe the box by EXIT CODE alone, because output stopped coming back
         continue-on-error: true
         run: |
