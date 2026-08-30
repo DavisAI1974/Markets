@@ -4,10 +4,10 @@ from __future__ import annotations
 import unittest
 
 from research.kalshi.frankie_raw_mbo_benchmark.native_dipole import (
-    FLIP,
+    CANONICAL,
     LONG,
+    MIRROR,
     NO_DIRECTION,
-    SAME,
     SHORT,
     DipoleCalculator,
     DipoleError,
@@ -30,7 +30,7 @@ def stage(**overrides) -> DipoleStage:
         runway_id="r1",
         stage_index=0,
         recv_ns=1_000,
-        orientation=SAME,
+        orientation=CANONICAL,
         signed_flow=10,
         bid_depth=100,
         ask_depth=50,
@@ -75,7 +75,7 @@ class DipoleStageTest(unittest.TestCase):
 
 
 class DipolePathTest(unittest.TestCase):
-    def path(self, flows, orientation=SAME, prices=None):
+    def path(self, flows, orientation=CANONICAL, prices=None):
         prices = prices or [1000] * len(flows)
         return DipolePath(
             runway_id="r1",
@@ -115,7 +115,7 @@ class DipolePathTest(unittest.TestCase):
         with self.assertRaises(DipoleError):
             DipolePath(
                 runway_id="r1",
-                stages=(stage(stage_index=0, orientation=SAME), stage(stage_index=1, orientation=FLIP)),
+                stages=(stage(stage_index=0, orientation=CANONICAL), stage(stage_index=1, orientation=MIRROR)),
             )
 
     def test_stages_must_be_strictly_ordered(self) -> None:
@@ -133,11 +133,11 @@ class DipoleCalculatorTest(unittest.TestCase):
     def setUp(self) -> None:
         self.calc = DipoleCalculator()
 
-    def test_same_and_flip_never_pool(self) -> None:
-        self.calc.observe_stage(stage(orientation=SAME), **CTX)
-        self.calc.observe_stage(stage(orientation=FLIP), **CTX)
+    def test_canonical_and_mirror_never_pool(self) -> None:
+        self.calc.observe_stage(stage(orientation=CANONICAL), **CTX)
+        self.calc.observe_stage(stage(orientation=MIRROR), **CTX)
         orientations = {r["stratum"]["side_orientation"] for r in self.calc.signed_flow.rows()}
-        self.assertEqual(orientations, {SAME, FLIP})
+        self.assertEqual(orientations, {CANONICAL, MIRROR})
 
     def test_stage_index_separates_strata_so_paths_are_stage_relative(self) -> None:
         self.calc.observe_stage(stage(stage_index=0), **CTX)

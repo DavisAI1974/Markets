@@ -104,60 +104,63 @@ class StateVocabularyGrowsTest(unittest.TestCase):
             self.assertEqual(ex.resolve_state_id(seed, []), seed)
 
 
-class PhaseVocabularyGrowsTest(unittest.TestCase):
+class LandmarkVocabularyGrowsTest(unittest.TestCase):
+    """The carried landmarks are a crosswalk, exactly as SEED_STATES is."""
+
     def setUp(self) -> None:
-        for name in list(ex.DISCOVERED_PHASES):
-            ex.PHASE_INDEX.pop(name, None)
-            ex.DISCOVERED_PHASES.pop(name, None)
+        for name in list(ex.DISCOVERED_LANDMARKS):
+            ex.LANDMARK_INDEX.pop(name, None)
+            ex.DISCOVERED_LANDMARKS.pop(name, None)
 
-    def test_a_novel_phase_can_be_inserted_between_carried_ones(self) -> None:
-        position = ex.register_discovered_phase("REARM", after=ex.PERSISTENCE, before=ex.EXTENSION)
-        self.assertGreater(position, ex.PHASE_INDEX[ex.PERSISTENCE])
-        self.assertLess(position, ex.PHASE_INDEX[ex.EXTENSION])
+    @staticmethod
+    def _open(calc, candidate_id: str) -> None:
+        calc.open_runway(candidate_id=candidate_id, instrument_id=42, side="B",
+                         source_day="20211004", source_role="SCORED_FINDINGS_DAY",
+                         continuity_segment=0, family_id="F", session_phase="RTH",
+                         searched_coverage_ns=10, opened_recv_ns=1_000, seed_state="P")
 
-    def test_a_runway_can_traverse_a_discovered_phase(self) -> None:
-        ex.register_discovered_phase("REARM", after=ex.PERSISTENCE, before=ex.EXTENSION)
+    def test_a_novel_landmark_can_be_inserted_between_carried_ones(self) -> None:
+        position = ex.register_discovered_landmark(
+            "REARM", after=ex.T0, before=ex.ENDPOINT_ONSET
+        )
+        self.assertGreater(position, ex.LANDMARK_INDEX[ex.T0])
+        self.assertLess(position, ex.LANDMARK_INDEX[ex.ENDPOINT_ONSET])
+
+    def test_a_runway_can_traverse_a_discovered_landmark(self) -> None:
+        ex.register_discovered_landmark("REARM", after=ex.T0, before=ex.ENDPOINT_ONSET)
         calc = ex.ExhaustionCalculator()
-        calc.open_runway(candidate_id="c1", instrument_id=42, side="B", source_day="20211004",
-                         source_role="SCORED_FINDINGS_DAY", continuity_segment=0,
-                         family_id="F", session_phase="RTH", searched_coverage_ns=10,
-                         opened_recv_ns=1_000, seed_state="P")
-        calc.enter_phase("c1", ex.BIRTH, 1_100)
-        calc.enter_phase("c1", ex.PERSISTENCE, 1_200)
-        calc.enter_phase("c1", "REARM", 1_300)
-        calc.enter_phase("c1", ex.EXTENSION, 1_400)
+        self._open(calc, "c1")
+        calc.mark_landmark("c1", ex.T0, 1_100)
+        calc.mark_landmark("c1", "REARM", 1_300)
+        calc.mark_landmark("c1", ex.ENDPOINT_ONSET, 1_400)
         row = calc.complete("c1", recv_ns=1_500)
-        self.assertIn("REARM", [p["phase"] for p in row["phases"]])
+        self.assertIn("REARM", [seg["landmark"] for seg in row["segments"]])
 
-    def test_a_discovered_phase_keeps_ordering_checkable(self) -> None:
-        ex.register_discovered_phase("REARM", after=ex.PERSISTENCE, before=ex.EXTENSION)
+    def test_a_discovered_landmark_keeps_ordering_checkable(self) -> None:
+        ex.register_discovered_landmark("REARM", after=ex.T0, before=ex.ENDPOINT_ONSET)
         calc = ex.ExhaustionCalculator()
-        calc.open_runway(candidate_id="c2", instrument_id=42, side="B", source_day="20211004",
-                         source_role="SCORED_FINDINGS_DAY", continuity_segment=0,
-                         family_id="F", session_phase="RTH", searched_coverage_ns=10,
-                         opened_recv_ns=1_000, seed_state="P")
-        calc.enter_phase("c2", ex.EXTENSION, 1_100)
+        self._open(calc, "c2")
+        calc.mark_landmark("c2", ex.ENDPOINT_ONSET, 1_100)
         with self.assertRaises(ex.ExhaustionError):
-            calc.enter_phase("c2", "REARM", 1_200)
+            calc.mark_landmark("c2", "REARM", 1_200)
 
-    def test_an_unregistered_phase_is_refused_with_the_remedy_named(self) -> None:
+    def test_an_unregistered_landmark_is_refused_with_the_remedy_named(self) -> None:
         calc = ex.ExhaustionCalculator()
-        calc.open_runway(candidate_id="c3", instrument_id=42, side="B", source_day="20211004",
-                         source_role="SCORED_FINDINGS_DAY", continuity_segment=0,
-                         family_id="F", session_phase="RTH", searched_coverage_ns=10,
-                         opened_recv_ns=1_000, seed_state="P")
-        with self.assertRaisesRegex(ex.ExhaustionError, "register_discovered_phase"):
-            calc.enter_phase("c3", "SOMETHING_NEW", 1_100)
+        self._open(calc, "c3")
+        with self.assertRaisesRegex(ex.ExhaustionError, "register_discovered_landmark"):
+            calc.mark_landmark("c3", "SOMETHING_NEW", 1_100)
 
-    def test_registering_the_same_phase_twice_is_idempotent(self) -> None:
-        a = ex.register_discovered_phase("REARM", after=ex.PERSISTENCE, before=ex.EXTENSION)
-        b = ex.register_discovered_phase("REARM", after=ex.PERSISTENCE, before=ex.EXTENSION)
+    def test_registering_the_same_landmark_twice_is_idempotent(self) -> None:
+        a = ex.register_discovered_landmark("REARM", after=ex.T0, before=ex.ENDPOINT_ONSET)
+        b = ex.register_discovered_landmark("REARM", after=ex.T0, before=ex.ENDPOINT_ONSET)
         self.assertEqual(a, b)
 
-    def test_moving_a_registered_phase_is_refused(self) -> None:
-        ex.register_discovered_phase("REARM", after=ex.PERSISTENCE, before=ex.EXTENSION)
+    def test_moving_a_registered_landmark_is_refused(self) -> None:
+        ex.register_discovered_landmark("REARM", after=ex.T0, before=ex.ENDPOINT_ONSET)
         with self.assertRaises(ex.ExhaustionError):
-            ex.register_discovered_phase("REARM", after=ex.BIRTH, before=ex.TRANSITION)
+            ex.register_discovered_landmark(
+                "REARM", after=ex.ENDPOINT_ONSET, before=ex.ENDPOINT_CONFIRMATION
+            )
 
 
 class DispositionVocabularyGrowsTest(unittest.TestCase):

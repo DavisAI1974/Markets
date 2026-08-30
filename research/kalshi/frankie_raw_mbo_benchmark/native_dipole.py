@@ -7,15 +7,23 @@ and there is no path that produces a direction from it - `direction` reads the s
 signed flow, and a stage whose signed flow is zero reports no direction rather than
 defaulting to one.
 
-`SAME` and `FLIP` orientations never pool. They are the two ways a mirrored structure can
-relate to its counterpart, and averaging across them cancels precisely the asymmetry the
-measure exists to find, so orientation is part of the stratum identity.
+A structure and its side-swapped counterpart never pool. Averaging across them cancels
+precisely the asymmetry the measure exists to find, so orientation is part of the stratum
+identity.
+
+That orientation is `CANONICAL` / `MIRROR`, taken from `native_mirror` - the built
+side-swap key that already ran and emitted 966 mirror-ready pairs. It is deliberately NOT
+`SAME` / `FLIP`: those words name a TEMPORAL relation, a chain member's exhaustion polarity
+against its latest predecessor, frozen with committed counts of 1,546 FLIP / 1,883 SAME of
+3,429 and gated in four files. This section's relation is CROSS-SECTIONAL. Two relations
+under one pair of names do not fail, they disagree.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Sequence
 
+from research.kalshi.frankie_raw_mbo_benchmark import native_mirror as mirror
 from research.kalshi.frankie_raw_mbo_benchmark.native_stratum import (
     RESOLVED,
     Declaration,
@@ -25,9 +33,9 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_stratum import (
 
 CAUSAL_CLOCK = "ts_recv_ns"
 
-SAME = "SAME"
-FLIP = "FLIP"
-VALID_ORIENTATIONS = frozenset({SAME, FLIP})
+CANONICAL = mirror.CANONICAL
+MIRROR = mirror.MIRROR
+VALID_ORIENTATIONS = mirror.VALID_ORIENTATIONS
 
 LONG = "LONG"
 SHORT = "SHORT"
@@ -120,7 +128,9 @@ class DipolePath:
         if indices != sorted(indices) or len(set(indices)) != len(indices):
             raise DipoleError("stages must be strictly ordered by stage_index")
         if len({s.orientation for s in self.stages}) > 1:
-            raise DipoleError("a path holds one orientation; SAME and FLIP never mix")
+            raise DipoleError(
+                "a path holds one orientation; CANONICAL and MIRROR never mix"
+            )
 
     @property
     def orientation(self) -> str:
@@ -237,7 +247,7 @@ class DipoleCalculator:
         session_phase: str,
         event_phase: str,
     ) -> StratumKey:
-        """Orientation is the side dimension here: SAME and FLIP never pool."""
+        """Orientation is the side dimension here: CANONICAL and MIRROR never pool."""
         return StratumKey(
             source_day=source_day,
             source_role=source_role,
@@ -312,6 +322,9 @@ class DipoleCalculator:
                 "magnitude is derived from the signed value and is never a direction source; "
                 "a zero-flow stage reports NO_DIRECTION rather than defaulting to one"
             ),
-            "orientation_note": "SAME and FLIP are separate strata and never pool",
+            "orientation_note": (
+                "CANONICAL and MIRROR are separate strata and never pool; they are the "
+                "side-swap key from native_mirror, not the chain-transition SAME/FLIP"
+            ),
             "stratum_counts": {m.name: m.stratum_count for m in self.measures},
         }

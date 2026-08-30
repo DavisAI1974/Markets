@@ -12,6 +12,9 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Iterable
 
+from research.kalshi.frankie_raw_mbo_benchmark.native_mirror import (
+    mirror_identity as native_mirror_identity,
+)
 from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import V4MboAdapter
 
 
@@ -92,15 +95,13 @@ def side_string(actions: Iterable[dict[str, Any]]) -> str:
 
 
 def mirror_identity(sides: str) -> dict[str, str]:
-    translation = str.maketrans({"A": "B", "B": "A"})
-    mirror = sides.translate(translation)
-    pair = sorted((sides, mirror))
-    return {
-        "side_string": sides,
-        "mirror_side_string": mirror,
-        "mirror_pair_key": f"{pair[0]}|{pair[1]}",
-        "orientation": "CANONICAL" if sides == pair[0] else "MIRROR",
-    }
+    """Delegates to the single mechanical mirror key required by contract 4.4.
+
+    The definition moved to `native_mirror` unchanged - same side swap, same pair key,
+    same CANONICAL/MIRROR orientation - so that section 4.12 and this recalculation share
+    one implementation instead of two that agree today.
+    """
+    return native_mirror_identity(sides)
 
 
 def fill_disposition(actions: Iterable[dict[str, Any]]) -> dict[str, Any]:

@@ -4,13 +4,10 @@ from __future__ import annotations
 import unittest
 
 from research.kalshi.frankie_raw_mbo_benchmark.native_exhaustion import (
-    BIRTH,
-    COMPLETION,
-    PERSISTENCE,
-    PRECURSOR,
-    PREBIRTH,
-    REVERSAL,
-    SEARCHED,
+    ENDPOINT_CONFIRMATION,
+    ENDPOINT_ONSET,
+    T0,
+    UNMARKED,
     ExhaustionCalculator,
     ExhaustionError,
     open_world_state_id,
@@ -62,35 +59,62 @@ class RunwayTest(unittest.TestCase):
     def setUp(self) -> None:
         self.calc = ExhaustionCalculator()
 
-    def test_phases_advance_and_cannot_go_backwards(self) -> None:
+    def test_landmarks_advance_and_cannot_go_backwards(self) -> None:
         self.calc.open_runway(**open_kwargs())
-        self.calc.enter_phase("c1", PRECURSOR, 1_100)
-        self.calc.enter_phase("c1", BIRTH, 1_500)
+        self.calc.mark_landmark("c1", T0, 1_100)
+        self.calc.mark_landmark("c1", ENDPOINT_ONSET, 1_500)
         with self.assertRaises(ExhaustionError):
-            self.calc.enter_phase("c1", PREBIRTH, 1_600)
+            self.calc.mark_landmark("c1", T0, 1_600)
 
-    def test_reentering_the_same_phase_is_refused(self) -> None:
+    def test_remarking_the_same_landmark_is_refused(self) -> None:
         self.calc.open_runway(**open_kwargs())
-        self.calc.enter_phase("c1", BIRTH, 1_500)
+        self.calc.mark_landmark("c1", T0, 1_500)
         with self.assertRaises(ExhaustionError):
-            self.calc.enter_phase("c1", BIRTH, 1_600)
+            self.calc.mark_landmark("c1", T0, 1_600)
 
-    def test_unknown_phase_is_refused(self) -> None:
+    def test_unknown_landmark_is_refused(self) -> None:
         self.calc.open_runway(**open_kwargs())
         with self.assertRaises(ExhaustionError):
-            self.calc.enter_phase("c1", "VIBES", 1_100)
+            self.calc.mark_landmark("c1", "VIBES", 1_100)
+
+    def test_the_eleven_invented_phase_names_are_gone(self) -> None:
+        """Four of them were reused for a different referent, which reads as continuity."""
+        from research.kalshi.frankie_raw_mbo_benchmark import native_exhaustion as ex
+
+        for name in (
+            "SEARCHED", "PRECURSOR", "PREBIRTH", "FIRST_DEVIATION", "BIRTH", "TRANSITION",
+            "INFLECTION", "PERSISTENCE", "EXTENSION", "COMPLETION", "REVERSAL",
+            "PHASE_ORDER", "PHASE_INDEX", "RunwayPhase", "register_discovered_phase",
+        ):
+            with self.subTest(name=name):
+                self.assertFalse(hasattr(ex, name))
+
+    def test_birth_is_the_onset_and_is_absent_when_never_marked(self) -> None:
+        """The negative case - a boundary with no birth - has to be representable."""
+        runway = self.calc.open_runway(**open_kwargs())
+        self.assertIsNone(runway.birth_recv_ns)
+        self.calc.mark_landmark("c1", T0, 1_400)
+        self.assertEqual(runway.birth_recv_ns, 1_400)
+        self.calc.mark_landmark("c1", ENDPOINT_ONSET, 1_800)
+        self.assertEqual(runway.birth_recv_ns, 1_400, "confirmation never overwrites onset")
+
+    def test_a_runway_with_no_birth_still_closes_and_says_so(self) -> None:
+        self.calc.open_runway(**open_kwargs())
+        row = self.calc.finalize(recv_ns=9_000)[0]
+        self.assertFalse(row["birth_marked"])
+        self.assertIsNone(row["birth_recv_ns"])
 
     def test_completed_duration_is_not_readable_before_completion(self) -> None:
         """Section 4.10 forbids a completed duration at an earlier causal cutoff."""
         runway = self.calc.open_runway(**open_kwargs())
-        self.calc.enter_phase("c1", BIRTH, 1_500)
+        self.calc.mark_landmark("c1", T0, 1_500)
         with self.assertRaises(ExhaustionError):
             _ = runway.completed_duration_ns
         self.assertEqual(runway.causal_age_ns(2_000), 1_000, "elapsed age is always lawful")
 
     def test_completed_duration_becomes_readable_after_completion(self) -> None:
         runway = self.calc.open_runway(**open_kwargs())
-        self.calc.enter_phase("c1", BIRTH, 1_500)
+        self.calc.mark_landmark("c1", T0, 1_500)
         self.calc.complete("c1", recv_ns=4_000)
         self.assertEqual(runway.completed_duration_ns, 3_000)
 
@@ -100,36 +124,42 @@ class RunwayTest(unittest.TestCase):
         with self.assertRaises(ExhaustionError):
             _ = runway.completed_duration_ns
 
-    def test_phase_is_part_of_the_stratum_so_phases_never_pool(self) -> None:
+    def test_the_landmark_is_part_of_the_stratum_so_segments_never_pool(self) -> None:
         self.calc.open_runway(**open_kwargs())
-        self.calc.enter_phase("c1", PRECURSOR, 1_100)
-        self.calc.enter_phase("c1", BIRTH, 1_500)
-        self.calc.enter_phase("c1", PERSISTENCE, 2_000)
+        self.calc.mark_landmark("c1", T0, 1_100)
+        self.calc.mark_landmark("c1", ENDPOINT_ONSET, 1_500)
         self.calc.complete("c1", recv_ns=3_000)
-        subfamilies = {r["stratum"]["subfamily_id"] for r in self.calc.phase_duration.rows()}
-        self.assertIn("state=P|phase=PRECURSOR", subfamilies)
-        self.assertIn("state=P|phase=BIRTH", subfamilies)
-        self.assertIn("state=P|phase=PERSISTENCE", subfamilies)
+        subfamilies = {r["stratum"]["subfamily_id"] for r in self.calc.segment_duration.rows()}
+        self.assertIn("state=P|landmark=T0", subfamilies)
+        self.assertIn("state=P|landmark=ENDPOINT_ONSET", subfamilies)
 
-    def test_phase_durations_are_exact(self) -> None:
+    def test_segment_durations_are_exact(self) -> None:
         self.calc.open_runway(**open_kwargs())
-        self.calc.enter_phase("c1", PRECURSOR, 1_100)
-        self.calc.enter_phase("c1", BIRTH, 1_700)
-        rows = {r["stratum"]["subfamily_id"]: r["value"] for r in self.calc.phase_duration.rows()}
-        self.assertEqual(rows["state=P|phase=PRECURSOR"]["maximum"], 600.0)
+        self.calc.mark_landmark("c1", T0, 1_100)
+        self.calc.mark_landmark("c1", ENDPOINT_ONSET, 1_700)
+        rows = {r["stratum"]["subfamily_id"]: r["value"] for r in self.calc.segment_duration.rows()}
+        self.assertEqual(rows["state=P|landmark=T0"]["maximum"], 600.0)
 
-    def test_completion_and_reversal_are_both_terminal(self) -> None:
+    def test_the_onset_and_the_confirmation_are_both_kept(self) -> None:
+        """`PERSIST - 1` apart: the structural answer and the causal one are different."""
+        self.calc.open_runway(**open_kwargs())
+        self.calc.mark_landmark("c1", T0, 1_000)
+        self.calc.mark_landmark("c1", ENDPOINT_ONSET, 4_000)
+        row = self.calc.complete("c1", recv_ns=6_000)
+        marks = {seg["landmark"]: seg["entered_recv_ns"] for seg in row["segments"]}
+        self.assertEqual(marks[ENDPOINT_ONSET], 4_000)
+        self.assertEqual(marks[ENDPOINT_CONFIRMATION], 6_000)
+
+    def test_only_the_confirmation_is_terminal(self) -> None:
         self.calc.open_runway(**open_kwargs(candidate_id="a"))
-        row = self.calc.complete("a", recv_ns=2_000, terminal_phase=COMPLETION)
+        row = self.calc.complete("a", recv_ns=2_000, terminal_landmark=ENDPOINT_CONFIRMATION)
         self.assertEqual(row["status"], "COMPLETED")
-        self.calc.open_runway(**open_kwargs(candidate_id="b"))
-        row = self.calc.complete("b", recv_ns=2_000, terminal_phase=REVERSAL)
-        self.assertEqual(row["phases"][-1]["phase"], REVERSAL)
+        self.assertEqual(row["segments"][-1]["landmark"], ENDPOINT_CONFIRMATION)
 
-    def test_a_nonterminal_completion_phase_is_refused(self) -> None:
+    def test_a_nonterminal_completion_landmark_is_refused(self) -> None:
         self.calc.open_runway(**open_kwargs())
         with self.assertRaises(ExhaustionError):
-            self.calc.complete("c1", recv_ns=2_000, terminal_phase=PERSISTENCE)
+            self.calc.complete("c1", recv_ns=2_000, terminal_landmark=ENDPOINT_ONSET)
 
     def test_segment_end_censors_and_excludes_from_completed_duration(self) -> None:
         self.calc.open_runway(**open_kwargs())
@@ -142,7 +172,7 @@ class RunwayTest(unittest.TestCase):
         self.assertEqual(self.calc.censored_age.rows()[0]["value"]["maximum"], 4_000.0)
 
     def test_completed_and_censored_runways_never_pool(self) -> None:
-        """Each lands in its own terminal-phase stratum, and in its own measure."""
+        """Each lands in its own terminal-landmark stratum, and in its own measure."""
         self.calc.open_runway(**open_kwargs(candidate_id="a"))
         self.calc.complete("a", recv_ns=2_000)
         self.calc.open_runway(**open_kwargs(candidate_id="b"))
@@ -150,14 +180,14 @@ class RunwayTest(unittest.TestCase):
 
         completed = {r["stratum"]["subfamily_id"]: r for r in self.calc.completed_duration.rows()}
         censored = {r["stratum"]["subfamily_id"]: r for r in self.calc.censored_age.rows()}
-        self.assertEqual(completed["state=P|phase=COMPLETION"]["value"]["n"], 1)
-        self.assertEqual(censored["state=P|phase=SEARCHED"]["value"]["n"], 1)
+        self.assertEqual(completed["state=P|landmark=ENDPOINT_CONFIRMATION"]["value"]["n"], 1)
+        self.assertEqual(censored["state=P|landmark=UNMARKED"]["value"]["n"], 1)
 
         # The cross terms are excluded rather than zero-filled, and never merged.
-        self.assertEqual(completed["state=P|phase=SEARCHED"]["value"]["n"], 0)
-        self.assertEqual(completed["state=P|phase=SEARCHED"]["excluded_missing_members"], 1)
-        self.assertEqual(censored["state=P|phase=COMPLETION"]["value"]["n"], 0)
-        self.assertEqual(censored["state=P|phase=COMPLETION"]["excluded_missing_members"], 1)
+        self.assertEqual(completed["state=P|landmark=UNMARKED"]["value"]["n"], 0)
+        self.assertEqual(completed["state=P|landmark=UNMARKED"]["excluded_missing_members"], 1)
+        self.assertEqual(censored["state=P|landmark=ENDPOINT_CONFIRMATION"]["value"]["n"], 0)
+        self.assertEqual(censored["state=P|landmark=ENDPOINT_CONFIRMATION"]["excluded_missing_members"], 1)
 
         self.assertEqual(sum(r["value"]["n"] for r in completed.values()), 1)
         self.assertEqual(sum(r["value"]["n"] for r in censored.values()), 1)
@@ -190,7 +220,7 @@ class RunwayTest(unittest.TestCase):
 
     def test_acting_on_an_unopened_runway_is_refused(self) -> None:
         with self.assertRaises(ExhaustionError):
-            self.calc.enter_phase("nope", BIRTH, 1)
+            self.calc.mark_landmark("nope", T0, 1)
         with self.assertRaises(ExhaustionError):
             self.calc.note_recurrence("nope")
 
