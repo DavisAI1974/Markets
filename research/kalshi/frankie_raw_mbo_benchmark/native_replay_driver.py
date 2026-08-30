@@ -164,6 +164,10 @@ class DriverCounters:
     segments_opened: int = 0
     invocation_cutoffs: list[dict[str, Any]] = field(default_factory=list)
     save_points: int = 0
+    legacy_rows_retained: int = 0
+    """Legacy rows RETAINED, counted whether they went to a list or to a sink."""
+    member_rows_retained: int = 0
+    lifecycle_rows_retained: int = 0
     recurrence_sequences: int = 0
     """4.14 sequences folded in. One per group, so this equals `groups_seen` on a fed pass."""
     ladder_transitions_fed: int = 0
@@ -249,6 +253,7 @@ class NativeReplayDriver:
         legacy_sink: Callable[[Mapping[str, Any]], Any] | None = None,
         roll20_clock: str = native_roll20.RECV_CLOCK,
         lineage_signature: str = LINEAGE_SIGNATURE,
+        sinks: Any = None,
     ) -> None:
         if session_rule is None:
             raise ReplayDriverError(
@@ -281,7 +286,14 @@ class NativeReplayDriver:
         # clock is a declaration: the frozen census binned on event time, this traversal's
         # causal clock is receive time, and the crosswalk hash changes with the choice.
         self.roll20 = native_roll20.SecondBinner(clock=roll20_clock)
-        self._legacy_cursor = 0
+        # Legacy rows emitted since the last group close. This used to be a CURSOR into the
+        # fully retained list, which silently made roll20 depend on retention living in RAM:
+        # stream the ledger and the slice would have read an empty tail and the per-second
+        # binning would have gone quietly wrong. A pending buffer says what it is.
+        self._legacy_pending: list[dict[str, Any]] = []
+        # When present, the three exact ledgers are retained ON DISK. Nothing is dropped -
+        # see `native_row_sink`. Absent, this class behaves exactly as before.
+        self.sinks = sinks
 
         # 4.13 is the one fed section whose state is not held by its calculator:
         # `LineageCalculator.observe_node` takes the graph as an argument, so the traversal
@@ -356,8 +368,18 @@ class NativeReplayDriver:
             kept = dict(row)
             kept["emitting_section"] = section
             kept["emitted_on"] = occasion
-            self.counters.lifecycle_rows.append(kept)
+            self.counters.lifecycle_rows_retained += 1
+            if self.sinks is None:
+                self.counters.lifecycle_rows.append(kept)
             self.run.note_lifecycle_row(row=kept)
+
+    def _retain_legacy(self, row: Mapping[str, Any]) -> None:
+        """D60: every legacy row is kept. A sink changes where, never whether."""
+        self.counters.legacy_rows_retained += 1
+        if self.sinks is None:
+            self.counters.legacy_rows.append(row)
+        else:
+            self.sinks.legacy.write(row)
 
     def _mark_for(self, event_ns: int, recv_ns: int, source_day: str) -> SessionMark:
         mark = self.session_rule.classify(
@@ -395,7 +417,8 @@ class NativeReplayDriver:
             # verbatim in emission order.
             for legacy_row in legacy_rows:
                 self.counters.legacy_rows_seen += 1
-                self.counters.legacy_rows.append(legacy_row)
+                self._legacy_pending.append(legacy_row)
+                self._retain_legacy(legacy_row)
                 if self.legacy_sink is not None:
                     self.legacy_sink(legacy_row)
             if frame is None:
@@ -429,10 +452,10 @@ class NativeReplayDriver:
         # different, entirely plausible number - see PerRowSecondBinner in the roll20 tests.
         stamp = recv_ns if self.roll20.clock == native_roll20.RECV_CLOCK else event_ns
         self.roll20.observe_group(
-            self.counters.legacy_rows[self._legacy_cursor:],
+            self._legacy_pending,
             second=stamp // NS_PER_SECOND,
         )
-        self._legacy_cursor = len(self.counters.legacy_rows)
+        self._legacy_pending = []
 
         source_day = _source_day(source_object)
         mark = self._mark_for(event_ns, recv_ns, source_day)
@@ -475,7 +498,9 @@ class NativeReplayDriver:
                 row[carried] = frame[carried]
         row["instrument_id"] = int(envelope["instrument_id"])
         row["causal_availability_clock"] = envelope["causal_availability_clock"]
-        self.counters.member_rows.append(row)
+        self.counters.member_rows_retained += 1
+        if self.sinks is None:
+            self.counters.member_rows.append(row)
         self.run.clocks.observe(row)
         self.run.note_member_row(row=row)
         self.run.note_session_assignment(
@@ -704,8 +729,14 @@ class NativeReplayDriver:
             "lineage_signature": self.lineage_signature,
             "lineage_segment_scope": LINEAGE_SEGMENT_SCOPE,
             "legacy_rows_seen": self.counters.legacy_rows_seen,
-            "legacy_rows_retained": len(self.counters.legacy_rows),
-            "legacy_rows": list(self.counters.legacy_rows),
+            "legacy_rows_retained": self.counters.legacy_rows_retained,
+            **(
+                {"legacy_rows": list(self.counters.legacy_rows),
+                 "legacy_rows_retention": "INLINE"}
+                if self.sinks is None
+                else {"legacy_rows_retention": "STREAMED",
+                      "legacy_rows_receipt": self.sinks.legacy.receipt()}
+            ),
             "legacy_rows_streamed": self.legacy_sink is not None,
             "legacy_per_second_roll20": {
                 **self.roll20.summary(),
@@ -713,8 +744,8 @@ class NativeReplayDriver:
                     clock=self.roll20.clock
                 )["state_hash"],
             },
-            "member_rows_retained": len(self.counters.member_rows),
-            "lifecycle_rows_retained": len(self.counters.lifecycle_rows),
+            "member_rows_retained": self.counters.member_rows_retained,
+            "lifecycle_rows_retained": self.counters.lifecycle_rows_retained,
             "causal_clock": CAUSAL_CLOCK,
             "forward_only": True,
             "session_rule": type(self.session_rule).__name__,

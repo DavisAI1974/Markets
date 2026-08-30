@@ -59,6 +59,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_replay_driver import (
     ExchangeSessionRule,
     NativeReplayDriver,
 )
+from research.kalshi.frankie_raw_mbo_benchmark.native_row_sink import LedgerSinks
 from research.kalshi.frankie_raw_mbo_benchmark.native_staging import SpawnStager
 from research.kalshi.frankie_raw_mbo_benchmark.periodic_checkpointer import PeriodicCheckpointer
 
@@ -349,6 +350,7 @@ def launch(
     cadence_groups: int = 250_000,
     repo_root: Path = REPO_ROOT,
     records: Any = None,
+    stream_ledgers: bool = True,
 ) -> dict[str, Any]:
     """Gate, traverse, checkpoint, finalize. Returns the layered result plus the receipts.
 
@@ -377,8 +379,14 @@ def launch(
         total_mbo_records=min(total_records, limit_records or total_records),
         code_commit=code_commit,
     )
+    # The three exact ledgers go to DISK by default. Held in RAM they grow ~18-22 MiB per
+    # thousand groups, which is 79-93 GiB over the roster against a 61.8 GiB box. Nothing is
+    # dropped - see `native_row_sink`. `stream_ledgers=False` keeps the old in-RAM path so
+    # the two can be run against each other and compared field for field.
+    sinks = LedgerSinks(out_dir / "ledgers") if stream_ledgers else None
     run = NativeCalculationRun(
         identity,
+        sinks=sinks,
         replenishment_horizon_ns=60_000_000_000,
         response_horizons_ns=(1_000_000_000, 10_000_000_000, 60_000_000_000),
         response_horizon_version="a-arm-h1",
@@ -427,6 +435,7 @@ def launch(
         run=run,
         checkpointer=checkpointer,
         stage_spawn=stager.stage,
+        sinks=sinks,
     )
     # Sequence 0 before any interval save. The checkpointer REFUSES an interval save without
     # it rather than quietly writing an unanchored chain, which is how the missing call
@@ -436,6 +445,15 @@ def launch(
     stream = native_records(sources, limit=limit_records) if records is None else records
     driver.consume(stream)
     result = driver.finalize()
+    if sinks is not None:
+        # After finalize, because finalize censors open lifecycles and emits the last rows.
+        # Reconciled against the FILE and raising on mismatch: this is a hard failure, not a
+        # soft verdict, because a ledger that does not match its counter is not evidence.
+        result["ledger_retention"] = sinks.reconcile_all(
+            member=run.member_rows_written,
+            lifecycle=run.lifecycle_rows_written,
+            legacy=driver.counters.legacy_rows_retained,
+        )
     result["gates"] = {
         key: gates[key]
         for key in ("registry_gate", "pre_call_layer_gate", "rt_surface_gate")
@@ -478,6 +496,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--checkpoint-every-records", type=int, default=250_000)
     parser.add_argument("--cadence-groups", type=int, default=250_000)
     parser.add_argument(
+        "--inline-ledgers", action="store_true",
+        help="retain the exact ledgers in RAM instead of streaming them to disk; the old "
+             "path, kept so the two can be compared, and not for a full-roster run",
+    )
+    parser.add_argument(
         "--gates-only", action="store_true",
         help="run the three pre-traversal gates and stop; reads no market data at all",
     )
@@ -513,6 +536,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         limit_records=args.limit_records,
         checkpoint_every_records=args.checkpoint_every_records,
         cadence_groups=args.cadence_groups,
+        stream_ledgers=not args.inline_ledgers,
     )
     (args.out_dir / "calculation_result.json").write_text(
         json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"

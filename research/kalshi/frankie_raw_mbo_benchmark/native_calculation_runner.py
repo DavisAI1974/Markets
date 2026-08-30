@@ -244,8 +244,13 @@ class NativeCalculationRun:
         exact_cap: int | None = None,
         seed: int = 0,
         session_strata: bool = True,
+        sinks: Any = None,
     ) -> None:
         self.identity = identity
+        # When present, the exact ledgers are RETAINED ON DISK instead of in RAM. Nothing is
+        # dropped - see `native_row_sink`. Absent, behaviour is byte-identical to before, so
+        # the two paths can be run against each other and compared.
+        self.sinks = sinks
         shared: dict[str, Any] = {"seed": seed}
         if exact_cap is not None:
             shared["exact_cap"] = exact_cap
@@ -322,13 +327,21 @@ class NativeCalculationRun:
 
     def note_member_row(self, count: int = 1, *, row: Mapping[str, Any] | None = None) -> None:
         self.member_rows_written += count
-        if row is not None:
+        if row is None:
+            return
+        if self.sinks is None:
             self.member_rows.append(row)
+        else:
+            self.sinks.member.write(row)
 
     def note_lifecycle_row(self, count: int = 1, *, row: Mapping[str, Any] | None = None) -> None:
         self.lifecycle_rows_written += count
-        if row is not None:
+        if row is None:
+            return
+        if self.sinks is None:
             self.lifecycle_rows.append(row)
+        else:
+            self.sinks.lifecycle.write(row)
 
     def add_finding(self, **_kwargs: Any) -> None:
         """Removed. The calculation layer does not author findings.
@@ -535,14 +548,41 @@ class NativeCalculationRun:
             "; ".join(problems[:5]) or "every averaged row declares its numerator, population, cutoff, status and missingness",
         )
 
+    def _ledger_rows(self, rows: list[Mapping[str, Any]], which: str) -> dict[str, Any]:
+        if self.sinks is None:
+            return {"rows": list(rows), "rows_retention": "INLINE"}
+        return {
+            "rows_retention": "STREAMED",
+            "rows_receipt": getattr(self.sinks, which).receipt(),
+        }
+
     def _gate_exact_under_summary(self) -> GateResult:
         reconciliation = self._reconciliation()
-        passed = bool(reconciliation["exact_members_present_beneath_summaries"])
+        problems = []
+        if not reconciliation["exact_members_present_beneath_summaries"]:
+            problems.append("no exact member rows beneath the summaries")
+        # THE CHECK THE IN-RAM VERSION NEVER HAD. `exact_members_present_beneath_summaries`
+        # reads a COUNTER, so it passed just as happily when the list was empty - present,
+        # typed, in range and attesting nothing. Streamed retention is reconciled against
+        # the FILE, and a mismatch REJECTS rather than warning.
+        if self.sinks is not None:
+            for which, counted in (
+                ("member", self.member_rows_written),
+                ("lifecycle", self.lifecycle_rows_written),
+            ):
+                sink = getattr(self.sinks, which)
+                if sink.rows_written != counted:
+                    problems.append(
+                        f"{which} retention mismatch: {counted} counted, "
+                        f"{sink.rows_written} retained"
+                    )
         return GateResult(
             GATE_EXACT_UNDER_SUMMARY,
-            passed,
-            f"{reconciliation['exact_member_rows']} exact member rows beneath "
-            f"{reconciliation['averaged_rows']} averaged rows",
+            not problems,
+            "; ".join(problems) or (
+                f"{reconciliation['exact_member_rows']} exact member rows beneath "
+                f"{reconciliation['averaged_rows']} averaged rows"
+            ),
         )
 
     def _gate_not_a_model_run(self) -> GateResult:
@@ -606,12 +646,16 @@ class NativeCalculationRun:
             },
             LAYER_MEMBERS: {
                 "exact_member_rows": self.member_rows_written,
-                # D60: the rows themselves, not just how many there were.
-                "rows": list(self.member_rows),
+                # D60: the rows themselves, not just how many there were. When a sink is in
+                # use they are on disk in emission order and this carries the RECEIPT - path,
+                # count, sha256, and the count read back off the file - instead of the array.
+                # The key is different rather than the value being empty, because a reader
+                # finding `rows: []` cannot tell retention-elsewhere from nothing-retained.
+                **self._ledger_rows(self.member_rows, "member"),
             },
             LAYER_LIFECYCLE: {
                 "exact_lifecycle_rows": self.lifecycle_rows_written,
-                "rows": list(self.lifecycle_rows),
+                **self._ledger_rows(self.lifecycle_rows, "lifecycle"),
                 # D60: computed inside the denominators gate, checked for one boolean and
                 # discarded. It carries every horizon's OWN entered/observed/censored counts
                 # per stratum - the horizon-specific denominators section 3 mandates.
