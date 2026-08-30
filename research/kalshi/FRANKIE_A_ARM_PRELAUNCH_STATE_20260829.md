@@ -101,12 +101,24 @@ Before anything runs, sit down with Greg and confirm, item by item:
    settled. **The workflows now dispatch** (T4), and as of 2026-08-30 there are two MEASURED
    numbers to size against rather than estimates read off the code:
 
-   **THROUGHPUT.** Canary run 33304621724 traversed **50,001 records / 40,242 groups in 256
-   seconds** on a GitHub `ubuntu-latest` runner, single process. The roster is **5,667,689
-   records**, so the full traversal is **roughly 8.1 hours** at that rate. **A GitHub-hosted
-   job is hard-capped at 360 minutes and this workflow is set to 350, so the full roster
-   CANNOT finish on a runner** - not as a policy, as arithmetic. That is why `mode=full`
-   dispatches to the box and why the checkpointer is on the path.
+   **THROUGHPUT, and 4.6 costs 72% of it.** Two canaries, same roster, same 50,001-record
+   slice, one variable changed. Run 33304621724 without 4.6 fed: **256 seconds**. Run
+   33304995387 with it: **440 seconds**, or **8.8 ms per record**. The roster is **5,667,689
+   records**, so the full traversal is **roughly 13.9 hours** - not the 8.1 the first figure
+   implied. The cost is where 4.6's own report said it would be: the adapter advances a
+   `ReplayBook` one action at a time and refreshes the queue positions behind the touched
+   order, which is O(tracked_at_level x level_depth) per mutating row. That is the price of
+   reading a queue position as a live feed saw it rather than as the closed group left it,
+   and it is the reason the section exists.
+
+   **A GitHub-hosted job is hard-capped at 360 minutes and this workflow is set to 350, so
+   the full roster CANNOT finish on a runner** - not as a policy, as arithmetic. That is why
+   `mode=full` dispatches to the box and why the checkpointer is on the path. **And the SSM
+   execution timeout is the one that matters**: `send-command --timeout-seconds` is the
+   DELIVERY timeout, while `AWS-RunShellScript`'s own `executionTimeout` parameter defaults
+   to 3600, so a command sent without it is killed at one hour whatever the send says. It is
+   set to 172800, the maximum, because 13.9 hours is projected from one slice on a different
+   machine and a generous execution timeout costs nothing.
 
    **ARTIFACT SIZE, and this is the one that decides the volume.** That same canary produced
    a packet of **1,205,197,795 bytes for 50,001 records** - about 24 KB per record, which at
