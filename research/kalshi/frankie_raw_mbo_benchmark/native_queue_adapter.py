@@ -502,8 +502,10 @@ class QueueGroupAdapter:
         handle = (instrument_id, order_id)
 
         # Pre-state, read from the book BEFORE the row lands. `resting_at` is the fact; the
-        # row is only the instruction, which is `ReplayBook._cancel`'s doctrine.
-        pre = book.resting_at(order_id) if order_id else None
+        # row is only the instruction, which is `ReplayBook._cancel`'s doctrine. Asked even
+        # for order id 0, because `_add_order` rests that as a real order and a level one
+        # order short is a wrong `orders_ahead` for everyone behind it.
+        pre = book.resting_at(order_id)
         ahead_before = -1
         behind: list[int] = []
         if pre is not None and pre[0] in BOOK_SIDES and action in (ADD, CANCEL, MODIFY):
@@ -516,6 +518,7 @@ class QueueGroupAdapter:
         tally.rows_applied += 1
 
         if action == RESET:
+            self.counters["reset_cleared_book"] += 1
             self._orphan(list(self._tracked.values()), "orphaned_by_reset")
             return
         if action == FILL:
@@ -538,7 +541,7 @@ class QueueGroupAdapter:
             self.counters["unsided_row_rested_nothing"] += 1
             return
 
-        post = book.resting_at(order_id) if order_id else None
+        post = book.resting_at(order_id)
         tracked = self._tracked.get(handle)
 
         if action == ADD:
@@ -563,18 +566,24 @@ class QueueGroupAdapter:
         row: Mapping[str, Any],
         ctx: GroupContext,
         tally: _Tally,
+        *,
         order_id: int,
+        pre: tuple[str, int, int] | None,
         post: tuple[str, int, int] | None,
         tracked: _Tracked | None,
         fired: Mapping[str, int],
         recv_ns: int,
+        behind: Sequence[int],
     ) -> None:
-        """An add that RESTED is a birth. One that did not is counted, never invented."""
+        """An add that RESTED is a birth. One that did not is counted, never invented.
+
+        An add never changes anyone else's queue position - FIFO admits it at the back - with
+        one exception: a DUPLICATE id, which `_add_order` replaces, so the old copy leaves its
+        level and everything behind it moves up. That old level is refreshed here; nothing
+        else is, because nothing else moved.
+        """
         if post is None:
             self.counters["add_rested_nothing"] += 1
-            return
-        if not order_id:
-            self.counters["anonymous_adds_not_tracked"] += 1
             return
         if tracked is not None:
             # `_add_order` REPLACES on a duplicate id, so the order is off its old level and
@@ -582,19 +591,31 @@ class QueueGroupAdapter:
             # the ingest point the calculator already has keeps one lifecycle for one id
             # rather than forking it - which `on_add` refuses outright.
             self.counters[
-                "duplicate_add_requeued" if fired.get("duplicate_add_order_id") else "readd_of_absent_order_requeued"
+                "duplicate_add_requeued"
+                if fired.get("duplicate_add_order_id")
+                else "readd_of_absent_order_requeued"
             ] += 1
+            self._touch(tracked, ctx)
             self._priority_loss(calc, book, tracked, post, recv_ns, tally)
-            return
-        if _is_snapshot(row):
+        elif not order_id:
+            self.counters["anonymous_adds_not_tracked"] += 1
+        elif _is_snapshot(row):
             self.counters["snapshot_adds_not_born"] += 1
+        else:
+            if abs(post[1]) >= PRICE_SENTINEL_ABS:
+                # The book rests it and reports it as the touch, so the level is real to every
+                # other order there. Kept, and counted, because a queue position at a price
+                # that does not exist is a fact about the feed, not about the market.
+                self.counters["sentinel_price_births"] += 1
+            self._birth(calc, book, row, ctx, tally, order_id, post, recv_ns)
+
+        if pre is None:
             return
-        if abs(post[1]) >= PRICE_SENTINEL_ABS:
-            # The book rests it and reports it as the touch, so the level is real to every
-            # other order there. Kept, and counted, because a queue position at a price that
-            # does not exist is a fact about the feed rather than about the market.
-            self.counters["sentinel_price_births"] += 1
-        self._birth(calc, book, row, ctx, tally, order_id, post, recv_ns)
+        # The replaced copy left this level without filling and without being cancelled, so
+        # the residual books it as a cancel ahead - the same shape as a re-price departure.
+        if behind:
+            self.counters["reprice_departures_ahead"] += len(behind)
+        self._refresh_level(calc, book, ctx.instrument_id, pre[0], pre[1], tally, credited=set())
 
     def _on_cancel_or_modify(
         self,
@@ -660,6 +681,7 @@ class QueueGroupAdapter:
                 # An F reported more quantity than the book ever held for the order.
                 self.counters["pending_fill_unbooked_at_removal"] += leftover
             if tracked is not None:
+                self._touch(tracked, ctx)
                 self._terminate(calc, ctx, tally, tracked, status, basis, recv_ns)
         elif tracked is not None:
             if action == MODIFY:

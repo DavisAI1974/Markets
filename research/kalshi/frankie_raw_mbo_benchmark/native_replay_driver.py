@@ -52,6 +52,9 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_candidate_adapter import (
     BookState,
     CandidateEpisodeTracker,
     EMPTY_BOOK,
+    NO_CLUSTERING,
+    ResponseFeed,
+    starting_liquidity_regime,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import ClockCalculator, member_clock_row
 from research.kalshi.frankie_raw_mbo_benchmark.native_session import (
@@ -170,6 +173,8 @@ class DriverCounters:
     invocation_cutoffs: list[dict[str, Any]] = field(default_factory=list)
     save_points: int = 0
     candidates_detected: int = 0
+    response_tracks_opened: int = 0
+    """4.16 tracks. One per candidate, opened at its first lawful instant."""
     episode_rows: int = 0
     """4.10/4.11/4.12 rows: one per episode opened and one per episode ended."""
     instrument_id: int = 0
@@ -334,6 +339,10 @@ class NativeReplayDriver:
         self._latest_book = EMPTY_BOOK
         self._episode_context = ("", "", "")
         self._candidate_second = 0
+        # 4.16 rides the same unit. Its baseline is the book at the candidate's FIRST LAWFUL
+        # instant, not at the spike: a response measured from a moment nobody could have
+        # acted on is not a response anyone could have captured.
+        self.responses = ResponseFeed()
 
         # 4.13 is the one fed section whose state is not held by its calculator:
         # `LineageCalculator.observe_node` takes the graph as an argument, so the traversal
@@ -456,12 +465,37 @@ class NativeReplayDriver:
                     second, signed_flow=signed, polarity=polarity, book=self._latest_book
                 )
             )
+            # 4.16 matures in STREAM time, at the first instant at or after each horizon.
+            self._retain_lifecycle(
+                self.run.response.advance(
+                    second * NS_PER_SECOND, values_for=self.responses.values_for
+                ),
+                section="response",
+                occasion="HORIZON_MATURED",
+            )
             for candidate in self.detector.observe(second, value):
                 self.counters.candidates_detected += 1
                 self._retain_lifecycle(
                     [candidate.as_dict()], section="candidate", occasion="CANDIDATE_LAWFUL"
                 )
                 source_day, family_id, session_phase = self._episode_context
+                available_ns = candidate.available_second * NS_PER_SECOND
+                self.run.response.open_track(
+                    structure_id=candidate.candidate_id,
+                    first_lawful_recv_ns=available_ns,
+                    source_day=source_day,
+                    source_role=self.identity_role,
+                    continuity_segment=candidate.continuity_segment,
+                    family_id=family_id,
+                    side_orientation="B" if candidate.polarity > 0 else (
+                        "A" if candidate.polarity < 0 else "N"
+                    ),
+                    session_phase=session_phase,
+                    cluster_version=NO_CLUSTERING,
+                    starting_liquidity_regime=starting_liquidity_regime(self._latest_book),
+                )
+                self.responses.open(candidate.candidate_id, self._latest_book.price_raw)
+                self.counters.response_tracks_opened += 1
                 self._retain_episode_rows([
                     self.episodes.open(
                         candidate,
@@ -646,6 +680,7 @@ class NativeReplayDriver:
         full_book = frame.get("book_full")
         if isinstance(full_book, Mapping):
             self._latest_book = BookState.from_full_book(full_book)
+            self.responses.note_price(self._latest_book.price_raw)
         self._episode_context = (
             source_day, str(structure["candidate_family_id"]), mark.session_phase
         )
@@ -890,6 +925,7 @@ class NativeReplayDriver:
                 "4.14_recurrence_sequences": self.counters.recurrence_sequences,
                 "candidate_unit_events": self.counters.candidates_detected,
                 "4.10_4.11_4.12_episode_rows": self.counters.episode_rows,
+                "4.16_response_tracks": self.counters.response_tracks_opened,
             },
             # D66's second unit, reported per continuity segment. A segment that found NOTHING
             # is still a row here: absence is a result about that segment, not an omission.

@@ -398,6 +398,7 @@ class FedSectionsTest(unittest.TestCase):
             "4.14_recurrence_sequences": 2,
             "candidate_unit_events": 0,
             "4.10_4.11_4.12_episode_rows": 0,
+            "4.16_response_tracks": 0,
         })
 
     def test_every_fed_section_produces_averaged_companions(self):
@@ -487,6 +488,7 @@ class FedSectionsTest(unittest.TestCase):
             "4.14_recurrence_sequences": 0,
             "candidate_unit_events": 0,
             "4.10_4.11_4.12_episode_rows": 0,
+            "4.16_response_tracks": 0,
         })
         sections = [row.get("section") for row in result["layers"]["averaged_companions"]["rows"]]
         for section in ("4.8", "4.9", "4.13", "4.14"):
@@ -737,3 +739,56 @@ class FullDepthRetentionTest(unittest.TestCase):
         if legacy:
             projected = nca.BookState.from_legacy_row(legacy[-1])
             self.assertEqual(projected.depth_scope, "TOP_TEN_PROJECTION")
+
+
+class ResponseTableFedTest(CandidateEpisodeFedTest):
+    """4.16 on the same candidate unit, fed by the traversal."""
+
+    def test_a_track_opens_for_every_candidate(self):
+        _, result = self._run()
+        fed = result["traversal"]["sections_fed"]
+        self.assertEqual(fed["4.16_response_tracks"], fed["candidate_unit_events"])
+        self.assertGreater(fed["4.16_response_tracks"], 0)
+
+    def test_every_horizon_carries_its_own_at_risk_denominator(self):
+        """4.16's requirement, and the reason a pooled denominator would be wrong."""
+        _, result = self._run()
+        rows = result["layers"]["exact_lifecycle_and_runway_ledger"]["response_at_risk_table"]
+        self.assertTrue(rows)
+        for row in rows:
+            with self.subTest(horizon=row["horizon_ns"]):
+                self.assertTrue(row["denominator_is_horizon_specific"])
+                self.assertEqual(
+                    row["entered_at_risk"],
+                    row["observed"] + row["censored_before_horizon"] + row["still_pending"],
+                    "a track left the at-risk set without being observed or censored",
+                )
+
+    def test_the_stratum_declares_no_clustering_rather_than_leaving_it_blank(self):
+        """D5 keeps discovery out of this run; blank would read as 'not recorded'."""
+        _, result = self._run()
+        rows = result["layers"]["exact_lifecycle_and_runway_ledger"]["response_at_risk_table"]
+        for row in rows:
+            self.assertEqual(row["stratum"]["cluster_version"], "NO_CLUSTERING_D5")
+
+    def test_the_starting_liquidity_regime_is_threshold_free(self):
+        """It is a stratum axis, so a fitted bar here would silently decide comparability."""
+        _, result = self._run()
+        rows = result["layers"]["exact_lifecycle_and_runway_ledger"]["response_at_risk_table"]
+        allowed = {
+            "EMPTY_BOOK", "ONE_SIDED_BID", "ONE_SIDED_ASK",
+            "DEPTH_SKEW_BID", "DEPTH_SKEW_ASK", "DEPTH_EVEN",
+        }
+        for row in rows:
+            self.assertIn(row["stratum"]["starting_liquidity_regime"], allowed)
+
+    def test_a_response_is_measured_from_the_first_lawful_instant(self):
+        """Not from the spike. A response measured from a moment nobody could have acted on
+        is not a response anyone could have captured."""
+        driver, _ = self._run()
+        candidates = [
+            r for r in driver.counters.lifecycle_rows if r["emitting_section"] == "candidate"
+        ]
+        self.assertTrue(candidates)
+        for row in candidates:
+            self.assertGreater(row["available_second"], row["event_second"])

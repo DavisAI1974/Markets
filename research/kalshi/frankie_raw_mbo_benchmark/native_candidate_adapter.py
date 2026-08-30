@@ -460,3 +460,74 @@ class CandidateEpisodeTracker:
                 "being given a fabricated orientation that would enter a stratum key"
             ),
         }
+
+
+NO_CLUSTERING = "NO_CLUSTERING_D5"
+"""D5 keeps discovery out of this run, so there is no cluster version to name.
+
+Declared rather than left blank: an empty stratum field reads as "not recorded", and this is
+"deliberately not in this run", which is a different fact.
+"""
+
+
+def starting_liquidity_regime(book: BookState) -> str:
+    """A THRESHOLD-FREE description of the book a response starts from.
+
+    4.16 requires the starting liquidity regime in every stratum key, and it is one of the
+    four fields the prelaunch state calls "not plumbing; they are the experiment". So it is
+    built the way the open-world identities are built: from the book's own shape, with no bar
+    sited at a value. A fitted threshold here would be an absolute bar that cannot change
+    state - the D23/D28 defect - and would silently decide which responses are comparable.
+
+    Sign of the depth difference only, plus the structurally distinct one-sided case. A side
+    with no depth is not merely more skewed than one with a little; nothing can trade there.
+    """
+    if book.bid_depth == 0 and book.ask_depth == 0:
+        return "EMPTY_BOOK"
+    if book.bid_depth == 0 or book.ask_depth == 0:
+        return "ONE_SIDED_BID" if book.ask_depth == 0 else "ONE_SIDED_ASK"
+    if book.bid_depth > book.ask_depth:
+        return "DEPTH_SKEW_BID"
+    if book.ask_depth > book.bid_depth:
+        return "DEPTH_SKEW_ASK"
+    return "DEPTH_EVEN"
+
+
+class ResponseFeed:
+    """Section 4.16's `values_for`, and the per-track baseline it needs.
+
+    The calculator asks only at the instant a horizon is due and never reaches forward
+    itself; this supplies the reading. The response is measured against the book AT THE
+    TRACK'S FIRST LAWFUL INSTANT - the candidate's `available_second`, not its event second -
+    because a response measured from a moment nobody could have acted on is not a response
+    anyone could have captured.
+
+    **The reading is taken at the first instant AT OR AFTER the horizon, never before.** A
+    horizon that matured between two observed seconds is recorded when the traversal next
+    looks, which is late by up to one second and never early. Late is a measurement property;
+    early would be lookahead.
+    """
+
+    def __init__(self) -> None:
+        self._baseline: dict[str, int] = {}
+        self._price_raw = 0
+        self.readings = 0
+
+    def note_price(self, price_raw: int) -> None:
+        self._price_raw = int(price_raw)
+
+    def open(self, structure_id: str, price_raw: int) -> None:
+        self._baseline[structure_id] = int(price_raw)
+
+    def forget(self, structure_id: str) -> None:
+        self._baseline.pop(structure_id, None)
+
+    def values_for(self, track: Any, horizon: int) -> dict[str, float]:
+        baseline = self._baseline.get(track.structure_id)
+        if baseline is None:
+            # No baseline means no comparable reading. Returning 0.0 would be a measurement
+            # of "no move" where none was taken, so the name is omitted and the calculator
+            # excludes it as missing.
+            return {}
+        self.readings += 1
+        return {"price_response": float(self._price_raw - baseline)}
