@@ -474,6 +474,14 @@ jobs:
           # Confirm it was ACCEPTED by the instance. Anything else is a dispatch that did not
           # happen, and reporting a run as started when it was not is the failure this whole
           # branch exists to stop.
+          #
+          # ACCEPTANCE IS NOT SURVIVAL, and that distinction cost a run. The first successful
+          # dispatch reported InProgress two seconds in and the job went green; the box
+          # monitor forty seconds later showed no python3 process and memory untouched. The
+          # command had been accepted and then died in staging - growpart, the disk precheck,
+          # the checkout, the S3 pulls - leaving a green job and no evidence anywhere. So the
+          # watch below runs past staging and into the traversal before this step is allowed
+          # to succeed, and prints the box's own output either way.
           status=Pending
           for _ in $(seq 1 24); do
             status="$(aws ssm get-command-invocation \
@@ -505,12 +513,38 @@ jobs:
               exit 1
               ;;
           esac
+          # WATCH IT THROUGH STAGING. Everything before the traversal - growing the
+          # filesystem, the disk precheck, the checkout, five S3 pulls - takes well under
+          # three minutes, so a command still InProgress at the end of this window is one
+          # that reached the traversal. A command that died in staging is caught here with
+          # its own output instead of being reported as a started run.
+          for _ in $(seq 1 18); do
+            status="$(aws ssm get-command-invocation \
+              --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+              --query Status --output text 2>/dev/null || echo InProgress)"
+            case "$status" in InProgress) ;; *) break ;; esac
+            sleep 10
+          done
+          # Partial output is returned for a command still running, which is the point: the
+          # staging echoes (A_ARM_DISK_AVAIL_KIB and the rest) are visible here whether the
+          # run survived or not.
+          invocation="$(aws ssm get-command-invocation \
+            --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+            --query '{status:Status,detail:StatusDetails,code:ResponseCode,out:StandardOutputContent,err:StandardErrorContent}' \
+            --output json || true)"
+          printf 'status after staging window: %s\n%s\n' "$status" "$invocation"
+          if [ "$status" != "InProgress" ]; then
+            echo "the traversal did not survive staging; it is not running" >&2
+            exit 1
+          fi
+
           {
-            echo "### Full-roster traversal dispatched"
+            echo "### Full-roster traversal dispatched and past staging"
             echo "- Instance: ${INSTANCE_ID}"
             echo "- SSM command: ${command_id}"
-            echo "- Status at dispatch: ${status}"
-            echo "- This job does NOT wait. Watch it with frankie_box_monitor_20260829.yml."
+            echo "- Status after the staging window: ${status}"
+            echo "- This job does NOT wait for the traversal itself, which is measured at"
+            echo "  roughly 13.9 hours. Watch it with frankie_box_monitor_20260829.yml."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Persist exact keyless A-clean RT packet
