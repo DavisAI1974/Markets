@@ -140,6 +140,28 @@ def _side(row: Mapping[str, Any]) -> str:
     return str(row.get("side", "N"))
 
 
+def _initiating_order_id(actions: Sequence[Mapping[str, Any]]) -> int:
+    """The group's initiating order id: the first row that names one.
+
+    Not simply `actions[0]["order_id"]`, which was the first version and raises on real
+    tape. A great many groups open on a row carrying no order id at all - Databento writes
+    `order_id` 0 on rows that do not identify a resting order - and parenting on `ord-0`
+    asks `LineageGraph` for a node nobody added, which fails with `parent ord-0 is not in
+    the graph`. Falling forward to the first row that DOES name an order makes that group's
+    first identified order its root, which is the honest reading: a group with no initiating
+    order id has no observable parent, so the lineage starts where identity starts.
+
+    Returns 0 when no row names an order id. The caller then adds nothing, because a group
+    of anonymous rows carries no order lineage to observe - which is an absence, and 4.13
+    records it as one rather than inventing a node to hold it.
+    """
+    for row in actions:
+        order_id = _int(row, "order_id")
+        if order_id:
+            return order_id
+    return 0
+
+
 def _require_actions(actions: Sequence[Mapping[str, Any]]) -> None:
     if not actions:
         raise GroupAdapterError("an F_LAST group must contain at least one native action")
@@ -292,8 +314,8 @@ def lineage_additions(
     the traversal owns `SessionSegmenter`'s.
     """
     _require_actions(actions)
-    initiator = _int(actions[0], "order_id")
-    parent_node = seen_order_ids.get(initiator)
+    initiator = _initiating_order_id(actions)
+    parent_node = seen_order_ids.get(initiator) if initiator else None
     additions: list[dict[str, Any]] = []
     issued: set[int] = set()
 

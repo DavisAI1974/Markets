@@ -22,11 +22,14 @@ thing through with Greg first.**
 
 This is not a formality and it is not about permission. **Re-verified 2026-08-29:** the
 driver now RUNS a pass end to end and finalizes ACCEPTED (13 tests), and D6 and D5 are both
-closed - those three lines were true when first written and are not now. What still holds is
-the part that matters: **seven of the eleven section adapters do not exist, the driver calls
-none of the four that do, and the execution gate is referenced by nothing.** A launch from
-this state would produce artifacts that look complete and are not - eleven of sixteen
-sections would report on an empty ingest.
+closed - those three lines were true when first written and are not now. **UPDATED 2026-08-30 (T1):
+the driver now CALLS all four built adapters and 4.8, 4.9, 4.13 and 4.14 report on rows that
+actually arrived** - `sections_fed` is emitted beside the measures, 12 new tests, package
+suite 653 -> 665, wider suite still exactly 7 pre-existing failures. What still holds:
+**seven of the eleven section adapters do not exist and the execution gate is referenced by
+nothing.** A launch from this state would still produce artifacts that look complete and are
+not - **six** of sixteen sections (4.6, 4.7 observation, 4.10, 4.11, 4.12, 4.16, with 4.15
+ruled out of this run by D5) would report on an empty ingest.
 
 Before anything runs, sit down with Greg and confirm, item by item:
 
@@ -79,8 +82,9 @@ Before anything runs, sit down with Greg and confirm, item by item:
    NAME, and renaming it changes `surface_inventory_hash` and the manifest.
 6. **The helper path is built as a tool available to RT and Forecaster**, not as four live
    roles, and the ingestion paper's Question 3 is updated to say so.
-7. **Every section from 4.6 to 4.16 is fed by the traversal.** Today only clocks and
-   coverage are.
+7. **Every section from 4.6 to 4.16 is fed by the traversal.** **2026-08-30: 4.8, 4.9,
+   4.13 and 4.14 now are**, plus clocks, coverage, sessions and 4.7's horizon maturation.
+   Still unfed: 4.6, 4.7's observation half, 4.10, 4.11, 4.12, 4.16.
 8. **Compute is settled** - which machine runs this, and whether it is sized for sixteen
    sections over 4.26M groups. See section 10a: the A-arm workflows currently dispatch
    nothing, and the box was PROBED LIVE on 2026-08-29 (D55) as an **r6i.2xlarge**, 8 cores /
@@ -341,9 +345,9 @@ All under `research/kalshi/frankie_raw_mbo_benchmark/`. **576 tests pass** (2026
 | §5/§6 | `native_calculation_runner.py` | 519 | Seven layers, eight gates, no partial promotion. |
 | — | `native_staging.py` | 195 | The spawn contract. A missing or empty principal artifact is a HARD failure, never zero findings. |
 | — | `periodic_checkpointer.py` | 380 | Save points on record or clock interval, refused mid-group. |
-| 4.8/4.9/4.13/4.14 | `native_group_adapters.py` | 314 | Raw MBO to constructed domain objects on the F_LAST unit. Ladder scope travels ON the value. No mean, ratio-of-sums or rate anywhere. 20 tests. **Called by nothing but its own test.** |
+| 4.8/4.9/4.13/4.14 | `native_group_adapters.py` | 314 | Raw MBO to constructed domain objects on the F_LAST unit. Ladder scope travels ON the value. No mean, ratio-of-sums or rate anywhere. 22 tests. **2026-08-30: CALLED BY THE DRIVER.** Wiring found a defect reading could not: a group opening on a row with `order_id` 0 parented on `ord-0`, a node nobody adds, and `LineageGraph.add` raised - it would have killed the traversal on real tape. |
 | 4.6 (input) | `native_rt_book.py` | 262 | The RT view. Advanced one action at a time, so a level is read as a live feed saw it, never as the closed group left it. Mirrors `InstrumentBook` on every mutation; refuses a negative size where it clamps. 24 tests incl. an executable no-lookahead property. |
-| — | `native_replay_driver.py` | 358 | Runs end to end and finalizes ACCEPTED; 14 tests. **Calls no adapter**, so sections 4.6-4.16 are all still unfed. See section 8. |
+| — | `native_replay_driver.py` | 358 | Runs end to end and finalizes ACCEPTED. **2026-08-30: calls all four built adapters** - 4.14, 4.9, 4.8, 4.13 - and emits `sections_fed` so an empty ingest is visible rather than inferred. 26 tests. See section 8. |
 
 Sections 4.1-4.4 already existed in `a_memory_member_first_recalculation_20260828.py`, which
 ran the full roster: 5,667,689 records into 4,256,603 groups, 4,758 candidate families, in
@@ -415,16 +419,49 @@ runs, but the claim as written was wrong. No driver feeds the sixteen sections.
    and it was never updated when commit `8645c5d` landed the first tranche. That is the
    section-11 same-commit rule broken on this document itself, and it is what made the adapter work read
    as either finished or untouched depending on which line you landed on.
-   **BUILT** (`native_group_adapters.py`, 314 lines, 20 tests): **4.14** recurrence
+   **BUILT** (`native_group_adapters.py`, 314 lines, 22 tests): **4.14** recurrence
    (`occurrences`), **4.9** ladder (`ladder_transitions`), **4.8** absorption
    (`runway_pressure_fields`), **4.13** lineage (`lineage_additions`).
    **NOT BUILT: 4.6, 4.7, 4.10, 4.11, 4.12, 4.15, 4.16.**
-   **BUILT, WIRED and FED are three different states, and no adapter is past the first.**
-   Re-verified by search 2026-08-29: `native_group_adapters` is imported by exactly one file
-   - its own test - and NO non-test file imports `native_queue`, `native_replenishment`,
-   `native_exhaustion`, `native_recognition`, `native_dipole`, `native_discovery` or
-   `native_response`. So the four built adapters do not narrow what the traversal reports by
-   one field; they only shorten the remaining build.
+
+   **T1 CLOSED 2026-08-30 - ALL FOUR BUILT ADAPTERS ARE NOW WIRED AND FED.** Count, so this
+   queue shrinks when work lands: **4 of 4 built adapters wired; 7 of 11 adapters still
+   unbuilt.** `NativeReplayDriver._feed_sections` calls all four on the D53 unit, from ONE
+   `GroupContext` built off the canonical `candidate_family_id` - assembling the stratum per
+   section is how two vocabularies for one quantity get born. Every return value is retained
+   as a lifecycle row, because an average with no member beneath it is what section 6
+   rejects. Package suite **653 -> 665**; wider suite unchanged at 7 pre-existing failures.
+
+   **Three things the wiring settled that reading had not:**
+   * **4.13 needed an owner for its graph.** `LineageCalculator.observe_node` takes the graph
+     as an argument and the run holds none, so the driver holds it - and rebuilds it at every
+     continuity boundary (`LINEAGE_SEGMENT_SCOPE = ONE_CONTINUITY_SEGMENT`). Lineage is the
+     one fed section with cross-group state and no `close_continuity_segment` of its own, so
+     without this it would have chained depth across the halt that censors every other
+     section. The scope is emitted in the output, not left in prose.
+   * **Nodes are observed at the BOUNDARY, not at creation.** `exited_recv_ns` is set by the
+     arrival of a CHILD, so observing at creation would have reported every node `OPEN` with
+     no stage duration - the section that exists to separate termination from censoring would
+     have reported neither. Now `TERMINATED` vs `CENSORED_SEGMENT_END`/`CENSORED_STREAM_END`,
+     pinned by a test.
+   * **A defect only wiring could find.** `lineage_additions` took `actions[0]["order_id"]` as
+     the initiator. Databento writes `order_id` 0 on rows that identify no resting order, so
+     any group opening on one parented on `ord-0` - a node nobody adds - and
+     `LineageGraph.add` raised. It would have killed the traversal on real tape at the first
+     such group. Fixed by falling forward to the group's first NAMED order id; a group naming
+     none contributes no lineage, which is recorded as an absence rather than filled.
+
+   **Corrections to this section's own previous wording, both wrong when checked by
+   execution:** it said `native_group_adapters` "is imported by exactly one file - its own
+   test". It was also imported by `native_rt_book.py:80` (`PRICE_SENTINEL_ABS`). And it said
+   NO non-test file imports `native_queue`, `native_replenishment`, `native_exhaustion`,
+   `native_recognition`, `native_dipole`, `native_discovery` or `native_response` -
+   `native_calculation_runner.py:24-36` imports **all thirteen** calculators. The intended
+   claim was about ingest CALL SITES and was true; as written both were reached by grepping a
+   name, which is the method this program has now been bitten by three times.
+   `native_replay_driver.py` also carried a **dead** `AbsorptionCalculator` import, its only
+   occurrence in the file, so an auditor grepping "is absorption wired" saw an import and
+   stopped. It is now a live `RunwayPressure` import.
 
    **THE REMAINING SEVEN ARE NOT ONE JOB. THE CONTRACTS WERE EXTRACTED 2026-08-29 AND THEY
    SPLIT THREE WAYS.** Every ingest signature below was read out of the module and its tests,

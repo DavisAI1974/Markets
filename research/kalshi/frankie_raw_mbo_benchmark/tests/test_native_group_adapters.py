@@ -231,3 +231,42 @@ class CandidateIdentityTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LineageInitiatorTest(unittest.TestCase):
+    """A group whose first row names no order id must not orphan its own parent.
+
+    Found by WIRING this adapter rather than by reading it. The first version took
+    `actions[0]["order_id"]` as the initiator, and Databento writes `order_id` 0 on rows that
+    do not identify a resting order - so any group opening on such a row parented every new
+    id on `ord-0`, a node nobody ever added, and `LineageGraph.add` raised. It would have
+    killed the traversal on real tape at the first such group, which is a large share of
+    them. Built and unfed is not the same as built and correct.
+    """
+
+    def test_a_group_opening_on_an_anonymous_row_roots_on_its_first_named_order(self):
+        actions = [
+            {"action": "T", "side": "A", "order_id": 0, "size": 3, "price_raw": 3_500_000_000,
+             "ts_recv_ns": 10},
+            {"action": "F", "side": "A", "order_id": 811, "size": 3, "price_raw": 3_500_000_000,
+             "ts_recv_ns": 11},
+            {"action": "C", "side": "A", "order_id": 812, "size": 1, "price_raw": 3_500_000_000,
+             "ts_recv_ns": 12},
+        ]
+        adds = ga.lineage_additions(actions, ctx(), seen_order_ids={})
+        graph = LineageGraph(lineage_signature="ow-abc")
+        for add in adds:
+            graph.add(**add)          # the assertion: this used to raise on ord-0
+        self.assertEqual([a["node_id"] for a in adds], ["ord-811", "ord-812"])
+        self.assertIsNone(adds[0]["parent_id"])
+        self.assertEqual(adds[1]["parent_id"], "ord-811")
+
+    def test_a_group_naming_no_order_at_all_contributes_no_lineage(self):
+        """An absence is recorded as one, not filled with an invented node."""
+        actions = [
+            {"action": "T", "side": "A", "order_id": 0, "size": 3, "price_raw": 3_500_000_000,
+             "ts_recv_ns": 10},
+            {"action": "T", "side": "B", "order_id": 0, "size": 2, "price_raw": 3_500_000_000,
+             "ts_recv_ns": 11},
+        ]
+        self.assertEqual(ga.lineage_additions(actions, ctx(), seen_order_ids={}), [])

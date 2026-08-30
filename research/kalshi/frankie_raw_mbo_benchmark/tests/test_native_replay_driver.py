@@ -346,3 +346,149 @@ class Roll20IsFedByTheTraversalTest(unittest.TestCase):
         self.assertEqual(summary["clock"], "ts_recv")
         self.assertEqual(len(summary["crosswalk_state_hash"]), 64)
         self.assertEqual(summary["rows_seen"], result["traversal"]["legacy_rows_seen"])
+
+
+class FedSectionsTest(unittest.TestCase):
+    """T1: 4.8, 4.9, 4.13 and 4.14 report on rows that actually arrived.
+
+    All four were built, tested and closed at their boundaries, and `native_group_adapters`
+    was imported by its own test and nothing else - so the traversal reported these sections
+    off an EMPTY ingest while every gate passed. A gate cannot catch that: zero strata over
+    no members is well formed, and it is exactly what a real absence looks like.
+
+    So these tests assert counts that cannot appear unless rows were folded in, and
+    `test_an_unconsumed_pass_reports_zero_everywhere` proves the assertions discriminate
+    rather than passing on any input at all.
+    """
+
+    GROUPS = (
+        (("T", "A", 701, False), ("F", "A", 702, False),
+         ("C", "A", 702, False), ("A", "B", 703, True)),
+        (("A", "B", 704, False), ("M", "B", 704, False),
+         ("C", "B", 705, False), ("T", "A", 706, True)),
+    )
+
+    def _run(self):
+        driver = make_driver(total_mbo_records=8)
+        base = at("2021-10-04T13:00:00")
+        seq = 0
+        for group_index, group in enumerate(self.GROUPS):
+            batch = []
+            for offset, (action, side, order_id, last) in enumerate(group):
+                batch.append(record(
+                    seq=seq,
+                    event_ns=base + (group_index * 10 + offset) * NS_PER_SECOND,
+                    order_id=order_id, action=action, side=side, last=last,
+                ))
+                seq += 1
+            driver.consume(batch)
+        return driver, driver.finalize()
+
+    def test_the_traversal_reports_what_each_section_received(self):
+        """The ingest count is emitted, not inferred from the measures above it."""
+        _, result = self._run()
+        self.assertEqual(result["verdict"], ACCEPTED, result["failed_gates"])
+        self.assertEqual(result["traversal"]["sections_fed"], {
+            "4.8_absorption_runways": 2,
+            "4.9_ladder_transitions": 4,
+            "4.13_lineage_nodes_added": 6,
+            "4.13_lineage_nodes_observed": 6,
+            "4.14_recurrence_sequences": 2,
+        })
+
+    def test_every_fed_section_produces_averaged_companions(self):
+        """Before the wiring each of these was zero, and the run was still ACCEPTED."""
+        _, result = self._run()
+        sections = [row.get("section") for row in result["layers"]["averaged_companions"]["rows"]]
+        for section in ("4.8", "4.9", "4.13", "4.14"):
+            with self.subTest(section=section):
+                self.assertGreater(sections.count(section), 0)
+
+    def test_absorption_classifies_a_disposition_it_could_not_have_invented(self):
+        """4.8's disposition needs traded and withdrawn depletion kept apart, per group."""
+        _, result = self._run()
+        summary = result["layers"]["exact_lifecycle_and_runway_ledger"]["section_summaries"]["4.8"]
+        self.assertEqual(summary["runways_scored"], 2)
+        self.assertEqual(sum(summary["disposition_counts"].values()), 2)
+
+    def test_lineage_depth_advances_past_the_root(self):
+        """Depth above zero is only reachable if a parent was in the graph when a child came.
+
+        This is the assertion that would have caught the group-local unit being wrong: with
+        a within-group graph, or with the graph never fed, `observed_max_depth` stays 0 and
+        the depth distribution has one entry.
+        """
+        _, result = self._run()
+        summary = result["layers"]["exact_lifecycle_and_runway_ledger"]["section_summaries"]["4.13"]
+        self.assertEqual(summary["observed_max_depth"], 1)
+        self.assertEqual(summary["role_counts"], {"ROOT": 2, "DESCENDANT": 4})
+        depths = {row["depth"]: row["count"]
+                  for row in result["layers"]["open_world_indexes"]["lineage_depth_distribution"]}
+        self.assertEqual(depths, {0: 2, 1: 4})
+
+    def test_lineage_separates_termination_from_censoring(self):
+        """4.13 requires the two be distinct, and OPEN would have erased both.
+
+        A node is observed once, when its status is finally known - so a node whose stage
+        ended reads TERMINATED and one still open at stream end reads CENSORED_STREAM_END.
+        Observing at creation would have reported every node OPEN with no stage duration.
+        """
+        _, result = self._run()
+        statuses = result["layers"]["exact_lifecycle_and_runway_ledger"]["section_summaries"]["4.13"]["status_counts"]
+        self.assertEqual(statuses["TERMINATED"], 2)
+        self.assertEqual(statuses["CENSORED_STREAM_END"], 4)
+        self.assertEqual(statuses["OPEN"], 0, "a node observed as OPEN was never given a terminal status")
+
+    def test_recurrence_records_transition_edges_with_denominators(self):
+        """An edge needs two occurrences in one sequence, so it cannot appear on an empty ingest."""
+        _, result = self._run()
+        edges = result["layers"]["open_world_indexes"]["transition_edges"]
+        self.assertGreater(len(edges), 0)
+        for edge in edges:
+            self.assertEqual(edge["statistic_kind"], "CONDITIONAL_PROBABILITY")
+            self.assertFalse(edge["is_arithmetic_mean"])
+            self.assertGreater(edge["outgoing_denominator"], 0)
+
+    def test_the_ladder_transition_carries_its_group_local_scope(self):
+        """D53's declared cost travels ON the value, never in prose alone."""
+        driver, _ = self._run()
+        ladder_rows = [r for r in driver.counters.lifecycle_rows if r["emitting_section"] == "ladder"]
+        self.assertEqual(len(ladder_rows), 4)
+        for row in ladder_rows:
+            self.assertEqual(row["ladder_scope"], "GROUP_LOCAL_DELTA")
+
+    def test_every_fed_row_is_retained_beneath_its_summary(self):
+        """D60 and section 6: an average with no member under it is not evidence."""
+        driver, result = self._run()
+        kept = {row["emitting_section"] for row in driver.counters.lifecycle_rows}
+        for section in ("recurrence", "ladder", "absorption", "lineage"):
+            with self.subTest(section=section):
+                self.assertIn(section, kept)
+        self.assertEqual(
+            result["traversal"]["lifecycle_rows_retained"], len(driver.counters.lifecycle_rows)
+        )
+
+    def test_an_unconsumed_pass_reports_zero_everywhere(self):
+        """Proves the assertions above discriminate. Without this they could pass on anything."""
+        # A run identity needs a positive record count, so the pass is set up exactly as the
+        # fed one and simply consumes nothing. The verdict is not asserted - an unfed pass
+        # SHOULD fail its coverage gate - only that the four sections report no ingest.
+        driver = make_driver(total_mbo_records=8)
+        result = driver.finalize()
+        self.assertEqual(result["traversal"]["sections_fed"], {
+            "4.8_absorption_runways": 0,
+            "4.9_ladder_transitions": 0,
+            "4.13_lineage_nodes_added": 0,
+            "4.13_lineage_nodes_observed": 0,
+            "4.14_recurrence_sequences": 0,
+        })
+        sections = [row.get("section") for row in result["layers"]["averaged_companions"]["rows"]]
+        for section in ("4.8", "4.9", "4.13", "4.14"):
+            with self.subTest(section=section):
+                self.assertEqual(sections.count(section), 0)
+
+    def test_the_lineage_signature_and_segment_scope_are_declared_in_the_output(self):
+        """A stratum axis left implicit makes two definitions look like one population."""
+        _, result = self._run()
+        self.assertEqual(result["traversal"]["lineage_signature"], "ORDER_ID_LINEAGE_V1")
+        self.assertEqual(result["traversal"]["lineage_segment_scope"], "ONE_CONTINUITY_SEGMENT")

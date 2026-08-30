@@ -29,7 +29,20 @@ from typing import Any, Callable, Iterable, Iterator, Mapping, Protocol, Sequenc
 from research.kalshi.frankie_raw_mbo_benchmark.a_memory_member_first_recalculation_20260828 import (
     describe_structure,
 )
-from research.kalshi.frankie_raw_mbo_benchmark.native_absorption import AbsorptionCalculator
+from research.kalshi.frankie_raw_mbo_benchmark.native_absorption import RunwayPressure
+from research.kalshi.frankie_raw_mbo_benchmark.native_group_adapters import (
+    GroupContext,
+    ladder_transitions,
+    lineage_additions,
+    occurrences,
+    runway_pressure_fields,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.native_lineage import (
+    CENSORED_SEGMENT_END,
+    CENSORED_STREAM_END,
+    TERMINATED,
+    LineageGraph,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import (
     NativeCalculationRun,
     RunIdentity,
@@ -120,6 +133,30 @@ class CadencePolicy(Protocol):
         ...
 
 
+LINEAGE_SIGNATURE = "ORDER_ID_LINEAGE_V1"
+"""What a lineage node IS in this traversal, declared rather than defaulted.
+
+A `lineage_signature` is part of every 4.13 stratum key, so leaving it implicit would make
+two runs with different lineage definitions look like one population. Under D53 the unit is
+the F_LAST group, and the causal link this traversal can actually observe is between ORDER
+IDS: a group's initiating order id parents the ids that group touched for the first time.
+That is the whole claim, and the name says it so a later definition cannot quietly replace
+it inside the same stratum.
+"""
+
+LINEAGE_SEGMENT_SCOPE = "ONE_CONTINUITY_SEGMENT"
+"""The lineage graph is rebuilt at every continuity boundary, and the scope travels.
+
+Section 2 forbids a calculation crossing a reset, snapshot, gap or session boundary unless
+it models that boundary as its own structure, and `LineageCalculator` is the one section
+holding cross-group state that has no `close_continuity_segment` of its own. So the graph is
+closed and rebuilt here instead: depth measures lineage WITHIN one CME trade date and never
+across the halt that censors every other section. Read as a whole-stream lineage it would
+overstate depth by chaining across a boundary the book does not cross - the `ladder_scope`
+lesson applied to the one section that could not carry it itself.
+"""
+
+
 @dataclass
 class DriverCounters:
     groups_seen: int = 0
@@ -127,6 +164,23 @@ class DriverCounters:
     segments_opened: int = 0
     invocation_cutoffs: list[dict[str, Any]] = field(default_factory=list)
     save_points: int = 0
+    recurrence_sequences: int = 0
+    """4.14 sequences folded in. One per group, so this equals `groups_seen` on a fed pass."""
+    ladder_transitions_fed: int = 0
+    """4.9 side transitions folded in - zero, one or two per group, never a fixed multiple."""
+    absorption_runways: int = 0
+    """4.8 runways scored. One per group under D53, where the runway IS the F_LAST group."""
+    lineage_nodes_added: int = 0
+    """4.13 nodes added to the live graph. Rises only when a group touches a NEW order id."""
+    lineage_nodes_observed: int = 0
+    """4.13 nodes folded into the calculator with a TERMINAL status, at a boundary or at end.
+
+    Deliberately not equal to `lineage_nodes_added` until the stream ends: a node is observed
+    once, when its status is finally known. Observing at creation would have reported every
+    node OPEN with no stage duration, because `exited_recv_ns` is set by the arrival of a
+    CHILD - so the section that exists to tell termination from censoring would have reported
+    neither.
+    """
     legacy_rows_seen: int = 0
     """Legacy MBP-10 control rows the adapter emitted. RETAINED IN FULL - see D60.
 
@@ -163,6 +217,12 @@ class DriverCounters:
     """
 
 
+def _row_recv_ns(row: Mapping[str, Any], default: int) -> int:
+    """A row's receive time, falling back to the group's own. Mirrors the adapter's `_int`."""
+    value = row.get("ts_recv_ns")
+    return default if value is None else int(value)
+
+
 def _source_day(source_object: str) -> str:
     import re
 
@@ -188,6 +248,7 @@ class NativeReplayDriver:
         stage_spawn: Callable[[Mapping[str, Any]], Any] | None = None,
         legacy_sink: Callable[[Mapping[str, Any]], Any] | None = None,
         roll20_clock: str = native_roll20.RECV_CLOCK,
+        lineage_signature: str = LINEAGE_SIGNATURE,
     ) -> None:
         if session_rule is None:
             raise ReplayDriverError(
@@ -222,6 +283,14 @@ class NativeReplayDriver:
         self.roll20 = native_roll20.SecondBinner(clock=roll20_clock)
         self._legacy_cursor = 0
 
+        # 4.13 is the one fed section whose state is not held by its calculator:
+        # `LineageCalculator.observe_node` takes the graph as an argument, so the traversal
+        # owns it. Rebuilt at every continuity boundary - see LINEAGE_SEGMENT_SCOPE.
+        self.lineage_signature = lineage_signature
+        self.lineage_graph = LineageGraph(lineage_signature=lineage_signature)
+        self._lineage_node_of: dict[int, str] = {}
+        self._lineage_context: dict[str, tuple[str, str]] = {}
+
         self.counters = DriverCounters()
         self._mark: SessionMark | None = None
         self._last_invoke_group = 0
@@ -251,6 +320,35 @@ class NativeReplayDriver:
                 section=section,
                 occasion="SEGMENT_CLOSE",
             )
+        self._close_lineage(
+            segment=segment, censored_status=CENSORED_SEGMENT_END, occasion="SEGMENT_CLOSE"
+        )
+
+    def _close_lineage(self, *, segment: int, censored_status: str, occasion: str) -> None:
+        """Observe every node in the live graph with its TERMINAL status, then rebuild.
+
+        A node whose `exited_recv_ns` is set had a qualifying child, so its stage ended and
+        it is TERMINATED. One without never ended inside the window we could observe, which
+        is censoring and not a negative - 4.13 requires the two be kept apart, and the graph
+        already holds the field that distinguishes them. Deciding it here rather than at
+        creation is why `lineage_nodes_observed` lags `lineage_nodes_added` mid-stream.
+        """
+        for node in list(self.lineage_graph.nodes.values()):
+            node.status = TERMINATED if node.exited_recv_ns is not None else censored_status
+            source_day, session_phase = self._lineage_context[node.node_id]
+            row = self.run.lineage.observe_node(
+                node,
+                self.lineage_graph,
+                source_day=source_day,
+                source_role=self.identity_role,
+                continuity_segment=segment,
+                session_phase=session_phase,
+            )
+            self.counters.lineage_nodes_observed += 1
+            self._retain_lifecycle([row], section="lineage", occasion=occasion)
+        self.lineage_graph = LineageGraph(lineage_signature=self.lineage_signature)
+        self._lineage_node_of = {}
+        self._lineage_context = {}
 
     def _retain_lifecycle(self, rows: Any, *, section: str, occasion: str) -> None:
         """Keep every exact row a section hands back, stamped with where it came from."""
@@ -386,6 +484,22 @@ class NativeReplayDriver:
             session_phase=mark.session_phase,
         )
 
+        self._feed_sections(
+            actions,
+            GroupContext(
+                group_index=group_index,
+                source_day=source_day,
+                source_role=self.identity_role,
+                continuity_segment=mark.continuity_segment,
+                session_phase=mark.session_phase,
+                family_id=str(structure["candidate_family_id"]),
+                side_orientation=self._side(actions),
+                event_ns=event_ns,
+                recv_ns=recv_ns,
+                instrument_id=int(envelope["instrument_id"]),
+            ),
+        )
+
         # Horizon-bearing sections mature in stream time, never by lookahead.
         self._retain_lifecycle(
             self.run.replenishment.advance(recv_ns),
@@ -428,6 +542,103 @@ class NativeReplayDriver:
             if saved is not None:
                 self.counters.save_points += 1
 
+    def _feed_sections(
+        self, actions: Sequence[Mapping[str, Any]], ctx: GroupContext
+    ) -> None:
+        """Hand this group to 4.14, 4.9, 4.8 and 4.13 as constructed domain objects.
+
+        These four sections were built, tested and closed at their boundaries, and then fed
+        by nothing: `native_group_adapters` was imported by its own test alone, so the
+        traversal reported on an empty ingest while every gate passed. That is the failure
+        shape this tree keeps meeting - present, well formed, attesting nothing - and the
+        only cure is a call site.
+
+        The stratum context is built ONCE, from the canonical `candidate_family_id`, and
+        passed to all four. Assembling it per section is how two vocabularies for one
+        quantity get born, which is the `_family_id` defect of 2026-08-29.
+
+        Every return value is retained. Each of these methods hands back the exact row it
+        folded in - the runs and gaps, the transition, the runway, the node - and dropping
+        it would keep the stratified average while losing the member beneath it, which
+        section 6 rejects and D60 forbids.
+        """
+        # --- 4.14 recurrence: one ordered occurrence sequence per group.
+        self._retain_lifecycle(
+            [
+                self.run.recurrence.observe_sequence(
+                    occurrences(actions, ctx),
+                    source_day=ctx.source_day,
+                    source_role=ctx.source_role,
+                    family_id=ctx.family_id,
+                    side_orientation=ctx.side_orientation,
+                    session_phase=ctx.session_phase,
+                )
+            ],
+            section="recurrence",
+            occasion="GROUP_CLOSE",
+        )
+        self.counters.recurrence_sequences += 1
+
+        # --- 4.9 ladder: one transition per side the group actually touched.
+        transitions = ladder_transitions(actions, ctx)
+        # 4.9 requires absolute depth and relative imbalance stay separate, so the opposite
+        # side's depth is passed as its own argument rather than folded into one figure.
+        # When a group touched one side only there is no opposite depth to state, and the
+        # calculator excludes it as missing rather than reading the absence as zero - a zero
+        # would be a measurement, and none was taken.
+        depth_by_side = {side: t.after.total_depth for side, t in transitions.items()}
+        for side, transition in transitions.items():
+            opposite = next((d for s, d in depth_by_side.items() if s != side), None)
+            self._retain_lifecycle(
+                [
+                    self.run.ladder.observe(
+                        transition,
+                        source_day=ctx.source_day,
+                        source_role=ctx.source_role,
+                        continuity_segment=ctx.continuity_segment,
+                        family_id=ctx.family_id,
+                        session_phase=ctx.session_phase,
+                        opposite_side_depth=opposite,
+                    )
+                ],
+                section="ladder",
+                occasion="GROUP_CLOSE",
+            )
+            self.counters.ladder_transitions_fed += 1
+
+        # --- 4.8 absorption: under D53 the runway IS this F_LAST group.
+        opened_recv_ns = min(_row_recv_ns(row, ctx.recv_ns) for row in actions)
+        self._retain_lifecycle(
+            [
+                self.run.absorption.score(
+                    RunwayPressure(
+                        runway_id=ctx.candidate_id,
+                        instrument_id=ctx.instrument_id,
+                        side=ctx.side_orientation,
+                        source_day=ctx.source_day,
+                        source_role=ctx.source_role,
+                        continuity_segment=ctx.continuity_segment,
+                        family_id=ctx.family_id,
+                        session_phase=ctx.session_phase,
+                        opened_recv_ns=opened_recv_ns,
+                        closed_recv_ns=ctx.recv_ns,
+                        **runway_pressure_fields(actions, ctx),
+                    )
+                )
+            ],
+            section="absorption",
+            occasion="GROUP_CLOSE",
+        )
+        self.counters.absorption_runways += 1
+
+        # --- 4.13 lineage: add to the live graph now, observe at the boundary.
+        for addition in lineage_additions(actions, ctx, seen_order_ids=self._lineage_node_of):
+            node = self.lineage_graph.add(**addition)
+            order_id = int(str(node.node_id).rsplit("-", 1)[-1])
+            self._lineage_node_of[order_id] = node.node_id
+            self._lineage_context[node.node_id] = (ctx.source_day, ctx.session_phase)
+            self.counters.lineage_nodes_added += 1
+
     @property
     def identity_role(self) -> str:
         return "SCORED_FINDINGS_DAY"
@@ -461,6 +672,14 @@ class NativeReplayDriver:
                 section=section,
                 occasion="STREAM_END",
             )
+        # 4.13 closes here too, in the segment it is still open in. A node with no child at
+        # stream end is CENSORED_STREAM_END, which is a different fact from a node whose
+        # stage ended - reporting both as OPEN would have erased the distinction 4.13 is for.
+        self._close_lineage(
+            segment=self._mark.continuity_segment if self._mark is not None else 0,
+            censored_status=CENSORED_STREAM_END,
+            occasion="STREAM_END",
+        )
         result = self.run.finalize()
         result["traversal"] = {
             "groups_seen": self.counters.groups_seen,
@@ -472,6 +691,18 @@ class NativeReplayDriver:
             "invocation_cutoff_count": len(self.counters.invocation_cutoffs),
             "invocation_cutoffs": list(self.counters.invocation_cutoffs),
             "save_points": self.counters.save_points,
+            # What each fed section actually received. A section reporting strata off an
+            # empty ingest is indistinguishable from one reporting a real absence, so the
+            # ingest count is emitted beside the measures rather than inferred from them.
+            "sections_fed": {
+                "4.8_absorption_runways": self.counters.absorption_runways,
+                "4.9_ladder_transitions": self.counters.ladder_transitions_fed,
+                "4.13_lineage_nodes_added": self.counters.lineage_nodes_added,
+                "4.13_lineage_nodes_observed": self.counters.lineage_nodes_observed,
+                "4.14_recurrence_sequences": self.counters.recurrence_sequences,
+            },
+            "lineage_signature": self.lineage_signature,
+            "lineage_segment_scope": LINEAGE_SEGMENT_SCOPE,
             "legacy_rows_seen": self.counters.legacy_rows_seen,
             "legacy_rows_retained": len(self.counters.legacy_rows),
             "legacy_rows": list(self.counters.legacy_rows),
