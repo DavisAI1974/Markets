@@ -246,7 +246,9 @@ class CandidateEpisodeTracker:
             session_phase=session_phase,
             # What was searched to find it: the trailing observations behind the bar, which
             # is the interval the detector actually consulted and not a round number.
-            searched_coverage_ns=candidate.observations_behind_threshold * NS_PER_SECOND,
+            # The SPAN, not the observation count. Reading the count as a duration
+            # understated the searched interval by 36% on a 40%-quiet tape.
+            searched_coverage_ns=candidate.searched_span_seconds * NS_PER_SECOND,
             opened_recv_ns=birth_ns,
             # NO SEED STATE, deliberately. P/O/S/X describe post-fill structural dispositions
             # of an F_LAST group; a causally detected flow spike is none of them, and the

@@ -270,7 +270,7 @@ jobs:
 
           sha = os.environ["GITHUB_SHA"]
           run_id = os.environ["RUN_ID"]
-          arm = os.environ["A_CLEAN"]
+          arm = os.environ["ARM_ID"]
           prefix = os.environ["DURABLE_PREFIX_FULL"]
           bucket = os.environ["BUCKET"]
           command = "; ".join(
@@ -303,35 +303,57 @@ jobs:
               json.dumps({"commands": [command]}), encoding="utf-8"
           )
           PY
+          # FIRE AND RETURN, never dispatch-and-wait.
+          #
+          # This block used to send with `--timeout-seconds 3600` and then poll 2400 x 5s =
+          # 200 minutes. Measured on real data, the full roster runs about 4-5 hours on the
+          # box - so SSM would have killed the command at one hour and the workflow would
+          # have given up at three, on a run that was still going. And a GitHub job is hard
+          # capped at 360 minutes regardless of any timeout set here, so waiting can never
+          # work for this run: the job would die before the traversal did.
+          #
+          # It has never fired, so nothing was damaged. The fix is to stop waiting: send the
+          # command with a timeout longer than the run, record the command id, and exit.
+          # T3 put the checkpointer on this path, so a run that dies mid-way costs one save
+          # point rather than the whole thing, and `frankie_box_monitor_20260829.yml` is what
+          # watches it.
           command_id="$(aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \
             --document-name AWS-RunShellScript \
             --comment "A-arm full-roster native traversal" \
             --parameters file:///tmp/a-arm-traversal-params.json \
-            --timeout-seconds 3600 \
+            --timeout-seconds 43200 \
             --query 'Command.CommandId' \
             --output text)"
           echo "SSM_COMMAND_ID=$command_id" >> "$GITHUB_ENV"
+
+          # Confirm it was ACCEPTED by the instance. Anything else is a dispatch that did not
+          # happen, and reporting a run as started when it was not is the failure this whole
+          # branch exists to stop.
           status=Pending
-          for _ in $(seq 1 2400); do
+          for _ in $(seq 1 24); do
             status="$(aws ssm get-command-invocation \
               --command-id "$command_id" \
               --instance-id "$INSTANCE_ID" \
               --query Status \
               --output text 2>/dev/null || true)"
             case "$status" in
-              Success|Failed|TimedOut|Cancelled) break ;;
+              InProgress|Success|Failed|TimedOut|Cancelled) break ;;
             esac
             sleep 5
           done
-          result="$(aws ssm get-command-invocation \
-            --command-id "$command_id" \
-            --instance-id "$INSTANCE_ID" \
-            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
-            --output json)"
-          printf '%s\n' "$result"
-          test "$status" = Success
-          grep -F "A_ARM_TRAVERSAL_COMPLETE=${RUN_ID}" <<<"$result"
+          printf 'dispatched command %s, status %s\n' "$command_id" "$status"
+          case "$status" in
+            InProgress|Success) ;;
+            *) echo "the box did not accept the command" >&2; exit 1 ;;
+          esac
+          {
+            echo "### Full-roster traversal dispatched"
+            echo "- Instance: ${INSTANCE_ID}"
+            echo "- SSM command: ${command_id}"
+            echo "- Status at dispatch: ${status}"
+            echo "- This job does NOT wait. Watch it with frankie_box_monitor_20260829.yml."
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Persist exact keyless A-clean RT packet
         shell: bash

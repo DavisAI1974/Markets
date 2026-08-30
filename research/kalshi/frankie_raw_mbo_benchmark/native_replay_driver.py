@@ -178,6 +178,8 @@ class DriverCounters:
     candidates_detected: int = 0
     replenishment_observations: int = 0
     """4.7 removals and refills actually stated to the calculator, not horizons matured."""
+    candidates_without_stratum: int = 0
+    """Candidates released before any group closed. Counted, never opened on empty strings."""
     response_tracks_opened: int = 0
     """4.16 tracks. One per candidate, opened at its first lawful instant."""
     episode_rows: int = 0
@@ -329,7 +331,13 @@ class NativeReplayDriver:
         self.candidate_selection = candidate_selection
         self.candidate_warmup_seconds = candidate_warmup_seconds
         self.candidate_min_observations = candidate_min_observations
-        self.detector = self._new_detector(0)
+        # Built LAZILY from the first mark's real segment. Seeding it with 0 stamped every
+        # candidate in the first segment with a segment id that exists nowhere else in the
+        # run: `segment_of` returns an absolute trade-date ordinal (18908, 18911...), and
+        # 4.10, 4.11, 4.12 and 4.16 all stratify on it, so the candidate lane landed in
+        # strata no group row shares and any join by segment returned empty. Wrong on the
+        # FIRST segment of every run, not only across a weekend.
+        self.detector: native_candidate.CausalPeakDetector | None = None
         self._last_complete_second: int | None = None
         # 4.10 / 4.11 / 4.12 ride the candidate unit as ONE vocabulary - a runway is opened by
         # a candidate's birth, recognition is measured against that birth, and the dipole
@@ -344,6 +352,7 @@ class NativeReplayDriver:
         self._latest_book = EMPTY_BOOK
         self._episode_context = ("", "", "")
         self._candidate_second = 0
+        self._last_signed_flow = 0
         # 4.16 rides the same unit. Its baseline is the book at the candidate's FIRST LAWFUL
         # instant, not at the spike: a response measured from a moment nobody could have
         # acted on is not a response anyone could have captured.
@@ -408,12 +417,8 @@ class NativeReplayDriver:
         )
         self.counters.candidate_summaries.append(self.detector.summary())
         self.counters.episode_summaries.append(self.episodes.summary())
-        self.detector = self._new_detector(segment + 1)
-        self.episodes = CandidateEpisodeTracker(
-            exhaustion=self.run.exhaustion, recognition=self.run.recognition,
-            dipole=self.run.dipole, source_role=self.identity_role,
-        )
-        self._last_complete_second = None
+        # The NEXT segment is opened by `_mark_for` from the new mark's own ordinal. It is
+        # not `segment + 1`: segments are trade-date ordinals and a weekend skips two.
 
     def _close_lineage(self, *, segment: int, censored_status: str, occasion: str) -> None:
         """Observe every node in the live graph with its TERMINAL status, then rebuild.
@@ -489,48 +494,63 @@ class NativeReplayDriver:
                 section="response",
                 occasion="HORIZON_MATURED",
             )
-            for candidate in self.detector.observe(second, value):
-                self.counters.candidates_detected += 1
-                self._retain_lifecycle(
-                    [candidate.as_dict()], section="candidate", occasion="CANDIDATE_LAWFUL"
-                )
-                source_day, family_id, session_phase = self._episode_context
-                available_ns = candidate.available_second * NS_PER_SECOND
-                self.run.response.open_track(
-                    structure_id=candidate.candidate_id,
-                    first_lawful_recv_ns=available_ns,
-                    source_day=source_day,
-                    source_role=self.identity_role,
-                    continuity_segment=candidate.continuity_segment,
-                    family_id=family_id,
-                    side_orientation="B" if candidate.polarity > 0 else (
-                        "A" if candidate.polarity < 0 else "N"
-                    ),
-                    session_phase=session_phase,
-                    cluster_version=NO_CLUSTERING,
-                    starting_liquidity_regime=starting_liquidity_regime(self._latest_book),
-                )
-                self.responses.open(candidate.candidate_id, self._latest_book.price_raw)
-                self.counters.response_tracks_opened += 1
-                self._retain_episode_rows([
-                    self.episodes.open(
-                        candidate,
-                        source_day=source_day,
-                        family_id=family_id,
-                        session_phase=session_phase,
-                        instrument_id=self.counters.instrument_id,
-                        book=self._latest_book,
-                        signed_flow=signed,
-                    )
-                ])
+            self._last_signed_flow = signed
+            self._retain_candidates(self.detector.observe(second, value))
         self._last_complete_second = current_second - 1
 
     def _retain_candidates(self, candidates: Any) -> None:
+        """The ONE route a candidate takes into every downstream section.
+
+        This used to write the lifecycle row and stop, while the per-second path separately
+        opened the 4.10/4.11/4.12 episode and the 4.16 track. `finish()` releases - the whole
+        `window_truncated` class - came through here alone, so `candidate_unit_events` counted
+        them and the four sections received nothing: one lost candidate per boundary plus the
+        tail of every segment. Two routes into one lane is how they disagree.
+        """
         for candidate in candidates or ():
             self.counters.candidates_detected += 1
             self._retain_lifecycle(
                 [candidate.as_dict()], section="candidate", occasion="CANDIDATE_LAWFUL"
             )
+            self._open_candidate(candidate)
+
+    def _open_candidate(self, candidate: Any) -> None:
+        """Open the 4.10/4.11/4.12 episode and the 4.16 track for one candidate."""
+        source_day, family_id, session_phase = self._episode_context
+        if not source_day:
+            # Nothing has closed a group yet, so there is no stratum identity to open on.
+            # Counted rather than opened with empty strings, which would be a key collision
+            # dressed as a missing label.
+            self.counters.candidates_without_stratum += 1
+            return
+        available_ns = candidate.available_second * NS_PER_SECOND
+        self.run.response.open_track(
+            structure_id=candidate.candidate_id,
+            first_lawful_recv_ns=available_ns,
+            source_day=source_day,
+            source_role=self.identity_role,
+            continuity_segment=candidate.continuity_segment,
+            family_id=family_id,
+            side_orientation="B" if candidate.polarity > 0 else (
+                "A" if candidate.polarity < 0 else "N"
+            ),
+            session_phase=session_phase,
+            cluster_version=NO_CLUSTERING,
+            starting_liquidity_regime=starting_liquidity_regime(self._latest_book),
+        )
+        self.responses.open(candidate.candidate_id, self._latest_book.price_raw)
+        self.counters.response_tracks_opened += 1
+        self._retain_episode_rows([
+            self.episodes.open(
+                candidate,
+                source_day=source_day,
+                family_id=family_id,
+                session_phase=session_phase,
+                instrument_id=self.counters.instrument_id,
+                book=self._latest_book,
+                signed_flow=self._last_signed_flow,
+            )
+        ])
 
     def _retain_episode_rows(self, rows: Any) -> None:
         for row in rows or ():
@@ -571,10 +591,23 @@ class NativeReplayDriver:
         if mark.starts_new_segment and self._mark is not None:
             self._close_segment(self._mark.continuity_segment, recv_ns)
             self.counters.segments_opened += 1
+            self._start_candidate_segment(mark.continuity_segment)
         elif self._mark is None:
             self.counters.segments_opened += 1
+            self._start_candidate_segment(mark.continuity_segment)
         self._mark = mark
         return mark
+
+    def _start_candidate_segment(self, segment: int) -> None:
+        """Open the candidate lane on the REAL segment, never on a counter of our own."""
+        self.detector = self._new_detector(segment)
+        self.episodes = CandidateEpisodeTracker(
+            exhaustion=self.run.exhaustion,
+            recognition=self.run.recognition,
+            dipole=self.run.dipole,
+            source_role=self.identity_role,
+        )
+        self._last_complete_second = None
 
     # --- the pass ---------------------------------------------------------
 
@@ -633,13 +666,29 @@ class NativeReplayDriver:
         # the frozen census assigns every row in a group to the group's own second. Binning
         # each row at its own timestamp splits a boundary-straddling group and yields a
         # different, entirely plausible number - see PerRowSecondBinner in the roll20 tests.
+        # The clock is a DECLARATION (see native_roll20): the frozen census binned on event
+        # time, this package's causal clock is receive time. Receive order is guarded above;
+        # EVENT time is not, and real MBO reorders event times against receive order
+        # routinely. Under EVENT_CLOCK that produced a backwards second and surfaced hours
+        # into a run as a contiguity error raised inside the detector, three files from the
+        # cause. It fails here instead, naming the clock.
         stamp = recv_ns if self.roll20.clock == native_roll20.RECV_CLOCK else event_ns
         self.roll20.observe_group(
             self._legacy_pending,
             second=stamp // NS_PER_SECOND,
         )
         self._legacy_pending = []
-        self._candidate_second = stamp // NS_PER_SECOND
+        candidate_second = stamp // NS_PER_SECOND
+        if (
+            self._last_complete_second is not None
+            and candidate_second <= self._last_complete_second
+        ):
+            raise ReplayDriverError(
+                f"the {self.roll20.clock} clock moved backwards to second {candidate_second} "
+                f"after {self._last_complete_second}; the candidate lane needs contiguous "
+                "seconds, and event time is not monotone in receive order on real MBO"
+            )
+        self._candidate_second = candidate_second
 
         source_day = _source_day(source_object)
         mark = self._mark_for(event_ns, recv_ns, source_day)
@@ -909,7 +958,7 @@ class NativeReplayDriver:
         # was dropped at all four call sites.
         # Same dependency as at a segment boundary: open runways close before the calculator
         # that holds them does.
-        if self._last_complete_second is not None:
+        if self.detector is not None and self._last_complete_second is not None:
             self._retain_candidates(self.detector.finish(self._last_complete_second))
             self._retain_episode_rows(self.episodes.close_segment(at))
         for section in ("queue", "replenishment", "exhaustion", "response"):
@@ -926,8 +975,12 @@ class NativeReplayDriver:
             censored_status=CENSORED_STREAM_END,
             occasion="STREAM_END",
         )
-        self.counters.candidate_summaries.append(self.detector.summary())
-        self.counters.episode_summaries.append(self.episodes.summary())
+        # The detector is built lazily from the first mark's real segment, so a pass that
+        # consumed nothing has none. Reporting a summary for a lane that never opened would
+        # be an empty stratum dressed as an observation.
+        if self.detector is not None:
+            self.counters.candidate_summaries.append(self.detector.summary())
+            self.counters.episode_summaries.append(self.episodes.summary())
         result = self.run.finalize()
         result["traversal"] = {
             "groups_seen": self.counters.groups_seen,
@@ -952,6 +1005,7 @@ class NativeReplayDriver:
                 "4.10_4.11_4.12_episode_rows": self.counters.episode_rows,
                 "4.16_response_tracks": self.counters.response_tracks_opened,
                 "4.7_replenishment_observations": self.counters.replenishment_observations,
+                "candidates_without_stratum": self.counters.candidates_without_stratum,
             },
             # D66's second unit, reported per continuity segment. A segment that found NOTHING
             # is still a row here: absence is a result about that segment, not an omission.

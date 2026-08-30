@@ -400,6 +400,7 @@ class FedSectionsTest(unittest.TestCase):
             "4.10_4.11_4.12_episode_rows": 0,
             "4.16_response_tracks": 0,
             "4.7_replenishment_observations": 2,
+            "candidates_without_stratum": 0,
         })
 
     def test_every_fed_section_produces_averaged_companions(self):
@@ -491,6 +492,7 @@ class FedSectionsTest(unittest.TestCase):
             "4.10_4.11_4.12_episode_rows": 0,
             "4.16_response_tracks": 0,
             "4.7_replenishment_observations": 0,
+            "candidates_without_stratum": 0,
         })
         sections = [row.get("section") for row in result["layers"]["averaged_companions"]["rows"]]
         for section in ("4.8", "4.9", "4.13", "4.14"):
@@ -853,3 +855,80 @@ class ReplenishmentObservationFedTest(unittest.TestCase):
         summary = result["traversal"]["replenishment_observation"]
         self.assertIn("groups_observed", summary)
         self.assertGreater(summary["groups_observed"], 0)
+
+
+class CandidateSeamRegressionTest(unittest.TestCase):
+    """The two seam defects an adversarial re-review found, both in the driver wiring.
+
+    The detector-side fixes were all correct; these were in how the driver fed it, which is
+    exactly the class of defect a module-level review cannot see.
+    """
+
+    def test_the_candidate_lane_uses_the_run_s_real_continuity_segments(self):
+        """It used a counter of its own, so the lane landed in strata nothing else shared.
+
+        `segment_of` returns an absolute trade-date ordinal. The driver seeded the detector
+        with 0 and advanced it as `segment + 1`, so on a Friday/Monday stream the true
+        segments are 18908 and 18911 while candidates were stamped 0 and 18909 - neither of
+        which exists. 4.10, 4.11, 4.12 and 4.16 all stratify on it, so any join by segment
+        returned empty. Wrong on the FIRST segment of every run, not only across a weekend.
+        """
+        driver = make_driver(total_mbo_records=6)
+        for day in ("2021-10-08", "2021-10-11"):
+            base = at(f"{day}T13:00:00")
+            driver.consume(
+                record(seq=i, event_ns=base + i * NS_PER_SECOND, order_id=500 + i)
+                for i in range(3)
+            )
+        result = driver.finalize()
+        member = {row["continuity_segment"] for row in driver.counters.member_rows}
+        detector = {s["continuity_segment"] for s in result["traversal"]["candidate_detection"]}
+        self.assertEqual(member, {18908, 18911}, "the fixture stopped crossing a weekend")
+        self.assertTrue(
+            detector.issubset(member),
+            f"candidate lane is in segments {detector - member} that no member row shares",
+        )
+
+    def test_a_pass_that_consumed_nothing_reports_no_candidate_lane(self):
+        """The detector is built from the first real mark, so an empty pass has none.
+
+        Reporting a summary for a lane that never opened would be an empty stratum dressed
+        as an observation.
+        """
+        driver = make_driver(total_mbo_records=8)
+        result = driver.finalize()
+        self.assertEqual(result["traversal"]["candidate_detection"], [])
+        self.assertEqual(result["traversal"]["sections_fed"]["candidate_unit_events"], 0)
+
+    def test_a_clock_that_moves_backwards_fails_at_the_seam(self):
+        """Under EVENT_CLOCK, real MBO reorders event times against receive order.
+
+        Receive order stays monotone, so the existing guard passes; the second derived from
+        EVENT time goes backwards and the detector's contiguity check fires - hours into a
+        run, from inside a module three files from the cause. It now fails here, naming the
+        clock, which is where the choice was made.
+        """
+        from research.kalshi.frankie_raw_mbo_benchmark import native_roll20
+
+        identity = RunIdentity(
+            run_id="event-clock", arm="A_CLEAN", mission_sha256="a" * 64,
+            calculation_contract_sha256="b" * 64, knowledge_manifest_hash="c" * 64,
+            source_manifest_hash="d" * 64, total_mbo_records=4, code_commit="deadbeef",
+        )
+        run = NativeCalculationRun(
+            identity, replenishment_horizon_ns=1_000, response_horizons_ns=(100,),
+            response_horizon_version="hv1", response_value_names=("price_response",),
+        )
+        driver = NativeReplayDriver(
+            identity=identity, session_rule=ExchangeSessionRule(), cadence=NeverInvoke(),
+            run=run, roll20_clock=native_roll20.EVENT_CLOCK,
+        )
+        base = at("2021-10-04T13:00:00")
+        first = record(seq=0, event_ns=base + 20 * NS_PER_SECOND, order_id=1)
+        driver.consume([first])
+        # Receive time still advances; EVENT time steps back three seconds.
+        second = record(seq=1, event_ns=base + 17 * NS_PER_SECOND, order_id=2)
+        second["ts_recv"] = first["ts_recv"] + NS_PER_SECOND
+        with self.assertRaises(ReplayDriverError) as caught:
+            driver.consume([second])
+        self.assertIn("ts_event", str(caught.exception))

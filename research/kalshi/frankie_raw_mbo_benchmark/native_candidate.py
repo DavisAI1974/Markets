@@ -153,6 +153,13 @@ class Candidate:
     baseline: float
     observations_behind_threshold: int
     """FINITE observations behind the trailing bar. Not seconds - NaN seconds never enter it."""
+    searched_span_seconds: int = 0
+    """WALL-CLOCK seconds the trailing bar actually spans, which is a different number.
+
+    On a quiet tape the two diverge badly: 41 finite observations can span 64 seconds, so
+    reading the count as a duration understated the searched interval by 36%. 4.10's
+    `searched_coverage_ns` needs the span; the count is kept beside it, never instead of it.
+    """
     window_truncated: bool = False
     """True when the segment ended before this candidate's window closed.
 
@@ -181,6 +188,7 @@ class Candidate:
             "continuity_segment": self.continuity_segment,
             "baseline": self.baseline,
             "observations_behind_threshold": self.observations_behind_threshold,
+            "searched_span_seconds": self.searched_span_seconds,
             "window_truncated": self.window_truncated,
             "direction_note": (
                 "polarity is the SIGN of signed flow; magnitude is reported beside it and "
@@ -244,7 +252,7 @@ class CausalPeakDetector:
         self.min_threshold_observations = min_threshold_observations
 
         self._flow: deque[tuple[int, float]] = deque()
-        self._trailing: deque[float] = deque()
+        self._trailing: deque[tuple[int, float]] = deque()
         self._seconds_seen = 0
         self._last_accepted: int | None = None
         self._previous_second: int | None = None
@@ -278,7 +286,7 @@ class CausalPeakDetector:
         self._previous_second = second
         self._flow.append((second, float(flow) if _finite(flow) else float("nan")))
         if _finite(flow):
-            self._trailing.append(abs(float(flow)))
+            self._trailing.append((second, abs(float(flow))))
             while len(self._trailing) > self.threshold_observations:
                 self._trailing.popleft()
         self._seconds_seen += 1
@@ -333,7 +341,7 @@ class CausalPeakDetector:
             # it one manufactures direction-less events that then consume refractory windows.
             self.rejected_zero_magnitude += 1
             return None
-        threshold = quantile(self._trailing, self.peak_quantile)
+        threshold = quantile([v for _, v in self._trailing], self.peak_quantile)
         # A bar of exactly 0.0 is NOT rejected, and this is a deliberate divergence from the
         # review's suggested fix. The frozen detector admits any non-zero magnitude against a
         # zero bar - on `[0.0]*300` with one 0.9 spike it emits exactly that spike - and
@@ -372,6 +380,7 @@ class CausalPeakDetector:
             continuity_segment=self.continuity_segment,
             baseline=baseline,
             observations_behind_threshold=len(self._trailing),
+            searched_span_seconds=(second - self._trailing[0][0] + 1) if self._trailing else 0,
             window_truncated=False,
         )
 

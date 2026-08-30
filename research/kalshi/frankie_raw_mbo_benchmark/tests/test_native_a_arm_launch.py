@@ -246,3 +246,38 @@ class LaunchSliceTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SliceBoundaryTest(unittest.TestCase):
+    """The defect that made the first real canary REJECT, pinned.
+
+    Run 33300298768: 50,000 records, 40,241 groups, every fed section reporting real data -
+    and `failed_gates: ["exact_once_coverage"]`. That gate requires
+    `coverage.records_seen == identity.total_mbo_records`, and the left side counts records
+    assigned to CLOSED groups while the identity carried the records FED. A slice cutting
+    mid-group leaves its tail consumed but never assigned, so the two can never agree. The
+    gate was right; the launcher was wrong.
+    """
+
+    F_LAST_BIT = 128
+
+    def test_a_slice_does_not_stop_before_its_limit(self):
+        self.assertFalse(launcher.slice_ends_here(emitted=10, limit=50, flags=self.F_LAST_BIT))
+
+    def test_a_slice_does_not_stop_mid_group_even_at_the_limit(self):
+        """The whole bug in one assertion."""
+        self.assertFalse(launcher.slice_ends_here(emitted=50, limit=50, flags=0))
+        self.assertFalse(launcher.slice_ends_here(emitted=999, limit=50, flags=0))
+
+    def test_a_slice_stops_on_the_first_closing_group_at_or_after_the_limit(self):
+        self.assertTrue(launcher.slice_ends_here(emitted=50, limit=50, flags=self.F_LAST_BIT))
+        self.assertTrue(launcher.slice_ends_here(emitted=51, limit=50, flags=self.F_LAST_BIT))
+
+    def test_an_unbounded_run_never_stops_early(self):
+        self.assertFalse(launcher.slice_ends_here(emitted=10**9, limit=None, flags=self.F_LAST_BIT))
+
+    def test_a_missing_or_unusable_flag_is_not_read_as_a_group_close(self):
+        """A closing group is a flag that is SET, never one that is absent."""
+        for flags in (None, 0, "", 1, 64):
+            with self.subTest(flags=flags):
+                self.assertFalse(launcher.slice_ends_here(emitted=50, limit=50, flags=flags))

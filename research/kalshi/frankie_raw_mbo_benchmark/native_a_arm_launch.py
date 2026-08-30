@@ -60,6 +60,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_replay_driver import (
     NativeReplayDriver,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_row_sink import LedgerSinks
+from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import F_LAST
 from research.kalshi.frankie_raw_mbo_benchmark.native_staging import SpawnStager
 from research.kalshi.frankie_raw_mbo_benchmark.periodic_checkpointer import PeriodicCheckpointer
 
@@ -321,8 +322,31 @@ def native_records(
             row["raw_symbol"] = _symbol(symbols, row["instrument_id"], row["ts_recv"])
             yield row
             emitted += 1
-            if limit is not None and emitted >= limit:
+            # A BOUNDED SLICE ENDS ON A GROUP BOUNDARY, never mid-group.
+            #
+            # This is the defect that made the first real canary REJECT on
+            # `exact_once_coverage`. That gate requires
+            # `coverage.records_seen == identity.total_mbo_records`, and
+            # `coverage.records_seen` counts records assigned to CLOSED groups while the
+            # identity carried the records FED. Cutting mid-group leaves the tail records
+            # consumed but never assigned, so the two can never agree - and the gate was
+            # right, the launcher was wrong.
+            #
+            # Reading on to the next F_LAST means every record yielded belongs to a group
+            # that closed, so the two counts are equal by construction rather than by luck.
+            if slice_ends_here(emitted=emitted, limit=limit, flags=row["flags"]):
                 return
+
+
+def slice_ends_here(*, emitted: int, limit: int | None, flags: Any) -> bool:
+    """Whether a bounded slice may stop after this record.
+
+    Extracted so the rule is testable without a DBN file: the reader itself needs
+    `databento` and a real object, and this is the part that was wrong.
+    """
+    if limit is None or emitted < limit:
+        return False
+    return bool(int(flags or 0) & F_LAST)
 
 
 def _symbol(symbols: Any, instrument_id: Any, ts_recv: Any) -> str | None:
@@ -366,6 +390,23 @@ def launch(
 
     knowledge = json.loads((repo_root / KNOWLEDGE_MANIFEST_PATH).read_text(encoding="utf-8"))
     total_records = int(source_manifest["total_mbo_records"])
+
+    # THE SLICE IS COUNTED BEFORE ANYTHING IS BUILT FROM IT.
+    #
+    # `_gate_coverage` requires `coverage.records_seen == identity.total_mbo_records`, where
+    # the left side counts records assigned to CLOSED groups. A bounded slice therefore has
+    # to know how many records it will actually deliver, and it cannot know that until it has
+    # read on to its closing group. Building the identity first and repairing it afterwards
+    # would leave the driver holding a stale copy - which is how a number that is present,
+    # typed and wrong gets into a receipt.
+    #
+    # Materialised only when bounded. The full roster streams and takes the manifest's total,
+    # which is the case where holding it would actually cost something.
+    stream = native_records(sources, limit=limit_records) if records is None else records
+    if records is None and limit_records is not None:
+        stream = list(stream)
+        total_records = len(stream)
+        limit_records = len(stream)
     identity = RunIdentity(
         run_id=run_id,
         arm=arm,
@@ -376,7 +417,9 @@ def launch(
         # On a bounded slice the identity states the SLICE's record count, not the roster's.
         # Claiming the full roster while traversing part of it would put the coverage gate in
         # the position of comparing a real count against an aspiration.
-        total_mbo_records=min(total_records, limit_records or total_records),
+        # Provisional for a bounded slice: replaced below with the exact count once the
+        # slice has been read to its closing group. For the full roster it is the manifest's.
+        total_mbo_records=total_records if limit_records is None else limit_records,
         code_commit=code_commit,
     )
     # The three exact ledgers go to DISK by default. Held in RAM they grow ~18-22 MiB per
@@ -463,7 +506,6 @@ def launch(
     # surfaced the moment the launch path first ran - a defect that could not appear while
     # nothing dispatched the driver.
     checkpointer.seal_start(driver.adapter)
-    stream = native_records(sources, limit=limit_records) if records is None else records
     driver.consume(stream)
     result = driver.finalize()
     if sinks is not None:

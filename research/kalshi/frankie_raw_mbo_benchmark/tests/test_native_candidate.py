@@ -319,8 +319,6 @@ class Roll20StreamingReconciliationTest(unittest.TestCase):
             binner.series()
 
 
-if __name__ == "__main__":
-    unittest.main()
 
 
 class AdversarialReviewRegressionTest(unittest.TestCase):
@@ -429,3 +427,7 @@ class AdversarialReviewRegressionTest(unittest.TestCase):
         self.assertTrue(truncated, "the last window closed cleanly; the fixture no longer truncates")
         for candidate in truncated:
             self.assertIn("window_truncated", candidate.as_dict())
+
+
+if __name__ == "__main__":
+    unittest.main()

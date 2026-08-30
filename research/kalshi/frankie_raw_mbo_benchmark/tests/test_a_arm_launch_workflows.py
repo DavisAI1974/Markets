@@ -118,7 +118,28 @@ class LaunchWorkflowDispatchTest(unittest.TestCase):
                 self.assertIn("aws ssm send-command", dispatch["run"])
                 self.assertIn("AWS-RunShellScript", dispatch["run"])
                 self.assertIn("get-command-invocation", dispatch["run"])
-                self.assertIn("test \"$status\" = Success", dispatch["run"])
+                # FIRE AND RETURN. It used to wait, with a one-hour SSM timeout and a
+                # three-hour poll, against a run measured at four to five hours - and a
+                # GitHub job is hard capped at 360 minutes anyway, so waiting could never
+                # work. It now confirms the box ACCEPTED the command and exits.
+                self.assertIn("--timeout-seconds 43200", dispatch["run"])
+                self.assertIn("InProgress", dispatch["run"])
+                # The remote command still ECHOES a completion marker - that is the box's
+                # own log line. What must not come back is the workflow GREPPING for it,
+                # which is the waiting this replaced.
+                self.assertNotIn(
+                    'grep -F "A_ARM_TRAVERSAL_COMPLETE', dispatch["run"],
+                    "the step is waiting for completion again",
+                )
+
+    def test_the_remote_command_reads_the_arm_from_its_own_env_var(self):
+        """It read `os.environ["A_CLEAN"]` - the VALUE as a key - and would KeyError on
+        dispatch. Never fired, so it was never seen."""
+        for arm, path in WORKFLOWS.items():
+            with self.subTest(arm=arm):
+                body = path.read_text(encoding="utf-8")
+                self.assertIn('os.environ["ARM_ID"]', body)
+                self.assertNotIn(f'os.environ["{arm}"]', body)
 
     def test_the_canary_summary_reads_the_artifact_rather_than_restating_it(self):
         """A summary that says a run passed without reading what it wrote attests nothing."""

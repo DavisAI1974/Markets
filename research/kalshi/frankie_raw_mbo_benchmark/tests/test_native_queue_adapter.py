@@ -82,8 +82,20 @@ class Harness:
 
     def lifecycles(self, recv_ns=9_000):
         """Close everything still open and index every exact row by order id."""
+        return {r["order_id"]: r for r in self.close(recv_ns=recv_ns)}
+
+    def close(self, recv_ns=9_000):
+        """Finalize the PAIR, in order: the calculator censors, the adapter releases.
+
+        Found by the seeded walk below rather than by reading the code: finalizing the
+        calculator alone leaves the adapter still tracking every order the calculator has
+        just censored, and the next thing it says about one of them lands in
+        `unknown_order_events` - a defect counter turned into noise. The two are one
+        operation and the tests spell it as one.
+        """
         rows = self.calc.finalize(recv_ns=recv_ns)
-        return {r["order_id"]: r for r in rows}
+        self.adapter.finalize()
+        return rows
 
 
 class GuardTests(unittest.TestCase):
@@ -127,6 +139,22 @@ class GuardTests(unittest.TestCase):
         h.adapter.close_continuity_segment(segment=18904)
         out = h.feed([row("A", "B", 2, 1000, 5, 200)], group_index=1, continuity_segment=18905)
         self.assertEqual(out["births"], 1)
+
+    def test_finalizing_the_calculator_alone_leaves_the_adapter_tracking(self):
+        """The pairing, asserted as a requirement rather than assumed by a caller.
+
+        `QueueSurvivalCalculator.finalize` censors every open lifecycle. The adapter cannot
+        see that happen, so it must be released too - and until it is, it still holds the
+        orders. Written as a test so a wirer meets the requirement instead of the symptom.
+        """
+        h = Harness()
+        h.feed([row("A", "B", 1, 1000, 5, 100)])
+        h.calc.finalize(recv_ns=9_000)
+        self.assertEqual(h.calc.open_order_count, 0)
+        self.assertEqual(h.adapter.open_tracked_orders, 1, "the adapter is not finalized yet")
+        receipt = h.adapter.finalize()
+        self.assertEqual(receipt["tracking_released"], 1)
+        self.assertEqual(h.adapter.open_tracked_orders, 0)
 
     def test_the_adapter_never_censors_on_the_calculators_behalf(self):
         # Two owners for one censoring would double-count; the traversal owns the boundary
@@ -398,6 +426,29 @@ class PriorityTests(unittest.TestCase):
         self.assertEqual(rows[11]["episodes"][0]["cancels_ahead"], 1)
         self.assertEqual(h.adapter.counters["reprice_departures_ahead"], 1)
 
+    def test_a_requeue_at_the_same_price_still_moves_everyone_behind(self):
+        """The case a price comparison alone would miss.
+
+        A size increase keeps the price, so `moved` is false, and yet `_modify` detaches the
+        order and re-appends it: everything behind it moves up on a departure that is neither
+        a fill nor a cancel. Detected from the position AFTER the row rather than from the
+        price, and counted like any other re-queue.
+        """
+        h = Harness()
+        h.feed([
+            row("A", "B", 10, 1000, 5, 100),
+            row("A", "B", 11, 1000, 7, 110),
+            row("A", "B", 12, 1000, 3, 120),
+            row("M", "B", 10, 1000, 8, 130),   # same price, larger size: back of the queue
+        ])
+        rows = h.lifecycles()
+        self.assertEqual(rows[10]["priority_loss_count"], 1)
+        self.assertEqual(rows[11]["episodes"][0]["final_orders_ahead"], 0)
+        self.assertEqual(rows[11]["episodes"][0]["cancels_ahead"], 1)
+        self.assertEqual(rows[12]["episodes"][0]["final_orders_ahead"], 1)
+        self.assertEqual(h.adapter.counters["reprice_departures_ahead"], 2)
+        self.assertEqual(h.calc.identity_violations, 0)
+
     def test_a_duplicate_add_requeues_one_lifecycle_instead_of_forking_it(self):
         # `_add_order` REPLACES on a duplicate id, and `on_add` refuses a second birth for
         # one order, so the only lawful reading is priority loss.
@@ -512,6 +563,23 @@ class DeclaredScopeTests(unittest.TestCase):
             self.assertTrue(declared["statement"])
             self.assertTrue(declared["counters"])
 
+    def test_every_counter_a_distortion_promises_is_one_the_module_writes(self):
+        """A declaration pointing at a counter nobody increments has quietly expired.
+
+        `DECLARED_DISTORTIONS` is the value-borne form of D53's cost, and its whole job is to
+        say how big each distortion is. Rename a counter and the statement survives while the
+        number it points at stops existing - a caveat that reads live on dead evidence, which
+        is the S114 schema correction in miniature. So the names are checked against the
+        module that writes them.
+        """
+        import inspect
+
+        source = inspect.getsource(qa)
+        for declared in qa.DECLARED_DISTORTIONS:
+            for name in (n.strip() for n in declared["counters"].split(",")):
+                with self.subTest(distortion=declared["name"], counter=name):
+                    self.assertIn(f'"{name}"', source)
+
     def test_an_order_outliving_its_birth_group_is_counted(self):
         """The stratum is stamped at birth and never restamped, so the count sizes the fiction."""
         h = Harness()
@@ -588,6 +656,86 @@ class RealCalculatorTests(unittest.TestCase):
         h.feed(self.CASCADE)
         h.calc.finalize(recv_ns=9_000)
         self.assertEqual(h.calc.unknown_order_events, 0)
+
+
+class SeededTapeTests(unittest.TestCase):
+    """Random well-formed tape, one advancing book, and the invariants that must survive it.
+
+    The hand-built cases above each pin ONE construction choice. This drives the adapter over
+    thousands of interleaved adds, fills, partial and full cancels, re-prices and size changes
+    and asserts the properties that no single case can: that the FIFO identity never breaks,
+    that nothing the adapter feeds lands in the calculator's defect counter, and that every
+    order it opened is closed exactly once. A regression in the refresh scope, the fill credit
+    point or the level index shows up here as a violation count rather than as an exception.
+    """
+
+    BIDS = (2_990_000_000, 2_995_000_000, 3_000_000_000, 3_005_000_000)
+    ASKS = (3_020_000_000, 3_025_000_000, 3_030_000_000, 3_035_000_000)
+
+    def _walk(self, seed, groups=400):
+        import random
+
+        rng = random.Random(seed)
+        h = Harness()
+        live: list[int] = []
+        order_id = 1_000
+        recv = 1_000_000
+        births = 0
+        for group_index in range(groups):
+            actions = []
+            for _ in range(rng.randint(1, 5)):
+                recv += rng.randint(1, 50)
+                live = [o for o in live if h.book.is_resting(o)]
+                resting_is_deep = len(live) >= 40
+                if rng.random() < (0.15 if resting_is_deep else 0.55) or not live:
+                    order_id += 1
+                    side = rng.choice("BA")
+                    price = rng.choice(self.BIDS if side == "B" else self.ASKS)
+                    live.append(order_id)
+                    actions.append(row("A", side, order_id, price, rng.randint(1, 9), recv))
+                    continue
+                target = rng.choice(live)
+                side, price, size = h.book.resting_at(target)
+                draw = rng.random()
+                if draw < 0.28:
+                    actions.append(row("F", side, target, price, rng.randint(1, size), recv))
+                elif draw < 0.70:
+                    pull = rng.choice([size, max(1, size // 2)])
+                    actions.append(row("C", side, target, price, pull, recv))
+                elif draw < 0.95:
+                    moved = rng.choice(self.BIDS if side == "B" else self.ASKS)
+                    actions.append(
+                        row("M", side, target, moved, max(1, size + rng.randint(-3, 3)), recv)
+                    )
+                else:
+                    actions.append(row("T", side, 0, price, rng.randint(1, 4), recv))
+            births += h.feed(actions, group_index=group_index, recv_ns=recv)["births"]
+        h.close(recv_ns=recv + 10_000)
+        return births, h
+
+    def test_the_fifo_identity_survives_random_tape(self):
+        for seed in range(6):
+            with self.subTest(seed=seed):
+                births, h = self._walk(seed)
+                summary = h.calc.summary()
+                self.assertGreater(births, 50, "the walk must actually exercise births")
+                self.assertEqual(summary["fifo_identity_violations"], 0)
+
+    def test_nothing_the_adapter_feeds_reaches_the_defect_counter(self):
+        for seed in range(6):
+            with self.subTest(seed=seed):
+                _, h = self._walk(seed)
+                self.assertEqual(h.calc.unknown_order_events, 0)
+
+    def test_every_order_opened_is_closed_exactly_once(self):
+        for seed in range(6):
+            with self.subTest(seed=seed):
+                births, h = self._walk(seed)
+                summary = h.calc.summary()
+                self.assertEqual(summary["completed_lifecycles"], births)
+                self.assertEqual(summary["resolved"] + summary["censored"], births)
+                self.assertEqual(summary["still_open"], 0)
+                self.assertEqual(h.adapter.open_tracked_orders, 0)
 
 
 if __name__ == "__main__":

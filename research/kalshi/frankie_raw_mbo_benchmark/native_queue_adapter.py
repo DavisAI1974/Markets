@@ -99,6 +99,14 @@ COUNTED and emitted by `report()` rather than described here and forgotten:
 ones that mutate nothing, and every row that produces no calculator call still produces a
 counter. Sizes are refused rather than clamped, on the `native_group_adapters._size`
 precedent: `max(0, size)` turns a malformed row into a silent zero.
+
+**The cost, stated because it is a property of the design rather than an accident.** A
+mutating row costs one book walk per tracked order standing behind its target, so per-row
+work is `O(tracked_at_level x level_depth)`. Both factors are bounded by the BOOK - the same
+bound `QueueSurvivalCalculator` states for its open state - and neither grows with the length
+of the stream, so a 4.26M-group pass does not degrade as it runs. The refresh is deliberately
+scoped to the orders behind the target: FIFO says nothing in front of a departure moved, and
+re-reading the whole level would multiply that cost by every bystander for no new number.
 """
 from __future__ import annotations
 
@@ -116,6 +124,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_queue import (
     QueueSurvivalCalculator,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_rt_book import ReplayBook
+from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import F_SNAPSHOT
 
 __all__ = [
     "QueueAdapterError",
@@ -208,7 +217,9 @@ DECLARED_DISTORTIONS: tuple[dict[str, str], ...] = (
             "a group is a slice of the day, so exits of orders that rested before the window "
             "opened cannot be attached to an observed birth"
         ),
-        "counters": "cancel_for_untracked_order, fill_for_unlocated_order",
+        "counters": (
+            "cancel_for_untracked_order, modify_for_untracked_order, fill_for_unlocated_order"
+        ),
     },
 )
 """Where the F_LAST group unit distorts 4.6, stated on the value and counted (D53)."""
@@ -246,10 +257,6 @@ def _action(row: Mapping[str, Any]) -> str:
     return str(row.get("action", "?"))
 
 
-def _side(row: Mapping[str, Any]) -> str:
-    return str(row.get("side", NONE_ACTION))
-
-
 def _recv_ns(row: Mapping[str, Any], default: int) -> int:
     """The row's own receive time, falling back to the group's.
 
@@ -266,12 +273,14 @@ def _is_snapshot(row: Mapping[str, Any]) -> bool:
     """Snapshot flag, from the normalized field or from the raw flag bits.
 
     `NormalizedMbo.public_dict` writes `is_snapshot`, but a hand-built row may carry only
-    `flags`, so both are read. Section 2 treats a snapshot as a boundary, not as history.
+    `flags`, so both are read. The bit comes from the adapter that defines it rather than
+    from a literal here, so one owner names it. Section 2 treats a snapshot as a boundary,
+    not as history.
     """
     flagged = row.get("is_snapshot")
     if flagged is not None:
         return bool(flagged)
-    return bool(_int(row, "flags") & 32)
+    return bool(_int(row, "flags") & F_SNAPSHOT)
 
 
 @dataclass
@@ -407,7 +416,15 @@ class QueueGroupAdapter:
         }
 
     def finalize(self) -> dict[str, Any]:
-        """Release everything at stream end. The calculator censors its own open orders."""
+        """Release everything at stream end. The calculator censors its own open orders.
+
+        Call this WITH `QueueSurvivalCalculator.finalize`, never instead of it: that one
+        censors the lifecycles, this one releases the tracking that addressed them. Finalize
+        the calculator alone and the adapter goes on naming orders the calculator has already
+        closed, every one of which lands in `unknown_order_events` - which turns the counter
+        that exists to find defects into noise. Same pairing as `close_continuity_segment`,
+        which the traversal already makes at every boundary.
+        """
         released = len(self._tracked)
         for tracked in list(self._tracked.values()):
             self._untrack(tracked)
@@ -531,9 +548,16 @@ class QueueGroupAdapter:
             return
 
         if fired.get("tob_side_wipe"):
-            side = _side(row)
+            # Selected by what the BOOK no longer holds rather than by the side this adapter
+            # thought each order was on. The wipe has already landed, so asking the book which
+            # side an order WAS on is impossible - and a cached side would be the one place a
+            # stale field could decide something. Rare enough that the sweep costs nothing.
             self._orphan(
-                [t for t in self._tracked.values() if t.instrument_id == instrument_id and t.side == side],
+                [
+                    t
+                    for t in self._tracked.values()
+                    if t.instrument_id == instrument_id and book.resting_at(t.order_id) is None
+                ],
                 "orphaned_by_tob_wipe",
             )
             return
@@ -673,6 +697,14 @@ class QueueGroupAdapter:
         departed = post is None
         moved = post is not None and (post[0], post[1]) != (side_before, price_before)
 
+        # A modify can re-queue the order without moving it to another price, so the position
+        # AFTER the row is read once here and shared: it decides both whether anything behind
+        # was passed and, in `_modify_priority`, whether the observation contradicts the rule.
+        ahead_after = -1
+        if action == MODIFY and post is not None and post[0] in BOOK_SIDES:
+            ahead_after = book.view(post[0], post[1], order_id)[0]
+        requeued = moved or (ahead_before >= 0 and ahead_after > ahead_before)
+
         if departed:
             status = FILLED if consumed > 0 else CANCELLED
             basis = TERMINAL_BASIS_FILL if consumed > 0 else TERMINAL_BASIS_CANCEL
@@ -686,11 +718,14 @@ class QueueGroupAdapter:
         elif tracked is not None:
             if action == MODIFY:
                 self._modify_priority(
-                    calc, book, row, tally, tracked, pre, post, recv_ns, ahead_before, moved
+                    calc, book, row, tally, tracked, pre, post, recv_ns,
+                    ahead_before=ahead_before, ahead_after=ahead_after, moved=moved,
                 )
             self._touch(tracked, ctx)
 
-        if moved and behind:
+        if requeued and behind:
+            # Whether the mover changed price or was re-appended to the back of its own level,
+            # everything behind it moved up on a departure that is neither fill nor cancel.
             self.counters["reprice_departures_ahead"] += len(behind)
 
         # The order joined the BACK of any new level, so nobody there moved; only the level
@@ -710,7 +745,9 @@ class QueueGroupAdapter:
         pre: tuple[str, int, int],
         post: tuple[str, int, int],
         recv_ns: int,
+        *,
         ahead_before: int,
+        ahead_after: int,
         moved: bool,
     ) -> None:
         """Priority retained, or lost. See PRIORITY_RULE_BASIS for why this one is recomputed."""
@@ -719,7 +756,6 @@ class QueueGroupAdapter:
             price_before != _int(row, "price_raw", PRICE_SENTINEL_ABS)
             or _size(row) > size_before
         )
-        ahead_after = book.view(post[0], post[1], tracked.order_id)[0]
         position_moved_back = (not moved) and ahead_before >= 0 and ahead_after > ahead_before
         if position_moved_back and not rule_says_lost:
             # The observation can falsify the rule even though it cannot confirm it. Two books
