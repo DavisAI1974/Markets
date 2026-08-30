@@ -671,17 +671,34 @@ leaving a trace, and `LegacyRowRetentionTest` fails if retained ever falls short
 
 Two findings, both worth settling before launch.
 
-**The A-arm launch workflows never reach the AWS box.** Neither
-`frankie_a_clean_rt_native_launch_20260828.yml` nor its A-memory twin contains a single
-reference to `ssm`, `ec2`, `send-command` or `INSTANCE_ID`. Their steps are: checkout,
-verify branch, install the DBN reader, fetch and hash-bind the roster, seal the packet and
-the pre-call checkpoint, push to S3, publish, report. **They stage and stop.** No compute is
-dispatched, no calculation runs, no model is called. By contrast the October fullstack
-workflow does carry `INSTANCE_ID: i-08cee7171c0a76a04` and drives it over SSM.
+~~**The A-arm launch workflows never reach the AWS box.**~~ **CLOSED 2026-08-30 (T4).**
+The paragraph this replaces was true and is measured again below. Both workflows now carry
+**12 references** each to `ssm` / `send-command` / `INSTANCE_ID` / the launcher module,
+against **0** before, and they run in **two modes**:
 
-So today there is no execution path at all - which compounds section 8: the driver is a
-draft, the checkpointer and gate are wired to nothing, and the workflow that would carry
-them dispatches nothing.
+* **`canary` (the default, and what a push runs).** A bounded slice of the REAL hash-bound
+  roster through `native_a_arm_launch`, on the runner - no box, no SSM, no spend beyond
+  runner minutes. This is prelaunch section 0 item 9: the dry run over a small slice with
+  the eight section 6 gates passing, before anything touches the full roster. The launcher
+  exits non-zero on any verdict but ACCEPTED, so the step cannot go green over a refused
+  calculation, and a separate step writes the canary's verdict into the job summary **by
+  reading `calculation_result.json`** rather than by restating it.
+* **`full`.** The whole roster on the box over SSM, `AWS-RunShellScript`, dispatch and wait.
+  **Reachable ONLY by an explicit `workflow_dispatch` with `mode=full`** - a push can never
+  get there, and a test asserts BOTH limbs of that guard, because `inputs.mode == 'full'`
+  alone is a condition that looks like a guard and is not one on a push where `inputs` is
+  empty. Starting the box is a spend and D58 leaves the sizing with Greg.
+
+**The D57 defect happened again while writing this, and `bash -n` caught it.** The canary
+summary began as a heredoc nested inside the report step's `{ ... }` group, which put `PY`
+at a non-zero column so bash never saw the terminator. It is now its own step. Both
+workflows are verified by parsing the YAML, running `bash -n` on every `run:` block, and
+`ast.parse` on every embedded Python heredoc - `tests/test_a_arm_launch_workflows.py`.
+
+The original paragraph, kept because it is the measurement: neither file contained a single
+reference to `ssm`, `ec2`, `send-command` or `INSTANCE_ID`; their steps were checkout,
+verify branch, install the DBN reader, fetch and hash-bind the roster, seal the packet and
+the pre-call checkpoint, push to S3, publish, report. **They staged and stopped.**
 
 **The recorded box was STALE, and the predicted failure is exactly what happened**
 (corrected 2026-08-29, Greg - D55). The paragraph this replaces said

@@ -7,6 +7,26 @@ on:
     paths:
       - '.github/workflows/frankie_a_memory_rt_native_launch_20260828.yml'
   workflow_dispatch:
+    inputs:
+      mode:
+        description: >-
+          canary = a bounded slice of the real roster on the runner (prelaunch section 0
+          item 9). full = the whole roster on the box over SSM, which is a spend and needs
+          Greg. The default is canary on purpose: a push can never reach full.
+        type: choice
+        default: canary
+        options:
+          - canary
+          - full
+      canary_records:
+        description: >-
+          Native MBO records the canary traverses. The default is deliberately small. D60
+          retains every legacy row, member row and lifecycle row IN MEMORY, and no one has
+          measured what sixteen fed sections cost per record - so the first slice is sized
+          to find that out cheaply rather than to be impressive. Raise it once there is a
+          measured curve.
+        type: string
+        default: '50000'
 
 permissions:
   contents: read
@@ -23,6 +43,8 @@ env:
   LAUNCH_BRANCH: chatgpt/frankie-raw-mbo-benchmark-20260828
   REQUIRED_STARTING_TIP: 82e140598b03bb38a7761c19d0ac47017c3908d0
   SOURCE_PREFIX: nymex/ng_mbo_5y_v0/native/20211001_20211101
+  ARM_ID: A_MEMORY
+  CANARY_RECORDS: ${{ github.event_name == 'workflow_dispatch' && inputs.canary_records || '50000' }}
   PRIOR_RUN_ID: workmode-32851909748-1
   PRIOR_MEMORY_DIR: research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1
   EXPECTED_PRIOR_MEMBER_MANIFEST_SHA256: b487acfbbea8ac8a82f42ceb555e8334057e4004740af91b9127cd2ba71e1cf8
@@ -433,6 +455,124 @@ jobs:
           find "$PACKET_DIR" -type f ! -name FILE_SHA256SUMS -print0 \
             | sort -z | xargs -0 sha256sum > "$PACKET_DIR/FILE_SHA256SUMS"
 
+
+      - name: Run bounded canary traversal (real roster, on the runner)
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.mode == 'canary' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Prelaunch section 0 item 9: a dry run over a small slice, with the calculation
+          # contract's eight section 6 gates passing, BEFORE anything touches the full
+          # roster. This is that run. It reads the real hash-bound DBN objects fetched
+          # above, bounded to CANARY_RECORDS native records, on the runner - no box, no
+          # SSM, no spend beyond runner minutes.
+          #
+          # The launcher exits non-zero on any verdict but ACCEPTED, so this step cannot go
+          # green over a refused calculation.
+          out_dir="$PACKET_DIR/canary"
+          install -d -m 0700 "$out_dir"
+          python -m research.kalshi.frankie_raw_mbo_benchmark.native_a_arm_launch \
+            --arm A_MEMORY \
+            --run-id "${RUN_ID}-canary" \
+            --code-commit "$GITHUB_SHA" \
+            --source-manifest "$PACKET_DIR/source_manifest.json" \
+            --out-dir "$out_dir" \
+            --limit-records "$CANARY_RECORDS" \
+            --checkpoint-every-records 20000 \
+            --cadence-groups 5000 \
+            --source "$SOURCE_DIR/glbx-mdp3-20211001.mbo.dbn.zst" \
+            --source "$SOURCE_DIR/glbx-mdp3-20211003.mbo.dbn.zst" \
+            --source "$SOURCE_DIR/glbx-mdp3-20211004.mbo.dbn.zst" \
+            --source "$SOURCE_DIR/glbx-mdp3-20211005.mbo.dbn.zst"
+          echo "CANARY_OUT_DIR=$out_dir" >> "$GITHUB_ENV"
+
+      - name: Dispatch full-roster traversal to the box
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'full' }}
+        shell: bash
+        env:
+          INSTANCE_ID: i-08cee7171c0a76a04
+          DURABLE_PREFIX_FULL: >-
+            nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/full/${{ github.sha }}/${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          # THE FULL ROSTER RUNS ON THE BOX, NOT ON THE RUNNER. D55/D56: 4.26M groups over
+          # sixteen sections against a member-first run that covered five and nearly
+          # exhausted 61.8 GiB. ubuntu-latest is smaller again, and a GitHub job is hard
+          # capped at 360 minutes whatever the timeout says.
+          #
+          # This mode is reachable ONLY by an explicit workflow_dispatch with mode=full. A
+          # push never reaches it, and the default input is canary, because starting the
+          # box is a spend and D58 leaves the sizing decision with Greg.
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          sha = os.environ["GITHUB_SHA"]
+          run_id = os.environ["RUN_ID"]
+          arm = os.environ["A_MEMORY"]
+          prefix = os.environ["DURABLE_PREFIX_FULL"]
+          bucket = os.environ["BUCKET"]
+          command = "; ".join(
+              [
+                  "set -eu",
+                  "cd /opt/frankie-a-arm",
+                  f"git fetch --depth 1 origin {sha}",
+                  f"git checkout --detach {sha}",
+                  f'test "$(git rev-parse HEAD)" = "{sha}"',
+                  "install -d -m 0700 /opt/frankie-a-arm-run",
+                  (
+                      "python3 -m research.kalshi.frankie_raw_mbo_benchmark.native_a_arm_launch"
+                      f" --arm {arm}"
+                      f" --run-id {run_id}"
+                      f" --code-commit {sha}"
+                      " --source-manifest /opt/frankie-a-arm-run/source_manifest.json"
+                      " --out-dir /opt/frankie-a-arm-run"
+                      " $(printf ' --source /opt/frankie-a-arm-run/sources/%s'"
+                      " glbx-mdp3-20211001.mbo.dbn.zst glbx-mdp3-20211003.mbo.dbn.zst"
+                      " glbx-mdp3-20211004.mbo.dbn.zst glbx-mdp3-20211005.mbo.dbn.zst)"
+                  ),
+                  (
+                      "aws s3 cp /opt/frankie-a-arm-run"
+                      f" s3://{bucket}/{prefix} --recursive --only-show-errors"
+                  ),
+                  f"echo A_ARM_TRAVERSAL_COMPLETE={run_id}",
+              ]
+          )
+          Path("/tmp/a-arm-traversal-params.json").write_text(
+              json.dumps({"commands": [command]}), encoding="utf-8"
+          )
+          PY
+          command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "A-arm full-roster native traversal" \
+            --parameters file:///tmp/a-arm-traversal-params.json \
+            --timeout-seconds 3600 \
+            --query 'Command.CommandId' \
+            --output text)"
+          echo "SSM_COMMAND_ID=$command_id" >> "$GITHUB_ENV"
+          status=Pending
+          for _ in $(seq 1 2400); do
+            status="$(aws ssm get-command-invocation \
+              --command-id "$command_id" \
+              --instance-id "$INSTANCE_ID" \
+              --query Status \
+              --output text 2>/dev/null || true)"
+            case "$status" in
+              Success|Failed|TimedOut|Cancelled) break ;;
+            esac
+            sleep 5
+          done
+          result="$(aws ssm get-command-invocation \
+            --command-id "$command_id" \
+            --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,ResponseCode:ResponseCode,StandardOutput:StandardOutputContent,StandardError:StandardErrorContent}' \
+            --output json)"
+          printf '%s\n' "$result"
+          test "$status" = Success
+          grep -F "A_ARM_TRAVERSAL_COMPLETE=${RUN_ID}" <<<"$result"
+
       - name: Persist exact keyless A-memory RT packet
         shell: bash
         run: |
@@ -449,6 +589,35 @@ jobs:
           path: ${{ runner.temp }}/a-memory-rt-packet
           if-no-files-found: error
           retention-days: 7
+
+      - name: Report canary verdict from its own artifact
+        if: ${{ env.CANARY_OUT_DIR != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Its OWN step, because a heredoc nested inside the summary block put `PY` at a
+          # non-zero column and bash never saw the terminator - the exact D57 defect, caught
+          # here by `bash -n` before it could produce a jobless startup-failure run.
+          python3 - <<'PY'
+          import json
+          import os
+
+          body = json.loads(
+              (open(os.environ["CANARY_OUT_DIR"] + "/calculation_result.json")).read()
+          )
+          traversal = body["traversal"]
+          lines = [
+              "### A-memory canary traversal",
+              f"- Verdict: {body['verdict']} (failed gates: {body['failed_gates'] or 'none'})",
+              f"- Completion: {body.get('completion_status')}",
+              f"- Groups / records: {traversal['groups_seen']} / {traversal['records_seen']}",
+              f"- Save points: {traversal['save_points']}",
+              f"- Sections fed: {json.dumps(traversal['sections_fed'], sort_keys=True)}",
+              f"- Slice: {json.dumps(body['slice'], sort_keys=True)}",
+          ]
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as handle:
+              handle.write("\n".join(lines) + "\n")
+          PY
 
       - name: Report concrete A-memory RT launch
         shell: bash
