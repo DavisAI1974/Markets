@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 161 |
+| open | 170 |
 | in progress | 1 |
 | done | 17 |
 
-By size: **XS** 18, **S** 73, **M** 49, **L** 11
+By size: **XS** 18, **S** 79, **M** 52, **L** 11
 
 ---
 
-By tier: **ESSENTIAL** 19, **BIGGEST_WIN** 40, **REST** 103
+By tier: **ESSENTIAL** 25, **BIGGEST_WIN** 43, **REST** 103
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (19)
+## ESSENTIAL (25)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -28,6 +28,10 @@ By tier: **ESSENTIAL** 19, **BIGGEST_WIN** 40, **REST** 103
 |---|---|---|---|
 | **G-1** | XS | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | 20 MINUTES, and it is the documented hole signature eleven times over. The EIA Natural Gas Weekly Update's final edition was the week ending 2026-01-21. A pipeline pointed at a dead vehicle goes stale SILENTLY - present, numeric, in range, right owner - which is exactly the shape state_health cannot see. Confirm what replaced it before the next group reads the block. |
 | **G-11** | XS | Start accruing EIA weekly coal basin spot prices | IRREVERSIBLE and running out. The EIA endpoint carries a rolling FIVE-WEEK window and EIA states the history is proprietary and cannot be released, so every week nobody runs it is a week gone permanently. Already IN_PROGRESS, captured once by hand; it needs a schedule, not a decision. |
+| **F-1** | S | THE BINDING CALCULATION CONTRACT AND MISSION ARE NOT IN ANY READ-FIRST ORDER, AND THREE SESSIONS RAN WITHOUT OPENING THEM | - |
+| **F-2** | S | THE OCTOBER STEP-1 SECONDS ARE THE SEALED ANSWER, AND I RECOMMENDED READING THEM | - |
+| **F-3** | S | THE REGISTRY NAMES A SOURCE PATH FOR ALL 105 LAYERS AND NOTHING FOLLOWS THEM | - |
+| **F-5** | S | SAME/FLIP NOW CARRIES THREE INCOMPATIBLE READINGS AND ONLY GREG CAN PICK | - |
 | **M-12** | S | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | It is the gate under every data fix. Without it a session cannot tell what it actually pushed, and the next session silently inherits pre-fix stores - which is what happened between S114 and S115. |
 | **M-14** | S | THE PAPER DOCK'S OWN CREDENTIAL PATH IS SESSION SCRATCHPAD - kalshi_auth reads scratchpad/kalshi.env | It is the credential the paper book itself needs. It fails on every fresh container by construction, so paper trading cannot start on a new session until it moves. Same class as the three feed consumers fixed this session (D1-02/03/04). |
 | **M-16** | S | THE PULLER WRITES TO A PHANTOM data/ AND LIES ABOUT WHERE - relative OUT_DIR + _write_df ignores out_dir | It silently empties the data plane for the LAST group run while reporting success. Third occurrence of the reports-rows-writes-nothing family (S114 ng_l1 writer; S115 --roll v near-miss). Small fix, and everything downstream of staging depends on it. |
@@ -39,6 +43,8 @@ By tier: **ESSENTIAL** 19, **BIGGEST_WIN** 40, **REST** 103
 | **A-60** | M | THE PRE-PAPER GATE: score the BAND, not the point - the forecaster has never been validated on the only field a binary market consumes | It is the measurement chain across the walk->paper boundary. The walk's scoreboard stops at the boundary and nothing on the other side has ever been validated, so the first honest number about the tradeable object would arrive from live P&L - the most expensive place to learn it. |
 | **A-63** | M | THE KERNEL IS THE MISSING ENGINE - and it produces the BAND for free, which is the same build as A-60 | D32 makes analog retrieval THE product and we have no similarity function at all - retrieval is a calendar window plus a regime label. It is also the cheapest honest route to the band, which A-60 shows has never been validated and is the only field a binary market actually prices. Two ESSENTIAL items, one build. |
 | **A-68** | M | GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal | It is the PREREQUISITE for A-67's retention arm - without it there is no retention to measure, and the arm cannot run. It is also the smallest change that turns a per-day amnesiac spawn into something with a horizon, which is the whole premise of the hybrid. |
+| **F-4** | M | 4.10 CANNOT BE FED BECAUSE RUNWAY IDENTITY IS PER-GROUP, NOT BECAUSE OF ITS PHASE NAMES | - |
+| **F-6** | M | THE A-ARM LINE HAS NO STATION IN THE SPEC BOOK, AND ITS BRANCH IS NOT ON THE PLANT MAP | - |
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | M | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24. |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -46,7 +52,7 @@ By tier: **ESSENTIAL** 19, **BIGGEST_WIN** 40, **REST** 103
 | **A-69** | L | SELF-TRAINING LOOP: Frankie runs blinds on the WALKED corpus, grades himself with FJ-1, and the head is held out as the only true test | It creates the TRAIN/TEST SPLIT this project has never had, it uses a corpus we already own and have used once each, and its grader is already built and has never been run. It is also the mechanism that makes A-67's retention arm meaningful - retention with nothing to retain across is ceremony. |
 | **A-50** | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 
-## BIGGEST WIN (40)
+## BIGGEST WIN (43)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -66,6 +72,8 @@ By tier: **ESSENTIAL** 19, **BIGGEST_WIN** 40, **REST** 103
 | **A-61** | S | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | A false REFUTED is worse than no verification: it argues for UNDOING a real fix, with an adversarial verdict behind it. Cheap to fix (pin a commit) and it protects every future audit. |
 | **A-65** | S | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | It is the test that would have caught THIS session's own worst mistake before Greg did, it is cheap (one extra spawn per change), and it converts every future view/brain change from an argument into a measurement. |
 | **A-66** | S | THE COMPOSITION CONTRACT - partition OWNERSHIP so borrowed pieces own different parts of one job (not a write protocol, and never a ranking) | It is the collision detector for everything else registered tonight. Cheap (a table), and it is the difference between composing best-of-breed and building something that fights itself. Do it BEFORE any of A-59/62/63/64/65 is built. |
+| **F-7** | S | QC_CHECKLIST.md CARRIES FIVE DESKTOP PATHS, VIOLATING D34 INSIDE A LIVE BINDING DOCUMENT | - |
+| **F-8** | S | per_event.report's DOCSTRING DOCUMENTS A PARAMETER IT DOES NOT HAVE, AND THE A-ARM RE-IMPLEMENTS ITS QUANTILE | - |
 | **G-30** | S | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | It is the instrument dependency under A-24a, the discovery note's own RANK 1 candidate and the one it calls strongest. It also turns five of twelve path points from a timing judgment into arithmetic, on a feed we already ingest. |
 | **M-15** | S | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | A compromised credential with a deferral that has silently expired is the kind of thing that is only ever noticed after it matters. Cheap to do, and the deferral it replaces was explicit and time-boxed. |
 | **O-3** | S | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
@@ -80,6 +88,7 @@ By tier: **ESSENTIAL** 19, **BIGGEST_WIN** 40, **REST** 103
 | **A-4** | M | Score the CURVE, not the scalar - four error terms kept separate | D32 made the product a CURVE and we have never scored it. Four error terms kept separate - level, slope, shape, timing - because a day high by 4,000 and a day low by 4,000 net to zero on a forecaster that was catastrophically wrong twice. The scoreboard is what every other item is judged by. |
 | **A-41** | M | RUN THE FAILURE JUDGE ON AGENT BEHAVIOUR - localize every post-mortem finding to an interaction edge and fault side BEFORE it becomes brain evidence | - |
 | **A-62** | M | SERVE EACH SPECIALIST ITS OWN TRACK RECORD - we measure how each agent fails and have never told the agent | instrument_priors proved the pattern works and was the most-praised content of the g24 run ('the honest prior on every instrument I have' - C-0721). This is the same object aimed at the agent instead of the instrument, built from measurements we already hold, and it targets the walk's worst-performing lanes by name. |
+| **F-9** | M | KALSHI_TRADING.md INDEXES 7 OF 103 A-ARM FILES AND CARRIES A REFUTED PREMISE | - |
 | **G-4** | M | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | THE TOP-RANKED GAP, named by two independent lenses, and 0629 is its canonical instance - our cooling forecast was exactly right and burn fell 4.2 Bcf/d because wind rose 62%. It is the fastest-dying input AND the one that flips the SIGN rather than the magnitude. ChatGPT ALREADY DELIVERED the source research (S112 T3) - collect it from Greg first. |
 | **M-4** | M | CDD-vs-normal (the anomaly instrument separating hill from spike) | The cure for the D28 TRANSFER disease, and nws_temp_feed already fetches the normals - so it is a serving change, not an ingest. gw_cdd >= 16.4 fires 46.6% pooled and 0/10 on all four summer blocks; an absolute bar cannot transfer across season by construction. |
 | **A-19** | L | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | L, and it is the foundation under the dominant driver. The station set is 16 hand-set metros with ONE covering the entire Southeast, the weights were never tuned, and the primitive is wrong - it should be per-BA with a measured roll-up. Everything weather-shaped rests on this. |
@@ -211,6 +220,10 @@ By tier: **ESSENTIAL** 19, **BIGGEST_WIN** 40, **REST** 103
 |---|---|---|---|---|---|---|
 | **G-1** | ESSENTIAL | XS | OPEN | S111 | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | - |
 | **G-11** | ESSENTIAL | XS | IN_PROGRESS | S111 | Start accruing EIA weekly coal basin spot prices | - |
+| **F-1** | ESSENTIAL | S | OPEN | S117 | THE BINDING CALCULATION CONTRACT AND MISSION ARE NOT IN ANY READ-FIRST ORDER, AND THREE SESSIONS RAN WITHOUT OPENING THEM | - |
+| **F-2** | ESSENTIAL | S | OPEN | S117 | THE OCTOBER STEP-1 SECONDS ARE THE SEALED ANSWER, AND I RECOMMENDED READING THEM | - |
+| **F-3** | ESSENTIAL | S | OPEN | S117 | THE REGISTRY NAMES A SOURCE PATH FOR ALL 105 LAYERS AND NOTHING FOLLOWS THEM | - |
+| **F-5** | ESSENTIAL | S | OPEN | S117 | SAME/FLIP NOW CARRIES THREE INCOMPATIBLE READINGS AND ONLY GREG CAN PICK | - |
 | **M-12** | ESSENTIAL | S | OPEN | S115 | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | - |
 | **M-14** | ESSENTIAL | S | OPEN | S115 | THE PAPER DOCK'S OWN CREDENTIAL PATH IS SESSION SCRATCHPAD - kalshi_auth reads scratchpad/kalshi.env | - |
 | **M-16** | ESSENTIAL | S | OPEN | S115 | THE PULLER WRITES TO A PHANTOM data/ AND LIES ABOUT WHERE - relative OUT_DIR + _write_df ignores out_dir | - |
@@ -222,6 +235,8 @@ By tier: **ESSENTIAL** 19, **BIGGEST_WIN** 40, **REST** 103
 | **A-60** | ESSENTIAL | M | OPEN | S115 | THE PRE-PAPER GATE: score the BAND, not the point - the forecaster has never been validated on the only field a binary market consumes | - |
 | **A-63** | ESSENTIAL | M | OPEN | S115 | THE KERNEL IS THE MISSING ENGINE - and it produces the BAND for free, which is the same build as A-60 | - |
 | **A-68** | ESSENTIAL | M | OPEN | S115 | GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal | - |
+| **F-4** | ESSENTIAL | M | OPEN | S117 | 4.10 CANNOT BE FED BECAUSE RUNWAY IDENTITY IS PER-GROUP, NOT BECAUSE OF ITS PHASE NAMES | - |
+| **F-6** | ESSENTIAL | M | OPEN | S117 | THE A-ARM LINE HAS NO STATION IN THE SPEC BOOK, AND ITS BRANCH IS NOT ON THE PLANT MAP | - |
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | ESSENTIAL | M | OPEN | S115 | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -242,6 +257,8 @@ By tier: **ESSENTIAL** 19, **BIGGEST_WIN** 40, **REST** 103
 | **A-61** | BIGGEST_WIN | S | OPEN | S115 | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | - |
 | **A-65** | BIGGEST_WIN | S | OPEN | S115 | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | - |
 | **A-66** | BIGGEST_WIN | S | OPEN | S115 | THE COMPOSITION CONTRACT - partition OWNERSHIP so borrowed pieces own different parts of one job (not a write protocol, and never a ranking) | - |
+| **F-7** | BIGGEST_WIN | S | OPEN | S117 | QC_CHECKLIST.md CARRIES FIVE DESKTOP PATHS, VIOLATING D34 INSIDE A LIVE BINDING DOCUMENT | - |
+| **F-8** | BIGGEST_WIN | S | OPEN | S117 | per_event.report's DOCSTRING DOCUMENTS A PARAMETER IT DOES NOT HAVE, AND THE A-ARM RE-IMPLEMENTS ITS QUANTILE | - |
 | **G-30** | BIGGEST_WIN | S | OPEN | S115 | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | - |
 | **M-15** | BIGGEST_WIN | S | OPEN | S115 | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | - |
 | **O-3** | BIGGEST_WIN | S | OPEN | S114 | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
@@ -256,6 +273,7 @@ By tier: **ESSENTIAL** 19, **BIGGEST_WIN** 40, **REST** 103
 | **A-4** | BIGGEST_WIN | M | OPEN | S111 | Score the CURVE, not the scalar - four error terms kept separate | - |
 | **A-41** | BIGGEST_WIN | M | OPEN | S114 | RUN THE FAILURE JUDGE ON AGENT BEHAVIOUR - localize every post-mortem finding to an interaction edge and fault side BEFORE it becomes brain evidence | - |
 | **A-62** | BIGGEST_WIN | M | OPEN | S115 | SERVE EACH SPECIALIST ITS OWN TRACK RECORD - we measure how each agent fails and have never told the agent | - |
+| **F-9** | BIGGEST_WIN | M | OPEN | S117 | KALSHI_TRADING.md INDEXES 7 OF 103 A-ARM FILES AND CARRIES A REFUTED PREMISE | - |
 | **G-4** | BIGGEST_WIN | M | OPEN | S111 | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | - |
 | **M-4** | BIGGEST_WIN | M | OPEN | S109 | CDD-vs-normal (the anomaly instrument separating hill from spike) | - |
 | **A-19** | BIGGEST_WIN | L | OPEN | S112 | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | - |
@@ -435,6 +453,46 @@ saturates at ~3.1M MWh/day around $7 gas because coal's cost per MWh sits below 
 BASIN-SPECIFIC. PRB at $14.65/ton is roughly $8/MWh of fuel and is never displaced; CAPP at $82/ton is
 roughly $33/MWh and is displaced by $3 gas. The switching threshold is a per-basin ladder and this feed IS
 that ladder. It is no longer a slow structural level for M-6 alone.
+
+---
+
+### [ESSENTIAL] F-1 - THE BINDING CALCULATION CONTRACT AND MISSION ARE NOT IN ANY READ-FIRST ORDER, AND THREE SESSIONS RAN WITHOUT OPENING THEM
+
+*size S | OPEN | raised S117*
+
+**Source:** S117, found only after Greg pushed three times: 'go through this list and look for things already built'
+
+MEASURED. research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md and ..._oct45_realtime_mission_20260828.md are marked BINDING_CURRENT_CALCULATION_CONTRACT / BINDING_CURRENT_MISSION and ALWAYS_LOAD in KNOWLEDGE_MANIFEST_20260828.json, and their on-disk sha256 match the manifest. Neither is named in DROP_IN_FRANKIE_A_ARM_NEXT.md's read order, in RUN_SOP.md, or in KALSHI_TRADING.md's A-arm entries. COST, and it is the whole reason this item is ESSENTIAL: on 2026-08-30 I deleted native_exhaustion.PHASE_ORDER on the drop-in's instruction that its eleven names had 'provenance one prose line'. Contract 4.10 lists them verbatim: 'searched coverage, precursor, prebirth state, first deviation, birth/T0, transitions, inflection, persistence, recurrence, extension, completion/reversal, and censored/open status'. Contract 4.12 likewise reads 'SAME and FLIP orientations never pool'. Both deletions reverted at 5148a33. FALSIFIER: this item is closed when a session can reach the contract from the drop-in box without searching for it.
+
+---
+
+### [ESSENTIAL] F-2 - THE OCTOBER STEP-1 SECONDS ARE THE SEALED ANSWER, AND I RECOMMENDED READING THEM
+
+*size S | OPEN | raised S117*
+
+**Source:** S117, self-caught after reading the mission
+
+MEASURED. The mission at :31-34 reads 'Use only F_LAST-closed native event groups. Never use reduced seconds rows, V4_NATIVE_FULL_MBO_SECONDS.jsonl.gz, MBP/top-10, Step-1-derived input... Keep Step-1 and the answer/reveal wall sealed.' NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md section 14 lists 'Existing October Step-1 seconds' under authority SEALED_TARGET_ANSWER, 'mechanically inaccessible until all primary discoveries... are immutable'. FRANKIE_A_ARM_ROLL20_SUBSTRATE_SCOPE_20260830.md recommended reading that artifact's legacy_buy_qty/legacy_sell_qty columns, which are doubly excluded - Step-1-derived AND MBP-10-derived. Banner-corrected, not deleted. WHAT THE DIRECTIVE ACTUALLY REQUIRES is inventory section 8: the causal replay must RECREATE the legacy surface from the native stream, and 'every legacy field requires an explicit crosswalk to its V4-native source fields, calculation, availability time, and state hash.' FALSIFIER: closed when a crosswalk exists and no benchmark path reads a Step-1 output.
+
+---
+
+### [ESSENTIAL] F-3 - THE REGISTRY NAMES A SOURCE PATH FOR ALL 105 LAYERS AND NOTHING FOLLOWS THEM
+
+*size S | OPEN | raised S117*
+
+**Source:** S117, found while checking the drop-in's claim that the roll20 bridge does not exist
+
+MEASURED. agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json carries source_paths on every layer; 93 of 105 point at ONE 193-line document, NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md, which describes each feed and whether it exists. Three sessions concluded capabilities were missing by grepping for their NAMES instead of reading that file: roll20 (exists three ways - the step1 census per-second columns, the frozen flow_series/detect_dipole_peaks, and a LIVE streaming AggressorRoll20Feed in ng_exhaustion_live_clock.py), and the event clock (exists as research/kalshi/ng_exhaustion_v4_causal_clock.py, a causal DISCOVERY-clock contract that fails closed when retrospective t0 is substituted for a causal mark, plus a runway clock, a live clock and a batch proof). THE TRANSFERABLE RULE: absence of a string is not absence of a capability - search for a capability's INPUTS AND OUTPUTS, never its name. FALSIFIER: closed when the drop-in read order names the feed inventory.
+
+---
+
+### [ESSENTIAL] F-5 - SAME/FLIP NOW CARRIES THREE INCOMPATIBLE READINGS AND ONLY GREG CAN PICK
+
+*size S | OPEN | raised S117*
+
+**Source:** S117, after the contract and the frozen corpus were read side by side
+
+Reading 1, BINDING: contract 4.12 - 'SAME and FLIP orientations never pool' - a stratum axis, undefined as to what relation it names. Reading 2, FROZEN WITH PUBLISHED COUNTS: CHAIN_PHASE2_MODULE_NOVELTY_FINDINGS_20260818.md:14 - 'current exhaustion polarity relative to the latest predecessor', 1,546 FLIP / 1,883 SAME of 3,429, gated in four files, and carried in this package as discovery_contract()['transition_orientation_seeds']. Reading 3: FRANKIE_A_ARM_PRELAUNCH_STATE_20260829.md:464-467 calls it 'a MIRROR relationship defined nowhere in the tree'. The first is temporal, the third is cross-sectional; they are different axes wearing one pair of names, which is the _family_id defect. Section 4.4's mechanically defined mirror key is now singular in native_mirror.py and is deliberately NOT these words. FALSIFIER: closed when one reading is written into the contract or the module with Greg's ruling recorded.
 
 ---
 
@@ -649,6 +707,26 @@ CONSEQUENCE FOR THE BOOK SPECIFICALLY: the book's CARRYING half may update conti
 
 (2) ADAPTATION NEEDS A DETECTOR, OR IT IS DRIFT WITH BETTER VOCABULARY. You cannot adapt to a change you have not noticed, and our one documented instance (G-25) is a feed whose sign inverted with nothing raising a hand. A self-improving agent with no change-detection improves against YESTERDAY'S WORLD - confidently, and with a scoreboard that still looks fine. The detector is the prerequisite, not a later refinement: something must be able to say 'this instrument no longer behaves as its instances describe'. instrument_priors (S114) is the raw material - it already carries each instrument's measured track record - and the missing piece is comparing RECENT behaviour against that prior rather than serving the prior as a static fact.
 PAIRS WITH A-35 (which is exactly the 'how would we know' question) and A-62 (the lens's own track record is the same detector aimed at the agent instead of the instrument).
+
+---
+
+### [ESSENTIAL] F-4 - 4.10 CANNOT BE FED BECAUSE RUNWAY IDENTITY IS PER-GROUP, NOT BECAUSE OF ITS PHASE NAMES
+
+*size M | OPEN | raised S117*
+
+**Source:** FRANKIE_A_ARM_PRELAUNCH_STATE_20260829.md:456-458, re-surfaced S117
+
+The prelaunch doc states it and nothing tracks it: 4.10 keys open runways on candidate_id, GroupContext.candidate_id is per-group, so every runway is exactly one group long, phases can never advance, and the ladder never moves off its first entry. This is the actual blocker on 4.10 and it survived the phase-name argument entirely - the names were a distraction from it. Needs a runway identity that SPANS groups, plus which raw pattern enters which landmark. RELATED AND SEPARATE: 4.11 with birth_recv_ns = ctx.recv_ns makes PRIOR structurally unreachable (prelaunch:459-463), which is the prebirth half of the section. FALSIFIER: closed when a runway spans more than one group in a test.
+
+---
+
+### [ESSENTIAL] F-6 - THE A-ARM LINE HAS NO STATION IN THE SPEC BOOK, AND ITS BRANCH IS NOT ON THE PLANT MAP
+
+*size M | OPEN | raised S117*
+
+**Source:** S117, measured while running the andon board for the first time this session
+
+MEASURED. RUN_SOP.md is 895 lines and carries one incidental hit for frankie/raw_mbo/A-arm/benchmark combined; there is no station covering this work. QC_CHECKLIST.md ITEM 0 pins the expected branch to claude/kalshi-agents-coordinator-guard-1175nr with a STOP RULE on mismatch, and PLANT_MAP.md's branch table does not list chatgpt/frankie-raw-mbo-benchmark-20260828 at all - so by PLANT_MAP.md:3, 'if a process is not on this map it is not a standing process', a whole parallel line has been running unmapped. plant_status.py FAILS on branch for the same reason. RUN_SOP.md:19-20 is explicit about what to do with uncovered work: 'the line STOPS at that station. Report the gap. Do not compose a procedure and run it.' Recorded as a NONCONFORMANCE per change-control item 3. The remedy is a proposed SOP diff on Greg's go, never an in-session edit. FALSIFIER: closed when the A-arm has a station and its branch is on the map.
 
 ---
 
@@ -1589,6 +1667,26 @@ PROVENANCE: repo structure and section sizes read from the GitHub landing page; 
 
 ---
 
+### [BIGGEST_WIN] F-7 - QC_CHECKLIST.md CARRIES FIVE DESKTOP PATHS, VIOLATING D34 INSIDE A LIVE BINDING DOCUMENT
+
+*size S | OPEN | raised S117*
+
+**Source:** S117, measured; reported rather than fixed because agents/ is under SOP change control
+
+MEASURED: QC_CHECKLIST.md lines 10, 19, 27, 60 and 67 carry 'E:\\Markets' or '/e/Markets'. D34 and RUN_SOP change-control item 6 both read that no artifact may NAME a desktop path, and this is a live document under agents/, not an archive script, so the declared exception list in CLAUDE.md (the root-level OD/crypto-era scripts) does not cover it. NOT FIXED IN SESSION deliberately: QC ITEM 6 makes any uncommitted modification under agents/ a FAIL, and change control requires a proposed diff plus Greg's go. FALSIFIER: closed when the five paths are repo-relative under a version-logged edit.
+
+---
+
+### [BIGGEST_WIN] F-8 - per_event.report's DOCSTRING DOCUMENTS A PARAMETER IT DOES NOT HAVE, AND THE A-ARM RE-IMPLEMENTS ITS QUANTILE
+
+*size S | OPEN | raised S117*
+
+**Source:** S117, found while checking how the no-average rule is enforced in the A-arm
+
+MEASURED, two defects in the module D37 names as the ENFORCEMENT of the no-average rule. (1) per_event.py:20-23 documents report(..., labels=[...]) but the signature at :33-34 has no labels parameter, so the documented call raises TypeError; the per-event identifiers are the second positional argument, keys. (2) report() has no length guard - zip truncates silently and n = len(keys), so a short prediction list yields a plausible smaller-n report instead of an error. SEPARATELY: no file in frankie_raw_mbo_benchmark/ imports per_event; native_stratum.py:115 re-derives _q by hand to 'match' it, with no test tying the two implementations together - the parallel-reader hazard D11 names. The A-arm's first emitted number would land through the hand copy. FALSIFIER: closed when the docstring executes and one quantile has one implementation.
+
+---
+
 ### [BIGGEST_WIN] G-30 - weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable
 
 *size S | OPEN | raised S115*
@@ -2066,6 +2164,16 @@ THE PATTERN IS ALREADY PROVEN HERE: instrument_priors (S114) collects every play
 THE BUILD: a generated `specialist_priors` section, per lens, carrying (a) day-class hit-rate and sum|err| from the committed corpus, (b) this lens's named recurring failure mode with its instance, (c) what has historically CORRECTED it. Generated from posteriors + actuals, never authored, so it cannot become a second doc (the S115 lesson).
 THE RISK, NAMED SO IT IS DESIGNED FOR: a track record can suppress as easily as inform - an agent told 'you are bad at Mondays' may stand down where it should commit, which is the emission-ceiling failure (A-40) arriving through a new door. Serve the MECHANISM of past failure, not merely the score, and pair it with what corrected it.
 FALSIFIER: if a run under specialist_priors shows no change in the named failure mode AND no drop in emission on that lane, it is inert and should be cut rather than kept for tidiness.
+
+---
+
+### [BIGGEST_WIN] F-9 - KALSHI_TRADING.md INDEXES 7 OF 103 A-ARM FILES AND CARRIES A REFUTED PREMISE
+
+*size M | OPEN | raised S117*
+
+**Source:** S117, measured; CLAUDE.md's standing instruction is to keep the index current
+
+MEASURED: git ls-files research/kalshi/frankie_raw_mbo_benchmark/ returns 103 tracked files; 7 are named anywhere in KALSHI_TRADING.md. Unnamed: 34 modules, 36 tests, and the 16 frozen lock/freeze records under prior_memory/workmode-32851909748-1/ - which is the class the index most needs to carry, since the drop-in warns 'never edit that adapter; it is hash-locked' and nothing tells a reader where the locks live. Also unindexed: the whole agents/frankie_native_raw_mbo_knowledge/ directory, and the calculation contract and mission themselves (see F-1). SEPARATELY the entry at :36-40 still states 'the contract specifies the CALCULATION, never the input event' - refuted: contract section 2 reads 'The atomic observation is one F_LAST-closed native event group', which is what D53 chose. The word 'candidate' is genuinely undefined, which is the narrower true claim. FALSIFIER: closed when store.py docs passes its two gates.
 
 ---
 

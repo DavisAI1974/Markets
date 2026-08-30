@@ -718,9 +718,10 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **164 files.**
+new tool cannot go unlisted. **471 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
+- `agent_frankie.py` — Frankie hybrid agent entry point.
 - `archive_blind.py` — move the blind's posteriors out of the refine's filenames (S108).
 - `batch_record.py` — the TRAVELER on the pallet (S110 turnaround memo 2.3, lot traceability).
 - `blind_drift_trend.py` — Is the BLIND improving group over group? Forward-curve drift is the scoreboard."""
@@ -732,6 +733,7 @@ new tool cannot go unlisted. **164 files.**
 - `brain_audit.py` — the 82-play audit harness, IN THE REPO. (S111, fixing an S111 defect.)
 - `brain_backfill.py` — put the reasoning, the evidence and the past instances INTO the brain, and
 - `brain_conditions.py` — the CONDITIONS slot: vocabulary, verification, and curation harness.
+- `brain_onedoc_fix_s115.py` — close the ONE-DOC holes in the brain. (S115, Greg's go.)
 - `brain_schema.py` — give the brain a schema: typed, queryable, LOSSLESS. (S111, Greg's call)
 - `brain_view.py` — serve the brain to a ROLE, and DECLARE what was withheld.
 - `bshare_normalization_probe.py` — Is session_b_share structurally sub-0.50 because of how it is NORMALIZED?
@@ -742,6 +744,8 @@ new tool cannot go unlisted. **164 files.**
 - `build_blind_state.py` — Build the canonical blind forecaster state from the existing decision_state path.
 - `build_causal_slices.py` — S109 HOLE #11: build per-day CAUSAL SLICES of a blind state, so a specialist physically cannot
 - `build_realized_forcings.py` — the VALIDATION TARGET for the GEFS forcing proxies (S114).
+- `burn_hh_12m_event_ledger.py` — Build an event-level US48 gas-generation vs Henry Hub spot ledger.
+- `burn_hh_living_365d.py` — Rebuild the active burn/Henry Hub dataset as the latest complete 365-day window.
 - `cash_basis.py` — FEED G (family DEL): Henry Hub CASH vs front-futures-settle basis (S98 data gate).
 - `characterize_turns.py` — run month_characterize.characterize_day on the pivotal turn days of the
 - `chatgpt_brief_split.py` — generate one self-contained hand-off file per task from CHATGPT_BRIEF.
@@ -759,12 +763,14 @@ new tool cannot go unlisted. **164 files.**
 - `cot_combined_feed.py` — CFTC COT FUTURES-AND-OPTIONS COMBINED positioning feed (DATA_GATE_S98 feed H).
 - `cot_feed.py` — CFTC Commitments of Traders (COT) positioning feed for the NG intraday forecaster.
 - `creds.py` — credential resolution, OUTSIDE the repo (S113, Greg: "no more scratchpad. It's in the sop").
-- `data_registry.py` — THE MASTER LIST OF EVERY DATA POINT WE HAVE. (Registry A-22.)
+- `data_registry.py` — Canonical DavisAI Markets data-point registry (S123 reconciliation).
 - `databento_backfill.py` — TRUE-TICK historical NYMEX tape from Databento (S84).
+- `databento_backfill_s115.py` — M-16 safe entry point for databento_backfill.py.
 - `databento_live_smoke.py` — one-shot validation that the Databento LIVE plan is active (S99).
 - `decision_trace.py` — BIND the reasoning to the decision it produced (S110, Greg's question:
 - `defect_timeline.py` — which groups ran on a known-broken input, and was the EVIDENCE re-measured?
 - `due_gate.py` — serve the REGISTERED FORWARD TESTS into a group's run, and refuse a silent pass.
+- `eia_storage_compat.py` — Build the legacy national-storage compatibility store from EIA's public WNGSR workbook.
 - `eia_surprise.py` — historical EIA release SURPRISE for the NYMEX-canary release windows (S86).
 - `event_move_baseline.py` — the NYMEX-canary EVENT-MOVE baseline (S85).
 - `extract_guesses.py` — the per-day guess-vs-actual scorecard for G3/4/5 survived in the brain's
@@ -775,6 +781,187 @@ new tool cannot go unlisted. **164 files.**
 - `forecast_contract.py` — Versioned output contract for the existing NG blind forecaster.
 - `forecast_harness.py` — turn-key helpers for the self-growing forecaster LOOP (S92 build).
 - `forward_curve.py` — the NYMEX forward-CURVE reader: backwardation/contango + prompt-vs-term conditioning
+- `frankie_anchor_s118.py` — Materialize ephemeral G17/G18 anchor artifacts from declared group_config values.
+- `frankie_authority_knowledge_plane_20260824.py` — Lossless authority-gated knowledge plane for the blind October Frankie run.
+- `frankie_aws_stage_s126.py` — Fail-closed AWS staging preflight for the current Frankie build (S126).
+- `frankie_backends.py` — Pluggable slow-path reasoning backends for Frankie.
+- `frankie_block_availability_matrix_20260824.py` — Machine-readable causal availability policy for every canonical S135 block."""
+- `frankie_bounded_3mo_parallel.py` — Bounded three-month Frankie orchestration for the full post-V4 program.
+- `frankie_bridge_preflight_s118.py` — Preflight the namespace-local E->A->B weekend bridge path for S118 G18/G19 validation.
+- `frankie_causal_capture_gate_s126.py` — S126 hard gate for causal-slice capture timestamps.
+- `frankie_causal_operational_context_20260824.py` — Lossless causal snapshots of Frankie's complete canonical decision-state universe.
+- `frankie_causal_runtime_tools_20260824.py` — Provider-callable causal state and append-only evidence receipts.
+- `frankie_claude_code_temp.py` — Temporary Claude Code operator for the existing Frankie blind/refine framework.
+- `frankie_cognition.py` — Deterministic cognitive contracts for Frankie.
+- `frankie_cognitive_candidates.py` — Pure SHADOW candidate components derived from Frankie's cognitive top ten.
+- `frankie_cognitive_experiments.py` — Matched-budget SHADOW experiment registry for Frankie's cognitive top ten."""
+- `frankie_cognitive_p0_loops.py` — Bounded SHADOW-only cognitive mechanism plumbing.
+- `frankie_core.py` — Deterministic core for Frankie, the hybrid market-research agent.
+- `frankie_docs_sync_20260821.py` — ---
+- `frankie_effects_s115.py` — Explicit S115 falsifier reports for A-68 retention and A-62 specialist priors.
+- `frankie_engine.py` — Frankie orchestration: independent reasoning lanes, deterministic adjudication, AWS queue."""
+- `frankie_evaluation_controls.py` — External evaluation controls for Frankie SHADOW candidates.
+- `frankie_evolution.py` — Frankie's bounded harness-evolution and release-engineering layer.
+- `frankie_forecaster_s115.py` — S115 forecaster harness for Frankie.
+- `frankie_full_stack_launch_gate_audit_20260824.py` — Fail-closed audit for the 15 minimum Frankie full-stack October launch gates.
+- `frankie_full_stack_paired_lane_orchestrator_20260824.py` — Fail-closed two-lane orchestration for the October Frankie experiment.
+- `frankie_full_stack_provisional_combined_pipeline_20260824.py` — Execute every lawful provisional ability for the combined October lane.
+- `frankie_full_stack_runtime_adapter_20260824.py` — Executable provider and durable-ledger adapter for one lawful Frankie prefix.
+- `frankie_full_stack_runtime_contracts_20260824.py` — Additive runtime-plane contracts for the Frankie October full-stack bridge.
+- `frankie_g24_refine_render_s128.py` — Render g24 full actual RT vs immutable S127 blind vs S128 causal refine."""
+- `frankie_g24_run_s127.py` — S127 packet exporter for ChatGPT-operated Frankie on sanctioned g24.
+- `frankie_g24_score_render_s127.py` — Score and render the fully-frozen ChatGPT-operated Frankie g24 blind run.
+- `frankie_g3_reblind_s131.py` — S131 corrected mechanical re-blind input exporter for September 2025 G3.
+- `frankie_g3_reblind_s131_runner.py` — Thin S131 entrypoint for a corrected G3 current-Frankie historical replay.
+- `frankie_g3_s131_freeze.py` — Actual-free S131 blind freeze coordinator for current-Frankie G3 replay.
+- `frankie_g3_s131_reconcile_score.py` — Reconcile S131 score against S129 on genuinely common definitions.
+- `frankie_g3_s131_score.py` — Post-freeze S131 reveal/score for current-Frankie G3 replay.
+- `frankie_g3_s132_dynamic_curve_rehearsal.py` — Assemble the S132 G3 event-driven curve rehearsal without reading target outcomes.
+- `frankie_g3_s134_full_refine.py` — S134 full ten-day G3 unblinded refine-to-actual curve.
+- `frankie_g3_s134_full_refine_runner.py` — S134 full-refine runner repairs for event-driven node time semantics.
+- `frankie_g3_s134_refine_evidence.py` — S134 full-window G3 refine evidence extractor.
+- `frankie_gdl_p0_controls.py` — Deterministic GDL-derived P0 controls for provisional Frankie research.
+- `frankie_group_forecast_s118.py` — Run Frankie through the current NG five-specialist forecast path on walked groups.
+- `frankie_hipporag_p0_retrieval.py` — Bounded HippoRAG-inspired retrieval-to-reader plumbing for Frankie.
+- `frankie_historical_hydrate_s130.py` — S130 historical hydration utility for current Frankie decision states.
+- `frankie_idempotency.py` — At-least-once delivery protection for Frankie evidence.
+- `frankie_improve.py` — Bounded self-improvement for Frankie.
+- `frankie_kitchen_sink_audit_s121.py` — S121 kitchen-sink causal completeness gate for Frankie blind recreations.
+- `frankie_lane_aware_context_router_20260824.py` — Two-lane, identity-bound context routing for the blind October experiment.
+- `frankie_lats_p0_search.py` — Bounded, callback-injected SHADOW LATS/MCTS plumbing for Frankie.
+- `frankie_m13_recover_s126.py` — M-13 S126: recover the three stale Frankie stores without inventing replacement feeds.
+- `frankie_market_p0_controls.py` — Fail-closed market/temporal evidence controls for Frankie.
+- `frankie_meta_loop_agents_20260821.py` — Two isolated research/build-redteam lanes for the Frankie metacognitive sidecar."""
+- `frankie_meta_loop_coordinator_s138.py` — Frankie coordinator integration for the bounded post-evidence metacognitive loop.
+- `frankie_meta_loop_s138.py` — Bounded post-evidence metacognitive sidecar for Frankie and specialists A-E.
+- `frankie_microstructure_p0_baselines.py` — Causal Level-I OFI and resiliency baselines for provisional Frankie research.
+- `frankie_nova_optimizer.py` — Frankie-specific NOVA token optimizer and external-state harness.
+- `frankie_october_knowledge_inventory_20260824.py` — Production source-spec builder for the corrected October knowledge plane.
+- `frankie_p0_real_evidence_plan.py` — Immutable precommit contract for Frankie's six real P0 empirical receipts.
+- `frankie_p0_registry.py` — Fail-closed inventory and readiness receipts for provisional Frankie P0 work.
+- `frankie_packet_compact_s120.py` — Lossless transmission compaction for the S120 Frankie canary.
+- `frankie_progress_compress_p0.py` — Bounded Progress & Compress SHADOW lifecycle for Frankie.
+- `frankie_progress_lock_s122.py` — Machine-enforced S122 progress lock.
+- `frankie_provider_knowledge_tools_20260824.py` — Bounded provider-callable access to the lawful Frankie knowledge plane.
+- `__init__.py` — Controller-neutral raw-MBO benchmark contracts and restart utilities."""
+- `a_clean_forecaster_prepare_20260828.py` — (no docstring summary)
+- `a_clean_forecaster_replay_20260828.py` — (no docstring summary)
+- `a_clean_forecaster_resume_20260828.py` — Verify the complete chain and every continuation/adapter sibling."""
+- `a_clean_rt_replay_20260828.py` — (no docstring summary)
+- `a_memory_member_first_recalculation_20260828.py` — Delegates to the single mechanical mirror key required by contract 4.4.
+- `a_memory_prepare_20260828.py` — (no docstring summary)
+- `a_memory_rt_resume_20260828.py` — (no docstring summary)
+- `a_memory_rt_resume_latest_20260828.py` — Resume the existing A-memory diagnostic replay from its latest closed checkpoint.
+- `benchmark_checkpoint.py` — Restart-safe, controller-neutral checkpoints for the raw-MBO blind benchmark."""
+- `chat_packet_seam.py` — Native raw-MBO contract boundary for the Chat-controlled Frankie benchmark arms.
+- `corrected_a_arm_execution_gate_20260828.py` — Fail-closed execution and lock gates for corrected native-MBO A-arm runs."""
+- `mbo_resume_state.py` — Exact external snapshot/restore for the proven V4 native-MBO adapter.
+- `native_absorption.py` — Section 4.8: absorption, withdrawal, and delivered pressure.
+- `native_calculation_runner.py` — Sections 5 and 6: the seven artifact layers and the eight fail-closed gates.
+- `native_clocks.py` — Section 4.5: formation, serialization, and observation clocks.
+- `native_dipole.py` — Section 4.12: dipole and opposing-pressure runway.
+- `native_discovery.py` — Section 4.15: open-world cluster and new-structure discovery.
+- `native_evidence_bundle.py` — Lossless native-MBO evidence ledger for the Chat-controlled Frankie arms.
+- `native_exhaustion.py` — Section 4.10: exhaustion state, birth, persistence, and completion.
+- `native_frankie_knowledge_registry.py` — Hash-bound, role-routed knowledge registry for native raw-MBO Frankie runs."""
+- `native_full_capture_adapter.py` — Keep everything the V4 adapter computes and then throws away, without editing it.
+- `native_group_adapters.py` — Construct section-4 domain objects from one F_LAST group (decision D53, 2026-08-29).
+- `native_ingestion_layer_registry.py` — Versioned, fail-closed ingestion-layer gates for corrected Frankie A arms."""
+- `native_ladder.py` — Section 4.9: price-ladder topology.
+- `native_lineage.py` — Section 4.13: chain families and D-depth lineages.
+- `native_mirror.py` — Section 4.4's one mechanically defined mirror key.
+- `native_queue.py` — Section 4.6: queue position, priority, and order survival.
+- `native_recognition.py` — Section 4.11: prebirth prediction and continuous H+N recognition.
+- `native_recurrence.py` — Section 4.14: recurrence, bursts, and transition graphs.
+- `native_replay_driver.py` — The driver: walks the native stream once and feeds every calculation section.
+- `native_replenishment.py` — Section 4.7: replenishment and liquidity resilience.
+- `native_response.py` — Section 4.16: fixed causal future-response table.
+- `native_rt_book.py` — A FIFO order book advanced one action at a time, so every read is the REAL-TIME view.
+- `native_session.py` — Section 2 session segmentation and trading-day assignment (decision D6a, 2026-08-29).
+- `native_staging.py` — The spawn contract: how Frankie is actually called, and how its output gets back.
+- `native_stratum.py` — Section 3 of the native calculation contract, as a function rather than a sentence.
+- `periodic_checkpointer.py` — Periodic save points for long native raw-MBO runs.
+- `raw_mbo_source_manifest.py` — Hash-bound native raw-MBO source manifest and exact progress denominator.
+- `refresh_native_frankie_knowledge.py` — Regenerate promoted Frankie capsules and their hash-bound knowledge manifest."""
+- `__init__.py` — Focused tests for the native raw-MBO Chat benchmark seam."""
+- `manifest_fixture.py` — Shared source-manifest fixture for the A-arm test suites.
+- `test_a_clean_forecaster_resume_latest.py` — (no docstring summary)
+- `test_a_memory_member_first_recalculation.py` — (no docstring summary)
+- `test_a_memory_rt_resume_latest.py` — (no docstring summary)
+- `test_chat_packet_seam.py` — (no docstring summary)
+- `test_corrected_a_arm_execution_gate.py` — (no docstring summary)
+- `test_native_absorption.py` — Tests for section 4.8 absorption, withdrawal, and delivered pressure."""
+- `test_native_calculation_runner.py` — Tests for sections 5 and 6: artifact layers and fail-closed acceptance gates."""
+- `test_native_clocks.py` — Tests for section 4.5 formation, serialization, and observation clocks."""
+- `test_native_dipole.py` — Tests for section 4.12 dipole and opposing-pressure runway."""
+- `test_native_discovery.py` — Tests for section 4.15 open-world cluster and new-structure discovery."""
+- `test_native_evidence_bundle.py` — (no docstring summary)
+- `test_native_exhaustion.py` — Tests for section 4.10 exhaustion runways."""
+- `test_native_frankie_knowledge_registry.py` — (no docstring summary)
+- `test_native_full_capture_adapter.py` — Tests for the full-capture adapter (D60).
+- `test_native_group_adapters.py` — Tests for the section-4 group adapters (D53: the F_LAST group is the unit).
+- `test_native_ingestion_layer_registry.py` — (no docstring summary)
+- `test_native_ladder.py` — Tests for section 4.9 price-ladder topology."""
+- `test_native_lineage.py` — Tests for section 4.13 chain families and D-depth lineages."""
+- `test_native_mirror.py` — Contract 4.4 mandates ONE mechanically defined mirror key.
+- `test_native_queue.py` — Tests for section 4.6 queue position, priority, and order survival."""
+- `test_native_recognition.py` — Tests for section 4.11 prebirth prediction and continuous H+N recognition."""
+- `test_native_recurrence.py` — Tests for section 4.14 recurrence, bursts, and transition graphs."""
+- `test_native_replay_driver.py` — Tests for the traversal driver.
+- `test_native_replenishment.py` — Tests for section 4.7 replenishment and liquidity resilience."""
+- `test_native_response.py` — Tests for section 4.16 fixed causal future-response table."""
+- `test_native_rt_book.py` — Tests for the real-time replay book (Greg: "We should see it like it would be seen in rt").
+- `test_native_rt_book_differential.py` — Differential tests: `ReplayBook` must MIRROR `InstrumentBook` on every book mutation.
+- `test_native_session.py` — Tests for section 2 continuity segmentation and trading-day assignment (D6a).
+- `test_native_staging.py` — The spawn contract: how Frankie is actually called.
+- `test_native_stratum.py` — Tests for the parallel-view rule as enforced structure."""
+- `test_open_world_growth.py` — The carried vocabulary is where discovery starts, not what it is validated against.
+- `test_periodic_checkpointer.py` — Tests for periodic save points on long native raw-MBO runs."""
+- `test_raw_mbo_source_manifest_roles.py` — Tests for the single-role roster and the identity/manifest hash split."""
+- `test_refresh_native_frankie_knowledge.py` — (no docstring summary)
+- `frankie_reflect.py` — Scheduled reflection over resolved Frankie evidence.
+- `frankie_reflect_runner.py` — Nightly bounded reflection runner for Frankie; generates proposals, never applies them."""
+- `frankie_render_s115.py` — A-59: NOOA-style render target over the existing canonical store.
+- `frankie_role_context_profiles_20260824.py` — Validated native-context profiles for the uniform two-Frankie build."""
+- `frankie_s114_separation_metadata_s126.py` — S126 metadata-only repair for the already-verified S114 GEFS forcing store.
+- `frankie_s115.py` — S115 Frankie contract layer.
+- `frankie_s115_status.py` — Report readiness against FRANKIE_BUILD_BRIEF_S115.md without pretending missing data is ready."""
+- `frankie_s118_redo.py` — S118/S120 clean-redo guards for the Frankie validation canary boundary.
+- `frankie_s121_curve_restore.py` — Frankie S121: restore the established kitchen-sink blind curve contract.
+- `frankie_s128_contract_repairs.py` — S128 narrow serving/contract repairs learned from the g24 blind+refine run.
+- `frankie_s128_decision_state.py` — S128 decision-state entrypoint with contract-only serving repairs installed."""
+- `frankie_s128_handoff.py` — S128 HE24->HE1 handoff entrypoint with typed forecast-vs-realized exit state."""
+- `frankie_s132_dynamic_curve.py` — S132 event-driven curve contract for Frankie.
+- `frankie_s132_runtime.py` — Canonical S132 runtime install seam.
+- `frankie_s133_reasoning_runtime.py` — S133 reasoning-authority runtime seam.
+- `frankie_s135_current_runtime.py` — S135 canonical CURRENT-FRANKIE runtime seam.
+- `frankie_s135_date_driver.py` — Permanent thin driver for S135 date-window ChatGPT sessions.
+- `frankie_s135_date_render.py` — Render a completed S135 date session from its resolved S136 date plan.
+- `frankie_s135_date_session.py` — Date-driven ChatGPT transport for the existing S135 CURRENT-FRANKIE state machine.
+- `frankie_s135_group_runner.py` — Canonical S135 sequential CURRENT-FRANKIE group runner.
+- `frankie_s135_handoff.py` — S135 current HE24->HE1 handoff wrapper.
+- `frankie_s135_preflight.py` — Fail-closed S135 preflight for every new CURRENT-FRANKIE group run.
+- `frankie_s135_specialist_authority.py` — S135 specialist authority/sequencing contracts.
+- `frankie_s135_substrate_descriptor_20260824.py` — Seal and validate the complete restore_substrate S135 data-plane staging receipt."""
+- `frankie_s136_date_plan.py` — Resolve date intent to one exact, already-declared Frankie historical window.
+- `frankie_s136_date_refine_prep.py` — Prepare a post-reveal REFINE packet for a completed S135 date session.
+- `frankie_s136_state_stage.py` — Targeted S136 state-plane staging for date-driven Frankie runs.
+- `frankie_s136_target_brain_wall.py` — S136 target-session brain wall for CURRENT-FRANKIE historical learning runs.
+- `frankie_s137_cognitive_experiment_runner.py` — Paired freeze-before-reveal runner for Frankie's ten S137 SHADOW arms.
+- `frankie_s137_cognitive_runtime.py` — S137 SHADOW-only cognitive-candidate wrapper for CURRENT FRANKIE S135.
+- `frankie_source_inventory_cross_reference_20260824.py` — Cross-reference the pushed 148-path Frankie inventory against live wiring.
+- `frankie_specialist_parity_s126.py` — S126 specialist parity guard for the current Frankie packet.
+- `frankie_stage_group_s128.py` — S128 staging wrapper: original stage_group with repaired decision-state construction.
+- `frankie_storage_preflight.py` — Frankie storage preflight: build and verify the weekly EIA storage stores with no API key.
+- `frankie_target_cell_manifest_s122.py` — Compile and validate the exact target-cell kitchen-sink manifest for Frankie.
+- `frankie_temporal_graph_p0_adapter.py` — Causal batch-size-1 temporal-graph adapter plumbing for Frankie.
+- `frankie_temporal_p0_controls.py` — Fail-closed temporal P0 controls for provisional Frankie research.
+- `frankie_two_group_run_s118.py` — Reproducible S118 two-group Frankie validation entrypoint.
+- `frankie_two_group_smoke_s118.py` — S118 matched-artifact smoke check for G15/G16.
+- `frankie_v4_authority_runtime_validation_20260824.py` — Fail-closed runtime receipt for every governing H module and I record.
+- `frankie_v4_follow_on_agents_20260821.py` — Isolated follow-on build-agent receipts for unfinished V4 preparation work.
+- `frankie_v4_governing_runtime_execution_20260824.py` — Execute governing H contracts on each corrected marked prefix.
+- `frankie_validation_s115.py` — S115 architecture validation for Frankie (A-67, A-69, A-42/FJ-1 adapter).
 - `free_ng_data_collector.py` — Collect free public drivers for Henry Hub NG and CME event-contract research.
 - `freeze_risk_feed.py` — FEED E (S100, DATA_GATE_S98) - freeze-off risk: producing-basin forecast MIN temps, cycle as-of.
 - `futures_kalshi_lag.py` — measure the LAG between the futures market (the price-discovery venue) and
@@ -808,6 +995,7 @@ new tool cannot go unlisted. **164 files.**
 - `kalshi_history.py` — pull HISTORICAL Kalshi trade + candlestick data around past scheduled releases.
 - `kalshi_ng_backfill.py` — FEED L (DATA_GATE_S98): Kalshi-side NG market data - inventory / backfill.
 - `kalshi_paper_ledger.py` — G1 of the paper-trading dock (S110 turnaround memo Part 3).
+- `kalshi_rule_canonicalizer.py` — Canonicalize Kalshi market rules and find duplicated contingent claims.
 - `kalshi_score.py` — settlement + scoring harness for Kalshi contracts (S78 Option A).
 - `kalshi_weather_forecast.py` — wire the OD-weather storage-NUMBER forecaster into the kalshi_score
 - `lag_execution_map.py` — FEED M part 1 (S100, DATA_GATE_S98) - the lag's NG-specific EXECUTION SHAPE on the KXNATGASD
@@ -820,12 +1008,45 @@ new tool cannot go unlisted. **164 files.**
 - `model_disagreement.py` — FEED C (DATA_GATE_S98): MODEL DISAGREEMENT as a forecast-uncertainty proxy.
 - `month_characterize.py` — per-(commodity, MONTH) CONTINUOUS-tape characterizer. The per-agent TOOL the S88
 - `mos_cycle_feed.py` — FEED A PHASE 1 (S100, DATA_GATE_S98) - cycle-level MOS as-of, hour resolution.
+- `ng_exhaustion_frankie_causal_data_plane_20260824.py` — Protected continuous causal data-plane contracts for the Frankie V4 bridge.
+- `ng_exhaustion_frankie_continuous_stream_20260824.py` — Continuous V4 replay-envelope to protected Frankie causal-second stream.
+- `ng_exhaustion_frankie_fullstack_october_20260824.py` — Fresh full-stack October Frankie runner.
+- `ng_exhaustion_frankie_post_freeze_paired_evaluation_20260824.py` — Post-freeze paired evaluation for the October Frankie full-stack experiment.
+- `ng_exhaustion_october_frankie_v4_bridge_20260824.py` — Blind raw-MBO -> V4-native -> GPT-5.6 Sol canary bridge.
+- `ng_exhaustion_step1_3mo_completion_gate.py` — Fail-closed completion gate for the exact Sep-Nov 2021 bounded Step-1 run.
+- `ng_exhaustion_step1_completion_gate.py` — Pure fail-closed gates shared by Step-1 launch/completion verification."""
+- `ng_exhaustion_step1_recovery.py` — Prepare an exact no-raw-replay finalization contract for Step-1."""
+- `ng_exhaustion_step1_to_v4_registry.py` — Freeze verified Step-1 outputs as non-result-bearing V4 pilot inputs."""
+- `ng_exhaustion_two_day_step1_transfer_verify_20260824.py` — Fail-closed receipt artifact verification for the two-day transfer recovery."""
+- `ng_exhaustion_two_frankies_prior_surface_blind_2day_20260825.py` — Run exactly Real-Time Frankie then Forecaster Frankie on the prior Oct-4/5 surface.
+- `ng_exhaustion_two_frankies_workmode_coordinate_2day_20260825.py` — Freeze sequential Work-mode Frankie outputs without provider/API receipts."""
+- `ng_exhaustion_two_frankies_workmode_packet_2day_20260825.py` — Build blind-safe Work-mode packets for the exact Oct-4/5 two-Frankie run.
+- `ng_exhaustion_v4_adapter_integration.py` — End-to-end isolated V4 adapter integration contract.
+- `ng_exhaustion_v4_causal_clock.py` — Isolated V4 causal discovery-clock contract.
+- `ng_exhaustion_v4_causal_entry_adapter.py` — Isolated bridge from a causal discovery receipt to the frozen runway engine.
+- `ng_exhaustion_v4_detector_intensity.py` — Detector-intensity semantic boundary for NG Exhaustion V4.
+- `ng_exhaustion_v4_detector_intensity_semantics.py` — Fail-closed detector-intensity semantic resolver for NG Exhaustion V4.
+- `ng_exhaustion_v4_end_to_end_adapter.py` — Isolated end-to-end NG Exhaustion V4 adapter pipeline.
+- `ng_exhaustion_v4_exact_candidate_freeze.py` — Exact-candidate engineering regression/freeze contract for NG Exhaustion V4.
+- `ng_exhaustion_v4_gate_verifier.py` — Recompute the nine V4 clean-source prelaunch gates from typed artifacts.
+- `ng_exhaustion_v4_history_support.py` — Provenance/coverage contracts for additive V4 outside chronology.
+- `ng_exhaustion_v4_lock_outcome.py` — Complete lock-outcome recomputation for the isolated V4 ledger.
+- `ng_exhaustion_v4_mechanics.py` — Isolated, fail-closed mechanics for NG Exhaustion V4.
+- `ng_exhaustion_v4_pilot_chunk_guard.py` — Fail-closed pilot-manifest / D-year-chunk guard for NG Exhaustion V4.
+- `ng_exhaustion_v4_pilot_chunk_guardrail.py` — Fail-closed V4 pilot manifest and D/year chunk guardrail.
+- `ng_exhaustion_v4_state_assembler.py` — Causal, missingness-safe immutable state assembler for NG Exhaustion V4.
+- `ng_exhaustion_v4_unified_runtime.py` — Single-registry / single-engine / single-reconciler V4 runtime contract.
 - `ng_historical_manifest.py` — Manifest contract for historical NG L1/trades and MBO replay.
 - `ng_historical_replay.py` — Deterministic G15 L1/trades + MBO replay through the live operator.
 - `ng_live_collector.py` — Durable live prompt-Henry-Hub collector, isolated from historical jobs.
+- `ng_live_exhaustion_collector.py` — Drop-in NG live collector entrypoint with the exact exhaustion roll-20 tap.
 - `ng_live_operator.py` — Causal NG live onset, divergence, exhaustion, and MBO queue telemetry.
 - `ng_live_recover.py` — Best-effort upload of live NG DBN files left by an abrupt prior exit.
 - `ng_live_watchdog.py` — Restart the live NG collector when its process or heartbeat becomes stale.
+- `ng_mbo_5y_job_consolidator.py` — Fence and consolidate Databento NG.v.0 MBO batch jobs for the approved 5Y archive.
+- `ng_mbo_5y_native_to_s3.py` — Lossless five-year NG.v.0 MBO batch acquisition -> existing Markets AWS S3 bucket.
+- `ng_mbo_5y_native_to_s3_safe.py` — Compatibility guard for the 5Y NG MBO acquisition.
+- `ng_mbo_5y_s3_compact_audit.py` — Read-only expected-vs-actual audit for the approved five-year NG.v.0 MBO archive.
 - `ng_paper_loop.py` — G2 of the paper-trading dock (S110): the DAILY PAPER LOOP skeleton.
 - `ng_rt_feature_state.py` — Causal feature-state contract for the NG Real-Time Refine Agent.
 - `ngwu_feed.py` — FEED N (family D/supply): the EIA weekly natural gas S/D balance, from the
@@ -872,13 +1093,99 @@ new tool cannot go unlisted. **164 files.**
 - `state_repair_s110.py` — the S110 fix phase for the G23 pre-blind state audit (findings f1/f3/f4/f5).
 - `state_repair_s110b.py` — A11.1: the CDD-LADDER ARTIFACT repair (S110 merge addendum; Greg's go
 - `steo_vintage.py` — FEED T (family D/balance): STEO monthly VINTAGES - the frozen as-of NG balance (S99).
-- `storage_consensus.py` — weekly EIA natural gas storage ANALYST CONSENSUS as a decision-state
+- `storage_consensus.py` — weekly EIA natural gas storage analyst consensus as a decision-state input.
 - `storage_regional.py` — REGIONAL NG working-gas storage as a decision-state INPUT (S97).
+- `storage_restage_repair.py` — graft the CORRECT storage lane onto a committed group state. (S115.)
 - `storage_vintage.py` — AS-FIRST-PRINTED vs CURRENT-VINTAGE EIA weekly storage (DATA_GATE_S98 feed K).
 - `store.py` — ONE STORE, GENERATED VIEWS. (Registry A-7.)
+- `system_inventory.py` — Durable DavisAI Markets / Frankie system inventory.
 - `tape_reconcile.py` — assert tape_conditions is measuring THE CONTRACT WE ARE FORECASTING (S108).
+- `test_agent_frankie.py` — (no docstring summary)
+- `test_databento_s115.py` — (no docstring summary)
+- `test_frankie_authority_knowledge_plane_20260824.py` — (no docstring summary)
+- `test_frankie_aws_stage_s126.py` — (no docstring summary)
+- `test_frankie_bounded_3mo_parallel.py` — (no docstring summary)
+- `test_frankie_causal_capture_gate_s126.py` — (no docstring summary)
+- `test_frankie_causal_operational_context_20260824.py` — (no docstring summary)
+- `test_frankie_causal_runtime_tools_20260824.py` — (no docstring summary)
+- `test_frankie_claude_code_temp.py` — (no docstring summary)
+- `test_frankie_cognition.py` — (no docstring summary)
+- `test_frankie_cognitive_p0_loops.py` — (no docstring summary)
+- `test_frankie_data_registry_s123.py` — (no docstring summary)
+- `test_frankie_effects_s115.py` — (no docstring summary)
+- `test_frankie_evaluation_controls.py` — (no docstring summary)
+- `test_frankie_evolution.py` — (no docstring summary)
+- `test_frankie_full_stack_launch_gate_audit_20260824.py` — (no docstring summary)
+- `test_frankie_full_stack_paired_lane_orchestrator_20260824.py` — (no docstring summary)
+- `test_frankie_full_stack_provisional_combined_pipeline_20260824.py` — (no docstring summary)
+- `test_frankie_full_stack_runtime_adapter_20260824.py` — (no docstring summary)
+- `test_frankie_full_stack_runtime_contracts_20260824.py` — (no docstring summary)
+- `test_frankie_g24_run_s127.py` — (no docstring summary)
+- `test_frankie_gdl_p0_controls.py` — (no docstring summary)
+- `test_frankie_hipporag_p0_retrieval.py` — (no docstring summary)
+- `test_frankie_idempotency.py` — (no docstring summary)
+- `test_frankie_kitchen_sink_s121.py` — (no docstring summary)
+- `test_frankie_lane_aware_context_router_20260824.py` — (no docstring summary)
+- `test_frankie_lats_p0_search.py` — (no docstring summary)
+- `test_frankie_m13_recover_s126.py` — (no docstring summary)
+- `test_frankie_market_p0_controls.py` — (no docstring summary)
+- `test_frankie_meta_loop_coordinator_s138.py` — (no docstring summary)
+- `test_frankie_meta_loop_s138.py` — (no docstring summary)
+- `test_frankie_microstructure_p0_baselines.py` — (no docstring summary)
+- `test_frankie_nova_optimizer.py` — (no docstring summary)
+- `test_frankie_october_knowledge_inventory_20260824.py` — (no docstring summary)
+- `test_frankie_p0_real_evidence_plan.py` — (no docstring summary)
+- `test_frankie_p0_registry.py` — (no docstring summary)
+- `test_frankie_progress_compress_p0.py` — (no docstring summary)
+- `test_frankie_progress_lock_s122.py` — (no docstring summary)
+- `test_frankie_provider_knowledge_tools_20260824.py` — (no docstring summary)
+- `test_frankie_role_context_profiles_20260824.py` — (no docstring summary)
+- `test_frankie_s114_separation_metadata_s126.py` — (no docstring summary)
+- `test_frankie_s115.py` — (no docstring summary)
+- `test_frankie_s120_canary_boundary.py` — (no docstring summary)
+- `test_frankie_s120_packet_compact.py` — (no docstring summary)
+- `test_frankie_s121_curve_restore.py` — (no docstring summary)
+- `test_frankie_s128_contract_repairs.py` — (no docstring summary)
+- `test_frankie_s137_cognitive_experiment_runner.py` — (no docstring summary)
+- `test_frankie_s137_cognitive_runtime.py` — (no docstring summary)
+- `test_frankie_source_inventory_cross_reference_20260824.py` — (no docstring summary)
+- `test_frankie_specialist_parity_s126.py` — (no docstring summary)
+- `test_frankie_target_cell_manifest_s122.py` — (no docstring summary)
+- `test_frankie_temporal_graph_p0_adapter.py` — (no docstring summary)
+- `test_frankie_temporal_p0_controls.py` — (no docstring summary)
+- `test_frankie_v4_authority_runtime_validation_20260824.py` — (no docstring summary)
+- `test_frankie_v4_follow_on_protected_baseline.py` — (no docstring summary)
+- `test_ng_exhaustion_frankie_causal_data_plane_20260824.py` — (no docstring summary)
+- `test_ng_exhaustion_frankie_continuous_stream_20260824.py` — (no docstring summary)
+- `test_ng_exhaustion_frankie_fullstack_october_20260824.py` — (no docstring summary)
+- `test_ng_exhaustion_frankie_fullstack_october_launch_workflow_20260824.py` — (no docstring summary)
+- `test_ng_exhaustion_frankie_post_freeze_paired_evaluation_20260824.py` — (no docstring summary)
+- `test_ng_exhaustion_october_frankie_v4_bridge_20260824.py` — (no docstring summary)
+- `test_ng_exhaustion_step1_completion_gate.py` — (no docstring summary)
+- `test_ng_exhaustion_step1_recovery.py` — (no docstring summary)
+- `test_ng_exhaustion_step1_recovery_workflow.py` — (no docstring summary)
+- `test_ng_exhaustion_step1_to_v4_registry.py` — (no docstring summary)
+- `test_ng_exhaustion_step1_to_v4_workflow.py` — (no docstring summary)
+- `test_ng_exhaustion_two_day_step1_transfer_recovery_20260824.py` — (no docstring summary)
+- `test_ng_exhaustion_v4_adapter_integration.py` — (no docstring summary)
+- `test_ng_exhaustion_v4_causal_clock.py` — (no docstring summary)
+- `test_ng_exhaustion_v4_causal_entry_adapter.py` — (no docstring summary)
+- `test_ng_exhaustion_v4_detector_intensity.py` — (no docstring summary)
+- `test_ng_exhaustion_v4_detector_intensity_semantics.py` — (no docstring summary)
+- `test_ng_exhaustion_v4_end_to_end_adapter.py` — (no docstring summary)
+- `test_ng_exhaustion_v4_exact_candidate_freeze.py` — (no docstring summary)
+- `test_ng_exhaustion_v4_gate_verifier.py` — (no docstring summary)
+- `test_ng_exhaustion_v4_history_support.py` — (no docstring summary)
+- `test_ng_exhaustion_v4_lock_outcome.py` — (no docstring summary)
+- `test_ng_exhaustion_v4_mechanics.py` — (no docstring summary)
+- `test_ng_exhaustion_v4_pilot_chunk_guard.py` — (no docstring summary)
+- `test_ng_exhaustion_v4_pilot_chunk_guardrail.py` — (no docstring summary)
+- `test_ng_exhaustion_v4_state_assembler.py` — (no docstring summary)
+- `test_ng_exhaustion_v4_unified_runtime.py` — (no docstring summary)
 - `test_ng_historical_replay.py` — (no docstring summary)
 - `test_ng_rt_feature_state.py` — (no docstring summary)
+- `test_storage_consensus_causal_s126.py` — (no docstring summary)
+- `test_system_inventory.py` — (no docstring summary)
 - `tropical_feed.py` — the TROPICAL / HURRICANE feed (S110; the named summer gap, memo 1.4).
 - `databento_options_iv_black76_example.py` — VENDOR REFERENCE - Databento official 'Estimate implied volatility' tutorial (verbatim,
 - `verify_gold.py` — THE CONCRETE WALLS around the refine gold master (S105, Greg).

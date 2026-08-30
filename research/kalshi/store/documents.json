@@ -253,6 +253,55 @@
    "path": "research/kalshi/DATABENTO_PLATFORM_REVIEW.md",
    "class": "RECORD",
    "why": "dated platform review."
+  },
+  {
+   "path": "research/kalshi/FRANKIE_A_ARM_PRELAUNCH_STATE_20260829.md",
+   "class": "LIVE",
+   "role": "the A-arm state record and file map - what is built, wired and fed, and the nine items to walk through with Greg before anything runs. Opens with STOP BEFORE LAUNCH.",
+   "update_when": "its own rule, :691-699 - if you change any decision in section 2 or 3, or land code that closes any part of section 8, update it IN THE SAME COMMIT with a count. It went stale twice by not doing this.",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_A_ARM_PRIOR_WORK_RECOVERY_20260829.md",
+   "class": "RECORD",
+   "role": "why the four estimand proposals were withdrawn - what the prior exhaustion program (2026-08-16 to 2026-08-25) already defines, with citations. D62's evidence.",
+   "update_when": "never - dated record. Its negative claims about the event clock and roll20 were REFUTED S117; the refutation lives in FRANKIE_A_ARM_ALREADY_BUILT_AUDIT_20260830.md rather than by editing this file.",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_A_ARM_ESTIMAND_PROPOSALS_20260829.md",
+   "class": "RECORD",
+   "role": "WITHDRAWN. The four proposals, kept as the record of what was proposed and why it was wrong (D62), per the rule that a superseded value is a deliberate record.",
+   "update_when": "never - banner-marked at line 1 and retained deliberately. Do not delete.",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_A_ARM_REVIEW_FINDINGS_20260829.md",
+   "class": "RECORD",
+   "role": "the original external review of the A-arm, deliberately unedited including its now-fixed findings.",
+   "update_when": "never - prelaunch:578-579 keeps it unedited on purpose, so the audit trail shows what changed.",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_A_ARM_ROLL20_SUBSTRATE_SCOPE_20260830.md",
+   "class": "RECORD",
+   "role": "scoping of the roll20 substrate: the recovered recipe, the measured 1.5s cost for the derived layer, and the day-overlap finding.",
+   "update_when": "never - carries two correction banners instead. Its Step-1 recommendation is VOID (F-2): the mission forbids Step-1-derived input and the feed inventory seals that artifact as the answer.",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_A_ARM_WIRING_LIST_20260830.md",
+   "class": "RECORD",
+   "role": "the measured wiring state - what the driver actually writes, the four built-but-uncalled adapters and their built-but-unfed consumers, and what Tier 2 wires to.",
+   "update_when": "never - dated measurement. Corrected in place once, for the same Step-1 reason as the scope document.",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_A_ARM_ALREADY_BUILT_AUDIT_20260830.md",
+   "class": "RECORD",
+   "role": "the claim-by-claim audit of what the A-arm documents said was missing. Five negative claims tested, one survives. Records that the benchmark imports one module of roughly forty.",
+   "update_when": "never - dated audit.",
+   "gate": null
   }
  ]
 }
