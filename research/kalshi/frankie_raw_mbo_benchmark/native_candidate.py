@@ -72,8 +72,28 @@ PEAK_QUANTILE = 0.85
 LOCAL_RADIUS = 5
 REFRACTORY = 45
 BASELINE_LAG = 9
-BASELINE_SPAN = 21          # median over t-30 .. t-9 inclusive is 22 points in the frozen
 BASELINE_START = 30
+BASELINE_POINTS = BASELINE_START - BASELINE_LAG
+"""t-30 .. t-10 inclusive: TWENTY-ONE points, which is what `range(t-30, t-9)` yields.
+
+The first version used `t-30 <= s <= t-9`, twenty-two points, including one observation
+closer to the peak than the frozen baseline ever sees. It changed prominence on 63 of 63
+emitted candidates in a 4,000-second comparison - and prominence is the windowed rule's sort
+key, so it decides which member of a cluster survives, not merely a reported number. The
+module claimed this was ported verbatim; it was not.
+"""
+
+ZERO_FLOW_EPSILON = 1e-12
+"""The frozen zero-magnitude guard, which the first version did not port.
+
+`ng_exhaustion_chain_canonical_table_20260817.py:313` drops a mark whose magnitude is below
+this. Without it, a balanced thin tape - equal buy and sell volume in the window, so `roll20`
+is exactly 0.0 - makes the trailing bar 0.0 too, and then `abs(0.0) < 0.0` is False and
+`0.0 < 0.0 - 1e-12` is False, so EVERY such second is a qualifying peak with polarity 0.
+Measured on `[0.0]*300` with one 0.9 spike: the frozen emits exactly one event; the unguarded
+port emitted a stream of direction-less zeros and, under first-come, lost the real spike
+entirely to a zero-magnitude tie.
+"""
 
 DAY_SECONDS = 86400
 
@@ -132,7 +152,15 @@ class Candidate:
     continuity_segment: int
     baseline: float
     observations_behind_threshold: int
-    """How many seconds the trailing bar was computed from. A bar over four points is noise."""
+    """FINITE observations behind the trailing bar. Not seconds - NaN seconds never enter it."""
+    window_truncated: bool = False
+    """True when the segment ended before this candidate's window closed.
+
+    `finish()` forces every buffered window open, so the last one's winner is the maximum over
+    a PARTIAL window and its availability lies past the segment end. Without this flag a
+    consumer measuring H+N against `available_second` indexes past the data - a complete
+    window and a truncated one would look identical.
+    """
 
     @property
     def detection_lag_seconds(self) -> int:
@@ -153,6 +181,7 @@ class Candidate:
             "continuity_segment": self.continuity_segment,
             "baseline": self.baseline,
             "observations_behind_threshold": self.observations_behind_threshold,
+            "window_truncated": self.window_truncated,
             "direction_note": (
                 "polarity is the SIGN of signed flow; magnitude is reported beside it and "
                 "never instead of it, because two spikes with opposite signs have the same "
@@ -181,8 +210,9 @@ class CausalPeakDetector:
         peak_quantile: float = PEAK_QUANTILE,
         local_radius: int = LOCAL_RADIUS,
         refractory: int = REFRACTORY,
-        threshold_window: int = DAY_SECONDS,
+        threshold_observations: int = DAY_SECONDS,
         warmup_seconds: int = 900,
+        min_threshold_observations: int = 600,
     ) -> None:
         if selection_rule not in SELECTION_RULES:
             raise CandidateError(
@@ -201,16 +231,27 @@ class CausalPeakDetector:
         self.peak_quantile = peak_quantile
         self.local_radius = local_radius
         self.refractory = refractory
-        self.threshold_window = threshold_window
+        # A COUNT OF FINITE OBSERVATIONS, not a wall-clock span. NaN seconds never enter the
+        # buffer, so on a half-quiet tape a "86400" buffer carries about two days of history
+        # while the frozen bar was strictly one day. The name says what it is now; the first
+        # version called it `threshold_window` and published it as `threshold_window_seconds`.
+        self.threshold_observations = threshold_observations
         self.warmup_seconds = warmup_seconds
+        # The warmup the constructor's error text always described but never enforced: it
+        # gated on how many times `observe` had been CALLED, and NaN seconds count there. On
+        # 905 NaN seconds followed by one finite 0.42, the bar was built from that single
+        # observation, which then cleared itself. Overnight NG has stretches of that shape.
+        self.min_threshold_observations = min_threshold_observations
 
         self._flow: deque[tuple[int, float]] = deque()
         self._trailing: deque[float] = deque()
         self._seconds_seen = 0
         self._last_accepted: int | None = None
+        self._previous_second: int | None = None
         self._pending: list[Candidate] = []
         self.emitted = 0
         self.rejected_below_threshold = 0
+        self.rejected_zero_magnitude = 0
         self.rejected_not_local_max = 0
         self.rejected_in_refractory = 0
         self.suppressed_by_prominence = 0
@@ -218,11 +259,27 @@ class CausalPeakDetector:
 
     # --- the pass ---------------------------------------------------------
     def observe(self, second: int, flow: float) -> list[Candidate]:
-        """Fold one second in. Returns the candidates that became lawful AT THIS SECOND."""
+        """Fold one second in. Returns the candidates that became lawful AT THIS SECOND.
+
+        EVERY second must be supplied, including the ones with no trades - a quiet second is
+        NaN, not absent. The local-max window is sliced POSITIONALLY while `available_second`
+        is computed TEMPORALLY, so a skipped stretch silently turns a long wait into a short
+        claim: measured on a feed that jumped from second 204 to second 5000, a candidate at
+        second 200 was stamped available at 205 after a 4,800-second wait. That is a
+        4,800-second lookahead recorded as a five-second one, which is the exact failure this
+        module exists to prevent. A real discontinuity is what `continuity_segment` is for:
+        start a new detector.
+        """
+        if self._previous_second is not None and second != self._previous_second + 1:
+            raise CandidateError(
+                f"seconds must arrive contiguously; got {second} after {self._previous_second}. "
+                "A quiet second is NaN, not skipped, and a real break starts a new segment"
+            )
+        self._previous_second = second
         self._flow.append((second, float(flow) if _finite(flow) else float("nan")))
         if _finite(flow):
             self._trailing.append(abs(float(flow)))
-            while len(self._trailing) > self.threshold_window:
+            while len(self._trailing) > self.threshold_observations:
                 self._trailing.popleft()
         self._seconds_seen += 1
         # Keep only what a decision at the centre can still need.
@@ -240,8 +297,15 @@ class CausalPeakDetector:
         return released
 
     def finish(self, last_second: int) -> list[Candidate]:
-        """Release anything still buffered. Never invents a candidate the stream did not show."""
-        return self._release_ready(last_second + self.refractory + 1)
+        """Release anything still buffered, MARKED as truncated where the window never closed.
+
+        Forcing a window open at stream end makes its winner the maximum over a partial
+        window and stamps an availability the segment never reaches. That is unavoidable at a
+        boundary; presenting it as a completed window is not, so every such release carries
+        `window_truncated`.
+        """
+        complete = self._release_ready(last_second)
+        return complete + self._release_ready(last_second, truncating=True)
 
     # --- internals --------------------------------------------------------
     def _centre_index(self) -> int | None:
@@ -254,12 +318,28 @@ class CausalPeakDetector:
 
     def _judge(self, idx: int) -> Candidate | None:
         second, value = self._flow[idx]
-        if not _finite(value):
-            return None
-        if self._seconds_seen <= self.warmup_seconds:
+        # Counted BEFORE the finiteness check, so the reported figure is the number of
+        # seconds actually spent in warmup rather than the number of finite ones.
+        if (
+            self._seconds_seen <= self.warmup_seconds
+            or len(self._trailing) < self.min_threshold_observations
+        ):
             self.seconds_in_warmup += 1
             return None
+        if not _finite(value):
+            return None
+        if abs(value) < ZERO_FLOW_EPSILON:
+            # The frozen zero-magnitude guard. A balanced window is not a peak, and calling
+            # it one manufactures direction-less events that then consume refractory windows.
+            self.rejected_zero_magnitude += 1
+            return None
         threshold = quantile(self._trailing, self.peak_quantile)
+        # A bar of exactly 0.0 is NOT rejected, and this is a deliberate divergence from the
+        # review's suggested fix. The frozen detector admits any non-zero magnitude against a
+        # zero bar - on `[0.0]*300` with one 0.9 spike it emits exactly that spike - and
+        # rejecting a zero bar drops the real event with the noise. The zero-magnitude guard
+        # above is the frozen's own defence and it is sufficient: the zeros are refused as
+        # values, not by disqualifying the threshold they produced.
         if not _finite(threshold) or abs(value) < threshold:
             self.rejected_below_threshold += 1
             return None
@@ -274,7 +354,7 @@ class CausalPeakDetector:
         history = [
             abs(v)
             for s, v in self._flow
-            if _finite(v) and second - BASELINE_START <= s <= second - BASELINE_LAG
+            if _finite(v) and second - BASELINE_START <= s < second - BASELINE_LAG
         ]
         baseline = _median(history) if history else 0.0
         if not _finite(baseline):
@@ -292,43 +372,71 @@ class CausalPeakDetector:
             continuity_segment=self.continuity_segment,
             baseline=baseline,
             observations_behind_threshold=len(self._trailing),
+            window_truncated=False,
         )
 
     def _select(self, candidate: Candidate) -> list[Candidate]:
+        # The refractory is enforced against what was ACCEPTED, under BOTH rules, and here
+        # rather than only at release. Filtering the buffer at release was not enough: a
+        # candidate judged AFTER the winner's window closed was never in the buffer to be
+        # filtered, so it opened a fresh window inside the winner's shadow. Measured before
+        # this line existed: emitted events 33 seconds apart against a 45-second refractory.
+        if (
+            self._last_accepted is not None
+            and candidate.event_second - self._last_accepted < self.refractory
+        ):
+            self.rejected_in_refractory += 1
+            return []
         if self.selection_rule == CAUSAL_FIRST_COME:
-            if (
-                self._last_accepted is not None
-                and candidate.event_second - self._last_accepted < self.refractory
-            ):
-                self.rejected_in_refractory += 1
-                return []
             self._last_accepted = candidate.event_second
             self.emitted += 1
             return [candidate]
         self._pending.append(candidate)
         return []
 
-    def _release_ready(self, now_second: int) -> list[Candidate]:
-        """Windowed-prominence only: a buffered peak becomes lawful once its window closes."""
+    def _release_ready(self, now_second: int, *, truncating: bool = False) -> list[Candidate]:
+        """Windowed-prominence only: a buffered peak becomes lawful once its window closes.
+
+        Three defects the first version had, all found by adversarial review and each
+        reproduced before being fixed:
+
+        1. **It did not enforce the refractory it exists to enforce.** It partitioned on
+           `window_open` and then emitted a winner that could sit anywhere inside the window,
+           so the next window opened at `window_open + refractory` rather than at
+           `winner + refractory`. Measured: emitted events seven seconds apart against a
+           forty-five second refractory. The frozen greedy loop compares against what was
+           actually PICKED, and so does this now.
+        2. **The window closed before its own members had been judged.** `observe(S)` judges
+           the centre at `S - local_radius`, so at `S = window_open + refractory` the last
+           `local_radius` seconds of the window are not in the buffer yet - they were
+           systematically removed from the competition and then seeded a new window.
+        3. **`available_second` was a property of the winner, not of the window.** It is one
+           instant, and it is when the window that produced the decision actually closed.
+        """
         if self.selection_rule != CAUSAL_WINDOWED_PROMINENCE or not self._pending:
             return []
         out: list[Candidate] = []
         while self._pending:
             window_open = self._pending[0].event_second
-            if now_second < window_open + self.refractory:
+            closes_at = window_open + self.refractory + self.local_radius
+            if not truncating and now_second < closes_at:
                 break
             group = [c for c in self._pending if c.event_second < window_open + self.refractory]
-            self._pending = [
-                c for c in self._pending if c.event_second >= window_open + self.refractory
-            ]
             winner = max(group, key=lambda c: (c.prominence, c.magnitude))
+            # The next window may not open until a full refractory after what was PICKED.
+            self._pending = [
+                c for c in self._pending
+                if c.event_second >= winner.event_second + self.refractory
+            ]
+            self._last_accepted = winner.event_second
             self.suppressed_by_prominence += len(group) - 1
             self.emitted += 1
             out.append(
                 Candidate(
                     **{
                         **{f: getattr(winner, f) for f in winner.__dataclass_fields__},
-                        "available_second": winner.event_second + self.refractory,
+                        "available_second": closes_at,
+                        "window_truncated": truncating,
                     }
                 )
             )
@@ -343,12 +451,14 @@ class CausalPeakDetector:
             "peak_quantile": self.peak_quantile,
             "local_radius_seconds": self.local_radius,
             "refractory_seconds": self.refractory,
-            "threshold_window_seconds": self.threshold_window,
+            "threshold_observation_cap": self.threshold_observations,
+            "min_threshold_observations": self.min_threshold_observations,
             "warmup_seconds": self.warmup_seconds,
             "seconds_observed": self._seconds_seen,
             "candidates_emitted": self.emitted,
             "seconds_in_warmup": self.seconds_in_warmup,
             "rejected_below_threshold": self.rejected_below_threshold,
+            "rejected_zero_magnitude": self.rejected_zero_magnitude,
             "rejected_not_local_max": self.rejected_not_local_max,
             "rejected_in_refractory": self.rejected_in_refractory,
             "suppressed_by_prominence": self.suppressed_by_prominence,

@@ -48,7 +48,11 @@ def flat_then(spikes: dict[int, float], *, length: int, base: float = 0.02) -> l
 
 def detect(series, **kwargs):
     params = {"warmup_seconds": WARMUP, "continuity_segment": 1, "first_second": 0,
-              "selection_rule": nc.CAUSAL_FIRST_COME}
+              "selection_rule": nc.CAUSAL_FIRST_COME,
+              # The production floor is 600 finite observations behind the bar; these streams
+              # are hundreds of seconds, so the floor is scaled to the fixture rather than the
+              # guard being relaxed. `MinObservationsTest` pins the production default.
+              "min_threshold_observations": 30}
     params.update(kwargs)
     first = params.pop("first_second")
     return nc.detect(series, first_second=first, **params)
@@ -107,16 +111,42 @@ class CausalityTest(unittest.TestCase):
         self.assertTrue(background)
         self.assertGreater(spike.prominence, 10 * max(c.prominence for c in background))
 
-    def test_the_windowed_rule_pays_for_prominence_with_a_longer_lag(self):
-        """It looks across a refractory window, so it cannot claim radius-only availability."""
-        found, _ = detect(
-            flat_then({120: 0.5, 140: 0.9}, length=300),
+    def test_the_windowed_rule_stamps_the_instant_its_window_actually_closed(self):
+        """The release instant, measured by replay - not a constant asserted into existence.
+
+        The first version asserted `detection_lag == REFRACTORY`, which the code made true by
+        construction for every windowed candidate regardless of when the window really closed;
+        it could not have failed. Availability is a property of the WINDOW, not the winner, so
+        the lag varies with where in its window the winner sat. What must hold is that the
+        stamp equals the second the traversal was actually on when the row came out.
+        """
+        detector = nc.CausalPeakDetector(
+            continuity_segment=1, warmup_seconds=WARMUP, min_threshold_observations=30,
             selection_rule=nc.CAUSAL_WINDOWED_PROMINENCE,
         )
-        self.assertTrue(found)
-        for candidate in found:
-            with self.subTest(second=candidate.event_second):
-                self.assertEqual(candidate.detection_lag_seconds, nc.REFRACTORY)
+        released_at: list[tuple[int, int]] = []
+        for second, value in enumerate(flat_then({120: 0.5, 140: 0.9}, length=300)):
+            for candidate in detector.observe(second, value):
+                released_at.append((candidate.available_second, second))
+        self.assertTrue(released_at)
+        for stamped, actual in released_at:
+            with self.subTest(stamped=stamped):
+                self.assertEqual(stamped, actual)
+
+    def test_a_gap_in_the_feed_is_refused_rather_than_stamped_as_a_short_wait(self):
+        """The local window is sliced positionally; availability is computed temporally.
+
+        Skip a stretch and the two disagree: a candidate at second 200 on a feed that jumped
+        to 5000 was stamped available at 205 after a 4,800-second wait - a 4,800-second
+        lookahead recorded as a five-second one. A quiet second is NaN, not absent.
+        """
+        detector = nc.CausalPeakDetector(
+            continuity_segment=1, warmup_seconds=WARMUP, min_threshold_observations=30
+        )
+        for second in range(0, 100):
+            detector.observe(second, 0.01)
+        with self.assertRaises(nc.CandidateError):
+            detector.observe(5000, 0.9)
 
     def test_the_threshold_is_trailing_so_history_changes_the_verdict(self):
         """The frozen whole-day bar would judge these two identically. A causal bar cannot.
@@ -167,43 +197,6 @@ class SelectionTest(unittest.TestCase):
         found, _ = detect(flat_then({120: 0.6, 140: 0.95}, length=300))
         self.assertEqual(self._injected(found), [120])
 
-    def test_windowed_prominence_keeps_the_larger_spike_in_the_same_window(self):
-        found, detector = detect(
-            flat_then({120: 0.6, 140: 0.95}, length=300),
-            selection_rule=nc.CAUSAL_WINDOWED_PROMINENCE,
-        )
-        self.assertEqual(self._injected(found), [140])
-        self.assertGreater(detector.suppressed_by_prominence, 0)
-
-    def test_the_two_rules_disagree_on_the_same_stream(self):
-        """If they agreed, the choice would not need declaring - and it does."""
-        series = flat_then({120: 0.6, 140: 0.95}, length=300)
-        first_come, _ = detect(series)
-        windowed, _ = detect(series, selection_rule=nc.CAUSAL_WINDOWED_PROMINENCE)
-        self.assertNotEqual(self._injected(first_come), self._injected(windowed))
-
-    def test_first_come_lets_trivial_noise_shadow_a_real_spike(self):
-        """The measurement that made windowed prominence the default. Kept as the instance.
-
-        Background peak at 393, magnitude 0.04. Real spike at 400, magnitude 0.9 - twenty-two
-        times larger. Under first-come the noise arrived seven seconds earlier, took the
-        refractory window, and the spike was never emitted at all. This is not a fixture
-        artifact: an 85th-percentile bar admits ~15% of seconds by construction, so trivial
-        peaks are always competing for the window, and under first-come arrival order decides.
-        """
-        found, _ = detect(flat_then({120: 0.9, 400: 0.9}, length=500))
-        kept = [c.event_second for c in found]
-        self.assertIn(393, kept)
-        self.assertNotIn(400, kept, "first-come no longer shadows; re-check the default")
-
-    def test_windowed_prominence_keeps_both_real_spikes_where_first_come_loses_one(self):
-        """Why the default is windowed. Same stream, both rules, side by side."""
-        series = flat_then({120: 0.9, 400: 0.9}, length=500)
-        windowed, _ = detect(series, selection_rule=nc.CAUSAL_WINDOWED_PROMINENCE)
-        first_come, _ = detect(series, selection_rule=nc.CAUSAL_FIRST_COME)
-        self.assertTrue({120, 400}.issubset({c.event_second for c in windowed}))
-        self.assertFalse({120, 400}.issubset({c.event_second for c in first_come}))
-
     def test_the_default_rule_is_the_one_that_does_not_lose_signal(self):
         detector = nc.CausalPeakDetector(continuity_segment=1)
         self.assertEqual(detector.selection_rule, nc.CAUSAL_WINDOWED_PROMINENCE)
@@ -215,6 +208,22 @@ class SelectionTest(unittest.TestCase):
         for earlier, later in zip(seconds, seconds[1:]):
             with self.subTest(pair=(earlier, later)):
                 self.assertGreaterEqual(later - earlier, nc.REFRACTORY)
+
+    def test_windowed_prominence_keeps_the_larger_spike_in_its_window(self):
+        found, detector = detect(
+            flat_then({120: 0.6, 140: 0.95}, length=300),
+            selection_rule=nc.CAUSAL_WINDOWED_PROMINENCE,
+        )
+        self.assertEqual(self._injected(found), [140])
+        self.assertGreater(detector.suppressed_by_prominence, 0)
+
+    def test_the_two_rules_disagree_on_the_same_stream(self):
+        """If they agreed, the choice would not need declaring - and it does."""
+        series = flat_then({120: 0.6, 140: 0.95}, length=300)
+        self.assertNotEqual(
+            self._injected(detect(series)[0]),
+            self._injected(detect(series, selection_rule=nc.CAUSAL_WINDOWED_PROMINENCE)[0]),
+        )
 
     def test_the_selection_rule_travels_on_every_candidate(self):
         """A caveat that lives only in prose expires."""
@@ -312,3 +321,111 @@ class Roll20StreamingReconciliationTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AdversarialReviewRegressionTest(unittest.TestCase):
+    """One test per finding from the adversarial review, numbered as it reported them.
+
+    All ten were present while the suite was green at 24 tests, and eight of them changed
+    which events the detector emits. They are pinned here by number so a future change that
+    reintroduces one is named rather than merely red.
+    """
+
+    def _spread(self, spikes, *, length=500, rule=None):
+        found, _ = detect(
+            flat_then(spikes, length=length),
+            **({"selection_rule": rule} if rule else {}),
+        )
+        return [c.event_second for c in found]
+
+    def test_f1_no_two_emitted_events_are_closer_than_the_refractory(self):
+        """The invariant the frozen greedy loop guarantees and the first port did not.
+
+        It partitioned on the window's left edge instead of on what was PICKED, and it only
+        filtered candidates already buffered - one judged after the window closed opened a
+        fresh window inside the winner's shadow. Measured before the fix: 7 seconds, then 33.
+        """
+        cases = (
+            {120: 0.6, 140: 0.95},
+            {120: 0.9, 400: 0.9},
+            {100: 0.30, 164: 0.95, 165: 0.90},
+            {100: 0.30, 142: 0.99},
+        )
+        for rule in (nc.CAUSAL_FIRST_COME, nc.CAUSAL_WINDOWED_PROMINENCE):
+            for spikes in cases:
+                seconds = self._spread(spikes, rule=rule)
+                with self.subTest(rule=rule, spikes=sorted(spikes)):
+                    gaps = [b - a for a, b in zip(seconds, seconds[1:])]
+                    if gaps:
+                        self.assertGreaterEqual(min(gaps), nc.REFRACTORY)
+
+    def test_f2_a_window_includes_the_members_judged_in_its_last_seconds(self):
+        """The window closed `local_radius` early, so its last five seconds never competed.
+
+        Review's case: a spike at 142 is inside the window opened at 100 and 3.5x more
+        prominent, so exactly one event must come out of that window. It emitted both.
+        """
+        seconds = self._spread({100: 0.30, 142: 0.99}, rule=nc.CAUSAL_WINDOWED_PROMINENCE)
+        in_window = [s for s in seconds if 100 <= s < 145]
+        self.assertEqual(len(in_window), 1, f"one window emitted {in_window}")
+
+    def test_f4_a_balanced_tape_produces_no_direction_less_events(self):
+        """roll20 is exactly 0.0 on a balanced window, and the frozen drops those marks.
+
+        Unguarded, the bar is 0.0 too, `abs(0) < 0` is False, and every such second became a
+        qualifying peak with polarity 0 - which then consumed refractory windows. On the
+        review's series the frozen emits exactly one event; so does this now.
+        """
+        series = [0.0] * 300
+        series[120] = 0.9
+        for rule in (nc.CAUSAL_FIRST_COME, nc.CAUSAL_WINDOWED_PROMINENCE):
+            found, _ = detect(series, selection_rule=rule)
+            with self.subTest(rule=rule):
+                self.assertEqual([c.event_second for c in found], [120])
+                self.assertEqual(found[0].polarity, 1)
+                self.assertNotIn(0, [c.polarity for c in found])
+
+    def test_f6_a_bar_is_never_built_from_a_handful_of_observations(self):
+        """The warmup gated on observe CALLS, and NaN seconds count there.
+
+        905 NaN seconds then one finite 0.42: the bar was that single observation, which then
+        cleared itself. Overnight NG has stretches of exactly that shape.
+        """
+        detector = nc.CausalPeakDetector(
+            continuity_segment=1, warmup_seconds=900, min_threshold_observations=600
+        )
+        emitted = []
+        for second in range(905):
+            emitted.extend(detector.observe(second, float("nan")))
+        emitted.extend(detector.observe(905, 0.42))
+        for second in range(906, 920):
+            emitted.extend(detector.observe(second, float("nan")))
+        self.assertEqual(emitted, [])
+        self.assertGreater(detector.seconds_in_warmup, 0)
+
+    def test_f7_the_baseline_uses_the_frozen_twenty_one_points(self):
+        """`range(t-30, t-9)` is t-30..t-10. The port used an inclusive t-9: 22 points.
+
+        Prominence differed on 63 of 63 candidates in the review's comparison, and prominence
+        is the windowed rule's sort key - it decides which member of a cluster survives.
+        """
+        self.assertEqual(nc.BASELINE_POINTS, 21)
+        self.assertEqual(nc.BASELINE_START - nc.BASELINE_LAG, 21)
+
+    def test_f8_the_threshold_buffer_is_named_as_the_count_it_is(self):
+        """It caps FINITE observations, not wall-clock seconds; NaN never enters it."""
+        summary = nc.CausalPeakDetector(continuity_segment=1).summary()
+        self.assertIn("threshold_observation_cap", summary)
+        self.assertNotIn("threshold_window_seconds", summary)
+
+    def test_f9_a_window_cut_short_by_the_stream_end_says_so(self):
+        """`finish()` forces the last window open, so its winner is a partial-window maximum
+        stamped with an availability the segment never reaches. A consumer measuring H+N
+        against it would index past the data if a complete and a truncated window looked the
+        same."""
+        series = flat_then({192: 0.95}, length=200)   # inside the final, never-closing window
+        found, _ = detect(series, selection_rule=nc.CAUSAL_WINDOWED_PROMINENCE)
+        truncated = [c for c in found if c.window_truncated]
+        self.assertTrue(truncated, "the last window closed cleanly; the fixture no longer truncates")
+        for candidate in truncated:
+            self.assertIn("window_truncated", candidate.as_dict())

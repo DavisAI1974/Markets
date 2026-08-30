@@ -535,6 +535,10 @@ class CandidateUnitFedTest(unittest.TestCase):
     def _run(self):
         driver = make_driver(total_mbo_records=self.SPAN + 1)
         driver.candidate_warmup_seconds = 60
+        # The production floor is 600 finite observations behind the trailing bar; this
+        # fixture is 400 seconds, so the floor is scaled to it rather than relaxed in the
+        # detector. `AdversarialReviewRegressionTest.test_f6` pins the production value.
+        driver.candidate_min_observations = 30
         driver.detector = driver._new_detector(0)
         driver.consume(self._stream())
         return driver, driver.finalize()

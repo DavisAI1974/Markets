@@ -260,6 +260,7 @@ class NativeReplayDriver:
         sinks: Any = None,
         candidate_selection: str = native_candidate.CAUSAL_WINDOWED_PROMINENCE,
         candidate_warmup_seconds: int = 900,
+        candidate_min_observations: int = 600,
     ) -> None:
         if session_rule is None:
             raise ReplayDriverError(
@@ -306,6 +307,7 @@ class NativeReplayDriver:
         # trailing bar carried across the halt would be calibrated on the wrong session.
         self.candidate_selection = candidate_selection
         self.candidate_warmup_seconds = candidate_warmup_seconds
+        self.candidate_min_observations = candidate_min_observations
         self.detector = self._new_detector(0)
         self._last_complete_second: int | None = None
 
@@ -397,6 +399,7 @@ class NativeReplayDriver:
             continuity_segment=segment,
             selection_rule=self.candidate_selection,
             warmup_seconds=self.candidate_warmup_seconds,
+            min_threshold_observations=self.candidate_min_observations,
         )
 
     def _advance_candidates(self, current_second: int) -> None:
