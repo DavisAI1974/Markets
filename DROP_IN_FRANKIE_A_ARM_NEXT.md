@@ -1,130 +1,173 @@
-# DROP-IN BOX - FRANKIE A-ARM, NEXT SESSION
+# DROP-IN BOX - FRANKIE A-ARM
 
-**BRANCH:** `chatgpt/frankie-raw-mbo-benchmark-20260828`
-**TIP AT HANDOFF:** run `git log --oneline -1` and confirm it is `1eb116a` or later.
-**STATUS: NOTHING LAUNCHED, AND THE BUILD PLAN CHANGED.** 613 tests green (was 552).
-**START A FRESH SESSION. Do not carry the previous one's proposals forward - they are withdrawn.**
+> **Required first read:** Read and obey
+> `research/kalshi/NG_EXHAUSTION_FRANKIE_MONTHLY_RUN_PROCEDURE.md` in full before this handoff.
+> This handoff supplies month-specific identities and exceptions only. If it conflicts with the canonical
+> procedure, stop and resolve the conflict explicitly rather than silently choosing one.
 
-## 0. READ THIS FIRST, BEFORE ANY BUILD
+**BRANCH:** `chatgpt/frankie-raw-mbo-benchmark-20260828` **TIP:** `990d15f` or later.
+**STATUS: NOTHING LAUNCHED. The roll20 substrate is BUILT, FED and RECONCILED.**
+653 tests in the package; `research/kalshi/tests/` has 7 PRE-EXISTING failures - not regressions.
 
-`research/kalshi/FRANKIE_A_ARM_PRIOR_WORK_RECOVERY_20260829.md`.
+---
 
-The previous session wrote four estimand proposals for sections 4.10, 4.11, 4.12 and 4.16 on
-the premise that the calculation contract "specifies the CALCULATION and never the input
-event". Greg asked *"this should have already been built in some capacity for the exhaustion
-prediction part. is this related?"* **It is the same work.** Roughly 200 files, built
-2026-08-16 to 2026-08-25, in places frozen and hash-bound. The proposals were building a second
-vocabulary over facts this project already has one for - the `_family_id` defect at project
-scale, which does not fail, it disagrees.
+## RESOLVED BY GREG, 2026-08-30: NO HELPERS OR SPECIALISTS
 
-**All four proposals are WITHDRAWN.** Read the recovery document instead.
+The canonical procedure mandates the **four-helper paired-lane architecture** (recurrence=CPU0,
+extension=CPU1, timing=CPU2, context=CPU3; *"Frankie is call five and starts only after all four
+helpers finish"*, step 11, plus the role-to-CPU mapping in the permanent invariants). It was adopted
+2026-08-24. **D54 (S115) retires it, and Greg reaffirmed it directly when this handoff raised the
+conflict: "No helpers or specialists."**
+
+**The ruling, applied:**
+
+* **Two roles only** - `REAL_TIME_FRANKIE` and `FORECASTER_FRANKIE`. A helper is a **tool invocation
+  inside a role**, never a parallel lane with its own knowledge profile or its own output, and the role
+  a helper is called under is selectable (D54, verbatim: *"we aren't doing the helpers or the
+  specialists anymore. Rt and forecaster can call one as part of their tools and there's options as to
+  the role."*).
+* **The procedure's step 11 four-helper concurrency and its role-to-CPU mapping DO NOT APPLY to the A
+  arms.** This is the "explicitly approved exception" the procedure's header contemplates - raised, not
+  silently forked, and now ruled.
+* **The five walk specialists (`mbo_specialist_{A..E}.md`) are not used by the A arms.**
+
+**Consequence that is now unblocked, and it is still a registry change rather than a code edit:** D59
+records that both `extra_agent_*` layers are `STATIC_REQUIRED_INPUT` and model-visible, so Frankie
+would READ the dead four-helper architecture as a required input on every run - *"showing Frankie a
+dead architecture is worse than showing nothing."* Moving either layer changes
+`EXPECTED_POLICY_COUNTS`, `EXPECTED_ARM_LAYER_COUNTS`, `EXPECTED_LAYER_ID_SET_SHA256`, the surface
+inventory hash and the manifest. **Greg's ruling settles the architecture question; whether to spend
+those hash changes now, and on which layer, is the remaining half of D59.**
+
+---
+
+## 0. READ ORDER - THIS IS THE FIX FOR WHAT WENT WRONG LAST SESSION
+
+Three sessions ran without opening the two documents that actually govern this work, and the cost was
+real: committed code was deleted against the contract's own wording. **Read these before any build.**
+
+| # | File | Why |
+|---|---|---|
+| 1 | `research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md` | `BINDING_CURRENT_MISSION`, `ALWAYS_LOAD`, sha256-pinned in the knowledge manifest. Fixes the evidence surface and the sealed wall. |
+| 2 | `research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md` | `BINDING_CURRENT_CALCULATION_CONTRACT`. Sections 4.1-4.16 ARE the vocabulary. |
+| 3 | `research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md` | 193 lines. **93 of the registry's 105 layers name it as their source.** It says which feeds exist. |
+| 4 | `research/kalshi/FRANKIE_A_ARM_PRELAUNCH_STATE_20260829.md` | State record and file map. Opens with STOP BEFORE LAUNCH. |
+| 5 | `DECISIONS.md` D50-D62 | The A-arm decisions. |
+| 6 | `research/kalshi/FRANKIE_A_ARM_ALREADY_BUILT_AUDIT_20260830.md` | What was claimed missing and actually exists. |
+
+**THE METHOD RULE, learned three times at cost: absence of a string is not absence of a capability.**
+Search for what a capability must CONSUME AND PRODUCE, never for its name. `roll20` was declared
+missing while three implementations existed; the event clock was declared missing while four modules
+existed, because both searches were for the name.
 
 ## 1. FIRST COMMANDS
 
 ```
 git fetch origin chatgpt/frankie-raw-mbo-benchmark-20260828
 git checkout -B chatgpt/frankie-raw-mbo-benchmark-20260828 origin/chatgpt/frankie-raw-mbo-benchmark-20260828
-git log --oneline -1
-python3 -m pytest research/kalshi/frankie_raw_mbo_benchmark/tests/ -q     # expect 613
-python3 -m pytest research/kalshi/tests/ -q                                # expect 7 PRE-EXISTING failures
+git log --oneline -1                                                  # 990d15f or later
+python3 -m pytest research/kalshi/frankie_raw_mbo_benchmark/tests/ -q  # expect 653
+python3 -m pytest research/kalshi/tests/ -q                            # expect 7 PRE-EXISTING failures
 ```
 
-## 2. THE FINDING THAT CHANGES THE BUILD PLAN
+## 2. CORRECTIONS TO THE PREVIOUS BOX - all five were acted on, all five were wrong
 
-**Do not build the six adapters the previous drop-in box asked for.** The missing layer is not
-an adapter on the F_LAST group. It is the **per-second roll20 / dipole substrate**.
+* **`PHASE_ORDER` / `PHASE_INDEX` are CONTRACT VOCABULARY. Do not delete them.** Contract 4.10 reads
+  *"searched coverage, precursor, prebirth state, first deviation, birth/T0, transitions, inflection,
+  persistence, recurrence, extension, completion/reversal, and censored/open status."* The old box said
+  their provenance was one prose line. It is section 4.10 of an `ALWAYS_LOAD` document.
+* **4.12's `SAME`/`FLIP` is CONTRACT VOCABULARY.** 4.12: *"`SAME` and `FLIP` orientations never pool."*
+* **The exhaustion program exists and was measured.** 3,429 frozen events, families A=3,235/B=72/C=122,
+  classifier SHA `698b956f...`, `mismatches 0 of 3429`, `FIXED_3429_DO_NOT_REOPEN`.
+* **The event clock exists.** `research/kalshi/ng_exhaustion_v4_causal_clock.py` is a causal
+  discovery-clock contract that fails closed when retrospective `t0` is substituted for a causal mark,
+  plus a runway clock, a live clock and a batch proof.
+* **`roll20` existed three ways before this session** - the step1 census columns, the frozen
+  `flow_series`/`detect_dipole_peaks`, and a live streaming `AggressorRoll20Feed`.
 
-The built exhaustion candidate is a **1-second flow event** - a spike in the trailing-20s signed
-aggressor-volume imbalance, detected by an 85th-percentile adaptive bar with a +/-5s local max,
-prominence ranking and a 45s refractory, and closed by three consecutive causal oriented
-`roll20 <= 0`. The A-arm's unit (D53) is the **nanosecond F_LAST group**. These are three to
-four orders of magnitude apart: **3,429 frozen events against 4.26M groups.**
+## 3. WHAT LANDED THIS SESSION
 
-The registry REQUIRES the bridge - `derived_roll20_and_dipole_state`,
-`legacy_per_second_roll20`, `derived_open_world_predecessor_state`, all
-`CAUSAL_STREAM_REQUIRED` - and **no code in `frankie_raw_mbo_benchmark/` computes roll20 or any
-dipole from the MBO stream.** The benchmark does not import one line of the built exhaustion
-stack. **That is why 4.10, 4.11 and 4.12 have nothing to feed them, and no F_LAST-group adapter
-fixes it.**
+* **`native_roll20.py`** - the feed inventory section 8 recreation of legacy per-second `roll20` from
+  the native stream. Opens no file; a structural test asserts the source text contains no file access.
+* **Reconciled two ways.** Bit-exact against the frozen `flow_series` over 400 seconds, and - the one
+  that matters - against **the frozen `SecondAggregator` itself** on identical legacy rows, across the
+  edge cases and a randomised 60-second stream. The harness is mutation-tested: three deliberate wrong
+  rules each produce a named exact disagreement.
+* **Fed by the traversal** at group close, from rows already retained under D60, **at the group's
+  second** - the frozen census assigns every legacy row in a group to that group's second, and per-row
+  binning splits a boundary-straddling group.
+* **The clock is declared, never defaulted.** `SecondBinner` refuses construction without a named
+  clock; the crosswalk hash changes with it.
 
-## 3. THE OPEN QUESTION FOR GREG - IT IS A UNIT QUESTION, NOT A PHASE QUESTION
+## 4. THE CRITICAL PATH TO A RUN - do these in order
 
-**Is an F_LAST-group-local candidate admissible at all, when every prior exhaustion result is
-per-second?** If no, sections 4.10/4.11/4.12 need a second clock and the roll20 substrate, not
-new definitions. Everything else follows from this. Do not re-ask the four proposal questions -
-they were the symptom.
+Each is small, each leaves the tree green, each is verified by EXECUTION.
 
-## 4. WHAT TO DELETE ON SIGHT
+**T1 - Wire the four built adapters.** `native_group_adapters` is imported by nothing but its own test.
+Four call sites in `native_replay_driver._on_group`, beside the existing `clocks.observe(row)`:
+`occurrences` -> `native_recurrence.observe_sequence`; `ladder_transitions` -> `native_ladder.observe`;
+`runway_pressure_fields` -> `native_absorption`'s `RunwayPressure`; `lineage_additions` ->
+`native_lineage.observe_node`. All four are group-local and D53-consistent.
+*Accept:* 4.8, 4.9, 4.13 and 4.14 report non-zero strata after a driver pass. *Verify:* a driver test
+asserting counts that can only appear if rows arrived. *Scope:* S. *Depends:* none.
 
-* **`native_exhaustion.PHASE_ORDER` / `PHASE_INDEX`** (`native_exhaustion.py:33-60`). Eleven
-  names, **0 match the built corpus as phases**, and FOUR collide semantically - BIRTH is an
-  instant, TRANSITION is a chain edge BETWEEN events, EXTENSION is the chain reaching depth D+1,
-  REVERSAL is a price-outcome class after the endpoint. `FIRST_DEVIATION` and `INFLECTION` occur
-  nowhere in the frozen corpus. Provenance is one prose line in the 2026-08-28 mission doc.
-  **Already superseded by commit `465a2e1`, but the code still carries it** - the S114 failure
-  exactly: a decision recorded where nothing enforces it.
-* **The 4.12 SAME/FLIP definition.** Those words are TAKEN: *"current exhaustion polarity
-  relative to the latest predecessor"*, frozen with committed counts of 1,546 FLIP / 1,883 SAME
-  of 3,429, gated in four files. And `DipolePath` refuses a path with mixed orientation, so a
-  frozen chain motif (`OOSS->FLIP`) cannot be expressed as a `DipolePath` at all.
-* **Any new mirror definition.** `mirror_identity()` is built, ran, and emitted a
-  `mirror-pair-index.json`: the mirror is the **side-swapped side string**, `CANONICAL|MIRROR`.
-  There are currently THREE mirror vocabularies live in committed code; contract 4.4 mandates one.
+**T2 - Wire the execution gate into the launcher.** `corrected_a_arm_execution_gate_20260828` is
+referenced by itself and its test and nothing else. An unreferenced gate is not a gate.
+*Accept:* a non-test file references it and it runs in the dry run. *Scope:* S. *Depends:* none.
 
-## 5. WHAT IS ALREADY RIGHT AND MUST NOT BE "FIXED"
+**T3 - Put the checkpointer on the launch path.** It is imported by the driver, and no workflow
+dispatches the driver. D58 makes this a **precondition of the resize**, not an independent item.
+*Accept:* a save point is written during a slice run. *Scope:* S. *Depends:* T2.
 
-`native_exhaustion.SEED_STATES` carries P/O/S/X correctly. `native_clocks.RecognitionLabel`
-carries PRIOR / T0 / H+N correctly. **These two are the model for how the rest should reuse the
-frozen vocabulary.**
+**T4 - Make a launch workflow actually dispatch compute. NEEDS GREG (spend).** Measured: both
+`frankie_a_clean_rt_native_launch_20260828.yml` and its A-memory twin contain **zero** references to
+`ssm`, `ec2`, `send-command` or `INSTANCE_ID`. They stage and stop. *Scope:* M. *Depends:* T3.
 
-## 6. FACTS THAT ARE EASY TO GET WRONG
+**T5 - Dry run over a small slice; the contract's eight section 6 gates pass.** Prelaunch section 0
+item 9 requires this before anything touches the full roster. *Scope:* M. *Depends:* T4.
 
-* **`t` IS A PRICE TICK** (`TICK = 0.001`). `3t/5t/8t/13t` are ZigZag reversal thresholds; the
-  358/993/1802/4386 figures are the median DURATIONS IN SECONDS of the legs they produce. It is
-  a SCALE ladder, not a horizon grid.
-* **Fibonacci is coincidental** - 2t was dropped after a five-point sweep; zero occurrences of
-  "fibonacci" in the repo.
-* **There is NO event clock in the built work.** The only `event_clock` is a boolean
-  data-availability flag. Built durations are seconds, the new modules' are nanoseconds - on
-  Greg's rule both are guilty. The only raw material is `native_clocks.sequence_span`.
-* **The frozen program's horizon fix was the ANCHOR, not abolition:** absolute seconds
-  `5,10,20,30,60,120,300` anchored on the **dynamic episode endpoint, "never t0+60 by fiat"**.
-  That keeps horizons comparable across events. Plus `first_hit_times` - first +/-3t, +/-5t
-  after the endpoint, no duration cap, censor when the stream ends.
-* **Prebirth skill is NOT established.** *"No authorized claim that D1, D2, or D3 validates at
-  any specific PRIOR H."* The one clue tested FAILED the 2-of-3 gate. There is also a hard
-  characteristics wall on prebirth models.
-* **B's locality rule was REFUTED on holdout.** Do not carry it forward.
-* **`ng_exhaustion_v4_exact_candidate_freeze.py` is a CI release freeze**, not a market
-  candidate definition. The previous session claimed otherwise. The real one is
-  `ng_exhaustion_chain_canonical_table_20260817.py:220-267`.
-* **"runway" means three different things** in this repo now. Disambiguate before using it.
+**CHECKPOINT after T1-T3:** package suite green, wider suite still exactly 7 pre-existing failures, and
+every section T1 touched reports data. Then stop and show Greg before T4.
 
-## 7. WHAT IS GENUINELY DONE AND SHOULD NOT BE REBUILT
+## 5. THE TWO OPEN RULINGS - parallel, they block only 4.10/4.11/4.12
 
-* **`native_rt_book.ReplayBook`** - the RT view, advanced action by action, on Greg's ruling
-  *"we should see it like it would be seen in rt"*. Mirrors `InstrumentBook` on every mutation;
-  differential-tested over 12,024 records with zero divergence.
-* **`native_full_capture_adapter.FullCaptureAdapter`** - restores everything the hash-locked V4
-  adapter discarded. **Never edit that adapter; it is hash-locked and editing it broke six
-  supply-chain locks in one commit (D61).**
-* **The whole D60 restoration sweep** - legacy rows, exact member and lifecycle rows,
-  `describe_structure`'s full output, the at-risk table, the population report, sum_of_squares,
-  ladder_scope on the value, the de-saturated assignment ledger.
-* The CME trading-day calendar; the file-based execution gate.
+* **`SAME`/`FLIP` carries three readings.** Contract 4.12 (a stratum axis); the frozen corpus (polarity
+  vs the latest predecessor, 1,546 FLIP / 1,883 SAME of 3,429, gated in four files); and
+  `FRANKIE_A_ARM_PRELAUNCH_STATE:464-467` (*"a MIRROR relationship defined nowhere in the tree"*).
+  Contract section 3 lists the stratifier as *"side or mirror orientation"* (:65) and forbids averaging
+  across *"mirror orientations"* (:71), so one-axis and two-axis both read defensibly. **Nothing is
+  pinned; `native_mirror` deliberately makes no claim.** Moot until something feeds
+  `DipoleStage.orientation`, which has no producer.
+* **4.10's runway identity is per-group.** `GroupContext.candidate_id` is per-group by D53, so every
+  runway is one group long and phases can never advance. **This is the real blocker on 4.10 and
+  redefining it answers D62's open unit question**, which is Greg's. Do not decide it in code.
 
-## 8. STANDING RULES THAT WERE EARNED THE HARD WAY
+## 6. DO NOT
 
-* **D60 - nothing is dropped without discussing it first.** Memory is explicitly not a reason.
-  The one exception is a row that is TRULY BLANK and measuring nothing.
-* **D61 - restore what the MBO adapter drops by WRAPPING it, never by editing it.**
-* **Verify by EXECUTION, not by the presence of a file.** Four adapters were built and called by
-  nothing; the checkpointer sits on a driver no workflow dispatches; ten of thirteen sections
-  receive zero data today. Components existing is not wiring existing.
-* **Search the prior corpus BEFORE proposing a definition.** This session cost hours to that.
+* **Never read the October Step-1 seconds.** The mission: *"Never use reduced seconds rows,
+  `V4_NATIVE_FULL_MBO_SECONDS.jsonl.gz`, MBP/top-10, Step-1-derived input... Keep Step-1 and the
+  answer/reveal wall sealed."* Feed inventory section 14 seals them as `SEALED_TARGET_ANSWER`.
+  Recreating the surface from native is REQUIRED (section 8); reading that file voids the run.
+* **Never edit `research/ng_exhaustion_mbo_v4_state_adapter_20260820.py`** - hash-locked; editing it
+  broke six supply-chain locks in one commit (D61). Restore by wrapping.
+* **D60: nothing dropped without discussing first.** Memory is explicitly not a reason. The one
+  exception is a row shown from itself to be truly blank.
+* **Do not launch, dispatch a workflow, or invoke a model** without walking prelaunch section 0 with
+  Greg first.
+* **Do not treat the 7 wider-suite failures as regressions.** They fail at `d5b7b51` too.
+* **Do not apply `RUN_SOP.md`, `PLANT_MAP.md`, `QC_CHECKLIST.md` or `plant_status.py` here.** Greg,
+  2026-08-30: *"The sop and plant map are something different... It should have no bearing on this
+  stuff."* They govern the group-walk program.
+* **Do not touch `tasks/plan.md` or `tasks/todo.md`** - different work, 54 unchecked tasks.
 
-## 9. LAUNCH READINESS - MEASURED, NOT ASSUMED
+## 7. HANDOFF COMPLETION CHECKLIST - supplied and missing, stated honestly
 
-Sections fed by the driver: **clocks, coverage, and a replenishment clock advance. That is all.**
-Adapters wired: **0**. Execution gate referenced by any non-test file: **0**. Workflows that
-dispatch the driver: **0**. Resize armed at `r6i.4xlarge` / 128 GiB, **not fired**.
+**Supplied:** target branch and tip; focused test nodes and expected counts; raw-manifest identity
+(`raw_mbo_source_manifest`, 5,667,689 records over 2021-10-01/03/04/05, manifest SHA
+`a98a454ef5a88d6f3ee1213370d6df530ab2946ec9cde47171b0d7aa19f4e2ba`); the sealed-wall declaration; the
+declared exception in the conflict notice above.
+
+**MISSING, and a run cannot be authorized without them:** the month descriptor path and hash, the
+prior-learning declaration and receipt hashes, the expected implementation/marker ancestry, the
+artifact namespace, the canary size, the progress source, and the isolated stop command. The canonical
+procedure requires every one. **This is a build-and-wire handoff, not a launch authorization.**
