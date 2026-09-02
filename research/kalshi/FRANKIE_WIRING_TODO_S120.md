@@ -1,4 +1,6 @@
-# FRANKIE WIRING TO-DO — S120 (2026-09-02)
+# FRANKIE WIRING TO-DO — S120 (2026-09-02), brought current S121
+
+**S121 status line (see `SESSION_HANDOFF_2026-09-02_S121.md`):** items 1-2 built (S120); item 12 DONE (the dated addendum, `59aae7b`); the registry rebind of item 3 DONE (`00c03db`); the crosswalk of item 6 built through computed status and the gate function (`6de4248`, `e5a6c85`); the output ledgers of item 8 built and validated (`833cbd6`); items 3-5 delivery, 6 wiring, 7, 8 read-back and 9 are IN FLIGHT in the three S121 wiring personas; item 10 registered as F-21..F-28 and D82-D86; item 11 is the S122 drop-in. One arm, A_MEMORY (D86). Zero hardcoded intervals (D83).
 
 **The rule this list serves (Greg, verbatim intent):** Frankie receives every record of every
 field for the day being run, delivered exactly as it arrives in real time (F_LAST-closed groups
