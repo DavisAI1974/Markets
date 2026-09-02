@@ -37,9 +37,18 @@ import sys
 from pathlib import Path
 from typing import Any, Mapping
 
+from research.kalshi.frankie_raw_mbo_benchmark.fetch_frankie_ledgers import (
+    RECEIPT_SCHEMA as DELIVERY_RECEIPT_SCHEMA,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import (
+    SHA256_RE,
+    canonical_hash,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_key_alias import read_averaged_rows
+from research.kalshi.frankie_raw_mbo_benchmark.native_staging import EXACT_LEDGERS
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
+STREAM_MODULE = "research.kalshi.frankie_raw_mbo_benchmark.native_causal_stream"
 MISSION_PATH = "research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md"
 CONTRACT_PATH = "research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md"
 
@@ -79,15 +88,64 @@ def _file_sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def emit(result_path: Path | str, *, repo_root: Path | None = None,
-         evidence_uri: str | None = None) -> str:
-    """Render the prompt for one Frankie run. Returns text; raises EmitError on any gap."""
+def _load_delivery_receipt(path: Path | str | None) -> dict[str, Any]:
+    """The D81 gate: no spawn until every exact ledger is in his hands and VERIFIED.
+
+    The receipt is `fetch_frankie_ledgers`' FRANKIE_LEDGER_DELIVERY_RECEIPT_V1. Its own hash
+    must verify, its schema must be that one, and every ledger in `EXACT_LEDGERS` must read
+    VERIFIED with a local path that exists. A partial delivery reasoned over as a complete
+    one is the S120 finding wearing a receipt.
+    """
+    if path is None:
+        raise EmitError(
+            "no delivery receipt: the raw MBO is the principal's evidence (D81) and the spawn "
+            "is refused until fetch_frankie_ledgers has delivered and VERIFIED every exact "
+            f"ledger in {list(EXACT_LEDGERS)}; pass --delivery-receipt"
+        )
+    path = Path(path)
+    try:
+        body = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise EmitError(f"cannot read the delivery receipt at {path}: {exc}") from exc
+    if not isinstance(body, Mapping) or body.get("schema") != DELIVERY_RECEIPT_SCHEMA:
+        raise EmitError(f"{path} is not a {DELIVERY_RECEIPT_SCHEMA}")
+    if body.get("receipt_sha256") != canonical_hash(body, omit="receipt_sha256"):
+        raise EmitError(f"delivery receipt at {path} fails its own receipt_sha256")
+    ledgers = body.get("ledgers")
+    if not isinstance(ledgers, Mapping):
+        raise EmitError("delivery receipt carries no `ledgers`")
+    for name in EXACT_LEDGERS:
+        entry = ledgers.get(name)
+        status = entry.get("status") if isinstance(entry, Mapping) else None
+        if status != "VERIFIED":
+            raise EmitError(
+                f"delivery receipt: {name} is {status!r}, not VERIFIED; a ledger that did not "
+                "arrive whole and matching the box's PLAIN_SHA256SUMS is not evidence"
+            )
+        local = entry.get("local_path")
+        if not isinstance(local, str) or not Path(local).exists():
+            raise EmitError(f"delivery receipt: {name} names no local_path that exists ({local!r})")
+        if not isinstance(entry.get("plain_sha256_observed"), str) or SHA256_RE.fullmatch(entry["plain_sha256_observed"]) is None:
+            raise EmitError(f"delivery receipt: {name} carries no observed plain sha256")
+    return dict(body)
+
+
+def emit(result_path: Path | str, *, delivery_receipt: Path | str | None = None,
+         repo_root: Path | None = None, evidence_uri: str | None = None) -> str:
+    """Render the prompt for one Frankie run. Returns text; raises EmitError on any gap.
+
+    `delivery_receipt` is REQUIRED in the only sense that matters: absent, the emission is
+    refused. It is a keyword with a None default so the refusal is an EmitError naming the
+    rule rather than a TypeError naming a parameter.
+    """
     repo_root = Path(repo_root or REPO_ROOT)
     result_path = Path(result_path)
     try:
         result = json.loads(result_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise EmitError(f"cannot read the evidence at {result_path}: {exc}") from exc
+    receipt = _load_delivery_receipt(delivery_receipt)
+    delivered = {name: receipt["ledgers"][name] for name in EXACT_LEDGERS}
 
     verdict = _lookup(result, "verdict")
     if verdict != "ACCEPTED":
@@ -142,15 +200,15 @@ def emit(result_path: Path | str, *, repo_root: Path | None = None,
             "spawn against, which is a cadence defect and not an empty day"
         )
     sections_fed = _lookup(traversal, "sections_fed")
+    # BY LOOKUP, like every other slot. Absent, the evidence block says the run's own
+    # retention receipts are unstated rather than silently rendering an empty list, because
+    # "you were given nothing" and "we did not record what you were given" are different facts.
+    retention = result.get("ledger_retention") or {}
 
     # NOT `_lookup(..., "layers.averaged_companions.rows")`. When the rows are aliased
     # that lookup still succeeds, still returns the right count, and `row.get("section")`
     # then returns None on every one - so the per-section table would report every row
     # under `None` and the prompt would go out looking complete.
-    # BY LOOKUP, like every other slot. Absent, the block below says the retention receipts
-    # themselves are unstated rather than silently rendering an empty list, because "you were
-    # given nothing" and "we did not record what you were given" are different facts.
-    retention = result.get("ledger_retention") or {}
     rows = read_averaged_rows(result)
     per_section: dict[str, int] = {}
     for row in rows:
@@ -169,16 +227,56 @@ def emit(result_path: Path | str, *, repo_root: Path | None = None,
     add(f"   sha256 `{contract_bound}` - what the runner computed and how.")
     add("")
     add("Section 5 of the mission governs the division of labour and is not negotiable:")
-    add("**the runner calculates, you interpret.** The sixteen sections were computed")
-    add("deterministically before you saw them. Do not recompute them differently, and do")
-    add("not treat a mechanical summary as a finding.")
+    add("**you compute the sixteen sections yourself**, from the complete causal stream, per")
+    add("the calculation contract. Greg, 2026-09-02: *\"he gets every record of every field for")
+    add("Sunday, the date and time we are running\"* and *\"this has to exactly mimic how it's")
+    add("going to come in rt.\"* The runner captured, retained and proved that nothing was")
+    add("dropped; it did not do your work, and its calculations are not your evidence.")
     add("")
     add("## The evidence")
     add("")
-    add(f"- Local file: `{result_path}`")
+    add("Every record of every field for the day being run, delivered at each F_LAST cutoff in")
+    add("causal order, never ahead. Three exact ledgers, each downloaded, gunzipped and verified")
+    add("byte-for-byte against the box's own `PLAIN_SHA256SUMS` and `PLAIN_SIZES`:")
+    add("")
+    for name in EXACT_LEDGERS:
+        entry = delivered[name]
+        bound = ""
+        sink = retention.get(name) if isinstance(retention, Mapping) else None
+        if isinstance(sink, Mapping) and isinstance(sink.get("sha256"), str):
+            # THE BINDING THAT MAKES "THIS LEDGER IS THIS RUN'S" TRUE. The sink hashed the
+            # file as it wrote it; the delivery hashed the file as it arrived. Different
+            # programs, different machines, one number - or a refusal.
+            if sink["sha256"] != entry["plain_sha256_observed"]:
+                raise EmitError(
+                    f"{name}: the delivered file hashes to {entry['plain_sha256_observed']} "
+                    f"but the run's sink wrote {sink['sha256']}; this is not the ledger this "
+                    "run retained, and a spawn against it would bind him to another run's rows"
+                )
+            bound = (f" - BOUND to this run: sha256 equals the sink's, "
+                     f"{int(sink.get('row_count', 0)):,} rows, {int(sink.get('bytes', 0)):,} bytes as written")
+        add(f"- `{name}`: `{entry['local_path']}` ({int(entry['plain_bytes_observed']):,} bytes, "
+            f"sha256 `{entry['plain_sha256_observed']}`){bound}")
+    add("")
+    add(f"Consume them through `{STREAM_MODULE}` - `CausalGroupStream(member, lifecycle, legacy,")
+    add(f"run_id=..., arm={arm!r})` and `iterate()`. It hands you one F_LAST-closed group at a")
+    add("time in `ts_recv_ns` order, byte-identical to the ledger, with the lifecycle and legacy")
+    add("rows whose own clocks are at or before that group's cutoff. There is no random access:")
+    add("peek, seek, rewind and indexing raise. Its closing `stream_receipt()` is the proof of")
+    add("what you consumed; write it beside your artifact and cite its sha256 below.")
+    add("")
+    add(f"Delivery receipt `{receipt['receipt_sha256']}` (run {receipt['run_id']} at")
+    add(f"`s3://{receipt['bucket']}/{receipt['run_prefix']}`).")
+    add("")
+    add("### What the runner produced, and what it is for")
+    add("")
+    add(f"- `calculation_result.json` at `{result_path}` (`evidence_result_hash` `{result_hash}`)")
     if evidence_uri:
-        add(f"- Durable copy: `{evidence_uri}`")
-    add(f"- `evidence_result_hash`: `{result_hash}`")
+        add(f"  durable copy `{evidence_uri}`")
+    add("  is **NOT your evidence**. It is the runner's own pass over the same stream, retained")
+    add("  for the section 6 gates; it may be compared AFTER you file against what you computed,")
+    add("  never read first, never adopted. A finding that agrees with it is not thereby")
+    add("  confirmed and one that disagrees is not thereby wrong; the stream decides.")
     add(f"- Verdict `{verdict}`, failed gates {_lookup(result, 'failed_gates') or 'none'}, "
         f"completion `{_lookup(result, 'completion_status')}`")
     add(f"- Source traversed: `{Path(str(_lookup(result, 'slice.sources')[0])).name}`")
@@ -188,9 +286,7 @@ def emit(result_path: Path | str, *, repo_root: Path | None = None,
         f"{coverage['duplicate_group_indices']} duplicate group indices, "
         f"{coverage['fifo_reconstruction_failures']} FIFO reconstruction failures")
     add("")
-    add("It is about 20 MB. `layers.averaged_companions.rows` is 99% of it, so read the")
-    add("skeleton whole and the averaged rows section by section with tools. Do not guess at")
-    add("what you have not read, and say what you did not read.")
+    add("Do not guess at what you have not streamed, and say what you did not read.")
     add("")
     add("### What each section actually received")
     add("")
@@ -242,13 +338,18 @@ def emit(result_path: Path | str, *, repo_root: Path | None = None,
     add("")
     add("### What you are actually given, so `CANNOT_JUDGE` is used honestly")
     add("")
-    for name, receipt in sorted(retention.items()):
-        add(f"- `{name}`: {receipt.get('row_count', 0):,} rows, "
-            f"{receipt.get('bytes', 0):,} bytes - **NOT in this result**, it is on the box "
-            f"at `{receipt.get('path', 'unknown')}`")
+    add("The three exact ledgers above, whole and verified, streamed to you group by group. What")
+    add("the runner's sink recorded as it wrote them, for comparison with what arrived:")
+    add("")
+    for name, sink in sorted(retention.items()):
+        add(f"- `{name}`: {int(sink.get('row_count', 0)):,} rows, "
+            f"{int(sink.get('bytes', 0)):,} bytes written on the box at "
+            f"`{sink.get('path', 'unknown')}`; delivered to you at "
+            f"`{delivered[name]['local_path'] if name in delivered else 'no exact ledger of that name'}`")
     if not retention:
-        add("- the run recorded no ledger retention receipts, so what was retained where is")
-        add("  itself unstated - say so rather than assuming you saw it")
+        add("- the run recorded no ledger retention receipts, so what the sink wrote is")
+        add("  itself unstated; the binding of the delivered files to this run then rests on the")
+        add("  box's `PLAIN_SHA256SUMS` alone, which the delivery receipt verified against")
     add("")
     # THE MEASUREMENT BEHIND 9a. Every retained member row was censused per field path; a
     # result without the census, or with a census that saw fewer rows than were written,
@@ -289,9 +390,9 @@ def emit(result_path: Path | str, *, repo_root: Path | None = None,
     if not always_null:
         add("- none")
     add("")
-    add("So any exact-member claim rests on the runner's counters and per-stratum summaries")
-    add("rather than on rows you read. **Say which fields you could not assess and why.** An")
-    add("honest CANNOT_JUDGE is worth more than a guess.")
+    add("Your exact-member claims rest on rows you streamed, not on the runner's counters.")
+    add("**Say which fields you could not assess and why.** An honest CANNOT_JUDGE is worth")
+    add("more than a guess.")
     add("")
     add("## What you return")
     add("")
@@ -306,12 +407,14 @@ def emit(result_path: Path | str, *, repo_root: Path | None = None,
         "evidence_result_hash": result_hash,
         "controller_only": False,
         "actual_principal_invocation": True,
-        # F-14: declared per exact ledger. NOT_READ is accepted; not saying is refused.
-        "evidence_read": {
-            "exact_member_ledger": "READ | PARTIAL | NOT_READ",
-            "exact_lifecycle_and_runway_ledger": "READ | PARTIAL | NOT_READ",
-            "legacy_observable_rows": "READ | PARTIAL | NOT_READ",
-        },
+        # D81: the ledgers were delivered and verified, so READ is the only honest answer
+        # for each; the staging gate refuses NOT_READ when a delivery receipt is cited.
+        "evidence_read": {name: "READ" for name in EXACT_LEDGERS},
+        "delivery_receipt_sha256": receipt["receipt_sha256"],
+        "stream_receipt_sha256": (
+            "<sha256 of the stream receipt your CausalGroupStream run wrote: "
+            "canonical_hash(stream_receipt(), omit='receipt_sha256')>"
+        ),
         "findings": ["<at least one; see the mission's section 9 for what a finding must carry>"],
     }, indent=2))
     add("```")
@@ -322,10 +425,11 @@ def emit(result_path: Path | str, *, repo_root: Path | None = None,
     add("`evidence_read` for every exact ledger. An empty artifact is a failed spawn, not an")
     add("empty success.")
     add("")
-    add("**`evidence_read` is required and NOT_READ carries no penalty.** The contract says")
-    add("exact evidence is never replaced by an average; that is only true of what you actually")
-    add("read, so say what you read. It is refused when absent - not because NOT_READ is wrong,")
-    add("but because not saying is what lets an average stand in for the exact.")
+    add("**`evidence_read` must be READ for every ledger, and NOT_READ is refused.** The")
+    add("ledgers were delivered to you whole and verified, so a ledger you did not read is a")
+    add("failed spawn, not a caveat. Cite `delivery_receipt_sha256` exactly as above and")
+    add("`stream_receipt_sha256` from the receipt your own stream wrote; the staging gate")
+    add("refuses NOT_READ on any artifact that cites a delivery receipt.")
     add("")
     add("Mission section 9 says what the output must contain: searched coverage and current")
     add("causal state; candidate families and complete causal runways; pre-birth and")
@@ -375,11 +479,17 @@ def emit(result_path: Path | str, *, repo_root: Path | None = None,
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--result", required=True, help="calculation_result.json for the run")
+    parser.add_argument(
+        "--delivery-receipt", required=True,
+        help="FRANKIE_LEDGER_DELIVERY_RECEIPT_V1 written by fetch_frankie_ledgers; every "
+             "exact ledger must be VERIFIED or the spawn is refused (D81)",
+    )
     parser.add_argument("--evidence-uri", default=None, help="durable S3 URI, for the record")
     parser.add_argument("--output", default=None)
     args = parser.parse_args(argv)
     try:
-        text = emit(args.result, evidence_uri=args.evidence_uri)
+        text = emit(args.result, delivery_receipt=args.delivery_receipt,
+                    evidence_uri=args.evidence_uri)
     except EmitError as exc:
         print(f"REFUSED: {exc}", file=sys.stderr)
         return 2
