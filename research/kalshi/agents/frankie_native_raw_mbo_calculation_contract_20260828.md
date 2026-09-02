@@ -165,7 +165,8 @@ at neighboring prices, touch restoration, overshoot, persistence, and first
 lawful restoration time. Distinguish new liquidity from reshaped residual orders.
 
 **Average decision: yes.** Within one initiating family, side, price/touch state,
-session/phase, and day, report mean removed/replaced quantity, restoration ratio,
+session/phase, and day, report mean removed quantity, neighbourhood arrival quantity
+(the arrival-credited numerator, not a replacement), the neighbourhood arrival ratio,
 and fixed-H+N response curves. Resolved, censored, and never-restored paths are
 separate. Exact paths and time-to-restoration distributions remain present.
 

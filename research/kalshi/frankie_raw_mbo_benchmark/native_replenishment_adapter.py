@@ -72,7 +72,7 @@ episode's answer depend on other episodes it has nothing to do with, when the ca
 built per episode throughout (per-episode survival, per-episode ratio, per-episode overshoot);
 and capping each episode at its own removed quantity would make OVERSHOOT - a measurand 4.7
 names explicitly - unobservable. The cost is stated instead of hidden: episodes whose windows
-overlap at one level SHARE a refill, so `replaced_quantity` SUMMED across overlapping episodes
+overlap at one level SHARE a refill, so `neighborhood_arrival_quantity` SUMMED across overlapping episodes
 exceeds the quantity that actually arrived. The episode is the unit 4.7 measures, not the sum,
 and `shared_with_episode_count` is emitted on the observation so the overlap is countable rather
 than inferred.
@@ -884,7 +884,7 @@ class ReplenishmentObserver:
         row["price_relations"] = relations
         row["neighbour_offset_ticks"] = offsets
         # Declared, not inferred: overlapping episodes SHARE this quantity, so a sum of
-        # `replaced_quantity` across them exceeds what arrived. The episode is the unit.
+        # `neighborhood_arrival_quantity` across them exceeds what arrived. The episode is the unit.
         row["shared_with_episode_count"] = max(len(attributed) - 1, 0)
         return row
 

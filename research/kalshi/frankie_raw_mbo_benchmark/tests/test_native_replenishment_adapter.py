@@ -193,7 +193,7 @@ class TickNeighbourhoodTests(unittest.TestCase):
         )
         emitted = c.advance(200 + HORIZON)[0]
         self.assertEqual(emitted["outcome"], NEVER_RESTORED)
-        self.assertEqual(emitted["replaced_quantity"], 0)
+        self.assertEqual(emitted["neighborhood_arrival_quantity"], 0)
 
     def test_an_ordinary_unprompted_add_is_not_filed_as_an_anomaly(self):
         # `refill_quantity_unattributed` is reserved for the two DEFECT shapes - an undefined
@@ -347,7 +347,7 @@ class NewIdVersusSameIdTests(unittest.TestCase):
         self.assertEqual(emitted["same_id_modify_quantity"], 3)
         self.assertEqual(emitted["new_id_add_count"], 1)
         self.assertEqual(emitted["same_id_modify_count"], 1)
-        self.assertEqual(emitted["replaced_quantity"], 7)
+        self.assertEqual(emitted["neighborhood_arrival_quantity"], 7)
 
 
 class SelfRestorationTests(unittest.TestCase):
@@ -361,7 +361,7 @@ class SelfRestorationTests(unittest.TestCase):
         c = calc()
         observe(observer, [SEEDED, [row("M", "B", 1, P_DOWN1, 5, 200)]], c)
         (episode,) = c.pending_at(42, "B", P0)
-        self.assertEqual(episode.replaced_quantity, 0)
+        self.assertEqual(episode.neighborhood_arrival_quantity, 0)
         self.assertIsNone(episode.first_restoration_recv_ns)
         emitted = c.advance(200 + HORIZON)
         outcomes = {e["price_raw"]: e["outcome"] for e in emitted}
@@ -408,7 +408,7 @@ class SharedAttributionTests(unittest.TestCase):
         self.assertEqual(refill["shared_with_episode_count"], 1)
         self.assertEqual(refill["refill_attribution"], "EVERY_PENDING_EPISODE_IN_NEIGHBOURHOOD")
         for episode in list(c.pending_at(42, "B", P0)):
-            self.assertEqual(episode.replaced_quantity, 4)
+            self.assertEqual(episode.neighborhood_arrival_quantity, 4)
 
 
 class OvershootTests(unittest.TestCase):
@@ -581,7 +581,7 @@ class NoLookaheadTests(unittest.TestCase):
         # An out-of-order feed: this add carries a timestamp BEFORE the removal it would answer.
         observe(observer, [[row("A", "B", 9, P0, 5, 400)]], c)
         (episode,) = c.pending_at(42, "B", P0)
-        self.assertEqual(episode.replaced_quantity, 0)
+        self.assertEqual(episode.neighborhood_arrival_quantity, 0)
         self.assertEqual(observer.integrity["refill_precedes_episode_open"], 1)
         self.assertEqual(observer.integrity["refill_quantity_unattributed"], 5)
         self.assertEqual(observer.integrity["refill_with_no_pending_episode"], 2, "the two seed adds")

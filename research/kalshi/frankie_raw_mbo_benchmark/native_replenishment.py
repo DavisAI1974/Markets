@@ -41,10 +41,13 @@ time a row is read alone - that is the whole of D-3. And the multiplicity is EMI
 stratum, and `attributions_per_episode` in the summary, so nobody has to divide 441,404 by
 24,283 to discover what kind of quantity they are holding.
 
-One name is knowingly left alone. The numerator field `replaced_quantity` carries the same
-implication of replacement and is NOT renamed here: it is outside the prescribed relabel and
-it is bound by the replenishment adapter's committed tests, which read the key by name.
-Flagged rather than changed quietly.
+The numerator was relabelled in S120 (F-17). `replaced_quantity` carried the same implication
+of replacement the ratio did - "replaced" reads as replacement of what left - and it is the
+same arrival-credited quantity: liquidity that arrived NEAR the removal, credited to every
+pending episode in the neighbourhood. It is now `neighborhood_arrival_quantity`. Value
+unchanged, key renamed, the old name refuses loudly and names its successor, exactly as the
+ratio did under D-3, so the comparison with run 33605852433 survives through the legend of
+one rename rather than a silent drift in meaning.
 """
 from __future__ import annotations
 
@@ -79,7 +82,7 @@ ARRIVAL_ATTRIBUTION_RULE = "EVERY_PENDING_EPISODE_IN_NEIGHBORHOOD"
 """How an arrival is credited, stated as a value so it cannot be read off a name instead.
 
 Not one-to-one. Two episodes pending at one level both receive the same arrival in full, so
-summing `replaced_quantity` across overlapping episodes exceeds the quantity that arrived.
+summing `neighborhood_arrival_quantity` across overlapping episodes exceeds the quantity that arrived.
 The episode is the unit 4.7 measures; the sum is not a quantity of liquidity.
 """
 
@@ -135,9 +138,24 @@ class ReplenishmentEpisode:
     closed_recv_ns: int | None = None
 
     @property
-    def replaced_quantity(self) -> int:
+    def neighborhood_arrival_quantity(self) -> int:
         """New liquidity plus reshaped residual, kept addable but never conflated above."""
         return self.new_id_add_quantity + self.same_id_modify_quantity
+
+
+    @property
+    def replaced_quantity(self) -> int:
+        """Refused loudly rather than quietly kept working (D60), as `restoration_ratio` is.
+
+        A caller reading this name is asking how much of the removal was replaced. The number
+        is the arrival quantity credited to the episode from its neighbourhood, which is not
+        that. Returning it would reproduce the defect on a codebase already told about it.
+        """
+        raise ReplenishmentError(
+            "replaced_quantity was renamed to neighborhood_arrival_quantity (F-17, S120): it "
+            "is the liquidity that arrived NEAR the removal, credited to every pending episode "
+            "in the neighbourhood, not the share of the removal that was replaced"
+        )
 
     @property
     def refill_attributions(self) -> int:
@@ -161,7 +179,7 @@ class ReplenishmentEpisode:
         """
         if self.removed_quantity == 0:
             return None
-        return self.replaced_quantity / self.removed_quantity
+        return self.neighborhood_arrival_quantity / self.removed_quantity
 
     @property
     def restoration_ratio(self) -> float | None:
@@ -221,7 +239,7 @@ class ReplenishmentEpisode:
             self.same_price_refill_quantity += quantity
         else:
             self.neighboring_price_refill_quantity += quantity
-        self.peak_restored_quantity = max(self.peak_restored_quantity, self.replaced_quantity)
+        self.peak_restored_quantity = max(self.peak_restored_quantity, self.neighborhood_arrival_quantity)
         if self.first_restoration_recv_ns is None:
             self.first_restoration_recv_ns = recv_ns
 
@@ -254,7 +272,7 @@ class ReplenishmentEpisode:
             "same_id_modify_count": self.same_id_modify_count,
             "same_price_refill_quantity": self.same_price_refill_quantity,
             "neighboring_price_refill_quantity": self.neighboring_price_refill_quantity,
-            "replaced_quantity": self.replaced_quantity,
+            "neighborhood_arrival_quantity": self.neighborhood_arrival_quantity,
             "neighborhood_arrival_ratio": self.neighborhood_arrival_ratio,
             # The qualifier travels ON the value. D-3 happened because the attribution rule
             # lived in an adapter docstring and a traversal counter while the number went out
@@ -315,8 +333,8 @@ class ReplenishmentCalculator:
             RESOLVED,
             "episodes with zero removal are refused at open, never counted as zero",
         )
-        self.replaced_quantity = measure(
-            "replaced_quantity",
+        self.neighborhood_arrival_quantity = measure(
+            "neighborhood_arrival_quantity",
             "new-ID add quantity + same-ID modify quantity within the horizon",
             RESOLVED,
             "censored episodes are excluded here and reported under their own outcome",
@@ -367,7 +385,7 @@ class ReplenishmentCalculator:
     def measures(self) -> tuple[StratifiedMeasure, ...]:
         return (
             self.removed_quantity,
-            self.replaced_quantity,
+            self.neighborhood_arrival_quantity,
             self.neighborhood_arrival_ratio,
             self.refill_attributions_per_episode,
             self.time_to_restoration,
@@ -462,17 +480,17 @@ class ReplenishmentCalculator:
         self.episodes_closed += 1
 
         if outcome in RESOLVED_OUTCOMES:
-            self.replaced_quantity.observe(key, float(episode.replaced_quantity))
+            self.neighborhood_arrival_quantity.observe(key, float(episode.neighborhood_arrival_quantity))
             self.overshoot.observe(key, float(episode.overshoot_quantity))
             self.neighborhood_arrival_ratio.observe(
-                key, float(episode.replaced_quantity), float(episode.removed_quantity)
+                key, float(episode.neighborhood_arrival_quantity), float(episode.removed_quantity)
             )
             self.refill_attributions_per_episode.observe(key, float(episode.refill_attributions))
             self.resolved_count += 1
             if outcome == NEVER_RESTORED:
                 self.never_restored_count += 1
         else:
-            self.replaced_quantity.exclude_missing(key)
+            self.neighborhood_arrival_quantity.exclude_missing(key)
             self.overshoot.exclude_missing(key)
             self.refill_attributions_per_episode.exclude_missing(key)
             self.censored_count += 1

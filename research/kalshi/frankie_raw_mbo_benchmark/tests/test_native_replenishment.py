@@ -103,7 +103,7 @@ class ReplenishmentCalculatorTest(unittest.TestCase):
         self.assertEqual(row["same_id_modify_quantity"], 3)
         self.assertEqual(row["new_id_add_count"], 1)
         self.assertEqual(row["same_id_modify_count"], 1)
-        self.assertEqual(row["replaced_quantity"], 7)
+        self.assertEqual(row["neighborhood_arrival_quantity"], 7)
 
     def test_same_and_neighboring_price_refills_are_separated(self) -> None:
         episode = self.calc.open_episode(**open_kwargs())
@@ -172,10 +172,10 @@ class ReplenishmentCalculatorTest(unittest.TestCase):
         self.assertEqual(survival["observed_events"], 1)
         self.assertEqual(survival["censored_observations"], 0)
 
-    def test_censored_episodes_are_excluded_from_replaced_quantity_and_counted(self) -> None:
+    def test_censored_episodes_are_excluded_from_neighborhood_arrival_quantity_and_counted(self) -> None:
         self.calc.open_episode(**open_kwargs())
         self.calc.close_continuity_segment(segment=0, recv_ns=10_300)
-        row = self.calc.replaced_quantity.rows()[0]
+        row = self.calc.neighborhood_arrival_quantity.rows()[0]
         self.assertEqual(row["value"]["n"], 0)
         self.assertEqual(row["excluded_missing_members"], 1)
 
@@ -357,7 +357,7 @@ class ArrivalDensityNamingTest(unittest.TestCase):
         episode.add_refill(quantity=4, liquidity_kind=NEW_LIQUIDITY, price_relation=SAME_PRICE, recv_ns=10_100)
         episode.add_refill(quantity=3, liquidity_kind=RESHAPED_RESIDUAL, price_relation=SAME_PRICE, recv_ns=10_200)
         row = self.calc.advance(11_000)[0]
-        self.assertEqual(row["replaced_quantity"], 7)
+        self.assertEqual(row["neighborhood_arrival_quantity"], 7)
         self.assertEqual(row["neighborhood_arrival_ratio"], 0.7)
         value = self.calc.neighborhood_arrival_ratio.rows()[0]["value"]
         self.assertEqual(value["numerator_total"], 7.0)
@@ -372,3 +372,31 @@ class ArrivalDensityNamingTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class ReplacedQuantityRenameTest(unittest.TestCase):
+    """F-17, the same fix as D-3 one field over: label only, arithmetic byte-identical.
+
+    `replaced_quantity` implied replacement of what left. It is the arrival-credited quantity
+    - liquidity that arrived NEAR the removal - and S119 flagged the name rather than change
+    it quietly. Renamed here; the old name refuses and names its successor so a reader of run
+    33605852433's rows can map one to the other through a single legend line.
+    """
+
+    def setUp(self) -> None:
+        self.calc = ReplenishmentCalculator(horizon_ns=HORIZON)
+        self.episode = self.calc.open_episode(**open_kwargs())
+
+    def test_the_old_name_refuses_and_names_the_successor(self):
+        with self.assertRaises(ReplenishmentError) as caught:
+            self.episode.replaced_quantity
+        self.assertIn("neighborhood_arrival_quantity", str(caught.exception))
+
+    def test_the_new_name_carries_the_identical_value(self):
+        """The whole point of a relabel: nothing about the number moves. A fresh episode has
+        received no arrivals, so the value is 0 under either name."""
+        self.assertEqual(self.episode.neighborhood_arrival_quantity, 0)
+
+    def test_the_row_carries_the_new_key_and_not_the_old(self):
+        row = self.episode.as_dict()
+        self.assertIn("neighborhood_arrival_quantity", row)
+        self.assertNotIn("replaced_quantity", row)
