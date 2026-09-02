@@ -62,6 +62,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_candidate_adapter import (
     starting_liquidity_regime,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import ClockCalculator, member_clock_row
+from research.kalshi.frankie_raw_mbo_benchmark.native_group_adapters import ladder_from_full_book
 from research.kalshi.frankie_raw_mbo_benchmark.native_session import (
     NS_PER_SECOND,
     phase_within,
@@ -356,6 +357,13 @@ class NativeReplayDriver:
             source_role=self.identity_role,
         )
         self._latest_book = EMPTY_BOOK
+        # D-5. The full price ladder as it stood BEFORE the group now being processed.
+        # 4.9's contract is a comparison of two consecutive full-book states, and it was
+        # being handed the group's own consumed/left delta instead - which is why its
+        # imbalance read exactly +/-1.0 on 152 of 154 observations. None until the first
+        # frame carrying a book arrives; a fabricated empty one would read as a book
+        # with no liquidity rather than as no book at all.
+        self._latest_ladder: dict[str, dict[int, int]] | None = None
         self._episode_context = ("", "", "")
         self._candidate_second = 0
         self._last_signed_flow = 0
@@ -765,9 +773,14 @@ class NativeReplayDriver:
         row["instrument_id"] = int(envelope["instrument_id"])
         self.counters.instrument_id = int(envelope["instrument_id"])
         full_book = frame.get("book_full")
+        ladder_before = self._latest_ladder
         if isinstance(full_book, Mapping):
             self._latest_book = BookState.from_full_book(full_book)
             self.responses.note_price(self._latest_book.price_raw)
+            ladder_after = ladder_from_full_book(full_book)
+            if ladder_after is not None:
+                self._latest_ladder = ladder_after
+        ladder_after = self._latest_ladder
         self._episode_context = (
             source_day, str(structure["candidate_family_id"]), mark.session_phase
         )
@@ -800,6 +813,8 @@ class NativeReplayDriver:
                 event_ns=event_ns,
                 recv_ns=recv_ns,
                 instrument_id=int(envelope["instrument_id"]),
+                book_before=ladder_before,
+                book_after=ladder_after,
             ),
         )
 
@@ -882,7 +897,9 @@ class NativeReplayDriver:
         )
         self.counters.recurrence_sequences += 1
 
-        # --- 4.9 ladder: one transition per side the group actually touched.
+        # --- 4.9 ladder. D-5: on the reconstructed book this is one transition per SIDE,
+        # both of them, whether or not the group touched them; only the group-local fallback
+        # is limited to the sides the group acted on.
         transitions = ladder_transitions(actions, ctx)
         # 4.9 requires absolute depth and relative imbalance stay separate, so the opposite
         # side's depth is passed as its own argument rather than folded into one figure.

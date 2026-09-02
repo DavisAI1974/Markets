@@ -72,6 +72,18 @@ BID, ASK = "B", "A"
 LADDER_SCOPE = "GROUP_LOCAL_DELTA"
 """What a `ladder_transitions` value IS. Travels with the value; see the module docstring."""
 
+LADDER_SCOPE_FULL_BOOK = "FULL_BOOK_TRANSITION"
+"""D-5. The scope when 4.9 is measured on the reconstructed book, which is its contract.
+
+`native_ladder`'s own opening line is "topology is compared between two consecutive
+full-book states", and it was handed a group-local delta instead: `before` = what the group
+consumed, `after` = what it left. True of the group, false of the book, and it produced
+`occupied_level_count` of 0 or 1 on 40,269 of 40,272 transitions and `relative_imbalance` of
+exactly +/-1.0 on 152 of 154 - because a group that touched only the bid presents a book
+with no ask at all. Every one of 4.9's eight measures inherited it. The full ladder was in
+the same frame the whole time, under `book_full.bid_levels_full` / `ask_levels_full`.
+"""
+
 
 class GroupAdapterError(ValueError):
     """A group could not be turned into a section-4 domain object."""
@@ -95,6 +107,12 @@ class GroupContext:
     event_ns: int
     recv_ns: int
     instrument_id: int = 0
+    # D-5. The reconstructed full ladder either side of this group, as {side: {price: size}}.
+    # Optional because a caller that has no book must be able to say so rather than be given
+    # a fabricated one; when both are absent 4.9 falls back to the group-local delta and
+    # LABELS itself GROUP_LOCAL_DELTA, so the two readings can never be confused downstream.
+    book_before: Mapping[str, Mapping[int, int]] | None = None
+    book_after: Mapping[str, Mapping[int, int]] | None = None
 
     @property
     def candidate_id(self) -> str:
@@ -207,6 +225,11 @@ def ladder_transitions(
     before: dict[str, dict[int, int]] = {BID: {}, ASK: {}}
     after: dict[str, dict[int, int]] = {BID: {}, ASK: {}}
     causing: dict[str, list[int]] = {BID: [], ASK: []}
+    # D-5. When the reconstructed book is available it IS the ladder, and the group's own
+    # actions serve only to name the orders that caused the transition. The group-local
+    # arithmetic below still runs, because a side the book reports as empty while the group
+    # demonstrably acted on it is a contradiction worth surfacing rather than smoothing.
+    on_full_book = ctx.book_before is not None and ctx.book_after is not None
 
     for row in actions:
         side = _side(row)
@@ -225,6 +248,25 @@ def ladder_transitions(
         if order_id:
             causing[side].append(order_id)
 
+    if on_full_book:
+        book_before = {s: dict(ctx.book_before.get(s, {})) for s in (BID, ASK)}
+        book_after = {s: dict(ctx.book_after.get(s, {})) for s in (BID, ASK)}
+        return {
+            side: LadderTransition(
+                before=LadderSide(side=side, depth_by_price=book_before[side]),
+                after=LadderSide(side=side, depth_by_price=book_after[side]),
+                recv_ns=ctx.recv_ns,
+                causing_order_ids=tuple(dict.fromkeys(causing[side])),
+                ladder_scope=LADDER_SCOPE_FULL_BOOK,
+            )
+            # BOTH sides, unconditionally - including a side that is empty in the book and a
+            # side the group never touched. An empty ask is a FACT about the book, and it is
+            # the fact `relative_imbalance` needs: dropping the side leaves the calculator
+            # with no opposite depth, which is exactly how imbalance came to be measured
+            # against an absent side rather than an empty one.
+            for side in (BID, ASK)
+        }
+
     return {
         side: LadderTransition(
             before=LadderSide(side=side, depth_by_price=dict(before[side])),
@@ -236,6 +278,34 @@ def ladder_transitions(
         for side in (BID, ASK)
         if before[side] or after[side]
     }
+
+
+def ladder_from_full_book(book: Mapping[str, Any] | None) -> dict[str, dict[int, int]] | None:
+    """`frame["book_full"]` -> `{side: {price_raw: size}}`, or None when there is no book.
+
+    Reads `bid_levels_full` / `ask_levels_full` - the WHOLE ladder the V4 adapter emits under
+    `include_full_depth=True` - never the ten-level `bid_levels` projection, which is the
+    truncation `BookState` already documents costing 29% of depth on a fourteen-level book.
+    Returns None rather than an empty ladder when the full-depth arrays are absent, so a
+    caller can tell "no book here" from "a book with nothing in it".
+    """
+    if not isinstance(book, Mapping):
+        return None
+    out: dict[str, dict[int, int]] = {}
+    for side, key in ((BID, "bid_levels_full"), (ASK, "ask_levels_full")):
+        levels = book.get(key)
+        if not isinstance(levels, list):
+            return None
+        ladder: dict[int, int] = {}
+        for level in levels:
+            if not isinstance(level, Mapping):
+                continue
+            price, size = level.get("price"), level.get("size")
+            if price is None or size is None:
+                continue
+            ladder[int(price)] = ladder.get(int(price), 0) + int(size)
+        out[side] = ladder
+    return out
 
 
 # --------------------------------------------------------------------------------------

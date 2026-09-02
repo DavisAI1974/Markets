@@ -145,9 +145,16 @@ class GateResult:
     gate: str
     passed: bool
     detail: str
+    # Structured evidence behind the verdict, for gates that produce any. A gate that reduces
+    # its findings to a prose string hands the reader a sentence to parse instead of rows to
+    # query - and a tolerated absence recorded only in prose is one nobody can count later.
+    verdicts: tuple[Mapping[str, Any], ...] = ()
 
     def as_dict(self) -> dict[str, Any]:
-        return {"gate": self.gate, "passed": self.passed, "detail": self.detail}
+        out = {"gate": self.gate, "passed": self.passed, "detail": self.detail}
+        if self.verdicts:
+            out["verdicts"] = [dict(v) for v in self.verdicts]
+        return out
 
 
 @dataclass
@@ -256,6 +263,7 @@ class NativeCalculationRun:
         sinks: Any = None,
     ) -> None:
         self.identity = identity
+        self._companions_cache: list[dict[str, Any]] | None = None
         # When present, the exact ledgers are RETAINED ON DISK instead of in RAM. Nothing is
         # dropped - see `native_row_sink`. Absent, behaviour is byte-identical to before, so
         # the two paths can be run against each other and compared.
@@ -415,12 +423,26 @@ class NativeCalculationRun:
         return dict(row)
 
     def _averaged_companions(self) -> list[dict[str, Any]]:
+        """Every section's averaged rows, section-labelled.
+
+        Cached from the first call inside `finalize`, which now asks for these six times -
+        two reconciliations, the denominators gate, the cross-section gate and the averages
+        layer - and rebuilding 16,293 rows each time is work done five times over on a run
+        whose whole point is that it is expensive.
+        """
+        if self._companions_cache is not None:
+            return self._companions_cache
         rows: list[dict[str, Any]] = []
         for label, section in self.sections.items():
             if not hasattr(section, "companion_rows"):
                 continue
             for row in section.companion_rows():
                 rows.append({**row, "section": label})
+        # Only cached once the run is sealed. Before that a section can still observe more,
+        # and a cache built mid-traversal would freeze a partial population under a name that
+        # says otherwise.
+        if self._finalized:
+            self._companions_cache = rows
         return rows
 
     def _open_world_indexes(self) -> dict[str, Any]:
@@ -634,7 +656,7 @@ class NativeCalculationRun:
         """
         verdicts = cross_section_compare(self._averaged_companions())
         passed, detail = cross_section_gate_detail(verdicts)
-        return GateResult(GATE_CROSS_SECTION, passed, detail)
+        return GateResult(GATE_CROSS_SECTION, passed, detail, tuple(verdicts))
 
     def finalize(self) -> dict[str, Any]:
         """Emit all seven layers with a single accept/reject verdict.

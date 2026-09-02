@@ -24,13 +24,25 @@ shape - one is pinned to its bounds and the other never approaches them. So agre
 tested on two statistics that survive re-stratification, since two sections legitimately
 stratify differently and their strata need not correspond:
 
-- the **population-weighted mean**, which is invariant to how the same members are grouped;
+- the **population-weighted mean**, invariant to how the same members are grouped;
+- the **population-weighted second moment**, `sum(sum_of_squares) / sum(n)`, which measures
+  how far from zero the members sit REGARDLESS OF SIGN;
 - the **extreme share**, the fraction of members sitting at the estimand's declared bounds.
+
+**The second moment is the one that cannot be dodged, and it is why the first version of
+this gate was not enough.** Mean and extreme share both cancel under sign symmetry: a
+section pinned half at +1 and half at -1 has a mean of 0.0, and if a stratum straddles both
+bounds its extreme share is 0.0 too, because a summary cannot be resolved into members. So a
+100%-degenerate section passed simply by being stratified differently - the real run only
+fired because 4.9's strata happened to be sign-pure. `E[x^2]` is about 1.0 for that section
+and about 0.004 for a section living in [0.0116, 0.1109], on every stratification of either.
+`sum_of_squares` is already emitted on every distribution row and was going unread.
 
 **The extreme share is counted conservatively.** From per-stratum summaries a mixed stratum -
 minimum at one bound, maximum at the other - cannot be resolved into members, so it
 contributes nothing. That undercounts and never overcounts, so a firing gate is always
-reporting at least the divergence it names.
+reporting at least the divergence it names. It is retained as a diagnostic because when it
+does fire it names the defect precisely; it is no longer relied on alone.
 
 **A declared member that goes missing while its counterpart speaks is also a failure.** A
 section that should compute an estimand and emitted nothing has not agreed with anyone, and
@@ -57,6 +69,10 @@ SHARED_ESTIMANDS: tuple[dict[str, Any], ...] = (
         # A bounded estimand on one instrument and one day. Two correct computations of it
         # can differ by re-stratification and by population, but not by this much in the mean.
         "max_mean_divergence": 0.05,
+        # E[x^2]. A section pinned at the bounds sits near 1.0; one living inside
+        # [0.0116, 0.1109] sits near 0.004. Neither cancels, and neither moves when the
+        # same members are re-stratified.
+        "max_second_moment_divergence": 0.10,
         # The one that actually fires here. 4.9 sat at 98.7% pinned, 4.12 at 0.0%.
         "max_extreme_share_divergence": 0.25,
         # Above this many observations in one member, a declared counterpart emitting
@@ -66,6 +82,10 @@ SHARED_ESTIMANDS: tuple[dict[str, Any], ...] = (
         # entry rather than global, because how much traffic an estimand needs before
         # silence becomes suspicious is a property of the estimand, not of the gate.
         "silence_is_a_defect_above_n": 1000,
+        # Below this many observations a member is REPORTED and not compared. A book
+        # with a genuinely empty ask yields exactly +1.0, and four such readings are a
+        # true fact about a short slice, not grounds to reject a fourteen-hour run.
+        "compare_above_n": 30,
         "basis": (
             "both sections declare the same formula over the same book on the same "
             "instrument and day; a difference in shape is a difference in substrate"
@@ -80,49 +100,100 @@ class AgreementError(ValueError):
     """A register entry is malformed. Distinct from the sections disagreeing."""
 
 
+def _observation_count(value: Mapping[str, Any]) -> int:
+    """How many observations a companion row stands for, whatever measure produced it.
+
+    Mirrors the runner's own function. Reading `value["n"]` alone values a RATIO_PAIR or a
+    SURVIVAL row at zero - so a register entry naming one of those measures would report
+    "absent on every stratum" forever, and the gate would be permanently, silently blind to
+    exactly the pairing it was added to watch.
+    """
+    if "n" in value:
+        return int(value.get("n") or 0)
+    if "total_observations" in value:
+        return int(value.get("total_observations") or 0)
+    nested = value.get("member_ratio_distribution")
+    if isinstance(nested, Mapping):
+        return int(nested.get("n") or 0)
+    return 0
+
+
+def _numeric(value: Any) -> float | None:
+    """A real number, or None. `True` is not a number here and neither is a string."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return float(value)
+
+
 def _aggregate(rows: Iterable[Mapping[str, Any]], bounds: tuple[float, float]) -> dict[str, Any]:
     """Population-weighted aggregate of one section's own averaged companions.
 
     Uses `sum` and `n` rather than averaging the per-stratum means, because a mean of means
     weights a stratum of one member the same as a stratum of a thousand - which is the shape
     of error this whole programme keeps finding.
+
+    REFUSES rather than skips a populated row whose `sum` is missing or non-numeric. Skipping
+    it added the row's population to the denominator with nothing in the numerator, so a
+    section with no sums at all reported a mean of exactly 0.0 - present, typed, in range,
+    and measuring nothing, which is the failure class this module exists to catch.
     """
     low, high = bounds
     span = high - low
     total_n = 0
     total_sum = 0.0
+    total_squares = 0.0
+    squares_known = True
     minimum: float | None = None
     maximum: float | None = None
     extreme_n = 0
     strata = 0
     for row in rows:
         value = row.get("value") or {}
-        n = value.get("n") or 0
-        if not isinstance(n, int) or n <= 0:
+        if not isinstance(value, Mapping):
+            raise AgreementError(f"{row.get('section')}:{row.get('measure')} has no value object")
+        n = _observation_count(value)
+        if n < 0:
+            raise AgreementError(
+                f"{row.get('section')}:{row.get('measure')} declares a negative population"
+            )
+        if n == 0:
             continue
+        total = _numeric(value.get("sum"))
+        if total is None:
+            raise AgreementError(
+                f"{row.get('section')}:{row.get('measure')} carries {n} observations with no "
+                "numeric sum; a population with no numerator would read as a mean of zero"
+            )
         strata += 1
         total_n += n
-        if isinstance(value.get("sum"), (int, float)):
-            total_sum += float(value["sum"])
-        lo, hi = value.get("minimum"), value.get("maximum")
-        if isinstance(lo, (int, float)):
-            minimum = float(lo) if minimum is None else min(minimum, float(lo))
-        if isinstance(hi, (int, float)):
-            maximum = float(hi) if maximum is None else max(maximum, float(hi))
+        total_sum += total
+        squares = _numeric(value.get("sum_of_squares"))
+        if squares is None:
+            squares_known = False
+        else:
+            total_squares += squares
+        lo, hi = _numeric(value.get("minimum")), _numeric(value.get("maximum"))
+        if lo is not None:
+            minimum = lo if minimum is None else min(minimum, lo)
+        if hi is not None:
+            maximum = hi if maximum is None else max(maximum, hi)
         # CONSERVATIVE: only a stratum wholly at one bound contributes. A mixed stratum
         # cannot be resolved into members from a summary, so it contributes nothing rather
-        # than an estimate.
-        if isinstance(lo, (int, float)) and isinstance(hi, (int, float)):
-            at_low = abs(float(lo) - low) <= EXTREME_TOLERANCE * span and \
-                abs(float(hi) - low) <= EXTREME_TOLERANCE * span
-            at_high = abs(float(lo) - high) <= EXTREME_TOLERANCE * span and \
-                abs(float(hi) - high) <= EXTREME_TOLERANCE * span
+        # than an estimate. This is why it cannot be the only test - see the module docstring.
+        if lo is not None and hi is not None:
+            at_low = abs(lo - low) <= EXTREME_TOLERANCE * span and \
+                abs(hi - low) <= EXTREME_TOLERANCE * span
+            at_high = abs(lo - high) <= EXTREME_TOLERANCE * span and \
+                abs(hi - high) <= EXTREME_TOLERANCE * span
             if at_low or at_high:
                 extreme_n += n
     return {
         "n": total_n,
         "strata": strata,
         "mean": (total_sum / total_n) if total_n else None,
+        # None, never zero, when a measure does not emit sum_of_squares - an unknown
+        # dispersion must not be comparable to a known one.
+        "second_moment": (total_squares / total_n) if (total_n and squares_known) else None,
         "minimum": minimum,
         "maximum": maximum,
         "extreme_share": (extreme_n / total_n) if total_n else None,
@@ -138,7 +209,7 @@ def compare(
     verdicts: list[dict[str, Any]] = []
     for entry in register:
         for field in ("estimand", "members", "bounds", "max_mean_divergence",
-                      "max_extreme_share_divergence"):
+                      "max_second_moment_divergence", "max_extreme_share_divergence"):
             if field not in entry:
                 raise AgreementError(f"register entry missing {field!r}")
         if len(entry["members"]) < 2:
@@ -147,6 +218,13 @@ def compare(
                 "one section agreeing with itself is what the existing gates already check"
             )
         bounds = tuple(entry["bounds"])
+        # Reversed or malformed bounds make `span` negative, and every "within tolerance of a
+        # bound" test then returns false - silently disabling the extreme-share check for the
+        # whole entry while the gate reports a clean pass.
+        if len(bounds) != 2 or any(_numeric(b) is None for b in bounds) or bounds[0] >= bounds[1]:
+            raise AgreementError(
+                f"{entry['estimand']}: bounds must be (low, high) with low < high, got {bounds!r}"
+            )
         observed: dict[str, dict[str, Any]] = {}
         absent: list[str] = []
         for section, measure in entry["members"]:
@@ -163,6 +241,25 @@ def compare(
         notes: list[str] = []
         populated = {k: v for k, v in observed.items() if v["n"]}
         loudest = max((v["n"] for v in populated.values()), default=0)
+        floor = entry.get("compare_above_n", 0)
+        # A member too small to compare is REPORTED, not compared and not dropped. A book
+        # with a genuinely empty ask yields exactly +1.0, and a handful of such readings on a
+        # short slice is a true measurement, not grounds to reject the run.
+        comparable = {k: v for k, v in populated.items() if v["n"] >= floor}
+        for name, agg in sorted(populated.items()):
+            if name not in comparable:
+                notes.append(
+                    f"{name} carries only {agg['n']} observations, below the declared "
+                    f"comparison floor of {floor}, so it is recorded and not compared"
+                )
+            lo, hi = agg["minimum"], agg["maximum"]
+            # Free, and a defect on its face: a value outside the estimand's own declared
+            # bounds cannot be the estimand, whatever it agrees with.
+            if (lo is not None and lo < bounds[0]) or (hi is not None and hi > bounds[1]):
+                problems.append(
+                    f"{name} observed [{lo}, {hi}] outside its declared bounds "
+                    f"{bounds}; the values are not the estimand they are labelled as"
+                )
         if absent and populated:
             # SILENCE IS NOT AGREEMENT - but only where there was something to agree WITH.
             # One section computing the estimand while its declared counterpart emits
@@ -188,7 +285,25 @@ def compare(
         # a short slice, or a day with none of the relevant events. That is a COVERAGE
         # question, already owned by the coverage and denominator gates, and answering it
         # here would reject every small run for a defect it does not have.
-        if len(populated) >= 2:
+        if len(comparable) >= 2:
+            populated = comparable
+            moments = {k: v["second_moment"] for k, v in populated.items()
+                       if v["second_moment"] is not None}
+            if len(moments) >= 2:
+                moment_spread = max(moments.values()) - min(moments.values())
+                if moment_spread > entry["max_second_moment_divergence"]:
+                    problems.append(
+                        f"population-weighted second moments differ by {moment_spread:.4f} "
+                        f"(> {entry['max_second_moment_divergence']}): "
+                        + ", ".join(f"{k}={v:.4f}" for k, v in moments.items())
+                        + " - E[x^2] does not cancel under sign symmetry and does not move "
+                          "under re-stratification, so this is a substrate difference"
+                    )
+            elif moments:
+                notes.append(
+                    f"{entry['estimand']}: only {len(moments)} of {len(populated)} members "
+                    "emit sum_of_squares, so the second moment could not be compared"
+                )
             means = {k: v["mean"] for k, v in populated.items()}
             spread = max(means.values()) - min(means.values())
             if spread > entry["max_mean_divergence"]:

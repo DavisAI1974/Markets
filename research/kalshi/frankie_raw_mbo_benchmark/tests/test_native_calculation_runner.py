@@ -122,11 +122,58 @@ class LayerTest(unittest.TestCase):
         layers = run.finalize()["layers"]
         self.assertEqual(set(layers), set(REQUIRED_LAYERS))
 
-    def test_all_eight_gates_are_evaluated(self) -> None:
+    def test_every_required_gate_is_evaluated(self) -> None:
+        """Named for the set, not a count - it read "eight" while REQUIRED_GATES held nine."""
         run = make_run()
         drive(run)
         gates = {g["gate"] for g in run.finalize()["gates"]}
         self.assertEqual(gates, set(REQUIRED_GATES))
+
+    def test_disagreeing_sections_reject_the_run_through_the_runner(self) -> None:
+        """The horizontal gate, exercised where it actually runs rather than in isolation.
+
+        Reproduces run 33605852433: 4.9 pinned to the bounds of (bid-ask)/(bid+ask), 4.12
+        computing the same formula and never approaching them. Every other gate passes.
+        """
+        run = make_run()
+        drive(run)
+        pinned = [
+            {"section": "4.9", "measure": "relative_imbalance",
+             "declaration": {"numerator_formula": "(bid - ask) / (bid + ask)",
+                             "population": "ladder transitions", "causal_cutoff": "ts_recv_ns",
+                             "status": "RESOLVED", "missingness_rule": "no exclusions"},
+             "value": {"n": 5000, "sum": 5000.0, "sum_of_squares": 5000.0,
+                       "minimum": 1.0, "maximum": 1.0}},
+            {"section": "4.12", "measure": "normalized_imbalance",
+             "declaration": {"numerator_formula": "(bid - ask) / (bid + ask)",
+                             "population": "ladder transitions", "causal_cutoff": "ts_recv_ns",
+                             "status": "RESOLVED", "missingness_rule": "no exclusions"},
+             "value": {"n": 5000, "sum": 269.0, "sum_of_squares": 19.4,
+                       "minimum": 0.0116, "maximum": 0.1109}},
+        ]
+        run._averaged_companions = lambda _real=run._averaged_companions: _real() + pinned
+        result = run.finalize()
+        self.assertEqual(result["verdict"], "REJECTED")
+        self.assertIn("cross_section_agreement", result["failed_gates"])
+        detail = next(g["detail"] for g in result["gates"]
+                      if g["gate"] == "cross_section_agreement")
+        self.assertIn("relative_book_imbalance", detail)
+
+    def test_a_tolerated_absence_reaches_the_result_as_data_not_only_as_prose(self) -> None:
+        """D60. A note that lives only in a detail string is a note nobody can query."""
+        run = make_run()
+        drive(run)
+        lone = [{"section": "4.12", "measure": "normalized_imbalance",
+                 "declaration": {"numerator_formula": "(bid - ask) / (bid + ask)",
+                             "population": "ladder transitions", "causal_cutoff": "ts_recv_ns",
+                             "status": "RESOLVED", "missingness_rule": "no exclusions"},
+                 "value": {"n": 10, "sum": 0.5, "sum_of_squares": 0.03,
+                           "minimum": 0.01, "maximum": 0.11}}]
+        run._averaged_companions = lambda _real=run._averaged_companions: _real() + lone
+        result = run.finalize()
+        self.assertEqual(result["verdict"], "ACCEPTED", result["failed_gates"])
+        gate = next(g for g in result["gates"] if g["gate"] == "cross_section_agreement")
+        self.assertTrue(gate["verdicts"][0]["notes"])
 
     def test_a_clean_run_is_accepted(self) -> None:
         run = make_run()

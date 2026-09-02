@@ -515,13 +515,36 @@ class FedSectionsTest(unittest.TestCase):
             self.assertFalse(edge["is_arithmetic_mean"])
             self.assertGreater(edge["outgoing_denominator"], 0)
 
-    def test_the_ladder_transition_carries_its_group_local_scope(self):
-        """D53's declared cost travels ON the value, never in prose alone."""
+    def test_the_ladder_transition_declares_which_substrate_it_measured(self):
+        """D53's declared cost travels ON the value, never in prose alone - and D-5.
+
+        Once a full book has been seen, 4.9 measures the BOOK, which is its contract; before
+        the first book arrives there is nothing to compare against and it falls back to the
+        group-local delta. Both readings occur in one run and are never interchangeable, so
+        each row says which one it is.
+        """
         driver, _ = self._run()
         ladder_rows = [r for r in driver.counters.lifecycle_rows if r["emitting_section"] == "ladder"]
         self.assertEqual(len(ladder_rows), 4)
-        for row in ladder_rows:
-            self.assertEqual(row["ladder_scope"], "GROUP_LOCAL_DELTA")
+        scopes = [row["ladder_scope"] for row in ladder_rows]
+        self.assertEqual(scopes[:2], ["GROUP_LOCAL_DELTA"] * 2)
+        self.assertEqual(set(scopes[2:]), {"FULL_BOOK_TRANSITION"})
+
+    def test_the_full_book_reading_emits_both_sides_even_when_one_is_untouched(self):
+        """D-5. An empty ask is a fact about the book; an absent ask is a missing opposite.
+
+        `relative_imbalance` takes the opposite side's depth from the OTHER transition, so a
+        dropped side leaves it with nothing to divide by - which is how 152 of 154 readings
+        on the real run came out at exactly +/-1.0.
+        """
+        driver, _ = self._run()
+        full = [r for r in driver.counters.lifecycle_rows
+                if r["emitting_section"] == "ladder" and r["ladder_scope"] == "FULL_BOOK_TRANSITION"]
+        by_recv = {}
+        for row in full:
+            by_recv.setdefault(row["recv_ns"], set()).add(row["side"])
+        for recv, sides in by_recv.items():
+            self.assertEqual(sides, {"B", "A"}, f"one side missing at {recv}")
 
     def test_every_fed_row_is_retained_beneath_its_summary(self):
         """D60 and section 6: an average with no member under it is not evidence."""
