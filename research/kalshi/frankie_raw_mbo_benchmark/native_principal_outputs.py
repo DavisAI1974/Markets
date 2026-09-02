@@ -25,9 +25,37 @@ that we should follow"*; *"not 10 as the floor. if it's supposed to have 30, the
 A bundle missing any one of them is a refused spawn. No constant in this module names a
 count, and `tests/test_native_principal_outputs.py` asserts that by reading the module's
 own AST.
+
+**THE SHAPE.** Every ledger is an `AppendOnlyLedger`: entries carry a monotone `sequence`, a
+nondecreasing `cutoff_recv_ns` (the F_LAST `ts_recv_ns` after which the entry was written -
+contract section 2: the first lawful knowledge time for a completed group is its F_LAST
+receive time), a `body`, and a hash chain `entry_hash = sha256(prev_hash + canonical(entry))`
+from `sha256(b"")`, the convention `native_causal_stream` uses for delivery receipts. An
+edited entry breaks its own hash, a reordered one breaks its sequence, a moved one breaks the
+cutoff order. An `OutputBundle` holds one run's ledgers bound to `registry_sha256` and
+`contract_sha256`; `write_bundle` puts one JSON per ledger beside `RECEIPT.json` and refuses
+any rewrite that is not a pure extension; `load_bundle` re-verifies every chain against the
+receipt. `validate_output_bundle` derives the required set, refuses any missing ledger by
+name, verifies every chain, applies the per-ledger rules and the cross-ledger ones, and
+returns the receipt; `validate_output_bundle_dir` is the form staging calls.
+
+**THE RULES THE LEDGERS ENFORCE**, each from a ruling in `DROP_IN_S121.md` item zero:
+timings are derived on the registry's named causal clocks and written as `{clock,
+observed_ns}` - a fixed ladder label names no clock and is refused (ruling 5, one helper,
+`clock_reading`); the state movie carries the book and the FIFO state and the delta per
+cutoff (ruling 3); a helper invocation is a tool call inside a role with a persona and is
+refused if it carries lane, cpu, parallel or output-artifact keys (ruling 6, D63/D64); the
+outputs are append-only experimental data (feed inventory 15); the principal runs as an
+AGENT SESSION, so API-shaped invocation receipts are refused (D70); no body names a desktop
+or session-local path (D34); and the 9a classification advises and never drops - a bundle
+where every field is LOAD_BEARING is valid (D60, D76).
+
+Run `python3 -m research.kalshi.frankie_raw_mbo_benchmark.native_principal_outputs validate
+--dir <outputs dir> --arm A_CLEAN` to print the receipt or `REFUSED: <why>`.
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import re
@@ -36,9 +64,11 @@ from typing import Any, Mapping, Sequence
 
 from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import (
     ALLOWED_ARMS,
+    REGISTRY_PATH,
     SHA256_RE,
     canonical_bytes,
     canonical_hash,
+    load_registry,
 )
 
 APPEND_ONLY_OUTPUTS_GROUP = "append_only_outputs"
@@ -1238,3 +1268,217 @@ def validate_ledger_entries(
     rule = _rule_for(ledger_id)
     if rule is not None:
         rule(entries, ctx)
+
+
+# --------------------------------------------------------------------------------------
+# D34: no artifact names a desktop or session-local path
+# --------------------------------------------------------------------------------------
+
+D34_RULE = (
+    "D34 (Greg, S112): there is nothing local - no artifact may name a desktop or "
+    "session-local path; write it repo-relative"
+)
+#: A drive-letter path, an absolute home/user/root/temp path, or a tilde path. Case matters:
+#: `Users` is the desktop spelling; a repo-relative `research/home/...` is not matched.
+DESKTOP_PATH_RE = re.compile(
+    r"(?:(?<![A-Za-z0-9_])[A-Za-z]:[\\/]|(?<![\w./-])/(?:home|Users|root|tmp)/|(?<![\w])~/)"
+)
+
+
+def refuse_desktop_paths(value: Any, *, where: str) -> None:
+    if isinstance(value, str):
+        if DESKTOP_PATH_RE.search(value):
+            raise PrincipalOutputError(f"{where}: {value!r} names a desktop or session-local path. {D34_RULE}")
+    elif isinstance(value, Mapping):
+        for key, child in value.items():
+            refuse_desktop_paths(child, where=f"{where}.{key}")
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            refuse_desktop_paths(child, where=f"{where}[{index}]")
+
+
+# --------------------------------------------------------------------------------------
+# The whole bundle
+# --------------------------------------------------------------------------------------
+
+CONTRACT_PATH = REGISTRY_PATH.parent / "frankie_native_raw_mbo_calculation_contract_20260828.md"
+
+#: A valid run always writes into these. Every contract-section ledger is one too - absence
+#: there is a NULL_RESULT entry, never an empty ledger - and knowledge_verification is one
+#: whenever a knowledge-delivery receipt is known, because delivered lessons exist to verify.
+MUST_HAVE_ENTRIES = frozenset(
+    {STATE_MOVIE, REASONING_MOVIE, INVOCATION_RECEIPTS, RUN_HASHES, RAW_MBO_CLASSIFICATION_LEDGER}
+)
+#: Cross-ledger references fix this much of the order: receipts before the movie that cites
+#: them, probabilities before the locks that bind them. Everything else follows in bundle order.
+VALIDATE_FIRST = (KNOWLEDGE_RECEIPTS, PROBABILITY_MOVIE)
+
+
+def _must_have_entries(ledger_id: str, knowledge_receipt_sha256: str | None) -> bool:
+    if ledger_id in MUST_HAVE_ENTRIES or ledger_id.startswith(SECTION_LEDGER_PREFIX):
+        return True
+    return ledger_id == KNOWLEDGE_VERIFICATION_LEDGER and knowledge_receipt_sha256 is not None
+
+
+def validate_output_bundle(
+    bundle: OutputBundle | Mapping[str, Any],
+    *,
+    registry: Mapping[str, Any],
+    contract_text: str,
+    knowledge_receipt_sha256: str | None = None,
+    delivery_receipt_sha256: str | None = None,
+) -> dict[str, Any]:
+    """Every required ledger present, every chain intact, every rule met - or refuse.
+
+    The required set is derived here from `registry` and `contract_text`; a bundle missing
+    any one ledger is refused naming every missing id. When `knowledge_receipt_sha256` is
+    given every knowledge-verification verdict must cite it; when `delivery_receipt_sha256`
+    is given the bundle must cite it, because the outputs were produced against that delivery.
+    Returns the bundle receipt (its `missing_ledger_ids` is empty by construction).
+    """
+    body = _as_mapping(bundle)
+    if body.get("schema") != OUTPUT_BUNDLE_SCHEMA:
+        raise PrincipalOutputError(f"bundle schema is {body.get('schema')!r}, expected {OUTPUT_BUNDLE_SCHEMA!r}")
+    if body.get("arm") not in ALLOWED_ARMS or body.get("role") not in ALLOWED_ROLES:
+        raise PrincipalOutputError("bundle names an unknown arm or role")
+    _require_text(body.get("run_id"), "bundle run_id")
+    declared_registry = _require_sha(registry.get("registry_sha256"), "registry.registry_sha256")
+    if body.get("registry_sha256") != declared_registry:
+        raise PrincipalOutputError(
+            f"bundle was written against registry {body.get('registry_sha256')!r}, not the registry "
+            f"{declared_registry} it is validated against"
+        )
+    expected_contract = contract_sha256_of(contract_text)
+    if body.get("contract_sha256") != expected_contract:
+        raise PrincipalOutputError(
+            f"bundle was written against calculation contract {body.get('contract_sha256')!r}, not the "
+            f"contract {expected_contract} it is validated against"
+        )
+    if delivery_receipt_sha256 is not None:
+        _require_sha(delivery_receipt_sha256, "delivery_receipt_sha256")
+        if body.get("delivery_receipt_sha256") != delivery_receipt_sha256:
+            raise PrincipalOutputError(
+                f"the run delivered its ledgers under delivery receipt {delivery_receipt_sha256} and the "
+                f"bundle cites {body.get('delivery_receipt_sha256')!r}; outputs are produced against the "
+                "delivery they were given"
+            )
+    if knowledge_receipt_sha256 is not None:
+        _require_sha(knowledge_receipt_sha256, "knowledge_receipt_sha256")
+        cited = body.get("knowledge_receipt_sha256")
+        if cited is not None and cited != knowledge_receipt_sha256:
+            raise PrincipalOutputError(
+                f"bundle cites knowledge-delivery receipt {cited}, not the run's {knowledge_receipt_sha256}"
+            )
+
+    required = required_ledger_ids(registry, contract_text)
+    ledgers = body.get("ledgers")
+    if not isinstance(ledgers, Mapping):
+        raise PrincipalOutputError("bundle carries no ledgers mapping")
+    missing = [lid for lid in required if lid not in ledgers]
+    if missing:
+        raise PrincipalOutputError(
+            f"{len(missing)} of {len(required)} required output ledger(s) absent: {missing}; a bundle "
+            "missing any one required ledger is a refused spawn - there is no floor below the full "
+            "count (DROP_IN_S121 ruling 4)"
+        )
+
+    ctx = ValidationContext(registry=registry, bundle=body)
+    ctx.knowledge_receipt_sha256 = knowledge_receipt_sha256
+    entries_by: dict[str, list[Mapping[str, Any]]] = {}
+    for ledger_id, ledger in ledgers.items():
+        entries = verify_chain(ledger_id, ledger)
+        reason = ledger.get("empty_reason")
+        if not entries:
+            if _must_have_entries(ledger_id, knowledge_receipt_sha256):
+                raise PrincipalOutputError(
+                    f"{ledger_id}: no entries; a valid run always writes into this ledger"
+                    + (" (absence is a NULL_RESULT entry, never an empty ledger)" if ledger_id.startswith(SECTION_LEDGER_PREFIX) else "")
+                )
+            if reason is None:
+                raise PrincipalOutputError(f"{ledger_id}: empty without a stated empty_reason")
+        elif reason is not None:
+            raise PrincipalOutputError(f"{ledger_id}: carries {len(entries)} entries and an empty_reason")
+        for entry in entries:
+            refuse_desktop_paths(entry["body"], where=f"{ledger_id}[{entry['sequence']}]")
+        entries_by[ledger_id] = entries
+
+    order = [*VALIDATE_FIRST, *(lid for lid in ledgers if lid not in VALIDATE_FIRST)]
+    for ledger_id in order:
+        if ledger_id in entries_by:
+            validate_ledger_entries(ledger_id, entries_by[ledger_id], ctx)
+
+    all_cutoffs = {entry["cutoff_recv_ns"] for entries in entries_by.values() for entry in entries}
+    turns = {entry["cutoff_recv_ns"] for entry in entries_by[INVOCATION_RECEIPTS]}
+    uncovered = sorted(all_cutoffs - turns)
+    if uncovered:
+        raise PrincipalOutputError(
+            f"{INVOCATION_RECEIPTS}: no session turn receipt at cutoff(s) {uncovered}, yet outputs were "
+            "written there; every cutoff that produced an output was a turn"
+        )
+    hashes = entries_by[RUN_HASHES]
+    if hashes[0]["cutoff_recv_ns"] > min(all_cutoffs) or hashes[-1]["cutoff_recv_ns"] < max(all_cutoffs):
+        raise PrincipalOutputError(
+            f"{RUN_HASHES}: START must be at or before the first output cutoff and END at or after the last"
+        )
+    return bundle_receipt(body, required_ledger_ids=required)
+
+
+def validate_output_bundle_dir(
+    out_dir: Path | str,
+    *,
+    registry: Mapping[str, Any],
+    contract_text: str,
+    knowledge_receipt_sha256: str | None = None,
+    delivery_receipt_sha256: str | None = None,
+) -> dict[str, Any]:
+    """The staging form: load what the principal wrote, re-verifying every chain, then validate."""
+    return validate_output_bundle(
+        load_bundle(out_dir),
+        registry=registry,
+        contract_text=contract_text,
+        knowledge_receipt_sha256=knowledge_receipt_sha256,
+        delivery_receipt_sha256=delivery_receipt_sha256,
+    )
+
+
+# --------------------------------------------------------------------------------------
+# CLI
+# --------------------------------------------------------------------------------------
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        prog="python3 -m research.kalshi.frankie_raw_mbo_benchmark.native_principal_outputs",
+        description="Validate a principal output bundle: print its receipt, or REFUSED and why.",
+    )
+    commands = parser.add_subparsers(dest="command", required=True)
+    validate = commands.add_parser("validate", help="validate a written bundle directory")
+    validate.add_argument("--dir", required=True, help="directory holding ledgers/ and RECEIPT.json")
+    validate.add_argument("--arm", required=True, choices=sorted(ALLOWED_ARMS), help="the arm the bundle must belong to")
+    validate.add_argument("--registry", default=str(REGISTRY_PATH), help="ingestion-layer registry JSON")
+    validate.add_argument("--contract", default=str(CONTRACT_PATH), help="calculation contract markdown")
+    validate.add_argument("--knowledge-receipt-sha256", default=None, help="the knowledge-delivery receipt every verdict must cite")
+    validate.add_argument("--delivery-receipt-sha256", default=None, help="the ledger-delivery receipt the bundle must cite")
+    args = parser.parse_args(argv)
+    try:
+        registry = load_registry(Path(args.registry))
+        contract_text = Path(args.contract).read_text(encoding="utf-8")
+        bundle = load_bundle(args.dir)
+        if bundle.get("arm") != args.arm:
+            raise PrincipalOutputError(f"bundle arm {bundle.get('arm')!r} is not the requested arm {args.arm!r}")
+        receipt = validate_output_bundle(
+            bundle,
+            registry=registry,
+            contract_text=contract_text,
+            knowledge_receipt_sha256=args.knowledge_receipt_sha256,
+            delivery_receipt_sha256=args.delivery_receipt_sha256,
+        )
+    except (PrincipalOutputError, OSError, ValueError) as exc:
+        print(f"REFUSED: {exc}")
+        return 1
+    print(json.dumps(receipt, indent=2, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
