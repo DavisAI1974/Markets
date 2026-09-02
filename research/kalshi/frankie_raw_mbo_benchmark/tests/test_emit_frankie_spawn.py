@@ -146,3 +146,53 @@ class SingleDayTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SpanAndPhaseTests(unittest.TestCase):
+    """A window is scoped by its span and its phases, not only by its date.
+
+    The canary covers 88 contiguous minutes of Oct 1. Told only the date, a principal would
+    reasonably write "on October 1" and mean a day. That is the project's recurring defect
+    in miniature - a figure that is present, typed, plausible, and measuring something other
+    than what its name implies.
+    """
+
+    def _emit_with(self, cutoffs):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            root, m_sha, c_sha = _repo_with_docs(root)
+            body = _result(m_sha, c_sha, cutoffs=cutoffs)
+            result = root / "calculation_result.json"
+            result.write_text(json.dumps(body), encoding="utf-8")
+            return emit(result, repo_root=root)
+
+    def _cuts(self, spans_ns, phases):
+        base = 1633046886987074241
+        return [
+            {"group_index": 100 * n, "source_day": "20211001", "session_phase": phases[n % len(phases)],
+             "recv_ns": base + spans_ns[n], "first_lawful_availability_ns": base + spans_ns[n],
+             "continuity_segment": 18904}
+            for n in range(len(spans_ns))
+        ]
+
+    def test_the_span_is_stated_in_seconds_and_minutes(self):
+        # 5,290 SECONDS is the canary's real span - 5.29e12 ns. Written first as 5.29e9,
+        # which is 5.29 seconds, and the test caught it. Nanosecond fields are exactly where
+        # an order-of-magnitude slip survives review, which is why the assertion names both
+        # units.
+        text = self._emit_with(self._cuts([0, 2_000_000_000, 5_290_000_000_000], ["PRE_SETTLEMENT"]))
+        self.assertIn("Cutoff span: 5,290 seconds", text)
+        self.assertIn("88.2 minutes", text)
+
+    def test_it_is_not_described_as_the_session_length(self):
+        text = self._emit_with(self._cuts([0, 5_290_000_000_000], ["PRE_SETTLEMENT"]))
+        self.assertIn("not the session's length", text)
+
+    def test_phases_covered_are_named_and_absence_is_distinguished(self):
+        text = self._emit_with(self._cuts([0, 1_000_000_000], ["PRE_SETTLEMENT"]))
+        self.assertIn("Session phases covered: PRE_SETTLEMENT", text)
+        self.assertIn("different fact from observing it empty", text)
+
+    def test_several_phases_are_all_listed(self):
+        text = self._emit_with(self._cuts([0, 1_000_000_000], ["PRE_SETTLEMENT", "SETTLEMENT"]))
+        self.assertIn("PRE_SETTLEMENT, SETTLEMENT", text)

@@ -220,6 +220,21 @@ def emit(result_path: Path | str, *, repo_root: Path | None = None,
     add("reconciliation labels; novel correlations and positive hypotheses; provisional")
     add("strategy hypotheses; and exact evidence and clock references.")
     add("")
+    # THE SPAN, NOT JUST THE DATE. On an 88-minute window "Oct 1" reads as a day and is an
+    # hour and a half, and a finding scoped to the wrong unit is wrong in the way this
+    # project keeps catching: present, typed, plausible, measuring something other than what
+    # its name implies. Stated as the CUTOFF span rather than the session's, because the
+    # traversal may begin before the first lawful cutoff and end after the last.
+    span_ns = int(cutoffs[-1]["recv_ns"]) - int(cutoffs[0]["recv_ns"])
+    phases = sorted({str(cut["session_phase"]) for cut in cutoffs})
+    add(f"**Cutoff span: {span_ns / 1e9:,.0f} seconds ({span_ns / 6e10:,.1f} minutes)** from the")
+    add("first lawful cutoff to the last - which is not the session's length, since the")
+    add("traversal may begin before the first cutoff and end after the last.")
+    add(f"**Session phases covered: {', '.join(phases)}.** Any phase not in that list was not")
+    add("observed at all on this slice, which is a different fact from observing it empty.")
+    add("Scope every finding to this span and these phases.")
+    add("")
+
     days = sorted({str(cut["source_day"]) for cut in cutoffs})
     if len(days) == 1:
         # THE SLICE STATED TO THE PRINCIPAL, not left for him to infer from the cutoff table.
