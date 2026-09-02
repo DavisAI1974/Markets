@@ -1257,5 +1257,277 @@ class KnowledgeVerificationTest(LedgerRuleCase):
         self.refused(self.LEDGER, [(C2, verification_body(knowledge_receipt_sha256=sha_of("some other receipt")))], "knowledge_receipt_sha256")
 
 
+# ----------------------------------------------------------------------------------------
+# Slice 4: the whole bundle - validate, validate a directory, end to end, and the CLI
+# ----------------------------------------------------------------------------------------
+
+import io
+import subprocess
+import sys
+from contextlib import redirect_stdout
+
+KNOWLEDGE_RECEIPT = sha_of("knowledge-delivery-receipt")
+DELIVERY_RECEIPT = sha_of("ledger-delivery-receipt")
+
+
+def complete_bundle(frames: list[dict], *, registry=None, contract_text=None) -> "outputs.OutputBundle":
+    """A complete, lawful two-cutoff bundle over REAL member frames: every required ledger."""
+    registry = registry or registry_today()
+    contract_text = contract_text or contract_today()
+    first, second = frames[-2], frames[-1]
+    c1, c2 = first["ts_recv_ns"], second["ts_recv_ns"]
+    bundle = outputs.OutputBundle(
+        run_id="run-e2e-0001", arm="A_CLEAN", role="REAL_TIME_FRANKIE",
+        registry=registry, contract_text=contract_text,
+        knowledge_receipt_sha256=KNOWLEDGE_RECEIPT, delivery_receipt_sha256=DELIVERY_RECEIPT,
+    )
+    invariants = dict(run_hash_body("START"))
+    invariants.pop("phase"); invariants.pop("state_sha256")
+    invariants["contract_sha256"] = bundle.contract_sha256
+    invariants["run_id"] = bundle.run_id
+    hashes = bundle.ledger("output_source_state_manifest_code_model_run_hashes")
+    hashes.append(c1, {"phase": "START", "state_sha256": sha_of("state-0"), **invariants})
+
+    receipts = bundle.ledger("output_knowledge_retrieval_receipts")
+    receipts.append(c1, knowledge_receipt_body())
+    receipts.append(c1, knowledge_receipt_body(receipt_id="kr-0002", layer_id="native_calculation_contract", sha256=bundle.contract_sha256))
+
+    invocations = bundle.ledger("output_provider_invocation_response_receipts")
+    invocations.append(c1, invocation_body(0))
+    invocations.append(c2, invocation_body(1))
+
+    state = bundle.ledger("output_state_and_state_delta_movie")
+    state.append(c1, state_frame(first, cutoff=c1, previous_cutoff=None))
+    carried = {
+        "spread": {"status": "PAST_CARRY", "value": first["book"]["spread"], "source_recv_ns": c1, "age": reading(c2 - c1)},
+        "dipole": {"status": "MISSING"},
+        "signed_flow": {"status": "OBSERVED", "value": -12},
+    }
+    state.append(c2, state_frame(second, cutoff=c2, previous_cutoff=c1, channels=carried))
+
+    reasoning = bundle.ledger("output_frankie_reasoning_movie")
+    reasoning.append(c1, reasoning_body(knowledge_retrievals=["kr-0001", "kr-0002"]))
+    reasoning.append(c2, reasoning_body(helper_invocations=[helper()]))
+
+    probability = bundle.ledger("output_probability_movie")
+    probability.append(c1, probability_body(evaluation=reading(c1)))
+    locked = probability.append(c2, probability_body(snapshot_id="snap-1", evaluation=reading(c2), lock_state="FIRST_LOCK", probabilities={"PERSIST": 0.7, "COLLAPSE": 0.3}))
+
+    bundle.ledger("output_candidate_discoveries").append(
+        c1, candidate_body(first_lawful_availability_ns=c1, recognition={"label": "T0", "lead": reading(0)})
+    )
+    locks = bundle.ledger("output_first_locks_and_no_locks")
+    locks.append(c1, lock_body())
+    fl = lock_body(lock_state="FIRST_LOCK", probability_entry_hash=locked["entry_hash"], lock_at=reading(c2))
+    fl.pop("reason")
+    locks.append(c2, fl)
+
+    bundle.ledger("output_negative_sparse_inconclusive_ledger").append(c2, negative_body())
+    bundle.ledger("output_answer_wall_access_receipts", empty_reason="no answer-wall access was made; A scope is blind by construction")
+
+    for index, section in enumerate(bundle.contract_sections):
+        ledger = bundle.ledger(f"contract_section_{section}")
+        if index == 0:
+            ledger.append(c1, section_body(section, cutoff=c1, member_group_indices=[], averages=[], result="NULL_RESULT", population={"denominator": 0, "description": "no completed second before the first cutoff"}))
+        ledger.append(c2, section_body(section, cutoff=c2))
+
+    raw = bundle.ledger("raw_mbo_classification")
+    for name in ("order_id", "price_raw", "size", "flags", "ts_event_ns", "ts_recv_ns", "book", "book_full", "activity_full", "clocks"):
+        raw.append(c2, raw_mbo_body(field_or_group=name))
+    bundle.ledger("knowledge_verification").append(c2, verification_body(evidence={"member_group_indices": [1, 2], "cutoff_recv_ns": c2}))
+    hashes.append(c2, {"phase": "END", "state_sha256": sha_of("state-2"), **invariants})
+    return bundle
+
+
+class ValidateOutputBundleTest(unittest.TestCase):
+    def setUp(self):
+        self.registry = registry_today()
+        self.contract = contract_today()
+        self.frames = real_frames()
+        self.bundle = complete_bundle(self.frames, registry=self.registry, contract_text=self.contract)
+
+    def validate(self, bundle=None, **kwargs):
+        args = dict(registry=self.registry, contract_text=self.contract, knowledge_receipt_sha256=KNOWLEDGE_RECEIPT, delivery_receipt_sha256=DELIVERY_RECEIPT)
+        args.update(kwargs)
+        return outputs.validate_output_bundle(bundle if bundle is not None else self.bundle, **args)
+
+    def refused(self, bundle=None, needle=None, **kwargs):
+        with self.assertRaises(outputs.PrincipalOutputError) as caught:
+            self.validate(bundle, **kwargs)
+        if needle:
+            self.assertIn(needle, str(caught.exception))
+        return caught.exception
+
+    def test_a_complete_bundle_is_accepted_with_an_empty_missing_list_and_todays_full_count(self):
+        receipt = self.validate()
+        self.assertEqual(receipt["missing_ledger_ids"], [])
+        expected = len(independent_output_ids(self.registry)) + len(independent_section_ids(self.contract)) + 2
+        self.assertEqual(len(receipt["required_ledger_ids"]), expected)
+        self.assertEqual(set(receipt["ledgers"]), set(receipt["required_ledger_ids"]))
+        self.assertEqual(receipt["ledgers"]["output_answer_wall_access_receipts"]["entry_count"], 0)
+        self.assertTrue(all(v["entry_count"] > 0 for k, v in receipt["ledgers"].items() if k != "output_answer_wall_access_receipts"))
+        self.assertEqual(receipt["receipt_sha256"], canonical_hash(receipt, omit="receipt_sha256"))
+
+    def test_a_missing_required_ledger_is_a_refused_spawn_naming_every_missing_id(self):
+        body = self.bundle.to_dict()
+        body["ledgers"].pop("contract_section_4.0b")
+        body["ledgers"].pop("raw_mbo_classification")
+        body["ledgers"].pop("output_probability_movie")
+        exc = self.refused(body)
+        for name in ("contract_section_4.0b", "raw_mbo_classification", "output_probability_movie"):
+            self.assertIn(name, str(exc))
+        self.assertIn("no floor", str(exc))
+
+    def test_a_bundle_bound_to_another_registry_or_contract_is_refused(self):
+        self.refused(needle="contract", contract_text=self.contract + "\n### 4.17 Added after the run\n")
+        other = copy.deepcopy(self.registry)
+        other["registry_sha256"] = "0" * 64
+        self.refused(needle="registry", registry=other)
+
+    def test_a_chain_broken_anywhere_refuses_the_bundle(self):
+        body = self.bundle.to_dict()
+        body["ledgers"]["contract_section_4.5"]["entries"][-1]["body"]["member_group_indices"] = [1]
+        self.refused(body, "rewritten")
+
+    def test_delivery_and_knowledge_receipts_must_be_the_ones_the_run_produced(self):
+        self.refused(needle="delivery", delivery_receipt_sha256=sha_of("another delivery"))
+        self.refused(needle="knowledge", knowledge_receipt_sha256=sha_of("another knowledge receipt"))
+        no_citation = self.bundle.to_dict()
+        no_citation["delivery_receipt_sha256"] = None
+        self.refused(no_citation, "delivery")
+        self.validate(knowledge_receipt_sha256=None, delivery_receipt_sha256=None)
+
+    def test_every_output_cutoff_was_a_session_turn(self):
+        c3 = self.bundle.ledger("output_negative_sparse_inconclusive_ledger").entries[-1]["cutoff_recv_ns"] + 1
+        self.bundle.ledger("output_negative_sparse_inconclusive_ledger").append(c3, negative_body())
+        self.refused(needle="turn")
+
+    def test_the_run_hashes_bracket_every_output(self):
+        body = self.bundle.to_dict()
+        ledger = body["ledgers"]["output_source_state_manifest_code_model_run_hashes"]
+        entries = ledger["entries"]
+        entries[1] = dict(entries[1], cutoff_recv_ns=entries[0]["cutoff_recv_ns"])
+        ledger["entries"] = rechained(entries)
+        ledger["head_hash"] = ledger["entries"][-1]["entry_hash"]
+        self.refused(body, "END")
+
+    def test_empty_ledgers_need_a_reason_and_some_may_never_be_empty(self):
+        body = self.bundle.to_dict()
+        body["ledgers"]["output_answer_wall_access_receipts"]["empty_reason"] = None
+        self.refused(body, "empty_reason")
+        for must_have in ("output_state_and_state_delta_movie", "output_frankie_reasoning_movie", "raw_mbo_classification", "contract_section_4.9", "output_provider_invocation_response_receipts", "knowledge_verification"):
+            with self.subTest(must_have=must_have):
+                body = self.bundle.to_dict()
+                body["ledgers"][must_have] = {"ledger_id": must_have, "empty_reason": "nothing to say", "entries": [], "head_hash": outputs.GENESIS_PREV_HASH}
+                self.refused(body, "no entries")
+        body = self.bundle.to_dict()
+        body["ledgers"]["output_candidate_discoveries"] = {"ledger_id": "output_candidate_discoveries", "empty_reason": "no candidate was born before the last cutoff", "entries": [], "head_hash": outputs.GENESIS_PREV_HASH}
+        body["ledgers"]["output_first_locks_and_no_locks"] = {"ledger_id": "output_first_locks_and_no_locks", "empty_reason": "no candidate, so nothing to lock or decline", "entries": [], "head_hash": outputs.GENESIS_PREV_HASH}
+        self.validate(body)
+
+    def test_a_desktop_or_session_local_path_anywhere_in_a_body_is_refused(self):
+        for path in ("E:/Markets/research/kalshi/x.json", "C:\\Users\\greg\\x.json", "/home/user/Markets/x.json", "/Users/greg/x.json", "~/x.json"):
+            with self.subTest(path=path):
+                bundle = complete_bundle(self.frames, registry=self.registry, contract_text=self.contract)
+                bundle.ledger("output_frankie_reasoning_movie").append(
+                    self.frames[-1]["ts_recv_ns"], reasoning_body(reasoning=f"see {path} for the ladder")
+                )
+                self.refused(bundle, "D34")
+        bundle = complete_bundle(self.frames, registry=self.registry, contract_text=self.contract)
+        bundle.ledger("output_frankie_reasoning_movie").append(
+            self.frames[-1]["ts_recv_ns"], reasoning_body(reasoning="see research/kalshi/frankie_raw_mbo_benchmark/principal_runs/x.json")
+        )
+        self.validate(bundle)
+
+    def test_an_extra_ledger_the_registry_does_not_name_is_validated_and_kept(self):
+        extra = self.bundle.ledger("frankie_open_world_notes")
+        extra.append(self.frames[-1]["ts_recv_ns"], {"note": "a structure matching no seed", "lead": reading(5)})
+        receipt = self.validate()
+        self.assertIn("frankie_open_world_notes", receipt["ledgers"])
+        extra.append(self.frames[-1]["ts_recv_ns"], {"note": "same, mis-stated", "lead": "H+60"})
+        self.refused(needle="TIMING RULE")
+
+
+class EndToEndTest(unittest.TestCase):
+    def setUp(self):
+        self.registry = registry_today()
+        self.contract = contract_today()
+        self.frames = real_frames()
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name) / "principal_outputs"
+        self.bundle = complete_bundle(self.frames, registry=self.registry, contract_text=self.contract)
+        outputs.write_bundle(self.bundle, self.root)
+
+    def test_write_load_validate_round_trip_over_real_book_and_fifo_shapes(self):
+        loaded = outputs.load_bundle(self.root)
+        self.assertEqual(loaded, self.bundle.to_dict())
+        frame = loaded["ledgers"]["output_state_and_state_delta_movie"]["entries"][-1]["body"]
+        self.assertIn("fifo_queue", frame["fifo_state"]["touch"]["bid"])
+        self.assertEqual(frame["book"]["bid_levels"][0]["price_raw"], 3_500_000_000)
+        receipt = outputs.validate_output_bundle_dir(
+            self.root, registry=self.registry, contract_text=self.contract,
+            knowledge_receipt_sha256=KNOWLEDGE_RECEIPT, delivery_receipt_sha256=DELIVERY_RECEIPT,
+        )
+        self.assertEqual(receipt["missing_ledger_ids"], [])
+        self.assertEqual(len(receipt["required_ledger_ids"]), len(independent_output_ids(self.registry)) + len(independent_section_ids(self.contract)) + 2)
+        self.assertEqual(len(list((self.root / "ledgers").glob("*.json"))), len(receipt["required_ledger_ids"]))
+
+    def test_one_entry_mutated_on_disk_refuses_the_reload(self):
+        path = self.root / "ledgers" / "contract_section_4.10.json"
+        ledger = json.loads(path.read_text())
+        ledger["entries"][-1]["body"]["member_group_indices"] = [9999]
+        path.write_text(json.dumps(ledger))
+        with self.assertRaises(outputs.PrincipalOutputError):
+            outputs.validate_output_bundle_dir(self.root, registry=self.registry, contract_text=self.contract)
+
+    def test_a_ledger_file_deleted_on_disk_refuses_the_reload(self):
+        (self.root / "ledgers" / "raw_mbo_classification.json").unlink()
+        with self.assertRaises(outputs.PrincipalOutputError):
+            outputs.validate_output_bundle_dir(self.root, registry=self.registry, contract_text=self.contract)
+
+
+class CliTest(unittest.TestCase):
+    def setUp(self):
+        self.frames = real_frames()
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name) / "principal_outputs"
+        outputs.write_bundle(complete_bundle(self.frames), self.root)
+
+    def run_cli(self, *extra: str) -> tuple[int, str]:
+        out = io.StringIO()
+        with redirect_stdout(out):
+            code = outputs.main(["validate", "--dir", str(self.root), *extra])
+        return code, out.getvalue()
+
+    def test_validate_prints_the_receipt_for_the_right_arm(self):
+        code, text = self.run_cli("--arm", "A_CLEAN", "--knowledge-receipt-sha256", KNOWLEDGE_RECEIPT, "--delivery-receipt-sha256", DELIVERY_RECEIPT)
+        self.assertEqual(code, 0, text)
+        receipt = json.loads(text)
+        self.assertEqual(receipt["schema"], "FRANKIE_NATIVE_RAW_MBO_PRINCIPAL_OUTPUTS_RECEIPT_V1")
+        self.assertEqual(receipt["missing_ledger_ids"], [])
+
+    def test_validate_refuses_the_wrong_arm_and_a_mutated_ledger(self):
+        code, text = self.run_cli("--arm", "A_MEMORY")
+        self.assertEqual(code, 1)
+        self.assertTrue(text.startswith("REFUSED"), text)
+        path = self.root / "ledgers" / "output_probability_movie.json"
+        ledger = json.loads(path.read_text())
+        ledger["entries"][0]["body"]["probabilities"]["PERSIST"] = 0.41
+        path.write_text(json.dumps(ledger))
+        code, text = self.run_cli("--arm", "A_CLEAN")
+        self.assertEqual(code, 1)
+        self.assertIn("REFUSED", text)
+
+    def test_the_module_runs_as_a_command(self):
+        result = subprocess.run(
+            [sys.executable, "-m", "research.kalshi.frankie_raw_mbo_benchmark.native_principal_outputs", "validate", "--dir", str(self.root), "--arm", "A_CLEAN"],
+            capture_output=True, text=True, cwd=str(Path(__file__).resolve().parents[4]),
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(json.loads(result.stdout)["missing_ledger_ids"], [])
+
+
 if __name__ == "__main__":
     unittest.main()
