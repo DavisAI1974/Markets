@@ -204,6 +204,46 @@ class LayerTest(unittest.TestCase):
             run.finalize()
 
 
+class FieldCensusLayerTest(unittest.TestCase):
+    """F-10: the member layer carries a per-field census of every row it received."""
+
+    def test_every_row_passed_to_note_member_row_is_censused(self):
+        run = make_run()
+        drive(run)
+        run.note_member_row(row={"a": 1, "book": {"levels": [{"size": 2}, {"size": 2}]}})
+        run.note_member_row(row={"a": 1, "book": {"levels": []}})
+        layer = run.finalize()["layers"]["exact_member_ledger"]
+        census = layer["field_census"]
+        self.assertEqual(census["rows_observed"], 2)
+        by_path = {f["field"]: f for f in census["fields"]}
+        self.assertTrue(by_path["a"]["degenerate"])
+        self.assertEqual(by_path["book.levels[].size"]["observations"], 2)
+        self.assertEqual(by_path["book.levels[].size"]["rows_with_field"], 1)
+
+    def test_a_member_counted_without_its_row_makes_the_census_partial_and_says_so(self):
+        """`drive` counts one member with no row. The flag is a FACT on the layer, not a
+        gate here, because count-only callers exist; the spawn emitter refuses on it."""
+        run = make_run()
+        drive(run)
+        layer = run.finalize()["layers"]["exact_member_ledger"]
+        self.assertEqual(layer["exact_member_rows"], 1)
+        self.assertEqual(layer["field_census"]["rows_observed"], 0)
+        self.assertFalse(layer["field_census_covers_every_member_row"])
+
+    def test_the_flag_is_true_when_every_member_carried_its_row(self):
+        run = make_run()
+        run.coverage.observe_group(group_index=0, record_count=TOTAL_RECORDS, f_last_closed=True, cursor=1)
+        row = member_clock_row(
+            group(), group_index=0, source_day="20211004", source_role="HELD_OUT_BLIND",
+            continuity_segment=0, family_id="A_A_A", side_orientation="BID", session_phase="RTH",
+        )
+        run.clocks.observe(row)
+        run.note_member_row(row=row)
+        layer = run.finalize()["layers"]["exact_member_ledger"]
+        self.assertEqual(layer["exact_member_rows"], layer["field_census"]["rows_observed"])
+        self.assertTrue(layer["field_census_covers_every_member_row"])
+
+
 class GateTest(unittest.TestCase):
     def test_incomplete_record_coverage_rejects(self) -> None:
         run = make_run()

@@ -784,6 +784,11 @@ class NativeCalculationRun:
                 # the principal can judge the raw MBO from a measurement rather than from
                 # counters. `rows_observed` must equal `exact_member_rows`; the emitter checks.
                 "field_census": self.field_census.summary(),
+                # A member counted but never censused would make the census partial while
+                # it reads as complete. Emitted as a fact; the spawn emitter refuses on False.
+                "field_census_covers_every_member_row": (
+                    self.field_census.rows_observed == self.member_rows_written
+                ),
             },
             LAYER_LIFECYCLE: {
                 "exact_lifecycle_rows": self.lifecycle_rows_written,

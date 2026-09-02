@@ -71,7 +71,27 @@ def _result(mission_sha: str, contract_sha: str, *, verdict="ACCEPTED", cutoffs=
             },
             "averaged_companions": {"rows": [{"section": "4.12"}, {"section": "4.9"},
                                              {"section": "4.12"}]},
+            "exact_member_ledger": {
+                "exact_member_rows": 57027,
+                "field_census": _census(57027),
+                "field_census_covers_every_member_row": True,
+            },
         },
+    }
+
+
+def _census(rows):
+    return {
+        "rows_observed": rows,
+        "field_count": 3,
+        "fields": [],
+        "degenerate_fields": [
+            {"field": "book_full.top_n", "only_value": 10, "rows_with_field": rows},
+        ],
+        "always_null_fields": ["structure.gap_ns"],
+        "distinct_cap": 64,
+        "list_positions_collapsed": True,
+        "basis": "measurement only",
     }
 
 
@@ -323,6 +343,48 @@ class RawMboQuestionReachesFrankieTest(StopRuleTests):
         """"You were given nothing" and "we did not record what you were given" are
         different facts, and only one of them is an answer."""
         self.assertIn("itself unstated", self._emit())
+
+
+class FieldCensusReachesFrankieTest(StopRuleTests):
+    """F-10: the measurement behind 9a is rendered, and a spawn without it HALTS.
+
+    Asking for a per-field classification while withholding the per-field census is asking
+    for a guess. A census that saw fewer rows than were written is partial, and a partial
+    census rendered as complete is the S119 shape - present, typed, plausible, wrong.
+    """
+
+    def test_the_degenerate_fields_are_rendered_with_their_value_and_row_count(self):
+        text = self._emit()
+        self.assertIn("The field census, measured on every retained member row", text)
+        self.assertIn("57,027 rows censused", text)
+        self.assertIn("| `book_full.top_n` | `10` | 57,027 |", text)
+        self.assertIn("1 fields carried exactly one value throughout", text)
+
+    def test_the_always_null_fields_are_rendered(self):
+        self.assertIn("- `structure.gap_ns`", self._emit())
+
+    def test_it_says_measurement_not_recommendation(self):
+        text = self._emit()
+        self.assertIn("It is a measurement, not a recommendation", text)
+        self.assertIn("say CANNOT_JUDGE", text)
+
+    def test_a_result_without_the_census_halts(self):
+        def drop(body):
+            del body["layers"]["exact_member_ledger"]["field_census"]
+        with self.assertRaises(EmitError):
+            self._emit(mutate=drop)
+
+    def test_a_census_that_saw_fewer_rows_than_were_written_halts(self):
+        def partial(body):
+            body["layers"]["exact_member_ledger"]["field_census"] = _census(57026)
+        with self.assertRaisesRegex(EmitError, "does not cover every member row"):
+            self._emit(mutate=partial)
+
+    def test_the_run_reporting_its_own_census_partial_halts(self):
+        def flag(body):
+            body["layers"]["exact_member_ledger"]["field_census_covers_every_member_row"] = False
+        with self.assertRaisesRegex(EmitError, "partial"):
+            self._emit(mutate=flag)
 
 
 class EvidenceReadIsAskedForTest(StopRuleTests):

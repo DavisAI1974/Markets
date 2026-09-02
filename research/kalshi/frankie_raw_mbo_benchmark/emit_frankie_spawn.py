@@ -250,6 +250,45 @@ def emit(result_path: Path | str, *, repo_root: Path | None = None,
         add("- the run recorded no ledger retention receipts, so what was retained where is")
         add("  itself unstated - say so rather than assuming you saw it")
     add("")
+    # THE MEASUREMENT BEHIND 9a. Every retained member row was censused per field path; a
+    # result without the census, or with a census that saw fewer rows than were written,
+    # cannot support the classification and the spawn HALTS rather than asking anyway.
+    census = _lookup(result, "layers.exact_member_ledger.field_census")
+    member_rows = _lookup(result, "layers.exact_member_ledger.exact_member_rows")
+    if not isinstance(census, Mapping) or census.get("rows_observed") != member_rows:
+        raise EmitError(
+            "field census does not cover every member row: "
+            f"rows_observed={census.get('rows_observed') if isinstance(census, Mapping) else None} "
+            f"exact_member_rows={member_rows}"
+        )
+    if _lookup(result, "layers.exact_member_ledger.field_census_covers_every_member_row") is not True:
+        raise EmitError("the run itself reports the field census as partial")
+    degenerate = list(census.get("degenerate_fields") or [])
+    always_null = list(census.get("always_null_fields") or [])
+    add("### The field census, measured on every retained member row")
+    add("")
+    add(f"`layers.exact_member_ledger.field_census`: {census['rows_observed']:,} rows censused, "
+        f"{census['field_count']:,} field paths. Per path it carries observations, rows-with-field,")
+    add("nulls, distinct values (capped at "
+        f"{census['distinct_cap']}), types and numeric range. `[]` marks a list whose every")
+    add("element is counted under one path, because a position in a ladder is not a field.")
+    add("**It is a measurement, not a recommendation.** A field degenerate on this slice may")
+    add("vary on another day; where one slice cannot settle it, say CANNOT_JUDGE.")
+    add("")
+    add(f"**{len(degenerate)} fields carried exactly one value throughout:**")
+    add("")
+    add("| field | only value | rows with field |")
+    add("|---|---|---:|")
+    for row in degenerate:
+        add(f"| `{row['field']}` | `{row['only_value']!r}` | {row['rows_with_field']:,} |")
+    add("")
+    add(f"**{len(always_null)} fields were present and null on every observation:**")
+    add("")
+    for name in always_null:
+        add(f"- `{name}`")
+    if not always_null:
+        add("- none")
+    add("")
     add("So any exact-member claim rests on the runner's counters and per-stratum summaries")
     add("rather than on rows you read. **Say which fields you could not assess and why.** An")
     add("honest CANNOT_JUDGE is worth more than a guess.")

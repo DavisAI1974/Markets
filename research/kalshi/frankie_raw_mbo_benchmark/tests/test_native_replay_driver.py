@@ -426,6 +426,51 @@ class FlowSubstrateIsFedByTheTraversalTest(unittest.TestCase):
         self.assertEqual(driver.roll20.clock, driver.run.flow_substrate.clock)
 
 
+class FieldCensusCoversTheTraversalTest(unittest.TestCase):
+    """F-10: the census sees every member row the traversal writes, and names the book.
+
+    A calculator's tests passing while the driver never calls it is S119's recorded mistake;
+    this is the driver-level proof, on a real traversal with a real reconstructed book.
+    """
+
+    def _run(self):
+        # A resting bid and ask FIRST, so `book_full` carries a ladder with leaves to name;
+        # three trades alone leave the book empty and a census of an empty book names no
+        # level fields, which would make this test pass or fail on the fixture, not the code.
+        driver = make_driver(total_mbo_records=4)
+        base = at("2021-10-04T13:00:00")
+        bid = record(seq=0, event_ns=base, order_id=400, action="A", side="B")
+        bid["price"] = 3_499_000_000
+        ask = record(seq=1, event_ns=base + NS_PER_SECOND, order_id=401, action="A", side="A")
+        ask["price"] = 3_501_000_000
+        trades = [
+            record(seq=2 + i, event_ns=base + (2 + i) * NS_PER_SECOND, order_id=300 + i,
+                   action="T")
+            for i in range(2)
+        ]
+        driver.consume([bid, ask, *trades])
+        return driver.finalize()
+
+    def test_every_member_row_is_censused(self):
+        layer = self._run()["layers"]["exact_member_ledger"]
+        self.assertGreater(layer["exact_member_rows"], 0, "the fixture wrote no members")
+        self.assertEqual(layer["field_census"]["rows_observed"], layer["exact_member_rows"])
+        self.assertTrue(layer["field_census_covers_every_member_row"])
+
+    def test_the_census_names_the_full_book_by_field_not_by_position(self):
+        census = self._run()["layers"]["exact_member_ledger"]["field_census"]
+        paths = {f["field"] for f in census["fields"]}
+        self.assertIn("book_full", paths)
+        for leaf in ("book_full.bid_levels_full[].price", "book_full.bid_levels_full[].size",
+                     "book_full.ask_levels_full[].price"):
+            self.assertIn(leaf, paths, f"{leaf} missing; the book is not being censused")
+        self.assertFalse([p for p in paths if "[0]" in p], "positions leaked into the census")
+
+    def test_the_census_is_json_serialisable_inside_the_result(self):
+        import json
+        json.dumps(self._run()["layers"]["exact_member_ledger"]["field_census"])
+
+
 if __name__ == "__main__":
     unittest.main()
 
