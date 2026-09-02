@@ -1,5 +1,34 @@
 # KALSHI TRADING — file index
 
+## S119 — the independent size witness and the volume rescue
+
+Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`.
+
+- **`research/kalshi/frankie_raw_mbo_benchmark/verify_ledger_size_witness.py`** — D69. The
+  SECOND PARTY on a size figure. `ledger_retention[*].bytes` is the sink counting its own
+  writes; S3 recorded a `ContentLength` for the same objects at PUT time with no stake in the
+  answer. Compares them per ledger, checks the DENOMINATOR from three places that must agree,
+  and compares a downloaded ledger's sha256 to the receipt so content is witnessed and not just
+  length. Three outcomes, three exit codes - **WITNESS_UNAVAILABLE is red on purpose**, because
+  a packet that never landed or landed gzipped produces a legitimate mismatch that must never
+  read as the sink being wrong. Emits a bytes-per-record figure ONLY with both quantities
+  independently sourced, and REFUSES otherwise. Tests: 16, including the case that drove out the
+  first violation - two of three record counts agreeing while the third was absent.
+- **`.github/workflows/frankie_run_size_report_20260902.yml`** (changed) — carries the witness
+  ahead of the self-reported table. Its default run is now PINNED rather than "newest": the
+  first live run reported CONFIRMED against a push-CI canary because newest is not the same as
+  the run in question, and nothing on the page named which run had been read. `newest` must now
+  be asked for by name. The witness markdown is echoed to the LOG, because a step summary cannot
+  be read back through the API.
+- **`.github/workflows/frankie_box_volume_rescue_20260902.yml`** — recovers the box by moving its
+  DISK rather than by talking to it. After the S118 reboot the SSM agent reports ConnectionLost,
+  which removes RunCommand and Session Manager both. Stops the instance, detaches the root
+  volume, mounts it on a throwaway t3.micro, reports `df` and `du` BEFORE clearing anything -
+  the first independent test of the full-disk diagnosis - clears `/opt/frankie-a-arm-run`, then
+  reattaches and proves the box executes a command. One script under one EXIT trap, because
+  between detach and reattach the box has no root disk. `action` defaults to a read-only report
+  and every acting step additionally requires a dispatch, so a push cannot reach one.
+
 ## S116 — the RT book, the full-capture adapter, and the prior-work recovery
 
 Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`.

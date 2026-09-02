@@ -149,3 +149,43 @@ Scaled from 2,890 sampled rows. Exact section totals are above; these are not ex
 | order_id | ~1,510,775 | ~0.0% |
 
 Nothing here is a recommendation to drop anything. D60: a row is USED, or RETAINED and counted, or REFUSED loudly, and what to drop is discussed before it is done. This says only what each thing costs.
+
+---
+
+## S119 ADDENDUM: THE FIGURE IS CONFIRMED BY AN INDEPENDENT WITNESS (2026-09-02)
+
+**Greg held the numbers open at S118 close - "i still feel the numbers need to be rechecked" -
+and he was right to. The table above is measured, but by the SINK COUNTING ITS OWN WRITES.**
+That is one party, not two.
+
+**The second party is S3.** It recorded a `ContentLength` for every object of run 33596898227 at
+PUT time, and it has no stake in the answer. The canary path copies the packet UNCOMPRESSED
+(only the full-run path gzips), so those lengths are directly comparable.
+
+| what was compared | result |
+|---|---|
+| every ledger object's S3 size vs `ledger_retention[*].bytes` | **equal, all three** |
+| `layers.identity_receipt.total_mbo_records` | 50,001 |
+| `traversal.records_seen` | 50,001 |
+| `layers.identity_receipt.coverage.records_seen` | 50,001 |
+| smallest ledger DOWNLOADED, sha256 vs the receipt's | **match** (`6ff73abc10faf65c...`) |
+| **verdict** | **CONFIRMED** |
+
+**Bytes per record: 246,030 (240.3 KiB), unchanged.** Numerator: S3 `ContentLength` summed over
+every ledger object. Denominator: `traversal.records_seen`, agreeing with the manifest total and
+the coverage receipt. Neither quantity is the sink's own tally. Evidence: workflow run
+33602694575.
+
+**So Sunday is still 14.0 GB and the full roster is still ~1.4 TB.** Nothing downstream moves.
+
+### And the witness's first live run confirmed the wrong run
+
+Worth more than the confirmation. Its default lookup took the NEWEST `calculation_result.json`
+under the a-clean tree, which was a push-CI canary at run 33599514613, not the 50,001-record run
+whose figure was in question. Every step passed. The verdict was green. **Nothing on the page
+said which run had been examined**, so a green would have been read as item zero settled.
+
+That is the fifth instance of the same defect on this branch, produced by the tool built to catch
+the first four. The repairs are in D69; the transferable one is that **a verdict with no subject
+is not a verdict**, and it is why the report now names the run and the record count in its own
+heading, derived from the S3 keys rather than passed in by whoever asked the question.
