@@ -12,7 +12,10 @@ handoff sections 0, 4 and 9, then `FRANKIE_BUILT_NOT_WIRED_SEARCH_S121.md`, then
    not his evidence (D81).
 2. A layer's evidence binds to the file that carries it, never to a document describing it (D82).
 3. **Zero hardcoded time intervals for anything.** Every time is derived from the actual events on
-   the clocks built for it; the seven clocks are wired into Frankie (D83).
+   the clocks built for it; the seven clocks are wired into Frankie (D83). **Greg, at the S121
+   close: "Don't make cutoff times."** A cutoff is an EVENT - the F_LAST receive of a group, a
+   candidate event - never an instant we choose. The driver's invocation cadence is audited for any
+   fixed time interval and freed of it in the same slice as the fixed windows (F-26).
 4. A persona on a long build pushes its own branch after every commit; a save point that exists
    only in a container is not a save point (D84).
 5. **One arm, and it is A_MEMORY** (D86; D85 superseded). Memory is his own day-over-day carry of
@@ -71,7 +74,8 @@ by hand from the tip; commit and push per slice (D84); one arm, A_MEMORY.
   `persona/s121-wire-outputs-staging` (`ae5611e`, slice 5 and `build_handoff` into `read_back`).
 - FIRST TWO EDITS OF S122, small, single-writer: the emitter's "What you return" gains
   `outputs_receipt_sha256` and the bundle prose (the persona's exact text is in its report, quoted
-  in the handoff); `native_staging.REQUIRED_CUTOFF_KEYS` gains `clock_model_evaluation_ns` with the
-  staging test fixture updated.
+  in the handoff); `native_staging.REQUIRED_CUTOFF_KEYS` gains `clock_model_evaluation_ns` (the F_LAST receive of
+  the group at which the principal is staged - an event instant the driver already stamps, never a
+  time we set) with the staging test fixture updated.
 - The Sunday crosswalk on the real result read 75 of 75 inputs not delivered; the wiring above is
   what turns those rows DELIVERED, and F-29/F-30 are resolved on the way, not waited on.
