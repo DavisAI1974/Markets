@@ -52,6 +52,13 @@ gate proved the document was unchanged and nothing about delivery.
       emitted prompt that none of the nine ids or their objects reaches the session.
 - [ ] **10. Register it.** F-20.. in `OPEN_ITEMS.json` for items 3-9; D81 (the rule) and D82 (the
       inventory-document binding) in the decisions store; renders regenerated.
+- [ ] **12. The canonical input list, reviewed and updated.** The pair from 2026-08-24:
+      `NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md` (15 feeds; the registry's authority)
+      and `NG_EXHAUSTION_FRANKIE_SOURCE_FILE_INVENTORY_20260824.md` (149 paths, sections A-M).
+      Every section classified KEEP (knowledge he receives) / CODE (runtime, not knowledge) /
+      SUPERSEDED (Sol/API era, four-helper era, D54/D63/D64/D70) / SEALED / OBSOLETE, each path
+      with its reason, applied as a DATED addendum to the inventory, never a silent rewrite.
+      The registry's knowledge layers rebind to the KEEP files.
 - [ ] **11. Sunday, then Monday.** Fetch Sunday's ledgers into the session with the receipt;
       spawn; his report on the calcs and the raw MBO; STOP for the reveal (D68). Then Monday the
       same way.
