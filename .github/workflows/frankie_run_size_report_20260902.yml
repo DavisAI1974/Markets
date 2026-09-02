@@ -23,6 +23,7 @@ on:
     paths:
       - '.github/workflows/frankie_run_size_report_20260902.yml'
       - 'research/kalshi/frankie_raw_mbo_benchmark/report_ledger_size.py'
+      - 'research/kalshi/frankie_raw_mbo_benchmark/verify_ledger_size_witness.py'
   workflow_dispatch:
     inputs:
       prefix:
@@ -31,6 +32,13 @@ on:
           nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-clean/full/<sha>/<run>-<attempt>.
           Leave empty to report on the most recently modified calculation_result.json under
           the a-clean tree, which is the usual case right after a run.
+        type: string
+        default: ''
+      run_id:
+        description: >-
+          Witness one named run instead of the newest: the GitHub run id, e.g. 33596898227.
+          Resolved by scanning the tree for a prefix containing it, so the commit sha in the
+          key does not have to be known. Ignored when `prefix` is given.
         type: string
         default: ''
 
@@ -53,6 +61,7 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
       WANTED_PREFIX: ${{ inputs.prefix || '' }}
+      WANTED_RUN_ID: ${{ inputs.run_id || '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -65,6 +74,13 @@ jobs:
           set -euo pipefail
           if [ -n "$WANTED_PREFIX" ]; then
             key="$WANTED_PREFIX/calculation_result.json"
+          elif [ -n "$WANTED_RUN_ID" ]; then
+            # A named run, found by scanning rather than by constructing the key: the prefix
+            # carries the commit sha as well as the run id, and guessing the sha is how a
+            # deterministic lookup turns into a 404 that reads as a missing run.
+            key="$(aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "$ROOT_PREFIX" \
+              --query "Contents[?ends_with(Key, 'calculation_result.json')].Key" \
+              --output text | tr '\t' '\n' | grep "/${WANTED_RUN_ID}-" | head -1)"
           else
             # The NEWEST result under the tree, chosen by S3's own LastModified rather than
             # by sorting key names: a run id sorts lexically, not chronologically, so the
@@ -79,6 +95,82 @@ jobs:
           aws s3 cp "s3://${BUCKET}/${key}" ./calculation_result.json \
             --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
           echo "RESULT_KEY=$key" >> "$GITHUB_ENV"
+
+      - name: List what S3 itself holds for this run
+        shell: bash
+        run: |
+          set -euo pipefail
+          # THE INDEPENDENT WITNESS. Every size figure so far has been the sink counting its
+          # own writes. S3 recorded a length for each object at PUT time, with no stake in
+          # the answer, and this is that reading. Paginated by the CLI, keyed and sized only -
+          # nothing here downloads a ledger.
+          prefix="${RESULT_KEY%/calculation_result.json}"
+          printf 'witnessing s3://%s/%s\n' "$BUCKET" "$prefix"
+          aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "$prefix" \
+            --query 'Contents[].{Key:Key,Size:Size}' --output json > ./s3_listing.json
+          python3 - <<'MAP' > ./s3_objects.json
+          import json
+          rows = json.load(open("s3_listing.json")) or []
+          print(json.dumps({r["Key"]: int(r["Size"]) for r in rows}))
+          MAP
+          echo "RUN_PREFIX=$prefix" >> "$GITHUB_ENV"
+
+      - name: Download the smallest ledger for a content witness
+        shell: bash
+        run: |
+          set -euo pipefail
+          # A size witness proves LENGTH. It says nothing about whether the bytes are the rows
+          # the traversal reconciled, and the receipt carries a sha256 that can settle that.
+          # Only the smallest uncompressed ledger is fetched, and only under a cap, because
+          # the point is a content check rather than a transfer of twelve gigabytes.
+          read -r ledger key < <(python3 - <<'PICK'
+          import json
+          from pathlib import PurePosixPath
+          objects = json.load(open("s3_objects.json"))
+          result = json.load(open("calculation_result.json"))
+          receipts = result.get("ledger_retention") or {}
+          by_name = {PurePosixPath(str(r.get("path") or "")).name: n for n, r in receipts.items()}
+          CAP = 512 * 1024 * 1024
+          best = None
+          for key, size in objects.items():
+              name = PurePosixPath(key).name
+              if name in by_name and size <= CAP and (best is None or size < best[2]):
+                  best = (by_name[name], key, size)
+          print(f"{best[0]} {best[1]}" if best else " ")
+          PICK
+          )
+          if [ -z "${ledger:-}" ] || [ -z "${key:-}" ]; then
+            echo "no uncompressed ledger under the cap; the content witness is skipped and"
+            echo "the size witness stands alone - stated rather than silently omitted"
+            echo "CONTENT_WITNESS=" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          aws s3 cp "s3://${BUCKET}/${key}" ./content_witness.jsonl \
+            --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
+          digest="$(sha256sum ./content_witness.jsonl | cut -d' ' -f1)"
+          rm -f ./content_witness.jsonl
+          printf 'content witness: %s = %s\n' "$ledger" "$digest"
+          echo "CONTENT_WITNESS=${ledger}=${digest}" >> "$GITHUB_ENV"
+
+      - name: Witness the size against S3, and refuse a per-record figure without both halves
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Runs BEFORE the self-reported table, so the witness cannot be read as a footnote
+          # to a number the reader has already accepted.
+          args=(--result ./calculation_result.json --objects ./s3_objects.json
+                --summary "$GITHUB_STEP_SUMMARY" --output ./LEDGER_SIZE_WITNESS.md)
+          if [ -n "${CONTENT_WITNESS:-}" ]; then
+            args+=(--observed-sha256 "$CONTENT_WITNESS")
+          fi
+          set +e
+          python3 -m research.kalshi.frankie_raw_mbo_benchmark.verify_ledger_size_witness "${args[@]}"
+          code=$?
+          set -e
+          # The self-reported table is rendered whatever the witness says - a contradicted run
+          # is exactly when both figures need to be visible side by side - but the job's own
+          # verdict is the witness's, recorded here and applied after the table.
+          echo "WITNESS_EXIT=$code" >> "$GITHUB_ENV"
 
       - name: Render the size table
         shell: bash
@@ -99,6 +191,17 @@ jobs:
           name: frankie-size-report-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             LEDGER_SIZE_TABLE.md
+            LEDGER_SIZE_WITNESS.md
             calculation_result.json
+            s3_objects.json
           if-no-files-found: error
           retention-days: 30
+
+      - name: The witness decides the verdict
+        shell: bash
+        run: |
+          set -euo pipefail
+          # 0 CONFIRMED, 1 CONTRADICTED, 2 WITNESS_UNAVAILABLE. Two is red on purpose: item
+          # zero is then still open, and a green run would be read as having settled it.
+          printf 'witness exit code: %s\n' "$WITNESS_EXIT"
+          exit "$WITNESS_EXIT"
