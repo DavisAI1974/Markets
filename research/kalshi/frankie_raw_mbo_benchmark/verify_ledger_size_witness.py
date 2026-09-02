@@ -60,6 +60,27 @@ def _receipts(result: Mapping[str, Any]) -> Mapping[str, Mapping[str, Any]]:
     return receipts
 
 
+def common_prefix(objects: Mapping[str, int]) -> str:
+    """The run this witness actually examined, derived from the keys rather than passed in.
+
+    A caller-supplied label can disagree with the data; a prefix computed from the keys
+    cannot. This exists because the first live run witnessed the WRONG RUN and reported
+    CONFIRMED: the default lookup takes the newest `calculation_result.json` under the tree,
+    and the newest was a push-CI canary rather than the 50,001-record run whose figure was in
+    question. Green under a heading that names no run reads as the question being settled.
+    """
+    keys = sorted(objects)
+    if not keys:
+        return ""
+    first, last = keys[0], keys[-1]
+    cut = len(first)
+    for index, char in enumerate(first):
+        if index >= len(last) or last[index] != char:
+            cut = index
+            break
+    return first[:cut].rsplit("/", 1)[0] if "/" in first[:cut] else first[:cut]
+
+
 def _index_by_basename(objects: Mapping[str, int]) -> dict[str, tuple[str, int]]:
     index: dict[str, tuple[str, int]] = {}
     for key, size in objects.items():
@@ -187,9 +208,19 @@ def render(
 
     lines: list[str] = []
     add = lines.append
+    traversal = result.get("traversal") or {}
     add("## The independent witness")
     add("")
     add(f"- Verdict: **{outcome}**")
+    # THE RUN IS NAMED IN THE HEADING, with its size beside it. Both are here because a
+    # verdict with no subject is the failure this module already committed once: it
+    # confirmed a run nobody had asked about, and nothing on the page said which run it was.
+    add(f"- Run witnessed: `{common_prefix(objects)}`")
+    add(f"- Records / groups in that run: **{traversal.get('records_seen'):,}** / "
+        f"{traversal.get('groups_seen'):,}"
+        if isinstance(traversal.get("records_seen"), int)
+        else f"- Records / groups in that run: {traversal.get('records_seen')} / "
+             f"{traversal.get('groups_seen')}")
     add(f"- Objects listed under the run prefix: {len(objects):,}")
     add("")
     add("### Ledger bytes: what the sink counted vs what S3 holds")

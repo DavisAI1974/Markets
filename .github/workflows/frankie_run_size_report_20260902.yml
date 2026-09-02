@@ -36,9 +36,10 @@ on:
         default: ''
       run_id:
         description: >-
-          Witness one named run instead of the newest: the GitHub run id, e.g. 33596898227.
-          Resolved by scanning the tree for a prefix containing it, so the commit sha in the
-          key does not have to be known. Ignored when `prefix` is given.
+          The GitHub run id to report on, e.g. 33596898227, resolved by scanning the tree for
+          a prefix containing it so the commit sha in the key does not have to be known. The
+          literal word `newest` takes the most recently modified result instead. Ignored when
+          `prefix` is given.
         type: string
         default: ''
 
@@ -61,7 +62,7 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
       WANTED_PREFIX: ${{ inputs.prefix || '' }}
-      WANTED_RUN_ID: ${{ inputs.run_id || '' }}
+      WANTED_RUN_ID: ${{ inputs.run_id || '33596898227' }}
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -72,22 +73,27 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # THE DEFAULT IS A PINNED RUN, NOT THE NEWEST ONE. Taking the newest was the
+          # first thing this workflow got wrong live: it reported CONFIRMED against a
+          # push-CI canary at 33599514613 rather than the 50,001-record run 33596898227
+          # whose per-record figure is the open question. `newest` is still reachable, but
+          # it now has to be asked for by name.
           if [ -n "$WANTED_PREFIX" ]; then
             key="$WANTED_PREFIX/calculation_result.json"
-          elif [ -n "$WANTED_RUN_ID" ]; then
-            # A named run, found by scanning rather than by constructing the key: the prefix
+          elif [ "$WANTED_RUN_ID" = "newest" ]; then
+            # Chosen by S3's own LastModified rather than by sorting key names: a run id
+            # sorts lexically, not chronologically, so the newest run is not reliably the
+            # last name in the list.
+            key="$(aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "$ROOT_PREFIX" \
+              --query "reverse(sort_by(Contents[?ends_with(Key, 'calculation_result.json')], &LastModified))[0].Key" \
+              --output text)"
+          else
+            # A named run, found by SCANNING rather than by constructing the key: the prefix
             # carries the commit sha as well as the run id, and guessing the sha is how a
             # deterministic lookup turns into a 404 that reads as a missing run.
             key="$(aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "$ROOT_PREFIX" \
               --query "Contents[?ends_with(Key, 'calculation_result.json')].Key" \
               --output text | tr '\t' '\n' | grep "/${WANTED_RUN_ID}-" | head -1)"
-          else
-            # The NEWEST result under the tree, chosen by S3's own LastModified rather than
-            # by sorting key names: a run id sorts lexically, not chronologically, so the
-            # newest run is not reliably the last name in the list.
-            key="$(aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "$ROOT_PREFIX" \
-              --query "reverse(sort_by(Contents[?ends_with(Key, 'calculation_result.json')], &LastModified))[0].Key" \
-              --output text)"
           fi
           test -n "$key"
           test "$key" != "None"
@@ -167,6 +173,7 @@ jobs:
           python3 -m research.kalshi.frankie_raw_mbo_benchmark.verify_ledger_size_witness "${args[@]}"
           code=$?
           set -e
+          cat ./LEDGER_SIZE_WITNESS.md
           # The self-reported table is rendered whatever the witness says - a contradicted run
           # is exactly when both figures need to be visible side by side - but the job's own
           # verdict is the witness's, recorded here and applied after the table.

@@ -191,3 +191,27 @@ class LengthIsNotContentTests(unittest.TestCase):
     def test_a_clean_run_carries_no_such_qualifier(self):
         text, _ = render(_result(), _objects(), {"exact_member_ledger": "a" * 64})
         self.assertNotIn("about LENGTH only", text)
+
+
+class NamesTheRunItExaminedTests(unittest.TestCase):
+    """The first live run witnessed the wrong run and reported CONFIRMED without saying so."""
+
+    def test_the_heading_carries_the_prefix_and_the_record_count(self):
+        text, outcome = render(_result(), _objects())
+        self.assertEqual(outcome, CONFIRMED)
+        self.assertIn(PREFIX, text)
+        self.assertIn("**50,001**", text)
+
+    def test_the_prefix_is_derived_from_the_keys_not_supplied(self):
+        from research.kalshi.frankie_raw_mbo_benchmark.verify_ledger_size_witness import (
+            common_prefix,
+        )
+        self.assertEqual(common_prefix(_objects()), PREFIX)
+        self.assertEqual(common_prefix({}), "")
+        self.assertEqual(common_prefix({"a/b/one.json": 1, "a/b/two.json": 2}), "a/b")
+
+    def test_a_different_run_shows_a_different_heading(self):
+        other = {k.replace("/1-1/", "/9-9/"): v for k, v in _objects().items()}
+        text, _ = render(_result(), other)
+        self.assertIn("/9-9", text)
+        self.assertNotIn(PREFIX, text)
