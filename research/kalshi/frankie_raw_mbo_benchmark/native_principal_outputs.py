@@ -466,3 +466,319 @@ def load_bundle(out_dir: Path | str) -> dict[str, Any]:
         "knowledge_receipt_sha256": receipt.get("knowledge_receipt_sha256"),
         "ledgers": ledgers,
     }
+
+
+# --------------------------------------------------------------------------------------
+# The timing rule: one helper, reused by every ledger
+# --------------------------------------------------------------------------------------
+
+CAUSAL_CLOCKS_GROUP = "causal_clocks"
+#: The clock every ledger's `cutoff_recv_ns` is on: the F_LAST `ts_recv_ns` the causal stream
+#: orders by. Named here as a registry layer id and checked against the registry at validation.
+RECEIVE_CLOCK_ID = "clock_receive_time"
+TIMING_RULE = (
+    "TIMING RULE (Greg, S120; DROP_IN_S121 ruling 5 - no hardcoded windows or horizons): a "
+    "timing or clock reading is derived on a named causal clock and written as "
+    "{clock, observed_ns}, with clock one of the registry's causal_clocks layer ids and "
+    "observed_ns an int; a fixed ladder label such as 'H+60' or '300s', or a bare number, "
+    "names no clock and is refused"
+)
+#: The timing vocabulary the rule names. A key whose last token (after a unit suffix) is one of
+#: these carries a timing and must be a clock reading.
+TIMING_WORDS = frozenset({"lead", "horizon", "elapsed", "age", "runway"})
+UNIT_TOKENS = frozenset({"ns", "us", "ms", "s", "sec", "secs", "seconds"})
+#: Verbatim member-row material inside a state frame. The hash-locked adapter's own level fields
+#: (`front_order_age_s`, `priority_age_s`) live here, computed at the frame's receive-clock
+#: cutoff; D61 wraps that adapter and never renames its fields, so the scan skips exactly these.
+MEMBER_ROW_VERBATIM_KEYS = frozenset({"book", "fifo_state"})
+
+
+def registry_clock_ids(registry: Mapping[str, Any]) -> tuple[str, ...]:
+    """The registry's named causal clocks, as layer ids, in registry order."""
+    return _layer_ids(registry, CAUSAL_CLOCKS_GROUP)
+
+
+def clock_reading(value: Any, *, clock_ids: Sequence[str], where: str) -> tuple[str, int]:
+    """Validate one `{clock, observed_ns}` reading, or refuse it naming the rule."""
+    if not isinstance(value, Mapping) or "clock" not in value or "observed_ns" not in value:
+        raise PrincipalOutputError(f"{where}: {value!r} is not a clock reading. {TIMING_RULE}")
+    clock = value["clock"]
+    if clock not in clock_ids:
+        raise PrincipalOutputError(
+            f"{where}: clock {clock!r} is not one of the registry's causal clocks {list(clock_ids)}. "
+            f"{TIMING_RULE}"
+        )
+    observed = value["observed_ns"]
+    if not _is_int(observed):
+        raise PrincipalOutputError(f"{where}: observed_ns {observed!r} is not an int. {TIMING_RULE}")
+    return clock, observed
+
+
+def _is_timing_key(key: str) -> bool:
+    tokens = [token for token in key.lower().split("_") if token]
+    if tokens and tokens[-1] in UNIT_TOKENS:
+        tokens = tokens[:-1]
+    return bool(tokens) and tokens[-1] in TIMING_WORDS
+
+
+def refuse_clockless_timings(value: Any, *, clock_ids: Sequence[str], where: str) -> None:
+    """Walk a body; every value under a timing key must be a clock reading (or a list of them,
+    or null for an absent timing). Skips the two verbatim member-row subtrees, nothing else."""
+    if isinstance(value, Mapping):
+        for key, child in value.items():
+            if key in MEMBER_ROW_VERBATIM_KEYS:
+                continue
+            sub = f"{where}.{key}"
+            if isinstance(key, str) and _is_timing_key(key):
+                if child is None:
+                    continue
+                for item in child if isinstance(child, list) else [child]:
+                    clock_reading(item, clock_ids=clock_ids, where=sub)
+            else:
+                refuse_clockless_timings(child, clock_ids=clock_ids, where=sub)
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            refuse_clockless_timings(child, clock_ids=clock_ids, where=f"{where}[{index}]")
+
+
+# --------------------------------------------------------------------------------------
+# Per-ledger validation: shared helpers and context
+# --------------------------------------------------------------------------------------
+
+
+def _fail(where: str, message: str) -> None:
+    raise PrincipalOutputError(f"{where}: {message}")
+
+
+def _text(body: Mapping[str, Any], key: str, where: str) -> str:
+    value = body.get(key)
+    if not isinstance(value, str) or not value.strip():
+        _fail(where, f"`{key}` must be a non-empty string")
+    return value  # type: ignore[return-value]
+
+
+def _sha(body: Mapping[str, Any], key: str, where: str) -> str:
+    value = body.get(key)
+    if not isinstance(value, str) or SHA256_RE.fullmatch(value) is None:
+        _fail(where, f"`{key}` must be a lowercase SHA-256")
+    return value  # type: ignore[return-value]
+
+
+def _int(body: Mapping[str, Any], key: str, where: str) -> int:
+    value = body.get(key)
+    if not _is_int(value):
+        _fail(where, f"`{key}` must be an int")
+    return value  # type: ignore[return-value]
+
+
+def _choice(body: Mapping[str, Any], key: str, allowed: Sequence[str], where: str) -> str:
+    value = body.get(key)
+    if value not in allowed:
+        _fail(where, f"`{key}` must be one of {list(allowed)}, got {value!r}")
+    return value  # type: ignore[return-value]
+
+
+def _list(body: Mapping[str, Any], key: str, where: str) -> list[Any]:
+    value = body.get(key)
+    if not isinstance(value, list):
+        _fail(where, f"`{key}` must be a list")
+    return value  # type: ignore[return-value]
+
+
+def _mapping(body: Mapping[str, Any], key: str, where: str) -> Mapping[str, Any]:
+    value = body.get(key)
+    if not isinstance(value, Mapping):
+        _fail(where, f"`{key}` must be a mapping")
+    return value  # type: ignore[return-value]
+
+
+def _int_list(body: Mapping[str, Any], key: str, where: str) -> list[int]:
+    values = _list(body, key, where)
+    if any(not _is_int(v) or v < 0 for v in values):
+        _fail(where, f"`{key}` must be a list of non-negative int group indices")
+    return values
+
+
+class ValidationContext:
+    """What the per-ledger rules may look at across ledgers, plus the registry's clocks."""
+
+    def __init__(self, *, registry: Mapping[str, Any], bundle: Mapping[str, Any]) -> None:
+        self.registry = registry
+        self.bundle = bundle
+        self.clock_ids = registry_clock_ids(registry)
+        if RECEIVE_CLOCK_ID not in self.clock_ids:
+            raise PrincipalOutputError(
+                f"the registry names no {RECEIVE_CLOCK_ID!r} clock, and every ledger cutoff is on it"
+            )
+        self.knowledge_receipt_sha256: str | None = None
+        self.receipt_cutoffs: dict[str, int] = {}
+        self.probability_entry_cutoffs: dict[str, int] = {}
+        self.first_locks: dict[str, int] = {}
+        self.locks = 0
+        self.no_locks = 0
+
+    def reading(self, value: Any, where: str) -> tuple[str, int]:
+        return clock_reading(value, clock_ids=self.clock_ids, where=where)
+
+
+# --------------------------------------------------------------------------------------
+# The state and state-delta movie
+# --------------------------------------------------------------------------------------
+
+STATE_MOVIE = "output_state_and_state_delta_movie"
+#: V4 proposal section 3: per channel, missingness distinguishes at minimum these, and a true
+#: numerical zero is its own state.
+CHANNEL_STATUSES = (
+    "OBSERVED",
+    "PAST_CARRY",
+    "STALE",
+    "MISSING",
+    "STRUCTURALLY_NOT_YET_KNOWN",
+    "NOT_APPLICABLE",
+    "TRUE_ZERO",
+)
+STATUSES_WITHOUT_VALUE = frozenset({"MISSING", "STRUCTURALLY_NOT_YET_KNOWN", "NOT_APPLICABLE"})
+CARRIED_STATUSES = frozenset({"PAST_CARRY", "STALE"})
+#: The member row's `book` (V4 `book_snapshot`): top of book, the depth levels and full depth.
+BOOK_REQUIRED_KEYS = ("best_bid", "best_ask", "spread", "bid_levels", "ask_levels", "bid_depth_full", "ask_depth_full")
+LEVEL_REQUIRED_KEYS = ("price_raw", "size", "order_count")
+#: The member row's `book_full[...].fifo_queue[...]` identity fields (V4 `_level`).
+FIFO_IDENTITY_KEYS = ("order_id", "priority_recv_ns", "priority_sequence", "size", "volume_ahead")
+FIFO_STATE_BASIS = (
+    "TOUCH_FIFO_IDENTITIES_PLUS_FULL_BOOK_SHA256: the fifo_queue identities at the bid and ask "
+    "touch, because queue-position and priority questions read the front of the queue, plus the "
+    "sha256 of the complete book_full snapshot with its level and order counts, because that "
+    "proves the whole FIFO state at this cutoff without carrying every level in every frame - "
+    "the full book_full stays on the member row"
+)
+
+
+def fifo_state_from_book_full(book_full: Mapping[str, Any]) -> dict[str, Any]:
+    """Build a frame's `fifo_state` from a member row's `book_full`, both ways at once."""
+    bids = book_full.get("bid_levels_full", book_full.get("bid_levels")) or []
+    asks = book_full.get("ask_levels_full", book_full.get("ask_levels")) or []
+
+    def touch(levels: Sequence[Mapping[str, Any]]) -> dict[str, Any] | None:
+        if not levels:
+            return None
+        level = levels[0]
+        return {
+            "price_raw": level["price_raw"],
+            "fifo_queue": [{key: order[key] for key in FIFO_IDENTITY_KEYS} for order in level.get("fifo_queue", [])],
+        }
+
+    return {
+        "basis": FIFO_STATE_BASIS,
+        "book_full_sha256": hashlib.sha256(canonical_bytes(book_full)).hexdigest(),
+        "level_count": len(bids) + len(asks),
+        "order_count": sum(int(level["order_count"]) for level in list(bids) + list(asks)),
+        "touch": {"bid": touch(bids), "ask": touch(asks)},
+    }
+
+
+def _v_book(body: Mapping[str, Any], where: str) -> None:
+    book = _mapping(body, "book", where)
+    missing = [key for key in BOOK_REQUIRED_KEYS if key not in book]
+    if missing:
+        _fail(where, f"`book` omits {missing}; the frame carries the book as on the member row")
+    for side in ("bid_levels", "ask_levels"):
+        levels = _list(book, side, f"{where}.book")
+        for index, level in enumerate(levels):
+            if not isinstance(level, Mapping) or any(key not in level for key in LEVEL_REQUIRED_KEYS):
+                _fail(where, f"`book.{side}[{index}]` must carry {list(LEVEL_REQUIRED_KEYS)} as on the member row")
+
+
+def _v_fifo_state(body: Mapping[str, Any], where: str) -> None:
+    fifo = _mapping(body, "fifo_state", where)
+    fw = f"{where}.fifo_state"
+    _text(fifo, "basis", fw)
+    _sha(fifo, "book_full_sha256", fw)
+    _int(fifo, "order_count", fw)
+    _int(fifo, "level_count", fw)
+    touch = _mapping(fifo, "touch", fw)
+    for side in ("bid", "ask"):
+        if side not in touch:
+            _fail(fw, f"`touch` must state the {side} side (a mapping, or null for an empty side)")
+        level = touch[side]
+        if level is None:
+            continue
+        if not isinstance(level, Mapping):
+            _fail(fw, f"`touch.{side}` must be a mapping or null")
+        _int(level, "price_raw", f"{fw}.touch.{side}")
+        for index, order in enumerate(_list(level, "fifo_queue", f"{fw}.touch.{side}")):
+            if not isinstance(order, Mapping) or any(key not in order for key in FIFO_IDENTITY_KEYS):
+                _fail(fw, f"`touch.{side}.fifo_queue[{index}]` must carry the FIFO identities {list(FIFO_IDENTITY_KEYS)}")
+
+
+def _v_state_movie(entries: Sequence[Mapping[str, Any]], ctx: ValidationContext) -> None:
+    previous_cutoff: int | None = None
+    for entry in entries:
+        where = f"{STATE_MOVIE}[{entry['sequence']}]"
+        body, cutoff = entry["body"], entry["cutoff_recv_ns"]
+        channels = _mapping(body, "channels", where)
+        if not channels:
+            _fail(where, "a frame with no channels is not a state")
+        missing: list[str] = []
+        for name, channel in channels.items():
+            cw = f"{where}.channels.{name}"
+            if not isinstance(channel, Mapping):
+                _fail(cw, "a channel is a mapping with a status")
+            status = _choice(channel, "status", CHANNEL_STATUSES, cw)
+            if status == "MISSING":
+                missing.append(name)
+            if status not in STATUSES_WITHOUT_VALUE and "value" not in channel:
+                _fail(cw, f"status {status} carries no value")
+            if status == "TRUE_ZERO":
+                value = channel["value"]
+                if isinstance(value, bool) or not isinstance(value, (int, float)) or value != 0:
+                    _fail(cw, f"TRUE_ZERO is a numerical zero, got {value!r}")
+            if status in CARRIED_STATUSES:
+                source = _int(channel, "source_recv_ns", cw)
+                if source > cutoff:
+                    _fail(cw, f"carried source_recv_ns {source} is after the cutoff {cutoff}")
+                clock, age = ctx.reading(channel.get("age"), f"{cw}.age")
+                if clock == RECEIVE_CLOCK_ID and age != cutoff - source:
+                    _fail(cw, f"age {age} on the receive clock must be cutoff - source = {cutoff - source}")
+        declared = _list(body, "missing_channels", where)
+        if sorted(declared) != sorted(missing):
+            _fail(where, f"missing_channels {sorted(declared)} does not name the MISSING channels {sorted(missing)}")
+        _v_book(body, where)
+        _v_fifo_state(body, where)
+        delta = _mapping(body, "delta", where)
+        if "previous_cutoff_recv_ns" not in delta or delta["previous_cutoff_recv_ns"] != previous_cutoff:
+            _fail(
+                f"{where}.delta",
+                f"previous_cutoff_recv_ns {delta.get('previous_cutoff_recv_ns')!r} must be the previous "
+                f"frame's cutoff {previous_cutoff!r} (null on the first frame)",
+            )
+        _mapping(delta, "channels", f"{where}.delta")
+        _mapping(delta, "book", f"{where}.delta")
+        previous_cutoff = cutoff
+
+
+# --------------------------------------------------------------------------------------
+# Dispatch
+# --------------------------------------------------------------------------------------
+
+LEDGER_RULES: dict[str, Any] = {
+    STATE_MOVIE: _v_state_movie,
+}
+
+
+def _rule_for(ledger_id: str) -> Any:
+    return LEDGER_RULES.get(ledger_id)
+
+
+def validate_ledger_entries(
+    ledger_id: str, entries: Sequence[Mapping[str, Any]], ctx: ValidationContext
+) -> None:
+    """The timing rule over every entry of every ledger, then the ledger's own rule if any.
+
+    A ledger with no rule of its own (a registry output layer added after this module) still
+    gets its chain verified and the timing rule applied; nothing is dropped for lacking a rule.
+    """
+    for entry in entries:
+        refuse_clockless_timings(entry["body"], clock_ids=ctx.clock_ids, where=f"{ledger_id}[{entry['sequence']}]")
+    rule = _rule_for(ledger_id)
+    if rule is not None:
+        rule(entries, ctx)

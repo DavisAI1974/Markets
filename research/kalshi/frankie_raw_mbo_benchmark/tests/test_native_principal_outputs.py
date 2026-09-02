@@ -411,5 +411,304 @@ class WriteAndLoadBundleTest(unittest.TestCase):
         self.assertIn("never rewritten", str(ctx.exception))
 
 
+# ----------------------------------------------------------------------------------------
+# Slice 3a: the timing rule (one helper, reused) and the state movie
+# ----------------------------------------------------------------------------------------
+
+from research.kalshi.frankie_raw_mbo_benchmark.native_full_capture_adapter import (
+    FullCaptureAdapter,
+)
+from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import F_LAST
+
+RECV = "clock_receive_time"
+
+
+def rec(*, seq, order_id, action="A", side="B", size=5, price=3_500_000_000, ts=1_000_000_000):
+    """One F_LAST-closed native record, the shape `test_native_full_capture_adapter` drives."""
+    return {
+        "instrument_id": 42,
+        "publisher_id": 1,
+        "channel_id": 0,
+        "order_id": order_id,
+        "action": action,
+        "side": side,
+        "price": price,
+        "size": size,
+        "flags": F_LAST,
+        "sequence": seq,
+        "ts_event": ts,
+        "ts_recv": ts + 150_000,
+        "ts_in_delta": 0,
+        "source_dbn_object": "20211003.dbn",
+        "source_dbn_sha256": "0" * 64,
+    }
+
+
+def real_frames() -> list[dict]:
+    """Member frames from the REAL adapter: `book` and `book_full` exactly as a member row has them."""
+    adapter = FullCaptureAdapter()
+    frames = []
+    records = [
+        rec(seq=1, order_id=11, side="B", price=3_500_000_000, ts=1_000_000_000),
+        rec(seq=2, order_id=12, side="A", price=3_501_000_000, ts=2_000_000_000),
+        rec(seq=3, order_id=13, side="B", price=3_500_000_000, size=7, ts=3_000_000_000),
+    ]
+    for record in records:
+        frame, _legacy = adapter.apply(
+            record, raw_symbol="NGX1", source_dbn_object=record["source_dbn_object"],
+            source_dbn_sha256=record["source_dbn_sha256"],
+        )
+        if frame is not None:
+            frames.append(frame)
+    return frames
+
+
+def reading(observed_ns: int, clock: str = RECV) -> dict:
+    return {"clock": clock, "observed_ns": observed_ns}
+
+
+def state_frame(frame: dict, *, cutoff: int, previous_cutoff: int | None, channels: dict | None = None) -> dict:
+    """A lawful state-movie body over a real member frame."""
+    if channels is None:
+        channels = {
+            "spread": {"status": "OBSERVED", "value": frame["book"]["spread"]},
+            "dipole": {"status": "MISSING"},
+            "roll20": {"status": "STRUCTURALLY_NOT_YET_KNOWN"},
+            "signed_flow": {"status": "TRUE_ZERO", "value": 0},
+        }
+    missing = sorted(
+        name for name, chan in channels.items() if isinstance(chan, dict) and chan.get("status") == "MISSING"
+    )
+    return {
+        "channels": channels,
+        "missing_channels": missing,
+        # Deep-copied so a subtest that pops a book field does not leak into the next subtest.
+        "book": copy.deepcopy(frame["book"]),
+        "fifo_state": outputs.fifo_state_from_book_full(frame["book_full"]),
+        "delta": {"previous_cutoff_recv_ns": previous_cutoff, "channels": {}, "book": {}},
+    }
+
+
+class TimingRuleTest(unittest.TestCase):
+    def setUp(self):
+        self.registry = registry_today()
+        self.clocks = outputs.registry_clock_ids(self.registry)
+
+    def test_clock_ids_are_the_registry_causal_clocks_layer_ids(self):
+        expected = [
+            e["layer_id"] for g in self.registry["groups"] if g["group_id"] == "causal_clocks"
+            for e in g["entries"]
+        ]
+        self.assertEqual(list(self.clocks), expected)
+        self.assertIn(outputs.RECEIVE_CLOCK_ID, self.clocks)
+
+    def test_a_reading_names_a_registry_clock_and_an_integer_observation(self):
+        self.assertEqual(
+            outputs.clock_reading(reading(1500), clock_ids=self.clocks, where="x.lead"), (RECV, 1500)
+        )
+        self.assertEqual(
+            outputs.clock_reading(reading(-7, "clock_event_time"), clock_ids=self.clocks, where="x"),
+            ("clock_event_time", -7),
+        )
+
+    def test_a_fixed_ladder_label_or_a_clockless_number_is_refused_naming_the_rule(self):
+        for bad in ("H+60", "300s", 300, 12.5, {"observed_ns": 5}, {"clock": RECV}, {"clock": "wall", "observed_ns": 1}, {"clock": RECV, "observed_ns": 1.5}, {"clock": RECV, "observed_ns": True}):
+            with self.subTest(bad=bad), self.assertRaises(outputs.PrincipalOutputError) as ctx:
+                outputs.clock_reading(bad, clock_ids=self.clocks, where="entry.horizon")
+            self.assertIn("TIMING RULE", str(ctx.exception))
+            self.assertIn("entry.horizon", str(ctx.exception))
+
+    def test_the_scan_refuses_a_clockless_timing_anywhere_in_a_body(self):
+        for body in (
+            {"lead_ns": 300},
+            {"recognition": {"label": "H+N", "horizon": "H+60"}},
+            {"runways": [{"runway": "300s"}]},
+            {"carried": {"age": 12}},
+            {"elapsed": {"observed_ns": 5}},
+        ):
+            with self.subTest(body=body), self.assertRaises(outputs.PrincipalOutputError) as ctx:
+                outputs.refuse_clockless_timings(body, clock_ids=self.clocks, where="entry")
+            self.assertIn("TIMING RULE", str(ctx.exception))
+
+    def test_the_scan_accepts_readings_absent_timings_and_non_timing_keys(self):
+        outputs.refuse_clockless_timings(
+            {
+                "lead": reading(300),
+                "horizons": [reading(1), reading(2)],
+                "recognition": {"lead": None},
+                "runway_stages": [{"stage": 1, "signed_flow": -12}],
+                "coverage": 0.5,
+                "message": "ages ago",
+                "stage_duration_ns": 42,
+            },
+            clock_ids=self.clocks,
+            where="entry",
+        )
+
+    def test_the_scan_leaves_verbatim_member_row_material_alone(self):
+        # `front_order_age_s` and `priority_age_s` are the hash-locked adapter's own names on
+        # every level of `book` / `book_full` (D61: wrap, never edit). Copied verbatim into a
+        # frame they are on the frame's own receive-clock cutoff, and are not the principal's
+        # timings; the scan skips the two verbatim subtrees and nothing else.
+        frame = real_frames()[-1]
+        body = {"book": frame["book"], "fifo_state": outputs.fifo_state_from_book_full(frame["book_full"])}
+        self.assertIn("front_order_age_s", frame["book"]["bid_levels"][0])
+        outputs.refuse_clockless_timings(body, clock_ids=self.clocks, where="frame")
+        with self.assertRaises(outputs.PrincipalOutputError):
+            outputs.refuse_clockless_timings({"elsewhere": {"front_order_age_s": 1.5}}, clock_ids=self.clocks, where="frame")
+
+
+class FifoStateBuilderTest(unittest.TestCase):
+    def test_it_carries_touch_identities_and_the_full_book_hash_and_says_why(self):
+        frame = real_frames()[-1]
+        state = outputs.fifo_state_from_book_full(frame["book_full"])
+        self.assertEqual(state["book_full_sha256"], hashlib.sha256(canon(frame["book_full"])).hexdigest())
+        self.assertEqual(state["level_count"], len(frame["book_full"]["bid_levels_full"]) + len(frame["book_full"]["ask_levels_full"]))
+        self.assertEqual(state["order_count"], 3)
+        bid = state["touch"]["bid"]
+        self.assertEqual(bid["price_raw"], 3_500_000_000)
+        self.assertEqual([q["order_id"] for q in bid["fifo_queue"]], [11, 13])
+        self.assertEqual(bid["fifo_queue"][1]["volume_ahead"], 5)
+        for key in ("order_id", "priority_recv_ns", "priority_sequence", "size", "volume_ahead"):
+            self.assertIn(key, bid["fifo_queue"][0])
+        self.assertEqual(state["touch"]["ask"]["price_raw"], 3_501_000_000)
+        self.assertTrue(state["basis"].strip())
+
+    def test_an_empty_side_is_a_stated_absence(self):
+        frame = real_frames()[0]
+        state = outputs.fifo_state_from_book_full(frame["book_full"])
+        self.assertIsNone(state["touch"]["ask"])
+        self.assertEqual(state["order_count"], 1)
+
+
+class StateMovieTest(unittest.TestCase):
+    def setUp(self):
+        self.frames = real_frames()
+        self.registry = registry_today()
+        self.bundle = bundle_fixture()
+        self.ledger = self.bundle.ledger("output_state_and_state_delta_movie")
+        self.cutoffs = [f["ts_recv_ns"] for f in self.frames]
+
+    def validate(self, ledger=None):
+        ledger = ledger or self.ledger
+        ctx = outputs.ValidationContext(registry=self.registry, bundle=self.bundle.to_dict())
+        outputs.validate_ledger_entries(ledger.ledger_id, ledger.to_dict()["entries"], ctx)
+        return ctx
+
+    def test_a_lawful_movie_over_real_member_frames_passes(self):
+        previous = None
+        for frame, cutoff in zip(self.frames, self.cutoffs):
+            self.ledger.append(cutoff, state_frame(frame, cutoff=cutoff, previous_cutoff=previous))
+            previous = cutoff
+        self.validate()
+
+    def test_a_carried_channel_keeps_its_source_timestamp_and_age_on_a_clock(self):
+        c0, c1 = self.cutoffs[0], self.cutoffs[1]
+        carried = {
+            "spread": {"status": "PAST_CARRY", "value": 1_000_000, "source_recv_ns": c0, "age": reading(c1 - c0)},
+        }
+        self.ledger.append(c1, state_frame(self.frames[1], cutoff=c1, previous_cutoff=None, channels=carried))
+        self.validate()
+        for broken in (
+            {"status": "PAST_CARRY", "value": 1, "age": reading(c1 - c0)},
+            {"status": "STALE", "value": 1, "source_recv_ns": c0},
+            {"status": "STALE", "value": 1, "source_recv_ns": c0, "age": reading(c1 - c0 + 1)},
+            {"status": "PAST_CARRY", "value": 1, "source_recv_ns": c1 + 1, "age": reading(-1)},
+            {"status": "PAST_CARRY", "value": 1, "source_recv_ns": c0, "age": "1s"},
+        ):
+            with self.subTest(broken=broken):
+                ledger = outputs.AppendOnlyLedger("output_state_and_state_delta_movie")
+                ledger.append(c1, state_frame(self.frames[1], cutoff=c1, previous_cutoff=None, channels={"spread": broken}))
+                with self.assertRaises(outputs.PrincipalOutputError):
+                    self.validate(ledger)
+
+    def test_missing_channels_are_named_on_every_frame(self):
+        c0 = self.cutoffs[0]
+        body = state_frame(self.frames[0], cutoff=c0, previous_cutoff=None)
+        body["missing_channels"] = []
+        self.ledger.append(c0, body)
+        with self.assertRaises(outputs.PrincipalOutputError) as ctx:
+            self.validate()
+        self.assertIn("MISSING", str(ctx.exception))
+
+    def test_every_channel_status_is_one_of_the_seven_and_true_zero_is_zero(self):
+        c0 = self.cutoffs[0]
+        for channels in (
+            {"x": {"status": "UNKNOWN", "value": 1}},
+            {"x": {"status": "OBSERVED"}},
+            {"x": {"status": "TRUE_ZERO", "value": 3}},
+            {"x": "OBSERVED"},
+            {},
+        ):
+            with self.subTest(channels=channels):
+                ledger = outputs.AppendOnlyLedger("output_state_and_state_delta_movie")
+                body = state_frame(self.frames[0], cutoff=c0, previous_cutoff=None, channels=channels) if channels else None
+                if body is None:
+                    body = state_frame(self.frames[0], cutoff=c0, previous_cutoff=None)
+                    body["channels"] = {}
+                ledger.append(c0, body)
+                with self.assertRaises(outputs.PrincipalOutputError):
+                    self.validate(ledger)
+
+    def test_the_frame_carries_the_book_as_on_the_member_row(self):
+        c0 = self.cutoffs[0]
+        for mutate in (
+            lambda b: b.pop("book"),
+            lambda b: b["book"].pop("bid_levels"),
+            lambda b: b["book"].pop("best_ask"),
+            lambda b: b["book"]["bid_levels"][0].pop("price_raw"),
+            lambda b: b["book"].pop("bid_depth_full"),
+        ):
+            with self.subTest():
+                ledger = outputs.AppendOnlyLedger("output_state_and_state_delta_movie")
+                body = state_frame(self.frames[0], cutoff=c0, previous_cutoff=None)
+                mutate(body)
+                ledger.append(c0, body)
+                with self.assertRaises(outputs.PrincipalOutputError) as ctx:
+                    self.validate(ledger)
+                self.assertIn("book", str(ctx.exception))
+
+    def test_the_frame_carries_the_fifo_state_with_touch_identities_and_the_full_book_hash(self):
+        c0 = self.cutoffs[0]
+        for mutate in (
+            lambda b: b.pop("fifo_state"),
+            lambda b: b["fifo_state"].pop("touch"),
+            lambda b: b["fifo_state"].pop("book_full_sha256"),
+            lambda b: b["fifo_state"].pop("basis"),
+            lambda b: b["fifo_state"]["touch"]["bid"]["fifo_queue"][0].pop("priority_sequence"),
+            lambda b: b["fifo_state"].pop("order_count"),
+        ):
+            with self.subTest():
+                ledger = outputs.AppendOnlyLedger("output_state_and_state_delta_movie")
+                body = state_frame(self.frames[0], cutoff=c0, previous_cutoff=None)
+                mutate(body)
+                ledger.append(c0, body)
+                with self.assertRaises(outputs.PrincipalOutputError) as ctx:
+                    self.validate(ledger)
+                self.assertIn("fifo", str(ctx.exception).lower())
+
+    def test_the_delta_points_at_the_previous_frame(self):
+        c0, c1 = self.cutoffs[0], self.cutoffs[1]
+        self.ledger.append(c0, state_frame(self.frames[0], cutoff=c0, previous_cutoff=None))
+        self.ledger.append(c1, state_frame(self.frames[1], cutoff=c1, previous_cutoff=c0 - 1))
+        with self.assertRaises(outputs.PrincipalOutputError) as ctx:
+            self.validate()
+        self.assertIn("delta", str(ctx.exception))
+        for mutate in (lambda b: b.pop("delta"), lambda b: b["delta"].pop("book"), lambda b: b["delta"].pop("channels")):
+            with self.subTest():
+                ledger = outputs.AppendOnlyLedger("output_state_and_state_delta_movie")
+                body = state_frame(self.frames[0], cutoff=c0, previous_cutoff=None)
+                mutate(body)
+                ledger.append(c0, body)
+                with self.assertRaises(outputs.PrincipalOutputError):
+                    self.validate(ledger)
+
+    def test_a_first_frame_claiming_a_predecessor_is_refused(self):
+        c0 = self.cutoffs[0]
+        self.ledger.append(c0, state_frame(self.frames[0], cutoff=c0, previous_cutoff=c0 - 5))
+        with self.assertRaises(outputs.PrincipalOutputError):
+            self.validate()
+
+
 if __name__ == "__main__":
     unittest.main()
