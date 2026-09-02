@@ -656,9 +656,27 @@ jobs:
                   " calculation_result.json source_manifest.json ledgers/*.jsonl"
                   " > /opt/frankie-a-arm-run/PLAIN_SHA256SUMS"
               ),
+              # AND THE PLAIN LENGTHS, for the same reason and at the same moment. A box run
+              # gzips its ledgers before upload, so S3 records only the COMPRESSED length -
+              # which answers "how well did it compress", never "how many bytes did the sink
+              # write". Without this the size witness has nothing to compare
+              # `ledger_retention[*].bytes` against for any full run, and the only figure in
+              # play would again be the sink counting its own writes.
+              #
+              # `wc -c` is coreutils reading the finished file off the disk: a different
+              # program from the one that wrote it, and independent of its counter. It is a
+              # weaker witness than S3's ContentLength - same machine, not a second party -
+              # and the reader labels it as such rather than quietly ranking them equal.
+              #
+              # `|| true` because this is evidence ABOUT the run and must never be able to
+              # end one. Fourteen hours of traversal is not thrown away over a receipt.
+              (
+                  "cd /opt/frankie-a-arm-run && wc -c ledgers/*.jsonl"
+                  " > /opt/frankie-a-arm-run/PLAIN_SIZES || true"
+              ),
               (
                   "cd /opt/frankie-a-arm-run && tar czf small_artifacts.tar.gz"
-                  " checkpoints spawn_requests PLAIN_SHA256SUMS"
+                  " checkpoints spawn_requests PLAIN_SHA256SUMS PLAIN_SIZES"
               ),
               # gzip -1 rather than the default: these are 5-12 GB of JSONL and the ratio
               # barely moves past level 1, while the time does. The point of compressing at
