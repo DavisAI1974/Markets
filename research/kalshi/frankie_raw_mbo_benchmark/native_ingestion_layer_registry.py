@@ -56,14 +56,26 @@ ALLOWED_ARMS = frozenset(EXPECTED_ARM_LAYER_COUNTS)
 ALLOWED_V3_LAYER_IDS = frozenset(
     {
         "extra_agent_corrected_information_and_gap_diagnoses",
+        "learned_structure_proposal_index_material",
     }
 )
-"""One member since D64. `extra_agent_four_helper_architecture_roles` was the second."""
+"""Two members. `extra_agent_four_helper_architecture_roles` left under D64 (2026-08-30).
+`learned_structure_proposal_index_material` joined 2026-09-02 under Greg's ruling that THE
+PROPOSAL LINEAGE GOES IN WHOLE (DROP_IN_S121 item zero, ruling 3): the two `_V3_V4_` brain
+trade-proposal addenda of source-inventory section D are knowledge he receives, so the layer
+that binds them carries V3-derived material and says so. The feed inventory's section 3
+sentence that the extra-agent carryforward is the ONLY admissible V3-derived material is
+superseded for the proposal lineage by that ruling; recorded here because a decision written
+where nothing enforces it has not landed."""
 ALLOWED_V3_SOURCE_PATHS = frozenset(
     {
         "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.json",
         "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md",
         "research/NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md",
+        # Greg, 2026-09-02: the proposal lineage goes in whole. Exactly these two files of
+        # source-inventory section D; nothing else V3-named is admitted by this line.
+        "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_ADDENDUM_20260820.md",
+        "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_FINAL_ADDENDUM_20260820.md",
     }
 )
 SEALED_LAYER_IDS = frozenset(
