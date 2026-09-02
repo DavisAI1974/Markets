@@ -166,3 +166,31 @@ class WriteReportTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class WhatThePrincipalReadTest(unittest.TestCase):
+    """F-10 / F-14: the report says in words which exact ledgers were read."""
+
+    def test_the_read_status_per_ledger_is_rendered(self):
+        body = artifact(evidence_read={
+            "exact_member_ledger": "NOT_READ",
+            "exact_lifecycle_and_runway_ledger": "PARTIAL",
+            "legacy_observable_rows": "READ",
+        })
+        text = render_report(body)
+        self.assertIn("## What the principal read", text)
+        self.assertIn("| `exact_member_ledger` | **NOT_READ** |", text)
+        self.assertIn("| `legacy_observable_rows` | **READ** |", text)
+        self.assertIn("rests on the\nrunner's counters", text)
+
+    def test_all_read_says_so(self):
+        body = artifact(evidence_read={"exact_member_ledger": "READ"})
+        self.assertIn("Every exact ledger was declared READ.", render_report(body))
+
+    def test_an_undeclared_artifact_is_rendered_as_pre_gate_not_silently(self):
+        body = artifact()
+        body.pop("evidence_read", None)
+        text = render_report(body)
+        self.assertIn("`evidence_read` is not declared on this artifact", text)
+        self.assertIn("resting on counters", text)
+

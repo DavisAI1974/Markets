@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 176 |
-| in progress | 3 |
-| done | 18 |
+| open | 171 |
+| in progress | 4 |
+| done | 22 |
 
-By size: **XS** 19, **S** 81, **M** 56, **L** 12
+By size: **XS** 18, **S** 80, **M** 54, **L** 12
 
 ---
 
-By tier: **ESSENTIAL** 29, **BIGGEST_WIN** 45, **REST** 105
+By tier: **ESSENTIAL** 26, **BIGGEST_WIN** 45, **REST** 104
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (29)
+## ESSENTIAL (26)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -29,7 +29,6 @@ By tier: **ESSENTIAL** 29, **BIGGEST_WIN** 45, **REST** 105
 | **G-1** | XS | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | 20 MINUTES, and it is the documented hole signature eleven times over. The EIA Natural Gas Weekly Update's final edition was the week ending 2026-01-21. A pipeline pointed at a dead vehicle goes stale SILENTLY - present, numeric, in range, right owner - which is exactly the shape state_health cannot see. Confirm what replaced it before the next group reads the block. |
 | **G-11** | XS | Start accruing EIA weekly coal basin spot prices | IRREVERSIBLE and running out. The EIA endpoint carries a rolling FIVE-WEEK window and EIA states the history is proprietary and cannot be released, so every week nobody runs it is a week gone permanently. Already IN_PROGRESS, captured once by hand; it needs a schedule, not a decision. |
 | **F-1** | S | THE BINDING CALCULATION CONTRACT AND MISSION ARE NOT IN ANY READ-FIRST ORDER, AND THREE SESSIONS RAN WITHOUT OPENING THEM | - |
-| **F-14** | S | THE NON-REPLACEMENT RULE IS WRITTEN AND UNENFORCED - it needs a gate at the delivery boundary, not another sentence | - |
 | **F-15** | S | RECONCILE EVERY 'Average decision' LINE AGAINST WHAT THE DUAL VIEW HAS ACTUALLY EARNED | - |
 | **F-2** | S | THE OCTOBER STEP-1 SECONDS ARE THE SEALED ANSWER, AND I RECOMMENDED READING THEM | - |
 | **F-3** | S | THE REGISTRY NAMES A SOURCE PATH FOR ALL 105 LAYERS AND NOTHING FOLLOWS THEM | - |
@@ -46,8 +45,6 @@ By tier: **ESSENTIAL** 29, **BIGGEST_WIN** 45, **REST** 105
 | **A-63** | M | THE KERNEL IS THE MISSING ENGINE - and it produces the BAND for free, which is the same build as A-60 | D32 makes analog retrieval THE product and we have no similarity function at all - retrieval is a calendar window plus a regime label. It is also the cheapest honest route to the band, which A-60 shows has never been validated and is the only field a binary market actually prices. Two ESSENTIAL items, one build. |
 | **A-68** | M | GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal | It is the PREREQUISITE for A-67's retention arm - without it there is no retention to measure, and the arm cannot run. It is also the smallest change that turns a per-day amnesiac spawn into something with a horizon, which is the whole premise of the hybrid. |
 | **F-10** | M | THE RAW-MBO HALF OF D68 - DELIVER THE EXACT ROWS TO THE PRINCIPAL, OR DECLARE THAT THEY WERE NOT | - |
-| **F-11** | M | SECTION 4.0 - THE PER-SECOND FLOW AND QUOTE SUBSTRATE, PROMOTED TO A GOVERNED SECTION | - |
-| **F-12** | M | SECTION 4.0b - DETECTOR COVERAGE AND REJECTION ACCOUNTING, SO EVERY EXHAUSTION RATE HAS ITS TRUE DENOMINATOR | - |
 | **F-4** | M | 4.10 CANNOT BE FED BECAUSE RUNWAY IDENTITY IS PER-GROUP, NOT BECAUSE OF ITS PHASE NAMES | - |
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | M | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24. |
@@ -108,13 +105,12 @@ By tier: **ESSENTIAL** 29, **BIGGEST_WIN** 45, **REST** 105
 | **A-53** | ? | Sweep every play's `requires` against the served BLIND field set | - |
 | **A-54** | ? | The output contract cannot express what the specialists actually derived | - |
 
-## REST (105)
+## REST (104)
 
 *everything else - real work, correctly tracked, and none of it deleted. Several become cheap once an ESSENTIAL or BIGGEST_WIN item lands.*
 
 | id | size | title | why it is here |
 |---|---|---|---|
-| **F-17** | XS | 4.7's replaced_quantity CARRIES THE SAME NAMING DEFECT THE OLD restoration_ratio DID | - |
 | **G-14** | XS | Fix the LNE strike decode at source (Databento display_factor bug) | - |
 | **G-17** | XS | TAPE: the BOIL/KOLD close-imbalance test | - |
 | **G-21** | XS | STORAGE CONSENSUS: carry the RANGE, not just the median | - |
@@ -229,7 +225,6 @@ By tier: **ESSENTIAL** 29, **BIGGEST_WIN** 45, **REST** 105
 | **G-1** | ESSENTIAL | XS | OPEN | S111 | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | - |
 | **G-11** | ESSENTIAL | XS | IN_PROGRESS | S111 | Start accruing EIA weekly coal basin spot prices | - |
 | **F-1** | ESSENTIAL | S | OPEN | S117 | THE BINDING CALCULATION CONTRACT AND MISSION ARE NOT IN ANY READ-FIRST ORDER, AND THREE SESSIONS RAN WITHOUT OPENING THEM | - |
-| **F-14** | ESSENTIAL | S | OPEN | S120 | THE NON-REPLACEMENT RULE IS WRITTEN AND UNENFORCED - it needs a gate at the delivery boundary, not another sentence | - |
 | **F-15** | ESSENTIAL | S | OPEN | S120 | RECONCILE EVERY 'Average decision' LINE AGAINST WHAT THE DUAL VIEW HAS ACTUALLY EARNED | - |
 | **F-2** | ESSENTIAL | S | OPEN | S117 | THE OCTOBER STEP-1 SECONDS ARE THE SEALED ANSWER, AND I RECOMMENDED READING THEM | - |
 | **F-3** | ESSENTIAL | S | OPEN | S117 | THE REGISTRY NAMES A SOURCE PATH FOR ALL 105 LAYERS AND NOTHING FOLLOWS THEM | - |
@@ -245,9 +240,7 @@ By tier: **ESSENTIAL** 29, **BIGGEST_WIN** 45, **REST** 105
 | **A-60** | ESSENTIAL | M | OPEN | S115 | THE PRE-PAPER GATE: score the BAND, not the point - the forecaster has never been validated on the only field a binary market consumes | - |
 | **A-63** | ESSENTIAL | M | OPEN | S115 | THE KERNEL IS THE MISSING ENGINE - and it produces the BAND for free, which is the same build as A-60 | - |
 | **A-68** | ESSENTIAL | M | OPEN | S115 | GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal | - |
-| **F-10** | ESSENTIAL | M | OPEN | S120 | THE RAW-MBO HALF OF D68 - DELIVER THE EXACT ROWS TO THE PRINCIPAL, OR DECLARE THAT THEY WERE NOT | - |
-| **F-11** | ESSENTIAL | M | OPEN | S120 | SECTION 4.0 - THE PER-SECOND FLOW AND QUOTE SUBSTRATE, PROMOTED TO A GOVERNED SECTION | - |
-| **F-12** | ESSENTIAL | M | OPEN | S120 | SECTION 4.0b - DETECTOR COVERAGE AND REJECTION ACCOUNTING, SO EVERY EXHAUSTION RATE HAS ITS TRUE DENOMINATOR | - |
+| **F-10** | ESSENTIAL | M | IN_PROGRESS | S120 | THE RAW-MBO HALF OF D68 - DELIVER THE EXACT ROWS TO THE PRINCIPAL, OR DECLARE THAT THEY WERE NOT | - |
 | **F-4** | ESSENTIAL | M | OPEN | S117 | 4.10 CANNOT BE FED BECAUSE RUNWAY IDENTITY IS PER-GROUP, NOT BECAUSE OF ITS PHASE NAMES | - |
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | ESSENTIAL | M | OPEN | S115 | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | - |
@@ -300,7 +293,6 @@ By tier: **ESSENTIAL** 29, **BIGGEST_WIN** 45, **REST** 105
 | **A-49** | BIGGEST_WIN | ? | OPEN | ? | stage_group --suffix still writes canonical names: the inspection certificate leaked | - |
 | **A-53** | BIGGEST_WIN | ? | OPEN | ? | Sweep every play's `requires` against the served BLIND field set | - |
 | **A-54** | BIGGEST_WIN | ? | OPEN | ? | The output contract cannot express what the specialists actually derived | - |
-| **F-17** | REST | XS | OPEN | S120 | 4.7's replaced_quantity CARRIES THE SAME NAMING DEFECT THE OLD restoration_ratio DID | - |
 | **G-14** | REST | XS | OPEN | S111 | Fix the LNE strike decode at source (Databento display_factor bug) | - |
 | **G-17** | REST | XS | OPEN | S111 (recommendation); S112  | TAPE: the BOIL/KOLD close-imbalance test | - |
 | **G-21** | REST | XS | OPEN | S111 (recommendation); S112  | STORAGE CONSENSUS: carry the RANGE, not just the median | - |
@@ -423,6 +415,10 @@ By tier: **ESSENTIAL** 29, **BIGGEST_WIN** 45, **REST** 105
 | A-48 | ? | grp22_state.json is STALE at the canonical name - promote the corrected state or delete it |
 | A-51 | ? | Serve FORWARD wind and solar - all three specialists named it independently |
 | A-52 | ? | wind_mwh has no chg_7d twin while gas, solar and hydro all do |
+| F-11 | M | SECTION 4.0 - THE PER-SECOND FLOW AND QUOTE SUBSTRATE, PROMOTED TO A GOVERNED SECTION |
+| F-12 | M | SECTION 4.0b - DETECTOR COVERAGE AND REJECTION ACCOUNTING, SO EVERY EXHAUSTION RATE HAS ITS TRUE DENOMINATOR |
+| F-14 | S | THE NON-REPLACEMENT RULE IS WRITTEN AND UNENFORCED - it needs a gate at the delivery boundary, not another sentence |
+| F-17 | XS | 4.7's replaced_quantity CARRIES THE SAME NAMING DEFECT THE OLD restoration_ratio DID |
 | F-19 | S | THE REPORT WAS AUTHORED APART FROM THE FINDINGS AND 44 OF THEM WENT UNREAD - CLOSED S120 |
 | G-19 | S | EIA-930: BATTERY STORAGE is now its own category and we do not carry it |
 | G-5 | M | ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY |
@@ -480,16 +476,6 @@ that ladder. It is no longer a slow structural level for M-6 alone.
 **Source:** S117, found only after Greg pushed three times: 'go through this list and look for things already built'
 
 MEASURED. research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md and ..._oct45_realtime_mission_20260828.md are marked BINDING_CURRENT_CALCULATION_CONTRACT / BINDING_CURRENT_MISSION and ALWAYS_LOAD in KNOWLEDGE_MANIFEST_20260828.json, and their on-disk sha256 match the manifest. Neither is named in DROP_IN_FRANKIE_A_ARM_NEXT.md's read order, in RUN_SOP.md, or in KALSHI_TRADING.md's A-arm entries. COST, and it is the whole reason this item is ESSENTIAL: on 2026-08-30 I deleted native_exhaustion.PHASE_ORDER on the drop-in's instruction that its eleven names had 'provenance one prose line'. Contract 4.10 lists them verbatim: 'searched coverage, precursor, prebirth state, first deviation, birth/T0, transitions, inflection, persistence, recurrence, extension, completion/reversal, and censored/open status'. Contract 4.12 likewise reads 'SAME and FLIP orientations never pool'. Both deletions reverted at 5148a33. FALSIFIER: this item is closed when a session can reach the contract from the drop-in box without searching for it.
-
----
-
-### [ESSENTIAL] F-14 - THE NON-REPLACEMENT RULE IS WRITTEN AND UNENFORCED - it needs a gate at the delivery boundary, not another sentence
-
-*size S | OPEN | raised S120*
-
-**Source:** S120, from Frankie's run-33605852433 assessment and the S120 measurement
-
-The contract preamble already says verbatim 'Exact evidence is never discarded or replaced by an average.' It is honoured in STORAGE (exact ledgers written, retained, witnessed) and broken in DELIVERY (they stay on the box; the principal gets the result JSON). The only guard, exact_members_present_beneath_summaries, reads member_rows_written > 0 - it proves rows were written somewhere and cannot prove anyone read one. Outcome on 33605852433: 16,293 averaged rows read, zero member rows read. Do NOT re-add the rule. Add the gate. Pairs with F-10. FALSIFIER: closed when the reconciliation carries a principal-attested read status per ledger and the verdict text states it.
 
 ---
 
@@ -749,31 +735,11 @@ PAIRS WITH A-35 (which is exactly the 'how would we know' question) and A-62 (th
 
 ### [ESSENTIAL] F-10 - THE RAW-MBO HALF OF D68 - DELIVER THE EXACT ROWS TO THE PRINCIPAL, OR DECLARE THAT THEY WERE NOT
 
-*size M | OPEN | raised S120*
+*size M | IN_PROGRESS | raised S120*
 
 **Source:** S120, from Frankie's run-33605852433 assessment and the S120 measurement
 
 D68 ordered a report 'on the calcs, on the full raw mbo, all of it'. The calcs half was delivered; the raw-MBO half was never ASKED (spawn prompt: raw mbo/retention/drop/field/book_full/keep = 0 occurrences; mission section 9 named none of them) and could not have been ANSWERED: he receives the ~34 MB result and the 10,616,914,801-byte member ledger is not in it - his own words. S120 added mission section 9a and a spawn gate that refuses a mission without it (34a0c16). STILL OPEN: the exact rows do not reach him. Either they do, or the artifact must declare per ledger READ / NOT_READ so CANNOT_JUDGE is honest. FALSIFIER: closed when a principal artifact validates only with an explicit per-ledger read declaration and the report states in words which claims rest on counters.
-
----
-
-### [ESSENTIAL] F-11 - SECTION 4.0 - THE PER-SECOND FLOW AND QUOTE SUBSTRATE, PROMOTED TO A GOVERNED SECTION
-
-*size M | OPEN | raised S120*
-
-**Source:** S120, from Frankie's run-33605852433 assessment and the S120 measurement
-
-Frankie proposal (a), never registered so never built. legacy_per_second_roll20 (22,380 rows, 2,028 trades, 474 buy / 488 sell seconds, classified by midpoint with the tape side never consulted) is the substrate the candidate detector and ALL of 4.12 run on and is not one of the sixteen: no declaration, no stratum, no companion, no acceptance gate. The 51.6% NO_DIRECTION share in 4.12 had to be reconstructed from traversal counters. IN PROGRESS S120 via a worktree agent. FALSIFIER: closed when it is in the runner's section map, fed by the driver (driver-level test), and in the contract.
-
----
-
-### [ESSENTIAL] F-12 - SECTION 4.0b - DETECTOR COVERAGE AND REJECTION ACCOUNTING, SO EVERY EXHAUSTION RATE HAS ITS TRUE DENOMINATOR
-
-*size M | OPEN | raised S120*
-
-**Source:** S120, from Frankie's run-33605852433 assessment and the S120 measurement
-
-Frankie proposal (b), never registered so never built. The selection function that CREATES the 4.10/4.11/4.12/4.16 population is outside the contract: quantile 0.85, 600 min observations, 900 s warm-up, 45 s refractory, 5 s local radius. It searched 6,592 of 17,991 seconds (36.6%), considered 4,462, promoted 91 (2.04%), rejected 4,371 across five named reasons. 4.11's detection_share = 1.0 is unfalsifiable precisely because the rejected sit outside the contract. IN PROGRESS S120 via a worktree agent. FALSIFIER: closed when rejections are counted by named reason in a governed section and 4.11's share is reported beside them.
 
 ---
 
@@ -2490,16 +2456,6 @@ E: two plays assert blind-legality that their own inputs contradict. terminal_im
 **Source:** g22 rehearsal specialist debriefs, S114
 
 Three separate versions of one gap. D derived a magnitude with real confidence and NO sign - 'the order implicitly assumes direction resolves and magnitude follows; here it inverted' - and had to improvise a partial stand-down in prose, which the coordinator assembles verbatim as a clean +60. B's gap play says the gap is NOT OWNABLE AS A POINT and the contract demands an integer, so B emitted a band midpoint and labelled it an artifact. E hit the same on a NO CALL band. The schema forces exactly the manufactured-answer failure the mission brief warns about. Cheapest fix: `direction_established: true|false` plus an optional band. This is A-2 arriving from a different direction.
-
----
-
-### [REST] F-17 - 4.7's replaced_quantity CARRIES THE SAME NAMING DEFECT THE OLD restoration_ratio DID
-
-*size XS | OPEN | raised S120*
-
-**Source:** S120, from Frankie's run-33605852433 assessment and the S120 measurement
-
-Reported S119, not acted on. It is the ratio's numerator and 'replaced' implies replacement of what left, which D-3 established the arithmetic does not measure (it is arrival density). Same fix as D-3: relabel, arithmetic untouched, so the comparison with 33605852433 survives. FALSIFIER: closed on rename with a test pinning the arithmetic byte-identical.
 
 ---
 

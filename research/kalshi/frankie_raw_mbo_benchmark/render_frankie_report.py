@@ -89,6 +89,30 @@ def render_report(body: Mapping[str, Any]) -> str:
     for name, value in _identity_rows(body):
         add(f"| {name} | `{value}` |")
     add("")
+    # F-10 / F-14: the report states IN WORDS which exact ledgers the principal read, so a
+    # reader can tell a claim resting on rows from one resting on counters. The staging gate
+    # refuses an artifact without the declaration; a render of one says so rather than
+    # quietly omitting the table.
+    add("## What the principal read")
+    add("")
+    evidence_read = body.get("evidence_read")
+    if isinstance(evidence_read, Mapping) and evidence_read:
+        add("| exact ledger | read status |")
+        add("|---|---|")
+        for ledger in sorted(evidence_read):
+            add(f"| `{ledger}` | **{evidence_read[ledger]}** |")
+        add("")
+        unread = [k for k, v in sorted(evidence_read.items()) if v != "READ"]
+        if unread:
+            add("A claim about exact members on a ledger marked PARTIAL or NOT_READ rests on the")
+            add("runner's counters and per-stratum summaries, not on rows the principal read.")
+        else:
+            add("Every exact ledger was declared READ.")
+    else:
+        add("_`evidence_read` is not declared on this artifact. The staging gate refuses such an_")
+        add("_artifact, so this render came from one that predates the gate; treat every_")
+        add("_exact-member claim in it as resting on counters._")
+    add("")
     add(f"**{len(findings)} findings.** The count is stated because a reader cannot notice an")
     add("absent finding without a denominator to check it against.")
     add("")
