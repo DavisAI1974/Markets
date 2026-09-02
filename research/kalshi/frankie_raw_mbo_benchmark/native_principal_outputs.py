@@ -757,11 +757,166 @@ def _v_state_movie(entries: Sequence[Mapping[str, Any]], ctx: ValidationContext)
 
 
 # --------------------------------------------------------------------------------------
+# The reasoning movie: helper invocations are tool calls inside a role, never lanes
+# --------------------------------------------------------------------------------------
+
+REASONING_MOVIE = "output_frankie_reasoning_movie"
+#: Feed inventory section 10 (D63/D64): a helper has no lane, no CPU affinity, no output
+#: artifact of its own and nothing waits on it in parallel.
+HELPER_LANE_KEYS = frozenset({"lane", "cpu", "cpu_affinity", "parallel", "output_artifact"})
+
+
+def _v_reasoning_movie(entries: Sequence[Mapping[str, Any]], ctx: ValidationContext) -> None:
+    role = ctx.bundle.get("role")
+    for entry in entries:
+        where = f"{REASONING_MOVIE}[{entry['sequence']}]"
+        body, cutoff = entry["body"], entry["cutoff_recv_ns"]
+        if body.get("role") != role:
+            _fail(where, f"role must be the bundle's role {role!r}, got {body.get('role')!r}")
+        _text(body, "reasoning", where)
+        for index, record in enumerate(_list(body, "helper_invocations", where)):
+            hw = f"{where}.helper_invocations[{index}]"
+            if not isinstance(record, Mapping):
+                _fail(hw, "a helper invocation is a mapping: persona, question, answer_sha256")
+            lane_keys = sorted(HELPER_LANE_KEYS & set(record))
+            if lane_keys:
+                _fail(
+                    hw,
+                    f"carries {lane_keys}; a helper is a tool invocation inside a role with a "
+                    "selectable persona, never a parallel lane (D63/D64)",
+                )
+            _text(record, "persona", hw)
+            _text(record, "question", hw)
+            _sha(record, "answer_sha256", hw)
+        for receipt_id in _list(body, "knowledge_retrievals", where):
+            if receipt_id not in ctx.receipt_cutoffs:
+                _fail(where, f"knowledge retrieval {receipt_id!r} has no receipt in the knowledge-retrieval ledger")
+            if ctx.receipt_cutoffs[receipt_id] > cutoff:
+                _fail(where, f"knowledge retrieval {receipt_id!r} is receipted after this cutoff")
+
+
+# --------------------------------------------------------------------------------------
+# The probability movie
+# --------------------------------------------------------------------------------------
+
+PROBABILITY_MOVIE = "output_probability_movie"
+#: V4 proposal section 10: first-lock, no-reliable-lock, no-lock, wrong-lock, late and censored.
+LOCK_STATES = ("FIRST_LOCK", "NO_RELIABLE_LOCK", "NO_LOCK", "WRONG_LOCK", "LATE", "CENSORED")
+PROBABILITY_SUM_TOLERANCE = 1e-6
+
+
+def _v_probability_movie(entries: Sequence[Mapping[str, Any]], ctx: ValidationContext) -> None:
+    for entry in entries:
+        where = f"{PROBABILITY_MOVIE}[{entry['sequence']}]"
+        body, cutoff = entry["body"], entry["cutoff_recv_ns"]
+        for key in ("instance_id", "snapshot_id", "head", "view", "lock_rule_revision"):
+            _text(body, key, where)
+        _choice(body, "lock_state", LOCK_STATES, where)
+        probabilities = _mapping(body, "probabilities", where)
+        if not probabilities:
+            _fail(where, "probabilities must not be empty")
+        total = 0.0
+        for label, value in probabilities.items():
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not 0.0 <= value <= 1.0:
+                _fail(where, f"probability {label!r} = {value!r} is not a number in [0, 1]")
+            total += float(value)
+        partition = body.get("partition", True)
+        if not isinstance(partition, bool):
+            _fail(where, "`partition` must be a bool when given")
+        if partition:
+            if abs(total - 1.0) > PROBABILITY_SUM_TOLERANCE:
+                _fail(where, f"probabilities sum to {total}, not 1; a head whose outcomes do not partition says `partition: false` with a reason")
+        else:
+            _text(body, "not_a_partition_reason", where)
+        clock, evaluated = ctx.reading(body.get("evaluation"), f"{where}.evaluation")
+        if clock == RECEIVE_CLOCK_ID and evaluated > cutoff:
+            _fail(where, f"evaluation {evaluated} is after the cutoff {cutoff} it was written at")
+        ctx.probability_entry_cutoffs[entry["entry_hash"]] = cutoff
+
+
+# --------------------------------------------------------------------------------------
+# Candidate discoveries
+# --------------------------------------------------------------------------------------
+
+CANDIDATE_DISCOVERIES = "output_candidate_discoveries"
+#: Contract section 2: PRIOR (before birth, positive lead), T0 (at birth), H+N (after).
+RECOGNITION_LABELS = ("PRIOR", "T0", "H+N")
+
+
+def _v_recognition(body: Mapping[str, Any], where: str, ctx: ValidationContext) -> None:
+    recognition = _mapping(body, "recognition", where)
+    rw = f"{where}.recognition"
+    label = _choice(recognition, "label", RECOGNITION_LABELS, rw)
+    _clock, lead = ctx.reading(recognition.get("lead"), f"{rw}.lead")
+    # `lead = reference - observed`, as native_clocks.RecognitionLabel: positive before birth.
+    if label == "PRIOR" and lead <= 0:
+        _fail(rw, f"a PRIOR recognition precedes its reference; lead {lead} is not positive")
+    if label == "T0" and lead != 0:
+        _fail(rw, f"a T0 recognition coincides with its reference; lead {lead} is not zero")
+    if label == "H+N" and lead >= 0:
+        _fail(rw, f"an H+N recognition follows its reference; lead {lead} is not negative")
+
+
+def _v_candidates(entries: Sequence[Mapping[str, Any]], ctx: ValidationContext) -> None:
+    for entry in entries:
+        where = f"{CANDIDATE_DISCOVERIES}[{entry['sequence']}]"
+        body, cutoff = entry["body"], entry["cutoff_recv_ns"]
+        _text(body, "candidate_id", where)
+        _text(body, "family_id", where)
+        if not _int_list(body, "member_group_indices", where):
+            _fail(where, "a discovery names the exact member groups beneath it; `member_group_indices` is empty")
+        _text(body, "falsifier", where)
+        available = _int(body, "first_lawful_availability_ns", where)
+        if available > cutoff:
+            _fail(where, f"first_lawful_availability_ns {available} is after the cutoff {cutoff}; not lawfully known when written")
+        _v_recognition(body, where, ctx)
+
+
+# --------------------------------------------------------------------------------------
+# First locks and no-locks
+# --------------------------------------------------------------------------------------
+
+FIRST_LOCKS = "output_first_locks_and_no_locks"
+LOCK_LEDGER_STATES = ("FIRST_LOCK", "NO_LOCK", "NO_RELIABLE_LOCK")
+
+
+def _v_locks(entries: Sequence[Mapping[str, Any]], ctx: ValidationContext) -> None:
+    for entry in entries:
+        where = f"{FIRST_LOCKS}[{entry['sequence']}]"
+        body, cutoff = entry["body"], entry["cutoff_recv_ns"]
+        candidate = _text(body, "candidate_id", where)
+        state = _choice(body, "lock_state", LOCK_LEDGER_STATES, where)
+        _text(body, "lock_rule_revision", where)
+        if state == "FIRST_LOCK":
+            if candidate in ctx.first_locks:
+                _fail(where, f"candidate {candidate!r} already holds a FIRST_LOCK at cutoff {ctx.first_locks[candidate]}; a later call cannot replace an earlier exact signal")
+            reference = _sha(body, "probability_entry_hash", where)
+            if reference not in ctx.probability_entry_cutoffs:
+                _fail(where, "probability_entry_hash names no entry of the probability movie")
+            if ctx.probability_entry_cutoffs[reference] > cutoff:
+                _fail(where, "the referenced probability entry was written after this lock")
+            clock, locked_at = ctx.reading(body.get("lock_at"), f"{where}.lock_at")
+            if clock == RECEIVE_CLOCK_ID and locked_at != cutoff:
+                _fail(where, f"lock_at {locked_at} is not the cutoff {cutoff} it was written at; a lock is stamped when it is called and never moved earlier")
+            ctx.first_locks[candidate] = cutoff
+            ctx.locks += 1
+        else:
+            _text(body, "reason", where)
+            if candidate in ctx.first_locks:
+                _fail(where, f"candidate {candidate!r} is already first-locked; a lock is never withdrawn")
+            ctx.no_locks += 1
+
+
+# --------------------------------------------------------------------------------------
 # Dispatch
 # --------------------------------------------------------------------------------------
 
 LEDGER_RULES: dict[str, Any] = {
     STATE_MOVIE: _v_state_movie,
+    REASONING_MOVIE: _v_reasoning_movie,
+    PROBABILITY_MOVIE: _v_probability_movie,
+    CANDIDATE_DISCOVERIES: _v_candidates,
+    FIRST_LOCKS: _v_locks,
 }
 
 

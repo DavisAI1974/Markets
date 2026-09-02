@@ -710,5 +710,229 @@ class StateMovieTest(unittest.TestCase):
             self.validate()
 
 
+# ----------------------------------------------------------------------------------------
+# Slice 3b: reasoning movie, probability movie, candidate discoveries, first locks
+# ----------------------------------------------------------------------------------------
+
+
+def sha_of(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+class LedgerRuleCase(unittest.TestCase):
+    """Shared plumbing: a context over today's registry and a bundle, and a one-ledger check."""
+
+    def setUp(self):
+        self.registry = registry_today()
+        self.bundle = bundle_fixture()
+        self.ctx = outputs.ValidationContext(registry=self.registry, bundle=self.bundle.to_dict())
+
+    def check(self, ledger_id: str, bodies: list[tuple[int, dict]], ctx=None):
+        ledger = outputs.AppendOnlyLedger(ledger_id)
+        for cutoff, body in bodies:
+            ledger.append(cutoff, body)
+        outputs.validate_ledger_entries(ledger_id, ledger.to_dict()["entries"], ctx or self.ctx)
+        return ledger
+
+    def refused(self, ledger_id: str, bodies: list[tuple[int, dict]], needle: str | None = None, ctx=None):
+        with self.assertRaises(outputs.PrincipalOutputError) as caught:
+            self.check(ledger_id, bodies, ctx)
+        if needle is not None:
+            self.assertIn(needle, str(caught.exception))
+        return caught.exception
+
+
+def reasoning_body(**overrides) -> dict:
+    body = {
+        "role": "REAL_TIME_FRANKIE",
+        "reasoning": "persistence read off the bid ladder; queue at the touch unchanged",
+        "helper_invocations": [],
+        "knowledge_retrievals": [],
+    }
+    body.update(overrides)
+    return body
+
+
+def helper(**overrides) -> dict:
+    record = {
+        "persona": "queue-survival-reviewer",
+        "question": "does the at-risk count support the persistence read?",
+        "answer_sha256": sha_of("answer"),
+    }
+    record.update(overrides)
+    return record
+
+
+class ReasoningMovieTest(LedgerRuleCase):
+    LEDGER = "output_frankie_reasoning_movie"
+
+    def test_a_plain_reasoning_entry_and_a_helper_invocation_pass(self):
+        self.check(self.LEDGER, [(C1, reasoning_body()), (C2, reasoning_body(helper_invocations=[helper()]))])
+
+    def test_a_helper_invocation_carries_persona_question_and_answer_hash(self):
+        for broken in (helper(persona=""), helper(question=None), helper(answer_sha256="not-a-sha"), "queue-survival-reviewer"):
+            with self.subTest(broken=broken):
+                self.refused(self.LEDGER, [(C1, reasoning_body(helper_invocations=[broken]))])
+
+    def test_a_helper_that_looks_like_a_parallel_lane_is_refused(self):
+        for key in ("lane", "cpu", "cpu_affinity", "parallel", "output_artifact"):
+            with self.subTest(key=key):
+                exc = self.refused(self.LEDGER, [(C1, reasoning_body(helper_invocations=[helper(**{key: 1})]))])
+                self.assertIn("D63", str(exc))
+                self.assertIn("D64", str(exc))
+
+    def test_the_role_is_the_bundle_role_and_the_reasoning_is_stated(self):
+        self.refused(self.LEDGER, [(C1, reasoning_body(role="FORECASTER_FRANKIE"))], "role")
+        self.refused(self.LEDGER, [(C1, reasoning_body(reasoning=""))], "reasoning")
+
+    def test_a_knowledge_retrieval_cites_a_receipt_that_exists_at_or_before_the_cutoff(self):
+        self.ctx.receipt_cutoffs["kr-0001"] = C2
+        self.check(self.LEDGER, [(C2, reasoning_body(knowledge_retrievals=["kr-0001"]))])
+        self.refused(self.LEDGER, [(C1, reasoning_body(knowledge_retrievals=["kr-0001"]))], "after")
+        self.refused(self.LEDGER, [(C2, reasoning_body(knowledge_retrievals=["kr-9999"]))], "no receipt")
+
+
+def probability_body(**overrides) -> dict:
+    body = {
+        "instance_id": "cand-0001",
+        "snapshot_id": "snap-0",
+        "head": "exhaustion_persistence_vs_collapse",
+        "view": "rt-frankie/persistence/v1",
+        "probabilities": {"PERSIST": 0.4, "COLLAPSE": 0.6},
+        "evaluation": reading(C1),
+        "lock_rule_revision": "lock-rule-r1",
+        "lock_state": "NO_LOCK",
+    }
+    body.update(overrides)
+    return body
+
+
+class ProbabilityMovieTest(LedgerRuleCase):
+    LEDGER = "output_probability_movie"
+
+    def test_a_partition_head_passes_and_is_remembered_for_the_lock_ledger(self):
+        ledger = self.check(self.LEDGER, [(C1, probability_body())])
+        self.assertEqual(self.ctx.probability_entry_cutoffs, {ledger.head_hash: C1})
+
+    def test_probabilities_are_in_unit_range_and_sum_to_one_where_they_partition(self):
+        self.refused(self.LEDGER, [(C1, probability_body(probabilities={"PERSIST": 0.7, "COLLAPSE": 0.6}))], "sum")
+        self.refused(self.LEDGER, [(C1, probability_body(probabilities={"PERSIST": 1.2, "COLLAPSE": -0.2}))])
+        self.refused(self.LEDGER, [(C1, probability_body(probabilities={}))])
+        self.refused(self.LEDGER, [(C1, probability_body(probabilities={"PERSIST": "0.4", "COLLAPSE": 0.6}))])
+
+    def test_a_non_partition_head_says_so_with_a_reason(self):
+        survival = {"survives_past_first_reading": 0.9, "survives_past_second_reading": 0.7}
+        self.check(self.LEDGER, [(C1, probability_body(probabilities=survival, partition=False, not_a_partition_reason="survival curve: P(runway survives past each observed reading), not exclusive outcomes"))])
+        self.refused(self.LEDGER, [(C1, probability_body(probabilities=survival, partition=False))], "not_a_partition_reason")
+        self.refused(self.LEDGER, [(C1, probability_body(probabilities=survival))], "sum")
+
+    def test_the_evaluation_is_a_clock_reading_at_or_before_the_cutoff(self):
+        self.refused(self.LEDGER, [(C1, probability_body(evaluation=C1))], "TIMING RULE")
+        self.refused(self.LEDGER, [(C1, probability_body(evaluation=reading(C1 + 1)))], "after")
+        self.check(self.LEDGER, [(C1, probability_body(evaluation=reading(C1 - 400, "clock_model_evaluation")))])
+
+    def test_identity_head_view_lock_rule_and_lock_state_are_required(self):
+        for broken in (
+            dict(instance_id=""), dict(snapshot_id=None), dict(head=""), dict(view=""),
+            dict(lock_rule_revision=""), dict(lock_state="LOCKED"),
+        ):
+            with self.subTest(broken=broken):
+                self.refused(self.LEDGER, [(C1, probability_body(**broken))])
+        for state in ("FIRST_LOCK", "NO_RELIABLE_LOCK", "NO_LOCK", "WRONG_LOCK", "LATE", "CENSORED"):
+            with self.subTest(state=state):
+                self.check(self.LEDGER, [(C1, probability_body(lock_state=state))])
+
+
+def candidate_body(**overrides) -> dict:
+    body = {
+        "candidate_id": "cand-0001",
+        "family_id": "fam-000001",
+        "member_group_indices": [4562, 4563],
+        "falsifier": "a member F_LAST after the lawful cutoff, or a second instrument among the members",
+        "first_lawful_availability_ns": C2 - 500,
+        "recognition": {"label": "PRIOR", "lead": reading(1_500_000_000)},
+    }
+    body.update(overrides)
+    return body
+
+
+class CandidateDiscoveriesTest(LedgerRuleCase):
+    LEDGER = "output_candidate_discoveries"
+
+    def test_a_discovery_names_its_members_its_falsifier_and_its_recognition_on_a_clock(self):
+        self.check(self.LEDGER, [(C2, candidate_body())])
+
+    def test_member_groups_and_falsifier_are_required(self):
+        self.refused(self.LEDGER, [(C2, candidate_body(member_group_indices=[]))], "member")
+        self.refused(self.LEDGER, [(C2, candidate_body(member_group_indices=[1, "2"]))], "member")
+        self.refused(self.LEDGER, [(C2, candidate_body(falsifier=""))], "falsifier")
+        self.refused(self.LEDGER, [(C2, candidate_body(candidate_id=""))])
+        self.refused(self.LEDGER, [(C2, candidate_body(family_id=""))])
+
+    def test_a_discovery_is_not_lawful_before_its_first_availability(self):
+        self.refused(self.LEDGER, [(C2, candidate_body(first_lawful_availability_ns=C2 + 1))], "availability")
+
+    def test_the_recognition_label_and_its_lead_agree_in_sign(self):
+        self.check(self.LEDGER, [(C2, candidate_body(recognition={"label": "T0", "lead": reading(0)}))])
+        self.check(self.LEDGER, [(C2, candidate_body(recognition={"label": "H+N", "lead": reading(-2_000_000_000)}))])
+        for recognition in (
+            {"label": "PRIOR", "lead": reading(0)},
+            {"label": "T0", "lead": reading(5)},
+            {"label": "H+N", "lead": reading(5)},
+            {"label": "H+60", "lead": reading(-60_000_000_000)},
+            {"label": "PRIOR", "lead": "300s"},
+            {"label": "PRIOR"},
+        ):
+            with self.subTest(recognition=recognition):
+                self.refused(self.LEDGER, [(C2, candidate_body(recognition=recognition))])
+
+
+def lock_body(**overrides) -> dict:
+    body = {"candidate_id": "cand-0001", "lock_rule_revision": "lock-rule-r1", "lock_state": "NO_LOCK", "reason": "persistence 0.5 does not clear the r1 bar"}
+    body.update(overrides)
+    return body
+
+
+class FirstLocksTest(LedgerRuleCase):
+    LEDGER = "output_first_locks_and_no_locks"
+
+    def setUp(self):
+        super().setUp()
+        probability = self.check("output_probability_movie", [(C2, probability_body()), (C3, probability_body(snapshot_id="snap-1", lock_state="FIRST_LOCK"))])
+        self.p2, self.p3 = [e["entry_hash"] for e in probability.entries]
+
+    def first_lock(self, cutoff, **overrides):
+        body = lock_body(lock_state="FIRST_LOCK", probability_entry_hash=self.p3, lock_at=reading(cutoff))
+        body.pop("reason")
+        body.update(overrides)
+        return body
+
+    def test_a_no_lock_then_a_first_lock_referencing_the_probability_entry_passes(self):
+        self.check(self.LEDGER, [(C2, lock_body()), (C3, self.first_lock(C3))])
+        self.assertEqual((self.ctx.locks, self.ctx.no_locks), (1, 1))
+        self.assertEqual(self.ctx.first_locks, {"cand-0001": C3})
+
+    def test_a_first_lock_is_stamped_at_its_cutoff_and_never_moved_earlier(self):
+        self.refused(self.LEDGER, [(C3, self.first_lock(C3, lock_at=reading(C2)))], "never moved")
+        self.refused(self.LEDGER, [(C3, self.first_lock(C3, lock_at=C3))], "TIMING RULE")
+        self.refused(self.LEDGER, [(C3, self.first_lock(C3, lock_at=None))])
+
+    def test_a_first_lock_references_a_probability_entry_written_at_or_before_it(self):
+        self.refused(self.LEDGER, [(C3, self.first_lock(C3, probability_entry_hash="0" * 64))], "probability")
+        self.refused(self.LEDGER, [(C2, self.first_lock(C2, probability_entry_hash=self.p3))], "probability")
+        self.check(self.LEDGER, [(C2, self.first_lock(C2, probability_entry_hash=self.p2))])
+
+    def test_a_second_first_lock_on_the_same_candidate_is_refused(self):
+        self.refused(self.LEDGER, [(C2, self.first_lock(C2, probability_entry_hash=self.p2)), (C3, self.first_lock(C3))], "already")
+
+    def test_no_lock_and_no_reliable_lock_carry_a_reason(self):
+        self.check(self.LEDGER, [(C2, lock_body(lock_state="NO_RELIABLE_LOCK"))])
+        self.refused(self.LEDGER, [(C2, lock_body(reason=""))], "reason")
+        self.refused(self.LEDGER, [(C2, lock_body(lock_state="WRONG_LOCK"))])
+
+    def test_a_lock_is_never_withdrawn(self):
+        self.refused(self.LEDGER, [(C2, self.first_lock(C2, probability_entry_hash=self.p2)), (C3, lock_body())], "withdrawn")
+
+
 if __name__ == "__main__":
     unittest.main()
