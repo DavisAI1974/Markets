@@ -40,7 +40,10 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_layer_crosswalk import (
     STATUSES,
     CrosswalkError,
     CrosswalkGateError,
+    FIXTURE_RENDER_PATH,
+    SUNDAY_CLI,
     crosswalk,
+    fixture_render,
     gate_applicable_inputs,
     main,
     path_present,
@@ -746,6 +749,47 @@ class CommandLineTest(unittest.TestCase):
             code = main(["--result", str(result_path), "--delivery-receipt", str(receipt_path),
                          "--arm", "A_CLEAN", "--out", str(root / "x.md")])
             self.assertEqual(code, 2)
+
+
+
+class CommittedFixtureRenderTest(unittest.TestCase):
+    """The committed render is generated, never hand-written, and it must not rot.
+
+    Compared on the STATUS column, not on hashes: a change in any producer, carrier or driver
+    behaviour changes a status and fails here by layer name, while a change that only moves a
+    hash (a new registry sha, say) does not force a regeneration for nothing.
+    """
+
+    @staticmethod
+    def _layer_rows(text: str) -> dict[str, tuple[str, str]]:
+        rows = {}
+        for line in text.splitlines():
+            cells = [c.strip() for c in line.split("|")]
+            if len(cells) > 5 and cells[2].startswith("`") and cells[2].endswith("`"):
+                rows[cells[2].strip("`")] = (cells[1], cells[5])
+        return rows
+
+    def test_the_committed_render_says_it_is_a_fixture_and_names_the_sunday_cli(self):
+        text = (REPO_ROOT / FIXTURE_RENDER_PATH).read_text(encoding="utf-8")
+        self.assertIn("FIXTURE render, not the Sunday run", text)
+        self.assertIn(SUNDAY_CLI, text)
+        self.assertIn(CROSSWALK_SCHEMA, text)
+        self.assertNotIn("/tmp/", text)
+        self.assertNotIn("scratchpad", text)
+        self.assertNotIn("/home/", text)
+
+    def test_the_committed_render_matches_a_fresh_fixture_crosswalk_layer_for_layer(self):
+        text = (REPO_ROOT / FIXTURE_RENDER_PATH).read_text(encoding="utf-8")
+        committed = self._layer_rows(text)
+        fresh_text, fresh = fixture_render()
+        expected = {row["layer_id"]: (row["group_id"], row["status"]) for row in fresh["layers"]}
+        self.assertEqual(set(committed), set(expected), "the render must carry every registry layer")
+        for layer_id, (group_id, status) in expected.items():
+            with self.subTest(layer_id=layer_id):
+                self.assertEqual(committed[layer_id], (group_id, status),
+                                 f"{layer_id}: committed {committed[layer_id]} vs fresh {(group_id, status)}; "
+                                 f"regenerate with --fixture-render {FIXTURE_RENDER_PATH}")
+        self.assertEqual(self._layer_rows(fresh_text), committed)
 
 
 if __name__ == "__main__":
