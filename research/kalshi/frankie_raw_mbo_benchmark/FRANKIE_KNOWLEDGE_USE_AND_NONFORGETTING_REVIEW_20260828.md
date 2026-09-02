@@ -7,7 +7,9 @@ The completed structure provides a strong deterministic knowledge registry. It p
 The guarantee should be expressed as two proof stages:
 
 1. **Registry proof, already implemented:** `KNOWLEDGE_SOURCES_20260828.json` is the editable authority; refresh deterministically generates both promoted capsules and the hash-bound manifest; the registry validates every registered artifact byte, route, and load mode and constructs one exact profile bundle plus receipt.
-2. **Principal-call proof, the remaining binding step:** the runner must prove that the generated bundle bytes and a compact retrieval index were actually present in the principal model input, then bind that proof to the model-call receipt and first-lock/freeze gate.
+2. **Principal-call proof, the remaining binding step:** the runner must prove that the generated bundle bytes and a compact retrieval index were actually present in the principal model input, then bind that proof to the principal EXECUTION RECEIPT - the committed staged request and
+the committed artifact, both hash-bound - and to the first-lock/freeze gate. Not a
+model-call receipt: no provider API is called (Greg, 2026-08-29).
 
 This division preserves a concise principal context without treating path references as evidence of use. Full positive reports remain individually retrievable; their IDs, paths, authorities, byte counts, and SHA-256 values remain visible and inventoried.
 
@@ -56,7 +58,7 @@ Extend `native_frankie_knowledge_registry.py` with one fail-closed principal-con
 2. accept only the exact profile bundle returned by `build_context_bundle`, then hash the exact serialized principal input supplied to the provider;
 3. emit a `FRANKIE_NATIVE_RAW_MBO_PRINCIPAL_KNOWLEDGE_USE_V1` receipt containing `profile_id`, arm, role, canonical manifest hash, registry receipt hash, existing core `context_bundle_sha256`/bytes, post-index `principal_knowledge_context_sha256`/bytes, serialized principal-input hash/bytes, loaded artifact inventory, retrieval `INSPECTED`/`UNINSPECTED` inventory, and verified external-binding proof hashes;
 4. require the principal response to return the same profile/manifest/bundle identifiers and complete retrieval disposition inventory; and
-5. make the model-call receipt and first-lock/freeze validator depend on this knowledge-use receipt hash.
+5. make the principal execution receipt (committed request + committed artifact, hash-bound) and the first-lock/freeze validator depend on this knowledge-use receipt hash.
 
 Add focused tests beside `test_native_frankie_knowledge_registry.py` for one-byte bundle omission, wrong profile, hidden retrieval index, incomplete inspection inventory, external-proof mismatch, and tampered serialized-input hash. Add the gate invocation to the future full-capacity runner at the single principal-call seam; the historical packet/replay launchers need no scientific replay change.
 

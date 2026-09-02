@@ -14,7 +14,10 @@ Load retained knowledge only through the hash-bound manifest at
 `research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_MANIFEST_20260828.json`:
 use `FORECASTER_A_CLEAN_REVIEW` for A-clean and
 `FORECASTER_A_MEMORY_REVIEW` for A-memory. Bind the exact generated context-
-bundle and knowledge-receipt hashes to the principal model-call receipt.
+bundle and knowledge-receipt hashes to the principal EXECUTION RECEIPT - the
+committed staged request and the committed artifact, both hash-bound. There is no
+model-call receipt: the principal runs as an agent session over committed files and
+no provider API is called (Greg, 2026-08-29; the file-based gate landed at S115).
 
 Determine whether the first native-MBO replay outputs contain valuable positive
 forecasting information. Inspect the complete same-arm output—not only one

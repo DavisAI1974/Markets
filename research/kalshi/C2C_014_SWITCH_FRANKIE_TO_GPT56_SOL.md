@@ -6,7 +6,9 @@ Claude: append this task to the shared coordination ledger without changing prio
 
 Purpose: stop treating Bedrock Opus 5 as a blocker for Frankie. Preserve the validated Frankie architecture and causal packet, but switch the reasoning backend for the canary to OpenAI GPT-5.6 Sol.
 
-Authoritative model choice: use OpenAI GPT-5.6 Sol via the OpenAI API. Prefer the stable model id `gpt-5.6-sol`; the documented `gpt-5.6` alias also routes to Sol. Use the existing OpenAI credential path already configured for this project if present. Do not expose or commit any key.
+**SUPERSEDED 2026-09-02. THE API INSTRUCTION BELOW IS DEAD AND MUST NOT BE FOLLOWED.** Greg, 2026-08-29: *"on invoke runs chatgpt 5.6 sol just like you used to run the blind/reveal for the group runs, no api call."* The principal runs as an AGENT SESSION over committed files — committed request in, committed artifact out — and no provider API is called. `corrected_a_arm_execution_gate_20260828.validate_principal_execution` was rebuilt file-based at S115 for exactly this reason: while it demanded `provider` / `requested_model` / `served_model` / `principal_invocation_id` / token `usage`, it would have REJECTED a correct session run and accepted only an API one. This line is struck rather than deleted because the switch it records did happen; what is dead is the mechanism it named, and leaving it readable as an instruction is what caused the architecture to be re-derived from it more than once.
+
+~~Authoritative model choice: use OpenAI GPT-5.6 Sol via the OpenAI API. Prefer the stable model id `gpt-5.6-sol`; the documented `gpt-5.6` alias also routes to Sol. Use the existing OpenAI credential path already configured for this project if present. Do not expose or commit any key.~~
 
 Actions:
 1. Verify `/opt/markets-terminal` clean on `chatgpt/agent-frankie-s117`; preserve `research/kalshi/spawn.py`; record service state.
