@@ -233,6 +233,11 @@ jobs:
             --result ./calculation_result.json \
             --summary "$GITHUB_STEP_SUMMARY" \
             --output ./LEDGER_SIZE_TABLE.md
+          # ECHOED TO THE LOG, for the same reason the witness above is. A step summary
+          # cannot be read back through the API, so a table written only there exists in a
+          # place nobody checking it can reach - which is the defect this workflow already
+          # fixed ONCE, for the witness, and left standing for the table beside it.
+          cat ./LEDGER_SIZE_TABLE.md || echo 'no size table was written'
 
       - name: Publish the table and the result
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
