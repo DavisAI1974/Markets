@@ -29,6 +29,25 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import 
     classify_inventory,
     parse_source_inventory,
 )
+from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import (
+    ALLOWED_V3_LAYER_IDS,
+    ALLOWED_V3_SOURCE_PATHS,
+    REGISTRY_PATH,
+    IngestionLayerGateError,
+    canonical_hash,
+    load_registry,
+    validate_registry,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import (
+    KNOWLEDGE_INPUT_POLICIES,
+    KNOWLEDGE_LAYER_SOURCES,
+    layers_bound_only_to,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.rebind_registry_knowledge_layers import (
+    main as rebind_main,
+    rebind_knowledge_layers,
+    render_registry_json,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.render_source_inventory_addendum import (
     ADDENDUM_DATE,
     main as render_main,
