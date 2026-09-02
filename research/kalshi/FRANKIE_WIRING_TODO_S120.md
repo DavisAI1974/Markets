@@ -17,15 +17,15 @@ gate proved the document was unchanged and nothing about delivery.
 
 ## The list
 
-- [ ] **1. Raw-MBO causal stream to Frankie (55 layers).** `CausalGroupStream`: one group at a
+- [x] **1. Raw-MBO causal stream to Frankie (55 layers) — BUILT and merged (`80f8b33`); the delivery ROW from a real run is still pending the workflow's first successful fire.** `CausalGroupStream`: one group at a
       time, byte-identical rows, no peeking, lifecycle/legacy rows attached only at or before the
       cutoff, every group through `validate_causal_group_delivery_receipt` (existed, never
       called). Session-side fetch verifies gz length vs S3, plain bytes vs the box's `wc -c`,
       sha256 vs `PLAIN_SHA256SUMS`. *IN PROGRESS (test-engineer persona, own worktree).*
-- [ ] **2. Frankie computes the sixteen sections himself.** Mission section 5 rewritten; the
+- [x] **2. Frankie computes the sections himself — mission sections 2 and 5 rewritten, spawn says so, result file is not his evidence (`80f8b33`).** Mission section 5 rewritten; the
       spawn prompt says so; `calculation_result.json` is not his evidence and is compared only
       after he files. *IN PROGRESS (same persona).*
-- [ ] **3. Frozen learned structure to Frankie (9 layers, DIRECT).** D structures and families,
+- [ ] **3. Frozen learned structure to Frankie (9 layers, DIRECT). The proposal lineage goes in WHOLE; disregard its "do not promote" language (Greg); every lesson carries VERIFIED / UNVERIFIED / REFUTED, Frankie verifies against the stream, only the refuted comes out.** D structures and families,
       dipoles and geometry, pair/triplet recurrence, chains/extensions/reappearances/ancestry,
       phase-1 discoveries and falsifiers, phase-2 findings/timing/POX/negatives, predecessor and
       unresolved-chain state, historical timing as context, and the proposal/index material
@@ -43,7 +43,7 @@ gate proved the document was unchanged and nothing about delivery.
       policy.
 - [ ] **7. The spawn gate.** Refuse to spawn unless all 75 A-clean-applicable inputs carry a
       delivery receipt; refuse an artifact that says NOT_READ on a delivered ledger.
-- [ ] **8. His ten outputs (append-only, registry §15).** State/state-delta movie, reasoning
+- [ ] **8. His output ledgers: the registry's ten as the FLOOR plus one per contract section (Greg: "ten" is an old number; no historical count is a spec), plus the 9a raw-MBO classification and the knowledge-verification ledger.** State/state-delta movie, reasoning
       movie, probability movie, candidate discoveries, first locks/no locks, negative/sparse/
       inconclusive ledger, knowledge-retrieval receipts, invocation receipts, answer-wall access
       receipts, source/state/manifest/code/run hashes. Defined in the return shape, required by
