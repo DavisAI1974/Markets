@@ -6,8 +6,8 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 173 |
-| in progress | 4 |
+| open | 172 |
+| in progress | 5 |
 | done | 22 |
 
 By size: **XS** 18, **S** 81, **M** 55, **L** 12
@@ -265,7 +265,7 @@ By tier: **ESSENTIAL** 27, **BIGGEST_WIN** 46, **REST** 104
 | **A-61** | BIGGEST_WIN | S | OPEN | S115 | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | - |
 | **A-65** | BIGGEST_WIN | S | OPEN | S115 | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | - |
 | **A-66** | BIGGEST_WIN | S | OPEN | S115 | THE COMPOSITION CONTRACT - partition OWNERSHIP so borrowed pieces own different parts of one job (not a write protocol, and never a ranking) | - |
-| **F-20** | BIGGEST_WIN | S | OPEN | S121 | THE LIFECYCLE LEDGER CARRIES NO UNIFORM AVAILABILITY STAMP - STAMP emitted_at_recv_ns AT _retain_lifecycle | - |
+| **F-20** | BIGGEST_WIN | S | IN_PROGRESS | S121 | THE LIFECYCLE LEDGER CARRIES NO UNIFORM AVAILABILITY STAMP - STAMP emitted_at_recv_ns AT _retain_lifecycle | - |
 | **F-8** | BIGGEST_WIN | S | OPEN | S117 | per_event.report's DOCSTRING DOCUMENTS A PARAMETER IT DOES NOT HAVE, AND THE A-ARM RE-IMPLEMENTS ITS QUANTILE | - |
 | **G-30** | BIGGEST_WIN | S | OPEN | S115 | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | - |
 | **M-15** | BIGGEST_WIN | S | OPEN | S115 | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | - |
@@ -1708,7 +1708,7 @@ PROVENANCE: repo structure and section sizes read from the GitHub landing page; 
 
 ### [BIGGEST_WIN] F-20 - THE LIFECYCLE LEDGER CARRIES NO UNIFORM AVAILABILITY STAMP - STAMP emitted_at_recv_ns AT _retain_lifecycle
 
-*size S | OPEN | raised S121*
+*size S | IN_PROGRESS | raised S121*
 
 **Why it is BIGGEST WIN:** one stamp in one function turns a declared rule into a measured field, and every RT delivery after it stops withholding 400 rows per 60 groups
 
