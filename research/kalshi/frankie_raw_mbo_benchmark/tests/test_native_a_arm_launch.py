@@ -20,6 +20,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.corrected_a_arm_execution_gate_20
     SURFACE_IDS,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import ACCEPTED
+from research.kalshi.frankie_raw_mbo_benchmark.native_key_alias import read_averaged_rows
 from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import (
     IngestionLayerGateError,
     load_registry,
@@ -281,3 +282,52 @@ class SliceBoundaryTest(unittest.TestCase):
         for flags in (None, 0, "", 1, 64):
             with self.subTest(flags=flags):
                 self.assertFalse(launcher.slice_ends_here(emitted=50, limit=50, flags=flags))
+
+
+class AliasCompanionKeysThroughTheLaunchPathTest(unittest.TestCase):
+    """The flag must survive the real launch path, not just the runner in isolation.
+
+    S119's own dominant finding was a correct calculator nothing ever called, and its own
+    recorded mistake was a finalize wired into the wrong loop whose unit tests passed
+    because they called the calculator directly. So this exercises `launch()`.
+    """
+
+    GROUPS = 40
+
+    def _launch(self, out_dir: Path, *, alias: bool):
+        return launcher.launch(
+            arm="A_CLEAN",
+            run_id=f"alias-{alias}",
+            sources=[],
+            source_manifest={"manifest_hash": "e" * 64, "total_mbo_records": 5_667_689},
+            out_dir=out_dir,
+            code_commit="cafebabe",
+            limit_records=self.GROUPS * 4,
+            checkpoint_every_records=50,
+            cadence_groups=10,
+            records=slice_records(self.GROUPS),
+            alias_companion_keys=alias,
+        )
+
+    def test_both_forms_decode_to_the_same_rows_and_the_same_verdict(self):
+        with tempfile.TemporaryDirectory() as raw:
+            plain = self._launch(Path(raw) / "plain", alias=False)
+            aliased = self._launch(Path(raw) / "aliased", alias=True)
+        self.assertEqual(plain["verdict"], aliased["verdict"])
+        self.assertEqual(plain["failed_gates"], aliased["failed_gates"])
+        self.assertEqual(read_averaged_rows(plain), read_averaged_rows(aliased))
+
+    def test_the_aliased_layer_is_smaller_on_the_wire(self):
+        """If it is not smaller it is doing nothing, and the flag is a lie."""
+        with tempfile.TemporaryDirectory() as raw:
+            plain = self._launch(Path(raw) / "plain", alias=False)
+            aliased = self._launch(Path(raw) / "aliased", alias=True)
+
+        def wire(result):
+            return len(json.dumps(
+                result["layers"]["averaged_companions"]["rows"],
+                separators=(",", ":"),
+                sort_keys=True,
+            ))
+
+        self.assertLess(wire(aliased), wire(plain))

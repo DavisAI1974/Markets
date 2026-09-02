@@ -14,10 +14,19 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import 
     REQUIRED_GATES,
     REQUIRED_LAYERS,
     CalculationRunError,
+    LAYER_AVERAGES,
     LAYER_FINDINGS,
     LAYER_RECONCILIATION,
     NativeCalculationRun,
     RunIdentity,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.native_key_alias import (
+    ALIAS_FORM_KEY,
+    ALIAS_LEGEND_KEY,
+    FORM_ALIASED,
+    FORM_PLAIN,
+    expand_aliases,
+    read_averaged_rows,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import member_clock_row
 from research.kalshi.frankie_raw_mbo_benchmark.native_discovery import (
@@ -582,3 +591,63 @@ class RunnerMustNotReplaceFrankieTest(unittest.TestCase):
         result = run.finalize()
         self.assertEqual(result["verdict"], REJECTED)
         self.assertIn(GATE_NOT_A_MODEL_RUN, result["failed_gates"])
+
+
+class CompanionKeyAliasingTest(unittest.TestCase):
+    """The aliaser is wired into the artifact, and it must change bytes and nothing else."""
+
+    def _finalized(self, *, alias: bool):
+        run = make_run(alias_companion_keys=alias)
+        drive(run)
+        return run.finalize()
+
+    def test_the_layer_declares_its_form_even_when_plain(self):
+        """A field present in only one form makes its absence ambiguous.
+
+        Absent, a reader cannot tell a plain artifact from one written before the field
+        existed - so PLAIN is stamped as positively as ALIASED.
+        """
+        plain = self._finalized(alias=False)["layers"][LAYER_AVERAGES]
+        self.assertEqual(plain[ALIAS_FORM_KEY], FORM_PLAIN)
+        self.assertEqual(plain[ALIAS_LEGEND_KEY], {})
+
+        aliased = self._finalized(alias=True)["layers"][LAYER_AVERAGES]
+        self.assertEqual(aliased[ALIAS_FORM_KEY], FORM_ALIASED)
+
+    def test_default_is_plain_so_a_rerun_carries_no_second_change(self):
+        self.assertEqual(
+            make_run().finalize.__self__.alias_companion_keys, False
+        )
+
+    def test_the_two_forms_carry_identical_rows(self):
+        """The whole claim. Aliasing is a renaming; decoded, the rows must be the same object."""
+        plain = self._finalized(alias=False)["layers"][LAYER_AVERAGES]["rows"]
+        aliased_layer = self._finalized(alias=True)["layers"][LAYER_AVERAGES]
+        decoded = expand_aliases(aliased_layer["rows"], aliased_layer[ALIAS_LEGEND_KEY])
+        self.assertEqual(decoded, plain)
+
+    def test_read_averaged_rows_returns_plain_rows_from_either_form(self):
+        for alias in (False, True):
+            with self.subTest(alias=alias):
+                result = self._finalized(alias=alias)
+                rows = read_averaged_rows(result)
+                self.assertTrue(all("section" in row for row in rows))
+
+    def test_the_gates_run_on_unaliased_rows_so_the_verdict_is_unchanged(self):
+        """Aliasing must not be able to change whether a run is accepted.
+
+        The gates read `_averaged_companions()` directly, which never aliases. If that ever
+        stopped being true, a gate keyed on `row["value"]` would silently see nothing and
+        pass on an empty population - the exact defect class the ninth gate exists for.
+        """
+        plain = self._finalized(alias=False)
+        aliased = self._finalized(alias=True)
+        self.assertEqual(plain["verdict"], aliased["verdict"])
+        self.assertEqual(plain["failed_gates"], aliased["failed_gates"])
+        self.assertEqual(plain["gates"], aliased["gates"])
+
+    def test_reconciliation_is_unchanged_by_the_form(self):
+        """`summarized_observations` walks `row["value"]`, so an aliased row would read 0."""
+        plain = self._finalized(alias=False)["layers"][LAYER_RECONCILIATION]
+        aliased = self._finalized(alias=True)["layers"][LAYER_RECONCILIATION]
+        self.assertEqual(plain, aliased)

@@ -29,6 +29,9 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_dipole import DipoleCalcul
 from research.kalshi.frankie_raw_mbo_benchmark.native_discovery import DiscoveryCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_exhaustion import ExhaustionCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_ladder import LadderCalculator
+from research.kalshi.frankie_raw_mbo_benchmark.native_key_alias import (
+    averaged_companion_layer,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_lineage import LineageCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_queue import QueueSurvivalCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_recognition import RecognitionCalculator
@@ -278,8 +281,16 @@ class NativeCalculationRun:
         seed: int = 0,
         session_strata: bool = True,
         sinks: Any = None,
+        alias_companion_keys: bool = False,
     ) -> None:
         self.identity = identity
+        # Key names are 49.5% of the averaged companions and aliasing removes about a third
+        # of what the principal reads (FRANKIE_MEASURED_TOKEN_REDUCTION_20260902.md). OFF by
+        # default deliberately: it changes the shape of the artifact every consumer reads,
+        # and a rerun meant to be compared against 33605852433 should not carry a second
+        # change at the same time. The gates never see it - they run on the unaliased rows
+        # `_averaged_companions` returns, and only the serialized layer is aliased.
+        self.alias_companion_keys = alias_companion_keys
         self._companions_cache: list[dict[str, Any]] | None = None
         # When present, the exact ledgers are RETAINED ON DISK instead of in RAM. Nothing is
         # dropped - see `native_row_sink`. Absent, behaviour is byte-identical to before, so
@@ -753,7 +764,9 @@ class NativeCalculationRun:
                 },
             },
             LAYER_INDEXES: self._open_world_indexes(),
-            LAYER_AVERAGES: {"rows": self._averaged_companions()},
+            LAYER_AVERAGES: averaged_companion_layer(
+                self._averaged_companions(), alias_keys=self.alias_companion_keys
+            ),
             LAYER_RECONCILIATION: self._reconciliation(),
             LAYER_FINDINGS: {
                 "findings": list(self._findings),

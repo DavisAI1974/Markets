@@ -19,6 +19,10 @@ from research.kalshi.frankie_raw_mbo_benchmark.emit_frankie_spawn import (
     MISSION_PATH,
     emit,
 )
+from research.kalshi.frankie_raw_mbo_benchmark.native_key_alias import (
+    apply_aliases,
+    build_alias_table,
+)
 
 
 def _repo_with_docs(directory: Path, mission: bytes = b"mission bytes\n",
@@ -196,3 +200,44 @@ class SpanAndPhaseTests(unittest.TestCase):
     def test_several_phases_are_all_listed(self):
         text = self._emit_with(self._cuts([0, 1_000_000_000], ["PRE_SETTLEMENT", "SETTLEMENT"]))
         self.assertIn("PRE_SETTLEMENT, SETTLEMENT", text)
+
+
+class AliasedRowsReachTheEmitterTest(StopRuleTests):
+    """The emitter must report the same per-section table whichever form the rows are in.
+
+    This is the consumer that would have broken silently. `_lookup` on
+    `layers.averaged_companions.rows` succeeds on an aliased layer, returns the right
+    number of rows, and `row.get("section")` then returns None on every one - so the table
+    would report three rows under `None` and the prompt would go out looking complete.
+    Present, well-formed, wrong: the one shape a field-level check cannot catch, and the
+    reason `read_averaged_rows` exists rather than a direct lookup.
+    """
+
+    @staticmethod
+    def _alias(body):
+        layer = body["layers"]["averaged_companions"]
+        table = build_alias_table(layer["rows"])
+        layer["rows"] = apply_aliases(layer["rows"], table)
+        layer["key_alias_form"] = "ALIASED"
+        layer["key_alias_legend"] = table
+
+    @staticmethod
+    def _section_table(text):
+        """The per-section block only. The full prompt carries the temp result PATH."""
+        head = text.index("### Averaged companion rows, by section")
+        return text[head:text.index("### The", head)]
+
+    def test_the_per_section_table_is_identical_in_both_forms(self):
+        self.assertEqual(
+            self._section_table(self._emit()),
+            self._section_table(self._emit(mutate=self._alias)),
+        )
+
+    def test_the_section_labels_survive_aliasing(self):
+        text = self._emit(mutate=self._alias)
+        self.assertIn("| 4.12 | 2 |", text)
+        self.assertIn("| 4.9 | 1 |", text)
+
+    def test_no_section_is_reported_as_none(self):
+        """The exact symptom of reading an aliased row without decoding it."""
+        self.assertNotIn("| None |", self._emit(mutate=self._alias))

@@ -382,6 +382,7 @@ def launch(
     repo_root: Path = REPO_ROOT,
     records: Any = None,
     stream_ledgers: bool = True,
+    alias_companion_keys: bool = False,
 ) -> dict[str, Any]:
     """Gate, traverse, checkpoint, finalize. Returns the layered result plus the receipts.
 
@@ -437,6 +438,11 @@ def launch(
     run = NativeCalculationRun(
         identity,
         sinks=sinks,
+        # Key names are 49.5% of the averaged companions and aliasing removes about a third
+        # of what the principal reads. OFF by default: it changes the shape of the layer
+        # every consumer reads, and a rerun meant to be compared against 33605852433 should
+        # not carry two changes at once. The layer DECLARES which form it is in either way.
+        alias_companion_keys=alias_companion_keys,
         replenishment_horizon_ns=60_000_000_000,
         # D-10. `a-arm-h1` is what run 33605852433 used and stays frozen for comparison;
         # `a-arm-h2` keeps all three of its horizons and adds 1 ms / 10 ms / 100 ms beneath
@@ -577,6 +583,16 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--checkpoint-every-records", type=int, default=250_000)
     parser.add_argument("--cadence-groups", type=int, default=250_000)
     parser.add_argument(
+        "--alias-companion-keys",
+        action="store_true",
+        help=(
+            "alias key names in the averaged companion rows. Lossless - the legend "
+            "travels in the same layer - and it removes about a third of what the "
+            "principal reads. Off by default so a rerun stays comparable to run "
+            "33605852433, which was written plain."
+        ),
+    )
+    parser.add_argument(
         "--inline-ledgers", action="store_true",
         help="retain the exact ledgers in RAM instead of streaming them to disk; the old "
              "path, kept so the two can be compared, and not for a full-roster run",
@@ -618,6 +634,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         checkpoint_every_records=args.checkpoint_every_records,
         cadence_groups=args.cadence_groups,
         stream_ledgers=not args.inline_ledgers,
+        alias_companion_keys=args.alias_companion_keys,
     )
     (args.out_dir / "calculation_result.json").write_text(
         json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"

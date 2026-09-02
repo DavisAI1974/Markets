@@ -37,6 +37,8 @@ import sys
 from pathlib import Path
 from typing import Any, Mapping
 
+from research.kalshi.frankie_raw_mbo_benchmark.native_key_alias import read_averaged_rows
+
 REPO_ROOT = Path(__file__).resolve().parents[3]
 MISSION_PATH = "research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md"
 CONTRACT_PATH = "research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md"
@@ -121,7 +123,11 @@ def emit(result_path: Path | str, *, repo_root: Path | None = None,
         )
     sections_fed = _lookup(traversal, "sections_fed")
 
-    rows = _lookup(result, "layers.averaged_companions.rows")
+    # NOT `_lookup(..., "layers.averaged_companions.rows")`. When the rows are aliased
+    # that lookup still succeeds, still returns the right count, and `row.get("section")`
+    # then returns None on every one - so the per-section table would report every row
+    # under `None` and the prompt would go out looking complete.
+    rows = read_averaged_rows(result)
     per_section: dict[str, int] = {}
     for row in rows:
         per_section[str(row.get("section"))] = per_section.get(str(row.get("section")), 0) + 1
