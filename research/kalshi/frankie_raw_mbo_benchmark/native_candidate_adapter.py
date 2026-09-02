@@ -50,6 +50,11 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_exhaustion import (
     register_discovered_phase,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_recognition import CandidateRecognition
+from research.kalshi.frankie_raw_mbo_benchmark.native_response import (
+    PRICE_RESPONSE,
+    ChannelReading,
+    channel_values,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_stratum import CLUSTERING_NOT_RUN
 
 NS_PER_SECOND = 1_000_000_000
@@ -634,26 +639,73 @@ class ResponseFeed:
     early would be lookahead.
     """
 
-    def __init__(self) -> None:
-        self._baseline: dict[str, int] = {}
-        self._price_raw = 0
+    def __init__(self, channels: Sequence[str] = (PRICE_RESPONSE,)) -> None:
+        # D-10. The feed used to carry ONE integer - a price - which is why 4.16 emitted 1 of
+        # the contract's 7 channels. Flow, full-book depth and queue depth were all already
+        # in the traversal's hands at the same instant; nothing was missing but a place to
+        # put them. It holds the whole reading now, and the channels it is asked for.
+        self._channels = tuple(channels)
+        self._baseline: dict[str, ChannelReading] = {}
+        self._book = EMPTY_BOOK
+        self._signed_flow: int | None = None
+        self._ladder: dict[str, dict[int, int]] | None = None
         self.readings = 0
 
-    def note_price(self, price_raw: int) -> None:
-        self._price_raw = int(price_raw)
+    def note_state(
+        self,
+        book: BookState,
+        *,
+        signed_flow_lots: int | None = None,
+        ladder: dict[str, dict[int, int]] | None = None,
+    ) -> None:
+        """The traversal's current instant, in full. Replaces `note_price`."""
+        self._book = book
+        self._signed_flow = signed_flow_lots
+        self._ladder = ladder
 
-    def open(self, structure_id: str, price_raw: int) -> None:
-        self._baseline[structure_id] = int(price_raw)
+    @staticmethod
+    def _touch_depth(
+        ladder: dict[str, dict[int, int]] | None, side_orientation: str
+    ) -> int | None:
+        """Resting depth at the best price on the structure's OWN side.
+
+        None, not zero, when there is no ladder or the side is unstated: a queue response of
+        zero says the touch did not move, and an absent ladder says nothing at all.
+        """
+        if not ladder or side_orientation not in ("B", "A"):
+            return None
+        level = ladder.get(side_orientation) or {}
+        if not level:
+            return 0
+        best = max(level) if side_orientation == "B" else min(level)
+        return int(level[best])
+
+    def _reading(self, side_orientation: str) -> ChannelReading:
+        return ChannelReading(
+            price_raw=self._book.price_raw,
+            signed_flow_lots=self._signed_flow,
+            resting_depth_total=self._book.bid_depth + self._book.ask_depth,
+            same_side_touch_depth=self._touch_depth(self._ladder, side_orientation),
+            depth_scope=self._book.depth_scope,
+        )
+
+    def open(self, structure_id: str, *, side_orientation: str) -> None:
+        self._baseline[structure_id] = self._reading(side_orientation)
 
     def forget(self, structure_id: str) -> None:
         self._baseline.pop(structure_id, None)
 
-    def values_for(self, track: Any, horizon: int) -> dict[str, float]:
+    def values_for(self, track: Any, horizon: int) -> dict[str, float | None]:
         baseline = self._baseline.get(track.structure_id)
         if baseline is None:
-            # No baseline means no comparable reading. Returning 0.0 would be a measurement
-            # of "no move" where none was taken, so the name is omitted and the calculator
-            # excludes it as missing.
+            # No baseline means no comparable reading AT ALL. The whole mapping is omitted and
+            # the calculator excludes every channel as missing - which is a different fact
+            # from a channel present as None, meaning this one quantity was unreadable at an
+            # instant the others were fine.
             return {}
         self.readings += 1
-        return {"price_response": float(self._price_raw - baseline)}
+        return channel_values(
+            baseline,
+            self._reading(getattr(track, "side_orientation", "")),
+            channels=self._channels,
+        )

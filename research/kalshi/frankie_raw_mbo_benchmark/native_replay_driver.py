@@ -402,7 +402,7 @@ class NativeReplayDriver:
         # 4.16 rides the same unit. Its baseline is the book at the candidate's FIRST LAWFUL
         # instant, not at the spike: a response measured from a moment nobody could have
         # acted on is not a response anyone could have captured.
-        self.responses = ResponseFeed()
+        self.responses = ResponseFeed(run.response.value_names)
         # 4.7's OBSERVATION half. The maturation half was already fed by
         # `replenishment.advance`; nothing ever told the calculator that a removal or a
         # refill had happened, so it matured horizons for episodes that were never opened.
@@ -609,8 +609,21 @@ class NativeReplayDriver:
             session_phase=session_phase,
             cluster_version=NO_CLUSTERING,
             starting_liquidity_regime=starting_liquidity_regime(self._latest_book),
+            # D-10. WHERE the regime came from, so a reader can see that it is a bare sign
+            # comparison of two absolute depths and not a conditioned state. It read
+            # DEPTH_SKEW_BID on all 84 at-risk rows because the sign never flipped on this
+            # instrument-day - D23 applied to a stratum key: a condition that cannot change
+            # state carries no information, whatever it is written in.
+            starting_liquidity_regime_basis=(
+                f"SIGN_OF_BID_MINUS_ASK_DEPTH@{self._latest_book.depth_scope}"
+            ),
         )
-        self.responses.open(candidate.candidate_id, self._latest_book.price_raw)
+        self.responses.open(
+            candidate.candidate_id,
+            side_orientation="B" if candidate.polarity > 0 else (
+                "A" if candidate.polarity < 0 else "N"
+            ),
+        )
         self.counters.response_tracks_opened += 1
         self._retain_episode_rows([
             self.episodes.open(
@@ -830,7 +843,13 @@ class NativeReplayDriver:
             )
         if isinstance(full_book, Mapping):
             self._latest_book = BookState.from_full_book(full_book)
-            self.responses.note_price(self._latest_book.price_raw)
+            # D-10. The whole instant, not just its price: flow and both depth channels
+            # were already in hand here and had nowhere to go.
+            self.responses.note_state(
+                self._latest_book,
+                signed_flow_lots=self._last_signed_flow,
+                ladder=self._latest_ladder,
+            )
             ladder_after = ladder_from_full_book(full_book)
             if ladder_after is not None:
                 self._latest_ladder = ladder_after

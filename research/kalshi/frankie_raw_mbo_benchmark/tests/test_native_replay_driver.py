@@ -15,6 +15,13 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import 
     NativeCalculationRun,
     RunIdentity,
 )
+from research.kalshi.frankie_raw_mbo_benchmark.native_response import (
+    FLOW_RESPONSE,
+    FULL_BOOK_RESPONSE,
+    PRICE_RESPONSE,
+    QUEUE_RESPONSE,
+    horizons_for_version,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_replay_driver import (
     ExchangeSessionRule,
     NativeReplayDriver,
@@ -62,7 +69,14 @@ class NeverInvoke:
         return False
 
 
-def make_driver(cadence=None, *, total_mbo_records: int = 3) -> NativeReplayDriver:
+def make_driver(
+    cadence=None,
+    *,
+    total_mbo_records: int = 3,
+    response_horizons_ns: tuple[int, ...] = (100,),
+    response_horizon_version: str = "hv1",
+    response_value_names: tuple[str, ...] = ("price_response",),
+) -> NativeReplayDriver:
     identity = RunIdentity(
         run_id="driver-1",
         arm="A_CLEAN",
@@ -76,9 +90,9 @@ def make_driver(cadence=None, *, total_mbo_records: int = 3) -> NativeReplayDriv
     run = NativeCalculationRun(
         identity,
         replenishment_horizon_ns=1_000,
-        response_horizons_ns=(100,),
-        response_horizon_version="hv1",
-        response_value_names=("price_response",),
+        response_horizons_ns=response_horizons_ns,
+        response_horizon_version=response_horizon_version,
+        response_value_names=response_value_names,
     )
     return NativeReplayDriver(
         identity=identity,
@@ -1064,3 +1078,58 @@ class DarkSectionRegressionTest(FedSectionsTest):
             with self.subTest(section=section):
                 self.assertTrue(section in summaries or section in rows,
                                 f"{section} produced neither a summary nor an averaged row")
+
+
+class ResponseChannelWiringTest(unittest.TestCase):
+    """D-10. 4.16 emitted 1 of 7 channels, and three of the missing four were already in hand.
+
+    Flow, full-book depth and queue depth all sat in the traversal at the same instant the
+    price did; the feed carried a single integer, so there was nowhere to put them. This runs
+    the real traversal with all four declared and asserts they arrive - a section that
+    CONSTRUCTS with four channels and is fed one is the defect wearing a new shape.
+    """
+
+    def _run_with_channels(self):
+        driver = make_driver(
+            total_mbo_records=8,
+            response_horizons_ns=horizons_for_version("a-arm-h2"),
+            response_horizon_version="a-arm-h2",
+            response_value_names=(
+                PRICE_RESPONSE, FLOW_RESPONSE, FULL_BOOK_RESPONSE, QUEUE_RESPONSE),
+        )
+        base = at("2021-10-04T13:00:00")
+        seq = 0
+        for group_index, group in enumerate(FedSectionsTest.GROUPS):
+            batch = []
+            for offset, (action, side, order_id, last) in enumerate(group):
+                batch.append(record(
+                    seq=seq,
+                    event_ns=base + (group_index * 10 + offset) * NS_PER_SECOND,
+                    order_id=order_id, action=action, side=side, last=last,
+                ))
+                seq += 1
+            driver.consume(batch)
+        return driver, driver.finalize()
+
+    def test_all_four_feedable_channels_reach_the_section(self):
+        _, result = self._run_with_channels()
+        summary = result["layers"]["exact_lifecycle_and_runway_ledger"][
+            "section_summaries"]["4.16"]
+        self.assertEqual(
+            list(summary["value_names"]),
+            [PRICE_RESPONSE, FLOW_RESPONSE, FULL_BOOK_RESPONSE, QUEUE_RESPONSE],
+        )
+
+    def test_the_sub_second_horizons_are_present_beneath_the_frozen_three(self):
+        """F-36: price response is already zero at the median by one second."""
+        _, result = self._run_with_channels()
+        summary = result["layers"]["exact_lifecycle_and_runway_ledger"][
+            "section_summaries"]["4.16"]
+        horizons = list(summary["horizons_ns"])
+        self.assertEqual(horizons[-3:], [1_000_000_000, 10_000_000_000, 60_000_000_000],
+                         "the frozen a-arm-h1 rungs must survive unchanged")
+        self.assertTrue([h for h in horizons if h < 1_000_000_000])
+
+    def test_a_run_with_every_channel_declared_is_still_accepted(self):
+        _, result = self._run_with_channels()
+        self.assertEqual(result["verdict"], ACCEPTED, result["failed_gates"])

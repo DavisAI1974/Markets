@@ -51,6 +51,13 @@ from research.kalshi.frankie_raw_mbo_benchmark import native_ingestion_layer_reg
 from research.kalshi.frankie_raw_mbo_benchmark import (
     corrected_a_arm_execution_gate_20260828 as execution_gate,
 )
+from research.kalshi.frankie_raw_mbo_benchmark.native_response import (
+    FLOW_RESPONSE,
+    FULL_BOOK_RESPONSE,
+    PRICE_RESPONSE,
+    QUEUE_RESPONSE,
+    horizons_for_version,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import (
     NativeCalculationRun,
     RunIdentity,
@@ -431,9 +438,20 @@ def launch(
         identity,
         sinks=sinks,
         replenishment_horizon_ns=60_000_000_000,
-        response_horizons_ns=(1_000_000_000, 10_000_000_000, 60_000_000_000),
-        response_horizon_version="a-arm-h1",
-        response_value_names=("price_response",),
+        # D-10. `a-arm-h1` is what run 33605852433 used and stays frozen for comparison;
+        # `a-arm-h2` keeps all three of its horizons and adds 1 ms / 10 ms / 100 ms beneath
+        # them. Sited on measured mechanics rather than round numbers: 4.7 on that same day
+        # puts median time-to-restoration at 1.775 ms AT_TOUCH against 673.1 ms BEHIND_TOUCH,
+        # so the sub-second rungs bracket the two restoration populations - and F-36 found
+        # price response already zero at the median by one second, which is the whole reason
+        # to look beneath it.
+        response_horizons_ns=horizons_for_version("a-arm-h2"),
+        response_horizon_version="a-arm-h2",
+        # Four of the contract's seven. The other three are REFUSED by name with their
+        # reasons in `native_response`, because nothing in this section's inputs reaches them.
+        response_value_names=(
+            PRICE_RESPONSE, FLOW_RESPONSE, FULL_BOOK_RESPONSE, QUEUE_RESPONSE,
+        ),
     )
     checkpoint_dir = out_dir / "checkpoints"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
