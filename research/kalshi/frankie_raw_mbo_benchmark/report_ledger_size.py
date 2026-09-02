@@ -189,6 +189,38 @@ def render_report(result_path: Path | str) -> str:
             " be read off it. That is why the field is stamped even when PLAIN.")
     add("")
 
+    add("### Was each section actually FED")
+    add("")
+    add("An ingest count is not a result, and a section handed nothing reports an exact zero"
+        " that is indistinguishable from a real absence - which is what seven of S119's"
+        " sixteen defects were. So the feeding is stated beside the sizes.")
+    add("")
+    fed = (body.get("traversal") or {}).get("sections_fed") or {}
+    if fed:
+        add("| section input | count |")
+        add("|---|---:|")
+        for name in sorted(fed):
+            add(f"| {name} | {fed[name]:,} |")
+    else:
+        add("- `traversal.sections_fed` is absent from this artifact.")
+    add("")
+    summaries = (
+        (body.get("layers") or {})
+        .get("exact_lifecycle_and_runway_ledger", {})
+        .get("section_summaries", {})
+    )
+    points = (summaries.get("4.16") or {}).get("event_driven_change_points")
+    if isinstance(points, Mapping):
+        add(f"- 4.16 event-driven change points: **{points.get('observed', 0):,}**, "
+            f"status **{points.get('status')}**")
+        add("")
+        add("  `observe_change_point` had no caller at all until S120, so run 33605852433"
+            " emitted only the fixed horizons. NOT_FED_BY_THE_TRAVERSAL is a declaration,"
+            " not a zero.")
+    else:
+        add("- 4.16 event-driven change points: not reported by this artifact.")
+    add("")
+
     add("Nothing here is a recommendation to drop anything. D60: a row is USED, or RETAINED"
         " and counted, or REFUSED loudly, and what to drop is discussed before it is done."
         " This says only what each thing costs.")

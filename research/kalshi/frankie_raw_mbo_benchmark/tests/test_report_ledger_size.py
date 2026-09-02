@@ -216,3 +216,43 @@ class ReadSurfaceSectionTest(unittest.TestCase):
         """An artifact from before the field cannot be read as plain by default."""
         text = self._render({"rows": self._rows(3)})
         self.assertIn("predates the form declaration", text)
+
+
+class WasEachSectionFedTest(unittest.TestCase):
+    """A size table that cannot say whether a section ran is half a report.
+
+    S119's dominant finding was seven correct calculators nothing ever called, each
+    reporting an exact zero indistinguishable from a real absence. A drop decision taken
+    off a size table would then be taken against a section that was never fed - the
+    cheapest thing to drop is always the thing that produced nothing.
+    """
+
+    def _render(self, **overrides):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "calculation_result.json"
+            path.write_text(json.dumps(_result(**overrides)), encoding="utf-8")
+            return render_report(path)
+
+    def test_the_ingest_counts_are_listed(self):
+        text = self._render()
+        self.assertIn("Was each section actually FED", text)
+        self.assertIn("| 4.6 | 1 |", text)
+
+    def test_an_unfed_4_16_reports_its_declaration_not_a_bare_zero(self):
+        text = self._render(layers={
+            "exact_lifecycle_and_runway_ledger": {"section_summaries": {"4.16": {
+                "event_driven_change_points": {
+                    "observed": 0, "status": "NOT_FED_BY_THE_TRAVERSAL"}}}}})
+        self.assertIn("status **NOT_FED_BY_THE_TRAVERSAL**", text)
+
+    def test_a_fed_4_16_reports_the_count_it_observed(self):
+        text = self._render(layers={
+            "exact_lifecycle_and_runway_ledger": {"section_summaries": {"4.16": {
+                "event_driven_change_points": {
+                    "observed": 4321, "status": "FED_BY_THE_TRAVERSAL"}}}}})
+        self.assertIn("**4,321**", text)
+        self.assertIn("status **FED_BY_THE_TRAVERSAL**", text)
+
+    def test_an_artifact_that_does_not_report_it_says_so(self):
+        """Absent is its own answer and must not be rendered as zero."""
+        self.assertIn("not reported by this artifact", self._render())
