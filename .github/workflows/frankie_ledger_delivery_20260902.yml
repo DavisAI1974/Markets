@@ -92,7 +92,7 @@ jobs:
           # at PUT time. Keys and sizes only; nothing here downloads a ledger.
           aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "$prefix" \
             --query 'Contents[].{Key:Key,Size:Size}' --output json > ./s3_listing.json
-          python3 -c 'import json;[print(f"{r[\"Size\"]:>15,d}  {r[\"Key\"]}") for r in json.load(open("s3_listing.json")) or []]'
+          python3 -c 'import json; rows = json.load(open("s3_listing.json")) or []; [print(str(r["Size"]).rjust(15), r["Key"]) for r in rows]'
           echo "RUN_PREFIX=$prefix" >> "$GITHUB_ENV"
           echo "RUN_ID=${WANTED_RUN_ID}" >> "$GITHUB_ENV"
 
