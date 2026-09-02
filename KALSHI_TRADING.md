@@ -994,7 +994,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **521 files.**
+new tool cannot go unlisted. **522 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `agent_frankie.py` — Frankie hybrid agent entry point.
@@ -1178,6 +1178,7 @@ new tool cannot go unlisted. **521 files.**
 - `native_stratum.py` — Section 3 of the native calculation contract, as a function rather than a sentence.
 - `periodic_checkpointer.py` — Periodic save points for long native raw-MBO runs.
 - `raw_mbo_source_manifest.py` — Hash-bound native raw-MBO source manifest and exact progress denominator.
+- `rebind_registry_knowledge_layers.py` — Rebind the registry's knowledge layers from the inventory DOCUMENT to their KEEP FILES.
 - `refresh_native_frankie_knowledge.py` — Regenerate promoted Frankie capsules and their hash-bound knowledge manifest."""
 - `render_frankie_report.py` — Render the principal's report FROM his findings, so the two cannot diverge.
 - `render_source_inventory_addendum.py` — Render the DATED classification addendum to the 2026-08-24 source-file inventory.

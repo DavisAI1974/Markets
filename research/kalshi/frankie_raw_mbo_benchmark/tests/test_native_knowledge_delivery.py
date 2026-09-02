@@ -29,6 +29,25 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import 
     classify_inventory,
     parse_source_inventory,
 )
+from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import (
+    ALLOWED_V3_LAYER_IDS,
+    ALLOWED_V3_SOURCE_PATHS,
+    REGISTRY_PATH,
+    IngestionLayerGateError,
+    canonical_hash,
+    load_registry,
+    validate_registry,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import (
+    KNOWLEDGE_INPUT_POLICIES,
+    KNOWLEDGE_LAYER_SOURCES,
+    layers_bound_only_to,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.rebind_registry_knowledge_layers import (
+    main as rebind_main,
+    rebind_knowledge_layers,
+    render_registry_json,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.render_source_inventory_addendum import (
     ADDENDUM_DATE,
     main as render_main,
@@ -260,6 +279,187 @@ class RenderSourceInventoryAddendumTests(unittest.TestCase):
         self.assertEqual(render_main(["--write", "--repo-root", str(root)]), 0)
         self.assertEqual(render_main(["--check", "--repo-root", str(root)]), 0)
         self.assertIn("`research/old.py`", (root / ADDENDUM_PATH).read_text(encoding="utf-8"))
+
+
+class KnowledgeLayerBindingTests(unittest.TestCase):
+    """The mapping from KEEP files to registry knowledge layers is by content, and it is complete."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.registry = load_registry()
+        cls.rows = classify_inventory(REPO_ROOT)
+        cls.keep_paths = {row.path for row in cls.rows if row.classification == KEEP}
+        cls.mapped_paths = {path for binding in KNOWLEDGE_LAYER_SOURCES for path in binding.paths}
+        cls.input_layers = {
+            entry["layer_id"]: group
+            for group in cls.registry["groups"]
+            if group["policy"] in KNOWLEDGE_INPUT_POLICIES
+            for entry in group["entries"]
+        }
+
+    def test_every_mapped_layer_is_a_required_input_layer_of_the_registry(self) -> None:
+        for binding in KNOWLEDGE_LAYER_SOURCES:
+            with self.subTest(layer=binding.layer_id):
+                self.assertIn(binding.layer_id, self.input_layers)
+
+    def test_mapping_layer_ids_are_unique(self) -> None:
+        ids = [binding.layer_id for binding in KNOWLEDGE_LAYER_SOURCES]
+        self.assertEqual(len(ids), len(set(ids)))
+
+    def test_every_mapped_path_is_keep_and_exists(self) -> None:
+        for binding in KNOWLEDGE_LAYER_SOURCES:
+            for path in binding.paths:
+                with self.subTest(layer=binding.layer_id, path=path):
+                    self.assertIn(path, self.keep_paths)
+                    self.assertTrue((REPO_ROOT / path).is_file())
+
+    def test_every_keep_path_lands_in_a_mapped_layer_or_an_already_bound_input_layer(self) -> None:
+        already_bound = {
+            path
+            for group in self.registry["groups"]
+            if group["policy"] in KNOWLEDGE_INPUT_POLICIES
+            for entry in group["entries"]
+            if entry["layer_id"] not in {b.layer_id for b in KNOWLEDGE_LAYER_SOURCES}
+            for path in entry["source_paths"]
+        }
+        unbound = sorted(self.keep_paths - self.mapped_paths - already_bound)
+        self.assertEqual(unbound, [])
+
+    def test_every_bound_file_matches_its_layers_content_terms(self) -> None:
+        for binding in KNOWLEDGE_LAYER_SOURCES:
+            pattern = re.compile(binding.content_terms, re.IGNORECASE)
+            for path in binding.paths:
+                with self.subTest(layer=binding.layer_id, path=path):
+                    text = (REPO_ROOT / path).read_text(encoding="utf-8", errors="replace")
+                    self.assertIsNotNone(pattern.search(text))
+
+    def test_no_mapped_layer_is_bound_only_to_the_feed_inventory_document(self) -> None:
+        for binding in KNOWLEDGE_LAYER_SOURCES:
+            with self.subTest(layer=binding.layer_id):
+                self.assertNotEqual(set(binding.paths), {FEED_INVENTORY_PATH})
+
+    def test_the_brain_is_the_file_every_current_brain_layer_binds(self) -> None:
+        brain_group = next(
+            group for group in self.registry["groups"] if group["group_id"] == "current_brain_runtime"
+        )
+        by_id = {binding.layer_id: binding for binding in KNOWLEDGE_LAYER_SOURCES}
+        for entry in brain_group["entries"]:
+            with self.subTest(layer=entry["layer_id"]):
+                self.assertIn(BRAIN_PATH, by_id[entry["layer_id"]].paths)
+
+    def test_every_binding_carries_a_reason(self) -> None:
+        for binding in KNOWLEDGE_LAYER_SOURCES:
+            with self.subTest(layer=binding.layer_id):
+                self.assertTrue(binding.why.strip())
+                self.assertTrue(binding.paths)
+
+
+class RegistryRebindTests(unittest.TestCase):
+    """The registry is rebound BY SCRIPT: layout preserved, hash recomputed, validator satisfied."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.committed_bytes = REGISTRY_PATH.read_bytes()
+        cls.registry = load_registry()
+        cls.rebound = rebind_knowledge_layers(cls.registry)
+
+    def test_render_reproduces_the_committed_registry_byte_for_byte(self) -> None:
+        self.assertEqual(render_registry_json(self.registry).encode("utf-8"), self.committed_bytes)
+
+    def test_committed_registry_is_already_rebound_and_check_passes(self) -> None:
+        self.assertEqual(self.rebound, self.registry)
+        self.assertEqual(rebind_main(["--check"]), 0)
+
+    def test_rebind_is_idempotent(self) -> None:
+        self.assertEqual(rebind_knowledge_layers(self.rebound), self.rebound)
+
+    def test_rebound_registry_validates_with_the_identity_set_and_counts_unchanged(self) -> None:
+        before = validate_registry(self.registry)
+        after = validate_registry(self.rebound)
+        for key in (
+            "exact_layer_id_set_sha256",
+            "concrete_layer_count",
+            "a_clean_applicable_layer_count",
+            "a_memory_applicable_layer_count",
+            "sealed_layer_ids",
+        ):
+            with self.subTest(key=key):
+                self.assertEqual(after[key], before[key])
+
+    def test_each_mapped_layer_binds_exactly_its_mapping_and_flags_v3_by_rule(self) -> None:
+        entries = {
+            entry["layer_id"]: entry
+            for group in self.rebound["groups"]
+            for entry in group["entries"]
+        }
+        for binding in KNOWLEDGE_LAYER_SOURCES:
+            with self.subTest(layer=binding.layer_id):
+                entry = entries[binding.layer_id]
+                self.assertEqual(entry["source_paths"], list(binding.paths))
+                self.assertEqual(entry["v3_derived"], any("_V3_" in p for p in binding.paths))
+
+    def test_no_required_input_layer_is_bound_only_to_the_inventory_after_rebind(self) -> None:
+        self.assertEqual(
+            layers_bound_only_to(
+                self.rebound, self.rebound["source_authority"], policies=KNOWLEDGE_INPUT_POLICIES
+            ),
+            [],
+        )
+
+    def test_v3_allowlists_are_exactly_what_the_rebound_registry_uses(self) -> None:
+        v3_layers = {
+            entry["layer_id"]
+            for group in self.rebound["groups"]
+            for entry in group["entries"]
+            if entry["v3_derived"]
+        }
+        v3_paths = {
+            path
+            for group in self.rebound["groups"]
+            for entry in group["entries"]
+            for path in entry["source_paths"]
+            if "_V3_" in path
+        }
+        self.assertEqual(v3_layers, set(ALLOWED_V3_LAYER_IDS))
+        self.assertEqual(v3_paths, set(ALLOWED_V3_SOURCE_PATHS))
+        self.assertEqual(set(self.rebound["permitted_v3_source_paths"]), set(ALLOWED_V3_SOURCE_PATHS))
+
+    def test_registry_hash_is_recomputed_never_hand_edited(self) -> None:
+        self.assertEqual(
+            self.rebound["registry_sha256"], canonical_hash(self.rebound, omit="registry_sha256")
+        )
+
+    def test_rebind_refuses_when_a_knowledge_layer_would_stay_bound_to_the_inventory(self) -> None:
+        stale = load_registry()
+        for group in stale["groups"]:
+            for entry in group["entries"]:
+                if entry["layer_id"] == "complete_s105_9_brain":
+                    entry["source_paths"] = [stale["source_authority"]]
+        partial = tuple(b for b in KNOWLEDGE_LAYER_SOURCES if b.layer_id != "complete_s105_9_brain")
+        with self.assertRaisesRegex(KnowledgeDeliveryError, "bound only to the inventory document"):
+            rebind_knowledge_layers(stale, bindings=partial)
+
+    def test_check_fails_on_a_stale_registry_copy_and_write_repairs_it(self) -> None:
+        stale = load_registry()
+        for group in stale["groups"]:
+            for entry in group["entries"]:
+                if entry["layer_id"] == "complete_s105_9_brain":
+                    entry["source_paths"] = [stale["source_authority"]]
+        stale["registry_sha256"] = canonical_hash(stale, omit="registry_sha256")
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        target = Path(temporary.name) / "registry.json"
+        target.write_text(render_registry_json(stale), encoding="utf-8")
+        self.assertEqual(rebind_main(["--check", "--registry", str(target)]), 1)
+        self.assertEqual(rebind_main(["--write", "--registry", str(target)]), 0)
+        self.assertEqual(rebind_main(["--check", "--registry", str(target)]), 0)
+        self.assertEqual(target.read_bytes(), self.committed_bytes)
+
+    def test_a_rebound_registry_with_a_wrong_hash_is_refused_by_the_validator(self) -> None:
+        broken = dict(self.rebound)
+        broken["registry_sha256"] = "0" * 64
+        with self.assertRaisesRegex(IngestionLayerGateError, "hash mismatch"):
+            validate_registry(broken)
 
 
 if __name__ == "__main__":

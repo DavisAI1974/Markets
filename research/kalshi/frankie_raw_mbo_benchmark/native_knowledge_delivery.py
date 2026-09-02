@@ -51,7 +51,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable, Mapping
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -338,3 +338,312 @@ def classify_inventory(repo_root: Path | str = REPO_ROOT) -> list[ClassifiedPath
             )
         )
     return rows
+
+
+# --------------------------------------------------------------------------------------
+# The knowledge layers, bound to the KEEP files by content
+# --------------------------------------------------------------------------------------
+KNOWLEDGE_INPUT_POLICIES = frozenset({"STATIC_REQUIRED_INPUT", "ARM_REQUIRED_INPUT"})
+"""The registry policies whose layers are inputs he reads before the call (pre-call, DIRECT)."""
+
+
+@dataclass(frozen=True)
+class LayerBinding:
+    """Which KEEP files carry one registry knowledge layer, and why.
+
+    `content_terms` is a regular expression every bound file must match. It is a NECESSARY
+    condition the test suite checks - the file speaks about what the layer names - not a
+    proof of sufficiency; the `why` clause carries the judgment, file by file, in words.
+    """
+
+    layer_id: str
+    content_terms: str
+    why: str
+    paths: tuple[str, ...]
+
+
+_R = "research/"
+_K = "research/kalshi/knowledge/"
+_CHAIN_STUDY_CONTRACT = _R + "NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json"
+_P2_FINAL_FREEZE = _R + "NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md"
+_P2_ALL_AGENT = _R + "NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md"
+_P2_FINDINGS = _R + "NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_20260817.md"
+_P2_TIMING = _R + "NG_EXHAUSTION_CHAIN_PHASE2_TIMING_CONTEXT_FINDINGS_20260818.md"
+_P2_MODULE_NOVELTY = _R + "NG_EXHAUSTION_CHAIN_PHASE2_MODULE_NOVELTY_FINDINGS_20260818.md"
+_P2_POSTEXIT = _R + "NG_EXHAUSTION_CHAIN_PHASE2_POSTEXIT_RECURRENCE_FINDINGS_20260818.md"
+_P2_PARALLEL = _R + "NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_RECURRENCE_RECONCILIATION_20260818.md"
+_P2_POX_ADDENDUM = _R + "NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_ADDENDUM_POX_20260818.md"
+_P2_POX_BRANCH = _R + "NG_EXHAUSTION_CHAIN_PHASE2_POX_BRANCH_RECONCILIATION_V2_20260818.md"
+_P2_POX_SAME = _R + "NG_EXHAUSTION_CHAIN_PHASE2_POX_SAME_POSTEXIT_REEXPRESSION_20260818.md"
+_P2_WATCH_MAP = _R + "NG_EXHAUSTION_CHAIN_PHASE2_REAPPEARANCE_WATCH_MAP_20260818.json"
+_P2_CHECKLIST = _R + "NG_EXHAUSTION_CHAIN_PHASE2_FINALIZATION_CHECKLIST_20260818.json"
+_STEP1_FILE_MAP = _R + "NG_EXHAUSTION_CHAIN_STEP1_ORIGINAL_FILE_MAP_20260820.md"
+_STEP1_CENSUS_MD = _R + "NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.md"
+_STEP1_CENSUS_JSON = _R + "NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.json"
+_CANONICAL_TABLE = _R + "ng_exhaustion_chain_canonical_table_20260817.py"
+_CHARACTERIZE = _R + "ng_exhaustion_chain_phase2_characterize_20260817.py"
+_PARALLEL_AGENTS = _R + "ng_exhaustion_chain_phase2_parallel_agents_20260818.py"
+_STATE_ENRICH = _R + "ng_exhaustion_chain_state_enrich_20260817.py"
+_CHAIN_STATE_ROSTER = _R + "ng_exhaustion_week_chain_state_roster_20260817.py"
+_CONTINUOUS_ROSTER = _R + "ng_exhaustion_week_continuous_roster_20260817.py"
+_PROPOSAL_INDEX = _R + "NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_20260818.md"
+_PROPOSAL_INDEX_ADDENDUM = _R + "NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_ADDENDUM_20260820.md"
+_CLEAN_SOURCE_CURRENT = _R + "NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md"
+_V3_V4_ADDENDUM = _R + "NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_ADDENDUM_20260820.md"
+_V3_V4_FINAL_ADDENDUM = _R + "NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_FINAL_ADDENDUM_20260820.md"
+_P2_PROPOSAL_JSON = _K + "ng_brain_exhaustion_chain_phase2_proposal_20260818.json"
+_BIRTH_V2_JSON = _K + "ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json"
+_ENTRY_TIMING_JSON = _K + "ng_brain_exhaustion_entry_timing_extension_20260818.json"
+_POX_FOCUSED_JSON = _K + "ng_brain_exhaustion_pox_focused_proposal_20260819.json"
+_INTERPRETATION_CORRECTION = _R + "NG_EXHAUSTION_V4_INTERPRETATION_CORRECTION_20260820.md"
+_WALKFORWARD_CONTRACT = _R + "NG_EXHAUSTION_V4_CONTINUOUS_ADAPTIVE_WALKFORWARD_CONTRACT_20260820.md"
+_D0_D5_CONTRACT_MD = _R + "NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md"
+_D0_D5_CONTRACT_JSON = _R + "NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.json"
+_EVENT_MARK_CLOCK = _R + "NG_EXHAUSTION_EVENT_MARK_CLOCK_OPEN_BOUNDARY_20260819.md"
+_PRELAUNCH_GATES = _R + "NG_EXHAUSTION_V4_CLEAN_SOURCE_PRELAUNCH_GATES_20260820.md"
+_INSTANCE_TIMING_CORRECTION = _R + "NG_EXHAUSTION_CONTINUOUS_INSTANCE_TIMING_CORRECTION_20260820.md"
+_LIVE_INFORMATION_CORRECTION = _R + "NG_EXHAUSTION_CONTINUOUS_LIVE_INFORMATION_CORRECTION_20260819.md"
+_FULL_CAUSAL_CORRECTION = _R + "NG_EXHAUSTION_FULL_CAUSAL_INFORMATION_CORRECTION_20260819.md"
+_PRIOR_MODEL_PRICE_CORRECTION = _R + "NG_EXHAUSTION_PRIOR_MODEL_PRICE_CORRECTION_20260819.md"
+_POLARITY_CORRECTION = _R + "NG_EXHAUSTION_POLARITY_NOT_PRIMARY_TARGET_CORRECTION_20260819.md"
+
+KNOWLEDGE_LAYER_SOURCES: tuple[LayerBinding, ...] = (
+    # --- frozen_learned_structure (authority FROZEN_LEARNED_KNOWLEDGE) ------------------
+    LayerBinding(
+        layer_id="learned_d_structures_and_families",
+        content_terms=r"\bD[0-5]\b|D-structure|D structure|famil(?:y|ies)",
+        why=(
+            "the D-depth structures (D1-D5) and D families as frozen by phase 2: the chain study "
+            "contract that defines them, the phase-2 freeze and findings that count them, the "
+            "canonical table that computes them, the weekly rosters that carry them, and the D0-D5 "
+            "geometric contract that governs their V4 representation"
+        ),
+        paths=(
+            _CHAIN_STUDY_CONTRACT, _P2_FINAL_FREEZE, _P2_ALL_AGENT, _P2_FINDINGS, _P2_TIMING,
+            _CANONICAL_TABLE, _CHAIN_STATE_ROSTER, _CONTINUOUS_ROSTER,
+            _D0_D5_CONTRACT_MD, _D0_D5_CONTRACT_JSON,
+        ),
+    ),
+    LayerBinding(
+        layer_id="learned_dipoles_and_geometry",
+        content_terms=r"dipole|geometr",
+        why=(
+            "the roll20/dipole polarity computation in the canonical table, the geometric "
+            "representation and flow/dipole semantics of the current proposal, the D0-D5 geometric "
+            "self-adaptation contract, and the event-mark clock boundary fixing when dipole polarity "
+            "may be read"
+        ),
+        paths=(
+            _CANONICAL_TABLE, _CLEAN_SOURCE_CURRENT, _D0_D5_CONTRACT_MD, _D0_D5_CONTRACT_JSON,
+            _EVENT_MARK_CLOCK,
+        ),
+    ),
+    LayerBinding(
+        layer_id="learned_pair_triplet_recurrence",
+        content_terms=r"\bpair\b|triplet|recurrence",
+        why=(
+            "the pair/triplet module recurrence of phase 2 (PP|S, PO|S, OO|F, ...) in the freeze, "
+            "all-agent, timing-context and post-exit findings, its four-lane parallel reconciliation "
+            "and runner, the recurrence atlas of the proposal index, and the modular_recurrence "
+            "lessons of the phase-2 proposal"
+        ),
+        paths=(
+            _P2_FINAL_FREEZE, _P2_ALL_AGENT, _P2_TIMING, _P2_POSTEXIT, _P2_PARALLEL,
+            _PARALLEL_AGENTS, _PROPOSAL_INDEX, _P2_PROPOSAL_JSON,
+        ),
+    ),
+    LayerBinding(
+        layer_id="learned_chains_extensions_reappearances_ancestry",
+        content_terms=r"\bchain|extension|reappear|ancestr|successor|lineage|continuity",
+        why=(
+            "the chain study contract, the phase-2 chain/extension/re-expression findings, the "
+            "reappearance watch map, the phase-1 lineage and continuity implementations, the "
+            "chain-state enrichment and roster, and the proposal index, phase-2 and chain-birth "
+            "proposals that carry chain doctrine"
+        ),
+        paths=(
+            _CHAIN_STUDY_CONTRACT, _P2_FINAL_FREEZE, _P2_ALL_AGENT, _P2_POSTEXIT, _P2_POX_SAME,
+            _P2_WATCH_MAP,
+            _R + "ng_exhaustion_chain_phase1_lineage_54w_20260817.py",
+            _R + "ng_exhaustion_chain_phase1_continuity_54w_20260817.py",
+            _STATE_ENRICH, _CHAIN_STATE_ROSTER,
+            _PROPOSAL_INDEX, _P2_PROPOSAL_JSON, _BIRTH_V2_JSON,
+        ),
+    ),
+    LayerBinding(
+        layer_id="phase1_discoveries_structural_falsifiers",
+        content_terms=r"phase.?1|falsif|discover|54w|54-week",
+        why=(
+            "the phase-1 54/55-week base freeze, execution, causal and discovery protocols, "
+            "mechanism addendum and reconcile launch, the phase-1 discovery / causal / continuity / "
+            "falsifier / lineage / structural / reconcile implementations, the canonical 54-week "
+            "merge and shard that built the base, and the original file map"
+        ),
+        paths=(
+            _CHAIN_STUDY_CONTRACT,
+            _R + "NG_EXHAUSTION_CHAIN_PHASE1_54W_BASE_FREEZE_20260817.json",
+            _R + "NG_EXHAUSTION_CHAIN_PHASE1_54W_EXECUTION_PROTOCOL_20260817.json",
+            _R + "NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_PROTOCOL_20260817.json",
+            _R + "NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_PROTOCOL_20260817.json",
+            _R + "NG_EXHAUSTION_CHAIN_PHASE1_MECHANISM_ADDENDUM_20260817.json",
+            _R + "NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILE_LAUNCH_20260817.json",
+            _STEP1_FILE_MAP,
+            _R + "ng_exhaustion_chain_canonical_54w_merge_20260817.py",
+            _R + "ng_exhaustion_chain_canonical_54w_shard_20260817.py",
+            _R + "ng_exhaustion_chain_phase1_discovery_20260817.py",
+            _R + "ng_exhaustion_chain_phase1_causal_54w_20260817.py",
+            _R + "ng_exhaustion_chain_phase1_continuity_54w_20260817.py",
+            _R + "ng_exhaustion_chain_phase1_falsifier_54w_20260817.py",
+            _R + "ng_exhaustion_chain_phase1_lineage_54w_20260817.py",
+            _R + "ng_exhaustion_chain_phase1_structural_54w_20260817.py",
+            _R + "ng_exhaustion_chain_phase1_reconcile_55w_20260817.py",
+        ),
+    ),
+    LayerBinding(
+        layer_id="phase2_findings_modules_timing_pox_negatives",
+        content_terms=(
+            r"phase.?2|\bPOX\b|P-O-X|negative|stopped|persistent_exhaustion|collapsed_opposite"
+        ),
+        why=(
+            "every phase-2 finding record (final freeze, all-agent, module novelty, timing context, "
+            "post-exit recurrence, the POX addendum and branch reconciliations, same-post-exit "
+            "re-expression), the reappearance watch map and finalization checklist, the "
+            "characterize and parallel-lane implementations (the latter defines the S/O/P/X state "
+            "vocabulary), and the phase-2, POX-focused and entry-timing proposals with their "
+            "negative and stopped-chain cases"
+        ),
+        paths=(
+            _P2_FINAL_FREEZE, _P2_ALL_AGENT, _P2_FINDINGS, _P2_TIMING, _P2_MODULE_NOVELTY,
+            _P2_POSTEXIT, _P2_PARALLEL, _P2_POX_ADDENDUM, _P2_POX_BRANCH, _P2_POX_SAME,
+            _P2_WATCH_MAP, _P2_CHECKLIST, _CHARACTERIZE, _PARALLEL_AGENTS,
+            _P2_PROPOSAL_JSON, _POX_FOCUSED_JSON, _ENTRY_TIMING_JSON,
+        ),
+    ),
+    LayerBinding(
+        layer_id="predecessor_ancestry_unresolved_chain_state",
+        content_terms=r"predecessor|unresolved",
+        why=(
+            "predecessor and unresolved-chain state: the phase-1 causal protocol, the Step-1 native "
+            "census protocol, the current proposal's unresolved predecessor lifecycle, prelaunch "
+            "gate 5, the D0-D5 contract's active-instance lifecycle, the PRIOR-model and full-causal "
+            "information corrections, the phase-2 findings and characterize implementation, and the "
+            "chain-birth proposal's predecessor-relative PRIOR rule"
+        ),
+        paths=(
+            _R + "NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_PROTOCOL_20260817.json",
+            _STEP1_CENSUS_MD, _STEP1_CENSUS_JSON, _CLEAN_SOURCE_CURRENT, _PRELAUNCH_GATES,
+            _D0_D5_CONTRACT_MD, _PRIOR_MODEL_PRICE_CORRECTION, _FULL_CAUSAL_CORRECTION,
+            _P2_FINDINGS, _CHARACTERIZE, _BIRTH_V2_JSON,
+        ),
+    ),
+    LayerBinding(
+        layer_id="historical_timing_lifespan_context",
+        content_terms=r"timing|lifespan|runway|clock",
+        why=(
+            "timing and lifespan as CONTEXT, never a target clock: the phase-2 timing-context "
+            "findings, the continuous-instance timing correction, the walk-forward contract (timing "
+            "is an output), the event-mark clock boundary, the clock-separation and PRIOR "
+            "corrections, the current proposal's causal knowledge clocks, the characterize "
+            "implementation's timing families, and the chain-birth, entry-timing and phase-2 "
+            "proposals' timing lessons"
+        ),
+        paths=(
+            _P2_TIMING, _INSTANCE_TIMING_CORRECTION, _WALKFORWARD_CONTRACT, _EVENT_MARK_CLOCK,
+            _FULL_CAUSAL_CORRECTION, _CLEAN_SOURCE_CURRENT, _PRIOR_MODEL_PRICE_CORRECTION,
+            _CHARACTERIZE, _BIRTH_V2_JSON, _ENTRY_TIMING_JSON, _P2_PROPOSAL_JSON,
+        ),
+    ),
+    LayerBinding(
+        layer_id="learned_structure_proposal_index_material",
+        content_terms=r"proposal|index|correction|contract|inventory|interpret|clarif",
+        why=(
+            "the proposal lineage WHOLE (index, index addendum, clean current source, the two V3-V4 "
+            "addenda and the four JSON proposals - Greg, 2026-09-02), every V4 governing contract "
+            "and correction that controls how the structures are interpreted, the original file "
+            "map, and the two canonical inventories as the index of the corpus"
+        ),
+        paths=(
+            _PROPOSAL_INDEX, _PROPOSAL_INDEX_ADDENDUM, _CLEAN_SOURCE_CURRENT,
+            _V3_V4_ADDENDUM, _V3_V4_FINAL_ADDENDUM,
+            _P2_PROPOSAL_JSON, _BIRTH_V2_JSON, _ENTRY_TIMING_JSON, _POX_FOCUSED_JSON,
+            _INTERPRETATION_CORRECTION, _WALKFORWARD_CONTRACT, _D0_D5_CONTRACT_MD,
+            _D0_D5_CONTRACT_JSON, _EVENT_MARK_CLOCK, _PRELAUNCH_GATES,
+            _INSTANCE_TIMING_CORRECTION, _LIVE_INFORMATION_CORRECTION, _FULL_CAUSAL_CORRECTION,
+            _PRIOR_MODEL_PRICE_CORRECTION, _POLARITY_CORRECTION,
+            _STEP1_FILE_MAP, FEED_INVENTORY_PATH, SOURCE_INVENTORY_PATH,
+        ),
+    ),
+    # --- current_brain_runtime (authority CURRENT_BRAIN) ------------------------------------
+    LayerBinding(
+        layer_id="authoritative_s135_construction",
+        content_terms=r"built_pass|merge_log|changelog",
+        why=(
+            "the brain the S135 runtime constructs and loads; its meta carries the construction "
+            "record (built_pass, merge_log, changelog, sections). The S120-S135 runtime modules that "
+            "apply it are CODE (addendum note 2); whether that construction code should ALSO be "
+            "delivered is a D60 item for Greg, recorded not decided"
+        ),
+        paths=(BRAIN_PATH,),
+    ),
+    LayerBinding(
+        layer_id="complete_s105_9_brain",
+        content_terms=r"\"plays\"|\"version\"",
+        why="the complete brain file: version, every play body, mechanisms, open_frontier, fingerprints",
+        paths=(BRAIN_PATH,),
+    ),
+    LayerBinding(
+        layer_id="doctrine_reasoning_play_index_evidence",
+        content_terms=r"doctrine|reasoning_method|falsifier",
+        why=(
+            "the brain's doctrine, reasoning_method, play index and each play's falsifier, support, "
+            "instances and corpus fields (negatives and contradictions live inside them)"
+        ),
+        paths=(BRAIN_PATH,),
+    ),
+    LayerBinding(
+        layer_id="lawful_prior_session_carry",
+        content_terms=r"prior session|handoff_out|carry",
+        why=(
+            "the brain's handoff_out_schema and the prior-session rules inside plays and doctrine; "
+            "the mission (bound in binding_common_controls) states what one run may carry"
+        ),
+        paths=(BRAIN_PATH,),
+    ),
+    LayerBinding(
+        layer_id="october_outcome_wall_enforcement",
+        content_terms=r"ruled_out_by_target|reveal|sealed|wall|outcome",
+        why=(
+            "the brain's ruled_out_by_target, the walk-forward contract's outcome-reveal timing, "
+            "prelaunch gates 7 and 8 (immutable ledger, sealed handoff), the D0-D5 contract's "
+            "post-reveal self-edit boundary and the current proposal's immutable ledger and sealed "
+            "handoff: the wall the October run enforces (the answer itself is section K, SEALED)"
+        ),
+        paths=(
+            BRAIN_PATH, _WALKFORWARD_CONTRACT, _PRELAUNCH_GATES, _D0_D5_CONTRACT_MD,
+            _CLEAN_SOURCE_CURRENT,
+        ),
+    ),
+)
+"""Layer -> KEEP files, by content. `extra_agent_corrected_information_and_gap_diagnoses` is not
+here because it already binds its three section-F files; the binding inputs (mission, contract,
+manifest, profile, capsules) already bind real files too. Every C/D/E/F KEEP file lands in at
+least one binding - the test suite derives that set from the inventory and checks it."""
+
+
+def layers_bound_only_to(
+    registry: Mapping[str, Any], path: str, *, policies: frozenset[str] | None = None
+) -> list[str]:
+    """Layer ids whose ONLY source path is `path` - the S120 defect, made measurable.
+
+    With `path` = the registry's `source_authority` and `policies` = the pre-call input
+    policies, this is the list of knowledge layers that would be "delivered" by proving a
+    document unchanged. It must be empty.
+    """
+    found: list[str] = []
+    for group in registry.get("groups", []):
+        if policies is not None and group.get("policy") not in policies:
+            continue
+        for entry in group.get("entries", []):
+            if set(entry.get("source_paths", [])) == {path}:
+                found.append(entry["layer_id"])
+    return found

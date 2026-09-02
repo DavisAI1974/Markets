@@ -116,11 +116,21 @@ class NativeIngestionLayerRegistryTests(unittest.TestCase):
         self.assertEqual(receipt["a_memory_applicable_layer_count"], 98)
         self.assertEqual(receipt["placeholder_layer_ids"], [])
 
-    def test_only_corrected_extra_agent_carryforward_is_v3_derived(self) -> None:
+    def test_v3_derived_layers_are_the_carryforward_and_the_proposal_lineage(self) -> None:
+        """Was `test_only_corrected_extra_agent_carryforward_is_v3_derived` until 2026-09-02.
+
+        Greg's ruling that the proposal lineage goes in WHOLE (DROP_IN_S121 item zero) binds the
+        two `_V3_V4_` brain trade-proposal addenda into `learned_structure_proposal_index_material`,
+        which therefore carries V3-derived material and is flagged as such. Sorted, because the
+        validator returns the ids sorted.
+        """
         receipt = validate_registry(load_registry())
         self.assertEqual(
             receipt["v3_derived_layer_ids"],
-            ["extra_agent_corrected_information_and_gap_diagnoses"],
+            [
+                "extra_agent_corrected_information_and_gap_diagnoses",
+                "learned_structure_proposal_index_material",
+            ],
         )
 
     def test_no_layer_carries_the_retired_four_helper_architecture(self) -> None:
