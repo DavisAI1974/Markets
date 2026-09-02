@@ -33,6 +33,20 @@ name: Frankie box unwedge 20260902
 # input rather than a default.
 
 on:
+  # A PUSH TRIGGER IS WHAT REGISTERS THE WORKFLOW. A file carrying only workflow_dispatch is
+  # never created as a workflow on a non-default branch - the dispatch API returns 404 - and
+  # every workflow in this tree that CAN be dispatched from this branch carries both. The
+  # paths filter keeps it to changes of this file.
+  #
+  # A push therefore runs the READ-ONLY report and can never do anything else: on a push
+  # `inputs.action` is empty, which is not 'report', so every acting step is additionally
+  # guarded on github.event_name == 'workflow_dispatch'. Without that guard an empty input
+  # would satisfy `action != 'report'` and a push would REBOOT the box.
+  push:
+    branches:
+      - chatgpt/frankie-raw-mbo-benchmark-20260828
+    paths:
+      - '.github/workflows/frankie_box_unwedge_20260902.yml'
   workflow_dispatch:
     inputs:
       action:
@@ -142,7 +156,7 @@ jobs:
           printf 'BOX_TRIVIAL_COMMAND_EXIT=%s  (40 = commands run; anything else = wedged)\n' "$code"
 
       - name: Grow the root volume, only if asked
-        if: ${{ inputs.action == 'grow_and_reboot' && inputs.grow_to_gb != '' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.action == 'grow_and_reboot' && inputs.grow_to_gb != '' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -169,7 +183,7 @@ jobs:
           esac
 
       - name: Reboot, so cloud-init grows the filesystem without on-box execution
-        if: ${{ inputs.action != 'report' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.action != 'report' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -177,7 +191,7 @@ jobs:
           echo "reboot requested; waiting for the SSM agent to answer again"
 
       - name: Wait for the agent, then ask the box what it can see
-        if: ${{ inputs.action != 'report' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.action != 'report' }}
         shell: bash
         run: |
           set -uo pipefail
@@ -209,7 +223,7 @@ jobs:
           [ "$ok" = "yes" ]
 
       - name: Report what is on the volume, then clear the previous run
-        if: ${{ inputs.action != 'report' && env.BOX_EXECUTES_COMMANDS == 'yes' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.action != 'report' && env.BOX_EXECUTES_COMMANDS == 'yes' }}
         shell: bash
         run: |
           set -euo pipefail
