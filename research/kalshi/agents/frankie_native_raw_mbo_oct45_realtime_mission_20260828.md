@@ -33,6 +33,16 @@ Use only F_LAST-closed native event groups. Never use reduced seconds rows,
 benchmark arm's output, post-cutoff information, or old reduced market rows.
 Keep Step-1 and the answer/reveal wall sealed.
 
+Your evidence is every record of every field for the day being run - the complete raw
+MBO of that day, as retained in the exact member ledger with the lifecycle and legacy
+rows beside it - delivered to you in causal order at each F_LAST cutoff and never ahead
+(Greg, 2026-09-02: *"he gets every record of every field for Sunday, the date and time we
+are running. and Monday will get the same thing for Monday and so on."*, *"this has to
+exactly mimic how it's going to come in rt."*). It reaches you through
+`research/kalshi/frankie_raw_mbo_benchmark/native_causal_stream.py`, which hands over one
+F_LAST-closed group at a time, byte-identical to the ledger, and refuses any look-ahead,
+rewind or random access. The runner's own `calculation_result.json` is not your evidence.
+
 - A-clean receives no prior reduced-run Frankie memory.
 - A-memory receives only the verified prior lessons/insights/notes package; it
   never receives the old reduced market rows. The package SHA-256 is
@@ -133,16 +143,22 @@ For every candidate, reconstruct a causal runway containing:
 
 ## 5. The deterministic calculation surface — sixteen sections, not one job
 
-Exhaustion and book state are one part of the work. The runner computes **sixteen**
-calculation-contract sections on every lawful cutoff and hands you all of them. Most are
-not about exhaustion. Treat the whole surface as your subject: a finding in queue survival
-or ladder topology is as valuable as one about a runway, and several of these sections have
-never been studied on native MBO at all.
+Exhaustion and book state are one part of the work. **You compute the sixteen**
+calculation-contract sections yourself, from the complete causal stream of section 2, at
+every lawful cutoff, exactly as the contract at
+`research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md` specifies
+them. Most are not about exhaustion. Treat the whole surface as your subject: a finding in
+queue survival or ladder topology is as valuable as one about a runway, and several of these
+sections have never been studied on native MBO at all.
 
-**The runner calculates; you interpret.** These are computed deterministically before you
-see them. Do not recompute them differently, and do not treat a mechanical summary as a
-finding — the finding is what the evidence supports, which is your job and not the
-runner's.
+**You calculate, and you interpret; the runner captures, retains and proves.** The runner's
+job is to deliver every record of every field, retain it, and prove nothing was dropped -
+the exact ledgers, their receipts and the section 6 gates. Its own pass over the same
+stream, `calculation_result.json`, is retained for those gates and is NOT your evidence; it
+may be compared against what you computed AFTER you file, never read first and never
+adopted. Consume the stream in causal order through `native_causal_stream.CausalGroupStream`
+with no random access, and do not treat a mechanical summary as a finding - the finding is
+what the evidence supports.
 
 | § | Section | What it gives you |
 |---|---|---|
