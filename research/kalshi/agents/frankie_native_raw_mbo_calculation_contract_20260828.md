@@ -82,6 +82,39 @@ and `ratio(aggregate sums)` are useful, retain both and label their difference
 
 ## 4. Calculation matrix
 
+### 4.0 Per-second flow and quote substrate
+
+**Exact calculation.** For every completed second on the traversal's declared
+binning clock (`ts_recv` unless declared otherwise; a second is complete once the
+stream has moved past it, so its bins are final), emit one exact row carrying: the
+second's own aggressor buy and sell volume and trade counts, classified by the
+`legacy_per_second_roll20` midpoint rule and never by the tape's side field (mid =
+0.5 * (bid_px_00 + ask_px_00) on rows with action `T`, price > 0, size > 0,
+bid_px_00 > 0 and ask_px_00 >= bid_px_00; price above the mid is buy volume, below
+is sell volume, exactly at the mid contributes to neither); the trades excluded at
+the mid, without a usable quote, or with an unusable price or size; the touch the
+last classifiable trade was judged against; and the trailing-window quantities
+downstream consumed at that second - the roll20 value, the window signed flow and
+its polarity. Every completed second receives exactly one own-second class - `BUY`,
+`SELL`, `NO_DIRECTION` (no trades, or balanced classified volume), `EXCLUDED_AT_MID`,
+`NO_QUOTE`, `UNUSABLE_PRICE_OR_SIZE` - and one trailing-window direction under
+4.12's stage rule (`LONG`, `SHORT`, `NO_DIRECTION`; zero flow is no direction,
+never a default). Missingness: a second that cannot be classified is a class, never
+a gap; a second with no rows is a member; a second still open at a continuity or
+stream boundary is `INCOMPLETE`, retained with its partial tallies and outside every
+denominator. The section's per-second volumes must reconcile exactly with the
+traversal's own binner, and a disagreement rejects rather than reports. Session
+phase is the phase of the second's own instant, never the phase of the group that
+closed after it. This section is upstream of the candidate detector and of 4.10
+through 4.12 and 4.16, which are computed from it.
+
+**Average decision: limited yes, census only.** Two classification censuses, each
+as per-class shares whose denominator is the count of completed seconds in the
+stratum (source day, role, continuity segment, session phase): the own-second class
+shares, and the trailing-window direction shares 4.12 consumes. These are population
+scale the member rows do not state directly. Nothing else in this section is
+averaged: volumes, counts and window values are member facts on the exact rows.
+
 ### 4.1 Identity, integrity, and exact member surface
 
 **Exact calculation.** Verify ledger/source hashes, exact-once native record and

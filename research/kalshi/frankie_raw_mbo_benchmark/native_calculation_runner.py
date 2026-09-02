@@ -28,6 +28,9 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_mirror import MirrorMatche
 from research.kalshi.frankie_raw_mbo_benchmark.native_dipole import DipoleCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_discovery import DiscoveryCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_exhaustion import ExhaustionCalculator
+from research.kalshi.frankie_raw_mbo_benchmark.native_flow_substrate import (
+    FlowSubstrateCalculator,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_ladder import LadderCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_key_alias import (
     averaged_companion_layer,
@@ -300,6 +303,14 @@ class NativeCalculationRun:
         if exact_cap is not None:
             shared["exact_cap"] = exact_cap
 
+        # Section 4.0, Frankie's item (a). The per-second substrate the candidate detector
+        # and 4.12 consume was `traversal.legacy_per_second_roll20` - a counters block, not
+        # a section: no declaration, no stratum, no denominator and no gate, which is why
+        # the 51.6% NO_DIRECTION share had to be reconstructed from counters. The binning
+        # clock is the DRIVER's declaration - it owns the binner this section shadows - and
+        # the section adopts it before the first row (`declare_clock`), so there is exactly
+        # one place the clock is set and no second one to disagree with it.
+        self.flow_substrate = FlowSubstrateCalculator(**shared)
         # D-4. 4.2 did not run at all, which left `book_full` - 10.13 GB, 93.47% of
         # the exact member ledger - with no consumer anywhere in the artifact.
         self.book_regime = BookRegimeCalculator(**shared)
@@ -353,6 +364,10 @@ class NativeCalculationRun:
     @property
     def sections(self) -> dict[str, Any]:
         mapping = {
+            # Upstream of every other section: the substrate 4.10-4.12 and the candidate
+            # lane are computed from. A section absent from THIS map is dark whatever else
+            # is true of it (D-4, D-16), so it is registered before it is fed anywhere.
+            "4.0": self.flow_substrate,
             "4.2": self.book_regime,
             # D-16. 4.4 was absent from this map entirely - the numbering jumped 4.2 to
             # 4.5 - so even a working matcher reached neither the averages layer nor the
