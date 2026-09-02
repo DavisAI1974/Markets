@@ -63,6 +63,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_candidate_adapter import (
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import ClockCalculator, member_clock_row
 from research.kalshi.frankie_raw_mbo_benchmark.native_group_adapters import ladder_from_full_book
+from research.kalshi.frankie_raw_mbo_benchmark.native_mirror import MatchScope
 from research.kalshi.frankie_raw_mbo_benchmark.native_session import (
     NS_PER_SECOND,
     phase_within,
@@ -221,6 +222,9 @@ class DriverCounters:
     # D-4. How many full-book snapshots reached 4.2. Zero means the section is
     # dark again, which is the state that produced a 10 GB unread artifact.
     book_snapshots_summarised: int = 0
+    # D-16. Members handed to 4.4's matcher. Zero means the section is dark
+    # again, which is the state that produced 0 pairs and 3,454 exclusions.
+    mirror_members_offered: int = 0
     """4.8 runways scored. One per group under D53, where the runway IS the F_LAST group."""
     lineage_nodes_added: int = 0
     """4.13 nodes added to the live graph. Rises only when a group touches a NEW order id."""
@@ -946,6 +950,30 @@ class NativeReplayDriver:
             occasion="GROUP_CLOSE",
         )
         self.counters.recurrence_sequences += 1
+        # D-16. 4.4's matcher, which nothing has ever called - which is the mechanical cause
+        # of the delivered run's zero pairs against 3,454 unmatched stages. Every group
+        # already carries its own side string; the mirror is the side-swapped one, and the
+        # coordinate is this group's receive time, which is lawful at the moment of the offer.
+        # Built here from the group's own actions rather than reaching for the structure
+        # descriptor, which belongs to a different method - one side string, same definition,
+        # `"".join(row["side"])`, exactly as `describe_structure` forms it.
+        self.counters.mirror_members_offered += 1
+        self._retain_lifecycle(
+            [self.run.mirror.offer(
+                member_id=ctx.candidate_id,
+                sides="".join(str(row.get("side", "?")) for row in actions),
+                coordinate=float(ctx.recv_ns),
+                scope=MatchScope(
+                    source_day=ctx.source_day,
+                    source_role=ctx.source_role,
+                    continuity_segment=ctx.continuity_segment,
+                    family_id=ctx.family_id,
+                    session_phase=ctx.session_phase,
+                ),
+            )],
+            section="mirror",
+            occasion="GROUP_CLOSE",
+        )
         # D-4. The other 4.2 companion the contract names by hand: group count and
         # max-actions-per-group, neither of which existed in the delivered artifact.
         self.run.book_regime.observe_group_size(
@@ -1101,12 +1129,20 @@ class NativeReplayDriver:
         if self.detector is not None and self._last_complete_second is not None:
             self._retain_candidates(self.detector.finish(self._last_complete_second))
             self._retain_episode_rows(self.episodes.close_segment(at))
-        for section in ("queue", "replenishment", "exhaustion", "response"):
+        for section in ("queue", "replenishment", "exhaustion", "response", "absorption"):
             self._retain_lifecycle(
                 getattr(self.run, section).finalize(recv_ns=at),
                 section=section,
                 occasion="STREAM_END",
             )
+        # D-16. 4.4 settles its own pool rather than taking a clock: a member still pooled at
+        # stream end had no counterpart arrive, and the pool decides that, not when the stream
+        # stopped. `finalize` also refuses unless the population adds up - members seen equals
+        # paired plus every reason counted - so a member leaving without a reason fails the
+        # run instead of quietly shrinking the denominator.
+        self._retain_lifecycle(
+            self.run.mirror.finalize(), section="mirror", occasion="STREAM_END",
+        )
         # Paired with the calculator's `finalize` above, for the boundary's reason.
         self.queue_adapter.finalize()
         # 4.13 closes here too, in the segment it is still open in. A node with no child at

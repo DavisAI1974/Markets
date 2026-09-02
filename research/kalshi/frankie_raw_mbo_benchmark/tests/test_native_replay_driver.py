@@ -1016,3 +1016,51 @@ class CandidateSeamRegressionTest(unittest.TestCase):
         with self.assertRaises(ReplayDriverError) as caught:
             driver.consume([second])
         self.assertIn("ts_event", str(caught.exception))
+
+
+class DarkSectionRegressionTest(FedSectionsTest):
+    """Two sections were BUILT and reached nothing. That is the shape to regress against.
+
+    4.2 existed as a contract line and no module; 4.4 had a working matcher and was absent
+    from the runner's section map entirely, the numbering jumping 4.2 straight to 4.5. Both
+    produced a clean, accepted run while a section of the contract sat dark, which is why a
+    passing verdict is not evidence that a section ran.
+    """
+
+    def test_the_book_reaches_the_section_whose_job_is_to_summarise_it(self):
+        driver, result = self._run()
+        self.assertGreater(driver.counters.book_snapshots_summarised, 0)
+        rows = [r for r in result["layers"]["averaged_companions"]["rows"]
+                if r["section"] == "4.2"]
+        self.assertTrue(rows, "4.2 emitted no averaged rows; book_full has no consumer again")
+
+    def test_the_mirror_matcher_is_actually_called(self):
+        driver, result = self._run()
+        self.assertGreater(driver.counters.mirror_members_offered, 0)
+        summary = result["layers"]["exact_lifecycle_and_runway_ledger"][
+            "section_summaries"]["4.4"]
+        self.assertTrue(summary["matcher_invoked"])
+        self.assertEqual(summary["unmatched_reason_counts"]["NOT_OFFERED_TO_MATCHER"], 0)
+
+    def test_pairing_nothing_still_produces_a_diagnosis(self):
+        """The whole point of D-16: the diagnosis is needed precisely when nothing matched."""
+        _, result = self._run()
+        summary = result["layers"]["exact_lifecycle_and_runway_ledger"][
+            "section_summaries"]["4.4"]
+        self.assertEqual(summary["pairs_formed"], 0)
+        self.assertEqual(sum(summary["unmatched_reason_counts"].values()),
+                         summary["members_seen"],
+                         "every member must leave with a reason, or the population shrank")
+        rows = [r for r in result["layers"]["averaged_companions"]["rows"]
+                if r["section"] == "4.4"]
+        self.assertTrue(rows, "no averaged rows at zero pairs is the delivered defect")
+
+    def test_every_registered_section_contributes_or_is_accounted_for(self):
+        """A section in the map with no rows and no summary is dark and would go unnoticed."""
+        _, result = self._run()
+        summaries = result["layers"]["exact_lifecycle_and_runway_ledger"]["section_summaries"]
+        rows = {r["section"] for r in result["layers"]["averaged_companions"]["rows"]}
+        for section in ("4.2", "4.4", "4.5", "4.8", "4.9", "4.13", "4.14"):
+            with self.subTest(section=section):
+                self.assertTrue(section in summaries or section in rows,
+                                f"{section} produced neither a summary nor an averaged row")

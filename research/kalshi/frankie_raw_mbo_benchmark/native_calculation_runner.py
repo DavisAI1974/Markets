@@ -24,6 +24,7 @@ from typing import Any, Callable, Mapping, Sequence
 from research.kalshi.frankie_raw_mbo_benchmark.native_absorption import AbsorptionCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_book_regime import BookRegimeCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import ClockCalculator
+from research.kalshi.frankie_raw_mbo_benchmark.native_mirror import MirrorMatcher
 from research.kalshi.frankie_raw_mbo_benchmark.native_dipole import DipoleCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_discovery import DiscoveryCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_exhaustion import ExhaustionCalculator
@@ -74,6 +75,19 @@ GATE_NOT_A_MODEL_RUN = "calculation_evidence_is_not_model_execution"
 # The ninth, and the only HORIZONTAL one. The eight above check a section against
 # itself, which a one-sided book satisfies perfectly - run 33605852433 passed all eight
 # while 4.9 and 4.12 computed one estimand and disagreed structurally about it.
+DEFAULT_MIRROR_DISTANCE_BOUND_NS = 60 * 1_000_000_000
+"""PROVISIONAL. How far apart two mirrored members may sit and still be one phenomenon.
+
+Declared here rather than buried, because nothing measures it yet. It borrows 4.7's and
+4.8's 60-second horizon on the grounds that they ask a comparable question of the same
+tape, and that grounding is an analogy, not evidence. The matcher emits a near-miss
+distance distribution even when it pairs nothing, so the first run that offers it members
+reports what the bound should be - which is the only thing that can settle it.
+"""
+
+MIRROR_COORDINATE_NAME = "group_ts_recv_ns"
+"""The axis distance is measured on. Lawful at the moment of the offer: no lookahead."""
+
 GATE_CROSS_SECTION = "cross_section_agreement"
 REQUIRED_GATES = (
     GATE_IDENTITY,
@@ -254,6 +268,8 @@ class NativeCalculationRun:
         identity: RunIdentity,
         *,
         replenishment_horizon_ns: int,
+        mirror_distance_bound_ns: float = DEFAULT_MIRROR_DISTANCE_BOUND_NS,
+        mirror_coordinate_name: str = MIRROR_COORDINATE_NAME,
         response_horizons_ns: Sequence[int],
         response_horizon_version: str,
         response_value_names: Sequence[str],
@@ -276,6 +292,18 @@ class NativeCalculationRun:
         # D-4. 4.2 did not run at all, which left `book_full` - 10.13 GB, 93.47% of
         # the exact member ledger - with no consumer anywhere in the artifact.
         self.book_regime = BookRegimeCalculator(**shared)
+        # D-16. The coordinate is the group's own receive time, which is lawful at the
+        # moment of the offer and needs no lookahead. THE BOUND IS PROVISIONAL AND
+        # DECLARED AS SUCH: 60 s matches 4.7's replenishment and 4.8's replacement
+        # horizons, but no measurement establishes it for MIRRORS and none can until a
+        # run reports a near-miss distance distribution - which is precisely what the
+        # matcher now emits even at zero pairs. A provisional bound that produces a
+        # diagnosis is strictly better than a matcher nothing calls.
+        self.mirror = MirrorMatcher(
+            coordinate_name=mirror_coordinate_name,
+            distance_bound=mirror_distance_bound_ns,
+            **shared,
+        )
         self.clocks = ClockCalculator(**shared)
         self.queue = QueueSurvivalCalculator(**shared)
         self.replenishment = ReplenishmentCalculator(horizon_ns=replenishment_horizon_ns, **shared)
@@ -315,6 +343,10 @@ class NativeCalculationRun:
     def sections(self) -> dict[str, Any]:
         mapping = {
             "4.2": self.book_regime,
+            # D-16. 4.4 was absent from this map entirely - the numbering jumped 4.2 to
+            # 4.5 - so even a working matcher reached neither the averages layer nor the
+            # denominators gate. Exactly D-4's shape: built and invisible.
+            "4.4": self.mirror,
             "4.5": self.clocks,
             "4.6": self.queue,
             "4.7": self.replenishment,
