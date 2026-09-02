@@ -121,6 +121,47 @@ jobs:
           MAP
           echo "RUN_PREFIX=$prefix" >> "$GITHUB_ENV"
 
+      - name: Recover the plain lengths a box run recorded before gzipping
+        shell: bash
+        run: |
+          set -euo pipefail
+          # A BOX run gzips its ledgers before upload, so S3 holds only a compressed length -
+          # which answers how well the file compressed and never how many bytes the sink
+          # wrote. The box records `wc -c` over the plain files at the same moment it writes
+          # PLAIN_SHA256SUMS, and both travel in small_artifacts.tar.gz, which is already
+          # uploaded. So no new S3 object is needed to read them back.
+          #
+          # A CANARY run uploads its ledgers uncompressed and needs none of this; the witness
+          # prefers S3's own length wherever a plain object exists and only falls back here.
+          echo '{}' > ./box_sizes.json
+          key="${RUN_PREFIX}/small_artifacts.tar.gz"
+          if ! aws s3api head-object --bucket "$BUCKET" --key "$key" >/dev/null 2>&1; then
+            echo "no small_artifacts.tar.gz under this run; a canary needs none"
+            exit 0
+          fi
+          aws s3 cp "s3://${BUCKET}/${key}" ./small_artifacts.tar.gz \
+            --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
+          mkdir -p ./small_artifacts
+          tar xzf ./small_artifacts.tar.gz -C ./small_artifacts PLAIN_SIZES 2>/dev/null || {
+            echo "the tarball carries no PLAIN_SIZES; this run predates that receipt"
+            exit 0
+          }
+          python3 - <<'SIZES' > ./box_sizes.json
+          import json
+          from pathlib import PurePosixPath
+          sizes = {}
+          for line in open("small_artifacts/PLAIN_SIZES", encoding="utf-8"):
+              parts = line.split()
+              # `wc -c` emits "<bytes> <path>" and a trailing "<total> total" line, which names
+              # no file and must not be read as one.
+              if len(parts) != 2 or parts[1] == "total" or not parts[0].isdigit():
+                  continue
+              sizes[PurePosixPath(parts[1]).name] = int(parts[0])
+          print(json.dumps(sizes))
+          SIZES
+          printf 'plain lengths recovered for %s ledger(s)\n' \
+            "$(python3 -c 'import json;print(len(json.load(open("box_sizes.json"))))')"
+
       - name: Download the smallest ledger for a content witness
         shell: bash
         run: |
@@ -165,6 +206,7 @@ jobs:
           # Runs BEFORE the self-reported table, so the witness cannot be read as a footnote
           # to a number the reader has already accepted.
           args=(--result ./calculation_result.json --objects ./s3_objects.json
+                --box-sizes ./box_sizes.json
                 --summary "$GITHUB_STEP_SUMMARY" --output ./LEDGER_SIZE_WITNESS.md)
           if [ -n "${CONTENT_WITNESS:-}" ]; then
             args+=(--observed-sha256 "$CONTENT_WITNESS")
@@ -201,6 +243,7 @@ jobs:
             LEDGER_SIZE_WITNESS.md
             calculation_result.json
             s3_objects.json
+            box_sizes.json
           if-no-files-found: error
           retention-days: 30
 

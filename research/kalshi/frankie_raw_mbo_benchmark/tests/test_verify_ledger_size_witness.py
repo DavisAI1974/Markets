@@ -309,3 +309,60 @@ class CrashIsMissingEvidenceTests(unittest.TestCase):
             self.assertEqual(main(["--result", str(result), "--objects", str(objects),
                                    "--output", str(out)]), 2)
             self.assertIn("WITNESS_UNAVAILABLE", out.read_text(encoding="utf-8"))
+
+
+class BoxRecordedLengthsTests(unittest.TestCase):
+    """A box run gzips its ledgers, so S3 holds no plain length to compare against.
+
+    The fallback is `wc -c` taken on the box while the files were still plain. It is a real
+    second reading - a different program from the sink, over the finished file - and a
+    WEAKER one, because it ran on the same machine. The rule the module exists to enforce is
+    that a per-record figure names its sources, so the weaker reading must be visible on the
+    page rather than silently filling the same column.
+    """
+
+    def _gzipped_objects(self):
+        objects = {f"{PREFIX}/calculation_result.json": 4_096,
+                   f"{PREFIX}/small_artifacts.tar.gz": 20_000}
+        for name, plain in (("exact_member_rows.jsonl", 12_113_675_715),
+                            ("exact_lifecycle_rows.jsonl", 169_866_829),
+                            ("legacy_observable_rows.jsonl", 18_194_001)):
+            objects[f"{PREFIX}/ledgers/{name}.gz"] = plain // 9
+        return objects
+
+    def _box_sizes(self):
+        return {"exact_member_rows.jsonl": 12_113_675_715,
+                "exact_lifecycle_rows.jsonl": 169_866_829,
+                "legacy_observable_rows.jsonl": 18_194_001}
+
+    def test_without_the_box_reading_a_gzipped_run_is_unavailable(self):
+        text, outcome = render(_result(), self._gzipped_objects())
+        self.assertEqual(outcome, UNAVAILABLE)
+        self.assertIn("REFUSED", text)
+
+    def test_the_box_reading_witnesses_a_gzipped_run(self):
+        from research.kalshi.frankie_raw_mbo_benchmark.verify_ledger_size_witness import FROM_BOX
+        rows = witness_ledgers(_result(), self._gzipped_objects(), self._box_sizes())
+        self.assertTrue(all(r["status"] == CONFIRMED for r in rows), rows)
+        self.assertTrue(all(r["source"] == FROM_BOX for r in rows))
+        text, outcome = render(_result(), self._gzipped_objects(), None, self._box_sizes())
+        self.assertEqual(outcome, CONFIRMED)
+        self.assertIn("246,030 bytes per record", text)
+
+    def test_the_weaker_witness_says_so_on_the_page(self):
+        text, _ = render(_result(), self._gzipped_objects(), None, self._box_sizes())
+        self.assertIn("weaker witness", text)
+        self.assertIn("BOX_WC_OVER_THE_PLAIN_FILE", text)
+
+    def test_s3_is_preferred_when_a_plain_object_exists(self):
+        from research.kalshi.frankie_raw_mbo_benchmark.verify_ledger_size_witness import FROM_S3
+        rows = witness_ledgers(_result(), _objects(), self._box_sizes())
+        self.assertTrue(all(r["source"] == FROM_S3 for r in rows))
+        text, _ = render(_result(), _objects(), None, self._box_sizes())
+        self.assertNotIn("weaker witness", text)
+
+    def test_a_disagreeing_box_reading_still_contradicts(self):
+        sizes = self._box_sizes()
+        sizes["exact_member_rows.jsonl"] = 1
+        _, outcome = render(_result(), self._gzipped_objects(), None, sizes)
+        self.assertEqual(outcome, CONTRADICTED)

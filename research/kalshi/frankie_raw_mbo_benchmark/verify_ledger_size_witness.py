@@ -47,6 +47,12 @@ NO_CLAIMED_BYTES = "RECEIPT_CARRIES_NO_BYTE_COUNT"
 NO_CLAIMED_DIGEST = "RECEIPT_CARRIES_NO_SHA256"
 NO_RECORD_COUNT = "RECORD_COUNTS_ABSENT"
 
+# Where a witnessed length came from, carried on the row and reported, because the two are
+# NOT equally strong and printing them in the same column without saying so is how a weaker
+# reading acquires the authority of a stronger one.
+FROM_S3 = "S3_CONTENTLENGTH"          # a second party, recorded at PUT time
+FROM_BOX = "BOX_WC_OVER_THE_PLAIN_FILE"  # coreutils on the same machine as the sink
+
 
 class WitnessError(ValueError):
     """A run could not be witnessed at all, as distinct from being contradicted."""
@@ -101,11 +107,22 @@ def _index_by_basename(objects: Mapping[str, int]) -> dict[str, tuple[str, int] 
 
 
 def witness_ledgers(
-    result: Mapping[str, Any], objects: Mapping[str, int]
+    result: Mapping[str, Any],
+    objects: Mapping[str, int],
+    box_sizes: Mapping[str, int] | None = None,
 ) -> list[dict[str, Any]]:
-    """One row per ledger: what the sink said, what S3 says, and whether they agree."""
+    """One row per ledger: what the sink said, what a second reading says, do they agree.
+
+    `box_sizes` is the fallback for a BOX run, whose ledgers are gzipped before upload - so
+    S3 holds only a compressed length, which answers how well the file compressed and never
+    how many bytes the sink wrote. `wc -c` on the box, taken while the file was still plain,
+    is a different program reading the finished file and is independent of the sink's
+    counter. It is WEAKER than S3 - same machine, not a second party - and every row and the
+    per-record line say which one they used.
+    """
     rows: list[dict[str, Any]] = []
     index = _index_by_basename(objects)
+    box_sizes = box_sizes or {}
     for name, receipt in sorted(_receipts(result).items()):
         basename = PurePosixPath(str(receipt.get("path") or "")).name
         raw_claim = receipt.get("bytes")
@@ -118,6 +135,7 @@ def witness_ledgers(
             "s3_key": None,
             "status": UNAVAILABLE,
             "reason": ABSENT,
+            "source": None,
         }
         if not isinstance(raw_claim, int):
             # Nothing to witness AGAINST. Treating a missing count as zero would report the
@@ -132,8 +150,19 @@ def witness_ledgers(
             row["s3_key"] = key
             row["witnessed_bytes"] = size
             row["reason"] = None
+            row["source"] = FROM_S3
             row["status"] = CONFIRMED if size == claimed else CONTRADICTED
             row["delta_bytes"] = size - claimed
+        elif basename in box_sizes:
+            size = int(box_sizes[basename])
+            row["witnessed_bytes"] = size
+            row["source"] = FROM_BOX
+            row["reason"] = None
+            row["status"] = CONFIRMED if size == claimed else CONTRADICTED
+            row["delta_bytes"] = size - claimed
+            gz = index.get(f"{basename}.gz")
+            if gz is not None:
+                row["s3_key"], row["compressed_bytes"] = gz
         elif index.get(f"{basename}.gz") is not None:
             # A gzip's size answers "how well did it compress", never "how many bytes did the
             # sink write". Reporting the difference as a contradiction would convict the sink
@@ -231,9 +260,10 @@ def render(
     result: Mapping[str, Any],
     objects: Mapping[str, int],
     observed: Mapping[str, str] | None = None,
+    box_sizes: Mapping[str, int] | None = None,
 ) -> tuple[str, str]:
     """Returns (markdown, verdict)."""
-    ledger_rows = witness_ledgers(result, objects)
+    ledger_rows = witness_ledgers(result, objects, box_sizes)
     denominator = witness_denominator(result)
     content_rows = witness_content(result, observed or {})
     outcome = verdict(ledger_rows, denominator, content_rows)
@@ -262,18 +292,24 @@ def render(
     add("")
     add("### Ledger bytes: what the sink counted vs what S3 holds")
     add("")
-    add("| ledger | file | sink bytes | S3 bytes | delta | status |")
-    add("|---|---|---:|---:|---:|---|")
+    add("| ledger | file | sink bytes | witnessed bytes | read from | delta | status |")
+    add("|---|---|---:|---:|---|---:|---|")
     for row in ledger_rows:
-        s3 = f"{row['witnessed_bytes']:,}" if row["witnessed_bytes"] is not None else "-"
+        seen = f"{row['witnessed_bytes']:,}" if row["witnessed_bytes"] is not None else "-"
         delta = f"{row['delta_bytes']:+,}" if "delta_bytes" in row else "-"
         status = row["status"] if not row["reason"] else f"{row['status']} ({row['reason']})"
-        add(f"| {row['ledger']} | `{row['file']}` | {row['claimed_bytes']:,} | {s3} "
-            f"| {delta} | {status} |")
+        add(f"| {row['ledger']} | `{row['file']}` | {row['claimed_bytes']:,} | {seen} "
+            f"| {row.get('source') or '-'} | {delta} | {status} |")
     add("")
+    sources = sorted({row["source"] for row in witnessed if row.get("source")})
     add(f"- Sink total: **{claimed_total:,}**")
-    add(f"- S3 total over the ledgers it holds: **{witnessed_total:,}**"
-        f" ({len(witnessed)} of {len(ledger_rows)} ledgers)")
+    add(f"- Witnessed total: **{witnessed_total:,}**"
+        f" ({len(witnessed)} of {len(ledger_rows)} ledgers, read from {', '.join(sources) or 'nothing'})")
+    if FROM_BOX in sources:
+        add("- **The box reading is the weaker witness** and is used only where S3 holds the"
+            " ledger gzipped. `wc -c` is a different program from the sink, reading the"
+            " finished file, but it ran on the same machine - it is not a second party the"
+            " way S3's ContentLength is.")
     add("")
 
     add("### The denominator")
@@ -310,8 +346,12 @@ def render(
     if fully_witnessed and isinstance(records, int) and records > 0:
         add(f"- **{witnessed_total / records:,.0f} bytes per record** "
             f"({witnessed_total / records / 1024:.1f} KiB)")
-        add("- Numerator: S3 `ContentLength` summed over every ledger object, read from the"
-            " object store.")
+        if sources == [FROM_S3]:
+            add("- Numerator: S3 `ContentLength` summed over every ledger object, read from"
+                " the object store.")
+        else:
+            add(f"- Numerator: plain ledger lengths summed over every ledger, read from"
+                f" {', '.join(sources)}.")
         add("- Denominator: `traversal.records_seen`, agreeing with the manifest total and"
             " the coverage receipt.")
         add("- Neither quantity is the sink's own tally of its own writes.")
@@ -341,6 +381,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                         help="calculation_result.json for the run")
     parser.add_argument("--objects", required=True,
                         help="JSON mapping of S3 key -> size in bytes, from list-objects-v2")
+    parser.add_argument("--box-sizes", default=None,
+                        help="JSON mapping of ledger basename -> PLAIN byte count, as the box "
+                             "recorded it with wc -c before gzipping; used only where S3 "
+                             "holds the ledger compressed")
     parser.add_argument("--observed-sha256", action="append", default=[],
                         metavar="LEDGER=HEX",
                         help="digest of a ledger file actually downloaded; repeatable")
@@ -358,8 +402,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise SystemExit(f"--observed-sha256 wants LEDGER=HEX, got {pair!r}")
         observed[ledger] = digest
 
+    box_sizes = json.loads(open(args.box_sizes, encoding="utf-8").read()) if args.box_sizes else {}
     try:
-        text, outcome = render(result, objects, observed)
+        text, outcome = render(result, objects, observed, box_sizes)
     except (WitnessError, TypeError, ValueError, KeyError) as exc:
         # EXIT 2, NOT 1. A crash is missing evidence, and reporting it as CONTRADICTED would
         # say the sink is wrong on the strength of this module failing to read the result.
