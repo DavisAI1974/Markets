@@ -222,3 +222,91 @@ rendered, never edited in the render.
 
 Nothing was built for section 4.0, the detector-coverage section, or the raw-MBO census. A
 census test file was started and removed; **no code for it exists and none is claimed.**
+
+---
+
+## 7. S120 CONTINUED — THE QUESTION WAS ADDED, THEN THE CHANGES THE HANDOFF CALLED FOR WERE MADE
+
+Greg: *"add the question and then mame those changes before we do a final correct run"*, then
+*"do your plan"*, *"and use a persona to help you"*. Section 6 above said nothing was built for
+4.0, 4.0b or the census. That is no longer true. Everything below is committed, pushed,
+tested and gate-checked; nothing below is claimed from reading.
+
+### 7.1 What was built, in the order it landed
+
+- **The raw-MBO question is in the mission and the spawn refuses a mission that omits it**
+  (`34a0c16`). Mission section 9a; `emit_frankie_spawn` halts on a mission without the
+  `### 9a. The raw MBO` marker; the prompt renders what he is and is NOT given per ledger.
+- **The report is a render of the findings** (`60750c9`, F-19 DONE).
+- **F-10..F-19 registered** in `research/kalshi/OPEN_ITEMS.json` (`46a41c5`), correcting the
+  "ZERO entries" line above: the real registry held 188 items and none were Frankie's.
+- **F-17 relabel** (`a3dc360`): `replaced_quantity` is `neighborhood_arrival_quantity`, D-3's
+  pattern, arithmetic pinned byte-identical.
+- **F-16 as a PARALLEL view** (`91f888c`): birth stays the primary stratum; an exit-keyed
+  survival sits beside it. The first attempt restamped and broke S119's pinned test.
+- **F-18 join 5** (`bfa1c8b`): one `level_event_key` on the 4.6 terminal and the 4.7 episode.
+- **Section 4.0** (persona, worktree, `4096fcb`, merged `decd5ab`): the per-second flow and
+  quote substrate the candidate detector and 4.12 always ran on and nothing declared. One
+  exact row per COMPLETED second, six own-second classes so an unclassifiable second is a
+  CLASS never a gap, INCOMPLETE at boundaries outside every denominator, reconciled against
+  the traversal's own binner and refusing on disagreement, phase from the second's own
+  instant (D75's shape refused). FIRST in the section map. 25 calculator tests + 8 driver
+  tests + the dark-section regression.
+- **Section 4.0b** (persona, worktree, `202b210`, merged `ed5e782`): detector coverage and
+  rejection accounting. Every judged second ends in exactly one NAMED outcome or a residual
+  REFUSES; reconciles key-for-key against the detector at every segment close; every
+  detector parameter rides on every row. It found a REAL uncounted exit
+  (`rejected_in_refractory_at_release`: counters summed 289 against 290 judged seconds).
+  Detector emissions proven identical 80/80 against the pristine module. New measure kind
+  `COUNT_PARTITION` (no arithmetic mean formed over counts).
+- **The field census** (`0fe66c8`, `69c7fc3`): `MboFieldCensus` walks EVERY member row the
+  sink receives and reports per field path - observations, rows-with-field, nulls, distinct
+  (capped 64), types, range, DEGENERATE, ALWAYS_NULL. **List positions collapse to `[]`**:
+  the first version indexed every ladder level, so a census keyed by position would have
+  grown with book depth (a 300-level `bid_levels_full` would be 300 x 6 paths) instead of
+  with the schema. Emitted as `layers.exact_member_ledger.field_census` with
+  `field_census_covers_every_member_row`; the emitter renders the degenerate and always-null
+  fields under 9a and HALTS on a result whose census is absent or partial. **It is a
+  measurement and its own `basis` says keep-everything is a first-class answer.** Greg
+  asked whether this changes the science or averages anything: it does not - read-only on
+  its input (a test proves a row is byte-identical after observation), the exact ledgers
+  keep every position, and no mean is formed anywhere in it.
+- **The report states what the principal read** (`b5e239e`): per-ledger `evidence_read` in
+  words, so a claim resting on counters is distinguishable from one resting on rows. F-14
+  DONE on that plus the gate; F-11, F-12, F-17 DONE; F-10 IN_PROGRESS (closes on the
+  corrected run's artifact); F-18 join 7 closed with 4.0b.
+
+### 7.2 Greg's question: do the new things need wiring into the token reducers?
+
+**No, and it was verified by execution, not by reading.** `build_alias_table` builds its
+table from a key census of whatever rows every registered section emits, and the runner
+gathers companions by iterating `self.sections` - so a section in the map is aliased
+automatically. Run with aliasing ON on the driver fixture: 4.0's nine rows came out with 0
+readable raw and 9 after decoding, legend 44 names. 4.0b registers the same way. The
+change-point reducer is 4.16-only by design. The census sits OUTSIDE the aliased layer and
+is kept small by construction (~80 KB for 256 paths on the fixture; it grows with the
+schema, not the book) so it needs no reducer.
+
+### 7.3 Merging two personas that added into the same slots
+
+Both worktree branches were cut from `34a0c16` and each added its section in the same
+places - the runner's constructor and section map, the driver's two finalize loops, the
+dark-section tuple, the contract before 4.1, the index. Every conflict resolved by keeping
+BOTH in order (4.0 then 4.0b); the driver's segment-close and stream-end paths carry 4.0b's
+close call before the loop that now includes `flow_substrate`. The knowledge manifest was
+stale twice (each persona pinned the contract at its own base) and re-pinned twice by
+`refresh_native_frankie_knowledge.py --write`. Suite 1227 -> **1406**, store gates and
+docs green, manifest CURRENT. D77 held: neither persona touched git state outside its
+worktree.
+
+### 7.4 The final correct run
+
+Canary first, per the standing incremental-validation rule, because the calculation code
+changed: run **33659412614** on `69c7fc3`, Sunday slice, `alias_companion_keys=true`,
+`emit_change_points=true`. Then the Sunday full run on the same configuration (D79), then
+the spawn against its artifact with the 9a question - the spawn now REQUIRES the mission
+with 9a, a census covering every member row, and an artifact carrying `evidence_read`.
+The mechanism for getting a result into a session is validated: the size-report workflow
+publishes `calculation_result.json` as a small artifact (1.3 MB zip for Sunday's 24.8 MB
+result) and `download_workflow_run_artifact` yields a signed URL that curl fetches.
+Run ids and verdicts for the full run and the spawn are in `DROP_IN_S121.md` STATE.
