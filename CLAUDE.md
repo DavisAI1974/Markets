@@ -1,4 +1,46 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-02, Session 119)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-02, Session 121)
+
+## S121 — BUILT, NOT WIRED: SIX RULINGS, THE SEARCH THAT CONFIRMED THE PREMISE, AND THE WIRING PERSONAS (read `SESSION_HANDOFF_2026-09-02_S121.md` sections 0, 4, 9 + `DROP_IN_S122.md`)
+
+**Branch = `chatgpt/frankie-raw-mbo-benchmark-20260828`. 1,483 -> 1,703 tests at the first merge
+round; the final count is in the handoff's section 9.** Decisions 81 -> 86.
+
+**GREG'S RULINGS, EACH RECORDED THE HOUR IT WAS SAID.** **D83**: *"There should be zero hard coded
+time intervals for anything"*, *"The clocks need to be wired into Frankie."* **D84**: push spots -
+a persona on a long build pushes its own branch after every commit; a save point that exists only
+in a container is not a save point (the session rate limit killed four personas at once; twelve
+committed slices recovered, two uncommitted salvaged, all pushed). **D86** (D85 superseded within
+the hour): **one arm and it is A_MEMORY** - *"In rt, Frankie isn't going to be flying blind so I'm
+retiring clean because of time"*; memory is his own day-over-day carry, **seeded on day one with
+every committed output of the past runs, provenance-labelled** (*"Just give him the canary stuff
+from the past runs to start it and it will build from there"*), every lesson UNVERIFIED until he
+verifies it against the stream. **D82**: a layer binds to the file that carries it, never a
+document describing it.
+
+**THE PREMISE AND THE SEARCH.** Greg: *"i feel like this stuff has been built but just not wired
+and fed."* Three read-only search agents confirmed it in every area
+(`FRANKIE_BUILT_NOT_WIRED_SEARCH_S121.md`): the knowledge pipeline exists end to end including the
+per-artifact read gate and nothing on the spawn path calls it; `load_principal_artifact`,
+`attach_principal_findings`, `validate_output_bundle_dir`, `render_crosswalk_table`,
+`gate_applicable_inputs` have zero production callers; three of the seven clocks are a naming
+wrapper over `member_clock_row`; 4.16's event-driven half is wired and OFF by default; 4.11 has no
+ladder and an uncalled `precursor_for`. **The one function that exists nowhere is the
+sealed-absence proof producer.** *"Look in step1 files for your clocks"* - the Step-1 2-day module
+carries the most developed clock design on the same hash-locked adapter.
+
+**MEASURED ON THE REAL SUNDAY RESULT**: the crosswalk reads **75 of 75 applicable inputs not
+DELIVERED**, 9 sealed unproven, 10 outputs pending. That is the number the wiring closes.
+
+**THE PERSONAS.** Round one (four, killed by the rate limit, merged green tips: the output ledgers
+with the required set DERIVED, the windows-and-clocks packet, the inventory classification and the
+14-layer registry rebind, the crosswalk with computed status and the gate function). Round two
+(three wiring personas, spawned as each search landed, arm A_MEMORY, push spots): knowledge and
+gates; outputs, staging and report; clocks, anchored windows and horizons with F-20 folded in.
+
+**NEXT CHAT (`DROP_IN_S122.md`): FEED HIM** - the Sunday re-run through the A-memory workflow on
+the wired code, the fetch, the gated spawn against the seeded memory, the reveal. **Search before
+building anything still unwired.**
+
 
 
 ## S119 — THE SIXTEEN-DEFECT REGISTER IS CLOSED, AND SEVEN OF THEM WERE MEASURES NOTHING EVER CALLED (read `SESSION_HANDOFF_2026-09-02_S119.md` SECTION 0 FIRST + `DROP_IN_S120.md`)
@@ -1097,6 +1139,8 @@ FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the drive
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
+**One-line state (S121):** tip per `SESSION_HANDOFF_2026-09-02_S121.md` section 9; **1,703 tests green at the first merge round.** Six rulings recorded (D82-D86): zero hardcoded intervals and the clocks wired (D83); push spots (D84); **one arm, A_MEMORY, memory seeded from the past runs** (D86). The search confirmed the premise: built, not wired - every gate, receipt and renderer exists with no production caller; the sealed-absence proof is the one thing that does not. **Sunday crosswalk: 75 of 75 inputs not delivered.** Three wiring personas in flight, merged as they land. **Next: feed him** (S122).
+
 **One-line state (S120, continued to close):** tip `4828d9d`+, **1,483 tests green.** Greg stopped
 the run and RULED: **Frankie does the calcs himself; he gets every record of every field for the
 day being run, delivered exactly as it arrives in RT; the proposal lineage goes in whole with
@@ -1390,7 +1434,10 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   e drive."* The split is the whole rule: **git = code and records, S3 = data, `data/` is
   DISPOSABLE** and rebuilt by `restore_substrate.py`. It binds two ways. (1) Nothing the next
   session must RUN may live outside git — no `~/.claude/projects/`, `workflows/scripts/`, `/tmp`
-  or scratchpad path (D33, gated by `plant_status.py`). (2) **No artifact may NAME a desktop
+  or scratchpad path (D33, gated by `plant_status.py`). **And the scratchpad and /tmp are not
+  used AT ALL - not for a fetch, a log or a transient measurement file (D87, S121, Greg's third
+  time saying it); a transient file lives under gitignored `data/` and is deleted when done.**
+  (2) **No artifact may NAME a desktop
   path** — not a citation, evidence list, ledger, handoff or decision line. INSTANCE: the S111
   audit partial carried 140 instances and **51 of them, across 11 plays, cited
   `E:/Markets/research/kalshi/...`**; the files were real and committed but the citations opened

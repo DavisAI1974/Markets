@@ -994,7 +994,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **522 files.**
+new tool cannot go unlisted. **526 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `agent_frankie.py` — Frankie hybrid agent entry point.
@@ -1180,11 +1180,13 @@ new tool cannot go unlisted. **522 files.**
 - `raw_mbo_source_manifest.py` — Hash-bound native raw-MBO source manifest and exact progress denominator.
 - `rebind_registry_knowledge_layers.py` — Rebind the registry's knowledge layers from the inventory DOCUMENT to their KEEP FILES.
 - `refresh_native_frankie_knowledge.py` — Regenerate promoted Frankie capsules and their hash-bound knowledge manifest."""
+- `register_a_memory_knowledge.py` — Register the KEEP set in the knowledge sources spec BY SCRIPT, routed to the arm that runs.
 - `render_frankie_report.py` — Render the principal's report FROM his findings, so the two cannot diverge.
 - `render_source_inventory_addendum.py` — Render the DATED classification addendum to the 2026-08-24 source-file inventory.
 - `report_ledger_size.py` — Which calculation is the size. The table that replaces an opinion.
 - `__init__.py` — Focused tests for the native raw-MBO Chat benchmark seam."""
 - `manifest_fixture.py` — Shared source-manifest fixture for the A-arm test suites.
+- `outputs_bundle_fixture.py` — A lawful output bundle with a configurable identity, for the staging and read-back tests.
 - `test_a_arm_launch_workflows.py` — T4: the A-arm launch workflows dispatch compute, and neither can fire the box by push.
 - `test_a_clean_forecaster_resume_latest.py` — (no docstring summary)
 - `test_a_memory_member_first_recalculation.py` — (no docstring summary)
@@ -1210,7 +1212,7 @@ new tool cannot go unlisted. **522 files.**
 - `test_native_evidence_bundle.py` — (no docstring summary)
 - `test_native_exhaustion.py` — Tests for section 4.10 exhaustion runways."""
 - `test_native_flow_substrate.py` — Section 4.0, the per-second flow and quote substrate.
-- `test_native_frankie_knowledge_registry.py` — (no docstring summary)
+- `test_native_frankie_knowledge_registry.py` — The hash-bound knowledge manifest: validation, the model-visible context, and the knowledge-use gate.
 - `test_native_full_capture_adapter.py` — Tests for the full-capture adapter (D60).
 - `test_native_group_adapters.py` — Tests for the section-4 group adapters (D53: the F_LAST group is the unit).
 - `test_native_ingestion_layer_registry.py` — (no docstring summary)
@@ -1237,11 +1239,13 @@ new tool cannot go unlisted. **522 files.**
 - `test_native_rt_book_differential.py` — Differential tests: `ReplayBook` must MIRROR `InstrumentBook` on every book mutation.
 - `test_native_session.py` — Tests for section 2 continuity segmentation and trading-day assignment (D6a).
 - `test_native_staging.py` — The spawn contract: how Frankie is actually called.
+- `test_native_staging_handoff.py` — S121 slice 4: the V2 workmode handoff machinery is re-fed from a VALIDATED output bundle.
 - `test_native_stratum.py` — Tests for the parallel-view rule as enforced structure."""
 - `test_open_world_growth.py` — The carried vocabulary is where discovery starts, not what it is validated against.
 - `test_periodic_checkpointer.py` — Tests for periodic save points on long native raw-MBO runs."""
 - `test_raw_mbo_source_manifest_roles.py` — Tests for the single-role roster and the identity/manifest hash split."""
 - `test_refresh_native_frankie_knowledge.py` — (no docstring summary)
+- `test_register_a_memory_knowledge.py` — The KEEP set reaches the knowledge manifest BY SCRIPT, routed to the one arm that runs.
 - `test_render_frankie_report.py` — The principal's report is a RENDER of his findings, never a separately authored document.
 - `test_report_ledger_size.py` — Turning a finished run into the table the drop decision needs.
 - `test_verify_ledger_size_witness.py` — What a witness must refuse to say.

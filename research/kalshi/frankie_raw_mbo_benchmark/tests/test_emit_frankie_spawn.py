@@ -29,6 +29,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_key_alias import (
     build_alias_table,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_staging import EXACT_LEDGERS
+from research.kalshi.frankie_raw_mbo_benchmark import native_principal_outputs as outputs
 
 
 #: The fixture mission must carry section 9a or the emitter refuses, which is the point of
@@ -555,6 +556,33 @@ class DeliveryReceiptGateTest(StopRuleTests):
         self.assertRegex(shape["delivery_receipt_sha256"], r"^[0-9a-f]{64}$")
         self.assertIn("stream receipt", shape["stream_receipt_sha256"])
         self.assertEqual(shape["evidence_read"], {name: "READ" for name in EXACT_LEDGERS})
+
+    def test_the_return_shape_carries_the_outputs_receipt_and_describes_the_bundle(self):
+        """F-25 at the ask side. `native_staging.load_principal_artifact` REFUSES a delivered
+        artifact that cites no `outputs_receipt_sha256` (OutputsBundleGateTest pins the
+        refusal against the emitter's previous text), so the return shape must ask for it
+        and the prompt must say what the bundle is - the schema, the directory, the receipt
+        file, the derived required set - from `native_principal_outputs`, the file that
+        carries it (D82), not from a description of it."""
+        text = self._emit()
+        block = text[text.index("```json"):text.index("```", text.index("```json") + 7)]
+        shape = json.loads(block.replace("```json", "").strip())
+        self.assertIn("outputs_receipt_sha256", shape)
+        self.assertIn(outputs.RECEIPT_FILENAME, shape["outputs_receipt_sha256"])
+        self.assertIn("## Your output bundle", text)
+        bundle = text[text.index("## Your output bundle"):]
+        for needle in (
+            outputs.OUTPUT_BUNDLE_SCHEMA, outputs.OUTPUT_RECEIPT_SCHEMA,
+            outputs.RECEIPT_FILENAME, outputs.LEDGERS_DIRNAME,
+            outputs.APPEND_ONLY_OUTPUTS_GROUP, outputs.SECTION_LEDGER_PREFIX,
+            outputs.RAW_MBO_CLASSIFICATION_LEDGER, outputs.KNOWLEDGE_VERIFICATION_LEDGER,
+            "append-only", "hash chain", "no count", "outputs_receipt_sha256",
+            "native_principal_outputs validate",
+        ):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, bundle)
+        # The refusal is stated where he reads the shape, beside the other refusals.
+        self.assertIn("cites a delivery receipt but no `outputs_receipt_sha256`", text)
 
     def test_the_9a_block_and_the_field_census_survive(self):
         text = self._emit()
