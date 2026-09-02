@@ -1,13 +1,13 @@
-"""DRAFT, UNVERIFIED, SALVAGED 2026-09-02 - read the note before trusting anything below.
-
-This file was written by the output-ledgers persona and left UNCOMMITTED in its worktree when
-Greg's interrupt stopped it. It has NO tests, was never run, and predates two of Greg's
-corrections that reached the persona too late: (1) there is NO floor of ten - the FULL derived
-set (registry outputs + one per contract section + 9a + knowledge verification) is required;
-(2) no hardcoded windows or horizons - timings are derived on the causal clocks, and the state
-movie must carry the book and FIFO state per cutoff. Treat as raw material for the rebuild
-(FRANKIE_WIRING_TODO_S120.md item 8), not as a module.
-"""
+# DRAFT, UNVERIFIED, SALVAGED 2026-09-02 - read this note before trusting anything below.
+#
+# Written by the output-ledgers persona and left UNCOMMITTED in its worktree when Greg's
+# interrupt stopped it. NO tests, never run, and it predates two corrections that reached the
+# persona too late: (1) there is NO floor of ten - the FULL derived set (registry outputs + one
+# per contract section + 9a classification + knowledge verification) is required, a bundle
+# missing any one is a failed spawn; (2) no hardcoded windows or horizons - timings are derived
+# on the causal clocks, and the state movie must carry the book and FIFO state per cutoff.
+# Raw material for FRANKIE_WIRING_TODO_S120.md item 8, not a module. Greg: "salvage it and
+# we'll run them in new session."
 """The principal's OUTPUT ledgers: the registry's output layers plus one per contract section.
 
 Frankie receives every record of every field for the day as a causal stream in `ts_recv_ns`
