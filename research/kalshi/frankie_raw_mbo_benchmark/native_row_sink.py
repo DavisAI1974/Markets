@@ -33,6 +33,16 @@ from pathlib import Path
 from typing import Any, Iterator, Mapping
 
 
+KEY_SAMPLE_EVERY = 97
+"""Sample one row in this many for per-FIELD byte estimates. Section totals stay exact.
+
+A prime, so a sampler stepping through rows emitted in a repeating per-group pattern cannot
+lock onto one position in that cycle and measure the same kind of row every time. With a
+round number and a group that emits, say, ten rows, every sample would be the same row of the
+group and the estimate would describe one tenth of the data while looking like all of it.
+"""
+
+
 class RowSinkError(RuntimeError):
     """A ledger could not be retained, or could not be reconciled against its counter."""
 
@@ -54,6 +64,10 @@ class RowSink:
         self._rows = 0
         self._bytes = 0
         self._closed = False
+        self._bytes_by_section: dict[str, int] = {}
+        self._rows_by_section: dict[str, int] = {}
+        self._key_bytes: dict[str, int] = {}
+        self._key_sampled_rows = 0
 
     @property
     def rows_written(self) -> int:
@@ -72,6 +86,42 @@ class RowSink:
         self._rows += 1
         self._bytes += len(encoded)
 
+        # WHICH CALCULATION IS THE SIZE? A total tells you the run is too big and nothing
+        # about what to do next. This attributes every byte to the section that emitted it,
+        # exactly, at the cost of one dict lookup per row - so "which of the sixteen is
+        # expensive" is a table rather than an opinion, and any decision to drop something
+        # starts from what it actually costs.
+        section = str(row.get("emitting_section") or row.get("section") or self.ledger)
+        self._bytes_by_section[section] = self._bytes_by_section.get(section, 0) + len(encoded)
+        self._rows_by_section[section] = self._rows_by_section.get(section, 0) + 1
+        self._sample_keys(row)
+
+    def _sample_keys(self, row: Mapping[str, Any]) -> None:
+        """Per-FIELD bytes, sampled, because the expensive thing is usually one field.
+
+        A section total says 4.x is large; it does not say the weight is one nested book
+        snapshot. This measures each top-level key, which is what a drop decision is actually
+        about - and D60 makes that a decision to bring to Greg with a number attached rather
+        than one to take quietly.
+
+        SAMPLED, and the rate is published beside the figures. Encoding every key of every row
+        costs a serialization per key per row, which is affordable on a 57,000-record day and
+        is not on a two-million-record one. An estimate labelled an estimate is honest; the
+        same number labelled exact is the failure this package keeps finding.
+        """
+        if self._rows % KEY_SAMPLE_EVERY:
+            return
+        self._key_sampled_rows += 1
+        for key, value in row.items():
+            try:
+                width = len(
+                    json.dumps({key: value}, sort_keys=True, separators=(",", ":"),
+                               allow_nan=False).encode("utf-8")
+                )
+            except (TypeError, ValueError):
+                continue
+            self._key_bytes[key] = self._key_bytes.get(key, 0) + width
+
     def close(self) -> dict[str, Any]:
         if not self._closed:
             self._handle.flush()
@@ -88,6 +138,25 @@ class RowSink:
             "sha256": self._digest.hexdigest(),
             "format": "JSONL_UTF8_SORTED_KEYS",
             "retention": "STREAMED",
+            # EXACT. Every byte written is attributed, so these sum to `bytes`, and a test
+            # asserts that they do - an attribution that does not add up to the total is a
+            # plausible table rather than a measurement.
+            "bytes_by_section": dict(sorted(self._bytes_by_section.items())),
+            "rows_by_section": dict(sorted(self._rows_by_section.items())),
+            # SAMPLED, and labelled so at the point of use. Scaled to the whole ledger by the
+            # sample rate; the raw sampled figures and the row count behind them travel with
+            # it so the estimate can be checked rather than taken.
+            "field_bytes_estimated": {
+                "sample_every_nth_row": KEY_SAMPLE_EVERY,
+                "rows_sampled": self._key_sampled_rows,
+                "basis": "sum of len(json({key: value})) over sampled rows, scaled by the rate",
+                "bytes_by_field": {
+                    key: value * KEY_SAMPLE_EVERY
+                    for key, value in sorted(
+                        self._key_bytes.items(), key=lambda item: -item[1]
+                    )
+                },
+            },
         }
 
     def reconcile(self, expected_rows: int) -> dict[str, Any]:
