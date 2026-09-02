@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 173 |
+| open | 175 |
 | in progress | 11 |
 | done | 22 |
 
-By size: **XS** 18, **S** 83, **M** 59, **L** 13
+By size: **XS** 18, **S** 84, **M** 60, **L** 13
 
 ---
 
-By tier: **ESSENTIAL** 32, **BIGGEST_WIN** 47, **REST** 105
+By tier: **ESSENTIAL** 34, **BIGGEST_WIN** 47, **REST** 105
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (32)
+## ESSENTIAL (34)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -32,6 +32,7 @@ By tier: **ESSENTIAL** 32, **BIGGEST_WIN** 47, **REST** 105
 | **F-15** | S | RECONCILE EVERY 'Average decision' LINE AGAINST WHAT THE DUAL VIEW HAS ACTUALLY EARNED | - |
 | **F-2** | S | THE OCTOBER STEP-1 SECONDS ARE THE SEALED ANSWER, AND I RECOMMENDED READING THEM | - |
 | **F-23** | S | THE SEALED-ABSENCE PROOF HAS NO PRODUCER - THE ONE GENUINELY NEW FUNCTION OF THE SEARCH | the nine sealed layers read SEALED_UNPROVEN on the Sunday crosswalk until this exists |
+| **F-29** | S | clock_lock_time IS REGISTERED AS AN INPUT LAYER (CAUSAL_STREAM_REQUIRED) WHILE IT IS FRANKIE'S OWN OUTPUT - THE SPAWN GATE CAN NEVER PASS UNTIL THIS IS RESOLVED | the gate is the whole point of item 7 and this one row makes it unpassable |
 | **F-3** | S | THE REGISTRY NAMES A SOURCE PATH FOR ALL 105 LAYERS AND NOTHING FOLLOWS THEM | - |
 | **F-5** | S | SAME/FLIP NOW CARRIES THREE INCOMPATIBLE READINGS AND ONLY GREG CAN PICK | - |
 | **M-12** | S | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | It is the gate under every data fix. Without it a session cannot tell what it actually pushed, and the next session silently inherits pre-fix stores - which is what happened between S114 and S115. |
@@ -50,6 +51,7 @@ By tier: **ESSENTIAL** 32, **BIGGEST_WIN** 47, **REST** 105
 | **F-22** | M | THE KNOWLEDGE PIPELINE EXISTS END TO END AND NOTHING ON THE SPAWN PATH CALLS IT - REGISTER THE KEEP SET AND THE SEED MEMORY IN THE EXISTING MANIFEST, PRODUCE THE RECEIPT FROM IT, WIRE THE READ GATE | 2 of 75 inputs reached him; without this the gate can never pass honestly |
 | **F-24** | M | THE SPAWN GATE (TO-DO ITEM 7): gate_applicable_inputs EXISTS AND emit() NEVER CALLS IT; NO FIXTURE PROVES IT CAN PASS HONESTLY | a gate that is not called is prose; 75 of 75 inputs were not delivered on Sunday and nothing refused |
 | **F-25** | M | THE OUTPUT LEDGERS ARE VALIDATED BY NOTHING IN PRODUCTION - load_principal_artifact, attach_principal_findings, validate_output_bundle_dir AND render_crosswalk_table ALL HAVE ZERO PRODUCTION CALLERS | his outputs are the experimental data; unvalidated they are prose |
+| **F-30** | M | THE DRIVER DROPS PER-RECORD raw_actions BEFORE THE LEDGER - A RAW-DATA DROP UNDER D60, AND THE GATE WILL REFUSE THE REAL SUNDAY RESULT ON IT | every record of every field is the ruling (D81); a dropped raw field is the S115 finding again |
 | **F-4** | M | 4.10 CANNOT BE FED BECAUSE RUNWAY IDENTITY IS PER-GROUP, NOT BECAUSE OF ITS PHASE NAMES | - |
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | M | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24. |
@@ -237,6 +239,7 @@ By tier: **ESSENTIAL** 32, **BIGGEST_WIN** 47, **REST** 105
 | **F-15** | ESSENTIAL | S | OPEN | S120 | RECONCILE EVERY 'Average decision' LINE AGAINST WHAT THE DUAL VIEW HAS ACTUALLY EARNED | - |
 | **F-2** | ESSENTIAL | S | OPEN | S117 | THE OCTOBER STEP-1 SECONDS ARE THE SEALED ANSWER, AND I RECOMMENDED READING THEM | - |
 | **F-23** | ESSENTIAL | S | IN_PROGRESS | S121 | THE SEALED-ABSENCE PROOF HAS NO PRODUCER - THE ONE GENUINELY NEW FUNCTION OF THE SEARCH | - |
+| **F-29** | ESSENTIAL | S | OPEN | S121 | clock_lock_time IS REGISTERED AS AN INPUT LAYER (CAUSAL_STREAM_REQUIRED) WHILE IT IS FRANKIE'S OWN OUTPUT - THE SPAWN GATE CAN NEVER PASS UNTIL THIS IS RESOLVED | - |
 | **F-3** | ESSENTIAL | S | OPEN | S117 | THE REGISTRY NAMES A SOURCE PATH FOR ALL 105 LAYERS AND NOTHING FOLLOWS THEM | - |
 | **F-5** | ESSENTIAL | S | OPEN | S117 | SAME/FLIP NOW CARRIES THREE INCOMPATIBLE READINGS AND ONLY GREG CAN PICK | - |
 | **M-12** | ESSENTIAL | S | OPEN | S115 | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | - |
@@ -255,6 +258,7 @@ By tier: **ESSENTIAL** 32, **BIGGEST_WIN** 47, **REST** 105
 | **F-22** | ESSENTIAL | M | IN_PROGRESS | S121 | THE KNOWLEDGE PIPELINE EXISTS END TO END AND NOTHING ON THE SPAWN PATH CALLS IT - REGISTER THE KEEP SET AND THE SEED MEMORY IN THE EXISTING MANIFEST, PRODUCE THE RECEIPT FROM IT, WIRE THE READ GATE | - |
 | **F-24** | ESSENTIAL | M | IN_PROGRESS | S121 | THE SPAWN GATE (TO-DO ITEM 7): gate_applicable_inputs EXISTS AND emit() NEVER CALLS IT; NO FIXTURE PROVES IT CAN PASS HONESTLY | - |
 | **F-25** | ESSENTIAL | M | IN_PROGRESS | S121 | THE OUTPUT LEDGERS ARE VALIDATED BY NOTHING IN PRODUCTION - load_principal_artifact, attach_principal_findings, validate_output_bundle_dir AND render_crosswalk_table ALL HAVE ZERO PRODUCTION CALLERS | - |
+| **F-30** | ESSENTIAL | M | OPEN | S121 | THE DRIVER DROPS PER-RECORD raw_actions BEFORE THE LEDGER - A RAW-DATA DROP UNDER D60, AND THE GATE WILL REFUSE THE REAL SUNDAY RESULT ON IT | - |
 | **F-4** | ESSENTIAL | M | OPEN | S117 | 4.10 CANNOT BE FED BECAUSE RUNWAY IDENTITY IS PER-GROUP, NOT BECAUSE OF ITS PHASE NAMES | - |
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | ESSENTIAL | M | OPEN | S115 | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | - |
@@ -526,6 +530,18 @@ MEASURED. The mission at :31-34 reads 'Use only F_LAST-closed native event group
 **Source:** S121 (the built-but-not-wired search, FRANKIE_BUILT_NOT_WIRED_SEARCH_S121.md)
 
 native_layer_crosswalk consumes FRANKIE_SEALED_ABSENCE_PROOF_V1 (all_absent, tokens_checked, receipt_sha256) and nothing produces it; the forbidden set is SEALED_LAYER_IDS plus source-inventory section K's objects, the Step-1 S3 prefix and schema strings; the scan-and-hard-fail pattern exists in brain_view.context_leak. Wired (built) by persona/s121-wire-knowledge-gates: sealed_object_set and prove_sealed_absent, run over the emitted prompt and every delivered and knowledge path. FALSIFIER: closed when the proof passes on a real emitted prompt and raises on an injected sealed path.
+
+---
+
+### [ESSENTIAL] F-29 - clock_lock_time IS REGISTERED AS AN INPUT LAYER (CAUSAL_STREAM_REQUIRED) WHILE IT IS FRANKIE'S OWN OUTPUT - THE SPAWN GATE CAN NEVER PASS UNTIL THIS IS RESOLVED
+
+*size S | OPEN | raised S121*
+
+**Why it is ESSENTIAL:** the gate is the whole point of item 7 and this one row makes it unpassable
+
+**Source:** S121 (the knowledge-and-gates wiring persona's report, branch persona/s121-wire-knowledge-gates at 6694770)
+
+gate_applicable_inputs refuses any arm-applicable input layer not DELIVERED; clock_lock_time sits in the causal_clocks group under CAUSAL_STREAM_REQUIRED with LAYER_PRODUCERS NO_PRODUCER_FOUND, because the lock instant is written by Frankie in output_first_locks_and_no_locks (D83). Once emit() is wired to the gate every spawn refuses regardless of fixture. Two resolutions, Greg's call under D60: (a) a computed status PRINCIPAL_STAMPED for that one record, accepted by the gate, with the pre-call stamp still reading as a disagreement (the persona's plan, reversible in one line); (b) moving the layer out of the input policies, which changes the registry's pinned policy counts and identity set. FALSIFIER: closed when an honest complete fixture passes the gate with clock_lock_time accounted for by his output ledger and the registry says so.
 
 ---
 
@@ -818,6 +834,18 @@ gate_applicable_inputs is documented as 'the gate the coordinator wires at spawn
 **Source:** S121 (the built-but-not-wired search, FRANKIE_BUILT_NOT_WIRED_SEARCH_S121.md)
 
 native_principal_outputs is complete and tested; native_staging.load_principal_artifact has no production caller and no CLI; attach_principal_findings is called only by tests; the report renders only at the staging choke point nothing reaches. Wired by persona/s121-wire-outputs-staging: staging validates the bundle directory, a read-back CLI chains load and attach, the report carries the crosswalk table, the V2 workmode handoff and first lock are re-fed from the bundle by reuse. FALSIFIER: closed when a fixture artifact with a bundle validates end to end through the CLI and a mutated ledger entry is refused.
+
+---
+
+### [ESSENTIAL] F-30 - THE DRIVER DROPS PER-RECORD raw_actions BEFORE THE LEDGER - A RAW-DATA DROP UNDER D60, AND THE GATE WILL REFUSE THE REAL SUNDAY RESULT ON IT
+
+*size M | OPEN | raised S121*
+
+**Why it is ESSENTIAL:** every record of every field is the ruling (D81); a dropped raw field is the S115 finding again
+
+**Source:** S121 (the knowledge-and-gates wiring persona's report, branch persona/s121-wire-knowledge-gates at 6694770)
+
+The crosswalk computes RECEIPTED_CARRIER_ABSENT for the nine order_lifecycle_* layers and native_acmrtfn_messages because per-record raw_actions are produced and dropped before the exact member ledger (pinned today by the crosswalk tests as structurally_absent). Under D81 the refusal is correct: the delivered ledger does not carry every field of every record. Under D60 the drop itself is the defect: a raw field that reaches our code and is not retained. Resolution is Greg's: carry raw_actions per record on the member row (ledger bytes grow; the Sunday re-run pays the re-baseline) or rule it a declared exclusion. FALSIFIER: closed when a fresh run's field census carries the per-record raw actions and the ten layers compute DELIVERED, or when a decision records the exclusion with its reason.
 
 ---
 
