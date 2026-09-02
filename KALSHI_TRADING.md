@@ -994,7 +994,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **513 files.**
+new tool cannot go unlisted. **514 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `agent_frankie.py` — Frankie hybrid agent entry point.
@@ -1158,6 +1158,7 @@ new tool cannot go unlisted. **513 files.**
 - `native_lineage.py` — Section 4.13: chain families and D-depth lineages.
 - `native_mbo_field_census.py` — Per-field census of the retained raw MBO, so the drop question can be answered at all.
 - `native_mirror.py` — Section 4.4's one mechanically defined mirror key, and the matcher that uses it.
+- `native_principal_outputs_draft_20260902.py` — The principal's OUTPUT ledgers: the registry's output layers plus one per contract section.
 - `native_queue.py` — Section 4.6: queue position, priority, and order survival.
 - `native_queue_adapter.py` — Section 4.6 from one F_LAST group: queue position, priority, order survival (D53).
 - `native_recognition.py` — Section 4.11: prebirth prediction and continuous H+N recognition.
