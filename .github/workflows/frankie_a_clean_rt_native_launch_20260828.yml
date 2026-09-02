@@ -531,7 +531,12 @@ jobs:
           # So it is computed from the slice's own record count now, not from a constant that
           # happened to fit one roster. A full-roster dispatch against a 300 GB volume is
           # REFUSED by this line, which is the correct answer and the one that was missing.
-          KIB_PER_RECORD = 215
+          # 246, and this one IS measured: the sink's own byte count over its own file,
+          # 12,301,736,545 bytes for 50,001 real records, canary run 33596898227. The 215
+          # it replaces was 232 GB of CloudWatch writes divided by a record count nobody
+          # ever read - close by luck, not by method. See
+          # research/kalshi/FRANKIE_MEASURED_LEDGER_SIZE_20260902.md.
+          KIB_PER_RECORD = 246
           HEADROOM = 1.4  # sources, the git clone, and the S3 staging copy come out of this
           required_kib = int(traverse_records * KIB_PER_RECORD * HEADROOM)
 

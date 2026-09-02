@@ -1018,6 +1018,25 @@ FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the drive
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
+**One-line state (S118):** branch `chatgpt/frankie-raw-mbo-benchmark-20260828`, **896 tests
+green. THE SIZE QUESTION IS ANSWERED AND IT IS ONE FIELD.** Measured exactly from the sink's
+own byte count over 50,001 real records (canary 33596898227): **246,030 bytes per record**,
+and **`book_full` alone is 94.7% of every byte** (11.64 GB of 12.30 GB); `exact_member_ledger`
+is 98.5%; **all sixteen calculations combined are ~1.5%, about 190 MB.** So dropping a
+calculation saves nothing - the most expensive one, `replenishment`, is 0.6% - and the D60
+conversation has exactly one subject, the per-group full book snapshot, which is the thing
+Greg already ruled must stay. **Sunday Oct 3 is 57,027 records = 14.0 GB and fits the existing
+300 GB volume; the full roster is 1,394 GB.** **FOUR OF MY NUMBERS WERE WRONG THE SAME WAY**
+(24 KB/record off a COMPRESSED artifact; 215 KB/record quoted as measured but divided by a
+record count never read; a 9:1 ratio derived from the discrepancy it explained; "key names are
+57.3%" measured on a row I invented, when real rows are ~0.1% - so **nova key aliasing saves
+essentially nothing** and D67's value is `plan_retrieval` and declared withholding, not
+compression). **THE BOX IS WEDGED**: the volume is full from the killed run, SSM cannot stage
+a script, and three independent commands - including a four-line `df` - return Failed/exit 1
+with both streams empty, while the agent pings Online and both EC2 status checks pass. A
+reboot was issued (run 33598410974) and had not resolved at last check. **The Sunday dispatch
+is built and verified but has not run.** Decisions 66 -> 68.
+
 **One-line state (S117):** branch `chatgpt/frankie-raw-mbo-benchmark-20260828`, **885 package
 tests green. THE A-CLEAN FULL ROSTER RAN FOR 2h35m AND FILLED THE 300 GB VOLUME.** Run
 33306922261 started 2026-08-30T10:38:35Z and wrote at **90 GB/h**; CloudWatch EBS write bytes
