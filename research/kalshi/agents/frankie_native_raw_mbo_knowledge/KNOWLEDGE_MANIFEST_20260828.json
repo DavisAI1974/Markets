@@ -22,7 +22,7 @@
         "A_MEMORY"
       ],
       "authority": "BINDING_CURRENT_CALCULATION_CONTRACT",
-      "bytes": 19953,
+      "bytes": 21908,
       "id": "native_calculation_contract",
       "kind": "MARKDOWN",
       "load_mode": "ALWAYS_LOAD",
@@ -30,7 +30,7 @@
       "roles": [
         "REAL_TIME_FRANKIE"
       ],
-      "sha256": "6c5a4deabe89f5a3dc40210ae2df52db824ac13ac5aa6bdf1a5c3d576dddf362"
+      "sha256": "822d2cfdf8e78bfde0566f1a67929cc81a02611193167cf94a2171364b897865"
     },
     {
       "arms": [
@@ -206,7 +206,7 @@
       "sha256": "b487acfbbea8ac8a82f42ceb555e8334057e4004740af91b9127cd2ba71e1cf8"
     }
   ],
-  "manifest_hash": "0f56364e7c3f09e62408734376d8b0ac8e25602f2638a6bfad2a194677f219d5",
+  "manifest_hash": "e9249a3ba286f393796fa1e5965ccdda521cbba3761398522b7d09a7ecd3a99b",
   "profiles": {
     "FORECASTER_A_CLEAN_REVIEW": {
       "always_load": [

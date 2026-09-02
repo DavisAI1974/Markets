@@ -2,7 +2,7 @@
 
 ## S120 — section 4.0, the per-second substrate everything ran on and nothing declared
 
-Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. **1290 tests, from 1254.**
+Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. **1388 tests after the 4.0, 4.0b and census merges, from 1254.**
 
 - **`research/kalshi/frankie_raw_mbo_benchmark/native_mbo_field_census.py`** — F-10 / mission
   9a. The raw-MBO drop question was unanswerable because nothing measured the retained
@@ -41,6 +41,45 @@ Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. **1290 tests, from 1254.**
   calculator's tests passing while the driver never calls it is S119's recorded mistake.
 - **`research/kalshi/frankie_raw_mbo_benchmark/tests/test_render_frankie_report.py`** — the
   render's tests; named here for the index, which had it tracked and unnamed.
+## S120 — section 4.0b: the selection function that creates the candidate population is governed
+
+Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`.
+
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_detector_coverage.py`** — section 4.0b,
+  detector coverage and rejection accounting: Frankie's proposal (b) from run 33605852433,
+  where **91 were promoted of 4,462 considered** and the 4,371 rejected lived in
+  `traversal.candidate_detection`, a counter block no section owned - which is what made
+  4.11's `detection_share = 1.0` unfalsifiable. It reads the detector's own integer counters
+  after every second the traversal feeds it and proves two identities at every segment close:
+  every judged second is in exactly one NAMED outcome (a residual REFUSES, never "other"), and
+  the section's totals equal the detector's counters key for key. Every detector constant
+  rides on every row; a rate is a ratio of exact counts with both integers beside it;
+  `summary()` gives 4.10-4.16 their true denominator. Fed from
+  `native_replay_driver._account_detector_second`, closed by `_retain_detector_close` after
+  `finish()`, reported as `sections_fed["4.0b_detector_seconds_accounted"]`.
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_candidate.py`** — accounting counters
+  only, no selection change: emissions are identical on 80 of 80 replays against the pristine
+  module. `seconds_judged`, `seconds_without_finite_flow`, and
+  `rejected_in_refractory_at_release` - a REAL uncounted exit, a peak judged at exactly
+  `window_open + refractory` that was outside the window's group and inside the winner's
+  shadow. The pre-existing counters summed to 289 against 290 judged seconds on the fixture
+  and fell short on 35 of 80 random streams. `counters()` and `parameters()` are the surfaces
+  4.0b reads; `summary()` keeps every key it had.
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_stratum.py`** — `CountPartition`, the
+  `COUNT_PARTITION` measure kind: exact counts over a declared, closed set of outcomes, every
+  outcome emitted even at zero, an undeclared outcome refused, no arithmetic mean formed -
+  section 3's "counts are not silently called arithmetic means" as structure.
+- **`research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md`** — gains
+  `### 4.0b` before 4.1, average decision NO. The contract is registered VAULT and hash-bound
+  into every run identity; `KNOWLEDGE_MANIFEST_20260828.json` was regenerated with
+  `refresh_native_frankie_knowledge.py` (it was already invalid on disk from the mission edit
+  at 34a0c16), and `emit_frankie_spawn` will refuse, by design, for any run bound to the
+  previous contract hash until a run binds the new one. Greg's go is the versioned event.
+- **`research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_detector_coverage.py`** — new;
+  every refusal is PRODUCED, on a real detector. `test_native_replay_driver.DetectorCoverageFedTest`
+  proves the traversal feeds the section with real promotions AND rejections and reconciles its
+  summary against `traversal.candidate_detection`; `DarkSectionRegressionTest` enumerates
+  `4.0b`. Also carried here for the index: `test_render_frankie_report.py`.
 
 ## S120 — the principal's report is a render of his findings
 
@@ -901,6 +940,7 @@ Every tracked `research/kalshi/*.py`, from git, with the opening line of its doc
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
 new tool cannot go unlisted. **502 files.**
+new tool cannot go unlisted. **504 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `agent_frankie.py` — Frankie hybrid agent entry point.
@@ -1047,6 +1087,7 @@ new tool cannot go unlisted. **502 files.**
 - `native_candidate_adapter.py` — Sections 4.10, 4.11 and 4.12 on the D66 candidate unit, as ONE vocabulary.
 - `native_clocks.py` — Section 4.5: formation, serialization, and observation clocks.
 - `native_cross_section_agreement.py` — Two sections computing one estimand cannot both be right. The gate that says so.
+- `native_detector_coverage.py` — Section 4.0b: detector coverage and rejection accounting - the denominator nobody carried.
 - `native_dipole.py` — Section 4.12: dipole and opposing-pressure runway.
 - `native_discovery.py` — Section 4.15: open-world cluster and new-structure discovery.
 - `native_evidence_bundle.py` — Lossless native-MBO evidence ledger for the Chat-controlled Frankie arms.
@@ -1096,6 +1137,7 @@ new tool cannot go unlisted. **502 files.**
 - `test_native_candidate_adapter.py` — The adapter that drives 4.10, 4.11 and 4.12 - which had no test file at all.
 - `test_native_clocks.py` — Tests for section 4.5 formation, serialization, and observation clocks."""
 - `test_native_cross_section_agreement.py` — The horizontal gate, tested against the defect that got past all eight vertical ones.
+- `test_native_detector_coverage.py` — Section 4.0b: the accounting for the search that creates the candidate population.
 - `test_native_dipole.py` — Tests for section 4.12 dipole and opposing-pressure runway."""
 - `test_native_discovery.py` — Tests for section 4.15 open-world cluster and new-structure discovery."""
 - `test_native_evidence_bundle.py` — (no docstring summary)

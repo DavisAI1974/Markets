@@ -279,6 +279,45 @@ class CausalPeakDetector:
         on the only axis this number has. Treat it as a lower bound on the warmup span, per
         detector and so per continuity segment, not as the span itself.
         """
+        # The three counters below are ACCOUNTING, added for section 4.0b. They increment on
+        # branches that already existed and change nothing about which candidates are emitted:
+        # the pristine module and this one produce byte-identical candidate lists on the same
+        # stream, which is asserted by replay rather than claimed. They exist because a judged
+        # second that leaves by an uncounted door is the D60 shape applied to a population -
+        # present in `seconds_observed`, absent from every reason, and derivable only as a
+        # residual, which is a bin called "other" under another name.
+        self.seconds_judged = 0
+        """Seconds that reached `_judge`: the population every counter here partitions.
+
+        Every judged second ends in exactly one of warm-up, no finite flow, a named rejection,
+        a pending buffer slot, or emission - the identity 4.0b asserts at every segment close.
+        It cannot be checked from `seconds_observed`, because the first and last `local_radius`
+        seconds of a segment never complete a window and are never judged at all.
+        """
+        self.seconds_without_finite_flow = 0
+        """Seconds past warm-up whose reading was NaN: the bar was live and nothing was judged.
+
+        A quiet second is NaN, not absent, and these are the seconds the search ran on and
+        found nothing to evaluate. Uncounted, they were the gap between "searched" and
+        "considered" that the principal had to derive by subtraction on run 33605852433.
+        """
+        self.rejected_in_refractory_at_release = 0
+        """Buffered peaks dropped at a window close by the WINNER's refractory. Uncounted before.
+
+        `_release_ready` keeps only pending peaks at least one refractory past the winner. A
+        peak judged in the same `observe` call that closes the window sits at exactly
+        `window_open + REFRACTORY`: outside the group, so it is not `suppressed_by_prominence`,
+        and inside the winner's shadow whenever the winner was not the window's first member,
+        so it is not kept either. It left by neither door. MEASURED before this counter
+        existed: on a 300-second fixture with peaks at 120, 134 and 165 the five rejection
+        counters plus warm-up plus emitted summed to 289 against 290 judged seconds, and on
+        35 of 80 replayed random streams the same sum fell short of the finite judged
+        population. Emissions are identical with and without the counter on all 80. It IS a
+        refractory rejection - the same rule, applied at release instead of at judgement -
+        and it is kept SEPARATE from `rejected_in_refractory` so that run 33605852433's
+        `candidate_detection` block stays comparable with the next run's on the counter it
+        already carries.
+        """
 
     # --- the pass ---------------------------------------------------------
     def observe(self, second: int, flow: float) -> list[Candidate]:
@@ -341,6 +380,7 @@ class CausalPeakDetector:
 
     def _judge(self, idx: int) -> Candidate | None:
         second, value = self._flow[idx]
+        self.seconds_judged += 1
         # Counted BEFORE the finiteness check, so the reported figure is the number of
         # seconds actually spent in warmup rather than the number of finite ones.
         if (
@@ -350,6 +390,7 @@ class CausalPeakDetector:
             self.seconds_in_warmup += 1
             return None
         if not _finite(value):
+            self.seconds_without_finite_flow += 1
             return None
         if abs(value) < ZERO_FLOW_EPSILON:
             # The frozen zero-magnitude guard. A balanced window is not a peak, and calling
@@ -448,10 +489,15 @@ class CausalPeakDetector:
             group = [c for c in self._pending if c.event_second < window_open + self.refractory]
             winner = max(group, key=lambda c: (c.prominence, c.magnitude))
             # The next window may not open until a full refractory after what was PICKED.
-            self._pending = [
+            survivors = [
                 c for c in self._pending
                 if c.event_second >= winner.event_second + self.refractory
             ]
+            # Pending peaks that were outside the group AND inside the winner's shadow leave
+            # here, and used to leave uncounted. The selection is unchanged - `survivors` is
+            # exactly what `_pending` was assigned before - only the exit is now witnessed.
+            self.rejected_in_refractory_at_release += len(self._pending) - len(group) - len(survivors)
+            self._pending = survivors
             self._last_accepted = winner.event_second
             self.suppressed_by_prominence += len(group) - 1
             self.emitted += 1
@@ -466,10 +512,15 @@ class CausalPeakDetector:
             )
         return out
 
-    def summary(self) -> dict[str, Any]:
+    def parameters(self) -> dict[str, Any]:
+        """Every constant that shapes the selection, as declared fields - the 4.0b parameter block.
+
+        A future run with a different bar, radius or refractory produces a different
+        population, and two populations under one name are what section 3 exists to keep
+        apart. The baseline and zero-flow constants are module-level and ported verbatim, so
+        they are reported from the module rather than restated, and cannot drift from it.
+        """
         return {
-            "unit": "DIPOLE_FLOW_EVENT",
-            "continuity_segment": self.continuity_segment,
             "selection_rule": self.selection_rule,
             "threshold_rule": TRAILING_QUANTILE,
             "peak_quantile": self.peak_quantile,
@@ -478,14 +529,50 @@ class CausalPeakDetector:
             "threshold_observation_cap": self.threshold_observations,
             "min_threshold_observations": self.min_threshold_observations,
             "warmup_seconds": self.warmup_seconds,
+            "baseline_start_seconds": BASELINE_START,
+            "baseline_lag_seconds": BASELINE_LAG,
+            "baseline_points": BASELINE_POINTS,
+            "prominence_rule": (
+                f"|flow| minus the median of |flow| over t-{BASELINE_START}..t-{BASELINE_LAG + 1} "
+                f"({BASELINE_POINTS} points), causal"
+            ),
+            "zero_flow_epsilon": ZERO_FLOW_EPSILON,
+        }
+
+    def counters(self) -> dict[str, int]:
+        """The exact integer accounting and nothing else - the surface section 4.0b reads.
+
+        Kept apart from `summary()` so a per-second consumer does not rebuild the prose keys
+        several hundred thousand times a day, and so the vocabulary lives in one list in one
+        place: 4.0b refuses a key here that it does not name, which is how a rejection path
+        cannot be added to this detector without also being accounted for.
+        `candidates_pending_in_window` is a GAUGE, not a counter - it is what has been judged
+        and not yet decided, and it is zero after `finish()`.
+        """
+        return {
             "seconds_observed": self._seconds_seen,
-            "candidates_emitted": self.emitted,
+            "seconds_judged": self.seconds_judged,
             "seconds_in_warmup": self.seconds_in_warmup,
-            "rejected_below_threshold": self.rejected_below_threshold,
+            "seconds_without_finite_flow": self.seconds_without_finite_flow,
             "rejected_zero_magnitude": self.rejected_zero_magnitude,
+            "rejected_below_threshold": self.rejected_below_threshold,
             "rejected_not_local_max": self.rejected_not_local_max,
             "rejected_in_refractory": self.rejected_in_refractory,
+            "rejected_in_refractory_at_release": self.rejected_in_refractory_at_release,
             "suppressed_by_prominence": self.suppressed_by_prominence,
+            "candidates_emitted": self.emitted,
+            "candidates_pending_in_window": len(self._pending),
+        }
+
+    def summary(self) -> dict[str, Any]:
+        return {
+            "unit": "DIPOLE_FLOW_EVENT",
+            "continuity_segment": self.continuity_segment,
+            # The parameter block and the counters keep every key and value `summary()` has
+            # always carried; 4.0b reads them through `parameters()` and `counters()` and the
+            # three new counters ride alongside the old ones rather than replacing any.
+            **self.parameters(),
+            **self.counters(),
             "not_the_frozen_population": (
                 "a causal bar finds a different set than the frozen whole-day quantile and a "
                 "causal selection keeps a different member of a cluster; reproducing the "

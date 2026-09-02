@@ -7,6 +7,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_stratum import (
     COMPLEMENTARY,
     QUANTILE_BASIS_EXACT,
     QUANTILE_BASIS_RESERVOIR,
+    CountPartition,
     Declaration,
     RatioPair,
     StratifiedMeasure,
@@ -224,6 +225,52 @@ class SurvivalAccumulatorTest(unittest.TestCase):
     def test_negative_time_is_refused(self) -> None:
         with self.assertRaises(StratumError):
             SurvivalAccumulator().add(-1.0, event_observed=True)
+
+
+class CountPartitionTest(unittest.TestCase):
+    """Section 3: a count is not silently an arithmetic mean, and 'other' never appears."""
+
+    def test_every_declared_outcome_is_emitted_even_at_zero(self) -> None:
+        partition = CountPartition(outcomes=("promoted", "rejected"))
+        partition.add("promoted", 3)
+        out = partition.as_dict()
+        self.assertEqual(out["counts"], {"promoted": 3, "rejected": 0})
+        self.assertEqual(out["n"], 3)
+        self.assertNotIn("arithmetic_mean", out)
+        self.assertIn("arithmetic_mean_forbidden", out)
+
+    def test_an_undeclared_outcome_is_refused_not_binned(self) -> None:
+        partition = CountPartition(outcomes=("promoted",))
+        with self.assertRaises(StratumError) as caught:
+            partition.add("other")
+        self.assertIn("refused", str(caught.exception))
+
+    def test_a_count_is_a_non_negative_int(self) -> None:
+        partition = CountPartition(outcomes=("promoted",))
+        for bad in (-1, 1.5, True):
+            with self.subTest(count=bad):
+                with self.assertRaises(StratumError):
+                    partition.add("promoted", bad)
+
+    def test_outcomes_are_declared_distinct_and_non_empty(self) -> None:
+        for bad in ((), ("a", "a"), ("",)):
+            with self.subTest(outcomes=bad):
+                with self.assertRaises(StratumError):
+                    CountPartition(outcomes=bad)
+
+    def test_the_measure_routes_the_kind_and_requires_the_declaration(self) -> None:
+        measure = StratifiedMeasure(
+            name="outcome", declaration=declaration(), kind="COUNT_PARTITION",
+            outcomes=("promoted", "rejected"),
+        )
+        measure.observe(key(), "rejected", 2)
+        row = measure.rows()[0]
+        self.assertEqual(row["kind"], "COUNT_PARTITION")
+        self.assertEqual(row["value"]["counts"], {"promoted": 0, "rejected": 2})
+        with self.assertRaises(StratumError):
+            StratifiedMeasure(name="x", declaration=declaration(), kind="COUNT_PARTITION")
+        with self.assertRaises(StratumError):
+            StratifiedMeasure(name="x", declaration=declaration(), outcomes=("a",))
 
 
 class StratifiedMeasureTest(unittest.TestCase):

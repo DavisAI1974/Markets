@@ -24,6 +24,9 @@ from typing import Any, Callable, Mapping, Sequence
 from research.kalshi.frankie_raw_mbo_benchmark.native_absorption import AbsorptionCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_book_regime import BookRegimeCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import ClockCalculator
+from research.kalshi.frankie_raw_mbo_benchmark.native_detector_coverage import (
+    DetectorCoverageCalculator,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_mirror import MirrorMatcher
 from research.kalshi.frankie_raw_mbo_benchmark.native_dipole import DipoleCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_discovery import DiscoveryCalculator
@@ -312,6 +315,11 @@ class NativeCalculationRun:
         # the section adopts it before the first row (`declare_clock`), so there is exactly
         # one place the clock is set and no second one to disagree with it.
         self.flow_substrate = FlowSubstrateCalculator(**shared)
+        # 4.0b. The selection function that creates the 4.10-4.12/4.16 population was in no
+        # section: 91 promoted of 4,462 considered on run 33605852433, and the 4,371 rejected
+        # lived in a traversal counter block nothing governed. This accounts for the detector
+        # and refuses a rejection it cannot name.
+        self.detector_coverage = DetectorCoverageCalculator(**shared)
         # D-4. 4.2 did not run at all, which left `book_full` - 10.13 GB, 93.47% of
         # the exact member ledger - with no consumer anywhere in the artifact.
         self.book_regime = BookRegimeCalculator(**shared)
@@ -374,6 +382,11 @@ class NativeCalculationRun:
             # lane are computed from. A section absent from THIS map is dark whatever else
             # is true of it (D-4, D-16), so it is registered before it is fed anywhere.
             "4.0": self.flow_substrate,
+            # 4.0b sits upstream of every candidate-unit section: it is the accounting for
+            # the search that produces their population. Absent from this map it would be
+            # D-4 and D-16 again - built, and dark - so it is registered first, and the
+            # dark-section regression test enumerates it.
+            "4.0b": self.detector_coverage,
             "4.2": self.book_regime,
             # D-16. 4.4 was absent from this map entirely - the numbering jumped 4.2 to
             # 4.5 - so even a working matcher reached neither the averages layer nor the

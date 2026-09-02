@@ -330,6 +330,56 @@ class SurvivalAccumulator:
         }
 
 
+class CountPartition:
+    """Exact counts over a DECLARED, closed set of outcomes. It cannot form a mean.
+
+    Section 3: counts and rates "are not silently called arithmetic means". The DISTRIBUTION
+    kind cannot honour that structurally - feeding it 1.0 per occurrence does yield the count
+    in `n`, but it also emits an `arithmetic_mean` of exactly 1.0 beside it, which is a mean
+    nobody asked for, on a row whose kind says it is one. So a count gets its own kind. Its
+    outcomes are declared up front; an outcome outside the declaration is REFUSED rather than
+    binned, because an open set of bins is how "other" appears; every declared outcome is
+    emitted even at zero, since a zero is a measurement and an absent key is not; and `n` is
+    the partition's population - the sum of its bins - which is what the runner's
+    `_observation_count` reads beneath a summary.
+    """
+
+    def __init__(self, *, outcomes: Sequence[str]) -> None:
+        names = tuple(outcomes)
+        if not names:
+            raise StratumError("a CountPartition declares at least one outcome")
+        if len(set(names)) != len(names):
+            raise StratumError("CountPartition outcomes must be distinct")
+        for name in names:
+            if not isinstance(name, str) or not name:
+                raise StratumError("every CountPartition outcome is a non-empty string")
+        self.outcomes = names
+        self._counts: dict[str, int] = {name: 0 for name in names}
+        self.n = 0
+
+    def add(self, outcome: str, count: int = 1) -> None:
+        if outcome not in self._counts:
+            raise StratumError(
+                f"outcome {outcome!r} is not declared; this partition is {list(self.outcomes)} "
+                "and an undeclared outcome is refused, never binned as other"
+            )
+        if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+            raise StratumError("a count is a non-negative int")
+        self._counts[outcome] += count
+        self.n += count
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "n": self.n,
+            "counts": dict(self._counts),
+            "outcomes_declared": list(self.outcomes),
+            "arithmetic_mean_forbidden": (
+                "section 3: a count is not an arithmetic mean and none is formed; a rate over "
+                "these counts is a ratio of two of them with both on the row"
+            ),
+        }
+
+
 @dataclass
 class StratifiedMeasure:
     """One declared measure accumulated independently within every stratum.
@@ -343,14 +393,23 @@ class StratifiedMeasure:
     kind: str = "DISTRIBUTION"
     exact_cap: int = EXACT_QUANTILE_CAP
     seed: int = 0
+    outcomes: tuple[str, ...] = ()
+    """COUNT_PARTITION only: the closed set of outcomes every stratum's counts partition."""
     _strata: dict[StratumKey, Any] = field(default_factory=dict, init=False, repr=False)
     _excluded: dict[StratumKey, int] = field(default_factory=dict, init=False, repr=False)
 
-    _KINDS = ("DISTRIBUTION", "RATIO_PAIR", "SURVIVAL")
+    _KINDS = ("DISTRIBUTION", "RATIO_PAIR", "SURVIVAL", "COUNT_PARTITION")
 
     def __post_init__(self) -> None:
         if self.kind not in self._KINDS:
             raise StratumError(f"kind must be one of {self._KINDS}")
+        if self.kind == "COUNT_PARTITION" and not self.outcomes:
+            raise StratumError(
+                "a COUNT_PARTITION measure declares its outcomes up front; an open set of "
+                "bins is how 'other' appears"
+            )
+        if self.kind != "COUNT_PARTITION" and self.outcomes:
+            raise StratumError("outcomes are only defined for a COUNT_PARTITION measure")
 
     def _accumulator(self, key: StratumKey) -> Any:
         if not isinstance(key, StratumKey):
@@ -360,6 +419,8 @@ class StratifiedMeasure:
                 self._strata[key] = StreamingDistribution(exact_cap=self.exact_cap, seed=self.seed)
             elif self.kind == "RATIO_PAIR":
                 self._strata[key] = RatioPair(exact_cap=self.exact_cap, seed=self.seed)
+            elif self.kind == "COUNT_PARTITION":
+                self._strata[key] = CountPartition(outcomes=self.outcomes)
             else:
                 self._strata[key] = SurvivalAccumulator()
         return self._strata[key]
