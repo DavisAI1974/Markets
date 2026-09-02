@@ -21,6 +21,13 @@ from research.kalshi.frankie_raw_mbo_benchmark.report_ledger_size import (
     ReportError,
     render_report,
 )
+from research.kalshi.frankie_raw_mbo_benchmark.native_key_alias import (
+    FORM_ALIASED,
+    FORM_PLAIN,
+    apply_aliases,
+    build_alias_table,
+    measure_key_names,
+)
 
 
 def _receipt(ledger, *, sections, fields, sample_every=97, sampled=10):
@@ -138,3 +145,74 @@ class RenderReportTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ReadSurfaceSectionTest(unittest.TestCase):
+    """The read surface is a different question from the disk, and the report must say so.
+
+    Aliasing changes `layers.averaged_companions` in the result JSON; the event-driven
+    change points change the response section's rows on disk. Reporting only the disk would
+    make a run with aliasing on look like it saved nothing, and a "net effect" of the two
+    would be an unattributable number - the shape D4 forbids, applied to bytes.
+    """
+
+    def _render(self, layer):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "calculation_result.json"
+            body = _result(layers={"averaged_companions": layer})
+            path.write_text(json.dumps(body), encoding="utf-8")
+            return render_report(path)
+
+    @staticmethod
+    def _rows(n):
+        return [
+            {"section": "4.6", "measure": "time_to_exit_ns", "kind": "SURVIVAL",
+             "stratum": {"source_day": "20211003", "session_phase": "REOPEN"},
+             "declaration": {"quantile_basis": "EXACT"},
+             "excluded_missing_members": 0,
+             "value": {"estimator": "KAPLAN_MEIER", "curve": [
+                 {"time": i, "at_risk": 9 - i, "events": 1, "censored": 0,
+                  "survival": 1.0 - i / 9} for i in range(9)]}}
+            for _ in range(n)
+        ]
+
+    def test_a_plain_run_reports_what_aliasing_would_save(self):
+        text = self._render({"rows": self._rows(12), "key_alias_form": FORM_PLAIN,
+                             "key_alias_legend": {}})
+        self.assertIn("Key alias form: **PLAIN**", text)
+        self.assertIn("Aliasing WOULD save", text)
+
+    def test_an_aliased_run_reports_what_it_DID_save_by_decoding_its_own_rows(self):
+        rows = self._rows(12)
+        table = build_alias_table(rows)
+        text = self._render({"rows": apply_aliases(rows, table),
+                             "key_alias_form": FORM_ALIASED,
+                             "key_alias_legend": table})
+        self.assertIn("Key alias form: **ALIASED**", text)
+        self.assertIn("Saved by aliasing", text)
+
+    def test_the_prediction_and_the_realization_agree_to_the_byte(self):
+        """The plain run's forecast and the aliased run's measurement are the same number.
+
+        They are computed by different routes - one applies the table to predict, the other
+        decodes what was written - so agreement is a real cross-check rather than the same
+        arithmetic printed twice. Disagreement would mean the aliaser and the estimator do
+        not describe the same operation.
+        """
+        rows = self._rows(12)
+        table = build_alias_table(rows)
+        predicted = self._render(
+            {"rows": rows, "key_alias_form": FORM_PLAIN, "key_alias_legend": {}}
+        )
+        realized = self._render(
+            {"rows": apply_aliases(rows, table), "key_alias_form": FORM_ALIASED,
+             "key_alias_legend": table}
+        )
+        saved = measure_key_names(rows)["saved_bytes"]
+        self.assertIn(f"~**{saved:,}**", predicted)
+        self.assertIn(f"**{saved:,}**", realized)
+
+    def test_an_undeclared_form_says_so_rather_than_guessing(self):
+        """An artifact from before the field cannot be read as plain by default."""
+        text = self._render({"rows": self._rows(3)})
+        self.assertIn("predates the form declaration", text)

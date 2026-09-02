@@ -27,6 +27,13 @@ import sys
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from research.kalshi.frankie_raw_mbo_benchmark.native_key_alias import (
+    FORM_ALIASED,
+    FORM_PLAIN,
+    expand_aliases,
+    measure_key_names,
+)
+
 
 class ReportError(ValueError):
     """A result could not be rendered into a size table."""
@@ -146,6 +153,42 @@ def render_report(result_path: Path | str) -> str:
     for name, size in sorted(by_field.items(), key=lambda kv: -kv[1])[:40]:
         add(f"| {name} | ~{size:,} | ~{_share(size, total_bytes)} |")
     add("")
+    add("### The READ SURFACE, which is a different question from the disk")
+    add("")
+    add("The tables above are DISK. What the principal is handed is"
+        " `layers.averaged_companions`, and it is not a ledger - so aliasing and the"
+        " event-driven change points cannot confound each other: one changes this layer in"
+        " the result JSON, the other changes the response section's rows on disk above.")
+    add("")
+    layer = (body.get("layers") or {}).get("averaged_companions") or {}
+    rows = layer.get("rows") or []
+    form = layer.get("key_alias_form", "UNDECLARED")
+    compact = len(json.dumps(rows, separators=(",", ":"), sort_keys=True))
+    add(f"- Averaged companion rows: **{len(rows):,}**")
+    add(f"- Key alias form: **{form}**")
+    add(f"- Compact bytes as written: **{compact:,}**")
+    if form == FORM_ALIASED:
+        legend = layer.get("key_alias_legend") or {}
+        plain = expand_aliases(rows, legend)
+        plain_bytes = len(json.dumps(plain, separators=(",", ":"), sort_keys=True))
+        add(f"- The same rows unaliased would be: **{plain_bytes:,}**")
+        add(f"- Saved by aliasing: **{plain_bytes - compact:,}** "
+            f"({_share(plain_bytes - compact, plain_bytes)})")
+        add(f"- Names aliased: {len(legend)}")
+        add("")
+        add("  Measured on this run's own rows by decoding them, not extrapolated. The"
+            " legend travels in the same layer, so the saving is reversible and nothing is"
+            " dropped - it is a renaming.")
+    elif form == FORM_PLAIN:
+        report = measure_key_names(rows)
+        add(f"- Key names are **{report['key_name_share']:.1%}** of it")
+        add(f"- Aliasing WOULD save ~**{report['saved_bytes']:,}** "
+            f"({report['saving_share']:.1%}), unapplied on this run")
+    else:
+        add("- This artifact predates the form declaration, so which form it is in cannot"
+            " be read off it. That is why the field is stamped even when PLAIN.")
+    add("")
+
     add("Nothing here is a recommendation to drop anything. D60: a row is USED, or RETAINED"
         " and counted, or REFUSED loudly, and what to drop is discussed before it is done."
         " This says only what each thing costs.")
