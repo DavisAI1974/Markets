@@ -178,6 +178,11 @@ class RunwayPhase:
     depletion: int = 0
     refill: int = 0
     absorption: int = 0
+    # How many groups contributed to the two figures above. F-29 caught 4.7 attributing each
+    # refill to EVERY pending episode - 18.18 attributions per episode - with the
+    # multiplicity invisible in the ratio it produced. The same shape is possible here
+    # whenever runways overlap, so the count is carried rather than left to be inferred.
+    liquidity_attributions: int = 0
 
     @property
     def duration_ns(self) -> int | None:
@@ -194,6 +199,7 @@ class RunwayPhase:
             "depletion": self.depletion,
             "refill": self.refill,
             "absorption": self.absorption,
+            "liquidity_attributions": self.liquidity_attributions,
         }
 
 
@@ -352,6 +358,9 @@ class ExhaustionCalculator:
         self.opened = 0
         self.completed_count = 0
         self.censored_count = 0
+        # Run-level total of the per-phase counter, so the artifact can state the
+        # attribution multiplicity outright instead of leaving a reader to derive it.
+        self.liquidity_attributions = 0
         self.open_world_states: set[str] = set()
 
     @property
@@ -441,6 +450,37 @@ class ExhaustionCalculator:
     def note_recurrence(self, candidate_id: str) -> None:
         self._require(candidate_id).recurrences += 1
 
+    def note_liquidity(self, candidate_id: str, *, depletion: int, refill: int) -> None:
+        """Fold one group's displayed depletion and refill into the runway's current phase.
+
+        D-2. `RunwayPhase.depletion` and `.refill` were dataclass fields defaulting to 0 that
+        NOTHING ever wrote, so both read exactly 0.0 at every quantile in all 109 strata over
+        344 observations, with zero exclusions and a declared rule of "no exclusions" - a
+        measure that ran and was handed zeros. It is why no runway on the whole run could be
+        described in terms of liquidity consumption.
+
+        The quantities come from 4.8's own per-group fields: depletion is traded plus
+        withdrawn, refill is the added quantity. They are summed into the phase rather than
+        averaged, because a phase's consumption is a total and its length is already a
+        separate measure.
+
+        A runway with no current phase is REFUSED, not skipped: liquidity arriving for a
+        runway that is between phases is a wiring error, and swallowing it is how a zero
+        comes to look like a measurement.
+        """
+        runway = self._require(candidate_id)
+        phase = runway.current_phase
+        if phase is None:
+            raise ExhaustionError(
+                f"runway {candidate_id} has no open phase to attribute liquidity to"
+            )
+        if depletion < 0 or refill < 0:
+            raise ExhaustionError("displayed depletion and refill are quantities, never signed")
+        phase.depletion += int(depletion)
+        phase.refill += int(refill)
+        phase.liquidity_attributions += 1
+        self.liquidity_attributions += 1
+
     def _close(self, runway: ExhaustionRunway, *, status: str, recv_ns: int) -> dict[str, Any]:
         current = runway.current_phase
         if current is not None and current.exited_recv_ns is None:
@@ -508,6 +548,9 @@ class ExhaustionCalculator:
             "censored": self.censored_count,
             "still_open": self.open_runway_count,
             "open_world_state_count": len(self.open_world_states),
+            # D-2 / F-29. Stated, so a reader can see how many groups fed each runway
+            # phase rather than deriving the multiplicity from the ratios it produced.
+            "liquidity_attributions": self.liquidity_attributions,
             "discovered_named_states": sorted(DISCOVERED_NAMED_STATES),
             "discovered_phases": {k: v["position"] for k, v in sorted(DISCOVERED_PHASES.items())},
             "carried_seed_count": len(SEED_STATES),

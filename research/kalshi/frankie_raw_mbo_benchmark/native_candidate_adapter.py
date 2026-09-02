@@ -258,7 +258,17 @@ class CandidateEpisodeTracker:
             # a content-addressed open-world identity from it.
             observed_shape=self._observed_shape(candidate),
         )
-        self.exhaustion.enter_phase(candidate.candidate_id, SEARCHED, birth_ns)
+        # D-11. SEARCHED was entered AND left at `birth_ns`, so its duration was exactly 0.0
+        # for all 91 candidates - min = max = 0 - and the phase the contract names first
+        # carried no information anywhere in the run. The searched interval is the trailing
+        # window the detector actually consulted, it was already computed and passed one line
+        # above as `searched_coverage_ns`, and it ENDS at the birth. So it begins that far
+        # before it. That is earlier than `opened_recv_ns`, correctly: the runway opens when
+        # the candidate is born, while the evidence for the birth was gathered beforehand.
+        searched_ns = candidate.searched_span_seconds * NS_PER_SECOND
+        self.exhaustion.enter_phase(
+            candidate.candidate_id, SEARCHED, birth_ns - searched_ns
+        )
         self.exhaustion.enter_phase(candidate.candidate_id, BIRTH, birth_ns)
 
         record = CandidateRecognition(
@@ -394,6 +404,53 @@ class CandidateEpisodeTracker:
                 emitted.append(self._close(episode, recv_ns, REVERSAL))
                 self.episodes_reversed += 1
         return emitted
+
+    def note_group_liquidity(self, *, side: str, depletion: int, refill: int) -> int:
+        """Attribute one group's displayed depletion and refill to the runways it belongs to.
+
+        D-2. Attribution is limited to episodes on the SAME side, because a bid-side runway's
+        consumption is not measured by asks being pulled - and an unsided group ("N") is
+        attributed to none, on the same reasoning that keeps it out of the ladder: assigning
+        it to a side would fabricate one the tape declined to state.
+
+        Returns how many runways received it, so overlap is a number the caller can carry
+        rather than a multiplicity hidden inside a total. F-29 is the standing warning here:
+        4.7 attributed every refill to every pending episode, 18.18 times over, and the ratio
+        it produced named none of it.
+        """
+        if side not in ("B", "A") or (depletion == 0 and refill == 0):
+            return 0
+        attributed = 0
+        for episode in self._open.values():
+            if episode.candidate.polarity == 0:
+                continue
+            episode_side = "B" if episode.candidate.polarity > 0 else "A"
+            if episode_side != side:
+                continue
+            self.exhaustion.note_liquidity(
+                episode.candidate.candidate_id, depletion=depletion, refill=refill
+            )
+            attributed += 1
+        return attributed
+
+    def note_structure_recurrence(self, family_id: str) -> int:
+        """A group of family F closed while a runway opened on family F is still running.
+
+        D-11. `recurrence_count` was min = max = 0.0 in all 28 strata over all 91 candidates,
+        because `ExhaustionCalculator.note_recurrence` existed and nothing called it. This is
+        the call: 4.14's own question - did this structure happen again - answered against the
+        runways that are open when it does.
+
+        Returns how many runways were notified, so a family with several concurrent runways
+        is a stated multiplicity rather than a hidden one.
+        """
+        notified = 0
+        for episode in self._open.values():
+            if episode.family_id != family_id:
+                continue
+            self.exhaustion.note_recurrence(episode.candidate.candidate_id)
+            notified += 1
+        return notified
 
     def _close(self, episode: _Episode, recv_ns: int, phase: str) -> dict[str, Any]:
         self.exhaustion.enter_phase(episode.candidate.candidate_id, phase, recv_ns)

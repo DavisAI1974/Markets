@@ -174,3 +174,74 @@ class RecurrenceCalculatorTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SamePathRecurrenceTest(unittest.TestCase):
+    """D-6. The section charged with recurrence was measuring serialization.
+
+    `interarrival_gap_ns` was byte-for-byte 4.5's `within_group_receive_gap_ns` - both
+    n=13,458, both summing to 10,437,153,281,209 ns - because `observe_sequence` is called
+    once per group with that group's own components as the occurrences. Meanwhile 19,625
+    order paths recurred across groups and received no averaged companion at all.
+    """
+
+    def setUp(self) -> None:
+        self.calc = RecurrenceCalculator()
+
+    def _group(self, *occurrences):
+        return self.calc.observe_sequence(list(occurrences), **CTX)
+
+    def test_a_path_recurring_across_groups_is_measured(self) -> None:
+        self._group(occ("A", 1_000, order_id=7))
+        self._group(occ("A", 4_000, order_id=7))
+        row = next(r for r in self.calc.companion_rows()
+                   if r["measure"] == "same_path_interarrival_gap_ns" and r["value"]["n"])
+        self.assertEqual(row["value"]["maximum"], 3_000.0)
+
+    def test_it_is_not_the_within_group_gap(self) -> None:
+        """The two must not report the same number, which is the whole defect."""
+        self._group(occ("A", 1_000, order_id=7), occ("A", 1_900, order_id=8))
+        self._group(occ("A", 5_000, order_id=7))
+        rows = {}
+        for r in self.calc.companion_rows():
+            if r["value"]["n"]:
+                rows.setdefault(r["measure"], []).append(r["value"])
+        within = {v["maximum"] for v in rows["interarrival_gap_ns"]}
+        across = {v["maximum"] for v in rows["same_path_interarrival_gap_ns"]}
+        self.assertEqual(within, {900.0}, "spacing of components inside one group")
+        self.assertEqual(across, {4000.0}, "spacing of one path's own occurrences")
+
+    def test_a_first_occurrence_is_excluded_not_recorded_as_a_zero_gap(self) -> None:
+        self._group(occ("A", 1_000, order_id=7))
+        row = next(r for r in self.calc.companion_rows()
+                   if r["measure"] == "same_path_interarrival_gap_ns")
+        self.assertEqual(row["value"]["n"], 0)
+        self.assertEqual(row["excluded_missing_members"], 1)
+        self.assertEqual(self.calc.summary()["same_path_first_occurrences"], 1)
+
+    def test_a_gap_across_a_continuity_boundary_is_excluded(self) -> None:
+        """The interval was never observed; reporting it would claim a measurement."""
+        self._group(occ("A", 1_000, segment=0, order_id=7))
+        self._group(occ("A", 9_000, segment=1, order_id=7))
+        self.assertEqual(self.calc.summary()["same_path_boundary_breaks"], 1)
+        populated = [r for r in self.calc.companion_rows()
+                     if r["measure"] == "same_path_interarrival_gap_ns" and r["value"]["n"]]
+        self.assertEqual(populated, [])
+
+    def test_an_anonymous_occurrence_carries_no_path_and_is_not_invented_one(self) -> None:
+        """No observation AND no exclusion - an order path that does not exist is neither.
+
+        Same reading 4.13 already takes on anonymous rows: a book with no order ids carries
+        no lineage to observe, which is an absence rather than a zero. Counting these as
+        exclusions would imply a path was expected and went missing.
+        """
+        self._group(occ("A", 1_000), occ("A", 2_000))
+        rows = [r for r in self.calc.companion_rows()
+                if r["measure"] == "same_path_interarrival_gap_ns"]
+        self.assertEqual(rows, [])
+        self.assertEqual(self.calc.summary()["same_path_first_occurrences"], 0)
+
+    def test_a_path_recurring_before_its_own_previous_occurrence_is_refused(self) -> None:
+        self._group(occ("A", 9_000, order_id=7))
+        with self.assertRaises(RecurrenceError):
+            self._group(occ("A", 1_000, order_id=7))

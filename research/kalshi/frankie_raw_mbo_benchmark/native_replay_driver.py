@@ -207,6 +207,14 @@ class DriverCounters:
     ladder_transitions_fed: int = 0
     """4.9 side transitions folded in - zero, one or two per group, never a fixed multiple."""
     absorption_runways: int = 0
+    # D-2. How many (group, open runway) pairs contributed liquidity. Overlapping
+    # runways each receive the same group, so this exceeds the group count and the
+    # excess IS the attribution multiplicity - stated, per F-29, never inferred.
+    runway_liquidity_attributions: int = 0
+    # D-11. How many (recurring group, open runway of that family) pairs were
+    # notified. Zero here means the structures that recur and the structures
+    # runways open on are disjoint, which is itself a finding.
+    runway_structure_recurrences: int = 0
     """4.8 runways scored. One per group under D53, where the runway IS the F_LAST group."""
     lineage_nodes_added: int = 0
     """4.13 nodes added to the live graph. Rises only when a group touches a NEW order id."""
@@ -896,6 +904,12 @@ class NativeReplayDriver:
             occasion="GROUP_CLOSE",
         )
         self.counters.recurrence_sequences += 1
+        # D-11. 4.14 has just said this structure occurred; 4.10 has runways open on it. The
+        # calculator's `note_recurrence` existed and nothing ever called it, so
+        # `recurrence_count` was min = max = 0.0 in all 28 strata over all 91 candidates.
+        self.counters.runway_structure_recurrences += (
+            self.episodes.note_structure_recurrence(ctx.family_id)
+        )
 
         # --- 4.9 ladder. D-5: on the reconstructed book this is one transition per SIDE,
         # both of them, whether or not the group touched them; only the group-local fallback
@@ -928,6 +942,15 @@ class NativeReplayDriver:
 
         # --- 4.8 absorption: under D53 the runway IS this F_LAST group.
         opened_recv_ns = min(_row_recv_ns(row, ctx.recv_ns) for row in actions)
+        pressure = runway_pressure_fields(actions, ctx)
+        # D-2. 4.10's phase_depletion and phase_refill were fields nothing ever wrote, so both
+        # read exactly 0.0 in all 109 strata. The quantities are right here, already computed
+        # for 4.8: depletion is traded plus withdrawn, refill is what was added.
+        self.counters.runway_liquidity_attributions += self.episodes.note_group_liquidity(
+            side=ctx.side_orientation,
+            depletion=pressure["traded_quantity"] + pressure["withdrawn_quantity"],
+            refill=pressure["surviving_depth"],
+        )
         self._retain_lifecycle(
             [
                 self.run.absorption.score(
@@ -942,7 +965,7 @@ class NativeReplayDriver:
                         session_phase=ctx.session_phase,
                         opened_recv_ns=opened_recv_ns,
                         closed_recv_ns=ctx.recv_ns,
-                        **runway_pressure_fields(actions, ctx),
+                        **pressure,
                     )
                 )
             ],

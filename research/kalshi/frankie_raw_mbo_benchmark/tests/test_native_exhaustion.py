@@ -217,3 +217,64 @@ class RunwayTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LiquidityAndRecurrenceTest(unittest.TestCase):
+    """D-2 and D-11: four of 4.10's six measures carried no information at all.
+
+    `phase_depletion` and `phase_refill` were 0.0 at every quantile in all 109 strata over
+    344 observations with zero exclusions, and `recurrence_count` was min = max = 0.0 in all
+    28. None of them was broken arithmetic - they were fields and a method that nothing ever
+    wrote to or called, so each measure ran perfectly and reported a zero.
+    """
+
+    def setUp(self) -> None:
+        self.calc = ExhaustionCalculator()
+
+    def test_liquidity_reaches_the_phase_it_was_consumed_in(self) -> None:
+        runway = self.calc.open_runway(**open_kwargs())
+        self.calc.enter_phase("c1", BIRTH, 1_500)
+        self.calc.note_liquidity("c1", depletion=30, refill=12)
+        self.calc.note_liquidity("c1", depletion=5, refill=0)
+        phase = runway.current_phase
+        self.assertEqual((phase.depletion, phase.refill), (35, 12))
+        self.assertEqual(phase.liquidity_attributions, 2)
+
+    def test_the_phase_measures_carry_the_quantity_not_a_zero(self) -> None:
+        self.calc.open_runway(**open_kwargs())
+        self.calc.enter_phase("c1", BIRTH, 1_500)
+        self.calc.note_liquidity("c1", depletion=30, refill=12)
+        self.calc.enter_phase("c1", PERSISTENCE, 2_000)
+        rows = {r["measure"]: r for r in self.calc.companion_rows()}
+        self.assertEqual(rows["phase_depletion"]["value"]["maximum"], 30.0)
+        self.assertEqual(rows["phase_refill"]["value"]["maximum"], 12.0)
+
+    def test_liquidity_for_a_runway_between_phases_is_refused_not_swallowed(self) -> None:
+        """Swallowing it is how a zero comes to look like a measurement."""
+        self.calc.open_runway(**open_kwargs())
+        with self.assertRaises(ExhaustionError):
+            self.calc.note_liquidity("c1", depletion=10, refill=0)
+
+    def test_a_signed_quantity_is_refused(self) -> None:
+        self.calc.open_runway(**open_kwargs())
+        self.calc.enter_phase("c1", BIRTH, 1_500)
+        with self.assertRaises(ExhaustionError):
+            self.calc.note_liquidity("c1", depletion=-10, refill=0)
+
+    def test_the_attribution_multiplicity_is_stated_at_run_level(self) -> None:
+        """F-29's standing warning: 4.7 attributed 18.18 times over and named none of it."""
+        self.calc.open_runway(**open_kwargs())
+        self.calc.open_runway(**open_kwargs(candidate_id="c2"))
+        for cid in ("c1", "c2"):
+            self.calc.enter_phase(cid, BIRTH, 1_500)
+            self.calc.note_liquidity(cid, depletion=7, refill=1)
+        self.assertEqual(self.calc.summary()["liquidity_attributions"], 2)
+
+    def test_recurrences_reach_the_recurrence_measure(self) -> None:
+        self.calc.open_runway(**open_kwargs())
+        self.calc.enter_phase("c1", BIRTH, 1_500)
+        self.calc.note_recurrence("c1")
+        self.calc.note_recurrence("c1")
+        self.calc.complete("c1", recv_ns=3_000)
+        rows = {r["measure"]: r for r in self.calc.companion_rows()}
+        self.assertEqual(rows["recurrence_count"]["value"]["maximum"], 2.0)

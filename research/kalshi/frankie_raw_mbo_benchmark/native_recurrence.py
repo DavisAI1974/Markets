@@ -209,18 +209,43 @@ class RecurrenceCalculator:
         )
         self.interarrival_gap = measure(
             "interarrival_gap_ns",
-            "exact receive-time gap between consecutive occurrences in one segment",
+            "exact receive-time gap between consecutive occurrences WITHIN one group",
             "gaps spanning a continuity boundary are excluded and counted",
+        )
+        # D-6. THE SECTION CHARGED WITH "THIS STRUCTURE HAPPENED AGAIN" WAS MEASURING
+        # SERIALIZATION. `interarrival_gap_ns` was byte-for-byte 4.5's
+        # `within_group_receive_gap_ns` - both n=13,458, both summing to
+        # 10,437,153,281,209 ns, both peaking at the same reopen-snapshot value - because
+        # `observe_sequence` is called once per group with that group's own components as the
+        # occurrences. The spacing of components inside one group is how a single event was
+        # serialized onto the wire; it is not a recurrence of anything.
+        #
+        # The real recurrence population was in the same object the whole time and had no
+        # averaged companion: `same_order_paths` counted 21,651 order paths of which 19,625
+        # recurred. This measures the gap between consecutive occurrences of the SAME path,
+        # ACROSS groups, which is the quantity the section's own name promises.
+        self.same_path_gap = measure(
+            "same_path_interarrival_gap_ns",
+            "receive-time gap between consecutive occurrences of one order path, across groups",
+            "a path's first occurrence has no predecessor and is excluded and counted; gaps "
+            "spanning a continuity boundary are excluded and counted",
         )
 
         self.graph = TransitionGraph()
         self.occurrences_seen = 0
         self.boundary_restarts = 0
         self.same_order_paths: dict[int, int] = {}
+        # Where each order path was last seen, so a cross-group gap can be measured at all.
+        # Keyed by order id; the value carries the segment so a boundary crossing is
+        # excluded rather than reported as an enormous gap.
+        self._last_seen: dict[int, tuple[int, int]] = {}
+        self.same_path_first_occurrences = 0
+        self.same_path_boundary_breaks = 0
 
     @property
     def measures(self) -> tuple[StratifiedMeasure, ...]:
-        return (self.run_length, self.run_duration, self.interarrival_gap)
+        return (self.run_length, self.run_duration, self.interarrival_gap,
+                self.same_path_gap)
 
     @staticmethod
     def _key(
@@ -287,10 +312,32 @@ class RecurrenceCalculator:
                 self.interarrival_gap.exclude_missing(key_for(current.node, current.continuity_segment))
 
         for occurrence in occurrences:
-            if occurrence.order_id is not None:
-                self.same_order_paths[occurrence.order_id] = (
-                    self.same_order_paths.get(occurrence.order_id, 0) + 1
-                )
+            if occurrence.order_id is None:
+                continue
+            self.same_order_paths[occurrence.order_id] = (
+                self.same_order_paths.get(occurrence.order_id, 0) + 1
+            )
+            path_key = key_for(occurrence.node, occurrence.continuity_segment)
+            previous_seen = self._last_seen.get(occurrence.order_id)
+            if previous_seen is None:
+                # A path's first sighting has no predecessor to be spaced from. Counted as
+                # an exclusion rather than as a zero gap, which would be a measurement.
+                self.same_path_gap.exclude_missing(path_key)
+                self.same_path_first_occurrences += 1
+            elif previous_seen[0] != occurrence.continuity_segment:
+                self.same_path_gap.exclude_missing(path_key)
+                self.same_path_boundary_breaks += 1
+            else:
+                gap = occurrence.recv_ns - previous_seen[1]
+                if gap < 0:
+                    raise RecurrenceError(
+                        f"order path {occurrence.order_id} recurs before its own previous "
+                        "occurrence; the receive clock cannot run backwards"
+                    )
+                self.same_path_gap.observe(path_key, float(gap))
+            self._last_seen[occurrence.order_id] = (
+                occurrence.continuity_segment, occurrence.recv_ns
+            )
 
         return {
             "runs": [r.as_dict() for r in runs],
@@ -314,6 +361,16 @@ class RecurrenceCalculator:
             "boundary_restarts": self.boundary_restarts,
             "same_order_paths": len(self.same_order_paths),
             "multi_occurrence_order_paths": multi_stage,
+            # D-6. The two gap measures answer different questions and are never one
+            # number: within-group spacing is serialization, same-path spacing is
+            # recurrence. The first was previously reported under the second's name.
+            "same_path_first_occurrences": self.same_path_first_occurrences,
+            "same_path_boundary_breaks": self.same_path_boundary_breaks,
+            "gap_measure_note": (
+                "interarrival_gap_ns is WITHIN one group and is a serialization "
+                "measure; same_path_interarrival_gap_ns is between occurrences of one "
+                "order path across groups and is the recurrence measure"
+            ),
             "transition_edges": self.graph.rows(),
             "canonical_evidence": "THRESHOLD_FREE_EXACT_GAPS",
             "burst_note": (
