@@ -33,10 +33,87 @@ HORIZON = "H+N"
 VALID_RECOGNITION = frozenset({PRIOR, T0, HORIZON})
 
 F_LAST_FLAG = 128
+EVENT_CLOCK = "ts_event_ns"
 
 
 class ClockError(ValueError):
     """A group could not be measured on the declared clocks."""
+
+
+# S121 item one (D83): the registry's `causal_clocks` group, produced BY NAME on every member
+# row. The delivery receipt named all seven layer ids as delivered with the member line's hash
+# as each one's evidence, while no field on the row was keyed by any of them. Delivered-by-hash
+# and findable-by-name are different facts; these are the names, in the registry's own order,
+# and `test_the_seven_ids_are_exactly_the_registrys_causal_clocks_group` reads them back from
+# the JSON so a drift between the two fails.
+CLOCK_EVENT_TIME = "clock_event_time"
+CLOCK_RECEIVE_TIME = "clock_receive_time"
+CLOCK_EVENT_KNOWN_BY = "clock_event_known_by"
+CLOCK_FEATURE_AVAILABILITY = "clock_feature_availability"
+CLOCK_PROSPECTIVE_DISCOVERY_CONFIRMATION = "clock_prospective_discovery_confirmation"
+CLOCK_MODEL_EVALUATION = "clock_model_evaluation"
+CLOCK_LOCK_TIME = "clock_lock_time"
+CAUSAL_CLOCK_LAYER_IDS: tuple[str, ...] = (
+    CLOCK_EVENT_TIME,
+    CLOCK_RECEIVE_TIME,
+    CLOCK_EVENT_KNOWN_BY,
+    CLOCK_FEATURE_AVAILABILITY,
+    CLOCK_PROSPECTIVE_DISCOVERY_CONFIRMATION,
+    CLOCK_MODEL_EVALUATION,
+    CLOCK_LOCK_TIME,
+)
+CAUSAL_CLOCKS_CARRIER = "member_row.causal_clocks"
+
+# The bases. Short, because they ride on every row; the prose behind each lives ONCE in
+# `CAUSAL_CLOCK_DECLARATIONS` and is rendered into the 4.5 summary, never repeated per row.
+BASIS_OBSERVED_ON_THE_RECORD = "OBSERVED_ON_THE_RECORD"
+BASIS_F_LAST_RECEIVE_OF_THE_GROUP = "F_LAST_RECEIVE_OF_THE_GROUP"
+FEATURE_BASIS_REPLAY_EARLIEST = "REPLAY_EARLIEST_LAWFUL_AVAILABILITY"
+FEATURE_BASIS_OBSERVED = "OBSERVED_COMPUTATION_INSTANT"
+FEATURE_SCOPE_MEMBER_ROW = "MEMBER_ROW_DERIVED_BLOCKS"
+DISCOVERY_BASIS_NONE = "NO_RECOGNITION_EMITTED_AT_THIS_CUTOFF"
+DISCOVERY_BASIS_EMITTED = "RECOGNITIONS_EMITTED_AT_THIS_CUTOFF"
+EVALUATION_BASIS_NONE = "NO_INVOCATION_AT_THIS_CUTOFF"
+EVALUATION_BASIS_STAGED = "PRINCIPAL_INVOCATION_STAGED_AT_THIS_CUTOFF"
+LOCK_BASIS_PRINCIPAL = "STAMPED_BY_THE_PRINCIPAL_FIRST_LOCK"
+NOT_ON_THIS_ROW = "NOT_ON_THIS_ROW"
+"""A ledger written before this build carries the five-field `clocks` object and nothing
+keyed by a registry id. What that object can support is derived; what it cannot is said."""
+
+CAUSAL_CLOCK_DECLARATIONS: dict[str, str] = {
+    CLOCK_EVENT_TIME: (
+        "ts_event of every DBN record as received; the group carries its first and F_LAST "
+        "component event times. Nothing is computed."
+    ),
+    CLOCK_RECEIVE_TIME: (
+        "ts_recv of every record; the package's causal clock, on which the stream is ordered. "
+        "The group carries its first and F_LAST component receive times."
+    ),
+    CLOCK_EVENT_KNOWN_BY: (
+        "the receive time of the record carrying F_LAST: the first instant a completed group is "
+        "lawfully knowable (contract section 2). Equal to clocks.first_lawful_availability_ns."
+    ),
+    CLOCK_FEATURE_AVAILABILITY: (
+        "the instant the row's derived blocks were computed on the causal prefix ending at "
+        "this F_LAST. A replay has no such instant to observe, so the earliest lawful one is "
+        "adopted and the basis says so; max_contributing_ts_recv_ns names the latest input "
+        "consumed and may never exceed feature_cutoff_ts_recv_ns."
+    ),
+    CLOCK_PROSPECTIVE_DISCOVERY_CONFIRMATION: (
+        "the F_LAST cutoff at which 4.11 actually emitted each PRIOR / T0 / H+N call, beside "
+        "the instant at which the call was knowable (recognized_recv_ns, on the candidate "
+        "lane's clock). Two instants the code used to collapse into one."
+    ),
+    CLOCK_MODEL_EVALUATION: (
+        "the receive-clock cutoff of the group at which the principal is staged to be invoked; "
+        "stamped by the driver when the cadence fires and carried into the spawn request's "
+        "cutoff as clock_model_evaluation_ns. Null with a declared basis otherwise."
+    ),
+    CLOCK_LOCK_TIME: (
+        "the cutoff at which the principal writes FIRST_LOCK. His act, not the tape's: the "
+        "traversal carries the declared null and his first-lock ledger stamps the value."
+    ),
+}
 
 
 def clock_subfamily(channel_id: int, component_count: int) -> str:
@@ -140,6 +217,7 @@ def member_clock_row(
     session_phase: str,
     decision_ts_recv_ns: int | None = None,
     decision_basis: str = DECISION_BASIS_REPLAY_EARLIEST,
+    feature_computed_at_ns: int | None = None,
 ) -> dict[str, Any]:
     """The exact per-member clock record. Section 3 requires this before any average.
 
@@ -214,7 +292,231 @@ def member_clock_row(
         "sequence_contiguous": sequences == list(range(sequences[0], sequences[0] + len(sequences))),
         "channel_count": len(channels),
         "single_channel_group": len(channels) == 1,
+        # S121 item one: the seven registry clocks BY NAME, beside the five-field object the
+        # stream and the registry validator read. Beside, never inside.
+        "causal_clocks": causal_clock_layers(
+            event_ns=event, recv_ns=recv, feature_computed_at_ns=feature_computed_at_ns
+        ),
     }
+
+
+def causal_clock_layers(
+    *,
+    event_ns: Sequence[int],
+    recv_ns: Sequence[int],
+    feature_computed_at_ns: int | None = None,
+) -> dict[str, dict[str, Any]]:
+    """The seven registry clocks for one F_LAST-closed group, from its component instants.
+
+    Five are the stream's and are filled here. The other two are acts - of the spawn
+    (`stamp_model_evaluation`) and of the principal (his first lock) - and are declared null
+    with a basis until the act happens; a null with a basis is a different fact from a zero.
+    """
+    if not recv_ns or len(recv_ns) != len(event_ns):
+        raise ClockError("a group needs one event and one receive instant per component")
+    recv = [int(value) for value in recv_ns]
+    event = [int(value) for value in event_ns]
+    known_by = recv[-1]
+    # The Step-1 idea (`max_contributing_ts_recv_ns` / `feature_cutoff_ts_recv_ns`), not its
+    # code: the derived blocks consumed these components and nothing later, so the latest
+    # input consumed can never exceed the cutoff the features were computed at.
+    max_contributing = max(recv)
+    if feature_computed_at_ns is None:
+        feature_ns, feature_basis = known_by, FEATURE_BASIS_REPLAY_EARLIEST
+    else:
+        feature_ns, feature_basis = int(feature_computed_at_ns), FEATURE_BASIS_OBSERVED
+        if feature_ns < known_by:
+            raise ClockError(
+                f"{CLOCK_FEATURE_AVAILABILITY} {feature_ns} precedes {CLOCK_EVENT_KNOWN_BY} "
+                f"{known_by}; a feature cannot be available before the group is knowable"
+            )
+    if max_contributing > feature_ns:
+        raise ClockError(
+            f"max_contributing_ts_recv_ns {max_contributing} exceeds the feature cutoff "
+            f"{feature_ns}; a derived block consumed an input after it was computed"
+        )
+    return {
+        CLOCK_EVENT_TIME: {
+            "clock": EVENT_CLOCK,
+            "first_component_ns": event[0],
+            "f_last_ns": event[-1],
+            "basis": BASIS_OBSERVED_ON_THE_RECORD,
+        },
+        CLOCK_RECEIVE_TIME: {
+            "clock": CAUSAL_CLOCK,
+            "first_component_ns": recv[0],
+            "f_last_ns": known_by,
+            "basis": BASIS_OBSERVED_ON_THE_RECORD,
+        },
+        CLOCK_EVENT_KNOWN_BY: {
+            "clock": CAUSAL_CLOCK,
+            "value_ns": known_by,
+            "basis": BASIS_F_LAST_RECEIVE_OF_THE_GROUP,
+        },
+        CLOCK_FEATURE_AVAILABILITY: {
+            "clock": CAUSAL_CLOCK,
+            "value_ns": feature_ns,
+            "max_contributing_ts_recv_ns": max_contributing,
+            "feature_cutoff_ts_recv_ns": feature_ns,
+            "basis": feature_basis,
+            "scope": FEATURE_SCOPE_MEMBER_ROW,
+        },
+        CLOCK_PROSPECTIVE_DISCOVERY_CONFIRMATION: {
+            "clock": CAUSAL_CLOCK,
+            "basis": DISCOVERY_BASIS_NONE,
+            "confirmed_at_this_cutoff": [],
+        },
+        CLOCK_MODEL_EVALUATION: {
+            "clock": CAUSAL_CLOCK,
+            "value_ns": None,
+            "basis": EVALUATION_BASIS_NONE,
+        },
+        CLOCK_LOCK_TIME: {
+            "clock": CAUSAL_CLOCK,
+            "value_ns": None,
+            "basis": LOCK_BASIS_PRINCIPAL,
+        },
+    }
+
+
+def causal_clock_layers_from_legacy_clocks(
+    clocks: Mapping[str, Any], *, ts_event_ns: int
+) -> dict[str, dict[str, Any]]:
+    """The seven, from a pre-S121 row's five-field `clocks` object. Three derive; four are
+    declared `NOT_ON_THIS_ROW` rather than filled with anything. The delivered Sunday ledger
+    is such a row and stays deliverable, findable by name."""
+    try:
+        first_event = int(clocks["first_component_ts_event_ns"])
+        first_recv = int(clocks["first_component_ts_recv_ns"])
+        f_last_recv = int(clocks["f_last_ts_recv_ns"])
+        known_by = int(clocks["first_lawful_availability_ns"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ClockError(f"legacy clocks object cannot support the three derivable clocks: {exc}") from exc
+    absent = lambda: {"clock": CAUSAL_CLOCK, "value_ns": None, "basis": NOT_ON_THIS_ROW}  # noqa: E731
+    return {
+        CLOCK_EVENT_TIME: {
+            "clock": EVENT_CLOCK, "first_component_ns": first_event, "f_last_ns": int(ts_event_ns),
+            "basis": BASIS_OBSERVED_ON_THE_RECORD,
+        },
+        CLOCK_RECEIVE_TIME: {
+            "clock": CAUSAL_CLOCK, "first_component_ns": first_recv, "f_last_ns": f_last_recv,
+            "basis": BASIS_OBSERVED_ON_THE_RECORD,
+        },
+        CLOCK_EVENT_KNOWN_BY: {
+            "clock": CAUSAL_CLOCK, "value_ns": known_by, "basis": BASIS_F_LAST_RECEIVE_OF_THE_GROUP,
+        },
+        CLOCK_FEATURE_AVAILABILITY: absent(),
+        CLOCK_PROSPECTIVE_DISCOVERY_CONFIRMATION: absent(),
+        CLOCK_MODEL_EVALUATION: absent(),
+        CLOCK_LOCK_TIME: absent(),
+    }
+
+
+def validate_causal_clock_layers(layers: Any) -> dict[str, dict[str, Any]]:
+    """Exactly the seven ids, each naming a clock and a basis. Refused, never patched."""
+    if not isinstance(layers, Mapping) or set(layers) != set(CAUSAL_CLOCK_LAYER_IDS):
+        have = sorted(layers) if isinstance(layers, Mapping) else type(layers).__name__
+        raise ClockError(
+            f"causal_clocks must carry exactly {list(CAUSAL_CLOCK_LAYER_IDS)}; got {have}"
+        )
+    for layer_id, entry in layers.items():
+        if not isinstance(entry, Mapping):
+            raise ClockError(f"causal_clocks[{layer_id}] is not an object")
+        if entry.get("clock") not in (CAUSAL_CLOCK, EVENT_CLOCK):
+            raise ClockError(f"causal_clocks[{layer_id}] names no clock")
+        basis = entry.get("basis")
+        if not isinstance(basis, str) or not basis:
+            raise ClockError(f"causal_clocks[{layer_id}] carries no basis")
+    return dict(layers)
+
+
+def check_causal_clock_order(layers: Mapping[str, Any]) -> dict[str, int | None]:
+    """event_known_by <= feature_availability <= model_evaluation, on the delivered values.
+
+    The order the V4 universe's `validate_availability_chain` enforces, checked here with
+    three comparisons and no import from that universe. A clock declared absent (null) is
+    skipped, never invented; the two present ones must still be in order.
+    """
+    layers = validate_causal_clock_layers(layers)
+    known_by = layers[CLOCK_EVENT_KNOWN_BY].get("value_ns")
+    if isinstance(known_by, bool) or not isinstance(known_by, int):
+        raise ClockError(f"{CLOCK_EVENT_KNOWN_BY} carries no integer value")
+    feature = layers[CLOCK_FEATURE_AVAILABILITY].get("value_ns")
+    model = layers[CLOCK_MODEL_EVALUATION].get("value_ns")
+    if feature is not None and feature < known_by:
+        raise ClockError(
+            f"{CLOCK_FEATURE_AVAILABILITY} {feature} precedes {CLOCK_EVENT_KNOWN_BY} {known_by}"
+        )
+    floor = known_by if feature is None else feature
+    if model is not None and model < floor:
+        raise ClockError(
+            f"{CLOCK_MODEL_EVALUATION} {model} precedes {CLOCK_FEATURE_AVAILABILITY} {floor}; "
+            "a model cannot be evaluated on features not yet available"
+        )
+    return {
+        "event_known_by_ns": known_by,
+        "feature_availability_ns": feature,
+        "model_evaluation_ns": model,
+    }
+
+
+def stamp_model_evaluation(row: dict[str, Any], *, staged_at_recv_ns: int | None) -> dict[str, Any]:
+    """Put the invocation cutoff on the row of the group at whose cutoff the cadence fired.
+
+    None leaves the declared null: NO_INVOCATION_AT_THIS_CUTOFF is a fact about the cadence,
+    not an absence of data.
+    """
+    layers = validate_causal_clock_layers(row["causal_clocks"])
+    entry = layers[CLOCK_MODEL_EVALUATION]
+    if staged_at_recv_ns is None:
+        entry["value_ns"] = None
+        entry["basis"] = EVALUATION_BASIS_NONE
+        return entry
+    entry["value_ns"] = int(staged_at_recv_ns)
+    entry["basis"] = EVALUATION_BASIS_STAGED
+    check_causal_clock_order(layers)
+    return entry
+
+
+_CONFIRMATION_KEYS = ("candidate_id", "outcome", "birth_recv_ns", "recognized_recv_ns")
+
+
+def stamp_discovery_confirmations(
+    row: dict[str, Any], confirmations: Iterable[Mapping[str, Any]]
+) -> dict[str, Any]:
+    """Record every 4.11 call the traversal emitted at THIS group's cutoff.
+
+    `recognized_recv_ns` is when the call was knowable on the candidate lane's clock;
+    `confirmed_at_cutoff_ns` is the F_LAST receive at which it was actually emitted. Both
+    travel, and whether the first is at or before the second is written down rather than
+    assumed - a window truncated at a boundary can name an availability past the cutoff.
+    """
+    layers = validate_causal_clock_layers(row["causal_clocks"])
+    cutoff = int(layers[CLOCK_EVENT_KNOWN_BY]["value_ns"])
+    entry = layers[CLOCK_PROSPECTIVE_DISCOVERY_CONFIRMATION]
+    kept: list[dict[str, Any]] = []
+    for confirmation in confirmations:
+        missing = [key for key in _CONFIRMATION_KEYS if key not in confirmation]
+        if missing:
+            raise ClockError(f"a discovery confirmation is missing {missing}")
+        candidate_id = confirmation["candidate_id"]
+        if not isinstance(candidate_id, str) or not candidate_id:
+            raise ClockError("a discovery confirmation must name its candidate")
+        if confirmation["outcome"] not in VALID_RECOGNITION:
+            raise ClockError(f"unknown recognition outcome {confirmation['outcome']!r}")
+        recognized = confirmation["recognized_recv_ns"]
+        kept.append({
+            "candidate_id": candidate_id,
+            "outcome": confirmation["outcome"],
+            "birth_recv_ns": int(confirmation["birth_recv_ns"]),
+            "recognized_recv_ns": None if recognized is None else int(recognized),
+            "recognized_recv_ns_basis": confirmation.get("recognized_recv_ns_basis"),
+            "confirmed_at_cutoff_ns": cutoff,
+            "knowable_at_or_before_cutoff": None if recognized is None else int(recognized) <= cutoff,
+        })
+    entry["confirmed_at_this_cutoff"] = kept
+    entry["basis"] = DISCOVERY_BASIS_EMITTED if kept else DISCOVERY_BASIS_NONE
+    return entry
 
 
 class ClockCalculator:
@@ -345,4 +647,10 @@ class ClockCalculator:
             "noncontiguous_sequence_members": self.noncontiguous_sequence_members,
             "multi_channel_members": self.multi_channel_members,
             "stratum_counts": {m.name: m.stratum_count for m in self.measures},
+            # S121 item one: the producer prose lives HERE, once, and the rows carry bases.
+            "causal_clock_layers": {
+                "carrier": CAUSAL_CLOCKS_CARRIER,
+                "layer_ids": list(CAUSAL_CLOCK_LAYER_IDS),
+                "declarations": dict(CAUSAL_CLOCK_DECLARATIONS),
+            },
         }

@@ -75,6 +75,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterator, Mapping
 
+from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import (
+    CAUSAL_CLOCK_LAYER_IDS,
+    NOT_ON_THIS_ROW,
+    ClockError,
+    causal_clock_layers_from_legacy_clocks,
+    check_causal_clock_order,
+    validate_causal_clock_layers,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import (
     GROUP_DELIVERY_SCHEMA,
     canonical_hash,
@@ -82,6 +90,8 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry i
     validate_causal_group_delivery_receipt,
     validate_registry,
 )
+
+__all__ = ["NOT_ON_THIS_ROW"]  # re-exported for readers of the delivery: the declared absence
 
 NS_PER_SECOND = 1_000_000_000
 CAUSAL_CLOCK = "ts_recv_ns"
@@ -91,6 +101,13 @@ GENESIS_PREVIOUS_RECEIPT_SHA256 = hashlib.sha256(b"").hexdigest()
 declared here rather than left as a magic string in the first receipt."""
 
 CLOSE_OCCASIONS = frozenset({"SEGMENT_CLOSE", "STREAM_END"})
+
+# S121 item one: the seven registry clocks ride on every delivery BY NAME, beside a receipt
+# whose four-key `clocks` object the registry validator still checks exactly (that module is
+# owned elsewhere, so the seven ride beside it, never inside it).
+CAUSAL_CLOCKS_CARRIER = "member.causal_clocks"
+CAUSAL_CLOCKS_ROW_OWN = "ROW_OWN"
+CAUSAL_CLOCKS_DERIVED_FROM_LEGACY = "DERIVED_FROM_LEGACY_CLOCKS_OBJECT"
 
 MEMBER = "member"
 LIFECYCLE = "lifecycle"
@@ -139,6 +156,12 @@ class GroupDelivery:
     group_sha256: str
     receipt: dict[str, Any]
     gate: dict[str, Any]
+    causal_clocks: dict[str, Any]
+    """The seven registry clocks by layer id (native_clocks.CAUSAL_CLOCK_LAYER_IDS)."""
+    causal_clocks_basis: str
+    """ROW_OWN when the row carried them; DERIVED_FROM_LEGACY_CLOCKS_OBJECT for a pre-S121 ledger."""
+    causal_clock_chain: dict[str, Any]
+    """event_known_by <= feature_availability <= model_evaluation, checked on the delivered values."""
 
 
 def _int_or_none(value: Any) -> int | None:
@@ -385,6 +408,8 @@ class CausalGroupStream:
         self._member_digest = hashlib.sha256()
         self._exhausted = False
         self._closed = False
+        self._groups_with_row_own_clocks = 0
+        self._groups_with_derived_clocks = 0
 
     # --- what is refused by construction -----------------------------------
 
@@ -469,6 +494,27 @@ class CausalGroupStream:
                 f"receive clock moved backwards at group {index}: {recv_ns} after {self._last_recv_ns}; "
                 "the ledger is not in ts_recv_ns order and cannot be delivered causally"
             )
+        # The seven clocks by registry id. A row that carries them is validated and its chain
+        # checked; a row that does not (the delivered Sunday ledger predates the field) gets
+        # the three the legacy object can support and four declared absences. Refused when
+        # partial or disordered - never patched into shape.
+        own_clocks = row.get("causal_clocks")
+        try:
+            if own_clocks is not None:
+                causal_clocks = validate_causal_clock_layers(own_clocks)
+                causal_clocks_basis = CAUSAL_CLOCKS_ROW_OWN
+            else:
+                causal_clocks = causal_clock_layers_from_legacy_clocks(clocks, ts_event_ns=int(row["ts_event_ns"]))
+                causal_clocks_basis = CAUSAL_CLOCKS_DERIVED_FROM_LEGACY
+            causal_clock_chain = check_causal_clock_order(causal_clocks)
+        except ClockError as exc:
+            raise CausalStreamError(f"group {index} causal_clocks refused: {exc}") from exc
+        if int(causal_clock_chain["event_known_by_ns"]) != cutoff:
+            raise CausalStreamError(
+                f"group {index} clock_event_known_by {causal_clock_chain['event_known_by_ns']} disagrees "
+                f"with clocks.first_lawful_availability_ns {cutoff}"
+            )
+
         previous_cutoff = self._last_cutoff_ns
         lifecycle = self._lifecycle.take_lawful(cutoff, previous_cutoff)
         legacy = self._legacy.take_lawful(cutoff, previous_cutoff)
@@ -514,6 +560,10 @@ class CausalGroupStream:
         self._digest.update(delivered)
         self._member_bytes += len(member_bytes)
         self._member_digest.update(member_bytes)
+        if causal_clocks_basis == CAUSAL_CLOCKS_ROW_OWN:
+            self._groups_with_row_own_clocks += 1
+        else:
+            self._groups_with_derived_clocks += 1
         return GroupDelivery(
             group_index=index,
             first_lawful_availability_ns=cutoff,
@@ -525,6 +575,9 @@ class CausalGroupStream:
             group_sha256=group_sha256,
             receipt=receipt,
             gate=gate,
+            causal_clocks=causal_clocks,
+            causal_clocks_basis=causal_clocks_basis,
+            causal_clock_chain=causal_clock_chain,
         )
 
     def iterate(self) -> Iterator[GroupDelivery]:
@@ -578,6 +631,12 @@ class CausalGroupStream:
             "last_delivery_receipt_sha256": self._previous_receipt_sha256,
             "layer_carriers": {k: list(v) for k, v in LAYER_CARRIERS.items()},
             "availability_rules": dict(AVAILABILITY_RULES),
+            "causal_clock_layers": {
+                "carrier": CAUSAL_CLOCKS_CARRIER,
+                "layer_ids": list(CAUSAL_CLOCK_LAYER_IDS),
+                "groups_with_row_own": self._groups_with_row_own_clocks,
+                "groups_with_derived_from_legacy_clocks": self._groups_with_derived_clocks,
+            },
             "receipt_sha256": "",
         }
         receipt["receipt_sha256"] = canonical_hash(receipt, omit="receipt_sha256")

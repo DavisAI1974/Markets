@@ -199,3 +199,45 @@ class PhaseAttributionTest(unittest.TestCase):
         self.assertEqual(summary["completed"], 0)
         self.assertEqual(summary["still_open"], 1,
                          "the runway stays open for 4.10's own boundary handling to censor")
+
+
+class RecognitionInstantOnTheOpenRowTest(unittest.TestCase):
+    """S121 item one: the open row carried `recognition_outcome` and not the instant it was
+    recognised at, so the member row's discovery-confirmation clock could name the call and
+    not when it was knowable. Both instants and the basis of the second now ride the row."""
+
+    def test_an_h_plus_n_call_carries_the_available_second_and_says_which_bin_it_is(self) -> None:
+        from research.kalshi.frankie_raw_mbo_benchmark.native_recognition import (
+            HORIZON, RECOGNIZED_BASIS_AVAILABLE_SECOND_BIN,
+        )
+        cand = candidate(event_second=1_633_352_400, available_second=1_633_352_405)
+        row = opened(tracker(), cand)
+        self.assertEqual(row["recognition_outcome"], HORIZON)
+        self.assertEqual(row["recognized_recv_ns"], 1_633_352_405 * NS_PER_SECOND)
+        self.assertEqual(row["recognized_recv_ns_basis"], RECOGNIZED_BASIS_AVAILABLE_SECOND_BIN)
+        self.assertIsNone(row["precursor_recv_ns"])
+
+    def test_a_prior_call_carries_the_precursor_instant_and_its_basis(self) -> None:
+        from research.kalshi.frankie_raw_mbo_benchmark.native_recognition import (
+            PRIOR, RECOGNIZED_BASIS_PRECURSOR_FINDING,
+        )
+        precursor_ns = 1_633_352_390 * NS_PER_SECOND
+        track = CandidateEpisodeTracker(
+            exhaustion=ExhaustionCalculator(), recognition=RecognitionCalculator(),
+            dipole=DipoleCalculator(), source_role="A_CLEAN",
+            precursor_for=lambda _cand: precursor_ns,
+        )
+        row = opened(track, candidate())
+        self.assertEqual(row["recognition_outcome"], PRIOR)
+        self.assertEqual(row["recognized_recv_ns"], precursor_ns)
+        self.assertEqual(row["precursor_recv_ns"], precursor_ns)
+        self.assertEqual(row["recognized_recv_ns_basis"], RECOGNIZED_BASIS_PRECURSOR_FINDING)
+
+    def test_the_recognition_record_keeps_the_basis_beside_the_instant(self) -> None:
+        from research.kalshi.frankie_raw_mbo_benchmark.native_recognition import (
+            RECOGNIZED_BASIS_AVAILABLE_SECOND_BIN,
+        )
+        track = tracker()
+        opened(track, candidate())
+        record = track._open["c1"].recognition.as_dict()
+        self.assertEqual(record["recognized_recv_ns_basis"], RECOGNIZED_BASIS_AVAILABLE_SECOND_BIN)
