@@ -1,0 +1,355 @@
+name: Frankie box volume rescue 20260902
+
+# UNWEDGE THE BOX FROM OUTSIDE IT, BY MOVING ITS DISK RATHER THAN BY TALKING TO IT.
+#
+# The state this exists for: SSM agent Online, instance running with both status checks ok,
+# and three independent commands - a 20 KB dispatch, the monitor's script, and a four-line
+# /bin/sh whose only action was `df` - returning Failed, exit 1, with stdout AND stderr empty.
+# SSM stages its command script to a FILE, so a full root volume means nothing executes and
+# no channel that runs on the box can report anything. A cleanup placed inside the dispatch
+# cannot work: that command is itself a file that must be written to the disk it would free.
+#
+# A reboot then made it worse, and that is the measurement that closes off the alternatives.
+# Run 33598410974: attempts 1-7 `ping=Online` with `probe_exit=-1` on `exit 40`, then from
+# 06:35:08Z `ping=ConnectionLost` for twenty-three consecutive attempts. So the agent no
+# longer registers at all, which removes RunCommand AND Session Manager - both need an agent
+# that can come up - and leaves exactly one route that does not depend on the broken thing:
+# detach the volume, mount it somewhere healthy, delete, put it back.
+#
+# WHAT THIS IS NOT: it is not the volume GROWTH Greg authorised as a last resort. He
+# challenged that correctly - "why would we have to grow a 300gb box by 20 to run a Sunday
+# that isn't even 2" - and the answer is that the growth was only ever a bootstrap for the
+# delete. This does the delete directly, for pennies, and buys nothing permanent.
+#
+# WHAT IS REMOVED: /opt/frankie-a-arm-run, and nothing else. That directory is disposable BY
+# THE BOX'S OWN DESIGN - the launch dispatch opens by clearing it after reporting what was
+# there, so the next Sunday run would destroy it anyway. Its size is reported BEFORE it goes,
+# which is also the first independent reading of the full-disk diagnosis: taken off the
+# volume itself, mounted on a machine with nothing at stake.
+
+on:
+  # A workflow carrying only workflow_dispatch is never registered on a non-default branch
+  # and the dispatch API 404s it. Registration therefore needs a push trigger - and a push
+  # must never be able to stop an instance or remove anything, so every acting step is
+  # additionally guarded on the event being a dispatch AND on action=rescue, which a push
+  # cannot set. What a push runs is the read-only report, which is the diagnosis anyway.
+  push:
+    branches:
+      - chatgpt/frankie-raw-mbo-benchmark-20260828
+    paths:
+      - '.github/workflows/frankie_box_volume_rescue_20260902.yml'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'report (read-only) or rescue (stop, detach, clean, reattach, start)'
+        type: choice
+        options: [report, rescue]
+        default: report
+      confirm:
+        description: 'type RESCUE to arm the clearing path; ignored for report'
+        type: string
+        default: ''
+      instance_id:
+        description: 'the wedged instance'
+        type: string
+        default: i-08cee7171c0a76a04
+      clear_path:
+        description: >-
+          Absolute path on the volume to clear. Must sit under /opt/frankie-a-arm-run, which
+          is checked rather than trusted - a typo here runs as root against someone else's
+          disk, and no confirm token catches a typo.
+        type: string
+        default: /opt/frankie-a-arm-run
+
+permissions:
+  contents: read
+
+env:
+  AWS_DEFAULT_REGION: us-east-2
+  AWS_REGION: us-east-2
+
+jobs:
+  rescue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      INSTANCE_ID: ${{ inputs.instance_id || 'i-08cee7171c0a76a04' }}
+      CLEAR_PATH: ${{ inputs.clear_path || '/opt/frankie-a-arm-run' }}
+      CONFIRM: ${{ inputs.confirm || '' }}
+    steps:
+      - name: Report the box and its volume
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "caller: $(aws sts get-caller-identity --query Arn --output text)"
+
+          read -r state itype az subnet root_dev profile <<<"$(aws ec2 describe-instances \
+            --instance-ids "$INSTANCE_ID" \
+            --query 'Reservations[0].Instances[0].[State.Name,InstanceType,Placement.AvailabilityZone,SubnetId,RootDeviceName,IamInstanceProfile.Arn]' \
+            --output text)"
+          sgs="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
+            --query 'Reservations[0].Instances[0].SecurityGroups[].GroupId' --output text | tr '\t' ',')"
+          volume="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
+            --query "Reservations[0].Instances[0].BlockDeviceMappings[?DeviceName=='${root_dev}'].Ebs.VolumeId" \
+            --output text)"
+          size="$(aws ec2 describe-volumes --volume-ids "$volume" --query 'Volumes[0].Size' --output text)"
+          vstate="$(aws ec2 describe-volumes --volume-ids "$volume" --query 'Volumes[0].State' --output text)"
+          ping="$(aws ssm describe-instance-information \
+            --filters "Key=InstanceIds,Values=$INSTANCE_ID" \
+            --query 'InstanceInformationList[0].PingStatus' --output text 2>/dev/null || echo none)"
+          # Reported because it is the likeliest reason a fresh helper never registers with
+          # SSM, and a rescue that stalls there has already detached the disk. On the page
+          # beforehand beats a second run to find out.
+          public_on_launch="$(aws ec2 describe-subnets --subnet-ids "$subnet" \
+            --query 'Subnets[0].MapPublicIpOnLaunch' --output text)"
+
+          printf 'subnet auto-assigns a public ip: %s\n' "$public_on_launch"
+          printf 'instance %s: %s %s in %s (subnet %s, sgs %s)\n' \
+            "$INSTANCE_ID" "$state" "$itype" "$az" "$subnet" "$sgs"
+          printf 'root %s = %s, %s GiB, %s\n' "$root_dev" "$volume" "$size" "$vstate"
+          printf 'ssm ping: %s\n' "$ping"
+          printf 'instance profile: %s\n' "$profile"
+
+          {
+            echo "## The box before anything is touched"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| instance | \`$INSTANCE_ID\` ($itype, $state) |"
+            echo "| availability zone | $az |"
+            echo "| root device | \`$root_dev\` = \`$volume\`, ${size} GiB, $vstate |"
+            echo "| SSM ping | **$ping** |"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          {
+            echo "AZ=$az"
+            echo "SUBNET=$subnet"
+            echo "SGS=$sgs"
+            echo "ROOT_DEV=$root_dev"
+            echo "VOLUME=$volume"
+            echo "VOLUME_GB=$size"
+            echo "BOX_STATE=$state"
+            echo "PROFILE_ARN=$profile"
+          } >> "$GITHUB_ENV"
+
+      - name: Refuse an unarmed or malformed rescue
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.action == 'rescue' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Checked, not trusted: this path is handed to a recursive clear running as root
+          # against a disk that is not this runner's. A confirm token stops a mis-click on
+          # the dispatch form; the prefix check stops a typo, which no token would catch.
+          test "$CONFIRM" = "RESCUE" || {
+            echo "confirm must be the word RESCUE to arm the clearing path" >&2; exit 1; }
+          case "$CLEAR_PATH" in
+            /opt/frankie-a-arm-run|/opt/frankie-a-arm-run/*) ;;
+            *) echo "refusing $CLEAR_PATH: not under /opt/frankie-a-arm-run" >&2; exit 1 ;;
+          esac
+          case "$CLEAR_PATH" in *..*) echo "refusing a path containing .." >&2; exit 1 ;; esac
+          echo "armed: will clear $CLEAR_PATH from $VOLUME"
+
+      - name: Move the disk, clear it, and put it back
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.action == 'rescue' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          HELPER=""
+          ATTACHED_TO_HELPER=no
+
+          # ONE SCRIPT WITH ONE TRAP, rather than one step per AWS call. Between the detach
+          # and the reattach the box has NO ROOT DISK, and a job that fails in that window
+          # and simply stops leaves it unbootable. The trap runs on every exit path and is
+          # idempotent: it reads the volume's ACTUAL attachment state rather than trusting a
+          # variable this script set.
+          restore() {
+            local code=$?
+            set +e
+            if [ "$ATTACHED_TO_HELPER" = "yes" ] && [ -n "$HELPER" ]; then
+              echo "restore: detaching from helper $HELPER"
+              aws ec2 detach-volume --volume-id "$VOLUME" >/dev/null 2>&1
+              aws ec2 wait volume-available --volume-ids "$VOLUME" >/dev/null 2>&1
+            fi
+            local where
+            where="$(aws ec2 describe-volumes --volume-ids "$VOLUME" \
+              --query 'Volumes[0].Attachments[0].InstanceId' --output text 2>/dev/null)"
+            if [ "$where" != "$INSTANCE_ID" ]; then
+              echo "restore: reattaching $VOLUME to $INSTANCE_ID at $ROOT_DEV"
+              aws ec2 wait volume-available --volume-ids "$VOLUME" >/dev/null 2>&1
+              aws ec2 attach-volume --volume-id "$VOLUME" --instance-id "$INSTANCE_ID" \
+                --device "$ROOT_DEV" >/dev/null 2>&1
+              aws ec2 wait volume-in-use --volume-ids "$VOLUME" >/dev/null 2>&1
+            fi
+            if [ -n "$HELPER" ]; then
+              echo "restore: terminating helper $HELPER"
+              aws ec2 terminate-instances --instance-ids "$HELPER" >/dev/null 2>&1
+            fi
+            exit "$code"
+          }
+          trap restore EXIT
+
+          echo "::group::stop the box"
+          aws ec2 stop-instances --instance-ids "$INSTANCE_ID" >/dev/null
+          aws ec2 wait instance-stopped --instance-ids "$INSTANCE_ID"
+          echo "stopped"
+          echo "::endgroup::"
+
+          echo "::group::detach the root volume"
+          aws ec2 detach-volume --volume-id "$VOLUME" >/dev/null
+          aws ec2 wait volume-available --volume-ids "$VOLUME"
+          echo "$VOLUME available"
+          echo "::endgroup::"
+
+          echo "::group::launch the helper"
+          # AL2023 from the public SSM parameter rather than a pinned AMI id, which is
+          # region-specific and goes stale. The helper carries the SAME instance profile as
+          # the box, which is what makes it reachable by RunCommand - its own disk is empty,
+          # so the failure mode being repaired here cannot recur on it.
+          ami="$(aws ssm get-parameters \
+            --names /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64 \
+            --query 'Parameters[0].Value' --output text)"
+          profile_name="${PROFILE_ARN##*/}"
+          HELPER="$(aws ec2 run-instances --image-id "$ami" --instance-type t3.micro \
+            --subnet-id "$SUBNET" --security-group-ids ${SGS//,/ } \
+            --associate-public-ip-address \
+            --iam-instance-profile "Name=$profile_name" \
+            --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=frankie-volume-rescue}]' \
+            --query 'Instances[0].InstanceId' --output text)"
+          echo "helper $HELPER from $ami"
+          aws ec2 wait instance-running --instance-ids "$HELPER"
+          ping=none
+          for _ in $(seq 1 30); do
+            ping="$(aws ssm describe-instance-information \
+              --filters "Key=InstanceIds,Values=$HELPER" \
+              --query 'InstanceInformationList[0].PingStatus' --output text 2>/dev/null || echo none)"
+            [ "$ping" = "Online" ] && break
+            sleep 10
+          done
+          test "$ping" = "Online"
+          echo "helper online"
+          echo "::endgroup::"
+
+          echo "::group::attach the volume to the helper"
+          aws ec2 attach-volume --volume-id "$VOLUME" --instance-id "$HELPER" \
+            --device /dev/sdf >/dev/null
+          aws ec2 wait volume-in-use --volume-ids "$VOLUME"
+          ATTACHED_TO_HELPER=yes
+          echo "attached as /dev/sdf"
+          echo "::endgroup::"
+
+          echo "::group::measure, then clear"
+          # THE MEASUREMENT COMES FIRST and is half the reason for doing it this way: `df`
+          # read off the volume itself, on a machine with nothing at stake, is the first
+          # INDEPENDENT test of the full-disk diagnosis. If it comes back with room to spare
+          # then the cause was never the disk, and nothing that follows should be believed to
+          # have fixed anything.
+          #
+          # -o nouuid on xfs: the helper's own root is xfs too, and xfs refuses to mount a
+          # second filesystem carrying a UUID it already has.
+          script=$(cat <<'SH'
+          set -eu
+          dev=$(lsblk -bnpo NAME,SIZE,TYPE | awk '$3=="part"' | sort -k2 -n | tail -1 | awk '{print $1}')
+          root=$(findmnt -no SOURCE /)
+          [ "$dev" != "$root" ] || { echo RESCUE_FATAL=picked_the_helpers_own_root; exit 1; }
+          echo "RESCUE_DEVICE=$dev"
+          fstype=$(lsblk -no FSTYPE "$dev")
+          echo "RESCUE_FSTYPE=$fstype"
+          mkdir -p /mnt/rescue
+          case "$fstype" in
+            xfs) mount -o nouuid "$dev" /mnt/rescue ;;
+            *)   mount "$dev" /mnt/rescue ;;
+          esac
+          echo "RESCUE_BEFORE=$(df -Pk /mnt/rescue | awk 'NR==2 {print $3","$4","$5}')"
+          target=/mnt/rescue__CLEAR_PATH__
+          case "$target" in
+            /mnt/rescue/opt/frankie-a-arm-run*) ;;
+            *) echo RESCUE_FATAL=path_guard_failed_on_the_box; exit 1 ;;
+          esac
+          if [ -d "$target" ]; then
+            echo "RESCUE_TARGET_KB=$(du -sk "$target" | awk '{print $1}')"
+            du -xk --max-depth=2 "$target" 2>/dev/null | sort -rn | head -12 \
+              | awk '{print "RESCUE_DU " $0}'
+            rm -rf "$target"
+            echo "RESCUE_CLEARED=yes"
+          else
+            echo "RESCUE_TARGET_KB=0"
+            echo "RESCUE_CLEARED=absent"
+          fi
+          sync
+          echo "RESCUE_AFTER=$(df -Pk /mnt/rescue | awk 'NR==2 {print $3","$4","$5}')"
+          umount /mnt/rescue
+          echo "RESCUE_OK=1"
+          SH
+          )
+          script="${script//__CLEAR_PATH__/$CLEAR_PATH}"
+          payload="$(python3 -c 'import json,sys; print(json.dumps({"commands": sys.stdin.read().splitlines()}))' <<<"$script")"
+          cid="$(aws ssm send-command --instance-ids "$HELPER" \
+            --document-name AWS-RunShellScript --comment "frankie volume rescue" \
+            --parameters "$payload" --query 'Command.CommandId' --output text)"
+          aws ssm wait command-executed --command-id "$cid" --instance-id "$HELPER" || true
+          aws ssm get-command-invocation --command-id "$cid" --instance-id "$HELPER" \
+            --query 'StandardOutputContent' --output text | tee ./rescue_out.txt
+          aws ssm get-command-invocation --command-id "$cid" --instance-id "$HELPER" \
+            --query 'StandardErrorContent' --output text >&2
+          grep -q '^RESCUE_OK=1' ./rescue_out.txt
+          echo "::endgroup::"
+
+          echo "::group::put the disk back"
+          aws ec2 detach-volume --volume-id "$VOLUME" >/dev/null
+          aws ec2 wait volume-available --volume-ids "$VOLUME"
+          ATTACHED_TO_HELPER=no
+          aws ec2 attach-volume --volume-id "$VOLUME" --instance-id "$INSTANCE_ID" \
+            --device "$ROOT_DEV" >/dev/null
+          aws ec2 wait volume-in-use --volume-ids "$VOLUME"
+          echo "reattached at $ROOT_DEV"
+          echo "::endgroup::"
+
+          echo "::group::start the box and prove it executes a command"
+          aws ec2 start-instances --instance-ids "$INSTANCE_ID" >/dev/null
+          aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
+          # PingStatus Online is necessary and NOT sufficient - it was Online throughout the
+          # wedge. What proves the box is usable is a command that RUNS and returns a code
+          # chosen in advance, so 40 is the pass and anything else is not.
+          ok=no
+          for attempt in $(seq 1 30); do
+            sleep 20
+            ping="$(aws ssm describe-instance-information \
+              --filters "Key=InstanceIds,Values=$INSTANCE_ID" \
+              --query 'InstanceInformationList[0].PingStatus' --output text 2>/dev/null || echo none)"
+            [ "$ping" != "Online" ] && { printf 'attempt %s: ping=%s\n' "$attempt" "$ping"; continue; }
+            probe="$(aws ssm send-command --instance-ids "$INSTANCE_ID" \
+              --document-name AWS-RunShellScript --comment "rescue liveness" \
+              --parameters 'commands=["df -Pk / | awk \"NR==2\"","exit 40"]' \
+              --query 'Command.CommandId' --output text 2>/dev/null || echo none)"
+            [ "$probe" = "none" ] && continue
+            aws ssm wait command-executed --command-id "$probe" --instance-id "$INSTANCE_ID" >/dev/null 2>&1 || true
+            code="$(aws ssm get-command-invocation --command-id "$probe" --instance-id "$INSTANCE_ID" \
+              --query ResponseCode --output text 2>/dev/null || echo unknown)"
+            printf 'attempt %s: ping=%s probe_exit=%s\n' "$attempt" "$ping" "$code"
+            if [ "$code" = "40" ]; then
+              aws ssm get-command-invocation --command-id "$probe" --instance-id "$INSTANCE_ID" \
+                --query 'StandardOutputContent' --output text | sed 's/^/BOX_DF /'
+              ok=yes
+              break
+            fi
+          done
+          echo "BOX_EXECUTES_COMMANDS=$ok"
+          echo "::endgroup::"
+
+          {
+            echo "## Rescue"
+            echo ""
+            sed -n 's/^RESCUE_BEFORE=/- df before (used KiB, avail KiB, use%): /p' ./rescue_out.txt
+            sed -n 's/^RESCUE_TARGET_KB=/- cleared directory size (KiB): /p' ./rescue_out.txt
+            sed -n 's/^RESCUE_AFTER=/- df after (used KiB, avail KiB, use%): /p' ./rescue_out.txt
+            sed -n 's/^RESCUE_CLEARED=/- clear: /p' ./rescue_out.txt
+            echo "- box executes commands afterwards: **$ok**"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          test "$ok" = "yes"
