@@ -1,0 +1,94 @@
+name: Frankie run size report 20260902
+
+# WHICH CALCULATION IS THE SIZE. A finished traversal writes calculation_result.json to S3,
+# and an interactive session resolves no AWS credentials - they are GitHub-secret scoped -
+# so only a workflow can read it back. This is that workflow.
+#
+# It renders nothing itself. The table comes from
+# research/kalshi/frankie_raw_mbo_benchmark/report_ledger_size.py, which has tests, because
+# the rendering is exactly where a SAMPLED per-field number is most likely to be presented
+# as an exact one and a drop decision taken off it.
+#
+# Nothing here recommends dropping anything. D60: a row is USED, or RETAINED and counted, or
+# REFUSED loudly, and what to drop is discussed first. This says only what each thing costs.
+
+on:
+  workflow_dispatch:
+    inputs:
+      prefix:
+        description: >-
+          S3 prefix of the run to report on, WITHOUT the bucket, e.g.
+          nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-clean/full/<sha>/<run>-<attempt>.
+          Leave empty to report on the most recently modified calculation_result.json under
+          the a-clean tree, which is the usual case right after a run.
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+env:
+  AWS_DEFAULT_REGION: us-east-2
+  AWS_REGION: us-east-2
+  S3_ENDPOINT_URL: https://s3.us-east-2.amazonaws.com
+  BUCKET: bento-568968024170-us-east-2-an
+  ROOT_PREFIX: nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-clean
+
+jobs:
+  size-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      WANTED_PREFIX: ${{ inputs.prefix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Locate the run and fetch its result
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "$WANTED_PREFIX" ]; then
+            key="$WANTED_PREFIX/calculation_result.json"
+          else
+            # The NEWEST result under the tree, chosen by S3's own LastModified rather than
+            # by sorting key names: a run id sorts lexically, not chronologically, so the
+            # newest run is not reliably the last name in the list.
+            key="$(aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "$ROOT_PREFIX" \
+              --query "reverse(sort_by(Contents[?ends_with(Key, 'calculation_result.json')], &LastModified))[0].Key" \
+              --output text)"
+          fi
+          test -n "$key"
+          test "$key" != "None"
+          printf 'reporting on s3://%s/%s\n' "$BUCKET" "$key"
+          aws s3 cp "s3://${BUCKET}/${key}" ./calculation_result.json \
+            --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
+          echo "RESULT_KEY=$key" >> "$GITHUB_ENV"
+
+      - name: Render the size table
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "Run: \`s3://${BUCKET}/${RESULT_KEY}\`"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+          python3 -m research.kalshi.frankie_raw_mbo_benchmark.report_ledger_size \
+            --result ./calculation_result.json \
+            --summary "$GITHUB_STEP_SUMMARY" \
+            --output ./LEDGER_SIZE_TABLE.md
+
+      - name: Publish the table and the result
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: frankie-size-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            LEDGER_SIZE_TABLE.md
+            calculation_result.json
+          if-no-files-found: error
+          retention-days: 30
