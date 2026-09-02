@@ -1185,6 +1185,7 @@ new tool cannot go unlisted. **522 files.**
 - `report_ledger_size.py` — Which calculation is the size. The table that replaces an opinion.
 - `__init__.py` — Focused tests for the native raw-MBO Chat benchmark seam."""
 - `manifest_fixture.py` — Shared source-manifest fixture for the A-arm test suites.
+- `outputs_bundle_fixture.py` — A lawful output bundle with a configurable identity, for the staging and read-back tests.
 - `test_a_arm_launch_workflows.py` — T4: the A-arm launch workflows dispatch compute, and neither can fire the box by push.
 - `test_a_clean_forecaster_resume_latest.py` — (no docstring summary)
 - `test_a_memory_member_first_recalculation.py` — (no docstring summary)
@@ -1237,6 +1238,7 @@ new tool cannot go unlisted. **522 files.**
 - `test_native_rt_book_differential.py` — Differential tests: `ReplayBook` must MIRROR `InstrumentBook` on every book mutation.
 - `test_native_session.py` — Tests for section 2 continuity segmentation and trading-day assignment (D6a).
 - `test_native_staging.py` — The spawn contract: how Frankie is actually called.
+- `test_native_staging_handoff.py` — S121 slice 4: the V2 workmode handoff machinery is re-fed from a VALIDATED output bundle.
 - `test_native_stratum.py` — Tests for the parallel-view rule as enforced structure."""
 - `test_open_world_growth.py` — The carried vocabulary is where discovery starts, not what it is validated against.
 - `test_periodic_checkpointer.py` — Tests for periodic save points on long native raw-MBO runs."""

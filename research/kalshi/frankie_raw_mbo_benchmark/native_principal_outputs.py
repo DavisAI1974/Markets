@@ -1441,6 +1441,20 @@ def validate_output_bundle_dir(
     )
 
 
+def ledger_entries(bundle: OutputBundle | Mapping[str, Any], ledger_id: str) -> list[Mapping[str, Any]]:
+    """The chain-verified entries of one ledger of a bundle, in sequence order.
+
+    For staging's handoff builder (S121 slice 4), which reads a ledger's head entry and the
+    candidate roster off a VALIDATED bundle. A ledger the bundle does not carry is refused by
+    name rather than read as empty: absence and emptiness are different facts.
+    """
+    body = _as_mapping(bundle)
+    ledgers = body.get("ledgers")
+    if not isinstance(ledgers, Mapping) or ledger_id not in ledgers:
+        raise PrincipalOutputError(f"bundle carries no ledger {ledger_id!r}")
+    return verify_chain(ledger_id, ledgers[ledger_id])
+
+
 # --------------------------------------------------------------------------------------
 # CLI
 # --------------------------------------------------------------------------------------

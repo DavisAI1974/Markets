@@ -586,6 +586,149 @@ def read_back(
     }
 
 
+# ------------------------------------------------------------------------------------------
+# S121 slice 4: the V2 workmode handoff, re-fed from a VALIDATED output bundle
+# ------------------------------------------------------------------------------------------
+
+#: The schema strings `ng_exhaustion_two_frankies_workmode_coordinate_2day_20260825.freeze_rt`
+#: writes for the real-time side of the one-way handoff. They are literals inside that function,
+#: so they are restated here and PINNED by test against the committed record of the wrong-data
+#: run (`prior_memory/workmode-32851909748-1/`): same schema, same key set. The hashing and the
+#: self-check are that module's own `sha256_json` / `verify_self_hash`, imported, never rewritten.
+HANDOFF_SCHEMA = "FRANKIE_PRIOR_SURFACE_OCT45_ONEWAY_HANDOFF_V2_WORKMODE_20260825"
+RT_FIRST_LOCK_SCHEMA = "FRANKIE_PRIOR_SURFACE_OCT45_RT_FIRST_LOCK_V2_WORKMODE_20260825"
+RT_CONTEXT_MANIFEST_SCHEMA = "FRANKIE_PRIOR_SURFACE_OCT45_RT_CONTEXT_MANIFEST_V2_WORKMODE_20260825"
+#: Object name -> file name, as `freeze_rt` writes them into a run root.
+HANDOFF_FILES = ("ONEWAY_HANDOFF", "RT_FIRST_LOCK", "RT_CONTEXT_MANIFEST")
+FIRST_LOCKS_LEDGER = "output_first_locks_and_no_locks"
+CANDIDATES_LEDGER = "output_candidate_discoveries"
+ANSWER_WALL_LEDGER = "output_answer_wall_access_receipts"
+INVOCATIONS_LEDGER = "output_provider_invocation_response_receipts"
+
+
+def build_handoff(
+    outputs_dir: Path | str,
+    *,
+    artifact_sha256: str,
+    source_manifest_hash: str,
+    knowledge_receipt_sha256: str | None = None,
+    delivery_receipt_sha256: str | None = None,
+) -> dict[str, dict[str, Any]]:
+    """The real-time side of the one-way handoff, built from a validated output bundle.
+
+    The bundle is validated again here - a handoff is never built from an unvalidated bundle -
+    and its receipt sha256 is the frozen state's hash: `frozen_rt_state_hash` = the bundle
+    receipt sha, `full_validated_rt_output_hash` = the artifact sha, `RT_FIRST_LOCK.first_lock`
+    = the head entry of `output_first_locks_and_no_locks` (chain-hashed, verbatim),
+    `exhaustion_events` = the `output_candidate_discoveries` entries (the new surface's
+    candidate roster, verbatim), `answer_wall` SEALED read off the EMPTY answer-wall ledger,
+    `provider_api_called` False read off every invocation receipt being an AGENT_SESSION,
+    `packet_hash` = the delivery receipt the bundle was produced against (the packet he was
+    handed), `source_manifest_hash` from the run's identity. Only a REAL_TIME_FRANKIE bundle
+    hands off; the forecaster-side objects (`FORECASTER_FIRST_LOCK`,
+    `FORECASTER_CONTEXT_MANIFEST`) are written by `finalize` from the FORECASTER's own output,
+    which does not exist until the forecaster has run against this handoff.
+    """
+    # Imported here: the coordinator module pulls the whole prior-surface module behind it,
+    # and nothing else in staging needs it.
+    from research.kalshi import ng_exhaustion_two_frankies_workmode_coordinate_2day_20260825 as workmode
+    from research.kalshi.frankie_raw_mbo_benchmark.native_principal_outputs import (
+        ledger_entries,
+        load_bundle,
+    )
+    from research.kalshi.frankie_role_context_profiles_20260824 import FrankieRole
+
+    for label, value in (("artifact_sha256", artifact_sha256), ("source_manifest_hash", source_manifest_hash)):
+        if not isinstance(value, str) or _SHA256_RE.fullmatch(value) is None:
+            raise StagingError(f"{label} must be a lowercase SHA-256, got {value!r}")
+    try:
+        receipt = validate_output_bundle_dir(
+            outputs_dir,
+            registry=load_registry(),
+            contract_text=CONTRACT_PATH.read_text(encoding="utf-8"),
+            knowledge_receipt_sha256=knowledge_receipt_sha256,
+            delivery_receipt_sha256=delivery_receipt_sha256,
+        )
+        bundle = load_bundle(outputs_dir)
+        locks = ledger_entries(bundle, FIRST_LOCKS_LEDGER)
+        candidates = ledger_entries(bundle, CANDIDATES_LEDGER)
+        wall = ledger_entries(bundle, ANSWER_WALL_LEDGER)
+        invocations = ledger_entries(bundle, INVOCATIONS_LEDGER)
+    except (PrincipalOutputError, OSError, ValueError) as exc:
+        raise StagingError(f"no handoff from a bundle the validator refuses: {exc}") from exc
+    role = bundle["role"]
+    if role != FrankieRole.REAL_TIME.value:
+        raise StagingError(
+            f"the one-way handoff runs FROM {FrankieRole.REAL_TIME.value}; a {role} bundle has "
+            "nothing to hand off, and the forecaster-side objects are written from the "
+            "forecaster's own output after it runs"
+        )
+    if wall:
+        raise StagingError(f"{len(wall)} answer-wall access receipt(s); the answer wall is not sealed")
+    if delivery_receipt_sha256 is None and bundle.get("delivery_receipt_sha256") is None:
+        raise StagingError(
+            "the bundle names no delivery receipt; a handoff states the packet he was handed and a "
+            "pre-delivery bundle has none"
+        )
+    packet_hash = delivery_receipt_sha256 or bundle["delivery_receipt_sha256"]
+    provider_api_called = any(entry["body"].get("mechanism") != "AGENT_SESSION" for entry in invocations)
+
+    handoff: dict[str, Any] = {
+        "schema": HANDOFF_SCHEMA,
+        "from_role": FrankieRole.REAL_TIME.value,
+        "to_role": FrankieRole.FORECASTER.value,
+        "frozen_rt_state_hash": receipt["receipt_sha256"],
+        "full_validated_rt_output_included": True,
+        "full_validated_rt_output_hash": artifact_sha256,
+        "forecaster_may_modify_rt_state": False,
+        "forecaster_may_reconstruct_competing_current_state": False,
+        "rt_frozen_before_forecaster": True,
+    }
+    handoff["receipt_hash"] = workmode.sha256_json(handoff)
+    lock: dict[str, Any] = {
+        "schema": RT_FIRST_LOCK_SCHEMA,
+        "rt_output_hash": artifact_sha256,
+        "first_lock": dict(locks[-1]) if locks else None,
+        "first_lock_owner": role,
+        "exhaustion_events": [dict(entry) for entry in candidates],
+    }
+    lock["receipt_hash"] = workmode.sha256_json(lock)
+    context: dict[str, Any] = {
+        "schema": RT_CONTEXT_MANIFEST_SCHEMA,
+        "role": role,
+        "packet_hash": packet_hash,
+        "source_manifest_hash": source_manifest_hash,
+        "answer_wall": "SEALED",
+        "provider_api_called": provider_api_called,
+        "role_is_forecasting": False,
+    }
+    context["receipt_hash"] = workmode.sha256_json(context)
+    return {"ONEWAY_HANDOFF": handoff, "RT_FIRST_LOCK": lock, "RT_CONTEXT_MANIFEST": context}
+
+
+def write_handoff(objects: Mapping[str, Mapping[str, Any]], out_dir: Path | str) -> list[Path]:
+    """Write the handoff objects as `<NAME>.json` under `out_dir`, exclusive-create, never over.
+
+    Uses the coordinator module's own `write_json` (O_EXCL), so a second write is refused the
+    way `freeze_rt` refuses an existing run root.
+    """
+    from research.kalshi import ng_exhaustion_two_frankies_workmode_coordinate_2day_20260825 as workmode
+
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    written: list[Path] = []
+    for name in HANDOFF_FILES:
+        if name not in objects:
+            raise StagingError(f"handoff object {name!r} is missing; build_handoff produces all of {list(HANDOFF_FILES)}")
+        target = out_dir / f"{name}.json"
+        try:
+            workmode.write_json(target, dict(objects[name]))
+        except FileExistsError as exc:
+            raise StagingError(f"{target} already exists; a handoff is written once and never rewritten") from exc
+        written.append(target)
+    return written
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python3 -m research.kalshi.frankie_raw_mbo_benchmark.native_staging",
