@@ -6,8 +6,8 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 175 |
-| in progress | 11 |
+| open | 178 |
+| in progress | 8 |
 | done | 22 |
 
 By size: **XS** 18, **S** 84, **M** 60, **L** 13
@@ -238,7 +238,7 @@ By tier: **ESSENTIAL** 34, **BIGGEST_WIN** 47, **REST** 105
 | **F-1** | ESSENTIAL | S | OPEN | S117 | THE BINDING CALCULATION CONTRACT AND MISSION ARE NOT IN ANY READ-FIRST ORDER, AND THREE SESSIONS RAN WITHOUT OPENING THEM | - |
 | **F-15** | ESSENTIAL | S | OPEN | S120 | RECONCILE EVERY 'Average decision' LINE AGAINST WHAT THE DUAL VIEW HAS ACTUALLY EARNED | - |
 | **F-2** | ESSENTIAL | S | OPEN | S117 | THE OCTOBER STEP-1 SECONDS ARE THE SEALED ANSWER, AND I RECOMMENDED READING THEM | - |
-| **F-23** | ESSENTIAL | S | IN_PROGRESS | S121 | THE SEALED-ABSENCE PROOF HAS NO PRODUCER - THE ONE GENUINELY NEW FUNCTION OF THE SEARCH | - |
+| **F-23** | ESSENTIAL | S | OPEN | S121 | THE SEALED-ABSENCE PROOF HAS NO PRODUCER - THE ONE GENUINELY NEW FUNCTION OF THE SEARCH | - |
 | **F-29** | ESSENTIAL | S | OPEN | S121 | clock_lock_time IS REGISTERED AS AN INPUT LAYER (CAUSAL_STREAM_REQUIRED) WHILE IT IS FRANKIE'S OWN OUTPUT - THE SPAWN GATE CAN NEVER PASS UNTIL THIS IS RESOLVED | - |
 | **F-3** | ESSENTIAL | S | OPEN | S117 | THE REGISTRY NAMES A SOURCE PATH FOR ALL 105 LAYERS AND NOTHING FOLLOWS THEM | - |
 | **F-5** | ESSENTIAL | S | OPEN | S117 | SAME/FLIP NOW CARRIES THREE INCOMPATIBLE READINGS AND ONLY GREG CAN PICK | - |
@@ -256,7 +256,7 @@ By tier: **ESSENTIAL** 34, **BIGGEST_WIN** 47, **REST** 105
 | **F-10** | ESSENTIAL | M | IN_PROGRESS | S120 | THE RAW-MBO HALF OF D68 - DELIVER THE EXACT ROWS TO THE PRINCIPAL, OR DECLARE THAT THEY WERE NOT | - |
 | **F-21** | ESSENTIAL | M | OPEN | S121 | THE A-MEMORY PACKAGE AND THE FORECASTER HANDOFF DERIVE FROM THE PRIOR REDUCED (WRONG-DATA) RUN 32851909748-1 - RE-DERIVE FROM A CORRECT RT RUN BEFORE A-MEMORY RUNS; RE-FEED, DO NOT REBUILD, THE HANDOFF MACHINERY | - |
 | **F-22** | ESSENTIAL | M | IN_PROGRESS | S121 | THE KNOWLEDGE PIPELINE EXISTS END TO END AND NOTHING ON THE SPAWN PATH CALLS IT - REGISTER THE KEEP SET AND THE SEED MEMORY IN THE EXISTING MANIFEST, PRODUCE THE RECEIPT FROM IT, WIRE THE READ GATE | - |
-| **F-24** | ESSENTIAL | M | IN_PROGRESS | S121 | THE SPAWN GATE (TO-DO ITEM 7): gate_applicable_inputs EXISTS AND emit() NEVER CALLS IT; NO FIXTURE PROVES IT CAN PASS HONESTLY | - |
+| **F-24** | ESSENTIAL | M | OPEN | S121 | THE SPAWN GATE (TO-DO ITEM 7): gate_applicable_inputs EXISTS AND emit() NEVER CALLS IT; NO FIXTURE PROVES IT CAN PASS HONESTLY | - |
 | **F-25** | ESSENTIAL | M | IN_PROGRESS | S121 | THE OUTPUT LEDGERS ARE VALIDATED BY NOTHING IN PRODUCTION - load_principal_artifact, attach_principal_findings, validate_output_bundle_dir AND render_crosswalk_table ALL HAVE ZERO PRODUCTION CALLERS | - |
 | **F-30** | ESSENTIAL | M | OPEN | S121 | THE DRIVER DROPS PER-RECORD raw_actions BEFORE THE LEDGER - A RAW-DATA DROP UNDER D60, AND THE GATE WILL REFUSE THE REAL SUNDAY RESULT ON IT | - |
 | **F-4** | ESSENTIAL | M | OPEN | S117 | 4.10 CANNOT BE FED BECAUSE RUNWAY IDENTITY IS PER-GROUP, NOT BECAUSE OF ITS PHASE NAMES | - |
@@ -282,7 +282,7 @@ By tier: **ESSENTIAL** 34, **BIGGEST_WIN** 47, **REST** 105
 | **A-65** | BIGGEST_WIN | S | OPEN | S115 | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | - |
 | **A-66** | BIGGEST_WIN | S | OPEN | S115 | THE COMPOSITION CONTRACT - partition OWNERSHIP so borrowed pieces own different parts of one job (not a write protocol, and never a ranking) | - |
 | **F-20** | BIGGEST_WIN | S | IN_PROGRESS | S121 | THE LIFECYCLE LEDGER CARRIES NO UNIFORM AVAILABILITY STAMP - STAMP emitted_at_recv_ns AT _retain_lifecycle | - |
-| **F-27** | BIGGEST_WIN | S | IN_PROGRESS | S121 | THE CROSSWALK'S bound_to_inventory_document IS A STATIC FLAG THAT ROTTED THE HOUR THE REGISTRY WAS REBOUND - COMPUTE IT | - |
+| **F-27** | BIGGEST_WIN | S | OPEN | S121 | THE CROSSWALK'S bound_to_inventory_document IS A STATIC FLAG THAT ROTTED THE HOUR THE REGISTRY WAS REBOUND - COMPUTE IT | - |
 | **F-8** | BIGGEST_WIN | S | OPEN | S117 | per_event.report's DOCSTRING DOCUMENTS A PARAMETER IT DOES NOT HAVE, AND THE A-ARM RE-IMPLEMENTS ITS QUANTILE | - |
 | **G-30** | BIGGEST_WIN | S | OPEN | S115 | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | - |
 | **M-15** | BIGGEST_WIN | S | OPEN | S115 | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | - |
@@ -523,7 +523,7 @@ MEASURED. The mission at :31-34 reads 'Use only F_LAST-closed native event group
 
 ### [ESSENTIAL] F-23 - THE SEALED-ABSENCE PROOF HAS NO PRODUCER - THE ONE GENUINELY NEW FUNCTION OF THE SEARCH
 
-*size S | IN_PROGRESS | raised S121*
+*size S | OPEN | raised S121*
 
 **Why it is ESSENTIAL:** the nine sealed layers read SEALED_UNPROVEN on the Sunday crosswalk until this exists
 
@@ -815,7 +815,7 @@ build_context_bundle, build_model_visible_context and bind_principal_knowledge_u
 
 ### [ESSENTIAL] F-24 - THE SPAWN GATE (TO-DO ITEM 7): gate_applicable_inputs EXISTS AND emit() NEVER CALLS IT; NO FIXTURE PROVES IT CAN PASS HONESTLY
 
-*size M | IN_PROGRESS | raised S121*
+*size M | OPEN | raised S121*
 
 **Why it is ESSENTIAL:** a gate that is not called is prose; 75 of 75 inputs were not delivered on Sunday and nothing refused
 
@@ -1822,7 +1822,7 @@ Every lifecycle row is retained through native_replay_driver._retain_lifecycle w
 
 ### [BIGGEST_WIN] F-27 - THE CROSSWALK'S bound_to_inventory_document IS A STATIC FLAG THAT ROTTED THE HOUR THE REGISTRY WAS REBOUND - COMPUTE IT
 
-*size S | IN_PROGRESS | raised S121*
+*size S | OPEN | raised S121*
 
 **Why it is BIGGEST WIN:** a status that mirrors a registry fact by constant lies as soon as the registry moves
 

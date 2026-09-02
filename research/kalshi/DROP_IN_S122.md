@@ -50,6 +50,24 @@ read-only search for an existing producer FIRST (the S121 search agents' briefs 
 section 4 and the search record), then a test-engineer persona wires it; `isolation: worktree` cut
 by hand from the tip; commit and push per slice (D84); one arm, A_MEMORY.
 
-## STATE (completed at the S121 close, section 9 of the handoff)
+## STATE, VERIFIED BY EXECUTION AT THE S121 CLOSE
 
-Tip, test count, the three wiring merges, the cross-persona call sites, F-22 onward.
+- **1,816 tests green**, store check, docs gate, D34 grep, locked adapter clean, scratchpad empty.
+- Merged this session (in order): the output ledgers (`native_principal_outputs`, required set
+  DERIVED), the windows-and-clocks packet, the inventory classification and the 14-layer registry
+  rebind, the crosswalk with computed status and `gate_applicable_inputs`, staging gated on the
+  output validator and the `read-back` CLI, the 63 KEEP files as knowledge-manifest artifacts routed
+  to A_MEMORY, the crosswalk on the report, the RT handoff trio from a validated bundle, and the
+  seven clocks by registry id on every row and delivery.
+- **The gate is wired to nothing yet**: `emit()` still requires only the delivery receipt. Wiring it
+  (knowledge slice 5) is blocked on F-29 and F-30 until Greg rules, and on the knowledge receipt
+  (slice 3) and the seed memory (slice 2).
+- Persona branches to resume from, all pushed: `persona/s121-wire-knowledge-gates` (`6694770`,
+  slices 2-6), `persona/s121-wire-clocks-windows` (`745f02e`, F-20 tests-first RED; slices b-d),
+  `persona/s121-wire-outputs-staging` (`ae5611e`, slice 5 and `build_handoff` into `read_back`).
+- FIRST TWO EDITS OF S122, small, single-writer: the emitter's "What you return" gains
+  `outputs_receipt_sha256` and the bundle prose (the persona's exact text is in its report, quoted
+  in the handoff); `native_staging.REQUIRED_CUTOFF_KEYS` gains `clock_model_evaluation_ns` with the
+  staging test fixture updated.
+- The Sunday crosswalk on the real result read 75 of 75 inputs not delivered; the wiring above is
+  what turns those rows DELIVERED, and F-29/F-30 are what still blocks the last of them.

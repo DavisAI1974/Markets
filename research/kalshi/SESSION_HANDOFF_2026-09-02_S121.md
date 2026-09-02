@@ -148,7 +148,36 @@ The Sunday re-run on the new code (needs Greg and the box; the A-memory workflow
 reveal; Monday. The removal of the retired A-clean overlay, profiles and workflow (D60 discussion).
 Key rotation stays deferred until the walk ends.
 
-## 9. THE CLOSE (completed when the wiring lands)
+## 9. THE CLOSE
 
-Pending: merge shas of the three wiring branches, the cross-persona call-site commits, the final
-test count, the final tip.
+Greg: *"Things are starting to move slow. Let's wrap it up."* All three wiring personas were stopped,
+committed their state as pushed save points (D84), and reported. What merged, all green, all gated:
+
+| merge | persona tip | what | tests after |
+|---|---|---|---|
+| `0ff5058` | outputs-staging `4d1898d` | staging gated on the output validator; the read-back loop closed (`native_staging read-back` CLI, findings attached to a finished result beside the original) | 1,735 |
+| `5b7b3db` | knowledge-gates `6694770` | slice 1 of F-22: the 63 KEEP files registered as artifacts of the EXISTING manifest (PYTHON_SOURCE kind), routed to the A_MEMORY profiles, wrong-data external binding retired from them, manifest regenerated | 1,752 |
+| `0412506` | outputs-staging `ae5611e` | the crosswalk rendered on the report at the choke point; the V2 workmode RT handoff trio (ONEWAY_HANDOFF, RT_FIRST_LOCK, RT_CONTEXT_MANIFEST) built from a validated bundle by reuse | 1,772 |
+| `a540b2d` | clocks-windows `34e2d09` | F-26 slice (a): the seven clocks by registry id on every member row and GroupDelivery, availability chain checked, clock_model_evaluation stamped and on the cutoff dict; nothing removed; locked adapter byte-identical | **1,816** |
+
+Left on persona branches, NOT merged: knowledge-gates slices 2-6 (not started; designs in its report,
+summarised in F-22); clocks-windows `745f02e` (F-20 tests-first, RED, no implementation) and slices
+(b)-(d) not started; outputs-staging slice 5 (A_MEMORY defaults) not started, `build_handoff` not yet
+called from `read_back`.
+
+**FINDINGS FROM THE PERSONAS THAT THE NEXT SESSION ACTS ON FIRST** (registered F-29, F-30, and the
+drop-in's ITEM ONE):
+1. The emitter's "What you return" must add `outputs_receipt_sha256` and describe the bundle; the
+   staging gate now REFUSES an artifact written to the emitter's current text (pinned by test).
+2. `native_staging.REQUIRED_CUTOFF_KEYS` must gain `clock_model_evaluation_ns` (the driver now emits it).
+3. F-29: `clock_lock_time` is registered as an INPUT layer with no producer; the gate cannot pass
+   until it is accounted for by his output ledger (a computed PRINCIPAL_STAMPED status, or a registry
+   move - Greg's call, D60).
+4. F-30: the driver drops per-record `raw_actions` before the ledger, so ten order-lifecycle layers
+   compute RECEIPTED_CARRIER_ABSENT on the real Sunday result. A raw-data drop under D60; Greg's call.
+5. The crosswalk's static bound-to-inventory flag must read the registry (F-27); its `activity.*`
+   member paths must be rebound to `activity_since.*` in the same merge that removes the fixed blocks.
+6. The prompt cannot carry the nine sealed layer ids verbatim once they are sealed tokens; the
+   crosswalk table withholds the sealed rows (count and proof sha) in the prompt.
+
+Scratchpad at close: 0 entries (D87). Final tip: the commit that carries this section.
