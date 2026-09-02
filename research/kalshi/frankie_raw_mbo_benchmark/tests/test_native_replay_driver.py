@@ -1291,3 +1291,26 @@ class ExitStratumReachesTheLedgerTest(unittest.TestCase):
         driver, result = self._run()
         summary = result["layers"]["exact_lifecycle_and_runway_ledger"]["section_summaries"]["4.6"]
         self.assertGreaterEqual(summary["exit_view"]["filed"], 1)
+
+
+
+class QueueTerminalJoinsReplenishmentEpisodeTest(ExitStratumReachesTheLedgerTest):
+    """F-18 join 5 through the DRIVER: a cancel that empties a level is BOTH a 4.6 terminal
+    and a 4.7 removal, and the two rows must carry the same key.
+
+    Reuses the two-record add-then-cancel tape: order 900 is the only order at its level,
+    so its cancel depletes the level and 4.7 opens an episode on exactly that instant.
+    """
+
+    def test_the_terminal_key_is_among_the_episode_keys(self):
+        driver, _ = self._run()
+        terminals = {r["level_event_key_at_exit"] for r in driver.counters.lifecycle_rows
+                     if r.get("emitting_section") == "queue"
+                     and r.get("level_event_key_at_exit")}
+        episodes = {r["level_event_key"] for r in driver.counters.lifecycle_rows
+                    if r.get("emitting_section") == "replenishment"
+                    and r.get("level_event_key")}
+        self.assertTrue(terminals, "no 4.6 terminal carried a level key")
+        self.assertTrue(episodes, "no 4.7 episode row carried a level key")
+        self.assertTrue(terminals & episodes,
+                        f"no 4.6 terminal joins a 4.7 episode: {terminals} vs {episodes}")

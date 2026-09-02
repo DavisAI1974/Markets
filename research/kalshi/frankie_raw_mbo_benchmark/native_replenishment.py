@@ -55,6 +55,7 @@ from dataclasses import dataclass, field
 from typing import Any, Iterable
 
 from research.kalshi.frankie_raw_mbo_benchmark.native_stratum import (
+    level_event_key,
     CENSORED,
     RESOLVED,
     Declaration,
@@ -258,6 +259,11 @@ class ReplenishmentEpisode:
             "side": self.side,
             "session_phase": self.session_phase,
             "price_raw": self.price_raw,
+            # F-18 join 5. Same key the 4.6 terminal of the order whose departure opened
+            # this episode carries as level_event_key_at_exit.
+            "level_event_key": level_event_key(
+                self.instrument_id, self.side, self.price_raw, self.opened_recv_ns
+            ),
             "touch_state_at_open": self.touch_state_at_open,
             "opened_recv_ns": self.opened_recv_ns,
             "closed_recv_ns": self.closed_recv_ns,

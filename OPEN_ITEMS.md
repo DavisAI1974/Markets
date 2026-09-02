@@ -6,8 +6,8 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 177 |
-| in progress | 2 |
+| open | 176 |
+| in progress | 3 |
 | done | 18 |
 
 By size: **XS** 19, **S** 81, **M** 56, **L** 12
@@ -293,7 +293,7 @@ By tier: **ESSENTIAL** 29, **BIGGEST_WIN** 45, **REST** 105
 | **A-23** | BIGGEST_WIN | L | OPEN | S112 | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not | - |
 | **A-39** | BIGGEST_WIN | L | OPEN | S114 | THE WINTER LANE FORWARD TOOL - build the missing terms behind the seven s105.1 plays (A-38 converter, G-4 feeds, conjunction joins) | - |
 | **A-59** | BIGGEST_WIN | L | OPEN | S115 | THE HYBRID: agent-as-render-target (NOOA) + agent-managed context with declared offload (ACM) - our store stays the truth | - |
-| **F-18** | BIGGEST_WIN | L | OPEN | S120 | THREE MISSING JOINS STILL OPEN: 4.6<->4.7, 4.11<-the rejection ledger, 4.5<->everything | - |
+| **F-18** | BIGGEST_WIN | L | IN_PROGRESS | S120 | THREE MISSING JOINS STILL OPEN: 4.6<->4.7, 4.11<-the rejection ledger, 4.5<->everything | - |
 | **G-29** | BIGGEST_WIN | L | OPEN | S114 | DAILY DRY-GAS PRODUCTION NOWCAST - the balance lens called it 'the single biggest hole' and the synthesis dropped it | - |
 | **A-42** | BIGGEST_WIN | ? | OPEN | ? | RUN the failure judge (FJ-1) on a scored group and see whether the labels change any repair | - |
 | **A-47** | BIGGEST_WIN | ? | OPEN | ? | Re-emit the truncated curves: g17/g18/g22 blinds have no overnight leg | - |
@@ -2425,7 +2425,7 @@ THE DISTINCTION I COLLAPSED, and both halves are real: (a) two IDEAS improving t
 
 ### [BIGGEST_WIN] F-18 - THREE MISSING JOINS STILL OPEN: 4.6<->4.7, 4.11<-the rejection ledger, 4.5<->everything
 
-*size L | OPEN | raised S120*
+*size L | IN_PROGRESS | raised S120*
 
 **Source:** S120, from Frankie's run-33605852433 assessment and the S120 measurement
 

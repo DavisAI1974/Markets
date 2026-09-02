@@ -28,6 +28,21 @@ QUANTILE_BASIS_EXACT = "EXACT_ALL_VALUES"
 QUANTILE_BASIS_RESERVOIR = "BOUNDED_RESERVOIR_SAMPLE"
 COMPLEMENTARY = "COMPLEMENTARY_SCOPE_DIFFERENCE"
 
+
+def level_event_key(instrument_id: int, side: str, price_raw: int, recv_ns: int) -> str:
+    """The join key between a 4.6 order terminal and a 4.7 removal episode (F-18, join 5).
+
+    A 4.7 removal episode IS a 4.6 lifecycle terminal - the level was depleted because the
+    order died - and on run 33605852433 nothing joined them, so "did the removed order's
+    queue position predict whether the level was restored" was unanswerable although both
+    halves were computed on the same day from the same book. 4.7 keys a LEVEL event and 4.6
+    keys an ORDER, and both already carry instrument, side, price and receive time; what was
+    missing was one declared key emitted identically on both rows. Defined once, here, so the
+    two sections cannot drift in format - a join that has to be reconstructed by a reader is
+    a join that gets reconstructed wrong.
+    """
+    return f"{int(instrument_id)}:{side}:{int(price_raw)}:{int(recv_ns)}"
+
 RESOLVED = "RESOLVED"
 CENSORED = "CENSORED"
 STILL_OPEN = "STILL_OPEN"

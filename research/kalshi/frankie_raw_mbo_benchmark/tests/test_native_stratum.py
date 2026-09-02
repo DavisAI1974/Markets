@@ -295,3 +295,18 @@ class CrossDaySynthesisTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+
+class LevelEventKeyTest(unittest.TestCase):
+    """F-18 join 5: one key, one definition, identical on a 4.6 terminal and a 4.7 episode."""
+
+    def test_it_is_deterministic_and_carries_all_four_parts(self):
+        from research.kalshi.frankie_raw_mbo_benchmark.native_stratum import level_event_key
+        key = level_event_key(42, "B", 1000, 4_000)
+        self.assertEqual(key, "42:B:1000:4000")
+        self.assertEqual(key, level_event_key(42, "B", 1000, 4_000))
+
+    def test_a_different_instant_is_a_different_key(self):
+        from research.kalshi.frankie_raw_mbo_benchmark.native_stratum import level_event_key
+        self.assertNotEqual(level_event_key(42, "B", 1000, 4_000), level_event_key(42, "B", 1000, 4_001))

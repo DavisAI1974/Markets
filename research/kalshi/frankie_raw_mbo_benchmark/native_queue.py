@@ -49,6 +49,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping
 
 from research.kalshi.frankie_raw_mbo_benchmark.native_stratum import (
+    level_event_key,
     CENSORED,
     RESOLVED,
     Declaration,
@@ -275,6 +276,14 @@ class OrderLifecycle:
             "exit_family_id": self.exit_family_id,
             "exit_session_phase": self.exit_session_phase,
             "exit_stratum_available": self.exit_stratum_available,
+            # F-18 join 5. Same key a 4.7 episode opened by this order's departure carries.
+            "level_event_key_at_exit": (
+                level_event_key(
+                    self.instrument_id, self.side, self.current_episode.price_raw,
+                    self.terminal_recv_ns,
+                )
+                if self.terminal_recv_ns is not None and self.episodes else None
+            ),
             "birth_recv_ns": self.birth_recv_ns,
             "birth_sequence": self.birth_sequence,
             "terminal_status": self.terminal_status,

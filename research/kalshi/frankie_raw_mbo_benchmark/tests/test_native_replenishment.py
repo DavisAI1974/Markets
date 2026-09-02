@@ -400,3 +400,17 @@ class ReplacedQuantityRenameTest(unittest.TestCase):
         row = self.episode.as_dict()
         self.assertIn("neighborhood_arrival_quantity", row)
         self.assertNotIn("replaced_quantity", row)
+
+
+
+class LevelEventKeyOnTheEpisodeTest(unittest.TestCase):
+    """F-18 join 5, the 4.7 half - the same key the departing order's 4.6 terminal carries."""
+
+    def test_the_episode_row_carries_the_level_key_it_opened_on(self):
+        calc = ReplenishmentCalculator(horizon_ns=HORIZON)
+        episode = calc.open_episode(**open_kwargs())
+        k = open_kwargs()
+        self.assertEqual(
+            episode.as_dict()["level_event_key"],
+            f"{k['instrument_id']}:{k['side']}:{k['price_raw']}:{k['recv_ns']}",
+        )

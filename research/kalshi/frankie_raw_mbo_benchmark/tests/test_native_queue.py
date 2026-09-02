@@ -601,3 +601,21 @@ class ExitStratumParallelViewTest(unittest.TestCase):
         summary = self.calc.summary()
         self.assertEqual(summary["exit_view"]["filed"], 1)
         self.assertEqual(summary["exit_view"]["excluded_no_exit_group"], 0)
+
+
+
+class LevelEventKeyOnTheTerminalTest(unittest.TestCase):
+    """F-18 join 5, the 4.6 half."""
+
+    def setUp(self) -> None:
+        self.book = FakeBook()
+        self.calc = QueueSurvivalCalculator()
+        self.book.rest("B", 1000, 1, 3)
+        self.lifecycle = self.calc.on_add(**add_kwargs(), book_view=self.book.view)
+
+    def test_no_key_before_the_terminal(self):
+        self.assertIsNone(self.lifecycle.as_dict()["level_event_key_at_exit"])
+
+    def test_the_terminal_row_carries_the_level_key_of_its_exit(self):
+        row = self.calc.on_terminal(instrument_id=42, order_id=1, status=CANCELLED, recv_ns=4_000)
+        self.assertEqual(row["level_event_key_at_exit"], "42:B:1000:4000")
