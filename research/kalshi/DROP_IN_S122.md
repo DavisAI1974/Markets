@@ -59,9 +59,13 @@ by hand from the tip; commit and push per slice (D84); one arm, A_MEMORY.
   output validator and the `read-back` CLI, the 63 KEEP files as knowledge-manifest artifacts routed
   to A_MEMORY, the crosswalk on the report, the RT handoff trio from a validated bundle, and the
   seven clocks by registry id on every row and delivery.
-- **The gate is wired to nothing yet**: `emit()` still requires only the delivery receipt. Wiring it
-  (knowledge slice 5) is blocked on F-29 and F-30 until Greg rules, and on the knowledge receipt
-  (slice 3) and the seed memory (slice 2).
+- **The gate is not yet called from `emit()`; S122 pushes through to it.** Order: the seed memory
+  (knowledge slice 2), the knowledge receipt (slice 3), the sealed proof and the crosswalk
+  bound-ness fix (slice 4), then the gate in `emit()` with honest fixtures (slice 5). F-29 is
+  resolved by the computed status PRINCIPAL_STAMPED for `clock_lock_time` (his own first-lock
+  entry accounts for it); F-30 is resolved by carrying per-record `raw_actions` on the member row
+  (D81: every record of every field; the Sunday re-run pays the re-baseline). No decision is
+  pending; Greg: "We're pushing through."
 - Persona branches to resume from, all pushed: `persona/s121-wire-knowledge-gates` (`6694770`,
   slices 2-6), `persona/s121-wire-clocks-windows` (`745f02e`, F-20 tests-first RED; slices b-d),
   `persona/s121-wire-outputs-staging` (`ae5611e`, slice 5 and `build_handoff` into `read_back`).
@@ -70,4 +74,4 @@ by hand from the tip; commit and push per slice (D84); one arm, A_MEMORY.
   in the handoff); `native_staging.REQUIRED_CUTOFF_KEYS` gains `clock_model_evaluation_ns` with the
   staging test fixture updated.
 - The Sunday crosswalk on the real result read 75 of 75 inputs not delivered; the wiring above is
-  what turns those rows DELIVERED, and F-29/F-30 are what still blocks the last of them.
+  what turns those rows DELIVERED, and F-29/F-30 are resolved on the way, not waited on.
