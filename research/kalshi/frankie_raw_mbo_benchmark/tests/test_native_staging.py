@@ -581,3 +581,223 @@ class OutputsBundleGateTest(unittest.TestCase):
         self.assertEqual(result["verdict"], "ACCEPTED", result["failed_gates"])
         principal = result["layers"]["positive_findings_report"]["principal"]
         self.assertEqual(principal["outputs_receipt_sha256"], self.receipt["receipt_sha256"])
+
+
+# ------------------------------------------------------------------------------------------
+# Slice 2 (S121): the read-back loop closes on a FINISHED calculation_result.json.
+# ------------------------------------------------------------------------------------------
+
+import io  # noqa: E402
+import subprocess  # noqa: E402
+import sys  # noqa: E402
+from contextlib import redirect_stdout  # noqa: E402
+
+from research.kalshi.frankie_raw_mbo_benchmark.native_staging import (  # noqa: E402
+    READ_BACK_SUFFIX,
+    main as staging_main,
+    read_back,
+)
+
+
+def finished_result() -> dict:
+    """A finalized EVIDENCE_ONLY result, exactly what the launch writes to calculation_result.json."""
+    from research.kalshi.frankie_raw_mbo_benchmark.tests.test_native_calculation_runner import (
+        drive,
+        make_run,
+    )
+    run = make_run()
+    drive(run)
+    return run.finalize()
+
+
+class ReadBackTest(unittest.TestCase):
+    """A finished result cannot be reconstituted into a live NativeCalculationRun - the
+    calculators' state is not serialized - so the findings layer is written INTO the result
+    JSON through the runner's own attach route, and the updated result is written BESIDE the
+    original. The original is never touched: it is the evidence the artifact cites, by hash.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.outputs_dir = Path(cls.tmp.name) / "principal_outputs"
+        cls.receipt = write_bundle(
+            build_bundle(delivery_receipt_sha256=DELIVERY, knowledge_receipt_sha256=KNOWLEDGE),
+            cls.outputs_dir,
+        )
+        cls.result = finished_result()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def _stage(self, tmp: str, *, artifact_overrides=None, result=None) -> tuple[Path, Path]:
+        result_path = Path(tmp) / "calculation_result.json"
+        result_path.write_text(json.dumps(result or self.result, indent=2, sort_keys=True) + "\n")
+        body = delivered_artifact(
+            evidence_result_hash=(result or self.result)["result_hash"],
+            outputs_receipt_sha256=self.receipt["receipt_sha256"],
+        )
+        body.update(artifact_overrides or {})
+        artifact_path = Path(tmp) / "frankie_principal_findings.json"
+        artifact_path.write_text(json.dumps(body, indent=2))
+        return artifact_path, result_path
+
+    def _read_back(self, artifact_path, result_path, **kwargs):
+        args = dict(
+            result_path=result_path, outputs_dir=self.outputs_dir,
+            knowledge_receipt_sha256=KNOWLEDGE, render_report=False,
+        )
+        args.update(kwargs)
+        return read_back(artifact_path, **args)
+
+    def test_it_writes_the_result_with_findings_beside_the_original_and_never_over_it(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path, result_path = self._stage(tmp)
+            before = result_path.read_bytes()
+            summary = self._read_back(artifact_path, result_path)
+            written = Path(summary["result_path"])
+            self.assertEqual(written.parent, result_path.parent)
+            self.assertNotEqual(written, result_path)
+            self.assertEqual(written.name, f"calculation_result{READ_BACK_SUFFIX}.json")
+            self.assertEqual(result_path.read_bytes(), before, "the original was rewritten")
+            updated = json.loads(written.read_text())
+        self.assertEqual(updated["completion_status"], "PRINCIPAL_FINDINGS_ATTACHED")
+        self.assertEqual(updated["verdict"], "ACCEPTED", updated["failed_gates"])
+        layer = updated["layers"]["positive_findings_report"]
+        self.assertEqual(len(layer["findings"]), 1)
+        self.assertEqual(layer["authored_by"], "PRINCIPAL")
+        self.assertEqual(layer["principal"]["outputs_receipt_sha256"], self.receipt["receipt_sha256"])
+        self.assertEqual(updated["evidence_result_hash"], self.result["result_hash"])
+        self.assertNotEqual(updated["result_hash"], self.result["result_hash"])
+        self.assertEqual(summary["findings_attached"], 1)
+        self.assertEqual(summary["evidence_result_hash"], self.result["result_hash"])
+
+    def test_an_artifact_citing_other_evidence_than_the_result_is_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path, result_path = self._stage(
+                tmp, artifact_overrides={"evidence_result_hash": "b" * 64}
+            )
+            with self.assertRaises(StagingError) as caught:
+                self._read_back(artifact_path, result_path)
+        self.assertIn("evidence", str(caught.exception))
+
+    def test_a_result_whose_hash_does_not_recompute_is_refused(self):
+        """A tampered evidence file cannot receive findings; the artifact cites the hash."""
+        tampered = json.loads(json.dumps(self.result))
+        tampered["layers"]["exact_member_ledger"]["exact_member_rows"] = 999_999
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path, result_path = self._stage(tmp, result=tampered)
+            with self.assertRaises(StagingError) as caught:
+                self._read_back(artifact_path, result_path)
+        self.assertIn("result_hash", str(caught.exception))
+
+    def test_a_result_that_already_carries_principal_findings_is_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path, result_path = self._stage(tmp)
+            first = self._read_back(artifact_path, result_path)
+            with self.assertRaises(StagingError) as caught:
+                self._read_back(artifact_path, Path(first["result_path"]))
+        self.assertIn("already", str(caught.exception))
+
+    def test_it_refuses_to_overwrite_an_earlier_read_back(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path, result_path = self._stage(tmp)
+            self._read_back(artifact_path, result_path)
+            with self.assertRaises(StagingError) as caught:
+                self._read_back(artifact_path, result_path)
+        self.assertIn("exists", str(caught.exception))
+
+    def test_it_refuses_an_out_path_equal_to_the_original(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path, result_path = self._stage(tmp)
+            with self.assertRaises(StagingError):
+                self._read_back(artifact_path, result_path, out_path=result_path)
+
+    def test_the_staging_refusals_still_fire_through_the_read_back(self):
+        """The read-back runs load_principal_artifact; its gate is not bypassed."""
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path, result_path = self._stage(
+                tmp, artifact_overrides={"outputs_receipt_sha256": "e" * 64}
+            )
+            with self.assertRaises(StagingError):
+                self._read_back(artifact_path, result_path)
+            self.assertFalse(
+                (result_path.parent / f"calculation_result{READ_BACK_SUFFIX}.json").exists(),
+                "a refused read-back must write nothing",
+            )
+
+
+class ReadBackCliTest(unittest.TestCase):
+    """`python3 -m ...native_staging read-back ...`, following the sibling modules' pattern:
+    a JSON summary on success, `REFUSED: <why>` and exit 1 otherwise."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        root = Path(cls.tmp.name)
+        cls.outputs_dir = root / "principal_outputs"
+        cls.receipt = write_bundle(
+            build_bundle(delivery_receipt_sha256=DELIVERY, knowledge_receipt_sha256=KNOWLEDGE),
+            cls.outputs_dir,
+        )
+        cls.result = finished_result()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def _stage(self, tmp: str, **artifact_overrides) -> tuple[Path, Path]:
+        result_path = Path(tmp) / "calculation_result.json"
+        result_path.write_text(json.dumps(self.result, indent=2, sort_keys=True) + "\n")
+        body = delivered_artifact(
+            evidence_result_hash=self.result["result_hash"],
+            outputs_receipt_sha256=self.receipt["receipt_sha256"],
+        )
+        body.update(artifact_overrides)
+        artifact_path = Path(tmp) / "frankie_principal_findings.json"
+        artifact_path.write_text(json.dumps(body, indent=2))
+        return artifact_path, result_path
+
+    def _argv(self, artifact_path, result_path, *extra):
+        return [
+            "read-back", "--artifact", str(artifact_path), "--result", str(result_path),
+            "--outputs-dir", str(self.outputs_dir), "--knowledge-receipt-sha256", KNOWLEDGE,
+            *extra,
+        ]
+
+    def test_read_back_prints_a_summary_and_writes_the_result(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path, result_path = self._stage(tmp)
+            out = io.StringIO()
+            with redirect_stdout(out):
+                code = staging_main(self._argv(artifact_path, result_path))
+            self.assertEqual(code, 0, out.getvalue())
+            summary = json.loads(out.getvalue())
+            self.assertEqual(summary["findings_attached"], 1)
+            self.assertEqual(summary["outputs_receipt_sha256"], self.receipt["receipt_sha256"])
+            self.assertTrue(Path(summary["result_path"]).exists())
+            self.assertEqual(
+                json.loads(Path(summary["result_path"]).read_text())["completion_status"],
+                "PRINCIPAL_FINDINGS_ATTACHED",
+            )
+
+    def test_a_refusal_prints_refused_and_exits_1(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path, result_path = self._stage(tmp, outputs_receipt_sha256="e" * 64)
+            out = io.StringIO()
+            with redirect_stdout(out):
+                code = staging_main(self._argv(artifact_path, result_path))
+            self.assertEqual(code, 1)
+            self.assertTrue(out.getvalue().startswith("REFUSED"), out.getvalue())
+
+    def test_the_module_runs_as_a_command(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path, result_path = self._stage(tmp)
+            proc = subprocess.run(
+                [sys.executable, "-m", "research.kalshi.frankie_raw_mbo_benchmark.native_staging",
+                 *self._argv(artifact_path, result_path, "--no-report")],
+                capture_output=True, text=True, cwd=str(Path(__file__).resolve().parents[4]),
+            )
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertEqual(json.loads(proc.stdout)["findings_attached"], 1)

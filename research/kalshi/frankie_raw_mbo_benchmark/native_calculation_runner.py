@@ -16,6 +16,7 @@ produces evidence. It does not lock, freeze, hand off, or claim that Frankie ran
 """
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 from dataclasses import dataclass, field
@@ -470,6 +471,14 @@ class NativeCalculationRun:
         """
         if self._finalized:
             raise CalculationRunError("this run has already been finalized")
+        self._check_principal_attribution(execution)
+        admitted = [self._admit_finding(row) for row in findings]
+        self._principal = dict(execution)
+        self._findings.extend(admitted)
+
+    @staticmethod
+    def _check_principal_attribution(execution: Mapping[str, Any]) -> None:
+        """The attribution a principal execution must carry, shared by both attach routes."""
         for field_name in ("principal", "artifact_path", "artifact_sha256"):
             value = execution.get(field_name)
             if not isinstance(value, str) or not value.strip():
@@ -484,9 +493,70 @@ class NativeCalculationRun:
                 "controller_only work cannot supply findings; that is the runner standing in "
                 "for the principal, which is what this gate exists to catch"
             )
-        admitted = [self._admit_finding(row) for row in findings]
-        self._principal = dict(execution)
-        self._findings.extend(admitted)
+
+    @classmethod
+    def attach_principal_findings_to_result(
+        cls,
+        result: Mapping[str, Any],
+        *,
+        execution: Mapping[str, Any],
+        findings: Sequence[Mapping[str, Any]],
+    ) -> dict[str, Any]:
+        """The attach route for a FINISHED result (S121 slice 2, the read-back).
+
+        A run cannot be reconstituted from its `calculation_result.json` - the sixteen
+        calculators' state is not serialized - so a principal artifact that arrives after
+        `finalize` has no live run to attach to. This applies the SAME attribution and
+        admission checks as `attach_principal_findings`, re-evaluates the one gate whose
+        verdict depends on attachment, and returns a NEW result: the findings layer filled,
+        `completion_status` PRINCIPAL_FINDINGS_ATTACHED, `evidence_result_hash` naming the
+        original by the hash the artifact cites, and `result_hash` recomputed over the whole.
+        The mapping handed in is not mutated. A result whose hash does not recompute, or that
+        already carries principal findings, is refused - a filed record is never replaced.
+        """
+        if not isinstance(result, Mapping) or result.get("schema") != SCHEMA:
+            raise CalculationRunError(
+                f"not a {SCHEMA} result; findings attach to a calculation result and nothing else"
+            )
+        declared = result.get("result_hash")
+        recomputed = canonical_hash({k: v for k, v in result.items() if k != "result_hash"})
+        if declared != recomputed:
+            raise CalculationRunError(
+                f"result_hash {declared!r} does not recompute ({recomputed}); a result that does "
+                "not hash to itself is tampered or partial and cannot receive findings"
+            )
+        layer = (result.get("layers") or {}).get(LAYER_FINDINGS) or {}
+        if (
+            result.get("completion_status") != "EVIDENCE_ONLY"
+            or layer.get("principal") is not None
+            or layer.get("findings")
+        ):
+            raise CalculationRunError(
+                f"this result already carries principal findings (completion_status "
+                f"{result.get('completion_status')!r}); a filed record is never replaced"
+            )
+        cls._check_principal_attribution(execution)
+        admitted = [cls._admit_finding(row) for row in findings]
+        principal = dict(execution)
+
+        updated = copy.deepcopy(dict(result))
+        updated["layers"][LAYER_FINDINGS] = {
+            "findings": admitted,
+            "every_finding_carries_a_falsifier": True,
+            "authored_by": "PRINCIPAL",
+            "principal": principal,
+        }
+        updated["completion_status"] = "PRINCIPAL_FINDINGS_ATTACHED"
+        gate = cls._principal_attribution_gate(admitted, principal).as_dict()
+        updated["gates"] = [
+            gate if g.get("gate") == GATE_NOT_A_MODEL_RUN else g for g in updated["gates"]
+        ]
+        updated["failed_gates"] = [g["gate"] for g in updated["gates"] if not g["passed"]]
+        updated["verdict"] = REJECTED if updated["failed_gates"] else ACCEPTED
+        updated["evidence_result_hash"] = declared
+        updated.pop("result_hash")
+        updated["result_hash"] = canonical_hash(updated)
+        return updated
 
     @staticmethod
     def _admit_finding(row: Mapping[str, Any]) -> dict[str, Any]:
@@ -707,14 +777,22 @@ class NativeCalculationRun:
         said nothing about whether a principal had actually produced the findings above it.
         Findings present without principal attribution now REJECT the result.
         """
-        if self._findings and self._principal is None:
+        return self._principal_attribution_gate(self._findings, self._principal)
+
+    @staticmethod
+    def _principal_attribution_gate(
+        findings: Sequence[Mapping[str, Any]], principal: Mapping[str, Any] | None
+    ) -> GateResult:
+        """The one gate whose verdict depends on attachment; shared with the read-back route
+        so a result attached after finalize carries the identical wording."""
+        if findings and principal is None:
             return GateResult(
                 GATE_NOT_A_MODEL_RUN,
                 False,
                 "findings are present with no principal attribution; the calculation layer "
                 "has stood in for the principal, which is not the procedure",
             )
-        if self._principal is None:
+        if principal is None:
             return GateResult(
                 GATE_NOT_A_MODEL_RUN,
                 True,
@@ -724,8 +802,8 @@ class NativeCalculationRun:
         return GateResult(
             GATE_NOT_A_MODEL_RUN,
             True,
-            f"findings attributed to {self._principal['principal']} via committed artifact "
-            f"{self._principal['artifact_path']}",
+            f"findings attributed to {principal['principal']} via committed artifact "
+            f"{principal['artifact_path']}",
         )
 
     def _gate_cross_section(self) -> GateResult:

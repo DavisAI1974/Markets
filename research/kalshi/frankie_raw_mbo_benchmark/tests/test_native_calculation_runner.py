@@ -1,10 +1,12 @@
 """Tests for sections 5 and 6: artifact layers and fail-closed acceptance gates."""
 from __future__ import annotations
 
+import json
 import unittest
 
 from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import (
     ACCEPTED,
+    canonical_hash,
     GATE_COVERAGE,
     GATE_DENOMINATORS,
     GATE_DETERMINISM,
@@ -380,6 +382,119 @@ PRINCIPAL = {
     "actual_principal_invocation": True,
     "controller_only": False,
 }
+
+
+class AttachToFinishedResultTest(unittest.TestCase):
+    """S121 slice 2: the attach path reaches a FINISHED result.
+
+    A run object cannot be rebuilt from its result JSON (the calculators' state is not
+    serialized), so `attach_principal_findings_to_result` applies the SAME attribution and
+    admission checks the live route applies and re-evaluates the one gate that depends on
+    attachment, returning a new result that names the original by `evidence_result_hash`.
+    """
+
+    FINDING = {
+        "claim": "withdrawal precedes touch retreat",
+        "support": "n=12 runways in one stratum",
+        "falsifier": "a stratum where retreat precedes withdrawal",
+        "exemplars": ["g0001", "g0002"],
+    }
+
+    def finished(self) -> dict:
+        run = make_run()
+        drive(run)
+        return run.finalize()
+
+    def test_a_finished_evidence_only_result_receives_the_findings(self) -> None:
+        result = self.finished()
+        self.assertEqual(result["completion_status"], "EVIDENCE_ONLY")
+        updated = NativeCalculationRun.attach_principal_findings_to_result(
+            result, execution=PRINCIPAL, findings=[self.FINDING]
+        )
+        self.assertEqual(updated["completion_status"], "PRINCIPAL_FINDINGS_ATTACHED")
+        layer = updated["layers"]["positive_findings_report"]
+        self.assertEqual(layer["findings"], [self.FINDING])
+        self.assertEqual(layer["authored_by"], "PRINCIPAL")
+        self.assertEqual(layer["principal"], PRINCIPAL)
+        self.assertEqual(updated["verdict"], "ACCEPTED", updated["failed_gates"])
+
+    def test_the_updated_result_names_the_evidence_and_hashes_itself(self) -> None:
+        result = self.finished()
+        updated = NativeCalculationRun.attach_principal_findings_to_result(
+            result, execution=PRINCIPAL, findings=[self.FINDING]
+        )
+        self.assertEqual(updated["evidence_result_hash"], result["result_hash"])
+        self.assertNotEqual(updated["result_hash"], result["result_hash"])
+        body = {k: v for k, v in updated.items() if k != "result_hash"}
+        self.assertEqual(updated["result_hash"], canonical_hash(body))
+
+    def test_the_attachment_gate_is_re_evaluated_and_names_the_principal(self) -> None:
+        result = self.finished()
+        updated = NativeCalculationRun.attach_principal_findings_to_result(
+            result, execution=PRINCIPAL, findings=[self.FINDING]
+        )
+        gate = next(g for g in updated["gates"] if g["gate"] == "calculation_evidence_is_not_model_execution")
+        self.assertTrue(gate["passed"])
+        self.assertIn(PRINCIPAL["principal"], gate["detail"])
+        self.assertIn(PRINCIPAL["artifact_path"], gate["detail"])
+        # The live route writes the identical gate wording, so a reader cannot tell the two
+        # apart by the gate - only by `evidence_result_hash`, which is the point.
+        live = make_run()
+        drive(live)
+        live.attach_principal_findings(execution=PRINCIPAL, findings=[self.FINDING])
+        live_gate = next(
+            g for g in live.finalize()["gates"] if g["gate"] == "calculation_evidence_is_not_model_execution"
+        )
+        self.assertEqual(gate, live_gate)
+
+    def test_the_original_result_is_not_mutated(self) -> None:
+        result = self.finished()
+        frozen = json.dumps(result, sort_keys=True)
+        NativeCalculationRun.attach_principal_findings_to_result(
+            result, execution=PRINCIPAL, findings=[self.FINDING]
+        )
+        self.assertEqual(json.dumps(result, sort_keys=True), frozen)
+
+    def test_a_result_whose_hash_does_not_recompute_is_refused(self) -> None:
+        result = self.finished()
+        result["layers"]["exact_member_ledger"]["exact_member_rows"] = 999_999
+        with self.assertRaises(CalculationRunError) as caught:
+            NativeCalculationRun.attach_principal_findings_to_result(
+                result, execution=PRINCIPAL, findings=[self.FINDING]
+            )
+        self.assertIn("result_hash", str(caught.exception))
+
+    def test_a_result_already_carrying_principal_findings_is_refused(self) -> None:
+        result = self.finished()
+        once = NativeCalculationRun.attach_principal_findings_to_result(
+            result, execution=PRINCIPAL, findings=[self.FINDING]
+        )
+        with self.assertRaises(CalculationRunError) as caught:
+            NativeCalculationRun.attach_principal_findings_to_result(
+                once, execution=PRINCIPAL, findings=[self.FINDING]
+            )
+        self.assertIn("already", str(caught.exception))
+
+    def test_the_live_routes_refusals_hold_on_the_finished_route(self) -> None:
+        result = self.finished()
+        for label, execution, findings in (
+            ("controller_only", dict(PRINCIPAL, controller_only=True), [self.FINDING]),
+            ("unproven invocation", dict(PRINCIPAL, actual_principal_invocation=False), [self.FINDING]),
+            ("no artifact hash", {k: v for k, v in PRINCIPAL.items() if k != "artifact_sha256"}, [self.FINDING]),
+            ("no falsifier", PRINCIPAL, [dict(self.FINDING, falsifier="  ")]),
+            ("no exemplar", PRINCIPAL, [dict(self.FINDING, exemplars=[])]),
+        ):
+            with self.subTest(label=label), self.assertRaises(CalculationRunError):
+                NativeCalculationRun.attach_principal_findings_to_result(
+                    result, execution=execution, findings=findings
+                )
+
+    def test_a_result_of_another_schema_is_refused(self) -> None:
+        result = dict(self.finished(), schema="SOMETHING_ELSE")
+        with self.assertRaises(CalculationRunError):
+            NativeCalculationRun.attach_principal_findings_to_result(
+                result, execution=PRINCIPAL, findings=[self.FINDING]
+            )
 
 
 class FindingsTest(unittest.TestCase):
