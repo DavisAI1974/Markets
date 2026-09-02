@@ -13,6 +13,16 @@ name: Frankie run size report 20260902
 # REFUSED loudly, and what to drop is discussed first. This says only what each thing costs.
 
 on:
+  # A workflow carrying only workflow_dispatch is never registered on a non-default branch
+  # and the dispatch API returns 404 for it. This one is read-only in every branch of its
+  # logic - it downloads a result and renders a table - so a push firing it is harmless and
+  # is in fact the fastest way to get the answer.
+  push:
+    branches:
+      - chatgpt/frankie-raw-mbo-benchmark-20260828
+    paths:
+      - '.github/workflows/frankie_run_size_report_20260902.yml'
+      - 'research/kalshi/frankie_raw_mbo_benchmark/report_ledger_size.py'
   workflow_dispatch:
     inputs:
       prefix:
@@ -42,7 +52,7 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-      WANTED_PREFIX: ${{ inputs.prefix }}
+      WANTED_PREFIX: ${{ inputs.prefix || '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
