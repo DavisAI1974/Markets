@@ -194,3 +194,51 @@ class WhatThePrincipalReadTest(unittest.TestCase):
         self.assertIn("`evidence_read` is not declared on this artifact", text)
         self.assertIn("resting on counters", text)
 
+
+class CrosswalkSectionTest(unittest.TestCase):
+    """S121 slice 3: the report is the choke point every artifact passes, so the 99-layer
+    crosswalk - what reached him, computed from receipts - is appended there and nowhere a
+    reader could miss it. Without a crosswalk the report is exactly what it was."""
+
+    @classmethod
+    def setUpClass(cls):
+        from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import (
+            load_registry,
+        )
+        from research.kalshi.frankie_raw_mbo_benchmark.native_layer_crosswalk import crosswalk
+
+        cls.crosswalk = crosswalk(load_registry(), arm="A_MEMORY")
+
+    def test_a_crosswalk_body_is_appended_with_its_totals_and_hash(self):
+        text = render_report(artifact(arm="A_MEMORY"), crosswalk=self.crosswalk)
+        self.assertIn("## Layer crosswalk", text)
+        totals = self.crosswalk["totals"]
+        self.assertIn(f"| registered | {totals['registered']} |", text)
+        self.assertIn(f"| inputs_applicable | {totals['inputs_applicable']} |", text)
+        self.assertIn(f"| outputs_pending | {totals['outputs_pending']} |", text)
+        self.assertIn(self.crosswalk["crosswalk_sha256"], text)
+        # The findings still come first and are all still there.
+        self.assertLess(text.index("## Findings by section"), text.index("## Layer crosswalk"))
+        self.assertEqual(text.count("#### F-"), 3)
+
+    def test_without_a_crosswalk_the_report_is_unchanged(self):
+        self.assertEqual(render_report(artifact()), render_report(artifact(), crosswalk=None))
+        self.assertNotIn("## Layer crosswalk", render_report(artifact()))
+
+    def test_a_crosswalk_that_could_not_be_computed_is_stated_in_the_report(self):
+        """A failure recorded only on stderr expires with the terminal; the report says so."""
+        text = render_report(
+            artifact(), crosswalk_note="crosswalk could not be computed: fixture reason 4711"
+        )
+        self.assertIn("## Layer crosswalk", text)
+        self.assertIn("fixture reason 4711", text)
+
+    def test_write_report_carries_the_crosswalk_to_disk(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "frankie_principal_findings.json"
+            path.write_text(json.dumps(artifact(arm="A_MEMORY")), encoding="utf-8")
+            written = write_report(path, crosswalk=self.crosswalk)
+            text = written.read_text()
+        self.assertIn("## Layer crosswalk", text)
+        self.assertIn(f"| registered | {self.crosswalk['totals']['registered']} |", text)
+

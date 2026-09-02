@@ -408,7 +408,11 @@ STREAM = "5" * 64
 
 
 def delivered_artifact(**overrides) -> dict:
-    """An artifact from a DELIVERED run on the arm every spawn targets (A_MEMORY, D86)."""
+    """An artifact from a DELIVERED run on the arm every spawn targets (A_MEMORY, D86).
+
+    Its finding carries what a real one does - `id`, `section`, claim, falsifier, exemplars -
+    so the report beside it renders; the renderer refuses a finding it cannot render honestly.
+    """
     body = dict(LoadPrincipalArtifactTest.GOOD)
     body["arm"] = "A_MEMORY"
     body["evidence_read"] = {name: "READ" for name in (
@@ -416,6 +420,16 @@ def delivered_artifact(**overrides) -> dict:
     )}
     body["delivery_receipt_sha256"] = DELIVERY
     body["stream_receipt_sha256"] = STREAM
+    body["findings"] = [
+        {
+            "id": "F-01",
+            "section": "4.6",
+            "claim": "cancels cluster at the close",
+            "support": "group 2654677",
+            "falsifier": "a close with no cancel cluster",
+            "exemplars": ["2654677"],
+        }
+    ]
     body.update(overrides)
     return body
 
@@ -801,3 +815,172 @@ class ReadBackCliTest(unittest.TestCase):
             )
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
             self.assertEqual(json.loads(proc.stdout)["findings_attached"], 1)
+
+
+# ------------------------------------------------------------------------------------------
+# Slice 3 (S121): the report at the choke point carries the 99-layer crosswalk.
+# ------------------------------------------------------------------------------------------
+
+
+def fixture_delivery_receipt() -> dict:
+    """A FRANKIE_LEDGER_DELIVERY_RECEIPT_V1 that passes the crosswalk's own hash check."""
+    from research.kalshi.frankie_raw_mbo_benchmark.fetch_frankie_ledgers import RECEIPT_SCHEMA
+    from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import (
+        canonical_hash,
+    )
+    body = {
+        "schema": RECEIPT_SCHEMA, "run_id": "readback-fixture", "run_prefix": "fixture/prefix",
+        "bucket": "fixture-bucket", "manifest_sha256": "f" * 64,
+        "fetched_at": "2026-09-02T00:00:00Z", "out_dir": "fixture", "ledgers": {}, "objects": {},
+        "all_ledgers_verified": True, "receipt_sha256": "",
+    }
+    body["receipt_sha256"] = canonical_hash(body, omit="receipt_sha256")
+    return body
+
+
+def fixture_knowledge_receipt(sha256: str) -> dict:
+    """A FRANKIE_KNOWLEDGE_DELIVERY_RECEIPT_V1 shape as the crosswalk reads it (hash unverified
+    there); its receipt_sha256 is what the bundle's verdicts cite."""
+    from research.kalshi.frankie_raw_mbo_benchmark.native_layer_crosswalk import (
+        KNOWLEDGE_RECEIPT_SCHEMA,
+    )
+    return {"schema": KNOWLEDGE_RECEIPT_SCHEMA, "layers": [], "receipt_sha256": sha256}
+
+
+class ReadBackReportTest(unittest.TestCase):
+    """The read-back has the result and every receipt in hand, so it computes the crosswalk
+    (`native_layer_crosswalk.crosswalk`) and the report carries `render_crosswalk_table`. A
+    receipt FILE handed to the read-back is bound by hash to the artifact's citation - that is
+    a refusal - while a crosswalk that cannot be computed stays non-fatal and is STATED in the
+    report rather than lost on stderr."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        root = Path(cls.tmp.name)
+        cls.delivery = fixture_delivery_receipt()
+        cls.delivery_path = root / "FRANKIE_LEDGER_DELIVERY_RECEIPT.json"
+        cls.delivery_path.write_text(json.dumps(cls.delivery, indent=2))
+        cls.knowledge = fixture_knowledge_receipt(KNOWLEDGE)
+        cls.knowledge_path = root / "FRANKIE_KNOWLEDGE_DELIVERY_RECEIPT.json"
+        cls.knowledge_path.write_text(json.dumps(cls.knowledge, indent=2))
+        cls.outputs_dir = root / "principal_outputs"
+        cls.receipt = write_bundle(
+            build_bundle(
+                delivery_receipt_sha256=cls.delivery["receipt_sha256"],
+                knowledge_receipt_sha256=KNOWLEDGE,
+            ),
+            cls.outputs_dir,
+        )
+        cls.result = finished_result()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def _stage(self, tmp: str, **artifact_overrides) -> tuple[Path, Path]:
+        result_path = Path(tmp) / "calculation_result.json"
+        result_path.write_text(json.dumps(self.result, indent=2, sort_keys=True) + "\n")
+        body = delivered_artifact(
+            evidence_result_hash=self.result["result_hash"],
+            delivery_receipt_sha256=self.delivery["receipt_sha256"],
+            outputs_receipt_sha256=self.receipt["receipt_sha256"],
+        )
+        body.update(artifact_overrides)
+        artifact_path = Path(tmp) / "frankie_principal_findings.json"
+        artifact_path.write_text(json.dumps(body, indent=2))
+        return artifact_path, result_path
+
+    def test_the_read_back_report_carries_the_crosswalk_totals_and_files_the_outputs(self):
+        from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import (
+            load_registry,
+        )
+        from research.kalshi.frankie_raw_mbo_benchmark.native_principal_outputs import (
+            registry_output_layer_ids,
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path, result_path = self._stage(tmp)
+            summary = read_back(
+                artifact_path, result_path=result_path, outputs_dir=self.outputs_dir,
+                delivery_receipt=self.delivery_path, knowledge_receipt=self.knowledge_path,
+            )
+            report = Path(summary["report_path"])
+            self.assertTrue(report.exists())
+            text = report.read_text()
+        self.assertIn("## Layer crosswalk", text)
+        self.assertIn("| registered |", text)
+        self.assertIn("| inputs_applicable |", text)
+        # Every output ledger the registry names is in the validated bundle, so the crosswalk
+        # files all of them off the outputs receipt - the count derived, not typed.
+        expected = len(registry_output_layer_ids(load_registry()))
+        self.assertIn(f"| outputs_filed | {expected} |", text)
+        self.assertIn(f"| outputs_pending | 0 |", text)
+        self.assertIn(self.receipt["receipt_sha256"], text)
+        self.assertIn(self.delivery["receipt_sha256"], text)
+        self.assertEqual(summary["knowledge_receipt_sha256"], KNOWLEDGE)
+
+    def test_a_delivery_receipt_file_that_is_not_the_cited_one_is_refused(self):
+        other = dict(self.delivery, run_id="another-run", receipt_sha256="")
+        from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import (
+            canonical_hash,
+        )
+        other["receipt_sha256"] = canonical_hash(other, omit="receipt_sha256")
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path, result_path = self._stage(tmp)
+            other_path = Path(tmp) / "other_receipt.json"
+            other_path.write_text(json.dumps(other))
+            with self.assertRaises(StagingError) as caught:
+                read_back(
+                    artifact_path, result_path=result_path, outputs_dir=self.outputs_dir,
+                    delivery_receipt=other_path, knowledge_receipt=self.knowledge_path,
+                    render_report=False,
+                )
+        self.assertIn("delivery", str(caught.exception))
+
+    def test_a_knowledge_receipt_file_and_a_stated_sha_must_agree(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path, result_path = self._stage(tmp)
+            with self.assertRaises(StagingError) as caught:
+                read_back(
+                    artifact_path, result_path=result_path, outputs_dir=self.outputs_dir,
+                    knowledge_receipt=self.knowledge_path, knowledge_receipt_sha256="f" * 64,
+                    render_report=False,
+                )
+        self.assertIn("knowledge", str(caught.exception))
+
+    def test_a_crosswalk_that_cannot_be_computed_is_non_fatal_and_stated_in_the_report(self):
+        """The receipt file binds to the citation (same sha) and is still not a delivery
+        receipt the crosswalk can read; the findings are the deliverable, so the read-back
+        completes and the report says what happened to the crosswalk."""
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path, result_path = self._stage(tmp)
+            broken_path = Path(tmp) / "broken_receipt.json"
+            broken_path.write_text(json.dumps({
+                "schema": "NOT_A_DELIVERY_RECEIPT", "receipt_sha256": self.delivery["receipt_sha256"],
+            }))
+            summary = read_back(
+                artifact_path, result_path=result_path, outputs_dir=self.outputs_dir,
+                delivery_receipt=broken_path, knowledge_receipt=self.knowledge_path,
+            )
+            self.assertTrue(Path(summary["result_path"]).exists())
+            text = Path(summary["report_path"]).read_text()
+        self.assertIn("## Layer crosswalk", text)
+        self.assertIn("could not be computed", text)
+        self.assertIn("NOT_A_DELIVERY_RECEIPT", text)
+
+    def test_the_cli_accepts_the_receipt_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path, result_path = self._stage(tmp)
+            out = io.StringIO()
+            with redirect_stdout(out):
+                code = staging_main([
+                    "read-back", "--artifact", str(artifact_path), "--result", str(result_path),
+                    "--outputs-dir", str(self.outputs_dir),
+                    "--delivery-receipt", str(self.delivery_path),
+                    "--knowledge-receipt", str(self.knowledge_path),
+                ])
+            self.assertEqual(code, 0, out.getvalue())
+            summary = json.loads(out.getvalue())
+            text = Path(summary["report_path"]).read_text()
+        self.assertIn("## Layer crosswalk", text)
+        self.assertEqual(summary["delivery_receipt_sha256"], self.delivery["receipt_sha256"])

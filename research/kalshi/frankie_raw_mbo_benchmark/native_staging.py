@@ -367,18 +367,24 @@ def _validate_outputs(
     return cited, receipt
 
 
-def _render_report_beside(path: Path) -> Path | None:
+def _render_report_beside(
+    path: Path,
+    *,
+    crosswalk: Mapping[str, Any] | None = None,
+    crosswalk_note: str | None = None,
+) -> Path | None:
     """Write the human-readable report next to the artifact. Never fatal.
 
     Imported inside the function so a renderer problem can never stop an artifact from
     validating: the findings are the deliverable, the report is how anyone reads them.
+    `crosswalk` / `crosswalk_note` (S121 slice 3) are appended by the renderer.
     """
     try:
         from research.kalshi.frankie_raw_mbo_benchmark.render_frankie_report import (
             write_report,
         )
 
-        return write_report(path)
+        return write_report(path, crosswalk=crosswalk, crosswalk_note=crosswalk_note)
     except Exception as exc:  # noqa: BLE001 - see docstring; reported, never raised
         print(
             f"WARNING: principal artifact at {path} validated but its report could not be "
@@ -394,6 +400,70 @@ READ_BACK_SUFFIX = "_with_findings"
 READ_BACK_SCHEMA = "FRANKIE_NATIVE_RAW_MBO_READ_BACK_V1"
 
 
+def _load_receipt_file(path: Path | str | None, *, label: str) -> dict[str, Any] | None:
+    """A receipt JSON handed to the read-back, or None. It must at least carry its own hash."""
+    if path is None:
+        return None
+    path = Path(path)
+    try:
+        body = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise StagingError(f"no {label} at {path}") from exc
+    except json.JSONDecodeError as exc:
+        raise StagingError(f"{label} at {path} is not valid JSON: {exc}") from exc
+    if not isinstance(body, Mapping):
+        raise StagingError(f"{label} at {path} is not an object")
+    sha = body.get("receipt_sha256")
+    if not isinstance(sha, str) or _SHA256_RE.fullmatch(sha) is None:
+        raise StagingError(f"{label} at {path} carries no receipt_sha256; it cannot be bound to the artifact")
+    return dict(body)
+
+
+def _bind_receipt_sha(file_body: Mapping[str, Any] | None, stated: str | None, *, label: str) -> str | None:
+    """The receipt sha the read-back works with: the file's, which a stated one must equal."""
+    if file_body is None:
+        return stated
+    file_sha = file_body["receipt_sha256"]
+    if stated is not None and stated != file_sha:
+        raise StagingError(
+            f"the {label} file has receipt_sha256 {file_sha} and {label.replace(' ', '_')}_sha256 "
+            f"{stated} was stated; the two name different receipts"
+        )
+    return file_sha
+
+
+def _crosswalk_for_report(
+    *,
+    execution: Mapping[str, Any],
+    result: Mapping[str, Any],
+    delivery_receipt: Mapping[str, Any] | None,
+    knowledge_receipt: Mapping[str, Any] | None,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """The 99-layer crosswalk for the report, or the reason there is none. Never raises.
+
+    The crosswalk is part of the RENDER: the findings are the deliverable, so a crosswalk that
+    cannot be computed is reported (in the report itself, and on stderr) rather than fatal.
+    """
+    try:
+        # Imported here, not at module level: the crosswalk imports the ledger fetcher, which
+        # imports this module - a top-level import would cycle.
+        from research.kalshi.frankie_raw_mbo_benchmark.native_layer_crosswalk import crosswalk
+
+        body = crosswalk(
+            load_registry(),
+            arm=execution["arm"],
+            result=result,
+            delivery_receipt=delivery_receipt,
+            knowledge_receipt=knowledge_receipt,
+            outputs_receipt=execution.get("outputs_receipt"),
+        )
+        return body, None
+    except Exception as exc:  # noqa: BLE001 - see docstring; stated in the report, never raised
+        note = f"crosswalk could not be computed: {exc}"
+        print(f"WARNING: {note}", file=sys.stderr)
+        return None, note
+
+
 def read_back(
     artifact_path: Path | str,
     *,
@@ -402,6 +472,8 @@ def read_back(
     out_path: Path | str | None = None,
     knowledge_receipt_sha256: str | None = None,
     delivery_receipt_sha256: str | None = None,
+    delivery_receipt: Path | str | None = None,
+    knowledge_receipt: Path | str | None = None,
     render_report: bool = True,
 ) -> dict[str, Any]:
     """Close the loop: a finished `calculation_result.json` receives the principal's findings.
@@ -411,10 +483,21 @@ def read_back(
     hash through `load_principal_artifact`; attaches through the runner's own route
     (`NativeCalculationRun.attach_principal_findings_to_result`); writes the updated result
     BESIDE the original under `READ_BACK_SUFFIX`, never over it and never over an earlier
-    read-back. Returns a summary naming every hash involved. A render failure stays non-fatal.
+    read-back. Returns a summary naming every hash involved.
+
+    `delivery_receipt` and `knowledge_receipt` are receipt FILES (S121 slice 3). Each is bound
+    by hash: the delivery receipt must be the one the artifact cites, and a stated
+    `*_sha256` must equal its file's. With the result and the receipts in hand the read-back
+    computes the 99-layer crosswalk and the report carries it; the crosswalk is part of the
+    render, so its failure is stated in the report and stays non-fatal, as a render failure
+    always has.
     """
     artifact_path = Path(artifact_path)
     result_path = Path(result_path)
+    delivery_body = _load_receipt_file(delivery_receipt, label="delivery receipt")
+    knowledge_body = _load_receipt_file(knowledge_receipt, label="knowledge receipt")
+    delivery_receipt_sha256 = _bind_receipt_sha(delivery_body, delivery_receipt_sha256, label="delivery receipt")
+    knowledge_receipt_sha256 = _bind_receipt_sha(knowledge_body, knowledge_receipt_sha256, label="knowledge receipt")
     try:
         result = json.loads(result_path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
@@ -473,7 +556,16 @@ def read_back(
     target.write_text(
         json.dumps(updated, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8"
     )
-    report = _render_report_beside(artifact_path) if render_report else None
+    report: Path | None = None
+    crosswalk_body: dict[str, Any] | None = None
+    if render_report:
+        crosswalk_body, crosswalk_note = _crosswalk_for_report(
+            execution=execution, result=result,
+            delivery_receipt=delivery_body, knowledge_receipt=knowledge_body,
+        )
+        report = _render_report_beside(
+            artifact_path, crosswalk=crosswalk_body, crosswalk_note=crosswalk_note
+        )
     return {
         "schema": READ_BACK_SCHEMA,
         "principal": execution["principal"],
@@ -487,9 +579,154 @@ def read_back(
         "result_hash": updated["result_hash"],
         "findings_attached": len(findings),
         "delivery_receipt_sha256": execution["delivery_receipt_sha256"],
+        "knowledge_receipt_sha256": knowledge_receipt_sha256,
         "outputs_receipt_sha256": execution["outputs_receipt_sha256"],
+        "crosswalk_sha256": None if crosswalk_body is None else crosswalk_body["crosswalk_sha256"],
         "report_path": None if report is None else str(report),
     }
+
+
+# ------------------------------------------------------------------------------------------
+# S121 slice 4: the V2 workmode handoff, re-fed from a VALIDATED output bundle
+# ------------------------------------------------------------------------------------------
+
+#: The schema strings `ng_exhaustion_two_frankies_workmode_coordinate_2day_20260825.freeze_rt`
+#: writes for the real-time side of the one-way handoff. They are literals inside that function,
+#: so they are restated here and PINNED by test against the committed record of the wrong-data
+#: run (`prior_memory/workmode-32851909748-1/`): same schema, same key set. The hashing and the
+#: self-check are that module's own `sha256_json` / `verify_self_hash`, imported, never rewritten.
+HANDOFF_SCHEMA = "FRANKIE_PRIOR_SURFACE_OCT45_ONEWAY_HANDOFF_V2_WORKMODE_20260825"
+RT_FIRST_LOCK_SCHEMA = "FRANKIE_PRIOR_SURFACE_OCT45_RT_FIRST_LOCK_V2_WORKMODE_20260825"
+RT_CONTEXT_MANIFEST_SCHEMA = "FRANKIE_PRIOR_SURFACE_OCT45_RT_CONTEXT_MANIFEST_V2_WORKMODE_20260825"
+#: Object name -> file name, as `freeze_rt` writes them into a run root.
+HANDOFF_FILES = ("ONEWAY_HANDOFF", "RT_FIRST_LOCK", "RT_CONTEXT_MANIFEST")
+FIRST_LOCKS_LEDGER = "output_first_locks_and_no_locks"
+CANDIDATES_LEDGER = "output_candidate_discoveries"
+ANSWER_WALL_LEDGER = "output_answer_wall_access_receipts"
+INVOCATIONS_LEDGER = "output_provider_invocation_response_receipts"
+
+
+def build_handoff(
+    outputs_dir: Path | str,
+    *,
+    artifact_sha256: str,
+    source_manifest_hash: str,
+    knowledge_receipt_sha256: str | None = None,
+    delivery_receipt_sha256: str | None = None,
+) -> dict[str, dict[str, Any]]:
+    """The real-time side of the one-way handoff, built from a validated output bundle.
+
+    The bundle is validated again here - a handoff is never built from an unvalidated bundle -
+    and its receipt sha256 is the frozen state's hash: `frozen_rt_state_hash` = the bundle
+    receipt sha, `full_validated_rt_output_hash` = the artifact sha, `RT_FIRST_LOCK.first_lock`
+    = the head entry of `output_first_locks_and_no_locks` (chain-hashed, verbatim),
+    `exhaustion_events` = the `output_candidate_discoveries` entries (the new surface's
+    candidate roster, verbatim), `answer_wall` SEALED read off the EMPTY answer-wall ledger,
+    `provider_api_called` False read off every invocation receipt being an AGENT_SESSION,
+    `packet_hash` = the delivery receipt the bundle was produced against (the packet he was
+    handed), `source_manifest_hash` from the run's identity. Only a REAL_TIME_FRANKIE bundle
+    hands off; the forecaster-side objects (`FORECASTER_FIRST_LOCK`,
+    `FORECASTER_CONTEXT_MANIFEST`) are written by `finalize` from the FORECASTER's own output,
+    which does not exist until the forecaster has run against this handoff.
+    """
+    # Imported here: the coordinator module pulls the whole prior-surface module behind it,
+    # and nothing else in staging needs it.
+    from research.kalshi import ng_exhaustion_two_frankies_workmode_coordinate_2day_20260825 as workmode
+    from research.kalshi.frankie_raw_mbo_benchmark.native_principal_outputs import (
+        ledger_entries,
+        load_bundle,
+    )
+    from research.kalshi.frankie_role_context_profiles_20260824 import FrankieRole
+
+    for label, value in (("artifact_sha256", artifact_sha256), ("source_manifest_hash", source_manifest_hash)):
+        if not isinstance(value, str) or _SHA256_RE.fullmatch(value) is None:
+            raise StagingError(f"{label} must be a lowercase SHA-256, got {value!r}")
+    try:
+        receipt = validate_output_bundle_dir(
+            outputs_dir,
+            registry=load_registry(),
+            contract_text=CONTRACT_PATH.read_text(encoding="utf-8"),
+            knowledge_receipt_sha256=knowledge_receipt_sha256,
+            delivery_receipt_sha256=delivery_receipt_sha256,
+        )
+        bundle = load_bundle(outputs_dir)
+        locks = ledger_entries(bundle, FIRST_LOCKS_LEDGER)
+        candidates = ledger_entries(bundle, CANDIDATES_LEDGER)
+        wall = ledger_entries(bundle, ANSWER_WALL_LEDGER)
+        invocations = ledger_entries(bundle, INVOCATIONS_LEDGER)
+    except (PrincipalOutputError, OSError, ValueError) as exc:
+        raise StagingError(f"no handoff from a bundle the validator refuses: {exc}") from exc
+    role = bundle["role"]
+    if role != FrankieRole.REAL_TIME.value:
+        raise StagingError(
+            f"the one-way handoff runs FROM {FrankieRole.REAL_TIME.value}; a {role} bundle has "
+            "nothing to hand off, and the forecaster-side objects are written from the "
+            "forecaster's own output after it runs"
+        )
+    if wall:
+        raise StagingError(f"{len(wall)} answer-wall access receipt(s); the answer wall is not sealed")
+    if delivery_receipt_sha256 is None and bundle.get("delivery_receipt_sha256") is None:
+        raise StagingError(
+            "the bundle names no delivery receipt; a handoff states the packet he was handed and a "
+            "pre-delivery bundle has none"
+        )
+    packet_hash = delivery_receipt_sha256 or bundle["delivery_receipt_sha256"]
+    provider_api_called = any(entry["body"].get("mechanism") != "AGENT_SESSION" for entry in invocations)
+
+    handoff: dict[str, Any] = {
+        "schema": HANDOFF_SCHEMA,
+        "from_role": FrankieRole.REAL_TIME.value,
+        "to_role": FrankieRole.FORECASTER.value,
+        "frozen_rt_state_hash": receipt["receipt_sha256"],
+        "full_validated_rt_output_included": True,
+        "full_validated_rt_output_hash": artifact_sha256,
+        "forecaster_may_modify_rt_state": False,
+        "forecaster_may_reconstruct_competing_current_state": False,
+        "rt_frozen_before_forecaster": True,
+    }
+    handoff["receipt_hash"] = workmode.sha256_json(handoff)
+    lock: dict[str, Any] = {
+        "schema": RT_FIRST_LOCK_SCHEMA,
+        "rt_output_hash": artifact_sha256,
+        "first_lock": dict(locks[-1]) if locks else None,
+        "first_lock_owner": role,
+        "exhaustion_events": [dict(entry) for entry in candidates],
+    }
+    lock["receipt_hash"] = workmode.sha256_json(lock)
+    context: dict[str, Any] = {
+        "schema": RT_CONTEXT_MANIFEST_SCHEMA,
+        "role": role,
+        "packet_hash": packet_hash,
+        "source_manifest_hash": source_manifest_hash,
+        "answer_wall": "SEALED",
+        "provider_api_called": provider_api_called,
+        "role_is_forecasting": False,
+    }
+    context["receipt_hash"] = workmode.sha256_json(context)
+    return {"ONEWAY_HANDOFF": handoff, "RT_FIRST_LOCK": lock, "RT_CONTEXT_MANIFEST": context}
+
+
+def write_handoff(objects: Mapping[str, Mapping[str, Any]], out_dir: Path | str) -> list[Path]:
+    """Write the handoff objects as `<NAME>.json` under `out_dir`, exclusive-create, never over.
+
+    Uses the coordinator module's own `write_json` (O_EXCL), so a second write is refused the
+    way `freeze_rt` refuses an existing run root.
+    """
+    from research.kalshi import ng_exhaustion_two_frankies_workmode_coordinate_2day_20260825 as workmode
+
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    written: list[Path] = []
+    for name in HANDOFF_FILES:
+        if name not in objects:
+            raise StagingError(f"handoff object {name!r} is missing; build_handoff produces all of {list(HANDOFF_FILES)}")
+        target = out_dir / f"{name}.json"
+        try:
+            workmode.write_json(target, dict(objects[name]))
+        except FileExistsError as exc:
+            raise StagingError(f"{target} already exists; a handoff is written once and never rewritten") from exc
+        written.append(target)
+    return written
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -510,7 +747,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     rb.add_argument("--out", type=Path, default=None, help=f"where to write the result with findings (default: beside --result with {READ_BACK_SUFFIX!r})")
     rb.add_argument("--knowledge-receipt-sha256", default=None, help="the knowledge-delivery receipt every verdict must cite")
     rb.add_argument("--delivery-receipt-sha256", default=None, help="the ledger-delivery receipt the artifact must cite")
-    rb.add_argument("--no-report", action="store_true", help="do not render the findings report beside the artifact")
+    rb.add_argument("--delivery-receipt", type=Path, default=None, help="FRANKIE_LEDGER_DELIVERY_RECEIPT_V1 file; bound by hash to the artifact's citation and fed to the crosswalk")
+    rb.add_argument("--knowledge-receipt", type=Path, default=None, help="FRANKIE_KNOWLEDGE_DELIVERY_RECEIPT_V1 file; its hash is the one the verdicts must cite, and it feeds the crosswalk")
+    rb.add_argument("--no-report", action="store_true", help="do not render the findings report (and its crosswalk) beside the artifact")
     args = parser.parse_args(argv)
     try:
         summary = read_back(
@@ -520,6 +759,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             out_path=args.out,
             knowledge_receipt_sha256=args.knowledge_receipt_sha256,
             delivery_receipt_sha256=args.delivery_receipt_sha256,
+            delivery_receipt=args.delivery_receipt,
+            knowledge_receipt=args.knowledge_receipt,
             render_report=not args.no_report,
         )
     except (StagingError, OSError, ValueError) as exc:

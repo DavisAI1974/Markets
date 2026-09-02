@@ -1239,6 +1239,7 @@ new tool cannot go unlisted. **525 files.**
 - `test_native_rt_book_differential.py` — Differential tests: `ReplayBook` must MIRROR `InstrumentBook` on every book mutation.
 - `test_native_session.py` — Tests for section 2 continuity segmentation and trading-day assignment (D6a).
 - `test_native_staging.py` — The spawn contract: how Frankie is actually called.
+- `test_native_staging_handoff.py` — S121 slice 4: the V2 workmode handoff machinery is re-fed from a VALIDATED output bundle.
 - `test_native_stratum.py` — Tests for the parallel-view rule as enforced structure."""
 - `test_open_world_growth.py` — The carried vocabulary is where discovery starts, not what it is validated against.
 - `test_periodic_checkpointer.py` — Tests for periodic save points on long native raw-MBO runs."""
