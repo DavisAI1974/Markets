@@ -41,8 +41,12 @@ document that governs the next run.
 **(a) D68's raw-MBO half.** Above. Recorded in DECISIONS.md, absent from the mission.
 
 **(b) Two of Frankie's three proposed new calculations were never built**, and the reason is
-mechanical rather than a judgement call: **the `open_items` store holds ZERO entries.** A
-recommendation living in prose has nothing counting it. Only (c), the cross-section agreement
+mechanical rather than a judgement call: **not one recommendation from his report was ever
+registered in `OPEN_ITEMS.json`** - the store holds 188 items, its `current_session` was
+stale at S117, and searches for detector-coverage, section 9a, raw MBO, non-replacement,
+replaced_quantity, F-17 and 'Average decision' all return zero. A recommendation living in
+prose has nothing counting it. (My first version of this sentence said the store held ZERO
+entries. It holds 188; I read a render-extract count as the store count. Corrected.) Only (c), the cross-section agreement
 gate, shipped — because it was also his single highest-value recommendation and got restated
 in the defect register, which IS numbered and IS worked. The two that did not:
 

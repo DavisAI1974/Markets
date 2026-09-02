@@ -1667,6 +1667,13 @@
    "role": "the S120 drop-in box",
    "update_when": "never - it is dated and finished",
    "gate": null
+  },
+  {
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/principal_runs/33605852433/frankie_findings_report.md",
+   "class": "RENDER",
+   "role": "the principal's findings report, GENERATED from frankie_principal_findings.json by render_frankie_report.py at load_principal_artifact. Never edited by hand: the findings artifact is the store.",
+   "update_when": "regenerated whenever the findings artifact changes; never edited directly",
+   "gate": null
   }
  ]
 }

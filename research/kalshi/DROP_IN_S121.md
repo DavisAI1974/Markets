@@ -53,8 +53,11 @@ we drop" pressures the answer toward a casualty and this programme has already p
 
 ## ITEM TWO — TWO OF FRANKIE'S THREE PROPOSED SECTIONS WERE NEVER BUILT
 
-The reason is mechanical: **the `open_items` store holds ZERO entries**, so a recommendation
-living in prose has nothing counting it. Only (c) shipped — the cross-section agreement gate —
+The reason is mechanical: **not one of Frankie's recommendations was ever registered in
+`OPEN_ITEMS.json`** (188 items, `current_session` stale at S117; zero hits for
+detector-coverage, section 9a, raw MBO, non-replacement, replaced_quantity, F-17), so a
+recommendation living in prose has nothing counting it. S120 registered them as F-10..F-19.
+(An earlier line here said the store held ZERO entries. Wrong - it holds 188.) Only (c) shipped — the cross-section agreement gate —
 because it was restated in the numbered defect register, which is worked. This is **D36
 recurring**, two sessions after S112 made it a rule.
 
@@ -153,8 +156,8 @@ Sunday artifact.**
 
 - **D60/D76 — the calcs are kept, all of them.** Stop answering the retention question with a
   calculation verdict.
-- **D36 — a recommendation with no registry item does not exist.** Zero `open_items` entries
-  is the mechanism, not an oversight.
+- **D36 — a recommendation with no registry item does not exist.** 188 items in the store and
+  none of them Frankie's is the mechanism, not an oversight. Now F-10..F-19.
 - **A settlement that reaches a report and not the contract does not bind.** Three instances in
   one session: D68's raw-MBO half, the two unbuilt sections, the non-replacement rule.
 - **D77 — parallel agents may never touch git state in a shared worktree.**

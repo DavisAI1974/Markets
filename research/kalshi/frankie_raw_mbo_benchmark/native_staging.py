@@ -105,6 +105,21 @@ def stage_spawn_request(
     return path
 
 
+#: The three exact ledgers every run retains. The artifact must declare, for each, whether
+#: the principal READ it. The contract preamble says exact evidence is never replaced by an
+#: average; on run 33605852433 the ledgers were written and witnessed and the principal read
+#: 16,293 averaged rows and zero exact ones, because nothing at the delivery boundary asked.
+EXACT_LEDGERS = (
+    "exact_member_ledger",
+    "exact_lifecycle_and_runway_ledger",
+    "legacy_observable_rows",
+)
+#: NOT_READ is the honest answer while delivery is unsolved and carries no penalty. A gate
+#: that accepted only READ would push the principal toward claiming reads he did not make,
+#: which is the defect this programme exists to catch wearing the gate's own uniform.
+READ_STATUSES = ("READ", "PARTIAL", "NOT_READ")
+
+
 def load_principal_artifact(
     path: Path, *, expected_evidence_hash: str, render_report: bool = True
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
@@ -165,6 +180,29 @@ def load_principal_artifact(
             "failed spawn, not an empty success"
         )
 
+    # THE DELIVERY-BOUNDARY GATE (F-14). An undeclared read status is what lets an average
+    # stand in for the exact: "beneath every summary sit exact members" is true of the disk
+    # and says nothing about what the principal saw. Declaring two ledgers of three is the
+    # silent version of declaring none, so every ledger is required by name.
+    evidence_read = body.get("evidence_read")
+    if not isinstance(evidence_read, Mapping):
+        raise StagingError(
+            "principal artifact carries no `evidence_read`; it must declare, for each exact "
+            f"ledger in {list(EXACT_LEDGERS)}, whether the principal READ it (READ / PARTIAL / "
+            "NOT_READ). NOT_READ is accepted. Not saying is not."
+        )
+    undeclared = [name for name in EXACT_LEDGERS if name not in evidence_read]
+    if undeclared:
+        raise StagingError(
+            f"principal artifact leaves these exact ledgers undeclared in `evidence_read`: "
+            f"{undeclared}; declare each as READ, PARTIAL or NOT_READ"
+        )
+    bad = {k: v for k, v in evidence_read.items() if v not in READ_STATUSES}
+    if bad:
+        raise StagingError(
+            f"`evidence_read` uses statuses outside {list(READ_STATUSES)}: {bad}"
+        )
+
     execution = {
         "principal": body["principal"],
         "arm": body["arm"],
@@ -174,6 +212,10 @@ def load_principal_artifact(
         "evidence_result_hash": expected_evidence_hash,
         "actual_principal_invocation": True,
         "controller_only": False,
+        "evidence_read": {name: evidence_read[name] for name in EXACT_LEDGERS},
+        "principal_read_any_exact_rows": any(
+            evidence_read[name] in ("READ", "PARTIAL") for name in EXACT_LEDGERS
+        ),
     }
     if render_report:
         _render_report_beside(path)

@@ -267,14 +267,26 @@ def emit(result_path: Path | str, *, repo_root: Path | None = None,
         "evidence_result_hash": result_hash,
         "controller_only": False,
         "actual_principal_invocation": True,
+        # F-14: declared per exact ledger. NOT_READ is accepted; not saying is refused.
+        "evidence_read": {
+            "exact_member_ledger": "READ | PARTIAL | NOT_READ",
+            "exact_lifecycle_and_runway_ledger": "READ | PARTIAL | NOT_READ",
+            "legacy_observable_rows": "READ | PARTIAL | NOT_READ",
+        },
         "findings": ["<at least one; see the mission's section 9 for what a finding must carry>"],
     }, indent=2))
     add("```")
     add("")
     add("`load_principal_artifact` refuses a missing artifact, a different")
     add("`evidence_result_hash`, `controller_only` true, an artifact that does not attest an")
-    add("actual invocation, and an empty findings list. An empty artifact is a failed spawn,")
-    add("not an empty success.")
+    add("actual invocation, an empty findings list, and an artifact that does not declare")
+    add("`evidence_read` for every exact ledger. An empty artifact is a failed spawn, not an")
+    add("empty success.")
+    add("")
+    add("**`evidence_read` is required and NOT_READ carries no penalty.** The contract says")
+    add("exact evidence is never replaced by an average; that is only true of what you actually")
+    add("read, so say what you read. It is refused when absent - not because NOT_READ is wrong,")
+    add("but because not saying is what lets an average stand in for the exact.")
     add("")
     add("Mission section 9 says what the output must contain: searched coverage and current")
     add("causal state; candidate families and complete causal runways; pre-birth and")

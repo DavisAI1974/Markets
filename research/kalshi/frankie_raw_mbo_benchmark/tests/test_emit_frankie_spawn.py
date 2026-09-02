@@ -323,3 +323,23 @@ class RawMboQuestionReachesFrankieTest(StopRuleTests):
         """"You were given nothing" and "we did not record what you were given" are
         different facts, and only one of them is an answer."""
         self.assertIn("itself unstated", self._emit())
+
+
+class EvidenceReadIsAskedForTest(StopRuleTests):
+    """F-14 at the ask side: the return shape names `evidence_read` per exact ledger.
+
+    The staging gate refuses an artifact without it; a prompt that never mentioned it would
+    make every first spawn fail the gate for a reason the principal was never told.
+    """
+
+    def test_the_return_shape_names_every_exact_ledger(self):
+        text = self._emit()
+        self.assertIn('"evidence_read"', text)
+        for ledger in ("exact_member_ledger", "exact_lifecycle_and_runway_ledger",
+                       "legacy_observable_rows"):
+            self.assertIn(ledger, text, ledger)
+
+    def test_it_says_not_read_is_accepted(self):
+        """A prompt that read as 'you must have read them' would push him toward claiming
+        reads he did not make - the defect this programme exists to catch."""
+        self.assertIn("NOT_READ carries no penalty", self._emit())

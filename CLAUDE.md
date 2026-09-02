@@ -1113,8 +1113,9 @@ the ~34 MB result while the 10.6 GB member ledger stays on the box, which he sta
 **THE CALCS ARE SETTLED AND ARE NOT THE QUESTION** (Greg: *"you keep reporting about the calcs
 and I've said over and over he are keep them all"*). **THREE INSTANCES OF ONE SHAPE IN ONE
 SESSION** - a settlement that reaches a report and never reaches the document governing the
-next run: D68's raw-MBO half; two of Frankie's three proposed sections never built because the
-`open_items` store holds **ZERO entries** (D36 recurring); and the non-replacement rule, which
+next run: D68's raw-MBO half; two of Frankie's three proposed sections never built because **none of his
+recommendations were ever registered** - 188 items in `OPEN_ITEMS.json`, none his (D36
+recurring; now F-10..F-19); and the non-replacement rule, which
 **already exists verbatim** in the contract preamble and is honoured in STORAGE while broken in
 DELIVERY - its only guard reads a counter, `member_rows_written > 0`, so **16,293 averaged rows
 were read and zero member rows**. The averaged view is authorized on **13 of 16** sections and

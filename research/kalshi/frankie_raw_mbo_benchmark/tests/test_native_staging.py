@@ -102,6 +102,13 @@ class LoadPrincipalArtifactTest(unittest.TestCase):
         "evidence_result_hash": "a" * 64,
         "actual_principal_invocation": True,
         "controller_only": False,
+        # F-14: every exact ledger's read status is declared. NOT_READ is the honest
+        # default while delivery is unsolved; leaving it out is what the gate refuses.
+        "evidence_read": {
+            "exact_member_ledger": "NOT_READ",
+            "exact_lifecycle_and_runway_ledger": "NOT_READ",
+            "legacy_observable_rows": "NOT_READ",
+        },
         "findings": [
             {
                 "claim": "cancels cluster at the close",
@@ -215,3 +222,95 @@ class DriverStagesRatherThanInvokesTest(unittest.TestCase):
         driver = make_driver()
         self.assertFalse(hasattr(driver, "on_invoke"))
         self.assertTrue(hasattr(driver, "stage_spawn"))
+
+
+class EvidenceReadDeclarationTest(unittest.TestCase):
+    """The non-replacement rule, enforced at the DELIVERY boundary.
+
+    The contract preamble already says, verbatim, "Exact evidence is never discarded or
+    replaced by an average." It is honoured in STORAGE - the exact ledgers are written,
+    retained, counted and witnessed - and broken in DELIVERY: they stay on the box while the
+    principal receives the result JSON. The one guard, `member_rows_written > 0`, proves rows
+    were written somewhere and cannot prove anyone read one. Outcome on run 33605852433:
+    16,293 averaged rows read, zero member rows read, and every exact-member claim resting
+    on counters.
+
+    So the artifact must DECLARE, per exact ledger, whether the principal read it. Not
+    reading is allowed and expected while delivery is unsolved; not SAYING is refused,
+    because an undeclared read status is what lets an average stand in for the exact.
+    """
+
+    GOOD = dict(LoadPrincipalArtifactTest.GOOD)
+    GOOD["evidence_read"] = {
+        "exact_member_ledger": "NOT_READ",
+        "exact_lifecycle_and_runway_ledger": "NOT_READ",
+        "legacy_observable_rows": "NOT_READ",
+    }
+
+    def _write(self, tmp, body):
+        path = Path(tmp) / "findings.json"
+        path.write_text(json.dumps(body))
+        return path
+
+    def test_an_artifact_that_declares_read_status_loads(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            execution, _ = load_principal_artifact(
+                self._write(tmp, self.GOOD), expected_evidence_hash="a" * 64,
+                render_report=False,
+            )
+        self.assertEqual(execution["evidence_read"]["exact_member_ledger"], "NOT_READ")
+
+    def test_an_artifact_that_does_not_declare_is_refused(self):
+        """The firing branch. This is the exact artifact shape run 33605852433 produced."""
+        body = dict(self.GOOD)
+        body.pop("evidence_read")
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(StagingError) as caught:
+                load_principal_artifact(
+                    self._write(tmp, body), expected_evidence_hash="a" * 64,
+                    render_report=False,
+                )
+        self.assertIn("evidence_read", str(caught.exception))
+
+    def test_a_ledger_left_undeclared_is_refused_by_name(self):
+        """Declaring two of three is the silent version of declaring none."""
+        body = dict(self.GOOD)
+        body["evidence_read"] = {"exact_member_ledger": "NOT_READ"}
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(StagingError) as caught:
+                load_principal_artifact(
+                    self._write(tmp, body), expected_evidence_hash="a" * 64,
+                    render_report=False,
+                )
+        self.assertIn("exact_lifecycle_and_runway_ledger", str(caught.exception))
+
+    def test_an_unknown_status_word_is_refused(self):
+        """READ, PARTIAL and NOT_READ are the vocabulary. 'skimmed' is not a fact."""
+        body = dict(self.GOOD)
+        body["evidence_read"] = dict(self.GOOD["evidence_read"], exact_member_ledger="skimmed")
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(StagingError):
+                load_principal_artifact(
+                    self._write(tmp, body), expected_evidence_hash="a" * 64,
+                    render_report=False,
+                )
+
+    def test_not_read_is_accepted_not_penalised(self):
+        """NOT_READ is the honest answer while delivery is unsolved. A gate that only
+        accepted READ would push the principal toward claiming reads he did not make."""
+        with tempfile.TemporaryDirectory() as tmp:
+            execution, _ = load_principal_artifact(
+                self._write(tmp, self.GOOD), expected_evidence_hash="a" * 64,
+                render_report=False,
+            )
+        self.assertFalse(execution["principal_read_any_exact_rows"])
+
+    def test_read_on_any_ledger_flips_the_summary_flag(self):
+        body = dict(self.GOOD)
+        body["evidence_read"] = dict(self.GOOD["evidence_read"], legacy_observable_rows="READ")
+        with tempfile.TemporaryDirectory() as tmp:
+            execution, _ = load_principal_artifact(
+                self._write(tmp, body), expected_evidence_hash="a" * 64,
+                render_report=False,
+            )
+        self.assertTrue(execution["principal_read_any_exact_rows"])
