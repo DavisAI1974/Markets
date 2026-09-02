@@ -994,7 +994,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **514 files.**
+new tool cannot go unlisted. **517 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `agent_frankie.py` — Frankie hybrid agent entry point.
@@ -1154,6 +1154,7 @@ new tool cannot go unlisted. **514 files.**
 - `native_group_adapters.py` — Construct section-4 domain objects from one F_LAST group (decision D53, 2026-08-29).
 - `native_ingestion_layer_registry.py` — Versioned, fail-closed ingestion-layer gates for corrected Frankie A arms."""
 - `native_key_alias.py` — Key-name aliasing for the averaged companion rows, and the measurement that scopes it.
+- `native_knowledge_delivery.py` — The knowledge Frankie receives: classified from the inventory, bound to real files, receipted.
 - `native_ladder.py` — Section 4.9: price-ladder topology.
 - `native_lineage.py` — Section 4.13: chain families and D-depth lineages.
 - `native_mbo_field_census.py` — Per-field census of the retained raw MBO, so the drop question can be answered at all.
@@ -1177,6 +1178,7 @@ new tool cannot go unlisted. **514 files.**
 - `raw_mbo_source_manifest.py` — Hash-bound native raw-MBO source manifest and exact progress denominator.
 - `refresh_native_frankie_knowledge.py` — Regenerate promoted Frankie capsules and their hash-bound knowledge manifest."""
 - `render_frankie_report.py` — Render the principal's report FROM his findings, so the two cannot diverge.
+- `render_source_inventory_addendum.py` — Render the DATED classification addendum to the 2026-08-24 source-file inventory.
 - `report_ledger_size.py` — Which calculation is the size. The table that replaces an opinion.
 - `__init__.py` — Focused tests for the native raw-MBO Chat benchmark seam."""
 - `manifest_fixture.py` — Shared source-manifest fixture for the A-arm test suites.
@@ -1210,6 +1212,7 @@ new tool cannot go unlisted. **514 files.**
 - `test_native_group_adapters.py` — Tests for the section-4 group adapters (D53: the F_LAST group is the unit).
 - `test_native_ingestion_layer_registry.py` — (no docstring summary)
 - `test_native_key_alias.py` — Tests for the key-name aliaser: it must be lossless, stable and self-describing.
+- `test_native_knowledge_delivery.py` — The knowledge Frankie receives is classified from the inventory, bound to real files, receipted.
 - `test_native_ladder.py` — Tests for section 4.9 price-ladder topology."""
 - `test_native_lineage.py` — Tests for section 4.13 chain families and D-depth lineages."""
 - `test_native_mbo_field_census.py` — The field census measures the retained raw MBO; it never judges it."""
