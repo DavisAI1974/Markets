@@ -1,5 +1,27 @@
 # KALSHI TRADING — file index
 
+## S119 — Frankie ran, and the token surface was measured
+
+Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`.
+
+- **`research/kalshi/frankie_raw_mbo_benchmark/emit_frankie_spawn.py`** — the A-arm `spawn.py`,
+  and the piece whose absence is why Frankie had never been run: staging existed, validation
+  existed, nothing rendered the prompt between them. Every slot is a LOOKUP from a committed
+  artifact and an unresolved slot HALTS the emission naming the failed lookup. **Refuses if the
+  mission on disk no longer hashes to what the run bound** - section 10's first bullet made
+  mechanical, and it fired on its own author within the hour. Also refuses a verdict that is not
+  ACCEPTED, a run that staged zero cutoffs, and a moved contract. States the cutoff SPAN and the
+  session phases covered, because on an 88-minute window "October 1" reads as a day. Tests: 12.
+- **`research/kalshi/frankie_raw_mbo_benchmark/principal_runs/33605852433/`** — the first
+  principal output this programme has produced. 44 findings over the complete Sunday session,
+  gate-accepted against `evidence_result_hash cb685e0e...`, artifact sha256 `147c6485...`, with
+  the emitted prompt beside it as the receipt for what he was run against.
+- **`research/kalshi/FRANKIE_MEASURED_TOKEN_REDUCTION_20260902.md`** — D71. Key names are
+  **49.5%** of the averaged companions at all depths, 56 names repeated 788,868 times, and
+  aliasing saves **33.8%**. Scopes D67 rather than overturning it: aliasing saves nothing on the
+  ledgers, where `book_full` dominates, and a third of the surface a principal actually reads.
+  The per-day extrapolation is deliberately left as an upper bound - strata saturate.
+
 ## S119 — the independent size witness and the volume rescue
 
 Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`.
