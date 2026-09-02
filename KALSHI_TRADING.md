@@ -1,5 +1,60 @@
 # KALSHI TRADING — file index
 
+## S121 — the raw MBO reaches the principal as it arrives in RT (D81)
+
+Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. Greg, 2026-09-02: *"he gets every record
+of every field for Sunday, the date and time we are running"* and *"this has to exactly mimic
+how it's going to come in rt."* Mission section 5 said "the runner calculates; you interpret"
+against section 3 and 55 registry layers routed `CAUSAL_GROUP_STREAM`, and every session built
+to section 5; `validate_causal_group_delivery_receipt` had no caller. Now it has one.
+
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_causal_stream.py`** — `CausalGroupStream`:
+  forward-only delivery of the exact member ledger, one F_LAST-closed group per call in
+  `ts_recv_ns` order, byte-identical to the ledger line; peek / seek / rewind / indexing raise;
+  a ledger whose receive clock moves backwards, an unclosed group, or a row declaring another
+  availability clock is refused. Lifecycle and legacy rows ride with a group only when their
+  OWN clock is at or before its cutoff under a DECLARED rule (`lifecycle_availability`:
+  close-occasion rows withheld until after exhaustion, `SECOND_COMPLETE` at `(second+1)s`,
+  candidates at `available_second`, otherwise the latest named `*_recv_ns`; legacy rows by
+  their float-seconds `ts_recv`); rows with no clock are withheld and COUNTED, never dropped,
+  and `read == attached + withheld + pending` is proved per ledger. Every delivery is a
+  `GROUP_DELIVERY_SCHEMA` receipt chained to the previous and validated through the registry.
+  `stream_receipt()` = groups, bytes, sha256 over delivered bytes, the ordered cutoffs.
+  `python3 -m ... --member-ledger ... --run-id ... --arm ...` prints it over a whole ledger.
+- **`research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_causal_stream.py`** — 27 tests:
+  byte identity against the sink's own line format, refusals produced, look-ahead withheld and
+  counted, receipts validated and chained, and the traversal's REAL ledgers streamed end to end
+  with the member sha256 equal to the sink receipt's.
+- **`research/kalshi/frankie_raw_mbo_benchmark/fetch_frankie_ledgers.py`** — a session has no
+  AWS credential, so delivery is workflow-presigns -> manifest artifact -> session downloads.
+  `build-manifest` (workflow side) assembles `FRANKIE_LEDGER_DELIVERY_MANIFEST_V1` from S3's
+  listing, the presigned URLs and the box's `PLAIN_SIZES` / `PLAIN_SHA256SUMS`, refusing any
+  hole; `fetch` (session side) downloads, checks the gzip length against S3's ContentLength,
+  gunzips, checks plain bytes and sha256 against the box's receipts, and writes
+  `FRANKIE_LEDGER_DELIVERY_RECEIPT_V1` with per-ledger `VERIFIED | LENGTH_MISMATCH |
+  SHA_MISMATCH | MISSING` - any mismatch is a refusal. URLs never reach a log or a receipt.
+- **`research/kalshi/frankie_raw_mbo_benchmark/tests/test_fetch_frankie_ledgers.py`** — 14
+  tests, stub downloader, every refusal produced.
+- **`.github/workflows/frankie_ledger_delivery_20260902.yml`** — presigns the PINNED Sunday run
+  33630348943's five objects for 604800 s and publishes `frankie-ledger-delivery-<run>-<attempt>`
+  (7 days); a push on this branch filtered to its own path registers it. FAILS on a run lacking
+  either plain receipt. D57-verified by parse, `bash -n` on every run block, zero heredocs.
+- **`research/kalshi/frankie_raw_mbo_benchmark/tests/test_frankie_ledger_delivery_workflow.py`**
+  — the D57 checks and the step contracts, mirrored from `test_a_arm_launch_workflows.py`.
+- **`research/kalshi/frankie_raw_mbo_benchmark/emit_frankie_spawn.py`** — `--delivery-receipt`
+  REQUIRED; refuses unless every ledger in `EXACT_LEDGERS` is VERIFIED, the receipt's own hash
+  verifies, and each delivered sha256 equals the run's sink receipt where the run carries one.
+  The evidence section names the three local ledger paths and `CausalGroupStream` as THE
+  evidence; he computes the sixteen sections himself in causal order; `calculation_result.json`
+  is NOT his evidence and is compared AFTER he files. Return shape: `evidence_read` READ for
+  every ledger, `delivery_receipt_sha256` filled, `stream_receipt_sha256` his to produce.
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_staging.py`** — `load_principal_artifact`
+  refuses NOT_READ on any ledger when the artifact cites `delivery_receipt_sha256`; without the
+  citation the old rule stands.
+- **`research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md`** —
+  section 2 names the evidence; section 5 opens with "you compute the sixteen"; the table and
+  the six things that follow are unchanged. `KNOWLEDGE_MANIFEST_20260828.json` re-pinned.
+
 ## S120 — section 4.0, the per-second substrate everything ran on and nothing declared
 
 Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. **1388 tests after the 4.0, 4.0b and census merges, from 1254.**
@@ -939,7 +994,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **508 files.**
+new tool cannot go unlisted. **513 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `agent_frankie.py` — Frankie hybrid agent entry point.
@@ -1077,6 +1132,7 @@ new tool cannot go unlisted. **508 files.**
 - `chat_packet_seam.py` — Native raw-MBO contract boundary for the Chat-controlled Frankie benchmark arms.
 - `corrected_a_arm_execution_gate_20260828.py` — Fail-closed execution and lock gates for corrected native-MBO A-arm runs."""
 - `emit_frankie_spawn.py` — Fill every Frankie spawn slot BY LOOKUP and emit the exact prompt. The A-arm `spawn.py`.
+- `fetch_frankie_ledgers.py` — Bring the exact ledgers into a session and PROVE they are the box's ledgers. D81.
 - `mbo_resume_state.py` — Exact external snapshot/restore for the proven V4 native-MBO adapter.
 - `native_a_arm_launch.py` — The A-arm launch path: gates, traversal, checkpoints, artifacts. One entrypoint.
 - `native_absorption.py` — Section 4.8: absorption, withdrawal, and delivered pressure.
@@ -1084,6 +1140,7 @@ new tool cannot go unlisted. **508 files.**
 - `native_calculation_runner.py` — Sections 5 and 6: the seven artifact layers and the eight fail-closed gates.
 - `native_candidate.py` — The A-arm candidate unit: a causally-detected dipole flow event (D66).
 - `native_candidate_adapter.py` — Sections 4.10, 4.11 and 4.12 on the D66 candidate unit, as ONE vocabulary.
+- `native_causal_stream.py` — The raw MBO delivered to the principal exactly as it would arrive in real time. D81.
 - `native_clocks.py` — Section 4.5: formation, serialization, and observation clocks.
 - `native_cross_section_agreement.py` — Two sections computing one estimand cannot both be right. The gate that says so.
 - `native_detector_coverage.py` — Section 4.0b: detector coverage and rejection accounting - the denominator nobody carried.
@@ -1130,12 +1187,15 @@ new tool cannot go unlisted. **508 files.**
 - `test_chat_packet_seam.py` — (no docstring summary)
 - `test_corrected_a_arm_execution_gate.py` — (no docstring summary)
 - `test_emit_frankie_spawn.py` — The stop rule, and the hash check that makes the mission uneditable mid-flight.
+- `test_fetch_frankie_ledgers.py` — The ledgers reach the session and are proven to be the ledgers the box reconciled.
+- `test_frankie_ledger_delivery_workflow.py` — D57 on the delivery workflow: parse the YAML, `bash -n` every run block, compile any
 - `test_native_a_arm_launch.py` — T2/T3/T5: the launch path gates, traverses, checkpoints and finalizes.
 - `test_native_absorption.py` — Tests for section 4.8 absorption, withdrawal, and delivered pressure."""
 - `test_native_book_regime.py` — Section 4.2, which did not run at all on the delivered artifact.
 - `test_native_calculation_runner.py` — Tests for sections 5 and 6: artifact layers and fail-closed acceptance gates."""
 - `test_native_candidate.py` — The causal candidate detector: it may never see past the second it is judging.
 - `test_native_candidate_adapter.py` — The adapter that drives 4.10, 4.11 and 4.12 - which had no test file at all.
+- `test_native_causal_stream.py` — The raw MBO reaches the principal the way it arrives in real time, and nothing else.
 - `test_native_clocks.py` — Tests for section 4.5 formation, serialization, and observation clocks."""
 - `test_native_cross_section_agreement.py` — The horizontal gate, tested against the defect that got past all eight vertical ones.
 - `test_native_detector_coverage.py` — Section 4.0b: the accounting for the search that creates the candidate population.
