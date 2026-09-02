@@ -1,0 +1,246 @@
+name: Frankie box unwedge 20260902
+
+# THE BOX IS UP AND NOTHING CAN RUN ON IT.
+#
+# Confirmed three ways on 2026-09-02, each an independent command: the Sunday dispatch
+# (a ~20 KB script), the monitor's facts-first script, and a FOUR-LINE /bin/sh -c whose
+# only action is `df`. All three returned Status=Failed, ResponseCode=1, stdout empty and
+# stderr empty. The disk probe's own verdict was PROBE_ITSELF_DID_NOT_RUN.
+#
+# SSM stages its command script to a FILE on the instance before running it, and captures
+# stdout and stderr to files under /var/lib/amazon/ssm. A volume with no free space returns
+# exactly that signature: nothing, and a non-zero code. The run that filled the volume left
+# roughly 232 GB in /opt/frankie-a-arm-run.
+#
+# WHY THE CLEANUP CANNOT BE DONE THE OBVIOUS WAY. Putting `rm -rf` inside the dispatch was
+# my fix and it cannot work: that command is itself a file that must be written to the disk
+# it is meant to free. The remedy has to come from outside the box.
+#
+# WHAT THIS DOES, and why a reboot is the lever. Growing an EBS volume does NOT by itself
+# give the filesystem more room - the partition and filesystem must be grown too, which
+# normally means running growpart and resize2fs ON the box. On a standard cloud image
+# cloud-init runs its growpart module at every boot, so a reboot grows the filesystem for
+# us without needing to execute anything. That is the one path that needs neither on-box
+# execution nor a new IAM permission.
+#
+# NOTHING IS LOST BY THE REBOOT. CloudWatch VolumeWriteBytes sits at 3.5-4.2 MB per
+# 5-minute bucket, which is idle noise and not a traversal, so no run is interrupted. EBS
+# persists across a reboot, so the previous run's checkpoints survive it.
+#
+# TRY IT FREE FIRST. `grow_to_gb` defaults to empty, which reboots WITHOUT growing: a boot
+# clears incidental space and SSM needs only a few hundred KB to stage. If that is enough,
+# it costs nothing. Growing is one-way and a standing monthly cost, so it is a deliberate
+# input rather than a default.
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: >-
+          report = read-only facts and nothing else, which is the DEFAULT because the fix
+          differs by cause and the cause is not yet proven. A full volume needs a grow before
+          the reboot can help; a hung SSM agent needs only the reboot; an impaired instance
+          needs a stop/start rather than a reboot. All three produce the same symptom -
+          every command Failed with exit 1 and both streams empty - so acting before reading
+          PingStatus and the instance status checks would be guessing between them.
+          reboot = reboot without growing (free, and enough if the agent is merely hung, or
+          if a boot frees the few hundred KB SSM needs to stage a script).
+          grow_and_reboot = grow the root volume to grow_to_gb first, so cloud-init's
+          growpart enlarges the filesystem during the boot.
+        type: choice
+        default: report
+        options:
+          - report
+          - reboot
+          - grow_and_reboot
+      grow_to_gb:
+        description: >-
+          Grow the root EBS volume to this many GB before rebooting. LEAVE EMPTY to reboot
+          without growing, which is free and may be enough on its own. Growing an EBS volume
+          CANNOT BE UNDONE and raises the monthly bill, so it is set deliberately or not at
+          all.
+        type: string
+        default: ''
+      clear_previous_run:
+        description: >-
+          After the box answers again, delete /opt/frankie-a-arm-run. Its size and save-point
+          count are printed BEFORE the deletion and stay in this run's log. That directory is
+          a partial traversal of the first roster object, reproducible from the same source
+          bytes, so nothing unique is lost - but per D60 a removal is stated, not assumed,
+          which is why this is a switch and not automatic.
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frankie-box-unwedge-20260902
+  cancel-in-progress: false
+
+env:
+  AWS_DEFAULT_REGION: us-east-2
+  AWS_REGION: us-east-2
+
+jobs:
+  unwedge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      INSTANCE_ID: i-08cee7171c0a76a04
+      GROW_TO_GB: ${{ inputs.grow_to_gb }}
+      CLEAR_PREVIOUS_RUN: ${{ inputs.clear_previous_run }}
+    steps:
+      - name: State the box before touching it
+        shell: bash
+        run: |
+          set -uo pipefail
+          # Read-only, and first, so the run record says what was true BEFORE any action.
+          # PingStatus is the reading that separates a dead machine from one that is up and
+          # cannot start commands, and it needs nothing from the box's filesystem.
+          aws ssm describe-instance-information \
+            --filters "Key=InstanceIds,Values=$INSTANCE_ID" \
+            --query 'InstanceInformationList[0].{Ping:PingStatus,Agent:AgentVersion,LastPing:LastPingDateTime}' \
+            --output table || true
+          aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
+            --query 'Reservations[0].Instances[0].{State:State.Name,Type:InstanceType,Root:RootDeviceName}' \
+            --output table || true
+          root_name="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
+            --query 'Reservations[0].Instances[0].RootDeviceName' --output text)"
+          volume="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
+            --query "Reservations[0].Instances[0].BlockDeviceMappings[?DeviceName=='$root_name'].Ebs.VolumeId | [0]" \
+            --output text)"
+          size="$(aws ec2 describe-volumes --volume-ids "$volume" --query 'Volumes[0].Size' --output text)"
+          printf 'ROOT_VOLUME=%s\nROOT_VOLUME_GB=%s\n' "$volume" "$size"
+          echo "ROOT_VOLUME=$volume" >> "$GITHUB_ENV"
+          echo "ROOT_VOLUME_GB=$size" >> "$GITHUB_ENV"
+
+          # THE STATUS CHECKS SEPARATE AN IMPAIRED INSTANCE FROM A WEDGED ONE. A failing
+          # system check is AWS's hardware; a failing instance check is the guest. Both look
+          # identical from a command that cannot run.
+          aws ec2 describe-instance-status --instance-ids "$INSTANCE_ID" --include-all-instances \
+            --query 'InstanceStatuses[0].{System:SystemStatus.Status,Instance:InstanceStatus.Status,State:InstanceState.Name}' \
+            --output table || true
+
+          # CAN A COMMAND RUN AT ALL? The answer travels as an EXIT CODE through the control
+          # plane, never through a file on the box, which is the one channel a full disk
+          # cannot break. 40 means commands work and the wedge is over or was never disk.
+          cid="$(aws ssm send-command --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript --comment "unwedge read-only liveness" \
+            --parameters 'commands=["exit 40"]' \
+            --query 'Command.CommandId' --output text 2>/dev/null || echo none)"
+          if [ "$cid" != "none" ]; then
+            aws ssm wait command-executed --command-id "$cid" --instance-id "$INSTANCE_ID" >/dev/null 2>&1 || true
+            code="$(aws ssm get-command-invocation --command-id "$cid" --instance-id "$INSTANCE_ID" \
+              --query ResponseCode --output text 2>/dev/null || echo unknown)"
+          else
+            code=send_failed
+          fi
+          printf 'BOX_TRIVIAL_COMMAND_EXIT=%s  (40 = commands run; anything else = wedged)\n' "$code"
+
+      - name: Grow the root volume, only if asked
+        if: ${{ inputs.action == 'grow_and_reboot' && inputs.grow_to_gb != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # One-way. EBS volumes grow and never shrink, so this raises the monthly bill for
+          # as long as the instance exists. The wait for `optimizing` matters: the OS cannot
+          # see the new size before that, so rebooting earlier would grow the partition to
+          # the OLD size and look like the resize did nothing.
+          if [ "$ROOT_VOLUME_GB" -ge "$GROW_TO_GB" ]; then
+            echo "already $ROOT_VOLUME_GB GB, at or above $GROW_TO_GB; nothing to grow"
+            exit 0
+          fi
+          aws ec2 modify-volume --volume-id "$ROOT_VOLUME" --size "$GROW_TO_GB" >/dev/null
+          state=modifying
+          for _ in $(seq 1 90); do
+            state="$(aws ec2 describe-volumes-modifications --volume-ids "$ROOT_VOLUME" \
+              --query 'VolumesModifications[0].ModificationState' --output text 2>/dev/null || echo modifying)"
+            case "$state" in optimizing|completed) break ;; esac
+            sleep 10
+          done
+          printf 'modification state: %s\n' "$state"
+          case "$state" in
+            optimizing|completed) ;;
+            *) echo "volume modification did not reach optimizing" >&2; exit 1 ;;
+          esac
+
+      - name: Reboot, so cloud-init grows the filesystem without on-box execution
+        if: ${{ inputs.action != 'report' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws ec2 reboot-instances --instance-ids "$INSTANCE_ID"
+          echo "reboot requested; waiting for the SSM agent to answer again"
+
+      - name: Wait for the agent, then ask the box what it can see
+        if: ${{ inputs.action != 'report' }}
+        shell: bash
+        run: |
+          set -uo pipefail
+          # PingStatus Online is necessary and NOT sufficient - the agent answered Online
+          # throughout the wedge. What proves the box is usable is a command that RUNS, so
+          # the loop below sends the smallest possible one and reads its exit code, which
+          # travels through the control plane rather than through a file on the disk.
+          ok=no
+          for attempt in $(seq 1 30); do
+            sleep 20
+            ping="$(aws ssm describe-instance-information \
+              --filters "Key=InstanceIds,Values=$INSTANCE_ID" \
+              --query 'InstanceInformationList[0].PingStatus' --output text 2>/dev/null || echo none)"
+            [ "$ping" != "Online" ] && { printf 'attempt %s: ping=%s\n' "$attempt" "$ping"; continue; }
+            cid="$(aws ssm send-command --instance-ids "$INSTANCE_ID" \
+              --document-name AWS-RunShellScript \
+              --comment "unwedge liveness probe" \
+              --parameters 'commands=["exit 40"]' \
+              --query 'Command.CommandId' --output text 2>/dev/null || echo none)"
+            [ "$cid" = "none" ] && continue
+            aws ssm wait command-executed --command-id "$cid" --instance-id "$INSTANCE_ID" >/dev/null 2>&1 || true
+            code="$(aws ssm get-command-invocation --command-id "$cid" --instance-id "$INSTANCE_ID" \
+              --query ResponseCode --output text 2>/dev/null || echo unknown)"
+            printf 'attempt %s: ping=%s probe_exit=%s\n' "$attempt" "$ping" "$code"
+            if [ "$code" = "40" ]; then ok=yes; break; fi
+          done
+          echo "BOX_EXECUTES_COMMANDS=$ok"
+          echo "BOX_EXECUTES_COMMANDS=$ok" >> "$GITHUB_ENV"
+          [ "$ok" = "yes" ]
+
+      - name: Report what is on the volume, then clear the previous run
+        if: ${{ inputs.action != 'report' && env.BOX_EXECUTES_COMMANDS == 'yes' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # SMALL ON PURPOSE. The whole failure was a script too large to stage on a full
+          # disk, so this stays a handful of commands and reports before it removes.
+          if [ "$CLEAR_PREVIOUS_RUN" = "true" ]; then
+            cmds='["df -Ph /","du -sh /opt/frankie-a-arm-run 2>/dev/null || true","ls -1 /opt/frankie-a-arm-run/checkpoints 2>/dev/null | wc -l","rm -rf /opt/frankie-a-arm-run","df -Ph /"]'
+          else
+            cmds='["df -Ph /","du -sh /opt/frankie-a-arm-run 2>/dev/null || true","ls -1 /opt/frankie-a-arm-run/checkpoints 2>/dev/null | wc -l"]'
+          fi
+          printf '{"commands":%s,"executionTimeout":["1800"]}' "$cmds" > /tmp/unwedge-params.json
+          cid="$(aws ssm send-command --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "unwedge: report then clear" \
+            --parameters file:///tmp/unwedge-params.json \
+            --query 'Command.CommandId' --output text)"
+          aws ssm wait command-executed --command-id "$cid" --instance-id "$INSTANCE_ID" || true
+          aws ssm get-command-invocation --command-id "$cid" --instance-id "$INSTANCE_ID" \
+            --query '{status:Status,code:ResponseCode,out:StandardOutputContent,err:StandardErrorContent}' \
+            --output json | tee /tmp/unwedge-result.json
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          result = json.loads(Path("/tmp/unwedge-result.json").read_text(encoding="utf-8"))
+          lines = ["### Box unwedge", "", f"- Status: {result.get('status')} "
+                   f"(code {result.get('code')})", "", "```",
+                   result.get("out", "").strip() or "(no output)", "```"]
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as handle:
+              handle.write("\n".join(lines) + "\n")
+          if result.get("status") != "Success":
+              raise SystemExit("the box still cannot run commands")
+          PY
