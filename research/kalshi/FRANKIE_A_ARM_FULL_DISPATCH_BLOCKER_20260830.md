@@ -1,3 +1,76 @@
+# THE UPLOAD BLOCKER IS CLOSED, AND THE RUN IS ONE DAY AT A TIME (2026-09-02)
+
+**Greg's call: not the canary, the real full-run path pointed at one roster object.** The
+canary bounds by a record count, runs on the runner and uses a different checkpoint cadence,
+and a day traversed that way is not a day traversed the way the roster will be. So the
+source list became an input to both modes. All four objects are still fetched and still in
+the manifest - the manifest contract requires exactly four sources at fixed roster positions
+and its `source_identity_hash` is pinned in code, so a one-file manifest would be a contract
+change rather than a smaller run. The slice is expressed by what is TRAVERSED.
+
+## The upload no longer needs Greg
+
+A presigned PUT is the mirror of the presigned GET already used for the sources: signed,
+write-only, one named key, expiring, and it never carries the secret. The output names are
+deterministic, which is what makes it possible at all - every key is known before the
+traversal writes it. The ledgers are gzipped first because a single PUT is capped at 5 GB,
+and the sha256 of each PLAIN file travels in `PLAIN_SHA256SUMS`, since a hash of a gzip
+proves the gzip arrived and says nothing about the rows.
+
+**So the scoped role policy below is now tidy-up, not a blocker.** It is still the cleaner
+answer and still Greg's call; nothing waits on it.
+
+## Three defects the RENDERED command exposed
+
+None had ever been wrong out loud, which is the point of rendering rather than reading.
+
+1. **The box path never passed `--cadence-groups`**, so it took the 250,000 default. One
+   roster object is about 45,000 groups, so the cadence would have fired NEVER and the run
+   would have staged NOT ONE spawn request. Every calculation would have run, every gate
+   would have passed, and there would have been nothing for Frankie to be spawned against -
+   a finished run that cannot answer the question it was run to answer. Cadence and
+   checkpoint interval now scale with the slice, and the formulas were checked by
+   REPRODUCING today's full-roster numbers rather than replacing them: 5,667,689 records
+   gives a cadence of 226,707 against the 250,000 in use, and a checkpoint interval that
+   clamps to exactly 250,000.
+2. **The disk precheck was a constant** derived from my 24 KB per record, which came from a
+   compressed artifact and was nine times too small. It is computed per record now from the
+   measured 215 KB. A full-roster dispatch against a 300 GB volume is REFUSED by this line,
+   which is the correct answer and the one that was missing.
+3. **`PACKET_DIR` was read from the environment in the step that writes it.** `$GITHUB_ENV`
+   reaches later steps only, so it would have raised `KeyError` on a value sitting in a shell
+   variable a few lines above.
+
+## What the numbers are now
+
+| | |
+|---|---|
+| Sunday, October 3 | 973,355 bytes compressed, about 57,000 MBO records |
+| its disk precheck | **16.3 GiB**, against 300 GB on the volume |
+| full roster precheck | **1,627 GiB** - so a full roster needs a ~1.75 TB volume |
+| per record, measured | 215 KB |
+
+**The dead run's output is removed by the dispatch**, because the precheck would otherwise
+refuse against it. Its size and save-point count are echoed into the run record first: it is
+a partial traversal of the first roster object, reproducible from the same source bytes and
+superseded by running a day at a time, so nothing unique dies - but per D60 a removal is
+stated, not assumed.
+
+## What Frankie still needs, and it is not a workflow
+
+**No run calls Frankie, and by design none can.** The launcher produces EVIDENCE and never
+calls a model; the traversal stages a spawn request at each lawful cutoff and moves on. That
+is the S115 correction - Sol runs as an agent session over committed files, exactly as the
+blind and refine specialists did. `attach_principal_findings` is the only route into the
+findings layer and nothing in any workflow calls it, so a traversal is ACCEPTED as
+**evidence only** and gate 8 says so in words.
+
+So the second half is a session reading the staged request plus the evidence and emitting a
+committed artifact. That is what produces the answers about what can be dropped, and it is
+the step after this run, not part of it.
+
+---
+
 # THE RUN FILLED A 300 GB VOLUME IN 2h35m AND STOPPED. The ledgers are 9x my estimate
 
 **Measured from CloudWatch EBS write bytes, which needs nothing from the box.** Five-minute
