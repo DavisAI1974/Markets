@@ -1794,3 +1794,87 @@ class DiscoveryConfirmationsOnTheRowTest(CandidateUnitFedTest):
         opened = sum(s["episodes_opened"] for s in result["traversal"]["candidate_episodes"])
         self.assertGreater(opened, 0)
         self.assertEqual(on_rows + at_end, opened)
+
+
+class EmittedAtRecvNsOnEveryLifecycleRowTest(unittest.TestCase):
+    """F-20 under D83: a lifecycle row without its own availability instant is a row missing
+    its feature-availability clock. Every section named its clock differently (recv_ns,
+    closed_recv_ns, terminal_recv_ns, exited_recv_ns, second, available_second, nested
+    runs[].end_recv_ns) and two named none (mirror GROUP_CLOSE and STREAM_END rows), so the
+    stream resolved availability by a declared rule and WITHHELD what it could not place.
+    The driver now stamps `emitted_at_recv_ns` - its receive-clock instant at the moment of
+    retention - on every retained lifecycle row, uniformly."""
+
+    def _two_segments(self):
+        driver = make_driver(total_mbo_records=6)
+        recvs = {}
+        for day in ("2021-10-08", "2021-10-11"):
+            base = at(f"{day}T13:00:00")
+            records = [record(seq=i, event_ns=base + i * NS_PER_SECOND, order_id=500 + i) for i in range(3)]
+            recvs[day] = [r["ts_recv"] for r in records]
+            driver.consume(records)
+        result = driver.finalize()
+        return driver, result, recvs
+
+    def test_every_retained_lifecycle_row_carries_an_integer_stamp(self):
+        driver, _, _ = self._two_segments()
+        self.assertTrue(driver.counters.lifecycle_rows)
+        for row in driver.counters.lifecycle_rows:
+            with self.subTest(section=row["emitting_section"], occasion=row["emitted_on"]):
+                self.assertIsInstance(row["emitted_at_recv_ns"], int)
+                self.assertNotIsInstance(row["emitted_at_recv_ns"], bool)
+
+    def test_a_group_close_row_is_stamped_with_its_groups_f_last_receive(self):
+        driver, _, recvs = self._two_segments()
+        group_recvs = set(recvs["2021-10-08"]) | set(recvs["2021-10-11"])
+        rows = [r for r in driver.counters.lifecycle_rows if r["emitted_on"] == "GROUP_CLOSE"]
+        self.assertTrue(rows)
+        for row in rows:
+            with self.subTest(section=row["emitting_section"]):
+                self.assertIn(row["emitted_at_recv_ns"], group_recvs)
+
+    def test_a_segment_close_row_is_stamped_with_the_receive_that_revealed_the_boundary(self):
+        """The Friday segment closes when the first Monday group arrives; that is the instant
+        the censoring became knowable, and it is the stamp - not Friday's last receive."""
+        driver, _, recvs = self._two_segments()
+        rows = [r for r in driver.counters.lifecycle_rows if r["emitted_on"] == "SEGMENT_CLOSE"]
+        self.assertTrue(rows, "the fixture stopped crossing a weekend")
+        for row in rows:
+            with self.subTest(section=row["emitting_section"]):
+                self.assertEqual(row["emitted_at_recv_ns"], recvs["2021-10-11"][0])
+
+    def test_a_stream_end_row_is_stamped_with_the_finalize_instant(self):
+        driver, _, recvs = self._two_segments()
+        rows = [r for r in driver.counters.lifecycle_rows if r["emitted_on"] == "STREAM_END"]
+        self.assertTrue(rows)
+        for row in rows:
+            with self.subTest(section=row["emitting_section"]):
+                self.assertEqual(row["emitted_at_recv_ns"], recvs["2021-10-11"][-1])
+
+    def test_an_explicit_finalize_instant_is_the_stamp(self):
+        driver = make_driver(total_mbo_records=3)
+        base = at("2021-10-04T13:00:00")
+        driver.consume(record(seq=i, event_ns=base + i * NS_PER_SECOND, order_id=700 + i) for i in range(3))
+        later = base + 60 * NS_PER_SECOND
+        driver.finalize(recv_ns=later)
+        rows = [r for r in driver.counters.lifecycle_rows if r["emitted_on"] == "STREAM_END"]
+        self.assertTrue(rows)
+        self.assertEqual({r["emitted_at_recv_ns"] for r in rows}, {later})
+
+    def test_the_stamp_never_precedes_the_rule_the_stream_used_to_resolve_the_row(self):
+        """The stamp is when the traversal actually produced the row; the rule was a lower
+        bound. On the candidate fixture (per-second and candidate rows present) the stamp
+        must be at or after every rule-derived instant, so the stricter clock is the stamp."""
+        from research.kalshi.frankie_raw_mbo_benchmark.native_causal_stream import lifecycle_availability
+        fixture = CandidateUnitFedTest()
+        driver, _ = fixture._run()
+        checked = 0
+        for row in driver.counters.lifecycle_rows:
+            legacy = {k: v for k, v in row.items() if k != "emitted_at_recv_ns"}
+            rule, when = lifecycle_availability(legacy)
+            if when is None:
+                continue
+            checked += 1
+            with self.subTest(section=row["emitting_section"], rule=rule):
+                self.assertGreaterEqual(row["emitted_at_recv_ns"], when)
+        self.assertGreater(checked, 0)
