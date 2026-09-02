@@ -934,5 +934,153 @@ class FirstLocksTest(LedgerRuleCase):
         self.refused(self.LEDGER, [(C2, self.first_lock(C2, probability_entry_hash=self.p2)), (C3, lock_body())], "withdrawn")
 
 
+# ----------------------------------------------------------------------------------------
+# Slice 3c: negative ledger, knowledge receipts, invocation receipts, answer wall, run hashes
+# ----------------------------------------------------------------------------------------
+
+
+def negative_body(**overrides) -> dict:
+    body = {
+        "kind": "SPARSE",
+        "section": "4.5",
+        "stratum": {"family": "fam-000001", "side": "ASK", "phase": "PRE_SETTLEMENT"},
+        "numerator": 0,
+        "denominator": 3,
+        "statement": "no ASK-side group in fam-000001 closed before the cutoff; absence recorded, not inferred",
+    }
+    body.update(overrides)
+    return body
+
+
+class NegativeLedgerTest(LedgerRuleCase):
+    LEDGER = "output_negative_sparse_inconclusive_ledger"
+
+    def test_every_kind_passes_with_its_numerator_and_denominator(self):
+        for kind in ("ABSTENTION", "WEAK", "NEGATIVE", "SPARSE", "INCONCLUSIVE"):
+            with self.subTest(kind=kind):
+                self.check(self.LEDGER, [(C1, negative_body(kind=kind))])
+
+    def test_numerator_and_denominator_are_population_counts_on_every_entry(self):
+        for broken in (dict(numerator=None), dict(denominator="3"), dict(numerator=4, denominator=3), dict(numerator=-1), dict(denominator=-1)):
+            with self.subTest(broken=broken):
+                self.refused(self.LEDGER, [(C1, negative_body(**broken))])
+
+    def test_kind_statement_and_stratum_are_required(self):
+        self.refused(self.LEDGER, [(C1, negative_body(kind="MAYBE"))], "kind")
+        self.refused(self.LEDGER, [(C1, negative_body(statement=""))], "statement")
+        self.refused(self.LEDGER, [(C1, negative_body(stratum="fam-000001"))], "stratum")
+
+
+def knowledge_receipt_body(**overrides) -> dict:
+    body = {
+        "receipt_id": "kr-0001",
+        "layer_id": "controlling_rt_mission",
+        "sha256": sha_of("mission"),
+        "disposition": "INSPECTED",
+    }
+    body.update(overrides)
+    return body
+
+
+class KnowledgeRetrievalReceiptsTest(LedgerRuleCase):
+    LEDGER = "output_knowledge_retrieval_receipts"
+
+    def test_receipts_are_remembered_by_id_at_their_cutoff(self):
+        self.check(self.LEDGER, [(C1, knowledge_receipt_body()), (C2, knowledge_receipt_body(receipt_id="kr-0002", disposition="UNINSPECTED"))])
+        self.assertEqual(self.ctx.receipt_cutoffs, {"kr-0001": C1, "kr-0002": C2})
+
+    def test_layer_hash_and_disposition_are_required_and_ids_do_not_repeat(self):
+        for broken in (dict(layer_id=""), dict(sha256="abc"), dict(disposition="READ"), dict(receipt_id="")):
+            with self.subTest(broken=broken):
+                self.refused(self.LEDGER, [(C1, knowledge_receipt_body(**broken))])
+        self.refused(self.LEDGER, [(C1, knowledge_receipt_body()), (C2, knowledge_receipt_body())], "repeats")
+
+
+def invocation_body(turn: int = 0, **overrides) -> dict:
+    body = {
+        "mechanism": "AGENT_SESSION",
+        "session_id": "session_fixture_0001",
+        "model_identity_as_reported_by_session": "the-model-the-session-reported",
+        "request_sha256": sha_of(f"request-{turn}"),
+        "response_sha256": sha_of(f"response-{turn}"),
+    }
+    body.update(overrides)
+    return body
+
+
+class InvocationReceiptsTest(LedgerRuleCase):
+    LEDGER = "output_provider_invocation_response_receipts"
+
+    def test_an_agent_session_receipt_per_cutoff_passes(self):
+        self.check(self.LEDGER, [(C1, invocation_body(0)), (C2, invocation_body(1))])
+
+    def test_an_api_shaped_receipt_is_refused_because_a_correct_session_run_could_not_supply_it(self):
+        for key in ("provider", "requested_model", "served_model", "principal_invocation_id", "usage", "input_tokens", "output_tokens"):
+            with self.subTest(key=key):
+                exc = self.refused(self.LEDGER, [(C1, invocation_body(0, **{key: "x"}))])
+                self.assertIn("AGENT SESSION", str(exc))
+                self.assertIn("D70", str(exc))
+
+    def test_mechanism_session_and_model_identity_are_required(self):
+        self.refused(self.LEDGER, [(C1, invocation_body(0, mechanism="API"))], "mechanism")
+        self.refused(self.LEDGER, [(C1, invocation_body(0, session_id=""))], "session_id")
+        self.refused(self.LEDGER, [(C1, invocation_body(0, model_identity_as_reported_by_session=""))], "model_identity")
+
+    def test_request_and_response_hashes_must_differ(self):
+        same = sha_of("same")
+        self.refused(self.LEDGER, [(C1, invocation_body(0, request_sha256=same, response_sha256=same))], "own input")
+        self.refused(self.LEDGER, [(C1, invocation_body(0, response_sha256="nope"))])
+
+
+class AnswerWallReceiptsTest(LedgerRuleCase):
+    LEDGER = "output_answer_wall_access_receipts"
+
+    def test_an_empty_ledger_passes_and_any_entry_invalidates_the_run(self):
+        self.check(self.LEDGER, [])
+        exc = self.refused(self.LEDGER, [(C1, {"accessed": "later_outcome_reveal"})])
+        self.assertIn("invalidates", str(exc))
+
+
+def run_hash_body(phase: str, state: str = "state-0", **overrides) -> dict:
+    body = {
+        "phase": phase,
+        "run_id": "run-fixture-0001",
+        "mission_sha256": sha_of("mission"),
+        "contract_sha256": hashlib.sha256(contract_today().encode("utf-8")).hexdigest(),
+        "knowledge_manifest_sha256": sha_of("manifest"),
+        "source_manifest_sha256": sha_of("source"),
+        "code_sha256": sha_of("code"),
+        "state_sha256": sha_of(state),
+    }
+    body.update(overrides)
+    return body
+
+
+class RunHashesTest(LedgerRuleCase):
+    LEDGER = "output_source_state_manifest_code_model_run_hashes"
+
+    def test_start_and_end_with_equal_invariants_and_a_moved_state_pass(self):
+        self.check(self.LEDGER, [(C1, run_hash_body("START")), (C3, run_hash_body("END", state="state-3"))])
+
+    def test_exactly_two_entries_start_then_end(self):
+        self.refused(self.LEDGER, [(C1, run_hash_body("START"))], "START")
+        self.refused(self.LEDGER, [(C1, run_hash_body("END")), (C3, run_hash_body("START"))], "START")
+        self.refused(self.LEDGER, [(C1, run_hash_body("START")), (C2, run_hash_body("END")), (C3, run_hash_body("END"))])
+
+    def test_every_hash_but_the_state_is_invariant_across_the_run(self):
+        for key in ("mission_sha256", "contract_sha256", "knowledge_manifest_sha256", "source_manifest_sha256", "code_sha256"):
+            with self.subTest(key=key):
+                end = run_hash_body("END", state="state-3", **{key: sha_of("changed")})
+                self.refused(self.LEDGER, [(C1, run_hash_body("START")), (C3, end)], "only the state")
+
+    def test_the_contract_hash_is_the_bundles_and_the_run_id_is_the_bundles(self):
+        self.refused(self.LEDGER, [(C1, run_hash_body("START", contract_sha256=sha_of("other"))), (C3, run_hash_body("END", contract_sha256=sha_of("other")))], "contract")
+        self.refused(self.LEDGER, [(C1, run_hash_body("START", run_id="other")), (C3, run_hash_body("END", run_id="other"))], "run_id")
+
+    def test_an_optional_model_identity_is_invariant_too(self):
+        self.check(self.LEDGER, [(C1, run_hash_body("START", model_identity="m")), (C3, run_hash_body("END", state="s", model_identity="m"))])
+        self.refused(self.LEDGER, [(C1, run_hash_body("START", model_identity="m")), (C3, run_hash_body("END", state="s", model_identity="n"))])
+
+
 if __name__ == "__main__":
     unittest.main()

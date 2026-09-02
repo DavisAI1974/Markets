@@ -908,6 +908,150 @@ def _v_locks(entries: Sequence[Mapping[str, Any]], ctx: ValidationContext) -> No
 
 
 # --------------------------------------------------------------------------------------
+# Abstentions, weak findings, negatives, sparse and inconclusive cases
+# --------------------------------------------------------------------------------------
+
+NEGATIVE_LEDGER = "output_negative_sparse_inconclusive_ledger"
+#: Feed inventory section 15's own wording of what this ledger holds.
+NEGATIVE_KINDS = ("ABSTENTION", "WEAK", "NEGATIVE", "SPARSE", "INCONCLUSIVE")
+
+
+def _v_negative(entries: Sequence[Mapping[str, Any]], ctx: ValidationContext) -> None:
+    for entry in entries:
+        where = f"{NEGATIVE_LEDGER}[{entry['sequence']}]"
+        body = entry["body"]
+        _choice(body, "kind", NEGATIVE_KINDS, where)
+        _mapping(body, "stratum", where)
+        numerator = _int(body, "numerator", where)
+        denominator = _int(body, "denominator", where)
+        if numerator < 0 or denominator < 0 or numerator > denominator:
+            _fail(where, f"numerator {numerator} / denominator {denominator} is not a population count")
+        _text(body, "statement", where)
+
+
+# --------------------------------------------------------------------------------------
+# Knowledge retrieval receipts
+# --------------------------------------------------------------------------------------
+
+KNOWLEDGE_RECEIPTS = "output_knowledge_retrieval_receipts"
+#: The dispositions `native_frankie_knowledge_registry.bind_principal_knowledge_use` accepts.
+RETRIEVAL_DISPOSITIONS = ("INSPECTED", "UNINSPECTED")
+
+
+def _v_knowledge_receipts(entries: Sequence[Mapping[str, Any]], ctx: ValidationContext) -> None:
+    for entry in entries:
+        where = f"{KNOWLEDGE_RECEIPTS}[{entry['sequence']}]"
+        body, cutoff = entry["body"], entry["cutoff_recv_ns"]
+        receipt_id = _text(body, "receipt_id", where)
+        if receipt_id in ctx.receipt_cutoffs:
+            _fail(where, f"receipt_id {receipt_id!r} repeats")
+        _text(body, "layer_id", where)
+        _sha(body, "sha256", where)
+        _choice(body, "disposition", RETRIEVAL_DISPOSITIONS, where)
+        ctx.receipt_cutoffs[receipt_id] = cutoff
+
+
+# --------------------------------------------------------------------------------------
+# Provider invocation and response receipts: an agent session, never an API
+# --------------------------------------------------------------------------------------
+
+INVOCATION_RECEIPTS = "output_provider_invocation_response_receipts"
+INVOCATION_MECHANISM = "AGENT_SESSION"
+#: Mission section 10 (D70): the fields an API gate demanded and a session run cannot supply.
+API_SHAPED_KEYS = frozenset(
+    {
+        "provider",
+        "requested_model",
+        "served_model",
+        "principal_invocation_id",
+        "usage",
+        "input_tokens",
+        "output_tokens",
+        "api_key",
+        "endpoint",
+        "http_status",
+    }
+)
+
+
+def _v_invocations(entries: Sequence[Mapping[str, Any]], ctx: ValidationContext) -> None:
+    for entry in entries:
+        where = f"{INVOCATION_RECEIPTS}[{entry['sequence']}]"
+        body = entry["body"]
+        api_keys = sorted(API_SHAPED_KEYS & set(body))
+        if api_keys:
+            _fail(
+                where,
+                f"receipt carries API-shaped fields {api_keys}; the principal runs as an AGENT "
+                "SESSION over committed files and no provider API is called (mission section 10, "
+                "D70) - a gate demanding these would reject a correct session run",
+            )
+        if body.get("mechanism") != INVOCATION_MECHANISM:
+            _fail(where, f"mechanism must be {INVOCATION_MECHANISM!r}, got {body.get('mechanism')!r}")
+        _text(body, "session_id", where)
+        _text(body, "model_identity_as_reported_by_session", where)
+        request = _sha(body, "request_sha256", where)
+        response = _sha(body, "response_sha256", where)
+        if request == response:
+            _fail(where, "request and response hash identically; a run that returned its own input produced no findings")
+
+
+# --------------------------------------------------------------------------------------
+# Answer-wall access receipts: empty, or the run is invalid
+# --------------------------------------------------------------------------------------
+
+ANSWER_WALL_RECEIPTS = "output_answer_wall_access_receipts"
+
+
+def _v_answer_wall(entries: Sequence[Mapping[str, Any]], ctx: ValidationContext) -> None:
+    if entries:
+        _fail(
+            ANSWER_WALL_RECEIPTS,
+            f"{len(entries)} answer-wall access receipt(s) present; any access to the answer wall "
+            "invalidates the run - a valid run's ledger is EMPTY with its reason stated",
+        )
+
+
+# --------------------------------------------------------------------------------------
+# Source, state, manifest, code and run hashes: START and END
+# --------------------------------------------------------------------------------------
+
+RUN_HASHES = "output_source_state_manifest_code_model_run_hashes"
+HASH_PHASES = ("START", "END")
+RUN_HASH_KEYS = (
+    "mission_sha256",
+    "contract_sha256",
+    "knowledge_manifest_sha256",
+    "source_manifest_sha256",
+    "code_sha256",
+    "state_sha256",
+)
+#: Only the state may move during a run.
+RUN_HASH_INVARIANT_KEYS = tuple(key for key in RUN_HASH_KEYS if key != "state_sha256")
+
+
+def _v_run_hashes(entries: Sequence[Mapping[str, Any]], ctx: ValidationContext) -> None:
+    phases = [entry["body"].get("phase") for entry in entries]
+    if phases != list(HASH_PHASES):
+        _fail(RUN_HASHES, f"written exactly twice, START then END; got phases {phases}")
+    for entry in entries:
+        where = f"{RUN_HASHES}[{entry['sequence']}]"
+        body = entry["body"]
+        for key in RUN_HASH_KEYS:
+            _sha(body, key, where)
+        if body.get("run_id") != ctx.bundle.get("run_id"):
+            _fail(where, f"run_id {body.get('run_id')!r} is not the bundle's {ctx.bundle.get('run_id')!r}")
+        if body["contract_sha256"] != ctx.bundle.get("contract_sha256"):
+            _fail(where, "contract_sha256 is not the contract this bundle is bound to")
+        if "model_identity" in body:
+            _text(body, "model_identity", where)
+    start, end = entries[0]["body"], entries[1]["body"]
+    for key in RUN_HASH_INVARIANT_KEYS + ("model_identity",):
+        if start.get(key) != end.get(key):
+            _fail(f"{RUN_HASHES}[1]", f"{key} changed between START and END; only the state may move during a run")
+
+
+# --------------------------------------------------------------------------------------
 # Dispatch
 # --------------------------------------------------------------------------------------
 
@@ -917,6 +1061,11 @@ LEDGER_RULES: dict[str, Any] = {
     PROBABILITY_MOVIE: _v_probability_movie,
     CANDIDATE_DISCOVERIES: _v_candidates,
     FIRST_LOCKS: _v_locks,
+    NEGATIVE_LEDGER: _v_negative,
+    KNOWLEDGE_RECEIPTS: _v_knowledge_receipts,
+    INVOCATION_RECEIPTS: _v_invocations,
+    ANSWER_WALL_RECEIPTS: _v_answer_wall,
+    RUN_HASHES: _v_run_hashes,
 }
 
 
