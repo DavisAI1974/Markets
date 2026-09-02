@@ -204,3 +204,54 @@ class PushCannotActTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DeviceSelectionTests(unittest.TestCase):
+    """The box script must end up with a real device path, not lsblk's tree drawing.
+
+    Run 33604642708 failed here on the live box: `lsblk -bnpo` draws a TREE, so the child
+    row arrived as `|-/dev/nvme1n1p1`, the name was taken verbatim, and the next lsblk said
+    "not a block device". The trap restored the volume correctly, which is the only reason
+    this was a wasted two minutes rather than a stranded instance.
+    """
+
+    def _fragment(self) -> str:
+        body = re.search(r"<<'SH'\n(.*?)\nSH\n", _step("Move the disk"), re.S).group(1)
+        return body[body.index('echo "RESCUE_DISK'):body.index("root=$(findmnt")]
+
+    def _run_with_stub_lsblk(self, fragment: str):
+        with tempfile.TemporaryDirectory() as raw:
+            work = Path(raw)
+            # A stub that behaves like the real one: tree output unless -l is asked for.
+            (work / "lsblk").write_text(
+                "#!/bin/sh\n"
+                'case "$*" in\n'
+                "  *-blnpo*) cat <<'EOF'\n"
+                "/dev/nvme1n1 322122547200 disk\n"
+                "/dev/nvme1n1p1 322121498624 part\n"
+                "EOF\n"
+                "  ;;\n"
+                "  *-bnpo*) cat <<'EOF'\n"
+                "/dev/nvme1n1 322122547200 disk\n"
+                "|-/dev/nvme1n1p1 322121498624 part\n"
+                "EOF\n"
+                "  ;;\n"
+                "  *) exit 0 ;;\n"
+                "esac\n", encoding="utf-8")
+            (work / "lsblk").chmod(0o755)
+            env = dict(os.environ, PATH=f"{work}:{os.environ['PATH']}")
+            return subprocess.run(["bash", "-c", f'disk=/dev/nvme1n1\n{fragment}\necho "PICKED=$dev"'],
+                                  env=env, capture_output=True, text=True)
+
+    def test_the_partition_is_selected_as_a_clean_device_path(self):
+        proc = self._run_with_stub_lsblk(self._fragment())
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertIn("PICKED=/dev/nvme1n1p1", proc.stdout)
+        self.assertNotIn("|-", proc.stdout)
+
+    def test_the_guard_refuses_a_name_that_is_not_a_path(self):
+        # The same fragment with the tree-drawing flags put back: the guard must catch what
+        # the missing -l lets through, rather than passing it to the next command.
+        proc = self._run_with_stub_lsblk(self._fragment().replace("-blnpo", "-bnpo"))
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("RESCUE_FATAL=device_name_is_not_a_path", proc.stdout)

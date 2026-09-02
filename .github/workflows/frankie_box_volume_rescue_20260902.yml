@@ -363,8 +363,16 @@ jobs:
           done
           [ -n "$disk" ] || { echo RESCUE_FATAL=volume_never_appeared_as_a_device; exit 1; }
           echo "RESCUE_DISK=$disk"
-          dev=$(lsblk -bnpo NAME,SIZE,TYPE "$disk" | awk '$3=="part"' | sort -k2 -n | tail -1 | awk '{print $1}')
+          # -l, because without it lsblk draws a TREE and the child rows arrive as
+          # "|-/dev/nvme1n1p1". Run 33604642708 died exactly there: the name was taken
+          # verbatim, and the next lsblk said "not a block device". -p gives the full path
+          # and -l flattens it; the guard below is the backstop that should have caught it.
+          dev=$(lsblk -blnpo NAME,SIZE,TYPE "$disk" | awk '$3=="part"' | sort -k2 -n | tail -1 | awk '{print $1}')
           [ -n "$dev" ] || dev="$disk"
+          case "$dev" in
+            /dev/*) ;;
+            *) echo "RESCUE_FATAL=device_name_is_not_a_path:$dev"; exit 1 ;;
+          esac
           root=$(findmnt -no SOURCE /)
           [ "$dev" != "$root" ] || { echo RESCUE_FATAL=picked_the_helpers_own_root; exit 1; }
           echo "RESCUE_DEVICE=$dev"
