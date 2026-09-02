@@ -1,7 +1,7 @@
 # DROP-IN S120 — Frankie A-arm raw-MBO benchmark
 
-**Branch: `chatgpt/frankie-raw-mbo-benchmark-20260828`. Tip: `<see git log -1>`, 1162 tests
-green.** First commands of the session:
+**Branch: `chatgpt/frankie-raw-mbo-benchmark-20260828`. Tip `9fb041a` "S119 close-out",
+1162 tests green.** First commands of the session:
 
 ```bash
 git fetch origin chatgpt/frankie-raw-mbo-benchmark-20260828
