@@ -1018,6 +1018,12 @@ FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the drive
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
+**S118 OPEN, GREG'S CALL:** *"i still feel the numbers need to be rechecked but we'll do that
+in the next session."* Item zero of `research/kalshi/DROP_IN_S119.md`. The 246,030 bytes/record
+figure is the sink counting ITS OWN writes; the independent witness is S3's object sizes for the
+canary packet, and that reconciliation has not been done. Four earlier size numbers were wrong
+the same way, so the doubt is well founded and stays OPEN.
+
 **One-line state (S118):** branch `chatgpt/frankie-raw-mbo-benchmark-20260828`, **896 tests
 green. THE SIZE QUESTION IS ANSWERED AND IT IS ONE FIELD.** Measured exactly from the sink's
 own byte count over 50,001 real records (canary 33596898227): **246,030 bytes per record**,
