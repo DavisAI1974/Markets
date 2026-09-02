@@ -42,6 +42,14 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_key_alias import read_aver
 REPO_ROOT = Path(__file__).resolve().parents[3]
 MISSION_PATH = "research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md"
 CONTRACT_PATH = "research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md"
+
+#: The mission must ASK the raw-MBO retention question or the spawn is refused. D68 ordered
+#: a report "on the calcs, on the full raw mbo, all of it"; the calcs half was delivered and
+#: the raw-MBO half was never asked, so it was never answered - the spawn prompt contained
+#: `raw mbo`, `retention`, `drop`, `field`, `book_full` and `keep` exactly zero times. A
+#: decision recorded in DECISIONS.md and absent from the mission never reaches Frankie, and
+#: prose cannot enforce itself. This is the enforcement.
+RAW_MBO_SECTION_MARKER = "### 9a. The raw MBO"
 FINDINGS_SCHEMA = "FRANKIE_NATIVE_RAW_MBO_PRINCIPAL_FINDINGS_V1"
 
 
@@ -106,6 +114,18 @@ def emit(result_path: Path | str, *, repo_root: Path | None = None,
             "be the ones loaded into Frankie, so emitting would bind him to a document the "
             "run never saw. Restore the bound bytes, or re-run the traversal."
         )
+    # THE GATE THAT MAKES THE RAW-MBO QUESTION UNSKIPPABLE. The hash check above proves the
+    # mission was not edited between traversal and spawn; it says nothing about what the
+    # mission ASKS. A mission missing section 9a produces a report that answers the
+    # calculations and silently omits the half Greg has asked for repeatedly.
+    if RAW_MBO_SECTION_MARKER not in mission_file.read_text(encoding="utf-8"):
+        raise EmitError(
+            f"the mission at {MISSION_PATH} does not carry {RAW_MBO_SECTION_MARKER!r}, so it "
+            "never asks the raw-MBO retention question and a spawn against it cannot answer "
+            "it. D68 requires the report to cover the calcs AND the full raw MBO. Restore "
+            "section 9a rather than spawning against a mission that omits it."
+        )
+
     contract_file = repo_root / CONTRACT_PATH
     contract_now = _file_sha256(contract_file)
     contract_bound = _lookup(identity, "calculation_contract_sha256")
@@ -127,6 +147,10 @@ def emit(result_path: Path | str, *, repo_root: Path | None = None,
     # that lookup still succeeds, still returns the right count, and `row.get("section")`
     # then returns None on every one - so the per-section table would report every row
     # under `None` and the prompt would go out looking complete.
+    # BY LOOKUP, like every other slot. Absent, the block below says the retention receipts
+    # themselves are unstated rather than silently rendering an empty list, because "you were
+    # given nothing" and "we did not record what you were given" are different facts.
+    retention = result.get("ledger_retention") or {}
     rows = read_averaged_rows(result)
     per_section: dict[str, int] = {}
     for row in rows:
@@ -196,6 +220,39 @@ def emit(result_path: Path | str, *, repo_root: Path | None = None,
     for index, cut in enumerate(cutoffs, start=1):
         add(f"| {index} | {cut['group_index']:,} | {cut['source_day']} | {cut['session_phase']} "
             f"| {cut['recv_ns']} | {cut['first_lawful_availability_ns']} |")
+    add("")
+    # THE RAW-MBO HALF, RENDERED WITH WHAT HE CAN AND CANNOT SEE STATED. Asking the question
+    # without saying which evidence is absent invites a confident judgement on data he never
+    # received, which is the defect this programme exists to catch.
+    add("## The raw MBO, which is section 9a and is REQUIRED")
+    add("")
+    add("**This is not the calculation question.** The sixteen calculations are settled and")
+    add("all of them are kept - they are about 1.78% of the bytes and none can be argued")
+    add("away on cost. Do not answer this with a verdict on the calculations; that has")
+    add("happened every time it was asked and it is not an answer.")
+    add("")
+    add("Judge the RAW MBO: the retained per-record fields, the reconstructed book including")
+    add("`book_full`, the ladder, the legacy observable rows and the per-second substrate.")
+    add("Classify each field or field group as LOAD_BEARING, RETAINED_UNREAD,")
+    add("DEGENERATE_ON_THIS_SLICE, REDUNDANT or CANNOT_JUDGE, with evidence, per section 9a.")
+    add("")
+    add("**Keep-everything is a first-class answer and carries no penalty.** If every field")
+    add("earns its retention, say so and say why. You ADVISE; nothing is removed on your")
+    add("say-so, and any removal is Greg's decision after discussion.")
+    add("")
+    add("### What you are actually given, so `CANNOT_JUDGE` is used honestly")
+    add("")
+    for name, receipt in sorted(retention.items()):
+        add(f"- `{name}`: {receipt.get('row_count', 0):,} rows, "
+            f"{receipt.get('bytes', 0):,} bytes - **NOT in this result**, it is on the box "
+            f"at `{receipt.get('path', 'unknown')}`")
+    if not retention:
+        add("- the run recorded no ledger retention receipts, so what was retained where is")
+        add("  itself unstated - say so rather than assuming you saw it")
+    add("")
+    add("So any exact-member claim rests on the runner's counters and per-stratum summaries")
+    add("rather than on rows you read. **Say which fields you could not assess and why.** An")
+    add("honest CANNOT_JUDGE is worth more than a guess.")
     add("")
     add("## What you return")
     add("")

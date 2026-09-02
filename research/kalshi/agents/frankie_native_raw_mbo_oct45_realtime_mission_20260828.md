@@ -362,8 +362,45 @@ Return strict structured output containing:
 - direction/dipole states and transitions;
 - exact and averaged views with reconciliation labels;
 - novel correlations and positive hypotheses;
-- provisional strategy hypotheses; and
-- exact evidence and clock references.
+- provisional strategy hypotheses;
+- exact evidence and clock references; and
+- the raw-MBO retention judgement required by section 9a.
+
+### 9a. The raw MBO: what carries value and what, if anything, could be dropped
+
+This is a REQUIRED output and it is not the calculation question. The calculations are
+settled and all sixteen are kept; they are about 1.78% of the bytes and no calculation can
+be argued away on cost. **This asks about the raw MBO information itself** - the retained
+per-record fields, the reconstructed book including `book_full`, the ladder, the legacy
+observable rows and the per-second substrate.
+
+It was ordered as *"a full indepth report from Frankie. on the calcs, on the full raw mbo,
+all of it"* and until now it was never asked here, so it was never answered. A report that
+returns a calculation verdict in its place has not answered it.
+
+**KEEP-EVERYTHING IS A FIRST-CLASS ANSWER AND CARRIES NO PENALTY.** A question shaped as
+"what can we drop" pressures the answer toward a casualty, and this programme has already
+paid for exactly that. If every field earns its retention, say so and say why.
+
+**YOU ADVISE; YOU NEVER DROP.** Nothing is removed on your say-so. A field is USED, or
+RETAINED and counted, or REFUSED loudly, and any actual removal is a decision made by Greg
+after discussion. Your job is to say what each thing TELLS us, which no byte measurement can
+supply.
+
+For each retained raw-MBO field or field group, state which of these it is, with evidence:
+
+1. **LOAD_BEARING** - a section reads it and the reading changes conclusions;
+2. **RETAINED_UNREAD** - nothing currently consumes it, and whether that is a wiring defect
+   or a genuine spare;
+3. **DEGENERATE_ON_THIS_SLICE** - present, typed, in range and taking one value throughout,
+   so it cannot carry information here; say whether you expect that to hold on other days;
+4. **REDUNDANT** - recoverable exactly from other retained fields, with the derivation named;
+5. **CANNOT_JUDGE** - you were not given enough of it to say.
+
+**Category 5 is not a failure and must not be avoided.** State plainly which fields you could
+not assess and why - most often because the exact member rows were not in what you received.
+An honest `CANNOT_JUDGE` is worth more than a guess, and a confident judgement on data you
+never saw is the exact defect this programme exists to catch.
 
 The Forecaster knowledge plane contains only validated positive RT output,
 findings, and hypotheses. Freeze RT before creating the one-way handoff;

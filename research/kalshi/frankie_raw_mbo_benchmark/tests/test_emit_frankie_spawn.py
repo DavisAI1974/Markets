@@ -25,7 +25,12 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_key_alias import (
 )
 
 
-def _repo_with_docs(directory: Path, mission: bytes = b"mission bytes\n",
+#: The fixture mission must carry section 9a or the emitter refuses, which is the point of
+#: the gate: a mission that does not ASK the raw-MBO question cannot be spawned against.
+MISSION_BYTES = b"mission bytes\n### 9a. The raw MBO\n"
+
+
+def _repo_with_docs(directory: Path, mission: bytes = MISSION_BYTES,
                     contract: bytes = b"contract bytes\n") -> tuple[Path, str, str]:
     for rel, body in ((MISSION_PATH, mission), (CONTRACT_PATH, contract)):
         path = directory / rel
@@ -71,7 +76,7 @@ def _result(mission_sha: str, contract_sha: str, *, verdict="ACCEPTED", cutoffs=
 
 
 class StopRuleTests(unittest.TestCase):
-    def _emit(self, mutate=None, mission=b"mission bytes\n"):
+    def _emit(self, mutate=None, mission=MISSION_BYTES):
         """`mission` is what lands ON DISK; the run always binds the ORIGINAL bytes.
 
         The first version of this helper hashed whatever it wrote, so an "edited" mission
@@ -81,7 +86,7 @@ class StopRuleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             root, _, c_sha = _repo_with_docs(root, mission=mission)
-            m_sha = hashlib.sha256(b"mission bytes\n").hexdigest()
+            m_sha = hashlib.sha256(MISSION_BYTES).hexdigest()
             body = _result(m_sha, c_sha)
             if mutate:
                 mutate(body)
@@ -101,7 +106,7 @@ class StopRuleTests(unittest.TestCase):
         # Section 10's first bullet: this mission's exact bytes and SHA-256 were loaded into
         # Frankie. Editing between traversal and spawn would break it invisibly.
         with self.assertRaises(EmitError) as caught:
-            self._emit(mission=b"mission bytes EDITED\n")
+            self._emit(mission=MISSION_BYTES + b"EDITED\n")
         self.assertIn("Section 10", str(caught.exception))
 
     def test_a_refused_calculation_is_not_spawned_against(self):
@@ -241,3 +246,80 @@ class AliasedRowsReachTheEmitterTest(StopRuleTests):
     def test_no_section_is_reported_as_none(self):
         """The exact symptom of reading an aliased row without decoding it."""
         self.assertNotIn("| None |", self._emit(mutate=self._alias))
+
+
+class RawMboQuestionReachesFrankieTest(StopRuleTests):
+    """D68 ordered a report "on the calcs, on the full raw mbo, all of it".
+
+    The calcs half was delivered and the raw-MBO half was never ANSWERED because it was
+    never ASKED: the S119 spawn prompt contained `raw mbo`, `retention`, `drop`, `field`,
+    `book_full` and `keep` exactly zero times, and mission section 9's nine required outputs
+    named none of them. A decision recorded in DECISIONS.md and absent from the mission never
+    reaches Frankie. Prose cannot enforce itself, so these are the enforcement.
+    """
+
+    @staticmethod
+    def _emit_binding_the_mission_on_disk(mission: bytes) -> str:
+        """Emit with the run binding the sha of the mission actually written.
+
+        `_emit` deliberately binds MISSION_BYTES whatever it writes, so an altered mission
+        trips the HASH check. To reach the 9a gate the mission must be correctly bound and
+        merely fail to ask the question - which is the real-world case: nobody edits the
+        mission mid-run, it simply never carried the section.
+        """
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            root, m_sha, c_sha = _repo_with_docs(root, mission=mission)
+            result = root / "calculation_result.json"
+            result.write_text(json.dumps(_result(m_sha, c_sha)), encoding="utf-8")
+            return emit(result, repo_root=root)
+
+    def test_a_correctly_bound_mission_that_never_asks_refuses_to_spawn(self):
+        """The gate's firing branch, executed. A guard whose output was never produced was
+        never tested - S113's NC-3, and the reason this assertion exists at all."""
+        with self.assertRaises(EmitError) as caught:
+            self._emit_binding_the_mission_on_disk(b"a mission that forgot to ask\n")
+        self.assertIn("raw-MBO", str(caught.exception))
+
+    def test_the_same_mission_with_9a_added_emits(self):
+        """The other half: the gate must PASS on a mission that does carry it, or it is
+        refusing everything and proving nothing."""
+        text = self._emit_binding_the_mission_on_disk(MISSION_BYTES)
+        self.assertIn("raw MBO", text)
+
+    def test_the_question_is_actually_in_the_prompt(self):
+        text = self._emit()
+        for needle in ("raw MBO", "LOAD_BEARING", "RETAINED_UNREAD",
+                       "DEGENERATE_ON_THIS_SLICE", "REDUNDANT", "CANNOT_JUDGE"):
+            self.assertIn(needle, text, needle)
+
+    def test_it_says_keep_everything_is_a_first_class_answer(self):
+        """D76. A question shaped as "what can we drop" pressures the answer toward a
+        casualty, and this programme has already paid for exactly that."""
+        text = self._emit()
+        self.assertIn("Keep-everything is a first-class answer", text)
+
+    def test_it_refuses_the_calculation_answer_in_advance(self):
+        """The calcs have been returned in place of this answer every time it was asked."""
+        self.assertIn("not the calculation question", self._emit())
+
+    def test_it_names_what_he_is_NOT_given(self):
+        """Asking the question without saying which evidence is absent invites a confident
+        judgement on data he never received."""
+        def add_retention(body):
+            body["ledger_retention"] = {
+                "exact_member_ledger": {
+                    "row_count": 43569, "bytes": 10630127166,
+                    "path": "/opt/frankie-a-arm-run/ledgers/exact_member_rows.jsonl",
+                }
+            }
+
+        text = self._emit(mutate=add_retention)
+        self.assertIn("NOT in this result", text)
+        self.assertIn("exact_member_rows.jsonl", text)
+        self.assertIn("10,630,127,166", text)
+
+    def test_absent_retention_receipts_are_declared_not_rendered_empty(self):
+        """"You were given nothing" and "we did not record what you were given" are
+        different facts, and only one of them is an answer."""
+        self.assertIn("itself unstated", self._emit())
