@@ -4,6 +4,18 @@
 
 Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. **1290 tests, from 1254.**
 
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_mbo_field_census.py`** — F-10 / mission
+  9a. The raw-MBO drop question was unanswerable because nothing measured the retained
+  fields: the member ledger stays on the box and the result carried a row COUNT. `MboFieldCensus`
+  walks every member row the runner's sink receives (`note_member_row`) and reports per field
+  path: observations, rows-with-field, nulls, distinct values (capped at 64), types, numeric
+  range, DEGENERATE (one value throughout) and ALWAYS_NULL. List positions collapse to `[]`
+  because a ladder position is not a field. Emitted as `layers.exact_member_ledger.field_census`
+  and rendered into the spawn prompt. A MEASUREMENT, never a recommendation (D60/D76); its
+  `basis` says so.
+- **`research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_mbo_field_census.py`** — the
+  census's own tests: absent vs null counted separately, list collapse, cap, bool excluded from
+  range, read-only on its input.
 - **`research/kalshi/frankie_raw_mbo_benchmark/native_flow_substrate.py`** — section 4.0,
   Frankie's item (a). The per-second roll20 substrate the candidate detector and 4.12 run on
   was `traversal.legacy_per_second_roll20` - a counters block, not a section: no declaration,

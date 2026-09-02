@@ -36,6 +36,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_key_alias import (
     averaged_companion_layer,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_lineage import LineageCalculator
+from research.kalshi.frankie_raw_mbo_benchmark.native_mbo_field_census import MboFieldCensus
 from research.kalshi.frankie_raw_mbo_benchmark.native_queue import QueueSurvivalCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_recognition import RecognitionCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_recurrence import RecurrenceCalculator
@@ -350,6 +351,11 @@ class NativeCalculationRun:
         self.session_strata = session_strata
         self.member_rows_written = 0
         self.lifecycle_rows_written = 0
+        # F-10 / mission 9a. The raw-MBO drop question was unanswerable because nothing
+        # measured the retained fields themselves: which are degenerate on this slice, which
+        # are always null, which are present. This walks EVERY member row the sink receives
+        # and reports per field path. It is a measurement, never a recommendation (D60/D76).
+        self.field_census = MboFieldCensus()
         # D60: the two exact-evidence layers of section 5 emitted COUNTS. A count is not a
         # member, and the gate that exists to guarantee exact rows beneath every summary was
         # satisfied by an integer being greater than zero. The rows live here now.
@@ -409,6 +415,7 @@ class NativeCalculationRun:
         self.member_rows_written += count
         if row is None:
             return
+        self.field_census.observe(row)
         if self.sinks is None:
             self.member_rows.append(row)
         else:
@@ -760,6 +767,10 @@ class NativeCalculationRun:
                 # The key is different rather than the value being empty, because a reader
                 # finding `rows: []` cannot tell retention-elsewhere from nothing-retained.
                 **self._ledger_rows(self.member_rows, "member"),
+                # F-10 / mission 9a: the per-field census over every member row above, so
+                # the principal can judge the raw MBO from a measurement rather than from
+                # counters. `rows_observed` must equal `exact_member_rows`; the emitter checks.
+                "field_census": self.field_census.summary(),
             },
             LAYER_LIFECYCLE: {
                 "exact_lifecycle_rows": self.lifecycle_rows_written,
