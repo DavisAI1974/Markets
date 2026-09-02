@@ -6,7 +6,7 @@
         "A_MEMORY"
       ],
       "authority": "BINDING_CURRENT_MISSION",
-      "bytes": 23236,
+      "bytes": 24218,
       "id": "native_rt_mission",
       "kind": "MARKDOWN",
       "load_mode": "ALWAYS_LOAD",
@@ -14,7 +14,7 @@
       "roles": [
         "REAL_TIME_FRANKIE"
       ],
-      "sha256": "c41c76d0d1ed602d2b47437f50491716fc2740e710acd1893bef9e3bedf17237"
+      "sha256": "027faa7d3d31936d3b026576c7694957319de2d94ef1d95aec5ce1fb5ec4a6f7"
     },
     {
       "arms": [
@@ -38,7 +38,7 @@
         "A_MEMORY"
       ],
       "authority": "BINDING_CURRENT_DIRECTIVE",
-      "bytes": 2806,
+      "bytes": 3058,
       "id": "first_replay_forecaster_directive",
       "kind": "MARKDOWN",
       "load_mode": "ALWAYS_LOAD",
@@ -46,14 +46,14 @@
       "roles": [
         "FORECASTER_FRANKIE"
       ],
-      "sha256": "b32ca5c35db11430c3bf29d8bf597c5ba0d495af499f4f680ea4c95c6c719903"
+      "sha256": "c53634ba99ef3b267bb1db47ada392916890df49c17c8e6721ce54b7c991decd"
     },
     {
       "arms": [
         "A_CLEAN"
       ],
       "authority": "PROMOTED_POSITIVE_NATIVE_KNOWLEDGE",
-      "bytes": 2314,
+      "bytes": 9543,
       "id": "a_clean_promoted_positive_knowledge",
       "kind": "MARKDOWN",
       "load_mode": "ALWAYS_LOAD",
@@ -62,7 +62,7 @@
         "REAL_TIME_FRANKIE",
         "FORECASTER_FRANKIE"
       ],
-      "sha256": "cf7a922728472c342151a5d380632a34d2ec9e823992a83be178082ac406b69a"
+      "sha256": "1e26a726faeb15ed5d0714c1bc850a4d347c77a324f7117fbc190910ec4b6a63"
     },
     {
       "arms": [
@@ -173,6 +173,22 @@
         "FORECASTER_FRANKIE"
       ],
       "sha256": "694857137e27cc84062177ed834d6a8c71fbca908e5f8d48b93b4b016fd787cb"
+    },
+    {
+      "arms": [
+        "A_CLEAN"
+      ],
+      "authority": "POSITIVE_NATIVE_EVIDENCE",
+      "bytes": 7351,
+      "id": "a_clean_s119_measured_knowledge",
+      "kind": "MARKDOWN",
+      "load_mode": "RETRIEVAL",
+      "path": "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_S119_MEASURED_KNOWLEDGE_SOURCE_20260902.md",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "5a86b82df0f869815bd68b5055d2f608802f3443d00718c46121f4c327ac8ed7"
     }
   ],
   "external_bindings": [
@@ -190,7 +206,7 @@
       "sha256": "b487acfbbea8ac8a82f42ceb555e8334057e4004740af91b9127cd2ba71e1cf8"
     }
   ],
-  "manifest_hash": "a45818b11321a1e1caedc545c4d5671b108f43f530d338e6b7a63244316807d7",
+  "manifest_hash": "6e566ab3aa2c5cd8b1beec53012d7209079dc21f8bc70b5b5e1913ccab1cee34",
   "profiles": {
     "FORECASTER_A_CLEAN_REVIEW": {
       "always_load": [

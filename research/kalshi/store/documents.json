@@ -1,5 +1,5 @@
 {
- "note": "THE DOCUMENT REGISTRY. Greg, S112: 'we need to put the list of our working docs in the store or a section of the sop so one doesn't get forgotten about.' Same disease as A-17 one level up - a document that is on no list goes stale silently, and nothing can report it. MEASURED THE DAY THIS WAS BUILT: 55 of 151 tracked research/kalshi/*.py files were absent from KALSHI_TRADING.md, the index whose stated job is 'every Kalshi file, what it does, current vs old'; and PLANT_MAP.md had been EDITED THAT SAME SESSION while naming none of the four plant components built in it. So mtime is not staleness - CONTENT is, and only a content gate catches this.",
+ "note": "THE DOCUMENT REGISTRY. Greg, S112: 'we need to put the list of our working docs in the store or a section of the sop so one doesn't get forgotten about.' Same disease as A-17 one level up - a document that is on no list goes stale silently, and nothing can report it. MEASURED THE DAY THIS WAS BUILT: 55 of 151 tracked research/kalshi/*.py files were absent from KALSHI_TRADING.md, the index whose stated job is 'every Kalshi file, what it does, current vs old'; and PLANT_MAP.md had been EDITED THAT SAME SESSION while naming none of the four plant components built in it. So mtime is not staleness - CONTENT is, and only a content gate catches this. S119: the registry was 44 entries against 236 tracked documents, so 192 carried NO class and no gate could reach them - the andon had been red for several sessions. Closed here. The 158 with a session or date suffix in the filename were classified RECORD BY RULE (the class is literally 'dated and finished'); the remaining 34 were classified by hand, and the load-bearing ones are named: the mission and the calculation contract are VAULT because they are HASH-BOUND into every run identity - S119 changed the mission and locked the spawn emitter out of two prior runs by doing so - and the five mbo_specialist files are LIVE because blind and refine read them byte-identical.",
  "classes": {
   "LIVE": "must be kept current. A gate exists where the content can be computed; otherwise the trigger is stated and the andon can only remind.",
   "RENDER": "GENERATED from a store. Never hand-edit - edit the store and re-render. Gated byte-identical by store.py check.",
@@ -301,6 +301,1371 @@
    "class": "RECORD",
    "role": "the claim-by-claim audit of what the A-arm documents said was missing. Five negative claims tested, one survives. Records that the benchmark imports one module of roughly forty.",
    "update_when": "never - dated audit.",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/AGENT_RUNBOOK_S95.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/AWS_INGEST_SETUP_S89.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/BSHARE_REPOINT_GAP_S108.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/C2C_004_MARKETS_MCP_READONLY.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/C2C_005_SUSTAIN_MARKETS_MCP.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/C2C_009_M16_RECOVERY_INSPECTION.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/C2C_010_M16_PHYSICAL_CLOSEOUT.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/C2C_011_OPUS5_CANARY_GATE.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/C2C_011_REISSUE_AFTER_FORM.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/C2C_012_ACCEPT_OPUS5_AND_CANARY.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/C2C_013_ANTHROPIC_RUNTIME_LOCALIZER.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/C2C_014_SWITCH_FRANKIE_TO_GPT56_SOL.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/C2C_015_S120_STRUCTURAL_FULL_BRAIN_CANARY.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/C2C_016_S120_CANARY_BOUNDARY_REDESIGN.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/C2C_017_S120_ONE_SOL_CANARY.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/C2C_018_S120_LOSSLESS_COMPACT_CANARY.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/C2C_019_RECONCILIATION_S122.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/C2C_019_RESTORE_KITCHEN_SINK_BLIND_CURVE.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/C2_RATIO_FINDINGS_S98.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/CASCADE_S104_friday_cleanup_summary.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/CASCADE_S104_friday_self_analysis.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/CASCADE_S104_monday_fix_summary.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/CASH_BASIS_NOTES_S98.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/CHATGPT_BRIEF_S112.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/CHATGPT_S112_SIX_WORKSTREAMS.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/CHATGPT_S113_T1_NUCLEAR_OUTAGE_SOURCES.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/COACH_REPLAY_S97.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/COMPETITIVE_BRIEF_FULL_S111.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/COMPETITIVE_BRIEF_S111.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/COT_COMBINED_NOTES_S98.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/DATA_GATE_S98.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/DEPTH_RUNLENGTH_FINDINGS_S86.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/DROP_IN_S119.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/EIA_BALANCE_OPTIONS_S98.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/EVENT_MOVE_FINDINGS_S85.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/EVENT_STATE_DESIGN_S86.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/EVENT_SURPRISE_FINDINGS_S86.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FLOW_CALENDAR_NOTES_S98.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FORECASTER_RUNBOOK_S93.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FORECAST_AGENT_DESIGN_S87.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FORECAST_AGENT_DIRECTIVE_S88.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FORECAST_ARCHITECTURE_S111.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_ACADEMIC_TOP10_EVALUATION_DOCKET_20260820.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_ARCHITECTURE_S117.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_A_ARM_FULL_DISPATCH_BLOCKER_20260830.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_COGNITIVE_TOP10_IMPLEMENTATION_HANDOFF_20260820.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_GDL_FRONT_TO_BACK_ADJUDICATION_20260820.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_GDL_REFERENCE_EVALUATION_DOCKET_20260820.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_GENERAL_COGNITIVE_ARCHITECTURE_TOP10_EVALUATION_DOCKET_20260820.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_MEASURED_LEDGER_SIZE_20260902.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_MEASURED_TOKEN_REDUCTION_20260902.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_NEXT_CHAT_HANDOFF_20260820.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_NEXT_CHAT_HANDOFF_20260821.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_NEXT_CHAT_HANDOFF_CURRENT_20260820.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_P0_GAP_CLOSURE_PROVISIONAL_20260820.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_POST_S137_RESIDUAL_TOP10_EVALUATION_DOCKET_20260820.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_PROGRESS_LOCK_S122.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_RAW_MBO_A_ARMS_CORRECTED_NEXT_CHAT_HANDOFF_20260828.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_RAW_MBO_CHAT_LAUNCH_OPERATIONS_HANDOFF_20260828.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_RESEARCH_INTEGRATION_S117.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_S115_IMPLEMENTATION.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_S131_REFINE_S133.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_SEAL_EVALUATION_DOCKET_20260820.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_STEP1_STRUCTURAL_CENSUS_METHOD_V1_20260824.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_V4_CURRENT_STATE_AUDIT_20260822.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_V4_UNIFIED_FRAMEWORK_AUDIT_20260820.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/G15_MBO_REFINE_HANDOFF_S103.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/G22_REASONING_LEDGER_S109.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/G22_REFINE_LEDGER_S110.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/G23_BLIND_LEDGER_S110.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/G23_REFINE_LEDGER_S110.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/GAS_OPTIONS_BRIEFING_S111.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/GAS_OPTIONS_SYNTHESIS_S111.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/GAS_SIGNAL_BRIEFING_S111.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/GAS_SIGNAL_SYNTHESIS_S111.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/GOLD_SILVER_LAG_FINDINGS_S91.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/GRAPH_LEARN_FINDINGS_S88.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/GRID_STACK_NOTES_S99.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/GROUP_PRECHECK_S103.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/KALSHI_DOCK_S110.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/KALSHI_ECHO_MAP_S100.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/KALSHI_NG_COVERAGE_S98.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/KALSHI_PRODUCT_RANKING_S91.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/LAG_EXPLOIT_FINDINGS_S81.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/LEVEL_HIT_FINDINGS_S82.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/LIVE_TELEMETRY_S100.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/LNG_FEEDGAS_SIZING_S98.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/MODEL_DISAGREEMENT_NOTES_S98.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/NGWU_NOTES_S98.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/NG_DAILY_PREDICTORS_SWEEP_S102.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/NG_EXHAUSTION_FRANKIE_FOUR_CPU_HELPER_LAUNCH_HANDOFF_20260824.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/NG_EXHAUSTION_FRANKIE_FULL_STACK_OCTOBER_NEXT_CHAT_HANDOFF_20260824.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/NG_EXHAUSTION_FRANKIE_GPT56_SOL_STACK_SUFFICIENCY_REVIEW_20260824.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/NG_EXHAUSTION_FRANKIE_NUCLEUS_COST_HANDOFF_20260824.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/NG_EXHAUSTION_FRANKIE_SOURCE_FILE_INVENTORY_20260824.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/NG_EXHAUSTION_FULL_MBO_STEP1_RUN_33054308590_HANDOFF_20260827.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/NG_EXHAUSTION_OCTOBER_SHARDED_HANDOFF_20260824.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/NG_EXHAUSTION_PRIOR_SURFACE_OCT45_TWO_FRANKIES_BUILD_CONTROL_20260825.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/NG_EXHAUSTION_REDUCED_SURFACE_TWO_FRANKIES_LAUNCH_HANDOFF_20260825.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/NG_EXHAUSTION_TWO_DAY_STEP1_TRANSFER_HANDOFF_20260824.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/NG_EXHAUSTION_TWO_FRANKIES_FULL_SUITE_HANDOFF_20260824.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/NG_FORECASTER_PROBLEM_MEMO_S103.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/NG_FORECASTER_PROBLEM_MEMO_S103_ADDENDUM_FILES.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/NG_FORECAST_LOG_S92.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/NUCLEAR_OUTAGES_NOTES_S99.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/NYMEX_CANARY_NOTES_S84.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/NYMEX_PRODUCTS_SURVEY_S91.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/OPTIONS_COACH_RESEARCH_S100.1.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/OPTIONS_SURFACE_NOTES_S99.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/PATH_FORECAST_RESEARCH_S87.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/PREVOL_FINDINGS_S86.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/REFINE_DIRECTIVE_S94.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/REVISION_VINTAGE_AUDIT_S98.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/SELF_EVAL_S105_B_monday_rerefine.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/SELF_EVAL_S105_C_wednesday.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/SELF_EVAL_S105_D_thursday.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/SESSION_HANDOFF_2026-09-02_S118.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/SPEC_FRANKIE_RAW_MBO_STREAM_BENCHMARK_20260828.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/STEO_VINTAGE_NOTES_S99.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/STORAGE_CONSENSUS_NOTES_S98.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/TURNAROUND_MEMO_S110.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/TWO_COACH_SPEC_S100.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/VOL_REGIME_NOTES_S98.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/WEATHER_BASELINE_S82.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/WEATHER_FORECAST_INTERFACE_S90.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/WEATHER_REGIME_FINDINGS_S84.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/WINTER_RESIDUAL_S110.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/refine_gold_s105/FROZEN.md",
+   "class": "VAULT",
+   "role": "frozen gold specialist vault; a change is a versioned vault event on Greg's go",
+   "update_when": "never by hand - a versioned vault event on Greg's go",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/refine_gold_s105/mbo_refine_shared.md",
+   "class": "VAULT",
+   "role": "frozen gold specialist vault; a change is a versioned vault event on Greg's go",
+   "update_when": "never by hand - a versioned vault event on Greg's go",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/refine_gold_s105/mbo_specialist_A.md",
+   "class": "VAULT",
+   "role": "frozen gold specialist vault; a change is a versioned vault event on Greg's go",
+   "update_when": "never by hand - a versioned vault event on Greg's go",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/refine_gold_s105/mbo_specialist_B.md",
+   "class": "VAULT",
+   "role": "frozen gold specialist vault; a change is a versioned vault event on Greg's go",
+   "update_when": "never by hand - a versioned vault event on Greg's go",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/refine_gold_s105/mbo_specialist_C.md",
+   "class": "VAULT",
+   "role": "frozen gold specialist vault; a change is a versioned vault event on Greg's go",
+   "update_when": "never by hand - a versioned vault event on Greg's go",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/refine_gold_s105/mbo_specialist_D.md",
+   "class": "VAULT",
+   "role": "frozen gold specialist vault; a change is a versioned vault event on Greg's go",
+   "update_when": "never by hand - a versioned vault event on Greg's go",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/refine_gold_s105/mbo_specialist_E.md",
+   "class": "VAULT",
+   "role": "frozen gold specialist vault; a change is a versioned vault event on Greg's go",
+   "update_when": "never by hand - a versioned vault event on Greg's go",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/chatgpt_tasks/S113_TASK_1_nuclear_planned_outage_schedule_forward_agreed_twice.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/chatgpt_tasks/S113_TASK_2_the_weather_station_set_is_16_hand_set_metros_and_on.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/chatgpt_tasks/S113_TASK_3_test_greg_s_hydro_carry_does_tva_s_curtailed_state_p.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/chatgpt_tasks/S113_TASK_4_triage_the_1_129_unread_data_points_find_the_ones_th.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/chatgpt_tasks/TASK_1_the_dipole_direction_result_you_already_prod.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/chatgpt_tasks/TASK_2_ecmwf_ens_and_gefs_ensemble_member_retrieval.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/chatgpt_tasks/TASK_3_iso_day_ahead_and_7_day_wind_solar_and_load.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/chatgpt_tasks/TASK_4_the_gas_weighted_degree_day_construction_and.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/chatgpt_tasks/TASK_5_the_north_american_weather_regime_label.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/chatgpt_tasks/TASK_6_lng_feedgas_nomination_sources.md",
+   "class": "EXTERNAL",
+   "role": "a delivered task packet or coordination hand-off from outside the session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/data_registry_legacy_s114_snapshot.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_FORECASTER_FIRST_REPLAY_OUTPUT_POSITIVE_REVIEW_20260828.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_METHOD_ONLY_CAPSULE_SOURCE_20260829.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_RT_ACTUAL_FRANKIE_INTERIM_POSITIVE_REPORT_20260828.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_RT_ACTUAL_FRANKIE_NONAVERAGED_EXTRACTION_OPPORTUNITIES_20260828.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_RT_NATIVE_MBO_POSITIVE_DERIVED_FINDINGS_20260828.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_FORECASTER_FIRST_REPLAY_OUTPUT_POSITIVE_REVIEW_20260828.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_NATIVE_MBO_POSITIVE_FINDINGS_20260828.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_RECALCULATION_SPEC_20260828.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_RT_ACTUAL_FRANKIE_RETROSPECTIVE_POSITIVE_REPORT_20260828.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/FRANKIE_KNOWLEDGE_USE_AND_NONFORGETTING_REVIEW_20260828.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/vendor/DATABENTO_LIVE_OPS_NOTES_S100.md",
+   "class": "RECORD",
+   "role": "dated session artifact - handoff, findings memo, ledger, briefing or audit; describes the session that wrote it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/BURN_HH_LIVING_DATA_CONTRACT.md",
+   "class": "LIVE",
+   "role": "the burn/HH data contract - a standing specification, not a dated record",
+   "update_when": "whenever the thing it describes changes",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/EVENT_WEIGHT_STUDY.md",
+   "class": "RECORD",
+   "role": "a finished study; undated in its filename but describing one measurement",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FRANKIE_CHATGPT_CLAUDE_COORDINATION.md",
+   "class": "LIVE",
+   "role": "the standing coordination protocol between the two agents",
+   "update_when": "whenever the thing it describes changes",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/FREE_DATA_COLLECTOR_STATUS.md",
+   "class": "LIVE",
+   "role": "collector status; stale the moment a collector changes, so it must be kept current",
+   "update_when": "whenever the thing it describes changes",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/G15_MBO_FIXES_FOR_CHATGPT.md",
+   "class": "EXTERNAL",
+   "role": "a task packet sent out to ChatGPT",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/NG_EXHAUSTION_FRANKIE_MONTHLY_RUN_PROCEDURE.md",
+   "class": "LIVE",
+   "role": "a run procedure - followed, therefore maintained",
+   "update_when": "whenever the thing it describes changes",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/PASS2_CONTINUOUS_SERIES_NOTES.md",
+   "class": "RECORD",
+   "role": "the S97 pass-2 notes; the work they describe was deferred and the notes are the record of it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/S102_MERGE_PROPOSAL.md",
+   "class": "RECORD",
+   "role": "a merge proposal for one session, accepted and finished",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/S109_MERGE_PROPOSAL_G22.md",
+   "class": "RECORD",
+   "role": "a merge proposal for one group, accepted and finished",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/S110_MERGE_ADDENDUM_G22.md",
+   "class": "RECORD",
+   "role": "the addendum to the G22 merge, finished with it",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/S136_PERMANENT_WORKFLOW_HANDOFF.md",
+   "class": "RECORD",
+   "role": "a delivered handoff describing the workflow state at one session",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md",
+   "class": "VAULT",
+   "role": "the A-arm calculation contract - HASH-BOUND into every run identity; a change is a versioned event, never an edit",
+   "update_when": "never by hand - a versioned vault event on Greg's go",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md",
+   "class": "VAULT",
+   "role": "the A-arm mission - HASH-BOUND into every run identity, and changing it locked the emitter out of two prior runs (S119)",
+   "update_when": "never by hand - a versioned vault event on Greg's go",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/frankie_native_raw_mbo_forecaster_first_replay_review_20260828.md",
+   "class": "RECORD",
+   "role": "a dated review of the first replay output",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_CLEAN_POSITIVE_KNOWLEDGE_20260828.md",
+   "class": "RENDER",
+   "role": "GENERATED capsule. Regenerate with refresh_native_frankie_knowledge.py from KNOWLEDGE_SOURCES_20260828.json - never hand-edit; the file says so in its own header and S119 classified it VAULT by mistake, which would have told the next session not to regenerate it at all",
+   "update_when": "whenever a registered source changes - run the refresh, which also re-hashes the manifest",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_MEMORY_POSITIVE_KNOWLEDGE_20260828.md",
+   "class": "RENDER",
+   "role": "GENERATED capsule, same refresh script and same rule as the A-clean one",
+   "update_when": "whenever a registered source changes - run the refresh, which also re-hashes the manifest",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_CLEAN_WARMUP_SCOPED_CAPSULE_PROPOSAL_20260829.md",
+   "class": "RECORD",
+   "role": "a dated proposal, not yet carried",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/README.md",
+   "class": "LIVE",
+   "role": "what the knowledge directory carries and how it is manifested",
+   "update_when": "whenever the thing it describes changes",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/frankie_native_raw_mbo_rt_positive_discovery_addendum_20260828.md",
+   "class": "RECORD",
+   "role": "a dated addendum to the mission's discovery section",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/frankie_prior_surface_oct45_forecaster_20260825.md",
+   "class": "RECORD",
+   "role": "the prior-surface forecaster brief, superseded by the native raw-MBO mission",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/frankie_prior_surface_oct45_realtime_20260825.md",
+   "class": "RECORD",
+   "role": "the prior-surface realtime brief, superseded by the native raw-MBO mission",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/forecasts/README.md",
+   "class": "LIVE",
+   "role": "how the forecast artifacts in this directory are named and read",
+   "update_when": "whenever the thing it describes changes",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/principal_runs/33605852433/FRANKIE_SPAWN_PROMPT.md",
+   "class": "RECORD",
+   "role": "the exact prompt the principal was run against; the receipt for run 33605852433 and never edited",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/principal_runs/33605852433/frankie_calculation_assessment.md",
+   "class": "RECORD",
+   "role": "the principal's sixteen-calculation assessment and defect register for run 33605852433",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/historical/README.md",
+   "class": "LIVE",
+   "role": "what the historical directory holds and how to read it",
+   "update_when": "whenever the thing it describes changes",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/historical/snapshots/g3_s130/README.md",
+   "class": "RECORD",
+   "role": "describes one frozen snapshot",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/renders/ng_learn_s92/README.md",
+   "class": "RECORD",
+   "role": "describes one session's render set",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/s125_burn_hh_12m/README.md",
+   "class": "RECORD",
+   "role": "describes one twelve-month burn/HH data pull",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/store/FORCING_WIRING_PROPOSAL.md",
+   "class": "RECORD",
+   "role": "a dated proposal for wiring the forcing feed",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/mbo_specialist_A.md",
+   "class": "LIVE",
+   "role": "canonical specialist A rule file - blind and refine read these BYTE-IDENTICAL (D S105); a change alters every future group run",
+   "update_when": "whenever the thing it describes changes",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/mbo_specialist_B.md",
+   "class": "LIVE",
+   "role": "canonical specialist B rule file - blind and refine read these BYTE-IDENTICAL (D S105); a change alters every future group run",
+   "update_when": "whenever the thing it describes changes",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/mbo_specialist_C.md",
+   "class": "LIVE",
+   "role": "canonical specialist C rule file - blind and refine read these BYTE-IDENTICAL (D S105); a change alters every future group run",
+   "update_when": "whenever the thing it describes changes",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/mbo_specialist_D.md",
+   "class": "LIVE",
+   "role": "canonical specialist D rule file - blind and refine read these BYTE-IDENTICAL (D S105); a change alters every future group run",
+   "update_when": "whenever the thing it describes changes",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/agents/mbo_specialist_E.md",
+   "class": "LIVE",
+   "role": "canonical specialist E rule file - blind and refine read these BYTE-IDENTICAL (D S105); a change alters every future group run",
+   "update_when": "whenever the thing it describes changes",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_S119_MEASURED_KNOWLEDGE_SOURCE_20260902.md",
+   "class": "RECORD",
+   "role": "the S119 measured-knowledge SOURCE - thirteen numbered findings, each a number from run 33605852433 or a rule established by closing the sixteen-defect register. Registered in KNOWLEDGE_SOURCES and promoted into the A-clean capsule",
+   "update_when": "never - it is dated and finished; add a new dated source rather than editing it",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/SESSION_HANDOFF_2026-09-02_S119.md",
+   "class": "RECORD",
+   "role": "the S119 session handoff",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
+   "path": "research/kalshi/DROP_IN_S120.md",
+   "class": "RECORD",
+   "role": "the S120 drop-in box",
+   "update_when": "never - it is dated and finished",
    "gate": null
   }
  ]

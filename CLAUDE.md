@@ -1,4 +1,83 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-30, Session 116)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-02, Session 119)
+
+
+## S119 — THE SIXTEEN-DEFECT REGISTER IS CLOSED, AND SEVEN OF THEM WERE MEASURES NOTHING EVER CALLED (read `SESSION_HANDOFF_2026-09-02_S119.md` SECTION 0 FIRST + `DROP_IN_S120.md`)
+
+**Branch = `chatgpt/frankie-raw-mbo-benchmark-20260828`. 896 -> 1162 tests. NOTHING
+RELAUNCHED.** Decisions 71 -> 77.
+
+**ITEM ZERO, AND IT HAS COST HALF A SESSION MORE THAN ONCE: FRANKIE RUNS AS AN AGENT SESSION
+OVER COMMITTED FILES. NO API — not OpenAI, not Anthropic, not Bedrock.** Run 33605852433 was
+run by **`claude-opus-5`, the assistant session itself**, on Greg's explicit authorisation:
+*"i'm completely fine with you running it and we don't need bedrock... i truly don't care who
+runs it."* The mechanism: a **committed staged request** -> `emit_frankie_spawn.py` renders the
+prompt by LOOKUP and HALTS on any slot it cannot resolve -> the principal writes a **committed
+artifact** -> `validate_principal_execution` binds the two by hash and **refuses identical
+hashes**. The S115 gate rebuild exists for exactly this: while it demanded `provider` /
+`served_model` / `principal_invocation_id` / token `usage` it would have **REJECTED a correct
+session run and accepted only an API one.** `C2C_014` is SUPERSEDED with its API instruction
+struck through — readable because the switch happened, dead as a mechanism. **Do not re-derive
+the architecture from it.**
+
+**THE DOMINANT FINDING: SEVEN OF THE SIXTEEN DEFECTS WERE A CORRECT CALCULATOR THAT NOTHING
+EVER CALLED, AND EACH REPORTED AN EXACT ZERO.** The decision clock (n=0, **43,569 excluded** —
+no caller ever passed a decision time); `phase_depletion`/`phase_refill` (0.0 at every quantile
+in **all 109 strata**, zero exclusions — dataclass fields nothing wrote); the SEARCHED phase
+duration (min = max = **0.0** for all 91 candidates — entered and left at the same nanosecond);
+`recurrence_count` (min = max = 0.0 in all 28 strata — `note_recurrence` existed and nothing
+called it); 4.13's censored age (n=0 against **21,651 censored** — derived from an exit only a
+successor stamps, and a censored stage by definition never gets one); and
+`ExhaustionCalculator.complete` (**91 opened, 0 completed, 91 censored** — never called, so the
+reversal duration everyone read was a censoring artifact). **A measure that ran perfectly and
+was handed nothing is indistinguishable, in every gate we had, from a measure that ran and
+found nothing.** Two more were sections **BUILT AND DARK**: 4.2 had no module at all, leaving
+`book_full` (**10.13 GB, 93.47% of the ledger**) with no consumer; 4.4's matcher was correct and
+absent from the runner's section map, the numbering jumping 4.2 to 4.5. **A PASSING VERDICT IS
+NOT EVIDENCE THAT A SECTION RAN** — now a regression test aimed at the shape, not the instances.
+
+**D72 — THE NINTH GATE, AND THE ONLY HORIZONTAL ONE.** Frankie, unprompted: *"If only one of
+those three ships, ship the gate."* The eight existing gates each check a section **against
+itself**, and a one-sided book satisfies every one: 4.9 returned exactly **+/-1.0 on 152 of
+154** readings of `(bid-ask)/(bid+ask)` while 4.12 computed the identical formula on the same
+day and instrument and returned **[0.0116, 0.1109] on 3,454**, never reaching a bound — **and
+all eight passed.** The test is DISTRIBUTIONAL because 4.9's range CONTAINS 4.12's. **A code
+review then found the first version evadable by the exact defect class it was built for**: mean
+AND extreme share both cancel under sign symmetry, so a 100%-degenerate section passes by being
+stratified differently, and the real run only fired because 4.9's strata happened to be
+sign-pure. Fixed by leading on the **population-weighted second moment** (`sum_of_squares` was
+already emitted on every row and going unread), which separates **0.9871 from 0.0031** against
+a 0.10 tolerance. Five further evasions closed, each reproduced before and after.
+
+**D74 — D-8 WAS NEITHER PROPOSED CAUSE.** The replacement numerator was 0.0 in all 205 strata
+and it was wired AND attributed correctly. It could not fire because it was scoped to a
+**single F_LAST group**, and on this tape depletion and same-side addition are mutually
+exclusive inside one: **24,617 of 43,569 runways carry zero depletion (pure-add groups) and the
+18,952 with depletion contain no adds at all.** No amount of tape would have made it nonzero.
+**Check the SCOPE before the wiring.**
+
+**D75 — FIXING ONE DEFECT CAN ARM A SECOND THAT WAS INERT BENEATH IT.** 4.12 held **3,454
+stages and not one REVERSAL** while 4.10 recorded 90 of 91 runways as reversed, because each
+stage was filed under the PREVIOUS second's phase. But the boundary-close path also stamped
+REVERSAL — harmless while the off-by-one hid it, **actively false the moment it is corrected**,
+since a boundary-censored episode would then emit reversals that never happened.
+
+**D76 (GREG) — FRANKIE DOES NOT HAVE TO FIND SOMETHING TO DROP.** *"if he says to keep
+everything then we keep it."* **All sixteen calculations combined are ~1.5% of the bytes and
+the most expensive, `replenishment`, is 0.6%** — the only thing with mass is the per-group
+`book_full` at 93.47%, which Greg has already ruled stays. **Next: token reducers, then rerun
+the canary AND Sunday on the corrected code so there are two independent slices, then the
+weekday.**
+
+**D77 — PARALLEL AGENTS MAY NEVER TOUCH GIT STATE IN A SHARED WORKTREE.** A subagent ran `git
+stash` to measure a baseline and reverted five sessions' uncommitted work in one command.
+Recovered in full and it reported itself. The fan-out was still worth it (six defects in
+disjoint sections, concurrently) but the isolation is the FILE boundary only.
+
+**MY OWN ERROR, recorded because it is the session's own finding committed while writing it
+up:** adding absorption to the driver's finalize list landed in the **segment-close** loop
+instead of the **stream-end** one, so pending replacements never censored at end of stream. The
+D-8 tests passed because they call the calculator directly. **A unit test on a calculator does
+not test the driver that is supposed to call it.**
 
 
 ## S116 — THE WORK WAS ALREADY BUILT, AND FIFTY-FIVE DROPS WERE RESTORED (read `SESSION_HANDOFF_2026-08-30_S116.md` + `research/kalshi/FRANKIE_A_ARM_PRIOR_WORK_RECOVERY_20260829.md` + `DROP_IN_FRANKIE_A_ARM_NEXT.md`)
@@ -1017,6 +1096,25 @@ DATA next (Greg): forward-curve cache back ($0.07; curve_regime was 'unknown' al
 FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the driver; back-fill the walked
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
+
+**One-line state (S119):** branch `chatgpt/frankie-raw-mbo-benchmark-20260828`, **1162 tests
+green (was 552 at S115). ALL SIXTEEN DEFECTS IN FRANKIE'S REGISTER ARE CLOSED, WIRED AND
+PUSHED. NOTHING RELAUNCHED** - the last real run is still 33605852433, produced BEFORE the
+fixes, so every number quoted is from the pre-fix artifact. **Frankie runs as an AGENT SESSION
+over committed files - no API, no Sol, no Bedrock; run 33605852433 was `claude-opus-5` on
+Greg's explicit authorisation, and `C2C_014`'s API instruction is SUPERSEDED and struck.**
+**Seven of the sixteen defects were a correct calculator nothing ever called**, each reporting
+an exact zero indistinguishable from a real finding; two more were sections BUILT AND DARK
+(4.2 had no module, leaving 10.13 GB of `book_full` with no consumer; 4.4's matcher was absent
+from the runner's section map). **A passing verdict is not evidence that a section ran.** The
+**ninth section-6 gate** is the first HORIZONTAL one - two sections computing one estimand must
+agree - and a review found its first version evadable by the exact defect class it was built
+for, fixed by leading on the population-weighted **second moment** (0.9871 vs 0.0031 on the
+real artifact). **D76: keep-everything is a legitimate answer** - all sixteen calculations are
+~1.5% of the bytes. **Next: token reducers, then rerun the canary AND Sunday on the corrected
+code, then the weekday.** The document registry went **44 of 236 -> 239 of 239**; Station 0's
+briefing backlog rose 6-of-7 to **23-of-27 because seventeen invisible briefings became
+visible**, which is the correct kind of worse.
 
 **S118 OPEN, GREG'S CALL:** *"i still feel the numbers need to be rechecked but we'll do that
 in the next session."* Item zero of `research/kalshi/DROP_IN_S119.md`. The 246,030 bytes/record

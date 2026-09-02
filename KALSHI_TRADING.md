@@ -1,5 +1,49 @@
 # KALSHI TRADING — file index
 
+## S119 — the sixteen-defect register closed, and the gate that would have caught it
+
+Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. **1162 tests, from 552 at S115.**
+
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_cross_section_agreement.py`** — D72, the
+  NINTH section-6 gate and the only HORIZONTAL one. The eight existing gates each check a
+  section against ITSELF, and a one-sided book satisfies every one of them: 4.9 returned
+  exactly +/-1.0 on **152 of 154** readings while 4.12 computed the identical formula and
+  returned **[0.0116, 0.1109] on 3,454**, and all eight passed. The test is DISTRIBUTIONAL,
+  because 4.9's range CONTAINS 4.12's. A review found the first version evadable by the exact
+  defect class it was built for - mean and extreme share both cancel under sign symmetry - so
+  it now leads on the population-weighted **second moment**, which does not cancel and does
+  not move under re-stratification: **0.9871 against 0.0031** on the real artifact.
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_book_regime.py`** — section 4.2, which
+  did not exist. Its absence left `book_full` - **10.13 GB, 93.47% of the exact member
+  ledger** - with no consumer anywhere in the artifact. Reads the book already on the row: no
+  new capture, no new pass. A one-sided book has an UNDEFINED spread and an empty book has no
+  imbalance, both excluded and counted, while zero DEPTH is a real measurement and is kept.
+  Its `relative_imbalance` is the THIRD computation of the estimand the gate above watches.
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_a_arm_launch.py`** — the run entry point.
+  Now selects horizon version `a-arm-h2` (1 ms / 10 ms / 100 ms beneath the frozen
+  1 s / 10 s / 60 s) and the four feedable response channels.
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_candidate.py`** /
+  **`native_candidate_adapter.py`** — the causal candidate detector and the adapter that
+  drives 4.10, 4.11 and 4.12 off it. The adapter had NO test file, which is why three defects
+  survived a full run; `tests/test_native_candidate_adapter.py` is new.
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_roll20.py`** — the per-second roll20 /
+  dipole substrate the registry requires as `CAUSAL_STREAM_REQUIRED`.
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_row_sink.py`** — D60 streamed retention:
+  the exact ledgers are held ON DISK rather than in RAM, and nothing is dropped.
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_queue_adapter.py`** /
+  **`native_replenishment_adapter.py`** — the group-to-section adapters for 4.6 and 4.7.
+- **`research/kalshi/frankie_raw_mbo_benchmark/report_ledger_size.py`** — the sink's own
+  byte accounting, which is what `verify_ledger_size_witness.py` exists to second.
+- **`research/kalshi/frankie_raw_mbo_benchmark/tests/`** — 1162 tests. New this session:
+  `test_native_candidate_adapter.py`, `test_native_book_regime.py`,
+  `test_native_cross_section_agreement.py`. Also carried here for the index:
+  `test_a_arm_launch_workflows.py`, `test_box_volume_rescue_workflow.py`,
+  `test_emit_frankie_spawn.py`, `test_native_a_arm_launch.py`, `test_native_candidate.py`,
+  `test_native_queue_adapter.py`, `test_native_replenishment_adapter.py`,
+  `test_native_roll20.py`, `test_native_row_sink.py`,
+  `test_native_row_sink_differential.py`, `test_report_ledger_size.py`,
+  `test_verify_ledger_size_witness.py`.
+
 ## S119 — Frankie ran, and the token surface was measured
 
 Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`.
