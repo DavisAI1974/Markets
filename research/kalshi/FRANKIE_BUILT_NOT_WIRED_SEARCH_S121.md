@@ -114,10 +114,69 @@ the working precedent for a workflow step that runs a renderer.
 
 ## D, E, F. Clocks, event-anchored windows, horizons
 
-Pending the third search report; appended when it lands. Known before the search: the 2-day
-Step-1 module `research/ng_exhaustion_mbo_2day_full_mbo_step1_20260825.py` already carries a
-per-event `causal_clocks` object (`ts_event_ns`, `ts_recv_ns`, `f_last_group_completion_ts_recv_ns`,
-`threshold_crossing_ts_recv_ns`, `event_known_by_ts_recv_ns`, `max_contributing_ts_recv_ns`,
-`feature_cutoff_ts_recv_ns`) and a post-lock `outcome_availability` clock, hashed as a set;
-`ng_exhaustion_v4_causal_clock.validate_availability_chain` enforces event_known_by, then
-feature availability, then model evaluation, then decision availability.
+The third search report. Orienting fact: Frankie's live path is the one package
+`research/kalshi/frankie_raw_mbo_benchmark/`, and three universes of clock code never touch it:
+the V4 universe (`ng_exhaustion_v4_causal_clock.py`, `ng_exhaustion_v4_mechanics.py`, the
+runtime contracts, all real and tested, callers only within that universe; the runtime contracts
+also carry the retired four-helper architecture, D64), the pre-V4 frozen runway clock
+(`ng_exhaustion_live_clock.py`, `ng_exhaustion_runway_clock.py`), and the sealed Step-1 universe,
+which sits on the SAME hash-locked adapter Frankie's wrapper wraps and whose clock design is the
+most developed (`research/ng_exhaustion_mbo_2day_full_mbo_step1_20260825.py`: per-event
+`causal_clocks` with `event_known_by_ts_recv_ns` as the receive time of the next confirming record,
+`max_contributing_ts_recv_ns`, `feature_cutoff_ts_recv_ns`, `threshold_crossing_ts_recv_ns`, a
+post-lock `outcome_availability` clock, the set hashed at :884-891).
+
+### D. The seven clocks, one by one
+
+| clock | producer today | file:line | status |
+|---|---|---|---|
+| clock_event_time | `member_clock_row` `first_component_ts_event_ns`; receipt `event_time_ns` | `native_clocks.py:199`; `native_causal_stream.py:496` | FULL, needs a naming wrapper by registry id |
+| clock_receive_time | `first_component_ts_recv_ns`; the package's `CAUSAL_CLOCK`; ordering invariant | `native_clocks.py:200`; `native_causal_stream.py:467-471` | FULL, naming wrapper |
+| clock_event_known_by | `f_last_ts_recv_ns` = `first_lawful_availability_ns`, the cutoff every sidecar row is gated on | `native_clocks.py:201-202`; `native_causal_stream.py:464, 473-474` | FULL at group level; identical by construction to feature availability |
+| clock_feature_availability | same field reused; lifecycle rows by declared rule (`lifecycle_availability`, four rules) | `native_clocks.py:202`; `native_causal_stream.py:170-190` | PARTIAL: a basis label at least; the per-component recv list at `native_clocks.py:153` is the ingredient for a real max-of-contributing value (Step-1's pattern) |
+| clock_prospective_discovery_confirmation | `CandidateRecognition.record_call` `recognized_recv_ns` | `native_recognition.py:83-100`, reached from `native_replay_driver.py:411, 842` | PARTIAL: lifecycle rows only; same call frame as the cutoff group, so a field copy onto the member row |
+| clock_model_evaluation | F_LAST adopted as the decision instant by convention (`decision_basis`) | `native_clocks.py:113-131, 203`; the driver's cadence cutoff dict; `native_staging.REQUIRED_CUTOFF_KEYS` :41-48 | PARTIAL: one key on the cutoff dict, copied unconditionally by `stage_spawn_request` |
+| clock_lock_time | none | `a_clean_rt_replay_20260828.py:430-454` carries no time field | NO_PRODUCER_FOUND, correctly: it is his own first-lock entry |
+
+The pre-call and RT-surface gates mandate all seven clock surface ids
+(`corrected_a_arm_execution_gate_20260828.py:24-118, 137-195`) while their evidence hash is the
+feed-inventory document; once the producers are named, the registry's `source_paths` repoint to
+code. The crosswalk's own `SEVEN_CLOCKS` diagnostic (`native_layer_crosswalk.py:679-729`) already
+answers this question and has no caller outside its tests.
+
+### E. The fixed windows against the event-anchored measures that exist
+
+`ACTIVITY_WINDOWS_S = (1, 5, 20, 60, 300)` (`ng_exhaustion_mbo_v4_state_adapter_20260820.py:51`,
+hash-locked) reaches the row through `native_full_capture_adapter.py:53, 188` and the resume path
+`mbo_resume_state.py:19, 300`. All ten native sections are wired in the driver and carry
+event-anchored measures: ladder touch migration (`native_ladder.py:129-148`), session open as an
+exact instant (`native_session`, `native_replay_driver.py:117-134`), the per-completed-second flow
+substrate (`native_flow_substrate.py:181-349`), exact recurrence gaps (`native_recurrence.py:72-177`),
+time to restoration (`native_replenishment.py:204-209`), dipole reversals (`native_dipole.py:215-244`),
+queue age (`native_queue.py:255-257`), absorption disposition (`native_absorption.py:156-177`),
+exhaustion durations only once observed (`native_exhaustion.py:244-256`), book regime snapshots.
+`odcore/incremental.RollingFlow` and `odcore/info_dipole` are proven in a sibling strategy stack and
+never called from Frankie's path; `RollingFlow` still takes a fixed `window_s`. NOT existing: an
+`activity_since` recomposition of the twelve-field activity vocabulary on anchors (zero hits),
+`last_book_reset` and `last_f_last_same_side` accumulators, a published elapsed-since-last-trade.
+Two of the five proposed anchors (last touch change, session open) already have full producers.
+
+### F. 4.16 and 4.11
+
+`HORIZON_SETS` (`native_response.py:146-166`), `horizons_for_version` (:190-198) consumed at
+`native_a_arm_launch.py:59, 455-456` into `native_calculation_runner.py:283-284, 349-352`;
+`open_track` / `advance` mature at `first_lawful_recv_ns + horizon` (:546-647). The event-driven half
+`observe_change_point` (:649-673) IS wired at `native_replay_driver.py:702-717` and gated OFF by
+default (`emit_change_points` False at :335; CLI `native_a_arm_launch.py:386, 600-604`), which is why
+the canonical Sunday run produced zero change points. 4.11 has NO ladder: `record_call` computes the
+real elapsed time; its real gap is that `precursor_for` (`native_candidate_adapter.py:217-227, 302,
+580`) has no caller, so PRIOR is unreachable. `native_clocks.RecognitionLabel` (:53-91) has no
+production caller. `WARMUP_SECONDS` in the October shards is on the sealed Step-1 side, not in
+Frankie's path: no action.
+
+**Missing to wire:** naming wrappers for three clocks, a basis label and a max-of-contributing
+value for the fourth, a same-frame field copy for the fifth, one cutoff-dict key for the sixth; the
+seventh is his output. `activity_since` on event anchors in the wrapper and the removal of the
+fixed-seconds blocks under D83. Change points on by default and the ladder retired (the packet's
+slice c). A caller for `precursor_for` from an existing prebirth-state producer and a caller for
+`RecognitionLabel`. Wired by the clocks-and-windows persona.
