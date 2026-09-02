@@ -1097,6 +1097,21 @@ FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the drive
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
+**One-line state (S120, continued to close):** tip `4828d9d`+, **1,483 tests green.** Greg stopped
+the run and RULED: **Frankie does the calcs himself; he gets every record of every field for the
+day being run, delivered exactly as it arrives in RT; the proposal lineage goes in whole with
+per-lesson verification; no historical number is a spec and no floor below the full count; no
+hardcoded windows or horizons, timings derive on the clocks.** Measured: mission section 5 had
+said "the runner calculates" since Aug 28; of 99 registry layers 78 are inputs and **2 reached
+him**; 91 of 99 bind their evidence hash to one inventory document and the pre-call gate stamps
+status off the policy; the registry's group-delivery validator had no caller. **Built and merged:
+the RT-faithful causal stream, verified ledger fetch, the delivery workflow, spawn and staging
+gates on delivery, mission 2/5 rewritten, D81.** **The first delivery row exists**: Sunday's three
+ledgers fetched into the session, all VERIFIED. Three personas (knowledge, crosswalk, outputs)
+were stopped uncommitted; one draft salvaged unverified. **Next chat: `DROP_IN_S121.md` ITEM ZERO
+and ONE, then run the three personas.** Sections 4.0/4.0b, the field census, mission 9a and the
+report render also landed earlier in the session.
+
 **One-line state (S120):** branch `chatgpt/frankie-raw-mbo-benchmark-20260828`, tip
 `7638659`, **1227 tests green**, decisions 77 -> 80. **SUNDAY RERAN ON THE CORRECTED CODE AND
 IS CONFIRMED** (run 33630348943, mode=full, both reducers on): 57,027 records / 43,569 groups

@@ -1,167 +1,91 @@
-# DROP-IN S121 — Frankie A-arm raw-MBO benchmark
+# DROP-IN S121 — FRANKIE GETS EVERYTHING, AS IT ARRIVES, AND DOES THE CALCS HIMSELF
 
-**Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. Tip `7638659`, 1227 tests green.**
+Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`, tip is the last commit of S120 (check
+`git log --oneline -1`; it must say "Salvaged draft" or later). **1,483 tests green.** Read
+`SESSION_HANDOFF_2026-09-02_S120.md` sections 7 and 8, then `FRANKIE_WIRING_TODO_S120.md`,
+before anything else.
 
-```bash
-git fetch origin chatgpt/frankie-raw-mbo-benchmark-20260828
-git checkout -B chatgpt/frankie-raw-mbo-benchmark-20260828 origin/chatgpt/frankie-raw-mbo-benchmark-20260828
-git log --oneline -1
-python3 -m pytest research/kalshi/frankie_raw_mbo_benchmark/tests/ -q   # expect 1227 passed
-```
+## ITEM ZERO — GREG'S RULINGS. THESE ARE THE SPEC. DO NOT RE-DERIVE FROM ANY OLDER DOCUMENT.
 
-Read `SESSION_HANDOFF_2026-09-02_S120.md` **section 0 first**, then this file.
+1. **Frankie is supposed to be doing the calcs.** The runner did them on one data run that was
+   wrong in the first place. Mission section 5 is rewritten; the runner captures, retains and
+   proves; its `calculation_result.json` is NOT his evidence.
+2. **He gets every record of every field for the day being run**, Sunday for Sunday, Monday for
+   Monday, and so on. Delivered **exactly as it comes in RT**: F_LAST-closed groups in
+   `ts_recv_ns` order, visible only once their F_LAST is received, never ahead.
+3. **The proposal lineage goes in whole.** Disregard its "do not promote / research memory /
+   proposal-only" language; every lesson carries VERIFIED / UNVERIFIED / REFUTED; Frankie
+   verifies against the stream; only the refuted comes out.
+4. **No historical number is a spec.** Not 99, not 16, not 10, not 18,837. Derive counts from
+   the current contract and registry at validation time. **No floor below the full count**:
+   "if it's supposed to have 30, the floor is 28. 10 is how 20 get silently dropped."
+5. **No hardcoded windows or horizons.** Clock values, run times, prebirths and H times are
+   derived from what actually happens, on the multiple clocks that were built for it.
+6. **A helper is a tool invocation** inside REAL_TIME_FRANKIE or FORECASTER_FRANKIE with
+   selectable persona options. Never a parallel lane (D63/D64).
+7. **Nothing is dropped without discussion (D60)**; keep-everything is a first-class answer (D76).
 
----
+## ITEM ONE — THE HARDCODED WINDOWS AND THE MISSING CLOCKS (a D60 discussion with Greg, first)
 
-## ITEM ZERO — HOW FRANKIE IS RUN. DO NOT RE-LITIGATE THIS.
+Still in the path, measured: `ACTIVITY_WINDOWS_S = (1, 5, 20, 60, 300)` in the hash-locked V4
+adapter feeding `activity` / `activity_full` on every member row; 4.11's H ladder; 4.16's
+fixed horizon version. The registry's seven causal clocks (event, receive, event_known_by,
+feature availability, prospective discovery/confirmation, model evaluation, lock time) have
+no producer mapping; the row carries `clocks` with five fields. **Discuss with Greg what
+replaces the fixed windows and how each of the seven clocks is produced, then build.** The
+adapter is hash-locked; restore by wrapping, never editing (D61).
 
-Unchanged from S120. The principal is an **AGENT SESSION over committed files**. No API — not
-OpenAI, not Anthropic, not Bedrock. Committed staged request -> `emit_frankie_spawn.py` renders
-by LOOKUP and HALTS on any slot it cannot resolve -> principal writes a committed artifact ->
-`validate_principal_execution` binds the two by hash and refuses identical hashes.
-`C2C_014` is SUPERSEDED with its API instruction struck through. **Do not re-derive the
-architecture from it.**
+## ITEM TWO — RUN THE THREE PERSONAS (Greg: "salvage it and we'll run them in new session")
 
----
+Their specs are in handoff section 8.3, verbatim enough to respawn. Use the test-engineer
+persona, `isolation: worktree`, one per item, disjoint files, never push from a worktree.
+- Knowledge delivery (to-do items 3-5): rebind the knowledge layers to the KEEP files of
+  `NG_EXHAUSTION_FRANKIE_SOURCE_FILE_INVENTORY_20260824.md` (sections C, D, E, F, the brain),
+  render the knowledge block, receipt, NOT_READ refused, every excluded path listed with why.
+- The 99-layer crosswalk (items 6, 9): producers with file:line, NO_PRODUCER_FOUND allowed,
+  pre-call status COMPUTED, sealed-proof helper, the seven clocks mapped or NO_PRODUCER_FOUND,
+  every hardcoded window flagged.
+- Output ledgers (item 8): the FULL derived set, chain-hashed append-only, per contract section
+  read from the contract's headings, 9a classification, knowledge verification, state movie
+  with book and FIFO per cutoff, timings on the clocks. A salvaged, unverified, pre-correction
+  draft exists: `native_principal_outputs_draft_20260902.py` (raw material only).
+Then, as the single writer: wire the emitter to the knowledge block and the sealed proof, the
+staging gate to the output validator, the spawn gate on every applicable input receipt (item 7),
+register F-21.. and D82 (item 10), merge, run the suite, push.
 
-## ITEM ONE — THE CALCS ARE SETTLED. THE OPEN QUESTION IS THE RAW MBO.
+## STATE, VERIFIED BY EXECUTION
 
-Greg, S120, after it was reported back to him as a calculation answer three times:
-*"he's supposed to inform us if any of the mbo info can be dropped. you keep reporting about
-the calcs and I've said over and over he are keep them all. they aren't the issue."*
-
-D76 settled the calcs and the measurement agrees — all sixteen are **1.78%** of the bytes.
-**Do not re-derive that answer. Do not report a calculation verdict as a retention answer.**
-
-**Why the raw-MBO half has never been delivered, measured rather than guessed:**
-
-1. The spawn prompt contains `raw mbo`, `retention`, `drop`, `discard`, `field`, `book_full`
-   and `keep` **zero times**.
-2. Mission **section 9** lists nine required outputs. None is the raw MBO or what can be
-   dropped.
-3. **The raw MBO is not in what Frankie receives.** He gets the ~34 MB result; the
-   10,616,914,801-byte member ledger stays on the box. His own words: *"None of these are in
-   the 34 MB result JSON I received."*
-
-So it was never asked, and it could not have been answered. Both halves need fixing, and the
-delivery half is the harder one.
-
-**Frame it per D76: keep-everything is a first-class outcome.** A question shaped as "what can
-we drop" pressures the answer toward a casualty and this programme has already paid for that.
-
----
-
-## ITEM TWO — TWO OF FRANKIE'S THREE PROPOSED SECTIONS WERE NEVER BUILT
-
-The reason is mechanical: **not one of Frankie's recommendations was ever registered in
-`OPEN_ITEMS.json`** (188 items, `current_session` stale at S117; zero hits for
-detector-coverage, section 9a, raw MBO, non-replacement, replaced_quantity, F-17), so a
-recommendation living in prose has nothing counting it. S120 registered them as F-10..F-19.
-(An earlier line here said the store held ZERO entries. Wrong - it holds 188.) Only (c) shipped — the cross-section agreement gate —
-because it was restated in the numbered defect register, which is worked. This is **D36
-recurring**, two sessions after S112 made it a rule.
-
-**Register these before building anything, or the next report's recommendations vanish the
-same way.**
-
-- **A per-second flow and quote substrate as its own section.** `legacy_per_second_roll20` —
-  22,380 rows, 2,028 trades, 474 buy / 488 sell seconds — is the substrate the candidate
-  detector and ALL of 4.12 run on, and it is not one of the sixteen: no declaration, no
-  stratum, no averaged companion, **no acceptance gate**.
-- **A detector-coverage and rejection-accounting section.** The selection function that
-  CREATES the population for 4.10/4.11/4.12/4.16 is outside the contract: trailing causal
-  quantile 0.85, 600 minimum observations, 900 s warm-up, 45 s refractory, 5 s local radius.
-  It searched 6,592 of 17,991 seconds (36.6%), considered 4,462, promoted **91 (2.04%)**,
-  rejected 4,371 across five named reasons. **4.11's `detection_share = 1.0` is unfalsifiable
-  precisely because the rejected sit outside the contract.**
-- Smaller, also unregistered: **no section owns executions.** Trades appear only as
-  by-products across three layers.
-
----
-
-## ITEM THREE — THE NON-REPLACEMENT RULE IS WRITTEN AND UNENFORCED
-
-Greg asked for a rule that averages never replace the exact run. **It already exists,
-verbatim**, in the contract preamble: *"Exact evidence is never discarded or replaced by an
-average."*
-
-**Do not add it again.** It is honoured in STORAGE and broken in DELIVERY: the exact ledgers
-are written, retained, counted and witnessed, then stay on the box while the principal gets
-the result JSON. The one check guarding it reads a counter —
-`member_rows_written > 0` — which proves rows were written somewhere and cannot prove anyone
-read one. Outcome: **16,293 averaged rows read, zero member rows read.**
-
-**What is needed is a gate at the delivery boundary**: either the exact rows reach the
-principal, or the run declares in words that they did not and which claims rest on counters.
-
----
-
-## ITEM FOUR — THE AVERAGED VIEW IS AUTHORIZED ALMOST EVERYWHERE AND PAID OFF ONCE
-
-The contract's per-section `Average decision` lines: **4.1 no**; conditional on 4.3, 4.4, 4.6,
-4.15; **unqualified yes on the other eleven**. The run emitted **16,293 averaged rows across
-11 sections** on that authorization.
-
-Frankie measured what the dual view actually earned, in 4.7: *"its coequal ratio pair **earned
-its keep exactly once in the whole artifact**"* — mean-of-ratios 14.86 vs ratio-of-sums 9.65
-behind the touch, 44.01 vs 42.63 at it.
-
-Greg: *"he settled that long ago by only saying one or two would be run both ways!!!! that
-should have been in the calc descriptions!"* **Reconcile each section's `Average decision`
-against what the dual view has demonstrably earned, with 4.7 as the one proven case.** The
-contract is hash-bound into run identity, so it is the one document where this binds.
-
----
-
-## STATE, AND WHAT IS ALREADY VERIFIED
-
-**Sunday reran on the corrected code and is CONFIRMED** (run 33630348943, `mode=full`, both
-reducers on): **57,027 records / 43,569 groups**, identical to the pre-fix run;
-**10,924,504,920 ledger bytes**; **191,567 per record**; sink count matching the box's `wc -c`
-with delta **+0** on all three ledgers.
-
-- The 14.0 GB projection was **28% high**. **This is not a reduction** — the 246 KiB constant
-  came from a 50,001-record canary over the roster's opening and this is a complete session.
-  The precheck is conservative, which is the safe direction.
-- **Aliasing measured on the real run: 31.0%**, 5,549,093 bytes, ~1.39M tokens (S119 estimated
-  33.8% / 1.69M; the rate was close, the total high because rows fell 16,293 -> 13,136 from
-  D-12's octave binning).
-- **4.16 fired: 88,071 change points, FED_BY_THE_TRAVERSAL.** The lifecycle ledger carrying
-  them is 265 MB, **2.4%** of the run.
-- The S119 canary was green but ran on `53c4943`, **before all eleven fix commits** — it
-  validated the corrected mission, not the corrected code.
-
-**Decisions 77 -> 80.** D78 (a reducer that changes artifact shape is off by default and the
-form is declared either way), D79 (Sunday runs in the configuration the remaining days will
-use — Greg's, and it overruled the recommendation), D80 (an event-driven emission is triggered
-by an event, never the clock, and a firing test is not optional where the fixture opens zero
-tracks).
-
----
-
-## FRANKIE'S ACTUAL OUTPUTS EXIST AND WERE NEVER SURFACED
-
-`principal_runs/33605852433/frankie_principal_findings.json` carries **44 findings** with
-claim, evidence, falsifier and confidence basis — D-depths, families, exhaustion, prebirth,
-dipole. S120 reported only the assessment document. **Read the findings file, not just the
-assessment.** Section 5 of the handoff lists the headline numbers.
-
-Note the scope: that artifact is from run 33605852433, produced **before** the sixteen fixes.
-Seven of its zeros were dead measures. **Frankie has not been spawned against the corrected
-Sunday artifact.**
-
----
+- **The raw-MBO stream delivery is BUILT and MERGED** (`80f8b33`): `native_causal_stream.py`
+  (one group at a time, byte-identical, no peeking, per-group receipts through the registry's
+  own validator, which had no caller before), `fetch_frankie_ledgers.py` (gz length vs S3, plain
+  bytes vs the box's `wc -c`, sha256 vs `PLAIN_SHA256SUMS`), the delivery workflow
+  `frankie_ledger_delivery_20260902.yml` (presigns seven days, publishes a manifest artifact;
+  pinned to run 33630348943 by default), the emitter requiring a delivery receipt and naming
+  the ledgers as THE evidence, staging refusing NOT_READ on a delivered ledger.
+- **The first delivery row exists.** Workflow run 33666109982 published the manifest; the
+  session fetched Sunday's three ledgers, all VERIFIED (member 10,630,127,166 bytes), receipt
+  `d973b025...`. The manifest's links expire 2026-09-09T18:15Z; re-dispatch the workflow for a
+  fresh one. Fetch: download the artifact zip, then
+  `python3 -m research.kalshi.frankie_raw_mbo_benchmark.fetch_frankie_ledgers fetch --manifest <dir>/delivery_manifest.json --out-dir <dir>/delivered --receipt <dir>/RECEIPT.json`
+  (about 12.6 GB on disk; the container has ~26 GB).
+- **FIFO and the book are in every row** (`book_full` levels carry `fifo_queue` with order_id,
+  priority_recv_ns, priority_sequence, size, volume_ahead; plus `book`, `book_regime`,
+  `activity`, `activity_full`, `structure`, `clocks`, `integrity`); 48 top-level fields.
+- **Of the 99 registry layers, 78 are inputs to him, 75 apply to A-clean, 2 reach him today.**
+  The 21 non-inputs: 9 sealed (correctly sealed on Sunday), 2 shadow, 10 that are HIS outputs.
+  91 of 99 bind their evidence hash to the feed-inventory document; the pre-call gate stamps
+  status off the policy. The canonical list is the feed inventory + the source-file inventory
+  (149 paths, A-M); registry never bound to the second.
+- Earlier this session, also merged: sections 4.0 and 4.0b, the field census, mission 9a, the
+  evidence-read gate, the report render, F-16/F-17/F-18 joins.
+- Canary 33659412614 on the merged calc code was left running and never checked; the Sunday
+  full run was NOT dispatched (Greg stopped it). D68's stop-for-the-reveal still stands.
 
 ## STANDING RULES THAT BIT THIS SESSION
 
-- **D60/D76 — the calcs are kept, all of them.** Stop answering the retention question with a
-  calculation verdict.
-- **D36 — a recommendation with no registry item does not exist.** 188 items in the store and
-  none of them Frankie's is the mechanism, not an oversight. Now F-10..F-19.
-- **A settlement that reaches a report and not the contract does not bind.** Three instances in
-  one session: D68's raw-MBO half, the two unbuilt sections, the non-replacement rule.
-- **D77 — parallel agents may never touch git state in a shared worktree.**
-- **Verify a number before quoting it.** Two of mine were wrong in S120: the ingestion gate is
-  **99 entries / hard minimum 90**, not 78 (I summed only the `*_REQUIRED` policies); and
-  "skeleton" is not a designed thing — it is undefined shorthand that leaked from the token
-  measurement into the spawn prompt.
+- A gate that reads status off a policy is not a gate. A delivery is proven by a row from a
+  real run naming the layer, the carrier and the receipt hash. "Done" is that row.
+- An interrupt stops background personas and their uncommitted worktrees are lost. Personas
+  commit at every slice. Nothing is reported done without its commit sha.
+- The mission and the registry said one thing, the spawn did another, and no gate between
+  them measured anything. Wire the document to the gate, or the document is prose.
