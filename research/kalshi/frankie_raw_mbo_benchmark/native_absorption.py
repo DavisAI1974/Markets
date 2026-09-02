@@ -211,8 +211,29 @@ class AbsorptionCalculator:
         )
         self.withdrawal_ratio = measure(
             "withdrawal_ratio",
-            "withdrawn quantity over displayed depletion",
+            # D-7. Stated in the formula itself, because it was not stated anywhere and the
+            # section read as though this were independent evidence. It is not:
+            # displayed_depletion IS traded + withdrawn, so in all 192 nonempty strata
+            # absorption_numerator + withdrawal_numerator equalled the denominator exactly
+            # (6,546 + 38,164 = 44,710) and the two mean_of_member_ratios summed to exactly
+            # 1.0. One degree of freedom, reported as two.
+            "withdrawn quantity over displayed depletion; EXACTLY 1 - absorption_ratio, since "
+            "displayed depletion is traded + withdrawn - retained as the complementary view, "
+            "never as a second measurement",
             "runways with zero depletion are counted as zero-denominator, never dropped",
+            "RATIO_PAIR",
+        )
+        # D-7's other half: the measure that IS independent of absorption_ratio.
+        # `opposite_side_retreat_quantity` was computed per group, carried on every
+        # RunwayPressure, and used in no ratio at all - so the section had a genuinely free
+        # second dimension available and spent 410 averaged rows on an identity instead.
+        # Traded volume against the far side stepping away separates a maker being run over
+        # from a book that simply widened ahead of the trade.
+        self.retreat_ratio = measure(
+            "traded_over_opposite_retreat_ratio",
+            "traded quantity over opposite-side retreat quantity",
+            "runways where the opposite side did not retreat are counted as zero-denominator, "
+            "never dropped",
             "RATIO_PAIR",
         )
         self.survival_ratio = measure(
@@ -249,6 +270,7 @@ class AbsorptionCalculator:
         return (
             self.absorption_ratio,
             self.withdrawal_ratio,
+            self.retreat_ratio,
             self.survival_ratio,
             self.replacement_ratio,
             self.price_response,
@@ -290,6 +312,13 @@ class AbsorptionCalculator:
             self.withdrawal_ratio.observe(key, float(runway.withdrawn_quantity), depletion)
             self.replacement_ratio.observe(key, float(runway.same_side_replacement_quantity), depletion)
 
+        # Observed for EVERY runway, including the indeterminate and sparse ones, because
+        # its denominator is the opposite side's retreat and has nothing to do with whether
+        # this side's depletion was zero. Gating it on `disposition` would have made it
+        # absent on exactly the runways where the far side moved and this one did not.
+        self.retreat_ratio.observe(
+            key, float(runway.traded_quantity), float(runway.opposite_side_retreat_quantity)
+        )
         self.survival_ratio.observe(key, float(runway.surviving_depth), float(runway.depth_at_open))
         self.price_response.observe(key, float(runway.price_response_raw))
         self.order_id_turnover.observe(key, float(runway.order_id_turnover))
@@ -320,6 +349,14 @@ class AbsorptionCalculator:
             "ratio_note": (
                 "every ratio keeps mean-of-member-ratios and ratio-of-aggregate-sums as "
                 "coequal views; either alone can invert the other when runway sizes are uneven"
+            ),
+            # D-7. The correction, in the artifact rather than in a commit message.
+            "complementarity_note": (
+                "absorption_ratio and withdrawal_ratio are COMPLEMENTARY, not independent: "
+                "displayed depletion is traded + withdrawn, so their numerators sum to the "
+                "denominator and their member ratios sum to 1.0 in every stratum. They carry "
+                "one degree of freedom. traded_over_opposite_retreat_ratio is the "
+                "independent second dimension and is not derivable from either"
             ),
             "stratum_counts": {m.name: m.stratum_count for m in self.measures},
         }
