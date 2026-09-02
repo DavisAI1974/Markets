@@ -310,3 +310,91 @@ The mechanism for getting a result into a session is validated: the size-report 
 publishes `calculation_result.json` as a small artifact (1.3 MB zip for Sunday's 24.8 MB
 result) and `download_workflow_run_artifact` yields a signed URL that curl fetches.
 Run ids and verdicts for the full run and the spawn are in `DROP_IN_S121.md` STATE.
+
+---
+
+## 8. THE CLOSE: GREG STOPPED IT, AND WHAT HE FOUND IS THE RECORD
+
+Greg, at the end of this session, in order:
+
+- *"Frankie is supposed to be doing the calcs. we just had the runner doing it one one data run
+  that we had done wrong in the first place."*
+- *"he gets every record of every field for Sunday, the date and time we are running. and
+  Monday will get the same thing for Monday and so on."*
+- *"this has to exactly mimic how it's going to come in rt."*
+- On the proposal lineage: *"disregard anything in the proposal doc that says we shouldn't use
+  it. that was not the intent. we need to verify it's good info but if it holds up, it goes in.
+  if there's stuff that doesn't, those pieces don't go in."*
+- On counts: *"don't take any historical number like that as a valid number that we should
+  follow"*; *"not 10 as the floor. if it's supposed to have 30, the floor is 28. 10 is how 20
+  get silently dropped."*
+- On windows and clocks: *"we aren't using these hardcoded values anymore over
+  1/5/20/60/300-seconds ... all of the clock values and run times, prebirths, h times are
+  derived by what actually happens. that's why we built multiple clocks! and i didn't see
+  those listed."*
+- *"the helper agent is one that rt and forecaster can call as part of their tools and there
+  are different options for personas."*
+
+### 8.1 What was measured, and it is why he stopped
+
+- **Mission section 5 said "the runner calculates; you interpret"** since the Aug 28 packet.
+  Section 3 of the same mission says "receive and study the complete lawful envelope" at every
+  group. Every session built to section 5. Section 5 is now rewritten (`80f8b33`).
+- **Of the 99 registry layers, 78 are inputs to the principal, 75 apply to A-clean, and 2
+  reached him** (mission, contract). The 21 that are not inputs: 9 sealed (the answer wall,
+  correctly sealed on Sunday), 2 shadow (D5), 10 that are HIS outputs.
+- **91 of 99 layers bind their evidence hash to one markdown document**
+  (`NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md`); the pre-call gate stamps status
+  off the POLICY (`build_pre_call_receipt`). It proved the document was unchanged and nothing
+  about ingestion or delivery.
+- **`validate_causal_group_delivery_receipt` had no caller anywhere.** Now called per group.
+- **The canonical input list exists**: the feed inventory (15 feeds) and its companion
+  `NG_EXHAUSTION_FRANKIE_SOURCE_FILE_INVENTORY_20260824.md` (149 paths, A-M). The registry
+  never bound to the second. Sections A (Sol-era handoff), B and H (older runtime code), L, M
+  are old; C, D, E, F are the knowledge. Feed section 10 was already rewritten for D64.
+- **FIFO and the book ARE captured**: every level of `book_full` carries `fifo_queue`
+  (order_id, priority_recv_ns, priority_sequence, size, volume_ahead) plus front/queue-age
+  fields; verified on group 0 of the delivered Sunday ledger. They were never delivered.
+- **Hardcoded windows and horizons still in the path**: `ACTIVITY_WINDOWS_S = (1,5,20,60,300)`
+  in the hash-locked V4 adapter (`activity`, `activity_full`), the 4.11 H ladder, 4.16's fixed
+  horizon version. Greg: derived from what happens, on the clocks. **A D60 discussion, ITEM ONE
+  of the next chat, not a silent change.**
+- The registry's seven causal clocks (event, receive, event_known_by, feature availability,
+  prospective discovery/confirmation, model evaluation, lock time) have no producer mapping;
+  the row carries `clocks` with five fields. The crosswalk (item 6) must map each or say
+  NO_PRODUCER_FOUND.
+
+### 8.2 What landed (merged, pushed)
+
+`80f8b33` persona A: `native_causal_stream.py` (RT-faithful group stream, byte-identical
+rows, no peeking, per-group receipts through the registry's validator), `fetch_frankie_ledgers.py`
+(gz length vs S3, plain bytes vs the box's `wc -c`, sha256 vs `PLAIN_SHA256SUMS`),
+`.github/workflows/frankie_ledger_delivery_20260902.yml` (presigns, publishes a manifest),
+emitter requires a delivery receipt and names the ledgers as THE evidence, staging refuses
+NOT_READ on a delivered ledger, mission 2 and 5 rewritten, D81, F-10/F-20. `9395dc9` fixed
+its first fire (a quoting bug). **The first delivery row exists**: run 33666109982 published
+the manifest; the session fetched all three Sunday ledgers, all VERIFIED, receipt
+`d973b025...`, member ledger 10,630,127,166 bytes. **1,483 tests green.**
+
+### 8.3 What was in flight and was stopped
+
+Three personas (knowledge delivery items 3-5; the 99-layer crosswalk item 6 and sealed proof
+item 9; the output ledgers item 8) were stopped by Greg's interrupts twice and committed
+nothing. Their specs are the to-do file's items with these bindings, to respawn verbatim:
+- knowledge: rebind the 15 knowledge layers from the inventory document to the KEEP files of
+  the source-file inventory (sections C, D, E, F; the brain), deliver the proposal lineage whole
+  with per-lesson VERIFIED / UNVERIFIED / REFUTED, no "do not promote" language, a
+  `FRANKIE_KNOWLEDGE_DELIVERY_RECEIPT_V1`, NOT_READ refused; list every excluded path with why.
+- crosswalk: `LAYER_PRODUCERS` for all 99 with file:line citations, NO_PRODUCER_FOUND allowed,
+  `crosswalk_against_result`, pre-call status COMPUTED not stamped, sealed-proof helper, the
+  table run on the Sunday result; each of the seven clocks mapped or NO_PRODUCER_FOUND; every
+  hardcoded window/horizon flagged.
+- outputs: append-only chain-hashed ledgers = registry outputs + one per contract section
+  (read from the contract's `### 4.x` headings, 18 today) + 9a classification + knowledge
+  verification; the FULL count required, no floor; state movie carries book and FIFO state and
+  delta per cutoff; timing derived on the clocks, never a fixed ladder; helper invocations
+  recordable (persona, question, answer hash).
+
+### 8.4 Not done
+
+Items 3-10 and 12 of `FRANKIE_WIRING_TODO_S120.md`; the spawn; the reveal; Monday.
