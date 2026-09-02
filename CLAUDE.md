@@ -1434,7 +1434,10 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   e drive."* The split is the whole rule: **git = code and records, S3 = data, `data/` is
   DISPOSABLE** and rebuilt by `restore_substrate.py`. It binds two ways. (1) Nothing the next
   session must RUN may live outside git — no `~/.claude/projects/`, `workflows/scripts/`, `/tmp`
-  or scratchpad path (D33, gated by `plant_status.py`). (2) **No artifact may NAME a desktop
+  or scratchpad path (D33, gated by `plant_status.py`). **And the scratchpad and /tmp are not
+  used AT ALL - not for a fetch, a log or a transient measurement file (D87, S121, Greg's third
+  time saying it); a transient file lives under gitignored `data/` and is deleted when done.**
+  (2) **No artifact may NAME a desktop
   path** — not a citation, evidence list, ledger, handoff or decision line. INSTANCE: the S111
   audit partial carried 140 instances and **51 of them, across 11 plays, cited
   `E:/Markets/research/kalshi/...`**; the files were real and committed but the citations opened
