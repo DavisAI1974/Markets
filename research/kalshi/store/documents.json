@@ -1688,6 +1688,13 @@
    "role": "The 99-layer crosswalk rendered on the driver FIXTURE (not the Sunday run) at S121 by native_layer_crosswalk.fixture_render: one row per registry layer with its COMPUTED status, the policy-versus-computed disagreement, and the hardcoded-windows table. A dated record of what the crosswalk computed on the code of that day; the Sunday render is a separate file when it lands.",
    "update_when": "never - it is dated and finished",
    "gate": null
+  },
+  {
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/LAYER_CROSSWALK_SUNDAY_33630348943_RENDER_20260902.md",
+   "class": "RECORD",
+   "role": "The 99-layer crosswalk COMPUTED on the real Sunday result (run 33630348943, result_hash d2ab3feb..., pre-census code) with no delivery, knowledge, outputs or sealed receipts in the session: 75 of 75 applicable inputs not DELIVERED (60 PRODUCED_NOT_DELIVERED, 14 read bound-to-inventory from a static producer flag that predates the registry rebind, 1 NO_PRODUCER_FOUND for clock_lock_time), 9 sealed unproven, 10 outputs pending. The S121 measurement behind Greg's premise: built, not fed.",
+   "update_when": "never - it is dated and finished",
+   "gate": null
   }
  ]
 }
