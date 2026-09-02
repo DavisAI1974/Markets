@@ -140,6 +140,7 @@ D82-D86 restated with shas, this section 9, the drop-in, the push.
 - Search before building (S116, again). The clocks existed in four places; the knowledge pipeline
   existed end to end; the read gate existed. Every "build" item of the drop-in was a wiring item.
 - A static flag that mirrors a registry fact rots the moment the registry changes; compute it.
+- `plant_status.py` still expects branch `claude/kalshi-agents-coordinator-guard-sg0n15` (the walk's S114 drop-in) and reads FAIL on every Frankie-branch session since S115, beside the briefings-audit backlog (23 of 27). Both pre-existing, both left as they are: an andon expectation is not changed silently, and the walk and the Frankie line share one board. A decision on a per-branch expectation belongs to Greg.
 
 ## 8. NOT DONE THIS SESSION
 
