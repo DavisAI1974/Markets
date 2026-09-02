@@ -338,14 +338,30 @@ class DeliveredLedgersMustBeReadTest(unittest.TestCase):
         body.update(overrides)
         return body
 
-    def _load(self, tmp, body):
+    def _load(self, tmp, body, **kwargs):
         path = Path(tmp) / "findings.json"
         path.write_text(json.dumps(body))
-        return load_principal_artifact(path, expected_evidence_hash="a" * 64, render_report=False)
+        return load_principal_artifact(
+            path, expected_evidence_hash="a" * 64, render_report=False, **kwargs
+        )
 
     def test_read_everywhere_with_a_delivery_receipt_loads_and_carries_both_hashes(self):
+        # S121 slice 1: a delivered artifact also cites the output bundle it wrote and staging
+        # is handed that bundle, so this test now supplies both; the two hashes it always
+        # asserted are still carried through.
         with tempfile.TemporaryDirectory() as tmp:
-            execution, _ = self._load(tmp, self._body())
+            outputs_dir = Path(tmp) / "outputs"
+            receipt = write_bundle(
+                build_bundle(
+                    arm="A_CLEAN", delivery_receipt_sha256="d" * 64,
+                    knowledge_receipt_sha256="e" * 64,
+                ),
+                outputs_dir,
+            )
+            execution, _ = self._load(
+                tmp, self._body(outputs_receipt_sha256=receipt["receipt_sha256"]),
+                outputs_dir=outputs_dir, knowledge_receipt_sha256="e" * 64,
+            )
         self.assertEqual(execution["delivery_receipt_sha256"], "d" * 64)
         self.assertEqual(execution["stream_receipt_sha256"], "5" * 64)
         self.assertTrue(execution["principal_read_any_exact_rows"])
@@ -375,3 +391,193 @@ class DeliveredLedgersMustBeReadTest(unittest.TestCase):
                     with self.assertRaises(StagingError) as caught:
                         self._load(tmp, self._body(**{field: "not-a-sha"}))
                 self.assertIn(field, str(caught.exception))
+
+
+# ------------------------------------------------------------------------------------------
+# Slice 1 (S121): the staging gate is wired to the output validator.
+# ------------------------------------------------------------------------------------------
+
+from research.kalshi.frankie_raw_mbo_benchmark.tests.outputs_bundle_fixture import (  # noqa: E402
+    build_bundle,
+    write_bundle,
+)
+
+DELIVERY = "d" * 64
+KNOWLEDGE = "e" * 64
+STREAM = "5" * 64
+
+
+def delivered_artifact(**overrides) -> dict:
+    """An artifact from a DELIVERED run on the arm every spawn targets (A_MEMORY, D86)."""
+    body = dict(LoadPrincipalArtifactTest.GOOD)
+    body["arm"] = "A_MEMORY"
+    body["evidence_read"] = {name: "READ" for name in (
+        "exact_member_ledger", "exact_lifecycle_and_runway_ledger", "legacy_observable_rows",
+    )}
+    body["delivery_receipt_sha256"] = DELIVERY
+    body["stream_receipt_sha256"] = STREAM
+    body.update(overrides)
+    return body
+
+
+class OutputsBundleGateTest(unittest.TestCase):
+    """The outputs ARE the deliverable of a delivered run, and the gate now asks for them.
+
+    `native_principal_outputs.validate_output_bundle_dir` was complete, tested and had no
+    production caller - the S119 shape again: a correct validator nothing ever reached. An
+    artifact that cites a delivery receipt was produced with every exact ledger in hand, so it
+    must also cite the receipt of the output bundle it wrote, and staging must be handed that
+    bundle to validate; the artifact's `outputs_receipt_sha256` must equal what the validator
+    computes. An artifact without a delivery receipt keeps the old rule untouched.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.outputs_dir = Path(cls.tmp.name) / "principal_outputs"
+        cls.receipt = write_bundle(
+            build_bundle(delivery_receipt_sha256=DELIVERY, knowledge_receipt_sha256=KNOWLEDGE),
+            cls.outputs_dir,
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def _load(self, body, **kwargs):
+        args = dict(
+            expected_evidence_hash="a" * 64, render_report=False,
+            outputs_dir=self.outputs_dir, knowledge_receipt_sha256=KNOWLEDGE,
+        )
+        args.update(kwargs)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "findings.json"
+            path.write_text(json.dumps(body))
+            return load_principal_artifact(path, **args)
+
+    def _refused(self, body, needle, **kwargs):
+        with self.assertRaises(StagingError) as caught:
+            self._load(body, **kwargs)
+        self.assertIn(needle, str(caught.exception))
+        return caught.exception
+
+    def test_a_delivered_artifact_with_its_validated_bundle_loads_and_carries_the_receipt(self):
+        execution, findings = self._load(
+            delivered_artifact(outputs_receipt_sha256=self.receipt["receipt_sha256"])
+        )
+        self.assertEqual(execution["outputs_receipt_sha256"], self.receipt["receipt_sha256"])
+        self.assertEqual(execution["outputs_receipt"]["schema"], self.receipt["schema"])
+        self.assertEqual(execution["outputs_receipt"]["missing_ledger_ids"], [])
+        self.assertEqual(execution["outputs_receipt"]["arm"], "A_MEMORY")
+        self.assertEqual(execution["delivery_receipt_sha256"], DELIVERY)
+        self.assertEqual(len(findings), 1)
+
+    def test_a_delivered_artifact_that_cites_no_outputs_receipt_is_refused_by_name(self):
+        """The firing branch for the emitter's CURRENT return shape, which carries no
+        `outputs_receipt_sha256`: an artifact following it verbatim is refused here."""
+        self._refused(delivered_artifact(), "outputs_receipt_sha256")
+
+    def test_an_outputs_citation_nothing_can_verify_is_refused(self):
+        self._refused(
+            delivered_artifact(outputs_receipt_sha256=self.receipt["receipt_sha256"]),
+            "outputs_dir", outputs_dir=None,
+        )
+
+    def test_an_outputs_dir_the_artifact_does_not_bind_to_is_refused(self):
+        """A bundle handed to staging that the artifact never cites is a bundle from nowhere."""
+        body = dict(LoadPrincipalArtifactTest.GOOD)
+        self._refused(body, "outputs_receipt_sha256", knowledge_receipt_sha256=None)
+
+    def test_a_bundle_receipt_that_disagrees_with_the_citation_is_refused(self):
+        exc = self._refused(delivered_artifact(outputs_receipt_sha256="e" * 64), "e" * 64)
+        self.assertIn(self.receipt["receipt_sha256"], str(exc))
+
+    def test_a_malformed_outputs_receipt_sha256_is_refused(self):
+        self._refused(delivered_artifact(outputs_receipt_sha256="not-a-sha"), "outputs_receipt_sha256")
+
+    def test_a_bundle_produced_against_another_delivery_is_refused(self):
+        """The bundle binds the delivery it was written against; the artifact cites another."""
+        self._refused(
+            delivered_artifact(
+                outputs_receipt_sha256=self.receipt["receipt_sha256"],
+                delivery_receipt_sha256="c" * 64,
+            ),
+            "delivery",
+        )
+
+    def test_a_knowledge_receipt_the_verdicts_do_not_cite_is_refused(self):
+        self._refused(
+            delivered_artifact(outputs_receipt_sha256=self.receipt["receipt_sha256"]),
+            "knowledge", knowledge_receipt_sha256="f" * 64,
+        )
+
+    def test_a_bundle_for_another_arm_is_refused(self):
+        """A_CLEAN stays a valid arm (an inert record, D86); it is not THIS artifact's arm."""
+        with tempfile.TemporaryDirectory() as other:
+            receipt = write_bundle(
+                build_bundle(
+                    arm="A_CLEAN", delivery_receipt_sha256=DELIVERY,
+                    knowledge_receipt_sha256=KNOWLEDGE,
+                ),
+                Path(other) / "outputs",
+            )
+            exc = self._refused(
+                delivered_artifact(outputs_receipt_sha256=receipt["receipt_sha256"]),
+                "arm", outputs_dir=Path(other) / "outputs",
+            )
+        self.assertIn("A_CLEAN", str(exc))
+        self.assertIn("A_MEMORY", str(exc))
+
+    def test_a_ledger_edited_on_disk_is_refused(self):
+        """Produced, not asserted: the validator's chain check reaches the gate."""
+        with tempfile.TemporaryDirectory() as other:
+            root = Path(other) / "outputs"
+            receipt = write_bundle(
+                build_bundle(delivery_receipt_sha256=DELIVERY, knowledge_receipt_sha256=KNOWLEDGE),
+                root,
+            )
+            ledger_path = root / "ledgers" / "contract_section_4.10.json"
+            ledger = json.loads(ledger_path.read_text())
+            ledger["entries"][-1]["body"]["member_group_indices"] = [9999]
+            ledger_path.write_text(json.dumps(ledger))
+            self._refused(
+                delivered_artifact(outputs_receipt_sha256=receipt["receipt_sha256"]),
+                "rewritten", outputs_dir=root,
+            )
+
+    def test_the_coordinators_delivery_receipt_must_be_the_one_the_artifact_cites(self):
+        self._refused(
+            delivered_artifact(outputs_receipt_sha256=self.receipt["receipt_sha256"]),
+            "delivery_receipt_sha256", delivery_receipt_sha256="c" * 64,
+        )
+
+    def test_the_coordinators_delivery_receipt_passes_through_when_it_matches(self):
+        execution, _ = self._load(
+            delivered_artifact(outputs_receipt_sha256=self.receipt["receipt_sha256"]),
+            delivery_receipt_sha256=DELIVERY,
+        )
+        self.assertEqual(execution["delivery_receipt_sha256"], DELIVERY)
+
+    def test_without_a_delivery_receipt_and_without_outputs_the_old_rule_stands(self):
+        execution, _ = self._load(
+            dict(LoadPrincipalArtifactTest.GOOD), outputs_dir=None, knowledge_receipt_sha256=None,
+        )
+        self.assertIsNone(execution["outputs_receipt_sha256"])
+        self.assertIsNone(execution["outputs_receipt"])
+
+    def test_the_round_trip_with_outputs_satisfies_the_runner(self):
+        """The execution dict, receipt included, is what the runner attaches."""
+        from research.kalshi.frankie_raw_mbo_benchmark.tests.test_native_calculation_runner import (
+            drive,
+            make_run,
+        )
+        execution, findings = self._load(
+            delivered_artifact(outputs_receipt_sha256=self.receipt["receipt_sha256"])
+        )
+        run = make_run()
+        drive(run)
+        run.attach_principal_findings(execution=execution, findings=findings)
+        result = run.finalize()
+        self.assertEqual(result["verdict"], "ACCEPTED", result["failed_gates"])
+        principal = result["layers"]["positive_findings_report"]["principal"]
+        self.assertEqual(principal["outputs_receipt_sha256"], self.receipt["receipt_sha256"])

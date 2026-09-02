@@ -27,6 +27,13 @@ import json
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import load_registry
+from research.kalshi.frankie_raw_mbo_benchmark.native_principal_outputs import (
+    CONTRACT_PATH,
+    PrincipalOutputError,
+    validate_output_bundle_dir,
+)
+
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 SPAWN_REQUEST_SCHEMA = "FRANKIE_NATIVE_RAW_MBO_SPAWN_REQUEST_V1"
@@ -124,13 +131,31 @@ READ_STATUSES = ("READ", "PARTIAL", "NOT_READ")
 
 
 def load_principal_artifact(
-    path: Path, *, expected_evidence_hash: str, render_report: bool = True
+    path: Path,
+    *,
+    expected_evidence_hash: str,
+    render_report: bool = True,
+    outputs_dir: Path | None = None,
+    knowledge_receipt_sha256: str | None = None,
+    delivery_receipt_sha256: str | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Read back what the spawn produced, or fail hard.
 
     Returns `(execution, findings)` shaped for
     `NativeCalculationRun.attach_principal_findings`, so the only route into the findings
     layer runs through this validation.
+
+    **The output bundle is validated here too (S121 slice 1).** An artifact that cites a
+    `delivery_receipt_sha256` was produced with every exact ledger in hand, and on such a run
+    the append-only output ledgers ARE the deliverable - so it must also cite
+    `outputs_receipt_sha256`, `outputs_dir` must hold the bundle it names, and the bundle
+    must validate under `native_principal_outputs.validate_output_bundle_dir` against the
+    loaded registry, the committed contract, the artifact's own delivery receipt and the
+    `knowledge_receipt_sha256` the coordinator delivered under. The bundle receipt the
+    validator computes must equal the artifact's citation. `delivery_receipt_sha256`, when
+    the coordinator states it, must be the receipt the artifact cites; it is what the bundle
+    is validated against either way. An artifact without a delivery receipt keeps the old
+    rule: no outputs are required, and none may be handed in unbound.
 
     **The readable report is generated here, automatically, because this is the one gate
     every artifact must pass.** Run 33605852433's 44 findings sat unread in JSON beside a
@@ -229,6 +254,25 @@ def load_principal_artifact(
                 f"{unread}; a delivered ledger he did not read is a failed spawn (D81)"
             )
 
+    cited_delivery = receipt_hashes["delivery_receipt_sha256"]
+    if delivery_receipt_sha256 is not None:
+        if _SHA256_RE.fullmatch(delivery_receipt_sha256) is None:
+            raise StagingError(
+                f"delivery_receipt_sha256 must be a lowercase SHA-256, got {delivery_receipt_sha256!r}"
+            )
+        if cited_delivery != delivery_receipt_sha256:
+            raise StagingError(
+                f"the run delivered its ledgers under delivery_receipt_sha256 "
+                f"{delivery_receipt_sha256} and the artifact cites {cited_delivery!r}; findings "
+                "are attached to the delivery they were produced against"
+            )
+    outputs_receipt_sha256, outputs_receipt = _validate_outputs(
+        body,
+        cited_delivery=cited_delivery,
+        outputs_dir=outputs_dir,
+        knowledge_receipt_sha256=knowledge_receipt_sha256,
+    )
+
     execution = {
         "principal": body["principal"],
         "arm": body["arm"],
@@ -242,12 +286,79 @@ def load_principal_artifact(
         "principal_read_any_exact_rows": any(
             evidence_read[name] in ("READ", "PARTIAL") for name in EXACT_LEDGERS
         ),
-        "delivery_receipt_sha256": receipt_hashes["delivery_receipt_sha256"],
+        "delivery_receipt_sha256": cited_delivery,
         "stream_receipt_sha256": receipt_hashes["stream_receipt_sha256"],
+        # S121 slice 1: the output bundle's receipt, validated above, travels with the
+        # attribution so the result names the outputs the findings were filed beside.
+        "outputs_receipt_sha256": outputs_receipt_sha256,
+        "outputs_receipt": outputs_receipt,
     }
     if render_report:
         _render_report_beside(path)
     return execution, [dict(row) for row in findings]
+
+
+def _validate_outputs(
+    body: Mapping[str, Any],
+    *,
+    cited_delivery: str | None,
+    outputs_dir: Path | None,
+    knowledge_receipt_sha256: str | None,
+) -> tuple[str | None, dict[str, Any] | None]:
+    """The staging gate's call into the output validator. Returns (receipt sha, receipt).
+
+    Refuses, in order: a delivered artifact with no `outputs_receipt_sha256`; a bundle handed
+    in that the artifact never cites; a citation with no bundle to verify it against; a
+    malformed citation; a bundle the validator refuses (its reason is carried verbatim); a
+    bundle for another arm or role; and a validated bundle whose receipt is not the one cited.
+    """
+    cited = body.get("outputs_receipt_sha256")
+    if cited is None:
+        if cited_delivery is not None:
+            raise StagingError(
+                f"the artifact cites delivery receipt {cited_delivery}, so the principal had every "
+                "exact ledger and his append-only output ledgers are the deliverable, yet it carries "
+                "no `outputs_receipt_sha256`; a delivered run without its outputs is a failed spawn"
+            )
+        if outputs_dir is not None:
+            raise StagingError(
+                "an outputs directory was handed to staging and the artifact carries no "
+                "`outputs_receipt_sha256`; a bundle the artifact does not bind to is a bundle from "
+                "nowhere"
+            )
+        return None, None
+    if not isinstance(cited, str) or _SHA256_RE.fullmatch(cited) is None:
+        raise StagingError(f"outputs_receipt_sha256 must be a lowercase SHA-256, got {cited!r}")
+    if outputs_dir is None:
+        raise StagingError(
+            f"the artifact cites outputs receipt {cited} and no outputs_dir was given; a citation "
+            "nothing can verify is not evidence"
+        )
+    if knowledge_receipt_sha256 is not None and _SHA256_RE.fullmatch(knowledge_receipt_sha256) is None:
+        raise StagingError(
+            f"knowledge_receipt_sha256 must be a lowercase SHA-256, got {knowledge_receipt_sha256!r}"
+        )
+    try:
+        receipt = validate_output_bundle_dir(
+            outputs_dir,
+            registry=load_registry(),
+            contract_text=CONTRACT_PATH.read_text(encoding="utf-8"),
+            knowledge_receipt_sha256=knowledge_receipt_sha256,
+            delivery_receipt_sha256=cited_delivery,
+        )
+    except (PrincipalOutputError, OSError, ValueError) as exc:
+        raise StagingError(f"the principal's output bundle was refused: {exc}") from exc
+    if receipt.get("arm") != body.get("arm") or receipt.get("role") != body.get("role"):
+        raise StagingError(
+            f"the output bundle belongs to arm {receipt.get('arm')!r} role {receipt.get('role')!r}; "
+            f"the artifact is arm {body.get('arm')!r} role {body.get('role')!r}"
+        )
+    if receipt["receipt_sha256"] != cited:
+        raise StagingError(
+            f"the artifact cites outputs receipt {cited} and the bundle under validation has receipt "
+            f"{receipt['receipt_sha256']}; the findings were filed beside a different set of outputs"
+        )
+    return cited, receipt
 
 
 def _render_report_beside(path: Path) -> Path | None:
