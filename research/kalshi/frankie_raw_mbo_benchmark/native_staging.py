@@ -55,6 +55,12 @@ REQUIRED_CUTOFF_KEYS = (
     "session_phase",
     "continuity_segment",
     "source_day",
+    # D83 (S121 item one): the model-evaluation clock by its registry name - the F_LAST
+    # receive of the group at which the principal is staged. The driver stamps it on the
+    # row and on the cutoff (`native_replay_driver`, `stamp_model_evaluation`); requiring it
+    # here makes it a required layer of every spawn request. It is an EVENT instant, never
+    # a time we choose (Greg: "Don't make cutoff times").
+    "clock_model_evaluation_ns",
 )
 
 
@@ -92,8 +98,8 @@ def stage_spawn_request(
     missing = [key for key in REQUIRED_CUTOFF_KEYS if cutoff.get(key) is None]
     if missing:
         raise StagingError(
-            f"cutoff is missing {missing}; a spawn without its lawful availability time has "
-            "no defensible decision point"
+            f"cutoff is missing {missing}; a spawn without its lawful availability time and "
+            "the model-evaluation clock it was staged at has no defensible decision point"
         )
     if not evidence.get("result_hash"):
         raise StagingError("a spawn request must name the evidence it is staged against")

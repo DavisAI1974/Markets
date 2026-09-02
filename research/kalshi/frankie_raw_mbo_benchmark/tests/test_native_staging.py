@@ -25,6 +25,9 @@ CUTOFF = {
     "session_phase": "POST_CLOSE",
     "continuity_segment": 18_904,
     "source_day": "20211004",
+    # D83: the model-evaluation clock is the F_LAST receive of the group at which the
+    # principal is staged - an event instant the driver stamps, never a time we choose.
+    "clock_model_evaluation_ns": 1_633_381_200_237_256_020,
 }
 
 EVIDENCE = {
@@ -76,6 +79,19 @@ class StageSpawnRequestTest(unittest.TestCase):
                     broken, out_dir=Path(tmp), arm="A_CLEAN", role="REAL_TIME_FRANKIE",
                     evidence=EVIDENCE,
                 )
+
+    def test_it_refuses_a_cutoff_missing_its_model_evaluation_clock(self):
+        """D83, S121 item one: the driver stamps `clock_model_evaluation_ns` (the F_LAST
+        receive of the group the principal is staged at) on every cutoff it stages. A request
+        without it names no instant at which he was invoked, so it is refused BY NAME."""
+        broken = {k: v for k, v in CUTOFF.items() if k != "clock_model_evaluation_ns"}
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(StagingError) as caught:
+                stage_spawn_request(
+                    broken, out_dir=Path(tmp), arm="A_MEMORY", role="REAL_TIME_FRANKIE",
+                    evidence=EVIDENCE,
+                )
+        self.assertIn("clock_model_evaluation_ns", str(caught.exception))
 
     def test_it_refuses_an_unknown_arm_or_role(self):
         with tempfile.TemporaryDirectory() as tmp:
