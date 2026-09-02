@@ -1085,5 +1085,177 @@ class RunHashesTest(LedgerRuleCase):
         self.refused(self.LEDGER, [(C1, run_hash_body("START", model_identity="m")), (C3, run_hash_body("END", state="s", model_identity="n"))])
 
 
+# ----------------------------------------------------------------------------------------
+# Slice 3d: contract-section ledgers, raw-MBO classification, knowledge verification
+# ----------------------------------------------------------------------------------------
+
+
+def stratum(cutoff: int, **overrides) -> dict:
+    """The nine declarations of contract section 3, as keys."""
+    body = {
+        "numerator": 3,
+        "formula": "count(groups with a touch refill) / count(groups)",
+        "population": "F_LAST-closed groups at or before the cutoff in this stratum",
+        "denominator": 2281,
+        "source_day": "20211003",
+        "source_role": "REAL_TIME_FRANKIE",
+        "family": "fam-000001",
+        "subfamily": "NONE",
+        "cluster_version": "open-world-v1",
+        "side_or_mirror_orientation": "BID",
+        "session": "SUNDAY",
+        "phase": "PRE_SETTLEMENT",
+        "continuity_segment": 18904,
+        "causal_clock": RECV,
+        "cutoff_recv_ns": cutoff,
+        "status": "OPEN",
+        "missingness_rule": "rows lacking f_last_recv_ns are withheld and counted",
+        "inclusion_rule": "every group closed at or before the cutoff",
+    }
+    body.update(overrides)
+    return body
+
+
+def section_body(section: str = "4.7", cutoff: int = C2, **overrides) -> dict:
+    body = {
+        "section": section,
+        "member_group_indices": [4562, 4563, 4570],
+        "averages": [{"value": 0.42, "strata": stratum(cutoff)}],
+    }
+    body.update(overrides)
+    return body
+
+
+class ContractSectionLedgerTest(LedgerRuleCase):
+    def test_every_section_of_todays_contract_dispatches_to_the_section_rule(self):
+        for section in outputs.contract_section_ids(contract_today()):
+            with self.subTest(section=section):
+                self.check(f"contract_section_{section}", [(C2, section_body(section))])
+
+    def test_an_entry_cites_its_own_section(self):
+        self.refused("contract_section_4.7", [(C2, section_body("4.8"))], "section")
+        self.refused("contract_section_4.7", [(C2, section_body(section=None))], "section")
+
+    def test_an_entry_rests_on_exact_member_groups_or_states_a_null_result_with_its_population(self):
+        self.refused("contract_section_4.7", [(C2, section_body(member_group_indices=[]))], "member")
+        self.refused("contract_section_4.7", [(C2, section_body(member_group_indices=[1, -2]))], "member")
+        self.check("contract_section_4.7", [(C2, section_body(member_group_indices=[], result="NULL_RESULT", averages=[], population={"denominator": 0, "description": "no BID-side group in fam-000001 closed before the cutoff"}))])
+        self.refused("contract_section_4.7", [(C2, section_body(member_group_indices=[], result="NULL_RESULT", averages=[]))], "population")
+        self.refused("contract_section_4.7", [(C2, section_body(member_group_indices=[], result="NULL_RESULT", averages=[], population={"description": "x"}))], "population")
+
+    def test_no_average_is_quoted_without_its_nine_strata_declarations(self):
+        for key in stratum(C2):
+            with self.subTest(missing=key):
+                incomplete = stratum(C2)
+                incomplete.pop(key)
+                self.refused("contract_section_4.7", [(C2, section_body(averages=[{"value": 0.4, "strata": incomplete}]))], key)
+        self.refused("contract_section_4.7", [(C2, section_body(averages=[{"value": 0.4}]))], "strata")
+        self.refused("contract_section_4.7", [(C2, section_body(averages=[{"strata": stratum(C2)}]))], "value")
+        self.refused("contract_section_4.7", [(C2, section_body(averages=[{"value": "0.4", "strata": stratum(C2)}]))], "value")
+
+    def test_a_stratum_declares_this_entrys_cutoff_on_a_registry_clock_and_a_status(self):
+        self.refused("contract_section_4.7", [(C2, section_body(averages=[{"value": 0.4, "strata": stratum(C2, cutoff_recv_ns=C1)}]))], "cutoff")
+        self.refused("contract_section_4.7", [(C2, section_body(averages=[{"value": 0.4, "strata": stratum(C2, causal_clock="ts_recv_ns")}]))], "clock")
+        self.refused("contract_section_4.7", [(C2, section_body(averages=[{"value": 0.4, "strata": stratum(C2, status="DONE")}]))], "status")
+        self.refused("contract_section_4.7", [(C2, section_body(averages=[{"value": 0.4, "strata": stratum(C2, denominator=-1)}]))], "denominator")
+        for status in ("RESOLVED", "CENSORED", "OPEN"):
+            with self.subTest(status=status):
+                self.check("contract_section_4.7", [(C2, section_body(averages=[{"value": 0.4, "strata": stratum(C2, status=status)}]))])
+
+    def test_a_timing_inside_a_section_entry_obeys_the_rule(self):
+        self.check("contract_section_4.11", [(C2, section_body("4.11", prior_lead=reading(1_500)))])
+        self.refused("contract_section_4.11", [(C2, section_body("4.11", prior_lead_ns=1_500))], "TIMING RULE")
+        self.refused("contract_section_4.16", [(C2, section_body("4.16", horizon="H+60"))], "TIMING RULE")
+
+
+def raw_mbo_body(**overrides) -> dict:
+    body = {
+        "field_or_group": "book_full",
+        "classification": "LOAD_BEARING",
+        "read_by_sections": ["4.6", "4.10"],
+        "evidence": "4.6's volume-ahead and 4.10's runway state change when the full book is withheld",
+    }
+    body.update(overrides)
+    return body
+
+
+class RawMboClassificationTest(LedgerRuleCase):
+    LEDGER = "raw_mbo_classification"
+
+    def test_keep_everything_is_a_first_class_answer(self):
+        fields = ("order_id", "price", "size", "flags", "ts_event_ns", "ts_recv_ns", "book_full", "book", "activity_full", "structure", "clocks", "integrity")
+        self.check(self.LEDGER, [(C3, raw_mbo_body(field_or_group=name)) for name in fields])
+
+    def test_each_class_carries_the_evidence_mission_9a_asks_for(self):
+        self.check(self.LEDGER, [
+            (C3, raw_mbo_body(field_or_group="ts_in_delta_ns", classification="RETAINED_UNREAD", cause="GENUINE_SPARE", evidence="no section reads it")),
+            (C3, raw_mbo_body(field_or_group="publisher_id", classification="DEGENERATE_ON_THIS_SLICE", single_value=1, expected_on_other_days=True, evidence="one value on all groups")),
+            (C3, raw_mbo_body(field_or_group="price", classification="REDUNDANT", derivation="price = price_raw / 1e9 exactly", evidence="recomputed on every row")),
+            (C3, raw_mbo_body(field_or_group="channel_id", classification="CANNOT_JUDGE", reason="the exact member rows carrying it were not in what was received", evidence="only averaged rows read")),
+        ])
+        for broken in (
+            dict(classification="LOAD_BEARING", read_by_sections=[]),
+            dict(classification="RETAINED_UNREAD", cause="UNSURE"),
+            dict(classification="RETAINED_UNREAD"),
+            dict(classification="DEGENERATE_ON_THIS_SLICE", single_value=1),
+            dict(classification="DEGENERATE_ON_THIS_SLICE", expected_on_other_days=True),
+            dict(classification="REDUNDANT"),
+            dict(classification="CANNOT_JUDGE"),
+            dict(classification="DROPPABLE"),
+            dict(evidence=""),
+            dict(field_or_group=""),
+        ):
+            with self.subTest(broken=broken):
+                self.refused(self.LEDGER, [(C3, raw_mbo_body(**broken))])
+
+    def test_the_principal_advises_and_never_drops(self):
+        for action in ("DROP", "remove", "Dropped", "DELETE"):
+            with self.subTest(action=action):
+                exc = self.refused(self.LEDGER, [(C3, raw_mbo_body(classification="RETAINED_UNREAD", cause="GENUINE_SPARE", action=action))])
+                self.assertIn("never drops", str(exc))
+        self.check(self.LEDGER, [(C3, raw_mbo_body(action="KEEP"))])
+
+
+def verification_body(**overrides) -> dict:
+    body = {
+        "lesson_id": "opaque-lesson-id-from-the-knowledge-delivery-persona",
+        "layer_id": "learned_d_structures_and_families",
+        "knowledge_receipt_sha256": sha_of("knowledge-delivery-receipt"),
+        "verdict": "VERIFIED",
+        "evidence": {"member_group_indices": [4562, 4563], "cutoff_recv_ns": C2},
+    }
+    body.update(overrides)
+    return body
+
+
+class KnowledgeVerificationTest(LedgerRuleCase):
+    LEDGER = "knowledge_verification"
+
+    def test_verified_refuted_and_unverified_pass_with_their_evidence_or_reason(self):
+        self.check(self.LEDGER, [
+            (C2, verification_body()),
+            (C2, verification_body(lesson_id="second", verdict="REFUTED", evidence={"member_group_indices": [4570], "cutoff_recv_ns": C2 - 5})),
+            (C2, verification_body(lesson_id="third", verdict="UNVERIFIED", evidence=None, reason="no member of the lesson's stratum closed on this slice")),
+        ])
+
+    def test_lesson_id_is_any_non_empty_string_and_the_rest_is_required(self):
+        self.check(self.LEDGER, [(C2, verification_body(lesson_id="7"))])
+        for broken in (dict(lesson_id=""), dict(lesson_id=7), dict(layer_id=""), dict(knowledge_receipt_sha256="x"), dict(verdict="MAYBE")):
+            with self.subTest(broken=broken):
+                self.refused(self.LEDGER, [(C2, verification_body(**broken))])
+
+    def test_evidence_is_group_indices_and_a_cutoff_not_after_the_entry(self):
+        self.refused(self.LEDGER, [(C2, verification_body(evidence={"member_group_indices": [], "cutoff_recv_ns": C2}))], "member")
+        self.refused(self.LEDGER, [(C2, verification_body(evidence={"member_group_indices": [1]}))], "cutoff")
+        self.refused(self.LEDGER, [(C2, verification_body(evidence={"member_group_indices": [1], "cutoff_recv_ns": C3}))], "after")
+        self.refused(self.LEDGER, [(C2, verification_body(verdict="UNVERIFIED", evidence=None))], "reason")
+        self.refused(self.LEDGER, [(C2, verification_body(verdict="REFUTED", evidence=None))], "evidence")
+
+    def test_when_the_delivery_receipt_is_known_every_verdict_must_cite_it(self):
+        self.ctx.knowledge_receipt_sha256 = sha_of("knowledge-delivery-receipt")
+        self.check(self.LEDGER, [(C2, verification_body())])
+        self.refused(self.LEDGER, [(C2, verification_body(knowledge_receipt_sha256=sha_of("some other receipt")))], "knowledge_receipt_sha256")
+
+
 if __name__ == "__main__":
     unittest.main()

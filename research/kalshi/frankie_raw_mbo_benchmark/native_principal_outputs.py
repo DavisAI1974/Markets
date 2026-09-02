@@ -1052,6 +1052,152 @@ def _v_run_hashes(entries: Sequence[Mapping[str, Any]], ctx: ValidationContext) 
 
 
 # --------------------------------------------------------------------------------------
+# One ledger per calculation-contract section
+# --------------------------------------------------------------------------------------
+
+NULL_RESULT = "NULL_RESULT"
+#: Contract section 3: resolved, censored, or still-open.
+STRATUM_STATUSES = ("RESOLVED", "CENSORED", "OPEN")
+#: Contract section 3's nine declarations every average must carry, as keys: (1) numerator and
+#: formula; (2) population and denominator; (3) source day and role; (4) family, subfamily and
+#: cluster version; (5) side or mirror orientation; (6) session, phase and continuity segment;
+#: (7) causal clock and cutoff; (8) status; (9) missingness and inclusion rules.
+STRATUM_REQUIRED_KEYS = (
+    "numerator",
+    "formula",
+    "population",
+    "denominator",
+    "source_day",
+    "source_role",
+    "family",
+    "subfamily",
+    "cluster_version",
+    "side_or_mirror_orientation",
+    "session",
+    "phase",
+    "continuity_segment",
+    "causal_clock",
+    "cutoff_recv_ns",
+    "status",
+    "missingness_rule",
+    "inclusion_rule",
+)
+
+
+def _v_average(average: Any, cutoff: int, where: str, ctx: ValidationContext) -> None:
+    if not isinstance(average, Mapping):
+        _fail(where, "an average is a mapping: value and strata")
+    value = average.get("value")
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        _fail(where, f"`value` must be a number, got {value!r}")
+    strata = _mapping(average, "strata", where)
+    missing = [key for key in STRATUM_REQUIRED_KEYS if key not in strata]
+    if missing:
+        _fail(where, f"strata omit {missing}; no average is quoted without its nine declarations (contract section 3, mission section 7)")
+    _choice(strata, "status", STRATUM_STATUSES, where)
+    if strata["causal_clock"] not in ctx.clock_ids:
+        _fail(where, f"causal_clock {strata['causal_clock']!r} is not one of the registry's causal clocks {list(ctx.clock_ids)}")
+    if strata["cutoff_recv_ns"] != cutoff:
+        _fail(where, f"strata cutoff_recv_ns {strata['cutoff_recv_ns']!r} must be this entry's cutoff {cutoff}")
+    if _int(strata, "denominator", where) < 0:
+        _fail(where, "denominator must be non-negative")
+
+
+def _section_rule(section: str) -> Any:
+    ledger_id = section_ledger_id(section)
+
+    def validate(entries: Sequence[Mapping[str, Any]], ctx: ValidationContext) -> None:
+        for entry in entries:
+            where = f"{ledger_id}[{entry['sequence']}]"
+            body, cutoff = entry["body"], entry["cutoff_recv_ns"]
+            if body.get("section") != section:
+                _fail(where, f"section must be {section!r}, got {body.get('section')!r}")
+            members = _int_list(body, "member_group_indices", where)
+            if not members:
+                if body.get("result") != NULL_RESULT:
+                    _fail(where, f"an entry rests on exact member groups (`member_group_indices` is empty) or states result {NULL_RESULT!r} with its population; absence is a result, silence is not")
+                population = _mapping(body, "population", where)
+                _int(population, "denominator", f"{where}.population")
+                _text(population, "description", f"{where}.population")
+            averages = body.get("averages", [])
+            if not isinstance(averages, list):
+                _fail(where, "`averages` must be a list when given")
+            for index, average in enumerate(averages):
+                _v_average(average, cutoff, f"{where}.averages[{index}]", ctx)
+
+    return validate
+
+
+# --------------------------------------------------------------------------------------
+# Mission section 9a: the raw-MBO retention judgement
+# --------------------------------------------------------------------------------------
+
+RAW_MBO_CLASSES = (
+    "LOAD_BEARING",
+    "RETAINED_UNREAD",
+    "DEGENERATE_ON_THIS_SLICE",
+    "REDUNDANT",
+    "CANNOT_JUDGE",
+)
+#: Mission 9a: RETAINED_UNREAD says whether that is a wiring defect or a genuine spare.
+RETAINED_UNREAD_CAUSES = ("WIRING_DEFECT", "GENUINE_SPARE")
+DROP_WORDS = frozenset({"DROP", "DROPPED", "REMOVE", "REMOVED", "DELETE", "DELETED"})
+
+
+def _v_raw_mbo(entries: Sequence[Mapping[str, Any]], ctx: ValidationContext) -> None:
+    for entry in entries:
+        where = f"{RAW_MBO_CLASSIFICATION_LEDGER}[{entry['sequence']}]"
+        body = entry["body"]
+        _text(body, "field_or_group", where)
+        classification = _choice(body, "classification", RAW_MBO_CLASSES, where)
+        _text(body, "evidence", where)
+        action = body.get("action")
+        if isinstance(action, str) and action.strip().upper() in DROP_WORDS:
+            _fail(where, "an output advises and never drops; removal is Greg's decision after discussion (mission 9a, D60)")
+        if classification == "LOAD_BEARING":
+            if not _list(body, "read_by_sections", where):
+                _fail(where, "LOAD_BEARING names the section(s) whose reading changes conclusions")
+        elif classification == "RETAINED_UNREAD":
+            _choice(body, "cause", RETAINED_UNREAD_CAUSES, where)
+        elif classification == "DEGENERATE_ON_THIS_SLICE":
+            if "single_value" not in body or not isinstance(body.get("expected_on_other_days"), bool):
+                _fail(where, "DEGENERATE_ON_THIS_SLICE states the single value and whether it is expected to hold on other days")
+        elif classification == "REDUNDANT":
+            _text(body, "derivation", where)
+        else:
+            _text(body, "reason", where)
+
+
+# --------------------------------------------------------------------------------------
+# Knowledge verification: one verdict per delivered lesson
+# --------------------------------------------------------------------------------------
+
+KNOWLEDGE_VERDICTS = ("VERIFIED", "UNVERIFIED", "REFUTED")
+
+
+def _v_knowledge_verification(entries: Sequence[Mapping[str, Any]], ctx: ValidationContext) -> None:
+    for entry in entries:
+        where = f"{KNOWLEDGE_VERIFICATION_LEDGER}[{entry['sequence']}]"
+        body, cutoff = entry["body"], entry["cutoff_recv_ns"]
+        _text(body, "lesson_id", where)
+        _text(body, "layer_id", where)
+        cited = _sha(body, "knowledge_receipt_sha256", where)
+        if ctx.knowledge_receipt_sha256 is not None and cited != ctx.knowledge_receipt_sha256:
+            _fail(where, f"knowledge_receipt_sha256 {cited} does not cite the knowledge-delivery receipt {ctx.knowledge_receipt_sha256} this run was validated against")
+        verdict = _choice(body, "verdict", KNOWLEDGE_VERDICTS, where)
+        if verdict == "UNVERIFIED":
+            _text(body, "reason", where)
+            continue
+        evidence = _mapping(body, "evidence", where)
+        ew = f"{where}.evidence"
+        if not _int_list(evidence, "member_group_indices", ew):
+            _fail(ew, "a verdict rests on exact member groups; `member_group_indices` is empty")
+        evidence_cutoff = _int(evidence, "cutoff_recv_ns", ew)
+        if evidence_cutoff > cutoff:
+            _fail(ew, f"evidence cutoff {evidence_cutoff} is after the entry's cutoff {cutoff}")
+
+
+# --------------------------------------------------------------------------------------
 # Dispatch
 # --------------------------------------------------------------------------------------
 
@@ -1066,11 +1212,17 @@ LEDGER_RULES: dict[str, Any] = {
     INVOCATION_RECEIPTS: _v_invocations,
     ANSWER_WALL_RECEIPTS: _v_answer_wall,
     RUN_HASHES: _v_run_hashes,
+    RAW_MBO_CLASSIFICATION_LEDGER: _v_raw_mbo,
+    KNOWLEDGE_VERIFICATION_LEDGER: _v_knowledge_verification,
 }
 
 
 def _rule_for(ledger_id: str) -> Any:
-    return LEDGER_RULES.get(ledger_id)
+    if ledger_id in LEDGER_RULES:
+        return LEDGER_RULES[ledger_id]
+    if ledger_id.startswith(SECTION_LEDGER_PREFIX):
+        return _section_rule(ledger_id[len(SECTION_LEDGER_PREFIX):])
+    return None
 
 
 def validate_ledger_entries(
