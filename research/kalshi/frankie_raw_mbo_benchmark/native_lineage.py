@@ -11,6 +11,28 @@ never averaged: a mean depth of 1.7 describes no chain that exists, so depth is 
 as a distribution over exact integers with counts. And roots, descendants, terminated,
 censored and still-open chains never mix, so lineage status is part of the stratum
 identity rather than a column you could forget to filter on.
+
+The censoring clock is an INPUT here, not something the graph can find for itself. A stage's
+exit time is written by its own successor - `add` stamps the parent the moment a child enters -
+so a censored stage, which by definition never got a qualifying successor, has no exit and
+therefore no `stage_duration_ns`. Deriving the censored age from that field made "censored" and
+"has a duration" mutually exclusive by construction: on the 2021-10-03 Sunday run
+`censored_stage_age_ns` reported n=0 with all 21,651 nodes excluded while 21,603 of them were
+censored - the measure's declared population was exactly the population it could never observe.
+Section 4.6 has no such hole because its caller hands it the boundary time at the moment it
+censors (`_close(status=OPEN_AT_SEGMENT_END, recv_ns=...)`), so the age is censoring time minus
+birth and never a field the subject was supposed to fill in for itself. 4.13 takes the same
+input as `censoring_recv_ns`; when it is not supplied the age is ABSENT and counted, never a
+zero, because a zero would be a measurement.
+
+Two root counts live in this summary and they are different populations. `roots_total` is every
+node with no parent, which is also the D0 row of the depth distribution; `d0_roots` is section
+4.13's D0 class, a root with NO qualifying successor. On the Sunday run they read 21,344 and
+21,296, and the 48 that separates them is the number of roots that acquired a successor. That
+48 also equalled `status_counts[TERMINATED]`, but only because observed max depth was 1 so every
+parent happened to be a root - a coincidence of that day, not an identity. Both counts are
+carried, each with a declared definition, and the identity that links them is checked here
+rather than left for a reader to guess at.
 """
 from __future__ import annotations
 
@@ -36,6 +58,7 @@ CENSORED_SEGMENT_END = "CENSORED_SEGMENT_END"
 CENSORED_STREAM_END = "CENSORED_STREAM_END"
 OPEN = "OPEN"
 LINEAGE_STATUSES = frozenset({TERMINATED, CENSORED_SEGMENT_END, CENSORED_STREAM_END, OPEN})
+CENSORED_STATUSES = frozenset({CENSORED_SEGMENT_END, CENSORED_STREAM_END})
 
 
 class LineageError(ValueError):
@@ -189,17 +212,30 @@ class LineageCalculator:
         )
         self.censored_stage_age = measure(
             "censored_stage_age_ns",
-            "censoring time - node entry, censored stages only",
+            "segment_or_stream_end.ts_recv_ns - node entry, censored stages only",
             CENSORED,
-            "terminated stages are excluded and reported under stage_duration_ns",
+            "terminated stages are excluded and reported under stage_duration_ns; a censored "
+            "stage observed without a censoring clock is excluded and counted in "
+            "censored_stage_age_coverage, never entered as a zero",
         )
 
         self.depth_counts: dict[int, int] = {}
         self.status_counts: dict[str, int] = {name: 0 for name in sorted(LINEAGE_STATUSES)}
         self.role_counts = {ROOT: 0, DESCENDANT: 0}
+        # Two root populations, counted separately at the source so the identity between them
+        # is a CHECK and not a definition. Deriving one by subtracting the other is what let
+        # 21,296 and 21,344 sit in one summary with nothing saying they were different things.
         self.d0_roots = 0
+        self.roots_with_successor = 0
+        self.nodes_with_successor = 0
         self.nodes_seen = 0
         self.observed_max_depth = 0
+        # The censored channel reports its own coverage. n=0 is indistinguishable from "the
+        # population was empty" unless the seen/observed/unmeasurable split travels with it.
+        self.censored_stages_seen = 0
+        self.censored_stage_age_observed = 0
+        self.censored_stage_age_no_censoring_clock = 0
+        self.open_stages_seen = 0
 
     @property
     def measures(self) -> tuple[StratifiedMeasure, ...]:
@@ -240,7 +276,15 @@ class LineageCalculator:
         source_role: str,
         continuity_segment: int,
         session_phase: str,
+        censoring_recv_ns: int | None = None,
     ) -> dict[str, Any]:
+        """Observe one node with its terminal status.
+
+        `censoring_recv_ns` is the boundary time that ended the observation window - the
+        segment close or the stream end - and it is the only lawful clock for a censored
+        stage, exactly as 4.6's `_close(recv_ns=...)` is for a censored order. It is ignored
+        for a stage that terminated, which carries its own exit.
+        """
         if node.status not in LINEAGE_STATUSES:
             raise LineageError(f"status must be one of {sorted(LINEAGE_STATUSES)}")
         key = self._key(
@@ -256,8 +300,14 @@ class LineageCalculator:
         self.status_counts[node.status] += 1
         self.role_counts[node.role] += 1
         self.observed_max_depth = max(self.observed_max_depth, node.depth)
-        if graph.is_d0_root(node.node_id):
-            self.d0_roots += 1
+        has_successor = bool(graph.children(node.node_id))
+        if has_successor:
+            self.nodes_with_successor += 1
+        if node.parent_id is None:
+            if has_successor:
+                self.roots_with_successor += 1
+            else:
+                self.d0_roots += 1
 
         delay = graph.interstage_delay_ns(node.node_id)
         if delay is None:
@@ -266,13 +316,38 @@ class LineageCalculator:
             self.interstage_delay.observe(key, float(delay))
 
         duration = node.stage_duration_ns
-        if node.status == TERMINATED and duration is not None:
+        if node.status == TERMINATED:
+            if duration is None:
+                # TERMINATED is decided FROM `exited_recv_ns` upstream, so one without an exit
+                # is a caller contradiction, not a missing measurement. Refused rather than
+                # excluded: an exclusion here would look like the ordinary open-stage case.
+                raise LineageError("a TERMINATED stage must carry exited_recv_ns")
             self.stage_duration.observe(key, float(duration))
             self.censored_stage_age.exclude_missing(key)
-        elif node.status in (CENSORED_SEGMENT_END, CENSORED_STREAM_END) and duration is not None:
-            self.censored_stage_age.observe(key, float(duration))
+        elif node.status in CENSORED_STATUSES:
+            if node.exited_recv_ns is not None:
+                # A stage with an exit had a qualifying successor, which is what ENDS it, so
+                # it is terminated. Calling it censored would put an ended stage in the
+                # censored population and read its own stage length as an age at censoring.
+                raise LineageError(
+                    "a stage with exited_recv_ns ended and is TERMINATED; it cannot be censored"
+                )
+            self.censored_stages_seen += 1
             self.stage_duration.exclude_missing(key)
+            if censoring_recv_ns is None:
+                # The one case that produced n=0 across all 17 strata: no clock, so no age.
+                # Excluded and counted, never a zero - a zero would say the stage was censored
+                # at the instant it entered.
+                self.censored_stage_age.exclude_missing(key)
+                self.censored_stage_age_no_censoring_clock += 1
+            else:
+                age = censoring_recv_ns - node.entered_recv_ns
+                if age < 0:
+                    raise LineageError("a censoring cannot precede the stage it censors")
+                self.censored_stage_age.observe(key, float(age))
+                self.censored_stage_age_observed += 1
         else:
+            self.open_stages_seen += 1
             self.stage_duration.exclude_missing(key)
             self.censored_stage_age.exclude_missing(key)
         return node.as_dict()
@@ -289,11 +364,75 @@ class LineageCalculator:
                 "depth": depth,
                 "depth_label": f"D{depth}",
                 "count": count,
+                # The D0 row is every depth-zero node, roots with a successor included, which
+                # is NOT section 4.13's D0 class of "a root with no qualifying successor".
+                # The two D0s differed by 48 on the Sunday run, so the population travels here
+                # rather than being inferred from the label.
+                "counted_population": "every node at this exact depth",
                 "share_of_nodes": (count / total) if total else None,
                 "share_is_a_rate_not_a_mean": True,
             }
             for depth, count in sorted(self.depth_counts.items())
         ]
+
+    def root_reconciliation(self) -> dict[str, Any]:
+        """The two root counts, each named, and the identity that links them, checked.
+
+        `roots_total` (every parentless node, which is also the D0 row of the depth
+        distribution) and `d0_roots` (4.13's D0 class: a root with NO qualifying successor)
+        are different populations. On the 2021-10-03 Sunday run they read 21,344 and 21,296
+        and nothing in the artifact said why, so the 48 between them looked like a defect.
+        It is `roots_with_a_qualifying_successor`, counted here in its own right. It also
+        equalled `status_counts[TERMINATED]` that day, but only because observed max depth
+        was 1 so every parent was a root; `terminated_equals_nodes_with_a_successor` is the
+        general statement and it is reported rather than assumed.
+        """
+        roots_total = self.role_counts[ROOT]
+        depth0 = self.depth_counts.get(0, 0)
+        return {
+            "roots_total": roots_total,
+            "roots_total_means": "EVERY_NODE_WITH_NO_PARENT",
+            "d0_roots": self.d0_roots,
+            "d0_roots_means": "ROOTS_WITH_NO_QUALIFYING_SUCCESSOR",
+            "roots_with_a_qualifying_successor": self.roots_with_successor,
+            "identity": (
+                "roots_total = d0_roots + roots_with_a_qualifying_successor"
+            ),
+            "identity_holds": roots_total == self.d0_roots + self.roots_with_successor,
+            "depth0_node_count": depth0,
+            "depth0_equals_roots_total": depth0 == roots_total,
+            "nodes_with_a_qualifying_successor": self.nodes_with_successor,
+            "terminated_status_count": self.status_counts[TERMINATED],
+            "terminated_equals_nodes_with_a_successor": (
+                self.status_counts[TERMINATED] == self.nodes_with_successor
+            ),
+        }
+
+    def censored_stage_age_coverage(self) -> dict[str, Any]:
+        """What the censored channel saw, split from what it could measure.
+
+        n=0 on a censored measure is ambiguous between "nothing was censored" and "everything
+        censored was unmeasurable", and on the Sunday run it was the second: 21,603 censored
+        nodes, none of them measured, because the boundary clock never reached this call.
+        The split is reported so the two can never be read as the same number again.
+        """
+        return {
+            "censored_stages_seen": self.censored_stages_seen,
+            "censored_stage_age_observed": self.censored_stage_age_observed,
+            "censored_stage_age_unmeasurable_no_censoring_clock": (
+                self.censored_stage_age_no_censoring_clock
+            ),
+            "unmeasurable_cause": (
+                "observe_node was called without censoring_recv_ns, so the boundary time that "
+                "ended the observation window was never supplied; the age is absent and "
+                "counted here rather than entered as a zero"
+            ),
+            "open_stages_seen": self.open_stages_seen,
+            "open_stages_note": (
+                "a still-open stage is neither terminated nor censored and contributes to "
+                "neither duration measure; it is excluded and counted"
+            ),
+        }
 
     def companion_rows(self) -> list[dict[str, Any]]:
         rows: list[dict[str, Any]] = []
@@ -309,6 +448,9 @@ class LineageCalculator:
             "observed_max_depth": self.observed_max_depth,
             "maximum_depth_imposed": None,
             "d0_roots": self.d0_roots,
+            "d0_roots_means": "ROOTS_WITH_NO_QUALIFYING_SUCCESSOR",
+            "root_reconciliation": self.root_reconciliation(),
+            "censored_stage_age_coverage": self.censored_stage_age_coverage(),
             "role_counts": dict(self.role_counts),
             "status_counts": dict(self.status_counts),
             "depth_distribution": self.depth_distribution(),

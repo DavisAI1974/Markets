@@ -64,7 +64,12 @@ SHARED_ESTIMANDS: tuple[dict[str, Any], ...] = (
     {
         "estimand": "relative_book_imbalance",
         "formula": "(bid - ask) / (bid + ask)",
-        "members": (("4.9", "relative_imbalance"), ("4.12", "normalized_imbalance")),
+        # D-4 added the third. 4.2 reads the book straight off `book_full`, so it is the
+        # nearest thing to a reference computation the artifact has - and three
+        # measurements from three substrates locate the odd one out, where two only say
+        # that one of them is wrong.
+        "members": (("4.9", "relative_imbalance"), ("4.12", "normalized_imbalance"),
+                    ("4.2", "relative_imbalance")),
         "bounds": (-1.0, 1.0),
         # A bounded estimand on one instrument and one day. Two correct computations of it
         # can differ by re-stratification and by population, but not by this much in the mean.

@@ -19,6 +19,27 @@ non-FIFO event shows up as a recorded violation instead of a plausible number.
 Section 4.6 forbids an arithmetic mean for time-to-exit under censoring, so resolved
 lifetimes feed a distribution and *all* exits - resolved and censored alike - feed a
 Kaplan-Meier accumulator with at-risk counts at every time.
+
+**D-13. Two units live here, and every measure now names the one it counts.** The section
+measured orders and episodes under a single declared population, "resting orders within the
+stratum and continuity segment". On run 33605852433 that read as one number twice:
+`initial_volume_ahead` n = 20,005, `queue_movement` n = 24,645, same declared population.
+They are different populations. A lifecycle is one order id inside one continuity segment;
+a queue episode is one stretch of retained priority, and an order that loses priority twice
+contributes one lifecycle and three episodes. So `initial_volume_ahead` counts BIRTHS,
+`queue_movement` counts CLOSED EPISODES, and the lifetime measures count LIFECYCLES - each
+said in its own declaration, because a population that is false is worse than one that is
+missing: it invites exactly the pooling section 3 exists to forbid.
+
+The 24,645 - 20,005 = 4,640 difference is the re-queue count, and it was reconcilable only
+by differencing against an adapter counter that never reached this artifact
+(`modify_reprice` 4,625), which left FIFTEEN observations unattributed. Two things close
+that here. Every re-queued episode records WHY its level changed (`opened_basis`), counted
+in `episode_accounting` by the transition the book itself shows - price, side, or neither -
+so the residual class is reported rather than differenced out. And the opening queue
+position of a re-queue, which was computed on every priority loss and entered no average at
+all, is its own measure now (`requeue_initial_volume_ahead`), so the three n values
+reconcile inside one section: births + re-queues - still-open = closed episodes.
 """
 from __future__ import annotations
 
@@ -32,6 +53,29 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_stratum import (
     StratifiedMeasure,
     StratumKey,
 )
+
+OPENED_AT_BIRTH = "BIRTH"
+REOPENED_PRICE_CHANGED = "REQUEUE_PRICE_CHANGED"
+REOPENED_SIDE_CHANGED = "REQUEUE_SIDE_CHANGED"
+REOPENED_SAME_LEVEL = "REQUEUE_SAME_LEVEL"
+# D-13. The three ways a priority loss can present in the book, kept apart because the
+# fifteen unattributed observations on run 33605852433 sat in exactly this distinction:
+# 4,625 were re-prices the adapter counted, 14 were priority losses the book position never
+# showed (a size increase re-queues at the same side and price), and one was neither. A
+# same-level re-queue is not a re-price and counting them together is how it went missing.
+REOPEN_BASES = (REOPENED_PRICE_CHANGED, REOPENED_SIDE_CHANGED, REOPENED_SAME_LEVEL)
+
+# D-13. The two units, written once and used by the declarations that count in each. A
+# lifecycle is one order id inside one continuity segment; an episode is one stretch of
+# retained priority within it, so the two n values differ by construction and neither is
+# the other's denominator.
+LIFECYCLE_POPULATION = "tracked order lifecycles within the stratum and continuity segment"
+EPISODE_POPULATION = "queue episodes within the stratum and continuity segment"
+
+UNIT_LIFECYCLE = "ORDER_LIFECYCLE"
+UNIT_BIRTH_EPISODE = "BIRTH_QUEUE_EPISODE"
+UNIT_REQUEUE_EPISODE = "REQUEUED_QUEUE_EPISODE"
+UNIT_CLOSED_EPISODE = "CLOSED_QUEUE_EPISODE"
 
 FILLED = "FILLED"
 CANCELLED = "CANCELLED"
@@ -48,6 +92,22 @@ BookView = Callable[[str, int, int], "tuple[int, int]"]
 
 class QueueError(ValueError):
     """A queue lifecycle could not be tracked consistently."""
+
+
+def _reopen_basis(closed: "QueueEpisode", *, side: str, price_raw: int) -> str:
+    """Which move the book shows between the episode that closed and the one that opens.
+
+    Side first, because a side change is the stronger statement and a re-priced order that
+    also crossed sides would otherwise be filed as a plain re-price. Neither changing is a
+    real and separate case - a size increase re-queues an order at its own side and price -
+    and it is the case that went uncounted: 14 of the fifteen unattributed observations on
+    run 33605852433 are the adapter's `priority_loss_not_visible_in_position`.
+    """
+    if side != closed.side:
+        return REOPENED_SIDE_CHANGED
+    if price_raw != closed.price_raw:
+        return REOPENED_PRICE_CHANGED
+    return REOPENED_SAME_LEVEL
 
 
 @dataclass
@@ -67,6 +127,10 @@ class QueueEpisode:
     initial_volume_ahead: int
     current_orders_ahead: int
     current_volume_ahead: int
+    # D-13. Why this episode exists, carried ON the episode rather than in prose. A birth and
+    # a re-queue are different populations, and on the Sunday run the only record of which
+    # was which lived in an adapter counter that never reached this section's artifact.
+    opened_basis: str = OPENED_AT_BIRTH
     fills_ahead: int = 0
     closed_recv_ns: int | None = None
     identity_violations: int = 0
@@ -110,6 +174,7 @@ class QueueEpisode:
             "side": self.side,
             "price_raw": self.price_raw,
             "opened_recv_ns": self.opened_recv_ns,
+            "opened_basis": self.opened_basis,
             "closed_recv_ns": self.closed_recv_ns,
             "initial_orders_ahead": self.initial_orders_ahead,
             "initial_volume_ahead": self.initial_volume_ahead,
@@ -206,12 +271,24 @@ class QueueSurvivalCalculator:
         if exact_cap is not None:
             kwargs["exact_cap"] = exact_cap
 
-        def measure(name: str, numerator: str, status: str, missingness: str, kind: str = "DISTRIBUTION"):
+        # D-13. `population` is a PARAMETER now. It was one string shared by five measures -
+        # "resting orders within the stratum and continuity segment" - and two of those
+        # measures do not count orders at all. One declaration covering two units is how
+        # 20,005 and 24,645 came to be reported as the same population, and a false
+        # population invites the pooling this whole section exists to refuse.
+        def measure(
+            name: str,
+            numerator: str,
+            population: str,
+            status: str,
+            missingness: str,
+            kind: str = "DISTRIBUTION",
+        ):
             return StratifiedMeasure(
                 name=name,
                 declaration=Declaration(
                     numerator_formula=numerator,
-                    population="resting orders within the stratum and continuity segment",
+                    population=population,
                     causal_cutoff="F_LAST receive time of the group carrying the action",
                     status=status,
                     missingness_rule=missingness,
@@ -223,30 +300,63 @@ class QueueSurvivalCalculator:
         self.resolved_lifetime = measure(
             "resolved_lifetime_ns",
             "terminal.ts_recv_ns - birth.ts_recv_ns, resolved exits only",
+            LIFECYCLE_POPULATION + ", resolved exits only; one observation per order id",
             RESOLVED,
             "censored and still-open orders are excluded here and carried in time_to_exit",
         )
         self.censored_age = measure(
             "censored_age_ns",
             "segment_or_stream_end.ts_recv_ns - birth.ts_recv_ns, censored orders only",
+            # The unit is stated; the arithmetic, the exclusion predicate and the n are
+            # untouched. This measure reported 597 against 597 declared censorings on run
+            # 33605852433 and is the reference for the same channel in 4.13, so nothing here
+            # changes what it counts - only what it says it counts.
+            LIFECYCLE_POPULATION + ", censored exits only; one observation per order id",
             CENSORED,
             "resolved orders are excluded here; they appear in resolved_lifetime",
         )
         self.initial_volume_ahead = measure(
             "initial_volume_ahead",
-            "sum of resting sizes ahead at episode open",
+            "sum of resting sizes ahead at the opening of an order's BIRTH episode",
+            "tracked order BIRTHS within the stratum and continuity segment; one observation "
+            "per order id, taken at its first queue episode only",
             RESOLVED,
-            "orders whose level could not be read are excluded and counted",
+            # D-13. The 4,640 re-queue opens are not missing from this measure, they are not
+            # members of it: the queue an order rejoins after losing priority is a different
+            # population from the queue it was born into. They are measured, in
+            # requeue_initial_volume_ahead, and retained per episode on every lifecycle row.
+            "orders whose level could not be read are excluded and counted; re-queue episode "
+            "opens are NOT members here and are measured by requeue_initial_volume_ahead",
+        )
+        self.requeue_initial_volume_ahead = measure(
+            "requeue_initial_volume_ahead",
+            "sum of resting sizes ahead at the opening of a RE-QUEUED episode",
+            EPISODE_POPULATION + ", re-queued episodes only; one observation per priority loss",
+            RESOLVED,
+            # D60: this number was computed on every priority loss, written to the episode row
+            # and then entered no average at all - 4,640 readings of where an order lands when
+            # it loses priority, retained and never used. It is also the half of the episode
+            # population that makes the section's three n values reconcile without reaching
+            # for an adapter counter.
+            "priority losses whose new level could not be read are excluded and counted",
         )
         self.queue_movement = measure(
             "queue_movement",
             "initial_orders_ahead - final_orders_ahead within one episode",
+            EPISODE_POPULATION + "; one observation per episode CLOSED, birth episodes and "
+            "re-queued episodes alike, so an order that lost priority twice contributes three",
             RESOLVED,
-            "episodes with no observation after open are excluded and counted",
+            # The old rule claimed an exclusion that does not exist and never did: an episode
+            # with no observation after open reports a movement of 0, and that 0 is a
+            # measurement - no order ahead departed, which the book states directly - not an
+            # absence dressed as a number.
+            "no episode is excluded; an episode never re-observed after open contributes a "
+            "measured 0, since nothing ahead of it departed",
         )
         self.time_to_exit = measure(
             "time_to_exit_ns",
             "Kaplan-Meier over exit times; censored orders lower the at-risk set without an event",
+            LIFECYCLE_POPULATION + "; one observation per order id, as an event or a censoring",
             CENSORED,
             "every order contributes exactly once, as an event or as a censoring",
             kind="SURVIVAL",
@@ -259,6 +369,13 @@ class QueueSurvivalCalculator:
         self.censored_count = 0
         self.identity_violations = 0
         self.unknown_order_events = 0
+        # D-13. The episode census, kept at the point of observation rather than derived
+        # afterwards. Each of these is incremented in the same statement block that feeds a
+        # measure, so `episode_accounting` reconciles the measures' own observation calls and
+        # not a second, independent count of the same events that could agree with nothing.
+        self.birth_episodes = 0
+        self.episodes_measured = 0
+        self.episode_reopens: dict[str, int] = {basis: 0 for basis in REOPEN_BASES}
 
     @property
     def measures(self) -> tuple[StratifiedMeasure, ...]:
@@ -266,9 +383,14 @@ class QueueSurvivalCalculator:
             self.resolved_lifetime,
             self.censored_age,
             self.initial_volume_ahead,
+            self.requeue_initial_volume_ahead,
             self.queue_movement,
             self.time_to_exit,
         )
+
+    @property
+    def episode_reopen_count(self) -> int:
+        return sum(self.episode_reopens.values())
 
     @property
     def open_order_count(self) -> int:
@@ -330,6 +452,7 @@ class QueueSurvivalCalculator:
         )
         self._open[handle] = lifecycle
         self.initial_volume_ahead.observe(self._key(lifecycle), float(volume_ahead))
+        self.birth_episodes += 1
         return lifecycle
 
     def observe_level(
@@ -371,21 +494,30 @@ class QueueSurvivalCalculator:
             self.unknown_order_events += 1
             return
         episode = lifecycle.current_episode
-        episode.closed_recv_ns = recv_ns
-        self.queue_movement.observe(self._key(lifecycle), float(episode.queue_movement))
+        key = self._key(lifecycle)
+        self._close_episode(lifecycle, episode, recv_ns=recv_ns)
         lifecycle.priority_loss_count += 1
+        # D-13. Classified from what the BOOK shows, before and after, because that is the
+        # only account of the re-queue this section holds: the cause the adapter knows -
+        # re-price, size increase, duplicate add, a re-add of an order a reset took - is
+        # counted there and reaches no artifact of section 4.6. Differencing 4,640 re-queues
+        # against 4,625 `modify_reprice` events is what left fifteen observations homeless.
+        basis = _reopen_basis(episode, side=side, price_raw=price_raw)
+        self.episode_reopens[basis] += 1
         orders_ahead, volume_ahead = book_view(side, price_raw, order_id)
         lifecycle.episodes.append(
             QueueEpisode(
                 side=side,
                 price_raw=price_raw,
                 opened_recv_ns=recv_ns,
+                opened_basis=basis,
                 initial_orders_ahead=orders_ahead,
                 initial_volume_ahead=volume_ahead,
                 current_orders_ahead=orders_ahead,
                 current_volume_ahead=volume_ahead,
             )
         )
+        self.requeue_initial_volume_ahead.observe(key, float(volume_ahead))
 
     def on_modify_retaining_priority(self, *, instrument_id: int, order_id: int) -> None:
         lifecycle = self._open.get((instrument_id, order_id))
@@ -408,15 +540,25 @@ class QueueSurvivalCalculator:
         self._level_fill_counts[handle] = self._level_fill_counts.get(handle, 0) + count
         return self._level_fill_counts[handle]
 
+    def _close_episode(self, lifecycle: OrderLifecycle, episode: QueueEpisode, *, recv_ns: int) -> None:
+        """The one place an episode is measured, so the census cannot drift from the measure.
+
+        Both closers - a priority loss and a lifecycle terminal - come through here, which is
+        what makes `episodes_measured` equal to `queue_movement`'s total n by construction
+        rather than by a second count that happens to agree.
+        """
+        if episode.closed_recv_ns is None:
+            episode.closed_recv_ns = recv_ns
+        self.queue_movement.observe(self._key(lifecycle), float(episode.queue_movement))
+        self.episodes_measured += 1
+
     def _close(self, lifecycle: OrderLifecycle, *, status: str, recv_ns: int) -> dict[str, Any]:
         lifecycle.terminal_status = status
         lifecycle.terminal_recv_ns = recv_ns
         episode = lifecycle.current_episode
-        if episode.closed_recv_ns is None:
-            episode.closed_recv_ns = recv_ns
         key = self._key(lifecycle)
         lifetime = lifecycle.lifetime_ns or 0
-        self.queue_movement.observe(key, float(episode.queue_movement))
+        self._close_episode(lifecycle, episode, recv_ns=recv_ns)
         if status in TERMINAL_RESOLVED:
             self.resolved_lifetime.observe(key, float(lifetime))
             self.time_to_exit.observe(key, float(lifetime), event_observed=True)
@@ -467,6 +609,46 @@ class QueueSurvivalCalculator:
             rows.extend(measure.rows())
         return rows
 
+    def episode_accounting(self) -> dict[str, Any]:
+        """D-13. The census that turns the 20,005-vs-24,645 difference into an identity.
+
+        `episodes_opened - episodes_measured == episodes_still_open` holds exactly, because
+        an open lifecycle holds exactly one unclosed episode and every close goes through
+        `_close_episode`. It is REPORTED, not asserted: a breach here means an episode was
+        opened or closed somewhere this class does not know about, and the number is the
+        evidence for that, so raising would destroy it.
+
+        `reopens_without_a_price_change` is the named residual. On run 33605852433 the
+        section's re-queue count (4,640) could only be read against an adapter counter
+        outside this artifact (`modify_reprice` 4,625), and the 15 that did not match had
+        nowhere to be counted - 14 of them are priority losses the book position never showed
+        and 1 was unattributable from the committed evidence at all. That class is now
+        counted here every run, so the number is reported rather than rediscovered.
+        """
+        opened = self.birth_episodes + self.episode_reopen_count
+        without_price_change = (
+            self.episode_reopens[REOPENED_SAME_LEVEL] + self.episode_reopens[REOPENED_SIDE_CHANGED]
+        )
+        return {
+            "birth_episodes": self.birth_episodes,
+            "reopened_episodes": self.episode_reopen_count,
+            "reopened_by_level_transition": dict(self.episode_reopens),
+            "reopens_without_a_price_change": without_price_change,
+            "reopens_without_a_price_change_basis": (
+                "REQUEUE_SAME_LEVEL + REQUEUE_SIDE_CHANGED; a re-queue at the order's own "
+                "side and price is a priority loss the book position does not show, and is "
+                "not a re-price"
+            ),
+            "episodes_opened": opened,
+            "episodes_measured": self.episodes_measured,
+            "episodes_still_open": self.open_order_count,
+            "accounting_balances": opened - self.episodes_measured == self.open_order_count,
+            "identity": (
+                "birth_episodes + reopened_episodes - episodes_still_open == "
+                "episodes_measured == queue_movement total n"
+            ),
+        }
+
     def summary(self) -> dict[str, Any]:
         return {
             "section": "4.6",
@@ -481,5 +663,17 @@ class QueueSurvivalCalculator:
                 "resolved and censored lifetimes are never pooled into one mean; section 4.6 "
                 "requires a survival estimator with at-risk counts for time-to-exit"
             ),
+            # D-13. The unit each measure counts, in the summary as well as on every averaged
+            # row, because the two were read side by side as one population and nothing in
+            # the artifact said they were not.
+            "measure_units": {
+                self.resolved_lifetime.name: UNIT_LIFECYCLE,
+                self.censored_age.name: UNIT_LIFECYCLE,
+                self.time_to_exit.name: UNIT_LIFECYCLE,
+                self.initial_volume_ahead.name: UNIT_BIRTH_EPISODE,
+                self.requeue_initial_volume_ahead.name: UNIT_REQUEUE_EPISODE,
+                self.queue_movement.name: UNIT_CLOSED_EPISODE,
+            },
+            "episode_accounting": self.episode_accounting(),
             "stratum_counts": {m.name: m.stratum_count for m in self.measures},
         }

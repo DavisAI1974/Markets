@@ -218,6 +218,9 @@ class DriverCounters:
     # D-8. (same-side add, pending runway) pairs. Exceeds the add count when
     # runways overlap, and the excess IS the multiplicity - stated, per F-29.
     replacement_attributions: int = 0
+    # D-4. How many full-book snapshots reached 4.2. Zero means the section is
+    # dark again, which is the state that produced a 10 GB unread artifact.
+    book_snapshots_summarised: int = 0
     """4.8 runways scored. One per group under D53, where the runway IS the F_LAST group."""
     lineage_nodes_added: int = 0
     """4.13 nodes added to the live graph. Rises only when a group touches a NEW order id."""
@@ -468,14 +471,17 @@ class NativeReplayDriver:
         # turned into noise. The adapter refuses the next group if this call is missed.
         self.queue_adapter.close_continuity_segment(segment=segment)
         self._close_lineage(
-            segment=segment, censored_status=CENSORED_SEGMENT_END, occasion="SEGMENT_CLOSE"
+            segment=segment, censored_status=CENSORED_SEGMENT_END, occasion="SEGMENT_CLOSE",
+            recv_ns=recv_ns,
         )
         self.counters.candidate_summaries.append(self.detector.summary())
         self.counters.episode_summaries.append(self.episodes.summary())
         # The NEXT segment is opened by `_mark_for` from the new mark's own ordinal. It is
         # not `segment + 1`: segments are trade-date ordinals and a weekend skips two.
 
-    def _close_lineage(self, *, segment: int, censored_status: str, occasion: str) -> None:
+    def _close_lineage(
+        self, *, segment: int, censored_status: str, occasion: str, recv_ns: int
+    ) -> None:
         """Observe every node in the live graph with its TERMINAL status, then rebuild.
 
         A node whose `exited_recv_ns` is set had a qualifying child, so its stage ended and
@@ -494,6 +500,13 @@ class NativeReplayDriver:
                 source_role=self.identity_role,
                 continuity_segment=segment,
                 session_phase=session_phase,
+                # D-9. The censoring CLOCK, which the node cannot supply for itself: a
+                # stage's `exited_recv_ns` is stamped only by its own successor, and a
+                # censored stage is precisely one that never got a qualifying successor. So
+                # censored and "has a duration" were mutually exclusive by construction, and
+                # the age channel excluded all 21,651 of them. 4.6 has no such hole because
+                # its caller hands it the boundary time at the moment it censors.
+                censoring_recv_ns=recv_ns,
             )
             self.counters.lineage_nodes_observed += 1
             self._retain_lifecycle([row], section="lineage", occasion=occasion)
@@ -800,6 +813,18 @@ class NativeReplayDriver:
         full_book = frame.get("book_full")
         ladder_before = self._latest_ladder
         if isinstance(full_book, Mapping):
+            # D-4. 4.2, at last given the book it exists to summarise. Read from the frame
+            # that is already in hand - no new capture, no new field, no second pass.
+            self.counters.book_snapshots_summarised += 1
+            row["book_regime"] = self.run.book_regime.observe_snapshot(
+                full_book,
+                source_day=source_day,
+                source_role=self.identity_role,
+                continuity_segment=mark.continuity_segment,
+                session_phase=mark.session_phase,
+                recv_ns=recv_ns,
+            )
+        if isinstance(full_book, Mapping):
             self._latest_book = BookState.from_full_book(full_book)
             self.responses.note_price(self._latest_book.price_raw)
             ladder_after = ladder_from_full_book(full_book)
@@ -921,6 +946,15 @@ class NativeReplayDriver:
             occasion="GROUP_CLOSE",
         )
         self.counters.recurrence_sequences += 1
+        # D-4. The other 4.2 companion the contract names by hand: group count and
+        # max-actions-per-group, neither of which existed in the delivered artifact.
+        self.run.book_regime.observe_group_size(
+            len(actions),
+            source_day=ctx.source_day,
+            source_role=ctx.source_role,
+            continuity_segment=ctx.continuity_segment,
+            session_phase=ctx.session_phase,
+        )
         # D-11. 4.14 has just said this structure occurred; 4.10 has runways open on it. The
         # calculator's `note_recurrence` existed and nothing ever called it, so
         # `recurrence_count` was min = max = 0.0 in all 28 strata over all 91 candidates.
@@ -1082,6 +1116,7 @@ class NativeReplayDriver:
             segment=self._mark.continuity_segment if self._mark is not None else 0,
             censored_status=CENSORED_STREAM_END,
             occasion="STREAM_END",
+            recv_ns=at,
         )
         # The detector is built lazily from the first mark's real segment, so a pass that
         # consumed nothing has none. Reporting a summary for a lane that never opened would

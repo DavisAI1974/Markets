@@ -38,6 +38,22 @@ def _row(section, measure, *, n, lo, hi, total=None, squares=None):
     return {"section": section, "measure": measure, "value": value}
 
 
+def _like(rows, section, measure):
+    """Copy a member's rows onto another registered member of the same estimand.
+
+    The register carries THREE computations of relative_book_imbalance since 4.2 was built,
+    so a two-member fixture leaves the third silent - which the gate correctly reports. Where
+    a test is about agreement or a tolerance rather than about absence, the third member is
+    given the same distribution as one that is already there, so the case under test is the
+    only thing that varies.
+    """
+    out = []
+    for row in rows:
+        clone = {**row, "section": section, "measure": measure}
+        out.append(clone)
+    return rows + out
+
+
 class TheRealDefectTests(unittest.TestCase):
     """Reproduced from run 33605852433's actual shape, not from an invented one."""
 
@@ -79,8 +95,10 @@ class TheRealDefectTests(unittest.TestCase):
 
 class AgreementTests(unittest.TestCase):
     def test_two_sections_computing_the_same_thing_pass(self):
-        rows = ([_row("4.9", "relative_imbalance", n=500, lo=0.01, hi=0.11)] * 5 +
-                [_row("4.12", "normalized_imbalance", n=500, lo=0.01, hi=0.11)] * 5)
+        rows = _like(
+            [_row("4.9", "relative_imbalance", n=500, lo=0.01, hi=0.11)] * 5 +
+            [_row("4.12", "normalized_imbalance", n=500, lo=0.01, hi=0.11)] * 5,
+            "4.2", "relative_imbalance")
         passed, detail = gate_detail(compare(rows))
         self.assertTrue(passed, detail)
         self.assertIn("agree", detail)
@@ -121,7 +139,8 @@ class AgreementTests(unittest.TestCase):
         # a stratum of a thousand is the error this whole programme keeps finding.
         rows = [_row("4.9", "relative_imbalance", n=1000, lo=0.10, hi=0.10),
                 _row("4.9", "relative_imbalance", n=1, lo=0.90, hi=0.90),
-                _row("4.12", "normalized_imbalance", n=1001, lo=0.10, hi=0.10, total=100.9)]
+                _row("4.12", "normalized_imbalance", n=1001, lo=0.10, hi=0.10, total=100.9),
+                _row("4.2", "relative_imbalance", n=1001, lo=0.10, hi=0.10, total=100.9)]
         verdict = compare(rows)[0]
         self.assertAlmostEqual(verdict["observed"]["4.9:relative_imbalance"]["mean"], 0.1008, places=3)
         self.assertTrue(verdict["agreed"])
@@ -176,6 +195,8 @@ class EvasionTests(unittest.TestCase):
             _row("4.9", "relative_imbalance", n=4, lo=1.0, hi=1.0, total=4.0),
             _row("4.12", "normalized_imbalance", n=120000, lo=-0.4, hi=0.4,
                  total=2400.0, squares=9600.0),
+            _row("4.2", "relative_imbalance", n=120000, lo=-0.4, hi=0.4,
+                 total=2400.0, squares=9600.0),
         ]
         passed, detail = gate_detail(compare(rows))
         self.assertTrue(passed, detail)
@@ -221,6 +242,8 @@ class ToleranceBoundaryTests(unittest.TestCase):
             _row("4.9", "relative_imbalance", n=n, lo=mean_a, hi=mean_a,
                  total=mean_a * n, squares=(sq_a if sq_a is not None else mean_a ** 2) * n),
             _row("4.12", "normalized_imbalance", n=n, lo=mean_b, hi=mean_b,
+                 total=mean_b * n, squares=(sq_b if sq_b is not None else mean_b ** 2) * n),
+            _row("4.2", "relative_imbalance", n=n, lo=mean_b, hi=mean_b,
                  total=mean_b * n, squares=(sq_b if sq_b is not None else mean_b ** 2) * n),
         ]
 

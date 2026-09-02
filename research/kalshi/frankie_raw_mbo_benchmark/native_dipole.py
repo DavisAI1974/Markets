@@ -10,6 +10,17 @@ defaulting to one.
 `SAME` and `FLIP` orientations never pool. They are the two ways a mirrored structure can
 relate to its counterpart, and averaging across them cancels precisely the asymmetry the
 measure exists to find, so orientation is part of the stratum identity.
+
+**D-12. The within-path stage INDEX is binned; the event PHASE is not.** The two were being
+treated as one rule and they are not the same rule. "Never average across phases of the same
+event" is about BIRTH / PERSISTENCE / REVERSAL - three qualitatively different states of a
+runway - and it stands untouched here: `event_phase` is still a raw component of the stratum
+key. `stage=k` is an ordinal position inside a phase, and putting it in the key raw shattered
+the population: run 33605852433 produced 1,692 strata for 3,454 observations, 848 of them
+(50.1%) at n=1, 1,307 (77.2%) at n<=2, and not one reaching n=30, which is 6,768 averaged
+rows - 41.5% of the entire 16,293-row averaged layer - describing a population whose modal
+average was a single member restating itself. Stage index is now bucketed by `stage_bin`,
+the exact index survives on the member row, and the bin's covered range travels in the key.
 """
 from __future__ import annotations
 
@@ -34,8 +45,61 @@ SHORT = "SHORT"
 NO_DIRECTION = "NO_DIRECTION"
 
 
+STAGE_BIN_RULE = "OCTAVE_DOUBLING_FROM_STAGE_ZERO"
+"""How `stage_bin` widens, named on every summary so the rule is never only in prose.
+
+Bin b covers stage indices [2^(b-1), 2^b - 1] for b >= 1, with index 0 alone in the first
+bin: 0 | 1 | 2-3 | 4-7 | 8-15 | 16-31 | 32-63 | 64-127 | 128-255 | ... The doubling is not a
+round number picked by reflex, it is read off the shape of the population being binned.
+
+**What the population actually is.** The members of a stage-index stratum are the paths in
+that stratum's own (family, orientation, phase) context that were STILL RUNNING at index k,
+so the count at k is a survival curve, monotone decreasing, never a sample of fixed size.
+Measured on run 33605852433: 90 paths carried 3,454 stages, a mean path of 38.4 stages, and
+4.10 on the same runways records the persistence phase spanning 3 s to 190 s - stages are
+second-quantized, so that is a 63-fold spread of path length inside one population. 4.10
+holds 28 (family, side) contexts, about 3.2 paths each, while 4.12 produced 1,692 strata:
+roughly 60 distinct stage indices per context against roughly 3 paths to fill them. That
+ratio IS the shattering, and it is not a coding error - it is what stratifying an ordinal
+position on a heavy-tailed survival population does.
+
+**Why doubling and not a fixed width.** Under a decaying survival count, any fixed width
+leaves the tail exactly where it was: the widest-index bin still holds only the single
+longest path, and the defect survives the fix. A width that doubles as the survivor count
+roughly halves keeps successive bins within about one halving of each other, so no bin is
+systematically the leftover. Applied to the measured shape - about 3.2 paths per context
+reaching a maximum of roughly 190 stages - a context spans at most nine bins instead of
+about sixty, and the members that were spread one-per-stratum across indices 32-63 land in
+one stratum of about 30.
+
+**Every bin is a CLOSED range.** There is no open-ended final bin, because an unbounded bin
+would pool an unbounded stretch of the path and reintroduce the averaging this measure is
+built to refuse. The bins tile the non-negative integers exactly once each.
+"""
+
+
 class DipoleError(ValueError):
     """A dipole stage could not be measured."""
+
+
+def stage_bin(stage_index: int) -> tuple[str, int, int]:
+    """Label, first index covered, last index covered - for one within-path stage index.
+
+    The label carries both bounds so a reader of a single averaged row can tell which stage
+    indices that row covers without holding this module in their head. `STAGE_4_7` is stages
+    four through seven and says so; a bare bin ordinal would not.
+    """
+    if not isinstance(stage_index, int) or isinstance(stage_index, bool):
+        raise DipoleError("stage_index must be an int")
+    if stage_index < 0:
+        raise DipoleError("stage_index must be non-negative")
+    if stage_index == 0:
+        first = last = 0
+    else:
+        exponent = stage_index.bit_length() - 1
+        first = 1 << exponent
+        last = (1 << (exponent + 1)) - 1
+    return f"STAGE_{first}_{last}", first, last
 
 
 @dataclass(frozen=True)
@@ -79,6 +143,19 @@ class DipoleStage:
         return abs(self.signed_flow)
 
     @property
+    def stage_bin(self) -> str:
+        """The octave this stage's index falls in. Part of the stratum key, per D-12."""
+        return stage_bin(self.stage_index)[0]
+
+    @property
+    def stage_bin_first_index(self) -> int:
+        return stage_bin(self.stage_index)[1]
+
+    @property
+    def stage_bin_last_index(self) -> int:
+        return stage_bin(self.stage_index)[2]
+
+    @property
     def normalized_imbalance(self) -> float | None:
         total = self.bid_depth + self.ask_depth
         if total == 0:
@@ -88,7 +165,15 @@ class DipoleStage:
     def as_dict(self) -> dict[str, Any]:
         return {
             "runway_id": self.runway_id,
+            # D60. The EXACT index stays on the exact member row. Binning happens in the
+            # averaged layer's key and nowhere else, so nothing about a stage becomes
+            # unrecoverable - a consumer that wants stage 37 specifically still has it, and
+            # the three fields beside it say which averaged row that member fed.
             "stage_index": self.stage_index,
+            "stage_bin": self.stage_bin,
+            "stage_bin_first_index": self.stage_bin_first_index,
+            "stage_bin_last_index": self.stage_bin_last_index,
+            "stage_bin_rule": STAGE_BIN_RULE,
             "recv_ns": self.recv_ns,
             "orientation": self.orientation,
             "signed_flow": self.signed_flow,
@@ -188,7 +273,11 @@ class DipoleCalculator:
                 name=name,
                 declaration=Declaration(
                     numerator_formula=numerator,
-                    population="dipole runway stages within the stratum, orientation and stage index",
+                    population=(
+                        "dipole runway stages within the stratum, orientation, event phase "
+                        f"and stage-index bin ({STAGE_BIN_RULE}); the exact within-path stage "
+                        "index is carried on every member row"
+                    ),
                     causal_cutoff="stage receive time on ts_recv_ns",
                     status=RESOLVED,
                     missingness_rule=missingness,
@@ -221,6 +310,23 @@ class DipoleCalculator:
         self.direction_counts = {LONG: 0, SHORT: 0, NO_DIRECTION: 0}
         self.paths_seen = 0
         self.reversal_total = 0
+        # D60. Binning is not dropping, and the way to show that is to count. Each bin
+        # records how many stages it took and the lowest and highest exact index it actually
+        # saw, so a reader can tell an empty stretch of a bin from a full one instead of
+        # inferring occupancy from the bin's declared width.
+        self.stage_bin_counts: dict[str, dict[str, int]] = {}
+        # An absent event phase is an ABSENCE, so it is missing from this dict rather than
+        # present at zero. Run 33605852433 emitted BIRTH 220 and PERSISTENCE 3,234 and no
+        # REVERSAL stage at all, against 90 reversed runways in 4.10, and nothing in 4.12's
+        # own output said so - the discrepancy was only visible by reading 4.10 beside it.
+        self.event_phase_counts: dict[str, int] = {}
+        # The failure mode binning INTRODUCES, counted rather than hoped away. A wide bin can
+        # be filled by one long runway's consecutive seconds - a path alone in STAGE_64_127
+        # contributes up to 64 members by itself - and an n of 64 drawn from one episode is
+        # not the population an n of 64 implies. So every stratum's contributing runways are
+        # tracked and reported as a histogram. Bounded by concurrent episodes, which the same
+        # run measured at 91 across a whole day.
+        self._stratum_runways: dict[StratumKey, set[str]] = {}
 
     @property
     def measures(self) -> tuple[StratifiedMeasure, ...]:
@@ -237,7 +343,16 @@ class DipoleCalculator:
         session_phase: str,
         event_phase: str,
     ) -> StratumKey:
-        """Orientation is the side dimension here: SAME and FLIP never pool."""
+        """Orientation is the side dimension here: SAME and FLIP never pool.
+
+        `event_phase` is raw and stays raw. The stage INDEX is BINNED. D-12 was read the first time
+        as one rule about "phase" and it is two: BIRTH, PERSISTENCE and REVERSAL are
+        qualitatively different states and averaging across them destroys the distinction the
+        measure exists to make, while `stage=k` is an ordinal position whose raw use put 848
+        strata at n=1 with nothing left to average. Binning the index does not weaken the
+        phase rule - a BIRTH stage 4 and a PERSISTENCE stage 5 sit in the same bin and still
+        land in two different strata.
+        """
         return StratumKey(
             source_day=source_day,
             source_role=source_role,
@@ -246,7 +361,7 @@ class DipoleCalculator:
             side_orientation=stage.orientation,
             session_phase=session_phase,
             clock=CAUSAL_CLOCK,
-            subfamily_id=f"event_phase={event_phase}|stage={stage.stage_index}",
+            subfamily_id=f"event_phase={event_phase}|stage_bin={stage.stage_bin}",
         )
 
     def observe_stage(
@@ -272,6 +387,22 @@ class DipoleCalculator:
         )
         self.stages_seen += 1
         self.direction_counts[stage.direction] += 1
+        self.event_phase_counts[event_phase] = self.event_phase_counts.get(event_phase, 0) + 1
+        self._stratum_runways.setdefault(key, set()).add(stage.runway_id)
+        label, first, last = stage_bin(stage.stage_index)
+        seen = self.stage_bin_counts.get(label)
+        if seen is None:
+            self.stage_bin_counts[label] = {
+                "covers_first_index": first,
+                "covers_last_index": last,
+                "stages_seen": 1,
+                "min_stage_index_seen": stage.stage_index,
+                "max_stage_index_seen": stage.stage_index,
+            }
+        else:
+            seen["stages_seen"] += 1
+            seen["min_stage_index_seen"] = min(seen["min_stage_index_seen"], stage.stage_index)
+            seen["max_stage_index_seen"] = max(seen["max_stage_index_seen"], stage.stage_index)
 
         self.signed_flow.observe(key, float(stage.signed_flow))
         self.magnitude.observe(key, float(stage.magnitude))
@@ -300,6 +431,10 @@ class DipoleCalculator:
         return rows
 
     def summary(self) -> dict[str, Any]:
+        runway_histogram: dict[int, int] = {}
+        for runways in self._stratum_runways.values():
+            runway_histogram[len(runways)] = runway_histogram.get(len(runways), 0) + 1
+        runway_histogram = dict(sorted(runway_histogram.items()))
         return {
             "section": "4.12",
             "causal_clock": CAUSAL_CLOCK,
@@ -313,5 +448,28 @@ class DipoleCalculator:
                 "a zero-flow stage reports NO_DIRECTION rather than defaulting to one"
             ),
             "orientation_note": "SAME and FLIP are separate strata and never pool",
+            "event_phase_counts": dict(self.event_phase_counts),
+            "event_phase_note": (
+                "a phase with no stages is absent from event_phase_counts rather than present "
+                "at zero; 4.12 can only report the phases its stages were observed under, and "
+                "which phases a runway passed through is 4.10's record"
+            ),
+            "stage_binning": {
+                "rule": STAGE_BIN_RULE,
+                "binned_field": "stage_index",
+                "phase_still_raw": True,
+                "note": (
+                    "the within-path stage index is binned into closed octaves and the exact "
+                    "index is retained on every member row; event phase is NOT binned"
+                ),
+                "bins": {label: dict(seen) for label, seen in sorted(self.stage_bin_counts.items())},
+                "distinct_runways_per_stratum": runway_histogram,
+                "single_runway_strata": runway_histogram.get(1, 0),
+                "single_runway_note": (
+                    "a stratum drawing all its members from ONE runway is that runway's "
+                    "consecutive seconds, not a population of episodes; counted here because "
+                    "binning is what makes it possible"
+                ),
+            },
             "stratum_counts": {m.name: m.stratum_count for m in self.measures},
         }

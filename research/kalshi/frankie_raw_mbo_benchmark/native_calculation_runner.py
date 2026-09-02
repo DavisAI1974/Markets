@@ -22,6 +22,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping, Sequence
 
 from research.kalshi.frankie_raw_mbo_benchmark.native_absorption import AbsorptionCalculator
+from research.kalshi.frankie_raw_mbo_benchmark.native_book_regime import BookRegimeCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import ClockCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_dipole import DipoleCalculator
 from research.kalshi.frankie_raw_mbo_benchmark.native_discovery import DiscoveryCalculator
@@ -272,6 +273,9 @@ class NativeCalculationRun:
         if exact_cap is not None:
             shared["exact_cap"] = exact_cap
 
+        # D-4. 4.2 did not run at all, which left `book_full` - 10.13 GB, 93.47% of
+        # the exact member ledger - with no consumer anywhere in the artifact.
+        self.book_regime = BookRegimeCalculator(**shared)
         self.clocks = ClockCalculator(**shared)
         self.queue = QueueSurvivalCalculator(**shared)
         self.replenishment = ReplenishmentCalculator(horizon_ns=replenishment_horizon_ns, **shared)
@@ -310,6 +314,7 @@ class NativeCalculationRun:
     @property
     def sections(self) -> dict[str, Any]:
         mapping = {
+            "4.2": self.book_regime,
             "4.5": self.clocks,
             "4.6": self.queue,
             "4.7": self.replenishment,
