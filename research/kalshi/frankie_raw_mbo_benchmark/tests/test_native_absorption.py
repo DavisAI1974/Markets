@@ -180,3 +180,95 @@ class AbsorptionCalculatorTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ReplacementHorizonTest(unittest.TestCase):
+    """D-8. same_side_replacement_ratio was 0.0 in ALL 205 strata, and it was wired correctly.
+
+    It could not fire because it was measured WITHIN one F_LAST group, and on this tape
+    depletion and same-side addition are mutually exclusive there: 24,617 of 43,569 runways
+    are INDETERMINATE (zero depletion - the pure-add groups) and the 18,952 carrying
+    depletion contain no adds at all. A maker replacing size it just lost does so in a LATER
+    group. The scope was the defect.
+    """
+
+    HORIZON = 60_000
+
+    def calc(self) -> AbsorptionCalculator:
+        return AbsorptionCalculator(replacement_horizon_ns=self.HORIZON)
+
+    def _resolved(self, calc: AbsorptionCalculator):
+        return next(r for r in calc.companion_rows()
+                    if r["measure"] == "same_side_replacement_ratio")
+
+    def test_a_later_group_replacing_size_reaches_the_numerator(self) -> None:
+        calc = self.calc()
+        calc.score(runway(closed_recv_ns=2_000, traded_quantity=10, withdrawn_quantity=0))
+        calc.note_same_side_add(side="B", quantity=4, recv_ns=10_000)
+        calc.finalize(recv_ns=200_000)
+        self.assertEqual(self._resolved(calc)["value"]["numerator_total"], 4.0)
+
+    def test_the_within_group_scope_alone_produces_the_zero_that_was_reported(self) -> None:
+        """The old behaviour, reproduced: score and resolve with nothing in between."""
+        calc = self.calc()
+        calc.score(runway(closed_recv_ns=2_000, same_side_replacement_quantity=0))
+        calc.finalize(recv_ns=200_000)
+        row = self._resolved(calc)
+        self.assertEqual(row["value"]["numerator_total"], 0.0)
+        self.assertGreater(row["value"]["denominator_total"], 0.0,
+                           "the denominator was never the problem")
+
+    def test_an_add_on_the_opposite_side_is_not_a_replacement(self) -> None:
+        calc = self.calc()
+        calc.score(runway(side="B", closed_recv_ns=2_000))
+        self.assertEqual(calc.note_same_side_add(side="A", quantity=9, recv_ns=10_000), 0)
+        calc.finalize(recv_ns=200_000)
+        self.assertEqual(self._resolved(calc)["value"]["numerator_total"], 0.0)
+
+    def test_an_add_before_the_runway_closed_replaces_nothing(self) -> None:
+        """It cannot be a response to a loss that had not happened yet."""
+        calc = self.calc()
+        calc.score(runway(closed_recv_ns=5_000))
+        self.assertEqual(calc.note_same_side_add(side="B", quantity=7, recv_ns=1_000), 0)
+
+    def test_an_add_past_the_horizon_arrives_too_late(self) -> None:
+        calc = self.calc()
+        calc.score(runway(closed_recv_ns=2_000))
+        calc.note_same_side_add(side="B", quantity=7, recv_ns=2_000 + self.HORIZON + 1)
+        calc.finalize(recv_ns=500_000)
+        self.assertEqual(self._resolved(calc)["value"]["numerator_total"], 0.0)
+
+    def test_a_runway_whose_horizon_never_elapsed_is_censored_not_resolved_short(self) -> None:
+        """Reporting the numerator it happened to reach measures the stream end, not the market."""
+        calc = self.calc()
+        calc.score(runway(closed_recv_ns=2_000))
+        calc.note_same_side_add(side="B", quantity=3, recv_ns=2_500)
+        calc.finalize(recv_ns=3_000)
+        self.assertEqual(calc.summary()["replacement_censored"], 1)
+        self.assertEqual(calc.summary()["replacement_resolved"], 0)
+        self.assertEqual(self._resolved(calc)["excluded_missing_members"], 1)
+
+    def test_a_continuity_break_censors_what_it_cuts_off(self) -> None:
+        """An add in the next segment sits across an interval that was never observed."""
+        calc = self.calc()
+        calc.score(runway(closed_recv_ns=2_000, continuity_segment=0))
+        calc.close_continuity_segment(segment=0, recv_ns=2_500)
+        self.assertEqual(calc.summary()["replacement_censored"], 1)
+
+    def test_the_attribution_multiplicity_is_published(self) -> None:
+        """F-29's standing warning: 4.7 attributed 18.18 times over and named none of it."""
+        calc = self.calc()
+        calc.score(runway(runway_id="r1", closed_recv_ns=2_000))
+        calc.score(runway(runway_id="r2", closed_recv_ns=2_100))
+        self.assertEqual(calc.note_same_side_add(side="B", quantity=5, recv_ns=3_000), 2)
+        self.assertEqual(calc.summary()["replacement_attributions"], 2)
+
+    def test_the_receive_clock_cannot_run_backwards(self) -> None:
+        calc = self.calc()
+        calc.advance(10_000)
+        with self.assertRaises(AbsorptionError):
+            calc.advance(9_000)
+
+    def test_a_nonpositive_horizon_is_refused(self) -> None:
+        with self.assertRaises(AbsorptionError):
+            AbsorptionCalculator(replacement_horizon_ns=0)

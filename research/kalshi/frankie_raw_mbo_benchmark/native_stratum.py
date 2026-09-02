@@ -38,6 +38,18 @@ class StratumError(ValueError):
     """A parallel-view rule was violated."""
 
 
+CLUSTERING_NOT_RUN = "NO_CLUSTERING_D5"
+"""The declared value of `cluster_version` when no clustering was frozen for a run.
+
+D-14. Contract section 3 requires every average to declare family, subfamily AND cluster
+version. `cluster_version` defaulted to the empty string and only 84 rows - 4.16's - ever set
+it, so 16,209 of 16,293 averaged rows declared nothing. An empty string is not a statement
+that clustering did not run; it is the absence of a statement, and the two are exactly what
+this contract exists to keep apart. So the default is a DECLARATION, and the empty string is
+refused outright.
+"""
+
+
 @dataclass(frozen=True, order=True)
 class StratumKey:
     """The identity an average may never be pooled across.
@@ -55,10 +67,18 @@ class StratumKey:
     session_phase: str
     clock: str
     subfamily_id: str = ""
-    cluster_version: str = ""
+    cluster_version: str = CLUSTERING_NOT_RUN
     chain_signature: str = ""
 
     def __post_init__(self) -> None:
+        # D-14. `cluster_version` joins the mandatory six. It is not in the loop below
+        # because its FAILURE mode is different: the others were never silently empty, while
+        # this one was empty on 99.5% of rows and passed every gate.
+        if not isinstance(self.cluster_version, str) or not self.cluster_version:
+            raise StratumError(
+                "StratumKey.cluster_version must be a declaration; pass CLUSTERING_NOT_RUN "
+                "when no clustering was frozen, never the empty string"
+            )
         for name in ("source_day", "source_role", "family_id", "side_orientation", "session_phase", "clock"):
             value = getattr(self, name)
             if not isinstance(value, str) or not value:

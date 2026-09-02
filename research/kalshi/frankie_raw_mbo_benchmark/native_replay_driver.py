@@ -215,6 +215,9 @@ class DriverCounters:
     # notified. Zero here means the structures that recur and the structures
     # runways open on are disjoint, which is itself a finding.
     runway_structure_recurrences: int = 0
+    # D-8. (same-side add, pending runway) pairs. Exceeds the add count when
+    # runways overlap, and the excess IS the multiplicity - stated, per F-29.
+    replacement_attributions: int = 0
     """4.8 runways scored. One per group under D53, where the runway IS the F_LAST group."""
     lineage_nodes_added: int = 0
     """4.13 nodes added to the live graph. Rises only when a group touches a NEW order id."""
@@ -267,6 +270,20 @@ def _row_recv_ns(row: Mapping[str, Any], default: int) -> int:
     """A row's receive time, falling back to the group's own. Mirrors the adapter's `_int`."""
     value = row.get("ts_recv_ns")
     return default if value is None else int(value)
+
+
+def _row_size(row: Mapping[str, Any]) -> int:
+    """A row's size, absent or unreadable reading as zero rather than raising.
+
+    Zero is the right reading here specifically: a row that states no size added no displayed
+    quantity, so it contributes nothing to a replacement numerator. That is a different case
+    from a row whose size is missing where one is required, which the adapters refuse.
+    """
+    value = row.get("size")
+    try:
+        return max(0, int(value))
+    except (TypeError, ValueError):
+        return 0
 
 
 def _source_day(source_object: str) -> str:
@@ -430,7 +447,7 @@ class NativeReplayDriver:
         if self._last_complete_second is not None:
             self._retain_candidates(self.detector.finish(self._last_complete_second))
             self._retain_episode_rows(self.episodes.close_segment(recv_ns))
-        for section in ("queue", "replenishment", "exhaustion", "response"):
+        for section in ("queue", "replenishment", "exhaustion", "response", "absorption"):
             self._retain_lifecycle(
                 getattr(self.run, section).close_continuity_segment(
                     segment=segment, recv_ns=recv_ns
@@ -973,6 +990,18 @@ class NativeReplayDriver:
             occasion="GROUP_CLOSE",
         )
         self.counters.absorption_runways += 1
+        # D-8. Same-side replacement necessarily happens in a LATER group - on this tape a
+        # group either consumes or adds, never both, which is why the within-group numerator
+        # was 0.0 in all 205 strata. The group's own adds are offered to the runways that
+        # closed before it and are still inside their horizon.
+        for add_side in ("B", "A"):
+            added = sum(
+                _row_size(row) for row in actions
+                if str(row.get("action")) == "A" and str(row.get("side")) == add_side
+            )
+            self.counters.replacement_attributions += self.run.absorption.note_same_side_add(
+                side=add_side, quantity=added, recv_ns=ctx.recv_ns
+            )
 
         # --- 4.7 replenishment, the observation half: removals open episodes, refills are
         # attributed against the ones already pending. The calculator still owns resolution -

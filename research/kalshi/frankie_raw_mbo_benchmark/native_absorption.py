@@ -46,6 +46,34 @@ VALID_DISPOSITIONS = frozenset(
 )
 
 
+DEFAULT_REPLACEMENT_HORIZON_NS = 60 * 1_000_000_000
+"""How long after a runway closes a same-side re-add still counts as replacing what it lost.
+
+Sixty seconds, matching 4.7's replenishment horizon. It is the same physical question asked
+of the same tape - how long before liquidity that comes back stops being a response to the
+liquidity that left - so answering it with two different windows in one artifact would make
+the two sections incomparable for no reason anyone could state.
+"""
+
+
+@dataclass
+class _PendingReplacement:
+    """One closed runway still collecting its replacement numerator.
+
+    Held rather than resolved, because at the moment a runway closes the numerator lies in
+    the future. Resolving it immediately is exactly what produced 0.0 in all 205 strata: the
+    quantity was correct for the instant it was read, and the instant was the wrong one.
+    """
+
+    key: StratumKey
+    denominator: float
+    side: str
+    closed_recv_ns: int
+    matures_recv_ns: int
+    numerator: float = 0.0
+    attributions: int = 0
+
+
 class AbsorptionError(ValueError):
     """A runway could not be scored for absorption or withdrawal."""
 
@@ -184,7 +212,16 @@ class RunwayPressure:
 class AbsorptionCalculator:
     """Streaming section 4.8 accumulator. Every ratio keeps both coequal forms."""
 
-    def __init__(self, *, exact_cap: int | None = None, seed: int = 0) -> None:
+    def __init__(
+        self,
+        *,
+        exact_cap: int | None = None,
+        seed: int = 0,
+        replacement_horizon_ns: int = DEFAULT_REPLACEMENT_HORIZON_NS,
+    ) -> None:
+        if replacement_horizon_ns <= 0:
+            raise AbsorptionError("the replacement horizon must be a positive duration")
+        self.replacement_horizon_ns = int(replacement_horizon_ns)
         kwargs: dict[str, Any] = {"seed": seed}
         if exact_cap is not None:
             kwargs["exact_cap"] = exact_cap
@@ -264,6 +301,14 @@ class AbsorptionCalculator:
         self.scored = 0
         self.disposition_counts: dict[str, int] = {name: 0 for name in sorted(VALID_DISPOSITIONS)}
         self.discovered_dispositions: dict[str, int] = {}
+        # D-8. Runways whose replacement horizon has not yet elapsed. A list, not a dict:
+        # two runways on one stratum at one instant are two runways, and keying them would
+        # silently keep the second one only.
+        self._pending: list[_PendingReplacement] = []
+        self.replacement_resolved = 0
+        self.replacement_censored = 0
+        self.replacement_attributions = 0
+        self._now_ns: int | None = None
 
     @property
     def measures(self) -> tuple[StratifiedMeasure, ...]:
@@ -310,7 +355,18 @@ class AbsorptionCalculator:
             depletion = float(runway.displayed_depletion)
             self.absorption_ratio.observe(key, float(runway.traded_quantity), depletion)
             self.withdrawal_ratio.observe(key, float(runway.withdrawn_quantity), depletion)
-            self.replacement_ratio.observe(key, float(runway.same_side_replacement_quantity), depletion)
+            # D-8. The replacement numerator is NOT resolved here. It opens instead, seeded
+            # with whatever this group itself re-added on the side - which on this tape is
+            # always zero, since a group either consumes or adds - and collects same-side
+            # adds from following groups until the horizon elapses.
+            self._pending.append(_PendingReplacement(
+                key=key,
+                denominator=depletion,
+                side=runway.side,
+                closed_recv_ns=runway.closed_recv_ns,
+                matures_recv_ns=runway.closed_recv_ns + self.replacement_horizon_ns,
+                numerator=float(runway.same_side_replacement_quantity),
+            ))
 
         # Observed for EVERY runway, including the indeterminate and sparse ones, because
         # its denominator is the opposite side's retreat and has nothing to do with whether
@@ -323,6 +379,79 @@ class AbsorptionCalculator:
         self.price_response.observe(key, float(runway.price_response_raw))
         self.order_id_turnover.observe(key, float(runway.order_id_turnover))
         return runway.as_dict()
+
+    def note_same_side_add(self, *, side: str, quantity: int, recv_ns: int) -> int:
+        """Liquidity re-added on one side, offered to every runway still inside its horizon.
+
+        Returns how many pending runways took it. Overlap is real and is COUNTED rather than
+        hidden: F-29 caught 4.7 attributing each refill to every pending episode, 18.18 times
+        over, with the multiplicity invisible in the ratio's name. The same arithmetic applies
+        here, so the same number is published.
+        """
+        self.advance(recv_ns)
+        if side not in ("B", "A") or quantity <= 0:
+            return 0
+        attributed = 0
+        for pending in self._pending:
+            if pending.side != side or recv_ns < pending.closed_recv_ns:
+                continue
+            pending.numerator += float(quantity)
+            pending.attributions += 1
+            attributed += 1
+        self.replacement_attributions += attributed
+        return attributed
+
+    def advance(self, recv_ns: int) -> None:
+        """Resolve every pending runway whose horizon stream time has now passed.
+
+        Never reads forward: a runway resolves only once the clock has moved beyond its
+        maturity, so its numerator is complete at the moment it is read.
+        """
+        if self._now_ns is not None and recv_ns < self._now_ns:
+            raise AbsorptionError("the receive clock cannot run backwards")
+        self._now_ns = recv_ns
+        still_pending = []
+        for pending in self._pending:
+            if recv_ns < pending.matures_recv_ns:
+                still_pending.append(pending)
+                continue
+            self.replacement_ratio.observe(pending.key, pending.numerator, pending.denominator)
+            self.replacement_resolved += 1
+        self._pending = still_pending
+
+    def close_continuity_segment(self, *, segment: int, recv_ns: int) -> list[dict[str, Any]]:
+        """A continuity break censors every unmatured runway on the segment being closed.
+
+        An add arriving in the NEXT segment is on the far side of a break in the stream, so
+        it cannot be attributed to a runway that closed before it: the interval between them
+        was never observed. This is the same treatment 4.6 and 4.10 give at a boundary, and
+        the same reason 4.14 refuses a gap that spans one.
+        """
+        self.advance(recv_ns)
+        still_pending = []
+        for pending in self._pending:
+            if pending.key.continuity_segment != segment:
+                still_pending.append(pending)
+                continue
+            self.replacement_ratio.exclude_missing(pending.key)
+            self.replacement_censored += 1
+        self._pending = still_pending
+        return []
+
+    def finalize(self, *, recv_ns: int) -> list[dict[str, Any]]:
+        """Close the section. Unmatured runways are CENSORED, never resolved short.
+
+        A runway whose horizon had not elapsed has an incomplete numerator, and reporting the
+        quantity it happened to have reached would be a measurement of the stream's end
+        rather than of the market. It is excluded and counted, which is the same treatment
+        4.6 gives a resting order that outlives the tape.
+        """
+        self.advance(recv_ns)
+        for pending in self._pending:
+            self.replacement_ratio.exclude_missing(pending.key)
+            self.replacement_censored += 1
+        self._pending = []
+        return []
 
     def companion_rows(self) -> list[dict[str, Any]]:
         rows: list[dict[str, Any]] = []
@@ -358,5 +487,12 @@ class AbsorptionCalculator:
                 "one degree of freedom. traded_over_opposite_retreat_ratio is the "
                 "independent second dimension and is not derivable from either"
             ),
+            # D-8. What the replacement ratio actually rests on, stated rather than left
+            # to be derived: how many runways resolved, how many the stream end cut
+            # short, and how many (add, pending runway) pairs fed the numerators.
+            "replacement_horizon_ns": self.replacement_horizon_ns,
+            "replacement_resolved": self.replacement_resolved,
+            "replacement_censored": self.replacement_censored,
+            "replacement_attributions": self.replacement_attributions,
             "stratum_counts": {m.name: m.stratum_count for m in self.measures},
         }

@@ -49,6 +49,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_exhaustion import (
     SEARCHED,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_recognition import CandidateRecognition
+from research.kalshi.frankie_raw_mbo_benchmark.native_stratum import CLUSTERING_NOT_RUN
 
 NS_PER_SECOND = 1_000_000_000
 PERSIST_SECONDS = 3
@@ -521,7 +522,9 @@ class CandidateEpisodeTracker:
         }
 
 
-NO_CLUSTERING = "NO_CLUSTERING_D5"
+# D-14. One definition, in `native_stratum`, where the key that carries it lives.
+# Two spellings of one sentinel is how half a run comes to declare it and half not.
+NO_CLUSTERING = CLUSTERING_NOT_RUN
 """D5 keeps discovery out of this run, so there is no cluster version to name.
 
 Declared rather than left blank: an empty stratum field reads as "not recorded", and this is

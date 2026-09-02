@@ -10,6 +10,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_stratum import (
     Declaration,
     RatioPair,
     StratifiedMeasure,
+    CLUSTERING_NOT_RUN,
     StratumError,
     StratumKey,
     StreamingDistribution,
@@ -71,6 +72,30 @@ class StratumKeyTest(unittest.TestCase):
             key(continuity_segment=-1)
         with self.assertRaises(StratumError):
             key(continuity_segment="0")
+
+
+class ClusterVersionTest(unittest.TestCase):
+    """D-14. 16,209 of 16,293 averaged rows declared nothing, and every gate passed.
+
+    Contract section 3 requires every average to declare family, subfamily AND cluster
+    version. The field defaulted to the empty string and only 4.16's 84 rows ever set it.
+    """
+
+    def test_the_empty_string_is_refused(self) -> None:
+        """It is the ABSENCE of a declaration, not a declaration that clustering was absent."""
+        with self.assertRaises(StratumError):
+            key(cluster_version="")
+
+    def test_the_default_is_a_declaration_not_a_blank(self) -> None:
+        self.assertEqual(key().cluster_version, CLUSTERING_NOT_RUN)
+        self.assertTrue(CLUSTERING_NOT_RUN)
+
+    def test_the_declaration_reaches_the_emitted_row(self) -> None:
+        """A field that never leaves the key cannot be read by anyone auditing the artifact."""
+        self.assertEqual(key().as_dict()["cluster_version"], CLUSTERING_NOT_RUN)
+
+    def test_a_real_cluster_version_still_keys_apart_from_the_default(self) -> None:
+        self.assertNotEqual(key(cluster_version="disc-v3"), key())
 
 
 class DeclarationTest(unittest.TestCase):
