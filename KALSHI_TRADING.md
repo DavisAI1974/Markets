@@ -1,5 +1,35 @@
 # KALSHI TRADING — file index
 
+## S120 — the token reducer applied, and 4.16's event-driven half given its first caller
+
+Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. **1223 tests, from 1162 at S119.**
+
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_key_alias.py`** — D78. Key-name
+  aliasing for the averaged companion rows, plus `measure_key_names`, which turns the S119
+  prose measurement into a function that reports the saving in ACTUAL serialized bytes
+  rather than from name lengths. Key names are 49.5% of that section on run 33605852433 and
+  aliasing removes about a third of it; it saves nothing on the ledgers, where `book_full`
+  swamps every name, which is the scope D67 was right about and this is not. Applied at
+  SERIALIZATION only, so the gates run on unaliased rows and no verdict can move under it.
+  `read_averaged_rows` is the only supported way to read the rows: a direct lookup on an
+  aliased layer succeeds, returns the right count, and reports every row under `None`.
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py`** — D80. Now carries
+  `_observe_change_points`, the FIRST caller `native_response.observe_change_point` has ever
+  had. The trigger is the observable state's fingerprint moving, never the clock: the
+  contract requires emission at change points AND at fixed horizons, so a per-second call
+  would collapse the two and retain (open tracks x seconds) for readings the horizons
+  already carry. Off by default, because retained volume becoming (open tracks x changes) is
+  a size decision.
+- **`research/kalshi/frankie_raw_mbo_benchmark/report_ledger_size.py`** — gains the READ
+  SURFACE section. The disk tables could not see aliasing at all, so a run with it on would
+  have reported a saving of exactly zero. It also states why the two reducers cannot
+  confound: one changes a layer in the result JSON, the other changes rows on disk.
+- **`research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_key_alias.py`** — new.
+  Round-trip, key-only renaming, no ambiguous codes, and one recorded LIMIT: a foreign alias
+  code is indistinguishable from a name that was never aliased, so the legend travelling in
+  the same layer is the structural answer rather than a guard that could never fire.
+
+
 ## S119 — the sixteen-defect register closed, and the gate that would have caught it
 
 Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. **1162 tests, from 552 at S115.**
