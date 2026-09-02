@@ -4,12 +4,14 @@ from __future__ import annotations
 import unittest
 
 from research.kalshi.frankie_raw_mbo_benchmark.native_replenishment import (
+    ARRIVAL_ATTRIBUTION_RULE,
     CENSORED_SEGMENT_END,
     CENSORED_STREAM_END,
     NEIGHBORING_PRICE,
     NEVER_RESTORED,
     NEW_LIQUIDITY,
     RESHAPED_RESIDUAL,
+    NEIGHBORHOOD_ARRIVAL_FORMULA,
     RESTORED,
     SAME_PRICE,
     ReplenishmentCalculator,
@@ -118,14 +120,14 @@ class ReplenishmentCalculatorTest(unittest.TestCase):
         episode.add_refill(quantity=14, liquidity_kind=NEW_LIQUIDITY, price_relation=SAME_PRICE, recv_ns=10_100)
         row = self.calc.advance(11_000)[0]
         self.assertEqual(row["overshoot_quantity"], 4)
-        self.assertEqual(row["restoration_ratio"], 1.4)
+        self.assertEqual(row["neighborhood_arrival_ratio"], 1.4)
 
     def test_no_overshoot_reports_zero_which_is_an_observation(self) -> None:
         episode = self.calc.open_episode(**open_kwargs(removed_quantity=10))
         episode.add_refill(quantity=3, liquidity_kind=NEW_LIQUIDITY, price_relation=SAME_PRICE, recv_ns=10_100)
         row = self.calc.advance(11_000)[0]
         self.assertEqual(row["overshoot_quantity"], 0)
-        self.assertEqual(row["restoration_ratio"], 0.3)
+        self.assertEqual(row["neighborhood_arrival_ratio"], 0.3)
 
     def test_touch_restoration_is_tracked_separately_from_quantity(self) -> None:
         episode = self.calc.open_episode(**open_kwargs())
@@ -177,14 +179,14 @@ class ReplenishmentCalculatorTest(unittest.TestCase):
         self.assertEqual(row["value"]["n"], 0)
         self.assertEqual(row["excluded_missing_members"], 1)
 
-    def test_restoration_ratio_keeps_both_coequal_forms(self) -> None:
+    def test_neighborhood_arrival_ratio_keeps_both_coequal_forms(self) -> None:
         for quantity, removed in ((1, 1), (1, 99)):
             episode = self.calc.open_episode(**open_kwargs(removed_quantity=removed))
             episode.add_refill(
                 quantity=quantity, liquidity_kind=NEW_LIQUIDITY, price_relation=SAME_PRICE, recv_ns=10_100
             )
         self.calc.advance(11_000)
-        value = self.calc.restoration_ratio.rows()[0]["value"]
+        value = self.calc.neighborhood_arrival_ratio.rows()[0]["value"]
         self.assertAlmostEqual(value["mean_of_member_ratios"], (1.0 + 1.0 / 99.0) / 2)
         self.assertAlmostEqual(value["ratio_of_aggregate_sums"], 2.0 / 100.0)
         self.assertEqual(value["difference_label"], "COMPLEMENTARY_SCOPE_DIFFERENCE")
@@ -233,6 +235,140 @@ class ReplenishmentCalculatorTest(unittest.TestCase):
         self.assertEqual(summary["emission"], "DEFERRED_UNTIL_HORIZON_ELAPSED_IN_STREAM_TIME")
         self.assertEqual(summary["episodes_opened"], 1)
 
+
+class ArrivalDensityNamingTest(unittest.TestCase):
+    """D-3: the name was the defect, so these tests are about what the name claims.
+
+    The delivered run reported an aggregate 14.24 under the name `restoration_ratio`, built
+    from 441,404 arrivals credited across 24,283 episodes - 18.18 attributions each - against
+    a median removed quantity of 1 to 2 lots. Nothing about the arithmetic is wrong. Every
+    assertion below is about whether a reader can tell what they are holding.
+    """
+
+    def setUp(self) -> None:
+        self.calc = ReplenishmentCalculator(horizon_ns=HORIZON)
+
+    def test_no_number_goes_out_under_a_name_that_claims_replacement(self) -> None:
+        episode = self.calc.open_episode(**open_kwargs())
+        episode.add_refill(quantity=6, liquidity_kind=NEW_LIQUIDITY, price_relation=SAME_PRICE, recv_ns=10_100)
+        row = self.calc.advance(11_000)[0]
+        self.assertNotIn("restoration_ratio", row)
+        self.assertIn("neighborhood_arrival_ratio", row)
+        self.assertNotIn(
+            "restoration_ratio",
+            {r["measure"] for r in self.calc.companion_rows()},
+        )
+
+    def test_the_old_name_is_refused_loudly_rather_than_quietly_still_working(self) -> None:
+        """D60's third option. A caller asking for a replacement ratio must not be handed
+        an arrival density under the name it asked for."""
+        episode = self.calc.open_episode(**open_kwargs())
+        with self.assertRaises(ReplenishmentError):
+            episode.restoration_ratio
+        with self.assertRaises(ReplenishmentError):
+            self.calc.restoration_ratio
+
+    def test_the_formula_travels_on_the_episode_row(self) -> None:
+        """A caveat that lives only in a docstring expires the first time a row is read alone."""
+        episode = self.calc.open_episode(**open_kwargs())
+        episode.add_refill(quantity=6, liquidity_kind=NEW_LIQUIDITY, price_relation=SAME_PRICE, recv_ns=10_100)
+        row = self.calc.advance(11_000)[0]
+        self.assertEqual(row["neighborhood_arrival_ratio_formula"], NEIGHBORHOOD_ARRIVAL_FORMULA)
+        self.assertIn("NOT the share", row["neighborhood_arrival_ratio_formula"])
+        self.assertEqual(row["attribution_rule"], ARRIVAL_ATTRIBUTION_RULE)
+
+    def test_the_stratified_measure_declares_the_same_formula(self) -> None:
+        episode = self.calc.open_episode(**open_kwargs())
+        episode.add_refill(quantity=6, liquidity_kind=NEW_LIQUIDITY, price_relation=SAME_PRICE, recv_ns=10_100)
+        self.calc.advance(11_000)
+        (row,) = [
+            r for r in self.calc.companion_rows() if r["measure"] == "neighborhood_arrival_ratio"
+        ]
+        self.assertIn("arrival density", row["declaration"]["numerator_formula"])
+        self.assertIn("every pending episode", row["declaration"]["numerator_formula"])
+
+    def test_the_multiplicity_is_a_number_in_the_artifact_not_a_division_to_do_later(self) -> None:
+        """441,404 / 24,283 lived in two different documents. It lives on the value now."""
+        first = self.calc.open_episode(**open_kwargs())
+        second = self.calc.open_episode(**open_kwargs(recv_ns=10_001))
+        for recv_ns in (10_100, 10_200, 10_300):
+            # One arrival, credited to both pending episodes - the rule under test.
+            for episode in (first, second):
+                episode.add_refill(
+                    quantity=2,
+                    liquidity_kind=NEW_LIQUIDITY,
+                    price_relation=SAME_PRICE,
+                    recv_ns=recv_ns,
+                )
+        rows = self.calc.advance(12_000)
+        summary = self.calc.summary()
+        self.assertEqual([row["refill_attributions"] for row in rows], [3, 3])
+        self.assertEqual(summary["refill_attributions"], 6)
+        self.assertEqual(summary["episodes_closed"], 2)
+        self.assertEqual(summary["attributions_per_episode"], 3.0)
+        self.assertEqual(summary["attribution_rule"], ARRIVAL_ATTRIBUTION_RULE)
+
+    def test_the_multiplicity_is_visible_per_stratum_not_only_in_the_traversal(self) -> None:
+        episode = self.calc.open_episode(**open_kwargs())
+        for recv_ns in (10_100, 10_200):
+            episode.add_refill(
+                quantity=1, liquidity_kind=NEW_LIQUIDITY, price_relation=SAME_PRICE, recv_ns=recv_ns
+            )
+        self.calc.advance(11_000)
+        (row,) = [
+            r
+            for r in self.calc.companion_rows()
+            if r["measure"] == "refill_attributions_per_episode"
+        ]
+        self.assertEqual(row["value"]["n"], 1)
+        self.assertEqual(row["value"]["maximum"], 2.0)
+
+    def test_a_censored_episode_is_excluded_from_the_multiplicity_and_counted(self) -> None:
+        """Its exposure to arrivals was cut short, so its count is not a comparable one."""
+        self.calc.open_episode(**open_kwargs())
+        self.calc.close_continuity_segment(segment=0, recv_ns=10_300)
+        (row,) = [
+            r
+            for r in self.calc.companion_rows()
+            if r["measure"] == "refill_attributions_per_episode"
+        ]
+        self.assertEqual(row["value"]["n"], 0)
+        self.assertEqual(row["excluded_missing_members"], 1)
+
+    def test_the_multiplicity_before_anything_closes_is_absent_not_zero(self) -> None:
+        """Zero would say each arrival was credited to no episode, which is a false claim."""
+        self.calc.open_episode(**open_kwargs())
+        self.assertIsNone(self.calc.summary()["attributions_per_episode"])
+        self.assertEqual(self.calc.summary()["episodes_closed"], 0)
+
+    def test_the_summary_names_the_measure_it_replaced(self) -> None:
+        """The rename must be joinable to run 33605852433, or the comparison is lost."""
+        summary = self.calc.summary()
+        self.assertEqual(
+            summary["renamed_measures"], {"restoration_ratio": "neighborhood_arrival_ratio"}
+        )
+        self.assertIn("D-3", summary["rename_reason"])
+
+    def test_the_relabel_left_the_arithmetic_alone(self) -> None:
+        """A regression pin, deliberately. Changing the attribution here would silently
+        invalidate every comparison with the delivered run, which is why D-3 was prescribed
+        as a relabel."""
+        episode = self.calc.open_episode(**open_kwargs(removed_quantity=10))
+        episode.add_refill(quantity=4, liquidity_kind=NEW_LIQUIDITY, price_relation=SAME_PRICE, recv_ns=10_100)
+        episode.add_refill(quantity=3, liquidity_kind=RESHAPED_RESIDUAL, price_relation=SAME_PRICE, recv_ns=10_200)
+        row = self.calc.advance(11_000)[0]
+        self.assertEqual(row["replaced_quantity"], 7)
+        self.assertEqual(row["neighborhood_arrival_ratio"], 0.7)
+        value = self.calc.neighborhood_arrival_ratio.rows()[0]["value"]
+        self.assertEqual(value["numerator_total"], 7.0)
+        self.assertEqual(value["denominator_total"], 10.0)
+
+    def test_a_zero_removal_ratio_is_none_rather_than_zero(self) -> None:
+        """Unchanged from before the relabel, and restated because it is the same discipline:
+        no denominator is not a ratio of zero."""
+        episode = self.calc.open_episode(**open_kwargs())
+        episode.removed_quantity = 0
+        self.assertIsNone(episode.neighborhood_arrival_ratio)
 
 if __name__ == "__main__":
     unittest.main()

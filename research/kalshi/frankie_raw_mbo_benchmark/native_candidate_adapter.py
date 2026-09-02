@@ -47,6 +47,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_exhaustion import (
     PERSISTENCE,
     REVERSAL,
     SEARCHED,
+    register_discovered_phase,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_recognition import CandidateRecognition
 from research.kalshi.frankie_raw_mbo_benchmark.native_stratum import CLUSTERING_NOT_RUN
@@ -57,6 +58,17 @@ PERSIST_SECONDS = 3
 
 DEPTH_LEVELS = 10
 NO_PREDECESSOR = "NO_PREDECESSOR"
+
+CENSORED_AT_OBSERVATION_END = "CENSORED_AT_OBSERVATION_END"
+"""The terminal phase of an episode that stopped being observable rather than ending.
+
+Registered as a DISCOVERED phase rather than reusing REVERSAL, because a boundary is not
+a reversal and stamping one as the other fabricates the very evidence the phase-ordering
+defect made unreachable. It sits after PERSISTENCE and before REVERSAL so ordering stays
+checkable, and it is deliberately absent from TERMINAL_PHASES: `complete` refuses it, so
+a censored episode cannot be recorded as one that finished.
+"""
+register_discovered_phase(CENSORED_AT_OBSERVATION_END, after=PERSISTENCE, before=REVERSAL)
 """A segment's first candidate has nothing to be SAME or FLIP against. Declared, not defaulted.
 
 4.12 forbids pooling SAME and FLIP, so inventing one for the first candidate would put a
@@ -374,6 +386,34 @@ class CandidateEpisodeTracker:
         emitted: list[dict[str, Any]] = []
         recv_ns = second * NS_PER_SECOND
         for episode in list(self._open.values()):
+            # THIS SECOND'S PHASE IS DECIDED BEFORE THIS SECOND'S STAGE IS OBSERVED.
+            #
+            # It used to be the other way round, and the consequence was that every stage was
+            # filed under the PREVIOUS second's phase: 4.12 reported BIRTH 220 against 90
+            # paths, and REVERSAL was unreachable entirely - 3,454 stages across 90 paths with
+            # not one REVERSAL, while 4.10 recorded 90 of 91 runways as reversed. The terminal
+            # phase was entered inside `_close`, which observes nothing and then drops the
+            # episode, so no stage could ever be filed under a phase that only exists after
+            # the last observation.
+            #
+            # Deciding first is not lookahead: the third consecutive opposite reading IS the
+            # evidence, and it arrives at this second, so entering REVERSAL here is the same
+            # fact observed causally rather than one second late.
+            opposed = polarity != 0 and polarity != episode.candidate.polarity
+            episode.opposite_run = episode.opposite_run + 1 if opposed else 0
+            reversing = episode.opposite_run >= self.persist_seconds
+            if not opposed and not episode.reached_persistence:
+                self.exhaustion.enter_phase(
+                    episode.candidate.candidate_id, PERSISTENCE, recv_ns
+                )
+                episode.current_phase = PERSISTENCE
+                episode.reached_persistence = True
+            if reversing:
+                self.exhaustion.enter_phase(
+                    episode.candidate.candidate_id, REVERSAL, recv_ns
+                )
+                episode.current_phase = REVERSAL
+
             if episode.orientation != NO_PREDECESSOR:
                 episode.stages.append(
                     DipoleStage(
@@ -393,16 +433,10 @@ class CandidateEpisodeTracker:
                 )
             if episode.stages:
                 self._observe_stage(episode, episode.stages[-1])
-            opposed = polarity != 0 and polarity != episode.candidate.polarity
-            episode.opposite_run = episode.opposite_run + 1 if opposed else 0
-            if not opposed and not episode.reached_persistence:
-                self.exhaustion.enter_phase(
-                    episode.candidate.candidate_id, PERSISTENCE, recv_ns
-                )
-                episode.current_phase = PERSISTENCE
-                episode.reached_persistence = True
-            if episode.opposite_run >= self.persist_seconds:
-                emitted.append(self._close(episode, recv_ns, REVERSAL))
+            if reversing:
+                emitted.append(self._close(
+                    episode, recv_ns, REVERSAL, phase_already_entered=True, completed=True
+                ))
                 self.episodes_reversed += 1
         return emitted
 
@@ -453,8 +487,26 @@ class CandidateEpisodeTracker:
             notified += 1
         return notified
 
-    def _close(self, episode: _Episode, recv_ns: int, phase: str) -> dict[str, Any]:
-        self.exhaustion.enter_phase(episode.candidate.candidate_id, phase, recv_ns)
+    def _close(
+        self,
+        episode: _Episode,
+        recv_ns: int,
+        phase: str,
+        *,
+        phase_already_entered: bool = False,
+        completed: bool = False,
+    ) -> dict[str, Any]:
+        """End one episode. `completed` says whether the runway REACHED a terminal phase.
+
+        The distinction is 4.10's whole point and was being lost: nothing ever called
+        `ExhaustionCalculator.complete`, so all 91 runways ended CENSORED_STREAM_END,
+        `completed_runway_duration_ns` had n=0 against 91 exclusions, and the reversal
+        duration everyone read was a censoring artifact rather than a persistence measure. An
+        episode that genuinely reversed reached its terminal phase and COMPLETED; one cut off
+        at a boundary stopped being observable, which is censoring.
+        """
+        if not phase_already_entered:
+            self.exhaustion.enter_phase(episode.candidate.candidate_id, phase, recv_ns)
         episode.current_phase = phase
         dipole_row: dict[str, Any] | None = None
         if episode.stages:
@@ -466,6 +518,10 @@ class CandidateEpisodeTracker:
         else:
             self.paths_withheld_no_predecessor += 1
         recognition_row = self.recognition.record(episode.recognition)
+        if completed:
+            self.exhaustion.complete(
+                episode.candidate.candidate_id, recv_ns=recv_ns, terminal_phase=phase
+            )
         episode.closed = True
         self._open.pop(episode.candidate.candidate_id, None)
         return {
@@ -493,7 +549,15 @@ class CandidateEpisodeTracker:
             # understate detection. Only a candidate never recognised at all is censored here.
             if episode.recognition.outcome is None:
                 episode.recognition.mark_censored()
-            rows.append(self._close(episode, recv_ns, REVERSAL))
+            # NOT REVERSAL. Once stages are filed under the phase they actually sat in, a
+            # boundary-censored episode stamped REVERSAL would emit REVERSAL stages for a
+            # reversal that never happened - fabricating exactly the evidence the previous
+            # defect made unreachable. A censored episode gets its own discovered phase,
+            # which is what the open-world phase vocabulary is for: a runway whose ending the
+            # carried three cannot describe is recorded under its own identity rather than
+            # rounded to the nearest carried label. It is deliberately NOT in
+            # TERMINAL_PHASES, so `complete` refuses it and the runway censors.
+            rows.append(self._close(episode, recv_ns, CENSORED_AT_OBSERVATION_END))
             self.episodes_censored += 1
         self._last_polarity = None
         return rows

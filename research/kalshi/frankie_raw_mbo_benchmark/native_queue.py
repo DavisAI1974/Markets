@@ -32,8 +32,10 @@ said in its own declaration, because a population that is false is worse than on
 missing: it invites exactly the pooling section 3 exists to forbid.
 
 The 24,645 - 20,005 = 4,640 difference is the re-queue count, and it was reconcilable only
-by differencing against an adapter counter that never reached this artifact
-(`modify_reprice` 4,625), which left FIFTEEN observations unattributed. Two things close
+by differencing against a counter in another block entirely - the adapter's
+`queue_observation`, where `modify_reprice` reads 4,625 - which left FIFTEEN observations
+unattributed: fourteen reconcile to `priority_loss_not_visible_in_position` and the fifteenth
+to nothing that was emitted anywhere. Two things close
 that here. Every re-queued episode records WHY its level changed (`opened_basis`), counted
 in `episode_accounting` by the transition the book itself shows - price, side, or neither -
 so the residual class is reported rather than differenced out. And the opening queue
@@ -59,10 +61,13 @@ REOPENED_PRICE_CHANGED = "REQUEUE_PRICE_CHANGED"
 REOPENED_SIDE_CHANGED = "REQUEUE_SIDE_CHANGED"
 REOPENED_SAME_LEVEL = "REQUEUE_SAME_LEVEL"
 # D-13. The three ways a priority loss can present in the book, kept apart because the
-# fifteen unattributed observations on run 33605852433 sat in exactly this distinction:
-# 4,625 were re-prices the adapter counted, 14 were priority losses the book position never
-# showed (a size increase re-queues at the same side and price), and one was neither. A
-# same-level re-queue is not a re-price and counting them together is how it went missing.
+# fifteen unattributed observations on run 33605852433 sit in exactly this distinction. The
+# arithmetic there: 4,625 `modify_reprice` + 14 `priority_loss_not_visible_in_position` =
+# 4,639 of 4,640 re-queues, so fourteen are priority losses the book position never showed -
+# a size increase re-queues at the order's own side and price - and the fifteenth is not
+# attributable at all, because those two are the only cause counters the adapter's
+# `queue_observation` block reported. A same-level re-queue is not a re-price, and having no
+# place inside 4.6 to count one apart from the other is how the fifteen went missing.
 REOPEN_BASES = (REOPENED_PRICE_CHANGED, REOPENED_SIDE_CHANGED, REOPENED_SAME_LEVEL)
 
 # D-13. The two units, written once and used by the declarations that count in each. A
@@ -100,8 +105,9 @@ def _reopen_basis(closed: "QueueEpisode", *, side: str, price_raw: int) -> str:
     Side first, because a side change is the stronger statement and a re-priced order that
     also crossed sides would otherwise be filed as a plain re-price. Neither changing is a
     real and separate case - a size increase re-queues an order at its own side and price -
-    and it is the case that went uncounted: 14 of the fifteen unattributed observations on
-    run 33605852433 are the adapter's `priority_loss_not_visible_in_position`.
+    and it is the case that went uncounted: fourteen of the fifteen unattributed observations
+    on run 33605852433 reconcile to the adapter's `priority_loss_not_visible_in_position`,
+    which is exactly this class, and the fifteenth is unattributable from what was emitted.
     """
     if side != closed.side:
         return REOPENED_SIDE_CHANGED
@@ -129,7 +135,7 @@ class QueueEpisode:
     current_volume_ahead: int
     # D-13. Why this episode exists, carried ON the episode rather than in prose. A birth and
     # a re-queue are different populations, and on the Sunday run the only record of which
-    # was which lived in an adapter counter that never reached this section's artifact.
+    # was which lived in an adapter counter block that no measure of 4.6 could see.
     opened_basis: str = OPENED_AT_BIRTH
     fills_ahead: int = 0
     closed_recv_ns: int | None = None
@@ -500,8 +506,9 @@ class QueueSurvivalCalculator:
         # D-13. Classified from what the BOOK shows, before and after, because that is the
         # only account of the re-queue this section holds: the cause the adapter knows -
         # re-price, size increase, duplicate add, a re-add of an order a reset took - is
-        # counted there and reaches no artifact of section 4.6. Differencing 4,640 re-queues
-        # against 4,625 `modify_reprice` events is what left fifteen observations homeless.
+        # counted in its own `queue_observation` block and in none of 4.6's measures or its
+        # summary. Reconciling 4,640 re-queues by differencing them against that block's 4,625
+        # `modify_reprice` events is what left fifteen observations homeless.
         basis = _reopen_basis(episode, side=side, price_raw=price_raw)
         self.episode_reopens[basis] += 1
         orders_ahead, volume_ahead = book_view(side, price_raw, order_id)
@@ -619,11 +626,13 @@ class QueueSurvivalCalculator:
         evidence for that, so raising would destroy it.
 
         `reopens_without_a_price_change` is the named residual. On run 33605852433 the
-        section's re-queue count (4,640) could only be read against an adapter counter
-        outside this artifact (`modify_reprice` 4,625), and the 15 that did not match had
-        nowhere to be counted - 14 of them are priority losses the book position never showed
-        and 1 was unattributable from the committed evidence at all. That class is now
-        counted here every run, so the number is reported rather than rediscovered.
+        section's re-queue count (4,640) could only be read against a counter in another
+        block (the adapter's `queue_observation`, `modify_reprice` 4,625), and the 15 that did not
+        match had
+        nowhere to be counted: 14 reconcile to `priority_loss_not_visible_in_position` and
+        the fifteenth is unattributable from the committed evidence, since no other cause
+        counter was emitted. That class is counted here every run now, so the number is
+        reported rather than differenced out of two artifacts and rediscovered.
         """
         opened = self.birth_episodes + self.episode_reopen_count
         without_price_change = (

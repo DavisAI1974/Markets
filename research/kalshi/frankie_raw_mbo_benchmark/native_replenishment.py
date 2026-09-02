@@ -16,6 +16,35 @@ paths are separate").
 Section 4.7 also requires distinguishing new liquidity from reshaped residual orders, so a
 refill by a previously unseen order ID and a resize of an order that was already resting
 are counted separately and never summed into one "replenishment" number.
+
+## D-3: the ratio was named for something it does not measure
+
+The measure this module previously called `restoration_ratio` is an ARRIVAL DENSITY. The
+observation layer credits each refill to EVERY pending episode in the neighbourhood - that
+rule is deliberate and is argued at length in `native_replenishment_adapter` - so in run
+33605852433 **441,404 attributions landed across 24,283 episodes, 18.18 per episode**, and
+the aggregate 748,271 over 52,541 gave **14.24** against a median removed quantity of 1 to 2
+lots. Read under the old name that says nine to forty lots come back for every lot removed.
+What it actually says is how much liquidity arrives within one tick and 60 s of a removal.
+
+**The name was the defect, so the name is what changed.** The arithmetic, the attribution and
+the emission are untouched: every number this module produces is bit-identical to the
+delivered run, so the two remain directly comparable and the AT_TOUCH / BEHIND_TOUCH contrast
+Frankie found (a factor of 379 to 405 on time-to-restoration) is unaffected. Changing the
+attribution here would have silently invalidated that comparison, which is why it was
+prescribed as a relabel and left as one.
+
+Two things travel with the value from now on. The formula rides on the episode row rather
+than living in this docstring, because a caveat that only prose carries expires the first
+time a row is read alone - that is the whole of D-3. And the multiplicity is EMITTED:
+`refill_attributions` per episode, a `refill_attributions_per_episode` distribution per
+stratum, and `attributions_per_episode` in the summary, so nobody has to divide 441,404 by
+24,283 to discover what kind of quantity they are holding.
+
+One name is knowingly left alone. The numerator field `replaced_quantity` carries the same
+implication of replacement and is NOT renamed here: it is outside the prescribed relabel and
+it is bound by the replenishment adapter's committed tests, which read the key by name.
+Flagged rather than changed quietly.
 """
 from __future__ import annotations
 
@@ -45,6 +74,27 @@ NEIGHBORING_PRICE = "NEIGHBORING_PRICE"
 
 NEW_LIQUIDITY = "NEW_ID_ADD"
 RESHAPED_RESIDUAL = "SAME_ID_MODIFY"
+
+ARRIVAL_ATTRIBUTION_RULE = "EVERY_PENDING_EPISODE_IN_NEIGHBORHOOD"
+"""How an arrival is credited, stated as a value so it cannot be read off a name instead.
+
+Not one-to-one. Two episodes pending at one level both receive the same arrival in full, so
+summing `replaced_quantity` across overlapping episodes exceeds the quantity that arrived.
+The episode is the unit 4.7 measures; the sum is not a quantity of liquidity.
+"""
+
+NEIGHBORHOOD_ARRIVAL_FORMULA = (
+    "quantity arriving at this level or a neighboring one within the horizon, credited to "
+    "every pending episode in the neighborhood, over this episode's removed quantity; a "
+    "liquidity arrival density in a price-and-time neighborhood, NOT the share of the "
+    "removed quantity that came back"
+)
+"""The formula, carried on every episode row.
+
+It costs a constant string per row - about 5 MB across the delivered run's 24,283 episodes,
+inside a section that is 0.6% of the run's bytes - against a defect that made the headline
+number of section 4.7 unreadable. Paid deliberately.
+"""
 
 
 class ReplenishmentError(ValueError):
@@ -90,11 +140,42 @@ class ReplenishmentEpisode:
         return self.new_id_add_quantity + self.same_id_modify_quantity
 
     @property
-    def restoration_ratio(self) -> float | None:
-        """Replaced over removed. None when nothing was removed - not zero."""
+    def refill_attributions(self) -> int:
+        """How many arrivals were credited to THIS episode.
+
+        The multiplicity, per episode, computed where it is cheapest and emitted rather than
+        left to be inferred from a traversal counter. In run 33605852433 this averaged 18.18.
+        """
+        return self.new_id_add_count + self.same_id_modify_count
+
+    @property
+    def neighborhood_arrival_ratio(self) -> float | None:
+        """Arrival quantity credited to this episode, over removed. None when nothing was
+        removed - not zero.
+
+        D-3. Formerly `restoration_ratio`, which claimed a one-to-one relation between what
+        left and what came back. It has never been that: an arrival within the neighbourhood
+        is credited to every pending episode there, so the numerator counts liquidity that
+        arrived NEAR the removal, not liquidity that replaced it. Value unchanged, claim
+        corrected.
+        """
         if self.removed_quantity == 0:
             return None
         return self.replaced_quantity / self.removed_quantity
+
+    @property
+    def restoration_ratio(self) -> float | None:
+        """Refused loudly rather than quietly kept working (D60).
+
+        A caller reading the old name is asking for a replacement ratio, and the number it
+        would get is an arrival density. Returning it would reproduce the defect on a
+        codebase that has already been told about it, so this raises and names the successor.
+        """
+        raise ReplenishmentError(
+            "restoration_ratio was renamed to neighborhood_arrival_ratio (D-3): each arrival "
+            "is credited to every pending episode in the neighbourhood, so this is a "
+            "liquidity arrival density, not the share of the removal that came back"
+        )
 
     @property
     def overshoot_quantity(self) -> int:
@@ -174,7 +255,13 @@ class ReplenishmentEpisode:
             "same_price_refill_quantity": self.same_price_refill_quantity,
             "neighboring_price_refill_quantity": self.neighboring_price_refill_quantity,
             "replaced_quantity": self.replaced_quantity,
-            "restoration_ratio": self.restoration_ratio,
+            "neighborhood_arrival_ratio": self.neighborhood_arrival_ratio,
+            # The qualifier travels ON the value. D-3 happened because the attribution rule
+            # lived in an adapter docstring and a traversal counter while the number went out
+            # under a name that contradicted both.
+            "neighborhood_arrival_ratio_formula": NEIGHBORHOOD_ARRIVAL_FORMULA,
+            "refill_attributions": self.refill_attributions,
+            "attribution_rule": ARRIVAL_ATTRIBUTION_RULE,
             "overshoot_quantity": self.overshoot_quantity,
             "peak_restored_quantity": self.peak_restored_quantity,
             "time_to_restoration_ns": self.time_to_restoration_ns,
@@ -234,12 +321,22 @@ class ReplenishmentCalculator:
             RESOLVED,
             "censored episodes are excluded here and reported under their own outcome",
         )
-        self.restoration_ratio = measure(
-            "restoration_ratio",
-            "replaced quantity over removed quantity, member and aggregate forms retained",
+        self.neighborhood_arrival_ratio = measure(
+            "neighborhood_arrival_ratio",
+            # D-3. The old formula string said "replaced quantity over removed quantity",
+            # which is true of the arithmetic and false about the estimand: the numerator is
+            # every arrival in the neighbourhood, each one credited to every episode pending
+            # there. The formula now says which of the two it is.
+            NEIGHBORHOOD_ARRIVAL_FORMULA + "; member and aggregate forms retained",
             RESOLVED,
             "zero-denominator episodes are counted, not dropped",
             kind="RATIO_PAIR",
+        )
+        self.refill_attributions_per_episode = measure(
+            "refill_attributions_per_episode",
+            "count of arrivals credited to the episode; the attribution multiplicity itself",
+            RESOLVED,
+            "censored episodes are excluded here; their exposure to arrivals was truncated",
         )
         self.time_to_restoration = measure(
             "time_to_restoration_ns",
@@ -261,15 +358,29 @@ class ReplenishmentCalculator:
         self.resolved_count = 0
         self.censored_count = 0
         self.never_restored_count = 0
+        # D-3's two traversal numbers, kept here so the summary can state the multiplicity
+        # instead of a reader deriving 441,404 / 24,283 from two different documents.
+        self.refill_attributions_total = 0
+        self.episodes_closed = 0
 
     @property
     def measures(self) -> tuple[StratifiedMeasure, ...]:
         return (
             self.removed_quantity,
             self.replaced_quantity,
-            self.restoration_ratio,
+            self.neighborhood_arrival_ratio,
+            self.refill_attributions_per_episode,
             self.time_to_restoration,
             self.overshoot,
+        )
+
+    @property
+    def restoration_ratio(self) -> StratifiedMeasure:
+        """Refused loudly, for the same reason as the episode property above (D-3)."""
+        raise ReplenishmentError(
+            "the restoration_ratio measure was renamed to neighborhood_arrival_ratio (D-3); "
+            "it measures liquidity arrival density in a price-and-time neighbourhood of a "
+            "removal, not how much came back for what left"
         )
 
     @property
@@ -345,18 +456,25 @@ class ReplenishmentCalculator:
         key = self._key(episode)
         elapsed = recv_ns - episode.opened_recv_ns
 
+        # Counted for every episode that closes, resolved or censored, because an attribution
+        # was made whatever the outcome turned out to be.
+        self.refill_attributions_total += episode.refill_attributions
+        self.episodes_closed += 1
+
         if outcome in RESOLVED_OUTCOMES:
             self.replaced_quantity.observe(key, float(episode.replaced_quantity))
             self.overshoot.observe(key, float(episode.overshoot_quantity))
-            self.restoration_ratio.observe(
+            self.neighborhood_arrival_ratio.observe(
                 key, float(episode.replaced_quantity), float(episode.removed_quantity)
             )
+            self.refill_attributions_per_episode.observe(key, float(episode.refill_attributions))
             self.resolved_count += 1
             if outcome == NEVER_RESTORED:
                 self.never_restored_count += 1
         else:
             self.replaced_quantity.exclude_missing(key)
             self.overshoot.exclude_missing(key)
+            self.refill_attributions_per_episode.exclude_missing(key)
             self.censored_count += 1
 
         restored = episode.time_to_restoration_ns
@@ -414,6 +532,24 @@ class ReplenishmentCalculator:
             "censored": self.censored_count,
             "pending": self.pending_count,
             "emission": "DEFERRED_UNTIL_HORIZON_ELAPSED_IN_STREAM_TIME",
+            "attribution_rule": ARRIVAL_ATTRIBUTION_RULE,
+            "refill_attributions": self.refill_attributions_total,
+            "episodes_closed": self.episodes_closed,
+            # None, never 0.0, when nothing has closed: no episode has been exposed to an
+            # arrival yet, and a multiplicity of zero would read as "each arrival was credited
+            # to no episode", which is a different and false statement.
+            "attributions_per_episode": (
+                self.refill_attributions_total / self.episodes_closed
+                if self.episodes_closed
+                else None
+            ),
+            "renamed_measures": {"restoration_ratio": "neighborhood_arrival_ratio"},
+            "rename_reason": (
+                "D-3: each arrival is credited to every pending episode in the neighbourhood, "
+                "so the ratio is a liquidity arrival density in a price-and-time neighbourhood "
+                "of a removal, not the share of the removed quantity that came back; the "
+                "arithmetic is unchanged and remains comparable with run 33605852433"
+            ),
             "separation_note": (
                 "new-ID adds and same-ID modifies are never summed into one replenishment "
                 "figure, and never-restored is distinct from not-yet-observed"

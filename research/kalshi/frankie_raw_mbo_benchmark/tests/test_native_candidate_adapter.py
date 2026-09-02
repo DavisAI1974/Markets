@@ -138,3 +138,64 @@ class StructureRecurrenceTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PhaseAttributionTest(unittest.TestCase):
+    """D-12's other half. 3,454 stages across 90 paths and not ONE was REVERSAL.
+
+    4.10 recorded 90 of 91 runways as reversed over the same episodes. 4.12 could not observe
+    a REVERSAL stage at all: the stage for second S was appended and observed BEFORE the
+    phase transition for that same second was evaluated, so every stage carried the previous
+    second's phase, and the terminal phase was entered inside `_close`, which observes
+    nothing and then drops the episode.
+    """
+
+    def _reversed_pair(self):
+        track = tracker()
+        # The first episode has no predecessor and so contributes no stages; the second does.
+        opened(track, candidate(candidate_id="c0", polarity=1, event_second=50,
+                                available_second=52))
+        track.advance(51, signed_flow=10, polarity=1)
+        opened(track, candidate(candidate_id="c1", polarity=1, event_second=100,
+                                available_second=102))
+        for second in range(101, 108):
+            track.advance(second, signed_flow=-50, polarity=-1)
+        return track
+
+    def test_a_reversal_produces_a_reversal_stage(self) -> None:
+        track = self._reversed_pair()
+        self.assertEqual(track.episodes_reversed, 2)
+        self.assertGreater(track.dipole.summary()["event_phase_counts"].get("REVERSAL", 0), 0)
+
+    def test_a_reversed_runway_completes_rather_than_censoring(self) -> None:
+        """91 runways opened, 0 completed, 91 censored - because nothing called `complete`.
+
+        That is why `completed_runway_duration_ns` had n=0 against 91 exclusions and the
+        reversal duration everyone read was a censoring artifact.
+        """
+        summary = self._reversed_pair().exhaustion.summary()
+        self.assertEqual(summary["completed"], 2)
+        self.assertEqual(summary["censored"], 0)
+
+    def test_a_boundary_censored_episode_is_not_stamped_as_a_reversal(self) -> None:
+        """The prerequisite. Otherwise the fix above fabricates reversals that never happened."""
+        track = tracker()
+        opened(track, candidate(candidate_id="c0", polarity=1, event_second=50,
+                                available_second=52))
+        track.advance(51, signed_flow=10, polarity=1)
+        opened(track, candidate(candidate_id="c1", polarity=1, event_second=100,
+                                available_second=102))
+        track.advance(101, signed_flow=10, polarity=1)
+        track.close_segment(1_633_352_500 * NS_PER_SECOND)
+        self.assertEqual(track.episodes_censored, 2)
+        self.assertEqual(track.dipole.summary()["event_phase_counts"].get("REVERSAL", 0), 0)
+
+    def test_a_censored_episode_does_not_complete_its_runway(self) -> None:
+        """CENSORED_AT_OBSERVATION_END is deliberately not a terminal phase."""
+        track = tracker()
+        opened(track, candidate(candidate_id="c1", polarity=1))
+        track.close_segment(1_633_352_500 * NS_PER_SECOND)
+        summary = track.exhaustion.summary()
+        self.assertEqual(summary["completed"], 0)
+        self.assertEqual(summary["still_open"], 1,
+                         "the runway stays open for 4.10's own boundary handling to censor")

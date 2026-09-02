@@ -391,6 +391,10 @@ class MirrorMatcher:
         self.members_offered += 1
         identity = mirror_identity(sides)
 
+        # Precedence is declared, not incidental: the coordinate is checked before the side
+        # string because a member with no coordinate could not be measured against anything
+        # whatever its sides say, while a self-mirror member with a coordinate is a statement
+        # about the mirror definition. One member, one reason, and which one is fixed here.
         if coordinate is None:
             return self._record_unmatched(
                 member_id=member_id,
