@@ -1681,6 +1681,13 @@
    "role": "the principal's findings report, GENERATED from frankie_principal_findings.json by render_frankie_report.py at load_principal_artifact. Never edited by hand: the findings artifact is the store.",
    "update_when": "regenerated whenever the findings artifact changes; never edited directly",
    "gate": null
+  },
+  {
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/LAYER_CROSSWALK_FIXTURE_RENDER_20260902.md",
+   "class": "RECORD",
+   "role": "The 99-layer crosswalk rendered on the driver FIXTURE (not the Sunday run) at S121 by native_layer_crosswalk.fixture_render: one row per registry layer with its COMPUTED status, the policy-versus-computed disagreement, and the hardcoded-windows table. A dated record of what the crosswalk computed on the code of that day; the Sunday render is a separate file when it lands.",
+   "update_when": "never - it is dated and finished",
+   "gate": null
   }
  ]
 }
