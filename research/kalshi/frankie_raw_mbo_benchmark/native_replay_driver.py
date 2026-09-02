@@ -180,6 +180,12 @@ class DriverCounters:
     invocation_cutoffs: list[dict[str, Any]] = field(default_factory=list)
     save_points: int = 0
     candidates_detected: int = 0
+    flow_seconds_completed: int = 0
+    """4.0 seconds judged COMPLETE and handed to the census, one exact row each.
+
+    Zero on a consumed pass means the substrate section is dark - the state in which the
+    detector and 4.12 ran on a series nothing declared, stratified or gated.
+    """
     replenishment_observations: int = 0
     """4.7 removals and refills actually stated to the calculator, not horizons matured."""
     queue_rows_applied: int = 0
@@ -364,6 +370,13 @@ class NativeReplayDriver:
         # clock is a declaration: the frozen census binned on event time, this traversal's
         # causal clock is receive time, and the crosswalk hash changes with the choice.
         self.roll20 = native_roll20.SecondBinner(clock=roll20_clock)
+        # 4.0 shadows this binner with one of the same class and reconciles against it on
+        # every completed second, so it must bin on the same clock. The clock is declared
+        # ONCE, here, where the binner is built. A first draft demanded the run be
+        # constructed with a matching clock as well, and a caller who set one and not the
+        # other was refused over a section they had never touched; the section now adopts
+        # the driver's clock and refuses only if it has already binned rows on another.
+        run.flow_substrate.declare_clock(roll20_clock)
         # Legacy rows emitted since the last group close. This used to be a CURSOR into the
         # fully retained list, which silently made roll20 depend on retention living in RAM:
         # stream the ledger and the slice would have read an empty tail and the per-second
@@ -463,7 +476,13 @@ class NativeReplayDriver:
         if self._last_complete_second is not None:
             self._retain_candidates(self.detector.finish(self._last_complete_second))
             self._retain_episode_rows(self.episodes.close_segment(recv_ns))
-        for section in ("queue", "replenishment", "exhaustion", "response", "absorption"):
+        for section in (
+            "queue", "replenishment", "exhaustion", "response", "absorption",
+            # 4.0 releases the seconds the boundary left unjudged as INCOMPLETE rows. In
+            # BOTH loops: S119's own recorded error was a finalize call that landed in the
+            # segment-close loop and not the stream-end one, so pending state never closed.
+            "flow_substrate",
+        ):
             self._retain_lifecycle(
                 getattr(self.run, section).close_continuity_segment(
                     segment=segment, recv_ns=recv_ns
@@ -559,6 +578,10 @@ class NativeReplayDriver:
         for second in range(self._last_complete_second + 1, current_second):
             value = self.roll20.rolling_value(second)
             signed, polarity = self._flow_at(second, value)
+            # 4.0 FIRST, upstream of everything that reads this second. The census is over
+            # the substrate as consumed, judged at the instant the detector judges it and
+            # from the very bins it is about to read.
+            self._complete_flow_second(second, value=value, signed=signed, polarity=polarity)
             # Episodes advance on EVERY completed second, not only on the ones that produced
             # a candidate: a runway's persistence and its reversal are properties of the
             # seconds in between, and skipping them would only ever find instant episodes.
@@ -586,6 +609,45 @@ class NativeReplayDriver:
             self._last_signed_flow = signed
             self._retain_candidates(self.detector.observe(second, value))
         self._last_complete_second = current_second - 1
+
+    def _complete_flow_second(
+        self, second: int, *, value: float, signed: int, polarity: int
+    ) -> None:
+        """Hand 4.0 one COMPLETED second, stratified on the second's OWN instant.
+
+        The phase comes from the session rule evaluated AT the second, not from the group
+        that closed after it. D75 was a stage filed under a neighbouring second's phase, and
+        the per-second episode lane here inherits the closing group's phase, which is that
+        defect one phase ahead rather than one behind; a section whose whole job is the
+        per-second census cannot carry it. The segment is the candidate LANE's, so a join
+        with 4.10-4.12 on the same second lands in the same stratum; the rule's own segment
+        rides on the row, and a disagreement is counted by the section rather than hidden or
+        made fatal, because a recv-clock second at a trade-date boundary can lawfully differ.
+
+        The binner's bins for the second travel as the WITNESS the section reconciles its own
+        tally against. If they disagree the section refuses, and that is the point: the
+        census must be over the substrate the detector was handed, not a second derivation.
+        """
+        source_day = self._episode_context[0]
+        second_ns = second * NS_PER_SECOND
+        mark = self.session_rule.classify(
+            event_ns=second_ns, recv_ns=second_ns, source_day=source_day, previous=None
+        )
+        row = self.run.flow_substrate.complete_second(
+            second,
+            roll20_value=value,
+            window_signed_flow=signed,
+            polarity=polarity,
+            buy_volume=self.roll20.buy_volume_at(second),
+            sell_volume=self.roll20.sell_volume_at(second),
+            source_day=source_day,
+            source_role=self.identity_role,
+            continuity_segment=self.detector.continuity_segment,
+            session_phase=mark.session_phase,
+            segment_by_rule=mark.continuity_segment,
+        )
+        self.counters.flow_seconds_completed += 1
+        self._retain_lifecycle([row], section="flow_substrate", occasion="SECOND_COMPLETE")
 
     def _observe_change_points(self, recv_ns: int) -> None:
         """Emit a 4.16 change point when the observable state has actually moved.
@@ -793,11 +855,12 @@ class NativeReplayDriver:
         # into a run as a contiguity error raised inside the detector, three files from the
         # cause. It fails here instead, naming the clock.
         stamp = recv_ns if self.roll20.clock == native_roll20.RECV_CLOCK else event_ns
+        group_rows = self._legacy_pending
+        self._legacy_pending = []
         self.roll20.observe_group(
-            self._legacy_pending,
+            group_rows,
             second=stamp // NS_PER_SECOND,
         )
-        self._legacy_pending = []
         candidate_second = stamp // NS_PER_SECOND
         if (
             self._last_complete_second is not None
@@ -812,6 +875,16 @@ class NativeReplayDriver:
 
         source_day = _source_day(source_object)
         mark = self._mark_for(event_ns, recv_ns, source_day)
+        # 4.0 sees the SAME rows at the SAME second the binner just did, so its census is
+        # over the substrate the detector and 4.12 actually consume. It is fed AFTER the mark
+        # and not beside the binner above, deliberately: `_mark_for` closes the previous
+        # continuity segment, and that close releases every second still pending in 4.0 as
+        # INCOMPLETE. Fed one call earlier, the first group of every new segment would be
+        # sitting in that pending buffer when the old segment closed, and would be released
+        # as an incomplete second of a segment it never belonged to.
+        self.run.flow_substrate.observe_group_rows(
+            group_rows, second=candidate_second, source_day=source_day
+        )
         group_index = self.counters.groups_seen
         self.counters.groups_seen += 1
 
@@ -1183,7 +1256,13 @@ class NativeReplayDriver:
         if self.detector is not None and self._last_complete_second is not None:
             self._retain_candidates(self.detector.finish(self._last_complete_second))
             self._retain_episode_rows(self.episodes.close_segment(at))
-        for section in ("queue", "replenishment", "exhaustion", "response", "absorption"):
+        for section in (
+            "queue", "replenishment", "exhaustion", "response", "absorption",
+            # 4.0 releases the seconds the boundary left unjudged as INCOMPLETE rows. In
+            # BOTH loops: S119's own recorded error was a finalize call that landed in the
+            # segment-close loop and not the stream-end one, so pending state never closed.
+            "flow_substrate",
+        ):
             self._retain_lifecycle(
                 getattr(self.run, section).finalize(recv_ns=at),
                 section=section,
@@ -1229,6 +1308,7 @@ class NativeReplayDriver:
             # empty ingest is indistinguishable from one reporting a real absence, so the
             # ingest count is emitted beside the measures rather than inferred from them.
             "sections_fed": {
+                "4.0_flow_seconds_completed": self.counters.flow_seconds_completed,
                 "4.8_absorption_runways": self.counters.absorption_runways,
                 "4.9_ladder_transitions": self.counters.ladder_transitions_fed,
                 "4.13_lineage_nodes_added": self.counters.lineage_nodes_added,

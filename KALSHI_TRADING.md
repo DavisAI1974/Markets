@@ -1,5 +1,35 @@
 # KALSHI TRADING — file index
 
+## S120 — section 4.0, the per-second substrate everything ran on and nothing declared
+
+Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. **1290 tests, from 1254.**
+
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_flow_substrate.py`** — section 4.0,
+  Frankie's item (a). The per-second roll20 substrate the candidate detector and 4.12 run on
+  was `traversal.legacy_per_second_roll20` - a counters block, not a section: no declaration,
+  no stratum, no denominator, no gate - which is why the 51.6% NO_DIRECTION share had to be
+  reconstructed from counters. One exact row per COMPLETED second (own-second buy/sell volume
+  and trade dispositions, the quote the last classifiable trade was judged against, the roll20
+  value and window signed flow downstream consumed); exactly one of six classes per second, so
+  a second that cannot be classified is a CLASS, never a gap; INCOMPLETE seconds at a boundary
+  are retained with partial tallies and kept outside every denominator. The midpoint rule is
+  not restated: dispositions are read as counter deltas off a `SecondBinner` of the same class
+  the traversal feeds, and the section RECONCILES its volumes against the traversal's binner on
+  every second and refuses on disagreement. Averaged rows are a census only - per-class shares
+  with the completed-second denominator. Fed from `native_replay_driver` at group close (rows,
+  AFTER the mark, so a new segment's first group is not released by the old segment's close)
+  and in `_advance_candidates` (one completed second at a time, phase from the second's OWN
+  instant - D75's shape refused). Registered FIRST in the runner's section map;
+  `sections_fed["4.0_flow_seconds_completed"]`. The contract gains `### 4.0` before 4.1 and the
+  knowledge manifest is re-pinned to the edited contract.
+- **`research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_flow_substrate.py`** — the
+  calculator's own tests. The driver-level proof that the section is FED lives in
+  `test_native_replay_driver.py` (`FlowSubstrateIsFedByTheTraversalTest`,
+  `DarkSectionRegressionTest.test_the_per_second_substrate_reaches_section_4_0`), because a
+  calculator's tests passing while the driver never calls it is S119's recorded mistake.
+- **`research/kalshi/frankie_raw_mbo_benchmark/tests/test_render_frankie_report.py`** — the
+  render's tests; named here for the index, which had it tracked and unnamed.
+
 ## S120 — the principal's report is a render of his findings
 
 - **`research/kalshi/frankie_raw_mbo_benchmark/render_frankie_report.py`** — the report is

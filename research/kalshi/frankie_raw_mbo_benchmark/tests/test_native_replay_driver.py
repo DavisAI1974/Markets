@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 
 from research.kalshi.frankie_raw_mbo_benchmark import native_candidate as nc
 from research.kalshi.frankie_raw_mbo_benchmark import native_candidate_adapter as nca
+from research.kalshi.frankie_raw_mbo_benchmark import native_roll20
 from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import (
     ACCEPTED,
     NativeCalculationRun,
@@ -261,6 +262,170 @@ class CadenceTest(unittest.TestCase):
         self.assertEqual(cutoff["source_day"], "20211004")
 
 
+class FlowSubstrateIsFedByTheTraversalTest(unittest.TestCase):
+    """Section 4.0 is FED, not merely built and mapped.
+
+    Frankie's item (a): the per-second substrate the detector and 4.12 run on was a counters
+    block with no section beneath it. S119's own recorded lesson is that a calculator's unit
+    tests pass while the driver never calls it, so these run the REAL traversal and assert
+    counts that cannot appear unless completed seconds actually reached the section, then
+    reconcile the section against the traversal's own binner, which is the check that says
+    the census is over the substrate the detector consumed and not a second derivation.
+    """
+
+    def _priced(self, *, seq, event_ns, order_id, action, side, price):
+        row = record(seq=seq, event_ns=event_ns, order_id=order_id, action=action, side=side)
+        row["price"] = price
+        return row
+
+    def _run(self):
+        # Four groups at seconds 0, 1, 2 and 5: a bid, an ask, a trade above the mid, and a
+        # trailing add whose only job is to move the stream past second 4. Judged: seconds
+        # 0-4, five of them, with the trade making second 2 a BUY. Second 5 is never judged.
+        driver = make_driver(total_mbo_records=4)
+        base = at("2021-10-04T13:00:00")
+        driver.consume([
+            self._priced(seq=0, event_ns=base, order_id=400, action="A", side="B",
+                         price=3_499_000_000),
+            self._priced(seq=1, event_ns=base + NS_PER_SECOND, order_id=401, action="A",
+                         side="A", price=3_501_000_000),
+            self._priced(seq=2, event_ns=base + 2 * NS_PER_SECOND, order_id=402, action="T",
+                         side="B", price=3_500_500_000),
+            self._priced(seq=3, event_ns=base + 5 * NS_PER_SECOND, order_id=403, action="A",
+                         side="B", price=3_499_000_000),
+        ])
+        result = driver.finalize()
+        summary = result["layers"]["exact_lifecycle_and_runway_ledger"][
+            "section_summaries"]["4.0"]
+        return driver, result, summary
+
+    def _flow_rows(self, driver, occasion):
+        return [r for r in driver.counters.lifecycle_rows
+                if r["emitting_section"] == "flow_substrate" and r["emitted_on"] == occasion]
+
+    def test_completed_seconds_reach_the_section(self):
+        driver, result, summary = self._run()
+        self.assertEqual(result["traversal"]["sections_fed"]["4.0_flow_seconds_completed"], 5)
+        self.assertEqual(driver.counters.flow_seconds_completed, 5)
+        self.assertEqual(summary["seconds_completed"], 5)
+        self.assertEqual(summary["census_denominator"], 5)
+        self.assertEqual(sum(summary["census"].values()), 5)
+
+    def test_the_buy_second_is_classified_by_the_midpoint_rule(self):
+        _, _, summary = self._run()
+        self.assertEqual(summary["census"]["BUY"], 1)
+        self.assertEqual(summary["census"]["SELL"], 0)
+        self.assertEqual(summary["census"]["NO_DIRECTION"], 4)
+        self.assertEqual(summary["no_direction_reasons"]["NO_TRADES"], 4)
+        self.assertFalse(summary["tape_side_field_consulted"])
+        self.assertEqual(summary["classification_rule"], native_roll20.CALCULATION)
+
+    def test_the_window_direction_census_is_a_section_output_with_a_denominator(self):
+        """The share Frankie reconstructed from traversal counters, now a share with its n."""
+        _, _, summary = self._run()
+        # The trade at second 2 sits in the trailing window of seconds 2, 3 and 4.
+        self.assertEqual(summary["window_census"], {"LONG": 3, "SHORT": 0, "NO_DIRECTION": 2})
+        self.assertAlmostEqual(summary["window_census_shares"]["NO_DIRECTION"], 0.4)
+
+    def test_the_section_reconciles_with_the_traversal_binner(self):
+        """Two computations of one number that are never compared are two numbers."""
+        _, result, summary = self._run()
+        roll = result["traversal"]["legacy_per_second_roll20"]
+        dispositions = summary["trade_dispositions"]
+        self.assertEqual(summary["rows_observed"], roll["rows_seen"])
+        self.assertEqual(dispositions["at_mid"], roll["excluded_at_mid"])
+        self.assertEqual(dispositions["no_quote"], roll["excluded_no_quote"])
+        self.assertEqual(dispositions["unusable"], roll["excluded_unusable_price_or_size"])
+        self.assertEqual(
+            dispositions["buy"] + dispositions["sell"] + dispositions["at_mid"]
+            + dispositions["no_quote"],
+            roll["trades_seen"],
+        )
+        self.assertEqual(summary["volume_reconciliations"], 5)
+        self.assertEqual(summary["boundary_skew_seconds"], 0)
+
+    def test_averaged_rows_carry_the_denominator_and_a_full_declaration(self):
+        _, result, _ = self._run()
+        rows = [r for r in result["layers"]["averaged_companions"]["rows"]
+                if r["section"] == "4.0"]
+        buy = [r for r in rows if r["measure"] == "second_class_share_BUY"]
+        self.assertEqual(len(buy), 1, "one day, one segment, one phase: one stratum")
+        self.assertEqual(buy[0]["value"]["n"], 5)
+        self.assertEqual(buy[0]["value"]["sum"], 1.0)
+        self.assertAlmostEqual(buy[0]["value"]["arithmetic_mean"], 0.2)
+        self.assertEqual(buy[0]["excluded_missing_members"], 0)
+        declaration = buy[0]["declaration"]
+        for field in ("numerator_formula", "population", "causal_cutoff", "status",
+                      "missingness_rule"):
+            self.assertTrue(declaration[field], field)
+        self.assertIn(native_roll20.CALCULATION, declaration["numerator_formula"])
+        self.assertEqual(buy[0]["stratum"]["session_phase"], PRE_SETTLEMENT)
+
+    def test_every_completed_second_is_retained_as_an_exact_row(self):
+        driver, _, _ = self._run()
+        complete = self._flow_rows(driver, "SECOND_COMPLETE")
+        self.assertEqual(len(complete), 5)
+        by_second = sorted(complete, key=lambda r: r["second"])
+        self.assertEqual([r["classification"] for r in by_second],
+                         ["NO_DIRECTION", "NO_DIRECTION", "BUY", "NO_DIRECTION",
+                          "NO_DIRECTION"])
+        buy = by_second[2]
+        self.assertEqual(buy["buy_volume"], 5.0)
+        self.assertEqual(buy["buy_trades"], 1)
+        self.assertIsNotNone(buy["last_quote"])
+        self.assertEqual(buy["window_direction"], "LONG")
+        self.assertEqual(buy["polarity"], 1)
+
+    def test_the_last_second_is_incomplete_at_stream_end_not_dropped(self):
+        """D60: a second the traversal never judged is retained and counted, never lost."""
+        driver, _, summary = self._run()
+        incomplete = self._flow_rows(driver, "STREAM_END")
+        self.assertEqual(len(incomplete), 1)
+        self.assertEqual(incomplete[0]["status"], "INCOMPLETE_STREAM_END")
+        self.assertIsNone(incomplete[0]["classification"])
+        self.assertEqual(summary["seconds_incomplete"], 1)
+        self.assertEqual(summary["census_denominator"], 5, "outside the denominator")
+
+    def test_a_second_is_filed_under_its_own_phase_not_the_next_group_s(self):
+        """D75's shape, refused at the per-second level.
+
+        Two groups bracket the settlement window's open: the first at 14:27:59 ET, the
+        second at 14:28:02 ET. The three seconds the second group completes straddle the
+        boundary, and the group that completed them sits INSIDE the window. Filing them
+        under that group's phase would put a PRE_SETTLEMENT second in the SETTLEMENT
+        stratum, which is exactly the off-by-one 4.12 carried for a full run.
+        """
+        driver = make_driver(total_mbo_records=2)
+        first = at("2021-10-04T18:27:59")
+        driver.consume([
+            record(seq=0, event_ns=first, order_id=1),
+            record(seq=1, event_ns=first + 3 * NS_PER_SECOND, order_id=2),
+        ])
+        driver.finalize()
+        self.assertEqual(driver.current_mark.session_phase, SETTLEMENT)
+        rows = sorted(self._flow_rows(driver, "SECOND_COMPLETE"), key=lambda r: r["second"])
+        self.assertEqual([r["session_phase"] for r in rows],
+                         [PRE_SETTLEMENT, SETTLEMENT, SETTLEMENT])
+
+    def test_the_clock_is_the_traversal_s_declaration(self):
+        """One declaration point. A driver on the event clock puts 4.0 on the event clock."""
+        identity = RunIdentity(
+            run_id="event-clock-4-0", arm="A_CLEAN", mission_sha256="a" * 64,
+            calculation_contract_sha256="b" * 64, knowledge_manifest_hash="c" * 64,
+            source_manifest_hash="d" * 64, total_mbo_records=1, code_commit="deadbeef",
+        )
+        run = NativeCalculationRun(
+            identity, replenishment_horizon_ns=1_000, response_horizons_ns=(100,),
+            response_horizon_version="hv1", response_value_names=("price_response",),
+        )
+        driver = NativeReplayDriver(
+            identity=identity, session_rule=ExchangeSessionRule(), cadence=NeverInvoke(),
+            run=run, roll20_clock=native_roll20.EVENT_CLOCK,
+        )
+        self.assertEqual(driver.run.flow_substrate.clock, native_roll20.EVENT_CLOCK)
+        self.assertEqual(driver.roll20.clock, driver.run.flow_substrate.clock)
+
+
 if __name__ == "__main__":
     unittest.main()
 
@@ -407,6 +572,9 @@ class FedSectionsTest(unittest.TestCase):
         _, result = self._run()
         self.assertEqual(result["verdict"], ACCEPTED, result["failed_gates"])
         self.assertEqual(result["traversal"]["sections_fed"], {
+            # Seconds 3 through 12: the first group closes at second 3, the second at 13,
+            # and a second is judged only once the stream has moved past it.
+            "4.0_flow_seconds_completed": 10,
             "4.8_absorption_runways": 2,
             "4.9_ladder_transitions": 4,
             "4.13_lineage_nodes_added": 6,
@@ -566,7 +734,7 @@ class FedSectionsTest(unittest.TestCase):
         """D60 and section 6: an average with no member under it is not evidence."""
         driver, result = self._run()
         kept = {row["emitting_section"] for row in driver.counters.lifecycle_rows}
-        for section in ("recurrence", "ladder", "absorption", "lineage"):
+        for section in ("recurrence", "ladder", "absorption", "lineage", "flow_substrate"):
             with self.subTest(section=section):
                 self.assertIn(section, kept)
         self.assertEqual(
@@ -581,6 +749,7 @@ class FedSectionsTest(unittest.TestCase):
         driver = make_driver(total_mbo_records=8)
         result = driver.finalize()
         self.assertEqual(result["traversal"]["sections_fed"], {
+            "4.0_flow_seconds_completed": 0,
             "4.8_absorption_runways": 0,
             "4.9_ladder_transitions": 0,
             "4.13_lineage_nodes_added": 0,
@@ -1076,10 +1245,31 @@ class DarkSectionRegressionTest(FedSectionsTest):
         _, result = self._run()
         summaries = result["layers"]["exact_lifecycle_and_runway_ledger"]["section_summaries"]
         rows = {r["section"] for r in result["layers"]["averaged_companions"]["rows"]}
-        for section in ("4.2", "4.4", "4.5", "4.8", "4.9", "4.13", "4.14"):
+        for section in ("4.0", "4.2", "4.4", "4.5", "4.8", "4.9", "4.13", "4.14"):
             with self.subTest(section=section):
                 self.assertTrue(section in summaries or section in rows,
                                 f"{section} produced neither a summary nor an averaged row")
+
+    def test_the_per_second_substrate_reaches_section_4_0(self):
+        """Frankie's item (a): the substrate was a counters block, not a section.
+
+        The detector and 4.12 ran on `legacy_per_second_roll20` with no declaration, stratum,
+        denominator or gate beneath it. This asserts the DRIVER hands completed seconds to
+        the section - a calculator's own tests cannot show that, which is S119's recorded
+        lesson - and that what it received equals what it summarised.
+        """
+        driver, result = self._run()
+        fed = result["traversal"]["sections_fed"]["4.0_flow_seconds_completed"]
+        self.assertGreater(fed, 0)
+        self.assertEqual(driver.counters.flow_seconds_completed, fed)
+        rows = [r for r in result["layers"]["averaged_companions"]["rows"]
+                if r["section"] == "4.0"]
+        self.assertTrue(rows, "4.0 emitted no averaged rows; the substrate is a counters "
+                              "block again")
+        summary = result["layers"]["exact_lifecycle_and_runway_ledger"][
+            "section_summaries"]["4.0"]
+        self.assertEqual(summary["seconds_completed"], fed)
+        self.assertEqual(sum(summary["census"].values()), fed)
 
 
 class ResponseChannelWiringTest(unittest.TestCase):
