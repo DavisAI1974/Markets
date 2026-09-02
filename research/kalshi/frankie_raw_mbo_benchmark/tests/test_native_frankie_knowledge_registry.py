@@ -1,3 +1,5 @@
+"""The hash-bound knowledge manifest: validation, the model-visible context, and the knowledge-use gate.
+"""
 from __future__ import annotations
 
 import hashlib
@@ -7,6 +9,7 @@ import tempfile
 import unittest
 
 from research.kalshi.frankie_raw_mbo_benchmark.native_frankie_knowledge_registry import (
+    ALLOWED_KINDS,
     KnowledgeRegistryError,
     bind_principal_knowledge_use,
     build_context_bundle,
@@ -81,6 +84,41 @@ class NativeFrankieKnowledgeRegistryTests(unittest.TestCase):
         )
         self.assertEqual(receipt["unregistered_required_artifacts"], [])
         self.assertEqual(receipt["missing_required_artifacts"], [])
+
+    def test_a_python_source_artifact_kind_is_accepted(self) -> None:
+        """Slice 1 (S121): the KEEP set carries 15 `.py` construction files of the frozen
+        corpus, and the manifest had no kind for Python source, so they could not be
+        registered. PYTHON_SOURCE is the one added value; the count is not asserted here."""
+        (self.root / "canonical_table.py").write_text("ROWS = ()\n", encoding="utf-8")
+        body = json.loads(self.manifest_path.read_text(encoding="utf-8"))
+        raw = (self.root / "canonical_table.py").read_bytes()
+        body["artifacts"].append(
+            {
+                "id": "canonical_table",
+                "path": "canonical_table.py",
+                "sha256": hashlib.sha256(raw).hexdigest(),
+                "bytes": len(raw),
+                "kind": "PYTHON_SOURCE",
+                "authority": "FROZEN_LEARNED_KNOWLEDGE",
+                "arms": ["A_CLEAN"],
+                "roles": ["REAL_TIME_FRANKIE"],
+                "load_mode": "RETRIEVAL",
+            }
+        )
+        body["profiles"]["RT_A_CLEAN"]["retrieval_catalog"].append("canonical_table")
+        body["manifest_hash"] = canonical_hash(body, omit="manifest_hash")
+        self.manifest_path.write_text(json.dumps(body), encoding="utf-8")
+        manifest = load_and_validate_manifest(self.manifest_path, self.root)
+        self.assertIn("PYTHON_SOURCE", ALLOWED_KINDS)
+        self.assertEqual(manifest["artifacts"][-1]["kind"], "PYTHON_SOURCE")
+
+    def test_an_unknown_artifact_kind_is_still_refused(self) -> None:
+        body = json.loads(self.manifest_path.read_text(encoding="utf-8"))
+        body["artifacts"][0]["kind"] = "SPREADSHEET"
+        body["manifest_hash"] = canonical_hash(body, omit="manifest_hash")
+        self.manifest_path.write_text(json.dumps(body), encoding="utf-8")
+        with self.assertRaisesRegex(KnowledgeRegistryError, "unsupported artifact kind"):
+            load_and_validate_manifest(self.manifest_path, self.root)
 
     def test_fails_closed_when_registered_bytes_drift(self) -> None:
         (self.root / "capsule.md").write_text("changed\n", encoding="utf-8")

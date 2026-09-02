@@ -18,7 +18,12 @@ USE_SCHEMA = "FRANKIE_NATIVE_RAW_MBO_PRINCIPAL_KNOWLEDGE_USE_V1"
 ALLOWED_ARMS = frozenset({"A_CLEAN", "A_MEMORY"})
 ALLOWED_ROLES = frozenset({"REAL_TIME_FRANKIE", "FORECASTER_FRANKIE"})
 ALLOWED_LOAD_MODES = frozenset({"ALWAYS_LOAD", "RETRIEVAL"})
-ALLOWED_KINDS = frozenset({"MARKDOWN", "JSON", "DIRECTORY_PROOF"})
+ALLOWED_KINDS = frozenset({"MARKDOWN", "JSON", "DIRECTORY_PROOF", "PYTHON_SOURCE"})
+"""PYTHON_SOURCE joined 2026-09-02 (S121, slice 1): the KEEP set of the source-file inventory
+carries the `.py` construction files of the frozen 54/55-week corpus - the exact definition
+of the legacy observables he must recreate (feed section 8) - and the manifest had no kind
+for them, so they could not be registered and therefore could not be delivered. One value,
+nothing else widened; an unknown kind is still refused."""
 ARTIFACT_KEYS = frozenset(
     {
         "id",
