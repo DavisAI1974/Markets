@@ -994,7 +994,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **517 files.**
+new tool cannot go unlisted. **521 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `agent_frankie.py` — Frankie hybrid agent entry point.
@@ -1156,9 +1156,11 @@ new tool cannot go unlisted. **517 files.**
 - `native_key_alias.py` — Key-name aliasing for the averaged companion rows, and the measurement that scopes it.
 - `native_knowledge_delivery.py` — The knowledge Frankie receives: classified from the inventory, bound to real files, receipted.
 - `native_ladder.py` — Section 4.9: price-ladder topology.
+- `native_layer_crosswalk.py` — The 99-layer crosswalk: registry layer -> producing code -> carrier -> delivery evidence.
 - `native_lineage.py` — Section 4.13: chain families and D-depth lineages.
 - `native_mbo_field_census.py` — Per-field census of the retained raw MBO, so the drop question can be answered at all.
 - `native_mirror.py` — Section 4.4's one mechanically defined mirror key, and the matcher that uses it.
+- `native_principal_outputs.py` — The principal's OUTPUT ledgers: the required set is derived, never counted in advance.
 - `native_principal_outputs_draft_20260902.py` — The principal's OUTPUT ledgers: the registry's output layers plus one per contract section.
 - `native_queue.py` — Section 4.6: queue position, priority, and order survival.
 - `native_queue_adapter.py` — Section 4.6 from one F_LAST group: queue position, priority, order survival (D53).
@@ -1214,9 +1216,11 @@ new tool cannot go unlisted. **517 files.**
 - `test_native_key_alias.py` — Tests for the key-name aliaser: it must be lossless, stable and self-describing.
 - `test_native_knowledge_delivery.py` — The knowledge Frankie receives is classified from the inventory, bound to real files, receipted.
 - `test_native_ladder.py` — Tests for section 4.9 price-ladder topology."""
+- `test_native_layer_crosswalk.py` — The 99-layer crosswalk: every registry layer to the code that produces it and the carrier
 - `test_native_lineage.py` — Tests for section 4.13 chain families and D-depth lineages."""
 - `test_native_mbo_field_census.py` — The field census measures the retained raw MBO; it never judges it."""
 - `test_native_mirror.py` — Section 4.4's mirror key and matcher: one mechanical definition, one implementation.
+- `test_native_principal_outputs.py` — The principal's OUTPUT ledgers: the required set is DERIVED, the chain is append-only.
 - `test_native_queue.py` — Tests for section 4.6 queue position, priority, and order survival."""
 - `test_native_queue_adapter.py` — Tests for the section-4.6 queue adapter (D53: the F_LAST group is the unit).
 - `test_native_recognition.py` — Tests for section 4.11 prebirth prediction and continuous H+N recognition."""
