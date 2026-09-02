@@ -14,6 +14,7 @@ import unittest
 from pathlib import Path
 
 from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import (
+    ADDENDUM_PATH,
     BRAIN_PATH,
     CLASSIFICATIONS,
     CODE,
@@ -27,6 +28,11 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import 
     KnowledgeDeliveryError,
     classify_inventory,
     parse_source_inventory,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.render_source_inventory_addendum import (
+    ADDENDUM_DATE,
+    main as render_main,
+    render_addendum,
 )
 
 
@@ -186,6 +192,74 @@ class ClassifyInventoryFailsClosedTests(unittest.TestCase):
         root = self._root_with_inventory("# x\n\n## L. Obsolete\n\n- `research/gone.py`\n")
         rows = classify_inventory(root)
         self.assertEqual([(r.classification, r.exists) for r in rows], [(OBSOLETE, False)])
+
+
+class RenderSourceInventoryAddendumTests(unittest.TestCase):
+    """The addendum is a RENDER of the classification, dated, and byte-identical when committed."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.rendered = render_addendum(REPO_ROOT)
+        cls.rows = classify_inventory(REPO_ROOT)
+
+    def test_committed_addendum_is_byte_identical_to_the_render(self) -> None:
+        committed = (REPO_ROOT / ADDENDUM_PATH).read_bytes()
+        self.assertEqual(committed, self.rendered.encode("utf-8"))
+
+    def test_addendum_is_dated_and_never_rewrites_the_inventory(self) -> None:
+        self.assertEqual(ADDENDUM_DATE, "2026-09-02")
+        self.assertIn(f"Date: {ADDENDUM_DATE}", self.rendered)
+        self.assertIn(SOURCE_INVENTORY_PATH, self.rendered)
+        self.assertNotIn("| # | path | section | classification | reason |", "")
+        # the render names the rule of construction: the 2026-08-24 record stays as written
+        self.assertIn("never rewritten", self.rendered)
+
+    def test_table_has_exactly_one_row_per_classified_bullet_in_order(self) -> None:
+        table_rows = [
+            line for line in self.rendered.splitlines()
+            if re.match(r"^\| \d+ \| ", line)
+        ]
+        self.assertEqual(len(table_rows), len(self.rows))
+        for number, (line, row) in enumerate(zip(table_rows, self.rows), start=1):
+            with self.subTest(row=number):
+                cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+                self.assertEqual(cells[0], str(number))
+                if row.path is not None:
+                    self.assertEqual(cells[1], f"`{row.path}`")
+                else:
+                    self.assertIn("no repository path", cells[1])
+                    self.assertIn(row.bullet[:40], cells[1])
+                self.assertEqual(cells[2], row.section)
+                self.assertEqual(cells[3], row.classification)
+                self.assertEqual(cells[4], row.reason)
+
+    def test_counts_are_derived_from_the_rows_not_typed(self) -> None:
+        for classification in CLASSIFICATIONS:
+            expected = sum(1 for row in self.rows if row.classification == classification)
+            with self.subTest(classification=classification):
+                self.assertIn(f"| {classification} | {expected} |", self.rendered)
+        self.assertIn(f"**{len(self.rows)} rows**", self.rendered)
+
+    def test_render_is_deterministic(self) -> None:
+        self.assertEqual(render_addendum(REPO_ROOT), self.rendered)
+
+    def test_render_carries_no_emoji_and_no_desktop_or_scratch_path(self) -> None:
+        self.assertFalse(re.search(r"[\U0001F300-\U0001FAFF☀-➿]", self.rendered))
+        self.assertNotRegex(self.rendered, r"[A-Za-z]:[\\/]")
+
+    def test_check_passes_on_the_committed_tree_and_fails_on_a_stale_addendum(self) -> None:
+        self.assertEqual(render_main(["--check", "--repo-root", str(REPO_ROOT)]), 0)
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        root = Path(temporary.name)
+        inventory = root / SOURCE_INVENTORY_PATH
+        inventory.parent.mkdir(parents=True)
+        inventory.write_text("# x\n\n## L. Obsolete\n\n- `research/old.py`\n", encoding="utf-8")
+        (root / ADDENDUM_PATH).write_text("stale\n", encoding="utf-8")
+        self.assertEqual(render_main(["--check", "--repo-root", str(root)]), 1)
+        self.assertEqual(render_main(["--write", "--repo-root", str(root)]), 0)
+        self.assertEqual(render_main(["--check", "--repo-root", str(root)]), 0)
+        self.assertIn("`research/old.py`", (root / ADDENDUM_PATH).read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":
