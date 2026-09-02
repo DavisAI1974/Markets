@@ -375,12 +375,26 @@ No RT first lock or freeze is valid unless receipts prove:
 
 - this complete mission's exact bytes and SHA-256 were loaded into Frankie;
 - the correct same-arm knowledge profile, bundle, manifest, and external
-  bindings were verified and bound to the model-call receipt;
+  bindings were verified and bound to the principal EXECUTION RECEIPT;
 - the native group envelope was delivered group-by-group under the causal clock;
 - the requested principal Frankie model actually ran;
-- the model/context/usage receipt identifies what Frankie saw;
+- the execution receipt identifies what Frankie saw;
 - the validated output answers this mission; and
 - the Frankie output—not replay summaries—is the object first-locked and frozen.
+
+The principal runs as an AGENT SESSION over committed files and no provider API is
+called (Greg, 2026-08-29: *"on invoke runs chatgpt 5.6 sol just like you used to run
+the blind/reveal for the group runs, no api call."*). So the EXECUTION RECEIPT named
+above is a file contract, not a provider record: a committed staged request at a known
+path and a committed artifact at a known path in the expected schema, both hash-bound,
+and refused if the two hash identically because a run that returned its own input
+produced no findings. This wording replaces "model-call receipt" and
+"model/context/usage receipt", which described an API architecture this mission does not
+use — a gate that demanded `provider`, `requested_model`, `served_model`,
+`principal_invocation_id` and reconciling token `usage` would REJECT a correct session
+run and accept only an API one, which is what
+`corrected_a_arm_execution_gate_20260828.validate_principal_execution` was rebuilt to
+stop doing at S115.
 
 A path reference, boolean claim, replay completion, averaged controller state, or
 file named `FIRST_LOCK`/`FREEZE` is not proof that Frankie ran.
