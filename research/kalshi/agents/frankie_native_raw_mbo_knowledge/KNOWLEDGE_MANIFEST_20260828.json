@@ -6,7 +6,7 @@
         "A_MEMORY"
       ],
       "authority": "BINDING_CURRENT_MISSION",
-      "bytes": 24218,
+      "bytes": 26512,
       "id": "native_rt_mission",
       "kind": "MARKDOWN",
       "load_mode": "ALWAYS_LOAD",
@@ -14,7 +14,7 @@
       "roles": [
         "REAL_TIME_FRANKIE"
       ],
-      "sha256": "027faa7d3d31936d3b026576c7694957319de2d94ef1d95aec5ce1fb5ec4a6f7"
+      "sha256": "ae5da7be95a23b76db2bce781c675de4aa3ffc1ba4de5262b54def917fa97a25"
     },
     {
       "arms": [
@@ -22,7 +22,7 @@
         "A_MEMORY"
       ],
       "authority": "BINDING_CURRENT_CALCULATION_CONTRACT",
-      "bytes": 17491,
+      "bytes": 19447,
       "id": "native_calculation_contract",
       "kind": "MARKDOWN",
       "load_mode": "ALWAYS_LOAD",
@@ -30,7 +30,7 @@
       "roles": [
         "REAL_TIME_FRANKIE"
       ],
-      "sha256": "6c4607312eb0aa7e9ba1d8f5aa2277e26ac48cb4b6c4bcd6e0020eaa29a3e45b"
+      "sha256": "bd993e2697daebf9176243f9ae7c518e970e438c63e9ca43a7f76225610cf1b1"
     },
     {
       "arms": [
@@ -206,7 +206,7 @@
       "sha256": "b487acfbbea8ac8a82f42ceb555e8334057e4004740af91b9127cd2ba71e1cf8"
     }
   ],
-  "manifest_hash": "6e566ab3aa2c5cd8b1beec53012d7209079dc21f8bc70b5b5e1913ccab1cee34",
+  "manifest_hash": "473fa2c61dab7c3e4cf02f1af621791f2b245ecda9e10cb4bfb2375f44919bc6",
   "profiles": {
     "FORECASTER_A_CLEAN_REVIEW": {
       "always_load": [

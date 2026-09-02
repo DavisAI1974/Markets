@@ -429,5 +429,73 @@ class AdversarialReviewRegressionTest(unittest.TestCase):
             self.assertIn("window_truncated", candidate.as_dict())
 
 
+class AccountingTest(unittest.TestCase):
+    """The counters section 4.0b reads: every judged second leaves by exactly one named door.
+
+    Added for 4.0b and asserted here at the detector, because the section can only
+    reconcile what the detector counts. The release-time refractory exit was REAL and
+    uncounted: measured before the counter existed, the five rejection counters plus
+    warm-up plus emitted summed to 289 against 290 judged seconds on the fixture below, and
+    fell short on 35 of 80 replayed random streams. Emissions were identical on all 80.
+    """
+
+    TERMINAL = (
+        "seconds_in_warmup", "seconds_without_finite_flow", "rejected_zero_magnitude",
+        "rejected_below_threshold", "rejected_not_local_max", "rejected_in_refractory",
+        "rejected_in_refractory_at_release", "suppressed_by_prominence", "candidates_emitted",
+    )
+
+    def _partition_holds(self, det):
+        c = det.counters()
+        return c["seconds_judged"] == (
+            sum(c[name] for name in self.TERMINAL) + c["candidates_pending_in_window"]
+        )
+
+    def test_every_judged_second_is_in_exactly_one_bin_under_both_rules(self):
+        series = flat_then({120: 0.5, 134: 0.9, 165: 0.7, 240: -0.8}, length=400)
+        for second in range(300, 340):
+            series[second] = math.nan
+        for rule in (nc.CAUSAL_FIRST_COME, nc.CAUSAL_WINDOWED_PROMINENCE):
+            with self.subTest(rule=rule):
+                _, det = detect(series, selection_rule=rule)
+                self.assertTrue(self._partition_holds(det), det.counters())
+                self.assertGreaterEqual(det.seconds_without_finite_flow, 40)
+                self.assertEqual(det.counters()["candidates_pending_in_window"], 0)
+
+    def test_the_release_time_refractory_exit_is_counted_and_emissions_are_unchanged(self):
+        """The one that left by no door. The emitted set is pinned to what it always was."""
+        found, det = detect(
+            flat_then({120: 0.5, 134: 0.9, 165: 0.7}, length=300),
+            selection_rule=nc.CAUSAL_WINDOWED_PROMINENCE,
+        )
+        self.assertEqual(det.rejected_in_refractory_at_release, 1)
+        pre_existing = (
+            det.seconds_in_warmup + det.rejected_zero_magnitude + det.rejected_below_threshold
+            + det.rejected_not_local_max + det.rejected_in_refractory
+            + det.suppressed_by_prominence + det.emitted
+        )
+        self.assertEqual(det.seconds_judged - det.seconds_without_finite_flow - pre_existing, 1,
+                         "the old counters undercount by exactly the release-time exits")
+        self.assertIn(134, [c.event_second for c in found])
+        self.assertNotIn(165, [c.event_second for c in found])
+        self.assertTrue(self._partition_holds(det))
+
+    def test_the_first_and_last_radius_are_observed_but_never_judged(self):
+        _, det = detect(flat_then({120: 0.9}, length=200))
+        self.assertEqual(det.counters()["seconds_observed"], 200)
+        self.assertEqual(det.counters()["seconds_judged"], 200 - 2 * nc.LOCAL_RADIUS)
+
+    def test_counters_and_parameters_are_exactly_what_the_summary_carries(self):
+        _, det = detect(flat_then({120: 0.9}, length=200))
+        summary = det.summary()
+        for name, value in det.counters().items():
+            with self.subTest(counter=name):
+                self.assertEqual(summary[name], value)
+        for name, value in det.parameters().items():
+            with self.subTest(parameter=name):
+                self.assertEqual(summary[name], value)
+        self.assertEqual(det.parameters()["baseline_points"], nc.BASELINE_POINTS)
+
+
 if __name__ == "__main__":
     unittest.main()

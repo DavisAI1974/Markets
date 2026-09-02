@@ -1,5 +1,45 @@
 # KALSHI TRADING — file index
 
+## S120 — section 4.0b: the selection function that creates the candidate population is governed
+
+Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`.
+
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_detector_coverage.py`** — section 4.0b,
+  detector coverage and rejection accounting: Frankie's proposal (b) from run 33605852433,
+  where **91 were promoted of 4,462 considered** and the 4,371 rejected lived in
+  `traversal.candidate_detection`, a counter block no section owned - which is what made
+  4.11's `detection_share = 1.0` unfalsifiable. It reads the detector's own integer counters
+  after every second the traversal feeds it and proves two identities at every segment close:
+  every judged second is in exactly one NAMED outcome (a residual REFUSES, never "other"), and
+  the section's totals equal the detector's counters key for key. Every detector constant
+  rides on every row; a rate is a ratio of exact counts with both integers beside it;
+  `summary()` gives 4.10-4.16 their true denominator. Fed from
+  `native_replay_driver._account_detector_second`, closed by `_retain_detector_close` after
+  `finish()`, reported as `sections_fed["4.0b_detector_seconds_accounted"]`.
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_candidate.py`** — accounting counters
+  only, no selection change: emissions are identical on 80 of 80 replays against the pristine
+  module. `seconds_judged`, `seconds_without_finite_flow`, and
+  `rejected_in_refractory_at_release` - a REAL uncounted exit, a peak judged at exactly
+  `window_open + refractory` that was outside the window's group and inside the winner's
+  shadow. The pre-existing counters summed to 289 against 290 judged seconds on the fixture
+  and fell short on 35 of 80 random streams. `counters()` and `parameters()` are the surfaces
+  4.0b reads; `summary()` keeps every key it had.
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_stratum.py`** — `CountPartition`, the
+  `COUNT_PARTITION` measure kind: exact counts over a declared, closed set of outcomes, every
+  outcome emitted even at zero, an undeclared outcome refused, no arithmetic mean formed -
+  section 3's "counts are not silently called arithmetic means" as structure.
+- **`research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md`** — gains
+  `### 4.0b` before 4.1, average decision NO. The contract is registered VAULT and hash-bound
+  into every run identity; `KNOWLEDGE_MANIFEST_20260828.json` was regenerated with
+  `refresh_native_frankie_knowledge.py` (it was already invalid on disk from the mission edit
+  at 34a0c16), and `emit_frankie_spawn` will refuse, by design, for any run bound to the
+  previous contract hash until a run binds the new one. Greg's go is the versioned event.
+- **`research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_detector_coverage.py`** — new;
+  every refusal is PRODUCED, on a real detector. `test_native_replay_driver.DetectorCoverageFedTest`
+  proves the traversal feeds the section with real promotions AND rejections and reconciles its
+  summary against `traversal.candidate_detection`; `DarkSectionRegressionTest` enumerates
+  `4.0b`. Also carried here for the index: `test_render_frankie_report.py`.
+
 ## S120 — the principal's report is a render of his findings
 
 - **`research/kalshi/frankie_raw_mbo_benchmark/render_frankie_report.py`** — the report is
@@ -858,7 +898,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **471 files.**
+new tool cannot go unlisted. **504 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `agent_frankie.py` — Frankie hybrid agent entry point.
@@ -995,10 +1035,17 @@ new tool cannot go unlisted. **471 files.**
 - `benchmark_checkpoint.py` — Restart-safe, controller-neutral checkpoints for the raw-MBO blind benchmark."""
 - `chat_packet_seam.py` — Native raw-MBO contract boundary for the Chat-controlled Frankie benchmark arms.
 - `corrected_a_arm_execution_gate_20260828.py` — Fail-closed execution and lock gates for corrected native-MBO A-arm runs."""
+- `emit_frankie_spawn.py` — Fill every Frankie spawn slot BY LOOKUP and emit the exact prompt. The A-arm `spawn.py`.
 - `mbo_resume_state.py` — Exact external snapshot/restore for the proven V4 native-MBO adapter.
+- `native_a_arm_launch.py` — The A-arm launch path: gates, traversal, checkpoints, artifacts. One entrypoint.
 - `native_absorption.py` — Section 4.8: absorption, withdrawal, and delivered pressure.
+- `native_book_regime.py` — Section 4.2: the daily book regime companion, which did not run.
 - `native_calculation_runner.py` — Sections 5 and 6: the seven artifact layers and the eight fail-closed gates.
+- `native_candidate.py` — The A-arm candidate unit: a causally-detected dipole flow event (D66).
+- `native_candidate_adapter.py` — Sections 4.10, 4.11 and 4.12 on the D66 candidate unit, as ONE vocabulary.
 - `native_clocks.py` — Section 4.5: formation, serialization, and observation clocks.
+- `native_cross_section_agreement.py` — Two sections computing one estimand cannot both be right. The gate that says so.
+- `native_detector_coverage.py` — Section 4.0b: detector coverage and rejection accounting - the denominator nobody carried.
 - `native_dipole.py` — Section 4.12: dipole and opposing-pressure runway.
 - `native_discovery.py` — Section 4.15: open-world cluster and new-structure discovery.
 - `native_evidence_bundle.py` — Lossless native-MBO evidence ledger for the Chat-controlled Frankie arms.
@@ -1007,15 +1054,20 @@ new tool cannot go unlisted. **471 files.**
 - `native_full_capture_adapter.py` — Keep everything the V4 adapter computes and then throws away, without editing it.
 - `native_group_adapters.py` — Construct section-4 domain objects from one F_LAST group (decision D53, 2026-08-29).
 - `native_ingestion_layer_registry.py` — Versioned, fail-closed ingestion-layer gates for corrected Frankie A arms."""
+- `native_key_alias.py` — Key-name aliasing for the averaged companion rows, and the measurement that scopes it.
 - `native_ladder.py` — Section 4.9: price-ladder topology.
 - `native_lineage.py` — Section 4.13: chain families and D-depth lineages.
-- `native_mirror.py` — Section 4.4's one mechanically defined mirror key.
+- `native_mirror.py` — Section 4.4's one mechanically defined mirror key, and the matcher that uses it.
 - `native_queue.py` — Section 4.6: queue position, priority, and order survival.
+- `native_queue_adapter.py` — Section 4.6 from one F_LAST group: queue position, priority, order survival (D53).
 - `native_recognition.py` — Section 4.11: prebirth prediction and continuous H+N recognition.
 - `native_recurrence.py` — Section 4.14: recurrence, bursts, and transition graphs.
 - `native_replay_driver.py` — The driver: walks the native stream once and feeds every calculation section.
 - `native_replenishment.py` — Section 4.7: replenishment and liquidity resilience.
+- `native_replenishment_adapter.py` — Section 4.7's OBSERVATION half: what tells `ReplenishmentCalculator` a level moved.
 - `native_response.py` — Section 4.16: fixed causal future-response table.
+- `native_roll20.py` — Feed inventory section 8: recreate the legacy per-second `roll20` from the native stream.
+- `native_row_sink.py` — Append-only on-disk retention for the exact ledgers. Nothing is dropped; it moves.
 - `native_rt_book.py` — A FIFO order book advanced one action at a time, so every read is the REAL-TIME view.
 - `native_session.py` — Section 2 session segmentation and trading-day assignment (decision D6a, 2026-08-29).
 - `native_staging.py` — The spawn contract: how Frankie is actually called, and how its output gets back.
@@ -1023,16 +1075,27 @@ new tool cannot go unlisted. **471 files.**
 - `periodic_checkpointer.py` — Periodic save points for long native raw-MBO runs.
 - `raw_mbo_source_manifest.py` — Hash-bound native raw-MBO source manifest and exact progress denominator.
 - `refresh_native_frankie_knowledge.py` — Regenerate promoted Frankie capsules and their hash-bound knowledge manifest."""
+- `render_frankie_report.py` — Render the principal's report FROM his findings, so the two cannot diverge.
+- `report_ledger_size.py` — Which calculation is the size. The table that replaces an opinion.
 - `__init__.py` — Focused tests for the native raw-MBO Chat benchmark seam."""
 - `manifest_fixture.py` — Shared source-manifest fixture for the A-arm test suites.
+- `test_a_arm_launch_workflows.py` — T4: the A-arm launch workflows dispatch compute, and neither can fire the box by push.
 - `test_a_clean_forecaster_resume_latest.py` — (no docstring summary)
 - `test_a_memory_member_first_recalculation.py` — (no docstring summary)
 - `test_a_memory_rt_resume_latest.py` — (no docstring summary)
+- `test_box_volume_rescue_workflow.py` — Does the box get its disk back after a failure at every point of the rescue?
 - `test_chat_packet_seam.py` — (no docstring summary)
 - `test_corrected_a_arm_execution_gate.py` — (no docstring summary)
+- `test_emit_frankie_spawn.py` — The stop rule, and the hash check that makes the mission uneditable mid-flight.
+- `test_native_a_arm_launch.py` — T2/T3/T5: the launch path gates, traverses, checkpoints and finalizes.
 - `test_native_absorption.py` — Tests for section 4.8 absorption, withdrawal, and delivered pressure."""
+- `test_native_book_regime.py` — Section 4.2, which did not run at all on the delivered artifact.
 - `test_native_calculation_runner.py` — Tests for sections 5 and 6: artifact layers and fail-closed acceptance gates."""
+- `test_native_candidate.py` — The causal candidate detector: it may never see past the second it is judging.
+- `test_native_candidate_adapter.py` — The adapter that drives 4.10, 4.11 and 4.12 - which had no test file at all.
 - `test_native_clocks.py` — Tests for section 4.5 formation, serialization, and observation clocks."""
+- `test_native_cross_section_agreement.py` — The horizontal gate, tested against the defect that got past all eight vertical ones.
+- `test_native_detector_coverage.py` — Section 4.0b: the accounting for the search that creates the candidate population.
 - `test_native_dipole.py` — Tests for section 4.12 dipole and opposing-pressure runway."""
 - `test_native_discovery.py` — Tests for section 4.15 open-world cluster and new-structure discovery."""
 - `test_native_evidence_bundle.py` — (no docstring summary)
@@ -1041,15 +1104,21 @@ new tool cannot go unlisted. **471 files.**
 - `test_native_full_capture_adapter.py` — Tests for the full-capture adapter (D60).
 - `test_native_group_adapters.py` — Tests for the section-4 group adapters (D53: the F_LAST group is the unit).
 - `test_native_ingestion_layer_registry.py` — (no docstring summary)
+- `test_native_key_alias.py` — Tests for the key-name aliaser: it must be lossless, stable and self-describing.
 - `test_native_ladder.py` — Tests for section 4.9 price-ladder topology."""
 - `test_native_lineage.py` — Tests for section 4.13 chain families and D-depth lineages."""
-- `test_native_mirror.py` — Section 4.4's mirror key: one mechanical definition, one implementation.
+- `test_native_mirror.py` — Section 4.4's mirror key and matcher: one mechanical definition, one implementation.
 - `test_native_queue.py` — Tests for section 4.6 queue position, priority, and order survival."""
+- `test_native_queue_adapter.py` — Tests for the section-4.6 queue adapter (D53: the F_LAST group is the unit).
 - `test_native_recognition.py` — Tests for section 4.11 prebirth prediction and continuous H+N recognition."""
 - `test_native_recurrence.py` — Tests for section 4.14 recurrence, bursts, and transition graphs."""
 - `test_native_replay_driver.py` — Tests for the traversal driver.
 - `test_native_replenishment.py` — Tests for section 4.7 replenishment and liquidity resilience."""
+- `test_native_replenishment_adapter.py` — Tests for section 4.7's observation half.
 - `test_native_response.py` — Tests for section 4.16 fixed causal future-response table."""
+- `test_native_roll20.py` — Section 8 of the feed inventory: recreate the legacy per-second roll20 from native.
+- `test_native_row_sink.py` — Byte attribution on the exact ledgers: which calculation is the size.
+- `test_native_row_sink_differential.py` — B, proved rather than claimed: streaming the exact ledgers changes no science.
 - `test_native_rt_book.py` — Tests for the real-time replay book (Greg: "We should see it like it would be seen in rt").
 - `test_native_rt_book_differential.py` — Differential tests: `ReplayBook` must MIRROR `InstrumentBook` on every book mutation.
 - `test_native_session.py` — Tests for section 2 continuity segmentation and trading-day assignment (D6a).
@@ -1059,6 +1128,10 @@ new tool cannot go unlisted. **471 files.**
 - `test_periodic_checkpointer.py` — Tests for periodic save points on long native raw-MBO runs."""
 - `test_raw_mbo_source_manifest_roles.py` — Tests for the single-role roster and the identity/manifest hash split."""
 - `test_refresh_native_frankie_knowledge.py` — (no docstring summary)
+- `test_render_frankie_report.py` — The principal's report is a RENDER of his findings, never a separately authored document.
+- `test_report_ledger_size.py` — Turning a finished run into the table the drop decision needs.
+- `test_verify_ledger_size_witness.py` — What a witness must refuse to say.
+- `verify_ledger_size_witness.py` — The independent witness for a run's size, because the sink counting its own writes is not one.
 - `frankie_reflect.py` — Scheduled reflection over resolved Frankie evidence.
 - `frankie_reflect_runner.py` — Nightly bounded reflection runner for Frankie; generates proposals, never applies them."""
 - `frankie_render_s115.py` — A-59: NOOA-style render target over the existing canonical store.

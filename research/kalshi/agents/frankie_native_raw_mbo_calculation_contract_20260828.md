@@ -82,6 +82,34 @@ and `ratio(aggregate sums)` are useful, retain both and label their difference
 
 ## 4. Calculation matrix
 
+### 4.0b Detector coverage and rejection accounting
+
+**Exact calculation.** The candidate population that 4.10, 4.11, 4.12 and 4.16
+report on is created by a selection function, and that function is governed here.
+For every continuity segment, and stratified by source day, source role, segment,
+and session phase, record: seconds observed by the causal candidate detector;
+seconds whose local window completed and were judged; seconds held in warm-up;
+seconds searched with a live bar; seconds with no finite flow reading; second-events
+considered; candidates promoted; and candidates rejected by NAMED reason, using the
+detector's own reason vocabulary verbatim - zero magnitude, below the trailing
+threshold, not a local maximum, inside the refractory at judgement, inside the
+winner's refractory at window release, and suppressed by prominence. Every judged
+second ends in exactly one named outcome or the pending gauge; a residual rejects
+the calculation rather than becoming an unnamed bin. Emit every detector parameter
+as a declared field on the row - peak quantile, minimum threshold observations,
+warm-up seconds, refractory seconds, local radius, threshold-observation cap,
+selection rule, threshold rule, baseline lookback, prominence rule, and the
+zero-flow guard - so that two runs under different parameters are two populations.
+Retain one exact reconciliation row per segment close carrying the detector's own
+counters beside the section's totals.
+
+**Average decision: no.** These are counts, ratios of counts, and declared constants.
+A rate here - the promotion rate, the searched share, the share rejected for each
+reason - is a ratio of two exact counts with its numerator and denominator on the
+same row, never an arithmetic mean. The summary gives every downstream exhaustion
+rate its true denominator: `promoted` is the population 4.10 through 4.16 report on,
+and `considered` with `rejected_by_reason` is what it was selected from.
+
 ### 4.1 Identity, integrity, and exact member surface
 
 **Exact calculation.** Verify ledger/source hashes, exact-once native record and

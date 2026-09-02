@@ -225,6 +225,9 @@ class DriverCounters:
     # D-16. Members handed to 4.4's matcher. Zero means the section is dark
     # again, which is the state that produced 0 pairs and 3,454 exclusions.
     mirror_members_offered: int = 0
+    # 4.0b. Seconds whose detector outcome was attributed to a stratum. Zero means the
+    # section is dark, which is the state that left 4,371 rejections outside the contract.
+    detector_seconds_accounted: int = 0
     """4.8 runways scored. One per group under D53, where the runway IS the F_LAST group."""
     lineage_nodes_added: int = 0
     """4.13 nodes added to the live graph. Rises only when a group touches a NEW order id."""
@@ -463,6 +466,11 @@ class NativeReplayDriver:
         if self._last_complete_second is not None:
             self._retain_candidates(self.detector.finish(self._last_complete_second))
             self._retain_episode_rows(self.episodes.close_segment(recv_ns))
+        # 4.0b closes AFTER finish(): the releases finish() forces out are the segment's
+        # last outcomes, and closing before them would reconcile against a detector still
+        # holding peaks in its buffer. Unconditional, so a segment that searched nothing is
+        # still a row rather than an omission.
+        self._retain_detector_close(segment, recv_ns, occasion="SEGMENT_CLOSE")
         for section in ("queue", "replenishment", "exhaustion", "response", "absorption"):
             self._retain_lifecycle(
                 getattr(self.run, section).close_continuity_segment(
@@ -546,6 +554,47 @@ class NativeReplayDriver:
             min_threshold_observations=self.candidate_min_observations,
         )
 
+    def _account_detector_second(self, second: int) -> None:
+        """4.0b: attribute what the detector decided across this second to the live stratum.
+
+        Read AFTER `detector.observe`, so the delta is the outcome of the second just judged
+        plus any window that second closed. The section consumes the detector's counters and
+        never a flow value - it accounts for the selection and cannot influence it. Phase and
+        day are those of the F_LAST group whose close advanced the clock, the same
+        granularity the episodes ride on.
+        """
+        source_day, _family_id, session_phase = self._episode_context
+        self.run.detector_coverage.observe_second(
+            self.detector,
+            second=second,
+            source_day=source_day,
+            source_role=self.identity_role,
+            continuity_segment=self.detector.continuity_segment,
+            session_phase=session_phase,
+        )
+        self.counters.detector_seconds_accounted += 1
+
+    def _retain_detector_close(self, segment: int, recv_ns: int, *, occasion: str) -> None:
+        """Close 4.0b's ledger for one detector and KEEP the reconciliation row it returns.
+
+        The close proves the partition identity and the section-versus-detector agreement,
+        and raises on either failing: a judged second with no named outcome is refused, not
+        binned. The row is the exact evidence beneath the section's summary, and it goes to
+        the lifecycle ledger for the reason every other close on this path now does - the
+        return used to be dropped.
+        """
+        source_day, _family_id, session_phase = self._episode_context
+        row = self.run.detector_coverage.close_segment(
+            self.detector,
+            source_day=source_day,
+            source_role=self.identity_role,
+            continuity_segment=segment,
+            session_phase=session_phase,
+            recv_ns=recv_ns,
+            occasion=occasion,
+        )
+        self._retain_lifecycle([row], section="detector_coverage", occasion=occasion)
+
     def _advance_candidates(self, current_second: int) -> None:
         """Judge every second that is now COMPLETE. Never the current one.
 
@@ -585,6 +634,8 @@ class NativeReplayDriver:
             self._observe_change_points(second * NS_PER_SECOND)
             self._last_signed_flow = signed
             self._retain_candidates(self.detector.observe(second, value))
+            # 4.0b, from the detector's own counters, after the second it just judged.
+            self._account_detector_second(second)
         self._last_complete_second = current_second - 1
 
     def _observe_change_points(self, recv_ns: int) -> None:
@@ -721,6 +772,10 @@ class NativeReplayDriver:
     def _start_candidate_segment(self, segment: int) -> None:
         """Open the candidate lane on the REAL segment, never on a counter of our own."""
         self.detector = self._new_detector(segment)
+        # 4.0b opens with the detector, so its first reading is the zero every counter
+        # starts from and every later delta is attributable. It also checks, here, that the
+        # detector exposes no rejection this section cannot name.
+        self.run.detector_coverage.open_segment(self.detector)
         self.episodes = CandidateEpisodeTracker(
             exhaustion=self.run.exhaustion,
             recognition=self.run.recognition,
@@ -1183,6 +1238,13 @@ class NativeReplayDriver:
         if self.detector is not None and self._last_complete_second is not None:
             self._retain_candidates(self.detector.finish(self._last_complete_second))
             self._retain_episode_rows(self.episodes.close_segment(at))
+        # 4.0b's stream-end close, in the STREAM-END path and not the segment-close loop -
+        # S119's own recorded mistake was a finalize wired into the wrong one. After
+        # finish(), for the reason given at the segment boundary.
+        if self.detector is not None:
+            self._retain_detector_close(
+                self.detector.continuity_segment, at, occasion="STREAM_END"
+            )
         for section in ("queue", "replenishment", "exhaustion", "response", "absorption"):
             self._retain_lifecycle(
                 getattr(self.run, section).finalize(recv_ns=at),
@@ -1241,6 +1303,7 @@ class NativeReplayDriver:
                 "4.6_queue_rows_applied": self.counters.queue_rows_applied,
                 "4.6_queue_terminals": self.counters.queue_terminals,
                 "candidates_without_stratum": self.counters.candidates_without_stratum,
+                "4.0b_detector_seconds_accounted": self.counters.detector_seconds_accounted,
             },
             # D66's second unit, reported per continuity segment. A segment that found NOTHING
             # is still a row here: absence is a result about that segment, not an omission.

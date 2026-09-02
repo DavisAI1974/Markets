@@ -419,6 +419,9 @@ class FedSectionsTest(unittest.TestCase):
             "4.6_queue_rows_applied": 8,
             "4.6_queue_terminals": 0,
             "candidates_without_stratum": 0,
+            # Ten completed seconds lie between the two group closes; each one is judged
+            # by the detector and accounted by 4.0b, whether or not it produced anything.
+            "4.0b_detector_seconds_accounted": 10,
         })
 
     def test_the_queue_lane_applies_every_row_and_emits_no_terminal_it_did_not_see(self):
@@ -593,6 +596,7 @@ class FedSectionsTest(unittest.TestCase):
             "4.6_queue_rows_applied": 0,
             "4.6_queue_terminals": 0,
             "candidates_without_stratum": 0,
+            "4.0b_detector_seconds_accounted": 0,
         })
         sections = [row.get("section") for row in result["layers"]["averaged_companions"]["rows"]]
         for section in ("4.8", "4.9", "4.13", "4.14"):
@@ -1076,10 +1080,123 @@ class DarkSectionRegressionTest(FedSectionsTest):
         _, result = self._run()
         summaries = result["layers"]["exact_lifecycle_and_runway_ledger"]["section_summaries"]
         rows = {r["section"] for r in result["layers"]["averaged_companions"]["rows"]}
-        for section in ("4.2", "4.4", "4.5", "4.8", "4.9", "4.13", "4.14"):
+        for section in ("4.0b", "4.2", "4.4", "4.5", "4.8", "4.9", "4.13", "4.14"):
             with self.subTest(section=section):
                 self.assertTrue(section in summaries or section in rows,
                                 f"{section} produced neither a summary nor an averaged row")
+
+
+class DetectorCoverageFedTest(CandidateUnitFedTest):
+    """4.0b through the DRIVER, on a tape that both promotes and rejects.
+
+    The section accounts for the selection function that creates the 4.10-4.12/4.16
+    population, and its unit tests drive the detector directly. This proves the traversal
+    feeds it - every second, after the detector judged that second - because a correct
+    calculator nothing calls reports an exact zero, which is what seven of S119's sixteen
+    defects were. The fixture is the candidate one: the tiny fixtures produce no candidates
+    and would make every promotion assertion vacuous.
+    """
+
+    def _summary(self, result):
+        return result["layers"]["exact_lifecycle_and_runway_ledger"]["section_summaries"]["4.0b"]
+
+    def test_the_section_is_fed_and_sees_both_promotions_and_rejections(self):
+        driver, result = self._run()
+        self.assertGreater(driver.counters.detector_seconds_accounted, 0,
+                           "4.0b is wired and nothing reached it")
+        self.assertEqual(
+            result["traversal"]["sections_fed"]["4.0b_detector_seconds_accounted"],
+            driver.counters.detector_seconds_accounted,
+        )
+        summary = self._summary(result)
+        self.assertEqual(summary["status"], "FED_BY_THE_TRAVERSAL")
+        self.assertGreater(summary["promoted"], 0)
+        self.assertGreater(summary["rejected_total"], 0)
+        # Which reason fires is a property of the tape, not of the wiring: this fixture's
+        # alternating one-lot tape sums every 20-second window to exactly zero, so its
+        # rejections are zero-magnitude ones and the bar is never the reason. What the wiring
+        # owes is that every rejection has a NAMED reason and the names are the detector's.
+        reasons = summary["rejected_by_reason"]
+        self.assertEqual(tuple(reasons), (
+            "rejected_zero_magnitude", "rejected_below_threshold", "rejected_not_local_max",
+            "rejected_in_refractory", "rejected_in_refractory_at_release",
+            "suppressed_by_prominence",
+        ))
+        self.assertEqual(sum(reasons.values()), summary["rejected_total"])
+        self.assertTrue(any(reasons.values()))
+        self.assertEqual(summary["promoted"],
+                         result["traversal"]["sections_fed"]["candidate_unit_events"])
+
+    def test_the_summary_reconciles_with_the_detectors_own_block(self):
+        """`traversal.candidate_detection` is the detector's word; 4.0b must say the same."""
+        _, result = self._run()
+        summary = self._summary(result)
+        blocks = result["traversal"]["candidate_detection"]
+        self.assertTrue(blocks)
+        for name in ("seconds_observed", "seconds_judged", "seconds_in_warmup",
+                     "seconds_without_finite_flow"):
+            with self.subTest(counter=name):
+                self.assertEqual(summary[name], sum(b[name] for b in blocks))
+        self.assertEqual(summary["promoted"], sum(b["candidates_emitted"] for b in blocks))
+        for reason, count in summary["rejected_by_reason"].items():
+            with self.subTest(reason=reason):
+                self.assertEqual(count, sum(b[reason] for b in blocks))
+
+    def test_every_downstream_rate_gets_its_denominator(self):
+        _, result = self._run()
+        summary = self._summary(result)
+        rate = summary["promotion_rate"]
+        self.assertEqual(rate["numerator"], summary["promoted"])
+        self.assertEqual(rate["denominator"], summary["considered"])
+        self.assertEqual(summary["considered"],
+                         summary["promoted"] + summary["rejected_total"]
+                         + summary["candidates_pending_in_window"])
+        self.assertEqual(summary["seconds_judged"],
+                         summary["searched_seconds"] + summary["seconds_in_warmup"])
+        self.assertTrue(summary["partition_identity"]["segments_verified"] >= 1)
+
+    def test_the_averaged_rows_carry_the_parameters_and_a_declaration(self):
+        _, result = self._run()
+        rows = [r for r in result["layers"]["averaged_companions"]["rows"]
+                if r["section"] == "4.0b"]
+        self.assertTrue(rows, "4.0b emitted no averaged rows; the search is dark again")
+        for row in rows:
+            with self.subTest(measure=row["measure"], phase=row["stratum"]["session_phase"]):
+                self.assertEqual(row["kind"], "COUNT_PARTITION")
+                self.assertEqual(row["stratum"]["source_day"], "20211004")
+                self.assertEqual(row["stratum"]["family_id"], "ALL_FAMILIES_DETECTOR_SEARCH")
+                params = row["value"]["detector_parameters"]
+                self.assertEqual(params["refractory_seconds"], nc.REFRACTORY)
+                self.assertEqual(params["warmup_seconds"], 60)
+                self.assertEqual(params["min_threshold_observations"], 30)
+                self.assertTrue(row["value"]["parameter_signature"])
+                self.assertNotIn("arithmetic_mean", row["value"])
+                for field_name in ("numerator_formula", "population", "causal_cutoff",
+                                   "status", "missingness_rule"):
+                    self.assertTrue(row["declaration"][field_name])
+
+    def test_the_reconciliation_row_is_retained_beneath_the_summary(self):
+        driver, _ = self._run()
+        rows = [r for r in driver.counters.lifecycle_rows
+                if r["emitting_section"] == "detector_coverage"]
+        self.assertTrue(rows, "the close returned a row and nothing kept it")
+        for row in rows:
+            self.assertTrue(row["partition_identity_holds"])
+            self.assertTrue(row["reconciled_with_detector"])
+            self.assertIn(row["emitted_on"], ("SEGMENT_CLOSE", "STREAM_END"))
+        self.assertEqual(rows[-1]["emitted_on"], "STREAM_END")
+        self.assertEqual(rows[-1]["detector_counters"]["candidates_pending_in_window"], 0)
+
+    def test_a_run_carrying_the_section_is_still_accepted(self):
+        _, result = self._run()
+        self.assertEqual(result["verdict"], ACCEPTED, result["failed_gates"])
+
+    def test_an_unfed_pass_declares_itself(self):
+        """Same section, no tape: the declaration, not a zero that reads like a finding."""
+        driver = make_driver()
+        result = driver.finalize()
+        self.assertEqual(self._summary(result)["status"], "NOT_FED_BY_THE_TRAVERSAL")
+        self.assertEqual(result["traversal"]["sections_fed"]["4.0b_detector_seconds_accounted"], 0)
 
 
 class ResponseChannelWiringTest(unittest.TestCase):
