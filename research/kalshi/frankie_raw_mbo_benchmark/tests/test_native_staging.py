@@ -314,3 +314,64 @@ class EvidenceReadDeclarationTest(unittest.TestCase):
                 render_report=False,
             )
         self.assertTrue(execution["principal_read_any_exact_rows"])
+
+
+class DeliveredLedgersMustBeReadTest(unittest.TestCase):
+    """D81 at the coordinator side: a delivered ledger he did not read is a failed spawn.
+
+    NOT_READ was the honest answer while the ledgers stayed on the box. Once an artifact
+    cites a `delivery_receipt_sha256` - which only exists when `fetch_frankie_ledgers`
+    verified every exact ledger into the session - NOT_READ on any of them is refused.
+    Without the citation the old rule stands, so an artifact from a pre-delivery run still
+    validates exactly as before.
+    """
+
+    READ_ALL = {name: "READ" for name in (
+        "exact_member_ledger", "exact_lifecycle_and_runway_ledger", "legacy_observable_rows",
+    )}
+
+    def _body(self, **overrides):
+        body = dict(LoadPrincipalArtifactTest.GOOD)
+        body["evidence_read"] = dict(self.READ_ALL)
+        body["delivery_receipt_sha256"] = "d" * 64
+        body["stream_receipt_sha256"] = "5" * 64
+        body.update(overrides)
+        return body
+
+    def _load(self, tmp, body):
+        path = Path(tmp) / "findings.json"
+        path.write_text(json.dumps(body))
+        return load_principal_artifact(path, expected_evidence_hash="a" * 64, render_report=False)
+
+    def test_read_everywhere_with_a_delivery_receipt_loads_and_carries_both_hashes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            execution, _ = self._load(tmp, self._body())
+        self.assertEqual(execution["delivery_receipt_sha256"], "d" * 64)
+        self.assertEqual(execution["stream_receipt_sha256"], "5" * 64)
+        self.assertTrue(execution["principal_read_any_exact_rows"])
+
+    def test_not_read_on_a_delivered_ledger_is_refused_by_name(self):
+        body = self._body(evidence_read=dict(self.READ_ALL, legacy_observable_rows="NOT_READ"))
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(StagingError) as caught:
+                self._load(tmp, body)
+        self.assertIn("legacy_observable_rows", str(caught.exception))
+        self.assertIn("delivered", str(caught.exception))
+
+    def test_without_a_delivery_receipt_the_old_rule_stands(self):
+        body = self._body(evidence_read=dict(self.READ_ALL, exact_member_ledger="NOT_READ"))
+        body.pop("delivery_receipt_sha256")
+        body.pop("stream_receipt_sha256")
+        with tempfile.TemporaryDirectory() as tmp:
+            execution, _ = self._load(tmp, body)
+        self.assertEqual(execution["evidence_read"]["exact_member_ledger"], "NOT_READ")
+        self.assertIsNone(execution["delivery_receipt_sha256"])
+        self.assertIsNone(execution["stream_receipt_sha256"])
+
+    def test_a_malformed_receipt_hash_is_refused(self):
+        for field in ("delivery_receipt_sha256", "stream_receipt_sha256"):
+            with self.subTest(field=field):
+                with tempfile.TemporaryDirectory() as tmp:
+                    with self.assertRaises(StagingError) as caught:
+                        self._load(tmp, self._body(**{field: "not-a-sha"}))
+                self.assertIn(field, str(caught.exception))

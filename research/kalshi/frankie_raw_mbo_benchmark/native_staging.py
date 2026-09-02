@@ -21,10 +21,13 @@ an artifact cannot be carried from one run to another where it was never earned.
 from __future__ import annotations
 
 import hashlib
+import re
 import sys
 import json
 from pathlib import Path
 from typing import Any, Mapping, Sequence
+
+_SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 SPAWN_REQUEST_SCHEMA = "FRANKIE_NATIVE_RAW_MBO_SPAWN_REQUEST_V1"
 PRINCIPAL_FINDINGS_SCHEMA = "FRANKIE_NATIVE_RAW_MBO_PRINCIPAL_FINDINGS_V1"
@@ -203,6 +206,29 @@ def load_principal_artifact(
             f"`evidence_read` uses statuses outside {list(READ_STATUSES)}: {bad}"
         )
 
+    # D81, THE DELIVERED CASE. `delivery_receipt_sha256` exists only when
+    # `fetch_frankie_ledgers` verified every exact ledger into the session, so an artifact
+    # citing one was produced with the ledgers in hand - and a delivered ledger the principal
+    # did not read is a failed spawn, not a caveat. Without the citation the old rule stands
+    # and NOT_READ is still the honest answer for a pre-delivery run.
+    receipt_hashes: dict[str, str | None] = {}
+    for field_name in ("delivery_receipt_sha256", "stream_receipt_sha256"):
+        value = body.get(field_name)
+        if value is None:
+            receipt_hashes[field_name] = None
+            continue
+        if not isinstance(value, str) or _SHA256_RE.fullmatch(value) is None:
+            raise StagingError(f"{field_name} must be a lowercase SHA-256, got {value!r}")
+        receipt_hashes[field_name] = value
+    if receipt_hashes["delivery_receipt_sha256"] is not None:
+        unread = [name for name in EXACT_LEDGERS if evidence_read[name] == "NOT_READ"]
+        if unread:
+            raise StagingError(
+                f"the artifact cites delivery receipt {receipt_hashes['delivery_receipt_sha256']}"
+                f", so every exact ledger was delivered and verified, yet declares NOT_READ on "
+                f"{unread}; a delivered ledger he did not read is a failed spawn (D81)"
+            )
+
     execution = {
         "principal": body["principal"],
         "arm": body["arm"],
@@ -216,6 +242,8 @@ def load_principal_artifact(
         "principal_read_any_exact_rows": any(
             evidence_read[name] in ("READ", "PARTIAL") for name in EXACT_LEDGERS
         ),
+        "delivery_receipt_sha256": receipt_hashes["delivery_receipt_sha256"],
+        "stream_receipt_sha256": receipt_hashes["stream_receipt_sha256"],
     }
     if render_report:
         _render_report_beside(path)

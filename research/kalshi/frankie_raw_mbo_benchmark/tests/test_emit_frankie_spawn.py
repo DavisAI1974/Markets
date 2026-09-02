@@ -19,10 +19,16 @@ from research.kalshi.frankie_raw_mbo_benchmark.emit_frankie_spawn import (
     MISSION_PATH,
     emit,
 )
+from research.kalshi.frankie_raw_mbo_benchmark.fetch_frankie_ledgers import (
+    LEDGER_FILES,
+    RECEIPT_SCHEMA,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import canonical_hash
 from research.kalshi.frankie_raw_mbo_benchmark.native_key_alias import (
     apply_aliases,
     build_alias_table,
 )
+from research.kalshi.frankie_raw_mbo_benchmark.native_staging import EXACT_LEDGERS
 
 
 #: The fixture mission must carry section 9a or the emitter refuses, which is the point of
@@ -95,8 +101,52 @@ def _census(rows):
     }
 
 
+#: Plain ledger bytes the fake delivery "delivered". Their sha256 is what a run's own
+#: `ledger_retention[*].sha256` must match for the ledger to be bound to the run.
+LEDGER_BYTES = {
+    "exact_member_ledger": b'{"group_index":0}\n',
+    "exact_lifecycle_and_runway_ledger": b'{"emitting_section":"ladder"}\n',
+    "legacy_observable_rows": b'{"ts_recv":1.0}\n',
+}
+
+
+def _delivery_receipt(root: Path, *, statuses=None, mutate=None) -> Path:
+    """A FRANKIE_LEDGER_DELIVERY_RECEIPT_V1 as `fetch_frankie_ledgers.fetch` writes it, with
+    the ledger files actually present on disk so the paths it names resolve."""
+    statuses = statuses or {}
+    ledgers = {}
+    for name in EXACT_LEDGERS:
+        path = root / "delivered" / LEDGER_FILES[name]
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(LEDGER_BYTES[name])
+        ledgers[name] = {
+            "file": LEDGER_FILES[name], "object": LEDGER_FILES[name] + ".gz",
+            "status": statuses.get(name, "VERIFIED"), "local_path": str(path),
+            "plain_bytes_expected": len(LEDGER_BYTES[name]),
+            "plain_bytes_observed": len(LEDGER_BYTES[name]),
+            "plain_sha256_expected": hashlib.sha256(LEDGER_BYTES[name]).hexdigest(),
+            "plain_sha256_observed": hashlib.sha256(LEDGER_BYTES[name]).hexdigest(),
+        }
+    body = {
+        "schema": RECEIPT_SCHEMA, "run_id": "33630348943",
+        "run_prefix": "nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-clean/full/7638659/33630348943-1",
+        "bucket": "bento-568968024170-us-east-2-an", "manifest_sha256": "f" * 64,
+        "fetched_at": "2026-09-02T20:00:00Z", "out_dir": str(root / "delivered"),
+        "ledgers": ledgers, "objects": {},
+        "all_ledgers_verified": all(v["status"] == "VERIFIED" for v in ledgers.values()),
+        "receipt_sha256": "",
+    }
+    body["receipt_sha256"] = canonical_hash(body, omit="receipt_sha256")
+    if mutate:
+        mutate(body)
+    path = root / "FRANKIE_LEDGER_DELIVERY_RECEIPT.json"
+    path.write_text(json.dumps(body), encoding="utf-8")
+    return path
+
+
 class StopRuleTests(unittest.TestCase):
-    def _emit(self, mutate=None, mission=MISSION_BYTES):
+    def _emit(self, mutate=None, mission=MISSION_BYTES, receipt_statuses=None,
+              receipt_mutate=None, without_receipt=False):
         """`mission` is what lands ON DISK; the run always binds the ORIGINAL bytes.
 
         The first version of this helper hashed whatever it wrote, so an "edited" mission
@@ -112,12 +162,15 @@ class StopRuleTests(unittest.TestCase):
                 mutate(body)
             result = root / "calculation_result.json"
             result.write_text(json.dumps(body), encoding="utf-8")
-            return emit(result, repo_root=root)
+            receipt = None if without_receipt else _delivery_receipt(
+                root, statuses=receipt_statuses, mutate=receipt_mutate
+            )
+            return emit(result, repo_root=root, delivery_receipt=receipt)
 
     def test_a_complete_run_emits_every_required_slot(self):
         text = self._emit()
         for needle in ("REAL_TIME_FRANKIE", "A_CLEAN", "cb685e0e",
-                       "the runner calculates, you interpret",
+                       "you compute the sixteen sections yourself",
                        "FRANKIE_NATIVE_RAW_MBO_PRINCIPAL_FINDINGS_V1",
                        "4.6_queue_rows_applied", "glbx-mdp3-20211003.mbo.dbn.zst"):
             self.assertIn(needle, text, needle)
@@ -161,7 +214,7 @@ class SingleDayTests(unittest.TestCase):
             body = _result(m_sha, c_sha, days=days)
             result = root / "calculation_result.json"
             result.write_text(json.dumps(body), encoding="utf-8")
-            return emit(result, repo_root=root)
+            return emit(result, repo_root=root, delivery_receipt=_delivery_receipt(root))
 
     def test_one_day_says_so_and_marks_cross_day_questions_unanswerable(self):
         text = self._emit_for(("20211003",))
@@ -193,7 +246,7 @@ class SpanAndPhaseTests(unittest.TestCase):
             body = _result(m_sha, c_sha, cutoffs=cutoffs)
             result = root / "calculation_result.json"
             result.write_text(json.dumps(body), encoding="utf-8")
-            return emit(result, repo_root=root)
+            return emit(result, repo_root=root, delivery_receipt=_delivery_receipt(root))
 
     def _cuts(self, spans_ns, phases):
         base = 1633046886987074241
@@ -292,7 +345,7 @@ class RawMboQuestionReachesFrankieTest(StopRuleTests):
             root, m_sha, c_sha = _repo_with_docs(root, mission=mission)
             result = root / "calculation_result.json"
             result.write_text(json.dumps(_result(m_sha, c_sha)), encoding="utf-8")
-            return emit(result, repo_root=root)
+            return emit(result, repo_root=root, delivery_receipt=_delivery_receipt(root))
 
     def test_a_correctly_bound_mission_that_never_asks_refuses_to_spawn(self):
         """The gate's firing branch, executed. A guard whose output was never produced was
@@ -323,21 +376,35 @@ class RawMboQuestionReachesFrankieTest(StopRuleTests):
         """The calcs have been returned in place of this answer every time it was asked."""
         self.assertIn("not the calculation question", self._emit())
 
-    def test_it_names_what_he_is_NOT_given(self):
-        """Asking the question without saying which evidence is absent invites a confident
-        judgement on data he never received."""
+    def test_it_names_what_the_run_retained_beside_what_was_delivered(self):
+        """The run's own sink receipt is rendered beside the delivered file, so a reader can
+        see the box's count and bytes next to the local path, and a delivered ledger whose
+        sha256 matches the sink's is stated as BOUND to the run."""
         def add_retention(body):
             body["ledger_retention"] = {
                 "exact_member_ledger": {
                     "row_count": 43569, "bytes": 10630127166,
                     "path": "/opt/frankie-a-arm-run/ledgers/exact_member_rows.jsonl",
+                    "sha256": hashlib.sha256(LEDGER_BYTES["exact_member_ledger"]).hexdigest(),
                 }
             }
 
         text = self._emit(mutate=add_retention)
-        self.assertIn("NOT in this result", text)
         self.assertIn("exact_member_rows.jsonl", text)
         self.assertIn("10,630,127,166", text)
+        self.assertIn("43,569 rows", text)
+        self.assertIn("BOUND to this run", text)
+        self.assertNotIn("NOT in this result", text)
+
+    def test_a_delivered_ledger_that_is_not_the_runs_ledger_halts(self):
+        """The binding that makes 'this ledger is this run's' true, executed on its firing
+        branch: the sink hashed one file, the delivery verified another."""
+        def add_retention(body):
+            body["ledger_retention"] = {
+                "exact_member_ledger": {"row_count": 1, "bytes": 18, "path": "/x", "sha256": "0" * 64}
+            }
+        with self.assertRaisesRegex(EmitError, "exact_member_ledger.*not the ledger this run retained"):
+            self._emit(mutate=add_retention)
 
     def test_absent_retention_receipts_are_declared_not_rendered_empty(self):
         """"You were given nothing" and "we did not record what you were given" are
@@ -401,7 +468,96 @@ class EvidenceReadIsAskedForTest(StopRuleTests):
                        "legacy_observable_rows"):
             self.assertIn(ledger, text, ledger)
 
-    def test_it_says_not_read_is_accepted(self):
-        """A prompt that read as 'you must have read them' would push him toward claiming
-        reads he did not make - the defect this programme exists to catch."""
-        self.assertIn("NOT_READ carries no penalty", self._emit())
+    def test_it_says_not_read_is_now_refused_because_the_ledgers_are_delivered(self):
+        """NOT_READ was the honest answer while delivery was unsolved. Delivered and
+        verified, a ledger he did not read is a failed spawn, and the prompt says so."""
+        text = self._emit()
+        self.assertNotIn("NOT_READ carries no penalty", text)
+        self.assertIn("NOT_READ is refused", text)
+        self.assertIn('"exact_member_ledger": "READ"', text)
+        self.assertIn('"exact_lifecycle_and_runway_ledger": "READ"', text)
+        self.assertIn('"legacy_observable_rows": "READ"', text)
+
+
+class DeliveryReceiptGateTest(StopRuleTests):
+    """D81: the raw MBO is his evidence, and the spawn is refused until it is in his hands.
+
+    Every session built to mission section 5's "the runner calculates; you interpret" while
+    section 3 and 55 registry layers said the principal receives the group stream at every
+    F_LAST cutoff. The emitter now REQUIRES a delivery receipt with every exact ledger
+    VERIFIED, names the local ledger paths and the stream tool as THE evidence, and says the
+    runner's result is not.
+    """
+
+    def test_no_receipt_no_spawn(self):
+        with self.assertRaisesRegex(EmitError, "delivery receipt"):
+            self._emit(without_receipt=True)
+
+    def test_a_ledger_that_is_not_verified_halts_by_name(self):
+        for status in ("LENGTH_MISMATCH", "SHA_MISMATCH", "MISSING"):
+            with self.subTest(status=status):
+                with self.assertRaisesRegex(EmitError, f"exact_lifecycle_and_runway_ledger.*{status}"):
+                    self._emit(receipt_statuses={"exact_lifecycle_and_runway_ledger": status})
+
+    def test_a_receipt_whose_own_hash_does_not_verify_halts(self):
+        def tamper(body):
+            body["ledgers"]["exact_member_ledger"]["status"] = "VERIFIED"
+            body["receipt_sha256"] = "0" * 64
+        with self.assertRaisesRegex(EmitError, "receipt_sha256"):
+            self._emit(receipt_mutate=tamper)
+
+    def test_a_receipt_of_another_schema_halts(self):
+        def wrong(body):
+            body["schema"] = "SOMETHING_ELSE_V1"
+            body["receipt_sha256"] = canonical_hash(body, omit="receipt_sha256")
+        with self.assertRaisesRegex(EmitError, "FRANKIE_LEDGER_DELIVERY_RECEIPT_V1"):
+            self._emit(receipt_mutate=wrong)
+
+    def test_the_prompt_names_every_local_ledger_path_as_the_evidence(self):
+        text = self._emit()
+        head = text.index("## The evidence")
+        evidence = text[head:text.index("## ", head + 4)]
+        for name in EXACT_LEDGERS:
+            self.assertIn(f"delivered/{LEDGER_FILES[name]}", evidence, name)
+        self.assertIn("native_causal_stream", evidence)
+        self.assertIn("CausalGroupStream", evidence)
+
+    def test_it_says_he_computes_the_sixteen_sections_himself(self):
+        text = self._emit()
+        self.assertIn("you compute the sixteen sections yourself", text)
+        self.assertIn("causal order", text)
+        self.assertIn("no random access", text)
+        self.assertNotIn("the runner calculates, you interpret", text)
+        self.assertNotIn("Do not recompute them", text)
+
+    def test_the_runners_result_is_not_listed_as_his_evidence(self):
+        text = self._emit()
+        head = text.index("## The evidence")
+        evidence = text[head:text.index("## ", head + 4)]
+        self.assertNotIn("calculation_result.json", evidence)
+        self.assertIn("calculation_result.json", text)          # named, as NOT his evidence
+        self.assertIn("NOT your evidence", text)
+        self.assertIn("compared AFTER you file", text)
+
+    def test_the_twenty_megabyte_skeleton_wording_is_gone(self):
+        text = self._emit()
+        self.assertNotIn("It is about 20 MB", text)
+        self.assertNotIn("read the\nskeleton", text)
+        self.assertNotIn("skeleton", text)
+
+    def test_the_return_shape_carries_both_receipt_hashes(self):
+        text = self._emit()
+        self.assertIn('"delivery_receipt_sha256"', text)
+        self.assertIn('"stream_receipt_sha256"', text)
+        # The delivery hash is KNOWN and filled in; the stream hash is his to produce.
+        block = text[text.index("```json"):text.index("```", text.index("```json") + 7)]
+        shape = json.loads(block.replace("```json", "").strip())
+        self.assertRegex(shape["delivery_receipt_sha256"], r"^[0-9a-f]{64}$")
+        self.assertIn("stream receipt", shape["stream_receipt_sha256"])
+        self.assertEqual(shape["evidence_read"], {name: "READ" for name in EXACT_LEDGERS})
+
+    def test_the_9a_block_and_the_field_census_survive(self):
+        text = self._emit()
+        self.assertIn("### 9a", text.replace("section 9a", "### 9a"))
+        self.assertIn("Keep-everything is a first-class answer", text)
+        self.assertIn("The field census, measured on every retained member row", text)

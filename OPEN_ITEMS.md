@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 171 |
+| open | 172 |
 | in progress | 4 |
 | done | 22 |
 
-By size: **XS** 18, **S** 80, **M** 54, **L** 12
+By size: **XS** 18, **S** 81, **M** 54, **L** 12
 
 ---
 
-By tier: **ESSENTIAL** 26, **BIGGEST_WIN** 45, **REST** 104
+By tier: **ESSENTIAL** 26, **BIGGEST_WIN** 46, **REST** 104
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -53,7 +53,7 @@ By tier: **ESSENTIAL** 26, **BIGGEST_WIN** 45, **REST** 104
 | **A-69** | L | SELF-TRAINING LOOP: Frankie runs blinds on the WALKED corpus, grades himself with FJ-1, and the head is held out as the only true test | It creates the TRAIN/TEST SPLIT this project has never had, it uses a corpus we already own and have used once each, and its grader is already built and has never been run. It is also the mechanism that makes A-67's retention arm meaningful - retention with nothing to retain across is ceremony. |
 | **A-50** | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 
-## BIGGEST WIN (45)
+## BIGGEST WIN (46)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -73,6 +73,7 @@ By tier: **ESSENTIAL** 26, **BIGGEST_WIN** 45, **REST** 104
 | **A-61** | S | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | A false REFUTED is worse than no verification: it argues for UNDOING a real fix, with an adversarial verdict behind it. Cheap to fix (pin a commit) and it protects every future audit. |
 | **A-65** | S | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | It is the test that would have caught THIS session's own worst mistake before Greg did, it is cheap (one extra spawn per change), and it converts every future view/brain change from an argument into a measurement. |
 | **A-66** | S | THE COMPOSITION CONTRACT - partition OWNERSHIP so borrowed pieces own different parts of one job (not a write protocol, and never a ranking) | It is the collision detector for everything else registered tonight. Cheap (a table), and it is the difference between composing best-of-breed and building something that fights itself. Do it BEFORE any of A-59/62/63/64/65 is built. |
+| **F-20** | S | THE LIFECYCLE LEDGER CARRIES NO UNIFORM AVAILABILITY STAMP - STAMP emitted_at_recv_ns AT _retain_lifecycle | one stamp in one function turns a declared rule into a measured field, and every RT delivery after it stops withholding 400 rows per 60 groups |
 | **F-8** | S | per_event.report's DOCSTRING DOCUMENTS A PARAMETER IT DOES NOT HAVE, AND THE A-ARM RE-IMPLEMENTS ITS QUANTILE | - |
 | **G-30** | S | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | It is the instrument dependency under A-24a, the discovery note's own RANK 1 candidate and the one it calls strongest. It also turns five of twelve path points from a timing judgment into arithmetic, on a feed we already ingest. |
 | **M-15** | S | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | A compromised credential with a deferral that has silently expired is the kind of thing that is only ever noticed after it matters. Cheap to do, and the deferral it replaces was explicit and time-boxed. |
@@ -262,6 +263,7 @@ By tier: **ESSENTIAL** 26, **BIGGEST_WIN** 45, **REST** 104
 | **A-61** | BIGGEST_WIN | S | OPEN | S115 | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | - |
 | **A-65** | BIGGEST_WIN | S | OPEN | S115 | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | - |
 | **A-66** | BIGGEST_WIN | S | OPEN | S115 | THE COMPOSITION CONTRACT - partition OWNERSHIP so borrowed pieces own different parts of one job (not a write protocol, and never a ranking) | - |
+| **F-20** | BIGGEST_WIN | S | OPEN | S121 | THE LIFECYCLE LEDGER CARRIES NO UNIFORM AVAILABILITY STAMP - STAMP emitted_at_recv_ns AT _retain_lifecycle | - |
 | **F-8** | BIGGEST_WIN | S | OPEN | S117 | per_event.report's DOCSTRING DOCUMENTS A PARAMETER IT DOES NOT HAVE, AND THE A-ARM RE-IMPLEMENTS ITS QUANTILE | - |
 | **G-30** | BIGGEST_WIN | S | OPEN | S115 | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | - |
 | **M-15** | BIGGEST_WIN | S | OPEN | S115 | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | - |
@@ -1687,6 +1689,18 @@ NOTE 2.2 MEMORY IS THE LARGEST SUBSECTION (~50) AND IS EXACTLY WHERE OUR OWN THR
 NAMED NEIGHBOURS FOR OUR OWN ITEMS, so the map is usable immediately: 2.4 carries 'Language Agents as Optimizable Graphs' and 'Godel Agent: A Self-Referential Agent Framework' - the neighbourhood A-64's branching refine sits in; 2.1 carries TextGrad and 'LLMs as Optimizers'; 2.2 carries MemGen, MemoryBank, MEMORYLLM.
 USE IT THIS WAY: the ownership table's LAYER column is section 2's subsection numbers. Any future paper Greg sends gets classified into 2.1/2.2/2.3/2.4 (or the foundation branch, which closes it for us with a stated reason rather than a judgement), and then into the PART of that layer it owns. That is the whole 'keep them straight' mechanism, and it costs one line per paper.
 PROVENANCE: repo structure and section sizes read from the GitHub landing page; the ~220 papers themselves are NOT read. Sizes are approximate as reported there.
+
+---
+
+### [BIGGEST_WIN] F-20 - THE LIFECYCLE LEDGER CARRIES NO UNIFORM AVAILABILITY STAMP - STAMP emitted_at_recv_ns AT _retain_lifecycle
+
+*size S | OPEN | raised S121*
+
+**Why it is BIGGEST WIN:** one stamp in one function turns a declared rule into a measured field, and every RT delivery after it stops withholding 400 rows per 60 groups
+
+**Source:** S121, measured while building CausalGroupStream (D81)
+
+Every lifecycle row is retained through native_replay_driver._retain_lifecycle with emitting_section and emitted_on and nothing else uniform. Each section names its clocks differently (recv_ns, closed_recv_ns, terminal_recv_ns, exited_recv_ns, second, available_second, nested runs[].end_recv_ns) and two name NONE (mirror GROUP_CLOSE rows; mirror STREAM_END rows), so the stream must resolve availability by a declared rule and WITHHOLD rows it cannot place: on a 60-group fixture 60 mirror rows have no clock and 362 close-occasion rows (lineage 240, queue 60, mirror 60, detector_coverage 1, flow_substrate 1) are held until after exhaustion because their content was fixed at a close instant the row does not carry. Stamping the driver's current recv_ns on every retained row at _retain_lifecycle would make availability a FIELD rather than a rule. Changes ledger bytes and hashes for future runs (the row-sink differential test must be re-baselined); the Sunday ledgers as written are served by the rule. FALSIFIER: closed when every lifecycle row carries emitted_at_recv_ns and CausalGroupStream's withheld_no_own_clock and withheld_close_occasion read zero on a fresh run.
 
 ---
 

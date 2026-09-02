@@ -2230,7 +2230,7 @@
       "size": "M",
       "why": "D68 ordered a report 'on the calcs, on the full raw mbo, all of it'. The calcs half was delivered; the raw-MBO half was never ASKED (spawn prompt: raw mbo/retention/drop/field/book_full/keep = 0 occurrences; mission section 9 named none of them) and could not have been ANSWERED: he receives the ~34 MB result and the 10,616,914,801-byte member ledger is not in it - his own words. S120 added mission section 9a and a spawn gate that refuses a mission without it (34a0c16). STILL OPEN: the exact rows do not reach him. Either they do, or the artifact must declare per ledger READ / NOT_READ so CANNOT_JUDGE is honest. FALSIFIER: closed when a principal artifact validates only with an explicit per-ledger read declaration and the report states in words which claims rest on counters.",
       "blocked_by": null,
-      "reraised": "S120: the DECLARE half is built - per-ledger evidence_read is required at the gate and rendered in the report - and the measurement 9a needs now exists: MboFieldCensus walks every member row (0fe66c8) and the spawn renders its degenerate and always-null fields and HALTS on a result whose census is absent or partial (69c7fc3). Closes when a principal artifact from the corrected run validates with the declaration and its report states which claims rest on counters.",
+      "reraised": "S121: THE DELIVER HALF IS BUILT (D81). `fetch_frankie_ledgers` brings the three exact ledgers into a session verified against S3's ContentLength and the box's PLAIN_SIZES / PLAIN_SHA256SUMS; `native_causal_stream.CausalGroupStream` hands them to the principal one F_LAST-closed group at a time in ts_recv_ns order, byte-identical, no look-ahead, every delivery receipted through the registry validator that had no caller; the emitter refuses to spawn without every ledger VERIFIED and the staging gate refuses NOT_READ once a delivery receipt is cited. Mission section 5 rewritten: he computes the sixteen sections himself. STILL OPEN: nothing has run against the Sunday ledgers - the workflow (frankie_ledger_delivery_20260902) must fire, the session must fetch, stream and spawn, and a principal artifact with delivery_receipt_sha256 and stream_receipt_sha256 must validate. Closes on that artifact.",
       "delegable": false,
       "delegable_ask": null,
       "tier": "ESSENTIAL",
@@ -2369,6 +2369,22 @@
       "delegable": false,
       "delegable_ask": null,
       "tier": "ESSENTIAL",
+      "delegated_prior": null
+    },
+    {
+      "id": "F-20",
+      "title": "THE LIFECYCLE LEDGER CARRIES NO UNIFORM AVAILABILITY STAMP - STAMP emitted_at_recv_ns AT _retain_lifecycle",
+      "source": "S121, measured while building CausalGroupStream (D81)",
+      "first_raised": "S121",
+      "status": "OPEN",
+      "size": "S",
+      "why": "Every lifecycle row is retained through native_replay_driver._retain_lifecycle with emitting_section and emitted_on and nothing else uniform. Each section names its clocks differently (recv_ns, closed_recv_ns, terminal_recv_ns, exited_recv_ns, second, available_second, nested runs[].end_recv_ns) and two name NONE (mirror GROUP_CLOSE rows; mirror STREAM_END rows), so the stream must resolve availability by a declared rule and WITHHOLD rows it cannot place: on a 60-group fixture 60 mirror rows have no clock and 362 close-occasion rows (lineage 240, queue 60, mirror 60, detector_coverage 1, flow_substrate 1) are held until after exhaustion because their content was fixed at a close instant the row does not carry. Stamping the driver's current recv_ns on every retained row at _retain_lifecycle would make availability a FIELD rather than a rule. Changes ledger bytes and hashes for future runs (the row-sink differential test must be re-baselined); the Sunday ledgers as written are served by the rule. FALSIFIER: closed when every lifecycle row carries emitted_at_recv_ns and CausalGroupStream's withheld_no_own_clock and withheld_close_occasion read zero on a fresh run.",
+      "blocked_by": null,
+      "reraised": null,
+      "delegable": false,
+      "delegable_ask": null,
+      "tier": "BIGGEST_WIN",
+      "tier_why": "one stamp in one function turns a declared rule into a measured field, and every RT delivery after it stops withholding 400 rows per 60 groups",
       "delegated_prior": null
     }
   ],

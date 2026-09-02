@@ -1,0 +1,179 @@
+name: Frankie ledger delivery 20260902
+
+# THE RAW MBO REACHES THE PRINCIPAL. D81 (Greg, 2026-09-02): "he gets every record of every
+# field for Sunday, the date and time we are running." The exact ledgers of a finished run sit
+# on S3, and an interactive session resolves no AWS credential - they are GitHub-secret scoped -
+# so a session cannot read them. This workflow presigns each object of a PINNED run for seven
+# days and publishes a FRANKIE_LEDGER_DELIVERY_MANIFEST_V1 as a run artifact. The session then
+# downloads the manifest and runs
+#   python3 -m research.kalshi.frankie_raw_mbo_benchmark.fetch_frankie_ledgers fetch ...
+# which pulls each URL, verifies the gzip length against S3's ContentLength and the plain bytes
+# against the box's PLAIN_SIZES / PLAIN_SHA256SUMS, and writes the delivery receipt the spawn
+# emitter requires.
+#
+# It reads S3 and writes nothing there. The presigned URLs are credentials for seven days: they
+# go into the manifest file and the artifact, never into the log - every step prints keys and
+# sizes only, and the presign loop runs under `set +x`.
+
+on:
+  # A workflow carrying only workflow_dispatch is never registered on a non-default branch and
+  # the dispatch API returns 404 for it. A push firing this is read-only and presigns the same
+  # pinned run the dispatch default names, so it is harmless and it is what registers the
+  # workflow.
+  push:
+    branches:
+      - chatgpt/frankie-raw-mbo-benchmark-20260828
+    paths:
+      - '.github/workflows/frankie_ledger_delivery_20260902.yml'
+  workflow_dispatch:
+    inputs:
+      prefix:
+        description: >-
+          S3 prefix of the run to deliver, WITHOUT the bucket, e.g.
+          nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-clean/full/<sha>/<run>-<attempt>.
+          Leave empty to resolve `run_id` by scanning the a-clean tree.
+        type: string
+        default: ''
+      run_id:
+        description: >-
+          The GitHub run id whose ledgers to deliver. PINNED to the confirmed Sunday run
+          33630348943 by default, never the newest: the size report took the newest once and
+          reported on a push-CI canary. Ignored when `prefix` is given.
+        type: string
+        default: '33630348943'
+
+permissions:
+  contents: read
+
+env:
+  AWS_DEFAULT_REGION: us-east-2
+  AWS_REGION: us-east-2
+  S3_ENDPOINT_URL: https://s3.us-east-2.amazonaws.com
+  BUCKET: bento-568968024170-us-east-2-an
+  ROOT_PREFIX: nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-clean
+  PRESIGN_SECONDS: '604800'
+
+jobs:
+  deliver:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      WANTED_PREFIX: ${{ inputs.prefix || '' }}
+      WANTED_RUN_ID: ${{ inputs.run_id || '33630348943' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Locate the pinned run and list what S3 holds for it
+        shell: bash
+        run: |
+          set -euo pipefail
+          # A named run, found by SCANNING rather than by constructing the key: the prefix
+          # carries the commit sha as well as the run id, and guessing the sha turns a
+          # deterministic lookup into a 404 that reads as a missing run.
+          if [ -n "$WANTED_PREFIX" ]; then
+            key="$WANTED_PREFIX/calculation_result.json"
+          else
+            key="$(aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "$ROOT_PREFIX" \
+              --query "Contents[?ends_with(Key, 'calculation_result.json')].Key" \
+              --output text | tr '\t' '\n' | grep "/${WANTED_RUN_ID}-" | head -1)"
+          fi
+          test -n "$key"
+          test "$key" != "None"
+          aws s3api head-object --bucket "$BUCKET" --key "$key" >/dev/null
+          prefix="${key%/calculation_result.json}"
+          printf 'delivering s3://%s/%s\n' "$BUCKET" "$prefix"
+          # THE INDEPENDENT WITNESS for the gzip lengths: S3's own ContentLength, recorded
+          # at PUT time. Keys and sizes only; nothing here downloads a ledger.
+          aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "$prefix" \
+            --query 'Contents[].{Key:Key,Size:Size}' --output json > ./s3_listing.json
+          python3 -c 'import json;[print(f"{r[\"Size\"]:>15,d}  {r[\"Key\"]}") for r in json.load(open("s3_listing.json")) or []]'
+          echo "RUN_PREFIX=$prefix" >> "$GITHUB_ENV"
+          echo "RUN_ID=${WANTED_RUN_ID}" >> "$GITHUB_ENV"
+
+      - name: Recover PLAIN_SIZES and PLAIN_SHA256SUMS from the box's small_artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The box wrote sha256sum and wc -c over the PLAIN ledgers before gzipping them
+          # (launch workflow: "THE RECEIPT IS WRITTEN BEFORE THE COMPRESSION"), and both ride
+          # in small_artifacts.tar.gz. A run that lacks either cannot be witnessed after
+          # gunzip, and a delivery that cannot be witnessed is not a delivery - so this step
+          # FAILS on absence rather than continuing with a hole.
+          key="${RUN_PREFIX}/small_artifacts.tar.gz"
+          aws s3 cp "s3://${BUCKET}/${key}" ./small_artifacts.tar.gz \
+            --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
+          mkdir -p ./small_artifacts
+          tar xzf ./small_artifacts.tar.gz -C ./small_artifacts PLAIN_SIZES PLAIN_SHA256SUMS
+          test -s ./small_artifacts/PLAIN_SIZES
+          test -s ./small_artifacts/PLAIN_SHA256SUMS
+          echo "PLAIN_SIZES:"
+          cat ./small_artifacts/PLAIN_SIZES
+          echo "PLAIN_SHA256SUMS:"
+          cat ./small_artifacts/PLAIN_SHA256SUMS
+
+      - name: Presign every object for seven days
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          # The URLs are secrets for seven days. They are written to a TSV that only the
+          # manifest builder reads; nothing echoes them. Each object is named explicitly so a
+          # missing one is a failure here, not a MISSING at fetch time in a session.
+          : > ./presigned.tsv
+          for name in exact_member_rows.jsonl.gz exact_lifecycle_rows.jsonl.gz \
+                      legacy_observable_rows.jsonl.gz; do
+            key="${RUN_PREFIX}/ledgers/${name}"
+            aws s3api head-object --bucket "$BUCKET" --key "$key" >/dev/null
+            url="$(aws s3 presign "s3://${BUCKET}/${key}" --expires-in 604800 \
+              --endpoint-url "$S3_ENDPOINT_URL")"
+            printf '%s\t%s\n' "$name" "$url" >> ./presigned.tsv
+            printf 'presigned %s\n' "$name"
+          done
+          for name in calculation_result.json small_artifacts.tar.gz; do
+            key="${RUN_PREFIX}/${name}"
+            aws s3api head-object --bucket "$BUCKET" --key "$key" >/dev/null
+            url="$(aws s3 presign "s3://${BUCKET}/${key}" --expires-in 604800 \
+              --endpoint-url "$S3_ENDPOINT_URL")"
+            printf '%s\t%s\n' "$name" "$url" >> ./presigned.tsv
+            printf 'presigned %s\n' "$name"
+          done
+          test "$(wc -l < ./presigned.tsv)" -eq 5
+
+      - name: Build the delivery manifest with the tested module
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Every check that matters lives in fetch_frankie_ledgers, which has tests; the
+          # workflow only hands it files. It prints keys and sizes, never the URLs.
+          python3 -m research.kalshi.frankie_raw_mbo_benchmark.fetch_frankie_ledgers build-manifest \
+            --run-id "$RUN_ID" --run-prefix "$RUN_PREFIX" --bucket "$BUCKET" \
+            --listing ./s3_listing.json --presigned ./presigned.tsv \
+            --plain-sizes ./small_artifacts/PLAIN_SIZES \
+            --plain-sha256sums ./small_artifacts/PLAIN_SHA256SUMS \
+            --presign-seconds 604800 --output ./delivery_manifest.json
+          rm -f ./presigned.tsv
+          {
+            echo "Delivery manifest for run ${RUN_ID} at \`s3://${BUCKET}/${RUN_PREFIX}\`"
+            echo ""
+            echo "Artifact: frankie-ledger-delivery-${RUN_ID}-${GITHUB_RUN_ATTEMPT}, retained 7 days."
+            echo "In a session: download it, then"
+            echo '`python3 -m research.kalshi.frankie_raw_mbo_benchmark.fetch_frankie_ledgers fetch --manifest delivery_manifest.json --out-dir <dir>`'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish the manifest
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: frankie-ledger-delivery-${{ env.RUN_ID }}-${{ github.run_attempt }}
+          path: |
+            delivery_manifest.json
+            s3_listing.json
+            small_artifacts/PLAIN_SIZES
+            small_artifacts/PLAIN_SHA256SUMS
+          if-no-files-found: error
+          retention-days: 7
