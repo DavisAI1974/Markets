@@ -27,6 +27,23 @@ on:
           measured curve.
         type: string
         default: '50000'
+      traverse_sources:
+        description: >-
+          Which roster objects are TRAVERSED, space separated, in stream order. Applies to
+          both modes. The default is all four.
+          Naming ONE object with mode=full gives a single day over the real full-run path:
+          the box, the same launcher, arm, manifest, three pre-traversal gates, eight
+          section 6 gates and 250k checkpoint cadence. Nothing about the calculation
+          changes - only how many objects the stream carries.
+          All four are always FETCHED and always in the manifest, because the manifest
+          contract requires exactly four sources at fixed roster positions and its
+          source_identity_hash is pinned in code. A one-file manifest would be a contract
+          change rather than a smaller run, so the roster identity stays byte-identical to
+          the full run and the slice is expressed by what is traversed.
+        type: string
+        default: >-
+          glbx-mdp3-20211001.mbo.dbn.zst glbx-mdp3-20211003.mbo.dbn.zst
+          glbx-mdp3-20211004.mbo.dbn.zst glbx-mdp3-20211005.mbo.dbn.zst
 
 permissions:
   contents: read
@@ -45,6 +62,10 @@ env:
   SOURCE_PREFIX: nymex/ng_mbo_5y_v0/native/20211001_20211101
   ARM_ID: A_CLEAN
   CANARY_RECORDS: ${{ github.event_name == 'workflow_dispatch' && inputs.canary_records || '50000' }}
+  TRAVERSE_SOURCES: >-
+    ${{ github.event_name == 'workflow_dispatch' && inputs.traverse_sources ||
+    'glbx-mdp3-20211001.mbo.dbn.zst glbx-mdp3-20211003.mbo.dbn.zst
+    glbx-mdp3-20211004.mbo.dbn.zst glbx-mdp3-20211005.mbo.dbn.zst' }}
 
 jobs:
   launch-a-clean-real-time:
@@ -77,7 +98,7 @@ jobs:
           test -s research/ng_exhaustion_mbo_v4_state_adapter_20260820.py
 
       - name: Install native DBN reader
-        run: python -m pip install --quiet databento==0.81.0
+        run: python -m pip install --quiet databento==0.81.0 boto3
 
       - name: Fetch and hash-bind exact native DBN roster
         shell: bash
@@ -111,6 +132,33 @@ jobs:
 
           echo "SOURCE_DIR=$source_dir" >> "$GITHUB_ENV"
           echo "PACKET_DIR=$packet_dir" >> "$GITHUB_ENV"
+
+          # HOW MANY RECORDS THE SLICE ACTUALLY CARRIES, taken from the manifest rather than
+          # estimated. The manifest already counts MBO records per object, so a subset's
+          # record total is a sum and not a guess - which matters twice over: the coverage
+          # gate compares records seen against the identity's count, and the box's disk
+          # precheck is computed from that same number below.
+          # PACKET_DIR is passed on the command line, NOT read from the environment. It is
+          # written to $GITHUB_ENV a few lines above, and $GITHUB_ENV reaches LATER steps
+          # only - inside this one it is still unset, so reading it here would KeyError on
+          # a value that is plainly sitting in a shell variable.
+          PACKET_DIR="$packet_dir" python3 - <<'PY' >> "$GITHUB_ENV"
+          import json
+          import os
+
+          manifest = json.load(open(os.environ["PACKET_DIR"] + "/source_manifest.json"))
+          wanted = os.environ["TRAVERSE_SOURCES"].split()
+          by_name = {row["name"]: row for row in manifest["sources"]}
+          missing = [name for name in wanted if name not in by_name]
+          if missing:
+              raise SystemExit(f"traverse_sources names objects not in the roster: {missing}")
+          records = sum(int(by_name[name]["mbo_records"]) for name in wanted)
+          subset = len(wanted) != len(manifest["sources"])
+          print(f"TRAVERSE_RECORDS={records}")
+          print(f"TRAVERSE_IS_SUBSET={'yes' if subset else 'no'}")
+          PY
+          printf 'traversing %s of %s roster objects\n' \
+            "$(echo $TRAVERSE_SOURCES | wc -w)" "4"
 
       - name: Seal A-clean RT packet and pre-call checkpoint
         shell: bash
@@ -231,6 +279,18 @@ jobs:
           # green over a refused calculation.
           out_dir="$PACKET_DIR/canary"
           install -d -m 0700 "$out_dir"
+          # Sources come from TRAVERSE_SOURCES so the same step serves a four-file prelaunch
+          # canary and a shorter slice without a second workflow. Each name is checked to
+          # exist before the launcher is called: an unreadable path would otherwise reach
+          # `native_records` and surface as a decode error, naming the symptom rather than
+          # the typo.
+          source_args=()
+          for name in $TRAVERSE_SOURCES; do
+            test -s "$SOURCE_DIR/$name"
+            source_args+=(--source "$SOURCE_DIR/$name")
+          done
+          test "${#source_args[@]}" -gt 0
+          printf 'traversing %s object(s): %s\n' "$((${#source_args[@]} / 2))" "$TRAVERSE_SOURCES"
           python -m research.kalshi.frankie_raw_mbo_benchmark.native_a_arm_launch \
             --arm A_CLEAN \
             --run-id "${RUN_ID}-canary" \
@@ -240,10 +300,7 @@ jobs:
             --limit-records "$CANARY_RECORDS" \
             --checkpoint-every-records 20000 \
             --cadence-groups 5000 \
-            --source "$SOURCE_DIR/glbx-mdp3-20211001.mbo.dbn.zst" \
-            --source "$SOURCE_DIR/glbx-mdp3-20211003.mbo.dbn.zst" \
-            --source "$SOURCE_DIR/glbx-mdp3-20211004.mbo.dbn.zst" \
-            --source "$SOURCE_DIR/glbx-mdp3-20211005.mbo.dbn.zst"
+            "${source_args[@]}"
           echo "CANARY_OUT_DIR=$out_dir" >> "$GITHUB_ENV"
 
       - name: Grow the box volume so the exact ledgers fit
@@ -335,14 +392,58 @@ jobs:
           # is short because the only thing it needs to outlive is the staging step.
           manifest_b64="$(base64 -w0 "$PACKET_DIR/source_manifest.json")"
           presigned=""
-          for name in glbx-mdp3-20211001.mbo.dbn.zst glbx-mdp3-20211003.mbo.dbn.zst \
-                      glbx-mdp3-20211004.mbo.dbn.zst glbx-mdp3-20211005.mbo.dbn.zst; do
+          for name in $TRAVERSE_SOURCES; do
             url="$(aws s3 presign "s3://${BUCKET}/${SOURCE_PREFIX}/${name}" \
               --expires-in 21600 --endpoint-url "$S3_ENDPOINT_URL")"
             presigned="${presigned}${name} ${url}"$'\n'
           done
+          # THE UPLOAD, SOLVED THE SAME WAY THE DOWNLOAD WAS. The box's instance role cannot
+          # write this bucket any more than it can read it, and the run before this one
+          # therefore ended with its output stranded on the volume - a finished traversal and
+          # an unfinished run, because D34 says data lives on S3.
+          #
+          # A presigned PUT is the mirror of the presigned GET already used above: it carries
+          # a signature and never the secret key, is write-only, names exactly one key, and
+          # expires. So the results become durable with NO new permission, which leaves the
+          # scoped role policy as the tidy-up it should have been rather than a blocker.
+          #
+          # The output names are deterministic, which is what makes this possible at all -
+          # each key is known before the traversal writes it. The ledgers are gzipped first:
+          # a single presigned PUT is capped at 5 GB and JSONL deflates about nine to one, so
+          # compression is what keeps the biggest ledger inside the cap. Nothing is dropped
+          # by it; gzip is lossless and the sha256 of the plain file travels in the receipt.
+          # boto3, not `aws s3 presign`, because that command signs GETs and its --method
+          # flag is not something to rely on across CLI versions. generate_presigned_url is
+          # explicit about the operation being signed, which is the part that matters here.
+          presigned_put="$(python3 - <<'PUTS'
+          import os
+
+          import boto3
+
+          keys = [
+              "calculation_result.json",
+              "source_manifest.json",
+              "small_artifacts.tar.gz",
+              "ledgers/exact_member_rows.jsonl.gz",
+              "ledgers/exact_lifecycle_rows.jsonl.gz",
+              "ledgers/legacy_observable_rows.jsonl.gz",
+          ]
+          client = boto3.client("s3", endpoint_url=os.environ["S3_ENDPOINT_URL"])
+          bucket = os.environ["BUCKET"]
+          prefix = os.environ["DURABLE_PREFIX_FULL"]
+          for key in keys:
+              url = client.generate_presigned_url(
+                  "put_object",
+                  Params={"Bucket": bucket, "Key": f"{prefix}/{key}"},
+                  ExpiresIn=129600,
+              )
+              print(f"{key} {url}")
+          PUTS
+          )"
+
           export MANIFEST_B64="$manifest_b64"
           export PRESIGNED_SOURCES="$presigned"
+          export PRESIGNED_PUTS="$presigned_put"
 
           python3 - <<'PY'
           import base64
@@ -370,27 +471,69 @@ jobs:
                   continue
               name, _, url = line.partition(" ")
               presigned[name] = url
+          puts = {}
+          for line in os.environ["PRESIGNED_PUTS"].splitlines():
+              if not line.strip():
+                  continue
+              key, _, url = line.partition(" ")
+              puts[key] = url
 
-          # The same four objects the runner fetched, with the same expected digests. The box
-          # verifies them itself: a silently truncated download is a shorter tape, which reads
-          # downstream as a quiet market rather than as a failure.
-          ROSTER = (
-              ("glbx-mdp3-20211001.mbo.dbn.zst",
-               "e6b4ec01bd9b34d57cb22c770b5d49c756e7f41a658f081823d923004a0121b2"),
-              ("glbx-mdp3-20211003.mbo.dbn.zst",
-               "4380bd9ba83a5badc4839e12785aa464817b87e3fac11176b951e7b474446d88"),
-              ("glbx-mdp3-20211004.mbo.dbn.zst",
-               "8ed47cc0a68cf40cae9fde45e158142978076e60d3f9fc7cf940196babfddc0a"),
-              ("glbx-mdp3-20211005.mbo.dbn.zst",
-               "a4a12f9578da762412884e7f559a123361eaa3a153bec0db59dfb3ba6224a874"),
-          )
+          # The objects the runner fetched, with the digests the MANIFEST records - read from
+          # the manifest rather than restated here, so the box and the runner cannot come to
+          # hold two opinions about the same roster. The box verifies each one itself: a
+          # silently truncated download is a shorter tape, which reads downstream as a quiet
+          # market rather than as a failure.
+          manifest = json.loads(base64.b64decode(manifest_b64))
+          by_name = {row["name"]: row for row in manifest["sources"]}
+          traversed = os.environ["TRAVERSE_SOURCES"].split()
+          ROSTER = tuple((name, by_name[name]["sha256"]) for name in traversed)
 
-          # MEASURED, not guessed: canary run 33304621724 wrote 1,205,197,795 bytes of packet
-          # for 50,001 records, so the 5.67M-record roster needs on the order of 136 GB of
-          # exact ledgers. 170 GiB, expressed in the 1024-byte blocks df -kP reports, leaves
-          # headroom for the sources and the S3 staging. Checked in the first seconds because
-          # the alternative is discovering it at hour six of an eight-hour run.
-          required_kib = 170 * 1024 * 1024
+          # WHAT BOUNDS THE SLICE, and only when it IS one. Traversing every roster object
+          # streams and takes the manifest's total, which is the case where materialising
+          # would cost 5.67M records of RAM. Traversing a SUBSET must state its own record
+          # count instead: the coverage gate compares records seen against the identity's
+          # count, so a subset claiming the roster's total would be comparing a real number
+          # against an aspiration and could never pass.
+          traverse_records = int(os.environ["TRAVERSE_RECORDS"])
+          is_subset = os.environ["TRAVERSE_IS_SUBSET"] == "yes"
+          bound = f" --limit-records {traverse_records}" if is_subset else ""
+
+          # CADENCE AND CHECKPOINTS SCALE WITH THE SLICE, and this is not a refinement - it
+          # is a defect the rendered command exposed. Both flags default to 250,000 and the
+          # box path never passed either, which is correct for 4.26M groups and silently
+          # wrong for one day: a single roster object is roughly 45,000 groups, so a cadence
+          # of 250,000 groups fires NEVER and the run stages NOT ONE spawn request. The
+          # traversal would complete, every calculation would run, every gate would pass, and
+          # there would be nothing for Frankie to be spawned against - a finished run that
+          # cannot answer the question it was run to answer.
+          #
+          # The formulas reproduce today's full-roster numbers rather than replacing them,
+          # which is how they were checked: 5,667,689 records gives a cadence of 226,707
+          # against the 250,000 in use, and a checkpoint interval that clamps to exactly
+          # 250,000. So the full roster behaves as before and a day gets the same DENSITY of
+          # decision points instead of none.
+          #
+          # Groups run about 0.8 per record, measured on the canary: 40,242 groups from
+          # 50,001 records. TARGET_SPAWNS is what that density is expressed in.
+          TARGET_SPAWNS = 20
+          GROUPS_PER_RECORD = 0.8
+          cadence = max(1000, int(traverse_records * GROUPS_PER_RECORD / TARGET_SPAWNS))
+          checkpoint_every = min(250_000, max(5_000, traverse_records // 10))
+
+          # MEASURED THE EXPENSIVE WAY, and this number is the correction of the error that
+          # cost a run. The first figure came from canary run 33304621724's uploaded
+          # ARTIFACT - 1,205,197,795 bytes for 50,001 records, so 24 KB per record - and was
+          # called the disk requirement. It was not: `actions/upload-artifact` compresses at
+          # level 6 and JSONL deflates about nine to one. The real figure came off CloudWatch
+          # EBS write bytes on the run that filled the volume: 90 GB per hour for 2.58 hours
+          # against roughly 1.05M records is 215 KB per record, nine times the estimate.
+          #
+          # So it is computed from the slice's own record count now, not from a constant that
+          # happened to fit one roster. A full-roster dispatch against a 300 GB volume is
+          # REFUSED by this line, which is the correct answer and the one that was missing.
+          KIB_PER_RECORD = 215
+          HEADROOM = 1.4  # sources, the git clone, and the S3 staging copy come out of this
+          required_kib = int(traverse_records * KIB_PER_RECORD * HEADROOM)
 
           steps = [
               "set -eu",
@@ -399,6 +542,20 @@ jobs:
               # instance happens to have configured. A wrong region is a 301 on the first
               # copy, hours before anything else would have gone wrong.
               "export AWS_DEFAULT_REGION=us-east-2",
+              # WHAT IS ALREADY ON THE VOLUME, SAID OUT LOUD BEFORE IT IS REMOVED. The run
+              # that filled this volume left roughly 232 GB of partial ledgers and about four
+              # save points, and the disk precheck below would refuse against them. They are
+              # a partial traversal of the first roster object, reproducible from the same
+              # source bytes and superseded by running a day at a time, so nothing unique
+              # dies here - but D60's habit is that a removal is stated, not assumed, so the
+              # sizes are echoed into the SSM output first and remain in the run record.
+              'echo "A_ARM_PRIOR_OUTPUT_KIB=$(du -sk /opt/frankie-a-arm-run 2>/dev/null'
+              ' | cut -f1 || echo 0)"',
+              'echo "A_ARM_PRIOR_SAVE_POINTS=$(ls -1 /opt/frankie-a-arm-run/checkpoints'
+              ' 2>/dev/null | wc -l)"',
+              'echo "A_ARM_PRIOR_LEDGERS=$(ls -l /opt/frankie-a-arm-run/ledgers'
+              ' 2>/dev/null | tail -n +2 | awk \'{print $9\":\"$5}\' | tr \'\\n\' \' \' || true)"',
+              "rm -rf /opt/frankie-a-arm-run",
               "install -d -m 0700 /opt/frankie-a-arm-run/sources",
               # A grown EBS volume is invisible to the OS until the partition and the
               # filesystem are grown too, so the box does that itself rather than trusting
@@ -466,9 +623,13 @@ jobs:
                   f" --code-commit {sha}"
                   " --source-manifest /opt/frankie-a-arm-run/source_manifest.json"
                   " --out-dir /opt/frankie-a-arm-run"
-                  " $(printf ' --source /opt/frankie-a-arm-run/sources/%s'"
-                  " glbx-mdp3-20211001.mbo.dbn.zst glbx-mdp3-20211003.mbo.dbn.zst"
-                  " glbx-mdp3-20211004.mbo.dbn.zst glbx-mdp3-20211005.mbo.dbn.zst)"
+                  f" --checkpoint-every-records {checkpoint_every}"
+                  f" --cadence-groups {cadence}"
+                  + bound
+                  + "".join(
+                      f" --source /opt/frankie-a-arm-run/sources/{name}"
+                      for name, _ in ROSTER
+                  )
               ),
               # THE UPLOAD IS ATTEMPTED AND ITS FAILURE IS NOT FATAL, which is the one place
               # in this script where swallowing an error is right. The box currently has no
@@ -481,14 +642,54 @@ jobs:
               # It is not silent: the marker says which of the two happened, and a run that
               # reports A_ARM_RESULTS_ON_BOX has NOT been made durable. D34 says S3 is where
               # data lives, so that state is unfinished, not done.
+              # THE RECEIPT IS WRITTEN BEFORE THE COMPRESSION, over the PLAIN files. A
+              # sha256 of a gzip proves the gzip arrived; it says nothing about the rows.
+              # This is what lets a reader verify the ledger it decompresses is the ledger
+              # the traversal reconciled, which is the whole evidentiary point of retention.
               (
-                  "aws s3 cp /opt/frankie-a-arm-run"
-                  f" s3://{bucket}/{prefix} --recursive --only-show-errors"
-                  " && echo A_ARM_RESULTS_UPLOADED=yes"
-                  " || echo A_ARM_RESULTS_ON_BOX=/opt/frankie-a-arm-run"
+                  "cd /opt/frankie-a-arm-run && sha256sum"
+                  " calculation_result.json source_manifest.json ledgers/*.jsonl"
+                  " > /opt/frankie-a-arm-run/PLAIN_SHA256SUMS"
               ),
-              f"echo A_ARM_TRAVERSAL_COMPLETE={run_id}",
+              (
+                  "cd /opt/frankie-a-arm-run && tar czf small_artifacts.tar.gz"
+                  " checkpoints spawn_requests PLAIN_SHA256SUMS"
+              ),
+              # gzip -1 rather than the default: these are 5-12 GB of JSONL and the ratio
+              # barely moves past level 1, while the time does. The point of compressing at
+              # all is the 5 GB cap on a single presigned PUT, not the smallest possible file.
+              "gzip -1 -f /opt/frankie-a-arm-run/ledgers/*.jsonl",
+              (
+                  "cd /opt/frankie-a-arm-run && ls -l calculation_result.json"
+                  " small_artifacts.tar.gz ledgers/ | awk '{print \"A_ARM_OUT \" $0}'"
+              ),
           ])
+          # EACH OUTPUT GOES UP OVER ITS OWN PRESIGNED PUT, and a failure is reported per
+          # file rather than as one verdict. curl -f makes an HTTP error a non-zero exit;
+          # -H 'Expect:' stops the 100-continue handshake, which some proxies never answer
+          # and which would otherwise stall an upload that was going to succeed.
+          #
+          # The failure of any one of these is NOT fatal to the script. Hours of finished
+          # traversal must never be discarded because a transfer failed at the last line, and
+          # the per-file marker says exactly which ones landed - a run missing any
+          # A_ARM_PUT_OK line is not durable, and the next step is to re-issue that URL, not
+          # to re-run the traversal.
+          for key in (
+              "calculation_result.json",
+              "source_manifest.json",
+              "small_artifacts.tar.gz",
+              "ledgers/exact_member_rows.jsonl.gz",
+              "ledgers/exact_lifecycle_rows.jsonl.gz",
+              "ledgers/legacy_observable_rows.jsonl.gz",
+          ):
+              steps.append(
+                  f"curl -sSf -X PUT -H 'Expect:' -T /opt/frankie-a-arm-run/{key}"
+                  f" '{puts[key]}'"
+                  f" && echo A_ARM_PUT_OK={key}"
+                  f" || echo A_ARM_PUT_FAILED={key}"
+              )
+          steps.append(f"echo A_ARM_RESULTS_PREFIX=s3://{bucket}/{prefix}")
+          steps.append(f"echo A_ARM_TRAVERSAL_COMPLETE={run_id}")
           # executionTimeout IS THE ONE THAT KILLS THE RUN, and it is not the one the send
           # sets. `aws ssm send-command --timeout-seconds` is TimeoutSeconds: how long the
           # command may sit undelivered before it is abandoned. It has nothing to do with how
