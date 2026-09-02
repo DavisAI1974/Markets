@@ -367,18 +367,24 @@ def _validate_outputs(
     return cited, receipt
 
 
-def _render_report_beside(path: Path) -> Path | None:
+def _render_report_beside(
+    path: Path,
+    *,
+    crosswalk: Mapping[str, Any] | None = None,
+    crosswalk_note: str | None = None,
+) -> Path | None:
     """Write the human-readable report next to the artifact. Never fatal.
 
     Imported inside the function so a renderer problem can never stop an artifact from
     validating: the findings are the deliverable, the report is how anyone reads them.
+    `crosswalk` / `crosswalk_note` (S121 slice 3) are appended by the renderer.
     """
     try:
         from research.kalshi.frankie_raw_mbo_benchmark.render_frankie_report import (
             write_report,
         )
 
-        return write_report(path)
+        return write_report(path, crosswalk=crosswalk, crosswalk_note=crosswalk_note)
     except Exception as exc:  # noqa: BLE001 - see docstring; reported, never raised
         print(
             f"WARNING: principal artifact at {path} validated but its report could not be "
@@ -394,6 +400,70 @@ READ_BACK_SUFFIX = "_with_findings"
 READ_BACK_SCHEMA = "FRANKIE_NATIVE_RAW_MBO_READ_BACK_V1"
 
 
+def _load_receipt_file(path: Path | str | None, *, label: str) -> dict[str, Any] | None:
+    """A receipt JSON handed to the read-back, or None. It must at least carry its own hash."""
+    if path is None:
+        return None
+    path = Path(path)
+    try:
+        body = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise StagingError(f"no {label} at {path}") from exc
+    except json.JSONDecodeError as exc:
+        raise StagingError(f"{label} at {path} is not valid JSON: {exc}") from exc
+    if not isinstance(body, Mapping):
+        raise StagingError(f"{label} at {path} is not an object")
+    sha = body.get("receipt_sha256")
+    if not isinstance(sha, str) or _SHA256_RE.fullmatch(sha) is None:
+        raise StagingError(f"{label} at {path} carries no receipt_sha256; it cannot be bound to the artifact")
+    return dict(body)
+
+
+def _bind_receipt_sha(file_body: Mapping[str, Any] | None, stated: str | None, *, label: str) -> str | None:
+    """The receipt sha the read-back works with: the file's, which a stated one must equal."""
+    if file_body is None:
+        return stated
+    file_sha = file_body["receipt_sha256"]
+    if stated is not None and stated != file_sha:
+        raise StagingError(
+            f"the {label} file has receipt_sha256 {file_sha} and {label.replace(' ', '_')}_sha256 "
+            f"{stated} was stated; the two name different receipts"
+        )
+    return file_sha
+
+
+def _crosswalk_for_report(
+    *,
+    execution: Mapping[str, Any],
+    result: Mapping[str, Any],
+    delivery_receipt: Mapping[str, Any] | None,
+    knowledge_receipt: Mapping[str, Any] | None,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """The 99-layer crosswalk for the report, or the reason there is none. Never raises.
+
+    The crosswalk is part of the RENDER: the findings are the deliverable, so a crosswalk that
+    cannot be computed is reported (in the report itself, and on stderr) rather than fatal.
+    """
+    try:
+        # Imported here, not at module level: the crosswalk imports the ledger fetcher, which
+        # imports this module - a top-level import would cycle.
+        from research.kalshi.frankie_raw_mbo_benchmark.native_layer_crosswalk import crosswalk
+
+        body = crosswalk(
+            load_registry(),
+            arm=execution["arm"],
+            result=result,
+            delivery_receipt=delivery_receipt,
+            knowledge_receipt=knowledge_receipt,
+            outputs_receipt=execution.get("outputs_receipt"),
+        )
+        return body, None
+    except Exception as exc:  # noqa: BLE001 - see docstring; stated in the report, never raised
+        note = f"crosswalk could not be computed: {exc}"
+        print(f"WARNING: {note}", file=sys.stderr)
+        return None, note
+
+
 def read_back(
     artifact_path: Path | str,
     *,
@@ -402,6 +472,8 @@ def read_back(
     out_path: Path | str | None = None,
     knowledge_receipt_sha256: str | None = None,
     delivery_receipt_sha256: str | None = None,
+    delivery_receipt: Path | str | None = None,
+    knowledge_receipt: Path | str | None = None,
     render_report: bool = True,
 ) -> dict[str, Any]:
     """Close the loop: a finished `calculation_result.json` receives the principal's findings.
@@ -411,10 +483,21 @@ def read_back(
     hash through `load_principal_artifact`; attaches through the runner's own route
     (`NativeCalculationRun.attach_principal_findings_to_result`); writes the updated result
     BESIDE the original under `READ_BACK_SUFFIX`, never over it and never over an earlier
-    read-back. Returns a summary naming every hash involved. A render failure stays non-fatal.
+    read-back. Returns a summary naming every hash involved.
+
+    `delivery_receipt` and `knowledge_receipt` are receipt FILES (S121 slice 3). Each is bound
+    by hash: the delivery receipt must be the one the artifact cites, and a stated
+    `*_sha256` must equal its file's. With the result and the receipts in hand the read-back
+    computes the 99-layer crosswalk and the report carries it; the crosswalk is part of the
+    render, so its failure is stated in the report and stays non-fatal, as a render failure
+    always has.
     """
     artifact_path = Path(artifact_path)
     result_path = Path(result_path)
+    delivery_body = _load_receipt_file(delivery_receipt, label="delivery receipt")
+    knowledge_body = _load_receipt_file(knowledge_receipt, label="knowledge receipt")
+    delivery_receipt_sha256 = _bind_receipt_sha(delivery_body, delivery_receipt_sha256, label="delivery receipt")
+    knowledge_receipt_sha256 = _bind_receipt_sha(knowledge_body, knowledge_receipt_sha256, label="knowledge receipt")
     try:
         result = json.loads(result_path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
@@ -473,7 +556,16 @@ def read_back(
     target.write_text(
         json.dumps(updated, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8"
     )
-    report = _render_report_beside(artifact_path) if render_report else None
+    report: Path | None = None
+    crosswalk_body: dict[str, Any] | None = None
+    if render_report:
+        crosswalk_body, crosswalk_note = _crosswalk_for_report(
+            execution=execution, result=result,
+            delivery_receipt=delivery_body, knowledge_receipt=knowledge_body,
+        )
+        report = _render_report_beside(
+            artifact_path, crosswalk=crosswalk_body, crosswalk_note=crosswalk_note
+        )
     return {
         "schema": READ_BACK_SCHEMA,
         "principal": execution["principal"],
@@ -487,7 +579,9 @@ def read_back(
         "result_hash": updated["result_hash"],
         "findings_attached": len(findings),
         "delivery_receipt_sha256": execution["delivery_receipt_sha256"],
+        "knowledge_receipt_sha256": knowledge_receipt_sha256,
         "outputs_receipt_sha256": execution["outputs_receipt_sha256"],
+        "crosswalk_sha256": None if crosswalk_body is None else crosswalk_body["crosswalk_sha256"],
         "report_path": None if report is None else str(report),
     }
 
@@ -510,7 +604,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     rb.add_argument("--out", type=Path, default=None, help=f"where to write the result with findings (default: beside --result with {READ_BACK_SUFFIX!r})")
     rb.add_argument("--knowledge-receipt-sha256", default=None, help="the knowledge-delivery receipt every verdict must cite")
     rb.add_argument("--delivery-receipt-sha256", default=None, help="the ledger-delivery receipt the artifact must cite")
-    rb.add_argument("--no-report", action="store_true", help="do not render the findings report beside the artifact")
+    rb.add_argument("--delivery-receipt", type=Path, default=None, help="FRANKIE_LEDGER_DELIVERY_RECEIPT_V1 file; bound by hash to the artifact's citation and fed to the crosswalk")
+    rb.add_argument("--knowledge-receipt", type=Path, default=None, help="FRANKIE_KNOWLEDGE_DELIVERY_RECEIPT_V1 file; its hash is the one the verdicts must cite, and it feeds the crosswalk")
+    rb.add_argument("--no-report", action="store_true", help="do not render the findings report (and its crosswalk) beside the artifact")
     args = parser.parse_args(argv)
     try:
         summary = read_back(
@@ -520,6 +616,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             out_path=args.out,
             knowledge_receipt_sha256=args.knowledge_receipt_sha256,
             delivery_receipt_sha256=args.delivery_receipt_sha256,
+            delivery_receipt=args.delivery_receipt,
+            knowledge_receipt=args.knowledge_receipt,
             render_report=not args.no_report,
         )
     except (StagingError, OSError, ValueError) as exc:

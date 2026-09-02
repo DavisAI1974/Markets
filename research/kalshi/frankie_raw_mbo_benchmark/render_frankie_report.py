@@ -57,8 +57,20 @@ def _render_evidence(evidence: Any) -> str:
     return "```json\n" + json.dumps(evidence, indent=2, sort_keys=True) + "\n```"
 
 
-def render_report(body: Mapping[str, Any]) -> str:
-    """Return the markdown report for one principal artifact."""
+def render_report(
+    body: Mapping[str, Any],
+    *,
+    crosswalk: Mapping[str, Any] | None = None,
+    crosswalk_note: str | None = None,
+) -> str:
+    """Return the markdown report for one principal artifact.
+
+    `crosswalk` is a `native_layer_crosswalk.crosswalk` body; when given, its table is
+    appended after the findings (S121 slice 3) - this report is the one file every artifact
+    produces, so what reached the principal is stated where it cannot be missed.
+    `crosswalk_note` states, in the report, why no crosswalk could be computed; a failure
+    recorded only on stderr expires with the terminal. Neither given: the report is unchanged.
+    """
     findings = body.get("findings")
     if not isinstance(findings, Sequence) or isinstance(findings, (str, bytes)) or not findings:
         raise ReportError(
@@ -152,15 +164,41 @@ def render_report(body: Mapping[str, Any]) -> str:
             add(f"**Confidence basis.** {basis}" if basis
                 else "**Confidence basis.** _not stated on this finding_")
             add("")
+
+    if crosswalk is not None or crosswalk_note is not None:
+        add("## Layer crosswalk")
+        add("")
+        if crosswalk is not None:
+            add("What reached the principal, one row per registry layer, COMPUTED from this run's")
+            add("receipts and its own field census - never read off a policy")
+            add("(`native_layer_crosswalk.crosswalk`). Appended here because this report is the one")
+            add("file every artifact produces, so the delivery record cannot be lost beside it.")
+            add("")
+            # Imported here, not at module level: the crosswalk module imports the ledger fetcher,
+            # which imports staging, which renders this report - a top-level import would cycle.
+            from research.kalshi.frankie_raw_mbo_benchmark.native_layer_crosswalk import (
+                render_crosswalk_table,
+            )
+
+            add(render_crosswalk_table(crosswalk))
+        else:
+            add(f"_{crosswalk_note}_")
+            add("")
     return "\n".join(lines) + "\n"
 
 
-def write_report(artifact_path: Path | str, *, out_dir: Path | None = None) -> Path:
+def write_report(
+    artifact_path: Path | str,
+    *,
+    out_dir: Path | None = None,
+    crosswalk: Mapping[str, Any] | None = None,
+    crosswalk_note: str | None = None,
+) -> Path:
     """Render `artifact_path` and write the report beside it. Returns the written path.
 
     Writes `frankie_findings_report.md`. It never writes
     `frankie_calculation_assessment.md`: that is a hand-authored record and a generated file
-    does not get to overwrite one.
+    does not get to overwrite one. `crosswalk` / `crosswalk_note` are passed to `render_report`.
     """
     artifact_path = Path(artifact_path)
     try:
@@ -171,7 +209,9 @@ def write_report(artifact_path: Path | str, *, out_dir: Path | None = None) -> P
         raise ReportError(f"principal artifact at {artifact_path} is not valid JSON: {exc}") from exc
     target = (out_dir or artifact_path.parent) / REPORT_FILENAME
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(render_report(body), encoding="utf-8")
+    target.write_text(
+        render_report(body, crosswalk=crosswalk, crosswalk_note=crosswalk_note), encoding="utf-8"
+    )
     return target
 
 
