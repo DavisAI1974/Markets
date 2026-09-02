@@ -1,0 +1,134 @@
+#!/usr/bin/env python3
+"""A stub `aws` that keeps just enough EC2/SSM state to exercise the rescue's exit paths.
+
+One question: after a failure at any point between the detach and the reattach, does the
+volume end up back on the box? A trap that has never executed is not a tested trap.
+
+It models the thing the review found: a MOUNTED volume refuses to detach. Terminating the
+helper is what releases it.
+"""
+import json
+import os
+import sys
+
+STATE = os.environ["SIM_STATE"]
+FAIL_AT = os.environ.get("SIM_FAIL_AT", "")
+BOX = "i-08cee7171c0a76a04"
+HELPER = "i-0helper"
+
+
+def load():
+    with open(STATE) as f:
+        return json.load(f)
+
+
+def save(s):
+    with open(STATE, "w") as f:
+        json.dump(s, f)
+
+
+argv = sys.argv[1:]
+joined = " ".join(argv)
+s = load()
+s.setdefault("calls", []).append(joined.split(" --")[0])
+
+
+def die(tag):
+    save(s)
+    print(f"simulated failure at {tag}", file=sys.stderr)
+    sys.exit(254)
+
+
+def out(value):
+    save(s)
+    print(value)
+    sys.exit(0)
+
+
+svc, op = argv[0], argv[1]
+
+if svc == "ec2" and op == "stop-instances":
+    if FAIL_AT == "stop":
+        die("stop")
+    s["box"] = "stopped"
+elif svc == "ec2" and op == "start-instances":
+    s["box"] = "running"
+    s["box_started_again"] = True
+elif svc == "ec2" and op == "detach-volume":
+    # THE MODELLED TRUTH: a mounted volume does not detach.
+    if s.get("mounted"):
+        die("detach-volume on a MOUNTED volume (stuck busy)")
+    s["attached_to"] = None
+elif svc == "ec2" and op == "attach-volume":
+    target = argv[argv.index("--instance-id") + 1]
+    if FAIL_AT == "attach_helper" and target == HELPER:
+        die("attach_helper")
+    if s["attached_to"] is not None:
+        die("attach-volume VolumeInUse")
+    s["attached_to"] = target
+    s["last_device"] = argv[argv.index("--device") + 1]
+elif svc == "ec2" and op == "run-instances":
+    if FAIL_AT == "run_instances":
+        die("run_instances (PassRole denied)")
+    s["helper"] = HELPER
+    s["helper_state"] = "running"
+    out(HELPER)
+elif svc == "ec2" and op == "terminate-instances":
+    s["helper_terminated"] = True
+    s["helper_state"] = "terminated"
+    # Termination releases the attachment whatever the guest was doing.
+    if s["attached_to"] == HELPER:
+        s["attached_to"] = None
+        s["mounted"] = False
+elif svc == "ec2" and op == "wait":
+    # The built-in waiters the rewrite removed, modelled so the OLD script can be run for
+    # comparison. A waiter does not succeed on a state that never arrives.
+    what = argv[2]
+    if what == "volume-available" and s["attached_to"] is not None:
+        die("wait volume-available timed out (volume still attached)")
+    if what == "volume-in-use" and s["attached_to"] is None:
+        die("wait volume-in-use timed out")
+elif svc == "ssm" and op == "wait":
+    pass
+elif svc == "ec2" and op == "describe-volumes":
+    if "Attachments" in joined:
+        out(s["attached_to"] or "None")
+    out("in-use" if s["attached_to"] else "available")
+elif svc == "ec2" and op == "describe-instances":
+    ident = argv[argv.index("--instance-ids") + 1]
+    out(s["box"] if ident == BOX else s.get("helper_state", "pending"))
+elif svc == "ec2" and op == "modify-instance-attribute":
+    s["dot_restored"] = True
+elif svc == "ssm" and op == "get-parameters":
+    out("ami-0simulated")
+elif svc == "ssm" and op == "describe-instance-information":
+    if FAIL_AT == "helper_offline" and HELPER in joined:
+        out("ConnectionLost")
+    out("Online")
+elif svc == "ssm" and op == "send-command":
+    if "volume rescue" in joined:
+        # The clear command mounts the filesystem. Whether it unmounts depends on the failure.
+        s["mounted"] = FAIL_AT == "box_script"
+        s["last_command"] = "clear"
+    else:
+        s["last_command"] = "probe"
+    out("cid-1")
+elif svc == "ssm" and op == "get-command-invocation":
+    if "Status" in joined:
+        out("Failed" if FAIL_AT == "box_script" else "Success")
+    if "ResponseCode" in joined:
+        out("40")
+    if "StandardErrorContent" in joined:
+        out("")
+    if FAIL_AT == "box_script":
+        out("RESCUE_DISK=/dev/nvme1n1\nRESCUE_DEVICE=/dev/nvme1n1p1\nRESCUE_FSTYPE=ext4\n"
+            "RESCUE_BEFORE=299000000,10000,100%\nRESCUE_FATAL=mount_failed")
+    out("RESCUE_DISK=/dev/nvme1n1\nRESCUE_DEVICE=/dev/nvme1n1p1\nRESCUE_FSTYPE=ext4\n"
+        "RESCUE_BEFORE=299000000,10000,100%\nRESCUE_TARGET_KB=243000000\n"
+        "RESCUE_CLEARED=yes\nRESCUE_AFTER=56000000,243010000,19%\nRESCUE_OK=1")
+else:
+    save(s)
+    print(f"unhandled: {joined}", file=sys.stderr)
+    sys.exit(9)
+
+save(s)

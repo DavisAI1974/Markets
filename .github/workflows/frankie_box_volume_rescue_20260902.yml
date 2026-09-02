@@ -11,21 +11,31 @@ name: Frankie box volume rescue 20260902
 #
 # A reboot then made it worse, and that is the measurement that closes off the alternatives.
 # Run 33598410974: attempts 1-7 `ping=Online` with `probe_exit=-1` on `exit 40`, then from
-# 06:35:08Z `ping=ConnectionLost` for twenty-three consecutive attempts. So the agent no
-# longer registers at all, which removes RunCommand AND Session Manager - both need an agent
-# that can come up - and leaves exactly one route that does not depend on the broken thing:
-# detach the volume, mount it somewhere healthy, delete, put it back.
+# 06:35:08Z `ping=ConnectionLost` for twenty-three consecutive attempts, still ConnectionLost
+# when read again at 07:10Z. So the agent no longer registers at all, which removes
+# RunCommand AND Session Manager - both need an agent that can come up - and leaves exactly
+# one route that does not depend on the broken thing: detach the volume, mount it somewhere
+# healthy, clear, put it back.
 #
 # WHAT THIS IS NOT: it is not the volume GROWTH Greg authorised as a last resort. He
 # challenged that correctly - "why would we have to grow a 300gb box by 20 to run a Sunday
 # that isn't even 2" - and the answer is that the growth was only ever a bootstrap for the
-# delete. This does the delete directly, for pennies, and buys nothing permanent.
+# clear. This does the clear directly, for pennies, and buys nothing permanent.
 #
 # WHAT IS REMOVED: /opt/frankie-a-arm-run, and nothing else. That directory is disposable BY
 # THE BOX'S OWN DESIGN - the launch dispatch opens by clearing it after reporting what was
 # there, so the next Sunday run would destroy it anyway. Its size is reported BEFORE it goes,
 # which is also the first independent reading of the full-disk diagnosis: taken off the
 # volume itself, mounted on a machine with nothing at stake.
+#
+# WHY NO `aws ... wait` APPEARS BELOW. A review of the first draft measured the built-in
+# waiters: `ec2 wait volume-available` is 15s x 40 = ten minutes, and `ssm wait
+# command-executed` is 5s x 20 = ONE HUNDRED SECONDS. The second is far shorter than a `du`
+# plus a recursive clear of ~232 GB, so the waiter would expire mid-clear, the step would
+# fail, and the trap would pull the disk out from under a running delete. The first is so
+# long that the trap could not finish inside a cancellation. Every wait here is therefore an
+# explicit poll with a stated budget, which is also what makes the trap fast enough to be
+# worth having.
 
 on:
   # A workflow carrying only workflow_dispatch is never registered on a non-default branch
@@ -55,11 +65,20 @@ on:
         default: i-08cee7171c0a76a04
       clear_path:
         description: >-
-          Absolute path on the volume to clear. Must sit under /opt/frankie-a-arm-run, which
-          is checked rather than trusted - a typo here runs as root against someone else's
-          disk, and no confirm token catches a typo.
+          Absolute path on the volume to clear. Validated against an ALLOWLIST, not merely a
+          prefix check - the string is pasted into a script that runs as root on a machine
+          holding someone else's disk, so anything outside [A-Za-z0-9._-] path segments under
+          /opt/frankie-a-arm-run is refused.
         type: string
         default: /opt/frankie-a-arm-run
+
+# Two dispatches, or a dispatch racing frankie_box_unwedge_20260902.yml (which calls
+# modify-volume on this same root volume), would act on one instance concurrently. Both
+# sibling box workflows declare this and so does this one. cancel-in-progress is FALSE
+# deliberately: cancellation inside the detached window is the dangerous state, not a tidy one.
+concurrency:
+  group: frankie-box-volume-rescue-20260902
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -71,7 +90,10 @@ env:
 jobs:
   rescue:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # Above the summed budget of every poll below (~35 minutes worst case) with room to
+    # spare. A job that times out INSIDE the detached window is killed with seconds of grace,
+    # which is not enough for any restore, so the timeout must never be the binding limit.
+    timeout-minutes: 90
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -95,6 +117,12 @@ jobs:
           volume="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
             --query "Reservations[0].Instances[0].BlockDeviceMappings[?DeviceName=='${root_dev}'].Ebs.VolumeId" \
             --output text)"
+          # READ BEFORE IT IS DISTURBED. attach-volume always sets DeleteOnTermination=false,
+          # so a root volume that had it true would silently start outliving its instance and
+          # billing forever. Captured here so the rescue can put the flag back as it found it.
+          dot="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
+            --query "Reservations[0].Instances[0].BlockDeviceMappings[?DeviceName=='${root_dev}'].Ebs.DeleteOnTermination" \
+            --output text)"
           size="$(aws ec2 describe-volumes --volume-ids "$volume" --query 'Volumes[0].Size' --output text)"
           vstate="$(aws ec2 describe-volumes --volume-ids "$volume" --query 'Volumes[0].State' --output text)"
           ping="$(aws ssm describe-instance-information \
@@ -109,7 +137,8 @@ jobs:
           printf 'subnet auto-assigns a public ip: %s\n' "$public_on_launch"
           printf 'instance %s: %s %s in %s (subnet %s, sgs %s)\n' \
             "$INSTANCE_ID" "$state" "$itype" "$az" "$subnet" "$sgs"
-          printf 'root %s = %s, %s GiB, %s\n' "$root_dev" "$volume" "$size" "$vstate"
+          printf 'root %s = %s, %s GiB, %s, DeleteOnTermination=%s\n' \
+            "$root_dev" "$volume" "$size" "$vstate" "$dot"
           printf 'ssm ping: %s\n' "$ping"
           printf 'instance profile: %s\n' "$profile"
 
@@ -121,6 +150,7 @@ jobs:
             echo "| instance | \`$INSTANCE_ID\` ($itype, $state) |"
             echo "| availability zone | $az |"
             echo "| root device | \`$root_dev\` = \`$volume\`, ${size} GiB, $vstate |"
+            echo "| DeleteOnTermination | $dot |"
             echo "| SSM ping | **$ping** |"
             echo ""
           } >> "$GITHUB_STEP_SUMMARY"
@@ -134,6 +164,7 @@ jobs:
             echo "VOLUME_GB=$size"
             echo "BOX_STATE=$state"
             echo "PROFILE_ARN=$profile"
+            echo "ROOT_DELETE_ON_TERMINATION=$dot"
           } >> "$GITHUB_ENV"
 
       - name: Refuse an unarmed or malformed rescue
@@ -141,16 +172,26 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Checked, not trusted: this path is handed to a recursive clear running as root
-          # against a disk that is not this runner's. A confirm token stops a mis-click on
-          # the dispatch form; the prefix check stops a typo, which no token would catch.
+          # An ALLOWLIST, not a prefix check. The first draft checked the prefix and then
+          # pasted the string into shell text, so `/opt/frankie-a-arm-run/x; cmd; :` passed
+          # every guard and ran `cmd` as root before the box-side check was ever evaluated.
+          # A grammar that admits no metacharacter cannot be re-parsed into one.
           test "$CONFIRM" = "RESCUE" || {
             echo "confirm must be the word RESCUE to arm the clearing path" >&2; exit 1; }
+          # -z, so the WHOLE string is one record. Testing this found two holes in the first
+          # version of this very guard: `grep -E` matches line by line, so a value carrying a
+          # newline passed on the strength of its first line while `splitlines()` downstream
+          # turned the second into its own SSM command; and `..` passed because `.` is an
+          # allowed character, so `/opt/frankie-a-arm-run/../../etc` satisfied both this
+          # check and the box-side glob, which does not normalise. Hence -z AND an explicit
+          # dot-dot refusal - the allowlist alone was not enough.
+          printf '%s' "$CLEAR_PATH" \
+            | grep -Ezq '^/opt/frankie-a-arm-run(/[A-Za-z0-9._-]+)*$' || {
+              echo "refusing $CLEAR_PATH: not an allowlisted path under /opt/frankie-a-arm-run" >&2
+              exit 1; }
           case "$CLEAR_PATH" in
-            /opt/frankie-a-arm-run|/opt/frankie-a-arm-run/*) ;;
-            *) echo "refusing $CLEAR_PATH: not under /opt/frankie-a-arm-run" >&2; exit 1 ;;
+            *..*) echo "refusing $CLEAR_PATH: contains .." >&2; exit 1 ;;
           esac
-          case "$CLEAR_PATH" in *..*) echo "refusing a path containing .." >&2; exit 1 ;; esac
           echo "armed: will clear $CLEAR_PATH from $VOLUME"
 
       - name: Move the disk, clear it, and put it back
@@ -159,49 +200,102 @@ jobs:
         run: |
           set -euo pipefail
 
+          # RE-CHECKED HERE, not inherited from the previous step. The only thing that stops
+          # an unarmed dispatch reaching this step is GitHub's implicit success(), and a step
+          # that stops an instance and clears a directory as root should not rest on an
+          # implicit rule three lines of shell can make explicit.
+          test "$CONFIRM" = "RESCUE"
+          printf '%s' "$CLEAR_PATH" | grep -Ezq '^/opt/frankie-a-arm-run(/[A-Za-z0-9._-]+)*$'
+          case "$CLEAR_PATH" in *..*) echo "refusing a path containing .." >&2; exit 1 ;; esac
+
           HELPER=""
-          ATTACHED_TO_HELPER=no
+          RESTORE_VERIFIED=no
+
+          vol_owner() {
+            aws ec2 describe-volumes --volume-ids "$VOLUME" \
+              --query 'Volumes[0].Attachments[0].InstanceId' --output text 2>/dev/null || echo None
+          }
+          vol_state() {
+            aws ec2 describe-volumes --volume-ids "$VOLUME" \
+              --query 'Volumes[0].State' --output text 2>/dev/null || echo unknown
+          }
+          # Explicit polls with stated budgets, never `aws ... wait`. See the header.
+          await_vol() {
+            local want="$1" budget="${2:-240}" waited=0
+            while [ "$waited" -lt "$budget" ]; do
+              [ "$(vol_state)" = "$want" ] && return 0
+              sleep 5; waited=$((waited + 5))
+            done
+            printf 'volume did not reach %s within %ss (now %s)\n' "$want" "$budget" "$(vol_state)" >&2
+            return 1
+          }
+          await_instance() {
+            local id="$1" want="$2" budget="${3:-300}" waited=0 now
+            while [ "$waited" -lt "$budget" ]; do
+              now="$(aws ec2 describe-instances --instance-ids "$id" \
+                --query 'Reservations[0].Instances[0].State.Name' --output text 2>/dev/null || echo unknown)"
+              [ "$now" = "$want" ] && return 0
+              sleep 5; waited=$((waited + 5))
+            done
+            printf 'instance %s did not reach %s within %ss\n' "$id" "$want" "$budget" >&2
+            return 1
+          }
 
           # ONE SCRIPT WITH ONE TRAP, rather than one step per AWS call. Between the detach
           # and the reattach the box has NO ROOT DISK, and a job that fails in that window
-          # and simply stops leaves it unbootable. The trap runs on every exit path and is
-          # idempotent: it reads the volume's ACTUAL attachment state rather than trusting a
-          # variable this script set.
+          # and simply stops leaves it unbootable.
+          #
+          # THE ORDER INSIDE restore IS THE FIX FOR THE WORST BUG THE REVIEW FOUND. The first
+          # draft tried to detach from the helper first - but a MOUNTED volume will not
+          # detach, so it hung, the reattach then failed VolumeInUse, and the terminate that
+          # would actually have released it ran afterwards. End state: a 300 GiB root volume
+          # sitting available while the box was stopped and rootless, with every error
+          # swallowed. So: TERMINATE FIRST, which force-releases the attachment whatever the
+          # guest is doing, then reattach, then VERIFY and say so out loud.
           restore() {
             local code=$?
             set +e
-            if [ "$ATTACHED_TO_HELPER" = "yes" ] && [ -n "$HELPER" ]; then
-              echo "restore: detaching from helper $HELPER"
-              aws ec2 detach-volume --volume-id "$VOLUME" >/dev/null 2>&1
-              aws ec2 wait volume-available --volume-ids "$VOLUME" >/dev/null 2>&1
-            fi
-            local where
-            where="$(aws ec2 describe-volumes --volume-ids "$VOLUME" \
-              --query 'Volumes[0].Attachments[0].InstanceId' --output text 2>/dev/null)"
-            if [ "$where" != "$INSTANCE_ID" ]; then
-              echo "restore: reattaching $VOLUME to $INSTANCE_ID at $ROOT_DEV"
-              aws ec2 wait volume-available --volume-ids "$VOLUME" >/dev/null 2>&1
-              aws ec2 attach-volume --volume-id "$VOLUME" --instance-id "$INSTANCE_ID" \
-                --device "$ROOT_DEV" >/dev/null 2>&1
-              aws ec2 wait volume-in-use --volume-ids "$VOLUME" >/dev/null 2>&1
-            fi
             if [ -n "$HELPER" ]; then
-              echo "restore: terminating helper $HELPER"
-              aws ec2 terminate-instances --instance-ids "$HELPER" >/dev/null 2>&1
+              echo "restore: terminating helper $HELPER (this releases the volume even if mounted)"
+              aws ec2 terminate-instances --instance-ids "$HELPER" >/dev/null
+              await_instance "$HELPER" terminated 300
             fi
+            if [ "$(vol_owner)" != "$INSTANCE_ID" ]; then
+              echo "restore: reattaching $VOLUME to $INSTANCE_ID at $ROOT_DEV"
+              await_vol available 300
+              aws ec2 attach-volume --volume-id "$VOLUME" --instance-id "$INSTANCE_ID" \
+                --device "$ROOT_DEV"
+              await_vol in-use 240
+            fi
+            # THE POST-CONDITION, stated rather than assumed. A failed restore and a
+            # successful one were previously indistinguishable in the log.
+            if [ "$(vol_owner)" = "$INSTANCE_ID" ]; then
+              RESTORE_VERIFIED=yes
+              echo "RESTORE_VERIFIED=yes ($VOLUME is on $INSTANCE_ID at $ROOT_DEV)"
+              aws ec2 start-instances --instance-ids "$INSTANCE_ID" >/dev/null \
+                && echo "restore: box start requested"
+            else
+              echo "RESTORE_VERIFIED=no - $VOLUME is NOT on $INSTANCE_ID; it is on $(vol_owner)." >&2
+              echo "MANUAL: aws ec2 attach-volume --volume-id $VOLUME --instance-id $INSTANCE_ID --device $ROOT_DEV" >&2
+              echo "MANUAL: aws ec2 start-instances --instance-ids $INSTANCE_ID" >&2
+            fi
+            {
+              echo ""
+              echo "- restore path ran; volume reattached and verified: **$RESTORE_VERIFIED**"
+            } >> "$GITHUB_STEP_SUMMARY"
             exit "$code"
           }
           trap restore EXIT
 
           echo "::group::stop the box"
           aws ec2 stop-instances --instance-ids "$INSTANCE_ID" >/dev/null
-          aws ec2 wait instance-stopped --instance-ids "$INSTANCE_ID"
+          await_instance "$INSTANCE_ID" stopped 600
           echo "stopped"
           echo "::endgroup::"
 
           echo "::group::detach the root volume"
           aws ec2 detach-volume --volume-id "$VOLUME" >/dev/null
-          aws ec2 wait volume-available --volume-ids "$VOLUME"
+          await_vol available 300
           echo "$VOLUME available"
           echo "::endgroup::"
 
@@ -221,14 +315,15 @@ jobs:
             --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=frankie-volume-rescue}]' \
             --query 'Instances[0].InstanceId' --output text)"
           echo "helper $HELPER from $ami"
-          aws ec2 wait instance-running --instance-ids "$HELPER"
+          await_instance "$HELPER" running 300
           ping=none
-          for _ in $(seq 1 30); do
+          waited=0
+          while [ "$waited" -lt 300 ]; do
             ping="$(aws ssm describe-instance-information \
               --filters "Key=InstanceIds,Values=$HELPER" \
               --query 'InstanceInformationList[0].PingStatus' --output text 2>/dev/null || echo none)"
             [ "$ping" = "Online" ] && break
-            sleep 10
+            sleep 10; waited=$((waited + 10))
           done
           test "$ping" = "Online"
           echo "helper online"
@@ -237,8 +332,7 @@ jobs:
           echo "::group::attach the volume to the helper"
           aws ec2 attach-volume --volume-id "$VOLUME" --instance-id "$HELPER" \
             --device /dev/sdf >/dev/null
-          aws ec2 wait volume-in-use --volume-ids "$VOLUME"
-          ATTACHED_TO_HELPER=yes
+          await_vol in-use 240
           echo "attached as /dev/sdf"
           echo "::endgroup::"
 
@@ -249,11 +343,28 @@ jobs:
           # then the cause was never the disk, and nothing that follows should be believed to
           # have fixed anything.
           #
+          # The disk is IDENTIFIED, not guessed. The volume id is already in hand and Nitro
+          # exposes it as the NVMe serial, so there is no reason to pick the largest partition
+          # and hope. The retry exists because `attach-volume` returns on the EBS attachment
+          # state, not on the guest enumerating a device node.
+          #
           # -o nouuid on xfs: the helper's own root is xfs too, and xfs refuses to mount a
           # second filesystem carrying a UUID it already has.
           script=$(cat <<'SH'
           set -eu
-          dev=$(lsblk -bnpo NAME,SIZE,TYPE | awk '$3=="part"' | sort -k2 -n | tail -1 | awk '{print $1}')
+          serial=$(printf '%s' "__VOLUME__" | tr -d '-')
+          disk=""
+          waited=0
+          while [ "$waited" -lt 60 ]; do
+            disk=$(lsblk -dnpo NAME,SERIAL | awk -v s="$serial" '$2==s {print $1}' | head -1)
+            [ -n "$disk" ] && break
+            sleep 5
+            waited=$((waited + 5))
+          done
+          [ -n "$disk" ] || { echo RESCUE_FATAL=volume_never_appeared_as_a_device; exit 1; }
+          echo "RESCUE_DISK=$disk"
+          dev=$(lsblk -bnpo NAME,SIZE,TYPE "$disk" | awk '$3=="part"' | sort -k2 -n | tail -1 | awk '{print $1}')
+          [ -n "$dev" ] || dev="$disk"
           root=$(findmnt -no SOURCE /)
           [ "$dev" != "$root" ] || { echo RESCUE_FATAL=picked_the_helpers_own_root; exit 1; }
           echo "RESCUE_DEVICE=$dev"
@@ -265,9 +376,12 @@ jobs:
             *)   mount "$dev" /mnt/rescue ;;
           esac
           echo "RESCUE_BEFORE=$(df -Pk /mnt/rescue | awk 'NR==2 {print $3","$4","$5}')"
-          target=/mnt/rescue__CLEAR_PATH__
+          target='/mnt/rescue__CLEAR_PATH__'
           case "$target" in
-            /mnt/rescue/opt/frankie-a-arm-run*) ;;
+            *..*) echo RESCUE_FATAL=path_contains_dotdot; exit 1 ;;
+          esac
+          case "$target" in
+            /mnt/rescue/opt/frankie-a-arm-run|/mnt/rescue/opt/frankie-a-arm-run/*) ;;
             *) echo RESCUE_FATAL=path_guard_failed_on_the_box; exit 1 ;;
           esac
           if [ -d "$target" ]; then
@@ -287,11 +401,25 @@ jobs:
           SH
           )
           script="${script//__CLEAR_PATH__/$CLEAR_PATH}"
+          script="${script//__VOLUME__/$VOLUME}"
           payload="$(python3 -c 'import json,sys; print(json.dumps({"commands": sys.stdin.read().splitlines()}))' <<<"$script")"
           cid="$(aws ssm send-command --instance-ids "$HELPER" \
             --document-name AWS-RunShellScript --comment "frankie volume rescue" \
+            --timeout-seconds 600 \
             --parameters "$payload" --query 'Command.CommandId' --output text)"
-          aws ssm wait command-executed --command-id "$cid" --instance-id "$HELPER" || true
+          # POLLED, NOT WAITED. `ssm wait command-executed` gives up after 100 seconds, which
+          # is far less than two du traversals and a recursive clear of ~232 GB - and its
+          # expiry would have failed the step and sent the trap in to pull the disk out from
+          # under a running delete.
+          status=Pending
+          waited=0
+          while [ "$waited" -lt 2400 ]; do
+            status="$(aws ssm get-command-invocation --command-id "$cid" --instance-id "$HELPER" \
+              --query Status --output text 2>/dev/null || echo Pending)"
+            case "$status" in Success|Failed|Cancelled|TimedOut) break ;; esac
+            sleep 10; waited=$((waited + 10))
+          done
+          printf 'clear command status after %ss: %s\n' "$waited" "$status"
           aws ssm get-command-invocation --command-id "$cid" --instance-id "$HELPER" \
             --query 'StandardOutputContent' --output text | tee ./rescue_out.txt
           aws ssm get-command-invocation --command-id "$cid" --instance-id "$HELPER" \
@@ -300,18 +428,30 @@ jobs:
           echo "::endgroup::"
 
           echo "::group::put the disk back"
-          aws ec2 detach-volume --volume-id "$VOLUME" >/dev/null
-          aws ec2 wait volume-available --volume-ids "$VOLUME"
-          ATTACHED_TO_HELPER=no
+          # The helper is terminated rather than detached-from: it has already unmounted, and
+          # terminating is the one action that cannot be blocked by the guest.
+          aws ec2 terminate-instances --instance-ids "$HELPER" >/dev/null
+          await_instance "$HELPER" terminated 300
+          HELPER=""
+          await_vol available 300
           aws ec2 attach-volume --volume-id "$VOLUME" --instance-id "$INSTANCE_ID" \
             --device "$ROOT_DEV" >/dev/null
-          aws ec2 wait volume-in-use --volume-ids "$VOLUME"
+          await_vol in-use 240
+          test "$(vol_owner)" = "$INSTANCE_ID"
+          RESTORE_VERIFIED=yes
+          # attach-volume always sets DeleteOnTermination=false. Put it back to whatever the
+          # report read off the instance, so the rescue leaves no billing change behind.
+          if [ "${ROOT_DELETE_ON_TERMINATION:-None}" = "True" ]; then
+            aws ec2 modify-instance-attribute --instance-id "$INSTANCE_ID" \
+              --block-device-mappings "[{\"DeviceName\":\"$ROOT_DEV\",\"Ebs\":{\"DeleteOnTermination\":true}}]"
+            echo "DeleteOnTermination restored to true"
+          fi
           echo "reattached at $ROOT_DEV"
           echo "::endgroup::"
 
           echo "::group::start the box and prove it executes a command"
           aws ec2 start-instances --instance-ids "$INSTANCE_ID" >/dev/null
-          aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
+          await_instance "$INSTANCE_ID" running 300
           # PingStatus Online is necessary and NOT sufficient - it was Online throughout the
           # wedge. What proves the box is usable is a command that RUNS and returns a code
           # chosen in advance, so 40 is the pass and anything else is not.
@@ -327,7 +467,7 @@ jobs:
               --parameters 'commands=["df -Pk / | awk \"NR==2\"","exit 40"]' \
               --query 'Command.CommandId' --output text 2>/dev/null || echo none)"
             [ "$probe" = "none" ] && continue
-            aws ssm wait command-executed --command-id "$probe" --instance-id "$INSTANCE_ID" >/dev/null 2>&1 || true
+            sleep 5
             code="$(aws ssm get-command-invocation --command-id "$probe" --instance-id "$INSTANCE_ID" \
               --query ResponseCode --output text 2>/dev/null || echo unknown)"
             printf 'attempt %s: ping=%s probe_exit=%s\n' "$attempt" "$ping" "$code"
@@ -344,6 +484,7 @@ jobs:
           {
             echo "## Rescue"
             echo ""
+            sed -n 's/^RESCUE_DISK=/- disk identified by volume serial: /p' ./rescue_out.txt
             sed -n 's/^RESCUE_BEFORE=/- df before (used KiB, avail KiB, use%): /p' ./rescue_out.txt
             sed -n 's/^RESCUE_TARGET_KB=/- cleared directory size (KiB): /p' ./rescue_out.txt
             sed -n 's/^RESCUE_AFTER=/- df after (used KiB, avail KiB, use%): /p' ./rescue_out.txt

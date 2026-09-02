@@ -129,7 +129,7 @@ jobs:
           # the traversal reconciled, and the receipt carries a sha256 that can settle that.
           # Only the smallest uncompressed ledger is fetched, and only under a cap, because
           # the point is a content check rather than a transfer of twelve gigabytes.
-          read -r ledger key < <(python3 - <<'PICK'
+          read -r ledger key < <(python3 - <<'PICK' || true
           import json
           from pathlib import PurePosixPath
           objects = json.load(open("s3_objects.json"))
@@ -173,7 +173,7 @@ jobs:
           python3 -m research.kalshi.frankie_raw_mbo_benchmark.verify_ledger_size_witness "${args[@]}"
           code=$?
           set -e
-          cat ./LEDGER_SIZE_WITNESS.md
+          cat ./LEDGER_SIZE_WITNESS.md || echo 'no witness file was written'
           # The self-reported table is rendered whatever the witness says - a contradicted run
           # is exactly when both figures need to be visible side by side - but the job's own
           # verdict is the witness's, recorded here and applied after the table.

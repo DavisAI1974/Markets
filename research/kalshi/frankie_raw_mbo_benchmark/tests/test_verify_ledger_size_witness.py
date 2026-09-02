@@ -24,6 +24,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.verify_ledger_size_witness import
     WitnessError,
     main,
     render,
+    witness_content,
     witness_denominator,
     witness_ledgers,
 )
@@ -135,7 +136,9 @@ class WitnessTests(unittest.TestCase):
         result = _result()
         del result["layers"]["identity_receipt"]["total_mbo_records"]
         text, outcome = render(result, _objects())
-        self.assertEqual(outcome, CONTRADICTED)
+        # UNAVAILABLE, not CONTRADICTED: absent is not disagreeing, and accusing the sink of
+        # an error on evidence we do not have is the same failure in the other direction.
+        self.assertEqual(outcome, UNAVAILABLE)
         self.assertIn("Denominator unavailable", text)
         self.assertNotIn("bytes per record**", text.split("### Bytes per record")[1])
 
@@ -215,3 +218,94 @@ class NamesTheRunItExaminedTests(unittest.TestCase):
         text, _ = render(_result(), other)
         self.assertIn("/9-9", text)
         self.assertNotIn(PREFIX, text)
+
+
+class AbsenceIsNotDisagreementTests(unittest.TestCase):
+    """Every way the evidence can be MISSING, kept distinct from the evidence DISAGREEING.
+
+    A review found the module preaching this distinction for objects while collapsing it
+    everywhere else: a receipt with no byte count, a receipt with no digest, and record
+    counts that were simply absent all came out CONTRADICTED - which says the sink is wrong,
+    on the strength of evidence nobody has.
+    """
+
+    def test_a_receipt_with_no_byte_count_has_nothing_to_witness_against(self):
+        from research.kalshi.frankie_raw_mbo_benchmark.verify_ledger_size_witness import (
+            NO_CLAIMED_BYTES,
+        )
+        result = _result()
+        del result["ledger_retention"]["exact_member_ledger"]["bytes"]
+        rows = witness_ledgers(result, _objects())
+        member = next(r for r in rows if r["ledger"] == "exact_member_ledger")
+        self.assertEqual(member["status"], UNAVAILABLE)
+        self.assertEqual(member["reason"], NO_CLAIMED_BYTES)
+        text, outcome = render(result, _objects())
+        self.assertEqual(outcome, UNAVAILABLE)
+        # and the sink total must not silently include a zero it never claimed
+        self.assertNotIn("12,301,736,545", text.split("- Sink total:")[1].split("\n")[0])
+
+    def test_a_receipt_with_no_digest_is_unavailable_not_a_mismatch(self):
+        from research.kalshi.frankie_raw_mbo_benchmark.verify_ledger_size_witness import (
+            NO_CLAIMED_DIGEST,
+        )
+        result = _result()
+        del result["ledger_retention"]["exact_member_ledger"]["sha256"]
+        rows = witness_content(result, {"exact_member_ledger": "a" * 64})
+        self.assertEqual(rows[0]["status"], UNAVAILABLE)
+        self.assertEqual(rows[0]["reason"], NO_CLAIMED_DIGEST)
+
+    def test_every_record_count_absent_is_unavailable_not_contradicted(self):
+        result = _result()
+        del result["layers"]
+        del result["traversal"]["records_seen"]
+        self.assertEqual(witness_denominator(result)["status"], UNAVAILABLE)
+        _, outcome = render(result, _objects())
+        self.assertEqual(outcome, UNAVAILABLE)
+
+    def test_counts_that_disagree_are_still_contradicted(self):
+        self.assertEqual(witness_denominator(_result(total=50_002))["status"], CONTRADICTED)
+
+    def test_a_boolean_is_not_a_record_count(self):
+        result = _result()
+        result["traversal"]["records_seen"] = True
+        self.assertNotEqual(witness_denominator(result)["status"], CONFIRMED)
+
+
+class WrongObjectTests(unittest.TestCase):
+    """Two keys sharing a basename must refuse, not pick one."""
+
+    def test_a_basename_collision_refuses_rather_than_guessing(self):
+        from research.kalshi.frankie_raw_mbo_benchmark.verify_ledger_size_witness import (
+            AMBIGUOUS,
+        )
+        objects = _objects()
+        objects[f"{PREFIX}/backup/exact_member_rows.jsonl"] = 999_999
+        rows = witness_ledgers(_result(), objects)
+        member = next(r for r in rows if r["ledger"] == "exact_member_ledger")
+        self.assertEqual(member["status"], UNAVAILABLE)
+        self.assertEqual(member["reason"], AMBIGUOUS)
+        _, outcome = render(_result(), objects)
+        self.assertEqual(outcome, UNAVAILABLE)
+
+
+class CrashIsMissingEvidenceTests(unittest.TestCase):
+    """A result this module cannot read is UNAVAILABLE, never CONTRADICTED."""
+
+    def test_a_result_without_groups_seen_still_renders(self):
+        result = _result()
+        del result["traversal"]["groups_seen"]
+        text, outcome = render(result, _objects())
+        self.assertEqual(outcome, CONFIRMED)
+        self.assertIn("**50,001** / absent", text)
+
+    def test_an_unreadable_result_exits_two_not_one(self):
+        with tempfile.TemporaryDirectory() as raw:
+            directory = Path(raw)
+            result = directory / "result.json"
+            objects = directory / "objects.json"
+            out = directory / "witness.md"
+            result.write_text(json.dumps({"traversal": {"records_seen": 1}}), encoding="utf-8")
+            objects.write_text(json.dumps(_objects()), encoding="utf-8")
+            self.assertEqual(main(["--result", str(result), "--objects", str(objects),
+                                   "--output", str(out)]), 2)
+            self.assertIn("WITNESS_UNAVAILABLE", out.read_text(encoding="utf-8"))

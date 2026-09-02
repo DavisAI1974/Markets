@@ -42,6 +42,10 @@ UNAVAILABLE = "WITNESS_UNAVAILABLE"
 # whose size answers a different question.
 ABSENT = "ABSENT_FROM_S3"
 COMPRESSED = "PRESENT_ONLY_COMPRESSED"
+AMBIGUOUS = "BASENAME_MATCHES_SEVERAL_KEYS"
+NO_CLAIMED_BYTES = "RECEIPT_CARRIES_NO_BYTE_COUNT"
+NO_CLAIMED_DIGEST = "RECEIPT_CARRIES_NO_SHA256"
+NO_RECORD_COUNT = "RECORD_COUNTS_ABSENT"
 
 
 class WitnessError(ValueError):
@@ -81,10 +85,18 @@ def common_prefix(objects: Mapping[str, int]) -> str:
     return first[:cut].rsplit("/", 1)[0] if "/" in first[:cut] else first[:cut]
 
 
-def _index_by_basename(objects: Mapping[str, int]) -> dict[str, tuple[str, int]]:
-    index: dict[str, tuple[str, int]] = {}
+def _index_by_basename(objects: Mapping[str, int]) -> dict[str, tuple[str, int] | None]:
+    """Basename -> (key, size), or None when several keys share the basename.
+
+    A dict built by assignment keeps the LAST key silently, so `ledgers/rows.jsonl` and
+    `backup/rows.jsonl` under one prefix would witness a ledger against whichever happened to
+    sort later. None marks the collision so it is REFUSED rather than answered from a coin
+    flip - a wrong witness is worse than no witness.
+    """
+    index: dict[str, tuple[str, int] | None] = {}
     for key, size in objects.items():
-        index[PurePosixPath(key).name] = (key, int(size))
+        name = PurePosixPath(key).name
+        index[name] = None if name in index else (key, int(size))
     return index
 
 
@@ -96,7 +108,8 @@ def witness_ledgers(
     index = _index_by_basename(objects)
     for name, receipt in sorted(_receipts(result).items()):
         basename = PurePosixPath(str(receipt.get("path") or "")).name
-        claimed = int(receipt.get("bytes") or 0)
+        raw_claim = receipt.get("bytes")
+        claimed = int(raw_claim) if isinstance(raw_claim, int) else 0
         row: dict[str, Any] = {
             "ledger": name,
             "file": basename,
@@ -106,14 +119,22 @@ def witness_ledgers(
             "status": UNAVAILABLE,
             "reason": ABSENT,
         }
-        if basename in index:
+        if not isinstance(raw_claim, int):
+            # Nothing to witness AGAINST. Treating a missing count as zero would report the
+            # whole object as a discrepancy and convict the sink of an error it never made.
+            row["reason"] = NO_CLAIMED_BYTES
+            rows.append(row)
+            continue
+        if index.get(basename) is None and basename in index:
+            row["reason"] = AMBIGUOUS
+        elif basename in index:
             key, size = index[basename]
             row["s3_key"] = key
             row["witnessed_bytes"] = size
             row["reason"] = None
             row["status"] = CONFIRMED if size == claimed else CONTRADICTED
             row["delta_bytes"] = size - claimed
-        elif f"{basename}.gz" in index:
+        elif index.get(f"{basename}.gz") is not None:
             # A gzip's size answers "how well did it compress", never "how many bytes did the
             # sink write". Reporting the difference as a contradiction would convict the sink
             # of an error committed by the upload path.
@@ -140,10 +161,20 @@ def witness_denominator(result: Mapping[str, Any]) -> dict[str, Any]:
         "traversal_records_seen": traversal.get("records_seen"),
         "coverage_records_seen": coverage.get("records_seen"),
     }
-    present = [v for v in values.values() if isinstance(v, int)]
+    present = [v for v in values.values() if isinstance(v, int) and not isinstance(v, bool)]
     agree = len(present) == len(values) and len(set(present)) == 1
+    if agree:
+        status = CONFIRMED
+    elif len(set(present)) > 1:
+        # Two quantities that should be the same number are not. That is a real disagreement.
+        status = CONTRADICTED
+    else:
+        # One or more simply is not there. ABSENT is not DISAGREEING, and the module refuses
+        # to accuse the sink of an error on the strength of evidence it does not have.
+        status = UNAVAILABLE
     return {
         "values": values,
+        "status": status,
         "agree": agree,
         # Only when ALL THREE agree. Taking the value because the PRESENT ones agree is the
         # same defect in miniature: two of three quantities matching says nothing about the
@@ -168,6 +199,11 @@ def witness_content(
         if receipt is None:
             raise WitnessError(f"content witness names ledger {ledger!r}, which has no receipt")
         claimed = str(receipt.get("sha256") or "")
+        if not claimed:
+            # No digest to compare against is not a mismatch.
+            rows.append({"ledger": ledger, "claimed_sha256": "", "observed_sha256": digest,
+                         "status": UNAVAILABLE, "reason": NO_CLAIMED_DIGEST})
+            continue
         rows.append({
             "ledger": ledger,
             "claimed_sha256": claimed,
@@ -183,7 +219,8 @@ def verdict(
     content_rows: Sequence[Mapping[str, Any]] = (),
 ) -> str:
     statuses = [row["status"] for row in ledger_rows] + [row["status"] for row in content_rows]
-    if CONTRADICTED in statuses or not denominator.get("agree"):
+    statuses.append(denominator.get("status", UNAVAILABLE))
+    if CONTRADICTED in statuses:
         return CONTRADICTED
     if UNAVAILABLE in statuses or not statuses:
         return UNAVAILABLE
@@ -216,11 +253,11 @@ def render(
     # verdict with no subject is the failure this module already committed once: it
     # confirmed a run nobody had asked about, and nothing on the page said which run it was.
     add(f"- Run witnessed: `{common_prefix(objects)}`")
-    add(f"- Records / groups in that run: **{traversal.get('records_seen'):,}** / "
-        f"{traversal.get('groups_seen'):,}"
-        if isinstance(traversal.get("records_seen"), int)
-        else f"- Records / groups in that run: {traversal.get('records_seen')} / "
-             f"{traversal.get('groups_seen')}")
+    def _count(value: Any) -> str:
+        return f"{value:,}" if isinstance(value, int) and not isinstance(value, bool) else "absent"
+
+    add(f"- Records / groups in that run: **{_count(traversal.get('records_seen'))}** / "
+        f"{_count(traversal.get('groups_seen'))}")
     add(f"- Objects listed under the run prefix: {len(objects):,}")
     add("")
     add("### Ledger bytes: what the sink counted vs what S3 holds")
@@ -252,7 +289,7 @@ def render(
         shown = f"{value:,}" if isinstance(value, int) else "absent"
         add(f"| {name} | `{sources[name]}` | {shown} |")
     add("")
-    add(f"- Agree: **{denominator['agree']}**")
+    add(f"- Agree: **{denominator['agree']}** ({denominator['status']})")
     add("")
 
     if content_rows:
@@ -261,8 +298,10 @@ def render(
         add("| ledger | sink sha256 | downloaded sha256 | status |")
         add("|---|---|---|---|")
         for row in content_rows:
-            add(f"| {row['ledger']} | `{row['claimed_sha256'][:16]}...` "
-                f"| `{row['observed_sha256'][:16]}...` | {row['status']} |")
+            claimed = f"`{row['claimed_sha256'][:16]}...`" if row["claimed_sha256"] else "absent"
+            status = row["status"] + (f" ({row['reason']})" if row.get("reason") else "")
+            add(f"| {row['ledger']} | {claimed} "
+                f"| `{row['observed_sha256'][:16]}...` | {status} |")
         add("")
 
     add("### Bytes per record")
@@ -290,8 +329,8 @@ def render(
             add(f"  - Numerator unavailable: only {len(witnessed)} of {len(ledger_rows)}"
                 " ledgers have an uncompressed S3 object.")
         if not isinstance(records, int):
-            add("  - Denominator unavailable: the three record counts do not agree, or one is"
-                " absent.")
+            add(f"  - Denominator unavailable ({denominator['status']}): the three record"
+                " counts do not agree, or one is absent.")
     add("")
     return "\n".join(lines), outcome
 
@@ -319,7 +358,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise SystemExit(f"--observed-sha256 wants LEDGER=HEX, got {pair!r}")
         observed[ledger] = digest
 
-    text, outcome = render(result, objects, observed)
+    try:
+        text, outcome = render(result, objects, observed)
+    except (WitnessError, TypeError, ValueError, KeyError) as exc:
+        # EXIT 2, NOT 1. A crash is missing evidence, and reporting it as CONTRADICTED would
+        # say the sink is wrong on the strength of this module failing to read the result.
+        print(f"witness could not be taken: {exc}", file=sys.stderr)
+        if args.output:
+            open(args.output, "w", encoding="utf-8").write(
+                f"## The independent witness\n\n- Verdict: **{UNAVAILABLE}**\n"
+                f"- The witness could not be taken: `{exc}`\n")
+        return 2
     if args.output:
         open(args.output, "w", encoding="utf-8").write(text)
     if args.summary:
