@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 173 |
+| open | 172 |
 | in progress | 4 |
 | done | 22 |
 
-By size: **XS** 18, **S** 81, **M** 55, **L** 12
+By size: **XS** 18, **S** 81, **M** 54, **L** 12
 
 ---
 
-By tier: **ESSENTIAL** 27, **BIGGEST_WIN** 46, **REST** 104
+By tier: **ESSENTIAL** 26, **BIGGEST_WIN** 46, **REST** 104
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (27)
+## ESSENTIAL (26)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -45,7 +45,6 @@ By tier: **ESSENTIAL** 27, **BIGGEST_WIN** 46, **REST** 104
 | **A-63** | M | THE KERNEL IS THE MISSING ENGINE - and it produces the BAND for free, which is the same build as A-60 | D32 makes analog retrieval THE product and we have no similarity function at all - retrieval is a calendar window plus a regime label. It is also the cheapest honest route to the band, which A-60 shows has never been validated and is the only field a binary market actually prices. Two ESSENTIAL items, one build. |
 | **A-68** | M | GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal | It is the PREREQUISITE for A-67's retention arm - without it there is no retention to measure, and the arm cannot run. It is also the smallest change that turns a per-day amnesiac spawn into something with a horizon, which is the whole premise of the hybrid. |
 | **F-10** | M | THE RAW-MBO HALF OF D68 - DELIVER THE EXACT ROWS TO THE PRINCIPAL, OR DECLARE THAT THEY WERE NOT | - |
-| **F-21** | M | THE A-MEMORY PACKAGE AND THE FORECASTER HANDOFF DERIVE FROM THE PRIOR REDUCED (WRONG-DATA) RUN 32851909748-1 - RE-DERIVE FROM A CORRECT RT RUN BEFORE A-MEMORY RUNS; RE-FEED, DO NOT REBUILD, THE HANDOFF MACHINERY | an arm fed lessons from the wrong data cannot produce a trustworthy result, and the handoff it feeds is the Forecaster's only input |
 | **F-4** | M | 4.10 CANNOT BE FED BECAUSE RUNWAY IDENTITY IS PER-GROUP, NOT BECAUSE OF ITS PHASE NAMES | - |
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | M | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24. |
@@ -243,7 +242,6 @@ By tier: **ESSENTIAL** 27, **BIGGEST_WIN** 46, **REST** 104
 | **A-63** | ESSENTIAL | M | OPEN | S115 | THE KERNEL IS THE MISSING ENGINE - and it produces the BAND for free, which is the same build as A-60 | - |
 | **A-68** | ESSENTIAL | M | OPEN | S115 | GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal | - |
 | **F-10** | ESSENTIAL | M | IN_PROGRESS | S120 | THE RAW-MBO HALF OF D68 - DELIVER THE EXACT ROWS TO THE PRINCIPAL, OR DECLARE THAT THEY WERE NOT | - |
-| **F-21** | ESSENTIAL | M | OPEN | S121 | THE A-MEMORY PACKAGE AND THE FORECASTER HANDOFF DERIVE FROM THE PRIOR REDUCED (WRONG-DATA) RUN 32851909748-1 - RE-DERIVE FROM A CORRECT RT RUN BEFORE A-MEMORY RUNS; RE-FEED, DO NOT REBUILD, THE HANDOFF MACHINERY | a correct complete-raw-MBO A-clean RT run (the Sunday re-run on the new code, Greg's go) |
 | **F-4** | ESSENTIAL | M | OPEN | S117 | 4.10 CANNOT BE FED BECAUSE RUNWAY IDENTITY IS PER-GROUP, NOT BECAUSE OF ITS PHASE NAMES | - |
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | ESSENTIAL | M | OPEN | S115 | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | - |
@@ -744,18 +742,6 @@ PAIRS WITH A-35 (which is exactly the 'how would we know' question) and A-62 (th
 **Source:** S120, from Frankie's run-33605852433 assessment and the S120 measurement
 
 D68 ordered a report 'on the calcs, on the full raw mbo, all of it'. The calcs half was delivered; the raw-MBO half was never ASKED (spawn prompt: raw mbo/retention/drop/field/book_full/keep = 0 occurrences; mission section 9 named none of them) and could not have been ANSWERED: he receives the ~34 MB result and the 10,616,914,801-byte member ledger is not in it - his own words. S120 added mission section 9a and a spawn gate that refuses a mission without it (34a0c16). STILL OPEN: the exact rows do not reach him. Either they do, or the artifact must declare per ledger READ / NOT_READ so CANNOT_JUDGE is honest. FALSIFIER: closed when a principal artifact validates only with an explicit per-ledger read declaration and the report states in words which claims rest on counters.
-
----
-
-### [ESSENTIAL] F-21 - THE A-MEMORY PACKAGE AND THE FORECASTER HANDOFF DERIVE FROM THE PRIOR REDUCED (WRONG-DATA) RUN 32851909748-1 - RE-DERIVE FROM A CORRECT RT RUN BEFORE A-MEMORY RUNS; RE-FEED, DO NOT REBUILD, THE HANDOFF MACHINERY
-
-*size M | OPEN | raised S121 | BLOCKED BY: a correct complete-raw-MBO A-clean RT run (the Sunday re-run on the new code, Greg's go)*
-
-**Why it is ESSENTIAL:** an arm fed lessons from the wrong data cannot produce a trustworthy result, and the handoff it feeds is the Forecaster's only input
-
-**Source:** S121 (Greg: 'the very first run we did with the wrong data created an output that was passed onto forecaster'; verified in prior_memory/workmode-32851909748-1)
-
-prior_memory/workmode-32851909748-1 carries REPOSITORY_FREEZE.json with schema FRANKIE_PRIOR_REDUCED_RUN_REPOSITORY_FREEZE_V1_20260828 and the flag old_reduced_market_rows_included, ONEWAY_HANDOFF.json (FRANKIE_PRIOR_SURFACE_OCT45_ONEWAY_HANDOFF_V2_WORKMODE_20260825: frozen_rt_state_hash, full_validated_rt_output_hash, rt_frozen_before_forecaster), FORECASTER_FIRST_LOCK.json, FORECASTER_CONTEXT_MANIFEST.json (answer_wall) and RT_AGENT_RECEIPT.json. That run was made on the reduced rows, the wrong data, and its RT output was passed one-way to the Forecaster and locked. a_memory_prepare_20260828.MEMBER_MANIFEST_SHA256 (b487acfb...) pins the A-memory prior lessons package to it, and the two A-memory positive-knowledge capsule sources in KNOWLEDGE_SOURCES_20260828.json (AMEMORY_RT_ACTUAL_FRANKIE_RETROSPECTIVE..., AMEMORY_FORECASTER_FIRST_REPLAY...) derive from the same run. TWO CONSEQUENCES. (1) The RT-to-Forecaster one-way handoff, the first lock and the context manifest with its answer wall are BUILT (the V2 workmode schemas) and are the machinery Frankie's new outputs flow through; they are re-fed from a correct complete-raw-MBO A-clean run, never rebuilt (Greg, S121: built but not wired and fed). (2) A-memory must not run until its package and capsules are re-derived from a correct RT run; running it on the pinned package would carry wrong-data lessons into the arm that exists to test memory. A-clean is unaffected: its capsule sources are method-only and S119-measured. FALSIFIER: closed when the A-memory package hash and the two capsule sources point at artifacts produced by a run whose REPOSITORY_FREEZE has old_reduced_market_rows_included false and current_raw_mbo_arm_output_included true, and the handoff/lock schemas are produced by the new outputs path with a passing validate_output_bundle_dir.
 
 ---
 
