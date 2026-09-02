@@ -76,6 +76,7 @@ def make_driver(
     response_horizons_ns: tuple[int, ...] = (100,),
     response_horizon_version: str = "hv1",
     response_value_names: tuple[str, ...] = ("price_response",),
+    emit_change_points: bool = False,
 ) -> NativeReplayDriver:
     identity = RunIdentity(
         run_id="driver-1",
@@ -99,6 +100,7 @@ def make_driver(
         session_rule=ExchangeSessionRule(),
         cadence=cadence or NeverInvoke(),
         run=run,
+        emit_change_points=emit_change_points,
     )
 
 
@@ -1133,3 +1135,117 @@ class ResponseChannelWiringTest(unittest.TestCase):
     def test_a_run_with_every_channel_declared_is_still_accepted(self):
         _, result = self._run_with_channels()
         self.assertEqual(result["verdict"], ACCEPTED, result["failed_gates"])
+
+
+class ChangePointsAreDrivenByEventsTest(unittest.TestCase):
+    """4.16's event-driven half, wired at the DRIVER because that is where it was missing.
+
+    `observe_change_point` was correct and had no caller anywhere - the eighth instance of
+    the shape S119 closed seven of. S119's own recorded mistake was a finalize wired into
+    the wrong loop, whose tests passed because they called the calculator directly, so
+    every assertion here goes through `driver.consume`.
+    """
+
+    def _run(self, *, emit: bool, records: int = 3):
+        driver = make_driver(total_mbo_records=records, emit_change_points=emit)
+        base = at("2021-10-04T13:00:00")
+        driver.consume(
+            record(seq=i, event_ns=base + i * NS_PER_SECOND, order_id=300 + i, action="T")
+            for i in range(records)
+        )
+        return driver, driver.finalize()
+
+    def _summary(self, result):
+        return (result["layers"]["exact_lifecycle_and_runway_ledger"]
+                ["section_summaries"]["4.16"]["event_driven_change_points"])
+
+    def test_unfed_it_declares_itself_rather_than_reporting_a_bare_zero(self):
+        """A zero and an absence are indistinguishable, which is the whole S119 finding."""
+        _, result = self._run(emit=False)
+        summary = self._summary(result)
+        self.assertEqual(summary["observed"], 0)
+        self.assertEqual(summary["status"], "NOT_FED_BY_THE_TRAVERSAL")
+
+    def test_the_flag_is_off_by_default_because_it_is_a_size_decision(self):
+        driver = make_driver()
+        self.assertFalse(driver.emit_change_points)
+
+    def test_a_repeated_state_emits_no_change_point(self):
+        """The trigger is an EVENT. A constant tape must produce no change points at all.
+
+        Firing per second instead would make this a fourth fixed cadence, retaining
+        (open tracks x seconds) under D60 to record readings the horizons already carry.
+        """
+        driver, _ = self._run(emit=True, records=5)
+        seen = driver.responses.state_fingerprint()
+        self.assertEqual(driver._last_change_point_state in (None, seen), True)
+        self.assertEqual(driver.run.response.change_points_observed, 0)
+
+    def test_the_fingerprint_moves_when_the_observable_state_moves(self):
+        """If the fingerprint cannot change, nothing downstream of it can ever fire.
+
+        D23 applied to the trigger itself: a condition that cannot change state carries no
+        information, whatever form it is written in - which is exactly how 4.16's
+        `starting_liquidity_regime` came to read the same value on all 84 at-risk rows.
+        """
+        driver, _ = self._run(emit=True)
+        first = driver.responses.state_fingerprint()
+        driver.responses.note_state(
+            driver._latest_book, signed_flow_lots=(driver._last_signed_flow or 0) + 7
+        )
+        self.assertNotEqual(first, driver.responses.state_fingerprint())
+
+
+class ChangePointsActuallyFireTest(ResponseTableFedTest):
+    """The test that matters: the guard PRODUCING its output, not merely staying silent.
+
+    The tests above prove change points do not fire on a constant tape. That is the
+    negative half, and S113's NC-3 is the reason it is not enough - a guard whose firing
+    branch never executed was never tested. This fixture detects real candidates, so 4.16
+    tracks are actually open and there is something for a change point to be written to;
+    the small fixtures open none, which would make `observe_change_point` a no-op loop over
+    an empty dict and every assertion about it vacuously true.
+    """
+
+    def _drive(self, *, emit: bool):
+        driver = make_driver(total_mbo_records=self.SPAN + 1, emit_change_points=emit)
+        driver.candidate_warmup_seconds = 60
+        driver.candidate_min_observations = 30
+        driver.detector = driver._new_detector(0)
+        driver.consume(self._stream())
+        result = driver.finalize()
+        summary = (result["layers"]["exact_lifecycle_and_runway_ledger"]
+                   ["section_summaries"]["4.16"])
+        return result, summary
+
+    def test_tracks_are_open_so_the_assertion_is_not_vacuous(self):
+        _, summary = self._drive(emit=False)
+        self.assertGreater(summary["tracks_opened"], 0)
+
+    def test_fed_it_fires_and_says_so(self):
+        _, summary = self._drive(emit=True)
+        points = summary["event_driven_change_points"]
+        self.assertGreater(points["observed"], 0, "wired but nothing reached it")
+        self.assertEqual(points["status"], "FED_BY_THE_TRAVERSAL")
+
+    def test_unfed_the_same_tape_reports_the_declaration_not_a_zero(self):
+        """Same records, same candidates - the ONLY difference is the flag.
+
+        Holding the tape constant is what makes this a measurement of the wiring rather
+        than of the fixture.
+        """
+        _, summary = self._drive(emit=False)
+        points = summary["event_driven_change_points"]
+        self.assertEqual(points["observed"], 0)
+        self.assertEqual(points["status"], "NOT_FED_BY_THE_TRAVERSAL")
+
+    def test_feeding_change_points_does_not_change_the_verdict(self):
+        """A retained observation must not be able to reject a run that would be accepted.
+
+        `finalize` is not idempotent - calling it twice raises out of the mirror - so the
+        verdict is taken from the result each drive already produced.
+        """
+        off, _ = self._drive(emit=False)
+        on, _ = self._drive(emit=True)
+        self.assertEqual(off["verdict"], on["verdict"])
+        self.assertEqual(off["failed_gates"], on["failed_gates"])

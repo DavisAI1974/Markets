@@ -323,6 +323,7 @@ class NativeReplayDriver:
         candidate_selection: str = native_candidate.CAUSAL_WINDOWED_PROMINENCE,
         candidate_warmup_seconds: int = 900,
         candidate_min_observations: int = 600,
+        emit_change_points: bool = False,
     ) -> None:
         if session_rule is None:
             raise ReplayDriverError(
@@ -335,6 +336,14 @@ class NativeReplayDriver:
                 "the shape of the experiment, not a traversal detail"
             )
         self.identity = identity
+        # 4.16's event-driven half. OFF by default because turning it on is a SIZE decision
+        # under D60 - every change point is retained on its track, so retained volume becomes
+        # (open tracks x changes) - and a size decision is declared before it is taken.
+        # Unfed, `native_response.summary` says NOT_FED_BY_THE_TRAVERSAL rather than
+        # reporting a zero that reads exactly like a real absence, which is the shape seven
+        # of S119's sixteen defects took.
+        self.emit_change_points = emit_change_points
+        self._last_change_point_state: tuple | None = None
         self.session_rule = session_rule
         self.cadence = cadence
         self.run = run
@@ -566,9 +575,35 @@ class NativeReplayDriver:
                 section="response",
                 occasion="HORIZON_MATURED",
             )
+            # The OTHER half of 4.16's emission rule, and it had no caller at all - the
+            # eighth instance of the shape S119 closed seven of. The contract requires
+            # emission "at every available event-driven change point AND at versioned fixed
+            # H+N horizons"; run 33605852433 emitted only the horizons. The trigger is the
+            # observable state CHANGING, never the clock: firing every second would make
+            # change points a fourth fixed cadence, retaining (open tracks x seconds) under
+            # D60 to record readings the horizons already carry.
+            self._observe_change_points(second * NS_PER_SECOND)
             self._last_signed_flow = signed
             self._retain_candidates(self.detector.observe(second, value))
         self._last_complete_second = current_second - 1
+
+    def _observe_change_points(self, recv_ns: int) -> None:
+        """Emit a 4.16 change point when the observable state has actually moved.
+
+        Off unless `emit_change_points` is set. Under D60 every change point is RETAINED on
+        its track and travels into the lifecycle row, so the retained volume is
+        (open tracks x changes) rather than (tracks) - which is a size decision, and size
+        decisions are declared before they are taken, not discovered afterwards.
+        """
+        if not self.emit_change_points:
+            return
+        fingerprint = self.responses.state_fingerprint()
+        if fingerprint == self._last_change_point_state:
+            return
+        self._last_change_point_state = fingerprint
+        self.run.response.observe_change_point(
+            recv_ns, values_for=self.responses.change_point_values_for
+        )
 
     def _retain_candidates(self, candidates: Any) -> None:
         """The ONE route a candidate takes into every downstream section.

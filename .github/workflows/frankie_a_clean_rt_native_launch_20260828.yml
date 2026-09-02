@@ -27,6 +27,24 @@ on:
           measured curve.
         type: string
         default: '50000'
+      alias_companion_keys:
+        description: >-
+          Alias key names in the averaged companion rows. Lossless - the legend travels in
+          the same layer and every consumer decodes through `read_averaged_rows` - and it
+          removes about a third of what the principal reads. Measured: key names are 49.5%
+          of that section on run 33605852433. Off by default so a rerun stays byte
+          comparable to that run, which was written plain.
+        type: boolean
+        default: false
+      emit_change_points:
+        description: >-
+          Feed 4.16's event-driven change points. `observe_change_point` had no caller
+          anywhere, so run 33605852433 emitted only the fixed horizons and the section
+          declared NOT_FED_BY_THE_TRAVERSAL. Every change point is RETAINED on its track
+          under D60, so retained volume becomes (open tracks x changes) rather than
+          (tracks). Off by default because that is a size decision.
+        type: boolean
+        default: false
       traverse_sources:
         description: >-
           Which roster objects are TRAVERSED, space separated, in stream order. Applies to
@@ -62,6 +80,8 @@ env:
   SOURCE_PREFIX: nymex/ng_mbo_5y_v0/native/20211001_20211101
   ARM_ID: A_CLEAN
   CANARY_RECORDS: ${{ github.event_name == 'workflow_dispatch' && inputs.canary_records || '50000' }}
+  ALIAS_COMPANION_KEYS: ${{ github.event_name == 'workflow_dispatch' && inputs.alias_companion_keys || false }}
+  EMIT_CHANGE_POINTS: ${{ github.event_name == 'workflow_dispatch' && inputs.emit_change_points || false }}
   TRAVERSE_SOURCES: >-
     ${{ github.event_name == 'workflow_dispatch' && inputs.traverse_sources ||
     'glbx-mdp3-20211001.mbo.dbn.zst glbx-mdp3-20211003.mbo.dbn.zst
@@ -291,6 +311,16 @@ jobs:
           done
           test "${#source_args[@]}" -gt 0
           printf 'traversing %s object(s): %s\n' "$((${#source_args[@]} / 2))" "$TRAVERSE_SOURCES"
+          # Both flags OFF unless dispatched on. Built as an array so an unset flag adds no
+          # empty argument, which argparse would take as a positional and refuse.
+          flag_args=()
+          if [ "$ALIAS_COMPANION_KEYS" = "true" ]; then
+            flag_args+=(--alias-companion-keys)
+          fi
+          if [ "$EMIT_CHANGE_POINTS" = "true" ]; then
+            flag_args+=(--emit-change-points)
+          fi
+          printf 'flags: %s\n' "${flag_args[*]:-none}"
           python -m research.kalshi.frankie_raw_mbo_benchmark.native_a_arm_launch \
             --arm A_CLEAN \
             --run-id "${RUN_ID}-canary" \
@@ -300,6 +330,7 @@ jobs:
             --limit-records "$CANARY_RECORDS" \
             --checkpoint-every-records 20000 \
             --cadence-groups 5000 \
+            "${flag_args[@]}" \
             "${source_args[@]}"
           echo "CANARY_OUT_DIR=$out_dir" >> "$GITHUB_ENV"
 
@@ -620,6 +651,16 @@ jobs:
                   f'test "$(sha256sum /opt/frankie-a-arm-run/sources/{name}'
                   f' | cut -d" " -f1)" = "{digest}"'
               )
+          # The two optional flags, rendered into the remote command rather than read from
+          # the box's environment: the box gets a script, not this job's env, so a flag left
+          # to an env lookup there would silently be absent and the run would report a
+          # section as NOT_FED while the dispatch believed it was on.
+          flag_args = ""
+          if os.environ.get("ALIAS_COMPANION_KEYS") == "true":
+              flag_args += " --alias-companion-keys"
+          if os.environ.get("EMIT_CHANGE_POINTS") == "true":
+              flag_args += " --emit-change-points"
+          print(f"remote flags: {flag_args.strip() or 'none'}")
           steps.extend([
               (
                   "python3 -m research.kalshi.frankie_raw_mbo_benchmark.native_a_arm_launch"
@@ -630,6 +671,7 @@ jobs:
                   " --out-dir /opt/frankie-a-arm-run"
                   f" --checkpoint-every-records {checkpoint_every}"
                   f" --cadence-groups {cadence}"
+                  + flag_args
                   + bound
                   + "".join(
                       f" --source /opt/frankie-a-arm-run/sources/{name}"

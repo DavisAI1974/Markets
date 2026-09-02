@@ -383,6 +383,7 @@ def launch(
     records: Any = None,
     stream_ledgers: bool = True,
     alias_companion_keys: bool = False,
+    emit_change_points: bool = False,
 ) -> dict[str, Any]:
     """Gate, traverse, checkpoint, finalize. Returns the layered result plus the receipts.
 
@@ -524,6 +525,10 @@ def launch(
         checkpointer=checkpointer,
         stage_spawn=stager.stage,
         sinks=sinks,
+        # 4.16's event-driven half. Under D60 every change point is retained on its track,
+        # so retained volume becomes (open tracks x changes) rather than (tracks) - a size
+        # decision, declared before it is taken.
+        emit_change_points=emit_change_points,
     )
     # Sequence 0 before any interval save. The checkpointer REFUSES an interval save without
     # it rather than quietly writing an unanchored chain, which is how the missing call
@@ -593,6 +598,16 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--emit-change-points",
+        action="store_true",
+        help=(
+            "feed 4.16's event-driven change points. `observe_change_point` had no caller "
+            "anywhere, so run 33605852433 emitted only the fixed horizons. Every change "
+            "point is RETAINED on its track under D60, so retained volume becomes "
+            "(open tracks x changes). Off by default because that is a size decision."
+        ),
+    )
+    parser.add_argument(
         "--inline-ledgers", action="store_true",
         help="retain the exact ledgers in RAM instead of streaming them to disk; the old "
              "path, kept so the two can be compared, and not for a full-roster run",
@@ -635,6 +650,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         cadence_groups=args.cadence_groups,
         stream_ledgers=not args.inline_ledgers,
         alias_companion_keys=args.alias_companion_keys,
+        emit_change_points=args.emit_change_points,
     )
     (args.out_dir / "calculation_result.json").write_text(
         json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"

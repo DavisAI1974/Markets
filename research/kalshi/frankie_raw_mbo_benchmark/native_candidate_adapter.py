@@ -695,6 +695,29 @@ class ResponseFeed:
     def forget(self, structure_id: str) -> None:
         self._baseline.pop(structure_id, None)
 
+    def state_fingerprint(self) -> tuple:
+        """The observable state 4.16 is fed, as a comparable value.
+
+        A change point is defined by the contract as an EVENT - "at every available
+        event-driven change point AND at versioned fixed H+N horizons". Emitting one per
+        second regardless would make change points a fourth fixed cadence rather than an
+        event, inflating retained volume without adding a single observation the horizons
+        do not already carry. So the trigger is this fingerprint CHANGING, and these are
+        exactly the quantities `_reading` turns into a channel set: anything not here cannot
+        alter a reading, and anything here can.
+        """
+        return (
+            self._book.price_raw,
+            self._book.bid_depth,
+            self._book.ask_depth,
+            self._book.depth_scope,
+            self._signed_flow,
+        )
+
+    def change_point_values_for(self, track: Any) -> dict[str, float | None]:
+        """`values_for` without a horizon. A change point is due by event, not by clock."""
+        return self.values_for(track, 0)
+
     def values_for(self, track: Any, horizon: int) -> dict[str, float | None]:
         baseline = self._baseline.get(track.structure_id)
         if baseline is None:
