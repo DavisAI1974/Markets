@@ -1097,6 +1097,33 @@ FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the drive
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
+**One-line state (S120):** branch `chatgpt/frankie-raw-mbo-benchmark-20260828`, tip
+`7638659`, **1227 tests green**, decisions 77 -> 80. **SUNDAY RERAN ON THE CORRECTED CODE AND
+IS CONFIRMED** (run 33630348943, mode=full, both reducers on): 57,027 records / 43,569 groups
+identical to the pre-fix run, 10,924,504,920 ledger bytes, 191,567 per record, sink count
+matching the box's own `wc -c` with delta +0 on all three ledgers. The 14.0 GB projection was
+28% high and **that is not a reduction** - the 246 KiB constant came from a canary over the
+roster's opening. Aliasing measured on the real run at **31.0%** (~1.39M tokens) against the
+33.8% estimate; 4.16's event-driven half fired for the first time, **88,071 change points**.
+**BUT THE D68 REPORT IS NOT DELIVERED AND THE REASON IS MEASURED: the raw-MBO half was never
+asked and could not have been answered.** The spawn prompt says `raw mbo`, `retention`,
+`drop`, `field`, `book_full` and `keep` **zero times**; mission section 9's nine required
+outputs include none of them; and **the raw MBO is not in what Frankie receives** - he gets
+the ~34 MB result while the 10.6 GB member ledger stays on the box, which he stated himself.
+**THE CALCS ARE SETTLED AND ARE NOT THE QUESTION** (Greg: *"you keep reporting about the calcs
+and I've said over and over he are keep them all"*). **THREE INSTANCES OF ONE SHAPE IN ONE
+SESSION** - a settlement that reaches a report and never reaches the document governing the
+next run: D68's raw-MBO half; two of Frankie's three proposed sections never built because the
+`open_items` store holds **ZERO entries** (D36 recurring); and the non-replacement rule, which
+**already exists verbatim** in the contract preamble and is honoured in STORAGE while broken in
+DELIVERY - its only guard reads a counter, `member_rows_written > 0`, so **16,293 averaged rows
+were read and zero member rows**. The averaged view is authorized on **13 of 16** sections and
+Frankie measured it earning its keep **exactly once**, in 4.7. **Frankie's 44 findings - D
+depths, families, exhaustion, prebirth, dipole - exist in
+`frankie_principal_findings.json` and were never surfaced; S120 reported only the assessment.**
+Two of my own numbers were wrong and Greg caught both: the ingestion gate is **99 entries /
+hard minimum 90**, not 78, and "skeleton" is undefined shorthand, not architecture.
+
 **One-line state (S119):** branch `chatgpt/frankie-raw-mbo-benchmark-20260828`, **1162 tests
 green (was 552 at S115). ALL SIXTEEN DEFECTS IN FRANKIE'S REGISTER ARE CLOSED, WIRED AND
 PUSHED. NOTHING RELAUNCHED** - the last real run is still 33605852433, produced BEFORE the
