@@ -1071,7 +1071,10 @@ class RunHashesTest(LedgerRuleCase):
         for key in ("mission_sha256", "contract_sha256", "knowledge_manifest_sha256", "source_manifest_sha256", "code_sha256"):
             with self.subTest(key=key):
                 end = run_hash_body("END", state="state-3", **{key: sha_of("changed")})
-                self.refused(self.LEDGER, [(C1, run_hash_body("START")), (C3, end)], "only the state")
+                # A moved contract hash is caught first as "not the contract this bundle is bound
+                # to"; every other invariant is caught as a START/END disagreement.
+                needle = "contract" if key == "contract_sha256" else "only the state"
+                self.refused(self.LEDGER, [(C1, run_hash_body("START")), (C3, end)], needle)
 
     def test_the_contract_hash_is_the_bundles_and_the_run_id_is_the_bundles(self):
         self.refused(self.LEDGER, [(C1, run_hash_body("START", contract_sha256=sha_of("other"))), (C3, run_hash_body("END", contract_sha256=sha_of("other")))], "contract")
