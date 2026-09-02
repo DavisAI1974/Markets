@@ -45,6 +45,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry i
     canonical_hash,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_key_alias import read_averaged_rows
+from research.kalshi.frankie_raw_mbo_benchmark import native_principal_outputs as outputs
 from research.kalshi.frankie_raw_mbo_benchmark.native_staging import EXACT_LEDGERS
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -415,21 +416,72 @@ def emit(result_path: Path | str, *, delivery_receipt: Path | str | None = None,
             "<sha256 of the stream receipt your CausalGroupStream run wrote: "
             "canonical_hash(stream_receipt(), omit='receipt_sha256')>"
         ),
+        # F-25: the staging gate validates the output bundle he wrote and refuses an
+        # artifact whose citation does not equal the validator's computed receipt.
+        "outputs_receipt_sha256": (
+            f"<receipt_sha256 of the {outputs.RECEIPT_FILENAME} in the output bundle you "
+            "wrote; see 'Your output bundle' below>"
+        ),
         "findings": ["<at least one; see the mission's section 9 for what a finding must carry>"],
     }, indent=2))
     add("```")
     add("")
     add("`load_principal_artifact` refuses a missing artifact, a different")
     add("`evidence_result_hash`, `controller_only` true, an artifact that does not attest an")
-    add("actual invocation, an empty findings list, and an artifact that does not declare")
-    add("`evidence_read` for every exact ledger. An empty artifact is a failed spawn, not an")
-    add("empty success.")
+    add("actual invocation, an empty findings list, an artifact that does not declare")
+    add("`evidence_read` for every exact ledger, and an artifact that")
+    add("cites a delivery receipt but no `outputs_receipt_sha256` (or one whose bundle does")
+    add("not validate to that receipt). An empty artifact is a failed spawn, not an empty")
+    add("success.")
     add("")
     add("**`evidence_read` must be READ for every ledger, and NOT_READ is refused.** The")
     add("ledgers were delivered to you whole and verified, so a ledger you did not read is a")
     add("failed spawn, not a caveat. Cite `delivery_receipt_sha256` exactly as above and")
     add("`stream_receipt_sha256` from the receipt your own stream wrote; the staging gate")
     add("refuses NOT_READ on any artifact that cites a delivery receipt.")
+    add("")
+    add("## Your output bundle")
+    add("")
+    add("Everything you produce as the stream advances is written to an output bundle -")
+    add(f"schema `{outputs.OUTPUT_BUNDLE_SCHEMA}` - in a directory beside your artifact")
+    add(f"(`principal_outputs/`): one JSON per ledger under `{outputs.LEDGERS_DIRNAME}/` and")
+    add(f"a `{outputs.RECEIPT_FILENAME}` (schema `{outputs.OUTPUT_RECEIPT_SCHEMA}`) whose")
+    add("`receipt_sha256` is the `outputs_receipt_sha256` you cite above. The staging gate")
+    add("validates the bundle against the registry, the calculation contract, the delivery")
+    add("receipt and the knowledge receipt, and refuses your artifact if its citation does")
+    add("not equal the receipt the validator computes.")
+    add("")
+    add("**The ledgers are append-only and chain-hashed.** Every entry carries a monotone")
+    add("`sequence`, a nondecreasing `cutoff_recv_ns` (the F_LAST `ts_recv_ns` after which")
+    add("you wrote it - contract section 2), a `body`, and `entry_hash = sha256(prev_hash +")
+    add("canonical(entry))` from `sha256(b\"\")`. An edited entry breaks its own hash chain, a")
+    add("reordered one breaks its sequence, a moved one breaks the cutoff order. Nothing is")
+    add("rewritten; a re-write that is not a pure extension is refused.")
+    add("")
+    add("**The required set is derived at validation time, and there is no count** - no")
+    add("historical number is a spec (DROP_IN_S121 item zero, D60). The bundle must carry:")
+    add("")
+    add(f"- every layer id of the registry's `{outputs.APPEND_ONLY_OUTPUTS_GROUP}` group;")
+    add(f"- one ledger per `### 4.x` heading of the calculation contract, named")
+    add(f"  `{outputs.SECTION_LEDGER_PREFIX}<id>` (4.0 and 4.0b included);")
+    add(f"- `{outputs.RAW_MBO_CLASSIFICATION_LEDGER}` - the mission's section 9a")
+    add("  classification, which advises and never drops (D60, D76);")
+    add(f"- `{outputs.KNOWLEDGE_VERIFICATION_LEDGER}` - one verdict per delivered lesson")
+    add("  (VERIFIED / UNVERIFIED / REFUTED against the stream), citing the knowledge")
+    add("  receipt.")
+    add("")
+    add("Every timing is written on a named causal clock as `{clock, observed_ns}`; a fixed")
+    add("ladder label names no clock and is refused (D83). A helper is a tool invocation")
+    add("inside your role, never a lane (D63/D64). Invocation receipts attest an AGENT")
+    add("SESSION, never an API call (D70). No body names a desktop or session-local path")
+    add("(D34). Check your own bundle before you file:")
+    add("")
+    add("```")
+    add("python3 -m research.kalshi.frankie_raw_mbo_benchmark.native_principal_outputs validate \\")
+    add(f"    --dir <your principal_outputs dir> --arm {arm}")
+    add("```")
+    add("")
+    add("It prints the receipt or `REFUSED: <why>`; a refused bundle is a failed spawn.")
     add("")
     add("Mission section 9 says what the output must contain: searched coverage and current")
     add("causal state; candidate families and complete causal runways; pre-birth and")
