@@ -897,6 +897,9 @@ class QueueGroupAdapter:
             order_id=tracked.order_id,
             status=status,
             recv_ns=recv_ns,
+            # F-17. The group this terminal arrived in is the stratum the order died in.
+            exit_family_id=ctx.family_id,
+            exit_session_phase=ctx.session_phase,
         )
         self._untrack(tracked)
         if row is None:

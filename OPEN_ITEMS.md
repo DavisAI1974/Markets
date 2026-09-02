@@ -6,8 +6,8 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 178 |
-| in progress | 1 |
+| open | 177 |
+| in progress | 2 |
 | done | 18 |
 
 By size: **XS** 19, **S** 81, **M** 56, **L** 12
@@ -285,7 +285,7 @@ By tier: **ESSENTIAL** 29, **BIGGEST_WIN** 45, **REST** 105
 | **A-41** | BIGGEST_WIN | M | OPEN | S114 | RUN THE FAILURE JUDGE ON AGENT BEHAVIOUR - localize every post-mortem finding to an interaction edge and fault side BEFORE it becomes brain evidence | - |
 | **A-62** | BIGGEST_WIN | M | OPEN | S115 | SERVE EACH SPECIALIST ITS OWN TRACK RECORD - we measure how each agent fails and have never told the agent | - |
 | **F-13** | BIGGEST_WIN | M | OPEN | S120 | NO SECTION OWNS EXECUTIONS - trades appear only as by-products across three layers | - |
-| **F-16** | BIGGEST_WIN | M | OPEN | S120 | 4.6's EXIT-STAMPED STRATUM (Frankie F-17): 97.3% of lifecycles outlive their birth group | - |
+| **F-16** | BIGGEST_WIN | M | IN_PROGRESS | S120 | 4.6's EXIT-STAMPED STRATUM (Frankie F-17): 97.3% of lifecycles outlive their birth group | - |
 | **F-9** | BIGGEST_WIN | M | OPEN | S117 | KALSHI_TRADING.md INDEXES 7 OF 103 A-ARM FILES AND CARRIES A REFUTED PREMISE | - |
 | **G-4** | BIGGEST_WIN | M | OPEN | S111 | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | - |
 | **M-4** | BIGGEST_WIN | M | OPEN | S109 | CDD-vs-normal (the anomaly instrument separating hill from spike) | - |
@@ -2226,7 +2226,7 @@ Frankie's fourth, smaller proposal. The two strongest market-mechanics results o
 
 ### [BIGGEST_WIN] F-16 - 4.6's EXIT-STAMPED STRATUM (Frankie F-17): 97.3% of lifecycles outlive their birth group
 
-*size M | OPEN | raised S120*
+*size M | IN_PROGRESS | raised S120*
 
 **Source:** S120, from Frankie's run-33605852433 assessment and the S120 measurement
 

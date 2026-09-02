@@ -217,6 +217,23 @@ class OrderLifecycle:
     priority_loss_count: int = 0
     terminal_status: str | None = None
     terminal_recv_ns: int | None = None
+    # F-17 (Frankie's F-17, S119). 97.3% of lifecycles outlive the group that gave rise to
+    # them, so a stratum stamped at BIRTH describes an instant the order left long ago. The
+    # exit-time family and phase are stamped at the terminal and the stratum is keyed on
+    # them; the birth values stay on the row. None until the order dies - a censored order
+    # has no exit group, and inventing one would be a key collision dressed as a label.
+    exit_family_id: str | None = None
+    exit_session_phase: str | None = None
+
+    @property
+    def exit_stratum_available(self) -> bool:
+        """Whether the order died inside a group whose family and phase are known.
+
+        Segment-end censoring has no exit group, so this is False there - and a censored
+        order is therefore EXCLUDED from the exit-keyed view and counted, never filed under
+        an invented exit.
+        """
+        return self.exit_family_id is not None and self.exit_session_phase is not None
 
     @property
     def current_episode(self) -> QueueEpisode:
@@ -244,9 +261,20 @@ class OrderLifecycle:
             "continuity_segment": self.continuity_segment,
             "source_day": self.source_day,
             "source_role": self.source_role,
+            # F-17. The PRIMARY stratum stays keyed on BIRTH - S119 decided that and a
+            # committed test pins it, and moving it would break comparability with run
+            # 33605852433. The EXIT context is carried beside it and feeds a second, separately
+            # labelled survival view, so Frankie's F-17 population exists without the birth
+            # one being overwritten. Which is primary is Greg's to pick (D60); both are here.
             "family_id": self.family_id,
             "side": self.side,
             "session_phase": self.session_phase,
+            "stratum_basis": "BIRTH_STAMPED",
+            "birth_family_id": self.family_id,
+            "birth_session_phase": self.session_phase,
+            "exit_family_id": self.exit_family_id,
+            "exit_session_phase": self.exit_session_phase,
+            "exit_stratum_available": self.exit_stratum_available,
             "birth_recv_ns": self.birth_recv_ns,
             "birth_sequence": self.birth_sequence,
             "terminal_status": self.terminal_status,
@@ -367,6 +395,27 @@ class QueueSurvivalCalculator:
             "every order contributes exactly once, as an event or as a censoring",
             kind="SURVIVAL",
         )
+        # F-17 (Frankie's F-17, S119) - the PARALLEL view. Same lifetimes, keyed on the group
+        # the order DIED in rather than the one it was born in. 97.3% of lifecycles outlive
+        # their birth group, so for almost every order these two strata name different
+        # families and phases - that difference is the finding. Birth stays PRIMARY (S119's
+        # decision, pinned by a committed test, and the comparability of run 33605852433
+        # depends on it); this is filed beside it, never instead of it. Which is primary is
+        # Greg's pick under D60.
+        self.time_to_exit_by_exit_stratum = measure(
+            "time_to_exit_by_exit_stratum_ns",
+            "Kaplan-Meier over exit times, keyed on the EXIT group's family and phase (F-17); "
+            "the birth-keyed time_to_exit_ns is the primary view and this is its complement",
+            LIFECYCLE_POPULATION + "; one observation per RESOLVED-or-censored order that died "
+            "inside a known group - segment-end censoring has no exit group",
+            CENSORED,
+            "an order censored at segment end is EXCLUDED here and counted "
+            "(exit_view_excluded_no_exit_group); it remains in time_to_exit_ns, so the two "
+            "populations differ by exactly that count: COMPLEMENTARY_SCOPE_DIFFERENCE",
+            kind="SURVIVAL",
+        )
+        self.exit_view_filed = 0
+        self.exit_view_excluded_no_exit_group = 0
 
         self._open: dict[tuple[int, int], OrderLifecycle] = {}
         self._level_fill_counts: dict[tuple[int, str, int], int] = {}
@@ -392,6 +441,10 @@ class QueueSurvivalCalculator:
             self.requeue_initial_volume_ahead,
             self.queue_movement,
             self.time_to_exit,
+            # F-17. In the tuple, or the D-13 unit gate, companion_rows and stratum_counts all
+            # miss it - a measure that exists and is enumerated nowhere is the dark-section
+            # shape one attribute down.
+            self.time_to_exit_by_exit_stratum,
         )
 
     @property
@@ -403,6 +456,7 @@ class QueueSurvivalCalculator:
         return len(self._open)
 
     def _key(self, lifecycle: OrderLifecycle) -> StratumKey:
+        """The BIRTH stratum - the primary key, unchanged since S119 decided it."""
         return StratumKey(
             source_day=lifecycle.source_day,
             source_role=lifecycle.source_role,
@@ -410,6 +464,25 @@ class QueueSurvivalCalculator:
             family_id=lifecycle.family_id,
             side_orientation=lifecycle.side,
             session_phase=lifecycle.session_phase,
+            clock=CAUSAL_CLOCK,
+        )
+
+    def _exit_key(self, lifecycle: OrderLifecycle) -> StratumKey:
+        """The EXIT stratum (F-17): the group the order actually died in.
+
+        Only meaningful when `exit_stratum_available`; callers check first. 97.3% of
+        lifecycles outlive their birth group, so for almost the whole population this names a
+        different family and phase from `_key`, and that difference is the finding, not an
+        error - which is why both views are kept and labelled rather than one replacing the
+        other.
+        """
+        return StratumKey(
+            source_day=lifecycle.source_day,
+            source_role=lifecycle.source_role,
+            continuity_segment=lifecycle.continuity_segment,
+            family_id=lifecycle.exit_family_id,  # type: ignore[arg-type]
+            side_orientation=lifecycle.side,
+            session_phase=lifecycle.exit_session_phase,  # type: ignore[arg-type]
             clock=CAUSAL_CLOCK,
         )
 
@@ -559,9 +632,22 @@ class QueueSurvivalCalculator:
         self.queue_movement.observe(self._key(lifecycle), float(episode.queue_movement))
         self.episodes_measured += 1
 
-    def _close(self, lifecycle: OrderLifecycle, *, status: str, recv_ns: int) -> dict[str, Any]:
+    def _close(
+        self,
+        lifecycle: OrderLifecycle,
+        *,
+        status: str,
+        recv_ns: int,
+        exit_family_id: str | None = None,
+        exit_session_phase: str | None = None,
+    ) -> dict[str, Any]:
         lifecycle.terminal_status = status
         lifecycle.terminal_recv_ns = recv_ns
+        # F-17. Stamped BEFORE the key is built, so every terminal observation below files
+        # under the exit stratum. Segment-end censoring passes neither and stays BIRTH_STAMPED,
+        # which the row then says in words.
+        lifecycle.exit_family_id = exit_family_id
+        lifecycle.exit_session_phase = exit_session_phase
         episode = lifecycle.current_episode
         key = self._key(lifecycle)
         lifetime = lifecycle.lifetime_ns or 0
@@ -574,6 +660,19 @@ class QueueSurvivalCalculator:
             self.censored_age.observe(key, float(lifetime))
             self.time_to_exit.observe(key, float(lifetime), event_observed=False)
             self.censored_count += 1
+        # F-17, the parallel view. The same lifetime filed under the group the order DIED in.
+        # Censored orders have no exit group and are excluded HERE and counted - they are still
+        # in the birth-keyed view above, so nothing is lost, and the two views' populations
+        # differ by exactly the censored count, which the declaration states.
+        if lifecycle.exit_stratum_available:
+            self.time_to_exit_by_exit_stratum.observe(
+                self._exit_key(lifecycle), float(lifetime),
+                event_observed=status in TERMINAL_RESOLVED,
+            )
+            self.exit_view_filed += 1
+        else:
+            self.time_to_exit_by_exit_stratum.exclude_missing(key)
+            self.exit_view_excluded_no_exit_group += 1
         self.completed += 1
         self._open.pop((lifecycle.instrument_id, lifecycle.order_id), None)
         return lifecycle.as_dict()
@@ -585,6 +684,8 @@ class QueueSurvivalCalculator:
         order_id: int,
         status: str,
         recv_ns: int,
+        exit_family_id: str | None = None,
+        exit_session_phase: str | None = None,
     ) -> dict[str, Any] | None:
         if status not in TERMINAL_RESOLVED:
             raise QueueError(f"on_terminal accepts {sorted(TERMINAL_RESOLVED)}; censoring is not an event")
@@ -592,7 +693,10 @@ class QueueSurvivalCalculator:
         if lifecycle is None:
             self.unknown_order_events += 1
             return None
-        return self._close(lifecycle, status=status, recv_ns=recv_ns)
+        return self._close(
+            lifecycle, status=status, recv_ns=recv_ns,
+            exit_family_id=exit_family_id, exit_session_phase=exit_session_phase,
+        )
 
     def close_continuity_segment(self, *, segment: int, recv_ns: int) -> list[dict[str, Any]]:
         """Censor every order still resting when a segment ends.
@@ -679,10 +783,22 @@ class QueueSurvivalCalculator:
                 self.resolved_lifetime.name: UNIT_LIFECYCLE,
                 self.censored_age.name: UNIT_LIFECYCLE,
                 self.time_to_exit.name: UNIT_LIFECYCLE,
+                self.time_to_exit_by_exit_stratum.name: UNIT_LIFECYCLE,
                 self.initial_volume_ahead.name: UNIT_BIRTH_EPISODE,
                 self.requeue_initial_volume_ahead.name: UNIT_REQUEUE_EPISODE,
                 self.queue_movement.name: UNIT_CLOSED_EPISODE,
             },
             "episode_accounting": self.episode_accounting(),
             "stratum_counts": {m.name: m.stratum_count for m in self.measures},
+            # F-17. Both views' populations, so the scope difference is on the record.
+            "exit_view": {
+                "measure": self.time_to_exit_by_exit_stratum.name,
+                "filed": self.exit_view_filed,
+                "excluded_no_exit_group": self.exit_view_excluded_no_exit_group,
+                "primary_view": self.time_to_exit.name,
+                "basis": (
+                    "birth-keyed survival is PRIMARY (S119); the exit-keyed view is filed "
+                    "beside it; which is primary is a D60 decision, not the runner's"
+                ),
+            },
         }

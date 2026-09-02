@@ -524,3 +524,80 @@ class QueueSurvivalCalculatorTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ExitStratumParallelViewTest(unittest.TestCase):
+    """F-17 (Frankie's F-17, S119): 97.3% of lifecycles outlive the group that gave rise to them.
+
+    S119 decided the PRIMARY stratum stays keyed on BIRTH, and a committed adapter test pins
+    it ("the stratum keeps the birth phase; a later phase is counted, not restamped").
+    Frankie says a birth-keyed survival view describes an instant the order left long ago.
+    Both are true and they conflict, so the resolution is the contract's own instrument for
+    exactly this: keep BOTH views, label the difference. Birth stays primary; an exit-keyed
+    survival view is filed beside it; which is primary is Greg's to pick (D60). Nothing is
+    dropped and nothing is overwritten.
+    """
+
+    def setUp(self) -> None:
+        self.book = FakeBook()
+        self.calc = QueueSurvivalCalculator()
+        self.book.rest("B", 1000, 1, 3)
+        self.calc.on_add(**add_kwargs(), book_view=self.book.view)
+        self.birth_family = add_kwargs()["family_id"]
+
+    def _terminate_elsewhere(self, status=FILLED):
+        return self.calc.on_terminal(
+            instrument_id=42, order_id=1, status=status, recv_ns=4_000,
+            exit_family_id="EXIT_FAMILY", exit_session_phase="PRE_SETTLEMENT",
+        )
+
+    def test_the_primary_row_stays_birth_keyed_and_says_so(self):
+        """S119's decision, preserved: comparability with 33605852433 depends on it."""
+        row = self._terminate_elsewhere()
+        self.assertEqual(row["stratum_basis"], "BIRTH_STAMPED")
+        self.assertEqual(row["family_id"], self.birth_family)
+        self.assertEqual(row["birth_family_id"], self.birth_family)
+
+    def test_the_exit_context_is_carried_on_the_row(self):
+        row = self._terminate_elsewhere()
+        self.assertEqual(row["exit_family_id"], "EXIT_FAMILY")
+        self.assertEqual(row["exit_session_phase"], "PRE_SETTLEMENT")
+        self.assertTrue(row["exit_stratum_available"])
+
+    def test_the_birth_view_files_under_birth_and_the_exit_view_under_exit(self):
+        """Not the labels on the row - where the two numbers LANDED."""
+        self._terminate_elsewhere()
+        birth_strata = {r["stratum"]["family_id"] for r in self.calc.time_to_exit.rows()}
+        exit_strata = {r["stratum"]["family_id"]
+                       for r in self.calc.time_to_exit_by_exit_stratum.rows()}
+        self.assertEqual(birth_strata, {self.birth_family})
+        self.assertEqual(exit_strata, {"EXIT_FAMILY"})
+
+    def test_a_terminal_without_exit_context_is_excluded_from_the_exit_view_and_counted(self):
+        """An exclusion is a ROW with n=0 and excluded_missing_members=1, never silence (D60)."""
+        self.calc.on_terminal(instrument_id=42, order_id=1, status=CANCELLED, recv_ns=2_000)
+        rows = self.calc.time_to_exit_by_exit_stratum.rows()
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["excluded_missing_members"], 1)
+        self.assertEqual(rows[0]["value"]["total_observations"], 0)
+        self.assertEqual(self.calc.exit_view_excluded_no_exit_group, 1)
+
+    def test_segment_end_censoring_is_excluded_from_the_exit_view_and_counted(self):
+        """A censored order has no exit group. It stays in the birth view (so nothing is
+        lost) and is excluded HERE and counted - the two populations differ by exactly the
+        censored count, which is a declared scope difference, not a discrepancy."""
+        rows = self.calc.close_continuity_segment(segment=0, recv_ns=9_000)
+        self.assertEqual(len(rows), 1)
+        self.assertFalse(rows[0]["exit_stratum_available"])
+        self.assertEqual(len(self.calc.time_to_exit.rows()), 1, "still in the birth view")
+        exit_rows = self.calc.time_to_exit_by_exit_stratum.rows()
+        self.assertEqual(len(exit_rows), 1, "excluded is a counted row, not silence")
+        self.assertEqual(exit_rows[0]["excluded_missing_members"], 1)
+        self.assertEqual(exit_rows[0]["value"]["total_observations"], 0)
+        self.assertEqual(self.calc.exit_view_excluded_no_exit_group, 1)
+
+    def test_the_summary_reports_both_counts(self):
+        self._terminate_elsewhere()
+        summary = self.calc.summary()
+        self.assertEqual(summary["exit_view"]["filed"], 1)
+        self.assertEqual(summary["exit_view"]["excluded_no_exit_group"], 0)

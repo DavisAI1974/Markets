@@ -1249,3 +1249,45 @@ class ChangePointsActuallyFireTest(ResponseTableFedTest):
         on, _ = self._drive(emit=True)
         self.assertEqual(off["verdict"], on["verdict"])
         self.assertEqual(off["failed_gates"], on["failed_gates"])
+
+
+class ExitStratumReachesTheLedgerTest(unittest.TestCase):
+    """F-17 through the DRIVER: an order born in one group and cancelled in the next.
+
+    The calculator tests prove the exit view is filed when TOLD the exit context. This proves
+    the adapter TELLS it - passes the terminal group's family and phase - which is the wiring
+    a calculator-level test cannot see, and the shape S119's own recorded mistake took.
+
+    Its own two-group stream, because the shared fixtures only ever censor 4.6 at stream
+    end: an order that never dies inside a group has no exit stratum by construction, so a
+    test on that tape would be vacuous whichever way the wiring went.
+    """
+
+    def _run(self):
+        driver = make_driver(total_mbo_records=2)
+        base = at("2021-10-04T13:00:00")
+        driver.consume([
+            record(seq=0, event_ns=base, order_id=900, action="A", side="B", last=True),
+            record(seq=1, event_ns=base + NS_PER_SECOND, order_id=900, action="C", side="B",
+                   last=True),
+        ])
+        return driver, driver.finalize()
+
+    def test_the_cancel_in_the_second_group_carries_that_group_as_its_exit(self):
+        driver, _ = self._run()
+        rows = [r for r in driver.counters.lifecycle_rows
+                if r.get("emitting_section") == "queue" and r.get("terminal_status")
+                and r.get("emitted_on") != "STREAM_END"]
+        self.assertTrue(rows, "the cancel produced no mid-stream 4.6 terminal row")
+        row = rows[0]
+        self.assertTrue(row["exit_stratum_available"], "the adapter did not pass the "
+                                                        "terminal group's context")
+        self.assertIsNotNone(row["exit_family_id"])
+        self.assertEqual(row["stratum_basis"], "BIRTH_STAMPED", "birth stays primary")
+        self.assertIn("birth_family_id", row)
+
+    def test_the_exit_view_is_fed_by_the_traversal(self):
+        """Not the label on the row - the section summary says the exit view received it."""
+        driver, result = self._run()
+        summary = result["layers"]["exact_lifecycle_and_runway_ledger"]["section_summaries"]["4.6"]
+        self.assertGreaterEqual(summary["exit_view"]["filed"], 1)
