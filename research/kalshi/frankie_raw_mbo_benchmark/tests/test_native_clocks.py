@@ -5,6 +5,9 @@ import unittest
 
 from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import (
     CAUSAL_CLOCK,
+    DECISION_BASIS_ABSENT,
+    DECISION_BASIS_OBSERVED,
+    DECISION_BASIS_REPLAY_EARLIEST,
     HORIZON,
     INTERPRETATION_DOMAIN,
     PRIOR,
@@ -227,12 +230,50 @@ class ClockCalculatorTest(unittest.TestCase):
         self.assertEqual(row["value"]["n"], 0)
         self.assertEqual(row["excluded_missing_members"], 1)
 
-    def test_missing_decision_time_is_excluded_and_counted(self) -> None:
+    def test_a_declared_absence_is_excluded_and_counted(self) -> None:
+        """Still the rule - but it now takes a DECLARATION, not a forgotten argument."""
         calc = ClockCalculator()
-        calc.observe(row_for(three_component_group()))
+        calc.observe(row_for(three_component_group(),
+                             decision_basis=DECISION_BASIS_ABSENT))
         row = calc.f_last_to_decision.rows()[0]
         self.assertEqual(row["value"]["n"], 0)
         self.assertEqual(row["excluded_missing_members"], 1)
+
+    def test_the_replay_basis_populates_the_clock_that_was_empty_on_every_member(self) -> None:
+        """D-1. 43,569 of 43,569 excluded, because nobody ever passed a decision time.
+
+        A replay takes its decision at the first lawfully knowable instant, so the delay is
+        zero - a measurement, not an absence - and the basis says which of the two it is.
+        """
+        calc = ClockCalculator()
+        calc.observe(row_for(three_component_group()))
+        row = calc.f_last_to_decision.rows()[0]
+        self.assertEqual(row["value"]["n"], 1)
+        self.assertEqual(row["value"]["maximum"], 0.0)
+        self.assertEqual(row["excluded_missing_members"], 0)
+
+    def test_the_basis_travels_on_the_exact_record(self) -> None:
+        """A zero delay and an unknown delay must never be indistinguishable downstream."""
+        replayed = row_for(three_component_group())
+        absent = row_for(three_component_group(), decision_basis=DECISION_BASIS_ABSENT)
+        self.assertEqual(replayed["decision_basis"], DECISION_BASIS_REPLAY_EARLIEST)
+        self.assertEqual(replayed["f_last_to_decision_delay_ns"], 0)
+        self.assertEqual(absent["decision_basis"], DECISION_BASIS_ABSENT)
+        self.assertIsNone(absent["f_last_to_decision_delay_ns"])
+        self.assertIsNone(absent["clocks"]["decision_ts_recv_ns"])
+
+    def test_an_observed_decision_time_overrides_the_replay_convention(self) -> None:
+        """Passing a real time alongside a replay basis must not silently discard it."""
+        g = three_component_group()
+        f_last = max(int(c["ts_recv_ns"]) for c in g["raw_actions"])
+        row = row_for(g, decision_ts_recv_ns=f_last + 500,
+                      decision_basis=DECISION_BASIS_REPLAY_EARLIEST)
+        self.assertEqual(row["decision_basis"], DECISION_BASIS_OBSERVED)
+        self.assertEqual(row["f_last_to_decision_delay_ns"], 500)
+
+    def test_an_unknown_basis_is_refused(self) -> None:
+        with self.assertRaises(ClockError):
+            row_for(three_component_group(), decision_basis="ASSUMED")
 
     def test_multi_channel_member_is_attributed_to_each_channel_it_spans(self) -> None:
         calc = ClockCalculator()

@@ -98,6 +98,29 @@ def _components(group: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     return actions
 
 
+# D-1. THE DECISION CLOCK WAS EMPTY ON EVERY ONE OF 43,569 MEMBERS, and it is the clock that
+# makes the other three actionable - without it nothing separates LAWFULLY KNOWABLE from
+# ACTED UPON. The cause was not a bug in the measure: no caller ever passed a decision time,
+# so the parameter defaulted to None, and 43,569 members were excluded by a rule that reads
+# "members with no decision time are excluded and counted". The measure ran perfectly and
+# reported an absence.
+#
+# In a replay there IS no trading decision to observe, so the honest reading is that the
+# decision is taken at the first instant the group is lawfully knowable - F_LAST. That yields
+# a delay of zero, which is a MEASUREMENT, and it must never be confusable with a zero that
+# means "unknown". So the basis travels ON the record: a reader can always tell whether the
+# zero was observed, adopted by replay convention, or absent. A caveat that lives only in
+# prose expires (S115); this one is a field.
+DECISION_BASIS_OBSERVED = "OBSERVED_DECISION_TIME"
+DECISION_BASIS_REPLAY_EARLIEST = "REPLAY_EARLIEST_LAWFUL_AVAILABILITY"
+DECISION_BASIS_ABSENT = "NO_DECISION_TIME"
+DECISION_BASES = (
+    DECISION_BASIS_OBSERVED,
+    DECISION_BASIS_REPLAY_EARLIEST,
+    DECISION_BASIS_ABSENT,
+)
+
+
 def _is_f_last(component: Mapping[str, Any]) -> bool:
     flagged = component.get("is_last")
     if isinstance(flagged, bool):
@@ -116,6 +139,7 @@ def member_clock_row(
     side_orientation: str,
     session_phase: str,
     decision_ts_recv_ns: int | None = None,
+    decision_basis: str = DECISION_BASIS_REPLAY_EARLIEST,
 ) -> dict[str, Any]:
     """The exact per-member clock record. Section 3 requires this before any average.
 
@@ -138,6 +162,18 @@ def member_clock_row(
     within_group_gaps = [b - a for a, b in zip(recv, recv[1:])]
     sequences = [int(c["sequence"]) for c in components]
     channels = sorted({int(c["channel_id"]) for c in components})
+
+    if decision_basis not in DECISION_BASES:
+        raise ClockError(
+            f"unknown decision basis {decision_basis!r}; one of {DECISION_BASES} is required "
+            "so that a zero delay can never be read as an absent one"
+        )
+    if decision_ts_recv_ns is not None:
+        # An observed time overrides any convention. Passing one alongside a replay basis
+        # would silently discard it, which is the drop this programme keeps finding.
+        decision_basis = DECISION_BASIS_OBSERVED
+    elif decision_basis == DECISION_BASIS_REPLAY_EARLIEST:
+        decision_ts_recv_ns = f_last_recv
 
     f_last_to_decision = None
     if decision_ts_recv_ns is not None:
@@ -166,6 +202,7 @@ def member_clock_row(
             "first_lawful_availability_ns": f_last_recv,
             "decision_ts_recv_ns": decision_ts_recv_ns,
         },
+        "decision_basis": decision_basis,
         "event_to_receive_latency_ns": event_to_receive,
         "formation_latency_ns": f_last_recv - first_recv,
         "within_group_receive_gaps_ns": within_group_gaps,
@@ -223,7 +260,8 @@ class ClockCalculator:
         self.f_last_to_decision = measure(
             "f_last_to_decision_delay_ns",
             "decision.ts_recv_ns - f_last.ts_recv_ns, one observation per member",
-            "members with no decision time are excluded and counted per stratum",
+            "members whose decision basis is NO_DECISION_TIME are excluded and counted per "
+            "stratum; a replay adopts F_LAST as the decision instant and observes zero",
         )
         self.sequence_span = measure(
             "sequence_span",

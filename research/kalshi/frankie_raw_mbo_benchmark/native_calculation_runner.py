@@ -57,6 +57,10 @@ REQUIRED_LAYERS = (
     LAYER_RECONCILIATION,
     LAYER_FINDINGS,
 )
+from research.kalshi.frankie_raw_mbo_benchmark.native_cross_section_agreement import (
+    compare as cross_section_compare,
+    gate_detail as cross_section_gate_detail,
+)
 
 GATE_IDENTITY = "identity"
 GATE_COVERAGE = "exact_once_coverage"
@@ -66,6 +70,10 @@ GATE_DETERMINISM = "deterministic_identity_and_open_world_retention"
 GATE_DENOMINATORS = "denominators_strata_and_censoring"
 GATE_EXACT_UNDER_SUMMARY = "exact_members_beneath_every_summary"
 GATE_NOT_A_MODEL_RUN = "calculation_evidence_is_not_model_execution"
+# The ninth, and the only HORIZONTAL one. The eight above check a section against
+# itself, which a one-sided book satisfies perfectly - run 33605852433 passed all eight
+# while 4.9 and 4.12 computed one estimand and disagreed structurally about it.
+GATE_CROSS_SECTION = "cross_section_agreement"
 REQUIRED_GATES = (
     GATE_IDENTITY,
     GATE_COVERAGE,
@@ -75,6 +83,7 @@ REQUIRED_GATES = (
     GATE_DENOMINATORS,
     GATE_EXACT_UNDER_SUMMARY,
     GATE_NOT_A_MODEL_RUN,
+    GATE_CROSS_SECTION,
 )
 
 
@@ -614,6 +623,19 @@ class NativeCalculationRun:
             f"{self._principal['artifact_path']}",
         )
 
+    def _gate_cross_section(self) -> GateResult:
+        """Two sections computing one estimand must agree, or neither reading is evidence.
+
+        This is the only gate that reads ACROSS sections. It exists because every vertical
+        check the run already performs is satisfied by a section that is internally perfect
+        and reading the wrong substrate; the only thing that separates it from a correct one
+        is a second computation of the same quantity, which was in the same artifact and was
+        never compared to it.
+        """
+        verdicts = cross_section_compare(self._averaged_companions())
+        passed, detail = cross_section_gate_detail(verdicts)
+        return GateResult(GATE_CROSS_SECTION, passed, detail)
+
     def finalize(self) -> dict[str, Any]:
         """Emit all seven layers with a single accept/reject verdict.
 
@@ -634,6 +656,7 @@ class NativeCalculationRun:
             self._gate_denominators(),
             self._gate_exact_under_summary(),
             self._gate_not_a_model_run(),
+            self._gate_cross_section(),
         ]
         failures = [g.gate for g in gates if not g.passed]
 
