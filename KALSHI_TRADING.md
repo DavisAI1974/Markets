@@ -939,8 +939,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **502 files.**
-new tool cannot go unlisted. **504 files.**
+new tool cannot go unlisted. **508 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `agent_frankie.py` — Frankie hybrid agent entry point.
@@ -1092,6 +1091,7 @@ new tool cannot go unlisted. **504 files.**
 - `native_discovery.py` — Section 4.15: open-world cluster and new-structure discovery.
 - `native_evidence_bundle.py` — Lossless native-MBO evidence ledger for the Chat-controlled Frankie arms.
 - `native_exhaustion.py` — Section 4.10: exhaustion state, birth, persistence, and completion.
+- `native_flow_substrate.py` — Section 4.0: the per-second flow and quote substrate, which fed everything and reported to nothing.
 - `native_frankie_knowledge_registry.py` — Hash-bound, role-routed knowledge registry for native raw-MBO Frankie runs."""
 - `native_full_capture_adapter.py` — Keep everything the V4 adapter computes and then throws away, without editing it.
 - `native_group_adapters.py` — Construct section-4 domain objects from one F_LAST group (decision D53, 2026-08-29).
@@ -1099,6 +1099,7 @@ new tool cannot go unlisted. **504 files.**
 - `native_key_alias.py` — Key-name aliasing for the averaged companion rows, and the measurement that scopes it.
 - `native_ladder.py` — Section 4.9: price-ladder topology.
 - `native_lineage.py` — Section 4.13: chain families and D-depth lineages.
+- `native_mbo_field_census.py` — Per-field census of the retained raw MBO, so the drop question can be answered at all.
 - `native_mirror.py` — Section 4.4's one mechanically defined mirror key, and the matcher that uses it.
 - `native_queue.py` — Section 4.6: queue position, priority, and order survival.
 - `native_queue_adapter.py` — Section 4.6 from one F_LAST group: queue position, priority, order survival (D53).
@@ -1142,6 +1143,7 @@ new tool cannot go unlisted. **504 files.**
 - `test_native_discovery.py` — Tests for section 4.15 open-world cluster and new-structure discovery."""
 - `test_native_evidence_bundle.py` — (no docstring summary)
 - `test_native_exhaustion.py` — Tests for section 4.10 exhaustion runways."""
+- `test_native_flow_substrate.py` — Section 4.0, the per-second flow and quote substrate.
 - `test_native_frankie_knowledge_registry.py` — (no docstring summary)
 - `test_native_full_capture_adapter.py` — Tests for the full-capture adapter (D60).
 - `test_native_group_adapters.py` — Tests for the section-4 group adapters (D53: the F_LAST group is the unit).
@@ -1149,6 +1151,7 @@ new tool cannot go unlisted. **504 files.**
 - `test_native_key_alias.py` — Tests for the key-name aliaser: it must be lossless, stable and self-describing.
 - `test_native_ladder.py` — Tests for section 4.9 price-ladder topology."""
 - `test_native_lineage.py` — Tests for section 4.13 chain families and D-depth lineages."""
+- `test_native_mbo_field_census.py` — The field census measures the retained raw MBO; it never judges it."""
 - `test_native_mirror.py` — Section 4.4's mirror key and matcher: one mechanical definition, one implementation.
 - `test_native_queue.py` — Tests for section 4.6 queue position, priority, and order survival."""
 - `test_native_queue_adapter.py` — Tests for the section-4.6 queue adapter (D53: the F_LAST group is the unit).
