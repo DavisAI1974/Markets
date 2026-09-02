@@ -35,6 +35,16 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_session import (
     PRE_SETTLEMENT,
     SETTLEMENT,
 )
+from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import (
+    CAUSAL_CLOCK_LAYER_IDS,
+    CLOCK_MODEL_EVALUATION,
+    CLOCK_PROSPECTIVE_DISCOVERY_CONFIRMATION,
+    DISCOVERY_BASIS_EMITTED,
+    EVALUATION_BASIS_NONE,
+    EVALUATION_BASIS_STAGED,
+    check_causal_clock_order,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.native_recognition import HORIZON as H_PLUS_N
 
 SOURCE = "s3://bucket/nymex/ng_mbo_5y_v0/native/20211004/part-0.dbn.zst"
 F_LAST = 128
@@ -470,6 +480,71 @@ class FieldCensusCoversTheTraversalTest(unittest.TestCase):
         import json
         json.dumps(self._run()["layers"]["exact_member_ledger"]["field_census"])
 
+
+class CausalClocksOnTheRowTest(unittest.TestCase):
+    """S121 item one: the registry's seven clocks by id on every row the driver writes, and the
+    model-evaluation clock stamped on the row of the group at whose cutoff the cadence fires."""
+
+    class Always:
+        def should_invoke(self, **_kwargs) -> bool:
+            return True
+
+    def _rows(self, cadence=None):
+        driver = make_driver(cadence=cadence)
+        base = at("2021-10-04T13:00:00")
+        driver.consume(
+            record(seq=i, event_ns=base + i * NS_PER_SECOND, order_id=700 + i) for i in range(3)
+        )
+        result = driver.finalize()
+        return driver, result, driver.counters.member_rows
+
+    def test_every_member_row_carries_the_seven_clocks_by_registry_id(self):
+        _, _, rows = self._rows()
+        self.assertEqual(len(rows), 3)
+        for row in rows:
+            self.assertEqual(set(row["causal_clocks"]), set(CAUSAL_CLOCK_LAYER_IDS))
+
+    def test_without_an_invocation_the_evaluation_clock_is_the_declared_null(self):
+        _, result, rows = self._rows()
+        self.assertEqual(result["traversal"]["invocation_cutoffs"], [])
+        for row in rows:
+            entry = row["causal_clocks"][CLOCK_MODEL_EVALUATION]
+            self.assertIsNone(entry["value_ns"])
+            self.assertEqual(entry["basis"], EVALUATION_BASIS_NONE)
+
+    def test_a_cutoff_group_carries_the_evaluation_clock_and_so_does_its_cutoff(self):
+        _, result, rows = self._rows(cadence=self.Always())
+        cutoffs = result["traversal"]["invocation_cutoffs"]
+        self.assertEqual(len(cutoffs), 3)
+        for row, cutoff in zip(rows, cutoffs):
+            with self.subTest(group=row["group_index"]):
+                entry = row["causal_clocks"][CLOCK_MODEL_EVALUATION]
+                self.assertEqual(entry["value_ns"], row["ts_recv_ns"])
+                self.assertEqual(entry["basis"], EVALUATION_BASIS_STAGED)
+                self.assertEqual(cutoff["clock_model_evaluation_ns"], row["ts_recv_ns"])
+                self.assertEqual(cutoff["recv_ns"], row["ts_recv_ns"])
+
+    def test_the_availability_chain_holds_on_every_row_the_driver_writes(self):
+        """event_known_by <= feature_availability <= model_evaluation, checked on delivered
+        values with three comparisons (the V4 `validate_availability_chain` order)."""
+        for cadence in (None, self.Always()):
+            _, _, rows = self._rows(cadence=cadence)
+            for row in rows:
+                with self.subTest(cadence=type(cadence).__name__, group=row["group_index"]):
+                    chain = check_causal_clock_order(row["causal_clocks"])
+                    self.assertEqual(chain["event_known_by_ns"], row["clocks"]["first_lawful_availability_ns"])
+                    self.assertEqual(chain["feature_availability_ns"], row["ts_recv_ns"])
+
+    def test_the_stamp_reaches_the_staged_request_through_the_cutoff(self):
+        """`native_staging.stage_spawn_request` copies `dict(cutoff)` and checks only its
+        required keys, so the stamp lands in the spawn request without touching that file."""
+        staged = []
+        driver = make_driver(cadence=self.Always())
+        driver.stage_spawn = staged.append
+        driver.consume([record(seq=0, event_ns=at("2021-10-04T13:00:00"), order_id=700)])
+        self.assertEqual(
+            staged[0]["clock_model_evaluation_ns"], driver.counters.member_rows[0]["ts_recv_ns"]
+        )
 
 if __name__ == "__main__":
     unittest.main()
@@ -1666,3 +1741,56 @@ class QueueTerminalJoinsReplenishmentEpisodeTest(ExitStratumReachesTheLedgerTest
         self.assertTrue(episodes, "no 4.7 episode row carried a level key")
         self.assertTrue(terminals & episodes,
                         f"no 4.6 terminal joins a 4.7 episode: {terminals} vs {episodes}")
+
+
+class DiscoveryConfirmationsOnTheRowTest(CandidateUnitFedTest):
+    """The firing test first (D80). The small fixtures open no episode, so every assertion about
+    the discovery clock on them is vacuous; this fixture detects real candidates."""
+
+    def _confirmations(self, rows):
+        return [
+            c
+            for r in rows
+            for c in r["causal_clocks"][CLOCK_PROSPECTIVE_DISCOVERY_CONFIRMATION][
+                "confirmed_at_this_cutoff"]
+        ]
+
+    def test_at_least_one_row_confirms_a_discovery_at_its_own_cutoff(self):
+        driver, _ = self._run()
+        confirming = [
+            r for r in driver.counters.member_rows
+            if r["causal_clocks"][CLOCK_PROSPECTIVE_DISCOVERY_CONFIRMATION]["confirmed_at_this_cutoff"]
+        ]
+        self.assertTrue(confirming, "wired but nothing reached the row")
+        for row in confirming:
+            entry = row["causal_clocks"][CLOCK_PROSPECTIVE_DISCOVERY_CONFIRMATION]
+            self.assertEqual(entry["basis"], DISCOVERY_BASIS_EMITTED)
+            for confirmed in entry["confirmed_at_this_cutoff"]:
+                self.assertEqual(confirmed["confirmed_at_cutoff_ns"], row["ts_recv_ns"])
+
+    def test_every_confirmation_joins_a_candidate_row_on_the_second_it_was_knowable(self):
+        driver, _ = self._run()
+        candidates = {
+            r["candidate_id"]: r
+            for r in driver.counters.lifecycle_rows if r["emitting_section"] == "candidate"
+        }
+        confirmations = self._confirmations(driver.counters.member_rows)
+        self.assertTrue(confirmations)
+        for confirmed in confirmations:
+            with self.subTest(candidate=confirmed["candidate_id"]):
+                candidate = candidates[confirmed["candidate_id"]]
+                self.assertEqual(confirmed["birth_recv_ns"], candidate["event_second"] * NS_PER_SECOND)
+                self.assertEqual(
+                    confirmed["recognized_recv_ns"], candidate["available_second"] * NS_PER_SECOND
+                )
+                self.assertEqual(confirmed["outcome"], H_PLUS_N)
+                # Knowable on the candidate lane's second bin, emitted at this group's F_LAST.
+                self.assertLessEqual(confirmed["recognized_recv_ns"], confirmed["confirmed_at_cutoff_ns"])
+
+    def test_confirmations_on_rows_plus_stream_end_equal_the_episodes_opened(self):
+        driver, result = self._run()
+        on_rows = len(self._confirmations(driver.counters.member_rows))
+        at_end = len(result["traversal"]["discovery_confirmations_at_stream_end"])
+        opened = sum(s["episodes_opened"] for s in result["traversal"]["candidate_episodes"])
+        self.assertGreater(opened, 0)
+        self.assertEqual(on_rows + at_end, opened)

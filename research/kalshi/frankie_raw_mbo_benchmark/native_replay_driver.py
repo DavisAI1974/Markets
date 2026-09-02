@@ -61,7 +61,12 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_candidate_adapter import (
     ResponseFeed,
     starting_liquidity_regime,
 )
-from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import ClockCalculator, member_clock_row
+from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import (
+    ClockCalculator,
+    member_clock_row,
+    stamp_discovery_confirmations,
+    stamp_model_evaluation,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_group_adapters import ladder_from_full_book
 from research.kalshi.frankie_raw_mbo_benchmark.native_mirror import MatchScope
 from research.kalshi.frankie_raw_mbo_benchmark.native_session import (
@@ -457,6 +462,12 @@ class NativeReplayDriver:
         self._last_invoke_group = 0
         self._last_invoke_ns: int | None = None
         self._last_recv_ns: int | None = None
+        # S121 item one: the 4.11 calls emitted since the last member row was written. They
+        # are stamped onto the row of the group at whose cutoff they were emitted
+        # (clock_prospective_discovery_confirmation); calls emitted at stream end, where no
+        # further row exists, are carried in the traversal summary instead.
+        self._confirmations_pending: list[dict[str, Any]] = []
+        self._confirmations_at_stream_end: list[dict[str, Any]] = []
 
     @property
     def current_mark(self) -> SessionMark | None:
@@ -773,17 +784,24 @@ class NativeReplayDriver:
             ),
         )
         self.counters.response_tracks_opened += 1
-        self._retain_episode_rows([
-            self.episodes.open(
-                candidate,
-                source_day=source_day,
-                family_id=family_id,
-                session_phase=session_phase,
-                instrument_id=self.counters.instrument_id,
-                book=self._latest_book,
-                signed_flow=self._last_signed_flow,
-            )
-        ])
+        opened = self.episodes.open(
+            candidate,
+            source_day=source_day,
+            family_id=family_id,
+            session_phase=session_phase,
+            instrument_id=self.counters.instrument_id,
+            book=self._latest_book,
+            signed_flow=self._last_signed_flow,
+        )
+        self._retain_episode_rows([opened])
+        # The call 4.11 just made, held for the member row of the cutoff at which it was made.
+        self._confirmations_pending.append({
+            "candidate_id": opened["candidate_id"],
+            "outcome": opened["recognition_outcome"],
+            "birth_recv_ns": opened["birth_recv_ns"],
+            "recognized_recv_ns": opened.get("recognized_recv_ns"),
+            "recognized_recv_ns_basis": opened.get("recognized_recv_ns_basis"),
+        })
 
     def _retain_episode_rows(self, rows: Any) -> None:
         for row in rows or ():
@@ -1024,6 +1042,24 @@ class NativeReplayDriver:
         # carry empty strings into a stratum key, which is a key collision waiting to happen
         # rather than a missing label.
         self._advance_candidates(self._candidate_second)
+        # S121 item one: the two act-clocks, stamped BEFORE the row is written so the row of
+        # the cutoff group carries them. Every 4.11 call emitted since the previous row rides
+        # this one, at this cutoff; the cadence decision moves up here from below so the
+        # invocation cutoff is on the row of the group it fires at, and the same value goes
+        # into the cutoff dict as `clock_model_evaluation_ns` (native_staging copies it
+        # unchanged). Nothing the decision reads depends on the sections fed below.
+        stamp_discovery_confirmations(row, self._confirmations_pending)
+        self._confirmations_pending = []
+        groups_since = group_index - self._last_invoke_group
+        ns_since = 0 if self._last_invoke_ns is None else recv_ns - self._last_invoke_ns
+        invoke = bool(self.cadence.should_invoke(
+            group_index=group_index,
+            recv_ns=recv_ns,
+            mark=mark,
+            groups_since_last=groups_since,
+            ns_since_last=ns_since,
+        ))
+        evaluation = stamp_model_evaluation(row, staged_at_recv_ns=recv_ns if invoke else None)
         row["causal_availability_clock"] = envelope["causal_availability_clock"]
         self.counters.member_rows_retained += 1
         if self.sinks is None:
@@ -1061,15 +1097,7 @@ class NativeReplayDriver:
             occasion="HORIZON_MATURED",
         )
 
-        groups_since = group_index - self._last_invoke_group
-        ns_since = 0 if self._last_invoke_ns is None else recv_ns - self._last_invoke_ns
-        if self.cadence.should_invoke(
-            group_index=group_index,
-            recv_ns=recv_ns,
-            mark=mark,
-            groups_since_last=groups_since,
-            ns_since_last=ns_since,
-        ):
+        if invoke:
             cutoff = {
                 "group_index": group_index,
                 "recv_ns": recv_ns,
@@ -1077,6 +1105,11 @@ class NativeReplayDriver:
                 "session_phase": mark.session_phase,
                 "continuity_segment": mark.continuity_segment,
                 "source_day": source_day,
+                # The model-evaluation clock by name. WIRING NOTE for native_staging (owned
+                # elsewhere): `stage_spawn_request` copies dict(cutoff) unchanged, so this
+                # reaches the spawn request today; adding "clock_model_evaluation_ns" to
+                # REQUIRED_CUTOFF_KEYS makes it a required layer of the request.
+                "clock_model_evaluation_ns": evaluation["value_ns"],
             }
             self.counters.invocation_cutoffs.append(cutoff)
             self._last_invoke_group = group_index
@@ -1311,6 +1344,13 @@ class NativeReplayDriver:
         if self.detector is not None and self._last_complete_second is not None:
             self._retain_candidates(self.detector.finish(self._last_complete_second))
             self._retain_episode_rows(self.episodes.close_segment(at))
+        # 4.11 calls emitted by the stream-end release have no further member row to ride;
+        # they are carried here, at the instant they were emitted, rather than dropped.
+        self._confirmations_at_stream_end = [
+            {**confirmation, "confirmed_at_cutoff_ns": at, "emitted_on": "STREAM_END"}
+            for confirmation in self._confirmations_pending
+        ]
+        self._confirmations_pending = []
         # 4.0b's stream-end close, in the STREAM-END path and not the segment-close loop -
         # S119's own recorded mistake was a finalize wired into the wrong one. After
         # finish(), for the reason given at the segment boundary.
@@ -1365,6 +1405,7 @@ class NativeReplayDriver:
             # recorded only how many there were.
             "invocation_cutoff_count": len(self.counters.invocation_cutoffs),
             "invocation_cutoffs": list(self.counters.invocation_cutoffs),
+            "discovery_confirmations_at_stream_end": list(self._confirmations_at_stream_end),
             "save_points": self.counters.save_points,
             # What each fed section actually received. A section reporting strata off an
             # empty ingest is indistinguishable from one reporting a real absence, so the

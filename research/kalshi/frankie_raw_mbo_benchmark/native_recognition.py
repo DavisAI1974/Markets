@@ -38,6 +38,13 @@ CENSORED_OUTCOME = "CENSORED"
 DETECTED_OUTCOMES = frozenset({PRIOR, T0, HORIZON})
 ALL_OUTCOMES = (PRIOR, T0, HORIZON, MISSED, CENSORED_OUTCOME)
 
+# S121 item one: WHERE a recognition instant came from, on the record beside the instant.
+# An H+N call made at `available_second` is on the candidate lane's second bin, which is
+# not an F_LAST receive; a PRIOR call is the precursor finding's own instant. The basis
+# travels so a reader can never mistake the one granularity for the other.
+RECOGNIZED_BASIS_AVAILABLE_SECOND_BIN = "AVAILABLE_SECOND_BIN"
+RECOGNIZED_BASIS_PRECURSOR_FINDING = "PRECURSOR_FINDING"
+
 
 class RecognitionError(ValueError):
     """A recognition could not be recorded lawfully."""
@@ -62,6 +69,7 @@ class CandidateRecognition:
     birth_recv_ns: int
     outcome: str | None = None
     recognized_recv_ns: int | None = None
+    recognized_recv_ns_basis: str | None = None
     precursor_recv_ns: int | None = None
     failed_states: list[dict[str, Any]] = field(default_factory=list)
     superseded_attempts: int = 0
@@ -80,12 +88,13 @@ class CandidateRecognition:
     def note_failed_state(self, *, label: str, recv_ns: int, reason: str) -> None:
         self.failed_states.append({"label": label, "recv_ns": recv_ns, "reason": reason})
 
-    def record_call(self, *, recv_ns: int) -> str:
+    def record_call(self, *, recv_ns: int, basis: str | None = None) -> str:
         """Record the first lawful call. A later call cannot replace it.
 
         Section 2: "A later, better-looking recognition may not replace the first lawful
         call." Subsequent attempts are counted so the pressure to re-call is visible in the
-        record rather than invisible in an improved number.
+        record rather than invisible in an improved number. `basis` says which clock the
+        instant is on (see RECOGNIZED_BASIS_*); it is recorded with the first call only.
         """
         if self.outcome is not None:
             self.superseded_attempts += 1
@@ -97,6 +106,7 @@ class CandidateRecognition:
         else:
             self.outcome = HORIZON
         self.recognized_recv_ns = recv_ns
+        self.recognized_recv_ns_basis = basis
         return self.outcome
 
     def mark_missed(self) -> None:
@@ -122,6 +132,7 @@ class CandidateRecognition:
             "outcome": self.outcome,
             "detected": self.detected,
             "recognized_recv_ns": self.recognized_recv_ns,
+            "recognized_recv_ns_basis": self.recognized_recv_ns_basis,
             "precursor_recv_ns": self.precursor_recv_ns,
             "lead_ns": self.lead_ns,
             "failed_state_count": len(self.failed_states),

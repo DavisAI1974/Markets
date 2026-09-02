@@ -49,7 +49,11 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_exhaustion import (
     SEARCHED,
     register_discovered_phase,
 )
-from research.kalshi.frankie_raw_mbo_benchmark.native_recognition import CandidateRecognition
+from research.kalshi.frankie_raw_mbo_benchmark.native_recognition import (
+    RECOGNIZED_BASIS_AVAILABLE_SECOND_BIN,
+    RECOGNIZED_BASIS_PRECURSOR_FINDING,
+    CandidateRecognition,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_response import (
     PRICE_RESPONSE,
     ChannelReading,
@@ -302,11 +306,13 @@ class CandidateEpisodeTracker:
         precursor_ns = self.precursor_for(candidate) if self.precursor_for else None
         if precursor_ns is not None:
             record.precursor_recv_ns = precursor_ns
-            record.record_call(recv_ns=precursor_ns)
+            record.record_call(recv_ns=precursor_ns, basis=RECOGNIZED_BASIS_PRECURSOR_FINDING)
         else:
             # H+N by construction, with N the detection lag. See the module docstring: a
             # candidate whose birth is its own detection cannot be recognised before it.
-            record.record_call(recv_ns=available_ns)
+            # The instant is the candidate lane's SECOND BIN, not an F_LAST receive, and the
+            # basis says so on the record (S121 item one).
+            record.record_call(recv_ns=available_ns, basis=RECOGNIZED_BASIS_AVAILABLE_SECOND_BIN)
 
         # 4.12 REFUSES an orientation outside {SAME, FLIP}, and it is right to. A segment's
         # first candidate has no predecessor, so it gets NO dipole path at all rather than a
@@ -348,6 +354,12 @@ class CandidateEpisodeTracker:
             "orientation": orientation,
             "birth_recv_ns": birth_ns,
             "recognition_outcome": record.outcome,
+            # S121 item one: the instant the call was knowable and the clock it is on, so the
+            # member row's discovery-confirmation clock can carry both beside the F_LAST
+            # cutoff at which the call was actually emitted.
+            "recognized_recv_ns": record.recognized_recv_ns,
+            "recognized_recv_ns_basis": record.recognized_recv_ns_basis,
+            "precursor_recv_ns": record.precursor_recv_ns,
             "detection_lag_seconds": candidate.detection_lag_seconds,
         }
 

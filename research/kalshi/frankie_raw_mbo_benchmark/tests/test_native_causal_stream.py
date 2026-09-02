@@ -24,13 +24,26 @@ from pathlib import Path
 
 from research.kalshi.frankie_raw_mbo_benchmark import native_a_arm_launch as launcher
 from research.kalshi.frankie_raw_mbo_benchmark.native_causal_stream import (
+    CAUSAL_CLOCKS_DERIVED_FROM_LEGACY,
+    CAUSAL_CLOCKS_ROW_OWN,
     GENESIS_PREVIOUS_RECEIPT_SHA256,
+    NOT_ON_THIS_ROW,
     STREAM_RECEIPT_SCHEMA,
     CausalGroupStream,
     CausalStreamError,
     EndOfStream,
     lifecycle_availability,
     main,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import (
+    CAUSAL_CLOCK_LAYER_IDS,
+    CLOCK_EVENT_KNOWN_BY,
+    CLOCK_EVENT_TIME,
+    CLOCK_LOCK_TIME,
+    CLOCK_MODEL_EVALUATION,
+    CLOCK_RECEIVE_TIME,
+    EVENT_CLOCK,
+    causal_clock_layers,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import (
     GROUP_DELIVERY_SCHEMA,
@@ -439,6 +452,91 @@ class CommandLineTest(unittest.TestCase):
                 handle.write(sink_line(member_row(0, BASE)))
             with self.assertRaisesRegex(CausalStreamError, "gunzip"):
                 CausalGroupStream(path, run_id="r", arm="A_CLEAN").next_group()
+
+
+class CausalClocksOnDeliveryTest(unittest.TestCase):
+    """S121 item one: the seven clocks ride on `GroupDelivery` by registry id, beside a receipt
+    whose four-key `clocks` object the registry validator still checks exactly."""
+
+    def _row_with_causal_clocks(self, index: int, recv_ns: int) -> dict:
+        row = member_row(index, recv_ns)
+        row["causal_clocks"] = causal_clock_layers(
+            event_ns=[recv_ns - 3 * NS - 150_000, recv_ns - 150_000],
+            recv_ns=[recv_ns - 3 * NS, recv_ns],
+        )
+        return row
+
+    def test_a_row_carrying_its_own_causal_clocks_is_delivered_as_row_own(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = write_ledger(Path(tmp) / "m.jsonl", [self._row_with_causal_clocks(0, BASE)])
+            delivery = CausalGroupStream(path, run_id="t", arm="A_CLEAN").next_group()
+            self.assertEqual(delivery.causal_clocks_basis, CAUSAL_CLOCKS_ROW_OWN)
+            self.assertEqual(delivery.causal_clocks, delivery.group["causal_clocks"])
+            self.assertEqual(set(delivery.causal_clocks), set(CAUSAL_CLOCK_LAYER_IDS))
+
+    def test_a_pre_s121_ledger_row_gets_the_three_derivable_clocks_and_says_so(self):
+        """The delivered Sunday ledger predates the field. The stream derives what the legacy
+        five-field object can support and declares the rest absent, so the ledger stays
+        deliverable and the crosswalk can still find the clocks by name."""
+        with tempfile.TemporaryDirectory() as tmp:
+            delivery = CausalGroupStream(three_groups(Path(tmp)), run_id="t", arm="A_CLEAN").next_group()
+            self.assertEqual(delivery.causal_clocks_basis, CAUSAL_CLOCKS_DERIVED_FROM_LEGACY)
+            clocks = delivery.causal_clocks
+            self.assertEqual(set(clocks), set(CAUSAL_CLOCK_LAYER_IDS))
+            self.assertEqual(clocks[CLOCK_EVENT_KNOWN_BY]["value_ns"], BASE)
+            self.assertEqual(clocks[CLOCK_RECEIVE_TIME]["f_last_ns"], BASE)
+            self.assertEqual(clocks[CLOCK_RECEIVE_TIME]["first_component_ns"], BASE - 3 * NS)
+            self.assertEqual(clocks[CLOCK_EVENT_TIME]["f_last_ns"], BASE - 150_000)
+            self.assertEqual(clocks[CLOCK_EVENT_TIME]["first_component_ns"], BASE - 3 * NS - 150_000)
+            self.assertEqual(clocks[CLOCK_LOCK_TIME]["basis"], NOT_ON_THIS_ROW)
+            self.assertEqual(clocks[CLOCK_MODEL_EVALUATION]["basis"], NOT_ON_THIS_ROW)
+
+    def test_a_row_with_a_partial_causal_clocks_object_is_refused_not_patched(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            row = member_row(0, BASE)
+            row["causal_clocks"] = {CLOCK_EVENT_TIME: {"clock": EVENT_CLOCK}}
+            path = write_ledger(Path(tmp) / "m.jsonl", [row])
+            with self.assertRaisesRegex(CausalStreamError, "causal_clocks"):
+                CausalGroupStream(path, run_id="t", arm="A_CLEAN").next_group()
+
+    def test_a_disordered_row_own_object_is_refused_not_delivered(self):
+        """A row whose feature clock precedes its event_known_by is not a row the stream
+        can hand over as causal, whatever its five-field `clocks` object says."""
+        with tempfile.TemporaryDirectory() as tmp:
+            row = self._row_with_causal_clocks(0, BASE)
+            row["causal_clocks"]["clock_feature_availability"]["value_ns"] = BASE - 1
+            path = write_ledger(Path(tmp) / "m.jsonl", [row])
+            with self.assertRaisesRegex(CausalStreamError, "clock_event_known_by"):
+                CausalGroupStream(path, run_id="t", arm="A_CLEAN").next_group()
+
+    def test_the_delivered_chain_is_checked_and_reported_on_every_delivery(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = write_ledger(Path(tmp) / "m.jsonl", [self._row_with_causal_clocks(0, BASE)])
+            delivery = CausalGroupStream(path, run_id="t", arm="A_CLEAN").next_group()
+            self.assertEqual(delivery.causal_clock_chain["event_known_by_ns"], BASE)
+            self.assertEqual(delivery.causal_clock_chain["feature_availability_ns"], BASE)
+            self.assertIsNone(delivery.causal_clock_chain["model_evaluation_ns"])
+
+    def test_the_registry_receipt_still_carries_exactly_four_clock_keys(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = write_ledger(Path(tmp) / "m.jsonl", [self._row_with_causal_clocks(0, BASE)])
+            delivery = CausalGroupStream(path, run_id="t", arm="A_CLEAN").next_group()
+            self.assertEqual(
+                set(delivery.receipt["clocks"]),
+                {"event_time_ns", "receive_time_ns", "availability_time_ns", "decision_time_ns"},
+            )
+            self.assertTrue(delivery.gate["all_causal_layers_delivered"])
+
+    def test_the_stream_receipt_declares_the_carrier_and_counts_both_bases(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rows = [self._row_with_causal_clocks(0, BASE), member_row(1, BASE + 4 * NS)]
+            stream = CausalGroupStream(write_ledger(Path(tmp) / "m.jsonl", rows), run_id="t", arm="A_CLEAN")
+            list(stream.iterate())
+            declared = stream.stream_receipt()["causal_clock_layers"]
+            self.assertEqual(declared["carrier"], "member.causal_clocks")
+            self.assertEqual(declared["layer_ids"], list(CAUSAL_CLOCK_LAYER_IDS))
+            self.assertEqual(declared["groups_with_row_own"], 1)
+            self.assertEqual(declared["groups_with_derived_from_legacy_clocks"], 1)
 
 
 if __name__ == "__main__":
