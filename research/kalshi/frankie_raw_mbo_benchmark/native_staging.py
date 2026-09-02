@@ -21,6 +21,7 @@ an artifact cannot be carried from one run to another where it was never earned.
 from __future__ import annotations
 
 import hashlib
+import sys
 import json
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -105,13 +106,24 @@ def stage_spawn_request(
 
 
 def load_principal_artifact(
-    path: Path, *, expected_evidence_hash: str
+    path: Path, *, expected_evidence_hash: str, render_report: bool = True
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Read back what the spawn produced, or fail hard.
 
     Returns `(execution, findings)` shaped for
     `NativeCalculationRun.attach_principal_findings`, so the only route into the findings
     layer runs through this validation.
+
+    **The readable report is generated here, automatically, because this is the one gate
+    every artifact must pass.** Run 33605852433's 44 findings sat unread in JSON beside a
+    separately hand-authored assessment, so what reached Greg was a verdict on whether each
+    section earned its place and none of the chain depths, family crosswalks, exhaustion
+    runways or prebirth timing. Rendering anywhere else would be a step someone can forget;
+    rendering here cannot be reached without the artifact having already validated.
+
+    A render failure never invalidates a good artifact - the findings are the deliverable and
+    the report is a convenience - so it is reported and swallowed rather than raised.
+    `render_report=False` is for tests that assert the validation alone.
     """
     path = Path(path)
     if not path.exists():
@@ -163,7 +175,30 @@ def load_principal_artifact(
         "actual_principal_invocation": True,
         "controller_only": False,
     }
+    if render_report:
+        _render_report_beside(path)
     return execution, [dict(row) for row in findings]
+
+
+def _render_report_beside(path: Path) -> Path | None:
+    """Write the human-readable report next to the artifact. Never fatal.
+
+    Imported inside the function so a renderer problem can never stop an artifact from
+    validating: the findings are the deliverable, the report is how anyone reads them.
+    """
+    try:
+        from research.kalshi.frankie_raw_mbo_benchmark.render_frankie_report import (
+            write_report,
+        )
+
+        return write_report(path)
+    except Exception as exc:  # noqa: BLE001 - see docstring; reported, never raised
+        print(
+            f"WARNING: principal artifact at {path} validated but its report could not be "
+            f"rendered: {exc}",
+            file=sys.stderr,
+        )
+        return None
 
 
 class SpawnStager:

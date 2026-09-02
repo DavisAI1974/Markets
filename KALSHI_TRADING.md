@@ -1,5 +1,20 @@
 # KALSHI TRADING — file index
 
+## S120 — the principal's report is a render of his findings
+
+- **`research/kalshi/frankie_raw_mbo_benchmark/render_frankie_report.py`** — the report is
+  generated FROM `frankie_principal_findings.json` and can no longer be authored apart from
+  it. Run 33605852433 produced **44 findings** - chain depths, family crosswalks, exhaustion
+  runways, prebirth recognition, dipole decoupling - beside a separately hand-written
+  assessment, so what reached Greg was a verdict on whether each section earned its place and
+  none of the findings. The findings artifact is the STORE and this is the RENDER, as
+  `DECISIONS.md` and `RUN_SOP.md` already are. It writes `frankie_findings_report.md` and
+  NEVER touches `frankie_calculation_assessment.md`, which is a hand-authored record.
+  Wired into `native_staging.load_principal_artifact` - the one gate every artifact must
+  pass - so it generates automatically and cannot be forgotten; a render failure is reported
+  and swallowed, because the findings are the deliverable and the report is how they are read.
+
+
 ## S120 — the token reducer applied, and 4.16's event-driven half given its first caller
 
 Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. **1223 tests, from 1162 at S119.**
