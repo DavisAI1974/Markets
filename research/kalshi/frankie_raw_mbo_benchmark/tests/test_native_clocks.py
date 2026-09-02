@@ -4,12 +4,31 @@ from __future__ import annotations
 import unittest
 
 from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import (
+    BASIS_F_LAST_RECEIVE_OF_THE_GROUP,
+    BASIS_OBSERVED_ON_THE_RECORD,
     CAUSAL_CLOCK,
+    CAUSAL_CLOCK_LAYER_IDS,
+    CLOCK_EVENT_KNOWN_BY,
+    CLOCK_EVENT_TIME,
+    CLOCK_FEATURE_AVAILABILITY,
+    CLOCK_LOCK_TIME,
+    CLOCK_MODEL_EVALUATION,
+    CLOCK_PROSPECTIVE_DISCOVERY_CONFIRMATION,
+    CLOCK_RECEIVE_TIME,
     DECISION_BASIS_ABSENT,
     DECISION_BASIS_OBSERVED,
     DECISION_BASIS_REPLAY_EARLIEST,
+    DISCOVERY_BASIS_EMITTED,
+    DISCOVERY_BASIS_NONE,
+    EVALUATION_BASIS_NONE,
+    EVALUATION_BASIS_STAGED,
+    EVENT_CLOCK,
+    FEATURE_BASIS_OBSERVED,
+    FEATURE_BASIS_REPLAY_EARLIEST,
+    FEATURE_SCOPE_MEMBER_ROW,
     HORIZON,
     INTERPRETATION_DOMAIN,
+    LOCK_BASIS_PRINCIPAL,
     PRIOR,
     T0,
     ClockCalculator,
@@ -17,7 +36,10 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import (
     RecognitionLabel,
     clock_subfamily,
     member_clock_row,
+    stamp_discovery_confirmations,
+    stamp_model_evaluation,
 )
+from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import load_registry
 
 
 def component(
@@ -321,6 +343,139 @@ class ClockCalculatorTest(unittest.TestCase):
         self.assertEqual(value["n"], 500)
         self.assertEqual(value["quantile_sample_size"], 16)
         self.assertEqual(value["maximum"], 1400.0)
+
+
+class CausalClockLayersTest(unittest.TestCase):
+    """S121 item one: the registry's seven causal clocks, produced BY NAME on every member row.
+
+    The delivery receipt already named all seven layer ids as delivered with the member line's
+    hash as evidence, while no field on the row was keyed by any of them (packet section 2).
+    Delivered-by-hash and findable-by-name are different facts; these pin the second.
+    """
+
+    def test_the_seven_ids_are_exactly_the_registrys_causal_clocks_group(self) -> None:
+        registry = load_registry()
+        group = next(g for g in registry["groups"] if g["group_id"] == "causal_clocks")
+        self.assertEqual([e["layer_id"] for e in group["entries"]], list(CAUSAL_CLOCK_LAYER_IDS))
+
+    def test_every_member_row_carries_the_seven_by_id_each_with_a_clock_and_a_basis(self) -> None:
+        layers = row_for(three_component_group())["causal_clocks"]
+        self.assertEqual(set(layers), set(CAUSAL_CLOCK_LAYER_IDS))
+        for layer_id, entry in layers.items():
+            with self.subTest(layer=layer_id):
+                self.assertIn(entry["clock"], (CAUSAL_CLOCK, EVENT_CLOCK))
+                self.assertTrue(entry["basis"])
+
+    def test_the_stream_clocks_carry_the_groups_own_instants(self) -> None:
+        layers = row_for(three_component_group())["causal_clocks"]
+        self.assertEqual(
+            layers[CLOCK_EVENT_TIME],
+            {"clock": EVENT_CLOCK, "first_component_ns": 1_000, "f_last_ns": 2_000,
+             "basis": BASIS_OBSERVED_ON_THE_RECORD},
+        )
+        self.assertEqual(
+            layers[CLOCK_RECEIVE_TIME],
+            {"clock": CAUSAL_CLOCK, "first_component_ns": 1_100, "f_last_ns": 2_500,
+             "basis": BASIS_OBSERVED_ON_THE_RECORD},
+        )
+        self.assertEqual(
+            layers[CLOCK_EVENT_KNOWN_BY],
+            {"clock": CAUSAL_CLOCK, "value_ns": 2_500, "basis": BASIS_F_LAST_RECEIVE_OF_THE_GROUP},
+        )
+        feature = layers[CLOCK_FEATURE_AVAILABILITY]
+        self.assertEqual(feature["value_ns"], 2_500)
+        self.assertEqual(feature["basis"], FEATURE_BASIS_REPLAY_EARLIEST)
+        self.assertEqual(feature["scope"], FEATURE_SCOPE_MEMBER_ROW)
+
+    def test_event_known_by_is_the_first_lawful_availability_under_its_registry_name(self) -> None:
+        row = row_for(three_component_group())
+        self.assertEqual(
+            row["causal_clocks"][CLOCK_EVENT_KNOWN_BY]["value_ns"],
+            row["clocks"]["first_lawful_availability_ns"],
+        )
+
+    def test_an_observed_feature_computation_instant_is_carried_with_its_basis(self) -> None:
+        entry = row_for(three_component_group(), feature_computed_at_ns=2_900)["causal_clocks"][
+            CLOCK_FEATURE_AVAILABILITY]
+        self.assertEqual(entry["value_ns"], 2_900)
+        self.assertEqual(entry["basis"], FEATURE_BASIS_OBSERVED)
+
+    def test_a_feature_cannot_be_available_before_the_group_is_knowable(self) -> None:
+        with self.assertRaises(ClockError):
+            row_for(three_component_group(), feature_computed_at_ns=2_499)
+
+    def test_the_two_downstream_clocks_are_declared_not_fabricated(self) -> None:
+        layers = row_for(three_component_group())["causal_clocks"]
+        self.assertIsNone(layers[CLOCK_MODEL_EVALUATION]["value_ns"])
+        self.assertEqual(layers[CLOCK_MODEL_EVALUATION]["basis"], EVALUATION_BASIS_NONE)
+        self.assertIsNone(layers[CLOCK_LOCK_TIME]["value_ns"])
+        self.assertEqual(layers[CLOCK_LOCK_TIME]["basis"], LOCK_BASIS_PRINCIPAL)
+        discovery = layers[CLOCK_PROSPECTIVE_DISCOVERY_CONFIRMATION]
+        self.assertEqual(discovery["confirmed_at_this_cutoff"], [])
+        self.assertEqual(discovery["basis"], DISCOVERY_BASIS_NONE)
+
+    def test_stamping_an_invocation_puts_the_cutoff_on_the_row(self) -> None:
+        row = row_for(three_component_group())
+        stamp_model_evaluation(row, staged_at_recv_ns=2_500)
+        entry = row["causal_clocks"][CLOCK_MODEL_EVALUATION]
+        self.assertEqual(entry["value_ns"], 2_500)
+        self.assertEqual(entry["basis"], EVALUATION_BASIS_STAGED)
+
+    def test_an_invocation_cannot_be_staged_before_the_group_is_knowable(self) -> None:
+        with self.assertRaises(ClockError):
+            stamp_model_evaluation(row_for(three_component_group()), staged_at_recv_ns=2_499)
+
+    def test_stamping_no_invocation_leaves_the_declared_null(self) -> None:
+        row = row_for(three_component_group())
+        stamp_model_evaluation(row, staged_at_recv_ns=None)
+        entry = row["causal_clocks"][CLOCK_MODEL_EVALUATION]
+        self.assertIsNone(entry["value_ns"])
+        self.assertEqual(entry["basis"], EVALUATION_BASIS_NONE)
+
+    def test_stamping_confirmations_records_each_call_at_this_cutoff(self) -> None:
+        row = row_for(three_component_group())
+        stamp_discovery_confirmations(row, [{
+            "candidate_id": "c1", "outcome": HORIZON, "birth_recv_ns": 1_000,
+            "recognized_recv_ns": 2_000, "recognized_recv_ns_basis": "AVAILABLE_SECOND_BIN",
+        }])
+        entry = row["causal_clocks"][CLOCK_PROSPECTIVE_DISCOVERY_CONFIRMATION]
+        self.assertEqual(entry["basis"], DISCOVERY_BASIS_EMITTED)
+        self.assertEqual(len(entry["confirmed_at_this_cutoff"]), 1)
+        confirmed = entry["confirmed_at_this_cutoff"][0]
+        self.assertEqual(confirmed["candidate_id"], "c1")
+        self.assertEqual(confirmed["confirmed_at_cutoff_ns"], 2_500)
+        self.assertEqual(confirmed["recognized_recv_ns"], 2_000)
+
+    def test_a_confirmation_without_its_identity_is_refused(self) -> None:
+        with self.assertRaises(ClockError):
+            stamp_discovery_confirmations(row_for(three_component_group()), [{"outcome": HORIZON}])
+
+    def test_the_five_field_clocks_object_is_unchanged(self) -> None:
+        """The stream reads `clocks.first_lawful_availability_ns` and the registry validator
+        checks the receipt's four keys; the seven ride BESIDE, never inside."""
+        row = row_for(three_component_group())
+        self.assertEqual(
+            set(row["clocks"]),
+            {"first_component_ts_event_ns", "first_component_ts_recv_ns", "f_last_ts_recv_ns",
+             "first_lawful_availability_ns", "decision_ts_recv_ns"},
+        )
+
+    def test_the_summary_declares_the_carrier_and_every_layer_once(self) -> None:
+        calc = ClockCalculator()
+        calc.observe(row_for(three_component_group()))
+        declared = calc.summary()["causal_clock_layers"]
+        self.assertEqual(declared["carrier"], "member_row.causal_clocks")
+        self.assertEqual(declared["layer_ids"], list(CAUSAL_CLOCK_LAYER_IDS))
+        self.assertEqual(set(declared["declarations"]), set(CAUSAL_CLOCK_LAYER_IDS))
+        for text in declared["declarations"].values():
+            self.assertTrue(text.strip())
+
+    def test_the_declaration_prose_is_not_repeated_on_every_row(self) -> None:
+        """Bytes: the producer prose lives once in the summary; a row carries short bases."""
+        for entry in row_for(three_component_group())["causal_clocks"].values():
+            for value in entry.values():
+                if isinstance(value, str):
+                    self.assertLess(len(value), 64)
 
 
 if __name__ == "__main__":
