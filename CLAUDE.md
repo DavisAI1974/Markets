@@ -1,4 +1,59 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-02, Session 121)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-03, Session 122)
+
+## S122 — THE WIRING IS DONE AND NOT ONE RUN HAS BEEN FED (read `SESSION_HANDOFF_2026-09-03_S122.md` section 0 + `DROP_IN_S123.md`)
+
+**Branch = `chatgpt/frankie-raw-mbo-benchmark-20260828`. 1,816 -> 1,973 tests.** Decisions 87 -> 88.
+
+**THE STATE, AND IT IS UNCOMFORTABLE: two sessions of wiring have landed and NOTHING WIRED IN
+EITHER HAS BEEN FED BY A RUN ON THE WIRED CODE.** The only feeding that happened ran the S121
+CODE against ledgers written by PRE-CENSUS code, so every number in the feed record is a
+BEFORE-number - including F-20's 109,532 withheld lifecycle rows. **The launch workflow's seal
+step was verified passing at the close, so nothing blocks the run.** F-31, ESSENTIAL. **The
+Sunday re-run is the whole of S123's opening.**
+
+**D88, four rulings in one message:** the seed is the LAST RUN's committed outputs (*"i'm not
+picky about that and it's wasting time"*); clocks and windows come from the STEP-1 files; **only
+memory runs**; and **one canonical launcher carries everything as DEFAULTS** - a flag exists only
+to turn a default OFF for a declared comparison.
+
+**WHAT LANDED.** Per-record `raw_actions` on the member row (F-30, the D81 ruling itself);
+`emitted_at_recv_ns` on every lifecycle row (F-20); `activity_since` on event anchors with the
+fixed-seconds blocks RETIRED and the cadence audit finding the invocation cadence already
+event-driven; change points ON by canonical default; the crosswalk computing evidence from what
+was actually DELIVERED (F-27 and F-29 computed, not stamped); **the A_MEMORY seed**, the knowledge
+delivery receipt and the sealed-absence proof (F-23, the one function the S121 search found
+existed nowhere); the output ledgers' read-back and the RT handoff trio; and the canonical
+A_MEMORY launch workflow with the wrong-data package step gone.
+
+**THE MOST INSTRUCTIVE THING: THE TASK PACKET WAS WRONG AND SAYING SO WAS THE RIGHT ANSWER.** The
+packet told the implementer four `structurally_absent` pins should survive; he removed all twelve
+and reported why - he checked a real row. Verified here independently by execution, including on
+the PRODUCTION path rather than the fixture: `native_records` stamps the provenance per row and
+the D61 wrapper attaches `book_effect`. **The packet's assumption was the stale thing.** The
+instruction that produced that outcome - *when something in this file turns out to be wrong, say
+so and do not silently work around it* - belongs in every future packet.
+
+**FOUR KINDS OF STALE, and the taxonomy is worth keeping**: stale live EXPECTATIONS (tests that
+encoded the F-30 defect as expected behaviour - keeping them would have PRESERVED it); stale live
+PROSE (four notes still saying the fields were dropped); HISTORICAL artifacts correctly left
+frozen; and PACKET assumptions proven false by execution. **The third has a consequence: four
+committed documents now assert an absence that is false of current code, and nothing on their
+face says so - the S112/S114 expiring-finding shape. F-35: stamp them superseded, never rewrite
+them.**
+
+**TWO DEFECTS FOUND BY FEEDING THE REAL LEDGERS, both fixed.** The launcher mutated the result
+AFTER the runner hashed it, so **every** launcher-written result declared a `result_hash` that did
+not recompute and `read_back` refused all of them - invisible because the tests build results
+through the runner, never the launcher. And the delivery fetcher verified the result object by S3
+length alone while the box's own `PLAIN_SHA256SUMS` carried a digest for it.
+
+**MY OWN ERROR:** I piped pytest to `tail`, which hid a failure from `set -e`, and pushed a red
+commit claiming a test count I had not verified. **Redirect the suite to a file and read its exit
+code** - the S113 nonconformance shape, reporting a verification that did not happen.
+
+**GREG'S, NOT THE SESSION'S:** the 4.16 ladder retirement is a REDESIGN and not a wiring item
+(F-32); **PRIOR is structurally unreachable until a precursor signal exists** and has now been
+proposed and refuted twice from the same docstring (F-33); the box spend; F-28.
 
 ## S121 — BUILT, NOT WIRED: SIX RULINGS, THE SEARCH THAT CONFIRMED THE PREMISE, AND THE WIRING PERSONAS (read `SESSION_HANDOFF_2026-09-02_S121.md` sections 0, 4, 9 + `DROP_IN_S122.md`)
 
@@ -1138,6 +1193,17 @@ DATA next (Greg): forward-curve cache back ($0.07; curve_regime was 'unknown' al
 FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the driver; back-fill the walked
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
+
+**One-line state (S122):** branch `chatgpt/frankie-raw-mbo-benchmark-20260828`, **1,973 tests
+green**, decisions 88. **EVERYTHING IS WIRED AND NOTHING HAS BEEN RUN** - two sessions of wiring,
+zero runs on the wired code, and the only feeding done used PRE-CENSUS ledgers, so every measured
+number is a before-number (F-31, ESSENTIAL). **The seal step was verified passing at the close, so
+the Sunday re-run is unblocked and is S123's opener.** Landed: raw_actions on the member row
+(D81), the lifecycle availability stamp, activity_since on event anchors with the fixed windows
+retired, change points on by default, the crosswalk computing from delivered carriers, the
+A_MEMORY seed, the knowledge receipt, the sealed-absence proof, and the canonical launcher.
+**D88: the seed is the last run, clocks come from the Step-1 files, only memory runs, one launcher
+carries everything.** Closed F-20/F-23/F-27/F-29/F-30; new F-31..F-36. **Keys do not rotate.**
 
 **One-line state (S121):** tip per `SESSION_HANDOFF_2026-09-02_S121.md` section 9; **1,703 tests green at the first merge round.** Six rulings recorded (D82-D86): zero hardcoded intervals and the clocks wired (D83); push spots (D84); **one arm, A_MEMORY, memory seeded from the past runs** (D86). The search confirmed the premise: built, not wired - every gate, receipt and renderer exists with no production caller; the sealed-absence proof is the one thing that does not. **Sunday crosswalk: 75 of 75 inputs not delivered.** Three wiring personas in flight, merged as they land. **Next: feed him** (S122).
 

@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 178 |
-| in progress | 8 |
+| open | 180 |
+| in progress | 7 |
 | done | 22 |
 
-By size: **XS** 18, **S** 84, **M** 60, **L** 13
+By size: **XS** 18, **S** 80, **M** 64, **L** 14
 
 ---
 
-By tier: **ESSENTIAL** 34, **BIGGEST_WIN** 47, **REST** 105
+By tier: **ESSENTIAL** 32, **BIGGEST_WIN** 48, **REST** 107
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (34)
+## ESSENTIAL (32)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -31,8 +31,6 @@ By tier: **ESSENTIAL** 34, **BIGGEST_WIN** 47, **REST** 105
 | **F-1** | S | THE BINDING CALCULATION CONTRACT AND MISSION ARE NOT IN ANY READ-FIRST ORDER, AND THREE SESSIONS RAN WITHOUT OPENING THEM | - |
 | **F-15** | S | RECONCILE EVERY 'Average decision' LINE AGAINST WHAT THE DUAL VIEW HAS ACTUALLY EARNED | - |
 | **F-2** | S | THE OCTOBER STEP-1 SECONDS ARE THE SEALED ANSWER, AND I RECOMMENDED READING THEM | - |
-| **F-23** | S | THE SEALED-ABSENCE PROOF HAS NO PRODUCER - THE ONE GENUINELY NEW FUNCTION OF THE SEARCH | the nine sealed layers read SEALED_UNPROVEN on the Sunday crosswalk until this exists |
-| **F-29** | S | clock_lock_time IS REGISTERED AS AN INPUT LAYER (CAUSAL_STREAM_REQUIRED) WHILE IT IS FRANKIE'S OWN OUTPUT - THE SPAWN GATE CAN NEVER PASS UNTIL THIS IS RESOLVED | the gate is the whole point of item 7 and this one row makes it unpassable |
 | **F-3** | S | THE REGISTRY NAMES A SOURCE PATH FOR ALL 105 LAYERS AND NOTHING FOLLOWS THEM | - |
 | **F-5** | S | SAME/FLIP NOW CARRIES THREE INCOMPATIBLE READINGS AND ONLY GREG CAN PICK | - |
 | **M-12** | S | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | It is the gate under every data fix. Without it a session cannot tell what it actually pushed, and the next session silently inherits pre-fix stores - which is what happened between S114 and S115. |
@@ -51,7 +49,6 @@ By tier: **ESSENTIAL** 34, **BIGGEST_WIN** 47, **REST** 105
 | **F-22** | M | THE KNOWLEDGE PIPELINE EXISTS END TO END AND NOTHING ON THE SPAWN PATH CALLS IT - REGISTER THE KEEP SET AND THE SEED MEMORY IN THE EXISTING MANIFEST, PRODUCE THE RECEIPT FROM IT, WIRE THE READ GATE | 2 of 75 inputs reached him; without this the gate can never pass honestly |
 | **F-24** | M | THE SPAWN GATE (TO-DO ITEM 7): gate_applicable_inputs EXISTS AND emit() NEVER CALLS IT; NO FIXTURE PROVES IT CAN PASS HONESTLY | a gate that is not called is prose; 75 of 75 inputs were not delivered on Sunday and nothing refused |
 | **F-25** | M | THE OUTPUT LEDGERS ARE VALIDATED BY NOTHING IN PRODUCTION - load_principal_artifact, attach_principal_findings, validate_output_bundle_dir AND render_crosswalk_table ALL HAVE ZERO PRODUCTION CALLERS | his outputs are the experimental data; unvalidated they are prose |
-| **F-30** | M | THE DRIVER DROPS PER-RECORD raw_actions BEFORE THE LEDGER - A RAW-DATA DROP UNDER D60, AND THE GATE WILL REFUSE THE REAL SUNDAY RESULT ON IT | every record of every field is the ruling (D81); a dropped raw field is the S115 finding again |
 | **F-4** | M | 4.10 CANNOT BE FED BECAUSE RUNWAY IDENTITY IS PER-GROUP, NOT BECAUSE OF ITS PHASE NAMES | - |
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | M | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24. |
@@ -59,9 +56,10 @@ By tier: **ESSENTIAL** 34, **BIGGEST_WIN** 47, **REST** 105
 | **A-67** | L | THE A/B IS BLIND vs FRANKENSTEIN ON THE UNWALKED HEAD - one block that is the last group run, the architecture test AND the under-emission experiment | It is the only way the hybrid ships on a MEASUREMENT rather than on argument, and it DE-RISKS the last group run rather than endangering it - the run would then use a harness validated on g24 instead of one reasoned about. It is also A-65's validated-compaction discipline applied at architecture scale, which is the standard S115 just adopted. |
 | **A-69** | L | SELF-TRAINING LOOP: Frankie runs blinds on the WALKED corpus, grades himself with FJ-1, and the head is held out as the only true test | It creates the TRAIN/TEST SPLIT this project has never had, it uses a corpus we already own and have used once each, and its grader is already built and has never been run. It is also the mechanism that makes A-67's retention arm meaningful - retention with nothing to retain across is ceremony. |
 | **F-26** | L | THE SEVEN CLOCKS ARE WIRED BY REUSE, THE FIXED WINDOWS GO, THE 4.16 LADDER RETIRES, PRIOR BECOMES REACHABLE (D83) | Greg: zero hardcoded time intervals for anything; the clocks need to be wired into Frankie |
+| **F-31** | L | NOTHING WIRED IN S121 OR S122 HAS BEEN FED BY A RUN ON THE WIRED CODE - THE SUNDAY RE-RUN IS THE GATE | two sessions of build with zero runs is exactly the state Greg named when he said 'built but not wired and fed' |
 | **A-50** | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 
-## BIGGEST WIN (47)
+## BIGGEST WIN (48)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -81,8 +79,6 @@ By tier: **ESSENTIAL** 34, **BIGGEST_WIN** 47, **REST** 105
 | **A-61** | S | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | A false REFUTED is worse than no verification: it argues for UNDOING a real fix, with an adversarial verdict behind it. Cheap to fix (pin a commit) and it protects every future audit. |
 | **A-65** | S | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | It is the test that would have caught THIS session's own worst mistake before Greg did, it is cheap (one extra spawn per change), and it converts every future view/brain change from an argument into a measurement. |
 | **A-66** | S | THE COMPOSITION CONTRACT - partition OWNERSHIP so borrowed pieces own different parts of one job (not a write protocol, and never a ranking) | It is the collision detector for everything else registered tonight. Cheap (a table), and it is the difference between composing best-of-breed and building something that fights itself. Do it BEFORE any of A-59/62/63/64/65 is built. |
-| **F-20** | S | THE LIFECYCLE LEDGER CARRIES NO UNIFORM AVAILABILITY STAMP - STAMP emitted_at_recv_ns AT _retain_lifecycle | one stamp in one function turns a declared rule into a measured field, and every RT delivery after it stops withholding 400 rows per 60 groups |
-| **F-27** | S | THE CROSSWALK'S bound_to_inventory_document IS A STATIC FLAG THAT ROTTED THE HOUR THE REGISTRY WAS REBOUND - COMPUTE IT | a status that mirrors a registry fact by constant lies as soon as the registry moves |
 | **F-8** | S | per_event.report's DOCSTRING DOCUMENTS A PARAMETER IT DOES NOT HAVE, AND THE A-ARM RE-IMPLEMENTS ITS QUANTILE | - |
 | **G-30** | S | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | It is the instrument dependency under A-24a, the discovery note's own RANK 1 candidate and the one it calls strongest. It also turns five of twelve path points from a timing judgment into arithmetic, on a feed we already ingest. |
 | **M-15** | S | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | A compromised credential with a deferral that has silently expired is the kind of thing that is only ever noticed after it matters. Cheap to do, and the deferral it replaces was explicit and time-boxed. |
@@ -100,6 +96,9 @@ By tier: **ESSENTIAL** 34, **BIGGEST_WIN** 47, **REST** 105
 | **A-62** | M | SERVE EACH SPECIALIST ITS OWN TRACK RECORD - we measure how each agent fails and have never told the agent | instrument_priors proved the pattern works and was the most-praised content of the g24 run ('the honest prior on every instrument I have' - C-0721). This is the same object aimed at the agent instead of the instrument, built from measurements we already hold, and it targets the walk's worst-performing lanes by name. |
 | **F-13** | M | NO SECTION OWNS EXECUTIONS - trades appear only as by-products across three layers | - |
 | **F-16** | M | 4.6's EXIT-STAMPED STRATUM (Frankie F-17): 97.3% of lifecycles outlive their birth group | - |
+| **F-32** | M | THE 4.16 HORIZON LADDER RETIREMENT IS A REDESIGN, NOT A WIRING ITEM - GREG'S CALL | the last live D83 violation on the principal's path, and the only one that cannot be fixed by wiring |
+| **F-34** | M | THE A_MEMORY SEED'S PACKAGE AND ITS PROOF ARE THE SAME FILE - A DEGENERATE PROOF | the same shape as the S108 lesson: a check whose two sides are the same source proves nothing |
+| **F-35** | M | THE FROZEN RENDERS AND THE FEED RECORD NOW DISAGREE WITH LIVE CODE, AND NOTHING SAYS SO ON THEIR FACE | a frozen record that reads as live state is how a closed defect gets re-opened as a finding |
 | **F-9** | M | KALSHI_TRADING.md INDEXES 7 OF 103 A-ARM FILES AND CARRIES A REFUTED PREMISE | - |
 | **G-4** | M | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | THE TOP-RANKED GAP, named by two independent lenses, and 0629 is its canonical instance - our cooling forecast was exactly right and burn fell 4.2 Bcf/d because wind rose 62%. It is the fastest-dying input AND the one that flips the SIGN rather than the magnitude. ChatGPT ALREADY DELIVERED the source research (S112 T3) - collect it from Greg first. |
 | **M-4** | M | CDD-vs-normal (the anomaly instrument separating hill from spike) | The cure for the D28 TRANSFER disease, and nws_temp_feed already fetches the normals - so it is a serving change, not an ingest. gw_cdd >= 16.4 fires 46.6% pooled and 0/10 on all four summer blocks; an absolute bar cannot transfer across season by construction. |
@@ -115,7 +114,7 @@ By tier: **ESSENTIAL** 34, **BIGGEST_WIN** 47, **REST** 105
 | **A-53** | ? | Sweep every play's `requires` against the served BLIND field set | - |
 | **A-54** | ? | The output contract cannot express what the specialists actually derived | - |
 
-## REST (105)
+## REST (107)
 
 *everything else - real work, correctly tracked, and none of it deleted. Several become cheap once an ESSENTIAL or BIGGEST_WIN item lands.*
 
@@ -195,6 +194,8 @@ By tier: **ESSENTIAL** 34, **BIGGEST_WIN** 47, **REST** 105
 | **A-24g** | M | Sunset compression x regional gas marginality - the synchronised thermal ramp | Stays REST S114: correctly parked by its own author on A-28. Six findings queue behind that one ingest change; when it lands this item is testable. |
 | **A-6** | M | Re-test the dipole EXHAUSTION arm on gas AT NATIVE TICK - it has a measurable success criterion | - |
 | **F-28** | M | REMOVE THE RETIRED A-CLEAN OVERLAY, PROFILES AND WORKFLOW - A D60 DISCUSSION, NOT A SILENT CLEANUP | inert records cost nothing; the removal touches pinned identities and is Greg's call |
+| **F-33** | M | PRIOR IS STRUCTURALLY UNREACHABLE UNTIL A PRECURSOR SIGNAL EXISTS - NOT A DEFECT, AND IT SHOULD STOP BEING RE-RAISED | it has now been proposed as a build item twice and refuted twice from the same docstring |
+| **F-36** | M | THE CROSSWALK'S MEMBER-LEDGER SCAN IS BOUNDED AT 1,024 ROWS AND 64 MB - DECLARED, BUT TINY AGAINST A 10.6 GB LEDGER | a bounded measurement reported as a whole-ledger fact is the shape this project keeps catching |
 | **G-13** | M | NG weekly option settlements + EIA-print event variance extraction | - |
 | **G-18** | M | OPTIONS: de-Samuelsonize and de-seasonalize the IV surface before reading it | - |
 | **G-22** | M | TERM STRUCTURE: use as a REGIME LABEL, and carry the CARRYOUT PROJECTION | - |
@@ -238,8 +239,6 @@ By tier: **ESSENTIAL** 34, **BIGGEST_WIN** 47, **REST** 105
 | **F-1** | ESSENTIAL | S | OPEN | S117 | THE BINDING CALCULATION CONTRACT AND MISSION ARE NOT IN ANY READ-FIRST ORDER, AND THREE SESSIONS RAN WITHOUT OPENING THEM | - |
 | **F-15** | ESSENTIAL | S | OPEN | S120 | RECONCILE EVERY 'Average decision' LINE AGAINST WHAT THE DUAL VIEW HAS ACTUALLY EARNED | - |
 | **F-2** | ESSENTIAL | S | OPEN | S117 | THE OCTOBER STEP-1 SECONDS ARE THE SEALED ANSWER, AND I RECOMMENDED READING THEM | - |
-| **F-23** | ESSENTIAL | S | OPEN | S121 | THE SEALED-ABSENCE PROOF HAS NO PRODUCER - THE ONE GENUINELY NEW FUNCTION OF THE SEARCH | - |
-| **F-29** | ESSENTIAL | S | OPEN | S121 | clock_lock_time IS REGISTERED AS AN INPUT LAYER (CAUSAL_STREAM_REQUIRED) WHILE IT IS FRANKIE'S OWN OUTPUT - THE SPAWN GATE CAN NEVER PASS UNTIL THIS IS RESOLVED | - |
 | **F-3** | ESSENTIAL | S | OPEN | S117 | THE REGISTRY NAMES A SOURCE PATH FOR ALL 105 LAYERS AND NOTHING FOLLOWS THEM | - |
 | **F-5** | ESSENTIAL | S | OPEN | S117 | SAME/FLIP NOW CARRIES THREE INCOMPATIBLE READINGS AND ONLY GREG CAN PICK | - |
 | **M-12** | ESSENTIAL | S | OPEN | S115 | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | - |
@@ -258,7 +257,6 @@ By tier: **ESSENTIAL** 34, **BIGGEST_WIN** 47, **REST** 105
 | **F-22** | ESSENTIAL | M | IN_PROGRESS | S121 | THE KNOWLEDGE PIPELINE EXISTS END TO END AND NOTHING ON THE SPAWN PATH CALLS IT - REGISTER THE KEEP SET AND THE SEED MEMORY IN THE EXISTING MANIFEST, PRODUCE THE RECEIPT FROM IT, WIRE THE READ GATE | - |
 | **F-24** | ESSENTIAL | M | OPEN | S121 | THE SPAWN GATE (TO-DO ITEM 7): gate_applicable_inputs EXISTS AND emit() NEVER CALLS IT; NO FIXTURE PROVES IT CAN PASS HONESTLY | - |
 | **F-25** | ESSENTIAL | M | IN_PROGRESS | S121 | THE OUTPUT LEDGERS ARE VALIDATED BY NOTHING IN PRODUCTION - load_principal_artifact, attach_principal_findings, validate_output_bundle_dir AND render_crosswalk_table ALL HAVE ZERO PRODUCTION CALLERS | - |
-| **F-30** | ESSENTIAL | M | OPEN | S121 | THE DRIVER DROPS PER-RECORD raw_actions BEFORE THE LEDGER - A RAW-DATA DROP UNDER D60, AND THE GATE WILL REFUSE THE REAL SUNDAY RESULT ON IT | - |
 | **F-4** | ESSENTIAL | M | OPEN | S117 | 4.10 CANNOT BE FED BECAUSE RUNWAY IDENTITY IS PER-GROUP, NOT BECAUSE OF ITS PHASE NAMES | - |
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | ESSENTIAL | M | OPEN | S115 | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | - |
@@ -266,6 +264,7 @@ By tier: **ESSENTIAL** 34, **BIGGEST_WIN** 47, **REST** 105
 | **A-67** | ESSENTIAL | L | OPEN | S115 | THE A/B IS BLIND vs FRANKENSTEIN ON THE UNWALKED HEAD - one block that is the last group run, the architecture test AND the under-emission experiment | - |
 | **A-69** | ESSENTIAL | L | OPEN | S115 | SELF-TRAINING LOOP: Frankie runs blinds on the WALKED corpus, grades himself with FJ-1, and the head is held out as the only true test | - |
 | **F-26** | ESSENTIAL | L | IN_PROGRESS | S121 | THE SEVEN CLOCKS ARE WIRED BY REUSE, THE FIXED WINDOWS GO, THE 4.16 LADDER RETIRES, PRIOR BECOMES REACHABLE (D83) | - |
+| **F-31** | ESSENTIAL | L | OPEN | S122 | NOTHING WIRED IN S121 OR S122 HAS BEEN FED BY A RUN ON THE WIRED CODE - THE SUNDAY RE-RUN IS THE GATE | None |
 | **A-50** | ESSENTIAL | ? | OPEN | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 | **O-2** | BIGGEST_WIN | XS | OPEN | S114 | RECORD THE S111 OPTIONS VERDICT AS A BINDING DECISION - it exists only in a file-index blurb | - |
 | **A-15** | BIGGEST_WIN | S | OPEN | S112 | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | - |
@@ -281,8 +280,6 @@ By tier: **ESSENTIAL** 34, **BIGGEST_WIN** 47, **REST** 105
 | **A-61** | BIGGEST_WIN | S | OPEN | S115 | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | - |
 | **A-65** | BIGGEST_WIN | S | OPEN | S115 | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | - |
 | **A-66** | BIGGEST_WIN | S | OPEN | S115 | THE COMPOSITION CONTRACT - partition OWNERSHIP so borrowed pieces own different parts of one job (not a write protocol, and never a ranking) | - |
-| **F-20** | BIGGEST_WIN | S | IN_PROGRESS | S121 | THE LIFECYCLE LEDGER CARRIES NO UNIFORM AVAILABILITY STAMP - STAMP emitted_at_recv_ns AT _retain_lifecycle | - |
-| **F-27** | BIGGEST_WIN | S | OPEN | S121 | THE CROSSWALK'S bound_to_inventory_document IS A STATIC FLAG THAT ROTTED THE HOUR THE REGISTRY WAS REBOUND - COMPUTE IT | - |
 | **F-8** | BIGGEST_WIN | S | OPEN | S117 | per_event.report's DOCSTRING DOCUMENTS A PARAMETER IT DOES NOT HAVE, AND THE A-ARM RE-IMPLEMENTS ITS QUANTILE | - |
 | **G-30** | BIGGEST_WIN | S | OPEN | S115 | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | - |
 | **M-15** | BIGGEST_WIN | S | OPEN | S115 | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | - |
@@ -300,6 +297,9 @@ By tier: **ESSENTIAL** 34, **BIGGEST_WIN** 47, **REST** 105
 | **A-62** | BIGGEST_WIN | M | OPEN | S115 | SERVE EACH SPECIALIST ITS OWN TRACK RECORD - we measure how each agent fails and have never told the agent | - |
 | **F-13** | BIGGEST_WIN | M | OPEN | S120 | NO SECTION OWNS EXECUTIONS - trades appear only as by-products across three layers | - |
 | **F-16** | BIGGEST_WIN | M | IN_PROGRESS | S120 | 4.6's EXIT-STAMPED STRATUM (Frankie F-17): 97.3% of lifecycles outlive their birth group | - |
+| **F-32** | BIGGEST_WIN | M | OPEN | S122 | THE 4.16 HORIZON LADDER RETIREMENT IS A REDESIGN, NOT A WIRING ITEM - GREG'S CALL | None |
+| **F-34** | BIGGEST_WIN | M | OPEN | S122 | THE A_MEMORY SEED'S PACKAGE AND ITS PROOF ARE THE SAME FILE - A DEGENERATE PROOF | None |
+| **F-35** | BIGGEST_WIN | M | OPEN | S122 | THE FROZEN RENDERS AND THE FEED RECORD NOW DISAGREE WITH LIVE CODE, AND NOTHING SAYS SO ON THEIR FACE | None |
 | **F-9** | BIGGEST_WIN | M | OPEN | S117 | KALSHI_TRADING.md INDEXES 7 OF 103 A-ARM FILES AND CARRIES A REFUTED PREMISE | - |
 | **G-4** | BIGGEST_WIN | M | OPEN | S111 | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | - |
 | **M-4** | BIGGEST_WIN | M | OPEN | S109 | CDD-vs-normal (the anomaly instrument separating hill from spike) | - |
@@ -388,6 +388,8 @@ By tier: **ESSENTIAL** 34, **BIGGEST_WIN** 47, **REST** 105
 | **A-24g** | REST | M | OPEN | S113 | Sunset compression x regional gas marginality - the synchronised thermal ramp | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
 | **A-6** | REST | M | OPEN | S90 | Re-test the dipole EXHAUSTION arm on gas AT NATIVE TICK - it has a measurable success criterion | - |
 | **F-28** | REST | M | OPEN | S121 | REMOVE THE RETIRED A-CLEAN OVERLAY, PROFILES AND WORKFLOW - A D60 DISCUSSION, NOT A SILENT CLEANUP | - |
+| **F-33** | REST | M | OPEN | S122 | PRIOR IS STRUCTURALLY UNREACHABLE UNTIL A PRECURSOR SIGNAL EXISTS - NOT A DEFECT, AND IT SHOULD STOP BEING RE-RAISED | None |
+| **F-36** | REST | M | OPEN | S122 | THE CROSSWALK'S MEMBER-LEDGER SCAN IS BOUNDED AT 1,024 ROWS AND 64 MB - DECLARED, BUT TINY AGAINST A 10.6 GB LEDGER | None |
 | **G-13** | REST | M | OPEN | S111 | NG weekly option settlements + EIA-print event variance extraction | - |
 | **G-18** | REST | M | OPEN | S111 (recommendation); S112  | OPTIONS: de-Samuelsonize and de-seasonalize the IV surface before reading it | - |
 | **G-22** | REST | M | OPEN | S111 (recommendation); S112  | TERM STRUCTURE: use as a REGIME LABEL, and carry the CARRYOUT PROJECTION | - |
@@ -518,30 +520,6 @@ Greg: 'he settled that long ago by only saying one or two would be run both ways
 **Source:** S117, self-caught after reading the mission
 
 MEASURED. The mission at :31-34 reads 'Use only F_LAST-closed native event groups. Never use reduced seconds rows, V4_NATIVE_FULL_MBO_SECONDS.jsonl.gz, MBP/top-10, Step-1-derived input... Keep Step-1 and the answer/reveal wall sealed.' NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md section 14 lists 'Existing October Step-1 seconds' under authority SEALED_TARGET_ANSWER, 'mechanically inaccessible until all primary discoveries... are immutable'. FRANKIE_A_ARM_ROLL20_SUBSTRATE_SCOPE_20260830.md recommended reading that artifact's legacy_buy_qty/legacy_sell_qty columns, which are doubly excluded - Step-1-derived AND MBP-10-derived. Banner-corrected, not deleted. WHAT THE DIRECTIVE ACTUALLY REQUIRES is inventory section 8: the causal replay must RECREATE the legacy surface from the native stream, and 'every legacy field requires an explicit crosswalk to its V4-native source fields, calculation, availability time, and state hash.' FALSIFIER: closed when a crosswalk exists and no benchmark path reads a Step-1 output.
-
----
-
-### [ESSENTIAL] F-23 - THE SEALED-ABSENCE PROOF HAS NO PRODUCER - THE ONE GENUINELY NEW FUNCTION OF THE SEARCH
-
-*size S | OPEN | raised S121*
-
-**Why it is ESSENTIAL:** the nine sealed layers read SEALED_UNPROVEN on the Sunday crosswalk until this exists
-
-**Source:** S121 (the built-but-not-wired search, FRANKIE_BUILT_NOT_WIRED_SEARCH_S121.md)
-
-native_layer_crosswalk consumes FRANKIE_SEALED_ABSENCE_PROOF_V1 (all_absent, tokens_checked, receipt_sha256) and nothing produces it; the forbidden set is SEALED_LAYER_IDS plus source-inventory section K's objects, the Step-1 S3 prefix and schema strings; the scan-and-hard-fail pattern exists in brain_view.context_leak. Wired (built) by persona/s121-wire-knowledge-gates: sealed_object_set and prove_sealed_absent, run over the emitted prompt and every delivered and knowledge path. FALSIFIER: closed when the proof passes on a real emitted prompt and raises on an injected sealed path.
-
----
-
-### [ESSENTIAL] F-29 - clock_lock_time IS REGISTERED AS AN INPUT LAYER (CAUSAL_STREAM_REQUIRED) WHILE IT IS FRANKIE'S OWN OUTPUT - THE SPAWN GATE CAN NEVER PASS UNTIL THIS IS RESOLVED
-
-*size S | OPEN | raised S121*
-
-**Why it is ESSENTIAL:** the gate is the whole point of item 7 and this one row makes it unpassable
-
-**Source:** S121 (the knowledge-and-gates wiring persona's report, branch persona/s121-wire-knowledge-gates at 6694770)
-
-gate_applicable_inputs refuses any arm-applicable input layer not DELIVERED; clock_lock_time sits in the causal_clocks group under CAUSAL_STREAM_REQUIRED with LAYER_PRODUCERS NO_PRODUCER_FOUND, because the lock instant is written by Frankie in output_first_locks_and_no_locks (D83). Once emit() is wired to the gate every spawn refuses regardless of fixture. Two resolutions, Greg's call under D60: (a) a computed status PRINCIPAL_STAMPED for that one record, accepted by the gate, with the pre-call stamp still reading as a disagreement (the persona's plan, reversible in one line); (b) moving the layer out of the input policies, which changes the registry's pinned policy counts and identity set. FALSIFIER: closed when an honest complete fixture passes the gate with clock_lock_time accounted for by his output ledger and the registry says so.
 
 ---
 
@@ -837,18 +815,6 @@ native_principal_outputs is complete and tested; native_staging.load_principal_a
 
 ---
 
-### [ESSENTIAL] F-30 - THE DRIVER DROPS PER-RECORD raw_actions BEFORE THE LEDGER - A RAW-DATA DROP UNDER D60, AND THE GATE WILL REFUSE THE REAL SUNDAY RESULT ON IT
-
-*size M | OPEN | raised S121*
-
-**Why it is ESSENTIAL:** every record of every field is the ruling (D81); a dropped raw field is the S115 finding again
-
-**Source:** S121 (the knowledge-and-gates wiring persona's report, branch persona/s121-wire-knowledge-gates at 6694770)
-
-The crosswalk computes RECEIPTED_CARRIER_ABSENT for the nine order_lifecycle_* layers and native_acmrtfn_messages because per-record raw_actions are produced and dropped before the exact member ledger (pinned today by the crosswalk tests as structurally_absent). Under D81 the refusal is correct: the delivered ledger does not carry every field of every record. Under D60 the drop itself is the defect: a raw field that reaches our code and is not retained. Resolution is Greg's: carry raw_actions per record on the member row (ledger bytes grow; the Sunday re-run pays the re-baseline) or rule it a declared exclusion. FALSIFIER: closed when a fresh run's field census carries the per-record raw actions and the ten layers compute DELIVERED, or when a decision records the exclusion with its reason.
-
----
-
 ### [ESSENTIAL] F-4 - 4.10 CANNOT BE FED BECAUSE RUNWAY IDENTITY IS PER-GROUP, NOT BECAUSE OF ITS PHASE NAMES
 
 *size M | OPEN | raised S117*
@@ -1024,6 +990,20 @@ CAVEAT ON THE OLDER BLOCKS, so nobody treats them as equivalent: g6..g16 were wa
 **Source:** S121 (the built-but-not-wired search, FRANKIE_BUILT_NOT_WIRED_SEARCH_S121.md)
 
 Three clocks are FULL in native_clocks.member_clock_row and need a naming wrapper by registry id; feature availability is collapsed onto event_known_by (the per-component recv list is the ingredient for a real value, the Step-1 2-day module's pattern); prospective discovery exists in native_recognition.record_call and is a same-frame field copy onto the row; model evaluation is one key on the driver's cutoff dict; lock time is his own first-lock entry. ACTIVITY_WINDOWS_S feeds activity/activity_full via the wrapper and the resume path; an activity_since recomposition on event anchors does not exist. 4.16's event-driven half is wired and OFF by default (why Sunday produced zero change points); the ladder HORIZON_SETS still drives maturation. 4.11 has no ladder; precursor_for has no caller so PRIOR is unreachable; RecognitionLabel has no caller. Wired by persona/s121-wire-clocks-windows, with F-20 folded in. FALSIFIER: closed when every member row and GroupDelivery carries the clocks by registry id with the ordering check, no fixed-seconds block is on the row, change points fire by default, and a fixture reaches PRIOR through precursor_for.
+
+---
+
+### [ESSENTIAL] F-31 - NOTHING WIRED IN S121 OR S122 HAS BEEN FED BY A RUN ON THE WIRED CODE - THE SUNDAY RE-RUN IS THE GATE
+
+*size L | OPEN | raised S122 | BLOCKED BY: None*
+
+**Why it is ESSENTIAL:** two sessions of build with zero runs is exactly the state Greg named when he said 'built but not wired and fed'
+
+**Source:** S122
+
+**Already delegated:** None
+
+Two sessions of wiring have landed and NOT ONE of them has produced a run. The only feeding done (S122, the feed persona) ran the S121 CODE against run 33630348943's ledgers, which were written by PRE-CENSUS code - so the code was exercised, the DATA was old, and every number in FRANKIE_FEED_RECORD_SUNDAY_33630348943_20260903.md is a BEFORE-number. Unfed as of the S122 close: per-record raw_actions on the member row (F-30), emitted_at_recv_ns on every lifecycle row (F-20, whose falsifier is 'withheld counts read zero on a FRESH run'), activity_since on event anchors with the fixed windows retired (F-26), change points ON by default, the seven clocks by registry id, RecognitionLabel, the crosswalk computing evidence from delivered carriers, the A_MEMORY seed, the knowledge delivery receipt, the sealed-absence proof, the output ledgers and the read-back handoff trio. The launch workflow's seal step was VERIFIED to pass at the S122 close, so the run is no longer blocked. FALSIFIER: closed when a run on the wired code exists and its crosswalk row names each of the above with a receipt hash.
 
 ---
 
@@ -1808,30 +1788,6 @@ PROVENANCE: repo structure and section sizes read from the GitHub landing page; 
 
 ---
 
-### [BIGGEST_WIN] F-20 - THE LIFECYCLE LEDGER CARRIES NO UNIFORM AVAILABILITY STAMP - STAMP emitted_at_recv_ns AT _retain_lifecycle
-
-*size S | IN_PROGRESS | raised S121*
-
-**Why it is BIGGEST WIN:** one stamp in one function turns a declared rule into a measured field, and every RT delivery after it stops withholding 400 rows per 60 groups
-
-**Source:** S121, measured while building CausalGroupStream (D81)
-
-Every lifecycle row is retained through native_replay_driver._retain_lifecycle with emitting_section and emitted_on and nothing else uniform. Each section names its clocks differently (recv_ns, closed_recv_ns, terminal_recv_ns, exited_recv_ns, second, available_second, nested runs[].end_recv_ns) and two name NONE (mirror GROUP_CLOSE rows; mirror STREAM_END rows), so the stream must resolve availability by a declared rule and WITHHOLD rows it cannot place: on a 60-group fixture 60 mirror rows have no clock and 362 close-occasion rows (lineage 240, queue 60, mirror 60, detector_coverage 1, flow_substrate 1) are held until after exhaustion because their content was fixed at a close instant the row does not carry. Stamping the driver's current recv_ns on every retained row at _retain_lifecycle would make availability a FIELD rather than a rule. Changes ledger bytes and hashes for future runs (the row-sink differential test must be re-baselined); the Sunday ledgers as written are served by the rule. FALSIFIER: closed when every lifecycle row carries emitted_at_recv_ns and CausalGroupStream's withheld_no_own_clock and withheld_close_occasion read zero on a fresh run.
-
----
-
-### [BIGGEST_WIN] F-27 - THE CROSSWALK'S bound_to_inventory_document IS A STATIC FLAG THAT ROTTED THE HOUR THE REGISTRY WAS REBOUND - COMPUTE IT
-
-*size S | OPEN | raised S121*
-
-**Why it is BIGGEST WIN:** a status that mirrors a registry fact by constant lies as soon as the registry moves
-
-**Source:** S121 (the built-but-not-wired search, FRANKIE_BUILT_NOT_WIRED_SEARCH_S121.md)
-
-LAYER_PRODUCERS stamps the 14 knowledge layers bound-to-inventory as a constant; the registry was rebound the same day (00c03db), so the Sunday crosswalk read 14 BOUND_TO_INVENTORY_DOCUMENT against a registry that binds real files. _static_status must read bound-ness off the registry's actual source_paths (native_knowledge_delivery.layers_bound_only_to). Wired by persona/s121-wire-knowledge-gates. FALSIFIER: closed when the crosswalk on the rebound registry with no knowledge receipt reads PRODUCED_NOT_DELIVERED, not BOUND_TO_INVENTORY_DOCUMENT, for those layers.
-
----
-
 ### [BIGGEST_WIN] F-8 - per_event.report's DOCSTRING DOCUMENTS A PARAMETER IT DOES NOT HAVE, AND THE A-ARM RE-IMPLEMENTS ITS QUANTILE
 
 *size S | OPEN | raised S117*
@@ -2339,6 +2295,48 @@ Frankie's fourth, smaller proposal. The two strongest market-mechanics results o
 **Source:** S120, from Frankie's run-33605852433 assessment and the S120 measurement
 
 Reported S119, not acted on. It changes stratum construction and is a different defect from D-13 (one declared population for two units). A lifecycle stratified by its birth group is filed under a stratum that had ceased to describe it for 97.3% of the population. FALSIFIER: closed when 4.6 strata are keyed on the exit-time stratum with the birth stratum retained as a field.
+
+---
+
+### [BIGGEST_WIN] F-32 - THE 4.16 HORIZON LADDER RETIREMENT IS A REDESIGN, NOT A WIRING ITEM - GREG'S CALL
+
+*size M | OPEN | raised S122 | BLOCKED BY: None*
+
+**Why it is BIGGEST WIN:** the last live D83 violation on the principal's path, and the only one that cannot be fixed by wiring
+
+**Source:** S122
+
+**Already delegated:** None
+
+D83 says horizons mature on realized responses, never on a ladder. But HORIZON_SETS (native_response.py:146) is not a knob: the response table is BUILT on fixed horizons, each with its own at-risk denominator, each written once and refusing a second write, with lateness recorded per reading, read live by native_a_arm_launch.py:456-457 into native_calculation_runner.py:284-285. Replacing it with realized-response maturation is a redesign of section 4.16. Investigated and deliberately NOT attempted in S122 (the task packet named it out of scope and Codex respected that). FALSIFIER: closed when Greg rules, either way.
+
+---
+
+### [BIGGEST_WIN] F-34 - THE A_MEMORY SEED'S PACKAGE AND ITS PROOF ARE THE SAME FILE - A DEGENERATE PROOF
+
+*size M | OPEN | raised S122 | BLOCKED BY: None*
+
+**Why it is BIGGEST WIN:** the same shape as the S108 lesson: a check whose two sides are the same source proves nothing
+
+**Source:** S122
+
+**Already delegated:** None
+
+The overlay rebind pointed BOTH a_memory_prior_lessons_package and a_memory_prior_package_proof at A_MEMORY_SEED_20260902.json, so seed_memory_package binds that file twice and the 'proof' layer carries the same bytes as the thing it proves. Measured at the S122 close by executing the seal step: 3 files bound, the seed appearing twice. The original pair was a package plus an INDEPENDENT proof receipt; a proof that is its subject is not a witness. Not blocking - the seal passes and the run can go - but it should be either a real receipt over the seed or an explicit declaration that the seed is self-describing. FALSIFIER: closed when the proof layer binds something that is not the seed, or a decision records the collapse deliberately.
+
+---
+
+### [BIGGEST_WIN] F-35 - THE FROZEN RENDERS AND THE FEED RECORD NOW DISAGREE WITH LIVE CODE, AND NOTHING SAYS SO ON THEIR FACE
+
+*size M | OPEN | raised S122 | BLOCKED BY: None*
+
+**Why it is BIGGEST WIN:** a frozen record that reads as live state is how a closed defect gets re-opened as a finding
+
+**Source:** S122
+
+**Already delegated:** None
+
+Codex correctly refused to edit the historical renders (LAYER_CROSSWALK_FIXTURE_RENDER_20260902.md, LAYER_CROSSWALK_SUNDAY_33630348943_RENDER_20260902.md, ..._FED_RENDER_20260903.md, FRANKIE_FEED_RECORD_SUNDAY_33630348943_20260903.md) because they are dated records of what an earlier run delivered - rewriting them would falsify history. The consequence is that four committed documents now assert raw_actions absent, RECEIPTED_CARRIER_ABSENT on the order-lifecycle layers and BOUND_TO_INVENTORY_DOCUMENT on the knowledge layers, all of which are false of the current code. This is the S112/S114 expiring-finding shape: a record that reads as current state. The fix is NOT to rewrite them but to stamp each with a superseded-by line naming the commit that changed the behaviour. FALSIFIER: closed when every such record carries that line and the document registry gates it.
 
 ---
 
@@ -3475,6 +3473,34 @@ PLACEMENT (S111, architecture doc s1.5 instrument panel): the whole dipole famil
 **Source:** S121 (the built-but-not-wired search, FRANKIE_BUILT_NOT_WIRED_SEARCH_S121.md)
 
 D86 retired A-clean and kept its a_clean_overlay layer, knowledge profiles, capsules and launch workflow as inert records. Removing them changes the registry identity set (EXPECTED_LAYER_ID_SET_SHA256, arm counts), the manifest and a workflow; D60 requires the discussion first. Nothing is blocked by their presence.
+
+---
+
+### [REST] F-33 - PRIOR IS STRUCTURALLY UNREACHABLE UNTIL A PRECURSOR SIGNAL EXISTS - NOT A DEFECT, AND IT SHOULD STOP BEING RE-RAISED
+
+*size M | OPEN | raised S122 | BLOCKED BY: None*
+
+**Why it is REST:** it has now been proposed as a build item twice and refuted twice from the same docstring
+
+**Source:** S122
+
+**Already delegated:** None
+
+native_candidate_adapter.py:14-24 says it in its own docstring: a candidate whose birth IS its own detection can never be recognised before it, so every recognition is honestly H+N and precursor_recv_ns stays None. precursor_for is an optional callback the module deliberately does not fill; there is no precursor detector in the repository and wiring the callback would mean INVENTING one. prior_reachable: false is a true statement about the current evidence surface. Registered so the next session does not re-derive it as a build item for the third time. FALSIFIER: closed when Greg scopes a precursor signal, or when this is accepted as permanent.
+
+---
+
+### [REST] F-36 - THE CROSSWALK'S MEMBER-LEDGER SCAN IS BOUNDED AT 1,024 ROWS AND 64 MB - DECLARED, BUT TINY AGAINST A 10.6 GB LEDGER
+
+*size M | OPEN | raised S122 | BLOCKED BY: None*
+
+**Why it is REST:** a bounded measurement reported as a whole-ledger fact is the shape this project keeps catching
+
+**Source:** S122
+
+**Already delegated:** None
+
+D-1 made the crosswalk census the DELIVERED member ledger rather than only the result's field census, which is right. The scan is bounded by MEMBER_SCAN_MAX_ROWS=1024 and MEMBER_SCAN_MAX_BYTES=64MB, and the bound is carried in the evidence detail rather than hidden, which is also right. But against Sunday's 10,630,127,166-byte member ledger that is the first fraction of a percent of rows, so a field that appears only later in the session would read absent from a prefix. Acceptable for a status; NOT acceptable as the basis of a spawn-gate refusal without saying so. FALSIFIER: closed when the gate's refusal text distinguishes 'absent from the scanned prefix' from 'absent from the ledger', or the bound is raised with a measured cost.
 
 ---
 

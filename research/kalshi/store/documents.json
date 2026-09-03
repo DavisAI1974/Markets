@@ -1721,6 +1721,13 @@
    "role": "The S121 search record behind Greg's 'built but not wired and fed': per item, the existing piece with file:line, its callers today, and what is missing to wire; the one function that exists nowhere is the sealed-absence proof producer.",
    "update_when": "never - it is dated and finished (the D/E/F section is appended once, when the third search report lands)",
    "gate": null
+  },
+  {
+   "path": "research/kalshi/CLAUDE_S122_ITEM4_IMPLEMENTATION_HANDOFF_20260903.md",
+   "class": "RECORD",
+   "role": "Codex's implementation handoff for the S122 item-4 packet: the four tasks, each with its RED proof, GREEN proof and measured byte cost, and the four-way taxonomy of stale state (live expectations, live prose, frozen historical artifacts, packet assumptions proven false). Reviewed by execution at the S122 close.",
+   "update_when": "never - it is dated and finished",
+   "gate": null
   }
  ]
 }

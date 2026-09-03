@@ -1024,7 +1024,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **535 files.**
+new tool cannot go unlisted. **532 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `agent_frankie.py` — Frankie hybrid agent entry point.
@@ -1188,8 +1188,6 @@ new tool cannot go unlisted. **535 files.**
 - `native_knowledge_delivery.py` — The knowledge Frankie receives: classified from the inventory, bound to real files, receipted.
 - `native_ladder.py` — Section 4.9: price-ladder topology.
 - `native_layer_crosswalk.py` — The 99-layer crosswalk: registry layer -> producing code -> carrier -> delivery evidence.
-- `native_layer_crosswalk.py` — The 99-layer crosswalk: registry layer -> producing code -> carrier -> delivery evidence.
-- `native_layer_crosswalk.py` — The 99-layer crosswalk: registry layer -> producing code -> carrier -> delivery evidence.
 - `native_lineage.py` — Section 4.13: chain families and D-depth lineages.
 - `native_mbo_field_census.py` — Per-field census of the retained raw MBO, so the drop question can be answered at all.
 - `native_mirror.py` — Section 4.4's one mechanically defined mirror key, and the matcher that uses it.
@@ -1256,7 +1254,6 @@ new tool cannot go unlisted. **535 files.**
 - `test_native_knowledge_delivery.py` — The knowledge Frankie receives is classified from the inventory, bound to real files, receipted.
 - `test_native_ladder.py` — Tests for section 4.9 price-ladder topology."""
 - `test_native_layer_crosswalk.py` — The 99-layer crosswalk: every registry layer to the code that produces it and the carrier
-- `test_native_layer_crosswalk_s122.py` — S122 slice 4 on the crosswalk: F-27, F-29, F-feed-4, F-feed-8, F-feed-10, the withheld sealed
 - `test_native_layer_crosswalk_s122_item4_d.py` — S122 Item 4 Task D: five measured crosswalk defects, tests first."""
 - `test_native_lineage.py` — Tests for section 4.13 chain families and D-depth lineages."""
 - `test_native_mbo_field_census.py` — The field census measures the retained raw MBO; it never judges it."""
