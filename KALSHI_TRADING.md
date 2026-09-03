@@ -1024,7 +1024,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **526 files.**
+new tool cannot go unlisted. **527 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `agent_frankie.py` — Frankie hybrid agent entry point.
@@ -1250,6 +1250,7 @@ new tool cannot go unlisted. **526 files.**
 - `test_native_knowledge_delivery.py` — The knowledge Frankie receives is classified from the inventory, bound to real files, receipted.
 - `test_native_ladder.py` — Tests for section 4.9 price-ladder topology."""
 - `test_native_layer_crosswalk.py` — The 99-layer crosswalk: every registry layer to the code that produces it and the carrier
+- `test_native_layer_crosswalk_s122_item4_d.py` — S122 Item 4 Task D: five measured crosswalk defects, tests first."""
 - `test_native_lineage.py` — Tests for section 4.13 chain families and D-depth lineages."""
 - `test_native_mbo_field_census.py` — The field census measures the retained raw MBO; it never judges it."""
 - `test_native_mirror.py` — Section 4.4's mirror key and matcher: one mechanical definition, one implementation.
