@@ -52,6 +52,12 @@ defect as a frozen record that reads as live state.
 uncommitted external findings artifact appear in the repository; the carry starts when that commit
 ARRIVES and cannot verify that it ever does. **That is the one way the loop silently never fires.**
 
+**D60 SIZE WATCH, MEASURED BEFORE A REAL RUN:** G grew the honest fixture prompt from **13,092 to
+15,999 bytes** (+2,907, **22.2%**) by rendering the gated knowledge block. Future served findings
+are roster-bounded, but this is a fixture number, not a live-run measurement. The first run records
+the emitted prompt's actual bytes; growth is observed and reported, never "fixed" by silently
+dropping lawful knowledge or findings.
+
 **AT THE CLOSE:** 1,997 / 664 / 45 passed across the three test trees (the other two were run because
 a green package suite says nothing about the rest of the repo), 193 workflows parse with 0 failures,
 the retired October launch has no push trigger and all three jobs guarded false, store 4/4, docs pass,

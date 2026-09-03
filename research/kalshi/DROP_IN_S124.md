@@ -42,6 +42,10 @@ implementer's own account and it is candid, including about the limits of what i
 - **The C/G coupling.** Before G the read gate was checked and found NOT vacuous. Re-derive that
   yourself rather than accepting it: a knowledge gate that passes over a prompt lacking its own
   subject is a false green on the gate we just wired.
+- **The D60 prompt-size watch.** G grew the honest fixture prompt from 13,092 to 15,999 bytes
+  (+2,907, 22.2%); that was measured before a real run, not on one. Future served findings are
+  roster-bounded. Record the first run's actual emitted prompt bytes and report growth without
+  dropping lawful knowledge or findings to make the number smaller.
 - **The memory loop's refusals (Task I).** An id reused with changed content must be refused; a veto
   for an unknown id must be refused; a vetoed finding must survive a rebuild still present and
   unserved. **Test the rebuild-resurrection case specifically** - it is the one that quietly undoes

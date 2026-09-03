@@ -118,7 +118,7 @@ ancestry failure as a possible blocker before establishing that the container cl
 | D | Four frozen F-35 records stamped, not rewritten, with a regression test |
 | E | Bounded scans say `ABSENT_FROM_SCANNED_PREFIX` with rows and bytes; only an EOF scan claims plain absence |
 | F | The one-day seed subject/proof equality DECLARED a degenerate bootstrap rather than papered over with a manufactured receipt; clears itself when a distinct receipt exists |
-| G | The knowledge block rendered from the exact receipt object the gate inspected; prompt 13,092 -> 15,999 bytes (+22.2%) |
+| G | The knowledge block rendered from the exact receipt object the gate inspected; honest fixture prompt 13,092 -> 15,999 bytes (+22.2%) |
 | H | Checkpoint writer corrected `MEMORY` -> `MEMORY_ASSISTED`; contract kept authoritative; unknown modes still raise |
 | I | The automatic findings carry: discovery by rule, admission through the shared path, new stable ids only, empty days recorded and not promoted, vetoes by id kept and unserved, ordered rebuild, direct commit, no review PR |
 
@@ -126,6 +126,11 @@ The C/G coupling was checked rather than assumed: before G the gate was **not** 
 separately serialized the bundle and the prompt alone refused with `serialized principal input lacks
 exact model-visible context`. C bound the bundle; G was still required to put the rendered block in
 the prompt.
+
+**D60 size watch, before any real run:** the 13,092 -> 15,999-byte change is a fixture measurement,
+not a live prompt measurement. Future served findings are roster-bounded. Record the actual emitted
+prompt bytes on the first run and report the growth; do not make it smaller by silently dropping
+lawful knowledge or findings.
 
 ---
 
@@ -140,6 +145,8 @@ the prompt.
   commit ARRIVES, and the loop cannot verify that it ever does. This is the one way the loop
   silently never fires.
 - **The 44 historical findings are not in memory** (section 3), so day-one memory is the seed alone.
+- **The live prompt size is not measured.** G's +22.2% is from the honest fixture; the first run must
+  record the emitted prompt's actual bytes. Future served findings are roster-bounded.
 - Task B named four layers it cannot account for without a real run rather than fabricating
   receipts: the DBN decoding witness, S3 object identity, `PLAIN_SIZES`, `PLAIN_SHA256SUMS`.
 
