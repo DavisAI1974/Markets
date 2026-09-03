@@ -7,6 +7,7 @@ given, and what was wrong was that three of those inputs were never sent.
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 from research.kalshi.frankie_raw_mbo_benchmark.native_candidate import Candidate
 from research.kalshi.frankie_raw_mbo_benchmark.native_candidate_adapter import (
@@ -17,7 +18,10 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_exhaustion import (
     SEARCHED,
     ExhaustionCalculator,
 )
-from research.kalshi.frankie_raw_mbo_benchmark.native_recognition import RecognitionCalculator
+from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import ClockError
+from research.kalshi.frankie_raw_mbo_benchmark.native_recognition import (
+    HORIZON, T0, CandidateRecognition, RecognitionCalculator,
+)
 
 NS_PER_SECOND = 1_000_000_000
 
@@ -241,3 +245,70 @@ class RecognitionInstantOnTheOpenRowTest(unittest.TestCase):
         opened(track, candidate())
         record = track._open["c1"].recognition.as_dict()
         self.assertEqual(record["recognized_recv_ns_basis"], RECOGNIZED_BASIS_AVAILABLE_SECOND_BIN)
+
+
+class RecognitionLabelCallerS122Test(unittest.TestCase):
+    def test_h_plus_n_open_row_carries_the_validated_label_and_canonical_lead(self) -> None:
+        cand = candidate(event_second=1_633_352_400, available_second=1_633_352_405)
+        row = opened(tracker(), cand)
+        validated = row["recognition_label"]
+        reference = cand.event_second * NS_PER_SECOND
+        observed = cand.available_second * NS_PER_SECOND
+        self.assertEqual(validated["label"], HORIZON)
+        self.assertEqual(validated["clock"], "ts_recv_ns")
+        self.assertEqual(validated["reference_ns"], reference)
+        self.assertEqual(validated["observed_ns"], observed)
+        self.assertEqual(validated["lead_ns"], reference - observed)
+        self.assertLess(validated["lead_ns"], 0)
+        # Existing fields stay beside the validated object.
+        self.assertEqual(row["recognition_outcome"], HORIZON)
+        self.assertEqual(row["recognized_recv_ns"], observed)
+
+    def test_prior_lead_is_positive_reference_minus_observed_without_wiring_a_new_precursor(self) -> None:
+        precursor_ns = 1_633_352_390 * NS_PER_SECOND
+        track = CandidateEpisodeTracker(
+            exhaustion=ExhaustionCalculator(), recognition=RecognitionCalculator(),
+            dipole=DipoleCalculator(), source_role="A_CLEAN",
+            precursor_for=lambda _cand: precursor_ns,
+        )
+        cand = candidate(event_second=1_633_352_400)
+        row = opened(track, cand)
+        validated = row["recognition_label"]
+        self.assertEqual(validated["lead_ns"], cand.event_second * NS_PER_SECOND - precursor_ns)
+        self.assertGreater(validated["lead_ns"], 0)
+
+    def test_t0_with_an_observed_time_off_its_reference_is_refused_by_the_adapter_caller(self) -> None:
+        def impossible_t0(self, *, recv_ns: int, basis=None):
+            self.outcome = T0
+            self.recognized_recv_ns = self.birth_recv_ns + 1
+            self.recognized_recv_ns_basis = basis
+            return self.outcome
+
+        with patch.object(CandidateRecognition, "record_call", impossible_t0):
+            with self.assertRaisesRegex(ClockError, "T0 recognition must coincide"):
+                opened(tracker(), candidate())
+
+    def test_h_plus_n_with_an_observed_time_before_reference_is_refused_by_the_adapter_caller(self) -> None:
+        def impossible_horizon(self, *, recv_ns: int, basis=None):
+            self.outcome = HORIZON
+            self.recognized_recv_ns = self.birth_recv_ns - 1
+            self.recognized_recv_ns_basis = basis
+            return self.outcome
+
+        with patch.object(CandidateRecognition, "record_call", impossible_horizon):
+            with self.assertRaisesRegex(ClockError, "H\+N recognition must follow"):
+                opened(tracker(), candidate())
+
+    def test_closed_recognition_output_keeps_existing_fields_and_adds_the_validated_object(self) -> None:
+        track = tracker()
+        cand = candidate()
+        opened(track, cand)
+        closed = track.close_segment((cand.available_second + 1) * NS_PER_SECOND)[0]
+        recognition = closed["recognition"]
+        self.assertEqual(recognition["outcome"], HORIZON)
+        self.assertIn("recognized_recv_ns", recognition)
+        self.assertEqual(recognition["recognition_label"]["label"], HORIZON)
+        self.assertEqual(
+            recognition["recognition_label"]["lead_ns"],
+            recognition["birth_recv_ns"] - recognition["recognized_recv_ns"],
+        )

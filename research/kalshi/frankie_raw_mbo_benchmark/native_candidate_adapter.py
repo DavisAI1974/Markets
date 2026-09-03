@@ -36,6 +36,10 @@ from dataclasses import dataclass
 from typing import Any, Callable, Iterable, Mapping, Sequence
 
 from research.kalshi.frankie_raw_mbo_benchmark.native_candidate import Candidate
+from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import (
+    CAUSAL_CLOCK,
+    RecognitionLabel,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_dipole import (
     FLIP,
     SAME,
@@ -187,6 +191,7 @@ class _Episode:
     candidate: Candidate
     stages: list[DipoleStage]
     recognition: CandidateRecognition
+    recognition_label: RecognitionLabel
     orientation: str
     source_day: str
     family_id: str
@@ -314,6 +319,20 @@ class CandidateEpisodeTracker:
             # basis says so on the record (S121 item one).
             record.record_call(recv_ns=available_ns, basis=RECOGNIZED_BASIS_AVAILABLE_SECOND_BIN)
 
+        # Section 2's typed carrier validates the outcome/time pair at the production caller.
+        # CandidateRecognition still owns first-call bookkeeping and all of its existing fields;
+        # this object adds the invariant check and canonical lead = reference - observed beside it.
+        if record.outcome is None or record.recognized_recv_ns is None:
+            raise CandidateAdapterError(
+                f"candidate {candidate.candidate_id} record_call produced no recognition instant"
+            )
+        recognition_label = RecognitionLabel(
+            label=record.outcome,
+            clock=CAUSAL_CLOCK,
+            reference_ns=birth_ns,
+            observed_ns=record.recognized_recv_ns,
+        )
+
         # 4.12 REFUSES an orientation outside {SAME, FLIP}, and it is right to. A segment's
         # first candidate has no predecessor, so it gets NO dipole path at all rather than a
         # fabricated orientation entering a stratum key the contract says must never mix.
@@ -337,6 +356,7 @@ class CandidateEpisodeTracker:
             candidate=candidate,
             stages=[stage] if stage is not None else [],
             recognition=record,
+            recognition_label=recognition_label,
             orientation=orientation,
             source_day=source_day,
             family_id=family_id,
@@ -354,6 +374,7 @@ class CandidateEpisodeTracker:
             "orientation": orientation,
             "birth_recv_ns": birth_ns,
             "recognition_outcome": record.outcome,
+            "recognition_label": recognition_label.as_dict(),
             # S121 item one: the instant the call was knowable and the clock it is on, so the
             # member row's discovery-confirmation clock can carry both beside the F_LAST
             # cutoff at which the call was actually emitted.
@@ -535,6 +556,7 @@ class CandidateEpisodeTracker:
         else:
             self.paths_withheld_no_predecessor += 1
         recognition_row = self.recognition.record(episode.recognition)
+        recognition_row["recognition_label"] = episode.recognition_label.as_dict()
         if completed:
             self.exhaustion.complete(
                 episode.candidate.candidate_id, recv_ns=recv_ns, terminal_phase=phase
