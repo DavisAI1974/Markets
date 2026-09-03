@@ -1697,6 +1697,13 @@
    "gate": null
   },
   {
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/FRANKIE_FEED_RECORD_SUNDAY_33630348943_20260903.md",
+   "class": "RECORD",
+   "role": "S122: the code merged at S121 FED with the real Sunday ledgers of run 33630348943 (result_hash d2ab3feb..., 57,027 records, 43,569 groups, 19 cutoffs; the last run, identity arm A_CLEAN, the one arm run being A_MEMORY per D86/D88). One section per wired piece - fetch with receipt, causal stream on the 10.6 GB member ledger with the F-20 withheld counts on real data, size witness, crosswalk with receipts under both arms and the gate's refusal, the emitter's refusal, the seven clocks on a real row, the staging read-back's honest state - with the exact command, exit code, numbers, refusals verbatim, wall times, and the closing table of findings for the owners.",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
    "path": "research/kalshi/FRANKIE_BUILT_NOT_WIRED_SEARCH_S121.md",
    "class": "RECORD",
    "role": "The S121 search record behind Greg's 'built but not wired and fed': per item, the existing piece with file:line, its callers today, and what is missing to wire; the one function that exists nowhere is the sealed-absence proof producer.",
