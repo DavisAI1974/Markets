@@ -195,6 +195,11 @@
    "why": "session-stamped outbound task packets."
   },
   {
+   "path": "research/kalshi/CODEX_TASK_S122_ITEM4.md",
+   "class": "EXTERNAL",
+   "why": "the S122 item-4 task packet handed to Codex: the four bounded wiring jobs that do not block the Sunday run, each verified by execution at 8e578f5, with the four investigated-and-ruled-out non-goals named so the work cannot drift into them."
+  },
+  {
    "path": "research/kalshi/*_FOR_CHATGPT.md",
    "class": "EXTERNAL",
    "why": "packets prepared for an external reader."
