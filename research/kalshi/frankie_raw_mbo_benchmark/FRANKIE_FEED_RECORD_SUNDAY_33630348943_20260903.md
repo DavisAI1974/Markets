@@ -49,8 +49,8 @@ wrapper (`ru_maxrss`, kB). Package `research/kalshi/frankie_raw_mbo_benchmark/`.
 **Rules held.** D87: nothing written to either of the two temporary locations the rule
 forbids; every transient file lives under the repo's gitignored `data/` and the fetched
 ledgers are deleted at the end (the receipts and manifest kept). D84: committed after every step and pushed to
-`origin/persona/s122-feed-wired` only. D34: no artifact names a desktop, scratchpad or /tmp
-path. D37/D60/D76: counts and the largest individual items, never a mean alone; keep
+`origin/persona/s122-feed-wired` only. D34: no artifact names a desktop path or either
+temporary location. D37/D60/D76: counts and the largest individual items, never a mean alone; keep
 everything; a refusal is produced, never asserted.
 
 ## 1. Step 1 - the fetch with the receipt (`fetch_frankie_ledgers fetch`)
