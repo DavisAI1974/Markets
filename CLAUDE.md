@@ -1,8 +1,66 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-03, Session 124)
+# CLAUDE.md - DavisAI Markets / Kalshi (Updated 2026-09-03, Session 125)
 
-**NEXT ACTION:** Greg has authorized Claude to run Frankie. Follow
-`research/kalshi/DROP_IN_CLAUDE_RUN_FRANKIE_20260903.md` exactly; it is the current operational
-handoff and preserves the four sequential one-day boundary. No run was dispatched while creating it.
+**NEXT ACTION:** read `research/kalshi/DROP_IN_S126.md`, then
+`research/kalshi/SESSION_HANDOFF_2026-09-03_S125.md`. **ITEM ZERO IS GREG'S**: the Sunday run
+traversed and uploaded nothing because the box instance role has no S3 write; check the box
+volume for the ledgers BEFORE re-running anything, because a completed traversal on a disk is an
+undelivered run, not a failed one, and re-running burns the spend twice.
+
+## S125 - THE CANARY WAS ACCEPTED AND SUNDAY DELIVERED NOTHING (read `SESSION_HANDOFF_2026-09-03_S125.md` + `DROP_IN_S126.md`)
+
+**Branch = `chatgpt/frankie-raw-mbo-benchmark-20260828`, tip `7b7400b`. 2,021 tests / 6,433
+subtests green. D61 hash unchanged.**
+
+**THE FIRST TRAVERSAL EVER COMPLETED ON THIS LINEAGE.** Canary run 33745123325-1: verdict
+ACCEPTED, **0 failed gates, 18 of 18 contract sections fed**, and all four falsifiers answered
+for the first time - **F-20 PASS** (`withheld_no_own_clock` 0 and `withheld_close_occasion` 0,
+against 43,569 and 65,960 before the wiring), **F-30** `raw_actions` PRESENT, **F-26**
+`activity_since` PRESENT, **4.16** 51 change-point tracks.
+
+**THEN SUNDAY TRAVERSED AND UPLOADED NOTHING.** Run 33746436209, `mode=full`: every object at
+the prefix carries the staging timestamp, and `ledgers/`, `calculation_result.json`,
+`small_artifacts.tar.gz` and `PLAIN_SHA256SUMS` are all absent. The box was at 99.9% CPU with
+3.7 GB RSS at 11:07 and idle by 12:19, so it ran and finished; it did not hang. **The cause is
+already in this repo's own history** - `FRANKIE_A_ARM_FULL_DISPATCH_BLOCKER_20260830.md`: the box
+role has no S3 access at all, reads are worked around with presigned GETs and **the UPLOAD cannot
+be**. The scoped policy is written and NOT applied. Results are probably still on the 300 GB
+volume.
+
+**THE CENSUS IS 11.98x FASTER AND BYTE-IDENTICAL** (41.5 -> 496.8 rows/sec on a real
+181,380-byte member row), pinned by a differential against a reference implementation over 25
+adversarial shapes. **TWO EXPERIMENTS WERE REVERTED and are recorded so nobody re-runs them**: a
+path-string cache measured SLOWER (1.73x vs 1.82x - the f-string it avoided is cheaper than the
+dict lookup that replaced it), and a generation stamp gained nothing because CPython caches a
+string's hash after first use.
+
+**THE DIFFERENTIAL HAD TO BE FIXED TWICE, AND THAT IS THE LESSON.** Its first version subclassed
+the live census and reused the LIVE `_Field`, so **a defect injected into `_Field` cancelled on
+both sides** - the reviewer proved it by injection. And its corpus had no empty list, which is
+exactly the bug I shipped: hoisting `touched.add(path)` out of the element loop made an EMPTY
+list invent a field with zero observations, so **present-but-empty read as present** - the exact
+collapse that module's docstring exists to prevent, live at `native_clocks.py:559`. **A
+differential is only as strong as its inputs.**
+
+**ALMOST SHIPPED: `--emit-change-points` DOES NOT EXIST** (the launcher has
+`--no-change-points`), and the launch workflow had the wrong polarity at TWO sites - the second
+inside the box-dispatch heredoc, where it would have burned the spend. A regression test now runs
+every workflow flag against the launcher's `--help`.
+
+**DO NOT QUOTE THE 1.04x PARALLEL CEILING.** It was measured when the census was 78% of the
+traversal; at HEAD the ceiling is roughly 4.3x, and **~26% of the run was never attributed to any
+bucket and never decomposed.** Re-profile before optimising further. Order-book reconstruction is
+genuinely serial and no core count helps it.
+
+**THREE GITHUB ACTIONS GOTCHAS, each measured the hard way after I got the same input wrong three
+times:** an empty workflow input NEVER arrives (GitHub substitutes the input's own `default:`);
+`a && b || c` cannot carry a falsy value, so an expression can never yield `""`; therefore
+translate a sentinel like `ROOT` **in bash**, never in the expression.
+
+**ROSTER, exact from the manifest**: Sunday `20211003` 57,027 records first, then `20211001`
+1,504,374, `20211004` 1,994,358, `20211005` 2,111,930 - records-per-byte 0.058-0.059 on all four,
+so compressed size is a fair proxy here, checked rather than assumed. **Sunday is roster position
+1, so `build_finding_memory` raises `SeedBuildError` while Oct 1's artifact is `MISSING`** - the
+carry refusing a later day while an earlier one is absent, working as designed. Do not relax it.
 
 ## S124 CORRECTION — THE 44 ESTABLISHED FINDINGS ARE A_MEMORY
 
