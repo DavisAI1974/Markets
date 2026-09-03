@@ -1024,7 +1024,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **532 files.**
+new tool cannot go unlisted. **534 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `agent_frankie.py` — Frankie hybrid agent entry point.
@@ -1228,7 +1228,7 @@ new tool cannot go unlisted. **532 files.**
 - `test_chat_packet_seam.py` — (no docstring summary)
 - `test_corrected_a_arm_execution_gate.py` — (no docstring summary)
 - `test_emit_frankie_spawn.py` — The stop rule, and the hash check that makes the mission uneditable mid-flight.
-- `test_emit_spawn_gate_s123.py` — S123 Task A: the spawn emitter gates computed applicable inputs before rendering.
+- `test_emit_spawn_gate_s123.py` — S123 Task A: the computed layer gate is on the spawn-emission path."""
 - `test_fetch_frankie_ledgers.py` — The ledgers reach the session and are proven to be the ledgers the box reconciled.
 - `test_frankie_ledger_delivery_workflow.py` — D57 on the delivery workflow: parse the YAML, `bash -n` every run block, compile any
 - `test_knowledge_delivery_receipt.py` — The knowledge delivery receipt, produced FROM the existing pipeline, consumed by the crosswalk.
@@ -1285,6 +1285,7 @@ new tool cannot go unlisted. **532 files.**
 - `test_register_a_memory_knowledge.py` — The KEEP set reaches the knowledge manifest BY SCRIPT, routed to the one arm that runs.
 - `test_render_frankie_report.py` — The principal's report is a RENDER of his findings, never a separately authored document.
 - `test_report_ledger_size.py` — Turning a finished run into the table the drop decision needs.
+- `test_s123_frozen_document_stamps.py` — Regression gate for the F-35 supersession stamps on frozen records."""
 - `test_verify_ledger_size_witness.py` — What a witness must refuse to say.
 - `verify_ledger_size_witness.py` — The independent witness for a run's size, because the sink counting its own writes is not one.
 - `frankie_reflect.py` — Scheduled reflection over resolved Frankie evidence.
