@@ -157,9 +157,33 @@ jobs:
               raise SystemExit(0)
           for field in ("withheld_no_own_clock", "withheld_close_occasion",
                         "complete", "groups_delivered", "rows_delivered",
-                        "applicable_inputs", "inputs_not_delivered", "schema"):
+                        "applicable_inputs", "inputs_not_delivered", "schema",
+                        "total_mbo_records", "source_identity_hash"):
               if field in body:
                   print(f"  {field}: {json.dumps(body[field])[:600]}")
+          # PER-DAY RECORD COUNTS, exact. Runtime was being projected by splitting the
+          # roster total in proportion to COMPRESSED byte size, which assumes every day
+          # compresses alike. These are the counted values the manifest was built from.
+          sources = body.get("sources")
+          if isinstance(sources, list) and sources:
+              print("  per-source:")
+              rate = 47.1  # records/sec, measured single-core on the accepted canary
+              total = 0
+              for row in sources:
+                  if not isinstance(row, dict):
+                      continue
+                  name = row.get("name", "?")
+                  recs = row.get("mbo_records")
+                  size = row.get("bytes")
+                  if isinstance(recs, int):
+                      total += recs
+                      hours = recs / rate / 3600
+                      ratio = (recs / size) if isinstance(size, int) and size else 0
+                      print(f"    {name}  records={recs:>10,}  bytes={size:>12,}"
+                            f"  rec/byte={ratio:5.3f}  single-core={hours:6.2f}h")
+                  else:
+                      print(f"    {name}  records={recs!r}")
+              print(f"    TOTAL records={total:,}  single-core={total/rate/3600:.2f}h")
           print(f"  keys: {sorted(body)[:60]}")
           PY
           done
