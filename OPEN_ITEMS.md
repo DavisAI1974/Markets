@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 180 |
+| open | 181 |
 | in progress | 7 |
 | done | 22 |
 
-By size: **XS** 18, **S** 80, **M** 64, **L** 14
+By size: **XS** 18, **S** 80, **M** 64, **L** 15
 
 ---
 
-By tier: **ESSENTIAL** 32, **BIGGEST_WIN** 48, **REST** 107
+By tier: **ESSENTIAL** 33, **BIGGEST_WIN** 48, **REST** 107
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (32)
+## ESSENTIAL (33)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -57,6 +57,7 @@ By tier: **ESSENTIAL** 32, **BIGGEST_WIN** 48, **REST** 107
 | **A-69** | L | SELF-TRAINING LOOP: Frankie runs blinds on the WALKED corpus, grades himself with FJ-1, and the head is held out as the only true test | It creates the TRAIN/TEST SPLIT this project has never had, it uses a corpus we already own and have used once each, and its grader is already built and has never been run. It is also the mechanism that makes A-67's retention arm meaningful - retention with nothing to retain across is ceremony. |
 | **F-26** | L | THE SEVEN CLOCKS ARE WIRED BY REUSE, THE FIXED WINDOWS GO, THE 4.16 LADDER RETIRES, PRIOR BECOMES REACHABLE (D83) | Greg: zero hardcoded time intervals for anything; the clocks need to be wired into Frankie |
 | **F-31** | L | NOTHING WIRED IN S121 OR S122 HAS BEEN FED BY A RUN ON THE WIRED CODE - THE SUNDAY RE-RUN IS THE GATE | two sessions of build with zero runs is exactly the state Greg named when he said 'built but not wired and fed' |
+| **F-37** | L | A_MEMORY HAS NO DAY-OVER-DAY LOOP AND NEVER DID - THE SEED BUILDER IS CORRECT AND NOTHING CALLS IT (D90: build it, promote automatically, veto by LABEL, and Frankie argues his own carry) | ESSENTIAL because it is the arm itself. D86 retired A_CLEAN so that memory would be the whole program; with no loop, 'A_MEMORY' names a static seed and the arm's defining property does not exist. It also decides what the four-day roster is FOR - without accumulation each day is an independent run and the roster is four unrelated slices rather than a carry. |
 | **A-50** | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 
 ## BIGGEST WIN (48)
@@ -265,6 +266,7 @@ By tier: **ESSENTIAL** 32, **BIGGEST_WIN** 48, **REST** 107
 | **A-69** | ESSENTIAL | L | OPEN | S115 | SELF-TRAINING LOOP: Frankie runs blinds on the WALKED corpus, grades himself with FJ-1, and the head is held out as the only true test | - |
 | **F-26** | ESSENTIAL | L | IN_PROGRESS | S121 | THE SEVEN CLOCKS ARE WIRED BY REUSE, THE FIXED WINDOWS GO, THE 4.16 LADDER RETIRES, PRIOR BECOMES REACHABLE (D83) | - |
 | **F-31** | ESSENTIAL | L | OPEN | S122 | NOTHING WIRED IN S121 OR S122 HAS BEEN FED BY A RUN ON THE WIRED CODE - THE SUNDAY RE-RUN IS THE GATE | None |
+| **F-37** | ESSENTIAL | L | OPEN | S123 | A_MEMORY HAS NO DAY-OVER-DAY LOOP AND NEVER DID - THE SEED BUILDER IS CORRECT AND NOTHING CALLS IT (D90: build it, promote automatically, veto by LABEL, and Frankie argues his own carry) | None |
 | **A-50** | ESSENTIAL | ? | OPEN | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 | **O-2** | BIGGEST_WIN | XS | OPEN | S114 | RECORD THE S111 OPTIONS VERDICT AS A BINDING DECISION - it exists only in a file-index blurb | - |
 | **A-15** | BIGGEST_WIN | S | OPEN | S112 | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | - |
@@ -1004,6 +1006,20 @@ Three clocks are FULL in native_clocks.member_clock_row and need a naming wrappe
 **Already delegated:** None
 
 Two sessions of wiring have landed and NOT ONE of them has produced a run. The only feeding done (S122, the feed persona) ran the S121 CODE against run 33630348943's ledgers, which were written by PRE-CENSUS code - so the code was exercised, the DATA was old, and every number in FRANKIE_FEED_RECORD_SUNDAY_33630348943_20260903.md is a BEFORE-number. Unfed as of the S122 close: per-record raw_actions on the member row (F-30), emitted_at_recv_ns on every lifecycle row (F-20, whose falsifier is 'withheld counts read zero on a FRESH run'), activity_since on event anchors with the fixed windows retired (F-26), change points ON by default, the seven clocks by registry id, RecognitionLabel, the crosswalk computing evidence from delivered carriers, the A_MEMORY seed, the knowledge delivery receipt, the sealed-absence proof, the output ledgers and the read-back handoff trio. The launch workflow's seal step was VERIFIED to pass at the S122 close, so the run is no longer blocked. FALSIFIER: closed when a run on the wired code exists and its crosswalk row names each of the above with a receipt hash.
+
+---
+
+### [ESSENTIAL] F-37 - A_MEMORY HAS NO DAY-OVER-DAY LOOP AND NEVER DID - THE SEED BUILDER IS CORRECT AND NOTHING CALLS IT (D90: build it, promote automatically, veto by LABEL, and Frankie argues his own carry)
+
+*size L | OPEN | raised S123 | BLOCKED BY: None*
+
+**Why it is ESSENTIAL:** ESSENTIAL because it is the arm itself. D86 retired A_CLEAN so that memory would be the whole program; with no loop, 'A_MEMORY' names a static seed and the arm's defining property does not exist. It also decides what the four-day roster is FOR - without accumulation each day is an independent run and the roster is four unrelated slices rather than a carry.
+
+**Source:** S123
+
+**Already delegated:** None
+
+MEASURED THIS SESSION, read-only on b896c3f: NO workflow ingests run outputs into A_MEMORY and none ever did. `frankie_native_knowledge_refresh_20260828.yml` is a DETERMINISM GATE - its `git diff --exit-code` step makes ingestion impossible by construction. `build_a_memory_seed.py` is the ONLY path from a past run into the seed, derives membership by rule, and NO workflow calls it (nor register_a_memory_knowledge, rebind_registry_knowledge_layers, or a_memory_prepare); its docstring documents them as a manual four-command sequence. NO workflow references `principal_runs/`, which holds exactly ONE entry (33605852433); `prior_memory/` holds one. The launch workflow contains no git add/commit/push - it PUTs six outputs to S3 and returns. `a_memory_rt_resume_20260828.py` is checkpoint/resume WITHIN a run, not the carry. So D86's 'memory is his own day-over-day carry' is currently ONE FROZEN FILE. Commit 8039f39 removed the wrong-data PACKAGE step, not an accumulation loop - there was never a loop, which makes this a BUILD item and not a regression, and is the more useful framing because nobody should go hunting for what broke. D90 (Greg) rules it built: automatic promotion (a deliberate rejection of the reviewed-PR pattern the refresh workflow already carries - a carry that waits for a human to merge is not a day-over-day carry), a veto that is a LABEL and never a deletion (D60/D76; the precedent is the wrong-data run sitting in the seed AS the wrong-data run, labelled, never filtered), bounded by the roster the manifest pins at exactly four so the number is derived and never typed, and Frankie emitting his own case for each carried lesson. THE DESIGNED-AGAINST RISK: if the gate is 'convincing', the optimised thing is rhetoric - so the case is structured evidence (claim, stream evidence, falsifier, what changed), only stream evidence moves a lesson UNVERIFIED -> VERIFIED, and an unpersuasive argument is NOT grounds for veto while an unfalsifiable one is. FALSIFIER: closed when a fixture run's outputs reach the committed tree, the seed rebuild runs and commits with no human, the next spawn's knowledge block carries the new entry, a vetoed id stays PRESENT and UNSERVED across a rebuild, and every promoted lesson carries a falsifier.
 
 ---
 

@@ -266,3 +266,145 @@ turned out to be wrong**; every decision that belongs to Greg, stated and left o
 is dropped while it waits), specifically the Task B list of layers that cannot be accounted without
 a run; and confirmation that no transient file was written outside `data/`, that the D61 adapter is
 byte-identical, and that no workflow was dispatched.
+
+---
+
+# ADDENDUM - TASKS G, H, I (added S123 after the first report; base `b896c3f`)
+
+Section 0's rules all still apply, **including rule 10: dispatch nothing.** These came from your own
+diagnosis and from Greg's ruling on it. I have not re-verified G's and H's anchors - confirm each by
+execution, and if a claim is wrong, say so and stop.
+
+**Order: H, G, I, then A, B, C, D, E, F.** H unblocks any run at all. G is C's prerequisite. I is the
+largest and is now the reason the rest matters.
+
+---
+
+## TASK G - the knowledge block is gated on but never rendered into the prompt
+
+`emit_frankie_spawn.py` loads the knowledge receipt only for crosswalk and gating; it never imports
+or calls `render_knowledge_block`, so the emitted prompt does not contain it. Frankie is spawned
+knowledge-gated and knowledge-blind.
+
+1. **Before packet Task C.** The read gate proves the exact model-visible context sits inside the
+   serialized principal input. With no rendered block there is no context to prove and the gate is
+   decorative.
+2. Render in `emit()` from **the same receipt object the gate consulted** - not a re-load, not a
+   re-read. What he is gated on and what he reads must be the same bytes, or the gate certifies a
+   document he was never shown.
+3. D82: import every name from the module that carries the block. Do not restate its schema,
+   headings or counts in `emit_frankie_spawn.py`.
+4. Tests: the prompt CONTAINS the rendered block; the block is derived from the gated receipt
+   (assert the binding, not a substring); an absent receipt still refuses as today.
+5. Report prompt size before and after - a D60 size decision, recorded now.
+
+**Push G even though the seed is static** (see Task I). Today he reads no block at all, so a static
+block is undetectable; once he reads one, "the same block every day" becomes an observable fact.
+Do not widen G to build the loop.
+
+---
+
+## TASK H - the checkpoint memory-mode token mismatch (BLOCKER)
+
+A bounded local A_MEMORY launch raises `CheckpointError: unknown benchmark memory mode`:
+`native_a_arm_launch.py` writes `MEMORY`, the checkpoint contract accepts `MEMORY_ASSISTED`.
+
+1. Find which token is canonical before changing either side. Locate the contract's definition of
+   the accepted set and every writer and reader. The contract is the authority unless you can show
+   the contract itself is wrong.
+2. **Correct the WRITER.** Widening the accepted set so both pass is weakening a refusal to make a
+   run go green - section 7 item 5. If the contract really is the wrong side, say so with the
+   evidence and stop; that is a ruling.
+3. `MEMORY_ASSISTED` and the arm id `A_MEMORY` are different vocabularies. Do not collapse them.
+4. Treat it as a class: sweep every other token the launcher writes into the checkpoint against that
+   contract and report every mismatch, fixed or not.
+5. Tests: a bounded local A_MEMORY launch reaches checkpoint without raising; an unknown mode still
+   raises by name. Reproduce the original failure first, then show the path passing.
+6. Report whether the canary would have failed on this had it been dispatched.
+
+---
+
+## TASK I - THE DAY-OVER-DAY LOOP (D90, F-37)
+
+**The measured gap.** No workflow ingests run outputs into A_MEMORY and none ever did.
+`frankie_native_knowledge_refresh_20260828.yml` is a determinism gate - its `git diff --exit-code`
+step makes ingestion impossible by design. `build_a_memory_seed.py` is the only path from a past run
+into the seed and **no workflow calls it**. **No workflow references `principal_runs/`**, which holds
+exactly one run. The launch workflow commits nothing; it PUTs to S3 and returns. `8039f39` removed
+the wrong-data PACKAGE step, not a loop - **there was never a loop, so this is a build item, not a
+regression.** Do not go looking for what broke.
+
+**Greg's ruling (D90), verbatim:** *"I'm going to have him build the loop and close this. we'll do an
+automatic promote but we can veto it. it's only going to be these 4 days. if it's problematic we can
+change it. we'll have Frankie print this out also and make a convincing argument for us to allow
+it."*
+
+### I.1 Close the loop
+
+The parts exist and are unwired. `build_a_memory_seed.py` derives membership **by rule**, so a newly
+committed output lands in the seed on the next `--write`; its docstring names the four-command
+sequence (`build_a_memory_seed` -> `register_a_memory_knowledge` -> `rebind_registry_knowledge_layers`
+-> `refresh_native_frankie_knowledge`) that nothing calls.
+
+Two links to close, and **name which one you are closing in each commit**:
+
+- **Outputs must reach the committed tree.** A completed run's outputs land under
+  `principal_runs/<run_id>/`. Decide from the existing machinery whether that is the launch workflow,
+  the delivery workflow, or a new step, and say why. The seed reads the tree, not S3.
+- **The sequence must run automatically** once they land, and the result is committed.
+
+### I.2 Promotion is AUTOMATIC - this is a deliberate rejection of the PR pattern
+
+`frankie_native_knowledge_refresh_20260828.yml` already carries a "Create reviewed refresh pull
+request" job. **Do not copy it here.** A carry that waits for a human to merge is not a day-over-day
+carry. The promotion commits.
+
+If you find a concrete reason automatic promotion cannot work (a permissions wall, a loop where the
+promotion commit retriggers the run), **state it and stop** - do not silently fall back to a PR.
+
+### I.3 THE VETO IS A LABEL, NEVER A DELETION
+
+D60 and D76 govern, and the precedent is already inside the seed: the wrong-data run
+`32851909748-1` sits there **as the wrong-data run, labelled, never filtered.** Same shape here.
+
+- A vetoed entry **stays in the seed** with a status and stops being SERVED.
+- Veto is by **stable id**, recorded in a committed file, applied by the builder on the next write.
+- A veto is **idempotent and survives a rebuild** - a rebuild that resurrects a vetoed entry is the
+  defect this bullet exists to prevent, so write that test first.
+- **Never implement the veto as a git revert.** That discards the run record along with the lesson.
+
+### I.4 The bound is the roster, and the number is never typed
+
+`raw_mbo_source_manifest` pins the roster at exactly four objects
+(`raw_mbo_source_manifest.py:153, 203`). "These four days" IS the roster. **Derive the bound from
+the manifest; never type `4`** (rule 7). A fifth day is then a manifest change, which is a contract
+change, which is Greg's - not something the loop can drift into.
+
+### I.5 Frankie argues for his own carry - as EVIDENCE, not persuasion
+
+Greg wants the promotion to arrive with its own case so the veto has something to read.
+
+**The risk, named so you design against it: if the gate is "convincing", the thing being optimised is
+rhetoric.** So this is a structured output, not an essay. Per carried lesson:
+
+- a stable id, and what the lesson CLAIMS;
+- the **stream evidence** that verified it - this is where D86's UNVERIFIED becomes VERIFIED, and
+  **only stream evidence may make that transition**, never the argument's own confidence;
+- what would **falsify** it;
+- what **changed** since the prior day (day one has no prior - say so, do not synthesise one).
+
+**An unpersuasive argument is not grounds for veto. An unfalsifiable one is.** A lesson with no
+falsifier stays UNVERIFIED and is not promoted, however well argued.
+
+Wire it as a required output the same way the existing ones are wired - derived, no typed count -
+and let the veto file cite a lesson id so a veto names what it rejected.
+
+### I.6 Done when
+
+A fixture run's outputs reach the committed tree, the seed rebuild runs and commits without a human,
+the next spawn's knowledge block (Task G) carries the new entry, a vetoed id stays present and
+unserved across a rebuild, the bound comes off the manifest, and every promoted lesson carries a
+falsifier. Each with a test that fails without its fix.
+
+**Report to Greg, do not decide:** anything the loop cannot verify on its own, and any promotion you
+believe should have been vetoed and was not.
