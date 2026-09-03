@@ -15,6 +15,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from research.kalshi.frankie_raw_mbo_benchmark import native_a_arm_launch as launcher
+from research.kalshi.frankie_raw_mbo_benchmark.benchmark_checkpoint import (
+    CheckpointError,
+    build_checkpoint,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import canonical_hash
 from research.kalshi.frankie_raw_mbo_benchmark.corrected_a_arm_execution_gate_20260828 import (
     CorrectedExecutionGateError,
@@ -226,6 +230,34 @@ class LaunchSliceTest(unittest.TestCase):
         self.assertGreater(result["traversal"]["save_points"], 0)
         self.assertEqual(body["phase"], "RT_NATIVE_TRAVERSAL")
         self.assertFalse(body["event_group_open"], "a save point mid-group is not resumable")
+
+    def test_a_memory_slice_reaches_a_canonical_memory_assisted_checkpoint(self):
+        """A_MEMORY is the arm id; MEMORY_ASSISTED is the checkpoint-mode token."""
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            result = self._launch(out, arm="A_MEMORY", run_id="slice-a-memory")
+            written = sorted((out / "checkpoints").glob("checkpoint-*.json"))
+            body = json.loads(written[-1].read_text(encoding="utf-8"))
+        self.assertEqual(result["verdict"], ACCEPTED, result["failed_gates"])
+        self.assertEqual(body["memory_mode"], "MEMORY_ASSISTED")
+
+    def test_checkpoint_contract_still_refuses_an_unknown_memory_mode_by_name(self):
+        with self.assertRaisesRegex(CheckpointError, "unknown benchmark memory mode"):
+            build_checkpoint(
+                run_id="unknown-mode",
+                controller="A_CHATGPT",
+                memory_mode="MEMORY",
+                sequence=0,
+                source_manifest_hash="e" * 64,
+                completed_mbo_records=0,
+                total_mbo_records=1,
+                event_group_open=False,
+                adapter_state_hash="a" * 64,
+                controller_state_hash=None,
+                previous_checkpoint_hash=None,
+                phase="RT_NATIVE_TRAVERSAL",
+                locked=False,
+            )
 
     def test_every_section_the_traversal_feeds_reports_a_real_ingest(self):
         with tempfile.TemporaryDirectory() as tmp:

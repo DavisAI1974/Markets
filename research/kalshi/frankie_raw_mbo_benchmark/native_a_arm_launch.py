@@ -466,7 +466,7 @@ def launch(
     checkpointer = PeriodicCheckpointer(
         run_id=run_id,
         controller="A_CHATGPT",
-        memory_mode="CLEAN" if arm == "A_CLEAN" else "MEMORY",
+        memory_mode="CLEAN" if arm == "A_CLEAN" else "MEMORY_ASSISTED",
         source_manifest_hash=source_manifest["manifest_hash"],
         total_mbo_records=identity.total_mbo_records,
         checkpoint_dir=checkpoint_dir,
