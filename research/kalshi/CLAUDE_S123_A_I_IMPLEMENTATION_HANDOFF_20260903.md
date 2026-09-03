@@ -1,5 +1,13 @@
 # Claude handoff — S123 Tasks A–I and legacy repairs
 
+> **S124 correction before any run:** The 44 findings in the historical A_CLEAN artifact are now
+> also present unchanged in Frankie's A_MEMORY seed and served as `VERIFIED`. Original ids, content,
+> dates and source provenance are preserved; the normal exemplar admission path for future findings
+> is unchanged. Future admitted findings enter as `NEW`, meaning recent rather than uncertain. This
+> supersedes the exclusion conclusion in “Task I: actual memory-loop contract” and the later
+> UNVERIFIED→VERIFIED sentence. The regenerated build-time knowledge block is 128,418 bytes; the
+> 15,999-byte number below is the earlier pre-correction fixture measurement. Nothing was dispatched.
+
 Date: 2026-09-03
 
 Repository: `DavisAI1974/Markets`

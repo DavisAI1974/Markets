@@ -158,6 +158,13 @@ class BuildKnowledgeDeliveryTest(unittest.TestCase):
                 self.assertEqual(files[0]["load_mode"], "ALWAYS_LOAD")
         self.assertIn(b"FRANKIE_A_MEMORY_SEED_V1", self.delivery.model_visible_context)
 
+    def test_the_44_verified_seed_findings_are_delivered_to_a_memory(self) -> None:
+        findings = self.receipt["memory_findings"]
+        self.assertEqual(len(findings), 44)
+        self.assertEqual([row["id"] for row in findings], [f"F-{number:02d}" for number in range(1, 45)])
+        self.assertTrue(all(row["status"] == "VERIFIED" for row in findings))
+        self.assertTrue(all(row["served"] is True for row in findings))
+
     def test_the_delivered_artifact_set_is_the_profiles_whole_set_in_profile_order(self) -> None:
         profile = self.manifest["profiles"][self.receipt["profile_id"]]
         self.assertEqual(
@@ -255,6 +262,11 @@ class RenderKnowledgeBlockTest(unittest.TestCase):
         self.assertIn("UNVERIFIED", self.text)
         for marker in LOCAL_PATH_MARKERS:
             self.assertNotIn(marker, self.text)
+
+    def test_the_block_puts_every_verified_seed_finding_in_frankies_prompt(self) -> None:
+        self.assertIn("### A_MEMORY findings served now", self.text)
+        for number in range(1, 45):
+            self.assertIn(f"#### F-{number:02d} — VERIFIED", self.text)
 
 
 class ValidateKnowledgeUseTest(unittest.TestCase):

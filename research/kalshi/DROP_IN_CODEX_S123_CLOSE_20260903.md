@@ -1,5 +1,11 @@
 # Drop-in for Codex — S123 closeout continuation
 
+> **S124 correction:** Add the existing 44 historical findings unchanged to Frankie's A_MEMORY seed
+> and serve them as `VERIFIED`. Keep their original ids, content, dates and A_CLEAN provenance. This
+> is seed availability, not a schema migration and not a weakening of the future exemplar gate.
+> Future admitted findings are `NEW`; NEW means recency, not uncertainty. The build-time rendered
+> knowledge block is now 128,418 bytes. No workflow or run was dispatched.
+
 Repository: `DavisAI1974/Markets`
 
 Branch: `chatgpt/frankie-raw-mbo-benchmark-20260828`

@@ -1,4 +1,4 @@
-"""The principal's OUTPUT ledgers: the required set is derived, never counted in advance.
+"""The principal's OUTPUT ledgers: the required set is derived above a protected baseline.
 
 Frankie receives every record of every field for the day as a causal stream in `ts_recv_ns`
 order and computes every calculation-contract section himself (D81). What he writes is
@@ -8,23 +8,22 @@ and the registry group `append_only_outputs` (`proof_mode: APPEND_ONLY_HASH_CHAI
 `activation_stage: SEQUENTIAL_AS_PRODUCED`). This module is the schema and the validator for
 that output surface. Staging calls it; it edits nothing staging owns.
 
-**THE REQUIRED SET IS DERIVED AT VALIDATION TIME, AND THERE IS NO FLOOR BELOW IT.** Greg
-(DROP_IN_S121, ruling 4): *"don't take any historical number like that as a valid number
-that we should follow"*; *"not 10 as the floor. if it's supposed to have 30, the floor is
-28. 10 is how 20 get silently dropped."* So the set is:
+**THE REQUIRED SET IS DERIVED AT VALIDATION TIME, WITH THE CURRENT EIGHTEEN AS ITS FLOOR.**
+The protected baseline is the actual section identities 4.0, 4.0b and 4.1 through 4.16,
+not a scalar count that a replacement heading could satisfy. Every later `### 4.x` heading
+automatically grows the required set. So the set is:
 
 - every layer id of the loaded registry's `append_only_outputs` group, read from the
   registry object handed in - never typed here;
 - one ledger per `### 4.x` heading of the calculation contract, read from the contract TEXT
-  handed in (`contract_section_<id>`, including 4.0 and 4.0b); adding a heading adds a
-  required ledger with no edit here;
+  handed in (`contract_section_<id>`, including the protected baseline); adding a heading
+  adds a required ledger with no edit here, while deleting a baseline heading is refused;
 - the mission's section 9a raw-MBO classification (`raw_mbo_classification`); and
 - the knowledge-verification record (`knowledge_verification`), one verdict per delivered
   lesson.
 
-A bundle missing any one of them is a refused spawn. No constant in this module names a
-count, and `tests/test_native_principal_outputs.py` asserts that by reading the module's
-own AST.
+A bundle missing any one of them is a refused spawn. The floor is expressed as section
+identities, not an integer count, so deleting 4.0b and adding 4.17 cannot silently pass.
 
 **THE SHAPE.** Every ledger is an `AppendOnlyLedger`: entries carry a monotone `sequence`, a
 nondecreasing `cutoff_recv_ns` (the F_LAST `ts_recv_ns` after which the entry was written -
@@ -88,6 +87,12 @@ KNOWLEDGE_VERIFICATION_LEDGER = "knowledge_verification"
 
 #: `### 4.0`, `### 4.0b`, `### 4.16` - the section id is the token after the marks.
 CONTRACT_SECTION_HEADING_RE = re.compile(r"^### (4\.[0-9]+[a-z]?)\b", re.MULTILINE)
+#: Greg, S124: eighteen is the floor. Identities enforce the real baseline; a bare count
+#: would let deleting 4.0b and adding 4.17 pass. Extra headings remain automatically required.
+MINIMUM_CONTRACT_SECTION_IDS = (
+    "4.0", "4.0b", "4.1", "4.2", "4.3", "4.4", "4.5", "4.6", "4.7",
+    "4.8", "4.9", "4.10", "4.11", "4.12", "4.13", "4.14", "4.15", "4.16",
+)
 
 
 class PrincipalOutputError(ValueError):
@@ -130,6 +135,11 @@ def contract_section_ids(contract_text: str) -> tuple[str, ...]:
         raise PrincipalOutputError("contract text carries no `### 4.x` section headings")
     if len(set(ids)) != len(ids):
         raise PrincipalOutputError("contract text repeats a `### 4.x` section heading")
+    missing_baseline = [section for section in MINIMUM_CONTRACT_SECTION_IDS if section not in ids]
+    if missing_baseline:
+        raise PrincipalOutputError(
+            f"calculation contract is below the protected baseline; missing {missing_baseline}"
+        )
     return ids
 
 

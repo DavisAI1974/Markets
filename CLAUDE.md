@@ -1,4 +1,39 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-03, Session 123)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-03, Session 124)
+
+## S124 CORRECTION — THE 44 ESTABLISHED FINDINGS ARE A_MEMORY
+
+Greg corrected the S123 closeout before the next run: the 44 findings in
+`principal_runs/33605852433/frankie_principal_findings.json` are added to Frankie's existing
+A_MEMORY seed **unchanged** and served as `VERIFIED`. Their original `F-01`–`F-44` ids, content,
+dates and historical A_CLEAN source provenance remain intact; this is an addition to the seed, not
+a migration or a relaxation of the normal admission path. They are verified because they were
+established over the prior group runs. Future daily findings still pass the existing exemplar and
+falsifier admission gates and enter as `NEW`; **NEW means recent, not unverified**. `VETOED` remains
+the only finding label that prevents service. This supersedes D91's historical-exclusion conclusion
+and the S123 phrases saying the day-one memory is the seed alone or the 44 are not in memory.
+
+The regenerated seed serves all 44 findings. Its rendered knowledge block is **128,418 bytes** in
+the build-time receipt fixture after this correction. That is a pre-run component measurement, not
+the actual emitted prompt from a live run. The earlier 13,092 -> 15,999-byte (+22.2%) number remains
+the pre-correction G fixture measurement. Nothing was dispatched.
+
+**ALL CALCULATIONS ARE WIRED TO FRANKIE, NOT MERELY BUILT.** The mission and calculation contract
+are both `ALWAYS_LOAD`; the emitter repeats that Frankie computes every current `### 4.x` contract
+section himself from the causal stream; and the output gate derives the section-ledger set from the
+contract. The current set is 18—4.0, 4.0b and 4.1–4.16—and the gate refuses the spawn if any is
+missing. S124 made the mission's completion rule explicit: every current section returns a computed
+result or a reasoned `NULL_RESULT`; none may be silently omitted. The contract, never a typed count,
+is authoritative if the set grows again. **Those 18 exact section identities are now the floor**;
+the contract may add sections but may not delete or swap out a baseline section. The mission also
+says why: these are instruments for
+finding causal market mechanics, relationships, falsifiers and possible signals—including links to
+exhaustion—not a set of math exercises or ledgers to fill mechanically.
+
+**RAW-MBO VALUE REVIEW, WITHOUT A FORCED CASUALTY:** after inspecting the full raw MBO, Frankie
+evaluates whether any raw-data layer or field group contributes no useful information to ongoing
+ingestion. If the evidence supports one, he recommends it for elimination and Greg decides; Frankie
+never removes it himself. He is under no obligation to identify one, and `KEEP EVERYTHING` remains a
+fully valid answer.
 
 ## S123 — THE WIRING IS FINISHED AND THE RUN IS THE ONLY THING LEFT (read `SESSION_HANDOFF_2026-09-03_S123.md` section 0 + `DROP_IN_S124.md`)
 

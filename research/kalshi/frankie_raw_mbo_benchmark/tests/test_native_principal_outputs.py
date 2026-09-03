@@ -89,6 +89,16 @@ class RequiredSetIsDerivedTest(unittest.TestCase):
         self.assertEqual(len(after), len(before) + 1)
         self.assertEqual(set(after) - set(before), {"contract_section_4.17"})
 
+    def test_the_current_eighteen_are_a_floor_not_a_replaceable_count(self):
+        contract = contract_today().replace(
+            "### 4.0b Detector coverage and rejection accounting",
+            "#### 4.0b Detector coverage and rejection accounting",
+            1,
+        )
+        contract += "\n### 4.17 A replacement cannot hide the deletion\n\nText.\n"
+        with self.assertRaisesRegex(outputs.PrincipalOutputError, "baseline.*4.0b"):
+            outputs.contract_section_ids(contract)
+
     def test_removing_an_output_layer_from_a_registry_copy_shrinks_the_set_by_one(self):
         registry, contract = registry_today(), contract_today()
         before = outputs.required_ledger_ids(registry, contract)
@@ -110,7 +120,7 @@ class RequiredSetIsDerivedTest(unittest.TestCase):
             outputs.registry_output_layer_ids(registry)
 
     def test_no_module_level_constant_names_a_count(self):
-        # Ruling 4. A count typed into the module is the number that becomes the floor.
+        # The floor is the exact baseline identities, not a scalar count that replacements satisfy.
         tree = ast.parse(inspect.getsource(outputs))
         offenders = []
         for node in tree.body:

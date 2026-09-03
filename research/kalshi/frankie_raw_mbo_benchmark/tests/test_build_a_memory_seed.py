@@ -196,7 +196,10 @@ class MissionPinTest(unittest.TestCase):
         self.assertEqual(mission_seed_sha256(text), sha256_of(SEED_PATH))
         lowered = " ".join(text.lower().split())  # the mission wraps at 80 columns
         self.assertIn("32851909748-1", text)
-        self.assertIn("unverified", lowered)
+        self.assertIn("44 established findings", lowered)
+        self.assertIn("as `verified`", lowered)
+        self.assertIn("future admitted daily findings enter as `new`", lowered)
+        self.assertIn("new records recency, not uncertainty", lowered)
         self.assertIn("day two", lowered)
         self.assertIn("a-clean", lowered)
 

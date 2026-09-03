@@ -48,13 +48,16 @@ rewind or random access. The runner's own `calculation_result.json` is not your 
 - A-memory is the one arm that runs, and its memory is your own day-over-day carry
   of your frozen outputs. On day one it is SEEDED, never faked: the seed is every
   committed output of the past runs, each file listed with its SHA-256, bytes and
-  a provenance label (run id, data surface, pre- or post-correction), every lesson
-  UNVERIFIED until you verify it against the stream; the reduced wrong-data run
-  32851909748-1 is in the seed AS the wrong-data run, labelled, never filtered
-  (D76). No canary output is committed, so the last run seeds it (D88). From day
-  two the memory is your own prior-day frozen outputs plus the seed. The seed is
+  a provenance label (run id, data surface, pre- or post-correction). The 44
+  established findings from the prior group runs are also available individually
+  in that seed as `VERIFIED`, unchanged and with their historical source provenance.
+  Future admitted daily findings enter as `NEW`; NEW records recency, not uncertainty.
+  The reduced wrong-data run 32851909748-1 is in the seed AS the wrong-data run,
+  labelled, never filtered (D76). No canary output is committed, so the last run
+  seeds it (D88). From day two the memory is your own prior-day frozen outputs plus
+  the seed. The seed is
   `research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json`
-  (SHA-256 `39c2c2e4d40a0a88a93099bfa8c98e15e416dbc30087c7e6705d7736f6dfd177`).
+  (SHA-256 `4a47b09d5b19a9165c570f9432d2f3190a657843009536d5dad9a6bd99d83f4a`).
   You never receive the old reduced market rows themselves.
 
 Load retained knowledge only through the hash-bound manifest at
@@ -148,15 +151,21 @@ For every candidate, reconstruct a causal runway containing:
 7. event, receive, availability, and decision clocks; and
 8. observed facts separated from hypotheses.
 
-## 5. The deterministic calculation surface — sixteen sections, not one job
+## 5. The deterministic calculation surface — every contract section, not one job
 
-Exhaustion and book state are one part of the work. **You compute the sixteen**
-calculation-contract sections yourself, from the complete causal stream of section 2, at
+Exhaustion and book state are one part of the work. **You compute every current `### 4.x`
+calculation-contract section yourself**, from the complete causal stream of section 2, at
 every lawful cutoff, exactly as the contract at
 `research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md` specifies
 them. Most are not about exhaustion. Treat the whole surface as your subject: a finding in
 queue survival or ladder topology is as valuable as one about a runway, and several of these
 sections have never been studied on native MBO at all.
+
+**These calculations are not a set of math exercises.** They are instruments for interrogating
+the raw MBO: use them to uncover causal market mechanics, relationships, falsifiers and possible
+signals, and to show when non-exhaustion behavior does or does not connect to exhaustion. The goal
+is to explain what the market is doing, what precedes or changes it, and what the evidence rules
+out—not merely to fill ledgers with numbers.
 
 **You calculate, and you interpret; the runner captures, retains and proves.** The runner's
 job is to deliver every record of every field, retain it, and prove nothing was dropped -
@@ -167,8 +176,19 @@ adopted. Consume the stream in causal order through `native_causal_stream.Causal
 with no random access, and do not treat a mechanical summary as a finding - the finding is
 what the evidence supports.
 
+**A run is incomplete until every `### 4.x` section in the loaded contract has its own computed
+result in the required `contract_section_<id>` ledger. That currently includes 4.0, 4.0b and
+4.1 through 4.16, and those eighteen are the minimum baseline; the set grows automatically
+with every later contract heading. No calculation section may be silently omitted.**
+If the lawful population is empty or the result is absent on a
+stratum, write an explicit `NULL_RESULT` with its population and reason; absence is still
+a calculation result. The output-bundle validator derives the complete required section
+set from the contract and refuses the entire spawn if any one section ledger is missing.
+
 | § | Section | What it gives you |
 |---|---|---|
+| 4.0 | Per-second flow and quote substrate | Every completed second's own flow/quote class plus the trailing-window quantities consumed downstream |
+| 4.0b | Detector coverage and rejection accounting | The full searched, promoted, rejected, warm-up and pending population behind downstream exhaustion rates |
 | 4.1 | Identity, integrity, exact members | Every F_LAST-closed group, exactly once, with its raw action tuple preserved |
 | 4.2 | Daily book regime companion | Per-day first/last/min/max/mean for spread, imbalance, depth, order and level counts |
 | 4.3 | Open-world families and members | Content-derived family IDs; unmatched and singleton members retained |
@@ -392,8 +412,9 @@ Return strict structured output containing:
 ### 9a. The raw MBO: what carries value and what, if anything, could be dropped
 
 This is a REQUIRED output and it is not the calculation question. The calculations are
-settled and all sixteen are kept; they are about 1.78% of the bytes and no calculation can
-be argued away on cost. **This asks about the raw MBO information itself** - the retained
+settled and every current contract section is kept; the previously measured calculation
+outputs were about 1.78% of the bytes and no calculation can be argued away on cost.
+**This asks about the raw MBO information itself** - the retained
 per-record fields, the reconstructed book including `book_full`, the ladder, the legacy
 observable rows and the per-second substrate.
 
@@ -404,6 +425,13 @@ returns a calculation verdict in its place has not answered it.
 **KEEP-EVERYTHING IS A FIRST-CLASS ANSWER AND CARRIES NO PENALTY.** A question shaped as
 "what can we drop" pressures the answer toward a casualty, and this programme has already
 paid for exactly that. If every field earns its retention, say so and say why.
+
+After you have inspected the full raw MBO directly, evaluate whether any raw-data layer or
+field group makes no useful contribution—its ongoing ingestion provides no value to your
+calculations, causal interpretation, discovery, falsification or downstream hypotheses. If
+the evidence supports that conclusion, recommend it for elimination and show why; Greg will
+decide whether we eliminate it. You are under no obligation to identify one, and you must not
+manufacture a casualty merely because the question was asked.
 
 **YOU ADVISE; YOU NEVER DROP.** Nothing is removed on your say-so. A field is USED, or
 RETAINED and counted, or REFUSED loudly, and any actual removal is a decision made by Greg

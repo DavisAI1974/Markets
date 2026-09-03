@@ -979,17 +979,20 @@ def render_knowledge_block(receipt: Mapping[str, Any]) -> str:
         add("### Memory")
         add("")
         add(f"`{A_MEMORY_SEED_PATH}` (sha256 `{seeds[0]['sha256']}`) is your day-one memory (D86, D88):")
-        add("every committed output of the past runs, provenance-labelled, every lesson UNVERIFIED")
-        add("until you verify it against the stream. From day two only admitted new findings")
-        add("accumulate. Empty findings artifacts remain run receipts and add no memory entry.")
+        add("every committed output of the past runs, provenance-labelled. Its file entries retain")
+        add("their UNVERIFIED labels; the 44 established findings are individually VERIFIED and")
+        add("served below. From day two only admitted NEW findings accumulate. NEW records recency,")
+        add("not uncertainty. Empty findings artifacts remain run receipts and add no memory entry.")
         add("The reduced wrong-data run 32851909748-1 remains labelled as the wrong-data run.")
         add("")
     memory_findings = receipt.get("memory_findings", [])
     if memory_findings:
-        add("### Admitted day-over-day findings served now")
+        add("### A_MEMORY findings served now")
         add("")
         add("Only findings whose committed label permits service appear here. Vetoed findings")
         add("remain in the seed as run evidence and are never rendered into this served list.")
+        add("NEW marks when a finding entered memory, not doubt about whether it truthfully")
+        add("represents the run that produced it. VERIFIED marks the established prior findings.")
         add("")
         for row in memory_findings:
             add(f"#### {row['id']} — {row['status']}")
@@ -1009,8 +1012,10 @@ def render_knowledge_block(receipt: Mapping[str, Any]) -> str:
     add("\"UNINSPECTED\", \"reason\": \"<why>\"}`. An artifact missing from the inventory, an id nobody")
     add("delivered, a disposition other than those two, or an empty reason is refused by the staging")
     add("gate through the read gate (`bind_principal_knowledge_use`). UNINSPECTED with an honest")
-    add("reason is a valid answer; a claimed inspection is not. Every lesson you receive is")
-    add(f"UNVERIFIED until you file its verdict in `output_knowledge_verification` citing this receipt.")
+    add("reason is a valid answer; a claimed inspection is not. File-entry lessons retain their")
+    add("delivered verification label. Memory findings are VERIFIED or NEW as shown above; NEW")
+    add("describes when the finding entered memory, not whether its source-run representation is true.")
+    add("File any later verdict in `output_knowledge_verification` citing this receipt.")
     add("")
     return "\n".join(lines)
 
@@ -1031,7 +1036,7 @@ def served_memory_findings(seed: Mapping[str, Any]) -> list[dict[str, Any]]:
             if is_served is not False:
                 raise KnowledgeDeliveryError(f"vetoed finding {row.get('id')!r} is marked served")
             continue
-        if status != "UNVERIFIED" or is_served is not True:
+        if status not in {"NEW", "VERIFIED"} or is_served is not True:
             raise KnowledgeDeliveryError(
                 f"finding {row.get('id')!r} has unsupported service label {status!r}/{is_served!r}"
             )

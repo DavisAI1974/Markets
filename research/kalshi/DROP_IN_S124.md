@@ -14,6 +14,24 @@ carried `raw_actions`, stamped the lifecycle rows, retired the fixed windows and
 **S123 finished it** - the spawn gate called, the knowledge gate wired, the knowledge block rendered,
 the checkpoint token fixed, and the day-over-day memory loop built and automatic.
 
+**S124 correction completed before review or run:** the 44 established findings are now in Frankie's
+A_MEMORY seed unchanged and served as `VERIFIED`. Their ids, content, dates and historical A_CLEAN
+source provenance remain intact. Future admitted findings are `NEW`, meaning recent rather than
+uncertain; their existing exemplar/falsifier admission gate is unchanged. `VETOED` alone blocks
+service.
+
+The calculation instruction is also now explicit end to end: the mission and contract are
+`ALWAYS_LOAD`, the emitted prompt tells Frankie to compute every current `### 4.x` section himself,
+and the output gate derives the required ledgers from that contract. The current set is 18—4.0,
+4.0b and 4.1–4.16—not the stale count of sixteen. Those exact 18 section identities are the minimum
+floor; later headings grow the set but cannot replace a baseline section. A section with no lawful
+population still returns a reasoned `NULL_RESULT`; silent omission refuses the whole spawn. The mission tells him why he is
+doing them: to discover causal market mechanics, relationships, falsifiers and possible signals,
+including how non-exhaustion behavior connects to exhaustion—not merely to fill ledgers with math.
+After direct inspection he must also assess whether any raw-MBO layer or field group adds no value
+to ongoing ingestion. If so, he recommends it with evidence and Greg decides whether to eliminate
+it; Frankie does not remove it and is under no obligation to find one. `KEEP EVERYTHING` is valid.
+
 **Nothing has been fed by a run on the wired code. That has been true for three sessions and it is
 still true.** F-31 stands, and it is now the only ESSENTIAL item that a session can close by itself.
 
@@ -42,10 +60,11 @@ implementer's own account and it is candid, including about the limits of what i
 - **The C/G coupling.** Before G the read gate was checked and found NOT vacuous. Re-derive that
   yourself rather than accepting it: a knowledge gate that passes over a prompt lacking its own
   subject is a false green on the gate we just wired.
-- **The D60 prompt-size watch.** G grew the honest fixture prompt from 13,092 to 15,999 bytes
-  (+2,907, 22.2%); that was measured before a real run, not on one. Future served findings are
-  roster-bounded. Record the first run's actual emitted prompt bytes and report growth without
-  dropping lawful knowledge or findings to make the number smaller.
+- **The D60 prompt-size watch.** G grew the earlier honest fixture prompt from 13,092 to 15,999
+  bytes (+2,907, 22.2%). After adding the 44 findings, the regenerated build-time knowledge block
+  alone is 128,418 bytes. Neither number is an actual emitted prompt from a live run. Record the
+  first run's actual emitted prompt bytes and report growth without dropping lawful knowledge or
+  findings to make the number smaller.
 - **The memory loop's refusals (Task I).** An id reused with changed content must be refused; a veto
   for an unknown id must be refused; a vetoed finding must survive a rebuild still present and
   unserved. **Test the rebuild-resurrection case specifically** - it is the one that quietly undoes
@@ -88,14 +107,16 @@ implementer's own account and it is candid, including about the limits of what i
 The loop is built and has never carried a live finding. After the run:
 
 - Confirm the findings artifact is committed and the carry fires **without a human**.
-- Confirm only NEW stable ids enter, and that a day with none adds nothing.
+- Confirm only admitted stable ids enter after the seed, with status `NEW`, and that a day with none
+  adds nothing. `NEW` records recency, not uncertainty.
 - **The first link is outside the machine and was declared, not hidden:** Actions cannot make an
   uncommitted external findings artifact appear in the repository. The carry starts when that commit
   ARRIVES and the loop cannot verify that it ever does. **This is the one way the loop silently never
   fires** - so on day one, check that it fired rather than assuming it did.
-- Day-one memory is **the seed alone**: the 44 historical findings are excluded by the admission path
-  (run-local ids, missing exemplars) and stay the historical A_CLEAN artifact. S120's finding that
-  they were never surfaced remains OPEN.
+- Day-one memory includes the **44 established findings**, unchanged, as `VERIFIED`. They remain in
+  their historical A_CLEAN source artifact and are additionally exposed through A_MEMORY; their
+  original ids, content, dates and provenance are not migrated. This one-time seed addition does
+  not relax the exemplar admission path used by future daily findings.
 
 ---
 

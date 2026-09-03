@@ -279,7 +279,7 @@ class StopRuleTests(unittest.TestCase):
     def test_a_complete_run_emits_every_required_slot(self):
         text = self._emit()
         for needle in ("REAL_TIME_FRANKIE", "A_CLEAN", "cb685e0e",
-                       "you compute the sixteen sections yourself",
+                       "you compute every current `### 4.x` contract section yourself",
                        "FRANKIE_NATIVE_RAW_MBO_PRINCIPAL_FINDINGS_V1",
                        "4.6_queue_rows_applied", "glbx-mdp3-20211003.mbo.dbn.zst"):
             self.assertIn(needle, text, needle)
@@ -631,13 +631,30 @@ class DeliveryReceiptGateTest(StopRuleTests):
         self.assertIn("native_causal_stream", evidence)
         self.assertIn("CausalGroupStream", evidence)
 
-    def test_it_says_he_computes_the_sixteen_sections_himself(self):
+    def test_it_says_he_computes_every_current_contract_section_himself(self):
         text = self._emit()
-        self.assertIn("you compute the sixteen sections yourself", text)
+        self.assertIn("you compute every current `### 4.x` contract section yourself", text)
+        self.assertIn("No calculation section may be silently omitted", text)
+        self.assertIn("NULL_RESULT", text)
         self.assertIn("causal order", text)
         self.assertIn("no random access", text)
         self.assertNotIn("the runner calculates, you interpret", text)
         self.assertNotIn("Do not recompute them", text)
+
+    def test_the_committed_mission_makes_every_current_calculation_a_completion_rule(self):
+        mission = (emitter.REPO_ROOT / MISSION_PATH).read_text(encoding="utf-8")
+        self.assertIn("A run is incomplete until every `### 4.x` section", mission)
+        self.assertIn("4.0, 4.0b and\n4.1 through 4.16", mission)
+        self.assertIn("No calculation section may be silently omitted", mission)
+        self.assertIn("NULL_RESULT", mission)
+
+    def test_the_mission_and_prompt_tell_him_why_he_is_doing_the_calculations(self):
+        mission = (emitter.REPO_ROOT / MISSION_PATH).read_text(encoding="utf-8")
+        prompt = self._emit()
+        for text in (mission, prompt):
+            self.assertIn("not a set of math exercises", text)
+            self.assertIn("causal market mechanics", text)
+            self.assertIn("relationships, falsifiers", text)
 
     def test_the_runners_result_is_not_listed_as_his_evidence(self):
         text = self._emit()
@@ -696,4 +713,14 @@ class DeliveryReceiptGateTest(StopRuleTests):
         text = self._emit()
         self.assertIn("### 9a", text.replace("section 9a", "### 9a"))
         self.assertIn("Keep-everything is a first-class answer", text)
+        self.assertIn("ongoing ingestion provides no value", text)
+        self.assertIn("recommend it for elimination", text)
+        self.assertIn("under no obligation to identify one", text)
         self.assertIn("The field census, measured on every retained member row", text)
+
+    def test_the_mission_asks_for_the_same_optional_raw_mbo_elimination_assessment(self):
+        mission = (emitter.REPO_ROOT / MISSION_PATH).read_text(encoding="utf-8")
+        self.assertIn("ongoing ingestion provides no value", mission)
+        self.assertIn("recommend it for elimination", mission)
+        self.assertIn("under no obligation to identify one", mission)
+        self.assertIn("KEEP-EVERYTHING IS A FIRST-CLASS ANSWER", mission)

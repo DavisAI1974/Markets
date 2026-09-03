@@ -95,6 +95,31 @@ class EmptyDayContractTest(unittest.TestCase):
         self.assertEqual(memory["findings"], [])
 
 
+class HistoricalSeedFindingsTest(unittest.TestCase):
+    def test_the_existing_44_findings_are_in_a_memory_seed_unchanged(self) -> None:
+        historical_path = (
+            REPO_ROOT
+            / PRINCIPAL_RUNS_DIR
+            / "33605852433"
+            / FINDING_ARTIFACT_NAME
+        )
+        historical = json.loads(historical_path.read_text(encoding="utf-8"))
+
+        seed = build_seed(REPO_ROOT)
+
+        carried = seed["finding_memory"]["findings"]
+        self.assertEqual(len(historical["findings"]), 44)
+        self.assertEqual(len(carried), 44)
+        for expected, actual in zip(historical["findings"], carried, strict=True):
+            self.assertEqual({field: actual[field] for field in expected}, expected)
+            self.assertEqual(actual["status"], "VERIFIED")
+            self.assertTrue(actual["served"])
+        self.assertEqual(
+            [row["id"] for row in served_memory_findings(seed)],
+            [row["id"] for row in historical["findings"]],
+        )
+
+
 class FindingsCarryTest(unittest.TestCase):
     def test_second_day_adds_only_ids_not_already_carried(self) -> None:
         first_day, second_day = (row[0] for row in EXPECTED_ROSTER[:2])
@@ -189,7 +214,7 @@ class VetoContractTest(unittest.TestCase):
         by_id = {row["id"]: row for row in second["findings"]}
         self.assertEqual(by_id["F-VETO"]["status"], "VETOED")
         self.assertFalse(by_id["F-VETO"]["served"])
-        self.assertEqual(by_id["F-KEEP"]["status"], "UNVERIFIED")
+        self.assertEqual(by_id["F-KEEP"]["status"], "NEW")
         self.assertTrue(by_id["F-KEEP"]["served"])
         self.assertEqual([row["id"] for row in served_memory_findings(second)], ["F-KEEP"])
 
@@ -222,7 +247,14 @@ class SeedIntegrationTest(unittest.TestCase):
             seed = build_seed(root)
 
         self.assertIn("finding_memory", seed)
-        self.assertEqual([row["id"] for row in seed["finding_memory"]["findings"]], ["F-IN-SEED"])
+        findings = seed["finding_memory"]["findings"]
+        self.assertEqual(len(findings), 45)
+        by_id = {row["id"]: row for row in findings}
+        self.assertEqual(by_id["F-IN-SEED"]["status"], "NEW")
+        self.assertEqual(
+            sum(row["status"] == "VERIFIED" for row in findings),
+            44,
+        )
         historical_paths = {entry["path"] for entry in seed["entries"]}
         self.assertIn(
             PRINCIPAL_RUNS_DIR + "33605852433/" + FINDING_ARTIFACT_NAME,
@@ -233,7 +265,7 @@ class SeedIntegrationTest(unittest.TestCase):
 class KnowledgeBlockTest(unittest.TestCase):
     def test_the_block_renders_every_served_finding_and_never_a_vetoed_one(self) -> None:
         keep = {
-            **finding("F-SERVED"), "status": "UNVERIFIED", "served": True,
+            **finding("F-SERVED"), "status": "NEW", "served": True,
             "provenance": {"source_day": EXPECTED_ROSTER[0][0], "run_id": "memory-day"},
         }
         veto = {

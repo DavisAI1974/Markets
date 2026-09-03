@@ -1,5 +1,13 @@
 # SESSION HANDOFF 2026-09-03 S123 - THE WIRING IS FINISHED AND THE RUN IS THE ONLY THING LEFT
 
+> **S124 correction before any run:** Greg ruled that the existing 44 findings are added unchanged
+> to the A_MEMORY seed and served as `VERIFIED`. They keep their original ids, content, dates and
+> A_CLEAN source provenance; no migration or relaxation of the future admission gate is involved.
+> Newly admitted daily findings are `NEW`, where NEW records recency rather than uncertainty.
+> This supersedes section 3's exclusion conclusion and section 5's “not in memory” bullet. The
+> regenerated build-time knowledge block is 128,418 bytes; the prior 15,999-byte figure remains the
+> earlier pre-correction fixture measurement. No workflow or run was dispatched.
+
 Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. Opened at `a30c7f4` (1,973 tests), closed at the
 tip carrying this file. **1,997 benchmark tests, and 2,706 across all three trees.** Decisions 88 -> 91.
 

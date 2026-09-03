@@ -1,4 +1,4 @@
-"""Build the A-memory SEED: every committed output of the past runs, hashed, labelled, UNVERIFIED.
+"""Build the A-memory SEED: prior files plus the findings Frankie is allowed to use.
 
 **What memory is (D86).** One arm runs and it is A_MEMORY. Memory is Frankie's OWN day-over-day
 carry of his frozen outputs; on day one it is SEEDED, never faked. Greg, verbatim: *"Just give
@@ -13,7 +13,9 @@ the last run's outputs (`principal_runs/33605852433/`), the prior workmode run
 AS the wrong-data run, never filtered - D76), the A-clean and A-memory positive-knowledge
 capsules and their source reports, and the S119 measured knowledge. Each entry carries its
 repo-relative path, sha256, bytes, a provenance label (run id, data surface, pre- or
-post-correction) and the status UNVERIFIED: he verifies every lesson against the stream.
+post-correction) and the file-entry status UNVERIFIED. The established 44 findings inside the
+historical principal artifact are also exposed individually in ``finding_memory`` as VERIFIED;
+that addition does not change their ids, content, dates, or A_CLEAN source provenance.
 
 **Derived, never typed.** The historical day-one file seed remains frozen by its provenance
 rules. From day two only admitted findings accumulate: every A_MEMORY findings artifact under
@@ -86,15 +88,20 @@ POST_CORRECTION = "POST_CORRECTION"
 CORRECTIONS = (PRE_CORRECTION, POST_CORRECTION)
 THE_WRONG_DATA_RUN = "THE_WRONG_DATA_RUN"
 PAST_RUN_OUTPUT = "PAST_RUN_OUTPUT"
-STATUS = "UNVERIFIED"
+SEED_ENTRY_STATUS = "UNVERIFIED"
+NEW = "NEW"
+VERIFIED = "VERIFIED"
+HISTORICAL_SEED_FINDING_COUNT = 44
 
 HEADER = (
     "No canary output is committed, so the last run seeds it (D88, Greg: 'if you can't find the "
     "canary just use something from the last run. like i said I'm not picky about that and it's "
     "wasting time.'). One arm, A_MEMORY (D86/D88: 'we aren't running clean anymore only memory'): "
     "day one is SEEDED with every committed output of the past runs, each file listed with its "
-    "sha256, bytes and a provenance label, every lesson UNVERIFIED until Frankie verifies it "
-    "against the stream; from day two the memory is his own prior-day frozen outputs plus this "
+    "sha256, bytes and a provenance label. The 44 findings already established by the prior group "
+    "runs are VERIFIED; every newly carried finding is NEW, which marks recency rather than doubt "
+    "about whether it truthfully represents that run. From day two the memory is his own prior-day "
+    "frozen outputs plus this "
     "seed. Keep-everything (D76): nothing is filtered for him, and the reduced wrong-data run "
     "32851909748-1 is here AS the wrong-data run."
 )
@@ -193,6 +200,72 @@ def _finding_artifacts(root: Path) -> list[tuple[int, str, Path, dict[str, Any]]
     return sorted(artifacts, key=lambda row: (row[0], row[1], row[2].as_posix()))
 
 
+def _historical_seed_findings(root: Path) -> list[dict[str, Any]]:
+    """Put the existing 44 verified findings in A_MEMORY without changing them."""
+    path = root / LAST_RUN_FINDINGS
+    if not path.is_file():
+        return []
+    try:
+        body = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SeedBuildError(f"historical seed findings are not readable: {path} ({exc})") from exc
+    if not isinstance(body, dict) or body.get("schema") != PRINCIPAL_FINDINGS_SCHEMA:
+        raise SeedBuildError(f"historical seed findings must use schema {PRINCIPAL_FINDINGS_SCHEMA}")
+    if body.get("arm") != "A_CLEAN":
+        raise SeedBuildError("historical seed findings must retain their A_CLEAN source provenance")
+    rows = body.get("findings")
+    if not isinstance(rows, list) or len(rows) != HISTORICAL_SEED_FINDING_COUNT:
+        raise SeedBuildError(
+            f"historical seed must carry exactly {HISTORICAL_SEED_FINDING_COUNT} findings"
+        )
+    relative = path.relative_to(root).as_posix()
+    artifact_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
+    execution = {
+        "principal": body.get("principal"),
+        "artifact_path": relative,
+        "artifact_sha256": artifact_sha256,
+        "actual_principal_invocation": body.get("actual_principal_invocation"),
+        "controller_only": body.get("controller_only"),
+    }
+    try:
+        NativeCalculationRun.admit_principal_findings(execution=execution, findings=[])
+    except CalculationRunError as exc:
+        raise SeedBuildError(f"historical seed attribution was refused: {exc}") from exc
+    carried: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            raise SeedBuildError("a historical seed finding is not an object")
+        missing = [name for name in REQUIRED_FIELDS if not str(row.get(name, "")).strip()]
+        if missing:
+            raise SeedBuildError(
+                f"historical finding {row.get('id', '<unnamed>')!r} is missing field(s) {missing}"
+            )
+        for name in ("category", "confidence_basis"):
+            if not str(row.get(name, "")).strip():
+                raise SeedBuildError(f"historical finding {row['id']!r} is missing {name}")
+        if row.get("evidence") is None:
+            raise SeedBuildError(f"historical finding {row['id']!r} is missing evidence")
+        finding_id = str(row["id"])
+        if finding_id in seen:
+            raise SeedBuildError(f"historical seed repeats finding id {finding_id!r}")
+        seen.add(finding_id)
+        carried.append(
+            {
+                **row,
+                "status": VERIFIED,
+                "served": True,
+                "provenance": {
+                    "run_id": body.get("run_id"),
+                    "source_day": body.get("source_day"),
+                    "artifact_path": relative,
+                    "artifact_sha256": artifact_sha256,
+                },
+            }
+        )
+    return carried
+
+
 def build_finding_memory(root: Path | str = REPO_ROOT) -> dict[str, Any]:
     """Build the findings-only daily carry with admission, dedupe, and veto labels."""
     root = Path(root)
@@ -207,7 +280,9 @@ def build_finding_memory(root: Path | str = REPO_ROOT) -> dict[str, Any]:
         }
         for source_day in expected_days
     }
-    carried: dict[str, dict[str, Any]] = {}
+    carried: dict[str, dict[str, Any]] = {
+        row["id"]: row for row in _historical_seed_findings(root)
+    }
     artifacts = _finding_artifacts(root)
     for _position, run_id, path, body in artifacts:
         rows = body.get("findings")
@@ -256,7 +331,7 @@ def build_finding_memory(root: Path | str = REPO_ROOT) -> dict[str, Any]:
                 continue
             carried[finding_id] = {
                 **row,
-                "status": STATUS,
+                "status": NEW,
                 "served": True,
                 "provenance": {
                     "run_id": run_id,
@@ -514,7 +589,7 @@ def build_seed(root: Path | str = REPO_ROOT) -> dict[str, Any]:
                 "path": relative,
                 "sha256": hashlib.sha256(raw).hexdigest(),
                 "bytes": len(raw),
-                "status": STATUS,
+                "status": SEED_ENTRY_STATUS,
                 "provenance": {
                     "group_id": group.group_id,
                     "run_id": group.run_id,
@@ -538,7 +613,7 @@ def build_seed(root: Path | str = REPO_ROOT) -> dict[str, Any]:
         "header": HEADER,
         "correction_reference": CORRECTION_REFERENCE,
         "status_vocabulary": {
-            STATUS: "listed for him; he verifies it against the stream and files VERIFIED / UNVERIFIED / REFUTED",
+            SEED_ENTRY_STATUS: "listed for him; he verifies it against the stream and files VERIFIED / UNVERIFIED / REFUTED",
         },
         "day_rule": {
             "day_one": "this seed, whole",
@@ -571,14 +646,21 @@ def build_seed(root: Path | str = REPO_ROOT) -> dict[str, Any]:
         "seed_hash": "",
     }
     finding_memory = build_finding_memory(root)
-    if finding_memory["totals"]["artifacts_present"]:
+    if finding_memory["totals"]["findings"]:
         seed["finding_memory"] = finding_memory
+        seed["status_vocabulary"][NEW] = (
+            "newly carried and served in A_MEMORY; recency only, not a claim that the finding "
+            "is an unverified representation of its source run"
+        )
+        seed["status_vocabulary"][VERIFIED] = (
+            "served in A_MEMORY; established by the prior group runs"
+        )
         seed["status_vocabulary"]["VETOED"] = (
             "retained as a run lesson and excluded from the served memory until Greg changes its label"
         )
         seed["day_rule"]["from_day_two"] = (
-            "only his admitted findings, deduplicated by their stable id; an empty artifact proves "
-            "the day ran and adds no memory entry"
+            "the verified findings already in this seed plus only his admitted new findings, "
+            "deduplicated by id; an empty artifact proves the day ran and adds no memory entry"
         )
     seed["seed_hash"] = canonical_hash(seed, omit="seed_hash")
     return seed
