@@ -127,3 +127,167 @@ hand and are recorded as observations, not as defects in the ledgers:
 Disk after the fetch: 12,351,208 kB under `sunday_ledgers/` (plain 10,924,504,920 bytes +
 gzipped 1,697,518,051 bytes + the result, tarball and receipt); 14 GB free remained.
 
+## 2. Step 2 - the causal stream on the real ledgers (`native_causal_stream`)
+
+(In progress at this commit: this section is written when the step completes.)
+
+## 3. Step 3 - the size witness (`report_ledger_size.py`, `verify_ledger_size_witness.py`)
+
+**3a. The size report.** `python3 -m research.kalshi.frankie_raw_mbo_benchmark.report_ledger_size
+--result <fetched copy>/sunday_ledgers/calculation_result.json --output <fetched copy>/witness/size_report.md`.
+**Exit 0**, no stderr, no refusal (the result carries the `ledger_retention` block the module
+refuses without). What it rendered, exact where the module says exact:
+
+- 443,403 exact ledger rows, **10,924,504,920 bytes**, **191,567 bytes per record** over 57,027
+  records (the figure the module exists to state correctly).
+- By ledger (exact): member 43,569 rows / 10,630,127,166 bytes (97.3%); lifecycle 377,454 rows /
+  265,048,572 (2.4%); legacy 22,380 rows / 29,329,182 (0.3%).
+- By emitting section (exact, merged across ledgers), largest first: the member ledger itself;
+  replenishment 73,480 rows / 93,642,870; ladder 87,138 / 52,972,261; absorption 43,569 /
+  35,840,608; legacy rows 22,380 / 29,329,182; queue 20,005 / 26,381,228; mirror 87,138 /
+  20,375,362; recurrence 43,569 / 13,868,311; response 630 / 12,887,634; lineage 21,651 /
+  7,108,056; episode 182 / 1,892,318; candidate 91 / 78,679; exhaustion 1 / 1,245.
+- By field (SAMPLED 1 row in 97, 4,570 rows - estimates, marked so by the module): `book_full`
+  ~10,131,179,453 bytes, ~92.7% of every ledger byte; `book` ~212 MB; `activity` ~114 MB;
+  `activity_full` ~47.5 MB; `structure` ~47.1 MB; `change_points` ~30.5 MB.
+- The read surface: 13,136 averaged companion rows, ALIASED, 12,365,788 bytes as written
+  (17,914,881 unaliased; 5,549,093 saved, 31.0%, 55 names).
+- Fed: 4.16 event-driven change points **88,071, `FED_BY_THE_TRAVERSAL`** - this run is on the
+  D79 configuration; the "zero change points" sentence in the S121 handoff's section 4 describes
+  run 33605852433, as the report's own note says. Candidates 91, episode rows 182, response
+  tracks 91, queue rows applied 57,027, lineage nodes 21,651, recurrence sequences 43,569,
+  ladder transitions 87,138, replenishment observations 49,197, absorption runways 43,569.
+
+**3b. The independent witness.** `python3 -m research.kalshi.frankie_raw_mbo_benchmark.verify_ledger_size_witness
+--result <the fetched result> --objects <S3 key -> size, built from the manifest run's s3_listing.json, 6 keys>
+--box-sizes <basename -> plain bytes, built from the box's PLAIN_SIZES>
+--observed-sha256 exact_member_ledger=0fd3bbce... --observed-sha256 exact_lifecycle_and_runway_ledger=039b6d0b...
+--observed-sha256 legacy_observable_rows=3c75f8b4... --output <fetched copy>/witness/witness.md`.
+**Exit 0 = CONFIRMED** (the module's vocabulary is CONFIRMED / CONTRADICTED / WITNESS_UNAVAILABLE;
+the brief's "WITNESSED" is its CONFIRMED). Run witnessed, derived from the keys and not passed in:
+`.../a-clean/full/2dd7044897f1a5c88872f6c395836a2671880ae6/33630348943-1`. Per ledger:
+
+| ledger | sink bytes | witnessed bytes | witness used | delta | status |
+|---|---:|---:|---|---:|---|
+| exact_lifecycle_and_runway_ledger | 265,048,572 | 265,048,572 | BOX_WC_OVER_THE_PLAIN_FILE | +0 | CONFIRMED |
+| exact_member_ledger | 10,630,127,166 | 10,630,127,166 | BOX_WC_OVER_THE_PLAIN_FILE | +0 | CONFIRMED |
+| legacy_observable_rows | 29,329,182 | 29,329,182 | BOX_WC_OVER_THE_PLAIN_FILE | +0 | CONFIRMED |
+
+S3 holds every ledger gzipped, so the witness used the box's `wc -c` over the plain file for all
+three and says so ("the weaker witness"); S3's ContentLength witnessed the gzips at the fetch
+(step 1). The denominator CONFIRMED: `layers.identity_receipt.total_mbo_records`,
+`traversal.records_seen` and `coverage.records_seen` all 57,027. Content CONFIRMED on all three
+(sink sha256 = downloaded sha256). Bytes per record 191,567, numerator and denominator both
+named, neither the sink's own tally.
+
+## 4. Step 4 - the crosswalk on the real result WITH receipts (`native_layer_crosswalk`)
+
+(In progress at this commit: this section is written when the step completes.)
+
+## 5. Step 5 - the emitter against the real result and receipt (`emit_frankie_spawn`)
+
+```
+python3 -m research.kalshi.frankie_raw_mbo_benchmark.emit_frankie_spawn \
+  --result <fetched copy>/sunday_ledgers/calculation_result.json \
+  --delivery-receipt <fetched copy>/sunday_ledgers/FRANKIE_LEDGER_DELIVERY_RECEIPT.json \
+  --output <fetched copy>/emit/FRANKIE_SPAWN_PROMPT_attempt.md
+```
+
+**Exit 2. REFUSED. No prompt written.** stderr, verbatim:
+
+```
+REFUSED: the mission on disk hashes to 2b10b24556e6544742e2343fa47d43ec3113c6b05fdb0a343665e97eae855cce but the run bound 027faa7d3d31936d3b026576c7694957319de2d94ef1d95aec5ce1fb5ec4a6f7. Section 10 requires this mission's exact bytes and SHA-256 to be the ones loaded into Frankie, so emitting would bind him to a document the run never saw. Restore the bound bytes, or re-run the traversal.
+```
+
+**Diagnosis.** The delivery receipt itself passed (`_load_delivery_receipt`: schema, own hash,
+every exact ledger VERIFIED with an existing local path and an observed sha256), and the
+verdict gate passed (`ACCEPTED`). The refusal is the mission-hash gate at
+`emit_frankie_spawn.py:169`, which sits BEFORE the raw-MBO-marker gate (`:180`), the contract
+gate (`:191`) and the field-census gates (`:362`, `:367`). S121's section 2 recorded the census
+refusal for this same result; it is no longer the first gate to fire because the mission moved
+under it during S121. The mission file's history, each blob hashed:
+
+| commit | mission sha256 | subject |
+|---|---|---|
+| `53c4943` (2026-09-02) | `027faa7d...` = THE BOUND VALUE | Mission section 10: the receipt is a file contract, not a provider record |
+| `34a0c16` (2026-09-02) | `ae5da7be...` | The raw-MBO question is in the mission, and the spawn refuses a mission that omits it |
+| `f717d9b` (2026-09-02) | `2b10b245...` = ON DISK NOW | Mission: the principal computes the sixteen sections from the complete causal stream |
+
+The calculation contract moved too: the run bound `6c460731...` and the file on disk hashes to
+`822d2cfd...`, so the contract gate (`:191`) would refuse next even if the mission were restored.
+
+**Produced, not asserted: the bound bytes are refused as well.** The two files were extracted
+at `53c4943` with `git archive` into a directory under `data/` (no worktree, no checkout of the
+repo) and `emit()` was called with `repo_root` pointing there - the function's own documented
+parameter, nothing edited. Both files hashed to the bound values (`027faa7d...`, `6c460731...`).
+Result, verbatim:
+
+```
+REFUSED: the mission at research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md does not carry '### 9a. The raw MBO', so it never asks the raw-MBO retention question and a spawn against it cannot answer it. D68 requires the report to cover the calcs AND the full raw MBO. Restore section 9a rather than spawning against a mission that omits it.
+```
+
+So the last run cannot be spawned against by the current emitter under ANY state of the mission
+file: the bytes on disk fail section 10's hash, the bytes the run bound fail the section-9a
+gate, and behind both sit the contract gate and the census gates that S121 expected. Nothing
+was weakened to get past any of them. **This is the correct outcome and the drop-in's ITEM ONE
+already says why**: only the Sunday re-run on the wired code binds a mission the emitter
+accepts. **Finding F-feed-3 (observation for the knowledge persona, owner of
+`emit_frankie_spawn`):** the gate order means a pre-edit result's census refusal is now masked
+by the hash refusal, so the S121 sentence "the emitter refuses it (pre-census code)" is true
+but no longer the refusal you will see. And **for the coordinator (D88):** the D88 seed is by
+definition a pre-edit run, so the seed route must never pass through `emit()` - it is memory
+content, not a spawn.
+
+## 6. Step 6 - the seven clocks on a real row
+
+The first line of the delivered `exact_member_rows.jsonl` (group_index 0, `source_day`
+20211003, `session_phase` PRE_OPEN, `source_role` SCORED_FINDINGS_DAY, `continuity_segment`
+18904, 99,306 bytes, 245 components, `event_group_complete_f_last` true, schema
+`NG_MBO_V4_NATIVE_EVENT_FRAME_V1`, `adapter_revision`
+`NG_EXHAUSTION_MBO_V4_STATE_ADAPTER_V2_20260823`) carries **48 top-level fields**. It carries
+NO `causal_clocks` block and NO `causal_clocks_basis` (these exist only on rows written by the
+S121 code, `a540b2d`); its clocks live in a five-field `clocks` object plus two top-level
+timestamps, exactly as the crosswalk's `SEVEN_CLOCKS` diagnostic
+(`native_layer_crosswalk.py:772`) describes the pre-S121 row. Read off the row itself:
+
+| registry clock | on the OLD row? | field name(s) on this row | value on group 0 |
+|---|---|---|---|
+| clock_event_time | YES | `clocks.first_component_ts_event_ns`; `ts_event_ns` (the F_LAST record) | 1633277168182000000; 1633287604754563461 |
+| clock_receive_time | YES | `clocks.first_component_ts_recv_ns`; `clocks.f_last_ts_recv_ns`; `ts_recv_ns` | 1633277168244072526; 1633287605008387796; 1633287605008387796 |
+| clock_event_known_by | YES, group level | `clocks.first_lawful_availability_ns` (= F_LAST `ts_recv_ns`); `causal_availability_clock` = `"ts_recv_ns"` | 1633287605008387796 |
+| clock_feature_availability | NO field of its own | the same `first_lawful_availability_ns` is reused by convention; no per-component max-of-contributing value | - |
+| clock_prospective_discovery_confirmation | NO, not on the member row | lifecycle `episode` rows carry `recognized_recv_ns`, `candidate` rows `available_second` (the crosswalk reads it DELIVERED off those rows, step 4) | - |
+| clock_model_evaluation | BY CONVENTION | `clocks.decision_ts_recv_ns` with `decision_basis` = `REPLAY_EARLIEST_LAWFUL_AVAILABILITY` and `f_last_to_decision_delay_ns` = 0; the 19 staged spawn requests in `small_artifacts.tar.gz` carry a six-key cutoff dict (`continuity_segment`, `first_lawful_availability_ns`, `group_index`, `recv_ns`, `session_phase`, `source_day`) and NO `clock_model_evaluation_ns` | 1633287605008387796 (delay 0) |
+| clock_lock_time | NO | none; his own first-lock entry | - |
+
+Other facts on the same row that the personas asked about: `raw_actions` is ABSENT (F-30
+confirmed on the real row: the per-record A/C/M/R/T/F/N messages are not on the ledger);
+`activity` and `activity_full` are keyed `'1','5','20','60','300'` - the fixed windows of D83,
+present on the real row; `event_to_receive_latency_ns` is a per-component list of 245 entries
+(62,072,526 ns for the first, 253,824,335 ns for the rest shown); `formation_latency_ns` =
+`max_within_group_receive_gap_ns` = 10,436,764,315,270 ns (2.9 hours - group 0 is the pre-open
+bootstrap group whose first component was received at 1633277168244072526 and whose F_LAST at
+1633287605008387796); `ts_in_delta_ns` 0; `snapshot_bootstrap_only` false.
+
+**What the wired stream does with such a row** (`native_causal_stream.py:497-508`, executed in
+step 2 on all 43,569 rows): `causal_clocks` absent, so
+`native_clocks.causal_clock_layers_from_legacy_clocks` (`native_clocks.py:382-412`) derives
+THREE by registry id from the legacy object - event time (first component + F_LAST event
+times), receive time (first component + F_LAST), event_known_by (`first_lawful_availability_ns`,
+basis F_LAST receive of the group) - and declares FOUR `NOT_ON_THIS_ROW` with a null value:
+feature availability, prospective discovery/confirmation, model evaluation, lock time. The
+delivery is stamped `causal_clocks_basis` = `DERIVED_FROM_LEGACY_CLOCKS_OBJECT`, and the stream
+receipt counts the groups on each basis (step 2). **Finding F-feed-5 (observation for the
+clocks persona):** the old row DOES carry a model-evaluation instant with a declared basis
+(`clocks.decision_ts_recv_ns` + `decision_basis`), and the legacy derivation declares
+`clock_model_evaluation` NOT_ON_THIS_ROW rather than carrying that value under its basis. The
+docstring says the four are "declared rather than filled with anything", so this is a choice
+to confirm, not a defect to fix; it is recorded because the value is on the row.
+
+## 7. Step 7 - the staging read-back (`native_staging read-back`)
+
+(In progress at this commit: this section is written when the step completes.)
+
+## 8. Step 8 - the closing table
+
+(In progress at this commit: this section is written when the step completes.)
