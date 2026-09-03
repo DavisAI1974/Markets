@@ -45,6 +45,46 @@ class _Field:
         self.minimum: float | None = None
         self.maximum: float | None = None
 
+    def observe_column(self, column: list) -> None:
+        """Fold a whole column of SCALARS at once, identically to observing each in turn.
+
+        Every element of a list shares one field path, so a 300-level ladder folds 300
+        values into one `_Field`. Doing that with C builtins - len, count, map, min, max -
+        removes 300 Python frames per list per row.
+
+        The distinct set is still filled ONE AT A TIME on purpose: `capped` latches the
+        moment the set reaches DISTINCT_CAP and nothing is added after, so a bulk update
+        would report the column's true cardinality where the loop reports exactly the cap.
+        That difference is visible in `distinct_values`, so the loop stays.
+        """
+        self.observations += len(column)
+        nulls = column.count(None)
+        self.null += nulls
+        if nulls == len(column):
+            return
+        types = self.types
+        for t in map(type, column):
+            types.add(t)
+        types.discard(type(None))
+        numeric = [v for v in column if type(v) is int or type(v) is float]
+        if numeric:
+            low = min(numeric)
+            high = max(numeric)
+            self.minimum = low if self.minimum is None else min(self.minimum, low)
+            self.maximum = high if self.maximum is None else max(self.maximum, high)
+        if not self.capped:
+            distinct = self.distinct
+            for value in column:
+                if value is None:
+                    continue
+                try:
+                    distinct.add(value)
+                except TypeError:
+                    distinct.add(repr(value))
+                if len(distinct) >= DISTINCT_CAP:
+                    self.capped = True
+                    break
+
     def observe(self, value: Any) -> None:
         self.observations += 1
         if value is None:
@@ -93,10 +133,68 @@ class MboFieldCensus:
                 path = f"{prefix}.{key}" if prefix else str(key)
                 self._observe_at(path, value, touched)
         elif isinstance(node, (list, tuple)):
-            # One path for every element: a ladder position is not a field.
+            # One path for every element: a ladder position is not a field. Because the path
+            # is the same for all of them, the field lookup and the `touched` add are
+            # per-LIST facts and are hoisted out of the element loop.
             path = f"{prefix}{LIST_MARKER}"
+            fields = self._fields
+            stat = fields.get(path)
+            if stat is None:
+                stat = fields[path] = _Field()
+            touched.add(path)
+            # An all-scalar column is folded in one call with C builtins. A list of
+            # containers - a ladder of level dicts - still walks, because each element
+            # carries its own child paths.
+            scalar = _SCALAR_TYPES.__contains__
             for value in node:
-                self._observe_at(path, value, touched)
+                if not scalar(type(value)):
+                    break
+            else:
+                stat.observe_column(node if type(node) is list else list(node))
+                return
+            # A LIST OF DICTS is the dominant shape: a ladder is hundreds of sibling level
+            # dicts with the same keys, and every one of them folds to the same handful of
+            # child paths. Transposing it - one column per key across all the dicts - turns
+            # hundreds of per-element walks into one fold per key.
+            if node and all(type(v) is dict for v in node):
+                stat.observations += len(node)
+                stat.types.add(dict)
+                keys: dict[Any, None] = {}
+                for element in node:
+                    keys.update(dict.fromkeys(element))
+                for key in keys:
+                    child = f"{path}.{key}"
+                    column = [e[key] for e in node if key in e]
+                    child_stat = fields.get(child)
+                    if child_stat is None:
+                        child_stat = fields[child] = _Field()
+                    touched.add(child)
+                    if all(scalar(type(v)) for v in column):
+                        child_stat.observe_column(column)
+                    else:
+                        for value in column:
+                            tv = type(value)
+                            if tv is dict or tv is list or tv is tuple or (
+                                tv not in _SCALAR_TYPES
+                                and isinstance(value, (Mapping, list, tuple))
+                            ):
+                                child_stat.observations += 1
+                                child_stat.types.add(tv)
+                                self._walk(value, child, touched)
+                            else:
+                                child_stat.observe(value)
+                return
+            observe = stat.observe
+            for value in node:
+                tv = type(value)
+                if tv is dict or tv is list or tv is tuple or (
+                    tv not in _SCALAR_TYPES and isinstance(value, (Mapping, list, tuple))
+                ):
+                    stat.observations += 1
+                    stat.types.add(tv)
+                    self._walk(value, path, touched)
+                else:
+                    observe(value)
 
     def _observe_at(self, path: str, value: Any, touched: set[str]) -> None:
         # The field lookup is inlined rather than wrapped in a helper: it runs once per leaf,
