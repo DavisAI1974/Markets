@@ -20,14 +20,20 @@ import hashlib
 import io
 import json
 import re
+import shutil
+import tarfile
 import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 
 from research.kalshi.frankie_raw_mbo_benchmark import native_a_arm_launch as launcher
-from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import load_registry
+from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import (
+    canonical_hash,
+    load_registry,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_layer_crosswalk import (
+    ACCOUNTED_INPUT_STATUSES,
     CROSSWALK_SCHEMA,
     INPUT_POLICIES,
     KNOWLEDGE_RECEIPT_SCHEMA,
@@ -51,8 +57,38 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_layer_crosswalk import (
     registry_layers,
     render_crosswalk_table,
 )
+from research.kalshi.frankie_raw_mbo_benchmark.fetch_frankie_ledgers import (
+    LEDGER_FILES,
+    build_manifest,
+    fetch,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import (
+    NativeCalculationRun,
+    RunIdentity,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.native_causal_stream import CausalGroupStream
 from research.kalshi.frankie_raw_mbo_benchmark.native_mbo_field_census import MboFieldCensus
-from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import KNOWLEDGE_LAYER_SOURCES
+from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import (
+    KNOWLEDGE_LAYER_SOURCES,
+    build_knowledge_delivery,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.native_replay_driver import (
+    ExchangeSessionRule,
+    NativeReplayDriver,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.native_response import (
+    FLOW_RESPONSE,
+    FULL_BOOK_RESPONSE,
+    PRICE_RESPONSE,
+    QUEUE_RESPONSE,
+    horizons_for_version,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.native_row_sink import LedgerSinks
+from research.kalshi.frankie_raw_mbo_benchmark.native_sealed_absence import (
+    prove_sealed_absent,
+    sealed_object_set,
+    surfaces_from_delivery,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.tests.test_native_a_arm_launch import slice_records
 
 REQUIRED_KEYS = {"kind", "module", "symbol", "file", "line", "carrier", "notes"}
@@ -326,6 +362,7 @@ class SevenClocksTest(unittest.TestCase):
 # Slice 2: the computed crosswalk
 # --------------------------------------------------------------------------------------
 _FIXTURE: dict | None = None
+_HONEST_GATE_FIXTURE: dict | None = None
 
 
 def fixture() -> dict:
@@ -344,6 +381,160 @@ def fixture() -> dict:
         )
         _FIXTURE = {"tmp": tmp, "root": root, "result": result, "registry": load_registry()}
     return _FIXTURE
+
+
+class _NeverInvoke:
+    def should_invoke(self, **_kwargs):
+        return False
+
+
+def _candidate_fixture_records():
+    """A bounded supplied iterable with two observable candidate bursts."""
+    template = next(iter(slice_records(1)))
+    base = int(template["ts_event"])
+    seq = 0
+    book = ((1, "B", 3_499_000_000), (2, "A", 3_501_000_000))
+    for order_id, side, price in book:
+        row = dict(template)
+        row.update({
+            "sequence": seq, "ts_event": base, "ts_recv": base + 150_000,
+            "order_id": order_id, "action": "A", "side": side, "price": price,
+            "flags": 0,
+        })
+        yield row
+        seq += 1
+    for offset in range(1, 400):
+        buy = offset % 2 == 0
+        row = dict(template)
+        row.update({
+            "sequence": seq, "ts_event": base + offset * 1_000_000_000,
+            "ts_recv": base + offset * 1_000_000_000 + 150_000,
+            "order_id": 1_000 + offset, "action": "T", "side": "A" if buy else "B",
+            "price": 3_500_000_000 + (500_000 if buy else -500_000),
+            "size": 100 if offset in (200, 320) else 1, "flags": launcher.F_LAST,
+        })
+        yield row
+        seq += 1
+
+
+def honest_gate_fixture() -> dict:
+    """A-memory gate evidence computed only by production producers.
+
+    The supplied iterable and local downloader deliberately do not claim the box-only
+    independent witnesses: native DBN decoding, S3 object identity and the workflow's
+    PLAIN_SIZES/PLAIN_SHA256SUMS. They exercise the same producer code over the exact files
+    the driver wrote. The principal outputs receipt is post-spawn and is therefore absent;
+    it is not an input to this gate. No layer status is assigned by this fixture.
+    """
+    global _HONEST_GATE_FIXTURE
+    if _HONEST_GATE_FIXTURE is not None:
+        return _HONEST_GATE_FIXTURE
+
+    tmp = tempfile.TemporaryDirectory()
+    root = Path(tmp.name)
+    produced = root / "produced"
+    delivered = root / "delivered"
+    records = list(_candidate_fixture_records())
+    source_manifest_hash = hashlib.sha256(
+        json.dumps(records, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    knowledge_manifest = json.loads(
+        (REPO_ROOT / launcher.KNOWLEDGE_MANIFEST_PATH).read_text(encoding="utf-8")
+    )
+    identity = RunIdentity(
+        run_id="honest-gate-fixture", arm="A_MEMORY",
+        mission_sha256=hashlib.sha256((REPO_ROOT / launcher.MISSION_PATH).read_bytes()).hexdigest(),
+        calculation_contract_sha256=hashlib.sha256(
+            (REPO_ROOT / launcher.CONTRACT_PATH).read_bytes()
+        ).hexdigest(),
+        knowledge_manifest_hash=knowledge_manifest["manifest_hash"],
+        source_manifest_hash=source_manifest_hash,
+        total_mbo_records=len(records), code_commit="fixture",
+    )
+    sinks = LedgerSinks(produced)
+    calculation = NativeCalculationRun(
+        identity, sinks=sinks, replenishment_horizon_ns=60_000_000_000,
+        response_horizons_ns=horizons_for_version("a-arm-h2"),
+        response_horizon_version="a-arm-h2",
+        response_value_names=(PRICE_RESPONSE, FLOW_RESPONSE, FULL_BOOK_RESPONSE, QUEUE_RESPONSE),
+    )
+    driver = NativeReplayDriver(
+        identity=identity, session_rule=ExchangeSessionRule(), cadence=_NeverInvoke(),
+        run=calculation, sinks=sinks,
+    )
+    # Production keeps the larger floors. This bounded fixture scales only the detector's
+    # observation floor so its two deliberate bursts exercise the candidate carriers.
+    driver.candidate_warmup_seconds = 60
+    driver.candidate_min_observations = 30
+    driver.detector = driver._new_detector(0)
+    driver.consume(records)
+    result = driver.finalize()
+    result["ledger_retention"] = sinks.reconcile_all(
+        member=calculation.member_rows_written,
+        lifecycle=calculation.lifecycle_rows_written,
+        legacy=driver.counters.legacy_rows_retained,
+    )
+    result["runner_result_hash"] = result.pop("result_hash")
+    result["result_hash"] = canonical_hash(result)
+
+    result_path = produced / "calculation_result.json"
+    result_path.write_text(json.dumps(result, sort_keys=True) + "\n", encoding="utf-8")
+    small_artifacts = produced / "small_artifacts.tar.gz"
+    with tarfile.open(small_artifacts, "w:gz") as archive:
+        archive.add(result_path, arcname=result_path.name)
+    object_names = [*LEDGER_FILES.values(), result_path.name, small_artifacts.name]
+    listing = [
+        {"Key": f"fixture/{name}", "Size": (produced / name).stat().st_size}
+        for name in object_names
+    ]
+    manifest = build_manifest(
+        run_id=identity.run_id, run_prefix="fixture/", bucket="fixture",
+        listing=listing,
+        presigned={name: f"https://fixture.invalid/{name}" for name in object_names},
+        plain_sizes={name: (produced / name).stat().st_size for name in LEDGER_FILES.values()},
+        plain_sha256={
+            name: hashlib.sha256((produced / name).read_bytes()).hexdigest()
+            for name in object_names
+        },
+        expires_at="fixture", presign_seconds=1,
+    )
+
+    def copy_fixture_object(url: str, destination: Path) -> None:
+        shutil.copyfile(produced / url.rsplit("/", 1)[-1], destination)
+
+    delivery_receipt_body = fetch(manifest, delivered, downloader=copy_fixture_object)
+    stream = CausalGroupStream(
+        delivered / LEDGER_FILES["exact_member_ledger"],
+        delivered / LEDGER_FILES["exact_lifecycle_and_runway_ledger"],
+        delivered / LEDGER_FILES["legacy_observable_rows"],
+        run_id=identity.run_id, arm=identity.arm,
+    )
+    for _delivery in stream:
+        pass
+    stream_receipt_body = stream.stream_receipt()
+    knowledge = build_knowledge_delivery(arm=identity.arm, role="REAL_TIME_FRANKIE")
+    sealed = sealed_object_set()
+    sealed_proof_body = prove_sealed_absent(
+        sealed,
+        surfaces_from_delivery(
+            knowledge_receipt=knowledge.receipt,
+            model_visible_context=knowledge.model_visible_context,
+            delivery_receipt=delivery_receipt_body,
+        ),
+    )
+    registry = load_registry()
+    body = crosswalk(
+        registry, arm=identity.arm, result=result,
+        delivery_receipt=delivery_receipt_body, stream_receipt=stream_receipt_body,
+        knowledge_receipt=knowledge.receipt, sealed_proof=sealed_proof_body,
+    )
+    _HONEST_GATE_FIXTURE = {
+        "tmp": tmp, "registry": registry, "result": result,
+        "delivery_receipt": delivery_receipt_body, "stream_receipt": stream_receipt_body,
+        "knowledge_receipt": knowledge.receipt, "sealed_proof": sealed_proof_body,
+        "crosswalk": body,
+    }
+    return _HONEST_GATE_FIXTURE
 
 
 def delivery_receipt(result: dict, *, statuses: dict | None = None, sha_override: dict | None = None) -> dict:
@@ -636,22 +827,27 @@ class GateTest(unittest.TestCase):
                          "a_memory_promoted_positive_capsule"):
             self.assertNotIn(layer_id, message)
 
-    def test_the_gate_passes_only_when_every_applicable_input_is_delivered(self):
-        cw = crosswalk(load_registry(), arm="A_CLEAN")
-        for row in cw["layers"]:
-            if row["arm_applicable"] and row["policy"] in INPUT_POLICIES:
-                row["status"] = "DELIVERED"
-        self.assertIsNone(gate_applicable_inputs(cw))
+    def test_the_gate_passes_on_a_fixture_computed_by_the_real_producers(self):
+        fx = honest_gate_fixture()
+        self.assertIsNone(gate_applicable_inputs(fx["crosswalk"]))
 
-    def test_one_missing_input_is_enough_to_refuse(self):
-        cw = crosswalk(load_registry(), arm="A_CLEAN")
-        for row in cw["layers"]:
-            if row["arm_applicable"] and row["policy"] in INPUT_POLICIES:
-                row["status"] = "DELIVERED"
-        rows = rows_by_id(cw)
-        rows["fifo_queues"]["status"] = "RECEIPTED_CARRIER_ABSENT"
-        with self.assertRaisesRegex(CrosswalkGateError, "fifo_queues"):
+    def test_withholding_one_real_receipt_is_enough_to_refuse(self):
+        fx = honest_gate_fixture()
+        cw = crosswalk(
+            fx["registry"], arm="A_MEMORY", result=fx["result"],
+            delivery_receipt=fx["delivery_receipt"], stream_receipt=fx["stream_receipt"],
+            knowledge_receipt=None, sealed_proof=fx["sealed_proof"],
+        )
+        offenders = [
+            row for row in cw["layers"]
+            if row["arm_applicable"] and row["policy"] in INPUT_POLICIES
+            and row["status"] not in ACCOUNTED_INPUT_STATUSES
+        ]
+        self.assertTrue(offenders)
+        with self.assertRaises(CrosswalkGateError) as caught:
             gate_applicable_inputs(cw)
+        for row in offenders:
+            self.assertIn(f"{row['layer_id']}={row['status']}", str(caught.exception))
 
 
 class PolicyStampVersusComputedTest(unittest.TestCase):
