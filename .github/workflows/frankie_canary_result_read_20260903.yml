@@ -29,8 +29,10 @@ on:
         default: nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/7d0068d8ae720772415bf84c8c0689e84408d642/33745123325-1
       subdir:
         description: >-
-          Subdirectory holding the calculation result. The canary writes to `canary/`; a
-          box run writes at the prefix root, so pass an empty string for one of those.
+          Subdirectory holding the calculation result. A canary writes to `canary/`; a BOX
+          run writes at the prefix ROOT - pass the literal `ROOT` for that. An empty string
+          does not work: GitHub replaces an empty input with this default before any
+          expression sees it.
         type: string
         default: canary
 
@@ -49,12 +51,15 @@ env:
   DURABLE_PREFIX: >-
     ${{ github.event_name == 'workflow_dispatch' && inputs.durable_prefix ||
     'nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/7d0068d8ae720772415bf84c8c0689e84408d642/33745123325-1' }}
-  # An EMPTY STRING is falsy in a GitHub expression, so `a && b || c` cannot carry
-  # `subdir: ""` - it falls through to 'canary' and the run reads the wrong prefix.
-  # A box run writes at the prefix ROOT, so an empty subdir is the value that matters.
-  # Inverted to "not a dispatch, or the dispatched value", the same shape the launch
-  # workflow documents for its boolean flags.
-  SUBDIR: ${{ github.event_name != 'workflow_dispatch' && 'canary' || inputs.subdir }}
+  # AN EMPTY STRING CANNOT BE PASSED AS A WORKFLOW INPUT. GitHub substitutes the input's
+  # own `default:` when the supplied value is empty, so `subdir: ""` arrives as 'canary'
+  # and no expression here can recover it - the value was replaced before this line runs.
+  # Measured twice: two dispatches with subdir="" both logged `SUBDIR: canary` and 404'd on
+  # a canary/ path that never existed for a box run. Inverting the `a && b || c` did not
+  # help, because the defect was never in the expression.
+  # So ROOT is a sentinel that survives substitution, and it is what a box run needs: a box
+  # writes its ledgers and result at the prefix root, a canary writes them under canary/.
+  SUBDIR: ${{ (github.event_name == 'workflow_dispatch' && inputs.subdir == 'ROOT') && '' || (github.event_name == 'workflow_dispatch' && inputs.subdir || 'canary') }}
 
 jobs:
   read:
