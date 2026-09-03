@@ -152,6 +152,13 @@ def build_manifest(
             raise DeliveryError(f"PLAIN_SHA256SUMS carries no sha256 for {plain} ({ledger})")
         sizes[plain] = int(plain_sizes[plain])
         shas[plain] = str(plain_sha256[plain]).lower()
+    # F-feed-1: the box's sha256sum also covers the non-ledger objects it witnessed (the
+    # result file, and source_manifest.json on a box run). Every such digest is carried so the
+    # fetch verifies the object's bytes, not only S3's length; an object the box did not
+    # witness is verified by length alone and the receipt says so.
+    object_sha256: dict[str, str] = {
+        name: str(plain_sha256[name]).lower() for name in OTHER_OBJECTS if name in plain_sha256
+    }
     manifest: dict[str, Any] = {
         "schema": MANIFEST_SCHEMA,
         "run_id": str(run_id),
@@ -162,6 +169,7 @@ def build_manifest(
         "objects": objects,
         "plain_sizes": sizes,
         "plain_sha256": shas,
+        "object_sha256": object_sha256,
         "ledger_files": dict(LEDGER_FILES),
         "manifest_sha256": "",
     }
@@ -256,6 +264,15 @@ def fetch(
         observed = dest.stat().st_size
         entry["bytes_observed"] = observed
         entry["status"] = VERIFIED if observed == entry["content_length_expected"] else LENGTH_MISMATCH
+        # The digest the box witnessed for a non-ledger object (F-feed-1), when it carried one.
+        # Older manifests carry no object_sha256 block; they verify by length alone, as before.
+        expected_sha = (manifest.get("object_sha256") or {}).get(name)
+        entry["sha256_expected"] = str(expected_sha).lower() if expected_sha else None
+        entry["sha256_observed"] = None
+        if entry["status"] == VERIFIED and entry["sha256_expected"] is not None:
+            _, entry["sha256_observed"] = _hash_file(dest)
+            if entry["sha256_observed"] != entry["sha256_expected"]:
+                entry["status"] = SHA_MISMATCH
         objects[name] = entry
 
     for ledger, plain in LEDGER_FILES.items():

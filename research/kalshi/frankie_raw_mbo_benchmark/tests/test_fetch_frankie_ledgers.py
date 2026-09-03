@@ -178,6 +178,33 @@ class FetchTest(unittest.TestCase):
         self.assertEqual(json.loads(receipt_path.read_text())["receipt_sha256"], receipt["receipt_sha256"])
         self.assertNotIn("X-Amz-Signature", receipt_path.read_text())
 
+    def test_the_result_objects_digest_is_carried_and_verified_when_the_box_witnessed_it(self):
+        """F-feed-1 (the feeding persona, on the real Sunday delivery): PLAIN_SHA256SUMS
+        carries a digest for calculation_result.json and the fetcher consulted it for the three
+        ledgers only, so the result file was verified by S3 length alone. The manifest now
+        carries every non-ledger object's digest the box witnessed, and the fetch verifies it -
+        a wrong digest is a SHA_MISMATCH refusal, not a verified object."""
+        m = manifest()
+        expected = hashlib.sha256(OTHER["calculation_result.json"]).hexdigest()
+        self.assertEqual(m["object_sha256"], {"calculation_result.json": expected})
+        receipt, error, _, _ = self._fetch(m)
+        self.assertIsNone(error)
+        obj = receipt["objects"]["calculation_result.json"]
+        self.assertEqual(obj["status"], "VERIFIED")
+        self.assertEqual(obj["sha256_expected"], expected)
+        self.assertEqual(obj["sha256_observed"], expected)
+        # An object the box did not witness is verified by length alone and SAYS so.
+        self.assertIsNone(receipt["objects"]["small_artifacts.tar.gz"]["sha256_expected"])
+
+    def test_a_result_object_with_the_wrong_digest_is_a_sha_mismatch_and_a_refusal(self):
+        objects = dict(OBJECTS)
+        # Same length, different bytes: S3's ContentLength cannot see it; only the digest can.
+        objects["calculation_result.json"] = b'{"verdict":"ACCEPTEX"}\n'
+        receipt, error, _, _ = self._fetch(downloader=stub_downloader(objects))
+        self.assertIsNotNone(error)
+        self.assertRegex(str(error), "calculation_result.json.*SHA_MISMATCH")
+        self.assertEqual(receipt["objects"]["calculation_result.json"]["status"], "SHA_MISMATCH")
+
     def test_a_short_gzip_is_a_length_mismatch_and_a_refusal(self):
         objects = dict(OBJECTS)
         objects["exact_member_rows.jsonl.gz"] = OBJECTS["exact_member_rows.jsonl.gz"][:-3]
