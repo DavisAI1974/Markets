@@ -15,7 +15,7 @@ jobs:
           set -euo pipefail
           TARGET='chatgpt/frankie-raw-mbo-benchmark-20260828'
           CANDIDATE='chatgpt/s122-item4-task-b-candidate-20260903'
-          BASE='9f984bf9160dffc240c32463476faa04af25973b'
+          BASE='e409a9e2180890ded98262ac098b7e714d4025f1'
           cp scripts/s122_patch_task_b_tests_20260903.py /home/runner/task_b_tests.py
           cp scripts/s122_patch_task_b_source_20260903.py /home/runner/task_b_source.py
           python3 -m pip install --quiet pytest databento matplotlib scipy scikit-learn
