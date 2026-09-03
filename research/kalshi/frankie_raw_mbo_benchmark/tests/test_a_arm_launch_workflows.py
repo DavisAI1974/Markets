@@ -15,6 +15,7 @@ from __future__ import annotations
 import ast
 import re
 import subprocess
+import sys
 import tempfile
 import textwrap
 import unittest
@@ -150,6 +151,29 @@ class LaunchWorkflowDispatchTest(unittest.TestCase):
             with self.subTest(arm=arm):
                 self.assertIn("calculation_result.json", report["run"])
                 self.assertIn("failed_gates", report["run"])
+
+    def test_every_launcher_flag_the_workflow_passes_actually_exists(self):
+        """The canary died on `unrecognized arguments: --emit-change-points`.
+
+        The workflow opted IN with a flag the launcher does not have; the launcher
+        carries change points ON by default and offers `--no-change-points` as the
+        opt-out, so the polarity was inverted. Nothing executed the workflow's
+        arguments against the parser that has to accept them, so a comment claiming
+        "both flags ON unless dispatched off" stood in for a check. Prose expires;
+        this executes.
+        """
+        help_text = subprocess.run(
+            [sys.executable, "-m", LAUNCHER, "--help"],
+            capture_output=True, text=True, cwd=REPO_ROOT,
+        ).stdout
+        self.assertIn("--arm", help_text, "launcher --help did not render")
+        for arm, path in WORKFLOWS.items():
+            body = next(
+                s for s in steps_of(path) if LAUNCHER in (s.get("run") or "")
+            )["run"]
+            for flag in sorted(set(re.findall(r"--[a-z][a-z0-9-]+", body))):
+                with self.subTest(arm=arm, flag=flag):
+                    self.assertIn(flag, help_text)
 
 
 if __name__ == "__main__":

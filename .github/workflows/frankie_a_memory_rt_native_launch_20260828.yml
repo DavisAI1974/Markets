@@ -321,14 +321,16 @@ jobs:
           done
           test "${#source_args[@]}" -gt 0
           printf 'traversing %s object(s): %s\n' "$((${#source_args[@]} / 2))" "$TRAVERSE_SOURCES"
-          # Both flags ON unless dispatched off (D88). Built as an array so an unset flag adds
+          # D88 keeps both ON. Aliasing is opt-in; change points are ON in the launcher by
+          # default, so ON passes NOTHING and only OFF names --no-change-points. Built as an
+          # array so an unset flag adds
           # no empty argument, which argparse would take as a positional and refuse.
           flag_args=()
           if [ "$ALIAS_COMPANION_KEYS" = "true" ]; then
             flag_args+=(--alias-companion-keys)
           fi
-          if [ "$EMIT_CHANGE_POINTS" = "true" ]; then
-            flag_args+=(--emit-change-points)
+          if [ "$EMIT_CHANGE_POINTS" != "true" ]; then
+            flag_args+=(--no-change-points)
           fi
           printf 'flags: %s\n' "${flag_args[*]:-none}"
           python -m research.kalshi.frankie_raw_mbo_benchmark.native_a_arm_launch \
@@ -668,8 +670,8 @@ jobs:
           flag_args = ""
           if os.environ.get("ALIAS_COMPANION_KEYS") == "true":
               flag_args += " --alias-companion-keys"
-          if os.environ.get("EMIT_CHANGE_POINTS") == "true":
-              flag_args += " --emit-change-points"
+          if os.environ.get("EMIT_CHANGE_POINTS") != "true":
+              flag_args += " --no-change-points"
           print(f"remote flags: {flag_args.strip() or 'none'}")
           steps.extend([
               (

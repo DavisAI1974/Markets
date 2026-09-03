@@ -317,8 +317,8 @@ jobs:
           if [ "$ALIAS_COMPANION_KEYS" = "true" ]; then
             flag_args+=(--alias-companion-keys)
           fi
-          if [ "$EMIT_CHANGE_POINTS" = "true" ]; then
-            flag_args+=(--emit-change-points)
+          if [ "$EMIT_CHANGE_POINTS" != "true" ]; then
+            flag_args+=(--no-change-points)
           fi
           printf 'flags: %s\n' "${flag_args[*]:-none}"
           python -m research.kalshi.frankie_raw_mbo_benchmark.native_a_arm_launch \
@@ -658,8 +658,8 @@ jobs:
           flag_args = ""
           if os.environ.get("ALIAS_COMPANION_KEYS") == "true":
               flag_args += " --alias-companion-keys"
-          if os.environ.get("EMIT_CHANGE_POINTS") == "true":
-              flag_args += " --emit-change-points"
+          if os.environ.get("EMIT_CHANGE_POINTS") != "true":
+              flag_args += " --no-change-points"
           print(f"remote flags: {flag_args.strip() or 'none'}")
           steps.extend([
               (
