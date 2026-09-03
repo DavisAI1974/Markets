@@ -296,7 +296,7 @@ class RecognitionLabelCallerS122Test(unittest.TestCase):
             return self.outcome
 
         with patch.object(CandidateRecognition, "record_call", impossible_horizon):
-            with self.assertRaisesRegex(ClockError, "H\+N recognition must follow"):
+            with self.assertRaisesRegex(ClockError, r"H\+N recognition must follow"):
                 opened(tracker(), candidate())
 
     def test_closed_recognition_output_keeps_existing_fields_and_adds_the_validated_object(self) -> None:
