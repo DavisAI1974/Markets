@@ -23,6 +23,9 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 from research.kalshi.frankie_raw_mbo_benchmark import native_a_arm_launch as launcher
+from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import (
+    EVALUATION_BASIS_LEGACY_DECISION_TS,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_causal_stream import (
     CAUSAL_CLOCKS_DERIVED_FROM_LEGACY,
     CAUSAL_CLOCKS_ROW_OWN,
@@ -307,6 +310,77 @@ class LifecycleAvailabilityRuleTest(unittest.TestCase):
         self.assertEqual(lifecycle_availability({"emitting_section": "mirror", "emitted_on": "GROUP_CLOSE"}), ("NO_OWN_CLOCK", None))
 
 
+class EmittedAtRecvNsResolvesFirstTest(unittest.TestCase):
+    """The stamp the driver puts on every lifecycle row is the row's availability clock; the
+    four rules remain only for ledgers written before the stamp existed."""
+
+    def _stream(self, tmp: Path, lifecycle: list[dict]):
+        member = three_groups(tmp)
+        life = write_ledger(tmp / "exact_lifecycle_rows.jsonl", lifecycle)
+        return CausalGroupStream(member, life, None, run_id="t", arm="A_CLEAN")
+
+    def test_a_stamped_row_resolves_by_the_stamp_whatever_else_it_names(self):
+        row = {"emitting_section": "ladder", "emitted_on": "GROUP_CLOSE", "recv_ns": 3,
+               "clock": "ts_recv_ns", "emitted_at_recv_ns": 7}
+        self.assertEqual(lifecycle_availability(row), ("EMITTED_AT_RECV_NS", 7))
+
+    def test_a_stamped_close_occasion_row_resolves_by_the_stamp_not_the_rule(self):
+        row = {"emitting_section": "lineage", "emitted_on": "STREAM_END", "entered_recv_ns": 1,
+               "exited_recv_ns": None, "clock": "ts_recv_ns", "emitted_at_recv_ns": 9}
+        self.assertEqual(lifecycle_availability(row), ("EMITTED_AT_RECV_NS", 9))
+
+    def test_a_null_or_non_integer_stamp_is_not_a_clock_and_falls_back(self):
+        row = {"emitting_section": "ladder", "emitted_on": "GROUP_CLOSE", "recv_ns": 3,
+               "clock": "ts_recv_ns", "emitted_at_recv_ns": None}
+        self.assertEqual(lifecycle_availability(row), ("OWN_CLOCK", 3))
+        row["emitted_at_recv_ns"] = "9"
+        self.assertEqual(lifecycle_availability(row), ("OWN_CLOCK", 3))
+
+    def test_an_unstamped_row_still_resolves_by_the_rules(self):
+        self.assertEqual(
+            lifecycle_availability({"emitting_section": "mirror", "emitted_on": "GROUP_CLOSE"}),
+            ("NO_OWN_CLOCK", None),
+        )
+
+    def test_a_stamped_mirror_row_is_attached_where_it_was_withheld_before(self):
+        rows = [
+            {"emitting_section": "mirror", "emitted_on": "GROUP_CLOSE", "member_id": "grp-0",
+             "emitted_at_recv_ns": BASE},
+            {"emitting_section": "mirror", "emitted_on": "STREAM_END", "member_id": "grp-2",
+             "emitted_at_recv_ns": BASE + 8 * NS},
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            stream = self._stream(Path(tmp), rows)
+            deliveries = list(stream.iterate())
+            self.assertEqual([len(d.lifecycle_rows) for d in deliveries], [1, 0, 1])
+            life = stream.stream_receipt()["lifecycle_ledger"]
+            self.assertEqual(life["withheld_no_own_clock"], {})
+            self.assertEqual(life["withheld_close_occasion"], {})
+            self.assertEqual(life["availability_resolution"]["EMITTED_AT_RECV_NS"], 2)
+
+    def test_the_receipt_counts_the_fallback_rows_by_the_rule_that_placed_them(self):
+        rows = [
+            {"emitting_section": "ladder", "emitted_on": "GROUP_CLOSE", "recv_ns": BASE, "clock": "ts_recv_ns"},
+            {"emitting_section": "ladder", "emitted_on": "GROUP_CLOSE", "recv_ns": BASE + 4 * NS,
+             "clock": "ts_recv_ns", "emitted_at_recv_ns": BASE + 4 * NS},
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            stream = self._stream(Path(tmp), rows)
+            list(stream.iterate())
+            resolution = stream.stream_receipt()["lifecycle_ledger"]["availability_resolution"]
+            self.assertEqual(resolution["EMITTED_AT_RECV_NS"], 1)
+            self.assertEqual(resolution["RULE_FALLBACK"], {"OWN_CLOCK": 1})
+
+    def test_a_stamp_beyond_the_last_cutoff_is_withheld_and_counted_like_any_clock(self):
+        rows = [{"emitting_section": "ladder", "emitted_on": "GROUP_CLOSE", "emitted_at_recv_ns": BASE + 40 * NS}]
+        with tempfile.TemporaryDirectory() as tmp:
+            stream = self._stream(Path(tmp), rows)
+            list(stream.iterate())
+            life = stream.stream_receipt()["lifecycle_ledger"]
+            self.assertEqual(life["withheld_beyond_last_cutoff"], 1)
+            self.assertTrue(life["retention_identity_holds"])
+
+
 class DeliveryReceiptTest(unittest.TestCase):
     """The registry's uncalled validator is now called on every delivered group."""
 
@@ -432,6 +506,54 @@ class RealLedgersStreamTest(unittest.TestCase):
             for row in delivery.legacy_rows:
                 self.assertLessEqual(float(row["ts_recv"]), cutoff / 1e9)
 
+    def test_f20_no_lifecycle_row_of_a_fresh_run_is_withheld_for_want_of_a_clock(self):
+        """F-20's falsifier, stated by the coordinator: on a fresh fixture run
+        withheld_no_own_clock and withheld_close_occasion both read zero. Every row the
+        traversal wrote carries `emitted_at_recv_ns`, so the stream places every one."""
+        stream = CausalGroupStream(
+            self.ledgers["exact_member_rows"], self.ledgers["exact_lifecycle_rows"],
+            self.ledgers["legacy_observable_rows"], run_id="stream-fixture", arm="A_CLEAN",
+        )
+        list(stream.iterate())
+        life = stream.stream_receipt()["lifecycle_ledger"]
+        self.assertEqual(life["withheld_no_own_clock"], {})
+        self.assertEqual(life["withheld_close_occasion"], {})
+        self.assertEqual(life["withheld_beyond_last_cutoff"], 0)
+        self.assertEqual(life["rows_attached"], life["rows_read"])
+        self.assertGreater(life["rows_read"], 0)
+        self.assertEqual(stream.drain_withheld()["lifecycle"], [])
+
+    def test_f20_every_real_row_was_placed_by_its_own_stamp_and_the_receipt_says_so(self):
+        stream = CausalGroupStream(
+            self.ledgers["exact_member_rows"], self.ledgers["exact_lifecycle_rows"],
+            self.ledgers["legacy_observable_rows"], run_id="stream-fixture", arm="A_CLEAN",
+        )
+        deliveries = list(stream.iterate())
+        life = stream.stream_receipt()["lifecycle_ledger"]
+        resolution = life["availability_resolution"]
+        self.assertEqual(resolution["EMITTED_AT_RECV_NS"], life["rows_attached"])
+        self.assertEqual(resolution["RULE_FALLBACK"], {})
+        self.assertEqual(life["availability_path"], "EMITTED_AT_RECV_NS_FIRST_RULES_FALLBACK")
+        for delivery in deliveries:
+            for row in delivery.lifecycle_rows:
+                self.assertLessEqual(row["emitted_at_recv_ns"], delivery.first_lawful_availability_ns)
+
+    def test_f20_the_close_occasion_rows_ride_with_the_group_whose_receive_revealed_the_close(self):
+        """A STREAM_END row now carries the instant it was fixed at, so the objection that
+        placed it after exhaustion (its content said nothing followed) no longer holds: at
+        that instant, nothing had."""
+        stream = CausalGroupStream(
+            self.ledgers["exact_member_rows"], self.ledgers["exact_lifecycle_rows"],
+            self.ledgers["legacy_observable_rows"], run_id="stream-fixture", arm="A_CLEAN",
+        )
+        deliveries = list(stream.iterate())
+        stream_end = [(d, r) for d in deliveries for r in d.lifecycle_rows if r["emitted_on"] == "STREAM_END"]
+        self.assertTrue(stream_end, "the fixture stopped emitting STREAM_END rows")
+        last = deliveries[-1]
+        for delivery, row in stream_end:
+            self.assertIs(delivery, last)
+            self.assertEqual(row["emitted_at_recv_ns"], last.first_lawful_availability_ns)
+
 
 class CommandLineTest(unittest.TestCase):
     def test_the_module_prints_the_stream_receipt_over_a_whole_ledger(self):
@@ -489,7 +611,10 @@ class CausalClocksOnDeliveryTest(unittest.TestCase):
             self.assertEqual(clocks[CLOCK_EVENT_TIME]["f_last_ns"], BASE - 150_000)
             self.assertEqual(clocks[CLOCK_EVENT_TIME]["first_component_ns"], BASE - 3 * NS - 150_000)
             self.assertEqual(clocks[CLOCK_LOCK_TIME]["basis"], NOT_ON_THIS_ROW)
-            self.assertEqual(clocks[CLOCK_MODEL_EVALUATION]["basis"], NOT_ON_THIS_ROW)
+            # F-feed-5: the legacy row's clocks.decision_ts_recv_ns IS its decision instant.
+            self.assertEqual(clocks[CLOCK_MODEL_EVALUATION]["basis"], EVALUATION_BASIS_LEGACY_DECISION_TS)
+            self.assertEqual(clocks[CLOCK_MODEL_EVALUATION]["value_ns"], BASE)
+            self.assertEqual(delivery.causal_clock_chain["model_evaluation_ns"], BASE)
 
     def test_a_row_with_a_partial_causal_clocks_object_is_refused_not_patched(self):
         with tempfile.TemporaryDirectory() as tmp:

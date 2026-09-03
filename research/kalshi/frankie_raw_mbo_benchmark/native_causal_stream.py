@@ -30,10 +30,24 @@ receive clock moves backwards is refused at the row where it happens.
 
 **Sidecars ride by their own clocks, never by the group's.** Lifecycle rows (the runner's
 exact per-section rows) and legacy rows (the adapter's ten-level projections) are attached to
-a group only when their own availability is at or before the group's cutoff. The lifecycle
-ledger carries NO uniform availability stamp - every section names its clocks differently and
-two name none - so availability is resolved by a DECLARED rule, `lifecycle_availability`,
-which is a fact about this ledger as written and is reported rather than hidden:
+a group only when their own availability is at or before the group's cutoff.
+
+**A lifecycle row's availability is a FIELD first (F-20, D83).** Every row the driver retains
+since S122 carries `emitted_at_recv_ns` (`native_clocks.LIFECYCLE_AVAILABILITY_STAMP`): the
+receive-clock instant the traversal stood at when it retained the row - a group's F_LAST
+receive, the receive that revealed a segment boundary, or the finalize instant. That is the
+Step-1 two-day module's `event_known_by_ts_recv_ns` definition (the receive time of the
+record that made the event knowable; design reused, no value copied). `lifecycle_availability`
+reads it FIRST and returns `("EMITTED_AT_RECV_NS", stamp)`; a stamped SEGMENT_CLOSE or
+STREAM_END row is placed at its stamp, because at that instant nothing HAD followed. The
+receipt counts, per ledger, how many attached rows were placed by the stamp and how many by
+each fallback rule (`availability_resolution`), and names the path
+(`availability_path`), so a ledger written before the stamp existed is visibly served by rule.
+
+The rules below are the FALLBACK for ledgers written before the stamp existed (the delivered
+Sunday ledgers of run 33605852433 are such ledgers): every section named its clocks
+differently and two named none, so availability is resolved by a DECLARED rule, which is a
+fact about that ledger as written and is reported rather than hidden:
 
 - `emitted_on` in `SEGMENT_CLOSE` / `STREAM_END`: the row's content (a censoring status, a
   final disposition) was fixed at a close instant the row does not carry, so delivering it at
@@ -76,6 +90,7 @@ from pathlib import Path
 from typing import Any, Iterator, Mapping
 
 from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import (
+    LIFECYCLE_AVAILABILITY_STAMP,
     CAUSAL_CLOCK_LAYER_IDS,
     NOT_ON_THIS_ROW,
     ClockError,
@@ -124,12 +139,16 @@ LAYER_CARRIERS: dict[str, tuple[str, ...]] = {
 }
 """Which delivered bytes carry each CAUSAL_STREAM_REQUIRED registry group. A declaration."""
 
+AVAILABILITY_PATH = "EMITTED_AT_RECV_NS_FIRST_RULES_FALLBACK"
+"""How a lifecycle row is placed: by its own stamp when it carries one, else by rule."""
+
 AVAILABILITY_RULES = {
-    "CLOSE_OCCASION": "emitted_on in {SEGMENT_CLOSE, STREAM_END}: withheld from every group; released after exhaustion",
+    "EMITTED_AT_RECV_NS": "the row's own emitted_at_recv_ns (native_clocks.LIFECYCLE_AVAILABILITY_STAMP), the receive instant the driver retained it at; read FIRST, integers only",
+    "CLOSE_OCCASION": "unstamped row, emitted_on in {SEGMENT_CLOSE, STREAM_END}: withheld from every group; released after exhaustion",
     "SECOND_COMPLETE": "(second + 1) * 1e9 on the row's declared ts_recv_ns clock",
     "CANDIDATE_AVAILABLE_SECOND": "available_second * 1e9, the clock 4.11 measures against",
     "OWN_CLOCK": "the latest integer recv_ns / *_recv_ns the row names at any depth",
-    "NO_OWN_CLOCK": "no receive clock named: withheld and counted, never dropped",
+    "NO_OWN_CLOCK": "unstamped row naming no receive clock: withheld and counted, never dropped",
     "LEGACY": "ts_recv (float seconds) <= cutoff_ns / 1e9, the adapter's own arithmetic",
 }
 
@@ -191,11 +210,16 @@ def _latest_recv_clock(value: Any) -> int | None:
 
 
 def lifecycle_availability(row: Mapping[str, Any]) -> tuple[str, int | None]:
-    """When a lifecycle row became lawfully knowable, under the declared rule (see module doc).
+    """When a lifecycle row became lawfully knowable: its own stamp first, else the declared rule.
 
-    Returns `(rule, availability_ns)`; `availability_ns` is None for CLOSE_OCCASION and
-    NO_OWN_CLOCK, which are withheld rather than placed.
+    Returns `(rule, availability_ns)`. A row carrying an integer `emitted_at_recv_ns` resolves
+    as `EMITTED_AT_RECV_NS` whatever else it names (F-20); a null or non-integer stamp is not a
+    clock and the row falls back to the rules (see module doc). `availability_ns` is None for
+    CLOSE_OCCASION and NO_OWN_CLOCK, which are withheld rather than placed.
     """
+    stamp = _int_or_none(row.get(LIFECYCLE_AVAILABILITY_STAMP))
+    if stamp is not None:
+        return "EMITTED_AT_RECV_NS", stamp
     occasion = row.get("emitted_on")
     if occasion in CLOSE_OCCASIONS:
         return "CLOSE_OCCASION", None
@@ -255,6 +279,9 @@ class _Sidecar:
         self.withheld_close_occasion: dict[str, int] = {}
         self.withheld_beyond_last_cutoff = 0
         self.withheld: list[dict[str, Any]] = []
+        # F-20: how each ATTACHED row was placed - by its own stamp, or by which fallback rule.
+        self.placed_by_stamp = 0
+        self.placed_by_rule: dict[str, int] = {}
         self.exhausted = path is None
 
     def _read_next(self) -> tuple[bytes, dict[str, Any]] | None:
@@ -298,6 +325,7 @@ class _Sidecar:
                 lawful = available <= cutoff_ns
                 late = previous_cutoff_ns is not None and available <= previous_cutoff_ns
             else:
+                rule = "LEGACY"
                 verdict = _legacy_lawful(row, cutoff_ns)
                 if verdict is None:
                     self.withheld_no_own_clock["ts_recv"] = self.withheld_no_own_clock.get("ts_recv", 0) + 1
@@ -310,6 +338,10 @@ class _Sidecar:
                 return taken
             if late:
                 self.late_arrivals += 1
+            if rule == "EMITTED_AT_RECV_NS":
+                self.placed_by_stamp += 1
+            else:
+                self.placed_by_rule[rule] = self.placed_by_rule.get(rule, 0) + 1
             self.rows_attached += 1
             self.bytes_attached += len(line)
             taken.append((line, row))
@@ -369,6 +401,13 @@ class _Sidecar:
             "withheld_total": withheld_total,
             "pending_unplaced": pending,
             "retention_identity_holds": self.rows_read == self.rows_attached + withheld_total + pending,
+            # F-20: attached rows by how they were placed. A fresh ledger reads every row under
+            # the stamp and an empty fallback; a pre-stamp ledger reads the reverse, visibly.
+            "availability_path": AVAILABILITY_PATH if self.kind == LIFECYCLE else "LEGACY_TS_RECV",
+            "availability_resolution": {
+                "EMITTED_AT_RECV_NS": self.placed_by_stamp,
+                "RULE_FALLBACK": dict(sorted(self.placed_by_rule.items())),
+            },
         }
 
 
@@ -504,7 +543,10 @@ class CausalGroupStream:
                 causal_clocks = validate_causal_clock_layers(own_clocks)
                 causal_clocks_basis = CAUSAL_CLOCKS_ROW_OWN
             else:
-                causal_clocks = causal_clock_layers_from_legacy_clocks(clocks, ts_event_ns=int(row["ts_event_ns"]))
+                causal_clocks = causal_clock_layers_from_legacy_clocks(
+                    clocks, ts_event_ns=int(row["ts_event_ns"]),
+                    decision_basis=row.get("decision_basis"),
+                )
                 causal_clocks_basis = CAUSAL_CLOCKS_DERIVED_FROM_LEGACY
             causal_clock_chain = check_causal_clock_order(causal_clocks)
         except ClockError as exc:

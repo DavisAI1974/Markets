@@ -35,6 +35,26 @@ VALID_RECOGNITION = frozenset({PRIOR, T0, HORIZON})
 F_LAST_FLAG = 128
 EVENT_CLOCK = "ts_event_ns"
 
+LIFECYCLE_AVAILABILITY_STAMP = "emitted_at_recv_ns"
+"""F-20 under D83: the receive-clock instant the traversal stood at when it retained a
+lifecycle row - the row's own feature-availability clock, stamped uniformly by
+`native_replay_driver._retain_lifecycle` and read FIRST by
+`native_causal_stream.lifecycle_availability`. Declared here, once, because the producer and
+the consumer must agree on the name and neither imports the other. The design is the
+Step-1 two-day module's (`research/ng_exhaustion_mbo_2day_full_mbo_step1_20260825.py`):
+`event_known_by_ts_recv_ns` is the receive time of the record that made the event knowable,
+never a time chosen; only that definition is reused, no Step-1 value.
+
+MEASURED ON THE REAL SUNDAY LEDGERS BEFORE THE STAMP (F-feed-7, run 33630348943, record
+`FRANKIE_FEED_RECORD_SUNDAY_33630348943_20260903.md`): 109,532 of 377,454 lifecycle rows
+(29.0%) could not ride inside any group - withheld_no_own_clock 43,569 (every `mirror`
+GROUP_CLOSE row names no receive clock), withheld_close_occasion 65,960 (mirror|STREAM_END
+43,569; lineage|STREAM_END 21,651; queue|STREAM_END 597; response|STREAM_END 91;
+replenishment|STREAM_END 51; exhaustion|STREAM_END 1), withheld_beyond_last_cutoff 3, late
+arrivals 1,713; in-stream mirror 0 of 87,138, lineage 0 of 21,651. Those are the numbers this
+stamp drives to zero on a fresh run: every one of those rows now carries the receive instant
+it was retained at, and `native_causal_stream` places it there."""
+
 
 class ClockError(ValueError):
     """A group could not be measured on the declared clocks."""
@@ -76,6 +96,13 @@ DISCOVERY_BASIS_EMITTED = "RECOGNITIONS_EMITTED_AT_THIS_CUTOFF"
 EVALUATION_BASIS_NONE = "NO_INVOCATION_AT_THIS_CUTOFF"
 EVALUATION_BASIS_STAGED = "PRINCIPAL_INVOCATION_STAGED_AT_THIS_CUTOFF"
 LOCK_BASIS_PRINCIPAL = "STAMPED_BY_THE_PRINCIPAL_FIRST_LOCK"
+EVALUATION_BASIS_LEGACY_DECISION_TS = "DERIVED_FROM_LEGACY_DECISION_TS_RECV_NS"
+"""F-feed-5 (S122, measured on the real Sunday ledgers): a pre-S121 row carries
+`clocks.decision_ts_recv_ns` under `decision_basis`, and the legacy derivation had declared
+the model-evaluation clock NOT_ON_THIS_ROW anyway. It derives from that instant now, and the
+entry carries the row's own `decision_basis` so a convention-adopted instant
+(REPLAY_EARLIEST_LAWFUL_AVAILABILITY) is never read as an observed staging."""
+DECISION_BASIS_UNDECLARED_ON_ROW = "DECISION_BASIS_UNDECLARED_ON_ROW"
 NOT_ON_THIS_ROW = "NOT_ON_THIS_ROW"
 """A ledger written before this build carries the five-field `clocks` object and nothing
 keyed by a registry id. What that object can support is derived; what it cannot is said."""
@@ -380,9 +407,11 @@ def causal_clock_layers(
 
 
 def causal_clock_layers_from_legacy_clocks(
-    clocks: Mapping[str, Any], *, ts_event_ns: int
+    clocks: Mapping[str, Any], *, ts_event_ns: int, decision_basis: str | None = None
 ) -> dict[str, dict[str, Any]]:
-    """The seven, from a pre-S121 row's five-field `clocks` object. Three derive; four are
+    """The seven, from a pre-S121 row's five-field `clocks` object. Three derive from the
+    receive clocks; the model-evaluation clock derives from `decision_ts_recv_ns` when the
+    row carries one (F-feed-5), with the row's `decision_basis` beside it; the rest are
     declared `NOT_ON_THIS_ROW` rather than filled with anything. The delivered Sunday ledger
     is such a row and stays deliverable, findable by name."""
     try:
@@ -393,6 +422,19 @@ def causal_clock_layers_from_legacy_clocks(
     except (KeyError, TypeError, ValueError) as exc:
         raise ClockError(f"legacy clocks object cannot support the three derivable clocks: {exc}") from exc
     absent = lambda: {"clock": CAUSAL_CLOCK, "value_ns": None, "basis": NOT_ON_THIS_ROW}  # noqa: E731
+    decision = clocks.get("decision_ts_recv_ns")
+    if isinstance(decision, bool) or not isinstance(decision, int):
+        evaluation = absent()
+    else:
+        evaluation = {
+            "clock": CAUSAL_CLOCK,
+            "value_ns": int(decision),
+            "basis": EVALUATION_BASIS_LEGACY_DECISION_TS,
+            "decision_basis": (
+                decision_basis if isinstance(decision_basis, str) and decision_basis
+                else DECISION_BASIS_UNDECLARED_ON_ROW
+            ),
+        }
     return {
         CLOCK_EVENT_TIME: {
             "clock": EVENT_CLOCK, "first_component_ns": first_event, "f_last_ns": int(ts_event_ns),
@@ -407,7 +449,7 @@ def causal_clock_layers_from_legacy_clocks(
         },
         CLOCK_FEATURE_AVAILABILITY: absent(),
         CLOCK_PROSPECTIVE_DISCOVERY_CONFIRMATION: absent(),
-        CLOCK_MODEL_EVALUATION: absent(),
+        CLOCK_MODEL_EVALUATION: evaluation,
         CLOCK_LOCK_TIME: absent(),
     }
 

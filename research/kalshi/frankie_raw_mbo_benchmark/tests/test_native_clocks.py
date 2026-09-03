@@ -7,6 +7,8 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import (
     BASIS_F_LAST_RECEIVE_OF_THE_GROUP,
     BASIS_OBSERVED_ON_THE_RECORD,
     CAUSAL_CLOCK,
+    DECISION_BASIS_UNDECLARED_ON_ROW,
+    EVALUATION_BASIS_LEGACY_DECISION_TS,
     NOT_ON_THIS_ROW,
     CAUSAL_CLOCK_LAYER_IDS,
     CLOCK_EVENT_KNOWN_BY,
@@ -546,11 +548,43 @@ class CausalClockLayersTest(unittest.TestCase):
         self.assertEqual(layers[CLOCK_EVENT_KNOWN_BY],
                          {"clock": CAUSAL_CLOCK, "value_ns": 2_500, "basis": BASIS_F_LAST_RECEIVE_OF_THE_GROUP})
         for layer_id in (CLOCK_FEATURE_AVAILABILITY, CLOCK_PROSPECTIVE_DISCOVERY_CONFIRMATION,
-                         CLOCK_MODEL_EVALUATION, CLOCK_LOCK_TIME):
+                         CLOCK_LOCK_TIME):
             with self.subTest(layer=layer_id):
                 self.assertIsNone(layers[layer_id]["value_ns"])
                 self.assertEqual(layers[layer_id]["basis"], NOT_ON_THIS_ROW)
+        # F-feed-5 (S122, measured on the real Sunday ledgers): the old row DOES carry a
+        # decision instant - clocks.decision_ts_recv_ns under decision_basis - so the model-
+        # evaluation clock derives from it, with the convention it was adopted under named.
+        self.assertEqual(layers[CLOCK_MODEL_EVALUATION], {
+            "clock": CAUSAL_CLOCK, "value_ns": 2_500,
+            "basis": EVALUATION_BASIS_LEGACY_DECISION_TS,
+            "decision_basis": DECISION_BASIS_UNDECLARED_ON_ROW,
+        })
         self.assertEqual(validate_causal_clock_layers(layers), layers)
+
+    def test_the_legacy_decision_instant_carries_the_rows_own_decision_basis(self) -> None:
+        legacy = {
+            "first_component_ts_event_ns": 1_000, "first_component_ts_recv_ns": 1_100,
+            "f_last_ts_recv_ns": 2_500, "first_lawful_availability_ns": 2_500,
+            "decision_ts_recv_ns": 2_600,
+        }
+        layers = causal_clock_layers_from_legacy_clocks(
+            legacy, ts_event_ns=2_000, decision_basis="REPLAY_EARLIEST_LAWFUL_AVAILABILITY")
+        entry = layers[CLOCK_MODEL_EVALUATION]
+        self.assertEqual(entry["value_ns"], 2_600)
+        self.assertEqual(entry["basis"], EVALUATION_BASIS_LEGACY_DECISION_TS)
+        self.assertEqual(entry["decision_basis"], "REPLAY_EARLIEST_LAWFUL_AVAILABILITY")
+        self.assertEqual(check_causal_clock_order(layers)["model_evaluation_ns"], 2_600)
+
+    def test_a_legacy_row_without_a_decision_instant_still_says_not_on_this_row(self) -> None:
+        legacy = {
+            "first_component_ts_event_ns": 1_000, "first_component_ts_recv_ns": 1_100,
+            "f_last_ts_recv_ns": 2_500, "first_lawful_availability_ns": 2_500,
+            "decision_ts_recv_ns": None,
+        }
+        layers = causal_clock_layers_from_legacy_clocks(legacy, ts_event_ns=2_000)
+        self.assertEqual(layers[CLOCK_MODEL_EVALUATION],
+                         {"clock": CAUSAL_CLOCK, "value_ns": None, "basis": NOT_ON_THIS_ROW})
 
     def test_the_declaration_prose_is_not_repeated_on_every_row(self) -> None:
         """Bytes: the producer prose lives once in the summary; a row carries short bases."""

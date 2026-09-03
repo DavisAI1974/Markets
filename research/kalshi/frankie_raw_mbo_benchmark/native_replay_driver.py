@@ -61,7 +61,13 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_candidate_adapter import (
     ResponseFeed,
     starting_liquidity_regime,
 )
+from research.kalshi.frankie_raw_mbo_benchmark.native_full_capture_adapter import (
+    ACTIVITY_ANCHORS,
+    ACTIVITY_SINCE_DECLARATION,
+    RETIRED_FIXED_INTERVAL_FRAME_KEYS,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import (
+    LIFECYCLE_AVAILABILITY_STAMP,
     ClockCalculator,
     member_clock_row,
     stamp_discovery_confirmations,
@@ -139,7 +145,25 @@ class ExchangeSessionRule:
 
 
 class CadencePolicy(Protocol):
-    """Decides when the principal model is invoked. Supplied, never inferred here."""
+    """Decides when the principal model is invoked. Supplied, never inferred here.
+
+    THE CADENCE AUDIT (S122, F-26; Greg: "Don't make cutoff times"). Every argument a policy
+    receives is an EVENT or a count of events, never a time interval:
+
+    * `group_index`, `recv_ns`: THIS cutoff - the F_LAST receive of the group that just
+      closed. A cutoff's identity is the pair `(group_index, recv_ns)`: on the real Sunday
+      ledgers 1,399 of 43,569 groups share an F_LAST receive nanosecond (F-feed-9, run
+      33630348943), so `recv_ns` alone does not name a cutoff.
+    * `mark`: the session mark of that group (segment, phase - exchange facts).
+    * `groups_since_last`: a COUNT of F_LAST-closed groups since the last invocation.
+    * `candidate_events`: the candidate events knowable AT this cutoff - the 4.11 calls
+      emitted since the previous row (recognitions) and the 4.16 change points observed
+      since it - so a policy can fire on them.
+
+    The interval `ns_since_last` that this protocol offered before S122 is REMOVED: a policy
+    firing on it would have made a cutoff a time we chose. `CADENCE_AUDIT` in the traversal
+    summary records the vocabulary so the audit is a field a reader can check, not prose.
+    """
 
     def should_invoke(
         self,
@@ -148,9 +172,52 @@ class CadencePolicy(Protocol):
         recv_ns: int,
         mark: SessionMark,
         groups_since_last: int,
-        ns_since_last: int,
+        candidate_events: Mapping[str, Any],
     ) -> bool:
         ...
+
+
+CADENCE_AUDIT: dict[str, Any] = {
+    "rule": "an invocation cutoff is an EVENT - the F_LAST receive of a group, or a candidate event at it - never a time we choose (D83, F-26)",
+    "cutoff_identity": ["group_index", "recv_ns"],
+    "cutoff_identity_note": "recv_ns alone is not unique: groups can share an F_LAST receive nanosecond (F-feed-9)",
+    "policy_inputs": ["group_index", "recv_ns", "mark", "groups_since_last", "candidate_events"],
+    "policy_inputs_that_are_time_intervals": [],
+    "removed_at_s122": ["ns_since_last"],
+    "candidate_event_kinds": ["recognitions_at_this_cutoff", "change_points_at_this_cutoff"],
+}
+
+
+class CandidateEventCadence:
+    """Invoke at a cutoff that carries a candidate event, and never on elapsed time.
+
+    A recognition emitted at this cutoff, or a 4.16 change point observed at it, is the
+    trigger; a count of F_LAST-closed groups (`every_groups`) is the only other one, and it
+    is a count of events. There is no clock in here to schedule on.
+    """
+
+    def __init__(self, *, every_groups: int | None = None) -> None:
+        if every_groups is not None and every_groups <= 0:
+            raise ReplayDriverError("every_groups must be a positive count of groups or None")
+        self.every_groups = every_groups
+
+    def should_invoke(
+        self,
+        *,
+        group_index: int,
+        groups_since_last: int,
+        candidate_events: Mapping[str, Any],
+        **_: Any,
+    ) -> bool:
+        if candidate_events.get("recognitions_at_this_cutoff") or candidate_events.get(
+            "change_points_at_this_cutoff"
+        ):
+            return True
+        return (
+            self.every_groups is not None
+            and group_index > 0
+            and groups_since_last >= self.every_groups
+        )
 
 
 LINEAGE_SIGNATURE = "ORDER_ID_LINEAGE_V1"
@@ -460,8 +527,17 @@ class NativeReplayDriver:
         self.counters = DriverCounters()
         self._mark: SessionMark | None = None
         self._last_invoke_group = 0
-        self._last_invoke_ns: int | None = None
         self._last_recv_ns: int | None = None
+        # F-26: change points observed since the previous member row, offered to the cadence
+        # policy as candidate events at this cutoff (a count, reset per row).
+        self._change_points_since_row = 0
+        # F-20 / D83: the receive-clock instant the driver stands at when it retains a
+        # lifecycle row. `_on_group` sets it to the group's F_LAST receive and `finalize` to
+        # the finalize instant, so a group-close row carries its group's F_LAST receive, a
+        # segment-close row the receive that REVEALED the boundary (the first group of the
+        # next segment - that is when the censoring became knowable, not the old segment's
+        # last receive), and a stream-end row the instant the stream was closed.
+        self._retention_recv_ns: int | None = None
         # S121 item one: the 4.11 calls emitted since the last member row was written. They
         # are stamped onto the row of the group at whose cutoff they were emitted
         # (clock_prospective_discovery_confirmation); calls emitted at stream end, where no
@@ -566,11 +642,33 @@ class NativeReplayDriver:
         self._lineage_context = {}
 
     def _retain_lifecycle(self, rows: Any, *, section: str, occasion: str) -> None:
-        """Keep every exact row a section hands back, stamped with where it came from."""
+        """Keep every exact row a section hands back, stamped with where it came from and WHEN.
+
+        F-20 under D83. Every section named its availability clock differently (`recv_ns`,
+        `closed_recv_ns`, `terminal_recv_ns`, `exited_recv_ns`, `second`, `available_second`,
+        nested `runs[].end_recv_ns`) and two named none (the mirror rows), so the causal
+        stream had to place rows by a declared rule and WITHHELD what it could not place -
+        60 mirror rows and 362 close-occasion rows on a 60-group fixture. A lifecycle row
+        without its own availability instant is a row missing its feature-availability
+        clock. `emitted_at_recv_ns` is the driver's own receive-clock instant at the moment
+        of retention, stamped on every row uniformly, so availability is a FIELD the stream
+        reads first (`native_causal_stream.lifecycle_availability`) and the rules remain
+        only for ledgers written before the stamp existed. Design reused from the Step-1
+        two-day module's per-event clock set (`event_known_by_ts_recv_ns`: the receive time
+        of the record that made the event knowable); no Step-1 value is copied.
+        """
+        stamp = self._retention_recv_ns
+        if stamp is None:
+            raise ReplayDriverError(
+                f"a {section} row was offered for retention ({occasion}) before the driver "
+                "stood at any receive instant; a lifecycle row is not retained without its "
+                "availability clock"
+            )
         for row in rows or ():
             kept = dict(row)
             kept["emitting_section"] = section
             kept["emitted_on"] = occasion
+            kept[LIFECYCLE_AVAILABILITY_STAMP] = stamp
             self.counters.lifecycle_rows_retained += 1
             if self.sinks is None:
                 self.counters.lifecycle_rows.append(kept)
@@ -725,7 +823,7 @@ class NativeReplayDriver:
         if fingerprint == self._last_change_point_state:
             return
         self._last_change_point_state = fingerprint
-        self.run.response.observe_change_point(
+        self._change_points_since_row += self.run.response.observe_change_point(
             recv_ns, values_for=self.responses.change_point_values_for
         )
 
@@ -914,6 +1012,9 @@ class NativeReplayDriver:
         if self._last_recv_ns is not None and recv_ns < self._last_recv_ns:
             raise ReplayDriverError("receive time moved backwards; the stream is not causal")
         self._last_recv_ns = recv_ns
+        # Every lifecycle row retained from here until the next group - including the
+        # segment close `_mark_for` may trigger below - is stamped at this receive.
+        self._retention_recv_ns = recv_ns
 
         event_ns = int(envelope["ts_event_ns"])
 
@@ -993,7 +1094,8 @@ class NativeReplayDriver:
         # D60, AND THE SECOND TIME THIS EXACT SHAPE HAS OCCURRED. This was a hardcoded list
         # of eleven keys, written against the BASE adapter's frame. `FullCaptureAdapter`
         # (D61) adds five more - `book_full` (the whole book, not the top ten levels),
-        # `activity_full`, `book_effects`, `integrity_delta` and `capture_observations` -
+        # `activity_since` (event anchors, D83; `activity_full` until S122), `book_effects`,
+        # `integrity_delta` and `capture_observations` -
         # which is precisely what D61 exists to restore, and this loop then discarded every
         # one of them. The wrapper put the data back into the frame and the traversal threw
         # it away one line later.
@@ -1049,15 +1151,21 @@ class NativeReplayDriver:
         # into the cutoff dict as `clock_model_evaluation_ns` (native_staging copies it
         # unchanged). Nothing the decision reads depends on the sections fed below.
         stamp_discovery_confirmations(row, self._confirmations_pending)
+        candidate_events = {
+            "recognitions_at_this_cutoff": len(self._confirmations_pending),
+            "change_points_at_this_cutoff": self._change_points_since_row,
+        }
         self._confirmations_pending = []
+        self._change_points_since_row = 0
         groups_since = group_index - self._last_invoke_group
-        ns_since = 0 if self._last_invoke_ns is None else recv_ns - self._last_invoke_ns
+        # F-26: no time interval reaches the policy. The cutoff is this group's F_LAST
+        # receive; the events at it are offered; a count of groups is the only other input.
         invoke = bool(self.cadence.should_invoke(
             group_index=group_index,
             recv_ns=recv_ns,
             mark=mark,
             groups_since_last=groups_since,
-            ns_since_last=ns_since,
+            candidate_events=candidate_events,
         ))
         evaluation = stamp_model_evaluation(row, staged_at_recv_ns=recv_ns if invoke else None)
         row["causal_availability_clock"] = envelope["causal_availability_clock"]
@@ -1113,7 +1221,6 @@ class NativeReplayDriver:
             }
             self.counters.invocation_cutoffs.append(cutoff)
             self._last_invoke_group = group_index
-            self._last_invoke_ns = recv_ns
             if self.stage_spawn is not None:
                 # STAGE, never invoke. Sol runs as an agent session over committed files;
                 # the traversal's job at a cutoff is to leave a request behind, not to call
@@ -1337,6 +1444,8 @@ class NativeReplayDriver:
     def finalize(self, *, recv_ns: int | None = None) -> dict[str, Any]:
         """Close every open structure, then emit the layered result."""
         at = recv_ns if recv_ns is not None else (self._last_recv_ns or 0)
+        # Stream-end rows are stamped at the finalize instant, explicit or the last receive.
+        self._retention_recv_ns = at
         # D60: every one of these RETURNS the rows it censored at stream end, and the return
         # was dropped at all four call sites.
         # Same dependency as at a segment boundary: open runways close before the calculator
@@ -1453,9 +1562,18 @@ class NativeReplayDriver:
             },
             "member_rows_retained": self.counters.member_rows_retained,
             "lifecycle_rows_retained": self.counters.lifecycle_rows_retained,
+            # F-20: the field every retained lifecycle row carries as its availability clock.
+            "lifecycle_availability_stamp": LIFECYCLE_AVAILABILITY_STAMP,
+            # D83, once per run rather than a string on every row: the fixed-seconds blocks
+            # that no longer reach the member row, and the event anchors that replaced them.
+            "fixed_interval_blocks_removed": list(RETIRED_FIXED_INTERVAL_FRAME_KEYS),
+            "activity_anchors": list(ACTIVITY_ANCHORS),
+            "activity_since_declaration": dict(ACTIVITY_SINCE_DECLARATION),
             "causal_clock": CAUSAL_CLOCK,
             "forward_only": True,
             "session_rule": type(self.session_rule).__name__,
             "cadence_policy": type(self.cadence).__name__,
+            # F-26: the cadence audit as a field, not prose.
+            "cadence_audit": dict(CADENCE_AUDIT),
         }
         return result

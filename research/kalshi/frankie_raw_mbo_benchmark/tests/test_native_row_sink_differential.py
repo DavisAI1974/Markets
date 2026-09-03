@@ -161,6 +161,30 @@ class RowSinkDifferentialTest(unittest.TestCase):
             json.loads(json.dumps(self.inline["traversal"]["legacy_rows"], sort_keys=True)),
         )
 
+    def test_every_lifecycle_row_carries_its_availability_stamp_on_both_paths(self):
+        """S121 (a2), the honest re-baseline: `emitted_at_recv_ns` is an ADDED field on every
+        lifecycle row, identical on the streamed and inline paths, and no other field moved
+        (the whole-object comparison above still holds). Named here so the differential
+        cannot later be read as having quietly absorbed a dropped raw field."""
+        receipt = self.streamed["ledger_retention"]["exact_lifecycle_and_runway_ledger"]
+        on_disk = [
+            json.loads(line)
+            for line in Path(receipt["path"]).read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        inline_rows = self.inline["layers"]["exact_lifecycle_and_runway_ledger"]["rows"]
+        self.assertEqual(len(on_disk), len(inline_rows))
+        self.assertGreater(len(on_disk), 0)
+        for streamed_row, inline_row in zip(on_disk, inline_rows):
+            self.assertIsInstance(streamed_row["emitted_at_recv_ns"], int)
+            self.assertEqual(streamed_row["emitted_at_recv_ns"], inline_row["emitted_at_recv_ns"])
+        member_cutoffs = {
+            row["clocks"]["first_lawful_availability_ns"]
+            for row in self.inline["layers"]["exact_member_ledger"]["rows"]
+        }
+        # Every stamp is an instant the traversal actually stood at: a group's F_LAST receive.
+        self.assertTrue({row["emitted_at_recv_ns"] for row in on_disk} <= member_cutoffs)
+
     def test_roll20_is_unaffected_by_where_the_legacy_rows_are_retained(self):
         """The trap this nearly walked into.
 

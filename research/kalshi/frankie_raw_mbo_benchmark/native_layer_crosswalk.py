@@ -296,7 +296,7 @@ LAYER_PRODUCERS: dict[str, dict[str, Any]] = {
         notes=RAW_ACTIONS_DROP + " Surviving aggregates: structure.action_string, structure.action_counts, "
               "activity.<window>.action_count.",
         structurally_absent=("raw_actions[]", "raw_actions[].action", "raw_actions[].order_id"),
-        aggregates_present=("structure.action_string", "structure.action_counts", "activity.*.action_count"),
+        aggregates_present=("structure.action_string", "structure.action_counts", "activity_since.*.action_count"),
     ),
     "snapshot_bootstrap_reset_messages": _row(
         module="native_full_capture_adapter", symbol="_observe_before", file=FCA, line=148,
@@ -323,7 +323,7 @@ LAYER_PRODUCERS: dict[str, dict[str, Any]] = {
         carrier="raw_actions[] where action == A, with raw_actions[].book_effect - NOT ON THE ROW",
         notes=RAW_ACTIONS_DROP + " Surviving aggregates: structure.action_counts.A, activity.<window>.action_qty.A.",
         structurally_absent=("raw_actions[]",),
-        aggregates_present=("structure.action_counts.A", "activity.*.action_qty.A"),
+        aggregates_present=("structure.action_counts.A", "activity_since.*.action_qty.A"),
     ),
     "order_lifecycle_cancels": _row(
         module="ng_exhaustion_mbo_v4_state_adapter_20260820", symbol="_cancel", file=V4, line=433,
@@ -331,7 +331,7 @@ LAYER_PRODUCERS: dict[str, dict[str, Any]] = {
         notes=RAW_ACTIONS_DROP + " Surviving aggregates: structure.action_counts.C, activity.<window>.action_qty.C, "
               "capture_observations.over_cancel*.",
         structurally_absent=("raw_actions[]",),
-        aggregates_present=("structure.action_counts.C", "activity.*.action_qty.C"),
+        aggregates_present=("structure.action_counts.C", "activity_since.*.action_qty.C"),
     ),
     "order_lifecycle_modifies": _row(
         module="ng_exhaustion_mbo_v4_state_adapter_20260820", symbol="_modify", file=V4, line=451,
@@ -339,13 +339,13 @@ LAYER_PRODUCERS: dict[str, dict[str, Any]] = {
         notes=RAW_ACTIONS_DROP + " Surviving aggregates: structure.action_counts (M when present), "
               "activity.<window>.priority_lost_modify_count.",
         structurally_absent=("raw_actions[]",),
-        aggregates_present=("structure.action_counts", "activity.*.priority_lost_modify_count"),
+        aggregates_present=("structure.action_counts", "activity_since.*.priority_lost_modify_count"),
     ),
     "order_lifecycle_replaces": _row(
         module="ng_exhaustion_mbo_v4_state_adapter_20260820", symbol="_modify", file=V4, line=472,
         carrier="activity.<window>.priority_lost_modify_count (a replace is an M that loses priority: "
                 "price change or size increase)",
-        member_paths=("activity.*.priority_lost_modify_count",),
+        member_paths=("activity_since.*.priority_lost_modify_count",),
         notes="The feed has no distinct replace action (VALID_ACTIONS = ACMRTFN); a replace is a modify that "
               "re-queues, which _modify decides (priority_lost) and the activity windows count. The per-record "
               "priority_lost flag rides on raw_actions[].book_effect and is dropped with it.",
@@ -355,7 +355,7 @@ LAYER_PRODUCERS: dict[str, dict[str, Any]] = {
         module="ng_exhaustion_mbo_v4_state_adapter_20260820", symbol="_legacy_control_row", file=V4, line=744,
         carrier="legacy_observable_rows (one ten-level projection per T action) + activity.<window>.trade_*_aggressor_qty; "
                 "raw_actions[] where action == T is NOT ON THE ROW",
-        member_paths=("activity.*.trade_buy_aggressor_qty", "activity.*.trade_sell_aggressor_qty"),
+        member_paths=("activity_since.*.trade_buy_aggressor_qty", "activity_since.*.trade_sell_aggressor_qty"),
         legacy_keys=("action", "price", "size", "ts_recv"),
         ledgers=(MEMBER_LEDGER, LEGACY_LEDGER),
         notes="Trades are the one action class whose per-record row survives, as the legacy ten-level projection "
@@ -474,8 +474,8 @@ LAYER_PRODUCERS: dict[str, dict[str, Any]] = {
         module="ng_exhaustion_mbo_v4_state_adapter_20260820", symbol="_RollingActivityWindow.snapshot", file=V4, line=252,
         carrier="activity.<window>.action_count / action_qty / action_side_qty; activity_full.<window>.action_side_count / "
                 "top_level_qty_by_action; structure.action_counts / side_counts",
-        member_paths=("activity.*.action_count", "activity.*.action_qty", "activity.*.action_side_qty",
-                      "activity_full.*.action_side_count", "activity_full.*.top_level_qty_by_action",
+        member_paths=("activity_since.*.action_count", "activity_since.*.action_qty", "activity_since.*.action_side_qty",
+                      "activity_since.*.action_side_count", "activity_since.*.top_level_qty_by_action",
                       "structure.side_counts"),
         notes="By side, and by LEVEL only as top-of-book versus not (top_level_*). The window keys are the "
               "hardcoded ACTIVITY_WINDOWS_S (1, 5, 20, 60, 300) - see HARDCODED_WINDOWS; the row shape changes "
@@ -485,8 +485,8 @@ LAYER_PRODUCERS: dict[str, dict[str, Any]] = {
         module="ng_exhaustion_mbo_v4_state_adapter_20260820", symbol="_RollingActivityWindow.snapshot", file=V4, line=253,
         carrier="activity.<window>.trade_buy_aggressor_qty / trade_sell_aggressor_qty / trade_aggressor_imbalance; "
                 "per second: lifecycle `flow_substrate` rows (window_signed_flow, polarity)",
-        member_paths=("activity.*.trade_buy_aggressor_qty", "activity.*.trade_sell_aggressor_qty",
-                      "activity.*.trade_aggressor_imbalance"),
+        member_paths=("activity_since.*.trade_buy_aggressor_qty", "activity_since.*.trade_sell_aggressor_qty",
+                      "activity_since.*.trade_aggressor_imbalance"),
         lifecycle_sections=("flow_substrate",), ledgers=(MEMBER_LEDGER, LIFECYCLE_LEDGER),
         notes="Aggressor side is the T's side (T_B buy, T_A sell) inside each window; the per-second signed flow "
               "is the roll20 binner's, fed to 4.0 (native_flow_substrate.complete_second).",
@@ -495,7 +495,7 @@ LAYER_PRODUCERS: dict[str, dict[str, Any]] = {
         module="native_replay_driver", symbol="replenishment", file=DRV, line=1058,
         carrier="lifecycle `replenishment` rows (4.7 removals, refills, matured horizons); "
                 "activity.<window>.top_level_cancel_qty_derived",
-        lifecycle_sections=("replenishment",), member_paths=("activity.*.top_level_cancel_qty_derived",),
+        lifecycle_sections=("replenishment",), member_paths=("activity_since.*.top_level_cancel_qty_derived",),
         ledgers=(LIFECYCLE_LEDGER, MEMBER_LEDGER),
         notes="4.7 observes removals and refills per group and matures its horizon in stream time "
               "(replenishment_horizon_ns=60 s at launch - a hardcoded horizon, see HARDCODED_WINDOWS).",
@@ -509,7 +509,7 @@ LAYER_PRODUCERS: dict[str, dict[str, Any]] = {
     "churn_and_queue_turnover": _row(
         module="ng_exhaustion_mbo_v4_state_adapter_20260820", symbol="_RollingActivityWindow.snapshot", file=V4, line=265,
         carrier="activity.<window>.add_cancel_churn / priority_lost_modify_count / event_count",
-        member_paths=("activity.*.add_cancel_churn", "activity.*.priority_lost_modify_count", "activity.*.event_count"),
+        member_paths=("activity_since.*.add_cancel_churn", "activity_since.*.priority_lost_modify_count", "activity_since.*.event_count"),
         notes="Cancel quantity over add-plus-cancel quantity, per hardcoded window.",
     ),
     "price_and_book_path": _row(
@@ -526,8 +526,8 @@ LAYER_PRODUCERS: dict[str, dict[str, Any]] = {
         carrier="integrity, integrity_delta, capture_observations (sequence_gap*, over_cancel*, book_clear*, "
                 "tob_side_wipe*), activity_full.<window>.receive_order_clean, activity.<window>.missing_reference_count, "
                 "sequence_contiguous",
-        member_paths=("integrity", "integrity_delta", "capture_observations", "activity_full.*.receive_order_clean",
-                      "activity.*.missing_reference_count", "sequence_contiguous"),
+        member_paths=("integrity", "integrity_delta", "capture_observations", "activity_since.*.receive_order_clean",
+                      "activity_since.*.missing_reference_count", "sequence_contiguous"),
         notes="Cumulative counters from the locked book, per-group deltas and anomaly magnitudes from the capture "
               "wrapper, sequence contiguity from the clock row.",
     ),
@@ -623,7 +623,7 @@ LAYER_PRODUCERS: dict[str, dict[str, Any]] = {
         module="native_full_capture_adapter", symbol="_window_extras", file=FCA, line=201,
         carrier="activity_full.<window>.* ; book_full.bid_levels_full[].fifo_queue[]; capture_observations; "
                 "lifecycle `queue` rows (4.6)",
-        member_paths=("activity_full.*.top_level_qty_by_action", "activity_full.*.action_side_count",
+        member_paths=("activity_since.*.top_level_qty_by_action", "activity_since.*.action_side_count",
                       "book_full.bid_levels_full[].fifo_queue[]", "capture_observations"),
         lifecycle_sections=("queue",), ledgers=(MEMBER_LEDGER, LIFECYCLE_LEDGER),
         notes="Everything the V4 adapter computed and discarded, restored by the capture wrapper.",
