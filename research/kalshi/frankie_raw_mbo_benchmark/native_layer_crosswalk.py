@@ -301,7 +301,7 @@ LAYER_PRODUCERS: dict[str, dict[str, Any]] = {
         member_paths=("snapshot_bootstrap_only", "capture_observations", "integrity", "raw_actions[].is_snapshot"),
         notes="Snapshot-only groups are flagged on the frame (event_frame); an R clear is counted with what it "
               "destroyed by the capture wrapper. The per-record is_snapshot flag rides on raw_actions and is "
-              "dropped with it.",
+              "carried with it.",
     ),
     "raw_source_identity_provenance_clocks_integrity": _row(
         module="ng_exhaustion_mbo_v4_state_adapter_20260820", symbol="event_frame", file=V4, line=703,
@@ -309,7 +309,7 @@ LAYER_PRODUCERS: dict[str, dict[str, Any]] = {
                 "sequence, ts_event_ns, ts_recv_ns, ts_in_delta_ns, integrity",
         member_paths=("adapter_revision", "census_view", "publisher_id", "channel_id", "sequence", "ts_event_ns", "ts_recv_ns", "ts_in_delta_ns", "integrity", "raw_actions[].source_dbn_sha256"),
         notes="The F_LAST record's identity and clocks plus the book's cumulative integrity counters. The "
-              "per-record provenance (source_dbn_sha256) is on raw_actions and dropped with it.",
+              "per-record provenance (source_dbn_sha256) is on raw_actions and carried with it.",
     ),
     # ---- order_lifecycle (CAUSAL_STREAM_REQUIRED; member carrier) -------------------------
     "order_lifecycle_adds": _row(
@@ -370,7 +370,7 @@ LAYER_PRODUCERS: dict[str, dict[str, Any]] = {
         carrier="capture_observations.book_clear / book_clear_orders_removed / book_clear_qty_removed; integrity_delta",
         member_paths=("capture_observations", "integrity_delta", "raw_actions[].book_effect"),
         notes="An R clear is counted with the orders and quantity it destroyed (cumulative, on every row); "
-              "the per-record R with cleared_orders / cleared_qty rides on raw_actions[].book_effect and is dropped.",
+              "the per-record R with cleared_orders / cleared_qty rides on raw_actions[].book_effect and is carried.",
     ),
     "order_identity_transitions": _row(
         module="a_memory_member_first_recalculation_20260828", symbol="describe_structure", file=STRUCT, line=187,
@@ -378,7 +378,7 @@ LAYER_PRODUCERS: dict[str, dict[str, Any]] = {
                 "integrity.duplicate_add_order_id / modify_side_change / modify_missing_treated_as_add",
         member_paths=("structure.order_ids[]", "structure.distinct_order_id_count", "structure.fill_disposition", "raw_actions[].order_id"),
         notes="Which order ids a group touched and how their fills resolved, per group. The per-record "
-              "order_id sequence is on raw_actions and dropped with it.",
+              "order_id sequence is on raw_actions and carried with it.",
     ),
     "contract_session_roll_state": _row(
         module="native_replay_driver", symbol="ExchangeSessionRule", file=DRV, line=117,
