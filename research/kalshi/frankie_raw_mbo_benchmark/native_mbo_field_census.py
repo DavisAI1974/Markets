@@ -13,6 +13,14 @@ types seen, the numeric range, and whether the field is degenerate (one value th
 or always null. It is READ-ONLY on its input and it is a MEASUREMENT: it never drops,
 never recommends, and its summary says so in its own `basis`.
 
+ONE DELIBERATE LIMIT OF THE TRANSPOSE. A list of dicts is folded into one column per key,
+and a column is keyed by ONE representative key object. Two dict keys that are `==` and
+hash-equal but render differently - `1` and `True`, `1` and `1.0` - therefore collapse to a
+single path where a per-element walk would have kept two. This cannot arise on the sink
+path: rows are written by `json.dumps(..., allow_nan=False)` with no `default=`, so every
+key is a `str`, and for strings equality implies identical rendering. The differential pins
+it as a known limit rather than leaving it to be rediscovered.
+
 List positions are collapsed: `book_full.bid_levels_full[].size` is one field, not one per
 ladder position, because a position in a ladder is not a field and a census keyed by
 position would grow with book depth instead of with the schema. Rows-with-field is counted
@@ -23,7 +31,17 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-_SCALAR_TYPES = frozenset({str, int, float, bool, type(None)})
+# NOT "the scalar types" - these are the types that provably FAIL the container test, so a
+# leaf of one of them can skip the ABC check entirely. `Mapping` is abstract, so
+# `isinstance(v, Mapping)` walks the ABC machinery, and it ran on EVERY leaf because a leaf
+# must fail that test before it can be observed; that was 43% of the traversal.
+#
+# NOTHING MAY BE ADDED HERE THAT IS, OR COULD BE REGISTERED AS, A Mapping, list or tuple.
+# Adding `tuple` "for completeness" - a plausible reading of the old name `_NON_CONTAINER_TYPES` -
+# would turn every nested container into a leaf and silently rewrite the census.
+# `bytes` is deliberately absent: it is a scalar, so omitting it only costs it the fast
+# path. `NoneType` is present and is not a scalar. The set is about containment, not kind.
+_NON_CONTAINER_TYPES = frozenset({str, int, float, bool, type(None)})
 _NUMERIC_TYPES = frozenset({int, float})
 _LIST_TYPES = frozenset({list})
 _NONE_TYPE_SET = frozenset({type(None)})
@@ -73,6 +91,11 @@ class _Field:
         # entirely on the shape that dominates a ladder.
         numeric_types = column_types - _NONE_TYPE_SET
         if numeric_types and numeric_types <= _NUMERIC_TYPES:
+            # ALIASES the caller's list when there are no nulls - `column` can be the row's
+            # own list, passed straight through by `_walk`. Read it, never mutate it: the
+            # obvious next optimisation here is `numeric.sort()` for min/max, and that would
+            # reorder a ladder inside a row bound for the sink and its hash. This module
+            # promises in its docstring that it is READ-ONLY on its input.
             numeric = column if nulls == 0 else [v for v in column if v is not None]
         elif numeric_types & _NUMERIC_TYPES:
             numeric = [v for v in column if type(v) is int or type(v) is float]
@@ -168,7 +191,7 @@ class MboFieldCensus:
             # containers - a ladder of level dicts - still walks, because each element
             # carries its own child paths.
             column_types = set(map(type, node))
-            if column_types <= _SCALAR_TYPES:
+            if column_types <= _NON_CONTAINER_TYPES:
                 stat.observe_column(
                     node if type(node) is list else list(node), column_types
                 )
@@ -199,7 +222,7 @@ class MboFieldCensus:
                         child_stat = fields[child] = _Field()
                     touched.add(child)
                     column_types = set(map(type, column))
-                    if column_types <= _SCALAR_TYPES:
+                    if column_types <= _NON_CONTAINER_TYPES:
                         child_stat.observe_column(column, column_types)
                     elif column_types <= _LIST_TYPES:
                         # Every value in this column is a list, and every one of them
@@ -220,7 +243,7 @@ class MboFieldCensus:
                         for value in column:
                             tv = type(value)
                             if tv is dict or tv is list or tv is tuple or (
-                                tv not in _SCALAR_TYPES
+                                tv not in _NON_CONTAINER_TYPES
                                 and isinstance(value, (Mapping, list, tuple))
                             ):
                                 child_stat.observations += 1
@@ -233,7 +256,7 @@ class MboFieldCensus:
             for value in node:
                 tv = type(value)
                 if tv is dict or tv is list or tv is tuple or (
-                    tv not in _SCALAR_TYPES and isinstance(value, (Mapping, list, tuple))
+                    tv not in _NON_CONTAINER_TYPES and isinstance(value, (Mapping, list, tuple))
                 ):
                     stat.observations += 1
                     stat.types.add(tv)
@@ -252,7 +275,7 @@ class MboFieldCensus:
         touched.add(path)
         tv = type(value)
         if tv is dict or tv is list or tv is tuple or (
-            tv not in _SCALAR_TYPES and isinstance(value, (Mapping, list, tuple))
+            tv not in _NON_CONTAINER_TYPES and isinstance(value, (Mapping, list, tuple))
         ):
             # The container itself is "present" with its type recorded; its leaves are
             # counted under their own paths. Its distinct/range are meaningless and are not

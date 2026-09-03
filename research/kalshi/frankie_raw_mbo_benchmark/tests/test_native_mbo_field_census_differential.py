@@ -29,16 +29,87 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_mbo_field_census import (
     DISTINCT_CAP,
     LIST_MARKER,
     MboFieldCensus,
-    _Field,
 )
 
 
+class _RefField:
+    """`_Field` as it stood before any optimisation.
+
+    The reference MUST NOT reuse the live `_Field`. It did, and that made the differential
+    blind to half of what it claimed to check: `_Field` carries two of the four
+    optimisations - the `type(v) is int` numeric fast path and the removal of the dead
+    `not isinstance(value, bool)` - so with the live class on both sides those cancelled and
+    a defect injected into `_Field.observe` passed the differential silently.
+
+    Differences from the optimised class, all deliberate: type NAMES rather than type
+    objects, `isinstance` for the numeric test with the bool exclusion spelled out, and no
+    `observe_column` at all - the reference folds nothing.
+    """
+
+    __slots__ = (
+        "observations", "null", "rows_with_field", "distinct", "capped", "types",
+        "minimum", "maximum",
+    )
+
+    def __init__(self) -> None:
+        self.observations = 0
+        self.null = 0
+        self.rows_with_field = 0
+        self.distinct: set = set()
+        self.capped = False
+        self.types: set = set()
+        self.minimum: float | None = None
+        self.maximum: float | None = None
+
+    def observe(self, value: Any) -> None:
+        self.observations += 1
+        if value is None:
+            self.null += 1
+            return
+        self.types.add(type(value).__name__)
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            self.minimum = value if self.minimum is None else min(self.minimum, value)
+            self.maximum = value if self.maximum is None else max(self.maximum, value)
+        if not self.capped:
+            try:
+                self.distinct.add(value)
+            except TypeError:
+                self.distinct.add(repr(value))
+            if len(self.distinct) >= DISTINCT_CAP:
+                self.capped = True
+
+
 class ReferenceCensus(MboFieldCensus):
-    """The walk as it stood before any optimisation, reusing only the reporting half.
+    """The walk as it stood before any optimisation, reusing only the reporting SHAPE.
 
     Kept deliberately naive: `isinstance` against the abstract `Mapping`, one call per leaf,
-    no columns and no transposition. It is the definition the fast paths must reproduce.
+    no columns and no transposition, and its own `_RefField`. It is the definition the fast
+    paths must reproduce, so it shares no accumulating code with them.
     """
+
+    def _row(self, path: str, stat: Any) -> dict[str, Any]:
+        """The reporting half as it was: `types` already holds NAMES, so no rendering."""
+        non_null = stat.observations - stat.null
+        only_value = None
+        degenerate = False
+        if not stat.capped and non_null > 0 and len(stat.distinct) == 1:
+            degenerate = True
+            only_value = next(iter(stat.distinct))
+        return {
+            "field": path,
+            "observations": stat.observations,
+            "observations_null": stat.null,
+            "rows_with_field": stat.rows_with_field,
+            "rows_absent": self.rows_observed - stat.rows_with_field,
+            "distinct_values": len(stat.distinct),
+            "distinct_capped": stat.capped,
+            "types": sorted(stat.types),
+            "minimum": stat.minimum,
+            "maximum": stat.maximum,
+            "degenerate": degenerate,
+            "only_value": only_value,
+            "always_null": stat.observations > 0 and non_null == 0,
+        }
 
     def observe(self, row: Mapping[str, Any]) -> None:
         self.rows_observed += 1
@@ -60,11 +131,11 @@ class ReferenceCensus(MboFieldCensus):
     def _ref_at(self, path: str, value: Any, touched: set[str]) -> None:
         stat = self._fields.get(path)
         if stat is None:
-            stat = self._fields[path] = _Field()
+            stat = self._fields[path] = _RefField()
         touched.add(path)
         if isinstance(value, (Mapping, list, tuple)):
             stat.observations += 1
-            stat.types.add(type(value))
+            stat.types.add(type(value).__name__)
             self._ref_walk(value, path, touched)
         else:
             stat.observe(value)
