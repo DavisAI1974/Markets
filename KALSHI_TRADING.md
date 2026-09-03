@@ -1,5 +1,35 @@
 # KALSHI TRADING — file index
 
+## S122 — one arm (A_MEMORY) and the canonical read-back (D86, D88)
+
+Greg, 2026-09-03: *"we aren't running clean anymore only memory."* and *"there is supposed
+to be a canonical file or a runner, launcher file with everything."* The launcher is
+`native_a_arm_launch.py`; the read-back is `native_staging.py`'s CLI. Branch
+`persona/s121-wire-outputs-staging`.
+
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_staging.py`** — THE CANONICAL READ-BACK
+  (usage in the module docstring, run end to end by test): `read-back --artifact --result
+  --outputs-dir --delivery-receipt --knowledge-receipt` validates the artifact, its bundle and
+  every receipt by hash, attaches the findings through the runner's route, renders the report
+  with the 99-layer crosswalk, and builds the RT handoff trio (ONEWAY_HANDOFF / RT_FIRST_LOCK /
+  RT_CONTEXT_MANIFEST) beside the result with findings, exclusive-create, never over an
+  earlier trio. The arm and `source_manifest_hash` are bound off the result's identity receipt
+  (`layers.identity_receipt`), never a CLI string; an artifact on another arm than its run is
+  refused. `first_lock` is the first FIRST_LOCK entry, null and stated when there is none; no
+  bundle or a forecaster artifact is stated, not refused. `CANONICAL_ARM` re-exported;
+  `KNOWLEDGE_USE_GATE` is the knowledge read gate's seam (None until the coordinator wires
+  `validate_knowledge_use`), threaded as `load_principal_artifact(knowledge_use_gate=)`.
+- **`research/kalshi/frankie_raw_mbo_benchmark/native_principal_outputs.py`** —
+  `CANONICAL_ARM = "A_MEMORY"`; `validate --arm` defaults to it (A_CLEAN stays a valid value
+  as an inert record, D60/F-28); the usage string exemplifies the arm that runs.
+- **`research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_staging.py`** — every fixture
+  on A_MEMORY; `CanonicalArmTest`, `ReadBackHandoffTest`, `CanonicalReadBackSurfaceTest` (the
+  docstring's own command as a subprocess), `KnowledgeReadGateSeamTest`.
+- **`research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_staging_handoff.py`** —
+  `FirstLockSelectionTest`: the first lock, never the ledger head; null, never fabricated.
+- **`research/kalshi/frankie_raw_mbo_benchmark/tests/outputs_bundle_fixture.py`** —
+  `build_bundle(first_lock=, trailing_no_lock=)`, arm defaulting to `CANONICAL_ARM`.
+
 ## S121 — the raw MBO reaches the principal as it arrives in RT (D81)
 
 Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. Greg, 2026-09-02: *"he gets every record

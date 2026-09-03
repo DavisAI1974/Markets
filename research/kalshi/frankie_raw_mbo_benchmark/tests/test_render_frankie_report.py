@@ -45,9 +45,9 @@ def artifact(findings=None, **over):
     body = {
         "schema": "FRANKIE_NATIVE_RAW_MBO_PRINCIPAL_FINDINGS_V1",
         "principal": "claude-opus-5",
-        "arm": "A_CLEAN",
+        "arm": "A_MEMORY",
         "role": "REAL_TIME_FRANKIE",
-        "run_id": "frankie-a-clean-rt-1-1",
+        "run_id": "frankie-a-memory-rt-1-1",
         "source_day": "20211003",
         "evidence_result_hash": "cb685e0e",
         "causal_clock": "ts_recv_ns",
@@ -117,7 +117,7 @@ class IdentityTest(unittest.TestCase):
         """A report that cannot say which run it describes is how a verdict came to be read
         against the wrong run once already in this tree."""
         text = render_report(artifact())
-        for needle in ("frankie-a-clean-rt-1-1", "20211003", "cb685e0e", "A_CLEAN",
+        for needle in ("frankie-a-memory-rt-1-1", "20211003", "cb685e0e", "A_MEMORY",
                        "claude-opus-5", "ts_recv_ns"):
             self.assertIn(needle, text)
 
