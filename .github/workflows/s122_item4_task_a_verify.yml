@@ -7,6 +7,7 @@ on:
     paths:
       - .github/workflows/s122_item4_task_a_verify.yml
       - scripts/s122_task_a_verify.sh
+      - scripts/s122_task_a_verify_v2.sh
 
 permissions:
   contents: write
@@ -23,4 +24,4 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 1
-      - run: bash scripts/s122_task_a_verify.sh
+      - run: bash scripts/s122_task_a_verify_v2.sh
