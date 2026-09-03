@@ -23,6 +23,9 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 from research.kalshi.frankie_raw_mbo_benchmark import native_a_arm_launch as launcher
+from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import (
+    EVALUATION_BASIS_LEGACY_DECISION_TS,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_causal_stream import (
     CAUSAL_CLOCKS_DERIVED_FROM_LEGACY,
     CAUSAL_CLOCKS_ROW_OWN,
@@ -608,7 +611,10 @@ class CausalClocksOnDeliveryTest(unittest.TestCase):
             self.assertEqual(clocks[CLOCK_EVENT_TIME]["f_last_ns"], BASE - 150_000)
             self.assertEqual(clocks[CLOCK_EVENT_TIME]["first_component_ns"], BASE - 3 * NS - 150_000)
             self.assertEqual(clocks[CLOCK_LOCK_TIME]["basis"], NOT_ON_THIS_ROW)
-            self.assertEqual(clocks[CLOCK_MODEL_EVALUATION]["basis"], NOT_ON_THIS_ROW)
+            # F-feed-5: the legacy row's clocks.decision_ts_recv_ns IS its decision instant.
+            self.assertEqual(clocks[CLOCK_MODEL_EVALUATION]["basis"], EVALUATION_BASIS_LEGACY_DECISION_TS)
+            self.assertEqual(clocks[CLOCK_MODEL_EVALUATION]["value_ns"], BASE)
+            self.assertEqual(delivery.causal_clock_chain["model_evaluation_ns"], BASE)
 
     def test_a_row_with_a_partial_causal_clocks_object_is_refused_not_patched(self):
         with tempfile.TemporaryDirectory() as tmp:

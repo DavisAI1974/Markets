@@ -543,7 +543,10 @@ class CausalGroupStream:
                 causal_clocks = validate_causal_clock_layers(own_clocks)
                 causal_clocks_basis = CAUSAL_CLOCKS_ROW_OWN
             else:
-                causal_clocks = causal_clock_layers_from_legacy_clocks(clocks, ts_event_ns=int(row["ts_event_ns"]))
+                causal_clocks = causal_clock_layers_from_legacy_clocks(
+                    clocks, ts_event_ns=int(row["ts_event_ns"]),
+                    decision_basis=row.get("decision_basis"),
+                )
                 causal_clocks_basis = CAUSAL_CLOCKS_DERIVED_FROM_LEGACY
             causal_clock_chain = check_causal_clock_order(causal_clocks)
         except ClockError as exc:

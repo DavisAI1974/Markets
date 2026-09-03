@@ -24,6 +24,9 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_response import (
     horizons_for_version,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_replay_driver import (
+    CADENCE_AUDIT,
+    CadencePolicy,
+    CandidateEventCadence,
     ExchangeSessionRule,
     NativeReplayDriver,
     ReplayDriverError,
@@ -1101,12 +1104,28 @@ class FullDepthRetentionTest(unittest.TestCase):
         return driver, driver.finalize()
 
     def test_every_frame_key_reaches_the_member_row(self):
-        """No hardcoded list. A key a future adapter adds arrives instead of vanishing."""
+        """No hardcoded list. A key a future adapter adds arrives instead of vanishing.
+        Re-baselined at S122 (b): `activity_since` (event anchors, D83) replaces
+        `activity_full` (fixed windows) among the keys the wrapper adds."""
         driver, result = self._run()
         carried = set(result["traversal"]["frame_keys_carried"])
-        for restored in ("book_full", "activity_full", "integrity_delta", "capture_observations"):
+        for restored in ("book_full", "activity_since", "integrity_delta", "capture_observations"):
             with self.subTest(key=restored):
                 self.assertIn(restored, carried, f"{restored} was restored by D61 and dropped")
+
+    def test_no_member_row_carries_a_fixed_interval_block_and_the_summary_names_the_removal(self):
+        """D83 on the row itself, and the removal declared ONCE per run, not per row."""
+        from research.kalshi.frankie_raw_mbo_benchmark.native_full_capture_adapter import (
+            ACTIVITY_ANCHORS, RETIRED_FIXED_INTERVAL_FRAME_KEYS,
+        )
+        driver, result = self._run()
+        for row in driver.counters.member_rows:
+            for retired in RETIRED_FIXED_INTERVAL_FRAME_KEYS:
+                self.assertNotIn(retired, row)
+            self.assertEqual(tuple(row["activity_since"]), ACTIVITY_ANCHORS)
+        traversal = result["traversal"]
+        self.assertEqual(traversal["fixed_interval_blocks_removed"], list(RETIRED_FIXED_INTERVAL_FRAME_KEYS))
+        self.assertEqual(traversal["activity_anchors"], list(ACTIVITY_ANCHORS))
 
     def test_the_full_book_is_deeper_than_the_ten_level_projection(self):
         """The measurement behind the fix, kept as the instance."""
@@ -1676,6 +1695,101 @@ class ChangePointsActuallyFireTest(ResponseTableFedTest):
         on, _ = self._drive(emit=True)
         self.assertEqual(off["verdict"], on["verdict"])
         self.assertEqual(off["failed_gates"], on["failed_gates"])
+
+
+class CadenceIsEventDrivenTest(unittest.TestCase):
+    """F-26, the cadence audit (Greg: "Don't make cutoff times"). A cutoff is an EVENT: the
+    F_LAST receive of a group, or a candidate event at it. A count of F_LAST-closed groups is
+    a count of events and is allowed; a nanosecond interval is not."""
+
+    def test_the_policy_protocol_offers_no_time_interval(self):
+        import inspect
+        params = inspect.signature(CadencePolicy.should_invoke).parameters
+        self.assertNotIn("ns_since_last", params)
+        self.assertIn("candidate_events", params)
+        self.assertIn("groups_since_last", params)
+        self.assertEqual(CADENCE_AUDIT["policy_inputs_that_are_time_intervals"], [])
+        self.assertEqual(CADENCE_AUDIT["cutoff_identity"], ["group_index", "recv_ns"])
+
+    def test_the_driver_hands_the_policy_events_and_counts_only(self):
+        seen = []
+
+        class Recorder:
+            def should_invoke(self, **kwargs):
+                seen.append(kwargs)
+                return False
+
+        driver = make_driver(cadence=Recorder(), total_mbo_records=3)
+        base = at("2021-10-04T13:00:00")
+        driver.consume(record(seq=i, event_ns=base + i * 3600 * NS_PER_SECOND, order_id=400 + i)
+                       for i in range(3))
+        driver.finalize()
+        self.assertEqual(len(seen), 3)
+        for kwargs in seen:
+            self.assertEqual(
+                set(kwargs), {"group_index", "recv_ns", "mark", "groups_since_last", "candidate_events"}
+            )
+            self.assertEqual(
+                set(kwargs["candidate_events"]),
+                {"recognitions_at_this_cutoff", "change_points_at_this_cutoff"},
+            )
+
+    def test_elapsed_time_alone_produces_no_cutoff(self):
+        """Hours pass between groups and nothing fires: time is not a trigger."""
+        driver = make_driver(cadence=CandidateEventCadence(), total_mbo_records=4)
+        base = at("2021-10-04T13:00:00")
+        driver.consume(record(seq=i, event_ns=base + i * 3600 * NS_PER_SECOND, order_id=500 + i)
+                       for i in range(4))
+        result = driver.finalize()
+        self.assertEqual(result["traversal"]["invocation_cutoff_count"], 0)
+
+    def test_a_count_of_groups_is_an_allowed_trigger(self):
+        driver = make_driver(cadence=CandidateEventCadence(every_groups=2), total_mbo_records=5)
+        base = at("2021-10-04T13:00:00")
+        driver.consume(record(seq=i, event_ns=base + i * NS_PER_SECOND, order_id=600 + i)
+                       for i in range(5))
+        result = driver.finalize()
+        self.assertEqual([c["group_index"] for c in result["traversal"]["invocation_cutoffs"]], [2, 4])
+
+    def test_a_candidate_event_at_a_cutoff_produces_the_cutoff(self):
+        """The firing branch (D80): on the candidate-detecting fixture the ONLY invocations
+        are at cutoffs that carry a recognition, and every such cutoff invokes."""
+        fixture = CandidateUnitFedTest()
+        driver = make_driver(cadence=CandidateEventCadence(), total_mbo_records=fixture.SPAN + 1)
+        driver.candidate_warmup_seconds = 60
+        driver.candidate_min_observations = 30
+        driver.detector = driver._new_detector(0)
+        driver.consume(fixture._stream())
+        result = driver.finalize()
+        invoked = {c["group_index"] for c in result["traversal"]["invocation_cutoffs"]}
+        self.assertTrue(invoked, "wired but nothing reached it")
+        with_recognition = {
+            row["group_index"] for row in driver.counters.member_rows
+            if row["causal_clocks"]["clock_prospective_discovery_confirmation"]["confirmed_at_this_cutoff"]
+        }
+        self.assertEqual(invoked, with_recognition)
+        for cutoff in result["traversal"]["invocation_cutoffs"]:
+            self.assertEqual(cutoff["clock_model_evaluation_ns"], cutoff["recv_ns"])
+
+    def test_a_cutoff_is_identified_by_group_index_and_recv_ns_together(self):
+        """F-feed-9: 1,399 of the real Sunday groups share an F_LAST receive nanosecond."""
+
+        class Always:
+            def should_invoke(self, **_kwargs):
+                return True
+
+        driver = make_driver(cadence=Always(), total_mbo_records=3)
+        base = at("2021-10-04T13:00:00")
+        driver.consume([
+            record(seq=0, event_ns=base, order_id=700),
+            record(seq=1, event_ns=base, order_id=701),   # same receive nanosecond
+            record(seq=2, event_ns=base + NS_PER_SECOND, order_id=702),
+        ])
+        cutoffs = driver.finalize()["traversal"]["invocation_cutoffs"]
+        recvs = [c["recv_ns"] for c in cutoffs]
+        self.assertLess(len(set(recvs)), len(recvs), "the fixture stopped sharing a receive ns")
+        pairs = [(c["group_index"], c["recv_ns"]) for c in cutoffs]
+        self.assertEqual(len(set(pairs)), len(pairs))
 
 
 class ExitStratumReachesTheLedgerTest(unittest.TestCase):
