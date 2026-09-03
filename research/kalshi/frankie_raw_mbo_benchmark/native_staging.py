@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import (
+    LAYER_IDENTITY,
     CalculationRunError,
     NativeCalculationRun,
     canonical_hash,
@@ -154,8 +155,13 @@ def load_principal_artifact(
     outputs_dir: Path | None = None,
     knowledge_receipt_sha256: str | None = None,
     delivery_receipt_sha256: str | None = None,
+    expected_arm: str | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Read back what the spawn produced, or fail hard.
+
+    `expected_arm` (S122 slice 6) is the arm the RUN was stamped with - the read-back binds
+    it off the result's identity receipt - and an artifact on another arm is refused: findings
+    attach to the run they were produced on. None keeps the old rule (any allowed arm).
 
     Returns `(execution, findings)` shaped for
     `NativeCalculationRun.attach_principal_findings`, so the only route into the findings
@@ -216,6 +222,12 @@ def load_principal_artifact(
             raise StagingError(f"principal artifact is missing {field_name}")
     if body.get("arm") not in ALLOWED_ARMS or body.get("role") not in ALLOWED_ROLES:
         raise StagingError("principal artifact names an unknown arm or role")
+    if expected_arm is not None and body["arm"] != expected_arm:
+        raise StagingError(
+            f"the artifact is arm {body['arm']!r} and the run it cites was run as arm "
+            f"{expected_arm!r} (its identity receipt); findings attach to the run they were "
+            "produced on"
+        )
 
     findings = body.get("findings")
     if not isinstance(findings, list) or not findings:
@@ -474,6 +486,89 @@ def _crosswalk_for_report(
         return None, note
 
 
+#: The role that hands off; the forecaster-side objects come from the forecaster's own run.
+RT_ROLE = "REAL_TIME_FRANKIE"
+
+
+def _identity_binding(result: Mapping[str, Any], result_path: Path) -> tuple[str, str]:
+    """(arm, source_manifest_hash) off the result's identity receipt - the layer `finalize`
+    writes from `RunIdentity`, inside the hash the read-back has already verified. Nothing else
+    may supply either: a CLI string names a source the run may not have been computed from."""
+    layers = result.get("layers")
+    identity = layers.get(LAYER_IDENTITY) if isinstance(layers, Mapping) else None
+    if not isinstance(identity, Mapping):
+        raise StagingError(
+            f"calculation result at {result_path} carries no {LAYER_IDENTITY!r} layer; the "
+            "read-back binds the arm and the source_manifest_hash from it and from nothing else"
+        )
+    arm = identity.get("arm")
+    if arm not in ALLOWED_ARMS:
+        raise StagingError(
+            f"the result's identity receipt names arm {arm!r}; expected one of {sorted(ALLOWED_ARMS)}"
+        )
+    source_manifest_hash = identity.get("source_manifest_hash")
+    if not isinstance(source_manifest_hash, str) or _SHA256_RE.fullmatch(source_manifest_hash) is None:
+        raise StagingError(
+            f"the result's identity receipt carries no source_manifest_hash (got "
+            f"{source_manifest_hash!r}); the handoff names the source the run was computed "
+            "from, and nothing but the result may supply it"
+        )
+    return str(arm), source_manifest_hash
+
+
+def _handoff_for_read_back(
+    execution: Mapping[str, Any],
+    *,
+    outputs_dir: Path | str | None,
+    source_manifest_hash: str,
+    knowledge_receipt_sha256: str | None,
+) -> tuple[dict[str, dict[str, Any]] | None, str | None]:
+    """The handoff trio for a validated read-back, or (None, why there is none).
+
+    No bundle (the artifact cites no delivery receipt, so nothing was validated) and a
+    FORECASTER_FRANKIE artifact are STATED, not refused: the findings still attach. A bundle
+    `build_handoff` refuses raises, and the read-back writes nothing.
+    """
+    if execution.get("outputs_receipt") is None or outputs_dir is None:
+        return None, (
+            "no output bundle was validated for this artifact (it cites no delivery receipt), "
+            "so there is no bundle to build a handoff from"
+        )
+    if execution.get("role") != RT_ROLE:
+        return None, (
+            f"a {execution.get('role')} artifact hands nothing off; the one-way handoff runs "
+            f"FROM {RT_ROLE}, and the forecaster-side objects are written from the forecaster's "
+            "own output after it runs"
+        )
+    objects = build_handoff(
+        outputs_dir,
+        artifact_sha256=execution["artifact_sha256"],
+        source_manifest_hash=source_manifest_hash,
+        knowledge_receipt_sha256=knowledge_receipt_sha256,
+        delivery_receipt_sha256=execution.get("delivery_receipt_sha256"),
+    )
+    return objects, None
+
+
+def _first_lock_summary(
+    handoff_objects: Mapping[str, Mapping[str, Any]] | None,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """What the summary says about the first lock: the entry's identity, or why there is none."""
+    if handoff_objects is None:
+        return None, None
+    entry = handoff_objects["RT_FIRST_LOCK"].get("first_lock")
+    if entry is None:
+        return None, (
+            "the bundle's lock ledger carries no FIRST_LOCK entry; RT_FIRST_LOCK.first_lock is "
+            "null, never a NO_LOCK dressed as a lock"
+        )
+    return {
+        "entry_hash": entry["entry_hash"],
+        "candidate_id": entry["body"].get("candidate_id"),
+        "cutoff_recv_ns": entry.get("cutoff_recv_ns"),
+    }, None
+
+
 def read_back(
     artifact_path: Path | str,
     *,
@@ -485,6 +580,7 @@ def read_back(
     delivery_receipt: Path | str | None = None,
     knowledge_receipt: Path | str | None = None,
     render_report: bool = True,
+    handoff_dir: Path | str | None = None,
 ) -> dict[str, Any]:
     """Close the loop: a finished `calculation_result.json` receives the principal's findings.
 
@@ -501,6 +597,18 @@ def read_back(
     computes the 99-layer crosswalk and the report carries it; the crosswalk is part of the
     render, so its failure is stated in the report and stays non-fatal, as a render failure
     always has.
+
+    **The handoff (S122 slice 6).** After a successful attach the read-back builds the V2
+    workmode real-time handoff trio from the VALIDATED bundle (`build_handoff`) and writes it
+    with `write_handoff` - ONEWAY_HANDOFF, RT_FIRST_LOCK, RT_CONTEXT_MANIFEST - BESIDE the
+    read-back output (or under `handoff_dir`), exclusive-create, never over an earlier trio;
+    an existing file refuses the whole read-back before anything is written. The arm and
+    `source_manifest_hash` are bound off the result's identity receipt (`layers.identity_receipt`,
+    what the launch stamped from `RunIdentity`), never from a CLI string; an artifact on
+    another arm than the run is refused. An artifact with no bundle (no delivery receipt) or
+    a FORECASTER_FRANKIE artifact has no handoff, and the summary SAYS so; a bundle whose lock
+    ledger carries no FIRST_LOCK yields a null `first_lock` and a stated note, never a
+    fabricated one.
     """
     artifact_path = Path(artifact_path)
     result_path = Path(result_path)
@@ -532,6 +640,7 @@ def read_back(
             f"(completion_status {result.get('completion_status')!r}); the read-back attaches to "
             "an EVIDENCE_ONLY result and never replaces a filed record"
         )
+    run_arm, source_manifest_hash = _identity_binding(result, result_path)
     target = (
         Path(out_path)
         if out_path is not None
@@ -555,6 +664,7 @@ def read_back(
         outputs_dir=None if outputs_dir is None else Path(outputs_dir),
         knowledge_receipt_sha256=knowledge_receipt_sha256,
         delivery_receipt_sha256=delivery_receipt_sha256,
+        expected_arm=run_arm,
     )
     try:
         updated = NativeCalculationRun.attach_principal_findings_to_result(
@@ -562,10 +672,35 @@ def read_back(
         )
     except CalculationRunError as exc:
         raise StagingError(f"the runner refused the findings: {exc}") from exc
+    # The handoff is BUILT before anything is written, so a refusal writes nothing; the
+    # target files are checked here for the same reason (write_handoff's O_EXCL still holds).
+    handoff_objects, handoff_note = _handoff_for_read_back(
+        execution,
+        outputs_dir=outputs_dir,
+        source_manifest_hash=source_manifest_hash,
+        knowledge_receipt_sha256=knowledge_receipt_sha256,
+    )
+    handoff_target: Path | None = None
+    if handoff_objects is not None:
+        handoff_target = Path(handoff_dir) if handoff_dir is not None else target.parent
+        for name in HANDOFF_FILES:
+            if (handoff_target / f"{name}.json").exists():
+                raise StagingError(
+                    f"{handoff_target / f'{name}.json'} already exists; a handoff is written once "
+                    "and never rewritten, so this read-back writes nothing"
+                )
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(
         json.dumps(updated, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8"
     )
+    handoff_summary: dict[str, dict[str, str]] | None = None
+    if handoff_objects is not None and handoff_target is not None:
+        written_paths = write_handoff(handoff_objects, handoff_target)
+        handoff_summary = {
+            name: {"path": str(path), "receipt_hash": handoff_objects[name]["receipt_hash"]}
+            for name, path in zip(HANDOFF_FILES, written_paths)
+        }
+    first_lock, first_lock_note = _first_lock_summary(handoff_objects)
     report: Path | None = None
     crosswalk_body: dict[str, Any] | None = None
     if render_report:
@@ -591,8 +726,14 @@ def read_back(
         "delivery_receipt_sha256": execution["delivery_receipt_sha256"],
         "knowledge_receipt_sha256": knowledge_receipt_sha256,
         "outputs_receipt_sha256": execution["outputs_receipt_sha256"],
+        "source_manifest_hash": source_manifest_hash,
         "crosswalk_sha256": None if crosswalk_body is None else crosswalk_body["crosswalk_sha256"],
         "report_path": None if report is None else str(report),
+        "handoff_dir": None if handoff_target is None else str(handoff_target),
+        "handoff": handoff_summary,
+        "handoff_note": handoff_note,
+        "first_lock": first_lock,
+        "first_lock_note": first_lock_note,
     }
 
 
@@ -616,6 +757,15 @@ ANSWER_WALL_LEDGER = "output_answer_wall_access_receipts"
 INVOCATIONS_LEDGER = "output_provider_invocation_response_receipts"
 
 
+def first_lock_entry(locks: Sequence[Mapping[str, Any]]) -> Mapping[str, Any] | None:
+    """The first FIRST_LOCK entry of a lock ledger's entries, or None when there is none."""
+    for entry in locks:
+        body = entry.get("body")
+        if isinstance(body, Mapping) and body.get("lock_state") == "FIRST_LOCK":
+            return entry
+    return None
+
+
 def build_handoff(
     outputs_dir: Path | str,
     *,
@@ -632,6 +782,9 @@ def build_handoff(
     = the head entry of `output_first_locks_and_no_locks` (chain-hashed, verbatim),
     `exhaustion_events` = the `output_candidate_discoveries` entries (the new surface's
     candidate roster, verbatim), `answer_wall` SEALED read off the EMPTY answer-wall ledger,
+    - `first_lock` is the FIRST entry whose `lock_state` is FIRST_LOCK, never the ledger head
+    (a later NO_LOCK for another candidate is the head, not the lock), and null when the
+    ledger carries no FIRST_LOCK at all: a NO_LOCK dressed as the first lock is fabricated -
     `provider_api_called` False read off every invocation receipt being an AGENT_SESSION,
     `packet_hash` = the delivery receipt the bundle was produced against (the packet he was
     handed), `source_manifest_hash` from the run's identity. Only a REAL_TIME_FRANKIE bundle
@@ -695,10 +848,11 @@ def build_handoff(
         "rt_frozen_before_forecaster": True,
     }
     handoff["receipt_hash"] = workmode.sha256_json(handoff)
+    first_lock = first_lock_entry(locks)
     lock: dict[str, Any] = {
         "schema": RT_FIRST_LOCK_SCHEMA,
         "rt_output_hash": artifact_sha256,
-        "first_lock": dict(locks[-1]) if locks else None,
+        "first_lock": None if first_lock is None else dict(first_lock),
         "first_lock_owner": role,
         "exhaustion_events": [dict(entry) for entry in candidates],
     }
@@ -759,6 +913,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     rb.add_argument("--delivery-receipt-sha256", default=None, help="the ledger-delivery receipt the artifact must cite")
     rb.add_argument("--delivery-receipt", type=Path, default=None, help="FRANKIE_LEDGER_DELIVERY_RECEIPT_V1 file; bound by hash to the artifact's citation and fed to the crosswalk")
     rb.add_argument("--knowledge-receipt", type=Path, default=None, help="FRANKIE_KNOWLEDGE_DELIVERY_RECEIPT_V1 file; its hash is the one the verdicts must cite, and it feeds the crosswalk")
+    rb.add_argument("--handoff-dir", type=Path, default=None, help="where to write ONEWAY_HANDOFF / RT_FIRST_LOCK / RT_CONTEXT_MANIFEST (default: beside the result with findings; never over an earlier trio)")
     rb.add_argument("--no-report", action="store_true", help="do not render the findings report (and its crosswalk) beside the artifact")
     args = parser.parse_args(argv)
     try:
@@ -772,6 +927,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             delivery_receipt=args.delivery_receipt,
             knowledge_receipt=args.knowledge_receipt,
             render_report=not args.no_report,
+            handoff_dir=args.handoff_dir,
         )
     except (StagingError, OSError, ValueError) as exc:
         print(f"REFUSED: {exc}")

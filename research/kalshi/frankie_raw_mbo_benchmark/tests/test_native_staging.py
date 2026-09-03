@@ -651,13 +651,21 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_staging import (  # noqa: 
 )
 
 
-def finished_result() -> dict:
-    """A finalized EVIDENCE_ONLY result, exactly what the launch writes to calculation_result.json."""
+def finished_result(arm: str = "A_MEMORY") -> dict:
+    """A finalized EVIDENCE_ONLY result, exactly what the launch writes to calculation_result.json.
+
+    Run on the one arm (D86): the read-back binds the arm and the source manifest hash off
+    the result's identity receipt, so the fixture result is stamped the way the A_MEMORY
+    launch stamps it. (The runner test's own `identity()` fixture predates D86 and names
+    A_CLEAN; it is another persona's file and is set here rather than edited there.)
+    """
     from research.kalshi.frankie_raw_mbo_benchmark.tests.test_native_calculation_runner import (
         drive,
+        identity,
         make_run,
     )
     run = make_run()
+    run.identity = identity(arm=arm)
     drive(run)
     return run.finalize()
 
@@ -1022,3 +1030,207 @@ class ReadBackReportTest(unittest.TestCase):
             text = Path(summary["report_path"]).read_text()
         self.assertIn("## Layer crosswalk", text)
         self.assertEqual(summary["delivery_receipt_sha256"], self.delivery["receipt_sha256"])
+
+
+# ------------------------------------------------------------------------------------------
+# Slice 6 (S122): the read-back builds and writes the RT handoff trio from the validated bundle.
+# ------------------------------------------------------------------------------------------
+
+from research.kalshi import ng_exhaustion_two_frankies_workmode_coordinate_2day_20260825 as workmode  # noqa: E402
+from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import (  # noqa: E402
+    LAYER_IDENTITY,
+    canonical_hash,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.native_staging import HANDOFF_FILES  # noqa: E402
+
+
+class ReadBackHandoffTest(unittest.TestCase):
+    """After a successful attach the read-back calls `build_handoff` and `write_handoff`:
+    ONEWAY_HANDOFF, RT_FIRST_LOCK and RT_CONTEXT_MANIFEST are written BESIDE the read-back
+    output, exclusive-create, never over an earlier trio, and the summary names their paths
+    and hashes. `source_manifest_hash` and the arm are bound from the result's identity
+    receipt (`layers.identity_receipt`, what the launch stamped from `RunIdentity`) - never
+    from a CLI string. A bundle with no FIRST_LOCK entry yields a null first lock, stated,
+    never a fabricated one; an artifact with no bundle has no handoff and says so."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.outputs_dir = Path(cls.tmp.name) / "principal_outputs"
+        cls.receipt = write_bundle(
+            build_bundle(delivery_receipt_sha256=DELIVERY, knowledge_receipt_sha256=KNOWLEDGE),
+            cls.outputs_dir,
+        )
+        cls.result = finished_result()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def _stage(self, tmp: str, *, result=None, receipt=None, **artifact_overrides) -> tuple[Path, Path]:
+        result = result or self.result
+        result_path = Path(tmp) / "calculation_result.json"
+        result_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+        body = delivered_artifact(
+            evidence_result_hash=result["result_hash"],
+            outputs_receipt_sha256=(receipt or self.receipt)["receipt_sha256"],
+        )
+        body.update(artifact_overrides)
+        artifact_path = Path(tmp) / "frankie_principal_findings.json"
+        artifact_path.write_text(json.dumps(body, indent=2))
+        return artifact_path, result_path
+
+    def _read_back(self, artifact_path, result_path, **kwargs):
+        args = dict(
+            result_path=result_path, outputs_dir=self.outputs_dir,
+            knowledge_receipt_sha256=KNOWLEDGE, render_report=False,
+        )
+        args.update(kwargs)
+        return read_back(artifact_path, **args)
+
+    def test_the_handoff_trio_is_written_beside_the_read_back_output_and_named_in_the_summary(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path, result_path = self._stage(tmp)
+            summary = self._read_back(artifact_path, result_path)
+            written = Path(summary["result_path"])
+            self.assertEqual(summary["handoff_dir"], str(written.parent))
+            self.assertEqual(set(summary["handoff"]), set(HANDOFF_FILES))
+            files = {}
+            for name in HANDOFF_FILES:
+                path = Path(summary["handoff"][name]["path"])
+                self.assertEqual(path, written.parent / f"{name}.json", "written beside the read-back output")
+                self.assertTrue(path.exists())
+                body = json.loads(path.read_text())
+                workmode.verify_self_hash(body)
+                self.assertEqual(summary["handoff"][name]["receipt_hash"], body["receipt_hash"])
+                files[name] = body
+            lock_ledger = json.loads((self.outputs_dir / "ledgers" / "output_first_locks_and_no_locks.json").read_text())
+        identity = self.result["layers"][LAYER_IDENTITY]
+        self.assertEqual(files["ONEWAY_HANDOFF"]["full_validated_rt_output_hash"], summary["artifact_sha256"])
+        self.assertEqual(files["ONEWAY_HANDOFF"]["frozen_rt_state_hash"], self.receipt["receipt_sha256"])
+        self.assertEqual(files["RT_CONTEXT_MANIFEST"]["source_manifest_hash"], identity["source_manifest_hash"])
+        self.assertEqual(summary["source_manifest_hash"], identity["source_manifest_hash"])
+        self.assertEqual(files["RT_CONTEXT_MANIFEST"]["packet_hash"], DELIVERY)
+        first = [e for e in lock_ledger["entries"] if e["body"]["lock_state"] == "FIRST_LOCK"][0]
+        self.assertEqual(files["RT_FIRST_LOCK"]["first_lock"], first)
+        self.assertEqual(summary["first_lock"]["entry_hash"], first["entry_hash"])
+        self.assertEqual(summary["first_lock"]["candidate_id"], first["body"]["candidate_id"])
+        self.assertIsNone(summary["first_lock_note"])
+        self.assertIsNone(summary["handoff_note"])
+
+    def test_source_manifest_hash_is_bound_from_the_identity_receipt_and_nothing_else_may_supply_it(self):
+        """No CLI flag exists for it; a result whose identity receipt lacks it is refused."""
+        from research.kalshi.frankie_raw_mbo_benchmark.native_staging import main as cli
+        with self.assertRaises(SystemExit):
+            with redirect_stdout(io.StringIO()):
+                cli(["read-back", "--artifact", "x", "--result", "y", "--source-manifest-hash", "f" * 64])
+        stripped = json.loads(json.dumps(self.result))
+        stripped["layers"][LAYER_IDENTITY].pop("source_manifest_hash")
+        stripped.pop("result_hash")
+        stripped["result_hash"] = canonical_hash(stripped)
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path, result_path = self._stage(tmp, result=stripped)
+            with self.assertRaises(StagingError) as caught:
+                self._read_back(artifact_path, result_path)
+            self.assertFalse((result_path.parent / f"calculation_result{READ_BACK_SUFFIX}.json").exists())
+        self.assertIn("source_manifest_hash", str(caught.exception))
+
+    def test_an_artifact_on_another_arm_than_the_result_is_refused_by_name(self):
+        """The arm is bound off the identity receipt too: an A_MEMORY artifact against a
+        result stamped A_CLEAN (the inert record) attaches to nothing."""
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path, result_path = self._stage(tmp, result=finished_result(arm="A_CLEAN"))
+            with self.assertRaises(StagingError) as caught:
+                self._read_back(artifact_path, result_path)
+        message = str(caught.exception)
+        self.assertIn("A_CLEAN", message)
+        self.assertIn("A_MEMORY", message)
+
+    def test_an_earlier_handoff_is_never_written_over_and_the_refusal_writes_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path, result_path = self._stage(tmp)
+            earlier = result_path.parent / "RT_FIRST_LOCK.json"
+            earlier.write_text("{}")
+            with self.assertRaises(StagingError) as caught:
+                self._read_back(artifact_path, result_path)
+            self.assertEqual(earlier.read_text(), "{}", "the earlier file was written over")
+            self.assertFalse((result_path.parent / f"calculation_result{READ_BACK_SUFFIX}.json").exists())
+            self.assertFalse((result_path.parent / "ONEWAY_HANDOFF.json").exists())
+        self.assertIn("RT_FIRST_LOCK", str(caught.exception))
+        self.assertIn("exists", str(caught.exception))
+
+    def test_a_handoff_dir_of_its_own_is_honoured(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path, result_path = self._stage(tmp)
+            handoff_dir = Path(tmp) / "handoff"
+            summary = self._read_back(artifact_path, result_path, handoff_dir=handoff_dir)
+            self.assertEqual(summary["handoff_dir"], str(handoff_dir))
+            for name in HANDOFF_FILES:
+                self.assertTrue((handoff_dir / f"{name}.json").exists())
+                self.assertFalse((result_path.parent / f"{name}.json").exists())
+
+    def test_a_bundle_with_no_first_lock_says_so_rather_than_fabricating_one(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            outputs_dir = Path(tmp) / "principal_outputs"
+            receipt = write_bundle(
+                build_bundle(delivery_receipt_sha256=DELIVERY, knowledge_receipt_sha256=KNOWLEDGE, first_lock=False),
+                outputs_dir,
+            )
+            artifact_path, result_path = self._stage(tmp, receipt=receipt)
+            summary = self._read_back(artifact_path, result_path, outputs_dir=outputs_dir)
+            lock = json.loads(Path(summary["handoff"]["RT_FIRST_LOCK"]["path"]).read_text())
+        self.assertIsNone(lock["first_lock"])
+        self.assertIsNone(summary["first_lock"])
+        self.assertIn("no FIRST_LOCK", summary["first_lock_note"])
+
+    def test_an_artifact_without_a_bundle_has_no_handoff_and_the_summary_says_so(self):
+        """A pre-delivery artifact (no delivery receipt, no outputs) still reads back; there
+        is no bundle to build a handoff from, and the summary states that instead of omitting
+        the keys."""
+        with tempfile.TemporaryDirectory() as tmp:
+            result_path = Path(tmp) / "calculation_result.json"
+            result_path.write_text(json.dumps(self.result, indent=2, sort_keys=True) + "\n")
+            body = dict(LoadPrincipalArtifactTest.GOOD, evidence_result_hash=self.result["result_hash"])
+            artifact_path = Path(tmp) / "frankie_principal_findings.json"
+            artifact_path.write_text(json.dumps(body))
+            summary = read_back(artifact_path, result_path=result_path, render_report=False)
+            self.assertEqual(summary["findings_attached"], 1)
+            for name in HANDOFF_FILES:
+                self.assertFalse((result_path.parent / f"{name}.json").exists())
+        self.assertIsNone(summary["handoff"])
+        self.assertIsNone(summary["handoff_dir"])
+        self.assertIn("no output bundle", summary["handoff_note"])
+        self.assertIsNone(summary["first_lock"])
+
+    def test_a_forecaster_artifact_hands_nothing_off_and_says_so(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            outputs_dir = Path(tmp) / "principal_outputs"
+            receipt = write_bundle(
+                build_bundle(role="FORECASTER_FRANKIE", delivery_receipt_sha256=DELIVERY, knowledge_receipt_sha256=KNOWLEDGE),
+                outputs_dir,
+            )
+            artifact_path, result_path = self._stage(tmp, receipt=receipt, role="FORECASTER_FRANKIE")
+            summary = self._read_back(artifact_path, result_path, outputs_dir=outputs_dir)
+            for name in HANDOFF_FILES:
+                self.assertFalse((result_path.parent / f"{name}.json").exists())
+        self.assertIsNone(summary["handoff"])
+        self.assertIn("FORECASTER_FRANKIE", summary["handoff_note"])
+
+    def test_the_cli_names_the_handoff_paths_and_accepts_a_handoff_dir(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path, result_path = self._stage(tmp)
+            handoff_dir = Path(tmp) / "handoff"
+            proc = subprocess.run(
+                [sys.executable, "-m", "research.kalshi.frankie_raw_mbo_benchmark.native_staging",
+                 "read-back", "--artifact", str(artifact_path), "--result", str(result_path),
+                 "--outputs-dir", str(self.outputs_dir), "--knowledge-receipt-sha256", KNOWLEDGE,
+                 "--handoff-dir", str(handoff_dir), "--no-report"],
+                capture_output=True, text=True, cwd=str(Path(__file__).resolve().parents[4]),
+            )
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            summary = json.loads(proc.stdout)
+            for name in HANDOFF_FILES:
+                path = Path(summary["handoff"][name]["path"])
+                self.assertEqual(path.parent, handoff_dir)
+                workmode.verify_self_hash(json.loads(path.read_text()))
+            self.assertEqual(summary["source_manifest_hash"], self.result["layers"][LAYER_IDENTITY]["source_manifest_hash"])

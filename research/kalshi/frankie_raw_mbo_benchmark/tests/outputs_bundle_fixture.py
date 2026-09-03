@@ -26,8 +26,17 @@ def build_bundle(
     run_id: str = "run-readback-0001",
     registry: dict[str, Any] | None = None,
     contract_text: str | None = None,
+    first_lock: bool = True,
+    trailing_no_lock: bool = False,
 ) -> outputs.OutputBundle:
-    """Every required ledger, two cutoffs, bound to the receipts given."""
+    """Every required ledger, two cutoffs, bound to the receipts given.
+
+    `first_lock=False` builds a lawful bundle whose lock ledger holds NO_LOCK entries only
+    (the principal called no first lock all day); `trailing_no_lock=True` appends a NO_LOCK
+    for a second candidate AFTER the FIRST_LOCK, so the ledger head is not the first lock.
+    Both exist so the handoff can be proven to select the first lock rather than the head,
+    and to say "none" rather than fabricate one.
+    """
     registry = registry or fx.registry_today()
     contract_text = contract_text or fx.contract_today()
     frames = fx.real_frames()
@@ -80,7 +89,8 @@ def build_bundle(
     locked = probability.append(
         c2,
         fx.probability_body(
-            snapshot_id="snap-1", evaluation=fx.reading(c2), lock_state="FIRST_LOCK",
+            snapshot_id="snap-1", evaluation=fx.reading(c2),
+            lock_state="FIRST_LOCK" if first_lock else "NO_LOCK",
             probabilities={"PERSIST": 0.7, "COLLAPSE": 0.3},
         ),
     )
@@ -93,11 +103,16 @@ def build_bundle(
     )
     locks = bundle.ledger("output_first_locks_and_no_locks")
     locks.append(c1, fx.lock_body())
-    first_lock = fx.lock_body(
-        lock_state="FIRST_LOCK", probability_entry_hash=locked["entry_hash"], lock_at=fx.reading(c2)
-    )
-    first_lock.pop("reason")
-    locks.append(c2, first_lock)
+    if first_lock:
+        lock = fx.lock_body(
+            lock_state="FIRST_LOCK", probability_entry_hash=locked["entry_hash"], lock_at=fx.reading(c2)
+        )
+        lock.pop("reason")
+        locks.append(c2, lock)
+    else:
+        locks.append(c2, fx.lock_body(reason="persistence 0.7 does not clear the r1 bar at the second cutoff"))
+    if trailing_no_lock:
+        locks.append(c2, fx.lock_body(candidate_id="cand-0002", reason="a second candidate the r1 bar does not clear"))
 
     bundle.ledger("output_negative_sparse_inconclusive_ledger").append(c2, fx.negative_body())
     bundle.ledger(
