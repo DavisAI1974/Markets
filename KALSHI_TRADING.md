@@ -994,7 +994,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **528 files.**
+new tool cannot go unlisted. **529 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `agent_frankie.py` — Frankie hybrid agent entry point.
@@ -1199,6 +1199,7 @@ new tool cannot go unlisted. **528 files.**
 - `test_emit_frankie_spawn.py` — The stop rule, and the hash check that makes the mission uneditable mid-flight.
 - `test_fetch_frankie_ledgers.py` — The ledgers reach the session and are proven to be the ledgers the box reconciled.
 - `test_frankie_ledger_delivery_workflow.py` — D57 on the delivery workflow: parse the YAML, `bash -n` every run block, compile any
+- `test_knowledge_delivery_receipt.py` — The knowledge delivery receipt, produced FROM the existing pipeline, consumed by the crosswalk.
 - `test_native_a_arm_launch.py` — T2/T3/T5: the launch path gates, traverses, checkpoints and finalizes.
 - `test_native_absorption.py` — Tests for section 4.8 absorption, withdrawal, and delivered pressure."""
 - `test_native_book_regime.py` — Section 4.2, which did not run at all on the delivered artifact.
