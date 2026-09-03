@@ -324,87 +324,106 @@ A bounded local A_MEMORY launch raises `CheckpointError: unknown benchmark memor
 
 ---
 
-## TASK I - THE DAY-OVER-DAY LOOP (D90, F-37)
+## TASK I - THE DAY-OVER-DAY MEMORY LOOP (D90 + D91, F-37)
 
-**The measured gap.** No workflow ingests run outputs into A_MEMORY and none ever did.
-`frankie_native_knowledge_refresh_20260828.yml` is a determinism gate - its `git diff --exit-code`
-step makes ingestion impossible by design. `build_a_memory_seed.py` is the only path from a past run
-into the seed and **no workflow calls it**. **No workflow references `principal_runs/`**, which holds
-exactly one run. The launch workflow commits nothing; it PUTs to S3 and returns. `8039f39` removed
-the wrong-data PACKAGE step, not a loop - **there was never a loop, so this is a build item, not a
-regression.** Do not go looking for what broke.
+**REWRITTEN after Greg narrowed it (D91). An earlier draft of this task said the whole output bundle
+accumulates. That was the wrong unit - ignore it if you saw it.** What accumulates is Frankie's
+FINDINGS.
 
-**Greg's ruling (D90), verbatim:** *"I'm going to have him build the loop and close this. we'll do an
-automatic promote but we can veto it. it's only going to be these 4 days. if it's problematic we can
-change it. we'll have Frankie print this out also and make a convincing argument for us to allow
-it."*
+Greg: *"frankie generates a json with his new findings after a day run if there are any new ones and
+that gets added to his memory so that it accumulates day after day like how a memory builds when you
+are acquiring new knowledge every day. he can tell us what that is when he does his post run
+analysis. if something feels off then we can take it out."* Confirmed: *"and it's an automatic
+workflow."*
 
-### I.1 Close the loop
+### I.0 Most of this is already built - verify before you write anything
 
-The parts exist and are unwired. `build_a_memory_seed.py` derives membership **by rule**, so a newly
-committed output lands in the seed on the next `--write`; its docstring names the four-command
-sequence (`build_a_memory_seed` -> `register_a_memory_knowledge` -> `rebind_registry_knowledge_layers`
--> `refresh_native_frankie_knowledge`) that nothing calls.
+The premise of this whole session holds again here: **built, not wired.** Confirm each by execution
+and report anything that is not where this says.
 
-Two links to close, and **name which one you are closing in each commit**:
+| piece | state at `b896c3f` |
+|---|---|
+| the findings artifact | `principal_runs/33605852433/frankie_principal_findings.json` - 44 findings, schema `id, category, section, claim, evidence, falsifier, confidence_basis` |
+| the admission gate | `NativeCalculationRun.attach_principal_findings` (`native_calculation_runner.py:461`) - **already refuses a finding with no falsifier** |
+| the render gate | `render_frankie_report.REQUIRED_FIELDS` (`:33`) = `id, section, claim, falsifier` |
+| the seed builder | `build_a_memory_seed.py` - reads `principal_runs/` **by rule**, so a newly committed findings file lands on the next `--write` |
+| what is missing | the findings file reaching the committed tree, and an automatic workflow running the rebuild |
 
-- **Outputs must reach the committed tree.** A completed run's outputs land under
-  `principal_runs/<run_id>/`. Decide from the existing machinery whether that is the launch workflow,
-  the delivery workflow, or a new step, and say why. The seed reads the tree, not S3.
-- **The sequence must run automatically** once they land, and the result is committed.
+**DO NOT REBUILD THE FALSIFIER BAR.** It exists at the admission boundary. A promoted finding
+already cannot lack a falsifier. If you find a path into the seed that bypasses
+`attach_principal_findings`, that is a finding - report it.
 
-### I.2 Promotion is AUTOMATIC - this is a deliberate rejection of the PR pattern
+### I.1 Close the two links, automatically
+
+- **The findings file reaches the committed tree** under `principal_runs/<run_id>/`. Decide from the
+  existing machinery which workflow does it and say why.
+- **The rebuild sequence runs automatically** and commits: `build_a_memory_seed --write` ->
+  `register_a_memory_knowledge --write` -> `rebind_registry_knowledge_layers --write` ->
+  `refresh_native_frankie_knowledge --write`. The seed builder's docstring carries the order; nothing
+  calls it today.
+
+Name which link each commit closes.
+
+### I.2 NEW ones only - and an empty day is a legitimate day
+
+*"if there are any new ones."* **The loop must never require a finding.** A requirement to produce
+one is a pressure to invent one.
+
+- Carry forward only findings **not already in the seed**. Identity is the finding's own `id`; if ids
+  are not stable across runs, say so rather than inventing a surrogate key.
+- **A day with no new findings adds nothing and is not a failure.**
+- **An empty findings file must be distinguishable from a run that never wrote one.** This is the
+  S119 lesson exactly: seven of sixteen defects were correct calculators nothing ever called, each
+  reporting an exact zero indistinguishable from a real measurement. Write that test first.
+
+### I.3 Promotion is AUTOMATIC - a deliberate rejection of the PR pattern
 
 `frankie_native_knowledge_refresh_20260828.yml` already carries a "Create reviewed refresh pull
-request" job. **Do not copy it here.** A carry that waits for a human to merge is not a day-over-day
+request" job. **Do not copy it.** A carry that waits for a human to merge is not a day-over-day
 carry. The promotion commits.
 
-If you find a concrete reason automatic promotion cannot work (a permissions wall, a loop where the
-promotion commit retriggers the run), **state it and stop** - do not silently fall back to a PR.
+If automatic promotion genuinely cannot work - a permissions wall, or the promotion commit
+retriggering the run - **state it and stop.** Do not silently fall back to a PR.
 
-### I.3 THE VETO IS A LABEL, NEVER A DELETION
+### I.4 THE VETO IS A LABEL, NEVER A DELETION
 
-D60 and D76 govern, and the precedent is already inside the seed: the wrong-data run
-`32851909748-1` sits there **as the wrong-data run, labelled, never filtered.** Same shape here.
+*"if something feels off then we can take it out."* Taking it out is a status change.
 
-- A vetoed entry **stays in the seed** with a status and stops being SERVED.
-- Veto is by **stable id**, recorded in a committed file, applied by the builder on the next write.
-- A veto is **idempotent and survives a rebuild** - a rebuild that resurrects a vetoed entry is the
-  defect this bullet exists to prevent, so write that test first.
-- **Never implement the veto as a git revert.** That discards the run record along with the lesson.
+- A vetoed finding **stays in the seed** with its status and stops being SERVED.
+- Veto by the finding's **id**, recorded in a committed file, applied by the builder on the next write.
+- **Idempotent across rebuilds.** A rebuild that resurrects a vetoed finding is the defect this
+  bullet exists to prevent - write that test first.
+- **Never a git revert.** That discards the run record along with the lesson.
+- Precedent, already inside the seed: the wrong-data run `32851909748-1` sits there AS the wrong-data
+  run, labelled, never filtered (D60/D76).
 
-### I.4 The bound is the roster, and the number is never typed
+### I.5 The carry explains itself inside the post-run analysis
 
-`raw_mbo_source_manifest` pins the roster at exactly four objects
-(`raw_mbo_source_manifest.py:153, 203`). "These four days" IS the roster. **Derive the bound from
-the manifest; never type `4`** (rule 7). A fifth day is then a manifest change, which is a contract
-change, which is Greg's - not something the loop can drift into.
+*"he can tell us what that is when he does his post run analysis."* This is a **section of an output
+he already produces**, not a new ceremony. It names which findings are new this day and why they
+should be carried.
 
-### I.5 Frankie argues for his own carry - as EVIDENCE, not persuasion
+The fields it needs are already on every finding - `claim`, `evidence`, `falsifier`,
+`confidence_basis`. Render them; do not invent a parallel vocabulary.
 
-Greg wants the promotion to arrive with its own case so the veto has something to read.
+**Two rules that keep the incentive honest.** Only **stream evidence** moves a finding from
+UNVERIFIED to VERIFIED (D86) - never the strength of its own write-up. And **an unpersuasive
+explanation is not grounds for veto; an unfalsifiable finding is** - though the admission gate should
+already have refused that one, so if an unfalsifiable finding reaches the seed, report the path.
 
-**The risk, named so you design against it: if the gate is "convincing", the thing being optimised is
-rhetoric.** So this is a structured output, not an essay. Per carried lesson:
+### I.6 The bound is the roster, and four is never typed
 
-- a stable id, and what the lesson CLAIMS;
-- the **stream evidence** that verified it - this is where D86's UNVERIFIED becomes VERIFIED, and
-  **only stream evidence may make that transition**, never the argument's own confidence;
-- what would **falsify** it;
-- what **changed** since the prior day (day one has no prior - say so, do not synthesise one).
+`raw_mbo_source_manifest` pins the roster at exactly four objects (`:153`, `:203`). "These four days"
+IS the roster. **Derive the bound; never type `4`** (rule 7). A fifth day is a manifest change, which
+is a contract change, which is Greg's - not something the loop can drift into.
 
-**An unpersuasive argument is not grounds for veto. An unfalsifiable one is.** A lesson with no
-falsifier stays UNVERIFIED and is not promoted, however well argued.
+### I.7 Done when
 
-Wire it as a required output the same way the existing ones are wired - derived, no typed count -
-and let the veto file cite a lesson id so a veto names what it rejected.
+A fixture run's findings reach the committed tree; the rebuild runs and commits with no human; a
+second run adds only its NEW findings; a run with none adds nothing and is distinguishable from a run
+that wrote no file; the next spawn's knowledge block (Task G) carries the new entries; a vetoed id
+stays present and unserved across a rebuild; the bound comes off the manifest. Each with a test that
+fails without its fix.
 
-### I.6 Done when
-
-A fixture run's outputs reach the committed tree, the seed rebuild runs and commits without a human,
-the next spawn's knowledge block (Task G) carries the new entry, a vetoed id stays present and
-unserved across a rebuild, the bound comes off the manifest, and every promoted lesson carries a
-falsifier. Each with a test that fails without its fix.
-
-**Report to Greg, do not decide:** anything the loop cannot verify on its own, and any promotion you
-believe should have been vetoed and was not.
+**Report to Greg, do not decide:** anything the loop cannot verify itself, any finding you believe
+should have been vetoed and was not, and any path into the seed that bypasses the admission gate.
