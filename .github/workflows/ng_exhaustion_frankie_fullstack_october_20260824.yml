@@ -1,11 +1,9 @@
 name: Launch full-stack Frankie October 2021 20260824
 
+# RETIRED_FORENSIC_ONLY: the four-helper October stack is superseded by the
+# one-skill-per-principal RT/Forecaster architecture. Keep the body as a record,
+# but expose no push trigger and permit no job to execute.
 on:
-  push:
-    branches:
-      - chatgpt/ng-exhaustion-october-sharded-20260824
-    paths:
-      - research/kalshi/NG_EXHAUSTION_FRANKIE_FULLSTACK_OCTOBER_LAUNCH_20260824.json
   workflow_dispatch:
     inputs:
       confirm_full_october:
@@ -26,10 +24,7 @@ concurrency:
 
 jobs:
   stop-attempt-8:
-    if: >-
-      ${{ github.ref == 'refs/heads/chatgpt/ng-exhaustion-october-sharded-20260824' &&
-          github.event_name == 'push' &&
-          startsWith(github.event.head_commit.message, 'stop: October Frankie attempt 8') }}
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -92,10 +87,7 @@ jobs:
           grep -F "FULLSTACK_STOPPED=$UNIT" <<<"$result"
 
   build-and-verify:
-    if: >-
-      ${{ github.ref == 'refs/heads/chatgpt/ng-exhaustion-october-sharded-20260824' &&
-          (github.event_name == 'push' || inputs.confirm_full_october == true) &&
-          !startsWith(github.event.head_commit.message, 'stop: October Frankie attempt 8') }}
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 350
     outputs:
@@ -257,10 +249,7 @@ jobs:
 
   launch-fullstack-october:
     needs: build-and-verify
-    if: >-
-      ${{ github.ref == 'refs/heads/chatgpt/ng-exhaustion-october-sharded-20260824' &&
-          (github.event_name == 'push' || inputs.confirm_full_october == true) &&
-          !startsWith(github.event.head_commit.message, 'stop: October Frankie attempt 8') }}
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 350
     env:

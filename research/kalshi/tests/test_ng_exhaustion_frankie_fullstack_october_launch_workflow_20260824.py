@@ -41,15 +41,14 @@ class FullStackOctoberLaunchWorkflowTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.source = WORKFLOW.read_text(encoding="utf-8")
 
-    def test_trigger_is_explicit_new_marker_or_confirmed_dispatch_on_target_branch(self):
+    def test_retired_workflow_has_no_push_trigger_and_no_executable_job(self):
         self.assertIn("workflow_dispatch:", self.source)
-        self.assertIn("confirm_full_october:", self.source)
-        self.assertIn("type: boolean", self.source)
-        self.assertIn(f"- {TARGET_BRANCH}", self.source)
-        self.assertIn(str(MARKER), self.source)
-        self.assertIn(f"refs/heads/{TARGET_BRANCH}", self.source)
+        self.assertNotRegex(self.source, re.compile(r"(?m)^  push:\s*$"))
+        self.assertIn("RETIRED_FORENSIC_ONLY", self.source)
+        self.assertEqual(self.source.count("if: ${{ false }}"), 3)
         marker = json.loads(MARKER.read_text(encoding="utf-8"))
-        self.assertIs(marker.get("launch_authorized"), True)
+        self.assertIs(marker.get("launch_authorized"), False)
+        self.assertIs(marker.get("stop_requested"), True)
         self.assertEqual(marker.get("launch_branch"), TARGET_BRANCH)
         self.assertEqual(
             marker.get("authorized_scope"),
@@ -96,7 +95,7 @@ class FullStackOctoberLaunchWorkflowTests(unittest.TestCase):
         self.assertIn('test "$(git rev-parse HEAD)" = "$GITHUB_SHA"', self.source)
         self.assertIn('git archive --format=tar "$GITHUB_SHA"', self.source)
         self.assertIn(
-            "python research/kalshi/ng_exhaustion_frankie_fullstack_october_20260824.py",
+            '"$venv_python" research/kalshi/ng_exhaustion_frankie_fullstack_october_20260824.py',
             self.source,
         )
         self.assertIn('research/kalshi/restore_substrate.py', self.source)
@@ -307,7 +306,10 @@ class FullStackOctoberLaunchWorkflowTests(unittest.TestCase):
         build = self.source.index("Build hash-locked offline runtime package without credentials")
         publish = self.source.index("Publish exact GITHUB_SHA package")
         self.assertLess(build, publish)
-        build_job = self.source[: self.source.index("  launch-fullstack-october:")]
+        build_job = self.source[
+            self.source.index("  build-and-verify:"):
+            self.source.index("  launch-fullstack-october:")
+        ]
         self.assertNotIn("AWS_ACCESS_KEY_ID: ${{ secrets.", build_job)
         for token in (
             "--require-hashes",
@@ -342,7 +344,13 @@ class FullStackOctoberLaunchWorkflowTests(unittest.TestCase):
         )
         rows = [line for line in lock.splitlines() if line and not line.startswith(("#", " "))]
         self.assertGreaterEqual(len(rows), 45)
-        self.assertTrue(all(re.fullmatch(r"[a-z0-9-]+==[^ ]+ \\", line) for line in rows))
+        self.assertTrue(all(
+            re.fullmatch(
+                r'[a-z0-9-]+==[^ ;]+(?: ; python_version < "[0-9.]+")? \\',
+                line,
+            )
+            for line in rows
+        ))
         self.assertGreaterEqual(lock.count("--hash=sha256:"), len(rows))
         self.assertNotIn("python - \"$wheelhouse\" \"$lock\"", self.source)
         self.assertNotIn("pip install --quiet --upgrade pip", self.source)
@@ -475,11 +483,14 @@ class FullStackOctoberLaunchWorkflowTests(unittest.TestCase):
         self.assertIn('test "$(systemctl show --property=ActiveState --value "$unit")" = active', self.source)
 
     def test_embedded_python_generator_and_remote_python_scripts_compile(self):
-        match = re.search(
+        generators = re.findall(
             r"          python - <<'PY'\n(.*?)\n          PY", self.source, re.DOTALL
         )
-        self.assertIsNotNone(match)
-        generator = textwrap.dedent(match.group(1))
+        generator = next(
+            textwrap.dedent(body)
+            for body in generators
+            if "credential_scope_script" in body
+        )
         tree = ast.parse(generator, filename=str(WORKFLOW))
         scripts = {}
         for node in ast.walk(tree):

@@ -3,9 +3,12 @@ import json
 from pathlib import Path
 import sys
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "research"))
 import ng_exhaustion_mbo_5y_step1_census_20260822 as census
+from kalshi import ng_exhaustion_step1_recovery as recovery
 
 
 RECOVERY = ROOT / ".github/workflows/ng_exhaustion_mbo_5y_step1_recover_20260823.yml"
@@ -59,13 +62,15 @@ def test_status_reads_exact_full_heartbeat_and_unit_without_prefix_listing():
     assert "aws s3 ls" not in source
 
 
-def test_checked_in_finalizer_lock_pins_every_executable_byte():
+def test_checked_in_historical_finalizer_lock_is_intact_and_refuses_current_engine_bytes():
     lock = json.loads(LOCK.read_text(encoding="utf-8"))
     claimed = lock.pop("finalizer_lock_sha256")
     actual = hashlib.sha256(
         json.dumps(lock, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
     ).hexdigest()
     assert claimed == actual
-    assert lock["finalizer_engine_hashes"] == census.material_hashes()
     assert lock["recovery_script_sha256"] == digest(SCRIPT)
     assert lock["recovery_workflow_sha256"] == digest(RECOVERY)
+    assert lock["finalizer_engine_hashes"] != census.material_hashes()
+    with pytest.raises(recovery.RecoveryError, match="identity or engine drift"):
+        recovery._load_lock(LOCK, lock["parent_candidate_commit"])

@@ -464,8 +464,9 @@ def test_responses_tool_loop_is_strict_sequential_bounded_and_persisted(tmp_path
 
     calls = raw_client.responses.calls
     assert len(calls) == 10
-    initial = calls[::2]
-    continuations = calls[1::2]
+    initial = [call for call in calls if isinstance(call["input"], str)]
+    continuations = [call for call in calls if isinstance(call["input"], list)]
+    assert len(initial) == len(continuations) == 5
     assert all(call["tools"] == list(KNOWLEDGE_TOOL_DEFINITIONS) for call in calls)
     assert all(call["parallel_tool_calls"] is False for call in calls)
     assert all("previous_response_id" not in call for call in calls)
@@ -556,14 +557,18 @@ def test_adapter_caps_replayed_reasoning_before_a_continuation_is_sent(tmp_path)
             tool_calls=tool_calls,
             retrievals=retrievals,
         )
-    assert len(raw_client.responses.calls) == 1
+    # The retired adapter starts its fixed worker batch concurrently. Several initial
+    # calls can therefore be in flight before one worker reports the oversized replay,
+    # but no worker may send a continuation containing that replay.
+    assert raw_client.responses.calls
+    assert all(isinstance(call["input"], str) for call in raw_client.responses.calls)
     persisted = [
         json.loads(row.content_json)
         for row in ledger.snapshot()
         if row.kind is LedgerKind.RETRIEVAL
         and json.loads(row.content_json).get("record_type") == "PROVIDER_TOOL_EXECUTION"
     ]
-    assert len(persisted) == 1
+    assert len(persisted) == len(raw_client.responses.calls)
 
 
 def test_all_five_roles_in_both_lanes_can_call_identical_1940_by_46_causal_snapshot(tmp_path):
