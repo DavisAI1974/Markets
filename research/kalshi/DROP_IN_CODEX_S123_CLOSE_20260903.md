@@ -5,6 +5,24 @@
 > is seed availability, not a schema migration and not a weakening of the future exemplar gate.
 > Future admitted findings are `NEW`; NEW means recency, not uncertainty. The build-time rendered
 > knowledge block is now 128,418 bytes. No workflow or run was dispatched.
+>
+> **Run-unit correction:** the roster is four sequential one-day production runs (October 1, 3,
+> 4, then 5), not one four-day execution. Each production run consumes the complete raw MBO for
+> exactly one source day, freezes and promotes that day's output, and only then starts the next
+> day with the carry. The earlier bounded run used less than a full day's MBO and is slice evidence,
+> not proof of a completed daily raw-MBO run.
+>
+> **Retention correction:** zero informational value is the only elimination bar. Even slight
+> credible value means KEEP. The rule applies to full book and FIFO both as whole surfaces and to
+> every constituent part; no component is eliminated merely because its parent looks redundant or
+> because it is large.
+>
+> **Initial four-day input isolation:** reliable aligned October 2021 values are not currently
+> available for weather, storage, COT/positioning, pipeline/LNG, production/demand,
+> grid/nuclear/solar and equivalent non-MBO context. Treat these inputs as `IGNORE_AS_EVIDENCE`
+> for the four one-day runs: never infer, fabricate or backfill them. Preserve their input identities
+> for later phases and later dates with available aligned values; this is not a zero-value finding.
+> Raw/derived MBO, the calculation mission and all 44 A_MEMORY seed findings remain in scope.
 
 Repository: `DavisAI1974/Markets`
 
@@ -14,6 +32,10 @@ Branch: `chatgpt/frankie-raw-mbo-benchmark-20260828`
 
 Tasks A–I, the A_MEMORY checkpoint fix, the retired four-helper cleanup, and the
 seven legacy failure classes are implemented, tested, committed, and pushed.
+The S124 A–I review is also complete. It found and closed two required run-boundary gaps:
+later-day carry could arrive before an earlier-day artifact, and the result could not distinguish
+a complete source day from a partial bounded slice. No other Critical or Required review finding
+remains.
 Read `research/kalshi/CLAUDE_S123_A_I_IMPLEMENTATION_HANDOFF_20260903.md` first;
 it is the authoritative map of commits, files, behavior, caveats, and tests.
 
@@ -34,6 +56,8 @@ contains this file and verify local HEAD equals origin before changing anything.
   treat the one-day self-proof bootstrap as independent evidence.
 - Empty daily findings are legitimate and add no memory. Missing output remains
   distinguishable. Veto is persistent unserved state, never deletion.
+- Execute exactly one manifest-roster source object per production run. A bounded canary may use
+  fewer records from that one source day, but no run may combine days.
 
 ## New Frankie spawn lookup contract
 
@@ -45,14 +69,18 @@ block belongs in the emitted prompt. Tests assert this object binding.
 
 ## Verification already complete
 
-The final code suite was green:
-`1997 passed, 14 warnings, 6389 subtests passed in 92.35s`.
+The S123 final code suite was green:
+`1997 passed, 14 warnings, 6389 subtests passed in 92.35s`. The later complete S124 pytest pass was
+`2004 passed, 14 warnings, 6389 subtests`. After D99's final input-isolation wording, the six changed
+modules pass 289 tests. The current scratch runtime lacks pytest and databento, so no replacement
+full pytest result was invented; unittest discovery separately executed 1,988 tests with no
+assertion failures and three imports blocked by the missing databento package.
 Store checks, documentation indexing, YAML parse, `py_compile`, diff checks, and
 the D61 lock passed. A documentation-only handoff commit may have run the suite
 again; use its recorded result. Do not rerun expensive checks unless the tree
 changes or the repository rules require them.
 
-No implementation task is intentionally left open. The next work is review and
+No implementation or review task is intentionally left open. The next work is
 Greg's decision about when to run, not an automatic dispatch.
 
 ## Local operational note

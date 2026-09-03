@@ -65,7 +65,11 @@ def _result(mission_sha: str, contract_sha: str, *, verdict="ACCEPTED", cutoffs=
         "failed_gates": [],
         "completion_status": "EVIDENCE_ONLY",
         "result_hash": "cb685e0e" + "0" * 56,
-        "slice": {"sources": ["/opt/frankie-a-arm-run/sources/glbx-mdp3-20211003.mbo.dbn.zst"]},
+        "slice": {
+            "sources": ["/opt/frankie-a-arm-run/sources/glbx-mdp3-20211003.mbo.dbn.zst"],
+            "is_bounded_slice": True,
+            "is_complete_source_day": False,
+        },
         "traversal": {
             "invocation_cutoffs": cuts,
             "sections_fed": {"4.6_queue_rows_applied": 57027, "4.16_response_tracks": 91},
@@ -337,25 +341,33 @@ class StopRuleTests(unittest.TestCase):
 
 
 class SingleDayTests(unittest.TestCase):
-    """A one-day slice of a four-day mission is stated, not left to be inferred."""
+    """Each artifact belongs to one source day; a bounded canary is not a full day."""
 
-    def _emit_for(self, days):
+    def _emit_for(self, days, *, complete_source_day=False):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             root, m_sha, c_sha = _repo_with_docs(root)
             body = _result(m_sha, c_sha, days=days)
+            body["slice"]["is_complete_source_day"] = complete_source_day
             result = root / "calculation_result.json"
             result.write_text(json.dumps(body), encoding="utf-8")
             return _emit_prompt_unit(result, repo_root=root, delivery_receipt=_delivery_receipt(root))
 
-    def test_one_day_says_so_and_marks_cross_day_questions_unanswerable(self):
+    def test_one_source_day_says_so_without_claiming_full_day_coverage(self):
         text = self._emit_for(("20211003",))
-        self.assertIn("ONE DAY: 20211003", text)
+        self.assertIn("ONE SOURCE DAY: 20211003", text)
+        self.assertIn("bounded/reduced-MBO slice, not proof of a complete day", text)
         self.assertIn("unanswerable on this slice", text)
 
-    def test_several_days_carry_no_such_caveat(self):
-        text = self._emit_for(("20211001", "20211003", "20211004"))
-        self.assertNotIn("ONE DAY", text)
+    def test_a_run_spanning_more_than_one_source_day_is_refused(self):
+        with self.assertRaises(EmitError) as caught:
+            self._emit_for(("20211001", "20211003", "20211004"))
+        self.assertIn("exactly one source day", str(caught.exception))
+
+    def test_a_complete_source_day_is_labeled_as_complete_raw_mbo(self):
+        text = self._emit_for(("20211001",), complete_source_day=True)
+        self.assertIn("complete raw-MBO traversal for that one source day", text)
+        self.assertNotIn("bounded/reduced-MBO slice", text)
 
 
 if __name__ == "__main__":
@@ -775,6 +787,7 @@ class DeliveryReceiptGateTest(StopRuleTests):
             self.assertIn("only after zero value is established", text)
             self.assertIn("`book_full`", text)
             self.assertIn("FIFO identities/queues", text)
+            self.assertIn("the whole surface and every constituent part", text)
             self.assertIn("size is not", text)
             self.assertIn("evidence that they are expendable", text)
 
@@ -785,3 +798,21 @@ class DeliveryReceiptGateTest(StopRuleTests):
         self.assertIn("causal market mechanics, relationships, falsifiers", objective)
         self.assertIn("Exhaustion is a\ncentral research axis, not the boundary", objective)
         self.assertIn("non-exhaustion\nmechanics in their own right", objective)
+
+    def test_the_mission_defines_four_sequential_complete_daily_runs(self):
+        mission = (emitter.REPO_ROOT / MISSION_PATH).read_text(encoding="utf-8")
+        self.assertIn("four separate daily runs", mission)
+        self.assertIn("exactly one complete source day", mission)
+        self.assertIn("frozen outputs are promoted into A_MEMORY", mission)
+        self.assertIn("Never combine source days in one run", mission)
+
+    def test_initial_four_days_ignore_current_non_mbo_context_without_deleting_it(self):
+        mission = (emitter.REPO_ROOT / MISSION_PATH).read_text(encoding="utf-8")
+        prompt = self._emit()
+        for text in (mission, prompt):
+            self.assertIn("INITIAL FOUR-DAY INPUT ISOLATION", text)
+            self.assertIn("weather, storage, COT/positioning, pipeline/LNG", text)
+            self.assertIn("production/demand, grid/nuclear/solar", text)
+            self.assertIn("IGNORE_AS_EVIDENCE", text)
+            self.assertIn("preserved for later phases", text)
+            self.assertIn("44 A_MEMORY seed findings remain in scope", text)

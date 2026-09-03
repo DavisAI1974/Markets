@@ -121,6 +121,29 @@ class HistoricalSeedFindingsTest(unittest.TestCase):
 
 
 class FindingsCarryTest(unittest.TestCase):
+    def test_a_later_day_is_refused_until_every_prior_day_has_an_artifact(self) -> None:
+        first_day, second_day = (row[0] for row in EXPECTED_ROSTER[:2])
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_artifact(root, artifact(
+                source_day=second_day,
+                run_id="memory-day-two-too-early",
+                findings=[finding("F-OUT-OF-ORDER")],
+            ))
+            with self.assertRaisesRegex(SeedBuildError, f"{second_day}.*{first_day}"):
+                build_finding_memory(root)
+
+            write_artifact(root, artifact(
+                source_day=first_day,
+                run_id="memory-day-one-empty",
+                findings=[],
+            ))
+            memory = build_finding_memory(root)
+
+        by_day = {row["source_day"]: row for row in memory["days"]}
+        self.assertEqual(by_day[first_day]["artifact_status"], "PRESENT_EMPTY")
+        self.assertEqual(by_day[second_day]["artifact_status"], "PRESENT_WITH_FINDINGS")
+
     def test_second_day_adds_only_ids_not_already_carried(self) -> None:
         first_day, second_day = (row[0] for row in EXPECTED_ROSTER[:2])
         shared = finding("F-GLOBAL-SHARED")

@@ -28,14 +28,34 @@ Canonical scientific input for both A arms is the native Databento
 `.mbo.dbn.zst` roster for October 1, 3, 4, and 5, 2021: 5,667,689 native records
 in `ts_recv_ns` causal order. Its source-manifest SHA-256 is
 `a98a454ef5a88d6f3ee1213370d6df530ab2946ec9cde47171b0d7aa19f4e2ba`.
-All four days are scored findings days and carry one role. They differ only in stream
-position: October 1 is seen first, with nothing accumulated, and October 5 last, with three
-days behind it. That gradient is a result to measure, not a role to declare.
+The roster is executed as four separate daily runs, in this order: October 1, 3, 4, and 5.
+Each production run consumes exactly one complete source day, computes and freezes that day's
+outputs, and ends before the next begins. Its frozen outputs are promoted into A_MEMORY before
+the following daily run starts. Never combine source days in one run or expose a day to any
+later-day record. All four days are scored findings days and carry one role. They differ only
+in stream position: October 1 is seen first, with nothing accumulated from this roster, and
+October 5 last, with three completed daily runs behind it. That gradient is a result to
+measure, not a role to declare. A bounded or reduced-MBO canary from one source day proves only
+its stated slice; it is not proof that the complete daily raw-MBO run occurred.
 
 Use only F_LAST-closed native event groups. Never use reduced seconds rows,
 `V4_NATIVE_FULL_MBO_SECONDS.jsonl.gz`, MBP/top-10, Step-1-derived input, another
 benchmark arm's output, post-cutoff information, or old reduced market rows.
 Keep Step-1 and the answer/reveal wall sealed.
+
+**INITIAL FOUR-DAY INPUT ISOLATION.** Reliable day-aligned October 2021 values are not
+currently available for these contemporaneous non-MBO context families:
+weather, storage, COT/positioning, pipeline/LNG, production/demand, grid/nuclear/solar, STEO, options,
+cash basis, macro, and equivalent fundamental or external feeds. For these initial four
+one-day runs, classify those inputs as `IGNORE_AS_EVIDENCE`: do not infer, fabricate,
+backfill, retrieve, or use them in a calculation, finding, causal explanation, hypothesis,
+falsifier, or elimination recommendation. Their input identities are preserved for later phases
+and later source days where reliable aligned values are available; this is temporary isolation,
+not deletion and not a zero-value judgment. Native raw MBO, lawful raw/derived MBO
+transformations, and the binding mission and calculation contract remain in scope.
+The 44 A_MEMORY seed findings remain in scope. Historical mentions of an external input within
+those findings are provenance,
+not permission to substitute contemporaneous external data that is unavailable for these dates.
 
 Your evidence is every record of every field for the day being run - the complete raw
 MBO of that day, as retained in the exact member ledger with the lifecycle and legacy
@@ -441,7 +461,10 @@ manufacture a casualty merely because the question was asked.
 If a layer has even a little credible present or future informational value, classify it KEEP.
 Data size can strengthen the practical case only after zero value is established; size never
 turns a useful layer into an elimination candidate. This applies explicitly to `book_full` and
-FIFO identities/queues: their size is not evidence that they are expendable.
+FIFO identities/queues, to the whole surface and every constituent part—each field, depth level,
+order identity, queue, queue-position fact, and derived component. No part may be recommended for
+elimination unless that part independently meets the same zero-value bar. Their size is not
+evidence that they are expendable.
 
 An elimination recommendation must also quantify the practical case as far as the receipts and
 field census allow: retained bytes per record and per day, downstream duplicate or derived

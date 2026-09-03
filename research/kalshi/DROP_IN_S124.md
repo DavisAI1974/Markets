@@ -1,13 +1,14 @@
-# DROP-IN S124 - REVIEW IT, THEN RUN IT
+# DROP-IN S124 - REVIEW COMPLETE; RUN ONLY WHEN AUTHORIZED
 
 Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. Check `git log --oneline -1`; the tip must carry
-`SESSION_HANDOFF_2026-09-03_S123.md` or later. **1,997 benchmark tests; 2,706 across all three trees.**
+`SESSION_HANDOFF_2026-09-03_S123.md` or later. **S123 baseline: 1,997 benchmark tests and 2,706
+across all three trees. S124 complete pytest: 2,004 passed, 14 warnings, 6,389 subtests.**
 
 Read `SESSION_HANDOFF_2026-09-03_S123.md` section 0, then this. Nothing else before you start.
 
 ---
 
-## ITEM ZERO - THE WIRING IS FINISHED. TWO THINGS STAND BETWEEN HERE AND A MEASURED RESULT.
+## ITEM ZERO - THE WIRING AND REVIEW ARE FINISHED. AUTHORIZATION STANDS BETWEEN HERE AND A MEASURED RESULT.
 
 Three sessions built this. S121 wired the causal stream, crosswalk, output ledgers and clocks; S122
 carried `raw_actions`, stamped the lifecycle rows, retired the fixed windows and built the seed;
@@ -31,47 +32,71 @@ including how non-exhaustion behavior connects to exhaustion—not merely to fil
 After direct inspection he must also assess whether any raw-MBO layer or field group adds no value
 to ongoing ingestion. If so, he recommends it with evidence and Greg decides whether to eliminate
 it; Frankie does not remove it and is under no obligation to find one. `KEEP EVERYTHING` is valid.
+Exactly zero informational value is the only elimination bar: even slight credible value means
+KEEP. That applies to `book_full` and FIFO as whole surfaces and to every constituent field, depth
+level, order identity, queue, queue-position fact and derived component; no part inherits a broader
+elimination verdict.
 
 **Nothing has been fed by a run on the wired code. That has been true for three sessions and it is
 still true.** F-31 stands, and it is now the only ESSENTIAL item that a session can close by itself.
+The roster is run as four separate complete daily productions—October 1, 3, 4, then 5—with each
+day frozen and promoted into A_MEMORY before the next day begins. The earlier bounded execution
+used less than a full day's MBO and is not complete-day proof.
 
-Two things, in this order:
+**Initial four-day input isolation:** reliable day-aligned October 2021 values are not currently
+available for weather, storage, COT/positioning, pipeline/LNG, production/demand,
+grid/nuclear/solar, STEO, options, cash basis, macro or equivalent non-MBO context. For these four
+one-day runs they are `IGNORE_AS_EVIDENCE`: do not infer, fabricate, backfill, retrieve or use
+them. Their input identities are preserved for later phases and later dates where aligned values
+exist; this is not deletion and not a zero-value judgment. Native raw/derived MBO, the full
+calculation mission and all 44 A_MEMORY seed findings remain in scope. A historical mention of an
+external input in a seed finding is provenance only, not a substitute for missing day-aligned data.
 
-1. **Review Tasks A-I.** The implementer asked for it explicitly and named what must not be weakened.
-   It was deliberately not started at the S123 close - reviewing nine tasks of gate and loop wiring on
-   a spent budget is how a rubber stamp happens, and a rubber stamp immediately before the first real
-   run is the worst possible place for one.
-2. **Then the run.** D89's order (work first) is satisfied the moment the review is.
+The review is complete. It found and closed two required run-boundary gaps:
+
+1. The carry accepted a later roster day while an earlier day's artifact was `MISSING`; it now
+   refuses that order while treating `PRESENT_EMPTY` as a legitimately completed day.
+2. `is_bounded_slice` alone mislabeled a full source day when the workflow supplied that object's
+   exact record count as a bound; the launcher now derives `is_complete_source_day` from the
+   manifest object and the prompt reports complete versus reduced evidence from that field.
+
+No other Critical or Required A–I review finding remains. **The run is next, but it still requires
+Greg's authorization. Nothing was dispatched during the review or these corrections.**
+
+After the final D99 input-isolation correction, the six changed test modules pass all 289 tests.
+Store/generation checks, JSON parsing, `py_compile`, `git diff --check` and the D61 hash gate pass.
+The current scratch runtime lacks pytest and databento, so the earlier complete 2,004-test pytest
+result remains the latest full pass; unittest discovery separately executed 1,988 tests without an
+assertion failure and reported three import errors caused by the absent databento package.
 
 ---
 
-## ITEM ONE - THE REVIEW, AND WHERE TO AIM IT
+## ITEM ONE - REVIEW RECORD
 
-Read `research/kalshi/CLAUDE_S123_A_I_IMPLEMENTATION_HANDOFF_20260903.md` first; it is the
-implementer's own account and it is candid, including about the limits of what it could prove.
+The review read `research/kalshi/CLAUDE_S123_A_I_IMPLEMENTATION_HANDOFF_20260903.md` and checked
+the five named high-risk areas rather than treating the prior green suite as approval.
 
-**Aim at these five, because each is a place where a green test proves less than it appears to.**
+**These six were checked:**
 
-- **The gate can now REFUSE a spawn (Task A).** Confirm it refuses for the right reason on a real
-  result and does not pass for a wrong one. A gate that cannot fail is worse than no gate.
+- **The spawn gate (Task A)** passes the producer-built accounted fixture and preserves every
+  computed offender/status when refusing an unaccounted one. A live result still requires the
+  authorized canary; the review did not fabricate one.
 - **The honest fixture (Task B)** names four layers it cannot account for without a run - the DBN
-  decoding witness, S3 object identity, `PLAIN_SIZES`, `PLAIN_SHA256SUMS`. Confirm they are named
-  rather than filled, and that the gate refuses when one is withheld.
-- **The C/G coupling.** Before G the read gate was checked and found NOT vacuous. Re-derive that
-  yourself rather than accepting it: a knowledge gate that passes over a prompt lacking its own
-  subject is a false green on the gate we just wired.
+  decoding witness, S3 object identity, `PLAIN_SIZES`, `PLAIN_SHA256SUMS`. They remain named rather
+  than fabricated, and withholding the computed knowledge receipt refuses the gate.
+- **The C/G coupling** passes only when the renderer receives the exact already-gated receipt
+  object; absent knowledge still refuses, and the rendered block is present byte-for-byte.
 - **The D60 prompt-size watch.** G grew the earlier honest fixture prompt from 13,092 to 15,999
   bytes (+2,907, 22.2%). After adding the 44 findings, the regenerated build-time knowledge block
-  alone is 128,418 bytes. Neither number is an actual emitted prompt from a live run. Record the
+  alone is 128,418 bytes. Neither number is an actual emitted prompt from a live run. The review
+  preserved the watch; record the
   first run's actual emitted prompt bytes and report growth without dropping lawful knowledge or
   findings to make the number smaller.
-- **The memory loop's refusals (Task I).** An id reused with changed content must be refused; a veto
-  for an unknown id must be refused; a vetoed finding must survive a rebuild still present and
-  unserved. **Test the rebuild-resurrection case specifically** - it is the one that quietly undoes
-  the veto.
-- **`PRESENT_EMPTY` vs `MISSING`.** Confirm by execution that a day which ran and found nothing is
-  distinguishable from a day that never wrote an artifact. This is the S119 defect class and it is
-  the reason the distinction exists.
+- **The memory loop's refusals (Task I)** reject a changed-content reused id and an unknown veto;
+  a vetoed finding survives repeated rebuilds present and unserved. The review added the missing
+  causal-order refusal for a later day arriving before an earlier-day artifact.
+- **`PRESENT_EMPTY` vs `MISSING`** is proved by execution: an empty first-day artifact satisfies
+  the new order gate and remains distinct from a day that never wrote an artifact.
 
 ---
 
@@ -84,9 +109,11 @@ implementer's own account and it is candid, including about the limits of what i
    canary would have died there before S123.
 2. **Read the canary's own artifact**, not the summary: verdict, failed gates, sections fed, and
    whether member rows carry `raw_actions` and every lifecycle row `emitted_at_recv_ns`.
-3. **Full roster, Sunday only**, `mode=full`, on the box over SSM; watch with
+3. **Complete October 1 source day only**, `mode=full`, explicitly setting `traverse_sources` to
+   `glbx-mdp3-20211001.mbo.dbn.zst`, on the box over SSM; watch with
    `frankie_box_monitor_20260829.yml`. **Starting the box is a spend and it is Greg's call.** The
-   ledger will be BIGGER than 10.6 GB now that raw actions are carried.
+   ledger will be BIGGER than 10.6 GB now that raw actions are carried. This is the first of four
+   sequential daily runs, not a one-day subset of one combined four-day execution.
 4. **Deliver it**: re-dispatch `frankie_ledger_delivery_20260902.yml` pinned to the NEW run id, then
    `fetch_frankie_ledgers fetch` into gitignored `data/`. Delete the plain and gzipped ledgers once
    the measurements are taken and say how many bytes were freed.
@@ -99,6 +126,10 @@ implementer's own account and it is candid, including about the limits of what i
 6. **The crosswalk on the new result, with receipts, gate enforced.** Sunday read **75 of 75
    applicable inputs NOT DELIVERED** before any of this. Whatever it reads now is the headline, good
    or bad. **Report it either way** - a worse number honestly measured is the point of the exercise.
+7. **Freeze and promote October 1 before starting the next roster day.** Then repeat the same
+   complete one-day process for October 3, October 4 and October 5, in that order.
+   Keep the initial four-day non-MBO context isolation active on every one of those runs; fill those
+   preserved inputs only on later source days for which reliable aligned values are available.
 
 ---
 

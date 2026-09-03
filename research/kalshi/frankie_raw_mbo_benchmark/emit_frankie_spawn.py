@@ -260,6 +260,12 @@ def emit(
             "the run staged no invocation cutoffs; there is no lawful decision point to "
             "spawn against, which is a cadence defect and not an empty day"
         )
+    days = sorted({str(cut["source_day"]) for cut in cutoffs})
+    if len(days) != 1:
+        raise EmitError(
+            "each Frankie run must cover exactly one source day; the four-day roster is "
+            "four sequential daily runs with frozen A_MEMORY carried into the next day"
+        )
     sections_fed = _lookup(traversal, "sections_fed")
     # BY LOOKUP, like every other slot. Absent, the evidence block says the run's own
     # retention receipts are unstated rather than silently rendering an empty list, because
@@ -305,6 +311,21 @@ def emit(
     add("what the market is doing and what the evidence rules out, not merely to fill ledgers.")
     add("")
     add(knowledge_block)
+    add("")
+    add("## INITIAL FOUR-DAY INPUT ISOLATION")
+    add("")
+    add("Reliable day-aligned October 2021 values are not currently available for these")
+    add("contemporaneous non-MBO context families: weather, storage, COT/positioning, pipeline/LNG,")
+    add("production/demand, grid/nuclear/solar, STEO, options, cash basis, macro, and equivalent")
+    add("fundamental or external feeds. For these initial four one-day runs, classify those inputs")
+    add("as `IGNORE_AS_EVIDENCE`: do not infer, fabricate, backfill, retrieve, or use them in a")
+    add("calculation, finding, causal explanation, hypothesis, falsifier, or elimination recommendation.")
+    add("Their input identities are preserved for later phases and later source days where reliable")
+    add("aligned values are available; this is temporary isolation, not deletion and not a zero-value")
+    add("judgment. Native raw MBO, lawful raw/derived MBO transformations, the binding mission and")
+    add("calculation contract, and the 44 A_MEMORY seed findings remain in scope. Historical mentions")
+    add("of an external input within those findings are provenance, not permission to substitute")
+    add("contemporaneous external data that is unavailable for these dates.")
     add("")
     add("## The evidence")
     add("")
@@ -427,8 +448,10 @@ def emit(
     add("**Zero value is the bar.** Low value, infrequent value or poor value per byte does not")
     add("qualify. If it has even a little credible present or future informational value, KEEP")
     add("it. Size matters only after zero value is established; it never makes useful data expendable.")
-    add("That applies explicitly to `book_full` and FIFO identities/queues: their size is not")
-    add("evidence that they are expendable.")
+    add("That applies explicitly to `book_full` and FIFO identities/queues, to the whole surface and every constituent part:")
+    add("each field, depth level, order identity, queue, queue-position fact and derived component.")
+    add("No surface or constituent part may be recommended unless it independently meets the")
+    add("same zero-value bar. Their size is not evidence that they are expendable.")
     add("For any elimination recommendation, quantify the practical case as far as the run")
     add("allows: retained bytes per record and per day, downstream duplicate/derived storage,")
     add("avoidable ingestion or calculation work, and every dependent calculation or future")
@@ -639,19 +662,21 @@ def emit(
     add("Scope every finding to this span and these phases.")
     add("")
 
-    days = sorted({str(cut["source_day"]) for cut in cutoffs})
-    if len(days) == 1:
-        # THE SLICE STATED TO THE PRINCIPAL, not left for him to infer from the cutoff table.
-        # The mission is written for October 1, 3, 4 and 5; this run traversed one of them.
-        # Anything needing a cross-day comparison is UNANSWERABLE here rather than absent,
-        # and those are different facts - the mission's own "censored is not negative" rule
-        # applied to the shape of the run instead of to a stratum.
-        add(f"**This run is ONE DAY: {days[0]}.** The mission is written across October 1, 3,")
-        add("4 and 5, and every question in it applies here - but any of them needing a")
-        add("cross-day comparison can only be answered WITHIN this day. Say which those are")
-        add("and mark them unanswerable on this slice. Do not report a single-day reading as")
-        add("if it settled a question the mission asks across days.")
-        add("")
+    # THE SOURCE DAY STATED TO THE PRINCIPAL, not left for him to infer from the cutoff
+    # table. A bounded canary uses fewer than the source object's full MBO, so "one day"
+    # alone would overclaim its coverage. Production is four sequential complete-day runs;
+    # canaries remain honest partial slices of exactly one of those source days.
+    add(f"**This run is ONE SOURCE DAY: {days[0]}.** The mission is executed as four")
+    add("sequential daily runs for October 1, 3, 4 and 5, with each finished day's frozen")
+    add("A_MEMORY carried into the next. Never combine their evidence in one run.")
+    if bool(_lookup(result, "slice.is_complete_source_day")):
+        add("**This is the complete raw-MBO traversal for that one source day.**")
+    else:
+        add("**This is a bounded/reduced-MBO slice, not proof of a complete day.**")
+    add("Any question needing a cross-day comparison can only be answered WITHIN this day.")
+    add("Say which those are and mark them unanswerable on this slice. Do not report a")
+    add("single-day reading as if it settled a question the mission asks across days.")
+    add("")
     add("Three of its rules are the ones most often broken. **Absence is a result** - a")
     add("section that produced nothing on a stratum has told you something; say so rather")
     add("than omitting it. **Censored is not negative** - never-restored, never-recognized")

@@ -1,4 +1,4 @@
-# SESSION HANDOFF 2026-09-03 S123 - THE WIRING IS FINISHED AND THE RUN IS THE ONLY THING LEFT
+# SESSION HANDOFF 2026-09-03 S123 - WIRING AND REVIEW FINISHED; THE RUN IS THE ONLY THING LEFT
 
 > **S124 correction before any run:** Greg ruled that the existing 44 findings are added unchanged
 > to the A_MEMORY seed and served as `VERIFIED`. They keep their original ids, content, dates and
@@ -7,6 +7,24 @@
 > This supersedes section 3's exclusion conclusion and section 5's “not in memory” bullet. The
 > regenerated build-time knowledge block is 128,418 bytes; the prior 15,999-byte figure remains the
 > earlier pre-correction fixture measurement. No workflow or run was dispatched.
+>
+> **Run-unit correction:** the four-day roster means four sequential complete one-day runs
+> (October 1, 3, 4, then 5), with frozen A_MEMORY carry between them. It never means one combined
+> four-day execution. The earlier bounded execution used less than a full day's MBO and is not
+> evidence that a complete daily raw-MBO run finished.
+>
+> **Input-isolation correction:** reliable day-aligned October 2021 weather, storage,
+> COT/positioning, pipeline/LNG, production/demand, grid/nuclear/solar and equivalent non-MBO
+> context are not currently available. They are `IGNORE_AS_EVIDENCE` for these initial four
+> one-day runs—never inferred, fabricated or backfilled—but their identities are preserved for
+> later phases and later dates with aligned data. This is not a zero-value judgment. Native
+> raw/derived MBO, the full calculation mission and all 44 A_MEMORY seed findings remain in scope.
+>
+> **S124 verification:** the later complete pytest pass was 2,004 passed, 14 warnings and 6,389
+> subtests. After D99's final wording, the six changed modules pass 289 tests and every
+> store/generation, JSON, compilation, diff and D61 gate passes. This scratch runtime lacks pytest
+> and databento; unittest discovery separately executed 1,988 tests without assertion failures and
+> reported three imports blocked by the absent databento package.
 
 Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. Opened at `a30c7f4` (1,973 tests), closed at the
 tip carrying this file. **1,997 benchmark tests, and 2,706 across all three trees.** Decisions 88 -> 91.
@@ -22,8 +40,11 @@ wiring.** Tasks A through I are implemented, tested and pushed: the spawn gate c
 `gate_applicable_inputs`, the knowledge read gate is wired, the knowledge block is RENDERED into the
 prompt, the frozen records are stamped, the bounded census says what it scanned, the degenerate seed
 proof is declared, the checkpoint mode token is corrected, and **the day-over-day memory loop is
-built and automatic.** **Nothing was dispatched.** The run is the whole of the next session, and it
-is now blocked by nothing except a review that has not happened.
+built and automatic.** **Nothing was dispatched.** The S124 review is complete and closed two
+required one-day boundary gaps: ordered carry now refuses a later day while an earlier artifact is
+missing, and complete source-day coverage is distinguished from a partial bounded slice using the
+manifest's own per-object count. No other Critical or Required review finding remains. The run is
+blocked only on Greg's authorization.
 
 ---
 
@@ -75,8 +96,8 @@ something feels off then we can take it out."*
 
 **The risk that was designed against rather than discovered:** Greg asked for a convincing argument,
 and if the gate is "convincing" then the optimised thing is RHETORIC. So the carry's case is
-structured evidence, only stream evidence moves a finding UNVERIFIED -> VERIFIED (D86), and an
-unpersuasive argument is not grounds for veto while an unfalsifiable finding is - though
+structured evidence; future admitted findings enter as `NEW`, recording recency rather than doubt,
+and an unpersuasive argument is not grounds for veto while an unfalsifiable finding is - though
 `attach_principal_findings` **already refuses a finding with no falsifier**, so that bar existed and
 was not rebuilt.
 
@@ -93,9 +114,11 @@ worked around:
 2. It routes findings through the admission path. **It did not** - zero references to
    `attach_principal_findings`; it hashed files directly, bypassing the gate. Reporting that bypass
    was an explicit instruction in the packet, and it was found and closed.
-3. The loop would finally read the 44 S119 findings, closing an S120 item. **It does not read them**
-   - their ids are run-local (`F-01`) and they lack the current path's exemplars, so they stay the
-   historical A_CLEAN day-one artifact and S120's finding stays OPEN.
+3. The loop would finally read the 44 S119 findings, closing an S120 item. The original implementation
+   did not: their ids are historical (`F-01` onward) and they lack the future daily path's exemplars.
+   **D92 then corrected the live requirement:** those exact 44 rows are now exposed unchanged in the
+   A_MEMORY seed as `VERIFIED`, retaining their historical A_CLEAN provenance. That is a one-time seed
+   addition, not admission through or weakening of the future daily path.
 
 **Where premise 1 came from is the part worth keeping: the module's own docstring said "Derived,
 never typed. Membership is read off the tree by rule."** The prose asserted a property the code did
@@ -145,14 +168,15 @@ lawful knowledge or findings.
 ## 5. WHAT IS NOT DONE
 
 - **The run.** Nothing blocks it but the review. F-31 stands.
-- **The review of A-I.** The implementer explicitly asked for one and named what must not be
-  weakened. It was not started here, deliberately - reviewing nine tasks on a spent budget is how a
-  rubber stamp happens, and a rubber stamp before the first real run is the worst place for one.
+- **The review of A-I is complete.** It closed the ordered-carry and complete-day identity gaps
+  described in section 0; no other Critical or Required finding remains.
 - **The loop's first link is outside the machine and was declared, not hidden.** Actions cannot make
   an uncommitted external findings artifact appear in the repository. The carry starts when that
   commit ARRIVES, and the loop cannot verify that it ever does. This is the one way the loop
   silently never fires.
-- **The 44 historical findings are not in memory** (section 3), so day-one memory is the seed alone.
+- **The 44 historical findings are in A_MEMORY** through the D92 one-time seed addition, unchanged
+  and served as `VERIFIED`; future daily findings still use the stricter admission path and enter as
+  `NEW`.
 - **The live prompt size is not measured.** G's +22.2% is from the honest fixture; the first run must
   record the emitted prompt's actual bytes. Future served findings are roster-bounded.
 - Task B named four layers it cannot account for without a real run rather than fabricating

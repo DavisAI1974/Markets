@@ -285,6 +285,16 @@ def build_finding_memory(root: Path | str = REPO_ROOT) -> dict[str, Any]:
     }
     artifacts = _finding_artifacts(root)
     for _position, run_id, path, body in artifacts:
+        missing_prior_days = [
+            source_day
+            for source_day in expected_days[:_position]
+            if by_day[source_day]["artifact_status"] == "MISSING"
+        ]
+        if missing_prior_days:
+            raise SeedBuildError(
+                f"A-memory findings for {body['source_day']} arrived before prior roster day(s) "
+                f"{missing_prior_days}; freeze and promote each daily artifact in order"
+            )
         rows = body.get("findings")
         if not isinstance(rows, list):
             raise SeedBuildError(f"{path} findings must be a list")

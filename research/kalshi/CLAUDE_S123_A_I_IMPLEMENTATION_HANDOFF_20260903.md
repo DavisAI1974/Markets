@@ -7,6 +7,24 @@
 > supersedes the exclusion conclusion in “Task I: actual memory-loop contract” and the later
 > UNVERIFIED→VERIFIED sentence. The regenerated build-time knowledge block is 128,418 bytes; the
 > 15,999-byte number below is the earlier pre-correction fixture measurement. Nothing was dispatched.
+>
+> **S124 run-unit correction:** execute the roster as four sequential one-day runs—October 1, 3,
+> 4, then 5—not one four-day run. Each production run consumes one complete source day's raw MBO,
+> freezes and promotes its outputs, then the next day starts with that carry. The earlier bounded
+> execution used less than a full day's MBO and does not prove a complete daily run.
+>
+> **S124 input-isolation correction:** reliable day-aligned October 2021 values are not currently
+> available for weather, storage, COT/positioning, pipeline/LNG, production/demand,
+> grid/nuclear/solar and equivalent non-MBO context. They are `IGNORE_AS_EVIDENCE` for these four
+> one-day runs and must not be inferred, fabricated or backfilled. Their input identities remain
+> preserved for later phases and dates with aligned data; this is not a zero-value judgment.
+> Native raw/derived MBO, the calculation mission and all 44 A_MEMORY seed findings remain in scope.
+>
+> **S124 verification:** the complete pytest pass after the implementation was 2,004 passed,
+> 14 warnings and 6,389 subtests. After D99's final input-isolation correction, all 289 tests in the
+> six changed modules pass, as do the store/generation, JSON, compile, diff and D61 gates. This
+> scratch runtime lacks pytest and databento; separate unittest discovery executed 1,988 tests with
+> no assertion failures and three imports blocked by the missing databento package.
 
 Date: 2026-09-03
 
@@ -27,6 +45,12 @@ packet: the A_MEMORY checkpoint token fix (H), and rendering the exact gated
 knowledge receipt into Frankie's spawn prompt (G). It also implements the
 automatic day-over-day findings memory loop (I). The old four-helper October
 launch was retired, not deleted; do not recreate its helper topology.
+
+The S124 review required by this handoff is complete. It found two interaction defects after the
+one-day run unit was clarified: the carry accepted a later day while an earlier artifact was
+missing, and `is_bounded_slice` could not distinguish a full source day passed with an exact record
+limit from a partial slice. Both are closed by ordered-carry refusal and the manifest-derived
+`is_complete_source_day` result field. No other Critical or Required A–I review finding remains.
 
 ## Tasks A–I
 
@@ -79,17 +103,19 @@ The original premise needed correction before implementation:
   all principal runs by rule.
 - Its direct file scan bypassed `attach_principal_findings`, and it treated whole
   artifacts rather than finding IDs as the carry unit.
-- The historical 44-finding artifact lacks the current admission path's required
-  exemplars and has run-local-looking IDs (`F-01`, etc.). It is preserved as the
-  historical A_CLEAN day-one artifact; it was not silently admitted to the new
-  A_MEMORY loop.
+- The historical 44-finding artifact lacks the future daily admission path's required
+  exemplars and keeps its historical A_CLEAN provenance and original IDs (`F-01`, etc.).
+  Under D92, those 44 rows are nevertheless added unchanged to the A_MEMORY seed as a
+  one-time `VERIFIED` seed addition. That availability does not route the old artifact
+  through, or weaken, the future daily admission gate.
 
 The implemented loop now:
 
 - discovers A_MEMORY findings artifacts under `principal_runs/`;
 - derives allowed source days and the bound from
   `raw_mbo_source_manifest.EXPECTED_ROSTER` rather than typing `4`;
-- excludes the historical A_CLEAN artifact and refuses unknown arms/days;
+- discovers future daily carry only from A_MEMORY artifacts and refuses unknown arms/days,
+  while the separate D92 seed rule exposes the 44 historical A_CLEAN findings unchanged;
 - sends every candidate through the shared
   `NativeCalculationRun.admit_principal_findings` admission path;
 - requires stable persistent finding IDs and current exemplars/falsifier/
@@ -107,10 +133,10 @@ The implemented loop now:
 - avoids a retrigger loop because promotion outputs are not workflow trigger paths;
 - adds a `Day-over-day memory carry` section to the existing post-run report.
 
-Only stream evidence may move a finding from `UNVERIFIED` to `VERIFIED`; prose
-quality cannot. No finding is required on a day, so the design creates no pressure
-to invent one. Empty findings JSON files do not fill memory; they remain only as
-honest run receipts.
+Future admitted findings enter as `NEW`; NEW records when they entered memory, not uncertainty
+about whether they truthfully represent their source run. No finding is required on a day, so the
+design creates no pressure to invent one. Empty findings JSON files do not fill memory; they remain
+only as honest run receipts.
 
 External first-link limitation to report, not conceal: GitHub Actions cannot make
 an uncommitted ChatGPT Work artifact appear in the repository. The principal's
@@ -119,13 +145,13 @@ link; the automatic carry starts when that commit arrives. The loop cannot verif
 that external commit action itself. No live A_MEMORY findings were ingested in
 this work, so there was no evidence-based finding to veto and none was guessed.
 
-## H and the run that did not happen
+## H and the complete daily run that did not happen
 
-The bounded local reproduction proved that the previously proposed canary would
+The bounded local reproduction—using less than a full source day's MBO—proved that the previously proposed canary would
 have failed at checkpoint on H had it been dispatched. Correcting the writer made
 the same bounded path reach checkpoint, while an unknown mode still refuses by
-name. A sweep of other launcher checkpoint tokens found no additional contract
-mismatch. No actual canary or workflow was launched.
+name. It did not prove a complete daily raw-MBO traversal. A sweep of other launcher checkpoint
+tokens found no additional contract mismatch. No actual canary or workflow was launched.
 
 ## Retired four-helper launch and seven old failure classes
 

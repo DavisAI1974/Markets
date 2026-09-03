@@ -169,6 +169,42 @@ class LaunchSliceTest(unittest.TestCase):
 
     GROUPS = 40
 
+    def test_complete_source_day_is_derived_from_the_manifest_object_count(self):
+        manifest = {
+            "sources": [{"name": "20211001.mbo.dbn.zst", "mbo_records": 100}],
+        }
+        source = [Path("/data/20211001.mbo.dbn.zst")]
+        self.assertTrue(launcher.is_complete_source_day(
+            sources=source,
+            source_manifest=manifest,
+            records_supplied=False,
+            records_requested=100,
+        ))
+        self.assertFalse(launcher.is_complete_source_day(
+            sources=source,
+            source_manifest=manifest,
+            records_supplied=False,
+            records_requested=99,
+        ))
+        self.assertFalse(launcher.is_complete_source_day(
+            sources=source,
+            source_manifest=manifest,
+            records_supplied=True,
+            records_requested=100,
+        ))
+
+    def test_a_memory_native_launch_refuses_more_than_one_source_day(self):
+        """The four-day roster is four sequential runs, never one multi-day execution."""
+        with self.assertRaisesRegex(launcher.LaunchError, "exactly one source object per run"):
+            launcher.launch(
+                arm="A_MEMORY",
+                run_id="multi-day-refused",
+                sources=[Path("20211001.mbo.dbn.zst"), Path("20211003.mbo.dbn.zst")],
+                source_manifest={},
+                out_dir=Path("unused"),
+                code_commit="cafebabe",
+            )
+
     def _launch(self, out_dir: Path, **kwargs):
         manifest = {"manifest_hash": "e" * 64, "total_mbo_records": 5_667_689}
         params = dict(

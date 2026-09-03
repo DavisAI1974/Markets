@@ -369,6 +369,28 @@ def _symbol(symbols: Any, instrument_id: Any, ts_recv: Any) -> str | None:
 # --------------------------------------------------------------------------------------
 # The launch
 # --------------------------------------------------------------------------------------
+def is_complete_source_day(
+    *,
+    sources: Sequence[Path],
+    source_manifest: Mapping[str, Any],
+    records_supplied: bool,
+    records_requested: int | None,
+) -> bool:
+    """Whether the native traversal covers its one manifest source object through EOF."""
+    if records_supplied or len(sources) != 1:
+        return False
+    rows = source_manifest.get("sources")
+    if not isinstance(rows, list):
+        raise LaunchError("source manifest carries no source roster for daily coverage")
+    name = Path(sources[0]).name
+    matches = [row for row in rows if isinstance(row, Mapping) and row.get("name") == name]
+    if len(matches) != 1:
+        raise LaunchError(f"native source {name!r} does not identify exactly one manifest roster day")
+    if records_requested is None:
+        return True
+    return int(records_requested) == int(matches[0]["mbo_records"])
+
+
 def launch(
     *,
     arm: str,
@@ -396,6 +418,16 @@ def launch(
     `native_records` itself, the DBN decode. That is covered by the workflow's bounded slice
     and by nothing here, and it is stated rather than papered over.
     """
+    # A_MEMORY learns across the roster by freezing one day before the next begins. Feeding
+    # two source objects to one native execution would erase that boundary and let later-day
+    # evidence coexist with an A_MEMORY state that had never been frozen after the earlier
+    # day. Tests may still supply an in-memory iterable without a DBN path; every real native
+    # launch must name exactly one manifest-roster object.
+    if arm == "A_MEMORY" and records is None and len(sources) != 1:
+        raise LaunchError(
+            "A_MEMORY native execution requires exactly one source object per run; run the "
+            "four manifest-roster days sequentially and carry frozen memory between them"
+        )
     gates = run_pre_traversal_gates(arm=arm, run_id=run_id, repo_root=repo_root)
 
     knowledge = json.loads((repo_root / KNOWLEDGE_MANIFEST_PATH).read_text(encoding="utf-8"))
@@ -417,6 +449,12 @@ def launch(
         stream = list(stream)
         total_records = len(stream)
         limit_records = len(stream)
+    complete_source_day = is_complete_source_day(
+        sources=sources,
+        source_manifest=source_manifest,
+        records_supplied=records is not None,
+        records_requested=limit_records,
+    )
     identity = RunIdentity(
         run_id=run_id,
         arm=arm,
@@ -556,6 +594,7 @@ def launch(
         "records_requested": limit_records,
         "roster_total_mbo_records": total_records,
         "is_bounded_slice": limit_records is not None,
+        "is_complete_source_day": complete_source_day,
         "sources": [str(path) for path in sources],
     }
     # THE RESULT HASHES TO ITSELF AS WRITTEN (F-feed-6, found by the feeding persona on the

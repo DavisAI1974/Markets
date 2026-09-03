@@ -1,5 +1,9 @@
 # CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-03, Session 124)
 
+**NEXT ACTION:** Greg has authorized Claude to run Frankie. Follow
+`research/kalshi/DROP_IN_CLAUDE_RUN_FRANKIE_20260903.md` exactly; it is the current operational
+handoff and preserves the four sequential one-day boundary. No run was dispatched while creating it.
+
 ## S124 CORRECTION — THE 44 ESTABLISHED FINDINGS ARE A_MEMORY
 
 Greg corrected the S123 closeout before the next run: the 44 findings in
@@ -33,7 +37,30 @@ exhaustion—not a set of math exercises or ledgers to fill mechanically.
 evaluates whether any raw-data layer or field group contributes no useful information to ongoing
 ingestion. If the evidence supports one, he recommends it for elimination and Greg decides; Frankie
 never removes it himself. He is under no obligation to identify one, and `KEEP EVERYTHING` remains a
-fully valid answer.
+fully valid answer. **Zero value is the only elimination bar; even slight credible present or future
+value means KEEP.** That rule applies independently to full book, FIFO and every constituent field,
+depth, order identity, queue, queue-position fact and derived component. The current review covers
+all 47 raw/non-geometry plus 8 derived-geometry causal identities, and grows with the registry.
+
+**FOUR SOURCE DAYS MEAN FOUR SEQUENTIAL ONE-DAY RUNS:** October 1, 3, 4, then 5. Each production
+run consumes exactly one complete source object, freezes and promotes its findings into A_MEMORY,
+then stops before the next day starts. A bounded canary is reduced-MBO slice evidence, not proof of
+a complete day; the launcher and emitter refuse multi-source execution and the carry refuses a
+later day while an earlier artifact is missing.
+
+**INITIAL FOUR-DAY INPUT ISOLATION:** reliable day-aligned October 2021 weather, storage,
+COT/positioning, pipeline/LNG, production/demand, grid/nuclear/solar and equivalent non-MBO context
+are not currently available. They are `IGNORE_AS_EVIDENCE` for these four one-day runs and must not
+be inferred, fabricated or backfilled. Their identities remain preserved for later phases and later
+dates with aligned data; this is not deletion or a zero-value finding. Native raw/derived MBO, the
+calculation mission and all 44 A_MEMORY seed findings remain in scope.
+
+**S124 VERIFICATION:** the earlier complete pytest pass after the S124 implementation was 2,004
+passed, 14 warnings and 6,389 subtests. After the final input-isolation correction, all 289 tests in
+the six changed modules pass, and every store/generation, JSON, compilation, diff and D61 gate is
+green. This scratch runtime has neither pytest nor databento, so a new full pytest pass was not
+fabricated; a prior unittest discovery reached 1,988 executed tests with no assertion failures and
+three collection imports blocked only by the missing databento package. Nothing was dispatched.
 
 ## S123 — THE WIRING IS FINISHED AND THE RUN IS THE ONLY THING LEFT (read `SESSION_HANDOFF_2026-09-03_S123.md` section 0 + `DROP_IN_S124.md`)
 
