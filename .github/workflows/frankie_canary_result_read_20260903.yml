@@ -108,8 +108,13 @@ jobs:
           print(json.dumps(fed, indent=2, sort_keys=True))
           if isinstance(fed, dict):
               print(f"section count: {len(fed)}")
-              not_fed = sorted(k for k, v in fed.items() if not v)
-              print(f"NOT fed: {not_fed or 'none'}")
+              # These are COUNTS, not booleans. `candidates_without_stratum: 0` is the healthy
+              # reading of a defect metric, so calling a zero "NOT fed" reads a good result as
+              # a missing one. Only a null is absent; a zero is a measurement.
+              absent = sorted(k for k, v in fed.items() if v is None)
+              zeroed = sorted(k for k, v in fed.items() if v == 0)
+              print(f"absent (null): {absent or 'none'}")
+              print(f"zero-valued (a measurement, not an absence): {zeroed or 'none'}")
 
           print("")
           print("== every other top-level key ==")
@@ -121,6 +126,44 @@ jobs:
               print(f"{key}: {rendered if len(rendered) <= 400 else rendered[:400] + ' ...[truncated]'}")
           PY
 
+      - name: Stream receipt and crosswalk, where the withheld counters live
+        shell: bash
+        run: |
+          set -euo pipefail
+          # F-20 asks for `withheld_no_own_clock` and `withheld_close_occasion`. They are NOT
+          # row fields: native_causal_stream.receipt() carries them, stream_receipt() closes
+          # over it, and the crosswalk consumes that. So they are read here, not off a row.
+          work="$RUNNER_TEMP/receipts"
+          install -d -m 0700 "$work"
+          mapfile -t keys < <(aws s3 ls "s3://${BUCKET}/${DURABLE_PREFIX}/" --recursive \
+            --endpoint-url "$S3_ENDPOINT_URL" | awk '{print $4}' \
+            | grep -E '(receipt|crosswalk|manifest|spawn)[^/]*\.json$' || true)
+          if [ "${#keys[@]}" -eq 0 ]; then
+            echo "no receipt/crosswalk json under this prefix"
+            exit 0
+          fi
+          for key in "${keys[@]}"; do
+            name="$(basename "$key")"
+            aws s3 cp "s3://${BUCKET}/${key}" "$work/$name" \
+              --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors || continue
+            printf '\n== %s ==\n' "$key"
+            DOC="$work/$name" python3 - <<'PY'
+          import json
+          import os
+
+          body = json.load(open(os.environ["DOC"]))
+          if not isinstance(body, dict):
+              print(f"top-level {type(body).__name__}, length {len(body)}")
+              raise SystemExit(0)
+          for field in ("withheld_no_own_clock", "withheld_close_occasion",
+                        "complete", "groups_delivered", "rows_delivered",
+                        "applicable_inputs", "inputs_not_delivered", "schema"):
+              if field in body:
+                  print(f"  {field}: {json.dumps(body[field])[:600]}")
+          print(f"  keys: {sorted(body)[:60]}")
+          PY
+          done
+
       - name: First row of each exact ledger, by byte range
         shell: bash
         run: |
@@ -130,7 +173,7 @@ jobs:
 
           # F-30 and F-20 are answered on the ROWS, not in the result summary: member rows must
           # carry `raw_actions`, and every lifecycle row must carry `emitted_at_recv_ns`. A range
-          # GET of the first 256 KiB is enough to read row one and costs nothing.
+          # GET of the first 16 MiB is enough to read row one and costs nothing.
           mapfile -t keys < <(aws s3 ls "s3://${BUCKET}/${DURABLE_PREFIX}/" --recursive \
             --endpoint-url "$S3_ENDPOINT_URL" | awk '{print $4}' | grep -E '\.jsonl(\.gz)?$' || true)
 
@@ -142,7 +185,7 @@ jobs:
           for key in "${keys[@]}"; do
             name="$(basename "$key")"
             aws s3api get-object --bucket "$BUCKET" --key "$key" \
-              --range "bytes=0-262143" --endpoint-url "$S3_ENDPOINT_URL" \
+              --range "bytes=0-16777215" --endpoint-url "$S3_ENDPOINT_URL" \
               "$work/$name" >/dev/null 2>&1 || { echo "RANGE GET FAILED $name"; continue; }
             printf '\n== %s ==\n' "$key"
             LEDGER="$work/$name" python3 - <<'PY'
@@ -162,7 +205,7 @@ jobs:
           try:
               row = json.loads(line)
           except Exception as exc:
-              print(f"first row did not parse from the first 256 KiB: {exc}")
+              print(f"first row did not parse from the first 16 MiB: {exc}")
               raise SystemExit(0)
           keys = sorted(row)
           print(f"row keys ({len(keys)}): {keys}")
