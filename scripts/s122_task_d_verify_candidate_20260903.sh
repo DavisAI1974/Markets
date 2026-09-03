@@ -5,9 +5,11 @@ CANDIDATE='chatgpt/s122-item4-task-d-candidate-20260903'
 BASE='e4d576f25bee8850a0bafa48d573927b938adda4'
 TEST='research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_layer_crosswalk_s122_item4_d.py'
 PATCH='scripts/s122_patch_task_d_20260903.py'
+STALE_PATCH='scripts/s122_patch_task_d_stale_tests_20260903.py'
 
 cp "$TEST" /home/runner/task_d_test.py
 cp "$PATCH" /home/runner/task_d_patch.py
+cp "$STALE_PATCH" /home/runner/task_d_stale_patch.py
 python3 -m pip install --quiet pytest databento matplotlib scipy scikit-learn
 
 git fetch origin "$TARGET" "$CANDIDATE"
@@ -16,8 +18,10 @@ test "$(git rev-parse origin/$CANDIDATE)" = "$BASE" || { echo 'STOP: candidate b
 git switch -C s122-task-d "origin/$TARGET"
 cp /home/runner/task_d_test.py "$TEST"
 cp /home/runner/task_d_patch.py data_s122_task_d_patch.py
+cp /home/runner/task_d_stale_patch.py data_s122_task_d_stale_patch.py
 python3 data_s122_task_d_patch.py
-rm data_s122_task_d_patch.py
+python3 data_s122_task_d_stale_patch.py
+rm data_s122_task_d_patch.py data_s122_task_d_stale_patch.py
 
 python3 -m py_compile \
   research/kalshi/frankie_raw_mbo_benchmark/native_layer_crosswalk.py \
