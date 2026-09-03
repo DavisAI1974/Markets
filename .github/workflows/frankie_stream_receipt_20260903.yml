@@ -1,0 +1,164 @@
+name: Frankie stream receipt 20260903
+
+# F-20 ASKS A QUESTION NOTHING WAS ANSWERING.
+#
+# The falsifier is that `withheld_no_own_clock` and `withheld_close_occasion` read ZERO,
+# against 43,569 and 65,960 before - 29.0% of 377,454 lifecycle rows that could not ride
+# inside any group. Those counters are built by `native_causal_stream.CausalGroupStream`
+# and exposed through `stream_receipt()`.
+#
+# The launcher never builds a causal stream at all: its `stream` is the raw record iterator.
+# The crosswalk builds one, but the crosswalk is a separate CLI that nothing in the launch
+# path calls, and it takes `--stream-receipt` as an INPUT rather than producing one. So the
+# receipt has never existed for any real run, and F-20 has been unanswerable for three
+# sessions - not because runs failed, but because nothing wrote the object that answers it.
+#
+# `native_causal_stream` already HAS the CLI that produces it. This runs it against a
+# finished run's ledgers and persists the receipt beside them.
+#
+# It is a SECOND PASS over everything the run wrote, which is exactly why it is not folded
+# into the launcher: that would add a full re-stream to every production day on the box.
+# Here it costs runner minutes and nothing else.
+
+on:
+  workflow_dispatch:
+    inputs:
+      durable_prefix:
+        description: >-
+          The run's durable S3 prefix, without the bucket.
+        type: string
+        default: nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/7d0068d8ae720772415bf84c8c0689e84408d642/33745123325-1
+      subdir:
+        description: >-
+          Subdirectory holding `ledgers/`. The canary writes to `canary/`; a box run writes
+          at the prefix root, so pass an empty string for one of those.
+        type: string
+        default: canary
+      run_id:
+        description: The run id to stamp on the receipt.
+        type: string
+        default: frankie-a-memory-rt-33745123325-1
+      arm:
+        type: choice
+        default: A_MEMORY
+        options:
+          - A_MEMORY
+          - A_CLEAN
+      persist:
+        description: >-
+          Upload the receipt back beside the run's ledgers. It is ADDITIVE - a new object,
+          nothing overwritten - but it does write, so it is a deliberate choice.
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frankie-stream-receipt-20260903
+  cancel-in-progress: false
+
+env:
+  AWS_DEFAULT_REGION: us-east-2
+  AWS_REGION: us-east-2
+  S3_ENDPOINT_URL: https://s3.us-east-2.amazonaws.com
+  BUCKET: bento-568968024170-us-east-2-an
+  DURABLE_PREFIX: ${{ inputs.durable_prefix }}
+  SUBDIR: ${{ inputs.subdir }}
+  RUN_ID: ${{ inputs.run_id }}
+  ARM: ${{ inputs.arm }}
+  PERSIST: ${{ inputs.persist }}
+
+jobs:
+  receipt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Fetch the run's three exact ledgers
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/stream-receipt"
+          install -d -m 0700 "$work/ledgers"
+          base="${DURABLE_PREFIX}"
+          if [ -n "$SUBDIR" ]; then base="${base}/${SUBDIR}"; fi
+
+          df -h / | tail -1
+          aws s3 cp "s3://${BUCKET}/${base}/ledgers/" "$work/ledgers/" --recursive \
+            --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
+          ls -l "$work/ledgers"
+          echo "STREAM_WORK=$work" >> "$GITHUB_ENV"
+
+      - name: Build the stream receipt and read F-20 off it
+        shell: bash
+        run: |
+          set -euo pipefail
+          led="$STREAM_WORK/ledgers"
+          # The CLI refuses rather than guessing, so a missing ledger is named here first.
+          test -s "$led/exact_member_rows.jsonl"
+          test -s "$led/exact_lifecycle_rows.jsonl"
+          test -s "$led/legacy_observable_rows.jsonl"
+
+          python3 -m research.kalshi.frankie_raw_mbo_benchmark.native_causal_stream \
+            --member-ledger "$led/exact_member_rows.jsonl" \
+            --lifecycle-ledger "$led/exact_lifecycle_rows.jsonl" \
+            --legacy-ledger "$led/legacy_observable_rows.jsonl" \
+            --run-id "$RUN_ID" --arm "$ARM" \
+            --progress-every 5000 \
+            --receipt "$STREAM_WORK/stream_receipt.json" > "$STREAM_WORK/summary.json"
+
+          RECEIPT="$STREAM_WORK/stream_receipt.json" python3 - <<'PY'
+          import json
+          import os
+
+          body = json.load(open(os.environ["RECEIPT"]))
+          no_clock = body.get("withheld_no_own_clock", {})
+          close_occ = body.get("withheld_close_occasion", {})
+          total_no_clock = sum(no_clock.values()) if isinstance(no_clock, dict) else no_clock
+          total_close = sum(close_occ.values()) if isinstance(close_occ, dict) else close_occ
+
+          print("== F-20 ==")
+          print(f"withheld_no_own_clock   total: {total_no_clock}   by section: {json.dumps(no_clock, sort_keys=True)}")
+          print(f"withheld_close_occasion total: {total_close}   by key: {json.dumps(close_occ, sort_keys=True)}")
+          print("")
+          verdict = "PASS" if (total_no_clock == 0 and total_close == 0) else "FAIL"
+          print(f"F-20 (both read zero): {verdict}")
+          print("  before this wiring: withheld_no_own_clock 43,569 and withheld_close_occasion 65,960")
+          print("")
+          print("== stream ==")
+          for field in ("schema", "complete", "groups_delivered", "bytes_delivered",
+                        "sha256_delivered", "registry_sha256", "causal_clock",
+                        "run_id", "arm", "receipt_sha256"):
+              if field in body:
+                  print(f"{field}: {json.dumps(body[field])}")
+          for name in ("member_ledger", "lifecycle_ledger", "legacy_ledger"):
+              if name in body:
+                  row = dict(body[name])
+                  row.pop("path", None)
+                  print(f"{name}: {json.dumps(row, sort_keys=True)}")
+          print("")
+          print(f"other keys: {sorted(set(body) - {'cutoffs'})}")
+          PY
+
+      - name: Persist the receipt beside the run
+        if: ${{ inputs.persist }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="${DURABLE_PREFIX}"
+          if [ -n "$SUBDIR" ]; then base="${base}/${SUBDIR}"; fi
+          # Additive: a new object next to the ledgers it was computed from. Nothing the run
+          # wrote is overwritten, so the frozen result stays exactly as the run left it.
+          aws s3 cp "$STREAM_WORK/stream_receipt.json" \
+            "s3://${BUCKET}/${base}/stream_receipt.json" \
+            --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
+          echo "persisted s3://${BUCKET}/${base}/stream_receipt.json"
