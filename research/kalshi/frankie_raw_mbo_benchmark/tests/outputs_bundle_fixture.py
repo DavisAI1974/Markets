@@ -1,10 +1,11 @@
 """A lawful output bundle with a configurable identity, for the staging and read-back tests.
 
-`test_native_principal_outputs.complete_bundle` fixes the arm (A_CLEAN), the run id and the
-receipt hashes it binds to. The staging gate has to be exercised on the arm every spawn now
-targets (A_MEMORY, D86) and bound to the delivery and knowledge receipts a specific artifact
-cites, so this builds the same lawful two-cutoff bundle over the same REAL member frames and
-parameterises only the identity. Every per-ledger body comes from the outputs persona's own
+`test_native_principal_outputs.complete_bundle` fixes the run id and the receipt hashes it
+binds to. The staging gate has to be bound to the delivery and knowledge receipts a specific
+artifact cites, so this builds the same lawful two-cutoff bundle over the same REAL member
+frames and parameterises only the identity. The arm defaults to the one arm that runs
+(`CANONICAL_ARM`, A_MEMORY, D86); A_CLEAN is passed explicitly by the single test that proves
+a bundle for another arm is refused. Every per-ledger body comes from the outputs persona's own
 builders, imported and not restated: the ledger shapes are theirs to define.
 """
 from __future__ import annotations
@@ -20,13 +21,22 @@ def build_bundle(
     *,
     delivery_receipt_sha256: str,
     knowledge_receipt_sha256: str,
-    arm: str = "A_MEMORY",
+    arm: str = outputs.CANONICAL_ARM,
     role: str = "REAL_TIME_FRANKIE",
     run_id: str = "run-readback-0001",
     registry: dict[str, Any] | None = None,
     contract_text: str | None = None,
+    first_lock: bool = True,
+    trailing_no_lock: bool = False,
 ) -> outputs.OutputBundle:
-    """Every required ledger, two cutoffs, bound to the receipts given."""
+    """Every required ledger, two cutoffs, bound to the receipts given.
+
+    `first_lock=False` builds a lawful bundle whose lock ledger holds NO_LOCK entries only
+    (the principal called no first lock all day); `trailing_no_lock=True` appends a NO_LOCK
+    for a second candidate AFTER the FIRST_LOCK, so the ledger head is not the first lock.
+    Both exist so the handoff can be proven to select the first lock rather than the head,
+    and to say "none" rather than fabricate one.
+    """
     registry = registry or fx.registry_today()
     contract_text = contract_text or fx.contract_today()
     frames = fx.real_frames()
@@ -79,7 +89,8 @@ def build_bundle(
     locked = probability.append(
         c2,
         fx.probability_body(
-            snapshot_id="snap-1", evaluation=fx.reading(c2), lock_state="FIRST_LOCK",
+            snapshot_id="snap-1", evaluation=fx.reading(c2),
+            lock_state="FIRST_LOCK" if first_lock else "NO_LOCK",
             probabilities={"PERSIST": 0.7, "COLLAPSE": 0.3},
         ),
     )
@@ -92,11 +103,16 @@ def build_bundle(
     )
     locks = bundle.ledger("output_first_locks_and_no_locks")
     locks.append(c1, fx.lock_body())
-    first_lock = fx.lock_body(
-        lock_state="FIRST_LOCK", probability_entry_hash=locked["entry_hash"], lock_at=fx.reading(c2)
-    )
-    first_lock.pop("reason")
-    locks.append(c2, first_lock)
+    if first_lock:
+        lock = fx.lock_body(
+            lock_state="FIRST_LOCK", probability_entry_hash=locked["entry_hash"], lock_at=fx.reading(c2)
+        )
+        lock.pop("reason")
+        locks.append(c2, lock)
+    else:
+        locks.append(c2, fx.lock_body(reason="persistence 0.7 does not clear the r1 bar at the second cutoff"))
+    if trailing_no_lock:
+        locks.append(c2, fx.lock_body(candidate_id="cand-0002", reason="a second candidate the r1 bar does not clear"))
 
     bundle.ledger("output_negative_sparse_inconclusive_ledger").append(c2, fx.negative_body())
     bundle.ledger(

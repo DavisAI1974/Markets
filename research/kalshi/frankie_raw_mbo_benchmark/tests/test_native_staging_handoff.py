@@ -131,6 +131,43 @@ class HandoffFromBundleTest(unittest.TestCase):
         self.assertEqual(again, self.objects)
 
 
+class FirstLockSelectionTest(unittest.TestCase):
+    """S122 slice 6: `RT_FIRST_LOCK.first_lock` is the first FIRST_LOCK entry of the lock
+    ledger - not the ledger head, which may be a later NO_LOCK - and null, stated, when the
+    ledger carries no FIRST_LOCK at all. A NO_LOCK presented as the first lock is fabricated."""
+
+    def _objects(self, **bundle_kwargs):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        root = Path(tmp.name) / "outputs"
+        write_bundle(
+            build_bundle(delivery_receipt_sha256=DELIVERY, knowledge_receipt_sha256=KNOWLEDGE, **bundle_kwargs),
+            root,
+        )
+        return outputs.load_bundle(root), build_handoff(
+            root, artifact_sha256=ARTIFACT_SHA, source_manifest_hash=SOURCE_MANIFEST,
+            knowledge_receipt_sha256=KNOWLEDGE, delivery_receipt_sha256=DELIVERY,
+        )
+
+    def test_the_first_lock_is_the_first_lock_entry_not_the_ledger_head(self):
+        bundle, objects = self._objects(trailing_no_lock=True)
+        entries = bundle["ledgers"]["output_first_locks_and_no_locks"]["entries"]
+        self.assertEqual(entries[-1]["body"]["lock_state"], "NO_LOCK", "the fixture's head is a NO_LOCK")
+        first = [e for e in entries if e["body"]["lock_state"] == "FIRST_LOCK"][0]
+        lock = objects["RT_FIRST_LOCK"]
+        self.assertEqual(lock["first_lock"], first)
+        self.assertNotEqual(lock["first_lock"], entries[-1])
+
+    def test_a_ledger_with_no_first_lock_yields_null_not_a_no_lock_dressed_as_one(self):
+        bundle, objects = self._objects(first_lock=False)
+        states = {e["body"]["lock_state"] for e in bundle["ledgers"]["output_first_locks_and_no_locks"]["entries"]}
+        self.assertNotIn("FIRST_LOCK", states)
+        lock = objects["RT_FIRST_LOCK"]
+        self.assertIsNone(lock["first_lock"])
+        self.assertEqual(set(lock), set(committed("RT_FIRST_LOCK")), "the key set is still the committed one")
+        workmode.verify_self_hash(lock)
+
+
 class HandoffRefusalTest(unittest.TestCase):
     def test_a_forecaster_bundle_has_nothing_to_hand_off(self):
         with tempfile.TemporaryDirectory() as tmp:

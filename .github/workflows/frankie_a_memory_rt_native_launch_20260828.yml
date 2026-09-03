@@ -27,6 +27,38 @@ on:
           measured curve.
         type: string
         default: '50000'
+      alias_companion_keys:
+        description: >-
+          Alias key names in the averaged companion rows (lossless; the legend travels in the
+          same layer and every consumer decodes through `read_averaged_rows`). ON by default
+          under D88 - the canonical launch carries everything; turn it off only for a declared
+          byte-for-byte comparison against a run that was written plain.
+        type: boolean
+        default: true
+      emit_change_points:
+        description: >-
+          Feed 4.16's event-driven change points. ON by default under D83/D88: horizons mature
+          on realized responses, never on a ladder, and a run without change points reports
+          the section NOT_FED (which is why run 33630348943 produced zero). Every change point
+          is RETAINED on its track under D60. Turn it off only for a declared comparison.
+        type: boolean
+        default: true
+      traverse_sources:
+        description: >-
+          Which roster objects are TRAVERSED, space separated, in stream order. Applies to
+          both modes. The default is SUNDAY 2021-10-03 alone (Item Three: the Sunday re-run
+          on the wired code, then Monday with Sunday's frozen outputs as memory).
+          Naming ONE object with mode=full gives a single day over the real full-run path:
+          the box, the same launcher, arm, manifest, three pre-traversal gates, eight
+          section 6 gates and the derived checkpoint cadence. Nothing about the calculation
+          changes - only how many objects the stream carries.
+          All four are always FETCHED and always in the manifest, because the manifest
+          contract requires exactly four sources at fixed roster positions and its
+          source_identity_hash is pinned in code. A one-file manifest would be a contract
+          change rather than a smaller run, so the roster identity stays byte-identical to
+          the full run and the slice is expressed by what is traversed.
+        type: string
+        default: glbx-mdp3-20211003.mbo.dbn.zst
 
 permissions:
   contents: read
@@ -45,9 +77,13 @@ env:
   SOURCE_PREFIX: nymex/ng_mbo_5y_v0/native/20211001_20211101
   ARM_ID: A_MEMORY
   CANARY_RECORDS: ${{ github.event_name == 'workflow_dispatch' && inputs.canary_records || '50000' }}
-  PRIOR_RUN_ID: workmode-32851909748-1
-  PRIOR_MEMORY_DIR: research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1
-  EXPECTED_PRIOR_MEMBER_MANIFEST_SHA256: b487acfbbea8ac8a82f42ceb555e8334057e4004740af91b9127cd2ba71e1cf8
+  # `a && b || c` cannot express a FALSE input (false || true reads true), so the default is
+  # expressed as "not a dispatch, or the dispatched value": a push runs with both ON.
+  ALIAS_COMPANION_KEYS: ${{ github.event_name != 'workflow_dispatch' || inputs.alias_companion_keys }}
+  EMIT_CHANGE_POINTS: ${{ github.event_name != 'workflow_dispatch' || inputs.emit_change_points }}
+  TRAVERSE_SOURCES: >-
+    ${{ github.event_name == 'workflow_dispatch' && inputs.traverse_sources ||
+    'glbx-mdp3-20211003.mbo.dbn.zst' }}
 
 jobs:
   launch-a-memory-real-time:
@@ -79,217 +115,8 @@ jobs:
           test -s research/ng_exhaustion_mbo_v4_full_state_replay_20260820.py
           test -s research/ng_exhaustion_mbo_v4_state_adapter_20260820.py
 
-      - name: Verify and hash-bind frozen prior learned-output package
-        shell: bash
-        run: |
-          set -euo pipefail
-          memory_dir="$PRIOR_MEMORY_DIR"
-          test -d "$memory_dir"
-          test "$(git rev-parse HEAD:$memory_dir/FORECASTER_OUTPUT.json)" != ""
-
-          python - <<'PY'
-          import hashlib
-          import json
-          import os
-          from pathlib import Path
-
-          root = Path(os.environ["PRIOR_MEMORY_DIR"])
-          required = [
-              "RT_OUTPUT.json", "RT_CONTEXT_MANIFEST.json", "RT_AGENT_RECEIPT.json",
-              "RT_FIRST_LOCK.json", "RT_FROZEN_STATE.json", "ONEWAY_HANDOFF.json",
-              "RT_FREEZE_COMPLETE.json", "RT_FREEZE_EXTERNAL_ANCHOR.json",
-              "FORECASTER_OUTPUT.json", "FORECASTER_CONTEXT_MANIFEST.json",
-              "FORECASTER_AGENT_RECEIPT.json", "FORECASTER_FIRST_LOCK.json",
-              "EXECUTION_USAGE.json", "ARTIFACT_MANIFEST.json", "COMPLETE.json",
-          ]
-
-          def read(name):
-              return json.loads((root / name).read_text(encoding="utf-8"))
-
-          def file_hash(name):
-              return hashlib.sha256((root / name).read_bytes()).hexdigest()
-
-          def json_hash(value):
-              body = json.dumps(
-                  value,
-                  sort_keys=True,
-                  separators=(",", ":"),
-                  ensure_ascii=True,
-                  allow_nan=False,
-              ).encode("utf-8")
-              return hashlib.sha256(body).hexdigest()
-
-          def receipt(name):
-              value = read(name)
-              assert value.get("receipt_hash") == json_hash(
-                  {key: item for key, item in value.items() if key != "receipt_hash"}
-              ), name
-              return value
-
-          present = sorted(path.name for path in root.glob("*.json"))
-          assert present == sorted(required + ["REPOSITORY_FREEZE.json"]), present
-
-          proof = read("REPOSITORY_FREEZE.json")
-          assert proof.get("source_run_id") == os.environ["PRIOR_RUN_ID"]
-          assert proof.get("source_surface_label") == "PRIOR_REDUCED_NON_FULL_MBO_SURFACE"
-          assert proof.get("proof_chain_verification") == "PASS"
-          assert proof.get("required_artifact_count") == len(required)
-          assert proof.get("model_outputs_changed") is False
-          assert proof.get("rt_output_semantically_equal_to_original_agent_output") is True
-          assert proof.get("forecaster_output_byte_identical_to_original_agent_output") is True
-          assert proof.get("step1_or_post_reveal_content_included") is False
-          assert proof.get("current_raw_mbo_arm_output_included") is False
-          assert proof.get("old_reduced_market_rows_included") is False
-
-          proof_rows = {row["name"]: row for row in proof["artifacts"]}
-          assert set(proof_rows) == set(required)
-          for name in required:
-              path = root / name
-              assert proof_rows[name]["bytes"] == path.stat().st_size, name
-              assert proof_rows[name]["sha256"] == file_hash(name), name
-
-          rt_output = read("RT_OUTPUT.json")
-          forecaster_output = read("FORECASTER_OUTPUT.json")
-          rt_context = receipt("RT_CONTEXT_MANIFEST.json")
-          forecaster_context = receipt("FORECASTER_CONTEXT_MANIFEST.json")
-          rt_agent = receipt("RT_AGENT_RECEIPT.json")
-          forecaster_agent = receipt("FORECASTER_AGENT_RECEIPT.json")
-          rt_lock = receipt("RT_FIRST_LOCK.json")
-          frozen = read("RT_FROZEN_STATE.json")
-          handoff = receipt("ONEWAY_HANDOFF.json")
-          freeze = receipt("RT_FREEZE_COMPLETE.json")
-          anchor = receipt("RT_FREEZE_EXTERNAL_ANCHOR.json")
-          forecaster_lock = receipt("FORECASTER_FIRST_LOCK.json")
-          usage = receipt("EXECUTION_USAGE.json")
-          manifest = receipt("ARTIFACT_MANIFEST.json")
-          complete = receipt("COMPLETE.json")
-
-          assert rt_context.get("answer_wall") == "SEALED"
-          assert forecaster_context.get("answer_wall") == "SEALED"
-          assert rt_agent.get("output_sha256") == file_hash("RT_OUTPUT.json")
-          assert forecaster_agent.get("output_sha256") == file_hash("FORECASTER_OUTPUT.json")
-          assert rt_agent.get("accepted_output_hash") == json_hash(rt_output)
-          assert forecaster_agent.get("accepted_output_hash") == json_hash(forecaster_output)
-          assert rt_lock.get("rt_output_hash") == json_hash(rt_output)
-          assert frozen.get("rt_output_hash") == json_hash(rt_output)
-          assert frozen.get("full_validated_rt_output") == rt_output
-          assert handoff.get("full_validated_rt_output_hash") == json_hash(rt_output)
-          assert handoff.get("rt_frozen_before_forecaster") is True
-          assert handoff.get("forecaster_may_modify_rt_state") is False
-          assert forecaster_lock.get("forecaster_output_hash") == json_hash(forecaster_output)
-
-          frozen_hash = frozen.get("frozen_rt_state_hash")
-          assert frozen_hash
-          assert handoff.get("frozen_rt_state_hash") == frozen_hash
-          assert anchor.get("frozen_rt_state_hash") == frozen_hash
-          assert forecaster_lock.get("frozen_rt_state_hash") == frozen_hash
-          assert complete.get("frozen_rt_state_hash") == frozen_hash
-          assert complete.get("manifest_receipt_hash") == manifest.get("receipt_hash")
-          assert complete.get("status") == "COMPLETE"
-          assert complete.get("published_last") is True
-          assert complete.get("answer_key_or_step1_results_exposed") is False
-          assert complete.get("principal_role_call_order") == [
-              "REAL_TIME_FRANKIE", "FORECASTER_FRANKIE"
-          ]
-          assert complete.get("external_provider_api_called") is False
-          assert complete.get("receipt_hash") == proof.get("complete_receipt_hash")
-          assert file_hash("FORECASTER_OUTPUT.json") == (
-              "32131d948790faa56ed130f901bad71b10075919a2e23a78d1ff2c3939de25af"
-          )
-          assert file_hash("FORECASTER_OUTPUT.json") == proof.get(
-              "forecaster_output_scoring_receipt_sha256"
-          )
-
-          manifest_rows = {row["path"]: row for row in manifest["artifacts"]}
-          for name in required:
-              if name in manifest_rows:
-                  assert manifest_rows[name]["bytes"] == (root / name).stat().st_size, name
-                  assert manifest_rows[name]["sha256"] == file_hash(name), name
-
-          recovery = {
-              "schema": "FRANKIE_PRIOR_MEMORY_REPOSITORY_VERIFICATION_V1",
-              "source_run_id": proof["source_run_id"],
-              "source_surface_label": proof["source_surface_label"],
-              "source_launch_commit": proof["source_launch_commit"],
-              "recovery_proof_sha256": file_hash("REPOSITORY_FREEZE.json"),
-              "required_artifact_count": len(required),
-              "rt_output_sha256": file_hash("RT_OUTPUT.json"),
-              "forecaster_output_sha256": file_hash("FORECASTER_OUTPUT.json"),
-              "complete_receipt_hash": complete["receipt_hash"],
-              "proof_chain_verification": "PASS",
-              "step1_or_post_reveal_content": False,
-              "current_raw_mbo_arm_output_content": False,
-              "old_reduced_market_rows_in_package": False,
-          }
-          recovery["receipt_hash"] = json_hash(recovery)
-          output = Path(os.environ["RUNNER_TEMP"]) / "prior-memory-repository-verification.json"
-          output.write_text(json.dumps(recovery, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-          PY
-
-          source_launch_commit="$(python -c 'import json,os; print(json.load(open(os.path.join(os.environ["PRIOR_MEMORY_DIR"],"REPOSITORY_FREEZE.json")))["source_launch_commit"])')"
-          git merge-base --is-ancestor "$source_launch_commit" "$REQUIRED_STARTING_TIP"
-
-          stage="$RUNNER_TEMP/a-memory-prior-learned-stage"
-          package_dir="$RUNNER_TEMP/a-memory-prior-learned"
-          install -d -m 0700 "$stage" "$package_dir"
-          for name in \
-            RT_OUTPUT.json RT_CONTEXT_MANIFEST.json RT_AGENT_RECEIPT.json \
-            RT_FIRST_LOCK.json RT_FROZEN_STATE.json ONEWAY_HANDOFF.json \
-            RT_FREEZE_COMPLETE.json RT_FREEZE_EXTERNAL_ANCHOR.json \
-            FORECASTER_OUTPUT.json FORECASTER_CONTEXT_MANIFEST.json \
-            FORECASTER_AGENT_RECEIPT.json FORECASTER_FIRST_LOCK.json \
-            EXECUTION_USAGE.json ARTIFACT_MANIFEST.json COMPLETE.json; do
-            cp "$memory_dir/$name" "$stage/$name"
-          done
-
-          tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
-            -cf - -C "$stage" . | gzip -n > "$package_dir/prior-learned-package.tgz"
-          package_sha="$(sha256sum "$package_dir/prior-learned-package.tgz" | awk '{print $1}')"
-          test "$package_sha" = "$EXPECTED_PRIOR_MEMBER_MANIFEST_SHA256"
-
-          python - "$stage" "$package_sha" "$package_dir/prior-learned-package-receipt.json" <<'PY'
-          import hashlib
-          import json
-          import os
-          import sys
-          from pathlib import Path
-
-          root = Path(sys.argv[1])
-          package_sha = sys.argv[2]
-          output = Path(sys.argv[3])
-          proof_path = Path(os.environ["PRIOR_MEMORY_DIR"]) / "REPOSITORY_FREEZE.json"
-          files = [
-              {
-                  "name": path.name,
-                  "bytes": path.stat().st_size,
-                  "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
-              }
-              for path in sorted(root.iterdir())
-          ]
-          value = {
-              "schema": "FRANKIE_PREEXISTING_UNREVEALED_OCT45_MEMORY_PROOF_V2",
-              "prior_run_id": os.environ["PRIOR_RUN_ID"],
-              "source_surface_label": "PRIOR_REDUCED_NON_FULL_MBO_SURFACE",
-              "package_sha256": package_sha,
-              "repository_recovery_proof_sha256": hashlib.sha256(proof_path.read_bytes()).hexdigest(),
-              "pre_existing_before_current_benchmark": True,
-              "proof_chain_verification": "PASS",
-              "step1_or_post_reveal_content": False,
-              "current_benchmark_arm_output_content": False,
-              "old_reduced_rows_in_package": False,
-              "files": files,
-          }
-          body = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
-          value["receipt_hash"] = hashlib.sha256(body).hexdigest()
-          output.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-          PY
-
-          cp "$RUNNER_TEMP/prior-memory-repository-verification.json" "$package_dir/"
-          echo "PRIOR_PACKAGE_DIR=$package_dir" >> "$GITHUB_ENV"
-          echo "PRIOR_PACKAGE_SHA256=$package_sha" >> "$GITHUB_ENV"
-
       - name: Install native DBN reader
-        run: python -m pip install --quiet databento==0.81.0
+        run: python -m pip install --quiet databento==0.81.0 boto3
 
       - name: Fetch and hash-bind exact native DBN roster
         shell: bash
@@ -297,8 +124,7 @@ jobs:
           set -euo pipefail
           source_dir="$RUNNER_TEMP/a-memory-native-sources"
           packet_dir="$RUNNER_TEMP/a-memory-rt-packet"
-          install -d -m 0700 \
-            "$source_dir" "$packet_dir/sources" "$packet_dir/checkpoints" "$packet_dir/memory"
+          install -d -m 0700 "$source_dir" "$packet_dir/sources" "$packet_dir/checkpoints"
 
           while read -r name expected_bytes expected_sha; do
             source_uri="s3://${BUCKET}/${SOURCE_PREFIX}/${name}"
@@ -322,14 +148,35 @@ jobs:
             "$source_dir/glbx-mdp3-20211004.mbo.dbn.zst" \
             "$source_dir/glbx-mdp3-20211005.mbo.dbn.zst"
 
-          test "$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["source_identity_hash"])' "$packet_dir/source_manifest.json")" = \
-            4d02dae63163a43fe0dc093ad0bda9a6d055a455cbc946a59d5b9008dad190ac
-          cp "$PRIOR_PACKAGE_DIR/prior-learned-package.tgz" "$packet_dir/memory/"
-          cp "$PRIOR_PACKAGE_DIR/prior-learned-package-receipt.json" "$packet_dir/memory/"
-          cp "$PRIOR_PACKAGE_DIR/prior-memory-repository-verification.json" "$packet_dir/memory/"
-
           echo "SOURCE_DIR=$source_dir" >> "$GITHUB_ENV"
           echo "PACKET_DIR=$packet_dir" >> "$GITHUB_ENV"
+
+          # HOW MANY RECORDS THE SLICE ACTUALLY CARRIES, taken from the manifest rather than
+          # estimated. The manifest already counts MBO records per object, so a subset's
+          # record total is a sum and not a guess - which matters twice over: the coverage
+          # gate compares records seen against the identity's count, and the box's disk
+          # precheck is computed from that same number below.
+          # PACKET_DIR is passed on the command line, NOT read from the environment. It is
+          # written to $GITHUB_ENV a few lines above, and $GITHUB_ENV reaches LATER steps
+          # only - inside this one it is still unset, so reading it here would KeyError on
+          # a value that is plainly sitting in a shell variable.
+          PACKET_DIR="$packet_dir" python3 - <<'PY' >> "$GITHUB_ENV"
+          import json
+          import os
+
+          manifest = json.load(open(os.environ["PACKET_DIR"] + "/source_manifest.json"))
+          wanted = os.environ["TRAVERSE_SOURCES"].split()
+          by_name = {row["name"]: row for row in manifest["sources"]}
+          missing = [name for name in wanted if name not in by_name]
+          if missing:
+              raise SystemExit(f"traverse_sources names objects not in the roster: {missing}")
+          records = sum(int(by_name[name]["mbo_records"]) for name in wanted)
+          subset = len(wanted) != len(manifest["sources"])
+          print(f"TRAVERSE_RECORDS={records}")
+          print(f"TRAVERSE_IS_SUBSET={'yes' if subset else 'no'}")
+          PY
+          printf 'traversing %s of %s roster objects\n' \
+            "$(echo $TRAVERSE_SOURCES | wc -w)" "4"
 
       - name: Seal A-memory RT packet and pre-call checkpoint
         shell: bash
@@ -347,6 +194,10 @@ jobs:
           )
           from research.kalshi.frankie_raw_mbo_benchmark.chat_packet_seam import (
               build_chat_packet_contract,
+              seed_memory_package,
+          )
+          from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import (
+              load_registry,
           )
           from research.kalshi.frankie_raw_mbo_benchmark.mbo_resume_state import (
               export_adapter_state,
@@ -355,25 +206,11 @@ jobs:
 
           packet_dir = Path(os.environ["PACKET_DIR"])
           manifest = json.loads((packet_dir / "source_manifest.json").read_text(encoding="utf-8"))
-          memory_proof = json.loads(
-              (packet_dir / "memory" / "prior-learned-package-receipt.json").read_text(
-                  encoding="utf-8"
-              )
-          )
-          memory_package = {
-              "schema": "FRANKIE_PREEXISTING_UNREVEALED_OCT45_MEMORY_V1",
-              "source_surface_label": memory_proof["source_surface_label"],
-              "package_sha256": memory_proof["package_sha256"],
-              "pre_existing_before_current_benchmark": memory_proof[
-                  "pre_existing_before_current_benchmark"
-              ],
-              "step1_or_post_reveal_content": memory_proof[
-                  "step1_or_post_reveal_content"
-              ],
-              "current_benchmark_arm_output_content": memory_proof[
-                  "current_benchmark_arm_output_content"
-              ],
-          }
+          # THE SEED IS THE MEMORY (D86, D88): every committed past-run output the registry's
+          # a_memory_overlay group binds, hashed over the files' bytes by the seam itself. An
+          # overlay layer still bound to an `external:` identity (the wrong-data package) is a
+          # REFUSAL here, by name - never a fallback.
+          memory_package = seed_memory_package(load_registry(), repo_root=Path.cwd())
           contract = build_chat_packet_contract(
               arm="A-memory",
               source_manifest=manifest,
@@ -408,7 +245,7 @@ jobs:
 
           packet_id = "amemory-rtpkt-" + contract["contract_hash"][:20]
           receipt = {
-              "schema": "FRANKIE_A_MEMORY_RT_NATIVE_LAUNCH_V1",
+              "schema": "FRANKIE_A_MEMORY_RT_NATIVE_LAUNCH_V2",
               "run_id": run_id,
               "lane": "REAL_TIME_FRANKIE",
               "arm": "A-memory",
@@ -416,8 +253,6 @@ jobs:
               "packet_id": packet_id,
               "checkpoint_id": checkpoint["checkpoint_hash"],
               "source_manifest_hash": manifest["manifest_hash"],
-              "prior_memory_package_sha256": memory_proof["package_sha256"],
-              "prior_memory_proof_receipt_hash": memory_proof["receipt_hash"],
               "required_starting_tip": os.environ["REQUIRED_STARTING_TIP"],
               "launch_commit": os.environ["GITHUB_SHA"],
               "completed_native_mbo_records": 0,
@@ -426,6 +261,8 @@ jobs:
               "rt_lane_status": "RUNNING_PRE_CALL",
               "forecaster_lane_started": False,
               "first_lock_frozen": False,
+              "seed_memory_package_sha256": memory_package["package_sha256"],
+              "seed_memory_files": len(memory_package["files"]),
               "prior_frankie_memory_present": True,
               "native_raw_mbo_only": True,
               "causal_clock": "ts_recv_ns",
@@ -445,7 +282,8 @@ jobs:
               encoding="utf-8",
           )
           for key, value in receipt.items():
-              if key in {"run_id", "packet_id", "checkpoint_id", "source_manifest_hash"}:
+              if key in {"run_id", "packet_id", "checkpoint_id", "source_manifest_hash",
+                         "seed_memory_package_sha256"}:
                   with Path(os.environ["GITHUB_ENV"]).open("a", encoding="utf-8") as handle:
                       handle.write(f"{key.upper()}={value}\n")
           with Path(os.environ["GITHUB_ENV"]).open("a", encoding="utf-8") as handle:
@@ -471,6 +309,28 @@ jobs:
           # green over a refused calculation.
           out_dir="$PACKET_DIR/canary"
           install -d -m 0700 "$out_dir"
+          # Sources come from TRAVERSE_SOURCES so the same step serves a four-file prelaunch
+          # canary and a shorter slice without a second workflow. Each name is checked to
+          # exist before the launcher is called: an unreadable path would otherwise reach
+          # `native_records` and surface as a decode error, naming the symptom rather than
+          # the typo.
+          source_args=()
+          for name in $TRAVERSE_SOURCES; do
+            test -s "$SOURCE_DIR/$name"
+            source_args+=(--source "$SOURCE_DIR/$name")
+          done
+          test "${#source_args[@]}" -gt 0
+          printf 'traversing %s object(s): %s\n' "$((${#source_args[@]} / 2))" "$TRAVERSE_SOURCES"
+          # Both flags ON unless dispatched off (D88). Built as an array so an unset flag adds
+          # no empty argument, which argparse would take as a positional and refuse.
+          flag_args=()
+          if [ "$ALIAS_COMPANION_KEYS" = "true" ]; then
+            flag_args+=(--alias-companion-keys)
+          fi
+          if [ "$EMIT_CHANGE_POINTS" = "true" ]; then
+            flag_args+=(--emit-change-points)
+          fi
+          printf 'flags: %s\n' "${flag_args[*]:-none}"
           python -m research.kalshi.frankie_raw_mbo_benchmark.native_a_arm_launch \
             --arm A_MEMORY \
             --run-id "${RUN_ID}-canary" \
@@ -480,11 +340,58 @@ jobs:
             --limit-records "$CANARY_RECORDS" \
             --checkpoint-every-records 20000 \
             --cadence-groups 5000 \
-            --source "$SOURCE_DIR/glbx-mdp3-20211001.mbo.dbn.zst" \
-            --source "$SOURCE_DIR/glbx-mdp3-20211003.mbo.dbn.zst" \
-            --source "$SOURCE_DIR/glbx-mdp3-20211004.mbo.dbn.zst" \
-            --source "$SOURCE_DIR/glbx-mdp3-20211005.mbo.dbn.zst"
+            "${flag_args[@]}" \
+            "${source_args[@]}"
           echo "CANARY_OUT_DIR=$out_dir" >> "$GITHUB_ENV"
+
+      - name: Grow the box volume so the exact ledgers fit
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'full' }}
+        shell: bash
+        env:
+          INSTANCE_ID: i-08cee7171c0a76a04
+          TARGET_GB: "300"
+        run: |
+          set -euo pipefail
+          # MEASURED, and the box said it itself. The first two full dispatches were refused
+          # by the run's own disk precheck, which printed A_ARM_DISK_AVAIL_KIB=134351004 -
+          # 128.1 GiB free against a projected 127.2 GiB of exact ledgers. That is a 0.7%
+          # margin, with the sources and the S3 staging still to come out of it, so the
+          # volume is too small: not marginally, but with no room for the run to be wrong
+          # about its own size.
+          #
+          # 300 GB leaves roughly 1.7x the projected need. Growing an EBS volume is one-way -
+          # it cannot be shrunk in place - so this is a standing cost and the number is
+          # chosen to be enough rather than generous. D60 is why the answer is a bigger
+          # volume and not a smaller output: nothing is dropped to make a run fit.
+          root_name="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
+            --query 'Reservations[0].Instances[0].RootDeviceName' --output text)"
+          volume="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
+            --query "Reservations[0].Instances[0].BlockDeviceMappings[?DeviceName=='$root_name'].Ebs.VolumeId | [0]" \
+            --output text)"
+          size="$(aws ec2 describe-volumes --volume-ids "$volume" \
+            --query 'Volumes[0].Size' --output text)"
+          printf 'root volume %s is %s GiB\n' "$volume" "$size"
+
+          if [ "$size" -ge "$TARGET_GB" ]; then
+            echo "already at or above ${TARGET_GB} GiB; nothing to grow"
+          else
+            aws ec2 modify-volume --volume-id "$volume" --size "$TARGET_GB" >/dev/null
+            # The OS cannot see the new size until the modification reaches optimizing.
+            # Dispatching before that grows the partition to the OLD size and the precheck
+            # refuses again with a number that looks like the resize did nothing.
+            state=modifying
+            for _ in $(seq 1 90); do
+              state="$(aws ec2 describe-volumes-modifications --volume-ids "$volume" \
+                --query 'VolumesModifications[0].ModificationState' --output text 2>/dev/null || echo modifying)"
+              case "$state" in optimizing|completed) break ;; esac
+              sleep 10
+            done
+            printf 'modification state: %s\n' "$state"
+            case "$state" in
+              optimizing|completed) ;;
+              *) echo "volume modification did not reach optimizing" >&2; exit 1 ;;
+            esac
+          fi
 
       - name: Dispatch full-roster traversal to the box
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'full' }}
@@ -503,7 +410,85 @@ jobs:
           # This mode is reachable ONLY by an explicit workflow_dispatch with mode=full. A
           # push never reaches it, and the default input is canary, because starting the
           # box is a spend and D58 leaves the sizing decision with Greg.
+          # THE BOX CANNOT READ THIS BUCKET, and it said so itself. Its own probe reported
+          # A_ARM_IDENTITY=arn:aws:sts::568968024170:assumed-role/Ssm/i-08cee7171c0a76a04
+          # with A_ARM_CAN_READ_SOURCES=no and A_ARM_CAN_READ_PACKET=no, so the instance role
+          # has no access at all and /etc/markets/coach.env holds no credentials.
+          #
+          # The clean fix is a scoped policy on that role, which also covers the upload. That
+          # is a privilege change and is left for Greg. What follows needs no new permission:
+          #
+          #   - The manifest travels INLINE, base64 in the command. It is a few kilobytes,
+          #     and the box gets the runner's BYTE IDENTICAL file rather than regenerating
+          #     one - regeneration would be a second opinion about the roster, and the
+          #     launcher reads total_mbo_records and manifest_hash straight off it, so two
+          #     manifests that disagree produce a run whose identity is not the one reported.
+          #   - The four DBN objects travel as PRESIGNED GET URLs, fetched with curl. A
+          #     presigned URL carries a signature, never the secret key, is read-only, names
+          #     five specific objects and expires. Exporting the runner's long-lived keys
+          #     into the command would also work and must not be done: command parameters are
+          #     readable by anyone with SSM read.
+          #
+          # Six hours of validity for downloads that happen in the first minute. The window
+          # is short because the only thing it needs to outlive is the staging step.
+          manifest_b64="$(base64 -w0 "$PACKET_DIR/source_manifest.json")"
+          presigned=""
+          for name in $TRAVERSE_SOURCES; do
+            url="$(aws s3 presign "s3://${BUCKET}/${SOURCE_PREFIX}/${name}" \
+              --expires-in 21600 --endpoint-url "$S3_ENDPOINT_URL")"
+            presigned="${presigned}${name} ${url}"$'\n'
+          done
+          # THE UPLOAD, SOLVED THE SAME WAY THE DOWNLOAD WAS. The box's instance role cannot
+          # write this bucket any more than it can read it, and the run before this one
+          # therefore ended with its output stranded on the volume - a finished traversal and
+          # an unfinished run, because D34 says data lives on S3.
+          #
+          # A presigned PUT is the mirror of the presigned GET already used above: it carries
+          # a signature and never the secret key, is write-only, names exactly one key, and
+          # expires. So the results become durable with NO new permission, which leaves the
+          # scoped role policy as the tidy-up it should have been rather than a blocker.
+          #
+          # The output names are deterministic, which is what makes this possible at all -
+          # each key is known before the traversal writes it. The ledgers are gzipped first:
+          # a single presigned PUT is capped at 5 GB and JSONL deflates about nine to one, so
+          # compression is what keeps the biggest ledger inside the cap. Nothing is dropped
+          # by it; gzip is lossless and the sha256 of the plain file travels in the receipt.
+          # boto3, not `aws s3 presign`, because that command signs GETs and its --method
+          # flag is not something to rely on across CLI versions. generate_presigned_url is
+          # explicit about the operation being signed, which is the part that matters here.
+          presigned_put="$(python3 - <<'PUTS'
+          import os
+
+          import boto3
+
+          keys = [
+              "calculation_result.json",
+              "source_manifest.json",
+              "small_artifacts.tar.gz",
+              "ledgers/exact_member_rows.jsonl.gz",
+              "ledgers/exact_lifecycle_rows.jsonl.gz",
+              "ledgers/legacy_observable_rows.jsonl.gz",
+          ]
+          client = boto3.client("s3", endpoint_url=os.environ["S3_ENDPOINT_URL"])
+          bucket = os.environ["BUCKET"]
+          prefix = os.environ["DURABLE_PREFIX_FULL"]
+          for key in keys:
+              url = client.generate_presigned_url(
+                  "put_object",
+                  Params={"Bucket": bucket, "Key": f"{prefix}/{key}"},
+                  ExpiresIn=129600,
+              )
+              print(f"{key} {url}")
+          PUTS
+          )"
+
+          export MANIFEST_B64="$manifest_b64"
+          export PRESIGNED_SOURCES="$presigned"
+          export PRESIGNED_PUTS="$presigned_put"
+
           python3 - <<'PY'
+          import base64
+          import hashlib
           import json
           import os
           from pathlib import Path
@@ -513,34 +498,294 @@ jobs:
           arm = os.environ["ARM_ID"]
           prefix = os.environ["DURABLE_PREFIX_FULL"]
           bucket = os.environ["BUCKET"]
-          command = "; ".join(
-              [
-                  "set -eu",
-                  "cd /opt/frankie-a-arm",
-                  f"git fetch --depth 1 origin {sha}",
-                  f"git checkout --detach {sha}",
-                  f'test "$(git rev-parse HEAD)" = "{sha}"',
-                  "install -d -m 0700 /opt/frankie-a-arm-run",
-                  (
-                      "python3 -m research.kalshi.frankie_raw_mbo_benchmark.native_a_arm_launch"
-                      f" --arm {arm}"
-                      f" --run-id {run_id}"
-                      f" --code-commit {sha}"
-                      " --source-manifest /opt/frankie-a-arm-run/source_manifest.json"
-                      " --out-dir /opt/frankie-a-arm-run"
-                      " $(printf ' --source /opt/frankie-a-arm-run/sources/%s'"
-                      " glbx-mdp3-20211001.mbo.dbn.zst glbx-mdp3-20211003.mbo.dbn.zst"
-                      " glbx-mdp3-20211004.mbo.dbn.zst glbx-mdp3-20211005.mbo.dbn.zst)"
-                  ),
-                  (
-                      "aws s3 cp /opt/frankie-a-arm-run"
-                      f" s3://{bucket}/{prefix} --recursive --only-show-errors"
-                  ),
-                  f"echo A_ARM_TRAVERSAL_COMPLETE={run_id}",
-              ]
-          )
-          Path("/tmp/a-arm-traversal-params.json").write_text(
-              json.dumps({"commands": [command]}), encoding="utf-8"
+          source_prefix = os.environ["SOURCE_PREFIX"]
+          repo = os.environ["GITHUB_SERVER_URL"] + "/" + os.environ["GITHUB_REPOSITORY"]
+
+          # Built on the runner, which HAS credentials, and carried in rather than fetched.
+          manifest_b64 = os.environ["MANIFEST_B64"]
+          manifest_sha = hashlib.sha256(
+              base64.b64decode(manifest_b64)
+          ).hexdigest()
+          presigned = {}
+          for line in os.environ["PRESIGNED_SOURCES"].splitlines():
+              if not line.strip():
+                  continue
+              name, _, url = line.partition(" ")
+              presigned[name] = url
+          puts = {}
+          for line in os.environ["PRESIGNED_PUTS"].splitlines():
+              if not line.strip():
+                  continue
+              key, _, url = line.partition(" ")
+              puts[key] = url
+
+          # The objects the runner fetched, with the digests the MANIFEST records - read from
+          # the manifest rather than restated here, so the box and the runner cannot come to
+          # hold two opinions about the same roster. The box verifies each one itself: a
+          # silently truncated download is a shorter tape, which reads downstream as a quiet
+          # market rather than as a failure.
+          manifest = json.loads(base64.b64decode(manifest_b64))
+          by_name = {row["name"]: row for row in manifest["sources"]}
+          traversed = os.environ["TRAVERSE_SOURCES"].split()
+          ROSTER = tuple((name, by_name[name]["sha256"]) for name in traversed)
+
+          # WHAT BOUNDS THE SLICE, and only when it IS one. Traversing every roster object
+          # streams and takes the manifest's total, which is the case where materialising
+          # would cost 5.67M records of RAM. Traversing a SUBSET must state its own record
+          # count instead: the coverage gate compares records seen against the identity's
+          # count, so a subset claiming the roster's total would be comparing a real number
+          # against an aspiration and could never pass.
+          traverse_records = int(os.environ["TRAVERSE_RECORDS"])
+          is_subset = os.environ["TRAVERSE_IS_SUBSET"] == "yes"
+          bound = f" --limit-records {traverse_records}" if is_subset else ""
+
+          # CADENCE AND CHECKPOINTS SCALE WITH THE SLICE, and this is not a refinement - it
+          # is a defect the rendered command exposed. Both flags default to 250,000 and the
+          # box path never passed either, which is correct for 4.26M groups and silently
+          # wrong for one day: a single roster object is roughly 45,000 groups, so a cadence
+          # of 250,000 groups fires NEVER and the run stages NOT ONE spawn request. The
+          # traversal would complete, every calculation would run, every gate would pass, and
+          # there would be nothing for Frankie to be spawned against - a finished run that
+          # cannot answer the question it was run to answer.
+          #
+          # The formulas reproduce today's full-roster numbers rather than replacing them,
+          # which is how they were checked: 5,667,689 records gives a cadence of 226,707
+          # against the 250,000 in use, and a checkpoint interval that clamps to exactly
+          # 250,000. So the full roster behaves as before and a day gets the same DENSITY of
+          # decision points instead of none.
+          #
+          # Groups run about 0.8 per record, measured on the canary: 40,242 groups from
+          # 50,001 records. TARGET_SPAWNS is what that density is expressed in.
+          TARGET_SPAWNS = 20
+          GROUPS_PER_RECORD = 0.8
+          cadence = max(1000, int(traverse_records * GROUPS_PER_RECORD / TARGET_SPAWNS))
+          checkpoint_every = min(250_000, max(5_000, traverse_records // 10))
+
+          # MEASURED THE EXPENSIVE WAY, and this number is the correction of the error that
+          # cost a run. The first figure came from canary run 33304621724's uploaded
+          # ARTIFACT - 1,205,197,795 bytes for 50,001 records, so 24 KB per record - and was
+          # called the disk requirement. It was not: `actions/upload-artifact` compresses at
+          # level 6 and JSONL deflates about nine to one. The real figure came off CloudWatch
+          # EBS write bytes on the run that filled the volume: 90 GB per hour for 2.58 hours
+          # against roughly 1.05M records is 215 KB per record, nine times the estimate.
+          #
+          # So it is computed from the slice's own record count now, not from a constant that
+          # happened to fit one roster. A full-roster dispatch against a 300 GB volume is
+          # REFUSED by this line, which is the correct answer and the one that was missing.
+          # 246, and this one IS measured: the sink's own byte count over its own file,
+          # 12,301,736,545 bytes for 50,001 real records, canary run 33596898227. The 215
+          # it replaces was 232 GB of CloudWatch writes divided by a record count nobody
+          # ever read - close by luck, not by method. See
+          # research/kalshi/FRANKIE_MEASURED_LEDGER_SIZE_20260902.md.
+          KIB_PER_RECORD = 246
+          HEADROOM = 1.4  # sources, the git clone, and the S3 staging copy come out of this
+          required_kib = int(traverse_records * KIB_PER_RECORD * HEADROOM)
+
+          steps = [
+              "set -eu",
+              # The runner passes --endpoint-url on every aws call; the box has no such
+              # variable, so the region is stated here rather than left to whatever the
+              # instance happens to have configured. A wrong region is a 301 on the first
+              # copy, hours before anything else would have gone wrong.
+              "export AWS_DEFAULT_REGION=us-east-2",
+              # WHAT IS ALREADY ON THE VOLUME, SAID OUT LOUD BEFORE IT IS REMOVED. The run
+              # that filled this volume left roughly 232 GB of partial ledgers and about four
+              # save points, and the disk precheck below would refuse against them. They are
+              # a partial traversal of the first roster object, reproducible from the same
+              # source bytes and superseded by running a day at a time, so nothing unique
+              # dies here - but D60's habit is that a removal is stated, not assumed, so the
+              # sizes are echoed into the SSM output first and remain in the run record.
+              'echo "A_ARM_PRIOR_OUTPUT_KIB=$(du -sk /opt/frankie-a-arm-run 2>/dev/null'
+              ' | cut -f1 || echo 0)"',
+              'echo "A_ARM_PRIOR_SAVE_POINTS=$(ls -1 /opt/frankie-a-arm-run/checkpoints'
+              ' 2>/dev/null | wc -l)"',
+              'echo "A_ARM_PRIOR_LEDGERS=$(ls -l /opt/frankie-a-arm-run/ledgers'
+              ' 2>/dev/null | tail -n +2 | awk \'{print $9\":\"$5}\' | tr \'\\n\' \' \' || true)"',
+              "rm -rf /opt/frankie-a-arm-run",
+              "install -d -m 0700 /opt/frankie-a-arm-run/sources",
+              # A grown EBS volume is invisible to the OS until the partition and the
+              # filesystem are grown too, so the box does that itself rather than trusting
+              # that someone did. growpart exits non-zero when there is nothing to change,
+              # which is a normal state and not a failure; resize2fs and xfs_growfs are both
+              # idempotent, so a run on an already-grown volume is a no-op.
+              "run_src=$(findmnt -no SOURCE --target /opt/frankie-a-arm-run)",
+              "run_disk=/dev/$(lsblk -no pkname \"$run_src\" | head -1)",
+              "run_part=$(echo \"$run_src\" | grep -o '[0-9]*$')",
+              "growpart \"$run_disk\" \"$run_part\" || true",
+              (
+                  'case "$(findmnt -no FSTYPE --target /opt/frankie-a-arm-run)" in'
+                  ' xfs) xfs_growfs /opt/frankie-a-arm-run ;;'
+                  ' *) resize2fs "$run_src" ;;'
+                  " esac"
+              ),
+              f'avail=$(df -kP /opt/frankie-a-arm-run | awk "NR==2 {{print \\$4}}")',
+              'echo "A_ARM_DISK_AVAIL_KIB=$avail"',
+              f'test "$avail" -ge {required_kib}',
+              # A missing clone is a first-run box, not a failure. Clone it, then bind the
+              # exact commit either way - the checkout is what makes this run reproducible.
+              f'test -d /opt/frankie-a-arm/.git || git clone --filter=blob:none {repo} /opt/frankie-a-arm',
+              "cd /opt/frankie-a-arm",
+              f"git fetch --depth 1 origin {sha}",
+              f"git checkout --detach {sha}",
+              f'test "$(git rev-parse HEAD)" = "{sha}"',
+              # The identity probe stays even though the answer is now known. It costs
+              # nothing, and it is what turned an opaque 403 into a named cause; the next
+              # person to hit an S3 error here should not have to add it back.
+              'echo "A_ARM_IDENTITY=$(aws sts get-caller-identity --query Arn --output text 2>&1 | tail -1)"',
+              (
+                  f'echo "A_ARM_CAN_READ_SOURCES=$(aws s3 ls s3://{bucket}/{source_prefix}/'
+                  ' >/dev/null 2>&1 && echo yes || echo no)"'
+              ),
+              # THE MANIFEST ARRIVES INLINE, not from S3, because the box has no read access
+              # to this bucket. Byte identical to the runner's own file, which is what keeps
+              # the run's identity the one this job reported.
+              (
+                  "printf %s "
+                  + manifest_b64
+                  + " | base64 -d > /opt/frankie-a-arm-run/source_manifest.json"
+              ),
+              (
+                  f'test "$(sha256sum /opt/frankie-a-arm-run/source_manifest.json'
+                  f' | cut -d\" \" -f1)" = "{manifest_sha}"'
+              ),
+          ]
+          # The four objects arrive over presigned GET URLs. curl -f turns an HTTP error into
+          # a non-zero exit, without which a 403 body would be written to the file and the
+          # digest check would report a corrupt tape rather than a refused download.
+          for name, digest in ROSTER:
+              url = presigned[name]
+              steps.append(
+                  f"curl -sSfL -o /opt/frankie-a-arm-run/sources/{name} '{url}'"
+              )
+              steps.append(
+                  f'test "$(sha256sum /opt/frankie-a-arm-run/sources/{name}'
+                  f' | cut -d" " -f1)" = "{digest}"'
+              )
+          # The two optional flags, rendered into the remote command rather than read from
+          # the box's environment: the box gets a script, not this job's env, so a flag left
+          # to an env lookup there would silently be absent and the run would report a
+          # section as NOT_FED while the dispatch believed it was on.
+          flag_args = ""
+          if os.environ.get("ALIAS_COMPANION_KEYS") == "true":
+              flag_args += " --alias-companion-keys"
+          if os.environ.get("EMIT_CHANGE_POINTS") == "true":
+              flag_args += " --emit-change-points"
+          print(f"remote flags: {flag_args.strip() or 'none'}")
+          steps.extend([
+              (
+                  "python3 -m research.kalshi.frankie_raw_mbo_benchmark.native_a_arm_launch"
+                  f" --arm {arm}"
+                  f" --run-id {run_id}"
+                  f" --code-commit {sha}"
+                  " --source-manifest /opt/frankie-a-arm-run/source_manifest.json"
+                  " --out-dir /opt/frankie-a-arm-run"
+                  f" --checkpoint-every-records {checkpoint_every}"
+                  f" --cadence-groups {cadence}"
+                  + flag_args
+                  + bound
+                  + "".join(
+                      f" --source /opt/frankie-a-arm-run/sources/{name}"
+                      for name, _ in ROSTER
+                  )
+              ),
+              # THE UPLOAD IS ATTEMPTED AND ITS FAILURE IS NOT FATAL, which is the one place
+              # in this script where swallowing an error is right. The box currently has no
+              # write access to this bucket either, and the alternative is that fourteen
+              # hours of completed traversal is thrown away at the last line because the
+              # results could not be moved. They are on a 300 GB volume; they can be pushed
+              # later once the role is granted, or pulled by presigned PUT once the file
+              # names are known. What must never happen is losing them.
+              #
+              # It is not silent: the marker says which of the two happened, and a run that
+              # reports A_ARM_RESULTS_ON_BOX has NOT been made durable. D34 says S3 is where
+              # data lives, so that state is unfinished, not done.
+              # THE RECEIPT IS WRITTEN BEFORE THE COMPRESSION, over the PLAIN files. A
+              # sha256 of a gzip proves the gzip arrived; it says nothing about the rows.
+              # This is what lets a reader verify the ledger it decompresses is the ledger
+              # the traversal reconciled, which is the whole evidentiary point of retention.
+              (
+                  "cd /opt/frankie-a-arm-run && sha256sum"
+                  " calculation_result.json source_manifest.json ledgers/*.jsonl"
+                  " > /opt/frankie-a-arm-run/PLAIN_SHA256SUMS"
+              ),
+              # AND THE PLAIN LENGTHS, for the same reason and at the same moment. A box run
+              # gzips its ledgers before upload, so S3 records only the COMPRESSED length -
+              # which answers "how well did it compress", never "how many bytes did the sink
+              # write". Without this the size witness has nothing to compare
+              # `ledger_retention[*].bytes` against for any full run, and the only figure in
+              # play would again be the sink counting its own writes.
+              #
+              # `wc -c` is coreutils reading the finished file off the disk: a different
+              # program from the one that wrote it, and independent of its counter. It is a
+              # weaker witness than S3's ContentLength - same machine, not a second party -
+              # and the reader labels it as such rather than quietly ranking them equal.
+              #
+              # `|| true` because this is evidence ABOUT the run and must never be able to
+              # end one. Fourteen hours of traversal is not thrown away over a receipt.
+              (
+                  "cd /opt/frankie-a-arm-run && wc -c ledgers/*.jsonl"
+                  " > /opt/frankie-a-arm-run/PLAIN_SIZES || true"
+              ),
+              (
+                  "cd /opt/frankie-a-arm-run && tar czf small_artifacts.tar.gz"
+                  " checkpoints spawn_requests PLAIN_SHA256SUMS PLAIN_SIZES"
+              ),
+              # gzip -1 rather than the default: these are 5-12 GB of JSONL and the ratio
+              # barely moves past level 1, while the time does. The point of compressing at
+              # all is the 5 GB cap on a single presigned PUT, not the smallest possible file.
+              "gzip -1 -f /opt/frankie-a-arm-run/ledgers/*.jsonl",
+              (
+                  "cd /opt/frankie-a-arm-run && ls -l calculation_result.json"
+                  " small_artifacts.tar.gz ledgers/ | awk '{print \"A_ARM_OUT \" $0}'"
+              ),
+          ])
+          # EACH OUTPUT GOES UP OVER ITS OWN PRESIGNED PUT, and a failure is reported per
+          # file rather than as one verdict. curl -f makes an HTTP error a non-zero exit;
+          # -H 'Expect:' stops the 100-continue handshake, which some proxies never answer
+          # and which would otherwise stall an upload that was going to succeed.
+          #
+          # The failure of any one of these is NOT fatal to the script. Hours of finished
+          # traversal must never be discarded because a transfer failed at the last line, and
+          # the per-file marker says exactly which ones landed - a run missing any
+          # A_ARM_PUT_OK line is not durable, and the next step is to re-issue that URL, not
+          # to re-run the traversal.
+          for key in (
+              "calculation_result.json",
+              "source_manifest.json",
+              "small_artifacts.tar.gz",
+              "ledgers/exact_member_rows.jsonl.gz",
+              "ledgers/exact_lifecycle_rows.jsonl.gz",
+              "ledgers/legacy_observable_rows.jsonl.gz",
+          ):
+              steps.append(
+                  f"curl -sSf -X PUT -H 'Expect:' -T /opt/frankie-a-arm-run/{key}"
+                  f" '{puts[key]}'"
+                  f" && echo A_ARM_PUT_OK={key}"
+                  f" || echo A_ARM_PUT_FAILED={key}"
+              )
+          steps.append(f"echo A_ARM_RESULTS_PREFIX=s3://{bucket}/{prefix}")
+          steps.append(f"echo A_ARM_TRAVERSAL_COMPLETE={run_id}")
+          # executionTimeout IS THE ONE THAT KILLS THE RUN, and it is not the one the send
+          # sets. `aws ssm send-command --timeout-seconds` is TimeoutSeconds: how long the
+          # command may sit undelivered before it is abandoned. It has nothing to do with how
+          # long the script may then run. That is AWS-RunShellScript's own `executionTimeout`
+          # parameter, and its DEFAULT IS 3600 - so a command sent with --timeout-seconds
+          # 43200 and no executionTimeout is killed at one hour, on a traversal measured in
+          # hours, while the dispatch reports success. Both are set, and they mean different
+          # things.
+          #
+          # THE VALUE IS 48 HOURS, THE MAXIMUM, AND THAT IS DELIBERATE. Measured on the same
+          # roster: 50,001 records took 256s before 4.6 was fed and 440s after, which puts
+          # the 5,667,689-record roster near 13.9 hours - so 43200 (12h) would have cut it
+          # short, and any figure derived from one 50k slice on a different machine is a
+          # guess about the box. A generous execution timeout costs nothing, because the
+          # command ends when the script ends. What bounds a runaway is the disk precheck
+          # above, the checkpointer, and the monitor - never this number.
+          Path(os.environ["RUNNER_TEMP"], "a-arm-traversal-params.json").write_text(
+              json.dumps(
+                  {"commands": ["; ".join(steps)], "executionTimeout": ["172800"]}
+              ),
+              encoding="utf-8",
           )
           PY
           # FIRE AND RETURN, never dispatch-and-wait.
@@ -552,8 +797,11 @@ jobs:
           # capped at 360 minutes regardless of any timeout set here, so waiting can never
           # work for this run: the job would die before the traversal did.
           #
-          # It has never fired, so nothing was damaged. The fix is to stop waiting: send the
-          # command with a timeout longer than the run, record the command id, and exit.
+          # It has never fired, so nothing was damaged. The fix is to stop waiting: record the
+          # command id and exit. Note that --timeout-seconds below is the DELIVERY timeout,
+          # not the execution one - the execution timeout is the document parameter set where
+          # the params file is written above, and getting those two confused is what would
+          # have capped this run at one hour.
           # T3 put the checkpointer on this path, so a run that dies mid-way costs one save
           # point rather than the whole thing, and `frankie_box_monitor_20260829.yml` is what
           # watches it.
@@ -561,7 +809,7 @@ jobs:
             --instance-ids "$INSTANCE_ID" \
             --document-name AWS-RunShellScript \
             --comment "A-arm full-roster native traversal" \
-            --parameters file:///tmp/a-arm-traversal-params.json \
+            --parameters "file://${RUNNER_TEMP}/a-arm-traversal-params.json" \
             --timeout-seconds 43200 \
             --query 'Command.CommandId' \
             --output text)"
@@ -570,6 +818,14 @@ jobs:
           # Confirm it was ACCEPTED by the instance. Anything else is a dispatch that did not
           # happen, and reporting a run as started when it was not is the failure this whole
           # branch exists to stop.
+          #
+          # ACCEPTANCE IS NOT SURVIVAL, and that distinction cost a run. The first successful
+          # dispatch reported InProgress two seconds in and the job went green; the box
+          # monitor forty seconds later showed no python3 process and memory untouched. The
+          # command had been accepted and then died in staging - growpart, the disk precheck,
+          # the checkout, the S3 pulls - leaving a green job and no evidence anywhere. So the
+          # watch below runs past staging and into the traversal before this step is allowed
+          # to succeed, and prints the box's own output either way.
           status=Pending
           for _ in $(seq 1 24); do
             status="$(aws ssm get-command-invocation \
@@ -585,14 +841,54 @@ jobs:
           printf 'dispatched command %s, status %s\n' "$command_id" "$status"
           case "$status" in
             InProgress|Success) ;;
-            *) echo "the box did not accept the command" >&2; exit 1 ;;
+            *)
+              # PRINT WHAT THE BOX SAID. The first real dispatch came back Failed in two
+              # seconds and this step discarded the invocation, so the only evidence was the
+              # word "Failed" - which names no cause and cannot be acted on. The box already
+              # says exactly what went wrong; it was simply being thrown away. The staging
+              # steps echo A_ARM_DISK_AVAIL_KIB before the precheck, so a refusal on volume
+              # size arrives here with the number that caused it.
+              aws ssm get-command-invocation \
+                --command-id "$command_id" \
+                --instance-id "$INSTANCE_ID" \
+                --query '{status:Status,detail:StatusDetails,code:ResponseCode,out:StandardOutputContent,err:StandardErrorContent}' \
+                --output json || true
+              echo "the box did not accept the command" >&2
+              exit 1
+              ;;
           esac
+          # WATCH IT THROUGH STAGING. Everything before the traversal - growing the
+          # filesystem, the disk precheck, the checkout, five S3 pulls - takes well under
+          # three minutes, so a command still InProgress at the end of this window is one
+          # that reached the traversal. A command that died in staging is caught here with
+          # its own output instead of being reported as a started run.
+          for _ in $(seq 1 18); do
+            status="$(aws ssm get-command-invocation \
+              --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+              --query Status --output text 2>/dev/null || echo InProgress)"
+            case "$status" in InProgress) ;; *) break ;; esac
+            sleep 10
+          done
+          # Partial output is returned for a command still running, which is the point: the
+          # staging echoes (A_ARM_DISK_AVAIL_KIB and the rest) are visible here whether the
+          # run survived or not.
+          invocation="$(aws ssm get-command-invocation \
+            --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+            --query '{status:Status,detail:StatusDetails,code:ResponseCode,out:StandardOutputContent,err:StandardErrorContent}' \
+            --output json || true)"
+          printf 'status after staging window: %s\n%s\n' "$status" "$invocation"
+          if [ "$status" != "InProgress" ]; then
+            echo "the traversal did not survive staging; it is not running" >&2
+            exit 1
+          fi
+
           {
-            echo "### Full-roster traversal dispatched"
+            echo "### Full-roster traversal dispatched and past staging"
             echo "- Instance: ${INSTANCE_ID}"
             echo "- SSM command: ${command_id}"
-            echo "- Status at dispatch: ${status}"
-            echo "- This job does NOT wait. Watch it with frankie_box_monitor_20260829.yml."
+            echo "- Status after the staging window: ${status}"
+            echo "- This job does NOT wait for the traversal itself, which is measured at"
+            echo "  roughly 13.9 hours. Watch it with frankie_box_monitor_20260829.yml."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Persist exact keyless A-memory RT packet
@@ -650,7 +946,7 @@ jobs:
             echo "- Packet: ${PACKET_ID}"
             echo "- Checkpoint: ${CHECKPOINT_ID}"
             echo "- Source manifest: ${SOURCE_MANIFEST_HASH}"
-            echo "- Prior learned package: ${PRIOR_PACKAGE_SHA256}"
+            echo "- Seed memory package: ${SEED_MEMORY_PACKAGE_SHA256}"
             echo "- Native MBO progress: 0 / ${TOTAL_NATIVE_MBO_RECORDS} (0.0%)"
             echo "- Durable prefix: s3://${BUCKET}/${DURABLE_PREFIX}"
             echo '- Status: RUNNING_PRE_CALL; Forecaster not started'
