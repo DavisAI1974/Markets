@@ -111,6 +111,43 @@ jobs:
           aws s3 cp "s3://${BUCKET}/${base}/ledgers/" "$work/ledgers/" --recursive \
             --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
           ls -l "$work/ledgers"
+
+          # A BOX RUN GZIPS ITS LEDGERS BEFORE UPLOAD (`gzip -1` in the launch workflow's
+          # remote command) and writes them at the prefix ROOT, not under canary/. A canary
+          # uploads them plain. Both are handled, because testing for a plain .jsonl is
+          # exactly how this would have refused the first real day it was needed for.
+          #
+          # Each .gz is decompressed and REMOVED immediately rather than after the loop: a
+          # weekday member ledger is 9-12 GB plain and holding both forms of all three at
+          # once is how a runner fills its volume.
+          shopt -s nullglob
+          for gz in "$work/ledgers"/*.gz; do
+            echo "decompressing $(basename "$gz")"
+            gunzip -f "$gz"
+          done
+          shopt -u nullglob
+          df -h / | tail -1
+          ls -l "$work/ledgers"
+
+          # The box records sha256 over the PLAIN files before compressing, so the
+          # decompressed ledgers can be proved identical to what it actually wrote rather
+          # than merely to what arrived. A canary has no such file and skips the check by
+          # name rather than silently.
+          if aws s3 cp "s3://${BUCKET}/${base}/small_artifacts.tar.gz" "$work/small.tar.gz" \
+               --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors 2>/dev/null; then
+            tar xzf "$work/small.tar.gz" -C "$work" PLAIN_SHA256SUMS 2>/dev/null || true
+          fi
+          if [ -s "$work/PLAIN_SHA256SUMS" ]; then
+            echo "== verifying decompressed ledgers against the box's own PLAIN_SHA256SUMS =="
+            cat "$work/PLAIN_SHA256SUMS"
+            ( cd "$work" && sha256sum -c PLAIN_SHA256SUMS 2>&1 | grep -E 'ledgers/|FAILED' ) || {
+              echo "PLAIN_SHA256SUMS DID NOT VERIFY - the receipt below describes different bytes"
+              exit 1
+            }
+          else
+            echo "no PLAIN_SHA256SUMS at this prefix (expected for a canary); skipping the check"
+          fi
+
           echo "STREAM_WORK=$work" >> "$GITHUB_ENV"
 
       - name: Build the stream receipt and read F-20 off it
