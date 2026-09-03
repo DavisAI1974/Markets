@@ -1,0 +1,34 @@
+name: S122 Task C RED
+on:
+  push:
+    branches: [chatgpt/s122-item4-task-c-verify-20260903]
+permissions:
+  contents: read
+jobs:
+  red:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Prove Task C is RED on exact B tip
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET='chatgpt/frankie-raw-mbo-benchmark-20260828'
+          BASE='3018ed490886e0526ad18b1a8f51c010277fe5c2'
+          cp scripts/s122_patch_task_c_tests_20260903.py /home/runner/task_c_tests.py
+          git fetch origin "$TARGET"
+          test "$(git rev-parse origin/$TARGET)" = "$BASE" || { echo 'STOP: target moved'; exit 41; }
+          git switch --detach "origin/$TARGET"
+          cp /home/runner/task_c_tests.py task_c_tests_patch.py
+          python3 task_c_tests_patch.py
+          rm task_c_tests_patch.py
+          python3 -m pip install --quiet pytest databento matplotlib scipy scikit-learn
+          set +e
+          python3 -m pytest \
+            research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_candidate_adapter.py::RecognitionLabelCallerS122Test \
+            -q -p no:cacheprovider > data_s122_c_red.log 2>&1
+          code=$?
+          set -e
+          echo "RED_EXIT $code"
+          tail -120 data_s122_c_red.log
+          test "$code" -ne 0
