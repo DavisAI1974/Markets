@@ -73,7 +73,7 @@ env:
   S3_ENDPOINT_URL: https://s3.us-east-2.amazonaws.com
   BUCKET: bento-568968024170-us-east-2-an
   LAUNCH_BRANCH: chatgpt/frankie-raw-mbo-benchmark-20260828
-  REQUIRED_STARTING_TIP: 82e140598b03bb38a7761c19d0ac47017c3908d0
+  REQUIRED_STARTING_TIP: cd0d7a5b3d17322f5d7d6640344618fda0e1b8fe
   SOURCE_PREFIX: nymex/ng_mbo_5y_v0/native/20211001_20211101
   ARM_ID: A_MEMORY
   CANARY_RECORDS: ${{ github.event_name == 'workflow_dispatch' && inputs.canary_records || '50000' }}
