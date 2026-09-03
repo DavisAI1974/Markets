@@ -404,7 +404,7 @@ class NativeReplayDriver:
         candidate_selection: str = native_candidate.CAUSAL_WINDOWED_PROMINENCE,
         candidate_warmup_seconds: int = 900,
         candidate_min_observations: int = 600,
-        emit_change_points: bool = False,
+        emit_change_points: bool = True,
     ) -> None:
         if session_rule is None:
             raise ReplayDriverError(
@@ -417,17 +417,16 @@ class NativeReplayDriver:
                 "the shape of the experiment, not a traversal detail"
             )
         self.identity = identity
-        # 4.16's event-driven half. OFF by default because turning it on is a SIZE decision
-        # under D60 - every change point is retained on its track, so retained volume becomes
-        # (open tracks x changes) - and a size decision is declared before it is taken.
-        # Unfed, `native_response.summary` says NOT_FED_BY_THE_TRAVERSAL rather than
-        # reporting a zero that reads exactly like a real absence, which is the shape seven
-        # of S119's sixteen defects took.
+        # 4.16's event-driven half is ON by canonical default under D83/D88: the launcher
+        # carries every lawful surface unless a declared comparison explicitly turns one off.
+        # Every change point remains retained under D60; the opt-out is therefore visible in
+        # the section summary rather than being allowed to masquerade as an observed zero.
         self.emit_change_points = emit_change_points
         self._last_change_point_state: tuple | None = None
         self.session_rule = session_rule
         self.cadence = cadence
         self.run = run
+        self.run.response.declare_change_point_feed(enabled=emit_change_points)
         # D60: defaults to the CAPTURING adapter. `V4MboAdapter` discards the per-record
         # book effect, the reconstructed FIFO queue, the book below level ten, the per-side
         # event counts, the touch quantity for T/F/M and every anomaly magnitude. The locked
@@ -812,10 +811,9 @@ class NativeReplayDriver:
     def _observe_change_points(self, recv_ns: int) -> None:
         """Emit a 4.16 change point when the observable state has actually moved.
 
-        Off unless `emit_change_points` is set. Under D60 every change point is RETAINED on
-        its track and travels into the lifecycle row, so the retained volume is
-        (open tracks x changes) rather than (tracks) - which is a size decision, and size
-        decisions are declared before they are taken, not discovered afterwards.
+        Enabled by default under D83/D88. An explicit comparison may set
+        `emit_change_points=False`; under D60 the section records that disabled state rather
+        than reporting a zero that could be mistaken for an observed absence.
         """
         if not self.emit_change_points:
             return

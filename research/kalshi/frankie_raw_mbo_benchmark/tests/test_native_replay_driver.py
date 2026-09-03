@@ -90,7 +90,7 @@ def make_driver(
     response_horizons_ns: tuple[int, ...] = (100,),
     response_horizon_version: str = "hv1",
     response_value_names: tuple[str, ...] = ("price_response",),
-    emit_change_points: bool = False,
+    emit_change_points: bool | None = None,
 ) -> NativeReplayDriver:
     identity = RunIdentity(
         run_id="driver-1",
@@ -109,12 +109,13 @@ def make_driver(
         response_horizon_version=response_horizon_version,
         response_value_names=response_value_names,
     )
+    kwargs = {} if emit_change_points is None else {"emit_change_points": emit_change_points}
     return NativeReplayDriver(
         identity=identity,
         session_rule=ExchangeSessionRule(),
         cadence=cadence or NeverInvoke(),
         run=run,
-        emit_change_points=emit_change_points,
+        **kwargs,
     )
 
 
@@ -1647,16 +1648,17 @@ class ChangePointsAreDrivenByEventsTest(unittest.TestCase):
         return (result["layers"]["exact_lifecycle_and_runway_ledger"]
                 ["section_summaries"]["4.16"]["event_driven_change_points"])
 
-    def test_unfed_it_declares_itself_rather_than_reporting_a_bare_zero(self):
-        """A zero and an absence are indistinguishable, which is the whole S119 finding."""
+    def test_opt_out_declares_the_comparison_off_rather_than_reporting_a_bare_zero(self):
+        """D83/D88: an explicit comparison-off state is not an empty measurement."""
         _, result = self._run(emit=False)
         summary = self._summary(result)
         self.assertEqual(summary["observed"], 0)
-        self.assertEqual(summary["status"], "NOT_FED_BY_THE_TRAVERSAL")
+        self.assertIs(summary["enabled"], False)
+        self.assertEqual(summary["status"], "DISABLED_BY_DECLARED_COMPARISON")
 
-    def test_the_flag_is_off_by_default_because_it_is_a_size_decision(self):
+    def test_change_points_are_on_by_default_under_d83_d88(self):
         driver = make_driver()
-        self.assertFalse(driver.emit_change_points)
+        self.assertTrue(driver.emit_change_points)
 
     def test_a_repeated_state_emits_no_change_point(self):
         """The trigger is an EVENT. A constant tape must produce no change points at all.
@@ -1695,7 +1697,7 @@ class ChangePointsActuallyFireTest(ResponseTableFedTest):
     an empty dict and every assertion about it vacuously true.
     """
 
-    def _drive(self, *, emit: bool):
+    def _drive(self, *, emit: bool | None):
         driver = make_driver(total_mbo_records=self.SPAN + 1, emit_change_points=emit)
         driver.candidate_warmup_seconds = 60
         driver.candidate_min_observations = 30
@@ -1716,6 +1718,13 @@ class ChangePointsActuallyFireTest(ResponseTableFedTest):
         self.assertGreater(points["observed"], 0, "wired but nothing reached it")
         self.assertEqual(points["status"], "FED_BY_THE_TRAVERSAL")
 
+    def test_default_feed_fires_without_an_opt_in_flag(self):
+        _, summary = self._drive(emit=None)
+        points = summary["event_driven_change_points"]
+        self.assertIs(points["enabled"], True)
+        self.assertGreater(points["observed"], 0, "default-on wiring reached no change point")
+        self.assertEqual(points["status"], "FED_BY_THE_TRAVERSAL")
+
     def test_unfed_the_same_tape_reports_the_declaration_not_a_zero(self):
         """Same records, same candidates - the ONLY difference is the flag.
 
@@ -1725,7 +1734,8 @@ class ChangePointsActuallyFireTest(ResponseTableFedTest):
         _, summary = self._drive(emit=False)
         points = summary["event_driven_change_points"]
         self.assertEqual(points["observed"], 0)
-        self.assertEqual(points["status"], "NOT_FED_BY_THE_TRAVERSAL")
+        self.assertIs(points["enabled"], False)
+        self.assertEqual(points["status"], "DISABLED_BY_DECLARED_COMPARISON")
 
     def test_feeding_change_points_does_not_change_the_verdict(self):
         """A retained observation must not be able to reject a run that would be accepted.

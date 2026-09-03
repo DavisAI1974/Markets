@@ -483,6 +483,7 @@ class ResponseTableCalculator:
             for horizon in self.horizons_ns
         }
         self.change_points_observed = 0
+        self.change_point_feed_enabled: bool | None = None
         self.tracks_opened = 0
         self.tracks_closed = 0
 
@@ -645,6 +646,14 @@ class ResponseTableCalculator:
                     }
                 )
         return recorded
+
+    def declare_change_point_feed(self, *, enabled: bool) -> None:
+        """Record whether the traversal is feeding event-driven change points.
+
+        Direct calculator use may leave this undeclared; a traversal must declare it once so
+        an explicit comparison-off state can never be mistaken for an observed zero.
+        """
+        self.change_point_feed_enabled = bool(enabled)
 
     def observe_change_point(self, recv_ns: int, *, values_for: Any) -> int:
         """The event-driven half of 4.16's emission rule, which nothing has ever called.
@@ -822,15 +831,20 @@ class ResponseTableCalculator:
             "tracks_open": len(self._open),
             "event_driven_change_points": {
                 "observed": self.change_points_observed,
+                "enabled": self.change_point_feed_enabled,
                 "status": (
-                    "NOT_FED_BY_THE_TRAVERSAL"
-                    if self.change_points_observed == 0
+                    "DISABLED_BY_DECLARED_COMPARISON"
+                    if self.change_point_feed_enabled is False
                     else "FED_BY_THE_TRAVERSAL"
+                    if self.change_points_observed > 0
+                    else "ENABLED_NO_CHANGE_POINTS_OBSERVED"
+                    if self.change_point_feed_enabled is True
+                    else "NOT_FED_BY_THE_TRAVERSAL"
                 ),
                 "rule": (
-                    "the contract requires emission at every available event-driven change "
-                    "point AND at the versioned fixed horizons; a zero here means the second "
-                    "half ran and the first half was never called"
+                    "the canonical traversal enables event-driven change points under D83/D88; "
+                    "an explicit comparison may disable them and is named as such. Enabled with "
+                    "zero observations means no eligible event fired, not that the feed was off"
                 ),
             },
             "emission": "DEFERRED_UNTIL_HORIZON_ELAPSED_IN_STREAM_TIME",

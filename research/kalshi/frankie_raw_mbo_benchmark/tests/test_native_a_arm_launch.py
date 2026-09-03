@@ -349,3 +349,25 @@ class AliasCompanionKeysThroughTheLaunchPathTest(unittest.TestCase):
             ))
 
         self.assertLess(wire(aliased), wire(plain))
+
+
+class ChangePointDefaultCliS122Test(unittest.TestCase):
+    @staticmethod
+    def _base_args():
+        return [
+            "--arm", "A_MEMORY", "--run-id", "task-b", "--code-commit", "cafebabe",
+            "--source", "source.dbn.zst", "--source-manifest", "manifest.json",
+            "--out-dir", "out",
+        ]
+
+    def test_launch_function_defaults_change_points_on(self):
+        import inspect
+        self.assertIs(inspect.signature(launcher.launch).parameters["emit_change_points"].default, True)
+
+    def test_cli_no_flag_keeps_change_points_on(self):
+        args = launcher.parse_args(self._base_args())
+        self.assertIs(args.emit_change_points, True)
+
+    def test_cli_flag_is_an_explicit_opt_out(self):
+        args = launcher.parse_args(self._base_args() + ["--no-change-points"])
+        self.assertIs(args.emit_change_points, False)

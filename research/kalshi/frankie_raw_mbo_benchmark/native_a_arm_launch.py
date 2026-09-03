@@ -384,7 +384,7 @@ def launch(
     records: Any = None,
     stream_ledgers: bool = True,
     alias_companion_keys: bool = False,
-    emit_change_points: bool = False,
+    emit_change_points: bool = True,
 ) -> dict[str, Any]:
     """Gate, traverse, checkpoint, finalize. Returns the layered result plus the receipts.
 
@@ -526,9 +526,8 @@ def launch(
         checkpointer=checkpointer,
         stage_spawn=stager.stage,
         sinks=sinks,
-        # 4.16's event-driven half. Under D60 every change point is retained on its track,
-        # so retained volume becomes (open tracks x changes) rather than (tracks) - a size
-        # decision, declared before it is taken.
+        # D83/D88: canonical launch carries change points by default. An explicit declared
+        # comparison may turn them off; the section summary records that disabled state.
         emit_change_points=emit_change_points,
     )
     # Sequence 0 before any interval save. The checkpointer REFUSES an interval save without
@@ -610,13 +609,14 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
-        "--emit-change-points",
-        action="store_true",
+        "--no-change-points",
+        action="store_false",
+        dest="emit_change_points",
+        default=True,
         help=(
-            "feed 4.16's event-driven change points. `observe_change_point` had no caller "
-            "anywhere, so run 33605852433 emitted only the fixed horizons. Every change "
-            "point is RETAINED on its track under D60, so retained volume becomes "
-            "(open tracks x changes). Off by default because that is a size decision."
+            "turn off 4.16 event-driven change points for a declared comparison. They are ON "
+            "by canonical default under D83/D88; disabling them is explicit and the section "
+            "records the comparison-off state rather than an empty measurement."
         ),
     )
     parser.add_argument(
