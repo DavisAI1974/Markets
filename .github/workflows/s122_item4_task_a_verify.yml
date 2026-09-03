@@ -1,23 +1,23 @@
-name: S122 Item 4 Task A verifier
+name: S122 Item 4 Task A isolated verify and land
 
 on:
   push:
     branches:
-      - chatgpt/s122-item4-verify
+      - chatgpt/s122-item4-verify-exec
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: s122-item4-task-a-exec
+  cancel-in-progress: true
 
 jobs:
-  verify:
+  verify-and-land:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - name: Checkout verifier branch
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 1
-      - name: Prove Actions job starts
-        run: |
-          set -euo pipefail
-          echo WORKFLOW_OK
-          git rev-parse HEAD
+      - run: bash scripts/s122_task_a_verify_v2.sh
