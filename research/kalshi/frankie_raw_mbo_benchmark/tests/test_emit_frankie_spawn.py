@@ -154,7 +154,30 @@ def _accounted_prompt_test_crosswalk() -> dict:
             }],
         } for layer_id in layer_ids],
     }
-    return xw.crosswalk(registry, arm="A_CLEAN", knowledge_receipt=knowledge_receipt)
+    body = xw.crosswalk(registry, arm="A_CLEAN", knowledge_receipt=knowledge_receipt)
+    # Prompt rendering now shows the exact causal roster. Keep the unit fixture small for
+    # static knowledge, but give it the production registry's 55 accounted causal identities
+    # so every prompt test exercises that rendered roster instead of a zero-layer fiction.
+    causal_rows = [
+        {
+            "layer_id": entry["layer_id"],
+            "group_id": group["group_id"],
+            "policy": group["policy"],
+            "arm_applicable": True,
+            "producer": {},
+            "status": "DELIVERED",
+            "evidence": {},
+        }
+        for group in xw.load_registry()["groups"]
+        if group["policy"] == "CAUSAL_STREAM_REQUIRED"
+        for entry in group["entries"]
+    ]
+    body["layers"].extend(causal_rows)
+    body["totals"]["inputs_applicable"] += len(causal_rows)
+    body["totals"]["inputs_delivered"] += len(causal_rows)
+    body["totals"]["inputs_accounted"] += len(causal_rows)
+    body["totals"]["delivered"] += len(causal_rows)
+    return body
 
 
 def _prompt_test_knowledge_receipt(root: Path, *, arm: str) -> Path:
@@ -718,9 +741,47 @@ class DeliveryReceiptGateTest(StopRuleTests):
         self.assertIn("under no obligation to identify one", text)
         self.assertIn("The field census, measured on every retained member row", text)
 
+    def test_the_9a_block_enumerates_all_47_raw_and_8_derived_causal_layers(self):
+        text = self._emit()
+        section = text[text.index("## The raw MBO, which is section 9a"):]
+        self.assertIn("55 layers: 47 raw/non-geometry", section)
+        self.assertIn("8 derived-geometry identities", section)
+        self.assertIn("later additions grow this review automatically", section)
+        registry = xw.load_registry()
+        causal_ids = {
+            entry["layer_id"]
+            for group in registry["groups"]
+            if group["policy"] == "CAUSAL_STREAM_REQUIRED"
+            for entry in group["entries"]
+        }
+        self.assertEqual(len(causal_ids), 55)
+        for layer_id in causal_ids:
+            self.assertIn(f"`{layer_id}`", section, layer_id)
+
     def test_the_mission_asks_for_the_same_optional_raw_mbo_elimination_assessment(self):
         mission = (emitter.REPO_ROOT / MISSION_PATH).read_text(encoding="utf-8")
         self.assertIn("ongoing ingestion provides no value", mission)
         self.assertIn("recommend it for elimination", mission)
         self.assertIn("under no obligation to identify one", mission)
         self.assertIn("KEEP-EVERYTHING IS A FIRST-CLASS ANSWER", mission)
+        self.assertIn("47 raw/non-geometry MBO identities plus 8 derived-geometry", mission)
+        self.assertIn("if identities are\nadded, the review grows with them", mission)
+        for text in (mission, self._emit()):
+            self.assertIn("retained bytes per record and per day", text)
+            self.assertIn("meaningful space and work", text)
+            self.assertIn("zero value is the bar", text.lower())
+            self.assertIn("even a little credible present or future informational value", text)
+            self.assertIn("size", text.lower())
+            self.assertIn("only after zero value is established", text)
+            self.assertIn("`book_full`", text)
+            self.assertIn("FIFO identities/queues", text)
+            self.assertIn("size is not", text)
+            self.assertIn("evidence that they are expendable", text)
+
+    def test_the_mission_statement_is_the_full_calculation_and_discovery_mission(self):
+        mission = (emitter.REPO_ROOT / MISSION_PATH).read_text(encoding="utf-8")
+        objective = mission[mission.index("## 1. Role and objective"):mission.index("## 2.")]
+        self.assertIn("compute every current\ncalculation-contract section yourself", objective)
+        self.assertIn("causal market mechanics, relationships, falsifiers", objective)
+        self.assertIn("Exhaustion is a\ncentral research axis, not the boundary", objective)
+        self.assertIn("non-exhaustion\nmechanics in their own right", objective)

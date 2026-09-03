@@ -419,11 +419,44 @@ def emit(
     add("earns its retention, say so and say why. You ADVISE; nothing is removed on your")
     add("say-so, and any removal is Greg's decision after discussion.")
     add("After inspecting the full raw MBO, assess whether any raw-data layer or field group")
-    add("makes no useful contribution—its ongoing ingestion provides no value to your")
+    add("makes **exactly zero useful contribution**—its ongoing ingestion provides no value to your")
     add("calculations, causal interpretation, discovery, falsification or hypotheses. If the")
     add("evidence supports that conclusion, recommend it for elimination and show why; Greg")
     add("decides whether it is eliminated. You are under no obligation to identify one, and")
     add("must not manufacture a casualty because the question was asked.")
+    add("**Zero value is the bar.** Low value, infrequent value or poor value per byte does not")
+    add("qualify. If it has even a little credible present or future informational value, KEEP")
+    add("it. Size matters only after zero value is established; it never makes useful data expendable.")
+    add("That applies explicitly to `book_full` and FIFO identities/queues: their size is not")
+    add("evidence that they are expendable.")
+    add("For any elimination recommendation, quantify the practical case as far as the run")
+    add("allows: retained bytes per record and per day, downstream duplicate/derived storage,")
+    add("avoidable ingestion or calculation work, and every dependent calculation or future")
+    add("question that would lose evidence. The point is meaningful space and work saved only")
+    add("when information is genuinely valueless, not a smaller schema for its own sake.")
+    add("")
+    causal_layers = [
+        row for row in crosswalk_body["layers"]
+        if row.get("policy") == "CAUSAL_STREAM_REQUIRED"
+    ]
+    raw_layers = [row for row in causal_layers if row.get("group_id") != "derived_geometry"]
+    geometry_layers = [row for row in causal_layers if row.get("group_id") == "derived_geometry"]
+    add("Review both the per-field census and **every individual causal registry layer**.")
+    add(f"The current gated roster is {len(causal_layers)} layers: {len(raw_layers)} raw/non-geometry")
+    add(f"MBO identities plus {len(geometry_layers)} derived-geometry identities. Derived surfaces")
+    add("such as dipole are included, but distinguish dropping a transform from dropping its raw")
+    add("inputs. The registry is authoritative; later additions grow this review automatically.")
+    add("Do not let a group-level judgement hide an individual layer. The roster you must cover is:")
+    add("")
+    causal_group_order: list[str] = []
+    for row in causal_layers:
+        group_id = str(row["group_id"])
+        if group_id not in causal_group_order:
+            causal_group_order.append(group_id)
+    for group_id in causal_group_order:
+        group_rows = [row for row in causal_layers if row["group_id"] == group_id]
+        identities = ", ".join(f"`{row['layer_id']}`" for row in group_rows)
+        add(f"- `{group_id}` ({len(group_rows)}): {identities}")
     add("")
     add("### What you are actually given, so `CANNOT_JUDGE` is used honestly")
     add("")
