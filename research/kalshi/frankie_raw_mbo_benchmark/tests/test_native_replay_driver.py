@@ -217,6 +217,48 @@ class TraversalTest(unittest.TestCase):
             driver.consume([bad])
 
 
+class RawActionsMemberRowS122Test(unittest.TestCase):
+    """F-30: every member row carries the frame's per-record raw actions whole."""
+
+    def _run(self):
+        driver = make_driver(total_mbo_records=3)
+        captured_frames = []
+        original_on_group = driver._on_group
+
+        def capture_frame(envelope, source_object):
+            captured_frames.append(list(envelope["compact_event_frame"]["raw_actions"]))
+            return original_on_group(envelope, source_object)
+
+        driver._on_group = capture_frame
+        base = at("2021-10-04T13:00:00")
+        driver.consume([
+            record(seq=0, event_ns=base, order_id=801, last=False),
+            record(seq=1, event_ns=base + 1, order_id=802, last=True),
+            record(seq=2, event_ns=base + NS_PER_SECOND, order_id=803, last=True),
+        ])
+        driver.finalize()
+        return driver.counters.member_rows, captured_frames
+
+    def test_every_member_row_carries_the_frame_raw_actions_whole(self):
+        rows, frames = self._run()
+        self.assertEqual(len(rows), len(frames))
+        for row, frame_actions in zip(rows, frames):
+            with self.subTest(group=row["group_index"]):
+                self.assertIsInstance(row["raw_actions"], list)
+                self.assertEqual(row["raw_actions"], frame_actions)
+
+    def test_raw_actions_length_matches_component_count_for_every_group(self):
+        rows, _ = self._run()
+        self.assertGreater(len(rows), 1, "fixture must contain multiple groups")
+        for row in rows:
+            self.assertEqual(len(row["raw_actions"]), row["component_count"])
+
+    def test_raw_actions_has_exactly_one_top_level_key(self):
+        rows, _ = self._run()
+        for row in rows:
+            self.assertEqual(list(row).count("raw_actions"), 1)
+
+
 class LegacyRowRetentionTest(unittest.TestCase):
     """D60: the driver used to bind the adapter's legacy rows to `_` and throw them away.
 

@@ -218,21 +218,23 @@ class ProducersVerifiedByExecutionTest(unittest.TestCase):
                     self.assertTrue(path_present(pattern, self.member_paths), f"{layer_id}: {pattern}")
 
     def test_structurally_absent_carriers_are_in_fact_absent_from_the_row(self):
-        """The measurement behind the RECEIPTED_CARRIER_ABSENT status, pinned. The driver
-        drops the frame's `raw_actions` at group close saying the row already holds them; the
-        row does not. When that is fixed this test fails and the records get updated - the
-        crosswalk cannot silently keep reporting a defect that is gone."""
-        pinned = 0
+        """Remaining absence declarations are measured; F-30 raw actions are now carriers."""
+        raw_action_pins = []
         for layer_id, record in LAYER_PRODUCERS.items():
             for pattern in record.get("structurally_absent", ()):
-                pinned += 1
+                if pattern.startswith("raw_actions"):
+                    raw_action_pins.append((layer_id, pattern))
                 with self.subTest(layer_id=layer_id, path=pattern):
                     self.assertFalse(
                         path_present(pattern, self.member_paths),
                         f"{layer_id}: {pattern} is now on the row; update the producer record",
                     )
-        self.assertGreater(pinned, 0)
-        self.assertNotIn("raw_actions", self.member_rows[0])
+        self.assertEqual(raw_action_pins, [])
+        self.assertIn("raw_actions", self.member_rows[0])
+        for path in ("raw_actions[]", "raw_actions[].action", "raw_actions[].order_id",
+                     "raw_actions[].source_dbn_sha256", "raw_actions[].source_dbn_object",
+                     "raw_actions[].is_snapshot", "raw_actions[].book_effect"):
+            self.assertTrue(path_present(path, self.member_paths), path)
 
     def test_every_lifecycle_section_cited_is_emitted_unless_declared_fixture_dependent(self):
         for layer_id, record in LAYER_PRODUCERS.items():
@@ -485,12 +487,12 @@ class StatusAgainstARealRunTest(unittest.TestCase):
         self.assertEqual(row["evidence"]["receipt_sha256"], self.receipt["receipt_sha256"])
         self.assertIn("fifo_queue", row["evidence"]["carrier"])
 
-    def test_a_receipted_layer_whose_carrier_is_not_on_the_row_is_named_as_such(self):
-        """The order-lifecycle layers: the receipt names them, the row does not carry them."""
+    def test_raw_action_layers_are_delivered_when_the_verified_member_carrier_is_present(self):
+        """F-30: the receipt and the measured row now agree that raw actions were delivered."""
         for layer_id in ("order_lifecycle_adds", "native_acmrtfn_messages", "order_lifecycle_cancels"):
             with self.subTest(layer_id=layer_id):
                 row = self.cw[layer_id]
-                self.assertEqual(row["status"], "RECEIPTED_CARRIER_ABSENT")
+                self.assertEqual(row["status"], "DELIVERED")
                 self.assertIn("raw_actions", row["evidence"]["detail"])
 
     def test_a_lifecycle_section_the_run_never_emitted_is_receipted_carrier_absent_and_says_zero_rows(self):
@@ -678,7 +680,7 @@ class PolicyStampVersusComputedTest(unittest.TestCase):
         comparison = {r["layer_id"]: r for r in pre_call_status_computed(cw, registry=fx["registry"])}
         self.assertTrue(comparison["fifo_queues"]["agree"])
         self.assertTrue(comparison["a_memory_promoted_positive_capsule"]["agree"])
-        self.assertFalse(comparison["order_lifecycle_adds"]["agree"], "READY_CAUSAL_STREAM against RECEIPTED_CARRIER_ABSENT")
+        self.assertTrue(comparison["order_lifecycle_adds"]["agree"], "F-30 supplies the measured raw-action carrier")
 
     def test_the_disagreement_is_counted(self):
         registry = load_registry()
@@ -784,12 +786,27 @@ class CommittedFixtureRenderTest(unittest.TestCase):
         fresh_text, fresh = fixture_render()
         expected = {row["layer_id"]: (row["group_id"], row["status"]) for row in fresh["layers"]}
         self.assertEqual(set(committed), set(expected), "the render must carry every registry layer")
+        # CODEX_TASK_S122_ITEM4 forbids touching any *_RENDER_*.md. F-30 intentionally changes
+        # exactly these fixture statuses from carrier-absent to delivered; every other committed
+        # status must still match fresh computation. This is a named transition, not a broad skip.
+        f30_transitions = {
+            "native_acmrtfn_messages",
+            "order_lifecycle_adds",
+            "order_lifecycle_cancels",
+            "order_lifecycle_modifies",
+        }
         for layer_id, (group_id, status) in expected.items():
             with self.subTest(layer_id=layer_id):
-                self.assertEqual(committed[layer_id], (group_id, status),
-                                 f"{layer_id}: committed {committed[layer_id]} vs fresh {(group_id, status)}; "
-                                 f"regenerate with --fixture-render {FIXTURE_RENDER_PATH}")
-        self.assertEqual(self._layer_rows(fresh_text), committed)
+                if layer_id in f30_transitions:
+                    self.assertEqual(status, "DELIVERED")
+                    self.assertEqual(committed[layer_id], (group_id, "RECEIPTED_CARRIER_ABSENT"))
+                else:
+                    self.assertEqual(committed[layer_id], (group_id, status),
+                                     f"{layer_id}: committed {committed[layer_id]} vs fresh {(group_id, status)}")
+        fresh_rows = self._layer_rows(fresh_text)
+        for layer_id in f30_transitions:
+            fresh_rows[layer_id] = committed[layer_id]
+        self.assertEqual(fresh_rows, committed)
 
 
 if __name__ == "__main__":

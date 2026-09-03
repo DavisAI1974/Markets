@@ -1102,9 +1102,9 @@ class NativeReplayDriver:
         #
         # So it no longer enumerates. Every frame key is carried, and anything new an adapter
         # adds arrives automatically instead of being silently dropped until someone notices.
-        # `raw_actions` is excluded only because the member row already holds it.
+        # Measured: member_clock_row consumes raw_actions for clocks but does not return it.
         for carried, value in frame.items():
-            if carried == "raw_actions" or carried in row:
+            if carried in row:
                 continue
             row[carried] = value
             self.counters.frame_keys_carried.add(carried)

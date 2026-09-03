@@ -129,6 +129,21 @@ class RowSinkDifferentialTest(unittest.TestCase):
             json.loads(json.dumps(inline_rows, sort_keys=True)),
         )
 
+    def test_raw_actions_rebaseline_is_identical_on_both_retention_paths(self):
+        """F-30 changes ledger bytes, never the row retained by each path."""
+        receipt = self.streamed["layers"]["exact_member_ledger"]["rows_receipt"]
+        streamed_rows = [
+            json.loads(line)
+            for line in Path(receipt["path"]).read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        inline_rows = self.inline["layers"]["exact_member_ledger"]["rows"]
+        self.assertEqual(len(streamed_rows), len(inline_rows))
+        self.assertGreater(len(streamed_rows), 0)
+        for streamed_row, inline_row in zip(streamed_rows, inline_rows):
+            self.assertEqual(streamed_row["raw_actions"], inline_row["raw_actions"])
+            self.assertEqual(len(streamed_row["raw_actions"]), streamed_row["component_count"])
+
     def test_all_three_ledgers_stream_and_reconcile_against_their_counters(self):
         retention = self.streamed["ledger_retention"]
         self.assertEqual(len(retention), 3)

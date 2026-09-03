@@ -18,19 +18,12 @@ verified BY EXECUTION in the tests against a row a real traversal wrote, censuse
 `native_mbo_field_census.MboFieldCensus`, whose paths are the vocabulary used here.
 
 **The measurement this table records, and it is the one Greg's ruling 2 turns on.** The exact
-member row carries 48 top-level fields and NO `raw_actions`: `native_replay_driver._on_group`
-skips the frame's `raw_actions` when carrying frame keys onto the row with a comment saying
-the member row already holds them, and `native_clocks.member_clock_row` - which builds the
-row - returns no such key. So the per-record A/C/M/R/T/F/N messages with their order ids,
-prices, sizes, flags, sequences, per-record clocks, per-record `book_effect` and per-record
-`source_dbn_object` / `source_dbn_sha256` are PRODUCED (the hash-locked adapter's
-`NormalizedMbo.public_dict`, the capture wrapper's `book_effect`) and then DROPPED before the
-ledger. What survives per group is state and aggregates: `book_full` with its FIFO queues,
-the `activity` windows, the `structure` descriptor, `integrity`, `clocks`. The order-lifecycle
-layers therefore have a producer and no carrier, and the per-group delivery receipt that names
-them under the member carrier over-claims. The records below say so, the tests pin the
-absence so a fix cannot go unnoticed, and the computed status (`RECEIPTED_CARRIER_ABSENT`)
-names it on every render.
+member row now carries the frame's `raw_actions` list whole. `native_clocks.member_clock_row`
+consumes that list to derive clocks but returns a fresh dict without it, so
+`native_replay_driver._on_group` carries the frame field onto the row explicitly. The field census
+therefore names the per-record A/C/M/R/T/F/N messages and their order ids, prices, sizes, flags,
+sequences, clocks, provenance, snapshot flag and `book_effect`. The producer records below declare
+those paths as member carriers; no raw-action field remains pinned as structurally absent.
 
 **The seven clocks, against the code as it is.** The registry's `causal_clocks` group names
 seven; the row's `clocks` object has five fields and the group receipt four keys. The mapping
@@ -86,14 +79,12 @@ SOURCE_DOC = "research/kalshi/NG_EXHAUSTION_FRANKIE_SOURCE_FILE_INVENTORY_202608
 KNOWLEDGE_DIR = "research/kalshi/agents/frankie_native_raw_mbo_knowledge/"
 KNOWLEDGE_MANIFEST = KNOWLEDGE_DIR + "KNOWLEDGE_MANIFEST_20260828.json"
 
-RAW_ACTIONS_DROP = (
-    "PRODUCED and then DROPPED: `NormalizedMbo.public_dict` builds every per-record field and "
-    "`FullCaptureAdapter.apply` attaches the per-record `book_effect`, but "
-    "`native_replay_driver._on_group` skips `raw_actions` when carrying frame keys onto the "
-    "member row ('excluded only because the member row already holds it') and "
-    "`native_clocks.member_clock_row`, which builds the row, returns no `raw_actions`. The "
-    "exact member ledger carries no per-record message. The per-group delivery receipt names "
-    "this layer under the member carrier, so the receipt over-claims."
+RAW_ACTIONS_CARRIED = (
+    "CARRIED: `NormalizedMbo.public_dict` builds every per-record field and "
+    "`FullCaptureAdapter.apply` attaches the per-record `book_effect`; "
+    "`native_replay_driver._on_group` carries the frame's `raw_actions` list whole onto the "
+    "exact member row because `member_clock_row` consumes it for clocks but does not return it. "
+    "The row field census is the delivery proof."
 )
 INVENTORY_BOUND = (
     "BOUND TO THE INVENTORY DOCUMENT: the registry's only source path for this layer is the "
@@ -268,12 +259,11 @@ LAYER_PRODUCERS: dict[str, dict[str, Any]] = {
     "canonical_sep_nov_2021_dbn_mbo_objects": _row(
         module="native_replay_driver", symbol="_source_day", file=DRV, line=305,
         carrier="source_day (+ raw_symbol, instrument_id); the roster identity is raw_mbo_source_manifest",
-        member_paths=("source_day", "raw_symbol", "instrument_id"),
+        member_paths=("source_day", "raw_symbol", "instrument_id", "raw_actions[].source_dbn_object", "raw_actions[].source_dbn_sha256"),
         notes="The row names its source day and instrument; the object roster is pinned by "
               "evidence_identity.source_manifest_hash. The PER-RECORD object name and sha256 "
               "(V4MboAdapter.normalize -> NormalizedMbo.source_dbn_object / source_dbn_sha256, on "
-              "raw_actions) are dropped with raw_actions - see native_acmrtfn_messages.",
-        structurally_absent=("raw_actions[].source_dbn_object", "raw_actions[].source_dbn_sha256"),
+              "raw_actions) are carried with raw_actions - see native_acmrtfn_messages.",
     ),
     "october_first_source_window": _row(
         module="raw_mbo_source_manifest", symbol="EXPECTED_ROSTER", file=ROSTER, line=33,
@@ -292,105 +282,96 @@ LAYER_PRODUCERS: dict[str, dict[str, Any]] = {
     ),
     "native_acmrtfn_messages": _row(
         module="ng_exhaustion_mbo_v4_state_adapter_20260820", symbol="NormalizedMbo.public_dict", file=V4, line=149,
-        carrier="raw_actions[] (action, side, price_raw, size, order_id, flags, sequence, ts_event_ns, ts_recv_ns) - NOT ON THE ROW",
-        notes=RAW_ACTIONS_DROP + " Surviving aggregates: structure.action_string, structure.action_counts, "
+        carrier="raw_actions[] (action, side, price_raw, size, order_id, flags, sequence, ts_event_ns, ts_recv_ns)",
+        notes=RAW_ACTIONS_CARRIED + " Surviving aggregates: structure.action_string, structure.action_counts, "
               "activity.<window>.action_count.",
-        structurally_absent=("raw_actions[]", "raw_actions[].action", "raw_actions[].order_id"),
+        member_paths=("raw_actions[]", "raw_actions[].action", "raw_actions[].order_id"),
         aggregates_present=("structure.action_string", "structure.action_counts", "activity_since.*.action_count"),
     ),
     "snapshot_bootstrap_reset_messages": _row(
         module="native_full_capture_adapter", symbol="_observe_before", file=FCA, line=148,
         carrier="snapshot_bootstrap_only; capture_observations (book_clear*, tob_side_wipe*); integrity",
-        member_paths=("snapshot_bootstrap_only", "capture_observations", "integrity"),
+        member_paths=("snapshot_bootstrap_only", "capture_observations", "integrity", "raw_actions[].is_snapshot"),
         notes="Snapshot-only groups are flagged on the frame (event_frame); an R clear is counted with what it "
               "destroyed by the capture wrapper. The per-record is_snapshot flag rides on raw_actions and is "
               "dropped with it.",
-        structurally_absent=("raw_actions[].is_snapshot",),
     ),
     "raw_source_identity_provenance_clocks_integrity": _row(
         module="ng_exhaustion_mbo_v4_state_adapter_20260820", symbol="event_frame", file=V4, line=703,
         carrier="schema, adapter_revision, census_view, instrument_id, raw_symbol, publisher_id, channel_id, "
                 "sequence, ts_event_ns, ts_recv_ns, ts_in_delta_ns, integrity",
-        member_paths=("adapter_revision", "census_view", "publisher_id", "channel_id", "sequence",
-                      "ts_event_ns", "ts_recv_ns", "ts_in_delta_ns", "integrity"),
+        member_paths=("adapter_revision", "census_view", "publisher_id", "channel_id", "sequence", "ts_event_ns", "ts_recv_ns", "ts_in_delta_ns", "integrity", "raw_actions[].source_dbn_sha256"),
         notes="The F_LAST record's identity and clocks plus the book's cumulative integrity counters. The "
               "per-record provenance (source_dbn_sha256) is on raw_actions and dropped with it.",
-        structurally_absent=("raw_actions[].source_dbn_sha256",),
     ),
     # ---- order_lifecycle (CAUSAL_STREAM_REQUIRED; member carrier) -------------------------
     "order_lifecycle_adds": _row(
         module="ng_exhaustion_mbo_v4_state_adapter_20260820", symbol="_add_order", file=V4, line=415,
-        carrier="raw_actions[] where action == A, with raw_actions[].book_effect - NOT ON THE ROW",
-        notes=RAW_ACTIONS_DROP + " Surviving aggregates: structure.action_counts.A, activity.<window>.action_qty.A.",
-        structurally_absent=("raw_actions[]",),
+        carrier="raw_actions[] where action == A, with raw_actions[].book_effect",
+        notes=RAW_ACTIONS_CARRIED + " Surviving aggregates: structure.action_counts.A, activity.<window>.action_qty.A.",
+        member_paths=("raw_actions[]",),
         aggregates_present=("structure.action_counts.A", "activity_since.*.action_qty.A"),
     ),
     "order_lifecycle_cancels": _row(
         module="ng_exhaustion_mbo_v4_state_adapter_20260820", symbol="_cancel", file=V4, line=433,
-        carrier="raw_actions[] where action == C, with raw_actions[].book_effect (removed, size_delta) - NOT ON THE ROW",
-        notes=RAW_ACTIONS_DROP + " Surviving aggregates: structure.action_counts.C, activity.<window>.action_qty.C, "
+        carrier="raw_actions[] where action == C, with raw_actions[].book_effect (removed, size_delta)",
+        notes=RAW_ACTIONS_CARRIED + " Surviving aggregates: structure.action_counts.C, activity.<window>.action_qty.C, "
               "capture_observations.over_cancel*.",
-        structurally_absent=("raw_actions[]",),
+        member_paths=("raw_actions[]",),
         aggregates_present=("structure.action_counts.C", "activity_since.*.action_qty.C"),
     ),
     "order_lifecycle_modifies": _row(
         module="ng_exhaustion_mbo_v4_state_adapter_20260820", symbol="_modify", file=V4, line=451,
-        carrier="raw_actions[] where action == M, with raw_actions[].book_effect (priority_lost) - NOT ON THE ROW",
-        notes=RAW_ACTIONS_DROP + " Surviving aggregates: structure.action_counts (M when present), "
+        carrier="raw_actions[] where action == M, with raw_actions[].book_effect (priority_lost)",
+        notes=RAW_ACTIONS_CARRIED + " Surviving aggregates: structure.action_counts (M when present), "
               "activity.<window>.priority_lost_modify_count.",
-        structurally_absent=("raw_actions[]",),
+        member_paths=("raw_actions[]",),
         aggregates_present=("structure.action_counts", "activity_since.*.priority_lost_modify_count"),
     ),
     "order_lifecycle_replaces": _row(
         module="ng_exhaustion_mbo_v4_state_adapter_20260820", symbol="_modify", file=V4, line=472,
         carrier="activity.<window>.priority_lost_modify_count (a replace is an M that loses priority: "
                 "price change or size increase)",
-        member_paths=("activity_since.*.priority_lost_modify_count",),
+        member_paths=("activity_since.*.priority_lost_modify_count", "raw_actions[].book_effect"),
         notes="The feed has no distinct replace action (VALID_ACTIONS = ACMRTFN); a replace is a modify that "
               "re-queues, which _modify decides (priority_lost) and the activity windows count. The per-record "
-              "priority_lost flag rides on raw_actions[].book_effect and is dropped with it.",
-        structurally_absent=("raw_actions[].book_effect",),
+              "priority_lost flag rides on raw_actions[].book_effect and is carried with it.",
     ),
     "order_lifecycle_trades": _row(
         module="ng_exhaustion_mbo_v4_state_adapter_20260820", symbol="_legacy_control_row", file=V4, line=744,
         carrier="legacy_observable_rows (one ten-level projection per T action) + activity.<window>.trade_*_aggressor_qty; "
-                "raw_actions[] where action == T is NOT ON THE ROW",
-        member_paths=("activity_since.*.trade_buy_aggressor_qty", "activity_since.*.trade_sell_aggressor_qty"),
+                "raw_actions[] where action == T is carried on the member row",
+        member_paths=("activity_since.*.trade_buy_aggressor_qty", "activity_since.*.trade_sell_aggressor_qty", "raw_actions[]"),
         legacy_keys=("action", "price", "size", "ts_recv"),
         ledgers=(MEMBER_LEDGER, LEGACY_LEDGER),
         notes="Trades are the one action class whose per-record row survives, as the legacy ten-level projection "
               "the adapter emits per T (legacy_observable_rows). The native per-record T with its order id and "
-              "flags is dropped with raw_actions.",
-        structurally_absent=("raw_actions[]",),
+              "flags is carried with raw_actions.",
         aggregates_present=("structure.action_counts.T",),
     ),
     "order_lifecycle_fills": _row(
         module="a_memory_member_first_recalculation_20260828", symbol="fill_disposition", file=STRUCT, line=176,
         carrier="structure.fill_disposition (filled / cancelled / modified / unresolved fill order ids); "
-                "raw_actions[] where action == F is NOT ON THE ROW",
-        member_paths=("structure.fill_disposition", "structure.fill_disposition.class",
-                      "structure.fill_disposition.filled_order_ids"),
+                "raw_actions[] where action == F is carried on the member row",
+        member_paths=("structure.fill_disposition", "structure.fill_disposition.class", "structure.fill_disposition.filled_order_ids", "raw_actions[]"),
         notes="The group-level fill disposition survives on structure; the per-record F (F mutates nothing in this "
-              "feed) is dropped with raw_actions.",
-        structurally_absent=("raw_actions[]",),
+              "feed) is carried with raw_actions.",
         aggregates_present=("structure.action_counts.F",),
     ),
     "order_lifecycle_clears": _row(
         module="native_full_capture_adapter", symbol="_observe_before", file=FCA, line=148,
         carrier="capture_observations.book_clear / book_clear_orders_removed / book_clear_qty_removed; integrity_delta",
-        member_paths=("capture_observations", "integrity_delta"),
+        member_paths=("capture_observations", "integrity_delta", "raw_actions[].book_effect"),
         notes="An R clear is counted with the orders and quantity it destroyed (cumulative, on every row); "
               "the per-record R with cleared_orders / cleared_qty rides on raw_actions[].book_effect and is dropped.",
-        structurally_absent=("raw_actions[].book_effect",),
     ),
     "order_identity_transitions": _row(
         module="a_memory_member_first_recalculation_20260828", symbol="describe_structure", file=STRUCT, line=187,
         carrier="structure.order_ids[], structure.distinct_order_id_count, structure.fill_disposition; "
                 "integrity.duplicate_add_order_id / modify_side_change / modify_missing_treated_as_add",
-        member_paths=("structure.order_ids[]", "structure.distinct_order_id_count", "structure.fill_disposition"),
+        member_paths=("structure.order_ids[]", "structure.distinct_order_id_count", "structure.fill_disposition", "raw_actions[].order_id"),
         notes="Which order ids a group touched and how their fills resolved, per group. The per-record "
               "order_id sequence is on raw_actions and dropped with it.",
-        structurally_absent=("raw_actions[].order_id",),
     ),
     "contract_session_roll_state": _row(
         module="native_replay_driver", symbol="ExchangeSessionRule", file=DRV, line=117,
