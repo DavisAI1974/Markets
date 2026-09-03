@@ -32,7 +32,9 @@ one arm, A_MEMORY (D86), nothing to remember:
         --result <run>/calculation_result.json \\
         --outputs-dir <run>/principal_outputs \\
         --delivery-receipt <run>/FRANKIE_LEDGER_DELIVERY_RECEIPT.json \\
-        --knowledge-receipt <run>/FRANKIE_KNOWLEDGE_DELIVERY_RECEIPT.json
+        --knowledge-receipt <run>/KNOWLEDGE_RECEIPT.json \
+        --knowledge-bundle <run>/KNOWLEDGE_BUNDLE.md \
+        --prompt <run>/FRANKIE_SPAWN_PROMPT.md
 
 It prints a JSON summary naming every hash and path it produced - `result_path`
 (`calculation_result_with_findings.json`, the original never written over), `report_path`,
@@ -40,7 +42,8 @@ It prints a JSON summary naming every hash and path it produced - `result_path`
 path and receipt hash), `first_lock` or the stated reason there is none - or `REFUSED: <why>`
 and exit 1, having written nothing. Optional: `--out`, `--handoff-dir`, `--no-report`, and
 the `*-sha256` forms of the two receipts when only the hash is in hand. The knowledge read
-gate plugs in at `KNOWLEDGE_USE_GATE` (see there); it is None until the coordinator wires it.
+gate is wired at `KNOWLEDGE_USE_GATE`; the canonical command supplies the
+exact receipt, knowledge bundle and prompt bytes it validates.
 """
 from __future__ import annotations
 
@@ -59,6 +62,10 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import 
     canonical_hash,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import load_registry
+from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import (
+    serialized_principal_input as bind_serialized_principal_input,
+    validate_knowledge_use,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_principal_outputs import (
     CANONICAL_ARM,
     CONTRACT_PATH,
@@ -104,11 +111,43 @@ class StagingError(ValueError):
 #: BEFORE its output bundle is validated. Whatever the gate raises refuses the artifact by
 #: name and the read-back writes nothing; whatever it returns (a receipt, or None) is carried
 #: on the execution as `knowledge_use_receipt` and so into the result's principal block. The
-#: knowledge persona exposes `validate_knowledge_use`; the coordinator wires it HERE at merge
-#: by setting this hook (the CLI reads it) - `read_back(knowledge_use_gate=)` and
+#: The knowledge persona exposes `validate_knowledge_use`; `validate_staged_knowledge_use`
+#: adapts this hook to it (the CLI reads the live hook) - `read_back(knowledge_use_gate=)` and
 #: `load_principal_artifact(knowledge_use_gate=)` take it explicitly for callers in-process.
 KnowledgeUseGate = Callable[..., Any]
-KNOWLEDGE_USE_GATE: KnowledgeUseGate | None = None
+
+
+def validate_staged_knowledge_use(
+    body: Mapping[str, Any],
+    *,
+    knowledge_receipt_sha256: str | None,
+    knowledge_receipt: Mapping[str, Any] | None = None,
+    model_visible_context: bytes | None = None,
+    serialized_principal_input: bytes | None = None,
+) -> dict[str, Any]:
+    """Adapt the staged artifact and its exact delivered bytes to the existing read gate."""
+    if knowledge_receipt_sha256 is None:
+        raise StagingError("no delivered knowledge_receipt_sha256 was supplied to the read gate")
+    if knowledge_receipt is None:
+        raise StagingError("the delivered knowledge receipt body is unavailable to the read gate")
+    if knowledge_receipt.get("receipt_sha256") != knowledge_receipt_sha256:
+        raise StagingError(
+            "the knowledge receipt body does not match the knowledge_receipt_sha256 "
+            "the coordinator delivered under"
+        )
+    if model_visible_context is None:
+        raise StagingError("the model-visible knowledge bundle bytes are unavailable to the read gate")
+    if serialized_principal_input is None:
+        raise StagingError("the exact serialized prompt plus knowledge bundle is unavailable to the read gate")
+    return validate_knowledge_use(
+        body.get("knowledge_use"),
+        knowledge_receipt=knowledge_receipt,
+        model_visible_context=model_visible_context,
+        serialized_principal_input=serialized_principal_input,
+    )
+
+
+KNOWLEDGE_USE_GATE: KnowledgeUseGate = validate_staged_knowledge_use
 
 
 def _canonical(value: Any) -> str:
@@ -195,6 +234,9 @@ def load_principal_artifact(
     delivery_receipt_sha256: str | None = None,
     expected_arm: str | None = None,
     knowledge_use_gate: KnowledgeUseGate | None = None,
+    knowledge_receipt: Mapping[str, Any] | None = None,
+    model_visible_context: bytes | None = None,
+    serialized_principal_input: bytes | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Read back what the spawn produced, or fail hard.
 
@@ -339,9 +381,18 @@ def load_principal_artifact(
     knowledge_use_receipt: Any = None
     if knowledge_use_gate is not None:
         try:
-            knowledge_use_receipt = knowledge_use_gate(
-                body, knowledge_receipt_sha256=knowledge_receipt_sha256
-            )
+            gate_inputs: dict[str, Any] = {
+                "knowledge_receipt_sha256": knowledge_receipt_sha256,
+            }
+            if any(value is not None for value in (
+                knowledge_receipt, model_visible_context, serialized_principal_input,
+            )):
+                gate_inputs.update({
+                    "knowledge_receipt": knowledge_receipt,
+                    "model_visible_context": model_visible_context,
+                    "serialized_principal_input": serialized_principal_input,
+                })
+            knowledge_use_receipt = knowledge_use_gate(body, **gate_inputs)
         except Exception as exc:  # noqa: BLE001 - the gate's own refusal, carried by name
             raise StagingError(f"the knowledge read gate refused the artifact: {exc}") from exc
     outputs_receipt_sha256, outputs_receipt = _validate_outputs(
@@ -493,6 +544,17 @@ def _load_receipt_file(path: Path | str | None, *, label: str) -> dict[str, Any]
     return dict(body)
 
 
+def _load_exact_bytes(path: Path | str | None, *, label: str) -> bytes | None:
+    """Read one exact staged input, or preserve its absence for the gate to refuse."""
+    if path is None:
+        return None
+    path = Path(path)
+    try:
+        return path.read_bytes()
+    except OSError as exc:
+        raise StagingError(f"cannot read the {label} at {path}: {exc}") from exc
+
+
 def _bind_receipt_sha(file_body: Mapping[str, Any] | None, stated: str | None, *, label: str) -> str | None:
     """The receipt sha the read-back works with: the file's, which a stated one must equal."""
     if file_body is None:
@@ -631,6 +693,8 @@ def read_back(
     delivery_receipt_sha256: str | None = None,
     delivery_receipt: Path | str | None = None,
     knowledge_receipt: Path | str | None = None,
+    knowledge_bundle: Path | str | None = None,
+    prompt: Path | str | None = None,
     render_report: bool = True,
     handoff_dir: Path | str | None = None,
     knowledge_use_gate: KnowledgeUseGate | None = None,
@@ -649,7 +713,9 @@ def read_back(
     `*_sha256` must equal its file's. With the result and the receipts in hand the read-back
     computes the 99-layer crosswalk and the report carries it; the crosswalk is part of the
     render, so its failure is stated in the report and stays non-fatal, as a render failure
-    always has.
+    always has. When the knowledge-use gate is supplied, `knowledge_bundle` and `prompt` are
+    the exact staged files whose bytes form the principal input; absence is passed to the gate
+    as absence and refused, never replaced with inferred or generated bytes.
 
     **The handoff (S122 slice 6).** After a successful attach the read-back builds the V2
     workmode real-time handoff trio from the VALIDATED bundle (`build_handoff`) and writes it
@@ -667,6 +733,13 @@ def read_back(
     result_path = Path(result_path)
     delivery_body = _load_receipt_file(delivery_receipt, label="delivery receipt")
     knowledge_body = _load_receipt_file(knowledge_receipt, label="knowledge receipt")
+    model_visible_context = _load_exact_bytes(knowledge_bundle, label="knowledge bundle")
+    prompt_bytes = _load_exact_bytes(prompt, label="spawn prompt")
+    principal_input = (
+        bind_serialized_principal_input(prompt_bytes, model_visible_context)
+        if prompt_bytes is not None and model_visible_context is not None
+        else None
+    )
     delivery_receipt_sha256 = _bind_receipt_sha(delivery_body, delivery_receipt_sha256, label="delivery receipt")
     knowledge_receipt_sha256 = _bind_receipt_sha(knowledge_body, knowledge_receipt_sha256, label="knowledge receipt")
     try:
@@ -719,6 +792,9 @@ def read_back(
         delivery_receipt_sha256=delivery_receipt_sha256,
         expected_arm=run_arm,
         knowledge_use_gate=knowledge_use_gate,
+        knowledge_receipt=knowledge_body,
+        model_visible_context=model_visible_context,
+        serialized_principal_input=principal_input,
     )
     try:
         updated = NativeCalculationRun.attach_principal_findings_to_result(
@@ -969,6 +1045,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     rb.add_argument("--delivery-receipt-sha256", default=None, help="the ledger-delivery receipt the artifact must cite")
     rb.add_argument("--delivery-receipt", type=Path, default=None, help="FRANKIE_LEDGER_DELIVERY_RECEIPT_V1 file; bound by hash to the artifact's citation and fed to the crosswalk")
     rb.add_argument("--knowledge-receipt", type=Path, default=None, help="FRANKIE_KNOWLEDGE_DELIVERY_RECEIPT_V1 file; its hash is the one the verdicts must cite, and it feeds the crosswalk")
+    rb.add_argument("--knowledge-bundle", type=Path, default=None, help="the exact model-visible KNOWLEDGE_BUNDLE.md delivered to the principal")
+    rb.add_argument("--prompt", type=Path, default=None, help="the exact FRANKIE_SPAWN_PROMPT.md delivered beside the knowledge bundle")
     rb.add_argument("--handoff-dir", type=Path, default=None, help="where to write ONEWAY_HANDOFF / RT_FIRST_LOCK / RT_CONTEXT_MANIFEST (default: beside the result with findings; never over an earlier trio)")
     rb.add_argument("--no-report", action="store_true", help="do not render the findings report (and its crosswalk) beside the artifact")
     args = parser.parse_args(argv)
@@ -982,6 +1060,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             delivery_receipt_sha256=args.delivery_receipt_sha256,
             delivery_receipt=args.delivery_receipt,
             knowledge_receipt=args.knowledge_receipt,
+            knowledge_bundle=args.knowledge_bundle,
+            prompt=args.prompt,
             render_report=not args.no_report,
             handoff_dir=args.handoff_dir,
             knowledge_use_gate=KNOWLEDGE_USE_GATE,

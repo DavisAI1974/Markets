@@ -449,6 +449,30 @@ def delivered_artifact(**overrides) -> dict:
     return body
 
 
+def write_knowledge_gate_inputs(root: Path) -> dict:
+    """Write the three exact files the default knowledge-use adapter validates."""
+    from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import (
+        build_knowledge_delivery,
+        complete_knowledge_use,
+        render_knowledge_block,
+        write_knowledge_delivery,
+    )
+
+    delivery = build_knowledge_delivery(arm="A_MEMORY", role="REAL_TIME_FRANKIE")
+    written = write_knowledge_delivery(delivery, root)
+    prompt = root / "FRANKIE_SPAWN_PROMPT.md"
+    prompt.write_bytes(
+        ("# prompt\n" + render_knowledge_block(delivery.receipt)).encode("utf-8")
+    )
+    return {
+        "delivery": delivery,
+        "knowledge_use": complete_knowledge_use(delivery.receipt),
+        "receipt": written["receipt"],
+        "bundle": written["bundle"],
+        "prompt": prompt,
+    }
+
+
 class CanonicalArmTest(unittest.TestCase):
     """One arm, A_MEMORY (D86). Staging re-exports the outputs module's `CANONICAL_ARM` so
     the two cannot drift; A_CLEAN stays in ALLOWED_ARMS as an inert record (D60)."""
@@ -796,9 +820,11 @@ class ReadBackCliTest(unittest.TestCase):
     def setUpClass(cls):
         cls.tmp = tempfile.TemporaryDirectory()
         root = Path(cls.tmp.name)
+        cls.knowledge = write_knowledge_gate_inputs(root / "knowledge")
+        knowledge_sha = cls.knowledge["delivery"].receipt["receipt_sha256"]
         cls.outputs_dir = root / "principal_outputs"
         cls.receipt = write_bundle(
-            build_bundle(delivery_receipt_sha256=DELIVERY, knowledge_receipt_sha256=KNOWLEDGE),
+            build_bundle(delivery_receipt_sha256=DELIVERY, knowledge_receipt_sha256=knowledge_sha),
             cls.outputs_dir,
         )
         cls.result = finished_result()
@@ -813,6 +839,8 @@ class ReadBackCliTest(unittest.TestCase):
         body = delivered_artifact(
             evidence_result_hash=self.result["result_hash"],
             outputs_receipt_sha256=self.receipt["receipt_sha256"],
+            knowledge_receipt_sha256=self.knowledge["delivery"].receipt["receipt_sha256"],
+            knowledge_use=self.knowledge["knowledge_use"],
         )
         body.update(artifact_overrides)
         artifact_path = Path(tmp) / "frankie_principal_findings.json"
@@ -822,7 +850,10 @@ class ReadBackCliTest(unittest.TestCase):
     def _argv(self, artifact_path, result_path, *extra):
         return [
             "read-back", "--artifact", str(artifact_path), "--result", str(result_path),
-            "--outputs-dir", str(self.outputs_dir), "--knowledge-receipt-sha256", KNOWLEDGE,
+            "--outputs-dir", str(self.outputs_dir),
+            "--knowledge-receipt", str(self.knowledge["receipt"]),
+            "--knowledge-bundle", str(self.knowledge["bundle"]),
+            "--prompt", str(self.knowledge["prompt"]),
             *extra,
         ]
 
@@ -1016,14 +1047,31 @@ class ReadBackReportTest(unittest.TestCase):
 
     def test_the_cli_accepts_the_receipt_files(self):
         with tempfile.TemporaryDirectory() as tmp:
-            artifact_path, result_path = self._stage(tmp)
+            knowledge = write_knowledge_gate_inputs(Path(tmp) / "knowledge")
+            knowledge_sha = knowledge["delivery"].receipt["receipt_sha256"]
+            outputs_dir = Path(tmp) / "principal_outputs"
+            outputs_receipt = write_bundle(
+                build_bundle(
+                    delivery_receipt_sha256=self.delivery["receipt_sha256"],
+                    knowledge_receipt_sha256=knowledge_sha,
+                ),
+                outputs_dir,
+            )
+            artifact_path, result_path = self._stage(
+                tmp,
+                knowledge_receipt_sha256=knowledge_sha,
+                knowledge_use=knowledge["knowledge_use"],
+                outputs_receipt_sha256=outputs_receipt["receipt_sha256"],
+            )
             out = io.StringIO()
             with redirect_stdout(out):
                 code = staging_main([
                     "read-back", "--artifact", str(artifact_path), "--result", str(result_path),
-                    "--outputs-dir", str(self.outputs_dir),
+                    "--outputs-dir", str(outputs_dir),
                     "--delivery-receipt", str(self.delivery_path),
-                    "--knowledge-receipt", str(self.knowledge_path),
+                    "--knowledge-receipt", str(knowledge["receipt"]),
+                    "--knowledge-bundle", str(knowledge["bundle"]),
+                    "--prompt", str(knowledge["prompt"]),
                 ])
             self.assertEqual(code, 0, out.getvalue())
             summary = json.loads(out.getvalue())
@@ -1218,12 +1266,30 @@ class ReadBackHandoffTest(unittest.TestCase):
 
     def test_the_cli_names_the_handoff_paths_and_accepts_a_handoff_dir(self):
         with tempfile.TemporaryDirectory() as tmp:
-            artifact_path, result_path = self._stage(tmp)
+            knowledge = write_knowledge_gate_inputs(Path(tmp) / "knowledge")
+            knowledge_sha = knowledge["delivery"].receipt["receipt_sha256"]
+            outputs_dir = Path(tmp) / "principal_outputs"
+            outputs_receipt = write_bundle(
+                build_bundle(
+                    delivery_receipt_sha256=DELIVERY,
+                    knowledge_receipt_sha256=knowledge_sha,
+                ),
+                outputs_dir,
+            )
+            artifact_path, result_path = self._stage(
+                tmp,
+                receipt=outputs_receipt,
+                knowledge_receipt_sha256=knowledge_sha,
+                knowledge_use=knowledge["knowledge_use"],
+            )
             handoff_dir = Path(tmp) / "handoff"
             proc = subprocess.run(
                 [sys.executable, "-m", "research.kalshi.frankie_raw_mbo_benchmark.native_staging",
                  "read-back", "--artifact", str(artifact_path), "--result", str(result_path),
-                 "--outputs-dir", str(self.outputs_dir), "--knowledge-receipt-sha256", KNOWLEDGE,
+                 "--outputs-dir", str(outputs_dir),
+                 "--knowledge-receipt", str(knowledge["receipt"]),
+                 "--knowledge-bundle", str(knowledge["bundle"]),
+                 "--prompt", str(knowledge["prompt"]),
                  "--handoff-dir", str(handoff_dir), "--no-report"],
                 capture_output=True, text=True, cwd=str(Path(__file__).resolve().parents[4]),
             )
@@ -1276,11 +1342,13 @@ class CanonicalReadBackSurfaceTest(unittest.TestCase):
         cls.run_dir.mkdir()
         cls.delivery = fixture_delivery_receipt()
         (cls.run_dir / "FRANKIE_LEDGER_DELIVERY_RECEIPT.json").write_text(json.dumps(cls.delivery, indent=2))
-        (cls.run_dir / "FRANKIE_KNOWLEDGE_DELIVERY_RECEIPT.json").write_text(
-            json.dumps(fixture_knowledge_receipt(KNOWLEDGE), indent=2)
-        )
+        cls.knowledge = write_knowledge_gate_inputs(cls.run_dir)
+        knowledge_sha = cls.knowledge["delivery"].receipt["receipt_sha256"]
         cls.receipt = write_bundle(
-            build_bundle(delivery_receipt_sha256=cls.delivery["receipt_sha256"], knowledge_receipt_sha256=KNOWLEDGE),
+            build_bundle(
+                delivery_receipt_sha256=cls.delivery["receipt_sha256"],
+                knowledge_receipt_sha256=knowledge_sha,
+            ),
             cls.run_dir / "principal_outputs",
         )
         cls.result = finished_result()
@@ -1289,6 +1357,8 @@ class CanonicalReadBackSurfaceTest(unittest.TestCase):
             evidence_result_hash=cls.result["result_hash"],
             delivery_receipt_sha256=cls.delivery["receipt_sha256"],
             outputs_receipt_sha256=cls.receipt["receipt_sha256"],
+            knowledge_receipt_sha256=knowledge_sha,
+            knowledge_use=cls.knowledge["knowledge_use"],
         )
         (cls.run_dir / "frankie_principal_findings.json").write_text(json.dumps(body, indent=2))
 
@@ -1303,7 +1373,10 @@ class CanonicalReadBackSurfaceTest(unittest.TestCase):
         flags = {a for a in argv if a.startswith("--")}
         self.assertEqual(
             flags,
-            {"--artifact", "--result", "--outputs-dir", "--delivery-receipt", "--knowledge-receipt"},
+            {
+                "--artifact", "--result", "--outputs-dir", "--delivery-receipt",
+                "--knowledge-receipt", "--knowledge-bundle", "--prompt",
+            },
         )
         self.assertNotIn("--arm", flags, "the arm is bound off the run, not remembered")
         self.assertIn("<run>", " ".join(argv))
@@ -1321,7 +1394,10 @@ class CanonicalReadBackSurfaceTest(unittest.TestCase):
         self.assertEqual(updated["verdict"], "ACCEPTED", updated["failed_gates"])
         self.assertEqual(summary["outputs_receipt_sha256"], self.receipt["receipt_sha256"])
         self.assertEqual(summary["delivery_receipt_sha256"], self.delivery["receipt_sha256"])
-        self.assertEqual(summary["knowledge_receipt_sha256"], KNOWLEDGE)
+        self.assertEqual(
+            summary["knowledge_receipt_sha256"],
+            self.knowledge["delivery"].receipt["receipt_sha256"],
+        )
         # the report with the crosswalk
         report = Path(summary["report_path"]).read_text()
         self.assertIn("## Layer crosswalk", report)
@@ -1342,10 +1418,10 @@ class CanonicalReadBackSurfaceTest(unittest.TestCase):
 
 
 class KnowledgeReadGateSeamTest(unittest.TestCase):
-    """The knowledge persona exposes `validate_knowledge_use`; the coordinator wires it at
-    merge. The seam is `load_principal_artifact(knowledge_use_gate=)`, threaded through
+    """The knowledge persona exposes `validate_knowledge_use`; the coordinator adapter is
+    wired to it. The seam is `load_principal_artifact(knowledge_use_gate=)`, threaded through
     `read_back(knowledge_use_gate=)`, and the CLI reads the module hook
-    `native_staging.KNOWLEDGE_USE_GATE` (None until the coordinator sets it). The gate is
+    `native_staging.KNOWLEDGE_USE_GATE`. The gate is
     called with the artifact body and the knowledge receipt sha the coordinator delivered
     under, BEFORE the bundle is validated; what it raises is a refusal that writes nothing;
     what it returns is carried on the execution as `knowledge_use_receipt`."""
@@ -1374,8 +1450,11 @@ class KnowledgeReadGateSeamTest(unittest.TestCase):
         path.write_text(json.dumps(body))
         return path
 
-    def test_the_hook_is_unset_until_the_coordinator_wires_it(self):
-        self.assertIsNone(native_staging.KNOWLEDGE_USE_GATE)
+    def test_the_hook_is_wired_to_the_file_bound_adapter(self):
+        self.assertIs(
+            native_staging.KNOWLEDGE_USE_GATE,
+            native_staging.validate_staged_knowledge_use,
+        )
 
     def test_the_gate_receives_the_artifact_body_and_the_delivered_receipt_sha_and_its_receipt_is_carried(self):
         calls = []
@@ -1478,3 +1557,81 @@ class KnowledgeReadGateSeamTest(unittest.TestCase):
                 native_staging.KNOWLEDGE_USE_GATE = previous
             self.assertEqual(code, 0, out.getvalue())
         self.assertEqual(calls, [KNOWLEDGE])
+
+
+class DefaultKnowledgeReadGateTest(unittest.TestCase):
+    """The default seam validates the exact knowledge files staged for this artifact."""
+
+    @classmethod
+    def setUpClass(cls):
+        from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import (
+            build_knowledge_delivery,
+            complete_knowledge_use,
+            render_knowledge_block,
+            serialized_principal_input,
+        )
+
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.delivery = build_knowledge_delivery(arm="A_MEMORY", role="REAL_TIME_FRANKIE")
+        cls.knowledge_use = complete_knowledge_use(cls.delivery.receipt)
+        cls.prompt = (
+            "# prompt\n" + render_knowledge_block(cls.delivery.receipt)
+        ).encode("utf-8")
+        cls.principal_input = serialized_principal_input(
+            cls.prompt, cls.delivery.model_visible_context
+        )
+        cls.outputs_dir = Path(cls.tmp.name) / "principal_outputs"
+        cls.outputs_receipt = write_bundle(
+            build_bundle(
+                delivery_receipt_sha256=DELIVERY,
+                knowledge_receipt_sha256=cls.delivery.receipt["receipt_sha256"],
+            ),
+            cls.outputs_dir,
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def _artifact(self, directory: str, knowledge_use: dict) -> Path:
+        body = delivered_artifact(
+            knowledge_receipt_sha256=self.delivery.receipt["receipt_sha256"],
+            outputs_receipt_sha256=self.outputs_receipt["receipt_sha256"],
+            knowledge_use=knowledge_use,
+        )
+        path = Path(directory) / "frankie_principal_findings.json"
+        path.write_text(json.dumps(body), encoding="utf-8")
+        return path
+
+    def _load(self, directory: str, knowledge_use: dict):
+        return load_principal_artifact(
+            self._artifact(directory, knowledge_use),
+            expected_evidence_hash="a" * 64,
+            render_report=False,
+            outputs_dir=self.outputs_dir,
+            knowledge_receipt_sha256=self.delivery.receipt["receipt_sha256"],
+            knowledge_use_gate=native_staging.KNOWLEDGE_USE_GATE,
+            knowledge_receipt=self.delivery.receipt,
+            model_visible_context=self.delivery.model_visible_context,
+            serialized_principal_input=self.principal_input,
+        )
+
+    def test_a_well_formed_knowledge_use_passes_and_carries_the_gate_receipt(self):
+        with tempfile.TemporaryDirectory() as directory:
+            execution, _ = self._load(directory, self.knowledge_use)
+        self.assertEqual(
+            execution["knowledge_use_receipt"]["knowledge_receipt_sha256"],
+            self.delivery.receipt["receipt_sha256"],
+        )
+
+    def test_an_undelivered_knowledge_id_is_refused_by_name_through_staging(self):
+        knowledge_use = json.loads(json.dumps(self.knowledge_use))
+        undelivered = "not_a_delivered_knowledge_id"
+        knowledge_use["dispositions"][undelivered] = {
+            "disposition": "INSPECTED",
+            "reason": "not actually delivered",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaises(StagingError) as caught:
+                self._load(directory, knowledge_use)
+        self.assertIn(undelivered, str(caught.exception))
