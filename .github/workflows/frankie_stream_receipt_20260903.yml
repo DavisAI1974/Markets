@@ -76,15 +76,16 @@ env:
   DURABLE_PREFIX: >-
     ${{ github.event_name == 'workflow_dispatch' && inputs.durable_prefix ||
     'nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/7d0068d8ae720772415bf84c8c0689e84408d642/33745123325-1' }}
-  # AN EMPTY STRING CANNOT BE PASSED AS A WORKFLOW INPUT. GitHub substitutes the input's
-  # own `default:` when the supplied value is empty, so `subdir: ""` arrives as 'canary'
-  # and no expression here can recover it - the value was replaced before this line runs.
-  # Measured twice: two dispatches with subdir="" both logged `SUBDIR: canary` and 404'd on
-  # a canary/ path that never existed for a box run. Inverting the `a && b || c` did not
-  # help, because the defect was never in the expression.
-  # So ROOT is a sentinel that survives substitution, and it is what a box run needs: a box
-  # writes its ledgers and result at the prefix root, a canary writes them under canary/.
-  SUBDIR: ${{ (github.event_name == 'workflow_dispatch' && inputs.subdir == 'ROOT') && '' || (github.event_name == 'workflow_dispatch' && inputs.subdir || 'canary') }}
+  # `ROOT` means the prefix root and is TRANSLATED IN BASH, not here. Two reasons, both
+  # measured rather than reasoned about:
+  #   1. An empty input never arrives - GitHub substitutes the input's own `default:`, so
+  #      `subdir: ""` reached the job as 'canary' and 404'd on a path a box run never writes.
+  #   2. An expression cannot produce an empty string anyway: `X && '' || Y` yields Y,
+  #      because the empty result is falsy and `||` takes the alternative. Rewriting the
+  #      condition three ways cannot beat that.
+  # So the value passes through verbatim and the steps below turn ROOT into "". A canary
+  # writes under canary/; a box run writes at the prefix root.
+  SUBDIR: ${{ github.event_name == 'workflow_dispatch' && inputs.subdir || 'canary' }}
   RUN_ID: >-
     ${{ github.event_name == 'workflow_dispatch' && inputs.run_id ||
     'frankie-a-memory-rt-33745123325-1' }}
@@ -114,7 +115,8 @@ jobs:
           work="$RUNNER_TEMP/stream-receipt"
           install -d -m 0700 "$work/ledgers"
           base="${DURABLE_PREFIX}"
-          if [ -n "$SUBDIR" ]; then base="${base}/${SUBDIR}"; fi
+          # ROOT means "no subdirectory" - see the SUBDIR comment above.
+          if [ -n "$SUBDIR" ] && [ "$SUBDIR" != "ROOT" ]; then base="${base}/${SUBDIR}"; fi
 
           df -h / | tail -1
           aws s3 cp "s3://${BUCKET}/${base}/ledgers/" "$work/ledgers/" --recursive \
@@ -216,7 +218,8 @@ jobs:
         run: |
           set -euo pipefail
           base="${DURABLE_PREFIX}"
-          if [ -n "$SUBDIR" ]; then base="${base}/${SUBDIR}"; fi
+          # ROOT means "no subdirectory" - see the SUBDIR comment above.
+          if [ -n "$SUBDIR" ] && [ "$SUBDIR" != "ROOT" ]; then base="${base}/${SUBDIR}"; fi
           # Additive: a new object next to the ledgers it was computed from. Nothing the run
           # wrote is overwritten, so the frozen result stays exactly as the run left it.
           aws s3 cp "$STREAM_WORK/stream_receipt.json" \
