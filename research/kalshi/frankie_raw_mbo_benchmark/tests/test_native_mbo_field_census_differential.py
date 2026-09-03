@@ -200,6 +200,19 @@ CORPUS: list[tuple[str, list[dict]]] = [
      [{"lv": list(range(DISTINCT_CAP * 3))}]),
     ("int and float tie", [{"n": 1}, {"n": 1.0}, {"n": 2}]),
     ("deeply nested empties", [{"a": {"b": {"c": []}}}, {"a": {"b": {"c": [{"d": []}]}}}]),
+    # The three below exist for the BULK distinct update. It snapshots the set before the
+    # update so it can restore and redo one at a time when the cap is reached, and the
+    # snapshot only does anything when a PRIOR row already put values in the set. A
+    # single-row cap crossing never exercises it.
+    ("cap crosses on a later row, with the set already part full",
+     [{"lv": list(range(DISTINCT_CAP - 4))}, {"lv": list(range(DISTINCT_CAP * 2))}]),
+    ("cap crosses exactly on the boundary value",
+     [{"lv": list(range(DISTINCT_CAP - 1))}, {"lv": [DISTINCT_CAP - 1, DISTINCT_CAP]}]),
+    # An unhashable arriving AFTER the set is part full: the bulk update raises partway,
+    # so the restore has to put back exactly what was there and not what the aborted
+    # update left behind.
+    ("unhashable after a part-full set",
+     [{"u": 1}, {"u": 2}, {"u": Unhashable()}, {"u": 3}]),
 ]
 
 

@@ -44,6 +44,7 @@ from typing import Any, Mapping
 _NON_CONTAINER_TYPES = frozenset({str, int, float, bool, type(None)})
 _NUMERIC_TYPES = frozenset({int, float})
 _LIST_TYPES = frozenset({list})
+_DICT_TYPES = frozenset({dict})
 _NONE_TYPE_SET = frozenset({type(None)})
 
 DISTINCT_CAP = 64
@@ -108,16 +109,36 @@ class _Field:
             self.maximum = high if self.maximum is None else max(self.maximum, high)
         if not self.capped:
             distinct = self.distinct
-            for value in column:
-                if value is None:
-                    continue
-                try:
+            # Below the cap the latch CANNOT fire mid-column, so the whole column goes in
+            # one C-level update. Only an update that reaches the cap is redone one at a
+            # time, to latch on exactly the value the per-element walk would have latched
+            # on - and that redo happens at most once per field, because `capped` skips
+            # this block forever after.
+            before = set(distinct)
+            try:
+                distinct.update(v for v in column if v is not None)
+            except TypeError:
+                distinct.clear(); distinct.update(before)
+                for value in column:
+                    if value is None:
+                        continue
+                    try:
+                        distinct.add(value)
+                    except TypeError:
+                        distinct.add(repr(value))
+                    if len(distinct) >= DISTINCT_CAP:
+                        self.capped = True
+                        break
+                return
+            if len(distinct) >= DISTINCT_CAP:
+                distinct.clear(); distinct.update(before)
+                for value in column:
+                    if value is None:
+                        continue
                     distinct.add(value)
-                except TypeError:
-                    distinct.add(repr(value))
-                if len(distinct) >= DISTINCT_CAP:
-                    self.capped = True
-                    break
+                    if len(distinct) >= DISTINCT_CAP:
+                        self.capped = True
+                        break
 
     def observe(self, value: Any) -> None:
         self.observations += 1
@@ -200,16 +221,20 @@ class MboFieldCensus:
             # dicts with the same keys, and every one of them folds to the same handful of
             # child paths. Transposing it - one column per key across all the dicts - turns
             # hundreds of per-element walks into one fold per key.
-            if node and all(type(v) is dict for v in node):
+            if node and column_types == _DICT_TYPES:
                 stat.observations += len(node)
                 stat.types.add(dict)
                 # A ladder's level dicts all carry the same keys, so the union is the first
                 # element's key list unless some element disagrees. Checking that is a length
                 # compare plus a membership test, against building a union dict per row.
                 first = node[0]
+                first_keys = first.keys()
                 keys: Any = first
                 for element in node:
-                    if len(element) != len(first) or element.keys() != first.keys():
+                    # dict-view SET equality: it detects any difference in the key set, and
+                    # the key set is all that matters because reporting sorts by path. The
+                    # `len` compare that used to sit here was fully subsumed by it.
+                    if element.keys() != first_keys:
                         keys = {}
                         for other in node:
                             keys.update(dict.fromkeys(other))
