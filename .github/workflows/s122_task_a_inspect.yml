@@ -1,0 +1,24 @@
+name: S122 Task A inspect
+
+on:
+  push:
+    branches:
+      - chatgpt/s122-item4-task-a-verify-20260903
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 1
+      - name: Inspect exact target
+        run: |
+          set -euo pipefail
+          git fetch origin chatgpt/frankie-raw-mbo-benchmark-20260828
+          git switch --detach origin/chatgpt/frankie-raw-mbo-benchmark-20260828
+          python3 -m py_compile research/kalshi/frankie_raw_mbo_benchmark/native_layer_crosswalk.py
+          grep -n -B 3 -A 8 'structurally_absent=("raw_actions' research/kalshi/frankie_raw_mbo_benchmark/native_layer_crosswalk.py
