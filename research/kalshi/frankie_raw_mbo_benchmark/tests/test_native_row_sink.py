@@ -119,6 +119,60 @@ class ByteAttributionTest(unittest.TestCase):
         on_disk = list(sink.read_back())
         self.assertEqual(len(on_disk), len(rows))
 
+class SinkEncodesOnceTest(unittest.TestCase):
+    """The bytes on disk, the digest and the byte count are ONE encoding, not two agreeing.
+
+    `write` encoded every line to UTF-8 twice: once explicitly for the digest, and again
+    inside the text handle. Over a member ledger measured at 9.2 GB that is a second full
+    encoding pass bought for nothing.
+
+    This is a guard rather than a red test - the change removes work and must not move a
+    byte. So it pins the property that makes it safe, independently of how the sink is
+    implemented: the receipt's digest and length must describe THE FILE. Non-ASCII is in
+    the data on purpose, because a careless binary conversion is exactly where a multi-byte
+    character stops agreeing with its own length.
+    """
+
+    def test_digest_and_length_describe_the_file_on_disk(self):
+        import hashlib
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "member.jsonl"
+            sink = RowSink(path, ledger="exact_member_rows")
+            rows = [
+                {"emitting_section": "4.6", "symbol": "NGX1", "note": "plain ascii"},
+                {"emitting_section": "4.6", "symbol": "NG\u00d81", "note": "caf\u00e9 \u00b5s \u20ac"},
+                {"emitting_section": "4.9", "symbol": "\u65e5\u672c", "note": "\U0001f600 astral"},
+            ]
+            for row in rows:
+                sink.write(row)
+            receipt = sink.close()
+
+            raw = path.read_bytes()
+            self.assertEqual(receipt["sha256"], hashlib.sha256(raw).hexdigest())
+            self.assertEqual(receipt["bytes"], len(raw))
+            self.assertEqual(receipt["row_count"], len(rows))
+
+    def test_the_ledger_is_pure_ascii_because_ensure_ascii_is_on(self):
+        """Written down because I assumed the opposite and the test caught it.
+
+        `json.dumps` defaults to ensure_ascii=True, so every non-ASCII character is escaped
+        to \\uXXXX and the ledger is pure ASCII - bytes and characters are always equal. That
+        is what makes the file hash portable across locales, and it is the reason
+        `ensure_ascii` must not be turned off to save space: it would change every byte of
+        every ledger and with them every hash the run is verified by.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "member.jsonl"
+            sink = RowSink(path, ledger="exact_member_rows")
+            sink.write({"emitting_section": "4.6", "v": "caf\u00e9 \u65e5\u672c \U0001f600"})
+            receipt = sink.close()
+            raw = path.read_bytes()
+            raw.decode("ascii")  # raises if anything non-ASCII reached the file
+            self.assertEqual(receipt["bytes"], len(raw))
+            self.assertEqual(len(raw), len(path.read_text(encoding="utf-8")))
+
+
 
 if __name__ == "__main__":
     unittest.main()

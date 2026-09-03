@@ -59,7 +59,12 @@ class RowSink:
         self.path = Path(path)
         self.ledger = ledger
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self._handle = self.path.open("w", encoding="utf-8")
+        # BINARY. `write` already encodes each line to UTF-8 for the digest, and a text
+        # handle would encode the very same line a second time on its way to disk - a full
+        # extra pass over a member ledger measured at 9.2 GB, bought for nothing. The bytes
+        # written, the bytes hashed and the bytes counted are now one encoding rather than
+        # two that have to agree.
+        self._handle = self.path.open("wb")
         self._digest = hashlib.sha256()
         self._rows = 0
         self._bytes = 0
@@ -81,7 +86,7 @@ class RowSink:
         # is not evidence of anything.
         line = json.dumps(row, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n"
         encoded = line.encode("utf-8")
-        self._handle.write(line)
+        self._handle.write(encoded)
         self._digest.update(encoded)
         self._rows += 1
         self._bytes += len(encoded)
