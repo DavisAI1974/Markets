@@ -1,0 +1,84 @@
+name: S122 Task C verify candidate
+on:
+  push:
+    branches: [chatgpt/s122-item4-task-c-verify-20260903]
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Apply C only, verify, and create candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET='chatgpt/frankie-raw-mbo-benchmark-20260828'
+          CANDIDATE='chatgpt/s122-item4-task-c-candidate-20260903'
+          BASE='3018ed490886e0526ad18b1a8f51c010277fe5c2'
+          cp scripts/s122_patch_task_c_tests_20260903.py /home/runner/task_c_tests.py
+          cp scripts/s122_patch_task_c_source_20260903.py /home/runner/task_c_source.py
+          python3 -m pip install --quiet pytest databento matplotlib scipy scikit-learn
+          git fetch origin "$TARGET" "$CANDIDATE"
+          test "$(git rev-parse origin/$TARGET)" = "$BASE" || { echo 'STOP: target moved'; exit 41; }
+          test "$(git rev-parse origin/$CANDIDATE)" = "$BASE" || { echo 'STOP: candidate moved'; exit 42; }
+          git switch -C s122-task-c "origin/$TARGET"
+          cp /home/runner/task_c_tests.py task_c_tests_patch.py
+          cp /home/runner/task_c_source.py task_c_source_patch.py
+          python3 task_c_tests_patch.py
+          python3 task_c_source_patch.py
+          rm task_c_tests_patch.py task_c_source_patch.py
+          python3 -m py_compile \
+            research/kalshi/frankie_raw_mbo_benchmark/native_candidate_adapter.py \
+            research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_candidate_adapter.py
+          set +e
+          python3 -m pytest \
+            research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_candidate_adapter.py \
+            research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_clocks.py \
+            research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_recognition.py \
+            -q -p no:cacheprovider > data_s122_c_focused.log 2>&1
+          focused=$?
+          set -e
+          echo "FOCUSED_EXIT $focused"
+          tail -120 data_s122_c_focused.log
+          test "$focused" -eq 0
+          set +e
+          python3 -m pytest research/kalshi/frankie_raw_mbo_benchmark/tests -q -p no:cacheprovider > data_s122_c_suite.log 2>&1
+          suite=$?
+          set -e
+          echo "SUITE_EXIT $suite"
+          tail -100 data_s122_c_suite.log
+          test "$suite" -eq 0
+          python3 research/kalshi/store.py check
+          python3 research/kalshi/store.py docs
+          if git diff --unified=0 | grep '^+' | grep -nE 'E:[/\\]|scratchpad|/tmp'; then
+            echo 'forbidden local path text added' >&2
+            exit 43
+          fi
+          git diff --quiet research/ng_exhaustion_mbo_v4_state_adapter_20260820.py
+          echo LOCKED_OK
+          if git diff --name-only | grep -E '(^|/)[^/]*_RENDER_[^/]*\.md$|(^|/)FRANKIE_FEED_RECORD_[^/]*\.md$'; then
+            echo 'forbidden historical render/feed record changed' >&2
+            exit 44
+          fi
+          if git diff --unified=0 -- research/kalshi/frankie_raw_mbo_benchmark/native_candidate_adapter.py | grep -E '^[+-].*precursor_for'; then
+            echo 'Task C changed precursor_for wiring' >&2
+            exit 45
+          fi
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n%s\n' \
+            research/kalshi/frankie_raw_mbo_benchmark/native_candidate_adapter.py \
+            research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_candidate_adapter.py | sort)"
+          test "$changed" = "$expected" || { echo 'unexpected Task C change set'; echo "$changed"; exit 46; }
+          git diff --check
+          git add \
+            research/kalshi/frankie_raw_mbo_benchmark/native_candidate_adapter.py \
+            research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_candidate_adapter.py
+          git diff --cached --check
+          git diff --cached --stat
+          git config user.name 'OpenAI Codex'
+          git config user.email 'noreply@openai.com'
+          git commit -m 'fix: validate candidate recognition labels at call time' \
+            -m 'S122 Item 4 Task C constructs native_clocks.RecognitionLabel immediately after the existing CandidateRecognition first-call path, so impossible T0/H+N timing is refused at the production caller and canonical lead remains reference minus observed. Existing recognition fields are retained and the validated object is added beside them on open and closed outputs. precursor_for wiring is unchanged.' \
+            -m 'Co-Authored-By: Codex <noreply@openai.com>'
+          git push origin "HEAD:$CANDIDATE"
