@@ -43,7 +43,7 @@ TOTAL_RECORDS = 3
 def identity(**overrides) -> RunIdentity:
     base = dict(
         run_id="run-1",
-        arm="A_CLEAN",
+        arm="A_MEMORY",
         mission_sha256="a" * 64,
         calculation_contract_sha256="b" * 64,
         knowledge_manifest_hash="c" * 64,
