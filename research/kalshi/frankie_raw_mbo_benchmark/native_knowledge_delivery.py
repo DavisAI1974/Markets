@@ -48,10 +48,23 @@ document grew; rules cannot.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping
+
+from research.kalshi.frankie_raw_mbo_benchmark.native_frankie_knowledge_registry import (
+    KnowledgeRegistryError,
+    bind_principal_knowledge_use,
+    build_model_visible_context,
+    load_and_validate_manifest,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import (
+    canonical_hash,
+    load_registry,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -360,6 +373,10 @@ class LayerBinding:
     content_terms: str
     why: str
     paths: tuple[str, ...]
+    description: str | None = None
+    """When set, the rebind rewrites the registry entry's `description` too (S122: the
+    a_memory_overlay layers said 'Verified ... prior lessons package' of a wrong-data package;
+    a description that names the retired thing is a record that lies). None leaves it alone."""
 
 
 _R = "research/"
@@ -630,6 +647,50 @@ manifest, profile, capsules) already bind real files too. Every C/D/E/F KEEP fil
 least one binding - the test suite derives that set from the inventory and checks it."""
 
 
+A_MEMORY_SEED_PATH = "research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json"
+"""The A-memory seed (D86/D88), built by `build_a_memory_seed.py`: every committed output of the
+past runs, provenance-labelled, UNVERIFIED. Not an inventory KEEP path - it is a generated record
+of the package - so its bindings live beside KNOWLEDGE_LAYER_SOURCES, not inside it."""
+
+A_MEMORY_SEED_LAYER_SOURCES: tuple[LayerBinding, ...] = (
+    LayerBinding(
+        layer_id="a_memory_prior_lessons_package",
+        content_terms=r"UNVERIFIED|32851909748|provenance",
+        why=(
+            "D86/D88: memory is his own day-over-day carry, seeded on day one with every committed "
+            "output of the past runs (the last run 33605852433, the reduced wrong-data run "
+            "32851909748-1 AS the wrong-data run, the capsules and their sources, the S119 measured "
+            "knowledge), each with sha256, bytes and a provenance label, every lesson UNVERIFIED; "
+            "the wrong-data lessons package (external:a_memory_prior_lessons_package, sha256 "
+            "b487acfb...) is retired from the registry"
+        ),
+        paths=(A_MEMORY_SEED_PATH,),
+        description=(
+            "A-memory seed memory: every committed output of the past runs, provenance-labelled, "
+            "UNVERIFIED (D86, D88); from day two his own prior-day frozen outputs plus the seed"
+        ),
+    ),
+    LayerBinding(
+        layer_id="a_memory_prior_package_proof",
+        content_terms=r"\"sha256\"|seed_hash",
+        why=(
+            "the proof of the seed is the seed itself: its per-entry sha256 and byte counts and its "
+            "seed_hash, verified by build_a_memory_seed --check against the bytes on disk and pinned "
+            "by hash in the mission and the knowledge manifest; no external proof receipt exists "
+            "(external:a_memory_prior_lessons_package_proof, sha256 d54c6191..., is retired)"
+        ),
+        paths=(A_MEMORY_SEED_PATH,),
+        description=(
+            "Proof of the A-memory seed: its per-entry sha256 and byte list and seed_hash, bound as "
+            "the seed file's own bytes (no external binding)"
+        ),
+    ),
+)
+
+ALL_LAYER_SOURCES: tuple[LayerBinding, ...] = KNOWLEDGE_LAYER_SOURCES + A_MEMORY_SEED_LAYER_SOURCES
+"""Every binding the rebind applies: the KEEP-file bindings and the seed bindings."""
+
+
 def layers_bound_only_to(
     registry: Mapping[str, Any], path: str, *, policies: frozenset[str] | None = None
 ) -> list[str]:
@@ -647,3 +708,417 @@ def layers_bound_only_to(
             if set(entry.get("source_paths", [])) == {path}:
                 found.append(entry["layer_id"])
     return found
+
+
+# --------------------------------------------------------------------------------------
+# S122 slice 3: the knowledge delivery RECEIPT, from the existing pipeline, per layer
+# --------------------------------------------------------------------------------------
+KNOWLEDGE_DIR = "research/kalshi/agents/frankie_native_raw_mbo_knowledge/"
+MANIFEST_PATH = KNOWLEDGE_DIR + "KNOWLEDGE_MANIFEST_20260828.json"
+SPEC_PATH = KNOWLEDGE_DIR + "KNOWLEDGE_SOURCES_20260828.json"
+KNOWLEDGE_RECEIPT_SCHEMA = "FRANKIE_KNOWLEDGE_DELIVERY_RECEIPT_V1"
+"""The per-layer receipt `native_layer_crosswalk._static_status` consumes: `layers[]` rows of
+`layer_id`, `status` and `files[] {path, sha256, bytes}`. Produced here, from the EXISTING
+pipeline (`build_context_bundle` -> `build_model_visible_context`), never hand-written."""
+KNOWLEDGE_USE_SCHEMA = "FRANKIE_PRINCIPAL_KNOWLEDGE_USE_V1"
+"""What the principal's artifact carries under `knowledge_use`: one disposition per delivered
+artifact id, INSPECTED or UNINSPECTED, each with a reason; validated by `validate_knowledge_use`
+through the EXISTING read gate `bind_principal_knowledge_use`."""
+KNOWLEDGE_BUNDLE_FILENAME = "KNOWLEDGE_BUNDLE.md"
+KNOWLEDGE_RECEIPT_FILENAME = "KNOWLEDGE_RECEIPT.json"
+KNOWLEDGE_PRECALL_FILENAME = "KNOWLEDGE_PRECALL_RECEIPT.json"
+MANIFEST_ARTIFACT = "MANIFEST_ARTIFACT"
+"""A file delivered as a manifest artifact routed to the profile: its hash is the manifest's."""
+BINDING_DOCUMENT = "BINDING_DOCUMENT"
+"""The two documents that PIN the delivery and so cannot be artifacts of it - the manifest and
+the sources spec - delivered by their own bytes hashed on disk, with the manifest's
+`manifest_hash` bound in the context receipt and the profile selected from it."""
+DISPOSITIONS = ("INSPECTED", "UNINSPECTED")
+DELIVERED = "DELIVERED"
+NOT_DELIVERED = "NOT_DELIVERED"
+
+
+@dataclass(frozen=True)
+class KnowledgeDelivery:
+    """One arm/role's knowledge as the pipeline built it, plus the per-layer receipt over it."""
+
+    arm: str
+    role: str
+    profile_id: str
+    receipt: dict[str, Any]
+    pre_call: dict[str, Any]
+    model_visible_context: bytes
+
+
+def _profile_for(manifest: Mapping[str, Any], arm: str, role: str) -> str:
+    """The profile is DERIVED from arm and role; exactly one must exist."""
+    found = [pid for pid, p in manifest["profiles"].items() if p["arm"] == arm and p["role"] == role]
+    if len(found) != 1:
+        raise KnowledgeDeliveryError(
+            f"the manifest carries {len(found)} knowledge profile(s) for arm {arm!r} role {role!r}; exactly one is required"
+        )
+    return found[0]
+
+
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _verify_manifest_bytes(manifest: Mapping[str, Any], root: Path) -> None:
+    """A receipt names bytes on disk; a manifest row whose file drifted is a refusal here."""
+    for row in manifest["artifacts"]:
+        target = root / row["path"]
+        if not target.is_file():
+            raise KnowledgeDeliveryError(f"manifest artifact missing on disk: {row['path']}")
+        if target.stat().st_size != row["bytes"] or _file_sha256(target) != row["sha256"]:
+            raise KnowledgeDeliveryError(
+                f"manifest artifact {row['id']} ({row['path']}) does not hash to the manifest's sha256; "
+                "the knowledge on disk is not the knowledge the manifest pins"
+            )
+
+
+def build_knowledge_delivery(
+    *,
+    arm: str = "A_MEMORY",
+    role: str = "REAL_TIME_FRANKIE",
+    registry: Mapping[str, Any] | None = None,
+    manifest: Mapping[str, Any] | None = None,
+    repo_root: Path | str = REPO_ROOT,
+) -> KnowledgeDelivery:
+    """Run the EXISTING pipeline for one arm/role and translate it into the per-layer receipt.
+
+    `build_context_bundle` concatenates the profile's ALWAYS_LOAD artifacts and receipts the
+    whole retrieval catalog; `build_model_visible_context` appends the hash-bound retrieval
+    index and binds external proofs (none since the wrong-data binding was retired, D86).
+    Each applicable knowledge layer of the registry (policies STATIC_REQUIRED_INPUT and
+    ARM_REQUIRED_INPUT, arm in the group's arms) is then answered path by path off its own
+    `source_paths`: a path that is a routed manifest artifact is delivered with the
+    manifest's hash; the manifest and the sources spec - the two documents that pin the
+    delivery - are delivered by their own bytes; anything else is MISSING and the layer reads
+    NOT_DELIVERED. Nothing is read off a policy.
+    """
+    root = Path(repo_root)
+    active = load_registry() if registry is None else registry
+    try:
+        loaded = (
+            load_and_validate_manifest(root / MANIFEST_PATH, root) if manifest is None else dict(manifest)
+        )
+    except KnowledgeRegistryError as exc:
+        raise KnowledgeDeliveryError(f"knowledge manifest refused: {exc}") from exc
+    _verify_manifest_bytes(loaded, root)
+    profile_id = _profile_for(loaded, arm, role)
+    try:
+        model_visible_context, pre_call = build_model_visible_context(
+            loaded, profile_id, root, external_proofs={}
+        )
+    except KnowledgeRegistryError as exc:
+        raise KnowledgeDeliveryError(f"context bundle refused for {profile_id}: {exc}") from exc
+    context_receipt = pre_call["context_receipt"]
+    artifacts: list[dict[str, Any]] = []
+    for load_mode, rows in (("ALWAYS_LOAD", context_receipt["loaded_artifacts"]),
+                            ("RETRIEVAL", context_receipt["retrieval_catalog"])):
+        for row in rows:
+            artifacts.append({**row, "load_mode": load_mode})
+    by_path = {row["path"]: row for row in artifacts}
+    binding_documents: dict[str, dict[str, Any]] = {}
+    for relative in (MANIFEST_PATH, SPEC_PATH):
+        target = root / relative
+        if not target.is_file():
+            raise KnowledgeDeliveryError(f"binding document missing on disk: {relative}")
+        binding_documents[relative] = {"sha256": _file_sha256(target), "bytes": target.stat().st_size}
+
+    layers: list[dict[str, Any]] = []
+    for group in active["groups"]:
+        if group["policy"] not in KNOWLEDGE_INPUT_POLICIES or arm not in group["arms"]:
+            continue
+        for entry in group["entries"]:
+            files: list[dict[str, Any]] = []
+            missing: list[str] = []
+            for path in entry["source_paths"]:
+                if path in by_path:
+                    row = by_path[path]
+                    files.append({
+                        "path": path, "sha256": row["sha256"], "bytes": row["bytes"],
+                        "delivery": MANIFEST_ARTIFACT, "artifact_id": row["id"], "load_mode": row["load_mode"],
+                    })
+                elif path in binding_documents:
+                    files.append({
+                        "path": path, **binding_documents[path],
+                        "delivery": BINDING_DOCUMENT, "artifact_id": None, "load_mode": None,
+                    })
+                else:
+                    missing.append(path)
+            layers.append({
+                "layer_id": entry["layer_id"],
+                "group_id": group["group_id"],
+                "policy": group["policy"],
+                "status": DELIVERED if files and not missing else NOT_DELIVERED,
+                "files": files,
+                "missing": missing,
+            })
+    receipt: dict[str, Any] = {
+        "schema": KNOWLEDGE_RECEIPT_SCHEMA,
+        "arm": arm,
+        "role": role,
+        "profile_id": profile_id,
+        "registry_sha256": active["registry_sha256"],
+        "manifest_path": MANIFEST_PATH,
+        "manifest_hash": loaded["manifest_hash"],
+        "manifest_file_sha256": binding_documents[MANIFEST_PATH]["sha256"],
+        "spec_path": SPEC_PATH,
+        "spec_file_sha256": binding_documents[SPEC_PATH]["sha256"],
+        "context_receipt_hash": context_receipt["receipt_hash"],
+        "pre_call_receipt_hash": pre_call["pre_call_receipt_hash"],
+        "context_bundle_sha256": context_receipt["context_bundle_sha256"],
+        "context_bundle_bytes": context_receipt["context_bundle_bytes"],
+        "model_visible_context_sha256": pre_call["model_visible_context_sha256"],
+        "model_visible_context_bytes": pre_call["model_visible_context_bytes"],
+        "retrieval_index_sha256": pre_call["retrieval_index_sha256"],
+        "bundle_filename": KNOWLEDGE_BUNDLE_FILENAME,
+        "artifacts": artifacts,
+        "layers": layers,
+        "totals": {
+            "layers": len(layers),
+            "delivered": sum(1 for row in layers if row["status"] == DELIVERED),
+            "not_delivered": sum(1 for row in layers if row["status"] != DELIVERED),
+            "artifacts": len(artifacts),
+            "always_load": sum(1 for a in artifacts if a["load_mode"] == "ALWAYS_LOAD"),
+            "retrieval": sum(1 for a in artifacts if a["load_mode"] == "RETRIEVAL"),
+            "files": sum(len(row["files"]) for row in layers),
+            "missing": sum(len(row["missing"]) for row in layers),
+        },
+        "pre_call": pre_call,
+        "receipt_sha256": "",
+    }
+    receipt["receipt_sha256"] = canonical_hash(receipt, omit="receipt_sha256")
+    return KnowledgeDelivery(
+        arm=arm, role=role, profile_id=profile_id, receipt=receipt, pre_call=pre_call,
+        model_visible_context=model_visible_context,
+    )
+
+
+def write_knowledge_delivery(delivery: KnowledgeDelivery, out_dir: Path | str) -> dict[str, Path]:
+    """Write the bundle, the receipt and the pre-call receipt BESIDE the prompt (fixed names)."""
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    bundle = out / KNOWLEDGE_BUNDLE_FILENAME
+    receipt = out / KNOWLEDGE_RECEIPT_FILENAME
+    pre_call = out / KNOWLEDGE_PRECALL_FILENAME
+    bundle.write_bytes(delivery.model_visible_context)
+    receipt.write_text(json.dumps(delivery.receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    pre_call.write_text(json.dumps(delivery.pre_call, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return {"bundle": bundle, "receipt": receipt, "pre_call": pre_call}
+
+
+def serialized_principal_input(prompt_bytes: bytes, model_visible_context: bytes) -> bytes:
+    """The principal's input as the read gate sees it: the prompt file and the bundle file.
+
+    He is spawned as an agent session over committed files (D70), so the input is two files
+    beside each other, not one string. Both sides of the gate build the same bytes this way,
+    and `bind_principal_knowledge_use` proves the exact model-visible context is inside.
+    """
+    return bytes(prompt_bytes) + b"\n" + bytes(model_visible_context)
+
+
+def render_knowledge_block(receipt: Mapping[str, Any]) -> str:
+    """The prompt section naming every delivered knowledge file with its sha256 and the receipt.
+
+    Knowledge layer ids and KEEP paths only - no sealed token can appear here, and the
+    sealed-absence proof scans this text anyway.
+    """
+    if receipt.get("schema") != KNOWLEDGE_RECEIPT_SCHEMA:
+        raise KnowledgeDeliveryError(f"not a {KNOWLEDGE_RECEIPT_SCHEMA}")
+    lines: list[str] = []
+    add = lines.append
+    add("## Your knowledge, delivered and receipted")
+    add("")
+    add(f"Knowledge receipt `{receipt['receipt_sha256']}` (`{KNOWLEDGE_RECEIPT_SCHEMA}`), profile")
+    add(f"`{receipt['profile_id']}` (arm `{receipt['arm']}`, role `{receipt['role']}`), from the hash-bound")
+    add(f"manifest `{receipt['manifest_path']}` (manifest_hash `{receipt['manifest_hash']}`, file sha256")
+    add(f"`{receipt['manifest_file_sha256']}`) and the profile spec `{receipt['spec_path']}` (sha256")
+    add(f"`{receipt['spec_file_sha256']}`). Registry sha256 `{receipt['registry_sha256']}`.")
+    add("")
+    add(f"Your model-visible context is the file `{receipt['bundle_filename']}` beside this prompt")
+    add(f"(sha256 `{receipt['model_visible_context_sha256']}`, {int(receipt['model_visible_context_bytes']):,} bytes):")
+    add("every ALWAYS_LOAD artifact inline, then the hash-bound retrieval index. **Read it in full")
+    add("first.** RETRIEVAL artifacts are read by path; each is named below with the sha256 its")
+    add("bytes must have.")
+    add("")
+    totals = receipt["totals"]
+    add(f"### Knowledge layers: {totals['delivered']} of {totals['layers']} applicable DELIVERED")
+    add("")
+    add("| layer | group | status | files |")
+    add("|---|---|---|---|")
+    for row in receipt["layers"]:
+        files = "; ".join(f"`{f['path']}` `{f['sha256'][:12]}`" for f in row["files"])
+        missing = ("; MISSING: " + ", ".join(f"`{m}`" for m in row["missing"])) if row["missing"] else ""
+        add(f"| `{row['layer_id']}` | {row['group_id']} | {row['status']} | {files}{missing} |")
+    add("")
+    add(f"### Delivered artifacts: {totals['artifacts']} ({totals['always_load']} inline, {totals['retrieval']} by path)")
+    add("")
+    add("| artifact id | load | path | sha256 | bytes |")
+    add("|---|---|---|---|---:|")
+    for artifact in receipt["artifacts"]:
+        add(f"| `{artifact['id']}` | {artifact['load_mode']} | `{artifact['path']}` | `{artifact['sha256']}` | {int(artifact['bytes']):,} |")
+    add("")
+    seeds = [a for a in receipt["artifacts"] if a["path"] == A_MEMORY_SEED_PATH]
+    if seeds:
+        add("### Memory")
+        add("")
+        add(f"`{A_MEMORY_SEED_PATH}` (sha256 `{seeds[0]['sha256']}`) is your day-one memory (D86, D88):")
+        add("every committed output of the past runs, provenance-labelled, every lesson UNVERIFIED")
+        add("until you verify it against the stream. From day two your own prior-day frozen outputs")
+        add("ride beside it. The reduced wrong-data run 32851909748-1 is in it AS the wrong-data run.")
+        add("")
+    add("### What you return about knowledge")
+    add("")
+    add(f"`knowledge_receipt_sha256` is `{receipt['receipt_sha256']}`. `knowledge_use` is an object of")
+    add(f"schema `{KNOWLEDGE_USE_SCHEMA}` carrying `knowledge_receipt_sha256`, `profile_id`, `arm`,")
+    add("`role`, `manifest_hash`, `context_bundle_sha256` exactly as receipted, and `dispositions`:")
+    add("**one entry per artifact id in the table above**, each `{\"disposition\": \"INSPECTED\" |")
+    add("\"UNINSPECTED\", \"reason\": \"<why>\"}`. An artifact missing from the inventory, an id nobody")
+    add("delivered, a disposition other than those two, or an empty reason is refused by the staging")
+    add("gate through the read gate (`bind_principal_knowledge_use`). UNINSPECTED with an honest")
+    add("reason is a valid answer; a claimed inspection is not. Every lesson you receive is")
+    add(f"UNVERIFIED until you file its verdict in `output_knowledge_verification` citing this receipt.")
+    add("")
+    return "\n".join(lines)
+
+
+def complete_knowledge_use(
+    receipt: Mapping[str, Any], *, disposition: str = "INSPECTED", reason: str = "read in full"
+) -> dict[str, Any]:
+    """A `knowledge_use` with one disposition per delivered artifact. For tests and examples."""
+    return {
+        "schema": KNOWLEDGE_USE_SCHEMA,
+        "knowledge_receipt_sha256": receipt["receipt_sha256"],
+        "profile_id": receipt["profile_id"],
+        "arm": receipt["arm"],
+        "role": receipt["role"],
+        "manifest_hash": receipt["manifest_hash"],
+        "context_bundle_sha256": receipt["context_bundle_sha256"],
+        "dispositions": {
+            artifact["id"]: {"disposition": disposition, "reason": reason} for artifact in receipt["artifacts"]
+        },
+    }
+
+
+def _require_knowledge_receipt(receipt: Any) -> dict[str, Any]:
+    if not isinstance(receipt, Mapping) or receipt.get("schema") != KNOWLEDGE_RECEIPT_SCHEMA:
+        raise KnowledgeDeliveryError(f"knowledge receipt is not a {KNOWLEDGE_RECEIPT_SCHEMA}")
+    if receipt.get("receipt_sha256") != canonical_hash(receipt, omit="receipt_sha256"):
+        raise KnowledgeDeliveryError("knowledge receipt fails its own receipt_sha256; tampered or partial")
+    return dict(receipt)
+
+
+def validate_knowledge_use(
+    knowledge_use: Mapping[str, Any],
+    *,
+    knowledge_receipt: Mapping[str, Any],
+    model_visible_context: bytes,
+    serialized_principal_input: bytes,
+) -> dict[str, Any]:
+    """The artifact's `knowledge_use`, validated through the EXISTING read gate.
+
+    Every delivered artifact (ALWAYS_LOAD and RETRIEVAL alike) must carry INSPECTED or
+    UNINSPECTED with a reason; a missing id, an undelivered id, another word, or an empty
+    reason is refused BY NAME. The retrieval dispositions then go through
+    `bind_principal_knowledge_use`, which proves the exact model-visible context sits inside
+    the serialized principal input and binds profile, manifest and bundle hashes. Returns the
+    registry's USE receipt extended with the always-load dispositions and the knowledge
+    receipt hash, re-hashed over the extended body (`bound_use_receipt_hash` keeps the
+    registry's own).
+    """
+    receipt = _require_knowledge_receipt(knowledge_receipt)
+    if not isinstance(knowledge_use, Mapping):
+        raise KnowledgeDeliveryError("knowledge_use must be an object")
+    if knowledge_use.get("schema") != KNOWLEDGE_USE_SCHEMA:
+        raise KnowledgeDeliveryError(f"knowledge_use schema must be {KNOWLEDGE_USE_SCHEMA}")
+    if knowledge_use.get("knowledge_receipt_sha256") != receipt["receipt_sha256"]:
+        raise KnowledgeDeliveryError(
+            f"knowledge_use cites knowledge_receipt_sha256 {knowledge_use.get('knowledge_receipt_sha256')!r}; "
+            f"the delivered receipt is {receipt['receipt_sha256']}"
+        )
+    for field in ("profile_id", "arm", "role", "manifest_hash", "context_bundle_sha256"):
+        if knowledge_use.get(field) != receipt[field]:
+            raise KnowledgeDeliveryError(f"knowledge_use.{field} {knowledge_use.get(field)!r} is not the receipted {receipt[field]!r}")
+    dispositions = knowledge_use.get("dispositions")
+    if not isinstance(dispositions, Mapping):
+        raise KnowledgeDeliveryError("knowledge_use.dispositions must be an object of artifact id -> {disposition, reason}")
+    delivered = {artifact["id"]: artifact for artifact in receipt["artifacts"]}
+    missing = sorted(set(delivered) - set(dispositions))
+    if missing:
+        raise KnowledgeDeliveryError(f"knowledge_use carries no disposition for delivered artifact(s): {missing}")
+    extra = sorted(set(dispositions) - set(delivered))
+    if extra:
+        raise KnowledgeDeliveryError(f"knowledge_use disposes of artifact(s) nobody delivered: {extra}")
+    clean: dict[str, dict[str, str]] = {}
+    for artifact_id in delivered:
+        value = dispositions[artifact_id]
+        if not isinstance(value, Mapping):
+            raise KnowledgeDeliveryError(f"knowledge_use.dispositions[{artifact_id!r}] must be an object")
+        disposition = value.get("disposition")
+        if disposition not in DISPOSITIONS:
+            raise KnowledgeDeliveryError(
+                f"knowledge_use.dispositions[{artifact_id!r}].disposition {disposition!r} is not one of {list(DISPOSITIONS)}"
+            )
+        reason = value.get("reason")
+        if not isinstance(reason, str) or not reason.strip():
+            raise KnowledgeDeliveryError(f"knowledge_use.dispositions[{artifact_id!r}] carries no reason")
+        clean[artifact_id] = {"disposition": disposition, "reason": reason}
+    retrieval_ids = [a["id"] for a in receipt["artifacts"] if a["load_mode"] == "RETRIEVAL"]
+    always_ids = [a["id"] for a in receipt["artifacts"] if a["load_mode"] == "ALWAYS_LOAD"]
+    response_binding = {
+        "profile_id": receipt["profile_id"],
+        "arm": receipt["arm"],
+        "role": receipt["role"],
+        "manifest_hash": receipt["manifest_hash"],
+        "context_bundle_sha256": receipt["context_bundle_sha256"],
+        "retrieval_dispositions": {artifact_id: clean[artifact_id]["disposition"] for artifact_id in retrieval_ids},
+    }
+    try:
+        bound = bind_principal_knowledge_use(
+            receipt["pre_call"],
+            model_visible_context=model_visible_context,
+            serialized_principal_input=serialized_principal_input,
+            response_binding=response_binding,
+        )
+    except KnowledgeRegistryError as exc:
+        raise KnowledgeDeliveryError(f"the read gate refused knowledge_use: {exc}") from exc
+    result: dict[str, Any] = {key: value for key, value in bound.items() if key != "knowledge_use_receipt_hash"}
+    result["bound_use_receipt_hash"] = bound["knowledge_use_receipt_hash"]
+    result["knowledge_receipt_sha256"] = receipt["receipt_sha256"]
+    result["always_load_dispositions"] = {artifact_id: clean[artifact_id] for artifact_id in always_ids}
+    result["retrieval_reasons"] = {artifact_id: clean[artifact_id]["reason"] for artifact_id in retrieval_ids}
+    result["knowledge_use_receipt_hash"] = ""
+    result["knowledge_use_receipt_hash"] = canonical_hash(result, omit="knowledge_use_receipt_hash")
+    return result
+
+
+def validate_knowledge_use_files(
+    knowledge_use: Mapping[str, Any],
+    *,
+    knowledge_receipt_path: Path | str,
+    bundle_path: Path | str,
+    prompt_path: Path | str,
+) -> dict[str, Any]:
+    """`validate_knowledge_use` over the three files the emitter wrote beside each other."""
+    paths = {"knowledge receipt": Path(knowledge_receipt_path), "bundle": Path(bundle_path), "prompt": Path(prompt_path)}
+    for label, path in paths.items():
+        if not path.is_file():
+            raise KnowledgeDeliveryError(f"{label} file is missing: {path.name}")
+    try:
+        receipt = json.loads(paths["knowledge receipt"].read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise KnowledgeDeliveryError(f"knowledge receipt is not JSON: {exc}") from exc
+    bundle = paths["bundle"].read_bytes()
+    return validate_knowledge_use(
+        knowledge_use,
+        knowledge_receipt=receipt,
+        model_visible_context=bundle,
+        serialized_principal_input=serialized_principal_input(paths["prompt"].read_bytes(), bundle),
+    )

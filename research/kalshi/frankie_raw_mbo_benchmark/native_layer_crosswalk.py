@@ -44,6 +44,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry i
     load_registry,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import (
+    A_MEMORY_SEED_PATH,
     FEED_INVENTORY_PATH,
     KNOWLEDGE_INPUT_POLICIES,
     KNOWLEDGE_LAYER_SOURCES,
@@ -213,15 +214,19 @@ LAYER_PRODUCERS: dict[str, dict[str, Any]] = {
         notes="Named by the knowledge manifest; A_MEMORY only; not named in the spawn prompt.",
     ),
     "a_memory_prior_lessons_package": _record(
-        "RECEIPT", module="native_a_arm_launch", symbol="EXTERNAL_SOURCE_IDENTITIES", file=LAUNCH, line=86,
-        carrier="external:a_memory_prior_lessons_package (pinned sha256, no repository bytes)",
-        notes="An external identity the mission pins; evidence_receipt_sha256 substitutes the pinned hash "
-              "for file bytes. A_MEMORY only. Nothing carries the package itself into a run.",
+        "FILE", module="build_a_memory_seed", symbol="SEED_PATH", file=PKG + "build_a_memory_seed.py", line=1,
+        carrier=A_MEMORY_SEED_PATH, carrier_paths=(A_MEMORY_SEED_PATH,),
+        notes="The A-memory SEED (D86/D88): every committed output of the past runs, provenance-labelled, "
+              "UNVERIFIED, built by build_a_memory_seed.py and bound as a repository file since S122. The "
+              "wrong-data package's external identity (b487acfb..., native_a_arm_launch.EXTERNAL_SOURCE_IDENTITIES) "
+              "is retired from the registry. A_MEMORY only; a knowledge receipt row is what marks it delivered.",
     ),
     "a_memory_prior_package_proof": _record(
-        "RECEIPT", module="native_a_arm_launch", symbol="EXTERNAL_SOURCE_IDENTITIES", file=LAUNCH, line=86,
-        carrier="external:a_memory_prior_lessons_package_proof (pinned sha256, no repository bytes)",
-        notes="The proof receipt of the prior package, pinned the same way. A_MEMORY only.",
+        "FILE", module="build_a_memory_seed", symbol="seed_hash", file=PKG + "build_a_memory_seed.py", line=1,
+        carrier=A_MEMORY_SEED_PATH, carrier_paths=(A_MEMORY_SEED_PATH,),
+        notes="The proof of the seed is the seed itself: per-entry sha256 and bytes plus seed_hash, checked "
+              "against the bytes on disk by build_a_memory_seed --check and pinned in the mission and the "
+              "manifest. No external proof receipt exists any more. A_MEMORY only.",
     ),
     # ---- current_brain_runtime (STATIC_REQUIRED_INPUT; all bound to the inventory doc) -----
     "authoritative_s135_construction": _inventory_bound("## 1. Current Frankie brain and runtime feed", 8),

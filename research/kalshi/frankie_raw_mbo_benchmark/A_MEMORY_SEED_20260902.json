@@ -1,0 +1,612 @@
+{
+ "arm": "A_MEMORY",
+ "correction_reference": "The correction is the corrected raw-MBO A-arm procedure of 2026-08-28 (corrected_a_arm_execution_gate_20260828.py: F_LAST-closed native event groups on ts_recv_ns, no reduced seconds rows), under which the reduced-seconds surface became the wrong data (F-21). PRE_CORRECTION: produced on or bound to that surface, or before the corrected procedure and its mission existed. POST_CORRECTION: produced on the corrected native raw-MBO surface. D81 (2026-09-02) is later than both and is noted per group where it applies.",
+ "day_rule": {
+  "day_one": "this seed, whole",
+  "from_day_two": "his own prior-day frozen outputs (the append-only ledgers, the knowledge-verification verdicts, the first locks) plus this seed"
+ },
+ "entries": [
+  {
+   "bytes": 6925,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/principal_runs/33605852433/FRANKIE_SPAWN_PROMPT.md",
+   "provenance": {
+    "basis": "principal_runs/33605852433/frankie_principal_findings.json (run_id, arm, source_day)",
+    "correction": "POST_CORRECTION",
+    "data_surface": "the runner's calculation_result.json over glbx-mdp3-20211003.mbo.dbn.zst (Sunday 2021-10-03; the ~34 MB averaged result the principal read, not the exact member ledger, which stayed on the box - D81, measured); native raw MBO through the corrected runner",
+    "group_id": "last_run_33605852433",
+    "included_as": "PAST_RUN_OUTPUT",
+    "label": "THE LAST RUN'S committed outputs (findings, report, assessment, prompt): the seed of record because no canary output is committed (D88); pre-D81 division of labour (the runner calculated, he interpreted)",
+    "run_id": "frankie-a-clean-rt-33605852433-1"
+   },
+   "sha256": "4c43532baa4f439da03f46847214fe9b70ba5509f84f2c3dddc73b7e0c427c19",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 63953,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/principal_runs/33605852433/frankie_calculation_assessment.md",
+   "provenance": {
+    "basis": "principal_runs/33605852433/frankie_principal_findings.json (run_id, arm, source_day)",
+    "correction": "POST_CORRECTION",
+    "data_surface": "the runner's calculation_result.json over glbx-mdp3-20211003.mbo.dbn.zst (Sunday 2021-10-03; the ~34 MB averaged result the principal read, not the exact member ledger, which stayed on the box - D81, measured); native raw MBO through the corrected runner",
+    "group_id": "last_run_33605852433",
+    "included_as": "PAST_RUN_OUTPUT",
+    "label": "THE LAST RUN'S committed outputs (findings, report, assessment, prompt): the seed of record because no canary output is committed (D88); pre-D81 division of labour (the runner calculated, he interpreted)",
+    "run_id": "frankie-a-clean-rt-33605852433-1"
+   },
+   "sha256": "53a4064da827e0848ef0c3e448baf58f3c174eee7e4e04caa9e8eb7819e3a837",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 106264,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/principal_runs/33605852433/frankie_findings_report.md",
+   "provenance": {
+    "basis": "principal_runs/33605852433/frankie_principal_findings.json (run_id, arm, source_day)",
+    "correction": "POST_CORRECTION",
+    "data_surface": "the runner's calculation_result.json over glbx-mdp3-20211003.mbo.dbn.zst (Sunday 2021-10-03; the ~34 MB averaged result the principal read, not the exact member ledger, which stayed on the box - D81, measured); native raw MBO through the corrected runner",
+    "group_id": "last_run_33605852433",
+    "included_as": "PAST_RUN_OUTPUT",
+    "label": "THE LAST RUN'S committed outputs (findings, report, assessment, prompt): the seed of record because no canary output is committed (D88); pre-D81 division of labour (the runner calculated, he interpreted)",
+    "run_id": "frankie-a-clean-rt-33605852433-1"
+   },
+   "sha256": "96fe8e261bfc654c146399428f63678ea4eafe06a5372a509f83f77c7c65f3ca",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 108583,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/principal_runs/33605852433/frankie_principal_findings.json",
+   "provenance": {
+    "basis": "principal_runs/33605852433/frankie_principal_findings.json (run_id, arm, source_day)",
+    "correction": "POST_CORRECTION",
+    "data_surface": "the runner's calculation_result.json over glbx-mdp3-20211003.mbo.dbn.zst (Sunday 2021-10-03; the ~34 MB averaged result the principal read, not the exact member ledger, which stayed on the box - D81, measured); native raw MBO through the corrected runner",
+    "group_id": "last_run_33605852433",
+    "included_as": "PAST_RUN_OUTPUT",
+    "label": "THE LAST RUN'S committed outputs (findings, report, assessment, prompt): the seed of record because no canary output is committed (D88); pre-D81 division of labour (the runner calculated, he interpreted)",
+    "run_id": "frankie-a-clean-rt-33605852433-1"
+   },
+   "sha256": "147c6485536940647ab8094f64493a65e454debc6da55a1e26e53252036d8c9a",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 2901,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/ARTIFACT_MANIFEST.json",
+   "provenance": {
+    "basis": "D85/D86 (DECISIONS.md) and F-21; the directory name carries the run id",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "the reduced seconds rows (old reduced market rows) the corrected raw-MBO procedure forbids - THE WRONG DATA (F-21); its RT output was passed one-way to the Forecaster",
+    "group_id": "wrong_data_run_32851909748_1",
+    "included_as": "THE_WRONG_DATA_RUN",
+    "label": "THE REDUCED WRONG-DATA RUN 32851909748-1: its receipts, handoff, locks, frozen state and outputs, included AS the wrong-data run, labelled, never filtered (D86, D76); its lessons package (sha256 b487acfb...) is NOT memory",
+    "run_id": "32851909748-1"
+   },
+   "sha256": "6f3cb63536d12d2bcb136b6698faf47b37c17a6ee3c8f6ee2ed309578bfda70d",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 1120,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/COMPLETE.json",
+   "provenance": {
+    "basis": "D85/D86 (DECISIONS.md) and F-21; the directory name carries the run id",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "the reduced seconds rows (old reduced market rows) the corrected raw-MBO procedure forbids - THE WRONG DATA (F-21); its RT output was passed one-way to the Forecaster",
+    "group_id": "wrong_data_run_32851909748_1",
+    "included_as": "THE_WRONG_DATA_RUN",
+    "label": "THE REDUCED WRONG-DATA RUN 32851909748-1: its receipts, handoff, locks, frozen state and outputs, included AS the wrong-data run, labelled, never filtered (D86, D76); its lessons package (sha256 b487acfb...) is NOT memory",
+    "run_id": "32851909748-1"
+   },
+   "sha256": "20a26ed0e29cfb12f30711030913e05bce1ccb5bee49058763f1fb2b5ec3f673",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 717,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/EXECUTION_USAGE.json",
+   "provenance": {
+    "basis": "D85/D86 (DECISIONS.md) and F-21; the directory name carries the run id",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "the reduced seconds rows (old reduced market rows) the corrected raw-MBO procedure forbids - THE WRONG DATA (F-21); its RT output was passed one-way to the Forecaster",
+    "group_id": "wrong_data_run_32851909748_1",
+    "included_as": "THE_WRONG_DATA_RUN",
+    "label": "THE REDUCED WRONG-DATA RUN 32851909748-1: its receipts, handoff, locks, frozen state and outputs, included AS the wrong-data run, labelled, never filtered (D86, D76); its lessons package (sha256 b487acfb...) is NOT memory",
+    "run_id": "32851909748-1"
+   },
+   "sha256": "262b78bfac4cff6bb49fd9566f1af958bb4fa65af3c494378df59d6be6dbe499",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 971,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/FORECASTER_AGENT_RECEIPT.json",
+   "provenance": {
+    "basis": "D85/D86 (DECISIONS.md) and F-21; the directory name carries the run id",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "the reduced seconds rows (old reduced market rows) the corrected raw-MBO procedure forbids - THE WRONG DATA (F-21); its RT output was passed one-way to the Forecaster",
+    "group_id": "wrong_data_run_32851909748_1",
+    "included_as": "THE_WRONG_DATA_RUN",
+    "label": "THE REDUCED WRONG-DATA RUN 32851909748-1: its receipts, handoff, locks, frozen state and outputs, included AS the wrong-data run, labelled, never filtered (D86, D76); its lessons package (sha256 b487acfb...) is NOT memory",
+    "run_id": "32851909748-1"
+   },
+   "sha256": "0c057c19d230a4c2950c85a1fa0bdd24ff264c11f726cd0f6a8f388764536e33",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 681,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/FORECASTER_CONTEXT_MANIFEST.json",
+   "provenance": {
+    "basis": "D85/D86 (DECISIONS.md) and F-21; the directory name carries the run id",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "the reduced seconds rows (old reduced market rows) the corrected raw-MBO procedure forbids - THE WRONG DATA (F-21); its RT output was passed one-way to the Forecaster",
+    "group_id": "wrong_data_run_32851909748_1",
+    "included_as": "THE_WRONG_DATA_RUN",
+    "label": "THE REDUCED WRONG-DATA RUN 32851909748-1: its receipts, handoff, locks, frozen state and outputs, included AS the wrong-data run, labelled, never filtered (D86, D76); its lessons package (sha256 b487acfb...) is NOT memory",
+    "run_id": "32851909748-1"
+   },
+   "sha256": "ed48912283e36438c437ea8bc1cb6c4cfe5806670b56c18469cf1c6e31a063b7",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 523,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/FORECASTER_FIRST_LOCK.json",
+   "provenance": {
+    "basis": "D85/D86 (DECISIONS.md) and F-21; the directory name carries the run id",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "the reduced seconds rows (old reduced market rows) the corrected raw-MBO procedure forbids - THE WRONG DATA (F-21); its RT output was passed one-way to the Forecaster",
+    "group_id": "wrong_data_run_32851909748_1",
+    "included_as": "THE_WRONG_DATA_RUN",
+    "label": "THE REDUCED WRONG-DATA RUN 32851909748-1: its receipts, handoff, locks, frozen state and outputs, included AS the wrong-data run, labelled, never filtered (D86, D76); its lessons package (sha256 b487acfb...) is NOT memory",
+    "run_id": "32851909748-1"
+   },
+   "sha256": "f5770436f66e1f1cdb340e8d5e3b9b6416ea89befb2bd307aa0e9866612da4df",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 41990,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/FORECASTER_OUTPUT.json",
+   "provenance": {
+    "basis": "D85/D86 (DECISIONS.md) and F-21; the directory name carries the run id",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "the reduced seconds rows (old reduced market rows) the corrected raw-MBO procedure forbids - THE WRONG DATA (F-21); its RT output was passed one-way to the Forecaster",
+    "group_id": "wrong_data_run_32851909748_1",
+    "included_as": "THE_WRONG_DATA_RUN",
+    "label": "THE REDUCED WRONG-DATA RUN 32851909748-1: its receipts, handoff, locks, frozen state and outputs, included AS the wrong-data run, labelled, never filtered (D86, D76); its lessons package (sha256 b487acfb...) is NOT memory",
+    "run_id": "32851909748-1"
+   },
+   "sha256": "32131d948790faa56ed130f901bad71b10075919a2e23a78d1ff2c3939de25af",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 626,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/ONEWAY_HANDOFF.json",
+   "provenance": {
+    "basis": "D85/D86 (DECISIONS.md) and F-21; the directory name carries the run id",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "the reduced seconds rows (old reduced market rows) the corrected raw-MBO procedure forbids - THE WRONG DATA (F-21); its RT output was passed one-way to the Forecaster",
+    "group_id": "wrong_data_run_32851909748_1",
+    "included_as": "THE_WRONG_DATA_RUN",
+    "label": "THE REDUCED WRONG-DATA RUN 32851909748-1: its receipts, handoff, locks, frozen state and outputs, included AS the wrong-data run, labelled, never filtered (D86, D76); its lessons package (sha256 b487acfb...) is NOT memory",
+    "run_id": "32851909748-1"
+   },
+   "sha256": "cde4673119316673b1ccdb6915fc7a455e2c3040d363cf2a1009ef3e72dbaa25",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 3645,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/REPOSITORY_FREEZE.json",
+   "provenance": {
+    "basis": "D85/D86 (DECISIONS.md) and F-21; the directory name carries the run id",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "the reduced seconds rows (old reduced market rows) the corrected raw-MBO procedure forbids - THE WRONG DATA (F-21); its RT output was passed one-way to the Forecaster",
+    "group_id": "wrong_data_run_32851909748_1",
+    "included_as": "THE_WRONG_DATA_RUN",
+    "label": "THE REDUCED WRONG-DATA RUN 32851909748-1: its receipts, handoff, locks, frozen state and outputs, included AS the wrong-data run, labelled, never filtered (D86, D76); its lessons package (sha256 b487acfb...) is NOT memory",
+    "run_id": "32851909748-1"
+   },
+   "sha256": "dc567f014d9c65fc50b179e1e2f46b8624d2d27e25eaf63a29068f6d6a4cb007",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 953,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/RT_AGENT_RECEIPT.json",
+   "provenance": {
+    "basis": "D85/D86 (DECISIONS.md) and F-21; the directory name carries the run id",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "the reduced seconds rows (old reduced market rows) the corrected raw-MBO procedure forbids - THE WRONG DATA (F-21); its RT output was passed one-way to the Forecaster",
+    "group_id": "wrong_data_run_32851909748_1",
+    "included_as": "THE_WRONG_DATA_RUN",
+    "label": "THE REDUCED WRONG-DATA RUN 32851909748-1: its receipts, handoff, locks, frozen state and outputs, included AS the wrong-data run, labelled, never filtered (D86, D76); its lessons package (sha256 b487acfb...) is NOT memory",
+    "run_id": "32851909748-1"
+   },
+   "sha256": "545df4397a0cd556088db452adfae44e93f803ef9129379c34a01f0f7d3e2029",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 474,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/RT_CONTEXT_MANIFEST.json",
+   "provenance": {
+    "basis": "D85/D86 (DECISIONS.md) and F-21; the directory name carries the run id",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "the reduced seconds rows (old reduced market rows) the corrected raw-MBO procedure forbids - THE WRONG DATA (F-21); its RT output was passed one-way to the Forecaster",
+    "group_id": "wrong_data_run_32851909748_1",
+    "included_as": "THE_WRONG_DATA_RUN",
+    "label": "THE REDUCED WRONG-DATA RUN 32851909748-1: its receipts, handoff, locks, frozen state and outputs, included AS the wrong-data run, labelled, never filtered (D86, D76); its lessons package (sha256 b487acfb...) is NOT memory",
+    "run_id": "32851909748-1"
+   },
+   "sha256": "a3f61eb539db91dbd612a31577b6749f1674cf88c6d3175961a4a612668c0a9b",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 11903,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/RT_FIRST_LOCK.json",
+   "provenance": {
+    "basis": "D85/D86 (DECISIONS.md) and F-21; the directory name carries the run id",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "the reduced seconds rows (old reduced market rows) the corrected raw-MBO procedure forbids - THE WRONG DATA (F-21); its RT output was passed one-way to the Forecaster",
+    "group_id": "wrong_data_run_32851909748_1",
+    "included_as": "THE_WRONG_DATA_RUN",
+    "label": "THE REDUCED WRONG-DATA RUN 32851909748-1: its receipts, handoff, locks, frozen state and outputs, included AS the wrong-data run, labelled, never filtered (D86, D76); its lessons package (sha256 b487acfb...) is NOT memory",
+    "run_id": "32851909748-1"
+   },
+   "sha256": "42f062642ca32ff9ddaef1789bf939e4696f16d442254afd5b5865a0968a3c20",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 465,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/RT_FREEZE_COMPLETE.json",
+   "provenance": {
+    "basis": "D85/D86 (DECISIONS.md) and F-21; the directory name carries the run id",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "the reduced seconds rows (old reduced market rows) the corrected raw-MBO procedure forbids - THE WRONG DATA (F-21); its RT output was passed one-way to the Forecaster",
+    "group_id": "wrong_data_run_32851909748_1",
+    "included_as": "THE_WRONG_DATA_RUN",
+    "label": "THE REDUCED WRONG-DATA RUN 32851909748-1: its receipts, handoff, locks, frozen state and outputs, included AS the wrong-data run, labelled, never filtered (D86, D76); its lessons package (sha256 b487acfb...) is NOT memory",
+    "run_id": "32851909748-1"
+   },
+   "sha256": "defc5495c40fc662f5255dc6d655fa20dcbce266d18b523989fa8bf890b7fdad",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 1973,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/RT_FREEZE_EXTERNAL_ANCHOR.json",
+   "provenance": {
+    "basis": "D85/D86 (DECISIONS.md) and F-21; the directory name carries the run id",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "the reduced seconds rows (old reduced market rows) the corrected raw-MBO procedure forbids - THE WRONG DATA (F-21); its RT output was passed one-way to the Forecaster",
+    "group_id": "wrong_data_run_32851909748_1",
+    "included_as": "THE_WRONG_DATA_RUN",
+    "label": "THE REDUCED WRONG-DATA RUN 32851909748-1: its receipts, handoff, locks, frozen state and outputs, included AS the wrong-data run, labelled, never filtered (D86, D76); its lessons package (sha256 b487acfb...) is NOT memory",
+    "run_id": "32851909748-1"
+   },
+   "sha256": "1446826e578e9d4dd0faaae1242db594bb6b3ee42d6efa957bf07be6c2dfb0fa",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 41707,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/RT_FROZEN_STATE.json",
+   "provenance": {
+    "basis": "D85/D86 (DECISIONS.md) and F-21; the directory name carries the run id",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "the reduced seconds rows (old reduced market rows) the corrected raw-MBO procedure forbids - THE WRONG DATA (F-21); its RT output was passed one-way to the Forecaster",
+    "group_id": "wrong_data_run_32851909748_1",
+    "included_as": "THE_WRONG_DATA_RUN",
+    "label": "THE REDUCED WRONG-DATA RUN 32851909748-1: its receipts, handoff, locks, frozen state and outputs, included AS the wrong-data run, labelled, never filtered (D86, D76); its lessons package (sha256 b487acfb...) is NOT memory",
+    "run_id": "32851909748-1"
+   },
+   "sha256": "18b1573014daa4d7414a63763b883258aeb14505622c7f1f89572395f14b84e0",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 38111,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/RT_OUTPUT.json",
+   "provenance": {
+    "basis": "D85/D86 (DECISIONS.md) and F-21; the directory name carries the run id",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "the reduced seconds rows (old reduced market rows) the corrected raw-MBO procedure forbids - THE WRONG DATA (F-21); its RT output was passed one-way to the Forecaster",
+    "group_id": "wrong_data_run_32851909748_1",
+    "included_as": "THE_WRONG_DATA_RUN",
+    "label": "THE REDUCED WRONG-DATA RUN 32851909748-1: its receipts, handoff, locks, frozen state and outputs, included AS the wrong-data run, labelled, never filtered (D86, D76); its lessons package (sha256 b487acfb...) is NOT memory",
+    "run_id": "32851909748-1"
+   },
+   "sha256": "72a22b5ec0ee5f6ebdcf14d0ff566dd178f31ce2bd6d3f3f85cf9b49a2ac9158",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 30837,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_FORECASTER_FIRST_REPLAY_OUTPUT_POSITIVE_REVIEW_20260828.md",
+   "provenance": {
+    "basis": "the reports' own provenance headers; ACLEAN_METHOD_ONLY_CAPSULE_SOURCE_20260829.md 'Why this file exists'",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "read-only retrospective reviews of the first A-clean native replay over the four .mbo.dbn.zst objects (daily summaries and the event-group ledger), under the original scientific RT mission",
+    "group_id": "aclean_first_native_replay_20260828",
+    "included_as": "PAST_RUN_OUTPUT",
+    "label": "A-clean positive-knowledge capsule SOURCE reports of 2026-08-28; four of the six promoted findings were results about roster days, which is why the method-only source of 2026-08-29 replaced them as the capsule source",
+    "run_id": "a-clean-runtime-33161766927"
+   },
+   "sha256": "f8a092c8e32e94b1081b1a246d98a73428a8b10dc18d7adfbe86db1fffa508c2",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 15278,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_RT_ACTUAL_FRANKIE_INTERIM_POSITIVE_REPORT_20260828.md",
+   "provenance": {
+    "basis": "the reports' own provenance headers; ACLEAN_METHOD_ONLY_CAPSULE_SOURCE_20260829.md 'Why this file exists'",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "read-only retrospective reviews of the first A-clean native replay over the four .mbo.dbn.zst objects (daily summaries and the event-group ledger), under the original scientific RT mission",
+    "group_id": "aclean_first_native_replay_20260828",
+    "included_as": "PAST_RUN_OUTPUT",
+    "label": "A-clean positive-knowledge capsule SOURCE reports of 2026-08-28; four of the six promoted findings were results about roster days, which is why the method-only source of 2026-08-29 replaced them as the capsule source",
+    "run_id": "a-clean-runtime-33161766927"
+   },
+   "sha256": "f09c94a7453ecf1faa756d255969ad9258ec766f9115d2452caa76408bdc9987",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 21745,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_RT_ACTUAL_FRANKIE_NONAVERAGED_EXTRACTION_OPPORTUNITIES_20260828.md",
+   "provenance": {
+    "basis": "the reports' own provenance headers; ACLEAN_METHOD_ONLY_CAPSULE_SOURCE_20260829.md 'Why this file exists'",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "read-only retrospective reviews of the first A-clean native replay over the four .mbo.dbn.zst objects (daily summaries and the event-group ledger), under the original scientific RT mission",
+    "group_id": "aclean_first_native_replay_20260828",
+    "included_as": "PAST_RUN_OUTPUT",
+    "label": "A-clean positive-knowledge capsule SOURCE reports of 2026-08-28; four of the six promoted findings were results about roster days, which is why the method-only source of 2026-08-29 replaced them as the capsule source",
+    "run_id": "a-clean-runtime-33161766927"
+   },
+   "sha256": "52c17005a947586def2dea79a579e48f80524264e970a50b08fce21340eea046",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 8335,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_RT_NATIVE_MBO_POSITIVE_DERIVED_FINDINGS_20260828.md",
+   "provenance": {
+    "basis": "the reports' own provenance headers; ACLEAN_METHOD_ONLY_CAPSULE_SOURCE_20260829.md 'Why this file exists'",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "read-only retrospective reviews of the first A-clean native replay over the four .mbo.dbn.zst objects (daily summaries and the event-group ledger), under the original scientific RT mission",
+    "group_id": "aclean_first_native_replay_20260828",
+    "included_as": "PAST_RUN_OUTPUT",
+    "label": "A-clean positive-knowledge capsule SOURCE reports of 2026-08-28; four of the six promoted findings were results about roster days, which is why the method-only source of 2026-08-29 replaced them as the capsule source",
+    "run_id": "a-clean-runtime-33161766927"
+   },
+   "sha256": "8c67fdbf5d2995657a0020200632def3fe1b2d70f1b4573c906b3a124959f8af",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 3261,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_METHOD_ONLY_CAPSULE_SOURCE_20260829.md",
+   "provenance": {
+    "basis": "the file's own 'Status' and 'Why this file exists' sections",
+    "correction": "POST_CORRECTION",
+    "data_surface": "method only, drawn from no run's results",
+    "group_id": "aclean_method_only_capsule_source_20260829",
+    "included_as": "PAST_RUN_OUTPUT",
+    "label": "the registered A-clean capsule source of 2026-08-29 (method-only)",
+    "run_id": "none (method-only; no measurement over the scored roster)"
+   },
+   "sha256": "694857137e27cc84062177ed834d6a8c71fbca908e5f8d48b93b4b016fd787cb",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 7351,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_S119_MEASURED_KNOWLEDGE_SOURCE_20260902.md",
+   "provenance": {
+    "basis": "the file's own opening paragraph",
+    "correction": "POST_CORRECTION",
+    "data_surface": "numbers from the first real principal run over a complete session (run 33605852433, Sunday 2021-10-03) and the rules established by closing its sixteen-defect register",
+    "group_id": "aclean_s119_measured_knowledge_20260902",
+    "included_as": "PAST_RUN_OUTPUT",
+    "label": "the S119 MEASURED knowledge source (2026-09-02)",
+    "run_id": "frankie-a-clean-rt-33605852433-1"
+   },
+   "sha256": "5a86b82df0f869815bd68b5055d2f608802f3443d00718c46121f4c327ac8ed7",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 25349,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_FORECASTER_FIRST_REPLAY_OUTPUT_POSITIVE_REVIEW_20260828.md",
+   "provenance": {
+    "basis": "the reports' own provenance sections; D85 names their derivation from run 32851909748-1",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "read-only retrospective and member-first recalculation reports over the A-memory diagnostic native replay, each bound to the prior wrong-data lessons package (sha256 b487acfb...)",
+    "group_id": "amemory_diagnostic_replay_20260828",
+    "included_as": "PAST_RUN_OUTPUT",
+    "label": "A-memory positive-knowledge capsule SOURCE reports and the member-first recalculation spec and receipt of 2026-08-28; every finding in them cites the wrong-data prior package as an input, so read them as PRE_CORRECTION",
+    "run_id": "frankie-a-memory-rt-c7da7d257fda-1"
+   },
+   "sha256": "b02a1a19a21a878e9d0c52294db18fd2f6810624a41a7e9a5773a01538a8d9dc",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 12114,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_NATIVE_MBO_POSITIVE_FINDINGS_20260828.md",
+   "provenance": {
+    "basis": "the reports' own provenance sections; D85 names their derivation from run 32851909748-1",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "read-only retrospective and member-first recalculation reports over the A-memory diagnostic native replay, each bound to the prior wrong-data lessons package (sha256 b487acfb...)",
+    "group_id": "amemory_diagnostic_replay_20260828",
+    "included_as": "PAST_RUN_OUTPUT",
+    "label": "A-memory positive-knowledge capsule SOURCE reports and the member-first recalculation spec and receipt of 2026-08-28; every finding in them cites the wrong-data prior package as an input, so read them as PRE_CORRECTION",
+    "run_id": "frankie-a-memory-rt-c7da7d257fda-1"
+   },
+   "sha256": "7b9bd3f11c28780900d76cfefd273ac7e9591c8e450b9b86b06a04fb8c32cde6",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 3196,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_RECALCULATION_RECEIPT_20260828.json",
+   "provenance": {
+    "basis": "the reports' own provenance sections; D85 names their derivation from run 32851909748-1",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "read-only retrospective and member-first recalculation reports over the A-memory diagnostic native replay, each bound to the prior wrong-data lessons package (sha256 b487acfb...)",
+    "group_id": "amemory_diagnostic_replay_20260828",
+    "included_as": "PAST_RUN_OUTPUT",
+    "label": "A-memory positive-knowledge capsule SOURCE reports and the member-first recalculation spec and receipt of 2026-08-28; every finding in them cites the wrong-data prior package as an input, so read them as PRE_CORRECTION",
+    "run_id": "frankie-a-memory-rt-c7da7d257fda-1"
+   },
+   "sha256": "094c32a4177edee9c16e92a288427d6e5d3777f23db8d2f954f0c6d5f310a7c1",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 9029,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_RECALCULATION_SPEC_20260828.md",
+   "provenance": {
+    "basis": "the reports' own provenance sections; D85 names their derivation from run 32851909748-1",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "read-only retrospective and member-first recalculation reports over the A-memory diagnostic native replay, each bound to the prior wrong-data lessons package (sha256 b487acfb...)",
+    "group_id": "amemory_diagnostic_replay_20260828",
+    "included_as": "PAST_RUN_OUTPUT",
+    "label": "A-memory positive-knowledge capsule SOURCE reports and the member-first recalculation spec and receipt of 2026-08-28; every finding in them cites the wrong-data prior package as an input, so read them as PRE_CORRECTION",
+    "run_id": "frankie-a-memory-rt-c7da7d257fda-1"
+   },
+   "sha256": "76fc805e143776694d02ed2fccf012714019fe23e9ae004828d1eeddf7b25790",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 17287,
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_RT_ACTUAL_FRANKIE_RETROSPECTIVE_POSITIVE_REPORT_20260828.md",
+   "provenance": {
+    "basis": "the reports' own provenance sections; D85 names their derivation from run 32851909748-1",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "read-only retrospective and member-first recalculation reports over the A-memory diagnostic native replay, each bound to the prior wrong-data lessons package (sha256 b487acfb...)",
+    "group_id": "amemory_diagnostic_replay_20260828",
+    "included_as": "PAST_RUN_OUTPUT",
+    "label": "A-memory positive-knowledge capsule SOURCE reports and the member-first recalculation spec and receipt of 2026-08-28; every finding in them cites the wrong-data prior package as an input, so read them as PRE_CORRECTION",
+    "run_id": "frankie-a-memory-rt-c7da7d257fda-1"
+   },
+   "sha256": "2854c9b96d759c61c4afa750e5106c824fa81462e5a5d61ff55240f9cbda9df5",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 9543,
+   "path": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_CLEAN_POSITIVE_KNOWLEDGE_20260828.md",
+   "provenance": {
+    "basis": "KNOWLEDGE_SOURCES_20260828.json capsules[]",
+    "correction": "POST_CORRECTION",
+    "data_surface": "the promoted A-clean capsule rendered from its registered source sections",
+    "group_id": "aclean_positive_knowledge_capsule",
+    "included_as": "PAST_RUN_OUTPUT",
+    "label": "the A-clean promoted positive-knowledge capsule (the retired arm's capsule, kept as a record)",
+    "run_id": "generated (refresh_native_frankie_knowledge) from the A-clean capsule sources"
+   },
+   "sha256": "1e26a726faeb15ed5d0714c1bc850a4d347c77a324f7117fbc190910ec4b6a63",
+   "status": "UNVERIFIED"
+  },
+  {
+   "bytes": 5380,
+   "path": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_MEMORY_POSITIVE_KNOWLEDGE_20260828.md",
+   "provenance": {
+    "basis": "KNOWLEDGE_SOURCES_20260828.json capsules[]",
+    "correction": "PRE_CORRECTION",
+    "data_surface": "the promoted A-memory capsule rendered from its registered source sections",
+    "group_id": "amemory_positive_knowledge_capsule",
+    "included_as": "PAST_RUN_OUTPUT",
+    "label": "the A-memory promoted positive-knowledge capsule; its sources are PRE_CORRECTION, so it is",
+    "run_id": "generated (refresh_native_frankie_knowledge) from the A-memory capsule sources"
+   },
+   "sha256": "bc84a77d33393c7d04185fcbfa82794cef0efd45b4fd31f0b2ee245cfb8d9131",
+   "status": "UNVERIFIED"
+  }
+ ],
+ "groups": [
+  {
+   "basis": "principal_runs/33605852433/frankie_principal_findings.json (run_id, arm, source_day)",
+   "correction": "POST_CORRECTION",
+   "data_surface": "the runner's calculation_result.json over glbx-mdp3-20211003.mbo.dbn.zst (Sunday 2021-10-03; the ~34 MB averaged result the principal read, not the exact member ledger, which stayed on the box - D81, measured); native raw MBO through the corrected runner",
+   "entries": 4,
+   "group_id": "last_run_33605852433",
+   "included_as": "PAST_RUN_OUTPUT",
+   "label": "THE LAST RUN'S committed outputs (findings, report, assessment, prompt): the seed of record because no canary output is committed (D88); pre-D81 division of labour (the runner calculated, he interpreted)",
+   "run_id": "frankie-a-clean-rt-33605852433-1"
+  },
+  {
+   "basis": "D85/D86 (DECISIONS.md) and F-21; the directory name carries the run id",
+   "correction": "PRE_CORRECTION",
+   "data_surface": "the reduced seconds rows (old reduced market rows) the corrected raw-MBO procedure forbids - THE WRONG DATA (F-21); its RT output was passed one-way to the Forecaster",
+   "entries": 16,
+   "group_id": "wrong_data_run_32851909748_1",
+   "included_as": "THE_WRONG_DATA_RUN",
+   "label": "THE REDUCED WRONG-DATA RUN 32851909748-1: its receipts, handoff, locks, frozen state and outputs, included AS the wrong-data run, labelled, never filtered (D86, D76); its lessons package (sha256 b487acfb...) is NOT memory",
+   "run_id": "32851909748-1"
+  },
+  {
+   "basis": "the reports' own provenance headers; ACLEAN_METHOD_ONLY_CAPSULE_SOURCE_20260829.md 'Why this file exists'",
+   "correction": "PRE_CORRECTION",
+   "data_surface": "read-only retrospective reviews of the first A-clean native replay over the four .mbo.dbn.zst objects (daily summaries and the event-group ledger), under the original scientific RT mission",
+   "entries": 4,
+   "group_id": "aclean_first_native_replay_20260828",
+   "included_as": "PAST_RUN_OUTPUT",
+   "label": "A-clean positive-knowledge capsule SOURCE reports of 2026-08-28; four of the six promoted findings were results about roster days, which is why the method-only source of 2026-08-29 replaced them as the capsule source",
+   "run_id": "a-clean-runtime-33161766927"
+  },
+  {
+   "basis": "the file's own 'Status' and 'Why this file exists' sections",
+   "correction": "POST_CORRECTION",
+   "data_surface": "method only, drawn from no run's results",
+   "entries": 1,
+   "group_id": "aclean_method_only_capsule_source_20260829",
+   "included_as": "PAST_RUN_OUTPUT",
+   "label": "the registered A-clean capsule source of 2026-08-29 (method-only)",
+   "run_id": "none (method-only; no measurement over the scored roster)"
+  },
+  {
+   "basis": "the file's own opening paragraph",
+   "correction": "POST_CORRECTION",
+   "data_surface": "numbers from the first real principal run over a complete session (run 33605852433, Sunday 2021-10-03) and the rules established by closing its sixteen-defect register",
+   "entries": 1,
+   "group_id": "aclean_s119_measured_knowledge_20260902",
+   "included_as": "PAST_RUN_OUTPUT",
+   "label": "the S119 MEASURED knowledge source (2026-09-02)",
+   "run_id": "frankie-a-clean-rt-33605852433-1"
+  },
+  {
+   "basis": "the reports' own provenance sections; D85 names their derivation from run 32851909748-1",
+   "correction": "PRE_CORRECTION",
+   "data_surface": "read-only retrospective and member-first recalculation reports over the A-memory diagnostic native replay, each bound to the prior wrong-data lessons package (sha256 b487acfb...)",
+   "entries": 5,
+   "group_id": "amemory_diagnostic_replay_20260828",
+   "included_as": "PAST_RUN_OUTPUT",
+   "label": "A-memory positive-knowledge capsule SOURCE reports and the member-first recalculation spec and receipt of 2026-08-28; every finding in them cites the wrong-data prior package as an input, so read them as PRE_CORRECTION",
+   "run_id": "frankie-a-memory-rt-c7da7d257fda-1"
+  },
+  {
+   "basis": "KNOWLEDGE_SOURCES_20260828.json capsules[]",
+   "correction": "POST_CORRECTION",
+   "data_surface": "the promoted A-clean capsule rendered from its registered source sections",
+   "entries": 1,
+   "group_id": "aclean_positive_knowledge_capsule",
+   "included_as": "PAST_RUN_OUTPUT",
+   "label": "the A-clean promoted positive-knowledge capsule (the retired arm's capsule, kept as a record)",
+   "run_id": "generated (refresh_native_frankie_knowledge) from the A-clean capsule sources"
+  },
+  {
+   "basis": "KNOWLEDGE_SOURCES_20260828.json capsules[]",
+   "correction": "PRE_CORRECTION",
+   "data_surface": "the promoted A-memory capsule rendered from its registered source sections",
+   "entries": 1,
+   "group_id": "amemory_positive_knowledge_capsule",
+   "included_as": "PAST_RUN_OUTPUT",
+   "label": "the A-memory promoted positive-knowledge capsule; its sources are PRE_CORRECTION, so it is",
+   "run_id": "generated (refresh_native_frankie_knowledge) from the A-memory capsule sources"
+  }
+ ],
+ "header": "No canary output is committed, so the last run seeds it (D88, Greg: 'if you can't find the canary just use something from the last run. like i said I'm not picky about that and it's wasting time.'). One arm, A_MEMORY (D86/D88: 'we aren't running clean anymore only memory'): day one is SEEDED with every committed output of the past runs, each file listed with its sha256, bytes and a provenance label, every lesson UNVERIFIED until Frankie verifies it against the stream; from day two the memory is his own prior-day frozen outputs plus this seed. Keep-everything (D76): nothing is filtered for him, and the reduced wrong-data run 32851909748-1 is here AS the wrong-data run.",
+ "schema": "FRANKIE_A_MEMORY_SEED_V1",
+ "seed_hash": "14f101c0a5dc1d4171df6f8d8767efa010811f9b7f6a2684322989b2cf83249f",
+ "status_vocabulary": {
+  "UNVERIFIED": "listed for him; he verifies it against the stream and files VERIFIED / UNVERIFIED / REFUTED"
+ },
+ "totals": {
+  "by_correction": {
+   "POST_CORRECTION": 7,
+   "PRE_CORRECTION": 26
+  },
+  "by_group": {
+   "aclean_first_native_replay_20260828": 4,
+   "aclean_method_only_capsule_source_20260829": 1,
+   "aclean_positive_knowledge_capsule": 1,
+   "aclean_s119_measured_knowledge_20260902": 1,
+   "amemory_diagnostic_replay_20260828": 5,
+   "amemory_positive_knowledge_capsule": 1,
+   "last_run_33605852433": 4,
+   "wrong_data_run_32851909748_1": 16
+  },
+  "bytes": 603190,
+  "entries": 33
+ },
+ "version": "a-memory-seed-20260902-v1"
+}

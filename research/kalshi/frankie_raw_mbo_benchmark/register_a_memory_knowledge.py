@@ -30,6 +30,11 @@ the manifest.
 - A KEEP path that no pre-call input layer binds is a REFUSAL, not an omission (D60): a file
   in the KEEP set with no layer to deliver it would otherwise be registered under no authority
   and reach him as an orphan.
+- **The seed (S122, D86/D88).** `A_MEMORY_SEED_20260902.json` - every committed output of the
+  past runs, provenance-labelled, UNVERIFIED, built by `build_a_memory_seed.py` - is one
+  generated JSON artifact (`seed_a_memory_20260902`), ALWAYS_LOAD, A_MEMORY only, both roles,
+  its authority the authority of the registry group that binds it (`a_memory_overlay`). Day one
+  is the seed; it rides inline in the context bundle.
 
 Run:
     python3 -m research.kalshi.frankie_raw_mbo_benchmark.register_a_memory_knowledge --check
@@ -52,6 +57,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry i
     load_registry,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import (
+    A_MEMORY_SEED_PATH,
     FEED_INVENTORY_PATH,
     KEEP,
     KNOWLEDGE_INPUT_POLICIES,
@@ -65,6 +71,10 @@ ROLES = ("REAL_TIME_FRANKIE", "FORECASTER_FRANKIE")
 KNOWLEDGE_DIR = "research/kalshi/agents/frankie_native_raw_mbo_knowledge/"
 SPEC_PATH = KNOWLEDGE_DIR + "KNOWLEDGE_SOURCES_20260828.json"
 KEEP_ID_PREFIX = "keep_"
+SEED_ID_PREFIX = "seed_"
+SEED_ARTIFACT_ID = SEED_ID_PREFIX + "a_memory_20260902"
+GENERATED_ID_PREFIXES = (KEEP_ID_PREFIX, SEED_ID_PREFIX)
+"""Rows this script owns and regenerates; everything else is a hand-maintained base row."""
 INVENTORY_AUTHORITY = "BINDING_CURRENT"
 KIND_BY_EXTENSION = {"md": "MARKDOWN", "json": "JSON", "py": "PYTHON_SOURCE"}
 RETIRED_EXTERNAL_BINDINGS = frozenset({"a_memory_prior_lessons_package"})
@@ -141,6 +151,34 @@ def keep_artifacts(registry: Mapping[str, Any], repo_root: Path | str = REPO_ROO
     return rows
 
 
+def _generated(artifact_id: str) -> bool:
+    return artifact_id.startswith(GENERATED_ID_PREFIXES)
+
+
+def seed_artifact(registry: Mapping[str, Any], repo_root: Path | str = REPO_ROOT) -> dict[str, Any]:
+    """The seed as ONE manifest artifact, ALWAYS_LOAD for the memory arm. Refused when the seed
+    is not on disk or no pre-call input layer binds it - a seed nobody delivers is not memory."""
+    if not (Path(repo_root) / A_MEMORY_SEED_PATH).is_file():
+        raise RegistrationError(
+            f"the seed is not on disk: {A_MEMORY_SEED_PATH}; run build_a_memory_seed --write first"
+        )
+    bound = _input_authorities(registry).get(A_MEMORY_SEED_PATH)
+    if not bound:
+        raise RegistrationError(
+            f"no pre-call input layer binds the seed {A_MEMORY_SEED_PATH!r}; run "
+            "rebind_registry_knowledge_layers --write first (D60: a seed no layer delivers is a refusal)"
+        )
+    return {
+        "id": SEED_ARTIFACT_ID,
+        "path": A_MEMORY_SEED_PATH,
+        "kind": kind_for_path(A_MEMORY_SEED_PATH),
+        "authority": "+".join(bound),
+        "arms": [ARM],
+        "roles": list(ROLES),
+        "load_mode": "ALWAYS_LOAD",
+    }
+
+
 def register(
     spec: Mapping[str, Any], registry: Mapping[str, Any], repo_root: Path | str = REPO_ROOT
 ) -> dict[str, Any]:
@@ -151,21 +189,25 @@ def register(
     rule fail later, so it is refused here by name instead.
     """
     out = json.loads(json.dumps(spec))
-    generated = keep_artifacts(registry, repo_root)
-    base = [row for row in out["artifacts"] if not row["id"].startswith(KEEP_ID_PREFIX)]
+    keep = keep_artifacts(registry, repo_root)
+    seed = seed_artifact(registry, repo_root)
+    generated = keep + [seed]
+    base = [row for row in out["artifacts"] if not _generated(row["id"])]
     base_paths = {row["path"] for row in base}
     clash = sorted(row["path"] for row in generated if row["path"] in base_paths)
     if clash:
         raise RegistrationError(
-            f"KEEP paths already registered as hand-maintained artifacts (paths must be unique): {clash}"
+            f"generated paths already registered as hand-maintained artifacts (paths must be unique): {clash}"
         )
     out["artifacts"] = base + generated
-    generated_ids = [row["id"] for row in generated]
+    keep_ids = [row["id"] for row in keep]
     for profile in out["profiles"].values():
         if profile["arm"] != ARM:
             continue
-        catalog = [value for value in profile["retrieval_catalog"] if not value.startswith(KEEP_ID_PREFIX)]
-        profile["retrieval_catalog"] = catalog + generated_ids
+        catalog = [value for value in profile["retrieval_catalog"] if not _generated(value)]
+        profile["retrieval_catalog"] = catalog + keep_ids
+        always = [value for value in profile["always_load"] if not _generated(value)]
+        profile["always_load"] = always + [seed["id"]]
         profile["external_bindings"] = [
             value for value in profile["external_bindings"] if value not in RETIRED_EXTERNAL_BINDINGS
         ]
@@ -199,12 +241,13 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     rendered = render_spec(generated)
     keep_count = sum(1 for row in generated["artifacts"] if row["id"].startswith(KEEP_ID_PREFIX))
+    summary = f"{keep_count} KEEP artifacts and the seed {SEED_ARTIFACT_ID} routed to {ARM}"
     if args.write:
         target.write_text(rendered, encoding="utf-8")
-        print(f"wrote {target}: {keep_count} KEEP artifacts routed to {ARM}; run refresh_native_frankie_knowledge --write")
+        print(f"wrote {target}: {summary}; run refresh_native_frankie_knowledge --write")
         return 0
     if target.read_text(encoding="utf-8") == rendered:
-        print(f"PASS  {target} is the generated spec ({keep_count} KEEP artifacts routed to {ARM})")
+        print(f"PASS  {target} is the generated spec ({summary})")
         return 0
     print(f"FAIL  {target} differs from the generated spec; run --write", file=sys.stderr)
     return 1

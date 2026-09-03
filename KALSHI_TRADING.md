@@ -1024,7 +1024,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **527 files.**
+new tool cannot go unlisted. **535 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `agent_frankie.py` — Frankie hybrid agent entry point.
@@ -1159,6 +1159,7 @@ new tool cannot go unlisted. **527 files.**
 - `a_memory_rt_resume_20260828.py` — (no docstring summary)
 - `a_memory_rt_resume_latest_20260828.py` — Resume the existing A-memory diagnostic replay from its latest closed checkpoint.
 - `benchmark_checkpoint.py` — Restart-safe, controller-neutral checkpoints for the raw-MBO blind benchmark."""
+- `build_a_memory_seed.py` — Build the A-memory SEED: every committed output of the past runs, hashed, labelled, UNVERIFIED.
 - `chat_packet_seam.py` — Native raw-MBO contract boundary for the Chat-controlled Frankie benchmark arms.
 - `corrected_a_arm_execution_gate_20260828.py` — Fail-closed execution and lock gates for corrected native-MBO A-arm runs."""
 - `emit_frankie_spawn.py` — Fill every Frankie spawn slot BY LOOKUP and emit the exact prompt. The A-arm `spawn.py`.
@@ -1187,6 +1188,8 @@ new tool cannot go unlisted. **527 files.**
 - `native_knowledge_delivery.py` — The knowledge Frankie receives: classified from the inventory, bound to real files, receipted.
 - `native_ladder.py` — Section 4.9: price-ladder topology.
 - `native_layer_crosswalk.py` — The 99-layer crosswalk: registry layer -> producing code -> carrier -> delivery evidence.
+- `native_layer_crosswalk.py` — The 99-layer crosswalk: registry layer -> producing code -> carrier -> delivery evidence.
+- `native_layer_crosswalk.py` — The 99-layer crosswalk: registry layer -> producing code -> carrier -> delivery evidence.
 - `native_lineage.py` — Section 4.13: chain families and D-depth lineages.
 - `native_mbo_field_census.py` — Per-field census of the retained raw MBO, so the drop question can be answered at all.
 - `native_mirror.py` — Section 4.4's one mechanically defined mirror key, and the matcher that uses it.
@@ -1203,6 +1206,7 @@ new tool cannot go unlisted. **527 files.**
 - `native_roll20.py` — Feed inventory section 8: recreate the legacy per-second `roll20` from the native stream.
 - `native_row_sink.py` — Append-only on-disk retention for the exact ledgers. Nothing is dropped; it moves.
 - `native_rt_book.py` — A FIFO order book advanced one action at a time, so every read is the REAL-TIME view.
+- `native_sealed_absence.py` — The sealed-absence proof (F-23): the sealed object set, and the scan that proves it absent.
 - `native_session.py` — Section 2 session segmentation and trading-day assignment (decision D6a, 2026-08-29).
 - `native_staging.py` — The spawn contract: how Frankie is actually called, and how its output gets back.
 - `native_stratum.py` — Section 3 of the native calculation contract, as a function rather than a sentence.
@@ -1222,11 +1226,13 @@ new tool cannot go unlisted. **527 files.**
 - `test_a_memory_member_first_recalculation.py` — (no docstring summary)
 - `test_a_memory_rt_resume_latest.py` — (no docstring summary)
 - `test_box_volume_rescue_workflow.py` — Does the box get its disk back after a failure at every point of the rescue?
+- `test_build_a_memory_seed.py` — The A-memory seed: every committed output of the past runs, hashed, provenance-labelled, UNVERIFIED.
 - `test_chat_packet_seam.py` — (no docstring summary)
 - `test_corrected_a_arm_execution_gate.py` — (no docstring summary)
 - `test_emit_frankie_spawn.py` — The stop rule, and the hash check that makes the mission uneditable mid-flight.
 - `test_fetch_frankie_ledgers.py` — The ledgers reach the session and are proven to be the ledgers the box reconciled.
 - `test_frankie_ledger_delivery_workflow.py` — D57 on the delivery workflow: parse the YAML, `bash -n` every run block, compile any
+- `test_knowledge_delivery_receipt.py` — The knowledge delivery receipt, produced FROM the existing pipeline, consumed by the crosswalk.
 - `test_native_a_arm_launch.py` — T2/T3/T5: the launch path gates, traverses, checkpoints and finalizes.
 - `test_native_absorption.py` — Tests for section 4.8 absorption, withdrawal, and delivered pressure."""
 - `test_native_book_regime.py` — Section 4.2, which did not run at all on the delivered artifact.
@@ -1250,6 +1256,7 @@ new tool cannot go unlisted. **527 files.**
 - `test_native_knowledge_delivery.py` — The knowledge Frankie receives is classified from the inventory, bound to real files, receipted.
 - `test_native_ladder.py` — Tests for section 4.9 price-ladder topology."""
 - `test_native_layer_crosswalk.py` — The 99-layer crosswalk: every registry layer to the code that produces it and the carrier
+- `test_native_layer_crosswalk_s122.py` — S122 slice 4 on the crosswalk: F-27, F-29, F-feed-4, F-feed-8, F-feed-10, the withheld sealed
 - `test_native_layer_crosswalk_s122_item4_d.py` — S122 Item 4 Task D: five measured crosswalk defects, tests first."""
 - `test_native_lineage.py` — Tests for section 4.13 chain families and D-depth lineages."""
 - `test_native_mbo_field_census.py` — The field census measures the retained raw MBO; it never judges it."""
@@ -1268,6 +1275,7 @@ new tool cannot go unlisted. **527 files.**
 - `test_native_row_sink_differential.py` — B, proved rather than claimed: streaming the exact ledgers changes no science.
 - `test_native_rt_book.py` — Tests for the real-time replay book (Greg: "We should see it like it would be seen in rt").
 - `test_native_rt_book_differential.py` — Differential tests: `ReplayBook` must MIRROR `InstrumentBook` on every book mutation.
+- `test_native_sealed_absence.py` — The sealed-absence proof (F-23): the one function the S121 search found nowhere.
 - `test_native_session.py` — Tests for section 2 continuity segmentation and trading-day assignment (D6a).
 - `test_native_staging.py` — The spawn contract: how Frankie is actually called.
 - `test_native_staging_handoff.py` — S121 slice 4: the V2 workmode handoff machinery is re-fed from a VALIDATED output bundle.

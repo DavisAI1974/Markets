@@ -48,8 +48,8 @@
       "proof_mode": "CONTENT_OR_EXTERNAL_BINDING_SHA256",
       "entries": [
         {"layer_id": "a_memory_promoted_positive_capsule", "description": "Pared-down A-memory promoted positive knowledge", "source_paths": ["research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_MEMORY_POSITIVE_KNOWLEDGE_20260828.md"], "v3_derived": false},
-        {"layer_id": "a_memory_prior_lessons_package", "description": "Verified A-memory prior lessons package", "source_paths": ["external:a_memory_prior_lessons_package"], "v3_derived": false},
-        {"layer_id": "a_memory_prior_package_proof", "description": "Proof receipt for the A-memory prior lessons package", "source_paths": ["external:a_memory_prior_lessons_package_proof"], "v3_derived": false}
+        {"layer_id": "a_memory_prior_lessons_package", "description": "A-memory seed memory: every committed output of the past runs, provenance-labelled, UNVERIFIED (D86, D88); from day two his own prior-day frozen outputs plus the seed", "source_paths": ["research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json"], "v3_derived": false},
+        {"layer_id": "a_memory_prior_package_proof", "description": "Proof of the A-memory seed: its per-entry sha256 and byte list and seed_hash, bound as the seed file's own bytes (no external binding)", "source_paths": ["research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json"], "v3_derived": false}
       ]
     },
     {
@@ -309,5 +309,5 @@
       ]
     }
   ],
-  "registry_sha256": "d6c72dfed8d76417679bf4fd78037eb889c27bf8fe7054b482d35ace55fad8aa"
+  "registry_sha256": "239a14808850d9cc9ba589165e4263c0e3f11a0c574052f39bfaa133adf296b1"
 }

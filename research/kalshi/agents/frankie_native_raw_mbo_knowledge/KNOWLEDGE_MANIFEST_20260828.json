@@ -6,7 +6,7 @@
         "A_MEMORY"
       ],
       "authority": "BINDING_CURRENT_MISSION",
-      "bytes": 27824,
+      "bytes": 28472,
       "id": "native_rt_mission",
       "kind": "MARKDOWN",
       "load_mode": "ALWAYS_LOAD",
@@ -14,7 +14,7 @@
       "roles": [
         "REAL_TIME_FRANKIE"
       ],
-      "sha256": "2b10b24556e6544742e2343fa47d43ec3113c6b05fdb0a343665e97eae855cce"
+      "sha256": "f03a7f47747b0865e0cd4f93cbfdb9b849e86bc6fc780837582314eba6afa103"
     },
     {
       "arms": [
@@ -1197,6 +1197,22 @@
         "FORECASTER_FRANKIE"
       ],
       "sha256": "16f894dbb4be6857b8fa4cc01add3d4c8020a7a4c97b5efcc3c3564397f6eb6b"
+    },
+    {
+      "arms": [
+        "A_MEMORY"
+      ],
+      "authority": "PROMOTED_POSITIVE_NATIVE_KNOWLEDGE",
+      "bytes": 38496,
+      "id": "seed_a_memory_20260902",
+      "kind": "JSON",
+      "load_mode": "ALWAYS_LOAD",
+      "path": "research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json",
+      "roles": [
+        "REAL_TIME_FRANKIE",
+        "FORECASTER_FRANKIE"
+      ],
+      "sha256": "39c2c2e4d40a0a88a93099bfa8c98e15e416dbc30087c7e6705d7736f6dfd177"
     }
   ],
   "external_bindings": [
@@ -1214,7 +1230,7 @@
       "sha256": "b487acfbbea8ac8a82f42ceb555e8334057e4004740af91b9127cd2ba71e1cf8"
     }
   ],
-  "manifest_hash": "8a10c6acdfdfb84836ea06113ecf9d943ffe594fb07f99d23696be0b3dabcb72",
+  "manifest_hash": "c578ba47a1c5344f0347584ffa22d03b398ace66b2ecee11ea865fd75d5b1b70",
   "profiles": {
     "FORECASTER_A_CLEAN_REVIEW": {
       "always_load": [
@@ -1231,7 +1247,8 @@
     "FORECASTER_A_MEMORY_REVIEW": {
       "always_load": [
         "first_replay_forecaster_directive",
-        "a_memory_promoted_positive_knowledge"
+        "a_memory_promoted_positive_knowledge",
+        "seed_a_memory_20260902"
       ],
       "arm": "A_MEMORY",
       "external_bindings": [],
@@ -1323,7 +1340,8 @@
       "always_load": [
         "native_rt_mission",
         "native_calculation_contract",
-        "a_memory_promoted_positive_knowledge"
+        "a_memory_promoted_positive_knowledge",
+        "seed_a_memory_20260902"
       ],
       "arm": "A_MEMORY",
       "external_bindings": [],

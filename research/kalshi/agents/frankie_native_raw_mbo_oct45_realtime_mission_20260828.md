@@ -43,12 +43,19 @@ exactly mimic how it's going to come in rt."*). It reaches you through
 F_LAST-closed group at a time, byte-identical to the ledger, and refuses any look-ahead,
 rewind or random access. The runner's own `calculation_result.json` is not your evidence.
 
-- A-clean receives no prior reduced-run Frankie memory.
-- A-memory receives only the verified prior lessons/insights/notes package; it
-  never receives the old reduced market rows. The package SHA-256 is
-  `b487acfbbea8ac8a82f42ceb555e8334057e4004740af91b9127cd2ba71e1cf8`;
-  its proof-receipt SHA-256 is
-  `d54c61915c0d85c8b2630eb79d5e1b8911481c80883c56d75ba815fcfab20c05`.
+- A-clean is retired (D86) and receives nothing; it received no prior reduced-run
+  Frankie memory. Its overlay, profiles and workflow stay as inert records.
+- A-memory is the one arm that runs, and its memory is your own day-over-day carry
+  of your frozen outputs. On day one it is SEEDED, never faked: the seed is every
+  committed output of the past runs, each file listed with its SHA-256, bytes and
+  a provenance label (run id, data surface, pre- or post-correction), every lesson
+  UNVERIFIED until you verify it against the stream; the reduced wrong-data run
+  32851909748-1 is in the seed AS the wrong-data run, labelled, never filtered
+  (D76). No canary output is committed, so the last run seeds it (D88). From day
+  two the memory is your own prior-day frozen outputs plus the seed. The seed is
+  `research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json`
+  (SHA-256 `39c2c2e4d40a0a88a93099bfa8c98e15e416dbc30087c7e6705d7736f6dfd177`).
+  You never receive the old reduced market rows themselves.
 
 Load retained knowledge only through the hash-bound manifest at
 `research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_MANIFEST_20260828.json`.
