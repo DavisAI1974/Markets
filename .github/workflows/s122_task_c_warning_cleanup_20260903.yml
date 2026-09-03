@@ -1,0 +1,74 @@
+name: S122 Task C warning cleanup
+on:
+  push:
+    branches: [chatgpt/s122-item4-task-c-warning-verify-20260903]
+permissions:
+  contents: write
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Prove warning, repair test only, and re-run gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET='chatgpt/frankie-raw-mbo-benchmark-20260828'
+          CANDIDATE='chatgpt/s122-item4-task-c-warning-candidate-20260903'
+          BASE='d8ed23986655f4aaa95cc0786f1edfb46686f565'
+          TEST='research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_candidate_adapter.py'
+          python3 -m pip install --quiet pytest databento matplotlib scipy scikit-learn
+          git fetch origin "$TARGET" "$CANDIDATE"
+          test "$(git rev-parse origin/$TARGET)" = "$BASE" || { echo 'STOP: target moved'; exit 41; }
+          test "$(git rev-parse origin/$CANDIDATE)" = "$BASE" || { echo 'STOP: candidate moved'; exit 42; }
+          git switch -C s122-task-c-warning "$TARGET"
+
+          set +e
+          python3 -W error::SyntaxWarning -m py_compile "$TEST" > data_s122_c_warning_red.log 2>&1
+          red=$?
+          set -e
+          echo "WARNING_RED_EXIT $red"
+          cat data_s122_c_warning_red.log
+          test "$red" -ne 0
+
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_candidate_adapter.py')
+          text = path.read_text(encoding='utf-8')
+          old = 'with self.assertRaisesRegex(ClockError, "H\\+N recognition must follow"):'
+          new = 'with self.assertRaisesRegex(ClockError, r"H\\+N recognition must follow"):'
+          assert text.count(old) == 1, text.count(old)
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
+          python3 -W error::SyntaxWarning -m py_compile "$TEST"
+          python3 -m pytest \
+            "$TEST" \
+            research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_clocks.py \
+            -q -p no:cacheprovider > data_s122_c_warning_focused.log 2>&1
+          tail -80 data_s122_c_warning_focused.log
+          set +e
+          python3 -m pytest research/kalshi/frankie_raw_mbo_benchmark/tests -q -p no:cacheprovider > data_s122_c_warning_suite.log 2>&1
+          suite=$?
+          set -e
+          echo "SUITE_EXIT $suite"
+          tail -100 data_s122_c_warning_suite.log
+          test "$suite" -eq 0
+          python3 research/kalshi/store.py check
+          python3 research/kalshi/store.py docs
+          git diff --quiet research/ng_exhaustion_mbo_v4_state_adapter_20260820.py
+          echo LOCKED_OK
+          test "$(git diff --name-only)" = "$TEST" || { echo 'unexpected warning-cleanup change set'; git diff --name-only; exit 43; }
+          if git diff --name-only | grep -E '(^|/)[^/]*_RENDER_[^/]*\.md$|(^|/)FRANKIE_FEED_RECORD_[^/]*\.md$'; then
+            echo 'forbidden historical record changed' >&2
+            exit 44
+          fi
+          git diff --check
+          git add "$TEST"
+          git diff --cached --check
+          git config user.name 'OpenAI Codex'
+          git config user.email 'noreply@openai.com'
+          git commit -m 'test: make H+N recognition regex explicit' \
+            -m 'Task C follow-up: express the H+N refusal regex as a raw string so Python emits no invalid-escape SyntaxWarning. Test meaning and production behavior are unchanged.' \
+            -m 'Co-Authored-By: Codex <noreply@openai.com>'
+          git push origin "HEAD:$CANDIDATE"
