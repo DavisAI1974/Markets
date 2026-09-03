@@ -1,10 +1,14 @@
 # DROP-IN S126 - RECOVER SUNDAY, THEN THE THREE WEEKDAYS
 
-Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. Start from tip `7b7400b`.
+Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. **The branch head is authoritative** - do
+not pin to a hash written before the commit that carries it. The last S125 code commit is
+`7b7400b` (census v10) and the docs sit on top of it, so anything at or after `7b7400b` on this
+branch is correct.
 
     git fetch origin chatgpt/frankie-raw-mbo-benchmark-20260828
     git checkout -B chatgpt/frankie-raw-mbo-benchmark-20260828 origin/chatgpt/frankie-raw-mbo-benchmark-20260828
-    git log --oneline -1     # must be 7b7400b or later
+    git log --oneline -1     # must contain 7b7400b in its history
+    git merge-base --is-ancestor 7b7400b HEAD && echo "starting tip OK"
 
 Read `research/kalshi/SESSION_HANDOFF_2026-09-03_S125.md` first. It is 179 lines and every
 number below is sourced there.

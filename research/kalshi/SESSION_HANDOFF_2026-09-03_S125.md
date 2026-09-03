@@ -1,6 +1,8 @@
 # SESSION HANDOFF 2026-09-03 S125 - FRANKIE RAN, SUNDAY TRAVERSED AND UPLOADED NOTHING
 
-Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. Tip at close: `7b7400b`.
+Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. Last code commit: `7b7400b`
+(census v10); the docs commits sit on top of it, so read the branch head rather than a
+hash written before the commit that carries it.
 2,021 tests / 6,433 subtests green. D61 adapter hash unchanged
 (`4a80e3e4b83867046d318ba97d350c2d7aca22e9d182d98399d01eeacc72d3ce`).
 
