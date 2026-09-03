@@ -1,0 +1,33 @@
+name: S122 Task B RED
+on:
+  push:
+    branches: [chatgpt/s122-item4-task-b-verify-20260903]
+permissions:
+  contents: read
+jobs:
+  red:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Prove Task B is RED on exact D tip
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp scripts/s122_patch_task_b_tests_20260903.py /home/runner/task_b_tests.py
+          git fetch origin chatgpt/frankie-raw-mbo-benchmark-20260828
+          test "$(git rev-parse origin/chatgpt/frankie-raw-mbo-benchmark-20260828)" = '9f984bf9160dffc240c32463476faa04af25973b'
+          git switch --detach origin/chatgpt/frankie-raw-mbo-benchmark-20260828
+          cp /home/runner/task_b_tests.py task_b_tests_patch.py
+          python3 task_b_tests_patch.py
+          rm task_b_tests_patch.py
+          python3 -m pip install --quiet pytest databento matplotlib scipy scikit-learn
+          set +e
+          python3 -m pytest \
+            research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_replay_driver.py \
+            research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_a_arm_launch.py \
+            -q -p no:cacheprovider > data_s122_b_red.log 2>&1
+          code=$?
+          set -e
+          echo "RED_EXIT $code"
+          tail -120 data_s122_b_red.log
+          test "$code" -ne 0
