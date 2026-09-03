@@ -1,4 +1,61 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-03, Session 122)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-03, Session 123)
+
+## S123 — THE WIRING IS FINISHED AND THE RUN IS THE ONLY THING LEFT (read `SESSION_HANDOFF_2026-09-03_S123.md` section 0 + `DROP_IN_S124.md`)
+
+**Branch = `chatgpt/frankie-raw-mbo-benchmark-20260828`. 1,973 -> 1,997 benchmark tests; 2,706 across
+all three trees. Decisions 88 -> 91. NOTHING DISPATCHED.**
+
+**TASKS A THROUGH I ARE IMPLEMENTED, TESTED AND PUSHED.** The spawn gate calls
+`gate_applicable_inputs`; the knowledge read gate is wired; **the knowledge block is RENDERED into
+the prompt** (it was gated on but never shown, so Frankie would have been spawned knowledge-gated and
+knowledge-blind); the four frozen records are stamped not rewritten; a bounded census now says
+`ABSENT_FROM_SCANNED_PREFIX`; the degenerate seed proof is DECLARED rather than papered over; and
+**the day-over-day memory loop is built and automatic.** The review of A-I has NOT happened and is
+S124's opener, then the run.
+
+**D89 — THE RUN IS LAST, AND IT PAID FOR ITSELF THE SAME DAY.** Greg: *"we are not doing canary until
+all of this other stuff is done first."* This REVERSED the drop-in, which opened by saying run first.
+Then Task H found a bounded local A_MEMORY launch dies at `CheckpointError: unknown benchmark memory
+mode` - the launcher wrote `MEMORY`, the contract accepts `MEMORY_ASSISTED`. **The canary would have
+failed at checkpoint had it been dispatched as instructed.** Fixed by correcting the WRITER; widening
+the accepted set would have been weakening a refusal to make a run go green.
+
+**D90/D91 + F-37 — A_MEMORY HAD NO DAY-OVER-DAY LOOP AND NEVER DID.** Measured: no workflow ingests
+run outputs, the knowledge-refresh workflow is a determinism gate whose `git diff --exit-code` makes
+ingestion impossible BY DESIGN, `build_a_memory_seed` was called by nothing, no workflow referenced
+`principal_runs/` (one entry), and the launch workflow commits nothing. **`8039f39` removed the
+wrong-data PACKAGE step, not a loop - there was never a loop**, so this is a build item, not a
+regression. Greg ruled it built: **the unit is his FINDINGS JSON, new ones only, automatic workflow**,
+*"like how a memory builds when you are acquiring new knowledge every day"*, explained in the post-run
+analysis he already produces. **Promotion is AUTOMATIC** (a deliberate rejection of the reviewed-PR
+pattern the refresh workflow already carries - a carry that waits for a human to merge is not a carry).
+**The VETO IS A LABEL, never a deletion** - precedent already in the seed, where the wrong-data run
+sits AS the wrong-data run, labelled, never filtered (D60/D76). **An empty day is a legitimate day**,
+and `PRESENT_EMPTY` is distinguished from `MISSING` - the S119 class, where seven of sixteen defects
+were correct calculators nothing ever called, each reporting an exact zero. **The risk designed
+against rather than discovered: if the gate is "convincing", the optimised thing is RHETORIC** - so
+the case is structured evidence, only stream evidence moves a finding UNVERIFIED -> VERIFIED, and
+`attach_principal_findings` ALREADY refuses a finding with no falsifier, so that bar was not rebuilt.
+
+**MY THREE PREMISES FOR THAT TASK WERE ALL FALSE, AND THE CAUSE IS A CLASS WE HAVE NAMED.**
+`build_a_memory_seed` did NOT derive membership by rule (line 62 hard-coded one run id), did NOT route
+through the admission path (zero references - a bypass the packet told the implementer to report, and
+he did), and the loop does NOT read the 44 S119 findings (run-local ids, no exemplars; they stay the
+historical A_CLEAN artifact and S120's finding stays OPEN). **Premise one came from the module's own
+docstring, which said "Derived, never typed. Membership is read off the tree by rule."** The prose
+asserted a property the code lacked and it went into a task packet and a decision record unexecuted -
+**the F-30 shape, catching the person enforcing verify-by-execution on everyone else.** D91 carries
+the third claim STRUCK in place: a decision record that overstates what a build achieved is the same
+defect as a frozen record that reads as live state.
+
+**DECLARED, NOT HIDDEN: the loop's first link is outside the machine.** Actions cannot make an
+uncommitted external findings artifact appear in the repository; the carry starts when that commit
+ARRIVES and cannot verify that it ever does. **That is the one way the loop silently never fires.**
+
+**AT THE CLOSE:** 1,997 / 664 / 45 passed across the three test trees (the other two were run because
+a green package suite says nothing about the rest of the repo), 193 workflows parse with 0 failures,
+the retired October launch has no push trigger and all three jobs guarded false, store 4/4, docs pass,
+D34 grep clean, **D61 adapter byte-identical**.
 
 ## S122 — THE WIRING IS DONE AND NOT ONE RUN HAS BEEN FED (read `SESSION_HANDOFF_2026-09-03_S122.md` section 0 + `DROP_IN_S123.md`)
 
@@ -1193,6 +1250,18 @@ DATA next (Greg): forward-curve cache back ($0.07; curve_regime was 'unknown' al
 FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the driver; back-fill the walked
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
+
+**One-line state (S123):** branch `chatgpt/frankie-raw-mbo-benchmark-20260828`, **1,997 benchmark
+tests / 2,706 across three trees**, decisions 91. **THE WIRING IS FINISHED - Tasks A-I implemented,
+tested and pushed - AND STILL NOTHING HAS BEEN RUN.** F-31 stands and is now the only ESSENTIAL item
+a session can close by itself. **S124 opens on the REVIEW of A-I, then the canary** (deliberately not
+started at close: reviewing nine tasks of gate and loop wiring on a spent budget is how a rubber stamp
+happens). **D89 reversed the order to run-last and was vindicated the same day** - Task H proved the
+canary would have died at checkpoint. **D90/D91: the memory loop is built and automatic**, unit = his
+findings JSON, new ids only, promotion automatic, veto by LABEL, empty days legitimate and
+distinguished from missing. **Three premises I specified that loop on were false, one of them read off
+a lying docstring.** Day-one memory is the SEED ALONE - the 44 historical findings are excluded by the
+admission path. **The loop's first link is outside the machine and is declared.** Keys do not rotate.
 
 **One-line state (S122):** branch `chatgpt/frankie-raw-mbo-benchmark-20260828`, **1,973 tests
 green**, decisions 88. **EVERYTHING IS WIRED AND NOTHING HAS BEEN RUN** - two sessions of wiring,
