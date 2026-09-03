@@ -1704,6 +1704,13 @@
    "gate": null
   },
   {
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/LAYER_CROSSWALK_SUNDAY_33630348943_FED_RENDER_20260903.md",
+   "class": "RECORD",
+   "role": "S122: the 99-layer crosswalk COMPUTED on the real Sunday result (run 33630348943, result_hash d2ab3feb...) WITH the delivery receipt (a27c8aa3...) and the full-pass stream receipt (6a188eab...), arm A_MEMORY (the one arm, D86/D88; the result's identity arm is A_CLEAN): 77 applicable inputs, 9 DELIVERED, 68 not - 45 RECEIPTED_CARRIER_ABSENT (36 of them because the pre-census result carries no field census, 4 raw_actions dropped, 5 sections 4.0/4.0b absent on this run), 14 BOUND_TO_INVENTORY_DOCUMENT, 8 PRODUCED_NOT_DELIVERED, 1 NO_PRODUCER_FOUND; 10 carrier-claim mismatches; 9 sealed unproven; 10 outputs pending. The verbatim render of the crosswalk CLI; the feed record of the same date explains every count.",
+   "update_when": "never - it is dated and finished",
+   "gate": null
+  },
+  {
    "path": "research/kalshi/FRANKIE_BUILT_NOT_WIRED_SEARCH_S121.md",
    "class": "RECORD",
    "role": "The S121 search record behind Greg's 'built but not wired and fed': per item, the existing piece with file:line, its callers today, and what is missing to wire; the one function that exists nowhere is the sealed-absence proof producer.",
