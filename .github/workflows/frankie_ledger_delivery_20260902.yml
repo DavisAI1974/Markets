@@ -50,7 +50,9 @@ env:
   AWS_REGION: us-east-2
   S3_ENDPOINT_URL: https://s3.us-east-2.amazonaws.com
   BUCKET: bento-568968024170-us-east-2-an
-  ROOT_PREFIX: nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-clean
+  # The whole benchmark tree, not one arm's: the A_MEMORY runs land under .../a-memory/full/
+  # and the scan below matches on the run id, so one root serves every arm (D86, D88).
+  ROOT_PREFIX: nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark
   PRESIGN_SECONDS: '604800'
 
 jobs:
