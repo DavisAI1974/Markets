@@ -21,6 +21,15 @@ name: Frankie stream receipt 20260903
 # Here it costs runner minutes and nothing else.
 
 on:
+  # A workflow carrying only workflow_dispatch is never registered on a non-default branch
+  # and the dispatch API returns 404 for it - measured here, and already recorded in
+  # frankie_ledger_delivery_20260902.yml. A push registers it, and the push defaults name
+  # the accepted canary, which is the run we want the receipt for anyway.
+  push:
+    branches:
+      - chatgpt/frankie-raw-mbo-benchmark-20260828
+    paths:
+      - '.github/workflows/frankie_stream_receipt_20260903.yml'
   workflow_dispatch:
     inputs:
       durable_prefix:
@@ -63,11 +72,17 @@ env:
   AWS_REGION: us-east-2
   S3_ENDPOINT_URL: https://s3.us-east-2.amazonaws.com
   BUCKET: bento-568968024170-us-east-2-an
-  DURABLE_PREFIX: ${{ inputs.durable_prefix }}
-  SUBDIR: ${{ inputs.subdir }}
-  RUN_ID: ${{ inputs.run_id }}
-  ARM: ${{ inputs.arm }}
-  PERSIST: ${{ inputs.persist }}
+  DURABLE_PREFIX: >-
+    ${{ github.event_name == 'workflow_dispatch' && inputs.durable_prefix ||
+    'nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/7d0068d8ae720772415bf84c8c0689e84408d642/33745123325-1' }}
+  SUBDIR: ${{ github.event_name == 'workflow_dispatch' && inputs.subdir || 'canary' }}
+  RUN_ID: >-
+    ${{ github.event_name == 'workflow_dispatch' && inputs.run_id ||
+    'frankie-a-memory-rt-33745123325-1' }}
+  ARM: ${{ github.event_name == 'workflow_dispatch' && inputs.arm || 'A_MEMORY' }}
+  # `a && b || c` cannot carry a FALSE input, so this reads "not a dispatch, or the
+  # dispatched value" - the same shape the launch workflow uses for its boolean flags.
+  PERSIST: ${{ github.event_name != 'workflow_dispatch' || inputs.persist }}
 
 jobs:
   receipt:
@@ -150,7 +165,7 @@ jobs:
           PY
 
       - name: Persist the receipt beside the run
-        if: ${{ inputs.persist }}
+        if: ${{ env.PERSIST == 'true' }}
         shell: bash
         run: |
           set -euo pipefail
