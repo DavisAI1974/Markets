@@ -32,7 +32,7 @@ CUTOFF = {
 
 EVIDENCE = {
     "result_hash": "a" * 64,
-    "artifact_path": "artifacts/a_clean_rt_evidence_20211004.json",
+    "artifact_path": "artifacts/a_memory_rt_evidence_20211004.json",
     "completion_status": "EVIDENCE_ONLY",
 }
 
@@ -41,23 +41,23 @@ class StageSpawnRequestTest(unittest.TestCase):
     def test_it_writes_a_request_the_coordinator_can_find(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = stage_spawn_request(
-                CUTOFF, out_dir=Path(tmp), arm="A_CLEAN", role="REAL_TIME_FRANKIE",
+                CUTOFF, out_dir=Path(tmp), arm="A_MEMORY", role="REAL_TIME_FRANKIE",
                 evidence=EVIDENCE,
             )
             self.assertTrue(path.exists())
             body = json.loads(path.read_text())
             self.assertEqual(body["schema"], SPAWN_REQUEST_SCHEMA)
             self.assertEqual(body["cutoff"]["session_phase"], "POST_CLOSE")
-            self.assertEqual(body["arm"], "A_CLEAN")
+            self.assertEqual(body["arm"], "A_MEMORY")
 
     def test_the_path_is_deterministic_from_the_cutoff(self):
         with tempfile.TemporaryDirectory() as tmp:
             first = stage_spawn_request(
-                CUTOFF, out_dir=Path(tmp), arm="A_CLEAN", role="REAL_TIME_FRANKIE",
+                CUTOFF, out_dir=Path(tmp), arm="A_MEMORY", role="REAL_TIME_FRANKIE",
                 evidence=EVIDENCE,
             )
             second = stage_spawn_request(
-                CUTOFF, out_dir=Path(tmp), arm="A_CLEAN", role="REAL_TIME_FRANKIE",
+                CUTOFF, out_dir=Path(tmp), arm="A_MEMORY", role="REAL_TIME_FRANKIE",
                 evidence=EVIDENCE,
             )
             self.assertEqual(first, second)
@@ -65,7 +65,7 @@ class StageSpawnRequestTest(unittest.TestCase):
     def test_it_names_the_evidence_the_findings_must_be_derived_from(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = stage_spawn_request(
-                CUTOFF, out_dir=Path(tmp), arm="A_CLEAN", role="REAL_TIME_FRANKIE",
+                CUTOFF, out_dir=Path(tmp), arm="A_MEMORY", role="REAL_TIME_FRANKIE",
                 evidence=EVIDENCE,
             )
             body = json.loads(path.read_text())
@@ -76,7 +76,7 @@ class StageSpawnRequestTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaises(StagingError):
                 stage_spawn_request(
-                    broken, out_dir=Path(tmp), arm="A_CLEAN", role="REAL_TIME_FRANKIE",
+                    broken, out_dir=Path(tmp), arm="A_MEMORY", role="REAL_TIME_FRANKIE",
                     evidence=EVIDENCE,
                 )
 
@@ -102,7 +102,7 @@ class StageSpawnRequestTest(unittest.TestCase):
                 )
             with self.assertRaises(StagingError):
                 stage_spawn_request(
-                    CUTOFF, out_dir=Path(tmp), arm="A_CLEAN",
+                    CUTOFF, out_dir=Path(tmp), arm="A_MEMORY",
                     role="SPECIALIST_C", evidence=EVIDENCE,
                 )
 
@@ -113,7 +113,7 @@ class LoadPrincipalArtifactTest(unittest.TestCase):
     GOOD = {
         "schema": "FRANKIE_NATIVE_RAW_MBO_PRINCIPAL_FINDINGS_V1",
         "principal": "gpt-5.6-sol",
-        "arm": "A_CLEAN",
+        "arm": "A_MEMORY",
         "role": "REAL_TIME_FRANKIE",
         "evidence_result_hash": "a" * 64,
         "actual_principal_invocation": True,
@@ -219,7 +219,7 @@ class DriverStagesRatherThanInvokesTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmp:
             stager = SpawnStager(
-                out_dir=Path(tmp), arm="A_CLEAN", role="REAL_TIME_FRANKIE", evidence=EVIDENCE
+                out_dir=Path(tmp), arm="A_MEMORY", role="REAL_TIME_FRANKIE", evidence=EVIDENCE
             )
             driver = make_driver(cadence=Always(), total_mbo_records=1)
             driver.stage_spawn = stager.stage
@@ -369,8 +369,7 @@ class DeliveredLedgersMustBeReadTest(unittest.TestCase):
             outputs_dir = Path(tmp) / "outputs"
             receipt = write_bundle(
                 build_bundle(
-                    arm="A_CLEAN", delivery_receipt_sha256="d" * 64,
-                    knowledge_receipt_sha256="e" * 64,
+                    delivery_receipt_sha256="d" * 64, knowledge_receipt_sha256="e" * 64,
                 ),
                 outputs_dir,
             )
@@ -448,6 +447,29 @@ def delivered_artifact(**overrides) -> dict:
     ]
     body.update(overrides)
     return body
+
+
+class CanonicalArmTest(unittest.TestCase):
+    """One arm, A_MEMORY (D86). Staging re-exports the outputs module's `CANONICAL_ARM` so
+    the two cannot drift; A_CLEAN stays in ALLOWED_ARMS as an inert record (D60)."""
+
+    def test_staging_and_outputs_agree_on_the_one_arm(self):
+        from research.kalshi.frankie_raw_mbo_benchmark import native_principal_outputs, native_staging
+
+        self.assertEqual(native_staging.CANONICAL_ARM, "A_MEMORY")
+        self.assertIs(native_staging.CANONICAL_ARM, native_principal_outputs.CANONICAL_ARM)
+        self.assertIn(native_staging.CANONICAL_ARM, native_staging.ALLOWED_ARMS)
+        self.assertIn("A_CLEAN", native_staging.ALLOWED_ARMS)
+
+    def test_the_fixtures_run_on_the_one_arm(self):
+        from research.kalshi.frankie_raw_mbo_benchmark.native_staging import CANONICAL_ARM
+
+        self.assertEqual(delivered_artifact()["arm"], CANONICAL_ARM)
+        self.assertEqual(LoadPrincipalArtifactTest.GOOD["arm"], CANONICAL_ARM)
+        self.assertEqual(
+            build_bundle(delivery_receipt_sha256=DELIVERY, knowledge_receipt_sha256=KNOWLEDGE).arm,
+            CANONICAL_ARM,
+        )
 
 
 class OutputsBundleGateTest(unittest.TestCase):

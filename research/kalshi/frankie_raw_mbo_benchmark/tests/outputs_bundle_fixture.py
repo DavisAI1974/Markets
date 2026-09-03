@@ -1,10 +1,11 @@
 """A lawful output bundle with a configurable identity, for the staging and read-back tests.
 
-`test_native_principal_outputs.complete_bundle` fixes the arm (A_CLEAN), the run id and the
-receipt hashes it binds to. The staging gate has to be exercised on the arm every spawn now
-targets (A_MEMORY, D86) and bound to the delivery and knowledge receipts a specific artifact
-cites, so this builds the same lawful two-cutoff bundle over the same REAL member frames and
-parameterises only the identity. Every per-ledger body comes from the outputs persona's own
+`test_native_principal_outputs.complete_bundle` fixes the run id and the receipt hashes it
+binds to. The staging gate has to be bound to the delivery and knowledge receipts a specific
+artifact cites, so this builds the same lawful two-cutoff bundle over the same REAL member
+frames and parameterises only the identity. The arm defaults to the one arm that runs
+(`CANONICAL_ARM`, A_MEMORY, D86); A_CLEAN is passed explicitly by the single test that proves
+a bundle for another arm is refused. Every per-ledger body comes from the outputs persona's own
 builders, imported and not restated: the ledger shapes are theirs to define.
 """
 from __future__ import annotations
@@ -20,7 +21,7 @@ def build_bundle(
     *,
     delivery_receipt_sha256: str,
     knowledge_receipt_sha256: str,
-    arm: str = "A_MEMORY",
+    arm: str = outputs.CANONICAL_ARM,
     role: str = "REAL_TIME_FRANKIE",
     run_id: str = "run-readback-0001",
     registry: dict[str, Any] | None = None,

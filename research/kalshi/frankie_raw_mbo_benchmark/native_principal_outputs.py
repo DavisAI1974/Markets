@@ -51,7 +51,10 @@ or session-local path (D34); and the 9a classification advises and never drops -
 where every field is LOAD_BEARING is valid (D60, D76).
 
 Run `python3 -m research.kalshi.frankie_raw_mbo_benchmark.native_principal_outputs validate
---dir <outputs dir> --arm A_CLEAN` to print the receipt or `REFUSED: <why>`.
+--dir <outputs dir>` to print the receipt or `REFUSED: <why>`. `--arm` defaults to
+`CANONICAL_ARM` (A_MEMORY - the one arm, D86; equivalent to `--arm A_MEMORY` spelled out);
+A_CLEAN is accepted only as the inert record it is, and a bundle for another arm is refused
+by name.
 """
 from __future__ import annotations
 
@@ -70,6 +73,13 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry i
     canonical_hash,
     load_registry,
 )
+
+#: THE ONE ARM (D86; Greg, S122: "we aren't running clean anymore only memory"). Every
+#: default, example and fixture names it; nothing is built, defaulted or exemplified for
+#: A_CLEAN, which stays in `ALLOWED_ARMS` as an inert record until its removal is discussed
+#: (D60, F-28). Staging re-exports this so the two modules cannot drift.
+CANONICAL_ARM = "A_MEMORY"
+assert CANONICAL_ARM in ALLOWED_ARMS
 
 APPEND_ONLY_OUTPUTS_GROUP = "append_only_outputs"
 SECTION_LEDGER_PREFIX = "contract_section_"
@@ -1468,7 +1478,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     commands = parser.add_subparsers(dest="command", required=True)
     validate = commands.add_parser("validate", help="validate a written bundle directory")
     validate.add_argument("--dir", required=True, help="directory holding ledgers/ and RECEIPT.json")
-    validate.add_argument("--arm", required=True, choices=sorted(ALLOWED_ARMS), help="the arm the bundle must belong to")
+    validate.add_argument(
+        "--arm", default=CANONICAL_ARM, choices=sorted(ALLOWED_ARMS),
+        help=f"the arm the bundle must belong to (default {CANONICAL_ARM}, the one arm - D86; "
+             "A_CLEAN is accepted only as an inert record)",
+    )
     validate.add_argument("--registry", default=str(REGISTRY_PATH), help="ingestion-layer registry JSON")
     validate.add_argument("--contract", default=str(CONTRACT_PATH), help="calculation contract markdown")
     validate.add_argument("--knowledge-receipt-sha256", default=None, help="the knowledge-delivery receipt every verdict must cite")

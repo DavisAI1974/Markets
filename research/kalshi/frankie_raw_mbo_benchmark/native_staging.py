@@ -35,6 +35,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import 
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import load_registry
 from research.kalshi.frankie_raw_mbo_benchmark.native_principal_outputs import (
+    CANONICAL_ARM,
     CONTRACT_PATH,
     PrincipalOutputError,
     validate_output_bundle_dir,
@@ -45,6 +46,9 @@ _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 SPAWN_REQUEST_SCHEMA = "FRANKIE_NATIVE_RAW_MBO_SPAWN_REQUEST_V1"
 PRINCIPAL_FINDINGS_SCHEMA = "FRANKIE_NATIVE_RAW_MBO_PRINCIPAL_FINDINGS_V1"
 
+#: A_MEMORY is the one arm that runs (`CANONICAL_ARM`, D86, re-exported from the outputs
+#: module); A_CLEAN stays a VALID value as an inert record until its removal is discussed
+#: (D60, F-28). Pinned equal to the outputs module's set by test.
 ALLOWED_ARMS = frozenset({"A_CLEAN", "A_MEMORY"})
 ALLOWED_ROLES = frozenset({"REAL_TIME_FRANKIE", "FORECASTER_FRANKIE"})
 

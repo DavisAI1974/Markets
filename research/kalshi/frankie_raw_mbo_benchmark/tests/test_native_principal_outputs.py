@@ -176,7 +176,7 @@ def rechained(entries: list[dict]) -> list[dict]:
 def bundle_fixture(**overrides) -> "outputs.OutputBundle":
     kwargs = dict(
         run_id="run-fixture-0001",
-        arm="A_CLEAN",
+        arm="A_MEMORY",
         role="REAL_TIME_FRANKIE",
         registry=registry_today(),
         contract_text=contract_today(),
@@ -287,7 +287,7 @@ class OutputBundleTest(unittest.TestCase):
         bundle = bundle_fixture()
         body = bundle.to_dict()
         self.assertEqual(body["schema"], "FRANKIE_NATIVE_RAW_MBO_PRINCIPAL_OUTPUTS_V1")
-        self.assertEqual((body["run_id"], body["arm"], body["role"]), ("run-fixture-0001", "A_CLEAN", "REAL_TIME_FRANKIE"))
+        self.assertEqual((body["run_id"], body["arm"], body["role"]), ("run-fixture-0001", "A_MEMORY", "REAL_TIME_FRANKIE"))
         self.assertEqual(body["registry_sha256"], registry["registry_sha256"])
         self.assertEqual(body["contract_sha256"], hashlib.sha256(contract.encode("utf-8")).hexdigest())
         self.assertEqual(body["ledgers"], {})
@@ -323,7 +323,7 @@ class OutputBundleTest(unittest.TestCase):
         bundle.ledger("output_answer_wall_access_receipts", empty_reason="blind by construction")
         receipt = outputs.bundle_receipt(bundle)
         self.assertEqual(receipt["schema"], "FRANKIE_NATIVE_RAW_MBO_PRINCIPAL_OUTPUTS_RECEIPT_V1")
-        self.assertEqual((receipt["run_id"], receipt["arm"]), ("run-fixture-0001", "A_CLEAN"))
+        self.assertEqual((receipt["run_id"], receipt["arm"]), ("run-fixture-0001", "A_MEMORY"))
         self.assertEqual(
             receipt["ledgers"]["output_frankie_reasoning_movie"],
             {"entry_count": 1, "head_hash": bundle.ledger("output_frankie_reasoning_movie").head_hash},
@@ -394,7 +394,7 @@ class WriteAndLoadBundleTest(unittest.TestCase):
     def test_a_tampered_receipt_hash_refuses_to_load(self):
         _bundle, root, _receipt = self.written()
         receipt = json.loads((root / "RECEIPT.json").read_text())
-        receipt["arm"] = "A_MEMORY"
+        receipt["arm"] = "A_CLEAN"  # the other arm; the receipt no longer hashes to itself
         (root / "RECEIPT.json").write_text(json.dumps(receipt))
         with self.assertRaises(outputs.PrincipalOutputError):
             outputs.load_bundle(root)
@@ -1277,7 +1277,7 @@ def complete_bundle(frames: list[dict], *, registry=None, contract_text=None) ->
     first, second = frames[-2], frames[-1]
     c1, c2 = first["ts_recv_ns"], second["ts_recv_ns"]
     bundle = outputs.OutputBundle(
-        run_id="run-e2e-0001", arm="A_CLEAN", role="REAL_TIME_FRANKIE",
+        run_id="run-e2e-0001", arm="A_MEMORY", role="REAL_TIME_FRANKIE",
         registry=registry, contract_text=contract_text,
         knowledge_receipt_sha256=KNOWLEDGE_RECEIPT, delivery_receipt_sha256=DELIVERY_RECEIPT,
     )
@@ -1487,6 +1487,21 @@ class EndToEndTest(unittest.TestCase):
             outputs.validate_output_bundle_dir(self.root, registry=self.registry, contract_text=self.contract)
 
 
+class CanonicalArmTest(unittest.TestCase):
+    """One arm, and it is A_MEMORY (D86; Greg S122: "we aren't running clean anymore only
+    memory"). A_CLEAN stays a VALID value - an inert record until its removal is discussed
+    (D60) - and nothing here defaults to it or exemplifies it as the arm that runs."""
+
+    def test_the_canonical_arm_is_a_memory_and_is_an_allowed_arm(self):
+        self.assertEqual(outputs.CANONICAL_ARM, "A_MEMORY")
+        self.assertIn(outputs.CANONICAL_ARM, outputs.ALLOWED_ARMS)
+        self.assertIn("A_CLEAN", outputs.ALLOWED_ARMS, "the inert record stays a valid value")
+
+    def test_the_usage_string_exemplifies_the_arm_that_runs(self):
+        self.assertIn("--arm A_MEMORY", outputs.__doc__)
+        self.assertNotIn("--arm A_CLEAN", outputs.__doc__)
+
+
 class CliTest(unittest.TestCase):
     def setUp(self):
         self.frames = real_frames()
@@ -1501,32 +1516,44 @@ class CliTest(unittest.TestCase):
             code = outputs.main(["validate", "--dir", str(self.root), *extra])
         return code, out.getvalue()
 
-    def test_validate_prints_the_receipt_for_the_right_arm(self):
-        code, text = self.run_cli("--arm", "A_CLEAN", "--knowledge-receipt-sha256", KNOWLEDGE_RECEIPT, "--delivery-receipt-sha256", DELIVERY_RECEIPT)
+    def test_validate_without_an_arm_validates_for_the_canonical_arm(self):
+        """Nothing to remember: `--arm` defaults to A_MEMORY, the one arm."""
+        code, text = self.run_cli("--knowledge-receipt-sha256", KNOWLEDGE_RECEIPT, "--delivery-receipt-sha256", DELIVERY_RECEIPT)
         self.assertEqual(code, 0, text)
         receipt = json.loads(text)
         self.assertEqual(receipt["schema"], "FRANKIE_NATIVE_RAW_MBO_PRINCIPAL_OUTPUTS_RECEIPT_V1")
+        self.assertEqual(receipt["arm"], outputs.CANONICAL_ARM)
         self.assertEqual(receipt["missing_ledger_ids"], [])
 
-    def test_validate_refuses_the_wrong_arm_and_a_mutated_ledger(self):
+    def test_an_explicit_a_memory_is_the_default_spelled_out(self):
         code, text = self.run_cli("--arm", "A_MEMORY")
+        self.assertEqual(code, 0, text)
+        self.assertEqual(json.loads(text)["arm"], "A_MEMORY")
+
+    def test_validate_refuses_the_inert_arm_and_a_mutated_ledger(self):
+        """A_CLEAN is a valid value and this bundle is not its bundle: refused by name."""
+        code, text = self.run_cli("--arm", "A_CLEAN")
         self.assertEqual(code, 1)
         self.assertTrue(text.startswith("REFUSED"), text)
+        self.assertIn("A_CLEAN", text)
+        self.assertIn("A_MEMORY", text)
         path = self.root / "ledgers" / "output_probability_movie.json"
         ledger = json.loads(path.read_text())
         ledger["entries"][0]["body"]["probabilities"]["PERSIST"] = 0.41
         path.write_text(json.dumps(ledger))
-        code, text = self.run_cli("--arm", "A_CLEAN")
+        code, text = self.run_cli()
         self.assertEqual(code, 1)
         self.assertIn("REFUSED", text)
 
-    def test_the_module_runs_as_a_command(self):
+    def test_the_module_runs_as_a_command_with_nothing_to_remember(self):
         result = subprocess.run(
-            [sys.executable, "-m", "research.kalshi.frankie_raw_mbo_benchmark.native_principal_outputs", "validate", "--dir", str(self.root), "--arm", "A_CLEAN"],
+            [sys.executable, "-m", "research.kalshi.frankie_raw_mbo_benchmark.native_principal_outputs", "validate", "--dir", str(self.root)],
             capture_output=True, text=True, cwd=str(Path(__file__).resolve().parents[4]),
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertEqual(json.loads(result.stdout)["missing_ledger_ids"], [])
+        receipt = json.loads(result.stdout)
+        self.assertEqual(receipt["missing_ledger_ids"], [])
+        self.assertEqual(receipt["arm"], "A_MEMORY")
 
 
 if __name__ == "__main__":
