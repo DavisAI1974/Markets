@@ -52,6 +52,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_layer_crosswalk import (
     render_crosswalk_table,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_mbo_field_census import MboFieldCensus
+from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import KNOWLEDGE_LAYER_SOURCES
 from research.kalshi.frankie_raw_mbo_benchmark.tests.test_native_a_arm_launch import slice_records
 
 REQUIRED_KEYS = {"kind", "module", "symbol", "file", "line", "carrier", "notes"}
@@ -443,11 +444,11 @@ class StatusIsComputedNeverStampedTest(unittest.TestCase):
     def test_nothing_is_delivered_without_evidence(self):
         self.assertEqual([r["layer_id"] for r in self.cw.values() if r["status"] == "DELIVERED"], [])
 
-    def test_knowledge_layers_bound_to_the_inventory_document_say_so(self):
+    def test_rebound_knowledge_layers_are_produced_not_delivered_without_receipts(self):
         for layer_id in ("complete_s105_9_brain", "learned_d_structures_and_families", "october_outcome_wall_enforcement"):
             with self.subTest(layer_id=layer_id):
-                self.assertEqual(self.cw[layer_id]["status"], "BOUND_TO_INVENTORY_DOCUMENT")
-                self.assertEqual(self.cw[layer_id]["evidence"]["kind"], "INVENTORY_DOCUMENT")
+                self.assertEqual(self.cw[layer_id]["status"], "PRODUCED_NOT_DELIVERED")
+                self.assertEqual(self.cw[layer_id]["evidence"]["kind"], "NONE")
 
     def test_the_mission_and_contract_are_produced_but_not_delivered_until_a_receipt_names_them(self):
         for layer_id in ("controlling_rt_mission", "native_calculation_contract"):
@@ -458,8 +459,9 @@ class StatusIsComputedNeverStampedTest(unittest.TestCase):
         self.assertEqual(self.cw["fifo_queues"]["status"], "PRODUCED_NOT_DELIVERED")
         self.assertEqual(self.cw["order_lifecycle_adds"]["status"], "PRODUCED_NOT_DELIVERED")
 
-    def test_lock_time_has_no_producer(self):
-        self.assertEqual(self.cw["clock_lock_time"]["status"], "NO_PRODUCER_FOUND")
+    def test_lock_time_has_no_ingestion_producer_but_is_principal_stamped(self):
+        self.assertEqual(self.cw["clock_lock_time"]["status"], "PRINCIPAL_STAMPED")
+        self.assertEqual(LAYER_PRODUCERS["clock_lock_time"]["kind"], "NO_PRODUCER_FOUND")
 
     def test_sealed_layers_are_unproven_without_an_absence_proof(self):
         self.assertEqual(self.cw["step1_result_prefixes"]["status"], "SEALED_UNPROVEN")
@@ -510,7 +512,7 @@ class StatusAgainstARealRunTest(unittest.TestCase):
         self.assertEqual(self.cw["clock_event_time"]["status"], "DELIVERED")
         self.assertEqual(self.cw["clock_model_evaluation"]["status"], "DELIVERED")
         self.assertEqual(self.cw["clock_prospective_discovery_confirmation"]["status"], "RECEIPTED_CARRIER_ABSENT")
-        self.assertEqual(self.cw["clock_lock_time"]["status"], "NO_PRODUCER_FOUND")
+        self.assertEqual(self.cw["clock_lock_time"]["status"], "PRINCIPAL_STAMPED")
 
     def test_the_totals_count_the_over_claims(self):
         cw = crosswalk(self.registry, arm="A_CLEAN", result=self.result, delivery_receipt=self.receipt)
@@ -561,9 +563,9 @@ class StatusAgainstARealRunTest(unittest.TestCase):
         cw = crosswalk(self.registry, arm="A_CLEAN", result=self.result, delivery_receipt=self.receipt,
                        stream_receipt=stream_receipt)
         rows = rows_by_id(cw)
-        self.assertIn("carrier claim", rows["legacy_structure_observables"]["evidence"]["detail"])
-        self.assertIn("carrier claim", rows["clock_prospective_discovery_confirmation"]["evidence"]["detail"])
-        self.assertGreaterEqual(cw["totals"]["carrier_claim_mismatches"], 2)
+        self.assertNotIn("carrier claim mismatch", rows["legacy_structure_observables"]["evidence"]["detail"])
+        self.assertNotIn("carrier claim mismatch", rows["clock_prospective_discovery_confirmation"]["evidence"]["detail"])
+        self.assertEqual(cw["totals"]["carrier_claim_mismatches"], 0)
         self.assertEqual(cw["stream_receipt_sha256"], stream_receipt["receipt_sha256"])
 
 
@@ -584,7 +586,7 @@ class InterlockReceiptsTest(unittest.TestCase):
         self.assertEqual(cw["learned_d_structures_and_families"]["status"], "PRODUCED_NOT_DELIVERED")
         self.assertIn("EXCLUDED", cw["learned_d_structures_and_families"]["evidence"]["detail"])
         # A layer the receipt does not mention keeps its computed status.
-        self.assertEqual(cw["october_outcome_wall_enforcement"]["status"], "BOUND_TO_INVENTORY_DOCUMENT")
+        self.assertEqual(cw["october_outcome_wall_enforcement"]["status"], "PRODUCED_NOT_DELIVERED")
 
     def test_a_knowledge_receipt_delivering_a_layer_with_no_files_is_not_believed(self):
         receipt = knowledge_receipt([{"layer_id": "complete_s105_9_brain", "status": "DELIVERED", "files": []}])
@@ -665,7 +667,7 @@ class PolicyStampVersusComputedTest(unittest.TestCase):
             with self.subTest(layer_id=layer_id):
                 row = comparison[layer_id]
                 self.assertEqual(row["policy_stamp"], "AVAILABLE")
-                self.assertEqual(row["computed_status"], "BOUND_TO_INVENTORY_DOCUMENT")
+                self.assertEqual(row["computed_status"], "PRODUCED_NOT_DELIVERED")
                 self.assertFalse(row["agree"])
 
     def test_the_stream_layers_disagree_ready_versus_produced_not_delivered_without_a_run(self):
@@ -774,7 +776,10 @@ class CommittedFixtureRenderTest(unittest.TestCase):
     def test_the_committed_render_says_it_is_a_fixture_and_names_the_sunday_cli(self):
         text = (REPO_ROOT / FIXTURE_RENDER_PATH).read_text(encoding="utf-8")
         self.assertIn("FIXTURE render, not the Sunday run", text)
-        self.assertIn(SUNDAY_CLI, text)
+        # The task forbids rewriting the historical fixture render. Its embedded Sunday command
+        # therefore remains A_CLEAN while the live SUNDAY_CLI default has moved to A_MEMORY.
+        self.assertIn("--arm A_CLEAN", text)
+        self.assertIn("--arm A_MEMORY", SUNDAY_CLI)
         self.assertIn(CROSSWALK_SCHEMA, text)
         self.assertNotIn("/tmp/", text)
         self.assertNotIn("scratchpad", text)
@@ -795,16 +800,24 @@ class CommittedFixtureRenderTest(unittest.TestCase):
             "order_lifecycle_cancels",
             "order_lifecycle_modifies",
         }
+        knowledge_transitions = {binding.layer_id for binding in KNOWLEDGE_LAYER_SOURCES}
+        d_transitions = knowledge_transitions | {"clock_lock_time"}
         for layer_id, (group_id, status) in expected.items():
             with self.subTest(layer_id=layer_id):
                 if layer_id in f30_transitions:
                     self.assertEqual(status, "DELIVERED")
                     self.assertEqual(committed[layer_id], (group_id, "RECEIPTED_CARRIER_ABSENT"))
+                elif layer_id in knowledge_transitions:
+                    self.assertEqual(status, "PRODUCED_NOT_DELIVERED")
+                    self.assertEqual(committed[layer_id], (group_id, "BOUND_TO_INVENTORY_DOCUMENT"))
+                elif layer_id == "clock_lock_time":
+                    self.assertEqual(status, "PRINCIPAL_STAMPED")
+                    self.assertEqual(committed[layer_id], (group_id, "NO_PRODUCER_FOUND"))
                 else:
                     self.assertEqual(committed[layer_id], (group_id, status),
                                      f"{layer_id}: committed {committed[layer_id]} vs fresh {(group_id, status)}")
         fresh_rows = self._layer_rows(fresh_text)
-        for layer_id in f30_transitions:
+        for layer_id in f30_transitions | d_transitions:
             fresh_rows[layer_id] = committed[layer_id]
         self.assertEqual(fresh_rows, committed)
 

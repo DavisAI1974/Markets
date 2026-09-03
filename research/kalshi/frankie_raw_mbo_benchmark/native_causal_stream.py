@@ -105,6 +105,9 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry i
     validate_causal_group_delivery_receipt,
     validate_registry,
 )
+from research.kalshi.frankie_raw_mbo_benchmark.native_layer_crosswalk import (
+    group_carriers_from_producers,
+)
 
 __all__ = ["NOT_ON_THIS_ROW"]  # re-exported for readers of the delivery: the declared absence
 
@@ -127,17 +130,8 @@ CAUSAL_CLOCKS_DERIVED_FROM_LEGACY = "DERIVED_FROM_LEGACY_CLOCKS_OBJECT"
 MEMBER = "member"
 LIFECYCLE = "lifecycle"
 LEGACY = "legacy"
-LAYER_CARRIERS: dict[str, tuple[str, ...]] = {
-    "canonical_raw_dbn_mbo": (MEMBER,),
-    "order_lifecycle": (MEMBER,),
-    "full_book_fifo_queue": (MEMBER,),
-    "microstructure_mechanics": (MEMBER,),
-    "causal_clocks": (MEMBER,),
-    "legacy_observable_crosswalk": (LEGACY,),
-    "derived_geometry": (MEMBER, LIFECYCLE),
-    "prebirth_opportunity": (MEMBER, LIFECYCLE),
-}
-"""Which delivered bytes carry each CAUSAL_STREAM_REQUIRED registry group. A declaration."""
+LAYER_CARRIERS: dict[str, tuple[str, ...]] = group_carriers_from_producers(load_registry())
+"""The causal carrier map derived from native_layer_crosswalk.LAYER_PRODUCERS; one authority."""
 
 AVAILABILITY_PATH = "EMITTED_AT_RECV_NS_FIRST_RULES_FALLBACK"
 """How a lifecycle row is placed: by its own stamp when it carries one, else by rule."""

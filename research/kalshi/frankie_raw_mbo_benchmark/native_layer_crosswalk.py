@@ -43,6 +43,13 @@ from typing import Any, Iterable, Mapping
 from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import (
     load_registry,
 )
+from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import (
+    FEED_INVENTORY_PATH,
+    KNOWLEDGE_INPUT_POLICIES,
+    KNOWLEDGE_LAYER_SOURCES,
+    layers_bound_only_to,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.native_mbo_field_census import MboFieldCensus
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -747,6 +754,24 @@ LAYER_PRODUCERS: dict[str, dict[str, Any]] = {
 }
 
 
+# F-27: knowledge producer records follow the current classified KEEP-file binding table.
+# The registry decides whether a layer is bound only to the inventory document at runtime;
+# no producer record carries a stale boolean copy of that fact.
+for _knowledge_binding in KNOWLEDGE_LAYER_SOURCES:
+    _knowledge_record = LAYER_PRODUCERS[_knowledge_binding.layer_id]
+    _knowledge_record.update({
+        "kind": "FILE",
+        "module": "native_knowledge_delivery",
+        "symbol": "KNOWLEDGE_LAYER_SOURCES",
+        "file": PKG + "native_knowledge_delivery.py",
+        "line": None,
+        "carrier": ", ".join(_knowledge_binding.paths),
+        "carrier_paths": tuple(_knowledge_binding.paths),
+        "notes": "Registry-rebound KEEP-file carriers: " + _knowledge_binding.why,
+    })
+    _knowledge_record.pop("bound_to_inventory_document", None)
+
+
 # --------------------------------------------------------------------------------------
 # The seven clocks against the code as it is. Expected to change at merge.
 # --------------------------------------------------------------------------------------
@@ -790,7 +815,8 @@ SEVEN_CLOCKS: dict[str, dict[str, Any]] = {
     "clock_lock_time": {
         "clock": "lock time", "producer": False,
         "row_fields": (), "receipt_key": None,
-        "coverage": "NONE: Frankie's output (output_first_locks_and_no_locks); no input producer exists",
+        "principal_ledger": "output_first_locks_and_no_locks",
+        "coverage": "PRINCIPAL_STAMPED: Frankie's output (output_first_locks_and_no_locks); no input producer exists",
     },
 }
 
@@ -835,10 +861,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.fetch_frankie_ledgers import (  #
     LEDGER_FILES,
     RECEIPT_SCHEMA as DELIVERY_RECEIPT_SCHEMA,
 )
-from research.kalshi.frankie_raw_mbo_benchmark.native_causal_stream import (  # noqa: E402
-    LAYER_CARRIERS,
-    STREAM_RECEIPT_SCHEMA,
-)
+STREAM_RECEIPT_SCHEMA = "FRANKIE_NATIVE_RAW_MBO_CAUSAL_STREAM_RECEIPT_V1"
 from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import (  # noqa: E402
     ALLOWED_ARMS,
     canonical_hash,
@@ -855,7 +878,11 @@ INPUT_POLICIES = frozenset({"STATIC_REQUIRED_INPUT", "ARM_REQUIRED_INPUT", "CAUS
 STATUS_MEANING: dict[str, str] = {
     "DELIVERED": "a receipt row names this layer's carrier AND the carrier is present in the run (field census, "
                  "lifecycle section rows or legacy rows); for static layers, a knowledge receipt row DELIVERED with files",
-    "RECEIPTED_CARRIER_ABSENT": "a VERIFIED receipt names this layer, and the run's own evidence shows the cited carrier "
+    "CENSUS_ABSENT": "the member carrier cannot be measured because neither the result field census nor a bounded "
+                     "scan of the delivered member ledger is available; this is missing evidence, not an absent carrier",
+    "PRINCIPAL_STAMPED": "the input clock is stamped by the principal's own named output ledger rather than produced "
+                         "by the ingestion path; this one computed status satisfies the input-accounting gate",
+    "RECEIPTED_CARRIER_ABSENT": "a VERIFIED receipt names this layer, and measured run evidence shows the cited carrier "
                                 "is not there - the receipt over-claims (a structural drop, or 0 rows on this run)",
     "BOUND_TO_INVENTORY_DOCUMENT": "the layer's only source path is the feed-inventory markdown; a named defect, never DELIVERED",
     "PRODUCED_NOT_DELIVERED": "a producer exists and no VERIFIED receipt covers this layer on this run",
@@ -868,9 +895,34 @@ STATUS_MEANING: dict[str, str] = {
     "NOT_APPLICABLE": "the arm is not in the layer's group arms",
 }
 STATUSES = frozenset(STATUS_MEANING)
+ACCOUNTED_INPUT_STATUSES = frozenset({"DELIVERED", "PRINCIPAL_STAMPED"})
 
 LEDGER_TO_CARRIER = {MEMBER_LEDGER: "member", LIFECYCLE_LEDGER: "lifecycle", LEGACY_LEDGER: "legacy"}
-"""Ledger name -> the carrier vocabulary native_causal_stream.LAYER_CARRIERS declares in."""
+"""Ledger name -> the carrier vocabulary used by the causal stream."""
+
+
+def group_carriers_from_producers(registry: Mapping[str, Any] | None = None) -> dict[str, tuple[str, ...]]:
+    """Derive each causal registry group's carrier set from its per-layer producer records.
+
+    This is the one carrier authority. A layer adds a carrier by naming its ledger; the stream
+    consumes this derivation instead of maintaining a second hand-written group table.
+    """
+    active = load_registry() if registry is None else registry
+    derived: dict[str, tuple[str, ...]] = {}
+    for group in active["groups"]:
+        if group["policy"] != "CAUSAL_STREAM_REQUIRED":
+            continue
+        carriers: set[str] = set()
+        for entry in group["entries"]:
+            record = LAYER_PRODUCERS.get(entry["layer_id"])
+            if record is None:
+                raise CrosswalkError(f"registry layer {entry['layer_id']!r} has no producer record")
+            for ledger in record.get("ledgers", ()):
+                carrier = LEDGER_TO_CARRIER.get(ledger)
+                if carrier is not None:
+                    carriers.add(carrier)
+        derived[group["group_id"]] = tuple(sorted(carriers))
+    return derived
 
 #: How a pre-call policy stamp and a computed status relate. A stamp AGREES with the computed
 #: status only when the measurement would have justified it; the rest is the disagreement the
@@ -889,7 +941,7 @@ FIXTURE_RENDER_PATH = PKG + "LAYER_CROSSWALK_FIXTURE_RENDER_20260902.md"
 SUNDAY_CLI = (
     "python3 -m research.kalshi.frankie_raw_mbo_benchmark.native_layer_crosswalk "
     "--result <calculation_result.json> --delivery-receipt <FRANKIE_LEDGER_DELIVERY_RECEIPT.json> "
-    "--arm A_CLEAN --out <LAYER_CROSSWALK_<run>.md> [--json <crosswalk.json>] [--stream-receipt <stream_receipt.json>] "
+    "--arm A_MEMORY --out <LAYER_CROSSWALK_<run>.md> [--json <crosswalk.json>] [--stream-receipt <stream_receipt.json>] "
     "[--knowledge-receipt <...>] [--outputs-receipt <...>] [--sealed-proof <...>] [--ledger-dir <delivered/>]"
 )
 
@@ -920,19 +972,63 @@ def _require_receipt(receipt: Any, schema: str, label: str, *, verify_hash: bool
 
 
 # --- what the run actually carried --------------------------------------------------------
+def _delivered_ledger_path(
+    ledger: str, *, delivery_receipt: Mapping[str, Any] | None, ledger_dir: Path | str | None
+) -> Path | None:
+    if ledger_dir is None:
+        return None
+    if delivery_receipt is not None:
+        entry = (delivery_receipt.get("ledgers") or {}).get(ledger) or {}
+        local = entry.get("local_path") if isinstance(entry, Mapping) else None
+        if isinstance(local, str) and local:
+            candidate = Path(local)
+            if not candidate.is_absolute() and not candidate.is_file():
+                candidate = Path(ledger_dir) / candidate
+            if candidate.is_file():
+                return candidate
+    candidate = Path(ledger_dir) / LEDGER_FILES[ledger]
+    return candidate if candidate.is_file() else None
+
+
+MEMBER_SCAN_MAX_ROWS = 1024
+MEMBER_SCAN_MAX_BYTES = 64 * 1024 * 1024
+
+
+def _bounded_member_census(path: Path) -> tuple[set[str], int, dict[str, int]]:
+    """Census a bounded prefix: at most MEMBER_SCAN_MAX_ROWS and MEMBER_SCAN_MAX_BYTES.
+
+    This recovers field NAMES when an old result omitted its census; it never claims a full-ledger
+    absence proof. The bound is returned and repeated in evidence detail.
+    """
+    census = MboFieldCensus()
+    rows = 0
+    bytes_read = 0
+    with path.open("rb") as handle:
+        while rows < MEMBER_SCAN_MAX_ROWS and bytes_read < MEMBER_SCAN_MAX_BYTES:
+            line = handle.readline()
+            if not line:
+                break
+            if bytes_read + len(line) > MEMBER_SCAN_MAX_BYTES and rows:
+                break
+            bytes_read += len(line)
+            if not line.strip():
+                continue
+            census.observe(json.loads(line))
+            rows += 1
+    return set(census.paths()), rows, {
+        "rows": MEMBER_SCAN_MAX_ROWS, "bytes": MEMBER_SCAN_MAX_BYTES,
+        "rows_read": rows, "bytes_read": bytes_read,
+    }
+
+
 def observed_carriers(
     result: Mapping[str, Any] | None, *, delivery_receipt: Mapping[str, Any] | None = None,
     ledger_dir: Path | str | None = None,
 ) -> dict[str, Any]:
-    """Read, off the result and the delivered files, what carriers the run holds.
-
-    Member paths come from the result's own field census (exact over every member row);
-    lifecycle sections from the sink's per-section row counts; legacy keys from the first rows
-    of the delivered legacy file when it is reachable, else from the sink's sampled field table.
-    Nothing here is asserted from a policy.
-    """
+    """Measure carriers from the result, or from bounded delivered-ledger scans when requested."""
     out: dict[str, Any] = {
-        "member_paths": None, "member_rows": None, "lifecycle_rows_by_section": None,
+        "member_paths": None, "member_rows": None, "member_paths_source": None,
+        "member_scan_bound": None, "lifecycle_rows_by_section": None,
         "legacy_keys": None, "legacy_keys_source": None, "legacy_rows": None, "sink_sha256": {},
     }
     if result is None:
@@ -945,6 +1041,17 @@ def observed_carriers(
             str(row["field"]) for row in census["fields"] if isinstance(row, Mapping) and "field" in row
         }
         out["member_rows"] = census.get("rows_observed")
+        out["member_paths_source"] = "RESULT_FIELD_CENSUS"
+    elif ledger_dir is not None:
+        member_path = _delivered_ledger_path(
+            MEMBER_LEDGER, delivery_receipt=delivery_receipt, ledger_dir=ledger_dir
+        )
+        if member_path is not None:
+            paths, rows, bound = _bounded_member_census(member_path)
+            out["member_paths"] = paths
+            out["member_rows"] = rows
+            out["member_paths_source"] = "DELIVERED_LEDGER_FIRST_ROWS"
+            out["member_scan_bound"] = bound
     retention = result.get("ledger_retention") or {}
     for ledger in (MEMBER_LEDGER, LIFECYCLE_LEDGER, LEGACY_LEDGER):
         sink = retention.get(ledger)
@@ -958,20 +1065,7 @@ def observed_carriers(
     legacy = retention.get(LEGACY_LEDGER)
     if isinstance(legacy, Mapping):
         out["legacy_rows"] = legacy.get("row_count")
-    path: Path | None = None
-    if delivery_receipt is not None:
-        entry = (delivery_receipt.get("ledgers") or {}).get(LEGACY_LEDGER) or {}
-        local = entry.get("local_path") if isinstance(entry, Mapping) else None
-        if isinstance(local, str) and local:
-            candidate = Path(local)
-            if not candidate.is_absolute() and ledger_dir is not None and not candidate.is_file():
-                candidate = Path(ledger_dir) / candidate
-            if candidate.is_file():
-                path = candidate
-    if path is None and ledger_dir is not None:
-        candidate = Path(ledger_dir) / LEDGER_FILES[LEGACY_LEDGER]
-        if candidate.is_file():
-            path = candidate
+    path = _delivered_ledger_path(LEGACY_LEDGER, delivery_receipt=delivery_receipt, ledger_dir=ledger_dir)
     if path is not None:
         keys: set[str] = set()
         with path.open("r", encoding="utf-8") as handle:
@@ -979,8 +1073,6 @@ def observed_carriers(
                 if line.strip():
                     keys.update(json.loads(line).keys())
                 if index >= 999:
-                    # The legacy row schema is fixed by the hash-locked `_legacy_control_row`;
-                    # a thousand rows settle the key set without reading a 10 GB file.
                     break
         out["legacy_keys"] = keys
         out["legacy_keys_source"] = "DELIVERED_LEDGER_FIRST_ROWS"
@@ -1018,23 +1110,22 @@ def _causal_status(
                 f"{sink_sha[:12]}; the delivered file is not this run's ledger"
             )
     if not result_present:
-        detail = (
-            "no run result supplied; the carrier cannot be checked"
-            if receipt is not None else "no run result and no delivery receipt supplied"
+        detail = "no run result supplied; the carrier cannot be checked" if receipt is not None else "no run result and no delivery receipt supplied"
+        return "PRODUCED_NOT_DELIVERED", _evidence(
+            "DELIVERY_RECEIPT" if receipt is not None else "NONE", receipt_sha, record["carrier"], detail
         )
-        kind = "DELIVERY_RECEIPT" if receipt is not None else "NONE"
-        return "PRODUCED_NOT_DELIVERED", _evidence(kind, receipt_sha, record["carrier"], detail)
 
     present: list[str] = []
     absent: list[str] = []
+    unmeasured: list[str] = []
     member_paths = observed["member_paths"]
     for pattern in record.get("member_paths", ()):
         if member_paths is None:
-            absent.append(f"{pattern} (the result carries no field census)")
+            unmeasured.append(pattern)
         elif path_present(pattern, member_paths):
             present.append(pattern)
         else:
-            absent.append(f"{pattern} not in the field census")
+            absent.append(f"{pattern} not in the measured member census")
     rows_by_section = observed["lifecycle_rows_by_section"] or {}
     for section in record.get("lifecycle_sections", ()):
         rows = int(rows_by_section.get(section, 0))
@@ -1062,29 +1153,45 @@ def _causal_status(
     if not declared:
         absent.extend(lost or ["no carrier declared"])
         lost = []
-    carriers_ok = declared and not absent
+    carriers_ok = declared and not absent and not unmeasured
     verified = not problems
+    scan_note = ""
+    if observed.get("member_paths_source") == "DELIVERED_LEDGER_FIRST_ROWS":
+        bound = observed.get("member_scan_bound") or {}
+        scan_note = (
+            f"; member census recovered by bounded delivered-ledger scan: <= {bound.get('rows')} rows and "
+            f"<= {bound.get('bytes')} bytes (read {bound.get('rows_read')} rows / {bound.get('bytes_read')} bytes)"
+        )
     lost_note = ("; per-record fields lost: " + "; ".join(lost)) if lost else ""
+    if verified and unmeasured:
+        detail = (
+            "delivery receipt verified, but member field census is absent and no bounded delivered-member-ledger "
+            "scan was available; carrier presence is unmeasured, not absent: " + ", ".join(unmeasured)
+        )
+        return "CENSUS_ABSENT", _evidence("DELIVERY_RECEIPT", receipt_sha, record["carrier"], detail)
     if verified and carriers_ok:
-        detail = "carriers present: " + ", ".join(present) + lost_note
+        detail = "carriers present: " + ", ".join(present) + scan_note + lost_note
         return "DELIVERED", _evidence("DELIVERY_RECEIPT", receipt_sha, record["carrier"], detail)
     if verified:
-        detail = "the delivery receipt names this layer; absent from the run: " + "; ".join(absent)
+        detail = "the delivery receipt names this layer; measured carrier absent from the run: " + "; ".join(absent)
         if present:
             detail += "; present: " + ", ".join(present)
-        return "RECEIPTED_CARRIER_ABSENT", _evidence("DELIVERY_RECEIPT", receipt_sha, record["carrier"], detail + lost_note)
+        return "RECEIPTED_CARRIER_ABSENT", _evidence("DELIVERY_RECEIPT", receipt_sha, record["carrier"], detail + scan_note + lost_note)
     kind = "DELIVERY_RECEIPT" if receipt is not None else "NONE"
-    if carriers_ok:
-        detail = "carrier present in the result; " + "; ".join(problems) + lost_note
-    else:
-        detail = "; ".join(problems + absent) + lost_note
+    detail = "; ".join(problems + absent + (["member census unavailable: " + ", ".join(unmeasured)] if unmeasured else [])) + scan_note + lost_note
     return "PRODUCED_NOT_DELIVERED", _evidence(kind, receipt_sha, record["carrier"], detail)
 
 
 def _static_status(
     layer_id: str, record: Mapping[str, Any], *, knowledge_rows: Mapping[str, Mapping[str, Any]],
-    knowledge_sha: str | None,
+    knowledge_sha: str | None, bound_to_inventory_document: bool,
 ) -> tuple[str, dict[str, Any]]:
+    if bound_to_inventory_document:
+        return "BOUND_TO_INVENTORY_DOCUMENT", _evidence(
+            "INVENTORY_DOCUMENT", None, FEED_INVENTORY_PATH,
+            "the registry currently binds this input layer only to the feed-inventory markdown; "
+            "a knowledge receipt cannot turn that document identity into delivered knowledge",
+        )
     row = knowledge_rows.get(layer_id)
     if row is not None:
         status = row.get("status")
@@ -1102,11 +1209,6 @@ def _static_status(
             )
         return "PRODUCED_NOT_DELIVERED", _evidence(
             "KNOWLEDGE_RECEIPT", knowledge_sha, record["carrier"], f"knowledge receipt: {status}",
-        )
-    if record.get("bound_to_inventory_document"):
-        return "BOUND_TO_INVENTORY_DOCUMENT", _evidence(
-            "INVENTORY_DOCUMENT", None, record["carrier"],
-            "the registry's only source path is the feed-inventory markdown; no knowledge receipt names this layer",
         )
     if record["kind"] == "NO_PRODUCER_FOUND":
         return "NO_PRODUCER_FOUND", _evidence("NONE", None, None, record["notes"])
@@ -1126,6 +1228,20 @@ def _outputs_named(receipt: Mapping[str, Any] | None) -> tuple[dict[str, Any], s
     raise CrosswalkError("outputs receipt `ledgers` is neither a mapping of ledger id -> record nor a list of ids")
 
 
+def _principal_lock_status(
+    outputs_named: Mapping[str, Any], outputs_sha: str | None
+) -> tuple[str, dict[str, Any]]:
+    ledger = SEVEN_CLOCKS["clock_lock_time"]["principal_ledger"]
+    filed = ledger in outputs_named
+    detail = (
+        f"principal ledger `{ledger}` is filed by the outputs receipt" if filed
+        else f"lock time is stamped by principal ledger `{ledger}` when Frankie files it; no ingestion producer exists"
+    )
+    return "PRINCIPAL_STAMPED", _evidence(
+        "PRINCIPAL_OUTPUT_LEDGER", outputs_sha if filed else None, ledger, detail
+    )
+
+
 # --- the crosswalk --------------------------------------------------------------------------
 def crosswalk(
     registry: Mapping[str, Any] | None, *, arm: str, result: Mapping[str, Any] | None = None,
@@ -1137,6 +1253,19 @@ def crosswalk(
     if arm not in ALLOWED_ARMS:
         raise CrosswalkError(f"unknown arm {arm!r}; one of {sorted(ALLOWED_ARMS)}")
     active = load_registry() if registry is None else registry
+    result_arm = None
+    if isinstance(result, Mapping):
+        identity = (result.get("layers") or {}).get("identity_receipt")
+        if isinstance(identity, Mapping) and isinstance(identity.get("arm"), str):
+            result_arm = identity["arm"]
+    if result_arm is not None:
+        if result_arm not in ALLOWED_ARMS:
+            raise CrosswalkError(f"result identity carries unknown arm {result_arm!r}")
+        if arm != result_arm:
+            raise CrosswalkError(f"requested arm {arm} disagrees with result identity arm {result_arm}")
+    bound_only_to_inventory = set(
+        layers_bound_only_to(active, FEED_INVENTORY_PATH, policies=KNOWLEDGE_INPUT_POLICIES)
+    )
     if delivery_receipt is not None:
         delivery_receipt = _require_receipt(delivery_receipt, DELIVERY_RECEIPT_SCHEMA, "delivery receipt", verify_hash=True)
     if stream_receipt is not None:
@@ -1176,10 +1305,13 @@ def crosswalk(
                     "REGISTRY", None, None, f"arm {arm} is not in the group's arms {list(group['arms'])}",
                 )
             elif policy == "CAUSAL_STREAM_REQUIRED":
-                status, evidence = _causal_status(
-                    record, result_present=result is not None, observed=observed,
-                    receipt=delivery_receipt, receipt_sha=delivery_sha,
-                )
+                if layer_id == "clock_lock_time":
+                    status, evidence = _principal_lock_status(outputs_named, outputs_sha)
+                else:
+                    status, evidence = _causal_status(
+                        record, result_present=result is not None, observed=observed,
+                        receipt=delivery_receipt, receipt_sha=delivery_sha,
+                    )
                 if isinstance(stream_claims, Mapping) and record["kind"] != "NO_PRODUCER_FOUND":
                     claimed = [str(c) for c in (stream_claims.get(group["group_id"]) or [])]
                     declared = [LEDGER_TO_CARRIER[l] for l in record.get("ledgers", ()) if l in LEDGER_TO_CARRIER]
@@ -1193,6 +1325,7 @@ def crosswalk(
             elif policy in ("STATIC_REQUIRED_INPUT", "ARM_REQUIRED_INPUT"):
                 status, evidence = _static_status(
                     layer_id, record, knowledge_rows=knowledge_rows, knowledge_sha=knowledge_sha,
+                    bound_to_inventory_document=layer_id in bound_only_to_inventory,
                 )
             elif policy == "SEALED_FOR_A_SCOPE":
                 if sealed_proof is not None and sealed_proof.get("all_absent") is True:
@@ -1254,8 +1387,11 @@ def crosswalk(
         "not_applicable": by_status["NOT_APPLICABLE"],
         "inputs_applicable": len(inputs),
         "inputs_delivered": sum(1 for row in inputs if row["status"] == "DELIVERED"),
+        "inputs_accounted": sum(1 for row in inputs if row["status"] in ACCOUNTED_INPUT_STATUSES),
         "inputs_not_delivered": sum(1 for row in inputs if row["status"] != "DELIVERED"),
         "delivered": by_status["DELIVERED"],
+        "census_absent": by_status["CENSUS_ABSENT"],
+        "principal_stamped": by_status["PRINCIPAL_STAMPED"],
         "receipted_carrier_absent": by_status["RECEIPTED_CARRIER_ABSENT"],
         "bound_to_inventory_document": by_status["BOUND_TO_INVENTORY_DOCUMENT"],
         "produced_not_delivered": by_status["PRODUCED_NOT_DELIVERED"],
@@ -1282,6 +1418,8 @@ def crosswalk(
         "outputs_receipt_sha256": outputs_sha,
         "sealed_proof_sha256": sealed_sha,
         "member_rows_censused": observed["member_rows"],
+        "member_paths_source": observed["member_paths_source"],
+        "member_scan_bound": observed["member_scan_bound"],
         "legacy_keys_source": observed["legacy_keys_source"],
         "layers": layers,
         "totals": totals,
@@ -1293,7 +1431,7 @@ def crosswalk(
 
 # --- the gate the coordinator wires at spawn (item 7) -------------------------------------
 def gate_applicable_inputs(crosswalk_body: Mapping[str, Any]) -> None:
-    """Refuse the spawn unless every arm-applicable INPUT layer is DELIVERED.
+    """Refuse the spawn unless every arm-applicable INPUT layer is accounted by DELIVERED or PRINCIPAL_STAMPED.
 
     Lists every offender with its computed status. Never consults the policy, never reads a
     stamp: the only thing that satisfies it is a row computed from a receipt and the run.
@@ -1301,7 +1439,7 @@ def gate_applicable_inputs(crosswalk_body: Mapping[str, Any]) -> None:
     refused = [
         (row["layer_id"], row["status"])
         for row in crosswalk_body["layers"]
-        if row["arm_applicable"] and row["policy"] in INPUT_POLICIES and row["status"] != "DELIVERED"
+        if row["arm_applicable"] and row["policy"] in INPUT_POLICIES and row["status"] not in ACCOUNTED_INPUT_STATUSES
     ]
     if not refused:
         return None
@@ -1511,7 +1649,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--outputs-receipt", default=None, help="FRANKIE_NATIVE_RAW_MBO_PRINCIPAL_OUTPUTS_RECEIPT_V1")
     parser.add_argument("--sealed-proof", default=None, help="FRANKIE_SEALED_ABSENCE_PROOF_V1")
     parser.add_argument("--ledger-dir", default=None, help="directory holding the delivered plain ledgers")
-    parser.add_argument("--arm", default="A_CLEAN", choices=sorted(ALLOWED_ARMS))
+    parser.add_argument("--arm", default=None, choices=sorted(ALLOWED_ARMS),
+                        help="arm to cross-walk; defaults to the result identity arm, or A_MEMORY without a result")
     parser.add_argument("--out", default=None, help="write the markdown render here")
     parser.add_argument("--json", default=None, help="write the crosswalk JSON here")
     parser.add_argument("--enforce-gate", action="store_true", help="exit 3 when an applicable input is not DELIVERED")
@@ -1527,8 +1666,15 @@ def main(argv: list[str] | None = None) -> int:
         if args.out is None and args.json is None:
             raise CrosswalkError("pass --out and/or --json (or --fixture-render)")
         registry = load_registry()
+        result_body = _load_json(args.result)
+        result_arm = None
+        if isinstance(result_body, Mapping):
+            identity = (result_body.get("layers") or {}).get("identity_receipt")
+            if isinstance(identity, Mapping) and isinstance(identity.get("arm"), str):
+                result_arm = identity["arm"]
+        selected_arm = args.arm if args.arm is not None else (result_arm or "A_MEMORY")
         body = crosswalk(
-            registry, arm=args.arm, result=_load_json(args.result),
+            registry, arm=selected_arm, result=result_body,
             delivery_receipt=_load_json(args.delivery_receipt), stream_receipt=_load_json(args.stream_receipt),
             knowledge_receipt=_load_json(args.knowledge_receipt), outputs_receipt=_load_json(args.outputs_receipt),
             sealed_proof=_load_json(args.sealed_proof), ledger_dir=args.ledger_dir,
@@ -1546,7 +1692,7 @@ def main(argv: list[str] | None = None) -> int:
     except CrosswalkGateError as exc:
         gate = {"passed": False, "refused": [
             f"{row['layer_id']}={row['status']}" for row in body["layers"]
-            if row["arm_applicable"] and row["policy"] in INPUT_POLICIES and row["status"] != "DELIVERED"
+            if row["arm_applicable"] and row["policy"] in INPUT_POLICIES and row["status"] not in ACCOUNTED_INPUT_STATUSES
         ], "message": str(exc)}
     print(json.dumps({"schema": body["schema"], "arm": body["arm"], "totals": body["totals"],
                       "crosswalk_sha256": body["crosswalk_sha256"], "gate": gate}, sort_keys=True))
