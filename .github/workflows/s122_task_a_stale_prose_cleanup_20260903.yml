@@ -1,0 +1,75 @@
+name: S122 Task A stale live prose cleanup
+on:
+  push:
+    branches: [chatgpt/s122-item4-task-a-stale-prose-verify-20260903]
+permissions:
+  contents: write
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Repair only stale live F-30 prose and prove gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET='chatgpt/frankie-raw-mbo-benchmark-20260828'
+          CANDIDATE='chatgpt/s122-item4-task-a-stale-prose-candidate-20260903'
+          BASE='f2fc36181df4b0c82ad0e8ea643b1858bcdec8fd'
+          FILE='research/kalshi/frankie_raw_mbo_benchmark/native_layer_crosswalk.py'
+          python3 -m pip install --quiet pytest databento matplotlib scipy scikit-learn
+          git fetch origin "$TARGET" "$CANDIDATE"
+          test "$(git rev-parse origin/$TARGET)" = "$BASE" || { echo 'STOP: target moved'; exit 41; }
+          test "$(git rev-parse origin/$CANDIDATE)" = "$BASE" || { echo 'STOP: candidate moved'; exit 42; }
+          git switch -C s122-task-a-stale-prose "origin/$TARGET"
+
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('research/kalshi/frankie_raw_mbo_benchmark/native_layer_crosswalk.py')
+          text = path.read_text(encoding='utf-8')
+          replacements = {
+              'The per-record is_snapshot flag rides on raw_actions and is "\n              "dropped with it.': 'The per-record is_snapshot flag rides on raw_actions and is "\n              "carried with it.',
+              'per-record provenance (source_dbn_sha256) is on raw_actions and dropped with it.': 'per-record provenance (source_dbn_sha256) is on raw_actions and carried with it.',
+              'the per-record R with cleared_orders / cleared_qty rides on raw_actions[].book_effect and is dropped.': 'the per-record R with cleared_orders / cleared_qty rides on raw_actions[].book_effect and is carried.',
+              'order_id sequence is on raw_actions and dropped with it.': 'order_id sequence is on raw_actions and carried with it.',
+          }
+          for old, new in replacements.items():
+              count = text.count(old)
+              assert count == 1, (old, count)
+              text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          # Live crosswalk must no longer claim raw_actions are dropped. Historical renders/records are untouched.
+          ! grep -nE 'raw_actions.*dropped|dropped with it' "$FILE"
+          python3 -m py_compile "$FILE"
+          python3 -m pytest \
+            research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_layer_crosswalk.py \
+            research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_layer_crosswalk_s122_item4_d.py \
+            -q -p no:cacheprovider > data_s122_a_stale_focused.log 2>&1
+          tail -80 data_s122_a_stale_focused.log
+          set +e
+          python3 -m pytest research/kalshi/frankie_raw_mbo_benchmark/tests -q -p no:cacheprovider > data_s122_a_stale_suite.log 2>&1
+          suite=$?
+          set -e
+          echo "SUITE_EXIT $suite"
+          tail -100 data_s122_a_stale_suite.log
+          test "$suite" -eq 0
+          python3 research/kalshi/store.py check
+          python3 research/kalshi/store.py docs
+          git diff --quiet research/ng_exhaustion_mbo_v4_state_adapter_20260820.py
+          echo LOCKED_OK
+          test "$(git diff --name-only)" = "$FILE" || { echo 'unexpected stale-prose change set'; git diff --name-only; exit 43; }
+          if git diff --name-only | grep -E '(^|/)[^/]*_RENDER_[^/]*\.md$|(^|/)FRANKIE_FEED_RECORD_[^/]*\.md$'; then
+            echo 'forbidden historical render/feed record changed' >&2
+            exit 44
+          fi
+          git diff --check
+          git add "$FILE"
+          git diff --cached --check
+          git config user.name 'OpenAI Codex'
+          git config user.email 'noreply@openai.com'
+          git commit -m 'docs: align live F-30 crosswalk prose with carried raw actions' \
+            -m 'Task A follow-up: four live crosswalk notes still described per-record raw-action fields as dropped after F-30 had made those same paths real member carriers. Correct only the live prose. Historical *_RENDER_*.md and FRANKIE_FEED_RECORD_*.md artifacts remain untouched because they are frozen records of the pre-F-30 run.' \
+            -m 'Co-Authored-By: Codex <noreply@openai.com>'
+          git push origin "HEAD:$CANDIDATE"
