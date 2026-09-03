@@ -45,6 +45,12 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry i
     canonical_hash,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_key_alias import read_averaged_rows
+from research.kalshi.frankie_raw_mbo_benchmark.native_layer_crosswalk import (
+    CrosswalkError,
+    CrosswalkGateError,
+    crosswalk,
+    gate_applicable_inputs,
+)
 from research.kalshi.frankie_raw_mbo_benchmark import native_principal_outputs as outputs
 from research.kalshi.frankie_raw_mbo_benchmark.native_staging import EXACT_LEDGERS
 
@@ -89,6 +95,20 @@ def _file_sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _load_json_object(path: Path | str | None, label: str) -> dict[str, Any] | None:
+    """Load one optional receipt/proof object without interpreting its schema."""
+    if path is None:
+        return None
+    path = Path(path)
+    try:
+        body = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise EmitError(f"cannot read the {label} at {path}: {exc}") from exc
+    if not isinstance(body, Mapping):
+        raise EmitError(f"the {label} at {path} is not a JSON object")
+    return dict(body)
+
+
 def _load_delivery_receipt(path: Path | str | None) -> dict[str, Any]:
     """The D81 gate: no spawn until every exact ledger is in his hands and VERIFIED.
 
@@ -104,11 +124,9 @@ def _load_delivery_receipt(path: Path | str | None) -> dict[str, Any]:
             f"ledger in {list(EXACT_LEDGERS)}; pass --delivery-receipt"
         )
     path = Path(path)
-    try:
-        body = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise EmitError(f"cannot read the delivery receipt at {path}: {exc}") from exc
-    if not isinstance(body, Mapping) or body.get("schema") != DELIVERY_RECEIPT_SCHEMA:
+    body = _load_json_object(path, "delivery receipt")
+    assert body is not None
+    if body.get("schema") != DELIVERY_RECEIPT_SCHEMA:
         raise EmitError(f"{path} is not a {DELIVERY_RECEIPT_SCHEMA}")
     if body.get("receipt_sha256") != canonical_hash(body, omit="receipt_sha256"):
         raise EmitError(f"delivery receipt at {path} fails its own receipt_sha256")
@@ -131,8 +149,15 @@ def _load_delivery_receipt(path: Path | str | None) -> dict[str, Any]:
     return dict(body)
 
 
-def emit(result_path: Path | str, *, delivery_receipt: Path | str | None = None,
-         repo_root: Path | None = None, evidence_uri: str | None = None) -> str:
+def emit(
+    result_path: Path | str, *, delivery_receipt: Path | str | None = None,
+    stream_receipt: Path | str | None = None,
+    knowledge_receipt: Path | str | None = None,
+    outputs_receipt: Path | str | None = None,
+    sealed_proof: Path | str | None = None,
+    ledger_dir: Path | str | None = None,
+    repo_root: Path | None = None, evidence_uri: str | None = None,
+) -> str:
     """Render the prompt for one Frankie run. Returns text; raises EmitError on any gap.
 
     `delivery_receipt` is REQUIRED in the only sense that matters: absent, the emission is
@@ -146,6 +171,10 @@ def emit(result_path: Path | str, *, delivery_receipt: Path | str | None = None,
     except (OSError, json.JSONDecodeError) as exc:
         raise EmitError(f"cannot read the evidence at {result_path}: {exc}") from exc
     receipt = _load_delivery_receipt(delivery_receipt)
+    stream_receipt_body = _load_json_object(stream_receipt, "stream receipt")
+    knowledge_receipt_body = _load_json_object(knowledge_receipt, "knowledge receipt")
+    outputs_receipt_body = _load_json_object(outputs_receipt, "outputs receipt")
+    sealed_proof_body = _load_json_object(sealed_proof, "sealed-absence proof")
     delivered = {name: receipt["ledgers"][name] for name in EXACT_LEDGERS}
 
     verdict = _lookup(result, "verdict")
@@ -194,6 +223,24 @@ def emit(result_path: Path | str, *, delivery_receipt: Path | str | None = None,
             f"{contract_bound}"
         )
 
+    try:
+        crosswalk_body = crosswalk(
+            None,
+            arm=arm,
+            result=result,
+            delivery_receipt=receipt,
+            stream_receipt=stream_receipt_body,
+            knowledge_receipt=knowledge_receipt_body,
+            outputs_receipt=outputs_receipt_body,
+            sealed_proof=sealed_proof_body,
+            ledger_dir=None if ledger_dir is None else Path(ledger_dir),
+        )
+        gate_applicable_inputs(crosswalk_body)
+    except CrosswalkGateError as exc:
+        raise EmitError(str(exc)) from exc
+    except CrosswalkError as exc:
+        raise EmitError(f"cannot compute the input-layer crosswalk: {exc}") from exc
+
     cutoffs = _lookup(traversal, "invocation_cutoffs")
     if not isinstance(cutoffs, list) or not cutoffs:
         raise EmitError(
@@ -235,6 +282,15 @@ def emit(result_path: Path | str, *, delivery_receipt: Path | str | None = None,
     add("dropped; it did not do your work, and its calculations are not your evidence.")
     add("")
     add("## The evidence")
+    add("")
+    crosswalk_totals = crosswalk_body["totals"]
+    add(f"Computed layer crosswalk `{crosswalk_body['crosswalk_sha256']}`: ")
+    add(
+        f"{crosswalk_totals['inputs_accounted']:,} of "
+        f"{crosswalk_totals['inputs_applicable']:,} applicable input layers accounted "
+        f"({crosswalk_totals['inputs_delivered']:,} delivered; "
+        f"{crosswalk_totals['principal_stamped']:,} principal-stamped)."
+    )
     add("")
     add("Every record of every field for the day being run, delivered at each F_LAST cutoff in")
     add("causal order, never ahead. Three exact ledgers, each downloaded, gunzipped and verified")
@@ -536,12 +592,25 @@ def main(argv: list[str] | None = None) -> int:
         help="FRANKIE_LEDGER_DELIVERY_RECEIPT_V1 written by fetch_frankie_ledgers; every "
              "exact ledger must be VERIFIED or the spawn is refused (D81)",
     )
+    parser.add_argument("--stream-receipt", default=None)
+    parser.add_argument("--knowledge-receipt", default=None)
+    parser.add_argument("--outputs-receipt", default=None)
+    parser.add_argument("--sealed-proof", default=None)
+    parser.add_argument("--ledger-dir", default=None)
     parser.add_argument("--evidence-uri", default=None, help="durable S3 URI, for the record")
     parser.add_argument("--output", default=None)
     args = parser.parse_args(argv)
     try:
-        text = emit(args.result, delivery_receipt=args.delivery_receipt,
-                    evidence_uri=args.evidence_uri)
+        text = emit(
+            args.result,
+            delivery_receipt=args.delivery_receipt,
+            stream_receipt=args.stream_receipt,
+            knowledge_receipt=args.knowledge_receipt,
+            outputs_receipt=args.outputs_receipt,
+            sealed_proof=args.sealed_proof,
+            ledger_dir=args.ledger_dir,
+            evidence_uri=args.evidence_uri,
+        )
     except EmitError as exc:
         print(f"REFUSED: {exc}", file=sys.stderr)
         return 2

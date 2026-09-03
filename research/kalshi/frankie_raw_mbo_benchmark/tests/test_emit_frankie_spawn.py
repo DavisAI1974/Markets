@@ -12,7 +12,10 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
+from research.kalshi.frankie_raw_mbo_benchmark import emit_frankie_spawn as emitter
+from research.kalshi.frankie_raw_mbo_benchmark import native_layer_crosswalk as xw
 from research.kalshi.frankie_raw_mbo_benchmark.emit_frankie_spawn import (
     CONTRACT_PATH,
     EmitError,
@@ -111,6 +114,54 @@ LEDGER_BYTES = {
 }
 
 
+def _accounted_prompt_test_crosswalk() -> dict:
+    """Computed gate input for tests whose subject is prompt rendering, not delivery.
+
+    This deliberately small registry isolates the older prompt tests from the full delivery
+    fixture. The S123 integration tests exercise receipt loading and the production call;
+    Task B's fixture is the proof over the full live registry. No computed row is mutated.
+    """
+    layer_ids = ("controlling_rt_mission", "native_calculation_contract")
+    registry = {
+        "registry_sha256": "a" * 64,
+        "groups": [{
+            "group_id": "binding_common_controls",
+            "policy": "STATIC_REQUIRED_INPUT",
+            "activation_stage": "PRE_CALL",
+            "authority": "BINDING_CURRENT",
+            "arms": ["A_CLEAN"],
+            "principal_route": "DIRECT",
+            "proof_mode": "CONTENT_SHA256",
+            "entries": [{
+                "layer_id": layer_id,
+                "description": layer_id,
+                "source_paths": [xw.LAYER_PRODUCERS[layer_id]["carrier_paths"][0]],
+                "v3_derived": False,
+            } for layer_id in layer_ids],
+        }],
+    }
+    knowledge_receipt = {
+        "schema": xw.KNOWLEDGE_RECEIPT_SCHEMA,
+        "receipt_sha256": "b" * 64,
+        "layers": [{
+            "layer_id": layer_id,
+            "status": "DELIVERED",
+            "files": [{
+                "path": xw.LAYER_PRODUCERS[layer_id]["carrier_paths"][0],
+                "sha256": "c" * 64,
+                "bytes": 1,
+            }],
+        } for layer_id in layer_ids],
+    }
+    return xw.crosswalk(registry, arm="A_CLEAN", knowledge_receipt=knowledge_receipt)
+
+
+def _emit_prompt_unit(*args, **kwargs) -> str:
+    """Run the real emitter and gate against computed prompt-test rows."""
+    with patch.object(emitter, "crosswalk", return_value=_accounted_prompt_test_crosswalk()):
+        return emit(*args, **kwargs)
+
+
 def _delivery_receipt(root: Path, *, statuses=None, mutate=None) -> Path:
     """A FRANKIE_LEDGER_DELIVERY_RECEIPT_V1 as `fetch_frankie_ledgers.fetch` writes it, with
     the ledger files actually present on disk so the paths it names resolve."""
@@ -166,7 +217,7 @@ class StopRuleTests(unittest.TestCase):
             receipt = None if without_receipt else _delivery_receipt(
                 root, statuses=receipt_statuses, mutate=receipt_mutate
             )
-            return emit(result, repo_root=root, delivery_receipt=receipt)
+            return _emit_prompt_unit(result, repo_root=root, delivery_receipt=receipt)
 
     def test_a_complete_run_emits_every_required_slot(self):
         text = self._emit()
@@ -215,7 +266,7 @@ class SingleDayTests(unittest.TestCase):
             body = _result(m_sha, c_sha, days=days)
             result = root / "calculation_result.json"
             result.write_text(json.dumps(body), encoding="utf-8")
-            return emit(result, repo_root=root, delivery_receipt=_delivery_receipt(root))
+            return _emit_prompt_unit(result, repo_root=root, delivery_receipt=_delivery_receipt(root))
 
     def test_one_day_says_so_and_marks_cross_day_questions_unanswerable(self):
         text = self._emit_for(("20211003",))
@@ -247,7 +298,7 @@ class SpanAndPhaseTests(unittest.TestCase):
             body = _result(m_sha, c_sha, cutoffs=cutoffs)
             result = root / "calculation_result.json"
             result.write_text(json.dumps(body), encoding="utf-8")
-            return emit(result, repo_root=root, delivery_receipt=_delivery_receipt(root))
+            return _emit_prompt_unit(result, repo_root=root, delivery_receipt=_delivery_receipt(root))
 
     def _cuts(self, spans_ns, phases):
         base = 1633046886987074241
@@ -346,7 +397,7 @@ class RawMboQuestionReachesFrankieTest(StopRuleTests):
             root, m_sha, c_sha = _repo_with_docs(root, mission=mission)
             result = root / "calculation_result.json"
             result.write_text(json.dumps(_result(m_sha, c_sha)), encoding="utf-8")
-            return emit(result, repo_root=root, delivery_receipt=_delivery_receipt(root))
+            return _emit_prompt_unit(result, repo_root=root, delivery_receipt=_delivery_receipt(root))
 
     def test_a_correctly_bound_mission_that_never_asks_refuses_to_spawn(self):
         """The gate's firing branch, executed. A guard whose output was never produced was
