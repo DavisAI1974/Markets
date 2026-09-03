@@ -1,0 +1,219 @@
+name: Frankie traversal profile 20260903
+
+# WHERE DO THE 47 RECORDS PER SECOND GO?
+#
+# The traversal runs on ONE core of an eight-core box, at 99.9% CPU. Measured from the
+# accepted canary: 50,000 records in 17.7 minutes. Projected over the roster's 5,667,689
+# records that is 33.4 hours, and the three weekday sources are 8.8h, 11.8h and 12.5h each -
+# against a 350-minute GitHub job cap, which is why the box exists at all.
+#
+# Sunday is 0.34h and runs as dispatched. This is for the days after it.
+#
+# There is NO parallelism anywhere in the package - no multiprocessing, no concurrent.futures,
+# no worker sizing. Two candidate explanations for the single core, and they imply opposite
+# fixes:
+#
+#   1. Order-book reconstruction. `adapter.apply` mutates book_full, FIFO priority and the
+#      native priority ids on every record, so record N+1 depends on record N. This is
+#      genuinely serial and no amount of cores helps.
+#   2. Ledger serialization. `RowSink.write` calls json.dumps(row, sort_keys=True) and a
+#      member row is ~242 KB - 9.2 GB of JSON encoding for 38,000 rows. Each row is
+#      independent, so this is embarrassingly parallel with write order preserved by
+#      ordering results rather than work.
+#
+# If it is (2), a process pool is a large win with no risk to the causal chain. If it is (1),
+# a pool buys nothing and the answer is a hot-path optimisation instead. Guessing wrong costs
+# more than measuring, so this measures.
+#
+# Runner only. No box, no SSM, no spend beyond runner minutes, and it touches no run.
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-raw-mbo-benchmark-20260828
+    paths:
+      - '.github/workflows/frankie_traversal_profile_20260903.yml'
+  workflow_dispatch:
+    inputs:
+      profile_records:
+        description: >-
+          Records to traverse under cProfile. Deliberately smaller than the canary's 50,000:
+          profiling roughly doubles wall time and the SHAPE of the cost does not need the
+          full slice to show itself.
+        type: string
+        default: '10000'
+      source_object:
+        description: The DBN object to profile against.
+        type: string
+        default: glbx-mdp3-20211003.mbo.dbn.zst
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frankie-traversal-profile-20260903
+  cancel-in-progress: false
+
+env:
+  AWS_DEFAULT_REGION: us-east-2
+  AWS_REGION: us-east-2
+  S3_ENDPOINT_URL: https://s3.us-east-2.amazonaws.com
+  BUCKET: bento-568968024170-us-east-2-an
+  SOURCE_PREFIX: nymex/ng_mbo_5y_v0/native/20211001_20211101
+  PROFILE_RECORDS: ${{ github.event_name == 'workflow_dispatch' && inputs.profile_records || '10000' }}
+  SOURCE_OBJECT: >-
+    ${{ github.event_name == 'workflow_dispatch' && inputs.source_object ||
+    'glbx-mdp3-20211003.mbo.dbn.zst' }}
+
+jobs:
+  profile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Install native DBN reader
+        run: python -m pip install --quiet databento==0.81.0 boto3
+
+      - name: How many cores does a runner even have
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Reported so the numbers below are read against the machine that produced them,
+          # rather than against the box they are meant to inform.
+          nproc
+          grep -m1 'model name' /proc/cpuinfo || true
+          free -g | head -2
+
+      - name: Fetch the source and build the manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/profile"
+          install -d -m 0700 "$work/sources" "$work/out"
+          # The manifest contract pins four sources at fixed roster positions, so all four are
+          # fetched even though one is traversed - the same reason the launch workflow does.
+          while read -r name; do
+            aws s3 cp "s3://${BUCKET}/${SOURCE_PREFIX}/${name}" "$work/sources/$name" \
+              --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
+          done <<'ROSTER'
+          glbx-mdp3-20211001.mbo.dbn.zst
+          glbx-mdp3-20211003.mbo.dbn.zst
+          glbx-mdp3-20211004.mbo.dbn.zst
+          glbx-mdp3-20211005.mbo.dbn.zst
+          ROSTER
+
+          python -m research.kalshi.frankie_raw_mbo_benchmark.raw_mbo_source_manifest \
+            --output "$work/source_manifest.json" \
+            "$work/sources/glbx-mdp3-20211001.mbo.dbn.zst" \
+            "$work/sources/glbx-mdp3-20211003.mbo.dbn.zst" \
+            "$work/sources/glbx-mdp3-20211004.mbo.dbn.zst" \
+            "$work/sources/glbx-mdp3-20211005.mbo.dbn.zst"
+          echo "PROFILE_WORK=$work" >> "$GITHUB_ENV"
+
+      - name: Traverse under cProfile
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE"
+          # --gates-only is NOT used: the gates read no market data, and the question is where
+          # the per-record and per-group cost goes.
+          python -m cProfile -o "$PROFILE_WORK/traversal.prof" \
+            -m research.kalshi.frankie_raw_mbo_benchmark.native_a_arm_launch \
+            --arm A_MEMORY \
+            --run-id "profile-$GITHUB_RUN_ID" \
+            --code-commit "$GITHUB_SHA" \
+            --source-manifest "$PROFILE_WORK/source_manifest.json" \
+            --out-dir "$PROFILE_WORK/out" \
+            --limit-records "$PROFILE_RECORDS" \
+            --checkpoint-every-records 1000000 \
+            --cadence-groups 1000000 \
+            --alias-companion-keys \
+            --source "$PROFILE_WORK/sources/$SOURCE_OBJECT"
+
+      - name: Where the time actually went
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROF="$PROFILE_WORK/traversal.prof" python3 - <<'PY'
+          import os
+          import pstats
+
+          stats = pstats.Stats(os.environ["PROF"])
+          total = stats.total_tt
+          print(f"total profiled time: {total:.1f}s over {stats.total_calls:,} calls")
+          print("")
+          print("== TOP 25 BY TOTTIME (time IN the function, excluding subcalls) ==")
+          print("   this is the one that names the hot code")
+          stats.sort_stats("tottime").print_stats(25)
+          print("")
+          print("== TOP 20 BY CUMTIME (time in the function AND everything it calls) ==")
+          stats.sort_stats("cumtime").print_stats(20)
+          PY
+
+      - name: The parallelism question, answered against the profile
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROF="$PROFILE_WORK/traversal.prof" python3 - <<'PY'
+          import os
+          import pstats
+
+          stats = pstats.Stats(os.environ["PROF"])
+          total = stats.total_tt
+
+          # Attribute cost to the two candidate explanations by the FILE the code lives in,
+          # so the split is read off the profile rather than argued for.
+          buckets = {
+              "SERIAL - order book / adapter": ("state_adapter", "full_state_replay", "replay_driver"),
+              "PARALLELISABLE - json encoding": ("json", "encoder"),
+              "PARALLELISABLE - row sink write": ("native_row_sink",),
+              "section calculations": ("native_queue", "native_replenish", "native_absorption",
+                                       "native_ladder", "native_lineage", "native_recurrence",
+                                       "native_response", "native_episode", "native_flow"),
+              "DBN decode": ("databento", "dbn"),
+          }
+          tallies = {name: 0.0 for name in buckets}
+          other = 0.0
+          for (path, _line, _fn), (_cc, _nc, tt, _ct, _callers) in stats.stats.items():
+              placed = False
+              for name, needles in buckets.items():
+                  if any(needle in str(path) for needle in needles):
+                      tallies[name] += tt
+                      placed = True
+                      break
+              if not placed:
+                  other += tt
+
+          print(f"total tottime: {total:.1f}s")
+          print("")
+          for name, value in sorted(tallies.items(), key=lambda kv: -kv[1]):
+              print(f"{value:8.1f}s  {value/total*100:5.1f}%  {name}")
+          print(f"{other:8.1f}s  {other/total*100:5.1f}%  everything else")
+          print("")
+          par = tallies["PARALLELISABLE - json encoding"] + tallies["PARALLELISABLE - row sink write"]
+          ser = tallies["SERIAL - order book / adapter"]
+          print(f"plainly parallelisable: {par/total*100:.1f}%")
+          print(f"plainly serial:         {ser/total*100:.1f}%")
+          print("")
+          print("Amdahl ceiling on 8 cores, if ONLY the plainly-parallel share is split:")
+          p = par / total
+          print(f"  speedup = 1 / ((1-{p:.3f}) + {p:.3f}/8) = {1/((1-p) + p/8):.2f}x")
+          print("")
+          print("A share below ~30% means a process pool is not the answer and the fix is")
+          print("hot-path optimisation instead. Report the number either way.")
+          PY
+
+      - name: Keep the profile
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: traversal-profile-${{ github.run_id }}
+          path: ${{ env.PROFILE_WORK }}/traversal.prof
+          retention-days: 14
