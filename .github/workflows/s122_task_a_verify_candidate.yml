@@ -1,0 +1,27 @@
+name: S122 Task A verify candidate
+
+on:
+  push:
+    branches:
+      - chatgpt/s122-item4-task-a-verify-20260903
+    paths:
+      - .github/workflows/s122_task_a_verify_candidate.yml
+      - scripts/s122_task_a_verify_and_candidate_20260903.sh
+
+permissions:
+  contents: write
+
+concurrency:
+  group: s122-task-a-verify-20260903
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 1
+      - name: RED GREEN full gates and candidate commit
+        run: bash scripts/s122_task_a_verify_and_candidate_20260903.sh
