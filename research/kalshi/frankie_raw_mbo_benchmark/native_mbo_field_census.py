@@ -24,6 +24,9 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 _SCALAR_TYPES = frozenset({str, int, float, bool, type(None)})
+_NUMERIC_TYPES = frozenset({int, float})
+_LIST_TYPES = frozenset({list})
+_NONE_TYPE_SET = frozenset({type(None)})
 
 DISTINCT_CAP = 64
 LIST_MARKER = "[]"
@@ -45,7 +48,7 @@ class _Field:
         self.minimum: float | None = None
         self.maximum: float | None = None
 
-    def observe_column(self, column: list) -> None:
+    def observe_column(self, column: list, column_types: set | None = None) -> None:
         """Fold a whole column of SCALARS at once, identically to observing each in turn.
 
         Every element of a list shares one field path, so a 300-level ladder folds 300
@@ -62,11 +65,19 @@ class _Field:
         self.null += nulls
         if nulls == len(column):
             return
-        types = self.types
-        for t in map(type, column):
-            types.add(t)
-        types.discard(type(None))
-        numeric = [v for v in column if type(v) is int or type(v) is float]
+        if column_types is None:
+            column_types = set(map(type, column))
+        self.types |= column_types - _NONE_TYPE_SET
+        # The column's type set already says whether a second pass is needed: an all-numeric
+        # column IS its own numeric subset, so the filtering comprehension is skipped
+        # entirely on the shape that dominates a ladder.
+        numeric_types = column_types - _NONE_TYPE_SET
+        if numeric_types and numeric_types <= _NUMERIC_TYPES:
+            numeric = column if nulls == 0 else [v for v in column if v is not None]
+        elif numeric_types & _NUMERIC_TYPES:
+            numeric = [v for v in column if type(v) is int or type(v) is float]
+        else:
+            numeric = ()
         if numeric:
             low = min(numeric)
             high = max(numeric)
@@ -145,12 +156,11 @@ class MboFieldCensus:
             # An all-scalar column is folded in one call with C builtins. A list of
             # containers - a ladder of level dicts - still walks, because each element
             # carries its own child paths.
-            scalar = _SCALAR_TYPES.__contains__
-            for value in node:
-                if not scalar(type(value)):
-                    break
-            else:
-                stat.observe_column(node if type(node) is list else list(node))
+            column_types = set(map(type, node))
+            if column_types <= _SCALAR_TYPES:
+                stat.observe_column(
+                    node if type(node) is list else list(node), column_types
+                )
                 return
             # A LIST OF DICTS is the dominant shape: a ladder is hundreds of sibling level
             # dicts with the same keys, and every one of them folds to the same handful of
@@ -159,9 +169,17 @@ class MboFieldCensus:
             if node and all(type(v) is dict for v in node):
                 stat.observations += len(node)
                 stat.types.add(dict)
-                keys: dict[Any, None] = {}
+                # A ladder's level dicts all carry the same keys, so the union is the first
+                # element's key list unless some element disagrees. Checking that is a length
+                # compare plus a membership test, against building a union dict per row.
+                first = node[0]
+                keys: Any = first
                 for element in node:
-                    keys.update(dict.fromkeys(element))
+                    if len(element) != len(first) or element.keys() != first.keys():
+                        keys = {}
+                        for other in node:
+                            keys.update(dict.fromkeys(other))
+                        break
                 for key in keys:
                     child = f"{path}.{key}"
                     column = [e[key] for e in node if key in e]
@@ -169,8 +187,24 @@ class MboFieldCensus:
                     if child_stat is None:
                         child_stat = fields[child] = _Field()
                     touched.add(child)
-                    if all(scalar(type(v)) for v in column):
-                        child_stat.observe_column(column)
+                    column_types = set(map(type, column))
+                    if column_types <= _SCALAR_TYPES:
+                        child_stat.observe_column(column, column_types)
+                    elif column_types <= _LIST_TYPES:
+                        # Every value in this column is a list, and every one of them
+                        # contributes to the SAME `[]` child path. So they are walked once
+                        # concatenated rather than once each: a ladder's hundreds of
+                        # per-level `orders` lists become one walk instead of hundreds.
+                        # Concatenation preserves element order, which matters because the
+                        # distinct set latches at the cap and order decides which values
+                        # reach it first.
+                        child_stat.observations += len(column)
+                        child_stat.types |= column_types
+                        merged: list = []
+                        for element in column:
+                            merged.extend(element)
+                        if merged:
+                            self._walk(merged, child, touched)
                     else:
                         for value in column:
                             tv = type(value)
