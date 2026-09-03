@@ -33,7 +33,10 @@ MANIFEST = {"manifest_hash": "e" * 64, "total_mbo_records": 5_667_689}
 # on the whole remaining object.
 MEMBER_KEYS = {"rows", "rows_retention", "rows_receipt"}
 TRAVERSAL_KEYS = {"legacy_rows", "legacy_rows_retention", "legacy_rows_receipt"}
-TOP_KEYS = {"ledger_retention", "result_hash"}
+# `runner_result_hash` is the runner's own hash over the layers as finalize saw them (kept
+# beside the launched result's hash since F-feed-6), and the retention representation
+# lives inside those layers, so it differs between the two runs for the same reason.
+TOP_KEYS = {"ledger_retention", "result_hash", "runner_result_hash"}
 # `result_hash` is `canonical_hash(result)` over the WHOLE artifact, and the artifact's
 # retention representation is precisely what changed - inline arrays versus a receipt. So it
 # MUST differ, and excluding it here is not an exemption: the test below asserts that it
