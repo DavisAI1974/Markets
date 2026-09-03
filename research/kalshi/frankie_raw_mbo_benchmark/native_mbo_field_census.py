@@ -107,9 +107,11 @@ class _Field:
         self.types.add(tv)
         # bool is a subclass of int, so `isinstance(v, int)` is true for True/False and a
         # min/max over them is noise rather than a range. `type(v) is int` excludes bool by
-        # construction, which is both faster than two isinstance calls and says what it means.
+        # construction. bool cannot be subclassed (TypeError: not an acceptable base type)
+        # and is not an ABC, so `tv is not bool` excludes every bool there is - the
+        # isinstance(value, bool) that used to follow was dead.
         if tv is int or tv is float or (
-            tv is not bool and isinstance(value, (int, float)) and not isinstance(value, bool)
+            tv is not bool and isinstance(value, (int, float))
         ):
             self.minimum = value if self.minimum is None else min(self.minimum, value)
             self.maximum = value if self.maximum is None else max(self.maximum, value)
@@ -144,6 +146,15 @@ class MboFieldCensus:
                 path = f"{prefix}.{key}" if prefix else str(key)
                 self._observe_at(path, value, touched)
         elif isinstance(node, (list, tuple)):
+            if not node:
+                # AN EMPTY LIST CREATES NOTHING. The original walked its elements, so a list
+                # with no elements never reached `<path>[]` at all. Hoisting the field lookup
+                # and the `touched` add out of the element loop made them unconditional,
+                # which invented a field with zero observations and counted the row as
+                # carrying a field it does not carry - present-but-empty reading as present,
+                # which is the exact collapse this module's docstring exists to prevent.
+                # `confirmed_at_this_cutoff` is `[]` on every group with no 4.11 call.
+                return
             # One path for every element: a ladder position is not a field. Because the path
             # is the same for all of them, the field lookup and the `touched` add are
             # per-LIST facts and are hoisted out of the element loop.
@@ -276,7 +287,9 @@ class MboFieldCensus:
             "rows_absent": self.rows_observed - stat.rows_with_field,
             "distinct_values": len(stat.distinct),
             "distinct_capped": stat.capped,
-            "types": sorted(t.__name__ for t in stat.types),
+            # Deduped on the NAME, not the type: the pre-optimisation code accumulated
+            # names, so two distinct classes sharing a __name__ collapsed to one entry.
+            "types": sorted({t.__name__ for t in stat.types}),
             "minimum": stat.minimum,
             "maximum": stat.maximum,
             "degenerate": degenerate,
