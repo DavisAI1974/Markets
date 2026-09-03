@@ -62,6 +62,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_candidate_adapter import (
     starting_liquidity_regime,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_clocks import (
+    LIFECYCLE_AVAILABILITY_STAMP,
     ClockCalculator,
     member_clock_row,
     stamp_discovery_confirmations,
@@ -462,6 +463,13 @@ class NativeReplayDriver:
         self._last_invoke_group = 0
         self._last_invoke_ns: int | None = None
         self._last_recv_ns: int | None = None
+        # F-20 / D83: the receive-clock instant the driver stands at when it retains a
+        # lifecycle row. `_on_group` sets it to the group's F_LAST receive and `finalize` to
+        # the finalize instant, so a group-close row carries its group's F_LAST receive, a
+        # segment-close row the receive that REVEALED the boundary (the first group of the
+        # next segment - that is when the censoring became knowable, not the old segment's
+        # last receive), and a stream-end row the instant the stream was closed.
+        self._retention_recv_ns: int | None = None
         # S121 item one: the 4.11 calls emitted since the last member row was written. They
         # are stamped onto the row of the group at whose cutoff they were emitted
         # (clock_prospective_discovery_confirmation); calls emitted at stream end, where no
@@ -566,11 +574,33 @@ class NativeReplayDriver:
         self._lineage_context = {}
 
     def _retain_lifecycle(self, rows: Any, *, section: str, occasion: str) -> None:
-        """Keep every exact row a section hands back, stamped with where it came from."""
+        """Keep every exact row a section hands back, stamped with where it came from and WHEN.
+
+        F-20 under D83. Every section named its availability clock differently (`recv_ns`,
+        `closed_recv_ns`, `terminal_recv_ns`, `exited_recv_ns`, `second`, `available_second`,
+        nested `runs[].end_recv_ns`) and two named none (the mirror rows), so the causal
+        stream had to place rows by a declared rule and WITHHELD what it could not place -
+        60 mirror rows and 362 close-occasion rows on a 60-group fixture. A lifecycle row
+        without its own availability instant is a row missing its feature-availability
+        clock. `emitted_at_recv_ns` is the driver's own receive-clock instant at the moment
+        of retention, stamped on every row uniformly, so availability is a FIELD the stream
+        reads first (`native_causal_stream.lifecycle_availability`) and the rules remain
+        only for ledgers written before the stamp existed. Design reused from the Step-1
+        two-day module's per-event clock set (`event_known_by_ts_recv_ns`: the receive time
+        of the record that made the event knowable); no Step-1 value is copied.
+        """
+        stamp = self._retention_recv_ns
+        if stamp is None:
+            raise ReplayDriverError(
+                f"a {section} row was offered for retention ({occasion}) before the driver "
+                "stood at any receive instant; a lifecycle row is not retained without its "
+                "availability clock"
+            )
         for row in rows or ():
             kept = dict(row)
             kept["emitting_section"] = section
             kept["emitted_on"] = occasion
+            kept[LIFECYCLE_AVAILABILITY_STAMP] = stamp
             self.counters.lifecycle_rows_retained += 1
             if self.sinks is None:
                 self.counters.lifecycle_rows.append(kept)
@@ -914,6 +944,9 @@ class NativeReplayDriver:
         if self._last_recv_ns is not None and recv_ns < self._last_recv_ns:
             raise ReplayDriverError("receive time moved backwards; the stream is not causal")
         self._last_recv_ns = recv_ns
+        # Every lifecycle row retained from here until the next group - including the
+        # segment close `_mark_for` may trigger below - is stamped at this receive.
+        self._retention_recv_ns = recv_ns
 
         event_ns = int(envelope["ts_event_ns"])
 
@@ -1337,6 +1370,8 @@ class NativeReplayDriver:
     def finalize(self, *, recv_ns: int | None = None) -> dict[str, Any]:
         """Close every open structure, then emit the layered result."""
         at = recv_ns if recv_ns is not None else (self._last_recv_ns or 0)
+        # Stream-end rows are stamped at the finalize instant, explicit or the last receive.
+        self._retention_recv_ns = at
         # D60: every one of these RETURNS the rows it censored at stream end, and the return
         # was dropped at all four call sites.
         # Same dependency as at a segment boundary: open runways close before the calculator
@@ -1453,6 +1488,8 @@ class NativeReplayDriver:
             },
             "member_rows_retained": self.counters.member_rows_retained,
             "lifecycle_rows_retained": self.counters.lifecycle_rows_retained,
+            # F-20: the field every retained lifecycle row carries as its availability clock.
+            "lifecycle_availability_stamp": LIFECYCLE_AVAILABILITY_STAMP,
             "causal_clock": CAUSAL_CLOCK,
             "forward_only": True,
             "session_rule": type(self.session_rule).__name__,

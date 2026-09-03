@@ -35,6 +35,16 @@ VALID_RECOGNITION = frozenset({PRIOR, T0, HORIZON})
 F_LAST_FLAG = 128
 EVENT_CLOCK = "ts_event_ns"
 
+LIFECYCLE_AVAILABILITY_STAMP = "emitted_at_recv_ns"
+"""F-20 under D83: the receive-clock instant the traversal stood at when it retained a
+lifecycle row - the row's own feature-availability clock, stamped uniformly by
+`native_replay_driver._retain_lifecycle` and read FIRST by
+`native_causal_stream.lifecycle_availability`. Declared here, once, because the producer and
+the consumer must agree on the name and neither imports the other. The design is the
+Step-1 two-day module's (`research/ng_exhaustion_mbo_2day_full_mbo_step1_20260825.py`):
+`event_known_by_ts_recv_ns` is the receive time of the record that made the event knowable,
+never a time chosen; only that definition is reused, no Step-1 value."""
+
 
 class ClockError(ValueError):
     """A group could not be measured on the declared clocks."""
