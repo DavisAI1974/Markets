@@ -1,0 +1,42 @@
+name: S122 Task D document gate repair
+on:
+  push:
+    branches: [chatgpt/s122-item4-task-d-doc-gate-verify-20260903]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Regenerate index and prove all gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET='chatgpt/frankie-raw-mbo-benchmark-20260828'
+          CANDIDATE='chatgpt/s122-item4-task-d-doc-gate-candidate-20260903'
+          BASE='9f984bf9160dffc240c32463476faa04af25973b'
+          git fetch origin "$TARGET" "$CANDIDATE"
+          test "$(git rev-parse origin/$TARGET)" = "$BASE" || { echo 'STOP: target moved'; exit 41; }
+          test "$(git rev-parse origin/$CANDIDATE)" = "$BASE" || { echo 'STOP: candidate moved'; exit 42; }
+          git switch -C s122-d-doc-repair "origin/$TARGET"
+          python3 research/kalshi/store.py docs --write
+          python3 research/kalshi/store.py check
+          python3 research/kalshi/store.py docs
+          git diff --quiet research/ng_exhaustion_mbo_v4_state_adapter_20260820.py
+          echo LOCKED_OK
+          if git diff --name-only | grep -E '(^|/)[^/]*_RENDER_[^/]*\.md$|(^|/)FRANKIE_FEED_RECORD_[^/]*\.md$'; then
+            echo 'forbidden historical render/feed record changed' >&2
+            exit 43
+          fi
+          changed="$(git diff --name-only)"
+          echo "$changed"
+          test "$changed" = 'KALSHI_TRADING.md' || { echo 'unexpected docs-write change set'; exit 44; }
+          git diff --check
+          git add KALSHI_TRADING.md
+          git config user.name 'OpenAI Codex'
+          git config user.email 'noreply@openai.com'
+          git commit -m 'docs: repair S122 Task D index gate' \
+            -m 'The Task D test became tracked only at commit time, so the pre-commit docs gate could not see it. Regenerate the KALSHI_TRADING.py inventory with store.py docs --write and re-run the content gates. No Task D behavior changes.' \
+            -m 'Co-Authored-By: Codex <noreply@openai.com>'
+          git push origin "HEAD:$CANDIDATE"
