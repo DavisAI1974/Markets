@@ -312,11 +312,8 @@ def load_principal_artifact(
         )
 
     findings = body.get("findings")
-    if not isinstance(findings, list) or not findings:
-        raise StagingError(
-            f"principal artifact at {path} carries no findings; an empty artifact is a "
-            "failed spawn, not an empty success"
-        )
+    if not isinstance(findings, list):
+        raise StagingError(f"principal artifact at {path} findings must be a list")
 
     # THE DELIVERY-BOUNDARY GATE (F-14). An undeclared read status is what lets an average
     # stand in for the exact: "beneath every summary sit exact members" is true of the disk

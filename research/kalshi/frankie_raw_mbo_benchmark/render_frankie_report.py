@@ -72,11 +72,8 @@ def render_report(
     recorded only on stderr expires with the terminal. Neither given: the report is unchanged.
     """
     findings = body.get("findings")
-    if not isinstance(findings, Sequence) or isinstance(findings, (str, bytes)) or not findings:
-        raise ReportError(
-            "the artifact carries no findings; an empty artifact is a failed spawn, not an "
-            "empty success, and must not be rendered as a tidy empty page"
-        )
+    if not isinstance(findings, Sequence) or isinstance(findings, (str, bytes)):
+        raise ReportError("the artifact findings must be a list")
     for row in findings:
         if not isinstance(row, Mapping):
             raise ReportError("a finding is not an object")
@@ -128,6 +125,31 @@ def render_report(
     add(f"**{len(findings)} findings.** The count is stated because a reader cannot notice an")
     add("absent finding without a denominator to check it against.")
     add("")
+    add("## Day-over-day memory carry")
+    add("")
+    if not findings:
+        add("**No new findings.** This is a legitimate completed day: the committed artifact")
+        add("proves the principal ran, while the empty list adds no entry to served memory.")
+        add("")
+    else:
+        add("These are the new findings this artifact asks the automatic A-memory carry to retain.")
+        add("Their own evidence, falsifier, and confidence basis explain why each is carried;")
+        add("only later stream evidence may change UNVERIFIED to VERIFIED.")
+        add("")
+        for row in findings:
+            add(f"#### Carry {row['id']}")
+            add("")
+            add(f"**Claim.** {row['claim']}")
+            add("")
+            add("**Evidence.**")
+            add(_render_evidence(row.get("evidence")))
+            add("")
+            add(f"**Falsifier.** {row['falsifier']}")
+            add("")
+            basis = row.get("confidence_basis")
+            add(f"**Confidence basis.** {basis}" if basis
+                else "**Confidence basis.** _not stated on this finding_")
+            add("")
 
     by_section: dict[str, list[Mapping[str, Any]]] = {}
     for row in findings:

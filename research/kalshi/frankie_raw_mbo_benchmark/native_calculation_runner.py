@@ -471,10 +471,22 @@ class NativeCalculationRun:
         """
         if self._finalized:
             raise CalculationRunError("this run has already been finalized")
-        self._check_principal_attribution(execution)
-        admitted = [self._admit_finding(row) for row in findings]
+        admitted = self.admit_principal_findings(execution=execution, findings=findings)
         self._principal = dict(execution)
         self._findings.extend(admitted)
+
+    @classmethod
+    def admit_principal_findings(
+        cls, *, execution: Mapping[str, Any], findings: Sequence[Mapping[str, Any]]
+    ) -> list[dict[str, Any]]:
+        """Apply the same attribution and finding bar at every persistence boundary.
+
+        The day-over-day seed builder calls this entry rather than duplicating the
+        falsifier/exemplar rules. An empty sequence is valid when the committed artifact
+        proves the principal ran; it means the day produced no new finding.
+        """
+        cls._check_principal_attribution(execution)
+        return [cls._admit_finding(row) for row in findings]
 
     @staticmethod
     def _check_principal_attribution(execution: Mapping[str, Any]) -> None:
@@ -535,8 +547,7 @@ class NativeCalculationRun:
                 f"this result already carries principal findings (completion_status "
                 f"{result.get('completion_status')!r}); a filed record is never replaced"
             )
-        cls._check_principal_attribution(execution)
-        admitted = [cls._admit_finding(row) for row in findings]
+        admitted = cls.admit_principal_findings(execution=execution, findings=findings)
         principal = dict(execution)
 
         updated = copy.deepcopy(dict(result))

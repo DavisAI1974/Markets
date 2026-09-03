@@ -15,10 +15,11 @@ capsules and their source reports, and the S119 measured knowledge. Each entry c
 repo-relative path, sha256, bytes, a provenance label (run id, data surface, pre- or
 post-correction) and the status UNVERIFIED: he verifies every lesson against the stream.
 
-**Derived, never typed.** Membership is read off the tree by rule (a directory whole, or a
-filename pattern), so a new committed output lands in the seed on the next `--write` and a
-file no rule labels is a REFUSAL, not a default label. The file is reproducible byte for
-byte and `--check` exits 1 when the committed seed is not the generated one.
+**Derived, never typed.** The historical day-one file seed remains frozen by its provenance
+rules. From day two only admitted findings accumulate: every A_MEMORY findings artifact under
+`principal_runs/` is read, exact duplicate ids are ignored, and an id whose content changes is
+refused. Empty artifacts prove a day ran but add no memory entry. The source-day bound comes
+from `raw_mbo_source_manifest.EXPECTED_ROSTER`, never a typed count.
 
 **The mission pins the seed.** The mission's memory paragraph names the seed's path and
 sha256; `--write` rewrites that one hash, `--check` verifies it. The manifest then pins both
@@ -48,9 +49,22 @@ from typing import Any
 from research.kalshi.frankie_raw_mbo_benchmark.native_frankie_knowledge_registry import (
     canonical_hash,
 )
+from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import (
+    CalculationRunError,
+    NativeCalculationRun,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import (
     A_MEMORY_SEED_PATH,
     REPO_ROOT,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.raw_mbo_source_manifest import (
+    EXPECTED_ROSTER,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.native_staging import (
+    PRINCIPAL_FINDINGS_SCHEMA,
+)
+from research.kalshi.frankie_raw_mbo_benchmark.render_frankie_report import (
+    REQUIRED_FIELDS,
 )
 
 SEED_SCHEMA = "FRANKIE_A_MEMORY_SEED_V1"
@@ -58,6 +72,11 @@ SEED_VERSION = "a-memory-seed-20260902-v1"
 SEED_PATH = A_MEMORY_SEED_PATH
 MISSION_PATH = "research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md"
 PKG = "research/kalshi/frankie_raw_mbo_benchmark/"
+PRINCIPAL_RUNS_DIR = PKG + "principal_runs/"
+FINDING_ARTIFACT_NAME = "frankie_principal_findings.json"
+FINDING_VETO_PATH = PKG + "A_MEMORY_FINDING_VETOES_20260903.json"
+FINDING_VETO_SCHEMA = "FRANKIE_A_MEMORY_FINDING_VETOES_V1"
+FINDING_MEMORY_SCHEMA = "FRANKIE_A_MEMORY_FINDINGS_V1"
 KNOWLEDGE_DIR = "research/kalshi/agents/frankie_native_raw_mbo_knowledge/"
 LAST_RUN_DIR = PKG + "principal_runs/33605852433/"
 LAST_RUN_FINDINGS = LAST_RUN_DIR + "frankie_principal_findings.json"
@@ -105,6 +124,171 @@ FORBIDDEN_ENTRY_PATHS = frozenset(
 
 class SeedBuildError(ValueError):
     """The seed cannot be built honestly; nothing is written."""
+
+
+def _load_vetoes(root: Path) -> dict[str, str]:
+    path = root / FINDING_VETO_PATH
+    if not path.exists():
+        return {}
+    try:
+        body = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SeedBuildError(f"finding veto file is not readable: {FINDING_VETO_PATH} ({exc})") from exc
+    if not isinstance(body, dict) or body.get("schema") != FINDING_VETO_SCHEMA:
+        raise SeedBuildError(f"finding veto file must use schema {FINDING_VETO_SCHEMA}")
+    rows = body.get("vetoes")
+    if not isinstance(rows, list):
+        raise SeedBuildError("finding veto file vetoes must be a list")
+    vetoes: dict[str, str] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            raise SeedBuildError("a finding veto must be an object")
+        finding_id = row.get("id")
+        reason = row.get("reason")
+        if not isinstance(finding_id, str) or not finding_id.strip():
+            raise SeedBuildError("a finding veto requires an id")
+        if row.get("status") != "VETOED":
+            raise SeedBuildError(f"finding veto {finding_id!r} must carry status VETOED")
+        if not isinstance(reason, str) or not reason.strip():
+            raise SeedBuildError(f"finding veto {finding_id!r} requires a reason")
+        if finding_id in vetoes:
+            raise SeedBuildError(f"finding veto {finding_id!r} is repeated")
+        vetoes[finding_id] = reason.strip()
+    return vetoes
+
+
+def _finding_artifacts(root: Path) -> list[tuple[int, str, Path, dict[str, Any]]]:
+    expected_days = tuple(source_day for source_day, _role in EXPECTED_ROSTER)
+    roster_position = {source_day: position for position, source_day in enumerate(expected_days)}
+    runs = root / PRINCIPAL_RUNS_DIR
+    artifacts: list[tuple[int, str, Path, dict[str, Any]]] = []
+    paths = sorted(runs.glob(f"*/{FINDING_ARTIFACT_NAME}")) if runs.is_dir() else []
+    for path in paths:
+        try:
+            body = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise SeedBuildError(f"principal findings are not readable: {path} ({exc})") from exc
+        if not isinstance(body, dict):
+            raise SeedBuildError(f"principal findings artifact is not an object: {path}")
+        # The one historical A_CLEAN artifact remains in the day-one file seed. The daily
+        # loop is A_MEMORY only and never re-admits the retired arm's run-local F-01 ids.
+        arm = body.get("arm")
+        if arm == "A_CLEAN":
+            continue
+        if arm != "A_MEMORY":
+            raise SeedBuildError(f"principal findings artifact {path} names unknown arm {arm!r}")
+        if body.get("schema") != PRINCIPAL_FINDINGS_SCHEMA:
+            raise SeedBuildError(
+                f"{path} uses schema {body.get('schema')!r}, expected {PRINCIPAL_FINDINGS_SCHEMA}"
+            )
+        source_day = body.get("source_day")
+        if source_day not in roster_position:
+            raise SeedBuildError(
+                f"A-memory findings name source_day {source_day!r}, outside the manifest roster"
+            )
+        run_id = body.get("run_id")
+        if not isinstance(run_id, str) or not run_id.strip():
+            raise SeedBuildError(f"{path} carries no run_id")
+        artifacts.append((roster_position[source_day], run_id, path, body))
+    return sorted(artifacts, key=lambda row: (row[0], row[1], row[2].as_posix()))
+
+
+def build_finding_memory(root: Path | str = REPO_ROOT) -> dict[str, Any]:
+    """Build the findings-only daily carry with admission, dedupe, and veto labels."""
+    root = Path(root)
+    expected_days = tuple(source_day for source_day, _role in EXPECTED_ROSTER)
+    by_day: dict[str, dict[str, Any]] = {
+        source_day: {
+            "source_day": source_day,
+            "artifact_status": "MISSING",
+            "artifact_count": 0,
+            "finding_ids_observed": [],
+            "new_finding_ids": [],
+        }
+        for source_day in expected_days
+    }
+    carried: dict[str, dict[str, Any]] = {}
+    artifacts = _finding_artifacts(root)
+    for _position, run_id, path, body in artifacts:
+        rows = body.get("findings")
+        if not isinstance(rows, list):
+            raise SeedBuildError(f"{path} findings must be a list")
+        relative = path.relative_to(root).as_posix()
+        execution = {
+            "principal": body.get("principal"),
+            "artifact_path": relative,
+            "artifact_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "actual_principal_invocation": body.get("actual_principal_invocation"),
+            "controller_only": body.get("controller_only"),
+        }
+        try:
+            admitted = NativeCalculationRun.admit_principal_findings(
+                execution=execution, findings=rows
+            )
+        except (CalculationRunError, TypeError) as exc:
+            raise SeedBuildError(f"the existing findings admission gate refused {relative}: {exc}") from exc
+        source_day = body["source_day"]
+        day = by_day[source_day]
+        day["artifact_count"] += 1
+        day["artifact_status"] = "PRESENT_WITH_FINDINGS" if admitted else (
+            "PRESENT_EMPTY" if day["artifact_status"] == "MISSING" else day["artifact_status"]
+        )
+        for row in admitted:
+            missing = [name for name in REQUIRED_FIELDS if not str(row.get(name, "")).strip()]
+            if missing:
+                raise SeedBuildError(
+                    f"finding {row.get('id', '<unnamed>')!r} is missing render field(s) {missing}"
+                )
+            for name in ("category", "confidence_basis"):
+                if not str(row.get(name, "")).strip():
+                    raise SeedBuildError(f"finding {row['id']!r} is missing {name}")
+            if row.get("evidence") is None:
+                raise SeedBuildError(f"finding {row['id']!r} is missing evidence")
+            finding_id = str(row["id"])
+            day["finding_ids_observed"].append(finding_id)
+            prior = carried.get(finding_id)
+            if prior is not None:
+                prior_body = {key: value for key, value in prior.items() if key not in {"status", "served", "veto_reason", "provenance"}}
+                if canonical_hash(prior_body) != canonical_hash(row):
+                    raise SeedBuildError(
+                        f"stable finding id {finding_id!r} names different content across runs"
+                    )
+                continue
+            carried[finding_id] = {
+                **row,
+                "status": STATUS,
+                "served": True,
+                "provenance": {
+                    "run_id": run_id,
+                    "source_day": source_day,
+                    "artifact_path": relative,
+                    "artifact_sha256": execution["artifact_sha256"],
+                },
+            }
+            day["new_finding_ids"].append(finding_id)
+
+    vetoes = _load_vetoes(root)
+    unknown_vetoes = sorted(set(vetoes) - set(carried))
+    if unknown_vetoes:
+        raise SeedBuildError(f"finding veto names unknown finding id(s): {unknown_vetoes}")
+    for finding_id, reason in vetoes.items():
+        carried[finding_id]["status"] = "VETOED"
+        carried[finding_id]["served"] = False
+        carried[finding_id]["veto_reason"] = reason
+
+    findings = list(carried.values())
+    return {
+        "schema": FINDING_MEMORY_SCHEMA,
+        "roster": {"source_days": list(expected_days), "day_bound": len(expected_days)},
+        "days": list(by_day.values()),
+        "findings": findings,
+        "totals": {
+            "artifacts_present": len(artifacts),
+            "findings": len(findings),
+            "served": sum(1 for row in findings if row["served"]),
+            "vetoed": sum(1 for row in findings if not row["served"]),
+        },
+    }
 
 
 @dataclass(frozen=True)
@@ -386,6 +570,16 @@ def build_seed(root: Path | str = REPO_ROOT) -> dict[str, Any]:
         },
         "seed_hash": "",
     }
+    finding_memory = build_finding_memory(root)
+    if finding_memory["totals"]["artifacts_present"]:
+        seed["finding_memory"] = finding_memory
+        seed["status_vocabulary"]["VETOED"] = (
+            "retained as a run lesson and excluded from the served memory until Greg changes its label"
+        )
+        seed["day_rule"]["from_day_two"] = (
+            "only his admitted findings, deduplicated by their stable id; an empty artifact proves "
+            "the day ran and adds no memory entry"
+        )
     seed["seed_hash"] = canonical_hash(seed, omit="seed_hash")
     return seed
 

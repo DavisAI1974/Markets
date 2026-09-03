@@ -126,11 +126,11 @@ class IdentityTest(unittest.TestCase):
 
 
 class RefusalTest(unittest.TestCase):
-    def test_an_artifact_with_no_findings_is_refused(self):
-        """An empty artifact is a failed spawn, not an empty success - the staging layer
-        already says so, and the renderer must not paper over it with a tidy empty page."""
-        with self.assertRaises(ReportError):
-            render_report(artifact([]))
+    def test_a_written_artifact_with_no_findings_renders_the_legitimate_empty_day(self):
+        text = render_report(artifact([]))
+        self.assertIn("0 findings", text)
+        self.assertIn("no new findings", text.lower())
+        self.assertIn("## Day-over-day memory carry", text)
 
     def test_a_finding_missing_its_claim_is_refused_by_name(self):
         with self.assertRaises(ReportError) as caught:
@@ -162,6 +162,16 @@ class WriteReportTest(unittest.TestCase):
             first = write_report(path).read_text()
             second = write_report(path).read_text()
             self.assertEqual(first, second)
+
+
+class DayOverDayCarrySectionTest(unittest.TestCase):
+    def test_the_existing_report_names_every_new_finding_and_why_it_carries(self):
+        row = finding("F-GLOBAL-ONE", "4.10")
+        text = render_report(artifact([row]))
+        self.assertIn("## Day-over-day memory carry", text)
+        self.assertIn(row["id"], text)
+        for field in ("claim", "evidence", "falsifier", "confidence_basis"):
+            self.assertIn(str(row[field]) if isinstance(row[field], str) else '"n": 91', text)
 
 
 if __name__ == "__main__":
@@ -241,4 +251,3 @@ class CrosswalkSectionTest(unittest.TestCase):
             text = written.read_text()
         self.assertIn("## Layer crosswalk", text)
         self.assertIn(f"| registered | {self.crosswalk['totals']['registered']} |", text)
-

@@ -478,17 +478,30 @@ def emit(
             f"<receipt_sha256 of the {outputs.RECEIPT_FILENAME} in the output bundle you "
             "wrote; see 'Your output bundle' below>"
         ),
-        "findings": ["<at least one; see the mission's section 9 for what a finding must carry>"],
+        "run_id": run_id,
+        "source_day": "<the one manifest-roster source day this artifact covers>",
+        "findings": [
+            "<new findings only; [] is valid; every finding carries a persistent global id, "
+            "claim, evidence, falsifier, confidence_basis, and exact exemplars>"
+        ],
     }, indent=2))
     add("```")
     add("")
     add("`load_principal_artifact` refuses a missing artifact, a different")
     add("`evidence_result_hash`, `controller_only` true, an artifact that does not attest an")
-    add("actual invocation, an empty findings list, an artifact that does not declare")
+    add("actual invocation, a findings value that is not a list, an artifact that does not declare")
     add("`evidence_read` for every exact ledger, and an artifact that")
     add("cites a delivery receipt but no `outputs_receipt_sha256` (or one whose bundle does")
-    add("not validate to that receipt). An empty artifact is a failed spawn, not an empty")
-    add("success.")
+    add("not validate to that receipt). A committed artifact with `findings: []` is a legitimate")
+    add("completed day with no novelty: it adds no memory entry. A missing artifact still means")
+    add("the spawn did not happen and is refused.")
+    add("")
+    add("**Return only findings that are new to the memory you were served.** Finding `id` is")
+    add("global and persistent across days: reuse an existing id only for the identical finding;")
+    add("the carry deduplicates an identical id and refuses the same id with changed content.")
+    add("Do not restart a local `F-01` counter each day. The automatic carry is triggered only")
+    add("after this artifact is committed under `principal_runs/<run_id>/`; an empty JSON remains")
+    add("a run receipt and is not copied into served memory.")
     add("")
     add("**`evidence_read` must be READ for every ledger, and NOT_READ is refused.** The")
     add("ledgers were delivered to you whole and verified, so a ledger you did not read is a")

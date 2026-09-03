@@ -174,12 +174,13 @@ class LoadPrincipalArtifactTest(unittest.TestCase):
             with self.assertRaises(StagingError):
                 load_principal_artifact(path, expected_evidence_hash="a" * 64)
 
-    def test_an_artifact_with_no_findings_is_refused(self):
-        """A spawn that produced nothing is a failed spawn, not an empty success."""
+    def test_a_written_artifact_with_no_findings_is_an_empty_success(self):
+        """The committed artifact proves the spawn ran; no novelty is a valid outcome."""
         with tempfile.TemporaryDirectory() as tmp:
             path = self._write(tmp, {**self.GOOD, "findings": []})
-            with self.assertRaises(StagingError):
-                load_principal_artifact(path, expected_evidence_hash="a" * 64)
+            execution, findings = load_principal_artifact(path, expected_evidence_hash="a" * 64)
+        self.assertEqual(findings, [])
+        self.assertEqual(execution["artifact_path"], str(path))
 
     def test_the_round_trip_satisfies_the_runner(self):
         """What load_principal_artifact returns must be what the runner accepts."""

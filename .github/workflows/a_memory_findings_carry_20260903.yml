@@ -1,0 +1,72 @@
+name: A-memory admitted findings carry
+
+on:
+  push:
+    branches:
+      - "chatgpt/frankie-raw-mbo-benchmark-20260828"
+    paths:
+      - "research/kalshi/frankie_raw_mbo_benchmark/principal_runs/**/frankie_principal_findings.json"
+      - "research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_FINDING_VETOES_20260903.json"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: a-memory-findings-carry-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  rebuild-and-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the memory branch
+        uses: actions/checkout@v4
+        with:
+          ref: "chatgpt/frankie-raw-mbo-benchmark-20260828"
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Rebuild the admitted A-memory carry in contract order
+        run: |
+          python -m research.kalshi.frankie_raw_mbo_benchmark.build_a_memory_seed --write
+          python -m research.kalshi.frankie_raw_mbo_benchmark.register_a_memory_knowledge --write
+          python -m research.kalshi.frankie_raw_mbo_benchmark.rebind_registry_knowledge_layers --write
+          python research/kalshi/frankie_raw_mbo_benchmark/refresh_native_frankie_knowledge.py \
+            --spec research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_SOURCES_20260828.json \
+            --repo-root . \
+            --write
+
+      - name: Verify the rebuilt carry
+        run: |
+          python -m research.kalshi.frankie_raw_mbo_benchmark.build_a_memory_seed --check
+          python -m research.kalshi.frankie_raw_mbo_benchmark.register_a_memory_knowledge --check
+          python -m research.kalshi.frankie_raw_mbo_benchmark.rebind_registry_knowledge_layers --check
+          python research/kalshi/frankie_raw_mbo_benchmark/refresh_native_frankie_knowledge.py \
+            --spec research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_SOURCES_20260828.json \
+            --repo-root . \
+            --check
+
+      - name: Commit automatic promotion directly
+        run: |
+          git add -- \
+            research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json \
+            research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md \
+            research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_SOURCES_20260828.json \
+            research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json \
+            research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_CLEAN_POSITIVE_KNOWLEDGE_20260828.md \
+            research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_MEMORY_POSITIVE_KNOWLEDGE_20260828.md \
+            research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_MANIFEST_20260828.json
+          if git diff --cached --quiet; then
+            echo "A-memory findings carry is already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit \
+            -m "chore: carry admitted Frankie findings into memory" \
+            -m "Co-Authored-By: Codex <noreply@openai.com>"
+          git push origin HEAD:chatgpt/frankie-raw-mbo-benchmark-20260828
