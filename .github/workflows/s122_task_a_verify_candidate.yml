@@ -9,6 +9,7 @@ on:
       - scripts/s122_task_a_verify_and_candidate_20260903.sh
       - scripts/s122_task_a_patch_status_expectations_20260903.py
       - scripts/s122_task_a_verify_v2_20260903.sh
+      - scripts/s122_task_a_verify_v3_20260903.sh
 
 permissions:
   contents: write
@@ -26,4 +27,4 @@ jobs:
         with:
           fetch-depth: 1
       - name: RED GREEN full gates and candidate commit
-        run: bash scripts/s122_task_a_verify_v2_20260903.sh
+        run: bash scripts/s122_task_a_verify_v3_20260903.sh
