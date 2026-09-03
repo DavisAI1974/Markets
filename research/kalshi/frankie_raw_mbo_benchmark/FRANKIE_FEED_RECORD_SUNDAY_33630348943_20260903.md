@@ -1,5 +1,15 @@
 # Frankie: the wired code FED with the real Sunday ledgers - the record (2026-09-03, S122)
 
+<!-- BEGIN F-35 SUPERSESSION STAMP -->
+> **Supersession stamp — 2026-09-03.** Commit `e4d576f` put `raw_actions` on the
+> member row; commit `9f984bf` made the crosswalk compute evidence from delivered
+> carriers. Superseded here are the assertions that `raw_actions` is `ABSENT` and
+> that `native_acmrtfn_messages`, `order_lifecycle_adds`,
+> `order_lifecycle_cancels`, and `order_lifecycle_modifies` are
+> `RECEIPTED_CARRIER_ABSENT`. This is a dated record of what an earlier run
+> delivered and is deliberately not rewritten.
+<!-- END F-35 SUPERSESSION STAMP -->
+
 Greg, verbatim: *"we need to run agents to feed what was wired last chat too."*
 
 This is the record of feeding the code merged at S121 with the only real Sunday data in

@@ -1,5 +1,15 @@
 # Frankie native raw-MBO layer crosswalk (A_CLEAN)
 
+<!-- BEGIN F-35 SUPERSESSION STAMP -->
+> **Supersession stamp — 2026-09-03.** Commit `e4d576f` put `raw_actions` on the
+> member row; commit `9f984bf` made the crosswalk compute evidence from delivered
+> carriers. Superseded here are the assertions that `raw_actions[]` is
+> `NOT ON THE ROW` and that `native_acmrtfn_messages`, `order_lifecycle_adds`,
+> `order_lifecycle_cancels`, and `order_lifecycle_modifies` are
+> `PRODUCED_NOT_DELIVERED`. This is a dated record of what an earlier run
+> delivered and is deliberately not rewritten.
+<!-- END F-35 SUPERSESSION STAMP -->
+
 - schema `FRANKIE_NATIVE_RAW_MBO_LAYER_CROSSWALK_V1`
 - registry sha256 `d6c72dfed8d76417679bf4fd78037eb889c27bf8fe7054b482d35ace55fad8aa`
 - result_hash `d2ab3feba0115a60088ae2a0efa8d2c173be4f911da85f82bbc0ed3375e9b3d9` (verdict `ACCEPTED`)

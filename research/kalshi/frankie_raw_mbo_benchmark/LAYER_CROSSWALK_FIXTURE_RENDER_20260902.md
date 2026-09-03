@@ -1,5 +1,15 @@
 # LAYER CROSSWALK - FIXTURE RENDER (2026-09-02)
 
+<!-- BEGIN F-35 SUPERSESSION STAMP -->
+> **Supersession stamp — 2026-09-03.** Commit `e4d576f` put `raw_actions` on the
+> member row; commit `9f984bf` made the crosswalk compute evidence from delivered
+> carriers. Superseded here are the assertions that `raw_actions[]` is
+> `NOT ON THE ROW` and that `native_acmrtfn_messages`, `order_lifecycle_adds`,
+> `order_lifecycle_cancels`, and `order_lifecycle_modifies` are
+> `RECEIPTED_CARRIER_ABSENT`. This is a dated record of what an earlier run
+> delivered and is deliberately not rewritten.
+<!-- END F-35 SUPERSESSION STAMP -->
+
 **This is a FIXTURE render, not the Sunday run.** It is computed by running the real launch path
 (`native_a_arm_launch.launch`) over the shared synthetic slice (`slice_records(12)`, 12 F_LAST
 groups of four actions), streaming the three ledgers it wrote through `CausalGroupStream`, and cross-walking

@@ -1,5 +1,21 @@
 {
  "note": "THE DOCUMENT REGISTRY. Greg, S112: 'we need to put the list of our working docs in the store or a section of the sop so one doesn't get forgotten about.' Same disease as A-17 one level up - a document that is on no list goes stale silently, and nothing can report it. MEASURED THE DAY THIS WAS BUILT: 55 of 151 tracked research/kalshi/*.py files were absent from KALSHI_TRADING.md, the index whose stated job is 'every Kalshi file, what it does, current vs old'; and PLANT_MAP.md had been EDITED THAT SAME SESSION while naming none of the four plant components built in it. So mtime is not staleness - CONTENT is, and only a content gate catches this. S119: the registry was 44 entries against 236 tracked documents, so 192 carried NO class and no gate could reach them - the andon had been red for several sessions. Closed here. The 158 with a session or date suffix in the filename were classified RECORD BY RULE (the class is literally 'dated and finished'); the remaining 34 were classified by hand, and the load-bearing ones are named: the mission and the calculation contract are VAULT because they are HASH-BOUND into every run identity - S119 changed the mission and locked the spawn emitter out of two prior runs by doing so - and the five mbo_specialist files are LIVE because blind and refine read them byte-identical.",
+ "record_supersession_stamp": {
+  "marker": "<!-- BEGIN F-35 SUPERSESSION STAMP -->",
+  "placement": "immediately under the document title",
+  "required_fields": [
+   "date",
+   "behaviour-changing commits",
+   "document-specific superseded assertions",
+   "dated-record non-rewrite sentence"
+  ],
+  "applies_to": [
+   "research/kalshi/frankie_raw_mbo_benchmark/FRANKIE_FEED_RECORD_SUNDAY_33630348943_20260903.md",
+   "research/kalshi/frankie_raw_mbo_benchmark/LAYER_CROSSWALK_SUNDAY_33630348943_RENDER_20260902.md",
+   "research/kalshi/frankie_raw_mbo_benchmark/LAYER_CROSSWALK_SUNDAY_33630348943_FED_RENDER_20260903.md",
+   "research/kalshi/frankie_raw_mbo_benchmark/LAYER_CROSSWALK_FIXTURE_RENDER_20260902.md"
+  ]
+ },
  "classes": {
   "LIVE": "must be kept current. A gate exists where the content can be computed; otherwise the trigger is stated and the andon can only remind.",
   "RENDER": "GENERATED from a store. Never hand-edit - edit the store and re-render. Gated byte-identical by store.py check.",
