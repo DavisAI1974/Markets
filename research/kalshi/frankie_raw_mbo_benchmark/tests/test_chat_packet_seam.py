@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+import hashlib
+import tempfile
 import unittest
+from pathlib import Path
 
 from research.kalshi.frankie_raw_mbo_benchmark.raw_mbo_source_manifest import manifest_hash
 from research.kalshi.frankie_raw_mbo_benchmark.chat_packet_seam import (
+    SEED_MEMORY_SCHEMA,
+    SEED_SURFACE_LABEL,
+    seed_memory_package,
     ChatPacketSeamError,
     build_chat_packet_contract,
     native_group_envelope,
@@ -141,3 +147,76 @@ class ChatPacketSeamTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SeedMemoryPackageTest(unittest.TestCase):
+    """D86/D88: A-memory's memory is the SEED - committed past-run outputs bound by the
+    registry's a_memory_overlay group - never the wrong-data package. The package the packet
+    contract carries is built FROM the registry's bindings and hashed over the files' bytes,
+    so it cannot be asserted; and a layer still bound to an `external:` identity (no
+    repository bytes) is a refusal, not a fallback."""
+
+    def _registry(self, tmp, *, external=False):
+        root = Path(tmp)
+        (root / "seed").mkdir()
+        seed = root / "seed" / "A_MEMORY_SEED.json"
+        seed.write_text('{"schema": "SEED", "entries": []}\n', encoding="utf-8")
+        capsule = root / "seed" / "CAPSULE.md"
+        capsule.write_text("capsule\n", encoding="utf-8")
+        entries = [
+            {"layer_id": "a_memory_promoted_positive_capsule", "source_paths": ["seed/CAPSULE.md"]},
+            {"layer_id": "a_memory_prior_lessons_package",
+             "source_paths": ["external:a_memory_prior_lessons_package" if external else "seed/A_MEMORY_SEED.json"]},
+        ]
+        return root, {"groups": [
+            {"group_id": "mission", "policy": "STATIC_REQUIRED_INPUT", "arms": ["A_MEMORY"], "entries": []},
+            {"group_id": "a_memory_overlay", "policy": "ARM_REQUIRED_INPUT", "arms": ["A_MEMORY"], "entries": entries},
+        ]}
+
+    def test_the_seed_package_is_built_from_the_overlay_bindings_and_accepted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, registry = self._registry(tmp)
+            package = seed_memory_package(registry, repo_root=root)
+            self.assertEqual(package["schema"], SEED_MEMORY_SCHEMA)
+            self.assertEqual(package["source_surface_label"], SEED_SURFACE_LABEL)
+            self.assertEqual([f["path"] for f in package["files"]],
+                             ["seed/A_MEMORY_SEED.json", "seed/CAPSULE.md"])
+            for row in package["files"]:
+                self.assertEqual(row["sha256"], hashlib.sha256((root / row["path"]).read_bytes()).hexdigest())
+                self.assertEqual(row["bytes"], (root / row["path"]).stat().st_size)
+            contract = build_chat_packet_contract(
+                arm="A-memory", source_manifest=self._manifest(), memory_package=package
+            )
+            self.assertEqual(contract["memory_mode"], "MEMORY_ASSISTED")
+            self.assertEqual(contract["memory_package"]["package_sha256"], package["package_sha256"])
+            self.assertEqual(len(contract["memory_package"]["files"]), 2)
+
+    def test_an_external_binding_is_refused_as_not_memory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, registry = self._registry(tmp, external=True)
+            with self.assertRaises(ChatPacketSeamError) as caught:
+                seed_memory_package(registry, repo_root=root)
+            self.assertIn("external:a_memory_prior_lessons_package", str(caught.exception))
+            self.assertIn("D86", str(caught.exception))
+
+    def test_a_seed_package_whose_hash_does_not_match_its_files_is_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, registry = self._registry(tmp)
+            package = seed_memory_package(registry, repo_root=root)
+            package["files"][0]["sha256"] = "0" * 64
+            with self.assertRaises(ChatPacketSeamError):
+                build_chat_packet_contract(
+                    arm="A-memory", source_manifest=self._manifest(), memory_package=package
+                )
+
+    def test_a_missing_overlay_group_or_file_is_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, registry = self._registry(tmp)
+            (root / "seed" / "CAPSULE.md").unlink()
+            with self.assertRaises(ChatPacketSeamError):
+                seed_memory_package(registry, repo_root=root)
+            with self.assertRaises(ChatPacketSeamError):
+                seed_memory_package({"groups": []}, repo_root=root)
+
+    def _manifest(self) -> dict:
+        return manifest_fixture((10, 20, 30, 40))
