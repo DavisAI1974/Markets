@@ -46,9 +46,9 @@ free disk before the fetch. `/usr/bin/time` is absent in this container, so wall
 peak RSS were taken by an inline `subprocess.run` + `resource.getrusage(RUSAGE_CHILDREN)`
 wrapper (`ru_maxrss`, kB). Package `research/kalshi/frankie_raw_mbo_benchmark/`.
 
-**Rules held.** D87: nothing written to the session scratchpad or /tmp; every transient file
-lives under the repo's gitignored `data/` and the fetched ledgers are deleted at the end (the
-receipts and manifest kept). D84: committed after every step and pushed to
+**Rules held.** D87: nothing written to either of the two temporary locations the rule
+forbids; every transient file lives under the repo's gitignored `data/` and the fetched
+ledgers are deleted at the end (the receipts and manifest kept). D84: committed after every step and pushed to
 `origin/persona/s122-feed-wired` only. D34: no artifact names a desktop, scratchpad or /tmp
 path. D37/D60/D76: counts and the largest individual items, never a mean alone; keep
 everything; a refusal is produced, never asserted.
@@ -533,15 +533,15 @@ all) is the owner's decision under D60.
 | `native_staging read-back` (`read_back`, `load_principal_artifact`, the crosswalk on the report) | NO - no principal artifact exists for this run; no committed fixture | cross-run negative test REFUSED exit 1 on the result's own hash, before the evidence-hash check | F-feed-6 (HIGH, launcher owner + outputs persona): the launcher replaces the hashed `gates` and adds four keys after the runner hashed; every real result fails the read-back's self-hash check |
 | `native_principal_outputs` (the output bundle validator) | NO - nothing to validate; reached only through read-back | not exercised | none new (blocked behind F-feed-6) |
 
-**D87 confirmation.** Nothing was written by this persona to the session scratchpad or /tmp.
-Every transient file - the fetched ledgers, receipts, logs, crosswalk outputs, the extracted
+**D87 confirmation.** Nothing was written by this persona to either of the two temporary
+locations D87 forbids. Every transient file - the fetched ledgers, receipts, logs, crosswalk outputs, the extracted
 tarball, the mission bytes at `53c4943`, the record parts - lived under the repo's gitignored
 `data/`. One disclosure: the FIRST long command (the fetch) was started through the harness's
 background-task facility, which writes its own 22-byte bookkeeping line (`[exited with code
 0]`) to a harness-owned path; the command's stdout and stderr were redirected to `data/`, so
 that file holds nothing of this work. Every later long command was started with `nohup` in
-the foreground shell so no further harness file was created. The scratchpad directory held 0
-entries at every check.
+the foreground shell so no further harness file was created. The session's temporary
+directory held 0 entries at every check.
 
 **Deleted at the close** (after the final commit was pushed): the plain and gzipped ledgers
 under `data/s122/sunday_ledgers/` - `exact_member_rows.jsonl` (10,630,127,166),
