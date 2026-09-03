@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from research.kalshi.frankie_raw_mbo_benchmark import native_a_arm_launch as launcher
+from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import canonical_hash
 from research.kalshi.frankie_raw_mbo_benchmark.corrected_a_arm_execution_gate_20260828 import (
     CorrectedExecutionGateError,
     SURFACE_IDS,
@@ -186,6 +187,23 @@ class LaunchSliceTest(unittest.TestCase):
             result = self._launch(Path(tmp))
         self.assertEqual(result["verdict"], ACCEPTED, result["failed_gates"])
         self.assertEqual(result["failed_gates"], [])
+
+    def test_the_launched_result_hashes_to_itself_as_written(self):
+        """F-feed-6, found by the feeding persona on the REAL Sunday result: the launcher added
+        ledger_retention, gates, evidence_identity and slice AFTER the runner's finalize had
+        hashed the result, so every launcher-written result declared a result_hash that did
+        not recompute and native_staging.read_back refused it ("declares d2ab3feb... and
+        recomputes to ceaca066..."). The tests never saw it because they build results through
+        the runner, never the launcher. The launched result must hash to itself; the runner's
+        own hash is kept beside it under its own name (D60: nothing dropped)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            result = self._launch(Path(tmp))
+        recomputed = canonical_hash({k: v for k, v in result.items() if k != "result_hash"})
+        self.assertEqual(result["result_hash"], recomputed)
+        self.assertRegex(result["runner_result_hash"], r"^[0-9a-f]{64}$")
+        self.assertNotEqual(result["runner_result_hash"], result["result_hash"])
+        for key in ("ledger_retention", "gates", "evidence_identity", "slice"):
+            self.assertIn(key, result, key)
 
     def test_the_gate_receipts_travel_with_the_result(self):
         """A calculation that cannot say what gated it is not evidence anyone can audit."""

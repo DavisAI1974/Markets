@@ -61,6 +61,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_response import (
 from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import (
     NativeCalculationRun,
     RunIdentity,
+    canonical_hash,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_replay_driver import (
     ExchangeSessionRule,
@@ -558,6 +559,17 @@ def launch(
         "is_bounded_slice": limit_records is not None,
         "sources": [str(path) for path in sources],
     }
+    # THE RESULT HASHES TO ITSELF AS WRITTEN (F-feed-6, found by the feeding persona on the
+    # real Sunday result). `driver.finalize()` hashed the result, and everything above was
+    # added AFTER that hash - so every launcher-written result declared a result_hash that
+    # did not recompute, and `native_staging.read_back` refused all of them ("declares
+    # d2ab3feb... and recomputes to ceaca066..."). The tests never saw it because they build
+    # results through the runner, never the launcher. The runner's own hash is kept under
+    # its own name (D60: nothing dropped; it is the calculation's identity before the launch
+    # added its receipts), and the hash the emitter, the spawn requests and the read-back
+    # all cite is recomputed over the whole result, last.
+    result["runner_result_hash"] = result.pop("result_hash")
+    result["result_hash"] = canonical_hash(result)
     return result
 
 
