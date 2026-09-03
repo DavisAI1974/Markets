@@ -994,7 +994,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **526 files.**
+new tool cannot go unlisted. **528 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `agent_frankie.py` — Frankie hybrid agent entry point.
@@ -1129,6 +1129,7 @@ new tool cannot go unlisted. **526 files.**
 - `a_memory_rt_resume_20260828.py` — (no docstring summary)
 - `a_memory_rt_resume_latest_20260828.py` — Resume the existing A-memory diagnostic replay from its latest closed checkpoint.
 - `benchmark_checkpoint.py` — Restart-safe, controller-neutral checkpoints for the raw-MBO blind benchmark."""
+- `build_a_memory_seed.py` — Build the A-memory SEED: every committed output of the past runs, hashed, labelled, UNVERIFIED.
 - `chat_packet_seam.py` — Native raw-MBO contract boundary for the Chat-controlled Frankie benchmark arms.
 - `corrected_a_arm_execution_gate_20260828.py` — Fail-closed execution and lock gates for corrected native-MBO A-arm runs."""
 - `emit_frankie_spawn.py` — Fill every Frankie spawn slot BY LOOKUP and emit the exact prompt. The A-arm `spawn.py`.
@@ -1192,6 +1193,7 @@ new tool cannot go unlisted. **526 files.**
 - `test_a_memory_member_first_recalculation.py` — (no docstring summary)
 - `test_a_memory_rt_resume_latest.py` — (no docstring summary)
 - `test_box_volume_rescue_workflow.py` — Does the box get its disk back after a failure at every point of the rescue?
+- `test_build_a_memory_seed.py` — The A-memory seed: every committed output of the past runs, hashed, provenance-labelled, UNVERIFIED.
 - `test_chat_packet_seam.py` — (no docstring summary)
 - `test_corrected_a_arm_execution_gate.py` — (no docstring summary)
 - `test_emit_frankie_spawn.py` — The stop rule, and the hash check that makes the mission uneditable mid-flight.

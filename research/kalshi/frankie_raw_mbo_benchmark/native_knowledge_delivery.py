@@ -360,6 +360,10 @@ class LayerBinding:
     content_terms: str
     why: str
     paths: tuple[str, ...]
+    description: str | None = None
+    """When set, the rebind rewrites the registry entry's `description` too (S122: the
+    a_memory_overlay layers said 'Verified ... prior lessons package' of a wrong-data package;
+    a description that names the retired thing is a record that lies). None leaves it alone."""
 
 
 _R = "research/"
@@ -628,6 +632,50 @@ KNOWLEDGE_LAYER_SOURCES: tuple[LayerBinding, ...] = (
 here because it already binds its three section-F files; the binding inputs (mission, contract,
 manifest, profile, capsules) already bind real files too. Every C/D/E/F KEEP file lands in at
 least one binding - the test suite derives that set from the inventory and checks it."""
+
+
+A_MEMORY_SEED_PATH = "research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json"
+"""The A-memory seed (D86/D88), built by `build_a_memory_seed.py`: every committed output of the
+past runs, provenance-labelled, UNVERIFIED. Not an inventory KEEP path - it is a generated record
+of the package - so its bindings live beside KNOWLEDGE_LAYER_SOURCES, not inside it."""
+
+A_MEMORY_SEED_LAYER_SOURCES: tuple[LayerBinding, ...] = (
+    LayerBinding(
+        layer_id="a_memory_prior_lessons_package",
+        content_terms=r"UNVERIFIED|32851909748|provenance",
+        why=(
+            "D86/D88: memory is his own day-over-day carry, seeded on day one with every committed "
+            "output of the past runs (the last run 33605852433, the reduced wrong-data run "
+            "32851909748-1 AS the wrong-data run, the capsules and their sources, the S119 measured "
+            "knowledge), each with sha256, bytes and a provenance label, every lesson UNVERIFIED; "
+            "the wrong-data lessons package (external:a_memory_prior_lessons_package, sha256 "
+            "b487acfb...) is retired from the registry"
+        ),
+        paths=(A_MEMORY_SEED_PATH,),
+        description=(
+            "A-memory seed memory: every committed output of the past runs, provenance-labelled, "
+            "UNVERIFIED (D86, D88); from day two his own prior-day frozen outputs plus the seed"
+        ),
+    ),
+    LayerBinding(
+        layer_id="a_memory_prior_package_proof",
+        content_terms=r"\"sha256\"|seed_hash",
+        why=(
+            "the proof of the seed is the seed itself: its per-entry sha256 and byte counts and its "
+            "seed_hash, verified by build_a_memory_seed --check against the bytes on disk and pinned "
+            "by hash in the mission and the knowledge manifest; no external proof receipt exists "
+            "(external:a_memory_prior_lessons_package_proof, sha256 d54c6191..., is retired)"
+        ),
+        paths=(A_MEMORY_SEED_PATH,),
+        description=(
+            "Proof of the A-memory seed: its per-entry sha256 and byte list and seed_hash, bound as "
+            "the seed file's own bytes (no external binding)"
+        ),
+    ),
+)
+
+ALL_LAYER_SOURCES: tuple[LayerBinding, ...] = KNOWLEDGE_LAYER_SOURCES + A_MEMORY_SEED_LAYER_SOURCES
+"""Every binding the rebind applies: the KEEP-file bindings and the seed bindings."""
 
 
 def layers_bound_only_to(

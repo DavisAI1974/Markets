@@ -1047,6 +1047,20 @@
     "REAL_TIME_FRANKIE",
     "FORECASTER_FRANKIE"
    ]
+  },
+  {
+   "arms": [
+    "A_MEMORY"
+   ],
+   "authority": "PROMOTED_POSITIVE_NATIVE_KNOWLEDGE",
+   "id": "seed_a_memory_20260902",
+   "kind": "JSON",
+   "load_mode": "ALWAYS_LOAD",
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json",
+   "roles": [
+    "REAL_TIME_FRANKIE",
+    "FORECASTER_FRANKIE"
+   ]
   }
  ],
  "capsules": [
@@ -1129,7 +1143,8 @@
   "FORECASTER_A_MEMORY_REVIEW": {
    "always_load": [
     "first_replay_forecaster_directive",
-    "a_memory_promoted_positive_knowledge"
+    "a_memory_promoted_positive_knowledge",
+    "seed_a_memory_20260902"
    ],
    "arm": "A_MEMORY",
    "external_bindings": [],
@@ -1221,7 +1236,8 @@
    "always_load": [
     "native_rt_mission",
     "native_calculation_contract",
-    "a_memory_promoted_positive_knowledge"
+    "a_memory_promoted_positive_knowledge",
+    "seed_a_memory_20260902"
    ],
    "arm": "A_MEMORY",
    "external_bindings": [],

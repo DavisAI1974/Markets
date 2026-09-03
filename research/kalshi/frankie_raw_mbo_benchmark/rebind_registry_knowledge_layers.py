@@ -24,6 +24,14 @@ reproduce the defect for that layer. The file is re-rendered in the committed la
 
 `--check` exits 1 when the committed registry differs from the rebound render; `--write`
 writes it. Idempotent: rebinding a rebound registry changes nothing.
+
+**S122 (D86/D88): the `a_memory_overlay` layers bind to the SEED FILE.** The two layers that
+carried `external:` paths - the wrong-data run's lessons package and its proof, pinned by hash
+with no repository bytes - now bind to `A_MEMORY_SEED_20260902.json` through the same
+mechanism (`native_knowledge_delivery.A_MEMORY_SEED_LAYER_SOURCES`), and their descriptions are
+rewritten so no entry says "Verified" of a package that was never memory. After this rebind no
+pre-call input layer binds an `external:` path; the launcher's `EXTERNAL_SOURCE_IDENTITIES` is
+then dead code for the coordinator to retire.
 """
 from __future__ import annotations
 
@@ -40,8 +48,8 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry i
     validate_registry,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import (
+    ALL_LAYER_SOURCES,
     KNOWLEDGE_INPUT_POLICIES,
-    KNOWLEDGE_LAYER_SOURCES,
     KnowledgeDeliveryError,
     LayerBinding,
     layers_bound_only_to,
@@ -86,7 +94,7 @@ def render_registry_json(registry: Mapping[str, Any]) -> str:
 
 
 def rebind_knowledge_layers(
-    registry: Mapping[str, Any], *, bindings: Sequence[LayerBinding] = KNOWLEDGE_LAYER_SOURCES
+    registry: Mapping[str, Any], *, bindings: Sequence[LayerBinding] = ALL_LAYER_SOURCES
 ) -> dict[str, Any]:
     """Return a rebound copy of `registry`; refuse if any input layer would stay on the document."""
     by_layer = {binding.layer_id: binding for binding in bindings}
@@ -102,6 +110,8 @@ def rebind_knowledge_layers(
             seen.add(binding.layer_id)
             entry["source_paths"] = list(binding.paths)
             entry["v3_derived"] = any("_V3_" in path for path in binding.paths)
+            if binding.description is not None:
+                entry["description"] = binding.description
     missing = sorted(set(by_layer) - seen)
     if missing:
         raise KnowledgeDeliveryError(
