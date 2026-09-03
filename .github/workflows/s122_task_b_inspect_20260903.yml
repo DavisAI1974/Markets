@@ -1,0 +1,21 @@
+name: S122 Task B inspect
+on:
+  push:
+    branches: [chatgpt/s122-item4-task-b-verify-20260903]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Inspect current change-point tests and section shape
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== TEST REFERENCES ==='
+          grep -R -n -E 'emit_change_points|event_driven_change_points|observe_change_point|change.points' research/kalshi/frankie_raw_mbo_benchmark/tests || true
+          echo '=== DRIVER CALL SITES ==='
+          grep -n -E '_observe_change_points|emit_change_points' research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py
+          echo '=== LAUNCHER CALL SITES ==='
+          grep -n -E 'emit_change_points|emit-change-points|change-points' research/kalshi/frankie_raw_mbo_benchmark/native_a_arm_launch.py
