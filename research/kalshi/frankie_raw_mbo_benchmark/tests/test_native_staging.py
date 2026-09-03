@@ -1234,3 +1234,247 @@ class ReadBackHandoffTest(unittest.TestCase):
                 self.assertEqual(path.parent, handoff_dir)
                 workmode.verify_self_hash(json.loads(path.read_text()))
             self.assertEqual(summary["source_manifest_hash"], self.result["layers"][LAYER_IDENTITY]["source_manifest_hash"])
+
+
+# ------------------------------------------------------------------------------------------
+# Slice 7 (S122): the canonical read-back surface, and the knowledge read gate's seam.
+# ------------------------------------------------------------------------------------------
+
+import shlex  # noqa: E402
+
+from research.kalshi.frankie_raw_mbo_benchmark import native_staging  # noqa: E402
+
+
+def canonical_usage_argv() -> list[str]:
+    """The `read-back` command as the module docstring states it, split into argv.
+
+    Read off `native_staging.__doc__`, never typed here: the usage IS the spec of the single
+    entry, and a docstring that drifted from the parser would fail this instead of a reader.
+    """
+    lines = native_staging.__doc__.splitlines()
+    start = next(i for i, line in enumerate(lines) if line.strip().startswith("python3 -m ") and "native_staging" in line)
+    command = []
+    for line in lines[start:]:
+        stripped = line.strip()
+        command.append(stripped.rstrip("\\").strip())
+        if not stripped.endswith("\\"):
+            break
+    return shlex.split(" ".join(command))
+
+
+class CanonicalReadBackSurfaceTest(unittest.TestCase):
+    """Greg (S122, D88): "there is supposed to be a canonical file or a runner, launcher file
+    with everything." The launcher is native_a_arm_launch; the read-back is THIS module's CLI,
+    the single entry that, given an artifact, its outputs dir, the result and the two receipts,
+    validates, attaches, renders the report with the crosswalk and builds the handoff - on the
+    one arm, with nothing to remember. The docstring's own command is run end to end."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.run_dir = Path(cls.tmp.name) / "run"
+        cls.run_dir.mkdir()
+        cls.delivery = fixture_delivery_receipt()
+        (cls.run_dir / "FRANKIE_LEDGER_DELIVERY_RECEIPT.json").write_text(json.dumps(cls.delivery, indent=2))
+        (cls.run_dir / "FRANKIE_KNOWLEDGE_DELIVERY_RECEIPT.json").write_text(
+            json.dumps(fixture_knowledge_receipt(KNOWLEDGE), indent=2)
+        )
+        cls.receipt = write_bundle(
+            build_bundle(delivery_receipt_sha256=cls.delivery["receipt_sha256"], knowledge_receipt_sha256=KNOWLEDGE),
+            cls.run_dir / "principal_outputs",
+        )
+        cls.result = finished_result()
+        (cls.run_dir / "calculation_result.json").write_text(json.dumps(cls.result, indent=2, sort_keys=True) + "\n")
+        body = delivered_artifact(
+            evidence_result_hash=cls.result["result_hash"],
+            delivery_receipt_sha256=cls.delivery["receipt_sha256"],
+            outputs_receipt_sha256=cls.receipt["receipt_sha256"],
+        )
+        (cls.run_dir / "frankie_principal_findings.json").write_text(json.dumps(body, indent=2))
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def test_the_docstring_states_the_command_and_it_carries_no_arm_to_remember(self):
+        argv = canonical_usage_argv()
+        self.assertEqual(argv[:3], ["python3", "-m", "research.kalshi.frankie_raw_mbo_benchmark.native_staging"])
+        self.assertEqual(argv[3], "read-back")
+        flags = {a for a in argv if a.startswith("--")}
+        self.assertEqual(
+            flags,
+            {"--artifact", "--result", "--outputs-dir", "--delivery-receipt", "--knowledge-receipt"},
+        )
+        self.assertNotIn("--arm", flags, "the arm is bound off the run, not remembered")
+        self.assertIn("<run>", " ".join(argv))
+
+    def test_the_docstrings_command_runs_end_to_end_on_the_fixtures(self):
+        argv = [a.replace("<run>", str(self.run_dir)) for a in canonical_usage_argv()]
+        argv[0] = sys.executable
+        proc = subprocess.run(argv, capture_output=True, text=True, cwd=str(Path(__file__).resolve().parents[4]))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        summary = json.loads(proc.stdout)
+        self.assertEqual(summary["arm"], "A_MEMORY")
+        # validated and attached
+        updated = json.loads(Path(summary["result_path"]).read_text())
+        self.assertEqual(updated["completion_status"], "PRINCIPAL_FINDINGS_ATTACHED")
+        self.assertEqual(updated["verdict"], "ACCEPTED", updated["failed_gates"])
+        self.assertEqual(summary["outputs_receipt_sha256"], self.receipt["receipt_sha256"])
+        self.assertEqual(summary["delivery_receipt_sha256"], self.delivery["receipt_sha256"])
+        self.assertEqual(summary["knowledge_receipt_sha256"], KNOWLEDGE)
+        # the report with the crosswalk
+        report = Path(summary["report_path"]).read_text()
+        self.assertIn("## Layer crosswalk", report)
+        self.assertIn(self.receipt["receipt_sha256"], report)
+        self.assertEqual(len(summary["crosswalk_sha256"]), 64)
+        # the handoff, beside the read-back output
+        for name in HANDOFF_FILES:
+            path = Path(summary["handoff"][name]["path"])
+            self.assertEqual(path.parent, self.run_dir)
+            workmode.verify_self_hash(json.loads(path.read_text()))
+        self.assertEqual(summary["source_manifest_hash"], self.result["layers"][LAYER_IDENTITY]["source_manifest_hash"])
+        self.assertIsNotNone(summary["first_lock"])
+        # the original evidence is untouched
+        self.assertEqual(
+            json.loads((self.run_dir / "calculation_result.json").read_text())["result_hash"],
+            self.result["result_hash"],
+        )
+
+
+class KnowledgeReadGateSeamTest(unittest.TestCase):
+    """The knowledge persona exposes `validate_knowledge_use`; the coordinator wires it at
+    merge. The seam is `load_principal_artifact(knowledge_use_gate=)`, threaded through
+    `read_back(knowledge_use_gate=)`, and the CLI reads the module hook
+    `native_staging.KNOWLEDGE_USE_GATE` (None until the coordinator sets it). The gate is
+    called with the artifact body and the knowledge receipt sha the coordinator delivered
+    under, BEFORE the bundle is validated; what it raises is a refusal that writes nothing;
+    what it returns is carried on the execution as `knowledge_use_receipt`."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.outputs_dir = Path(cls.tmp.name) / "principal_outputs"
+        cls.receipt = write_bundle(
+            build_bundle(delivery_receipt_sha256=DELIVERY, knowledge_receipt_sha256=KNOWLEDGE),
+            cls.outputs_dir,
+        )
+        cls.result = finished_result()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def _artifact(self, tmp: str) -> Path:
+        body = delivered_artifact(
+            outputs_receipt_sha256=self.receipt["receipt_sha256"],
+            knowledge_receipt_sha256=KNOWLEDGE,
+            knowledge_use={"lessons": {"lesson-1": "INSPECTED"}},
+        )
+        path = Path(tmp) / "findings.json"
+        path.write_text(json.dumps(body))
+        return path
+
+    def test_the_hook_is_unset_until_the_coordinator_wires_it(self):
+        self.assertIsNone(native_staging.KNOWLEDGE_USE_GATE)
+
+    def test_the_gate_receives_the_artifact_body_and_the_delivered_receipt_sha_and_its_receipt_is_carried(self):
+        calls = []
+
+        def gate(body, *, knowledge_receipt_sha256):
+            calls.append((dict(body), knowledge_receipt_sha256))
+            return {"schema": "TEST_KNOWLEDGE_USE_RECEIPT", "inspected": 1}
+
+        with tempfile.TemporaryDirectory() as tmp:
+            execution, _ = load_principal_artifact(
+                self._artifact(tmp), expected_evidence_hash="a" * 64, render_report=False,
+                outputs_dir=self.outputs_dir, knowledge_receipt_sha256=KNOWLEDGE,
+                knowledge_use_gate=gate,
+            )
+        self.assertEqual(len(calls), 1)
+        body, sha = calls[0]
+        self.assertEqual(body["knowledge_use"], {"lessons": {"lesson-1": "INSPECTED"}})
+        self.assertEqual(body["knowledge_receipt_sha256"], KNOWLEDGE)
+        self.assertEqual(sha, KNOWLEDGE)
+        self.assertEqual(execution["knowledge_use_receipt"], {"schema": "TEST_KNOWLEDGE_USE_RECEIPT", "inspected": 1})
+
+    def test_a_gate_that_refuses_refuses_the_artifact_by_name_before_the_bundle_is_validated(self):
+        seen = []
+
+        def gate(body, *, knowledge_receipt_sha256):
+            seen.append("gate")
+            raise ValueError("lesson-1 was delivered and its disposition is missing")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(StagingError) as caught:
+                load_principal_artifact(
+                    self._artifact(tmp), expected_evidence_hash="a" * 64, render_report=False,
+                    outputs_dir=Path(tmp) / "no-such-bundle", knowledge_receipt_sha256=KNOWLEDGE,
+                    knowledge_use_gate=gate,
+                )
+        self.assertEqual(seen, ["gate"])
+        message = str(caught.exception)
+        self.assertIn("knowledge read gate", message)
+        self.assertIn("lesson-1", message)
+        self.assertNotIn("no-such-bundle", message, "the gate fired before the bundle was looked at")
+
+    def test_without_a_gate_nothing_is_carried_and_nothing_changes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            execution, _ = load_principal_artifact(
+                self._artifact(tmp), expected_evidence_hash="a" * 64, render_report=False,
+                outputs_dir=self.outputs_dir, knowledge_receipt_sha256=KNOWLEDGE,
+            )
+        self.assertNotIn("knowledge_use_receipt", execution)
+
+    def test_the_read_back_threads_the_gate_and_a_refusal_writes_nothing(self):
+        def gate(body, *, knowledge_receipt_sha256):
+            raise ValueError("refused by the knowledge read gate")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            result_path = Path(tmp) / "calculation_result.json"
+            result_path.write_text(json.dumps(self.result, indent=2, sort_keys=True) + "\n")
+            body = delivered_artifact(
+                evidence_result_hash=self.result["result_hash"],
+                outputs_receipt_sha256=self.receipt["receipt_sha256"],
+            )
+            artifact_path = Path(tmp) / "frankie_principal_findings.json"
+            artifact_path.write_text(json.dumps(body))
+            with self.assertRaises(StagingError) as caught:
+                read_back(
+                    artifact_path, result_path=result_path, outputs_dir=self.outputs_dir,
+                    knowledge_receipt_sha256=KNOWLEDGE, render_report=False, knowledge_use_gate=gate,
+                )
+            self.assertFalse((result_path.parent / f"calculation_result{READ_BACK_SUFFIX}.json").exists())
+            for name in HANDOFF_FILES:
+                self.assertFalse((result_path.parent / f"{name}.json").exists())
+        self.assertIn("knowledge read gate", str(caught.exception))
+
+    def test_the_cli_reads_the_module_hook(self):
+        calls = []
+
+        def gate(body, *, knowledge_receipt_sha256):
+            calls.append(knowledge_receipt_sha256)
+            return None
+
+        with tempfile.TemporaryDirectory() as tmp:
+            result_path = Path(tmp) / "calculation_result.json"
+            result_path.write_text(json.dumps(self.result, indent=2, sort_keys=True) + "\n")
+            body = delivered_artifact(
+                evidence_result_hash=self.result["result_hash"],
+                outputs_receipt_sha256=self.receipt["receipt_sha256"],
+            )
+            artifact_path = Path(tmp) / "frankie_principal_findings.json"
+            artifact_path.write_text(json.dumps(body))
+            previous = native_staging.KNOWLEDGE_USE_GATE
+            native_staging.KNOWLEDGE_USE_GATE = gate
+            try:
+                out = io.StringIO()
+                with redirect_stdout(out):
+                    code = staging_main([
+                        "read-back", "--artifact", str(artifact_path), "--result", str(result_path),
+                        "--outputs-dir", str(self.outputs_dir), "--knowledge-receipt-sha256", KNOWLEDGE,
+                        "--no-report",
+                    ])
+            finally:
+                native_staging.KNOWLEDGE_USE_GATE = previous
+            self.assertEqual(code, 0, out.getvalue())
+        self.assertEqual(calls, [KNOWLEDGE])

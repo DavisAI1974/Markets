@@ -17,6 +17,30 @@ an empty success - a spawn that produced nothing is a spawn that did not happen,
 treating it as zero findings is how the calculation layer came to stand in for Frankie in
 the first place. And **findings must cite the evidence hash they were produced against**, so
 an artifact cannot be carried from one run to another where it was never earned.
+
+THE CANONICAL READ-BACK (S122, D88 - Greg: "there is supposed to be a canonical file or a
+runner, launcher file with everything"). The launcher is `native_a_arm_launch`; the read-back
+is this module's CLI, the single entry that, given the artifact, its output bundle, the
+finished result and the two receipts, VALIDATES (the artifact, the bundle, every receipt by
+hash), ATTACHES the findings through the runner's own route, RENDERS the report with the
+99-layer crosswalk beside the artifact, and BUILDS the RT handoff trio beside the result with
+findings. The arm and the source manifest hash are bound off the result's identity receipt -
+one arm, A_MEMORY (D86), nothing to remember:
+
+    python3 -m research.kalshi.frankie_raw_mbo_benchmark.native_staging read-back \\
+        --artifact <run>/frankie_principal_findings.json \\
+        --result <run>/calculation_result.json \\
+        --outputs-dir <run>/principal_outputs \\
+        --delivery-receipt <run>/FRANKIE_LEDGER_DELIVERY_RECEIPT.json \\
+        --knowledge-receipt <run>/FRANKIE_KNOWLEDGE_DELIVERY_RECEIPT.json
+
+It prints a JSON summary naming every hash and path it produced - `result_path`
+(`calculation_result_with_findings.json`, the original never written over), `report_path`,
+`crosswalk_sha256`, `handoff` (ONEWAY_HANDOFF / RT_FIRST_LOCK / RT_CONTEXT_MANIFEST, each
+path and receipt hash), `first_lock` or the stated reason there is none - or `REFUSED: <why>`
+and exit 1, having written nothing. Optional: `--out`, `--handoff-dir`, `--no-report`, and
+the `*-sha256` forms of the two receipts when only the hash is in hand. The knowledge read
+gate plugs in at `KNOWLEDGE_USE_GATE` (see there); it is None until the coordinator wires it.
 """
 from __future__ import annotations
 
@@ -26,7 +50,7 @@ import re
 import sys
 import json
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import (
     LAYER_IDENTITY,
@@ -71,6 +95,20 @@ REQUIRED_CUTOFF_KEYS = (
 
 class StagingError(ValueError):
     """A spawn could not be staged, or its artifact could not be trusted."""
+
+
+#: THE KNOWLEDGE READ GATE'S SEAM (S122 slice 7). `load_principal_artifact` calls
+#: `knowledge_use_gate(body, knowledge_receipt_sha256=<the receipt the coordinator delivered
+#: under>)` with the whole artifact body (which carries `knowledge_use` and the artifact's own
+#: `knowledge_receipt_sha256`) AFTER the artifact's structural and delivery-receipt checks and
+#: BEFORE its output bundle is validated. Whatever the gate raises refuses the artifact by
+#: name and the read-back writes nothing; whatever it returns (a receipt, or None) is carried
+#: on the execution as `knowledge_use_receipt` and so into the result's principal block. The
+#: knowledge persona exposes `validate_knowledge_use`; the coordinator wires it HERE at merge
+#: by setting this hook (the CLI reads it) - `read_back(knowledge_use_gate=)` and
+#: `load_principal_artifact(knowledge_use_gate=)` take it explicitly for callers in-process.
+KnowledgeUseGate = Callable[..., Any]
+KNOWLEDGE_USE_GATE: KnowledgeUseGate | None = None
 
 
 def _canonical(value: Any) -> str:
@@ -156,12 +194,14 @@ def load_principal_artifact(
     knowledge_receipt_sha256: str | None = None,
     delivery_receipt_sha256: str | None = None,
     expected_arm: str | None = None,
+    knowledge_use_gate: KnowledgeUseGate | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Read back what the spawn produced, or fail hard.
 
     `expected_arm` (S122 slice 6) is the arm the RUN was stamped with - the read-back binds
     it off the result's identity receipt - and an artifact on another arm is refused: findings
     attach to the run they were produced on. None keeps the old rule (any allowed arm).
+    `knowledge_use_gate` is the seam described at `KNOWLEDGE_USE_GATE`.
 
     Returns `(execution, findings)` shaped for
     `NativeCalculationRun.attach_principal_findings`, so the only route into the findings
@@ -294,6 +334,16 @@ def load_principal_artifact(
                 f"{delivery_receipt_sha256} and the artifact cites {cited_delivery!r}; findings "
                 "are attached to the delivery they were produced against"
             )
+    # THE KNOWLEDGE READ GATE'S SEAM - see `KNOWLEDGE_USE_GATE`. Before the bundle, so a
+    # refused knowledge use never gets as far as validating the outputs it was not entitled to.
+    knowledge_use_receipt: Any = None
+    if knowledge_use_gate is not None:
+        try:
+            knowledge_use_receipt = knowledge_use_gate(
+                body, knowledge_receipt_sha256=knowledge_receipt_sha256
+            )
+        except Exception as exc:  # noqa: BLE001 - the gate's own refusal, carried by name
+            raise StagingError(f"the knowledge read gate refused the artifact: {exc}") from exc
     outputs_receipt_sha256, outputs_receipt = _validate_outputs(
         body,
         cited_delivery=cited_delivery,
@@ -321,6 +371,8 @@ def load_principal_artifact(
         "outputs_receipt_sha256": outputs_receipt_sha256,
         "outputs_receipt": outputs_receipt,
     }
+    if knowledge_use_receipt is not None:
+        execution["knowledge_use_receipt"] = knowledge_use_receipt
     if render_report:
         _render_report_beside(path)
     return execution, [dict(row) for row in findings]
@@ -581,6 +633,7 @@ def read_back(
     knowledge_receipt: Path | str | None = None,
     render_report: bool = True,
     handoff_dir: Path | str | None = None,
+    knowledge_use_gate: KnowledgeUseGate | None = None,
 ) -> dict[str, Any]:
     """Close the loop: a finished `calculation_result.json` receives the principal's findings.
 
@@ -608,7 +661,7 @@ def read_back(
     another arm than the run is refused. An artifact with no bundle (no delivery receipt) or
     a FORECASTER_FRANKIE artifact has no handoff, and the summary SAYS so; a bundle whose lock
     ledger carries no FIRST_LOCK yields a null `first_lock` and a stated note, never a
-    fabricated one.
+    fabricated one. `knowledge_use_gate` is the seam described at `KNOWLEDGE_USE_GATE`.
     """
     artifact_path = Path(artifact_path)
     result_path = Path(result_path)
@@ -665,6 +718,7 @@ def read_back(
         knowledge_receipt_sha256=knowledge_receipt_sha256,
         delivery_receipt_sha256=delivery_receipt_sha256,
         expected_arm=run_arm,
+        knowledge_use_gate=knowledge_use_gate,
     )
     try:
         updated = NativeCalculationRun.attach_principal_findings_to_result(
@@ -897,10 +951,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python3 -m research.kalshi.frankie_raw_mbo_benchmark.native_staging",
         description=(
-            "Read a principal artifact back against its finished calculation result: validate "
-            "the artifact and its output bundle, attach the findings through the runner's own "
-            "route, write the result with findings beside the original. Prints a JSON summary, "
-            "or REFUSED and why."
+            "THE CANONICAL READ-BACK. Read a principal artifact back against its finished "
+            "calculation result: validate the artifact, its output bundle and every receipt, "
+            "attach the findings through the runner's own route, write the result with findings "
+            "beside the original, render the report with the layer crosswalk, and build the RT "
+            "handoff trio from the validated bundle. One arm (A_MEMORY), bound off the result - "
+            "nothing to remember. Prints a JSON summary, or REFUSED and why."
         ),
     )
     commands = parser.add_subparsers(dest="command", required=True)
@@ -928,6 +984,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             knowledge_receipt=args.knowledge_receipt,
             render_report=not args.no_report,
             handoff_dir=args.handoff_dir,
+            knowledge_use_gate=KNOWLEDGE_USE_GATE,
         )
     except (StagingError, OSError, ValueError) as exc:
         print(f"REFUSED: {exc}")
