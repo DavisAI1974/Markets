@@ -1,0 +1,28 @@
+name: S122 Task D verify candidate
+
+on:
+  push:
+    branches:
+      - chatgpt/s122-item4-task-d-verify-20260903
+    paths:
+      - scripts/s122_patch_task_d_20260903.py
+      - scripts/s122_task_d_verify_candidate_20260903.sh
+      - .github/workflows/s122_task_d_verify_candidate_20260903.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: s122-task-d-verify-20260903
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 1
+      - name: Apply D only, verify, and create candidate
+        run: bash scripts/s122_task_d_verify_candidate_20260903.sh
