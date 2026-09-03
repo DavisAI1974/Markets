@@ -892,6 +892,9 @@ STATUS_MEANING: dict[str, str] = {
     "RECEIPTED_CARRIER_ABSENT_FROM_SCANNED_PREFIX": "a VERIFIED receipt names this layer, but the cited member "
                                                      "carrier was not found before a bounded ledger scan stopped; "
                                                      "this is prefix evidence, not a full-ledger absence claim",
+    "DEGENERATE_PROOF_SAME_AS_SUBJECT": "the proof layer and the package it is meant to prove bind the same file "
+                                        "identity; an explicitly accounted bootstrap condition that does not claim "
+                                        "independent proof and clears when an independent receipt is bound",
     "BOUND_TO_INVENTORY_DOCUMENT": "the layer's only source path is the feed-inventory markdown; a named defect, never DELIVERED",
     "PRODUCED_NOT_DELIVERED": "a producer exists and no VERIFIED receipt covers this layer on this run",
     "NO_PRODUCER_FOUND": "nothing in the ingestion path produces it; the record says what was searched",
@@ -903,7 +906,11 @@ STATUS_MEANING: dict[str, str] = {
     "NOT_APPLICABLE": "the arm is not in the layer's group arms",
 }
 STATUSES = frozenset(STATUS_MEANING)
-ACCOUNTED_INPUT_STATUSES = frozenset({"DELIVERED", "PRINCIPAL_STAMPED"})
+ACCOUNTED_INPUT_STATUSES = frozenset({
+    "DELIVERED",
+    "PRINCIPAL_STAMPED",
+    "DEGENERATE_PROOF_SAME_AS_SUBJECT",
+})
 
 LEDGER_TO_CARRIER = {MEMBER_LEDGER: "member", LIFECYCLE_LEDGER: "lifecycle", LEGACY_LEDGER: "legacy"}
 """Ledger name -> the carrier vocabulary used by the causal stream."""
@@ -1238,6 +1245,24 @@ def _static_status(
         files = row.get("files") or []
         paths = [str(f.get("path")) for f in files if isinstance(f, Mapping) and f.get("path")]
         if status == "DELIVERED" and paths:
+            if layer_id == "a_memory_prior_package_proof":
+                subject = knowledge_rows.get("a_memory_prior_lessons_package") or {}
+                subject_files = subject.get("files") or []
+                proof_bindings = {
+                    (str(f.get("path")), str(f.get("sha256")), f.get("bytes"))
+                    for f in files if isinstance(f, Mapping) and f.get("path")
+                }
+                subject_bindings = {
+                    (str(f.get("path")), str(f.get("sha256")), f.get("bytes"))
+                    for f in subject_files if isinstance(f, Mapping) and f.get("path")
+                }
+                if proof_bindings and proof_bindings == subject_bindings:
+                    return "DEGENERATE_PROOF_SAME_AS_SUBJECT", _evidence(
+                        "KNOWLEDGE_RECEIPT", knowledge_sha, ", ".join(paths),
+                        "proof and its subject bind the same file identity; the seed currently "
+                        "contains its own per-entry hashes because no independently produced receipt "
+                        "exists; bind a real independent receipt over the seed to close this status",
+                    )
             return "DELIVERED", _evidence(
                 "KNOWLEDGE_RECEIPT", knowledge_sha, ", ".join(paths),
                 f"knowledge receipt: DELIVERED, {len(paths)} file(s)",
@@ -1436,6 +1461,7 @@ def crosswalk(
         "receipted_carrier_absent_from_scanned_prefix": by_status[
             "RECEIPTED_CARRIER_ABSENT_FROM_SCANNED_PREFIX"
         ],
+        "degenerate_proof_same_as_subject": by_status["DEGENERATE_PROOF_SAME_AS_SUBJECT"],
         "bound_to_inventory_document": by_status["BOUND_TO_INVENTORY_DOCUMENT"],
         "produced_not_delivered": by_status["PRODUCED_NOT_DELIVERED"],
         "no_producer_found": by_status["NO_PRODUCER_FOUND"],
@@ -1474,10 +1500,11 @@ def crosswalk(
 
 # --- the gate the coordinator wires at spawn (item 7) -------------------------------------
 def gate_applicable_inputs(crosswalk_body: Mapping[str, Any]) -> None:
-    """Refuse the spawn unless every arm-applicable INPUT layer is accounted by DELIVERED or PRINCIPAL_STAMPED.
+    """Refuse the spawn unless every arm-applicable INPUT layer has an explicitly accounted status.
 
     Lists every offender with its computed status. Never consults the policy, never reads a
-    stamp: the only thing that satisfies it is a row computed from a receipt and the run.
+    stamp: the only thing that satisfies it is a row computed from a receipt and the run. The
+    declared one-day A_MEMORY self-proof bootstrap is accounted without being called DELIVERED.
     """
     refused = [
         (row["layer_id"], row["status"])
@@ -1489,7 +1516,7 @@ def gate_applicable_inputs(crosswalk_body: Mapping[str, Any]) -> None:
     total = sum(1 for row in crosswalk_body["layers"] if row["arm_applicable"] and row["policy"] in INPUT_POLICIES)
     raise CrosswalkGateError(
         f"spawn refused for arm {crosswalk_body['arm']}: {len(refused)} of {total} applicable input layers "
-        "are not DELIVERED: " + ", ".join(f"{layer_id}={status}" for layer_id, status in refused)
+        "are not accounted: " + ", ".join(f"{layer_id}={status}" for layer_id, status in refused)
     )
 
 

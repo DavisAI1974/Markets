@@ -74,6 +74,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import 
 from research.kalshi.frankie_raw_mbo_benchmark.native_causal_stream import CausalGroupStream
 from research.kalshi.frankie_raw_mbo_benchmark.native_mbo_field_census import MboFieldCensus
 from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import (
+    A_MEMORY_SEED_PATH,
     KNOWLEDGE_LAYER_SOURCES,
     build_knowledge_delivery,
 )
@@ -890,6 +891,53 @@ class InterlockReceiptsTest(unittest.TestCase):
         self.assertNotEqual(cw["complete_s105_9_brain"]["status"], "DELIVERED")
         self.assertIn("no files", cw["complete_s105_9_brain"]["evidence"]["detail"])
 
+    def test_the_seed_proof_declares_equal_bindings_and_clears_for_an_independent_receipt(self):
+        seed_binding = {
+            "path": A_MEMORY_SEED_PATH,
+            "sha256": "a" * 64,
+            "bytes": 10,
+        }
+        receipt = knowledge_receipt([
+            {
+                "layer_id": "a_memory_prior_lessons_package",
+                "status": "DELIVERED",
+                "files": [seed_binding],
+            },
+            {
+                "layer_id": "a_memory_prior_package_proof",
+                "status": "DELIVERED",
+                "files": [dict(seed_binding)],
+            },
+        ])
+
+        body = crosswalk(load_registry(), arm="A_MEMORY", knowledge_receipt=receipt)
+        rows = rows_by_id(body)
+
+        self.assertEqual(rows["a_memory_prior_lessons_package"]["status"], "DELIVERED")
+        self.assertEqual(
+            rows["a_memory_prior_package_proof"]["status"],
+            "DEGENERATE_PROOF_SAME_AS_SUBJECT",
+        )
+        self.assertIn(
+            "proof and its subject bind the same file",
+            rows["a_memory_prior_package_proof"]["evidence"]["detail"],
+        )
+        self.assertEqual(body["totals"]["degenerate_proof_same_as_subject"], 1)
+        self.assertIn(
+            "DEGENERATE_PROOF_SAME_AS_SUBJECT",
+            ACCOUNTED_INPUT_STATUSES,
+        )
+
+        receipt["layers"][1]["files"] = [{
+            "path": "receipts/a_memory_seed_receipt.json",
+            "sha256": "b" * 64,
+            "bytes": 20,
+        }]
+        independent = rows_by_id(
+            crosswalk(load_registry(), arm="A_MEMORY", knowledge_receipt=receipt)
+        )
+        self.assertEqual(independent["a_memory_prior_package_proof"]["status"], "DELIVERED")
+
     def test_a_knowledge_receipt_of_another_schema_is_refused(self):
         with self.assertRaises(CrosswalkError):
             crosswalk(load_registry(), arm="A_CLEAN", knowledge_receipt={"schema": "X", "layers": [], "receipt_sha256": "1" * 64})
@@ -932,8 +980,20 @@ class GateTest(unittest.TestCase):
                          "a_memory_promoted_positive_capsule"):
             self.assertNotIn(layer_id, message)
 
-    def test_the_gate_passes_on_a_fixture_computed_by_the_real_producers(self):
+    def test_the_gate_passes_on_a_fixture_with_declared_bootstrap_self_proof(self):
         fx = honest_gate_fixture()
+        offenders = [
+            (row["layer_id"], row["status"])
+            for row in fx["crosswalk"]["layers"]
+            if row["arm_applicable"] and row["policy"] in INPUT_POLICIES
+            and row["status"] not in ACCOUNTED_INPUT_STATUSES
+        ]
+        self.assertEqual(offenders, [])
+        rows = rows_by_id(fx["crosswalk"])
+        self.assertEqual(
+            rows["a_memory_prior_package_proof"]["status"],
+            "DEGENERATE_PROOF_SAME_AS_SUBJECT",
+        )
         self.assertIsNone(gate_applicable_inputs(fx["crosswalk"]))
 
     def test_withholding_one_real_receipt_is_enough_to_refuse(self):

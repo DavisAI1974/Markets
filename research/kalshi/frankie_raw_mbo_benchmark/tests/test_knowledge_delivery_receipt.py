@@ -175,9 +175,8 @@ class BuildKnowledgeDeliveryTest(unittest.TestCase):
         self.assertEqual(totals["artifacts"], len(self.receipt["artifacts"]))
         self.assertEqual(totals["files"], sum(len(r["files"]) for r in self.receipt["layers"]))
 
-    def test_the_crosswalk_reads_every_applicable_static_input_as_delivered_from_this_receipt(self) -> None:
-        """The payoff: the receipt turns the 22 knowledge rows the S121 Sunday crosswalk read
-        as not delivered into DELIVERED rows naming files and the receipt hash."""
+    def test_the_crosswalk_delivers_static_inputs_but_declares_the_seed_self_proof(self) -> None:
+        """A delivered file is not independent proof when subject and proof bind the same bytes."""
         body = crosswalk(self.registry, arm=ARM, knowledge_receipt=self.receipt)
         rows = {row["layer_id"]: row for row in body["layers"]}
         static = [
@@ -187,9 +186,14 @@ class BuildKnowledgeDeliveryTest(unittest.TestCase):
         self.assertTrue(static)
         for row in static:
             with self.subTest(layer=row["layer_id"]):
-                self.assertEqual(row["status"], "DELIVERED")
+                if row["layer_id"] == "a_memory_prior_package_proof":
+                    self.assertEqual(row["status"], "DEGENERATE_PROOF_SAME_AS_SUBJECT")
+                    self.assertIn("bind the same file", row["evidence"]["detail"])
+                else:
+                    self.assertEqual(row["status"], "DELIVERED")
                 self.assertEqual(row["evidence"]["kind"], "KNOWLEDGE_RECEIPT")
                 self.assertEqual(row["evidence"]["receipt_sha256"], self.receipt["receipt_sha256"])
+        self.assertEqual(body["totals"]["degenerate_proof_same_as_subject"], 1)
         self.assertEqual(rows["a_clean_promoted_positive_capsule"]["status"], "NOT_APPLICABLE")
         self.assertEqual(body["knowledge_receipt_sha256"], self.receipt["receipt_sha256"])
         # Stream inputs are untouched by a knowledge receipt: still not delivered without a run.
