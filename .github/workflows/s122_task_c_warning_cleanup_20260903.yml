@@ -21,7 +21,7 @@ jobs:
           git fetch origin "$TARGET" "$CANDIDATE"
           test "$(git rev-parse origin/$TARGET)" = "$BASE" || { echo 'STOP: target moved'; exit 41; }
           test "$(git rev-parse origin/$CANDIDATE)" = "$BASE" || { echo 'STOP: candidate moved'; exit 42; }
-          git switch -C s122-task-c-warning "$TARGET"
+          git switch -C s122-task-c-warning "origin/$TARGET"
 
           set +e
           python3 -W error::SyntaxWarning -m py_compile "$TEST" > data_s122_c_warning_red.log 2>&1
