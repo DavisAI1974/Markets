@@ -1,4 +1,13 @@
-# DROP-IN S123 - FEED IT. EVERYTHING IS WIRED AND NOTHING HAS BEEN RUN
+# DROP-IN S123 - FINISH THE WIRING, THEN FEED IT
+
+> **AMENDED IN SESSION BY D89 (Greg, 2026-09-03), verbatim:** *"we are not doing canary until all
+> of this other stuff is done first."* This file was written to open on a run. **It does not any
+> more.** The order is now ITEM TWO and ITEM THREE first, then ITEM ONE. Item zero's diagnosis is
+> unchanged and still correct - nothing wired in S121 or S122 has been fed - but the conclusion it
+> drew from that diagnosis has been reversed, and the reversal is the sound one: a run dispatched
+> over unfinished wiring produces one more set of before-numbers, which is exactly what run
+> 33630348943 cost. **A run is worth dispatching once, on finished code.** The outstanding work is
+> the Codex packet `CODEX_TASK_S123.md`.
 
 Branch `chatgpt/frankie-raw-mbo-benchmark-20260828`. Check `git log --oneline -1`; the tip must be
 the commit carrying `SESSION_HANDOFF_2026-09-03_S122.md` or later. **1,973 tests green.**
@@ -27,11 +36,14 @@ retired windows. So every number in `FRANKIE_FEED_RECORD_SUNDAY_33630348943_2026
 and passes: the A_MEMORY seed is merged, the overlay layers bind it, no `external:` identity
 remains. Registered **F-31, ESSENTIAL**.
 
-So: **run it first, then read the result.** Do not open another build item before a run exists.
+So: the run is the only thing that turns two sessions of wiring from claimed into measured.
+**But it is dispatched LAST, not first (D89).** Land item two and item three, then run it once on
+finished code and read the result. Nothing is blocking the run when you get there; what is being
+avoided is spending it early.
 
 ---
 
-## ITEM ONE - THE SUNDAY RE-RUN, IN ORDER
+## ITEM ONE - THE SUNDAY RE-RUN, IN ORDER (D89: RUN THIS **AFTER** ITEMS TWO AND THREE)
 
 1. **Canary first.** Dispatch `frankie_a_memory_rt_native_launch_20260828.yml` with `mode=canary`.
    The defaults now carry everything (aliasing on, change points on, Sunday `20211003` as the
@@ -61,7 +73,10 @@ So: **run it first, then read the result.** Do not open another build item befor
 
 ---
 
-## ITEM TWO - THE GATE, ONCE A RUN EXISTS (F-24)
+## ITEM TWO - THE GATE (F-24) - **THIS IS NOW THE OPENER, NOT ITEM ONE**
+
+Written as "once a run exists"; D89 reverses that. It is done FIRST, on the fixture, and the run
+then happens over a gated emitter instead of ahead of one.
 
 `gate_applicable_inputs` still has no production caller, and now everything it needs is merged:
 the crosswalk computes status from delivered carriers, the sealed-absence proof exists
