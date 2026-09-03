@@ -23,6 +23,8 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
+_SCALAR_TYPES = frozenset({str, int, float, bool, type(None)})
+
 DISTINCT_CAP = 64
 LIST_MARKER = "[]"
 
@@ -48,9 +50,16 @@ class _Field:
         if value is None:
             self.null += 1
             return
-        self.types.add(type(value).__name__)
-        # bool is a subclass of int; a min/max over True/False is noise, not a range.
-        if isinstance(value, (int, float)) and not isinstance(value, bool):
+        tv = type(value)
+        # The TYPE OBJECT, not its name: an attribute lookup per observation over 61.6M
+        # observations buys nothing a report-time lookup cannot. Names are rendered in `_row`.
+        self.types.add(tv)
+        # bool is a subclass of int, so `isinstance(v, int)` is true for True/False and a
+        # min/max over them is noise rather than a range. `type(v) is int` excludes bool by
+        # construction, which is both faster than two isinstance calls and says what it means.
+        if tv is int or tv is float or (
+            tv is not bool and isinstance(value, (int, float)) and not isinstance(value, bool)
+        ):
             self.minimum = value if self.minimum is None else min(self.minimum, value)
             self.maximum = value if self.maximum is None else max(self.maximum, value)
         if not self.capped:
@@ -79,7 +88,7 @@ class MboFieldCensus:
             self._fields[path].rows_with_field += 1
 
     def _walk(self, node: Any, prefix: str, touched: set[str]) -> None:
-        if isinstance(node, Mapping):
+        if type(node) is dict or isinstance(node, Mapping):
             for key, value in node.items():
                 path = f"{prefix}.{key}" if prefix else str(key)
                 self._observe_at(path, value, touched)
@@ -90,23 +99,26 @@ class MboFieldCensus:
                 self._observe_at(path, value, touched)
 
     def _observe_at(self, path: str, value: Any, touched: set[str]) -> None:
-        stat = self._touch(path)
+        # The field lookup is inlined rather than wrapped in a helper: it runs once per leaf,
+        # tens of millions of times per run, and a method call around a dict lookup is pure
+        # overhead at that count.
+        fields = self._fields
+        stat = fields.get(path)
+        if stat is None:
+            stat = fields[path] = _Field()
         touched.add(path)
-        if isinstance(value, (Mapping, list, tuple)):
+        tv = type(value)
+        if tv is dict or tv is list or tv is tuple or (
+            tv not in _SCALAR_TYPES and isinstance(value, (Mapping, list, tuple))
+        ):
             # The container itself is "present" with its type recorded; its leaves are
             # counted under their own paths. Its distinct/range are meaningless and are not
             # accumulated, so a container never reads as degenerate or always-null.
             stat.observations += 1
-            stat.types.add(type(value).__name__)
+            stat.types.add(tv)
             self._walk(value, path, touched)
         else:
             stat.observe(value)
-
-    def _touch(self, path: str) -> _Field:
-        stat = self._fields.get(path)
-        if stat is None:
-            stat = self._fields[path] = _Field()
-        return stat
 
     # -- reporting ----------------------------------------------------------------------
 
@@ -132,7 +144,7 @@ class MboFieldCensus:
             "rows_absent": self.rows_observed - stat.rows_with_field,
             "distinct_values": len(stat.distinct),
             "distinct_capped": stat.capped,
-            "types": sorted(stat.types),
+            "types": sorted(t.__name__ for t in stat.types),
             "minimum": stat.minimum,
             "maximum": stat.maximum,
             "degenerate": degenerate,
