@@ -1,0 +1,173 @@
+name: Frankie canary result read 20260903
+
+# READ-ONLY. Prints a finished run's own calculation_result.json, and the first row of each
+# exact ledger, from the run's durable S3 prefix.
+#
+# WHY THIS EXISTS. DROP_IN_S124 item two step 2 says to read the canary's OWN artifact rather
+# than the job summary. Neither is reachable from an interactive session: the verdict step
+# writes to GITHUB_STEP_SUMMARY, and the uploaded artifact is 1.17 GB behind api.github.com.
+# The packet is on S3, and AWS credentials are GitHub-secret scoped, so reading it is a
+# workflow or it is nothing.
+#
+# It reads S3 and writes NOTHING. It prints CONTENT - verdicts, gate names, section ids, row
+# keys - never a credential and never a presigned URL. Ledger rows are fetched by BYTE RANGE
+# so a multi-gigabyte ledger is never pulled to check whether a field is on its rows.
+
+on:
+  push:
+    branches:
+      - chatgpt/frankie-raw-mbo-benchmark-20260828
+    paths:
+      - '.github/workflows/frankie_canary_result_read_20260903.yml'
+  workflow_dispatch:
+    inputs:
+      durable_prefix:
+        description: >-
+          The run's durable S3 prefix, without the bucket. Defaults to canary run
+          33745123325-1 on commit 7d0068d, the first traversal ever accepted on this lineage.
+        type: string
+        default: nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/7d0068d8ae720772415bf84c8c0689e84408d642/33745123325-1
+      subdir:
+        description: >-
+          Subdirectory holding the calculation result. The canary writes to `canary/`; a
+          box run writes at the prefix root, so pass an empty string for one of those.
+        type: string
+        default: canary
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frankie-canary-result-read-20260903
+  cancel-in-progress: false
+
+env:
+  AWS_DEFAULT_REGION: us-east-2
+  AWS_REGION: us-east-2
+  S3_ENDPOINT_URL: https://s3.us-east-2.amazonaws.com
+  BUCKET: bento-568968024170-us-east-2-an
+  DURABLE_PREFIX: >-
+    ${{ github.event_name == 'workflow_dispatch' && inputs.durable_prefix ||
+    'nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/7d0068d8ae720772415bf84c8c0689e84408d642/33745123325-1' }}
+  SUBDIR: ${{ github.event_name == 'workflow_dispatch' && inputs.subdir || 'canary' }}
+
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+    steps:
+      - name: What the run actually wrote
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "== objects under the run prefix, with sizes =="
+          aws s3 ls "s3://${BUCKET}/${DURABLE_PREFIX}/" --recursive --human-readable \
+            --endpoint-url "$S3_ENDPOINT_URL" | sort -k4
+
+      - name: The calculation result, in full
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/canary-read"
+          install -d -m 0700 "$work"
+          base="${DURABLE_PREFIX}"
+          if [ -n "$SUBDIR" ]; then base="${base}/${SUBDIR}"; fi
+
+          aws s3 cp "s3://${BUCKET}/${base}/calculation_result.json" \
+            "$work/calculation_result.json" \
+            --endpoint-url "$S3_ENDPOINT_URL" --only-show-errors
+
+          WORK="$work" python3 - <<'PY'
+          import json
+          import os
+
+          body = json.load(open(os.environ["WORK"] + "/calculation_result.json"))
+          print("== headline ==")
+          for key in ("verdict", "completion_status", "failed_gates", "arm", "run_id",
+                      "is_complete_source_day", "is_bounded_slice"):
+              if key in body:
+                  print(f"{key}: {json.dumps(body[key])}")
+
+          print("")
+          print("== slice ==")
+          print(json.dumps(body.get("slice"), indent=2, sort_keys=True))
+
+          traversal = body.get("traversal", {})
+          print("")
+          print("== traversal ==")
+          for key in ("groups_seen", "records_seen", "save_points"):
+              print(f"{key}: {traversal.get(key)}")
+
+          fed = traversal.get("sections_fed")
+          print("")
+          print("== sections fed ==")
+          print(json.dumps(fed, indent=2, sort_keys=True))
+          if isinstance(fed, dict):
+              print(f"section count: {len(fed)}")
+              not_fed = sorted(k for k, v in fed.items() if not v)
+              print(f"NOT fed: {not_fed or 'none'}")
+
+          print("")
+          print("== every other top-level key ==")
+          shown = {"verdict", "completion_status", "failed_gates", "arm", "run_id",
+                   "slice", "traversal", "is_complete_source_day", "is_bounded_slice"}
+          for key in sorted(set(body) - shown):
+              value = body[key]
+              rendered = json.dumps(value)
+              print(f"{key}: {rendered if len(rendered) <= 400 else rendered[:400] + ' ...[truncated]'}")
+          PY
+
+      - name: First row of each exact ledger, by byte range
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/ledger-heads"
+          install -d -m 0700 "$work"
+
+          # F-30 and F-20 are answered on the ROWS, not in the result summary: member rows must
+          # carry `raw_actions`, and every lifecycle row must carry `emitted_at_recv_ns`. A range
+          # GET of the first 256 KiB is enough to read row one and costs nothing.
+          mapfile -t keys < <(aws s3 ls "s3://${BUCKET}/${DURABLE_PREFIX}/" --recursive \
+            --endpoint-url "$S3_ENDPOINT_URL" | awk '{print $4}' | grep -E '\.jsonl(\.gz)?$' || true)
+
+          if [ "${#keys[@]}" -eq 0 ]; then
+            echo "no .jsonl ledgers under this prefix"
+            exit 0
+          fi
+
+          for key in "${keys[@]}"; do
+            name="$(basename "$key")"
+            aws s3api get-object --bucket "$BUCKET" --key "$key" \
+              --range "bytes=0-262143" --endpoint-url "$S3_ENDPOINT_URL" \
+              "$work/$name" >/dev/null 2>&1 || { echo "RANGE GET FAILED $name"; continue; }
+            printf '\n== %s ==\n' "$key"
+            LEDGER="$work/$name" python3 - <<'PY'
+          import gzip
+          import io
+          import json
+          import os
+
+          path = os.environ["LEDGER"]
+          raw = open(path, "rb").read()
+          if path.endswith(".gz"):
+              try:
+                  raw = gzip.GzipFile(fileobj=io.BytesIO(raw)).read()
+              except EOFError:
+                  pass  # a truncated range decompresses as far as it can, which is enough
+          line = raw.split(b"\n", 1)[0]
+          try:
+              row = json.loads(line)
+          except Exception as exc:
+              print(f"first row did not parse from the first 256 KiB: {exc}")
+              raise SystemExit(0)
+          keys = sorted(row)
+          print(f"row keys ({len(keys)}): {keys}")
+          for field in ("raw_actions", "emitted_at_recv_ns", "activity_since",
+                        "withheld_no_own_clock", "withheld_close_occasion"):
+              print(f"  {field}: {'PRESENT' if field in row else 'absent'}")
+          PY
+          done
