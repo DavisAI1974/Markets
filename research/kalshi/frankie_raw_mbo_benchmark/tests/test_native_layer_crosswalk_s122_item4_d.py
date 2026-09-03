@@ -58,7 +58,7 @@ class D1CensusAbsentTest(unittest.TestCase):
             xw.gate_applicable_inputs(xw.crosswalk(self.registry, arm="A_CLEAN", result=self.without_census(),
                                                    delivery_receipt=self.receipt))
 
-    def test_ledger_dir_recovers_member_field_names_with_a_stated_bound(self) -> None:
+    def test_ledger_dir_recovers_member_fields_and_reports_a_complete_scan(self) -> None:
         observed = xw.observed_carriers(self.without_census(), delivery_receipt=self.receipt,
                                         ledger_dir=self.ledger_dir)
         self.assertEqual(observed["member_paths_source"], "DELIVERED_LEDGER_FIRST_ROWS")
@@ -66,10 +66,20 @@ class D1CensusAbsentTest(unittest.TestCase):
         self.assertGreater(observed["member_rows"], 0)
         self.assertIn("rows", observed["member_scan_bound"])
         self.assertIn("bytes", observed["member_scan_bound"])
+        self.assertTrue(observed["member_scan_bound"]["reached_end"])
+        self.assertFalse(observed["member_scan_bound"]["truncated"])
+        self.assertEqual(
+            observed["member_rows"], observed["member_scan_bound"]["rows_read"]
+        )
         rows = rows_by_id(xw.crosswalk(self.registry, arm="A_CLEAN", result=self.without_census(),
                                        delivery_receipt=self.receipt, ledger_dir=self.ledger_dir))
         self.assertEqual(rows["fifo_queues"]["status"], "DELIVERED")
-        self.assertIn("bounded", rows["fifo_queues"]["evidence"]["detail"].lower())
+        self.assertIn(
+            "reached end after "
+            f"{observed['member_scan_bound']['rows_read']} rows / "
+            f"{observed['member_scan_bound']['bytes_read']} bytes",
+            rows["fifo_queues"]["evidence"]["detail"],
+        )
         # Task A landed first: raw actions are now a real member carrier.
         self.assertEqual(rows["order_lifecycle_adds"]["status"], "DELIVERED")
 

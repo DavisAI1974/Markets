@@ -889,6 +889,9 @@ STATUS_MEANING: dict[str, str] = {
                          "by the ingestion path; this one computed status satisfies the input-accounting gate",
     "RECEIPTED_CARRIER_ABSENT": "a VERIFIED receipt names this layer, and measured run evidence shows the cited carrier "
                                 "is not there - the receipt over-claims (a structural drop, or 0 rows on this run)",
+    "RECEIPTED_CARRIER_ABSENT_FROM_SCANNED_PREFIX": "a VERIFIED receipt names this layer, but the cited member "
+                                                     "carrier was not found before a bounded ledger scan stopped; "
+                                                     "this is prefix evidence, not a full-ledger absence claim",
     "BOUND_TO_INVENTORY_DOCUMENT": "the layer's only source path is the feed-inventory markdown; a named defect, never DELIVERED",
     "PRODUCED_NOT_DELIVERED": "a producer exists and no VERIFIED receipt covers this layer on this run",
     "NO_PRODUCER_FOUND": "nothing in the ingestion path produces it; the record says what was searched",
@@ -999,30 +1002,35 @@ MEMBER_SCAN_MAX_ROWS = 1024
 MEMBER_SCAN_MAX_BYTES = 64 * 1024 * 1024
 
 
-def _bounded_member_census(path: Path) -> tuple[set[str], int, dict[str, int]]:
+def _bounded_member_census(path: Path) -> tuple[set[str], int, dict[str, int | bool]]:
     """Census a bounded prefix: at most MEMBER_SCAN_MAX_ROWS and MEMBER_SCAN_MAX_BYTES.
 
     This recovers field NAMES when an old result omitted its census; it never claims a full-ledger
-    absence proof. The bound is returned and repeated in evidence detail.
+    absence proof. The bound, actual scan counts and whether the scan reached the end are returned
+    and repeated in evidence detail.
     """
     census = MboFieldCensus()
     rows = 0
     bytes_read = 0
+    stopped_before_line = False
     with path.open("rb") as handle:
         while rows < MEMBER_SCAN_MAX_ROWS and bytes_read < MEMBER_SCAN_MAX_BYTES:
             line = handle.readline()
             if not line:
                 break
             if bytes_read + len(line) > MEMBER_SCAN_MAX_BYTES and rows:
+                stopped_before_line = True
                 break
             bytes_read += len(line)
             if not line.strip():
                 continue
             census.observe(json.loads(line))
             rows += 1
+        reached_end = not stopped_before_line and handle.tell() == path.stat().st_size
     return set(census.paths()), rows, {
         "rows": MEMBER_SCAN_MAX_ROWS, "bytes": MEMBER_SCAN_MAX_BYTES,
         "rows_read": rows, "bytes_read": bytes_read,
+        "reached_end": reached_end, "truncated": not reached_end,
     }
 
 
@@ -1124,11 +1132,20 @@ def _causal_status(
     absent: list[str] = []
     unmeasured: list[str] = []
     member_paths = observed["member_paths"]
+    member_scan_bound = observed.get("member_scan_bound") or {}
+    member_scan_truncated = (
+        observed.get("member_paths_source") == "DELIVERED_LEDGER_FIRST_ROWS"
+        and bool(member_scan_bound.get("truncated"))
+    )
+    member_absent_from_prefix = False
     for pattern in record.get("member_paths", ()):
         if member_paths is None:
             unmeasured.append(pattern)
         elif path_present(pattern, member_paths):
             present.append(pattern)
+        elif member_scan_truncated:
+            absent.append(f"{pattern} absent from the scanned prefix")
+            member_absent_from_prefix = True
         else:
             absent.append(f"{pattern} not in the measured member census")
     rows_by_section = observed["lifecycle_rows_by_section"] or {}
@@ -1151,9 +1168,15 @@ def _causal_status(
             present.append(f"legacy rows ({legacy_rows}; keys unmeasured, schema fixed by _legacy_control_row)")
         else:
             absent.append("legacy ledger: 0 rows on this run")
-    lost = [f"{pattern} not on the row (produced and dropped before the ledger)"
-            for pattern in record.get("structurally_absent", ())
-            if member_paths is None or not path_present(pattern, member_paths)]
+    lost_patterns = [
+        pattern for pattern in record.get("structurally_absent", ())
+        if member_paths is None or not path_present(pattern, member_paths)
+    ]
+    lost = [
+        (f"{pattern} not found in the scanned prefix" if member_scan_truncated
+         else f"{pattern} not on the row (produced and dropped before the ledger)")
+        for pattern in lost_patterns
+    ]
     declared = bool(record.get("member_paths") or record.get("lifecycle_sections") or record.get("legacy_keys"))
     if not declared:
         absent.extend(lost or ["no carrier declared"])
@@ -1162,11 +1185,18 @@ def _causal_status(
     verified = not problems
     scan_note = ""
     if observed.get("member_paths_source") == "DELIVERED_LEDGER_FIRST_ROWS":
-        bound = observed.get("member_scan_bound") or {}
-        scan_note = (
-            f"; member census recovered by bounded delivered-ledger scan: <= {bound.get('rows')} rows and "
-            f"<= {bound.get('bytes')} bytes (read {bound.get('rows_read')} rows / {bound.get('bytes_read')} bytes)"
-        )
+        bound = member_scan_bound
+        if bound.get("reached_end"):
+            scan_note = (
+                "; member census recovered by complete delivered-ledger scan; reached end after "
+                f"{bound.get('rows_read')} rows / {bound.get('bytes_read')} bytes"
+            )
+        else:
+            scan_note = (
+                "; member census recovered from scanned prefix only: "
+                f"read {bound.get('rows_read')} rows / {bound.get('bytes_read')} bytes; "
+                f"bound <= {bound.get('rows')} rows / {bound.get('bytes')} bytes"
+            )
     lost_note = ("; per-record fields lost: " + "; ".join(lost)) if lost else ""
     if verified and unmeasured:
         detail = (
@@ -1178,10 +1208,15 @@ def _causal_status(
         detail = "carriers present: " + ", ".join(present) + scan_note + lost_note
         return "DELIVERED", _evidence("DELIVERY_RECEIPT", receipt_sha, record["carrier"], detail)
     if verified:
-        detail = "the delivery receipt names this layer; measured carrier absent from the run: " + "; ".join(absent)
+        if member_absent_from_prefix:
+            status = "RECEIPTED_CARRIER_ABSENT_FROM_SCANNED_PREFIX"
+            detail = "the delivery receipt names this layer; carrier absent from the scanned prefix: " + "; ".join(absent)
+        else:
+            status = "RECEIPTED_CARRIER_ABSENT"
+            detail = "the delivery receipt names this layer; measured carrier absent from the run: " + "; ".join(absent)
         if present:
             detail += "; present: " + ", ".join(present)
-        return "RECEIPTED_CARRIER_ABSENT", _evidence("DELIVERY_RECEIPT", receipt_sha, record["carrier"], detail + scan_note + lost_note)
+        return status, _evidence("DELIVERY_RECEIPT", receipt_sha, record["carrier"], detail + scan_note + lost_note)
     kind = "DELIVERY_RECEIPT" if receipt is not None else "NONE"
     detail = "; ".join(problems + absent + (["member census unavailable: " + ", ".join(unmeasured)] if unmeasured else [])) + scan_note + lost_note
     return "PRODUCED_NOT_DELIVERED", _evidence(kind, receipt_sha, record["carrier"], detail)
@@ -1398,6 +1433,9 @@ def crosswalk(
         "census_absent": by_status["CENSUS_ABSENT"],
         "principal_stamped": by_status["PRINCIPAL_STAMPED"],
         "receipted_carrier_absent": by_status["RECEIPTED_CARRIER_ABSENT"],
+        "receipted_carrier_absent_from_scanned_prefix": by_status[
+            "RECEIPTED_CARRIER_ABSENT_FROM_SCANNED_PREFIX"
+        ],
         "bound_to_inventory_document": by_status["BOUND_TO_INVENTORY_DOCUMENT"],
         "produced_not_delivered": by_status["PRODUCED_NOT_DELIVERED"],
         "no_producer_found": by_status["NO_PRODUCER_FOUND"],

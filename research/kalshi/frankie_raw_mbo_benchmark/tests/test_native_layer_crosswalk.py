@@ -38,6 +38,8 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_layer_crosswalk import (
     INPUT_POLICIES,
     KNOWLEDGE_RECEIPT_SCHEMA,
     LAYER_PRODUCERS,
+    MEMBER_SCAN_MAX_BYTES,
+    MEMBER_SCAN_MAX_ROWS,
     OUTPUTS_RECEIPT_SCHEMA,
     PRODUCER_KINDS,
     REPO_ROOT,
@@ -48,10 +50,13 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_layer_crosswalk import (
     CrosswalkGateError,
     FIXTURE_RENDER_PATH,
     SUNDAY_CLI,
+    _bounded_member_census,
+    _causal_status,
     crosswalk,
     fixture_render,
     gate_applicable_inputs,
     main,
+    observed_carriers,
     path_present,
     pre_call_status_computed,
     registry_layers,
@@ -195,6 +200,106 @@ class PathPatternTest(unittest.TestCase):
         paths = {"book_full.bid_levels_full[].fifo_queue[].order_id"}
         self.assertTrue(path_present("book_full.bid_levels_full[].fifo_queue[].order_id", paths))
         self.assertFalse(path_present("book_full.bid_levels_full[].fifo_queue[].size", paths))
+
+
+class BoundedMemberCensusEvidenceTest(unittest.TestCase):
+    @staticmethod
+    def _status_for(path: Path) -> tuple[str, dict, dict]:
+        receipt = {
+            "ledgers": {
+                "exact_member_ledger": {
+                    "status": "VERIFIED",
+                    "local_path": str(path),
+                }
+            }
+        }
+        observed = observed_carriers(
+            {"layers": {}, "ledger_retention": {}},
+            delivery_receipt=receipt,
+            ledger_dir=path.parent,
+        )
+        status, evidence = _causal_status(
+            {
+                "kind": "ROW_FIELD",
+                "ledgers": ("exact_member_ledger",),
+                "member_paths": ("field_that_is_not_present",),
+                "carrier": "field_that_is_not_present",
+            },
+            result_present=True,
+            observed=observed,
+            receipt=receipt,
+            receipt_sha="f" * 64,
+        )
+        return status, evidence, observed["member_scan_bound"]
+
+    def test_a_truncated_ledger_qualifies_absence_and_reports_true_prefix_counts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "exact_member_rows.jsonl"
+            encoded = [
+                (json.dumps({"present": index}) + "\n").encode("utf-8")
+                for index in range(MEMBER_SCAN_MAX_ROWS + 1)
+            ]
+            path.write_bytes(b"".join(encoded))
+
+            _paths, rows, bound = _bounded_member_census(path)
+            status, evidence, observed_bound = self._status_for(path)
+
+        self.assertEqual(rows, MEMBER_SCAN_MAX_ROWS)
+        self.assertEqual(bound["rows_read"], MEMBER_SCAN_MAX_ROWS)
+        self.assertEqual(bound["bytes_read"], sum(map(len, encoded[:MEMBER_SCAN_MAX_ROWS])))
+        self.assertLess(bound["bytes_read"], MEMBER_SCAN_MAX_BYTES)
+        self.assertFalse(bound["reached_end"])
+        self.assertTrue(bound["truncated"])
+        self.assertEqual(observed_bound, bound)
+        self.assertEqual(status, "RECEIPTED_CARRIER_ABSENT_FROM_SCANNED_PREFIX")
+        self.assertIn("absent from the scanned prefix", evidence["detail"])
+        self.assertIn(
+            f"read {bound['rows_read']} rows / {bound['bytes_read']} bytes",
+            evidence["detail"],
+        )
+        with self.assertRaisesRegex(
+            CrosswalkGateError,
+            "field_that_is_not_present="
+            "RECEIPTED_CARRIER_ABSENT_FROM_SCANNED_PREFIX",
+        ):
+            gate_applicable_inputs(
+                {
+                    "arm": "A_CLEAN",
+                    "layers": [
+                        {
+                            "layer_id": "field_that_is_not_present",
+                            "arm_applicable": True,
+                            "policy": "CAUSAL_STREAM_REQUIRED",
+                            "status": status,
+                        }
+                    ],
+                }
+            )
+
+    def test_a_complete_short_ledger_keeps_unqualified_absence_and_says_it_reached_end(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "exact_member_rows.jsonl"
+            encoded = [
+                (json.dumps({"present": index}) + "\n").encode("utf-8")
+                for index in range(min(3, MEMBER_SCAN_MAX_ROWS))
+            ]
+            path.write_bytes(b"".join(encoded))
+
+            _paths, rows, bound = _bounded_member_census(path)
+            status, evidence, observed_bound = self._status_for(path)
+
+        self.assertEqual(rows, len(encoded))
+        self.assertEqual(bound["rows_read"], len(encoded))
+        self.assertEqual(bound["bytes_read"], sum(map(len, encoded)))
+        self.assertTrue(bound["reached_end"])
+        self.assertFalse(bound["truncated"])
+        self.assertEqual(observed_bound, bound)
+        self.assertEqual(status, "RECEIPTED_CARRIER_ABSENT")
+        self.assertNotIn("absent from the scanned prefix", evidence["detail"])
+        self.assertIn(
+            f"reached end after {bound['rows_read']} rows / {bound['bytes_read']} bytes",
+            evidence["detail"],
+        )
 
 
 class ProducersVerifiedByExecutionTest(unittest.TestCase):
