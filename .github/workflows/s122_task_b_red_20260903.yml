@@ -23,8 +23,13 @@ jobs:
           python3 -m pip install --quiet pytest databento matplotlib scipy scikit-learn
           set +e
           python3 -m pytest \
-            research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_replay_driver.py \
-            research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_a_arm_launch.py \
+            research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_replay_driver.py::ChangePointsAreDrivenByEventsTest::test_opt_out_declares_the_comparison_off_rather_than_reporting_a_bare_zero \
+            research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_replay_driver.py::ChangePointsAreDrivenByEventsTest::test_change_points_are_on_by_default_under_d83_d88 \
+            research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_replay_driver.py::ChangePointsActuallyFireTest::test_default_feed_fires_without_an_opt_in_flag \
+            research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_replay_driver.py::ChangePointsActuallyFireTest::test_unfed_the_same_tape_reports_the_declaration_not_a_zero \
+            research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_a_arm_launch.py::ChangePointDefaultCliS122Test::test_launch_function_defaults_change_points_on \
+            research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_a_arm_launch.py::ChangePointDefaultCliS122Test::test_cli_no_flag_keeps_change_points_on \
+            research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_a_arm_launch.py::ChangePointDefaultCliS122Test::test_cli_flag_is_an_explicit_opt_out \
             -q -p no:cacheprovider > data_s122_b_red.log 2>&1
           code=$?
           set -e
