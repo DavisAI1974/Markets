@@ -45,6 +45,10 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry i
     canonical_hash,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_key_alias import read_averaged_rows
+from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import (
+    KnowledgeDeliveryError,
+    render_knowledge_block,
+)
 from research.kalshi.frankie_raw_mbo_benchmark.native_layer_crosswalk import (
     CrosswalkError,
     CrosswalkGateError,
@@ -240,6 +244,15 @@ def emit(
         raise EmitError(str(exc)) from exc
     except CrosswalkError as exc:
         raise EmitError(f"cannot compute the input-layer crosswalk: {exc}") from exc
+    if knowledge_receipt_body is None:
+        raise EmitError("the accounted input gate returned without a knowledge receipt")
+    try:
+        # One object, one authority: this is the exact receipt instance crosswalk() gated.
+        # Re-loading here would allow the prompt to name knowledge other than the knowledge
+        # whose delivery status authorized emission.
+        knowledge_block = render_knowledge_block(knowledge_receipt_body)
+    except KnowledgeDeliveryError as exc:
+        raise EmitError(f"cannot render the gated knowledge receipt: {exc}") from exc
 
     cutoffs = _lookup(traversal, "invocation_cutoffs")
     if not isinstance(cutoffs, list) or not cutoffs:
@@ -280,6 +293,8 @@ def emit(
     add("Sunday, the date and time we are running\"* and *\"this has to exactly mimic how it's")
     add("going to come in rt.\"* The runner captured, retained and proved that nothing was")
     add("dropped; it did not do your work, and its calculations are not your evidence.")
+    add("")
+    add(knowledge_block)
     add("")
     add("## The evidence")
     add("")

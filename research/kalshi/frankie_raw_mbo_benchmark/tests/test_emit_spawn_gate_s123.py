@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from research.kalshi.frankie_raw_mbo_benchmark import emit_frankie_spawn as emitter
+from research.kalshi.frankie_raw_mbo_benchmark import native_knowledge_delivery as knowledge_delivery
 from research.kalshi.frankie_raw_mbo_benchmark import native_layer_crosswalk as xw
 from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import canonical_hash
 from research.kalshi.frankie_raw_mbo_benchmark.tests.test_emit_frankie_spawn import (
@@ -93,20 +94,54 @@ class EmitSpawnGateTest(unittest.TestCase):
             layers = [
                 {
                     "layer_id": entry["layer_id"],
+                    "group_id": "binding_common_controls",
                     "status": "DELIVERED",
                     "files": [{
                         "path": entry["source_paths"][0],
                         "sha256": "b" * 64,
                         "bytes": 1,
                     }],
+                    "missing": [],
                 }
                 for entry in self.registry["groups"][0]["entries"]
             ]
+        artifacts = [
+            {
+                "id": row["layer_id"],
+                "load_mode": "ALWAYS_LOAD",
+                "path": row["files"][0]["path"],
+                "sha256": row["files"][0]["sha256"],
+                "bytes": row["files"][0]["bytes"],
+            }
+            for row in layers
+        ]
         body = {
-            "schema": xw.KNOWLEDGE_RECEIPT_SCHEMA,
+            "schema": knowledge_delivery.KNOWLEDGE_RECEIPT_SCHEMA,
+            "profile_id": "RT_A_MEMORY_SECOND_PASS",
+            "arm": "A_MEMORY",
+            "role": "REAL_TIME_FRANKIE",
+            "manifest_path": "fixture/KNOWLEDGE_MANIFEST.json",
+            "manifest_hash": "1" * 64,
+            "manifest_file_sha256": "2" * 64,
+            "spec_path": "fixture/PROFILE.json",
+            "spec_file_sha256": "3" * 64,
+            "registry_sha256": self.registry["registry_sha256"],
+            "bundle_filename": knowledge_delivery.KNOWLEDGE_BUNDLE_FILENAME,
+            "model_visible_context_sha256": "4" * 64,
+            "model_visible_context_bytes": 123,
+            "context_bundle_sha256": "4" * 64,
+            "totals": {
+                "layers": len(layers),
+                "delivered": len(layers),
+                "artifacts": len(artifacts),
+                "always_load": len(artifacts),
+                "retrieval": 0,
+            },
             "layers": layers,
-            "receipt_sha256": "b" * 64,
+            "artifacts": artifacts,
+            "receipt_sha256": "",
         }
+        body["receipt_sha256"] = canonical_hash(body, omit="receipt_sha256")
         return _write_json(self.root, "knowledge_receipt.json", body), body
 
     def _emit(self, knowledge: Path, captured: dict) -> str:
@@ -160,6 +195,39 @@ class EmitSpawnGateTest(unittest.TestCase):
         self.assertIn(body["crosswalk_sha256"], text)
         self.assertIn(str(totals["inputs_accounted"]), text)
         self.assertIn(str(totals["inputs_applicable"]), text)
+
+    def test_prompt_renders_the_exact_receipt_object_consulted_by_the_gate(self) -> None:
+        knowledge, _ = self._knowledge(delivered=True)
+        captured: dict = {}
+
+        def render(receipt):
+            captured["render_receipt"] = receipt
+            return knowledge_delivery.render_knowledge_block(receipt)
+
+        with patch.object(emitter, "render_knowledge_block", side_effect=render, create=True):
+            text = self._emit(knowledge, captured)
+
+        self.assertIs(captured["render_receipt"], captured["knowledge_receipt"])
+        expected = knowledge_delivery.render_knowledge_block(captured["knowledge_receipt"])
+        self.assertIn(expected, text)
+
+    def test_absent_knowledge_receipt_still_refuses_emission(self) -> None:
+        with (
+            patch.object(xw, "load_registry", return_value=self.registry),
+            self.assertRaises(emitter.EmitError) as caught,
+        ):
+            emitter.emit(
+                self.result,
+                repo_root=self.root,
+                delivery_receipt=self.delivery,
+                stream_receipt=self.stream,
+                knowledge_receipt=None,
+                outputs_receipt=self.outputs,
+                sealed_proof=self.sealed,
+                ledger_dir=self.root / "delivered",
+            )
+
+        self.assertIn("applicable input layer", str(caught.exception))
 
     def test_refusal_preserves_every_computed_offender_and_status(self) -> None:
         knowledge, knowledge_body = self._knowledge(delivered=False)

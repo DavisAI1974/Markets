@@ -15,6 +15,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from research.kalshi.frankie_raw_mbo_benchmark import emit_frankie_spawn as emitter
+from research.kalshi.frankie_raw_mbo_benchmark import native_knowledge_delivery as knowledge_delivery
 from research.kalshi.frankie_raw_mbo_benchmark import native_layer_crosswalk as xw
 from research.kalshi.frankie_raw_mbo_benchmark.emit_frankie_spawn import (
     CONTRACT_PATH,
@@ -156,8 +157,64 @@ def _accounted_prompt_test_crosswalk() -> dict:
     return xw.crosswalk(registry, arm="A_CLEAN", knowledge_receipt=knowledge_receipt)
 
 
+def _prompt_test_knowledge_receipt(root: Path, *, arm: str) -> Path:
+    """A renderer-complete receipt for tests whose subject is other prompt prose."""
+    layer_ids = ("controlling_rt_mission", "native_calculation_contract")
+    layers = [{
+        "layer_id": layer_id,
+        "group_id": "binding_common_controls",
+        "status": "DELIVERED",
+        "files": [{
+            "path": xw.LAYER_PRODUCERS[layer_id]["carrier_paths"][0],
+            "sha256": "c" * 64,
+            "bytes": 1,
+        }],
+        "missing": [],
+    } for layer_id in layer_ids]
+    artifacts = [{
+        "id": row["layer_id"],
+        "load_mode": "ALWAYS_LOAD",
+        "path": row["files"][0]["path"],
+        "sha256": row["files"][0]["sha256"],
+        "bytes": row["files"][0]["bytes"],
+    } for row in layers]
+    body = {
+        "schema": knowledge_delivery.KNOWLEDGE_RECEIPT_SCHEMA,
+        "profile_id": "PROMPT_TEST_PROFILE",
+        "arm": arm,
+        "role": "REAL_TIME_FRANKIE",
+        "manifest_path": "fixture/KNOWLEDGE_MANIFEST.json",
+        "manifest_hash": "1" * 64,
+        "manifest_file_sha256": "2" * 64,
+        "spec_path": "fixture/PROFILE.json",
+        "spec_file_sha256": "3" * 64,
+        "registry_sha256": "a" * 64,
+        "bundle_filename": knowledge_delivery.KNOWLEDGE_BUNDLE_FILENAME,
+        "model_visible_context_sha256": "4" * 64,
+        "model_visible_context_bytes": 123,
+        "context_bundle_sha256": "4" * 64,
+        "totals": {
+            "layers": len(layers), "delivered": len(layers),
+            "artifacts": len(artifacts), "always_load": len(artifacts), "retrieval": 0,
+        },
+        "layers": layers,
+        "artifacts": artifacts,
+        "receipt_sha256": "",
+    }
+    body["receipt_sha256"] = canonical_hash(body, omit="receipt_sha256")
+    path = root / "KNOWLEDGE_RECEIPT.json"
+    path.write_text(json.dumps(body), encoding="utf-8")
+    return path
+
+
 def _emit_prompt_unit(*args, **kwargs) -> str:
     """Run the real emitter and gate against computed prompt-test rows."""
+    if kwargs.get("knowledge_receipt") is None:
+        result_path = Path(args[0])
+        result = json.loads(result_path.read_text(encoding="utf-8"))
+        kwargs["knowledge_receipt"] = _prompt_test_knowledge_receipt(
+            result_path.parent, arm=result["layers"]["identity_receipt"]["arm"]
+        )
     with patch.object(emitter, "crosswalk", return_value=_accounted_prompt_test_crosswalk()):
         return emit(*args, **kwargs)
 

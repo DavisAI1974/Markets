@@ -1024,7 +1024,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **534 files.**
+new tool cannot go unlisted. **535 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `agent_frankie.py` — Frankie hybrid agent entry point.
@@ -1221,6 +1221,7 @@ new tool cannot go unlisted. **534 files.**
 - `outputs_bundle_fixture.py` — A lawful output bundle with a configurable identity, for the staging and read-back tests.
 - `test_a_arm_launch_workflows.py` — T4: the A-arm launch workflows dispatch compute, and neither can fire the box by push.
 - `test_a_clean_forecaster_resume_latest.py` — (no docstring summary)
+- `test_a_memory_findings_loop.py` — D90/D91: Frankie's admitted findings accumulate across roster days."""
 - `test_a_memory_member_first_recalculation.py` — (no docstring summary)
 - `test_a_memory_rt_resume_latest.py` — (no docstring summary)
 - `test_box_volume_rescue_workflow.py` — Does the box get its disk back after a failure at every point of the rescue?
