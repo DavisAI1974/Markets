@@ -49,7 +49,12 @@ env:
   DURABLE_PREFIX: >-
     ${{ github.event_name == 'workflow_dispatch' && inputs.durable_prefix ||
     'nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/7d0068d8ae720772415bf84c8c0689e84408d642/33745123325-1' }}
-  SUBDIR: ${{ github.event_name == 'workflow_dispatch' && inputs.subdir || 'canary' }}
+  # An EMPTY STRING is falsy in a GitHub expression, so `a && b || c` cannot carry
+  # `subdir: ""` - it falls through to 'canary' and the run reads the wrong prefix.
+  # A box run writes at the prefix ROOT, so an empty subdir is the value that matters.
+  # Inverted to "not a dispatch, or the dispatched value", the same shape the launch
+  # workflow documents for its boolean flags.
+  SUBDIR: ${{ github.event_name != 'workflow_dispatch' && 'canary' || inputs.subdir }}
 
 jobs:
   read:
