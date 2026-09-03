@@ -49,8 +49,10 @@ test "$SUITE" -eq 0
 
 python3 research/kalshi/store.py check
 python3 research/kalshi/store.py docs
-if git diff | grep -nE 'E:[/\\]|scratchpad|/tmp'; then
-  echo 'forbidden path text found in diff' >&2
+# Inspect only newly added lines. Existing tests deliberately contain '/tmp/' and 'scratchpad'
+# as forbidden-string assertions; unchanged/context lines are not a newly introduced path.
+if git diff --unified=0 | grep '^+' | grep -v '^+++' | grep -nE 'E:[/\\]|scratchpad|/tmp'; then
+  echo 'forbidden path text found in added diff lines' >&2
   exit 43
 fi
 git diff --quiet research/ng_exhaustion_mbo_v4_state_adapter_20260820.py
