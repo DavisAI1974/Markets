@@ -58,6 +58,7 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_layer_crosswalk import (
 from research.kalshi.frankie_raw_mbo_benchmark import native_principal_outputs as outputs
 from research.kalshi.frankie_raw_mbo_benchmark.native_staging import EXACT_LEDGERS
 
+CANONICAL_ARM = "A_MEMORY"
 REPO_ROOT = Path(__file__).resolve().parents[3]
 STREAM_MODULE = "research.kalshi.frankie_raw_mbo_benchmark.native_causal_stream"
 MISSION_PATH = "research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md"
@@ -710,12 +711,28 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--evidence-uri", default=None, help="durable S3 URI, for the record")
     parser.add_argument("--output", default=None)
     args = parser.parse_args(argv)
+    knowledge_receipt = args.knowledge_receipt
+    if knowledge_receipt is None:
+        # THE KNOWLEDGE RECEIPT IS BUILT HERE, NOT BY HAND. `build_knowledge_delivery` had no
+        # production caller for four sessions, so every spawn began with someone remembering to
+        # produce the receipt - and the bundle it hashes, which is the knowledge that actually
+        # reaches the principal, was produced by nobody. The bundle, receipt and pre-call receipt
+        # are written beside the prompt (fixed names) so the read-back can bind them.
+        from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import (
+            build_knowledge_delivery, write_knowledge_delivery,
+        )
+        beside = Path(args.output).parent if args.output else Path(".")
+        delivery = build_knowledge_delivery(arm=CANONICAL_ARM, role="REAL_TIME_FRANKIE")
+        written = write_knowledge_delivery(delivery, beside)
+        knowledge_receipt = str(written["receipt"])
+        print(f"knowledge delivery built: receipt {delivery.receipt['receipt_sha256']} and bundle "
+              f"{len(delivery.model_visible_context):,} bytes written beside the prompt", file=sys.stderr)
     try:
         text = emit(
             args.result,
             delivery_receipt=args.delivery_receipt,
             stream_receipt=args.stream_receipt,
-            knowledge_receipt=args.knowledge_receipt,
+            knowledge_receipt=knowledge_receipt,
             outputs_receipt=args.outputs_receipt,
             sealed_proof=args.sealed_proof,
             ledger_dir=args.ledger_dir,

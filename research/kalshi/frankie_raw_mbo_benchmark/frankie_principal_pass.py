@@ -920,9 +920,9 @@ def section_entries(t: Tallies, cutoff: int, since: int, is_end: bool) -> dict[s
                  "frozen": is_end}
     # 4.16
     S["4.16"] = {"section": "4.16", "member_group_indices": members, "window": win, "tracks": t.resp_tracks, "matured_observations": t.resp_obs,
-                 "observations_by_horizon_ns": _d(t.resp_horizon_obs), "change_points_per_track": _q(t.resp_change_points),
+                 "matured_observations_per_horizon_bucket": _d(t.resp_horizon_obs), "change_points_per_track": _q(t.resp_change_points),
                  "starting_liquidity_regime": _d(t.resp_regime), "closed": {str(k): v for k, v in t.resp_closed.items()},
-                 "note": "each horizon has its own at-risk denominator (observations_by_horizon_ns); earliest observation kept"}
+                 "note": "each horizon has its own at-risk denominator (matured_observations_per_horizon_bucket, keyed by the horizon the row declared); earliest observation kept"}
     for s in SECTIONS:
         if s not in S:
             raise PassError(f"section {s} has no entry builder")
@@ -1090,6 +1090,70 @@ def raw_mbo_entries(t: Tallies, registry: Mapping[str, Any]) -> list[dict[str, A
 
 
 # --------------------------------------------------------------------------------------
+# The knowledge, actually read: every delivered artifact, verified against its receipt
+# --------------------------------------------------------------------------------------
+
+
+def load_knowledge(receipt: Mapping[str, Any], *, bundle_path: Path, repo_root: Path = REPO_ROOT) -> dict[str, Any]:
+    """Read every artifact the knowledge receipt delivered, verify each against its receipted
+    sha256 and byte count, and refuse the pass on any that cannot be read or does not match.
+    Delivered is not read (S121-S126, four sessions running): this is where it becomes read,
+    mechanically, and the retrieval receipts and `knowledge_use` are written from what
+    actually loaded rather than from what the principal says it looked at."""
+    bundle = bundle_path.read_bytes()
+    pre_call = receipt.get("pre_call") or {}
+    if len(bundle) != pre_call.get("model_visible_context_bytes") or hashlib.sha256(bundle).hexdigest() != pre_call.get("model_visible_context_sha256"):
+        raise PassError("the knowledge bundle on disk is not the model-visible context the receipt was built over")
+    loaded: dict[str, dict[str, Any]] = {}
+    failures: list[str] = []
+    brain: dict[str, Any] | None = None
+    seed_findings: list[dict[str, Any]] = []
+    for artifact in receipt["artifacts"]:
+        path = repo_root / artifact["path"]
+        try:
+            data = path.read_bytes()
+        except OSError as exc:
+            failures.append(f"{artifact['id']}: cannot read {artifact['path']}: {exc}")
+            continue
+        sha = hashlib.sha256(data).hexdigest()
+        if sha != artifact["sha256"] or len(data) != int(artifact["bytes"]):
+            failures.append(f"{artifact['id']}: {artifact['path']} hashes to {sha} ({len(data)} bytes), receipted {artifact['sha256']} ({artifact['bytes']})")
+            continue
+        entry: dict[str, Any] = {"id": artifact["id"], "path": artifact["path"], "sha256": sha, "bytes": len(data),
+                                 "load_mode": artifact["load_mode"], "in_bundle": data in bundle}
+        if artifact["path"].endswith(".json"):
+            try:
+                body = json.loads(data)
+            except json.JSONDecodeError as exc:
+                failures.append(f"{artifact['id']}: not JSON: {exc}")
+                continue
+            if artifact["path"].endswith("ng_brain.json") and isinstance(body, Mapping):
+                brain = body
+                entry["parsed"] = {"plays": len(body.get("plays") or []), "mechanisms": len(body.get("mechanisms") or []),
+                                   "run_findings": len(body.get("run_findings") or []), "version": (body.get("meta") or {}).get("version")}
+            elif artifact["path"].endswith("A_MEMORY_SEED_20260902.json") and isinstance(body, Mapping):
+                fm = body.get("finding_memory") or {}
+                seed_findings = list(fm.get("findings") or fm.get("entries") or []) if isinstance(fm, Mapping) else list(fm)
+                entry["parsed"] = {"finding_memory": len(seed_findings), "top_level": sorted(body.keys())[:12]}
+            else:
+                entry["parsed"] = {"top_level": (sorted(body.keys())[:12] if isinstance(body, Mapping) else f"list[{len(body)}]")}
+        else:
+            text = data.decode("utf-8", errors="replace")
+            entry["parsed"] = {"lines": text.count("\n") + 1, "headings": sum(1 for line in text.splitlines() if line.startswith("#"))}
+        loaded[artifact["id"]] = entry
+    if failures:
+        raise PassError("knowledge artifacts could not be read as delivered - the pass does not run knowledge-blind:\n  " + "\n  ".join(failures))
+    dispositions = {aid: {"disposition": "INSPECTED", "reason": ("carried verbatim in the model-visible bundle and read" if e["in_bundle"] else
+                                                                  f"read from {e['path']} and verified against the receipt ({e['bytes']} bytes)")}
+                    for aid, e in loaded.items()}
+    knowledge_use = {"schema": "FRANKIE_PRINCIPAL_KNOWLEDGE_USE_V1", "knowledge_receipt_sha256": receipt["receipt_sha256"],
+                     **{k: receipt[k] for k in ("profile_id", "arm", "role", "manifest_hash", "context_bundle_sha256")},
+                     "dispositions": dispositions}
+    return {"artifacts": loaded, "brain": brain, "seed_findings": seed_findings, "knowledge_use": knowledge_use,
+            "bundle_bytes": len(bundle), "bundle_sha256": hashlib.sha256(bundle).hexdigest()}
+
+
+# --------------------------------------------------------------------------------------
 # The pass
 # --------------------------------------------------------------------------------------
 
@@ -1108,6 +1172,11 @@ def run_stream(args: argparse.Namespace) -> int:
     knowledge = json.loads(Path(args.knowledge_receipt).read_text(encoding="utf-8"))
     prompt_sha = _file_sha(Path(args.prompt))
     session = {"session_id": args.session_id, "model": args.model_identity}
+    knowledge_loaded = load_knowledge(knowledge, bundle_path=Path(args.knowledge_bundle))
+    (out_dir / "knowledge_use.json").write_text(json.dumps(knowledge_loaded["knowledge_use"], indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(f"knowledge read: {len(knowledge_loaded['artifacts'])} artifacts verified; bundle {knowledge_loaded['bundle_bytes']:,} bytes; "
+          f"brain {(knowledge_loaded['brain'] or {}).get('meta', {}).get('version')} with {len((knowledge_loaded['brain'] or {}).get('plays') or [])} plays",
+          file=sys.stderr, flush=True)
 
     bundle = outputs.OutputBundle(run_id=run_id, arm=arm, role=ROLE, registry=registry, contract_text=contract_text,
                                   delivery_receipt_sha256=delivery["receipt_sha256"], knowledge_receipt_sha256=knowledge["receipt_sha256"])
@@ -1136,13 +1205,17 @@ def run_stream(args: argparse.Namespace) -> int:
         row = delivery.group
         if turns == 1:
             L[outputs.RUN_HASHES].append(cutoff, {**hashes, "phase": "START", "state_sha256": _sha_text(json.dumps({"groups": t.groups}))})
+            # one receipt per delivered ARTIFACT, from what load_knowledge actually read and verified
+            by_path = {}
             for layer in knowledge["layers"]:
-                rid = f"kr-{layer['layer_id']}"
-                inspected = layer["layer_id"] in ("controlling_rt_mission", "native_calculation_contract", "a_memory_prior_lessons_package", "anchored_knowledge_manifest")
-                L[outputs.KNOWLEDGE_RECEIPTS].append(cutoff, {"receipt_id": rid, "layer_id": layer["layer_id"],
-                                                             "sha256": (layer.get("files") or [{}])[0].get("sha256") or knowledge["receipt_sha256"],
-                                                             "disposition": "INSPECTED" if inspected else "UNINSPECTED",
-                                                             "note": "INSPECTED = read in full by the principal this session; UNINSPECTED = delivered and receipted, not opened"})
+                for f in layer["files"]:
+                    by_path.setdefault(f["path"], layer["layer_id"])
+            for aid, e in knowledge_loaded["artifacts"].items():
+                rid = f"kr-{aid}"
+                L[outputs.KNOWLEDGE_RECEIPTS].append(cutoff, {"receipt_id": rid, "layer_id": by_path.get(e["path"], "manifest_artifact"),
+                                                             "artifact_id": aid, "path": e["path"], "sha256": e["sha256"], "bytes": e["bytes"],
+                                                             "load_mode": e["load_mode"], "disposition": "INSPECTED", "parsed": e.get("parsed"),
+                                                             "basis": "read from disk by the pass and verified against the knowledge receipt's sha256 and byte count"})
                 receipt_ids.append(rid)
         sections = section_entries(t, cutoff, since, is_end)
         for sec, body in sections.items():
@@ -1203,6 +1276,9 @@ def run_stream(args: argparse.Namespace) -> int:
                     "magnitude": c.get("magnitude"), "prominence": c.get("prominence"),
                     "recognition": {"label": label, "lead": _reading(lead), "basis": (ep or {}).get("recognized_recv_ns_basis"), "outcome": (ep or {}).get("recognition_outcome")}})
             L[outputs.RUN_HASHES].append(cutoff, {**hashes, "phase": "END", "state_sha256": _sha_text(json.dumps({"groups": t.groups, "records": t.records}))})
+            for lid, ledger in bundle.ledgers.items():
+                if not ledger.entries and ledger.empty_reason is None:
+                    ledger.empty_reason = f"nothing of this kind arose on this slice: {t.groups} groups, {len(t.candidates)} candidates, {t.flow_seconds} completed seconds"
         outputs.write_bundle(bundle, out_dir)
         since = len(t.group_indices)
         previous_cutoff = cutoff
@@ -1301,6 +1377,7 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--cutoffs", required=True, help="json: run_id, arm, invocation_cutoffs[], source_manifest_sha256, code_commit")
     s.add_argument("--delivery-receipt", required=True)
     s.add_argument("--knowledge-receipt", required=True)
+    s.add_argument("--knowledge-bundle", required=True, help="KNOWLEDGE_BUNDLE.md, the exact model-visible context of the receipt")
     s.add_argument("--prompt", required=True)
     s.add_argument("--out-dir", required=True)
     s.add_argument("--session-id", required=True)
